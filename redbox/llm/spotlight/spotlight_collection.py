@@ -1,0 +1,49 @@
+from collections import defaultdict
+from datetime import date
+from typing import List
+
+from langchain.schema import HumanMessage, SystemMessage
+
+from redbox.llm.prompts.spotlight import SPOTLIGHT_COMBINATION_TASK_PROMPT
+
+
+class SpotlightCollection(object):
+    """A class for combining Spotlight task outputs into a cohesive briefing.
+
+    Args:
+        object (_type_): _description_
+    """
+
+    def __init__(self, spotlights: List[dict]) -> None:
+        self.spotlights = spotlights
+        self.combined_spotlight_tasks = defaultdict(list)
+
+        for individual_spotlight_dict in self.spotlights:
+            for task_id in individual_spotlight_dict["task_outputs"]:
+                self.combined_spotlight_tasks[task_id].append(
+                    individual_spotlight_dict["task_outputs"][task_id]
+                )
+        self.combined_spotlight_dict = {"combined_task_outputs": {}}
+
+    def combine_spotlight_task_outputs(
+        self, task_outputs: List[dict], task_id, user_info, llm, callbacks: list = []
+    ):
+        """Combine the outputs of a task across all spotlights."""
+        spotlight_payload = ""
+
+        for i, individual_task_payload in enumerate(task_outputs):
+            spotlight_payload += f"Spotlight {i}: {individual_task_payload['title']}:\n{individual_task_payload['content']}\n\n\n"
+
+        messages_to_send = [
+            SystemMessage(
+                content=SPOTLIGHT_COMBINATION_TASK_PROMPT.format(
+                    current_date=date.today().isoformat(),
+                    user_info=user_info,
+                )
+            ),
+            HumanMessage(content=spotlight_payload),
+        ]
+
+        result = llm(messages_to_send, callbacks=callbacks)
+        self.combined_spotlight_dict[task_id] = result
+        return result

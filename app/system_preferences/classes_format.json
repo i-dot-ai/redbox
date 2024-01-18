@@ -1,0 +1,45 @@
+{
+    "name": "Format",
+    "tags": [
+        {
+            "letter": "A",
+            "model_type": "Tag",
+            "description": "Email, letter or correspondance",
+            "examples": [],
+            "var": "email_letter_or_correspondance"
+        },
+        {
+            "letter": "B",
+            "model_type": "Tag",
+            "description": "Meetings and minutes",
+            "examples": [],
+            "var": "meetings_and_minutes"
+        },
+        {
+            "letter": "C",
+            "model_type": "Tag",
+            "description": "Briefing",
+            "examples": [],
+            "var": "briefing"
+        },
+        {
+            "letter": "D",
+            "model_type": "Tag",
+            "description": "Proposals and submissions",
+            "examples": [],
+            "var": "proposals_and_submissions"
+        },
+        {
+            "letter": "E",
+            "model_type": "Tag",
+            "description": "Other, including documents",
+            "examples": [],
+            "var": "other_including_documents"
+        }
+    ],
+    "default_tag_index": -1,
+    "uuid": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+    "creator_user_uuid": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+    "created_datetime": "2023-11-20T08:00:00.000000Z",
+    "model_type": "TagGroup"
+}
