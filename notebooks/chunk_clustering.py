@@ -13,8 +13,8 @@ import plotly.figure_factory as ff
 import scipy
 from langchain.chains import LLMChain
 from langchain.chat_models import ChatAnthropic
-from langchain_community.embeddings import SentenceTransformerEmbeddings
 from langchain.prompts import FewShotPromptTemplate, PromptTemplate
+from langchain_community.embeddings import SentenceTransformerEmbeddings
 from pyprojroot import here
 
 # %%

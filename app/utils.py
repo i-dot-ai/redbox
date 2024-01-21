@@ -17,13 +17,13 @@ from langchain.callbacks import FileCallbackHandler
 from langchain.callbacks.base import BaseCallbackHandler
 from langchain.chains.base import Chain
 from langchain.chat_models import ChatAnthropic
-from langchain_community.embeddings import SentenceTransformerEmbeddings
 from langchain.llms import Bedrock
 from langchain.schema.output import LLMResult
 from langchain.vectorstores.elasticsearch import (
     ApproxRetrievalStrategy,
     ElasticsearchStore,
 )
+from langchain_community.embeddings import SentenceTransformerEmbeddings
 from loguru import logger
 from lxml.html.clean import Cleaner
 from pyprojroot import here

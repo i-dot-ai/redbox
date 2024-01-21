@@ -16,16 +16,10 @@ class Collection(BaseModel):
     category: Optional[str] = Field(default="")
     deadline: Optional[str] = Field(default="")
     actions: Optional[str] = Field(default="")
-    comment_ps: Optional[str] = Field(
-        default=""
-    )
-    comment_principal: Optional[str] = Field(
-        default=""
-    )
+    comment_ps: Optional[str] = Field(default="")
+    comment_principal: Optional[str] = Field(default="")
     done: bool = Field(default=False)
-    files: List[str] = Field(
-        default=[]
-    )
+    files: List[str] = Field(default=[])
 
     created_datetime: str = Field(default_factory=lambda: datetime.utcnow().isoformat())
     creator_user_uuid: Optional[str]
