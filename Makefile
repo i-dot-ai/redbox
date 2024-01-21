@@ -7,6 +7,7 @@ PYTHON = python3
 
 reqs:
 	$(PYTHON) -m pip install -r requirements.txt
+	$(PYTHON) -m pip install -r requirements.dev.txt
 
 venv:
 	$(PYTHON) -m venv .venv && \
