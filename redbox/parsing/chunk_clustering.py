@@ -3,7 +3,7 @@ from typing import Dict, List
 
 import numpy as np
 import scipy
-from langchain.embeddings import SentenceTransformerEmbeddings
+from langchain_community.embeddings import SentenceTransformerEmbeddings
 
 from redbox.models.file import Chunk
 
