@@ -2,7 +2,6 @@ from langchain.output_parsers import PydanticOutputParser
 from langchain.prompts.prompt import PromptTemplate
 
 from redbox.llm.prompts.core import _core_redbox_prompt
-from redbox.models.extraction import SpotlightSummaryExtraction
 
 # ==================== SUMMARY ====================
 
@@ -204,19 +203,4 @@ DO NOT INCLUDE the example string "<DocX>" TAGS IN YOUR RESPONSE. \
 
 SPOTLIGHT_COMBINATION_TASK_PROMPT = PromptTemplate.from_template(
     _core_redbox_prompt + _spotlight_combination_prompt
-)
-
-
-# ==================== SUMMARY METADATA ====================
-
-spotlight_metadata_parser = PydanticOutputParser(
-    pydantic_object=SpotlightSummaryExtraction
-)
-
-SPOTLIGHT_METADATA_PROMPT = PromptTemplate(
-    template="Extract metadata from the summary\n{format_instructions}\n{summary}\n",
-    input_variables=["summary"],
-    partial_variables={
-        "format_instructions": spotlight_metadata_parser.get_format_instructions()
-    },
 )
