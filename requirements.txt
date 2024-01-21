@@ -15,7 +15,6 @@ litellm
 fastapi
 streamlit
 lxml
-pytest
 PyPDF2
 pre-commit
 pyprojroot

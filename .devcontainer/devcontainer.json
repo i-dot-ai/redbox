@@ -1,6 +1,6 @@
 {
   "image": "mcr.microsoft.com/devcontainers/python:3.11-bookworm",
-  "postCreateCommand": "pip3 install -r requirements.txt && sudo apt-get update && sudo apt-get libgl-dev libmagic-dev  -y",
+  "postCreateCommand": "pip3 install -r requirements.txt && pip3 install -r requirements.dev.txt && sudo apt-get update && sudo apt-get libgl-dev libmagic-dev  -y",
   "name": "redbox-dev",
   "features": {
     "ghcr.io/devcontainers/features/aws-cli:1": {},
