@@ -3,7 +3,7 @@
 -include .env
 export
 
-PYTHON = python3.9
+PYTHON = python3
 
 reqs:
 	$(PYTHON) -m pip install -r requirements.txt
