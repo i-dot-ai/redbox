@@ -33,11 +33,13 @@ def refresh_files():
 
 
 refresh_files()
-url_params = st.experimental_get_query_params()
+url_params = st.query_params.to_dict()
+
+st.write(url_params)
 
 
 def clear_params():
-    st.experimental_set_query_params()
+    st.query_params.clear()
 
 
 if "file_uuid" in url_params:
@@ -45,7 +47,7 @@ if "file_uuid" in url_params:
         label="File",
         options=list(st.session_state.file_uuid_to_name_map.keys()),
         index=list(st.session_state.file_uuid_to_name_map.keys()).index(
-            url_params["file_uuid"][0]
+            url_params["file_uuid"]
         ),
         on_change=clear_params,
         format_func=lambda x: st.session_state.file_uuid_to_name_map[x],
@@ -76,7 +78,7 @@ if preview_file_button or "file_uuid" in url_params:
 
     if file.type in file_preview.render_methods:
         if (file.type == ".pdf") & ("page_number" in url_params):
-            page_number = url_params["page_number"][0]
+            page_number = url_params["page_number"]
             if page_number[0] == "[":
                 page_number = min(page_number[1:-1].split(r","))
             else:
