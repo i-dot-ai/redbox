@@ -104,7 +104,8 @@ if "submitted" not in st.session_state:
 
 
 # region ===== URL PARAM INJECTION =====
-url_params = st.experimental_get_query_params()
+url_params = st.query_params.to_dict()
+
 
 collections = st.session_state.storage_handler.read_all_items("Collection")
 collections_by_uuid_map = {x.uuid: x for x in collections}
@@ -329,7 +330,7 @@ if st.session_state.submitted:
 
         st.session_state.spotlight = []
         st.session_state.submitted = False
-        st.experimental_set_query_params()
+        st.query_params.clear()
 
     delete_summary = st.sidebar.button(
         label="Delete Summary",
