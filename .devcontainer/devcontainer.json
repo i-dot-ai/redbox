@@ -11,7 +11,7 @@
     "ghcr.io/devcontainers-contrib/features/isort:2": {},
     "ghcr.io/stuartleeks/dev-container-features/shell-history:0": {},
     "ghcr.io/jungaretti/features/make:1": {},
-    "ghcr.io/joshuanianji/devcontainer-features/aws-cli-persistence:0": {},
+    "ghcr.io/joshuanianji/devcontainer-features/aws-cli-persistence:1.0.1": {},
     "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {}
   },
   "runArgs": [
