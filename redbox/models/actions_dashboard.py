@@ -8,23 +8,23 @@ from pydantic import BaseModel, Field, computed_field
 
 class Collection(BaseModel):
     uuid: str = Field(default_factory=lambda: str(uuid4()))
-    date: str = Field(description="The date when item received")
-    name: str = Field(description="Name of the submission")
+    date: str = Field()
+    name: str = Field()
     details: Optional[str] = Field(
-        default="", description="Submission details and links"
+        default="",
     )
-    category: Optional[str] = Field(default="", description="Category of the item")
-    deadline: Optional[str] = Field(default="", description="Deadline")
-    actions: Optional[str] = Field(default="", description="The item to be actioned")
+    category: Optional[str] = Field(default="")
+    deadline: Optional[str] = Field(default="")
+    actions: Optional[str] = Field(default="")
     comment_ps: Optional[str] = Field(
-        default="", description="Private secretary comments"
+        default=""
     )
     comment_principal: Optional[str] = Field(
-        default="", description="Principal comment"
+        default=""
     )
-    done: bool = Field(default=False, decription="Has the item been actioned?")
+    done: bool = Field(default=False)
     files: List[str] = Field(
-        default=[], description="List of files (pointer to location) on the collection"
+        default=[]
     )
 
     created_datetime: str = Field(default_factory=lambda: datetime.utcnow().isoformat())
