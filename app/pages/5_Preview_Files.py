@@ -35,8 +35,6 @@ def refresh_files():
 refresh_files()
 url_params = st.query_params.to_dict()
 
-st.write(url_params)
-
 
 def clear_params():
     st.query_params.clear()
