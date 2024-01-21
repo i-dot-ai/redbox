@@ -1,3 +1,3 @@
-from langchain.embeddings import SentenceTransformerEmbeddings
+from langchain_community.embeddings import SentenceTransformerEmbeddings
 
 SentenceTransformerEmbeddings()
