@@ -24,13 +24,8 @@ from redbox.llm.prompts.chat import (
     STUFF_DOCUMENT_PROMPT,
     WITH_SOURCES_PROMPT,
 )
-from redbox.llm.prompts.spotlight import (
-    SPOTLIGHT_COMBINATION_TASK_PROMPT,
-    SPOTLIGHT_METADATA_PROMPT,
-    spotlight_metadata_parser,
-)
+from redbox.llm.prompts.spotlight import SPOTLIGHT_COMBINATION_TASK_PROMPT
 from redbox.models.classification import Tag, TagGroup
-from redbox.models.extraction import SpotlightSummaryExtraction
 from redbox.models.file import Chunk, File
 from redbox.models.spotlight import Spotlight, SpotlightTask
 
@@ -260,54 +255,6 @@ class LLMHandler(object):
             )
 
         return (result, chain)
-
-    def get_spotlight_metadata(
-        self,
-        spotlight_markdown: str,
-        attempt_count_max: int = 5,
-        callbacks: Optional[List] = [],
-    ) -> SpotlightSummaryExtraction:
-        input_prompt = SPOTLIGHT_METADATA_PROMPT.format_prompt(
-            summary=spotlight_markdown
-        )
-
-        try:
-            output = self.llm(
-                [HumanMessage(content=input_prompt.text)], callbacks=callbacks
-            )
-            metadata = spotlight_metadata_parser.parse(output.content)
-            return metadata
-        except ValueError as parse_error:
-            print(
-                f"Encountered error with first metadata extraction attempt: {str(parse_error)}"
-            )
-            attempt_count = 0
-
-            retry_parser = RetryWithErrorOutputParser.from_llm(
-                parser=spotlight_metadata_parser, llm=self.llm
-            )
-
-            metadata = None
-
-            while attempt_count < attempt_count_max:
-                try:
-                    metadata = retry_parser.parse_with_prompt(
-                        completion=output.content,
-                        prompt_value=input_prompt,
-                    )
-                    break
-                except ValueError as parse_retry_errror:
-                    print(
-                        f"Failed to rectify malformed data object: {str(parse_retry_errror)}"
-                    )
-                    attempt_count += 1
-
-            if metadata is not None:
-                print(f"Sucessful extraction with {attempt_count+1} attempt(s)")
-            else:
-                print(f"Failed extraction with {attempt_count+1} attempt(s)")
-
-            return metadata
 
     def classify_to_tag(
         self, group: TagGroup, raw_text: str, attempt_count_max: int = 5
