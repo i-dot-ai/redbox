@@ -23,11 +23,6 @@ metricbeat.modules:
   xpack.enabled: true
   period: 10s
   enabled: true
-- module: logstash
-  hosts: [ http://logstash:9600 ]
-  xpack.enabled: true
-  period: 10s
-  enabled: true
 - module: kibana
   hosts: [ http://kibana:5601 ]
   username: monitoring_internal
