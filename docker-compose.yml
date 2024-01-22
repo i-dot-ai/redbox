@@ -2,21 +2,8 @@ version: '3.7'
 
 services:
 
-  # The 'setup' service runs a one-off script which initializes users inside
-  # Elasticsearch — such as 'logstash_internal' and 'kibana_system' — with the
-  # values of the passwords defined in the '.env' file. It also creates the
-  # roles required by some of these users.
-  #
-  # This task only needs to be performed once, during the *initial* startup of
-  # the stack. Any subsequent run will reset the passwords of existing users to
-  # the values defined inside the '.env' file, and the built-in roles to their
-  # default permissions.
-  #
-  # By default, it is excluded from the services started by 'docker compose up'
-  # due to the non-default profile it belongs to. To run it, either provide the
-  # '--profile=setup' CLI flag to Compose commands, or "up" the service by name
-  # such as 'docker compose up setup'.
   app:
+    image: redbox-app:latest
     build:
       context: .
       dockerfile: ./Dockerfile
@@ -28,12 +15,27 @@ services:
       ELASTIC_USER: ${ELASTIC_USER:-}
     ports:
       - 8080:8080
+    volumes:
+      - ./data:/app/data:Z
     depends_on:
       - elasticsearch
     networks:
       - redbox-app-network
     links:
       - elasticsearch
+  embed:
+    image: redbox-embed:latest
+    build:
+      context: ./api/embed
+      dockerfile: Dockerfile
+    ports:
+      - 5000:5000
+    environment:
+      - PORT=5000
+      - MODEL_NAMES=all-mpnet-base-v2|paraphrase-multilingual-MiniLM-L12-v2
+    networks:
+      - redbox-app-network
+
   setup:
     profiles:
       - setup
@@ -48,7 +50,6 @@ services:
       - ./elk/setup/roles:/roles:ro,Z
     environment:
       ELASTIC_PASSWORD: ${ELASTIC_PASSWORD:-}
-      LOGSTASH_INTERNAL_PASSWORD: ${LOGSTASH_INTERNAL_PASSWORD:-}
       KIBANA_SYSTEM_PASSWORD: ${KIBANA_SYSTEM_PASSWORD:-}
       METRICBEAT_INTERNAL_PASSWORD: ${METRICBEAT_INTERNAL_PASSWORD:-}
       FILEBEAT_INTERNAL_PASSWORD: ${FILEBEAT_INTERNAL_PASSWORD:-}
@@ -85,28 +86,6 @@ services:
       - elk
     restart: unless-stopped
 
-  logstash:
-    build:
-      context: elk/logstash/
-      args:
-        ELASTIC_VERSION: ${ELASTIC_VERSION}
-    volumes:
-      - ./elk/logstash/config/logstash.yml:/usr/share/logstash/config/logstash.yml:ro,Z
-      - ./elk/logstash/pipeline:/usr/share/logstash/pipeline:ro,Z
-    ports:
-      - 5044:5044
-      - 50000:50000/tcp
-      - 50000:50000/udp
-      - 9600:9600
-    environment:
-      LS_JAVA_OPTS: -Xms256m -Xmx256m
-      LOGSTASH_INTERNAL_PASSWORD: ${LOGSTASH_INTERNAL_PASSWORD:-}
-    networks:
-      - elk
-    depends_on:
-      - elasticsearch
-    restart: unless-stopped
-
   kibana:
     build:
       context: elk/kibana/
@@ -132,3 +111,4 @@ networks:
 
 volumes:
   elasticsearch:
+  redbox-app-data:
