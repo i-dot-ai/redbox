@@ -1,12 +1,12 @@
-from sentence_transformers import SentenceTransformer
 import os
-from fastapi import FastAPI
-from fastapi.responses import RedirectResponse
+from datetime import datetime
 from typing import List
 from uuid import uuid4
-import pydantic
-from datetime import datetime
 
+import pydantic
+from fastapi import FastAPI
+from fastapi.responses import RedirectResponse
+from sentence_transformers import SentenceTransformer
 
 # === Data Models ===
 
