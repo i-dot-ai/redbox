@@ -61,6 +61,35 @@ services:
     depends_on:
       - elasticsearch
 
+  minio:
+    depends_on:
+      - rabbitmq
+    image: minio/minio
+    expose:
+      - "9000"
+      - "9001"
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:-minio}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:-miniosecretkey}
+    command: server --console-address ":9001" /data
+
+  rabbitmq:
+    image: rabbitmq:3.7-management-alpine
+    hostname: rabbitmq # See https://hub.docker.com/_/rabbitmq/
+    expose:
+      - "5672"
+      - "15672"
+    ports:
+      - "15672:15672"
+    tmpfs:
+      - /var/lib/rabbitmq
+    volumes:
+      - /etc/rabbitmq
+    read_only: true
+
   elasticsearch:
     build:
       context: elk/elasticsearch/
