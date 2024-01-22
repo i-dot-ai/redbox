@@ -3,6 +3,7 @@ version: '3.7'
 services:
 
   app:
+    image: redbox-app:latest
     build:
       context: .
       dockerfile: ./Dockerfile
@@ -22,6 +23,19 @@ services:
       - redbox-app-network
     links:
       - elasticsearch
+  embed:
+    image: redbox-embed:latest
+    build:
+      context: ./api/embed
+      dockerfile: Dockerfile
+    ports:
+      - 5000:5000
+    environment:
+      - PORT=5000
+      - MODEL_NAMES=all-mpnet-base-v2|paraphrase-multilingual-MiniLM-L12-v2
+    networks:
+      - redbox-app-network
+
   setup:
     profiles:
       - setup
