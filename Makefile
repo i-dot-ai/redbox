@@ -9,7 +9,7 @@ setup-elastic:
 	docker compose up setup
 
 run:
-	docker compose up -d elasticsearch kibana app
+	docker compose up -d elasticsearch kibana app embed
 
 reqs:
 	$(PYTHON) -m pip install -r requirements.txt
