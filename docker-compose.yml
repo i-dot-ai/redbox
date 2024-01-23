@@ -1,11 +1,9 @@
 version: '3.7'
-
 services:
-
   app:
     image: redbox-app:latest
     build:
-      context: .
+      context: ./
       dockerfile: ./Dockerfile
     environment:
       ANTHROPIC_KEY: ${ANTHROPIC_KEY:-}
@@ -26,7 +24,7 @@ services:
   embed:
     image: redbox-embed:latest
     build:
-      context: ./api/embed
+      context: ./app/apis/embed
       dockerfile: Dockerfile
     ports:
       - 5000:5000
@@ -40,14 +38,14 @@ services:
     profiles:
       - setup
     build:
-      context: elk/setup/
+      context: ./infra/elk/setup/
       args:
         ELASTIC_VERSION: ${ELASTIC_VERSION}
     init: true
     volumes:
-      - ./elk/setup/entrypoint.sh:/entrypoint.sh:ro,Z
-      - ./elk/setup/lib.sh:/lib.sh:ro,Z
-      - ./elk/setup/roles:/roles:ro,Z
+      - ./infra/elk/setup/entrypoint.sh:/entrypoint.sh:ro,Z
+      - ./infra/elk/setup/lib.sh:/lib.sh:ro,Z
+      - ./infra/elk/setup/roles:/roles:ro,Z
     environment:
       ELASTIC_PASSWORD: ${ELASTIC_PASSWORD:-}
       KIBANA_SYSTEM_PASSWORD: ${KIBANA_SYSTEM_PASSWORD:-}
@@ -72,9 +70,17 @@ services:
       - "9000:9000"
       - "9001:9001"
     environment:
-      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:-minio}
-      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:-miniosecretkey}
+      MINIO_ACCESS_KEY: minioadmin
+      MINIO_SECRET_KEY: minioadmin
     command: server --console-address ":9001" /data
+    volumes:
+      - ./data/objectstore:/data
+  miniocreatebuckets:
+    image: minio/mc
+    depends_on:
+      - minio
+    entrypoint: >
+      /bin/sh -c " /usr/bin/mc alias set redbox http://minio:9000 minioadmin minioadmin; /usr/bin/mc mb redbox/filestore; /usr/bin/mc policy set public redbox/filestore; exit 0; "
 
   rabbitmq:
     image: rabbitmq:3.7-management-alpine
@@ -92,12 +98,12 @@ services:
 
   elasticsearch:
     build:
-      context: elk/elasticsearch/
+      context: ./infra/elk/elasticsearch/
       args:
         ELASTIC_VERSION: ${ELASTIC_VERSION}
     volumes:
-      - ./elk/elasticsearch/config/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml:ro,Z
-      - ./elk/elasticsearch/data:/usr/share/elasticsearch/data:Z
+      - ./infra/elk/elasticsearch/config/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml:ro,Z
+      - ./infra/elk/elasticsearch/data:/usr/share/elasticsearch/data:Z
     ports:
       - 9200:9200
       - 9300:9300
@@ -117,11 +123,11 @@ services:
 
   kibana:
     build:
-      context: elk/kibana/
+      context: ./infra/elk/kibana/
       args:
         ELASTIC_VERSION: ${ELASTIC_VERSION}
     volumes:
-      - ./elk/kibana/config/kibana.yml:/usr/share/kibana/config/kibana.yml:ro,Z
+      - ./infra/elk/kibana/config/kibana.yml:/usr/share/kibana/config/kibana.yml:ro,Z
     ports:
       - 5601:5601
     environment:
