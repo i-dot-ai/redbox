@@ -4,7 +4,7 @@ RUN apt-get update
 RUN apt-get install -y libgl-dev libmagic-dev
 
 RUN mkdir /app
-COPY app/ /app/app
+COPY legacy_app/ /app/app
 COPY requirements.txt /app
 COPY redbox/ /app/redbox
 COPY setup.py /app
