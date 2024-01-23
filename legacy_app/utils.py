@@ -127,6 +127,17 @@ def init_session_state() -> dict:
                     "username_md5"
                 ]
 
+    if "s3_client" not in st.session_state:
+        if ENV["OBJECT_STORE"] == "minio":
+            st.session_state.s3_client = boto3.client(
+                "s3",
+                endpoint_url="http://localhost:9000",
+                aws_access_key_id=ENV["MINIO_ACCESS_KEY"],
+                aws_secret_access_key=ENV["MINIO_SECRET_KEY"],
+            )
+        elif ENV["OBJECT_STORE"] == "s3":
+            raise NotImplementedError("S3 not yet implemented")
+
     if "storage_handler" not in st.session_state:
         if ENV["STORAGE_MODE"] == "filesystem":
             persistency_folder_path = pathlib.Path(
