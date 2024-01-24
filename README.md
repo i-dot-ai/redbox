@@ -14,7 +14,7 @@ Redbox Copilot is a retrieval augmented generation (RAG) app that uses Claude 2 
 # Setup
 
 * Ensure Python 3.9+ is installed
-* Create a `.env` with `cp .env.sample .env` and add the relevant API keys and settings
+* Create a `.env` with `cp .env.example .env` and add the relevant API keys and settings
 * Create the Python virtual environment with `make venv`
 * Run the app with `make app`
 
