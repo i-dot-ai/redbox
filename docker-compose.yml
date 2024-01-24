@@ -1,10 +1,11 @@
 version: '3.7'
+
 services:
   app:
     image: redbox-app:latest
     build:
-      context: ./
-      dockerfile: ./Dockerfile
+      context: .
+      dockerfile: ./legacy_app/Dockerfile
     environment:
       ANTHROPIC_KEY: ${ANTHROPIC_KEY:-}
       DEV_MODE: ${DEV_MODE:-}
@@ -12,7 +13,7 @@ services:
       ELASTIC_PASSWORD: ${ELASTIC_PASSWORD:-}
       ELASTIC_USER: ${ELASTIC_USER:-}
     ports:
-      - 8080:8080
+      - 8501:8501
     volumes:
       - ./data:/app/data:Z
     depends_on:
@@ -33,7 +34,6 @@ services:
       - MODEL_NAMES=all-mpnet-base-v2|paraphrase-multilingual-MiniLM-L12-v2
     networks:
       - redbox-app-network
-
   setup:
     profiles:
       - setup
@@ -58,7 +58,6 @@ services:
       - elk
     depends_on:
       - elasticsearch
-
   minio:
     depends_on:
       - rabbitmq
@@ -81,10 +80,9 @@ services:
       - minio
     entrypoint: >
       /bin/sh -c " /usr/bin/mc alias set redbox http://minio:9000 minioadmin minioadmin; /usr/bin/mc mb redbox/filestore; /usr/bin/mc policy set public redbox/filestore; exit 0; "
-
   rabbitmq:
     image: rabbitmq:3.7-management-alpine
-    hostname: rabbitmq # See https://hub.docker.com/_/rabbitmq/
+    hostname: rabbitmq
     expose:
       - "5672"
       - "15672"
@@ -95,7 +93,6 @@ services:
     volumes:
       - /etc/rabbitmq
     read_only: true
-
   elasticsearch:
     build:
       context: ./infra/elk/elasticsearch/
@@ -110,17 +107,11 @@ services:
     environment:
       node.name: elasticsearch
       ES_JAVA_OPTS: -Xms512m -Xmx512m
-      # Bootstrap password.
-      # Used to initialize the keystore during the initial startup of
-      # Elasticsearch. Ignored on subsequent runs.
       ELASTIC_PASSWORD: ${ELASTIC_PASSWORD:-}
-      # Use single node discovery in order to disable production mode and avoid bootstrap checks.
-      # see: https://www.elastic.co/guide/en/elasticsearch/reference/current/bootstrap-checks.html
       discovery.type: single-node
     networks:
       - elk
     restart: unless-stopped
-
   kibana:
     build:
       context: ./infra/elk/kibana/
