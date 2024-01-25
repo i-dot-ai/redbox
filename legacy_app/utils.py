@@ -16,14 +16,14 @@ from elasticsearch import Elasticsearch
 from langchain.callbacks import FileCallbackHandler
 from langchain.callbacks.base import BaseCallbackHandler
 from langchain.chains.base import Chain
-from langchain.chat_models import ChatAnthropic
-from langchain.llms import Bedrock
 from langchain.schema.output import LLMResult
 from langchain.vectorstores.elasticsearch import (
     ApproxRetrievalStrategy,
     ElasticsearchStore,
 )
+from langchain_community.chat_models import ChatAnthropic
 from langchain_community.embeddings import SentenceTransformerEmbeddings
+from langchain_community.llms import Bedrock
 from loguru import logger
 from lxml.html.clean import Cleaner
 from pyprojroot import here
@@ -93,10 +93,15 @@ def init_session_state() -> dict:
     Returns:
         dict: the environment variables dictionary
     """
-    # Bring VARS into environment
-    dotenv.load_dotenv(".env")
+    # Bring VARS into environment from any .env file
+    DOT_ENV = dotenv.dotenv_values(".env")
     # Grab it as a dictionary too for convenience
-    ENV = dotenv.dotenv_values(".env")
+    ENV = dict(os.environ)
+    # Update the environment with the .env file
+    if DOT_ENV:
+        ENV.update(DOT_ENV)
+
+    st.write(ENV)
 
     st.markdown(
         """
@@ -131,7 +136,7 @@ def init_session_state() -> dict:
         if ENV["OBJECT_STORE"] == "minio":
             st.session_state.s3_client = boto3.client(
                 "s3",
-                endpoint_url="http://localhost:9000",
+                endpoint_url="http://minio:9000",
                 aws_access_key_id=ENV["MINIO_ACCESS_KEY"],
                 aws_secret_access_key=ENV["MINIO_SECRET_KEY"],
             )
@@ -150,8 +155,8 @@ def init_session_state() -> dict:
             es = Elasticsearch(
                 hosts=[
                     {
-                        "host": ENV["ELASTIC_HOST"],
-                        "port": int(ENV["ELASTIC_PORT"]),
+                        "host": "elasticsearch",
+                        "port": 9200,
                         "scheme": "http",
                     }
                 ],
@@ -326,8 +331,9 @@ def load_llm_handler(ENV, model_params) -> None:
             )
         elif ENV["STORAGE_MODE"] == "elasticsearch":
             embedding_function = SentenceTransformerEmbeddings()
+
             vector_store = ElasticsearchStore(
-                es_url=f'http://{ENV["ELASTIC_HOST"]}:{ENV["ELASTIC_PORT"]}',
+                es_url=f"http://{ENV['ELASTIC_HOST']}:9200",
                 es_user=ENV["ELASTIC_USER"],
                 es_password=ENV["ELASTIC_PASSWORD"],
                 index_name="redbox-vector",
