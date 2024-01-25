@@ -21,7 +21,7 @@ file_chunker = FileChunker()
 
 # Folder setup and loading
 
-system_prefs_folder = os.path.join(here(), "legacy_app", "system_preferences")
+system_prefs_folder = "./system_preferences"
 default_taggroups = []
 for default_taggroup_file in os.listdir(system_prefs_folder):
     with open(
