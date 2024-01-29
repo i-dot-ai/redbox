@@ -4,6 +4,7 @@ import os
 import pathlib
 import uuid
 from datetime import datetime
+from io import BytesIO
 from typing import Dict, List, Optional, Union
 
 import boto3
@@ -12,6 +13,7 @@ import dotenv
 import html2markdown
 import pandas as pd
 import streamlit as st
+from botocore.client import ClientError
 from elasticsearch import Elasticsearch
 from langchain.callbacks import FileCallbackHandler
 from langchain.callbacks.base import BaseCallbackHandler
@@ -130,9 +132,6 @@ def init_session_state() -> dict:
                     "username_md5"
                 ]
 
-    if "BUCKET_NAME" not in st.session_state:
-        st.session_state.BUCKET_NAME = f"redbox-storage-{st.session_state.user_uuid}"
-
     if "s3_client" not in st.session_state:
         if ENV["OBJECT_STORE"] == "minio":
             st.session_state.s3_client = boto3.client(
@@ -143,6 +142,22 @@ def init_session_state() -> dict:
             )
         elif ENV["OBJECT_STORE"] == "s3":
             raise NotImplementedError("S3 not yet implemented")
+
+    if "BUCKET_NAME" not in st.session_state:
+        st.session_state.BUCKET_NAME = f"redbox-storage-{st.session_state.user_uuid}"
+
+        try:
+            st.session_state.s3_client.head_bucket(Bucket=st.session_state.BUCKET_NAME)
+        except ClientError as err:
+            # The bucket does not exist or you have no access.
+            if err.response["Error"]["Code"] == "404":
+                print("The bucket does not exist.")
+                st.session_state.s3_client.create_bucket(
+                    Bucket=st.session_state.BUCKET_NAME
+                )
+                print("Bucket created successfully.")
+            else:
+                raise err
 
     if "storage_handler" not in st.session_state:
         if ENV["STORAGE_MODE"] == "filesystem":
@@ -408,59 +423,63 @@ class FilePreview(object):
         """
 
         render_method = self.render_methods[file.type]
-        render_method(file)
+        stream = st.session_state.s3_client.get_object(
+            Bucket=st.session_state.BUCKET_NAME, Key=file.name
+        )
+        file_bytes = stream["Body"].read()
+        render_method(file, file_bytes)
 
     def _render_pdf(self, file: File, page_number: int = None) -> None:
-        with open(file.path, "rb") as f:
-            base64_pdf = base64.b64encode(f.read()).decode("utf-8")
-            if page_number is not None:
-                iframe = f"""<iframe
-                            title="{file.name}" \
-                            src="data:application/pdf;base64,{base64_pdf}#page={page_number}" \
-                            width="100%" \
-                            height="1000" \
-                            type="application/pdf"></iframe>"""
-            else:
-                iframe = f"""<iframe
-                            title="{file.name}" \
-                            src="data:application/pdf;base64,{base64_pdf}" \
-                            width="100%" \
-                            height="1000" \
-                            type="application/pdf"></iframe>"""
+        stream = st.session_state.s3_client.get_object(
+            Bucket=st.session_state.BUCKET_NAME, Key=file.name
+        )
+        base64_pdf = base64.b64encode(stream["Body"].read()).decode("utf-8")
 
-            st.markdown(iframe, unsafe_allow_html=True)
+        if page_number is not None:
+            iframe = f"""<iframe
+                        title="{file.name}" \
+                        src="data:application/pdf;base64,{base64_pdf}#page={page_number}" \
+                        width="100%" \
+                        height="1000" \
+                        type="application/pdf"></iframe>"""
+        else:
+            iframe = f"""<iframe
+                        title="{file.name}" \
+                        src="data:application/pdf;base64,{base64_pdf}" \
+                        width="100%" \
+                        height="1000" \
+                        type="application/pdf"></iframe>"""
 
-    def _render_txt(self, file: File) -> None:
-        with open(file.path, "r", encoding="utf-8") as f:
-            st.markdown(f"{f.read()}", unsafe_allow_html=True)
+        st.markdown(iframe, unsafe_allow_html=True)
 
-    def _render_xlsx(self, file: File) -> None:
-        df = pd.read_excel(file.path)
+    def _render_txt(self, file: File, file_bytes: bytes) -> None:
+        st.markdown(f"{file_bytes.decode('utf-8')}", unsafe_allow_html=True)
+
+    def _render_xlsx(self, file: File, file_bytes: bytes) -> None:
+        df = pd.read_excel(BytesIO(file_bytes))
         st.dataframe(df, use_container_width=True)
 
-    def _render_csv(self, file: File) -> None:
-        df = pd.read_csv(file.path)
+    def _render_csv(self, file: File, file_bytes: bytes) -> None:
+        df = pd.read_csv(BytesIO(file_bytes))
         st.dataframe(df, use_container_width=True)
 
-    def _render_eml(self, file: File) -> None:
-        # TODO Visual Formatting could be improved.
-        with open(file.path, "r", encoding="utf-8") as f:
-            st.markdown(self.cleaner.clean_html(f.read()), unsafe_allow_html=True)
+    def _render_eml(self, file: File, file_bytes: bytes) -> None:
+        st.markdown(
+            self.cleaner.clean_html(file_bytes.decode("utf-8")), unsafe_allow_html=True
+        )
 
-    def _render_html(self, file: File) -> None:
-        with open(file.path, "r", encoding="utf-8") as f:
-            markdown_html = html2markdown.convert(f.read())
-            st.markdown(markdown_html, unsafe_allow_html=True)
+    def _render_html(self, file: File, file_bytes: bytes) -> None:
+        markdown_html = html2markdown.convert(file_bytes.decode("utf-8"))
+        st.markdown(markdown_html, unsafe_allow_html=True)
 
-    def _render_docx(self, file: File) -> None:
+    def _render_docx(self, file: File, file_bytes: bytes) -> None:
         st.warning("DOCX preview not yet supported.")
-        with open(file.path, "rb") as f:
-            st.download_button(
-                label=file.name,
-                data=f.read(),
-                mime="application/msword",
-                file_name=file.name,
-            )
+        st.download_button(
+            label=file.name,
+            data=file_bytes,
+            mime="application/msword",
+            file_name=file.name,
+        )
 
 
 def replace_doc_ref(

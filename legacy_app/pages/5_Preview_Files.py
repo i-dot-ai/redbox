@@ -107,8 +107,9 @@ if delete_file_button:
                 )
 
     # Delete the file from Uploads
-    file_path = os.path.join(st.session_state.storage_handler.upload_folder, file.name)
-    os.remove(file_path)
+    st.session_state.s3_client.delete_object(
+        Bucket=st.session_state.BUCKET_NAME, Key=file.name
+    )
 
     # Delete the file from the DB
     st.session_state.storage_handler.delete_item(item_uuid=file.uuid, model_type="File")
