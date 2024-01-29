@@ -1,4 +1,3 @@
-import os
 from typing import List
 
 from elasticsearch import Elasticsearch, NotFoundError
@@ -22,12 +21,6 @@ class ElasticsearchStorageHandler(BaseStorageHandler):
         """
         self.es_client = es_client
         self.root_index = root_index
-
-        # For storing raw files
-        self.upload_folder = default_root_path / "Uploads"
-
-        if not os.path.exists(self.upload_folder):
-            os.makedirs(self.upload_folder)
 
     def write_item(self, item: type[BaseModel]):
         model_type = item.model_type.lower()

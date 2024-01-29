@@ -36,7 +36,6 @@ taggroups = (
 )
 collections = st.session_state.storage_handler.read_all_items(model_type="Collection")
 
-
 # Upload form
 
 
@@ -104,7 +103,7 @@ if submitted:  # noqa: C901
             file_type = pathlib.Path(sanitised_name).suffix
 
             st.session_state.s3_client.put_object(
-                Bucket=ENV["BUCKET_NAME"],
+                Bucket=st.session_state.BUCKET_NAME,
                 Body=bytes_data,
                 Key=sanitised_name,
                 Tagging=f"file_type={file_type}&user_uuid={st.session_state.user_uuid}",
@@ -112,7 +111,7 @@ if submitted:  # noqa: C901
 
             authenticated_s3_url = st.session_state.s3_client.generate_presigned_url(
                 "get_object",
-                Params={"Bucket": ENV["BUCKET_NAME"], "Key": sanitised_name},
+                Params={"Bucket": st.session_state.BUCKET_NAME, "Key": sanitised_name},
                 ExpiresIn=3600,
             )
             # Strip off the query string (we don't need the keys)
@@ -144,24 +143,17 @@ if submitted:  # noqa: C901
 
         with st.spinner(f"Classifying **{file.name}**"):
             # Saving combined text to File record too (useful for Summarise Documents)
-            try:
-                file_path = os.path.join(data_folder, "file", f"{file.name}.json")
-                file.text = "".join([chunk.text for chunk in chunks])
+            file_path = os.path.join(data_folder, "file", f"{file.name}.json")
+            file.text = "".join([chunk.text for chunk in chunks])
 
-                file_classifications = {}
-                for taggroup in taggroups:
-                    # Classify using the first N characters of the file
-                    tag = st.session_state.llm_handler.classify_to_tag(
-                        group=taggroup, raw_text=file.text[:1000]
-                    )
-                    file_classifications[taggroup.name] = tag.model_dump()
-                file.classifications = file_classifications
-            except Exception as e:
-                st.error(f"Failed to classify {file.name}, error: {str(e)}")
-                st.write(file.model_dump())
-                st.write(taggroups)
-                raise e
-                # continue
+            file_classifications = {}
+            for taggroup in taggroups:
+                # Classify using the first N characters of the file
+                tag = st.session_state.llm_handler.classify_to_tag(
+                    group=taggroup, raw_text=file.text[:1000]
+                )
+                file_classifications[taggroup.name] = tag.model_dump()
+            file.classifications = file_classifications
 
         # ==================== SAVING ====================
 
