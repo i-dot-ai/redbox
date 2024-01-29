@@ -69,7 +69,7 @@ def render_citation_response(response):
     cited_chunks = [
         (
             chunk.metadata["parent_doc_uuid"],
-            chunk.metadata["filename"],
+            chunk.metadata["url"],
             chunk.metadata["page_numbers"]
             if "page_numbers" in chunk.metadata
             else None,
