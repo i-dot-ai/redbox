@@ -101,8 +101,6 @@ def init_session_state() -> dict:
     if DOT_ENV:
         ENV.update(DOT_ENV)
 
-    st.write(ENV)
-
     st.markdown(
         """
     <style>
@@ -136,7 +134,7 @@ def init_session_state() -> dict:
         if ENV["OBJECT_STORE"] == "minio":
             st.session_state.s3_client = boto3.client(
                 "s3",
-                endpoint_url="http://minio:9000",
+                endpoint_url=f"http://{ENV['MINIO_HOST']}:9000",
                 aws_access_key_id=ENV["MINIO_ACCESS_KEY"],
                 aws_secret_access_key=ENV["MINIO_SECRET_KEY"],
             )
