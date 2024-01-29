@@ -70,9 +70,11 @@ def render_citation_response(response):
         (
             chunk.metadata["parent_doc_uuid"],
             chunk.metadata["url"],
-            chunk.metadata["page_numbers"]
-            if "page_numbers" in chunk.metadata
-            else None,
+            (
+                chunk.metadata["page_numbers"]
+                if "page_numbers" in chunk.metadata
+                else None
+            ),
         )
         for chunk in response["input_documents"]
     ]
@@ -188,6 +190,6 @@ if prompt := st.chat_input():
 
     # Store the markdown response for later rendering
     # Done to avoid needing file references from llm_handler
-    st.session_state.ai_message_markdown_lookup[
-        hash(response["output_text"])
-    ] = response_final_markdown
+    st.session_state.ai_message_markdown_lookup[hash(response["output_text"])] = (
+        response_final_markdown
+    )
