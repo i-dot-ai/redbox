@@ -1,32 +1,28 @@
 version: '3.7'
-
 services:
-
   app:
     image: redbox-app:latest
     build:
       context: .
-      dockerfile: ./Dockerfile
-    environment:
-      ANTHROPIC_KEY: ${ANTHROPIC_KEY:-}
-      DEV_MODE: ${DEV_MODE:-}
-      ELASTIC_ENDPOINT: "http://elasticsearch:9200"
-      ELASTIC_PASSWORD: ${ELASTIC_PASSWORD:-}
-      ELASTIC_USER: ${ELASTIC_USER:-}
+      dockerfile: ./legacy_app/Dockerfile
+    env_file:
+      - .env
     ports:
-      - 8080:8080
+      - 8501:8501
     volumes:
       - ./data:/app/data:Z
     depends_on:
       - elasticsearch
-    networks:
-      - redbox-app-network
+      - minio
     links:
       - elasticsearch
+      - minio
+    networks:
+      - redbox-app-network
   embed:
     image: redbox-embed:latest
     build:
-      context: ./api/embed
+      context: ./app/apis/embed
       dockerfile: Dockerfile
     ports:
       - 5000:5000
@@ -35,19 +31,18 @@ services:
       - MODEL_NAMES=all-mpnet-base-v2|paraphrase-multilingual-MiniLM-L12-v2
     networks:
       - redbox-app-network
-
   setup:
     profiles:
       - setup
     build:
-      context: elk/setup/
+      context: ./infra/elk/setup/
       args:
         ELASTIC_VERSION: ${ELASTIC_VERSION}
     init: true
     volumes:
-      - ./elk/setup/entrypoint.sh:/entrypoint.sh:ro,Z
-      - ./elk/setup/lib.sh:/lib.sh:ro,Z
-      - ./elk/setup/roles:/roles:ro,Z
+      - ./infra/elk/setup/entrypoint.sh:/entrypoint.sh:ro,Z
+      - ./infra/elk/setup/lib.sh:/lib.sh:ro,Z
+      - ./infra/elk/setup/roles:/roles:ro,Z
     environment:
       ELASTIC_PASSWORD: ${ELASTIC_PASSWORD:-}
       KIBANA_SYSTEM_PASSWORD: ${KIBANA_SYSTEM_PASSWORD:-}
@@ -57,13 +52,10 @@ services:
       MONITORING_INTERNAL_PASSWORD: ${MONITORING_INTERNAL_PASSWORD:-}
       BEATS_SYSTEM_PASSWORD: ${BEATS_SYSTEM_PASSWORD:-}
     networks:
-      - elk
+      - redbox-app-network
     depends_on:
       - elasticsearch
-
   minio:
-    depends_on:
-      - rabbitmq
     image: minio/minio
     expose:
       - "9000"
@@ -72,69 +64,58 @@ services:
       - "9000:9000"
       - "9001:9001"
     environment:
-      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:-minio}
-      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:-miniosecretkey}
+      MINIO_ACCESS_KEY: minioadmin
+      MINIO_SECRET_KEY: minioadmin
     command: server --console-address ":9001" /data
-
-  rabbitmq:
-    image: rabbitmq:3.7-management-alpine
-    hostname: rabbitmq # See https://hub.docker.com/_/rabbitmq/
-    expose:
-      - "5672"
-      - "15672"
-    ports:
-      - "15672:15672"
-    tmpfs:
-      - /var/lib/rabbitmq
+    networks:
+      - redbox-app-network
     volumes:
-      - /etc/rabbitmq
-    read_only: true
-
+      - ./data/objectstore:/data
+  miniocreatebuckets:
+    image: minio/mc
+    depends_on:
+      - minio
+    networks:
+      - redbox-app-network
+    entrypoint: >
+      /bin/sh -c " /usr/bin/mc alias set redbox http://minio:9000 minioadmin minioadmin; /usr/bin/mc mb redbox/filestore; /usr/bin/mc policy set public redbox/filestore; exit 0; "
   elasticsearch:
     build:
-      context: elk/elasticsearch/
+      context: ./infra/elk/elasticsearch/
       args:
         ELASTIC_VERSION: ${ELASTIC_VERSION}
     volumes:
-      - ./elk/elasticsearch/config/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml:ro,Z
-      - ./elk/elasticsearch/data:/usr/share/elasticsearch/data:Z
+      - ./infra/elk/elasticsearch/config/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml:ro,Z
+      - ./data/elastic/:/usr/share/elasticsearch/data:Z
     ports:
       - 9200:9200
       - 9300:9300
     environment:
       node.name: elasticsearch
       ES_JAVA_OPTS: -Xms512m -Xmx512m
-      # Bootstrap password.
-      # Used to initialize the keystore during the initial startup of
-      # Elasticsearch. Ignored on subsequent runs.
       ELASTIC_PASSWORD: ${ELASTIC_PASSWORD:-}
-      # Use single node discovery in order to disable production mode and avoid bootstrap checks.
-      # see: https://www.elastic.co/guide/en/elasticsearch/reference/current/bootstrap-checks.html
       discovery.type: single-node
     networks:
-      - elk
+      - redbox-app-network
     restart: unless-stopped
-
   kibana:
     build:
-      context: elk/kibana/
+      context: ./infra/elk/kibana/
       args:
         ELASTIC_VERSION: ${ELASTIC_VERSION}
     volumes:
-      - ./elk/kibana/config/kibana.yml:/usr/share/kibana/config/kibana.yml:ro,Z
+      - ./infra/elk/kibana/config/kibana.yml:/usr/share/kibana/config/kibana.yml:ro,Z
     ports:
       - 5601:5601
     environment:
       KIBANA_SYSTEM_PASSWORD: ${KIBANA_SYSTEM_PASSWORD:-}
     networks:
-      - elk
+      - redbox-app-network
     depends_on:
       - elasticsearch
     restart: unless-stopped
 
 networks:
-  elk:
-    driver: bridge
   redbox-app-network:
     driver: bridge
 

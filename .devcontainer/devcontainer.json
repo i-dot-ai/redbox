@@ -1,6 +1,6 @@
 {
   "image": "mcr.microsoft.com/devcontainers/python:3.11-bookworm",
-  "postCreateCommand": "pip3 install -r requirements.txt && pip3 install -r requirements.dev.txt && sudo apt-get update && sudo apt-get install libgl-dev libmagic-dev  -y",
+  "postCreateCommand": "pip3 install -r legacy_app/requirements.txt && pip3 install -r requirements.dev.txt && sudo apt-get update && sudo apt-get install libgl-dev libmagic-dev  -y",
   "name": "redbox-dev",
   "features": {
     "ghcr.io/devcontainers/features/aws-cli:1": {},
@@ -12,8 +12,8 @@
     "ghcr.io/stuartleeks/dev-container-features/shell-history:0": {},
     "ghcr.io/jungaretti/features/make:1": {},
     "ghcr.io/joshuanianji/devcontainer-features/aws-cli-persistence:1.0.1": {},
-    "ghcr.io/devcontainers/features/docker-in-docker:2": {},
-    "ghcr.io/joshuanianji/devcontainer-features/aws-cli-persistence:1": {}
+    "ghcr.io/joshuanianji/devcontainer-features/aws-cli-persistence:1": {},
+    "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {}
   },
   "runArgs": [
     "--network",

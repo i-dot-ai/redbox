@@ -21,7 +21,7 @@ file_chunker = FileChunker()
 
 # Folder setup and loading
 
-system_prefs_folder = os.path.join(here(), "app", "system_preferences")
+system_prefs_folder = "./system_preferences"
 default_taggroups = []
 for default_taggroup_file in os.listdir(system_prefs_folder):
     with open(
@@ -100,19 +100,29 @@ if submitted:  # noqa: C901
 
             sanitised_name = uploaded_file.name
             sanitised_name = sanitised_name.replace("'", "_")
-            upload_path = os.path.join(
-                st.session_state.storage_handler.upload_folder, sanitised_name
-            )
-            file_type = pathlib.Path(upload_path).suffix
 
-            with open(upload_path, "wb") as f:
-                f.write(bytes_data)
+            file_type = pathlib.Path(sanitised_name).suffix
+
+            st.session_state.s3_client.put_object(
+                Bucket=ENV["BUCKET_NAME"],
+                Body=bytes_data,
+                Key=sanitised_name,
+                Tagging=f"file_type={file_type}&user_uuid={st.session_state.user_uuid}",
+            )
+
+            authenticated_s3_url = st.session_state.s3_client.generate_presigned_url(
+                "get_object",
+                Params={"Bucket": ENV["BUCKET_NAME"], "Key": sanitised_name},
+                ExpiresIn=3600,
+            )
+            # Strip off the query string (we don't need the keys)
+            simple_s3_url = authenticated_s3_url.split("?")[0]
 
             file = File(
-                path=os.path.relpath(upload_path, here()),
+                path=simple_s3_url,
                 type=file_type,
                 name=sanitised_name,
-                storage_kind="local",
+                storage_kind=ENV["OBJECT_STORE"],
                 creator_user_uuid=st.session_state.user_uuid,
             )
 
@@ -121,7 +131,9 @@ if submitted:  # noqa: C901
         with st.spinner(f"Chunking **{file.name}**"):
             try:
                 chunks = file_chunker.chunk_file(
-                    file=file, creator_user_uuid=st.session_state.user_uuid
+                    file=file,
+                    file_url=authenticated_s3_url,
+                    creator_user_uuid=st.session_state.user_uuid,
                 )
             except TypeError as err:
                 st.error(f"Failed to chunk {file.name}, error: {str(err)}")

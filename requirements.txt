@@ -1,5 +1,5 @@
--e file:.
 langchain
+langchain-community
 pgvector
 boto3
 openai
