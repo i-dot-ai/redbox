@@ -110,18 +110,20 @@ if submitted:  # noqa: C901
                 Tagging=f"file_type={file_type}&user_uuid={st.session_state.user_uuid}",
             )
 
+            authenticated_s3_url = st.session_state.s3_client.generate_presigned_url(
+                "get_object",
+                Params={"Bucket": ENV["BUCKET_NAME"], "Key": sanitised_name},
+                ExpiresIn=3600,
+            )
+            # Strip off the query string (we don't need the keys)
+            simple_s3_url = authenticated_s3_url.split("?")[0]
+
             file = File(
-                path=sanitised_name,
+                path=simple_s3_url,
                 type=file_type,
                 name=sanitised_name,
                 storage_kind=ENV["OBJECT_STORE"],
                 creator_user_uuid=st.session_state.user_uuid,
-            )
-
-            url = st.session_state.s3_client.generate_presigned_url(
-                "get_object",
-                Params={"Bucket": "filestore", "Key": "hello.txt"},
-                ExpiresIn=3600,
             )
 
         # ==================== CHUNKING ====================
@@ -129,7 +131,9 @@ if submitted:  # noqa: C901
         with st.spinner(f"Chunking **{file.name}**"):
             try:
                 chunks = file_chunker.chunk_file(
-                    file=file, creator_user_uuid=st.session_state.user_uuid
+                    file=file,
+                    file_url=authenticated_s3_url,
+                    creator_user_uuid=st.session_state.user_uuid,
                 )
             except TypeError as err:
                 st.error(f"Failed to chunk {file.name}, error: {str(err)}")
