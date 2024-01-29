@@ -36,7 +36,6 @@ taggroups = (
 )
 collections = st.session_state.storage_handler.read_all_items(model_type="Collection")
 
-
 # Upload form
 
 
@@ -104,7 +103,7 @@ if submitted:  # noqa: C901
             file_type = pathlib.Path(sanitised_name).suffix
 
             st.session_state.s3_client.put_object(
-                Bucket=ENV["BUCKET_NAME"],
+                Bucket=st.session_state.BUCKET_NAME,
                 Body=bytes_data,
                 Key=sanitised_name,
                 Tagging=f"file_type={file_type}&user_uuid={st.session_state.user_uuid}",
@@ -112,7 +111,7 @@ if submitted:  # noqa: C901
 
             authenticated_s3_url = st.session_state.s3_client.generate_presigned_url(
                 "get_object",
-                Params={"Bucket": ENV["BUCKET_NAME"], "Key": sanitised_name},
+                Params={"Bucket": st.session_state.BUCKET_NAME, "Key": sanitised_name},
                 ExpiresIn=3600,
             )
             # Strip off the query string (we don't need the keys)

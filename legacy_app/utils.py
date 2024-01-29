@@ -130,6 +130,9 @@ def init_session_state() -> dict:
                     "username_md5"
                 ]
 
+    if "BUCKET_NAME" not in st.session_state:
+        st.session_state.BUCKET_NAME = f"redbox-storage-{st.session_state.user_uuid}"
+
     if "s3_client" not in st.session_state:
         if ENV["OBJECT_STORE"] == "minio":
             st.session_state.s3_client = boto3.client(
