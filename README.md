@@ -1,7 +1,5 @@
 # 📮 Redbox Copilot
 
-
-
 Redbox Copilot is a retrieval augmented generation (RAG) app that uses Claude 2 to organise, categorise and summarise civil service documents. It's designed to handle a variety of administrative sources, such as letters, briefings, minutes, and speech transcripts.
 
 * **Better retrieval**. Redbox Copilot increases organisational memory by indexing documents
@@ -21,3 +19,5 @@ Redbox Copilot is a retrieval augmented generation (RAG) app that uses Claude 2 
 # Development
 
 * Download and install [pre-commit](https://pre-commit.com) to benefit from pre-commit hooks
+    * `pip install pre-commit`
+    * `pre-commit install`
