@@ -114,6 +114,27 @@ services:
     depends_on:
       - elasticsearch
     restart: unless-stopped
+  celery:
+    build:
+      context: ./infra/celery/
+      dockerfile: Dockerfile
+    ports:
+      - 5555:5555
+    env_file:
+      - .env
+    networks:
+      - redbox-app-network
+    depends_on:
+      - elasticsearch
+    restart: unless-stopped
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - 5672:5672
+      - 15672:15672
+    networks:
+      - redbox-app-network
+    restart: unless-stopped
 
 networks:
   redbox-app-network:
