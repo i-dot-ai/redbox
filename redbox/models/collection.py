@@ -1,4 +1,3 @@
-import os
 from datetime import datetime
 from typing import List, Optional
 from uuid import uuid4
@@ -8,7 +7,6 @@ from pydantic import BaseModel, Field, computed_field
 
 class Collection(BaseModel):
     uuid: str = Field(default_factory=lambda: str(uuid4()))
-    date: str = Field()
     name: str = Field()
     files: List[str] = Field(default=[])
     created_datetime: str = Field(default_factory=lambda: datetime.utcnow().isoformat())

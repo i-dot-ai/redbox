@@ -1,6 +1,5 @@
 import datetime
 import os
-from gc import collect
 from io import BytesIO
 
 import streamlit as st
