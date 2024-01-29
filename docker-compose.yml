@@ -14,6 +14,9 @@ services:
     depends_on:
       - elasticsearch
       - minio
+    links:
+      - elasticsearch
+      - minio
     networks:
       - redbox-app-network
   embed:
@@ -64,12 +67,16 @@ services:
       MINIO_ACCESS_KEY: minioadmin
       MINIO_SECRET_KEY: minioadmin
     command: server --console-address ":9001" /data
+    networks:
+      - redbox-app-network
     volumes:
       - ./data/objectstore:/data
   miniocreatebuckets:
     image: minio/mc
     depends_on:
       - minio
+    networks:
+      - redbox-app-network
     entrypoint: >
       /bin/sh -c " /usr/bin/mc alias set redbox http://minio:9000 minioadmin minioadmin; /usr/bin/mc mb redbox/filestore; /usr/bin/mc policy set public redbox/filestore; exit 0; "
   elasticsearch:
