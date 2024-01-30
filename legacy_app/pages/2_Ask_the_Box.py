@@ -7,6 +7,7 @@ from streamlit_feedback import streamlit_feedback
 from utils import (
     StreamlitStreamHandler,
     init_session_state,
+    load_llm_handler,
     replace_doc_ref,
     submit_feedback,
 )
@@ -19,6 +20,21 @@ st.set_page_config(
 )
 
 ENV = init_session_state()
+
+# Model selector
+
+
+def change_selected_model():
+    load_llm_handler(ENV, update=True)
+    st.write(st.session_state.llm)
+
+
+model_select = st.sidebar.selectbox(
+    "Select Model",
+    options=st.session_state.available_models,
+    on_change=change_selected_model,
+    key="model_select",
+)
 
 user_info = st.session_state.user_info
 
@@ -190,6 +206,6 @@ if prompt := st.chat_input():
 
     # Store the markdown response for later rendering
     # Done to avoid needing file references from llm_handler
-    st.session_state.ai_message_markdown_lookup[hash(response["output_text"])] = (
-        response_final_markdown
-    )
+    st.session_state.ai_message_markdown_lookup[
+        hash(response["output_text"])
+    ] = response_final_markdown

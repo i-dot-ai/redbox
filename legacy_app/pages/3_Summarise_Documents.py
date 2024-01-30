@@ -4,13 +4,9 @@ from io import BytesIO
 
 import streamlit as st
 from streamlit_feedback import streamlit_feedback
-from utils import (
-    StreamlitStreamHandler,
-    hash_list_of_files,
-    init_session_state,
-    replace_doc_ref,
-    submit_feedback,
-)
+from utils import (StreamlitStreamHandler, hash_list_of_files,
+                   init_session_state, load_llm_handler, replace_doc_ref,
+                   submit_feedback)
 
 from redbox.export.docx import spotlight_complete_to_docx
 from redbox.models.spotlight import SpotlightComplete, SpotlightTaskComplete
@@ -27,6 +23,21 @@ st.title("Summarise Documents")
 
 with st.spinner("Loading..."):
     ENV = init_session_state()
+
+# Model selector
+
+
+def change_selected_model():
+    load_llm_handler(ENV, update=True)
+    st.write(st.session_state.llm)
+
+
+model_select = st.sidebar.selectbox(
+    "Select Model",
+    options=st.session_state.available_models,
+    on_change=change_selected_model,
+    key="model_select",
+)
 
 
 MAX_TOKENS = 100_000

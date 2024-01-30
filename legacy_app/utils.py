@@ -23,7 +23,7 @@ from langchain.vectorstores.elasticsearch import (
     ApproxRetrievalStrategy,
     ElasticsearchStore,
 )
-from langchain_community.chat_models import ChatAnthropic
+from langchain_community.chat_models import ChatLiteLLM
 from langchain_community.embeddings import SentenceTransformerEmbeddings
 from langchain_community.llms import Bedrock
 from loguru import logger
@@ -143,6 +143,15 @@ def init_session_state() -> dict:
         elif ENV["OBJECT_STORE"] == "s3":
             raise NotImplementedError("S3 not yet implemented")
 
+    if "available_models" not in st.session_state:
+        st.session_state.available_models = [
+            "openai/gpt-3.5-turbo",
+            "anthropic/claude-2",
+        ]
+
+    if "model_select" not in st.session_state:
+        st.session_state.model_select = st.session_state.available_models[0]
+
     if "BUCKET_NAME" not in st.session_state:
         st.session_state.BUCKET_NAME = f"redbox-storage-{st.session_state.user_uuid}"
 
@@ -185,12 +194,13 @@ def init_session_state() -> dict:
     if st.session_state.user_uuid == "dev":
         st.sidebar.info("**DEV MODE**")
         with st.sidebar.expander("⚙️ DEV Settings", expanded=False):
-            model_params = {
+            st.session_state.model_params = {
+                # TODO: This shoudld be dynamic to the model
                 "max_tokens": st.number_input(
                     label="max_tokens",
                     min_value=0,
                     max_value=100_000,
-                    value=4096,
+                    value=1024,
                     step=1,
                 ),
                 "temperature": st.slider(
@@ -203,7 +213,7 @@ def init_session_state() -> dict:
             }
             reload_llm = st.button(label="♻️ Reload LLM and LLMHandler")
             if reload_llm:
-                load_llm_handler(ENV=ENV, model_params=model_params)
+                load_llm_handler(ENV=ENV)
 
             if st.button(label="Empty Streamlit Cache"):
                 st.cache_data.clear()
@@ -215,7 +225,9 @@ def init_session_state() -> dict:
         model_params = {"max_tokens": 4096, "temperature": 0.2}
 
     if "llm" not in st.session_state or "llm_handler" not in st.session_state:
-        load_llm_handler(ENV=ENV, model_params=model_params)
+        load_llm_handler(
+            ENV=ENV,
+        )
 
     # check we have all expected data folders
 
@@ -309,7 +321,7 @@ def get_bedrock_client(ENV):
     return bedrock_client
 
 
-def load_llm_handler(ENV, model_params) -> None:
+def load_llm_handler(ENV, update=False) -> None:
     """Loads the LLM and LLMHandler into the session state
 
     Args:
@@ -318,29 +330,14 @@ def load_llm_handler(ENV, model_params) -> None:
 
     """
 
-    if "llm" not in st.session_state:
-        if "BEDROCK_MODEL_ID" in ENV:
-            if ENV["BEDROCK_MODEL_ID"] != "" or ENV["BEDROCK_MODEL_ID"] is not None:
-                bedrock_client = get_bedrock_client(ENV)
+    st.session_state.llm = ChatLiteLLM(
+        model=st.session_state.model_select,
+        max_tokens=st.session_state.model_params["max_tokens"],
+        temperature=st.session_state.model_params["temperature"],
+        streaming=True,
+    )
 
-                st.session_state.llm = Bedrock(
-                    model_id=ENV["BEDROCK_MODEL_ID"],
-                    model_kwargs={
-                        "max_tokens_to_sample": model_params["max_tokens"],
-                        "temperature": model_params["temperature"],
-                    },
-                    client=bedrock_client,
-                    streaming=True,
-                )
-        else:
-            st.session_state.llm = ChatAnthropic(
-                anthropic_api_key=ENV["ANTHROPIC_API_KEY"],
-                max_tokens=model_params["max_tokens"],
-                temperature=model_params["temperature"],
-                streaming=True,
-            )
-
-    if "llm_handler" not in st.session_state:
+    if "llm_handler" not in st.session_state or update:
         if ENV["STORAGE_MODE"] == "filesystem":
             st.session_state.llm_handler = LLMHandler(
                 llm=st.session_state.llm, user_uuid=st.session_state.user_uuid
