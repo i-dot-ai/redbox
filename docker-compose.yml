@@ -22,7 +22,7 @@ services:
   embed:
     image: redbox-embed:latest
     build:
-      context: ./app/apis/embed
+      context: ./app/workers/embed
       dockerfile: Dockerfile
     ports:
       - 5000:5000
