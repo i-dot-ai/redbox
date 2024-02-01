@@ -1,14 +1,6 @@
 # See https://pre-commit.com for more information
 # See https://pre-commit.com/hooks.html for more hooks
 repos:
-  - repo: https://github.com/kynan/nbstripout
-    rev: 0.6.1
-    hooks:
-      - id: nbstripout
-        name: nbstripout - Strip outputs from notebooks (auto-fixes)
-        args:
-          - --extra-keys
-          - "metadata.colab metadata.kernelspec cell.metadata.colab cell.metadata.executionInfo cell.metadata.id cell.metadata.outputId"
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.4.0
     hooks:
@@ -44,4 +36,3 @@ repos:
         name: nbqa-isort - Sort Python imports (notebooks; auto-fixes)
         args: ["--float-to-top", "--profile=black"]
         additional_dependencies: [ isort==5.8.0 ]
-

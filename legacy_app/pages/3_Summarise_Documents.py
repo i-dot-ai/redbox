@@ -4,9 +4,14 @@ from io import BytesIO
 
 import streamlit as st
 from streamlit_feedback import streamlit_feedback
-from utils import (StreamlitStreamHandler, hash_list_of_files,
-                   init_session_state, load_llm_handler, replace_doc_ref,
-                   submit_feedback)
+from utils import (
+    StreamlitStreamHandler,
+    hash_list_of_files,
+    init_session_state,
+    load_llm_handler,
+    replace_doc_ref,
+    submit_feedback,
+)
 
 from redbox.export.docx import spotlight_complete_to_docx
 from redbox.models.spotlight import SpotlightComplete, SpotlightTaskComplete
