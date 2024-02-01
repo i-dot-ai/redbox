@@ -2,3 +2,4 @@ sentence-transformers
 fastapi
 uvicorn
 python-multipart
+pika

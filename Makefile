@@ -47,6 +47,5 @@ lint:
 	$(PYTHON) -m pylint app
 
 format:
-	$(PYTHON) -m isort .
+	$(PYTHON) -m isort --profile black .
 	$(PYTHON) -m black .
-

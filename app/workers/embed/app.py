@@ -1,8 +1,11 @@
+import logging
 import os
+from contextlib import asynccontextmanager
 from datetime import datetime
 from typing import List
 from uuid import uuid4
 
+import pika
 import pydantic
 from fastapi import FastAPI
 from fastapi.responses import RedirectResponse
@@ -47,43 +50,58 @@ class StatusResponse(pydantic.BaseModel):
 
 # === API Setup ===
 
+
 start_time = datetime.now()
 IS_READY = False
-
 available_models = []
-
-for dirpath, dirnames, filenames in os.walk("models"):
-    # Check if the current directory contains a file named "config.json"
-    if "pytorch_model.bin" in filenames:
-        # If it does, print the path to the directory
-        available_models.append(dirpath)
-
-# Load all models
 models = {}
-
-for model_path in available_models:
-    model = model_path.split("/")[-1]
-    models[model] = SentenceTransformer(model_path)
-    print(f"Loaded model {model}")
-
-# Create model info
 model_info = {}
+log = logging.getLogger(__name__)
+log.setLevel(logging.DEBUG)
 
-for model, model_obj in models.items():
-    model_info_entry = {
-        "model": model,
-        "max_seq_length": model_obj.get_max_seq_length(),
-        "vector_size": model_obj.get_sentence_embedding_dimension(),
-    }
 
-    model_info[model] = model_info_entry
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    global IS_READY
+    # Start of the setup phase
+    for dirpath, dirnames, filenames in os.walk("models"):
+        # Check if the current directory contains a file named "config.json"
+        if "pytorch_model.bin" in filenames:
+            # If it does, print the path to the directory
+            available_models.append(dirpath)
+
+    for model_path in available_models:
+        model_name = model_path.split("/")[-3]
+        model = model_name.split("--")[-1]
+        models[model] = SentenceTransformer(model_path)
+        log.info(f"Loaded model {model}")
+
+    for model, model_obj in models.items():
+        model_info_entry = {
+            "model": model,
+            "max_seq_length": model_obj.get_max_seq_length(),
+            "vector_size": model_obj.get_sentence_embedding_dimension(),
+        }
+
+        model_info[model] = model_info_entry
+
+    IS_READY = True
+    # End of the setup phase, yield control back to FastAPI
+    yield
+    # FastAPI is shutting down, perform cleanup...
+    log.info("Received shutdown event in the lifespan context, cleaning up.")
+    IS_READY = False
+    models.clear()
+    model_info.clear()
+    log.info("Cleanup finished, shutting down.")
+    log.info("So long, and thanks for all the fish.")
 
 
 # Create API
 
 app = FastAPI(
-    title="Sentence Embedding API",
-    description="A simple API that uses sentence-transformers to embed sentences",
+    title="Embedding API + Worker",
+    description="A simple API that uses sentence-transformers to embed sentence via API calls and from a queue",
     version="0.1.0",
     openapi_tags=[
         {"name": "models", "description": "Get information about the available models"},
@@ -92,7 +110,9 @@ app = FastAPI(
     docs_url="/docs",
     redoc_url="/redoc",
     openapi_url="/openapi.json",
+    lifespan=lifespan,
 )
+
 
 # === API Routes ===
 
