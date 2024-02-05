@@ -18,7 +18,7 @@ module "ecr_repository" {
 
 module "ecs_task_definition" {
   source = "../../modules/ecs_container"
-  family = "${var.project_name}-${var.environment}-task-def"
+  family = "${var.project_name}-${var.environment}-rdo-task"
   cpu    = "1024"
   memory = "4096"
   containers = [
