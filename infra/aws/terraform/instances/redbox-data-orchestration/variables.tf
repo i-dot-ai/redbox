@@ -9,3 +9,7 @@ variable "environment" {
 variable "embed_image_tag" {
   type = string
 }
+
+variable "region" {
+  type = string
+}
