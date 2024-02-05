@@ -34,7 +34,7 @@ variable "period" {
 }
 
 variable "threshold" {
-  description = "The value against which the specified statistic is compared, e.g. the number of messages in the queu"
+  description = "The value against which the specified statistic is compared, e.g. the number of messages in the queue"
   type        = number
 }
 

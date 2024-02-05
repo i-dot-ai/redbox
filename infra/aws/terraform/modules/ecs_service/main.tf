@@ -14,7 +14,7 @@ variable "task_definition_arn" {
 }
 
 variable "desired_count" {
-  description = "The number of tasks to run in the ECS service"
+  description = "The number of tasks to run in the ECS service before the SQS scaling scales up/down"
   type        = number
 }
 
