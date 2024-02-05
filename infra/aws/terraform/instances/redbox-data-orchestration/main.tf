@@ -30,17 +30,17 @@ module "ecs_task_definition" {
       essential = true
       port_mappings = [
         {
-          name          = "django-application"
-          containerPort = 8501
+          name          = "fastapi-application"
+          containerPort = 5000
           protocol      = "tcp"
         }
       ]
-      readonly_root_filesystem  = false
+      readonly_root_filesystem  = true  # Change if the application needs to adjust anything at the root directory level
       enable_cloudwatch_logging = true
       secrets = [
         {
-          name      = "DJANGO_SECRET_KEY",
-          valueFrom = "${data.aws_secretsmanager_secret_version.env_secret.arn}:DJANGO_SECRET_KEY::",
+          name      = "SECRET_KEY",
+          valueFrom = "${data.aws_secretsmanager_secret_version.env_secret.arn}:SECRET_KEY::",
         }
       ],
       environment = [
