@@ -5,10 +5,6 @@ export
 
 PYTHON = python3
 
-setup-elastic:
-	docker compose up setup
-
-
 
 reqs:
 	$(PYTHON) -m pip install -r requirements.txt
