@@ -13,8 +13,6 @@ The entire architecture runs in docker compose for local development. This inclu
 
 You will need to create a copy of the `.env.example` file as `.env` to store your secrets, such as your Anthropic API key (ask the team for the keys). The `.env` file should not be committed to GitHub.
 
-Then run `docker compose up setup` to set up Elasticsearch and users.
-
 If you have issues with permissions, you may need to run `chmod 777 data/elastic/` to be able to write to the folder.
 
 ## To run
