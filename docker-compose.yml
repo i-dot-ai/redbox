@@ -31,30 +31,7 @@ services:
       - MODEL_NAMES=all-mpnet-base-v2|paraphrase-multilingual-MiniLM-L12-v2
     networks:
       - redbox-app-network
-  setup:
-    profiles:
-      - setup
-    build:
-      context: ./infra/elk/setup/
-      args:
-        ELASTIC_VERSION: ${ELASTIC_VERSION}
-    init: true
-    volumes:
-      - ./infra/elk/setup/entrypoint.sh:/entrypoint.sh:ro,Z
-      - ./infra/elk/setup/lib.sh:/lib.sh:ro,Z
-      - ./infra/elk/setup/roles:/roles:ro,Z
-    environment:
-      ELASTIC_PASSWORD: ${ELASTIC_PASSWORD:-}
-      KIBANA_SYSTEM_PASSWORD: ${KIBANA_SYSTEM_PASSWORD:-}
-      METRICBEAT_INTERNAL_PASSWORD: ${METRICBEAT_INTERNAL_PASSWORD:-}
-      FILEBEAT_INTERNAL_PASSWORD: ${FILEBEAT_INTERNAL_PASSWORD:-}
-      HEARTBEAT_INTERNAL_PASSWORD: ${HEARTBEAT_INTERNAL_PASSWORD:-}
-      MONITORING_INTERNAL_PASSWORD: ${MONITORING_INTERNAL_PASSWORD:-}
-      BEATS_SYSTEM_PASSWORD: ${BEATS_SYSTEM_PASSWORD:-}
-    networks:
-      - redbox-app-network
-    depends_on:
-      - elasticsearch
+ 
   minio:
     image: minio/minio
     expose:
@@ -80,35 +57,32 @@ services:
     entrypoint: >
       /bin/sh -c " /usr/bin/mc alias set redbox http://minio:9000 minioadmin minioadmin; /usr/bin/mc mb redbox/redboxcore; /usr/bin/mc policy set public redbox/redboxcore; exit 0; "
   elasticsearch:
-    build:
-      context: ./infra/elk/elasticsearch/
-      args:
-        ELASTIC_VERSION: ${ELASTIC_VERSION}
+    image: elasticsearch:8.12.0
     volumes:
-      - ./infra/elk/elasticsearch/config/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml:ro,Z
       - ./data/elastic/:/usr/share/elasticsearch/data:Z
     ports:
       - 9200:9200
       - 9300:9300
     environment:
-      node.name: elasticsearch
-      ES_JAVA_OPTS: -Xms512m -Xmx512m
-      ELASTIC_PASSWORD: ${ELASTIC_PASSWORD:-}
+      # node.name: elasticsearch
+      # ES_JAVA_OPTS: -Xms512m -Xmx2048m
+      # ELASTIC_PASSWORD: ${ELASTIC_PASSWORD:-}
       discovery.type: single-node
+      xpack.security.enabled: "false"
+      xpack.security.enrollment.enabled: "false"
     networks:
       - redbox-app-network
     restart: unless-stopped
   kibana:
-    build:
-      context: ./infra/elk/kibana/
-      args:
-        ELASTIC_VERSION: ${ELASTIC_VERSION}
-    volumes:
-      - ./infra/elk/kibana/config/kibana.yml:/usr/share/kibana/config/kibana.yml:ro,Z
+    image: kibana:8.12.0
     ports:
       - 5601:5601
     environment:
-      KIBANA_SYSTEM_PASSWORD: ${KIBANA_SYSTEM_PASSWORD:-}
+      # KIBANA_SYSTEM_PASSWORD: ${KIBANA_SYSTEM_PASSWORD:-}
+      # ELASTICSEARCH_PASSWORD: ${ELASTIC_PASSWORD:-}
+      # ELASTICSEARCH_HOSTS: "http://elasticsearch:9200"
+      # XPACK_SECURITY_ENABLED: "false"
+      XPACK_ENCRYPTEDSAVEDOBJECTS_ENCRYPTIONKEY: 19264f57-b71d-46e1-8f20-33be19131a6c
     networks:
       - redbox-app-network
     depends_on:
