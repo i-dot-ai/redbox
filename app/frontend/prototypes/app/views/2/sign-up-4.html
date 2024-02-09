@@ -1,0 +1,23 @@
+{% extends "layouts/standard.html" %}
+
+{% from "govuk/components/button/macro.njk" import govukButton %}
+{% from "govuk/components/input/macro.njk" import govukInput %}
+
+{% block pageTitle %}
+Sign up complete
+{% endblock %}
+
+{% block content %}
+<div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+        <h1 class="govuk-heading-l">Sign up complete</h1>
+        <p>Please check your emails and follow the confirmation link to confirm your email address</p>
+        {{ govukButton({
+        text: "Sign in",
+        href: "/2/sign-in-1"
+        }) }}
+        </form>
+    </div>
+</div>
+
+{% endblock %}

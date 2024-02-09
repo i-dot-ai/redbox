@@ -1,0 +1,153 @@
+{% extends "layouts/main2.html" %}
+
+{% from "govuk/components/button/macro.njk" import govukButton %}
+{% from "govuk/components/fieldset/macro.njk" import govukFieldset %}
+{% from "govuk/components/file-upload/macro.njk" import govukFileUpload %}
+{% from "govuk/components/pagination/macro.njk" import govukPagination %}
+{% from "govuk/components/table/macro.njk" import govukTable %}
+{% from "govuk/components/tag/macro.njk" import govukTag %}
+
+{% set prototype = '2' %}
+
+{% set title = "Data source" %}
+{% block pageTitle %}
+{{title}}
+{% endblock %}
+
+{# Count selected documents #}
+{% set docCount = 0 %}
+{% for doc in data.docs %}
+  {% if doc.selected %}
+    {% set docCount = docCount + 1 %}
+  {% endif %}
+{% endfor %}
+
+{% block content %}
+
+<h1 class="govuk-heading-l">{{title}}</h1>
+
+<source-selector class="iai-source-selector">
+  <div class="govuk-form-group govuk-!-margin-bottom-1">
+    <fieldset class="govuk-fieldset">
+      <legend class="govuk-fieldset__legend govuk-fieldset__legend--s">Choose source</legend>
+      <div class="govuk-radios govuk-radios--inline govuk-radios--small" data-module="govuk-radios">
+        <div class="govuk-radios__item">
+          <input class="govuk-radios__input" id="source-2" name="source" type="radio" value="claude" aria-describedby="source-2-item-hint" {% if data.dataSource == "claude" or docCount == 0 %}checked{% endif %}>
+          <label class="govuk-label govuk-radios__label" for="source-2">Large Language Model (LLM)</label>
+          <div id="source-2-item-hint" class="govuk-hint govuk-radios__hint">For general queries not using your documents</div>
+        </div>
+        <div class="govuk-radios__item">
+          <input class="govuk-radios__input" id="source" name="source" type="radio" value="docs" aria-describedby="source-item-hint" {% if data.dataSource == "docs" and docCount != 0 %}checked{% endif %}>
+          <label class="govuk-label govuk-radios__label" for="source">Selected documents</label>
+          <div id="source-2-item-hint" class="govuk-hint govuk-radios__hint">For queries using your documents</div>
+        </div>
+      </div>
+    </fieldset>
+  </div>
+  <div class="iai-source-selector__links">
+    <a href="#about-llm">Find out more about the LLM you are interacting with</a>
+  </div>
+</source-selector>
+
+{% if data.docs.length %}
+    <data-sources data-type="docs">
+        <table class="govuk-table iai-doclist">
+            <caption class="govuk-table__caption govuk-table__caption--m">
+                <h2 class="govuk-heading-m govuk-!-margin-bottom-0">Existing documents</h2>
+                <span class="iai-table-info">Documents will be stored for a maximum of 30 days.</span>
+            </caption>
+            <thead class="govuk-table__head">
+            <tr class="govuk-table__row">
+                <th scope="col" class="govuk-table__header iai-doclist__selected">Selected</th>
+                <th scope="col" class="govuk-table__header">Document name</th>
+                <th scope="col" class="govuk-table__header">Status</th>
+                <th scope="col" class="govuk-table__header">Date uploaded</th>
+                <th scope="col" class="govuk-table__header iai-doclist__actions">Actions</th>
+            </tr>
+            </thead>
+            <tbody class="govuk-table__body">
+            {% for doc in data.docs %}
+            <tr class="govuk-table__row">
+                <td class="govuk-table__cell">
+                    <div class="govuk-checkboxes govuk-checkboxes--small" data-module="govuk-checkboxes">
+                        <div class="govuk-checkboxes__item">
+                            <input class="govuk-checkboxes__input" id="doc{{loop.index}}" name="doc{{loop.index}}"
+                                type="checkbox" value="doc{{loop.index}}" {% if doc.selected %}checked{% endif %}>
+                            <label class="govuk-label govuk-checkboxes__label" for="doc{{loop.index}}">
+                                <span class="govuk-visually-hidden">Select</span>
+                            </label>
+                        </div>
+                </td>
+                <td class="govuk-table__cell iai-doclist__doc-name">{{doc.name}}</td>
+                <td class="govuk-table__cell govuk-!-padding-top-4">
+                    {% if doc.processedPercent == 100 %}
+                        {{ govukTag({
+                            text: 'Ready'
+                        }) }}
+                    {% else %}
+                        <doc-status data-processed="{{doc.processedPercent}}" data-index="{{loop.index0}}">
+                            {{ govukTag({
+                                text: 'Processing'
+                            }) }}
+                        </doc-status>
+                    {% endif %}
+                </td>
+                <td class="govuk-table__cell iai-doclist__doc-name">{{doc.dateUploaded}}</td>
+                <td class="govuk-table__cell">
+                    {#<div class="govuk-button-group">#}
+                        {#
+                        {{ govukButton({
+                        text: "Summarise",
+                        href: "/summary?chat-index=-1&prototype=2&doc-index=" + loop.index0,
+                        classes: "govuk-button--secondary"
+                        }) }}
+                        #}
+                        {{ govukButton({
+                            text: "Summarise",
+                            href: "/" + prototype + "/summary?from=data-source&doc-index=" + loop.index0,
+                            classes: "govuk-button--secondary"
+                        }) }}
+                        {{ govukButton({
+                        text: "Remove",
+                        href: "remove-doc?doc-index=" + loop.index0,
+                        classes: "govuk-button--warning"
+                        }) }}
+                        {#
+                    </div>
+                    #}
+                </td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </data-sources>
+{% else %}
+    <h2 class="govuk-heading-m govuk-!-margin-bottom-0">Existing documents</h2>
+    <p class="iai-table-info govuk-!-margin-bottom-7">Uploaded documents will appear here. Documents will be stored for a maximum of 30 days.</p>
+{% endif %}
+
+<h2></h2>
+<form class="iai-upload" action="/upload" method="post">
+    <h2 class="govuk-heading-m">Upload document</h2>
+    <input type="hidden" name="redirect-url" value="/{{prototype}}/data-source"/>
+    {{ govukFileUpload({
+    id: "file-upload",
+    name: "fileUpload",
+    label: {
+    text: "Upload a file"
+    }
+    }) }}
+    {{ govukButton({
+    text: "Upload"
+    }) }}
+
+    {# Limit 200MB per file • EML, HTML, JSON, MD, MSG, RST, RTF, TXT, XML, CSV, DOC, DOCX, EPUB, ODT, PDF, PPT, PPTX,
+    TSV, XLSX, HTM #}
+</form>
+
+{{ govukButton({
+text: "Chat",
+href: "chat"
+}) }}
+
+{% endblock %}

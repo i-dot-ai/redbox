@@ -1,0 +1,31 @@
+{% extends "layouts/standard.html" %}
+
+{% from "govuk/components/button/macro.njk" import govukButton %}
+{% from "govuk/components/input/macro.njk" import govukInput %}
+
+{% block pageTitle %}
+Sign in - step 2
+{% endblock %}
+
+{% block content %}
+<div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+        <h1 class="govuk-heading-l">Sign in - step 2 of 2</h1>
+        <form>
+            {{ govukInput({
+            label: {
+            text: "Please enter the 6 digit code that has just been sent to you"
+            },
+            id: "code",
+            name: "code",
+            classes: "govuk-!-width-one-third"
+            }) }}
+            {{ govukButton({
+            text: "Continue",
+            href: "/2/"
+            }) }}
+        </form>
+    </div>
+</div>
+
+{% endblock %}

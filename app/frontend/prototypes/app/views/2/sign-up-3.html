@@ -1,0 +1,67 @@
+{% extends "layouts/standard.html" %}
+
+{% from "govuk/components/button/macro.njk" import govukButton %}
+{% from "govuk/components/input/macro.njk" import govukInput %}
+
+{% block pageTitle %}
+Sign up - step 3
+{% endblock %}
+
+{% block content %}
+<div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+        <h1 class="govuk-heading-l">Sign up - step 3 of 3</h1>
+        <form>
+            <div class="govuk-form-group">
+                <fieldset class="govuk-fieldset" aria-describedby="declaration-hint">
+                    <legend class="govuk-fieldset__legend govuk-fieldset__legend--m">
+                        <h2 class="govuk-fieldset__heading">
+                            Declaration
+                        </h2>
+                    </legend>
+                    <div class="govuk-checkboxes" data-module="govuk-checkboxes">
+                        <div class="govuk-checkboxes__item">
+                            <input class="govuk-checkboxes__input" id="declaration" name="declaration" type="checkbox"
+                                   value="carcasses">
+                            <label class="govuk-label govuk-checkboxes__label" for="declaration">
+                                I will not input information that is <strong>classified, sensitive</strong> or <strong>reveals
+                                the intent of the government</strong> (that may not be in the public domain) into
+                                {{serviceName}}.
+                            </label>
+                        </div>
+                        <div class="govuk-checkboxes__item">
+                            <input class="govuk-checkboxes__input" id="declaration-2" name="declaration" type="checkbox"
+                                   value="mines">
+                            <label class="govuk-label govuk-checkboxes__label" for="declaration-2">
+                                I will not input <strong>personal data</strong> into {{serviceName}} as defined under
+                                the Data Protection Act (2018).
+                            </label>
+                        </div>
+                        <div class="govuk-checkboxes__item">
+                            <input class="govuk-checkboxes__input" id="declaration-3" name="declaration" type="checkbox"
+                                   value="farm">
+                            <label class="govuk-label govuk-checkboxes__label" for="declaration-3">
+                                I understand that the outputs from {{serviceName}} are <strong>susceptible to bias and
+                                misinformation</strong> and they nbeed to be checked and cited appropriately.
+                            </label>
+                        </div>
+                        <div class="govuk-checkboxes__item">
+                            <input class="govuk-checkboxes__input" id="declaration-3" name="declaration" type="checkbox"
+                                   value="farm">
+                            <label class="govuk-label govuk-checkboxes__label" for="declaration-3">
+                                I understand that the information I input and the replies received will be retained by
+                                the Cabinet Office for auditing purposes.
+                            </label>
+                        </div>
+                    </div>
+                </fieldset>
+            </div>
+            {{ govukButton({
+            text: "Continue",
+            href: "/2/sign-up-4"
+            }) }}
+        </form>
+    </div>
+</div>
+
+{% endblock %}

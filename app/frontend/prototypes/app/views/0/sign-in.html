@@ -1,0 +1,25 @@
+{% extends "layouts/standard.html" %}
+
+{% from "govuk/components/button/macro.njk" import govukButton %}
+
+{% block pageTitle %}
+Sign in
+{% endblock %}
+
+{% block content %}
+<div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+        <h1 class="govuk-heading-l">Sign in</h1>
+        <p>Welcome to Redbox Copilot. Some information about what this service is will be displayed here. Just so users
+            have an understanding before proceeding.</p>
+        <p>Sign in with your Cabinet Office email. Once signed in, you will be redirected back to Redbox Copilot.</p>
+        {{ govukButton({
+        text: "Sign in",
+        href: "/0/declaration"
+        }) }}
+        <p><strong>NOTE:</strong> This will take you straight in to the prototype currently, rather than linking to
+            COLA.</p>
+    </div>
+</div>
+
+{% endblock %}

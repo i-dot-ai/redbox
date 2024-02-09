@@ -1,0 +1,43 @@
+{% extends "layouts/main1.html" %}
+
+{% from "govuk/components/button/macro.njk" import govukButton %}
+
+{% set prototype = '1' %}
+
+{% block pageTitle %}
+  {{title}}
+{% endblock %}
+
+{% block content %}
+  
+  <h1 class="govuk-heading-l">Welcome</h1>
+  <p>{{serviceName}} allows users to chat with AI models and summarise documents using AI.</p>
+
+  <div class="govuk-grid-row govuk-!-margin-top-7">
+    <div class="govuk-grid-column-one-third">
+        <h2 class="govuk-heading-m">Upload documents</h2>
+        <p class="govuk-body">Upload and manage your files. You can also summarise documents to extract key dates,
+            people, actions and discussion.</p>
+        {{ govukButton({
+        text: "Documents",
+        href: "/" + prototype + "/documents"
+        }) }}
+    </div>
+    <div class="govuk-grid-column-one-third">
+        <h2 class="govuk-heading-m">Ask AI</h2>
+        <p class="govuk-body">Ask questions about your content or make general queries.</p>
+        {{ govukButton({
+        text: "Ask",
+        href: "/" + prototype + "/chat"
+        }) }}
+    </div>
+    <div class="govuk-grid-column-one-third">
+        <h2 class="govuk-heading-m">Find out more</h2>
+        <p class="govuk-body">Learn more about what you can do, and about using AI as part of your work.</p>
+        {{ govukButton({
+        text: "Learn",
+        href: "#learn"
+        }) }}
+    </div>
+</div>
+{% endblock %}
