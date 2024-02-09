@@ -1,0 +1,134 @@
+{% extends "layouts/main2.html" %}
+
+{% from "govuk/components/button/macro.njk" import govukButton %}
+{% from "govuk/components/radios/macro.njk" import govukRadios %}
+{% from "govuk/components/textarea/macro.njk" import govukTextarea %}
+
+{% set prototype = "2" %}
+
+{% set title = "Chat" %}
+{% block pageTitle %}
+{{title}}
+{% endblock %}
+
+{% block content %}
+
+<h1 class="govuk-heading-l">{{serviceName}}</h1>
+
+<div class="govuk-grid-row">
+    <div class="govuk-grid-column-full">
+        <p>{{serviceName}} allows users to chat with AI models and summarise documents using AI.</p>
+        <p>To control the data source you wish {{serviceName}} to interact with, click <a href="data-source">Data source</a> page. Here you can upload a document to summarise or interact with the Large Language Model (LLM).</p>
+    </div>
+</div>
+
+<div class="govuk-grid-row govuk-!-margin-top-3">
+
+    <div class="govuk-grid-column-one-third">
+        {{ govukButton({
+        text: "Ask a new query",
+        href: "/new-chat?prototype=" + prototype,
+        classes: "govuk-button--secondary"
+        }) }}
+        <h2 class="govuk-heading-s">Recent conversations</h2>
+        <ul class="govuk-list govuk-list--bullet govuk-list--spaced">
+            {% for i in range(1, 6) %}
+            {% set chat = data.chats[data.chats.length - i] %}
+            {% if chat %}
+            <li><a class="govuk-link" href="/{{prototype}}/chat?chat-index={{index}}">{{chat.title}}</a></li>
+            {% endif %}
+            {% endfor %}
+        </ul>
+        {% if data.chats.length > 5 %}
+        <a href="activity-history">View older conversations</a>
+        {% endif %}
+    </div>
+
+    <div class="govuk-grid-column-two-thirds">
+
+        {% if data['chat-index'] != -1 %}
+        {% set chat = data.chats[data['chat-index']] %}
+        {% endif %}
+
+        <h2 class="govuk-heading-m">Current conversation: {{chat.title}}</h2>
+        {# The UI for this section is loosely based on
+        https://insidegovuk.blog.gov.uk/2024/01/18/experimenting-with-how-generative-ai-could-help-gov-uk-users/ #}
+
+        {% for message in chat.messages %}
+        <div>
+            <p class="iai-message-header govuk-heading-s">
+                <span class="iai-message-icon iai-message-icon--{{message.from}}"></span>
+                {% if message.from == 'user' %}You:{% endif %}
+                {% if message.from == 'redbox' %}{{serviceName}}:{% endif %}
+            </p>
+            <div class="iai-message-content govuk-body">
+                {{message.text|safe}}
+            </div>
+        </div>
+        {% endfor %}
+
+        <form class="iai-new-message" action="/message" method="post">
+            <input type="hidden" name="prototype" value="{{prototype}}"/>
+            {{ govukTextarea({
+            name: "new-message",
+            id: "new-message",
+            label: {
+            text: "Write a message:"
+            },
+            classes: "govuk-!-margin-bottom-0"
+            }) }}
+            {{ govukButton({
+            text: "Chat"
+            }) }}
+
+            {% if data.docs.length %}
+
+            {% set selectedDocs = 0 %}
+            {% for doc in data.docs %}
+            {% if doc.selected %}
+            {% set selectedDocs = selectedDocs + 1 %}
+            {% endif %}
+            {% endfor %}
+
+            {% if selectedDocs == 0 %}
+            {{ govukButton({
+            text: "Select documents",
+            href: "/" + prototype + "/data-source",
+            classes: "govuk-button--secondary"
+            }) }}
+            {% else %}
+
+            {% if selectedDocs == 1 %}
+            {% set buttonText = "Summarise selected document" %}
+            {% else %}
+            {% set buttonText = "Summarise selected documents" %}
+            {% endif %}
+            {#
+            <button type="submit" class="govuk-button govuk-button--secondary" data-module="govuk-button"
+                    formaction="/summary?doc-index=-1">{{buttonText}}
+            </button>
+            #}
+            {{ govukButton({
+                text: buttonText,
+                href: "/" + prototype + "/summary?from=chat&doc-index=-1",
+                classes: "govuk-button--secondary"
+            }) }}
+
+            {% endif %}
+
+            {% else %}
+
+            {{ govukButton({
+            text: "Upload documents",
+            href: "/" + prototype + "/data-source",
+            classes: "govuk-button--secondary"
+            }) }}
+
+            {% endif %}
+        </form>
+
+    </div>
+
+</div>
+
+{% endblock %}

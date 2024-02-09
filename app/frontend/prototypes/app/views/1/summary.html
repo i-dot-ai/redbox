@@ -1,0 +1,63 @@
+{% extends "layouts/main1.html" %}
+
+{% from "govuk/components/button/macro.njk" import govukButton %}
+
+{% if data["doc-index"] == '-1' %}
+{% set selectedDocCount = 0 %}
+{% for doc in data.docs %}
+{% if doc.selected %}
+{% set selectedDocCount = selectedDocCount + 1 %}
+{% endif %}
+{% endfor %}
+{% endif %}
+
+{% set doc = data.docs[data["doc-index"]] %}
+
+{% if doc %}
+{% set title = "Summary of " + doc.name %}
+{% else %}
+{% set title = "Sumary of " + selectedDocCount + " documents" %}
+{% endif %}
+
+{% block pageTitle %}
+{{title}}
+{% endblock %}
+
+{% set backLink = {
+text: "Back to documents",
+href: "documents"
+} %}
+
+
+{% block content %}
+
+<h2 class="govuk-heading-m">Overview</h2>
+<p class="govuk-body">{{doc.name}} is a discussion guide for user research on experiences with Ask AI, a generative AI
+    tool. It outlines an interview to understand how civil servants are using Ask AI, their goals and expectations,
+    successes and challenges. The interview covers the participant's background, experiences with generative AI,
+    motivations for using Ask AI, examples of use cases, ease of use, and potential barriers or concerns. It aims to
+    evaluate the usefulness of Ask AI in assisting with work tasks.</p>
+
+<h2 class="govuk-heading-m">Key Dates</h2>
+<h3 class="govuk-heading-s">Future</h3>
+<ul class="govuk-list govuk-list--bullet govuk-list--spaced">
+    <li>2023-01 - Next research session planned</li>
+    <li>2023-01 to 2023-02 - Timeframe for participants to continue using Ask AI</li>
+</ul>
+
+<h3 class="govuk-heading-s">Present</h3>
+<p class="govuk-body">No key dates found</p>
+
+<h3 class="govuk-heading-s">Past</h3>
+<p class="govuk-body">No key dates found</p>
+<p class="govuk-body">This document appears to be a discussion guide for user research around Ask AI, a generative AI
+    tool. It outlines an introductory script and interview questions for research participants. No specific key dates
+    are provided apart from planning for an additional research session in January 2023 and a timeframe for participants
+    to continue using Ask AI over the next month or two. The document itself does not contain other key dates.</p>
+
+{{ govukButton({
+text: "Download summary",
+href: "#download"
+}) }}
+
+{% endblock %}

@@ -1,0 +1,28 @@
+{% extends "layouts/main.html" %}
+
+{% from "govuk/components/button/macro.njk" import govukButton %}
+
+{% set title = "Remove " + data["doc-name"] %}
+{% block pageTitle %}
+{{title}}
+{% endblock %}
+
+{% block content %}
+<div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+        <p class="govuk-body">Are you sure you want to permanently remove this document?</p>
+        <div class="govuk-button-group">
+            {{ govukButton({
+            text: "Cancel",
+            href: "/0/documents",
+            classes: "govuk-button--secondary"
+            }) }}
+            {{ govukButton({
+            text: "Remove document",
+            href: "/0/documents",
+            classes: "govuk-button--warning"
+            }) }}
+        </div>
+    </div>
+</div>
+{% endblock %}

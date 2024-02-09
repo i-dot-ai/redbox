@@ -1,0 +1,43 @@
+{% extends "layouts/standard.html" %}
+
+{% from "govuk/components/button/macro.njk" import govukButton %}
+{% from "govuk/components/input/macro.njk" import govukInput %}
+
+{% block pageTitle %}
+Sign up - step 1
+{% endblock %}
+
+{% block content %}
+<div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+        <h1 class="govuk-heading-l">Sign up - step 1 of 3</h1>
+        <form>
+            <div class="govuk-form-group">
+                <label class="govuk-label" for="email">Email address</label>
+                <input class="govuk-input govuk-!-width-two-thirds" id="email" name="email" type="email">
+            </div>
+            <div class="govuk-form-group">
+                <label class="govuk-label" for="password">Password</label>
+                <div id="password-hint" class="govuk-hint">
+                    Please create a new password with a minimum of 6 characters
+                </div>
+                <input class="govuk-input govuk-!-width-two-thirds" id="password" name="password" type="password"
+                       aria-describedby="password-hint">
+            </div>
+            <div class="govuk-form-group">
+                <label class="govuk-label" for="password2">Repeat password</label>
+                <div id="password-hint2" class="govuk-hint">
+                    Please re-enter your new password to ensure they match
+                </div>
+                <input class="govuk-input govuk-!-width-two-thirds" id="password2" name="password2" type="password"
+                       aria-describedby="password-hint2">
+            </div>
+            {{ govukButton({
+            text: "Continue",
+            href: "/1/sign-up-2"
+            }) }}
+        </form>
+    </div>
+</div>
+
+{% endblock %}

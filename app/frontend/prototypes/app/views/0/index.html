@@ -1,0 +1,45 @@
+{% extends "layouts/main.html" %}
+
+{% from "govuk/components/button/macro.njk" import govukButton %}
+
+{% set title = "Welcome" %}
+{% block pageTitle %}
+{{title}}
+{% endblock %}
+
+{% block content %}
+{#
+<div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+        <h2 class="govuk-heading-m">Get started</h2>
+    </div>
+</div>
+#}
+<div class="govuk-grid-row">
+    <div class="govuk-grid-column-one-third">
+        <h2 class="govuk-heading-m">Add documents</h2>
+        <p class="govuk-body">Upload and manage your files. You can also summarise documents to extract key dates,
+            people, actions and discussion.</p>
+        {{ govukButton({
+        text: "Documents",
+        href: "/0/documents"
+        }) }}
+    </div>
+    <div class="govuk-grid-column-one-third">
+        <h2 class="govuk-heading-m">Ask the Box</h2>
+        <p class="govuk-body">Ask questions about your content or make general queries.</p>
+        {{ govukButton({
+        text: "Ask the box",
+        href: "/0/ask-box"
+        }) }}
+    </div>
+    <div class="govuk-grid-column-one-third">
+        <h2 class="govuk-heading-m">Find out more</h2>
+        <p class="govuk-body">Learn more about what you can do, and about using AI as part of your work.</p>
+        {{ govukButton({
+        text: "Learn",
+        href: "#learn"
+        }) }}
+    </div>
+</div>
+{% endblock %}

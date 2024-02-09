@@ -1,0 +1,23 @@
+{% extends "layouts/standard.html" %}
+
+{% from "govuk/components/button/macro.njk" import govukButton %}
+
+{% block pageTitle %}
+Prototypes Menu
+{% endblock %}
+
+{% block content %}
+
+<div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+        <h1 class="govuk-heading-l">{{serviceName}} Prototypes</h1>
+        <p>Please select which prototype you want to test</p>
+        <ul class="govuk-list govuk-list--bullet govuk-list--spaced">
+            {#<li><a class="govuk-link" href="/0/sign-in">Original Prototype</a></li>#}
+            <li><a class="govuk-link" href="/1/sign-up">New Prototype 1</a></li>
+            <li><a class="govuk-link" href="/2/sign-up">New Prototype 2</a></li>
+        </ul>
+    </div>
+</div>
+
+{% endblock %}

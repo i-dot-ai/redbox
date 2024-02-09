@@ -1,0 +1,29 @@
+{% extends "layouts/standard.html" %}
+
+{% from "govuk/components/button/macro.njk" import govukButton %}
+
+{% block pageTitle %}
+{{serviceName}}
+{% endblock %}
+
+{% block content %}
+<div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+        <h1 class="govuk-heading-l">{{serviceName}}</h1>
+        <p>Welcome to Redbox Copilot. Some information about what this service is will be displayed here. So users have
+            an understanding before proceeding.</p>
+        <h2 class="govuk-heading-m">New user?</h2>
+        <p>Sign up now to get started.</p>
+        {{ govukButton({
+        text: "Sign up",
+        href: "/2/sign-up-1"
+        }) }}
+        <h2 class="govuk-heading-m">Existing user?</h2>
+        {{ govukButton({
+        text: "Sign in",
+        href: "/2/sign-in-1"
+        }) }}
+    </div>
+</div>
+
+{% endblock %}
