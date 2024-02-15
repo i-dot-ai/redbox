@@ -83,19 +83,9 @@ def get_files_by_uuid(file_uuids):
     return files
 
 
-@dataclass
-class InputDocument:
-    parent_doc_uuid: str
-    url: str
-    page_numbers: list[str]
-
-
-# Chunk
-
-
 def render_citation_response(chat_history_response: dict[str, Any]) -> str:
     cited_chunks = [
-        InputDocument(
+        (
             chunk.metadata["parent_doc_uuid"],
             chunk.metadata["url"],
             chunk.metadata.get("page_numbers"),
@@ -104,9 +94,9 @@ def render_citation_response(chat_history_response: dict[str, Any]) -> str:
     ]
     cited_chunks = set(cited_chunks)
     cited_files = get_files_by_uuid(
-        [cited_chunk.parent_doc_uuid for cited_chunk in cited_chunks]
+        [parent_doc_uuid for parent_doc_uuid, _, _ in cited_chunks]
     )
-    page_numbers = [cited_chunk.page_numbers for cited_chunk in cited_chunks]
+    page_numbers = [page_numbers for _, _, page_numbers in cited_chunks]
 
     for j, page_number in enumerate(page_numbers):
         if isinstance(page_number, str):

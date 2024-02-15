@@ -1,6 +1,3 @@
-from uuid import uuid4
-
-
 def test_read_item(example_chuck_saved, file_system_storage_handler):
     obj = file_system_storage_handler.read_item(
         example_chuck_saved.uuid, example_chuck_saved.__class__.__name__
