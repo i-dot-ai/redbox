@@ -1,13 +1,16 @@
 import json
+import logging
 import os
 import pathlib
-from typing import List
+from typing import List, Any
 
 from pydantic import BaseModel, TypeAdapter
 from pyprojroot import here
 
 from redbox.models import Chunk, Collection, Feedback, File, SpotlightComplete, TagGroup
 from redbox.storage.storage_handler import BaseStorageHandler
+
+logger = logging.Logger(__file__)
 
 default_root_path = here() / "data"
 
@@ -51,7 +54,7 @@ class FileSystemStorageHandler(BaseStorageHandler):
         for item in items:
             self.write_item(item)
 
-    def read_item(self, item_uuid: str, model_type: str) -> TypeAdapter:
+    def read_item(self, item_uuid: str, model_type: str) -> Any:
         """Read an object from a data store"""
         with open(
             self.root_path / model_type / f"{item_uuid}.json", "r", encoding="utf-8"
@@ -61,14 +64,16 @@ class FileSystemStorageHandler(BaseStorageHandler):
             item = TypeAdapter(model).validate_python(item_dict)
             return item
 
-    def read_items(self, item_uuids: List[str], model_type: str) -> list[TypeAdapter]:
+    def read_items(self, item_uuids: List[str], model_type: str) -> list[Any]:
         """Read a list of objects from a data store"""
         items = []
         for item_uuid in item_uuids:
             try:
                 items.append(self.read_item(item_uuid, model_type))
             except FileNotFoundError:
-                pass
+                logger.warning(
+                    f"file not found {self.root_path}/{model_type}/{item_uuid}.json"
+                )
         return items
 
     def update_item(self, item_uuid: str, item: type[BaseModel]):
@@ -89,13 +94,13 @@ class FileSystemStorageHandler(BaseStorageHandler):
         for item_uuid in item_uuids:
             self.delete_item(item_uuid, model_type)
 
-    def list_all_items(self, model_type: str):
+    def list_all_items(self, model_type: str) -> list[str]:
         """List all objects of a given type from a data store"""
         raw_file_names = os.listdir(self.root_path / model_type)
         item_uuids = [x.split(".")[0] for x in raw_file_names]
         return item_uuids
 
-    def read_all_items(self, model_type: str):
+    def read_all_items(self, model_type: str) -> list[Any]:
         """Read all objects of a given type from a data store"""
         raw_file_names = os.listdir(self.root_path / model_type)
         item_uuids = [x.split(".")[0] for x in raw_file_names]
