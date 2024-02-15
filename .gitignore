@@ -1,3 +1,5 @@
+.idea/
+
 # data files
 elk/elasticsearch/data
 data/
