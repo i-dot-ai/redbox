@@ -51,7 +51,7 @@ class FileSystemStorageHandler(BaseStorageHandler):
         for item in items:
             self.write_item(item)
 
-    def read_item(self, item_uuid: str, model_type: str):
+    def read_item(self, item_uuid: str, model_type: str) -> TypeAdapter:
         """Read an object from a data store"""
         with open(
             self.root_path / model_type / f"{item_uuid}.json", "r", encoding="utf-8"
@@ -61,11 +61,14 @@ class FileSystemStorageHandler(BaseStorageHandler):
             item = TypeAdapter(model).validate_python(item_dict)
             return item
 
-    def read_items(self, item_uuids: List[str], model_type: str):
+    def read_items(self, item_uuids: List[str], model_type: str) -> list[TypeAdapter]:
         """Read a list of objects from a data store"""
         items = []
         for item_uuid in item_uuids:
-            items.append(self.read_item(item_uuid, model_type))
+            try:
+                items.append(self.read_item(item_uuid, model_type))
+            except FileNotFoundError:
+                pass
         return items
 
     def update_item(self, item_uuid: str, item: type[BaseModel]):
