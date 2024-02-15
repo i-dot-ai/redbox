@@ -1,5 +1,7 @@
 import json
+from dataclasses import dataclass
 from datetime import date, datetime
+from typing import Any
 
 import streamlit as st
 from langchain.schema import AIMessage, HumanMessage, SystemMessage
@@ -81,29 +83,37 @@ def get_files_by_uuid(file_uuids):
     return files
 
 
-def render_citation_response(response):
+@dataclass
+class InputDocument:
+    parent_doc_uuid: str
+    url: str
+    page_numbers: list[str]
+
+
+# Chunk
+
+
+def render_citation_response(chat_history_response: dict[str, Any]) -> str:
     cited_chunks = [
-        (
+        InputDocument(
             chunk.metadata["parent_doc_uuid"],
             chunk.metadata["url"],
-            (
-                chunk.metadata["page_numbers"]
-                if "page_numbers" in chunk.metadata
-                else None
-            ),
+            chunk.metadata.get("page_numbers"),
         )
-        for chunk in response["input_documents"]
+        for chunk in chat_history_response["input_documents"]
     ]
     cited_chunks = set(cited_chunks)
-    cited_files = get_files_by_uuid([x[0] for x in cited_chunks])
-    page_numbers = [x[2] for x in cited_chunks]
+    cited_files = get_files_by_uuid(
+        [cited_chunk.parent_doc_uuid for cited_chunk in cited_chunks]
+    )
+    page_numbers = [cited_chunk.page_numbers for cited_chunk in cited_chunks]
 
     for j, page_number in enumerate(page_numbers):
         if isinstance(page_number, str):
             page_numbers[j] = json.loads(page_number)
 
     response_markdown = replace_doc_ref(
-        str(response["output_text"]),
+        str(chat_history_response["output_text"]),
         cited_files,
         page_numbers=page_numbers,
         flexible=True,
