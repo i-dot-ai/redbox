@@ -54,6 +54,8 @@ redbox-copilot/
 │  │  │  ├─ Dockerfile
 │  │  │  ├─ pyproject.toml
 │  │  ├─ ingest
+│  │  │  ├─ Dockerfile
+│  │  │  ├─ pyproject.toml
 ├─ legacy_app/
 │  ├─ Dockerfile
 ├─ redbox/
