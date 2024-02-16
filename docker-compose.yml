@@ -31,7 +31,7 @@ services:
       - MODEL_NAMES=all-mpnet-base-v2|paraphrase-multilingual-MiniLM-L12-v2
     networks:
       - redbox-app-network
- 
+
   minio:
     image: minio/minio
     expose:
@@ -83,19 +83,6 @@ services:
       # ELASTICSEARCH_HOSTS: "http://elasticsearch:9200"
       # XPACK_SECURITY_ENABLED: "false"
       XPACK_ENCRYPTEDSAVEDOBJECTS_ENCRYPTIONKEY: 19264f57-b71d-46e1-8f20-33be19131a6c
-    networks:
-      - redbox-app-network
-    depends_on:
-      - elasticsearch
-    restart: unless-stopped
-  celery:
-    build:
-      context: ./infra/celery/
-      dockerfile: Dockerfile
-    ports:
-      - 5555:5555
-    env_file:
-      - .env
     networks:
       - redbox-app-network
     depends_on:
