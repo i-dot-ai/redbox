@@ -22,9 +22,7 @@ def test_write_item(example_chuck_unsaved, file_system_storage_handler):
     When I call write_item on it
     Then I expect to see it saved to disk
     """
-    file_path = (
-        f"{file_system_storage_handler.root_path}/Chunk/{example_chuck_unsaved.uuid}"
-    )
+    file_path = f"{file_system_storage_handler.root_path}/Chunk/{example_chuck_unsaved.uuid}.json"
     assert not os.path.exists(file_path)
     file_system_storage_handler.write_item(example_chuck_unsaved)
     assert os.path.exists(file_path)
@@ -37,10 +35,10 @@ def test_delete_item(example_chuck_saved, file_system_storage_handler):
     Then I expect to see the corresponding file to be deleted
     """
     file_path = (
-        f"{file_system_storage_handler.root_path}/Chunk/{example_chuck_saved.uuid}"
+        f"{file_system_storage_handler.root_path}/Chunk/{example_chuck_saved.uuid}.json"
     )
     assert os.path.exists(file_path)
-    file_system_storage_handler.delete_item(example_chuck_saved)
+    file_system_storage_handler.delete_item(example_chuck_saved.uuid, "Chunk")
     assert not os.path.exists(file_path)
 
 
@@ -51,7 +49,7 @@ def test_delete_item_fail(example_chuck_unsaved, file_system_storage_handler):
     Then I expect to see a FileNotFoundError error raised
     """
     with pytest.raises(FileNotFoundError):
-        file_system_storage_handler.delete_item(example_chuck_unsaved)
+        file_system_storage_handler.delete_item(example_chuck_unsaved.uuid, "Chunk")
 
 
 def test_delete_items(
