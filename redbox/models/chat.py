@@ -4,10 +4,12 @@ from uuid import uuid4
 
 from langchain.chains.base import Chain
 from langchain.schema import AIMessage, HumanMessage, SystemMessage
-from pydantic import BaseModel, Field, computed_field, field_serializer
+from pydantic import Field, computed_field, field_serializer
+
+from redbox.models.base import PersistableModel
 
 
-class ChatMessage(BaseModel):
+class ChatMessage(PersistableModel):
     uuid: str = Field(default_factory=lambda: str(uuid4()))
     # langchain.chains.base.Chain needs pydantic v1, breaks
     # https://python.langchain.com/docs/guides/pydantic_compatibility
@@ -16,7 +18,7 @@ class ChatMessage(BaseModel):
     created_datetime: str = Field(default_factory=lambda: datetime.utcnow().isoformat())
     creator_user_uuid: Optional[str]
 
-    @computed_field
+    @computed_field(return_type=str)
     def model_type(self) -> str:
         return self.__class__.__name__
 

@@ -1,15 +1,13 @@
-from datetime import datetime
 from typing import Optional
-from uuid import uuid4
 
-from pydantic import BaseModel, Field, computed_field
+from pydantic import computed_field
+
+from redbox.models.base import PersistableModel
 
 
-class User(BaseModel):
-    uuid: str = Field(default_factory=lambda: str(uuid4()))
+class User(PersistableModel):
     email: Optional[str]
-    created_datetime: str = Field(default_factory=lambda: datetime.utcnow().isoformat())
 
-    @computed_field
+    @computed_field(return_type=str)
     def model_type(self) -> str:
         return self.__class__.__name__

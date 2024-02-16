@@ -86,6 +86,8 @@ def populate_user_info(ENV: dict) -> dict:
             st.sidebar.markdown("Running Locally")
             return {"name": "dev", "email": "dev@example.com"}
 
+    raise ValueError
+
 
 def init_session_state() -> dict:
     """
@@ -257,7 +259,7 @@ def init_session_state() -> dict:
 
 
 def get_link_html(
-    page: str, text: str, query_dict: dict = None, target: str = "_self"
+    page: str, text: str, query_dict: Optional[dict] = None, target: str = "_self"
 ) -> str:
     """Returns a link in HTML format
 
@@ -279,7 +281,7 @@ def get_link_html(
     return f"<a href='/{page}{query}' target={target}><button style='background-color: white;border-radius: 8px;'>{text}</button></a>"
 
 
-def get_file_link(file: File, page: int = None) -> str:
+def get_file_link(file: File, page: Optional[int] = None) -> str:
     """Returns a link to a file
 
     Args:
@@ -296,7 +298,7 @@ def get_file_link(file: File, page: int = None) -> str:
         presentation_name = file.name
     query_dict = {"file_uuid": file.uuid}
     if page is not None:
-        query_dict["page_number"] = page[0]
+        query_dict["page_number"] = page
 
     link_html = get_link_html(
         page="Preview_Files",
@@ -425,7 +427,7 @@ class FilePreview(object):
         file_bytes = stream["Body"].read()
         render_method(file, file_bytes)
 
-    def _render_pdf(self, file: File, page_number: int = None) -> None:
+    def _render_pdf(self, file: File, page_number: Optional[int] = None) -> None:
         stream = st.session_state.s3_client.get_object(
             Bucket=st.session_state.BUCKET_NAME, Key=file.name
         )

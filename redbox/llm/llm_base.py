@@ -86,6 +86,8 @@ class LLMHandler(object):
             Chroma: the langchain vectorstore object for Chroma
         """
         embedder = self.embedding_function
+        if self.user_uuid is None:
+            raise ValueError
         persist_directory = os.path.join("data", self.user_uuid, "db")
         return Chroma(embedding_function=embedder, persist_directory=persist_directory)
 
@@ -129,6 +131,8 @@ class LLMHandler(object):
 
             sanitised_metadatas.append(metadata)
 
+        if self.vector_store is None:
+            raise ValueError
         # it requires tha batch size to be smaller than 166 but some documents have >300 chunks
         batch_size = 160
         for i in range(0, len(chunks), batch_size):
@@ -142,9 +146,9 @@ class LLMHandler(object):
         self,
         user_question: str,
         user_info: dict,
-        chat_history: Optional[List] = [],
-        callbacks: Optional[List] = [],
-    ) -> dict:
+        chat_history: Optional[List] = None,
+        callbacks: Optional[List] = None,
+    ) -> tuple:
         """Answers user question by retrieving context from content stored in
         Vector DB
 
@@ -176,11 +180,14 @@ class LLMHandler(object):
         standalone_question = self.condense_question_chain(
             {
                 "question": user_question,
-                "chat_history": chat_history,
+                "chat_history": chat_history or [],
                 # "user_info": user_info,
                 # "current_date": date.today().isoformat()
             }
         )["text"]
+
+        if self.vector_store is None:
+            raise ValueError
 
         docs = self.vector_store.as_retriever().get_relevant_documents(
             standalone_question,
@@ -193,9 +200,9 @@ class LLMHandler(object):
                 "user_info": user_info,
                 "current_date": date.today().isoformat(),
             },
-            callbacks=callbacks,
+            callbacks=callbacks or [],
         )
-        return (result, self.docs_with_sources_chain)
+        return result, self.docs_with_sources_chain
 
     def get_spotlight_tasks(self, files: List[File], file_hash: str) -> Spotlight:
         spotlight = Spotlight(
@@ -215,11 +222,11 @@ class LLMHandler(object):
         spotlight: Spotlight,
         task: SpotlightTask,
         user_info: dict,
-        callbacks: Optional[List] = [],
+        callbacks: Optional[List] = None,
         map_reduce: bool = False,
         token_max: int = 100_000,
-    ) -> dict:
-        map_chain = LLMChain(llm=self.llm, prompt=task.prompt_template)
+    ) -> tuple:
+        map_chain = LLMChain(llm=self.llm, prompt=task.prompt_template)  # type: ignore
         regular_chain = StuffDocumentsChain(
             llm_chain=map_chain, document_variable_name="text"
         )
@@ -241,20 +248,19 @@ class LLMHandler(object):
         )
 
         if map_reduce:
-            chain = map_reduce_chain
             result = map_reduce_chain.run(
                 user_info=user_info,
                 current_date=date.today().isoformat(),
                 input_documents=spotlight.to_documents(),
-                callbacks=callbacks,
+                callbacks=callbacks or [],
             )
+            return result, map_reduce_chain
         else:
-            chain = regular_chain
             result = regular_chain.run(
                 user_info=user_info,
                 current_date=date.today().isoformat(),
                 input_documents=spotlight.to_documents(),
-                callbacks=callbacks,
+                callbacks=callbacks or [],
             )
 
-        return (result, chain)
+            return result, regular_chain

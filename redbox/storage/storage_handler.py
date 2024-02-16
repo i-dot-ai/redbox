@@ -1,9 +1,9 @@
 from abc import ABC, abstractmethod
 from typing import List
 
-from pydantic import BaseModel
 
 from redbox.models import Chunk, Collection, Feedback, File, SpotlightComplete
+from redbox.models.base import PersistableModel
 
 
 class BaseStorageHandler(ABC):
@@ -29,7 +29,7 @@ class BaseStorageHandler(ABC):
         pass
 
     @abstractmethod
-    def write_item(self, item: type[BaseModel]):
+    def write_item(self, item: PersistableModel):
         """Write an object to a data store"""
         pass
 
@@ -49,12 +49,12 @@ class BaseStorageHandler(ABC):
         pass
 
     @abstractmethod
-    def update_item(self, item_uuid: str, item: type[BaseModel]):
+    def update_item(self, item_uuid: str, item: PersistableModel):
         """Update an object in a data store"""
         pass
 
     @abstractmethod
-    def update_items(self, item_uuids: List[str], items: List[type[BaseModel]]):
+    def update_items(self, item_uuids: List[str], items: List[PersistableModel]):
         """Update a list of objects in a data store"""
         pass
 
