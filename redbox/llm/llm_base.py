@@ -26,7 +26,6 @@ from redbox.llm.prompts.chat import (
 from redbox.llm.prompts.spotlight import SPOTLIGHT_COMBINATION_TASK_PROMPT
 from redbox.llm.spotlight.spotlight import (
     key_actions_task,
-    key_dates_task,
     key_discussion_task,
     key_people_task,
     summary_task,
