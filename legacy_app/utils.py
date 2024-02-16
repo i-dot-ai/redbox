@@ -217,9 +217,6 @@ def init_session_state() -> dict:
             if st.button(label="Empty Streamlit Cache"):
                 st.cache_data.clear()
 
-            if st.button(label="Empty LLM Prompt Cache"):
-                st.session_state.llm_handler.clear_cache()
-
     else:
         _model_params = {"max_tokens": 4096, "temperature": 0.2}
 
