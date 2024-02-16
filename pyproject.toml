@@ -48,8 +48,7 @@ pytest = "^8.0.0"
 pre-commit = "^3.6.1"
 pylint = "^3.0.3"
 
-[tool.ruff]
-extend-include = ["*.ipynb"]
+
 
 [build-system]
 requires = ["poetry-core"]

@@ -150,11 +150,11 @@ def merge_chunk_metadata(meta_in: List[Dict]) -> Dict:
     for key in all_keys:
         # collect all the values for that key in each metadata
         one_meta_to_collapse = [meta[key] for meta in meta_in if key in meta]
-        if type(one_meta_to_collapse[0]) == list:
+        if isinstance(one_meta_to_collapse[0], list):
             meta_out[key] = list()
             for meta in one_meta_to_collapse:
                 meta_out[key] += meta
-        elif type(one_meta_to_collapse[0]) == dict:
+        elif isinstance(one_meta_to_collapse[0], dict):
             meta_out[key] = merge_chunk_metadata(one_meta_to_collapse)
         elif all(x == one_meta_to_collapse[0] for x in one_meta_to_collapse):
             meta_out[key] = one_meta_to_collapse[0]
@@ -162,6 +162,6 @@ def merge_chunk_metadata(meta_in: List[Dict]) -> Dict:
             meta_out[key] = one_meta_to_collapse
 
         # Dedupe page numbers of merged chunks
-        if key in ["page_number", "languages"] and type(meta_out[key]) == list:
+        if key in ["page_number", "languages"] and isinstance(meta_out[key], list):
             meta_out[key] = list(set(sorted(meta_out[key])))
     return meta_out

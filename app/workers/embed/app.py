@@ -5,7 +5,6 @@ from datetime import datetime
 from typing import List
 from uuid import uuid4
 
-import pika
 import pydantic
 from fastapi import FastAPI
 from fastapi.responses import RedirectResponse

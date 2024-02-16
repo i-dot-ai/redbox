@@ -1,5 +1,4 @@
 import tempfile
-from pprint import pprint
 from typing import List, Optional
 
 import markdown
