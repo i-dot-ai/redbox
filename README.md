@@ -34,3 +34,34 @@ Any time you update code for the the repo, you'll likely need to rebuild the con
 - Download and install [pre-commit](https://pre-commit.com) to benefit from pre-commit hooks
   - `pip install pre-commit`
   - `pre-commit install`
+
+# Dependencies
+
+This project uses a microservice architecture.
+
+Each microservice runs in its own container defined by a `Dockerfile`.
+
+For every microservice that we have written in python we define its dependencies using https://python-poetry.org/.
+
+This means that our project is structured approximately like this:
+
+```txt
+redbox-copilot/
+├── app/
+│  ├── frontend/
+│  └── workers/
+│     ├── embed
+│     │  ├── Dockerfile
+│     │  └── pyproject.toml
+│     └── ingest
+│        ├── Dockerfile
+│        └── pyproject.toml
+├── legacy_app/
+│  └── Dockerfile
+├── redbox/
+├── docker-compose.yaml
+├── pyproject.toml
+└── README.md
+```
+
+Where the top level `pyproject.toml` is currently closely associated with `lagacy_app` and `redbox`.
