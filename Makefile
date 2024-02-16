@@ -1,25 +1,15 @@
-.PHONY: app reqs venv
+.PHONY: app reqs
 
 -include .env
 export
 
-PYTHON = python3
-
 
 reqs:
-	$(PYTHON) -m pip install -r requirements.txt
-	$(PYTHON) -m pip install -r requirements.dev.txt
+	poetry install
 
-venv:
-	$(PYTHON) -m venv .venv && \
-	source .venv/bin/activate && \
-	make reqs
-	@echo "========================"
-	@echo "Virtual environment successfully created. To activate the venv:"
-	@echo "	\033[0;32msource .venv/bin/activate"
 
 app:
-	streamlit run app/Welcome.py --server.port 8501
+	poetry run streamlit run app/Welcome.py --server.port 8501
 
 run:
 	docker compose up -d elasticsearch kibana app embed minio miniocreatebuckets
@@ -37,11 +27,11 @@ rebuild:
 	docker compose build --no-cache
 
 test:
-	$(PYTHON) -m pytest -v --cov=app --cov-report=term-missing --cov-fail-under=100 --cov-config=.coveragerc
+	poetry run pytest -v --cov=app --cov-report=term-missing --cov-fail-under=100 --cov-config=.coveragerc
 
 lint:
-	$(PYTHON) -m pylint app
+	poetry run pylint app
 
 format:
-	$(PYTHON) -m isort --profile black .
-	$(PYTHON) -m black .
+	poetry run isort --profile black .
+	poetry run black .
