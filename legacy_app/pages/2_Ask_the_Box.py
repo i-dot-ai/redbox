@@ -1,7 +1,5 @@
 import json
-from dataclasses import dataclass
 from datetime import date, datetime
-from typing import Any
 
 import streamlit as st
 from langchain.schema import AIMessage, HumanMessage, SystemMessage
@@ -83,27 +81,29 @@ def get_files_by_uuid(file_uuids):
     return files
 
 
-def render_citation_response(chat_history_response: dict[str, Any]) -> str:
+def render_citation_response(response):
     cited_chunks = [
         (
             chunk.metadata["parent_doc_uuid"],
             chunk.metadata["url"],
-            chunk.metadata.get("page_numbers"),
+            (
+                chunk.metadata["page_numbers"]
+                if "page_numbers" in chunk.metadata
+                else None
+            ),
         )
-        for chunk in chat_history_response["input_documents"]
+        for chunk in response["input_documents"]
     ]
     cited_chunks = set(cited_chunks)
-    cited_files = get_files_by_uuid(
-        [parent_doc_uuid for parent_doc_uuid, _, _ in cited_chunks]
-    )
-    page_numbers = [page_numbers for _, _, page_numbers in cited_chunks]
+    cited_files = get_files_by_uuid([x[0] for x in cited_chunks])
+    page_numbers = [x[2] for x in cited_chunks]
 
     for j, page_number in enumerate(page_numbers):
         if isinstance(page_number, str):
             page_numbers[j] = json.loads(page_number)
 
     response_markdown = replace_doc_ref(
-        str(chat_history_response["output_text"]),
+        str(response["output_text"]),
         cited_files,
         page_numbers=page_numbers,
         flexible=True,
