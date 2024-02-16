@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Dict, List, Optional
+from typing import List, Optional
 from uuid import uuid4
 
 from langchain.chains.base import Chain
@@ -59,40 +59,16 @@ class SpotlightTaskComplete(BaseModel):
             return chain
 
 
-class SpotlightFormat(BaseModel):
-    uuid: str = Field(default_factory=lambda: str(uuid4()))
-    id: str
-    tasks: List[SpotlightTask]
-    created_datetime: str = Field(default_factory=lambda: datetime.utcnow().isoformat())
-
-    @computed_field
-    def model_type(self) -> str:
-        return self.__class__.__name__
-
-
 class Spotlight(BaseModel):
     uuid: str = Field(default_factory=lambda: str(uuid4()))
     files: List[File]
     file_hash: str
-    formats: List[SpotlightFormat]
     created_datetime: str = Field(default_factory=lambda: datetime.utcnow().isoformat())
-
-    @property
-    def formats_dict(self) -> Dict[str, List[SpotlightTask]]:
-        return {f.id: f.tasks for f in self.formats}
+    tasks: List[SpotlightTask]
 
     @computed_field
     def model_type(self) -> str:
         return self.__class__.__name__
-
-    @computed_field
-    def tasks(self) -> List[SpotlightTask]:
-        file_formats = set(file.classifications["Format"]["var"] for file in self.files)
-        file_tasks = []
-        for file_format in file_formats:
-            if file_format not in file_tasks:
-                file_tasks += self.formats_dict[file_format]
-        return file_tasks
 
     def to_documents(self) -> List[str]:
         return [file.to_document() for file in self.files]
