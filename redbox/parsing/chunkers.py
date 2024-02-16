@@ -1,10 +1,4 @@
-import os
-import platform
-import re
-from datetime import datetime
-from email.message import Message
-from email.parser import BytesParser
-from typing import List, Union
+from typing import List
 
 from unstructured.chunking.title import chunk_by_title
 from unstructured.partition.auto import partition

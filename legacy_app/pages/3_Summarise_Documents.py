@@ -93,7 +93,7 @@ def update_token_budget_tracker():
         current_token_count += selected_file.token_count
 
     if current_token_count > MAX_TOKENS:
-        if st.session_state.summary_of_summaries_mode == False:
+        if not st.session_state.summary_of_summaries_mode:
             st.session_state.summary_of_summaries_mode = True
             st.toast(
                 "Summary of Summaries mode enabled due to token budget",
@@ -198,7 +198,7 @@ spotlight_completed_by_hash = {x.file_hash: x for x in spotlight_completed}
 # RENDER SPOTLIGHT
 if st.session_state.submitted:
     if SELECTED_FILE_HASH in spotlight_completed_by_hash:
-        st.info(f"Loading cached summary")
+        st.info("Loading cached summary")
         cached_complete = spotlight_completed_by_hash[SELECTED_FILE_HASH]
         st.session_state.spotlight = cached_complete.tasks
 

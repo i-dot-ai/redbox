@@ -25,7 +25,6 @@ from langchain.vectorstores.elasticsearch import (
 )
 from langchain_community.chat_models import ChatLiteLLM
 from langchain_community.embeddings import SentenceTransformerEmbeddings
-from langchain_community.llms import Bedrock
 from loguru import logger
 from lxml.html.clean import Cleaner
 from pyprojroot import here
@@ -222,7 +221,7 @@ def init_session_state() -> dict:
                 st.session_state.llm_handler.clear_cache()
 
     else:
-        model_params = {"max_tokens": 4096, "temperature": 0.2}
+        _model_params = {"max_tokens": 4096, "temperature": 0.2}
 
     if "llm" not in st.session_state or "llm_handler" not in st.session_state:
         load_llm_handler(

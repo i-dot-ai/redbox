@@ -1,6 +1,5 @@
 import hashlib
 
-import pytest
 
 from redbox.models.file import File
 
