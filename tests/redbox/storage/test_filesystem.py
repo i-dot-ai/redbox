@@ -90,8 +90,7 @@ def test_read_items(
     And no error to be thrown due the absense of the unsaved object
     """
     objs = file_system_storage_handler.read_items(
-        [example_chuck_saved.uuid, example_chuck_unsaved.uuid],
-        example_chuck_saved.__class__.__name__,
+        [example_chuck_saved.uuid, example_chuck_unsaved.uuid], "Chunk"
     )
     assert objs == [example_chuck_saved]
 
