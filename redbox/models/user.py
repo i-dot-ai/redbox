@@ -8,6 +8,6 @@ from redbox.models.base import PersistableModel
 class User(PersistableModel):
     email: Optional[str]
 
-    @computed_field(return_type=str)
+    @computed_field
     def model_type(self) -> str:
         return self.__class__.__name__
