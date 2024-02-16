@@ -19,7 +19,7 @@ class SpotlightTask(PersistableModel):
     def __hash__(self):
         return hash((type(self),) + (self.id, self.title))
 
-    @computed_field(return_type=str)
+    @computed_field
     def model_type(self) -> str:
         return self.__class__.__name__
 
@@ -58,7 +58,7 @@ class Spotlight(PersistableModel):
     file_hash: str
     tasks: List[SpotlightTask]
 
-    @computed_field(return_type=str)
+    @computed_field
     def model_type(self) -> str:
         return self.__class__.__name__
 

@@ -16,7 +16,7 @@ class File(PersistableModel):
     storage_kind: str = "local"
     text: str = ""
 
-    @computed_field(return_type=str)
+    @computed_field
     def model_type(self) -> str:
         return self.__class__.__name__
 

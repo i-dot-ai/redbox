@@ -9,7 +9,7 @@ class Collection(PersistableModel):
     name: str = Field()
     files: List[str] = Field(default=[])
 
-    @computed_field(return_type=str)
+    @computed_field
     def model_type(self) -> str:
         return self.__class__.__name__
 

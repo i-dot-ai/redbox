@@ -16,7 +16,7 @@ class Feedback(PersistableModel):
     feedback_score: str
     feedback_text: Optional[str] = None
 
-    @computed_field(return_type=str)
+    @computed_field
     def model_type(self) -> str:
         return self.__class__.__name__
 
