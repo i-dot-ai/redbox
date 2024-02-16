@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "redbox-copilot-infra"
+version = "0.1.0"
+description = ""
+authors = ["i.AI <i-dot-ai-team@cabinetoffice.gov.uk>"]
+license = "MIT"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+celery = {extras = ["elasticsearch"], version = "^5.3.6"}
+lorem = "^0.1.1"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
