@@ -47,19 +47,21 @@ This means that our project is structured approximately like this:
 
 ```txt
 redbox-copilot/
-├─ app/
-│  ├─ frontend/
-│  ├─ workers/
-│  │  ├─ embed
-│  │  │  ├─ Dockerfile
-│  │  │  ├─ pyproject.toml
-│  │  ├─ ingest
-├─ legacy_app/
-│  ├─ Dockerfile
-├─ redbox/
-├─ docker-compose.yaml
-├─ pyproject.toml
-├─ README.md
+├── app/
+│  ├── frontend/
+│  └── workers/
+│     ├── embed
+│     │  ├── Dockerfile
+│     │  └── pyproject.toml
+│     └── ingest
+│        ├── Dockerfile
+│        └── pyproject.toml
+├── legacy_app/
+│  └── Dockerfile
+├── redbox/
+├── docker-compose.yaml
+├── pyproject.toml
+└── README.md
 ```
 
 Where the top level `pyproject.toml` is currently closely associated with `lagacy_app` and `redbox`.
