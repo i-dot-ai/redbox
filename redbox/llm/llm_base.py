@@ -4,12 +4,10 @@ from datetime import date
 from typing import List, Optional
 
 import dotenv
-from langchain.cache import SQLiteCache
 from langchain.chains import MapReduceDocumentsChain, ReduceDocumentsChain
 from langchain.chains.combine_documents.stuff import StuffDocumentsChain
 from langchain.chains.llm import LLMChain
 from langchain.chains.qa_with_sources import load_qa_with_sources_chain
-from langchain.globals import set_llm_cache
 from langchain.memory import ConversationBufferMemory
 from langchain_community.embeddings import (
     HuggingFaceEmbeddings,
@@ -56,10 +54,6 @@ class LLMHandler(object):
             embedding_function (Optional[HuggingFaceEmbeddings], optional):
             _description_. Defaults to None.
         """
-        self.cache = None
-        if os.environ["CACHE_LLM_RESPONSES"] == "true":
-            self.cache = SQLiteCache(database_path=os.environ["CACHE_LLM_DB"])
-            set_llm_cache(self.cache)
 
         self.llm = llm
         self.user_uuid = user_uuid
@@ -96,10 +90,6 @@ class LLMHandler(object):
             SentenceTransformerEmbeddings: object to run text embedding
         """
         return SentenceTransformerEmbeddings()
-
-    def clear_cache(self) -> None:
-        if self.cache is not None:
-            self.cache.clear()
 
     def add_chunks_to_vector_store(self, chunks: List[Chunk]) -> None:
         """Takes a list of Chunks and embedds them into the vector store
@@ -156,8 +146,6 @@ class LLMHandler(object):
         Returns:
             dict: A dictionary with the new chat_history:list and the answer
         """
-        if os.environ["CACHE_LLM_RESPONSES"] == "true":
-            set_llm_cache(SQLiteCache(database_path=os.environ["CACHE_LLM_DB"]))
 
         self.docs_with_sources_chain = load_qa_with_sources_chain(
             self.llm,
