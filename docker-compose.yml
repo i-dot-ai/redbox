@@ -88,7 +88,7 @@ services:
       - elasticsearch
     restart: unless-stopped
   rabbitmq:
-    image: rabbitmq:3-management
+    image: rabbitmq:3-management-alpine
     ports:
       - 5672:5672
       - 15672:15672
@@ -96,6 +96,8 @@ services:
       - redbox-app-network
     volumes:
       - ./data/queue/data/:/var/lib/rabbitmq/
+      - ./infra/rabbitmq/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf:ro
+      - ./infra/rabbitmq/definitions.json:/etc/rabbitmq/definitions.json:ro
     restart: unless-stopped
 
 networks:
