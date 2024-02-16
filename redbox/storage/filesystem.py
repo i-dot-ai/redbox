@@ -45,7 +45,6 @@ class FileSystemStorageHandler(BaseStorageHandler):
         with open(
             self.root_path / item.__class__.__name__ / f"{item.uuid}.json",
             "w",
-            encoding="utf-8",
         ) as f:
             json.dump(item.model_dump(), f, indent=4, ensure_ascii=False)
 
@@ -56,9 +55,7 @@ class FileSystemStorageHandler(BaseStorageHandler):
 
     def read_item(self, item_uuid: str, model_type: str) -> Any:
         """Read an object from a data store"""
-        with open(
-            self.root_path / model_type / f"{item_uuid}.json", "r", encoding="utf-8"
-        ) as f:
+        with open(self.root_path / model_type / f"{item_uuid}.json", "r") as f:
             item_dict = json.load(f)
             model = self.get_model_by_model_type(model_type)
             item = TypeAdapter(model).validate_python(item_dict)
@@ -92,7 +89,12 @@ class FileSystemStorageHandler(BaseStorageHandler):
     def delete_items(self, item_uuids: List[str], model_type: str):
         """Delete a list of objects from a data store"""
         for item_uuid in item_uuids:
-            self.delete_item(item_uuid, model_type)
+            try:
+                self.delete_item(item_uuid, model_type)
+            except FileNotFoundError:
+                logger.warning(
+                    f"file not found {self.root_path}/{model_type}/{item_uuid}.json"
+                )
 
     def list_all_items(self, model_type: str) -> list[str]:
         """List all objects of a given type from a data store"""
