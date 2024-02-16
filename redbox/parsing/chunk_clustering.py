@@ -143,10 +143,10 @@ def merge_chunk_metadata(meta_in: List[Dict]) -> Dict:
     Combine metadata for multiple chunks from the same document.
     """
     # collect all the possible key values
-    all_keys = set()
+    all_keys: set = set()
     for meta in meta_in:
         all_keys = all_keys.union(meta.keys())
-    meta_out = {}
+    meta_out: dict = {}
     for key in all_keys:
         # collect all the values for that key in each metadata
         one_meta_to_collapse = [meta[key] for meta in meta_in if key in meta]

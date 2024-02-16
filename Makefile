@@ -36,3 +36,7 @@ format:
 	poetry run ruff format .
 	# additionally we format, but not lint, the notebooks
 	poetry run ruff format **/*.ipynb
+
+type-check:
+	poetry run mypy redbox --ignore-missing-imports
+	poetry run mypy legacy_app --follow-imports skip --ignore-missing-imports
