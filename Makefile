@@ -9,7 +9,7 @@ reqs:
 
 
 app:
-	poetry run streamlit run app/Welcome.py --server.port 8501
+	poetry run streamlit run legacy_app/Welcome.py --server.port 8501
 
 run:
 	docker compose up -d elasticsearch kibana app embed minio miniocreatebuckets
