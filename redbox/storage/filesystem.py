@@ -2,7 +2,7 @@ import json
 import logging
 import os
 import pathlib
-from typing import List, Any
+from typing import Any, List
 
 from pydantic import BaseModel, TypeAdapter
 from pyprojroot import here

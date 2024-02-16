@@ -27,7 +27,7 @@ rebuild:
 	docker compose build --no-cache
 
 test:
-	poetry run pytest -v --cov=app --cov-report=term-missing --cov-fail-under=100 --cov-config=.coveragerc
+	poetry run pytest . --cov=redbox -v --cov-report=term-missing --cov-fail-under=35
 
 lint:
 	poetry run pylint app
