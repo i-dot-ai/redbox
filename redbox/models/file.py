@@ -1,6 +1,6 @@
 import hashlib
 from datetime import datetime
-from typing import Dict, Optional
+from typing import Optional
 from uuid import uuid4
 
 import tiktoken
@@ -17,7 +17,6 @@ class File(BaseModel):
     name: str
     storage_kind: str = "local"
     text: str = ""
-    classifications: Optional[Dict] = {}
 
     created_datetime: str = Field(default_factory=lambda: datetime.utcnow().isoformat())
     creator_user_uuid: Optional[str]

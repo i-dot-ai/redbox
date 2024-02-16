@@ -3,7 +3,7 @@ from typing import List
 
 from pydantic import BaseModel
 
-from redbox.models import Chunk, Collection, Feedback, File, SpotlightComplete, TagGroup
+from redbox.models import Chunk, Collection, Feedback, File, SpotlightComplete
 
 
 class BaseStorageHandler(ABC):
@@ -17,7 +17,7 @@ class BaseStorageHandler(ABC):
     # dict comprehension for lowercase class name to class
     model_type_map = {
         v.__name__.lower(): v
-        for v in [Chunk, Collection, Feedback, File, SpotlightComplete, TagGroup]
+        for v in [Chunk, Collection, Feedback, File, SpotlightComplete]
     }
 
     def get_model_by_model_type(self, model_type):

@@ -1,14 +1,12 @@
-import json
 import os
 import pathlib
 from datetime import date
 
 import streamlit as st
-from pydantic import TypeAdapter
 from pyprojroot import here
 from utils import init_session_state
 
-from redbox.models import Collection, File, TagGroup
+from redbox.models import Collection, File
 from redbox.parsing.file_chunker import FileChunker
 
 st.set_page_config(
@@ -19,21 +17,6 @@ ENV = init_session_state()
 
 file_chunker = FileChunker()
 
-# Folder setup and loading
-
-system_prefs_folder = "./system_preferences"
-default_taggroups = []
-for default_taggroup_file in os.listdir(system_prefs_folder):
-    with open(
-        os.path.join(system_prefs_folder, default_taggroup_file), "r", encoding="utf-8"
-    ) as f:
-        default_taggroups.append(TypeAdapter(TagGroup).validate_python(json.load(f)))
-
-
-taggroups = (
-    st.session_state.storage_handler.read_all_items(model_type="TagGroup")
-    + default_taggroups
-)
 collections = st.session_state.storage_handler.read_all_items(model_type="Collection")
 
 # Upload form
@@ -138,22 +121,6 @@ if submitted:  # noqa: C901
                 st.error(f"Failed to chunk {file.name}, error: {str(err)}")
                 st.write(file.model_dump())
                 continue
-
-        # ==================== CLASSIFICATION ====================
-
-        with st.spinner(f"Classifying **{file.name}**"):
-            # Saving combined text to File record too (useful for Summarise Documents)
-            file_path = os.path.join(data_folder, "file", f"{file.name}.json")
-            file.text = "".join([chunk.text for chunk in chunks])
-
-            file_classifications = {}
-            for taggroup in taggroups:
-                # Classify using the first N characters of the file
-                tag = st.session_state.llm_handler.classify_to_tag(
-                    group=taggroup, raw_text=file.text[:1000]
-                )
-                file_classifications[taggroup.name] = tag.model_dump()
-            file.classifications = file_classifications
 
         # ==================== SAVING ====================
 

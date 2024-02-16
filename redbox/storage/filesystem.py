@@ -7,7 +7,7 @@ from typing import Any, List
 from pydantic import BaseModel, TypeAdapter
 from pyprojroot import here
 
-from redbox.models import Chunk, Collection, Feedback, File, SpotlightComplete, TagGroup
+from redbox.models import Chunk, Collection, Feedback, File, SpotlightComplete
 from redbox.storage.storage_handler import BaseStorageHandler
 
 logger = logging.Logger(__file__)
@@ -20,7 +20,6 @@ models_to_store = [
     Feedback,
     File,
     SpotlightComplete,
-    TagGroup,
 ]
 
 
