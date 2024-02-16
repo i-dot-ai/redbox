@@ -1,9 +1,5 @@
 import hashlib
 
-import pytest
-
-from redbox.models.file import Chunk
-
 
 def test_chunk_creation(chunk):
     assert chunk.parent_file_uuid == "test_uuid"

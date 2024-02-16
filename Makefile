@@ -30,8 +30,9 @@ test:
 	poetry run pytest . --cov=redbox -v --cov-report=term-missing --cov-fail-under=35
 
 lint:
-	poetry run pylint app
+	poetry run ruff check .
 
 format:
-	poetry run isort --profile black .
-	poetry run black .
+	poetry run ruff format .
+	# additionally we format, but not lint, the notebooks
+	poetry run ruff format **/*.ipynb

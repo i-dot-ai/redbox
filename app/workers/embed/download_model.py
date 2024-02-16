@@ -8,7 +8,7 @@ MODEL_NAMES = os.getenv(
 
 models_to_download = MODEL_NAMES.split("|")
 
-models_path = f"models/"
+models_path = "models/"
 
 for model in models_to_download:
     model = SentenceTransformer(model, cache_folder=models_path)

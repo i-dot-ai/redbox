@@ -1,4 +1,3 @@
-from langchain.output_parsers import PydanticOutputParser
 from langchain.prompts.prompt import PromptTemplate
 
 from redbox.llm.prompts.core import _core_redbox_prompt
