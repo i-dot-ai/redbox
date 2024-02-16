@@ -1,0 +1,20 @@
+[tool.poetry]
+name = "redbox-copilot-ingest"
+version = "0.1.0"
+description = ""
+authors = ["i.AI <i-dot-ai-team@cabinetoffice.gov.uk>"]
+license = "MIT"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = ">=3.11,<3.12"
+fastapi = "^0.109.2"
+pydantic = "^2.6.1"
+celery = "^5.3.6"
+elasticsearch = "^8.12.0"
+unstructured = {extras = ["all-docs"], version = "^0.12.4"}
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

@@ -11,8 +11,6 @@ from langchain.chains.llm import LLMChain
 from langchain.chains.qa_with_sources import load_qa_with_sources_chain
 from langchain.globals import set_llm_cache
 from langchain.memory import ConversationBufferMemory
-from langchain.output_parsers import RetryWithErrorOutputParser
-from langchain.schema import HumanMessage
 from langchain_community.embeddings import (
     HuggingFaceEmbeddings,
     SentenceTransformerEmbeddings,
@@ -20,14 +18,19 @@ from langchain_community.embeddings import (
 from langchain_community.vectorstores import Chroma
 from pyprojroot import here
 
-import redbox.llm.spotlight.spotlight as spotlight_formats
 from redbox.llm.prompts.chat import (
     CONDENSE_QUESTION_PROMPT,
     STUFF_DOCUMENT_PROMPT,
     WITH_SOURCES_PROMPT,
 )
 from redbox.llm.prompts.spotlight import SPOTLIGHT_COMBINATION_TASK_PROMPT
-from redbox.models.classification import Tag, TagGroup
+from redbox.llm.spotlight.spotlight import (
+    key_actions_task,
+    key_dates_task,
+    key_discussion_task,
+    key_people_task,
+    summary_task,
+)
 from redbox.models.file import Chunk, File
 from redbox.models.spotlight import Spotlight, SpotlightTask
 
@@ -199,12 +202,11 @@ class LLMHandler(object):
         spotlight = Spotlight(
             files=files,
             file_hash=file_hash,
-            formats=[
-                spotlight_formats.email_format,
-                spotlight_formats.meeting_format,
-                spotlight_formats.briefing_format,
-                spotlight_formats.proposal_format,
-                spotlight_formats.other_format,
+            tasks=[
+                summary_task,
+                key_discussion_task,
+                key_actions_task,
+                key_people_task,
             ],
         )
         return spotlight
@@ -257,55 +259,3 @@ class LLMHandler(object):
             )
 
         return (result, chain)
-
-    def classify_to_tag(
-        self, group: TagGroup, raw_text: str, attempt_count_max: int = 5
-    ) -> Tag:
-        parser = group.get_parser()
-        prompt = group.get_classification_prompt_template()
-
-        input_prompt = prompt.format_prompt(raw_text=raw_text)
-
-        detected_class = None
-        attempt_count = 0
-
-        output = None
-
-        try:
-            output = self.llm([HumanMessage(content=input_prompt.text)])
-            detected_class = parser.parse(output.content)
-        except ValueError as parse_error:
-            print("Encountered error with first metadata extraction attempt: ")
-            print(f"{str(parse_error)} \n\n")
-            if output is not None:
-                print(f"LLM response: {output.content}\n\n")
-                retry_parser = RetryWithErrorOutputParser.from_llm(
-                    parser=parser, llm=self.llm
-                )
-
-                while attempt_count < attempt_count_max:
-                    try:
-                        detected_class = retry_parser.parse_with_prompt(
-                            completion=output.content, prompt_value=input_prompt
-                        )
-                        break
-                    except ValueError as parse_retry_errror:
-                        print(
-                            "Failed to rectify malformed data object: "
-                            f"{str(parse_retry_errror)} \n\n"
-                            f"LLM response: {output}\n\n"
-                        )
-                        detected_class = None
-                        attempt_count += 1
-            else:
-                print("LLM response: None\n\n")
-                detected_class = None
-
-        if detected_class is not None:
-            print(f"Sucessful extraction with {attempt_count+1} attempt(s)")
-            my_tag = group.get_tag(detected_class.letter)
-        else:
-            print(f"Failed extraction with {attempt_count+1} attempt(s)")
-            my_tag = group.get_default_tag()
-
-        return Tag(letter=my_tag.letter, description=my_tag.description)

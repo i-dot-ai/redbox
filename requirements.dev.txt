@@ -1,4 +1,0 @@
-pytest
-black[jupyter]
-isort
-pre-commit
