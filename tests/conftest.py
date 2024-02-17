@@ -1,3 +1,4 @@
+from typing import Generator, TypeVar
 from uuid import uuid4
 
 import pytest
@@ -6,13 +7,18 @@ from redbox.models import Chunk
 from redbox.storage import FileSystemStorageHandler
 
 
+T = TypeVar("T")
+
+YieldFixture = Generator[T, None, None]
+
+
 @pytest.fixture
-def file_system_storage_handler(tmp_path) -> FileSystemStorageHandler:
+def file_system_storage_handler(tmp_path) -> YieldFixture[FileSystemStorageHandler]:
     yield FileSystemStorageHandler(tmp_path)
 
 
 @pytest.fixture
-def chunk() -> Chunk:
+def chunk() -> YieldFixture[Chunk]:
     chunk = Chunk(
         parent_file_uuid="test_uuid",
         index=1,
@@ -24,12 +30,12 @@ def chunk() -> Chunk:
 
 
 @pytest.fixture
-def example_chuck_saved(chunk, file_system_storage_handler) -> Chunk:
+def example_chuck_saved(chunk, file_system_storage_handler) -> YieldFixture[Chunk]:
     file_system_storage_handler.write_item(chunk)
     yield chunk
 
 
 @pytest.fixture
-def example_chuck_unsaved(file_system_storage_handler) -> Chunk:
+def example_chuck_unsaved(file_system_storage_handler) -> YieldFixture[Chunk]:
     chunk = Chunk(parent_file_uuid=str(uuid4()), index=1, text="hello", metadata={})
     yield chunk
