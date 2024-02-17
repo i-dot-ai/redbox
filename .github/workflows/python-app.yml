@@ -49,4 +49,4 @@ jobs:
 
     - name: Type check
       run: |
-        make type-check
+        make checktypes
