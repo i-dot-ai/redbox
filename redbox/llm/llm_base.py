@@ -1,11 +1,12 @@
 import json
 import os
 from datetime import date
-from typing import List, Optional
+from typing import List, Optional, Any
 
 import dotenv
 from langchain.cache import SQLiteCache
 from langchain.chains import MapReduceDocumentsChain, ReduceDocumentsChain
+from langchain.chains.combine_documents.base import BaseCombineDocumentsChain
 from langchain.chains.combine_documents.stuff import StuffDocumentsChain
 from langchain.chains.llm import LLMChain
 from langchain.chains.qa_with_sources import load_qa_with_sources_chain
@@ -139,7 +140,7 @@ class LLMHandler(object):
         user_info: dict,
         chat_history: Optional[List] = None,
         callbacks: Optional[List] = None,
-    ) -> tuple:
+    ) -> tuple[dict, BaseCombineDocumentsChain]:
         """Answers user question by retrieving context from content stored in
         Vector DB
 
@@ -150,11 +151,12 @@ class LLMHandler(object):
 
         Returns:
             dict: A dictionary with the new chat_history:list and the answer
+            BaseCombineDocumentsChain: docs-with-sources-chain
         """
         if os.environ["CACHE_LLM_RESPONSES"] == "true":
             set_llm_cache(SQLiteCache(database_path=os.environ["CACHE_LLM_DB"]))
 
-        self.docs_with_sources_chain = load_qa_with_sources_chain(
+        docs_with_sources_chain = load_qa_with_sources_chain(
             self.llm,
             chain_type="stuff",
             prompt=WITH_SOURCES_PROMPT,
@@ -162,13 +164,13 @@ class LLMHandler(object):
             verbose=True,
         )
 
-        self.condense_question_chain = LLMChain(
+        condense_question_chain = LLMChain(
             llm=self.llm, prompt=CONDENSE_QUESTION_PROMPT
         )
 
-        # split chain manualy, so that the standalone question doesn't leak into chat
+        # split chain manually, so that the standalone question doesn't leak into chat
         # should we display some waiting message instead?
-        standalone_question = self.condense_question_chain(
+        standalone_question = condense_question_chain(
             {
                 "question": user_question,
                 "chat_history": chat_history or [],
@@ -181,7 +183,7 @@ class LLMHandler(object):
             standalone_question,
         )
 
-        result = self.docs_with_sources_chain(
+        result = docs_with_sources_chain(
             {
                 "question": standalone_question,
                 "input_documents": docs,
@@ -190,7 +192,7 @@ class LLMHandler(object):
             },
             callbacks=callbacks or [],
         )
-        return result, self.docs_with_sources_chain
+        return result, docs_with_sources_chain
 
     def get_spotlight_tasks(self, files: List[File], file_hash: str) -> Spotlight:
         spotlight = Spotlight(
@@ -213,7 +215,7 @@ class LLMHandler(object):
         callbacks: Optional[List] = None,
         map_reduce: bool = False,
         token_max: int = 100_000,
-    ) -> tuple:
+    ) -> tuple[Any, StuffDocumentsChain | MapReduceDocumentsChain]:
         map_chain = LLMChain(llm=self.llm, prompt=task.prompt_template)  # type: ignore
         regular_chain = StuffDocumentsChain(
             llm_chain=map_chain, document_variable_name="text"
