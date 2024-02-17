@@ -13,4 +13,4 @@ class PersistableModel(BaseModel):
 
     @computed_field
     def model_type(self) -> str:
-        raise NotImplementedError
+        return self.__class__.__name__

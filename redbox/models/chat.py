@@ -1,10 +1,9 @@
-from datetime import datetime
 from typing import Optional, Union
 from uuid import uuid4
 
 from langchain.chains.base import Chain
 from langchain.schema import AIMessage, HumanMessage, SystemMessage
-from pydantic import Field, computed_field, field_serializer
+from pydantic import Field, field_serializer
 
 from redbox.models.base import PersistableModel
 
@@ -15,12 +14,6 @@ class ChatMessage(PersistableModel):
     # https://python.langchain.com/docs/guides/pydantic_compatibility
     chain: Optional[object] = None
     message: object
-    created_datetime: str = Field(default_factory=lambda: datetime.utcnow().isoformat())
-    creator_user_uuid: Optional[str]
-
-    @computed_field
-    def model_type(self) -> str:
-        return self.__class__.__name__
 
     @field_serializer("chain")
     def serialise_chain(self, chain: Chain, _info):

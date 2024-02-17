@@ -20,14 +20,12 @@ class File(PersistableModel):
     def model_type(self) -> str:
         return self.__class__.__name__
 
-    @property
     @computed_field
     def text_hash(self) -> str:
         return hashlib.md5(
             self.text.encode(encoding="UTF-8", errors="strict")
         ).hexdigest()
 
-    @property
     @computed_field
     def token_count(self) -> int:
         return len(encoding.encode(self.text))
@@ -46,17 +44,11 @@ class Chunk(PersistableModel):
     metadata: dict
 
     @computed_field
-    def model_type(self) -> str:
-        return self.__class__.__name__
-
-    @property
-    @computed_field
     def text_hash(self) -> str:
         return hashlib.md5(
             self.text.encode(encoding="UTF-8", errors="strict")
         ).hexdigest()
 
-    @property
     @computed_field
     def token_count(self) -> int:
         return len(encoding.encode(self.text))

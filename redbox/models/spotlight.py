@@ -41,10 +41,6 @@ class SpotlightTaskComplete(PersistableModel):
     raw: str
     processed: Optional[str] = None
 
-    @computed_field
-    def model_type(self) -> str:
-        return self.__class__.__name__
-
     @field_serializer("chain")
     def serialise_chain(self, chain: Chain, _info):
         if isinstance(chain, Chain):
