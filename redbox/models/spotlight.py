@@ -3,7 +3,7 @@ from typing import List, Optional
 from langchain.chains.base import Chain
 from langchain.prompts import PromptTemplate
 from langchain_core.documents import Document
-from pydantic import computed_field, field_serializer
+from pydantic import field_serializer
 
 from redbox.models.base import PersistableModel
 from redbox.models.file import File
@@ -18,10 +18,6 @@ class SpotlightTask(PersistableModel):
 
     def __hash__(self):
         return hash((type(self),) + (self.id, self.title))
-
-    @computed_field
-    def model_type(self) -> str:
-        return self.__class__.__name__
 
     @field_serializer("prompt_template")
     def serialise_prompt(self, prompt_template: PromptTemplate, _info):
@@ -54,10 +50,6 @@ class Spotlight(PersistableModel):
     file_hash: str
     tasks: List[SpotlightTask]
 
-    @computed_field
-    def model_type(self) -> str:
-        return self.__class__.__name__
-
     def to_documents(self) -> List[Document]:
         return [file.to_document() for file in self.files]
 
@@ -66,7 +58,3 @@ class SpotlightComplete(PersistableModel):
     file_hash: str
     file_uuids: List[str]
     tasks: List[SpotlightTaskComplete]
-
-    @computed_field
-    def model_type(self) -> str:
-        return self.__class__.__name__

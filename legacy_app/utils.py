@@ -86,7 +86,8 @@ def populate_user_info(ENV: dict) -> dict:
             st.sidebar.markdown("Running Locally")
             return {"name": "dev", "email": "dev@example.com"}
 
-    raise ValueError
+    # TODO: is the right thing to do here?
+    return {}
 
 
 def init_session_state() -> dict:
