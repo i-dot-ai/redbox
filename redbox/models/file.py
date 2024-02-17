@@ -17,10 +17,6 @@ class File(PersistableModel):
     text: str = ""
 
     @computed_field
-    def model_type(self) -> str:
-        return self.__class__.__name__
-
-    @computed_field
     def text_hash(self) -> str:
         return hashlib.md5(
             self.text.encode(encoding="UTF-8", errors="strict")

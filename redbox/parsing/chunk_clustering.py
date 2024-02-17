@@ -33,11 +33,11 @@ def cluster_chunks(
             List[Chunk]: A list of all the (merged) chunks extracted from the given file.
     """
     # filter out empty chunks
-    chunks = [chunk for chunk in chunks if chunk.token_count() > 0]
+    chunks = [chunk for chunk in chunks if chunk.token_count > 0]  # type: ignore
     if len(chunks) < 2:
         out_chunks = chunks
     else:
-        token_counts = [chunk.token_count() for chunk in chunks]
+        token_counts = [chunk.token_count for chunk in chunks]  # type: ignore
         # calculate simple vector embedding and distances between adjacent chunks
         embed = SentenceTransformerEmbeddings(model_name=embed_model)
         chunk_embedding = [embed.embed_query(chunk.text) for chunk in chunks]
@@ -57,7 +57,7 @@ def cluster_chunks(
         # Distance approach is Farthest Point Algorithm (complete linkage) which
         # gets the maximum distance between all the points in the cluster
         hc = scipy.cluster.hierarchy.linkage(dist_triu, "complete")
-        num_clusters = round(np.sum(token_counts) / desired_chunk_size)
+        num_clusters = round(np.sum(token_counts) / desired_chunk_size)  # type: ignore
         out_clusters = [
             lab[0]
             for lab in scipy.cluster.hierarchy.cut_tree(hc, n_clusters=num_clusters)

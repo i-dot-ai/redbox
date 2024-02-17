@@ -42,7 +42,7 @@ class LLMHandler(object):
     def __init__(
         self,
         llm,
-        user_uuid: Optional[str] = None,
+        user_uuid: str,
         vector_store: Optional[Chroma] = None,
         embedding_function: Optional[HuggingFaceEmbeddings] = None,
     ):
@@ -63,17 +63,12 @@ class LLMHandler(object):
 
         self.llm = llm
         self.user_uuid = user_uuid
-        self.vector_store = vector_store
 
-        if embedding_function is None:
-            self.embedding_function = self._create_embedding_function()
-        else:
-            self.embedding_function = embedding_function
+        self.embedding_function = (
+            embedding_function or self._create_embedding_function()
+        )
 
-        if vector_store is None:  # if no vectorstore provided, make a new one
-            self.vector_store = self._create_vector_store()
-        else:
-            self.vector_store = vector_store
+        self.vector_store = vector_store or self._create_vector_store()
 
         self.memory = ConversationBufferMemory(
             memory_key="chat_history", return_messages=True
@@ -86,8 +81,6 @@ class LLMHandler(object):
             Chroma: the langchain vectorstore object for Chroma
         """
         embedder = self.embedding_function
-        if self.user_uuid is None:
-            raise ValueError
         persist_directory = os.path.join("data", self.user_uuid, "db")
         return Chroma(embedding_function=embedder, persist_directory=persist_directory)
 
@@ -131,8 +124,6 @@ class LLMHandler(object):
 
             sanitised_metadatas.append(metadata)
 
-        if self.vector_store is None:
-            raise ValueError
         # it requires tha batch size to be smaller than 166 but some documents have >300 chunks
         batch_size = 160
         for i in range(0, len(chunks), batch_size):
@@ -185,9 +176,6 @@ class LLMHandler(object):
                 # "current_date": date.today().isoformat()
             }
         )["text"]
-
-        if self.vector_store is None:
-            raise ValueError
 
         docs = self.vector_store.as_retriever().get_relevant_documents(
             standalone_question,
