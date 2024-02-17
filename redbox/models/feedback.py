@@ -1,7 +1,7 @@
 from typing import List, Optional, Union
 
 from langchain.chains.base import Chain
-from pydantic import computed_field, field_serializer
+from pydantic import field_serializer
 
 from redbox.models.base import PersistableModel
 
@@ -15,10 +15,6 @@ class Feedback(PersistableModel):
     feedback_type: str
     feedback_score: str
     feedback_text: Optional[str] = None
-
-    @computed_field
-    def model_type(self) -> str:
-        return self.__class__.__name__
 
     @field_serializer("chain")
     def serialise_chain(self, chain: Chain, _info):

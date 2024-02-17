@@ -33,11 +33,11 @@ def cluster_chunks(
             List[Chunk]: A list of all the (merged) chunks extracted from the given file.
     """
     # filter out empty chunks
-    chunks = [chunk for chunk in chunks if chunk.token_count > 0]
+    chunks = [chunk for chunk in chunks if chunk.token_count() > 0]
     if len(chunks) < 2:
         out_chunks = chunks
     else:
-        token_counts = [chunk.token_count for chunk in chunks]
+        token_counts = [chunk.token_count() for chunk in chunks]
         # calculate simple vector embedding and distances between adjacent chunks
         embed = SentenceTransformerEmbeddings(model_name=embed_model)
         chunk_embedding = [embed.embed_query(chunk.text) for chunk in chunks]
