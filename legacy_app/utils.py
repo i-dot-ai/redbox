@@ -86,7 +86,7 @@ def populate_user_info(ENV: dict) -> dict:
             st.sidebar.markdown("Running Locally")
             return {"name": "dev", "email": "dev@example.com"}
 
-    # TODO: is the right thing to do here?
+    # TODO: is this the right thing to do here?
     return {}
 
 
