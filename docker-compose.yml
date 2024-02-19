@@ -77,9 +77,6 @@ services:
     image: kibana:8.12.0
     ports:
       - 5601:5601
-    hostname: "0.0.0.0"
-#      - server.port: 5601
-#        server.host: "0.0.0.0"
     environment:
       # KIBANA_SYSTEM_PASSWORD: ${KIBANA_SYSTEM_PASSWORD:-}
       # ELASTICSEARCH_PASSWORD: ${ELASTIC_PASSWORD:-}
