@@ -1,11 +1,12 @@
 import json
 import os
 from datetime import date
-from typing import List, Optional
+from typing import Optional, Any
 
 import dotenv
 from langchain.cache import SQLiteCache
 from langchain.chains import MapReduceDocumentsChain, ReduceDocumentsChain
+from langchain.chains.combine_documents.base import BaseCombineDocumentsChain
 from langchain.chains.combine_documents.stuff import StuffDocumentsChain
 from langchain.chains.llm import LLMChain
 from langchain.chains.qa_with_sources import load_qa_with_sources_chain
@@ -42,7 +43,7 @@ class LLMHandler(object):
     def __init__(
         self,
         llm,
-        user_uuid: Optional[str] = None,
+        user_uuid: str,
         vector_store: Optional[Chroma] = None,
         embedding_function: Optional[HuggingFaceEmbeddings] = None,
     ):
@@ -63,17 +64,12 @@ class LLMHandler(object):
 
         self.llm = llm
         self.user_uuid = user_uuid
-        self.vector_store = vector_store
 
-        if embedding_function is None:
-            self.embedding_function = self._create_embedding_function()
-        else:
-            self.embedding_function = embedding_function
+        self.embedding_function = (
+            embedding_function or self._create_embedding_function()
+        )
 
-        if vector_store is None:  # if no vectorstore provided, make a new one
-            self.vector_store = self._create_vector_store()
-        else:
-            self.vector_store = vector_store
+        self.vector_store = vector_store or self._create_vector_store()
 
         self.memory = ConversationBufferMemory(
             memory_key="chat_history", return_messages=True
@@ -101,7 +97,7 @@ class LLMHandler(object):
         if self.cache is not None:
             self.cache.clear()
 
-    def add_chunks_to_vector_store(self, chunks: List[Chunk]) -> None:
+    def add_chunks_to_vector_store(self, chunks: list[Chunk]) -> None:
         """Takes a list of Chunks and embedds them into the vector store
 
         Args:
@@ -142,9 +138,9 @@ class LLMHandler(object):
         self,
         user_question: str,
         user_info: dict,
-        chat_history: Optional[List] = [],
-        callbacks: Optional[List] = [],
-    ) -> dict:
+        chat_history: Optional[list] = None,
+        callbacks: Optional[list] = None,
+    ) -> tuple[dict, BaseCombineDocumentsChain]:
         """Answers user question by retrieving context from content stored in
         Vector DB
 
@@ -155,11 +151,12 @@ class LLMHandler(object):
 
         Returns:
             dict: A dictionary with the new chat_history:list and the answer
+            BaseCombineDocumentsChain: docs-with-sources-chain
         """
         if os.environ["CACHE_LLM_RESPONSES"] == "true":
             set_llm_cache(SQLiteCache(database_path=os.environ["CACHE_LLM_DB"]))
 
-        self.docs_with_sources_chain = load_qa_with_sources_chain(
+        docs_with_sources_chain = load_qa_with_sources_chain(
             self.llm,
             chain_type="stuff",
             prompt=WITH_SOURCES_PROMPT,
@@ -167,16 +164,16 @@ class LLMHandler(object):
             verbose=True,
         )
 
-        self.condense_question_chain = LLMChain(
+        condense_question_chain = LLMChain(
             llm=self.llm, prompt=CONDENSE_QUESTION_PROMPT
         )
 
-        # split chain manualy, so that the standalone question doesn't leak into chat
+        # split chain manually, so that the standalone question doesn't leak into chat
         # should we display some waiting message instead?
-        standalone_question = self.condense_question_chain(
+        standalone_question = condense_question_chain(
             {
                 "question": user_question,
-                "chat_history": chat_history,
+                "chat_history": chat_history or [],
                 # "user_info": user_info,
                 # "current_date": date.today().isoformat()
             }
@@ -186,18 +183,18 @@ class LLMHandler(object):
             standalone_question,
         )
 
-        result = self.docs_with_sources_chain(
+        result = docs_with_sources_chain(
             {
                 "question": standalone_question,
                 "input_documents": docs,
                 "user_info": user_info,
                 "current_date": date.today().isoformat(),
             },
-            callbacks=callbacks,
+            callbacks=callbacks or [],
         )
-        return (result, self.docs_with_sources_chain)
+        return result, docs_with_sources_chain
 
-    def get_spotlight_tasks(self, files: List[File], file_hash: str) -> Spotlight:
+    def get_spotlight_tasks(self, files: list[File], file_hash: str) -> Spotlight:
         spotlight = Spotlight(
             files=files,
             file_hash=file_hash,
@@ -215,11 +212,11 @@ class LLMHandler(object):
         spotlight: Spotlight,
         task: SpotlightTask,
         user_info: dict,
-        callbacks: Optional[List] = [],
+        callbacks: Optional[list] = None,
         map_reduce: bool = False,
         token_max: int = 100_000,
-    ) -> dict:
-        map_chain = LLMChain(llm=self.llm, prompt=task.prompt_template)
+    ) -> tuple[Any, StuffDocumentsChain | MapReduceDocumentsChain]:
+        map_chain = LLMChain(llm=self.llm, prompt=task.prompt_template)  # type: ignore
         regular_chain = StuffDocumentsChain(
             llm_chain=map_chain, document_variable_name="text"
         )
@@ -241,20 +238,19 @@ class LLMHandler(object):
         )
 
         if map_reduce:
-            chain = map_reduce_chain
             result = map_reduce_chain.run(
                 user_info=user_info,
                 current_date=date.today().isoformat(),
                 input_documents=spotlight.to_documents(),
-                callbacks=callbacks,
+                callbacks=callbacks or [],
             )
+            return result, map_reduce_chain
         else:
-            chain = regular_chain
             result = regular_chain.run(
                 user_info=user_info,
                 current_date=date.today().isoformat(),
                 input_documents=spotlight.to_documents(),
-                callbacks=callbacks,
+                callbacks=callbacks or [],
             )
 
-        return (result, chain)
+            return result, regular_chain
