@@ -1,9 +1,8 @@
 import json
 import os
 from datetime import date
-from typing import Optional, Any
+from typing import Any, Optional
 
-import dotenv
 from langchain.cache import SQLiteCache
 from langchain.chains import MapReduceDocumentsChain, ReduceDocumentsChain
 from langchain.chains.combine_documents.base import BaseCombineDocumentsChain
@@ -16,8 +15,6 @@ from langchain_community.embeddings import (
     HuggingFaceEmbeddings,
     SentenceTransformerEmbeddings,
 )
-from langchain_community.vectorstores import Chroma
-from pyprojroot import here
 
 from redbox.llm.prompts.chat import (
     CONDENSE_QUESTION_PROMPT,
@@ -34,8 +31,6 @@ from redbox.llm.spotlight.spotlight import (
 from redbox.models.file import Chunk, File
 from redbox.models.spotlight import Spotlight, SpotlightTask
 
-dotenv.load_dotenv(os.path.join(here(), ".env"))
-
 
 class LLMHandler(object):
     """A class to handle RedBox data suffused interactions with a given LLM"""
@@ -44,7 +39,7 @@ class LLMHandler(object):
         self,
         llm,
         user_uuid: str,
-        vector_store: Optional[Chroma] = None,
+        vector_store=None,
         embedding_function: Optional[HuggingFaceEmbeddings] = None,
     ):
         """Initialise LLMHandler
@@ -57,10 +52,6 @@ class LLMHandler(object):
             embedding_function (Optional[HuggingFaceEmbeddings], optional):
             _description_. Defaults to None.
         """
-        self.cache = None
-        if os.environ["CACHE_LLM_RESPONSES"] == "true":
-            self.cache = SQLiteCache(database_path=os.environ["CACHE_LLM_DB"])
-            set_llm_cache(self.cache)
 
         self.llm = llm
         self.user_uuid = user_uuid
@@ -69,21 +60,11 @@ class LLMHandler(object):
             embedding_function or self._create_embedding_function()
         )
 
-        self.vector_store = vector_store or self._create_vector_store()
+        self.vector_store = vector_store
 
         self.memory = ConversationBufferMemory(
             memory_key="chat_history", return_messages=True
         )
-
-    def _create_vector_store(self) -> Chroma:
-        """Initialises Chrome VectorDB on known DB dir in data
-
-        Returns:
-            Chroma: the langchain vectorstore object for Chroma
-        """
-        embedder = self.embedding_function
-        persist_directory = os.path.join("data", self.user_uuid, "db")
-        return Chroma(embedding_function=embedder, persist_directory=persist_directory)
 
     def _create_embedding_function(self) -> SentenceTransformerEmbeddings:
         """Initialises our vectorisation method.
@@ -92,10 +73,6 @@ class LLMHandler(object):
             SentenceTransformerEmbeddings: object to run text embedding
         """
         return SentenceTransformerEmbeddings()
-
-    def clear_cache(self) -> None:
-        if self.cache is not None:
-            self.cache.clear()
 
     def add_chunks_to_vector_store(self, chunks: list[Chunk]) -> None:
         """Takes a list of Chunks and embedds them into the vector store
