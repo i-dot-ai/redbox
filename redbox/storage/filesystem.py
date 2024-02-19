@@ -2,12 +2,13 @@ import json
 import logging
 import os
 import pathlib
-from typing import Any, List
+from typing import Any
 
-from pydantic import BaseModel, TypeAdapter
+from pydantic import TypeAdapter
 from pyprojroot import here
 
 from redbox.models import Chunk, Collection, Feedback, File, SpotlightComplete
+from redbox.models.base import PersistableModel
 from redbox.storage.storage_handler import BaseStorageHandler
 
 logger = logging.Logger(__file__)
@@ -39,7 +40,7 @@ class FileSystemStorageHandler(BaseStorageHandler):
         if not os.path.exists(self.upload_folder):
             os.makedirs(self.upload_folder)
 
-    def write_item(self, item: type[BaseModel]):
+    def write_item(self, item: PersistableModel):
         """Write an object to a data store"""
         with open(
             self.root_path / item.__class__.__name__ / f"{item.uuid}.json",
@@ -60,7 +61,7 @@ class FileSystemStorageHandler(BaseStorageHandler):
             item = TypeAdapter(model).validate_python(item_dict)
             return item
 
-    def read_items(self, item_uuids: List[str], model_type: str) -> list[Any]:
+    def read_items(self, item_uuids: list[str], model_type: str) -> list[Any]:
         """Read a list of objects from a data store"""
         items = []
         for item_uuid in item_uuids:
@@ -72,11 +73,11 @@ class FileSystemStorageHandler(BaseStorageHandler):
                 )
         return items
 
-    def update_item(self, item_uuid: str, item: type[BaseModel]):
+    def update_item(self, item_uuid: str, item: PersistableModel):
         """Update an object in a data store"""
         self.write_item(item)
 
-    def update_items(self, item_uuids: List[str], items: List[type[BaseModel]]):
+    def update_items(self, item_uuids: list[str], items: list[PersistableModel]):
         """Update a list of objects in a data store"""
         for item in items:
             self.write_item(item)
@@ -85,7 +86,7 @@ class FileSystemStorageHandler(BaseStorageHandler):
         """Delete an object from a data store"""
         os.remove(self.root_path / model_type / f"{item_uuid}.json")
 
-    def delete_items(self, item_uuids: List[str], model_type: str):
+    def delete_items(self, item_uuids: list[str], model_type: str):
         """Delete a list of objects from a data store"""
         for item_uuid in item_uuids:
             try:
