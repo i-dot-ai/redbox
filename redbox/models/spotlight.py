@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import Optional
 
 from langchain.chains.base import Chain
 from langchain.prompts import PromptTemplate
@@ -46,15 +46,15 @@ class SpotlightTaskComplete(PersistableModel):
 
 
 class Spotlight(PersistableModel):
-    files: List[File]
+    files: list[File]
     file_hash: str
-    tasks: List[SpotlightTask]
+    tasks: list[SpotlightTask]
 
-    def to_documents(self) -> List[Document]:
+    def to_documents(self) -> list[Document]:
         return [file.to_document() for file in self.files]
 
 
 class SpotlightComplete(PersistableModel):
     file_hash: str
-    file_uuids: List[str]
-    tasks: List[SpotlightTaskComplete]
+    file_uuids: list[str]
+    tasks: list[SpotlightTaskComplete]

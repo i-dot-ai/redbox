@@ -1,4 +1,4 @@
-from typing import Optional, Union
+from typing import Optional
 from uuid import uuid4
 
 from langchain.chains.base import Chain
@@ -24,7 +24,7 @@ class ChatMessage(PersistableModel):
 
     @field_serializer("message")
     def serialise_message(
-        self, message: Union[AIMessage, HumanMessage, SystemMessage], _info
+        self, message: AIMessage | HumanMessage | SystemMessage, _info
     ):
         if isinstance(message, (AIMessage, HumanMessage, SystemMessage)):
             return message.dict()

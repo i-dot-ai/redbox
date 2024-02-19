@@ -1,5 +1,3 @@
-from typing import List
-
 from elasticsearch import Elasticsearch, NotFoundError
 from pyprojroot import here
 
@@ -47,7 +45,7 @@ class ElasticsearchStorageHandler(BaseStorageHandler):
         item = model(**result.body["_source"])
         return item
 
-    def read_items(self, item_uuids: List[str], model_type: str):
+    def read_items(self, item_uuids: list[str], model_type: str):
         target_index = f"{self.root_index}-{model_type.lower()}"
         result = self.es_client.mget(index=target_index, body={"ids": item_uuids})
 
@@ -66,7 +64,7 @@ class ElasticsearchStorageHandler(BaseStorageHandler):
             body=item.model_dump(),
         )
 
-    def update_items(self, item_uuids: List[str], items: List[PersistableModel]):
+    def update_items(self, item_uuids: list[str], items: list[PersistableModel]):
         for item_uuid, item in zip(item_uuids, items):
             self.update_item(item_uuid, item)
 
@@ -75,7 +73,7 @@ class ElasticsearchStorageHandler(BaseStorageHandler):
         result = self.es_client.delete(index=target_index, id=item_uuid)
         return result
 
-    def delete_items(self, item_uuids: List[str], model_type: str):
+    def delete_items(self, item_uuids: list[str], model_type: str):
         target_index = f"{self.root_index}-{model_type.lower()}"
         result = self.es_client.mdelete(index=target_index, body={"ids": item_uuids})  # type: ignore
         return result

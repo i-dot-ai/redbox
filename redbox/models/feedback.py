@@ -1,4 +1,4 @@
-from typing import List, Optional, Union
+from typing import Optional
 
 from langchain.chains.base import Chain
 from pydantic import field_serializer
@@ -7,7 +7,7 @@ from redbox.models.base import PersistableModel
 
 
 class Feedback(PersistableModel):
-    input: Union[str, List[str]]
+    input: str | list[str]
     # langchain.chains.base.Chain needs pydantic v1, breaks
     # https://python.langchain.com/docs/guides/pydantic_compatibility
     chain: Optional[object] = None
