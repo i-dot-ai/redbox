@@ -2,7 +2,6 @@ import logging
 import os
 from contextlib import asynccontextmanager
 from datetime import datetime
-from typing import List
 from uuid import uuid4
 
 import pydantic
@@ -22,23 +21,23 @@ class ModelInfo(pydantic.BaseModel):
 class Embedding(pydantic.BaseModel):
     object: str = "embedding"
     index: int
-    embedding: List[float]
+    embedding: list[float]
 
 
 class EmbeddingResponse(pydantic.BaseModel):
     object: str = "list"
-    data: List[Embedding]
+    data: list[Embedding]
     embedding_id: str
     model: str
     model_info: ModelInfo
 
 
 class EmbeddingRequest(pydantic.BaseModel):
-    sentences: List[str]
+    sentences: list[str]
 
 
 class ModelListResponse(pydantic.BaseModel):
-    models: List[ModelInfo]
+    models: list[ModelInfo]
 
 
 class StatusResponse(pydantic.BaseModel):
@@ -174,12 +173,12 @@ def get_model(model: str):
 
 
 @app.post("/models/{model}/embed", response_model=EmbeddingResponse, tags=["models"])
-def embed_sentences(model: str, sentences: List[str]):
+def embed_sentences(model: str, sentences: list[str]):
     """Embeds a list of sentences using a given model
 
     Args:
         model (str): The name of the model
-        sentences (List[str]): A list of sentences
+        sentences (list[str]): A list of sentences
 
     Returns:
         EmbeddingResponse: The embeddings of the sentences

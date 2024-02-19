@@ -47,3 +47,7 @@ jobs:
     - name: Format code
       run: |
         make format
+
+    - name: Type check
+      run: |
+        make checktypes
