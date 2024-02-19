@@ -11,6 +11,7 @@ on:
       - 'chore/**'
       - 'bugfix/**'
       - 'hotfix/**'
+      - 'dependabot/**'
       - 'develop'
   workflow_dispatch:
 
