@@ -5,7 +5,7 @@ import pathlib
 import uuid
 from datetime import datetime
 from io import BytesIO
-from typing import Dict, List, Optional, Union
+from typing import Optional
 
 import boto3
 import cognitojwt
@@ -363,7 +363,7 @@ def load_llm_handler(ENV, update=False) -> None:
             )
 
 
-def hash_list_of_files(list_of_files: List[File]) -> str:
+def hash_list_of_files(list_of_files: list[File]) -> str:
     """Returns a hash of the list of files
 
     Args:
@@ -483,8 +483,8 @@ class FilePreview(object):
 
 def replace_doc_ref(
     output_for_render: str = "",
-    files: List[File] = [],
-    page_numbers: List = [],
+    files: Optional[list[File]] = None,
+    page_numbers: Optional[list] = None,
     flexible=False,
 ) -> str:
     """Replaces references to files in the output text with links to the files
@@ -498,6 +498,9 @@ def replace_doc_ref(
     Returns:
         str: The modified text
     """
+    files = files or []
+    page_numbers = page_numbers or []
+
     if len(page_numbers) != len(files):
         page_numbers = [None for _ in files]
 
@@ -540,8 +543,8 @@ def eval_csv_to_squad_json(csv_path: str, json_path: str) -> None:
 
 
 def submit_feedback(
-    feedback: Dict,
-    input: Union[str, List[str]],
+    feedback: dict,
+    input: str | list[str],
     output: str,
     creator_user_uuid: str,
     chain: Optional[Chain] = None,

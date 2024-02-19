@@ -1,7 +1,7 @@
 import json
 import os
 from datetime import date
-from typing import List, Optional, Any
+from typing import Optional, Any
 
 import dotenv
 from langchain.cache import SQLiteCache
@@ -97,7 +97,7 @@ class LLMHandler(object):
         if self.cache is not None:
             self.cache.clear()
 
-    def add_chunks_to_vector_store(self, chunks: List[Chunk]) -> None:
+    def add_chunks_to_vector_store(self, chunks: list[Chunk]) -> None:
         """Takes a list of Chunks and embedds them into the vector store
 
         Args:
@@ -138,8 +138,8 @@ class LLMHandler(object):
         self,
         user_question: str,
         user_info: dict,
-        chat_history: Optional[List] = None,
-        callbacks: Optional[List] = None,
+        chat_history: Optional[list] = None,
+        callbacks: Optional[list] = None,
     ) -> tuple[dict, BaseCombineDocumentsChain]:
         """Answers user question by retrieving context from content stored in
         Vector DB
@@ -194,7 +194,7 @@ class LLMHandler(object):
         )
         return result, docs_with_sources_chain
 
-    def get_spotlight_tasks(self, files: List[File], file_hash: str) -> Spotlight:
+    def get_spotlight_tasks(self, files: list[File], file_hash: str) -> Spotlight:
         spotlight = Spotlight(
             files=files,
             file_hash=file_hash,
@@ -212,7 +212,7 @@ class LLMHandler(object):
         spotlight: Spotlight,
         task: SpotlightTask,
         user_info: dict,
-        callbacks: Optional[List] = None,
+        callbacks: Optional[list] = None,
         map_reduce: bool = False,
         token_max: int = 100_000,
     ) -> tuple[Any, StuffDocumentsChain | MapReduceDocumentsChain]:

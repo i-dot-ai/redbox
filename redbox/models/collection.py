@@ -1,5 +1,3 @@
-from typing import List
-
 from pydantic import Field
 
 from redbox.models.base import PersistableModel
@@ -7,7 +5,7 @@ from redbox.models.base import PersistableModel
 
 class Collection(PersistableModel):
     name: str = Field()
-    files: List[str] = Field(default_factory=list)
+    files: list[str] = Field(default_factory=list)
 
     def remove_file(self, file_name: str):
         self.files = [x for x in self.files if x != file_name]

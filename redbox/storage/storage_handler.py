@@ -1,5 +1,4 @@
 from abc import ABC, abstractmethod
-from typing import List
 
 
 from redbox.models import Chunk, Collection, Feedback, File, SpotlightComplete
@@ -44,7 +43,7 @@ class BaseStorageHandler(ABC):
         pass
 
     @abstractmethod
-    def read_items(self, item_uuids: List[str], model_type: str):
+    def read_items(self, item_uuids: list[str], model_type: str):
         """Read a list of objects from a data store"""
         pass
 
@@ -54,7 +53,7 @@ class BaseStorageHandler(ABC):
         pass
 
     @abstractmethod
-    def update_items(self, item_uuids: List[str], items: List[PersistableModel]):
+    def update_items(self, item_uuids: list[str], items: list[PersistableModel]):
         """Update a list of objects in a data store"""
         pass
 
@@ -64,7 +63,7 @@ class BaseStorageHandler(ABC):
         pass
 
     @abstractmethod
-    def delete_items(self, item_uuids: List[str], model_type: str):
+    def delete_items(self, item_uuids: list[str], model_type: str):
         """Delete a list of objects from a data store"""
         pass
 

@@ -1,5 +1,4 @@
 from itertools import compress
-from typing import Dict, List
 
 import numpy as np
 import scipy
@@ -9,12 +8,12 @@ from redbox.models.file import Chunk
 
 
 def cluster_chunks(
-    chunks: List[Chunk],
+    chunks: list[Chunk],
     desired_chunk_size: int = 300,
     embed_model: str = "all-MiniLM-L6-v2",
     dist_weight_split: float = 0.2,
     dist_use_log: bool = True,
-) -> List[Chunk]:
+) -> list[Chunk]:
     """Merge together adjacent chanks based ion their semantic similarity (distance after sentence embedding)
     and length(token count)
 
@@ -138,7 +137,7 @@ def create_pdist(token_counts, pair_embed_dist, weight_embed_dist=0.2, use_log=T
     return combined_dist
 
 
-def merge_chunk_metadata(meta_in: List[Dict]) -> Dict:
+def merge_chunk_metadata(meta_in: list[dict]) -> dict:
     """
     Combine metadata for multiple chunks from the same document.
     """

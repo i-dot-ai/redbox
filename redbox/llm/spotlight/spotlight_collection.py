@@ -1,6 +1,6 @@
 from collections import defaultdict
 from datetime import date
-from typing import List
+from typing import Optional
 
 from langchain.schema import HumanMessage, SystemMessage
 
@@ -14,7 +14,7 @@ class SpotlightCollection(object):
         object (_type_): _description_
     """
 
-    def __init__(self, spotlights: List[dict]) -> None:
+    def __init__(self, spotlights: list[dict]) -> None:
         self.spotlights = spotlights
         self.combined_spotlight_tasks = defaultdict(list)
 
@@ -26,7 +26,12 @@ class SpotlightCollection(object):
         self.combined_spotlight_dict: dict = {"combined_task_outputs": {}}
 
     def combine_spotlight_task_outputs(
-        self, task_outputs: List[dict], task_id, user_info, llm, callbacks: list = []
+        self,
+        task_outputs: list[dict],
+        task_id,
+        user_info,
+        llm,
+        callbacks: Optional[list] = None,
     ):
         """Combine the outputs of a task across all spotlights."""
         spotlight_payload = ""
@@ -44,6 +49,6 @@ class SpotlightCollection(object):
             HumanMessage(content=spotlight_payload),
         ]
 
-        result = llm(messages_to_send, callbacks=callbacks)
+        result = llm(messages_to_send, callbacks=callbacks or [])
         self.combined_spotlight_dict[task_id] = result
         return result
