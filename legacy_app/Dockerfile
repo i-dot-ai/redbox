@@ -1,4 +1,4 @@
-FROM python:3.11
+FROM python:3.11-slim
 
 RUN apt-get update
 RUN apt-get install -y libgl-dev libmagic-dev inetutils-ping
