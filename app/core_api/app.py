@@ -1,8 +1,10 @@
+import json
 import logging
 import os
 from datetime import datetime
 
 import boto3
+import pika
 import pydantic
 from elasticsearch import Elasticsearch
 from fastapi import FastAPI, UploadFile
@@ -24,6 +26,8 @@ ENV = {
     "ELASTIC_SCHEME": None,
     "OBJECT_STORE": None,
     "BUCKET_NAME": None,
+    "INGEST_QUEUE_NAME": None,
+    "QUEUE": None,
 }
 
 for key in ENV:
@@ -52,6 +56,39 @@ elif ENV["OBJECT_STORE"] == "s3":
         aws_secret_access_key=ENV["AWS_SECRET_ACCESS_KEY"],
         region_name=ENV["AWS_REGION"],
     )
+
+
+# === Queues ===
+
+if ENV["QUEUE"] == "rabbitmq":
+    for key in ["RABBITMQ_HOST", "RABBITMQ_PORT", "RABBITMQ_USER", "RABBITMQ_PASSWORD"]:
+        ENV[key] = os.environ[key]
+
+    connection = pika.BlockingConnection(
+        pika.ConnectionParameters(
+            host=ENV["RABBITMQ_HOST"],
+            port=int(ENV["RABBITMQ_PORT"]),
+            credentials=pika.PlainCredentials(
+                ENV["RABBITMQ_USER"], ENV["RABBITMQ_PASSWORD"]
+            ),
+            connection_attempts=5,
+            retry_delay=5,
+        )
+    )
+    channel = connection.channel()
+    channel.queue_declare(queue=ENV["INGEST_QUEUE_NAME"], durable=True)
+elif ENV["QUEUE"] == "sqs":
+    for key in ["AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "AWS_REGION"]:
+        ENV[key] = os.environ[key]
+
+    sqs = boto3.client(
+        "sqs",
+        aws_access_key_id=ENV["AWS_ACCESS_KEY_ID"],
+        aws_secret_access_key=ENV["AWS_SECRET_ACCESS_KEY"],
+        region_name=ENV["AWS_REGION"],
+    )
+
+    raise NotImplementedError("SQS is not yet implemented")
 
 
 # === Storage ===
@@ -209,5 +246,11 @@ def ingest_file(file_uuid: str) -> File:
         File: The file that was ingested
     """
     file = storage_handler.read_item(file_uuid, model_type="File")
+
+    channel.basic_publish(
+        exchange="redbox-core-exchange",
+        routing_key=ENV["INGEST_QUEUE_NAME"],
+        body=json.dumps(file.model_dump(), ensure_ascii=False),
+    )
 
     return file
