@@ -1,5 +1,5 @@
 import tempfile
-from typing import List, Optional
+from typing import Optional
 
 import markdown
 from dateutil import parser
@@ -20,7 +20,7 @@ def lookup_indentedness(raw: str, line_str_to_match: str):
 
 def spotlight_complete_to_docx(
     spotlight_complete: SpotlightComplete,
-    files: List[File],
+    files: list[File],
     title: Optional[str] = None,
 ):
     document = Document()

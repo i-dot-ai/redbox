@@ -1,20 +1,11 @@
-from datetime import datetime
-from typing import List, Optional
-from uuid import uuid4
+from pydantic import Field
 
-from pydantic import BaseModel, Field, computed_field
+from redbox.models.base import PersistableModel
 
 
-class Collection(BaseModel):
-    uuid: str = Field(default_factory=lambda: str(uuid4()))
+class Collection(PersistableModel):
     name: str = Field()
-    files: List[str] = Field(default=[])
-    created_datetime: str = Field(default_factory=lambda: datetime.utcnow().isoformat())
-    creator_user_uuid: Optional[str]
-
-    @computed_field
-    def model_type(self) -> str:
-        return self.__class__.__name__
+    files: list[str] = Field(default_factory=list)
 
     def remove_file(self, file_name: str):
         self.files = [x for x in self.files if x != file_name]

@@ -1,5 +1,3 @@
-from typing import List
-
 from redbox.models.file import Chunk, File
 from redbox.parsing.chunk_clustering import cluster_chunks
 from redbox.parsing.chunkers import other_chunker
@@ -39,7 +37,7 @@ class FileChunker:
         file_url: str,
         chunk_clustering: bool = True,
         creator_user_uuid="dev",
-    ) -> List[Chunk]:
+    ) -> list[Chunk]:
         """_summary_
 
         Args:

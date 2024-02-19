@@ -5,7 +5,7 @@ import pathlib
 import uuid
 from datetime import datetime
 from io import BytesIO
-from typing import Dict, List, Optional, Union
+from typing import Optional
 
 import boto3
 import cognitojwt
@@ -85,6 +85,9 @@ def populate_user_info(ENV: dict) -> dict:
         else:
             st.sidebar.markdown("Running Locally")
             return {"name": "dev", "email": "dev@example.com"}
+
+    # TODO: is this the right thing to do here?
+    return {}
 
 
 def init_session_state() -> dict:
@@ -254,7 +257,7 @@ def init_session_state() -> dict:
 
 
 def get_link_html(
-    page: str, text: str, query_dict: dict = None, target: str = "_self"
+    page: str, text: str, query_dict: Optional[dict] = None, target: str = "_self"
 ) -> str:
     """Returns a link in HTML format
 
@@ -276,7 +279,7 @@ def get_link_html(
     return f"<a href='/{page}{query}' target={target}><button style='background-color: white;border-radius: 8px;'>{text}</button></a>"
 
 
-def get_file_link(file: File, page: int = None) -> str:
+def get_file_link(file: File, page: Optional[int] = None) -> str:
     """Returns a link to a file
 
     Args:
@@ -293,7 +296,7 @@ def get_file_link(file: File, page: int = None) -> str:
         presentation_name = file.name
     query_dict = {"file_uuid": file.uuid}
     if page is not None:
-        query_dict["page_number"] = page[0]
+        query_dict["page_number"] = page
 
     link_html = get_link_html(
         page="Preview_Files",
@@ -357,7 +360,7 @@ def load_llm_handler(ENV, update=False) -> None:
             )
 
 
-def hash_list_of_files(list_of_files: List[File]) -> str:
+def hash_list_of_files(list_of_files: list[File]) -> str:
     """Returns a hash of the list of files
 
     Args:
@@ -422,7 +425,7 @@ class FilePreview(object):
         file_bytes = stream["Body"].read()
         render_method(file, file_bytes)
 
-    def _render_pdf(self, file: File, page_number: int = None) -> None:
+    def _render_pdf(self, file: File, page_number: Optional[int] = None) -> None:
         stream = st.session_state.s3_client.get_object(
             Bucket=st.session_state.BUCKET_NAME, Key=file.name
         )
@@ -477,8 +480,8 @@ class FilePreview(object):
 
 def replace_doc_ref(
     output_for_render: str = "",
-    files: List[File] = [],
-    page_numbers: List = [],
+    files: Optional[list[File]] = None,
+    page_numbers: Optional[list] = None,
     flexible=False,
 ) -> str:
     """Replaces references to files in the output text with links to the files
@@ -492,6 +495,9 @@ def replace_doc_ref(
     Returns:
         str: The modified text
     """
+    files = files or []
+    page_numbers = page_numbers or []
+
     if len(page_numbers) != len(files):
         page_numbers = [None for _ in files]
 
@@ -534,8 +540,8 @@ def eval_csv_to_squad_json(csv_path: str, json_path: str) -> None:
 
 
 def submit_feedback(
-    feedback: Dict,
-    input: Union[str, List[str]],
+    feedback: dict,
+    input: str | list[str],
     output: str,
     creator_user_uuid: str,
     chain: Optional[Chain] = None,

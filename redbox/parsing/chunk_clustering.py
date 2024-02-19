@@ -1,5 +1,4 @@
 from itertools import compress
-from typing import Dict, List
 
 import numpy as np
 import scipy
@@ -9,12 +8,12 @@ from redbox.models.file import Chunk
 
 
 def cluster_chunks(
-    chunks: List[Chunk],
+    chunks: list[Chunk],
     desired_chunk_size: int = 300,
     embed_model: str = "all-MiniLM-L6-v2",
     dist_weight_split: float = 0.2,
     dist_use_log: bool = True,
-) -> List[Chunk]:
+) -> list[Chunk]:
     """Merge together adjacent chanks based ion their semantic similarity (distance after sentence embedding)
     and length(token count)
 
@@ -33,11 +32,11 @@ def cluster_chunks(
             List[Chunk]: A list of all the (merged) chunks extracted from the given file.
     """
     # filter out empty chunks
-    chunks = [chunk for chunk in chunks if chunk.token_count > 0]
+    chunks = [chunk for chunk in chunks if chunk.token_count > 0]  # type: ignore
     if len(chunks) < 2:
         out_chunks = chunks
     else:
-        token_counts = [chunk.token_count for chunk in chunks]
+        token_counts = [chunk.token_count for chunk in chunks]  # type: ignore
         # calculate simple vector embedding and distances between adjacent chunks
         embed = SentenceTransformerEmbeddings(model_name=embed_model)
         chunk_embedding = [embed.embed_query(chunk.text) for chunk in chunks]
@@ -57,7 +56,7 @@ def cluster_chunks(
         # Distance approach is Farthest Point Algorithm (complete linkage) which
         # gets the maximum distance between all the points in the cluster
         hc = scipy.cluster.hierarchy.linkage(dist_triu, "complete")
-        num_clusters = round(np.sum(token_counts) / desired_chunk_size)
+        num_clusters = round(np.sum(token_counts) / desired_chunk_size)  # type: ignore
         out_clusters = [
             lab[0]
             for lab in scipy.cluster.hierarchy.cut_tree(hc, n_clusters=num_clusters)
@@ -138,15 +137,15 @@ def create_pdist(token_counts, pair_embed_dist, weight_embed_dist=0.2, use_log=T
     return combined_dist
 
 
-def merge_chunk_metadata(meta_in: List[Dict]) -> Dict:
+def merge_chunk_metadata(meta_in: list[dict]) -> dict:
     """
     Combine metadata for multiple chunks from the same document.
     """
     # collect all the possible key values
-    all_keys = set()
+    all_keys: set = set()
     for meta in meta_in:
         all_keys = all_keys.union(meta.keys())
-    meta_out = {}
+    meta_out: dict = {}
     for key in all_keys:
         # collect all the values for that key in each metadata
         one_meta_to_collapse = [meta[key] for meta in meta_in if key in meta]
