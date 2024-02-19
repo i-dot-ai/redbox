@@ -110,7 +110,8 @@ async def lifespan(app: FastAPI):
     # End of the setup phase, yield control back to FastAPI
     yield
     # FastAPI is shutting down, perform cleanup...
-    poll_thread.join()
+    if poll_thread is not None:
+        poll_thread.join()
     log.info("Received shutdown event in the lifespan context, cleaning up.")
     IS_READY = False
     models.clear()
