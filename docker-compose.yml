@@ -22,8 +22,8 @@ services:
   embed:
     image: redbox-embed:latest
     build:
-      context: ./app/workers/embed
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: ./app/workers/embed/Dockerfile
     ports:
       - 5000:5000
     environment:
@@ -31,7 +31,23 @@ services:
       - MODEL_NAMES=all-mpnet-base-v2|paraphrase-multilingual-MiniLM-L12-v2
     networks:
       - redbox-app-network
-
+  core-api:
+    image: redbox-core-api:latest
+    build:
+      context: .
+      dockerfile: ./app/core_api/Dockerfile
+    ports:
+      - 5002:5002
+    environment:
+      - PORT=5002
+    env_file:
+      - .env
+    networks:
+      - redbox-app-network
+    depends_on:
+      - elasticsearch
+      - minio
+      - rabbitmq
   minio:
     image: minio/minio
     expose:
@@ -41,8 +57,8 @@ services:
       - "9000:9000"
       - "9001:9001"
     environment:
-      MINIO_ACCESS_KEY: minioadmin
-      MINIO_SECRET_KEY: minioadmin
+      - MINIO_ACCESS_KEY=minioadmin
+      - MINIO_SECRET_KEY=minioadmin
     command: server --console-address ":9001" /data
     networks:
       - redbox-app-network

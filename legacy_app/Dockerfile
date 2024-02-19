@@ -9,12 +9,9 @@ COPY pyproject.toml poetry.lock ./
 RUN poetry install --no-root --no-ansi
 
 ADD redbox/ /app/redbox
-ADD download_embedder.py /app
 ADD legacy_app /app
 
 WORKDIR /app/
-
-RUN poetry run python download_embedder.py
 
 EXPOSE 8501
 
