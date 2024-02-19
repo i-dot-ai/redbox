@@ -12,7 +12,7 @@ app:
 	poetry run streamlit run legacy_app/Welcome.py --server.port 8501
 
 run:
-	docker compose up -d elasticsearch kibana app embed minio miniocreatebuckets core-api
+	docker compose up -d elasticsearch kibana app embed minio miniocreatebuckets rabbitmq core-api
 
 stop:
 	docker compose down

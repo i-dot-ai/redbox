@@ -1,0 +1,76 @@
+{
+    "vhosts": [
+        {
+            "name": "/"
+        }
+    ],
+    "queues": [
+        {
+            "name": "redbox-ingest-queue",
+            "vhost": "/",
+            "durable": true,
+            "auto_delete": false,
+            "arguments": {
+                "x-queue-type": "classic"
+            }
+        },
+        {
+            "name": "redbox-embed-queue",
+            "vhost": "/",
+            "durable": true,
+            "auto_delete": false,
+            "arguments": {
+                "x-queue-type": "classic"
+            }
+        }
+    ],
+    "exchanges": [
+        {
+            "name": "redbox-core-exchange",
+            "vhost": "/",
+            "type": "direct",
+            "durable": true,
+            "auto_delete": false,
+            "internal": false,
+            "arguments": {}
+        }
+    ],
+    "bindings": [
+        {
+            "source": "redbox-core-exchange",
+            "vhost": "/",
+            "destination": "redbox-ingest-queue",
+            "destination_type": "queue",
+            "routing_key": "redbox-ingest-queue",
+            "arguments": {}
+        },
+        {
+            "source": "redbox-core-exchange",
+            "vhost": "/",
+            "destination": "redbox-embed-queue",
+            "destination_type": "queue",
+            "routing_key": "redbox-embed-queue",
+            "arguments": {}
+        }
+    ],
+    "users": [
+        {
+            "name": "guest",
+            "password_hash": "BMfxN8drrYcIqXZMr+pWTpDT0nMcOagMduLX0bjr4jwud/pN",
+            "hashing_algorithm": "rabbit_password_hashing_sha256",
+            "tags": [
+                "administrator"
+            ],
+            "limits": {}
+        }
+    ],
+    "permissions": [
+        {
+            "user": "guest",
+            "vhost": "/",
+            "configure": ".*",
+            "write": ".*",
+            "read": ".*"
+        }
+    ]
+}
