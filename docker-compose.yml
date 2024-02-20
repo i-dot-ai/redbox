@@ -27,16 +27,26 @@ services:
     ports:
       - 5000:5000
     environment:
-      - PORT=5000
-      - MODEL_NAMES=all-mpnet-base-v2|paraphrase-multilingual-MiniLM-L12-v2
-      - QUEUE_URI=amqp://guest:guest@rabbitmq:5672?heartbeat=60
-      - EMBED_QUEUE_NAME=redbox-embed-queue
+      - EMBEDDING_MODEL=all-mpnet-base-v2
     depends_on:
-      - rabbitmq
-    links:
       - rabbitmq
     networks:
       - redbox-app-network
+    restart: unless-stopped
+  ingest:
+    image: redbox-ingest:latest
+    build:
+      context: .
+      dockerfile: ./app/workers/ingest/Dockerfile
+    env_file:
+      - .env
+    depends_on:
+      - rabbitmq
+      - elasticsearch
+      - minio
+    networks:
+      - redbox-app-network
+    restart: unless-stopped
   core-api:
     image: redbox-core-api:latest
     build:
@@ -54,6 +64,7 @@ services:
       - elasticsearch
       - minio
       - rabbitmq
+    restart: unless-stopped
   minio:
     image: minio/minio
     expose:
