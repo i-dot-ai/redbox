@@ -77,6 +77,7 @@ if ENV["QUEUE"] == "rabbitmq":
     )
     channel = connection.channel()
     channel.queue_declare(queue=ENV["INGEST_QUEUE_NAME"], durable=True)
+
 elif ENV["QUEUE"] == "sqs":
     for key in ["AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "AWS_REGION"]:
         ENV[key] = os.environ[key]
@@ -168,7 +169,7 @@ def health():
 
 
 @app.post("/file/upload", response_model=File, tags=["file"])
-async def create_upload_file(file: UploadFile) -> File:
+async def create_upload_file(file: UploadFile, ingest=True) -> File:
     """Upload a file to the object store and create a record in the database
 
     Args:
@@ -202,6 +203,9 @@ async def create_upload_file(file: UploadFile) -> File:
     )
 
     storage_handler.write_item(file_record)
+
+    if ingest:
+        ingest_file(file_record.uuid)
 
     return file_record
 
