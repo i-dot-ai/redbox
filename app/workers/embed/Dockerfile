@@ -1,6 +1,4 @@
-FROM python:3.11-slim
-
-ARG MODEL_NAMES=all-mpnet-base-v2|paraphrase-multilingual-MiniLM-L12-v2
+FROM python:3.11
 
 RUN pip install poetry
 
