@@ -30,6 +30,7 @@ sentence-transformers = "^2.3.1"
 
 [tool.poetry.group.ingest.dependencies]
 unstructured = {version = "^0.12.4", extras = ["all-docs"]}
+opencv-python-headless = "^4.9.0.80"
 
 
 [tool.poetry.group.dev.dependencies]
