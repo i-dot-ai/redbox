@@ -2,11 +2,9 @@ import os
 
 from sentence_transformers import SentenceTransformer
 
-MODEL_NAMES = os.getenv(
-    "MODEL_NAMES", "all-mpnet-base-v2|paraphrase-multilingual-MiniLM-L12-v2"
-)
+EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL", "all-mpnet-base-v2")
 
-models_to_download = MODEL_NAMES.split("|")
+models_to_download = EMBEDDING_MODEL.split("|")
 
 models_path = "models/"
 
