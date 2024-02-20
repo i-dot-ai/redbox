@@ -7,7 +7,13 @@ from redbox.storage.storage_handler import BaseStorageHandler
 class ElasticsearchStorageHandler(BaseStorageHandler):
     """Storage Handler for Elasticsearch"""
 
-    def __init__(self, es_client: Elasticsearch, root_index: str = "redbox"):
+    def __init__(
+        self,
+        es_client: Elasticsearch,
+        root_index: str = "redbox",
+        minute_timeout: int = 5,
+        query_size_limit: int = 10000,
+    ):
         """Initialise the storage handler
 
         Args:
@@ -16,6 +22,8 @@ class ElasticsearchStorageHandler(BaseStorageHandler):
         """
         self.es_client = es_client
         self.root_index = root_index
+        self.minute_timeout = minute_timeout
+        self.query_size_limit = query_size_limit
 
     def write_item(self, item: PersistableModel):
         model_type = item.model_type.lower()  # type: ignore
@@ -67,19 +75,23 @@ class ElasticsearchStorageHandler(BaseStorageHandler):
 
     def delete_item(self, item_uuid: str, model_type: str):
         target_index = f"{self.root_index}-{model_type.lower()}"
-        result = self.es_client.delete(index=target_index, id=item_uuid)
+        result = self.es_client.delete(index=target_index, body={"id": item_uuid})
         return result
 
     def delete_items(self, item_uuids: list[str], model_type: str):
         target_index = f"{self.root_index}-{model_type.lower()}"
-        result = self.es_client.mdelete(index=target_index, body={"ids": item_uuids})  # type: ignore
+        result = self.es_client.delete(index=target_index, body={"ids": item_uuids})  # type: ignore
         return result
 
     def read_all_items(self, model_type: str):
         target_index = f"{self.root_index}-{model_type.lower()}"
         try:
+            # SELECT all items (no limit with X minute timeout)
             result = self.es_client.search(
-                index=target_index, body={"query": {"match_all": {}}}
+                index=target_index,
+                body={"query": {"match_all": {}}},
+                request_timeout=f"{self.minute_timeout}m",
+                size=self.query_size_limit,
             )
         except NotFoundError:
             print(f"Index {target_index} not found. Returning empty list.")
@@ -93,7 +105,10 @@ class ElasticsearchStorageHandler(BaseStorageHandler):
         target_index = f"{self.root_index}-{model_type.lower()}"
         try:
             result = self.es_client.search(
-                index=target_index, body={"query": {"match_all": {}}}
+                index=target_index,
+                body={"query": {"match_all": {}}},
+                request_timeout=f"{self.minute_timeout}m",
+                size=self.query_size_limit,
             )
         except NotFoundError:
             print(f"Index {target_index} not found. Returning empty list.")
