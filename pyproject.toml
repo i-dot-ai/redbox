@@ -26,7 +26,7 @@ fastapi = "^0.109.2"
 streamlit = "^1.31.1"
 lxml = "^5.1.0"
 pypdf2 = "^3.0.1"
-pre-commit = "^3.6.1"
+pre-commit = "^3.6.2"
 pyprojroot = "^0.3.0"
 python-dotenv = "^1.0.1"
 unstructured = {extras = ["all-docs"], version = "^0.12.4"}
@@ -45,7 +45,7 @@ ruff = "^0.2.1"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.0.1"
-pre-commit = "^3.6.1"
+pre-commit = "^3.6.2"
 pylint = "^3.0.3"
 mypy = "^1.8.0"
 types-python-dateutil = "^2.8.19.20240106"
