@@ -65,3 +65,59 @@ redbox-copilot/
 ```
 
 Where the top level `pyproject.toml` is currently closely associated with `lagacy_app` and `redbox`.
+
+## Troubleshooting
+
+#### Error: Elasticsearch 137
+
+```commandline
+ERROR: Elasticsearch exited unexpectedly, with exit code 137
+```
+This is caused by Elasticsearch not having enough memory.
+
+Increase total memory available to 8gb.
+
+```commandline
+colima down
+colima start --memory 8
+```
+
+
+#### Error: RabbitMQ permissions
+```commandline
+rabbitmq-1            | chown: /var/lib/rabbitmq: Permission denied
+```
+
+This is caused my rabbitmq not having access the volumes defined in docker-compose.yml.
+
+First try running the following:
+
+```commandline
+chmod -R 777 ./data
+chmod -R 777 ./infra
+```
+
+If this doesn't work then update the `rabbitmq` service in the `docker-compose.yml`
+by adding a new `user` key so that the container assumes your own identity, i.e.:
+
+```yaml
+  rabbitmq:
+    image: rabbitmq:3-management
+    user: "{UID}:{GID}"
+```
+
+Where `UID` and `GID` can be found by running `id -u` and `id -g` respectively.
+
+#### Error: Docker... no space left on device
+
+```commandline
+docker: /var/lib/... no space left on device
+```
+
+This is caused by your own laptop being too full to create a new image.
+
+Clear out old docker artefacts:
+
+```commandline
+docker system prune --all --force
+```
