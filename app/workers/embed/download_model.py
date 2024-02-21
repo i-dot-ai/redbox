@@ -11,4 +11,4 @@ models_to_download = MODEL_NAMES.split("|")
 models_path = "models/"
 
 for model in models_to_download:
-    SentenceTransformer(model, cache_folder=models_path)
+    model = SentenceTransformer(model, cache_folder=models_path)
