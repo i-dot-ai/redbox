@@ -15,6 +15,10 @@ python-multipart = "^0.0.9"
 pika = "^1.3.2"
 
 
+[tool.poetry.group.add.dependencies]
+pytest = "^8.0.1"
+httpx = "^0.27.0"
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"

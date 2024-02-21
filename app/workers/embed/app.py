@@ -5,7 +5,7 @@ from datetime import datetime
 from uuid import uuid4
 
 import pydantic
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.responses import RedirectResponse
 from sentence_transformers import SentenceTransformer
 
@@ -167,8 +167,9 @@ def get_model(model: str):
         ModelInfo: Information about the model
     """
 
-    if model not in models:
-        return {"message": f"Model {model} not found"}
+    if model not in model_info:
+        raise HTTPException(status_code=404, detail=f"Model {model} not found")
+
     return model_info[model]
 
 
@@ -185,7 +186,7 @@ def embed_sentences(model: str, sentences: list[str]):
     """
 
     if model not in models:
-        return {"message": f"Model {model} not found"}
+        raise HTTPException(status_code=404, detail=f"Model {model} not found")
 
     model_obj = models[model]
     embeddings = model_obj.encode(sentences)
