@@ -59,12 +59,12 @@ redbox-copilot/
 ├── legacy_app/
 │  └── Dockerfile
 ├── redbox/
+│  └── pyproject.toml
 ├── docker-compose.yaml
-├── pyproject.toml
 └── README.md
 ```
 
-Where the top level `pyproject.toml` is currently closely associated with `lagacy_app` and `redbox`.
+Note that the redbox `pyproject.toml` is currently also closely associated with `lagacy_app`.
 
 ## Troubleshooting
 
