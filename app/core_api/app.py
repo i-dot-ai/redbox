@@ -211,7 +211,7 @@ async def create_upload_file(file: UploadFile, ingest=True) -> File:
 
 
 @app.get("/file/{file_uuid}", response_model=File, tags=["file"])
-def get_file(file_uuid: str) -> File:
+def get_file(file_uuid: UUID) -> File:
     """Get a file from the object store
 
     Args:
