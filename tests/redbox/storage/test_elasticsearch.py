@@ -97,7 +97,7 @@ def test_elastic_write_read_delete_items(elasticsearch_storage_handler):
         [chunk.uuid for chunk in chunks], "Chunk"
     )
 
-    for i, chunk in enumerate(read_chunks):
+    assert read_chunks == chunks
         assert chunk.uuid == chunks[i].uuid
         assert chunk.parent_file_uuid == chunks[i].parent_file_uuid
         assert chunk.index == chunks[i].index
