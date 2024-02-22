@@ -5,7 +5,6 @@ from redbox.models import Chunk
 from redbox.storage.elasticsearch import ElasticsearchStorageHandler
 
 
-@pytest.mark.usefixtures("elasticsearch_client")
 def test_elasticsearch_client_connection(elasticsearch_client):
     """
     Given that I have a valid Elasticsearch client
@@ -24,7 +23,6 @@ def test_elasticsearch_client_connection(elasticsearch_client):
     assert isinstance(test_elasticsearch_storage_handler.model_type_map, dict)
 
 
-@pytest.mark.usefixtures("elasticsearch_storage_handler", "chunk")
 def test_elasticsearch_write_read_item(elasticsearch_storage_handler, chunk):
     """
     Given that `Chunk` is a valid model
@@ -40,7 +38,6 @@ def test_elasticsearch_write_read_item(elasticsearch_storage_handler, chunk):
     assert chunk_read.uuid == chunk.uuid
 
 
-@pytest.mark.usefixtures("elasticsearch_storage_handler", "chunk")
 def test_elastic_read_item(elasticsearch_storage_handler, chunk):
     read_chunk = elasticsearch_storage_handler.read_item(chunk.uuid, "Chunk")
     assert read_chunk.uuid == chunk.uuid
@@ -52,7 +49,6 @@ def test_elastic_read_item(elasticsearch_storage_handler, chunk):
     assert read_chunk.token_count == chunk.token_count
 
 
-@pytest.mark.usefixtures("elasticsearch_storage_handler", "chunk")
 def test_elastic_delete_item_fail(
     elasticsearch_storage_handler: ElasticsearchStorageHandler,
 ):
@@ -65,7 +61,6 @@ def test_elastic_delete_item_fail(
         elasticsearch_storage_handler.delete_item("bad-uuid", "Chunk")
 
 
-@pytest.mark.usefixtures("elasticsearch_storage_handler")
 def test_elastic_read_item_fail(
     elasticsearch_storage_handler: ElasticsearchStorageHandler,
 ):
@@ -78,7 +73,6 @@ def test_elastic_read_item_fail(
         elasticsearch_storage_handler.read_item("bad-uuid", "Chunk")
 
 
-@pytest.mark.usefixtures("elasticsearch_storage_handler")
 def test_elastic_write_read_delete_items(elasticsearch_storage_handler):
     """
     Given that I have a list of items
@@ -121,7 +115,6 @@ def test_elastic_write_read_delete_items(elasticsearch_storage_handler):
     assert chunk_uuids_to_delete not in items_left
 
 
-@pytest.mark.usefixtures("elasticsearch_storage_handler", "chunk")
 def test_list_all_items(
     elasticsearch_storage_handler: ElasticsearchStorageHandler, chunk: Chunk
 ):
@@ -134,7 +127,6 @@ def test_list_all_items(
     assert len(uuids) > 0
 
 
-@pytest.mark.usefixtures("elasticsearch_storage_handler", "chunk")
 def test_elastic_delete_item(elasticsearch_storage_handler, chunk):
     """
     Given that I have a saved object
