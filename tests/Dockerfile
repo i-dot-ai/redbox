@@ -5,7 +5,7 @@ RUN apt-get update
 RUN pip install poetry
 
 ADD ../pyproject.toml ../poetry.lock ./
-RUN poetry install --no-root --no-ansi --with dev,worker,api,ingest,embed --without ai,streamlit-app
+RUN poetry install --no-root --no-ansi --with dev,worker,api --without ai,streamlit-app,ingest,embed
 
 ADD redbox/ /app/redbox
 ADD tests /app/tests
