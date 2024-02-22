@@ -27,6 +27,7 @@ rebuild:
 	docker compose build --no-cache
 
 test:
+	cp .env.example .env
 	docker-compose up -d elasticsearch
 	sleep 60
 	poetry run pytest . --cov=redbox -v --cov-report=term-missing --cov-fail-under=35
