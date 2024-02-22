@@ -119,10 +119,6 @@ def ingest_file(file: File):
         creator_user_uuid=file.creator_user_uuid,
     )
 
-    # remove URL from metadata added by unstructured chunker
-    for chunk in chunks:
-        del chunk["metadata"]["url"]
-
     logging.info(f"Writing {len(chunks)} chunks to storage for file uuid: {file.uuid}")
 
     storage_handler.write_items(chunks)
