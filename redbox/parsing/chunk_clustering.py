@@ -10,7 +10,7 @@ from redbox.models.file import Chunk
 def cluster_chunks(
     chunks: list[Chunk],
     desired_chunk_size: int = 300,
-    embed_model: str = "all-MiniLM-L6-v2",
+    embed_model: str = "all-mpnet-base-v2",
     dist_weight_split: float = 0.2,
     dist_use_log: bool = True,
 ) -> list[Chunk]:
@@ -21,7 +21,7 @@ def cluster_chunks(
             chunks (List[File]): List of raw (small) chunks extracted from document.
             desired_chunk_size: Avarage size of the output chunks. Defaults to 300,
             embed_model (str): name of the sentence embedding model used to compare chunk similarity.
-                Defaults to "all-MiniLM-L6-v2".
+                Defaults to "all-mpnet-base-v2".
             dist_weight_split (float): Expects value between 0 and 1.
                 When calculating the combined distance metric this is the relative weight (importance)
                 of the semantic similarity vs the token counts. Defaults to .2.
