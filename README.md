@@ -51,15 +51,19 @@ redbox-copilot/
 │  ├── frontend/
 │  └── workers/
 │     ├── embed
+│     │  ├── tests/
 │     │  ├── Dockerfile
+|     │  ├── Makefile
 │     │  └── pyproject.toml
 │     └── ingest
+│        ├── tests/
 │        ├── Dockerfile
+|        ├── Makefile
 │        └── pyproject.toml
-├── legacy_app/
-│  └── Dockerfile
 ├── redbox/
-│  └── pyproject.toml
+|  ├── tests/
+|  ├── Makefile
+|  └── pyproject.toml
 ├── docker-compose.yaml
 └── README.md
 ```
