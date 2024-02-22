@@ -1,7 +1,4 @@
-import os
-
 import streamlit as st
-from pyprojroot import here
 from utils import FilePreview, init_session_state
 
 st.set_page_config(
@@ -11,7 +8,6 @@ st.set_page_config(
 ENV = init_session_state()
 file_preview = FilePreview()
 
-data_folder = os.path.join(here(), "data", str(st.session_state.user_uuid))
 
 st.title("Preview Files")
 
