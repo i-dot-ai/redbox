@@ -7,7 +7,29 @@ class FileChunker:
     """A class to wrap unstructured and generate compliant chunks from files"""
 
     def __init__(self):
-        pass
+        self.supported_file_types = [
+            ".eml",
+            ".html",
+            ".json",
+            ".md",
+            ".msg",
+            ".rst",
+            ".rtf",
+            ".txt",
+            ".xml",
+            ".jpeg",  # Must have tesseract installed
+            ".png",  # Must have tesseract installed
+            ".csv",
+            ".doc",
+            ".docx",
+            ".epub",
+            ".odt",
+            ".pdf",
+            ".ppt",
+            ".pptx",
+            ".tsv",
+            ".xlsx",
+        ]
 
     def chunk_file(
         self,
