@@ -82,6 +82,8 @@ elif ENV["OBJECT_STORE"] == "s3":
         aws_secret_access_key=ENV["AWS_SECRET_ACCESS_KEY"],
         region_name=ENV["AWS_REGION"],
     )
+else:
+    raise ValueError(f"Object store type {ENV['OBJECT_STORE']} not supported")
 
 
 # === Queues ===
@@ -115,6 +117,8 @@ elif ENV["QUEUE"] == "sqs":
     )
 
     raise NotImplementedError("SQS is not yet implemented")
+else:
+    raise ValueError(f"Queue type {ENV['QUEUE']} not supported")
 
 # === Storage ===
 
