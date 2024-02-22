@@ -23,7 +23,7 @@ jobs:
 
     runs-on: ubuntu-latest
     strategy:
-      matrix: { dir: ['some-dir', 'other-dir'] }
+      matrix: { dir: ['redbox', 'app/workers/embed'] }
 
     steps:
     - uses: actions/checkout@v3
