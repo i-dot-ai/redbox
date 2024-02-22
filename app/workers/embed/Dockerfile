@@ -10,10 +10,10 @@ RUN poetry install --no-root --no-ansi --with worker,embed
 
 # Add the rest of the files
 ADD ./app/workers/embed/app.py /app/
-ADD ./app/workers/embed/download_model.py /app/
+ADD ./download_embedder.py /app/
 
 # Download the model
-RUN poetry run python download_model.py
+RUN poetry run python ./download_embedder.py
 
 EXPOSE 5000
 
