@@ -36,13 +36,13 @@ jobs:
       with:
         poetry-version: 1.7.0
 
-    - name: Install dependencies
-      run: |
-        make reqs
-
     - name: Test with pytest
       run: |
         make test
+
+    - name: Install dependencies
+      run: |
+        poetry install --no-root --no-ansi --with dev --without  streamlit-app,ai,ingest,embed,worker,api
 
     - name: Format code
       run: |
