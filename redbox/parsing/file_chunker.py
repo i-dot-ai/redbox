@@ -1,3 +1,5 @@
+from sentence_transformers import SentenceTransformer
+
 from redbox.models.file import Chunk, File
 from redbox.parsing.chunk_clustering import cluster_chunks
 from redbox.parsing.chunkers import other_chunker
@@ -6,7 +8,7 @@ from redbox.parsing.chunkers import other_chunker
 class FileChunker:
     """A class to wrap unstructured and generate compliant chunks from files"""
 
-    def __init__(self):
+    def __init__(self, embedding_model: SentenceTransformer = None):
         self.supported_file_types = [
             ".eml",
             ".html",
@@ -30,6 +32,7 @@ class FileChunker:
             ".tsv",
             ".xlsx",
         ]
+        self.embedding_model = embedding_model
 
     def chunk_file(
         self,
@@ -54,7 +57,7 @@ class FileChunker:
         chunks = other_chunker(file, file_url, creator_user_uuid=creator_user_uuid)
 
         if chunk_clustering:
-            chunks = cluster_chunks(chunks)
+            chunks = cluster_chunks(chunks, embedding_model=self.embedding_model)
 
         # Ensure page numbers are a list for schema compliance
         for chunk in chunks:

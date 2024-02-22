@@ -8,6 +8,10 @@ ADD pyproject.toml poetry.lock /app/
 WORKDIR /app/
 RUN poetry install --no-root --no-ansi --with worker,ingest,embed --without ai,dev,api
 
+ADD ./download_embedder.py /app/
+# Download the model
+RUN poetry run python ./download_embedder.py
+
 WORKDIR /app
 ADD ./app/workers/ingest/app.py /app/app.py
 

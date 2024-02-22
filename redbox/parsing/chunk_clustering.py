@@ -2,7 +2,7 @@ from itertools import compress
 
 import numpy as np
 import scipy
-from langchain_community.embeddings import SentenceTransformerEmbeddings
+from sentence_transformers import SentenceTransformer
 
 from redbox.models.file import Chunk
 
@@ -10,7 +10,7 @@ from redbox.models.file import Chunk
 def cluster_chunks(
     chunks: list[Chunk],
     desired_chunk_size: int = 300,
-    embed_model: str = "all-mpnet-base-v2",
+    embedding_model: SentenceTransformer = None,
     dist_weight_split: float = 0.2,
     dist_use_log: bool = True,
 ) -> list[Chunk]:
@@ -38,8 +38,9 @@ def cluster_chunks(
     else:
         token_counts = [chunk.token_count for chunk in chunks]  # type: ignore
         # calculate simple vector embedding and distances between adjacent chunks
-        embed = SentenceTransformerEmbeddings(model_name=embed_model)
-        chunk_embedding = [embed.embed_query(chunk.text) for chunk in chunks]
+
+        chunk_embedding = embedding_model.encode([chunk.text for chunk in chunks])
+
         pair_embed_dist = [0] + [
             scipy.spatial.distance.cosine(chunk_embedding[i], chunk_embedding[i + 1])
             for i in range(len(chunks) - 1)

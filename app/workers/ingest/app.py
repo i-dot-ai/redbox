@@ -5,6 +5,7 @@ import os
 import boto3
 import pika
 from elasticsearch import Elasticsearch
+from sentence_transformers import SentenceTransformer
 
 from redbox.models import File
 from redbox.parsing.file_chunker import FileChunker
@@ -20,6 +21,7 @@ ENV = {
     "ELASTIC_PORT": None,
     "ELASTIC_SCHEME": None,
     "OBJECT_STORE": None,
+    "EMBEDDING_MODEL": None,  # For chunk clustering
     "BUCKET_NAME": None,
     "INGEST_QUEUE_NAME": None,
     "QUEUE": None,
@@ -28,6 +30,34 @@ ENV = {
 for key in ENV:
     # Throw KeyError if the environment variable is not set
     ENV[key] = os.environ[key]
+
+# ====== Loading embedding model ======
+
+available_models = []
+models = {}
+model_info = {}
+
+# Start of the setup phase
+for dirpath, dirnames, filenames in os.walk("models"):
+    # Check if the current directory contains a file named "config.json"
+    if "pytorch_model.bin" in filenames:
+        # If it does, print the path to the directory
+        available_models.append(dirpath)
+
+for model_path in available_models:
+    model_name = model_path.split("/")[-3]
+    model = model_name.split("--")[-1]
+    models[model] = SentenceTransformer(model_path)
+    logging.info(f"Loaded model {model}")
+
+for model, model_obj in models.items():
+    model_info_entry = {
+        "model": model,
+        "max_seq_length": model_obj.get_max_seq_length(),
+        "vector_size": model_obj.get_sentence_embedding_dimension(),
+    }
+
+    model_info[model] = model_info_entry
 
 
 # === Object Store ===
@@ -101,7 +131,7 @@ es = Elasticsearch(
 )
 
 storage_handler = ElasticsearchStorageHandler(es_client=es, root_index="redbox-data")
-chunker = FileChunker()
+chunker = FileChunker(embedding_model=models[ENV["EMBEDDING_MODEL"]])
 
 
 def ingest_file(file: File):
