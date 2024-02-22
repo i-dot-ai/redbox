@@ -1,24 +1,24 @@
 version: '3.7'
 services:
-  # app:
-  #   image: redbox-app:latest
-  #   build:
-  #     context: .
-  #     dockerfile: ./legacy_app/Dockerfile
-  #   env_file:
-  #     - .env
-  #   ports:
-  #     - 8501:8501
-  #   volumes:
-  #     - ./data:/app/data:Z
-  #   depends_on:
-  #     - elasticsearch
-  #     - minio
-  #   links:
-  #     - elasticsearch
-  #     - minio
-  #   networks:
-  #     - redbox-app-network
+  app:
+    image: redbox-app:latest
+    build:
+      context: .
+      dockerfile: ./legacy_app/Dockerfile
+    env_file:
+      - .env
+    ports:
+      - 8501:8501
+    volumes:
+      - ./data:/app/data:Z
+    depends_on:
+      - elasticsearch
+      - minio
+    links:
+      - elasticsearch
+      - minio
+    networks:
+      - redbox-app-network
   embed:
     image: redbox-embed:latest
     build:
