@@ -26,8 +26,8 @@ services:
       dockerfile: ./app/workers/embed/Dockerfile
     ports:
       - 5000:5000
-    environment:
-      - EMBEDDING_MODEL=all-mpnet-base-v2
+    env_file:
+      - .env
     depends_on:
       - rabbitmq
     networks:
