@@ -86,7 +86,7 @@ def test_elastic_write_read_delete_items(elasticsearch_storage_handler):
     Then I expect to see them written to the database
     """
     chunks = []
-    for i in range(0, 10):
+    for i in range(10):
         chunks.append(
             Chunk(
                 parent_file_uuid="test_uuid",
