@@ -98,7 +98,7 @@ services:
       - 9300:9300
     environment:
       # node.name: elasticsearch
-      # ES_JAVA_OPTS: -Xms512m -Xmx2048m
+      ES_JAVA_OPTS: -Xms512m -Xmx2048m
       # ELASTIC_PASSWORD: ${ELASTIC_PASSWORD:-}
       discovery.type: single-node
       xpack.security.enabled: "false"
