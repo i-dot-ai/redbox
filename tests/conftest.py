@@ -11,7 +11,8 @@ T = TypeVar("T")
 
 YieldFixture = Generator[T, None, None]
 
-ENV = dotenv.dotenv_values(".env.test")
+env_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".env.test")
+ENV = dotenv.dotenv_values(env_path)
 
 
 @pytest.fixture
