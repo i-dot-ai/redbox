@@ -98,13 +98,6 @@ def test_elastic_write_read_delete_items(elasticsearch_storage_handler):
     )
 
     assert read_chunks == chunks
-        assert chunk.uuid == chunks[i].uuid
-        assert chunk.parent_file_uuid == chunks[i].parent_file_uuid
-        assert chunk.index == chunks[i].index
-        assert chunk.text == chunks[i].text
-        assert chunk.metadata == chunks[i].metadata
-        assert chunk.creator_user_uuid == chunks[i].creator_user_uuid
-        assert chunk.token_count == chunks[i].token_count
 
     chunk_uuids_to_delete = [chunk.uuid for chunk in chunks]
     # Delete the chunks
