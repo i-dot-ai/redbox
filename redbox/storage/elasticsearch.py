@@ -72,12 +72,15 @@ class ElasticsearchStorageHandler(BaseStorageHandler):
 
     def delete_item(self, item_uuid: str, model_type: str):
         target_index = f"{self.root_index}-{model_type.lower()}"
-        result = self.es_client.delete(index=target_index, body={"id": item_uuid})
+        result = self.es_client.delete(index=target_index, id=item_uuid)
         return result
 
     def delete_items(self, item_uuids: list[str], model_type: str):
         target_index = f"{self.root_index}-{model_type.lower()}"
-        result = self.es_client.delete(index=target_index, body={"ids": item_uuids})  # type: ignore
+        result = self.es_client.delete_by_query(
+            index=target_index,
+            body={"query": {"terms": {"_id": item_uuids}}},
+        )
         return result
 
     def read_all_items(self, model_type: str):
