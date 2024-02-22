@@ -4,7 +4,7 @@ from typing import Optional
 
 from langchain.schema import HumanMessage, SystemMessage
 
-from redbox.llm.prompts.spotlight import SPOTLIGHT_COMBINATION_TASK_PROMPT
+from llm.prompts.spotlight import SPOTLIGHT_COMBINATION_TASK_PROMPT
 
 
 class SpotlightCollection(object):

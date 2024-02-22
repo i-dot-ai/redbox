@@ -4,7 +4,7 @@ import numpy as np
 import scipy
 from langchain_community.embeddings import SentenceTransformerEmbeddings
 
-from redbox.models.file import Chunk
+from models.file import Chunk
 
 
 def cluster_chunks(

@@ -1,11 +1,11 @@
-from redbox.llm.prompts.spotlight import (
+from llm.prompts.spotlight import (
     SPOTLIGHT_KEY_ACTIONS_TASK_PROMPT,
     SPOTLIGHT_KEY_DATES_TASK_PROMPT,
     SPOTLIGHT_KEY_DISCUSSION_TASK_PROMPT,
     SPOTLIGHT_KEY_PEOPLE_TASK_PROMPT,
     SPOTLIGHT_SUMMARY_TASK_PROMPT,
 )
-from redbox.models.spotlight import SpotlightTask
+from models.spotlight import SpotlightTask
 
 # region ===== TASKS =====
 

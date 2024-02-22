@@ -1,7 +1,7 @@
 from typing import Optional
 
 
-from redbox.models.base import PersistableModel
+from models.base import PersistableModel
 
 
 class User(PersistableModel):

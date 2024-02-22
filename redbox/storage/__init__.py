@@ -1,6 +1,6 @@
-from redbox.storage.elasticsearch import ElasticsearchStorageHandler
-from redbox.storage.filesystem import FileSystemStorageHandler
-from redbox.storage.storage_handler import BaseStorageHandler
+from storage.elasticsearch import ElasticsearchStorageHandler
+from storage.filesystem import FileSystemStorageHandler
+from storage.storage_handler import BaseStorageHandler
 
 __all__ = [
     "BaseStorageHandler",

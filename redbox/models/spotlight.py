@@ -5,8 +5,8 @@ from langchain.prompts import PromptTemplate
 from langchain_core.documents import Document
 from pydantic import field_serializer
 
-from redbox.models.base import PersistableModel
-from redbox.models.file import File
+from models.base import PersistableModel
+from models.file import File
 
 
 class SpotlightTask(PersistableModel):

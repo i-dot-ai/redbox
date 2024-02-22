@@ -2,7 +2,7 @@ import os
 
 import pytest
 
-from redbox.storage import FileSystemStorageHandler
+from storage import FileSystemStorageHandler
 
 
 def test_file_system_storage_handler(tmp_path):

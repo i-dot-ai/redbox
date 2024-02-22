@@ -5,7 +5,7 @@ from langchain.chains.base import Chain
 from langchain.schema import AIMessage, HumanMessage, SystemMessage
 from pydantic import Field, field_serializer
 
-from redbox.models.base import PersistableModel
+from models.base import PersistableModel
 
 
 class ChatMessage(PersistableModel):

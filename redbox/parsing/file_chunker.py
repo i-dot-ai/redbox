@@ -1,6 +1,6 @@
-from redbox.models.file import Chunk, File
-from redbox.parsing.chunk_clustering import cluster_chunks
-from redbox.parsing.chunkers import other_chunker
+from models.file import Chunk, File
+from parsing.chunk_clustering import cluster_chunks
+from parsing.chunkers import other_chunker
 
 
 class FileChunker:

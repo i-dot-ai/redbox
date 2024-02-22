@@ -1,7 +1,7 @@
 from unstructured.chunking.title import chunk_by_title
 from unstructured.partition.auto import partition
 
-from redbox.models import Chunk, File
+from models import Chunk, File
 
 
 def other_chunker(

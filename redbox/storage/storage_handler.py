@@ -1,8 +1,8 @@
 from abc import ABC, abstractmethod
 
 
-from redbox.models import Chunk, Collection, Feedback, File, SpotlightComplete
-from redbox.models.base import PersistableModel
+from models import Chunk, Collection, Feedback, File, SpotlightComplete
+from models.base import PersistableModel
 
 
 class BaseStorageHandler(ABC):

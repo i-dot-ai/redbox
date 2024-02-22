@@ -3,9 +3,8 @@ from uuid import uuid4
 
 import pytest
 
-from redbox.models import Chunk
-from redbox.storage import FileSystemStorageHandler
-
+from models.file import Chunk
+from storage.filesystem import FileSystemStorageHandler
 
 T = TypeVar("T")
 

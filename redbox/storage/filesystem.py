@@ -7,9 +7,9 @@ from typing import Any
 from pydantic import TypeAdapter
 from pyprojroot import here
 
-from redbox.models import Chunk, Collection, Feedback, File, SpotlightComplete
-from redbox.models.base import PersistableModel
-from redbox.storage.storage_handler import BaseStorageHandler
+from models import Chunk, Collection, Feedback, File, SpotlightComplete
+from models.base import PersistableModel
+from storage.storage_handler import BaseStorageHandler
 
 logger = logging.Logger(__file__)
 

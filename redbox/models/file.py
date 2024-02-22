@@ -4,7 +4,7 @@ import tiktoken
 from langchain.schema import Document
 from pydantic import computed_field
 
-from redbox.models.base import PersistableModel
+from models.base import PersistableModel
 
 encoding = tiktoken.get_encoding("cl100k_base")
 

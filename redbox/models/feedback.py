@@ -3,7 +3,7 @@ from typing import Optional
 from langchain.chains.base import Chain
 from pydantic import field_serializer
 
-from redbox.models.base import PersistableModel
+from models.base import PersistableModel
 
 
 class Feedback(PersistableModel):

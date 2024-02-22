@@ -7,8 +7,10 @@ from docx import Document
 from docx.shared import Inches
 from unstructured.partition.html import partition_html
 
-from redbox import __version__ as redbox_version
-from redbox.models import File, SpotlightComplete
+# from redbox import __version__ as redbox_version
+from models import File, SpotlightComplete
+
+redbox_version = 1
 
 
 def lookup_indentedness(raw: str, line_str_to_match: str):

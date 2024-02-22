@@ -1,7 +1,7 @@
 import hashlib
 
 
-from redbox.models.file import File
+from models.file import File
 
 
 def test_file_creation():

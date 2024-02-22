@@ -22,6 +22,8 @@ jobs:
   build:
 
     runs-on: ubuntu-latest
+    strategy:
+      matrix: { dir: ['some-dir', 'other-dir'] }
 
     steps:
     - uses: actions/checkout@v3
@@ -37,17 +39,21 @@ jobs:
         poetry-version: 1.7.0
 
     - name: Install dependencies
+      working-directory: ${{ matrix.dir }}
       run: |
         make reqs
 
     - name: Test with pytest
+      working-directory: ${{ matrix.dir }}
       run: |
         make test
 
     - name: Format code
+      working-directory: ${{ matrix.dir }}
       run: |
         make format
 
     - name: Type check
+      working-directory: ${{ matrix.dir }}
       run: |
         make checktypes

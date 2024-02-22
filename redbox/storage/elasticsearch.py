@@ -1,8 +1,8 @@
 from elasticsearch import Elasticsearch, NotFoundError
 from pyprojroot import here
 
-from redbox.models.base import PersistableModel
-from redbox.storage.storage_handler import BaseStorageHandler
+from models.base import PersistableModel
+from storage.storage_handler import BaseStorageHandler
 
 default_root_path = here() / "data"
 

@@ -1,6 +1,6 @@
 from langchain.prompts.prompt import PromptTemplate
 
-from redbox.llm.prompts.core import _core_redbox_prompt
+from llm.prompts.core import _core_redbox_prompt
 
 # ==================== SUMMARY ====================
 

@@ -19,20 +19,20 @@ from langchain_community.embeddings import (
 from langchain_community.vectorstores import Chroma
 from pyprojroot import here
 
-from redbox.llm.prompts.chat import (
+from llm.prompts.chat import (
     CONDENSE_QUESTION_PROMPT,
     STUFF_DOCUMENT_PROMPT,
     WITH_SOURCES_PROMPT,
 )
-from redbox.llm.prompts.spotlight import SPOTLIGHT_COMBINATION_TASK_PROMPT
-from redbox.llm.spotlight.spotlight import (
+from llm.prompts.spotlight import SPOTLIGHT_COMBINATION_TASK_PROMPT
+from llm.spotlight.spotlight import (
     key_actions_task,
     key_discussion_task,
     key_people_task,
     summary_task,
 )
-from redbox.models.file import Chunk, File
-from redbox.models.spotlight import Spotlight, SpotlightTask
+from models.file import Chunk, File
+from models.spotlight import Spotlight, SpotlightTask
 
 dotenv.load_dotenv(os.path.join(here(), ".env"))
 

@@ -1,8 +1,8 @@
-from redbox.models.chat import ChatMessage
-from redbox.models.collection import Collection
-from redbox.models.feedback import Feedback
-from redbox.models.file import Chunk, File
-from redbox.models.spotlight import (
+from models.chat import ChatMessage
+from models.collection import Collection
+from models.feedback import Feedback
+from models.file import Chunk, File
+from models.spotlight import (
     Spotlight,
     SpotlightComplete,
     SpotlightTask,
