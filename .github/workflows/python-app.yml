@@ -41,7 +41,7 @@ jobs:
     - name: Install dependencies
       working-directory: ${{ matrix.dir }}
       run: |
-        make reqs
+        make build
 
     - name: Test with pytest
       working-directory: ${{ matrix.dir }}
