@@ -27,7 +27,9 @@ rebuild:
 	docker compose build --no-cache
 
 test:
-	docker compose run test poetry run pytest
+	cp .env.example .env
+	docker compose run test poetry run pytest .
+	# --cov=redbox -v --cov-report=term-missing --cov-fail-under=35
 
 lint:
 	poetry run ruff check .
