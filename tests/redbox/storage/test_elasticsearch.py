@@ -1,6 +1,7 @@
 import time
 
 import pytest
+from elastic_transport import ConnectionError
 from elasticsearch import NotFoundError
 
 from redbox.models import Chunk
@@ -13,7 +14,12 @@ def poll_elastic_until_ready(elasticsearch_client):
     """
     time_remainging = 300  # 5 minutes
 
-    while not elasticsearch_client.ping():
+    while True:
+        try:
+            elasticsearch_client.ping()
+            break
+        except ConnectionError:
+            pass
         time.sleep(5)
         time_remainging -= 5
         if time_remainging <= 0:
