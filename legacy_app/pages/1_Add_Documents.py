@@ -1,9 +1,7 @@
-import os
 import pathlib
 from datetime import date
 
 import streamlit as st
-from pyprojroot import here
 from utils import init_session_state
 
 from redbox.models import Collection, File
@@ -48,7 +46,6 @@ new_collection = st.text_input("New collection name:")
 
 submitted = st.button("Upload to Redbox Copilot collection")
 
-data_folder = os.path.join(here(), "data", str(st.session_state.user_uuid))
 
 if submitted:  # noqa: C901
     if collection_selection == new_collection_str:
