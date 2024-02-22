@@ -1,3 +1,4 @@
+import os
 from typing import Generator, TypeVar
 
 import dotenv
