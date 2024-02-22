@@ -79,17 +79,16 @@ def test_elastic_write_read_delete_items(elasticsearch_storage_handler):
     When I call write_items on them
     Then I expect to see them written to the database
     """
-    chunks = []
-    for i in range(10):
-        chunks.append(
-            Chunk(
-                parent_file_uuid="test_uuid",
-                index=i,
-                text="test_text",
-                metadata={},
-                creator_user_uuid="test",
-            )
+    chunks = [
+        Chunk(
+            parent_file_uuid="test_uuid",
+            index=i,
+            text="test_text",
+            metadata={},
+            creator_user_uuid="test",
         )
+        for i in range(10)
+    ]
 
     elasticsearch_storage_handler.write_items(chunks)
 
