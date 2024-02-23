@@ -1,21 +1,22 @@
 FROM python:3.11
 
-ARG MODEL_NAMES=all-mpnet-base-v2|paraphrase-multilingual-MiniLM-L12-v2
-
 RUN pip install poetry
 
-COPY pyproject.toml poetry.lock ./
-RUN poetry install --no-root --no-ansi
+# Add redbox python package and install it with poetry
+ADD redbox/ /app/redbox
 
-ADD download_model.py /download_model.py
-RUN mkdir models
-RUN poetry run python download_model.py
+ADD pyproject.toml poetry.lock /app/
+WORKDIR /app/
+RUN poetry install --no-root --no-ansi --with worker,embed,api --without ai,ingest,dev
 
+# Add the rest of the files
+ADD ./app/workers/embed/app.py /app/
+ADD ./download_embedder.py /app/
 
-ADD app.py /app.py
+# Download the model
+RUN poetry run python ./download_embedder.py
 
 EXPOSE 5000
 
 # Run FastAPI
-
 CMD ["poetry", "run", "uvicorn", "app:app", "--host", "0.0.0.0", "--port", "5000"]

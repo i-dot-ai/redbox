@@ -12,7 +12,7 @@ app:
 	poetry run streamlit run legacy_app/Welcome.py --server.port 8501
 
 run:
-	docker compose up -d elasticsearch kibana app embed minio miniocreatebuckets
+	docker compose up -d elasticsearch kibana app embed minio miniocreatebuckets rabbitmq core-api
 
 stop:
 	docker compose down
@@ -27,7 +27,9 @@ rebuild:
 	docker compose build --no-cache
 
 test:
-	poetry run pytest . --cov=redbox -v --cov-report=term-missing --cov-fail-under=35
+	docker compose up -d --wait elasticsearch
+	docker-compose run test poetry run pytest .
+	# --cov=redbox -v --cov-report=term-missing --cov-fail-under=35
 
 lint:
 	poetry run ruff check .

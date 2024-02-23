@@ -1,16 +1,18 @@
 from elasticsearch import Elasticsearch, NotFoundError
-from pyprojroot import here
+from elasticsearch.helpers import scan
 
 from redbox.models.base import PersistableModel
 from redbox.storage.storage_handler import BaseStorageHandler
-
-default_root_path = here() / "data"
 
 
 class ElasticsearchStorageHandler(BaseStorageHandler):
     """Storage Handler for Elasticsearch"""
 
-    def __init__(self, es_client: Elasticsearch, root_index: str = "redbox"):
+    def __init__(
+        self,
+        es_client: Elasticsearch,
+        root_index: str = "redbox",
+    ):
         """Initialise the storage handler
 
         Args:
@@ -75,31 +77,50 @@ class ElasticsearchStorageHandler(BaseStorageHandler):
 
     def delete_items(self, item_uuids: list[str], model_type: str):
         target_index = f"{self.root_index}-{model_type.lower()}"
-        result = self.es_client.mdelete(index=target_index, body={"ids": item_uuids})  # type: ignore
+        result = self.es_client.delete_by_query(
+            index=target_index,
+            body={"query": {"terms": {"_id": item_uuids}}},
+        )
         return result
 
     def read_all_items(self, model_type: str):
         target_index = f"{self.root_index}-{model_type.lower()}"
         try:
-            result = self.es_client.search(
-                index=target_index, body={"query": {"match_all": {}}}
+            result = scan(
+                client=self.es_client,
+                index="redbox-test-data-chunk",
+                query={"query": {"match_all": {}}},
+                _source=True,
             )
+
+            # Unpack from scrolling generator
+            results = [item for item in result]
+
         except NotFoundError:
             print(f"Index {target_index} not found. Returning empty list.")
             return []
+
+        # Grab the model we'll use to deserialize the items
         model = self.get_model_by_model_type(model_type)
-        items = [model(**item["_source"]) for item in result.body["hits"]["hits"]]
+        items = [model(**item["_source"]) for item in results]
         return items
 
     def list_all_items(self, model_type: str):
-        # SELECT only uuids
         target_index = f"{self.root_index}-{model_type.lower()}"
         try:
-            result = self.es_client.search(
-                index=target_index, body={"query": {"match_all": {}}}
+            # Only return _id
+            result = scan(
+                client=self.es_client,
+                index="redbox-test-data-chunk",
+                query={"query": {"match_all": {}}},
+                _source=False,
             )
+
+            # Unpack from scrolling generator
+            results = [item for item in result]
+
         except NotFoundError:
             print(f"Index {target_index} not found. Returning empty list.")
             return []
-        uuids = [item["_id"] for item in result.body["hits"]["hits"]]
+        uuids = [item["_id"] for item in results]
         return uuids

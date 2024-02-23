@@ -1,5 +1,17 @@
 version: '3.7'
 services:
+  test:
+    image: redbox-tests:latest
+    build:
+      context: .
+      dockerfile: ./tests/Dockerfile
+    env_file:
+      - .env
+    depends_on:
+      - elasticsearch
+    networks:
+      - redbox-app-network
+#    command: bash -c "sleep infinity"
   app:
     image: redbox-app:latest
     build:
@@ -22,16 +34,49 @@ services:
   embed:
     image: redbox-embed:latest
     build:
-      context: ./app/workers/embed
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: ./app/workers/embed/Dockerfile
     ports:
       - 5000:5000
-    environment:
-      - PORT=5000
-      - MODEL_NAMES=all-mpnet-base-v2|paraphrase-multilingual-MiniLM-L12-v2
+    env_file:
+      - .env
+    depends_on:
+      - rabbitmq
     networks:
       - redbox-app-network
-
+    restart: unless-stopped
+  ingest:
+    image: redbox-ingest:latest
+    build:
+      context: .
+      dockerfile: ./app/workers/ingest/Dockerfile
+    env_file:
+      - .env
+    depends_on:
+      - rabbitmq
+      - elasticsearch
+      - minio
+    networks:
+      - redbox-app-network
+    restart: unless-stopped
+  core-api:
+    image: redbox-core-api:latest
+    build:
+      context: .
+      dockerfile: ./app/core_api/Dockerfile
+    ports:
+      - 5002:5002
+    environment:
+      - PORT=5002
+    env_file:
+      - .env
+    networks:
+      - redbox-app-network
+    depends_on:
+      - elasticsearch
+      - minio
+      - rabbitmq
+    restart: unless-stopped
   minio:
     image: minio/minio
     expose:
@@ -41,8 +86,8 @@ services:
       - "9000:9000"
       - "9001:9001"
     environment:
-      MINIO_ACCESS_KEY: minioadmin
-      MINIO_SECRET_KEY: minioadmin
+      - MINIO_ACCESS_KEY=minioadmin
+      - MINIO_SECRET_KEY=minioadmin
     command: server --console-address ":9001" /data
     networks:
       - redbox-app-network
@@ -89,12 +134,16 @@ services:
       - elasticsearch
     restart: unless-stopped
   rabbitmq:
-    image: rabbitmq:3-management
+    image: rabbitmq:3-management-alpine
     ports:
       - 5672:5672
       - 15672:15672
     networks:
       - redbox-app-network
+    volumes:
+      - ./data/queue/data/:/var/lib/rabbitmq/
+      - ./infra/rabbitmq/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf:ro
+      - ./infra/rabbitmq/definitions.json:/etc/rabbitmq/definitions.json:ro
     restart: unless-stopped
 
 networks:

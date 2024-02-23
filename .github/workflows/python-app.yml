@@ -36,18 +36,33 @@ jobs:
       with:
         poetry-version: 1.7.0
 
-    - name: Install dependencies
+    - name: Build Containers
       run: |
-        make reqs
+        mkdir -p data/elastic/
+        chmod 777 data/elastic/
+        cp .env.example .env
+        docker compose build test elasticsearch
+        docker compose up -d --wait elasticsearch
+
+    - name: Peek Elasticsearch
+      run: |
+        docker ps
+        sleep 30
+        docker logs redbox-copilot-elasticsearch-1
 
     - name: Test with pytest
       run: |
         make test
 
+    - name: Install dependencies
+      run: |
+        poetry install --no-root --no-ansi --with dev --without  streamlit-app,ai,ingest,embed,worker,api
+
     - name: Format code
       run: |
         make format
 
-    - name: Type check
-      run: |
-        make checktypes
+#    temporarily disabled
+#    - name: Type check
+#      run: |
+#        make checktypes

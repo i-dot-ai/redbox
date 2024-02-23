@@ -5,16 +5,14 @@ RUN apt-get install -y libgl-dev libmagic-dev inetutils-ping
 
 RUN pip install poetry
 
-COPY pyproject.toml poetry.lock ./
-RUN poetry install --no-root --no-ansi
+ADD pyproject.toml poetry.lock ./
+# Streamlit app needs a lot of dependencies
+RUN poetry install --no-root --no-ansi --with streamlit-app,ai,ingest,embed --without dev,worker,api
 
 ADD redbox/ /app/redbox
-ADD download_embedder.py /app
 ADD legacy_app /app
 
 WORKDIR /app/
-
-RUN poetry run python download_embedder.py
 
 EXPOSE 8501
 

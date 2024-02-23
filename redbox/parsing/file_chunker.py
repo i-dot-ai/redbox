@@ -1,3 +1,5 @@
+from sentence_transformers import SentenceTransformer
+
 from redbox.models.file import Chunk, File
 from redbox.parsing.chunk_clustering import cluster_chunks
 from redbox.parsing.chunkers import other_chunker
@@ -6,30 +8,31 @@ from redbox.parsing.chunkers import other_chunker
 class FileChunker:
     """A class to wrap unstructured and generate compliant chunks from files"""
 
-    def __init__(self):
-        self.supported_file_types = {
-            ".eml": other_chunker,
-            ".html": other_chunker,
-            ".json": other_chunker,
-            ".md": other_chunker,
-            ".msg": other_chunker,
-            ".rst": other_chunker,
-            ".rtf": other_chunker,
-            ".txt": other_chunker,
-            ".xml": other_chunker,
-            ".jpeg": other_chunker,  # Must have tesseract installed
-            ".png": other_chunker,  # Must have tesseract installed
-            ".csv": other_chunker,
-            ".doc": other_chunker,
-            ".docx": other_chunker,
-            ".epub": other_chunker,
-            ".odt": other_chunker,
-            ".pdf": other_chunker,
-            ".ppt": other_chunker,
-            ".pptx": other_chunker,
-            ".tsv": other_chunker,
-            ".xlsx": other_chunker,
-        }
+    def __init__(self, embedding_model: SentenceTransformer = None):
+        self.supported_file_types = [
+            ".eml",
+            ".html",
+            ".json",
+            ".md",
+            ".msg",
+            ".rst",
+            ".rtf",
+            ".txt",
+            ".xml",
+            ".jpeg",  # Must have tesseract installed
+            ".png",  # Must have tesseract installed
+            ".csv",
+            ".doc",
+            ".docx",
+            ".epub",
+            ".odt",
+            ".pdf",
+            ".ppt",
+            ".pptx",
+            ".tsv",
+            ".xlsx",
+        ]
+        self.embedding_model = embedding_model
 
     def chunk_file(
         self,
@@ -51,15 +54,10 @@ class FileChunker:
         Returns:
             List[Chunk]: The chunks generated from the given file.
         """
-        # Check we can process
-        if file.type not in list(self.supported_file_types.keys()):
-            raise ValueError(f"File type {file.type} of {file.name} is not supported")
-
-        chunker = self.supported_file_types.get(file.type)
-        chunks = chunker(file, file_url, creator_user_uuid=creator_user_uuid)
+        chunks = other_chunker(file, file_url, creator_user_uuid=creator_user_uuid)
 
         if chunk_clustering:
-            chunks = cluster_chunks(chunks)
+            chunks = cluster_chunks(chunks, embedding_model=self.embedding_model)
 
         # Ensure page numbers are a list for schema compliance
         for chunk in chunks:

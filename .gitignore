@@ -6,6 +6,13 @@ data/
 db/
 !*/user_preferences/classes_format.json
 !*/user_preferences/classes_subject.json
+models/
+
+# npm package files
+
+node_modules/
+package-lock.json
+yarn.lock
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

@@ -1,7 +1,6 @@
 import base64
 import hashlib
 import os
-import pathlib
 import uuid
 from datetime import datetime
 from io import BytesIO
@@ -27,13 +26,12 @@ from langchain_community.chat_models import ChatLiteLLM
 from langchain_community.embeddings import SentenceTransformerEmbeddings
 from loguru import logger
 from lxml.html.clean import Cleaner
-from pyprojroot import here
 from streamlit.web.server.websocket_headers import _get_websocket_headers
 
 from redbox.llm.llm_base import LLMHandler
 from redbox.models.feedback import Feedback
 from redbox.models.file import File
-from redbox.storage import ElasticsearchStorageHandler, FileSystemStorageHandler
+from redbox.storage import ElasticsearchStorageHandler
 
 
 def get_user_name(principal: dict) -> str:
@@ -171,27 +169,19 @@ def init_session_state() -> dict:
                 raise err
 
     if "storage_handler" not in st.session_state:
-        if ENV["STORAGE_MODE"] == "filesystem":
-            persistency_folder_path = pathlib.Path(
-                os.path.join(here(), "data", str(st.session_state.user_uuid))
-            )
-            st.session_state.storage_handler = FileSystemStorageHandler(
-                root_path=persistency_folder_path
-            )
-        elif ENV["STORAGE_MODE"] == "elasticsearch":
-            es = Elasticsearch(
-                hosts=[
-                    {
-                        "host": "elasticsearch",
-                        "port": 9200,
-                        "scheme": "http",
-                    }
-                ],
-                basic_auth=(ENV["ELASTIC_USER"], ENV["ELASTIC_PASSWORD"]),
-            )
-            st.session_state.storage_handler = ElasticsearchStorageHandler(
-                es_client=es, root_index="redbox-data"
-            )
+        es = Elasticsearch(
+            hosts=[
+                {
+                    "host": ENV["ELASTIC_HOST"],
+                    "port": int(ENV["ELASTIC_PORT"]),
+                    "scheme": ENV["ELASTIC_SCHEME"],
+                }
+            ],
+            basic_auth=(ENV["ELASTIC_USER"], ENV["ELASTIC_PASSWORD"]),
+        )
+        st.session_state.storage_handler = ElasticsearchStorageHandler(
+            es_client=es, root_index="redbox-data"
+        )
 
     if st.session_state.user_uuid == "dev":
         st.sidebar.info("**DEV MODE**")
@@ -219,9 +209,6 @@ def init_session_state() -> dict:
 
             if st.button(label="Empty Streamlit Cache"):
                 st.cache_data.clear()
-
-            if st.button(label="Empty LLM Prompt Cache"):
-                st.session_state.llm_handler.clear_cache()
 
     else:
         _model_params = {"max_tokens": 4096, "temperature": 0.2}
@@ -340,27 +327,22 @@ def load_llm_handler(ENV, update=False) -> None:
     )
 
     if "llm_handler" not in st.session_state or update:
-        if ENV["STORAGE_MODE"] == "filesystem":
-            st.session_state.llm_handler = LLMHandler(
-                llm=st.session_state.llm, user_uuid=st.session_state.user_uuid
-            )
-        elif ENV["STORAGE_MODE"] == "elasticsearch":
-            embedding_function = SentenceTransformerEmbeddings()
+        embedding_function = SentenceTransformerEmbeddings()
 
-            vector_store = ElasticsearchStore(
-                es_url=f"http://{ENV['ELASTIC_HOST']}:9200",
-                es_user=ENV["ELASTIC_USER"],
-                es_password=ENV["ELASTIC_PASSWORD"],
-                index_name="redbox-vector",
-                embedding=embedding_function,
-                strategy=ApproxRetrievalStrategy(hybrid=True),
-            )
+        vector_store = ElasticsearchStore(
+            es_url=f"{ENV['ELASTIC_SCHEME']}://{ENV['ELASTIC_HOST']}:{ENV['ELASTIC_PORT']}",
+            es_user=ENV["ELASTIC_USER"],
+            es_password=ENV["ELASTIC_PASSWORD"],
+            index_name="redbox-vector",
+            embedding=embedding_function,
+            strategy=ApproxRetrievalStrategy(hybrid=True),
+        )
 
-            st.session_state.llm_handler = LLMHandler(
-                llm=st.session_state.llm,
-                user_uuid=st.session_state.user_uuid,
-                vector_store=vector_store,
-            )
+        st.session_state.llm_handler = LLMHandler(
+            llm=st.session_state.llm,
+            user_uuid=st.session_state.user_uuid,
+            vector_store=vector_store,
+        )
 
 
 def hash_list_of_files(list_of_files: list[File]) -> str:
