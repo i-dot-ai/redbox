@@ -2,7 +2,6 @@ import json
 import logging
 import os
 
-import boto3
 from sentence_transformers import SentenceTransformer
 
 from redbox.models import File, Settings
@@ -55,13 +54,7 @@ if env.queue == "rabbitmq":
     channel = connection.channel()
     channel.queue_declare(queue=env.ingest_queue_name, durable=True)
 elif env.queue == "sqs":
-    sqs = boto3.client(
-        "sqs",
-        aws_access_key_id=env.aws_access_key_id,
-        aws_secret_access_key=env.aws_secret_access_key,
-        region_name=env.aws_region,
-    )
-
+    sqs = env.sqs_client()
     raise NotImplementedError("SQS is not yet implemented")
 
 # === Storage ===
