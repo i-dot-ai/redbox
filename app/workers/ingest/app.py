@@ -4,7 +4,6 @@ import os
 
 import boto3
 import pika
-from elasticsearch import Elasticsearch
 from sentence_transformers import SentenceTransformer
 
 from redbox.models import File, Settings
@@ -48,19 +47,9 @@ for model, model_obj in models.items():
 # === Object Store ===
 
 if env.object_store == "minio":
-    s3 = boto3.client(
-        "s3",
-        aws_access_key_id=env.minio_access_key,
-        aws_secret_access_key=env.minio_secret_key,
-        endpoint_url=f"http://{env.minio_host}:{env.minio_port}",
-    )
+    s3 = env.minio_client()
 elif env.object_store == "s3":
-    s3 = boto3.client(
-        "s3",
-        aws_access_key_id=env.aws_access_key_id,
-        aws_secret_access_key=env.aws_secret_access_key,
-        region_name=env.aws_region,
-    )
+    s3 = env.s3_client()
 
 
 # === Queues ===
@@ -90,16 +79,7 @@ elif env.queue == "sqs":
 # === Storage ===
 
 
-es = Elasticsearch(
-    hosts=[
-        {
-            "host": env.elastic_host,
-            "port": env.elastic_port,
-            "scheme": env.elastic_scheme,
-        }
-    ],
-    basic_auth=(env.elastic_user, env.elastic_password),
-)
+es = env.elasticsearch_client()
 
 storage_handler = ElasticsearchStorageHandler(es_client=es, root_index="redbox-data")
 chunker = FileChunker(embedding_model=models[env.embedding_model])

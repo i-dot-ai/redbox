@@ -15,7 +15,7 @@ YieldFixture = Generator[T, None, None]
 env_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".env.test")
 
 
-env = Settings(_env_file=env_path)  # type: ignore
+env = Settings(_env_file=env_path, elastic_host="localhost")  # type: ignore
 
 
 @pytest.fixture
@@ -37,16 +37,7 @@ def file_pdf_path() -> str:
 
 @pytest.fixture
 def elasticsearch_client() -> YieldFixture[Elasticsearch]:
-    client = Elasticsearch(
-        hosts=[
-            {
-                "host": env.elastic_host,
-                "port": env.elastic_port,
-                "scheme": env.elastic_scheme,
-            }
-        ],
-        basic_auth=(env.elastic_user, env.elastic_password),
-    )
+    client = env.elasticsearch_client()
     yield client
 
 
