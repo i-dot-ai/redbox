@@ -44,6 +44,12 @@ jobs:
         docker compose build test elasticsearch
         docker compose up -d --wait elasticsearch
 
+    - name: Peek Elasticsearch
+      run: |
+        docker ps
+        sleep 30
+        docker logs redbox-copilot-elasticsearch-1
+
     - name: Test with pytest
       run: |
         make test
