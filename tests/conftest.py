@@ -1,24 +1,21 @@
 import os
 from typing import Generator, TypeVar
 
-import dotenv
 import pytest
 from elasticsearch import Elasticsearch
 
-from redbox.models import Chunk
+from redbox.models import Chunk, Settings
 from redbox.storage.elasticsearch import ElasticsearchStorageHandler
+
 
 T = TypeVar("T")
 
 YieldFixture = Generator[T, None, None]
 
-env_path = os.path.join(
-    os.path.dirname(os.path.abspath(__file__)), "..", ".env.example"
-)
-if not os.path.exists(env_path):
-    raise Exception(".env.test not found!")
+env_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".env.test")
 
-ENV = dotenv.dotenv_values(env_path)
+
+env = Settings(_env_file=env_path)
 
 
 @pytest.fixture
@@ -43,12 +40,12 @@ def elasticsearch_client() -> YieldFixture[Elasticsearch]:
     client = Elasticsearch(
         hosts=[
             {
-                "host": ENV["ELASTIC_HOST"],
-                "port": int(ENV["ELASTIC_PORT"]),
-                "scheme": ENV["ELASTIC_SCHEME"],
+                "host": env.elastic_host,
+                "port": env.elastic_port,
+                "scheme": env.elastic_scheme,
             }
         ],
-        basic_auth=(ENV["ELASTIC_USER"], ENV["ELASTIC_PASSWORD"]),
+        basic_auth=(env.elastic_user, env.elastic_password),
     )
     yield client
 

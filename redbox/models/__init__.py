@@ -8,6 +8,7 @@ from redbox.models.spotlight import (
     SpotlightTask,
     SpotlightTaskComplete,
 )
+from redbox.models.settings import Settings
 
 __all__ = [
     "ChatMessage",
@@ -19,4 +20,5 @@ __all__ = [
     "SpotlightComplete",
     "SpotlightTask",
     "SpotlightTaskComplete",
+    "Settings",
 ]
