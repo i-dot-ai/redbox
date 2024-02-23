@@ -72,7 +72,6 @@ start_time = datetime.now()
 IS_READY = False
 available_models = []
 models = {}
-# model_info = {}
 log = logging.getLogger()
 log.setLevel(logging.INFO)
 

@@ -4,6 +4,7 @@ from typing import Generator, TypeVar
 import dotenv
 import pytest
 from elasticsearch import Elasticsearch
+from sentence_transformers import SentenceTransformer
 
 from redbox.models import Chunk
 from redbox.storage.elasticsearch import ElasticsearchStorageHandler
@@ -69,22 +70,12 @@ def client():
     yield TestClient(application)
 
 
-class FakeSentenceTransformer:
-    def __init__(self, max_seq_length: int, vector_size: int):
-        self.max_seq_length = max_seq_length
-        self.vector_size = vector_size
-
-    def get_max_seq_length(self) -> int:
-        return self.max_seq_length
-
-    def get_sentence_embedding_dimension(self) -> int:
-        return self.vector_size
-
-
 @pytest.fixture
 def example_modes():
     from app.workers.embed.app import models as db
 
-    db["a"] = FakeSentenceTransformer(max_seq_length=1, vector_size=2)
-    db["b"] = FakeSentenceTransformer(max_seq_length=1, vector_size=2)
+    db["paraphrase-albert-small-v2"] = SentenceTransformer(
+        model_name_or_path="paraphrase-albert-small-v2",
+        cache_folder="./models",
+    )
     yield db
