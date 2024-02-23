@@ -2,7 +2,6 @@ import os
 from typing import Literal, Optional
 
 import boto3
-from botocore.client import BaseClient
 from elasticsearch import Elasticsearch
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -65,25 +64,28 @@ class Settings(BaseSettings):
         )
         return es
 
-    def minio_client(self) -> BaseClient:
-        s3 = boto3.client(
-            "s3",
-            aws_access_key_id=self.minio_access_key,
-            aws_secret_access_key=self.minio_secret_key,
-            endpoint_url=f"http://{self.minio_host}:{self.minio_port}",
-        )
-        return s3
+    def s3_client(self):
+        if self.object_store == "minio":
+            client = boto3.client(
+                "s3",
+                aws_access_key_id=self.minio_access_key,
+                aws_secret_access_key=self.minio_secret_key,
+                endpoint_url=f"http://{self.minio_host}:{self.minio_port}",
+            )
+            return client
 
-    def s3_client(self) -> BaseClient:
-        s3 = boto3.client(
-            "s3",
-            aws_access_key_id=self.aws_access_key_id,
-            aws_secret_access_key=self.aws_secret_access_key,
-            region_name=self.aws_region,
-        )
-        return s3
+        if self.object_store == "s3":
+            client = boto3.client(
+                "s3",
+                aws_access_key_id=self.aws_access_key_id,
+                aws_secret_access_key=self.aws_secret_access_key,
+                region_name=self.aws_region,
+            )
+            return client
 
-    def sqs_client(self) -> BaseClient:
+        raise NotImplementedError
+
+    def sqs_client(self):
         sqs = boto3.client(
             "sqs",
             aws_access_key_id=self.aws_access_key_id,
