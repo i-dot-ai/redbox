@@ -62,7 +62,6 @@ jobs:
       run: |
         make format
 
-#    temporarily disabled
-#    - name: Type check
-#      run: |
-#        make checktypes
+    - name: Type check
+      run: |
+        make checktypes
