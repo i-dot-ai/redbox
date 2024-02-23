@@ -36,6 +36,16 @@ jobs:
       with:
         poetry-version: 1.7.0
 
+    - name: Build Containers
+      run: |
+        cp .env.example .env
+        docker compose build test elasticsearch
+
+    - name: peek elastic
+      run: |
+        docker ps
+        docker logs redbox-copilot-elasticsearch-1
+
     - name: Test with pytest
       run: |
         make test
