@@ -12,7 +12,7 @@ T = TypeVar("T")
 
 YieldFixture = Generator[T, None, None]
 
-env_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".env.test")
+env_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".env")
 if not os.path.exists(env_path):
     raise Exception(".env.test not found!")
 ENV = dotenv.dotenv_values(env_path)
