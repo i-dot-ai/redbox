@@ -45,6 +45,7 @@ jobs:
     - name: peek elastic
       run: |
         docker ps
+        sleep 30
         docker logs redbox-copilot-elasticsearch-1
 
     - name: Test with pytest
