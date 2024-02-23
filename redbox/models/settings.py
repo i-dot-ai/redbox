@@ -1,6 +1,9 @@
 import os
 from typing import Literal, Optional
 
+import boto3
+from botocore.client import BaseClient
+from elasticsearch import Elasticsearch
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 env_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".env")
@@ -48,3 +51,43 @@ class Settings(BaseSettings):
     dev_mode: bool = False
 
     model_config = SettingsConfigDict(env_file=env_path)
+
+    def elasticsearch_client(self) -> Elasticsearch:
+        es = Elasticsearch(
+            hosts=[
+                {
+                    "host": self.elastic_host,
+                    "port": self.elastic_port,
+                    "scheme": self.elastic_scheme,
+                }
+            ],
+            basic_auth=(self.elastic_user, self.elastic_password),
+        )
+        return es
+
+    def minio_client(self) -> BaseClient:
+        s3 = boto3.client(
+            "s3",
+            aws_access_key_id=self.minio_access_key,
+            aws_secret_access_key=self.minio_secret_key,
+            endpoint_url=f"http://{self.minio_host}:{self.minio_port}",
+        )
+        return s3
+
+    def s3_client(self) -> BaseClient:
+        s3 = boto3.client(
+            "s3",
+            aws_access_key_id=self.aws_access_key_id,
+            aws_secret_access_key=self.aws_secret_access_key,
+            region_name=self.aws_region,
+        )
+        return s3
+
+    def sqs_client(self) -> BaseClient:
+        sqs = boto3.client(
+            "sqs",
+            aws_access_key_id=self.aws_access_key_id,
+            aws_secret_access_key=self.aws_secret_access_key,
+            region_name=self.aws_region,
+        )
+        return sqs
