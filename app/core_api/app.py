@@ -3,7 +3,6 @@ import logging
 from datetime import datetime
 from uuid import UUID
 
-import pika
 import pydantic
 from fastapi import FastAPI, UploadFile
 from fastapi.responses import RedirectResponse
@@ -27,15 +26,7 @@ s3 = env.s3_client()
 # === Queues ===
 
 if env.queue == "rabbitmq":
-    connection = pika.BlockingConnection(
-        pika.ConnectionParameters(
-            host=env.rabbitmq_host,
-            port=env.rabbitmq_port,
-            credentials=pika.PlainCredentials(env.rabbitmq_user, env.rabbitmq_password),
-            connection_attempts=5,
-            retry_delay=5,
-        )
-    )
+    connection = env.blocking_connection()
     channel = connection.channel()
     channel.queue_declare(queue=env.ingest_queue_name, durable=True)
 
