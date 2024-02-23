@@ -28,9 +28,10 @@ rebuild:
 
 test:
 	cp .env.example .env
-	docker compose up -d --wait elasticsearch test
+	docker compose up -d --wait elasticsearch
+	docker compose build test
 	sleep 10
-	docker compose run test poetry run pytest .
+	docker-compose run test poetry run pytest .
 	# --cov=redbox -v --cov-report=term-missing --cov-fail-under=35
 
 lint:
