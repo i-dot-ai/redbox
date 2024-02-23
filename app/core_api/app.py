@@ -21,7 +21,7 @@ env = Settings()
 
 # === Object Store ===
 
-s3 = env.minio_client()
+s3 = env.s3_client()
 
 
 # === Queues ===
