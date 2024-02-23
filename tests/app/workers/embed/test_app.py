@@ -31,7 +31,15 @@ def test_read_models_404(client, example_modes):
 def test_embed_sentences_422(client):
     response = client.post(
         "/models/paraphrase-albert-small-v2/embed",
-        data={"not": "a well formed payload"},
+        json={"not": "a well formed payload"},
     )
     assert response.status_code == 422
     assert response.json()["detail"][0]["msg"] == "Input should be a valid list"
+
+
+def test_embed_sentences(client):
+    response = client.post(
+        "/models/paraphrase-albert-small-v2/embed",
+        json=["I am the egg man", "I am the walrus"],
+    )
+    assert response.status_code == 200
