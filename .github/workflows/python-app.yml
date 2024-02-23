@@ -38,6 +38,8 @@ jobs:
 
     - name: Build Containers
       run: |
+        mkdir -p data/elastic/
+        chmod 777 data/elastic/
         cp .env.example .env
         docker compose build test elasticsearch
         docker compose up -d --wait elasticsearch
