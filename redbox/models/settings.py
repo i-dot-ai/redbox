@@ -8,10 +8,10 @@ env_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".env"
 
 class Settings(BaseSettings):
     elastic_host: str = "elasticsearch"
-    elastic_port: int
-    elastic_scheme: Literal["http"]
-    elastic_user: str = "ELASTIC_PASSWORD"
-    elastic_version: str
+    elastic_port: int = 9200
+    elastic_scheme: Literal["http"] = "http"
+    elastic_user: str = "elastic"
+    elastic_version: str = "8.11.0"
     elastic_password: str = "redboxpass"
 
     kibana_system_password: str = "redboxpass"

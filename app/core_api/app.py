@@ -166,7 +166,10 @@ async def create_upload_file(file: UploadFile, ingest=True) -> File:
     )
     # Strip off the query string (we don't need the keys)
     simple_s3_url = authenticated_s3_url.split("?")[0]
-
+    if file.filename is None:
+        raise ValueError("file name is null")
+    if file.content_type is None:
+        raise ValueError("file type is null")
     file_record = File(
         name=file.filename,
         path=simple_s3_url,
