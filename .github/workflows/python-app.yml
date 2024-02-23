@@ -56,7 +56,7 @@ jobs:
 
     - name: Install dependencies
       run: |
-        poetry install --no-root --no-ansi --with dev --without  streamlit-app,ai,ingest,embed,worker,api
+        poetry install --no-root --no-ansi --with dev,embed --without  streamlit-app,ai,ingest,worker,api
 
     - name: Format code
       run: |
