@@ -17,6 +17,7 @@ env_path = os.path.join(
 )
 if not os.path.exists(env_path):
     raise Exception(".env.test not found!")
+
 ENV = dotenv.dotenv_values(env_path)
 
 
