@@ -15,7 +15,7 @@ YieldFixture = Generator[T, None, None]
 env_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".env.test")
 
 
-env = Settings(_env_file=env_path)
+env = Settings(_env_file=env_path)  # type: ignore
 
 
 @pytest.fixture
