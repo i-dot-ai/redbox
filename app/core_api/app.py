@@ -1,7 +1,7 @@
 import json
 import logging
-import os
 from datetime import datetime
+from uuid import UUID
 
 import boto3
 import pika
@@ -10,7 +10,7 @@ from elasticsearch import Elasticsearch
 from fastapi import FastAPI, UploadFile
 from fastapi.responses import RedirectResponse
 
-from redbox.models import File
+from redbox.models import File, Settings
 from redbox.storage.elasticsearch import ElasticsearchStorageHandler
 
 # === Logging ===
@@ -18,75 +18,48 @@ from redbox.storage.elasticsearch import ElasticsearchStorageHandler
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger()
 
-ENV = {
-    "ELASTIC_USER": None,
-    "ELASTIC_PASSWORD": None,
-    "ELASTIC_HOST": None,
-    "ELASTIC_PORT": None,
-    "ELASTIC_SCHEME": None,
-    "OBJECT_STORE": None,
-    "BUCKET_NAME": None,
-    "INGEST_QUEUE_NAME": None,
-    "QUEUE": None,
-}
+env = Settings()
 
-for key in ENV:
-    # Throw KeyError if the environment variable is not set
-    ENV[key] = os.environ[key]
 
 # === Object Store ===
 
-if ENV["OBJECT_STORE"] == "minio":
-    for key in ["MINIO_HOST", "MINIO_PORT", "MINIO_ACCESS_KEY", "MINIO_SECRET_KEY"]:
-        ENV[key] = os.environ[key]
-
+if env.object_store == "minio":
     s3 = boto3.client(
         "s3",
-        aws_access_key_id=ENV["MINIO_ACCESS_KEY"],
-        aws_secret_access_key=ENV["MINIO_SECRET_KEY"],
-        endpoint_url=f"http://{ENV['MINIO_HOST']}:{ENV['MINIO_PORT']}",
+        aws_access_key_id=env.minio_access_key,
+        aws_secret_access_key=env.minio_secret_key,
+        endpoint_url=f"http://{env.minio_host}:{env.minio_port}",
     )
-elif ENV["OBJECT_STORE"] == "s3":
-    for key in ["AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "AWS_REGION"]:
-        ENV[key] = os.environ[key]
-
+elif env.object_store == "s3":
     s3 = boto3.client(
         "s3",
-        aws_access_key_id=ENV["AWS_ACCESS_KEY_ID"],
-        aws_secret_access_key=ENV["AWS_SECRET_ACCESS_KEY"],
-        region_name=ENV["AWS_REGION"],
+        aws_access_key_id=env.aws_access_key_id,
+        aws_secret_access_key=env.aws_secret_access_key,
+        region_name=env.aws_region,
     )
 
 
 # === Queues ===
 
-if ENV["QUEUE"] == "rabbitmq":
-    for key in ["RABBITMQ_HOST", "RABBITMQ_PORT", "RABBITMQ_USER", "RABBITMQ_PASSWORD"]:
-        ENV[key] = os.environ[key]
-
+if env.queue == "rabbitmq":
     connection = pika.BlockingConnection(
         pika.ConnectionParameters(
-            host=ENV["RABBITMQ_HOST"],
-            port=int(ENV["RABBITMQ_PORT"]),
-            credentials=pika.PlainCredentials(
-                ENV["RABBITMQ_USER"], ENV["RABBITMQ_PASSWORD"]
-            ),
+            host=env.rabbitmq_host,
+            port=env.rabbitmq_port,
+            credentials=pika.PlainCredentials(env.rabbitmq_user, env.rabbitmq_password),
             connection_attempts=5,
             retry_delay=5,
         )
     )
     channel = connection.channel()
-    channel.queue_declare(queue=ENV["INGEST_QUEUE_NAME"], durable=True)
+    channel.queue_declare(queue=env.ingest_queue_name, durable=True)
 
-elif ENV["QUEUE"] == "sqs":
-    for key in ["AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "AWS_REGION"]:
-        ENV[key] = os.environ[key]
-
+elif env.queue == "sqs":
     sqs = boto3.client(
         "sqs",
-        aws_access_key_id=ENV["AWS_ACCESS_KEY_ID"],
-        aws_secret_access_key=ENV["AWS_SECRET_ACCESS_KEY"],
-        region_name=ENV["AWS_REGION"],
+        aws_access_key_id=env.aws_access_key_id,
+        aws_secret_access_key=env.aws_secret_access_key,
+        region_name=env.aws_region,
     )
 
     raise NotImplementedError("SQS is not yet implemented")
@@ -97,12 +70,12 @@ elif ENV["QUEUE"] == "sqs":
 es = Elasticsearch(
     hosts=[
         {
-            "host": ENV["ELASTIC_HOST"],
-            "port": int(ENV["ELASTIC_PORT"]),
-            "scheme": ENV["ELASTIC_SCHEME"],
+            "host": env.elastic_host,
+            "port": env.elastic_port,
+            "scheme": env.elastic_scheme,
         }
     ],
-    basic_auth=(ENV["ELASTIC_USER"], ENV["ELASTIC_PASSWORD"]),
+    basic_auth=(env.elastic_user, env.elastic_password),
 )
 
 
@@ -180,7 +153,7 @@ async def create_upload_file(file: UploadFile, ingest=True) -> File:
     """
 
     s3.put_object(
-        Bucket=ENV["BUCKET_NAME"],
+        Bucket=env.bucket_name,
         Body=file.file,
         Key=file.filename,
         Tagging=f"file_type={file.content_type}",
@@ -188,7 +161,7 @@ async def create_upload_file(file: UploadFile, ingest=True) -> File:
 
     authenticated_s3_url = s3.generate_presigned_url(
         "get_object",
-        Params={"Bucket": ENV["BUCKET_NAME"], "Key": file.filename},
+        Params={"Bucket": env.bucket_name, "Key": file.filename},
         ExpiresIn=3600,
     )
     # Strip off the query string (we don't need the keys)
@@ -199,7 +172,7 @@ async def create_upload_file(file: UploadFile, ingest=True) -> File:
         path=simple_s3_url,
         type=file.content_type,
         creator_user_uuid="dev",
-        storage_kind=ENV["OBJECT_STORE"],
+        storage_kind=env.object_store,
     )
 
     storage_handler.write_item(file_record)
@@ -220,7 +193,7 @@ def get_file(file_uuid: UUID) -> File:
     Returns:
         File: The file
     """
-    return storage_handler.read_item(file_uuid, model_type="File")
+    return storage_handler.read_item(str(file_uuid), model_type="File")
 
 
 @app.post("/file/{file_uuid}/delete", response_model=File, tags=["file"])
@@ -234,7 +207,7 @@ def delete_file(file_uuid: str) -> File:
         File: The file that was deleted
     """
     file = storage_handler.read_item(file_uuid, model_type="File")
-    s3.delete_object(Bucket=ENV["BUCKET_NAME"], Key=file.name)
+    s3.delete_object(Bucket=env.bucket_name, Key=file.name)
     storage_handler.delete_item(file_uuid, model_type="File")
     return file
 
@@ -253,7 +226,7 @@ def ingest_file(file_uuid: str) -> File:
 
     channel.basic_publish(
         exchange="redbox-core-exchange",
-        routing_key=ENV["INGEST_QUEUE_NAME"],
+        routing_key=env.ingest_queue_name,
         body=json.dumps(file.model_dump(), ensure_ascii=False),
     )
 
