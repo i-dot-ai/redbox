@@ -93,6 +93,7 @@ async def lifespan(app: FastAPI):
         log.info(f"Loaded model {model}")
 
     IS_READY = True
+    poll_thread = None
 
     # Check to see if we run in polling mode from a queue
     if "QUEUE_URI" in os.environ:

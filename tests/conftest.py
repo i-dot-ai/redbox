@@ -1,27 +1,24 @@
 import os
 from typing import Generator, TypeVar
 
-import dotenv
 import pytest
 from elasticsearch import Elasticsearch
 from sentence_transformers import SentenceTransformer
 
-from redbox.models import Chunk
+from redbox.models import Chunk, Settings
 from redbox.storage.elasticsearch import ElasticsearchStorageHandler
 from fastapi.testclient import TestClient
+
 
 
 T = TypeVar("T")
 
 YieldFixture = Generator[T, None, None]
 
-env_path = os.path.join(
-    os.path.dirname(os.path.abspath(__file__)), "..", ".env.example"
-)
-if not os.path.exists(env_path):
-    raise Exception(".env.test not found!")
+env_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".env.test")
 
-ENV = dotenv.dotenv_values(env_path)
+
+env = Settings(_env_file=env_path)  # type: ignore
 
 
 @pytest.fixture
@@ -43,16 +40,7 @@ def file_pdf_path() -> str:
 
 @pytest.fixture
 def elasticsearch_client() -> YieldFixture[Elasticsearch]:
-    client = Elasticsearch(
-        hosts=[
-            {
-                "host": ENV["ELASTIC_HOST"],
-                "port": int(ENV["ELASTIC_PORT"]),
-                "scheme": ENV["ELASTIC_SCHEME"],
-            }
-        ],
-        basic_auth=(ENV["ELASTIC_USER"], ENV["ELASTIC_PASSWORD"]),
-    )
+    client = env.elasticsearch_client()
     yield client
 
 
