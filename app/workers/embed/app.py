@@ -56,7 +56,7 @@ class EmbedQueueItem(pydantic.BaseModel):
 
 
 def get_model_info(model_name: str) -> ModelInfo:
-    model_obj = models[model_name]
+    model_obj = model_db[model_name]
     model_info_entry = ModelInfo(
         model=model_name,
         max_seq_length=model_obj.get_max_seq_length(),
@@ -69,9 +69,8 @@ def get_model_info(model_name: str) -> ModelInfo:
 
 
 start_time = datetime.now()
-IS_READY = False
 available_models = []
-models = {}
+model_db: dict[str, SentenceTransformer] = {}
 log = logging.getLogger()
 log.setLevel(logging.INFO)
 
@@ -89,10 +88,9 @@ async def lifespan(app: FastAPI):
     for model_path in available_models:
         model_name = model_path.split("/")[-3]
         model = model_name.split("--")[-1]
-        models[model] = SentenceTransformer(model_path)
+        model_db[model] = SentenceTransformer(model_path)
         log.info(f"Loaded model {model}")
 
-    IS_READY = True
     poll_thread = None
 
     # Check to see if we run in polling mode from a queue
@@ -113,8 +111,7 @@ async def lifespan(app: FastAPI):
     if poll_thread is not None:
         poll_thread.join()
     log.info("Received shutdown event in the lifespan context, cleaning up.")
-    IS_READY = False
-    models.clear()
+    model_db.clear()
     log.info("Cleanup finished, shutting down.")
     log.info("So long, and thanks for all the fish.")
 
@@ -157,12 +154,11 @@ def health():
     uptime = datetime.now() - start_time
     uptime_seconds = uptime.total_seconds()
 
-    output = {"status": None, "uptime_seconds": uptime_seconds, "version": app.version}
-
-    if IS_READY:
-        output["status"] = "ready"
-    else:
-        output["status"] = "loading"
+    output = {
+        "status": ("ready" if model_db else "loading"),
+        "uptime_seconds": uptime_seconds,
+        "version": app.version,
+    }
 
     return output
 
@@ -177,7 +173,7 @@ def get_models():
     Returns:
         ModelListResponse: A list of available models
     """
-    return {"models": [get_model_info(m) for m in models]}
+    return {"models": [get_model_info(m) for m in model_db]}
 
 
 @app.get("/models/{model}", response_model=ModelInfo, tags=["models"])
@@ -191,7 +187,7 @@ def get_model(model: str):
         ModelInfo: Information about the model
     """
 
-    if model not in models:
+    if model not in model_db:
         raise HTTPException(status_code=404, detail=f"Model {model} not found")
     return get_model_info(model)
 
@@ -208,10 +204,10 @@ def embed_sentences(model: str, sentences: list[str]):
         EmbeddingResponse: The embeddings of the sentences
     """
 
-    if model not in models:
+    if model not in model_db:
         raise HTTPException(status_code=404, detail=f"Model {model} not found")
 
-    model_obj = models[model]
+    model_obj = model_db[model]
     embeddings = model_obj.encode(sentences)
 
     reformatted_embeddings = []

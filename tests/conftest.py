@@ -37,31 +37,9 @@ def file_pdf_path() -> str:
     return "tests/data/pdf/Cabinet Office - Wikipedia.pdf"
 
 
-# def setup_elasticsearch():
-#     es = Elasticsearch(env.elastic_host)
-#     for index_name, schema in schemas.items():
-#         body = {
-#             "settings": {
-#                 "number_of_shards": 1,
-#                 "number_of_replicas": 1,
-#                 "index.store.type": "mmapfs",
-#             },
-#             "mappings": schema,
-#         }
-#         es.indices.create(index=index_name, body=body)
-#
-#
-# def teardown_elasticsearch():
-#     es = Elasticsearch(env.elastic_host)
-#     for index_name in schemas.keys():
-#         es.indices.delete(index=index_name)
-
-
 @pytest.fixture
 def elasticsearch_client() -> YieldFixture[Elasticsearch]:
-    # setup_elasticsearch()
     yield env.elasticsearch_client()
-    # teardown_elasticsearch()
 
 
 @pytest.fixture
@@ -80,10 +58,10 @@ def client():
 
 @pytest.fixture
 def example_modes():
-    from app.workers.embed.app import models as db
+    from app.workers.embed.app import model_db
 
-    db["paraphrase-albert-small-v2"] = SentenceTransformer(
+    model_db["paraphrase-albert-small-v2"] = SentenceTransformer(
         model_name_or_path="paraphrase-albert-small-v2",
         cache_folder="./models",
     )
-    yield db
+    yield model_db
