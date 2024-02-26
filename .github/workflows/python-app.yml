@@ -44,25 +44,14 @@ jobs:
         docker compose build test elasticsearch
         docker compose up -d --wait elasticsearch
 
-    - name: Peek Elasticsearch
-      run: |
-        sleep 10
-        docker logs redbox-copilot-elasticsearch-1
-
     - name: Test with pytest
       run: |
-        make test
-
-    - name: Install dependencies
-      run: |
-        docker compose down
-        docker system prune --all --force
-        poetry install --no-root --no-ansi --with dev,embed --without  streamlit-app,ai,ingest,worker,api
+        poetry run make test
 
     - name: Format code
       run: |
-        make format
+        poetry run make lint
 
     - name: Type check
       run: |
-        make checktypes
+        poetry run make checktypes

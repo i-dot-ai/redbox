@@ -10,6 +10,7 @@ RUN poetry install --no-root --no-ansi --with dev,worker,api,embed --without ai,
 ADD redbox/ /app/redbox
 ADD app/ /app/app
 ADD tests /app/tests
+ADD Makefile /app/
 ADD ../.env.example /app/
 
 WORKDIR /app/
