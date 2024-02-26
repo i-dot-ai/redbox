@@ -77,7 +77,6 @@ log.setLevel(logging.INFO)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    global IS_READY
     # Start of the setup phase
     for dirpath, dirnames, filenames in os.walk("models"):
         # Check if the current directory contains a file named "config.json"

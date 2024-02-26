@@ -46,12 +46,12 @@ jobs:
 
     - name: Test with pytest
       run: |
-        poetry run make test
+        docker compose run test make test
 
     - name: Format code
       run: |
-        poetry run make lint
+        docker compose run test make lint
 
     - name: Type check
       run: |
-        poetry run make checktypes
+        docker compose run test make checktypes

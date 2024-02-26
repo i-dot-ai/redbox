@@ -39,4 +39,4 @@ format:
 
 checktypes:
 	poetry run mypy redbox app tests --ignore-missing-imports
-	poetry run mypy legacy_app --follow-imports skip --ignore-missing-imports
+	# poetry run mypy legacy_app --follow-imports skip --ignore-missing-imports

@@ -8,7 +8,7 @@ from sentence_transformers import SentenceTransformer
 from redbox.models import Chunk, Settings
 from redbox.storage.elasticsearch import ElasticsearchStorageHandler
 from fastapi.testclient import TestClient
-
+from app.workers.embed.app import app as application, model_db
 
 T = TypeVar("T")
 
@@ -51,15 +51,11 @@ def elasticsearch_storage_handler(elasticsearch_client):
 
 @pytest.fixture
 def client():
-    from app.workers.embed.app import app as application
-
     yield TestClient(application)
 
 
 @pytest.fixture
 def example_modes():
-    from app.workers.embed.app import model_db
-
     model_db["paraphrase-albert-small-v2"] = SentenceTransformer(
         model_name_or_path="paraphrase-albert-small-v2",
         cache_folder="./models",
