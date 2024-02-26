@@ -50,7 +50,7 @@ jobs:
 
     - name: Format code
       run: |
-        docker compose run test make lint
+        docker compose run test make format
 
     - name: Type check
       run: |
