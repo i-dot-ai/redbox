@@ -1,4 +1,4 @@
-def test_read_all_models(client, example_modes):
+def test_read_all_models(client, example_model_db):
     """
     Given that I have one model, paraphrase-albert-small-v2, in the database
     When I GET all models /models
@@ -17,7 +17,7 @@ def test_read_all_models(client, example_modes):
     }
 
 
-def test_read_one_model(client, example_modes):
+def test_read_one_model(client, example_model_db):
     """
     Given that I have one model, paraphrase-albert-small-v2, in the database
     When I GET this one model /models/paraphrase-albert-small-v2
@@ -32,7 +32,7 @@ def test_read_one_model(client, example_modes):
     }
 
 
-def test_read_models_404(client, example_modes):
+def test_read_models_404(client, example_model_db):
     """
     Given that I have one model, paraphrase-albert-small-v2, in the database
     When I GET a non-existent model /models/not-a-model
@@ -57,7 +57,7 @@ def test_embed_sentences_422(client):
     assert response.json()["detail"][0]["msg"] == "Input should be a valid list"
 
 
-def test_embed_sentences(client):
+def test_embed_sentences(client, example_model_db):
     """
     Given that I have one model, paraphrase-albert-small-v2, in the database
     When I POST a valid payload consisting of some sentenced to embed to
@@ -71,3 +71,17 @@ def test_embed_sentences(client):
         json=["I am the egg man", "I am the walrus"],
     )
     assert response.status_code == 200
+
+
+def test_health_ready(client, example_model_db):
+    """
+    Given that I have one model, paraphrase-albert-small-v2, in the database
+    When I GET the app health /models/health
+    I Expect its state to be ready
+
+    N.B. We are not testing the content / efficacy of the model in this test.
+    """
+    response = client.get("/health")
+    assert response.status_code == 200
+    assert response.json()["status"] == "ready"
+    assert response.json()["version"] == "0.1.0"

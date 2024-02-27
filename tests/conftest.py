@@ -55,7 +55,7 @@ def client():
 
 
 @pytest.fixture
-def example_modes():
+def example_model_db():
     model_db["paraphrase-albert-small-v2"] = SentenceTransformer(
         model_name_or_path="paraphrase-albert-small-v2",
         cache_folder="./models",
