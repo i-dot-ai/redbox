@@ -26,6 +26,7 @@ from langchain_community.chat_models import ChatLiteLLM
 from langchain_community.embeddings import SentenceTransformerEmbeddings
 from loguru import logger
 from lxml.html.clean import Cleaner
+from sentence_transformers import SentenceTransformer
 from streamlit.web.server.websocket_headers import _get_websocket_headers
 
 from redbox.llm.llm_base import LLMHandler
@@ -151,6 +152,23 @@ def init_session_state() -> dict:
 
     if "model_select" not in st.session_state:
         st.session_state.model_select = st.session_state.available_models[0]
+
+    if "embedding_model" not in st.session_state:
+        available_models = []
+        models = {}
+        for dirpath, dirnames, filenames in os.walk("models"):
+            # Check if the current directory contains a file named "config.json"
+            if "pytorch_model.bin" in filenames:
+                # If it does, print the path to the directory
+                available_models.append(dirpath)
+
+        for model_path in available_models:
+            model_name = model_path.split("/")[-3]
+            model = model_name.split("--")[-1]
+            models[model] = SentenceTransformer(model_path)
+
+        model_name = ENV.get("EMBEDDING_MODEL", "all-mpnet-base-v2")
+        st.session_state.embedding_model = models[model_name]
 
     if "BUCKET_NAME" not in st.session_state:
         st.session_state.BUCKET_NAME = f"redbox-storage-{st.session_state.user_uuid}"
