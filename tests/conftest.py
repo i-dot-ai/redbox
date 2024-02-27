@@ -10,6 +10,7 @@ from redbox.storage.elasticsearch import ElasticsearchStorageHandler
 from fastapi.testclient import TestClient
 from app.workers.embed.app import app as application, model_db
 
+
 T = TypeVar("T")
 
 YieldFixture = Generator[T, None, None]

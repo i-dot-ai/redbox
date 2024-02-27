@@ -48,6 +48,10 @@ jobs:
       run: |
         docker compose run test make test
 
+    - name: Install dependencies
+      run: |
+        poetry install --no-root --no-ansi --with dev --without  streamlit-app,ai,ingest,embed,worker,api
+
     - name: Format code
       run: |
         docker compose run test make format
