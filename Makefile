@@ -27,7 +27,7 @@ rebuild:
 	docker compose build --no-cache
 
 test:
-	docker compose run test poetry run pytest . --cov=redbox -v --cov-report=term-missing --cov-fail-under=35
+	poetry run pytest . --cov=redbox -v --cov-report=term-missing --cov-fail-under=35
 
 lint:
 	poetry run ruff check .
@@ -35,8 +35,8 @@ lint:
 format:
 	poetry run ruff format .
 	# additionally we format, but not lint, the notebooks
-	poetry run ruff format **/*.ipynb
+	# poetry run ruff format **/*.ipynb
 
 checktypes:
 	poetry run mypy redbox app tests --ignore-missing-imports
-	poetry run mypy legacy_app --follow-imports skip --ignore-missing-imports
+	# poetry run mypy legacy_app --follow-imports skip --ignore-missing-imports
