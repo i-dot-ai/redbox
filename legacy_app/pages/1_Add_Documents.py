@@ -13,7 +13,7 @@ st.set_page_config(
 
 ENV = init_session_state()
 
-file_chunker = FileChunker()
+file_chunker = FileChunker(embedding_model=st.session_state.embedding_model)
 
 collections = st.session_state.storage_handler.read_all_items(model_type="Collection")
 

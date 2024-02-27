@@ -12,7 +12,10 @@ RUN poetry install --no-root --no-ansi --with streamlit-app,ai,ingest,embed --wi
 ADD redbox/ /app/redbox
 ADD legacy_app /app
 
+# Download the model
+ADD ./download_embedder.py /app/
 WORKDIR /app/
+RUN poetry run python ./download_embedder.py
 
 EXPOSE 8501
 
