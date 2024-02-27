@@ -88,7 +88,7 @@ class ElasticsearchStorageHandler(BaseStorageHandler):
         try:
             result = scan(
                 client=self.es_client,
-                index="redbox-test-data-chunk",
+                index=target_index,
                 query={"query": {"match_all": {}}},
                 _source=True,
             )
@@ -111,7 +111,7 @@ class ElasticsearchStorageHandler(BaseStorageHandler):
             # Only return _id
             result = scan(
                 client=self.es_client,
-                index="redbox-test-data-chunk",
+                index=target_index,
                 query={"query": {"match_all": {}}},
                 _source=False,
             )
