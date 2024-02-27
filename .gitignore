@@ -178,3 +178,7 @@ cython_debug/
 #.idea/
 
 .terraform
+
+# Django app
+*.pyc
+app/django_app/staticfiles/
