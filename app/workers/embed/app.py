@@ -13,12 +13,12 @@ from fastapi import FastAPI, HTTPException
 from fastapi.responses import RedirectResponse
 from sentence_transformers import SentenceTransformer
 
-from app.core_api.app import StatusResponse
 from redbox.models import (
     ModelInfo,
     ModelListResponse,
     EmbeddingResponse,
     EmbedQueueItem,
+    StatusResponse,
 )
 
 
