@@ -14,6 +14,7 @@ from redbox.models.llm import (
     ModelListResponse,
     EmbeddingResponse,
     EmbedQueueItem,
+    StatusResponse
 )
 
 __all__ = [
@@ -31,4 +32,5 @@ __all__ = [
     "ModelListResponse",
     "EmbeddingResponse",
     "EmbedQueueItem",
+    "StatusResponse"
 ]
