@@ -13,46 +13,13 @@ from fastapi import FastAPI, HTTPException
 from fastapi.responses import RedirectResponse
 from sentence_transformers import SentenceTransformer
 
-# === Data Models ===
-
-
-class ModelInfo(pydantic.BaseModel):
-    model: str
-    max_seq_length: int
-    vector_size: int
-
-
-class Embedding(pydantic.BaseModel):
-    object: str = "embedding"
-    index: int
-    embedding: list[float]
-
-
-class EmbeddingResponse(pydantic.BaseModel):
-    object: str = "list"
-    data: list[Embedding]
-    embedding_id: str
-    model: str
-    model_info: ModelInfo
-
-
-class EmbeddingRequest(pydantic.BaseModel):
-    sentences: list[str]
-
-
-class ModelListResponse(pydantic.BaseModel):
-    models: list[ModelInfo]
-
-
-class StatusResponse(pydantic.BaseModel):
-    status: str
-    uptime_seconds: float
-    version: str
-
-
-class EmbedQueueItem(pydantic.BaseModel):
-    model: str
-    sentence: str
+from app.core_api.app import StatusResponse
+from redbox.models import (
+    ModelInfo,
+    ModelListResponse,
+    EmbeddingResponse,
+    EmbedQueueItem,
+)
 
 
 def get_model_info(model_name: str) -> ModelInfo:
