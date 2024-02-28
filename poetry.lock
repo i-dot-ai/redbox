@@ -420,17 +420,17 @@ files = [
 
 [[package]]
 name = "boto3"
-version = "1.34.51"
+version = "1.34.52"
 description = "The AWS SDK for Python"
 optional = false
 python-versions = ">= 3.8"
 files = [
-    {file = "boto3-1.34.51-py3-none-any.whl", hash = "sha256:67732634dc7d0afda879bd9a5e2d0818a2c14a98bef766b95a3e253ea5104cb9"},
-    {file = "boto3-1.34.51.tar.gz", hash = "sha256:2cd9463e738a184cbce8a6824027c22163c5f73e277a35ff5aa0fb0e845b4301"},
+    {file = "boto3-1.34.52-py3-none-any.whl", hash = "sha256:898ad2123b18cae8efd85adc56ac2d1925be54592aebc237020d4f16e9a9e7a9"},
+    {file = "boto3-1.34.52.tar.gz", hash = "sha256:66303b5f26d92afb72656ff490b22ea72dfff8bf1a29e4a0c5d5f11ec56245dd"},
 ]
 
 [package.dependencies]
-botocore = ">=1.34.51,<1.35.0"
+botocore = ">=1.34.52,<1.35.0"
 jmespath = ">=0.7.1,<2.0.0"
 s3transfer = ">=0.10.0,<0.11.0"
 
@@ -439,13 +439,13 @@ crt = ["botocore[crt] (>=1.21.0,<2.0a0)"]
 
 [[package]]
 name = "boto3-stubs"
-version = "1.34.51"
-description = "Type annotations for boto3 1.34.51 generated with mypy-boto3-builder 7.23.2"
+version = "1.34.52"
+description = "Type annotations for boto3 1.34.52 generated with mypy-boto3-builder 7.23.2"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "boto3-stubs-1.34.51.tar.gz", hash = "sha256:c04ece156a376745af34aefe7283e93f7066d8f2be2500297b129e3d46e0ac26"},
-    {file = "boto3_stubs-1.34.51-py3-none-any.whl", hash = "sha256:3c3283d3982099cfbe6fee474f8eae42217b7cdfd98d5dd857ea952e29bdabf1"},
+    {file = "boto3-stubs-1.34.52.tar.gz", hash = "sha256:823c41059f836d6877daaa1cbd20f813c8f1a78b9fdf290bc0b853127e127ba3"},
+    {file = "boto3_stubs-1.34.52-py3-none-any.whl", hash = "sha256:644381a404fb5884154f7dcc40bb819f0c7f37de21b7a7b493585277b51c9a5f"},
 ]
 
 [package.dependencies]
@@ -496,7 +496,7 @@ bedrock-agent = ["mypy-boto3-bedrock-agent (>=1.34.0,<1.35.0)"]
 bedrock-agent-runtime = ["mypy-boto3-bedrock-agent-runtime (>=1.34.0,<1.35.0)"]
 bedrock-runtime = ["mypy-boto3-bedrock-runtime (>=1.34.0,<1.35.0)"]
 billingconductor = ["mypy-boto3-billingconductor (>=1.34.0,<1.35.0)"]
-boto3 = ["boto3 (==1.34.51)", "botocore (==1.34.51)"]
+boto3 = ["boto3 (==1.34.52)", "botocore (==1.34.52)"]
 braket = ["mypy-boto3-braket (>=1.34.0,<1.35.0)"]
 budgets = ["mypy-boto3-budgets (>=1.34.0,<1.35.0)"]
 ce = ["mypy-boto3-ce (>=1.34.0,<1.35.0)"]
@@ -839,13 +839,13 @@ xray = ["mypy-boto3-xray (>=1.34.0,<1.35.0)"]
 
 [[package]]
 name = "botocore"
-version = "1.34.51"
+version = "1.34.52"
 description = "Low-level, data-driven core of boto 3."
 optional = false
 python-versions = ">= 3.8"
 files = [
-    {file = "botocore-1.34.51-py3-none-any.whl", hash = "sha256:01d5156247f991b3466a8404e3d7460a9ecbd9b214f9992d6ba797d9ddc6f120"},
-    {file = "botocore-1.34.51.tar.gz", hash = "sha256:5086217442e67dd9de36ec7e87a0c663f76b7790d5fb6a12de565af95e87e319"},
+    {file = "botocore-1.34.52-py3-none-any.whl", hash = "sha256:05567d8aba344826060481ea309555432c96f0febe22bee7cf5a3b6d3a03cec8"},
+    {file = "botocore-1.34.52.tar.gz", hash = "sha256:187da93aec3f2e87d8a31eced16fa2cb9c71fe2d69b0a797f9f7a9220f5bf7ae"},
 ]
 
 [package.dependencies]
@@ -2954,13 +2954,13 @@ tesseract = ["pytesseract"]
 
 [[package]]
 name = "litellm"
-version = "1.27.10"
+version = "1.27.14"
 description = "Library to easily interface with LLM API providers"
 optional = false
 python-versions = ">=3.8, !=2.7.*, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*, !=3.5.*, !=3.6.*, !=3.7.*"
 files = [
-    {file = "litellm-1.27.10-py3-none-any.whl", hash = "sha256:c9e5e98db9f88720eb075a8d4bd7bd748d456f29b522543ad0f2e9502feab677"},
-    {file = "litellm-1.27.10.tar.gz", hash = "sha256:f90cdf303a5069a0abd21918f83fdb7dd22f0cdbf4d2270577028bbb3762c38c"},
+    {file = "litellm-1.27.14-py3-none-any.whl", hash = "sha256:3fea0c9b9cc594e94497cedd5c8c87ae8e08f596ed5f5afc2f8ab878e03f2b3d"},
+    {file = "litellm-1.27.14.tar.gz", hash = "sha256:b7de72dc718dcd316a6d23df217cc1b28ce8298b44a994c9cb8d7e1d7a3bbeaf"},
 ]
 
 [package.dependencies]
@@ -3988,13 +3988,13 @@ sympy = "*"
 
 [[package]]
 name = "openai"
-version = "1.12.0"
+version = "1.13.3"
 description = "The official Python library for the openai API"
 optional = false
 python-versions = ">=3.7.1"
 files = [
-    {file = "openai-1.12.0-py3-none-any.whl", hash = "sha256:a54002c814e05222e413664f651b5916714e4700d041d5cf5724d3ae1a3e3481"},
-    {file = "openai-1.12.0.tar.gz", hash = "sha256:99c5d257d09ea6533d689d1cc77caa0ac679fa21efef8893d8b0832a86877f1b"},
+    {file = "openai-1.13.3-py3-none-any.whl", hash = "sha256:5769b62abd02f350a8dd1a3a242d8972c947860654466171d60fb0972ae0a41c"},
+    {file = "openai-1.13.3.tar.gz", hash = "sha256:ff6c6b3bc7327e715e4b3592a923a5a1c7519ff5dd764a83d69f633d49e77a7b"},
 ]
 
 [package.dependencies]
@@ -7106,13 +7106,13 @@ devenv = ["check-manifest", "pytest (>=4.3)", "pytest-cov", "pytest-mock (>=3.3)
 
 [[package]]
 name = "unstructured"
-version = "0.12.4"
+version = "0.12.5"
 description = "A library that prepares raw documents for downstream ML tasks."
 optional = false
 python-versions = ">=3.9.0,<3.12"
 files = [
-    {file = "unstructured-0.12.4-py3-none-any.whl", hash = "sha256:f1aa046297a3afba3aa16895e513aca6a93802ef73b7a18080656435c4deb217"},
-    {file = "unstructured-0.12.4.tar.gz", hash = "sha256:019cf52e9e2bfa286e61ffa0d7d336e1645280f9a0f165e697583143fcfe708a"},
+    {file = "unstructured-0.12.5-py3-none-any.whl", hash = "sha256:cce7de36964f556810adb8728d0639d8e9b3ef4567443877609f3c66a54e24d1"},
+    {file = "unstructured-0.12.5.tar.gz", hash = "sha256:5ea6c881049e7d98a88c07192bcb6ab750de41b4e3b594972ed1034bda99dbae"},
 ]
 
 [package.dependencies]
@@ -7155,6 +7155,7 @@ xlrd = {version = "*", optional = true, markers = "extra == \"all-docs\""}
 [package.extras]
 airtable = ["pyairtable"]
 all-docs = ["markdown", "msg-parser", "networkx", "onnx", "openpyxl", "pandas", "pdf2image", "pdfminer.six", "pikepdf", "pillow-heif", "pypandoc", "pypdf", "python-docx", "python-pptx (<=0.6.23)", "unstructured-inference (==0.7.23)", "unstructured.pytesseract (>=0.3.12)", "xlrd"]
+astra = ["astrapy"]
 azure = ["adlfs", "fsspec"]
 azure-cognitive-search = ["azure-search-documents"]
 bedrock = ["boto3", "langchain-community"]
@@ -7714,4 +7715,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.11,<3.12"
-content-hash = "1567e6f7fdc55d8e9927ac5b1d95d984324c124b15f2ac48193a233352b86bb8"
+content-hash = "c495ce5f31f860ff59799072bcf50aec97f2122a457d21cd09b14bde17816b89"
