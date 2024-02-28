@@ -29,7 +29,7 @@ rebuild:
 test:
 	#poetry run pytest . --cov=redbox -v --cov-report=term-missing --cov-fail-under=35
 	docker-compose up -d db
-	docker-compose run --env ENVIRONMENT="TEST" --env PYTHONPATH=/app/app/django_app/ redbox-core poetry run pytest /app/app/django_app/tests -v --cov=redbox_core --cov-fail-under 0
+	docker-compose run --env ENVIRONMENT="TEST" --env PYTHONPATH=/app/app/django_app/ redbox-core poetry run pytest /app/app/django_app/tests/ -v --cov=redbox_app.redbox_core --cov-fail-under 10
 
 lint:
 	poetry run ruff check .

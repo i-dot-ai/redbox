@@ -2,7 +2,7 @@ from datetime import datetime
 
 import pytest
 import pytz
-from django.contrib.auth.models import User
+from redbox_app.redbox_core.models import User
 
 UTC = pytz.timezone("UTC")
 

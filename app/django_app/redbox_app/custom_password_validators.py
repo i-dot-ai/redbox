@@ -3,7 +3,7 @@ import string
 
 from django.core.exceptions import ValidationError
 
-from redbox_core.constants import BUSINESS_SPECIFIC_WORDS
+from redbox_app.redbox_core.constants import BUSINESS_SPECIFIC_WORDS
 
 
 class SpecialCharacterValidator:
