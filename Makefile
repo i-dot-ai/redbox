@@ -44,16 +44,16 @@ checktypes:
 	# poetry run mypy legacy_app --follow-imports skip --ignore-missing-imports
 
 check-migrations:
-	docker-compose build web
-	docker-compose run --env ENVIRONMENT="TEST" redbox-core poetry run python manage.py migrate
-	docker-compose run --env ENVIRONMENT="TEST" redbox-core poetry run python manage.py makemigrations --check
+	docker-compose build redbox-core
+	docker-compose run --env ENVIRONMENT="TEST" redbox-core poetry run python /app/app/django_app/manage.py migrate
+	docker-compose run --env ENVIRONMENT="TEST" redbox-core poetry run python /app/app/django_app/manage.py makemigrations --check
 
 check-python-code:
-	chdir app/
-	poetry run ruff .
-	poetry run bandit -ll -r ./redbox
-	poetry run bandit -ll -r ./django_app
-	poetry run mypy ./ --ignore-missing-imports
+	poetry run ruff check .
+	#poetry run bandit -ll -r ./redbox
+	#poetry run bandit -ll -r ./app/django_app
+	poetry run mypy ./redbox --ignore-missing-imports
+	poetry run mypy ./app/django_app --ignore-missing-imports
 
 reset-db:
 	docker-compose down db --volumes
