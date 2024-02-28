@@ -1,5 +1,33 @@
 version: '3.7'
 services:
+  redbox-core:
+    image: redbox-core:latest
+    build:
+      context: .
+      dockerfile: ./app/django_app/docker/web/Dockerfile
+    depends_on:
+      - db
+    environment:
+      - POSTGRES_HOST=db
+    volumes:
+      - ./:/app/:z
+    ports:
+      - "8090:8090"
+  db:
+    image: postgres:13
+    environment:
+      - POSTGRES_USER=redbox-core
+      - POSTGRES_PASSWORD=insecure
+    volumes:
+      - local_postgres_data:/var/lib/postgresql/data:Z
+    ports:
+      - "5432:5432"
+  requirements:
+    image: python:3.11
+    profiles:
+      - utils
+    volumes:
+      - ./:/app/:z
   test:
     image: redbox-tests:latest
     build:
@@ -155,3 +183,4 @@ networks:
 volumes:
   elasticsearch:
   redbox-app-data:
+  local_postgres_data: {}

@@ -49,6 +49,9 @@ This means that our project is structured approximately like this:
 redbox-copilot/
 ├── app/
 │  ├── frontend/
+│  ├── django_app/
+│  │   ├── Dockerfile
+│  │   └── pyproject.toml
 │  └── workers/
 │     ├── embed
 │     │  ├── Dockerfile
