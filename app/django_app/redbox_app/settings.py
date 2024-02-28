@@ -36,7 +36,7 @@ SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 # Application definition
 INSTALLED_APPS = [
-    "redbox.redbox_core",
+    "redbox_app.redbox_core",
     "allauth",
     "allauth.account",
     "allauth.socialaccount",
@@ -70,16 +70,16 @@ MIDDLEWARE = [
     "allauth.account.middleware.AccountMiddleware",
 ]
 
-ROOT_URLCONF = "redbox.urls"
+ROOT_URLCONF = "redbox_app.urls"
 
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.jinja2.Jinja2",
         "DIRS": [
-            BASE_DIR / "redbox" / "templates",
-            BASE_DIR / "redbox" / "templates" / "auth",
+            BASE_DIR / "redbox_app" / "templates",
+            BASE_DIR / "redbox_app" / "templates" / "auth",
         ],
-        "OPTIONS": {"environment": "redbox.jinja2.environment"},
+        "OPTIONS": {"environment": "redbox_app.jinja2.environment"},
     },
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
@@ -96,7 +96,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = "redbox.wsgi.application"
+WSGI_APPLICATION = "redbox_app.wsgi.application"
 
 AUTHENTICATION_BACKENDS = [
     "django.contrib.auth.backends.ModelBackend",
@@ -119,13 +119,13 @@ AUTH_PASSWORD_VALIDATORS = [
         "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
     },
     {
-        "NAME": "{{cookiecutter.package_name}}.custom_password_validators.SpecialCharacterValidator",
+        "NAME": "redbox_app.custom_password_validators.SpecialCharacterValidator",
     },
     {
-        "NAME": "{{cookiecutter.package_name}}.custom_password_validators.LowercaseUppercaseValidator",
+        "NAME": "redbox_app.custom_password_validators.LowercaseUppercaseValidator",
     },
     {
-        "NAME": "{{cookiecutter.package_name}}.custom_password_validators.BusinessPhraseSimilarityValidator",
+        "NAME": "redbox_app.custom_password_validators.BusinessPhraseSimilarityValidator",
     },
 ]
 
@@ -219,7 +219,7 @@ if HostingEnvironment.is_beanstalk():
     )
 else:
     ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
-    DEFAULT_FILE_STORAGE = "django.core.files.storage.FileSystemStorage"
+    DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
     LOG_ROOT = "."
     LOG_HANDLER = "console"
 
