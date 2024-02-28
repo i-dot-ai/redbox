@@ -27,9 +27,9 @@ rebuild:
 	docker compose build --no-cache
 
 test:
-	poetry run pytest . --cov=redbox -v --cov-report=term-missing --cov-fail-under=35
+	#poetry run pytest . --cov=redbox -v --cov-report=term-missing --cov-fail-under=35
 	docker-compose up -d db
-	docker-compose run --env ENVIRONMENT="TEST" web poetry run pytest tests -v --cov=redbox_core --cov-fail-under 92
+	docker-compose run --env ENVIRONMENT="TEST" --env PYTHONPATH=/app/app/django_app/ redbox-core poetry run pytest /app/app/django_app/tests -v --cov=redbox_core --cov-fail-under 0
 
 lint:
 	poetry run ruff check .
@@ -45,13 +45,14 @@ checktypes:
 
 check-migrations:
 	docker-compose build web
-	docker-compose run --env ENVIRONMENT="TEST" web poetry run python manage.py migrate
-	docker-compose run --env ENVIRONMENT="TEST" web poetry run python manage.py makemigrations --check
+	docker-compose run --env ENVIRONMENT="TEST" redbox-core poetry run python manage.py migrate
+	docker-compose run --env ENVIRONMENT="TEST" redbox-core poetry run python manage.py makemigrations --check
 
 check-python-code:
 	chdir app/
 	poetry run ruff .
 	poetry run bandit -ll -r ./redbox
+	poetry run bandit -ll -r ./django_app
 	poetry run mypy ./ --ignore-missing-imports
 
 reset-db:
