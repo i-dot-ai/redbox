@@ -1,9 +1,8 @@
 import json
 import logging
-import os
 
-from sentence_transformers import SentenceTransformer
 
+from app.workers.model_db import SentenceTransformerDB
 from redbox.models import File, Settings
 from redbox.parsing.file_chunker import FileChunker
 from redbox.storage.elasticsearch import ElasticsearchStorageHandler
@@ -16,30 +15,9 @@ env = Settings()
 # ====== Loading embedding model ======
 
 available_models = []
-models = {}
-model_info = {}
+models = SentenceTransformerDB()
 
-# Start of the setup phase
-for dirpath, dirnames, filenames in os.walk("models"):
-    # Check if the current directory contains a file named "config.json"
-    if "pytorch_model.bin" in filenames:
-        # If it does, print the path to the directory
-        available_models.append(dirpath)
-
-for model_path in available_models:
-    model_name = model_path.split("/")[-3]
-    model = model_name.split("--")[-1]
-    models[model] = SentenceTransformer(model_path)
-    logging.info(f"Loaded model {model}")
-
-for model, model_obj in models.items():
-    model_info_entry = {
-        "model": model,
-        "max_seq_length": model_obj.get_max_seq_length(),
-        "vector_size": model_obj.get_sentence_embedding_dimension(),
-    }
-
-    model_info[model] = model_info_entry
+models.init_from_disk()
 
 
 # === Object Store ===
