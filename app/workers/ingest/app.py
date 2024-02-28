@@ -14,7 +14,6 @@ env = Settings()
 
 # ====== Loading embedding model ======
 
-available_models = []
 models = SentenceTransformerDB()
 
 models.init_from_disk()
@@ -34,6 +33,8 @@ if env.queue == "rabbitmq":
 elif env.queue == "sqs":
     sqs = env.sqs_client()
     raise NotImplementedError("SQS is not yet implemented")
+else:
+    raise ValueError("must use rabbitmq")
 
 # === Storage ===
 
