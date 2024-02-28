@@ -8350,6 +8350,17 @@ files = [
 types-pyasn1 = "*"
 
 [[package]]
+name = "types-pytz"
+version = "2024.1.0.20240203"
+description = "Typing stubs for pytz"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "types-pytz-2024.1.0.20240203.tar.gz", hash = "sha256:c93751ee20dfc6e054a0148f8f5227b9a00b79c90a4d3c9f464711a73179c89e"},
+    {file = "types_pytz-2024.1.0.20240203-py3-none-any.whl", hash = "sha256:9679eef0365db3af91ef7722c199dbb75ee5c1b67e3c4dd7bfbeb1b8a71c21a3"},
+]
+
+[[package]]
 name = "types-s3transfer"
 version = "0.10.0"
 description = "Type annotations and code completion for s3transfer"
@@ -9090,4 +9101,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.11,<3.12"
-content-hash = "849444cd1c941ea53e3cc91328b341f57f0a032ef67cca94e01b503576c27419"
+content-hash = "f2b6ea2bfea69d12ae4158597e61c689d4571de5667e7dfc34da6c53501cfa30"
