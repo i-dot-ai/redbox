@@ -1,0 +1,6 @@
+---
+applications:
+- name: redbox-core
+  memory: 512M
+  buildpacks:
+  - python_buildpack
