@@ -31,7 +31,7 @@ test:
 
 test-django:
 	docker-compose up -d db
-	docker-compose run --env ENVIRONMENT="TEST" --env PYTHONPATH=/app/app/django_app/ redbox-core poetry run pytest /app/app/django_app/tests/ -v --cov=redbox_app.redbox_core --cov-fail-under 10
+	docker-compose run --env ENVIRONMENT="TEST" --env PYTHONPATH=/app/django_app/ redbox-core poetry run pytest /app/django_app/tests/ -v --cov=redbox_app.redbox_core --cov-fail-under 10
 
 lint:
 	poetry run ruff check .
@@ -47,15 +47,15 @@ checktypes:
 
 check-migrations:
 	docker-compose build redbox-core
-	docker-compose run --env ENVIRONMENT="TEST" redbox-core poetry run python /app/app/django_app/manage.py migrate
-	docker-compose run --env ENVIRONMENT="TEST" redbox-core poetry run python /app/app/django_app/manage.py makemigrations --check
+	docker-compose run --env ENVIRONMENT="TEST" redbox-core poetry run python /app/django_app/manage.py migrate
+	docker-compose run --env ENVIRONMENT="TEST" redbox-core poetry run python /app/django_app/manage.py makemigrations --check
 
 check-python-code:
 	poetry run ruff check .
 	poetry run bandit -ll -r ./redbox
-	poetry run bandit -ll -r ./app/django_app
+	poetry run bandit -ll -r ./django_app
 	poetry run mypy ./redbox --ignore-missing-imports
-	poetry run mypy ./app/django_app --ignore-missing-imports
+	poetry run mypy ./django_app --ignore-missing-imports
 
 reset-db:
 	docker-compose down db --volumes
