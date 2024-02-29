@@ -27,7 +27,9 @@ rebuild:
 	docker compose build --no-cache
 
 test:
-	#poetry run pytest . --cov=redbox -v --cov-report=term-missing --cov-fail-under=35
+	poetry run pytest . --cov=redbox -v --cov-report=term-missing --cov-fail-under=35
+
+test-django:
 	docker-compose up -d db
 	docker-compose run --env ENVIRONMENT="TEST" --env PYTHONPATH=/app/app/django_app/ redbox-core poetry run pytest /app/app/django_app/tests/ -v --cov=redbox_app.redbox_core --cov-fail-under 10
 
@@ -50,8 +52,8 @@ check-migrations:
 
 check-python-code:
 	poetry run ruff check .
-	#poetry run bandit -ll -r ./redbox
-	#poetry run bandit -ll -r ./app/django_app
+	poetry run bandit -ll -r ./redbox
+	poetry run bandit -ll -r ./app/django_app
 	poetry run mypy ./redbox --ignore-missing-imports
 	poetry run mypy ./app/django_app --ignore-missing-imports
 
