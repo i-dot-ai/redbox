@@ -4,7 +4,7 @@ services:
     image: redbox-core:latest
     build:
       context: .
-      dockerfile: ./app/django_app/docker/web/Dockerfile
+      dockerfile: ./django_app/docker/web/Dockerfile
     depends_on:
       - db
     environment:
