@@ -182,4 +182,4 @@ cython_debug/
 
 # Django app
 *.pyc
-app/django_app/staticfiles/*
+django_app/staticfiles/*
