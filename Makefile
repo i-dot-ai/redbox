@@ -26,8 +26,13 @@ build:
 rebuild:
 	docker compose build --no-cache
 
-test:
-	poetry run pytest . --cov=redbox -v --cov-report=term-missing --cov-fail-under=35
+testembed:
+	poetry install --no-root --no-ansi --with worker,embed,api,dev --without ai,ingest
+	poetry run pytest . --cov=app/workers/emebd -v --cov-report=term-missing --cov-fail-under=30
+
+testredbox:
+	poetry install --no-root --no-ansi --only worker,api,dev --without embed,ai,streamlit-app,ingest
+	poetry run pytest . --cov=redbox -v --cov-report=term-missing --cov-fail-under=45
 
 lint:
 	poetry run ruff check .
