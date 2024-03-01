@@ -27,7 +27,7 @@ rebuild:
 	docker compose build --no-cache
 
 test:
-	poetry run pytest . --cov=redbox -v --cov-report=term-missing --cov-fail-under=35
+	poetry run pytest tests --ignore django_app --cov=redbox -v --cov-report=term-missing --cov-fail-under=35
 
 test-django:
 	docker-compose up -d db

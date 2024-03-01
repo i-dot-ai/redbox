@@ -11,66 +11,19 @@ import pika
 import pydantic
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import RedirectResponse
-from sentence_transformers import SentenceTransformer
 
-# === Data Models ===
-
-
-class ModelInfo(pydantic.BaseModel):
-    model: str
-    max_seq_length: int
-    vector_size: int
-
-
-class Embedding(pydantic.BaseModel):
-    object: str = "embedding"
-    index: int
-    embedding: list[float]
-
-
-class EmbeddingResponse(pydantic.BaseModel):
-    object: str = "list"
-    data: list[Embedding]
-    embedding_id: str
-    model: str
-    model_info: ModelInfo
-
-
-class EmbeddingRequest(pydantic.BaseModel):
-    sentences: list[str]
-
-
-class ModelListResponse(pydantic.BaseModel):
-    models: list[ModelInfo]
-
-
-class StatusResponse(pydantic.BaseModel):
-    status: str
-    uptime_seconds: float
-    version: str
-
-
-class EmbedQueueItem(pydantic.BaseModel):
-    model: str
-    sentence: str
-
-
-def get_model_info(model_name: str) -> ModelInfo:
-    model_obj = model_db[model_name]
-    model_info_entry = ModelInfo(
-        model=model_name,
-        max_seq_length=model_obj.get_max_seq_length(),
-        vector_size=model_obj.get_sentence_embedding_dimension(),
-    )
-    return model_info_entry
-
-
-# === API Setup ===
+from app.workers.model_db import SentenceTransformerDB
+from redbox.models import (
+    ModelInfo,
+    ModelListResponse,
+    EmbeddingResponse,
+    EmbedQueueItem,
+    StatusResponse,
+)
 
 
 start_time = datetime.now()
-available_models = []
-model_db: dict[str, SentenceTransformer] = {}
+model_db = SentenceTransformerDB()
 log = logging.getLogger()
 log.setLevel(logging.INFO)
 
@@ -78,19 +31,9 @@ log.setLevel(logging.INFO)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Start of the setup phase
-    for dirpath, dirnames, filenames in os.walk("models"):
-        # Check if the current directory contains a file named "config.json"
-        if "pytorch_model.bin" in filenames:
-            # If it does, print the path to the directory
-            available_models.append(dirpath)
-
-    for model_path in available_models:
-        model_name = model_path.split("/")[-3]
-        model = model_name.split("--")[-1]
-        model_db[model] = SentenceTransformer(model_path)
-        log.info(f"Loaded model {model}")
 
     poll_thread = None
+    model_db.init_from_disk()
 
     # Check to see if we run in polling mode from a queue
     if "QUEUE_URI" in os.environ:
@@ -172,7 +115,7 @@ def get_models():
     Returns:
         ModelListResponse: A list of available models
     """
-    return {"models": [get_model_info(m) for m in model_db]}
+    return {"models": [model_db.get_model_info(m) for m in model_db]}
 
 
 @app.get("/models/{model}", response_model=ModelInfo, tags=["models"])
@@ -188,7 +131,7 @@ def get_model(model: str):
 
     if model not in model_db:
         raise HTTPException(status_code=404, detail=f"Model {model} not found")
-    return get_model_info(model)
+    return model_db.get_model_info(model)
 
 
 @app.post("/models/{model}/embed", response_model=EmbeddingResponse, tags=["models"])
@@ -224,7 +167,7 @@ def embed_sentences(model: str, sentences: list[str]):
         "data": reformatted_embeddings,
         "embedding_id": str(uuid4()),
         "model": model,
-        "model_info": get_model_info(model),
+        "model_info": model_db.get_model_info(model),
     }
 
     return output
