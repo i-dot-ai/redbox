@@ -13,7 +13,7 @@ ADD ./download_embedder.py /app/
 RUN poetry run python ./download_embedder.py
 
 WORKDIR /app
-ADD ./app/workers/ingest/app.py /app/app.py
+ADD ./ingest/app.py /app/app.py
 
 # Run pika worker
 CMD ["poetry", "run", "python", "app.py"]

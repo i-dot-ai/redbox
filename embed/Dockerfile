@@ -10,7 +10,7 @@ WORKDIR /app/
 RUN poetry install --no-root --no-ansi --with worker,embed,api --without ai,ingest,dev
 
 # Add the rest of the files
-ADD ./app/workers/embed /app/app/workers/embed
+ADD ./embed /app/
 ADD ./download_embedder.py /app/
 ADD ./Makefile /app/
 ADD ./.env.example /app/

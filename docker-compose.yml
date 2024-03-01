@@ -34,7 +34,7 @@ services:
     image: redbox-embed:latest
     build:
       context: .
-      dockerfile: ./app/workers/embed/Dockerfile
+      dockerfile: embed/Dockerfile
     ports:
       - 5000:5000
     env_file:
@@ -48,7 +48,7 @@ services:
     image: redbox-ingest:latest
     build:
       context: .
-      dockerfile: ./app/workers/ingest/Dockerfile
+      dockerfile: ingest/Dockerfile
     env_file:
       - .env
     depends_on:
@@ -62,7 +62,7 @@ services:
     image: redbox-core-api:latest
     build:
       context: .
-      dockerfile: ./app/core_api/Dockerfile
+      dockerfile: core_api/Dockerfile
     ports:
       - 5002:5002
     environment:
