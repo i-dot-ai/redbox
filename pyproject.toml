@@ -2,9 +2,9 @@
 line-length = 120
 target-version = 'py311'
 
-[tool.pytest.ini_options]
-DJANGO_SETTINGS_MODULE = "redbox_app.settings"
-env = ["ENVIRONMENT=TEST",]
+#[tool.pytest.ini_options]
+#DJANGO_SETTINGS_MODULE = "redbox_app.settings"
+#env = ["ENVIRONMENT=TEST",]
 
 [tool.poetry]
 name = "redbox"
