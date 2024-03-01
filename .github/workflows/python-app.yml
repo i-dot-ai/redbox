@@ -46,7 +46,7 @@ jobs:
 
     - name: ES peek
       run: |
-        docker logs elasticsearch
+        docker logs redbox-copilot-elasticsearch-1
 
     - name: Test redbox with pytest
       run: |
