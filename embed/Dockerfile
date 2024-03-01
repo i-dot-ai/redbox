@@ -21,4 +21,4 @@ RUN poetry run python ./download_embedder.py
 EXPOSE 5000
 
 # Run FastAPI
-CMD ["poetry", "run", "uvicorn", "app.workers.embed:app", "--host", "0.0.0.0", "--port", "5000"]
+CMD ["poetry", "run", "uvicorn", "embed.src:app", "--host", "0.0.0.0", "--port", "5000"]

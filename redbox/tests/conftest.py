@@ -31,9 +31,6 @@ def chunk() -> Chunk:
     return test_chunk
 
 
-def file_pdf_path() -> str:
-    return "tests/data/pdf/Cabinet Office - Wikipedia.pdf"
-
 
 @pytest.fixture
 def elasticsearch_client() -> YieldFixture[Elasticsearch]:

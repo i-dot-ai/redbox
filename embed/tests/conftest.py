@@ -4,7 +4,7 @@ import pytest
 from sentence_transformers import SentenceTransformer
 
 from fastapi.testclient import TestClient
-from embed.app import app as application, model_db
+from embed.src.app import app as application, model_db
 
 env_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".env.test")
 
