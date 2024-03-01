@@ -258,8 +258,3 @@ LOGGING = {
     },
     "loggers": {"application": {"handlers": [LOG_HANDLER], "level": "DEBUG", "propagate": True}},
 }
-
-OTP_TOTP_ISSUER = "Redbox Copilot"
-OTP_TOTP_AUTOCONF = True
-OTP_TOTP_KEY_LENGTH = 16
-OTP_TOTP_THROTTLE_FACTOR = 1.0
