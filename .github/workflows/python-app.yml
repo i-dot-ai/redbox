@@ -44,6 +44,10 @@ jobs:
         docker compose build elasticsearch
         docker compose up -d --wait elasticsearch
 
+    - name: ES peek
+      run: |
+        docker logs elasticsearch
+
     - name: Test redbox with pytest
       run: |
         make testredbox
