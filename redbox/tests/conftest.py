@@ -31,7 +31,6 @@ def chunk() -> Chunk:
     return test_chunk
 
 
-
 @pytest.fixture
 def elasticsearch_client() -> YieldFixture[Elasticsearch]:
     yield env.elasticsearch_client()
