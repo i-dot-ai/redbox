@@ -144,8 +144,6 @@ LOGIN_REDIRECT_URL = "homepage"
 CSP_DEFAULT_SRC = (
     "'self'",
     "s3.amazonaws.com",
-    "ask-ai-files-dev.s3.amazonaws.com",
-    "ask-ai-files-prod.s3.amazonaws.com",
     "plausible.io",
 )
 CSP_OBJECT_SRC = ("'none'",)
@@ -153,13 +151,9 @@ CSP_REQUIRE_TRUSTED_TYPES_FOR = ("'script'",)
 CSP_FONT_SRC = (
     "'self'",
     "s3.amazonaws.com",
-    "redbox-files-dev.s3.amazonaws.com",
-    "redbox-files-prod.s3.amazonaws.com",
 )
 CSP_STYLE_SRC = (
     "'self'",
-    "redbox-files-dev.s3.amazonaws.com",
-    "redbox-files-prod.s3.amazonaws.com",
 )
 CSP_FRAME_ANCESTORS = ("'none'",)
 
