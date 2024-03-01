@@ -1,4 +1,4 @@
-name: Check code
+name: Django
 
 env:
   DOCKER_BUILDKIT: 1
@@ -16,33 +16,6 @@ on:
 
 
 jobs:
-  check_web:
-    name: Check Python
-
-    runs-on: ubuntu-latest
-    environment: release
-
-    steps:
-    - uses: actions/checkout@v3
-
-    - name: Set up Python 3.11
-      uses: actions/setup-python@v3
-      with:
-        python-version: 3.11
-
-    - name: Run image
-      uses: abatilo/actions-poetry@v2
-      with:
-        poetry-version: 1.7.0
-
-    - name: Install dependencies
-      run: |
-        poetry lock
-        poetry install
-
-    - name: Run Python code checks
-      run: |
-        make check-python-code
 
   check_migrations:
     name: Check migrations
@@ -52,7 +25,10 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
-      - run: |
+
+      - name: Run migrations
+        run: |
+          cp .env.example .env
           make check-migrations
 
   run_tests:
@@ -66,4 +42,5 @@ jobs:
 
     - name: Run tests
       run: |
+        cp .env.example .env
         make test-django
