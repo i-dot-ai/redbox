@@ -12,7 +12,7 @@ import pydantic
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import RedirectResponse
 
-from app.workers.model_db import SentenceTransformerDB
+from model_db import SentenceTransformerDB
 from redbox.models import (
     ModelInfo,
     ModelListResponse,
