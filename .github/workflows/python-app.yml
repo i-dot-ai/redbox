@@ -31,17 +31,26 @@ jobs:
       with:
         python-version: "3.11"
 
+    - name: Set up Poetry
+      uses: abatilo/actions-poetry@v2
+      with:
+        poetry-version: 1.7.0
+
     - name: Build Containers
       run: |
         mkdir -p data/elastic/
         chmod 777 data/elastic/
         cp .env.example .env
-        docker compose build test elasticsearch
+        docker compose build elasticsearch
         docker compose up -d --wait elasticsearch
 
-    - name: Test with pytest
+    - name: Test redbox with pytest
       run: |
-        docker compose run test make test
+        make testredbox
+
+    - name: Test embed with pytest
+      run: |
+        make testembed
 
 
   static_checks:
