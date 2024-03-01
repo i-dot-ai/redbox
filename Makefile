@@ -12,7 +12,7 @@ app:
 	poetry run streamlit run legacy_app/Welcome.py --server.port 8501
 
 run:
-	docker compose up -d elasticsearch kibana app embed minio miniocreatebuckets rabbitmq core-api db redbox-core
+	docker compose up -d elasticsearch kibana app embed minio miniocreatebuckets rabbitmq core-api db django-app
 
 stop:
 	docker compose down
@@ -31,7 +31,7 @@ test:
 
 test-django:
 	docker-compose up -d db
-	docker-compose run --env ENVIRONMENT="TEST" --env PYTHONPATH=/app/django_app/ redbox-core poetry run pytest /app/django_app/tests/ --ds redbox_app.settings -v --cov=redbox_app.redbox_core --cov-fail-under 10
+	docker-compose run --env ENVIRONMENT="TEST" --env PYTHONPATH=/app/django_app/ django-app poetry run pytest /app/django_app/tests/ --ds redbox_app.settings -v --cov=redbox_app.redbox_core --cov-fail-under 10
 
 lint:
 	poetry run ruff check .
@@ -46,9 +46,9 @@ checktypes:
 	# poetry run mypy legacy_app --follow-imports skip --ignore-missing-imports
 
 check-migrations:
-	docker-compose build redbox-core
-	docker-compose run --env ENVIRONMENT="TEST" redbox-core poetry run python /app/django_app/manage.py migrate
-	docker-compose run --env ENVIRONMENT="TEST" redbox-core poetry run python /app/django_app/manage.py makemigrations --check
+	docker-compose build django-app
+	docker-compose run --env ENVIRONMENT="TEST" django-app poetry run python /app/django_app/manage.py migrate
+	docker-compose run --env ENVIRONMENT="TEST" django-app poetry run python /app/django_app/manage.py makemigrations --check
 
 check-python-code:
 	poetry run ruff check .

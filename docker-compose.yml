@@ -1,7 +1,7 @@
 version: '3.7'
 services:
-  redbox-core:
-    image: redbox-core:latest
+  django-app:
+    image: django-app:latest
     build:
       context: .
       dockerfile: ./django_app/docker/web/Dockerfile

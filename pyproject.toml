@@ -82,7 +82,7 @@ pandas = "^2.2.1"
 html2markdown = "^0.1.7"
 streamlit-feedback = "^0.1.3"
 
-[tool.poetry.group.redbox-core.dependencies]
+[tool.poetry.group.django-app.dependencies]
 python = "^3.11.2"
 automatilib = "^1.2.1"
 django = "^4.2.8"
