@@ -8,6 +8,7 @@ ADD ../pyproject.toml ../poetry.lock ./
 RUN poetry install --no-root --no-ansi --with dev,worker,api,embed --without ai,streamlit-app,ingest
 
 ADD redbox/ /app/redbox
+ADD django_app/ /app/django_app
 ADD app/ /app/app
 ADD tests /app/tests
 ADD Makefile /app/
