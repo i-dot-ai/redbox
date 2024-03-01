@@ -9,6 +9,13 @@ from redbox.models.spotlight import (
     SpotlightTaskComplete,
 )
 from redbox.models.settings import Settings
+from redbox.models.llm import (
+    ModelInfo,
+    ModelListResponse,
+    EmbeddingResponse,
+    EmbedQueueItem,
+    StatusResponse,
+)
 
 __all__ = [
     "ChatMessage",
@@ -21,4 +28,9 @@ __all__ = [
     "SpotlightTask",
     "SpotlightTaskComplete",
     "Settings",
+    "ModelInfo",
+    "ModelListResponse",
+    "EmbeddingResponse",
+    "EmbedQueueItem",
+    "StatusResponse",
 ]
