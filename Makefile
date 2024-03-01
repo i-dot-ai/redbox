@@ -41,6 +41,12 @@ format:
 	# additionally we format, but not lint, the notebooks
 	# poetry run ruff format **/*.ipynb
 
+safe:
+	poetry run bandit -ll -r ./redbox
+	poetry run bandit -ll -r ./django_app
+	poetry run mypy ./redbox --ignore-missing-imports
+	poetry run mypy ./django_app --ignore-missing-imports
+
 checktypes:
 	poetry run mypy redbox app tests --ignore-missing-imports
 	# poetry run mypy legacy_app --follow-imports skip --ignore-missing-imports
@@ -49,13 +55,6 @@ check-migrations:
 	docker-compose build django-app
 	docker-compose run --env ENVIRONMENT="TEST" django-app poetry run python /app/django_app/manage.py migrate
 	docker-compose run --env ENVIRONMENT="TEST" django-app poetry run python /app/django_app/manage.py makemigrations --check
-
-check-python-code:
-	poetry run ruff check .
-	poetry run bandit -ll -r ./redbox
-	poetry run bandit -ll -r ./django_app
-	poetry run mypy ./redbox --ignore-missing-imports
-	poetry run mypy ./django_app --ignore-missing-imports
 
 reset-db:
 	docker-compose down db --volumes
