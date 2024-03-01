@@ -10,7 +10,7 @@ COPY pyproject.toml /app/pyproject.toml
 COPY .env /app/app/django_app/
 COPY .env.test /app/app/django_app/
 WORKDIR app/
-RUN poetry install --no-root --no-ansi --with redbox-core,dev --without ai,ingest,embed,worker
+RUN poetry install --no-root --no-ansi --with django-app,dev --without ai,ingest,embed,worker
 
 COPY django_app/docker/web/start.sh app/start.sh
 RUN chmod +x app/start.sh
