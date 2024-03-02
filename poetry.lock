@@ -420,17 +420,17 @@ files = [
 
 [[package]]
 name = "boto3"
-version = "1.34.53"
+version = "1.34.54"
 description = "The AWS SDK for Python"
 optional = false
 python-versions = ">= 3.8"
 files = [
-    {file = "boto3-1.34.53-py3-none-any.whl", hash = "sha256:340c73f57fcca6f503403e2e13a0a4ad44bec218feee2e0896be612324394afd"},
-    {file = "boto3-1.34.53.tar.gz", hash = "sha256:cd30261a782824ce543a628ae524480abb4ca6ab4e4a2631477e48baed43b5f2"},
+    {file = "boto3-1.34.54-py3-none-any.whl", hash = "sha256:f201b6a416f809283d554c652211eecec9fe3a52ed4063dab3f3e7aea7571d9c"},
+    {file = "boto3-1.34.54.tar.gz", hash = "sha256:8b3f5cc7fbedcbb22271c328039df8a6ab343001e746e0cdb24774c426cadcf8"},
 ]
 
 [package.dependencies]
-botocore = ">=1.34.53,<1.35.0"
+botocore = ">=1.34.54,<1.35.0"
 jmespath = ">=0.7.1,<2.0.0"
 s3transfer = ">=0.10.0,<0.11.0"
 
@@ -439,13 +439,13 @@ crt = ["botocore[crt] (>=1.21.0,<2.0a0)"]
 
 [[package]]
 name = "boto3-stubs"
-version = "1.34.53"
-description = "Type annotations for boto3 1.34.53 generated with mypy-boto3-builder 7.23.2"
+version = "1.34.54"
+description = "Type annotations for boto3 1.34.54 generated with mypy-boto3-builder 7.23.2"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "boto3-stubs-1.34.53.tar.gz", hash = "sha256:ff319b348fa7b0d6e40f685378297266f939038c06d04e0918aa5acf2e532c2c"},
-    {file = "boto3_stubs-1.34.53-py3-none-any.whl", hash = "sha256:a30a23f60ab2ebbe03661c8a2b6928a35c936a790cf3624de717d3ce770baae5"},
+    {file = "boto3-stubs-1.34.54.tar.gz", hash = "sha256:c7b2e8b99f4896cf1226df47d4badaaa8df7426008c96a428bf00205695669e9"},
+    {file = "boto3_stubs-1.34.54-py3-none-any.whl", hash = "sha256:7db5194e47f76e0010cd00b6ad9725db114d6a3fd04e52ceed3ef1181fe326bc"},
 ]
 
 [package.dependencies]
@@ -496,7 +496,7 @@ bedrock-agent = ["mypy-boto3-bedrock-agent (>=1.34.0,<1.35.0)"]
 bedrock-agent-runtime = ["mypy-boto3-bedrock-agent-runtime (>=1.34.0,<1.35.0)"]
 bedrock-runtime = ["mypy-boto3-bedrock-runtime (>=1.34.0,<1.35.0)"]
 billingconductor = ["mypy-boto3-billingconductor (>=1.34.0,<1.35.0)"]
-boto3 = ["boto3 (==1.34.53)", "botocore (==1.34.53)"]
+boto3 = ["boto3 (==1.34.54)", "botocore (==1.34.54)"]
 braket = ["mypy-boto3-braket (>=1.34.0,<1.35.0)"]
 budgets = ["mypy-boto3-budgets (>=1.34.0,<1.35.0)"]
 ce = ["mypy-boto3-ce (>=1.34.0,<1.35.0)"]
@@ -839,13 +839,13 @@ xray = ["mypy-boto3-xray (>=1.34.0,<1.35.0)"]
 
 [[package]]
 name = "botocore"
-version = "1.34.53"
+version = "1.34.54"
 description = "Low-level, data-driven core of boto 3."
 optional = false
 python-versions = ">= 3.8"
 files = [
-    {file = "botocore-1.34.53-py3-none-any.whl", hash = "sha256:cbbcaddc35738d32df55d26ed5561cf3fa32751a6b22e7e342be87b5e3f55eec"},
-    {file = "botocore-1.34.53.tar.gz", hash = "sha256:3d243781e994dfc5b20036d9fb92672bfaef4dbe388eaa79dae6440ea56c53eb"},
+    {file = "botocore-1.34.54-py3-none-any.whl", hash = "sha256:bf215d93e9d5544c593962780d194e74c6ee40b883d0b885e62ef35fc0ec01e5"},
+    {file = "botocore-1.34.54.tar.gz", hash = "sha256:4061ff4be3efcf53547ebadf2c94d419dfc8be7beec24e9fa1819599ffd936fa"},
 ]
 
 [package.dependencies]
@@ -2954,13 +2954,13 @@ tesseract = ["pytesseract"]
 
 [[package]]
 name = "litellm"
-version = "1.28.1"
+version = "1.28.7"
 description = "Library to easily interface with LLM API providers"
 optional = false
 python-versions = ">=3.8, !=2.7.*, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*, !=3.5.*, !=3.6.*, !=3.7.*"
 files = [
-    {file = "litellm-1.28.1-py3-none-any.whl", hash = "sha256:7156dc4f01c43b212be7393d3923439e3b1f258fb923d23d51fc18f3f910d8dc"},
-    {file = "litellm-1.28.1.tar.gz", hash = "sha256:ab9e426a01111195558ce0aacfabe79ac1e6fb66b5efc2dc33e2a39edad84a2a"},
+    {file = "litellm-1.28.7-py3-none-any.whl", hash = "sha256:50e0cd95fd8213caed88a3e5ee92bc8926a473af16c242f71d0660aed2450401"},
+    {file = "litellm-1.28.7.tar.gz", hash = "sha256:bbdd0adfb6e04b746df334f91be64d6466ded030c36ef3fa420ddfe47ba09690"},
 ]
 
 [package.dependencies]
@@ -6183,13 +6183,13 @@ win32 = ["pywin32"]
 
 [[package]]
 name = "sentence-transformers"
-version = "2.5.0"
+version = "2.5.1"
 description = "Multilingual text embeddings"
 optional = false
 python-versions = ">=3.8.0"
 files = [
-    {file = "sentence-transformers-2.5.0.tar.gz", hash = "sha256:42cbd4130d58e8e08ea966bf94b012136f0939bbe692ab28dcd00d3e69c57989"},
-    {file = "sentence_transformers-2.5.0-py3-none-any.whl", hash = "sha256:2a8df56b1c2171a2c625294bd371ebd61bbbfd1208f4fbac0f8cf95aeaffb79d"},
+    {file = "sentence-transformers-2.5.1.tar.gz", hash = "sha256:754bf2b2623eb46904fd9c72ff89a0f90200fe141a8d45b03e83bc6d51718153"},
+    {file = "sentence_transformers-2.5.1-py3-none-any.whl", hash = "sha256:f12346f7fca06ed1198d24235cb9114a74665506f7c30044e0a6f12de7eeeb77"},
 ]
 
 [package.dependencies]
@@ -7715,4 +7715,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.11,<3.12"
-content-hash = "3060e03f70f406635bb5947a9d14e6ba35568004c0829506519586a9ee21e7d1"
+content-hash = "d955addd3e6ab1d987895912505e1b076cbc37b6b4fc8b5ecbd225cd5b350f0d"
