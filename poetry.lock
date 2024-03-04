@@ -145,13 +145,13 @@ files = [
 
 [[package]]
 name = "anthropic"
-version = "0.16.0"
+version = "0.18.1"
 description = "The official Python library for the anthropic API"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "anthropic-0.16.0-py3-none-any.whl", hash = "sha256:fb6657050c14c90ebc49df3510541a4f74a926f04598eaa2c4f5a3be772a95da"},
-    {file = "anthropic-0.16.0.tar.gz", hash = "sha256:130730820d1b327f31a097f575e42721d7ef69c731728f4c2d7fa70cf3b7eee0"},
+    {file = "anthropic-0.18.1-py3-none-any.whl", hash = "sha256:b85aee64f619ce1b1964ba733a09adc4053e7bc4e6d4186001229ec191099dcf"},
+    {file = "anthropic-0.18.1.tar.gz", hash = "sha256:f5d1caafd43f6cc933a79753a93531605095f040a384f6a900c3de9c3fb6694e"},
 ]
 
 [package.dependencies]
@@ -420,17 +420,17 @@ files = [
 
 [[package]]
 name = "boto3"
-version = "1.34.54"
+version = "1.34.55"
 description = "The AWS SDK for Python"
 optional = false
 python-versions = ">= 3.8"
 files = [
-    {file = "boto3-1.34.54-py3-none-any.whl", hash = "sha256:f201b6a416f809283d554c652211eecec9fe3a52ed4063dab3f3e7aea7571d9c"},
-    {file = "boto3-1.34.54.tar.gz", hash = "sha256:8b3f5cc7fbedcbb22271c328039df8a6ab343001e746e0cdb24774c426cadcf8"},
+    {file = "boto3-1.34.55-py3-none-any.whl", hash = "sha256:ee2c96e8a4a741ecb3380e0a406baa67bfea6186be99b75bdeca3e1b5044c088"},
+    {file = "boto3-1.34.55.tar.gz", hash = "sha256:9a6d59e035fac4366dbdaf909c4f66fc817dfbec044fa71564dcf036ad46bb19"},
 ]
 
 [package.dependencies]
-botocore = ">=1.34.54,<1.35.0"
+botocore = ">=1.34.55,<1.35.0"
 jmespath = ">=0.7.1,<2.0.0"
 s3transfer = ">=0.10.0,<0.11.0"
 
@@ -439,13 +439,13 @@ crt = ["botocore[crt] (>=1.21.0,<2.0a0)"]
 
 [[package]]
 name = "boto3-stubs"
-version = "1.34.54"
-description = "Type annotations for boto3 1.34.54 generated with mypy-boto3-builder 7.23.2"
+version = "1.34.55"
+description = "Type annotations for boto3 1.34.55 generated with mypy-boto3-builder 7.23.2"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "boto3-stubs-1.34.54.tar.gz", hash = "sha256:c7b2e8b99f4896cf1226df47d4badaaa8df7426008c96a428bf00205695669e9"},
-    {file = "boto3_stubs-1.34.54-py3-none-any.whl", hash = "sha256:7db5194e47f76e0010cd00b6ad9725db114d6a3fd04e52ceed3ef1181fe326bc"},
+    {file = "boto3-stubs-1.34.55.tar.gz", hash = "sha256:cbbae1b811b97e4e1f1d00eba237ff987678e652502226b87e6276f7963935b4"},
+    {file = "boto3_stubs-1.34.55-py3-none-any.whl", hash = "sha256:5ee40bdfba94fcdba26f36869339c849e918827ed1fb2f8e470474e6b1e923ff"},
 ]
 
 [package.dependencies]
@@ -496,7 +496,7 @@ bedrock-agent = ["mypy-boto3-bedrock-agent (>=1.34.0,<1.35.0)"]
 bedrock-agent-runtime = ["mypy-boto3-bedrock-agent-runtime (>=1.34.0,<1.35.0)"]
 bedrock-runtime = ["mypy-boto3-bedrock-runtime (>=1.34.0,<1.35.0)"]
 billingconductor = ["mypy-boto3-billingconductor (>=1.34.0,<1.35.0)"]
-boto3 = ["boto3 (==1.34.54)", "botocore (==1.34.54)"]
+boto3 = ["boto3 (==1.34.55)", "botocore (==1.34.55)"]
 braket = ["mypy-boto3-braket (>=1.34.0,<1.35.0)"]
 budgets = ["mypy-boto3-budgets (>=1.34.0,<1.35.0)"]
 ce = ["mypy-boto3-ce (>=1.34.0,<1.35.0)"]
@@ -839,13 +839,13 @@ xray = ["mypy-boto3-xray (>=1.34.0,<1.35.0)"]
 
 [[package]]
 name = "botocore"
-version = "1.34.54"
+version = "1.34.55"
 description = "Low-level, data-driven core of boto 3."
 optional = false
 python-versions = ">= 3.8"
 files = [
-    {file = "botocore-1.34.54-py3-none-any.whl", hash = "sha256:bf215d93e9d5544c593962780d194e74c6ee40b883d0b885e62ef35fc0ec01e5"},
-    {file = "botocore-1.34.54.tar.gz", hash = "sha256:4061ff4be3efcf53547ebadf2c94d419dfc8be7beec24e9fa1819599ffd936fa"},
+    {file = "botocore-1.34.55-py3-none-any.whl", hash = "sha256:07044c3cbfb86d0ecb9c56d887b8ad63a72eff0e4f6ab329cf335f1fd867ea0b"},
+    {file = "botocore-1.34.55.tar.gz", hash = "sha256:bb333e3845bfe65600f36bf92d09668306e224fa9f4e4f87b77f6957192ae59f"},
 ]
 
 [package.dependencies]
@@ -2840,19 +2840,19 @@ text-helpers = ["chardet (>=5.1.0,<6.0.0)"]
 
 [[package]]
 name = "langchain-community"
-version = "0.0.24"
+version = "0.0.25"
 description = "Community contributed LangChain integrations."
 optional = false
 python-versions = ">=3.8.1,<4.0"
 files = [
-    {file = "langchain_community-0.0.24-py3-none-any.whl", hash = "sha256:575e776817d6f5e3dfdff0230049de342e06aaa60fb1924316cf82b4e710fe84"},
-    {file = "langchain_community-0.0.24.tar.gz", hash = "sha256:fd609f6c962cca4b7b75f2159f1fbf74b14fdd45011ee2be53e95db4e678837f"},
+    {file = "langchain_community-0.0.25-py3-none-any.whl", hash = "sha256:09b931ba710b1a10e449396d59f38575e0554acd527287937c33a2c4abdc6d83"},
+    {file = "langchain_community-0.0.25.tar.gz", hash = "sha256:b6c8c14cd6ec2635e51e3974bf78a8de3b959bbedb4af55aad164f8cf392f0c5"},
 ]
 
 [package.dependencies]
 aiohttp = ">=3.8.3,<4.0.0"
 dataclasses-json = ">=0.5.7,<0.7"
-langchain-core = ">=0.1.26,<0.2"
+langchain-core = ">=0.1.28,<0.2.0"
 langsmith = ">=0.1.0,<0.2.0"
 numpy = ">=1,<2"
 PyYAML = ">=5.3"
@@ -2866,13 +2866,13 @@ extended-testing = ["aiosqlite (>=0.19.0,<0.20.0)", "aleph-alpha-client (>=2.15.
 
 [[package]]
 name = "langchain-core"
-version = "0.1.27"
+version = "0.1.29"
 description = "Building applications with LLMs through composability"
 optional = false
 python-versions = ">=3.8.1,<4.0"
 files = [
-    {file = "langchain_core-0.1.27-py3-none-any.whl", hash = "sha256:68eb89dc4a932baf4fb6b4b75b7119eec9e5405e892d2137e9fe0a1d24a40d0c"},
-    {file = "langchain_core-0.1.27.tar.gz", hash = "sha256:698414223525c0bc130d85a614e1493905d588ab72fe0c9ad3b537b1dc62067f"},
+    {file = "langchain_core-0.1.29-py3-none-any.whl", hash = "sha256:b96d599ff98810a7fcba726c151d473a4b938e0f90b9907c460b0bf0a1c7a0f7"},
+    {file = "langchain_core-0.1.29.tar.gz", hash = "sha256:6731dabffad03b9213ada2640d54ed7f4ef6b99fce87ade3c71474ae154dd3cc"},
 ]
 
 [package.dependencies]
@@ -2954,13 +2954,13 @@ tesseract = ["pytesseract"]
 
 [[package]]
 name = "litellm"
-version = "1.28.7"
+version = "1.28.13"
 description = "Library to easily interface with LLM API providers"
 optional = false
 python-versions = ">=3.8, !=2.7.*, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*, !=3.5.*, !=3.6.*, !=3.7.*"
 files = [
-    {file = "litellm-1.28.7-py3-none-any.whl", hash = "sha256:50e0cd95fd8213caed88a3e5ee92bc8926a473af16c242f71d0660aed2450401"},
-    {file = "litellm-1.28.7.tar.gz", hash = "sha256:bbdd0adfb6e04b746df334f91be64d6466ded030c36ef3fa420ddfe47ba09690"},
+    {file = "litellm-1.28.13-py3-none-any.whl", hash = "sha256:48277f7f9c143cd98e3f1686b97b70a28eab25a559a14e88633046c6eb99c204"},
+    {file = "litellm-1.28.13.tar.gz", hash = "sha256:111a116bcb8c85da2c72952f4b682faba15a0c95ba955bd97b648ccb6322c7cd"},
 ]
 
 [package.dependencies]
@@ -7715,4 +7715,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.11,<3.12"
-content-hash = "d955addd3e6ab1d987895912505e1b076cbc37b6b4fc8b5ecbd225cd5b350f0d"
+content-hash = "1edecef507ee16cf1b74a41e315a6eac1d14c37d9b050a5480281cc83d585bb0"
