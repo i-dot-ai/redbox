@@ -16,7 +16,7 @@ ADD ./Makefile /app/
 ADD ./.env.example /app/
 
 # Download the model
-RUN poetry run python ./download_embedder.py
+RUN poetry run download-embedder
 
 EXPOSE 5000
 

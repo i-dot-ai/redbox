@@ -5,6 +5,9 @@ name: Python application
 
 on:
   push:
+    paths:
+      - redbox/**
+      - embed/**
     branches:
       - 'main'
       - 'feature/**'
@@ -14,6 +17,7 @@ on:
       - 'dependabot/**'
       - 'develop'
   workflow_dispatch:
+
 
 permissions:
   contents: read

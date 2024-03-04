@@ -10,7 +10,7 @@ RUN poetry install --no-root --no-ansi --with worker,ingest,embed --without ai,d
 
 ADD ./download_embedder.py /app/
 # Download the model
-RUN poetry run python ./download_embedder.py
+RUN poetry run download-embedder
 
 WORKDIR /app
 ADD ./ingest/app.py /app/app.py
