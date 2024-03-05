@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <script src="scripts.js"></script>
+        <title>Websockets Test</title>
+    </head>
+    <body>
+        <main>
+            <h1>Websocket Demo</h1>
+            <websocket-stream data-url="ws://localhost:8888"></websocket-stream>
+            <button id="sendmsg">Send Message</button>
+        </main>
+        <script>
+            document.querySelector('#sendmsg')?.addEventListener("click", () => {
+                document.querySelector('websocket-stream').stream("Testing");
+            });
+        </script>
+    </body>
+</html>
