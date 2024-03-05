@@ -1,8 +1,7 @@
 import json
 import logging
 
-
-from app.workers.model_db import SentenceTransformerDB
+from model_db import SentenceTransformerDB
 from redbox.models import File, Settings
 from redbox.parsing.file_chunker import FileChunker
 from redbox.storage.elasticsearch import ElasticsearchStorageHandler

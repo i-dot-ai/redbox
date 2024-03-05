@@ -1,5 +1,5 @@
 import os
-from typing import Literal, Optional
+from typing import Optional
 
 import boto3
 import pika
@@ -12,7 +12,7 @@ env_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".env"
 class Settings(BaseSettings):
     elastic_host: str = "elasticsearch"
     elastic_port: int = 9200
-    elastic_scheme: Literal["http"] = "http"
+    elastic_scheme: str = "http"
     elastic_user: str = "elastic"
     elastic_version: str = "8.11.0"
     elastic_password: str = "redboxpass"
@@ -33,7 +33,7 @@ class Settings(BaseSettings):
     aws_secret_access_key: Optional[str] = None
     aws_region: str = "eu-west-2"
 
-    object_store: Literal["s3", "minio"] = "minio"
+    object_store: str = "minio"
 
     bucket_name: str = "redbox-storage-dev"
     embedding_model: str = "all-mpnet-base-v2"
@@ -41,7 +41,7 @@ class Settings(BaseSettings):
     embed_queue_name: str = "redbox-embed-queue"
     ingest_queue_name: str = "redbox-ingest-queue"
 
-    queue: Literal["sqs", "rabbitmq"] = "rabbitmq"
+    queue: str = "rabbitmq"
 
     rabbitmq_host: str = "rabbitmq"
     rabbitmq_port: int = 5672
