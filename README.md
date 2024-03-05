@@ -2,6 +2,8 @@
 
 Redbox Copilot is a retrieval augmented generation (RAG) app that uses Claude 2 to organise, categorise and summarise civil service documents. It's designed to handle a variety of administrative sources, such as letters, briefings, minutes, and speech transcripts.
 
+> ⚠️ **This project is in active development and a work in progress. The repo is getting regular additions so be sure to check back regularly for updates.**
+
 - **Better retrieval**. Redbox Copilot increases organisational memory by indexing documents
 - **Faster, accurate summarisation**. Redbox Copilot can summarise reports read months ago, supplement them with current work, and produce a first draft that lets civil servants focus on what they do best
 
@@ -26,6 +28,7 @@ You'll find a series of useful `docker compose` commands already maded in [`Make
 Any time you update code for the the repo, you'll likely need to rebuild the containers.
 
 # Codespace
+For a quick start, you can use GitHub Codespaces to run the project in a cloud-based development environment. Click the button below to open the project in a new Codespace.
 
 [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/i-dot-ai/redbox-copilot?quickstart=1)
 
