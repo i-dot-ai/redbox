@@ -8,7 +8,7 @@ logging.basicConfig(level=logging.INFO)
 log = logging.getLogger()
 
 
-if __name__ == "__main__":
+def download():
     parser = argparse.ArgumentParser(
         description="Download Sentence Transformer Embedder"
     )
@@ -51,3 +51,7 @@ if __name__ == "__main__":
     log.info(
         f"✅ Downloaded Sentence Transformer Embedder: {model_name} to {args.models_path}"
     )
+
+
+if __name__ == "__main__":
+    download()
