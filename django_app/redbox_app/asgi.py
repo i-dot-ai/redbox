@@ -1,5 +1,5 @@
 """
-ASGI config for people_survey project.
+ASGI config for redbox copilot project.
 
 It exposes the ASGI callable as a module-level variable named ``application``.
 
