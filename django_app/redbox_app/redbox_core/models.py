@@ -1,9 +1,8 @@
 import uuid
 
-from automatilib.core.models import IDotAiUser
-
+from django.contrib.auth.models import UserManager
 from django.db import models
-from django_use_email_as_username.models import BaseUserManager
+from django_use_email_as_username.models import BaseUser
 
 
 class UUIDPrimaryKeyBase(models.Model):
@@ -22,8 +21,8 @@ class TimeStampedModel(models.Model):
         ordering = ["created_at"]
 
 
-class User(IDotAiUser):
-    objects = BaseUserManager()
+class User(BaseUser, UUIDPrimaryKeyBase):
+    objects = UserManager()
     username = None
     verified = models.BooleanField(default=False, blank=True, null=True)
     invited_at = models.DateTimeField(default=None, blank=True, null=True)
