@@ -15,9 +15,8 @@ services:
       - "8090:8090"
   db:
     image: postgres:13
-    environment:
-      - POSTGRES_USER=redbox-core
-      - POSTGRES_PASSWORD=insecure
+    env_file:
+      - .env
     volumes:
       - local_postgres_data:/var/lib/postgresql/data:Z
     ports:
