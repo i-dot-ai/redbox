@@ -5,25 +5,40 @@ const INTERVAL_MS = 100;
 const ws = new WebSocketServer({ port: 8888 });
 
 ws.on('connection', function connection(ws) {
-    ws.on('error', console.error);
 
-    ws.on('message', function message(data) {
-        console.log('received: %s', data);
-    });
+  ws.on('error', console.error);
 
-    console.log('Websocket open');
-    const totalWords = Math.random() * 100;
-    let wordCount = 0;
-    const sendWord = () => {
-        let word = WORDS[Math.floor(Math.random() * WORDS.length)];
-        ws.send(`${word} `);
-        wordCount++;
-        if (wordCount < totalWords) {
-            setTimeout(sendWord, INTERVAL_MS);
-        } else {
-            ws.send('[END]');
-        }
-    };
-    sendWord();
+  ws.on('message', function message(data) {
+    console.log('Received: %s', data);
+  });
+
+  console.log('Websocket open');
+
+  const totalWords = Math.random() * 100;
+  let wordCount = 0;
+  const sendWord = () => {
+
+    let toSend = '';
+    const numberOfWordsToSend = Math.floor(Math.random() * 3);
+
+    for (let i = 0; i < numberOfWordsToSend; i++) {
+      let word = WORDS[Math.floor(Math.random() * WORDS.length)];
+      // Add a random paragraph/new-line occasionally
+      if (word.indexOf('.') !== -1 && Math.random() > 0.5) {
+        word = word + '\n';
+      }
+      toSend += `${word} `;
+    }
+
+    ws.send(`${toSend} `);
+
+    wordCount++;
+    if (wordCount < totalWords) {
+      setTimeout(sendWord, INTERVAL_MS);
+    } else {
+      ws.close();
+    }
+  };
+  sendWord();
 
 });

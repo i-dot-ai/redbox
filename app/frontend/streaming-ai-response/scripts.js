@@ -2,39 +2,38 @@
 
 class websocketStream extends HTMLElement {
 
-    stream = () => {
-        
-        let url = this.dataset.url;
-        if (!url) {
-            return;
-        }
-        let webSocket = new WebSocket(url);
+  /**
+   * @param {string} message
+   */
+  stream = (message) => {
 
-        // create new p element
-        let el = document.createElement('p');
-        this.appendChild(el);
+    let url = this.dataset.url;
+    if (!url) {
+      return;
+    }
+    let webSocket = new WebSocket(url);
 
-        webSocket.onopen = (event) => {
-            this.dataset.status="streaming";
-        };
-
-        webSocket.onerror = (event) => {
-            this.dataset.status="error";
-        };
-
-        webSocket.onclose = (event) => {
-            this.dataset.status="error";
-        };
-
-        webSocket.onmessage = (event) => {
-            if (event.data !== "[END]") {
-                el.textContent += event.data;
-            } else {
-                this.dataset.status="complete";
-            }
-        };
-
+    webSocket.onopen = (event) => {
+      webSocket.send(message);
+      this.dataset.status = "streaming";
     };
-  
-  }
-  customElements.define('websocket-stream', websocketStream);
+
+    webSocket.onerror = (event) => {
+      this.dataset.status = "error";
+    };
+    webSocket.onclose = (event) => {
+      this.dataset.status = "complete";
+    };
+
+    // create a <p> element for content to go into
+    this.innerHTML = "<p></p>";
+
+    webSocket.onmessage = (event) => {
+      const newText = event.data.replace(/\n/g, "</p><p>");
+      this.innerHTML = this.innerHTML.replace(/<\/p>$/, `${newText}</p>`);
+    };
+
+  };
+
+}
+customElements.define('websocket-stream', websocketStream);
