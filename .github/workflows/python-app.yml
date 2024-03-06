@@ -5,6 +5,9 @@ name: Python application
 
 on:
   push:
+    paths:
+      - redbox/**
+      - embed/**
     branches:
       - 'main'
       - 'feature/**'
@@ -19,7 +22,7 @@ permissions:
   contents: read
 
 jobs:
-  build:
+  test:
 
     runs-on: ubuntu-latest
 
@@ -41,21 +44,42 @@ jobs:
         mkdir -p data/elastic/
         chmod 777 data/elastic/
         cp .env.example .env
-        docker compose build test elasticsearch
         docker compose up -d --wait elasticsearch
 
-    - name: Test with pytest
+    - name: Test redbox with pytest
       run: |
-        docker compose run test make test
+        make test-redbox
+
+    - name: Test embed with pytest
+      run: |
+        make test-embed
+
+
+  static_checks:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v3
+      with:
+        python-version: "3.11"
+
+    - name: Set up Poetry
+      uses: abatilo/actions-poetry@v2
+      with:
+        poetry-version: 1.7.0
 
     - name: Install dependencies
       run: |
-        poetry install --no-root --no-ansi --with dev --without  streamlit-app,ai,ingest,embed,worker,api
+        poetry install --no-root --no-ansi --only dev
 
     - name: Format code
       run: |
-        docker compose run test make format
+        make format
 
-#    - name: Type check
-#      run: |
-#        docker compose run test make checktypes
+    - name: Type check
+      run: |
+        make checktypes
