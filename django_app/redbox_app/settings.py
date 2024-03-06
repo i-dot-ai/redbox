@@ -6,7 +6,6 @@ from pathlib import Path
 
 import environ
 import sentry_sdk
-from dotenv import load_dotenv
 from sentry_sdk.integrations.django import DjangoIntegration
 
 from .hosting_environment import HostingEnvironment
@@ -34,7 +33,6 @@ INSTALLED_APPS = [
     "allauth",
     "allauth.account",
     "allauth.socialaccount",
-    "automatilib.core",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
