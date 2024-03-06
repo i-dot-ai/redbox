@@ -7,8 +7,6 @@ RUN pip install poetry
 COPY django_app/ /app/
 COPY poetry.lock /app/poetry.lock
 COPY pyproject.toml /app/pyproject.toml
-COPY .env /app/app/django_app/
-COPY .env.test /app/app/django_app/
 WORKDIR app/
 RUN poetry install --no-root --no-ansi --with django-app,dev --without ai,ingest,embed,worker
 

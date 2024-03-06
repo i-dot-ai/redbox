@@ -7,8 +7,8 @@ services:
       dockerfile: ./django_app/docker/web/Dockerfile
     depends_on:
       - db
-    environment:
-      - POSTGRES_HOST=db
+    env_file:
+      - .env
     volumes:
       - ./:/app/:z
     ports:

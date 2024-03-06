@@ -14,12 +14,6 @@ from .hosting_environment import HostingEnvironment
 env = environ.Env()
 
 
-if HostingEnvironment.is_test():
-    load_dotenv(".env.test")
-else:
-    load_dotenv(".env")
-
-
 SECRET_KEY = env.str("DJANGO_SECRET_KEY")
 ENVIRONMENT = env.str("ENVIRONMENT")
 
