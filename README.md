@@ -47,27 +47,37 @@ This means that our project is structured approximately like this:
 
 ```txt
 redbox-copilot/
-├── app/
-│  ├── frontend/
-│  ├── django_app/
-│  │   ├── Dockerfile
-│  │   └── pyproject.toml
-│  └── workers/
-│     ├── embed
-│     │  ├── Dockerfile
-│     │  └── pyproject.toml
-│     └── ingest
-│        ├── Dockerfile
-│        └── pyproject.toml
-├── legacy_app/
+├── frontend/
+├── django_app
+│  ├── app/
+│  ├── static/
+│  ├── tests/
+│  ├── manage.py
+│  └── Dockerfile
+├── embed
+│  ├── src/
+│  │  └── app.py
+│  ├── tests/
+│  └── Dockerfile
+├── ingest
+│  ├── src/
+│  │  └── app.py
+│  ├── tests/
 │  └── Dockerfile
 ├── redbox/
+│  ├── exceptions/
+│  ├── export/
+│  ├── llm/
+│  ├── models/
+│  ├── parsing/
+│  ├── storage
+│  ├── tests/
+│  └── Dockerfile
 ├── docker-compose.yaml
 ├── pyproject.toml
+├── Makefile
 └── README.md
 ```
-
-Where the top level `pyproject.toml` is currently closely associated with `lagacy_app` and `redbox`.
 
 ## Troubleshooting
 

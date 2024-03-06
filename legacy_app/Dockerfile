@@ -15,7 +15,7 @@ ADD legacy_app /app
 # Download the model
 ADD ./download_embedder.py /app/
 WORKDIR /app/
-RUN poetry run python ./download_embedder.py
+RUN poetry run download-embedder
 
 EXPOSE 8501
 
