@@ -14,7 +14,7 @@ RUN poetry install --no-root --no-ansi --with worker,ingest,embed --without ai,d
 RUN poetry run download-model
 
 WORKDIR /app
-ADD ./ingest/src/app.py /app/app.py
+ADD ./ingest/ /app/ingest
 
 # Run pika worker
-CMD ["poetry", "run", "python", "app.py"]
+CMD ["poetry", "run", "ingest"]
