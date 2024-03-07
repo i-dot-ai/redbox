@@ -144,9 +144,7 @@ CSP_FONT_SRC = (
     "'self'",
     "s3.amazonaws.com",
 )
-CSP_STYLE_SRC = (
-    "'self'",
-)
+CSP_STYLE_SRC = ("'self'",)
 CSP_FRAME_ANCESTORS = ("'none'",)
 
 # https://pypi.org/project/django-permissions-policy/

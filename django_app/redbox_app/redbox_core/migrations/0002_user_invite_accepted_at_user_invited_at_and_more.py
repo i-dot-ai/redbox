@@ -4,30 +4,29 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('redbox_core', '0001_initial'),
+        ("redbox_core", "0001_initial"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='user',
-            name='invite_accepted_at',
+            model_name="user",
+            name="invite_accepted_at",
             field=models.DateTimeField(blank=True, default=None, null=True),
         ),
         migrations.AddField(
-            model_name='user',
-            name='invited_at',
+            model_name="user",
+            name="invited_at",
             field=models.DateTimeField(blank=True, default=None, null=True),
         ),
         migrations.AddField(
-            model_name='user',
-            name='last_token_sent_at',
+            model_name="user",
+            name="last_token_sent_at",
             field=models.DateTimeField(blank=True, editable=False, null=True),
         ),
         migrations.AddField(
-            model_name='user',
-            name='verified',
+            model_name="user",
+            name="verified",
             field=models.BooleanField(blank=True, default=False, null=True),
         ),
     ]

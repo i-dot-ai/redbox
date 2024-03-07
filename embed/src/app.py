@@ -42,9 +42,7 @@ async def lifespan(app: FastAPI):
         queue_name = os.environ.get("EMBED_QUEUE_NAME", "redbox-embed-queue")
         queue_poll_interval = int(os.environ.get("QUEUE_POLL_INTERVAL", 5))
 
-        poll_thread = threading.Thread(
-            target=poll_queue_every, args=(queue_uri, queue_name, queue_poll_interval)
-        )
+        poll_thread = threading.Thread(target=poll_queue_every, args=(queue_uri, queue_name, queue_poll_interval))
         poll_thread.start()
 
     # End of the setup phase, yield control back to FastAPI
@@ -188,9 +186,7 @@ def poll_queue(queue_uri: str, queue_name: str, max_connection_attempts: int = 1
 
     for i in range(max_connection_attempts):
         try:
-            logging.debug(
-                f"Attempting to connect to queue {queue_name} (attempt {i}/{max_connection_attempts})"
-            )
+            logging.debug(f"Attempting to connect to queue {queue_name} (attempt {i}/{max_connection_attempts})")
             connection = pika.BlockingConnection(
                 parameters=pika.URLParameters(queue_uri),
             )
@@ -206,9 +202,7 @@ def poll_queue(queue_uri: str, queue_name: str, max_connection_attempts: int = 1
 
     channel = connection.channel()
     channel.queue_declare(queue=queue_name, durable=True)
-    channel.basic_consume(
-        queue=queue_name, on_message_callback=embed_item_callback, auto_ack=False
-    )
+    channel.basic_consume(queue=queue_name, on_message_callback=embed_item_callback, auto_ack=False)
     channel.start_consuming()
 
 
@@ -233,8 +227,6 @@ def embed_item_callback(ch, method, properties, body):
 
     # TODO: Send the output to Elasticsearch?
 
-    logging.info(
-        f"Embedding ID {output.embedding_id} complete for {method.delivery_tag}"
-    )
+    logging.info(f"Embedding ID {output.embedding_id} complete for {method.delivery_tag}")
     ch.basic_ack(delivery_tag=method.delivery_tag)
     ch.stop_consuming()
