@@ -13,17 +13,6 @@ env = Settings()
 
 
 class FileIngestor:
-    """
-    0. listens to queue
-    1. receives File message from queue
-    2. not sure but either:
-        picks up file from s3
-        gets file obj directly from queue, but then why s3 ref?
-    3. chunks file
-    4. writes chunks to ES
-    5. acknowledges message
-    """
-
     def __init__(
         self,
         raw_file_source,
@@ -49,9 +38,7 @@ class FileIngestor:
             creator_user_uuid=file.creator_user_uuid,
         )
 
-        logging.info(
-            f"Writing {len(chunks)} chunks to storage for file uuid: {file.uuid}"
-        )
+        logging.info(f"Writing {len(chunks)} chunks to storage for file uuid: {file.uuid}")
 
         return self.chunked_file_destination.write_items(chunks)
 
@@ -69,6 +56,16 @@ class FileIngestor:
 
 
 def run():
+    """
+    0. Listens to queue
+    1. On Receipt of a File metadata message from queue
+    2. Callbacks to ingest_file, which:
+     2.1. Gets up file from s3
+     2.2. Chunks file
+     2.3. Puts chunks to ES
+     2.4. Acknowledges message
+    """
+
     # ====== Loading embedding model ======
 
     models = SentenceTransformerDB()
@@ -95,16 +92,12 @@ def run():
 
     es = env.elasticsearch_client()
 
-    storage_handler = ElasticsearchStorageHandler(
-        es_client=es, root_index="redbox-data"
-    )
+    storage_handler = ElasticsearchStorageHandler(es_client=es, root_index="redbox-data")
     chunker = FileChunker(embedding_model=models[env.embedding_model])
 
     file_ingestor = FileIngestor(s3, chunker, storage_handler)
 
-    channel.basic_consume(
-        queue=env.ingest_queue_name, on_message_callback=file_ingestor.callback
-    )
+    channel.basic_consume(queue=env.ingest_queue_name, on_message_callback=file_ingestor.callback)
     channel.start_consuming()
 
 

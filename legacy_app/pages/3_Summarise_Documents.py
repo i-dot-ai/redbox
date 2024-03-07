@@ -53,15 +53,11 @@ token_budget_ratio = float(st.session_state.current_token_count) / MAX_TOKENS
 token_budget_tracker = st.sidebar.progress(
     value=(token_budget_ratio if token_budget_ratio <= 1 else 1),
 )
-token_budget_desc = st.sidebar.caption(
-    body=f"Word Budget: {st.session_state.current_token_count}/{MAX_TOKENS}"
-)
+token_budget_desc = st.sidebar.caption(body=f"Word Budget: {st.session_state.current_token_count}/{MAX_TOKENS}")
 
 
 def on_summary_of_summaries_mode_change():
-    st.session_state.summary_of_summaries_mode = not (
-        st.session_state.summary_of_summaries_mode
-    )
+    st.session_state.summary_of_summaries_mode = not (st.session_state.summary_of_summaries_mode)
     if st.session_state.summary_of_summaries_mode:
         st.sidebar.info("Will summarise each document individually and combine them.")
     unsubmit_session_state()
@@ -142,9 +138,7 @@ if collection_select is not None:
 
 if "collection_title" in url_params:
     collection_title = url_params["collection_title"][0]
-    collection = st.session_state.storage_handler.read_item(
-        item_uuid=collection_title, model_type="Collection"
-    )
+    collection = st.session_state.storage_handler.read_item(item_uuid=collection_title, model_type="Collection")
 
     files_from_url = [os.path.split(x)[1] for x in collection.files]
     files_from_url = [x for x in files_from_url if x in parsed_files_uuid_map.keys()]
@@ -189,9 +183,7 @@ if len(files) == 0:
     st.stop()
 SELECTED_FILE_HASH = hash_list_of_files(files)
 
-spotlight_completed = st.session_state.storage_handler.read_all_items(
-    model_type="SpotlightComplete"
-)
+spotlight_completed = st.session_state.storage_handler.read_all_items(model_type="SpotlightComplete")
 spotlight_completed_by_hash = {x.file_hash: x for x in spotlight_completed}
 
 
@@ -218,9 +210,7 @@ if st.session_state.submitted:
 
     if SELECTED_FILE_HASH not in spotlight_completed_by_hash:
         # RUN SPOTLIGHT
-        spotlight_model = st.session_state.llm_handler.get_spotlight_tasks(
-            files=files, file_hash=SELECTED_FILE_HASH
-        )
+        spotlight_model = st.session_state.llm_handler.get_spotlight_tasks(files=files, file_hash=SELECTED_FILE_HASH)
         finished_tasks = [t.id for t in st.session_state.spotlight]
         for task in spotlight_model.tasks:
             if task.id not in finished_tasks:
@@ -316,9 +306,7 @@ if st.session_state.submitted:
         return bytes_document
 
     if collection is not None:
-        summary_file_name_root = (
-            f"{collection.name}_{datetime.datetime.now().isoformat()}_summary"
-        )
+        summary_file_name_root = f"{collection.name}_{datetime.datetime.now().isoformat()}_summary"
     else:
         summary_file_name_root = f"{datetime.datetime.now().isoformat()}_summary"
 

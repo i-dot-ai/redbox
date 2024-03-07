@@ -77,9 +77,7 @@ def populate_user_info(ENV: dict) -> dict:
                 st.write(headers)
                 st.stop()
 
-            user_details["username_md5"] = hashlib.md5(
-                user_details["username"].encode("utf-8")
-            ).hexdigest()
+            user_details["username_md5"] = hashlib.md5(user_details["username"].encode("utf-8")).hexdigest()
             return user_details
         else:
             st.sidebar.markdown("Running Locally")
@@ -129,9 +127,7 @@ def init_session_state() -> dict:
                 st.session_state.user_uuid = "local"
             else:
                 # MD5 of the username is used as the user_uuid
-                st.session_state.user_uuid = st.session_state.user_details[
-                    "username_md5"
-                ]
+                st.session_state.user_uuid = st.session_state.user_details["username_md5"]
 
     if "s3_client" not in st.session_state:
         if ENV["OBJECT_STORE"] == "minio":
@@ -179,9 +175,7 @@ def init_session_state() -> dict:
             # The bucket does not exist or you have no access.
             if err.response["Error"]["Code"] == "404":
                 print("The bucket does not exist.")
-                st.session_state.s3_client.create_bucket(
-                    Bucket=st.session_state.BUCKET_NAME
-                )
+                st.session_state.s3_client.create_bucket(Bucket=st.session_state.BUCKET_NAME)
                 print("Bucket created successfully.")
             else:
                 raise err
@@ -197,9 +191,7 @@ def init_session_state() -> dict:
             ],
             basic_auth=(ENV["ELASTIC_USER"], ENV["ELASTIC_PASSWORD"]),
         )
-        st.session_state.storage_handler = ElasticsearchStorageHandler(
-            es_client=es, root_index="redbox-data"
-        )
+        st.session_state.storage_handler = ElasticsearchStorageHandler(es_client=es, root_index="redbox-data")
 
     if st.session_state.user_uuid == "dev":
         st.sidebar.info("**DEV MODE**")
@@ -264,9 +256,7 @@ def init_session_state() -> dict:
     return ENV
 
 
-def get_link_html(
-    page: str, text: str, query_dict: Optional[dict] = None, target: str = "_self"
-) -> str:
+def get_link_html(page: str, text: str, query_dict: Optional[dict] = None, target: str = "_self") -> str:
     """Returns a link in HTML format
 
     Args:
@@ -422,16 +412,12 @@ class FilePreview(object):
         """
 
         render_method = self.render_methods[file.type]
-        stream = st.session_state.s3_client.get_object(
-            Bucket=st.session_state.BUCKET_NAME, Key=file.name
-        )
+        stream = st.session_state.s3_client.get_object(Bucket=st.session_state.BUCKET_NAME, Key=file.name)
         file_bytes = stream["Body"].read()
         render_method(file, file_bytes)
 
     def _render_pdf(self, file: File, page_number: Optional[int] = None) -> None:
-        stream = st.session_state.s3_client.get_object(
-            Bucket=st.session_state.BUCKET_NAME, Key=file.name
-        )
+        stream = st.session_state.s3_client.get_object(Bucket=st.session_state.BUCKET_NAME, Key=file.name)
         base64_pdf = base64.b64encode(stream["Body"].read()).decode("utf-8")
 
         if page_number is not None:
@@ -463,9 +449,7 @@ class FilePreview(object):
         st.dataframe(df, use_container_width=True)
 
     def _render_eml(self, file: File, file_bytes: bytes) -> None:
-        st.markdown(
-            self.cleaner.clean_html(file_bytes.decode("utf-8")), unsafe_allow_html=True
-        )
+        st.markdown(self.cleaner.clean_html(file_bytes.decode("utf-8")), unsafe_allow_html=True)
 
     def _render_html(self, file: File, file_bytes: bytes) -> None:
         markdown_html = html2markdown.convert(file_bytes.decode("utf-8"))
