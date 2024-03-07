@@ -11,66 +11,102 @@ log = logging.getLogger()
 
 env = Settings()
 
-# ====== Loading embedding model ======
 
-models = SentenceTransformerDB()
+class FileIngestor:
+    """
+    0. listens to queue
+    1. receives File message from queue
+    2. not sure but either:
+        picks up file from s3
+        gets file obj directly from queue, but then why s3 ref?
+    3. chunks file
+    4. writes chunks to ES
+    5. acknowledges message
+    """
 
-models.init_from_disk()
+    def __init__(
+        self,
+        raw_file_source,
+        chunker: FileChunker,
+        chunked_file_destination: ElasticsearchStorageHandler,
+    ):
+        self.raw_file_source = raw_file_source
+        self.chunker = chunker
+        self.chunked_file_destination = chunked_file_destination
+
+    def ingest_file(self, file: File):
+        logging.info(f"Ingesting file: {file}")
+
+        authenticated_s3_url = self.raw_file_source.generate_presigned_url(
+            "get_object",
+            Params={"Bucket": env.bucket_name, "Key": file.name},
+            ExpiresIn=180,
+        )
+
+        chunks = self.chunker.chunk_file(
+            file=file,
+            file_url=authenticated_s3_url,
+            creator_user_uuid=file.creator_user_uuid,
+        )
+
+        logging.info(
+            f"Writing {len(chunks)} chunks to storage for file uuid: {file.uuid}"
+        )
+
+        return self.chunked_file_destination.write_items(chunks)
+
+    def callback(self, ch, method, _properties, body):
+        logging.info("Received message")
+        file = File(**json.loads(body))
+        logging.info(f"Starting ingest for file (uuid: {file.uuid}, name: {file.name})")
+        try:
+            files = self.ingest_file(file)
+            logging.info(f"blah blah blah {files}")
+        except Exception:
+            logging.error("blah blah blah")
+        finally:
+            ch.basic_ack(delivery_tag=method.delivery_tag)
 
 
-# === Object Store ===
+def run():
+    # ====== Loading embedding model ======
 
-s3 = env.s3_client()
+    models = SentenceTransformerDB()
 
+    models.init_from_disk()
 
-# === Queues ===
+    # === Object Store ===
 
-if env.queue == "rabbitmq":
-    connection = env.blocking_connection()
-    channel = connection.channel()
-    channel.queue_declare(queue=env.ingest_queue_name, durable=True)
-elif env.queue == "sqs":
-    sqs = env.sqs_client()
-    raise NotImplementedError("SQS is not yet implemented")
-else:
-    raise ValueError("must use rabbitmq")
+    s3 = env.s3_client()
 
-# === Storage ===
+    # === Queues ===
 
+    if env.queue == "rabbitmq":
+        connection = env.blocking_connection()
+        channel = connection.channel()
+        channel.queue_declare(queue=env.ingest_queue_name, durable=True)
+    elif env.queue == "sqs":
+        _sqs = env.sqs_client()
+        raise NotImplementedError("SQS is not yet implemented")
+    else:
+        raise ValueError("must use rabbitmq")
 
-es = env.elasticsearch_client()
+    # === Storage ===
 
-storage_handler = ElasticsearchStorageHandler(es_client=es, root_index="redbox-data")
-chunker = FileChunker(embedding_model=models[env.embedding_model])
+    es = env.elasticsearch_client()
 
-
-def ingest_file(file: File):
-    logging.info(f"Ingesting file: {file}")
-
-    authenticated_s3_url = s3.generate_presigned_url(
-        "get_object",
-        Params={"Bucket": env.bucket_name, "Key": file.name},
-        ExpiresIn=180,
+    storage_handler = ElasticsearchStorageHandler(
+        es_client=es, root_index="redbox-data"
     )
+    chunker = FileChunker(embedding_model=models[env.embedding_model])
 
-    chunks = chunker.chunk_file(
-        file=file,
-        file_url=authenticated_s3_url,
-        creator_user_uuid=file.creator_user_uuid,
+    file_ingestor = FileIngestor(s3, chunker, storage_handler)
+
+    channel.basic_consume(
+        queue=env.ingest_queue_name, on_message_callback=file_ingestor.callback
     )
-
-    logging.info(f"Writing {len(chunks)} chunks to storage for file uuid: {file.uuid}")
-
-    storage_handler.write_items(chunks)
+    channel.start_consuming()
 
 
-def callback(ch, method, properties, body):
-    logging.info("Received message")
-    file = File(**json.loads(body))
-    logging.info(f"Starting ingest for file (uuid: {file.uuid}, name: {file.name})")
-    ingest_file(file)
-    ch.basic_ack(delivery_tag=method.delivery_tag)
-
-
-channel.basic_consume(queue=env.ingest_queue_name, on_message_callback=callback)
-channel.start_consuming()
+if __name__ == "__main__":
+    run()
