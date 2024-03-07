@@ -14,7 +14,7 @@ YieldFixture = Generator[T, None, None]
 env_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".env.test")
 
 
-env = Settings(
+env = Settings(  # type: ignore
     _env_file=env_path,
     object_store="minio",
     minio_host="localhost",
@@ -69,14 +69,14 @@ def file(s3_client, file_pdf_path, bucket):
     """
     file_name = os.path.basename(file_pdf_path)
     file_type = file_name.split(".")[-1]
-    body = open(file_pdf_path, "rb").read()
 
-    s3_client.put_object(
-        Bucket=bucket,
-        Body=body,
-        Key=file_name,
-        Tagging=f"file_type={file_type}",
-    )
+    with open(file_pdf_path, "rb") as f:
+        s3_client.put_object(
+            Bucket=bucket,
+            Body=f.read(),
+            Key=file_name,
+            Tagging=f"file_type={file_type}",
+        )
 
     authenticated_s3_url = s3_client.generate_presigned_url(
         "get_object",
