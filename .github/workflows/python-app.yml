@@ -43,7 +43,6 @@ jobs:
       run: |
         mkdir -p data/elastic/
         chmod 777 data/elastic/
-        cp .env.example .env
         docker compose up -d --wait elasticsearch
 
     - name: Test redbox with pytest
