@@ -1,0 +1,10 @@
+Hi,
+
+You can use the following link to sign in to your Redbox Copilot account:
+{{url|safe}}
+
+You can only use this link once. If you do not use it within 1 hour, it will expire.
+
+Regards
+
+<service_name>
