@@ -1,5 +1,32 @@
 version: '3.7'
 services:
+  django-app:
+    image: django-app:latest
+    build:
+      context: .
+      dockerfile: ./django_app/docker/web/Dockerfile
+    depends_on:
+      - db
+    env_file:
+      - .env
+    volumes:
+      - ./:/app/:z
+    ports:
+      - "8090:8090"
+  db:
+    image: postgres:13
+    env_file:
+      - .env
+    volumes:
+      - local_postgres_data:/var/lib/postgresql/data:Z
+    ports:
+      - "5432:5432"
+  requirements:
+    image: python:3.11
+    profiles:
+      - utils
+    volumes:
+      - ./:/app/:z
   redbox:
     image: redbox-tests:latest
     build:
@@ -154,3 +181,4 @@ networks:
 volumes:
   elasticsearch:
   redbox-app-data:
+  local_postgres_data: {}
