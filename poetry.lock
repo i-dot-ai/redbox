@@ -146,13 +146,10 @@ files = [
 [[package]]
 name = "anthropic"
 version = "0.18.1"
-version = "0.18.1"
 description = "The official Python library for the anthropic API"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "anthropic-0.18.1-py3-none-any.whl", hash = "sha256:b85aee64f619ce1b1964ba733a09adc4053e7bc4e6d4186001229ec191099dcf"},
-    {file = "anthropic-0.18.1.tar.gz", hash = "sha256:f5d1caafd43f6cc933a79753a93531605095f040a384f6a900c3de9c3fb6694e"},
     {file = "anthropic-0.18.1-py3-none-any.whl", hash = "sha256:b85aee64f619ce1b1964ba733a09adc4053e7bc4e6d4186001229ec191099dcf"},
     {file = "anthropic-0.18.1.tar.gz", hash = "sha256:f5d1caafd43f6cc933a79753a93531605095f040a384f6a900c3de9c3fb6694e"},
 ]
@@ -2613,22 +2610,22 @@ files = [
 
 [[package]]
 name = "importlib-metadata"
-version = "7.0.1"
+version = "7.0.2"
 description = "Read metadata from Python packages"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "importlib_metadata-7.0.1-py3-none-any.whl", hash = "sha256:4805911c3a4ec7c3966410053e9ec6a1fecd629117df5adee56dfc9432a1081e"},
-    {file = "importlib_metadata-7.0.1.tar.gz", hash = "sha256:f238736bb06590ae52ac1fab06a3a9ef1d8dce2b7a35b5ab329371d6c8f5d2cc"},
+    {file = "importlib_metadata-7.0.2-py3-none-any.whl", hash = "sha256:f4bc4c0c070c490abf4ce96d715f68e95923320370efb66143df00199bb6c100"},
+    {file = "importlib_metadata-7.0.2.tar.gz", hash = "sha256:198f568f3230878cb1b44fbd7975f87906c22336dba2e4a7f05278c281fbd792"},
 ]
 
 [package.dependencies]
 zipp = ">=0.5"
 
 [package.extras]
-docs = ["furo", "jaraco.packaging (>=9.3)", "jaraco.tidelift (>=1.4)", "rst.linker (>=1.9)", "sphinx (<7.2.5)", "sphinx (>=3.5)", "sphinx-lint"]
+docs = ["furo", "jaraco.packaging (>=9.3)", "jaraco.tidelift (>=1.4)", "rst.linker (>=1.9)", "sphinx (>=3.5)", "sphinx-lint"]
 perf = ["ipython"]
-testing = ["flufl.flake8", "importlib-resources (>=1.3)", "packaging", "pyfakefs", "pytest (>=6)", "pytest-black (>=0.3.7)", "pytest-checkdocs (>=2.4)", "pytest-cov", "pytest-enabler (>=2.2)", "pytest-mypy (>=0.9.1)", "pytest-perf (>=0.9.2)", "pytest-ruff"]
+testing = ["flufl.flake8", "importlib-resources (>=1.3)", "packaging", "pyfakefs", "pytest (>=6)", "pytest-checkdocs (>=2.4)", "pytest-cov", "pytest-enabler (>=2.2)", "pytest-mypy", "pytest-perf (>=0.9.2)", "pytest-ruff (>=0.2.1)"]
 
 [[package]]
 name = "iniconfig"
@@ -3109,13 +3106,13 @@ test = ["jupyter-server (>=2.0.0)", "pytest (>=7.0)", "pytest-jupyter[server] (>
 
 [[package]]
 name = "jupyterlab"
-version = "4.1.3"
+version = "4.1.4"
 description = "JupyterLab computational environment"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "jupyterlab-4.1.3-py3-none-any.whl", hash = "sha256:67dbec7057c6ad46f08a3667a80bdb890df9453822c93b5ddfd5e8313a718ef9"},
-    {file = "jupyterlab-4.1.3.tar.gz", hash = "sha256:b85bd8766f995d23461e1f68a0cbc688d23e0af2b6f42a7768fc7b1826b2ec39"},
+    {file = "jupyterlab-4.1.4-py3-none-any.whl", hash = "sha256:f92c3f2b12b88efcf767205f49be9b2f86b85544f9c4f342bb5e9904a16cf931"},
+    {file = "jupyterlab-4.1.4.tar.gz", hash = "sha256:e03c82c124ad8a0892e498b9dde79c50868b2c267819aca3f55ce47c57ebeb1d"},
 ]
 
 [package.dependencies]
@@ -4881,13 +4878,13 @@ pillow = "*"
 
 [[package]]
 name = "pdfminer-six"
-version = "20221105"
+version = "20231228"
 description = "PDF parser and analyzer"
 optional = false
 python-versions = ">=3.6"
 files = [
-    {file = "pdfminer.six-20221105-py3-none-any.whl", hash = "sha256:1eaddd712d5b2732f8ac8486824533514f8ba12a0787b3d5fe1e686cd826532d"},
-    {file = "pdfminer.six-20221105.tar.gz", hash = "sha256:8448ab7b939d18b64820478ecac5394f482d7a79f5f7eaa7703c6c959c175e1d"},
+    {file = "pdfminer.six-20231228-py3-none-any.whl", hash = "sha256:e8d3c3310e6fbc1fe414090123ab01351634b4ecb021232206c4c9a8ca3e3b8f"},
+    {file = "pdfminer.six-20231228.tar.gz", hash = "sha256:6004da3ad1a7a4d45930cb950393df89b068e73be365a6ff64a838d37bcb08c4"},
 ]
 
 [package.dependencies]
@@ -4901,17 +4898,17 @@ image = ["Pillow"]
 
 [[package]]
 name = "pdfplumber"
-version = "0.10.4"
+version = "0.11.0"
 description = "Plumb a PDF for detailed information about each char, rectangle, and line."
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "pdfplumber-0.10.4-py3-none-any.whl", hash = "sha256:c8f200259703324cd39a5c93b181a0d2370a6b2b6da670c117e75c3da6aca4a4"},
-    {file = "pdfplumber-0.10.4.tar.gz", hash = "sha256:1c83a4e1fe75525ce1f161fa55a8142209a2da69b45542ce2c45be879e804fd6"},
+    {file = "pdfplumber-0.11.0-py3-none-any.whl", hash = "sha256:be41686fe9515da5f54fad254e2b6941a723b9afe99eb92008df30880b6d61b3"},
+    {file = "pdfplumber-0.11.0.tar.gz", hash = "sha256:e0027b8fc0ab98329cd8d445f5324d779078a6b58406471234e3e9c265dd8a48"},
 ]
 
 [package.dependencies]
-"pdfminer.six" = "20221105"
+"pdfminer.six" = "20231228"
 Pillow = ">=9.1"
 pypdfium2 = ">=4.18.0"
 
@@ -7150,13 +7147,13 @@ transformers = ">=4.32.0,<5.0.0"
 
 [[package]]
 name = "sentry-sdk"
-version = "1.40.6"
+version = "1.41.0"
 description = "Python client for Sentry (https://sentry.io)"
 optional = false
 python-versions = "*"
 files = [
-    {file = "sentry-sdk-1.40.6.tar.gz", hash = "sha256:f143f3fb4bb57c90abef6e2ad06b5f6f02b2ca13e4060ec5c0549c7a9ccce3fa"},
-    {file = "sentry_sdk-1.40.6-py2.py3-none-any.whl", hash = "sha256:becda09660df63e55f307570e9817c664392655a7328bbc414b507e9cb874c67"},
+    {file = "sentry-sdk-1.41.0.tar.gz", hash = "sha256:4f2d6c43c07925d8cd10dfbd0970ea7cb784f70e79523cca9dbcd72df38e5a46"},
+    {file = "sentry_sdk-1.41.0-py2.py3-none-any.whl", hash = "sha256:be4f8f4b29a80b6a3b71f0f31487beb9e296391da20af8504498a328befed53f"},
 ]
 
 [package.dependencies]
@@ -7182,7 +7179,7 @@ huey = ["huey (>=2)"]
 loguru = ["loguru (>=0.5)"]
 opentelemetry = ["opentelemetry-distro (>=0.35b0)"]
 opentelemetry-experimental = ["opentelemetry-distro (>=0.40b0,<1.0)", "opentelemetry-instrumentation-aiohttp-client (>=0.40b0,<1.0)", "opentelemetry-instrumentation-django (>=0.40b0,<1.0)", "opentelemetry-instrumentation-fastapi (>=0.40b0,<1.0)", "opentelemetry-instrumentation-flask (>=0.40b0,<1.0)", "opentelemetry-instrumentation-requests (>=0.40b0,<1.0)", "opentelemetry-instrumentation-sqlite3 (>=0.40b0,<1.0)", "opentelemetry-instrumentation-urllib (>=0.40b0,<1.0)"]
-pure-eval = ["asttokens", "executing", "pure_eval"]
+pure-eval = ["asttokens", "executing", "pure-eval"]
 pymongo = ["pymongo (>=3.1)"]
 pyspark = ["pyspark (>=2.4.4)"]
 quart = ["blinker (>=1.1)", "quart (>=0.16.1)"]
@@ -9150,4 +9147,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.11,<3.12"
-content-hash = "fc67074d98459e0ecebe487e5705ff1c8a7ae9c6dbe0b9fb65c8b7bdd5970181"
+content-hash = "f6bae3fff43219856d266b33dc4aeef1fa9736c4334783e6825ab7f3f3e916a6"
