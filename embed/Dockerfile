@@ -6,17 +6,19 @@ RUN pip install poetry
 ADD redbox/ /app/redbox
 
 ADD pyproject.toml poetry.lock /app/
+ADD ./download_embedder.py /app/
+ADD ./model_db.py /app/
 WORKDIR /app/
 RUN poetry install --no-root --no-ansi --with worker,embed,api --without ai,ingest,dev
 
 # Add the rest of the files
 ADD ./embed /app/
-ADD ./download_embedder.py /app/
+
 ADD ./Makefile /app/
 ADD ./.env.example /app/
 
 # Download the model
-RUN poetry run download-embedder
+RUN poetry run download-model
 
 EXPOSE 5000
 
