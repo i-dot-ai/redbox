@@ -1,5 +1,6 @@
 import json
 import logging
+import os
 
 from model_db import SentenceTransformerDB
 from redbox.models import File, Settings
@@ -9,7 +10,9 @@ from redbox.storage.elasticsearch import ElasticsearchStorageHandler
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger()
 
-env = Settings()
+env_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".env.test")
+
+env = Settings(_env_file=env_path, elastic_host="localhost")  # type: ignore
 
 
 class FileIngestor:
