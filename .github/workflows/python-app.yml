@@ -8,6 +8,8 @@ on:
     paths:
       - redbox/**
       - embed/**
+      - Makefile
+      - .github/**
     branches:
       - 'main'
       - 'feature/**'
@@ -17,7 +19,6 @@ on:
       - 'dependabot/**'
       - 'develop'
   workflow_dispatch:
-
 
 permissions:
   contents: read
