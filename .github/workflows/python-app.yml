@@ -9,6 +9,7 @@ on:
       - redbox/**
       - embed/**
       - Makefile
+      - .github/**
     branches:
       - 'main'
       - 'feature/**'
