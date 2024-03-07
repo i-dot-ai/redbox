@@ -5,6 +5,10 @@ env:
 
 on:
   push:
+    paths:
+      - django_app/**
+      - Makefile
+      - .github/**
     branches:
       - 'main'
       - 'feature/**'
