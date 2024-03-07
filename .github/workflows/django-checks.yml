@@ -28,7 +28,6 @@ jobs:
 
       - name: Run migrations
         run: |
-#          cp .env.example .env
           make check-migrations
 
   run_tests:
@@ -42,5 +41,4 @@ jobs:
 
     - name: Run tests
       run: |
-#        cp .env.example .env
         make test-django
