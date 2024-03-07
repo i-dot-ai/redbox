@@ -1,7 +1,6 @@
 import os
 from typing import TypeVar, Generator
 
-import botocore
 import pytest
 from elasticsearch import Elasticsearch
 from sentence_transformers import SentenceTransformer
@@ -72,15 +71,12 @@ def file(s3_client, file_pdf_path, bucket):
     file_type = file_name.split(".")[-1]
     body = open(file_pdf_path, "rb").read()
 
-    try:
-        s3_client.put_object(
-            Bucket=bucket,
-            Body=body,
-            Key=file_name,
-            Tagging=f"file_type={file_type}",
-        )
-    except Exception as e:
-        raise Exception(f"bucket: {env.bucket_name}, original exception {e}")
+    s3_client.put_object(
+        Bucket=bucket,
+        Body=body,
+        Key=file_name,
+        Tagging=f"file_type={file_type}",
+    )
 
     authenticated_s3_url = s3_client.generate_presigned_url(
         "get_object",
