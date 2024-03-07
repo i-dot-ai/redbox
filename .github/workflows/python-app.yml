@@ -8,6 +8,7 @@ on:
     paths:
       - redbox/**
       - embed/**
+      - Makefile
     branches:
       - 'main'
       - 'feature/**'
