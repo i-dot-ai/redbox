@@ -59,7 +59,7 @@ class Settings(BaseSettings):
     postgres_user: str = "redbox-core"
     postgres_db: str = "redbox-core"
     postgres_password: str
-    postgres_host: str = "localhost"
+    postgres_host: str = "db"
     contact_email: str = "test@example.com"
 
     def elasticsearch_client(self) -> Elasticsearch:
