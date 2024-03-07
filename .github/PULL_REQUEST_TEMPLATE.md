@@ -10,10 +10,10 @@
 
 <!-- How could someone else check this work? Which parts do you want more feedback on? -->
 
-## Link to JIRA ticket
+## Relevant links
 
-<!-- e.g. https://technologyprogramme.atlassian.net/jira/software/c/projects/ER/boards/346?selectedIssue=ER-87 -->
 
 ## Things to check
 
 - [ ] I have added any new ENV vars in all deployed environments
+- [ ] I have tested any code added or changed

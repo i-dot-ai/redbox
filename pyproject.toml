@@ -4,9 +4,9 @@ target-version = 'py311'
 
 [tool.poetry]
 name = "redbox"
-version = "0.1.0"
+version = "1.0.0"
 description = ""
-authors = ["i.AI <i-dot-ai-team@cabinetoffice.gov.uk>"]
+authors = ["i.AI <i-dot-ai-enquiries@cabinetoffice.gov.uk>"]
 license = "MIT"
 readme = "README.md"
 
@@ -15,11 +15,12 @@ python = ">=3.11,<3.12"
 pydantic = "^2.6.3"
 elasticsearch = "^8.12.0"
 requests = "^2.31.0"
-langchain = "^0.1.9"
+langchain = "^0.1.11"
 tiktoken = "^0.6.0"
 boto3 = "^1.34.56"
 pika = "^1.3.2"
 pydantic-settings = "^2.2.1"
+bumpversion = "^0.6.0"
 
 [tool.poetry.group.api.dependencies]
 fastapi = "^0.110.0"
@@ -69,7 +70,7 @@ loguru = "^0.7.2"
 anthropic = "^0.18.1"
 litellm = "^1.29.1"
 openai = "^1.13.3"
-langchain-community = "^0.0.25"
+
 
 [tool.poetry.group.streamlitapp.dependencies]
 cognitojwt = "^1.4.1"

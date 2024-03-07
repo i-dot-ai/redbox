@@ -10,7 +10,7 @@ RUN poetry install --no-root --no-ansi --with api --without ai,ingest,embed,dev,
 
 WORKDIR /app
 
-ADD app/core_api/app.py /app/
+ADD core_api/src/app.py /app/app.py
 
 # Run FastAPI
 EXPOSE 5002
