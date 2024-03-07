@@ -1,5 +1,5 @@
 import os
-from typing import Optional
+from typing import Optional, Literal
 
 import boto3
 import pika
@@ -52,6 +52,16 @@ class Settings(BaseSettings):
 
     model_config = SettingsConfigDict(env_file=env_path)
 
+    django_settings_module: str = "redbox_app.settings"
+    debug: bool = True
+    django_secret_key: str
+    environment: Literal["LOCAL"] = "LOCAL"
+    postgres_user: str = "redbox-core"
+    postgres_db: str = "redbox-core"
+    postgres_password: str
+    postgres_host: str = "db"
+    contact_email: str = "test@example.com"
+
     def elasticsearch_client(self) -> Elasticsearch:
         es = Elasticsearch(
             hosts=[
@@ -100,11 +110,10 @@ class Settings(BaseSettings):
             pika.ConnectionParameters(
                 host=self.rabbitmq_host,
                 port=self.rabbitmq_port,
-                credentials=pika.PlainCredentials(
-                    self.rabbitmq_user, self.rabbitmq_password
-                ),
+                credentials=pika.PlainCredentials(self.rabbitmq_user, self.rabbitmq_password),
                 connection_attempts=5,
                 retry_delay=5,
             )
         )
         return connection
+
