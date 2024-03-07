@@ -1,8 +1,7 @@
 import uuid
 
-from django.contrib.auth.models import UserManager
 from django.db import models
-from django_use_email_as_username.models import BaseUser
+from django_use_email_as_username.models import BaseUser, BaseUserManager
 
 
 class UUIDPrimaryKeyBase(models.Model):
@@ -22,7 +21,7 @@ class TimeStampedModel(models.Model):
 
 
 class User(BaseUser, UUIDPrimaryKeyBase):
-    objects = UserManager()
+    objects = BaseUserManager()
     username = None
     verified = models.BooleanField(default=False, blank=True, null=True)
     invited_at = models.DateTimeField(default=None, blank=True, null=True)

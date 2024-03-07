@@ -36,7 +36,7 @@ test-redbox:
 
 test-django:
 	docker-compose up -d db
-	docker-compose run --env ENVIRONMENT="TEST" --env PYTHONPATH=/app/django_app/ django-app poetry run pytest /app/django_app/tests/ --ds redbox_app.settings -v --cov=redbox_app.redbox_core --cov-fail-under 10
+	docker-compose run django-app poetry run pytest django_app/tests/ --ds redbox_app.settings -v --cov=redbox_app.redbox_core --cov-fail-under 10
 
 lint:
 	poetry run ruff check .
@@ -58,8 +58,8 @@ checktypes:
 
 check-migrations:
 	docker-compose build django-app
-	docker-compose run --env ENVIRONMENT="TEST" django-app poetry run python /app/django_app/manage.py migrate
-	docker-compose run --env ENVIRONMENT="TEST" django-app poetry run python /app/django_app/manage.py makemigrations --check
+	docker-compose run django-app poetry run python django_app/manage.py migrate
+	docker-compose run django-app poetry run python django_app/manage.py makemigrations --check
 
 reset-db:
 	docker-compose down db --volumes
