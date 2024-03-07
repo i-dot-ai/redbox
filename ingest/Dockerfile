@@ -6,14 +6,15 @@ RUN pip install poetry
 ADD redbox/ /app/redbox
 ADD pyproject.toml poetry.lock /app/
 WORKDIR /app/
+ADD ./download_embedder.py /app/
+ADD ./model_db.py /app/
 RUN poetry install --no-root --no-ansi --with worker,ingest,embed --without ai,dev,api
 
-ADD ./download_embedder.py /app/
 # Download the model
-RUN poetry run download-embedder
+RUN poetry run download-model
 
 WORKDIR /app
-ADD ./ingest/app.py /app/app.py
+ADD ./ingest/src/app.py /app/app.py
 
 # Run pika worker
 CMD ["poetry", "run", "python", "app.py"]
