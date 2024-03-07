@@ -54,7 +54,15 @@ def file_pdf_path() -> YieldFixture[str]:
 
 
 @pytest.fixture
-def file(s3_client, file_pdf_path):
+def bucket(s3_client):
+    buckets = s3_client.list_buckets()
+    if not any(bucket["Name"] == env.bucket_name for bucket in buckets["Buckets"]):
+        s3_client.create_bucket(Bucket=env.bucket_name)
+    yield env.bucket_name
+
+
+@pytest.fixture
+def file(s3_client, file_pdf_path, bucket):
     """
     TODO: this is a cut and paste of core_api:create_upload_file
     When we come to test core_api we should think about
@@ -66,14 +74,13 @@ def file(s3_client, file_pdf_path):
 
     try:
         s3_client.put_object(
-            Bucket=env.bucket_name,
+            Bucket=bucket,
             Body=body,
             Key=file_name,
             Tagging=f"file_type={file_type}",
         )
     except Exception as e:
         raise Exception(f"bucket: {env.bucket_name}, original exception {e}")
-
 
     authenticated_s3_url = s3_client.generate_presigned_url(
         "get_object",
