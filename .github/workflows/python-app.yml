@@ -46,7 +46,7 @@ jobs:
         mkdir -p data/elastic/
         chmod 777 data/elastic/
         cp .env.example .env
-        docker compose up -d --wait elasticsearch
+        docker compose up -d --wait elasticsearch minio
 
     - name: Test redbox with pytest
       run: |
@@ -55,6 +55,10 @@ jobs:
     - name: Test embed with pytest
       run: |
         make test-embed
+
+    - name: Test ingest with pytest
+      run: |
+        make test-ingest
 
 
   static_checks:
