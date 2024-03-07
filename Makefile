@@ -27,11 +27,11 @@ rebuild:
 	docker compose build --no-cache
 
 test-embed:
-	poetry install --no-root --no-ansi --with worker,embed,api,dev --without ai,ingest
+	poetry install --no-root --no-ansi --with worker,embed,api,dev --without ai,ingest,pytest-django
 	poetry run pytest embed/tests --cov=embed/src -v --cov-report=term-missing --cov-fail-under=45
 
 test-redbox:
-	poetry install --no-root --no-ansi --with worker,api,dev --without embed,ai,streamlit-app,ingest
+	poetry install --no-root --no-ansi --with worker,api,dev --without embed,ai,streamlit-app,ingest,pytest-django
 	poetry run pytest redbox/tests --cov=redbox -v --cov-report=term-missing --cov-fail-under=45
 
 test-django:
