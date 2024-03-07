@@ -8,6 +8,8 @@ on:
     paths:
       - redbox/**
       - embed/**
+      - Makefile
+      - .github/**
     branches:
       - 'main'
       - 'feature/**'
