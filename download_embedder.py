@@ -9,9 +9,7 @@ log = logging.getLogger()
 
 
 def download():
-    parser = argparse.ArgumentParser(
-        description="Download Sentence Transformer Embedder"
-    )
+    parser = argparse.ArgumentParser(description="Download Sentence Transformer Embedder")
     parser.add_argument(
         "--model_name",
         type=str,
@@ -33,9 +31,7 @@ def download():
     model_name = "all-mpnet-base-v2"
 
     if args.model_name is None:
-        logging.warning(
-            "❓ No model name provided. Attempting to load EMBEDDING_MODEL from environment"
-        )
+        logging.warning("❓ No model name provided. Attempting to load EMBEDDING_MODEL from environment")
         try:
             model_name = os.environ["EMBEDDING_MODEL"]
         except KeyError:
@@ -48,9 +44,7 @@ def download():
 
     log.info(f"💾 Downloading Sentence Transformer Embedder: {model_name}")
     SentenceTransformer(model_name, cache_folder=args.models_path)
-    log.info(
-        f"✅ Downloaded Sentence Transformer Embedder: {model_name} to {args.models_path}"
-    )
+    log.info(f"✅ Downloaded Sentence Transformer Embedder: {model_name} to {args.models_path}")
 
 
 if __name__ == "__main__":
