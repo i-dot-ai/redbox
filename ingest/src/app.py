@@ -50,10 +50,10 @@ class FileIngestor:
         file = File(**json.loads(body))
         logging.info(f"Starting ingest for file (uuid: {file.uuid}, name: {file.name})")
         try:
-            files = self.ingest_file(file)
-            logging.info(f"blah blah blah {files}")
-        except Exception:
-            logging.error("blah blah blah")
+            self.ingest_file(file)
+            logging.info("ingestion complete")
+        except Exception as e:
+            logging.error(f"ingestion failed: {e}")
         finally:
             ch.basic_ack(delivery_tag=method.delivery_tag)
 
