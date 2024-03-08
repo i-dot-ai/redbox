@@ -12,7 +12,7 @@ log = logging.getLogger()
 
 env_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".env.test")
 
-env = Settings(_env_file=env_path, elastic_host="localhost")  # type: ignore
+env = Settings(_env_file=env_path)  # type: ignore
 
 
 class FileIngestor:
