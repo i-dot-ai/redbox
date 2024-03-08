@@ -34,6 +34,10 @@ test-redbox:
 	poetry install --no-root --no-ansi --with worker,api,dev --without embed,ai,streamlit-app,ingest,django-app,pytest-django
 	poetry run pytest redbox/tests --cov=redbox -v --cov-report=term-missing --cov-fail-under=45
 
+test-ingest:
+	poetry install --no-root --no-ansi --with worker,ingest,dev --without embed,ai,streamlit-app,api,django-app,pytest-django
+	poetry run pytest ingest/tests --cov=ingest -v --cov-report=term-missing --cov-fail-under=40
+
 test-django:
 	docker-compose up -d db
 	docker-compose run django-app poetry run pytest django_app/tests/ --ds redbox_app.settings -v --cov=redbox_app.redbox_core --cov-fail-under 10
