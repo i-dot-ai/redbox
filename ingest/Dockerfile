@@ -4,17 +4,16 @@ RUN pip install poetry
 
 # Add redbox python package and install it with poetry
 ADD redbox/ /app/redbox
+ADD ingest/src/app.py /app/app.py
 ADD pyproject.toml poetry.lock /app/
+ADD download_embedder.py /app/
+ADD model_db.py /app/
+
 WORKDIR /app/
-ADD ./download_embedder.py /app/
-ADD ./model_db.py /app/
-RUN poetry install --no-root --no-ansi --with worker,ingest,embed --without ai,dev,api
+RUN poetry install --no-root --no-ansi --with worker,ingest,embed --without ai,dev,api,django-app,pytest-django
 
 # Download the model
 RUN poetry run download-model
 
-WORKDIR /app
-ADD ./ingest/ /app/ingest
-
 # Run pika worker
-CMD ["poetry", "run", "ingest"]
+CMD ["poetry", "run", "python", "app.py"]
