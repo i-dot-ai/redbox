@@ -119,4 +119,3 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.scripts]
 download-model = 'download_embedder:download'
-ingest = 'ingest.src.app:run'
