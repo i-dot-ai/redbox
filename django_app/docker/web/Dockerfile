@@ -20,11 +20,9 @@ COPY django_app/ /app/
 COPY poetry.lock /app/poetry.lock
 COPY pyproject.toml /app/pyproject.toml
 
-WORKDIR app/django_app/
-RUN npm install
-
 WORKDIR app/
 RUN poetry install --no-root --no-ansi --with django-app,dev,pytest-django --without ai,ingest,embed,worker
+RUN npm install
 
 COPY django_app/docker/web/start.sh app/start.sh
 RUN chmod +x app/start.sh
