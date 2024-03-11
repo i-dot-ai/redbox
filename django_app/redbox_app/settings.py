@@ -25,7 +25,7 @@ COMPRESS_PRECOMPILERS = (("text/x-scss", "django_libsass.SassCompiler"),)
 
 STATIC_URL = "static/"
 STATIC_ROOT = "django_app/frontend/"
-STATICFILES_DIRS = [("govuk-assets", BASE_DIR / "node_modules/govuk-frontend/dist/govuk/assets")]
+STATICFILES_DIRS = [("govuk-assets", BASE_DIR / "frontend/node_modules/govuk-frontend/dist/govuk/assets")]
 STATICFILES_FINDERS = ["compressor.finders.CompressorFinder", "django.contrib.staticfiles.finders.FileSystemFinder"]
 
 
