@@ -43,6 +43,12 @@ def file():
 
 
 @pytest.fixture
+def stored_file(elasticsearch_storage_handler, file):
+    elasticsearch_storage_handler.write_item(item=file)
+    yield file
+
+
+@pytest.fixture
 def bucket(s3_client):
     buckets = s3_client.list_buckets()
     if not any(bucket["Name"] == env.bucket_name for bucket in buckets["Buckets"]):

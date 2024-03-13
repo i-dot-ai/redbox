@@ -9,19 +9,16 @@ def test_post_file_upload(client, bucket, file_pdf_path, file):
     assert response.status_code == 200
 
 
-def test_get_file(client, elasticsearch_storage_handler, file):
-    elasticsearch_storage_handler.write_item(item=file)
-    response = client.get(f"/file/{file.uuid}")
+def test_get_file(client, stored_file):
+    response = client.get(f"/file/{stored_file.uuid}")
     assert response.status_code == 200
 
 
-def test_delete_file(client, elasticsearch_storage_handler, file):
-    elasticsearch_storage_handler.write_item(item=file)
-    response = client.delete(f"/file/{file.uuid}")
+def test_delete_file(client, stored_file):
+    response = client.delete(f"/file/{stored_file.uuid}")
     assert response.status_code == 200
 
 
-def test_ingest_file(client, elasticsearch_storage_handler, file):
-    elasticsearch_storage_handler.write_item(item=file)
-    response = client.post(f"/file/{file.uuid}/ingest/")
+def test_ingest_file(client, stored_file):
+    response = client.post(f"/file/{stored_file.uuid}/ingest/")
     assert response.status_code == 200
