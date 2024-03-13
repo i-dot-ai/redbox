@@ -15,7 +15,8 @@ from redbox.storage.elasticsearch import ElasticsearchStorageHandler
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger()
 
-env = Settings()
+
+env = Settings(_env_file="/Users/george.burton/redbox-copilot/.env")
 
 
 # === Object Store ===
@@ -29,9 +30,7 @@ if env.queue == "rabbitmq":
     connection = env.blocking_connection()
     channel = connection.channel()
     channel.queue_declare(queue=env.ingest_queue_name, durable=True)
-
-elif env.queue == "sqs":
-    sqs = env.sqs_client()
+else:
     raise NotImplementedError("SQS is not yet implemented")
 
 
@@ -54,7 +53,6 @@ class StatusResponse(pydantic.BaseModel):
 # === API Setup ===
 
 start_time = datetime.now()
-IS_READY = True
 
 
 # Create API
@@ -92,12 +90,7 @@ def health():
     uptime = datetime.now() - start_time
     uptime_seconds = uptime.total_seconds()
 
-    output = {"status": None, "uptime_seconds": uptime_seconds, "version": app.version}
-
-    if IS_READY:
-        output["status"] = "ready"
-    else:
-        output["status"] = "loading"
+    output = {"status": "ready", "uptime_seconds": uptime_seconds, "version": app.version}
 
     return output
 

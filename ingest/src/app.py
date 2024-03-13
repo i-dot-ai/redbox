@@ -10,9 +10,7 @@ from redbox.storage.elasticsearch import ElasticsearchStorageHandler
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger()
 
-env_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".env.test")
-
-env = Settings(_env_file=env_path)  # type: ignore
+env = Settings()
 
 
 class FileIngestor:

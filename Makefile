@@ -26,6 +26,10 @@ build:
 rebuild:
 	docker compose build --no-cache
 
+test-core-api:
+	poetry install --no-root --no-ansi --with worker,embed,api,dev --without ai,ingest,django-app,pytest-django
+	poetry run pytest core_api/tests --cov=core_api/src -v --cov-report=term-missing --cov-fail-under=45
+
 test-embed:
 	poetry install --no-root --no-ansi --with worker,embed,api,dev --without ai,ingest,django-app,pytest-django
 	poetry run pytest embed/tests --cov=embed/src -v --cov-report=term-missing --cov-fail-under=45
