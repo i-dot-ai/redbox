@@ -1,4 +1,4 @@
-import os
+
 from typing import Optional, Literal
 
 import boto3
@@ -6,7 +6,6 @@ import pika
 from elasticsearch import Elasticsearch
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-env_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".env")
 
 
 class Settings(BaseSettings):
@@ -47,11 +46,7 @@ class Settings(BaseSettings):
     rabbitmq_port: int = 5672
     rabbitmq_user: str = "guest"
     rabbitmq_password: str = "guest"
-
     dev_mode: bool = False
-
-    model_config = SettingsConfigDict(env_file=env_path)
-
     django_settings_module: str = "redbox_app.settings"
     debug: bool = True
     django_secret_key: str
@@ -61,6 +56,8 @@ class Settings(BaseSettings):
     postgres_password: str
     postgres_host: str = "db"
     contact_email: str = "test@example.com"
+
+    model_config = SettingsConfigDict(env_file=".env")
 
     def elasticsearch_client(self) -> Elasticsearch:
         es = Elasticsearch(
@@ -73,6 +70,7 @@ class Settings(BaseSettings):
             ],
             basic_auth=(self.elastic_user, self.elastic_password),
         )
+
         return es
 
     def s3_client(self):

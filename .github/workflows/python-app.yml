@@ -8,6 +8,7 @@ on:
     paths:
       - redbox/**
       - embed/**
+      - core_api/**
       - ingest/**
       - Makefile
       - .github/**
@@ -46,8 +47,8 @@ jobs:
       run: |
         mkdir -p data/elastic/
         chmod 777 data/elastic/
-        cp .env.example .env
-        docker compose up -d --wait elasticsearch minio
+        cp .env.test .env
+        docker compose up -d --wait elasticsearch minio rabbitmq
 
     - name: Test redbox with pytest
       run: |
@@ -60,6 +61,10 @@ jobs:
     - name: Test ingest with pytest
       run: |
         make test-ingest
+
+    - name: Test core with pytest
+      run: |
+        make test-core-api
 
 
   static_checks:
