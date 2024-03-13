@@ -1,4 +1,3 @@
-import os
 from typing import Generator, TypeVar
 
 import pytest
@@ -12,10 +11,8 @@ T = TypeVar("T")
 
 YieldFixture = Generator[T, None, None]
 
-env_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".env.test")
 
-
-env = Settings(_env_file=env_path, elastic_host="localhost")  # type: ignore
+env = Settings()
 
 
 @pytest.fixture

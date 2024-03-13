@@ -1,6 +1,5 @@
 import json
 import logging
-import os
 
 from model_db import SentenceTransformerDB
 from redbox.models import File, Settings

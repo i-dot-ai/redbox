@@ -16,7 +16,7 @@ logging.basicConfig(level=logging.INFO)
 log = logging.getLogger()
 
 
-env = Settings(_env_file="/Users/george.burton/redbox-copilot/.env")
+env = Settings()
 
 
 # === Object Store ===
