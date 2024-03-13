@@ -1,21 +1,10 @@
 from redbox.models.chat import ChatMessage
 from redbox.models.collection import Collection
 from redbox.models.feedback import Feedback
-from redbox.models.file import Chunk, File
-from redbox.models.spotlight import (
-    Spotlight,
-    SpotlightComplete,
-    SpotlightTask,
-    SpotlightTaskComplete,
-)
+from redbox.models.file import Chunk, File, ProcessingStatusEnum
+from redbox.models.llm import EmbeddingResponse, EmbedQueueItem, ModelInfo, ModelListResponse, StatusResponse
 from redbox.models.settings import Settings
-from redbox.models.llm import (
-    ModelInfo,
-    ModelListResponse,
-    EmbeddingResponse,
-    EmbedQueueItem,
-    StatusResponse,
-)
+from redbox.models.spotlight import Spotlight, SpotlightComplete, SpotlightTask, SpotlightTaskComplete
 
 __all__ = [
     "ChatMessage",
@@ -33,4 +22,5 @@ __all__ = [
     "EmbeddingResponse",
     "EmbedQueueItem",
     "StatusResponse",
+    "ProcessingStatusEnum",
 ]

@@ -2,7 +2,7 @@ import json
 import logging
 
 from model_db import SentenceTransformerDB
-from redbox.models import File, Settings
+from redbox.models import File, ProcessingStatusEnum, Settings
 from redbox.parsing.file_chunker import FileChunker
 from redbox.storage.elasticsearch import ElasticsearchStorageHandler
 
@@ -17,11 +17,11 @@ class FileIngestor:
         self,
         raw_file_source,
         chunker: FileChunker,
-        chunked_file_destination: ElasticsearchStorageHandler,
+        file_destination: ElasticsearchStorageHandler,
     ):
         self.raw_file_source = raw_file_source
         self.chunker = chunker
-        self.chunked_file_destination = chunked_file_destination
+        self.file_destination = file_destination
 
     def ingest_file(self, file: File):
         logging.info(f"Ingesting file: {file}")
@@ -32,6 +32,9 @@ class FileIngestor:
             ExpiresIn=180,
         )
 
+        file.processing_status = ProcessingStatusEnum.chunking
+        self.file_destination.update_item(file.uuid, file)
+
         chunks = self.chunker.chunk_file(
             file=file,
             file_url=authenticated_s3_url,
@@ -40,7 +43,7 @@ class FileIngestor:
 
         logging.info(f"Writing {len(chunks)} chunks to storage for file uuid: {file.uuid}")
 
-        return self.chunked_file_destination.write_items(chunks)
+        return self.file_destination.write_items(chunks)
 
     def callback(self, ch, method, _properties, body):
         logging.info("Received message")

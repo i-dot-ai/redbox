@@ -1,4 +1,5 @@
 import hashlib
+from enum import Enum
 
 import tiktoken
 from langchain.schema import Document
@@ -9,17 +10,27 @@ from redbox.models.base import PersistableModel
 encoding = tiktoken.get_encoding("cl100k_base")
 
 
+class ProcessingStatusEnum(str, Enum):
+    uploading = "uploading"
+    parsing = "parsing"
+    chunking = "chunking"
+    embedding = "embedding"
+    indexing = "indexing"
+    complete = "complete"
+
+
 class File(PersistableModel):
     path: str
     type: str
     name: str
     storage_kind: str = "local"
     text: str = ""
+    processing_status: ProcessingStatusEnum = ProcessingStatusEnum.uploading
 
     @computed_field
     def text_hash(self) -> str:
         return hashlib.md5(
-            self.text.encode(encoding="UTF-8", errors="strict")
+            self.text.encode(encoding="UTF-8", errors="strict"), usedforsecurity=False
         ).hexdigest()
 
     @computed_field
@@ -42,7 +53,7 @@ class Chunk(PersistableModel):
     @computed_field
     def text_hash(self) -> str:
         return hashlib.md5(
-            self.text.encode(encoding="UTF-8", errors="strict")
+            self.text.encode(encoding="UTF-8", errors="strict"), usedforsecurity=False
         ).hexdigest()
 
     @computed_field

@@ -7,7 +7,7 @@ import pydantic
 from fastapi import FastAPI, UploadFile
 from fastapi.responses import RedirectResponse
 
-from redbox.models import File, Settings
+from redbox.models import File, ProcessingStatusEnum, Settings
 from redbox.storage.elasticsearch import ElasticsearchStorageHandler
 
 # === Logging ===
@@ -130,11 +130,14 @@ async def create_upload_file(file: UploadFile, ingest=True) -> File:
         type=file.content_type,
         creator_user_uuid="dev",
         storage_kind=env.object_store,
+        processing_status=ProcessingStatusEnum.uploading,
     )
 
     storage_handler.write_item(file_record)
 
     if ingest:
+        file_record.processing_status = ProcessingStatusEnum.parsing
+        storage_handler.update_item(item_uuid=file_record.uuid, item=file_record)
         ingest_file(file_record.uuid)
 
     return file_record
