@@ -8,6 +8,7 @@ on:
     paths:
       - redbox/**
       - embed/**
+      - core_api/**
       - ingest/**
       - Makefile
       - .github/**
