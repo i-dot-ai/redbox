@@ -5,22 +5,12 @@ import pytest
 from elasticsearch import Elasticsearch
 from sentence_transformers import SentenceTransformer
 
-from redbox.models import File, Settings
+from redbox.models import File
+from ingest.src.app import env
 
 T = TypeVar("T")
 
 YieldFixture = Generator[T, None, None]
-
-env_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".env.test")
-
-
-env = Settings(  # type: ignore
-    _env_file=env_path,
-    object_store="minio",
-    minio_host="localhost",
-    elastic_host="localhost",
-    embedding_model="paraphrase-albert-small-v2",
-)
 
 
 @pytest.fixture

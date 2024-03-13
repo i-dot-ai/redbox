@@ -73,6 +73,7 @@ class Settings(BaseSettings):
             ],
             basic_auth=(self.elastic_user, self.elastic_password),
         )
+
         return es
 
     def s3_client(self):

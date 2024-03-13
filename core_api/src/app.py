@@ -95,7 +95,7 @@ def health():
     return output
 
 
-@app.post("/file/upload", response_model=File, tags=["file"])
+@app.post("/file", response_model=File, tags=["file"])
 async def create_upload_file(file: UploadFile, ingest=True) -> File:
     """Upload a file to the object store and create a record in the database
 
@@ -153,7 +153,7 @@ def get_file(file_uuid: UUID) -> File:
     return storage_handler.read_item(str(file_uuid), model_type="File")
 
 
-@app.post("/file/{file_uuid}/delete", response_model=File, tags=["file"])
+@app.delete("/file/{file_uuid}", response_model=File, tags=["file"])
 def delete_file(file_uuid: str) -> File:
     """Delete a file from the object store and the database
 
@@ -169,7 +169,7 @@ def delete_file(file_uuid: str) -> File:
     return file
 
 
-@app.post("/file/ingest/{file_uuid}", response_model=File, tags=["file"])
+@app.post("/file/{file_uuid}/ingest", response_model=File, tags=["file"])
 def ingest_file(file_uuid: str) -> File:
     """Trigger the ingest process for a file to a queue.
 
