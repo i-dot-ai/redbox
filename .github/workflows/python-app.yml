@@ -46,7 +46,7 @@ jobs:
       run: |
         mkdir -p data/elastic/
         chmod 777 data/elastic/
-        cp .env.example .env
+        cp .env.test .env
         docker compose up -d --wait elasticsearch minio rabbitmq
 
     - name: Test redbox with pytest
