@@ -89,11 +89,23 @@ def bucket(s3_client):
 def file_pdf_path() -> YieldFixture[str]:
     path = os.path.join(
         os.path.dirname(os.path.abspath(__file__)),
-        "..",
-        "..",
-        "tests",
+        "..", "..", "tests",
         "data",
         "pdf",
         "Cabinet Office - Wikipedia.pdf",
     )
     yield path
+
+
+@pytest.fixture
+def rabbitmq_connection():
+    connection = env.blocking_connection()
+    yield connection
+    connection.close()
+
+
+@pytest.fixture
+def rabbitmq_channel(rabbitmq_connection):
+    channel = rabbitmq_connection.channel()
+    yield channel
+    channel.close()
