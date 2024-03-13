@@ -183,3 +183,8 @@ cython_debug/
 # Django app
 *.pyc
 django_app/staticfiles/*
+# Django app frontend
+django_app/node_modules
+django_app/frontend/CACHE
+django_app/frontend/govuk-assets
+

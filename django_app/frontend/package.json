@@ -1,0 +1,16 @@
+{
+  "name": "redbox-django",
+  "version": "1.0.0",
+  "description": "Frontend dependencies for i.AI Redbox application",
+  "main": "index.js",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "dependencies": {
+    "govuk-frontend": "^5.2.0"
+  }
+}

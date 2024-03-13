@@ -1,0 +1,4 @@
+$govuk-assets-path: "govuk-assets/";
+$govuk-font-family: sans-serif;
+
+@import "django_app/frontend/node_modules/govuk-frontend/dist/govuk/all";

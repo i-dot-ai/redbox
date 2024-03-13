@@ -7,6 +7,9 @@ from django.templatetags.static import static
 from django.urls import reverse
 from markdown_it import MarkdownIt
 
+from compressor.contrib.jinja2ext import CompressorExtension
+
+
 # `js-default` setting required to sanitize inputs
 # https://markdown-it-py.readthedocs.io/en/latest/security.html
 markdown_converter = MarkdownIt("js-default")
@@ -50,6 +53,7 @@ def environment(**options):
     env = jinja2.Environment(  # nosec B701
         **{
             "autoescape": True,
+            "extensions": [CompressorExtension],
             **options,
             **extra_options,
         }
