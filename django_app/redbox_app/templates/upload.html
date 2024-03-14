@@ -1,0 +1,25 @@
+{% set pageTitle = "Upload a document" %}
+
+{% extends "base.html" %}
+{% from "macros/govuk-button.html" import govukButton %}
+
+{% block content %}
+<form method="post" enctype="multipart/form-data">
+
+  <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+
+  <div class="govuk-form-group">
+    <label class="govuk-label" for="upload-doc">
+      <h1 class="govuk-heading-l">{{ pageTitle }}</h1>
+    </label>
+    <p class="govuk-body iai-file-types" id="upload-doc-filetypes">Limit 200MB per file: EML, HTML, JSON, MD, MSG, RST, RTF, TXT, XML, CSV, DOC, DOCX, EPUB, ODT, PDF, PPT, PPTX, TSV, XLSX, HTM</p>
+    <input class="govuk-file-upload" id="upload-doc" name="uploadDoc" type="file" aria-describedby="upload-doc-filetypes">
+  </div>
+
+  <div class="govuk-button-group">
+    {{ govukButton(text="Upload") }}
+    {{ govukButton(text="Cancel", secondary=True, href="/documents") }}
+  </div>
+
+</form>
+{% endblock %}

@@ -1,4 +1,33 @@
 $govuk-assets-path: "govuk-assets/";
 $govuk-font-family: sans-serif;
+$iai-pink: #b62777;
 
-@import "django_app/frontend/node_modules/govuk-frontend/dist/govuk/all";
+@import "../node_modules/govuk-frontend/dist/govuk/all";
+
+
+/* Classification banner */
+.iai-classification-banner {
+  background-color: #2b71c7;
+  color: white;
+  font-size: 0.875rem;
+  margin-bottom: 0.25rem;
+  padding: 0.25rem 1rem;
+  text-align: center;
+}
+
+
+/* i.AI pink in header */
+.govuk-header__container {
+  border-color: $iai-pink;
+}
+
+.govuk-phase-banner__content__tag {
+  background-color: $iai-pink;
+  color: white;
+}
+
+
+/* File upload */
+.iai-file-types {
+  font-size: 0.875rem;
+}
