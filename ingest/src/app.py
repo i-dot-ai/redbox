@@ -4,7 +4,7 @@ import logging
 from pika.adapters.blocking_connection import BlockingChannel
 
 from model_db import SentenceTransformerDB
-from redbox.models import File, ProcessingStatusEnum, Settings
+from redbox.models import EmbedQueueItem, File, ProcessingStatusEnum, Settings
 from redbox.parsing.file_chunker import FileChunker
 from redbox.storage.elasticsearch import ElasticsearchStorageHandler
 
@@ -29,11 +29,10 @@ class FileIngestor:
 
     def ingest_file(self, file: File):
         """
-        1. Gets up file from s3
-        2. Chunks file
-        3. Puts chunks to ES
-        4. Acknowledges message
-        5. Puts chunk on embed-queue
+        1. Chunks file
+        2. Puts chunks to ES
+        3. Acknowledges message
+        4. Puts chunk on embed-queue
         """
 
         logging.info(f"Ingesting file: {file}")
@@ -59,11 +58,12 @@ class FileIngestor:
         logging.info(f"written {len(items)} chunks to elasticsearch")
 
         for chunk in chunks:
+            queue_item = EmbedQueueItem(model=env.embedding_model, chunk_uuid=chunk.uuid)
             logging.info(f"Writing chunk to storage for chunk uuid: {chunk.uuid}")
             self.channel.basic_publish(
                 exchange="redbox-core-exchange",
                 routing_key=env.embed_queue_name,
-                body=json.dumps(chunk.model_dump(), ensure_ascii=False),
+                body=json.dumps(queue_item.model_dump(), ensure_ascii=False),
             )
         return items
 

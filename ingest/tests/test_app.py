@@ -1,8 +1,7 @@
 import json
 
 from ingest.src.app import FileIngestor
-from redbox.models import Settings
-from redbox.models import ProcessingStatusEnum
+from redbox.models import ProcessingStatusEnum, Settings
 from redbox.parsing.file_chunker import FileChunker
 from redbox.storage import ElasticsearchStorageHandler
 
@@ -34,4 +33,4 @@ def test_ingest_file(s3_client, es_client, embedding_model, file, rabbitmq_chann
 
     _method, _properties, body = rabbitmq_channel.basic_get(env.embed_queue_name)
     msg = json.loads(body)
-    assert msg["model_type"] == "Chunk"
+    assert msg["model"] == env.embedding_model

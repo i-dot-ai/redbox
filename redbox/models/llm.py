@@ -1,6 +1,7 @@
 from typing import Literal
+from uuid import UUID
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class ModelInfo(BaseModel):
@@ -38,5 +39,6 @@ class StatusResponse(BaseModel):
 
 
 class EmbedQueueItem(BaseModel):
-    model: str
-    sentence: str
+    """Instruction to Ingest app for what to embed, and how"""
+    model: str = Field(description="model to be used to embed sentence")
+    chunk_uuid: str = Field(description="id of the chunk that this text belongs to")

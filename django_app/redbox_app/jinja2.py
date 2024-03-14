@@ -1,14 +1,11 @@
 import datetime
 
 import humanize
-
 import jinja2
+from compressor.contrib.jinja2ext import CompressorExtension
 from django.templatetags.static import static
 from django.urls import reverse
 from markdown_it import MarkdownIt
-
-from compressor.contrib.jinja2ext import CompressorExtension
-
 
 # `js-default` setting required to sanitize inputs
 # https://markdown-it-py.readthedocs.io/en/latest/security.html

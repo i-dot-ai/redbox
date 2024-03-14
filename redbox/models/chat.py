@@ -9,7 +9,6 @@ from redbox.models.base import PersistableModel
 
 
 class ChatMessage(PersistableModel):
-    uuid: str = Field(default_factory=lambda: str(uuid4()))
     # langchain.chains.base.Chain needs pydantic v1, breaks
     # https://python.langchain.com/docs/guides/pydantic_compatibility
     chain: Optional[object] = None

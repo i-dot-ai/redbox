@@ -6,7 +6,6 @@ from elasticsearch import Elasticsearch
 from redbox.models import Chunk, Settings
 from redbox.storage.elasticsearch import ElasticsearchStorageHandler
 
-
 T = TypeVar("T")
 
 YieldFixture = Generator[T, None, None]

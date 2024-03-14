@@ -7,7 +7,6 @@ from io import BytesIO
 from typing import Optional
 
 import boto3
-import cognitojwt
 import dotenv
 import html2markdown
 import pandas as pd
@@ -18,17 +17,13 @@ from langchain.callbacks import FileCallbackHandler
 from langchain.callbacks.base import BaseCallbackHandler
 from langchain.chains.base import Chain
 from langchain.schema.output import LLMResult
-from langchain.vectorstores.elasticsearch import (
-    ApproxRetrievalStrategy,
-    ElasticsearchStore,
-)
+from langchain.vectorstores.elasticsearch import ApproxRetrievalStrategy, ElasticsearchStore
 from langchain_community.chat_models import ChatLiteLLM
 from langchain_community.embeddings import SentenceTransformerEmbeddings
 from loguru import logger
 from lxml.html.clean import Cleaner
-from sentence_transformers import SentenceTransformer
-from streamlit.web.server.websocket_headers import _get_websocket_headers
 
+from model_db import SentenceTransformerDB
 from redbox.llm.llm_base import LLMHandler
 from redbox.models.feedback import Feedback
 from redbox.models.file import File
@@ -51,8 +46,8 @@ def get_user_name(principal: dict) -> str:
     return ""
 
 
-def populate_user_info(ENV: dict) -> dict:
-    """Populate the user information in the sidebar
+def populate_user_info() -> dict:
+    """Populate the user information
 
     Args:
         ENV (dict): the environment variables dictionary
@@ -60,31 +55,7 @@ def populate_user_info(ENV: dict) -> dict:
     Returns:
         dict: the user information dictionary
     """
-    headers = _get_websocket_headers()
-
-    if headers is not None:
-        if "X-Amzn-Oidc-Accesstoken" in headers:
-            try:
-                jwt_dict = cognitojwt.decode(
-                    token=headers["X-Amzn-Oidc-Accesstoken"],
-                    region=ENV["COGNITO_REGION"],
-                    userpool_id=ENV["COGNITO_USERPOOL_ID"],
-                    app_client_id=ENV["COGNITO_APP_CLIENT_ID"],
-                )
-                user_details = {"username": jwt_dict["username"]}
-            except TypeError:
-                st.error("Error decoding JWT from Cognito")
-                st.write(headers)
-                st.stop()
-
-            user_details["username_md5"] = hashlib.md5(user_details["username"].encode("utf-8")).hexdigest()
-            return user_details
-        else:
-            st.sidebar.markdown("Running Locally")
-            return {"name": "dev", "email": "dev@example.com"}
-
-    # TODO: is this the right thing to do here?
-    return {}
+    return {"name": "dev", "email": "dev@example.com"}
 
 
 def init_session_state() -> dict:
@@ -117,17 +88,10 @@ def init_session_state() -> dict:
     )
 
     if "user_details" not in st.session_state:
-        st.session_state["user_details"] = populate_user_info(ENV)
+        st.session_state["user_details"] = populate_user_info()
 
     if "user_uuid" not in st.session_state:
-        if ENV["DEV_MODE"] == "true":
-            st.session_state.user_uuid = "dev"
-        else:
-            if "username_md5" not in st.session_state.user_details:
-                st.session_state.user_uuid = "local"
-            else:
-                # MD5 of the username is used as the user_uuid
-                st.session_state.user_uuid = st.session_state.user_details["username_md5"]
+        st.session_state.user_uuid = st.session_state["user_details"]["name"]
 
     if "s3_client" not in st.session_state:
         if ENV["OBJECT_STORE"] == "minio":
@@ -141,30 +105,50 @@ def init_session_state() -> dict:
             raise NotImplementedError("S3 not yet implemented")
 
     if "available_models" not in st.session_state:
-        st.session_state.available_models = [
-            "openai/gpt-3.5-turbo",
-            "anthropic/claude-2",
-        ]
+        st.session_state.available_models = []
+
+        if "OPENAI_API_KEY" in ENV:
+            if ENV["OPENAI_API_KEY"]:
+                st.session_state.available_models.append("openai/gpt-3.5-turbo")
+
+        if "ANTHROPIC_API_KEY" in ENV:
+            if ENV["ANTHROPIC_API_KEY"]:
+                st.session_state.available_models.append("anthropic/claude-2")
+
+        if len(st.session_state.available_models) == 0:
+            st.error("No models available. Please check your API keys.")
+            st.stop()
 
     if "model_select" not in st.session_state:
         st.session_state.model_select = st.session_state.available_models[0]
 
+    if "available_personas" not in st.session_state:
+        st.session_state.available_personas = [
+            "Policy Experts",
+            "Economists",
+            "Foreign Policy Experts",
+        ]
+
+    if "persona_detail" not in st.session_state:
+        st.session_state.persona_detail = {
+            "Policy Experts":"Lorem ipsum dolor sit amet",
+            "Economists":"Lorem ipsum dolor sit amet",
+            "Foreign Policy Experts":"Lorem ipsum dolor sit amet",
+        }
+
+    if "model_db" not in st.session_state:
+        st.session_state.model_db = SentenceTransformerDB()
+        st.session_state.model_db.init_from_disk()
+
+
     if "embedding_model" not in st.session_state:
         available_models = []
-        models = {}
-        for dirpath, dirnames, filenames in os.walk("models"):
-            # Check if the current directory contains a file named "config.json"
-            if "pytorch_model.bin" in filenames:
-                # If it does, print the path to the directory
-                available_models.append(dirpath)
+        for model_name in st.session_state.model_db:
+            available_models.append(model_name)
 
-        for model_path in available_models:
-            model_name = model_path.split("/")[-3]
-            model = model_name.split("--")[-1]
-            models[model] = SentenceTransformer(model_path)
+        default_model = available_models[0]
 
-        model_name = ENV.get("EMBEDDING_MODEL", "all-mpnet-base-v2")
-        st.session_state.embedding_model = models[model_name]
+        st.session_state.embedding_model = st.session_state.model_db[default_model]
 
     if "BUCKET_NAME" not in st.session_state:
         st.session_state.BUCKET_NAME = f"redbox-storage-{st.session_state.user_uuid}"

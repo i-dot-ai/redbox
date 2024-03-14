@@ -2,18 +2,31 @@ import json
 import logging
 from datetime import datetime
 from uuid import UUID
+from uuid import uuid4
 
 import pydantic
-from fastapi import FastAPI, UploadFile
+from fastapi import FastAPI, HTTPException
+from fastapi import UploadFile
 from fastapi.responses import RedirectResponse
 
-from redbox.models import File, ProcessingStatusEnum, Settings
-from redbox.storage.elasticsearch import ElasticsearchStorageHandler
+from model_db import SentenceTransformerDB
+from redbox.models import File, ProcessingStatusEnum
+from redbox.models import (
+    ModelInfo,
+    ModelListResponse,
+    EmbeddingResponse,
+    Settings,
+)
+from redbox.models.llm import Embedding
+from redbox.storage import ElasticsearchStorageHandler
 
 # === Logging ===
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger()
+
+model_db = SentenceTransformerDB()
+model_db.init_from_disk()
 
 
 env = Settings()
@@ -196,3 +209,67 @@ def ingest_file(file_uuid: str) -> File:
     )
 
     return file
+
+
+@app.get("/models", response_model=ModelListResponse, tags=["models"])
+def get_models():
+    """Returns a list of available models
+
+    Returns:
+        ModelListResponse: A list of available models
+    """
+    return {"models": [model_db.get_model_info(m) for m in model_db]}
+
+
+@app.get("/models/{model}", response_model=ModelInfo, tags=["models"])
+def get_model(model: str):
+    """Returns information about a given model
+
+    Args:
+        model (str): The name of the model
+
+    Returns:
+        ModelInfo: Information about the model
+    """
+
+    if model not in model_db:
+        raise HTTPException(status_code=404, detail=f"Model {model} not found")
+    return model_db.get_model_info(model)
+
+
+@app.post("/models/{model}/embed", tags=["models"])
+def embed_sentences(model: str, sentences: list[str]) -> EmbeddingResponse:
+    """Embeds a list of sentences using a given model
+
+    Args:
+        model (str): The name of the model
+        sentences (list[str]): A list of sentences
+
+    Returns:
+        EmbeddingResponse: The embeddings of the sentences
+    """
+
+    if model not in model_db:
+        raise HTTPException(status_code=404, detail=f"Model {model} not found")
+
+    model_obj = model_db[model]
+    embeddings = model_obj.encode(sentences)
+
+    reformatted_embeddings = [
+        Embedding(
+            object="embedding",
+            index=i,
+            embedding=list(embedding),
+        )
+        for i, embedding in enumerate(embeddings)
+    ]
+
+    output = EmbeddingResponse(
+        object="list",
+        data=reformatted_embeddings,
+        embedding_id=str(uuid4()),
+        model=model,
+        model_info=model_db.get_model_info(model),
+    )
+
+    return output
