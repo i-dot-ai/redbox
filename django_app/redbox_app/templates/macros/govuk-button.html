@@ -1,0 +1,13 @@
+{% macro govukButton(text=None, secondary=False, href=None) %}
+
+  {% if href %}
+    <a href="{{ href }}" role="button" draggable="false" class="govuk-button {% if secondary %}govuk-button--secondary{% endif %}" data-module="govuk-button">
+      {{ text }}
+    </a>
+  {% else %}
+    <button type="submit" class="govuk-button {% if secondary %}govuk-button--secondary{% endif %}" data-module="govuk-button">
+      {{ text }}
+    </button>
+  {% endif %}
+
+{% endmacro %}

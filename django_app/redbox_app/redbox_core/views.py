@@ -9,3 +9,15 @@ def homepage_view(request):
         template_name="homepage.html",
         context={"request": request},
     )
+
+
+def upload_view(request):
+    if request.method == "POST" and request.FILES["uploadDoc"]:
+        doc = request.FILES["uploadDoc"]
+        print(doc)
+        # TO DO: handle file upload here
+    return render(
+        request,
+        template_name="upload.html",
+        context={"request": request},
+    )
