@@ -29,8 +29,7 @@ def change_selected_model():
 
 persona_select = st.sidebar.selectbox(
     "What is your role?",
-    options=st.session_state.available_models,
-    on_change=change_selected_model,
+    options=st.session_state.available_personas,
     key="persona_select",
 )
 
@@ -46,15 +45,6 @@ INITIAL_CHAT_PROMPT = [
             )
         ),
         creator_user_uuid=st.session_state.user_uuid,
-    ),
-    ChatMessage(
-        chain=None,
-        message=AIMessage(content="Hi, I'm Redbox Copilot. What is your role?"),
-        persona_select = st.sidebar.selectbox(
-            "What is your role?",
-            options=st.session_state.available_models,
-            key="persona_select",
-            ),
     ),
 ]
 
