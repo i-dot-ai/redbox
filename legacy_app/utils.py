@@ -148,6 +148,13 @@ def init_session_state() -> dict:
 
     if "model_select" not in st.session_state:
         st.session_state.model_select = st.session_state.available_models[0]
+    
+    if "available_personas" not in st.session_state:
+        st.session_state.available_personas = [
+            "Policy Experts",
+            "Economists",
+            "Foreign Policy Experts",
+        ]
 
     if "embedding_model" not in st.session_state:
         available_models = []
