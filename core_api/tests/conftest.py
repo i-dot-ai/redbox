@@ -1,12 +1,13 @@
 import os
-from typing import TypeVar, Generator
+from typing import Generator, TypeVar
 
 import pytest
 from elasticsearch import Elasticsearch
-
 from fastapi.testclient import TestClient
-from redbox.models import File
-from core_api.src.app import app as application, env
+
+from core_api.src.app import app as application
+from core_api.src.app import env
+from redbox.models import File, ProcessingStatusEnum
 from redbox.storage import ElasticsearchStorageHandler
 
 T = TypeVar("T")
@@ -66,6 +67,7 @@ def file(s3_client, file_pdf_path, bucket) -> YieldFixture[File]:
         type=file_type,
         creator_user_uuid="dev",
         storage_kind=env.object_store,
+        processing_status=ProcessingStatusEnum.uploaded,
     )
 
     yield file_record
@@ -89,7 +91,9 @@ def bucket(s3_client):
 def file_pdf_path() -> YieldFixture[str]:
     path = os.path.join(
         os.path.dirname(os.path.abspath(__file__)),
-        "..", "..", "tests",
+        "..",
+        "..",
+        "tests",
         "data",
         "pdf",
         "Cabinet Office - Wikipedia.pdf",

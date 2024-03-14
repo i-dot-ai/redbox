@@ -11,7 +11,7 @@ encoding = tiktoken.get_encoding("cl100k_base")
 
 
 class ProcessingStatusEnum(str, Enum):
-    uploading = "uploading"
+    uploaded = "uploaded"
     parsing = "parsing"
     chunking = "chunking"
     embedding = "embedding"
@@ -25,7 +25,7 @@ class File(PersistableModel):
     name: str
     storage_kind: str = "local"
     text: str = ""
-    processing_status: ProcessingStatusEnum = ProcessingStatusEnum.uploading
+    processing_status: ProcessingStatusEnum = ProcessingStatusEnum.uploaded
 
     @computed_field
     def text_hash(self) -> str:

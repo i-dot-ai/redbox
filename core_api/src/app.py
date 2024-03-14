@@ -90,7 +90,11 @@ def health():
     uptime = datetime.now() - start_time
     uptime_seconds = uptime.total_seconds()
 
-    output = {"status": "ready", "uptime_seconds": uptime_seconds, "version": app.version}
+    output = {
+        "status": "ready",
+        "uptime_seconds": uptime_seconds,
+        "version": app.version,
+    }
 
     return output
 
@@ -130,14 +134,12 @@ async def create_upload_file(file: UploadFile, ingest=True) -> File:
         type=file.content_type,
         creator_user_uuid="dev",
         storage_kind=env.object_store,
-        processing_status=ProcessingStatusEnum.uploading,
+        processing_status=ProcessingStatusEnum.uploaded,
     )
 
     storage_handler.write_item(file_record)
 
     if ingest:
-        file_record.processing_status = ProcessingStatusEnum.parsing
-        storage_handler.update_item(item_uuid=file_record.uuid, item=file_record)
         ingest_file(file_record.uuid)
 
     return file_record
@@ -183,6 +185,9 @@ def ingest_file(file_uuid: str) -> File:
         File: The file that was ingested
     """
     file = storage_handler.read_item(file_uuid, model_type="File")
+
+    file.processing_status = ProcessingStatusEnum.parsing
+    storage_handler.update_item(item_uuid=file.uuid, item=file)
 
     channel.basic_publish(
         exchange="redbox-core-exchange",
