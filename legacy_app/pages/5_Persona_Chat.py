@@ -14,8 +14,8 @@ from utils import (
 )
 
 from redbox.llm.prompts.core import CORE_REDBOX_PROMPT
+from redbox.models.chat import ChatMessage
 from redbox.models.persona import ChatPersona
-from redbox.models.user import User
 
 st.set_page_config(page_title="Redbox Copilot - Ask the Box", page_icon="📮", layout="wide")
 
