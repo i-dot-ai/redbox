@@ -1,6 +1,8 @@
 import json
 import logging
 
+from pika.adapters.blocking_connection import BlockingChannel
+
 from model_db import SentenceTransformerDB
 from redbox.models import File, ProcessingStatusEnum, Settings
 from redbox.parsing.file_chunker import FileChunker
@@ -18,10 +20,12 @@ class FileIngestor:
         raw_file_source,
         chunker: FileChunker,
         file_destination: ElasticsearchStorageHandler,
+        channel: BlockingChannel,
     ):
         self.raw_file_source = raw_file_source
         self.chunker = chunker
         self.file_destination = file_destination
+        self.channel = channel
 
     def ingest_file(self, file: File):
         logging.info(f"Ingesting file: {file}")
@@ -43,7 +47,17 @@ class FileIngestor:
 
         logging.info(f"Writing {len(chunks)} chunks to storage for file uuid: {file.uuid}")
 
-        return self.file_destination.write_items(chunks)
+        items = self.file_destination.write_items(chunks)
+        logging.info(f"written {len(items)} chunks to elasticsearch")
+
+        for chunk in chunks:
+            logging.info(f"Writing chunk to storage for chunk uuid: {chunk.uuid}")
+            self.channel.basic_publish(
+                exchange="redbox-core-exchange",
+                routing_key=env.embed_queue_name,
+                body=json.dumps(chunk.model_dump(), ensure_ascii=False),
+            )
+        return items
 
     def callback(self, ch, method, _properties, body):
         logging.info("Received message")
@@ -82,9 +96,16 @@ def run():
     # === Queues ===
 
     if env.queue == "rabbitmq":
-        connection = env.blocking_connection()
-        channel = connection.channel()
-        channel.queue_declare(queue=env.ingest_queue_name, durable=True)
+        try:
+            connection = env.blocking_connection()
+        except Exception:
+            raise Exception(f"failed to start with {env.rabbitmq_host}:{env.rabbitmq_port}")
+
+        ingest_channel = connection.channel()
+        ingest_channel.queue_declare(queue=env.ingest_queue_name, durable=True)
+
+        embed_channel = connection.channel()
+        embed_channel.queue_declare(queue=env.embed_queue_name, durable=True)
     elif env.queue == "sqs":
         _sqs = env.sqs_client()
         raise NotImplementedError("SQS is not yet implemented")
@@ -98,10 +119,10 @@ def run():
     storage_handler = ElasticsearchStorageHandler(es_client=es, root_index="redbox-data")
     chunker = FileChunker(embedding_model=models[env.embedding_model])
 
-    file_ingestor = FileIngestor(s3, chunker, storage_handler)
+    file_ingestor = FileIngestor(s3, chunker, storage_handler, embed_channel)
 
-    channel.basic_consume(queue=env.ingest_queue_name, on_message_callback=file_ingestor.callback)
-    channel.start_consuming()
+    ingest_channel.basic_consume(queue=env.ingest_queue_name, on_message_callback=file_ingestor.callback)
+    ingest_channel.start_consuming()
 
 
 if __name__ == "__main__":
