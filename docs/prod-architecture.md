@@ -7,11 +7,11 @@ flowchart TB;
 
     subgraph core-api[Core API]
         subgraph file["/file"]
-            file-upload[POST "/file"]
-            file-ingest[POST "/file/{file_uuid}/ingest"]
-            file-delete[DELETE "/file/{file_uuid}"]
-            file-search[POST "/file/{file_uuid}/search"]
-            file-chunks[GET "/file/{file_uuid}chunks"]
+            file-upload["/file"]
+            file-ingest["/file/{file_uuid}/ingest"]
+            file-delete["/file/{file_uuid}"]
+            file-search["/file/{file_uuid}/search"]
+            file-chunks["/file/{file_uuid}/chunks"]
         end
 
         subgraph chat["/chat"]
