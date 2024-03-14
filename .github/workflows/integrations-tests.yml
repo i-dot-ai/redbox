@@ -1,0 +1,56 @@
+# This workflow will install Python dependencies, run tests and lint with a single version of Python
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python
+
+name: Python application
+
+on:
+  push:
+    paths:
+      - redbox/**
+      - embed/**
+      - core_api/**
+      - ingest/**
+      - Makefile
+      - .github/**
+    branches:
+      - 'main'
+      - 'feature/**'
+      - 'chore/**'
+      - 'bugfix/**'
+      - 'hotfix/**'
+      - 'dependabot/**'
+      - 'develop'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v3
+      with:
+        python-version: "3.11"
+
+    - name: Set up Poetry
+      uses: abatilo/actions-poetry@v2
+      with:
+        poetry-version: 1.7.0
+
+    - name: Build Containers
+      run: |
+        mkdir -p data/elastic/
+        chmod 777 data/elastic/
+        cp .env.example .env
+        docker compose up -d --wait elasticsearch minio rabbitmq ingest embed core-api
+
+    - name: Test e2e with pytest
+      run: |
+        make test-integration
+
