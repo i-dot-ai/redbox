@@ -28,6 +28,14 @@ class FileIngestor:
         self.channel = channel
 
     def ingest_file(self, file: File):
+        """
+        1. Gets up file from s3
+        2. Chunks file
+        3. Puts chunks to ES
+        4. Acknowledges message
+        5. Puts chunk on embed-queue
+        """
+
         logging.info(f"Ingesting file: {file}")
 
         authenticated_s3_url = self.raw_file_source.generate_presigned_url(
@@ -76,11 +84,7 @@ def run():
     """
     0. Listens to queue
     1. On Receipt of a File metadata message from queue
-    2. Callbacks to ingest_file, which:
-     2.1. Gets up file from s3
-     2.2. Chunks file
-     2.3. Puts chunks to ES
-     2.4. Acknowledges message
+    2. Callbacks to ingest_file
     """
 
     # ====== Loading embedding model ======
