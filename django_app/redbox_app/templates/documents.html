@@ -1,0 +1,48 @@
+{% set pageTitle = "Documents" %}
+{% extends "base.html" %}
+{% from "macros/govuk-button.html" import govukButton %}
+
+{% block content %}
+
+<table class="govuk-table iai-doclist">
+  <caption class="govuk-table__caption govuk-table__caption--m">
+    <h1 class="govuk-heading-l govuk-!-margin-bottom-0">Documents</h1>
+  </caption>
+  <thead class="govuk-table__head">
+    <tr class="govuk-table__row">
+      <th scope="col" class="govuk-table__header">Name</th>
+      <th scope="col" class="govuk-table__header">Status</th>
+      <th scope="col" class="govuk-table__header iai-doclist__actions">Actions</th>
+    </tr>
+  </thead>
+  <tbody class="govuk-table__body">
+    {% for document in documents %}
+      <tr class="govuk-table__row">
+        <td class="govuk-table__cell govuk-!-padding-top-3">{{document.name}}</td>
+        <td class="govuk-table__cell govuk-!-padding-top-3">
+          <strong class="govuk-tag {% if document.processed %}govuk-tag--green{% else %}govuk-tag--yellow{% endif %}">{{document.process_status}}</strong>
+        </td>
+        <td class="govuk-table__cell">
+          {{ govukButton(
+            text="Download",
+            href=document.url,
+            classes="govuk-button--secondary govuk-!-margin-bottom-0",
+            download=True
+          ) }}
+          {{ govukButton(
+            text="Remove",
+            href="/remove-doc/" + document.id,
+            classes="govuk-button--warning govuk-!-margin-bottom-0"
+          ) }}
+        </td>
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+{{ govukButton(
+  text="Upload a new document", 
+  href="/upload"
+) }}
+
+{% endblock %}
