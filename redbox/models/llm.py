@@ -42,4 +42,4 @@ class EmbedQueueItem(BaseModel):
     """Instruction to Ingest app for what to embed, and how"""
     model: str = Field(description="model to be used to embed sentence")
     sentence: str = Field(description="text to be embedded")
-    chunk_uuid: UUID = Field(description="id of the chunk that this text belongs to")
+    chunk_uuid: str = Field(description="id of the chunk that this text belongs to")

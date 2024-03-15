@@ -183,13 +183,13 @@ def embed_item_callback(ch: BlockingChannel, method, properties, body):
         response = embed_sentences(embed_queue_item.model, [embed_queue_item.sentence])
         logging.info(f"Embedding ID {response.embedding_id} complete for {method.delivery_tag}")
 
-        chunk: Chunk = storage_handler.read_item(embed_queue_item.chunk_uuid, "Chunk")
+        chunk: Chunk = storage_handler.read_item(str(embed_queue_item.chunk_uuid), "Chunk")
 
         if len(response.data) == 1:
             log.error(f"expected just 1 embedding but got {len(response.data)}")
         else:
             chunk.embedding = response.data[0].embedding
-            storage_handler.update_item(embed_queue_item.chunk_uuid, chunk)
+            storage_handler.update_item(str(embed_queue_item.chunk_uuid), chunk)
 
     except json.JSONDecodeError as e:
         logging.error(f"Failed to decode message: {e}")
