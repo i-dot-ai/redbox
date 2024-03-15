@@ -15,6 +15,7 @@ other_urlpatterns = [
     path("accounts/", include("allauth.urls")),
     path("documents/", views.documents_view, name="documents"),
     path("upload/", views.upload_view, name="upload"),
+    path("remove-doc/<str:doc_id>", views.remove_doc_view, name="remove_doc")
 ]
 
 urlpatterns = info_urlpatterns + other_urlpatterns
