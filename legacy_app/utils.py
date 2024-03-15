@@ -51,8 +51,8 @@ def get_user_name(principal: dict) -> str:
     return ""
 
 
-def populate_user_info(ENV: dict) -> dict:
-    """Populate the user information in the sidebar
+def populate_user_info() -> dict:
+    """Populate the user information
 
     Args:
         ENV (dict): the environment variables dictionary
@@ -60,31 +60,7 @@ def populate_user_info(ENV: dict) -> dict:
     Returns:
         dict: the user information dictionary
     """
-    headers = _get_websocket_headers()
-
-    if headers is not None:
-        if "X-Amzn-Oidc-Accesstoken" in headers:
-            try:
-                jwt_dict = cognitojwt.decode(
-                    token=headers["X-Amzn-Oidc-Accesstoken"],
-                    region=ENV["COGNITO_REGION"],
-                    userpool_id=ENV["COGNITO_USERPOOL_ID"],
-                    app_client_id=ENV["COGNITO_APP_CLIENT_ID"],
-                )
-                user_details = {"username": jwt_dict["username"]}
-            except TypeError:
-                st.error("Error decoding JWT from Cognito")
-                st.write(headers)
-                st.stop()
-
-            user_details["username_md5"] = hashlib.md5(user_details["username"].encode("utf-8")).hexdigest()
-            return user_details
-        else:
-            st.sidebar.markdown("Running Locally")
-            return {"name": "dev", "email": "dev@example.com"}
-
-    # TODO: is this the right thing to do here?
-    return {}
+    return {"name": "dev", "email": "dev@example.com"}
 
 
 def init_session_state() -> dict:
@@ -117,17 +93,10 @@ def init_session_state() -> dict:
     )
 
     if "user_details" not in st.session_state:
-        st.session_state["user_details"] = populate_user_info(ENV)
+        st.session_state["user_details"] = populate_user_info()
 
     if "user_uuid" not in st.session_state:
-        if ENV["DEV_MODE"] == "true":
-            st.session_state.user_uuid = "dev"
-        else:
-            if "username_md5" not in st.session_state.user_details:
-                st.session_state.user_uuid = "local"
-            else:
-                # MD5 of the username is used as the user_uuid
-                st.session_state.user_uuid = st.session_state.user_details["username_md5"]
+        st.session_state.user_uuid = st.session_state["user_details"]["name"]
 
     if "s3_client" not in st.session_state:
         if ENV["OBJECT_STORE"] == "minio":
@@ -141,14 +110,23 @@ def init_session_state() -> dict:
             raise NotImplementedError("S3 not yet implemented")
 
     if "available_models" not in st.session_state:
-        st.session_state.available_models = [
-            "openai/gpt-3.5-turbo",
-            "anthropic/claude-2",
-        ]
+        st.session_state.available_models = []
+
+        if "OPENAI_API_KEY" in ENV:
+            if ENV["OPENAI_API_KEY"]:
+                st.session_state.available_models.append("openai/gpt-3.5-turbo")
+
+        if "ANTHROPIC_API_KEY" in ENV:
+            if ENV["ANTHROPIC_API_KEY"]:
+                st.session_state.available_models.append("anthropic/claude-2")
+
+        if len(st.session_state.available_models) == 0:
+            st.error("No models available. Please check your API keys.")
+            st.stop()
 
     if "model_select" not in st.session_state:
         st.session_state.model_select = st.session_state.available_models[0]
-    
+
     if "available_personas" not in st.session_state:
         st.session_state.available_personas = [
             "Policy Experts",
@@ -159,7 +137,7 @@ def init_session_state() -> dict:
     if "embedding_model" not in st.session_state:
         available_models = []
         models = {}
-        for dirpath, dirnames, filenames in os.walk("models"):
+        for dirpath, _, filenames in os.walk("models"):
             # Check if the current directory contains a file named "config.json"
             if "pytorch_model.bin" in filenames:
                 # If it does, print the path to the directory
@@ -182,7 +160,9 @@ def init_session_state() -> dict:
             # The bucket does not exist or you have no access.
             if err.response["Error"]["Code"] == "404":
                 print("The bucket does not exist.")
-                st.session_state.s3_client.create_bucket(Bucket=st.session_state.BUCKET_NAME)
+                st.session_state.s3_client.create_bucket(
+                    Bucket=st.session_state.BUCKET_NAME
+                )
                 print("Bucket created successfully.")
             else:
                 raise err
@@ -198,7 +178,9 @@ def init_session_state() -> dict:
             ],
             basic_auth=(ENV["ELASTIC_USER"], ENV["ELASTIC_PASSWORD"]),
         )
-        st.session_state.storage_handler = ElasticsearchStorageHandler(es_client=es, root_index="redbox-data")
+        st.session_state.storage_handler = ElasticsearchStorageHandler(
+            es_client=es, root_index="redbox-data"
+        )
 
     if st.session_state.user_uuid == "dev":
         st.sidebar.info("**DEV MODE**")
@@ -263,7 +245,9 @@ def init_session_state() -> dict:
     return ENV
 
 
-def get_link_html(page: str, text: str, query_dict: Optional[dict] = None, target: str = "_self") -> str:
+def get_link_html(
+    page: str, text: str, query_dict: Optional[dict] = None, target: str = "_self"
+) -> str:
     """Returns a link in HTML format
 
     Args:
@@ -419,12 +403,16 @@ class FilePreview(object):
         """
 
         render_method = self.render_methods[file.type]
-        stream = st.session_state.s3_client.get_object(Bucket=st.session_state.BUCKET_NAME, Key=file.name)
+        stream = st.session_state.s3_client.get_object(
+            Bucket=st.session_state.BUCKET_NAME, Key=file.name
+        )
         file_bytes = stream["Body"].read()
         render_method(file, file_bytes)
 
     def _render_pdf(self, file: File, page_number: Optional[int] = None) -> None:
-        stream = st.session_state.s3_client.get_object(Bucket=st.session_state.BUCKET_NAME, Key=file.name)
+        stream = st.session_state.s3_client.get_object(
+            Bucket=st.session_state.BUCKET_NAME, Key=file.name
+        )
         base64_pdf = base64.b64encode(stream["Body"].read()).decode("utf-8")
 
         if page_number is not None:
@@ -456,7 +444,9 @@ class FilePreview(object):
         st.dataframe(df, use_container_width=True)
 
     def _render_eml(self, file: File, file_bytes: bytes) -> None:
-        st.markdown(self.cleaner.clean_html(file_bytes.decode("utf-8")), unsafe_allow_html=True)
+        st.markdown(
+            self.cleaner.clean_html(file_bytes.decode("utf-8")), unsafe_allow_html=True
+        )
 
     def _render_html(self, file: File, file_bytes: bytes) -> None:
         markdown_html = html2markdown.convert(file_bytes.decode("utf-8"))
