@@ -13,6 +13,7 @@ other_urlpatterns = [
     path("", views.homepage_view, name="homepage"),
     path("admin/", admin.site.urls),
     path("accounts/", include("allauth.urls")),
+    path("documents/", views.documents_view, name="documents"),
     path("upload/", views.upload_view, name="upload"),
 ]
 
