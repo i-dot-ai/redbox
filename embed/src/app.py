@@ -18,8 +18,10 @@ from redbox.models import (
     EmbedQueueItem,
     StatusResponse,
     Settings,
+    Chunk,
 )
-
+from redbox.models.llm import Embedding
+from redbox.storage import ElasticsearchStorageHandler
 
 start_time = datetime.now()
 model_db = SentenceTransformerDB()
@@ -28,6 +30,10 @@ log.setLevel(logging.INFO)
 
 
 env = Settings()
+
+es = env.elasticsearch_client()
+
+storage_handler = ElasticsearchStorageHandler(es_client=es, root_index="redbox-data")
 
 
 @asynccontextmanager
@@ -123,8 +129,8 @@ def get_model(model: str):
     return model_db.get_model_info(model)
 
 
-@app.post("/models/{model}/embed", response_model=EmbeddingResponse, tags=["models"])
-def embed_sentences(model: str, sentences: list[str]):
+@app.post("/models/{model}/embed", tags=["models"])
+def embed_sentences(model: str, sentences: list[str]) -> EmbeddingResponse:
     """Embeds a list of sentences using a given model
 
     Args:
@@ -142,21 +148,21 @@ def embed_sentences(model: str, sentences: list[str]):
     embeddings = model_obj.encode(sentences)
 
     reformatted_embeddings = [
-        {
-            "object": "embedding",
-            "index": i,
-            "embedding": list(embedding),
-        }
+        Embedding(
+            object="embedding",
+            index=i,
+            embedding=list(embedding),
+        )
         for i, embedding in enumerate(embeddings)
     ]
 
-    output = {
-        "object": "list",
-        "data": reformatted_embeddings,
-        "embedding_id": str(uuid4()),
-        "model": model,
-        "model_info": model_db.get_model_info(model),
-    }
+    output = EmbeddingResponse(
+        object="list",
+        data=reformatted_embeddings,
+        embedding_id=str(uuid4()),
+        model=model,
+        model_info=model_db.get_model_info(model),
+    )
 
     return output
 
@@ -175,7 +181,16 @@ def embed_item_callback(ch: BlockingChannel, method, properties, body):
         body_dict = json.loads(body.decode("utf-8"))
         embed_queue_item = EmbedQueueItem(**body_dict)
         response = embed_sentences(embed_queue_item.model, [embed_queue_item.sentence])
-        logging.info(f"Embedding ID {response['embedding_id']} complete for {method.delivery_tag}")
+        logging.info(f"Embedding ID {response.embedding_id} complete for {method.delivery_tag}")
+
+        chunk: Chunk = storage_handler.read_item(embed_queue_item.chunk_uuid, "Chunk")
+
+        if len(response.data) == 1:
+            log.error(f"expected just 1 embedding but got {len(response.data)}")
+        else:
+            chunk.embedding = response.data[0].embedding
+            storage_handler.update_item(embed_queue_item.chunk_uuid, chunk)
+
     except json.JSONDecodeError as e:
         logging.error(f"Failed to decode message: {e}")
     except pydantic.ValidationError as e:

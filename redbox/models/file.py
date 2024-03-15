@@ -1,9 +1,10 @@
 import hashlib
 from enum import Enum
+from typing import Optional
 
 import tiktoken
 from langchain.schema import Document
-from pydantic import computed_field
+from pydantic import computed_field, Field
 
 from redbox.models.base import PersistableModel
 
@@ -45,10 +46,11 @@ class File(PersistableModel):
 
 
 class Chunk(PersistableModel):
-    parent_file_uuid: str
+    parent_file_uuid: str =Field(description="id of the original file which this text came from")
     index: int
-    text: str
+    text: str =Field(description="chunk of the original text")
     metadata: dict
+    embedding: Optional[list[float]] = Field(description="the vector representation of the text", default=None)
 
     @computed_field
     def text_hash(self) -> str:
