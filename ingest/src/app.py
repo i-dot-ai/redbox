@@ -4,7 +4,7 @@ import logging
 from pika.adapters.blocking_connection import BlockingChannel
 
 from model_db import SentenceTransformerDB
-from redbox.models import File, ProcessingStatusEnum, Settings
+from redbox.models import File, ProcessingStatusEnum, Settings, EmbedQueueItem
 from redbox.parsing.file_chunker import FileChunker
 from redbox.storage.elasticsearch import ElasticsearchStorageHandler
 
@@ -59,11 +59,12 @@ class FileIngestor:
         logging.info(f"written {len(items)} chunks to elasticsearch")
 
         for chunk in chunks:
+            queue_item = EmbedQueueItem(model=env.embedding_model, sentence=chunk.text)
             logging.info(f"Writing chunk to storage for chunk uuid: {chunk.uuid}")
             self.channel.basic_publish(
                 exchange="redbox-core-exchange",
                 routing_key=env.embed_queue_name,
-                body=json.dumps(chunk.model_dump(), ensure_ascii=False),
+                body=json.dumps(queue_item.model_dump(), ensure_ascii=False),
             )
         return items
 
