@@ -4,7 +4,7 @@ from typing import Optional
 
 import tiktoken
 from langchain.schema import Document
-from pydantic import computed_field, Field, PositiveInt
+from pydantic import computed_field, Field
 
 from redbox.models.base import PersistableModel
 
@@ -48,7 +48,7 @@ class File(PersistableModel):
 class Chunk(PersistableModel):
     """Chunk of a File"""
     parent_file_uuid: str = Field(description="id of the original file which this text came from")
-    index: PositiveInt = Field(description="relative position of this chunk in the original file")
+    index: int = Field(description="relative position of this chunk in the original file")
     text: str = Field(description="chunk of the original text")
     metadata: dict
     embedding: Optional[list[float]] = Field(description="the vector representation of the text", default=None)
