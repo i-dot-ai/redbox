@@ -180,15 +180,15 @@ def embed_item_callback(ch: BlockingChannel, method, properties, body):
     try:
         body_dict = json.loads(body.decode("utf-8"))
         embed_queue_item = EmbedQueueItem(**body_dict)
-        response = embed_sentences(embed_queue_item.model, [embed_queue_item.sentence])
-        logging.info(f"Embedding ID {response.embedding_id} complete for {method.delivery_tag}")
+        embedded_sentences = embed_sentences(embed_queue_item.model, [embed_queue_item.sentence])
+        logging.info(f"Embedding ID {embedded_sentences.embedding_id} complete for {method.delivery_tag}")
 
         chunk: Chunk = storage_handler.read_item(str(embed_queue_item.chunk_uuid), "Chunk")
 
-        if len(response.data) == 1:
-            log.error(f"expected just 1 embedding but got {len(response.data)}")
+        if len(embedded_sentences.data) != 1:
+            log.error(f"expected just 1 embedding but got {len(embedded_sentences.data)}")
         else:
-            chunk.embedding = response.data[0].embedding
+            chunk.embedding = embedded_sentences.data[0].embedding
             storage_handler.update_item(str(embed_queue_item.chunk_uuid), chunk)
 
     except json.JSONDecodeError as e:
