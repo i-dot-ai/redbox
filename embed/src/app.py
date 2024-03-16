@@ -183,7 +183,7 @@ def embed_item_callback(ch: BlockingChannel, method, properties, body):
         embedded_sentences = embed_sentences(embed_queue_item.model, [embed_queue_item.sentence])
         logging.info(f"Embedding ID {embedded_sentences.embedding_id} complete for {method.delivery_tag}")
 
-        chunk: Chunk = storage_handler.read_item(str(embed_queue_item.chunk_uuid), "Chunk")
+        chunk: Chunk = storage_handler.read_item(embed_queue_item.chunk_uuid, "Chunk")
 
         if len(embedded_sentences.data) != 1:
             log.error(f"expected just 1 embedding but got {len(embedded_sentences.data)}")
