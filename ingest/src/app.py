@@ -44,7 +44,7 @@ class FileIngestor:
         )
 
         file.processing_status = ProcessingStatusEnum.chunking
-        self.file_destination.update_item(str(file.uuid), file)
+        self.file_destination.update_item(file.uuid, file)
 
         chunks = self.chunker.chunk_file(
             file=file,
