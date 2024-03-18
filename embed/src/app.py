@@ -1,26 +1,20 @@
 import json
 import logging
-from datetime import datetime
 
 import pydantic
 from pika.adapters.blocking_connection import BlockingChannel
 
 from core_api.src.app import embed_sentences
-from model_db import SentenceTransformerDB
 from redbox.models import (
     EmbedQueueItem,
     Settings,
 )
 
-start_time = datetime.now()
-model_db = SentenceTransformerDB()
 log = logging.getLogger()
 log.setLevel(logging.INFO)
 
 
 env = Settings()
-
-# Models and Embeddings
 
 
 def run():
