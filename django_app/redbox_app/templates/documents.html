@@ -24,13 +24,13 @@
         </td>
         <td class="govuk-table__cell">
           {{ govukButton(
-            text="Download",
+            text="Download" + "<span class=\"govuk-visually-hidden\">" + document.name + "</span>",
             href=document.url,
             classes="govuk-button--secondary govuk-!-margin-bottom-0",
             download=True
           ) }}
           {{ govukButton(
-            text="Remove",
+            text="Remove" + "<span class=\"govuk-visually-hidden\">" + document.name + "</span>",
             href="/remove-doc/" + document.id,
             classes="govuk-button--warning govuk-!-margin-bottom-0"
           ) }}
