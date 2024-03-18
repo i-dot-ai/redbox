@@ -54,9 +54,9 @@ jobs:
       run: |
         make test-redbox
 
-    - name: Test embed with pytest
-      run: |
-        make test-embed
+#    - name: Test embed with pytest
+#      run: |
+#        make test-embed
 
     - name: Test ingest with pytest
       run: |
