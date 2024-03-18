@@ -15,7 +15,6 @@ from redbox.models import (
     ModelInfo,
     ModelListResponse,
     EmbeddingResponse,
-    StatusResponse,
     Settings,
 )
 from redbox.storage.elasticsearch import ElasticsearchStorageHandler
