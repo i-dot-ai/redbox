@@ -1,9 +1,8 @@
-from pydantic import Field, computed_field
 from datetime import datetime
 from typing import Optional
 from uuid import uuid4
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, computed_field
 
 
 class PersistableModel(BaseModel):

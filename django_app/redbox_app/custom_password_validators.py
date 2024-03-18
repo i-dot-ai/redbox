@@ -2,7 +2,6 @@ import re
 import string
 
 from django.core.exceptions import ValidationError
-
 from redbox_app.redbox_core.constants import BUSINESS_SPECIFIC_WORDS
 
 
