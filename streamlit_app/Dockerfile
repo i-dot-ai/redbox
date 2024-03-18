@@ -11,7 +11,7 @@ ADD pyproject.toml poetry.lock ./
 # Streamlit app needs a lot of dependencies
 ADD ./download_embedder.py /app/
 ADD ./model_db.py /app/
-RUN poetry install --no-root --no-ansi --with streamlit-app,ai,ingest --without dev,worker,api
+RUN poetry install --no-root --no-ansi --with streamlit-app,ai,ingest --without dev,worker,api,pytest-django
 
 ADD redbox/ /app/redbox
 ADD streamlit_app/ /app
