@@ -25,15 +25,9 @@ class Queue:
     # Coalesce a single method of creating a channel
     channel: BlockingChannel = None
 
-    def __init__(self, queue_uri: str, queue_name: str, max_connection_attempts: int = 10):
-        if env.queue == "rabbitmq":
-            try:
-                connection = env.blocking_connection()
-                self.channel = connection.channel()
-                self.channel.queue_declare(queue=queue_name, durable=True)
-            except Exception:
-                raise Exception(f"failed to start with {env.rabbitmq_host}:{env.rabbitmq_port}")
-        else:
+    def __init__(self, queue_name: str, queue_uri: str = None, max_connection_attempts: int = 10):
+        if queue_uri :
+            # Embed creation method
             logging.info(f"Polling queue {queue_name}")
 
             connection = None
@@ -56,6 +50,20 @@ class Queue:
 
             self.channel = connection.channel()
             self.channel.queue_declare(queue=queue_name, durable=True)
+        else:
+            # Ingest creation method
+            if env.queue == "rabbitmq":
+                try:
+                    connection = env.blocking_connection()
+                    self.channel = connection.channel()
+                    self.channel.queue_declare(queue=queue_name, durable=True)
+                except Exception:
+                    raise Exception(f"failed to start with {env.rabbitmq_host}:{env.rabbitmq_port}")
+            elif env.queue == "sqs":
+                _sqs = env.sqs_client()
+                raise NotImplementedError("SQS is not yet implemented")
+            else:
+                raise ValueError("must use rabbitmq")
 
     def send_message_to_queue(self, chunks: list[Chunk], queue_name: str):
         for chunk in chunks:
@@ -66,11 +74,11 @@ class Queue:
                 body=json.dumps(chunk.model_dump(), ensure_ascii=False),
             )
 
-    def setup_listener(self, queue_name: str, poll_interval: int = 5):
+    def setup_listener(self, queue_name: str, callback = None, poll_interval: int = 5):
         logging.debug(f"Starting queue poller for {queue_name} every {poll_interval} seconds")
         while True:
             logging.debug(f"Polling queue {queue_name} (every {poll_interval} seconds)")
-            self.channel.basic_consume(queue=queue_name, on_message_callback=self.embed_item_callback, auto_ack=False)
+            self.channel.basic_consume(queue=queue_name, on_message_callback=(callback if callback else self.embed_item_callback), auto_ack=False)
             self.channel.start_consuming()
             time.sleep(poll_interval)
 
