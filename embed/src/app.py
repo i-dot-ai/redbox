@@ -18,8 +18,10 @@ from redbox.models import (
     EmbedQueueItem,
     StatusResponse,
     Settings,
+    Chunk,
 )
-
+from redbox.models.llm import Embedding
+from redbox.storage import ElasticsearchStorageHandler
 
 start_time = datetime.now()
 model_db = SentenceTransformerDB()
@@ -28,6 +30,8 @@ log.setLevel(logging.INFO)
 
 
 env = Settings()
+
+es = env.elasticsearch_client()
 
 
 @asynccontextmanager
@@ -123,8 +127,8 @@ def get_model(model: str):
     return model_db.get_model_info(model)
 
 
-@app.post("/models/{model}/embed", response_model=EmbeddingResponse, tags=["models"])
-def embed_sentences(model: str, sentences: list[str]):
+@app.post("/models/{model}/embed", tags=["models"])
+def embed_sentences(model: str, sentences: list[str]) -> EmbeddingResponse:
     """Embeds a list of sentences using a given model
 
     Args:
@@ -142,21 +146,21 @@ def embed_sentences(model: str, sentences: list[str]):
     embeddings = model_obj.encode(sentences)
 
     reformatted_embeddings = [
-        {
-            "object": "embedding",
-            "index": i,
-            "embedding": list(embedding),
-        }
+        Embedding(
+            object="embedding",
+            index=i,
+            embedding=list(embedding),
+        )
         for i, embedding in enumerate(embeddings)
     ]
 
-    output = {
-        "object": "list",
-        "data": reformatted_embeddings,
-        "embedding_id": str(uuid4()),
-        "model": model,
-        "model_info": model_db.get_model_info(model),
-    }
+    output = EmbeddingResponse(
+        object="list",
+        data=reformatted_embeddings,
+        embedding_id=str(uuid4()),
+        model=model,
+        model_info=model_db.get_model_info(model),
+    )
 
     return output
 
@@ -165,20 +169,39 @@ def subscribe_to_queue():
     connection = env.blocking_connection()
     channel = connection.channel()
     channel.queue_declare(queue=env.embed_queue_name, durable=True)
-    channel.basic_consume(queue=env.embed_queue_name, on_message_callback=embed_item_callback, auto_ack=False)
+    storage_handler = ElasticsearchStorageHandler(es_client=es, root_index="redbox-data")
+    chunk_embedder = ChunkEmbedder(storage_handler)
+
+    channel.basic_consume(queue=env.embed_queue_name, on_message_callback=chunk_embedder.callback, auto_ack=False)
     channel.start_consuming()
 
 
-def embed_item_callback(ch: BlockingChannel, method, properties, body):
-    logging.info(f"Received message {method.delivery_tag} by callback")
-    try:
-        body_dict = json.loads(body.decode("utf-8"))
-        embed_queue_item = EmbedQueueItem(**body_dict)
-        response = embed_sentences(embed_queue_item.model, [embed_queue_item.sentence])
-        logging.info(f"Embedding ID {response['embedding_id']} complete for {method.delivery_tag}")
-    except json.JSONDecodeError as e:
-        logging.error(f"Failed to decode message: {e}")
-    except pydantic.ValidationError as e:
-        logging.error(f"Failed to validate message: {e}")
-    finally:
-        ch.basic_ack(delivery_tag=method.delivery_tag)
+class ChunkEmbedder:
+    def __init__(self, storage_handler: ElasticsearchStorageHandler):
+        self.storage_handler = storage_handler
+
+    def embed_queue_item(self, queue_item: EmbedQueueItem):
+        """
+        1. embed queue-item text
+        2. update related chunk on ES
+        """
+
+        chunk: Chunk = self.storage_handler.read_item(queue_item.chunk_uuid, "Chunk")
+        embedded_sentences = embed_sentences(queue_item.model, [chunk.text])
+        if len(embedded_sentences.data) != 1:
+            raise ValueError(f"expected just 1 embedding but got {len(embedded_sentences.data)}")
+        chunk.embedding = embedded_sentences.data[0].embedding
+        self.storage_handler.update_item(queue_item.chunk_uuid, chunk)
+
+    def callback(self, ch: BlockingChannel, method, properties, body):
+        logging.info(f"Received message {method.delivery_tag} by callback")
+        try:
+            body_dict = json.loads(body.decode("utf-8"))
+            embed_queue_item = EmbedQueueItem(**body_dict)
+            self.embed_queue_item(embed_queue_item)
+        except json.JSONDecodeError as e:
+            logging.error(f"Failed to decode message: {e}")
+        except pydantic.ValidationError as e:
+            logging.error(f"Failed to validate message: {e}")
+        finally:
+            ch.basic_ack(delivery_tag=method.delivery_tag)
