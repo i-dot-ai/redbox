@@ -23,7 +23,7 @@ env = Settings()
 # Models and Embeddings
 
 
-def subscribe_to_queue():
+def run():
     connection = env.blocking_connection()
     channel = connection.channel()
     channel.queue_declare(queue=env.embed_queue_name, durable=True)
@@ -44,3 +44,7 @@ def embed_item_callback(ch: BlockingChannel, method, properties, body):
         logging.error(f"Failed to validate message: {e}")
     finally:
         ch.basic_ack(delivery_tag=method.delivery_tag)
+
+
+if __name__ == "__main__":
+    run()
