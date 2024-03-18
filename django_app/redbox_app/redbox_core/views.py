@@ -15,7 +15,13 @@ def documents_view(request):
     # Testing with some static docs for now
     documents = [
         {"id": "doc-id-1", "name": "Document 1", "url": "#download1", "processed": True, "process_status": "Complete"},
-        {"id": "doc-id-2", "name": "Document 2", "url": "#download2", "processed": False, "process_status": "2/5 Parsing"},
+        {
+            "id": "doc-id-2",
+            "name": "Document 2",
+            "url": "#download2",
+            "processed": False,
+            "process_status": "2/5 Parsing",
+        },
     ]
     return render(
         request,
