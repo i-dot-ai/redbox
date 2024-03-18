@@ -7,11 +7,14 @@ from model_db import SentenceTransformerDB
 from redbox.models import File, ProcessingStatusEnum, Settings
 from redbox.parsing.file_chunker import FileChunker
 from redbox.storage.elasticsearch import ElasticsearchStorageHandler
+from workers.queue import Queue
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger()
 
 env = Settings()
+
+Queue: Queue
 
 
 class FileIngestor:
@@ -20,12 +23,11 @@ class FileIngestor:
         raw_file_source,
         chunker: FileChunker,
         file_destination: ElasticsearchStorageHandler,
-        channel: BlockingChannel,
+        # channel: BlockingChannel,
     ):
         self.raw_file_source = raw_file_source
         self.chunker = chunker
         self.file_destination = file_destination
-        self.channel = channel
 
     def ingest_file(self, file: File):
         """
@@ -110,6 +112,7 @@ def run():
 
         embed_channel = connection.channel()
         embed_channel.queue_declare(queue=env.embed_queue_name, durable=True)
+        Queue = Queue(env.rabbitmq_host)
     elif env.queue == "sqs":
         _sqs = env.sqs_client()
         raise NotImplementedError("SQS is not yet implemented")
