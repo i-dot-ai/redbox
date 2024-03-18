@@ -1,6 +1,5 @@
 from django.core.management import BaseCommand
 from django_otp.plugins.otp_totp.models import TOTPDevice
-
 from redbox_app.redbox_core.models import User
 
 
