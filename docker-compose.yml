@@ -39,11 +39,11 @@ services:
       - elasticsearch
     networks:
       - redbox-app-network
-  app:
+  streamlit-app:
     image: redbox-app:latest
     build:
       context: .
-      dockerfile: ./legacy_app/Dockerfile
+      dockerfile: ./streamlit_app/Dockerfile
     env_file:
       - .env
     ports:

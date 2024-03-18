@@ -14,7 +14,7 @@ ADD ./model_db.py /app/
 RUN poetry install --no-root --no-ansi --with streamlit-app,ai,ingest,embed --without dev,worker,api
 
 ADD redbox/ /app/redbox
-ADD legacy_app /app
+ADD streamlit_app/ /app
 
 # Download the model
 

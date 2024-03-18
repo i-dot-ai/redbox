@@ -7,12 +7,8 @@ export
 reqs:
 	poetry install
 
-
-app:
-	poetry run streamlit run legacy_app/Welcome.py --server.port 8501
-
 run:
-	docker compose up -d elasticsearch kibana app embed minio miniocreatebuckets rabbitmq core-api db django-app
+	docker compose up -d elasticsearch kibana embed minio miniocreatebuckets rabbitmq core-api db django-app
 
 stop:
 	docker compose down
