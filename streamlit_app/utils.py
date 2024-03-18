@@ -7,7 +7,6 @@ from io import BytesIO
 from typing import Optional
 
 import boto3
-import cognitojwt
 import dotenv
 import html2markdown
 import pandas as pd
@@ -18,17 +17,13 @@ from langchain.callbacks import FileCallbackHandler
 from langchain.callbacks.base import BaseCallbackHandler
 from langchain.chains.base import Chain
 from langchain.schema.output import LLMResult
-from langchain.vectorstores.elasticsearch import (
-    ApproxRetrievalStrategy,
-    ElasticsearchStore,
-)
+from langchain.vectorstores.elasticsearch import ApproxRetrievalStrategy, ElasticsearchStore
 from langchain_community.chat_models import ChatLiteLLM
 from langchain_community.embeddings import SentenceTransformerEmbeddings
 from loguru import logger
 from lxml.html.clean import Cleaner
-from sentence_transformers import SentenceTransformer
-from streamlit.web.server.websocket_headers import _get_websocket_headers
 
+from model_db import SentenceTransformerDB
 from redbox.llm.llm_base import LLMHandler
 from redbox.models.feedback import Feedback
 from redbox.models.file import File
@@ -134,22 +129,18 @@ def init_session_state() -> dict:
             "Foreign Policy Experts",
         ]
 
+    if "model_db" not in st.session_state:
+        st.session_state.model_db = SentenceTransformerDB()
+        st.session_state.model_db.init_from_disk()
+
     if "embedding_model" not in st.session_state:
         available_models = []
-        models = {}
-        for dirpath, _, filenames in os.walk("models"):
-            # Check if the current directory contains a file named "config.json"
-            if "pytorch_model.bin" in filenames:
-                # If it does, print the path to the directory
-                available_models.append(dirpath)
+        for model_name in st.session_state.model_db:
+            available_models.append(model_name)
 
-        for model_path in available_models:
-            model_name = model_path.split("/")[-3]
-            model = model_name.split("--")[-1]
-            models[model] = SentenceTransformer(model_path)
+        default_model = available_models[0]
 
-        model_name = ENV.get("EMBEDDING_MODEL", "all-mpnet-base-v2")
-        st.session_state.embedding_model = models[model_name]
+        st.session_state.embedding_model = st.session_state.model_db[default_model]
 
     if "BUCKET_NAME" not in st.session_state:
         st.session_state.BUCKET_NAME = f"redbox-storage-{st.session_state.user_uuid}"
