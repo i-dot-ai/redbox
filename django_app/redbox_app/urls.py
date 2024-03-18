@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.urls import include, path
 
-from .redbox_core import views, info_views
+from .redbox_core import info_views, views
 
 info_urlpatterns = [
     path("privacy-notice/", info_views.privacy_notice_view, name="privacy-notice"),

@@ -32,7 +32,11 @@ def run():
     storage_handler = ElasticsearchStorageHandler(es_client=es, root_index="redbox-data")
     chunk_embedder = ChunkEmbedder(storage_handler)
 
-    channel.basic_consume(queue=env.embed_queue_name, on_message_callback=chunk_embedder.callback, auto_ack=False)
+    channel.basic_consume(
+        queue=env.embed_queue_name,
+        on_message_callback=chunk_embedder.callback,
+        auto_ack=False,
+    )
     channel.start_consuming()
 
 

@@ -1,5 +1,5 @@
 import os
-from typing import TypeVar, Generator
+from typing import Generator, TypeVar
 
 import pytest
 from elasticsearch import Elasticsearch
@@ -7,8 +7,8 @@ from pika import BlockingConnection
 from pika.adapters.blocking_connection import BlockingChannel
 from sentence_transformers import SentenceTransformer
 
-from redbox.models import File
 from ingest.src.app import env
+from redbox.models import File
 
 T = TypeVar("T")
 

@@ -1,6 +1,5 @@
 from abc import ABC, abstractmethod
 
-
 from redbox.models import Chunk, Collection, Feedback, File, SpotlightComplete
 from redbox.models.base import PersistableModel
 

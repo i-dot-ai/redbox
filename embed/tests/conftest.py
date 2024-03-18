@@ -1,12 +1,10 @@
-from typing import TypeVar, Generator
+from typing import Generator, TypeVar
 from uuid import uuid4
 
 import pytest
 from elasticsearch import Elasticsearch
-from sentence_transformers import SentenceTransformer
 
-from embed.src.app import model_db
-from redbox.models import Settings, Chunk, EmbedQueueItem
+from redbox.models import Chunk, EmbedQueueItem, Settings
 from redbox.storage import ElasticsearchStorageHandler
 
 T = TypeVar("T")
