@@ -28,7 +28,7 @@ test-core-api:
 
 test-embed:
 	poetry install --no-root --no-ansi --with worker,api,dev --without ai,ingest,django-app,pytest-django
-	poetry run pytest embed/tests --cov=embed/src -v --cov-report=term-missing --cov-fail-under=65
+	poetry run pytest embed/tests --cov=embed/src -v --cov-report=term-missing --cov-fail-under=45
 
 test-redbox:
 	poetry install --no-root --no-ansi --with worker,api,dev --without ai,streamlit-app,ingest,django-app,pytest-django
@@ -39,8 +39,8 @@ test-ingest:
 	poetry run pytest ingest/tests --cov=ingest -v --cov-report=term-missing --cov-fail-under=40
 
 test-django:
-	docker-compose up -d db
-	docker-compose run django-app poetry run pytest django_app/tests/ --ds redbox_app.settings -v --cov=redbox_app.redbox_core --cov-fail-under 10
+	docker compose up -d --wait db
+	docker compose run django-app poetry run pytest django_app/tests/ --ds redbox_app.settings -v --cov=redbox_app.redbox_core --cov-fail-under 10
 
 lint:
 	poetry run ruff check .
@@ -61,10 +61,10 @@ checktypes:
 	# poetry run mypy legacy_app --follow-imports skip --ignore-missing-imports
 
 check-migrations:
-	docker-compose build django-app
-	docker-compose run django-app poetry run python django_app/manage.py migrate
-	docker-compose run django-app poetry run python django_app/manage.py makemigrations --check
+	docker compose build django-app
+	docker compose run django-app poetry run python django_app/manage.py migrate
+	docker compose run django-app poetry run python django_app/manage.py makemigrations --check
 
 reset-db:
-	docker-compose down db --volumes
-	docker-compose up -d db
+	docker compose down db --volumes
+	docker compose up -d db

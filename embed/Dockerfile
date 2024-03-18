@@ -9,7 +9,7 @@ ADD pyproject.toml poetry.lock /app/
 ADD ./download_embedder.py /app/
 ADD ./model_db.py /app/
 WORKDIR /app/
-RUN poetry install --no-root --no-ansi --with worker,api --without ai,ingest,dev
+RUN poetry install --no-root --no-ansi --with worker,api --without ai,ingest,dev,streamlit-app
 
 # Add the rest of the files
 ADD ./embed/src/app.py /app/app.py

@@ -4,7 +4,7 @@ from typing import Optional
 
 import tiktoken
 from langchain.schema import Document
-from pydantic import computed_field, Field
+from pydantic import Field, computed_field
 
 from redbox.models.base import PersistableModel
 

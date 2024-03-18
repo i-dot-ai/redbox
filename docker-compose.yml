@@ -10,7 +10,6 @@ services:
     env_file:
       - .env
     volumes:
-      - ./:/app/:z
       - /app/django_app/frontend/node_modules
     ports:
       - "8090:8090"
@@ -40,7 +39,7 @@ services:
     networks:
       - redbox-app-network
   streamlit-app:
-    image: redbox-app:latest
+    image: redbox-streamlit-app:latest
     build:
       context: .
       dockerfile: ./streamlit_app/Dockerfile
