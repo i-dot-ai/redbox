@@ -58,7 +58,7 @@ class FileIngestor:
         logging.info(f"written {len(items)} chunks to elasticsearch")
 
         for chunk in chunks:
-            queue_item = EmbedQueueItem(model=env.embedding_model, sentence=chunk.text, chunk_uuid=chunk.uuid)
+            queue_item = EmbedQueueItem(model=env.embedding_model, chunk_uuid=chunk.uuid)
             logging.info(f"Writing chunk to storage for chunk uuid: {chunk.uuid}")
             self.channel.basic_publish(
                 exchange="redbox-core-exchange",

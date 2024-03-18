@@ -186,8 +186,8 @@ class ChunkEmbedder:
         2. update related chunk on ES
         """
 
-        embedded_sentences = embed_sentences(queue_item.model, [queue_item.sentence])
         chunk: Chunk = self.storage_handler.read_item(queue_item.chunk_uuid, "Chunk")
+        embedded_sentences = embed_sentences(queue_item.model, [chunk.text])
         if len(embedded_sentences.data) != 1:
             raise ValueError(f"expected just 1 embedding but got {len(embedded_sentences.data)}")
         chunk.embedding = embedded_sentences.data[0].embedding
