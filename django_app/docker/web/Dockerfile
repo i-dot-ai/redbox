@@ -9,6 +9,13 @@ ENV PYTHONUNBUFFERED 1
 
 RUN pip install poetry
 
+# Optimise image size with poetry by defining cache dir to be deleted after installation
+ENV POETRY_NO_INTERACTION=1 \
+    POETRY_VIRTUALENVS_IN_PROJECT=1 \
+    POETRY_VIRTUALENVS_CREATE=1 \
+    POETRY_CACHE_DIR=/tmp/poetry_cache
+
+
 COPY django_app/ /app/
 COPY poetry.lock /app/poetry.lock
 COPY pyproject.toml /app/pyproject.toml
@@ -17,7 +24,8 @@ COPY pyproject.toml /app/pyproject.toml
 COPY --from=node_modules /app/node_modules /app/django_app/frontend/node_modules
 
 WORKDIR app/
-RUN poetry install --no-root --no-ansi --with django-app,dev,pytest-django --without ai,ingest,embed,worker
+# Install the dependencies (with necessary dependency groups) and remove the cache dir (to reduce image size)
+RUN poetry install --no-root --no-ansi --with django-app,dev,pytest-django --without ai,ingest,embed,worker && rm -rf $POETRY_CACHE_DIR
 
 COPY django_app/docker/web/start.sh app/start.sh
 RUN chmod +x app/start.sh
