@@ -64,7 +64,7 @@ jobs:
 
     - name: Test core with pytest
       run: |
-        make test-core-api        
+        make test-core-api
 
 
   static_checks:
