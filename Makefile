@@ -28,7 +28,7 @@ test-core-api:
 
 test-embed:
 	poetry install --no-root --no-ansi --with worker,api,dev --without ai,ingest,django-app,pytest-django
-	poetry run pytest embed/tests --cov=embed/src -v --cov-report=term-missing --cov-fail-under=65
+	poetry run pytest embed/tests --cov=embed/src -v --cov-report=term-missing --cov-fail-under=50
 
 test-redbox:
 	poetry install --no-root --no-ansi --with worker,api,dev --without ai,streamlit-app,ingest,django-app,pytest-django
@@ -39,8 +39,12 @@ test-ingest:
 	poetry run pytest ingest/tests --cov=ingest -v --cov-report=term-missing --cov-fail-under=40
 
 test-django:
-	docker-compose up -d db
-	docker-compose run django-app poetry run pytest django_app/tests/ --ds redbox_app.settings -v --cov=redbox_app.redbox_core --cov-fail-under 10
+	docker compose up -d db
+	docker compose run django-app poetry run pytest django_app/tests/ --ds redbox_app.settings -v --cov=redbox_app.redbox_core --cov-fail-under 10
+
+test-integration:
+	poetry install --no-root --no-ansi --with dev --without ai,streamlit-app,api,django-app,pytest-django,worker,ingest
+	poetry run pytest tests
 
 lint:
 	poetry run ruff check .

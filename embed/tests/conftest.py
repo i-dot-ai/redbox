@@ -5,8 +5,7 @@ import pytest
 from elasticsearch import Elasticsearch
 from sentence_transformers import SentenceTransformer
 
-from fastapi.testclient import TestClient
-from embed.src.app import app as application, model_db
+from embed.src.app import model_db
 from redbox.models import Settings, Chunk, EmbedQueueItem
 from redbox.storage import ElasticsearchStorageHandler
 
@@ -16,20 +15,6 @@ YieldFixture = Generator[T, None, None]
 
 
 env = Settings()
-
-
-@pytest.fixture
-def client():
-    yield TestClient(application)
-
-
-@pytest.fixture
-def example_model_db():
-    model_db["paraphrase-albert-small-v2"] = SentenceTransformer(
-        model_name_or_path="paraphrase-albert-small-v2",
-        cache_folder="./models",
-    )
-    yield model_db
 
 
 @pytest.fixture
@@ -47,7 +32,7 @@ def chunk() -> YieldFixture[Chunk]:
 
 @pytest.fixture
 def embed_queue_item(stored_chunk) -> YieldFixture[EmbedQueueItem]:
-    yield EmbedQueueItem(model="paraphrase-albert-small-v2", chunk_uuid=stored_chunk.uuid)
+    yield EmbedQueueItem(model=env.embedding_model, chunk_uuid=stored_chunk.uuid)
 
 
 @pytest.fixture

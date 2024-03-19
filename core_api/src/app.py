@@ -253,24 +253,4 @@ def embed_sentences(model: str, sentences: list[str]) -> EmbeddingResponse:
     if model not in model_db:
         raise HTTPException(status_code=404, detail=f"Model {model} not found")
 
-    model_obj = model_db[model]
-    embeddings = model_obj.encode(sentences)
-
-    reformatted_embeddings = [
-        Embedding(
-            object="embedding",
-            index=i,
-            embedding=list(embedding),
-        )
-        for i, embedding in enumerate(embeddings)
-    ]
-
-    output = EmbeddingResponse(
-        object="list",
-        data=reformatted_embeddings,
-        embedding_id=str(uuid4()),
-        model=model,
-        model_info=model_db.get_model_info(model),
-    )
-
-    return output
+    return model_db.embed_sentences(model, sentences)
