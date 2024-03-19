@@ -16,22 +16,22 @@
     </tr>
   </thead>
   <tbody class="govuk-table__body">
-    {% for document in documents %}
+    {% for file in files %}
       <tr class="govuk-table__row">
-        <td class="govuk-table__cell govuk-!-padding-top-3">{{document.name}}</td>
+        <td class="govuk-table__cell govuk-!-padding-top-3">{{file.name}}</td>
         <td class="govuk-table__cell govuk-!-padding-top-3">
-          <strong class="govuk-tag {% if document.processed %}govuk-tag--green{% else %}govuk-tag--yellow{% endif %}">{{document.process_status}}</strong>
+          <strong class="govuk-tag {% if file.processing_text == 'complete' %}govuk-tag--green{% else %}govuk-tag--yellow{% endif %}">{{file.processing_text}}</strong>
         </td>
         <td class="govuk-table__cell">
           {{ govukButton(
-            text="Download" + "<span class=\"govuk-visually-hidden\">" + document.name + "</span>",
-            href=document.url,
+            text="Download" + "<span class=\"govuk-visually-hidden\">" + file.name + "</span>",
+            href=file.path,
             classes="govuk-button--secondary govuk-!-margin-bottom-0",
             download=True
           ) }}
           {{ govukButton(
-            text="Remove" + "<span class=\"govuk-visually-hidden\">" + document.name + "</span>",
-            href="/remove-doc/" + document.id,
+            text="Remove" + "<span class=\"govuk-visually-hidden\">" + file.name + "</span>",
+            href="/remove-doc/" + file.id | string,
             classes="govuk-button--warning govuk-!-margin-bottom-0"
           ) }}
         </td>
