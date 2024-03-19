@@ -10,7 +10,7 @@ ADD download_embedder.py /app/
 ADD model_db.py /app/
 
 WORKDIR /app/
-RUN poetry install --no-root --no-ansi --with worker,ingest --without ai,dev,api,django-app,pytest-django,streamlit-app
+RUN poetry install --no-root --no-ansi --with worker,ingest --without ai,dev,api,streamlit-app
 
 # Download the model
 RUN poetry run download-model
