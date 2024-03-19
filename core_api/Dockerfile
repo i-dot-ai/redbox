@@ -6,7 +6,7 @@ RUN pip install poetry
 ADD redbox/ /app/redbox
 ADD pyproject.toml poetry.lock /app/
 WORKDIR /app/
-RUN poetry install --no-root --no-ansi --with api --without ai,ingest,embed,dev,worker
+RUN poetry install --no-root --no-ansi --with api --without ai,ingest,dev,worker
 
 WORKDIR /app
 
