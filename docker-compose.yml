@@ -163,7 +163,6 @@ services:
       - elasticsearch
     restart: unless-stopped
   rabbitmq:
-    user: "423642704:849146750"
     image: rabbitmq:3-management-alpine
     ports:
       - 5672:5672

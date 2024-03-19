@@ -20,7 +20,6 @@ def test_upload_to_elastic(file_pdf_path, elasticsearch_storage_handler):
 
     while time.time() - start_time < timeout:
         for chunk in elasticsearch_storage_handler.read_all_items("Chunk"):
-            print(chunk)
             if chunk.embedding:
                 return
         time.sleep(1)

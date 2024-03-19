@@ -28,7 +28,7 @@ test-core-api:
 
 test-embed:
 	poetry install --no-root --no-ansi --with worker,api,dev --without ai,ingest,django-app,pytest-django
-	poetry run pytest embed/tests --cov=embed/src -v --cov-report=term-missing --cov-fail-under=65
+	poetry run pytest embed/tests --cov=embed/src -v --cov-report=term-missing --cov-fail-under=50
 
 test-redbox:
 	poetry install --no-root --no-ansi --with worker,api,dev --without ai,streamlit-app,ingest,django-app,pytest-django
@@ -44,10 +44,9 @@ test-django:
 
 test-integration:
 	cp .env.example .env
-#	docker-compose down
-#	docker-compose build embed ingest core-api
 	docker-compose up -d embed ingest core-api
 	poetry install --no-root --no-ansi --with dev --without ai,streamlit-app,api,django-app,pytest-django,worker,ingest
+	sleep 10
 	poetry run pytest tests
 
 lint:

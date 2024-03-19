@@ -5,7 +5,6 @@ import pytest
 from elasticsearch import Elasticsearch
 from sentence_transformers import SentenceTransformer
 
-from fastapi.testclient import TestClient
 from embed.src.app import model_db
 from redbox.models import Settings, Chunk, EmbedQueueItem
 from redbox.storage import ElasticsearchStorageHandler
