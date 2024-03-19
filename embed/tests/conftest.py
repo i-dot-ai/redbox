@@ -3,11 +3,9 @@ from uuid import uuid4
 
 import pytest
 from elasticsearch import Elasticsearch
-from fastapi.testclient import TestClient
 from sentence_transformers import SentenceTransformer
 
-from embed.src.app import app as application
-from embed.src.app import model_db
+from model_db import SentenceTransformerDB
 from redbox.models import Chunk, EmbedQueueItem, Settings
 from redbox.storage import ElasticsearchStorageHandler
 
@@ -15,13 +13,11 @@ T = TypeVar("T")
 
 YieldFixture = Generator[T, None, None]
 
+model_db = SentenceTransformerDB()
+model_db.init_from_disk()
+
 
 env = Settings()
-
-
-@pytest.fixture
-def client():
-    yield TestClient(application)
 
 
 @pytest.fixture
