@@ -1,10 +1,12 @@
 import collections
 import logging
 import os
+from uuid import uuid4
 
 from sentence_transformers import SentenceTransformer
 
-from redbox.models import ModelInfo
+from redbox.models import ModelInfo, EmbeddingResponse
+from redbox.models.llm import Embedding
 
 log = logging.getLogger()
 log.setLevel(logging.INFO)
@@ -37,3 +39,26 @@ class SentenceTransformerDB(collections.UserDict):
             model = model_name.split("--")[-1]
             self[model] = SentenceTransformer(model_path)
             log.info(f"Loaded model {model}")
+
+    def embed_sentences(self, model: str, sentences: list[str]):
+        model_obj = self[model]
+        embeddings = model_obj.encode(sentences)
+
+        reformatted_embeddings = [
+            Embedding(
+                object="embedding",
+                index=i,
+                embedding=list(embedding),
+            )
+            for i, embedding in enumerate(embeddings)
+        ]
+
+        output = EmbeddingResponse(
+            object="list",
+            data=reformatted_embeddings,
+            embedding_id=str(uuid4()),
+            model=model,
+            model_info=self.get_model_info(model),
+        )
+
+        return output

@@ -5,13 +5,16 @@ from datetime import datetime
 import pydantic
 from pika.adapters.blocking_connection import BlockingChannel
 
-from core_api.src.app import embed_sentences
+from model_db import SentenceTransformerDB
 from redbox.models import (
     EmbedQueueItem,
     Settings,
     Chunk,
 )
 from redbox.storage import ElasticsearchStorageHandler
+
+model_db = SentenceTransformerDB()
+model_db.init_from_disk()
 
 start_time = datetime.now()
 log = logging.getLogger()
@@ -44,11 +47,13 @@ class ChunkEmbedder:
         """
 
         chunk: Chunk = self.storage_handler.read_item(queue_item.chunk_uuid, "Chunk")
-        embedded_sentences = embed_sentences(queue_item.model, [chunk.text])
+        embedded_sentences = model_db.embed_sentences(queue_item.model, [chunk.text])
         if len(embedded_sentences.data) != 1:
-            raise ValueError(f"expected just 1 embedding but got {len(embedded_sentences.data)}")
+            logging.error(f"expected just 1 embedding but got {len(embedded_sentences.data)}")
+            return
         chunk.embedding = embedded_sentences.data[0].embedding
-        self.storage_handler.update_item(queue_item.chunk_uuid, chunk)
+        self.storage_handler.update_item(chunk.uuid, chunk)
+        logging.info(f"embedded: {chunk.text}")
 
     def callback(self, ch: BlockingChannel, method, properties, body):
         logging.info(f"Received message {method.delivery_tag} by callback")
@@ -56,6 +61,7 @@ class ChunkEmbedder:
             body_dict = json.loads(body.decode("utf-8"))
             embed_queue_item = EmbedQueueItem(**body_dict)
             self.embed_queue_item(embed_queue_item)
+            logging.info(f"Embedded message: {method.delivery_tag}")
         except json.JSONDecodeError as e:
             logging.error(f"Failed to decode message: {e}")
         except pydantic.ValidationError as e:
