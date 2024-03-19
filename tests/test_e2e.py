@@ -6,7 +6,11 @@ import requests
 
 
 def test_upload_to_elastic(file_pdf_path, elasticsearch_storage_handler):
-    # clear out
+    """
+    Given that I have removed all existing chunks from ES
+    When I POST a file to core-api/file
+    I Expect a Chunk with a non-null embedding ... eventually
+    """
     for chunk in elasticsearch_storage_handler.read_all_items("Chunk"):
         elasticsearch_storage_handler.delete_item(chunk.uuid, "Chunk")
 

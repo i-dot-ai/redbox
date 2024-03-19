@@ -17,15 +17,6 @@ YieldFixture = Generator[T, None, None]
 env = Settings()
 
 
-@pytest.fixture(autouse=True)
-def example_model_db():
-    model_db[env.embedding_model] = SentenceTransformer(
-        model_name_or_path=env.embedding_model,
-        cache_folder="./models",
-    )
-    yield model_db
-
-
 @pytest.fixture
 def chunk() -> YieldFixture[Chunk]:
     test_chunk = Chunk(

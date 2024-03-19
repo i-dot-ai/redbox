@@ -91,7 +91,7 @@ def test_ingest_file(app_client, rabbitmq_channel, stored_file, elasticsearch_st
     assert msg["text_hash"] == response.json()["text_hash"]
 
 
-def test_read_all_models(client, example_model_db):
+def test_read_all_models(client):
     """
     Given that I have one model, paraphrase-albert-small-v2, in the database
     When I GET all models /models
@@ -110,7 +110,7 @@ def test_read_all_models(client, example_model_db):
     }
 
 
-def test_read_one_model(client, example_model_db):
+def test_read_one_model(client):
     """
     Given that I have one model, paraphrase-albert-small-v2, in the database
     When I GET this one model /models/paraphrase-albert-small-v2
@@ -125,7 +125,7 @@ def test_read_one_model(client, example_model_db):
     }
 
 
-def test_read_models_404(client, example_model_db):
+def test_read_models_404(client):
     """
     Given that I have one model, paraphrase-albert-small-v2, in the database
     When I GET a non-existent model /models/not-a-model
@@ -150,7 +150,7 @@ def test_embed_sentences_422(client):
     assert response.json()["detail"][0]["msg"] == "Input should be a valid list"
 
 
-def test_embed_sentences(client, example_model_db):
+def test_embed_sentences(client):
     """
     Given that I have one model, paraphrase-albert-small-v2, in the database
     When I POST a valid payload consisting of some sentenced to embed to

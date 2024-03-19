@@ -8,7 +8,7 @@ from pika import BlockingConnection
 from pika.adapters.blocking_connection import BlockingChannel
 
 
-from core_api.src.app import app as application
+from core_api.src.app import app as application, model_db
 from core_api.src.app import env
 from redbox.models import File, ProcessingStatusEnum
 from redbox.storage import ElasticsearchStorageHandler
