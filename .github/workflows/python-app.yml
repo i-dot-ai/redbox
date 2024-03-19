@@ -49,6 +49,7 @@ jobs:
         chmod 777 data/elastic/
         cp .env.test .env
         docker compose up -d --wait elasticsearch minio rabbitmq
+        poetry run download-model
 
     - name: Test redbox with pytest
       run: |
