@@ -1,7 +1,5 @@
 FROM python:3.11-buster as builder
 
-
-
 RUN pip install poetry
 
 ENV POETRY_NO_INTERACTION=1 \
@@ -21,13 +19,12 @@ FROM python:3.11-slim-buster as runtime
 RUN apt-get update
 RUN apt-get install -y libgl-dev libmagic-dev inetutils-ping
 
+WORKDIR /app/
 
 ENV VIRTUAL_ENV=/app/.venv \
     PATH="/app/.venv/bin:$PATH"
 
 COPY --from=builder ${VIRTUAL_ENV} ${VIRTUAL_ENV}
-
-WORKDIR /app/
 
 ADD ./download_embedder.py /app/
 ADD ./model_db.py /app/
