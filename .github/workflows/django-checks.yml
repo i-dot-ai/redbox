@@ -32,7 +32,7 @@ jobs:
 
       - name: Copy env file
         run: |
-          cp .env.integration .env
+          cp .env.example .env
 
       - name: Run migrations
         run: |
