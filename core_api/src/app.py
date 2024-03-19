@@ -15,7 +15,6 @@ from redbox.models import (
     ModelInfo,
     ModelListResponse,
     EmbeddingResponse,
-    StatusResponse,
     Settings,
 )
 from redbox.models.llm import Embedding
