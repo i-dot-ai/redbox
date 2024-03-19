@@ -4,6 +4,9 @@ import os
 
 from sentence_transformers import SentenceTransformer
 
+from redbox.models import Settings
+
+env = Settings()
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger()
 
@@ -28,16 +31,9 @@ def download():
 
     args = parser.parse_args()
 
-    model_name = "all-mpnet-base-v2"
-
     if args.model_name is None:
         logging.warning("❓ No model name provided. Attempting to load EMBEDDING_MODEL from environment")
-        try:
-            model_name = os.environ["EMBEDDING_MODEL"]
-        except KeyError:
-            logging.warning(
-                "❓ No model name provided and EMBEDDING_MODEL not found in environment. Defaulting to all-mpnet-base-v2"
-            )
+        model_name = env.embedding_model
     else:
         logging.info(f"🔎 Model name provided: {args.model_name}")
         model_name = args.model_name
