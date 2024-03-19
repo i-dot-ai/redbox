@@ -102,7 +102,7 @@ def test_read_all_models(client):
     assert response.json() == {
         "models": [
             {
-                "max_seq_length": 100,
+                "max_seq_length": 384,
                 "model": env.embedding_model,
                 "vector_size": 768,
             }
@@ -119,7 +119,7 @@ def test_read_one_model(client):
     response = client.get(f"/models/{env.embedding_model}")
     assert response.status_code == 200
     assert response.json() == {
-        "max_seq_length": 100,
+        "max_seq_length": 384,
         "model": env.embedding_model,
         "vector_size": 768,
     }
