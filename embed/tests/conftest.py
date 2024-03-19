@@ -5,7 +5,8 @@ import pytest
 from elasticsearch import Elasticsearch
 from sentence_transformers import SentenceTransformer
 
-from model_db import SentenceTransformerDB
+from core_api.src.app import model_db
+# from model_db import SentenceTransformerDB
 from redbox.models import Chunk, EmbedQueueItem, Settings
 from redbox.storage import ElasticsearchStorageHandler
 
@@ -13,8 +14,8 @@ T = TypeVar("T")
 
 YieldFixture = Generator[T, None, None]
 
-model_db = SentenceTransformerDB()
-model_db.init_from_disk()
+# model_db = SentenceTransformerDB()
+# model_db.init_from_disk()
 
 
 env = Settings()
