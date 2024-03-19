@@ -6,7 +6,7 @@ from elasticsearch import Elasticsearch
 from sentence_transformers import SentenceTransformer
 
 from fastapi.testclient import TestClient
-from embed.src.app import app as application, model_db
+from embed.src.app import model_db
 from redbox.models import Settings, Chunk, EmbedQueueItem
 from redbox.storage import ElasticsearchStorageHandler
 
@@ -16,11 +16,6 @@ YieldFixture = Generator[T, None, None]
 
 
 env = Settings()
-
-
-@pytest.fixture
-def client():
-    yield TestClient(application)
 
 
 @pytest.fixture

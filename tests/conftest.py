@@ -7,7 +7,7 @@ from redbox.storage.elasticsearch import ElasticsearchStorageHandler
 
 import pytest
 
-env = Settings(postgres_password="",django_secret_key="")
+env = Settings(postgres_password="", django_secret_key="")
 
 
 @pytest.fixture
