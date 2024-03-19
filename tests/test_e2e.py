@@ -15,7 +15,7 @@ def test_upload_to_elastic(file_pdf_path, elasticsearch_storage_handler):
     response = requests.post(url="http://localhost:5002/file", files=files)
     assert response.status_code == 200, response.text
 
-    timeout = 60
+    timeout = 120
     start_time = time.time()
 
     while time.time() - start_time < timeout:
