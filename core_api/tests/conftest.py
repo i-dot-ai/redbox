@@ -19,6 +19,11 @@ YieldFixture = Generator[T, None, None]
 
 
 @pytest.fixture
+def client():
+    yield TestClient(application)
+
+
+@pytest.fixture
 def s3_client():
     yield env.s3_client()
 

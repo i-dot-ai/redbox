@@ -26,7 +26,7 @@ permissions:
   contents: read
 
 jobs:
-  test:
+  unit-test:
 
     runs-on: ubuntu-latest
 
@@ -53,6 +53,47 @@ jobs:
     - name: Test redbox with pytest
       run: |
         make test-redbox
+
+    - name: Test embed with pytest
+      run: |
+        make test-embed
+
+    - name: Test ingest with pytest
+      run: |
+        make test-ingest
+
+    - name: Test core with pytest
+      run: |
+        make test-core-api
+
+  integration-test:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v3
+      with:
+        python-version: "3.11"
+
+    - name: Set up Poetry
+      uses: abatilo/actions-poetry@v2
+      with:
+        poetry-version: 1.7.0
+
+    - name: Build Containers
+      run: |
+        mkdir -p data/elastic/
+        chmod 777 data/elastic/
+        cp .env.example .env
+        docker compose up -d --wait core-api embed ingest
+        sleep 10
+
+    - name: Test redbox with pytest
+      run: |
+        make test-integration
 
     - name: Test embed with pytest
       run: |
