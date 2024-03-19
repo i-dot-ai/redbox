@@ -17,10 +17,10 @@ YieldFixture = Generator[T, None, None]
 env = Settings()
 
 
-@pytest.fixture
+@pytest.fixture(autouse=True)
 def example_model_db():
-    model_db["paraphrase-albert-small-v2"] = SentenceTransformer(
-        model_name_or_path="paraphrase-albert-small-v2",
+    model_db[env.embedding_model] = SentenceTransformer(
+        model_name_or_path=env.embedding_model,
         cache_folder="./models",
     )
     yield model_db
@@ -41,7 +41,7 @@ def chunk() -> YieldFixture[Chunk]:
 
 @pytest.fixture
 def embed_queue_item(stored_chunk) -> YieldFixture[EmbedQueueItem]:
-    yield EmbedQueueItem(model="paraphrase-albert-small-v2", chunk_uuid=stored_chunk.uuid)
+    yield EmbedQueueItem(model=env.embedding_model, chunk_uuid=stored_chunk.uuid)
 
 
 @pytest.fixture
