@@ -20,7 +20,7 @@ YieldFixture = Generator[T, None, None]
 
 @pytest.fixture(autouse=True)
 def small_model():
-    SentenceTransformer(env.embedding_model)
+    SentenceTransformer(env.embedding_model, cache_folder="./models")
 
 
 @pytest.fixture

@@ -66,6 +66,7 @@ jobs:
       run: |
         make test-core-api        
 
+
   static_checks:
 
     runs-on: ubuntu-latest
