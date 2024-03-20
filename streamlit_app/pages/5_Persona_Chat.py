@@ -27,6 +27,7 @@ persona_select = st.sidebar.selectbox(
     "What is your role?",
     options=st.session_state.available_personas,
     key="persona_select",
+    help=st.session.persona_detail
 )
 
 user_info = st.session_state.user_info
@@ -40,6 +41,11 @@ INITIAL_CHAT_PROMPT = [
                 user_info=user_info,
             )
         ),
+        creator_user_uuid=st.session_state.user_uuid,
+    ),
+    ChatMessage(
+        chain=None,
+        message=AIMessage(content="Hi, I'm Redbox Copilot. How can I help you?"),
         creator_user_uuid=st.session_state.user_uuid,
     ),
 ]

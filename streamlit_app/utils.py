@@ -128,6 +128,13 @@ def init_session_state() -> dict:
             "Economists",
             "Foreign Policy Experts",
         ]
+    
+    if "persona_detail" not in st.session_state:
+        st.session_state.persona_detail = {
+            "Policy Experts":"Lorem ipsum dolor sit amet",
+            "Economists":"Lorem ipsum dolor sit amet",
+            "Foreign Policy Experts":"Lorem ipsum dolor sit amet",
+        }
 
     if "model_db" not in st.session_state:
         st.session_state.model_db = SentenceTransformerDB()
