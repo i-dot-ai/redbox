@@ -8,7 +8,6 @@ ENV POETRY_NO_INTERACTION=1 \
     POETRY_CACHE_DIR=/tmp/poetry_cache
 
 WORKDIR /app/
-
 ADD pyproject.toml poetry.lock ./
 # Streamlit app needs a lot of dependencies
 
