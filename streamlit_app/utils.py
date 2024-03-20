@@ -27,6 +27,7 @@ from model_db import SentenceTransformerDB
 from redbox.llm.llm_base import LLMHandler
 from redbox.models.feedback import Feedback
 from redbox.models.file import File
+from redbox.models.persona import ChatPersona
 from redbox.storage import ElasticsearchStorageHandler
 
 
@@ -128,13 +129,6 @@ def init_session_state() -> dict:
             "Economists",
             "Foreign Policy Experts",
         ]
-    
-    if "persona_detail" not in st.session_state:
-        st.session_state.persona_detail = {
-            "Policy Experts":"Lorem ipsum dolor sit amet",
-            "Economists":"Lorem ipsum dolor sit amet",
-            "Foreign Policy Experts":"Lorem ipsum dolor sit amet",
-        }
 
     if "model_db" not in st.session_state:
         st.session_state.model_db = SentenceTransformerDB()
@@ -537,3 +531,33 @@ def submit_feedback(
     st.session_state.storage_handler.write_item(to_write)
 
     st.toast("Thanks for your feedback!", icon="🙏")
+
+def get_persona_description(persona_name) -> str:
+    """Returns persona description based on persona name selected by user
+
+    Args:
+        persona_name (str): Persona name selected by user.
+    
+    Returns:
+        persona.description (str): Persona descripton based on persona_name
+    """
+    chat_personas = [
+        ChatPersona(
+            name = "Policy Experts",
+            description = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua",
+            prompt = "Lorem ipsum"
+        ),
+        ChatPersona(
+            name = "Economists",
+            description = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua",
+            prompt = "Lorem ipsum"
+        ),
+        ChatPersona(
+            name = "Foreign Policy Experts",
+            description = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua",
+            prompt = "Lorem ipsum"
+        )
+    ]
+    for chat_persona in chat_personas:
+        if chat_persona.name == persona_name:
+            return chat_persona.description

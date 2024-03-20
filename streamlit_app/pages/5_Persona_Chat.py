@@ -5,11 +5,10 @@ import pydantic
 import streamlit as st
 from langchain.schema import AIMessage, HumanMessage, SystemMessage
 from streamlit_feedback import streamlit_feedback
-from utils import StreamlitStreamHandler, init_session_state, load_llm_handler, replace_doc_ref, submit_feedback
+from utils import StreamlitStreamHandler, init_session_state, load_llm_handler, replace_doc_ref, submit_feedback, get_persona_description
 
 from redbox.llm.prompts.core import CORE_REDBOX_PROMPT
 from redbox.models.chat import ChatMessage
-from redbox.models.persona import ChatPersona
 
 st.set_page_config(page_title="Redbox Copilot - Ask the Box", page_icon="📮", layout="wide")
 
@@ -22,13 +21,14 @@ def change_selected_model():
     load_llm_handler(ENV, update=True)
     st.write(st.session_state.llm)
 
-
-persona_select = st.sidebar.selectbox(
+persona_name = st.sidebar.selectbox(
     "What is your role?",
     options=st.session_state.available_personas,
     key="persona_select",
-    help=st.session.persona_detail
 )
+
+description = get_persona_description(persona_name)
+st.sidebar.write(description)
 
 user_info = st.session_state.user_info
 
