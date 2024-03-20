@@ -1,17 +1,36 @@
-FROM python:3.11
+FROM python:3.11-buster as builder
+
+WORKDIR /app/
 
 RUN pip install poetry
+ENV POETRY_NO_INTERACTION=1 \
+    POETRY_VIRTUALENVS_IN_PROJECT=1 \
+    POETRY_VIRTUALENVS_CREATE=1 \
+    POETRY_CACHE_DIR=/tmp/poetry_cache
 
-# Add redbox python package and install it with poetry
-ADD redbox/ /app/redbox
 ADD pyproject.toml poetry.lock /app/
-WORKDIR /app/
-RUN poetry install --no-root --no-ansi --with api --without ai,ingest,dev,worker,streamlit-app
+ADD download_embedder.py /app/
+ADD redbox/ /app/redbox
 
-WORKDIR /app
+RUN --mount=type=cache,target=$POETRY_CACHE_DIR poetry install --no-root --no-ansi --with api --without ai,ingest,dev,worker,streamlit-app
+
+FROM python:3.11-slim-buster as runtime
+
+WORKDIR /app/
+
+ENV VIRTUAL_ENV=/app/.venv \
+    PATH="/app/.venv/bin:$PATH"
+
+COPY --from=builder ${VIRTUAL_ENV} ${VIRTUAL_ENV}
 
 ADD core_api/src/app.py /app/app.py
+ADD download_embedder.py /app/
+ADD redbox/ /app/redbox
+ADD model_db.py /app/
+
+# Download the model
+RUN type=cache python download_embedder.py
 
 # Run FastAPI
 EXPOSE 5002
-CMD ["poetry", "run", "uvicorn", "app:app", "--host", "0.0.0.0", "--port", "5002"]
+CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "5002"]
