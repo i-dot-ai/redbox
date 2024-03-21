@@ -45,7 +45,7 @@ class ProcessingStatusEnum(models.TextChoices):
 # TO DO: Based on /redbox/models/file.py, but not complete
 class File(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    path = models.TextField()
+    path = models.TextField(help_text="location of file")
     name = models.TextField()
     processing_status = models.CharField(choices=ProcessingStatusEnum.choices, default=ProcessingStatusEnum.uploaded)
 
@@ -54,5 +54,4 @@ class File(models.Model):
         stage = processing_status_list.index(self.processing_status)
         if stage == len(processing_status_list) - 1:
             return self.processing_status
-        else:
-            return str(stage + 1) + "/" + str(len(processing_status_list) - 1) + " " + self.processing_status
+        return f"{stage + 1}/{len(processing_status_list) - 1} {self.processing_status}" 
