@@ -9210,8 +9210,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.11,<3.12"
-<<<<<<< HEAD
 content-hash = "68efd1232b4af65b38212cb78ebfa957ef799a021231e55538f658714a582e47"
-=======
-content-hash = "140eacdf7871ce85a37c6eae997c92b26562e02dc047da25bfedb1a909135277"
->>>>>>> 590c52a (Updated poetry lock file)
