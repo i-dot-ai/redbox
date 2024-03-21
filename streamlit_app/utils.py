@@ -7,7 +7,6 @@ from io import BytesIO
 from typing import Optional
 
 import boto3
-import cognitojwt
 import dotenv
 import html2markdown
 import pandas as pd
@@ -18,17 +17,13 @@ from langchain.callbacks import FileCallbackHandler
 from langchain.callbacks.base import BaseCallbackHandler
 from langchain.chains.base import Chain
 from langchain.schema.output import LLMResult
-from langchain.vectorstores.elasticsearch import (
-    ApproxRetrievalStrategy,
-    ElasticsearchStore,
-)
+from langchain.vectorstores.elasticsearch import ApproxRetrievalStrategy, ElasticsearchStore
 from langchain_community.chat_models import ChatLiteLLM
 from langchain_community.embeddings import SentenceTransformerEmbeddings
 from loguru import logger
 from lxml.html.clean import Cleaner
-from sentence_transformers import SentenceTransformer
-from streamlit.web.server.websocket_headers import _get_websocket_headers
 
+from model_db import SentenceTransformerDB
 from redbox.llm.llm_base import LLMHandler
 from redbox.models.feedback import Feedback
 from redbox.models.file import File
@@ -134,22 +129,18 @@ def init_session_state() -> dict:
             "Foreign Policy Experts",
         ]
 
+    if "model_db" not in st.session_state:
+        st.session_state.model_db = SentenceTransformerDB()
+        st.session_state.model_db.init_from_disk()
+
     if "embedding_model" not in st.session_state:
         available_models = []
-        models = {}
-        for dirpath, _, filenames in os.walk("models"):
-            # Check if the current directory contains a file named "config.json"
-            if "pytorch_model.bin" in filenames:
-                # If it does, print the path to the directory
-                available_models.append(dirpath)
+        for model_name in st.session_state.model_db:
+            available_models.append(model_name)
 
-        for model_path in available_models:
-            model_name = model_path.split("/")[-3]
-            model = model_name.split("--")[-1]
-            models[model] = SentenceTransformer(model_path)
+        default_model = available_models[0]
 
-        model_name = ENV.get("EMBEDDING_MODEL", "all-mpnet-base-v2")
-        st.session_state.embedding_model = models[model_name]
+        st.session_state.embedding_model = st.session_state.model_db[default_model]
 
     if "BUCKET_NAME" not in st.session_state:
         st.session_state.BUCKET_NAME = f"redbox-storage-{st.session_state.user_uuid}"
@@ -160,9 +151,7 @@ def init_session_state() -> dict:
             # The bucket does not exist or you have no access.
             if err.response["Error"]["Code"] == "404":
                 print("The bucket does not exist.")
-                st.session_state.s3_client.create_bucket(
-                    Bucket=st.session_state.BUCKET_NAME
-                )
+                st.session_state.s3_client.create_bucket(Bucket=st.session_state.BUCKET_NAME)
                 print("Bucket created successfully.")
             else:
                 raise err
@@ -178,9 +167,7 @@ def init_session_state() -> dict:
             ],
             basic_auth=(ENV["ELASTIC_USER"], ENV["ELASTIC_PASSWORD"]),
         )
-        st.session_state.storage_handler = ElasticsearchStorageHandler(
-            es_client=es, root_index="redbox-data"
-        )
+        st.session_state.storage_handler = ElasticsearchStorageHandler(es_client=es, root_index="redbox-data")
 
     if st.session_state.user_uuid == "dev":
         st.sidebar.info("**DEV MODE**")
@@ -245,9 +232,7 @@ def init_session_state() -> dict:
     return ENV
 
 
-def get_link_html(
-    page: str, text: str, query_dict: Optional[dict] = None, target: str = "_self"
-) -> str:
+def get_link_html(page: str, text: str, query_dict: Optional[dict] = None, target: str = "_self") -> str:
     """Returns a link in HTML format
 
     Args:
@@ -403,16 +388,12 @@ class FilePreview(object):
         """
 
         render_method = self.render_methods[file.type]
-        stream = st.session_state.s3_client.get_object(
-            Bucket=st.session_state.BUCKET_NAME, Key=file.name
-        )
+        stream = st.session_state.s3_client.get_object(Bucket=st.session_state.BUCKET_NAME, Key=file.name)
         file_bytes = stream["Body"].read()
         render_method(file, file_bytes)
 
     def _render_pdf(self, file: File, page_number: Optional[int] = None) -> None:
-        stream = st.session_state.s3_client.get_object(
-            Bucket=st.session_state.BUCKET_NAME, Key=file.name
-        )
+        stream = st.session_state.s3_client.get_object(Bucket=st.session_state.BUCKET_NAME, Key=file.name)
         base64_pdf = base64.b64encode(stream["Body"].read()).decode("utf-8")
 
         if page_number is not None:
@@ -444,9 +425,7 @@ class FilePreview(object):
         st.dataframe(df, use_container_width=True)
 
     def _render_eml(self, file: File, file_bytes: bytes) -> None:
-        st.markdown(
-            self.cleaner.clean_html(file_bytes.decode("utf-8")), unsafe_allow_html=True
-        )
+        st.markdown(self.cleaner.clean_html(file_bytes.decode("utf-8")), unsafe_allow_html=True)
 
     def _render_html(self, file: File, file_bytes: bytes) -> None:
         markdown_html = html2markdown.convert(file_bytes.decode("utf-8"))

@@ -23,9 +23,11 @@ ENV = init_session_state()
 
 # Model selector
 
+
 def change_selected_model():
     load_llm_handler(ENV, update=True)
     st.write(st.session_state.llm)
+
 
 persona_select = st.sidebar.selectbox(
     "What is your role?",
@@ -71,6 +73,7 @@ if "ai_message_markdown_lookup" not in st.session_state:
 def get_files_by_uuid(file_uuids):
     files = st.session_state.storage_handler.read_items(file_uuids, "File")
     return files
+
 
 def render_citation_response(response):
     cited_chunks = [
