@@ -23,6 +23,7 @@ ENV VIRTUAL_ENV=/app/.venv \
 
 COPY --from=builder ${VIRTUAL_ENV} ${VIRTUAL_ENV}
 # Add the rest of the files
+ADD redbox/ /app/redbox
 ADD ./embed/src/app.py /app/app.py
 ADD download_embedder.py /app/
 ADD model_db.py /app/
