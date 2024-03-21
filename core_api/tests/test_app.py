@@ -91,43 +91,43 @@ def test_ingest_file(app_client, rabbitmq_channel, stored_file, elasticsearch_st
     assert msg["text_hash"] == response.json()["text_hash"]
 
 
-def test_read_all_models(client, example_model_db):
+def test_read_all_models(client):
     """
-    Given that I have one model, paraphrase-albert-small-v2, in the database
+    Given that I have one model, in the database
     When I GET all models /models
-    I Expect a list of just one model, paraphrase-albert-small-v2, to be returned
+    I Expect a list of just one model to be returned
     """
     response = client.get("/models")
     assert response.status_code == 200
     assert response.json() == {
         "models": [
             {
-                "max_seq_length": 100,
-                "model": "paraphrase-albert-small-v2",
+                "max_seq_length": 384,
+                "model": env.embedding_model,
                 "vector_size": 768,
             }
         ]
     }
 
 
-def test_read_one_model(client, example_model_db):
+def test_read_one_model(client):
     """
-    Given that I have one model, paraphrase-albert-small-v2, in the database
-    When I GET this one model /models/paraphrase-albert-small-v2
-    I Expect a single model, paraphrase-albert-small-v2, to be returned
+    Given that I have one model in the database
+    When I GET this one model /models/<name>
+    I Expect a single model to be returned
     """
-    response = client.get("/models/paraphrase-albert-small-v2")
+    response = client.get(f"/models/{env.embedding_model}")
     assert response.status_code == 200
     assert response.json() == {
-        "max_seq_length": 100,
-        "model": "paraphrase-albert-small-v2",
+        "max_seq_length": 384,
+        "model": env.embedding_model,
         "vector_size": 768,
     }
 
 
-def test_read_models_404(client, example_model_db):
+def test_read_models_404(client):
     """
-    Given that I have one model, paraphrase-albert-small-v2, in the database
+    Given that I have one model in the database
     When I GET a non-existent model /models/not-a-model
     I Expect a 404 error
     """
@@ -138,29 +138,29 @@ def test_read_models_404(client, example_model_db):
 
 def test_embed_sentences_422(client):
     """
-    Given that I have one model, paraphrase-albert-small-v2, in the database
-    When I POST a mall-formed payload to /models/paraphrase-albert-small-v2/embed
+    Given that I have one model in the database
+    When I POST a mall-formed payload to /models/<model-name>/embed
     I Expect a 422 error
     """
     response = client.post(
-        "/models/paraphrase-albert-small-v2/embed",
+        f"/models/{env.embedding_model}/embed",
         json={"not": "a well formed payload"},
     )
     assert response.status_code == 422
     assert response.json()["detail"][0]["msg"] == "Input should be a valid list"
 
 
-def test_embed_sentences(client, example_model_db):
+def test_embed_sentences(client):
     """
-    Given that I have one model, paraphrase-albert-small-v2, in the database
+    Given that I have one model in the database
     When I POST a valid payload consisting of some sentenced to embed to
-    /models/paraphrase-albert-small-v2/embed
+    /models/<model-name>/embed
     I Expect a 200 response
 
     N.B. We are not testing the content / efficacy of the model in this test.
     """
     response = client.post(
-        "/models/paraphrase-albert-small-v2/embed",
+        f"/models/{env.embedding_model}/embed",
         json=["I am the egg man", "I am the walrus"],
     )
     assert response.status_code == 200

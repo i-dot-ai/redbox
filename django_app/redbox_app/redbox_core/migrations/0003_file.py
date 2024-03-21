@@ -5,19 +5,31 @@ import uuid
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('redbox_core', '0002_user_invite_accepted_at_user_invited_at_and_more'),
+        ("redbox_core", "0002_user_invite_accepted_at_user_invited_at_and_more"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='File',
+            name="File",
             fields=[
-                ('id', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
-                ('path', models.TextField()),
-                ('name', models.TextField()),
-                ('processing_status', models.CharField(choices=[('uploaded', 'Uploaded'), ('parsing', 'Parsing'), ('chunking', 'Chunking'), ('embedding', 'Embedding'), ('indexing', 'Indexing'), ('complete', 'Complete')], default='uploaded')),
+                ("id", models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
+                ("path", models.TextField()),
+                ("name", models.TextField()),
+                (
+                    "processing_status",
+                    models.CharField(
+                        choices=[
+                            ("uploaded", "Uploaded"),
+                            ("parsing", "Parsing"),
+                            ("chunking", "Chunking"),
+                            ("embedding", "Embedding"),
+                            ("indexing", "Indexing"),
+                            ("complete", "Complete"),
+                        ],
+                        default="uploaded",
+                    ),
+                ),
             ],
         ),
     ]

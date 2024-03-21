@@ -4,15 +4,14 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('redbox_core', '0003_file'),
+        ("redbox_core", "0003_file"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='file',
-            name='path',
-            field=models.TextField(help_text='location of file'),
+            model_name="file",
+            name="path",
+            field=models.TextField(help_text="location of file"),
         ),
     ]

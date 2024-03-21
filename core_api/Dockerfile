@@ -8,6 +8,9 @@ ENV POETRY_NO_INTERACTION=1 \
     POETRY_VIRTUALENVS_CREATE=1 \
     POETRY_CACHE_DIR=/tmp/poetry_cache
 
+# Add redbox python package and install it with poetry
+ADD redbox/ /app/redbox
+ADD model_db.py/ /app/
 ADD pyproject.toml poetry.lock /app/
 ADD download_embedder.py /app/
 ADD redbox/ /app/redbox
