@@ -27,7 +27,7 @@ test-core-api:
 	poetry run pytest core_api/tests --cov=core_api/src -v --cov-report=term-missing --cov-fail-under=45
 
 test-embed:
-	poetry install --no-root --no-ansi --with worker,api,dev --without ai,ingest,django-app,pytest-django
+	poetry install --no-root --no-ansi --with worker,api,dev --without ai,ingest
 	poetry run pytest embed/tests --cov=embed/src -v --cov-report=term-missing --cov-fail-under=50
 
 test-redbox:
