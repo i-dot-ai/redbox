@@ -57,7 +57,6 @@ class ChunkEmbedder:
             return
         chunk.embedding = embedded_sentences.data[0].embedding
         self.storage_handler.update_item(chunk.uuid, chunk)
-        logging.info(f"embedded: {chunk.text}")
 
     def callback(self, ch: BlockingChannel, method, properties, body):
         logging.info(f"Received message {method.delivery_tag} by callback")
