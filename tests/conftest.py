@@ -1,11 +1,10 @@
 import os
 
+import pytest
 from elasticsearch import Elasticsearch
 
 from redbox.models import Settings
 from redbox.storage.elasticsearch import ElasticsearchStorageHandler
-
-import pytest
 
 env = Settings(postgres_password="", django_secret_key="")
 

@@ -4,7 +4,6 @@ import os
 
 from sentence_transformers import SentenceTransformer
 
-
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger()
 
