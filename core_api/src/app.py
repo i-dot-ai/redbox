@@ -16,6 +16,7 @@ from redbox.models import (
     ModelListResponse,
     EmbeddingResponse,
     Settings,
+    StatusResponse
 )
 from redbox.models.llm import Embedding
 from redbox.storage import ElasticsearchStorageHandler
@@ -53,15 +54,6 @@ es = env.elasticsearch_client()
 
 
 storage_handler = ElasticsearchStorageHandler(es_client=es, root_index="redbox-data")
-
-# === Data Models ===
-
-
-class StatusResponse(pydantic.BaseModel):
-    status: str
-    uptime_seconds: float
-    version: str
-
 
 # === API Setup ===
 
