@@ -17,7 +17,7 @@ COPY pyproject.toml /app/pyproject.toml
 COPY --from=node_modules /app/node_modules /app/django_app/frontend/node_modules
 
 WORKDIR app/
-RUN poetry install --no-root --no-ansi --with django-app,dev,pytest-django --without ai,ingest,worker,api,streamlit-app,ai,streamlitapp
+RUN poetry install --no-root --no-ansi --with django-app,dev,pytest-django --without ai,ingest,worker,api,streamlit-app,ai
 
 COPY django_app/docker/web/start.sh app/start.sh
 RUN chmod +x app/start.sh

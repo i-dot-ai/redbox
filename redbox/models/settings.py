@@ -1,11 +1,10 @@
 
-from typing import Optional, Literal
+from typing import Literal, Optional
 
 import boto3
 import pika
 from elasticsearch import Elasticsearch
 from pydantic_settings import BaseSettings, SettingsConfigDict
-
 
 
 class Settings(BaseSettings):

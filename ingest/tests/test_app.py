@@ -1,8 +1,7 @@
 import json
 
 from ingest.src.app import FileIngestor
-from redbox.models import Settings
-from redbox.models import ProcessingStatusEnum
+from redbox.models import ProcessingStatusEnum, Settings
 from redbox.parsing.file_chunker import FileChunker
 from redbox.storage import ElasticsearchStorageHandler
 
