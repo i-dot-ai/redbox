@@ -32,4 +32,4 @@ RUN python download_embedder.py
 
 EXPOSE 5000
 
-CMD ["poetry", "run", "python", "app.py"]
+CMD ["python", "app.py"]
