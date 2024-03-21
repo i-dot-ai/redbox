@@ -1,7 +1,6 @@
 import json
 from datetime import date, datetime
 
-import pydantic
 import streamlit as st
 from langchain.schema import AIMessage, HumanMessage, SystemMessage
 from streamlit_feedback import streamlit_feedback
@@ -9,7 +8,6 @@ from utils import StreamlitStreamHandler, init_session_state, load_llm_handler, 
 
 from redbox.llm.prompts.core import CORE_REDBOX_PROMPT
 from redbox.models.chat import ChatMessage
-from redbox.models.persona import ChatPersona
 
 st.set_page_config(page_title="Redbox Copilot - Ask the Box", page_icon="📮", layout="wide")
 

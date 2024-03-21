@@ -2,9 +2,7 @@ import json
 import logging
 from datetime import datetime
 from uuid import UUID
-from uuid import uuid4
 
-import pydantic
 from fastapi import FastAPI, HTTPException
 from fastapi import UploadFile
 from fastapi.responses import RedirectResponse
@@ -18,7 +16,6 @@ from redbox.models import (
     StatusResponse,
     Settings,
 )
-from redbox.models.llm import Embedding
 from redbox.storage import ElasticsearchStorageHandler
 
 # === Logging ===
@@ -54,14 +51,6 @@ es = env.elasticsearch_client()
 
 
 storage_handler = ElasticsearchStorageHandler(es_client=es, root_index="redbox-data")
-
-# === Data Models ===
-
-
-class StatusResponse(pydantic.BaseModel):
-    status: str
-    uptime_seconds: float
-    version: str
 
 
 # === API Setup ===
