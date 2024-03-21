@@ -6,9 +6,9 @@ from elasticsearch import Elasticsearch
 from fastapi.testclient import TestClient
 from pika import BlockingConnection
 from pika.adapters.blocking_connection import BlockingChannel
+from sentence_transformers import SentenceTransformer
 
-
-from core_api.src.app import app as application
+from core_api.src.app import app as application, model_db
 from core_api.src.app import env
 from redbox.models import File, ProcessingStatusEnum
 from redbox.storage import ElasticsearchStorageHandler
@@ -16,6 +16,16 @@ from redbox.storage import ElasticsearchStorageHandler
 T = TypeVar("T")
 
 YieldFixture = Generator[T, None, None]
+
+
+@pytest.fixture(autouse=True)
+def small_model():
+    SentenceTransformer(env.embedding_model, cache_folder="./models")
+
+
+@pytest.fixture
+def client():
+    yield TestClient(application)
 
 
 @pytest.fixture
