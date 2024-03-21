@@ -38,6 +38,17 @@ For a quick start, you can use GitHub Codespaces to run the project in a cloud-b
   - `pip install pre-commit`
   - `pre-commit install`
 
+# Testing
+- Unit tests and QA run in CI
+- At this time integration test(s) must be run locally:
+
+```commandline
+docker down
+cp .env.example .env
+docker compose up -d ingest embed core-api
+make test-integration
+```
+
 # Dependencies
 
 This project uses a microservice architecture.

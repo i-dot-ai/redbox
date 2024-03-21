@@ -54,4 +54,4 @@ class File(models.Model):
         stage = processing_status_list.index(self.processing_status)
         if stage == len(processing_status_list) - 1:
             return self.processing_status
-        return f"{stage + 1}/{len(processing_status_list) - 1} {self.processing_status}" 
+        return f"{stage + 1}/{len(processing_status_list) - 1} {self.processing_status}"

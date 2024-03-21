@@ -9,7 +9,6 @@ from utils import StreamlitStreamHandler, init_session_state, load_llm_handler, 
 
 from redbox.llm.prompts.core import CORE_REDBOX_PROMPT
 from redbox.models.chat import ChatMessage
-from redbox.models.persona import ChatPersona
 
 st.set_page_config(page_title="Redbox Copilot - Ask the Box", page_icon="📮", layout="wide")
 
