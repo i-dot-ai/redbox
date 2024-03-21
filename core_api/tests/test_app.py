@@ -93,9 +93,9 @@ def test_ingest_file(app_client, rabbitmq_channel, stored_file, elasticsearch_st
 
 def test_read_all_models(client):
     """
-    Given that I have one model, paraphrase-albert-small-v2, in the database
+    Given that I have one model, in the database
     When I GET all models /models
-    I Expect a list of just one model, paraphrase-albert-small-v2, to be returned
+    I Expect a list of just one model to be returned
     """
     response = client.get("/models")
     assert response.status_code == 200
@@ -112,9 +112,9 @@ def test_read_all_models(client):
 
 def test_read_one_model(client):
     """
-    Given that I have one model, paraphrase-albert-small-v2, in the database
-    When I GET this one model /models/paraphrase-albert-small-v2
-    I Expect a single model, paraphrase-albert-small-v2, to be returned
+    Given that I have one model in the database
+    When I GET this one model /models/<name>
+    I Expect a single model to be returned
     """
     response = client.get(f"/models/{env.embedding_model}")
     assert response.status_code == 200
@@ -127,7 +127,7 @@ def test_read_one_model(client):
 
 def test_read_models_404(client):
     """
-    Given that I have one model, paraphrase-albert-small-v2, in the database
+    Given that I have one model in the database
     When I GET a non-existent model /models/not-a-model
     I Expect a 404 error
     """
@@ -138,8 +138,8 @@ def test_read_models_404(client):
 
 def test_embed_sentences_422(client):
     """
-    Given that I have one model, paraphrase-albert-small-v2, in the database
-    When I POST a mall-formed payload to /models/paraphrase-albert-small-v2/embed
+    Given that I have one model in the database
+    When I POST a mall-formed payload to /models/<model-name>/embed
     I Expect a 422 error
     """
     response = client.post(
@@ -152,9 +152,9 @@ def test_embed_sentences_422(client):
 
 def test_embed_sentences(client):
     """
-    Given that I have one model, paraphrase-albert-small-v2, in the database
+    Given that I have one model in the database
     When I POST a valid payload consisting of some sentenced to embed to
-    /models/paraphrase-albert-small-v2/embed
+    /models/<model-name>/embed
     I Expect a 200 response
 
     N.B. We are not testing the content / efficacy of the model in this test.
