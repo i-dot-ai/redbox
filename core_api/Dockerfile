@@ -20,6 +20,7 @@ WORKDIR /app/
 
 ENV VIRTUAL_ENV=/app/.venv \
     PATH="/app/.venv/bin:$PATH"
+RUN poetry install --no-root --no-ansi --with api --without ai,ingest,dev,worker,streamlit-app
 
 COPY --from=builder ${VIRTUAL_ENV} ${VIRTUAL_ENV}
 

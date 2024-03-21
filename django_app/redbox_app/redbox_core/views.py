@@ -1,6 +1,8 @@
 from django.shortcuts import render
 from django.views.decorators.http import require_http_methods
 
+from .models import File, ProcessingStatusEnum
+
 
 @require_http_methods(["GET"])
 def homepage_view(request):
@@ -12,21 +14,28 @@ def homepage_view(request):
 
 
 def documents_view(request):
-    # Testing with some static docs for now
-    documents = [
-        {"id": "doc-id-1", "name": "Document 1", "url": "#download1", "processed": True, "process_status": "Complete"},
-        {
-            "id": "doc-id-2",
-            "name": "Document 2",
-            "url": "#download2",
-            "processed": False,
-            "process_status": "2/5 Parsing",
-        },
-    ]
+    # Testing with dummy data for now
+    if not File.objects.exists():
+        File.objects.create(
+            name="Document 1",
+            path="#download1",
+            processing_status=ProcessingStatusEnum.complete,
+        )
+        File.objects.create(
+            name="Document 2",
+            path="#download2",
+            processing_status=ProcessingStatusEnum.parsing,
+        )
+
+    # Add processing_text
+    files = File.objects.all()
+    for file in files:
+        file.processing_text = file.get_processing_text()
+
     return render(
         request,
         template_name="documents.html",
-        context={"request": request, "documents": documents},
+        context={"request": request, "files": files},
     )
 
 
