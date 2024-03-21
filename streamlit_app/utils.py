@@ -551,7 +551,7 @@ def get_persona_names() -> list:
     """
     persona_names = []
     for chat_persona in chat_personas:
-        persona_names.append(ChatPersona.name)
+        persona_names.append(chat_persona.name)
     return persona_names
 
 
