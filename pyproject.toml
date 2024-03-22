@@ -17,7 +17,7 @@ elasticsearch = "^8.12.0"
 requests = "^2.31.0"
 langchain = "^0.1.13"
 tiktoken = "^0.6.0"
-boto3 = "^1.34.67"
+boto3 = "^1.34.68"
 pika = "^1.3.2"
 pydantic-settings = "^2.2.1"
 bumpversion = "^0.6.0"
@@ -33,20 +33,20 @@ sentence-transformers = "^2.5.1"
 pika = "^1.3.2"
 
 [tool.poetry.group.ingest.dependencies]
-unstructured = {version = "^0.12.5", extras = ["all-docs"]}
+unstructured = {version = "^0.12.6", extras = ["all-docs"]}
 opencv-python-headless = "^4.9.0.80"
 sentence-transformers = "^2.5.1"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.1.1"
 pytest-env = "^1.1.1"
-pytest-mock = "^3.12.0"
+pytest-mock = "^3.14.0"
 pytest-cov = "^4.1.0"
 pylint = "^3.0.3"
 mypy = "^1.9.0"
 types-python-dateutil = "^2.9.0.20240315"
 types-markdown = "^3.6.0.20240316"
-ruff = "^0.3.3"
+ruff = "^0.3.4"
 python-dotenv = "^1.0.1"
 jupyter = "^1.0.0"
 ipykernel = "^6.29.2"
@@ -58,7 +58,7 @@ django-types = "^0.19.1"
 types-python-jose = "^3.3.4.8"
 detect-secrets = "^1.4.0"
 types-pytz = "^2024.1.0.20240203"
-boto3-stubs = "^1.34.67"
+boto3-stubs = "^1.34.68"
 
 
 [tool.poetry.group.streamlit-app.dependencies]
@@ -67,8 +67,8 @@ lxml = "^5.1.0"
 loguru = "^0.7.2"
 
 [tool.poetry.group.ai.dependencies]
-anthropic = "^0.21.1"
-litellm = "^1.32.7"
+anthropic = "^0.21.3"
+litellm = "^1.33.1"
 openai = "^1.14.2"
 
 
@@ -93,7 +93,7 @@ django-single-session = "^0.2.0"
 sentry-sdk = "^1.43.0"
 django-storages = "^1.14.2"
 django-health-check = "<3.19.0" # this pin can be removed once https://github.com/revsys/django-health-check/issues/412 is resolved
-boto3 = "^1.34.67"
+boto3 = "^1.34.68"
 urllib3 = "<2.3"
 python-jose = {extras = ["cryptography"], version = "^3.3.0"}
 requests = "^2.31.0"
