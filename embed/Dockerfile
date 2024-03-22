@@ -1,25 +1,42 @@
-FROM python:3.11
+FROM python:3.11-buster as builder
 
 RUN pip install poetry
 
-# Add redbox python package and install it with poetry
-ADD redbox/ /app/redbox
+ENV POETRY_NO_INTERACTION=1 \
+    POETRY_VIRTUALENVS_IN_PROJECT=1 \
+    POETRY_VIRTUALENVS_CREATE=1 \
+    POETRY_CACHE_DIR=/tmp/poetry_cache
 
-ADD pyproject.toml poetry.lock /app/
-ADD ./download_embedder.py /app/
-ADD ./model_db.py /app/
 WORKDIR /app/
-RUN poetry install --no-root --no-ansi --with worker,api --without ai,ingest,dev,pytest-django,streamlit-app
+ADD pyproject.toml poetry.lock ./
+ADD download_embedder.py /app/
+
+RUN --mount=type=cache,target=$POETRY_CACHE_DIR poetry install --no-root --no-ansi --with worker,api --without ai,ingest,dev,streamlit-app
+
+
+FROM python:3.11-slim-buster as runtime
+
+RUN pip install poetry
+
+COPY --from=builder ${VIRTUAL_ENV} ${VIRTUAL_ENV}
+
+ENV VIRTUAL_ENV=/app/.venv \
+    PATH="/app/.venv/bin:$PATH"
+
+WORKDIR /app/
+ADD pyproject.toml poetry.lock ./
+
+RUN poetry install --no-root --no-ansi --with worker,api --without ai,ingest,dev,streamlit-app
 
 # Add the rest of the files
+ADD redbox/ /app/redbox
 ADD ./embed/src/app.py /app/app.py
-
-ADD ./Makefile /app/
-ADD ./.env.example /app/
+ADD download_embedder.py /app/
+ADD model_db.py /app/
 
 # Download the model
-RUN poetry run download-model
+RUN python download_embedder.py
 
 EXPOSE 5000
 
-CMD ["poetry", "run", "python", "app.py"]
+CMD ["python", "app.py"]

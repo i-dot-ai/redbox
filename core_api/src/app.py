@@ -3,18 +3,18 @@ import logging
 from datetime import datetime
 from uuid import UUID
 
-from fastapi import FastAPI, HTTPException
-from fastapi import UploadFile
+from fastapi import FastAPI, HTTPException, UploadFile
 from fastapi.responses import RedirectResponse
 
 from model_db import SentenceTransformerDB
-from redbox.models import File, ProcessingStatusEnum
 from redbox.models import (
+    EmbeddingResponse,
+    File,
     ModelInfo,
     ModelListResponse,
-    EmbeddingResponse,
-    StatusResponse,
+    ProcessingStatusEnum,
     Settings,
+    StatusResponse,
 )
 from redbox.storage import ElasticsearchStorageHandler
 

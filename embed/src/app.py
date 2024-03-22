@@ -6,11 +6,7 @@ import pydantic
 from pika.adapters.blocking_connection import BlockingChannel
 
 from model_db import SentenceTransformerDB
-from redbox.models import (
-    EmbedQueueItem,
-    Settings,
-    Chunk,
-)
+from redbox.models import Chunk, EmbedQueueItem, Settings
 from redbox.storage import ElasticsearchStorageHandler
 
 model_db = SentenceTransformerDB()

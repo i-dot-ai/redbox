@@ -1,7 +1,5 @@
 FROM python:3.11-buster as builder
 
-
-
 RUN pip install poetry
 
 ENV POETRY_NO_INTERACTION=1 \
@@ -10,24 +8,22 @@ ENV POETRY_NO_INTERACTION=1 \
     POETRY_CACHE_DIR=/tmp/poetry_cache
 
 WORKDIR /app/
-
 ADD pyproject.toml poetry.lock ./
 # Streamlit app needs a lot of dependencies
 
-RUN --mount=type=cache,target=$POETRY_CACHE_DIR  poetry install --no-root --no-ansi --with streamlit-app,ai,ingest --without dev,worker,api,pytest-django  --no-root
+RUN --mount=type=cache,target=$POETRY_CACHE_DIR  poetry install --no-root --no-ansi --with streamlit-app,ai,ingest --without dev,worker,api  --no-root
 
 FROM python:3.11-slim-buster as runtime
 
 RUN apt-get update
 RUN apt-get install -y libgl-dev libmagic-dev inetutils-ping
 
+WORKDIR /app/
 
 ENV VIRTUAL_ENV=/app/.venv \
     PATH="/app/.venv/bin:$PATH"
 
 COPY --from=builder ${VIRTUAL_ENV} ${VIRTUAL_ENV}
-
-WORKDIR /app/
 
 ADD ./download_embedder.py /app/
 ADD ./model_db.py /app/

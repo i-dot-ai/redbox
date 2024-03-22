@@ -10,7 +10,6 @@ services:
     env_file:
       - .env
     volumes:
-      - ./:/app/:z
       - /app/django_app/frontend/node_modules
     ports:
       - "8090:8090"
@@ -127,7 +126,7 @@ services:
     networks:
       - redbox-app-network
     entrypoint: >
-      /bin/sh -c " /usr/bin/mc alias set redbox http://minio:9000 minioadmin minioadmin; /usr/bin/mc mb redbox/redboxcore; /usr/bin/mc policy set public redbox/redboxcore; exit 0; "
+      /bin/sh -c " /usr/bin/mc alias set redbox http://minio:9000 minioadmin minioadmin; /usr/bin/mc mb redbox/redbox-storage-dev; /usr/bin/mc policy set public redbox/redbox-storage-dev; exit 0; "
   elasticsearch:
     image: elasticsearch:8.12.0
     volumes:

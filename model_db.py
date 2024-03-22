@@ -5,7 +5,7 @@ from uuid import uuid4
 
 from sentence_transformers import SentenceTransformer
 
-from redbox.models import ModelInfo, EmbeddingResponse
+from redbox.models import EmbeddingResponse, ModelInfo
 from redbox.models.llm import Embedding
 
 log = logging.getLogger()
