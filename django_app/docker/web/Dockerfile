@@ -32,13 +32,10 @@ COPY --from=builder ${VIRTUAL_ENV} ${VIRTUAL_ENV}
 WORKDIR /app/
 
 RUN pip install poetry
-
-RUN poetry install --no-ansi --with django-app --without pytest-django
-
+RUN poetry install --no-ansi --with django-app,pytest-django
+COPY --from=node_modules /app/node_modules /app/django_app/frontend/node_modules
 
 ADD django_app/ /app/django_app/
-
-COPY --from=node_modules /app/node_modules /app/django_app/frontend/node_modules
 
 COPY django_app/docker/web/start.sh /app/start.sh
 RUN chmod +x /app/start.sh
