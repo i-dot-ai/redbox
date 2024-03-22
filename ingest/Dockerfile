@@ -9,6 +9,7 @@ ADD pyproject.toml poetry.lock /app/
 
 WORKDIR /app/
 RUN poetry install --no-root --no-ansi --with worker,ingest --without ai,dev,api,django-app,pytest-django,streamlit-app
+ADD ./.env /app/
 
 # Download the model
 RUN poetry run download-model
