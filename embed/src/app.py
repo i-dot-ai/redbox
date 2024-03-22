@@ -10,7 +10,6 @@ from redbox.models import Chunk, EmbedQueueItem, Settings
 from redbox.storage import ElasticsearchStorageHandler
 
 model_db = SentenceTransformerDB()
-model_db.init_from_disk()
 
 start_time = datetime.now()
 log = logging.getLogger()

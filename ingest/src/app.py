@@ -91,8 +91,6 @@ def run():
 
     models = SentenceTransformerDB()
 
-    models.init_from_disk()
-
     # === Object Store ===
 
     s3 = env.s3_client()
