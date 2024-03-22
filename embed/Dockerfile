@@ -38,4 +38,4 @@ RUN python download_embedder.py
 
 EXPOSE 5000
 
-CMD ["python", "app.py"]
+CMD ["faststream", "run", "embed.src.worker:app"]

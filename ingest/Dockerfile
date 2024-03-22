@@ -22,11 +22,10 @@ COPY --from=builder ${VIRTUAL_ENV} ${VIRTUAL_ENV}
 
 WORKDIR /app/
 ADD redbox/ /app/redbox
-ADD ingest/src/app.py /app/app.py
+ADD ingest/ /app/ingest
 ADD download_embedder.py /app/
 
 # Download the model
 RUN python download_embedder.py
 
-# Run pika worker
-CMD ["python", "app.py"]
+CMD ["faststream", "run", "embed.src.worker:app"]
