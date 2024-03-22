@@ -24,7 +24,6 @@ WORKDIR /app/
 ADD redbox/ /app/redbox
 ADD ingest/src/app.py /app/app.py
 ADD download_embedder.py /app/
-ADD model_db.py /app/
 
 # Download the model
 RUN python download_embedder.py

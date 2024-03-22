@@ -25,11 +25,10 @@ ENV VIRTUAL_ENV=/app/.venv \
 
 COPY --from=builder ${VIRTUAL_ENV} ${VIRTUAL_ENV}
 
-ADD ./download_embedder.py /app/
-ADD ./model_db.py /app/
+ADD redbox/ /app/redbox
+ADD download_embedder.py /app/
 RUN python download_embedder.py
 
-ADD redbox/ /app/redbox
 ADD streamlit_app/ /app
 
 EXPOSE 8501

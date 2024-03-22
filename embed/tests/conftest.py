@@ -11,9 +11,6 @@ T = TypeVar("T")
 
 YieldFixture = Generator[T, None, None]
 
-# model_db = SentenceTransformerDB()
-# model_db.init_from_disk()
-
 
 env = Settings()
 
