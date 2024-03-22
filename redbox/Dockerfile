@@ -9,6 +9,6 @@ RUN poetry install --no-root --no-ansi --with worker,api --without ai,streamlit-
 
 ADD ./redbox /app/redbox
 ADD ./Makefile /app/
-ADD ./.env.example /app/
+ADD ./.env /app/
 
 WORKDIR /app/

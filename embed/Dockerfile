@@ -6,7 +6,6 @@ RUN pip install poetry
 ADD redbox/ /app/redbox
 
 ADD pyproject.toml poetry.lock /app/
-ADD ./download_embedder.py /app/
 ADD ./model_db.py /app/
 WORKDIR /app/
 RUN poetry install --no-root --no-ansi --with worker,api --without ai,ingest,dev,pytest-django,streamlit-app
@@ -15,7 +14,7 @@ RUN poetry install --no-root --no-ansi --with worker,api --without ai,ingest,dev
 ADD ./embed/src/app.py /app/app.py
 
 ADD ./Makefile /app/
-ADD ./.env.example /app/
+ADD ./.env /app/
 
 # Download the model
 RUN poetry run download-model

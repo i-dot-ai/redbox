@@ -5,11 +5,14 @@ from uuid import uuid4
 
 from sentence_transformers import SentenceTransformer
 
-from redbox.models import ModelInfo, EmbeddingResponse
+from redbox.models import ModelInfo, EmbeddingResponse, Settings
 from redbox.models.llm import Embedding
 
+env = Settings()
 log = logging.getLogger()
 log.setLevel(logging.INFO)
+
+MODEL_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "models")
 
 
 class SentenceTransformerDB(collections.UserDict):
@@ -25,20 +28,8 @@ class SentenceTransformerDB(collections.UserDict):
         )
         return model_info
 
-    def init_from_disk(self, filepath: str = "models"):
-        available_models = []
-
-        for dirpath, dirnames, filenames in os.walk(filepath):
-            # Check if the current directory contains a file named "config.json"
-            if "pytorch_model.bin" in filenames:
-                # If it does, print the path to the directory
-                available_models.append(dirpath)
-
-        for model_path in available_models:
-            model_name = model_path.split("/")[-3]
-            model = model_name.split("--")[-1]
-            self[model] = SentenceTransformer(model_path)
-            log.info(f"Loaded model {model}")
+    def init_from_disk(self):
+        self[env.embedding_model] = SentenceTransformer(env.embedding_model, cache_folder=MODEL_PATH)
 
     def embed_sentences(self, model: str, sentences: list[str]):
         model_obj = self[model]
@@ -62,3 +53,7 @@ class SentenceTransformerDB(collections.UserDict):
         )
 
         return output
+
+
+def download():
+    SentenceTransformerDB().init_from_disk()

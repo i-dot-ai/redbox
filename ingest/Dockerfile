@@ -6,7 +6,6 @@ RUN pip install poetry
 ADD redbox/ /app/redbox
 ADD ingest/src/app.py /app/app.py
 ADD pyproject.toml poetry.lock /app/
-ADD download_embedder.py /app/
 ADD model_db.py /app/
 
 WORKDIR /app/

@@ -29,9 +29,8 @@ COPY --from=builder ${VIRTUAL_ENV} ${VIRTUAL_ENV}
 
 WORKDIR /app/
 
-ADD ./download_embedder.py /app/
 ADD ./model_db.py /app/
-RUN python download_embedder.py
+RUN poetry run download-model
 
 ADD redbox/ /app/redbox
 ADD streamlit_app/ /app
