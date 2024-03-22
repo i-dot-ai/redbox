@@ -17,8 +17,8 @@ MODEL_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "models")
 
 class SentenceTransformerDB(collections.UserDict):
     def __init__(self):
-        super().__init__()
         """loads the EMBEDDING_MODEL either from the web, or if it exists, the cache"""
+        super().__init__()
         self[env.embedding_model] = SentenceTransformer(env.embedding_model, cache_folder=MODEL_PATH)
 
     def __getitem__(self, model_name: str) -> SentenceTransformer:
