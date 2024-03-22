@@ -1,10 +1,10 @@
-import json
 import logging
 from datetime import datetime
 from uuid import UUID
 
 from fastapi import FastAPI, HTTPException, UploadFile
 from fastapi.responses import RedirectResponse
+from faststream.rabbit import RabbitBroker, RabbitQueue
 
 from redbox.model_db import SentenceTransformerDB
 from redbox.models import (
@@ -37,9 +37,12 @@ s3 = env.s3_client()
 # === Queues ===
 
 if env.queue == "rabbitmq":
-    connection = env.blocking_connection()
-    channel = connection.channel()
-    channel.queue_declare(queue=env.ingest_queue_name, durable=True)
+    broker = RabbitBroker(
+        f"amqp://{env.rabbitmq_user}:{env.rabbitmq_password}@{env.rabbitmq_host}:{env.rabbitmq_port}/"
+    )
+
+    channel = RabbitQueue(name=env.ingest_queue_name, durable=True)
+
 else:
     raise NotImplementedError("SQS is not yet implemented")
 
@@ -191,10 +194,11 @@ def ingest_file(file_uuid: str) -> File:
     file.processing_status = ProcessingStatusEnum.parsing
     storage_handler.update_item(item_uuid=file.uuid, item=file)
 
-    channel.basic_publish(
+    broker.publish(
+        file,
+        queue=channel,
         exchange="redbox-core-exchange",
         routing_key=env.ingest_queue_name,
-        body=json.dumps(file.model_dump(), ensure_ascii=False),
     )
 
     return file

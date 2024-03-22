@@ -7,7 +7,7 @@ from pika import BlockingConnection
 from pika.adapters.blocking_connection import BlockingChannel
 from sentence_transformers import SentenceTransformer
 
-from ingest.src.app import env
+from ingest.src.worker import env
 from redbox.models import File
 
 T = TypeVar("T")
