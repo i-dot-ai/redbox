@@ -39,7 +39,7 @@ test-ingest:
 	poetry run pytest ingest/tests --cov=ingest -v --cov-report=term-missing --cov-fail-under=40
 
 test-django:
-	docker compose up -d db --wait db
+	docker compose up -d --wait db
 	docker compose run django-app poetry run pytest django_app/tests/ --ds redbox_app.settings -v --cov=redbox_app.redbox_core --cov-fail-under 10
 
 test-integration:
