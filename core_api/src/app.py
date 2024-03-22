@@ -24,7 +24,6 @@ logging.basicConfig(level=logging.INFO)
 log = logging.getLogger()
 
 model_db = SentenceTransformerDB()
-model_db.init_from_disk()
 
 
 env = Settings()
