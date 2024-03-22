@@ -33,9 +33,6 @@ class SentenceTransformerDB(collections.UserDict):
         )
         return model_info
 
-    def load(self):
-        pass
-
     def embed_sentences(self, model: str, sentences: list[str]):
         model_obj = self[model]
         embeddings = model_obj.encode(sentences)
