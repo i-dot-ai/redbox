@@ -19,7 +19,9 @@ env = Settings()
 class SentenceTransformerDB(collections.UserDict):
     def __init__(self):
         super().__init__()
+        log.info(f"💾 Downloading Sentence Transformer Embedder: {env.embedding_model}")
         self[env.embedding_model] = SentenceTransformer(env.embedding_model, cache_folder=MODEL_PATH)
+        log.info(f"✅ Downloaded Sentence Transformer Embedder: {env.embedding_model} to {MODEL_PATH}")
 
     def __getitem__(self, model_name: str) -> SentenceTransformer:
         return super().__getitem__(model_name)
