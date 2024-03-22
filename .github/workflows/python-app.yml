@@ -50,7 +50,7 @@ jobs:
         cp .env.test .env
         docker compose up -d --wait elasticsearch minio rabbitmq
 
-        poetry install --no-root --no-ansi --with dev --without ai,streamlit-app,api,django-app,pytest-django,worker,ingest
+        poetry install --no-root --no-ansi --with dev --without ai,streamlit-app,api,worker,ingest
         poetry run download-model
 
     - name: Test redbox with pytest
