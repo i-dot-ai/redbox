@@ -7,7 +7,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi import UploadFile
 from fastapi.responses import RedirectResponse
 
-from model_db import SentenceTransformerDB
+from redbox.model_db import SentenceTransformerDB
 from redbox.models import File, ProcessingStatusEnum
 from redbox.models import (
     ModelInfo,
@@ -24,8 +24,6 @@ logging.basicConfig(level=logging.INFO)
 log = logging.getLogger()
 
 model_db = SentenceTransformerDB()
-model_db.init_from_disk()
-
 
 env = Settings()
 

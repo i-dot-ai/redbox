@@ -114,4 +114,4 @@ requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.scripts]
-download-model = 'model_db:download'
+download-model = 'redbox.model_db:download'

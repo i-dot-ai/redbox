@@ -29,11 +29,10 @@ COPY --from=builder ${VIRTUAL_ENV} ${VIRTUAL_ENV}
 
 WORKDIR /app/
 
-ADD ./model_db.py /app/
+ADD redbox /app/redbox
+ADD streamlit_app/ /app
 RUN poetry run download-model
 
-ADD redbox/ /app/redbox
-ADD streamlit_app/ /app
 
 EXPOSE 8501
 

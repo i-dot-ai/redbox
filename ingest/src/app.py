@@ -3,7 +3,7 @@ import logging
 
 from pika.adapters.blocking_connection import BlockingChannel
 
-from model_db import SentenceTransformerDB
+from redbox.model_db import SentenceTransformerDB
 from redbox.models import EmbedQueueItem, File, ProcessingStatusEnum, Settings
 from redbox.parsing.file_chunker import FileChunker
 from redbox.storage.elasticsearch import ElasticsearchStorageHandler
@@ -90,8 +90,6 @@ def run():
     # ====== Loading embedding model ======
 
     models = SentenceTransformerDB()
-
-    models.init_from_disk()
 
     # === Object Store ===
 

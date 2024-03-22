@@ -23,7 +23,7 @@ from langchain_community.embeddings import SentenceTransformerEmbeddings
 from loguru import logger
 from lxml.html.clean import Cleaner
 
-from model_db import SentenceTransformerDB
+from redbox.model_db import SentenceTransformerDB
 from redbox.llm.llm_base import LLMHandler
 from redbox.models.feedback import Feedback
 from redbox.models.file import File
@@ -131,7 +131,6 @@ def init_session_state() -> dict:
 
     if "model_db" not in st.session_state:
         st.session_state.model_db = SentenceTransformerDB()
-        st.session_state.model_db.init_from_disk()
 
     if "embedding_model" not in st.session_state:
         available_models = []

@@ -5,7 +5,7 @@ from datetime import datetime
 import pydantic
 from pika.adapters.blocking_connection import BlockingChannel
 
-from model_db import SentenceTransformerDB
+from redbox.model_db import SentenceTransformerDB
 from redbox.models import (
     EmbedQueueItem,
     Settings,
@@ -14,7 +14,6 @@ from redbox.models import (
 from redbox.storage import ElasticsearchStorageHandler
 
 model_db = SentenceTransformerDB()
-model_db.init_from_disk()
 
 start_time = datetime.now()
 log = logging.getLogger()
