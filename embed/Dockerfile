@@ -30,7 +30,7 @@ RUN poetry install --no-root --no-ansi --with worker,api --without ai,ingest,dev
 
 # Add the rest of the files
 ADD redbox/ /app/redbox
-ADD ./embed/src/app.py /app/app.py
+ADD embed/src/app.py /app/app.py
 ADD download_embedder.py /app/
 ADD model_db.py /app/
 
