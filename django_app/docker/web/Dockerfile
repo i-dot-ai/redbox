@@ -18,7 +18,7 @@ RUN pip install poetry
 ADD django_app/poetry.lock /app/poetry.lock
 ADD django_app/pyproject.toml /app/pyproject.toml
 
-RUN --mount=type=cache,target=$POETRY_CACHE_DIR  poetry install --no-ansi --with django-app --without pytest-django
+RUN --mount=type=cache,target=$POETRY_CACHE_DIR  poetry install --no-ansi --with django-app
 
 FROM python:3.11-slim-buster as runtime
 
@@ -32,7 +32,9 @@ COPY --from=builder ${VIRTUAL_ENV} ${VIRTUAL_ENV}
 WORKDIR /app/
 
 RUN pip install poetry
-RUN poetry install --no-ansi --with django-app,pytest-django
+
+RUN poetry install --no-ansi --with django-app
+
 COPY --from=node_modules /app/node_modules /app/django_app/frontend/node_modules
 
 ADD django_app/ /app/django_app/
