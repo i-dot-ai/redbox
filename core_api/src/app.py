@@ -6,7 +6,7 @@ from uuid import UUID
 from fastapi import FastAPI, HTTPException, UploadFile
 from fastapi.responses import RedirectResponse
 
-from model_db import SentenceTransformerDB
+from redbox.model_db import SentenceTransformerDB
 from redbox.models import (
     EmbeddingResponse,
     File,
