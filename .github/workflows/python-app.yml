@@ -93,7 +93,7 @@ jobs:
         cp .env.integration .env
         docker compose up -d --wait core-api embed ingest
 
-        poetry install --no-root --no-ansi --with dev --without ai,streamlit-app,api,django-app,pytest-django,worker,ingest
+        poetry install --no-root --no-ansi --with dev --without ai,streamlit-app,api,django-app,worker,ingest
         poetry run download-model
 
     - name: Test integration with pytest
