@@ -31,7 +31,7 @@ def get_chunker() -> FileChunker:
     return chunker
 
 
-broker = RabbitBroker(f"amqp://{env.rabbitmq_user}:{env.rabbitmq_password}@{env.rabbitmq_host}:{env.rabbitmq_port}/")
+broker = RabbitBroker(env.rabbit_url)
 app = FastStream(broker)
 
 ingest_channel = RabbitQueue(name=env.ingest_queue_name, durable=True)

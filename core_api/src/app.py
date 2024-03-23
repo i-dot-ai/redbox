@@ -40,7 +40,7 @@ if env.queue != "rabbitmq":
     raise NotImplementedError("SQS is not yet implemented")
 
 
-broker = RabbitBroker(f"amqp://{env.rabbitmq_user}:{env.rabbitmq_password}@{env.rabbitmq_host}:{env.rabbitmq_port}/")
+broker = RabbitBroker(env.rabbit_url)
 
 ingest_channel = RabbitQueue(name=env.ingest_queue_name, durable=True)
 

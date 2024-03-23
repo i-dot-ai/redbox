@@ -17,7 +17,7 @@ log.setLevel(logging.INFO)
 env = Settings()
 
 
-broker = RabbitBroker(f"amqp://{env.rabbitmq_user}:{env.rabbitmq_password}@{env.rabbitmq_host}:{env.rabbitmq_port}/")
+broker = RabbitBroker(env.rabbit_url)
 app = FastStream(broker)
 
 embed_channel = RabbitQueue(name=env.embed_queue_name, durable=True)
