@@ -36,15 +36,15 @@ s3 = env.s3_client()
 
 # === Queues ===
 
-if env.queue == "rabbitmq":
-    broker = RabbitBroker(
-        f"amqp://{env.rabbitmq_user}:{env.rabbitmq_password}@{env.rabbitmq_host}:{env.rabbitmq_port}/"
-    )
-
-    channel = RabbitQueue(name=env.ingest_queue_name, durable=True)
-
-else:
+if env.queue != "rabbitmq":
     raise NotImplementedError("SQS is not yet implemented")
+
+
+broker = RabbitBroker(f"amqp://{env.rabbitmq_user}:{env.rabbitmq_password}@{env.rabbitmq_host}:{env.rabbitmq_port}/")
+
+ingest_channel = RabbitQueue(name=env.ingest_queue_name, durable=True)
+
+publisher = broker.publisher(queue=ingest_channel, exchange="redbox-core-exchange", routing_key=env.ingest_queue_name)
 
 
 # === Storage ===
@@ -194,12 +194,7 @@ def ingest_file(file_uuid: str) -> File:
     file.processing_status = ProcessingStatusEnum.parsing
     storage_handler.update_item(item_uuid=file.uuid, item=file)
 
-    broker.publish(
-        file,
-        queue=channel,
-        exchange="redbox-core-exchange",
-        routing_key=env.ingest_queue_name,
-    )
+    publisher.publish(file)
 
     return file
 

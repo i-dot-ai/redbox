@@ -3,8 +3,6 @@ from typing import Generator, TypeVar
 
 import pytest
 from elasticsearch import Elasticsearch
-from pika import BlockingConnection
-from pika.adapters.blocking_connection import BlockingChannel
 from sentence_transformers import SentenceTransformer
 
 from ingest.src.worker import env
@@ -87,21 +85,3 @@ def file(s3_client, file_pdf_path, bucket):
     )
 
     yield file_record
-
-
-@pytest.fixture
-def rabbitmq_connection() -> YieldFixture[BlockingConnection]:
-    connection = env.blocking_connection()
-    yield connection
-    connection.close()
-
-
-@pytest.fixture
-def rabbitmq_channel(rabbitmq_connection: BlockingConnection) -> YieldFixture[BlockingChannel]:
-    channel = rabbitmq_connection.channel()
-    channel.queue_declare(
-        queue=env.embed_queue_name,
-        durable=True,
-    )
-    yield channel
-    channel.close()

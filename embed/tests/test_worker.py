@@ -1,10 +1,14 @@
+import pytest
+
 from redbox.models import Settings
-from embed.src.worker import embed, get_model_db
+from embed.src.worker import broker, embed_channel
+from faststream.rabbit import TestRabbitBroker
 
 env = Settings()
 
 
-def test_embed_item_callback(elasticsearch_storage_handler, embed_queue_item):
+@pytest.mark.asyncio
+async def test_embed_item_callback(elasticsearch_storage_handler, embed_queue_item):
     """
     Given that I have created and persisted a chunk to ElasticSearch
     When I call embed_queue_item
@@ -13,9 +17,8 @@ def test_embed_item_callback(elasticsearch_storage_handler, embed_queue_item):
     unembedded_chunk = elasticsearch_storage_handler.read_item(embed_queue_item.chunk_uuid, "Chunk")
     assert unembedded_chunk.embedding is None
 
-    # chunk_embedder = ChunkEmbedder(elasticsearch_storage_handler)
-    # chunk_embedder.embed_queue_item(embed_queue_item)
-    embed(embed_queue_item, elasticsearch_storage_handler, get_model_db())
+    async with TestRabbitBroker(broker) as br:
+        await br.publish(embed_queue_item, queue=embed_channel)
 
     embedded_chunk = elasticsearch_storage_handler.read_item(embed_queue_item.chunk_uuid, "Chunk")
     assert embedded_chunk.embedding is not None

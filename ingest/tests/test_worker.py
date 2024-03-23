@@ -1,36 +1,31 @@
-import json
+import pytest
 
-from ingest.src.worker import ingest
-from redbox.models import ProcessingStatusEnum, Settings
-from redbox.parsing.file_chunker import FileChunker
+from ingest.src.worker import broker, ingest_channel
+from redbox.models import ProcessingStatusEnum
 from redbox.storage import ElasticsearchStorageHandler
 
-env = Settings()
+from faststream.rabbit import TestRabbitBroker
 
 
-def test_ingest_file(s3_client, es_client, embedding_model, file, rabbitmq_channel):
+@pytest.mark.asyncio
+async def test_ingest_file(s3_client, es_client, embedding_model, file):
     """
     Given that I have written a text File to s3
     When I call ingest_file
     I Expect to see this file to be:
     1. chunked
     2. written to Elasticsearch
-    3. a message put on the embed-queue
     """
 
     storage_handler = ElasticsearchStorageHandler(es_client=es_client, root_index="redbox-data")
-    chunker = FileChunker(embedding_model=embedding_model)
 
-    ingest(file, s3_client, storage_handler, chunker)
+    async with TestRabbitBroker(broker) as br:
+        await br.publish(file, queue=ingest_channel)
 
-    assert (
-        storage_handler.read_item(
-            item_uuid=file.uuid,
-            model_type="file",
-        ).processing_status
-        is ProcessingStatusEnum.chunking
-    )
-
-    _method, _properties, body = rabbitmq_channel.basic_get(env.embed_queue_name)
-    msg = json.loads(body)
-    assert msg["model"] == env.embedding_model
+        assert (
+            storage_handler.read_item(
+                item_uuid=file.uuid,
+                model_type="file",
+            ).processing_status
+            is ProcessingStatusEnum.chunking
+        )

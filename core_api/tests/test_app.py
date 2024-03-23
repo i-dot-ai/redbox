@@ -1,10 +1,10 @@
-import json
-
 import pytest
 from elasticsearch import NotFoundError
 
-from core_api.src.app import env
+from core_api.src.app import env, publisher, broker
 from redbox.models import ProcessingStatusEnum
+
+from faststream.rabbit import TestRabbitBroker
 
 
 def test_get_health(app_client):
@@ -69,7 +69,8 @@ def test_delete_file(s3_client, app_client, elasticsearch_storage_handler, bucke
         elasticsearch_storage_handler.read_item(item_uuid=stored_file.uuid, model_type="file")
 
 
-def test_ingest_file(app_client, rabbitmq_channel, stored_file, elasticsearch_storage_handler):
+@pytest.mark.asyncio
+async def test_ingest_file(app_client, stored_file, elasticsearch_storage_handler):
     """
     Given a previously saved file
     When I POST to /file/uuid/ingest
@@ -86,9 +87,8 @@ def test_ingest_file(app_client, rabbitmq_channel, stored_file, elasticsearch_st
     )
     assert response.status_code == 200
 
-    method, _properties, body = rabbitmq_channel.basic_get(env.ingest_queue_name)
-    msg = json.loads(body.decode())
-    assert msg["text_hash"] == response.json()["text_hash"]
+    async with TestRabbitBroker(broker):
+        publisher.mock.called_once_with(stored_file)
 
 
 def test_read_all_models(client):

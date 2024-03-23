@@ -38,9 +38,11 @@ ingest_channel = RabbitQueue(name=env.ingest_queue_name, durable=True)
 
 embed_channel = RabbitQueue(name=env.embed_queue_name, durable=True)
 
+publisher = broker.publisher(embed_channel, exchange="redbox-core-exchange")
+
 
 @broker.subscriber(queue=ingest_channel)
-def ingest(
+async def ingest(
     file: File,
     s3_client=Depends(get_s3),
     elasticsearch_storage_handler: ElasticsearchStorageHandler = Depends(get_storage),
@@ -78,9 +80,5 @@ def ingest(
     for chunk in chunks:
         queue_item = EmbedQueueItem(model=env.embedding_model, chunk_uuid=chunk.uuid)
         logging.info(f"Writing chunk to storage for chunk uuid: {chunk.uuid}")
-        broker.publish(
-            queue_item,
-            queue=embed_channel,
-            exchange="redbox-core-exchange",
-        )
+        publisher.publish(queue_item)
     return items

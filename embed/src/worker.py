@@ -20,7 +20,7 @@ env = Settings()
 broker = RabbitBroker(f"amqp://{env.rabbitmq_user}:{env.rabbitmq_password}@{env.rabbitmq_host}:{env.rabbitmq_port}/")
 app = FastStream(broker)
 
-channel = RabbitQueue(name=env.embed_queue_name, durable=True)
+embed_channel = RabbitQueue(name=env.embed_queue_name, durable=True)
 
 
 def get_storage() -> ElasticsearchStorageHandler:
@@ -34,8 +34,8 @@ def get_model_db() -> SentenceTransformerDB:
     return model_db
 
 
-@broker.subscriber(queue=channel)
-def embed(
+@broker.subscriber(queue=embed_channel)
+async def embed(
     queue_item: EmbedQueueItem,
     elasticsearch_storage_handler: ElasticsearchStorageHandler = Depends(get_storage),
     model_db: SentenceTransformerDB = Depends(get_model_db),
