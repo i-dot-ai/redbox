@@ -1,7 +1,7 @@
 import logging
+from contextlib import asynccontextmanager
 
-from fast_depends import Depends
-from faststream import FastStream
+from faststream import FastStream, ContextRepo, Context
 from faststream.rabbit import RabbitBroker, RabbitQueue
 
 from redbox.model_db import SentenceTransformerDB
@@ -15,24 +15,7 @@ log = logging.getLogger()
 env = Settings()
 
 
-def get_s3():
-    return env.s3_client()
-
-
-def get_storage() -> ElasticsearchStorageHandler:
-    es = env.elasticsearch_client()
-    storage_handler = ElasticsearchStorageHandler(es_client=es, root_index="redbox-data")
-    return storage_handler
-
-
-def get_chunker() -> FileChunker:
-    models = SentenceTransformerDB()
-    chunker = FileChunker(embedding_model=models[env.embedding_model])
-    return chunker
-
-
 broker = RabbitBroker(env.rabbit_url)
-app = FastStream(broker)
 
 ingest_channel = RabbitQueue(name=env.ingest_queue_name, durable=True)
 
@@ -41,12 +24,28 @@ embed_channel = RabbitQueue(name=env.embed_queue_name, durable=True)
 publisher = broker.publisher(embed_channel, exchange="redbox-core-exchange")
 
 
+@asynccontextmanager
+async def lifespan(context: ContextRepo):
+    s3 = env.s3_client()
+    es = env.elasticsearch_client()
+    storage_handler = ElasticsearchStorageHandler(es_client=es, root_index="redbox-data")
+    model_db = SentenceTransformerDB()
+    chunker = FileChunker(embedding_model=model_db[env.embedding_model])
+
+    context.set_global("s3", s3)
+    context.set_global("storage_handler", storage_handler)
+    context.set_global("chunker", chunker)
+
+    yield
+    # Clean up the ML models and release the resources
+
+
 @broker.subscriber(queue=ingest_channel)
 async def ingest(
     file: File,
-    s3_client=Depends(get_s3),
-    elasticsearch_storage_handler: ElasticsearchStorageHandler = Depends(get_storage),
-    chunker: FileChunker = Depends(get_chunker),
+    s3_client=Context(),
+    elasticsearch_storage_handler: ElasticsearchStorageHandler = Context(),
+    chunker: FileChunker = Context(),
 ):
     """
     1. Chunks file
@@ -82,3 +81,6 @@ async def ingest(
         logging.info(f"Writing chunk to storage for chunk uuid: {chunk.uuid}")
         publisher.publish(queue_item)
     return items
+
+
+app = FastStream(broker, lifespan=lifespan)

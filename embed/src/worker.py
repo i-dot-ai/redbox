@@ -1,8 +1,7 @@
 import logging
+from contextlib import asynccontextmanager
 from datetime import datetime
-
-from fast_depends import Depends
-from faststream import FastStream
+from faststream import FastStream, ContextRepo, Context
 from faststream.rabbit import RabbitBroker, RabbitQueue
 
 from redbox.model_db import SentenceTransformerDB
@@ -18,37 +17,41 @@ env = Settings()
 
 
 broker = RabbitBroker(env.rabbit_url)
-app = FastStream(broker)
 
 embed_channel = RabbitQueue(name=env.embed_queue_name, durable=True)
 
 
-def get_storage() -> ElasticsearchStorageHandler:
+@asynccontextmanager
+async def lifespan(context: ContextRepo):
     es = env.elasticsearch_client()
     storage_handler = ElasticsearchStorageHandler(es_client=es, root_index="redbox-data")
-    return storage_handler
-
-
-def get_model_db() -> SentenceTransformerDB:
     model_db = SentenceTransformerDB()
-    return model_db
+
+    context.set_global("storage_handler", storage_handler)
+    context.set_global("model_db", model_db)
+
+    yield
+    # Clean up the ML models and release the resources
 
 
 @broker.subscriber(queue=embed_channel)
 async def embed(
     queue_item: EmbedQueueItem,
-    elasticsearch_storage_handler: ElasticsearchStorageHandler = Depends(get_storage),
-    model_db: SentenceTransformerDB = Depends(get_model_db),
+    storage_handler: ElasticsearchStorageHandler = Context(),
+    model_db: SentenceTransformerDB = Context(),
 ):
     """
     1. embed queue-item text
     2. update related chunk on ES
     """
 
-    chunk: Chunk = elasticsearch_storage_handler.read_item(queue_item.chunk_uuid, "Chunk")
+    chunk: Chunk = storage_handler.read_item(queue_item.chunk_uuid, "Chunk")
     embedded_sentences = model_db.embed_sentences(queue_item.model, [chunk.text])
     if len(embedded_sentences.data) != 1:
         logging.error(f"expected just 1 embedding but got {len(embedded_sentences.data)}")
         return
     chunk.embedding = embedded_sentences.data[0].embedding
-    elasticsearch_storage_handler.update_item(chunk.uuid, chunk)
+    storage_handler.update_item(chunk.uuid, chunk)
+
+
+app = FastStream(broker, lifespan=lifespan)

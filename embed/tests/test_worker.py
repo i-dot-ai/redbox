@@ -1,8 +1,8 @@
 import pytest
 
 from redbox.models import Settings
-from embed.src.worker import broker, embed_channel
-from faststream.rabbit import TestRabbitBroker
+from embed.src.worker import broker, embed_channel, app
+from faststream.rabbit import TestRabbitBroker, TestApp
 
 env = Settings()
 
@@ -17,7 +17,7 @@ async def test_embed_item_callback(elasticsearch_storage_handler, embed_queue_it
     unembedded_chunk = elasticsearch_storage_handler.read_item(embed_queue_item.chunk_uuid, "Chunk")
     assert unembedded_chunk.embedding is None
 
-    async with TestRabbitBroker(broker) as br:
+    async with TestRabbitBroker(broker) as br, TestApp(app):
         await br.publish(embed_queue_item, queue=embed_channel)
 
     embedded_chunk = elasticsearch_storage_handler.read_item(embed_queue_item.chunk_uuid, "Chunk")
