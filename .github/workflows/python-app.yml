@@ -48,7 +48,7 @@ jobs:
         mkdir -p data/elastic/
         chmod 777 data/elastic/
         cp .env.test .env
-        docker compose up -d --wait elasticsearch minio
+        docker compose up -d --wait elasticsearch
 
         poetry install --no-root --no-ansi --with dev --without ai,streamlit-app,api,worker,ingest
         poetry run download-model

@@ -23,10 +23,11 @@ def test_post_file_upload(s3_client, app_client, elasticsearch_storage_handler, 
     When I POST it to /file
     I Expect to see it persisted in s3 and elastic-search
     """
+    file_name = file_pdf_path.split("/")[-1]
     with open(file_pdf_path, "rb") as f:
-        response = app_client.post("/file", files={"file": ("filename", f, "pdf")})
+        response = app_client.post("/file", files={"file": (file_name, f, "pdf")})
     assert response.status_code == 200
-    assert s3_client.get_object(Bucket=bucket, Key=file_pdf_path.split("/")[-1])
+    assert s3_client.get_object(Bucket=bucket, Key=file_name)
     json_response = response.json()
     assert (
         elasticsearch_storage_handler.read_item(
