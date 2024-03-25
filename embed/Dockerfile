@@ -32,6 +32,7 @@ RUN poetry install --no-root --no-ansi --with worker,api --without ai,ingest,dev
 ADD redbox/ /app/redbox
 ADD embed/ /app/embed
 ADD download_embedder.py /app/
+ADD .env.example /app/.env
 
 # Download the model
 RUN python download_embedder.py

@@ -27,6 +27,7 @@ COPY --from=builder ${VIRTUAL_ENV} ${VIRTUAL_ENV}
 ADD core_api/src/app.py /app/app.py
 ADD download_embedder.py /app/
 ADD redbox/ /app/redbox
+ADD .env.example /app/.env
 
 # Download the model
 RUN type=cache python download_embedder.py
