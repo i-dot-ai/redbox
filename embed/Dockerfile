@@ -1,4 +1,6 @@
 FROM python:3.11-buster as builder
+ARG EMBEDDING_MODEL
+
 
 RUN pip install poetry
 
@@ -9,7 +11,6 @@ ENV POETRY_NO_INTERACTION=1 \
 
 WORKDIR /app/
 ADD pyproject.toml poetry.lock ./
-ADD download_embedder.py /app/
 
 RUN --mount=type=cache,target=$POETRY_CACHE_DIR poetry install --no-root --no-ansi --with worker,api --without ai,ingest,dev,streamlit-app
 
@@ -32,10 +33,9 @@ RUN poetry install --no-root --no-ansi --with worker,api --without ai,ingest,dev
 ADD redbox/ /app/redbox
 ADD embed/ /app/embed
 ADD download_embedder.py /app/
-ADD .env.example /app/.env
 
 # Download the model
-RUN python download_embedder.py
+RUN python download_embedder.py --model_name ${EMBEDDING_MODEL}
 
 EXPOSE 5000
 

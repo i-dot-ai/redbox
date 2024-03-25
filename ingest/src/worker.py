@@ -32,7 +32,7 @@ async def lifespan(context: ContextRepo):
     s3_client = env.s3_client()
     es = env.elasticsearch_client()
     storage_handler = ElasticsearchStorageHandler(es_client=es, root_index="redbox-data")
-    model_db = SentenceTransformerDB()
+    model_db = SentenceTransformerDB(env.embedding_model)
     chunker = FileChunker(embedding_model=model_db[env.embedding_model])
 
     context.set_global("s3_client", s3_client)

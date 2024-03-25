@@ -25,10 +25,8 @@ from faststream.rabbit.fastapi import RabbitRouter
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger()
 
-model_db = SentenceTransformerDB()
-
-
 env = Settings()
+model_db = SentenceTransformerDB(env.embedding_model)
 
 
 # === Object Store ===
