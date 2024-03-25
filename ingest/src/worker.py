@@ -2,7 +2,7 @@ import logging
 from contextlib import asynccontextmanager
 
 from faststream import FastStream, ContextRepo, Context
-from faststream.rabbit import RabbitBroker, RabbitQueue
+from faststream.rabbit import RabbitBroker, RabbitQueue, RabbitExchange
 
 from redbox.model_db import SentenceTransformerDB
 from redbox.models import EmbedQueueItem, File, ProcessingStatusEnum, Settings
@@ -21,7 +21,10 @@ ingest_channel = RabbitQueue(name=env.ingest_queue_name, durable=True)
 
 embed_channel = RabbitQueue(name=env.embed_queue_name, durable=True)
 
-publisher = broker.publisher(embed_channel, exchange="redbox-core-exchange")
+publisher = broker.publisher(
+    embed_channel,
+    exchange=RabbitExchange("redbox-core-exchange", durable=True),
+)
 
 
 @asynccontextmanager

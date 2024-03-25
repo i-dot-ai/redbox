@@ -25,10 +25,10 @@ embed_channel = RabbitQueue(name=env.embed_queue_name, durable=True, routing_key
 async def lifespan(context: ContextRepo):
     es = env.elasticsearch_client()
     storage_handler = ElasticsearchStorageHandler(es_client=es, root_index="redbox-data")
-    model_db = SentenceTransformerDB()
+    model = SentenceTransformerDB()
 
     context.set_global("storage_handler", storage_handler)
-    context.set_global("model_db", model_db)
+    context.set_global("model", model)
 
     yield
 
@@ -37,7 +37,7 @@ async def lifespan(context: ContextRepo):
 async def embed(
     queue_item: EmbedQueueItem,
     storage_handler: ElasticsearchStorageHandler = Context(),
-    model_db: SentenceTransformerDB = Context(),
+    model: SentenceTransformerDB = Context(),
 ):
     """
     1. embed queue-item text
@@ -45,7 +45,7 @@ async def embed(
     """
 
     chunk: Chunk = storage_handler.read_item(queue_item.chunk_uuid, "Chunk")
-    embedded_sentences = model_db.embed_sentences(queue_item.model, [chunk.text])
+    embedded_sentences = model.embed_sentences(queue_item.model, [chunk.text])
     if len(embedded_sentences.data) != 1:
         logging.error(f"expected just 1 embedding but got {len(embedded_sentences.data)}")
         return

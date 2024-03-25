@@ -4,7 +4,7 @@ from uuid import UUID
 
 from fastapi import FastAPI, HTTPException, UploadFile
 from fastapi.responses import RedirectResponse
-from faststream.rabbit import RabbitBroker, RabbitQueue
+from faststream.rabbit import RabbitQueue, RabbitExchange
 
 from redbox.model_db import SentenceTransformerDB
 from redbox.models import (
@@ -17,6 +17,8 @@ from redbox.models import (
     StatusResponse,
 )
 from redbox.storage import ElasticsearchStorageHandler
+
+from faststream.rabbit.fastapi import RabbitRouter
 
 # === Logging ===
 
@@ -40,11 +42,15 @@ if env.queue != "rabbitmq":
     raise NotImplementedError("SQS is not yet implemented")
 
 
-broker = RabbitBroker(env.rabbit_url)
+router = RabbitRouter(env.rabbit_url)
 
 ingest_channel = RabbitQueue(name=env.ingest_queue_name, durable=True)
 
-publisher = broker.publisher(queue=ingest_channel, exchange="redbox-core-exchange", routing_key=env.ingest_queue_name)
+publisher = router.publisher(
+    queue=ingest_channel,
+    exchange=RabbitExchange("redbox-core-exchange", durable=True),
+    routing_key=env.ingest_queue_name,
+)
 
 
 # === Storage ===
@@ -72,7 +78,10 @@ app = FastAPI(
     docs_url="/docs",
     redoc_url="/redoc",
     openapi_url="/openapi.json",
+    lifespan=router.lifespan_context,
 )
+
+app.include_router(router)
 
 # === API Routes ===
 
@@ -145,7 +154,7 @@ async def create_upload_file(file: UploadFile, ingest=True) -> File:
     storage_handler.write_item(file_record)
 
     if ingest:
-        ingest_file(file_record.uuid)
+        await ingest_file(file_record.uuid)
 
     return file_record
 
@@ -180,7 +189,7 @@ def delete_file(file_uuid: str) -> File:
 
 
 @app.post("/file/{file_uuid}/ingest", response_model=File, tags=["file"])
-def ingest_file(file_uuid: str) -> File:
+async def ingest_file(file_uuid: str) -> File:
     """Trigger the ingest process for a file to a queue.
 
     Args:
@@ -194,7 +203,8 @@ def ingest_file(file_uuid: str) -> File:
     file.processing_status = ProcessingStatusEnum.parsing
     storage_handler.update_item(item_uuid=file.uuid, item=file)
 
-    publisher.publish(file)
+    log.info(f"publishing {file.uuid}")
+    await publisher.publish(file)
 
     return file
 
