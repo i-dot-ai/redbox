@@ -81,7 +81,7 @@ async def ingest(
     for chunk in chunks:
         queue_item = EmbedQueueItem(model=env.embedding_model, chunk_uuid=chunk.uuid)
         logging.info(f"Writing chunk to storage for chunk uuid: {chunk.uuid}")
-        publisher.publish(queue_item)
+        await publisher.publish(queue_item)
     return items
 
 

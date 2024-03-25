@@ -43,10 +43,11 @@ test-django:
 	docker compose run django-app poetry run pytest django_app/tests/ --ds redbox_app.settings -v --cov=redbox_app.redbox_core --cov-fail-under 10
 
 test-integration:
-	docker compose down
+	docker-compose down
 	cp .env.example .env
-	docker compose up -d --build --force-recreate --no-deps core-api ingest embed rabbitmq elasticsearch minio
+	docker-compose up -d --build --force-recreate --no-deps core-api ingest embed rabbitmq elasticsearch minio
 	poetry install --no-root --no-ansi --with dev --without ai,streamlit-app,api,worker,ingest
+	sleep 10
 	poetry run pytest tests
 
 lint:
