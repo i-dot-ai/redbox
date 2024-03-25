@@ -17,4 +17,4 @@
 
 - [ ] I have added any new ENV vars in all deployed environments
 - [ ] I have tested any code added or changed
-- [ ] I have run integration tests locally.
+- [ ] I have run integration tests locally

@@ -1,7 +1,6 @@
 import json
 from datetime import date, datetime
 
-import pydantic
 import streamlit as st
 from langchain.schema import AIMessage, HumanMessage, SystemMessage
 from streamlit_feedback import streamlit_feedback

@@ -48,7 +48,7 @@ jobs:
         mkdir -p data/elastic/
         chmod 777 data/elastic/
         cp .env.test .env
-        docker compose up -d --wait elasticsearch minio rabbitmq
+        docker compose up -d --wait elasticsearch minio
 
         poetry install --no-root --no-ansi --with dev --without ai,streamlit-app,api,worker,ingest
         poetry run download-model
@@ -108,7 +108,6 @@ jobs:
         chmod 777 data/elastic/
         cp .env.integration .env
         docker compose up -d --wait core-api embed ingest
-
 
     - name: Test integration with pytest
       run: |

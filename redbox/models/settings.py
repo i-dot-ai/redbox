@@ -1,7 +1,6 @@
 from typing import Literal, Optional
 
 import boto3
-import pika
 from elasticsearch import Elasticsearch
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -104,16 +103,7 @@ class Settings(BaseSettings):
         )
         return sqs
 
-    def blocking_connection(self) -> pika.BlockingConnection:
-        connection = pika.BlockingConnection(
-            pika.ConnectionParameters(
-                host=self.rabbitmq_host,
-                port=self.rabbitmq_port,
-                credentials=pika.PlainCredentials(
-                    self.rabbitmq_user, self.rabbitmq_password
-                ),
-                connection_attempts=5,
-                retry_delay=5,
-            )
-        )
-        return connection
+    @property
+    def rabbit_url(self) -> str:
+        return f"amqp://{self.rabbitmq_user}:{self.rabbitmq_password}@{self.rabbitmq_host}:{self.rabbitmq_port}/"
+

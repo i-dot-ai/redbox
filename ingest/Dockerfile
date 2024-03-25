@@ -14,6 +14,7 @@ ADD download_embedder.py /app/
 RUN --mount=type=cache,target=$POETRY_CACHE_DIR poetry install --no-root --no-ansi --with worker,ingest --without ai,dev,api,streamlit-app
 
 FROM python:3.11-slim-buster as runtime
+ARG EMBEDDING_MODEL
 
 ENV VIRTUAL_ENV=/app/.venv \
     PATH="/app/.venv/bin:$PATH"
@@ -22,12 +23,10 @@ COPY --from=builder ${VIRTUAL_ENV} ${VIRTUAL_ENV}
 
 WORKDIR /app/
 ADD redbox/ /app/redbox
-ADD ingest/src/app.py /app/app.py
+ADD ingest/ /app/ingest
 ADD download_embedder.py /app/
-ADD model_db.py /app/
 
 # Download the model
-RUN python download_embedder.py
+RUN python download_embedder.py --model_name ${EMBEDDING_MODEL}
 
-# Run pika worker
-CMD ["python", "app.py"]
+CMD ["faststream", "run", "ingest.src.worker:app"]
