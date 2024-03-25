@@ -29,4 +29,4 @@ ADD .env.example /app/.env
 # Download the model
 RUN python download_embedder.py
 
-CMD ["faststream", "run", "embed.src.worker:app"]
+CMD ["faststream", "run", "ingest.src.worker:app"]

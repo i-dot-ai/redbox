@@ -18,7 +18,7 @@ env = Settings()
 
 broker = RabbitBroker(env.rabbit_url)
 
-embed_channel = RabbitQueue(name=env.embed_queue_name, durable=True)
+embed_channel = RabbitQueue(name=env.embed_queue_name, durable=True, routing_key=env.ingest_queue_name)
 
 
 @asynccontextmanager
