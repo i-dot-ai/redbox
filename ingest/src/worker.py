@@ -37,7 +37,6 @@ async def lifespan(context: ContextRepo):
     context.set_global("chunker", chunker)
 
     yield
-    # Clean up the ML models and release the resources
 
 
 @broker.subscriber(queue=ingest_channel)

@@ -31,7 +31,6 @@ async def lifespan(context: ContextRepo):
     context.set_global("model_db", model_db)
 
     yield
-    # Clean up the ML models and release the resources
 
 
 @broker.subscriber(queue=embed_channel)
