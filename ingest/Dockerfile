@@ -1,6 +1,4 @@
 FROM python:3.11-buster as builder
-ARG EMBEDDING_MODEL
-
 
 RUN pip install poetry
 
@@ -11,11 +9,17 @@ ENV POETRY_NO_INTERACTION=1 \
 
 WORKDIR /app/
 ADD pyproject.toml poetry.lock ./
+ADD download_embedder.py /app/
 
 RUN --mount=type=cache,target=$POETRY_CACHE_DIR poetry install --no-root --no-ansi --with worker,ingest --without ai,dev,api,streamlit-app
 
+FROM python:3.11-slim-buster as runtime
+ARG EMBEDDING_MODEL
+
 ENV VIRTUAL_ENV=/app/.venv \
     PATH="/app/.venv/bin:$PATH"
+
+COPY --from=builder ${VIRTUAL_ENV} ${VIRTUAL_ENV}
 
 WORKDIR /app/
 ADD redbox/ /app/redbox
