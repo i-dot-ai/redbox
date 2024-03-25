@@ -1,10 +1,8 @@
 import pytest
 from elasticsearch import NotFoundError
 
-from core_api.src.app import env, publisher, broker
+from core_api.src.app import env, publisher
 from redbox.models import ProcessingStatusEnum
-
-from faststream.rabbit import TestRabbitBroker
 
 
 def test_get_health(app_client):
@@ -87,8 +85,7 @@ async def test_ingest_file(app_client, stored_file, elasticsearch_storage_handle
     )
     assert response.status_code == 200
 
-    async with TestRabbitBroker(broker):
-        publisher.mock.called_once_with(stored_file)
+    publisher.mock.called_once_with(stored_file)
 
 
 def test_read_all_models(client):
