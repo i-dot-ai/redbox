@@ -4,8 +4,6 @@ from typing import Generator, TypeVar
 import pytest
 from elasticsearch import Elasticsearch
 from fastapi.testclient import TestClient
-from pika import BlockingConnection
-from pika.adapters.blocking_connection import BlockingChannel
 from sentence_transformers import SentenceTransformer
 
 from core_api.src.app import app as application
@@ -112,21 +110,3 @@ def file_pdf_path() -> YieldFixture[str]:
         "Cabinet Office - Wikipedia.pdf",
     )
     yield path
-
-
-@pytest.fixture
-def rabbitmq_connection() -> YieldFixture[BlockingConnection]:
-    connection = env.blocking_connection()
-    yield connection
-    connection.close()
-
-
-@pytest.fixture
-def rabbitmq_channel(rabbitmq_connection: BlockingConnection) -> YieldFixture[BlockingChannel]:
-    channel = rabbitmq_connection.channel()
-    channel.queue_declare(
-        queue=env.ingest_queue_name,
-        durable=True,
-    )
-    yield channel
-    channel.close()

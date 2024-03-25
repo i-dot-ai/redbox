@@ -15,27 +15,23 @@ RUN --mount=type=cache,target=$POETRY_CACHE_DIR poetry install --no-root --no-an
 
 
 FROM python:3.11-slim-buster as runtime
-
-RUN pip install poetry
-
-COPY --from=builder ${VIRTUAL_ENV} ${VIRTUAL_ENV}
+ARG EMBEDDING_MODEL
 
 ENV VIRTUAL_ENV=/app/.venv \
     PATH="/app/.venv/bin:$PATH"
 
-WORKDIR /app/
-ADD pyproject.toml poetry.lock ./
+COPY --from=builder ${VIRTUAL_ENV} ${VIRTUAL_ENV}
 
-RUN poetry install --no-root --no-ansi --with worker,api --without ai,ingest,dev,streamlit-app
+WORKDIR /app/
 
 # Add the rest of the files
 ADD redbox/ /app/redbox
-ADD embed/src/app.py /app/app.py
+ADD embed/ /app/embed
 ADD download_embedder.py /app/
-
-# Download the model
-RUN python download_embedder.py
 
 EXPOSE 5000
 
-CMD ["python", "app.py"]
+# Download the model
+RUN python download_embedder.py --model_name ${EMBEDDING_MODEL}
+
+CMD ["faststream", "run", "embed.src.worker:app"]

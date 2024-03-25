@@ -17,6 +17,7 @@ ADD redbox/ /app/redbox
 RUN --mount=type=cache,target=$POETRY_CACHE_DIR poetry install --no-root --no-ansi --with api --without ai,ingest,dev,worker,streamlit-app
 
 FROM python:3.11-slim-buster as runtime
+ARG EMBEDDING_MODEL
 
 WORKDIR /app/
 
@@ -29,7 +30,7 @@ ADD download_embedder.py /app/
 ADD redbox/ /app/redbox
 
 # Download the model
-RUN type=cache python download_embedder.py
+RUN type=cache python download_embedder.py --model_name ${EMBEDDING_MODEL}
 
 # Run FastAPI
 EXPOSE 5002

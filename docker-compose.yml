@@ -62,6 +62,8 @@ services:
     build:
       context: .
       dockerfile: embed/Dockerfile
+      args:
+        - EMBEDDING_MODEL=${EMBEDDING_MODEL:-}
     ports:
       - 5000:5000
     env_file:
@@ -76,6 +78,8 @@ services:
     build:
       context: .
       dockerfile: ingest/Dockerfile
+      args:
+        - EMBEDDING_MODEL=${EMBEDDING_MODEL:-}
     env_file:
       - .env
     depends_on:
@@ -90,6 +94,8 @@ services:
     build:
       context: .
       dockerfile: core_api/Dockerfile
+      args:
+        - EMBEDDING_MODEL=${EMBEDDING_MODEL:-}
     ports:
       - 5002:5002
     environment:
