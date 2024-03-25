@@ -15,11 +15,8 @@ ADD pyproject.toml poetry.lock ./
 RUN --mount=type=cache,target=$POETRY_CACHE_DIR poetry install --no-root --no-ansi --with worker,api --without ai,ingest,dev,streamlit-app
 
 
-FROM python:3.11-slim-buster as runtime
-
 RUN pip install poetry
 
-COPY --from=builder ${VIRTUAL_ENV} ${VIRTUAL_ENV}
 
 ENV VIRTUAL_ENV=/app/.venv \
     PATH="/app/.venv/bin:$PATH"
@@ -35,7 +32,7 @@ ADD embed/ /app/embed
 ADD download_embedder.py /app/
 
 # Download the model
-RUN python download_embedder.py --model_name ${EMBEDDING_MODEL}
+RUN type=cache python download_embedder.py --model_name ${EMBEDDING_MODEL}
 
 EXPOSE 5000
 
