@@ -1,10 +1,10 @@
 import pytest
 from elasticsearch import NotFoundError
 
-from core_api.src.app import env, publisher, broker
-from redbox.models import ProcessingStatusEnum
-
 from faststream.rabbit import TestRabbitBroker
+
+from core_api.src.app import env, publisher, router
+from redbox.models import ProcessingStatusEnum
 
 
 def test_get_health(app_client):
@@ -17,7 +17,8 @@ def test_get_health(app_client):
     assert response.status_code == 200
 
 
-def test_post_file_upload(s3_client, app_client, elasticsearch_storage_handler, bucket, file_pdf_path):
+@pytest.mark.asyncio
+async def test_post_file_upload(s3_client, app_client, elasticsearch_storage_handler, bucket, file_pdf_path):
     """
     Given a new file
     When I POST it to /file
@@ -25,7 +26,8 @@ def test_post_file_upload(s3_client, app_client, elasticsearch_storage_handler, 
     """
     file_name = file_pdf_path.split("/")[-1]
     with open(file_pdf_path, "rb") as f:
-        response = app_client.post("/file", files={"file": (file_name, f, "pdf")})
+        async with TestRabbitBroker(router.broker):
+            response = app_client.post("/file", files={"file": (file_name, f, "pdf")})
     assert response.status_code == 200
     assert s3_client.get_object(Bucket=bucket, Key=file_name)
     json_response = response.json()
@@ -77,18 +79,18 @@ async def test_ingest_file(app_client, stored_file, elasticsearch_storage_handle
     When I POST to /file/uuid/ingest
     I Expect to see a message on the ingest-queue, THIS IS NOT WORKING
     """
-    response = app_client.post(f"/file/{stored_file.uuid}/ingest/")
+    async with TestRabbitBroker(router.broker):
+        response = app_client.post(f"/file/{stored_file.uuid}/ingest/")
 
-    assert (
-        elasticsearch_storage_handler.read_item(
-            item_uuid=stored_file.uuid,
-            model_type="file",
-        ).processing_status
-        is ProcessingStatusEnum.parsing
-    )
-    assert response.status_code == 200
+        assert (
+            elasticsearch_storage_handler.read_item(
+                item_uuid=stored_file.uuid,
+                model_type="file",
+            ).processing_status
+            is ProcessingStatusEnum.parsing
+        )
+        assert response.status_code == 200
 
-    async with TestRabbitBroker(broker):
         publisher.mock.called_once_with(stored_file)
 
 

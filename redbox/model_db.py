@@ -5,7 +5,7 @@ from uuid import uuid4
 
 from sentence_transformers import SentenceTransformer
 
-from redbox.models import ModelInfo, Settings
+from redbox.models import ModelInfo
 from redbox.models.llm import Embedding, EmbeddingResponse
 
 MODEL_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "models")
@@ -13,15 +13,13 @@ MODEL_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "mod
 log = logging.getLogger()
 log.setLevel(logging.INFO)
 
-env = Settings()
-
 
 class SentenceTransformerDB(collections.UserDict):
-    def __init__(self):
+    def __init__(self, model_name):
         super().__init__()
-        log.info(f"💾 Downloading Sentence Transformer Embedder: {env.embedding_model}")
-        self[env.embedding_model] = SentenceTransformer(env.embedding_model, cache_folder=MODEL_PATH)
-        log.info(f"✅ Downloaded Sentence Transformer Embedder: {env.embedding_model} to {MODEL_PATH}")
+        log.info(f"💾 Downloading Sentence Transformer Embedder: {model_name}")
+        self[model_name] = SentenceTransformer(model_name, cache_folder=MODEL_PATH)
+        log.info(f"✅ Downloaded Sentence Transformer Embedder: {model_name} to {MODEL_PATH}")
 
     def __getitem__(self, model_name: str) -> SentenceTransformer:
         return super().__getitem__(model_name)
