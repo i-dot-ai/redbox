@@ -26,13 +26,13 @@ publisher = broker.publisher(embed_channel, exchange="redbox-core-exchange")
 
 @asynccontextmanager
 async def lifespan(context: ContextRepo):
-    s3 = env.s3_client()
+    s3_client = env.s3_client()
     es = env.elasticsearch_client()
     storage_handler = ElasticsearchStorageHandler(es_client=es, root_index="redbox-data")
     model_db = SentenceTransformerDB()
     chunker = FileChunker(embedding_model=model_db[env.embedding_model])
 
-    context.set_global("s3", s3)
+    context.set_global("s3_client", s3_client)
     context.set_global("storage_handler", storage_handler)
     context.set_global("chunker", chunker)
 
@@ -44,7 +44,7 @@ async def lifespan(context: ContextRepo):
 async def ingest(
     file: File,
     s3_client=Context(),
-    elasticsearch_storage_handler: ElasticsearchStorageHandler = Context(),
+    storage_handler: ElasticsearchStorageHandler = Context(),
     chunker: FileChunker = Context(),
 ):
     """
@@ -63,7 +63,7 @@ async def ingest(
     )
 
     file.processing_status = ProcessingStatusEnum.chunking
-    elasticsearch_storage_handler.update_item(file.uuid, file)
+    storage_handler.update_item(file.uuid, file)
 
     chunks = chunker.chunk_file(
         file=file,
@@ -73,7 +73,7 @@ async def ingest(
 
     logging.info(f"Writing {len(chunks)} chunks to storage for file uuid: {file.uuid}")
 
-    items = elasticsearch_storage_handler.write_items(chunks)
+    items = storage_handler.write_items(chunks)
     logging.info(f"written {len(items)} chunks to elasticsearch")
 
     for chunk in chunks:
