@@ -32,8 +32,8 @@ async def lifespan(context: ContextRepo):
     s3_client = env.s3_client()
     es = env.elasticsearch_client()
     storage_handler = ElasticsearchStorageHandler(es_client=es, root_index="redbox-data")
-    model_db = SentenceTransformerDB(env.embedding_model)
-    chunker = FileChunker(embedding_model=model_db[env.embedding_model])
+    model_db = SentenceTransformerDB()
+    chunker = FileChunker(embedding_model=model_db)
 
     context.set_global("s3_client", s3_client)
     context.set_global("storage_handler", storage_handler)
@@ -79,7 +79,7 @@ async def ingest(
     logging.info(f"written {len(items)} chunks to elasticsearch")
 
     for chunk in chunks:
-        queue_item = EmbedQueueItem(model=env.embedding_model, chunk_uuid=chunk.uuid)
+        queue_item = EmbedQueueItem(chunk_uuid=chunk.uuid)
         logging.info(f"Writing chunk to storage for chunk uuid: {chunk.uuid}")
         await publisher.publish(queue_item)
     return items

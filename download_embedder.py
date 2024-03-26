@@ -20,7 +20,7 @@ def download():
     args = parser.parse_args()
 
     if args.model_name is None:
-        logging.error("❓ No model name provided. Attempting to load EMBEDDING_MODEL from environment")
+        logging.error("❓ No model name provided")
         return
     else:
         logging.info(f"🔎 Model name provided: {args.model_name}")
