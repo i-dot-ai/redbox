@@ -15,16 +15,7 @@ log.setLevel(logging.INFO)
 
 
 class SentenceTransformerDB(SentenceTransformer):
-    def __init__(self, model_name: Optional[str] = None):
-        if model_name is None:
-            try:
-                model_name = next(
-                    dir_name.split("--")[-1]
-                    for dir_name in os.listdir(MODEL_PATH)
-                    if dir_name.startswith("models--sentence-transformers--")
-                )
-            except StopIteration:
-                raise StopIteration("no model found on disk")
+    def __init__(self, model_name: str):
         super().__init__(model_name, cache_folder=MODEL_PATH)
         self.model_name = model_name
 
