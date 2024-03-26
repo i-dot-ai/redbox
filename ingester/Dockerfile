@@ -11,7 +11,7 @@ WORKDIR /app/
 ADD pyproject.toml poetry.lock ./
 ADD download_embedder.py /app/
 
-RUN --mount=type=cache,target=$POETRY_CACHE_DIR poetry install --no-root --no-ansi --with worker,ingest --without ai,dev,api,streamlit-app
+RUN --mount=type=cache,target=$POETRY_CACHE_DIR poetry install --no-root --no-ansi --with worker,ingester --without ai,dev,api,streamlit-app
 
 FROM python:3.11-slim-buster as runtime
 ARG EMBEDDING_MODEL
@@ -23,7 +23,7 @@ COPY --from=builder ${VIRTUAL_ENV} ${VIRTUAL_ENV}
 
 WORKDIR /app/
 ADD redbox/ /app/redbox
-ADD ingest/ /app/ingest
+ADD ingester/ /app/ingester
 ADD download_embedder.py /app/
 
 # Download the model

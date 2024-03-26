@@ -33,7 +33,7 @@ sentence-transformers = "^2.6.0"
 [tool.poetry.group.worker.dependencies]
 pika = "^1.3.2"
 
-[tool.poetry.group.ingest.dependencies]
+[tool.poetry.group.ingester.dependencies]
 unstructured = {version = "^0.12.6", extras = ["all-docs"]}
 opencv-python-headless = "^4.9.0.80"
 sentence-transformers = "^2.6.0"

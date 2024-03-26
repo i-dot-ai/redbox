@@ -9,7 +9,7 @@ on:
       - redbox/**
       - embed/**
       - core_api/**
-      - ingest/**
+      - ingester/**
       - Makefile
       - .github/**
     branches:
@@ -50,7 +50,7 @@ jobs:
         cp .env.test .env
         docker compose up -d --wait elasticsearch minio
 
-        poetry install --no-root --no-ansi --with dev --without ai,streamlit-app,api,worker,ingest
+        poetry install --no-root --no-ansi --with dev --without ai,streamlit-app,api,worker,ingester
         poetry run download-model
 
     - name: Test redbox with pytest
@@ -61,9 +61,9 @@ jobs:
       run: |
         make test-embed
 
-    - name: Test ingest with pytest
+    - name: Test ingester with pytest
       run: |
-        make test-ingest
+        make test-ingester
 
     - name: Test core with pytest
       run: |

@@ -73,11 +73,11 @@ services:
     networks:
       - redbox-app-network
     restart: unless-stopped
-  ingest:
-    image: redbox-ingest:latest
+  ingester:
+    image: redbox-ingester:latest
     build:
       context: .
-      dockerfile: ingest/Dockerfile
+      dockerfile: ingester/Dockerfile
       args:
         - EMBEDDING_MODEL=${EMBEDDING_MODEL:-}
     env_file:

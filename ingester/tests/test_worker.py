@@ -1,6 +1,6 @@
 import pytest
 
-from ingest.src.worker import broker, ingest_channel, app
+from ingester.src.worker import broker, ingest_channel, app
 from redbox.models import ProcessingStatusEnum
 from redbox.storage import ElasticsearchStorageHandler
 
