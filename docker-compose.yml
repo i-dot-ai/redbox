@@ -57,11 +57,11 @@ services:
       - minio
     networks:
       - redbox-app-network
-  embed:
-    image: redbox-embed:latest
+  embedder:
+    image: redbox-embedder:latest
     build:
       context: .
-      dockerfile: embed/Dockerfile
+      dockerfile: embedder/Dockerfile
       args:
         - EMBEDDING_MODEL=${EMBEDDING_MODEL:-}
     ports:
@@ -73,11 +73,11 @@ services:
     networks:
       - redbox-app-network
     restart: unless-stopped
-  ingest:
-    image: redbox-ingest:latest
+  ingester:
+    image: redbox-ingester:latest
     build:
       context: .
-      dockerfile: ingest/Dockerfile
+      dockerfile: ingester/Dockerfile
       args:
         - EMBEDDING_MODEL=${EMBEDDING_MODEL:-}
     env_file:

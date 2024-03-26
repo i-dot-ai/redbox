@@ -45,7 +45,7 @@ For a quick start, you can use GitHub Codespaces to run the project in a cloud-b
 ```commandline
 docker down
 cp .env.example .env
-docker compose up -d ingest embed core-api
+docker compose up -d ingester embedder core-api
 make test-integration
 ```
 
@@ -68,12 +68,12 @@ redbox-copilot/
 │  ├── tests/
 │  ├── manage.py
 │  └── Dockerfile
-├── embed
+├── embedder
 │  ├── src/
 │  │  └── app.py
 │  ├── tests/
 │  └── Dockerfile
-├── ingest
+├── ingester
 │  ├── src/
 │  │  └── app.py
 │  ├── tests/

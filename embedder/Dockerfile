@@ -11,7 +11,7 @@ WORKDIR /app/
 ADD pyproject.toml poetry.lock ./
 ADD download_embedder.py /app/
 
-RUN --mount=type=cache,target=$POETRY_CACHE_DIR poetry install --no-root --no-ansi --with worker,api --without ai,ingest,dev,streamlit-app
+RUN --mount=type=cache,target=$POETRY_CACHE_DIR poetry install --no-root --no-ansi --with worker,api --without ai,ingester,dev,streamlit-app
 
 
 FROM python:3.11-slim-buster as runtime
@@ -26,7 +26,7 @@ WORKDIR /app/
 
 # Add the rest of the files
 ADD redbox/ /app/redbox
-ADD embed/ /app/embed
+ADD embedder/ /app/embedder
 ADD download_embedder.py /app/
 
 EXPOSE 5000
@@ -34,4 +34,4 @@ EXPOSE 5000
 # Download the model
 RUN python download_embedder.py --model_name ${EMBEDDING_MODEL}
 
-CMD ["faststream", "run", "embed.src.worker:app"]
+CMD ["faststream", "run", "embedder.src.worker:app"]
