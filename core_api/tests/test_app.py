@@ -141,7 +141,7 @@ def test_read_models_404(client):
 def test_embed_sentences_422(client):
     """
     Given that I have one model in the database
-    When I POST a mall-formed payload to /models/<model-name>/embed
+    When I POST a malformed payload to /models/<model-name>/embed
     I Expect a 422 error
     """
     response = client.post(
@@ -155,7 +155,7 @@ def test_embed_sentences_422(client):
 def test_embed_sentences(client):
     """
     Given that I have one model in the database
-    When I POST a valid payload consisting of some sentenced to embed to
+    When I POST a valid payload consisting of some sentences to embed to
     /models/<model-name>/embed
     I Expect a 200 response
 
