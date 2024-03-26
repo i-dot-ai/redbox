@@ -1,6 +1,9 @@
+from uuid import UUID
+
 from elasticsearch import Elasticsearch, NotFoundError
 from elasticsearch.helpers import scan
 
+from redbox.models import Chunk
 from redbox.models.base import PersistableModel
 from redbox.storage.storage_handler import BaseStorageHandler
 
@@ -122,3 +125,15 @@ class ElasticsearchStorageHandler(BaseStorageHandler):
             return []
         uuids = [item["_id"] for item in results]
         return uuids
+
+    def get_file_chunks(self, parent_file_uuid: UUID) -> list[Chunk]:
+        """get chunks for a given file"""
+        target_index = f"{self.root_index}-chunk"
+
+        res = [
+            item["_source"]
+            for item in self.es_client.search(
+                index=target_index, query={"match": {"parent_file_uuid": str(parent_file_uuid)}}
+            ).body["hits"]["hits"]
+        ]
+        return res
