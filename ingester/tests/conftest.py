@@ -3,11 +3,9 @@ from typing import Generator, TypeVar
 
 import pytest
 from elasticsearch import Elasticsearch
-from pika import BlockingConnection
-from pika.adapters.blocking_connection import BlockingChannel
 from sentence_transformers import SentenceTransformer
 
-from ingest.src.app import env
+from ingester.src.worker import env
 from redbox.models import File
 
 T = TypeVar("T")
@@ -57,7 +55,7 @@ def file(s3_client, file_pdf_path, bucket):
     """
     TODO: this is a cut and paste of core_api:create_upload_file
     When we come to test core_api we should think about
-    the relationship between core_api and the ingest app
+    the relationship between core_api and the ingester app
     """
     file_name = os.path.basename(file_pdf_path)
     file_type = file_name.split(".")[-1]
@@ -87,21 +85,3 @@ def file(s3_client, file_pdf_path, bucket):
     )
 
     yield file_record
-
-
-@pytest.fixture
-def rabbitmq_connection() -> YieldFixture[BlockingConnection]:
-    connection = env.blocking_connection()
-    yield connection
-    connection.close()
-
-
-@pytest.fixture
-def rabbitmq_channel(rabbitmq_connection: BlockingConnection) -> YieldFixture[BlockingChannel]:
-    channel = rabbitmq_connection.channel()
-    channel.queue_declare(
-        queue=env.embed_queue_name,
-        durable=True,
-    )
-    yield channel
-    channel.close()

@@ -31,3 +31,27 @@ class User(BaseUser, UUIDPrimaryKeyBase):
     def save(self, *args, **kwargs):
         self.email = self.email.lower()
         super().save(*args, **kwargs)
+
+
+class ProcessingStatusEnum(models.TextChoices):
+    uploaded = "uploaded"
+    parsing = "parsing"
+    chunking = "chunking"
+    embedding = "embedding"
+    indexing = "indexing"
+    complete = "complete"
+
+
+# TO DO: Based on /redbox/models/file.py, but not complete
+class File(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    path = models.TextField(help_text="location of file")
+    name = models.TextField()
+    processing_status = models.CharField(choices=ProcessingStatusEnum.choices, default=ProcessingStatusEnum.uploaded)
+
+    def get_processing_text(self) -> str:
+        processing_status_list = list(ProcessingStatusEnum)
+        stage = processing_status_list.index(self.processing_status)
+        if stage == len(processing_status_list) - 1:
+            return self.processing_status
+        return f"{stage + 1}/{len(processing_status_list) - 1} {self.processing_status}"

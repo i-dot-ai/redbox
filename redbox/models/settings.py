@@ -1,13 +1,14 @@
-
 from typing import Literal, Optional
 
 import boto3
-import pika
 from elasticsearch import Elasticsearch
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
+    anthropic_api_key: Optional[str] = None
+    openai_api_key: Optional[str] = None
+
     elastic_host: str = "elasticsearch"
     elastic_port: int = 9200
     elastic_scheme: str = "http"
@@ -36,8 +37,8 @@ class Settings(BaseSettings):
     bucket_name: str = "redbox-storage-dev"
     embedding_model: str = "all-mpnet-base-v2"
 
-    embed_queue_name: str = "redbox-embed-queue"
-    ingest_queue_name: str = "redbox-ingest-queue"
+    embed_queue_name: str = "redbox-embedder-queue"
+    ingest_queue_name: str = "redbox-ingester-queue"
 
     queue: str = "rabbitmq"
 
@@ -102,15 +103,7 @@ class Settings(BaseSettings):
         )
         return sqs
 
-    def blocking_connection(self) -> pika.BlockingConnection:
-        connection = pika.BlockingConnection(
-            pika.ConnectionParameters(
-                host=self.rabbitmq_host,
-                port=self.rabbitmq_port,
-                credentials=pika.PlainCredentials(self.rabbitmq_user, self.rabbitmq_password),
-                connection_attempts=5,
-                retry_delay=5,
-            )
-        )
-        return connection
+    @property
+    def rabbit_url(self) -> str:
+        return f"amqp://{self.rabbitmq_user}:{self.rabbitmq_password}@{self.rabbitmq_host}:{self.rabbitmq_port}/"
 

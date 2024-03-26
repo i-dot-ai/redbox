@@ -130,6 +130,10 @@ def init_session_state() -> dict:
         st.session_state.model_db = SentenceTransformerDB()
         st.session_state.model_db.init_from_disk()
 
+    if "model_db" not in st.session_state:
+        st.session_state.model_db = SentenceTransformerDB()
+        st.session_state.model_db.init_from_disk()
+
     if "embedding_model" not in st.session_state:
         available_models = []
         for model_name in st.session_state.model_db:

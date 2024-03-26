@@ -23,8 +23,7 @@ class ElasticsearchStorageHandler(BaseStorageHandler):
         self.root_index = root_index
 
     def write_item(self, item: PersistableModel):
-        model_type = item.model_type.lower()  # type: ignore
-        target_index = f"{self.root_index}-{model_type}"
+        target_index = f"{self.root_index}-{item.model_type.lower()}"
 
         resp = self.es_client.index(
             index=target_index,
@@ -33,7 +32,7 @@ class ElasticsearchStorageHandler(BaseStorageHandler):
         )
         return resp
 
-    def write_items(self, items: list):
+    def write_items(self, items: list[PersistableModel]):
         responses = []
         for item in items:
             resp = self.write_item(item)
@@ -57,8 +56,7 @@ class ElasticsearchStorageHandler(BaseStorageHandler):
         return items
 
     def update_item(self, item_uuid: str, item: PersistableModel):
-        model_type = item.model_type.lower()  # type: ignore
-        target_index = f"{self.root_index}-{model_type}"
+        target_index = f"{self.root_index}-{item.model_type.lower()}"
 
         self.es_client.index(
             index=target_index,

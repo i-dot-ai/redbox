@@ -4,8 +4,7 @@ from typing import Generator, TypeVar
 import pytest
 from elasticsearch import Elasticsearch
 from fastapi.testclient import TestClient
-from pika import BlockingConnection
-from pika.adapters.blocking_connection import BlockingChannel
+from sentence_transformers import SentenceTransformer
 
 from core_api.src.app import app as application
 from core_api.src.app import env
@@ -15,6 +14,16 @@ from redbox.storage import ElasticsearchStorageHandler
 T = TypeVar("T")
 
 YieldFixture = Generator[T, None, None]
+
+
+@pytest.fixture(autouse=True)
+def small_model():
+    SentenceTransformer(env.embedding_model, cache_folder="./models")
+
+
+@pytest.fixture
+def client():
+    yield TestClient(application)
 
 
 @pytest.fixture
@@ -42,7 +51,7 @@ def file(s3_client, file_pdf_path, bucket) -> YieldFixture[File]:
     """
     TODO: this is a cut and paste of core_api:create_upload_file
     When we come to test core_api we should think about
-    the relationship between core_api and the ingest app
+    the relationship between core_api and the ingester app
     """
     file_name = os.path.basename(file_pdf_path)
     file_type = file_name.split(".")[-1]
@@ -101,21 +110,3 @@ def file_pdf_path() -> YieldFixture[str]:
         "Cabinet Office - Wikipedia.pdf",
     )
     yield path
-
-
-@pytest.fixture
-def rabbitmq_connection() -> YieldFixture[BlockingConnection]:
-    connection = env.blocking_connection()
-    yield connection
-    connection.close()
-
-
-@pytest.fixture
-def rabbitmq_channel(rabbitmq_connection: BlockingConnection) -> YieldFixture[BlockingChannel]:
-    channel = rabbitmq_connection.channel()
-    channel.queue_declare(
-        queue=env.ingest_queue_name,
-        durable=True,
-    )
-    yield channel
-    channel.close()

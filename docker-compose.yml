@@ -57,11 +57,13 @@ services:
       - minio
     networks:
       - redbox-app-network
-  embed:
-    image: redbox-embed:latest
+  embedder:
+    image: redbox-embedder:latest
     build:
       context: .
-      dockerfile: embed/Dockerfile
+      dockerfile: embedder/Dockerfile
+      args:
+        - EMBEDDING_MODEL=${EMBEDDING_MODEL:-}
     ports:
       - 5000:5000
     env_file:
@@ -71,11 +73,13 @@ services:
     networks:
       - redbox-app-network
     restart: unless-stopped
-  ingest:
-    image: redbox-ingest:latest
+  ingester:
+    image: redbox-ingester:latest
     build:
       context: .
-      dockerfile: ingest/Dockerfile
+      dockerfile: ingester/Dockerfile
+      args:
+        - EMBEDDING_MODEL=${EMBEDDING_MODEL:-}
     env_file:
       - .env
     depends_on:
@@ -90,6 +94,8 @@ services:
     build:
       context: .
       dockerfile: core_api/Dockerfile
+      args:
+        - EMBEDDING_MODEL=${EMBEDDING_MODEL:-}
     ports:
       - 5002:5002
     environment:
@@ -126,7 +132,7 @@ services:
     networks:
       - redbox-app-network
     entrypoint: >
-      /bin/sh -c " /usr/bin/mc alias set redbox http://minio:9000 minioadmin minioadmin; /usr/bin/mc mb redbox/redboxcore; /usr/bin/mc policy set public redbox/redboxcore; exit 0; "
+      /bin/sh -c " /usr/bin/mc alias set redbox http://minio:9000 minioadmin minioadmin; /usr/bin/mc mb redbox/redbox-storage-dev; /usr/bin/mc policy set public redbox/redbox-storage-dev; exit 0; "
   elasticsearch:
     image: elasticsearch:8.12.0
     volumes:

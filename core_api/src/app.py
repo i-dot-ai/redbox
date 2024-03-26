@@ -1,35 +1,32 @@
-import json
 import logging
 from datetime import datetime
 from uuid import UUID
-from uuid import uuid4
 
-import pydantic
-from fastapi import FastAPI, HTTPException
-from fastapi import UploadFile
+from fastapi import FastAPI, HTTPException, UploadFile
 from fastapi.responses import RedirectResponse
+from faststream.rabbit import RabbitQueue, RabbitExchange
 
-from model_db import SentenceTransformerDB
-from redbox.models import File, ProcessingStatusEnum
+from redbox.model_db import SentenceTransformerDB
 from redbox.models import (
+    EmbeddingResponse,
+    File,
     ModelInfo,
     ModelListResponse,
-    EmbeddingResponse,
+    ProcessingStatusEnum,
     Settings,
+    StatusResponse,
 )
-from redbox.models.llm import Embedding
 from redbox.storage import ElasticsearchStorageHandler
+
+from faststream.rabbit.fastapi import RabbitRouter
 
 # === Logging ===
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger()
 
-model_db = SentenceTransformerDB()
-model_db.init_from_disk()
-
-
 env = Settings()
+model_db = SentenceTransformerDB(env.embedding_model)
 
 
 # === Object Store ===
@@ -39,12 +36,19 @@ s3 = env.s3_client()
 
 # === Queues ===
 
-if env.queue == "rabbitmq":
-    connection = env.blocking_connection()
-    channel = connection.channel()
-    channel.queue_declare(queue=env.ingest_queue_name, durable=True)
-else:
+if env.queue != "rabbitmq":
     raise NotImplementedError("SQS is not yet implemented")
+
+
+router = RabbitRouter(env.rabbit_url)
+
+ingest_channel = RabbitQueue(name=env.ingest_queue_name, durable=True)
+
+publisher = router.publisher(
+    queue=ingest_channel,
+    exchange=RabbitExchange("redbox-core-exchange", durable=True),
+    routing_key=env.ingest_queue_name,
+)
 
 
 # === Storage ===
@@ -53,14 +57,6 @@ es = env.elasticsearch_client()
 
 
 storage_handler = ElasticsearchStorageHandler(es_client=es, root_index="redbox-data")
-
-# === Data Models ===
-
-
-class StatusResponse(pydantic.BaseModel):
-    status: str
-    uptime_seconds: float
-    version: str
 
 
 # === API Setup ===
@@ -80,7 +76,10 @@ app = FastAPI(
     docs_url="/docs",
     redoc_url="/redoc",
     openapi_url="/openapi.json",
+    lifespan=router.lifespan_context,
 )
+
+app.include_router(router)
 
 # === API Routes ===
 
@@ -153,7 +152,7 @@ async def create_upload_file(file: UploadFile, ingest=True) -> File:
     storage_handler.write_item(file_record)
 
     if ingest:
-        ingest_file(file_record.uuid)
+        await ingest_file(file_record.uuid)
 
     return file_record
 
@@ -188,7 +187,7 @@ def delete_file(file_uuid: str) -> File:
 
 
 @app.post("/file/{file_uuid}/ingest", response_model=File, tags=["file"])
-def ingest_file(file_uuid: str) -> File:
+async def ingest_file(file_uuid: str) -> File:
     """Trigger the ingest process for a file to a queue.
 
     Args:
@@ -202,11 +201,8 @@ def ingest_file(file_uuid: str) -> File:
     file.processing_status = ProcessingStatusEnum.parsing
     storage_handler.update_item(item_uuid=file.uuid, item=file)
 
-    channel.basic_publish(
-        exchange="redbox-core-exchange",
-        routing_key=env.ingest_queue_name,
-        body=json.dumps(file.model_dump(), ensure_ascii=False),
-    )
+    log.info(f"publishing {file.uuid}")
+    await publisher.publish(file)
 
     return file
 
@@ -252,24 +248,4 @@ def embed_sentences(model: str, sentences: list[str]) -> EmbeddingResponse:
     if model not in model_db:
         raise HTTPException(status_code=404, detail=f"Model {model} not found")
 
-    model_obj = model_db[model]
-    embeddings = model_obj.encode(sentences)
-
-    reformatted_embeddings = [
-        Embedding(
-            object="embedding",
-            index=i,
-            embedding=list(embedding),
-        )
-        for i, embedding in enumerate(embeddings)
-    ]
-
-    output = EmbeddingResponse(
-        object="list",
-        data=reformatted_embeddings,
-        embedding_id=str(uuid4()),
-        model=model,
-        model_info=model_db.get_model_info(model),
-    )
-
-    return output
+    return model_db.embed_sentences(model, sentences)

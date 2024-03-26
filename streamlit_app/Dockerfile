@@ -11,7 +11,7 @@ WORKDIR /app/
 ADD pyproject.toml poetry.lock ./
 # Streamlit app needs a lot of dependencies
 
-RUN --mount=type=cache,target=$POETRY_CACHE_DIR  poetry install --no-root --no-ansi --with streamlit-app,ai,ingest --without dev,worker,api  --no-root
+RUN --mount=type=cache,target=$POETRY_CACHE_DIR  poetry install --no-root --no-ansi --with streamlit-app,ai,ingester --without dev,worker,api  --no-root
 
 FROM python:3.11-slim-buster as runtime
 
@@ -25,11 +25,10 @@ ENV VIRTUAL_ENV=/app/.venv \
 
 COPY --from=builder ${VIRTUAL_ENV} ${VIRTUAL_ENV}
 
-ADD ./download_embedder.py /app/
-ADD ./model_db.py /app/
+ADD redbox/ /app/redbox
+ADD download_embedder.py /app/
 RUN python download_embedder.py
 
-ADD redbox/ /app/redbox
 ADD streamlit_app/ /app
 
 EXPOSE 8501
