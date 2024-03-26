@@ -51,7 +51,7 @@ jobs:
         docker compose up -d --wait elasticsearch minio
 
         poetry install --no-root --no-ansi --with dev --without ai,streamlit-app,api,worker,ingester
-        poetry run download-model
+        poetry run download-model --model_name paraphrase-albert-small-v2
 
     - name: Test redbox with pytest
       run: |
