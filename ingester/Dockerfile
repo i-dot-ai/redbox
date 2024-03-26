@@ -29,4 +29,4 @@ ADD download_embedder.py /app/
 # Download the model
 RUN python download_embedder.py --model_name ${EMBEDDING_MODEL}
 
-CMD ["faststream", "run", "ingest.src.worker:app"]
+CMD ["faststream", "run", "ingester.src.worker:app"]
