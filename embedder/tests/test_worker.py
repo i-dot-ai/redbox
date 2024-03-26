@@ -1,7 +1,7 @@
 import pytest
 
 from redbox.models import Settings
-from embed.src.worker import broker, embed_channel, app
+from embedder.src.worker import broker, embed_channel, app
 from faststream.rabbit import TestRabbitBroker, TestApp
 
 env = Settings()

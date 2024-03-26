@@ -53,7 +53,7 @@ async def ingest(
     1. Chunks file
     2. Puts chunks to ES
     3. Acknowledges message
-    4. Puts chunk on embed-queue
+    4. Puts chunk on embedder-queue
     """
 
     logging.info(f"Ingesting file: {file}")

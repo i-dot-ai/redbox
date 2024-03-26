@@ -6,7 +6,7 @@
     ],
     "queues": [
         {
-            "name": "redbox-ingest-queue",
+            "name": "redbox-ingester-queue",
             "vhost": "/",
             "durable": true,
             "auto_delete": false,
@@ -15,7 +15,7 @@
             }
         },
         {
-            "name": "redbox-embed-queue",
+            "name": "redbox-embedder-queue",
             "vhost": "/",
             "durable": true,
             "auto_delete": false,
@@ -39,17 +39,17 @@
         {
             "source": "redbox-core-exchange",
             "vhost": "/",
-            "destination": "redbox-ingest-queue",
+            "destination": "redbox-ingester-queue",
             "destination_type": "queue",
-            "routing_key": "redbox-ingest-queue",
+            "routing_key": "redbox-ingester-queue",
             "arguments": {}
         },
         {
             "source": "redbox-core-exchange",
             "vhost": "/",
-            "destination": "redbox-embed-queue",
+            "destination": "redbox-embedder-queue",
             "destination_type": "queue",
-            "routing_key": "redbox-embed-queue",
+            "routing_key": "redbox-embedder-queue",
             "arguments": {}
         }
     ],
