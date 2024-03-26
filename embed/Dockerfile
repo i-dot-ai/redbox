@@ -11,7 +11,7 @@ WORKDIR /app/
 ADD pyproject.toml poetry.lock ./
 ADD download_embedder.py /app/
 
-RUN --mount=type=cache,target=$POETRY_CACHE_DIR poetry install --no-root --no-ansi --with worker,api --without ai,ingest,dev,streamlit-app
+RUN --mount=type=cache,target=$POETRY_CACHE_DIR poetry install --no-root --no-ansi --with worker,api --without ai,ingester,dev,streamlit-app
 
 
 FROM python:3.11-slim-buster as runtime

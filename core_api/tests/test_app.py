@@ -76,7 +76,7 @@ async def test_ingest_file(app_client, stored_file, elasticsearch_storage_handle
     """
     Given a previously saved file
     When I POST to /file/uuid/ingest
-    I Expect to see a message on the ingest-queue, THIS IS NOT WORKING
+    I Expect to see a message on the ingester-queue, THIS IS NOT WORKING
     """
     async with TestRabbitBroker(router.broker):
         response = app_client.post(f"/file/{stored_file.uuid}/ingest/")
