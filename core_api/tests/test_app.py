@@ -96,8 +96,8 @@ async def test_ingest_file(app_client, stored_file, elasticsearch_storage_handle
 def test_read_model(client):
     """
     Given that I have a model in the database
-    When I GET this one model /models/
-    I Expect a model to be returned
+    When I GET /model
+    I Expect model-info to be returned
     """
     response = client.get("/model")
     assert response.status_code == 200
@@ -111,11 +111,11 @@ def test_read_model(client):
 def test_embed_sentences_422(client):
     """
     Given that I have a model in the database
-    When I POST a mall-formed payload to /models/embed
+    When I POST a mall-formed payload to /embedding
     I Expect a 422 error
     """
     response = client.post(
-        "/models/embed",
+        "/embedding",
         json={"not": "a well formed payload"},
     )
     assert response.status_code == 422
@@ -126,13 +126,13 @@ def test_embed_sentences(client):
     """
     Given that I have a model in the database
     When I POST a valid payload consisting of some sentenced to embed to
-    /models/embed
+    /embedding
     I Expect a 200 response
 
     N.B. We are not testing the content / efficacy of the model in this test.
     """
     response = client.post(
-        "/models/embed",
+        "/embedding",
         json=["I am the egg man", "I am the walrus"],
     )
     assert response.status_code == 200
