@@ -113,7 +113,7 @@ jobs:
       run: |
         pip install requests
         pip install pytest
-        python pytest tests
+        python -m pytest tests
 
 
   static_checks:
