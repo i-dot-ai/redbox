@@ -217,7 +217,7 @@ def get_model() -> ModelInfo:
     return model_db.get_model_info()
 
 
-@app.post("/models/embed", tags=["models"])
+@app.post("/embedding", tags=["models"])
 def embed_sentences(sentences: list[str]) -> EmbeddingResponse:
     """Embeds a list of sentences using a given model
 
