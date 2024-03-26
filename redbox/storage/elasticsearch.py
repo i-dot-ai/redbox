@@ -133,7 +133,7 @@ class ElasticsearchStorageHandler(BaseStorageHandler):
         res = [
             item["_source"]
             for item in self.es_client.search(
-                index=target_index, query={"match": {"parent_file_uuid": str(parent_file_uuid)}}
+                index=target_index, query={"bool": {"filter": [{"term": {"parent_file_uuid": str(parent_file_uuid)}}]}}
             ).body["hits"]["hits"]
         ]
         return res
