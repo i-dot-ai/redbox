@@ -28,10 +28,6 @@ class EmbeddingRequest(BaseModel):
     sentences: list[str]
 
 
-class ModelListResponse(BaseModel):
-    models: list[ModelInfo]
-
-
 class StatusResponse(BaseModel):
     status: str
     uptime_seconds: float
@@ -40,5 +36,4 @@ class StatusResponse(BaseModel):
 
 class EmbedQueueItem(BaseModel):
     """Instruction to Ingest app for what to embed, and how"""
-    model: str = Field(description="model to be used to embed sentence")
     chunk_uuid: str = Field(description="id of the chunk that this text belongs to")

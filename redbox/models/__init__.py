@@ -3,7 +3,7 @@ from redbox.models.collection import Collection
 from redbox.models.feedback import Feedback
 from redbox.models.file import Chunk, File, ProcessingStatusEnum
 from redbox.models.llm import (EmbeddingResponse, EmbedQueueItem, ModelInfo,
-                               ModelListResponse, StatusResponse)
+                               StatusResponse)
 from redbox.models.persona import ChatPersona
 from redbox.models.settings import Settings
 from redbox.models.spotlight import (Spotlight, SpotlightComplete,
@@ -22,7 +22,6 @@ __all__ = [
     "SpotlightTaskComplete",
     "Settings",
     "ModelInfo",
-    "ModelListResponse",
     "EmbeddingResponse",
     "EmbedQueueItem",
     "StatusResponse",
