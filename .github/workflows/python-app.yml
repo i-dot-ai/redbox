@@ -111,7 +111,9 @@ jobs:
 
     - name: Test integration with pytest
       run: |
-        make test-integration
+        pip install requests
+        pip install pytest
+        python pytest tests
 
 
   static_checks:
