@@ -25,7 +25,7 @@ embed_channel = RabbitQueue(name=env.embed_queue_name, durable=True, routing_key
 async def lifespan(context: ContextRepo):
     es = env.elasticsearch_client()
     storage_handler = ElasticsearchStorageHandler(es_client=es, root_index="redbox-data")
-    model = SentenceTransformerDB()
+    model = SentenceTransformerDB(env.embedding_model)
 
     context.set_global("storage_handler", storage_handler)
     context.set_global("model", model)

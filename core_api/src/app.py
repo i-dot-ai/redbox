@@ -25,7 +25,7 @@ logging.basicConfig(level=logging.INFO)
 log = logging.getLogger()
 
 env = Settings()
-model_db = SentenceTransformerDB()
+model_db = SentenceTransformerDB(env.embedding_model)
 
 
 # === Object Store ===
