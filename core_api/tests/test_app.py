@@ -1,3 +1,5 @@
+import time
+
 import pytest
 from elasticsearch import NotFoundError
 
@@ -19,7 +21,6 @@ def test_get_health(app_client):
 
 
 @pytest.mark.asyncio
-@mock_aws
 async def test_post_file_upload(s3_client, app_client, elasticsearch_storage_handler, bucket, file_pdf_path):
     """
     Given a new file
@@ -143,6 +144,8 @@ def test_embed_sentences(client):
 
 
 def test_get_file_chunks(client, chunked_file):
+    # TODO: fix this nasty hack
+    time.sleep(1)
     response = client.get(f"/file/{chunked_file.uuid}/chunks")
     assert response.status_code == 200
     assert len(response.json()) == 5
