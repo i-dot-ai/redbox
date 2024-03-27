@@ -27,6 +27,7 @@ from model_db import SentenceTransformerDB
 from redbox.llm.llm_base import LLMHandler
 from redbox.models.feedback import Feedback
 from redbox.models.file import File
+from redbox.models.persona import ChatPersona
 from redbox.storage import ElasticsearchStorageHandler
 
 
@@ -123,11 +124,11 @@ def init_session_state() -> dict:
         st.session_state.model_select = st.session_state.available_models[0]
 
     if "available_personas" not in st.session_state:
-        st.session_state.available_personas = [
-            "Policy Experts",
-            "Economists",
-            "Foreign Policy Experts",
-        ]
+        st.session_state.available_personas = get_persona_names()
+
+    if "model_db" not in st.session_state:
+        st.session_state.model_db = SentenceTransformerDB()
+        st.session_state.model_db.init_from_disk()
 
     if "model_db" not in st.session_state:
         st.session_state.model_db = SentenceTransformerDB()
@@ -530,3 +531,50 @@ def submit_feedback(
     st.session_state.storage_handler.write_item(to_write)
 
     st.toast("Thanks for your feedback!", icon="🙏")
+
+chat_personas = [
+        ChatPersona(
+            name = "Policy Experts",
+            description = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua",
+            prompt = "Lorem ipsum"
+        ),
+        ChatPersona(
+            name = "Economists",
+            description = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna",
+            prompt = "Lorem ipsum"
+        ),
+        ChatPersona(
+            name = "Foreign Policy Experts",
+            description = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore",
+            prompt = "Lorem ipsum"
+        )
+]
+
+def get_persona_names() -> list:
+    """Returns list of persona names
+    """
+    persona_names = []
+    for chat_persona in chat_personas:
+        persona_names.append(chat_persona.name)
+    return persona_names
+
+
+def get_persona_description(persona_name) -> str:
+    """Returns persona description based on persona name selected by user
+
+    Args:
+        persona_name (str): Persona name selected by user.
+    """
+    for chat_persona in chat_personas:
+        if chat_persona.name == persona_name:
+            return chat_persona.description
+
+def get_persona_prompt(persona_name) -> str:
+    """Returns persona prompt based on persona name selected by user
+
+    Args:
+        persona_name (str): Persona name selected by user.
+    """
+    for chat_persona in chat_personas:
+        if chat_persona.name == persona_name:
+            return chat_persona.prompt

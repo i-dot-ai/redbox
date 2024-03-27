@@ -43,6 +43,8 @@ services:
     build:
       context: .
       dockerfile: ./streamlit_app/Dockerfile
+      args:
+        - EMBEDDING_MODEL=${EMBEDDING_MODEL:-}
     env_file:
       - .env
     ports:

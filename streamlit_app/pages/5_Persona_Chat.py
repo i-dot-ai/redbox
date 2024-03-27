@@ -1,10 +1,11 @@
 import json
 from datetime import date, datetime
 
+import pydantic
 import streamlit as st
 from langchain.schema import AIMessage, HumanMessage, SystemMessage
 from streamlit_feedback import streamlit_feedback
-from utils import StreamlitStreamHandler, init_session_state, load_llm_handler, replace_doc_ref, submit_feedback
+from utils import StreamlitStreamHandler, init_session_state, load_llm_handler, replace_doc_ref, submit_feedback, get_persona_description
 
 from redbox.llm.prompts.core import CORE_REDBOX_PROMPT
 from redbox.models.chat import ChatMessage
@@ -20,12 +21,14 @@ def change_selected_model():
     load_llm_handler(ENV, update=True)
     st.write(st.session_state.llm)
 
-
-persona_select = st.sidebar.selectbox(
+persona_name = st.sidebar.selectbox(
     "What is your role?",
     options=st.session_state.available_personas,
     key="persona_select",
 )
+
+description = get_persona_description(persona_name)
+st.sidebar.write(description)
 
 user_info = st.session_state.user_info
 
@@ -38,6 +41,11 @@ INITIAL_CHAT_PROMPT = [
                 user_info=user_info,
             )
         ),
+        creator_user_uuid=st.session_state.user_uuid,
+    ),
+    ChatMessage(
+        chain=None,
+        message=AIMessage(content="Hi, I'm Redbox Copilot. How can I help you?"),
         creator_user_uuid=st.session_state.user_uuid,
     ),
 ]
