@@ -60,9 +60,13 @@ jobs:
         docker compose up -d --wait core-api embedder ingester
         sleep 20
 
-    - name: Peek logs
+    - name: Peek application logs
       run: |
         docker compose logs core-api embedder ingester
+
+    - name: Peek rabbit logs
+      run: |
+        docker compose logs rabbitmq
 
     - name: Test integration with pytest
       run: |
