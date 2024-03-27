@@ -1,11 +1,17 @@
 import json
 from datetime import date, datetime
 
-import pydantic
 import streamlit as st
 from langchain.schema import AIMessage, HumanMessage, SystemMessage
 from streamlit_feedback import streamlit_feedback
-from utils import StreamlitStreamHandler, init_session_state, load_llm_handler, replace_doc_ref, submit_feedback, get_persona_description
+from utils import (
+    StreamlitStreamHandler,
+    init_session_state,
+    load_llm_handler,
+    replace_doc_ref,
+    submit_feedback,
+    get_persona_description,
+)
 
 from redbox.llm.prompts.core import CORE_REDBOX_PROMPT
 from redbox.models.chat import ChatMessage
@@ -20,6 +26,7 @@ ENV = init_session_state()
 def change_selected_model():
     load_llm_handler(ENV, update=True)
     st.write(st.session_state.llm)
+
 
 persona_name = st.sidebar.selectbox(
     "What is your role?",

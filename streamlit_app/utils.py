@@ -532,27 +532,28 @@ def submit_feedback(
 
     st.toast("Thanks for your feedback!", icon="🙏")
 
+
 chat_personas = [
-        ChatPersona(
-            name = "Policy Experts",
-            description = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua",
-            prompt = "Lorem ipsum"
-        ),
-        ChatPersona(
-            name = "Economists",
-            description = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna",
-            prompt = "Lorem ipsum"
-        ),
-        ChatPersona(
-            name = "Foreign Policy Experts",
-            description = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore",
-            prompt = "Lorem ipsum"
-        )
+    ChatPersona(
+        name="Policy Experts",
+        description="Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua",
+        prompt="Lorem ipsum",
+    ),
+    ChatPersona(
+        name="Economists",
+        description="Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna",
+        prompt="Lorem ipsum",
+    ),
+    ChatPersona(
+        name="Foreign Policy Experts",
+        description="Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore",
+        prompt="Lorem ipsum",
+    ),
 ]
 
+
 def get_persona_names() -> list:
-    """Returns list of persona names
-    """
+    """Returns list of persona names"""
     persona_names = []
     for chat_persona in chat_personas:
         persona_names.append(chat_persona.name)
@@ -568,6 +569,7 @@ def get_persona_description(persona_name) -> str:
     for chat_persona in chat_personas:
         if chat_persona.name == persona_name:
             return chat_persona.description
+
 
 def get_persona_prompt(persona_name) -> str:
     """Returns persona prompt based on persona name selected by user

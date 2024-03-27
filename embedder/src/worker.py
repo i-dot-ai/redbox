@@ -2,7 +2,7 @@ import logging
 from contextlib import asynccontextmanager
 from datetime import datetime
 from faststream import FastStream, ContextRepo, Context
-from faststream.rabbit import RabbitBroker, RabbitQueue
+from faststream.redis import RedisBroker
 
 from redbox.model_db import SentenceTransformerDB
 from redbox.models import Chunk, EmbedQueueItem, Settings
@@ -16,9 +16,7 @@ log.setLevel(logging.INFO)
 env = Settings()
 
 
-broker = RabbitBroker(env.rabbit_url)
-
-embed_channel = RabbitQueue(name=env.embed_queue_name, durable=True, routing_key=env.embed_queue_name)
+broker = RedisBroker(url=env.redis_url)
 
 
 @asynccontextmanager
@@ -33,7 +31,7 @@ async def lifespan(context: ContextRepo):
     yield
 
 
-@broker.subscriber(queue=embed_channel)
+@broker.subscriber(channel=env.embed_queue_name)
 async def embed(
     queue_item: EmbedQueueItem,
     storage_handler: ElasticsearchStorageHandler = Context(),

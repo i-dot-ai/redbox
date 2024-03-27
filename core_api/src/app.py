@@ -4,7 +4,7 @@ from uuid import UUID
 
 from fastapi import FastAPI, UploadFile
 from fastapi.responses import RedirectResponse
-from faststream.rabbit import RabbitQueue, RabbitExchange
+from faststream.redis.fastapi import RedisRouter
 
 from redbox.model_db import SentenceTransformerDB
 from redbox.models import (
@@ -17,8 +17,6 @@ from redbox.models import (
     Chunk,
 )
 from redbox.storage import ElasticsearchStorageHandler
-
-from faststream.rabbit.fastapi import RabbitRouter
 
 # === Logging ===
 
@@ -36,19 +34,9 @@ s3 = env.s3_client()
 
 # === Queues ===
 
-if env.queue != "rabbitmq":
-    raise NotImplementedError("SQS is not yet implemented")
+router = RedisRouter(url=env.redis_url)
 
-
-router = RabbitRouter(env.rabbit_url)
-
-ingest_channel = RabbitQueue(name=env.ingest_queue_name, durable=True)
-
-publisher = router.publisher(
-    queue=ingest_channel,
-    exchange=RabbitExchange("redbox-core-exchange", durable=True),
-    routing_key=env.ingest_queue_name,
-)
+publisher = router.publisher(env.ingest_queue_name)
 
 
 # === Storage ===

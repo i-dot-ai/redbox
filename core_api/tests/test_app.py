@@ -1,7 +1,9 @@
+import time
+
 import pytest
 from elasticsearch import NotFoundError
 
-from faststream.rabbit import TestRabbitBroker
+from faststream.redis import TestRedisBroker
 
 from core_api.src.app import env, publisher, router
 from redbox.models import ProcessingStatusEnum
@@ -25,7 +27,7 @@ async def test_post_file_upload(s3_client, app_client, elasticsearch_storage_han
     I Expect to see it persisted in s3 and elastic-search
     """
     with open(file_pdf_path, "rb") as f:
-        async with TestRabbitBroker(router.broker):
+        async with TestRedisBroker(router.broker):
             response = app_client.post("/file", files={"file": ("filename", f, "pdf")})
     assert response.status_code == 200
     assert s3_client.get_object(Bucket=bucket, Key=file_pdf_path.split("/")[-1])
@@ -78,7 +80,7 @@ async def test_ingest_file(app_client, stored_file, elasticsearch_storage_handle
     When I POST to /file/uuid/ingest
     I Expect to see a message on the ingester-queue, THIS IS NOT WORKING
     """
-    async with TestRabbitBroker(router.broker):
+    async with TestRedisBroker(router.broker):
         response = app_client.post(f"/file/{stored_file.uuid}/ingest/")
 
         assert (
@@ -139,6 +141,8 @@ def test_embed_sentences(client):
 
 
 def test_get_file_chunks(client, chunked_file):
+    # TODO: fix this hack
+    time.sleep(1)
     response = client.get(f"/file/{chunked_file.uuid}/chunks")
     assert response.status_code == 200
     assert len(response.json()) == 5

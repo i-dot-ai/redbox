@@ -40,12 +40,10 @@ class Settings(BaseSettings):
     embed_queue_name: str = "redbox-embedder-queue"
     ingest_queue_name: str = "redbox-ingester-queue"
 
-    queue: str = "rabbitmq"
+    redis_host: str = "redis"
+    redis_port: int = 6379
+    redis_password: str = "guest"
 
-    rabbitmq_host: str = "rabbitmq"
-    rabbitmq_port: int = 5672
-    rabbitmq_user: str = "guest"
-    rabbitmq_password: str = "guest"
     dev_mode: bool = False
     django_settings_module: str = "redbox_app.settings"
     debug: bool = True
@@ -104,6 +102,6 @@ class Settings(BaseSettings):
         return sqs
 
     @property
-    def rabbit_url(self) -> str:
-        return f"amqp://{self.rabbitmq_user}:{self.rabbitmq_password}@{self.rabbitmq_host}:{self.rabbitmq_port}/"
+    def redis_url(self) -> str:
+        return f"redis://:{self.redis_password}@{self.redis_host}:{self.redis_port}/"
 

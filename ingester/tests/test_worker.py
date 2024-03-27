@@ -1,10 +1,13 @@
 import pytest
 
-from ingester.src.worker import broker, ingest_channel, app
-from redbox.models import ProcessingStatusEnum
+from ingester.src.worker import broker, app
+from redbox.models import ProcessingStatusEnum, Settings
 from redbox.storage import ElasticsearchStorageHandler
 
-from faststream.rabbit import TestRabbitBroker, TestApp
+from faststream.redis import TestRedisBroker, TestApp
+
+
+env = Settings()
 
 
 @pytest.mark.asyncio
@@ -19,8 +22,8 @@ async def test_ingest_file(s3_client, es_client, embedding_model, file):
 
     storage_handler = ElasticsearchStorageHandler(es_client=es_client, root_index="redbox-data")
 
-    async with TestRabbitBroker(broker) as br, TestApp(app):
-        await br.publish(file, queue=ingest_channel)
+    async with TestRedisBroker(broker) as br, TestApp(app):
+        await br.publish(file, channel=env.ingest_queue_name)
 
         assert (
             storage_handler.read_item(

@@ -71,7 +71,7 @@ services:
     env_file:
       - .env
     depends_on:
-      - rabbitmq
+      - redis
     networks:
       - redbox-app-network
     restart: unless-stopped
@@ -85,7 +85,7 @@ services:
     env_file:
       - .env
     depends_on:
-      - rabbitmq
+      - redis
       - elasticsearch
       - minio
     networks:
@@ -109,7 +109,7 @@ services:
     depends_on:
       - elasticsearch
       - minio
-      - rabbitmq
+      - redis
     restart: unless-stopped
   minio:
     image: minio/minio
@@ -169,18 +169,27 @@ services:
     depends_on:
       - elasticsearch
     restart: unless-stopped
-  rabbitmq:
-    image: rabbitmq:3-management-alpine
+  redis:
+    image: redis:7-alpine
+    restart: always
     ports:
-      - 5672:5672
-      - 15672:15672
+      - "6379:6379"
+    command: redis-server --requirepass {REDIS_PASSWORD:-}
+    volumes:
+      - redis:/data/redis
+    env_file:
+      - .env
     networks:
       - redbox-app-network
+  redis-insight:
+    image: redis/redisinsight:latest
+    restart: always
+    ports:
+      - "5540:5540"
     volumes:
-      - ./data/queue/data/:/var/lib/rabbitmq/
-      - ./infra/rabbitmq/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf:ro
-      - ./infra/rabbitmq/definitions.json:/etc/rabbitmq/definitions.json:ro
-    restart: unless-stopped
+      - redis-insight:/data/redis-insight
+    networks:
+      - redbox-app-network
   frontend-proto:
     image: redbox-frontend-proto:latest
     build:
@@ -202,3 +211,6 @@ volumes:
   elasticsearch:
   redbox-app-data:
   local_postgres_data: {}
+  redis:
+    driver: local
+  redis-insight:
