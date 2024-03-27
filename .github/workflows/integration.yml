@@ -63,6 +63,12 @@ jobs:
       run: |
         sleep 120
 
+    - name: Test integration with pytest
+      run: |
+        pip install requests
+        pip install pytest
+        python -m pytest tests
+  
     - name: Peek application logs
       run: |
         docker compose logs core-api embedder ingester
@@ -70,10 +76,4 @@ jobs:
     - name: Peek rabbit logs
       run: |
         docker compose logs rabbitmq
-
-    - name: Test integration with pytest
-      run: |
-        pip install requests pytest
-        python -m pytest tests
-  
 
