@@ -45,7 +45,8 @@ def es_client() -> YieldFixture[Elasticsearch]:
 
 @pytest.fixture
 def app_client():
-    yield TestClient(application)
+    with mock_aws():
+        yield TestClient(application)
 
 
 @pytest.fixture
