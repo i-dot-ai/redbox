@@ -34,7 +34,7 @@ def s3_client(aws_credentials):
 
 
 @pytest.fixture
-def client():
+def client(aws_credentials):
     yield TestClient(application)
 
 
