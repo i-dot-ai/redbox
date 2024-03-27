@@ -2,7 +2,7 @@ import logging
 from datetime import datetime
 from uuid import UUID
 
-from fastapi import FastAPI, HTTPException, UploadFile
+from fastapi import FastAPI, UploadFile
 from fastapi.responses import RedirectResponse
 from faststream.rabbit import RabbitQueue, RabbitExchange
 
@@ -11,10 +11,10 @@ from redbox.models import (
     EmbeddingResponse,
     File,
     ModelInfo,
-    ModelListResponse,
     ProcessingStatusEnum,
     Settings,
     StatusResponse,
+    Chunk,
 )
 from redbox.storage import ElasticsearchStorageHandler
 
@@ -112,7 +112,7 @@ def health():
 
 
 @app.post("/file", response_model=File, tags=["file"])
-async def create_upload_file(file: UploadFile, ingest=True) -> File:
+async def create_upload_file(file: UploadFile, ingest: bool = True) -> File:
     """Upload a file to the object store and create a record in the database
 
     Args:
@@ -207,45 +207,32 @@ async def ingest_file(file_uuid: str) -> File:
     return file
 
 
-@app.get("/models", response_model=ModelListResponse, tags=["models"])
-def get_models():
-    """Returns a list of available models
-
-    Returns:
-        ModelListResponse: A list of available models
-    """
-    return {"models": [model_db.get_model_info(m) for m in model_db]}
+@app.get("/file/{file_uuid}/chunks", tags=["file"])
+def get_file_chunks(file_uuid: UUID) -> list[Chunk]:
+    log.info(f"getting chunks for file {file_uuid}")
+    return storage_handler.get_file_chunks(file_uuid)
 
 
-@app.get("/models/{model}", response_model=ModelInfo, tags=["models"])
-def get_model(model: str):
-    """Returns information about a given model
-
-    Args:
-        model (str): The name of the model
+@app.get("/model", tags=["models"])
+def get_model() -> ModelInfo:
+    """Returns information about the model
 
     Returns:
         ModelInfo: Information about the model
     """
 
-    if model not in model_db:
-        raise HTTPException(status_code=404, detail=f"Model {model} not found")
-    return model_db.get_model_info(model)
+    return model_db.get_model_info()
 
 
-@app.post("/models/{model}/embed", tags=["models"])
-def embed_sentences(model: str, sentences: list[str]) -> EmbeddingResponse:
+@app.post("/embedding", tags=["models"])
+def embed_sentences(sentences: list[str]) -> EmbeddingResponse:
     """Embeds a list of sentences using a given model
 
     Args:
-        model (str): The name of the model
         sentences (list[str]): A list of sentences
 
     Returns:
         EmbeddingResponse: The embeddings of the sentences
     """
 
-    if model not in model_db:
-        raise HTTPException(status_code=404, detail=f"Model {model} not found")
-
-    return model_db.embed_sentences(model, sentences)
+    return model_db.embed_sentences(sentences)

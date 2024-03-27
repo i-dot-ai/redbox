@@ -77,7 +77,7 @@ async def test_ingest_file(app_client, stored_file, elasticsearch_storage_handle
     """
     Given a previously saved file
     When I POST to /file/uuid/ingest
-    I Expect to see a message on the ingest-queue, THIS IS NOT WORKING
+    I Expect to see a message on the ingester-queue, THIS IS NOT WORKING
     """
     async with TestRabbitBroker(router.broker):
         response = app_client.post(f"/file/{stored_file.uuid}/ingest/")
@@ -94,32 +94,13 @@ async def test_ingest_file(app_client, stored_file, elasticsearch_storage_handle
         publisher.mock.called_once_with(stored_file)
 
 
-def test_read_all_models(client):
+def test_read_model(client):
     """
-    Given that I have one model, in the database
-    When I GET all models /models
-    I Expect a list of just one model to be returned
+    Given that I have a model in the database
+    When I GET /model
+    I Expect model-info to be returned
     """
-    response = client.get("/models")
-    assert response.status_code == 200
-    assert response.json() == {
-        "models": [
-            {
-                "max_seq_length": 100,
-                "model": env.embedding_model,
-                "vector_size": 768,
-            }
-        ]
-    }
-
-
-def test_read_one_model(client):
-    """
-    Given that I have one model in the database
-    When I GET this one model /models/<name>
-    I Expect a single model to be returned
-    """
-    response = client.get(f"/models/{env.embedding_model}")
+    response = client.get("/model")
     assert response.status_code == 200
     assert response.json() == {
         "max_seq_length": 100,
@@ -128,25 +109,14 @@ def test_read_one_model(client):
     }
 
 
-def test_read_models_404(client):
-    """
-    Given that I have one model in the database
-    When I GET a non-existent model /models/not-a-model
-    I Expect a 404 error
-    """
-    response = client.get("/models/not-a-model")
-    assert response.status_code == 404
-    assert response.json() == {"detail": "Model not-a-model not found"}
-
-
 def test_embed_sentences_422(client):
     """
-    Given that I have one model in the database
-    When I POST a mall-formed payload to /models/<model-name>/embed
+    Given that I have a model in the database
+    When I POST a mall-formed payload to /embedding
     I Expect a 422 error
     """
     response = client.post(
-        f"/models/{env.embedding_model}/embed",
+        "/embedding",
         json={"not": "a well formed payload"},
     )
     assert response.status_code == 422
@@ -155,15 +125,21 @@ def test_embed_sentences_422(client):
 
 def test_embed_sentences(client):
     """
-    Given that I have one model in the database
+    Given that I have a model in the database
     When I POST a valid payload consisting of some sentenced to embed to
-    /models/<model-name>/embed
+    /embedding
     I Expect a 200 response
 
     N.B. We are not testing the content / efficacy of the model in this test.
     """
     response = client.post(
-        f"/models/{env.embedding_model}/embed",
+        "/embedding",
         json=["I am the egg man", "I am the walrus"],
     )
     assert response.status_code == 200
+
+
+def test_get_file_chunks(client, chunked_file):
+    response = client.get(f"/file/{chunked_file.uuid}/chunks")
+    assert response.status_code == 200
+    assert len(response.json()) == 5

@@ -7,9 +7,9 @@ on:
   push:
     paths:
       - redbox/**
-      - embed/**
+      - embedder/**
       - core_api/**
-      - ingest/**
+      - ingester/**
       - Makefile
       - .github/**
     branches:
@@ -50,20 +50,20 @@ jobs:
         cp .env.test .env
         docker compose up -d --wait elasticsearch
 
-        poetry install --no-root --no-ansi --with dev --without ai,streamlit-app,api,worker,ingest
-        poetry run download-model
+        poetry install --no-root --no-ansi --with dev --without ai,streamlit-app,api,worker,ingester
+        poetry run download-model --model_name paraphrase-albert-small-v2
 
     - name: Test redbox with pytest
       run: |
         make test-redbox
 
-    - name: Test embed with pytest
+    - name: Test embedder with pytest
       run: |
-        make test-embed
+        make test-embedder
 
-    - name: Test ingest with pytest
+    - name: Test ingester with pytest
       run: |
-        make test-ingest
+        make test-ingester
 
     - name: Test core with pytest
       run: |

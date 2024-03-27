@@ -1,4 +1,3 @@
-import collections
 import logging
 import os
 from uuid import uuid4
@@ -14,19 +13,13 @@ log = logging.getLogger()
 log.setLevel(logging.INFO)
 
 
-class SentenceTransformerDB(collections.UserDict):
-    def __init__(self, model_name):
-        super().__init__()
-        log.info(f"💾 Downloading Sentence Transformer Embedder: {model_name}")
-        self[model_name] = SentenceTransformer(model_name, cache_folder=MODEL_PATH)
-        log.info(f"✅ Downloaded Sentence Transformer Embedder: {model_name} to {MODEL_PATH}")
+class SentenceTransformerDB(SentenceTransformer):
+    def __init__(self, model_name: str):
+        super().__init__(model_name, cache_folder=MODEL_PATH)
+        self.model_name = model_name
 
-    def __getitem__(self, model_name: str) -> SentenceTransformer:
-        return super().__getitem__(model_name)
-
-    def embed_sentences(self, model: str, sentences: list[str]) -> EmbeddingResponse:
-        model_obj = self[model]
-        embeddings = model_obj.encode(sentences)
+    def embed_sentences(self, sentences: list[str]) -> EmbeddingResponse:
+        embeddings = self.encode(sentences)
 
         reformatted_embeddings = [
             Embedding(
@@ -41,17 +34,16 @@ class SentenceTransformerDB(collections.UserDict):
             object="list",
             data=reformatted_embeddings,
             embedding_id=str(uuid4()),
-            model=model,
-            model_info=self.get_model_info(model),
+            model=self.model_name,
+            model_info=self.get_model_info(),
         )
 
         return output
 
-    def get_model_info(self, model_name: str) -> ModelInfo:
-        model_obj = self[model_name]
+    def get_model_info(self) -> ModelInfo:
         model_info = ModelInfo(
-            model=model_name,
-            max_seq_length=model_obj.get_max_seq_length(),
-            vector_size=model_obj.get_sentence_embedding_dimension(),
+            model=self.model_name,
+            max_seq_length=self.get_max_seq_length(),
+            vector_size=self.get_sentence_embedding_dimension(),
         )
         return model_info

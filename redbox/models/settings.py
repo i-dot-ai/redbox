@@ -37,8 +37,8 @@ class Settings(BaseSettings):
     bucket_name: str = "redbox-storage-dev"
     embedding_model: str = "all-mpnet-base-v2"
 
-    embed_queue_name: str = "redbox-embed-queue"
-    ingest_queue_name: str = "redbox-ingest-queue"
+    embed_queue_name: str = "redbox-embedder-queue"
+    ingest_queue_name: str = "redbox-ingester-queue"
 
     queue: str = "rabbitmq"
 

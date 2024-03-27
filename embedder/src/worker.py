@@ -45,7 +45,7 @@ async def embed(
     """
 
     chunk: Chunk = storage_handler.read_item(queue_item.chunk_uuid, "Chunk")
-    embedded_sentences = model.embed_sentences(queue_item.model, [chunk.text])
+    embedded_sentences = model.embed_sentences([chunk.text])
     if len(embedded_sentences.data) != 1:
         logging.error(f"expected just 1 embedding but got {len(embedded_sentences.data)}")
         return

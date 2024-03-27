@@ -7,7 +7,7 @@ from elasticsearch import Elasticsearch
 from moto import mock_aws
 from sentence_transformers import SentenceTransformer
 
-from ingest.src.worker import env
+from ingester.src.worker import env
 from redbox.models import File
 
 T = TypeVar("T")
@@ -68,7 +68,7 @@ def file(s3_client, file_pdf_path, bucket):
     """
     TODO: this is a cut and paste of core_api:create_upload_file
     When we come to test core_api we should think about
-    the relationship between core_api and the ingest app
+    the relationship between core_api and the ingester app
     """
     file_name = os.path.basename(file_pdf_path)
     file_type = file_name.split(".")[-1]

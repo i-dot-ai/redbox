@@ -30,7 +30,7 @@ def chunk() -> YieldFixture[Chunk]:
 
 @pytest.fixture
 def embed_queue_item(stored_chunk) -> YieldFixture[EmbedQueueItem]:
-    yield EmbedQueueItem(model=env.embedding_model, chunk_uuid=stored_chunk.uuid)
+    yield EmbedQueueItem(chunk_uuid=stored_chunk.uuid)
 
 
 @pytest.fixture
