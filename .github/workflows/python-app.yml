@@ -109,7 +109,7 @@ jobs:
         mkdir -p data/elastic/
         chmod 777 data/elastic/
         cp .env.integration .env
-        docker compose up -d --wait core-api embed ingest
+        docker compose up -d --wait core-api embedder ingester
 
     - name: Test integration with pytest
       run: |
