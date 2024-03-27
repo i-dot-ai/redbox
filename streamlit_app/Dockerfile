@@ -14,6 +14,7 @@ ADD pyproject.toml poetry.lock ./
 RUN --mount=type=cache,target=$POETRY_CACHE_DIR  poetry install --no-root --no-ansi --with streamlit-app,ai,ingester --without dev,worker,api  --no-root
 
 FROM python:3.11-slim-buster as runtime
+ARG EMBEDDING_MODEL
 
 RUN apt-get update
 RUN apt-get install -y libgl-dev libmagic-dev inetutils-ping
@@ -27,8 +28,7 @@ COPY --from=builder ${VIRTUAL_ENV} ${VIRTUAL_ENV}
 
 ADD redbox/ /app/redbox
 ADD download_embedder.py /app/
-RUN python download_embedder.py
-
+RUN python download_embedder.py --model_name ${EMBEDDING_MODEL}
 ADD streamlit_app/ /app
 
 EXPOSE 8501
