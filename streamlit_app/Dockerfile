@@ -27,8 +27,7 @@ COPY --from=builder ${VIRTUAL_ENV} ${VIRTUAL_ENV}
 
 ADD redbox/ /app/redbox
 ADD download_embedder.py /app/
-RUN python download_embedder.py
-
+RUN python download_embedder.py --model_name ${EMBEDDING_MODEL}
 ADD streamlit_app/ /app
 
 EXPOSE 8501
