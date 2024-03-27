@@ -71,7 +71,7 @@ jobs:
   
     - name: Peek application logs
       run: |
-        docker compose logs core-api embedder ingester
+        docker compose logs core-api
 
     - name: Peek rabbit logs
       run: |
