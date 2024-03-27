@@ -20,6 +20,7 @@ def test_get_health(app_client):
     assert response.status_code == 200
 
 
+@mock_aws
 @pytest.mark.asyncio
 async def test_post_file_upload(s3_client, aws_credentials, app_client, elasticsearch_storage_handler, bucket, file_pdf_path):
     """
