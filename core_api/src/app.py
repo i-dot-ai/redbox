@@ -14,6 +14,7 @@ from redbox.models import (
     ProcessingStatusEnum,
     Settings,
     StatusResponse,
+    Chunk,
 )
 from redbox.storage import ElasticsearchStorageHandler
 
@@ -111,7 +112,7 @@ def health():
 
 
 @app.post("/file", response_model=File, tags=["file"])
-async def create_upload_file(file: UploadFile, ingest=True) -> File:
+async def create_upload_file(file: UploadFile, ingest: bool = True) -> File:
     """Upload a file to the object store and create a record in the database
 
     Args:
@@ -204,6 +205,12 @@ async def ingest_file(file_uuid: str) -> File:
     await publisher.publish(file)
 
     return file
+
+
+@app.get("/file/{file_uuid}/chunks", tags=["file"])
+def get_file_chunks(file_uuid: UUID) -> list[Chunk]:
+    log.info(f"getting chunks for file {file_uuid}")
+    return storage_handler.get_file_chunks(file_uuid)
 
 
 @app.get("/model", tags=["models"])
