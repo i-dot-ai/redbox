@@ -209,6 +209,7 @@ async def ingest_file(file_uuid: str) -> File:
 
 @app.get("/file/{file_uuid}/chunks", tags=["file"])
 def get_file_chunks(file_uuid: UUID) -> list[Chunk]:
+    log.info(f"getting chunks for file {file_uuid}")
     return storage_handler.get_file_chunks(file_uuid)
 
 

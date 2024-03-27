@@ -132,8 +132,10 @@ class ElasticsearchStorageHandler(BaseStorageHandler):
 
         res = [
             item["_source"]
-            for item in self.es_client.search(
-                index=target_index, query={"bool": {"filter": [{"term": {"parent_file_uuid": str(parent_file_uuid)}}]}}
-            ).body["hits"]["hits"]
+            for item in scan(
+                client=self.es_client,
+                index=target_index,
+                query={"query": {"match_all": {"parent_file_uuid": str(parent_file_uuid)}}},
+            )
         ]
         return res

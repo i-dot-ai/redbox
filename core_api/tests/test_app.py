@@ -141,3 +141,4 @@ def test_embed_sentences(client):
 def test_get_file_chunks(client, chunked_file):
     response = client.get(f"/file/{chunked_file.uuid}/chunks")
     assert response.status_code == 200
+    assert len(response.json()) == 5
