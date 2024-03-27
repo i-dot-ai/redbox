@@ -2,7 +2,7 @@ import logging
 from contextlib import asynccontextmanager
 
 from faststream import FastStream, ContextRepo, Context
-from faststream.rabbit import RabbitBroker, RabbitQueue, RabbitExchange
+from faststream.redis import RedisBroker
 
 from redbox.model_db import SentenceTransformerDB
 from redbox.models import EmbedQueueItem, File, ProcessingStatusEnum, Settings
@@ -15,16 +15,9 @@ log = logging.getLogger()
 env = Settings()
 
 
-broker = RabbitBroker(env.rabbit_url)
+broker = RedisBroker(url=env.redis_url)
 
-ingest_channel = RabbitQueue(name=env.ingest_queue_name, durable=True)
-
-embed_channel = RabbitQueue(name=env.embed_queue_name, durable=True)
-
-publisher = broker.publisher(
-    embed_channel,
-    exchange=RabbitExchange("redbox-core-exchange", durable=True),
-)
+publisher = broker.publisher(env.embed_queue_name)
 
 
 @asynccontextmanager
@@ -42,7 +35,7 @@ async def lifespan(context: ContextRepo):
     yield
 
 
-@broker.subscriber(queue=ingest_channel)
+@broker.subscriber(channel=env.ingest_queue_name)
 async def ingest(
     file: File,
     s3_client=Context(),

@@ -8,7 +8,7 @@ reqs:
 	poetry install
 
 run:
-	docker compose up -d elasticsearch kibana embedder ingester minio miniocreatebuckets rabbitmq core-api db django-app
+	docker compose up -d elasticsearch kibana embedder ingester minio miniocreatebuckets redis core-api db django-app
 
 stop:
 	docker compose down
