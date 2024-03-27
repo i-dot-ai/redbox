@@ -58,7 +58,10 @@ jobs:
         chmod 777 data/elastic/
         cp .env.integration .env
         docker compose up -d --wait core-api embedder ingester
-        sleep 20
+
+    - name: Wait 60s for services to be ready
+      run: |
+        sleep 60
 
     - name: Peek application logs
       run: |
@@ -70,8 +73,7 @@ jobs:
 
     - name: Test integration with pytest
       run: |
-        pip install requests
-        pip install pytest
+        pip install requests pytest
         python -m pytest tests
   
 
