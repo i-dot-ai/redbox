@@ -135,7 +135,7 @@ class ElasticsearchStorageHandler(BaseStorageHandler):
             for item in scan(
                 client=self.es_client,
                 index=target_index,
-                query={"query": {"match_all": {"parent_file_uuid": str(parent_file_uuid)}}},
+                query={"query": {"match": {"parent_file_uuid": str(parent_file_uuid)}}},
             )
         ]
         return res

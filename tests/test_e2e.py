@@ -16,7 +16,6 @@ def test_upload_to_elastic(file_pdf_path):
     response = requests.post(url="http://localhost:5002/file", files=files)
     assert response.status_code == 200
     file_uuid = response.json()["uuid"]
-    print(file_uuid)
 
     timeout = 120
     start_time = time.time()
