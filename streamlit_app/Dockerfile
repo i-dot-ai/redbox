@@ -14,6 +14,7 @@ ADD pyproject.toml poetry.lock ./
 RUN --mount=type=cache,target=$POETRY_CACHE_DIR  poetry install --no-root --no-ansi --with streamlit-app,ai,ingester --without dev,worker,api  --no-root
 
 FROM python:3.11-slim-buster as runtime
+ARG EMBEDDING_MODEL
 
 RUN apt-get update
 RUN apt-get install -y libgl-dev libmagic-dev inetutils-ping
