@@ -21,7 +21,7 @@ def test_get_health(app_client):
 
 
 @pytest.mark.asyncio
-async def test_post_file_upload(s3_client, app_client, elasticsearch_storage_handler, bucket, file_pdf_path):
+async def test_post_file_upload(s3_client, aws_credentials, app_client, elasticsearch_storage_handler, bucket, file_pdf_path):
     """
     Given a new file
     When I POST it to /file
@@ -55,7 +55,7 @@ def test_get_file(app_client, stored_file):
 
 
 @mock_aws
-def test_delete_file(s3_client, app_client, elasticsearch_storage_handler, bucket, stored_file):
+def test_delete_file(s3_client, aws_credentials, app_client, elasticsearch_storage_handler, bucket, stored_file):
     """
     Given a previously saved file
     When I DELETE it to /file
@@ -143,7 +143,7 @@ def test_embed_sentences(client):
     assert response.status_code == 200
 
 
-def test_get_file_chunks(client, chunked_file):
+def test_get_file_chunks(aws_credentials, client, chunked_file):
     # TODO: fix this nasty hack
     time.sleep(1)
     response = client.get(f"/file/{chunked_file.uuid}/chunks")
