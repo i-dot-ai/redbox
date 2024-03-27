@@ -2,6 +2,7 @@ import pytest
 from elasticsearch import NotFoundError
 
 from faststream.rabbit import TestRabbitBroker
+from moto import mock_aws
 
 from core_api.src.app import env, publisher, router
 from redbox.models import ProcessingStatusEnum
@@ -18,6 +19,7 @@ def test_get_health(app_client):
 
 
 @pytest.mark.asyncio
+@mock_aws
 async def test_post_file_upload(s3_client, app_client, elasticsearch_storage_handler, bucket, file_pdf_path):
     """
     Given a new file
@@ -51,6 +53,7 @@ def test_get_file(app_client, stored_file):
     assert response.status_code == 200
 
 
+@mock_aws
 def test_delete_file(s3_client, app_client, elasticsearch_storage_handler, bucket, stored_file):
     """
     Given a previously saved file
