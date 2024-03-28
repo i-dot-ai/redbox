@@ -154,7 +154,7 @@ def get_file(file_uuid: UUID) -> File:
     Returns:
         File: The file
     """
-    return storage_handler.read_item(str(file_uuid), model_type="File")
+    return storage_handler.read_item(file_uuid, model_type="File")
 
 
 @app.delete("/file/{file_uuid}", response_model=File, tags=["file"])
@@ -167,9 +167,9 @@ def delete_file(file_uuid: UUID) -> File:
     Returns:
         File: The file that was deleted
     """
-    file = storage_handler.read_item(str(file_uuid), model_type="File")
+    file = storage_handler.read_item(file_uuid, model_type="File")
     s3.delete_object(Bucket=env.bucket_name, Key=file.name)
-    storage_handler.delete_item(str(file_uuid), model_type="File")
+    storage_handler.delete_item(file_uuid, model_type="File")
     return file
 
 
@@ -183,7 +183,7 @@ async def ingest_file(file_uuid: UUID) -> File:
     Returns:
         File: The file that was ingested
     """
-    file = storage_handler.read_item(str(file_uuid), model_type="File")
+    file = storage_handler.read_item(file_uuid, model_type="File")
 
     file.processing_status = ProcessingStatusEnum.parsing
     storage_handler.update_item(item_uuid=file.uuid, item=file)
