@@ -59,18 +59,17 @@ jobs:
         cp .env.integration .env
         docker compose up -d --wait core-api embedder ingester
 
-    - name: Wait 120s for services to be ready
+    - name: Wait 20s for services to be ready
       run: |
-        sleep 120
-
-    - name: Peek application logs
-      run: |
-        docker compose logs core-api ingester embedder
+        sleep 20
 
     - name: Test integration with pytest
       run: |
         pip install requests
         pip install pytest
         python -m pytest tests
-  
+
+    - name: Peek application logs
+      run: |
+        docker compose logs core-api ingester embedder
 
