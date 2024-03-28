@@ -6,7 +6,7 @@ name: Integration Tests
 on:
   # weekday mealtimes
   schedule:
-    - cron: '* 6,12,18 * * 1-5'
+    - cron: '0 6,12,18 * * 1-5'
   # or on-demand
   workflow_dispatch:
 
