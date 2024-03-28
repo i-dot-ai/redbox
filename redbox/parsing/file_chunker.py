@@ -3,7 +3,7 @@ from uuid import UUID
 
 from sentence_transformers import SentenceTransformer
 
-from redbox.models.file import Chunk, File
+from redbox.models.file import Chunk, File, ContentType
 from redbox.parsing.chunk_clustering import cluster_chunks
 from redbox.parsing.chunkers import other_chunker
 
@@ -12,29 +12,7 @@ class FileChunker:
     """A class to wrap unstructured and generate compliant chunks from files"""
 
     def __init__(self, embedding_model: SentenceTransformer = None):
-        self.supported_file_types = [
-            ".eml",
-            ".html",
-            ".json",
-            ".md",
-            ".msg",
-            ".rst",
-            ".rtf",
-            ".txt",
-            ".xml",
-            ".jpeg",  # Must have tesseract installed
-            ".png",  # Must have tesseract installed
-            ".csv",
-            ".doc",
-            ".docx",
-            ".epub",
-            ".odt",
-            ".pdf",
-            ".ppt",
-            ".pptx",
-            ".tsv",
-            ".xlsx",
-        ]
+        self.supported_file_types = [content_type.value for content_type in ContentType]
         self.embedding_model = embedding_model
 
     def chunk_file(

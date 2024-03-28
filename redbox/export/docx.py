@@ -12,7 +12,7 @@ from redbox.models import File, SpotlightComplete
 
 
 def lookup_indentedness(raw: str, line_str_to_match: str):
-    for line in raw.split("\n"):
+    for line in raw.split(r"\n"):
         if line_str_to_match in line:
             # count number of spaces at start of line
             return len(line) - len(line.lstrip(" "))
@@ -40,7 +40,7 @@ def spotlight_complete_to_docx(
     # Add page number to header (right hand side)
 
     footer = section.footer
-    summary_datetime = parser.parse(spotlight_complete.created_datetime)
+    summary_datetime = parser.parse(spotlight_complete.created_datetime.isoformat())
     footer.paragraphs[
         0
     ].text = (
