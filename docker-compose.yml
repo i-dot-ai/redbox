@@ -174,7 +174,6 @@ services:
     restart: always
     ports:
       - "6379:6379"
-    command: redis-server --requirepass {REDIS_PASSWORD:-}
     volumes:
       - redis:/data/redis
     env_file:
