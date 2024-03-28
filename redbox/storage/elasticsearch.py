@@ -30,7 +30,7 @@ class ElasticsearchStorageHandler(BaseStorageHandler):
 
         resp = self.es_client.index(
             index=target_index,
-            id=item.uuid,
+            id=str(item.uuid),
             body=item.model_dump(),
         )
         return resp

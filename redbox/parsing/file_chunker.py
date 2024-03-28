@@ -1,3 +1,6 @@
+from typing import Optional
+from uuid import UUID
+
 from sentence_transformers import SentenceTransformer
 
 from redbox.models.file import Chunk, File
@@ -39,7 +42,7 @@ class FileChunker:
         file: File,
         file_url: str,
         chunk_clustering: bool = True,
-        creator_user_uuid="dev",
+        creator_user_uuid: Optional[UUID] = None,
     ) -> list[Chunk]:
         """_summary_
 
