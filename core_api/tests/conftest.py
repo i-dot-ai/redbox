@@ -1,6 +1,5 @@
 import os
 from typing import Generator, TypeVar
-from uuid import uuid4
 
 import pytest
 from elasticsearch import Elasticsearch

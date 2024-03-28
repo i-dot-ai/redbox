@@ -1,6 +1,6 @@
 import logging
 from datetime import datetime
-from uuid import UUID, uuid4
+from uuid import UUID
 
 from fastapi import FastAPI, UploadFile
 from fastapi.responses import RedirectResponse
