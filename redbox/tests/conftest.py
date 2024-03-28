@@ -22,7 +22,6 @@ def chunk() -> Chunk:
         index=1,
         text="test_text",
         metadata={},
-        creator_user_uuid=uuid4(),
     )
     return test_chunk
 
