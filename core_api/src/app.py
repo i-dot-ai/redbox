@@ -132,7 +132,6 @@ async def create_upload_file(file: UploadFile, ingest: bool = True) -> File:
         name=file.filename,
         path=simple_s3_url,
         type=file.content_type,
-        creator_user_uuid=uuid4(),
         storage_kind=env.object_store,
         processing_status=ProcessingStatusEnum.uploaded,
     )
