@@ -51,10 +51,6 @@ storage_handler = ElasticsearchStorageHandler(es_client=es, root_index="redbox-d
 
 start_time = datetime.now()
 
-buckets = s3.list_buckets()
-if not any(bucket["Name"] == env.bucket_name for bucket in buckets["Buckets"]):
-    s3.create_bucket(Bucket=env.bucket_name)
-
 
 # Create API
 
@@ -113,7 +109,6 @@ async def create_upload_file(file: UploadFile, ingest: bool = True) -> File:
     Returns:
         File: The file record
     """
-
 
     s3.put_object(
         Bucket=env.bucket_name,

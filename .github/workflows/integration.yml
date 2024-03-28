@@ -57,19 +57,15 @@ jobs:
         mkdir -p data/elastic/
         chmod -R 777 data/
         cp .env.integration .env
-        docker compose up -d --wait core-api embedder ingester
+        docker compose up -d --wait core-api embedder ingester miniocreatebuckets
 
-    - name: Wait 20s for services to be ready
+    - name: Wait 60s for services to be ready
       run: |
-        sleep 20
+        sleep 60
 
     - name: Test integration with pytest
       run: |
         pip install requests
         pip install pytest
         python -m pytest tests
-
-    - name: Peek application logs
-      run: |
-        docker compose logs core-api ingester embedder
 
