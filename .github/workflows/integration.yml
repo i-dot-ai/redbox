@@ -56,7 +56,7 @@ jobs:
         mkdir -p data/elastic/
         chmod -R 777 data/
         cp .env.integration .env
-        docker compose up -d --wait core-api embedder ingester miniocreatebuckets
+        docker compose up -d --wait core-api embedder ingester
 
     - name: Wait 60s for services to be ready
       run: |
