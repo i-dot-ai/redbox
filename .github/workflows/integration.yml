@@ -61,9 +61,12 @@ jobs:
               {
                 "type": "header",
                 "text": {
-                  "type": "mrkdwn",
-                  "text": ":fire: *Integration Tests are failing* :fire_engine:"
+                  "type": "plain_text",
+                  "text": ":fire: Integration Tests are failing :fire_engine:"
                 }
+              },
+              {
+                "type": "divider"
               },
               {
                 "type": "actions",
