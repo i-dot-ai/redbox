@@ -21,9 +21,7 @@ class ChatMessage(PersistableModel):
             return chain
 
     @field_serializer("message")
-    def serialise_message(
-        self, message: AIMessage | HumanMessage | SystemMessage, _info
-    ):
+    def serialise_message(self, message: AIMessage | HumanMessage | SystemMessage, _info):
         if isinstance(message, (AIMessage, HumanMessage, SystemMessage)):
             return message.dict()
         else:
