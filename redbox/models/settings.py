@@ -1,6 +1,7 @@
 from typing import Literal, Optional
 
 import boto3
+from botocore.exceptions import ClientError
 from elasticsearch import Elasticsearch
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -78,18 +79,27 @@ class Settings(BaseSettings):
                 aws_secret_access_key=self.minio_secret_key,
                 endpoint_url=f"http://{self.minio_host}:{self.minio_port}",
             )
-            return client
 
-        if self.object_store == "s3":
+        elif self.object_store == "s3":
             client = boto3.client(
                 "s3",
                 aws_access_key_id=self.aws_access_key_id,
                 aws_secret_access_key=self.aws_secret_access_key,
                 region_name=self.aws_region,
             )
-            return client
+        else:
+            raise NotImplementedError
 
-        raise NotImplementedError
+        try:
+            client.create_bucket(
+                Bucket=self.bucket_name,
+                CreateBucketConfiguration={"LocationConstraint": self.aws_region},
+            )
+        except ClientError as e:
+            if e.response['Error']['Code'] != 'BucketAlreadyOwnedByYou':
+                raise e
+
+        return client
 
     @property
     def redis_url(self) -> str:
