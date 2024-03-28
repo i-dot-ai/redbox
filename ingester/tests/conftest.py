@@ -1,5 +1,6 @@
 import os
 from typing import Generator, TypeVar
+from uuid import uuid4
 
 import pytest
 from elasticsearch import Elasticsearch
@@ -72,7 +73,7 @@ def file(s3_client, file_pdf_path):
         name=file_name,
         path=simple_s3_url,
         type=file_type,
-        creator_user_uuid="dev",
+        creator_user_uuid=uuid4(),
         storage_kind=env.object_store,
     )
 

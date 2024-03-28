@@ -36,4 +36,4 @@ class StatusResponse(BaseModel):
 
 class EmbedQueueItem(BaseModel):
     """Instruction to Ingest app for what to embed"""
-    chunk_uuid: str = Field(description="id of the chunk that this text belongs to")
+    chunk_uuid: UUID = Field(description="id of the chunk that this text belongs to")

@@ -18,12 +18,11 @@ env = Settings()
 @pytest.fixture
 def chunk() -> YieldFixture[Chunk]:
     test_chunk = Chunk(
-        uuid=str(uuid4()),
-        parent_file_uuid="test_uuid",
+        parent_file_uuid=uuid4(),
         index=1,
         text="test_text",
         metadata={},
-        creator_user_uuid="test",
+        creator_user_uuid=uuid4(),
     )
     yield test_chunk
 

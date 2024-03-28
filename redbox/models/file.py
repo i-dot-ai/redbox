@@ -1,6 +1,7 @@
 import hashlib
 from enum import Enum
 from typing import Optional
+from uuid import UUID
 
 import tiktoken
 from langchain.schema import Document
@@ -47,7 +48,7 @@ class File(PersistableModel):
 
 class Chunk(PersistableModel):
     """Chunk of a File"""
-    parent_file_uuid: str = Field(description="id of the original file which this text came from")
+    parent_file_uuid: UUID = Field(description="id of the original file which this text came from")
     index: int = Field(description="relative position of this chunk in the original file")
     text: str = Field(description="chunk of the original text")
     metadata: dict
