@@ -40,14 +40,7 @@ For a quick start, you can use GitHub Codespaces to run the project in a cloud-b
 
 # Testing
 - Unit tests and QA run in CI
-- At this time integration test(s) must be run locally:
-
-```commandline
-docker down
-cp .env.example .env
-docker compose up -d ingester embedder core-api
-make test-integration
-```
+- At this time integration test(s) take 10+ mins to run so are triggered manually in CI
 
 # Dependencies
 

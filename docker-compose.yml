@@ -134,7 +134,7 @@ services:
     networks:
       - redbox-app-network
     entrypoint: >
-      /bin/sh -c " /usr/bin/mc alias set redbox http://minio:9000 minioadmin minioadmin; /usr/bin/mc mb redbox/redbox-storage-dev; /usr/bin/mc policy set public redbox/redbox-storage-dev; exit 0; "
+      /bin/sh -c " /usr/bin/mc alias set redbox http://minio:9000 minioadmin minioadmin; /usr/bin/mc mb --ignore-existing redbox/redbox-storage-dev; /usr/bin/mc policy set public redbox/redbox-storage-dev; exit 0; "
   elasticsearch:
     image: elasticsearch:8.12.0
     volumes:
