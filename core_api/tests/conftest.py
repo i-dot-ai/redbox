@@ -77,7 +77,6 @@ def file(s3_client, file_pdf_path) -> YieldFixture[File]:
         name=file_name,
         path=simple_s3_url,
         type=file_type,
-        creator_user_uuid=uuid4(),
         storage_kind=env.object_store,
         processing_status=ProcessingStatusEnum.uploaded,
     )

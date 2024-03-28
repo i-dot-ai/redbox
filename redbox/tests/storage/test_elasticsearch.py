@@ -105,11 +105,10 @@ def test_elastic_write_read_delete_items(elasticsearch_storage_handler):
     """
     chunks = [
         Chunk(
-            parent_file_uuid="test_uuid",
+            parent_file_uuid=uuid4(),
             index=i,
             text="test_text",
             metadata={},
-            creator_user_uuid="test",
         )
         for i in range(10)
     ]

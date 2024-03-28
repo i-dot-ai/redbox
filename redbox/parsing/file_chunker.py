@@ -12,7 +12,7 @@ class FileChunker:
     """A class to wrap unstructured and generate compliant chunks from files"""
 
     def __init__(self, embedding_model: SentenceTransformer = None):
-        self.supported_file_types = [content_type.value for content_type in ContentType]
+        self.supported_file_types = ["." + content_type.value for content_type in ContentType]
         self.embedding_model = embedding_model
 
     def chunk_file(
