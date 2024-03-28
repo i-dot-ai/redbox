@@ -126,8 +126,7 @@ async def create_upload_file(name: str, type: str, location: str, ingest=True) -
     if ingest:
         await ingest_file(file_record.uuid)
 
-    # TODO: return something more sensible to the user (including errors)
-    return file_record
+    return name
 
 
 @app.get("/file/{file_uuid}", response_model=File, tags=["file"])
