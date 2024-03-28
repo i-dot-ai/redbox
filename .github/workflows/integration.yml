@@ -4,10 +4,6 @@
 name: Integration Tests
 
 on:
-  push:
-    branches:
-      - 'feature/**'
-
   # weekday mealtimes
   schedule:
     - cron: '* 6,12,18 * * 1-5'
