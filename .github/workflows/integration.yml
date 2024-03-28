@@ -64,3 +64,38 @@ jobs:
         pip install pytest
         python -m pytest tests
 
+    - name: notify slack
+      id: slack
+      uses: slackapi/slack-github-action@v1.24.0
+      if: ${{ failure() }}
+      with:
+        channel-id: 'C05D67P6M34'
+        payload: |
+          {
+            "text": "Integration Tests Failed",
+            "blocks": [
+              {
+                "type": "section",
+                "text": {
+                  "type": "mrkdwn",
+                  "text": ":fire_engine:\n Integration Tests are failing on main"
+                }
+              },
+              {
+                "type": "actions",
+                "elements": [
+                  {
+                    "type": "button",
+                    "text": {
+                      "type": "plain_text",
+                      "text": ":github: logs"
+                    },
+                    "url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+                  }
+                ]
+              }
+            ]
+          }
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_NOTIFICATIONS_TOKEN }}
+        SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
