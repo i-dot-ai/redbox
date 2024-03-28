@@ -42,7 +42,6 @@ class Settings(BaseSettings):
 
     redis_host: str = "redis"
     redis_port: int = 6379
-    redis_password: str = "guest"
 
     dev_mode: bool = False
     django_settings_module: str = "redbox_app.settings"
@@ -92,16 +91,7 @@ class Settings(BaseSettings):
 
         raise NotImplementedError
 
-    def sqs_client(self):
-        sqs = boto3.client(
-            "sqs",
-            aws_access_key_id=self.aws_access_key_id,
-            aws_secret_access_key=self.aws_secret_access_key,
-            region_name=self.aws_region,
-        )
-        return sqs
-
     @property
     def redis_url(self) -> str:
-        return f"redis://:{self.redis_password}@{self.redis_host}:{self.redis_port}/"
+        return f"redis://{self.redis_host}:{self.redis_port}/"
 
