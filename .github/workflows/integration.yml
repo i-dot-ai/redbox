@@ -59,10 +59,10 @@ jobs:
             "text": "Integration Tests Failed",
             "blocks": [
               {
-                "type": "section",
+                "type": "header",
                 "text": {
                   "type": "mrkdwn",
-                  "text": ":fire_engine:\n Integration Tests are failing on main"
+                  "text": ":fire: *Integration Tests are failing* :fire_engine:"
                 }
               },
               {
@@ -72,7 +72,7 @@ jobs:
                     "type": "button",
                     "text": {
                       "type": "plain_text",
-                      "text": ":github: logs"
+                      "text": "logs"
                     },
                     "url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
                   }
