@@ -35,6 +35,7 @@ APPROVED_FILE_EXTENSIONS = [
     ".xlsx",
     ".htm",
 ]
+MAX_FILE_SIZE = 209715200  # 200 MB or 200 * 1024 * 1024
 
 
 @require_http_methods(["GET"])
@@ -81,68 +82,75 @@ def get_file_extension(file):
 
 
 def upload_view(request):
+    errors = {"upload_doc": []}
+    uploaded = False
+
     if request.method == "POST" and request.FILES["uploadDoc"]:
         # https://django-storages.readthedocs.io/en/1.13.2/backends/amazon-S3.html
         uploaded_file = request.FILES["uploadDoc"]
 
         file_extension = get_file_extension(uploaded_file)
 
-        # TODO: Surface errors to the users
         if uploaded_file.name is None:
-            raise ValueError("file name is null")
+            errors["upload_doc"].append("File has no name")
         if uploaded_file.content_type is None:
-            raise ValueError("file type is null")
+            errors["upload_doc"].append("File has no content-type")
+        if uploaded_file.size > MAX_FILE_SIZE:
+            errors["upload_doc"].append("File is larger than 200MB")
         if file_extension not in APPROVED_FILE_EXTENSIONS:
-            raise ValueError(f"file type {file_extension} not approved")
+            errors["upload_doc"].append(f"File type {file_extension} not supported")
 
-        file_key = f"{uuid.uuid4()}{file_extension}"
+        if not len(errors["upload_doc"]):
+            file_key = f"{uuid.uuid4()}{file_extension}"
 
-        # TODO: can we upload chunks instead of having the file read?
-        s3.upload_fileobj(
-            Bucket=settings.BUCKET_NAME,
-            Fileobj=uploaded_file,
-            Key=file_key,
-            ExtraArgs={"Tagging": f"file_type={uploaded_file.content_type}"},
-            Config=TransferConfig(
-                multipart_chunksize=CHUNK_SIZE,
-                preferred_transfer_client="auto",
-                multipart_threshold=CHUNK_SIZE,
-                use_threads=True,
-                max_concurrency=80,
-            ),
-        )
+            # TODO: can we upload chunks instead of having the file read?
+            s3.upload_fileobj(
+                Bucket=settings.BUCKET_NAME,
+                Fileobj=uploaded_file,
+                Key=file_key,
+                ExtraArgs={"Tagging": f"file_type={uploaded_file.content_type}"},
+                Config=TransferConfig(
+                    multipart_chunksize=CHUNK_SIZE,
+                    preferred_transfer_client="auto",
+                    multipart_threshold=CHUNK_SIZE,
+                    use_threads=True,
+                    max_concurrency=80,
+                ),
+            )
 
-        # TODO: Handle S3 upload errors
-        authenticated_s3_url = s3.generate_presigned_url(
-            "get_object",
-            Params={
-                "Bucket": settings.BUCKET_NAME,
-                "Key": file_key,
-            },
-            ExpiresIn=3600,
-        )
-        # Strip off the query string (we don't need the keys)
-        simple_s3_url = authenticated_s3_url.split("?")[0]
+            # TODO: Handle S3 upload errors
+            authenticated_s3_url = s3.generate_presigned_url(
+                "get_object",
+                Params={
+                    "Bucket": settings.BUCKET_NAME,
+                    "Key": file_key,
+                },
+                ExpiresIn=3600,
+            )
+            # Strip off the query string (we don't need the keys)
+            simple_s3_url = authenticated_s3_url.split("?")[0]
 
-        # ingest file
-        # TODO: set url using ENV vars
-        url = "http://core-api:5002/file"
-        api_response = requests.post(
-            url,
-            params={
-                "name": uploaded_file.name,
-                "type": uploaded_file.content_type,
-                "location": simple_s3_url,
-            },
-        )
+            # ingest file
+            # TODO: set url using ENV vars
+            url = "http://core-api:5002/file"
+            api_response = requests.post(
+                url,
+                params={
+                    "name": uploaded_file.name,
+                    "type": uploaded_file.content_type,
+                    "location": simple_s3_url,
+                },
+            )
 
-        # TODO: handle better
-        return JsonResponse(api_response.json())
+            if api_response.ok:
+                uploaded = True
+            else:
+                errors["upload_doc"].append(api_response.reason)
 
     return render(
         request,
         template_name="upload.html",
-        context={"request": request},
+        context={"request": request, "errors": errors, "uploaded": uploaded},
     )
 
 
