@@ -1,9 +1,8 @@
 from typing import Optional
-from uuid import uuid4
 
 from langchain.chains.base import Chain
 from langchain.schema import AIMessage, HumanMessage, SystemMessage
-from pydantic import Field, field_serializer
+from pydantic import field_serializer
 
 from redbox.models.base import PersistableModel
 

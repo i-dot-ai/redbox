@@ -1,6 +1,6 @@
 import logging
 from datetime import datetime
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from fastapi import FastAPI, UploadFile
 from fastapi.responses import RedirectResponse
@@ -132,7 +132,7 @@ async def create_upload_file(file: UploadFile, ingest: bool = True) -> File:
         name=file.filename,
         path=simple_s3_url,
         type=file.content_type,
-        creator_user_uuid="dev",
+        creator_user_uuid=uuid4(),
         storage_kind=env.object_store,
         processing_status=ProcessingStatusEnum.uploaded,
     )
@@ -159,7 +159,7 @@ def get_file(file_uuid: UUID) -> File:
 
 
 @app.delete("/file/{file_uuid}", response_model=File, tags=["file"])
-def delete_file(file_uuid: str) -> File:
+def delete_file(file_uuid: UUID) -> File:
     """Delete a file from the object store and the database
 
     Args:
@@ -168,23 +168,23 @@ def delete_file(file_uuid: str) -> File:
     Returns:
         File: The file that was deleted
     """
-    file = storage_handler.read_item(file_uuid, model_type="File")
+    file = storage_handler.read_item(str(file_uuid), model_type="File")
     s3.delete_object(Bucket=env.bucket_name, Key=file.name)
-    storage_handler.delete_item(file_uuid, model_type="File")
+    storage_handler.delete_item(str(file_uuid), model_type="File")
     return file
 
 
 @app.post("/file/{file_uuid}/ingest", response_model=File, tags=["file"])
-async def ingest_file(file_uuid: str) -> File:
+async def ingest_file(file_uuid: UUID) -> File:
     """Trigger the ingest process for a file to a queue.
 
     Args:
-        file_uuid (str): The UUID of the file to ingest
+        file_uuid (UUID): The UUID of the file to ingest
 
     Returns:
         File: The file that was ingested
     """
-    file = storage_handler.read_item(file_uuid, model_type="File")
+    file = storage_handler.read_item(str(file_uuid), model_type="File")
 
     file.processing_status = ProcessingStatusEnum.parsing
     storage_handler.update_item(item_uuid=file.uuid, item=file)
