@@ -31,6 +31,9 @@ model_db = SentenceTransformerDB(env.embedding_model)
 
 s3 = env.s3_client()
 
+if not any(bucket["Name"] == env.bucket_name for bucket in s3.list_buckets()["Buckets"]):
+    s3.create_bucket(Bucket=env.bucket_name)
+
 
 # === Queues ===
 

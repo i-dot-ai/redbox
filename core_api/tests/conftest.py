@@ -47,7 +47,7 @@ def elasticsearch_storage_handler(es_client):
 
 
 @pytest.fixture
-def file(s3_client, file_pdf_path, bucket) -> YieldFixture[File]:
+def file(s3_client, file_pdf_path) -> YieldFixture[File]:
     """
     TODO: this is a cut and paste of core_api:create_upload_file
     When we come to test core_api we should think about
@@ -58,7 +58,7 @@ def file(s3_client, file_pdf_path, bucket) -> YieldFixture[File]:
 
     with open(file_pdf_path, "rb") as f:
         s3_client.put_object(
-            Bucket=bucket,
+            Bucket=env.bucket_name,
             Body=f.read(),
             Key=file_name,
             Tagging=f"file_type={file_type}",
@@ -96,14 +96,6 @@ def chunked_file(elasticsearch_storage_handler, stored_file) -> YieldFixture[Fil
         chunk = Chunk(text="hello", index=i, parent_file_uuid=stored_file.uuid, metadata={})
         elasticsearch_storage_handler.write_item(chunk)
     yield stored_file
-
-
-@pytest.fixture
-def bucket(s3_client):
-    buckets = s3_client.list_buckets()
-    if not any(bucket["Name"] == env.bucket_name for bucket in buckets["Buckets"]):
-        s3_client.create_bucket(Bucket=env.bucket_name)
-    yield env.bucket_name
 
 
 @pytest.fixture
