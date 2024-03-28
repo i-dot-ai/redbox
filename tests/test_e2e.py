@@ -20,11 +20,15 @@ def test_upload_to_elastic(file_pdf_path):
     timeout = 60  # 10s should be plenty
     start_time = time.time()
     embeddings_found = False
+    error = ""
 
     while not embeddings_found and time.time() - start_time < timeout:
         time.sleep(1)
-        chunks = requests.get(f"http://localhost:5002/file/{file_uuid}/chunks").json()
-        embeddings_found = any(chunk["embedding"] for chunk in chunks)
+        chunk_response = requests.get(f"http://localhost:5002/file/{file_uuid}/chunks")
+        if chunk_response.status_code == 200:
+            embeddings_found = any(chunk["embedding"] for chunk in chunk_response.json())
+        else:
+            error = chunk_response.text
 
     if not embeddings_found:
-        pytest.fail(reason=f"failed to get embedded chunks within {timeout} seconds")
+        pytest.fail(reason=f"failed to get embedded chunks within {timeout} seconds, potential error: {error}")
