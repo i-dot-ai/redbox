@@ -27,6 +27,14 @@ You'll find a series of useful `docker compose` commands already maded in [`Make
 
 Any time you update code for the the repo, you'll likely need to rebuild the containers.
 
+# Docs
+
+The docs are built using [MkDocs](https://www.mkdocs.org/). To run the docs locally, you can run:
+
+```bash
+make docs-serve
+```
+
 # Codespace
 For a quick start, you can use GitHub Codespaces to run the project in a cloud-based development environment. Click the button below to open the project in a new Codespace.
 
