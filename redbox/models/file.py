@@ -46,7 +46,7 @@ class ContentType(str, Enum):
 
 
 class File(PersistableModel):
-    path: str = Field(description="location of file")
+    url: AnyUrl = Field(description="s3 url")
     type: ContentType = Field(description="content_type of file")
     name: str = Field(description="file name")
     storage_kind: str = "local"
