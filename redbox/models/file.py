@@ -49,7 +49,6 @@ class File(PersistableModel):
     url: AnyUrl = Field(description="s3 url")
     type: ContentType = Field(description="content_type of file")
     name: str = Field(description="file name")
-    storage_kind: str = "local"
     text: Optional[str] = Field(description="file content", default=None)
     processing_status: ProcessingStatusEnum = Field(default=ProcessingStatusEnum.uploaded)
 
