@@ -24,7 +24,7 @@ nav:
 plugins:
     - search
     - mermaid2
-    - mkdocstrings
+    - mkapi
 
 markdown_extensions:
   - meta
