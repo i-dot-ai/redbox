@@ -97,7 +97,6 @@ if submitted:  # noqa: C901
                 path=simple_s3_url,
                 type=file_type,
                 name=sanitised_name,
-                storage_kind=ENV["OBJECT_STORE"],
                 creator_user_uuid=st.session_state.user_uuid,
             )
 

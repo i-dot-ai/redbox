@@ -130,9 +130,8 @@ async def create_upload_file(file: UploadFile, ingest: bool = True) -> File:
         raise ValueError("file type is null")
     file_record = File(
         name=file.filename,
-        path=simple_s3_url,
-        type=file.content_type,
-        storage_kind=env.object_store,
+        url=simple_s3_url,
+        content_type=file.content_type,
         processing_status=ProcessingStatusEnum.uploaded,
     )
 

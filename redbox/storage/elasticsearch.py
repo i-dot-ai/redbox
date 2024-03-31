@@ -31,7 +31,7 @@ class ElasticsearchStorageHandler(BaseStorageHandler):
         resp = self.es_client.index(
             index=target_index,
             id=str(item.uuid),
-            body=item.model_dump(),
+            body=item.json(),
         )
         return resp
 
@@ -64,7 +64,7 @@ class ElasticsearchStorageHandler(BaseStorageHandler):
         self.es_client.index(
             index=target_index,
             id=str(item.uuid),
-            body=item.model_dump(),
+            body=item.json(),
         )
 
     def update_items(self, item_uuids: list[UUID], items: list[PersistableModel]):
