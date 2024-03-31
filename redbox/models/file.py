@@ -5,7 +5,7 @@ from uuid import UUID
 
 import tiktoken
 from langchain.schema import Document
-from pydantic import Field, computed_field
+from pydantic import Field, computed_field, AnyUrl
 
 from redbox.models.base import PersistableModel
 
@@ -63,7 +63,7 @@ class File(PersistableModel):
     def to_document(self) -> Document:
         return Document(
             page_content=f"<Doc{self.uuid}>Title: {self.name}\n\n{self.text}</Doc{self.uuid}>\n\n",
-            metadata={"source": self.storage_kind},
+            metadata={"source": self.url},
         )
 
 
