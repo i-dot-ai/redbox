@@ -30,8 +30,8 @@ class ElasticsearchStorageHandler(BaseStorageHandler):
 
         resp = self.es_client.index(
             index=target_index,
-            id=item.uuid,
-            body=item.model_dump(),
+            id=str(item.uuid),
+            body=item.json(),
         )
         return resp
 
@@ -42,45 +42,45 @@ class ElasticsearchStorageHandler(BaseStorageHandler):
             responses.append(resp)
         return responses
 
-    def read_item(self, item_uuid: str, model_type: str):
+    def read_item(self, item_uuid: UUID, model_type: str):
         target_index = f"{self.root_index}-{model_type.lower()}"
-        result = self.es_client.get(index=target_index, id=item_uuid)
+        result = self.es_client.get(index=target_index, id=str(item_uuid))
         model = self.get_model_by_model_type(model_type)
         item = model(**result.body["_source"])
         return item
 
-    def read_items(self, item_uuids: list[str], model_type: str):
+    def read_items(self, item_uuids: list[UUID], model_type: str):
         target_index = f"{self.root_index}-{model_type.lower()}"
-        result = self.es_client.mget(index=target_index, body={"ids": item_uuids})
+        result = self.es_client.mget(index=target_index, body={"ids": list(map(str, item_uuids))})
 
         model = self.get_model_by_model_type(model_type)
         items = [model(**item["_source"]) for item in result.body["docs"]]
 
         return items
 
-    def update_item(self, item_uuid: str, item: PersistableModel):
+    def update_item(self, item_uuid: UUID, item: PersistableModel):
         target_index = f"{self.root_index}-{item.model_type.lower()}"
 
         self.es_client.index(
             index=target_index,
-            id=item.uuid,
-            body=item.model_dump(),
+            id=str(item.uuid),
+            body=item.json(),
         )
 
-    def update_items(self, item_uuids: list[str], items: list[PersistableModel]):
+    def update_items(self, item_uuids: list[UUID], items: list[PersistableModel]):
         for item_uuid, item in zip(item_uuids, items):
             self.update_item(item_uuid, item)
 
-    def delete_item(self, item_uuid: str, model_type: str):
+    def delete_item(self, item_uuid: UUID, model_type: str):
         target_index = f"{self.root_index}-{model_type.lower()}"
-        result = self.es_client.delete(index=target_index, id=item_uuid)
+        result = self.es_client.delete(index=target_index, id=str(item_uuid))
         return result
 
-    def delete_items(self, item_uuids: list[str], model_type: str):
+    def delete_items(self, item_uuids: list[UUID], model_type: str):
         target_index = f"{self.root_index}-{model_type.lower()}"
         result = self.es_client.delete_by_query(
             index=target_index,
-            body={"query": {"terms": {"_id": item_uuids}}},
+            body={"query": {"terms": {"_id": list(map(str, item_uuids))}}},
         )
         return result
 

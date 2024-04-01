@@ -130,10 +130,8 @@ async def create_upload_file(file: UploadFile, ingest: bool = True) -> File:
         raise ValueError("file type is null")
     file_record = File(
         name=file.filename,
-        path=simple_s3_url,
-        type=file.content_type,
-        creator_user_uuid="dev",
-        storage_kind=env.object_store,
+        url=simple_s3_url,
+        content_type=file.content_type,
         processing_status=ProcessingStatusEnum.uploaded,
     )
 
@@ -155,11 +153,11 @@ def get_file(file_uuid: UUID) -> File:
     Returns:
         File: The file
     """
-    return storage_handler.read_item(str(file_uuid), model_type="File")
+    return storage_handler.read_item(file_uuid, model_type="File")
 
 
 @app.delete("/file/{file_uuid}", response_model=File, tags=["file"])
-def delete_file(file_uuid: str) -> File:
+def delete_file(file_uuid: UUID) -> File:
     """Delete a file from the object store and the database
 
     Args:
@@ -175,11 +173,11 @@ def delete_file(file_uuid: str) -> File:
 
 
 @app.post("/file/{file_uuid}/ingest", response_model=File, tags=["file"])
-async def ingest_file(file_uuid: str) -> File:
+async def ingest_file(file_uuid: UUID) -> File:
     """Trigger the ingest process for a file to a queue.
 
     Args:
-        file_uuid (str): The UUID of the file to ingest
+        file_uuid (UUID): The UUID of the file to ingest
 
     Returns:
         File: The file that was ingested

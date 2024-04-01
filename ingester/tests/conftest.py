@@ -70,10 +70,8 @@ def file(s3_client, file_pdf_path):
     simple_s3_url = authenticated_s3_url.split("?")[0]
     file_record = File(
         name=file_name,
-        path=simple_s3_url,
-        type=file_type,
-        creator_user_uuid="dev",
-        storage_kind=env.object_store,
+        url=simple_s3_url,
+        content_type=file_type,
     )
 
     yield file_record

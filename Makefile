@@ -44,7 +44,7 @@ test-django:
 
 test-integration:
 	docker compose down
-	cp .env.example .env
+	cp .env.integration .env
 	docker compose build core-api embedder ingester
 	docker compose up -d core-api embedder ingester
 	poetry install --no-root --no-ansi --with dev --without ai,streamlit-app,api,worker,ingester

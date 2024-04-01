@@ -1,4 +1,5 @@
 from typing import Generator, TypeVar
+from uuid import uuid4
 
 import pytest
 from elasticsearch import Elasticsearch
@@ -17,14 +18,18 @@ env = Settings()
 @pytest.fixture
 def chunk() -> Chunk:
     test_chunk = Chunk(
-        uuid="aaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
-        parent_file_uuid="test_uuid",
+        parent_file_uuid=uuid4(),
         index=1,
         text="test_text",
         metadata={},
-        creator_user_uuid="test",
     )
     return test_chunk
+
+
+@pytest.fixture
+def stored_chunk(elasticsearch_storage_handler, chunk) -> Chunk:
+    elasticsearch_storage_handler.write_item(item=chunk)
+    return chunk
 
 
 @pytest.fixture

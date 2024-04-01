@@ -71,12 +71,12 @@ redbox-copilot/
 │  └── Dockerfile
 ├── embedder
 │  ├── src/
-│  │  └── app.py
+│  │  └── worker.py
 │  ├── tests/
 │  └── Dockerfile
 ├── ingester
 │  ├── src/
-│  │  └── app.py
+│  │  └── worker.py
 │  ├── tests/
 │  └── Dockerfile
 ├── redbox/

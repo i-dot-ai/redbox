@@ -96,7 +96,7 @@ class Settings(BaseSettings):
                 CreateBucketConfiguration={"LocationConstraint": self.aws_region},
             )
         except ClientError as e:
-            if e.response['Error']['Code'] != 'BucketAlreadyOwnedByYou':
+            if e.response["Error"]["Code"] != "BucketAlreadyOwnedByYou":
                 raise e
 
         return client
@@ -104,4 +104,3 @@ class Settings(BaseSettings):
     @property
     def redis_url(self) -> str:
         return f"redis://{self.redis_host}:{self.redis_port}/"
-
