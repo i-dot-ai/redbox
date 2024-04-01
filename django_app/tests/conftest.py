@@ -34,13 +34,17 @@ def chris(create_user):
 
 @pytest.fixture
 def peter_rabbit(create_user):
-    user = User.objects.create_user(email="peter.rabbit@example.com", password="P455W0rd")
+    user = User.objects.create_user(
+        email="peter.rabbit@example.com", password="P455W0rd"
+    )
     yield user
 
 
 @pytest.fixture
 def jemima_puddleduck():
-    user = User.objects.create_user(email="jemima.puddleduck@example.com", password="P455W0rd")
+    user = User.objects.create_user(
+        email="jemima.puddleduck@example.com", password="P455W0rd"
+    )
     yield user
 
 

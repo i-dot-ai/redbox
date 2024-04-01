@@ -6,17 +6,19 @@ from langchain.schema import AIMessage, HumanMessage, SystemMessage
 from streamlit_feedback import streamlit_feedback
 from utils import (
     StreamlitStreamHandler,
+    get_persona_description,
     init_session_state,
     load_llm_handler,
     replace_doc_ref,
     submit_feedback,
-    get_persona_description,
 )
 
 from redbox.llm.prompts.core import CORE_REDBOX_PROMPT
 from redbox.models.chat import ChatMessage
 
-st.set_page_config(page_title="Redbox Copilot - Ask the Box", page_icon="📮", layout="wide")
+st.set_page_config(
+    page_title="Redbox Copilot - Ask the Box", page_icon="📮", layout="wide"
+)
 
 ENV = init_session_state()
 
@@ -87,7 +89,11 @@ def render_citation_response(response):
         (
             chunk.metadata["parent_doc_uuid"],
             chunk.metadata["url"],
-            (chunk.metadata["page_numbers"] if "page_numbers" in chunk.metadata else None),
+            (
+                chunk.metadata["page_numbers"]
+                if "page_numbers" in chunk.metadata
+                else None
+            ),
         )
         for chunk in response["input_documents"]
     ]
@@ -118,7 +124,9 @@ st.sidebar.download_button(
         indent=4,
         ensure_ascii=False,
     ),
-    file_name=(f"redboxai_conversation_{st.session_state.user_uuid}" f"_{now_formatted}.json"),
+    file_name=(
+        f"redboxai_conversation_{st.session_state.user_uuid}" f"_{now_formatted}.json"
+    ),
 )
 
 message_count = len(st.session_state.messages)
@@ -168,7 +176,9 @@ if prompt := st.chat_input():
             user_info=st.session_state.user_info,
             chat_history=st.session_state.messages,
             callbacks=[
-                StreamlitStreamHandler(text_element=response_stream_text, initial_text=""),
+                StreamlitStreamHandler(
+                    text_element=response_stream_text, initial_text=""
+                ),
                 st.session_state.llm_logger_callback,
             ],
         )
@@ -199,4 +209,6 @@ if prompt := st.chat_input():
 
     # Store the markdown response for later rendering
     # Done to avoid needing file references from llm_handler
-    st.session_state.ai_message_markdown_lookup[hash(response["output_text"])] = response_final_markdown
+    st.session_state.ai_message_markdown_lookup[hash(response["output_text"])] = (
+        response_final_markdown
+    )

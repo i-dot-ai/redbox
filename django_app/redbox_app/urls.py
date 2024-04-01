@@ -5,7 +5,11 @@ from .redbox_core import info_views, views
 
 info_urlpatterns = [
     path("privacy-notice/", info_views.privacy_notice_view, name="privacy-notice"),
-    path("accessibility-statement/", info_views.accessibility_statement_view, name="accessibility-statement"),
+    path(
+        "accessibility-statement/",
+        info_views.accessibility_statement_view,
+        name="accessibility-statement",
+    ),
     path("support/", info_views.support_view, name="support"),
 ]
 

@@ -1,11 +1,9 @@
 import pytest
+from faststream.redis import TestApp, TestRedisBroker
 
-from ingester.src.worker import broker, app
+from ingester.src.worker import app, broker
 from redbox.models import ProcessingStatusEnum, Settings
 from redbox.storage import ElasticsearchStorageHandler
-
-from faststream.redis import TestRedisBroker, TestApp
-
 
 env = Settings()
 
@@ -20,7 +18,9 @@ async def test_ingest_file(s3_client, es_client, embedding_model, file):
     2. written to Elasticsearch
     """
 
-    storage_handler = ElasticsearchStorageHandler(es_client=es_client, root_index="redbox-data")
+    storage_handler = ElasticsearchStorageHandler(
+        es_client=es_client, root_index="redbox-data"
+    )
 
     async with TestRedisBroker(broker) as br, TestApp(app):
         await br.publish(file, channel=env.ingest_queue_name)

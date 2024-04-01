@@ -1,7 +1,7 @@
 import logging
 from contextlib import asynccontextmanager
 
-from faststream import FastStream, ContextRepo, Context
+from faststream import Context, ContextRepo, FastStream
 from faststream.redis import RedisBroker
 
 from redbox.model_db import SentenceTransformerDB
@@ -24,7 +24,9 @@ publisher = broker.publisher(env.embed_queue_name)
 async def lifespan(context: ContextRepo):
     s3_client = env.s3_client()
     es = env.elasticsearch_client()
-    storage_handler = ElasticsearchStorageHandler(es_client=es, root_index="redbox-data")
+    storage_handler = ElasticsearchStorageHandler(
+        es_client=es, root_index="redbox-data"
+    )
     model_db = SentenceTransformerDB(env.embedding_model)
     chunker = FileChunker(embedding_model=model_db)
 

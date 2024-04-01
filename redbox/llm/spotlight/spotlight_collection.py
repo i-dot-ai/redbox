@@ -20,7 +20,9 @@ class SpotlightCollection(object):
 
         for individual_spotlight_dict in self.spotlights:
             for task_id in individual_spotlight_dict["task_outputs"]:
-                self.combined_spotlight_tasks[task_id].append(individual_spotlight_dict["task_outputs"][task_id])
+                self.combined_spotlight_tasks[task_id].append(
+                    individual_spotlight_dict["task_outputs"][task_id]
+                )
         self.combined_spotlight_dict: dict = {"combined_task_outputs": {}}
 
     def combine_spotlight_task_outputs(
@@ -35,9 +37,7 @@ class SpotlightCollection(object):
         spotlight_payload = ""
 
         for i, individual_task_payload in enumerate(task_outputs):
-            spotlight_payload += (
-                f"Spotlight {i}: {individual_task_payload['title']}:\n{individual_task_payload['content']}\n\n\n"
-            )
+            spotlight_payload += f"Spotlight {i}: {individual_task_payload['title']}:\n{individual_task_payload['content']}\n\n\n"
 
         messages_to_send = [
             SystemMessage(

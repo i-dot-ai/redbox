@@ -2,7 +2,6 @@ import time
 
 import pytest
 from elasticsearch import NotFoundError
-
 from faststream.redis import TestRedisBroker
 
 from core_api.src.app import env, publisher, router
@@ -20,7 +19,9 @@ def test_get_health(app_client):
 
 
 @pytest.mark.asyncio
-async def test_post_file_upload(s3_client, app_client, elasticsearch_storage_handler, file_pdf_path):
+async def test_post_file_upload(
+    s3_client, app_client, elasticsearch_storage_handler, file_pdf_path
+):
     """
     Given a new file
     When I POST it to /file
@@ -30,7 +31,9 @@ async def test_post_file_upload(s3_client, app_client, elasticsearch_storage_han
         async with TestRedisBroker(router.broker):
             response = app_client.post("/file", files={"file": ("filename", f, "pdf")})
     assert response.status_code == 200
-    assert s3_client.get_object(Bucket=env.bucket_name, Key=file_pdf_path.split("/")[-1])
+    assert s3_client.get_object(
+        Bucket=env.bucket_name, Key=file_pdf_path.split("/")[-1]
+    )
     json_response = response.json()
     assert (
         elasticsearch_storage_handler.read_item(
@@ -60,7 +63,9 @@ def test_delete_file(s3_client, app_client, elasticsearch_storage_handler, store
     """
     # check assets exist
     assert s3_client.get_object(Bucket=env.bucket_name, Key=stored_file.name)
-    assert elasticsearch_storage_handler.read_item(item_uuid=stored_file.uuid, model_type="file")
+    assert elasticsearch_storage_handler.read_item(
+        item_uuid=stored_file.uuid, model_type="file"
+    )
 
     response = app_client.delete(f"/file/{stored_file.uuid}")
     assert response.status_code == 200
@@ -70,7 +75,9 @@ def test_delete_file(s3_client, app_client, elasticsearch_storage_handler, store
         s3_client.get_object(Bucket=env.bucket_name, Key=stored_file.name)
 
     with pytest.raises(NotFoundError):
-        elasticsearch_storage_handler.read_item(item_uuid=stored_file.uuid, model_type="file")
+        elasticsearch_storage_handler.read_item(
+            item_uuid=stored_file.uuid, model_type="file"
+        )
 
 
 @pytest.mark.asyncio

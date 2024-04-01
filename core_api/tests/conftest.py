@@ -8,7 +8,7 @@ from sentence_transformers import SentenceTransformer
 
 from core_api.src.app import app as application
 from core_api.src.app import env
-from redbox.models import File, ProcessingStatusEnum, Chunk
+from redbox.models import Chunk, File, ProcessingStatusEnum
 from redbox.storage import ElasticsearchStorageHandler
 
 T = TypeVar("T")
@@ -91,7 +91,9 @@ def stored_file(elasticsearch_storage_handler, file) -> YieldFixture[File]:
 @pytest.fixture
 def chunked_file(elasticsearch_storage_handler, stored_file) -> YieldFixture[File]:
     for i in range(5):
-        chunk = Chunk(text="hello", index=i, parent_file_uuid=stored_file.uuid, metadata={})
+        chunk = Chunk(
+            text="hello", index=i, parent_file_uuid=stored_file.uuid, metadata={}
+        )
         elasticsearch_storage_handler.write_item(chunk)
     yield stored_file
 

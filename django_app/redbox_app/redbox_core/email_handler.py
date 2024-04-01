@@ -49,7 +49,13 @@ def _make_token_url(user, token_type):
     token = token_generator.make_token(user)
     base_url = settings.BASE_URL
     url_path = reverse(EMAIL_MAPPING[token_type]["url_name"])
-    url = str(furl.furl(url=base_url, path=url_path, query_params={"code": token, "user_id": str(user.id)}))
+    url = str(
+        furl.furl(
+            url=base_url,
+            path=url_path,
+            query_params={"code": token, "user_id": str(user.id)},
+        )
+    )
     return url
 
 
@@ -101,7 +107,11 @@ def send_account_already_exists_email(user):
     reset_url = furl.furl(url=base_url)
     reset_url.path.add(data["url_name"])
     reset_url = str(reset_url)
-    context = {"contact_address": settings.CONTACT_EMAIL, "url": base_url, "reset_link": reset_url}
+    context = {
+        "contact_address": settings.CONTACT_EMAIL,
+        "url": base_url,
+        "reset_link": reset_url,
+    }
     response = _send_normal_email(
         subject=data["subject"],
         template_name=data["template_name"],

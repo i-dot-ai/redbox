@@ -1,0 +1,52 @@
+site_name: Redbox
+site_description: Bringing Generative AI to the way the Civil Service works
+site_author: Incubator for AI
+repo_url: https://github.com/i-dot-ai/redbox-copilot
+
+theme:
+  name: "material"
+  palette:
+    primary: "red"
+    accent: "red"
+  features:
+    - content.code.copy
+
+nav:
+  - Home: index.md
+  - Installation: installation.md
+  - Code Reference: 
+    - Home: code_reference/index.md
+    - Models: 
+      - Overview: code_reference/models/index.md
+      - File: code_reference/models/file.md
+      - Chunk: code_reference/models/chunk.md
+
+plugins:
+    - search
+    - mermaid2
+    - mkapi
+
+markdown_extensions:
+  - meta
+  - admonition
+  - pymdownx.details
+  - pymdownx.highlight
+  - pymdownx.snippets
+  - pymdownx.superfences
+  - pymdownx.pathconverter
+  - pymdownx.tabbed:
+      alternate_style: true 
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/i-dot-ai/redbox-copilot
+    - icon: fontawesome/solid/envelope
+      link: mailto:i-dot-ai-enquiries@cabinetoffice.gov.uk
+
+        
