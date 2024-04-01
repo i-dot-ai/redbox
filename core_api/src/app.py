@@ -8,13 +8,13 @@ from faststream.redis.fastapi import RedisRouter
 
 from redbox.model_db import SentenceTransformerDB
 from redbox.models import (
+    Chunk,
     EmbeddingResponse,
     File,
     ModelInfo,
     ProcessingStatusEnum,
     Settings,
     StatusResponse,
-    Chunk,
 )
 from redbox.storage import ElasticsearchStorageHandler
 

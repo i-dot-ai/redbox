@@ -5,7 +5,7 @@ from uuid import UUID
 
 import tiktoken
 from langchain.schema import Document
-from pydantic import Field, computed_field, AnyUrl
+from pydantic import AnyUrl, Field, computed_field
 
 from redbox.models.base import PersistableModel
 

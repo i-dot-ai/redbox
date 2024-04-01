@@ -41,9 +41,7 @@ def spotlight_complete_to_docx(
 
     footer = section.footer
     summary_datetime = parser.parse(spotlight_complete.created_datetime.isoformat())
-    footer.paragraphs[
-        0
-    ].text = (
+    footer.paragraphs[0].text = (
         f"This document is AI generated\t{redbox_version}\tGenerated: {summary_datetime.strftime('%d %B %Y %H:%M')}"
     )
     footer.paragraphs[0].style.font.name = "Arial"

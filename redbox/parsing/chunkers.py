@@ -7,7 +7,9 @@ from unstructured.partition.auto import partition
 from redbox.models import Chunk, File
 
 
-def other_chunker(file: File, file_url: str, creator_user_uuid: Optional[UUID] = None) -> list[Chunk]:
+def other_chunker(
+    file: File, file_url: str, creator_user_uuid: Optional[UUID] = None
+) -> list[Chunk]:
     elements = partition(url=file_url)
     raw_chunks = chunk_by_title(elements=elements)
 

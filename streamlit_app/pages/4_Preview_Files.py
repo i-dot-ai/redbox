@@ -1,7 +1,9 @@
 import streamlit as st
 from utils import FilePreview, init_session_state
 
-st.set_page_config(page_title="Redbox Copilot - Preview Files", page_icon="📮", layout="wide")
+st.set_page_config(
+    page_title="Redbox Copilot - Preview Files", page_icon="📮", layout="wide"
+)
 
 ENV = init_session_state()
 file_preview = FilePreview()
@@ -15,9 +17,13 @@ st.session_state["file_uuid_to_name_map"] = {}
 
 
 def refresh_files():
-    st.session_state["files"] = st.session_state.storage_handler.read_all_items(model_type="File")
+    st.session_state["files"] = st.session_state.storage_handler.read_all_items(
+        model_type="File"
+    )
     st.session_state["file_uuid_map"] = {x.uuid: x for x in st.session_state["files"]}
-    st.session_state["file_uuid_to_name_map"] = {x.uuid: x.name for x in st.session_state["files"]}
+    st.session_state["file_uuid_to_name_map"] = {
+        x.uuid: x.name for x in st.session_state["files"]
+    }
 
 
 refresh_files()
@@ -32,7 +38,9 @@ if "file_uuid" in url_params:
     file_select = st.selectbox(
         label="File",
         options=list(st.session_state.file_uuid_to_name_map.keys()),
-        index=list(st.session_state.file_uuid_to_name_map.keys()).index(url_params["file_uuid"]),
+        index=list(st.session_state.file_uuid_to_name_map.keys()).index(
+            url_params["file_uuid"]
+        ),
         on_change=clear_params,
         format_func=lambda x: st.session_state.file_uuid_to_name_map[x],
     )
@@ -82,16 +90,22 @@ if delete_file_button:
             collection.files.remove(file.uuid)
 
             if len(collection.files) >= 1:
-                st.session_state.storage_handler.update_item(item_uuid=collection.uuid, item=collection)
+                st.session_state.storage_handler.update_item(
+                    item_uuid=collection.uuid, item=collection
+                )
             else:
-                st.session_state.storage_handler.delete_item(item_uuid=collection.uuid, model_type="Collection")
+                st.session_state.storage_handler.delete_item(
+                    item_uuid=collection.uuid, model_type="Collection"
+                )
                 st.toast(
                     f"Deleted collection {collection.name} as it was empty",
                     icon="🗑️",
                 )
 
     # Delete the file from Uploads
-    st.session_state.s3_client.delete_object(Bucket=st.session_state.BUCKET_NAME, Key=file.name)
+    st.session_state.s3_client.delete_object(
+        Bucket=st.session_state.BUCKET_NAME, Key=file.name
+    )
 
     # Delete the file from the DB
     st.session_state.storage_handler.delete_item(item_uuid=file.uuid, model_type="File")

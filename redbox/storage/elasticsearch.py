@@ -51,7 +51,9 @@ class ElasticsearchStorageHandler(BaseStorageHandler):
 
     def read_items(self, item_uuids: list[UUID], model_type: str):
         target_index = f"{self.root_index}-{model_type.lower()}"
-        result = self.es_client.mget(index=target_index, body={"ids": list(map(str, item_uuids))})
+        result = self.es_client.mget(
+            index=target_index, body={"ids": list(map(str, item_uuids))}
+        )
 
         model = self.get_model_by_model_type(model_type)
         items = [model(**item["_source"]) for item in result.body["docs"]]

@@ -47,7 +47,9 @@ class File(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     path = models.TextField(help_text="location of file")
     name = models.TextField()
-    processing_status = models.CharField(choices=ProcessingStatusEnum.choices, default=ProcessingStatusEnum.uploaded)
+    processing_status = models.CharField(
+        choices=ProcessingStatusEnum.choices, default=ProcessingStatusEnum.uploaded
+    )
 
     def get_processing_text(self) -> str:
         processing_status_list = list(ProcessingStatusEnum)
