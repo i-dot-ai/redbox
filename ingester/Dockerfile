@@ -14,7 +14,7 @@ ADD download_embedder.py /app/
 RUN --mount=type=cache,target=$POETRY_CACHE_DIR poetry install --no-root --no-ansi --with worker,ingester --without ai,dev,api,streamlit-app
 
 FROM python:3.11-slim-buster as runtime
-RUN apt update && sudo apt-get install -y \
+RUN apt update && apt-get install -y \
     poppler-utils \
     tesseract-ocr
 
