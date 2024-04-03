@@ -42,6 +42,10 @@ For a quick start, you can use GitHub Codespaces to run the project in a cloud-b
 
 # Development
 
+You will need to install `poppler` and `tesseract` to run the `ingester`
+- `brew install poppler`
+- `brew install tesseract`
+
 - Download and install [pre-commit](https://pre-commit.com) to benefit from pre-commit hooks
   - `pip install pre-commit`
   - `pre-commit install`
