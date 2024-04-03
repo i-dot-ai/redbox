@@ -149,8 +149,10 @@ class ElasticsearchStorageHandler(BaseStorageHandler):
         """delete chunks for a given file"""
         target_index = f"{self.root_index}-chunk"
 
+        chunks = self.get_file_chunks(parent_file_uuid)
+
         result = self.es_client.delete_by_query(
             index=target_index,
-            body={"query": {"match": {"parent_file_uuid": str(parent_file_uuid)}}},
+            body={"query": {"terms": {"_id": [str(chunk.uuid) for chunk in chunks]}}},
         )
         return result
