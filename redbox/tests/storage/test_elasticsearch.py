@@ -75,6 +75,7 @@ def test_elastic_read_item(elasticsearch_storage_handler, stored_chunk):
 
 def test_elastic_delete_item_fail(
     elasticsearch_storage_handler: ElasticsearchStorageHandler,
+    another_chunk,
 ):
     """
     Given that I have an non-existent item uuid
@@ -82,7 +83,7 @@ def test_elastic_delete_item_fail(
     Then I expect to see a NotFoundError error raised
     """
     with pytest.raises(NotFoundError):
-        elasticsearch_storage_handler.delete_item(uuid4(), "Chunk")
+        elasticsearch_storage_handler.delete_item(another_chunk)
 
 
 def test_elastic_read_item_fail(
