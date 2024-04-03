@@ -55,7 +55,7 @@ jobs:
 
     - name: Add dependencies for Ingester
       run: |
-        sudo apt update && apt-get install -y \
+        sudo apt update && sudo apt-get install -y \
         poppler-utils \
         tesseract-ocr
 
