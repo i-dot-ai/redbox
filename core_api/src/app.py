@@ -5,6 +5,7 @@ from uuid import UUID
 from fastapi import FastAPI
 from fastapi.responses import RedirectResponse
 from faststream.redis.fastapi import RedisRouter
+from pydantic import AnyHttpUrl
 
 from redbox.model_db import SentenceTransformerDB
 from redbox.models import (
@@ -99,14 +100,16 @@ def health():
     return output
 
 
-@app.post("/file", response_model=File, tags=["file"])
-async def create_upload_file(name: str, type: str, location: str, ingest=True) -> File:
+@app.post("/file", response_model=str, tags=["file"])
+async def create_upload_file(
+    name: str, type: str, location: AnyHttpUrl, ingest=True
+) -> File:
     """Upload a file to the object store and create a record in the database
 
     Args:
         name (str): The file name to be recorded
         type (str): The file type to be recorded
-        location (str): The presigned file resource location
+        location (AnyHttpUrl): The presigned file resource location
 
     Returns:
         File: The file record
@@ -114,10 +117,8 @@ async def create_upload_file(name: str, type: str, location: str, ingest=True) -
 
     file_record = File(
         name=name,
-        path=location,
-        type=type,
-        creator_user_uuid="dev",
-        storage_kind=env.object_store,
+        url=str(location),  # avoids JSON serialisation error
+        content_type=type,
         processing_status=ProcessingStatusEnum.uploaded,
     )
 
