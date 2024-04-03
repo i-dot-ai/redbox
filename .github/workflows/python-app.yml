@@ -53,6 +53,12 @@ jobs:
         poetry install --no-root --no-ansi --with dev --without ai,streamlit-app,api,worker,ingester
         poetry run download-model --model_name paraphrase-albert-small-v2
 
+    - name: Add dependencies for Ingester
+      run: |
+        apt update && apt-get install -y \
+        poppler-utils \
+        tesseract-ocr
+
     - name: Test redbox with pytest
       run: |
         make test-redbox
