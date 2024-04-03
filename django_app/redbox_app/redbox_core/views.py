@@ -74,8 +74,7 @@ def documents_view(request):
 
 
 def get_file_extension(file):
-    # TODO: validate user file input using a less flaky approach than:
-    # return mimetypes.guess_extension(str(magic.from_buffer(file.read(), mime=True)))
+    # TODO: use a third party checking service to validate this
 
     _, extension = os.path.splitext(file.name)
     return extension
@@ -137,7 +136,7 @@ def upload_view(request):
                 url,
                 params={
                     "name": uploaded_file.name,
-                    "type": uploaded_file.content_type,
+                    "type": file_extension,
                     "location": simple_s3_url,
                 },
             )
