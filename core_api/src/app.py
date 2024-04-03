@@ -168,7 +168,7 @@ def delete_file(file_uuid: UUID) -> File:
     """
     file = storage_handler.read_item(file_uuid, model_type="File")
     s3.delete_object(Bucket=env.bucket_name, Key=file.name)
-    storage_handler.delete_item(file_uuid, model_type="File")
+    storage_handler.delete_item(file)
     storage_handler.delete_file_chunks(file_uuid)
     return file
 
@@ -186,7 +186,7 @@ async def ingest_file(file_uuid: UUID) -> File:
     file = storage_handler.read_item(file_uuid, model_type="File")
 
     file.processing_status = ProcessingStatusEnum.parsing
-    storage_handler.update_item(item_uuid=file.uuid, item=file)
+    storage_handler.update_item(item=file)
 
     log.info(f"publishing {file.uuid}")
     await publisher.publish(file)

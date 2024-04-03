@@ -58,7 +58,7 @@ class ElasticsearchStorageHandler(BaseStorageHandler):
 
         return items
 
-    def update_item(self, item_uuid: UUID, item: PersistableModel):
+    def update_item(self, item: PersistableModel):
         target_index = f"{self.root_index}-{item.model_type.lower()}"
 
         self.es_client.index(
@@ -67,20 +67,25 @@ class ElasticsearchStorageHandler(BaseStorageHandler):
             body=item.json(),
         )
 
-    def update_items(self, item_uuids: list[UUID], items: list[PersistableModel]):
-        for item_uuid, item in zip(item_uuids, items):
-            self.update_item(item_uuid, item)
+    def update_items(self, items: list[PersistableModel]):
+        for item in items:
+            self.update_item(item)
 
-    def delete_item(self, item_uuid: UUID, model_type: str):
-        target_index = f"{self.root_index}-{model_type.lower()}"
-        result = self.es_client.delete(index=target_index, id=str(item_uuid))
+    def delete_item(self, item: PersistableModel):
+        target_index = f"{self.root_index}-{item.model_type.lower()}"
+        result = self.es_client.delete(index=target_index, id=str(item.uuid))
         return result
 
-    def delete_items(self, item_uuids: list[UUID], model_type: str):
+    def delete_items(self, items: list[PersistableModel]):
+        if not items:
+            return None
+
+        model_type = items[0].model_type
+        assert all(item.model_type == model_type for item in items)
         target_index = f"{self.root_index}-{model_type.lower()}"
         result = self.es_client.delete_by_query(
             index=target_index,
-            body={"query": {"terms": {"_id": list(map(str, item_uuids))}}},
+            body={"query": {"terms": {"_id": [str(item.uuid) for item in items]}}},
         )
         return result
 

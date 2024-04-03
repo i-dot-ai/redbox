@@ -45,22 +45,22 @@ class BaseStorageHandler(ABC):
         pass
 
     @abstractmethod
-    def update_item(self, item_uuid: UUID, item: PersistableModel):
+    def update_item(self, item: PersistableModel):
         """Update an object in a data store"""
         pass
 
     @abstractmethod
-    def update_items(self, item_uuids: list[UUID], items: list[PersistableModel]):
+    def update_items(self, items: list[PersistableModel]):
         """Update a list of objects in a data store"""
         pass
 
     @abstractmethod
-    def delete_item(self, item_uuid: UUID, model_type: str):
+    def delete_item(self, item: PersistableModel):
         """Delete an object from a data store"""
         pass
 
     @abstractmethod
-    def delete_items(self, item_uuids: list[UUID], model_type: str):
+    def delete_items(self, items: list[PersistableModel]):
         """Delete a list of objects from a data store"""
         pass
 
