@@ -19,9 +19,7 @@ def test_get_health(app_client):
 
 
 @pytest.mark.asyncio
-async def test_post_file_upload(
-    s3_client, app_client, elasticsearch_storage_handler, file_pdf_path
-):
+async def test_post_file_upload(s3_client, app_client, elasticsearch_storage_handler, file_pdf_path):
     """
     Given a new file
     When I POST it to /file
@@ -31,9 +29,7 @@ async def test_post_file_upload(
         async with TestRedisBroker(router.broker):
             response = app_client.post("/file", files={"file": ("filename", f, "pdf")})
     assert response.status_code == 200
-    assert s3_client.get_object(
-        Bucket=env.bucket_name, Key=file_pdf_path.split("/")[-1]
-    )
+    assert s3_client.get_object(Bucket=env.bucket_name, Key=file_pdf_path.split("/")[-1])
     json_response = response.json()
     assert (
         elasticsearch_storage_handler.read_item(
@@ -55,29 +51,28 @@ def test_get_file(app_client, stored_file):
     assert response.status_code == 200
 
 
-def test_delete_file(s3_client, app_client, elasticsearch_storage_handler, stored_file):
+def test_delete_file(s3_client, app_client, elasticsearch_storage_handler, chunked_file):
     """
     Given a previously saved file
     When I DELETE it to /file
-    I Expect to see it removed from s3 and elastic-search
+    I Expect to see it removed from s3 and elastic-search, including the chunks
     """
     # check assets exist
-    assert s3_client.get_object(Bucket=env.bucket_name, Key=stored_file.name)
-    assert elasticsearch_storage_handler.read_item(
-        item_uuid=stored_file.uuid, model_type="file"
-    )
+    assert s3_client.get_object(Bucket=env.bucket_name, Key=chunked_file.name)
+    assert elasticsearch_storage_handler.read_item(item_uuid=chunked_file.uuid, model_type="file")
+    assert not elasticsearch_storage_handler.get_file_chunks(chunked_file.uuid)
 
-    response = app_client.delete(f"/file/{stored_file.uuid}")
+    response = app_client.delete(f"/file/{chunked_file.uuid}")
     assert response.status_code == 200
 
     # check assets dont exist
     with pytest.raises(Exception):
-        s3_client.get_object(Bucket=env.bucket_name, Key=stored_file.name)
+        s3_client.get_object(Bucket=env.bucket_name, Key=chunked_file.name)
 
     with pytest.raises(NotFoundError):
-        elasticsearch_storage_handler.read_item(
-            item_uuid=stored_file.uuid, model_type="file"
-        )
+        elasticsearch_storage_handler.read_item(item_uuid=chunked_file.uuid, model_type="file")
+
+    assert not elasticsearch_storage_handler.get_file_chunks(chunked_file.uuid)
 
 
 @pytest.mark.asyncio
