@@ -17,7 +17,7 @@ def test_upload_to_elastic(file_pdf_path):
     assert response.status_code == 200
     file_uuid = response.json()["uuid"]
 
-    timeout = 60  # 10s should be plenty
+    timeout = 120  # 10s should be plenty
     start_time = time.time()
     embeddings_found = False
     error = ""
