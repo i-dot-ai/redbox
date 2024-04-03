@@ -136,7 +136,7 @@ class ElasticsearchStorageHandler(BaseStorageHandler):
         target_index = f"{self.root_index}-chunk"
 
         res = [
-            item["_source"]
+            Chunk(**item["_source"])
             for item in scan(
                 client=self.es_client,
                 index=target_index,
@@ -145,14 +145,3 @@ class ElasticsearchStorageHandler(BaseStorageHandler):
         ]
         return res
 
-    def delete_file_chunks(self, parent_file_uuid: UUID):
-        """delete chunks for a given file"""
-        target_index = f"{self.root_index}-chunk"
-
-        chunks = self.get_file_chunks(parent_file_uuid)
-
-        result = self.es_client.delete_by_query(
-            index=target_index,
-            body={"query": {"terms": {"_id": [str(chunk.uuid) for chunk in chunks]}}},
-        )
-        return result

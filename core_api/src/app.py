@@ -169,7 +169,9 @@ def delete_file(file_uuid: UUID) -> File:
     file = storage_handler.read_item(file_uuid, model_type="File")
     s3.delete_object(Bucket=env.bucket_name, Key=file.name)
     storage_handler.delete_item(file)
-    storage_handler.delete_file_chunks(file_uuid)
+
+    chunks = storage_handler.get_file_chunks(file.uuid)
+    storage_handler.delete_items(chunks)
     return file
 
 
