@@ -34,7 +34,7 @@ sentence-transformers = "^2.6.0"
 pika = "^1.3.2"
 
 [tool.poetry.group.ingester.dependencies]
-unstructured = {version = "<0.13.0", extras = ["all-docs"]}  # v13 doesn't automatically handle pdfs
+unstructured = {version = "0.13.0", extras = ["all-docs"]}
 opencv-python-headless = "^4.9.0.80"
 sentence-transformers = "^2.6.0"
 
