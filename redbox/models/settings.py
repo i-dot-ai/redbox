@@ -72,6 +72,7 @@ class Settings(BaseSettings):
         return es
 
     def s3_client(self):
+
         if self.object_store == "minio":
             client = boto3.client(
                 "s3",
@@ -81,6 +82,17 @@ class Settings(BaseSettings):
             )
 
         elif self.object_store == "s3":
+            client = boto3.client(
+                "s3",
+                aws_access_key_id=self.aws_access_key_id,
+                aws_secret_access_key=self.aws_secret_access_key,
+                region_name=self.aws_region,
+            )
+        elif self.object_store == "moto":
+            from moto import mock_aws
+            mock = mock_aws()
+            mock.start()
+
             client = boto3.client(
                 "s3",
                 aws_access_key_id=self.aws_access_key_id,
