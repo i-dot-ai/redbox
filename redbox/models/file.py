@@ -17,7 +17,6 @@ class ProcessingStatusEnum(str, Enum):
     parsing = "parsing"
     chunking = "chunking"
     embedding = "embedding"
-    indexing = "indexing"
     complete = "complete"
 
 
@@ -100,8 +99,7 @@ class Chunk(PersistableModel):
 
 class FileStatus(BaseModel):
     uuid: UUID
-    status: ProcessingStatusEnum
-    model_type: str
+    processing_status: ProcessingStatusEnum
 
 
 class FileExistsException(Exception):
