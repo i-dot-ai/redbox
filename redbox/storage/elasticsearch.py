@@ -5,6 +5,7 @@ from elasticsearch.helpers import scan
 
 from redbox.models import Chunk
 from redbox.models.base import PersistableModel
+from redbox.models.file import ProcessingStatusEnum
 from redbox.storage.storage_handler import BaseStorageHandler
 
 
@@ -142,13 +143,43 @@ class ElasticsearchStorageHandler(BaseStorageHandler):
         ]
         return res
 
+    def _count_chunks(self, parent_file_uuid: UUID) -> int:
+        target_index = f"{self.root_index}-chunk"
+        res = self.es_client.count(
+            index=target_index,
+            body={"query": {"match": {"parent_file_uuid": str(parent_file_uuid)}}},
+        )
+        return res["count"]
+
+    def _count_embedded_chunks(self, parent_file_uuid: UUID) -> int:
+        target_index = f"{self.root_index}-chunk"
+        res = self.es_client.count(
+            index=target_index,
+            body={
+                "query": {
+                    "bool": {
+                        "must": [
+                            {"match": {"parent_file_uuid": str(parent_file_uuid)}},
+                            {"exists": {"field": "embedding"}},
+                        ]
+                    }
+                }
+            },
+        )
+        return res["count"]
+
     def get_file_status(self, file_uuid: UUID):
-        target_index = f"{self.root_index}-file"
-        result = self.es_client.get(index=target_index, id=str(file_uuid))
+        file = self.read_item(file_uuid, model_type="File")
+        if file.processing_status == "embedding":
+            chunk_count = self._count_chunks(file_uuid)
+            embedded_chunk_count = self._count_embedded_chunks(file_uuid)
+
+            if chunk_count == embedded_chunk_count:
+                file.processing_status = ProcessingStatusEnum.complete
+                self.update_item(file_uuid, file)
 
         status_body = {
-            "uuid": result["_id"],
-            "model_type": "File",
-            "processing_status": result["_source"]["processing_status"],
+            "uuid": file.uuid,
+            "processing_status": file.processing_status,
         }
         return status_body
