@@ -77,6 +77,10 @@ async def ingest(
         queue_item = EmbedQueueItem(chunk_uuid=chunk.uuid)
         logging.info(f"Writing chunk to storage for chunk uuid: {chunk.uuid}")
         await publisher.publish(queue_item)
+
+    file.processing_status = ProcessingStatusEnum.embedding
+    storage_handler.update_item(file.uuid, file)
+
     return items
 
 
