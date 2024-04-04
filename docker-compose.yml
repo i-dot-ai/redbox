@@ -27,6 +27,16 @@ services:
       - utils
     volumes:
       - ./:/app/:z
+  mlflow:
+    build:
+      context: .
+      dockerfile: ./mlflow/docker/Dockerfile
+    image: mlflow_server
+    container_name: mlflow_server
+    ports:
+        - "5010:5010"
+    volumes:
+      - mlflow-data:/mlflow
   redbox:
     image: redbox-tests:latest
     build:
@@ -202,3 +212,4 @@ volumes:
   elasticsearch:
   redbox-app-data:
   local_postgres_data: {}
+  mlflow-data:
