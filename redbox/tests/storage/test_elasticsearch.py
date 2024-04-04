@@ -179,6 +179,13 @@ def test_get_file_status_incomplete(elasticsearch_storage_handler, file):
     file.processing_status = "embedding"
     elasticsearch_storage_handler.update_item(file.uuid, file)
 
+    chunk_count = 10
+    embedded_chunk_count = 5
+    elasticsearch_storage_handler._count_chunks = lambda file_uuid: chunk_count
+    elasticsearch_storage_handler._count_embedded_chunks = (
+        lambda file_uuid: embedded_chunk_count
+    )
+
     status_body = elasticsearch_storage_handler.get_file_status(file.uuid)
 
     assert status_body["uuid"] == file.uuid
