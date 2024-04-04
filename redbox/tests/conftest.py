@@ -28,7 +28,12 @@ def chunk() -> Chunk:
 
 @pytest.fixture
 def file() -> File:
-    test_file = File(name="test.pdf", status="uploaded", content_type="pdf")
+    test_file = File(
+        name="test.pdf",
+        url="http://example.com/test.pdf",
+        status="uploaded",
+        content_type="pdf",
+    )
     return test_file
 
 
