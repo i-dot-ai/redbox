@@ -141,3 +141,14 @@ class ElasticsearchStorageHandler(BaseStorageHandler):
             )
         ]
         return res
+
+    def get_file_status(self, file_uuid: UUID):
+        target_index = f"{self.root_index}-file"
+        result = self.es_client.get(index=target_index, id=str(file_uuid))
+
+        status_body = {
+            "uuid": result["_id"],
+            "model_type": "File",
+            "processing_status": result["_source"]["processing_status"],
+        }
+        return status_body

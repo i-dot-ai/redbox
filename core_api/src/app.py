@@ -11,6 +11,7 @@ from redbox.models import (
     Chunk,
     EmbeddingResponse,
     File,
+    FileStatus,
     ModelInfo,
     ProcessingStatusEnum,
     Settings,
@@ -197,6 +198,22 @@ async def ingest_file(file_uuid: UUID) -> File:
 def get_file_chunks(file_uuid: UUID) -> list[Chunk]:
     log.info(f"getting chunks for file {file_uuid}")
     return storage_handler.get_file_chunks(file_uuid)
+
+
+@app.get("/file/{file_uuid}/status", response_model=FileStatus, tags=["file"])
+def get_file_status(file_uuid: UUID) -> FileStatus:
+    """Get the status of a file
+
+    Args:
+        file_uuid (str): The UUID of the file to get the status of
+
+    Returns:
+        File: The file with the updated status
+    """
+
+    status_obj = storage_handler.get_file_status(file_uuid)
+    status = FileStatus(**status_obj)
+    return status
 
 
 @app.get("/model", tags=["models"])
