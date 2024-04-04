@@ -1,7 +1,9 @@
+import os
 from datetime import datetime
 
 import pytest
 import pytz
+from redbox_app.redbox_core import client
 from redbox_app.redbox_core.models import User
 
 UTC = pytz.timezone("UTC")
@@ -52,3 +54,29 @@ def jemima_puddleduck():
 def mrs_tiggywinkle():
     user = User.objects.create_user(email="mrs.tiggywinkle@example.com")
     yield user
+
+
+@pytest.fixture
+def file_pdf_path():
+    path = os.path.join(
+        os.path.dirname(os.path.abspath(__file__)),
+        "data",
+        "pdf",
+        "Cabinet Office - Wikipedia.pdf",
+    )
+    yield path
+
+
+@pytest.fixture
+def file_py_path():
+    path = os.path.join(
+        os.path.dirname(os.path.abspath(__file__)),
+        "data",
+        "test_data.py",
+    )
+    yield path
+
+
+@pytest.fixture
+def s3_client():
+    yield client.s3_client()

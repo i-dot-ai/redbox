@@ -1,4 +1,5 @@
 import logging
+import uuid
 from datetime import datetime
 from uuid import UUID
 
@@ -100,7 +101,7 @@ def health():
     return output
 
 
-@app.post("/file", response_model=str, tags=["file"])
+@app.post("/file", response_model=uuid.UUID, tags=["file"])
 async def create_upload_file(
     name: str, type: str, location: AnyHttpUrl, ingest=True
 ) -> File:
@@ -127,7 +128,7 @@ async def create_upload_file(
     if ingest:
         await ingest_file(file_record.uuid)
 
-    return name
+    return file_record.uuid
 
 
 @app.get("/file/{file_uuid}", response_model=File, tags=["file"])

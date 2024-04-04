@@ -4,7 +4,6 @@ import uuid
 import requests
 from boto3.s3.transfer import TransferConfig
 from django.conf import settings
-from django.http import JsonResponse
 from django.shortcuts import render
 from django.views.decorators.http import require_http_methods
 from redbox_app.redbox_core.client import s3_client
@@ -130,8 +129,7 @@ def upload_view(request):
             simple_s3_url = authenticated_s3_url.split("?")[0]
 
             # ingest file
-            # TODO: set url using ENV vars
-            url = "http://core-api:5002/file"
+            url = f"{settings.CORE_API_HOST}:{settings.CORE_API_PORT}/file"
             api_response = requests.post(
                 url,
                 params={

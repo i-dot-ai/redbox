@@ -272,3 +272,7 @@ LOGGING = {
         "application": {"handlers": [LOG_HANDLER], "level": "DEBUG", "propagate": True}
     },
 }
+
+# link to core_api app
+CORE_API_HOST = env.str("CORE_API_HOST")
+CORE_API_PORT = env.str("CORE_API_PORT")
