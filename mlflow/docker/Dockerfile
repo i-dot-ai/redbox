@@ -7,8 +7,6 @@ RUN pip install poetry
 ADD ../pyproject.toml ../poetry.lock ./
 RUN poetry install --no-root --no-ansi --with mlflow
 
-ENV BACKEND_URI sqlite:///mlflow.db
-
-EXPOSE 5000
+EXPOSE 5010
 
 CMD mlflow deployments start-server --config-path config.yaml
