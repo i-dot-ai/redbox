@@ -153,3 +153,83 @@ def test_elastic_delete_item(elasticsearch_storage_handler, stored_chunk):
 
     with pytest.raises(NotFoundError):
         elasticsearch_storage_handler.read_item(stored_chunk.uuid, "Chunk")
+
+
+def test_get_file_status_complete(elasticsearch_storage_handler, file):
+    """
+    Given that `File` is a valid model
+    When I call get_file_status on a file with complete processing status
+    Then I expect to see the file's UUID and processing status returned
+    """
+    file.processing_status = "complete"
+    elasticsearch_storage_handler.update_item(file.uuid, file)
+
+    status_body = elasticsearch_storage_handler.get_file_status(file.uuid)
+
+    assert status_body["uuid"] == file.uuid
+    assert status_body["processing_status"] == "complete"
+
+
+def test_get_file_status_incomplete(elasticsearch_storage_handler, file):
+    """
+    Given that `File` is a valid model
+    When I call get_file_status on a file with incomplete processing status
+    Then I expect to see the file's UUID and processing status returned
+    """
+    file.processing_status = "embedding"
+    elasticsearch_storage_handler.update_item(file.uuid, file)
+
+    status_body = elasticsearch_storage_handler.get_file_status(file.uuid)
+
+    assert status_body["uuid"] == file.uuid
+    assert status_body["processing_status"] == "embedding"
+
+
+def test_get_file_status_all_chunks_embedded(elasticsearch_storage_handler, file):
+    """
+    Given that `File` is a valid model
+    When I call get_file_status on a file with all chunks embedded
+    Then I expect the file's processing status to be updated to "complete"
+    """
+    file.processing_status = "embedding"
+    elasticsearch_storage_handler.update_item(file.uuid, file)
+
+    chunk_count = 10
+    embedded_chunk_count = 10
+    elasticsearch_storage_handler._count_chunks = lambda file_uuid: chunk_count
+    elasticsearch_storage_handler._count_embedded_chunks = (
+        lambda file_uuid: embedded_chunk_count
+    )
+
+    status_body = elasticsearch_storage_handler.get_file_status(file.uuid)
+
+    assert status_body["uuid"] == file.uuid
+    assert status_body["processing_status"] == "complete"
+
+    updated_file = elasticsearch_storage_handler.read_item(file.uuid, "File")
+    assert updated_file.processing_status == "complete"
+
+
+def test_get_file_status_partial_chunks_embedded(elasticsearch_storage_handler, file):
+    """
+    Given that `File` is a valid model
+    When I call get_file_status on a file with partial chunks embedded
+    Then I expect the file's processing status to remain unchanged
+    """
+    file.processing_status = "embedding"
+    elasticsearch_storage_handler.update_item(file.uuid, file)
+
+    chunk_count = 10
+    embedded_chunk_count = 5
+    elasticsearch_storage_handler._count_chunks = lambda file_uuid: chunk_count
+    elasticsearch_storage_handler._count_embedded_chunks = (
+        lambda file_uuid: embedded_chunk_count
+    )
+
+    status_body = elasticsearch_storage_handler.get_file_status(file.uuid)
+
+    assert status_body["uuid"] == file.uuid
+    assert status_body["processing_status"] == "embedding"
+
+    updated_file = elasticsearch_storage_handler.read_item(file.uuid, "File")
+    assert updated_file.processing_status == "embedding"
