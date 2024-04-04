@@ -2,7 +2,6 @@ import boto3
 from django.conf import settings
 
 
-# TODO: rewrite with env vars
 def s3_client():
     if settings.OBJECT_STORE == "minio":
         client = boto3.client(
@@ -14,11 +13,12 @@ def s3_client():
         return client
 
 
+# TODO: rewrite with env vars
 # if settings.OBJECT_STORE == "s3":
 #     client = boto3.client(
 #         "s3",
-#         aws_access_key_id=self.aws_access_key_id,
-#         aws_secret_access_key=self.aws_secret_access_key,
+#         aws_access_key_id=???,
+#         aws_secret_access_key=???,
 #         region_name=settings.AWS_S3_REGION_NAME,
 #     )
 #     return client
