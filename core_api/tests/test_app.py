@@ -1,5 +1,3 @@
-import time
-
 import pytest
 from elasticsearch import NotFoundError
 from faststream.redis import TestRedisBroker
@@ -60,10 +58,12 @@ def test_delete_file(s3_client, app_client, elasticsearch_storage_handler, chunk
     # check assets exist
     assert s3_client.get_object(Bucket=env.bucket_name, Key=chunked_file.name)
     assert elasticsearch_storage_handler.read_item(item_uuid=chunked_file.uuid, model_type="file")
-    assert not elasticsearch_storage_handler.get_file_chunks(chunked_file.uuid)
+    assert elasticsearch_storage_handler.get_file_chunks(chunked_file.uuid)
 
     response = app_client.delete(f"/file/{chunked_file.uuid}")
     assert response.status_code == 200
+
+    elasticsearch_storage_handler.refresh()
 
     # check assets dont exist
     with pytest.raises(Exception):
@@ -143,8 +143,6 @@ def test_embed_sentences(client):
 
 
 def test_get_file_chunks(client, chunked_file):
-    # TODO: fix this hack
-    time.sleep(1)
     response = client.get(f"/file/{chunked_file.uuid}/chunks")
     assert response.status_code == 200
     assert len(response.json()) == 5
