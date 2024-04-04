@@ -48,6 +48,30 @@ es = env.elasticsearch_client()
 storage_handler = ElasticsearchStorageHandler(es_client=es, root_index="redbox-data")
 
 
+mime_type_to_content_type = {
+    "message/rfc822": "eml",
+    "text/html": "html",
+    "application/json": "json",
+    "text/markdown": "md",
+    "application/vnd.ms-outlook": "msg",
+    "text/x-rst": "rst",
+    "application/rtf": "rtf",
+    "text/plain": "txt",
+    "application/xml": "xml",
+    "image/jpeg": "jpeg",
+    "image/png": "png",
+    "text/csv": "csv",
+    "application/msword": "doc",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document": "docx",
+    "application/epub+zip": "epub",
+    "application/vnd.oasis.opendocument.text": "odt",
+    "application/pdf": "pdf",
+    "application/vnd.ms-powerpoint": "ppt",
+    "application/vnd.openxmlformats-officedocument.presentationml.presentation": "pptx",
+    "text/tab-separated-values": "tsv",
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": "xlsx",
+}
+
 # === API Setup ===
 
 start_time = datetime.now()
@@ -110,12 +134,18 @@ async def create_upload_file(file: UploadFile, ingest: bool = True) -> File:
     Returns:
         File: The file record
     """
+    try:
+        content_type = mime_type_to_content_type[file.content_type]
+    except KeyError:
+        raise ValueError(
+            f"Unsupported content type: {file.content_type} (not in {mime_type_to_content_type})"
+        )
 
     s3.put_object(
         Bucket=env.bucket_name,
         Body=file.file,
         Key=file.filename,
-        Tagging=f"file_type={file.content_type}",
+        Tagging=f"content_type={content_type}",
     )
 
     authenticated_s3_url = s3.generate_presigned_url(
@@ -132,7 +162,7 @@ async def create_upload_file(file: UploadFile, ingest: bool = True) -> File:
     file_record = File(
         name=file.filename,
         url=simple_s3_url,
-        content_type=file.content_type,
+        content_type=content_type,
         processing_status=ProcessingStatusEnum.uploaded,
     )
 
@@ -211,8 +241,8 @@ def get_file_status(file_uuid: UUID) -> FileStatus:
         File: The file with the updated status
     """
 
-    status_obj = storage_handler.get_file_status(file_uuid)
-    status = FileStatus(**status_obj)
+    status = storage_handler.get_file_status(file_uuid)
+
     return status
 
 
