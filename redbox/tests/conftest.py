@@ -4,7 +4,7 @@ from uuid import uuid4
 import pytest
 from elasticsearch import Elasticsearch
 
-from redbox.models import Chunk, Settings
+from redbox.models import Chunk, File, Settings
 from redbox.storage.elasticsearch import ElasticsearchStorageHandler
 
 T = TypeVar("T")
@@ -24,6 +24,12 @@ def chunk() -> Chunk:
         metadata={},
     )
     return test_chunk
+
+
+@pytest.fixture
+def file() -> File:
+    test_file = File(name="test.pdf", status="uploaded", content_type="pdf")
+    return test_file
 
 
 @pytest.fixture
