@@ -29,7 +29,9 @@ async def test_post_file_upload(
     """
     with open(file_pdf_path, "rb") as f:
         async with TestRedisBroker(router.broker):
-            response = app_client.post("/file", files={"file": ("filename", f, "pdf")})
+            response = app_client.post(
+                "/file", files={"file": ("filename", f, "application/pdf")}
+            )
     assert response.status_code == 200
     assert s3_client.get_object(
         Bucket=env.bucket_name, Key=file_pdf_path.split("/")[-1]

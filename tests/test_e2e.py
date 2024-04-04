@@ -12,7 +12,7 @@ def test_upload_to_elastic(file_pdf_path):
     """
 
     file_name = os.path.basename(file_pdf_path)
-    files = {"file": (file_name, open(file_pdf_path, "rb"), "pdf")}
+    files = {"file": (file_name, open(file_pdf_path, "rb"), "application/pdf")}
     response = requests.post(url="http://localhost:5002/file", files=files)
     assert response.status_code == 200
     file_uuid = response.json()["uuid"]
