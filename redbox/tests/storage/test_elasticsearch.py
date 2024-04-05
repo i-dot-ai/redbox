@@ -164,10 +164,10 @@ def test_get_file_status_complete(elasticsearch_storage_handler, file):
     file.processing_status = "complete"
     elasticsearch_storage_handler.update_item(file.uuid, file)
 
-    status_body = elasticsearch_storage_handler.get_file_status(file.uuid)
+    status = elasticsearch_storage_handler.get_file_status(file.uuid)
 
-    assert status_body["uuid"] == file.uuid
-    assert status_body["processing_status"] == "complete"
+    assert status.uuid == file.uuid
+    assert status.processing_status == "complete"
 
 
 def test_get_file_status_incomplete(elasticsearch_storage_handler, file):
@@ -186,10 +186,10 @@ def test_get_file_status_incomplete(elasticsearch_storage_handler, file):
         lambda file_uuid: embedded_chunk_count
     )
 
-    status_body = elasticsearch_storage_handler.get_file_status(file.uuid)
+    status = elasticsearch_storage_handler.get_file_status(file.uuid)
 
-    assert status_body["uuid"] == file.uuid
-    assert status_body["processing_status"] == "embedding"
+    assert status.uuid == file.uuid
+    assert status.processing_status == "embedding"
 
 
 def test_get_file_status_all_chunks_embedded(elasticsearch_storage_handler, file):
@@ -208,10 +208,10 @@ def test_get_file_status_all_chunks_embedded(elasticsearch_storage_handler, file
         lambda file_uuid: embedded_chunk_count
     )
 
-    status_body = elasticsearch_storage_handler.get_file_status(file.uuid)
+    status = elasticsearch_storage_handler.get_file_status(file.uuid)
 
-    assert status_body["uuid"] == file.uuid
-    assert status_body["processing_status"] == "complete"
+    assert status.uuid == file.uuid
+    assert status.processing_status == "complete"
 
     updated_file = elasticsearch_storage_handler.read_item(file.uuid, "File")
     assert updated_file.processing_status == "complete"
@@ -233,10 +233,10 @@ def test_get_file_status_partial_chunks_embedded(elasticsearch_storage_handler, 
         lambda file_uuid: embedded_chunk_count
     )
 
-    status_body = elasticsearch_storage_handler.get_file_status(file.uuid)
+    status = elasticsearch_storage_handler.get_file_status(file.uuid)
 
-    assert status_body["uuid"] == file.uuid
-    assert status_body["processing_status"] == "embedding"
+    assert status.uuid == file.uuid
+    assert status.processing_status == "embedding"
 
     updated_file = elasticsearch_storage_handler.read_item(file.uuid, "File")
     assert updated_file.processing_status == "embedding"
