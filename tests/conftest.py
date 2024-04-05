@@ -1,5 +1,6 @@
 import os
 
+import boto3
 import pytest
 
 
@@ -12,3 +13,13 @@ def file_pdf_path():
         "Cabinet Office - Wikipedia.pdf",
     )
     yield path
+
+
+@pytest.fixture
+def s3_client():
+    yield boto3.client(
+        "s3",
+        aws_access_key_id="minioadmin",
+        aws_secret_access_key="minioadmin",
+        endpoint_url=f"http://localhost:9000",
+    )
