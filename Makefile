@@ -71,6 +71,7 @@ checktypes:
 
 check-migrations:
 	docker compose build django-app
+	docker compose up -d --wait db minio
 	docker compose run django-app poetry run python django_app/manage.py migrate
 	docker compose run django-app poetry run python django_app/manage.py makemigrations --check
 
