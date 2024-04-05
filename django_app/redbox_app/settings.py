@@ -12,6 +12,7 @@ from .hosting_environment import HostingEnvironment
 
 env = environ.Env()
 
+AWS_REGION = env.str("AWS_REGION")
 
 SECRET_KEY = env.str("DJANGO_SECRET_KEY")
 ENVIRONMENT = env.str("ENVIRONMENT")
