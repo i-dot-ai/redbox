@@ -60,7 +60,7 @@ async def ingest(
     )
 
     file.processing_status = ProcessingStatusEnum.chunking
-    storage_handler.update_item(file.uuid, file)
+    storage_handler.update_item(file)
 
     chunks = chunker.chunk_file(
         file=file,

@@ -27,6 +27,17 @@ def chunk() -> Chunk:
 
 
 @pytest.fixture
+def another_chunk() -> Chunk:
+    test_chunk = Chunk(
+        parent_file_uuid=uuid4(),
+        index=1,
+        text="test_text",
+        metadata={},
+    )
+    return test_chunk
+
+
+@pytest.fixture
 def stored_chunk(elasticsearch_storage_handler, chunk) -> Chunk:
     elasticsearch_storage_handler.write_item(item=chunk)
     return chunk

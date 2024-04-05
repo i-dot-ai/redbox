@@ -1,5 +1,7 @@
+from typing import Optional
 from uuid import UUID
 
+from elastic_transport import ObjectApiResponse
 from elasticsearch import Elasticsearch, NotFoundError
 from elasticsearch.helpers import scan
 
@@ -25,7 +27,10 @@ class ElasticsearchStorageHandler(BaseStorageHandler):
         self.es_client = es_client
         self.root_index = root_index
 
-    def write_item(self, item: PersistableModel):
+    def refresh(self, index: str = "*") -> ObjectApiResponse:
+        return self.es_client.indices.refresh(index=f"{self.root_index}-{index}")
+
+    def write_item(self, item: PersistableModel) -> ObjectApiResponse:
         target_index = f"{self.root_index}-{item.model_type.lower()}"
 
         resp = self.es_client.index(
@@ -35,12 +40,8 @@ class ElasticsearchStorageHandler(BaseStorageHandler):
         )
         return resp
 
-    def write_items(self, items: list[PersistableModel]):
-        responses = []
-        for item in items:
-            resp = self.write_item(item)
-            responses.append(resp)
-        return responses
+    def write_items(self, items: list[PersistableModel]) -> list[ObjectApiResponse]:
+        return list(map(self.write_item, items))
 
     def read_item(self, item_uuid: UUID, model_type: str):
         target_index = f"{self.root_index}-{model_type.lower()}"
@@ -51,53 +52,53 @@ class ElasticsearchStorageHandler(BaseStorageHandler):
 
     def read_items(self, item_uuids: list[UUID], model_type: str):
         target_index = f"{self.root_index}-{model_type.lower()}"
-        result = self.es_client.mget(
-            index=target_index, body={"ids": list(map(str, item_uuids))}
-        )
+        result = self.es_client.mget(index=target_index, body={"ids": list(map(str, item_uuids))})
 
         model = self.get_model_by_model_type(model_type)
         items = [model(**item["_source"]) for item in result.body["docs"]]
 
         return items
 
-    def update_item(self, item_uuid: UUID, item: PersistableModel):
+    def update_item(self, item: PersistableModel) -> ObjectApiResponse:
         target_index = f"{self.root_index}-{item.model_type.lower()}"
 
-        self.es_client.index(
+        resp = self.es_client.index(
             index=target_index,
             id=str(item.uuid),
             body=item.json(),
         )
+        return resp
 
-    def update_items(self, item_uuids: list[UUID], items: list[PersistableModel]):
-        for item_uuid, item in zip(item_uuids, items):
-            self.update_item(item_uuid, item)
+    def update_items(self, items: list[PersistableModel]) -> list[ObjectApiResponse]:
+        return list(map(self.update_item, items))
 
-    def delete_item(self, item_uuid: UUID, model_type: str):
-        target_index = f"{self.root_index}-{model_type.lower()}"
-        result = self.es_client.delete(index=target_index, id=str(item_uuid))
+    def delete_item(self, item: PersistableModel) -> ObjectApiResponse:
+        target_index = f"{self.root_index}-{item.model_type.lower()}"
+        result = self.es_client.delete(index=target_index, id=str(item.uuid))
         return result
 
-    def delete_items(self, item_uuids: list[UUID], model_type: str):
+    def delete_items(self, items: list[PersistableModel]) -> Optional[ObjectApiResponse]:
+        if not items:
+            return None
+
+        model_type = items[0].model_type
+        assert all(item.model_type == model_type for item in items)
         target_index = f"{self.root_index}-{model_type.lower()}"
         result = self.es_client.delete_by_query(
             index=target_index,
-            body={"query": {"terms": {"_id": list(map(str, item_uuids))}}},
+            body={"query": {"terms": {"_id": [str(item.uuid) for item in items]}}},
         )
         return result
 
-    def read_all_items(self, model_type: str):
+    def read_all_items(self, model_type: str) -> list[PersistableModel]:
         target_index = f"{self.root_index}-{model_type.lower()}"
         try:
-            result = scan(
+            results = scan(
                 client=self.es_client,
                 index=target_index,
                 query={"query": {"match_all": {}}},
                 _source=True,
             )
-
-            # Unpack from scrolling generator
-            results = [item for item in result]
 
         except NotFoundError:
             print(f"Index {target_index} not found. Returning empty list.")
@@ -108,24 +109,21 @@ class ElasticsearchStorageHandler(BaseStorageHandler):
         items = [model(**item["_source"]) for item in results]
         return items
 
-    def list_all_items(self, model_type: str):
+    def list_all_items(self, model_type: str) -> list[UUID]:
         target_index = f"{self.root_index}-{model_type.lower()}"
         try:
             # Only return _id
-            result = scan(
+            results = scan(
                 client=self.es_client,
                 index=target_index,
                 query={"query": {"match_all": {}}},
                 _source=False,
             )
 
-            # Unpack from scrolling generator
-            results = [item for item in result]
-
         except NotFoundError:
             print(f"Index {target_index} not found. Returning empty list.")
             return []
-        uuids = [item["_id"] for item in results]
+        uuids = [UUID(item["_id"]) for item in results]
         return uuids
 
     def get_file_chunks(self, parent_file_uuid: UUID) -> list[Chunk]:
@@ -133,7 +131,7 @@ class ElasticsearchStorageHandler(BaseStorageHandler):
         target_index = f"{self.root_index}-chunk"
 
         res = [
-            item["_source"]
+            Chunk(**item["_source"])
             for item in scan(
                 client=self.es_client,
                 index=target_index,
