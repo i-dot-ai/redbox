@@ -39,7 +39,7 @@ test-ingester:
 	poetry run pytest ingester/tests --cov=ingester -v --cov-report=term-missing --cov-fail-under=40
 
 test-django:
-	docker compose up -d --wait db minio core-api
+	docker compose up -d --wait db minio
 	docker compose run django-app poetry run pytest django_app/tests/ --ds redbox_app.settings -v --cov=redbox_app.redbox_core --cov-fail-under 10
 
 test-integration:
