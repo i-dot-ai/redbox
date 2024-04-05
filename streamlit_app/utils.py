@@ -25,13 +25,16 @@ from langchain_community.chat_models import ChatLiteLLM
 from langchain_community.embeddings import SentenceTransformerEmbeddings
 from loguru import logger
 from lxml.html.clean import Cleaner
-from model_db import SentenceTransformerDB
 
 from redbox.llm.llm_base import LLMHandler
+from redbox.model_db import SentenceTransformerDB
+from redbox.models import Settings
 from redbox.models.feedback import Feedback
 from redbox.models.file import File
 from redbox.models.persona import ChatPersona
 from redbox.storage import ElasticsearchStorageHandler
+
+env = Settings()
 
 
 def get_user_name(principal: dict) -> str:
@@ -130,11 +133,11 @@ def init_session_state() -> dict:
         st.session_state.available_personas = get_persona_names()
 
     if "model_db" not in st.session_state:
-        st.session_state.model_db = SentenceTransformerDB()
+        st.session_state.model_db = SentenceTransformerDB(env.embedding_model)
         st.session_state.model_db.init_from_disk()
 
     if "model_db" not in st.session_state:
-        st.session_state.model_db = SentenceTransformerDB()
+        st.session_state.model_db = SentenceTransformerDB(env.embedding_model)
         st.session_state.model_db.init_from_disk()
 
     if "embedding_model" not in st.session_state:

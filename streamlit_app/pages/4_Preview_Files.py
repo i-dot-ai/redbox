@@ -1,5 +1,5 @@
 import streamlit as st
-from utils import FilePreview, init_session_state
+from streamlit_app.utils import FilePreview, init_session_state
 
 st.set_page_config(
     page_title="Redbox Copilot - Preview Files", page_icon="📮", layout="wide"

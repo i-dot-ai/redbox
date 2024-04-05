@@ -2,10 +2,10 @@ import pathlib
 from datetime import date
 
 import streamlit as st
-from utils import init_session_state
 
 from redbox.models import Collection, File
 from redbox.parsing.file_chunker import FileChunker
+from streamlit_app.utils import init_session_state
 
 st.set_page_config(
     page_title="Redbox Copilot - Add Documents", page_icon="📮", layout="wide"
