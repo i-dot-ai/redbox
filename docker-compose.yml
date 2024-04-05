@@ -32,7 +32,6 @@ services:
       context: .
       dockerfile: ./mlflow/docker/Dockerfile
     image: mlflow_server
-    container_name: mlflow_server
     ports:
         - "5010:5010"
     volumes:

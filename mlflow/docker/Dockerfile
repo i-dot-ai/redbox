@@ -1,12 +1,10 @@
-FROM python:3.11-buster as builder
+# Use the MLFlow image as the base
+FROM ghcr.io/mlflow/mlflow
 
 WORKDIR /mlflow
 
-RUN pip install poetry
+RUN apt-get update && apt-get install -y \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
 
-ADD ../pyproject.toml ../poetry.lock ./
-RUN --mount=type=cache,target=/root/.cache poetry install --no-root --no-ansi --with mlflow
-
-EXPOSE 5010
-
-CMD mlflow deployments start-server --config-path config.yaml
+CMD mlflow server --host 0.0.0.0 --port 5010
