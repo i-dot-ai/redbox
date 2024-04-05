@@ -1,3 +1,5 @@
+import os
+
 import pytest
 from elasticsearch import NotFoundError
 from faststream.redis import TestRedisBroker
