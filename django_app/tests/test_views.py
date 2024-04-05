@@ -13,7 +13,8 @@ def count_s3_objects(s3_client):
     count = 0
     paginator = s3_client.get_paginator("list_objects")
     for result in paginator.paginate(Bucket=settings.BUCKET_NAME):
-        count += len(result.get("Contents"))
+        if result:
+            count += len(result.get("Contents"))
 
     return count
 
