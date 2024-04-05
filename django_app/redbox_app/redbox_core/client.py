@@ -1,4 +1,5 @@
 import boto3
+from botocore.exceptions import ClientError
 from django.conf import settings
 import requests
 
@@ -11,6 +12,15 @@ def s3_client():
             aws_secret_access_key=settings.MINIO_SECRET_KEY,
             endpoint_url=f"http://{settings.MINIO_HOST}:{settings.MINIO_PORT}",
         )
+
+        try:
+            client.create_bucket(
+                Bucket=settings.BUCKET_NAME,
+                CreateBucketConfiguration={"LocationConstraint": settings.AWSREGION},
+            )
+        except ClientError as e:
+            if e.response["Error"]["Code"] != "BucketAlreadyOwnedByYou":
+                raise e
         return client
 
 
