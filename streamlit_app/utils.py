@@ -134,11 +134,9 @@ def init_session_state() -> dict:
 
     if "model_db" not in st.session_state:
         st.session_state.model_db = SentenceTransformerDB(env.embedding_model)
-        st.session_state.model_db.init_from_disk()
 
     if "model_db" not in st.session_state:
         st.session_state.model_db = SentenceTransformerDB(env.embedding_model)
-        st.session_state.model_db.init_from_disk()
 
     if "embedding_model" not in st.session_state:
         available_models = []
@@ -400,7 +398,7 @@ class FilePreview(object):
             file (File): The file to preview
         """
 
-        render_method = self.render_methods[file.type]
+        render_method = self.render_methods[file.content_type]
         stream = st.session_state.s3_client.get_object(
             Bucket=st.session_state.BUCKET_NAME, Key=file.name
         )
@@ -584,9 +582,12 @@ def get_persona_description(persona_name) -> str:
     Args:
         persona_name (str): Persona name selected by user.
     """
-    for chat_persona in chat_personas:
-        if chat_persona.name == persona_name:
-            return chat_persona.description
+
+    return next(
+        chat_persona.description
+        for chat_persona in chat_personas
+        if chat_persona.name == persona_name
+    )
 
 
 def get_persona_prompt(persona_name) -> str:
@@ -595,6 +596,8 @@ def get_persona_prompt(persona_name) -> str:
     Args:
         persona_name (str): Persona name selected by user.
     """
-    for chat_persona in chat_personas:
-        if chat_persona.name == persona_name:
-            return chat_persona.prompt
+    return next(
+        chat_persona.prompt
+        for chat_persona in chat_personas
+        if chat_persona.name == persona_name
+    )
