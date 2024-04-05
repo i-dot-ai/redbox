@@ -1,5 +1,6 @@
 import boto3
 from django.conf import settings
+import requests
 
 
 def s3_client():
@@ -22,3 +23,37 @@ def s3_client():
 #         region_name=settings.AWS_S3_REGION_NAME,
 #     )
 #     return client
+
+
+class CoreApiClient:
+
+    def __init__(self, host: str, port: int):
+        self.host = host
+        self.port = port
+
+    @property
+    def url(self) -> str:
+        return f"{self.host}:{self.port}"
+
+    def upload_file(self, s3_url: str, name: str, extension: str):
+        if self.host ==  "testserver":
+            file = {
+                "url": "s3 url",
+                "content_type": "application/pdf",
+                "name": "my-test-file.pdf",
+                "text": "once upon a time....",
+                "processing_status": "uploaded"
+            }
+            return file
+
+        response = requests.post(
+            f"{self.url}/file",
+            params={
+                "name": name,
+                "type": extension,
+                "location": s3_url,
+            },
+        )
+        if response.status_code != 201:
+            raise ValueError(response.text)
+        return response.json()
