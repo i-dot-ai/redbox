@@ -45,8 +45,8 @@ test-django:
 test-integration:
 	docker compose down
 	cp .env.integration .env
-	docker compose build core-api embedder ingester
-	docker compose up -d core-api embedder ingester
+	docker compose build core-api embedder ingester minio
+	docker compose up -d core-api embedder ingester minio
 	poetry install --no-root --no-ansi --with dev --without ai,streamlit-app,api,worker,ingester
 	sleep 10
 	poetry run pytest tests
