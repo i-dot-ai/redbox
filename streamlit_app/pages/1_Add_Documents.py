@@ -98,8 +98,8 @@ if submitted:  # noqa: C901
             simple_s3_url = authenticated_s3_url.split("?")[0]
 
             file = File(
-                path=simple_s3_url,
-                type=file_type,
+                url=simple_s3_url,
+                content_type=file_type,
                 name=sanitised_name,
                 creator_user_uuid=st.session_state.user_uuid,
             )
