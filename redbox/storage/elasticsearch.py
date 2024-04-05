@@ -3,7 +3,7 @@ from uuid import UUID
 from elasticsearch import Elasticsearch, NotFoundError
 from elasticsearch.helpers import scan
 
-from redbox.models import Chunk
+from redbox.models import Chunk, FileStatus
 from redbox.models.base import PersistableModel
 from redbox.models.file import ProcessingStatusEnum
 from redbox.storage.storage_handler import BaseStorageHandler
@@ -168,7 +168,7 @@ class ElasticsearchStorageHandler(BaseStorageHandler):
         )
         return res["count"]
 
-    def get_file_status(self, file_uuid: UUID):
+    def get_file_status(self, file_uuid: UUID) -> FileStatus:
         file = self.read_item(file_uuid, model_type="File")
         if file.processing_status == "embedding":
             chunk_count = self._count_chunks(file_uuid)
@@ -178,8 +178,8 @@ class ElasticsearchStorageHandler(BaseStorageHandler):
                 file.processing_status = ProcessingStatusEnum.complete
                 self.update_item(file_uuid, file)
 
-        status_body = {
-            "uuid": file.uuid,
-            "processing_status": file.processing_status,
-        }
-        return status_body
+        status = FileStatus(
+            uuid=file.uuid,
+            processing_status=file.processing_status,
+        )
+        return status
