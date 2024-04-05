@@ -230,7 +230,7 @@ def get_file_chunks(file_uuid: UUID) -> list[Chunk]:
     return storage_handler.get_file_chunks(file_uuid)
 
 
-@app.get("/file/{file_uuid}/status", response_model=FileStatus, tags=["file"])
+@app.get("/file/{file_uuid}/status", tags=["file"])
 def get_file_status(file_uuid: UUID) -> FileStatus:
     """Get the status of a file
 
