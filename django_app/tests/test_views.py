@@ -9,14 +9,13 @@ def test_declaration_view_get(peter_rabbit, client):
     assert response.status_code == 200, response.status_code
 
 
-def count_s3_objects(s3_client):
-    count = 0
+def count_s3_objects(s3_client) -> int:
     paginator = s3_client.get_paginator("list_objects")
-    for result in paginator.paginate(Bucket=settings.BUCKET_NAME):
-        if result:
-            count += len(result.get("Contents"))
-
-    return count
+    return sum(
+        len(result.get("Contents", []))
+        for result in paginator.paginate(Bucket=settings.BUCKET_NAME)
+        if result
+    )
 
 
 @pytest.mark.django_db
