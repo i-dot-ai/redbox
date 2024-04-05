@@ -7,7 +7,7 @@ services:
       dockerfile: ./django_app/docker/web/Dockerfile
     depends_on:
       - db
-      - core-api
+#      - core-api
     networks:
       - redbox-app-network
     env_file:
