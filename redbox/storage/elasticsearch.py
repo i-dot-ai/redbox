@@ -214,7 +214,7 @@ class ElasticsearchStorageHandler(BaseStorageHandler):
 
         chunk_statuses = [
             ChunkStatus(
-                chunk_uuid=UUID(chunk_uuid), embedded=chunk_uuid in embedded_chunk_uuids
+                chunk_uuid=chunk_uuid, embedded=chunk_uuid in embedded_chunk_uuids
             )
             for chunk_uuid in chunk_uuids
         ]
