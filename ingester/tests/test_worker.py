@@ -22,6 +22,8 @@ async def test_ingest_file(s3_client, es_client, embedding_model, file):
         es_client=es_client, root_index="redbox-data"
     )
 
+    storage_handler.write_item(file)
+
     async with TestRedisBroker(broker) as br, TestApp(app):
         await br.publish(file, channel=env.ingest_queue_name)
 
