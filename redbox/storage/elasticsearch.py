@@ -144,11 +144,11 @@ class ElasticsearchStorageHandler(BaseStorageHandler):
         ]
         return res
 
-    def _get_child_chunks(self, parent_file_uuid: UUID) -> int:
+    def _get_child_chunks(self, parent_file_uuid: UUID) -> list[UUID]:
         target_index = f"{self.root_index}-chunk"
 
         matched_chunk_ids = [
-            x["_id"]
+            UUID(x["_id"])
             for x in scan(
                 client=self.es_client,
                 index=target_index,
@@ -159,10 +159,10 @@ class ElasticsearchStorageHandler(BaseStorageHandler):
 
         return matched_chunk_ids
 
-    def _get_embedded_child_chunks(self, parent_file_uuid: UUID) -> int:
+    def _get_embedded_child_chunks(self, parent_file_uuid: UUID) -> list[UUID]:
         target_index = f"{self.root_index}-chunk"
         matched_embedded_chunk_ids = [
-            x["_id"]
+            UUID(x["_id"])
             for x in scan(
                 client=self.es_client,
                 index=target_index,
