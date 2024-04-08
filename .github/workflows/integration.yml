@@ -62,6 +62,7 @@ jobs:
       run: |
         pip install requests
         pip install pytest
+        pip install boto3
         python -m pytest tests
 
     - name: notify slack
