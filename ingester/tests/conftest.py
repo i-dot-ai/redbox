@@ -50,7 +50,7 @@ def file(s3_client, file_pdf_path):
     the relationship between core_api and the ingester app
     """
     file_name = os.path.basename(file_pdf_path)
-    file_type = file_name.split(".")[-1]
+    file_type = f'.{file_name.split(".")[-1]}'
 
     with open(file_pdf_path, "rb") as f:
         s3_client.put_object(

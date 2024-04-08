@@ -1,10 +1,12 @@
 import logging
+import uuid
 from datetime import datetime
 from uuid import UUID
 
-from fastapi import FastAPI, UploadFile
+from fastapi import FastAPI
 from fastapi.responses import RedirectResponse
 from faststream.redis.fastapi import RedisRouter
+from pydantic import AnyHttpUrl
 
 from redbox.model_db import SentenceTransformerDB
 from redbox.models import (
@@ -99,39 +101,25 @@ def health():
     return output
 
 
-@app.post("/file", response_model=File, tags=["file"])
-async def create_upload_file(file: UploadFile, ingest: bool = True) -> File:
+@app.post("/file", response_model=uuid.UUID, tags=["file"])
+async def create_upload_file(
+    name: str, type: str, location: AnyHttpUrl, ingest=True
+) -> uuid.UUID:
     """Upload a file to the object store and create a record in the database
 
     Args:
-        file (UploadFile): The file to upload
+        name (str): The file name to be recorded
+        type (str): The file type to be recorded
+        location (AnyHttpUrl): The presigned file resource location
 
     Returns:
-        File: The file record
+        UUID: The file uuid from the elastic database
     """
 
-    s3.put_object(
-        Bucket=env.bucket_name,
-        Body=file.file,
-        Key=file.filename,
-        Tagging=f"file_type={file.content_type}",
-    )
-
-    authenticated_s3_url = s3.generate_presigned_url(
-        "get_object",
-        Params={"Bucket": env.bucket_name, "Key": file.filename},
-        ExpiresIn=3600,
-    )
-    # Strip off the query string (we don't need the keys)
-    simple_s3_url = authenticated_s3_url.split("?")[0]
-    if file.filename is None:
-        raise ValueError("file name is null")
-    if file.content_type is None:
-        raise ValueError("file type is null")
     file_record = File(
-        name=file.filename,
-        url=simple_s3_url,
-        content_type=file.content_type,
+        name=name,
+        url=str(location),  # avoids JSON serialisation error
+        content_type=type,
         processing_status=ProcessingStatusEnum.uploaded,
     )
 
@@ -140,7 +128,7 @@ async def create_upload_file(file: UploadFile, ingest: bool = True) -> File:
     if ingest:
         await ingest_file(file_record.uuid)
 
-    return file_record
+    return file_record.uuid
 
 
 @app.get("/file/{file_uuid}", response_model=File, tags=["file"])
