@@ -11,6 +11,7 @@ services:
       - .env
     volumes:
       - /app/django_app/frontend/node_modules
+      - ./django_app:/app/django_app/
     ports:
       - "8090:8090"
   db:
