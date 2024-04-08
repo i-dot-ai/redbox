@@ -47,9 +47,9 @@ flowchart TB;
     llm[[LLM API]]
 
     %% File upload flow
-    frontend-app -- uploads File --> file-upload
-    file-upload -- uploads File --> object-store
-    file-uploads -- creates File record --> redbox-data-file
+    frontend-app -- uploads File --> object-store
+    frontend-app -- uploads file metadata --> file-upload
+    file-upload -- creates File record --> redbox-data-file
     file-upload -- calls --> file-ingest
     file-ingest -- enqueue FileURI --> ingest-queue
     ingest-queue -- dequeues FileURI --> ingest-worker
@@ -58,7 +58,7 @@ flowchart TB;
     embedding-queue -- dequeues ChunkUUIDs --> embedding-worker
     embedding-worker -- creates Chunk Vectors --> redbox-data-chunk-vector
 
-    %% Vanill Chat flow
+    %% Vanilla Chat flow
     frontend-app -- sends Chat Message --> chat-vanilla
     chat-vanilla -- calls --> llm
 

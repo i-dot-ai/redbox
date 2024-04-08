@@ -104,7 +104,7 @@ def health():
 @app.post("/file", response_model=uuid.UUID, tags=["file"])
 async def create_upload_file(
     name: str, type: str, location: AnyHttpUrl, ingest=True
-) -> File:
+) -> uuid.UUID:
     """Upload a file to the object store and create a record in the database
 
     Args:
@@ -113,7 +113,7 @@ async def create_upload_file(
         location (AnyHttpUrl): The presigned file resource location
 
     Returns:
-        File: The file record
+        UUID: The file uuid from the elastic database
     """
 
     file_record = File(

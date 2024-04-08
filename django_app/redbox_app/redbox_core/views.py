@@ -6,7 +6,7 @@ from boto3.s3.transfer import TransferConfig
 from django.conf import settings
 from django.shortcuts import render
 from django.views.decorators.http import require_http_methods
-from redbox_app.redbox_core.client import s3_client, CoreApiClient
+from redbox_app.redbox_core.client import CoreApiClient, s3_client
 from redbox_app.redbox_core.models import File, ProcessingStatusEnum
 
 s3 = s3_client()
@@ -129,7 +129,9 @@ def upload_view(request):
             simple_s3_url = authenticated_s3_url.split("?")[0]
 
             # ingest file
-            api = CoreApiClient(host=settings.CORE_API_HOST, port=settings.CORE_API_PORT)
+            api = CoreApiClient(
+                host=settings.CORE_API_HOST, port=settings.CORE_API_PORT
+            )
 
             try:
                 api.upload_file(
@@ -137,6 +139,7 @@ def upload_view(request):
                     file_extension,
                     simple_s3_url,
                 )
+                # TODO: update improved File object with elastic uuid
                 uploaded = True
             except ValueError as value_error:
                 errors["upload_doc"].append(value_error.args[0])
