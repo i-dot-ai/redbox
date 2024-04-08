@@ -5,7 +5,7 @@ from faststream import Context, ContextRepo, FastStream
 from faststream.redis import RedisBroker
 
 from redbox.model_db import SentenceTransformerDB
-from redbox.models import EmbedQueueItem, File, ProcessingStatusEnum, Settings
+from redbox.models import EmbedQueueItem, File, Settings
 from redbox.parsing.file_chunker import FileChunker
 from redbox.storage.elasticsearch import ElasticsearchStorageHandler
 
@@ -59,9 +59,6 @@ async def ingest(
         ExpiresIn=180,
     )
 
-    file.processing_status = ProcessingStatusEnum.chunking
-    storage_handler.update_item(file)
-
     chunks = chunker.chunk_file(
         file=file,
         file_url=authenticated_s3_url,
@@ -77,9 +74,6 @@ async def ingest(
         queue_item = EmbedQueueItem(chunk_uuid=chunk.uuid)
         logging.info(f"Writing chunk to storage for chunk uuid: {chunk.uuid}")
         await publisher.publish(queue_item)
-
-    file.processing_status = ProcessingStatusEnum.embedding
-    storage_handler.update_item(file.uuid, file)
 
     return items
 

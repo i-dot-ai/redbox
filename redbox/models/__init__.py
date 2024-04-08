@@ -1,7 +1,13 @@
 from redbox.models.chat import ChatMessage
 from redbox.models.collection import Collection
 from redbox.models.feedback import Feedback
-from redbox.models.file import Chunk, File, FileStatus, ProcessingStatusEnum
+from redbox.models.file import (
+    Chunk,
+    ChunkStatus,
+    File,
+    FileStatus,
+    ProcessingStatusEnum,
+)
 from redbox.models.llm import (
     EmbeddingResponse,
     EmbedQueueItem,
@@ -21,6 +27,7 @@ __all__ = [
     "ChatMessage",
     "ChatPersona",
     "Chunk",
+    "ChunkStatus",
     "Collection",
     "Feedback",
     "File",

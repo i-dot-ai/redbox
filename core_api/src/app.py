@@ -1,9 +1,10 @@
 import logging
 import uuid
 from datetime import datetime
+from email.policy import HTTP
 from uuid import UUID
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.responses import RedirectResponse
 from faststream.redis.fastapi import RedisRouter
 from pydantic import AnyHttpUrl
@@ -15,7 +16,6 @@ from redbox.models import (
     File,
     FileStatus,
     ModelInfo,
-    ProcessingStatusEnum,
     Settings,
     StatusResponse,
 )
@@ -121,7 +121,6 @@ async def create_upload_file(
         name=name,
         url=str(location),  # avoids JSON serialisation error
         content_type=type,
-        processing_status=ProcessingStatusEnum.uploaded,
     )
 
     storage_handler.write_item(file_record)
@@ -176,9 +175,6 @@ async def ingest_file(file_uuid: UUID) -> File:
     """
     file = storage_handler.read_item(file_uuid, model_type="File")
 
-    file.processing_status = ProcessingStatusEnum.parsing
-    storage_handler.update_item(item=file)
-
     log.info(f"publishing {file.uuid}")
     await publisher.publish(file)
 
@@ -201,8 +197,10 @@ def get_file_status(file_uuid: UUID) -> FileStatus:
     Returns:
         File: The file with the updated status
     """
-
-    status = storage_handler.get_file_status(file_uuid)
+    try:
+        status = storage_handler.get_file_status(file_uuid)
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=f"File {file_uuid} not found")
 
     return status
 

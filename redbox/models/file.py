@@ -13,8 +13,6 @@ encoding = tiktoken.get_encoding("cl100k_base")
 
 
 class ProcessingStatusEnum(str, Enum):
-    uploaded = "uploaded"
-    parsing = "parsing"
     chunking = "chunking"
     embedding = "embedding"
     complete = "complete"
@@ -50,9 +48,6 @@ class File(PersistableModel):
     content_type: ContentType = Field(description="content_type of file")
     name: str = Field(description="file name")
     text: Optional[str] = Field(description="file content", default=None)
-    processing_status: ProcessingStatusEnum = Field(
-        default=ProcessingStatusEnum.uploaded
-    )
 
     @computed_field
     def text_hash(self) -> str:
@@ -98,9 +93,15 @@ class Chunk(PersistableModel):
         return len(encoding.encode(self.text))
 
 
+class ChunkStatus(BaseModel):
+    chunk_uuid: UUID
+    embedded: bool
+
+
 class FileStatus(BaseModel):
-    uuid: UUID
+    file_uuid: UUID
     processing_status: ProcessingStatusEnum
+    chunk_statuses: Optional[list[ChunkStatus]]
 
 
 class FileExistsException(Exception):
