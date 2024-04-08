@@ -1,4 +1,4 @@
-import time
+import os
 
 import pytest
 from elasticsearch import NotFoundError
@@ -25,22 +25,43 @@ async def test_post_file_upload(
     """
     Given a new file
     When I POST it to /file
-    I Expect to see it persisted in s3 and elastic-search
+    I Expect to see it persisted in elastic-search
     """
+
+    file_name = os.path.basename(file_pdf_path)
+
     with open(file_pdf_path, "rb") as f:
+        file_key = "filename.pdf"
+
+        s3_client.upload_fileobj(
+            Bucket=env.bucket_name,
+            Fileobj=f,
+            Key=file_key,
+            ExtraArgs={"Tagging": f"file_type=pdf"},
+        )
+
+        authenticated_s3_url = s3_client.generate_presigned_url(
+            "get_object",
+            Params={"Bucket": env.bucket_name, "Key": file_key},
+            ExpiresIn=3600,
+        )
+
         async with TestRedisBroker(router.broker):
             response = app_client.post(
-                "/file", files={"file": ("filename", f, "application/pdf")}
+                "/file",
+                params={
+                    "name": "filename",
+                    "type": ".pdf",
+                    "location": authenticated_s3_url,
+                },
             )
     assert response.status_code == 200
-    assert s3_client.get_object(
-        Bucket=env.bucket_name, Key=file_pdf_path.split("/")[-1]
-    )
+
     json_response = response.json()
     assert (
         elasticsearch_storage_handler.read_item(
-            item_uuid=json_response["uuid"],
-            model_type=json_response["model_type"],
+            item_uuid=json_response,
+            model_type="file",
         ).processing_status
         is ProcessingStatusEnum.parsing
     )
@@ -57,29 +78,36 @@ def test_get_file(app_client, stored_file):
     assert response.status_code == 200
 
 
-def test_delete_file(s3_client, app_client, elasticsearch_storage_handler, stored_file):
+def test_delete_file(
+    s3_client, app_client, elasticsearch_storage_handler, chunked_file
+):
     """
     Given a previously saved file
     When I DELETE it to /file
-    I Expect to see it removed from s3 and elastic-search
+    I Expect to see it removed from s3 and elastic-search, including the chunks
     """
     # check assets exist
-    assert s3_client.get_object(Bucket=env.bucket_name, Key=stored_file.name)
+    assert s3_client.get_object(Bucket=env.bucket_name, Key=chunked_file.name)
     assert elasticsearch_storage_handler.read_item(
-        item_uuid=stored_file.uuid, model_type="file"
+        item_uuid=chunked_file.uuid, model_type="file"
     )
+    assert elasticsearch_storage_handler.get_file_chunks(chunked_file.uuid)
 
-    response = app_client.delete(f"/file/{stored_file.uuid}")
+    response = app_client.delete(f"/file/{chunked_file.uuid}")
     assert response.status_code == 200
+
+    elasticsearch_storage_handler.refresh()
 
     # check assets dont exist
     with pytest.raises(Exception):
-        s3_client.get_object(Bucket=env.bucket_name, Key=stored_file.name)
+        s3_client.get_object(Bucket=env.bucket_name, Key=chunked_file.name)
 
     with pytest.raises(NotFoundError):
         elasticsearch_storage_handler.read_item(
-            item_uuid=stored_file.uuid, model_type="file"
+            item_uuid=chunked_file.uuid, model_type="file"
         )
+
+    assert not elasticsearch_storage_handler.get_file_chunks(chunked_file.uuid)
 
 
 @pytest.mark.asyncio
@@ -150,8 +178,6 @@ def test_embed_sentences(client):
 
 
 def test_get_file_chunks(client, chunked_file):
-    # TODO: fix this hack
-    time.sleep(1)
     response = client.get(f"/file/{chunked_file.uuid}/chunks")
     assert response.status_code == 200
     assert len(response.json()) == 5

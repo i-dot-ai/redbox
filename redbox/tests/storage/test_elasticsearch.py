@@ -75,6 +75,7 @@ def test_elastic_read_item(elasticsearch_storage_handler, stored_chunk):
 
 def test_elastic_delete_item_fail(
     elasticsearch_storage_handler: ElasticsearchStorageHandler,
+    another_chunk,
 ):
     """
     Given that I have an non-existent item uuid
@@ -82,7 +83,7 @@ def test_elastic_delete_item_fail(
     Then I expect to see a NotFoundError error raised
     """
     with pytest.raises(NotFoundError):
-        elasticsearch_storage_handler.delete_item(uuid4(), "Chunk")
+        elasticsearch_storage_handler.delete_item(another_chunk)
 
 
 def test_elastic_read_item_fail(
@@ -121,13 +122,13 @@ def test_elastic_write_read_delete_items(elasticsearch_storage_handler):
 
     assert read_chunks == chunks
 
-    chunk_uuids_to_delete = [chunk.uuid for chunk in chunks]
     # Delete the chunks
-    elasticsearch_storage_handler.delete_items(chunk_uuids_to_delete, "Chunk")
+    elasticsearch_storage_handler.delete_items(chunks)
 
     # Check that the chunks are deleted
     items_left = elasticsearch_storage_handler.list_all_items("Chunk")
-    assert chunk_uuids_to_delete not in items_left
+
+    assert all(chunk.uuid not in items_left for chunk in chunks)
 
 
 @pytest.mark.xfail(reason="")
@@ -149,7 +150,7 @@ def test_elastic_delete_item(elasticsearch_storage_handler, stored_chunk):
     When I call delete_item on it
     Then I expect to not be able to read the item
     """
-    elasticsearch_storage_handler.delete_item(stored_chunk.uuid, "Chunk")
+    elasticsearch_storage_handler.delete_item(stored_chunk)
 
     with pytest.raises(NotFoundError):
         elasticsearch_storage_handler.read_item(stored_chunk.uuid, "Chunk")

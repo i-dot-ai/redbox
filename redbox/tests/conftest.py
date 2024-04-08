@@ -27,6 +27,17 @@ def chunk() -> Chunk:
 
 
 @pytest.fixture
+def another_chunk() -> Chunk:
+    test_chunk = Chunk(
+        parent_file_uuid=uuid4(),
+        index=1,
+        text="test_text",
+        metadata={},
+    )
+    return test_chunk
+
+
+@pytest.fixture
 def file() -> File:
     test_file = File(
         name="test.pdf",

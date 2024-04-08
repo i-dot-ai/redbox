@@ -39,14 +39,14 @@ test-ingester:
 	poetry run pytest ingester/tests --cov=ingester -v --cov-report=term-missing --cov-fail-under=40
 
 test-django:
-	docker compose up -d --wait db
+	docker compose up -d --wait db minio
 	docker compose run django-app poetry run pytest django_app/tests/ --ds redbox_app.settings -v --cov=redbox_app.redbox_core --cov-fail-under 10
 
 test-integration:
 	docker compose down
 	cp .env.integration .env
-	docker compose build core-api embedder ingester
-	docker compose up -d core-api embedder ingester
+	docker compose build core-api embedder ingester minio
+	docker compose up -d core-api embedder ingester minio
 	poetry install --no-root --no-ansi --with dev --without ai,streamlit-app,api,worker,ingester
 	sleep 10
 	poetry run pytest tests
@@ -71,6 +71,7 @@ checktypes:
 
 check-migrations:
 	docker compose build django-app
+	docker compose up -d --wait db minio
 	docker compose run django-app poetry run python django_app/manage.py migrate
 	docker compose run django-app poetry run python django_app/manage.py makemigrations --check
 

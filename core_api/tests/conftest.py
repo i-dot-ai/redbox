@@ -54,7 +54,7 @@ def file(s3_client, file_pdf_path) -> YieldFixture[File]:
     the relationship between core_api and the ingester app
     """
     file_name = os.path.basename(file_pdf_path)
-    file_type = file_name.split(".")[-1]
+    file_type = f'.{file_name.split(".")[-1]}'
 
     with open(file_pdf_path, "rb") as f:
         s3_client.put_object(
@@ -85,16 +85,16 @@ def file(s3_client, file_pdf_path) -> YieldFixture[File]:
 @pytest.fixture
 def stored_file(elasticsearch_storage_handler, file) -> YieldFixture[File]:
     elasticsearch_storage_handler.write_item(file)
+    elasticsearch_storage_handler.refresh()
     yield file
 
 
 @pytest.fixture
 def chunked_file(elasticsearch_storage_handler, stored_file) -> YieldFixture[File]:
     for i in range(5):
-        chunk = Chunk(
-            text="hello", index=i, parent_file_uuid=stored_file.uuid, metadata={}
-        )
+        chunk = Chunk(text="hello", index=i, parent_file_uuid=stored_file.uuid, metadata={})
         elasticsearch_storage_handler.write_item(chunk)
+    elasticsearch_storage_handler.refresh()
     yield stored_file
 
 

@@ -54,6 +54,8 @@ class Settings(BaseSettings):
     postgres_password: str
     postgres_host: str = "db"
     contact_email: str = "test@example.com"
+    core_api_host: str = "http://core-api"
+    core_api_port: int = 5002
 
     model_config = SettingsConfigDict(env_file=".env")
 
@@ -72,6 +74,7 @@ class Settings(BaseSettings):
         return es
 
     def s3_client(self):
+
         if self.object_store == "minio":
             client = boto3.client(
                 "s3",
@@ -81,6 +84,17 @@ class Settings(BaseSettings):
             )
 
         elif self.object_store == "s3":
+            client = boto3.client(
+                "s3",
+                aws_access_key_id=self.aws_access_key_id,
+                aws_secret_access_key=self.aws_secret_access_key,
+                region_name=self.aws_region,
+            )
+        elif self.object_store == "moto":
+            from moto import mock_aws
+            mock = mock_aws()
+            mock.start()
+
             client = boto3.client(
                 "s3",
                 aws_access_key_id=self.aws_access_key_id,

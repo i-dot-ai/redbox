@@ -7,10 +7,13 @@ services:
       dockerfile: ./django_app/docker/web/Dockerfile
     depends_on:
       - db
+    networks:
+      - redbox-app-network
     env_file:
       - .env
     volumes:
       - /app/django_app/frontend/node_modules
+      - ./django_app:/app/django_app/
     ports:
       - "8090:8090"
   db:
@@ -19,6 +22,8 @@ services:
       - .env
     volumes:
       - local_postgres_data:/var/lib/postgresql/data:Z
+    networks:
+      - redbox-app-network
     ports:
       - "5432:5432"
   requirements:

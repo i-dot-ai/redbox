@@ -12,6 +12,7 @@ from .hosting_environment import HostingEnvironment
 
 env = environ.Env()
 
+AWS_REGION = env.str("AWS_REGION")
 
 SECRET_KEY = env.str("DJANGO_SECRET_KEY")
 ENVIRONMENT = env.str("ENVIRONMENT")
@@ -196,6 +197,7 @@ if HostingEnvironment.is_beanstalk():
 
     STATICFILES_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
     DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
+    OBJECT_STORE = "s3"
     AWS_STORAGE_BUCKET_NAME = env.str("AWS_STORAGE_BUCKET_NAME")
     AWS_S3_REGION_NAME = env.str("AWS_S3_REGION_NAME")
     INSTALLED_APPS += ["health_check.contrib.s3boto3_storage"]
@@ -223,6 +225,12 @@ else:
 if HostingEnvironment.is_local():
     # For Docker to work locally
     ALLOWED_HOSTS.append("0.0.0.0")  # nosec B104 - don't do this on server!
+    OBJECT_STORE = "minio"
+    MINIO_ACCESS_KEY = env.str("MINIO_ACCESS_KEY")
+    MINIO_SECRET_KEY = env.str("MINIO_SECRET_KEY")
+    MINIO_HOST = env.str("MINIO_HOST")
+    MINIO_PORT = env.str("MINIO_PORT")
+    BUCKET_NAME = env.str("BUCKET_NAME")
 else:
     # https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Strict-Transport-Security
     # Mozilla guidance max-age 2 years
@@ -265,3 +273,7 @@ LOGGING = {
         "application": {"handlers": [LOG_HANDLER], "level": "DEBUG", "propagate": True}
     },
 }
+
+# link to core_api app
+CORE_API_HOST = env.str("CORE_API_HOST")
+CORE_API_PORT = env.str("CORE_API_PORT")

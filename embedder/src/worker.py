@@ -52,7 +52,7 @@ async def embed(
         )
         return
     chunk.embedding = embedded_sentences.data[0].embedding
-    storage_handler.update_item(chunk.uuid, chunk)
+    storage_handler.update_item(chunk)
 
 
 app = FastStream(broker, lifespan=lifespan)

@@ -21,27 +21,28 @@ class ProcessingStatusEnum(str, Enum):
 
 
 class ContentType(str, Enum):
-    EML = "eml"
-    HTML = "html"
-    JSON = "json"
-    MD = "md"
-    MSG = "msg"
-    RST = "rst"
-    RTF = "rtf"
-    TXT = "txt"
-    XML = "xml"
-    JPEG = "jpeg"  # Must have tesseract installed
-    PNG = "png"  # Must have tesseract installed
-    CSV = "csv"
-    DOC = "doc"
-    DOCX = "docx"
-    EPUB = "epub"
-    ODT = "odt"
-    PDF = "pdf"
-    PPT = "ppt"
-    PPTX = "pptx"
-    TSV = "tsv"
-    XLSX = "xlsx"
+    EML = ".eml"
+    HTML = ".html"
+    HTM = ".htm"
+    JSON = ".json"
+    MD = ".md"
+    MSG = ".msg"
+    RST = ".rst"
+    RTF = ".rtf"
+    TXT = ".txt"
+    XML = ".xml"
+    JPEG = ".jpeg"  # Must have tesseract installed
+    PNG = ".png"  # Must have tesseract installed
+    CSV = ".csv"
+    DOC = ".doc"
+    DOCX = ".docx"
+    EPUB = ".epub"
+    ODT = ".odt"
+    PDF = ".pdf"
+    PPT = ".ppt"
+    PPTX = ".pptx"
+    TSV = ".tsv"
+    XLSX = ".xlsx"
 
 
 class File(PersistableModel):
