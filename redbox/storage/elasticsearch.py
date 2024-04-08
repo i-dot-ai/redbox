@@ -106,8 +106,11 @@ class ElasticsearchStorageHandler(BaseStorageHandler):
 
         # Grab the model we'll use to deserialize the items
         model = self.get_model_by_model_type(model_type)
-        items = [model(**item["_source"]) for item in results]
-        return items
+        try:
+            items = [model(**item["_source"]) for item in results]
+            return items
+        except NotFoundError:
+            return []
 
     def list_all_items(self, model_type: str) -> list[UUID]:
         target_index = f"{self.root_index}-{model_type.lower()}"

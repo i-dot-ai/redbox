@@ -29,8 +29,11 @@ COPY --from=builder ${VIRTUAL_ENV} ${VIRTUAL_ENV}
 ADD redbox/ /app/redbox
 ADD download_embedder.py /app/
 RUN python download_embedder.py --model_name ${EMBEDDING_MODEL}
-ADD streamlit_app/ /app
+ADD streamlit_app/ /app/streamlit_app
+RUN touch /app/__init__.py
+
+ENV PYTHONPATH "/app"
 
 EXPOSE 8501
 
-ENTRYPOINT ["streamlit", "run", "--server.address", "0.0.0.0", "--server.port", "8501", "Welcome.py" ]
+ENTRYPOINT ["streamlit", "run", "--server.address", "0.0.0.0", "--server.port", "8501", "streamlit_app/Welcome.py" ]
