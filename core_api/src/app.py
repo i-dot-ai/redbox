@@ -50,30 +50,6 @@ es = env.elasticsearch_client()
 storage_handler = ElasticsearchStorageHandler(es_client=es, root_index="redbox-data")
 
 
-mime_type_to_content_type = {
-    "message/rfc822": "eml",
-    "text/html": "html",
-    "application/json": "json",
-    "text/markdown": "md",
-    "application/vnd.ms-outlook": "msg",
-    "text/x-rst": "rst",
-    "application/rtf": "rtf",
-    "text/plain": "txt",
-    "application/xml": "xml",
-    "image/jpeg": "jpeg",
-    "image/png": "png",
-    "text/csv": "csv",
-    "application/msword": "doc",
-    "application/vnd.openxmlformats-officedocument.wordprocessingml.document": "docx",
-    "application/epub+zip": "epub",
-    "application/vnd.oasis.opendocument.text": "odt",
-    "application/pdf": "pdf",
-    "application/vnd.ms-powerpoint": "ppt",
-    "application/vnd.openxmlformats-officedocument.presentationml.presentation": "pptx",
-    "text/tab-separated-values": "tsv",
-    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": "xlsx",
-}
-
 # === API Setup ===
 
 start_time = datetime.now()
