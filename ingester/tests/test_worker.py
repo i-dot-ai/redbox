@@ -25,7 +25,9 @@ async def test_ingest_file(s3_client, es_client, embedding_model, file):
     async with TestRedisBroker(broker) as br, TestApp(app):
         await br.publish(file, channel=env.ingest_queue_name)
 
-        assert storage_handler.read_item(
+        file = storage_handler.read_item(
             item_uuid=file.uuid,
-            model_type="file",
+            model_type="File",
         )
+
+        assert file is not None
