@@ -1,9 +1,10 @@
 import logging
 import uuid
 from datetime import datetime
+from email.policy import HTTP
 from uuid import UUID
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.responses import RedirectResponse
 from faststream.redis.fastapi import RedisRouter
 from pydantic import AnyHttpUrl
@@ -13,8 +14,8 @@ from redbox.models import (
     Chunk,
     EmbeddingResponse,
     File,
+    FileStatus,
     ModelInfo,
-    ProcessingStatusEnum,
     Settings,
     StatusResponse,
 )
@@ -120,7 +121,6 @@ async def create_upload_file(
         name=name,
         url=str(location),  # avoids JSON serialisation error
         content_type=type,
-        processing_status=ProcessingStatusEnum.uploaded,
     )
 
     storage_handler.write_item(file_record)
@@ -175,9 +175,6 @@ async def ingest_file(file_uuid: UUID) -> File:
     """
     file = storage_handler.read_item(file_uuid, model_type="File")
 
-    file.processing_status = ProcessingStatusEnum.parsing
-    storage_handler.update_item(item=file)
-
     log.info(f"publishing {file.uuid}")
     await publisher.publish(file)
 
@@ -188,6 +185,24 @@ async def ingest_file(file_uuid: UUID) -> File:
 def get_file_chunks(file_uuid: UUID) -> list[Chunk]:
     log.info(f"getting chunks for file {file_uuid}")
     return storage_handler.get_file_chunks(file_uuid)
+
+
+@app.get("/file/{file_uuid}/status", tags=["file"])
+def get_file_status(file_uuid: UUID) -> FileStatus:
+    """Get the status of a file
+
+    Args:
+        file_uuid (str): The UUID of the file to get the status of
+
+    Returns:
+        File: The file with the updated status
+    """
+    try:
+        status = storage_handler.get_file_status(file_uuid)
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=f"File {file_uuid} not found")
+
+    return status
 
 
 @app.get("/model", tags=["models"])

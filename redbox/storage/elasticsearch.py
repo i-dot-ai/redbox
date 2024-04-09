@@ -5,7 +5,7 @@ from elastic_transport import ObjectApiResponse
 from elasticsearch import Elasticsearch, NotFoundError
 from elasticsearch.helpers import scan
 
-from redbox.models import Chunk
+from redbox.models import Chunk, ChunkStatus, FileStatus, ProcessingStatusEnum
 from redbox.models.base import PersistableModel
 from redbox.storage.storage_handler import BaseStorageHandler
 
@@ -52,7 +52,9 @@ class ElasticsearchStorageHandler(BaseStorageHandler):
 
     def read_items(self, item_uuids: list[UUID], model_type: str):
         target_index = f"{self.root_index}-{model_type.lower()}"
-        result = self.es_client.mget(index=target_index, body={"ids": list(map(str, item_uuids))})
+        result = self.es_client.mget(
+            index=target_index, body={"ids": list(map(str, item_uuids))}
+        )
 
         model = self.get_model_by_model_type(model_type)
         items = [model(**item["_source"]) for item in result.body["docs"]]
@@ -77,7 +79,9 @@ class ElasticsearchStorageHandler(BaseStorageHandler):
         result = self.es_client.delete(index=target_index, id=str(item.uuid))
         return result
 
-    def delete_items(self, items: list[PersistableModel]) -> Optional[ObjectApiResponse]:
+    def delete_items(
+        self, items: list[PersistableModel]
+    ) -> Optional[ObjectApiResponse]:
         if not items:
             return None
 
@@ -139,3 +143,94 @@ class ElasticsearchStorageHandler(BaseStorageHandler):
             )
         ]
         return res
+
+    def _get_child_chunks(self, parent_file_uuid: UUID) -> list[UUID]:
+        target_index = f"{self.root_index}-chunk"
+
+        matched_chunk_ids = [
+            UUID(x["_id"])
+            for x in scan(
+                client=self.es_client,
+                index=target_index,
+                query={"query": {"match": {"parent_file_uuid": str(parent_file_uuid)}}},
+                _source=False,
+            )
+        ]
+
+        return matched_chunk_ids
+
+    def _get_embedded_child_chunks(self, parent_file_uuid: UUID) -> list[UUID]:
+        target_index = f"{self.root_index}-chunk"
+        matched_embedded_chunk_ids = [
+            UUID(x["_id"])
+            for x in scan(
+                client=self.es_client,
+                index=target_index,
+                query={
+                    "query": {
+                        "bool": {
+                            "must": [
+                                {"match": {"parent_file_uuid": str(parent_file_uuid)}},
+                                {"exists": {"field": "embedding"}},
+                            ]
+                        }
+                    }
+                },
+                _source=False,
+            )
+        ]
+
+        return matched_embedded_chunk_ids
+
+    def get_file_status(self, file_uuid: UUID) -> FileStatus:
+        """Get the status of a file and associated Chunks
+
+        Args:
+            file_uuid (UUID): The UUID of the file to get the status of
+
+        Returns:
+            FileStatus: The status of the file
+        """
+
+        # Test 1: Get the file
+        try:
+            file = self.read_item(file_uuid, "File")
+        except NotFoundError:
+            raise ValueError(f"File {file_uuid} not found")
+
+        # Test 2: Get the number of chunks for the file
+        chunk_uuids = self._get_child_chunks(file_uuid)
+
+        if len(chunk_uuids) == 0:
+            # File has not been chunked yet
+            return FileStatus(
+                file_uuid=file_uuid,
+                chunk_statuses=[],
+                processing_status=ProcessingStatusEnum.chunking,
+            )
+
+        # Test 3: Get the number of embedded chunks for the file
+        embedded_chunk_uuids = self._get_embedded_child_chunks(file_uuid)
+
+        chunk_statuses = [
+            ChunkStatus(
+                chunk_uuid=chunk_uuid, embedded=chunk_uuid in embedded_chunk_uuids
+            )
+            for chunk_uuid in chunk_uuids
+        ]
+
+        # Test 4: Determine the latest status
+        if len(chunk_uuids) == len(embedded_chunk_uuids):
+            latest_status = ProcessingStatusEnum.complete
+        elif len(embedded_chunk_uuids) < len(chunk_uuids):
+            latest_status = ProcessingStatusEnum.embedding
+        else:
+            raise ValueError(
+                "The number of embedded chunks should never exceed the number of chunks"
+            )
+
+        return FileStatus(
+            file_uuid=file_uuid,
+            chunk_statuses=chunk_statuses,
+            processing_status=latest_status,
+        )
