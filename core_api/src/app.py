@@ -1,7 +1,6 @@
 import logging
 import uuid
 from datetime import datetime
-from email.policy import HTTP
 from uuid import UUID
 
 from fastapi import FastAPI, HTTPException
@@ -102,10 +101,8 @@ def health():
     return output
 
 
-@app.post("/file", response_model=uuid.UUID, tags=["file"])
-async def create_upload_file(
-    name: str, type: str, location: AnyHttpUrl, ingest=True
-) -> uuid.UUID:
+@app.post("/file", tags=["file"])
+async def create_upload_file(name: str, type: str, location: AnyHttpUrl) -> uuid.UUID:
     """Upload a file to the object store and create a record in the database
 
     Args:
@@ -125,8 +122,7 @@ async def create_upload_file(
 
     storage_handler.write_item(file_record)
 
-    if ingest:
-        await ingest_file(file_record.uuid)
+    await ingest_file(file_record.uuid)
 
     return file_record.uuid
 
@@ -199,7 +195,7 @@ def get_file_status(file_uuid: UUID) -> FileStatus:
     """
     try:
         status = storage_handler.get_file_status(file_uuid)
-    except ValueError as exc:
+    except ValueError:
         raise HTTPException(status_code=404, detail=f"File {file_uuid} not found")
 
     return status
