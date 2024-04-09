@@ -85,7 +85,7 @@ docs-serve:
 docs-build:
 	poetry run mkdocs build
 
-	# Docker
+# Docker
 AWS_REGION=eu-west-2
 APP_NAME=redbox
 ECR_URL=$(AWS_ACCOUNT_ID).dkr.ecr.$(AWS_REGION).amazonaws.com
@@ -122,10 +122,10 @@ CONFIG_DIR=../../../redbox-copilot-infra-config
 TF_BACKEND_CONFIG=$(CONFIG_DIR)/backend.hcl
 
 tf_new_workspace:
-	terraform -chdir=./infrastructure/aws workspace new $(env)
+	terraform -chdir=./infrastructure workspace new $(env)
 
 tf_set_workspace:
-	terraform -chdir=./infrastructure/aws workspace select $(env)
+	terraform -chdir=./infrastructure workspace select $(env)
 
 tf_set_or_create_workspace:
 	make tf_set_workspace || make tf_new_workspace
@@ -146,7 +146,7 @@ tf_apply: ## Apply terraform
 
 .PHONY: tf_init_universal
 tf_init_universal: ## Initialise terraform
-	terraform -chdir=./infrastructure/aws/universal init -backend-config=../../$(TF_BACKEND_CONFIG)
+	terraform -chdir=./infrastructure/aws/universal init -backend-config=../$(TF_BACKEND_CONFIG)
 
 .PHONY: tf_apply_universal
 tf_apply_universal: ## Apply terraform
