@@ -21,7 +21,6 @@ provider "aws" {
   default_tags {
     tags = {
       Environment = terraform.workspace
-      Deployed    = "github"
     }
   }
 }
