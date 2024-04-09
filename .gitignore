@@ -188,3 +188,15 @@ django_app/node_modules
 django_app/frontend/CACHE
 django_app/frontend/govuk-assets
 
+
+# Other
+.DS_Store
+
+
+# Local .terraform directories
+**/.terraform/*
+**/.terraform.lock.hcl
+
+# .tfstate files
+*.tfstate
+*.tfstate.*
