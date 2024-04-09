@@ -63,13 +63,13 @@ if preview_file_button or "file_uuid" in url_params:
     with st.expander("File Metadata"):
         st.markdown(f"**Name:** `{file.name}`")
         st.markdown(f"**UUID:** `{file.uuid}`")
-        st.markdown(f"**Type:** `{file.type}`")
+        st.markdown(f"**Type:** `{file.content_type}`")
         st.markdown(f"**Token Count:** `{file.token_count}`")
         st.markdown(f"**Text Hash:** `{file.text_hash}`")
         st.markdown(f"**Creator UUID:** `{file.creator_user_uuid}`")
 
-    if file.type in file_preview.render_methods:
-        if (file.type == ".pdf") & ("page_number" in url_params):
+    if file.content_type in file_preview.render_methods:
+        if (file.content_type == ".pdf") & ("page_number" in url_params):
             page_number = url_params["page_number"]
             if page_number[0] == "[":
                 page_number = min(page_number[1:-1].split(r","))
@@ -79,7 +79,7 @@ if preview_file_button or "file_uuid" in url_params:
         else:
             file_preview.st_render(file)
     else:
-        st.warning(f"File rendering not yet supported for {file.type}")
+        st.warning(f"File rendering not yet supported for {file.content_type}")
 
 if delete_file_button:
     file = st.session_state.file_uuid_map[file_select]

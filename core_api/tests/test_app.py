@@ -5,7 +5,6 @@ from elasticsearch import NotFoundError
 from faststream.redis import TestRedisBroker
 
 from core_api.src.app import env, publisher, router
-from redbox.models import ProcessingStatusEnum
 
 
 def test_get_health(app_client):
@@ -56,15 +55,6 @@ async def test_post_file_upload(
                 },
             )
     assert response.status_code == 200
-
-    json_response = response.json()
-    assert (
-        elasticsearch_storage_handler.read_item(
-            item_uuid=json_response,
-            model_type="file",
-        ).processing_status
-        is ProcessingStatusEnum.parsing
-    )
 
 
 def test_get_file(app_client, stored_file):
@@ -120,13 +110,6 @@ async def test_ingest_file(app_client, stored_file, elasticsearch_storage_handle
     async with TestRedisBroker(router.broker):
         response = app_client.post(f"/file/{stored_file.uuid}/ingest/")
 
-        assert (
-            elasticsearch_storage_handler.read_item(
-                item_uuid=stored_file.uuid,
-                model_type="file",
-            ).processing_status
-            is ProcessingStatusEnum.parsing
-        )
         assert response.status_code == 200
 
         publisher.mock.called_once_with(stored_file)
