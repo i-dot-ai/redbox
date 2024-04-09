@@ -44,7 +44,7 @@ def test_upload_to_elastic(file_pdf_path, s3_client):
         start_time = time.time()
         error = None
 
-        while not time.time() - start_time < timeout:
+        while time.time() - start_time < timeout:
             time.sleep(1)
             chunk_response = requests.get(
                 f"http://localhost:5002/file/{file_uuid}/status"
