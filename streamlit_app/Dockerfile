@@ -17,7 +17,8 @@ FROM python:3.11-slim-buster as runtime
 ARG EMBEDDING_MODEL
 
 RUN apt-get update
-RUN apt-get install -y libgl-dev libmagic-dev inetutils-ping
+RUN apt-get install -y libgl-dev libmagic-dev inetutils-ping poppler-utils tesseract-ocr
+
 
 WORKDIR /app/
 

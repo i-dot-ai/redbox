@@ -36,6 +36,8 @@ from redbox.storage import ElasticsearchStorageHandler
 
 env = Settings()
 
+DEV_UUID = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
+
 
 def get_user_name(principal: dict) -> str:
     """Get the user name from the principal object
@@ -62,7 +64,7 @@ def populate_user_info() -> dict:
     Returns:
         dict: the user information dictionary
     """
-    return {"name": "dev", "email": "dev@example.com"}
+    return {"name": DEV_UUID, "email": "dev@example.com"}
 
 
 def init_session_state() -> dict:
@@ -172,7 +174,7 @@ def init_session_state() -> dict:
             es_client=es, root_index="redbox-data"
         )
 
-    if st.session_state.user_uuid == "dev":
+    if st.session_state.user_uuid == DEV_UUID:
         st.sidebar.info("**DEV MODE**")
         with st.sidebar.expander("⚙️ DEV Settings", expanded=False):
             st.session_state.model_params = {

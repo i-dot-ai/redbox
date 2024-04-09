@@ -1,5 +1,6 @@
 import pathlib
 from datetime import date
+from uuid import UUID
 
 import streamlit as st
 
@@ -61,11 +62,11 @@ if submitted:  # noqa: C901
         collection_obj = Collection(
             date=date.today().isoformat(),
             name=new_collection,
-            creator_user_uuid=st.session_state.user_uuid,
+            creator_user_uuid=UUID(st.session_state.user_uuid),
         )
     elif collection_selection == no_collection_str:
         collection_obj = Collection(
-            date="", name="", creator_user_uuid=st.session_state.user_uuid
+            date="", name="", creator_user_uuid=UUID(st.session_state.user_uuid)
         )
     else:
         collection_obj = st.session_state.storage_handler.read_item(

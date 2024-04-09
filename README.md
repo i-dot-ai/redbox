@@ -1,6 +1,7 @@
 # 📮 Redbox Copilot
 
-> ⚠️ **This project is in active development and a work in progress. The repo is getting regular additions so be sure to check back regularly for updates.**
+> [!IMPORTANT]
+> Incubation Project: This project is an incubation project; as such, we DON’T recommend using it in any critical use case. This project is in active development and a work in progress. This project may one day Graduate, in which case this disclaimer will be removed.
 
 Redbox Copilot is a retrieval augmented generation (RAG) app that uses GenAI to chat with and summarise civil service documents. It's designed to handle a variety of administrative sources, such as letters, briefings, minutes, and speech transcripts.
 
