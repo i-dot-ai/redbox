@@ -13,10 +13,6 @@ terraform {
 
 }
 
-provider "random" {
-
-}
-
 provider "aws" {
   default_tags {
     tags = {
