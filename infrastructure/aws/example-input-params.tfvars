@@ -1,0 +1,5 @@
+account_id   = "123456789"
+env          = "dev"
+state_bucket = "tfstate-bucket"
+project_name = "redbox"
+domain_name  = "domain.com"
