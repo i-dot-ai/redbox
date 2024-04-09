@@ -109,11 +109,7 @@ if submitted:  # noqa: C901
 
         with st.spinner(f"Chunking **{file.name}**"):
             try:
-                chunks = file_chunker.chunk_file(
-                    file=file,
-                    file_url=authenticated_s3_url,
-                    creator_user_uuid=st.session_state.user_uuid,
-                )
+                chunks = file_chunker.chunk_file(file=file)
             except TypeError as err:
                 st.error(f"Failed to chunk {file.name}, error: {str(err)}")
                 st.write(file.model_dump())
