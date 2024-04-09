@@ -14,13 +14,13 @@ def test_upload_to_elastic(file_pdf_path, s3_client):
     """
 
     with open(file_pdf_path, "rb") as f:
-        file_key = "filename.pdf"
+        file_key = os.path.basename(file_pdf_path)
         bucket_name = "redbox-storage-dev"
         s3_client.upload_fileobj(
             Bucket=bucket_name,
             Fileobj=f,
             Key=file_key,
-            ExtraArgs={"Tagging": f"file_type=pdf"},
+            ExtraArgs={"Tagging": "file_type=pdf"},
         )
 
         authenticated_s3_url = s3_client.generate_presigned_url(
@@ -47,17 +47,11 @@ def test_upload_to_elastic(file_pdf_path, s3_client):
 
         while not embeddings_found and time.time() - start_time < timeout:
             time.sleep(1)
-            chunk_response = requests.get(
-                f"http://localhost:5002/file/{file_uuid}/chunks"
-            )
+            chunk_response = requests.get(f"http://localhost:5002/file/{file_uuid}/chunks")
             if chunk_response.status_code == 200:
-                embeddings_found = any(
-                    chunk["embedding"] for chunk in chunk_response.json()
-                )
+                embeddings_found = any(chunk["embedding"] for chunk in chunk_response.json())
             else:
                 error = chunk_response.text
 
         if not embeddings_found:
-            pytest.fail(
-                reason=f"failed to get embedded chunks within {timeout} seconds, potential error: {error}"
-            )
+            pytest.fail(reason=f"failed to get embedded chunks within {timeout} seconds, potential error: {error}")
