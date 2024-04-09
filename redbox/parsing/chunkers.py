@@ -8,9 +8,9 @@ from redbox.models import Chunk, File
 
 
 def other_chunker(
-    file: File, file_url: str, creator_user_uuid: Optional[UUID] = None
+    file: File
 ) -> list[Chunk]:
-    elements = partition(url=file_url)
+    elements = partition(url=str(file.url))
     raw_chunks = chunk_by_title(elements=elements)
 
     chunks = []
@@ -23,7 +23,7 @@ def other_chunker(
             index=i,
             text=raw_chunk["text"],
             metadata=raw_chunk["metadata"],
-            creator_user_uuid=creator_user_uuid,
+            creator_user_uuid=file.creator_user_uuid,
         )
         chunks.append(chunk)
 

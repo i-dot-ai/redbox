@@ -20,9 +20,7 @@ class FileChunker:
     def chunk_file(
         self,
         file: File,
-        file_url: str,
         chunk_clustering: bool = True,
-        creator_user_uuid: Optional[UUID] = None,
     ) -> list[Chunk]:
         """_summary_
 
@@ -37,7 +35,7 @@ class FileChunker:
         Returns:
             List[Chunk]: The chunks generated from the given file.
         """
-        chunks = other_chunker(file, file_url, creator_user_uuid=creator_user_uuid)
+        chunks = other_chunker(file)
 
         if chunk_clustering:
             chunks = cluster_chunks(chunks, embedding_model=self.embedding_model)
