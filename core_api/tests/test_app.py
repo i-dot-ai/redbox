@@ -100,21 +100,6 @@ def test_delete_file(
     assert not elasticsearch_storage_handler.get_file_chunks(chunked_file.uuid)
 
 
-@pytest.mark.asyncio
-async def test_ingest_file(app_client, stored_file, elasticsearch_storage_handler):
-    """
-    Given a previously saved file
-    When I POST to /file/uuid/ingest
-    I Expect to see a message on the ingester-queue, THIS IS NOT WORKING
-    """
-    async with TestRedisBroker(router.broker):
-        response = app_client.post(f"/file/{stored_file.uuid}/ingest/")
-
-        assert response.status_code == 200
-
-        publisher.mock.called_once_with(stored_file)
-
-
 def test_read_model(client):
     """
     Given that I have a model in the database

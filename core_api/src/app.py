@@ -114,17 +114,19 @@ async def create_upload_file(name: str, type: str, location: AnyHttpUrl) -> uuid
         UUID: The file uuid from the elastic database
     """
 
-    file_record = File(
+    file = File(
         name=name,
         url=str(location),  # avoids JSON serialisation error
         content_type=type,
     )
 
-    storage_handler.write_item(file_record)
+    storage_handler.write_item(file)
 
-    await ingest_file(file_record.uuid)
+    log.info(f"publishing {file.uuid}")
+    await publisher.publish(file)
 
-    return file_record.uuid
+
+    return file.uuid
 
 
 @app.get("/file/{file_uuid}", response_model=File, tags=["file"])
@@ -156,24 +158,6 @@ def delete_file(file_uuid: UUID) -> File:
 
     chunks = storage_handler.get_file_chunks(file.uuid)
     storage_handler.delete_items(chunks)
-    return file
-
-
-@app.post("/file/{file_uuid}/ingest", response_model=File, tags=["file"])
-async def ingest_file(file_uuid: UUID) -> File:
-    """Trigger the ingest process for a file to a queue.
-
-    Args:
-        file_uuid (UUID): The UUID of the file to ingest
-
-    Returns:
-        File: The file that was ingested
-    """
-    file = storage_handler.read_item(file_uuid, model_type="File")
-
-    log.info(f"publishing {file.uuid}")
-    await publisher.publish(file)
-
     return file
 
 
