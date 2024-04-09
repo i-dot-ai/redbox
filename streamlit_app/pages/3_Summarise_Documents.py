@@ -4,7 +4,7 @@ from io import BytesIO
 
 import streamlit as st
 from streamlit_feedback import streamlit_feedback
-from utils import (
+from streamlit_app.utils import (
     StreamlitStreamHandler,
     hash_list_of_files,
     init_session_state,

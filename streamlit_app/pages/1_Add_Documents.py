@@ -1,11 +1,12 @@
 import pathlib
 from datetime import date
+from uuid import UUID
 
 import streamlit as st
-from utils import init_session_state
 
 from redbox.models import Collection, File
 from redbox.parsing.file_chunker import FileChunker
+from streamlit_app.utils import init_session_state
 
 st.set_page_config(
     page_title="Redbox Copilot - Add Documents", page_icon="📮", layout="wide"
@@ -61,11 +62,11 @@ if submitted:  # noqa: C901
         collection_obj = Collection(
             date=date.today().isoformat(),
             name=new_collection,
-            creator_user_uuid=st.session_state.user_uuid,
+            creator_user_uuid=UUID(st.session_state.user_uuid),
         )
     elif collection_selection == no_collection_str:
         collection_obj = Collection(
-            date="", name="", creator_user_uuid=st.session_state.user_uuid
+            date="", name="", creator_user_uuid=UUID(st.session_state.user_uuid)
         )
     else:
         collection_obj = st.session_state.storage_handler.read_item(
@@ -98,8 +99,8 @@ if submitted:  # noqa: C901
             simple_s3_url = authenticated_s3_url.split("?")[0]
 
             file = File(
-                path=simple_s3_url,
-                type=file_type,
+                url=simple_s3_url,
+                content_type=file_type,
                 name=sanitised_name,
                 creator_user_uuid=st.session_state.user_uuid,
             )
