@@ -31,10 +31,8 @@ def test_upload_to_elastic(file_pdf_path, s3_client):
 
         response = requests.post(
             url="http://localhost:5002/file",
-            params={
-                "name": "filename",
-                "type": ".pdf",
-                "location": authenticated_s3_url,
+            json={
+                "presigned_url": authenticated_s3_url,
             },
         )
         assert response.status_code == 200
