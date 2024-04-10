@@ -108,8 +108,8 @@ docker_build: ## Build the docker container
 	@$(eval PREVIOUS_COMMIT=$(shell git rev-parse HEAD~1))
 	@for service in $(SERVICES); do \
 		if grep -A 2 "^\s*$$service:" docker-compose.yml | grep -q 'build:'; then \
-			echo "Building $$service..."; \
-			PREV_IMAGE=$(ECR_REPO_URL)-$$service:$(PREV_IMAGE_TAG); \
+			echo "Building $$service..."; \ 
+			PREV_IMAGE=$(ECR_REPO_URL)-$$service:$(PREV_IMAGE_TAG); \ # Try pull previous image
 			echo "Pulling previous image: $(ECR_REPO_URL)-$$service:$(PREV_IMAGE_TAG)"; \
 			docker pull $(ECR_REPO_URL)-$$service:$(PREV_IMAGE_TAG); \
 			docker-compose build $$service; \
