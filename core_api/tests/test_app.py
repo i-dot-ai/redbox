@@ -52,8 +52,7 @@ async def test_post_file_upload(
                 },
             )
     assert response.status_code == 200
-    assert response.json()["bucket"] == env.bucket_name
-    assert response.json()["key"].startswith(file_key)
+    assert response.json()["key"] == file_key
     assert response.json()["extension"] == ".pdf"
 
 

@@ -6,7 +6,6 @@ from uuid import UUID
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import RedirectResponse
 from faststream.redis.fastapi import RedisRouter
-from pydantic import AnyHttpUrl, BaseModel
 
 from redbox.model_db import SentenceTransformerDB
 from redbox.models import (
@@ -18,6 +17,7 @@ from redbox.models import (
     Settings,
     StatusResponse,
 )
+from redbox.models.file import FileRequest
 from redbox.storage import ElasticsearchStorageHandler
 
 # === Logging ===
@@ -100,12 +100,10 @@ def health():
 
     return output
 
-class FileRequest(BaseModel):
-    url: AnyHttpUrl
 
 @app.post("/file", tags=["file"])
-async def create_upload_file(file: FileRequest) -> File:
-    """Upload a file to the object store and create a record in the database
+async def add_file(file: FileRequest) -> File:
+    """Add a file to the object store and create a record in the database
 
     Args:
         file (FileRequest): The file to be saved
@@ -114,7 +112,7 @@ async def create_upload_file(file: FileRequest) -> File:
         File: The file from the elastic database
     """
 
-    url = unquote(str(file.url))
+    url = unquote(str(file.presigned_url))
     key = url.split("/", 2)[-1].split("/", 1)[-1]
 
     if "?" in key:

@@ -4,7 +4,7 @@ from typing import Optional
 from uuid import UUID
 
 import tiktoken
-from pydantic import BaseModel, Field, computed_field
+from pydantic import BaseModel, Field, computed_field, AnyHttpUrl
 
 from redbox.models.base import PersistableModel
 
@@ -17,6 +17,11 @@ class ProcessingStatusEnum(str, Enum):
     complete = "complete"
 
 
+class FileRequest(BaseModel):
+    """for front ends to add a file to the backend"""
+    presigned_url: AnyHttpUrl
+
+
 class File(PersistableModel):
     """This is a reference to file stored in S3"""
     key: str
@@ -26,7 +31,7 @@ class File(PersistableModel):
     def extension(self) -> str:
         return "." + self.key.split(".")[-1]
 
-    def generate_presigned_url(self, bucket:str, s3_client) -> str:
+    def generate_presigned_url(self, bucket: str, s3_client) -> str:
         url = s3_client.generate_presigned_url(
             "get_object",
             Params={"Bucket":bucket, "Key": self.key},
