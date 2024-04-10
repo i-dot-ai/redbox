@@ -72,7 +72,7 @@ def file(s3_client, file_pdf_path) -> YieldFixture[File]:
 
     # Strip off the query string (we don't need the keys)
     simple_s3_url = authenticated_s3_url.split("?")[0]
-    file_record = File(name=file_name, url=simple_s3_url, content_type=file_type)
+    file_record = File(url=simple_s3_url)
 
     yield file_record
 

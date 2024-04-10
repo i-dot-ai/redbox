@@ -1,6 +1,7 @@
 import hashlib
 from enum import Enum
 from typing import Optional
+from urllib.parse import unquote
 from uuid import UUID
 
 import tiktoken
@@ -44,27 +45,32 @@ class ContentType(str, Enum):
 
 
 class File(PersistableModel):
+    """This is a reference to file stored in S3"""
     url: AnyUrl = Field(description="s3 url")
-    content_type: ContentType = Field(description="content_type of file")
-    name: str = Field(description="file name")
-    text: Optional[str] = Field(description="file content", default=None)
+    _bucket: str
+    _key: str
+    _extension: str
 
     @computed_field
-    def text_hash(self) -> str:
-        return hashlib.md5(
-            (self.text or "").encode(encoding="UTF-8", errors="strict"),
-            usedforsecurity=False,
-        ).hexdigest()
+    def bucket(self) -> str:
+        return self._bucket
 
     @computed_field
-    def token_count(self) -> int:
-        return len(encoding.encode(self.text or ""))
+    def key(self) -> str:
+        return self._key
 
-    def to_document(self) -> Document:
-        return Document(
-            page_content=f"<Doc{self.uuid}>Title: {self.name}\n\n{self.text}</Doc{self.uuid}>\n\n",
-            metadata={"source": self.url},
-        )
+    @computed_field
+    def extension(self) -> str:
+        return self._extension
+
+    def __init__(self, **data):
+        super().__init__(**data)
+        url = unquote(str(self.url))
+        bucket, key = url.split("/", 2)[-1].split("/", 1)
+        self._bucket = bucket[:-len(".s3.amazonaws.com")]
+        self._key = key
+        self._extension = "." + key.split(".")[-1]
+
 
 
 class Chunk(PersistableModel):

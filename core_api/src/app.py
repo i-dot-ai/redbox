@@ -115,9 +115,7 @@ async def create_upload_file(name: str, type: str, location: AnyHttpUrl) -> uuid
     """
 
     file = File(
-        name=name,
         url=str(location),  # avoids JSON serialisation error
-        content_type=type,
     )
 
     storage_handler.write_item(file)
@@ -129,7 +127,7 @@ async def create_upload_file(name: str, type: str, location: AnyHttpUrl) -> uuid
     return file.uuid
 
 
-@app.get("/file/{file_uuid}", response_model=File, tags=["file"])
+@app.get("/file/{file_uuid}", tags=["file"])
 def get_file(file_uuid: UUID) -> File:
     """Get a file from the object store
 
@@ -142,7 +140,7 @@ def get_file(file_uuid: UUID) -> File:
     return storage_handler.read_item(file_uuid, model_type="File")
 
 
-@app.delete("/file/{file_uuid}", response_model=File, tags=["file"])
+@app.delete("/file/{file_uuid}", tags=["file"])
 def delete_file(file_uuid: UUID) -> File:
     """Delete a file from the object store and the database
 
@@ -153,7 +151,7 @@ def delete_file(file_uuid: UUID) -> File:
         File: The file that was deleted
     """
     file = storage_handler.read_item(file_uuid, model_type="File")
-    s3.delete_object(Bucket=env.bucket_name, Key=file.name)
+    s3.delete_object(Bucket=file.bucket, Key=file.key)
     storage_handler.delete_item(file)
 
     chunks = storage_handler.get_file_chunks(file.uuid)

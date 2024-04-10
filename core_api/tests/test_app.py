@@ -1,4 +1,5 @@
 import os
+from urllib.parse import unquote
 
 import pytest
 from elasticsearch import NotFoundError
@@ -76,9 +77,9 @@ def test_delete_file(
     I Expect to see it removed from s3 and elastic-search, including the chunks
     """
     # check assets exist
-    assert s3_client.get_object(Bucket=env.bucket_name, Key=chunked_file.name)
+    assert s3_client.get_object(Bucket=chunked_file.bucket, Key=chunked_file.key)
     assert elasticsearch_storage_handler.read_item(
-        item_uuid=chunked_file.uuid, model_type="file"
+        item_uuid=chunked_file.uuid, model_type="File"
     )
     assert elasticsearch_storage_handler.get_file_chunks(chunked_file.uuid)
 
