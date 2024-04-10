@@ -40,18 +40,23 @@ def test_upload_to_elastic(file_pdf_path, s3_client):
         assert response.status_code == 200
         file_uuid = response.json()
 
-        timeout = 120  # 10s should be plenty
+        timeout = 120
         start_time = time.time()
-        embeddings_found = False
-        error = ""
+        error = None
 
-        while not embeddings_found and time.time() - start_time < timeout:
+        while time.time() - start_time < timeout:
             time.sleep(1)
-            chunk_response = requests.get(f"http://localhost:5002/file/{file_uuid}/chunks")
-            if chunk_response.status_code == 200:
-                embeddings_found = any(chunk["embedding"] for chunk in chunk_response.json())
+            chunk_response = requests.get(
+                f"http://localhost:5002/file/{file_uuid}/status"
+            )
+            if (
+                chunk_response.status_code == 200 and
+                chunk_response.json()["processing_status"] == "complete"
+            ):
+                return  # test passed
             else:
                 error = chunk_response.text
 
-        if not embeddings_found:
-            pytest.fail(reason=f"failed to get embedded chunks within {timeout} seconds, potential error: {error}")
+        pytest.fail(
+            reason=f"failed to get embedded chunks within {timeout} seconds, potential error: {error}"
+        )
