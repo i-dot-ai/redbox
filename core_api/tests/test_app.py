@@ -48,7 +48,7 @@ async def test_post_file_upload(
             response = app_client.post(
                 "/file",
                 json={
-                    "url": authenticated_s3_url,
+                    "presigned_url": authenticated_s3_url,
                 },
             )
     assert response.status_code == 200
@@ -76,7 +76,7 @@ def test_delete_file(
     I Expect to see it removed from s3 and elastic-search, including the chunks
     """
     # check assets exist
-    assert s3_client.get_object(Bucket=chunked_file.bucket, Key=chunked_file.key)
+    assert s3_client.get_object(Bucket=env.bucket_name, Key=chunked_file.key)
     assert elasticsearch_storage_handler.read_item(
         item_uuid=chunked_file.uuid, model_type="File"
     )

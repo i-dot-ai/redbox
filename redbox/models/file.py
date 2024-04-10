@@ -19,12 +19,12 @@ class ProcessingStatusEnum(str, Enum):
 
 class FileRequest(BaseModel):
     """for front ends to add a file to the backend"""
-    presigned_url: AnyHttpUrl
+    presigned_url: AnyHttpUrl = Field(description="transient url")
 
 
 class File(PersistableModel):
     """This is a reference to file stored in S3"""
-    key: str
+    key: str = Field(description="s3 key")
     _extension: str
 
     @computed_field
