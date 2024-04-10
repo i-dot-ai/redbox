@@ -3,19 +3,30 @@ from typing import Literal, Optional
 import boto3
 from botocore.exceptions import ClientError
 from elasticsearch import Elasticsearch
+from pydantic import BaseModel
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+class ElasticLocal(BaseModel):
+    host: str = "elasticsearch"
+    port: int = 9200
+    scheme: str = "http"
+    user: str = "elastic"
+    version: str = "8.11.0"
+    password: str = "redboxpass"
+
+
+class ElasticCloud(BaseModel):
+    api_key: str
+    cloud_id: str
 
 
 class Settings(BaseSettings):
     anthropic_api_key: Optional[str] = None
     openai_api_key: Optional[str] = None
 
-    elastic_host: str = "elasticsearch"
-    elastic_port: int = 9200
-    elastic_scheme: str = "http"
-    elastic_user: str = "elastic"
-    elastic_version: str = "8.11.0"
-    elastic_password: str = "redboxpass"
+    elastic_cloud: Optional[ElasticCloud] = None
+    elastic_local: Optional[ElasticLocal] = None
 
     kibana_system_password: str = "redboxpass"
     metricbeat_internal_password: str = "redboxpass"
@@ -57,21 +68,27 @@ class Settings(BaseSettings):
     core_api_host: str = "http://core-api"
     core_api_port: int = 5002
 
-    model_config = SettingsConfigDict(env_file=".env")
+    model_config = SettingsConfigDict(env_file=".env", env_nested_delimiter='__')
 
     def elasticsearch_client(self) -> Elasticsearch:
-        es = Elasticsearch(
-            hosts=[
-                {
-                    "host": self.elastic_host,
-                    "port": self.elastic_port,
-                    "scheme": self.elastic_scheme,
-                }
-            ],
-            basic_auth=(self.elastic_user, self.elastic_password),
-        )
+        if self.elastic_local:
+            es = Elasticsearch(
+                hosts=[
+                    {
+                        "host": self.elastic_local.host,
+                        "port": self.elastic_local.port,
+                        "scheme": self.elastic_local.scheme,
+                    }
+                ],
+                basic_auth=(self.elastic_local.user, self.elastic_local.password),
+            )
+            return es
 
-        return es
+        if self.elastic_cloud:
+            es = Elasticsearch(cloud_id=self.elastic_cloud.cloud_id, api_key=self.elastic_cloud.api_key)
+            return es
+
+        raise ValueError("either elastic_cloud or elastic_local must be provided")
 
     def s3_client(self):
 
