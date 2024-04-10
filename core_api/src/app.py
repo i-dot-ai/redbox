@@ -115,15 +115,12 @@ async def create_upload_file(file: FileRequest) -> File:
     """
 
     url = unquote(str(file.url))
-    bucket, key = url.split("/", 2)[-1].split("/", 1)
-
-    if bucket.endswith(".s3.amazonaws.com"):
-        bucket = bucket[:-len(".s3.amazonaws.com")]
+    key = url.split("/", 2)[-1].split("/", 1)[-1]
 
     if "?" in key:
         key = "?".join(key.split("?")[:-1])
 
-    file = File(bucket=bucket, key=key)
+    file = File(key=key)
 
     storage_handler.write_item(file)
 

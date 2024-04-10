@@ -11,42 +11,14 @@ from redbox.models.base import PersistableModel
 encoding = tiktoken.get_encoding("cl100k_base")
 
 
-
-
 class ProcessingStatusEnum(str, Enum):
     chunking = "chunking"
     embedding = "embedding"
     complete = "complete"
 
 
-class ContentType(str, Enum):
-    EML = ".eml"
-    HTML = ".html"
-    HTM = ".htm"
-    JSON = ".json"
-    MD = ".md"
-    MSG = ".msg"
-    RST = ".rst"
-    RTF = ".rtf"
-    TXT = ".txt"
-    XML = ".xml"
-    JPEG = ".jpeg"  # Must have tesseract installed
-    PNG = ".png"  # Must have tesseract installed
-    CSV = ".csv"
-    DOC = ".doc"
-    DOCX = ".docx"
-    EPUB = ".epub"
-    ODT = ".odt"
-    PDF = ".pdf"
-    PPT = ".ppt"
-    PPTX = ".pptx"
-    TSV = ".tsv"
-    XLSX = ".xlsx"
-
-
 class File(PersistableModel):
     """This is a reference to file stored in S3"""
-    bucket: str
     key: str
     _extension: str
 
@@ -54,10 +26,10 @@ class File(PersistableModel):
     def extension(self) -> str:
         return "." + self.key.split(".")[-1]
 
-    def generate_presigned_url(self, s3_client) -> str:
+    def generate_presigned_url(self, bucket:str, s3_client) -> str:
         url = s3_client.generate_presigned_url(
             "get_object",
-            Params={"Bucket": self.bucket, "Key": self.key},
+            Params={"Bucket":bucket, "Key": self.key},
             ExpiresIn=3600,
         )
         return url

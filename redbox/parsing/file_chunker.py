@@ -1,11 +1,35 @@
-from typing import Optional
-from uuid import UUID
+from enum import Enum
 
 from sentence_transformers import SentenceTransformer
 
-from redbox.models.file import Chunk, ContentType, File
+from redbox.models.file import Chunk, File
 from redbox.parsing.chunk_clustering import cluster_chunks
 from redbox.parsing.chunkers import other_chunker
+
+
+class ContentType(str, Enum):
+    EML = ".eml"
+    HTML = ".html"
+    HTM = ".htm"
+    JSON = ".json"
+    MD = ".md"
+    MSG = ".msg"
+    RST = ".rst"
+    RTF = ".rtf"
+    TXT = ".txt"
+    XML = ".xml"
+    JPEG = ".jpeg"  # Must have tesseract installed
+    PNG = ".png"  # Must have tesseract installed
+    CSV = ".csv"
+    DOC = ".doc"
+    DOCX = ".docx"
+    EPUB = ".epub"
+    ODT = ".odt"
+    PDF = ".pdf"
+    PPT = ".ppt"
+    PPTX = ".pptx"
+    TSV = ".tsv"
+    XLSX = ".xlsx"
 
 
 class FileChunker:

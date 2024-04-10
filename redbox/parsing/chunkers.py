@@ -8,7 +8,7 @@ s3_client = env.s3_client()
 
 
 def other_chunker(file: File) -> list[Chunk]:
-    elements = partition(url=file.generate_presigned_url(s3_client))
+    elements = partition(url=file.generate_presigned_url(env.bucket_name, s3_client))
     raw_chunks = chunk_by_title(elements=elements)
 
     chunks = []
