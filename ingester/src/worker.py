@@ -22,7 +22,6 @@ publisher = broker.publisher(env.embed_queue_name)
 
 @asynccontextmanager
 async def lifespan(context: ContextRepo):
-    s3_client = env.s3_client()
     es = env.elasticsearch_client()
     storage_handler = ElasticsearchStorageHandler(
         es_client=es, root_index="redbox-data"
@@ -30,7 +29,6 @@ async def lifespan(context: ContextRepo):
     model_db = SentenceTransformerDB(env.embedding_model)
     chunker = FileChunker(embedding_model=model_db)
 
-    context.set_global("s3_client", s3_client)
     context.set_global("storage_handler", storage_handler)
     context.set_global("chunker", chunker)
 
@@ -40,7 +38,6 @@ async def lifespan(context: ContextRepo):
 @broker.subscriber(channel=env.ingest_queue_name)
 async def ingest(
     file: File,
-    s3_client=Context(),
     storage_handler: ElasticsearchStorageHandler = Context(),
     chunker: FileChunker = Context(),
 ):
@@ -53,17 +50,7 @@ async def ingest(
 
     logging.info(f"Ingesting file: {file}")
 
-    authenticated_s3_url = s3_client.generate_presigned_url(
-        "get_object",
-        Params={"Bucket": env.bucket_name, "Key": file.name},
-        ExpiresIn=180,
-    )
-
-    chunks = chunker.chunk_file(
-        file=file,
-        file_url=authenticated_s3_url,
-        creator_user_uuid=file.creator_user_uuid,
-    )
+    chunks = chunker.chunk_file(file=file)
 
     logging.info(f"Writing {len(chunks)} chunks to storage for file uuid: {file.uuid}")
 

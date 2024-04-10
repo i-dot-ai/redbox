@@ -14,13 +14,13 @@ def test_upload_to_elastic(file_pdf_path, s3_client):
     """
 
     with open(file_pdf_path, "rb") as f:
-        file_key = "filename.pdf"
+        file_key = os.path.basename(file_pdf_path)
         bucket_name = "redbox-storage-dev"
         s3_client.upload_fileobj(
             Bucket=bucket_name,
             Fileobj=f,
             Key=file_key,
-            ExtraArgs={"Tagging": f"file_type=pdf"},
+            ExtraArgs={"Tagging": "file_type=pdf"},
         )
 
         authenticated_s3_url = s3_client.generate_presigned_url(

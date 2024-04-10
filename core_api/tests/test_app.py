@@ -4,7 +4,7 @@ import pytest
 from elasticsearch import NotFoundError
 from faststream.redis import TestRedisBroker
 
-from core_api.src.app import env, publisher, router
+from core_api.src.app import env, router
 
 
 def test_get_health(app_client):
@@ -27,16 +27,15 @@ async def test_post_file_upload(
     I Expect to see it persisted in elastic-search
     """
 
-    file_name = os.path.basename(file_pdf_path)
+    file_key = os.path.basename(file_pdf_path)
 
     with open(file_pdf_path, "rb") as f:
-        file_key = "filename.pdf"
 
         s3_client.upload_fileobj(
             Bucket=env.bucket_name,
             Fileobj=f,
             Key=file_key,
-            ExtraArgs={"Tagging": f"file_type=pdf"},
+            ExtraArgs={"Tagging": "file_type=pdf"},
         )
 
         authenticated_s3_url = s3_client.generate_presigned_url(
@@ -98,21 +97,6 @@ def test_delete_file(
         )
 
     assert not elasticsearch_storage_handler.get_file_chunks(chunked_file.uuid)
-
-
-@pytest.mark.asyncio
-async def test_ingest_file(app_client, stored_file, elasticsearch_storage_handler):
-    """
-    Given a previously saved file
-    When I POST to /file/uuid/ingest
-    I Expect to see a message on the ingester-queue, THIS IS NOT WORKING
-    """
-    async with TestRedisBroker(router.broker):
-        response = app_client.post(f"/file/{stored_file.uuid}/ingest/")
-
-        assert response.status_code == 200
-
-        publisher.mock.called_once_with(stored_file)
 
 
 def test_read_model(client):

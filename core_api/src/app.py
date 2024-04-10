@@ -1,7 +1,6 @@
 import logging
 import uuid
 from datetime import datetime
-from email.policy import HTTP
 from uuid import UUID
 
 from fastapi import FastAPI, HTTPException
@@ -102,10 +101,8 @@ def health():
     return output
 
 
-@app.post("/file", response_model=uuid.UUID, tags=["file"])
-async def create_upload_file(
-    name: str, type: str, location: AnyHttpUrl, ingest=True
-) -> uuid.UUID:
+@app.post("/file", tags=["file"])
+async def create_upload_file(name: str, type: str, location: AnyHttpUrl) -> uuid.UUID:
     """Upload a file to the object store and create a record in the database
 
     Args:
@@ -117,18 +114,19 @@ async def create_upload_file(
         UUID: The file uuid from the elastic database
     """
 
-    file_record = File(
+    file = File(
         name=name,
         url=str(location),  # avoids JSON serialisation error
         content_type=type,
     )
 
-    storage_handler.write_item(file_record)
+    storage_handler.write_item(file)
 
-    if ingest:
-        await ingest_file(file_record.uuid)
+    log.info(f"publishing {file.uuid}")
+    await publisher.publish(file)
 
-    return file_record.uuid
+
+    return file.uuid
 
 
 @app.get("/file/{file_uuid}", response_model=File, tags=["file"])
@@ -163,24 +161,6 @@ def delete_file(file_uuid: UUID) -> File:
     return file
 
 
-@app.post("/file/{file_uuid}/ingest", response_model=File, tags=["file"])
-async def ingest_file(file_uuid: UUID) -> File:
-    """Trigger the ingest process for a file to a queue.
-
-    Args:
-        file_uuid (UUID): The UUID of the file to ingest
-
-    Returns:
-        File: The file that was ingested
-    """
-    file = storage_handler.read_item(file_uuid, model_type="File")
-
-    log.info(f"publishing {file.uuid}")
-    await publisher.publish(file)
-
-    return file
-
-
 @app.get("/file/{file_uuid}/chunks", tags=["file"])
 def get_file_chunks(file_uuid: UUID) -> list[Chunk]:
     log.info(f"getting chunks for file {file_uuid}")
@@ -199,7 +179,7 @@ def get_file_status(file_uuid: UUID) -> FileStatus:
     """
     try:
         status = storage_handler.get_file_status(file_uuid)
-    except ValueError as exc:
+    except ValueError:
         raise HTTPException(status_code=404, detail=f"File {file_uuid} not found")
 
     return status

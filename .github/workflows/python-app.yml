@@ -11,6 +11,7 @@ on:
       - core_api/**
       - ingester/**
       - Makefile
+      - poetry.lock
       - .github/**
     branches:
       - 'main'

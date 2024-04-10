@@ -4,7 +4,7 @@ from datetime import date, datetime
 import streamlit as st
 from langchain.schema import AIMessage, HumanMessage, SystemMessage
 from streamlit_feedback import streamlit_feedback
-from utils import (
+from streamlit_app.utils import (
     StreamlitStreamHandler,
     get_persona_description,
     init_session_state,

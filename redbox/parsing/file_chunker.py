@@ -13,16 +13,14 @@ class FileChunker:
 
     def __init__(self, embedding_model: SentenceTransformer = None):
         self.supported_file_types = [
-            "." + content_type.value for content_type in ContentType
+            content_type.value for content_type in ContentType
         ]
         self.embedding_model = embedding_model
 
     def chunk_file(
         self,
         file: File,
-        file_url: str,
         chunk_clustering: bool = True,
-        creator_user_uuid: Optional[UUID] = None,
     ) -> list[Chunk]:
         """_summary_
 
@@ -37,7 +35,7 @@ class FileChunker:
         Returns:
             List[Chunk]: The chunks generated from the given file.
         """
-        chunks = other_chunker(file, file_url, creator_user_uuid=creator_user_uuid)
+        chunks = other_chunker(file)
 
         if chunk_clustering:
             chunks = cluster_chunks(chunks, embedding_model=self.embedding_model)
