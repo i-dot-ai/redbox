@@ -25,8 +25,7 @@ class Settings(BaseSettings):
     anthropic_api_key: Optional[str] = None
     openai_api_key: Optional[str] = None
 
-    elastic_cloud: Optional[ElasticCloud] = None
-    elastic_local: Optional[ElasticLocal] = None
+    elastic: ElasticCloud | ElasticLocal
 
     kibana_system_password: str = "redboxpass"
     metricbeat_internal_password: str = "redboxpass"
@@ -71,24 +70,21 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_nested_delimiter='__')
 
     def elasticsearch_client(self) -> Elasticsearch:
-        if self.elastic_local:
+        if isinstance(self.elastic, ElasticLocal):
             es = Elasticsearch(
                 hosts=[
                     {
-                        "host": self.elastic_local.host,
-                        "port": self.elastic_local.port,
-                        "scheme": self.elastic_local.scheme,
+                        "host": self.elastic.host,
+                        "port": self.elastic.port,
+                        "scheme": self.elastic.scheme,
                     }
                 ],
-                basic_auth=(self.elastic_local.user, self.elastic_local.password),
+                basic_auth=(self.elastic.user, self.elastic.password),
             )
             return es
 
-        if self.elastic_cloud:
-            es = Elasticsearch(cloud_id=self.elastic_cloud.cloud_id, api_key=self.elastic_cloud.api_key)
-            return es
-
-        raise ValueError("either elastic_cloud or elastic_local must be provided")
+        es = Elasticsearch(cloud_id=self.elastic.cloud_id, api_key=self.elastic.api_key)
+        return es
 
     def s3_client(self):
 
