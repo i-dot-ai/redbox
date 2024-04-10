@@ -99,6 +99,10 @@ PREV_IMAGE_TAG=$$(git rev-parse HEAD~1)
 
 tf_build_args=-var "image_tag=$(IMAGE_TAG)"
 
+.PHONY: docker_login
+docker_login:
+	aws ecr get-login-password --region $(AWS_REGION) | docker login --username AWS --password-stdin $(ECR_URL)
+
 .PHONY: docker_build
 docker_build: ## Build the docker container
 	@echo "Fetching service list..."
@@ -117,12 +121,6 @@ docker_build: ## Build the docker container
 			echo "Skipping $$service - does not have a build context."; \
 		fi; \
 	done
-
-
-
-.PHONY: docker_login
-docker_login:
-	aws ecr get-login-password --region $(AWS_REGION) | docker login --username AWS --password-stdin $(ECR_URL)
 
 .PHONY: docker_push
 docker_push:
