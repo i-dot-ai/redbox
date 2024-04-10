@@ -102,7 +102,7 @@ if submitted:  # noqa: C901
                 url=simple_s3_url,
                 content_type=file_type,
                 name=sanitised_name,
-                creator_user_uuid=st.session_state.user_uuid,
+                creator_user_uuid=UUID(st.session_state.user_uuid),
             )
 
         # ==================== CHUNKING ====================

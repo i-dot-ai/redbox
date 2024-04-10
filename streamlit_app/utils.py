@@ -320,13 +320,17 @@ def load_llm_handler(ENV, update=False) -> None:
     if "llm_handler" not in st.session_state or update:
         embedding_function = SentenceTransformerEmbeddings()
 
+        hybrid = False
+        if ENV["ELASTIC_SUBSCRIPTION_LEVEL"].lower() in ("platinum", "enterprise"):
+            hybrid = True
+
         vector_store = ElasticsearchStore(
             es_url=f"{ENV['ELASTIC_SCHEME']}://{ENV['ELASTIC_HOST']}:{ENV['ELASTIC_PORT']}",
             es_user=ENV["ELASTIC_USER"],
             es_password=ENV["ELASTIC_PASSWORD"],
             index_name="redbox-vector",
             embedding=embedding_function,
-            strategy=ApproxRetrievalStrategy(hybrid=True),
+            strategy=ApproxRetrievalStrategy(hybrid=hybrid),
         )
 
         st.session_state.llm_handler = LLMHandler(
@@ -538,7 +542,7 @@ def submit_feedback(
         feedback_type=feedback["type"],
         feedback_score=feedback["score"],
         feedback_text=feedback["text"],
-        creator_user_uuid=creator_user_uuid,
+        creator_user_uuid=uuid.UUID(creator_user_uuid),
     )
     st.session_state.storage_handler.write_item(to_write)
 
@@ -597,3 +601,8 @@ def get_persona_prompt(persona_name) -> str:
         for chat_persona in chat_personas
         if chat_persona.name == persona_name
     )
+
+
+def get_files_by_uuid(file_uuids: list[uuid.UUID]) -> list[File]:
+    files = st.session_state.storage_handler.read_items(file_uuids, "File")
+    return files

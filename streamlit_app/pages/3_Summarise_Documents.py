@@ -1,9 +1,13 @@
 import datetime
 import os
+import uuid
 from io import BytesIO
 
 import streamlit as st
 from streamlit_feedback import streamlit_feedback
+
+from redbox.export.docx import spotlight_complete_to_docx
+from redbox.models.spotlight import SpotlightComplete, SpotlightTaskComplete
 from streamlit_app.utils import (
     StreamlitStreamHandler,
     hash_list_of_files,
@@ -12,9 +16,6 @@ from streamlit_app.utils import (
     replace_doc_ref,
     submit_feedback,
 )
-
-from redbox.export.docx import spotlight_complete_to_docx
-from redbox.models.spotlight import SpotlightComplete, SpotlightTaskComplete
 
 # region ===== PAGE SETUP =====
 
@@ -104,7 +105,7 @@ def update_token_budget_tracker():
 
 
 def clear_params():
-    st.experimental_set_query_params()
+    st.query_params.clear()
     unsubmit_session_state()
 
 
@@ -146,7 +147,7 @@ if "collection_title" in url_params:
         item_uuid=collection_title, model_type="Collection"
     )
 
-    files_from_url = [os.path.split(x)[1] for x in collection.files]
+    files_from_url = [uuid.UUID(x) for x in collection.files]
     files_from_url = [x for x in files_from_url if x in parsed_files_uuid_map.keys()]
 
     spotlight_file_select = st.multiselect(
@@ -267,7 +268,7 @@ if st.session_state.submitted:
 
         spotlight_complete = SpotlightComplete(
             file_hash=spotlight_model.file_hash,
-            file_uuids=[f.uuid for f in files],
+            file_uuids=[str(f.uuid) for f in files],
             tasks=st.session_state.spotlight,
             creator_user_uuid=st.session_state.user_uuid,
         )
