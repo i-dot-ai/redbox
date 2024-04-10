@@ -1,101 +1,101 @@
 version: '3.7'
 services:
-  django-app:
-    image: django-app:latest
-    build:
-      context: .
-      dockerfile: ./django_app/docker/web/Dockerfile
-    depends_on:
-      - db
-    networks:
-      - redbox-app-network
-    env_file:
-      - .env
-    volumes:
-      - /app/django_app/frontend/node_modules
-      - ./django_app:/app/django_app/
-    ports:
-      - "8090:8090"
-  db:
-    image: postgres:13
-    env_file:
-      - .env
-    volumes:
-      - local_postgres_data:/var/lib/postgresql/data:Z
-    networks:
-      - redbox-app-network
-    ports:
-      - "5432:5432"
-  requirements:
-    image: python:3.11
-    profiles:
-      - utils
-    volumes:
-      - ./:/app/:z
-  redbox:
-    image: redbox-tests:latest
-    build:
-      context: .
-      dockerfile: ./redbox/Dockerfile
-    env_file:
-      - .env
-    depends_on:
-      - elasticsearch
-    networks:
-      - redbox-app-network
-  streamlit-app:
-    image: redbox-streamlit-app:latest
-    build:
-      context: .
-      dockerfile: ./streamlit_app/Dockerfile
-      args:
-        - EMBEDDING_MODEL=${EMBEDDING_MODEL:-}
-    env_file:
-      - .env
-    ports:
-      - 8501:8501
-    volumes:
-      - ./data:/app/data:Z
-    depends_on:
-      - elasticsearch
-      - minio
-    links:
-      - elasticsearch
-      - minio
-    networks:
-      - redbox-app-network
-  embedder:
-    image: redbox-embedder:latest
-    build:
-      context: .
-      dockerfile: embedder/Dockerfile
-      args:
-        - EMBEDDING_MODEL=${EMBEDDING_MODEL:-}
-    ports:
-      - 5000:5000
-    env_file:
-      - .env
-    depends_on:
-      - redis
-    networks:
-      - redbox-app-network
-    restart: unless-stopped
-  ingester:
-    image: redbox-ingester:latest
-    build:
-      context: .
-      dockerfile: ingester/Dockerfile
-      args:
-        - EMBEDDING_MODEL=${EMBEDDING_MODEL:-}
-    env_file:
-      - .env
-    depends_on:
-      - redis
-      - elasticsearch
-      - minio
-    networks:
-      - redbox-app-network
-    restart: unless-stopped
+  # django-app:
+  #   image: django-app:latest
+  #   build:
+  #     context: .
+  #     dockerfile: ./django_app/docker/web/Dockerfile
+  #   depends_on:
+  #     - db
+  #   networks:
+  #     - redbox-app-network
+  #   env_file:
+  #     - .env
+  #   volumes:
+  #     - /app/django_app/frontend/node_modules
+  #     - ./django_app:/app/django_app/
+  #   ports:
+  #     - "8090:8090"
+  # db:
+  #   image: postgres:13
+  #   env_file:
+  #     - .env
+  #   volumes:
+  #     - local_postgres_data:/var/lib/postgresql/data:Z
+  #   networks:
+  #     - redbox-app-network
+  #   ports:
+  #     - "5432:5432"
+  # requirements:
+  #   image: python:3.11
+  #   profiles:
+  #     - utils
+  #   volumes:
+  #     - ./:/app/:z
+  # redbox:
+  #   image: redbox-tests:latest
+  #   build:
+  #     context: .
+  #     dockerfile: ./redbox/Dockerfile
+  #   env_file:
+  #     - .env
+  #   depends_on:
+  #     - elasticsearch
+  #   networks:
+  #     - redbox-app-network
+  # streamlit-app:
+  #   image: redbox-streamlit-app:latest
+  #   build:
+  #     context: .
+  #     dockerfile: ./streamlit_app/Dockerfile
+  #     args:
+  #       - EMBEDDING_MODEL=${EMBEDDING_MODEL:-}
+  #   env_file:
+  #     - .env
+  #   ports:
+  #     - 8501:8501
+  #   volumes:
+  #     - ./data:/app/data:Z
+  #   depends_on:
+  #     - elasticsearch
+  #     - minio
+  #   links:
+  #     - elasticsearch
+  #     - minio
+  #   networks:
+  #     - redbox-app-network
+  # embedder:
+  #   image: redbox-embedder:latest
+  #   build:
+  #     context: .
+  #     dockerfile: embedder/Dockerfile
+  #     args:
+  #       - EMBEDDING_MODEL=${EMBEDDING_MODEL:-}
+  #   ports:
+  #     - 5000:5000
+  #   env_file:
+  #     - .env
+  #   depends_on:
+  #     - redis
+  #   networks:
+  #     - redbox-app-network
+  #   restart: unless-stopped
+  # ingester:
+  #   image: redbox-ingester:latest
+  #   build:
+  #     context: .
+  #     dockerfile: ingester/Dockerfile
+  #     args:
+  #       - EMBEDDING_MODEL=${EMBEDDING_MODEL:-}
+  #   env_file:
+  #     - .env
+  #   depends_on:
+  #     - redis
+  #     - elasticsearch
+  #     - minio
+  #   networks:
+  #     - redbox-app-network
+  #   restart: unless-stopped
   core-api:
     image: redbox-core-api:latest
     build:
@@ -132,14 +132,14 @@ services:
       - redbox-app-network
     volumes:
       - ./data/objectstore:/data
-  miniocreatebuckets:
-    image: minio/mc
-    depends_on:
-      - minio
-    networks:
-      - redbox-app-network
-    entrypoint: >
-      /bin/sh -c " /usr/bin/mc alias set redbox http://minio:9000 minioadmin minioadmin; /usr/bin/mc mb redbox/redbox-storage-dev; /usr/bin/mc policy set public redbox/redbox-storage-dev; exit 0; "
+  # miniocreatebuckets:
+  #   image: minio/mc
+  #   depends_on:
+  #     - minio
+  #   networks:
+  #     - redbox-app-network
+  #   entrypoint: >
+  #     /bin/sh -c " /usr/bin/mc alias set redbox http://minio:9000 minioadmin minioadmin; /usr/bin/mc mb redbox/redbox-storage-dev; /usr/bin/mc policy set public redbox/redbox-storage-dev; exit 0; "
   elasticsearch:
     image: elasticsearch:8.12.0
     volumes:
@@ -159,21 +159,21 @@ services:
     networks:
       - redbox-app-network
     restart: unless-stopped
-  kibana:
-    image: kibana:8.12.0
-    ports:
-      - 5601:5601
-    environment:
-      # KIBANA_SYSTEM_PASSWORD: ${KIBANA_SYSTEM_PASSWORD:-}
-      # ELASTICSEARCH_PASSWORD: ${ELASTIC_PASSWORD:-}
-      # ELASTICSEARCH_HOSTS: "http://elasticsearch:9200"
-      # XPACK_SECURITY_ENABLED: "false"
-      XPACK_ENCRYPTEDSAVEDOBJECTS_ENCRYPTIONKEY: 19264f57-b71d-46e1-8f20-33be19131a6c
-    networks:
-      - redbox-app-network
-    depends_on:
-      - elasticsearch
-    restart: unless-stopped
+  # kibana:
+  #   image: kibana:8.12.0
+  #   ports:
+  #     - 5601:5601
+  #   environment:
+  #     # KIBANA_SYSTEM_PASSWORD: ${KIBANA_SYSTEM_PASSWORD:-}
+  #     # ELASTICSEARCH_PASSWORD: ${ELASTIC_PASSWORD:-}
+  #     # ELASTICSEARCH_HOSTS: "http://elasticsearch:9200"
+  #     # XPACK_SECURITY_ENABLED: "false"
+  #     XPACK_ENCRYPTEDSAVEDOBJECTS_ENCRYPTIONKEY: 19264f57-b71d-46e1-8f20-33be19131a6c
+  #   networks:
+  #     - redbox-app-network
+  #   depends_on:
+  #     - elasticsearch
+  #   restart: unless-stopped
   redis:
     image: redis:7-alpine
     restart: always
@@ -185,27 +185,27 @@ services:
       - .env
     networks:
       - redbox-app-network
-  redis-insight:
-    image: redis/redisinsight:latest
-    restart: always
-    ports:
-      - "5540:5540"
-    volumes:
-      - redis-insight:/data/redis-insight
-    networks:
-      - redbox-app-network
-  frontend-proto:
-    image: redbox-frontend-proto:latest
-    build:
-      context: ./frontend/prototypes/
-      dockerfile: Dockerfile
-    env_file:
-      - .env
-    ports:
-      - 3000:3000
-    networks:
-      - redbox-app-network
-    restart: unless-stopped
+  # redis-insight:
+  #   image: redis/redisinsight:latest
+  #   restart: always
+  #   ports:
+  #     - "5540:5540"
+  #   volumes:
+  #     - redis-insight:/data/redis-insight
+  #   networks:
+  #     - redbox-app-network
+  # frontend-proto:
+  #   image: redbox-frontend-proto:latest
+  #   build:
+  #     context: ./frontend/prototypes/
+  #     dockerfile: Dockerfile
+  #   env_file:
+  #     - .env
+  #   ports:
+  #     - 3000:3000
+  #   networks:
+  #     - redbox-app-network
+  #   restart: unless-stopped
 
 networks:
   redbox-app-network:
