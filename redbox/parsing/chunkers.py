@@ -1,11 +1,14 @@
 from unstructured.chunking.title import chunk_by_title
 from unstructured.partition.auto import partition
 
-from redbox.models import Chunk, File
+from redbox.models import Chunk, File, Settings
+
+env = Settings()
+s3_client = env.s3_client()
 
 
 def other_chunker(file: File) -> list[Chunk]:
-    elements = partition(url=file.url)
+    elements = partition(url=file.generate_presigned_url(s3_client))
     raw_chunks = chunk_by_title(elements=elements)
 
     chunks = []

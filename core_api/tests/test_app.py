@@ -1,5 +1,4 @@
 import os
-from urllib.parse import unquote
 
 import pytest
 from elasticsearch import NotFoundError
@@ -48,13 +47,14 @@ async def test_post_file_upload(
         async with TestRedisBroker(router.broker):
             response = app_client.post(
                 "/file",
-                params={
-                    "name": "filename",
-                    "type": ".pdf",
-                    "location": authenticated_s3_url,
+                json={
+                    "url": authenticated_s3_url,
                 },
             )
     assert response.status_code == 200
+    assert response.json()["bucket"] == env.bucket_name
+    assert response.json()["key"].startswith(file_key)
+    assert response.json()["extension"] == ".pdf"
 
 
 def test_get_file(app_client, stored_file):

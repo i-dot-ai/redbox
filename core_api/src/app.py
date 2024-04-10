@@ -1,12 +1,12 @@
 import logging
-import uuid
 from datetime import datetime
+from urllib.parse import unquote
 from uuid import UUID
 
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import RedirectResponse
 from faststream.redis.fastapi import RedisRouter
-from pydantic import AnyHttpUrl
+from pydantic import AnyHttpUrl, BaseModel
 
 from redbox.model_db import SentenceTransformerDB
 from redbox.models import (
@@ -100,32 +100,37 @@ def health():
 
     return output
 
+class FileRequest(BaseModel):
+    url: AnyHttpUrl
 
 @app.post("/file", tags=["file"])
-async def create_upload_file(name: str, type: str, location: AnyHttpUrl) -> uuid.UUID:
+async def create_upload_file(file: FileRequest) -> File:
     """Upload a file to the object store and create a record in the database
 
     Args:
-        name (str): The file name to be recorded
-        type (str): The file type to be recorded
-        location (AnyHttpUrl): The presigned file resource location
+        file (FileRequest): The file to be saved
 
     Returns:
-        UUID: The file uuid from the elastic database
+        File: The file from the elastic database
     """
 
-    file = File(
-        url=str(location),  # avoids JSON serialisation error
-    )
+    url = unquote(str(file.url))
+    bucket, key = url.split("/", 2)[-1].split("/", 1)
+
+    if bucket.endswith(".s3.amazonaws.com"):
+        bucket = bucket[:-len(".s3.amazonaws.com")]
+
+    if "?" in key:
+        key = "?".join(key.split("?")[:-1])
+
+    file = File(bucket=bucket, key=key)
 
     storage_handler.write_item(file)
 
     log.info(f"publishing {file.uuid}")
     await publisher.publish(file)
 
-
-   
-    return file.uuid
+    return file
 
 
 @app.get("/file/{file_uuid}", tags=["file"])

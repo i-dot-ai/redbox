@@ -1,16 +1,16 @@
 import hashlib
 from enum import Enum
 from typing import Optional
-from urllib.parse import unquote
 from uuid import UUID
 
 import tiktoken
-from langchain.schema import Document
-from pydantic import AnyUrl, BaseModel, Field, computed_field
+from pydantic import BaseModel, Field, computed_field
 
 from redbox.models.base import PersistableModel
 
 encoding = tiktoken.get_encoding("cl100k_base")
+
+
 
 
 class ProcessingStatusEnum(str, Enum):
@@ -46,30 +46,21 @@ class ContentType(str, Enum):
 
 class File(PersistableModel):
     """This is a reference to file stored in S3"""
-    url: AnyUrl = Field(description="s3 url")
-    _bucket: str
-    _key: str
+    bucket: str
+    key: str
     _extension: str
 
     @computed_field
-    def bucket(self) -> str:
-        return self._bucket
-
-    @computed_field
-    def key(self) -> str:
-        return self._key
-
-    @computed_field
     def extension(self) -> str:
-        return self._extension
+        return "." + self.key.split(".")[-1]
 
-    def __init__(self, **data):
-        super().__init__(**data)
-        url = unquote(str(self.url))
-        bucket, key = url.split("/", 2)[-1].split("/", 1)
-        self._bucket = bucket[:-len(".s3.amazonaws.com")]
-        self._key = key
-        self._extension = "." + key.split(".")[-1]
+    def generate_presigned_url(self, s3_client) -> str:
+        url = s3_client.generate_presigned_url(
+            "get_object",
+            Params={"Bucket": self.bucket, "Key": self.key},
+            ExpiresIn=3600,
+        )
+        return url
 
 
 
