@@ -1,9 +1,11 @@
+import logging
 from typing import Optional
 from uuid import UUID
 
 from elastic_transport import ObjectApiResponse
 from elasticsearch import Elasticsearch, NotFoundError
 from elasticsearch.helpers import scan
+from pydantic import ValidationError
 
 from redbox.models import Chunk, ChunkStatus, FileStatus, ProcessingStatusEnum
 from redbox.models.base import PersistableModel
@@ -97,7 +99,7 @@ class ElasticsearchStorageHandler(BaseStorageHandler):
     def read_all_items(self, model_type: str) -> list[PersistableModel]:
         target_index = f"{self.root_index}-{model_type.lower()}"
         try:
-            results = scan(
+            result = scan(
                 client=self.es_client,
                 index=target_index,
                 query={"query": {"match_all": {}}},
@@ -110,7 +112,17 @@ class ElasticsearchStorageHandler(BaseStorageHandler):
 
         # Grab the model we'll use to deserialize the items
         model = self.get_model_by_model_type(model_type)
-        items = [model(**item["_source"]) for item in results]
+        try:
+            results = list(result)
+        except NotFoundError:
+            return []
+
+        items = []
+        for item in results:
+            try:
+                items.append(model(**item["_source"]))
+            except ValidationError as e:
+                logging.error(e)
         return items
 
     def list_all_items(self, model_type: str) -> list[UUID]:

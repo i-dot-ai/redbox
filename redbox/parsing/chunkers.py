@@ -6,6 +6,12 @@ from redbox.models import Chunk, File, Settings
 env = Settings()
 s3_client = env.s3_client()
 
+def other_chunker(file: File) -> list[Chunk]:
+    authenticated_s3_url = s3_client.generate_presigned_url(
+        "get_object",
+        Params={"Bucket": env.bucket_name, "Key": file.name},
+        ExpiresIn=3600,
+    )
 
 def other_chunker(file: File) -> list[Chunk]:
     elements = partition(url=file.url)

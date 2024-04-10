@@ -25,13 +25,18 @@ from langchain_community.chat_models import ChatLiteLLM
 from langchain_community.embeddings import SentenceTransformerEmbeddings
 from loguru import logger
 from lxml.html.clean import Cleaner
-from model_db import SentenceTransformerDB
 
 from redbox.llm.llm_base import LLMHandler
+from redbox.model_db import SentenceTransformerDB
+from redbox.models import Settings
 from redbox.models.feedback import Feedback
 from redbox.models.file import File
 from redbox.models.persona import ChatPersona
 from redbox.storage import ElasticsearchStorageHandler
+
+env = Settings()
+
+DEV_UUID = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
 
 
 def get_user_name(principal: dict) -> str:
@@ -59,7 +64,7 @@ def populate_user_info() -> dict:
     Returns:
         dict: the user information dictionary
     """
-    return {"name": "dev", "email": "dev@example.com"}
+    return {"name": DEV_UUID, "email": "dev@example.com"}
 
 
 def init_session_state() -> dict:
@@ -130,21 +135,13 @@ def init_session_state() -> dict:
         st.session_state.available_personas = get_persona_names()
 
     if "model_db" not in st.session_state:
-        st.session_state.model_db = SentenceTransformerDB()
-        st.session_state.model_db.init_from_disk()
+        st.session_state.model_db = SentenceTransformerDB(env.embedding_model)
 
     if "model_db" not in st.session_state:
-        st.session_state.model_db = SentenceTransformerDB()
-        st.session_state.model_db.init_from_disk()
+        st.session_state.model_db = SentenceTransformerDB(env.embedding_model)
 
     if "embedding_model" not in st.session_state:
-        available_models = []
-        for model_name in st.session_state.model_db:
-            available_models.append(model_name)
-
-        default_model = available_models[0]
-
-        st.session_state.embedding_model = st.session_state.model_db[default_model]
+        st.session_state.embedding_model = st.session_state.model_db
 
     if "BUCKET_NAME" not in st.session_state:
         st.session_state.BUCKET_NAME = f"redbox-storage-{st.session_state.user_uuid}"
@@ -177,7 +174,7 @@ def init_session_state() -> dict:
             es_client=es, root_index="redbox-data"
         )
 
-    if st.session_state.user_uuid == "dev":
+    if st.session_state.user_uuid == DEV_UUID:
         st.sidebar.info("**DEV MODE**")
         with st.sidebar.expander("⚙️ DEV Settings", expanded=False):
             st.session_state.model_params = {
@@ -397,7 +394,7 @@ class FilePreview(object):
             file (File): The file to preview
         """
 
-        render_method = self.render_methods[file.type]
+        render_method = self.render_methods[file.content_type]
         stream = st.session_state.s3_client.get_object(
             Bucket=st.session_state.BUCKET_NAME, Key=file.name
         )
@@ -581,9 +578,12 @@ def get_persona_description(persona_name) -> str:
     Args:
         persona_name (str): Persona name selected by user.
     """
-    for chat_persona in chat_personas:
-        if chat_persona.name == persona_name:
-            return chat_persona.description
+
+    return next(
+        chat_persona.description
+        for chat_persona in chat_personas
+        if chat_persona.name == persona_name
+    )
 
 
 def get_persona_prompt(persona_name) -> str:
@@ -592,6 +592,8 @@ def get_persona_prompt(persona_name) -> str:
     Args:
         persona_name (str): Persona name selected by user.
     """
-    for chat_persona in chat_personas:
-        if chat_persona.name == persona_name:
-            return chat_persona.prompt
+    return next(
+        chat_persona.prompt
+        for chat_persona in chat_personas
+        if chat_persona.name == persona_name
+    )

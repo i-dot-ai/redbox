@@ -13,7 +13,7 @@ class FileChunker:
 
     def __init__(self, embedding_model: SentenceTransformer = None):
         self.supported_file_types = [
-            "." + content_type.value for content_type in ContentType
+            content_type.value for content_type in ContentType
         ]
         self.embedding_model = embedding_model
 
