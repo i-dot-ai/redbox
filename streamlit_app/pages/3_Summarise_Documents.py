@@ -339,9 +339,7 @@ if st.session_state.submitted:
 
     def delete_summary():
         spotlight_completed_to_delete = spotlight_completed_by_hash[SELECTED_FILE_HASH]
-        st.session_state.storage_handler.delete_item(
-            item_uuid=spotlight_completed_to_delete.uuid, model_type="SpotlightComplete"
-        )
+        st.session_state.storage_handler.delete_item(spotlight_completed_to_delete)
         del spotlight_completed_by_hash[SELECTED_FILE_HASH]
 
         st.session_state.spotlight = []

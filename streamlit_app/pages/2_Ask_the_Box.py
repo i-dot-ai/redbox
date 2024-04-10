@@ -28,7 +28,7 @@ ENV = init_session_state()
 
 def change_selected_model():
     load_llm_handler(ENV, update=True)
-    st.write(st.session_state.llm)
+    st.toast(f"Loaded {st.session_state.llm.model}")
 
 
 model_select = st.sidebar.selectbox(
