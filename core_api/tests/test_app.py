@@ -40,7 +40,7 @@ async def test_post_file_upload(
 
         async with TestRedisBroker(router.broker):
             response = app_client.post(
-                "/file",
+                url="http://localhost:5002/file",
                 json={
                     "key": file_key,
                 },
