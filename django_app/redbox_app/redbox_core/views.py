@@ -116,29 +116,13 @@ def upload_view(request):
                 ),
             )
 
-            # TODO: Handle S3 upload errors
-            authenticated_s3_url = s3.generate_presigned_url(
-                "get_object",
-                Params={
-                    "Bucket": settings.BUCKET_NAME,
-                    "Key": file_key,
-                },
-                ExpiresIn=3600,
-            )
-            # Strip off the query string (we don't need the keys)
-            simple_s3_url = authenticated_s3_url.split("?")[0]
-
             # ingest file
             api = CoreApiClient(
                 host=settings.CORE_API_HOST, port=settings.CORE_API_PORT
             )
 
             try:
-                api.upload_file(
-                    uploaded_file.name,
-                    file_extension,
-                    simple_s3_url,
-                )
+                api.upload_file(uploaded_file.name)
                 # TODO: update improved File object with elastic uuid
                 uploaded = True
             except ValueError as value_error:

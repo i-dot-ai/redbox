@@ -38,19 +38,14 @@ async def test_post_file_upload(
             ExtraArgs={"Tagging": "file_type=pdf"},
         )
 
-        authenticated_s3_url = s3_client.generate_presigned_url(
-            "get_object",
-            Params={"Bucket": env.bucket_name, "Key": file_key},
-            ExpiresIn=3600,
-        )
-
         async with TestRedisBroker(router.broker):
             response = app_client.post(
                 "/file",
                 json={
-                    "presigned_url": authenticated_s3_url,
+                    "key": file_key,
                 },
             )
+
     assert response.status_code == 200
     assert response.json()["key"] == file_key
     assert response.json()["extension"] == ".pdf"

@@ -45,7 +45,7 @@ class CoreApiClient:
     def url(self) -> str:
         return f"{self.host}:{self.port}"
 
-    def upload_file(self, s3_url: str, name: str, extension: str):
+    def upload_file(self, key: str):
         if self.host ==  "testserver":
             file = {
                 "extension": ".pdf",
@@ -55,7 +55,7 @@ class CoreApiClient:
 
         response = requests.post(
             f"{self.url}/file",
-            json={"presigned_url": s3_url}
+            json={"key": key}
         )
         if response.status_code != 201:
             raise ValueError(response.text)

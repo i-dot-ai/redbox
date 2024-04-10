@@ -17,7 +17,6 @@ from redbox.models import (
     Settings,
     StatusResponse,
 )
-from redbox.models.file import FileRequest
 from redbox.storage import ElasticsearchStorageHandler
 
 # === Logging ===
@@ -102,23 +101,15 @@ def health():
 
 
 @app.post("/file", tags=["file"])
-async def add_file(file: FileRequest) -> File:
+async def add_file(file: File) -> File:
     """Add a file to the object store and create a record in the database
 
     Args:
-        file (FileRequest): The file to be saved
+        file (File): The file to be saved
 
     Returns:
         File: The file from the elastic database
     """
-
-    url = unquote(str(file.presigned_url))
-    key = url.split("/", 2)[-1].split("/", 1)[-1]
-
-    if "?" in key:
-        key = "?".join(key.split("?")[:-1])
-
-    file = File(key=key)
 
     storage_handler.write_item(file)
 
