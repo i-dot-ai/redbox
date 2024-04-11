@@ -105,6 +105,7 @@ docker_login:
 .PHONY: docker_build
 docker_build: ## Build the docker container
 	@echo "Fetching service list..."
+	cp .env.example .env
 	@$(eval SERVICES=$(shell docker-compose config --services))
 	@echo "Services to update: $(SERVICES)"
 	@for service in $(SERVICES); do \
