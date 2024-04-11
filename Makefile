@@ -92,9 +92,8 @@ ECR_REPO_URL=$(ECR_URL)/$(ECR_REPO_NAME)
 IMAGE=$(ECR_REPO_URL):$(IMAGE_TAG)
 
 ECR_REPO_NAME=$(APP_NAME)
-IMAGE_TAG=$$(git rev-parse HEAD)
-
 PREV_IMAGE_TAG=$$(git rev-parse HEAD~1)
+IMAGE_TAG=$$(git rev-parse HEAD)
 
 tf_build_args=-var "image_tag=$(IMAGE_TAG)"
 

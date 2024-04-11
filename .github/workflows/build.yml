@@ -50,6 +50,7 @@ jobs:
       - start-runner
     uses: i-dot-ai/i-dot-ai-core-github-actions/.github/workflows/build-docker.yml@main
     with:
+      fetch-depth: 0
       APP_NAME: ${{ needs.set-vars.outputs.app-name }}
       RUNNER_LABEL: ${{ needs.set-vars.outputs.runner_label }}
       INFRASTRUCTURE_FOLDER: "infrastructure/aws"
