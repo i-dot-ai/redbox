@@ -105,7 +105,7 @@ docker_login:
 .PHONY: docker_build
 docker_build: ## Build the docker container
 	@echo "Fetching service list..."
-	cp .env.example .env
+	cp .env.example .env 
 	@SERVICES=$$(docker-compose config --services); \
 	echo "Services to update: $$SERVICES"; \
 	for service in $$SERVICES; do \
@@ -119,7 +119,6 @@ docker_build: ## Build the docker container
 			echo "Skipping $$service - does not have a build context."; \
 		fi; \
 	done
-
 
 .PHONY: docker_push
 docker_push:
