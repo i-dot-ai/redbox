@@ -1,6 +1,5 @@
 
 -include .env
-export
 
 .PHONY: app reqs
 
