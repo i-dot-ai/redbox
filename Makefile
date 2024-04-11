@@ -106,20 +106,20 @@ docker_login:
 docker_build: ## Build the docker container
 	@echo "Fetching service list..."
 	cp .env.example .env
-	cat .env
-	@$(eval SERVICES=$(shell docker-compose config --services))
-	@echo "Services to update: $(SERVICES)"
-	@for service in $(SERVICES); do \
+	@SERVICES=$$(docker-compose config --services); \
+	echo "Services to update: $$SERVICES"; \
+	for service in $$SERVICES; do \
 		if grep -A 2 "^\s*$$service:" docker-compose.yml | grep -q 'build:'; then \
 			echo "Building $$service..."; \
-			PREV_IMAGE=$(ECR_REPO_URL)-$$service:$(PREV_IMAGE_TAG); \
-			echo "Pulling previous image: $(ECR_REPO_URL)-$$service:$(PREV_IMAGE_TAG)"; \
-			docker pull $(ECR_REPO_URL)-$$service:$(PREV_IMAGE_TAG); \
+			PREV_IMAGE="$(ECR_REPO_URL)-$$service:$(PREV_IMAGE_TAG)"; \
+			echo "Pulling previous image: $$PREV_IMAGE"; \
+			docker pull $$PREV_IMAGE; \
 			docker-compose build $$service; \
 		else \
 			echo "Skipping $$service - does not have a build context."; \
 		fi; \
 	done
+
 
 .PHONY: docker_push
 docker_push:
