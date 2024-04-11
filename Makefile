@@ -1,8 +1,8 @@
-.PHONY: app reqs
 
 -include .env
 export
 
+.PHONY: app reqs
 
 reqs:
 	poetry install
