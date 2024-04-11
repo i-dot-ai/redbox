@@ -1,9 +1,9 @@
 
 name: build
 on:
-    push:
-      branches:
-        - "**"
+  push:
+    branches:
+      - "**"
 
 
 jobs:
@@ -15,6 +15,7 @@ jobs:
       version: ${{ steps.export.outputs.version }}
       runner_label: ${{ steps.export.outputs.runner_label }}
       environment: ${{ steps.export.outputs.environment }}
+      runner_size: ${{ steps.export.outputs.runner_size }}
 
 
     steps:
@@ -27,7 +28,7 @@ jobs:
           echo "app-name=${APP_NAME}" >> $GITHUB_OUTPUT
           echo "version=${VERSION}" >> $GITHUB_OUTPUT
           echo "environment=${ENVIRONMENT}" >> $GITHUB_OUTPUT
-          echo "RUNNER_LABEL=self-hosted" >> $GITHUB_OUTPUT
+          echo "RUNNER_LABEL=${RUNNER_LABEL}" >> $GITHUB_OUTPUT
           echo "runner_size=${RUNNER_SIZE}" >> $GITHUB_OUTPUT
 
   start-runner:
