@@ -10,9 +10,9 @@ python == 3.11
 
 ## Installing packages
 
-Currently we use [poetry](https://python-poetry.org/) to manage our python packages. The list of poetry groups and python packages we install can be found [here](https://github.com/i-dot-ai/redbox-copilot/blob/main/pyproject.toml) in `pyproject.toml`.
+Currently, we use [poetry](https://python-poetry.org/) to manage our python packages. The list of poetry groups and python packages we install can be found [here](https://github.com/i-dot-ai/redbox-copilot/blob/main/pyproject.toml) in `pyproject.toml`.
 
-To install the packages, you'll first need to create a new virtual environment for python, and then run the following in that virtual environment.
+Run the following to install the packages into a virtual environment poetry will create.
 
 ``` bash
 poetry install
@@ -28,16 +28,15 @@ To run the project, create a new file called `.env` and populate this file with 
 
 ## Building and running the project
 
-To view all of the build commands, check the `Makefile` that can be found [here](https://github.com/i-dot-ai/redbox-copilot/blob/main/Makefile).
+To view all the build commands, check the `Makefile` that can be found [here](https://github.com/i-dot-ai/redbox-copilot/blob/main/Makefile).
 
-The project currently consists of multiple docker images needed to run the project in it's entirety. If you only need a subsection of the project running, for example if you're only editing the django app, you can run a subset of the images. The images currently in the project are:
+The project currently consists of multiple docker images needed to run the project in its entirety. If you only need a subsection of the project running, for example if you're only editing the django app, you can run a subset of the images. The images currently in the project are:
 
 - `elasticsearch`
 - `kibana`
 - `embedder`
 - `ingester`
 - `minio`
-- `miniocreatebuckets`
 - `redis`
 - `core-api`
 - `db`
