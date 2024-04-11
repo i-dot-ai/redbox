@@ -1,17 +1,11 @@
 import logging
 from datetime import datetime
-<<<<<<< HEAD
-from uuid import UUID
-=======
->>>>>>> 33ebdf6 (create file sub app)
 
 from fastapi import FastAPI
 from fastapi.responses import RedirectResponse
 from faststream.redis.fastapi import RedisRouter
 
-# from sub_apps.file import file_app
-from file import FileSubApp
-
+from core_api.src.routes.file import FileSubApp
 from redbox.model_db import SentenceTransformerDB
 from redbox.models import EmbeddingResponse, ModelInfo, Settings, StatusResponse
 from redbox.storage import ElasticsearchStorageHandler

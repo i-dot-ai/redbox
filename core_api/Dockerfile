@@ -25,7 +25,7 @@ ENV VIRTUAL_ENV=/app/.venv \
     PATH="/app/.venv/bin:$PATH"
 COPY --from=builder ${VIRTUAL_ENV} ${VIRTUAL_ENV}
 
-COPY core_api/src/*.py /app/
+COPY core_api/ /app/core_api/
 ADD download_embedder.py /app/
 ADD redbox/ /app/redbox
 
@@ -34,4 +34,4 @@ RUN type=cache python download_embedder.py --model_name ${EMBEDDING_MODEL}
 
 # Run FastAPI
 EXPOSE 5002
-CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "5002"]
+CMD ["uvicorn", "core_api.src.app:app", "--host", "0.0.0.0", "--port", "5002"]

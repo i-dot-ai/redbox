@@ -1,23 +1,23 @@
-# import logging
 from uuid import UUID
 
-from fastapi import FastAPI, HTTPException
+from fastapi import HTTPException
 from pydantic import AnyHttpUrl
 
+from core_api.src.routes.sub_app import SubApp
 from redbox.models import Chunk, File, FileStatus
 
 
-class FileSubApp:
+class FileSubApp(SubApp):
     def __init__(self, router, storage_handler, log, publisher, s3, env):
-        self.app = FastAPI()
-        self.router = router
+        super().__init__(router)
+
+        # TODO: move some of these to the superclass if used more frequently
         self.storage_handler = storage_handler
         self.log = log
         self.publisher = publisher
         self.s3 = s3
         self.env = env
 
-        self.app.include_router(self.router)
         self.router.add_api_route(
             "/file", self.create_upload_file, methods=["POST"], tags=["file"]
         )
@@ -29,7 +29,7 @@ class FileSubApp:
             tags=["file"],
         )
         self.router.add_api_route(
-            "/{file_uuid}",
+            "/file/{file_uuid}",
             self.delete_file,
             methods=["DELETE"],
             response_model=File,
