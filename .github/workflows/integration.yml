@@ -66,7 +66,7 @@ jobs:
         python -m pytest tests
 
     - name: notify slack failure
-      id: slack failure
+      id: slack-failure
       uses: slackapi/slack-github-action@v1.24.0
       if: ${{ failure() && github.event_name == 'schedule' }}
       with:
@@ -105,7 +105,7 @@ jobs:
         SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
 
     - name: notify slack pass
-      id: slack pass
+      id: slack-pass
       uses: slackapi/slack-github-action@v1.24.0
       if: ${{ success() && github.event_name == 'schedule' }}
       with:
