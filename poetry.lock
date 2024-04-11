@@ -3172,13 +3172,13 @@ tesseract = ["pytesseract"]
 
 [[package]]
 name = "litellm"
-version = "1.34.41"
+version = "1.35.0"
 description = "Library to easily interface with LLM API providers"
 optional = false
 python-versions = "!=2.7.*,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,!=3.5.*,!=3.6.*,!=3.7.*,>=3.8"
 files = [
-    {file = "litellm-1.34.41-py3-none-any.whl", hash = "sha256:ec6b1fb7f27178ad36f3be64e2f0fb73a637c0d7c128d5aa1d845414cc21be66"},
-    {file = "litellm-1.34.41.tar.gz", hash = "sha256:e8ad1a0b9cf4abea0471394db8c95f479e94e271bc1ce3d98204e1a6ed917e93"},
+    {file = "litellm-1.35.0-py3-none-any.whl", hash = "sha256:beb5a8f6bfb7c4c9e0e3605c92b9aae1c85331743ce80923a193480f558362fa"},
+    {file = "litellm-1.35.0.tar.gz", hash = "sha256:8f5cb8ecd5b957b14ea02b2c429c42a976f32816ceda7a817d8a2bc4098ae4e5"},
 ]
 
 [package.dependencies]
@@ -8537,4 +8537,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.11,<3.12"
-content-hash = "fb25ab2b1add6ef7092f202eb583580eb6a3949f4e980513a98ee3dce28a4a46"
+content-hash = "58106b45e240788ff1daf128be0b241c41e0e0eab0203a58797708d547606943"

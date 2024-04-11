@@ -72,7 +72,7 @@ html2markdown = "^0.1.7"
 
 [tool.poetry.group.ai.dependencies]
 anthropic = "^0.25.0"
-litellm = "^1.34.41"
+litellm = "^1.34.42"
 openai = "^1.17.0"
 
 
