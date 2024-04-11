@@ -53,15 +53,11 @@ class LLMHandler(object):
         self.llm = llm
         self.user_uuid = user_uuid
 
-        self.embedding_function = (
-            embedding_function or self._create_embedding_function()
-        )
+        self.embedding_function = embedding_function or self._create_embedding_function()
 
         self.vector_store = vector_store
 
-        self.memory = ConversationBufferMemory(
-            memory_key="chat_history", return_messages=True
-        )
+        self.memory = ConversationBufferMemory(memory_key="chat_history", return_messages=True)
 
     def _create_embedding_function(self) -> SentenceTransformerEmbeddings:
         """Initialises our vectorisation method.
@@ -136,9 +132,7 @@ class LLMHandler(object):
             verbose=True,
         )
 
-        condense_question_chain = LLMChain(
-            llm=self.llm, prompt=CONDENSE_QUESTION_PROMPT
-        )
+        condense_question_chain = LLMChain(llm=self.llm, prompt=CONDENSE_QUESTION_PROMPT)
 
         # split chain manually, so that the standalone question doesn't leak into chat
         # should we display some waiting message instead?
@@ -189,14 +183,10 @@ class LLMHandler(object):
         token_max: int = 100_000,
     ) -> tuple[Any, StuffDocumentsChain | MapReduceDocumentsChain]:
         map_chain = LLMChain(llm=self.llm, prompt=task.prompt_template)  # type: ignore
-        regular_chain = StuffDocumentsChain(
-            llm_chain=map_chain, document_variable_name="text"
-        )
+        regular_chain = StuffDocumentsChain(llm_chain=map_chain, document_variable_name="text")
 
         reduce_chain = LLMChain(llm=self.llm, prompt=SPOTLIGHT_COMBINATION_TASK_PROMPT)
-        combine_documents_chain = StuffDocumentsChain(
-            llm_chain=reduce_chain, document_variable_name="text"
-        )
+        combine_documents_chain = StuffDocumentsChain(llm_chain=reduce_chain, document_variable_name="text")
         reduce_documents_chain = ReduceDocumentsChain(
             combine_documents_chain=combine_documents_chain,
             collapse_documents_chain=combine_documents_chain,

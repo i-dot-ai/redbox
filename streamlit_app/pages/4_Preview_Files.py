@@ -4,9 +4,7 @@ import streamlit as st
 
 from streamlit_app.utils import FilePreview, init_session_state
 
-st.set_page_config(
-    page_title="Redbox Copilot - Preview Files", page_icon="📮", layout="wide"
-)
+st.set_page_config(page_title="Redbox Copilot - Preview Files", page_icon="📮", layout="wide")
 
 ENV = init_session_state()
 file_preview = FilePreview()
@@ -20,13 +18,9 @@ st.session_state["file_uuid_to_name_map"] = {}
 
 
 def refresh_files():
-    st.session_state["files"] = st.session_state.storage_handler.read_all_items(
-        model_type="File"
-    )
+    st.session_state["files"] = st.session_state.storage_handler.read_all_items(model_type="File")
     st.session_state["file_uuid_map"] = {x.uuid: x for x in st.session_state["files"]}
-    st.session_state["file_uuid_to_name_map"] = {
-        x.uuid: x.name for x in st.session_state["files"]
-    }
+    st.session_state["file_uuid_to_name_map"] = {x.uuid: x.name for x in st.session_state["files"]}
 
 
 refresh_files()
@@ -38,9 +32,7 @@ def clear_params():
 
 
 if "file_uuid" in url_params:
-    file_uuid_string_list = [
-        str(file_uuid) for file_uuid in st.session_state.file_uuid_to_name_map.keys()
-    ]
+    file_uuid_string_list = [str(file_uuid) for file_uuid in st.session_state.file_uuid_to_name_map.keys()]
     file_select = st.selectbox(
         label="File",
         options=file_uuid_string_list,
@@ -102,9 +94,7 @@ if delete_file_button:
                 )
 
     # Delete the file from Uploads
-    st.session_state.s3_client.delete_object(
-        Bucket=st.session_state.BUCKET_NAME, Key=file.name
-    )
+    st.session_state.s3_client.delete_object(Bucket=st.session_state.BUCKET_NAME, Key=file.name)
 
     # Delete the file from the DB
     st.session_state.storage_handler.delete_item(file)

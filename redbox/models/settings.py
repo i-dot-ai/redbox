@@ -74,7 +74,6 @@ class Settings(BaseSettings):
         return es
 
     def s3_client(self):
-
         if self.object_store == "minio":
             client = boto3.client(
                 "s3",
@@ -92,6 +91,7 @@ class Settings(BaseSettings):
             )
         elif self.object_store == "moto":
             from moto import mock_aws
+
             mock = mock_aws()
             mock.start()
 

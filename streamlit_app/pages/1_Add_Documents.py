@@ -8,9 +8,7 @@ from redbox.models import Collection, File
 from redbox.parsing.file_chunker import FileChunker
 from streamlit_app.utils import init_session_state
 
-st.set_page_config(
-    page_title="Redbox Copilot - Add Documents", page_icon="📮", layout="wide"
-)
+st.set_page_config(page_title="Redbox Copilot - Add Documents", page_icon="📮", layout="wide")
 
 ENV = init_session_state()
 
@@ -65,9 +63,7 @@ if submitted:  # noqa: C901
             creator_user_uuid=UUID(st.session_state.user_uuid),
         )
     elif collection_selection == no_collection_str:
-        collection_obj = Collection(
-            date="", name="", creator_user_uuid=UUID(st.session_state.user_uuid)
-        )
+        collection_obj = Collection(date="", name="", creator_user_uuid=UUID(st.session_state.user_uuid))
     else:
         collection_obj = st.session_state.storage_handler.read_item(
             item_uuid=collection_selection, model_type="Collection"
@@ -122,9 +118,7 @@ if submitted:  # noqa: C901
                 st.session_state.storage_handler.write_item(item=file)
                 st.session_state.storage_handler.write_items(items=chunks)
             except Exception as e:
-                st.error(
-                    f"Failed to save {file.name} and or its chunks, error: {str(e)}"
-                )
+                st.error(f"Failed to save {file.name} and or its chunks, error: {str(e)}")
                 continue
 
         # ==================== INDEXING ====================
@@ -140,7 +134,7 @@ if submitted:  # noqa: C901
 
         st.toast(body=f"{file.name} Complete")
 
-        collection_obj.files.append(file.uuid)
+        collection_obj.files.append(str(file.uuid))
 
     if collection_obj.name and (collection_obj.name != "none"):
         st.session_state.storage_handler.write_item(item=collection_obj)
