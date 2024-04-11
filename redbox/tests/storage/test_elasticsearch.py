@@ -116,9 +116,7 @@ def test_elastic_write_read_delete_items(elasticsearch_storage_handler):
 
     elasticsearch_storage_handler.write_items(chunks)
 
-    read_chunks = elasticsearch_storage_handler.read_items(
-        [chunk.uuid for chunk in chunks], "Chunk"
-    )
+    read_chunks = elasticsearch_storage_handler.read_items([chunk.uuid for chunk in chunks], "Chunk")
 
     assert read_chunks == chunks
 
@@ -132,9 +130,7 @@ def test_elastic_write_read_delete_items(elasticsearch_storage_handler):
 
 
 @pytest.mark.xfail(reason="")
-def test_list_all_items(
-    elasticsearch_storage_handler: ElasticsearchStorageHandler, chunk: Chunk
-):
+def test_list_all_items(elasticsearch_storage_handler: ElasticsearchStorageHandler, chunk: Chunk):
     """
     Given that I have both saved and unsaved objects of the same type
     When I call list_all_items on their common type-name

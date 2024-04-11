@@ -37,9 +37,7 @@ QUESTION: {question}
 =========
 FINAL ANSWER:"""
 
-WITH_SOURCES_PROMPT = PromptTemplate.from_template(
-    _core_redbox_prompt + _with_sources_template
-)
+WITH_SOURCES_PROMPT = PromptTemplate.from_template(_core_redbox_prompt + _with_sources_template)
 
 _stuff_document_template = "<Doc{parent_doc_uuid}>{page_content}</Doc{parent_doc_uuid}>"
 
