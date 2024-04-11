@@ -5,7 +5,7 @@
 To run this project, you'll need `python`, `pip` and `poetry` installed.
 
 ```
-python = <=3.11, <3.12
+python == 3.11
 ```
 
 ## Installing packages
