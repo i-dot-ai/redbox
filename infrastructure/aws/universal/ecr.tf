@@ -4,7 +4,6 @@ locals {
     "db",
     "django-app",
     "embedder",
-    "frontend-proto",
     "ingester",
     "redbox",
   ]
