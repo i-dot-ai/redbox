@@ -124,9 +124,9 @@ docker_build: ## Build the docker container
 .PHONY: docker_push
 docker_push:
 	@echo "Fetching service list..."
-	@$(eval SERVICES=$(shell docker-compose config --services))
-	@echo "Services to update: $(SERVICES)"
-	@for service in $(SERVICES); do \
+	@SERVICES=$$(docker-compose config --services); \
+	echo "Services to update: $$SERVICES"; \
+	for service in $$SERVICES; do \
 		if grep -A 2 "^\s*$$service:" docker-compose.yml | grep -q 'build:'; then \
 			echo "Pushing $$service..."; \
 			ECR_REPO_SERVICE_TAG=$(ECR_REPO_URL)-$$service:$(IMAGE_TAG); \
