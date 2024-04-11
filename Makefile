@@ -108,8 +108,6 @@ docker_build: ## Build the docker container
 	@echo "Fetching service list..."
 	@$(eval SERVICES=$(shell docker-compose config --services))
 	@echo "Services to update: $(SERVICES)"
-	@echo "PREV_IMAGE_TAG=$$(git rev-parse HEAD~1)"
-	@$(eval PREVIOUS_COMMIT=$(shell git rev-parse HEAD~1))
 	@for service in $(SERVICES); do \
 		if grep -A 2 "^\s*$$service:" docker-compose.yml | grep -q 'build:'; then \
 			echo "Building $$service..."; \
