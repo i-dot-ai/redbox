@@ -7,7 +7,6 @@ locals {
     "frontend-proto",
     "ingester",
     "redbox",
-    "streamlit-app"
   ]
 }
 
