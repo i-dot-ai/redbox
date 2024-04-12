@@ -87,9 +87,7 @@ def stored_file(elasticsearch_storage_handler, file) -> YieldFixture[File]:
 @pytest.fixture
 def chunked_file(elasticsearch_storage_handler, stored_file) -> YieldFixture[File]:
     for i in range(5):
-        chunk = Chunk(
-            text="hello", index=i, parent_file_uuid=stored_file.uuid, metadata={}
-        )
+        chunk = Chunk(text="hello", index=i, parent_file_uuid=stored_file.uuid, metadata={})
         elasticsearch_storage_handler.write_item(chunk)
     elasticsearch_storage_handler.refresh()
     yield stored_file

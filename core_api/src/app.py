@@ -125,7 +125,6 @@ async def create_upload_file(name: str, type: str, location: AnyHttpUrl) -> uuid
     log.info(f"publishing {file.uuid}")
     await publisher.publish(file)
 
-
     return file.uuid
 
 

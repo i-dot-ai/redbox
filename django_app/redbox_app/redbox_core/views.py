@@ -1,7 +1,6 @@
 import os
 import uuid
 
-import requests
 from boto3.s3.transfer import TransferConfig
 from django.conf import settings
 from django.shortcuts import render
@@ -129,9 +128,7 @@ def upload_view(request):
             simple_s3_url = authenticated_s3_url.split("?")[0]
 
             # ingest file
-            api = CoreApiClient(
-                host=settings.CORE_API_HOST, port=settings.CORE_API_PORT
-            )
+            api = CoreApiClient(host=settings.CORE_API_HOST, port=settings.CORE_API_PORT)
 
             try:
                 api.upload_file(
