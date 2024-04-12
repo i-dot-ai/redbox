@@ -96,6 +96,7 @@ PREV_IMAGE_TAG=$$(git rev-parse HEAD~1)
 IMAGE_TAG=$$(git rev-parse HEAD)
 
 tf_build_args=-var "image_tag=$(IMAGE_TAG)"
+DOCKER_SERVICES=$$(docker compose config --services)
 
 .PHONY: docker_login
 docker_login:
@@ -104,22 +105,23 @@ docker_login:
 .PHONY: docker_build
 docker_build: ## Build the docker container
 	@echo "Fetching service list..."
-	cp .env.example .env 
-	@SERVICES=$$(docker compose config --services); \
-	echo "Services to update: $$SERVICES"; \
-	DOCKER_BUILDKIT=1
-	docker compose build core-api
-	for service in $$SERVICES; do \
-			if grep -A 2 "^\s*$$service:" docker-compose.yml | grep -q 'build:'; then \
+	@cp .env.example .env
+	# Fetching list of services defined in docker-compose configuration
+	@echo "Services to update: $(DOCKER_SERVICES)"
+	# Enabling Docker BuildKit for better build performance
+	export DOCKER_BUILDKIT=1
+	@for service in $(DOCKER_SERVICES); do \
+		if grep -A 2 "^\s*$$service:" docker-compose.yml | grep -q 'build:'; then \
 			echo "Building $$service..."; \
-			PREV_IMAGE="$(ECR_REPO_URL)-$$service:$(PREV_IMAGE_TAG)"; \
+			PREV_IMAGE="${ECR_REPO_URL}-$$service:${PREV_IMAGE_TAG}"; \
 			echo "Pulling previous image: $$PREV_IMAGE"; \
 			docker pull $$PREV_IMAGE; \
 			docker compose build $$service; \
 		else \
-			echo "Skipping $$service - does not have a build context."; \
+			echo "Skipping $$service uses default image"; \
 		fi; \
 	done
+
 
 .PHONY: docker_push
 docker_push:
