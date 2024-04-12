@@ -144,7 +144,7 @@ def init_session_state() -> dict:
         st.session_state.embedding_model = st.session_state.model_db
 
     if "BUCKET_NAME" not in st.session_state:
-        st.session_state.BUCKET_NAME = f"redbox-storage-{st.session_state.user_uuid}"
+        st.session_state.BUCKET_NAME = ENV["BUCKET_NAME"]
 
         try:
             st.session_state.s3_client.head_bucket(Bucket=st.session_state.BUCKET_NAME)
@@ -163,12 +163,12 @@ def init_session_state() -> dict:
         es = Elasticsearch(
             hosts=[
                 {
-                    "host": ENV["ELASTIC_HOST"],
-                    "port": int(ENV["ELASTIC_PORT"]),
-                    "scheme": ENV["ELASTIC_SCHEME"],
+                    "host": ENV["ELASTIC__HOST"],
+                    "port": int(ENV["ELASTIC__PORT"]),
+                    "scheme": ENV["ELASTIC__SCHEME"],
                 }
             ],
-            basic_auth=(ENV["ELASTIC_USER"], ENV["ELASTIC_PASSWORD"]),
+            basic_auth=(ENV["ELASTIC__USER"], ENV["ELASTIC__PASSWORD"]),
         )
         st.session_state.storage_handler = ElasticsearchStorageHandler(
             es_client=es, root_index="redbox-data"
@@ -275,9 +275,10 @@ def get_file_link(file: File, page: Optional[int] = None) -> str:
         presentation_name = file.name[:45] + "..."
     else:
         presentation_name = file.name
-    query_dict = {"file_uuid": file.uuid}
+
+    query_dict = {"file_uuid": str(file.uuid)}
     if page is not None:
-        query_dict["page_number"] = page
+        query_dict["page_number"] = str(page)
 
     link_html = get_link_html(
         page="Preview_Files",
@@ -320,13 +321,17 @@ def load_llm_handler(ENV, update=False) -> None:
     if "llm_handler" not in st.session_state or update:
         embedding_function = SentenceTransformerEmbeddings()
 
+        hybrid = False
+        if ENV["ELASTIC__SUBSCRIPTION_LEVEL"].lower() in ("platinum", "enterprise"):
+            hybrid = True
+
         vector_store = ElasticsearchStore(
-            es_url=f"{ENV['ELASTIC_SCHEME']}://{ENV['ELASTIC_HOST']}:{ENV['ELASTIC_PORT']}",
-            es_user=ENV["ELASTIC_USER"],
-            es_password=ENV["ELASTIC_PASSWORD"],
+            es_url=f"{ENV['ELASTIC__SCHEME']}://{ENV['ELASTIC__HOST']}:{ENV['ELASTIC__PORT']}",
+            es_user=ENV["ELASTIC__USER"],
+            es_password=ENV["ELASTIC__PASSWORD"],
             index_name="redbox-vector",
             embedding=embedding_function,
-            strategy=ApproxRetrievalStrategy(hybrid=True),
+            strategy=ApproxRetrievalStrategy(hybrid=hybrid),
         )
 
         st.session_state.llm_handler = LLMHandler(
@@ -538,7 +543,7 @@ def submit_feedback(
         feedback_type=feedback["type"],
         feedback_score=feedback["score"],
         feedback_text=feedback["text"],
-        creator_user_uuid=creator_user_uuid,
+        creator_user_uuid=uuid.UUID(creator_user_uuid),
     )
     st.session_state.storage_handler.write_item(to_write)
 
@@ -572,7 +577,7 @@ def get_persona_names() -> list:
     return persona_names
 
 
-def get_persona_description(persona_name) -> str:
+def get_persona_description(persona_name) -> str | None:
     """Returns persona description based on persona name selected by user
 
     Args:
@@ -586,7 +591,7 @@ def get_persona_description(persona_name) -> str:
     )
 
 
-def get_persona_prompt(persona_name) -> str:
+def get_persona_prompt(persona_name) -> str | None:
     """Returns persona prompt based on persona name selected by user
 
     Args:
@@ -597,3 +602,8 @@ def get_persona_prompt(persona_name) -> str:
         for chat_persona in chat_personas
         if chat_persona.name == persona_name
     )
+
+
+def get_files_by_uuid(file_uuids: list[uuid.UUID]) -> list[File]:
+    files = st.session_state.storage_handler.read_items(file_uuids, "File")
+    return files

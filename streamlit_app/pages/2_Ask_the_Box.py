@@ -1,23 +1,23 @@
 import json
+import uuid
 from datetime import date, datetime
 
 import streamlit as st
 from langchain.schema import AIMessage, HumanMessage, SystemMessage
 from streamlit_feedback import streamlit_feedback
+
+from redbox.llm.prompts.core import CORE_REDBOX_PROMPT
+from redbox.models.chat import ChatMessage
 from streamlit_app.utils import (
     StreamlitStreamHandler,
+    get_files_by_uuid,
     init_session_state,
     load_llm_handler,
     replace_doc_ref,
     submit_feedback,
 )
 
-from redbox.llm.prompts.core import CORE_REDBOX_PROMPT
-from redbox.models.chat import ChatMessage
-
-st.set_page_config(
-    page_title="Redbox Copilot - Ask the Box", page_icon="📮", layout="wide"
-)
+st.set_page_config(page_title="Redbox Copilot - Ask the Box", page_icon="📮", layout="wide")
 
 ENV = init_session_state()
 
@@ -26,7 +26,7 @@ ENV = init_session_state()
 
 def change_selected_model():
     load_llm_handler(ENV, update=True)
-    st.write(st.session_state.llm)
+    st.toast(f"Loaded {st.session_state.llm.model}")
 
 
 model_select = st.sidebar.selectbox(
@@ -76,26 +76,17 @@ if "ai_message_markdown_lookup" not in st.session_state:
     st.session_state["ai_message_markdown_lookup"] = {}
 
 
-def get_files_by_uuid(file_uuids):
-    files = st.session_state.storage_handler.read_items(file_uuids, "File")
-    return files
-
-
 def render_citation_response(response):
     cited_chunks = [
         (
             chunk.metadata["parent_doc_uuid"],
             chunk.metadata["url"],
-            (
-                chunk.metadata["page_numbers"]
-                if "page_numbers" in chunk.metadata
-                else None
-            ),
+            (chunk.metadata["page_numbers"] if "page_numbers" in chunk.metadata else None),
         )
         for chunk in response["input_documents"]
     ]
     cited_chunks = set(cited_chunks)
-    cited_files = get_files_by_uuid([x[0] for x in cited_chunks])
+    cited_files = get_files_by_uuid([uuid.UUID(x[0]) for x in cited_chunks])
     page_numbers = [x[2] for x in cited_chunks]
 
     for j, page_number in enumerate(page_numbers):
@@ -121,9 +112,7 @@ st.sidebar.download_button(
         indent=4,
         ensure_ascii=False,
     ),
-    file_name=(
-        f"redboxai_conversation_{st.session_state.user_uuid}" f"_{now_formatted}.json"
-    ),
+    file_name=(f"redboxai_conversation_{st.session_state.user_uuid}" f"_{now_formatted}.json"),
 )
 
 message_count = len(st.session_state.messages)
@@ -173,9 +162,7 @@ if prompt := st.chat_input():
             user_info=st.session_state.user_info,
             chat_history=st.session_state.messages,
             callbacks=[
-                StreamlitStreamHandler(
-                    text_element=response_stream_text, initial_text=""
-                ),
+                StreamlitStreamHandler(text_element=response_stream_text, initial_text=""),
                 st.session_state.llm_logger_callback,
             ],
         )
@@ -206,6 +193,4 @@ if prompt := st.chat_input():
 
     # Store the markdown response for later rendering
     # Done to avoid needing file references from llm_handler
-    st.session_state.ai_message_markdown_lookup[hash(response["output_text"])] = (
-        response_final_markdown
-    )
+    st.session_state.ai_message_markdown_lookup[hash(response["output_text"])] = response_final_markdown

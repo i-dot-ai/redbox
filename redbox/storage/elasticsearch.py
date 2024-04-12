@@ -54,9 +54,7 @@ class ElasticsearchStorageHandler(BaseStorageHandler):
 
     def read_items(self, item_uuids: list[UUID], model_type: str):
         target_index = f"{self.root_index}-{model_type.lower()}"
-        result = self.es_client.mget(
-            index=target_index, body={"ids": list(map(str, item_uuids))}
-        )
+        result = self.es_client.mget(index=target_index, body={"ids": list(map(str, item_uuids))})
 
         model = self.get_model_by_model_type(model_type)
         items = [model(**item["_source"]) for item in result.body["docs"]]
@@ -81,9 +79,7 @@ class ElasticsearchStorageHandler(BaseStorageHandler):
         result = self.es_client.delete(index=target_index, id=str(item.uuid))
         return result
 
-    def delete_items(
-        self, items: list[PersistableModel]
-    ) -> Optional[ObjectApiResponse]:
+    def delete_items(self, items: list[PersistableModel]) -> Optional[ObjectApiResponse]:
         if not items:
             return None
 
@@ -225,9 +221,7 @@ class ElasticsearchStorageHandler(BaseStorageHandler):
         embedded_chunk_uuids = self._get_embedded_child_chunks(file_uuid)
 
         chunk_statuses = [
-            ChunkStatus(
-                chunk_uuid=chunk_uuid, embedded=chunk_uuid in embedded_chunk_uuids
-            )
+            ChunkStatus(chunk_uuid=chunk_uuid, embedded=chunk_uuid in embedded_chunk_uuids)
             for chunk_uuid in chunk_uuids
         ]
 
@@ -237,9 +231,7 @@ class ElasticsearchStorageHandler(BaseStorageHandler):
         elif len(embedded_chunk_uuids) < len(chunk_uuids):
             latest_status = ProcessingStatusEnum.embedding
         else:
-            raise ValueError(
-                "The number of embedded chunks should never exceed the number of chunks"
-            )
+            raise ValueError("The number of embedded chunks should never exceed the number of chunks")
 
         return FileStatus(
             file_uuid=file_uuid,
