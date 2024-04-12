@@ -7,7 +7,8 @@ from pydantic import BaseModel
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
-class ElasticLocal(BaseModel):
+class ElasticLocalSetings(BaseModel):
+    """settings required for a local/ec2 instance of elastic"""
     host: str = "elasticsearch"
     port: int = 9200
     scheme: str = "http"
@@ -16,7 +17,8 @@ class ElasticLocal(BaseModel):
     password: str = "redboxpass"
 
 
-class ElasticCloud(BaseModel):
+class ElasticCloudSetings(BaseModel):
+    """settings required for elastic-cloud"""
     api_key: str
     cloud_id: str
 
@@ -25,7 +27,7 @@ class Settings(BaseSettings):
     anthropic_api_key: Optional[str] = None
     openai_api_key: Optional[str] = None
 
-    elastic: ElasticCloud | ElasticLocal
+    elastic: ElasticCloudSetings | ElasticLocalSetings = ElasticLocalSetings()
 
     kibana_system_password: str = "redboxpass"
     metricbeat_internal_password: str = "redboxpass"
