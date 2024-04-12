@@ -107,8 +107,9 @@ docker_build: ## Build the docker container
 	cp .env.example .env 
 	@SERVICES=$$(docker compose config --services); \
 	echo "Services to update: $$SERVICES"; \
+	DOCKER_BUILDKIT=1
 	for service in $$SERVICES; do \
-		if grep -A 2 "^\s*$$service:" docker-compose.yml | grep -q 'build:'; then \
+			if grep -A 2 "^\s*$$service:" docker-compose.yml | grep -q 'build:'; then \
 			echo "Building $$service..."; \
 			PREV_IMAGE="$(ECR_REPO_URL)-$$service:$(PREV_IMAGE_TAG)"; \
 			echo "Pulling previous image: $$PREV_IMAGE"; \
