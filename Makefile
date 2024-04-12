@@ -104,7 +104,6 @@ docker_login:
 
 .PHONY: docker_build
 docker_build: ## Build the docker container
-	@echo "Fetching service list..."
 	@cp .env.example .env
 	# Fetching list of services defined in docker-compose configuration
 	@echo "Services to update: $(DOCKER_SERVICES)"
@@ -125,10 +124,8 @@ docker_build: ## Build the docker container
 
 .PHONY: docker_push
 docker_push:
-	@echo "Fetching service list..."
-	@SERVICES=$$(docker compose config --services); \
-	echo "Services to push: $$SERVICES"; \
-	for service in $$SERVICES; do \
+	@echo "Services to push: $(DOCKER_SERVICES)"
+	@for service in $(DOCKER_SERVICES); do \
 		if grep -A 2 "^\s*$$service:" docker-compose.yml | grep -q 'build:'; then \
 			echo "Pushing $$service..."; \
 			ECR_REPO_SERVICE_TAG=$(ECR_REPO_URL)-$$service:$(IMAGE_TAG); \
