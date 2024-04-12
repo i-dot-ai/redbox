@@ -26,12 +26,12 @@ s3 = env.s3_client()
 es = env.elasticsearch_client()
 storage_handler = ElasticsearchStorageHandler(es_client=es, root_index="redbox-data")
 
-file_app = FastAPI()
-
-
 # === Queues ===
 router = RedisRouter(url=env.redis_url)
 publisher = router.publisher(env.ingest_queue_name)
+
+file_app = FastAPI()
+file_app.include_router(router)
 
 
 @file_app.post("/", tags=["file"])
