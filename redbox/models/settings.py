@@ -72,7 +72,7 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_nested_delimiter='__')
 
     def elasticsearch_client(self) -> Elasticsearch:
-        if isinstance(self.elastic, ElasticLocal):
+        if isinstance(self.elastic, ElasticLocalSetings):
             es = Elasticsearch(
                 hosts=[
                     {
