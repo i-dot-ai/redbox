@@ -1,24 +1,18 @@
-{% import "macros.html" as macros %}
-{% extends "base_generic_gov.html" %}
+{% extends "base.html" %}
 
-<!--TODO: Update variables-->
-
-{% block title %}
-  <title>Privacy notice - Redbox Copilot - GOV.UK</title>
-{% endblock %}
+{% set pageTitle = "Privacy notice" %}
 
 
 {% block content %}
-  <h1 class="govuk-heading-l">Privacy notice for Redbox Copilot platform</h1>
+  <h1 class="govuk-heading-l">Privacy notice for Redbox Copilot</h1>
   <div class="govuk-body">
     <p class="govuk-body-l">This notice sets out how we will use your personal data, and your rights. It is made under Articles 13 and/or 14 of the UK General Data Protection Regulation (UK GDPR).</p>
 
     <h2 class="govuk-heading-m">Your data</h2>
     <h3 class="govuk-heading-s">Purpose</h3>
-    <p class="govuk-body">The purpose(s) for which we are processing your personal data is (are):</p>
+    <p class="govuk-body">The purposes for which we are processing your personal data are:</p>
     <ul class="govuk-list govuk-list--bullet">
       <li>enabling login to the platform</li>
-      <li>emailing you reminders of actions required</li>
       <li>information will be aggregated and used for anonymous further analysis</li>
     </ul>
 
@@ -62,9 +56,8 @@
     <p class="govuk-body">The contact details for the data controller's Data Protection Officer are: <a href="mailto:dpo@cabinetoffice.gov.uk" class="govuk-link">dpo@cabinetoffice.gov.uk</a>.</p>
     <p class="govuk-body">The Data Protection Officer provides independent advice and monitoring of Cabinet Office's use of personal information.</p>
 
-
-    <h3 class="govuk-heading-s">Changes to this notice</h3>
+    <h2 class="govuk-heading-m">Changes to this notice</h2>
     <p class="govuk-body">We may change this privacy notice. When we make changes to this notice, the "last updated" date at the bottom of this page will also change. Any changes to this privacy notice will apply to you and your data immediately. If these changes affect how your personal data is processed, Cabinet Office will take reasonable steps to make sure you know.</p>
-    <p class="govuk-body">Last updated: 27th February 2024</p>
+    <p class="govuk-body">Last updated: 11th April 2024</p>
   </div>
 {% endblock %}
