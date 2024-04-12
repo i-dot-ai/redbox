@@ -21,16 +21,29 @@ env = Settings()
 s3 = env.s3_client()
 
 
+# === Queues ===
+router = RedisRouter(url=env.redis_url)
+publisher = router.publisher(env.ingest_queue_name)
+
+
 # === Storage ===
 
 es = env.elasticsearch_client()
 storage_handler = ElasticsearchStorageHandler(es_client=es, root_index="redbox-data")
 
-# === Queues ===
-router = RedisRouter(url=env.redis_url)
-publisher = router.publisher(env.ingest_queue_name)
 
-file_app = FastAPI()
+file_app = FastAPI(
+    title="Core File API",
+    description="Redbox Core File API",
+    version="0.1.0",
+    openapi_tags=[
+        {"name": "file", "description": "File endpoints"},
+    ],
+    docs_url="/docs",
+    redoc_url="/redoc",
+    openapi_url="/openapi.json",
+    lifespan=router.lifespan_context,
+)
 file_app.include_router(router)
 
 
@@ -56,6 +69,7 @@ async def create_upload_file(name: str, type: str, location: AnyHttpUrl) -> UUID
     storage_handler.write_item(file)
 
     log.info(f"publishing {file.uuid}")
+    await router.broker.connect()
     await publisher.publish(file)
 
     return file.uuid
