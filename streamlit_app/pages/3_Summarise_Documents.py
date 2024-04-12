@@ -1,10 +1,13 @@
 import datetime
-import os
+import uuid
 from io import BytesIO
 
 import streamlit as st
 from streamlit_feedback import streamlit_feedback
-from utils import (
+
+from redbox.export.docx import spotlight_complete_to_docx
+from redbox.models.spotlight import SpotlightComplete, SpotlightTaskComplete
+from streamlit_app.utils import (
     StreamlitStreamHandler,
     hash_list_of_files,
     init_session_state,
@@ -12,9 +15,6 @@ from utils import (
     replace_doc_ref,
     submit_feedback,
 )
-
-from redbox.export.docx import spotlight_complete_to_docx
-from redbox.models.spotlight import SpotlightComplete, SpotlightTaskComplete
 
 # region ===== PAGE SETUP =====
 
@@ -100,7 +100,7 @@ def update_token_budget_tracker():
 
 
 def clear_params():
-    st.experimental_set_query_params()
+    st.query_params.clear()
     unsubmit_session_state()
 
 
@@ -140,7 +140,7 @@ if "collection_title" in url_params:
     collection_title = url_params["collection_title"][0]
     collection = st.session_state.storage_handler.read_item(item_uuid=collection_title, model_type="Collection")
 
-    files_from_url = [os.path.split(x)[1] for x in collection.files]
+    files_from_url = [uuid.UUID(x) for x in collection.files]
     files_from_url = [x for x in files_from_url if x in parsed_files_uuid_map.keys()]
 
     spotlight_file_select = st.multiselect(
@@ -174,10 +174,12 @@ if submitted:
         st.warning("Please select document(s)")
         unsubmit_session_state()
 
-
 files = []
 for file in spotlight_file_select:
-    files.append(parsed_files_uuid_map[file])
+    file_to_add = parsed_files_uuid_map[file]
+    chunks = st.session_state.storage_handler.get_file_chunks(file_to_add.uuid)
+    file_to_add.text = "\n".join([chunk.text for chunk in chunks])
+    files.append(file_to_add)
 
 if len(files) == 0:
     st.stop()
@@ -257,7 +259,7 @@ if st.session_state.submitted:
 
         spotlight_complete = SpotlightComplete(
             file_hash=spotlight_model.file_hash,
-            file_uuids=[f.uuid for f in files],
+            file_uuids=[str(f.uuid) for f in files],
             tasks=st.session_state.spotlight,
             creator_user_uuid=st.session_state.user_uuid,
         )
@@ -326,9 +328,7 @@ if st.session_state.submitted:
 
     def delete_summary():
         spotlight_completed_to_delete = spotlight_completed_by_hash[SELECTED_FILE_HASH]
-        st.session_state.storage_handler.delete_item(
-            item_uuid=spotlight_completed_to_delete.uuid, model_type="SpotlightComplete"
-        )
+        st.session_state.storage_handler.delete_item(spotlight_completed_to_delete)
         del spotlight_completed_by_hash[SELECTED_FILE_HASH]
 
         st.session_state.spotlight = []

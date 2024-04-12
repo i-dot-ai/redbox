@@ -1,9 +1,10 @@
 from typing import Generator, TypeVar
+from uuid import uuid4
 
 import pytest
 from elasticsearch import Elasticsearch
 
-from redbox.models import Chunk, Settings
+from redbox.models import Chunk, File, Settings
 from redbox.storage.elasticsearch import ElasticsearchStorageHandler
 
 T = TypeVar("T")
@@ -17,14 +18,40 @@ env = Settings()
 @pytest.fixture
 def chunk() -> Chunk:
     test_chunk = Chunk(
-        uuid="aaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
-        parent_file_uuid="test_uuid",
+        parent_file_uuid=uuid4(),
         index=1,
         text="test_text",
         metadata={},
-        creator_user_uuid="test",
     )
     return test_chunk
+
+
+@pytest.fixture
+def another_chunk() -> Chunk:
+    test_chunk = Chunk(
+        parent_file_uuid=uuid4(),
+        index=1,
+        text="test_text",
+        metadata={},
+    )
+    return test_chunk
+
+
+@pytest.fixture
+def file() -> File:
+    test_file = File(
+        name="test.pdf",
+        url="http://example.com/test.pdf",
+        status="uploaded",
+        content_type=".pdf",
+    )
+    return test_file
+
+
+@pytest.fixture
+def stored_chunk(elasticsearch_storage_handler, chunk) -> Chunk:
+    elasticsearch_storage_handler.write_item(item=chunk)
+    return chunk
 
 
 @pytest.fixture

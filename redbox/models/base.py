@@ -1,14 +1,14 @@
 from datetime import datetime
-from typing import Optional
-from uuid import uuid4
+from typing import Annotated, Optional
+from uuid import UUID, uuid4
 
-from pydantic import BaseModel, Field, computed_field
+from pydantic import AfterValidator, BaseModel, Field, computed_field
 
 
 class PersistableModel(BaseModel):
-    uuid: str = Field(default_factory=lambda: str(uuid4()))
-    created_datetime: str = Field(default_factory=lambda: datetime.utcnow().isoformat())
-    creator_user_uuid: Optional[str] = None
+    uuid: UUID | Annotated[str, AfterValidator(lambda x: UUID(x))] = Field(default_factory=uuid4)
+    created_datetime: datetime = Field(default_factory=datetime.utcnow)
+    creator_user_uuid: Optional[UUID | Annotated[str, AfterValidator(lambda x: UUID(x))]] = None
 
     @computed_field
     def model_type(self) -> str:

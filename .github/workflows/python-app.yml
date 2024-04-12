@@ -11,6 +11,7 @@ on:
       - core_api/**
       - ingester/**
       - Makefile
+      - poetry.lock
       - .github/**
     branches:
       - 'main'
@@ -48,10 +49,16 @@ jobs:
         mkdir -p data/elastic/
         chmod 777 data/elastic/
         cp .env.test .env
-        docker compose up -d --wait elasticsearch minio
+        docker compose up -d --wait elasticsearch
 
         poetry install --no-root --no-ansi --with dev --without ai,streamlit-app,api,worker,ingester
         poetry run download-model --model_name paraphrase-albert-small-v2
+
+    - name: Add dependencies for Ingester
+      run: |
+        sudo apt update && sudo apt-get install -y \
+        poppler-utils \
+        tesseract-ocr
 
     - name: Test redbox with pytest
       run: |

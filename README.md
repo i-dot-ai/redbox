@@ -1,6 +1,7 @@
 # 📮 Redbox Copilot
 
-> ⚠️ **This project is in active development and a work in progress. The repo is getting regular additions so be sure to check back regularly for updates.**
+> [!IMPORTANT]
+> Incubation Project: This project is an incubation project; as such, we DON’T recommend using it in any critical use case. This project is in active development and a work in progress. This project may one day Graduate, in which case this disclaimer will be removed.
 
 Redbox Copilot is a retrieval augmented generation (RAG) app that uses GenAI to chat with and summarise civil service documents. It's designed to handle a variety of administrative sources, such as letters, briefings, minutes, and speech transcripts.
 
@@ -27,6 +28,14 @@ You'll find a series of useful `docker compose` commands already maded in [`Make
 
 Any time you update code for the the repo, you'll likely need to rebuild the containers.
 
+# Docs
+
+The docs are built using [MkDocs](https://www.mkdocs.org/). To run the docs locally, you can run:
+
+```bash
+make docs-serve
+```
+
 # Codespace
 For a quick start, you can use GitHub Codespaces to run the project in a cloud-based development environment. Click the button below to open the project in a new Codespace.
 
@@ -34,20 +43,17 @@ For a quick start, you can use GitHub Codespaces to run the project in a cloud-b
 
 # Development
 
+You will need to install `poppler` and `tesseract` to run the `ingester`
+- `brew install poppler`
+- `brew install tesseract`
+
 - Download and install [pre-commit](https://pre-commit.com) to benefit from pre-commit hooks
   - `pip install pre-commit`
   - `pre-commit install`
 
 # Testing
 - Unit tests and QA run in CI
-- At this time integration test(s) must be run locally:
-
-```commandline
-docker down
-cp .env.example .env
-docker compose up -d ingester embedder core-api
-make test-integration
-```
+- At this time integration test(s) take 10+ mins to run so are triggered manually in CI
 
 # Dependencies
 
@@ -70,12 +76,12 @@ redbox-copilot/
 │  └── Dockerfile
 ├── embedder
 │  ├── src/
-│  │  └── app.py
+│  │  └── worker.py
 │  ├── tests/
 │  └── Dockerfile
 ├── ingester
 │  ├── src/
-│  │  └── app.py
+│  │  └── worker.py
 │  ├── tests/
 │  └── Dockerfile
 ├── redbox/
@@ -120,32 +126,6 @@ Increase total memory available to 8gb.
 colima down
 colima start --memory 8
 ```
-
-
-#### Error: RabbitMQ permissions
-```commandline
-rabbitmq-1            | chown: /var/lib/rabbitmq: Permission denied
-```
-
-This is caused my rabbitmq not having access the volumes defined in docker-compose.yml.
-
-First try running the following:
-
-```commandline
-chmod -R 777 ./data
-chmod -R 777 ./infra
-```
-
-If this doesn't work then update the `rabbitmq` service in the `docker-compose.yml`
-by adding a new `user` key so that the container assumes your own identity, i.e.:
-
-```yaml
-  rabbitmq:
-    image: rabbitmq:3-management
-    user: "{UID}:{GID}"
-```
-
-Where `UID` and `GID` can be found by running `id -u` and `id -g` respectively.
 
 #### Error: Docker... no space left on device
 

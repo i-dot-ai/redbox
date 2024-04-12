@@ -43,26 +43,18 @@ def file_pdf_path() -> YieldFixture[str]:
 
 
 @pytest.fixture
-def bucket(s3_client):
-    buckets = s3_client.list_buckets()
-    if not any(bucket["Name"] == env.bucket_name for bucket in buckets["Buckets"]):
-        s3_client.create_bucket(Bucket=env.bucket_name)
-    yield env.bucket_name
-
-
-@pytest.fixture
-def file(s3_client, file_pdf_path, bucket):
+def file(s3_client, file_pdf_path):
     """
     TODO: this is a cut and paste of core_api:create_upload_file
     When we come to test core_api we should think about
     the relationship between core_api and the ingester app
     """
     file_name = os.path.basename(file_pdf_path)
-    file_type = file_name.split(".")[-1]
+    file_type = f'.{file_name.split(".")[-1]}'
 
     with open(file_pdf_path, "rb") as f:
         s3_client.put_object(
-            Bucket=bucket,
+            Bucket=env.bucket_name,
             Body=f.read(),
             Key=file_name,
             Tagging=f"file_type={file_type}",
@@ -78,10 +70,8 @@ def file(s3_client, file_pdf_path, bucket):
     simple_s3_url = authenticated_s3_url.split("?")[0]
     file_record = File(
         name=file_name,
-        path=simple_s3_url,
-        type=file_type,
-        creator_user_uuid="dev",
-        storage_kind=env.object_store,
+        url=simple_s3_url,
+        content_type=file_type,
     )
 
     yield file_record

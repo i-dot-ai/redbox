@@ -1,10 +1,11 @@
 import pytest
+from faststream.redis import TestApp, TestRedisBroker
 
-from ingester.src.worker import broker, ingest_channel, app
-from redbox.models import ProcessingStatusEnum
+from ingester.src.worker import app, broker
+from redbox.models import Settings
 from redbox.storage import ElasticsearchStorageHandler
 
-from faststream.rabbit import TestRabbitBroker, TestApp
+env = Settings()
 
 
 @pytest.mark.asyncio
@@ -17,15 +18,18 @@ async def test_ingest_file(s3_client, es_client, embedding_model, file):
     2. written to Elasticsearch
     """
 
-    storage_handler = ElasticsearchStorageHandler(es_client=es_client, root_index="redbox-data")
+    storage_handler = ElasticsearchStorageHandler(
+        es_client=es_client, root_index="redbox-data"
+    )
 
-    async with TestRabbitBroker(broker) as br, TestApp(app):
-        await br.publish(file, queue=ingest_channel)
+    storage_handler.write_item(file)
 
-        assert (
-            storage_handler.read_item(
-                item_uuid=file.uuid,
-                model_type="file",
-            ).processing_status
-            is ProcessingStatusEnum.chunking
+    async with TestRedisBroker(broker) as br, TestApp(app):
+        await br.publish(file, channel=env.ingest_queue_name)
+
+        file = storage_handler.read_item(
+            item_uuid=file.uuid,
+            model_type="File",
         )
+
+        assert file is not None

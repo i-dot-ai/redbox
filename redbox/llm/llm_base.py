@@ -8,11 +8,23 @@ from langchain.chains.combine_documents.stuff import StuffDocumentsChain
 from langchain.chains.llm import LLMChain
 from langchain.chains.qa_with_sources import load_qa_with_sources_chain
 from langchain.memory import ConversationBufferMemory
-from langchain_community.embeddings import HuggingFaceEmbeddings, SentenceTransformerEmbeddings
+from langchain_community.embeddings import (
+    HuggingFaceEmbeddings,
+    SentenceTransformerEmbeddings,
+)
 
-from redbox.llm.prompts.chat import CONDENSE_QUESTION_PROMPT, STUFF_DOCUMENT_PROMPT, WITH_SOURCES_PROMPT
+from redbox.llm.prompts.chat import (
+    CONDENSE_QUESTION_PROMPT,
+    STUFF_DOCUMENT_PROMPT,
+    WITH_SOURCES_PROMPT,
+)
 from redbox.llm.prompts.spotlight import SPOTLIGHT_COMBINATION_TASK_PROMPT
-from redbox.llm.spotlight.spotlight import key_actions_task, key_discussion_task, key_people_task, summary_task
+from redbox.llm.spotlight.spotlight import (
+    key_actions_task,
+    key_discussion_task,
+    key_people_task,
+    summary_task,
+)
 from redbox.models.file import Chunk, File
 from redbox.models.spotlight import Spotlight, SpotlightTask
 

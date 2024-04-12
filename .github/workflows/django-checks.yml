@@ -16,6 +16,7 @@ on:
       - 'bugfix/**'
       - 'hotfix/**'
       - 'develop'
+      - 'dependabot/**'
   workflow_dispatch:
 
 
@@ -32,7 +33,7 @@ jobs:
 
       - name: Copy env file
         run: |
-          cp .env.example .env
+          cp .env.django .env
 
       - name: Run migrations
         run: |
@@ -49,7 +50,7 @@ jobs:
 
     - name: Copy env file
       run: |
-        cp .env.example .env
+        cp .env.django .env
 
     - name: Run tests
       run: |

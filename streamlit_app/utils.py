@@ -17,18 +17,26 @@ from langchain.callbacks import FileCallbackHandler
 from langchain.callbacks.base import BaseCallbackHandler
 from langchain.chains.base import Chain
 from langchain.schema.output import LLMResult
-from langchain.vectorstores.elasticsearch import ApproxRetrievalStrategy, ElasticsearchStore
+from langchain.vectorstores.elasticsearch import (
+    ApproxRetrievalStrategy,
+    ElasticsearchStore,
+)
 from langchain_community.chat_models import ChatLiteLLM
 from langchain_community.embeddings import SentenceTransformerEmbeddings
 from loguru import logger
 from lxml.html.clean import Cleaner
 
-from model_db import SentenceTransformerDB
 from redbox.llm.llm_base import LLMHandler
+from redbox.model_db import SentenceTransformerDB
+from redbox.models import Settings
 from redbox.models.feedback import Feedback
 from redbox.models.file import File
 from redbox.models.persona import ChatPersona
 from redbox.storage import ElasticsearchStorageHandler
+
+env = Settings()
+
+DEV_UUID = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
 
 
 def get_user_name(principal: dict) -> str:
@@ -56,7 +64,7 @@ def populate_user_info() -> dict:
     Returns:
         dict: the user information dictionary
     """
-    return {"name": "dev", "email": "dev@example.com"}
+    return {"name": DEV_UUID, "email": "dev@example.com"}
 
 
 def init_session_state() -> dict:
@@ -127,24 +135,16 @@ def init_session_state() -> dict:
         st.session_state.available_personas = get_persona_names()
 
     if "model_db" not in st.session_state:
-        st.session_state.model_db = SentenceTransformerDB()
-        st.session_state.model_db.init_from_disk()
+        st.session_state.model_db = SentenceTransformerDB(env.embedding_model)
 
     if "model_db" not in st.session_state:
-        st.session_state.model_db = SentenceTransformerDB()
-        st.session_state.model_db.init_from_disk()
+        st.session_state.model_db = SentenceTransformerDB(env.embedding_model)
 
     if "embedding_model" not in st.session_state:
-        available_models = []
-        for model_name in st.session_state.model_db:
-            available_models.append(model_name)
-
-        default_model = available_models[0]
-
-        st.session_state.embedding_model = st.session_state.model_db[default_model]
+        st.session_state.embedding_model = st.session_state.model_db
 
     if "BUCKET_NAME" not in st.session_state:
-        st.session_state.BUCKET_NAME = f"redbox-storage-{st.session_state.user_uuid}"
+        st.session_state.BUCKET_NAME = ENV["BUCKET_NAME"]
 
         try:
             st.session_state.s3_client.head_bucket(Bucket=st.session_state.BUCKET_NAME)
@@ -152,7 +152,9 @@ def init_session_state() -> dict:
             # The bucket does not exist or you have no access.
             if err.response["Error"]["Code"] == "404":
                 print("The bucket does not exist.")
-                st.session_state.s3_client.create_bucket(Bucket=st.session_state.BUCKET_NAME)
+                st.session_state.s3_client.create_bucket(
+                    Bucket=st.session_state.BUCKET_NAME
+                )
                 print("Bucket created successfully.")
             else:
                 raise err
@@ -161,16 +163,18 @@ def init_session_state() -> dict:
         es = Elasticsearch(
             hosts=[
                 {
-                    "host": ENV["ELASTIC_HOST"],
-                    "port": int(ENV["ELASTIC_PORT"]),
-                    "scheme": ENV["ELASTIC_SCHEME"],
+                    "host": ENV["ELASTIC__HOST"],
+                    "port": int(ENV["ELASTIC__PORT"]),
+                    "scheme": ENV["ELASTIC__SCHEME"],
                 }
             ],
-            basic_auth=(ENV["ELASTIC_USER"], ENV["ELASTIC_PASSWORD"]),
+            basic_auth=(ENV["ELASTIC__USER"], ENV["ELASTIC__PASSWORD"]),
         )
-        st.session_state.storage_handler = ElasticsearchStorageHandler(es_client=es, root_index="redbox-data")
+        st.session_state.storage_handler = ElasticsearchStorageHandler(
+            es_client=es, root_index="redbox-data"
+        )
 
-    if st.session_state.user_uuid == "dev":
+    if st.session_state.user_uuid == DEV_UUID:
         st.sidebar.info("**DEV MODE**")
         with st.sidebar.expander("⚙️ DEV Settings", expanded=False):
             st.session_state.model_params = {
@@ -233,7 +237,9 @@ def init_session_state() -> dict:
     return ENV
 
 
-def get_link_html(page: str, text: str, query_dict: Optional[dict] = None, target: str = "_self") -> str:
+def get_link_html(
+    page: str, text: str, query_dict: Optional[dict] = None, target: str = "_self"
+) -> str:
     """Returns a link in HTML format
 
     Args:
@@ -269,9 +275,10 @@ def get_file_link(file: File, page: Optional[int] = None) -> str:
         presentation_name = file.name[:45] + "..."
     else:
         presentation_name = file.name
-    query_dict = {"file_uuid": file.uuid}
+
+    query_dict = {"file_uuid": str(file.uuid)}
     if page is not None:
-        query_dict["page_number"] = page
+        query_dict["page_number"] = str(page)
 
     link_html = get_link_html(
         page="Preview_Files",
@@ -314,13 +321,17 @@ def load_llm_handler(ENV, update=False) -> None:
     if "llm_handler" not in st.session_state or update:
         embedding_function = SentenceTransformerEmbeddings()
 
+        hybrid = False
+        if ENV["ELASTIC__SUBSCRIPTION_LEVEL"].lower() in ("platinum", "enterprise"):
+            hybrid = True
+
         vector_store = ElasticsearchStore(
-            es_url=f"{ENV['ELASTIC_SCHEME']}://{ENV['ELASTIC_HOST']}:{ENV['ELASTIC_PORT']}",
-            es_user=ENV["ELASTIC_USER"],
-            es_password=ENV["ELASTIC_PASSWORD"],
+            es_url=f"{ENV['ELASTIC__SCHEME']}://{ENV['ELASTIC__HOST']}:{ENV['ELASTIC__PORT']}",
+            es_user=ENV["ELASTIC__USER"],
+            es_password=ENV["ELASTIC__PASSWORD"],
             index_name="redbox-vector",
             embedding=embedding_function,
-            strategy=ApproxRetrievalStrategy(hybrid=True),
+            strategy=ApproxRetrievalStrategy(hybrid=hybrid),
         )
 
         st.session_state.llm_handler = LLMHandler(
@@ -388,13 +399,17 @@ class FilePreview(object):
             file (File): The file to preview
         """
 
-        render_method = self.render_methods[file.type]
-        stream = st.session_state.s3_client.get_object(Bucket=st.session_state.BUCKET_NAME, Key=file.name)
+        render_method = self.render_methods[file.content_type]
+        stream = st.session_state.s3_client.get_object(
+            Bucket=st.session_state.BUCKET_NAME, Key=file.name
+        )
         file_bytes = stream["Body"].read()
         render_method(file, file_bytes)
 
     def _render_pdf(self, file: File, page_number: Optional[int] = None) -> None:
-        stream = st.session_state.s3_client.get_object(Bucket=st.session_state.BUCKET_NAME, Key=file.name)
+        stream = st.session_state.s3_client.get_object(
+            Bucket=st.session_state.BUCKET_NAME, Key=file.name
+        )
         base64_pdf = base64.b64encode(stream["Body"].read()).decode("utf-8")
 
         if page_number is not None:
@@ -426,7 +441,9 @@ class FilePreview(object):
         st.dataframe(df, use_container_width=True)
 
     def _render_eml(self, file: File, file_bytes: bytes) -> None:
-        st.markdown(self.cleaner.clean_html(file_bytes.decode("utf-8")), unsafe_allow_html=True)
+        st.markdown(
+            self.cleaner.clean_html(file_bytes.decode("utf-8")), unsafe_allow_html=True
+        )
 
     def _render_html(self, file: File, file_bytes: bytes) -> None:
         markdown_html = html2markdown.convert(file_bytes.decode("utf-8"))
@@ -526,55 +543,67 @@ def submit_feedback(
         feedback_type=feedback["type"],
         feedback_score=feedback["score"],
         feedback_text=feedback["text"],
-        creator_user_uuid=creator_user_uuid,
+        creator_user_uuid=uuid.UUID(creator_user_uuid),
     )
     st.session_state.storage_handler.write_item(to_write)
 
     st.toast("Thanks for your feedback!", icon="🙏")
 
+
 chat_personas = [
-        ChatPersona(
-            name = "Policy Experts",
-            description = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua",
-            prompt = "Lorem ipsum"
-        ),
-        ChatPersona(
-            name = "Economists",
-            description = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna",
-            prompt = "Lorem ipsum"
-        ),
-        ChatPersona(
-            name = "Foreign Policy Experts",
-            description = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore",
-            prompt = "Lorem ipsum"
-        )
+    ChatPersona(
+        name="Policy Experts",
+        description="Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua",
+        prompt="Lorem ipsum",
+    ),
+    ChatPersona(
+        name="Economists",
+        description="Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna",
+        prompt="Lorem ipsum",
+    ),
+    ChatPersona(
+        name="Foreign Policy Experts",
+        description="Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore",
+        prompt="Lorem ipsum",
+    ),
 ]
 
+
 def get_persona_names() -> list:
-    """Returns list of persona names
-    """
+    """Returns list of persona names"""
     persona_names = []
     for chat_persona in chat_personas:
         persona_names.append(chat_persona.name)
     return persona_names
 
 
-def get_persona_description(persona_name) -> str:
+def get_persona_description(persona_name) -> str | None:
     """Returns persona description based on persona name selected by user
 
     Args:
         persona_name (str): Persona name selected by user.
     """
-    for chat_persona in chat_personas:
-        if chat_persona.name == persona_name:
-            return chat_persona.description
 
-def get_persona_prompt(persona_name) -> str:
+    return next(
+        chat_persona.description
+        for chat_persona in chat_personas
+        if chat_persona.name == persona_name
+    )
+
+
+def get_persona_prompt(persona_name) -> str | None:
     """Returns persona prompt based on persona name selected by user
 
     Args:
         persona_name (str): Persona name selected by user.
     """
-    for chat_persona in chat_personas:
-        if chat_persona.name == persona_name:
-            return chat_persona.prompt
+    return next(
+        chat_persona.prompt
+        for chat_persona in chat_personas
+        if chat_persona.name == persona_name
+    )
+
+
+def get_files_by_uuid(file_uuids: list[uuid.UUID]) -> list[File]:
+    files = st.session_state.storage_handler.read_items(file_uuids, "File")
+    return files

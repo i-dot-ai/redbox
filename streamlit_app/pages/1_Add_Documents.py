@@ -1,11 +1,12 @@
 import pathlib
 from datetime import date
+from uuid import UUID
 
 import streamlit as st
-from utils import init_session_state
 
 from redbox.models import Collection, File
 from redbox.parsing.file_chunker import FileChunker
+from streamlit_app.utils import init_session_state
 
 st.set_page_config(page_title="Redbox Copilot - Add Documents", page_icon="📮", layout="wide")
 
@@ -59,10 +60,10 @@ if submitted:  # noqa: C901
         collection_obj = Collection(
             date=date.today().isoformat(),
             name=new_collection,
-            creator_user_uuid=st.session_state.user_uuid,
+            creator_user_uuid=UUID(st.session_state.user_uuid),
         )
     elif collection_selection == no_collection_str:
-        collection_obj = Collection(date="", name="", creator_user_uuid=st.session_state.user_uuid)
+        collection_obj = Collection(date="", name="", creator_user_uuid=UUID(st.session_state.user_uuid))
     else:
         collection_obj = st.session_state.storage_handler.read_item(
             item_uuid=collection_selection, model_type="Collection"
@@ -94,22 +95,17 @@ if submitted:  # noqa: C901
             simple_s3_url = authenticated_s3_url.split("?")[0]
 
             file = File(
-                path=simple_s3_url,
-                type=file_type,
+                url=simple_s3_url,
+                content_type=file_type,
                 name=sanitised_name,
-                storage_kind=ENV["OBJECT_STORE"],
-                creator_user_uuid=st.session_state.user_uuid,
+                creator_user_uuid=UUID(st.session_state.user_uuid),
             )
 
         # ==================== CHUNKING ====================
 
         with st.spinner(f"Chunking **{file.name}**"):
             try:
-                chunks = file_chunker.chunk_file(
-                    file=file,
-                    file_url=authenticated_s3_url,
-                    creator_user_uuid=st.session_state.user_uuid,
-                )
+                chunks = file_chunker.chunk_file(file=file)
             except TypeError as err:
                 st.error(f"Failed to chunk {file.name}, error: {str(err)}")
                 st.write(file.model_dump())
@@ -138,7 +134,7 @@ if submitted:  # noqa: C901
 
         st.toast(body=f"{file.name} Complete")
 
-        collection_obj.files.append(file.uuid)
+        collection_obj.files.append(str(file.uuid))
 
     if collection_obj.name and (collection_obj.name != "none"):
         st.session_state.storage_handler.write_item(item=collection_obj)

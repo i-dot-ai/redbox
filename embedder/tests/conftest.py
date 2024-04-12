@@ -11,9 +11,6 @@ T = TypeVar("T")
 
 YieldFixture = Generator[T, None, None]
 
-# model_db = SentenceTransformerDB()
-# model_db.init_from_disk()
-
 
 env = Settings()
 
@@ -21,12 +18,10 @@ env = Settings()
 @pytest.fixture
 def chunk() -> YieldFixture[Chunk]:
     test_chunk = Chunk(
-        uuid=str(uuid4()),
-        parent_file_uuid="test_uuid",
+        parent_file_uuid=uuid4(),
         index=1,
         text="test_text",
         metadata={},
-        creator_user_uuid="test",
     )
     yield test_chunk
 
@@ -45,7 +40,9 @@ def elasticsearch_client() -> YieldFixture[Elasticsearch]:
 def elasticsearch_storage_handler(
     elasticsearch_client,
 ) -> YieldFixture[ElasticsearchStorageHandler]:
-    yield ElasticsearchStorageHandler(es_client=elasticsearch_client, root_index="redbox-data")
+    yield ElasticsearchStorageHandler(
+        es_client=elasticsearch_client, root_index="redbox-data"
+    )
 
 
 @pytest.fixture

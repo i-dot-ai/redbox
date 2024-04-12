@@ -1,14 +1,22 @@
 import json
+import uuid
 from datetime import date, datetime
 
-import pydantic
 import streamlit as st
 from langchain.schema import AIMessage, HumanMessage, SystemMessage
 from streamlit_feedback import streamlit_feedback
-from utils import StreamlitStreamHandler, init_session_state, load_llm_handler, replace_doc_ref, submit_feedback, get_persona_description
 
 from redbox.llm.prompts.core import CORE_REDBOX_PROMPT
 from redbox.models.chat import ChatMessage
+from streamlit_app.utils import (
+    StreamlitStreamHandler,
+    get_files_by_uuid,
+    get_persona_description,
+    init_session_state,
+    load_llm_handler,
+    replace_doc_ref,
+    submit_feedback,
+)
 
 st.set_page_config(page_title="Redbox Copilot - Ask the Box", page_icon="📮", layout="wide")
 
@@ -20,6 +28,7 @@ ENV = init_session_state()
 def change_selected_model():
     load_llm_handler(ENV, update=True)
     st.write(st.session_state.llm)
+
 
 persona_name = st.sidebar.selectbox(
     "What is your role?",
@@ -70,11 +79,6 @@ if "ai_message_markdown_lookup" not in st.session_state:
     st.session_state["ai_message_markdown_lookup"] = {}
 
 
-def get_files_by_uuid(file_uuids):
-    files = st.session_state.storage_handler.read_items(file_uuids, "File")
-    return files
-
-
 def render_citation_response(response):
     cited_chunks = [
         (
@@ -85,7 +89,7 @@ def render_citation_response(response):
         for chunk in response["input_documents"]
     ]
     cited_chunks = set(cited_chunks)
-    cited_files = get_files_by_uuid([x[0] for x in cited_chunks])
+    cited_files = get_files_by_uuid([uuid.UUID(x[0]) for x in cited_chunks])
     page_numbers = [x[2] for x in cited_chunks]
 
     for j, page_number in enumerate(page_numbers):
