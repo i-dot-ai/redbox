@@ -122,7 +122,7 @@ docker_build: ## Build the docker container
 .PHONY: docker_push
 docker_push:
 	@echo "Fetching service list..."
-	@SERVICES=$$(docker-compose config --services); \
+	@SERVICES=$$(docker compose config --services); \
 	echo "Services to push: $$SERVICES"; \
 	for service in $$SERVICES; do \
 		if grep -A 2 "^\s*$$service:" docker-compose.yml | grep -q 'build:'; then \
