@@ -105,7 +105,7 @@ docker_login:
 docker_build: ## Build the docker container
 	@echo "Fetching service list..."
 	cp .env.example .env 
-	@SERVICES=$$(docker-compose config --services); \
+	@SERVICES=$$(docker compose config --services); \
 	echo "Services to update: $$SERVICES"; \
 	for service in $$SERVICES; do \
 		if grep -A 2 "^\s*$$service:" docker-compose.yml | grep -q 'build:'; then \
