@@ -112,7 +112,7 @@ docker_build: ## Build the docker container
 	@for service in $(DOCKER_SERVICES); do \
 		if grep -A 2 "^\s*$$service:" docker-compose.yml | grep -q 'build:'; then \
 			echo "Building $$service..."; \
-			PREV_IMAGE="${ECR_REPO_URL}-$$service:${PREV_IMAGE_TAG}"; \
+			PREV_IMAGE="$(ECR_REPO_URL)-$$service:$(PREV_IMAGE_TAG)"; \
 			echo "Pulling previous image: $$PREV_IMAGE"; \
 			docker pull $$PREV_IMAGE; \
 			docker compose build $$service; \
