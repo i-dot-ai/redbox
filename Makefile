@@ -113,7 +113,7 @@ docker_build: ## Build the docker container
 			PREV_IMAGE="$(ECR_REPO_URL)-$$service:$(PREV_IMAGE_TAG)"; \
 			echo "Pulling previous image: $$PREV_IMAGE"; \
 			docker pull $$PREV_IMAGE; \
-			docker-compose build $$service; \
+			docker compose build $$service; \
 		else \
 			echo "Skipping $$service - does not have a build context."; \
 		fi; \
