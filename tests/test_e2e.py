@@ -31,7 +31,7 @@ def test_upload_to_elastic(file_pdf_path, s3_client):
             },
         )
         assert response.status_code == 200
-        file_uuid = response.json()
+        file_uuid = response.json()["uuid"]
 
         timeout = 120
         start_time = time.time()
