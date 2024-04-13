@@ -1,7 +1,6 @@
 import os
 import uuid
 
-import requests
 from boto3.s3.transfer import TransferConfig
 from django.conf import settings
 from django.shortcuts import render
@@ -75,7 +74,7 @@ def documents_view(request):
 def get_file_extension(file):
     # TODO: use a third party checking service to validate this
 
-    _, extension = os.path.splitext(file.name)
+    _, extension = os.path.splitext(file.key)
     return extension
 
 
@@ -89,7 +88,7 @@ def upload_view(request):
 
         file_extension = get_file_extension(uploaded_file)
 
-        if uploaded_file.name is None:
+        if uploaded_file.key is None:
             errors["upload_doc"].append("File has no name")
         if uploaded_file.content_type is None:
             errors["upload_doc"].append("File has no content-type")
@@ -106,7 +105,7 @@ def upload_view(request):
                 Bucket=settings.BUCKET_NAME,
                 Fileobj=uploaded_file,
                 Key=file_key,
-                ExtraArgs={"Tagging": f"file_type={uploaded_file.content_type}"},
+                ExtraArgs={"Tagging": f"file_type={file_extension}"},
                 Config=TransferConfig(
                     multipart_chunksize=CHUNK_SIZE,
                     preferred_transfer_client="auto",
@@ -129,13 +128,11 @@ def upload_view(request):
             simple_s3_url = authenticated_s3_url.split("?")[0]
 
             # ingest file
-            api = CoreApiClient(
-                host=settings.CORE_API_HOST, port=settings.CORE_API_PORT
-            )
+            api = CoreApiClient(host=settings.CORE_API_HOST, port=settings.CORE_API_PORT)
 
             try:
                 api.upload_file(
-                    uploaded_file.name,
+                    uploaded_file.key,
                     file_extension,
                     simple_s3_url,
                 )

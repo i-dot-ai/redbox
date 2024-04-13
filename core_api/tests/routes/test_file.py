@@ -25,19 +25,12 @@ async def test_post_file_upload(s3_client, app_client, elasticsearch_storage_han
             ExtraArgs={"Tagging": "file_type=pdf"},
         )
 
-        authenticated_s3_url = s3_client.generate_presigned_url(
-            "get_object",
-            Params={"Bucket": env.bucket_name, "Key": file_key},
-            ExpiresIn=3600,
-        )
-
         async with TestRedisBroker(router.broker):
             response = app_client.post(
                 "/file",
-                params={
-                    "name": "filename",
-                    "type": ".pdf",
-                    "location": authenticated_s3_url,
+                json={
+                    "key": file_key,
+                    "bucket": env.bucket_name,
                 },
             )
     assert response.status_code == 200
@@ -61,7 +54,7 @@ def test_delete_file(s3_client, app_client, elasticsearch_storage_handler, chunk
     I Expect to see it removed from s3 and elastic-search, including the chunks
     """
     # check assets exist
-    assert s3_client.get_object(Bucket=env.bucket_name, Key=chunked_file.name)
+    assert s3_client.get_object(Bucket=env.bucket_name, Key=chunked_file.key)
     assert elasticsearch_storage_handler.read_item(item_uuid=chunked_file.uuid, model_type="file")
     assert elasticsearch_storage_handler.get_file_chunks(chunked_file.uuid)
 
@@ -72,7 +65,7 @@ def test_delete_file(s3_client, app_client, elasticsearch_storage_handler, chunk
 
     # check assets dont exist
     with pytest.raises(Exception):
-        s3_client.get_object(Bucket=env.bucket_name, Key=chunked_file.name)
+        s3_client.get_object(Bucket=env.bucket_name, Key=chunked_file.key)
 
     with pytest.raises(NotFoundError):
         elasticsearch_storage_handler.read_item(item_uuid=chunked_file.uuid, model_type="file")
