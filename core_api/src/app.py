@@ -1,6 +1,5 @@
 import logging
 from datetime import datetime
-from urllib.parse import unquote
 from uuid import UUID
 
 from fastapi import FastAPI, HTTPException
@@ -18,6 +17,7 @@ from redbox.models import (
     StatusResponse,
 )
 from redbox.storage import ElasticsearchStorageHandler
+from core_api.src.routes.file import file_app
 
 # === Logging ===
 
@@ -65,10 +65,8 @@ app = FastAPI(
     docs_url="/docs",
     redoc_url="/redoc",
     openapi_url="/openapi.json",
-    lifespan=router.lifespan_context,
 )
 
-app.include_router(router)
 
 # === API Routes ===
 
@@ -198,3 +196,6 @@ def embed_sentences(sentences: list[str]) -> EmbeddingResponse:
     """
 
     return model_db.embed_sentences(sentences)
+
+
+app.mount("/file", file_app)

@@ -152,9 +152,7 @@ def init_session_state() -> dict:
             # The bucket does not exist or you have no access.
             if err.response["Error"]["Code"] == "404":
                 print("The bucket does not exist.")
-                st.session_state.s3_client.create_bucket(
-                    Bucket=st.session_state.BUCKET_NAME
-                )
+                st.session_state.s3_client.create_bucket(Bucket=st.session_state.BUCKET_NAME)
                 print("Bucket created successfully.")
             else:
                 raise err
@@ -170,9 +168,7 @@ def init_session_state() -> dict:
             ],
             basic_auth=(ENV["ELASTIC__USER"], ENV["ELASTIC__PASSWORD"]),
         )
-        st.session_state.storage_handler = ElasticsearchStorageHandler(
-            es_client=es, root_index="redbox-data"
-        )
+        st.session_state.storage_handler = ElasticsearchStorageHandler(es_client=es, root_index="redbox-data")
 
     if st.session_state.user_uuid == DEV_UUID:
         st.sidebar.info("**DEV MODE**")
@@ -237,9 +233,7 @@ def init_session_state() -> dict:
     return ENV
 
 
-def get_link_html(
-    page: str, text: str, query_dict: Optional[dict] = None, target: str = "_self"
-) -> str:
+def get_link_html(page: str, text: str, query_dict: Optional[dict] = None, target: str = "_self") -> str:
     """Returns a link in HTML format
 
     Args:
@@ -400,16 +394,12 @@ class FilePreview(object):
         """
 
         render_method = self.render_methods[file.content_type]
-        stream = st.session_state.s3_client.get_object(
-            Bucket=st.session_state.BUCKET_NAME, Key=file.name
-        )
+        stream = st.session_state.s3_client.get_object(Bucket=st.session_state.BUCKET_NAME, Key=file.name)
         file_bytes = stream["Body"].read()
         render_method(file, file_bytes)
 
     def _render_pdf(self, file: File, page_number: Optional[int] = None) -> None:
-        stream = st.session_state.s3_client.get_object(
-            Bucket=st.session_state.BUCKET_NAME, Key=file.name
-        )
+        stream = st.session_state.s3_client.get_object(Bucket=st.session_state.BUCKET_NAME, Key=file.name)
         base64_pdf = base64.b64encode(stream["Body"].read()).decode("utf-8")
 
         if page_number is not None:
@@ -441,9 +431,7 @@ class FilePreview(object):
         st.dataframe(df, use_container_width=True)
 
     def _render_eml(self, file: File, file_bytes: bytes) -> None:
-        st.markdown(
-            self.cleaner.clean_html(file_bytes.decode("utf-8")), unsafe_allow_html=True
-        )
+        st.markdown(self.cleaner.clean_html(file_bytes.decode("utf-8")), unsafe_allow_html=True)
 
     def _render_html(self, file: File, file_bytes: bytes) -> None:
         markdown_html = html2markdown.convert(file_bytes.decode("utf-8"))
@@ -584,11 +572,7 @@ def get_persona_description(persona_name) -> str | None:
         persona_name (str): Persona name selected by user.
     """
 
-    return next(
-        chat_persona.description
-        for chat_persona in chat_personas
-        if chat_persona.name == persona_name
-    )
+    return next(chat_persona.description for chat_persona in chat_personas if chat_persona.name == persona_name)
 
 
 def get_persona_prompt(persona_name) -> str | None:
@@ -597,11 +581,7 @@ def get_persona_prompt(persona_name) -> str | None:
     Args:
         persona_name (str): Persona name selected by user.
     """
-    return next(
-        chat_persona.prompt
-        for chat_persona in chat_personas
-        if chat_persona.name == persona_name
-    )
+    return next(chat_persona.prompt for chat_persona in chat_personas if chat_persona.name == persona_name)
 
 
 def get_files_by_uuid(file_uuids: list[uuid.UUID]) -> list[File]:
