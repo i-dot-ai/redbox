@@ -35,5 +35,3 @@ def s3_client():
             raise e
 
     yield client
-
-

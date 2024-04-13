@@ -100,7 +100,8 @@ jobs:
 
     - name: Format code
       run: |
-        make format
+        poetry run ruff format . --check
+        poetry run ruff check .
 
     - name: Type check
       run: |

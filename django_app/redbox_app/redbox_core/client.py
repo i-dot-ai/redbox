@@ -36,7 +36,6 @@ def s3_client():
 
 
 class CoreApiClient:
-
     def __init__(self, host: str, port: int):
         self.host = host
         self.port = port
@@ -46,13 +45,13 @@ class CoreApiClient:
         return f"{self.host}:{self.port}"
 
     def upload_file(self, s3_url: str, name: str, extension: str):
-        if self.host ==  "testserver":
+        if self.host == "testserver":
             file = {
                 "url": "s3 url",
                 "content_type": "application/pdf",
                 "name": "my-test-file.pdf",
                 "text": "once upon a time....",
-                "processing_status": "uploaded"
+                "processing_status": "uploaded",
             }
             return file
 

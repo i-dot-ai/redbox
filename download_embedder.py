@@ -8,9 +8,7 @@ log = logging.getLogger()
 
 
 def download():
-    parser = argparse.ArgumentParser(
-        description="Download Sentence Transformer Embedder"
-    )
+    parser = argparse.ArgumentParser(description="Download Sentence Transformer Embedder")
     parser.add_argument(
         "--model_name",
         type=str,

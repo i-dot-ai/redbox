@@ -12,9 +12,7 @@ class Command(BaseCommand):
     superuser should use to enable login to the admin portal."""
 
     def add_arguments(self, parser):
-        parser.add_argument(
-            "-e", "--email", type=str, help="user's email", required=True
-        )
+        parser.add_argument("-e", "--email", type=str, help="user's email", required=True)
         parser.add_argument("-p", "--password", type=str, help="user's new password")
 
     def handle(self, *args, **kwargs):
@@ -32,13 +30,9 @@ class Command(BaseCommand):
         user.refresh_from_db()
 
         if not user.password:
-            self.stderr.write(
-                self.style.ERROR(f"A password must be set for '{email}'.")
-            )
+            self.stderr.write(self.style.ERROR(f"A password must be set for '{email}'."))
             return
 
-        device, _ = TOTPDevice.objects.get_or_create(
-            user=user, confirmed=True, tolerance=0
-        )
+        device, _ = TOTPDevice.objects.get_or_create(user=user, confirmed=True, tolerance=0)
         self.stdout.write(device.config_url)
         return

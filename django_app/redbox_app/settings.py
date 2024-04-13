@@ -253,9 +253,7 @@ DATABASES = {
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
-    "formatters": {
-        "verbose": {"format": "%(asctime)s %(levelname)s %(module)s: %(message)s"}
-    },
+    "formatters": {"verbose": {"format": "%(asctime)s %(levelname)s %(module)s: %(message)s"}},
     "handlers": {
         "file": {
             "level": "DEBUG",
@@ -269,9 +267,7 @@ LOGGING = {
             "formatter": "verbose",
         },
     },
-    "loggers": {
-        "application": {"handlers": [LOG_HANDLER], "level": "DEBUG", "propagate": True}
-    },
+    "loggers": {"application": {"handlers": [LOG_HANDLER], "level": "DEBUG", "propagate": True}},
 }
 
 # link to core_api app
