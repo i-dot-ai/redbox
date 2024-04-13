@@ -26,7 +26,7 @@ def test_upload_to_elastic(file_pdf_path, s3_client):
         response = requests.post(
             url="http://localhost:5002/file",
             json={
-                "name": file_key,
+                "key": file_key,
                 "bucket": bucket_name,
             },
         )
