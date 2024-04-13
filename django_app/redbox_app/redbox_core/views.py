@@ -74,7 +74,7 @@ def documents_view(request):
 def get_file_extension(file):
     # TODO: use a third party checking service to validate this
 
-    _, extension = os.path.splitext(file.key)
+    _, extension = os.path.splitext(file.name)
     return extension
 
 
@@ -88,7 +88,7 @@ def upload_view(request):
 
         file_extension = get_file_extension(uploaded_file)
 
-        if uploaded_file.key is None:
+        if uploaded_file.name is None:
             errors["upload_doc"].append("File has no name")
         if uploaded_file.content_type is None:
             errors["upload_doc"].append("File has no content-type")
@@ -105,7 +105,7 @@ def upload_view(request):
                 Bucket=settings.BUCKET_NAME,
                 Fileobj=uploaded_file,
                 Key=file_key,
-                ExtraArgs={"Tagging": f"file_type={file_extension}"},
+                ExtraArgs={"Tagging": f"file_type={uploaded_file.content_type}"},
                 Config=TransferConfig(
                     multipart_chunksize=CHUNK_SIZE,
                     preferred_transfer_client="auto",
@@ -115,27 +115,11 @@ def upload_view(request):
                 ),
             )
 
-            # TODO: Handle S3 upload errors
-            authenticated_s3_url = s3.generate_presigned_url(
-                "get_object",
-                Params={
-                    "Bucket": settings.BUCKET_NAME,
-                    "Key": file_key,
-                },
-                ExpiresIn=3600,
-            )
-            # Strip off the query string (we don't need the keys)
-            simple_s3_url = authenticated_s3_url.split("?")[0]
-
             # ingest file
             api = CoreApiClient(host=settings.CORE_API_HOST, port=settings.CORE_API_PORT)
 
             try:
-                api.upload_file(
-                    uploaded_file.key,
-                    file_extension,
-                    simple_s3_url,
-                )
+                api.upload_file(uploaded_file.name)
                 # TODO: update improved File object with elastic uuid
                 uploaded = True
             except ValueError as value_error:
