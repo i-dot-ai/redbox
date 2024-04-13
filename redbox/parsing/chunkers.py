@@ -10,7 +10,7 @@ s3_client = env.s3_client()
 def other_chunker(file: File) -> list[Chunk]:
     authenticated_s3_url = s3_client.generate_presigned_url(
         "get_object",
-        Params={"Bucket": env.bucket_name, "Key": file.name},
+        Params={"Bucket": env.bucket_name, "Key": file.key},
         ExpiresIn=3600,
     )
 

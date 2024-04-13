@@ -60,18 +60,9 @@ def file(s3_client, file_pdf_path):
             Tagging=f"file_type={file_type}",
         )
 
-    authenticated_s3_url = s3_client.generate_presigned_url(
-        "get_object",
-        Params={"Bucket": env.bucket_name, "Key": file_name},
-        ExpiresIn=3600,
-    )
-
-    # Strip off the query string (we don't need the keys)
-    simple_s3_url = authenticated_s3_url.split("?")[0]
     file_record = File(
-        name=file_name,
-        url=simple_s3_url,
-        content_type=file_type,
+        key=file_name,
+        bucket=env.bucket_name,
     )
 
     yield file_record
