@@ -23,18 +23,11 @@ def test_upload_to_elastic(file_pdf_path, s3_client):
             ExtraArgs={"Tagging": "file_type=pdf"},
         )
 
-        authenticated_s3_url = s3_client.generate_presigned_url(
-            "get_object",
-            Params={"Bucket": bucket_name, "Key": file_key},
-            ExpiresIn=3600,
-        )
-
         response = requests.post(
             url="http://localhost:5002/file",
             params={
-                "name": "filename",
-                "type": ".pdf",
-                "location": authenticated_s3_url,
+                "name": file_key,
+                "bucket": bucket_name,
             },
         )
         assert response.status_code == 200
