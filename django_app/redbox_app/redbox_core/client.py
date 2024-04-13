@@ -44,10 +44,10 @@ class CoreApiClient:
     def url(self) -> str:
         return f"{self.host}:{self.port}"
 
-    def upload_file(self, s3_url: str, name: str, extension: str):
+    def upload_file(self, name: str):
         if self.host == "testserver":
             file = {
-                "key": "my-test-file.pdf",
+                "key": name,
                 "bucket": settings.BUCKET_NAME,
             }
             return file
