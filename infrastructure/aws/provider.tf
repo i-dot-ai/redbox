@@ -19,4 +19,5 @@ provider "aws" {
       Environment = terraform.workspace
     }
   }
+  region = var.region
 }
