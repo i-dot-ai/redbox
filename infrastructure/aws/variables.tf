@@ -19,13 +19,23 @@ variable "image_tag" {
   description = "Image tag"
 }
 
-variable "project_name" {
-  type        = string
-  description = "Name of the project"
-}
-
 variable "env" {
   type        = string
   description = "Environment"
 }
 
+variable "ecr_core_api_repository_uri" {
+  type        = string
+  description = "ECR repo uri"
+}
+
+variable "hosted_zone_id" {
+  type = string
+  default = "Z02925941RE7O3KX4BN43"
+  description = "Route 53 Hosted Zone"
+}
+
+variable "project_name" {
+  type        = string
+  description = "Name of project"
+}
