@@ -25,7 +25,7 @@ module "core-api" {
   project_name       = var.project_name
   image_tag          = var.image_tag
   prefix             = local.prefix
-  ecr_repository_uri = var.ecr_core_api_repository_uri
+  ecr_repository_uri = "${var.ecr_repository_uri}/redbox-core-api"
   ecs_cluster_id     = module.cluster.ecs_cluster_id
   health_check = {
     healthy_threshold   = 3
