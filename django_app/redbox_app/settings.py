@@ -150,7 +150,11 @@ LOGIN_REDIRECT_URL = "homepage"
 CSP_DEFAULT_SRC = (
     "'self'",
     "s3.amazonaws.com",
+)
+CSP_SCRIPT_SRC = (
+    "'self'", 
     "plausible.io",
+    "'sha256-GUQ5ad8JK5KmEWmROf3LZd9ge94daqNvd8xy9YS1iDw='",
 )
 CSP_OBJECT_SRC = ("'none'",)
 CSP_REQUIRE_TRUSTED_TYPES_FOR = ("'script'",)
