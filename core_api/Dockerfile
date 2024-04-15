@@ -14,7 +14,7 @@ ADD pyproject.toml poetry.lock /app/
 ADD download_embedder.py /app/
 ADD redbox/ /app/redbox
 
-RUN --mount=type=cache,target=$POETRY_CACHE_DIR poetry install --no-root --no-ansi --with api --without ai,ingester,dev,worker,streamlit-app
+RUN --mount=type=cache,target=$POETRY_CACHE_DIR poetry install --no-root --no-ansi --with api --without ai,ingester,dev,worker
 
 FROM python:3.11-slim-buster as runtime
 ARG EMBEDDING_MODEL

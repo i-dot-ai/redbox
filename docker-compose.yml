@@ -32,28 +32,6 @@ services:
       - utils
     volumes:
       - ./:/app/:z
-  streamlit-app:
-    image: redbox-streamlit-app:latest
-    build:
-      context: .
-      dockerfile: ./streamlit_app/Dockerfile
-      args:
-        - EMBEDDING_MODEL=${EMBEDDING_MODEL:-}
-    env_file:
-      - .env
-    ports:
-      - 8501:8501
-    volumes:
-      - ./data:/app/data:Z
-      - ./streamlit_app:/app/streamlit_app/
-    depends_on:
-      - elasticsearch
-      - minio
-    links:
-      - elasticsearch
-      - minio
-    networks:
-      - redbox-app-network
   embedder:
     image: redbox-embedder:latest
     build:
