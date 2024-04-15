@@ -48,7 +48,6 @@ class FileChunker:
 
         Args:
             file (File): The file to read, analyse layout and chunk.
-            file_url (str): The authenticated url of the file to fetch, analyse layout and chunk.
             chunk_clustering (bool): Whether to merge small semantically similar chunks.
                 Defaults to True.
         Raises:
@@ -61,14 +60,5 @@ class FileChunker:
 
         if chunk_clustering:
             chunks = cluster_chunks(chunks, embedding_model=self.embedding_model)
-
-        # Ensure page numbers are a list for schema compliance
-        for chunk in chunks:
-            if "page_number" in chunk.metadata:
-                if isinstance(chunk.metadata["page_number"], int):
-                    chunk.metadata["page_numbers"] = [chunk.metadata["page_number"]]
-                elif isinstance(chunk.metadata["page_number"], list):
-                    chunk.metadata["page_numbers"] = chunk.metadata["page_number"]
-                del chunk.metadata["page_number"]
 
         return chunks

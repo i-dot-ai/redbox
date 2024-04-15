@@ -4,8 +4,8 @@ from typing import Optional
 from uuid import UUID
 
 import tiktoken
-from langchain.schema import Document
-from pydantic import AnyUrl, BaseModel, Field, computed_field
+from pydantic import BaseModel, Field, computed_field
+from unstructured.documents.elements import Element
 
 from redbox.models.base import PersistableModel
 
@@ -31,7 +31,7 @@ class Chunk(PersistableModel):
     parent_file_uuid: UUID = Field(description="id of the original file which this text came from")
     index: int = Field(description="relative position of this chunk in the original file")
     text: str = Field(description="chunk of the original text")
-    metadata: dict
+    metadata: Optional[Element] = None
     embedding: Optional[list[float]] = Field(description="the vector representation of the text", default=None)
 
     @computed_field

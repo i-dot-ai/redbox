@@ -56,8 +56,6 @@ lint:
 
 format:
 	poetry run ruff format .
-	# additionally we format, but not lint, the notebooks
-	# poetry run ruff format **/*.ipynb
 
 safe:
 	poetry run bandit -ll -r ./redbox
