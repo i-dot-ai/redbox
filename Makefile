@@ -31,11 +31,11 @@ test-embedder:
 	poetry run pytest embedder/tests --cov=embedder/src -v --cov-report=term-missing --cov-fail-under=50
 
 test-redbox:
-	poetry install --no-root --no-ansi --with worker,api,dev --without ai,streamlit-app,ingester
+	poetry install --no-root --no-ansi --with worker,api,dev --without ai,ingester
 	poetry run pytest redbox/tests --cov=redbox -v --cov-report=term-missing --cov-fail-under=45
 
 test-ingester:
-	poetry install --no-root --no-ansi --with worker,ingester,dev --without ai,streamlit-app,api
+	poetry install --no-root --no-ansi --with worker,ingester,dev --without ai,api
 	poetry run pytest ingester/tests --cov=ingester -v --cov-report=term-missing --cov-fail-under=40
 
 test-django:
@@ -47,7 +47,7 @@ test-integration:
 	cp .env.integration .env
 	docker compose build core-api embedder ingester minio
 	docker compose up -d core-api embedder ingester minio
-	poetry install --no-root --no-ansi --with dev --without ai,streamlit-app,api,worker,ingester
+	poetry install --no-root --no-ansi --with dev --without ai,api,worker,ingester
 	sleep 10
 	poetry run pytest tests
 
