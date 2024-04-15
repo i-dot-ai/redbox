@@ -3,6 +3,7 @@ from itertools import compress
 import numpy as np
 import scipy
 from sentence_transformers import SentenceTransformer
+from unstructured.documents.elements import ElementMetadata
 
 from redbox.models.file import Chunk
 
@@ -129,7 +130,7 @@ def create_pdist(token_counts, pair_embed_dist, weight_embed_dist=0.2, use_log=T
     return combined_dist
 
 
-def merge_chunk_metadata(meta_in: list[dict]) -> dict:
+def merge_chunk_metadata(meta_in: list[ElementMetadata]) -> dict:
     """
     Combine metadata for multiple chunks from the same document.
     """
