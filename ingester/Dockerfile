@@ -30,8 +30,12 @@ WORKDIR /app/
 ADD redbox/ /app/redbox
 ADD ingester/ /app/ingester
 ADD download_embedder.py /app/
+ADD ingester/download_ocr_models.py /app/
 
 # Download the model
 RUN python download_embedder.py --model_name ${EMBEDDING_MODEL}
+
+# Download the OCR models
+RUN python download_ocr_models.py
 
 CMD ["faststream", "run", "ingester.src.worker:app"]
