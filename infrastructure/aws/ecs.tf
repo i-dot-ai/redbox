@@ -1,6 +1,7 @@
 locals {
   host = terraform.workspace == "prod" ? "${var.project_name}.ai.cabinetoffice.gov.uk" : "${var.project_name}-${terraform.workspace}.ai.cabinetoffice.gov.uk"
   prefix = "backend"
+  bucket_name = "redbox-${terraform.workspace}"
 }
 
 module "cluster" {
@@ -31,7 +32,7 @@ module "core-api" {
     healthy_threshold   = 3
     unhealthy_threshold = 3
     accepted_response   = "200"
-    path                = "/health/"
+    path                = "/health"
     timeout             = 5
   }
   state_bucket                 = var.state_bucket
@@ -45,14 +46,54 @@ module "core-api" {
     "ELASTIC__API_KEY": var.elastic_api_key,
     "ELASTIC__CLOUD_ID": var.cloud_id,
     "OBJECT_STORE": "s3",
-    "BUCKET_NAME": "redbox",
+    "BUCKET_NAME": local.bucket_name,
     "EMBEDDING_MODEL": "all-mpnet-base-v2",
     "EMBED_QUEUE_NAME": "redbox-embedder-queue",
     "INGEST_QUEUE_NAME": "redbox-ingester-queue",
-    "REDIS_HOST": "redis",
-    "REDIS_PORT": "6379",
+    "REDIS_HOST": module.elasticache.redis_address,
+    "REDIS_PORT": module.elasticache.redis_port,
     "DJANGO_SECRET_KEY": var.django_secret_key,
     "POSTGRES_PASSWORD": var.postgres_password
   }
 }
 
+
+data "aws_iam_policy_document" "ecs_exec_role_policy" {
+  # checkov:skip=CKV_AWS_111:Allow for write access without constraints
+  # checkov:skip=CKV_AWS_356:Allow for policies to not have resource limits
+  statement {
+    effect = "Allow"
+    actions = [
+      "s3:PutObject",
+      "s3:GetObject",
+      "s3:AbortMultipartUpload",
+      "s3:ListBucket",
+      "s3:DeleteObject",
+      "s3:GetObjectVersion",
+      "s3:ListMultipartUploadParts",
+    ]
+    resources = [
+      "arn:aws:s3:::${local.bucket_name}",
+      "arn:aws:s3:::${local.bucket_name}/*"
+    ]
+  }
+
+  statement {
+    effect = "Allow"
+    actions = [
+      "elasticache:Connect"
+    ]
+    resources = [module.elasticache.redis_arn]
+  }
+}
+
+resource "aws_iam_policy" "redbox_policy" {
+  name        = "backend-${var.project_name}-${terraform.workspace}-policy"
+  description = "Allow application instance to log"
+  policy      = data.aws_iam_policy_document.ecs_exec_role_policy.json
+}
+
+resource "aws_iam_role_policy_attachment" "redbox_role_policy" {
+  role       = module.core-api.ecs_task_execution_exec_role_name
+  policy_arn = aws_iam_policy.redbox_policy.arn
+}
