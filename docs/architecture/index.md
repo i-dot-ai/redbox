@@ -30,7 +30,7 @@ The Retrieval Augmented Generation (RAG) architecture grounds our Large Language
 |-----------|-----|-------|---------|----|
 | Object Store | S3 | Blob Storage | Minio | Storage of files |
 | Queue | SQS | Storage Queues | Redis | Distributing many compute tasks |
-| Frontend App | ECS | App Service | Docker | NextJS Chat App |
+| Frontend App | ECS | App Service | Docker | Django GOV.UK/AlpineJS |
 | Core API | ECS | App Service | Docker | FastAPI AI Interaction and DB Intermediary |
 | Ingester Worker | ECS | App Service | Docker | Queue fed file ingester |
 | Embedder Worker | ECS | App Service | Docker | Queue fed chunk embedder |
