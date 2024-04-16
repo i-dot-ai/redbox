@@ -23,7 +23,7 @@ resource "aws_route53_record" "type-a-record" {
 module "core-api" {
   source             = "../../../i-ai-core-infrastructure//modules/ecs"
   project_name       = var.project_name
-  image_tag          = var.image_tag
+  image_tag          = "09e2cf755630d3e785afec10daacdd86e4d33656"
   prefix             = local.prefix
   ecr_repository_uri = "${var.ecr_repository_uri}/redbox-core-api"
   ecs_cluster_id     = module.cluster.ecs_cluster_id
@@ -31,8 +31,8 @@ module "core-api" {
     healthy_threshold   = 3
     unhealthy_threshold = 3
     accepted_response   = "200"
-    path                = "/"
-    timeout             = 6
+    path                = "/health/"
+    timeout             = 5
   }
   state_bucket                 = var.state_bucket
   vpc_id                       = data.terraform_remote_state.vpc.outputs.vpc_id
@@ -52,7 +52,7 @@ module "core-api" {
     "REDIS_HOST": "redis",
     "REDIS_PORT": "6379",
     "DJANGO_SECRET_KEY": var.django_secret_key,
-    "PSOTGRES_PASSWORD": var.postgres_password
+    "POSTGRES_PASSWORD": var.postgres_password
   }
 }
 
