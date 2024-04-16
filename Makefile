@@ -22,7 +22,7 @@ rebuild:
 	docker compose build --no-cache
 
 test-core-api:
-	poetry install --no-root --no-ansi --with worker,api,dev --without ai,ingester
+	poetry install --no-root --no-ansi --with worker,api,dev,ai --without ingester
 	poetry run pytest core_api/tests --cov=core_api/src -v --cov-report=term-missing --cov-fail-under=45
 
 test-embedder:
