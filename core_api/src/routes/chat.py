@@ -57,23 +57,24 @@ def simple_chat(chat_history: List[ChatMessage]) -> StreamingResponse:
 
     if len(chat_history) < 2:
         raise HTTPException(
-            status_code=421,
+            status_code=422,
             detail="Chat history should include both system and user prompts",
         )
 
-    if chat_history[-1]["role"] != "system":
+    if chat_history[0]["role"] != "system":
         raise HTTPException(
-            status_code=421,
+            status_code=422,
             detail="The first entry in the chat history should be a system prompt",
         )
 
     if chat_history[-1]["role"] != "user":
         raise HTTPException(
-            status_code=421,
+            status_code=422,
             detail="The final entry in the chat history should be a user question",
         )
 
     # TODO: handle errors from LLM request
+    # maybe litellm.exceptions.APIError: OpenAIException?
 
     question = chat_history[-1]
     previous_history = chat_history[0:-1]
