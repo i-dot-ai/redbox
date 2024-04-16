@@ -23,7 +23,12 @@ theme:
 
 nav:
   - Home: index.md
-  - Installation: installation.md
+  - Installation: DEVELOPER_SETUP.md
+  - Architecture:
+    - Overview: architecture/index.md
+    - Workers and Queues: architecture/workers_and_queues.md
+    - Transactions and Schema: architecture/transactions_and_schema.md
+    - Docker and Dependencies: architecture/docker_and_dependencies.md
   - Code Reference: 
     - Home: code_reference/index.md
     - Models: 
@@ -40,6 +45,8 @@ nav:
     - Storage:
       - Overview: code_reference/storage/index.md
       - ElasticsearchStorageHandler: code_reference/storage/elasticsearch_storage_handler.md
+  - Contributing: contributing.md
+
 plugins:
     search: null
     mermaid2: null

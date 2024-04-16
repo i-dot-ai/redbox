@@ -1,12 +1,17 @@
-# Developer setup guide
+# Developer Setup Guide
 
 ## Requirements
 
-To run this project, you'll need `python`, `pip` and `poetry` installed.
+To run this project, you'll need the following installed:
 
-```
-python == 3.11
-```
+-  [Docker](https://docs.docker.com/get-docker/) - For building and running containers
+-  [Docker Compose](https://docs.docker.com/compose/install/) - For managing multiple containers
+-  [Python 3.11](https://www.python.org/downloads/) - For intellisense and linting (not explicitly needed to run the project due to docker, but recommended for development)
+-  [pip](https://pip.pypa.io/en/stable/installation/) - For installing poetry
+-  [poetry](https://python-poetry.org/docs/) - For managing python packages
+-  [Make](https://www.gnu.org/software/make/) - For running commands in the `Makefile`
+
+If you don't have this python version, we'd recommend using [pyenv](https://github.com/pyenv/pyenv) to manage your python versions.
 
 ## Installing packages
 
@@ -24,7 +29,20 @@ We use `.env` files to populate the environment variables for local development.
 
 To run the project, create a new file called `.env` and populate this file with the setting names from `.env.example` and the values these settings need.
 
+Typically this involves setting the following variables:
+
+- `OPENAI_API_KEY` - OpenAI API key
+- `ANTHROPIC_API_KEY` - Anthropic API key
+
 **`.env` is in `.gitignore` and should not be committed to git**
+
+## Other dependencies (for Document Ingestion and OCR)
+
+You will need to install `poppler` and `tesseract` to run the `ingester`
+- `brew install poppler`
+- `brew install tesseract`
+
+
 
 ## Building and running the project
 
@@ -107,3 +125,9 @@ For integration tests:
 ``` bash
 make test-integration
 ```
+
+## Pre-commit hooks
+
+- Download and install [pre-commit](https://pre-commit.com) to benefit from pre-commit hooks
+  - `pip install pre-commit`
+  - `pre-commit install`
