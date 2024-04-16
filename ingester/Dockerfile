@@ -16,7 +16,8 @@ RUN --mount=type=cache,target=$POETRY_CACHE_DIR poetry install --no-root --no-an
 FROM python:3.11-slim-buster as runtime
 RUN apt update && apt-get install -y \
     poppler-utils \
-    tesseract-ocr
+    tesseract-ocr \
+    libmagic-dev
 
 ARG EMBEDDING_MODEL
 
