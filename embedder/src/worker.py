@@ -2,11 +2,12 @@ import logging
 from contextlib import asynccontextmanager
 from datetime import datetime
 
-from faststream import Context, ContextRepo, FastStream
-from faststream.redis import RedisBroker
+from fastapi import FastAPI
+from faststream import Context, ContextRepo
+from faststream.redis import RedisRouter
 
 from redbox.model_db import SentenceTransformerDB
-from redbox.models import Chunk, EmbedQueueItem, Settings
+from redbox.models import Chunk, EmbedQueueItem, Settings, StatusResponse
 from redbox.storage import ElasticsearchStorageHandler
 
 start_time = datetime.now()
@@ -15,8 +16,7 @@ log.setLevel(logging.INFO)
 
 env = Settings()
 
-
-broker = RedisBroker(url=env.redis_url)
+router = RedisRouter(env.redis_url)
 
 
 @asynccontextmanager
@@ -31,7 +31,7 @@ async def lifespan(context: ContextRepo):
     yield
 
 
-@broker.subscriber(channel=env.embed_queue_name)
+@router.subscriber(channel=env.embed_queue_name)
 async def embed(
     queue_item: EmbedQueueItem,
     storage_handler: ElasticsearchStorageHandler = Context(),
@@ -51,4 +51,25 @@ async def embed(
     storage_handler.update_item(chunk)
 
 
-app = FastStream(broker, lifespan=lifespan)
+app = FastAPI(lifespan=router.lifespan_context)
+app.include_router(router)
+
+
+@app.get("/health", tags=["health"])
+def health() -> StatusResponse:
+    """Returns the health of the API
+
+    Returns:
+        StatusResponse: The health of the API
+    """
+
+    uptime = datetime.now() - start_time
+    uptime_seconds = uptime.total_seconds()
+
+    output = StatusResponse(
+        status="ready",
+        uptime_seconds=uptime_seconds,
+        version="0.1.0",
+    )
+
+    return output
