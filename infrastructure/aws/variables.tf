@@ -48,3 +48,13 @@ variable "cloud_id" {
   type = string
   description = "Cloud ID for elastic cloud instance"
 }
+
+variable "django_secret_key" {
+  type = string
+  description = "cryptographic signature for djamngo app"
+}
+
+variable "postgres_password" {
+  type = string
+  description = "postgres password"
+}

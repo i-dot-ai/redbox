@@ -50,7 +50,9 @@ module "core-api" {
     "EMBED_QUEUE_NAME": "redbox-embedder-queue",
     "INGEST_QUEUE_NAME": "redbox-ingester-queue",
     "REDIS_HOST": "redis",
-    "REDIS_PORT": "6379"
+    "REDIS_PORT": "6379",
+    "DJANGO_SECRET_KEY": var.django_secret_key,
+    "PSOTGRES_PASSWORD": var.postgres_password
   }
 }
 
