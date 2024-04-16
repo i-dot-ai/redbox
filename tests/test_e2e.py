@@ -7,20 +7,21 @@ import requests
 # TODO: add e2e tests involving the Django app, checking S3 upload
 
 
-def test_upload_to_elastic(file_pdf_path, s3_client):
+def test_upload_to_elastic(file_path, s3_client):
     """
     When I POST file data to core-api/file
     I Expect a Chunk with a non-null embedding ... eventually
     """
 
-    with open(file_pdf_path, "rb") as f:
-        file_key = os.path.basename(file_pdf_path)
+    with open(file_path, "rb") as f:
+        file_key = os.path.basename(file_path)
+        file_type = os.path.splitext(file_key)[-1]
         bucket_name = "redbox-storage-dev"
         s3_client.upload_fileobj(
             Bucket=bucket_name,
             Fileobj=f,
             Key=file_key,
-            ExtraArgs={"Tagging": "file_type=pdf"},
+            ExtraArgs={"Tagging": f"file_type={file_type}"},
         )
 
         response = requests.post(
