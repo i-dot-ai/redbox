@@ -79,9 +79,7 @@ def simple_chat(chat_history: List[ChatMessage]) -> StreamingResponse:
     question = chat_history[-1]
     previous_history = chat_history[0:-1]
 
-    chat_prompt = ChatPromptTemplate.from_messages(
-        (msg["role"], msg["text"]) for msg in previous_history
-    )
+    chat_prompt = ChatPromptTemplate.from_messages((msg["role"], msg["text"]) for msg in previous_history)
 
     chain = LLMChain(llm=llm, prompt=chat_prompt)
 

@@ -34,9 +34,7 @@ def mock_get_chain(llm, prompt):
 
 @pytest.mark.parametrize("chat_history, status_code", test_history)
 def test_simple_chat(chat_history, status_code, app_client, monkeypatch):
-    monkeypatch.setattr(
-        "langchain_core.prompts.ChatPromptTemplate.from_messages", mock_chat_prompt
-    )
+    monkeypatch.setattr("langchain_core.prompts.ChatPromptTemplate.from_messages", mock_chat_prompt)
     monkeypatch.setattr("core_api.src.routes.chat.LLMChain", mock_get_chain)
 
     response = app_client.post("/chat/vanilla", json=chat_history)
