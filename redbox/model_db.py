@@ -5,7 +5,7 @@ from uuid import uuid4
 from sentence_transformers import SentenceTransformer
 
 from redbox.models import ModelInfo
-from redbox.models.llm import Embedding, EmbeddingResponse
+from redbox.models.embedding import Embedding, EmbeddingResponse
 
 MODEL_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "models")
 

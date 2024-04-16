@@ -19,13 +19,12 @@ def cluster_chunks(
 
     Args:
             chunks (List[File]): List of raw (small) chunks extracted from document.
-            desired_chunk_size: Avarage size of the output chunks. Defaults to 300,
-            embed_model (str): name of the sentence embedding model used to compare chunk similarity.
-                Defaults to "all-mpnet-base-v2".
+            desired_chunk_size (int): Avarage size of the output chunks. Defaults to 300,
+            embed_model (SentenceTransformer): name of the sentence embedding model used to compare chunk similarity
             dist_weight_split (float): Expects value between 0 and 1.
                 When calculating the combined distance metric this is the relative weight (importance)
                 of the semantic similarity vs the token counts. Defaults to .2.
-            dist_use_log (bool): When calculationg the combined distance metric should the input values
+            dist_use_log (bool): When calculating the combined distance metric should the input values
                 be scaled by log. Defaults to True.
 
     Returns:
@@ -42,7 +41,8 @@ def cluster_chunks(
         chunk_embedding = embedding_model.encode([chunk.text for chunk in chunks])
 
         pair_embed_dist = [0] + [
-            scipy.spatial.distance.cosine(chunk_embedding[i], chunk_embedding[i + 1]) for i in range(len(chunks) - 1)
+            scipy.spatial.distance.cosine(chunk_embedding[i], chunk_embedding[i + 1])
+            for i in range(len(chunks) - 1)
         ]
         # create distance vector (upper triangular) by combining the token counts with embedding distance
         dist_triu = create_pdist(
@@ -57,7 +57,10 @@ def cluster_chunks(
         # gets the maximum distance between all the points in the cluster
         hc = scipy.cluster.hierarchy.linkage(dist_triu, "complete")
         num_clusters = round(np.sum(token_counts) / desired_chunk_size)  # type: ignore
-        out_clusters = [lab[0] for lab in scipy.cluster.hierarchy.cut_tree(hc, n_clusters=num_clusters)]
+        out_clusters = [
+            lab[0]
+            for lab in scipy.cluster.hierarchy.cut_tree(hc, n_clusters=num_clusters)
+        ]
         # merge clusters and create output chunks
         out_chunks = []
         for i, clust in enumerate(np.unique(out_clusters)):
@@ -72,7 +75,9 @@ def cluster_chunks(
                     parent_file_uuid=chunks_in[0].parent_file_uuid,
                     index=1,
                     text=" ".join([chunk.text for chunk in chunks_in]),
-                    metadata=merge_chunk_metadata([chunk.metadata for chunk in chunks_in]),
+                    metadata=merge_chunk_metadata(
+                        [chunk.metadata for chunk in chunks_in]
+                    ),
                     creator_user_uuid=chunks_in[0].creator_user_uuid,
                 )
             out_chunks.append(new_chunk)
@@ -104,7 +109,10 @@ def create_pdist(token_counts, pair_embed_dist, weight_embed_dist=0.2, use_log=T
     token_dims = np.tri(n + 1, k=0) * np.concatenate([[0], np.array(token_counts)])
 
     # drop diagonal (sizes of individual chunks)
-    drop_ind = [y - x > 1 for x, y in zip(np.triu_indices(n + 1, k=1)[0], np.triu_indices(n + 1, k=1)[1])]
+    drop_ind = [
+        y - x > 1
+        for x, y in zip(np.triu_indices(n + 1, k=1)[0], np.triu_indices(n + 1, k=1)[1])
+    ]
 
     # calculate the token count distance between chunk i and j
     token_dist = scipy.spatial.distance.pdist(token_dims, "cityblock")[drop_ind]
