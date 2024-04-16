@@ -29,6 +29,8 @@ nav:
     - Workers and Queues: architecture/workers_and_queues.md
     - Transactions and Schema: architecture/transactions_and_schema.md
     - Docker and Dependencies: architecture/docker_and_dependencies.md
+  - Frontends:
+    - Overview: frontends/index.md
   - Code Reference: 
     - Home: code_reference/index.md
     - Models: 
