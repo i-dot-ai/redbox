@@ -7,7 +7,7 @@ data/
 db/
 !*/user_preferences/classes_format.json
 !*/user_preferences/classes_subject.json
-models/
+/models/
 
 # npm package files
 
