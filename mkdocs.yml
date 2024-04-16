@@ -9,7 +9,17 @@ theme:
     primary: "red"
     accent: "red"
   features:
+    - search.suggest
+    - search.highlight
+    - content.tabs.link
+    - navigation.indexes
+    - content.tooltips
+    - navigation.path
+    - content.code.annotate
     - content.code.copy
+    - content.code.select
+    - navigation.tabs
+  
 
 nav:
   - Home: index.md
@@ -20,11 +30,43 @@ nav:
       - Overview: code_reference/models/index.md
       - File: code_reference/models/file.md
       - Chunk: code_reference/models/chunk.md
-
+      - Embedding: code_reference/models/embedding.md
+      - Settings: code_reference/models/settings.md
+    - Parsing:
+      - Overview: code_reference/parsing/index.md
+      - FileChunker: code_reference/parsing/file_chunker.md
+      - Chunkers: code_reference/parsing/chunkers.md
+      - Chunk Clustering: code_reference/parsing/chunk_clustering.md
+    - Storage:
+      - Overview: code_reference/storage/index.md
+      - ElasticsearchStorageHandler: code_reference/storage/elasticsearch_storage_handler.md
 plugins:
-    - search
-    - mermaid2
-    - mkapi
+    search: null
+    mermaid2: null
+    git-revision-date-localized:
+      type: timeago
+      locale: en
+      fallback_to_build_date: true
+    glightbox: null
+    mkdocstrings:
+      handlers:
+        python:
+          options:
+            extensions:
+            - griffe_typingdoc
+            show_root_heading: true
+            show_if_no_docstring: true
+            inherited_members: true
+            members_order: source
+            separate_signature: true
+            unwrap_annotated: true
+            filters:
+            - '!^_'
+            merge_init_into_class: true
+            docstring_section_style: spacy
+            signature_crossrefs: true
+            show_symbol_type_heading: true
+            show_symbol_type_toc: true
 
 markdown_extensions:
   - meta
@@ -34,6 +76,9 @@ markdown_extensions:
   - pymdownx.snippets
   - pymdownx.superfences
   - pymdownx.pathconverter
+  - codehilite:
+      guess_lang: true
+      use_pygments: true
   - pymdownx.tabbed:
       alternate_style: true 
   - pymdownx.superfences:
