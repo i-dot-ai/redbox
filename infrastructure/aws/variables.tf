@@ -38,3 +38,13 @@ variable "project_name" {
   type        = string
   description = "Name of project"
 }
+
+variable "elastic_api_key" {
+  type = string
+  description = "API Key for elastic cloud instance"
+}
+
+variable "cloud_id" {
+  type = string
+  description = "Cloud ID for elastic cloud instance"
+}

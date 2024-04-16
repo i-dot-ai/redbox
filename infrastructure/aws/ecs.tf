@@ -41,5 +41,16 @@ module "core-api" {
   load_balancer_security_group = data.terraform_remote_state.platform.outputs.load_balancer_security_group_id["default"]
   aws_lb_arn                   = data.terraform_remote_state.platform.outputs.load_balancer_arn["default"]
   host                         = local.host
+  environment_variables = {
+    "ELASTIC__API_KEY": var.elastic_api_key,
+    "ELASTIC__CLOUD_ID": var.cloud_id,
+    "OBJECT_STORE": "s3",
+    "BUCKET_NAME": "redbox",
+    "EMBEDDING_MODEL": "all-mpnet-base-v2",
+    "EMBED_QUEUE_NAME": "redbox-embedder-queue",
+    "INGEST_QUEUE_NAME": "redbox-ingester-queue",
+    "REDIS_HOST": "redis",
+    "REDIS_PORT": "6379"
+  }
 }
 
