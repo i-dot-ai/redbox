@@ -44,30 +44,29 @@ class ProcessingStatusEnum(models.TextChoices):
 
 
 class FileTypeEnum(models.TextChoices):
-    EML = ".eml"
-    HTML = ".html"
-    JSON = ".json"
-    MD = ".md"
-    MSG = ".msg"
-    RST = ".rst"
-    RTF = ".rtf"
-    TXT = ".txt"
-    XML = ".xml"
-    CSV = ".csv"
-    DOC = ".doc"
-    DOCX = ".docx"
-    EPUB = ".epub"
-    ODT = ".odt"
-    PDF = ".pdf"
-    PPT = ".ppt"
-    PPTX = ".pptx"
-    TSV = ".tsv"
-    XLSX = ".xlsx"
-    HTM = ".htm"
+    eml = ".eml"
+    html = ".html"
+    json = ".json"
+    md = ".md"
+    msg = ".msg"
+    rst = ".rst"
+    rtf = ".rtf"
+    txt = ".txt"
+    xml = ".xml"
+    csv = ".csv"
+    doc = ".doc"
+    docx = ".docx"
+    epub = ".epub"
+    odt = ".odt"
+    pdf = ".pdf"
+    ppt = ".ppt"
+    pptx = ".pptx"
+    tsv = ".tsv"
+    xlsx = ".xlsx"
+    htm = ".htm"
 
 
 class File(UUIDPrimaryKeyBase, TimeStampedModel):
-    name = models.TextField(max_length=2048, null=False, blank=False)
     processing_status = models.CharField(choices=ProcessingStatusEnum.choices, null=False, blank=False)
     original_file = models.FileField(storage=settings.BUCKET_NAME)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -80,6 +79,10 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
     @property
     def file_url(self):
         return self.original_file.url
+
+    @property
+    def name(self):
+        return self.original_file.name
 
     def get_processing_text(self) -> str:
         processing_status_list = list(ProcessingStatusEnum)
