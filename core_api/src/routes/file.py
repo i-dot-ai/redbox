@@ -51,8 +51,8 @@ file_app.include_router(router)
 class FileRequest(BaseModel):
     """Reference to file stored on s3"""
 
-    key: str = Field(description="file key")
-    bucket: str = Field(description="s3 bucket")
+    key: str = Field(description="file key", examples=["sales.csv", "README.txt"])
+    bucket: str = Field(description="s3 bucket", examples=[env.bucket_name])
 
 
 @file_app.post("/", tags=["file"])
