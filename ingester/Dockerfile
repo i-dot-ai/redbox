@@ -38,4 +38,4 @@ RUN python download_embedder.py --model_name ${EMBEDDING_MODEL}
 # Download the OCR models
 RUN python download_ocr_models.py
 
-CMD ["faststream", "run", "ingester.src.worker:app"]
+CMD ["uvicorn", "ingester.src.worker:app", "--host", "0.0.0.0", "--port", "5000"]

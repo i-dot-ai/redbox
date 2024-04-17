@@ -1,7 +1,7 @@
 import pytest
-from faststream.redis import TestApp, TestRedisBroker
+from faststream.redis import TestRedisBroker
 
-from embedder.src.worker import app, broker
+from embedder.src.worker import router
 from redbox.models import Settings
 
 env = Settings()
@@ -17,8 +17,18 @@ async def test_embed_item_callback(elasticsearch_storage_handler, embed_queue_it
     unembedded_chunk = elasticsearch_storage_handler.read_item(embed_queue_item.chunk_uuid, "Chunk")
     assert unembedded_chunk.embedding is None
 
-    async with TestRedisBroker(broker) as br, TestApp(app):
+    async with TestRedisBroker(router.broker) as br:
         await br.publish(embed_queue_item, channel=env.embed_queue_name)
 
     embedded_chunk = elasticsearch_storage_handler.read_item(embed_queue_item.chunk_uuid, "Chunk")
     assert embedded_chunk.embedding is not None
+
+
+def test_get_health(app_client):
+    """
+    Given that the app is running
+    When I call /health
+    I Expect to see the docs
+    """
+    response = app_client.get("/health")
+    assert response.status_code == 200
