@@ -2,6 +2,7 @@ import uuid
 
 from django.db import models
 from django_use_email_as_username.models import BaseUser, BaseUserManager
+from django.conf import settings
 
 
 class UUIDPrimaryKeyBase(models.Model):
@@ -65,13 +66,20 @@ class FileTypeEnum(models.TextChoices):
     HTM = ".htm"
 
 
-# TO DO: Based on /redbox/models/file.py, but not complete
 class File(UUIDPrimaryKeyBase, TimeStampedModel):
     name = models.TextField(max_length=2048, null=False, blank=False)
     processing_status = models.CharField(choices=ProcessingStatusEnum.choices, null=False, blank=False)
-    key = models.CharField(max_length=2048, null=False, blank=False)
-    file_type = models.CharField(choices=FileTypeEnum.choices, blank=False, null=False)
+    original_file = models.FileField(storage=settings.BUCKET_NAME)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
+
+    @property
+    def file_type(self):
+        name = self.original_file.name
+        return name.split(".")[-1]
+
+    @property
+    def file_url(self):
+        return self.original_file.url
 
     def get_processing_text(self) -> str:
         processing_status_list = list(ProcessingStatusEnum)
