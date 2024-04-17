@@ -1,7 +1,8 @@
 import pytest
-from faststream.redis import TestApp, TestRedisBroker
+from faststream.redis import TestRedisBroker
 
-from ingester.src.worker import app, broker
+
+from ingester.src.worker import router
 from redbox.models import Settings
 from redbox.storage import ElasticsearchStorageHandler
 
@@ -22,7 +23,7 @@ async def test_ingest_file(s3_client, es_client, embedding_model, file):
 
     storage_handler.write_item(file)
 
-    async with TestRedisBroker(broker) as br, TestApp(app):
+    async with TestRedisBroker(router.broker) as br:
         await br.publish(file, channel=env.ingest_queue_name)
 
         file = storage_handler.read_item(
@@ -31,3 +32,13 @@ async def test_ingest_file(s3_client, es_client, embedding_model, file):
         )
 
         assert file is not None
+
+
+def test_get_health(app_client):
+    """
+    Given that the app is running
+    When I call /health
+    I Expect to see the docs
+    """
+    response = app_client.get("/health")
+    assert response.status_code == 200
