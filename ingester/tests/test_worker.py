@@ -18,9 +18,7 @@ async def test_ingest_file(s3_client, es_client, embedding_model, file):
     2. written to Elasticsearch
     """
 
-    storage_handler = ElasticsearchStorageHandler(
-        es_client=es_client, root_index="redbox-data"
-    )
+    storage_handler = ElasticsearchStorageHandler(es_client=es_client, root_index="redbox-data")
 
     storage_handler.write_item(file)
 

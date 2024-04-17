@@ -11,11 +11,7 @@ def test_declaration_view_get(peter_rabbit, client):
 
 def count_s3_objects(s3_client) -> int:
     paginator = s3_client.get_paginator("list_objects")
-    return sum(
-        len(result.get("Contents", []))
-        for result in paginator.paginate(Bucket=settings.BUCKET_NAME)
-        if result
-    )
+    return sum(len(result.get("Contents", [])) for result in paginator.paginate(Bucket=settings.BUCKET_NAME) if result)
 
 
 @pytest.mark.django_db

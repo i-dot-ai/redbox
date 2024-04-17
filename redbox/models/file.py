@@ -4,8 +4,7 @@ from typing import Optional
 from uuid import UUID
 
 import tiktoken
-from langchain.schema import Document
-from pydantic import AnyUrl, BaseModel, Field, computed_field
+from pydantic import BaseModel, Field, computed_field
 
 from redbox.models.base import PersistableModel
 
@@ -18,53 +17,11 @@ class ProcessingStatusEnum(str, Enum):
     complete = "complete"
 
 
-class ContentType(str, Enum):
-    EML = ".eml"
-    HTML = ".html"
-    HTM = ".htm"
-    JSON = ".json"
-    MD = ".md"
-    MSG = ".msg"
-    RST = ".rst"
-    RTF = ".rtf"
-    TXT = ".txt"
-    XML = ".xml"
-    JPEG = ".jpeg"  # Must have tesseract installed
-    PNG = ".png"  # Must have tesseract installed
-    CSV = ".csv"
-    DOC = ".doc"
-    DOCX = ".docx"
-    EPUB = ".epub"
-    ODT = ".odt"
-    PDF = ".pdf"
-    PPT = ".ppt"
-    PPTX = ".pptx"
-    TSV = ".tsv"
-    XLSX = ".xlsx"
-
-
 class File(PersistableModel):
-    url: AnyUrl = Field(description="s3 url")
-    content_type: ContentType = Field(description="content_type of file")
-    name: str = Field(description="file name")
-    text: Optional[str] = Field(description="file content", default=None)
+    """Reference to file stored on s3"""
 
-    @computed_field
-    def text_hash(self) -> str:
-        return hashlib.md5(
-            (self.text or "").encode(encoding="UTF-8", errors="strict"),
-            usedforsecurity=False,
-        ).hexdigest()
-
-    @computed_field
-    def token_count(self) -> int:
-        return len(encoding.encode(self.text or ""))
-
-    def to_document(self) -> Document:
-        return Document(
-            page_content=f"<Doc{self.uuid}>Title: {self.name}\n\n{self.text}</Doc{self.uuid}>\n\n",
-            metadata={"source": self.url},
-        )
+    key: str = Field(description="file key")
+    bucket: str = Field(description="s3 bucket")
 
 
 class Chunk(PersistableModel):
@@ -86,11 +43,15 @@ class Chunk(PersistableModel):
 
 
 class ChunkStatus(BaseModel):
+    """Status of a chunk of a file."""
+
     chunk_uuid: UUID
     embedded: bool
 
 
 class FileStatus(BaseModel):
+    """Status of a file."""
+
     file_uuid: UUID
     processing_status: ProcessingStatusEnum
     chunk_statuses: Optional[list[ChunkStatus]]

@@ -48,11 +48,6 @@ def elasticsearch_storage_handler(es_client):
 
 @pytest.fixture
 def file(s3_client, file_pdf_path) -> YieldFixture[File]:
-    """
-    TODO: this is a cut and paste of core_api:create_upload_file
-    When we come to test core_api we should think about
-    the relationship between core_api and the ingester app
-    """
     file_name = os.path.basename(file_pdf_path)
     file_type = f'.{file_name.split(".")[-1]}'
 
@@ -64,15 +59,7 @@ def file(s3_client, file_pdf_path) -> YieldFixture[File]:
             Tagging=f"file_type={file_type}",
         )
 
-    authenticated_s3_url = s3_client.generate_presigned_url(
-        "get_object",
-        Params={"Bucket": env.bucket_name, "Key": file_name},
-        ExpiresIn=3600,
-    )
-
-    # Strip off the query string (we don't need the keys)
-    simple_s3_url = authenticated_s3_url.split("?")[0]
-    file_record = File(name=file_name, url=simple_s3_url, content_type=file_type)
+    file_record = File(key=file_name, bucket=env.bucket_name)
 
     yield file_record
 
@@ -87,9 +74,7 @@ def stored_file(elasticsearch_storage_handler, file) -> YieldFixture[File]:
 @pytest.fixture
 def chunked_file(elasticsearch_storage_handler, stored_file) -> YieldFixture[File]:
     for i in range(5):
-        chunk = Chunk(
-            text="hello", index=i, parent_file_uuid=stored_file.uuid, metadata={}
-        )
+        chunk = Chunk(text="hello", index=i, parent_file_uuid=stored_file.uuid, metadata={})
         elasticsearch_storage_handler.write_item(chunk)
     elasticsearch_storage_handler.refresh()
     yield stored_file

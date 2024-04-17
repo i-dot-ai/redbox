@@ -51,7 +51,7 @@ jobs:
         cp .env.test .env
         docker compose up -d --wait elasticsearch
 
-        poetry install --no-root --no-ansi --with dev --without ai,streamlit-app,api,worker,ingester
+        poetry install --no-root --no-ansi --with dev --without ai,api,worker,ingester
         poetry run download-model --model_name paraphrase-albert-small-v2
 
     - name: Add dependencies for Ingester
@@ -100,7 +100,8 @@ jobs:
 
     - name: Format code
       run: |
-        make format
+        poetry run ruff format . --check
+        poetry run ruff check .
 
     - name: Type check
       run: |

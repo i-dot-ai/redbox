@@ -40,9 +40,7 @@ def elasticsearch_client() -> YieldFixture[Elasticsearch]:
 def elasticsearch_storage_handler(
     elasticsearch_client,
 ) -> YieldFixture[ElasticsearchStorageHandler]:
-    yield ElasticsearchStorageHandler(
-        es_client=elasticsearch_client, root_index="redbox-data"
-    )
+    yield ElasticsearchStorageHandler(es_client=elasticsearch_client, root_index="redbox-data")
 
 
 @pytest.fixture

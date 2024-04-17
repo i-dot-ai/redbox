@@ -6,12 +6,12 @@ from botocore.exceptions import ClientError
 
 
 @pytest.fixture
-def file_pdf_path():
+def file_path():
     path = os.path.join(
         os.path.dirname(os.path.abspath(__file__)),
         "data",
-        "pdf",
-        "Cabinet Office - Wikipedia.pdf",
+        "html",
+        "example.html",
     )
     yield path
 
@@ -35,5 +35,3 @@ def s3_client():
             raise e
 
     yield client
-
-

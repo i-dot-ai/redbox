@@ -3,38 +3,17 @@
 > [!IMPORTANT]
 > Incubation Project: This project is an incubation project; as such, we DON’T recommend using it in any critical use case. This project is in active development and a work in progress. This project may one day Graduate, in which case this disclaimer will be removed.
 
+> [!NOTE]
+> The original streamlit-app has moved to its own repository https://github.com/i-dot-ai/redbox-copilot-streamlit.
+
 Redbox Copilot is a retrieval augmented generation (RAG) app that uses GenAI to chat with and summarise civil service documents. It's designed to handle a variety of administrative sources, such as letters, briefings, minutes, and speech transcripts.
 
 - **Better retrieval**. Redbox Copilot increases organisational memory by indexing documents
 - **Faster, accurate summarisation**. Redbox Copilot can summarise reports read months ago, supplement them with current work, and produce a first draft that lets civil servants focus on what they do best
 
-# Local Dev Setup
+# Setup
 
-The entire architecture runs in docker compose for local development. This includes locally hosting the app, databases, object store and orchestration. Therefore, you will need docker installed.
-
-## First time setup
-
-You will need to create a copy of the `.env.example` file as `.env` to store your secrets, such as your Anthropic API key (ask the team for the keys). The `.env` file should not be committed to GitHub.
-
-If you have issues with permissions, you may need to run `chmod 777 data/elastic/` to be able to write to the folder.
-
-## To run
-
-You can simply run:
-
-`docker compose up` or `make run`
-
-You'll find a series of useful `docker compose` commands already maded in [`Makefile`](./Makefile)
-
-Any time you update code for the the repo, you'll likely need to rebuild the containers.
-
-# Docs
-
-The docs are built using [MkDocs](https://www.mkdocs.org/). To run the docs locally, you can run:
-
-```bash
-make docs-serve
-```
+Please refer to the [DEVELOPER_SETUP.md](./docs/DEVELOPER_SETUP.md) for detailed instructions on setting up the project.
 
 # Codespace
 For a quick start, you can use GitHub Codespaces to run the project in a cloud-based development environment. Click the button below to open the project in a new Codespace.

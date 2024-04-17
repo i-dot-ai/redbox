@@ -36,7 +36,6 @@ def s3_client():
 
 
 class CoreApiClient:
-
     def __init__(self, host: str, port: int):
         self.host = host
         self.port = port
@@ -45,23 +44,19 @@ class CoreApiClient:
     def url(self) -> str:
         return f"{self.host}:{self.port}"
 
-    def upload_file(self, s3_url: str, name: str, extension: str):
-        if self.host ==  "testserver":
+    def upload_file(self, name: str):
+        if self.host == "testserver":
             file = {
-                "url": "s3 url",
-                "content_type": "application/pdf",
-                "name": "my-test-file.pdf",
-                "text": "once upon a time....",
-                "processing_status": "uploaded"
+                "key": name,
+                "bucket": settings.BUCKET_NAME,
             }
             return file
 
         response = requests.post(
             f"{self.url}/file",
-            params={
-                "name": name,
-                "type": extension,
-                "location": s3_url,
+            json={
+                "key": name,
+                "bucket": settings.BUCKET_NAME,
             },
         )
         if response.status_code != 201:

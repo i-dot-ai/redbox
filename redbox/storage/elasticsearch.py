@@ -202,7 +202,7 @@ class ElasticsearchStorageHandler(BaseStorageHandler):
 
         # Test 1: Get the file
         try:
-            file = self.read_item(file_uuid, "File")
+            self.read_item(file_uuid, "File")
         except NotFoundError:
             raise ValueError(f"File {file_uuid} not found")
 

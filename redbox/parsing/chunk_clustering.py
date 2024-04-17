@@ -19,13 +19,12 @@ def cluster_chunks(
 
     Args:
             chunks (List[File]): List of raw (small) chunks extracted from document.
-            desired_chunk_size: Avarage size of the output chunks. Defaults to 300,
-            embed_model (str): name of the sentence embedding model used to compare chunk similarity.
-                Defaults to "all-mpnet-base-v2".
+            desired_chunk_size (int): Avarage size of the output chunks. Defaults to 300,
+            embed_model (SentenceTransformer): name of the sentence embedding model used to compare chunk similarity
             dist_weight_split (float): Expects value between 0 and 1.
                 When calculating the combined distance metric this is the relative weight (importance)
                 of the semantic similarity vs the token counts. Defaults to .2.
-            dist_use_log (bool): When calculationg the combined distance metric should the input values
+            dist_use_log (bool): When calculating the combined distance metric should the input values
                 be scaled by log. Defaults to True.
 
     Returns:

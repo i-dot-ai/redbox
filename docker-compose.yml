@@ -41,28 +41,6 @@ services:
         - "5010:5010"
     volumes:
       - mlflow-data:/mlflow
-  streamlit-app:
-    image: redbox-streamlit-app:latest
-    build:
-      context: .
-      dockerfile: ./streamlit_app/Dockerfile
-      args:
-        - EMBEDDING_MODEL=${EMBEDDING_MODEL:-}
-    env_file:
-      - .env
-    ports:
-      - 8501:8501
-    volumes:
-      - ./data:/app/data:Z
-      - ./streamlit_app:/app/streamlit_app/
-    depends_on:
-      - elasticsearch
-      - minio
-    links:
-      - elasticsearch
-      - minio
-    networks:
-      - redbox-app-network
   embedder:
     image: redbox-embedder:latest
     build:
@@ -176,27 +154,18 @@ services:
       - .env
     networks:
       - redbox-app-network
-  redis-insight:
-    image: redis/redisinsight:latest
-    restart: always
-    ports:
-      - "5540:5540"
-    volumes:
-      - redis-insight:/data/redis-insight
-    networks:
-      - redbox-app-network
-  frontend-proto:
-    image: redbox-frontend-proto:latest
-    build:
-      context: ./frontend/prototypes/
-      dockerfile: Dockerfile
-    env_file:
-      - .env
-    ports:
-      - 3000:3000
-    networks:
-      - redbox-app-network
-    restart: unless-stopped
+  # frontend-proto:
+  #   image: redbox-frontend-proto:latest
+  #   build:
+  #     context: ./frontend/prototypes/
+  #     dockerfile: Dockerfile
+  #   env_file:
+  #     - .env
+  #   ports:
+  #     - 3000:3000
+  #   networks:
+  #     - redbox-app-network
+  #   restart: unless-stopped
 
 networks:
   redbox-app-network:

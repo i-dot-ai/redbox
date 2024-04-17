@@ -8,9 +8,18 @@ s3_client = env.s3_client()
 
 
 def other_chunker(file: File) -> list[Chunk]:
+    """The default unstructured chunker for Redbox. This chunker uses the unstructured partitioner and title chunker
+    to split a file into chunks.
+
+    Args:
+        file (File): The file to be chunked from the Redbox backend.
+
+    Returns:
+        list[Chunk]: A list of chunks that have been created from the file.
+    """
     authenticated_s3_url = s3_client.generate_presigned_url(
         "get_object",
-        Params={"Bucket": env.bucket_name, "Key": file.name},
+        Params={"Bucket": env.bucket_name, "Key": file.key},
         ExpiresIn=3600,
     )
 

@@ -150,7 +150,11 @@ LOGIN_REDIRECT_URL = "homepage"
 CSP_DEFAULT_SRC = (
     "'self'",
     "s3.amazonaws.com",
+)
+CSP_SCRIPT_SRC = (
+    "'self'",
     "plausible.io",
+    "'sha256-GUQ5ad8JK5KmEWmROf3LZd9ge94daqNvd8xy9YS1iDw='",
 )
 CSP_OBJECT_SRC = ("'none'",)
 CSP_REQUIRE_TRUSTED_TYPES_FOR = ("'script'",)
@@ -253,9 +257,7 @@ DATABASES = {
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
-    "formatters": {
-        "verbose": {"format": "%(asctime)s %(levelname)s %(module)s: %(message)s"}
-    },
+    "formatters": {"verbose": {"format": "%(asctime)s %(levelname)s %(module)s: %(message)s"}},
     "handlers": {
         "file": {
             "level": "DEBUG",
@@ -269,9 +271,7 @@ LOGGING = {
             "formatter": "verbose",
         },
     },
-    "loggers": {
-        "application": {"handlers": [LOG_HANDLER], "level": "DEBUG", "propagate": True}
-    },
+    "loggers": {"application": {"handlers": [LOG_HANDLER], "level": "DEBUG", "propagate": True}},
 }
 
 # link to core_api app

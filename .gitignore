@@ -7,7 +7,7 @@ data/
 db/
 !*/user_preferences/classes_format.json
 !*/user_preferences/classes_subject.json
-models/
+/models/
 
 # npm package files
 
@@ -188,3 +188,15 @@ django_app/node_modules
 django_app/frontend/CACHE
 django_app/frontend/govuk-assets
 
+
+# Other
+.DS_Store
+
+
+# Local .terraform directories
+**/.terraform/*
+**/.terraform.lock.hcl
+
+# .tfstate files
+*.tfstate
+*.tfstate.*

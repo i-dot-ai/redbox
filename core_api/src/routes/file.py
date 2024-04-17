@@ -3,8 +3,8 @@ from uuid import UUID
 
 from fastapi import FastAPI, HTTPException
 from faststream.redis.fastapi import RedisRouter
-from pydantic import AnyHttpUrl
 
+from core_api.src.publisher_handler import FilePublisher
 from redbox.models import Chunk, File, FileStatus, Settings
 from redbox.storage import ElasticsearchStorageHandler
 
@@ -23,8 +23,8 @@ s3 = env.s3_client()
 
 # === Queues ===
 router = RedisRouter(url=env.redis_url)
-publisher = router.publisher(env.ingest_queue_name)
 
+file_publisher = FilePublisher(router.broker, env.ingest_queue_name)
 
 # === Storage ===
 
@@ -48,31 +48,22 @@ file_app.include_router(router)
 
 
 @file_app.post("/", tags=["file"])
-async def create_upload_file(name: str, type: str, location: AnyHttpUrl) -> UUID:
-    """Upload a file to the object store and create a record in the database
+async def add_file(file: File) -> File:
+    """Create a File record in the database
 
     Args:
-        name (str): The file name to be recorded
-        type (str): The file type to be recorded
-        location (AnyHttpUrl): The presigned file resource location
+        file (File): The file to be recorded
 
     Returns:
-        UUID: The file uuid from the elastic database
+        File: The file uuid from the elastic database
     """
-
-    file = File(
-        name=name,
-        url=str(location),  # avoids JSON serialisation error
-        content_type=type,
-    )
 
     storage_handler.write_item(file)
 
     log.info(f"publishing {file.uuid}")
-    await router.broker.connect()
-    await publisher.publish(file)
+    await file_publisher.publish(file)
 
-    return file.uuid
+    return file
 
 
 @file_app.get("/{file_uuid}", response_model=File, tags=["file"])
@@ -99,7 +90,7 @@ def delete_file(file_uuid: UUID) -> File:
         File: The file that was deleted
     """
     file = storage_handler.read_item(file_uuid, model_type="File")
-    s3.delete_object(Bucket=env.bucket_name, Key=file.name)
+    s3.delete_object(Bucket=env.bucket_name, Key=file.key)
     storage_handler.delete_item(file)
 
     chunks = storage_handler.get_file_chunks(file.uuid)
