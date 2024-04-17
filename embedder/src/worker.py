@@ -1,12 +1,11 @@
 import logging
-from contextlib import asynccontextmanager
 from datetime import datetime
 
-from faststream import Context, ContextRepo, FastStream
-from faststream.redis import RedisBroker
+from fastapi import FastAPI, Depends
+from faststream.redis.fastapi import RedisRouter
 
 from redbox.model_db import SentenceTransformerDB
-from redbox.models import Chunk, EmbedQueueItem, Settings
+from redbox.models import Chunk, EmbedQueueItem, Settings, StatusResponse
 from redbox.storage import ElasticsearchStorageHandler
 
 start_time = datetime.now()
@@ -16,26 +15,24 @@ log.setLevel(logging.INFO)
 env = Settings()
 
 
-broker = RedisBroker(url=env.redis_url)
+router = RedisRouter(url=env.redis_url)
 
 
-@asynccontextmanager
-async def lifespan(context: ContextRepo):
+def get_storage_handler():
     es = env.elasticsearch_client()
-    storage_handler = ElasticsearchStorageHandler(es_client=es, root_index="redbox-data")
+    return ElasticsearchStorageHandler(es_client=es, root_index="redbox-data")
+
+
+def get_model():
     model = SentenceTransformerDB(env.embedding_model)
-
-    context.set_global("storage_handler", storage_handler)
-    context.set_global("model", model)
-
-    yield
+    return model
 
 
-@broker.subscriber(channel=env.embed_queue_name)
+@router.subscriber(channel=env.embed_queue_name)
 async def embed(
     queue_item: EmbedQueueItem,
-    storage_handler: ElasticsearchStorageHandler = Context(),
-    model: SentenceTransformerDB = Context(),
+    storage_handler: ElasticsearchStorageHandler = Depends(get_storage_handler),
+    model: SentenceTransformerDB = Depends(get_model),
 ):
     """
     1. embed queue-item text
@@ -51,4 +48,25 @@ async def embed(
     storage_handler.update_item(chunk)
 
 
-app = FastStream(broker, lifespan=lifespan)
+app = FastAPI(lifespan=router.lifespan_context)
+app.include_router(router)
+
+
+@app.get("/health", tags=["health"])
+def health() -> StatusResponse:
+    """Returns the health of the API
+
+    Returns:
+        StatusResponse: The health of the API
+    """
+
+    uptime = datetime.now() - start_time
+    uptime_seconds = uptime.total_seconds()
+
+    output = StatusResponse(
+        status="ready",
+        uptime_seconds=uptime_seconds,
+        version=app.version,
+    )
+
+    return output
