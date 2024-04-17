@@ -3,6 +3,7 @@ from uuid import UUID
 
 from fastapi import FastAPI, HTTPException
 from faststream.redis.fastapi import RedisRouter
+from pydantic import BaseModel, Field
 
 from core_api.src.publisher_handler import FilePublisher
 from redbox.models import Chunk, File, FileStatus, Settings
@@ -47,16 +48,25 @@ file_app = FastAPI(
 file_app.include_router(router)
 
 
+class FileRequest(BaseModel):
+    """Reference to file stored on s3"""
+
+    key: str = Field(description="file key")
+    bucket: str = Field(description="s3 bucket")
+
+
 @file_app.post("/", tags=["file"])
-async def add_file(file: File) -> File:
+async def add_file(file_request: FileRequest) -> File:
     """Create a File record in the database
 
     Args:
-        file (File): The file to be recorded
+        file_request (FileRequest): The file to be recorded
 
     Returns:
         File: The file uuid from the elastic database
     """
+
+    file = File(key=file_request.key, bucket=file_request.bucket)
 
     storage_handler.write_item(file)
 
