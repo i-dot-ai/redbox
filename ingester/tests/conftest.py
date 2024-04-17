@@ -2,10 +2,11 @@ import os
 from typing import Generator, TypeVar
 
 import pytest
+from fastapi.testclient import TestClient
 from elasticsearch import Elasticsearch
 from sentence_transformers import SentenceTransformer
 
-from ingester.src.worker import env
+from ingester.src.worker import env, app
 from redbox.models import File
 
 T = TypeVar("T")
@@ -44,11 +45,6 @@ def file_pdf_path() -> YieldFixture[str]:
 
 @pytest.fixture
 def file(s3_client, file_pdf_path):
-    """
-    TODO: this is a cut and paste of core_api:create_upload_file
-    When we come to test core_api we should think about
-    the relationship between core_api and the ingester app
-    """
     file_name = os.path.basename(file_pdf_path)
     file_type = f'.{file_name.split(".")[-1]}'
 
@@ -66,3 +62,8 @@ def file(s3_client, file_pdf_path):
     )
 
     yield file_record
+
+
+@pytest.fixture
+def app_client():
+    yield TestClient(app)
