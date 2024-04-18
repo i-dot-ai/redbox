@@ -122,13 +122,13 @@ files = [
 
 [[package]]
 name = "anthropic"
-version = "0.25.3"
+version = "0.25.5"
 description = "The official Python library for the anthropic API"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "anthropic-0.25.3-py3-none-any.whl", hash = "sha256:044c5872c575dbf7aab11e97469f76e71ceae92d55a8ef13b595bb6fb9ea60e7"},
-    {file = "anthropic-0.25.3.tar.gz", hash = "sha256:d0833de8319541bd3a82a248ea1a25714d80a5ede00cdee71203f458e0917000"},
+    {file = "anthropic-0.25.5-py3-none-any.whl", hash = "sha256:8665a8aee45be6a1f0664b2f8fd740f5b60d5a88fab62f0e647105d769a5c9dd"},
+    {file = "anthropic-0.25.5.tar.gz", hash = "sha256:bc64a17f18a967fae4254bd7464f5c4d39951dacceff22e823434216c4731e38"},
 ]
 
 [package.dependencies]
@@ -421,17 +421,17 @@ css = ["tinycss2 (>=1.1.0,<1.3)"]
 
 [[package]]
 name = "boto3"
-version = "1.34.85"
+version = "1.34.86"
 description = "The AWS SDK for Python"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "boto3-1.34.85-py3-none-any.whl", hash = "sha256:135f1358fbc7d7dc89ad1a4346cb8da621fdc2aea69deb7b20c71ffec7cde111"},
-    {file = "boto3-1.34.85.tar.gz", hash = "sha256:de73d0f2dec1819074caf3f0888e18f6e13a9fb75ef5f17b1bdd9d1acc127b33"},
+    {file = "boto3-1.34.86-py3-none-any.whl", hash = "sha256:be594c449a0079bd1898ba1b7d90e0e5ac6b5803b2ada03993da01179073808d"},
+    {file = "boto3-1.34.86.tar.gz", hash = "sha256:992ba74459fef2bf1572050408db73d33c43e7531d81bda85a027f39156926a1"},
 ]
 
 [package.dependencies]
-botocore = ">=1.34.85,<1.35.0"
+botocore = ">=1.34.86,<1.35.0"
 jmespath = ">=0.7.1,<2.0.0"
 s3transfer = ">=0.10.0,<0.11.0"
 
@@ -440,13 +440,13 @@ crt = ["botocore[crt] (>=1.21.0,<2.0a0)"]
 
 [[package]]
 name = "boto3-stubs"
-version = "1.34.85"
-description = "Type annotations for boto3 1.34.85 generated with mypy-boto3-builder 7.23.2"
+version = "1.34.86"
+description = "Type annotations for boto3 1.34.86 generated with mypy-boto3-builder 7.23.2"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "boto3_stubs-1.34.85-py3-none-any.whl", hash = "sha256:1c7d9659fdbac1707ea6114f40c29925cc64b4c5f939c926574d49bacf335b14"},
-    {file = "boto3_stubs-1.34.85.tar.gz", hash = "sha256:aa4f17a0d7bff4112551d47d449928d67ffefc81b9c156f07a259368a7c0e2f9"},
+    {file = "boto3_stubs-1.34.86-py3-none-any.whl", hash = "sha256:325b3c6a765aa9ffb0123c7700938f39560c37f9e5174f717749ffc9994ee34f"},
+    {file = "boto3_stubs-1.34.86.tar.gz", hash = "sha256:d6b77891a52d5c160cc8c6a5958d96d54e2a964f881d65fa4b09dc85c376ef54"},
 ]
 
 [package.dependencies]
@@ -497,7 +497,7 @@ bedrock-agent = ["mypy-boto3-bedrock-agent (>=1.34.0,<1.35.0)"]
 bedrock-agent-runtime = ["mypy-boto3-bedrock-agent-runtime (>=1.34.0,<1.35.0)"]
 bedrock-runtime = ["mypy-boto3-bedrock-runtime (>=1.34.0,<1.35.0)"]
 billingconductor = ["mypy-boto3-billingconductor (>=1.34.0,<1.35.0)"]
-boto3 = ["boto3 (==1.34.85)", "botocore (==1.34.85)"]
+boto3 = ["boto3 (==1.34.86)", "botocore (==1.34.86)"]
 braket = ["mypy-boto3-braket (>=1.34.0,<1.35.0)"]
 budgets = ["mypy-boto3-budgets (>=1.34.0,<1.35.0)"]
 ce = ["mypy-boto3-ce (>=1.34.0,<1.35.0)"]
@@ -843,13 +843,13 @@ xray = ["mypy-boto3-xray (>=1.34.0,<1.35.0)"]
 
 [[package]]
 name = "botocore"
-version = "1.34.85"
+version = "1.34.86"
 description = "Low-level, data-driven core of boto 3."
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "botocore-1.34.85-py3-none-any.whl", hash = "sha256:9abae3f7925a8cc2b91b6ff3f09e631476c74826d45dc44fb30d1d15960639db"},
-    {file = "botocore-1.34.85.tar.gz", hash = "sha256:18548525d4975bbe982f393f6470ba45249919a93f5dc6a69e37e435dd2cf579"},
+    {file = "botocore-1.34.86-py3-none-any.whl", hash = "sha256:57c1e3b2e1db745d22c45cbd761bbc0c143d2cfc2b532e3245cf5d874aa30b6d"},
+    {file = "botocore-1.34.86.tar.gz", hash = "sha256:2fd62b63d8788e15629bfc95be1bd2d99c0da6c1d45ef1f40c0a0101e412f6b5"},
 ]
 
 [package.dependencies]
@@ -862,13 +862,13 @@ crt = ["awscrt (==0.20.9)"]
 
 [[package]]
 name = "botocore-stubs"
-version = "1.34.85"
+version = "1.34.86"
 description = "Type annotations and code completion for botocore"
 optional = false
 python-versions = "<4.0,>=3.8"
 files = [
-    {file = "botocore_stubs-1.34.85-py3-none-any.whl", hash = "sha256:bd7977f42326e0c0bb739e4f002d4b658711f05e03baee16307edc066c4816f5"},
-    {file = "botocore_stubs-1.34.85.tar.gz", hash = "sha256:04691efc4559b9012ffbae43a37e5712d8ad5d549b547b016b26742402234e24"},
+    {file = "botocore_stubs-1.34.86-py3-none-any.whl", hash = "sha256:24276781a437702c96e05cba01a808ef6d9c5d2df8f615e540cf2e55987fe7bf"},
+    {file = "botocore_stubs-1.34.86.tar.gz", hash = "sha256:2e0d170d627454a1d8b685ef3f4eed8c0adf634f19e9c96f195ca3aef737a62e"},
 ]
 
 [package.dependencies]
@@ -3128,13 +3128,13 @@ tesseract = ["pytesseract"]
 
 [[package]]
 name = "litellm"
-version = "1.35.10"
+version = "1.35.12"
 description = "Library to easily interface with LLM API providers"
 optional = false
 python-versions = "!=2.7.*,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,!=3.5.*,!=3.6.*,!=3.7.*,>=3.8"
 files = [
-    {file = "litellm-1.35.10-py3-none-any.whl", hash = "sha256:fd1d53e281268855913e589f0232314e7324f66993f100176368da52254f4ad3"},
-    {file = "litellm-1.35.10.tar.gz", hash = "sha256:8066a3aadeded1d6c95afc03353eab023329ba2d09b4985684ec8acc27d4d152"},
+    {file = "litellm-1.35.12-py3-none-any.whl", hash = "sha256:df985e2ad0caa4c8b4b39ceaf41a716ed36fe5eaeed525c2528154bb957b4f14"},
+    {file = "litellm-1.35.12.tar.gz", hash = "sha256:c080a1a68d0f38952d32be536981ee2b9230a50cdc08cda867b583ece1963ef5"},
 ]
 
 [package.dependencies]
@@ -4510,13 +4510,13 @@ sympy = "*"
 
 [[package]]
 name = "openai"
-version = "1.21.0"
+version = "1.21.2"
 description = "The official Python library for the openai API"
 optional = false
 python-versions = ">=3.7.1"
 files = [
-    {file = "openai-1.21.0-py3-none-any.whl", hash = "sha256:7da39d0bbc849fae00a0045f5486666f16d76a5f170c59e79c93cf426661053d"},
-    {file = "openai-1.21.0.tar.gz", hash = "sha256:943f51c9186f97fd4a870c49996a614e43f85639b75c4302e2f35aee2f65e6eb"},
+    {file = "openai-1.21.2-py3-none-any.whl", hash = "sha256:65f6bed84ecde0fc20e4f3b458000deb775531aa29154ff4d679e937d7e4370d"},
+    {file = "openai-1.21.2.tar.gz", hash = "sha256:7b6e4d59f3686fcd94efdb2ee61052bf6c9dbb58052b5116fc0d75ba7adbf329"},
 ]
 
 [package.dependencies]
@@ -8322,4 +8322,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.11,<3.12"
-content-hash = "2751a0e88c4a9dda0a04ef033f7bf87a613550f6ed99df486617b9f30cd31254"
+content-hash = "711a94572e0d5303b82139a081326e66996012b031493802774e0af783bb81e1"
