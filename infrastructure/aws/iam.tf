@@ -35,6 +35,6 @@ resource "aws_iam_policy" "redbox_policy" {
 }
 
 resource "aws_iam_role_policy_attachment" "redbox_role_policy" {
-  role       = module.core-api.ecs_task_execution_exec_role_name
+  role       = module.core_api.ecs_task_execution_exec_role_name
   policy_arn = aws_iam_policy.redbox_policy.arn
 }
