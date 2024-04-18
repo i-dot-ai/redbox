@@ -153,10 +153,10 @@ CONFIG_DIR=../../../redbox-copilot-infra-config
 TF_BACKEND_CONFIG=$(CONFIG_DIR)/backend.hcl
 
 tf_new_workspace:
-	terraform -chdir=./infrastructure workspace new $(env)
+	terraform -chdir=./infrastructure/aws workspace new $(env)
 
 tf_set_workspace:
-	terraform -chdir=./infrastructure workspace select $(env)
+	terraform -chdir=./infrastructure/aws workspace select $(env)
 
 tf_set_or_create_workspace:
 	make tf_set_workspace || make tf_new_workspace
