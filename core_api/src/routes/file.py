@@ -51,8 +51,7 @@ file_app.include_router(router)
 class FileRequest(BaseModel):
     """Reference to file stored on s3"""
 
-    key: str = Field(description="file key", examples=["sales.csv", "README.txt"])
-    bucket: str = Field(description="s3 bucket", examples=[env.bucket_name])
+    key: str = Field(description="file key", examples=["policies.pdf"])
 
 
 @file_app.post("/", tags=["file"])
@@ -66,7 +65,7 @@ async def add_file(file_request: FileRequest) -> File:
         File: The file uuid from the elastic database
     """
 
-    file = File(key=file_request.key, bucket=file_request.bucket)
+    file = File(key=file_request.key, bucket=env.bucket_name)
 
     storage_handler.write_item(file)
 
