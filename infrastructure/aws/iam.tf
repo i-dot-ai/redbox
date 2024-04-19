@@ -12,11 +12,10 @@ data "aws_iam_policy_document" "ecs_exec_role_policy" {
       "s3:DeleteObject",
       "s3:GetObjectVersion",
       "s3:ListMultipartUploadParts",
-      "s3:createBucket"
     ]
     resources = [
-      "arn:aws:s3:::${local.bucket_name}",
-      "arn:aws:s3:::${local.bucket_name}/*"
+      "arn:aws:s3:::${aws_s3_bucket.user_data_bucket.bucket}",
+      "arn:aws:s3:::${aws_s3_bucket.user_data_bucket.bucket}/*"
     ]
   }
 
