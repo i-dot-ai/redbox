@@ -22,19 +22,19 @@ rebuild:
 	docker compose build --no-cache
 
 test-core-api:
-	poetry install --no-root --no-ansi --with worker,api,dev --without ai,ingester
+	poetry install --no-root --no-ansi --with api,dev,ai --without ingester
 	poetry run pytest core_api/tests --cov=core_api/src -v --cov-report=term-missing --cov-fail-under=45
 
 test-embedder:
-	poetry install --no-root --no-ansi --with worker,api,dev --without ai,ingester
+	poetry install --no-root --no-ansi --with api,dev --without ai,ingester
 	poetry run pytest embedder/tests --cov=embedder/src -v --cov-report=term-missing --cov-fail-under=50
 
 test-redbox:
-	poetry install --no-root --no-ansi --with worker,api,dev --without ai,ingester
+	poetry install --no-root --no-ansi --with api,dev --without ai,ingester
 	poetry run pytest redbox/tests --cov=redbox -v --cov-report=term-missing --cov-fail-under=45
 
 test-ingester:
-	poetry install --no-root --no-ansi --with worker,ingester,dev --without ai,api
+	poetry install --no-root --no-ansi --with ingester,dev --without ai,api
 	poetry run pytest ingester/tests --cov=ingester -v --cov-report=term-missing --cov-fail-under=40
 
 test-django:
@@ -46,7 +46,7 @@ test-integration:
 	cp .env.integration .env
 	docker compose build core-api embedder ingester minio
 	docker compose up -d core-api embedder ingester minio
-	poetry install --no-root --no-ansi --with dev --without ai,api,worker,ingester
+	poetry install --no-root --no-ansi --with dev --without ai,api,ingester
 	sleep 10
 	poetry run pytest tests
 
@@ -105,7 +105,7 @@ docker_login:
 .PHONY: docker_build
 docker_build: ## Build the docker container
 	@cp .env.example .env
-	# Fetching list of services defined in docker-compose configuration
+	# Fetching list of services defined in docker compose configuration
 	@echo "Services to update: $(DOCKER_SERVICES)"
 	# Enabling Docker BuildKit for better build performance
 	export DOCKER_BUILDKIT=1
@@ -129,7 +129,7 @@ docker_push:
 		if grep -A 2 "^\s*$$service:" docker-compose.yml | grep -q 'build:'; then \
 			echo "Pushing $$service..."; \
 			ECR_REPO_SERVICE_TAG=$(ECR_REPO_URL)-$$service:$(IMAGE_TAG); \
-			CURRENT_TAG=$$(grep -A 1 "^\s*$$service:" docker-compose.yml | grep 'image:' | sed 's/.*image:\s*//'); \
+			CURRENT_TAG=$$(grep -A 1 "^\s*$$service:" docker compose.yml | grep 'image:' | sed 's/.*image:\s*//'); \
 			echo "Tagging $$service: $$CURRENT_TAG -> $$ECR_REPO_SERVICE_TAG"; \
 			docker tag $$CURRENT_TAG $$ECR_REPO_SERVICE_TAG; \
 			docker push $$ECR_REPO_SERVICE_TAG; \
