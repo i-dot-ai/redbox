@@ -4,13 +4,18 @@
 
 {% block content %}
 
+{% compress js %}
+  <script src="{{ static('js/alpine.min.js') }}"></script>
+  <script src="{{ static('js/documents.js') }}"></script>
+{% endcompress %}
+
 <table class="govuk-table iai-doclist">
   <caption class="govuk-table__caption govuk-table__caption--m">
     <h1 class="govuk-heading-l govuk-!-margin-bottom-0">Documents</h1>
   </caption>
   <thead class="govuk-table__head">
     <tr class="govuk-table__row">
-      <th scope="col" class="govuk-table__header">Name</th>
+      <th scope="col" class="govuk-table__header">File Name</th>
       <th scope="col" class="govuk-table__header">Status</th>
       <th scope="col" class="govuk-table__header iai-doclist__actions">Actions</th>
     </tr>
@@ -20,7 +25,11 @@
       <tr class="govuk-table__row">
         <td class="govuk-table__cell govuk-!-padding-top-3">{{file.name}}</td>
         <td class="govuk-table__cell govuk-!-padding-top-3">
-          <strong class="govuk-tag {% if file.processing_text == 'complete' %}govuk-tag--green{% else %}govuk-tag--yellow{% endif %}">{{file.processing_text}}</strong>
+          {% if file.processing_text == 'complete' %}
+            <strong class="govuk-tag govuk-tag--green">{{file.processing_text}}</strong>
+          {% else %}
+            <strong class="govuk-tag govuk-tag--yellow" x-data="file-status" data-id="{{file.id}}" x-text="status">{{file.processing_text}}</strong>
+          {% endif %}
         </td>
         <td class="govuk-table__cell">
           {{ govukButton(
