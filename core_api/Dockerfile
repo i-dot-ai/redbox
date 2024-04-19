@@ -1,4 +1,4 @@
-FROM python:3.11-buster as builder
+FROM --platform=linux/amd64 python:3.11-buster as builder
 
 WORKDIR /app/
 
@@ -16,7 +16,7 @@ ADD redbox/ /app/redbox
 
 RUN --mount=type=cache,target=$POETRY_CACHE_DIR poetry install --no-root --no-ansi --with api,ai --without ingester,dev
 
-FROM python:3.11-slim-buster as runtime
+FROM --platform=linux/amd64 python:3.11-slim-buster as runtime
 ARG EMBEDDING_MODEL
 
 WORKDIR /app/

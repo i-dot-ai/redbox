@@ -1,4 +1,4 @@
-FROM python:3.11-buster as builder
+FROM --platform=linux/amd64 python:3.11-buster as builder
 
 RUN pip install poetry
 
