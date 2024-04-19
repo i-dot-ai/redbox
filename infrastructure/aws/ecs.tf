@@ -25,7 +25,7 @@ resource "aws_route53_record" "type_a_record" {
 module "core_api" {
   source             = "../../../i-ai-core-infrastructure//modules/ecs"
   project_name       = "redbox-core-api"
-  image_tag          = "11b26f1b5a17100698c75d83fd48766cd9d9a91e"
+  image_tag          = var.image_tag
   prefix             = local.prefix
   ecr_repository_uri = "${var.ecr_repository_uri}/redbox-core-api"
   ecs_cluster_id     = module.cluster.ecs_cluster_id
