@@ -119,15 +119,6 @@ class Settings(BaseSettings):
         else:
             raise NotImplementedError
 
-        try:
-            client.create_bucket(
-                Bucket=self.bucket_name,
-                CreateBucketConfiguration={"LocationConstraint": self.aws_region},
-            )
-        except ClientError as e:
-            if e.response["Error"]["Code"] != "BucketAlreadyOwnedByYou":
-                raise e
-
         return client
 
     @property
