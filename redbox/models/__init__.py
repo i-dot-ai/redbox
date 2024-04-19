@@ -1,18 +1,16 @@
 from redbox.models.chat import ChatMessage
-from redbox.models.collection import Collection
-from redbox.models.feedback import Feedback
+from redbox.models.embedding import (
+    EmbeddingResponse,
+    EmbedQueueItem,
+    ModelInfo,
+    StatusResponse,
+)
 from redbox.models.file import (
     Chunk,
     ChunkStatus,
     File,
     FileStatus,
     ProcessingStatusEnum,
-)
-from redbox.models.llm import (
-    EmbeddingResponse,
-    EmbedQueueItem,
-    ModelInfo,
-    StatusResponse,
 )
 from redbox.models.persona import ChatPersona
 from redbox.models.settings import Settings
@@ -28,8 +26,6 @@ __all__ = [
     "ChatPersona",
     "Chunk",
     "ChunkStatus",
-    "Collection",
-    "Feedback",
     "File",
     "FileStatus",
     "Spotlight",

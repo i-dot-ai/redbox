@@ -11,12 +11,13 @@ WORKDIR /app/
 ADD pyproject.toml poetry.lock ./
 ADD download_embedder.py /app/
 
-RUN --mount=type=cache,target=$POETRY_CACHE_DIR poetry install --no-root --no-ansi --with worker,ingester --without ai,dev,api
+RUN --mount=type=cache,target=$POETRY_CACHE_DIR poetry install --no-root --no-ansi --with ingester,api --without ai,dev
 
 FROM python:3.11-slim-buster as runtime
 RUN apt update && apt-get install -y \
     poppler-utils \
-    tesseract-ocr
+    tesseract-ocr \
+    libmagic-dev
 
 ARG EMBEDDING_MODEL
 
@@ -29,8 +30,12 @@ WORKDIR /app/
 ADD redbox/ /app/redbox
 ADD ingester/ /app/ingester
 ADD download_embedder.py /app/
+ADD ingester/download_ocr_models.py /app/
 
 # Download the model
 RUN python download_embedder.py --model_name ${EMBEDDING_MODEL}
 
-CMD ["faststream", "run", "ingester.src.worker:app"]
+# Download the OCR models
+RUN python download_ocr_models.py
+
+CMD ["uvicorn", "ingester.src.worker:app", "--host", "0.0.0.0", "--port", "5000"]

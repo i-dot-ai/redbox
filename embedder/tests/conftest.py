@@ -2,8 +2,10 @@ from typing import Generator, TypeVar
 from uuid import uuid4
 
 import pytest
+from fastapi.testclient import TestClient
 from elasticsearch import Elasticsearch
 
+from embedder.src.worker import app
 from redbox.models import Chunk, EmbedQueueItem, Settings
 from redbox.storage import ElasticsearchStorageHandler
 
@@ -47,3 +49,8 @@ def elasticsearch_storage_handler(
 def stored_chunk(chunk, elasticsearch_storage_handler) -> YieldFixture[Chunk]:
     elasticsearch_storage_handler.write_item(chunk)
     yield chunk
+
+
+@pytest.fixture
+def app_client():
+    yield TestClient(app)

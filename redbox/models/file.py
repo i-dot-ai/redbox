@@ -4,8 +4,7 @@ from typing import Optional
 from uuid import UUID
 
 import tiktoken
-from langchain.schema import Document
-from pydantic import AnyUrl, BaseModel, Field, computed_field
+from pydantic import BaseModel, Field, computed_field
 
 from redbox.models.base import PersistableModel
 
@@ -44,11 +43,15 @@ class Chunk(PersistableModel):
 
 
 class ChunkStatus(BaseModel):
+    """Status of a chunk of a file."""
+
     chunk_uuid: UUID
     embedded: bool
 
 
 class FileStatus(BaseModel):
+    """Status of a file."""
+
     file_uuid: UUID
     processing_status: ProcessingStatusEnum
     chunk_statuses: Optional[list[ChunkStatus]]

@@ -3,6 +3,7 @@ from datetime import datetime
 from fastapi import FastAPI
 from fastapi.responses import RedirectResponse
 
+from core_api.src.routes.chat import chat_app
 from core_api.src.routes.file import file_app
 from redbox.model_db import SentenceTransformerDB
 from redbox.models import EmbeddingResponse, ModelInfo, Settings, StatusResponse
@@ -43,8 +44,8 @@ def root():
     return RedirectResponse(url="/docs")
 
 
-@app.get("/health", response_model=StatusResponse, tags=["health"])
-def health():
+@app.get("/health", tags=["health"])
+def health() -> StatusResponse:
     """Returns the health of the API
 
     Returns:
@@ -54,11 +55,11 @@ def health():
     uptime = datetime.now() - start_time
     uptime_seconds = uptime.total_seconds()
 
-    output = {
-        "status": "ready",
-        "uptime_seconds": uptime_seconds,
-        "version": app.version,
-    }
+    output = StatusResponse(
+        status="ready",
+        uptime_seconds=uptime_seconds,
+        version=app.version,
+    )
 
     return output
 
@@ -88,4 +89,5 @@ def embed_sentences(sentences: list[str]) -> EmbeddingResponse:
     return model_db.embed_sentences(sentences)
 
 
+app.mount("/chat", chat_app)
 app.mount("/file", file_app)

@@ -11,7 +11,7 @@ WORKDIR /app/
 ADD pyproject.toml poetry.lock ./
 ADD download_embedder.py /app/
 
-RUN --mount=type=cache,target=$POETRY_CACHE_DIR poetry install --no-root --no-ansi --with worker,api --without ai,ingester,dev
+RUN --mount=type=cache,target=$POETRY_CACHE_DIR poetry install --no-root --no-ansi --with api --without ai,ingester,dev
 
 
 FROM python:3.11-slim-buster as runtime
@@ -34,4 +34,4 @@ EXPOSE 5000
 # Download the model
 RUN python download_embedder.py --model_name ${EMBEDDING_MODEL}
 
-CMD ["faststream", "run", "embedder.src.worker:app"]
+CMD ["uvicorn", "embedder.src.worker:app", "--host", "0.0.0.0", "--port", "5000"]
