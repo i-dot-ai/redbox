@@ -1,7 +1,6 @@
 from typing import Literal, Optional
 
 import boto3
-from botocore.exceptions import ClientError
 from elasticsearch import Elasticsearch
 from pydantic import BaseModel
 from pydantic_settings import BaseSettings, SettingsConfigDict
