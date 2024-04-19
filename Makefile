@@ -110,7 +110,7 @@ docker_build: ## Build the docker container
 	# Enabling Docker BuildKit for better build performance
 	export DOCKER_BUILDKIT=1
 	@for service in $(DOCKER_SERVICES); do \
-		if grep -A 2 "^\s*$$service:" docker compose.yml | grep -q 'build:'; then \
+		if grep -A 2 "^\s*$$service:" docker-compose.yml | grep -q 'build:'; then \
 			echo "Building $$service..."; \
 			PREV_IMAGE="$(ECR_REPO_URL)-$$service:$(PREV_IMAGE_TAG)"; \
 			echo "Pulling previous image: $$PREV_IMAGE"; \
@@ -126,7 +126,7 @@ docker_build: ## Build the docker container
 docker_push:
 	@echo "Services to push: $(DOCKER_SERVICES)"
 	@for service in $(DOCKER_SERVICES); do \
-		if grep -A 2 "^\s*$$service:" docker compose.yml | grep -q 'build:'; then \
+		if grep -A 2 "^\s*$$service:" docker-compose.yml | grep -q 'build:'; then \
 			echo "Pushing $$service..."; \
 			ECR_REPO_SERVICE_TAG=$(ECR_REPO_URL)-$$service:$(IMAGE_TAG); \
 			CURRENT_TAG=$$(grep -A 1 "^\s*$$service:" docker compose.yml | grep 'image:' | sed 's/.*image:\s*//'); \
