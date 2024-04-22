@@ -8,7 +8,7 @@ from langchain.chains.qa_with_sources import load_qa_with_sources_chain
 from langchain_community.chat_models import ChatLiteLLM
 from langchain_community.embeddings import SentenceTransformerEmbeddings
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_elasticsearch import ApproxRetrievalStrategy, ElasticsearchStore
+from langchain_elasticsearch import ElasticsearchStore, ApproxRetrievalStrategy
 from typing_extensions import TypedDict
 
 from redbox.llm.prompts.chat import (
@@ -47,24 +47,18 @@ es = env.elasticsearch_client()
 embedding_function = SentenceTransformerEmbeddings()
 # TODO: do we want to be able to set hybrid to True depending on Elastic subscription levels?
 # see: https://github.com/i-dot-ai/redbox-copilot-streamlit/blob/3d197e76e6d42cfe0b70f66bb374c899b74754b4/streamlit_app/utils.py#L316C17-L316C45
-hybrid = False
+hybrid = True
+strategy = ApproxRetrievalStrategy(hybrid=hybrid)
 
 # TODO: fix this - I don't think it's correctly implemented, as we're getting an error when making a request:
 # raise HTTP_EXCEPTIONS.get(meta.status, ApiError)(
 # elasticsearch.NotFoundError: NotFoundError(404, 'status_exception', '[file] is not an inference service model or a deployed ml model')
 vector_store = ElasticsearchStore(
     es_connection=es,
-    index_name="redbox-data",
-    embedding=embedding_function,
-embedding_function = SentenceTransformerEmbeddings()
-strategy = ApproxRetrievalStrategy(hybrid=False)
-vector_store = ElasticsearchStore(
-    es_connection=es,
     index_name="redbox-data-chunk",
     embedding=embedding_function,
     strategy=strategy,
-    vector_query_field="embedding"
-)
+    vector_query_field="embedding",
 )
 
 
@@ -123,7 +117,7 @@ def simple_chat(chat_history: List[ChatMessage]) -> StreamingResponse:
 
 
 @chat_app.post("/rag", tags=["chat"])
-def rag_chat(chat_history: List[ChatMessage], files: List[UUID]) -> StreamingResponse:
+def rag_chat(chat_history: List[ChatMessage], files: List[UUID]) -> str:
     """Get a LLM response to a question history and file
 
     Args:
@@ -156,9 +150,7 @@ def rag_chat(chat_history: List[ChatMessage], files: List[UUID]) -> StreamingRes
         {
             "question": standalone_question,
             "input_documents": docs,
-            # TODO: do we want user_info or current_date
         },
-        # TODO: do we need callbacks?
     )
 
-    return result, docs_with_sources_chain
+    return result["output_text"]
