@@ -56,7 +56,15 @@ vector_store = ElasticsearchStore(
     es_connection=es,
     index_name="redbox-data",
     embedding=embedding_function,
-    strategy=ApproxRetrievalStrategy(hybrid=hybrid, query_model_id="file"),
+embedding_function = SentenceTransformerEmbeddings()
+strategy = ApproxRetrievalStrategy(hybrid=False)
+vector_store = ElasticsearchStore(
+    es_connection=es,
+    index_name="redbox-data-chunk",
+    embedding=embedding_function,
+    strategy=strategy,
+    vector_query_field="embedding"
+)
 )
 
 
