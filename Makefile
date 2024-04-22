@@ -96,7 +96,7 @@ PREV_IMAGE_TAG=$$(git rev-parse HEAD~1)
 IMAGE_TAG=$$(git rev-parse HEAD)
 
 tf_build_args=-var "image_tag=$(IMAGE_TAG)"
-DOCKER_SERVICES=$$(docker compose config --services)
+DOCKER_SERVICES=$$(docker compose config --services | grep -v mlflow)
 
 .PHONY: docker_login
 docker_login:
