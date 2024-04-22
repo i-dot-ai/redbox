@@ -32,15 +32,15 @@ services:
       - utils
     volumes:
       - ./:/app/:z
-#  mlflow:
-#    build:
-#      context: .
-#      dockerfile: ./mlflow/docker/Dockerfile
-#    image: mlflow_server
-#    ports:
-#        - "5010:5010"
-#    volumes:
-#      - mlflow-data:/mlflow
+  mlflow:
+    build:
+      context: .
+      dockerfile: ./mlflow/docker/Dockerfile
+    image: mlflow_server
+    ports:
+        - "5010:5010"
+    volumes:
+      - mlflow-data:/mlflow
   embedder:
     image: redbox-embedder:latest
     build:
