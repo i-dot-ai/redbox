@@ -129,7 +129,7 @@ docker_push:
 		if grep -A 2 "^\s*$$service:" docker-compose.yml | grep -q 'build:'; then \
 			echo "Pushing $$service..."; \
 			ECR_REPO_SERVICE_TAG=$(ECR_REPO_URL)-$$service:$(IMAGE_TAG); \
-			CURRENT_TAG=$$(grep -A 1 "^\s*$$service:" docker compose.yml | grep 'image:' | sed 's/.*image:\s*//'); \
+			CURRENT_TAG=$$(grep -A 1 "^\s*$$service:" docker-compose.yml | grep 'image:' | sed 's/.*image:\s*//'); \
 			echo "Tagging $$service: $$CURRENT_TAG -> $$ECR_REPO_SERVICE_TAG"; \
 			docker tag $$CURRENT_TAG $$ECR_REPO_SERVICE_TAG; \
 			docker push $$ECR_REPO_SERVICE_TAG; \
