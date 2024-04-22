@@ -67,6 +67,7 @@ moto = {extras = ["s3"], version = "^5.0.5"}
 anthropic = "^0.25.1"
 litellm = "^1.35.2"
 openai = "^1.17.0"
+langchain-elasticsearch = "^0.1.2"
 
 
 [tool.poetry.group.docs.dependencies]
