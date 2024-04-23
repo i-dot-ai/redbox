@@ -35,7 +35,10 @@ ADD ingester/download_ocr_models.py /app/
 # Download the model
 RUN python download_embedder.py --model_name ${EMBEDDING_MODEL}
 
-# Download tagging model
+# Downlaod Sentence Tokenizer
+RUN python -m nltk.downloader punkt
+
+# Download POS tagger
 RUN python -m nltk.downloader averaged_perceptron_tagger
 
 # Download the OCR models
