@@ -45,7 +45,7 @@ class Metadata(BaseModel):
     # links: Optional[list[Link]] = None,
     # orig_elements: Optional[list[Element]] = None,
     # page_name: Optional[str] = None,
-    page_number: Optional[int] = (None,)
+    page_number: Optional[int | list[int]] = None
     # parent_id: Optional[ UUID] = None,
     # regex_metadata: Optional[dict[str, list[RegexMetadata]]] = None,
     # section: Optional[str] = None,
