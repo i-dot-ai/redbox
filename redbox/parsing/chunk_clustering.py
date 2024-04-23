@@ -72,7 +72,7 @@ def cluster_chunks(
                     parent_file_uuid=chunks_in[0].parent_file_uuid,
                     index=1,
                     text=" ".join([chunk.text for chunk in chunks_in]),
-                    metadata=merge_chunk_metadata([chunk.metadata for chunk in chunks_in]),
+                    metadata=reduce(Metadata.merge, [chunk.metadata for chunk in chunks_in]),
                     creator_user_uuid=chunks_in[0].creator_user_uuid,
                 )
             out_chunks.append(new_chunk)
@@ -133,4 +133,4 @@ def merge_chunk_metadata(meta_in: list[Metadata]) -> Metadata:
     """
     Combine metadata for multiple chunks from the same document.
     """
-    return reduce(Metadata.merge, meta_in, None)
+    return reduce(Metadata.merge, meta_in)

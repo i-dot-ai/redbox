@@ -7,6 +7,7 @@ from elasticsearch import Elasticsearch
 
 from embedder.src.worker import app
 from redbox.models import Chunk, EmbedQueueItem, Settings
+from redbox.models.file import Metadata
 from redbox.storage import ElasticsearchStorageHandler
 
 T = TypeVar("T")
@@ -23,7 +24,7 @@ def chunk() -> YieldFixture[Chunk]:
         parent_file_uuid=uuid4(),
         index=1,
         text="test_text",
-        metadata={},
+        metadata=Metadata(),
     )
     yield test_chunk
 

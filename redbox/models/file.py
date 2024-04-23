@@ -30,6 +30,13 @@ class Link(BaseModel):
     url: str
     start_index: int
 
+    def __le__(self, other: Link):
+        """required for sorted"""
+        return self.start_index <= other.start_index
+
+    def __hash__(self):
+        return hash(self.text) ^ hash(self.url) ^ hash(self.start_index)
+
 
 class Metadata(BaseModel):
     """this is a pydantic model for the unstructured Metadata class
@@ -77,8 +84,8 @@ class Metadata(BaseModel):
             return [field_value]
 
         data = {
-            field_name: listify(left, field_name) + listify(right, field_name)
-            for field_name in ["page_number", "link_texts", "link_urls", "links", "languages"]
+            field_name: sorted(set(listify(left, field_name) + listify(right, field_name)))
+            for field_name in cls.model_fields.keys()
         }
         return cls(**data)
 
