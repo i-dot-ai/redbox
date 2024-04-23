@@ -16,16 +16,6 @@ locals {
   }
 }
 
-resource "aws_security_group" "service_security_group" {
-  vpc_id      = data.terraform_remote_state.vpc.outputs.vpc_id
-  description = "${var.project_name} ${terraform.workspace} ecs security group"
-  name        = "${var.project_name}-${terraform.workspace}"
-  lifecycle {
-    create_before_destroy = true
-  }
-}
-
-
 module "cluster" {
   source         = "../../../i-ai-core-infrastructure//modules/ecs_cluster"
   project_prefix = var.project_name
@@ -70,7 +60,6 @@ module "core_api" {
   host                         = local.host
   ip_whitelist                 = var.external_ips
   environment_variables        = local.environment_variables
-  security_group_id            = aws_security_group.service_security_group.id
 }
 
 
@@ -100,7 +89,6 @@ module "embedder" {
   host                         = local.host
   ip_whitelist                 = var.external_ips
   environment_variables        = local.environment_variables
-  security_group_id            = aws_security_group.service_security_group.id
 }
 
 
@@ -130,5 +118,4 @@ module "ingester" {
   host                         = local.host
   ip_whitelist                 = var.external_ips
   environment_variables        = local.environment_variables
-  security_group_id            = aws_security_group.service_security_group.id
 }
