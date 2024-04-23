@@ -13,6 +13,7 @@ locals {
     "REDIS_PORT" : module.elasticache.redis_port,
     "DJANGO_SECRET_KEY" : var.django_secret_key,
     "POSTGRES_PASSWORD" : var.postgres_password
+    "OPENAI_API_KEY": var.openai_api_key
   }
 }
 
