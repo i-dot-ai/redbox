@@ -11,7 +11,6 @@ ENV POETRY_NO_INTERACTION=1 \
 # Add redbox python package and install it with poetry
 ADD redbox/ /app/redbox
 ADD pyproject.toml poetry.lock /app/
-ADD download_embedder.py /app/
 ADD redbox/ /app/redbox
 
 RUN --mount=type=cache,target=$POETRY_CACHE_DIR poetry install --no-root --no-ansi --with api,ai --without ingester,dev,worker
@@ -42,7 +41,6 @@ COPY --from=builder ${VIRTUAL_ENV} ${VIRTUAL_ENV}
 COPY --from=embeddings ${EMBEDDING_MODEL_PATH} ${EMBEDDING_MODEL_PATH}
 
 COPY core_api/ /app/core_api/
-ADD download_embedder.py /app/
 ADD redbox/ /app/redbox
 
 ENV PYTHONPATH "/app"

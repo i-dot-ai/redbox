@@ -5,15 +5,20 @@ from langchain_community.chat_models import ChatLiteLLM
 from langchain_community.embeddings import SentenceTransformerEmbeddings
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_elasticsearch import ElasticsearchStore, ApproxRetrievalStrategy
+import logging
 
 from redbox.llm.prompts.chat import (
     CONDENSE_QUESTION_PROMPT,
     STUFF_DOCUMENT_PROMPT,
     WITH_SOURCES_PROMPT,
 )
-from redbox.models import Settings, EmbeddingResponse, EmbeddingModelInfo
-from redbox.model_db import SentenceTransformerDB
+from redbox.models import Settings, EmbeddingResponse, EmbeddingModelInfo, Embedding
 from redbox.models.chat import ChatRequest, ChatResponse, ChatMessage
+
+# === Logging ===
+
+logging.basicConfig(level=logging.INFO)
+log = logging.getLogger()
 
 env = Settings()
 
@@ -32,8 +37,23 @@ chat_app = FastAPI(
     openapi_url="/openapi.json",
 )
 
+log.info("Loading embedding model from environment: %s", env.embedding_model)
+embedding_model = SentenceTransformerEmbeddings(model_name=env.embedding_model, cache_folder="/app/models")
+log.info("Loaded embedding model from environment: %s", env.embedding_model)
 
-model_db = SentenceTransformerDB(env.embedding_model)
+
+def populate_embedding_model_info() -> EmbeddingModelInfo:
+    test_text = "This is a test sentence."
+    embedding = embedding_model.embed_documents([test_text])[0]
+    model_info = EmbeddingModelInfo(
+        model=env.embedding_model,
+        vector_size=len(embedding),
+    )
+    return model_info
+
+
+embedding_model_info = populate_embedding_model_info()
+
 
 # === LLM setup ===
 
@@ -44,14 +64,17 @@ llm = ChatLiteLLM(
 )
 
 es = env.elasticsearch_client()
-
-hybrid = True
-strategy = ApproxRetrievalStrategy(hybrid=hybrid)
+if env.elastic.subscription_level == "basic":
+    strategy = ApproxRetrievalStrategy(hybrid=False)
+elif env.elastic.subscription_level in ["platinum", "enterprise"]:
+    strategy = ApproxRetrievalStrategy(hybrid=True)
+else:
+    raise ValueError(f"Unknown Elastic subscription level {env.elastic.subscription_level}")
 
 vector_store = ElasticsearchStore(
     es_connection=es,
     index_name="redbox-data-chunk",
-    embedding=model_db,
+    embedding=embedding_model,
     strategy=strategy,
     vector_query_field="embedding",
 )
@@ -65,7 +88,7 @@ def get_model() -> EmbeddingModelInfo:
         EmbeddingModelInfo: Information about the embedding model
     """
 
-    return model_db.get_embedding_model_info()
+    return embedding_model_info
 
 
 @chat_app.post("/embedding", tags=["embedding"])
@@ -79,7 +102,14 @@ def embed_sentences(sentences: list[str]) -> EmbeddingResponse:
         EmbeddingResponse: The embeddings of the sentences
     """
 
-    return model_db.embed_sentences(sentences)
+    embeddings = embedding_model.embed_documents(sentences)
+    embeddings = [Embedding(object="embedding", index=i, embedding=embedding) for i, embedding in enumerate(embeddings)]
+
+    response = EmbeddingResponse(
+        object="list", data=embeddings, model=env.embedding_model, embedding_model_info=embedding_model_info
+    )
+
+    return response
 
 
 @chat_app.post("/vanilla", tags=["chat"], response_model=ChatResponse)

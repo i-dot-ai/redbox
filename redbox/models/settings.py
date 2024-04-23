@@ -16,6 +16,7 @@ class ElasticLocalSettings(BaseModel):
     user: str = "elastic"
     version: str = "8.11.0"
     password: str = "redboxpass"
+    subscription_level: str = "basic"
 
 
 class ElasticCloudSettings(BaseModel):
@@ -23,6 +24,7 @@ class ElasticCloudSettings(BaseModel):
 
     api_key: str
     cloud_id: str
+    subscription_level: str = "basic"
 
 
 class Settings(BaseSettings):

@@ -3,8 +3,8 @@ from contextlib import asynccontextmanager
 
 from faststream import Context, ContextRepo, FastStream
 from faststream.redis import RedisBroker
+from sentence_transformers import SentenceTransformer
 
-from redbox.model_db import SentenceTransformerDB
 from redbox.models import EmbedQueueItem, File, Settings
 from redbox.parsing.file_chunker import FileChunker
 from redbox.storage.elasticsearch import ElasticsearchStorageHandler
@@ -24,8 +24,8 @@ publisher = broker.publisher(env.embed_queue_name)
 async def lifespan(context: ContextRepo):
     es = env.elasticsearch_client()
     storage_handler = ElasticsearchStorageHandler(es_client=es, root_index="redbox-data")
-    model_db = SentenceTransformerDB(env.embedding_model)
-    chunker = FileChunker(embedding_model=model_db)
+    model = SentenceTransformer(model_name_or_path=env.embedding_model, cache_folder="/app/models")
+    chunker = FileChunker(embedding_model=model)
 
     context.set_global("storage_handler", storage_handler)
     context.set_global("chunker", chunker)

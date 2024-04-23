@@ -20,7 +20,6 @@ def test_read_model(client):
     response = client.get("/model")
     assert response.status_code == 200
     assert response.json() == {
-        "max_seq_length": 100,
         "model": env.embedding_model,
         "vector_size": 768,
     }

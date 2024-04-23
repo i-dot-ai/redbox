@@ -1,14 +1,14 @@
-from typing import Literal
+from typing import Literal, Annotated
 from uuid import UUID
+from uuid import uuid4
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, AfterValidator
 
 
 class EmbeddingModelInfo(BaseModel):
     """Information about the model used to generate the embeddings"""
 
     model: str
-    max_seq_length: int
     vector_size: int
 
 
@@ -25,7 +25,7 @@ class EmbeddingResponse(BaseModel):
 
     object: Literal["list"]
     data: list[Embedding]
-    embedding_id: str
+    embedding_id: UUID | Annotated[str, AfterValidator(lambda x: UUID(x))] = Field(default_factory=uuid4)
     model: str
     embedding_model_info: EmbeddingModelInfo
 

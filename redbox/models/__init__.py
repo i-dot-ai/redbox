@@ -2,6 +2,7 @@ from redbox.models.chat import ChatMessage
 from redbox.models.embedding import (
     EmbeddingResponse,
     EmbedQueueItem,
+    Embedding,
     EmbeddingModelInfo,
     StatusResponse,
 )
@@ -33,6 +34,7 @@ __all__ = [
     "SpotlightTask",
     "SpotlightTaskComplete",
     "Settings",
+    "Embedding",
     "EmbeddingModelInfo",
     "EmbeddingResponse",
     "EmbedQueueItem",
