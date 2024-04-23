@@ -1,10 +1,11 @@
-from typing import List, Literal
+from typing import Literal
 
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import StreamingResponse
 from langchain.chains.llm import LLMChain
 from langchain_community.chat_models import ChatLiteLLM
 from langchain_core.prompts import ChatPromptTemplate
+from pydantic import conlist
 from typing_extensions import TypedDict
 
 from redbox.models import Settings
@@ -39,7 +40,7 @@ class ChatMessage(TypedDict):
 
 
 @chat_app.post("/vanilla", tags=["chat"])
-def simple_chat(chat_history: List[ChatMessage]) -> StreamingResponse:
+def simple_chat(chat_history: conlist(ChatMessage, min_length=2)) -> StreamingResponse:
     """Get a LLM response to a question history
 
     Args:
@@ -54,12 +55,6 @@ def simple_chat(chat_history: List[ChatMessage]) -> StreamingResponse:
     Returns:
         StreamingResponse: a stream of the chain response
     """
-
-    if len(chat_history) < 2:
-        raise HTTPException(
-            status_code=422,
-            detail="Chat history should include both system and user prompts",
-        )
 
     if chat_history[0]["role"] != "system":
         raise HTTPException(
