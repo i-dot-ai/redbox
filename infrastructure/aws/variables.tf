@@ -73,3 +73,10 @@ variable "internal_ips" {
   type        = list(string)
   description = "IP's of No10 and CO"
 }
+
+
+variable "openai_api_key" {
+  type = string
+  sensitive   = true
+  description = "OPENAI api key"
+}
