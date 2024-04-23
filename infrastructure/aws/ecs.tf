@@ -50,7 +50,7 @@ module "core_api" {
   create_listener = true
   source             = "../../../i-ai-core-infrastructure//modules/ecs"
   project_name       = "redbox-core-api"
-  image_tag          = "2a43dc806c4cc112e4789618b4b45d1cec56b01"
+  image_tag          = var.image_tag
   prefix             = local.prefix
   ecr_repository_uri = "${var.ecr_repository_uri}/redbox-core-api"
   ecs_cluster_id     = module.cluster.ecs_cluster_id
@@ -78,7 +78,7 @@ module "embedder" {
   create_networking = false
   source             = "../../../i-ai-core-infrastructure//modules/ecs"
   project_name       = "redbox-embedder"
-  image_tag          = "2a43dc806c4cc112e4789618b4b45d1cec56b01"
+  image_tag          = var.image_tag
   prefix             = local.prefix
   ecr_repository_uri = "${var.ecr_repository_uri}/redbox-embedder"
   ecs_cluster_id     = module.cluster.ecs_cluster_id
@@ -106,7 +106,7 @@ module "ingester" {
   create_networking = false
   source             = "../../../i-ai-core-infrastructure//modules/ecs"
   project_name       = "redbox-ingester"
-  image_tag          = "2a43dc806c4cc112e4789618b4b45d1cec56b01"
+  image_tag          = var.image_tag
   prefix             = local.prefix
   ecr_repository_uri = "${var.ecr_repository_uri}/redbox-ingester"
   ecs_cluster_id     = module.cluster.ecs_cluster_id

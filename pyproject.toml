@@ -28,6 +28,7 @@ uvicorn = "^0.29.0"
 [tool.poetry.group.ingester.dependencies]
 unstructured = {version = "0.13.2", extras = ["all-docs"]}
 opencv-python-headless = "^4.9.0.80"
+nltk = "^3.8.1"
 
 [tool.poetry.group.dev.dependencies]
 bumpversion = "^0.6.0"
