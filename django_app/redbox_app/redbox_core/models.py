@@ -43,29 +43,6 @@ class ProcessingStatusEnum(models.TextChoices):
     complete = "complete"
 
 
-class FileTypeEnum(models.TextChoices):
-    eml = ".eml"
-    html = ".html"
-    json = ".json"
-    md = ".md"
-    msg = ".msg"
-    rst = ".rst"
-    rtf = ".rtf"
-    txt = ".txt"
-    xml = ".xml"
-    csv = ".csv"
-    doc = ".doc"
-    docx = ".docx"
-    epub = ".epub"
-    odt = ".odt"
-    pdf = ".pdf"
-    ppt = ".ppt"
-    pptx = ".pptx"
-    tsv = ".tsv"
-    xlsx = ".xlsx"
-    htm = ".htm"
-
-
 class File(UUIDPrimaryKeyBase, TimeStampedModel):
     processing_status = models.CharField(choices=ProcessingStatusEnum.choices, null=False, blank=False)
     original_file = models.FileField(storage=settings.BUCKET_NAME)
