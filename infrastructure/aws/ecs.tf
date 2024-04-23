@@ -46,8 +46,8 @@ resource "aws_route53_record" "type_a_record" {
 
 
 module "core_api" {
-  create_networking = true
-  create_listener = true
+  create_networking  = true
+  create_listener    = true
   source             = "../../../i-ai-core-infrastructure//modules/ecs"
   project_name       = "redbox-core-api"
   image_tag          = var.image_tag
@@ -75,7 +75,9 @@ module "core_api" {
 
 
 module "embedder" {
-  create_networking = false
+  create_networking  = false
+  memory             = 2048
+  cpu                = 1024
   source             = "../../../i-ai-core-infrastructure//modules/ecs"
   project_name       = "redbox-embedder"
   image_tag          = var.image_tag
@@ -103,7 +105,9 @@ module "embedder" {
 
 
 module "ingester" {
-  create_networking = false
+  create_networking  = false
+  memory             = 4096
+  cpu                = 2048
   source             = "../../../i-ai-core-infrastructure//modules/ecs"
   project_name       = "redbox-ingester"
   image_tag          = var.image_tag
