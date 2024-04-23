@@ -129,21 +129,8 @@ def create_pdist(token_counts, pair_embed_dist, weight_embed_dist=0.2, use_log=T
     return combined_dist
 
 
-def listify(obj) -> list:
-    if isinstance(obj, list):
-        return obj
-    if obj is None:
-        return []
-    return [obj]
-
-
-def merge_two_chunk_metadatas(left: Metadata, right: Metadata) -> Metadata:
-    page_number = listify(left.page_number) + listify(right.page_number)
-    return Metadata(page_number=page_number)
-
-
 def merge_chunk_metadata(meta_in: list[Metadata]) -> Metadata:
     """
     Combine metadata for multiple chunks from the same document.
     """
-    return reduce(merge_two_chunk_metadatas, meta_in, None)
+    return reduce(Metadata.merge, meta_in, None)
