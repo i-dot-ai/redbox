@@ -4,7 +4,7 @@ from uuid import UUID
 from pydantic import BaseModel, Field
 
 
-class ModelInfo(BaseModel):
+class EmbeddingModelInfo(BaseModel):
     """Information about the model used to generate the embeddings"""
 
     model: str
@@ -27,7 +27,7 @@ class EmbeddingResponse(BaseModel):
     data: list[Embedding]
     embedding_id: str
     model: str
-    model_info: ModelInfo
+    embedding_model_info: EmbeddingModelInfo
 
 
 class EmbeddingRequest(BaseModel):
