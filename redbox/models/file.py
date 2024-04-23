@@ -24,13 +24,46 @@ class File(PersistableModel):
     bucket: str = Field(description="s3 bucket")
 
 
+class Metadata(BaseModel):
+    # attached_to_filename: Optional[str] = None,
+    # category_depth: Optional[int] = None,
+    # coordinates: Optional[CoordinatesMetadata] = None,
+    # data_source: Optional[DataSourceMetadata] = None,
+    # detection_class_prob: Optional[float] = None,
+    # emphasized_text_contents: Optional[list[str]] = None,
+    # emphasized_text_tags: Optional[list[str]] = None,
+    # file_directory: Optional[str] = None,
+    # filename: Optional[str | pathlib.Path] = None,
+    # filetype: Optional[str] = None,
+    # header_footer_type: Optional[str] = None,
+    # image_path: Optional[str] = None,
+    # is_continuation: Optional[bool] = None,
+    # languages: Optional[list[str]] = None,
+    # last_modified: Optional[str] = None,
+    # link_texts: Optional[list[str]] = None,
+    # link_urls: Optional[list[str]] = None,
+    # links: Optional[list[Link]] = None,
+    # orig_elements: Optional[list[Element]] = None,
+    # page_name: Optional[str] = None,
+    page_number: Optional[int] = (None,)
+    # parent_id: Optional[ UUID] = None,
+    # regex_metadata: Optional[dict[str, list[RegexMetadata]]] = None,
+    # section: Optional[str] = None,
+    # sent_from: Optional[list[str]] = None,
+    # sent_to: Optional[list[str]] = None,
+    # signature: Optional[str] = None,
+    # subject: Optional[str] = None,
+    # text_as_html: Optional[str] = None,
+    # url: Optional[str] = None,
+
+
 class Chunk(PersistableModel):
     """Chunk of a File"""
 
     parent_file_uuid: UUID = Field(description="id of the original file which this text came from")
     index: int = Field(description="relative position of this chunk in the original file")
     text: str = Field(description="chunk of the original text")
-    metadata: dict
+    metadata: Metadata
     embedding: Optional[list[float]] = Field(description="the vector representation of the text", default=None)
 
     @computed_field
@@ -60,5 +93,3 @@ class FileStatus(BaseModel):
 class FileExistsException(Exception):
     def __init__(self):
         super().__init__("Document with same name already exists. Please rename if you want to upload anyway.")
-
-    pass
