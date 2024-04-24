@@ -10,7 +10,7 @@ ENV POETRY_NO_INTERACTION=1 \
 WORKDIR /app/
 ADD pyproject.toml poetry.lock ./
 
-RUN --mount=type=cache,target=$POETRY_CACHE_DIR poetry install --no-root --no-ansi --with worker,ingester --without ai,dev,api
+RUN --mount=type=cache,target=$POETRY_CACHE_DIR poetry install --no-root --no-ansi --with ingester,api --without ai,dev
 
 FROM python:3.11-buster as embeddings
 ARG EMBEDDING_MODEL
@@ -45,7 +45,13 @@ ADD redbox/ /app/redbox
 ADD ingester/ /app/ingester
 ADD ingester/download_ocr_models.py /app/
 
+# Downlaod Sentence Tokenizer
+RUN python -m nltk.downloader punkt
+
+# Download POS tagger
+RUN python -m nltk.downloader averaged_perceptron_tagger
+
 # Download the OCR models
 RUN python download_ocr_models.py
 
-CMD ["faststream", "run", "ingester.src.worker:app"]
+CMD ["uvicorn", "ingester.src.worker:app", "--host", "0.0.0.0", "--port", "5000"]

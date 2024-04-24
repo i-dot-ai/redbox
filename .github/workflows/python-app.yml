@@ -51,7 +51,7 @@ jobs:
         cp .env.test .env
         docker compose up -d --wait elasticsearch
 
-        poetry install --no-root --no-ansi --with dev --without ai,api,worker,ingester
+        poetry install --no-root --no-ansi --with dev --without ai,api,ingester
 
     - name: Add dependencies for Ingester
       run: |

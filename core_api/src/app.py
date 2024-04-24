@@ -42,8 +42,8 @@ def root():
     return RedirectResponse(url="/docs")
 
 
-@app.get("/health", response_model=StatusResponse, tags=["health"])
-def health():
+@app.get("/health", tags=["health"])
+def health() -> StatusResponse:
     """Returns the health of the API
 
     Returns:
@@ -53,11 +53,11 @@ def health():
     uptime = datetime.now() - start_time
     uptime_seconds = uptime.total_seconds()
 
-    output = {
-        "status": "ready",
-        "uptime_seconds": uptime_seconds,
-        "version": app.version,
-    }
+    output = StatusResponse(
+        status="ready",
+        uptime_seconds=uptime_seconds,
+        version=app.version,
+    )
 
     return output
 

@@ -39,3 +39,40 @@ def test_simple_chat(chat_history, status_code, app_client, monkeypatch):
 
     response = app_client.post("/chat/vanilla", json=chat_history)
     assert response.status_code == status_code
+
+
+@pytest.mark.parametrize(
+    "payload, error",
+    [
+        (
+            [{"text": "hello", "role": "system"}],
+            {
+                "detail": [
+                    {
+                        "ctx": {"actual_length": 1, "field_type": "List", "min_length": 2},
+                        "input": [{"role": "system", "text": "hello"}],
+                        "loc": ["body"],
+                        "msg": "List should have at least 2 items after validation, not 1",
+                        "type": "too_short",
+                    }
+                ]
+            },
+        ),
+        (
+            [{"text": "hello", "role": "user"}, {"text": "hello", "role": "user"}],
+            {"detail": "The first entry in the chat history should be a system prompt"},
+        ),
+        (
+            [{"text": "hello", "role": "system"}, {"text": "hello", "role": "system"}],
+            {"detail": "The final entry in the chat history should be a user question"},
+        ),
+    ],
+)
+def test_chat_errors(app_client, payload, error):
+    """Given the app is running
+    When I POST a malformed payload to /chat/vanilla
+    I expect a 422 error and a meaningful message
+    """
+    response = app_client.post("/chat/vanilla", json=payload)
+    assert response.status_code == 422
+    assert response.json() == error

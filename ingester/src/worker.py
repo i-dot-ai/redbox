@@ -1,5 +1,5 @@
 import logging
-from contextlib import asynccontextmanager
+from datetime import datetime
 
 from faststream import Context, ContextRepo, FastStream
 from faststream.redis import RedisBroker
@@ -9,19 +9,19 @@ from redbox.models import EmbedQueueItem, File, Settings
 from redbox.parsing.file_chunker import FileChunker
 from redbox.storage.elasticsearch import ElasticsearchStorageHandler
 
+start_time = datetime.now()
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger()
 
 env = Settings()
 
 
-broker = RedisBroker(url=env.redis_url)
+router = RedisRouter(url=env.redis_url)
 
-publisher = broker.publisher(env.embed_queue_name)
+publisher = router.broker.publisher(env.embed_queue_name)
 
 
-@asynccontextmanager
-async def lifespan(context: ContextRepo):
+def get_storage_handler():
     es = env.elasticsearch_client()
     storage_handler = ElasticsearchStorageHandler(es_client=es, root_index="redbox-data")
     model = SentenceTransformer(model_name_or_path=env.embedding_model, cache_folder="/app/models")
@@ -33,11 +33,11 @@ async def lifespan(context: ContextRepo):
     yield
 
 
-@broker.subscriber(channel=env.ingest_queue_name)
+@router.subscriber(channel=env.ingest_queue_name)
 async def ingest(
     file: File,
-    storage_handler: ElasticsearchStorageHandler = Context(),
-    chunker: FileChunker = Context(),
+    storage_handler: ElasticsearchStorageHandler = Depends(get_storage_handler),
+    chunker: FileChunker = Depends(get_chunker),
 ):
     """
     1. Chunks file
@@ -63,4 +63,25 @@ async def ingest(
     return items
 
 
-app = FastStream(broker, lifespan=lifespan)
+app = FastAPI(lifespan=router.lifespan_context)
+app.include_router(router)
+
+
+@app.get("/health", tags=["health"])
+def health() -> StatusResponse:
+    """Returns the health of the API
+
+    Returns:
+        StatusResponse: The health of the API
+    """
+
+    uptime = datetime.now() - start_time
+    uptime_seconds = uptime.total_seconds()
+
+    output = StatusResponse(
+        status="ready",
+        uptime_seconds=uptime_seconds,
+        version=app.version,
+    )
+
+    return output

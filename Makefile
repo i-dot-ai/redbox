@@ -22,19 +22,19 @@ rebuild:
 	docker compose build --no-cache
 
 test-core-api:
-	poetry install --no-root --no-ansi --with worker,api,dev,ai --without ingester
+	poetry install --no-root --no-ansi --with api,dev,ai --without ingester
 	poetry run pytest core_api/tests --cov=core_api/src -v --cov-report=term-missing --cov-fail-under=45
 
 test-embedder:
-	poetry install --no-root --no-ansi --with worker,api,dev --without ai,ingester
+	poetry install --no-root --no-ansi --with api,dev --without ai,ingester
 	poetry run pytest embedder/tests --cov=embedder/src -v --cov-report=term-missing --cov-fail-under=50
 
 test-redbox:
-	poetry install --no-root --no-ansi --with worker,api,dev --without ai,ingester
+	poetry install --no-root --no-ansi --with api,dev --without ai,ingester
 	poetry run pytest redbox/tests --cov=redbox -v --cov-report=term-missing --cov-fail-under=45
 
 test-ingester:
-	poetry install --no-root --no-ansi --with worker,ingester,dev --without ai,api
+	poetry install --no-root --no-ansi --with ingester,dev --without ai,api
 	poetry run pytest ingester/tests --cov=ingester -v --cov-report=term-missing --cov-fail-under=40
 
 test-django:
@@ -46,7 +46,7 @@ test-integration:
 	cp .env.integration .env
 	docker compose build core-api embedder ingester minio
 	docker compose up -d core-api embedder ingester minio
-	poetry install --no-root --no-ansi --with dev --without ai,api,worker,ingester
+	poetry install --no-root --no-ansi --with dev --without ai,api,ingester
 	sleep 10
 	poetry run pytest tests
 
@@ -96,7 +96,7 @@ PREV_IMAGE_TAG=$$(git rev-parse HEAD~1)
 IMAGE_TAG=$$(git rev-parse HEAD)
 
 tf_build_args=-var "image_tag=$(IMAGE_TAG)"
-DOCKER_SERVICES=$$(docker compose config --services)
+DOCKER_SERVICES=$$(docker compose config --services | grep -v mlflow)
 
 .PHONY: docker_login
 docker_login:
@@ -105,7 +105,7 @@ docker_login:
 .PHONY: docker_build
 docker_build: ## Build the docker container
 	@cp .env.example .env
-	# Fetching list of services defined in docker-compose configuration
+	# Fetching list of services defined in docker compose configuration
 	@echo "Services to update: $(DOCKER_SERVICES)"
 	# Enabling Docker BuildKit for better build performance
 	export DOCKER_BUILDKIT=1
@@ -153,10 +153,10 @@ CONFIG_DIR=../../../redbox-copilot-infra-config
 TF_BACKEND_CONFIG=$(CONFIG_DIR)/backend.hcl
 
 tf_new_workspace:
-	terraform -chdir=./infrastructure workspace new $(env)
+	terraform -chdir=./infrastructure/aws workspace new $(env)
 
 tf_set_workspace:
-	terraform -chdir=./infrastructure workspace select $(env)
+	terraform -chdir=./infrastructure/aws workspace select $(env)
 
 tf_set_or_create_workspace:
 	make tf_set_workspace || make tf_new_workspace

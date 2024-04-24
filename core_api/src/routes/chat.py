@@ -4,6 +4,7 @@ from langchain.chains.qa_with_sources import load_qa_with_sources_chain
 from langchain_community.chat_models import ChatLiteLLM
 from langchain_community.embeddings import SentenceTransformerEmbeddings
 from langchain_core.prompts import ChatPromptTemplate
+from pydantic import conlist
 from langchain_elasticsearch import ElasticsearchStore, ApproxRetrievalStrategy
 import logging
 

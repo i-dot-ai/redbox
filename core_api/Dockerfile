@@ -13,7 +13,7 @@ ADD redbox/ /app/redbox
 ADD pyproject.toml poetry.lock /app/
 ADD redbox/ /app/redbox
 
-RUN --mount=type=cache,target=$POETRY_CACHE_DIR poetry install --no-root --no-ansi --with api,ai --without ingester,dev,worker
+RUN --mount=type=cache,target=$POETRY_CACHE_DIR poetry install --no-root --no-ansi --with api,ai --without ingester,dev
 
 FROM python:3.11-buster as embeddings
 ARG EMBEDDING_MODEL
