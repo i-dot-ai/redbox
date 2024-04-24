@@ -20,12 +20,10 @@ data "terraform_remote_state" "platform" {
 }
 
 data "terraform_remote_state" "universal" {
-  backend   = "s3"
-  workspace = terraform.workspace
+  backend = "s3"
   config = {
     bucket = var.state_bucket
     key    = "universal/terraform.tfstate"
     region = var.region
   }
 }
-
