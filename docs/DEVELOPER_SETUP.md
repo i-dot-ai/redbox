@@ -52,7 +52,6 @@ The project currently consists of multiple docker images needed to run the proje
 
 - `elasticsearch`
 - `kibana`
-- `embedder`
 - `ingester`
 - `minio`
 - `redis`
@@ -106,12 +105,6 @@ For the core API:
 
 ``` bash
 make test-core-api
-```
-
-For the embedder:
-
-``` bash
-make test-embedder
 ```
 
 For the ingester:

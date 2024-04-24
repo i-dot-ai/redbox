@@ -7,7 +7,7 @@ reqs:
 	poetry install
 
 run:
-	docker compose up -d elasticsearch kibana embedder ingester minio redis core-api db django-app
+	docker compose up -d elasticsearch kibana ingester minio redis core-api db django-app
 
 stop:
 	docker compose down
@@ -25,10 +25,6 @@ test-core-api:
 	poetry install --no-root --no-ansi --with api,dev,ai --without ingester
 	poetry run pytest core_api/tests --cov=core_api/src -v --cov-report=term-missing --cov-fail-under=45
 
-test-embedder:
-	poetry install --no-root --no-ansi --with api,dev --without ai,ingester
-	poetry run pytest embedder/tests --cov=embedder/src -v --cov-report=term-missing --cov-fail-under=50
-
 test-redbox:
 	poetry install --no-root --no-ansi --with api,dev --without ai,ingester
 	poetry run pytest redbox/tests --cov=redbox -v --cov-report=term-missing --cov-fail-under=45
@@ -44,8 +40,8 @@ test-django:
 test-integration:
 	docker compose down
 	cp .env.integration .env
-	docker compose build core-api embedder ingester minio
-	docker compose up -d core-api embedder ingester minio
+	docker compose build core-api ingester minio
+	docker compose up -d core-api ingester minio
 	poetry install --no-root --no-ansi --with dev --without ai,api,ingester
 	sleep 10
 	poetry run pytest tests
@@ -65,7 +61,7 @@ safe:
 	poetry run mypy ./django_app --ignore-missing-imports
 
 checktypes:
-	poetry run mypy redbox embedder ingester --ignore-missing-imports
+	poetry run mypy redbox ingester --ignore-missing-imports
 	# poetry run mypy legacy_app --follow-imports skip --ignore-missing-imports
 
 check-migrations:

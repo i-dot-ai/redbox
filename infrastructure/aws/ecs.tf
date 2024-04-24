@@ -64,35 +64,6 @@ module "core_api" {
 }
 
 
-module "embedder" {
-  create_networking  = false
-  memory             = 2048
-  cpu                = 1024
-  source             = "../../../i-ai-core-infrastructure//modules/ecs"
-  project_name       = "redbox-embedder"
-  image_tag          = var.image_tag
-  prefix             = local.prefix
-  ecr_repository_uri = "${var.ecr_repository_uri}/redbox-embedder"
-  ecs_cluster_id     = module.cluster.ecs_cluster_id
-  health_check = {
-    healthy_threshold   = 3
-    unhealthy_threshold = 3
-    accepted_response   = "200"
-    path                = "/health"
-    timeout             = 5
-  }
-  state_bucket                 = var.state_bucket
-  vpc_id                       = data.terraform_remote_state.vpc.outputs.vpc_id
-  private_subnets              = data.terraform_remote_state.vpc.outputs.private_subnets
-  container_port               = 5000
-  load_balancer_security_group = module.load_balancer.load_balancer_security_group_id
-  aws_lb_arn                   = module.load_balancer.alb_arn
-  host                         = local.host
-  ip_whitelist                 = var.external_ips
-  environment_variables        = local.environment_variables
-}
-
-
 module "ingester" {
   create_networking  = false
   memory             = 4096

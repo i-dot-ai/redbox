@@ -53,11 +53,6 @@ redbox-copilot/
 │  ├── tests/
 │  ├── manage.py
 │  └── Dockerfile
-├── embedder
-│  ├── src/
-│  │  └── worker.py
-│  ├── tests/
-│  └── Dockerfile
 ├── ingester
 │  ├── src/
 │  │  └── worker.py

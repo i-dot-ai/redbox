@@ -9,7 +9,6 @@ module "elasticache" {
     {
       "ingester" = module.ingester.ecs_sg_id,
       "core_api" = module.core_api.ecs_sg_id,
-      "embedder" = module.embedder.ecs_sg_id,
     }
   )
 }

@@ -5,7 +5,7 @@ from fastapi import FastAPI, Depends
 from faststream.redis.fastapi import RedisRouter
 
 from redbox.model_db import SentenceTransformerDB
-from redbox.models import EmbedQueueItem, File, Settings, StatusResponse
+from redbox.models import EmbedQueueItem, File, Settings, StatusResponse, Chunk
 from redbox.parsing.file_chunker import FileChunker
 from redbox.storage.elasticsearch import ElasticsearchStorageHandler
 
@@ -29,6 +29,11 @@ def get_storage_handler():
 def get_chunker():
     model_db = SentenceTransformerDB(env.embedding_model)
     return FileChunker(embedding_model=model_db)
+
+
+def get_model():
+    model = SentenceTransformerDB(env.embedding_model)
+    return model
 
 
 @router.subscriber(channel=env.ingest_queue_name)
@@ -59,6 +64,26 @@ async def ingest(
         await publisher.publish(queue_item)
 
     return items
+
+
+@router.subscriber(channel=env.embed_queue_name)
+async def embed(
+    queue_item: EmbedQueueItem,
+    storage_handler: ElasticsearchStorageHandler = Depends(get_storage_handler),
+    model: SentenceTransformerDB = Depends(get_model),
+):
+    """
+    1. embed queue-item text
+    2. update related chunk on ES
+    """
+
+    chunk: Chunk = storage_handler.read_item(queue_item.chunk_uuid, "Chunk")
+    embedded_sentences = model.embed_sentences([chunk.text])
+    if len(embedded_sentences.data) != 1:
+        logging.error(f"expected just 1 embedding but got {len(embedded_sentences.data)}")
+        return
+    chunk.embedding = embedded_sentences.data[0].embedding
+    storage_handler.update_item(chunk)
 
 
 app = FastAPI(lifespan=router.lifespan_context)

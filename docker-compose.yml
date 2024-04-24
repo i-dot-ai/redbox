@@ -41,22 +41,6 @@ services:
         - "5010:5010"
     volumes:
       - mlflow-data:/mlflow
-  embedder:
-    image: redbox-embedder:latest
-    build:
-      context: .
-      dockerfile: embedder/Dockerfile
-      args:
-        - EMBEDDING_MODEL=${EMBEDDING_MODEL:-}
-    ports:
-      - 5000:5000
-    env_file:
-      - .env
-    depends_on:
-      - redis
-    networks:
-      - redbox-app-network
-    restart: unless-stopped
   ingester:
     image: redbox-ingester:latest
     build:

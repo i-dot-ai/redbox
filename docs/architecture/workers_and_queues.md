@@ -1,6 +1,6 @@
 # Workers and Queues
 
-The Workers are a set of services that run in the background and perform tasks that are too resource-intensive to run on the Core API. These workers include:
+The Worker is a set of service that runs in the background and perform tasks that are too resource-intensive to run on the Core API. These workers include:
 
 - `ingester` - Ingesting files
 - `embedder` - Embedding chunks of text
@@ -23,8 +23,8 @@ The Ingester Worker is responsible for ingesting files into the system. The Inge
 
 ::: ingester.src.worker.ingest
 
-## Embedder
+## Worker
 
-The Embedder Worker is responsible for embedding chunks of text. The Embedder Worker reads a [`Chunk`](../code_reference/models/chunk.md) reference from its queue and then reads the text from the Database. The Embedder Worker then embeds the text with it instance of the embedding model. The Embedder Worker then stores the embedding in the Database.
+The Worker is responsible for embedding chunks of text. The Embedder Worker reads a [`Chunk`](../code_reference/models/chunk.md) reference from its queue and then reads the text from the Database. The Embedder Worker then embeds the text with it instance of the embedding model. The Embedder Worker then stores the embedding in the Database.
 
 ::: embedder.src.worker.embed

@@ -7,7 +7,6 @@ on:
   push:
     paths:
       - redbox/**
-      - embedder/**
       - core_api/**
       - ingester/**
       - Makefile
@@ -63,10 +62,6 @@ jobs:
     - name: Test redbox with pytest
       run: |
         make test-redbox
-
-    - name: Test embedder with pytest
-      run: |
-        make test-embedder
 
     - name: Test ingester with pytest
       run: |
