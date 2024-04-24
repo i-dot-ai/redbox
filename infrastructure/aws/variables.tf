@@ -76,7 +76,13 @@ variable "internal_ips" {
 
 
 variable "openai_api_key" {
-  type = string
+  type        = string
   sensitive   = true
   description = "OPENAI api key"
 }
+
+variable "cognito_usernames" {
+  type        = list(string)
+  description = "List of usernames to be added"
+}
+
