@@ -41,11 +41,11 @@ services:
         - "5010:5010"
     volumes:
       - mlflow-data:/mlflow
-  ingester:
-    image: redbox-ingester:latest
+  worker:
+    image: redbox-worker:latest
     build:
       context: .
-      dockerfile: ingester/Dockerfile
+      dockerfile: worker/Dockerfile
       args:
         - EMBEDDING_MODEL=${EMBEDDING_MODEL:-}
     env_file:

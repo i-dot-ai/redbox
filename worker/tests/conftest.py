@@ -8,7 +8,7 @@ from fastapi.testclient import TestClient
 from elasticsearch import Elasticsearch
 from sentence_transformers import SentenceTransformer
 
-from ingester.src.worker import env, app
+from worker.src.app import env, app
 from redbox.models import File, Chunk, EmbedQueueItem
 from redbox.storage import ElasticsearchStorageHandler
 

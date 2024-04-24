@@ -11,7 +11,7 @@ WORKDIR /app/
 ADD pyproject.toml poetry.lock ./
 ADD download_embedder.py /app/
 
-RUN --mount=type=cache,target=$POETRY_CACHE_DIR poetry install --no-root --no-ansi --with ingester,api --without ai,dev
+RUN --mount=type=cache,target=$POETRY_CACHE_DIR poetry install --no-root --no-ansi --with worker,api --without ai,dev
 
 FROM python:3.11-slim-buster as runtime
 RUN apt update && apt-get install -y \
@@ -28,9 +28,9 @@ COPY --from=builder ${VIRTUAL_ENV} ${VIRTUAL_ENV}
 
 WORKDIR /app/
 ADD redbox/ /app/redbox
-ADD ingester/ /app/ingester
+ADD worker/ /app/worker
 ADD download_embedder.py /app/
-ADD ingester/download_ocr_models.py /app/
+ADD worker/download_ocr_models.py /app/
 
 # Download the model
 RUN python download_embedder.py --model_name ${EMBEDDING_MODEL}
@@ -44,4 +44,4 @@ RUN python -m nltk.downloader averaged_perceptron_tagger
 # Download the OCR models
 RUN python download_ocr_models.py
 
-CMD ["uvicorn", "ingester.src.worker:app", "--host", "0.0.0.0", "--port", "5000"]
+CMD ["uvicorn", "worker.src.app:app", "--host", "0.0.0.0", "--port", "5000"]

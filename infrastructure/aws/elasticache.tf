@@ -7,7 +7,7 @@ module "elasticache" {
   private_subnets   = data.terraform_remote_state.vpc.outputs.private_subnets
   security_group_ids = tomap(
     {
-      "ingester" = module.ingester.ecs_sg_id,
+      "worker" = module.worker.ecs_sg_id,
       "core_api" = module.core_api.ecs_sg_id,
     }
   )

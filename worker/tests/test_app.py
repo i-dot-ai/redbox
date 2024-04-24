@@ -2,7 +2,7 @@ import pytest
 from faststream.redis import TestRedisBroker
 
 
-from ingester.src.worker import router
+from worker.src.app import router
 from redbox.models import Settings
 from redbox.storage import ElasticsearchStorageHandler
 

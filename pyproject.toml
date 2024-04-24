@@ -25,7 +25,7 @@ fastapi = "^0.110.1"
 faststream = {extras = ["redis"], version = "<0.5.0"}
 uvicorn = "^0.29.0"
 
-[tool.poetry.group.ingester.dependencies]
+[tool.poetry.group.worker.dependencies]
 unstructured = {version = "0.13.3", extras = ["all-docs"]}
 opencv-python-headless = "^4.9.0.80"
 nltk = "^3.8.1"
