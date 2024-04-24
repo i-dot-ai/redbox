@@ -9,9 +9,22 @@ ENV POETRY_NO_INTERACTION=1 \
 
 WORKDIR /app/
 ADD pyproject.toml poetry.lock ./
-ADD download_embedder.py /app/
 
 RUN --mount=type=cache,target=$POETRY_CACHE_DIR poetry install --no-root --no-ansi --with ingester,api --without ai,dev
+
+FROM python:3.11-buster as embeddings
+ARG EMBEDDING_MODEL
+ARG EMBEDDING_MODEL_PATH
+
+WORKDIR /app/
+
+ENV VIRTUAL_ENV=/app/.venv \
+    PATH="/app/.venv/bin:$PATH"
+
+COPY --from=builder ${VIRTUAL_ENV} ${VIRTUAL_ENV}
+
+RUN python -c "from sentence_transformers import SentenceTransformer; \
+    SentenceTransformer('${EMBEDDING_MODEL}', cache_folder='${EMBEDDING_MODEL_PATH}');"
 
 FROM python:3.11-slim-buster as runtime
 RUN apt update && apt-get install -y \
@@ -25,15 +38,12 @@ ENV VIRTUAL_ENV=/app/.venv \
     PATH="/app/.venv/bin:$PATH"
 
 COPY --from=builder ${VIRTUAL_ENV} ${VIRTUAL_ENV}
+COPY --from=embeddings ${EMBEDDING_MODEL_PATH} ${EMBEDDING_MODEL_PATH}
 
 WORKDIR /app/
 ADD redbox/ /app/redbox
 ADD ingester/ /app/ingester
-ADD download_embedder.py /app/
 ADD ingester/download_ocr_models.py /app/
-
-# Download the model
-RUN python download_embedder.py --model_name ${EMBEDDING_MODEL}
 
 # Downlaod Sentence Tokenizer
 RUN python -m nltk.downloader punkt
