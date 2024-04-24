@@ -155,8 +155,10 @@ def rag_chat(chat_request: ChatRequest) -> ChatResponse:
         StreamingResponse: a stream of the chain response
     """
     question = chat_request.message_history[-1].text
-    previous_history = [msg.text for msg in chat_request.message_history[:-1]]
-    previous_history = ChatPromptTemplate.from_messages((msg.role, msg) for msg in previous_history).format_messages()
+    previous_history = [msg for msg in chat_request.message_history[:-1]]
+    previous_history = ChatPromptTemplate.from_messages(
+        (msg.role, msg.text) for msg in previous_history
+    ).format_messages()
 
     docs_with_sources_chain = load_qa_with_sources_chain(
         llm,

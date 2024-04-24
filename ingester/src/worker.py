@@ -1,11 +1,11 @@
 import logging
 from datetime import datetime
 
-from faststream import Context, ContextRepo, FastStream
-from faststream.redis import RedisBroker
-from sentence_transformers import SentenceTransformer
+from fastapi import FastAPI, Depends
+from faststream.redis.fastapi import RedisRouter
 
-from redbox.models import EmbedQueueItem, File, Settings
+from sentence_transformers import SentenceTransformer
+from redbox.models import EmbedQueueItem, File, Settings, StatusResponse
 from redbox.parsing.file_chunker import FileChunker
 from redbox.storage.elasticsearch import ElasticsearchStorageHandler
 
@@ -23,14 +23,12 @@ publisher = router.broker.publisher(env.embed_queue_name)
 
 def get_storage_handler():
     es = env.elasticsearch_client()
-    storage_handler = ElasticsearchStorageHandler(es_client=es, root_index="redbox-data")
-    model = SentenceTransformer(model_name_or_path=env.embedding_model, cache_folder="/app/models")
-    chunker = FileChunker(embedding_model=model)
+    return ElasticsearchStorageHandler(es_client=es, root_index="redbox-data")
 
-    context.set_global("storage_handler", storage_handler)
-    context.set_global("chunker", chunker)
 
-    yield
+def get_chunker():
+    model_db = SentenceTransformer(model_name_or_path=env.embedding_model, cache_folder="/app/models")
+    return FileChunker(embedding_model=model_db)
 
 
 @router.subscriber(channel=env.ingest_queue_name)

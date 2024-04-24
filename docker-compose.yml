@@ -48,6 +48,7 @@ services:
       dockerfile: embedder/Dockerfile
       args:
         - EMBEDDING_MODEL=${EMBEDDING_MODEL:-}
+        - EMBEDDING_MODEL_PATH=${EMBEDDING_MODEL_PATH}
     ports:
       - 5000:5000
     env_file:
@@ -64,6 +65,7 @@ services:
       dockerfile: ingester/Dockerfile
       args:
         - EMBEDDING_MODEL=${EMBEDDING_MODEL:-}
+        - EMBEDDING_MODEL_PATH=${EMBEDDING_MODEL_PATH}
     env_file:
       - .env
     depends_on:
@@ -80,6 +82,7 @@ services:
       dockerfile: core_api/Dockerfile
       args:
         - EMBEDDING_MODEL=${EMBEDDING_MODEL:-}
+        - EMBEDDING_MODEL_PATH=${EMBEDDING_MODEL_PATH}
     ports:
       - 5002:5002
     environment:
