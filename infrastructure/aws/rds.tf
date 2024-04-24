@@ -1,10 +1,10 @@
 module "rds" {
     source                  = "../../../i-ai-core-infrastructure//modules/postgres"
-    db_name                 = "${var.project_name}-psql-rds-${var.env}"
-    developer_ips           = []
+    db_name                 = var.project_name
+    developer_ips           = var.developer_ips
     kms_secrets_arn         = data.terraform_remote_state.platform.outputs.kms_key_arn
     private_subnet_ids_list = data.terraform_remote_state.vpc.outputs.private_subnets
-    project                 = var.project_name
+    project                 = "i-dot-ai"
     public_subnet_ids_list  = data.terraform_remote_state.vpc.outputs.public_subnets
     service_sg_ids          = [
         module.ingester.ecs_sg_id,
