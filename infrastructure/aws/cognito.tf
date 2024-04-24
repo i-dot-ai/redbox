@@ -23,7 +23,7 @@ resource "random_password" "this" {
 
 module "cognito" {
   # checkov:skip=CKV_SECRET_4:Skip secret check as these have to be used within the Github Action
-  source                    = "../../i-ai-core-infrastructure//modules/cognito"
+  source                    = "../../../i-ai-core-infrastructure//modules/cognito"
   name                      = var.project_name
   invite_email_addition     = "Access the application at https://${local.record_prefix}.${var.domain_name}"
   invite_subject            = "${local.record_prefix} temporary credentials"

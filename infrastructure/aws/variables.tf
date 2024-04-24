@@ -86,3 +86,8 @@ variable "cognito_usernames" {
   description = "List of usernames to be added"
 }
 
+
+variable "domain_name" {
+  type        = string
+  description = "The base domain name for the project"
+}
