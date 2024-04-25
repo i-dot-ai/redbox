@@ -96,7 +96,9 @@ jobs:
     - name: Install dependencies
       run: |
         poetry install --no-root --no-ansi --only dev
-        poetry run python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('paraphrase-albert-small-v2');"
+        mkdir /app/models
+        poetry run python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer(model_name_or_path='paraphrase-albert-small-v2', cache_folder='/app/models');"
+        chmod -R 777 /app/models
 
     - name: Format code
       run: |
