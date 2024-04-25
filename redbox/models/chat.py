@@ -1,31 +1,21 @@
-from typing import Optional
+from typing import Literal
 
-from langchain.chains.base import Chain
-from langchain.schema import AIMessage, HumanMessage, SystemMessage
-from pydantic import field_serializer, Field, BaseModel
-
-from redbox.models.base import PersistableModel
+from pydantic import Field, BaseModel
 
 
-class ChatMessage(PersistableModel):
-    # langchain.chains.base.Chain needs pydantic v1, breaks
-    # https://python.langchain.com/docs/guides/pydantic_compatibility
-    chain: Optional[object] = None
-    message: object
+class ChatMessage(BaseModel):
+    text: str = Field(description="The text of the message")
+    role: Literal["user", "ai", "system"] = Field(description="The role of the message")
 
-    @field_serializer("chain")
-    def serialise_chain(self, chain: Chain, _info):
-        if isinstance(chain, Chain):
-            return chain.dict()
-        else:
-            return chain
-
-    @field_serializer("message")
-    def serialise_message(self, message: AIMessage | HumanMessage | SystemMessage, _info):
-        if isinstance(message, (AIMessage, HumanMessage, SystemMessage)):
-            return message.dict()
-        else:
-            return message
+    model_config = {
+        "json_schema_extra": {
+            "examples": [
+                {"text": "You are helpful AI Assistant", "role": "system"},
+                {"text": "Hello", "role": "user"},
+                {"text": "Hi there!", "role": "ai"},
+            ]
+        }
+    }
 
 
 class ChatRequest(BaseModel):
