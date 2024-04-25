@@ -9,7 +9,7 @@ module "rds" {
   task_prefix             = var.project_name
   domain_name             = var.domain_name
   state_bucket            = var.state_bucket
-  developer_ips           = var.developer_ips
+  developer_ips           = toset(concat(var.developer_ips, var.internal_ips))
   kms_secrets_arn         = data.terraform_remote_state.platform.outputs.kms_key_arn
   private_subnet_ids_list = data.terraform_remote_state.vpc.outputs.private_subnets
   public_subnet_ids_list  = data.terraform_remote_state.vpc.outputs.public_subnets
