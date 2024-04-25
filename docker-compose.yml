@@ -39,6 +39,7 @@ services:
     image: mlflow_server
     ports:
         - "5010:5010"
+        - "5020:5020"
     volumes:
       - mlflow-data:/mlflow
   embedder:

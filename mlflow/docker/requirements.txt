@@ -1,0 +1,11 @@
+mlflow
+pydantic
+starlette
+limits
+watchfiles
+fastapi
+slowapi
+uvicorn
+aiohttp
+gunicorn
+boto3
