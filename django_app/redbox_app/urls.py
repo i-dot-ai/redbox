@@ -20,6 +20,8 @@ other_urlpatterns = [
     path("documents/", views.documents_view, name="documents"),
     path("upload/", views.upload_view, name="upload"),
     path("remove-doc/<str:doc_id>", views.remove_doc_view, name="remove_doc"),
+    path("sessions/<str:session_id>/", views.sessions_view, name="sessions"),
+    path("sessions/", views.sessions_view, name="sessions"),
 ]
 
 urlpatterns = info_urlpatterns + other_urlpatterns
