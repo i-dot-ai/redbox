@@ -80,6 +80,7 @@ variable "openai_api_key" {
   sensitive   = true
   description = "OPENAI api key"
 }
+
 variable "rules" {
   description = "The rules to add to this WAF"
   type        = list(object({}))
@@ -101,4 +102,9 @@ variable "scope" {
 variable "universal_tags" {
   type        = map(string)
   description = "Map to tag resources with"
+}
+
+variable "domain_name" {
+  type        = string
+  description = "The base domain name for the project"
 }
