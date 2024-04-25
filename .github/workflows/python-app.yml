@@ -96,7 +96,7 @@ jobs:
     - name: Install dependencies
       run: |
         poetry install --no-root --no-ansi --only dev
-        python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('paraphrase-albert-small-v2');"
+        poetry run python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('paraphrase-albert-small-v2');"
 
     - name: Format code
       run: |
