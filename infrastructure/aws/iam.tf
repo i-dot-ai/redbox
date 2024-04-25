@@ -35,6 +35,13 @@ resource "aws_iam_policy" "redbox_policy" {
 }
 
 resource "aws_iam_role_policy_attachment" "redbox_role_policy" {
-  role       = module.core_api.ecs_task_execution_exec_role_name
+  for_each = tomap(
+    {
+      "core-api"=module.core_api.ecs_task_execution_exec_role_name,
+      "ingester"=module.ingester.ecs_task_execution_exec_role_name,
+      "embedder"=module.embedder.ecs_task_execution_exec_role_name,
+    }
+  )
+  role       = each.value
   policy_arn = aws_iam_policy.redbox_policy.arn
 }
