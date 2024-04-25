@@ -69,7 +69,7 @@ def cluster_chunks(
                 # if there are multiple chunks in the cluster, merge them
                 new_chunk = Chunk(
                     parent_file_uuid=chunks_in[0].parent_file_uuid,
-                    index=1,
+                    index=i,
                     text=" ".join([chunk.text for chunk in chunks_in]),
                     metadata=merge_chunk_metadata([chunk.metadata for chunk in chunks_in]),
                     creator_user_uuid=chunks_in[0].creator_user_uuid,
