@@ -144,3 +144,22 @@ def remove_doc_view(request, doc_id: str):
         template_name="remove-doc.html",
         context={"request": request, "doc_id": doc_id, "doc_name": doc_name},
     )
+
+
+def sessions_view(request, session_id: str = ""):
+
+    # Hard-coding some chat history for now
+    session_history = [
+        {"session_id": "chat1", "title": "Chat 1", "url": "/sessions/chat1"},
+        {"session_id": "chat2", "title": "Chat 2", "url": "/sessions/chat2"},
+    ]
+
+    context = {
+        "session_history": session_history
+    }
+
+    return render(
+        request,
+        template_name="sessions.html",
+        context=context,
+    )
