@@ -1,6 +1,7 @@
-from redbox.models.chat import ChatMessage
+from redbox.models.chat import ChatMessage, ChatResponse, ChatRequest
 from redbox.models.embedding import (
     EmbeddingResponse,
+    EmbeddingModelInfo,
     EmbedQueueItem,
     ModelInfo,
     StatusResponse,
@@ -24,8 +25,11 @@ from redbox.models.spotlight import (
 __all__ = [
     "ChatMessage",
     "ChatPersona",
+    "ChatResponse",
+    "ChatRequest",
     "Chunk",
     "ChunkStatus",
+    "EmbeddingModelInfo",
     "File",
     "FileStatus",
     "Spotlight",
