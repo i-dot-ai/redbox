@@ -27,7 +27,7 @@ uvicorn = "^0.29.0"
 langchain-elasticsearch = "^0.1.2"
 
 [tool.poetry.group.worker.dependencies]
-unstructured = {version = "0.13.3", extras = ["all-docs"]}
+unstructured = {version = "0.13.4", extras = ["all-docs"]}
 opencv-python-headless = "^4.9.0.80"
 nltk = "^3.8.1"
 
