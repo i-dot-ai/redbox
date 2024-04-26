@@ -1,7 +1,8 @@
 import logging
 from uuid import UUID
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, UploadFile
+from fastapi import File as FastAPIFile
 from faststream.redis.fastapi import RedisRouter
 from pydantic import BaseModel, Field
 
@@ -73,6 +74,31 @@ async def add_file(file_request: FileRequest) -> File:
     await file_publisher.publish(file)
 
     return file
+
+
+# Standard file upload endpoint for utility in quick testing
+if env.dev_mode:
+
+    @file_app.post("/upload", tags=["file"], response_model=File)
+    async def upload_file(file: UploadFile = FastAPIFile(...)) -> File:
+        """Upload a file to the object store
+
+        Args:
+            file (UploadFile): The file to upload
+
+        Returns:
+            File: The file that was uploaded
+        """
+        key = file.filename
+        s3.upload_fileobj(file.file, env.bucket_name, key)
+
+        file = File(key=key, bucket=env.bucket_name)
+        storage_handler.write_item(file)
+
+        log.info(f"publishing {file.uuid}")
+        await file_publisher.publish(file)
+
+        return file
 
 
 @file_app.get("/{file_uuid}", response_model=File, tags=["file"])
