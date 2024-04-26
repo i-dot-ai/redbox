@@ -24,6 +24,7 @@ sentence-transformers = "^2.6.0"
 fastapi = "^0.110.1"
 faststream = {extras = ["redis"], version = "<0.5.0"}
 uvicorn = "^0.29.0"
+langchain-elasticsearch = "^0.1.2"
 
 [tool.poetry.group.ingester.dependencies]
 unstructured = {version = "0.13.3", extras = ["all-docs"]}
