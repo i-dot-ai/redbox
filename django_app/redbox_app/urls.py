@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.urls import include, path
 
-from .redbox_core import info_views, views
+from .redbox_core import info_views, auth_views, views
 
 info_urlpatterns = [
     path("privacy-notice/", info_views.privacy_notice_view, name="privacy-notice"),
@@ -11,6 +11,12 @@ info_urlpatterns = [
         name="accessibility-statement",
     ),
     path("support/", info_views.support_view, name="support"),
+]
+
+auth_urlpatterns = [
+    path("sign-in/", auth_views.sign_in_view, name="sign_in"),
+    path("sign-in-link-sent/", auth_views.sign_in_link_sent_view, name="sign_in_link_sent"),
+    path("signed-out/", auth_views.signed_out_view, name="signed_out"),
 ]
 
 other_urlpatterns = [
@@ -24,4 +30,4 @@ other_urlpatterns = [
     path("sessions/", views.sessions_view, name="sessions"),
 ]
 
-urlpatterns = info_urlpatterns + other_urlpatterns
+urlpatterns = info_urlpatterns + auth_urlpatterns + other_urlpatterns
