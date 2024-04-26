@@ -55,7 +55,7 @@ jobs:
         chmod -R 777 data/
         cp .env.integration .env
         sed -i~ "/^OPENAI_API_KEY=/s/=.*/=$OPENAI_API_KEY/" .env
-        docker compose up -d --wait core-api embedder ingester
+        docker compose up -d --wait core-api worker
 
     - name: Wait 60s for services to be ready
       run: |

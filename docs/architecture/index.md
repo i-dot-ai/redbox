@@ -12,7 +12,7 @@ Some of our guiding architectural principles are:
 
 ## Document Processing Pipeline
 
-The document processing pipeline is the core of the Redbox system. It is responsible for processing documents and extracting information from them. The pipeline is broken down into three main components: Ingester, Embedder, and Core API.
+The document processing pipeline is the core of the Redbox system. It is responsible for processing documents and extracting information from them. The pipeline is broken down into two main components: Worker and Core API.
 
 ![Document Processing Pipeline](../assets/document_processing_pipeline.png)
 
@@ -26,17 +26,16 @@ The Retrieval Augmented Generation (RAG) architecture grounds our Large Language
 
 ## Notional Cross-Cloud Components
 
-| Component | AWS | Azure | Local | Purpose/Function |
-|-----------|-----|-------|---------|----|
-| Object Store | S3 | Blob Storage | Minio | Storage of files |
-| Queue | SQS | Storage Queues | Redis | Distributing many compute tasks |
-| Frontend App | ECS | App Service | Docker | Django GOV.UK/AlpineJS |
+| Component | AWS | Azure | Local | Purpose/Function                           |
+|-----------|-----|-------|---------|--------------------------------------------|
+| Object Store | S3 | Blob Storage | Minio | Storage of files                           |
+| Queue | SQS | Storage Queues | Redis | Distributing many compute tasks            |
+| Frontend App | ECS | App Service | Docker | Django GOV.UK/AlpineJS                     |
 | Core API | ECS | App Service | Docker | FastAPI AI Interaction and DB Intermediary |
-| Ingester Worker | ECS | App Service | Docker | Queue fed file ingester |
-| Embedder Worker | ECS | App Service | Docker | Queue fed chunk embedder |
-| Document Database | DynamoDB | CosmosDB | PostGres | Conversation and Doc storage |
-| Vector Database | ElasticCloud | ElasticCloud | Elasticsearch | RAG Database |
-| Container Registry | ECR | ACR | Harbor | Storage for app containers |
-| Embedding API | Bedrock | Azure OpenAI Service | Huggingface Containers | Embedding for docs into VectorDB |
-| LLM API | Bedrock | Azure OpenAI Service | Huggingface Containers | Chat model |
-| Authentication | Cognito | Entra | NONE | User auth and management |
+| Worker | ECS | App Service | Docker | Queue fed file ingester and embedder               |
+| Document Database | DynamoDB | CosmosDB | PostGres | Conversation and Doc storage               |
+| Vector Database | ElasticCloud | ElasticCloud | Elasticsearch | RAG Database                               |
+| Container Registry | ECR | ACR | Harbor | Storage for app containers                 |
+| Embedding API | Bedrock | Azure OpenAI Service | Huggingface Containers | Embedding for docs into VectorDB           |
+| LLM API | Bedrock | Azure OpenAI Service | Huggingface Containers | Chat model                                 |
+| Authentication | Cognito | Entra | NONE | User auth and management                   |

@@ -38,7 +38,7 @@ Typically this involves setting the following variables:
 
 ## Other dependencies (for Document Ingestion and OCR)
 
-You will need to install `poppler` and `tesseract` to run the `ingester`
+You will need to install `poppler` and `tesseract` to run the `worker`
 - `brew install poppler`
 - `brew install tesseract`
 
@@ -52,8 +52,7 @@ The project currently consists of multiple docker images needed to run the proje
 
 - `elasticsearch`
 - `kibana`
-- `embedder`
-- `ingester`
+- `worker`
 - `minio`
 - `redis`
 - `core-api`
@@ -108,16 +107,10 @@ For the core API:
 make test-core-api
 ```
 
-For the embedder:
+For the worker:
 
 ``` bash
-make test-embedder
-```
-
-For the ingester:
-
-``` bash
-make test-ingester
+make test-worker
 ```
 
 For integration tests:

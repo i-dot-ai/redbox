@@ -7,9 +7,8 @@ on:
   push:
     paths:
       - redbox/**
-      - embedder/**
       - core_api/**
-      - ingester/**
+      - worker/**
       - Makefile
       - poetry.lock
       - .github/**
@@ -51,10 +50,10 @@ jobs:
         cp .env.test .env
         docker compose up -d --wait elasticsearch
 
-        poetry install --no-root --no-ansi --with dev --without ai,api,ingester
+        poetry install --no-root --no-ansi --with dev --without ai,api,worker
         poetry run download-model --model_name paraphrase-albert-small-v2
 
-    - name: Add dependencies for Ingester
+    - name: Add dependencies for worker
       run: |
         sudo apt update && sudo apt-get install -y \
         poppler-utils \
@@ -64,13 +63,9 @@ jobs:
       run: |
         make test-redbox
 
-    - name: Test embedder with pytest
+    - name: Test worker with pytest
       run: |
-        make test-embedder
-
-    - name: Test ingester with pytest
-      run: |
-        make test-ingester
+        make test-worker
 
     - name: Test core with pytest
       run: |
