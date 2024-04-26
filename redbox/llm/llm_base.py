@@ -1,4 +1,3 @@
-import json
 from datetime import date
 from typing import Any, Optional
 
@@ -25,7 +24,7 @@ from redbox.llm.spotlight.spotlight import (
     key_people_task,
     summary_task,
 )
-from redbox.models.file import Chunk, File
+from redbox.models.file import File
 from redbox.models.spotlight import Spotlight, SpotlightTask
 
 
@@ -66,43 +65,6 @@ class LLMHandler(object):
             SentenceTransformerEmbeddings: object to run text embedding
         """
         return SentenceTransformerEmbeddings()
-
-    def add_chunks_to_vector_store(self, chunks: list[Chunk]) -> None:
-        """Takes a list of Chunks and embedds them into the vector store
-
-        Args:
-            chunks (List[Chunk]): The chunks to be added to the vector store
-        """
-
-        metadatas = [dict(chunk.metadata) for chunk in chunks]
-
-        for i, chunk in enumerate(chunks):
-            # add other chunk fields to metadata
-            metadatas[i]["uuid"] = chunk.uuid
-            metadatas[i]["parent_file_uuid"] = chunk.parent_file_uuid
-            metadatas[i]["index"] = chunk.index
-            metadatas[i]["created_datetime"] = chunk.created_datetime
-            metadatas[i]["token_count"] = chunk.token_count
-            metadatas[i]["text_hash"] = chunk.text_hash
-
-        sanitised_metadatas = []
-
-        for metadata in metadatas:
-            for k, v in metadata.items():
-                if isinstance(v, list) or isinstance(v, dict):
-                    # Converting {k} metadata into JSON string to make vectorstore safe
-                    metadata[k] = json.dumps(metadata[k], ensure_ascii=False)
-
-            sanitised_metadatas.append(metadata)
-
-        # it requires tha batch size to be smaller than 166 but some documents have >300 chunks
-        batch_size = 160
-        for i in range(0, len(chunks), batch_size):
-            self.vector_store.add_texts(
-                texts=[chunk.text for chunk in chunks[i : i + batch_size]],
-                metadatas=[meta for meta in sanitised_metadatas[i : i + batch_size]],
-                ids=[chunk.uuid for chunk in chunks[i : i + batch_size]],
-            )
 
     def chat_with_rag(
         self,

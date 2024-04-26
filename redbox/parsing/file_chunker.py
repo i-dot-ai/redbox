@@ -62,13 +62,4 @@ class FileChunker:
         if chunk_clustering:
             chunks = cluster_chunks(chunks, embedding_model=self.embedding_model)
 
-        # Ensure page numbers are a list for schema compliance
-        for chunk in chunks:
-            if "page_number" in chunk.metadata:
-                if isinstance(chunk.metadata["page_number"], int):
-                    chunk.metadata["page_numbers"] = [chunk.metadata["page_number"]]
-                elif isinstance(chunk.metadata["page_number"], list):
-                    chunk.metadata["page_numbers"] = chunk.metadata["page_number"]
-                del chunk.metadata["page_number"]
-
         return chunks
