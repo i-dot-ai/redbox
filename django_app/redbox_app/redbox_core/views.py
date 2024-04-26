@@ -147,16 +147,13 @@ def remove_doc_view(request, doc_id: str):
 
 
 def sessions_view(request, session_id: str = ""):
-
     # Hard-coding some chat history for now
     session_history = [
         {"session_id": "chat1", "title": "Chat 1", "url": "/sessions/chat1"},
         {"session_id": "chat2", "title": "Chat 2", "url": "/sessions/chat2"},
     ]
 
-    context = {
-        "session_history": session_history
-    }
+    context = {"session_history": session_history}
 
     return render(
         request,
