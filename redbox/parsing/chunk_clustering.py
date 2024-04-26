@@ -1,10 +1,11 @@
+from functools import reduce
 from itertools import compress
 
 import numpy as np
 import scipy
 from sentence_transformers import SentenceTransformer
 
-from redbox.models.file import Chunk
+from redbox.models.file import Chunk, Metadata
 
 
 def cluster_chunks(
@@ -69,9 +70,9 @@ def cluster_chunks(
                 # if there are multiple chunks in the cluster, merge them
                 new_chunk = Chunk(
                     parent_file_uuid=chunks_in[0].parent_file_uuid,
-                    index=1,
+                    index=i,
                     text=" ".join([chunk.text for chunk in chunks_in]),
-                    metadata=merge_chunk_metadata([chunk.metadata for chunk in chunks_in]),
+                    metadata=reduce(Metadata.merge, [chunk.metadata for chunk in chunks_in]),
                     creator_user_uuid=chunks_in[0].creator_user_uuid,
                 )
             out_chunks.append(new_chunk)
@@ -128,30 +129,8 @@ def create_pdist(token_counts, pair_embed_dist, weight_embed_dist=0.2, use_log=T
     return combined_dist
 
 
-def merge_chunk_metadata(meta_in: list[dict]) -> dict:
+def merge_chunk_metadata(meta_in: list[Metadata]) -> Metadata:
     """
     Combine metadata for multiple chunks from the same document.
     """
-    # collect all the possible key values
-    all_keys: set = set()
-    for meta in meta_in:
-        all_keys = all_keys.union(meta.keys())
-    meta_out: dict = {}
-    for key in all_keys:
-        # collect all the values for that key in each metadata
-        one_meta_to_collapse = [meta[key] for meta in meta_in if key in meta]
-        if isinstance(one_meta_to_collapse[0], list):
-            meta_out[key] = list()
-            for meta in one_meta_to_collapse:
-                meta_out[key] += meta
-        elif isinstance(one_meta_to_collapse[0], dict):
-            meta_out[key] = merge_chunk_metadata(one_meta_to_collapse)
-        elif all(x == one_meta_to_collapse[0] for x in one_meta_to_collapse):
-            meta_out[key] = one_meta_to_collapse[0]
-        else:
-            meta_out[key] = one_meta_to_collapse
-
-        # Dedupe page numbers of merged chunks
-        if key in ["page_number", "languages"] and isinstance(meta_out[key], list):
-            meta_out[key] = list(set(sorted(meta_out[key])))
-    return meta_out
+    return reduce(Metadata.merge, meta_in)

@@ -1,0 +1,34 @@
+{% set pageTitle = "Sign in" %}
+
+{% extends "base.html" %}
+{% from "macros/govuk-button.html" import govukButton %}
+
+{% block content %}
+
+<div class="govuk-grid-row">
+  <div class="govuk-grid-column-two-thirds">
+
+    <h1 class="govuk-heading-l">Sign in</h1>
+
+    <form action="/sign-in-link-sent">
+
+      <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+
+      <div class="govuk-form-group">
+        <label class="govuk-label" for="email">
+          Email address
+        </label>
+        <div id="email-hint" class="govuk-hint">
+          Enter your email address to generate a link to sign in
+        </div>
+        <input class="govuk-input" id="email" name="email" type="email" spellcheck="false" aria-describedby="email-hint" autocomplete="email" required>
+      </div>
+
+      {{ govukButton(text="Continue") }}
+
+    </form>
+  
+  </div>
+</div>
+
+{% endblock %}
