@@ -40,13 +40,13 @@ def test_upload_to_search(file_path, s3_client):
         assert response.status_code == 200
         file_uuid = response.json()["uuid"]
 
-        timeout = 210
+        timeout = 120
         start_time = time.time()
         error = None
         embedding_complete = False
 
         while time.time() - start_time < timeout:
-            time.sleep(5)
+            time.sleep(1)
             chunk_response = requests.get(f"http://localhost:5002/file/{file_uuid}/status")
             if chunk_response.status_code == 200 and chunk_response.json()["processing_status"] == "complete":
                 embedding_complete = True

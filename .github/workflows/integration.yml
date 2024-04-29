@@ -53,7 +53,6 @@ jobs:
         chmod -R 777 data/
         cp .env.integration .env
         echo OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }} >> .env
-        cat .env
         docker compose up -d --wait core-api worker
         
 
