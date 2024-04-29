@@ -11,9 +11,6 @@ from notifications_python_client.notifications import NotificationsAPIClient
 from redbox_app.redbox_core import models
 
 # Setup Notify
-current_dir = Path(__file__).resolve().parent
-dotenv_dir = current_dir.parent.parent.parent
-dotenv_path = dotenv_dir / ".env"
 load_dotenv()
 notifications_client = NotificationsAPIClient(os.environ.get("NOTIFY_API_KEY"))
 

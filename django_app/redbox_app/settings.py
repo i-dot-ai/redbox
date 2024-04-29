@@ -108,6 +108,7 @@ WSGI_APPLICATION = "redbox_app.wsgi.application"
 
 AUTHENTICATION_BACKENDS = [
     "django.contrib.auth.backends.ModelBackend",
+    'magic_link.backends.MagicLinkBackend',
 ]
 
 AUTH_PASSWORD_VALIDATORS = [
