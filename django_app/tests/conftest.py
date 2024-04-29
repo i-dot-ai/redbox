@@ -3,6 +3,7 @@ from datetime import datetime
 
 import pytest
 import pytz
+
 from redbox_app.redbox_core import client
 from redbox_app.redbox_core.models import User
 
@@ -36,13 +37,17 @@ def chris(create_user):
 
 @pytest.fixture
 def peter_rabbit(create_user):
-    user = User.objects.create_user(email="peter.rabbit@example.com", password="P455W0rd")
+    user = User.objects.create_user(
+        email="peter.rabbit@example.com", password="P455W0rd"
+    )
     yield user
 
 
 @pytest.fixture
 def jemima_puddleduck():
-    user = User.objects.create_user(email="jemima.puddleduck@example.com", password="P455W0rd")
+    user = User.objects.create_user(
+        email="jemima.puddleduck@example.com", password="P455W0rd"
+    )
     yield user
 
 
