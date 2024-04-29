@@ -1566,16 +1566,6 @@ django = ">=1.11"
 testing = ["codecov", "coverage"]
 
 [[package]]
-name = "docopt"
-version = "0.6.2"
-description = "Pythonic argument parser, that will make you smile"
-optional = false
-python-versions = "*"
-files = [
-    {file = "docopt-0.6.2.tar.gz", hash = "sha256:49b3a825280bd66b3aa83585ef59c4a8c82f2c8a522dbe754a8bc8d08c85c491"},
-]
-
-[[package]]
 name = "ecdsa"
 version = "0.19.0"
 description = "ECDSA cryptographic signature library (pure python)"
@@ -2824,21 +2814,6 @@ jupyter-server = ">=1.8,<3"
 
 [package.extras]
 test = ["pytest", "pytest-console-scripts", "pytest-jupyter", "pytest-tornasync"]
-
-[[package]]
-name = "notifications-python-client"
-version = "9.0.0"
-description = "Python API client for GOV.UK Notify."
-optional = false
-python-versions = ">=3.7"
-files = [
-    {file = "notifications_python_client-9.0.0-py3-none-any.whl", hash = "sha256:664a5b5da2aa1a00efa8106bfa4855db04da95d79586e5edfb0411637d20d2d9"},
-]
-
-[package.dependencies]
-docopt = ">=0.3.0"
-PyJWT = ">=1.5.1"
-requests = ">=2.0.0"
 
 [[package]]
 name = "numpy"
@@ -5259,4 +5234,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11.2"
-content-hash = "def767371c881e7b928954efd8fd6d66adf42aa127f37adb61aca418ebf01cbe"
+content-hash = "20846967347801a07cb87e5341bd3c064a186f80ad919633ff1c47b163e4ff60"
