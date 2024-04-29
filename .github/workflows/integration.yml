@@ -70,7 +70,7 @@ jobs:
     - name: print logs on failure
       if: ${{ failure() }}
       run: |
-        docker compose logs -f core-api
+        docker compose logs -f worker
 
     - name: notify slack failure
       id: slack-failure
