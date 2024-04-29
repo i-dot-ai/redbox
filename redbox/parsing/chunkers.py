@@ -2,6 +2,7 @@ from unstructured.chunking.title import chunk_by_title
 from unstructured.partition.auto import partition
 
 from redbox.models import Chunk, File, Settings
+from redbox.models.file import Metadata
 
 env = Settings()
 s3_client = env.s3_client()
@@ -31,7 +32,13 @@ def other_chunker(file: File) -> list[Chunk]:
             parent_file_uuid=file.uuid,
             index=i,
             text=raw_chunk.text,
-            metadata=raw_chunk.metadata,
+            metadata=Metadata(
+                page_number=raw_chunk.metadata.page_number,
+                languages=raw_chunk.metadata.languages,
+                link_texts=raw_chunk.metadata.link_texts,
+                link_urls=raw_chunk.metadata.link_urls,
+                links=raw_chunk.metadata.links,
+            ),
             creator_user_uuid=file.creator_user_uuid,
         )
         for i, raw_chunk in enumerate(raw_chunks)
