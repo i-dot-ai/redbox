@@ -51,7 +51,7 @@ jobs:
         docker compose up -d --wait elasticsearch
 
         poetry install --no-root --no-ansi --with dev --without ai,api,worker
-        poetry run download-model --model_name paraphrase-albert-small-v2
+        poetry run download-model --embedding_model paraphrase-albert-small-v2
 
     - name: Add dependencies for worker
       run: |

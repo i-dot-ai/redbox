@@ -3,7 +3,6 @@ from redbox.models.embedding import (
     EmbeddingResponse,
     EmbeddingModelInfo,
     EmbedQueueItem,
-    ModelInfo,
     StatusResponse,
 )
 from redbox.models.file import (
@@ -37,7 +36,6 @@ __all__ = [
     "SpotlightTask",
     "SpotlightTaskComplete",
     "Settings",
-    "ModelInfo",
     "EmbeddingResponse",
     "EmbedQueueItem",
     "StatusResponse",
