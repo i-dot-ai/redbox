@@ -1,11 +1,11 @@
 from __future__ import annotations
 import hashlib
 from enum import Enum
-from typing import Optional, Annotated
+from typing import Optional
 from uuid import UUID
 
 import tiktoken
-from pydantic import BaseModel, Field, computed_field, AfterValidator
+from pydantic import BaseModel, Field, computed_field
 
 from redbox.models.base import PersistableModel
 
@@ -42,7 +42,7 @@ class Metadata(BaseModel):
     """this is a pydantic model for the unstructured Metadata class
     uncomment fields below and update merge as required"""
 
-    parent_doc_uuid: Optional[UUID | Annotated[str, AfterValidator(UUID)]] = Field(
+    parent_doc_uuid: Optional[UUID | None] = Field(
         description="this field is not actually part of unstructured Metadata but is required by langchain",
         default=None,
     )
@@ -88,10 +88,19 @@ class Metadata(BaseModel):
                 return []
             return [field_value]
 
+        def sorted_list_or_none(obj: list):
+            return sorted(set(obj)) or None
+
         data = {
-            field_name: sorted(set(listify(left, field_name) + listify(right, field_name)))
+            field_name: sorted_list_or_none(listify(left, field_name) + listify(right, field_name))
             for field_name in cls.model_fields.keys()
         }
+
+        if parent_doc_uuids := data.get("parent_doc_uuid"):
+            parent_doc_uuids_without_none = [uuid for uuid in parent_doc_uuids if uuid]
+            if len(parent_doc_uuids) > 1:
+                raise ValueError("chunks do not have the same parent_doc_uuid")
+            data["parent_doc_uuid"] = parent_doc_uuids_without_none[0]
         return cls(**data)
 
 
