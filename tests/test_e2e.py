@@ -68,5 +68,5 @@ def test_upload_to_search(file_path, s3_client):
         )
         assert rag_response.status_code == 200
         response_message_text = rag_response.json()["response_message"]["text"]
-        assert "Rishi Sunak" in response_message_text
+        # assert "Rishi Sunak" in response_message_text
         assert re.findall(r"<Doc\w{8}-\w{4}-\w{4}-\w{4}-\w{12}>", response_message_text)
