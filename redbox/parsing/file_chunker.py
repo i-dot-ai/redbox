@@ -48,7 +48,6 @@ class FileChunker:
 
         Args:
             file (File): The file to read, analyse layout and chunk.
-            file_url (str): The authenticated url of the file to fetch, analyse layout and chunk.
             chunk_clustering (bool): Whether to merge small semantically similar chunks.
                 Defaults to True.
         Raises:

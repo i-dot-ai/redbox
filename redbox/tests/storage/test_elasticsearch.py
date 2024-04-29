@@ -1,32 +1,10 @@
-import time
 from uuid import uuid4
 
 import pytest
-from elastic_transport import ConnectionError
 from elasticsearch import NotFoundError
 
 from redbox.models import Chunk
 from redbox.storage.elasticsearch import ElasticsearchStorageHandler
-
-
-def poll_elastic_until_ready(elasticsearch_client):
-    """
-    Poll the elasticsearch client until it is ready
-    """
-    time_remainging = 300  # 5 minutes
-
-    while True:
-        try:
-            elasticsearch_client.ping()
-            break
-        except ConnectionError:
-            pass
-        time.sleep(5)
-        time_remainging -= 5
-        if time_remainging <= 0:
-            raise TimeoutError("Elasticsearch client did not become ready in time")
-
-    assert elasticsearch_client.ping()
 
 
 def test_elasticsearch_client_connection(elasticsearch_client):
