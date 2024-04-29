@@ -1,18 +1,9 @@
-import os
-from pathlib import Path
-
 from django.contrib.auth import logout
 from django.http import HttpRequest
 from django.shortcuts import render, redirect
-from dotenv import load_dotenv
 from magic_link.models import MagicLink
-from notifications_python_client.notifications import NotificationsAPIClient
 
-from redbox_app.redbox_core import models
-
-# Setup Notify
-load_dotenv()
-notifications_client = NotificationsAPIClient(os.environ.get("NOTIFY_API_KEY"))
+from redbox_app.redbox_core import models, email_handler
 
 
 def sign_in_view(request: HttpRequest):
@@ -34,11 +25,7 @@ def sign_in_view(request: HttpRequest):
             full_link = request.build_absolute_uri(link.get_absolute_url())
 
             # Email link to user
-            notifications_client.send_email_notification(
-                email_address=email,
-                template_id="39225d39-5b90-4a5b-9a15-66a33d1256bc",
-                personalisation={"link": full_link},
-            )
+            email_handler.send_magic_link_email(full_link, email)
 
         return redirect("sign-in-link-sent")
     else:
