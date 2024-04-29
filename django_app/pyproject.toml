@@ -8,7 +8,6 @@ license = "MIT"
 [tool.poetry.dependencies]
 python = "^3.11.2"
 django = "^4.2.8"
-notifications-python-client = "^9.0.0"
 
 [tool.poetry.group.django-app.dependencies]
 python = "^3.11.2"
@@ -16,6 +15,7 @@ django = "^4.2.8"
 django-compressor = "^4.4"
 django-libsass = "^0.9"
 django-magic-link = "^1.0.0"
+notifications-python-client = "^9.0.0"
 whitenoise = "^6.6.0"
 watchdog = {extras = ["watchmedo"], version = "^3.0.0"}
 jinja2 = "^3.1.2"
