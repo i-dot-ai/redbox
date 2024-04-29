@@ -1,11 +1,11 @@
 from __future__ import annotations
 import hashlib
 from enum import Enum
-from typing import Optional
+from typing import Optional, Annotated
 from uuid import UUID
 
 import tiktoken
-from pydantic import BaseModel, Field, computed_field
+from pydantic import BaseModel, Field, computed_field, AfterValidator
 
 from redbox.models.base import PersistableModel
 
@@ -41,6 +41,11 @@ class Link(BaseModel):
 class Metadata(BaseModel):
     """this is a pydantic model for the unstructured Metadata class
     uncomment fields below and update merge as required"""
+
+    parent_doc_uuid: Optional[UUID | Annotated[str, AfterValidator(UUID)]] = Field(
+        description="this field is not actually part of unstructured Metadata but is required by langchain",
+        default=None,
+    )
 
     # attached_to_filename: Optional[str] = None
     # category_depth: Optional[int] = None

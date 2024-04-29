@@ -33,6 +33,7 @@ def other_chunker(file: File) -> list[Chunk]:
             index=i,
             text=raw_chunk.text,
             metadata=Metadata(
+                parent_doc_uuid=file.uuid,
                 page_number=raw_chunk.metadata.page_number,
                 languages=raw_chunk.metadata.languages,
                 link_texts=raw_chunk.metadata.link_texts,
