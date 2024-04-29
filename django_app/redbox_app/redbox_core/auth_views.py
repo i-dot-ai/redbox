@@ -33,7 +33,7 @@ def sign_in_view(request: HttpRequest):
         user_exists = models.User.objects.filter(email=email).exists()
         if user_exists:
             user = models.User.objects.get(email=email)
-            link = MagicLink.objects.create(user=user)
+            link = MagicLink.objects.create(user=user, redirect_to="/sessions")
             full_link = request.build_absolute_uri(link.get_absolute_url())
 
             # Email link to user

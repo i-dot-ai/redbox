@@ -10,9 +10,8 @@
 
     <h1 class="govuk-heading-l">Sign in - confirmation</h1>
 
-    <form method="POST" action="{{ link.get_absolute_url }}">
-
-      <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+    <form method="POST" action="{{ link.get_absolute_url() }}">
+      {{ csrf_input }}
 
       {{ govukButton(text="Sign in") }}
 

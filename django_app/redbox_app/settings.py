@@ -137,6 +137,8 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+AUTH_USER_MODEL = "authentication.User"
+
 LANGUAGE_CODE = "en-GB"
 TIME_ZONE = "UTC"
 USE_I18N = True
