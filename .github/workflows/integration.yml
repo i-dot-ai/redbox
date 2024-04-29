@@ -21,13 +21,6 @@ jobs:
     steps:
     - uses: actions/checkout@v3
 
-    - name: Set up env
-      run: |
-        cp .env.integration .env
-        echo OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }} >> .env
-        cat .env
-
-
     - name: Free Disk Space (Ubuntu)
       uses: jlumbroso/free-disk-space@main
       with:
@@ -74,11 +67,6 @@ jobs:
         pip install pytest
         pip install boto3
         python -m pytest tests
-
-    - name: print logs on failure
-      if: ${{ failure() }}
-      run: |
-        docker compose logs -f worker core-api
 
     - name: notify slack failure
       id: slack-failure
