@@ -25,6 +25,7 @@ fastapi = "^0.110.1"
 faststream = {extras = ["redis"], version = "<0.5.0"}
 uvicorn = "^0.29.0"
 langchain-elasticsearch = "^0.1.2"
+python-multipart = "^0.0.9"
 
 [tool.poetry.group.worker.dependencies]
 unstructured = {version = "0.13.3", extras = ["all-docs"]}
