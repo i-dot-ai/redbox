@@ -60,7 +60,7 @@ openai = "^1.17.0"
 
 [tool.poetry.group.docs.dependencies]
 mkdocs = "^1.5.3"
-mkdocstrings = {extras = ["python"], version = "^0.24.3"}
+mkdocstrings = {extras = ["python"], version = "^0.25.0"}
 mkdocs-material = "^9.5.15"
 mkdocs-mermaid2-plugin = "^1.1.1"
 markdown-mdantic = "^2.1.0"
