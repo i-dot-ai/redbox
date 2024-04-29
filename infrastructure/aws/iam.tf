@@ -38,8 +38,7 @@ resource "aws_iam_role_policy_attachment" "redbox_role_policy" {
   for_each = tomap(
     {
       "core-api"=module.core_api.ecs_task_execution_exec_role_name,
-      "ingester"=module.ingester.ecs_task_execution_exec_role_name,
-      "embedder"=module.embedder.ecs_task_execution_exec_role_name,
+      "worker"=module.worker.ecs_task_execution_exec_role_name,
     }
   )
   role       = each.value

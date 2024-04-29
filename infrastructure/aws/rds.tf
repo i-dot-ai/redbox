@@ -16,9 +16,8 @@ module "rds" {
   vpc_id                  = data.terraform_remote_state.vpc.outputs.vpc_id
   instance_type           = "db.t3.large"
   service_sg_ids = [
-    module.ingester.ecs_sg_id,
     module.core_api.ecs_sg_id,
-    module.embedder.ecs_sg_id,
+    module.worker.ecs_sg_id,
   ]
   dev_instance     = local.dev_flag
   prod_maintenance = true

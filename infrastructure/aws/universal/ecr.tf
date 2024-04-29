@@ -3,7 +3,6 @@ locals {
     "core-api",
     "db",
     "django-app",
-    "embedder",
     "worker",
     "redbox",
   ]
