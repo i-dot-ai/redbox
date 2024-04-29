@@ -71,6 +71,11 @@ jobs:
         pip install boto3
         python -m pytest tests
 
+    - name: print logs on failure
+      if: ${{ failure() }}
+      run: |
+        docker compose logs -f core-api
+
     - name: notify slack failure
       id: slack-failure
       uses: slackapi/slack-github-action@v1.24.0
