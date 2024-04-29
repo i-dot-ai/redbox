@@ -138,7 +138,6 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-AUTH_USER_MODEL = "authentication.User"
 
 LANGUAGE_CODE = "en-GB"
 TIME_ZONE = "UTC"
@@ -149,7 +148,7 @@ SITE_ID = 1
 AUTH_USER_MODEL = "redbox_core.User"
 ACCOUNT_EMAIL_VERIFICATION = "none"
 LOGIN_REDIRECT_URL = "homepage"
-LOGIN_URL = "sign_in"
+LOGIN_URL = "sign-in"
 
 # CSP settings https://content-security-policy.com/
 # https://django-csp.readthedocs.io/
