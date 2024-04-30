@@ -6,13 +6,13 @@ from .redbox_core import info_views, auth_views, views
 
 auth_urlpatterns = [
     path("magic_link/", include(magic_link_urls)),
-    path("sign-in/", auth_views.sign_in_view, name="sign_in"),
+    path("sign-in/", auth_views.sign_in_view, name="sign-in"),
     path(
         "sign-in-link-sent/",
         auth_views.sign_in_link_sent_view,
         name="sign-in-link-sent",
     ),
-    path("signed-out/", auth_views.signed_out_view, name="signed_out"),
+    path("signed-out/", auth_views.signed_out_view, name="signed-out"),
 ]
 
 info_urlpatterns = [
