@@ -17,14 +17,14 @@
         href="/sessions",
         classes="govuk-button--secondary"
       ) }}
-    
+
       <h2 class="govuk-heading-s">Recent sessions</h2>
       <ul class="govuk-list govuk-list--bullet govuk-list--spaced">
-          {% for session in session_history %}
-            <li>
-              <a class="govuk-link" href="{{ session.url }}">{{ session.title }}</a>
-            </li>
-          {% endfor %}
+        {% for session in chat_history %}
+          <li>
+            <a class="govuk-link" href="/sessions/{{ session.id }}">{{ session.name }}</a>
+          </li>
+        {% endfor %}
       </ul>
       
   </div>
@@ -41,9 +41,17 @@
           </strong>
       </div>
 
-      <form class="iai-new-message js-send-message" action="/sessions/" method="post">
+      {% for message in messages %}
+        <div>
+          <p>{{ message.role }} says:</p>
+          <p>{{ message.text }}</p>
+        </div>
+      {% endfor %}
 
-        <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+      <form class="iai-new-message js-send-message" action="/post-message/" method="post">
+
+        <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}"/>
+        <input type="hidden" name="session-id" value="{{ session_id }}"/>
 
         <div class="govuk-form-group">
           <label class="govuk-label" for="message">

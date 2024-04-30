@@ -1,12 +1,18 @@
 import os
 import uuid
+import requests
 
 from boto3.s3.transfer import TransferConfig
 from django.conf import settings
-from django.shortcuts import render
+from django.shortcuts import redirect, render
 from django.views.decorators.http import require_http_methods
 from redbox_app.redbox_core.client import CoreApiClient, s3_client
 from redbox_app.redbox_core.models import File, ProcessingStatusEnum
+
+from dotenv import load_dotenv
+load_dotenv()
+
+from . import models
 
 s3 = s3_client()
 CHUNK_SIZE = 1024
@@ -147,16 +153,73 @@ def remove_doc_view(request, doc_id: str):
 
 
 def sessions_view(request, session_id: str = ""):
-    # Hard-coding some chat history for now
-    session_history = [
-        {"session_id": "chat1", "title": "Chat 1", "url": "/sessions/chat1"},
-        {"session_id": "chat2", "title": "Chat 2", "url": "/sessions/chat2"},
-    ]
+    
+    chat_history = models.ChatHistory.objects.all().filter(users=request.user)
 
-    context = {"session_history": session_history}
+    messages = []
+    if session_id:
+        current_chat = models.ChatHistory.objects.get(id=session_id)
+        messages = models.ChatMessage.objects.all().filter(chat_history=current_chat)
+
+    context = {
+        "session_id": session_id,
+        "messages": messages,
+        "chat_history": chat_history,
+    }
 
     return render(
         request,
         template_name="sessions.html",
         context=context,
     )
+
+
+@require_http_methods(["POST"])
+def post_message(request):
+
+    text = request.POST.get("message", "New chat")
+
+    # get current session, or create a new one
+    session_id = request.POST.get("session-id", "")
+    session = None
+    if session_id:
+        session = models.ChatHistory.objects.get(id=session_id)
+    else:
+        session_name = text[0:20]
+        session = models.ChatHistory(name=session_name,users=request.user)
+        session.save()
+        session_id = session.id
+    
+    # save user message
+    chat_message = models.ChatMessage(chat_history=session, text=text, role=models.ChatRoleEnum.user)
+    chat_message.save()
+
+    # get LLM response
+    """
+    message_history = []
+    messages = models.ChatMessage.objects.all().filter(chat_history=session)
+    for message in messages:
+        formatted_message = {
+            "role": message.role,
+            "text": message.text,
+        }
+        message_history.append(formatted_message)
+    data = {
+        "message_history": message_history
+    }
+    """
+    data = {
+        "message_history": [
+            {"role": models.ChatRoleEnum.user, "text": text,}
+        ]
+    }
+    url = os.environ.get("CORE_API_HOST") + ":" + os.environ.get("CORE_API_PORT") + "/chat/rag"
+    response = requests.post(url, json=data)
+    llm_data = response.json()
+
+    # save LLM response
+    llm_message = models.ChatMessage(chat_history=session, text=llm_data["response_message"]["text"], role=models.ChatRoleEnum.ai)
+    llm_message.save()
+
+    return redirect(f"/sessions/{session_id}")
+
