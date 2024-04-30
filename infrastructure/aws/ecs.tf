@@ -24,7 +24,8 @@ locals {
     "CORE_API_PORT": 8000,
     "ENVIRONMENT": terraform.workspace,
     "DJANGO_SETTINGS_MODULE": "redbox_app.settings",
-    "DEBUG": false
+    "DEBUG": false,
+    "AWS_REGION": terraform.region,
   }
 }
 

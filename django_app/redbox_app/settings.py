@@ -5,8 +5,8 @@ import socket
 from pathlib import Path
 
 import environ
-import sentry_sdk
-from sentry_sdk.integrations.django import DjangoIntegration
+# import sentry_sdk
+# from sentry_sdk.integrations.django import DjangoIntegration
 
 from .hosting_environment import HostingEnvironment
 
@@ -200,24 +200,22 @@ if HostingEnvironment.is_deployed():
     STATICFILES_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
     DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
     OBJECT_STORE = "s3"
-    AWS_STORAGE_BUCKET_NAME = env.str("AWS_STORAGE_BUCKET_NAME")
-    AWS_S3_REGION_NAME = env.str("AWS_S3_REGION_NAME")
     INSTALLED_APPS += ["health_check.contrib.s3boto3_storage"]
     # https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/using-features.logging.html
     LOG_ROOT = "/opt/python/log/"
     LOG_HANDLER = "file"
-    SENTRY_DSN = env.str("SENTRY_DSN")
-    SENTRY_ENVIRONMENT = env.str("SENTRY_ENVIRONMENT")
-    sentry_sdk.init(
-        dsn=SENTRY_DSN,
-        integrations=[
-            DjangoIntegration(),
-        ],
-        environment=SENTRY_ENVIRONMENT,
-        send_default_pii=False,
-        traces_sample_rate=1.0,
-        profiles_sample_rate=0.0,
-    )
+    # SENTRY_DSN = env.str("SENTRY_DSN")
+    # SENTRY_ENVIRONMENT = env.str("SENTRY_ENVIRONMENT")
+    # sentry_sdk.init(
+    #     dsn=SENTRY_DSN,
+    #     integrations=[
+    #         DjangoIntegration(),
+    #     ],
+    #     environment=SENTRY_ENVIRONMENT,
+    #     send_default_pii=False,
+    #     traces_sample_rate=1.0,
+    #     profiles_sample_rate=0.0,
+    # )
 else:
     ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
     DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
