@@ -54,6 +54,12 @@ variable "from_email" {
   description = "GOV notify from email"
 }
 
+variable "govuk_notify_plain_email_template_id" {
+  type        = string
+  sensitive   = true
+  description = "GOV notify plain template id"
+}
+
 variable "hosted_zone_id" {
   type        = string
   description = "Route 53 Hosted Zone"
