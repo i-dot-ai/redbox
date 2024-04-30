@@ -65,7 +65,7 @@ class Settings(BaseSettings):
     django_settings_module: str = "redbox_app.settings"
     debug: bool = True
     django_secret_key: str
-    environment: Literal["LOCAL", "dev", "preprod", "prod"] = "LOCAL"
+    environment: Literal["LOCAL", "DEV", "PREPROD", "PROD"] = "LOCAL"
     postgres_user: str = "redbox-core"
     postgres_db: str = "redbox-core"
     postgres_password: str

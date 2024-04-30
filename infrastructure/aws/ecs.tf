@@ -23,10 +23,10 @@ locals {
     "POSTGRES_HOST" : module.rds.db_instance_address,
     "CORE_API_HOST" : "https://${local.api_host}",
     "CORE_API_PORT": 8000,
-    "ENVIRONMENT": terraform.workspace,
+    "ENVIRONMENT": upper(terraform.workspace),
     "DJANGO_SETTINGS_MODULE": "redbox_app.settings",
     "DEBUG": false,
-    "AWS_REGION": terraform.region,
+    "AWS_REGION": var.region,
   }
 }
 
@@ -49,7 +49,7 @@ resource "aws_route53_record" "type_a_record_core_api" {
 }
 
 
-resource "aws_route53_record" "type_a_record_django" {
+resource "aws_route53_record" "type_a_record" {
   zone_id = var.hosted_zone_id
   name    = local.django_host
   type    = "A"
@@ -63,9 +63,10 @@ resource "aws_route53_record" "type_a_record_django" {
 
 
 module "django-app" {
+  create_listener    = false
   create_networking  = false
-  memory             = 2048
-  cpu                = 1024
+  memory             = 4096
+  cpu                = 2048
   source             = "../../../i-ai-core-infrastructure//modules/ecs"
   project_name       = "redbox-django-app"
   image_tag          = var.django_app_image_tag

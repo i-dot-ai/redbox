@@ -202,8 +202,8 @@ if HostingEnvironment.is_deployed():
     OBJECT_STORE = "s3"
     INSTALLED_APPS += ["health_check.contrib.s3boto3_storage"]
     # https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/using-features.logging.html
-    LOG_ROOT = "/opt/python/log/"
-    LOG_HANDLER = "file"
+    LOG_ROOT = "."
+    LOG_HANDLER = "console"
     # SENTRY_DSN = env.str("SENTRY_DSN")
     # SENTRY_ENVIRONMENT = env.str("SENTRY_ENVIRONMENT")
     # sentry_sdk.init(
