@@ -12,9 +12,6 @@ from .hosting_environment import HostingEnvironment
 
 env = environ.Env()
 
-AWS_STORAGE_BUCKET_NAME = env.str("BUCKET_NAME")
-AWS_S3_REGION_NAME = env.str("AWS_REGION")
-
 SECRET_KEY = env.str("DJANGO_SECRET_KEY")
 ENVIRONMENT = env.str("ENVIRONMENT")
 
@@ -191,19 +188,31 @@ SESSION_COOKIE_AGE = 60 * 60 * 24
 SESSION_COOKIE_SAMESITE = "Strict"
 SESSION_ENGINE = "django.contrib.sessions.backends.db"
 
-if HostingEnvironment.is_deployed():
-    LOCALHOST = socket.gethostbyname(socket.gethostname())
-    ALLOWED_HOSTS = [
-        LOCALHOST,
-    ]
+LOG_ROOT = "."
+LOG_HANDLER = "console"
 
-    STATICFILES_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
-    DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
+DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
+
+if HostingEnvironment.is_local():
+    # For Docker to work locally
+    OBJECT_STORE = "minio"
+    MINIO_ACCESS_KEY = env.str("MINIO_ACCESS_KEY")
+    MINIO_SECRET_KEY = env.str("MINIO_SECRET_KEY")
+    MINIO_HOST = env.str("MINIO_HOST")
+    MINIO_PORT = env.str("MINIO_PORT")
+
+    ALLOWED_HOSTS = ["localhost", "127.0.0.1", "0.0.0.0"] # nosec B104 - don't do this on server!
+else:
     OBJECT_STORE = "s3"
+    AWS_STORAGE_BUCKET_NAME = env.str("BUCKET_NAME")
+    AWS_S3_REGION_NAME = env.str("AWS_REGION")
+    STATICFILES_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
+
+    LOCALHOST = socket.gethostbyname(socket.gethostname())
+    ALLOWED_HOSTS = [LOCALHOST]
+
     INSTALLED_APPS += ["health_check.contrib.s3boto3_storage"]
     # https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/using-features.logging.html
-    LOG_ROOT = "."
-    LOG_HANDLER = "console"
     # SENTRY_DSN = env.str("SENTRY_DSN")
     # SENTRY_ENVIRONMENT = env.str("SENTRY_ENVIRONMENT")
     # sentry_sdk.init(
@@ -216,21 +225,6 @@ if HostingEnvironment.is_deployed():
     #     traces_sample_rate=1.0,
     #     profiles_sample_rate=0.0,
     # )
-else:
-    ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
-    DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
-    LOG_ROOT = "."
-    LOG_HANDLER = "console"
-
-if HostingEnvironment.is_local():
-    # For Docker to work locally
-    ALLOWED_HOSTS.append("0.0.0.0")  # nosec B104 - don't do this on server!
-    OBJECT_STORE = "minio"
-    MINIO_ACCESS_KEY = env.str("MINIO_ACCESS_KEY")
-    MINIO_SECRET_KEY = env.str("MINIO_SECRET_KEY")
-    MINIO_HOST = env.str("MINIO_HOST")
-    MINIO_PORT = env.str("MINIO_PORT")
-else:
     # https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Strict-Transport-Security
     # Mozilla guidance max-age 2 years
     SECURE_HSTS_SECONDS = 2 * 365 * 24 * 60 * 60
