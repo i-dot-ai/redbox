@@ -195,7 +195,6 @@ def post_message(request):
     chat_message.save()
 
     # get LLM response
-    """
     message_history = []
     messages = models.ChatMessage.objects.all().filter(chat_history=session)
     for message in messages:
@@ -206,12 +205,6 @@ def post_message(request):
         message_history.append(formatted_message)
     data = {
         "message_history": message_history
-    }
-    """
-    data = {
-        "message_history": [
-            {"role": models.ChatRoleEnum.user, "text": text,}
-        ]
     }
     url = os.environ.get("CORE_API_HOST") + ":" + os.environ.get("CORE_API_PORT") + "/chat/rag"
     response = requests.post(url, json=data)
