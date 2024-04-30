@@ -45,7 +45,7 @@ class ProcessingStatusEnum(models.TextChoices):
 
 class File(UUIDPrimaryKeyBase, TimeStampedModel):
     processing_status = models.CharField(choices=ProcessingStatusEnum.choices, null=False, blank=False)
-    original_file = models.FileField(storage=settings.BUCKET_NAME)
+    original_file = models.FileField(storage=settings.AWS_STORAGE_BUCKET_NAME)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
 
     @property

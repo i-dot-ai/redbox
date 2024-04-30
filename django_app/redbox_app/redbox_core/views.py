@@ -102,7 +102,7 @@ def upload_view(request):
 
             # TODO: can we upload chunks instead of having the file read?
             s3.upload_fileobj(
-                Bucket=settings.BUCKET_NAME,
+                Bucket=settings.AWS_STORAGE_BUCKET_NAME,
                 Fileobj=uploaded_file,
                 Key=file_key,
                 ExtraArgs={"Tagging": f"file_type={uploaded_file.content_type}"},

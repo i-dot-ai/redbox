@@ -15,8 +15,8 @@ def s3_client():
 
         try:
             client.create_bucket(
-                Bucket=settings.BUCKET_NAME,
-                CreateBucketConfiguration={"LocationConstraint": settings.AWS_REGION},
+                Bucket=settings.AWS_STORAGE_BUCKET_NAME,
+                CreateBucketConfiguration={"LocationConstraint": settings.AWS_S3_REGION_NAME},
             )
         except ClientError as e:
             if e.response["Error"]["Code"] != "BucketAlreadyOwnedByYou":
@@ -48,7 +48,7 @@ class CoreApiClient:
         if self.host == "testserver":
             file = {
                 "key": name,
-                "bucket": settings.BUCKET_NAME,
+                "bucket": settings.AWS_STORAGE_BUCKET_NAME,
             }
             return file
 
