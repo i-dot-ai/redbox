@@ -190,6 +190,7 @@ SESSION_COOKIE_AGE = 60 * 60 * 24
 SESSION_COOKIE_SAMESITE = "Strict"
 SESSION_ENGINE = "django.contrib.sessions.backends.db"
 
+BUCKET_NAME = env.str("BUCKET_NAME")
 
 if HostingEnvironment.is_deployed():
     LOCALHOST = socket.gethostbyname(socket.gethostname())
@@ -230,7 +231,6 @@ if HostingEnvironment.is_local():
     MINIO_SECRET_KEY = env.str("MINIO_SECRET_KEY")
     MINIO_HOST = env.str("MINIO_HOST")
     MINIO_PORT = env.str("MINIO_PORT")
-    BUCKET_NAME = env.str("BUCKET_NAME")
 else:
     # https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Strict-Transport-Security
     # Mozilla guidance max-age 2 years
