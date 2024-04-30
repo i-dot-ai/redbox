@@ -193,6 +193,8 @@ LOG_HANDLER = "console"
 
 DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
 
+BUCKET_NAME = env.str("BUCKET_NAME")
+
 if HostingEnvironment.is_local():
     # For Docker to work locally
     OBJECT_STORE = "minio"
@@ -201,11 +203,11 @@ if HostingEnvironment.is_local():
     MINIO_HOST = env.str("MINIO_HOST")
     MINIO_PORT = env.str("MINIO_PORT")
 
-    ALLOWED_HOSTS = ["localhost", "127.0.0.1", "0.0.0.0"] # nosec B104 - don't do this on server!
+    ALLOWED_HOSTS = ["localhost", "127.0.0.1", "0.0.0.0"]  # nosec B104 - don't do this on server!
 else:
     OBJECT_STORE = "s3"
-    AWS_STORAGE_BUCKET_NAME = env.str("BUCKET_NAME")
     AWS_S3_REGION_NAME = env.str("AWS_REGION")
+    AWS_STORAGE_BUCKET_NAME = BUCKET_NAME  # this duplication is required for django-storage
     STATICFILES_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
 
     LOCALHOST = socket.gethostbyname(socket.gethostname())
