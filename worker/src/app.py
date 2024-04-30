@@ -70,7 +70,7 @@ async def ingest(
 async def embed(
     queue_item: EmbedQueueItem,
     storage_handler: ElasticsearchStorageHandler = Depends(get_storage_handler),
-    model: SentenceTransformerDB = Depends(get_model),
+    embedding_model: SentenceTransformerDB = Depends(get_model),
 ):
     """
     1. embed queue-item text
@@ -78,7 +78,7 @@ async def embed(
     """
 
     chunk: Chunk = storage_handler.read_item(queue_item.chunk_uuid, "Chunk")
-    embedded_sentences = model.embed_sentences([chunk.text])
+    embedded_sentences = embedding_model.embed_sentences([chunk.text])
     if len(embedded_sentences.data) != 1:
         logging.error(f"expected just 1 embedding but got {len(embedded_sentences.data)}")
         return

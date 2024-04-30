@@ -4,8 +4,7 @@ from uuid import uuid4
 
 from sentence_transformers import SentenceTransformer
 
-from redbox.models import ModelInfo
-from redbox.models.embedding import Embedding, EmbeddingResponse
+from redbox.models.embedding import Embedding, EmbeddingResponse, EmbeddingModelInfo
 
 MODEL_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "models")
 
@@ -14,9 +13,9 @@ log.setLevel(logging.INFO)
 
 
 class SentenceTransformerDB(SentenceTransformer):
-    def __init__(self, model_name: str):
-        super().__init__(model_name, cache_folder=MODEL_PATH)
-        self.model_name = model_name
+    def __init__(self, embedding_model_name: str):
+        super().__init__(embedding_model_name, cache_folder=MODEL_PATH)
+        self.embedding_model_name = embedding_model_name
 
     def embed_sentences(self, sentences: list[str]) -> EmbeddingResponse:
         embeddings = self.encode(sentences)
@@ -34,16 +33,15 @@ class SentenceTransformerDB(SentenceTransformer):
             object="list",
             data=reformatted_embeddings,
             embedding_id=str(uuid4()),
-            model=self.model_name,
-            model_info=self.get_model_info(),
+            embedding_model=self.embedding_model_name,
+            embedding_model_info=self.get_embedding_model_info(),
         )
 
         return output
 
-    def get_model_info(self) -> ModelInfo:
-        model_info = ModelInfo(
-            model=self.model_name,
-            max_seq_length=self.get_max_seq_length(),
+    def get_embedding_model_info(self) -> EmbeddingModelInfo:
+        embedding_model_info = EmbeddingModelInfo(
+            embedding_model=self.embedding_model_name,
             vector_size=self.get_sentence_embedding_dimension(),
         )
-        return model_info
+        return embedding_model_info
