@@ -48,6 +48,12 @@ variable "external_ips" {
   description = "List of external IPs"
 }
 
+variable "from_email" {
+  type        = string
+  sensitive   = true
+  description = "GOV notify from email"
+}
+
 variable "hosted_zone_id" {
   type        = string
   description = "Route 53 Hosted Zone"
@@ -61,6 +67,12 @@ variable "image_tag" {
 variable "internal_ips" {
   type        = list(string)
   description = "IP's of No10 and CO"
+}
+
+variable "notify_api_key" {
+  type        = string
+  sensitive   = true
+  description = "GOV notify api key"
 }
 
 variable "openai_api_key" {
