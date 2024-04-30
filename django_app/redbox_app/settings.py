@@ -191,14 +191,11 @@ SESSION_COOKIE_SAMESITE = "Strict"
 SESSION_ENGINE = "django.contrib.sessions.backends.db"
 
 
-if HostingEnvironment.is_beanstalk():
+if HostingEnvironment.is_deployed():
     LOCALHOST = socket.gethostbyname(socket.gethostname())
     ALLOWED_HOSTS = [
         LOCALHOST,
     ]
-
-    for key, value in HostingEnvironment.get_beanstalk_environ_vars().items():
-        env(key, default=value)
 
     STATICFILES_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
     DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"

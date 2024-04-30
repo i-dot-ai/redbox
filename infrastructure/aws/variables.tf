@@ -53,10 +53,21 @@ variable "hosted_zone_id" {
   description = "Route 53 Hosted Zone"
 }
 
-variable "image_tag" {
+variable "core_api_image_tag" {
   type        = string
-  description = "Image tag"
+  description = "Image tag for the core-api"
 }
+
+variable "worker_image_tag" {
+  type        = string
+  description = "Image tag for the worker"
+}
+
+variable "django_app_image_tag" {
+  type        = string
+  description = "Image tag for the django-app"
+}
+
 
 variable "internal_ips" {
   type        = list(string)
