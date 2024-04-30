@@ -31,3 +31,25 @@ $iai-pink: #b62777;
 .iai-file-types {
   font-size: 0.875rem;
 }
+
+
+/* Chat page */
+.iai-chat-message {
+  background-color: #b1b4b6;
+  padding: 1rem;
+}
+.iai-chat-message--ai {
+  margin-right: clamp(2rem, 10vw, 5rem);
+}
+.iai-chat-message--user {
+  margin-left: clamp(2rem, 10vw, 5rem);
+}
+.iai-chat-message__role {
+  font-size: 0.75rem;
+}
+.iai-chat-message__text {
+  font-size: 1rem;
+  padding-top: 0.5rem;
+}
+
+/*iai-chat-message--{{ message.role }}*/
