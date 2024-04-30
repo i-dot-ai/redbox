@@ -74,6 +74,8 @@ class Settings(BaseSettings):
     email_backend_type: str = "CONSOLE"
     notify_api_key: str
     from_email: str
+    email_file_path: str = "/app/mail"
+    govuk_notify_plain_email_template_id: str = "example-id"
 
     model_config = SettingsConfigDict(env_file=".env", env_nested_delimiter="__")
 
