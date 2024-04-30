@@ -47,6 +47,8 @@ module "core_api" {
   prefix             = local.prefix
   ecr_repository_uri = "${var.ecr_repository_uri}/redbox-core-api"
   ecs_cluster_id     = module.cluster.ecs_cluster_id
+  memory             = 4096
+  cpu                = 2048
   health_check = {
     healthy_threshold   = 3
     unhealthy_threshold = 3
@@ -63,6 +65,13 @@ module "core_api" {
   host                         = local.host
   ip_whitelist                 = var.external_ips
   environment_variables        = local.environment_variables
+
+  authenticate_cognito = {
+    enabled : true,
+    user_pool_arn : module.cognito.user_pool_arn,
+    user_pool_client_id : module.cognito.user_pool_client_id,
+    user_pool_domain : module.cognito.user_pool_domain
+  }
 }
 
 
@@ -71,7 +80,7 @@ module "worker" {
   memory             = 4096
   cpu                = 2048
   source             = "../../../i-ai-core-infrastructure//modules/ecs"
-  project_name       = "redbox-worker"
+  project_name       = "worker"
   image_tag          = var.image_tag
   prefix             = local.prefix
   ecr_repository_uri = "${var.ecr_repository_uri}/redbox-worker"
