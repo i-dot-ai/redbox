@@ -6,6 +6,7 @@ from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
 from django.views.decorators.http import require_http_methods
+
 from redbox_app.redbox_core.client import CoreApiClient, s3_client
 from redbox_app.redbox_core.models import File, ProcessingStatusEnum
 
@@ -73,7 +74,6 @@ def documents_view(request):
     )
 
 
-@login_required
 def get_file_extension(file):
     # TODO: use a third party checking service to validate this
 
@@ -120,7 +120,9 @@ def upload_view(request):
             )
 
             # ingest file
-            api = CoreApiClient(host=settings.CORE_API_HOST, port=settings.CORE_API_PORT)
+            api = CoreApiClient(
+                host=settings.CORE_API_HOST, port=settings.CORE_API_PORT
+            )
 
             try:
                 api.upload_file(uploaded_file.name)
@@ -160,9 +162,7 @@ def sessions_view(request, session_id: str = ""):
         {"session_id": "chat2", "title": "Chat 2", "url": "/sessions/chat2"},
     ]
 
-    context = {
-        "session_history": session_history
-    }
+    context = {"session_history": session_history}
 
     return render(
         request,
