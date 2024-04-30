@@ -191,8 +191,6 @@ SESSION_COOKIE_AGE = 60 * 60 * 24
 SESSION_COOKIE_SAMESITE = "Strict"
 SESSION_ENGINE = "django.contrib.sessions.backends.db"
 
-BUCKET_NAME = env.str("BUCKET_NAME")
-
 if HostingEnvironment.is_deployed():
     LOCALHOST = socket.gethostbyname(socket.gethostname())
     ALLOWED_HOSTS = [
