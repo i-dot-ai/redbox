@@ -14,6 +14,10 @@ env = environ.Env()
 
 AWS_REGION = env.str("AWS_REGION")
 
+# duplicate required for django-storage
+AWS_STORAGE_BUCKET_NAME = env.str("AWS_REGION")
+AWS_S3_REGION_NAME = env.str("AWS_REGION")
+
 SECRET_KEY = env.str("DJANGO_SECRET_KEY")
 ENVIRONMENT = env.str("ENVIRONMENT")
 
