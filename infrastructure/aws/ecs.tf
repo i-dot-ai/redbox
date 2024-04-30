@@ -1,6 +1,7 @@
 locals {
   record_prefix = terraform.workspace == "prod" ? var.project_name : "${var.project_name}-${terraform.workspace}"
-  host          = "${local.record_prefix}.${var.domain_name}"
+  django_host          = "${local.record_prefix}.${var.domain_name}"
+  api_host          = "${local.record_prefix}-api.${var.domain_name}"
 
   environment_variables = {
     "ELASTIC__API_KEY" : var.elastic_api_key,
@@ -20,7 +21,7 @@ locals {
     "POSTGRES_PASSWORD": module.rds.db_write_password,
     "POSTGRES_DB" : module.rds.db_instance_name,
     "POSTGRES_HOST" : module.rds.db_instance_address,
-    "CORE_API_HOST" : "https://${var.project_name}-api-${terraform.workspace}.ai.cabinetoffice.gov.uk",
+    "CORE_API_HOST" : "https://${local.api_host}",
     "CORE_API_PORT": 8000,
     "ENVIRONMENT": terraform.workspace,
     "DJANGO_SETTINGS_MODULE": "redbox_app.settings",
@@ -35,9 +36,22 @@ module "cluster" {
   name           = "backend"
 }
 
-resource "aws_route53_record" "type_a_record" {
+resource "aws_route53_record" "type_a_record_core_api" {
   zone_id = var.hosted_zone_id
-  name    = local.host
+  name    = local.api_host
+  type    = "A"
+
+  alias {
+    name                   = module.load_balancer.load_balancer_dns_name
+    zone_id                = module.load_balancer.load_balancer_zone_id
+    evaluate_target_health = true
+  }
+}
+
+
+resource "aws_route53_record" "type_a_record_django" {
+  zone_id = var.hosted_zone_id
+  name    = local.django_host
   type    = "A"
 
   alias {
@@ -71,7 +85,7 @@ module "django-app" {
   container_port               = 8090
   load_balancer_security_group = module.load_balancer.load_balancer_security_group_id
   aws_lb_arn                   = module.load_balancer.alb_arn
-  host                         = local.host
+  host                         = local.django_host
   ip_whitelist                 = var.external_ips
   environment_variables        = local.environment_variables
 }
@@ -101,7 +115,7 @@ module "core_api" {
   container_port               = 5002
   load_balancer_security_group = module.load_balancer.load_balancer_security_group_id
   aws_lb_arn                   = module.load_balancer.alb_arn
-  host                         = "${local.host}-api"
+  host                         = local.api_host
   ip_whitelist                 = var.external_ips
   environment_variables        = local.environment_variables
 }
@@ -130,7 +144,7 @@ module "worker" {
   container_port               = 5000
   load_balancer_security_group = module.load_balancer.load_balancer_security_group_id
   aws_lb_arn                   = module.load_balancer.alb_arn
-  host                         = local.host
+  host                         = local.api_host
   ip_whitelist                 = var.external_ips
   environment_variables        = local.environment_variables
 }
