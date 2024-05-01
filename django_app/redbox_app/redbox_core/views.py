@@ -176,35 +176,28 @@ def sessions_view(request, session_id: str = ""):
 
 @require_http_methods(["POST"])
 def post_message(request):
-    text = request.POST.get("message", "New chat")
+    message_text = request.POST.get("message", "New chat")
 
     # get current session, or create a new one
-    session_id = request.POST.get("session-id", "")
-    session = None
-    if session_id:
+    if session_id := request.POST.get("session-id", ""):
         session = models.ChatHistory.objects.get(id=session_id)
     else:
-        session_name = text[0:20]
+        session_name = message_text[0:20]
         session = models.ChatHistory(name=session_name, users=request.user)
         session.save()
         session_id = session.id
 
     # save user message
-    chat_message = models.ChatMessage(chat_history=session, text=text, role=models.ChatRoleEnum.user)
+    chat_message = models.ChatMessage(chat_history=session, text=message_text, role=models.ChatRoleEnum.user)
     chat_message.save()
 
     # get LLM response
-    message_history = []
-    messages = models.ChatMessage.objects.all().filter(chat_history=session)
-    for message in messages:
-        formatted_message = {
-            "role": message.role,
-            "text": message.text,
-        }
-        message_history.append(formatted_message)
-    data = {"message_history": message_history}
+    message_history = [
+        {"role": message.role, "text": message.text}
+        for message in models.ChatMessage.objects.all().filter(chat_history=session)
+    ]
     url = os.environ.get("CORE_API_HOST") + ":" + os.environ.get("CORE_API_PORT") + "/chat/rag"
-    response = requests.post(url, json=data)
+    response = requests.post(url, json={"message_history": message_history})
     llm_data = response.json()
 
     # save LLM response
