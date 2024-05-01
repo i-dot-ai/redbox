@@ -6,11 +6,12 @@ from django.conf import settings
 from django.test import Client
 from redbox_app.redbox_core.models import User, ChatHistory, ChatMessage, ChatRoleEnum
 from http import HTTPStatus
-
+from yarl import URL
 from redbox_app.redbox_core.utils import build_rag_url
 from requests_mock import Mocker
 
 logger = logging.getLogger(__name__)
+logger.setLevel("DEBUG")
 
 
 @pytest.mark.django_db
@@ -55,18 +56,17 @@ def test_post_message_to_new_session(alice: User, client: Client, requests_mock:
     # Given
     client.force_login(alice)
     requests_mock.register_uri(
-        "POST", build_rag_url(), json={"response_message": {"text": "Good afternoon, Mr. Amor."}}
+        "POST", str(build_rag_url()), json={"response_message": {"text": "Good afternoon, Mr. Amor."}}
     )
 
     # When
     response = client.post("/post-message/", {"message": "Are you there?"})
-    logger.debug(f"{response=}")
 
     # Then
     logger.debug(f"{response=}")
     assert response.status_code == HTTPStatus.FOUND
     assert "Location" in response.headers
-    session_id = response.headers["Location"][:-1].rpartition("/")[-1]
+    session_id = URL(response.url).parts[-2]
     assert (
         ChatMessage.objects.filter(chat_history__id=session_id, role=ChatRoleEnum.user).first().text == "Are you there?"
     )
@@ -84,7 +84,7 @@ def test_post_message_to_existing_session(alice: User, client: Client, requests_
     logger.debug(f"{session_id=}")
     ChatHistory.objects.create(id=session_id, users=alice)
     requests_mock.register_uri(
-        "POST", build_rag_url(), json={"response_message": {"text": "Good afternoon, Mr. Amor."}}
+        "POST", str(build_rag_url()), json={"response_message": {"text": "Good afternoon, Mr. Amor."}}
     )
 
     # When
