@@ -63,7 +63,6 @@ def test_post_message_to_new_session(alice: User, client: Client, requests_mock:
     response = client.post("/post-message/", {"message": "Are you there?"})
 
     # Then
-    logger.debug(f"{response=}")
     assert response.status_code == HTTPStatus.FOUND
     assert "Location" in response.headers
     session_id = URL(response.url).parts[-2]
