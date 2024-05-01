@@ -9,8 +9,9 @@ from django.urls import reverse
 from django.views.decorators.http import require_http_methods
 from redbox_app.redbox_core.client import CoreApiClient, s3_client
 from redbox_app.redbox_core.models import File, ProcessingStatusEnum
-
+from django.http import HttpRequest, HttpResponse
 from dotenv import load_dotenv
+from redbox_app.redbox_core.utils import build_rag_url
 
 load_dotenv()
 
@@ -176,7 +177,7 @@ def sessions_view(request, session_id: str = ""):
 
 
 @require_http_methods(["POST"])
-def post_message(request):
+def post_message(request: HttpRequest) -> HttpResponse:
     message_text = request.POST.get("message", "New chat")
 
     # get current session, or create a new one
@@ -197,7 +198,7 @@ def post_message(request):
         {"role": message.role, "text": message.text}
         for message in models.ChatMessage.objects.all().filter(chat_history=session)
     ]
-    url = os.environ.get("CORE_API_HOST") + ":" + os.environ.get("CORE_API_PORT") + "/chat/rag"
+    url = build_rag_url()
     response = requests.post(url, json={"message_history": message_history})
     llm_data = response.json()
 
