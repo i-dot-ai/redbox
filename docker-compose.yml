@@ -39,13 +39,6 @@ services:
     ports:
       - 5010:5010
       - 5020:5020
-    env_file:
-      - .env
-    depends_on:
-      - redis
-    networks:
-      - redbox-app-network
-    restart: unless-stopped
   ingester:
     image: redbox-ingester:latest
     build:
