@@ -37,11 +37,15 @@ class ChatRequest(BaseModel):
 
 
 class Metadata(BaseModel):
-    languages: list[str] = Field(description="languages detected in this chunk", examples=[["eng"]])
-    url: AnyUrl = Field(description="url of original file")
-    filetype: str = Field(description="content-type", examples=["application/pdf"])
     parent_doc_uuid: UUID = Field(description="uuid of original file")
-    page_numbers: list[int] = Field(description="page number of the file that this chunk came from")
+    languages: Optional[list[str]] = Field(
+        description="languages detected in this chunk", examples=[["eng"]], default=None
+    )
+    url: Optional[AnyUrl] = Field(description="url of original file", default=None)
+    filetype: Optional[str] = Field(description="content-type", examples=["application/pdf"], default=None)
+    page_numbers: Optional[list[int]] = Field(
+        description="page number of the file that this chunk came from", default=None
+    )
 
 
 class InputDocuments(BaseModel):
