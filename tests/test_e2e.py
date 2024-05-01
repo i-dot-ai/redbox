@@ -1,5 +1,4 @@
 import os
-import re
 import time
 
 import pytest
@@ -57,16 +56,20 @@ def test_upload_to_search(file_path, s3_client):
         if not embedding_complete:
             pytest.fail(reason=f"failed to get embedded chunks within {timeout} seconds, potential error: {error}")
 
+        chunks_response = requests.get(f"http://localhost:5002/file/{file_uuid}/chunks")
+        assert chunks_response.status_code == 200
+
         rag_response = requests.post(
             "http://localhost:5002/chat/rag",
             json={
                 "message_history": [
                     {"role": "system", "text": "You are a helpful AI Assistant"},
-                    {"role": "user", "text": "What colour is the sea?"},
+                    {"role": "user", "text": "please summarise my document"},
                 ]
             },
         )
         assert rag_response.status_code == 200
-        response_message_text = rag_response.json()["response_message"]["text"]
-        # assert "yellow" in response_message_text
-        assert re.findall(r"<Doc\w{8}-\w{4}-\w{4}-\w{4}-\w{12}>", response_message_text)
+        parent_doc_uuids = {
+            input_document["metadata"]["parent_doc_uuid"] for input_document in rag_response.json()["input_documents"]
+        }
+        assert file_uuid in parent_doc_uuids

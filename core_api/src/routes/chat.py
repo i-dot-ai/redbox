@@ -112,7 +112,7 @@ def simple_chat(chat_request: ChatRequest) -> ChatResponse:
     return ChatResponse(response_message=ChatMessage(text=response.text, role="ai"))
 
 
-@chat_app.post("/rag", tags=["chat"], response_model=ChatResponse)
+@chat_app.post("/rag", tags=["chat"])
 def rag_chat(chat_request: ChatRequest) -> ChatResponse:
     """Get a LLM response to a question history and file
 
@@ -149,4 +149,5 @@ def rag_chat(chat_request: ChatRequest) -> ChatResponse:
         },
     )
 
-    return ChatResponse(response_message=ChatMessage(text=result["output_text"], role="ai"))
+    result["input_documents"] = [input_document.dict() for input_document in result["input_documents"]]
+    return ChatResponse(**result)
