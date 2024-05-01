@@ -17,23 +17,21 @@ def sign_in_view(request: HttpRequest):
                     "errors": {"email": "Please enter a valid email address."},
                 },
             )
-        email = email.lower()
-        user_exists = models.User.objects.filter(email=email).exists()
+        user_exists = models.User.objects.filter(email=email.lower()).exists()
         if user_exists:
-            user = models.User.objects.get(email=email)
+            user = models.User.objects.get(email=email.lower())
             link = MagicLink.objects.create(user=user, redirect_to="/sessions")
             full_link = request.build_absolute_uri(link.get_absolute_url())
 
             # Email link to user
-            email_handler.send_magic_link_email(full_link, email)
+            email_handler.send_magic_link_email(full_link, email.lower())
 
         return redirect("sign-in-link-sent")
-    else:
-        return render(
-            request,
-            template_name="sign-in.html",
-            context={"request": request},
-        )
+    return render(
+        request,
+        template_name="sign-in.html",
+        context={"request": request},
+    )
 
 
 def sign_in_link_sent_view(request: HttpRequest):
