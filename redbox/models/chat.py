@@ -1,7 +1,7 @@
 from typing import Literal, Optional
 from uuid import UUID
 
-from pydantic import Field, BaseModel, AnyUrl
+from pydantic import Field, BaseModel
 
 
 class ChatMessage(BaseModel):
@@ -38,11 +38,6 @@ class ChatRequest(BaseModel):
 
 class Metadata(BaseModel):
     parent_doc_uuid: UUID = Field(description="uuid of original file")
-    languages: Optional[list[str]] = Field(
-        description="languages detected in this chunk", examples=[["eng"]], default=None
-    )
-    url: Optional[AnyUrl] = Field(description="url of original file", default=None)
-    filetype: Optional[str] = Field(description="content-type", examples=["application/pdf"], default=None)
     page_numbers: Optional[list[int]] = Field(
         description="page number of the file that this chunk came from", default=None
     )
@@ -54,11 +49,7 @@ class InputDocuments(BaseModel):
 
 
 class ChatResponse(BaseModel):
-    question: str = Field(
-        description="original question",
-        examples=["Who is the prime minister?"],
-    )
-    input_documents: Optional[list[InputDocuments]] = Field(
+    sources: Optional[list[InputDocuments]] = Field(
         description="documents retrieved to form this response", default=None
     )
     output_text: str = Field(

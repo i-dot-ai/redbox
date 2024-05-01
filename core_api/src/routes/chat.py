@@ -149,5 +149,5 @@ def rag_chat(chat_request: ChatRequest) -> ChatResponse:
         },
     )
 
-    result["input_documents"] = [input_document.dict() for input_document in result["input_documents"]]
-    return ChatResponse(**result)
+    sources = [input_document.dict() for input_document in result.pop("input_documents", [])]
+    return ChatResponse(output_text=result["output_text"], sources=sources)

@@ -49,17 +49,11 @@ def pytest_runtest_makereport(item, call):
             # retrieve the class name of the test
             cls_name = str(item.cls)
             # retrieve the index of the test (if parametrize is used in combination with incremental)
-            parametrize_index = (
-                tuple(item.callspec.indices.values())
-                if hasattr(item, "callspec")
-                else ()
-            )
+            parametrize_index = tuple(item.callspec.indices.values()) if hasattr(item, "callspec") else ()
             # retrieve the name of the test function
             test_name = item.originalname or item.name
             # store in _test_failed_incremental the original name of the failed test
-            _test_failed_incremental.setdefault(cls_name, {}).setdefault(
-                parametrize_index, test_name
-            )
+            _test_failed_incremental.setdefault(cls_name, {}).setdefault(parametrize_index, test_name)
 
 
 def pytest_runtest_setup(item):
@@ -69,11 +63,7 @@ def pytest_runtest_setup(item):
         # check if a previous test has failed for this class
         if cls_name in _test_failed_incremental:
             # retrieve the index of the test (if parametrize is used in combination with incremental)
-            parametrize_index = (
-                tuple(item.callspec.indices.values())
-                if hasattr(item, "callspec")
-                else ()
-            )
+            parametrize_index = tuple(item.callspec.indices.values()) if hasattr(item, "callspec") else ()
             # retrieve the name of the first test function to fail for this class name and index
             test_name = _test_failed_incremental[cls_name].get(parametrize_index, None)
             # if name found, test has failed for the combination of class name & test name
