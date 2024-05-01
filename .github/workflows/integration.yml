@@ -68,7 +68,6 @@ jobs:
         python -m pytest tests
 
     - name: get-logs
-      uses: slackapi/slack-github-action@v1.24.0
       if: ${{ failure() }}
       run: |
         docker compose logs core-api
