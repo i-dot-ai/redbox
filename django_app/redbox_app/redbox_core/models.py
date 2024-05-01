@@ -2,6 +2,7 @@ import uuid
 
 from django.db import models
 from django_use_email_as_username.models import BaseUser, BaseUserManager
+from django.conf import settings
 
 
 class UUIDPrimaryKeyBase(models.Model):
@@ -42,16 +43,39 @@ class ProcessingStatusEnum(models.TextChoices):
     complete = "complete"
 
 
-# TO DO: Based on /redbox/models/file.py, but not complete
-class File(models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    path = models.TextField(help_text="location of file")
-    name = models.TextField()
-    processing_status = models.CharField(choices=ProcessingStatusEnum.choices, default=ProcessingStatusEnum.uploaded)
+class File(UUIDPrimaryKeyBase, TimeStampedModel):
+    processing_status = models.CharField(choices=ProcessingStatusEnum.choices, null=False, blank=False)
+    original_file = models.FileField(storage=settings.BUCKET_NAME)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
 
-    def get_processing_text(self) -> str:
-        processing_status_list = list(ProcessingStatusEnum)
-        stage = processing_status_list.index(self.processing_status)
-        if stage == len(processing_status_list) - 1:
-            return self.processing_status
-        return f"{stage + 1}/{len(processing_status_list) - 1} {self.processing_status}"
+    @property
+    def file_type(self):
+        name = self.original_file.name
+        return name.split(".")[-1]
+
+    @property
+    def file_url(self):
+        return self.original_file.url
+
+    @property
+    def name(self):
+        return self.original_file.name
+
+
+class ChatHistory(UUIDPrimaryKeyBase, TimeStampedModel):
+    name = models.TextField(max_length=1024, null=False, blank=False)
+    users = models.ForeignKey(User, on_delete=models.CASCADE)
+    source_files = models.ManyToManyField(File)
+
+
+class ChatRoleEnum(models.TextChoices):
+    ai = "ai"
+    user = "user"
+    system = "system"
+
+
+class ChatMessage(UUIDPrimaryKeyBase, TimeStampedModel):
+    chat_history = models.ForeignKey(ChatHistory, on_delete=models.CASCADE)
+    text = models.TextField(max_length=32768, null=False, blank=False)
+    role = models.CharField(choices=ChatRoleEnum.choices, null=False, blank=False)
+    source_files = models.ManyToManyField(File)

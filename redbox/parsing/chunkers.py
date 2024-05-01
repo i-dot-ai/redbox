@@ -2,6 +2,7 @@ from unstructured.chunking.title import chunk_by_title
 from unstructured.partition.auto import partition
 
 from redbox.models import Chunk, File, Settings
+from redbox.models.file import Metadata
 
 env = Settings()
 s3_client = env.s3_client()
@@ -26,18 +27,22 @@ def other_chunker(file: File) -> list[Chunk]:
     elements = partition(url=authenticated_s3_url)
     raw_chunks = chunk_by_title(elements=elements)
 
-    chunks = []
-    for i, raw_chunk in enumerate(raw_chunks):
-        raw_chunk = raw_chunk.to_dict()
-        raw_chunk["metadata"]["parent_doc_uuid"] = file.uuid
-
-        chunk = Chunk(
+    chunks = [
+        Chunk(
             parent_file_uuid=file.uuid,
             index=i,
-            text=raw_chunk["text"],
-            metadata=raw_chunk["metadata"],
+            text=raw_chunk.text,
+            metadata=Metadata(
+                parent_doc_uuid=file.uuid,
+                page_number=raw_chunk.metadata.page_number,
+                languages=raw_chunk.metadata.languages,
+                link_texts=raw_chunk.metadata.link_texts,
+                link_urls=raw_chunk.metadata.link_urls,
+                links=raw_chunk.metadata.links,
+            ),
             creator_user_uuid=file.creator_user_uuid,
         )
-        chunks.append(chunk)
+        for i, raw_chunk in enumerate(raw_chunks)
+    ]
 
     return chunks

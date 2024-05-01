@@ -1,7 +1,6 @@
 from typing import Literal, Optional
 
 import boto3
-from botocore.exceptions import ClientError
 from elasticsearch import Elasticsearch
 from pydantic import BaseModel
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -16,6 +15,7 @@ class ElasticLocalSettings(BaseModel):
     user: str = "elastic"
     version: str = "8.11.0"
     password: str = "redboxpass"
+    subscription_level: str = "basic"
 
 
 class ElasticCloudSettings(BaseModel):
@@ -23,6 +23,7 @@ class ElasticCloudSettings(BaseModel):
 
     api_key: str
     cloud_id: str
+    subscription_level: str = "basic"
 
 
 class Settings(BaseSettings):
@@ -122,15 +123,6 @@ class Settings(BaseSettings):
             )
         else:
             raise NotImplementedError
-
-        try:
-            client.create_bucket(
-                Bucket=self.bucket_name,
-                CreateBucketConfiguration={"LocationConstraint": self.aws_region},
-            )
-        except ClientError as e:
-            if e.response["Error"]["Code"] != "BucketAlreadyOwnedByYou":
-                raise e
 
         return client
 

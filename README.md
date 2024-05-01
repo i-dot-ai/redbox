@@ -22,7 +22,7 @@ For a quick start, you can use GitHub Codespaces to run the project in a cloud-b
 
 # Development
 
-You will need to install `poppler` and `tesseract` to run the `ingester`
+You will need to install `poppler` and `tesseract` to run the `worker`
 - `brew install poppler`
 - `brew install tesseract`
 
@@ -53,14 +53,9 @@ redbox-copilot/
 │  ├── tests/
 │  ├── manage.py
 │  └── Dockerfile
-├── embedder
+├── worker
 │  ├── src/
-│  │  └── worker.py
-│  ├── tests/
-│  └── Dockerfile
-├── ingester
-│  ├── src/
-│  │  └── worker.py
+│  │  └── app.py
 │  ├── tests/
 │  └── Dockerfile
 ├── redbox/

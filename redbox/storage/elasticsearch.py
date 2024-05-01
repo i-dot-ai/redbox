@@ -155,15 +155,19 @@ class ElasticsearchStorageHandler(BaseStorageHandler):
     def _get_child_chunks(self, parent_file_uuid: UUID) -> list[UUID]:
         target_index = f"{self.root_index}-chunk"
 
-        matched_chunk_ids = [
-            UUID(x["_id"])
-            for x in scan(
-                client=self.es_client,
-                index=target_index,
-                query={"query": {"match": {"parent_file_uuid": str(parent_file_uuid)}}},
-                _source=False,
-            )
-        ]
+        try:
+            matched_chunk_ids = [
+                UUID(x["_id"])
+                for x in scan(
+                    client=self.es_client,
+                    index=target_index,
+                    query={"query": {"match": {"parent_file_uuid": str(parent_file_uuid)}}},
+                    _source=False,
+                )
+            ]
+        except NotFoundError:
+            print(f"Index {target_index} not found. Returning empty list.")
+            return []
 
         return matched_chunk_ids
 

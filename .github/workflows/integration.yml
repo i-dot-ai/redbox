@@ -52,7 +52,9 @@ jobs:
         mkdir -p data/elastic/
         chmod -R 777 data/
         cp .env.integration .env
-        docker compose up -d --wait core-api embedder ingester
+        echo OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }} >> .env
+        docker compose up -d --wait core-api worker
+        
 
     - name: Wait 60s for services to be ready
       run: |

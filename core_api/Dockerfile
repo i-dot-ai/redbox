@@ -14,7 +14,7 @@ ADD pyproject.toml poetry.lock /app/
 ADD download_embedder.py /app/
 ADD redbox/ /app/redbox
 
-RUN --mount=type=cache,target=$POETRY_CACHE_DIR poetry install --no-root --no-ansi --with api,ai --without ingester,dev,worker
+RUN --mount=type=cache,target=$POETRY_CACHE_DIR poetry install --no-root --no-ansi --with api,ai --without worker,dev
 
 FROM python:3.11-slim-buster as runtime
 ARG EMBEDDING_MODEL
@@ -30,7 +30,7 @@ ADD download_embedder.py /app/
 ADD redbox/ /app/redbox
 
 # Download the model
-RUN type=cache python download_embedder.py --model_name ${EMBEDDING_MODEL}
+RUN type=cache python download_embedder.py --embedding_model ${EMBEDDING_MODEL}
 
 # Run FastAPI
 EXPOSE 5002

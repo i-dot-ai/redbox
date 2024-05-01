@@ -1,0 +1,65 @@
+{% set pageTitle = "Chat" %}
+{% extends "base.html" %}
+{% from "macros/govuk-button.html" import govukButton %}
+
+{% block content %}
+
+{% compress js %}
+  <script src="{{ static('js/alpine.min.js') }}"></script>
+{% endcompress %}
+
+<div class="govuk-grid-row govuk-!-margin-top-3">
+
+  <div class="govuk-grid-column-one-third">
+
+      {{ govukButton(
+        text="Start a new session",
+        href="/sessions",
+        classes="govuk-button--secondary"
+      ) }}
+    
+      <h2 class="govuk-heading-s">Recent sessions</h2>
+      <ul class="govuk-list govuk-list--bullet govuk-list--spaced">
+          {% for session in session_history %}
+            <li>
+              <a class="govuk-link" href="{{ session.url }}">{{ session.title }}</a>
+            </li>
+          {% endfor %}
+      </ul>
+      
+  </div>
+
+  <div class="govuk-grid-column-two-thirds">
+
+      <h2 class="govuk-heading-m">Current session</h2>
+
+      <div class="govuk-warning-text">
+          <span class="govuk-warning-text__icon" aria-hidden="true">!</span>
+          <strong class="govuk-warning-text__text">
+              <span class="govuk-visually-hidden">Warning</span>
+              You must check the response for accuracy
+          </strong>
+      </div>
+
+      <form class="iai-new-message js-send-message" action="/sessions/" method="post">
+
+        <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+
+        <div class="govuk-form-group">
+          <label class="govuk-label" for="message">
+            Write a message
+          </label>
+          <textarea class="govuk-textarea" id="message" name="message" rows="5" required></textarea>
+        </div>
+
+        {{ govukButton(
+          text="Send"
+        ) }}
+
+      </form>
+
+  </div>
+
+</div>
+
+{% endblock %}

@@ -9,6 +9,7 @@ import environ
 
 env = environ.Env()
 
+
 @require_http_methods(["GET"])
 def privacy_notice_view(request):
     return render(request, "privacy-notice.html", {})

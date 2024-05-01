@@ -54,10 +54,7 @@ class CoreApiClient:
 
         response = requests.post(
             f"{self.url}/file",
-            json={
-                "key": name,
-                "bucket": settings.BUCKET_NAME,
-            },
+            json={"key": name},
         )
         if response.status_code != 201:
             raise ValueError(response.text)

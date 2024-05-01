@@ -2,6 +2,7 @@ import os
 from typing import Generator, TypeVar
 
 import pytest
+from botocore.exceptions import ClientError
 from elasticsearch import Elasticsearch
 from fastapi.testclient import TestClient
 from sentence_transformers import SentenceTransformer
@@ -28,7 +29,17 @@ def client():
 
 @pytest.fixture
 def s3_client():
-    yield env.s3_client()
+    _client = env.s3_client()
+    try:
+        _client.create_bucket(
+            Bucket=env.bucket_name,
+            CreateBucketConfiguration={"LocationConstraint": env.aws_region},
+        )
+    except ClientError as e:
+        if e.response["Error"]["Code"] != "BucketAlreadyOwnedByYou":
+            raise e
+
+    yield _client
 
 
 @pytest.fixture

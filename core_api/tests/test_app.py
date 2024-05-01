@@ -14,14 +14,13 @@ def test_get_health(app_client):
 def test_read_model(client):
     """
     Given that I have a model in the database
-    When I GET /model
+    When I GET /embedding_model
     I Expect model-info to be returned
     """
-    response = client.get("/model")
+    response = client.get("/embedding_model")
     assert response.status_code == 200
     assert response.json() == {
-        "max_seq_length": 100,
-        "model": env.embedding_model,
+        "embedding_model": env.embedding_model,
         "vector_size": 768,
     }
 

@@ -1,4 +1,3 @@
-version: '3.7'
 services:
   django-app:
     image: django-app:latest
@@ -38,19 +37,8 @@ services:
       dockerfile: ./mlflow/docker/Dockerfile
     image: mlflow_server
     ports:
-        - "5010:5010"
-        - "5020:5020"
-    volumes:
-      - mlflow-data:/mlflow
-  embedder:
-    image: redbox-embedder:latest
-    build:
-      context: .
-      dockerfile: embedder/Dockerfile
-      args:
-        - EMBEDDING_MODEL=${EMBEDDING_MODEL:-}
-    ports:
-      - 5000:5000
+      - 5010:5010
+      - 5020:5020
     env_file:
       - .env
     depends_on:
@@ -62,7 +50,7 @@ services:
     image: redbox-ingester:latest
     build:
       context: .
-      dockerfile: ingester/Dockerfile
+      dockerfile: worker/Dockerfile
       args:
         - EMBEDDING_MODEL=${EMBEDDING_MODEL:-}
     env_file:
