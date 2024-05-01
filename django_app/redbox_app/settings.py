@@ -262,9 +262,7 @@ DATABASES = {
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
-    "formatters": {
-        "verbose": {"format": "%(asctime)s %(levelname)s %(module)s: %(message)s"}
-    },
+    "formatters": {"verbose": {"format": "%(asctime)s %(levelname)s %(module)s: %(message)s"}},
     "handlers": {
         "file": {
             "level": "DEBUG",
@@ -278,9 +276,7 @@ LOGGING = {
             "formatter": "verbose",
         },
     },
-    "loggers": {
-        "application": {"handlers": [LOG_HANDLER], "level": "DEBUG", "propagate": True}
-    },
+    "loggers": {"application": {"handlers": [LOG_HANDLER], "level": "DEBUG", "propagate": True}},
 }
 
 # link to core_api app
@@ -299,9 +295,7 @@ elif EMAIL_BACKEND_TYPE == "CONSOLE":
 elif EMAIL_BACKEND_TYPE == "GOVUKNOTIFY":
     EMAIL_BACKEND = "django_gov_notify.backends.NotifyEmailBackend"
     GOVUK_NOTIFY_API_KEY = env.str("GOVUK_NOTIFY_API_KEY")
-    GOVUK_NOTIFY_PLAIN_EMAIL_TEMPLATE_ID = env.str(
-        "GOVUK_NOTIFY_PLAIN_EMAIL_TEMPLATE_ID"
-    )
+    GOVUK_NOTIFY_PLAIN_EMAIL_TEMPLATE_ID = env.str("GOVUK_NOTIFY_PLAIN_EMAIL_TEMPLATE_ID")
 else:
     raise Exception(f"Unknown EMAIL_BACKEND_TYPE of {EMAIL_BACKEND_TYPE}")
 
