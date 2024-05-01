@@ -76,5 +76,7 @@ class TestEndToEnd:
             },
         )
         assert rag_response.status_code == 200
-        parent_doc_uuids = {source["metadata"]["parent_doc_uuid"] for source in rag_response.json()["sources"]}
-        assert TestEndToEnd.file_uuid in parent_doc_uuids
+        source_document_file_uuids = {
+            source_document["file_uuid"] for source_document in rag_response.json()["source_documents"]
+        }
+        assert TestEndToEnd.file_uuid in source_document_file_uuids

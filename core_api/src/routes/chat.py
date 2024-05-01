@@ -14,7 +14,7 @@ from redbox.llm.prompts.chat import (
 )
 from redbox.model_db import MODEL_PATH
 from redbox.models import Settings, EmbeddingModelInfo
-from redbox.models.chat import ChatRequest, ChatResponse, ChatMessage
+from redbox.models.chat import ChatRequest, ChatResponse, ChatMessage, SourceDocument
 
 # === Logging ===
 
@@ -149,5 +149,8 @@ def rag_chat(chat_request: ChatRequest) -> ChatResponse:
         },
     )
 
-    sources = [input_document.dict() for input_document in result.pop("input_documents", [])]
-    return ChatResponse(output_text=result["output_text"], sources=sources)
+    source_documents = [
+        SourceDocument.from_langchain_document(langchain_document)
+        for langchain_document in result.get("input_documents", [])
+    ]
+    return ChatResponse(output_text=result["output_text"], source_documents=source_documents)
