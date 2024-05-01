@@ -1,6 +1,7 @@
 from typing import Literal, Optional
 from uuid import UUID
 
+from langchain_core.documents import Document
 from pydantic import Field, BaseModel
 
 
@@ -36,20 +37,25 @@ class ChatRequest(BaseModel):
     }
 
 
-class Metadata(BaseModel):
-    parent_doc_uuid: UUID = Field(description="uuid of original file")
+class SourceDocument(BaseModel):
+    page_content: str = Field(description="chunk text")
+    file_uuid: UUID = Field(description="uuid of original file")
     page_numbers: Optional[list[int]] = Field(
         description="page number of the file that this chunk came from", default=None
     )
 
-
-class InputDocuments(BaseModel):
-    page_content: str = Field(description="chunk text")
-    metadata: Metadata
+    @classmethod
+    def from_langchain_document(cls, langchain_document: Document):
+        """typically we construct this class from a langchain.Document"""
+        source_document = SourceDocument(page_content=langchain_document.page_content)
+        if langchain_document.metadata:
+            source_document.file_uuid = langchain_document.metadata["parent_doc_uuid"]
+            source_document.page_numbers = langchain_document.metadata["page_numbers"]
+        return source_document
 
 
 class ChatResponse(BaseModel):
-    sources: Optional[list[InputDocuments]] = Field(
+    source_documents: Optional[list[SourceDocument]] = Field(
         description="documents retrieved to form this response", default=None
     )
     output_text: str = Field(
