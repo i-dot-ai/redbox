@@ -74,8 +74,8 @@ class Settings(BaseSettings):
     core_api_host: str = "http://core-api"
     core_api_port: int = 5002
     email_backend_type: str = "CONSOLE"
-    notify_api_key: str
-    from_email: str
+    notify_api_key: Optional[str] = None
+    from_email: Optional[str] = None
     email_file_path: str = "/app/mail"
     govuk_notify_plain_email_template_id: str = "example-id"
 
