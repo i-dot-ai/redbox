@@ -1,5 +1,6 @@
 import os
 import time
+from typing import Optional
 
 import pytest
 import requests
@@ -7,7 +8,8 @@ import requests
 # TODO: add e2e tests involving the Django app, checking S3 upload
 
 
-def test_upload_to_search(file_path, s3_client):
+@pytest.mark.incremental
+class TestEndToEnd:
     """
     When I POST file data to core-api/file
     I Expect:
@@ -17,28 +19,32 @@ def test_upload_to_search(file_path, s3_client):
     When I ask a question relevant to my file
     I expect the file to be cited in the response
     """
+    file_uuid: str = None
 
-    with open(file_path, "rb") as f:
-        file_key = os.path.basename(file_path)
-        file_type = os.path.splitext(file_key)[-1]
-        bucket_name = "redbox-storage-dev"
-        s3_client.upload_fileobj(
-            Bucket=bucket_name,
-            Fileobj=f,
-            Key=file_key,
-            ExtraArgs={"Tagging": f"file_type={file_type}"},
-        )
+    def test_upload_to_search(self, file_path, s3_client):
 
-        response = requests.post(
-            url="http://localhost:5002/file",
-            json={
-                "key": file_key,
-                "bucket": bucket_name,
-            },
-        )
-        assert response.status_code == 200
-        file_uuid = response.json()["uuid"]
+        with open(file_path, "rb") as f:
+            file_key = os.path.basename(file_path)
+            file_type = os.path.splitext(file_key)[-1]
+            bucket_name = "redbox-storage-dev"
+            s3_client.upload_fileobj(
+                Bucket=bucket_name,
+                Fileobj=f,
+                Key=file_key,
+                ExtraArgs={"Tagging": f"file_type={file_type}"},
+            )
 
+            response = requests.post(
+                url="http://localhost:5002/file",
+                json={
+                    "key": file_key,
+                    "bucket": bucket_name,
+                },
+            )
+            TestEndToEnd.file_uuid = response.json()["uuid"]
+            assert response.status_code == 200
+
+    def test_get_file_status(self):
         timeout = 120
         start_time = time.time()
         error = None
@@ -46,7 +52,7 @@ def test_upload_to_search(file_path, s3_client):
 
         while time.time() - start_time < timeout:
             time.sleep(1)
-            chunk_response = requests.get(f"http://localhost:5002/file/{file_uuid}/status")
+            chunk_response = requests.get(f"http://localhost:5002/file/{TestEndToEnd.file_uuid}/status")
             if chunk_response.status_code == 200 and chunk_response.json()["processing_status"] == "complete":
                 embedding_complete = True
                 break  # test passed
@@ -56,9 +62,11 @@ def test_upload_to_search(file_path, s3_client):
         if not embedding_complete:
             pytest.fail(reason=f"failed to get embedded chunks within {timeout} seconds, potential error: {error}")
 
-        chunks_response = requests.get(f"http://localhost:5002/file/{file_uuid}/chunks")
+    def test_get_file_chunks(self):
+        chunks_response = requests.get(f"http://localhost:5002/file/{TestEndToEnd.file_uuid}/chunks")
         assert chunks_response.status_code == 200
 
+    def test_post_rag(self):
         rag_response = requests.post(
             "http://localhost:5002/chat/rag",
             json={
@@ -72,4 +80,4 @@ def test_upload_to_search(file_path, s3_client):
         parent_doc_uuids = {
             input_document["metadata"]["parent_doc_uuid"] for input_document in rag_response.json()["input_documents"]
         }
-        assert file_uuid in parent_doc_uuids
+        assert TestEndToEnd.file_uuid in parent_doc_uuids
