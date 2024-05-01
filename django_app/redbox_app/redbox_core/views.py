@@ -206,4 +206,8 @@ def post_message(request):
     )
     llm_message.save()
 
-    return redirect(f"/sessions/{session_id}")
+    if session:
+        # we know session_id is safe if there's a session
+        return redirect(f"/sessions/{session_id}")
+    else:
+        return redirect("/sessions/")
