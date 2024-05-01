@@ -5,6 +5,7 @@ import requests
 from boto3.s3.transfer import TransferConfig
 from django.conf import settings
 from django.shortcuts import redirect, render
+from django.urls import reverse
 from django.views.decorators.http import require_http_methods
 from redbox_app.redbox_core.client import CoreApiClient, s3_client
 from redbox_app.redbox_core.models import File, ProcessingStatusEnum
@@ -206,8 +207,4 @@ def post_message(request):
     )
     llm_message.save()
 
-    if session:
-        # we know session_id is safe if there's a session
-        return redirect(f"/sessions/{session_id}")
-    else:
-        return redirect("/sessions/")
+    return redirect(reverse(sessions_view, args=(session_id,)))
