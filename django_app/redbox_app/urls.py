@@ -28,7 +28,7 @@ other_urlpatterns = [
     path("remove-doc/<str:doc_id>", views.remove_doc_view, name="remove_doc"),
     path("sessions/<str:session_id>/", views.sessions_view, name="sessions"),
     path("sessions/", views.sessions_view, name="sessions"),
-    path("post-message/", views.post_message, name="post_message")
+    path("post-message/", views.post_message, name="post_message"),
 ]
 
 urlpatterns = info_urlpatterns + auth_urlpatterns + other_urlpatterns

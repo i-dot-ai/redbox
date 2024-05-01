@@ -7,61 +7,75 @@ import uuid
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('redbox_core', '0002_user_invite_accepted_at_user_invited_at_and_more'),
+        ("redbox_core", "0002_user_invite_accepted_at_user_invited_at_and_more"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='ChatHistory',
+            name="ChatHistory",
             fields=[
-                ('id', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('modified_at', models.DateTimeField(auto_now=True)),
-                ('name', models.TextField(max_length=1024)),
+                ("id", models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                ("modified_at", models.DateTimeField(auto_now=True)),
+                ("name", models.TextField(max_length=1024)),
             ],
             options={
-                'abstract': False,
+                "abstract": False,
             },
         ),
         migrations.CreateModel(
-            name='File',
+            name="File",
             fields=[
-                ('id', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('modified_at', models.DateTimeField(auto_now=True)),
-                ('processing_status', models.CharField(choices=[('uploaded', 'Uploaded'), ('parsing', 'Parsing'), ('chunking', 'Chunking'), ('embedding', 'Embedding'), ('indexing', 'Indexing'), ('complete', 'Complete')])),
-                ('original_file', models.FileField(storage='redbox-storage-dev', upload_to='')),
-                ('user', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL)),
+                ("id", models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                ("modified_at", models.DateTimeField(auto_now=True)),
+                (
+                    "processing_status",
+                    models.CharField(
+                        choices=[
+                            ("uploaded", "Uploaded"),
+                            ("parsing", "Parsing"),
+                            ("chunking", "Chunking"),
+                            ("embedding", "Embedding"),
+                            ("indexing", "Indexing"),
+                            ("complete", "Complete"),
+                        ]
+                    ),
+                ),
+                ("original_file", models.FileField(storage="redbox-storage-dev", upload_to="")),
+                ("user", models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL)),
             ],
             options={
-                'abstract': False,
+                "abstract": False,
             },
         ),
         migrations.CreateModel(
-            name='ChatMessage',
+            name="ChatMessage",
             fields=[
-                ('id', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('modified_at', models.DateTimeField(auto_now=True)),
-                ('text', models.TextField(max_length=32768)),
-                ('role', models.CharField(choices=[('ai', 'Ai'), ('user', 'User'), ('system', 'System')])),
-                ('chat_history', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='redbox_core.chathistory')),
-                ('source_files', models.ManyToManyField(to='redbox_core.file')),
+                ("id", models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                ("modified_at", models.DateTimeField(auto_now=True)),
+                ("text", models.TextField(max_length=32768)),
+                ("role", models.CharField(choices=[("ai", "Ai"), ("user", "User"), ("system", "System")])),
+                (
+                    "chat_history",
+                    models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to="redbox_core.chathistory"),
+                ),
+                ("source_files", models.ManyToManyField(to="redbox_core.file")),
             ],
             options={
-                'abstract': False,
+                "abstract": False,
             },
         ),
         migrations.AddField(
-            model_name='chathistory',
-            name='source_files',
-            field=models.ManyToManyField(to='redbox_core.file'),
+            model_name="chathistory",
+            name="source_files",
+            field=models.ManyToManyField(to="redbox_core.file"),
         ),
         migrations.AddField(
-            model_name='chathistory',
-            name='users',
+            model_name="chathistory",
+            name="users",
             field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL),
         ),
     ]

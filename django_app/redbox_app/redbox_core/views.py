@@ -10,9 +10,10 @@ from redbox_app.redbox_core.client import CoreApiClient, s3_client
 from redbox_app.redbox_core.models import File, ProcessingStatusEnum
 
 from dotenv import load_dotenv
+
 load_dotenv()
 
-from . import models
+from . import models  # noqa: E402
 
 s3 = s3_client()
 CHUNK_SIZE = 1024
@@ -153,7 +154,6 @@ def remove_doc_view(request, doc_id: str):
 
 
 def sessions_view(request, session_id: str = ""):
-    
     chat_history = models.ChatHistory.objects.all().filter(users=request.user)
 
     messages = []
@@ -176,7 +176,6 @@ def sessions_view(request, session_id: str = ""):
 
 @require_http_methods(["POST"])
 def post_message(request):
-
     text = request.POST.get("message", "New chat")
 
     # get current session, or create a new one
@@ -186,10 +185,10 @@ def post_message(request):
         session = models.ChatHistory.objects.get(id=session_id)
     else:
         session_name = text[0:20]
-        session = models.ChatHistory(name=session_name,users=request.user)
+        session = models.ChatHistory(name=session_name, users=request.user)
         session.save()
         session_id = session.id
-    
+
     # save user message
     chat_message = models.ChatMessage(chat_history=session, text=text, role=models.ChatRoleEnum.user)
     chat_message.save()
@@ -203,16 +202,15 @@ def post_message(request):
             "text": message.text,
         }
         message_history.append(formatted_message)
-    data = {
-        "message_history": message_history
-    }
+    data = {"message_history": message_history}
     url = os.environ.get("CORE_API_HOST") + ":" + os.environ.get("CORE_API_PORT") + "/chat/rag"
     response = requests.post(url, json=data)
     llm_data = response.json()
 
     # save LLM response
-    llm_message = models.ChatMessage(chat_history=session, text=llm_data["response_message"]["text"], role=models.ChatRoleEnum.ai)
+    llm_message = models.ChatMessage(
+        chat_history=session, text=llm_data["response_message"]["text"], role=models.ChatRoleEnum.ai
+    )
     llm_message.save()
 
     return redirect(f"/sessions/{session_id}")
-
