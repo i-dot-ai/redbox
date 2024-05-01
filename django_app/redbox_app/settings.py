@@ -303,8 +303,7 @@ elif EMAIL_BACKEND_TYPE == "GOVUKNOTIFY":
         "GOVUK_NOTIFY_PLAIN_EMAIL_TEMPLATE_ID"
     )
 else:
-    if EMAIL_BACKEND_TYPE not in ("FILE", "CONSOLE", "GOVUKNOTIFY"):
-        raise Exception(f"Unknown EMAIL_BACKEND_TYPE of {EMAIL_BACKEND_TYPE}")
+    raise Exception(f"Unknown EMAIL_BACKEND_TYPE of {EMAIL_BACKEND_TYPE}")
 
 # Magic link
 
