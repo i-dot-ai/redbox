@@ -1,7 +1,7 @@
 from typing import Literal, Optional
 from uuid import UUID
 
-from pydantic import Field, BaseModel, AnyUrl, conlist
+from pydantic import Field, BaseModel, AnyUrl
 
 
 class ChatMessage(BaseModel):
@@ -36,23 +36,10 @@ class ChatRequest(BaseModel):
     }
 
 
-class Coordinates(BaseModel):
-    layout_width: int = Field(description="width")
-    layout_height: int = Field(description="height")
-    system: str = Field(description="layout unit", examples=["PixelSpace"])
-    points: list[conlist(float, min_length=2, max_length=2)] = None
-
-
 class Metadata(BaseModel):
     languages: list[str] = Field(description="languages detected in this chunk", examples=[["eng"]])
-    coordinates: Coordinates
-    parent_id: UUID
     url: AnyUrl = Field(description="url of original file")
-    orig_elements: list[str]
-    text_as_html: list[str]
-    is_continuation: bool
     filetype: str = Field(description="content-type", examples=["application/pdf"])
-    detection_class_prob: float
     parent_doc_uuid: UUID = Field(description="uuid of original file")
     page_numbers: list[int] = Field(description="page number of the file that this chunk came from")
 
@@ -67,7 +54,7 @@ class ChatResponse(BaseModel):
         description="original question",
         examples=["Who is the prime minister?"],
     )
-    input_documents: Optional[InputDocuments] = Field(
+    input_documents: Optional[list[InputDocuments]] = Field(
         description="documents retrieved to form this response", default=None
     )
     output_text: str = Field(
