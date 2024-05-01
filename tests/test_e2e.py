@@ -1,6 +1,5 @@
 import os
 import time
-from typing import Optional
 
 import pytest
 import requests
@@ -19,10 +18,10 @@ class TestEndToEnd:
     When I ask a question relevant to my file
     I expect the file to be cited in the response
     """
+
     file_uuid: str = None
 
     def test_upload_to_search(self, file_path, s3_client):
-
         with open(file_path, "rb") as f:
             file_key = os.path.basename(file_path)
             file_type = os.path.splitext(file_key)[-1]
@@ -77,7 +76,5 @@ class TestEndToEnd:
             },
         )
         assert rag_response.status_code == 200
-        parent_doc_uuids = {
-            input_document["metadata"]["parent_doc_uuid"] for input_document in rag_response.json()["input_documents"]
-        }
+        parent_doc_uuids = {source["metadata"]["parent_doc_uuid"] for source in rag_response.json()["sources"]}
         assert TestEndToEnd.file_uuid in parent_doc_uuids
