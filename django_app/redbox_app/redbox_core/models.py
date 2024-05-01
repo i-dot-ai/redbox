@@ -1,8 +1,8 @@
 import uuid
 
+from django.conf import settings
 from django.db import models
 from django_use_email_as_username.models import BaseUser, BaseUserManager
-from django.conf import settings
 
 
 class UUIDPrimaryKeyBase(models.Model):
@@ -44,7 +44,9 @@ class ProcessingStatusEnum(models.TextChoices):
 
 
 class File(UUIDPrimaryKeyBase, TimeStampedModel):
-    processing_status = models.CharField(choices=ProcessingStatusEnum.choices, null=False, blank=False)
+    processing_status = models.CharField(
+        choices=ProcessingStatusEnum.choices, null=False, blank=False
+    )
     original_file = models.FileField(storage=settings.BUCKET_NAME)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
 
@@ -65,7 +67,11 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
 class ChatHistory(UUIDPrimaryKeyBase, TimeStampedModel):
     name = models.TextField(max_length=1024, null=False, blank=False)
     users = models.ForeignKey(User, on_delete=models.CASCADE)
-    source_files = models.ManyToManyField(File)
+    selected_files = models.ManyToManyField(
+        File,
+        related_name="chat_histories",
+        blank=True,
+    )
 
 
 class ChatRoleEnum(models.TextChoices):
@@ -78,4 +84,8 @@ class ChatMessage(UUIDPrimaryKeyBase, TimeStampedModel):
     chat_history = models.ForeignKey(ChatHistory, on_delete=models.CASCADE)
     text = models.TextField(max_length=32768, null=False, blank=False)
     role = models.CharField(choices=ChatRoleEnum.choices, null=False, blank=False)
-    source_files = models.ManyToManyField(File)
+    source_files = models.ManyToManyField(
+        File,
+        related_name="chat_messages",
+        blank=True,
+    )
