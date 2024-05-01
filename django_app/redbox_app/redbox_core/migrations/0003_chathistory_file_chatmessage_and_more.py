@@ -8,7 +8,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("redbox_core", "0002_user_invite_accepted_at_user_invited_at_and_more"),
     ]
@@ -74,9 +73,7 @@ class Migration(migrations.Migration):
                 ("name", models.TextField(max_length=1024)),
                 (
                     "selected_files",
-                    models.ManyToManyField(
-                        blank=True, related_name="chat_histories", to="redbox_core.file"
-                    ),
+                    models.ManyToManyField(blank=True, related_name="chat_histories", to="redbox_core.file"),
                 ),
             ],
             options={
@@ -100,9 +97,7 @@ class Migration(migrations.Migration):
                 ("text", models.TextField(max_length=32768)),
                 (
                     "role",
-                    models.CharField(
-                        choices=[("ai", "Ai"), ("user", "User"), ("system", "System")]
-                    ),
+                    models.CharField(choices=[("ai", "Ai"), ("user", "User"), ("system", "System")]),
                 ),
                 (
                     "chat_history",
@@ -113,9 +108,7 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "source_files",
-                    models.ManyToManyField(
-                        blank=True, related_name="chat_messages", to="redbox_core.file"
-                    ),
+                    models.ManyToManyField(blank=True, related_name="chat_messages", to="redbox_core.file"),
                 ),
             ],
             options={
@@ -125,8 +118,6 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name="chathistory",
             name="users",
-            field=models.ForeignKey(
-                on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL
-            ),
+            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL),
         ),
     ]
