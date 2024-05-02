@@ -21,7 +21,7 @@ class TestEndToEnd:
 
     file_uuid: str = None
 
-    def test_upload_to_search(self, file_path, s3_client):
+    def test_upload_to_search(self, file_path, s3_client, headers):
         with open(file_path, "rb") as f:
             file_key = os.path.basename(file_path)
             file_type = os.path.splitext(file_key)[-1]
@@ -39,11 +39,12 @@ class TestEndToEnd:
                     "key": file_key,
                     "bucket": bucket_name,
                 },
+                headers=headers,
             )
             TestEndToEnd.file_uuid = response.json()["uuid"]
             assert response.status_code == 200
 
-    def test_get_file_status(self):
+    def test_get_file_status(self, headers):
         timeout = 120
         start_time = time.time()
         error = None
@@ -51,7 +52,9 @@ class TestEndToEnd:
 
         while time.time() - start_time < timeout:
             time.sleep(1)
-            chunk_response = requests.get(f"http://localhost:5002/file/{TestEndToEnd.file_uuid}/status")
+            chunk_response = requests.get(
+                f"http://localhost:5002/file/{TestEndToEnd.file_uuid}/status", headers=headers
+            )
             if chunk_response.status_code == 200 and chunk_response.json()["processing_status"] == "complete":
                 embedding_complete = True
                 break  # test passed
@@ -61,11 +64,11 @@ class TestEndToEnd:
         if not embedding_complete:
             pytest.fail(reason=f"failed to get embedded chunks within {timeout} seconds, potential error: {error}")
 
-    def test_get_file_chunks(self):
-        chunks_response = requests.get(f"http://localhost:5002/file/{TestEndToEnd.file_uuid}/chunks")
+    def test_get_file_chunks(self, headers):
+        chunks_response = requests.get(f"http://localhost:5002/file/{TestEndToEnd.file_uuid}/chunks", headers=headers)
         assert chunks_response.status_code == 200
 
-    def test_post_rag(self):
+    def test_post_rag(self, headers):
         rag_response = requests.post(
             "http://localhost:5002/chat/rag",
             json={
@@ -74,6 +77,7 @@ class TestEndToEnd:
                     {"role": "user", "text": "please summarise my document"},
                 ]
             },
+            headers=headers,
         )
         assert rag_response.status_code == 200
         source_document_file_uuids = {
