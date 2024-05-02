@@ -150,7 +150,11 @@ def rag_chat(chat_request: ChatRequest) -> ChatResponse:
     )
 
     source_documents = [
-        SourceDocument.from_langchain_document(langchain_document)
+        SourceDocument(
+            page_content=langchain_document.page_content,
+            file_uuid=langchain_document.metadata.get("parent_doc_uuid"),
+            page_numbers=langchain_document.metadata.get("page_numbers"),
+        )
         for langchain_document in result.get("input_documents", [])
     ]
     return ChatResponse(output_text=result["output_text"], source_documents=source_documents)
