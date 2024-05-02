@@ -5,8 +5,6 @@ import socket
 from pathlib import Path
 
 import environ
-# import sentry_sdk
-# from sentry_sdk.integrations.django import DjangoIntegration
 
 from .hosting_environment import HostingEnvironment
 
@@ -218,19 +216,6 @@ else:
     ALLOWED_HOSTS = [LOCALHOST]
 
     INSTALLED_APPS += ["health_check.contrib.s3boto3_storage"]
-    # https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/using-features.logging.html
-    # SENTRY_DSN = env.str("SENTRY_DSN")
-    # SENTRY_ENVIRONMENT = env.str("SENTRY_ENVIRONMENT")
-    # sentry_sdk.init(
-    #     dsn=SENTRY_DSN,
-    #     integrations=[
-    #         DjangoIntegration(),
-    #     ],
-    #     environment=SENTRY_ENVIRONMENT,
-    #     send_default_pii=False,
-    #     traces_sample_rate=1.0,
-    #     profiles_sample_rate=0.0,
-    # )
     # https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Strict-Transport-Security
     # Mozilla guidance max-age 2 years
     SECURE_HSTS_SECONDS = 2 * 365 * 24 * 60 * 60
