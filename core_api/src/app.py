@@ -5,13 +5,11 @@ from fastapi.responses import RedirectResponse
 
 from core_api.src.routes.chat import chat_app
 from core_api.src.routes.file import file_app
-from redbox.model_db import SentenceTransformerDB
-from redbox.models import EmbeddingResponse, EmbeddingModelInfo, Settings, StatusResponse
+from redbox.models import Settings, StatusResponse
 
 # === Logging ===
 
 env = Settings()
-model_db = SentenceTransformerDB(env.embedding_model)
 
 
 # === API Setup ===
@@ -62,31 +60,6 @@ def health() -> StatusResponse:
     )
 
     return output
-
-
-@app.get("/embedding_model", tags=["embedding"])
-def get_embedding_model() -> EmbeddingModelInfo:
-    """Returns information about the model
-
-    Returns:
-        EmbeddingModelInfo: Information about the model
-    """
-
-    return model_db.get_embedding_model_info()
-
-
-@app.post("/embedding", tags=["embedding"])
-def embed_sentences(sentences: list[str]) -> EmbeddingResponse:
-    """Embeds a list of sentences using a given model
-
-    Args:
-        sentences (list[str]): A list of sentences
-
-    Returns:
-        EmbeddingResponse: The embeddings of the sentences
-    """
-
-    return model_db.embed_sentences(sentences)
 
 
 app.mount("/chat", chat_app)
