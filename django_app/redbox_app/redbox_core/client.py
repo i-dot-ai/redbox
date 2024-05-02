@@ -3,7 +3,7 @@ from botocore.exceptions import ClientError
 from django.conf import settings
 import requests
 
-from django_app.redbox_app.redbox_core.models import User
+from redbox_app.redbox_core.models import User
 
 
 def s3_client():
