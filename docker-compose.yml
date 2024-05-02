@@ -6,6 +6,7 @@ services:
       dockerfile: ./django_app/docker/web/Dockerfile
     depends_on:
       - db
+      - minio
     networks:
       - redbox-app-network
     env_file:

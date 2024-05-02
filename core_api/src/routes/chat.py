@@ -14,7 +14,7 @@ from redbox.llm.prompts.chat import (
 )
 from redbox.model_db import MODEL_PATH
 from redbox.models import Settings, EmbeddingModelInfo
-from redbox.models.chat import ChatRequest, ChatResponse, ChatMessage
+from redbox.models.chat import ChatRequest, ChatResponse, ChatMessage, SourceDocument
 
 # === Logging ===
 
@@ -112,7 +112,7 @@ def simple_chat(chat_request: ChatRequest) -> ChatResponse:
     return ChatResponse(response_message=ChatMessage(text=response.text, role="ai"))
 
 
-@chat_app.post("/rag", tags=["chat"], response_model=ChatResponse)
+@chat_app.post("/rag", tags=["chat"])
 def rag_chat(chat_request: ChatRequest) -> ChatResponse:
     """Get a LLM response to a question history and file
 
@@ -149,4 +149,12 @@ def rag_chat(chat_request: ChatRequest) -> ChatResponse:
         },
     )
 
-    return ChatResponse(response_message=ChatMessage(text=result["output_text"], role="ai"))
+    source_documents = [
+        SourceDocument(
+            page_content=langchain_document.page_content,
+            file_uuid=langchain_document.metadata.get("parent_doc_uuid"),
+            page_numbers=langchain_document.metadata.get("page_numbers"),
+        )
+        for langchain_document in result.get("input_documents", [])
+    ]
+    return ChatResponse(output_text=result["output_text"], source_documents=source_documents)

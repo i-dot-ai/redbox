@@ -5,14 +5,10 @@ import socket
 from pathlib import Path
 
 import environ
-import sentry_sdk
-from sentry_sdk.integrations.django import DjangoIntegration
 
 from .hosting_environment import HostingEnvironment
 
 env = environ.Env()
-
-AWS_REGION = env.str("AWS_REGION")
 
 SECRET_KEY = env.str("DJANGO_SECRET_KEY")
 ENVIRONMENT = env.str("ENVIRONMENT")
@@ -61,6 +57,7 @@ INSTALLED_APPS = [
     "health_check.contrib.migrations",
     "health_check.cache",
     "compressor",
+    "magic_link",
 ]
 
 MIDDLEWARE = [
@@ -107,6 +104,7 @@ WSGI_APPLICATION = "redbox_app.wsgi.application"
 
 AUTHENTICATION_BACKENDS = [
     "django.contrib.auth.backends.ModelBackend",
+    "magic_link.backends.MagicLinkBackend",
 ]
 
 AUTH_PASSWORD_VALIDATORS = [
@@ -136,6 +134,7 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+
 LANGUAGE_CODE = "en-GB"
 TIME_ZONE = "UTC"
 USE_I18N = True
@@ -145,6 +144,7 @@ SITE_ID = 1
 AUTH_USER_MODEL = "redbox_core.User"
 ACCOUNT_EMAIL_VERIFICATION = "none"
 LOGIN_REDIRECT_URL = "homepage"
+LOGIN_URL = "sign-in"
 
 # CSP settings https://content-security-policy.com/
 # https://django-csp.readthedocs.io/
@@ -190,53 +190,32 @@ SESSION_COOKIE_AGE = 60 * 60 * 24
 SESSION_COOKIE_SAMESITE = "Strict"
 SESSION_ENGINE = "django.contrib.sessions.backends.db"
 
+LOG_ROOT = "."
+LOG_HANDLER = "console"
 
-if HostingEnvironment.is_beanstalk():
-    LOCALHOST = socket.gethostbyname(socket.gethostname())
-    ALLOWED_HOSTS = [
-        LOCALHOST,
-    ]
+DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
 
-    for key, value in HostingEnvironment.get_beanstalk_environ_vars().items():
-        env(key, default=value)
-
-    STATICFILES_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
-    DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
-    OBJECT_STORE = "s3"
-    AWS_STORAGE_BUCKET_NAME = env.str("AWS_STORAGE_BUCKET_NAME")
-    AWS_S3_REGION_NAME = env.str("AWS_S3_REGION_NAME")
-    INSTALLED_APPS += ["health_check.contrib.s3boto3_storage"]
-    # https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/using-features.logging.html
-    LOG_ROOT = "/opt/python/log/"
-    LOG_HANDLER = "file"
-    SENTRY_DSN = env.str("SENTRY_DSN")
-    SENTRY_ENVIRONMENT = env.str("SENTRY_ENVIRONMENT")
-    sentry_sdk.init(
-        dsn=SENTRY_DSN,
-        integrations=[
-            DjangoIntegration(),
-        ],
-        environment=SENTRY_ENVIRONMENT,
-        send_default_pii=False,
-        traces_sample_rate=1.0,
-        profiles_sample_rate=0.0,
-    )
-else:
-    ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
-    DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
-    LOG_ROOT = "."
-    LOG_HANDLER = "console"
+BUCKET_NAME = env.str("BUCKET_NAME")
+AWS_S3_REGION_NAME = env.str("AWS_REGION")
 
 if HostingEnvironment.is_local():
     # For Docker to work locally
-    ALLOWED_HOSTS.append("0.0.0.0")  # nosec B104 - don't do this on server!
     OBJECT_STORE = "minio"
     MINIO_ACCESS_KEY = env.str("MINIO_ACCESS_KEY")
     MINIO_SECRET_KEY = env.str("MINIO_SECRET_KEY")
     MINIO_HOST = env.str("MINIO_HOST")
     MINIO_PORT = env.str("MINIO_PORT")
-    BUCKET_NAME = env.str("BUCKET_NAME")
+
+    ALLOWED_HOSTS = ["localhost", "127.0.0.1", "0.0.0.0"]  # nosec B104 - don't do this on server!
 else:
+    OBJECT_STORE = "s3"
+    AWS_STORAGE_BUCKET_NAME = BUCKET_NAME  # this duplication is required for django-storage
+    STATICFILES_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
+
+    LOCALHOST = socket.gethostbyname(socket.gethostname())
+    ALLOWED_HOSTS = [LOCALHOST]
+
+    INSTALLED_APPS += ["health_check.contrib.s3boto3_storage"]
     # https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Strict-Transport-Security
     # Mozilla guidance max-age 2 years
     SECURE_HSTS_SECONDS = 2 * 365 * 24 * 60 * 60
@@ -278,3 +257,33 @@ LOGGING = {
 # link to core_api app
 CORE_API_HOST = env.str("CORE_API_HOST")
 CORE_API_PORT = env.str("CORE_API_PORT")
+
+# Email
+EMAIL_BACKEND_TYPE = env.str("EMAIL_BACKEND_TYPE")
+FROM_EMAIL = env.str("FROM_EMAIL")
+
+if EMAIL_BACKEND_TYPE == "FILE":
+    EMAIL_BACKEND = "django.core.mail.backends.filebased.EmailBackend"
+    EMAIL_FILE_PATH = env.str("EMAIL_FILE_PATH")
+elif EMAIL_BACKEND_TYPE == "CONSOLE":
+    EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+elif EMAIL_BACKEND_TYPE == "GOVUKNOTIFY":
+    EMAIL_BACKEND = "django_gov_notify.backends.NotifyEmailBackend"
+    GOVUK_NOTIFY_API_KEY = env.str("GOVUK_NOTIFY_API_KEY")
+    GOVUK_NOTIFY_PLAIN_EMAIL_TEMPLATE_ID = env.str("GOVUK_NOTIFY_PLAIN_EMAIL_TEMPLATE_ID")
+else:
+    raise Exception(f"Unknown EMAIL_BACKEND_TYPE of {EMAIL_BACKEND_TYPE}")
+
+# Magic link
+
+MAGIC_LINK = {
+    # link expiry, in seconds
+    "DEFAULT_EXPIRY": 300,
+    # default link redirect
+    "DEFAULT_REDIRECT": "/",
+    # the preferred authorization backend to use, in the case where you have more
+    # than one specified in the `settings.AUTHORIZATION_BACKENDS` setting.
+    "AUTHENTICATION_BACKEND": "django.contrib.auth.backends.ModelBackend",
+    # SESSION_COOKIE_AGE override for magic-link logins - in seconds (default is 1 week)
+    "SESSION_EXPIRY": 7 * 24 * 60 * 60,
+}

@@ -1,12 +1,16 @@
 import os
 import uuid
 
+import requests
 from boto3.s3.transfer import TransferConfig
 from django.conf import settings
-from django.shortcuts import render
+from django.contrib.auth.decorators import login_required
+from django.http import HttpRequest, HttpResponse
+from django.shortcuts import redirect, render
+from django.urls import reverse
 from django.views.decorators.http import require_http_methods
 from redbox_app.redbox_core.client import CoreApiClient, s3_client
-from redbox_app.redbox_core.models import File, ProcessingStatusEnum
+from redbox_app.redbox_core.models import ChatHistory, ChatMessage, ChatRoleEnum, File, ProcessingStatusEnum
 
 s3 = s3_client()
 CHUNK_SIZE = 1024
@@ -24,6 +28,7 @@ APPROVED_FILE_EXTENSIONS = [
     ".csv",
     ".doc",
     ".docx",
+    ".epub",
     ".epub",
     ".odt",
     ".pdf",
@@ -45,6 +50,7 @@ def homepage_view(request):
     )
 
 
+@login_required
 def documents_view(request):
     # Testing with dummy data for now
     if not File.objects.exists():
@@ -78,6 +84,7 @@ def get_file_extension(file):
     return extension
 
 
+@login_required
 def upload_view(request):
     errors = {"upload_doc": []}
     uploaded = False
@@ -132,6 +139,7 @@ def upload_view(request):
     )
 
 
+@login_required
 def remove_doc_view(request, doc_id: str):
     if request.method == "POST":
         print(f"Removing document: {request.POST['doc_id']}")
@@ -146,17 +154,55 @@ def remove_doc_view(request, doc_id: str):
     )
 
 
+@login_required
 def sessions_view(request, session_id: str = ""):
-    # Hard-coding some chat history for now
-    session_history = [
-        {"session_id": "chat1", "title": "Chat 1", "url": "/sessions/chat1"},
-        {"session_id": "chat2", "title": "Chat 2", "url": "/sessions/chat2"},
-    ]
+    chat_history = ChatHistory.objects.all().filter(users=request.user)
 
-    context = {"session_history": session_history}
+    messages = []
+    if session_id:
+        messages = ChatMessage.objects.filter(chat_history__id=session_id)
+
+    context = {
+        "session_id": session_id,
+        "messages": messages,
+        "chat_history": chat_history,
+    }
 
     return render(
         request,
         template_name="sessions.html",
         context=context,
     )
+
+
+@require_http_methods(["POST"])
+def post_message(request: HttpRequest) -> HttpResponse:
+    message_text = request.POST.get("message", "New chat")
+
+    # get current session, or create a new one
+    if session_id := request.POST.get("session-id", ""):
+        session = ChatHistory.objects.get(id=session_id)
+    else:
+        session_name = message_text[0:20]
+        session = ChatHistory(name=session_name, users=request.user)
+        session.save()
+        session_id = session.id
+
+    # save user message
+    chat_message = ChatMessage(chat_history=session, text=message_text, role=ChatRoleEnum.user)
+    chat_message.save()
+
+    # get LLM response
+    message_history = [
+        {"role": message.role, "text": message.text}
+        for message in ChatMessage.objects.all().filter(chat_history=session)
+    ]
+    url = settings.CORE_API_HOST + ":" + settings.CORE_API_PORT + "/chat/rag"
+    response = requests.post(url, json={"message_history": message_history})
+    llm_data = response.json()
+
+    # save LLM response
+    llm_message = ChatMessage(chat_history=session, text=llm_data["response_message"]["text"], role=ChatRoleEnum.ai)
+    llm_message.save()
+
+    return redirect(reverse(sessions_view, args=(session_id,)))

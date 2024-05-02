@@ -51,11 +51,18 @@
           <button type="button" class="govuk-header__menu-button govuk-js-header-toggle" aria-controls="navigation" hidden>
             Menu
           </button>
-          {% set menu_items = [
-            {"text": "Documents", "url": "/documents"},
-            {"text": "Sessions", "url": "/sessions"},
-            {"text": "Sign out", "url": "/signed-out"}
-          ] %}
+
+          {% if request.user.is_authenticated %}
+            {% set menu_items = [
+              {"text": "Documents", "url": "/documents"},
+              {"text": "Sessions", "url": "/sessions"},
+              {"text": "Sign out", "url": "/signed-out"}
+            ] %}
+          {% else %}
+            {% set menu_items = [
+              {"text": "Sign in", "url": "/sign-in"}
+            ] %}
+          {% endif %}
           <ul id="navigation" class="govuk-header__navigation-list">
             {% for menu_item in menu_items %}
               <li class="govuk-header__navigation-item {% if pageTitle == menu_item.text %}govuk-header__navigation-item--active{% endif %}">

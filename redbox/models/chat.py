@@ -1,4 +1,5 @@
-from typing import Literal
+from typing import Literal, Optional
+from uuid import UUID
 
 from pydantic import Field, BaseModel
 
@@ -35,11 +36,19 @@ class ChatRequest(BaseModel):
     }
 
 
-class ChatResponse(BaseModel):
-    response_message: ChatMessage = Field(description="The response message")
+class SourceDocument(BaseModel):
+    page_content: str = Field(description="chunk text")
+    file_uuid: UUID = Field(description="uuid of original file")
+    page_numbers: Optional[list[int]] = Field(
+        description="page number of the file that this chunk came from", default=None
+    )
 
-    model_config = {
-        "json_schema_extra": {
-            "examples": [{"response_message": {"text": "AI stands for Artificial Intelligence.", "role": "ai"}}]
-        }
-    }
+
+class ChatResponse(BaseModel):
+    source_documents: Optional[list[SourceDocument]] = Field(
+        description="documents retrieved to form this response", default=None
+    )
+    output_text: str = Field(
+        description="response text",
+        examples=["The current Prime Minister of the UK is The Rt Hon. Rishi Sunak MP."],
+    )
