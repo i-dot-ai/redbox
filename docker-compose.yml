@@ -32,12 +32,14 @@ services:
     volumes:
       - ./:/app/:z
   mlflow:
+    image: mlflow_server
     build:
       context: .
       dockerfile: ./mlflow/docker/Dockerfile
       args:
       - OPENAI_API_KEY=${OPENAI_API_KEY:-}
-    image: mlflow_server
+    env_file:
+      - .env
     ports:
       - 5010:5010
       - 5020:5020
