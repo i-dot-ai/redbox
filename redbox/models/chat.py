@@ -1,7 +1,6 @@
 from typing import Literal, Optional
 from uuid import UUID
 
-from langchain_core.documents import Document
 from pydantic import Field, BaseModel
 
 
@@ -43,15 +42,6 @@ class SourceDocument(BaseModel):
     page_numbers: Optional[list[int]] = Field(
         description="page number of the file that this chunk came from", default=None
     )
-
-    @classmethod
-    def from_langchain_document(cls, langchain_document: Document):
-        """typically we construct this class from a langchain.Document"""
-        source_document = SourceDocument(page_content=langchain_document.page_content)
-        if langchain_document.metadata:
-            source_document.file_uuid = langchain_document.metadata["parent_doc_uuid"]
-            source_document.page_numbers = langchain_document.metadata["page_numbers"]
-        return source_document
 
 
 class ChatResponse(BaseModel):
