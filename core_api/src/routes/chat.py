@@ -46,11 +46,11 @@ log.info("Loaded embedding model from environment: %s", env.embedding_model)
 def populate_embedding_model_info() -> EmbeddingModelInfo:
     test_text = "This is a test sentence."
     embedding = embedding_model.embed_documents([test_text])[0]
-    model_info = EmbeddingModelInfo(
-        model=env.embedding_model,
+    embedding_model_info = EmbeddingModelInfo(
+        embedding_model=env.embedding_model,
         vector_size=len(embedding),
     )
-    return model_info
+    return embedding_model_info
 
 
 embedding_model_info = populate_embedding_model_info()

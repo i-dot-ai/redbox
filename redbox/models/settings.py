@@ -73,6 +73,11 @@ class Settings(BaseSettings):
     contact_email: str = "test@example.com"
     core_api_host: str = "http://core-api"
     core_api_port: int = 5002
+    email_backend_type: str = "CONSOLE"
+    notify_api_key: Optional[str] = None
+    from_email: Optional[str] = None
+    email_file_path: str = "/app/mail"
+    govuk_notify_plain_email_template_id: str = "example-id"
 
     model_config = SettingsConfigDict(env_file=".env", env_nested_delimiter="__")
 

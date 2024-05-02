@@ -2,7 +2,7 @@ locals {
   record_prefix = terraform.workspace == "prod" ? var.project_name : "${var.project_name}-${terraform.workspace}"
   host          = "${local.record_prefix}.${var.domain_name}"
 
-  prefix = "backend"
+  prefix                = "backend"
   environment_variables = {
     "ELASTIC__API_KEY" : var.elastic_api_key,
     "ELASTIC__CLOUD_ID" : var.cloud_id,
@@ -14,8 +14,11 @@ locals {
     "REDIS_HOST" : module.elasticache.redis_address,
     "REDIS_PORT" : module.elasticache.redis_port,
     "DJANGO_SECRET_KEY" : var.django_secret_key,
-    "POSTGRES_PASSWORD" : var.postgres_password
-    "OPENAI_API_KEY" : var.openai_api_key
+    "POSTGRES_PASSWORD" : var.postgres_password,
+    "OPENAI_API_KEY" : var.openai_api_key,
+    "NOTIFY_API_KEY" : var.notify_api_key,
+    "FROM_EMAIL" : var.from_email,
+    "GOVUK_NOTIFY_API_KEY" : var.govuk_notify_plain_email_template_id,
   }
 }
 

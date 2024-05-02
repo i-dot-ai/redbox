@@ -1,8 +1,8 @@
 import uuid
 
+from django.conf import settings
 from django.db import models
 from django_use_email_as_username.models import BaseUser, BaseUserManager
-from django.conf import settings
 
 from dotenv import load_dotenv
 
@@ -69,7 +69,11 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
 class ChatHistory(UUIDPrimaryKeyBase, TimeStampedModel):
     name = models.TextField(max_length=1024, null=False, blank=False)
     users = models.ForeignKey(User, on_delete=models.CASCADE)
-    source_files = models.ManyToManyField(File)
+    selected_files = models.ManyToManyField(
+        File,
+        related_name="chat_histories",
+        blank=True,
+    )
 
 
 class ChatRoleEnum(models.TextChoices):
@@ -82,4 +86,8 @@ class ChatMessage(UUIDPrimaryKeyBase, TimeStampedModel):
     chat_history = models.ForeignKey(ChatHistory, on_delete=models.CASCADE)
     text = models.TextField(max_length=32768, null=False, blank=False)
     role = models.CharField(choices=ChatRoleEnum.choices, null=False, blank=False)
-    source_files = models.ManyToManyField(File)
+    source_files = models.ManyToManyField(
+        File,
+        related_name="chat_messages",
+        blank=True,
+    )

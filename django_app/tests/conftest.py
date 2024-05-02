@@ -3,6 +3,7 @@ from datetime import datetime
 
 import pytest
 import pytz
+
 from redbox_app.redbox_core import client
 from redbox_app.redbox_core.models import User
 

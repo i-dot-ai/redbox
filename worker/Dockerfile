@@ -33,7 +33,7 @@ ADD download_embedder.py /app/
 ADD worker/download_ocr_models.py /app/
 
 # Download the model
-RUN python download_embedder.py --model_name ${EMBEDDING_MODEL}
+RUN python download_embedder.py --embedding_model ${EMBEDDING_MODEL}
 
 # Downlaod Sentence Tokenizer
 RUN python -m nltk.downloader punkt
