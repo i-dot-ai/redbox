@@ -126,7 +126,7 @@ def upload_view(request):
             api = CoreApiClient(host=settings.CORE_API_HOST, port=settings.CORE_API_PORT)
 
             try:
-                api.upload_file(uploaded_file.name)
+                api.upload_file(uploaded_file.name, request.user)
                 # TODO: update improved File object with elastic uuid
                 uploaded = True
             except ValueError as value_error:
@@ -198,7 +198,9 @@ def post_message(request: HttpRequest) -> HttpResponse:
         for message in ChatMessage.objects.all().filter(chat_history=session)
     ]
     url = settings.CORE_API_HOST + ":" + settings.CORE_API_PORT + "/chat/rag"
-    response = requests.post(url, json={"message_history": message_history})
+    response = requests.post(
+        url, json={"message_history": message_history}, headers={"Authorization": request.user.get_bearer_token()}
+    )
     llm_data = response.json()
 
     # save LLM response

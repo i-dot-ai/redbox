@@ -5,6 +5,7 @@ from django.db import models
 from django_use_email_as_username.models import BaseUser, BaseUserManager
 
 from dotenv import load_dotenv
+from jose import jwt
 
 load_dotenv()
 
@@ -36,6 +37,12 @@ class User(BaseUser, UUIDPrimaryKeyBase):
     def save(self, *args, **kwargs):
         self.email = self.email.lower()
         super().save(*args, **kwargs)
+
+    def get_bearer_token(self) -> str:
+        """the bearer token expected by the core-api"""
+        user_uuid = str(self.id)
+        bearer_token = jwt.encode({"user_uuid": user_uuid}, key=settings.DJANGO_SECRET_KEY)
+        return f"Bearer {bearer_token}"
 
 
 class ProcessingStatusEnum(models.TextChoices):

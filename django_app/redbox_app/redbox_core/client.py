@@ -3,6 +3,8 @@ from botocore.exceptions import ClientError
 from django.conf import settings
 import requests
 
+from django_app.redbox_app.redbox_core.models import User
+
 
 def s3_client():
     if settings.OBJECT_STORE == "minio":
@@ -44,7 +46,7 @@ class CoreApiClient:
     def url(self) -> str:
         return f"{self.host}:{self.port}"
 
-    def upload_file(self, name: str):
+    def upload_file(self, name: str, user: User):
         if self.host == "testserver":
             file = {
                 "key": name,
@@ -53,8 +55,7 @@ class CoreApiClient:
             return file
 
         response = requests.post(
-            f"{self.url}/file",
-            json={"key": name},
+            f"{self.url}/file", json={"key": name}, headers={"Authorization": user.get_bearer_token()}
         )
         if response.status_code != 201:
             raise ValueError(response.text)
