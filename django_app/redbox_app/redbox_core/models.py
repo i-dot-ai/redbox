@@ -41,7 +41,7 @@ class User(BaseUser, UUIDPrimaryKeyBase):
     def get_bearer_token(self) -> str:
         """the bearer token expected by the core-api"""
         user_uuid = str(self.id)
-        bearer_token = jwt.encode({"user_uuid": user_uuid}, key=settings.DJANGO_SECRET_KEY)
+        bearer_token = jwt.encode({"user_uuid": user_uuid}, key=settings.SECRET_KEY)
         return f"Bearer {bearer_token}"
 
 
