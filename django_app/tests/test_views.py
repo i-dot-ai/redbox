@@ -15,8 +15,9 @@ def count_s3_objects(s3_client) -> int:
 
 
 @pytest.mark.django_db
-def test_upload_view(client, file_pdf_path, s3_client):
+def test_upload_view(alice, client, file_pdf_path, s3_client):
     previous_count = count_s3_objects(s3_client)
+    client.force_login(alice)
 
     with open(file_pdf_path, "rb") as f:
         response = client.post("/upload/", {"uploadDoc": f})
@@ -28,8 +29,9 @@ def test_upload_view(client, file_pdf_path, s3_client):
 
 
 @pytest.mark.django_db
-def test_upload_view_bad_data(client, file_py_path, s3_client):
+def test_upload_view_bad_data(alice, client, file_py_path, s3_client):
     previous_count = count_s3_objects(s3_client)
+    client.force_login(alice)
 
     with open(file_py_path, "rb") as f:
         response = client.post("/upload/", {"uploadDoc": f})

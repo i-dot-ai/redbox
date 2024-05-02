@@ -62,11 +62,11 @@ def test_upload_to_search(file_path, s3_client):
             json={
                 "message_history": [
                     {"role": "system", "text": "You are a helpful AI Assistant"},
-                    {"role": "user", "text": "Who is the prime minister"},
+                    {"role": "user", "text": "What colour is the sea?"},
                 ]
             },
         )
         assert rag_response.status_code == 200
         response_message_text = rag_response.json()["response_message"]["text"]
-        # assert "Rishi Sunak" in response_message_text
+        # assert "yellow" in response_message_text
         assert re.findall(r"<Doc\w{8}-\w{4}-\w{4}-\w{4}-\w{12}>", response_message_text)

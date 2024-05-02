@@ -59,6 +59,7 @@ INSTALLED_APPS = [
     "health_check.contrib.migrations",
     "health_check.cache",
     "compressor",
+    "magic_link",
 ]
 
 MIDDLEWARE = [
@@ -105,6 +106,7 @@ WSGI_APPLICATION = "redbox_app.wsgi.application"
 
 AUTHENTICATION_BACKENDS = [
     "django.contrib.auth.backends.ModelBackend",
+    "magic_link.backends.MagicLinkBackend",
 ]
 
 AUTH_PASSWORD_VALIDATORS = [
@@ -134,6 +136,7 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+
 LANGUAGE_CODE = "en-GB"
 TIME_ZONE = "UTC"
 USE_I18N = True
@@ -143,6 +146,7 @@ SITE_ID = 1
 AUTH_USER_MODEL = "redbox_core.User"
 ACCOUNT_EMAIL_VERIFICATION = "none"
 LOGIN_REDIRECT_URL = "homepage"
+LOGIN_URL = "sign-in"
 
 # CSP settings https://content-security-policy.com/
 # https://django-csp.readthedocs.io/
@@ -268,3 +272,33 @@ LOGGING = {
 # link to core_api app
 CORE_API_HOST = env.str("CORE_API_HOST")
 CORE_API_PORT = env.str("CORE_API_PORT")
+
+# Email
+EMAIL_BACKEND_TYPE = env.str("EMAIL_BACKEND_TYPE")
+FROM_EMAIL = env.str("FROM_EMAIL")
+
+if EMAIL_BACKEND_TYPE == "FILE":
+    EMAIL_BACKEND = "django.core.mail.backends.filebased.EmailBackend"
+    EMAIL_FILE_PATH = env.str("EMAIL_FILE_PATH")
+elif EMAIL_BACKEND_TYPE == "CONSOLE":
+    EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+elif EMAIL_BACKEND_TYPE == "GOVUKNOTIFY":
+    EMAIL_BACKEND = "django_gov_notify.backends.NotifyEmailBackend"
+    GOVUK_NOTIFY_API_KEY = env.str("GOVUK_NOTIFY_API_KEY")
+    GOVUK_NOTIFY_PLAIN_EMAIL_TEMPLATE_ID = env.str("GOVUK_NOTIFY_PLAIN_EMAIL_TEMPLATE_ID")
+else:
+    raise Exception(f"Unknown EMAIL_BACKEND_TYPE of {EMAIL_BACKEND_TYPE}")
+
+# Magic link
+
+MAGIC_LINK = {
+    # link expiry, in seconds
+    "DEFAULT_EXPIRY": 300,
+    # default link redirect
+    "DEFAULT_REDIRECT": "/",
+    # the preferred authorization backend to use, in the case where you have more
+    # than one specified in the `settings.AUTHORIZATION_BACKENDS` setting.
+    "AUTHENTICATION_BACKEND": "django.contrib.auth.backends.ModelBackend",
+    # SESSION_COOKIE_AGE override for magic-link logins - in seconds (default is 1 week)
+    "SESSION_EXPIRY": 7 * 24 * 60 * 60,
+}

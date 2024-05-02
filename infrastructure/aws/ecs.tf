@@ -16,7 +16,6 @@ locals {
 #     django stuff
     "DJANGO_SECRET_KEY" : var.django_secret_key,
     "POSTGRES_PASSWORD" : var.postgres_password,
-    "OPENAI_API_KEY" : var.openai_api_key,
     "POSTGRES_USER" : module.rds.rds_instance_username,
     "POSTGRES_PASSWORD": module.rds.rds_instance_db_password,
     "POSTGRES_DB" : module.rds.db_instance_name,
@@ -27,6 +26,11 @@ locals {
     "DJANGO_SETTINGS_MODULE": "redbox_app.settings",
     "DEBUG": false,
     "AWS_REGION": var.region,
+    "OPENAI_API_KEY" : var.openai_api_key,
+    "NOTIFY_API_KEY" : var.notify_api_key,
+    "FROM_EMAIL" : var.from_email,
+    "GOVUK_NOTIFY_API_KEY" : var.govuk_notify_plain_email_template_id,
+
   }
 }
 

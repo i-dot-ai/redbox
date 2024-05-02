@@ -3,8 +3,10 @@ import uuid
 
 from boto3.s3.transfer import TransferConfig
 from django.conf import settings
+from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
 from django.views.decorators.http import require_http_methods
+
 from redbox_app.redbox_core.client import CoreApiClient, s3_client
 from redbox_app.redbox_core.models import File, ProcessingStatusEnum
 
@@ -45,6 +47,7 @@ def homepage_view(request):
     )
 
 
+@login_required
 def documents_view(request):
     # Testing with dummy data for now
     if not File.objects.exists():
@@ -78,6 +81,7 @@ def get_file_extension(file):
     return extension
 
 
+@login_required
 def upload_view(request):
     errors = {"upload_doc": []}
     uploaded = False
@@ -132,6 +136,7 @@ def upload_view(request):
     )
 
 
+@login_required
 def remove_doc_view(request, doc_id: str):
     if request.method == "POST":
         print(f"Removing document: {request.POST['doc_id']}")
@@ -146,6 +151,7 @@ def remove_doc_view(request, doc_id: str):
     )
 
 
+@login_required
 def sessions_view(request, session_id: str = ""):
     # Hard-coding some chat history for now
     session_history = [
