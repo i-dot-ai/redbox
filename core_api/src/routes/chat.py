@@ -1,4 +1,7 @@
-from fastapi import FastAPI, HTTPException
+from typing import Annotated
+from uuid import UUID
+
+from fastapi import FastAPI, HTTPException, Depends
 from langchain.chains.llm import LLMChain
 from langchain.chains.qa_with_sources import load_qa_with_sources_chain
 from langchain_community.chat_models import ChatLiteLLM
@@ -7,6 +10,7 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_elasticsearch import ElasticsearchStore, ApproxRetrievalStrategy
 import logging
 
+from core_api.src.auth import get_user_uuid
 from redbox.llm.prompts.chat import (
     CONDENSE_QUESTION_PROMPT,
     STUFF_DOCUMENT_PROMPT,
@@ -82,7 +86,7 @@ vector_store = ElasticsearchStore(
 
 
 @chat_app.post("/vanilla", tags=["chat"], response_model=ChatResponse)
-def simple_chat(chat_request: ChatRequest) -> ChatResponse:
+def simple_chat(chat_request: ChatRequest, _user_uuid: Annotated[UUID, Depends(get_user_uuid)]) -> ChatResponse:
     """Get a LLM response to a question history"""
 
     if len(chat_request.message_history) < 2:
@@ -113,7 +117,7 @@ def simple_chat(chat_request: ChatRequest) -> ChatResponse:
 
 
 @chat_app.post("/rag", tags=["chat"])
-def rag_chat(chat_request: ChatRequest) -> ChatResponse:
+def rag_chat(chat_request: ChatRequest, _user_uuid: Annotated[UUID, Depends(get_user_uuid)]) -> ChatResponse:
     """Get a LLM response to a question history and file
 
     Args:

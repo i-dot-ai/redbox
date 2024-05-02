@@ -8,7 +8,7 @@ from core_api.src.routes.file import env, router
 
 
 @pytest.mark.asyncio
-async def test_post_file_upload(s3_client, app_client, elasticsearch_storage_handler, file_pdf_path):
+async def test_post_file_upload(s3_client, app_client, elasticsearch_storage_handler, file_pdf_path, headers):
     """
     Given a new file
     When I POST it to /file
@@ -32,22 +32,22 @@ async def test_post_file_upload(s3_client, app_client, elasticsearch_storage_han
                     "key": file_key,
                     "bucket": env.bucket_name,
                 },
+                headers=headers,
             )
     assert response.status_code == 200
 
 
-def test_get_file(app_client, stored_file):
+def test_get_file(app_client, stored_file, headers):
     """
     Given a previously saved file
     When I GET it from /file/uuid
     I Expect to receive it
     """
-
-    response = app_client.get(f"/file/{stored_file.uuid}")
+    response = app_client.get(f"/file/{stored_file.uuid}", headers=headers)
     assert response.status_code == 200
 
 
-def test_delete_file(s3_client, app_client, elasticsearch_storage_handler, chunked_file):
+def test_delete_file(s3_client, app_client, elasticsearch_storage_handler, chunked_file, headers):
     """
     Given a previously saved file
     When I DELETE it to /file
@@ -58,7 +58,7 @@ def test_delete_file(s3_client, app_client, elasticsearch_storage_handler, chunk
     assert elasticsearch_storage_handler.read_item(item_uuid=chunked_file.uuid, model_type="file")
     assert elasticsearch_storage_handler.get_file_chunks(chunked_file.uuid)
 
-    response = app_client.delete(f"/file/{chunked_file.uuid}")
+    response = app_client.delete(f"/file/{chunked_file.uuid}", headers=headers)
     assert response.status_code == 200
 
     elasticsearch_storage_handler.refresh()
@@ -73,7 +73,7 @@ def test_delete_file(s3_client, app_client, elasticsearch_storage_handler, chunk
     assert not elasticsearch_storage_handler.get_file_chunks(chunked_file.uuid)
 
 
-def test_get_file_chunks(client, chunked_file):
-    response = client.get(f"/file/{chunked_file.uuid}/chunks")
+def test_get_file_chunks(client, chunked_file, headers):
+    response = client.get(f"/file/{chunked_file.uuid}/chunks", headers=headers)
     assert response.status_code == 200
     assert len(response.json()) == 5
