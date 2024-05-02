@@ -42,7 +42,7 @@ def s3_client():
 @pytest.fixture
 def headers():
     user_uuid = uuid4()
-    token = jwt.encode({"user_uuid": str(user_uuid)})
+    token = jwt.encode({"user_uuid": str(user_uuid)}, key="super-secure-private-key")
     yield {"Authorization": f"Bearer {token}"}
 
 
