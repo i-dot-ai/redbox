@@ -1,13 +1,13 @@
 import logging
+import uuid
+from http import HTTPStatus
 
 import pytest
-import uuid
 from django.conf import settings
 from django.test import Client
-from redbox_app.redbox_core.models import User, ChatHistory, ChatMessage, ChatRoleEnum
-from http import HTTPStatus
-from yarl import URL
+from redbox_app.redbox_core.models import ChatHistory, ChatMessage, ChatRoleEnum, User
 from requests_mock import Mocker
+from yarl import URL
 
 logger = logging.getLogger(__name__)
 logger.setLevel("DEBUG")
