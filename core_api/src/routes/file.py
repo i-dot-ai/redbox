@@ -1,11 +1,13 @@
 import logging
+from typing import Annotated
 from uuid import UUID
 
-from fastapi import FastAPI, HTTPException, UploadFile
+from fastapi import FastAPI, HTTPException, UploadFile, Depends
 from fastapi import File as FastAPIFile
 from faststream.redis.fastapi import RedisRouter
 from pydantic import BaseModel, Field
 
+from core_api.src.auth import get_user_uuid
 from core_api.src.publisher_handler import FilePublisher
 from redbox.models import Chunk, File, FileStatus, Settings
 from redbox.storage import ElasticsearchStorageHandler
@@ -56,7 +58,7 @@ class FileRequest(BaseModel):
 
 
 @file_app.post("/", tags=["file"])
-async def add_file(file_request: FileRequest) -> File:
+async def add_file(file_request: FileRequest, user_uuid: Annotated[UUID, Depends(get_user_uuid)]) -> File:
     """Create a File record in the database
 
     Args:
@@ -66,7 +68,7 @@ async def add_file(file_request: FileRequest) -> File:
         File: The file uuid from the elastic database
     """
 
-    file = File(key=file_request.key, bucket=env.bucket_name)
+    file = File(key=file_request.key, bucket=env.bucket_name, creator_user_uuid=user_uuid)
 
     storage_handler.write_item(file)
 
@@ -80,7 +82,9 @@ async def add_file(file_request: FileRequest) -> File:
 if env.dev_mode:
 
     @file_app.post("/upload", tags=["file"], response_model=File)
-    async def upload_file(file: UploadFile = FastAPIFile(...)) -> File:
+    async def upload_file(
+        user_uuid: Annotated[UUID, Depends(get_user_uuid)], file: UploadFile = FastAPIFile(...)
+    ) -> File:
         """Upload a file to the object store
 
         Args:
@@ -92,7 +96,7 @@ if env.dev_mode:
         key = file.filename
         s3.upload_fileobj(file.file, env.bucket_name, key)
 
-        file = File(key=key, bucket=env.bucket_name)
+        file = File(key=key, bucket=env.bucket_name, creator_user_uuid=user_uuid)
         storage_handler.write_item(file)
 
         log.info(f"publishing {file.uuid}")
@@ -102,7 +106,7 @@ if env.dev_mode:
 
 
 @file_app.get("/{file_uuid}", response_model=File, tags=["file"])
-def get_file(file_uuid: UUID) -> File:
+def get_file(file_uuid: UUID, _user_uuid: Annotated[UUID, Depends(get_user_uuid)]) -> File:
     """Get a file from the object store
 
     Args:
@@ -115,7 +119,7 @@ def get_file(file_uuid: UUID) -> File:
 
 
 @file_app.delete("/{file_uuid}", response_model=File, tags=["file"])
-def delete_file(file_uuid: UUID) -> File:
+def delete_file(file_uuid: UUID, _user_uuid: Annotated[UUID, Depends(get_user_uuid)]) -> File:
     """Delete a file from the object store and the database
 
     Args:
@@ -140,7 +144,7 @@ def get_file_chunks(file_uuid: UUID) -> list[Chunk]:
 
 
 @file_app.get("/{file_uuid}/status", tags=["file"])
-def get_file_status(file_uuid: UUID) -> FileStatus:
+def get_file_status(file_uuid: UUID, _user_uuid: Annotated[UUID, Depends(get_user_uuid)]) -> FileStatus:
     """Get the status of a file
 
     Args:

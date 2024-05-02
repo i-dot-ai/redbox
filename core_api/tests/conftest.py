@@ -1,10 +1,12 @@
 import os
 from typing import Generator, TypeVar
+from uuid import uuid4, UUID
 
 import pytest
 from botocore.exceptions import ClientError
 from elasticsearch import Elasticsearch
 from fastapi.testclient import TestClient
+from jose import jwt
 from sentence_transformers import SentenceTransformer
 
 from core_api.src.app import app as application
@@ -50,6 +52,17 @@ def es_client() -> YieldFixture[Elasticsearch]:
 @pytest.fixture
 def app_client():
     yield TestClient(application)
+
+
+@pytest.fixture
+def user_uuid() -> UUID:
+    yield uuid4()
+
+
+@pytest.fixture
+def headers(user_uuid):
+    bearer_token = jwt.encode({"user_uuid": str(user_uuid)}, key="nvjkernd")
+    yield {"Authorization": f"Bearer {bearer_token}"}
 
 
 @pytest.fixture
