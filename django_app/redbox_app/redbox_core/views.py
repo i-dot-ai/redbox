@@ -13,7 +13,6 @@ from redbox_app.redbox_core.client import CoreApiClient, s3_client
 from redbox_app.redbox_core.models import File, ProcessingStatusEnum
 from django.http import HttpRequest, HttpResponse
 from dotenv import load_dotenv
-from redbox_app.redbox_core.utils import build_rag_url
 
 load_dotenv()
 
@@ -204,7 +203,7 @@ def post_message(request: HttpRequest) -> HttpResponse:
         {"role": message.role, "text": message.text}
         for message in models.ChatMessage.objects.all().filter(chat_history=session)
     ]
-    url = build_rag_url()
+    url = settings.CORE_API_HOST + ":" + settings.CORE_API_PORT + "/chat/rag"
     response = requests.post(url, json={"message_history": message_history})
     llm_data = response.json()
 

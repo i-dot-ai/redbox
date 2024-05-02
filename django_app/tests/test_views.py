@@ -7,7 +7,6 @@ from django.test import Client
 from redbox_app.redbox_core.models import User, ChatHistory, ChatMessage, ChatRoleEnum
 from http import HTTPStatus
 from yarl import URL
-from redbox_app.redbox_core.utils import build_rag_url
 from requests_mock import Mocker
 
 logger = logging.getLogger(__name__)
@@ -57,9 +56,8 @@ def test_upload_view_bad_data(alice, client, file_py_path, s3_client):
 def test_post_message_to_new_session(alice: User, client: Client, requests_mock: Mocker):
     # Given
     client.force_login(alice)
-    requests_mock.register_uri(
-        "POST", str(build_rag_url()), json={"response_message": {"text": "Good afternoon, Mr. Amor."}}
-    )
+    rag_url = settings.CORE_API_HOST + ":" + settings.CORE_API_PORT + "/chat/rag"
+    requests_mock.register_uri("POST", rag_url, json={"response_message": {"text": "Good afternoon, Mr. Amor."}})
 
     # When
     response = client.post("/post-message/", {"message": "Are you there?"})
@@ -84,9 +82,8 @@ def test_post_message_to_existing_session(alice: User, client: Client, requests_
     session_id = uuid.uuid4()
     logger.debug(f"{session_id=}")
     ChatHistory.objects.create(id=session_id, users=alice)
-    requests_mock.register_uri(
-        "POST", str(build_rag_url()), json={"response_message": {"text": "Good afternoon, Mr. Amor."}}
-    )
+    rag_url = settings.CORE_API_HOST + ":" + settings.CORE_API_PORT + "/chat/rag"
+    requests_mock.register_uri("POST", rag_url, json={"response_message": {"text": "Good afternoon, Mr. Amor."}})
 
     # When
     response = client.post("/post-message/", {"message": "Are you there?", "session-id": session_id})
