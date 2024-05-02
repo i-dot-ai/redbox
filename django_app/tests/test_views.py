@@ -1,5 +1,4 @@
 import logging
-import uuid
 from http import HTTPStatus
 
 import pytest
@@ -66,22 +65,17 @@ def test_post_message_to_new_session(alice: User, client: Client, requests_mock:
     assert response.status_code == HTTPStatus.FOUND
     assert "Location" in response.headers
     session_id = URL(response.url).parts[-2]
+    assert ChatMessage.objects.get(chat_history__id=session_id, role=ChatRoleEnum.user).text == "Are you there?"
     assert (
-        ChatMessage.objects.filter(chat_history__id=session_id, role=ChatRoleEnum.user).first().text == "Are you there?"
-    )
-    assert (
-        ChatMessage.objects.filter(chat_history__id=session_id, role=ChatRoleEnum.ai).first().text
-        == "Good afternoon, Mr. Amor."
+        ChatMessage.objects.get(chat_history__id=session_id, role=ChatRoleEnum.ai).text == "Good afternoon, Mr. Amor."
     )
 
 
 @pytest.mark.django_db
-def test_post_message_to_existing_session(alice: User, client: Client, requests_mock: Mocker):
+def test_post_message_to_existing_session(chat_history: ChatHistory, client: Client, requests_mock: Mocker):
     # Given
-    client.force_login(alice)
-    session_id = uuid.uuid4()
-    logger.debug(f"{session_id=}")
-    ChatHistory.objects.create(id=session_id, users=alice)
+    client.force_login(chat_history.users)
+    session_id = chat_history.id
     rag_url = settings.CORE_API_HOST + ":" + settings.CORE_API_PORT + "/chat/rag"
     requests_mock.register_uri("POST", rag_url, json={"response_message": {"text": "Good afternoon, Mr. Amor."}})
 
@@ -90,11 +84,8 @@ def test_post_message_to_existing_session(alice: User, client: Client, requests_
 
     # Then
     assert response.status_code == HTTPStatus.FOUND
-    assert response.headers.get("Location").endswith(f"{session_id}/")
+    assert URL(response.url).parts[-2] == str(session_id)
+    assert ChatMessage.objects.get(chat_history__id=session_id, role=ChatRoleEnum.user).text == "Are you there?"
     assert (
-        ChatMessage.objects.filter(chat_history__id=session_id, role=ChatRoleEnum.user).first().text == "Are you there?"
-    )
-    assert (
-        ChatMessage.objects.filter(chat_history__id=session_id, role=ChatRoleEnum.ai).first().text
-        == "Good afternoon, Mr. Amor."
+        ChatMessage.objects.get(chat_history__id=session_id, role=ChatRoleEnum.ai).text == "Good afternoon, Mr. Amor."
     )

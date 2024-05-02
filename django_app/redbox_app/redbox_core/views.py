@@ -160,8 +160,7 @@ def sessions_view(request, session_id: str = ""):
 
     messages = []
     if session_id:
-        current_chat = ChatHistory.objects.get(id=session_id)
-        messages = ChatMessage.objects.all().filter(chat_history=current_chat)
+        messages = ChatMessage.objects.filter(chat_history__id=session_id)
 
     context = {
         "session_id": session_id,
