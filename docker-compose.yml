@@ -35,6 +35,8 @@ services:
     build:
       context: .
       dockerfile: ./mlflow/docker/Dockerfile
+      args:
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
     image: mlflow_server
     ports:
       - 5010:5010
