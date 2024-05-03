@@ -29,16 +29,13 @@ WORKDIR /app/
 ADD redbox/ /app/redbox
 ADD worker/ /app/worker
 
-# Download the model
-RUN python worker/download_embedder.py --embedding_model ${EMBEDDING_MODEL}
+# Download the Embedding and OCR models
+RUN python worker/download_models.py --embedding_model ${EMBEDDING_MODEL}
 
 # Downlaod Sentence Tokenizer
 RUN python -m nltk.downloader punkt
 
 # Download POS tagger
 RUN python -m nltk.downloader averaged_perceptron_tagger
-
-# Download the OCR models
-RUN python worker/download_ocr_models.py
 
 CMD ["uvicorn", "worker.src.app:app", "--host", "0.0.0.0", "--port", "5000"]
