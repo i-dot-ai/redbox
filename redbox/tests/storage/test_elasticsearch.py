@@ -121,11 +121,31 @@ def test_list_all_items(
     * a saved chunk belonging to Alice
     * a saved chunk belonging to Bob
     * an unsaved chunk belonging to Claire
-    When I call list_all_items as alice on their common type-name
+    When I call list_all_items as alice
     Then I expect to see the uuids of the saved objects that belong to alice returned
     """
     uuids = elasticsearch_storage_handler.list_all_items("Chunk", alice)
     assert len(uuids) == 1
+
+
+def test_read_all_items(
+    elasticsearch_storage_handler: ElasticsearchStorageHandler,
+    stored_chunk_belonging_to_alice: Chunk,
+    stored_chunk_belonging_to_bob: Chunk,
+    chunk_belonging_to_claire: Chunk,
+    alice: UUID,
+):
+    """
+    Given that I have
+    * a saved chunk belonging to Alice
+    * a saved chunk belonging to Bob
+    * an unsaved chunk belonging to Claire
+    When I call read_all_items as alice
+    Then I expect to see the one Chunk belonging to alice
+    """
+    chunks = elasticsearch_storage_handler.read_all_items("Chunk", alice)
+    assert len(chunks) == 1
+    assert chunks[0].creator_user_uuid == alice
 
 
 def test_elastic_delete_item(elasticsearch_storage_handler, stored_chunk_belonging_to_alice):
