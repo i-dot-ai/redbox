@@ -92,13 +92,13 @@ class ElasticsearchStorageHandler(BaseStorageHandler):
         )
         return result
 
-    def read_all_items(self, model_type: str) -> list[PersistableModel]:
+    def read_all_items(self, model_type: str, user_uuid: UUID) -> list[PersistableModel]:
         target_index = f"{self.root_index}-{model_type.lower()}"
         try:
             result = scan(
                 client=self.es_client,
                 index=target_index,
-                query={"query": {"match_all": {}}},
+                query={"query": {"match": {"creator_user_uuid": str(user_uuid)}}},
                 _source=True,
             )
 
