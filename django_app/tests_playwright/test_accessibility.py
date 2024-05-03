@@ -2,7 +2,11 @@ from playwright.sync_api import Page, expect
 from axe_playwright_python.sync_playwright import Axe
 
 URLS = [
-    "/"
+    "/",
+    "/sign-in",
+    "/privacy-notice",
+    "/accessibility-statement",
+    "/support",
     "/documents",
     "/upload",
 ]
