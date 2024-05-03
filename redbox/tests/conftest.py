@@ -14,7 +14,9 @@ T = TypeVar("T")
 YieldFixture = Generator[T, None, None]
 
 
-env = Settings()
+@pytest.fixture
+def env():
+    yield Settings(django_secret_key="", postgres_password="")
 
 
 @pytest.fixture
@@ -33,7 +35,7 @@ def claire():
 
 
 @pytest.fixture
-def file_belonging_to_alice(s3_client, file_pdf_path, alice) -> YieldFixture[File]:
+def file_belonging_to_alice(s3_client, file_pdf_path, alice, env) -> YieldFixture[File]:
     file_name = os.path.basename(file_pdf_path)
     file_type = f'.{file_name.split(".")[-1]}'
 
@@ -66,7 +68,7 @@ def chunk_belonging_to_alice(file_belonging_to_alice) -> YieldFixture[Chunk]:
 
 
 @pytest.fixture
-def file_belonging_to_bob(s3_client, file_pdf_path, bob) -> YieldFixture[File]:
+def file_belonging_to_bob(s3_client, file_pdf_path, bob, env) -> YieldFixture[File]:
     file_name = os.path.basename(file_pdf_path)
     file_type = f'.{file_name.split(".")[-1]}'
 
@@ -124,7 +126,7 @@ def file_pdf_path() -> YieldFixture[str]:
 
 
 @pytest.fixture
-def s3_client():
+def s3_client(env):
     _client = env.s3_client()
     try:
         _client.create_bucket(
@@ -155,7 +157,7 @@ def stored_chunk_belonging_to_bob(elasticsearch_storage_handler, chunk_belonging
 
 
 @pytest.fixture
-def elasticsearch_client() -> YieldFixture[Elasticsearch]:
+def elasticsearch_client(env) -> YieldFixture[Elasticsearch]:
     yield env.elasticsearch_client()
 
 
