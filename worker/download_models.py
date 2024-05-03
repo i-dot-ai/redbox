@@ -1,7 +1,8 @@
 import argparse
 import logging
 
-from redbox.model_db import SentenceTransformerDB
+from unstructured_inference.models.tables import load_agent
+from worker.src.model_db import SentenceTransformerDB
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger()
@@ -25,3 +26,4 @@ def download():
 
 if __name__ == "__main__":
     download()
+    load_agent()
