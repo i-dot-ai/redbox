@@ -55,14 +55,14 @@ def file_belonging_to_alice(s3_client, file_pdf_path, alice) -> YieldFixture[Fil
 
 
 @pytest.fixture
-def chunk_belonging_to_alice(file_belonging_to_alice) -> Chunk:
+def chunk_belonging_to_alice(file_belonging_to_alice) -> YieldFixture[Chunk]:
     chunk = Chunk(
         creator_user_uuid=file_belonging_to_alice.creator_user_uuid,
         parent_file_uuid=file_belonging_to_alice.uuid,
         index=1,
         text="hello, i am Alice!",
     )
-    return chunk
+    yield chunk
 
 
 @pytest.fixture
@@ -88,25 +88,25 @@ def file_belonging_to_bob(s3_client, file_pdf_path, bob) -> YieldFixture[File]:
 
 
 @pytest.fixture
-def chunk_belonging_to_bob(file_belonging_to_bob) -> Chunk:
+def chunk_belonging_to_bob(file_belonging_to_bob) -> YieldFixture[Chunk]:
     chunk = Chunk(
         creator_user_uuid=file_belonging_to_bob.creator_user_uuid,
         parent_file_uuid=file_belonging_to_bob.uuid,
         index=1,
         text="hello, i am Bob!",
     )
-    return chunk
+    yield chunk
 
 
 @pytest.fixture
-def chunk_belonging_to_claire(claire) -> Chunk:
+def chunk_belonging_to_claire(claire) -> YieldFixture[Chunk]:
     chunk = Chunk(
         creator_user_uuid=claire,
         parent_file_uuid=uuid4(),
         index=1,
         text="hello, i am Claire!",
     )
-    return chunk
+    yield chunk
 
 
 @pytest.fixture
@@ -139,14 +139,16 @@ def s3_client():
 
 
 @pytest.fixture
-def stored_chunk_belonging_to_alice(elasticsearch_storage_handler, chunk_belonging_to_alice, alice) -> Chunk:
+def stored_chunk_belonging_to_alice(
+    elasticsearch_storage_handler, chunk_belonging_to_alice, alice
+) -> YieldFixture[Chunk]:
     elasticsearch_storage_handler.write_item(item=chunk_belonging_to_alice)
     elasticsearch_storage_handler.refresh()
     yield chunk_belonging_to_alice
 
 
 @pytest.fixture
-def stored_chunk_belonging_to_bob(elasticsearch_storage_handler, chunk_belonging_to_bob) -> Chunk:
+def stored_chunk_belonging_to_bob(elasticsearch_storage_handler, chunk_belonging_to_bob) -> YieldFixture[Chunk]:
     elasticsearch_storage_handler.write_item(item=chunk_belonging_to_bob)
     elasticsearch_storage_handler.refresh()
     yield chunk_belonging_to_bob
@@ -158,5 +160,5 @@ def elasticsearch_client() -> YieldFixture[Elasticsearch]:
 
 
 @pytest.fixture
-def elasticsearch_storage_handler(elasticsearch_client):
+def elasticsearch_storage_handler(elasticsearch_client) -> YieldFixture[ElasticsearchStorageHandler]:
     yield ElasticsearchStorageHandler(es_client=elasticsearch_client, root_index="redbox-test-data")
