@@ -202,7 +202,7 @@ def post_message(request: HttpRequest) -> HttpResponse:
     llm_data = response.json()
 
     # save LLM response
-    llm_message = ChatMessage(chat_history=session, text=llm_data["response_message"]["text"], role=ChatRoleEnum.ai)
+    llm_message = ChatMessage(chat_history=session, text=llm_data["output_text"], role=ChatRoleEnum.ai)
     llm_message.save()
 
     return redirect(reverse(sessions_view, args=(session_id,)))
