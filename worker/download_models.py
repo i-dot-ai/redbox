@@ -2,7 +2,7 @@ import argparse
 import logging
 
 from unstructured_inference.models.tables import load_agent
-from worker.src.model_db import SentenceTransformerDB
+from worker.model_db import SentenceTransformerDB
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger()
