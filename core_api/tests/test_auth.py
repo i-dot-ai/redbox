@@ -11,7 +11,7 @@ import pytest
         ({"Authorization": "blah blah"}, 403),
         ({"Authorization": "Bearer blah-blah"}, 401),
         ({"Authorization": "Bearer " + jwt.encode({"user_uuid": "not a uuid"}, key="super-secure-private-key")}, 401),
-        ({"Authorization": "Bearer " + jwt.encode({"user_uuid": str(uuid4())}, key="super-secure-private-key")}, 200),
+        ({"Authorization": "Bearer " + jwt.encode({"user_uuid": str(uuid4())}, key="super-secure-private-key")}, 404),
     ],
 )
 def test_get_file_fails_auth(app_client, stored_file, malformed_headers, status_code):

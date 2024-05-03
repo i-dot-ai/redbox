@@ -192,7 +192,7 @@ class ElasticsearchStorageHandler(BaseStorageHandler):
 
         return matched_embedded_chunk_ids
 
-    def get_file_status(self, file_uuid: UUID) -> FileStatus:
+    def get_file_status(self, file_uuid: UUID, user_uuid: UUID) -> FileStatus:
         """Get the status of a file and associated Chunks
 
         Args:
@@ -206,6 +206,8 @@ class ElasticsearchStorageHandler(BaseStorageHandler):
         try:
             file = self.read_item(file_uuid, "File")
         except NotFoundError:
+            raise ValueError(f"File {file_uuid} not found")
+        if file.uuid != user_uuid:
             raise ValueError(f"File {file_uuid} not found")
 
         # Test 2: Get the number of chunks for the file

@@ -7,7 +7,6 @@ from botocore.exceptions import ClientError
 from elasticsearch import Elasticsearch
 from fastapi.testclient import TestClient
 from jose import jwt
-from sentence_transformers import SentenceTransformer
 
 from core_api.src.app import app as application
 from core_api.src.app import env
