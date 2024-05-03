@@ -83,6 +83,30 @@ This project is licensed under the MIT License - see the [LICENSE](./LICENSE) fi
 
 # Security
 
+> [!IMPORTANT]
+> The core-api is the http-gateway to the backend. Currently, this is unsecured, you should only run this on
+a private network. 
+
+However:
+* We have taken care to ensure that the backend is as stateless as possible, i.e. it only stores text chunks and 
+  embeddings. All data is associated with a user, and a user can access their own data. 
+* The only user data stored is the user-uuid, and no chat history is stored.
+* We are considering making the core-api secure. To this end the user-uuid is passed to the core-api as a JWT.
+  Currently no attempt is made to verify the JWT, but in the future we may do so, e.g. via Cognito or similar
+
+You can generate your JWT using the following snippet. Note that you whilst you can use a more secure key than an
+empty string this is currently not verified.  
+
+```python
+from jose import jwt
+import requests
+
+my_uuid = "a93a8f40-f261-4f12-869a-2cea3f3f0d71"
+token = jwt.encode({"user_uuid": my_uuid}, key="")
+
+requests.get(..., headers={"Authorization": f"Bearer {token}"})
+```
+
 If you discover a security vulnerability within this project, please follow our [Security Policy](./SECURITY.md).
 
 ## Troubleshooting
