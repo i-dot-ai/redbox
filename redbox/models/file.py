@@ -79,7 +79,12 @@ class Metadata(BaseModel):
     # url: Optional[str] = None
 
     @classmethod
-    def merge(cls, left: Metadata, right: Metadata) -> Metadata:
+    def merge(cls, left: Optional[Metadata], right: Optional[Metadata]) -> Optional[Metadata]:
+        if not left:
+            return right
+        if not right:
+            return left
+
         def listify(obj, field_name: str) -> list:
             field_value = getattr(obj, field_name, None)
             if isinstance(field_value, list):

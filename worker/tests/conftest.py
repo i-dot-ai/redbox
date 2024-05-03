@@ -95,7 +95,6 @@ def chunk() -> YieldFixture[Chunk]:
         parent_file_uuid=uuid4(),
         index=1,
         text="test_text",
-        metadata={},
     )
     yield test_chunk
 

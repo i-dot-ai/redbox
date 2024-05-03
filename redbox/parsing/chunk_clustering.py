@@ -127,10 +127,3 @@ def create_pdist(token_counts, pair_embed_dist, weight_embed_dist=0.2, use_log=T
     # the two above distance are combined either using sum or product (i.e. use_log=T)
     combined_dist = [x + y for x, y in zip(embed_dist, token_dist)]
     return combined_dist
-
-
-def merge_chunk_metadata(meta_in: list[Metadata]) -> Metadata:
-    """
-    Combine metadata for multiple chunks from the same document.
-    """
-    return reduce(Metadata.merge, meta_in)
