@@ -169,6 +169,8 @@ def test_get_file_chunks(
     When I call get_file_chunks with the right file id and alice's id
     I Expect the single chunk to be retrieved
     """
+    assert stored_chunk_belonging_to_alice.creator_user_uuid
+
     chunks = elasticsearch_storage_handler.get_file_chunks(
         stored_chunk_belonging_to_alice.parent_file_uuid,
         stored_chunk_belonging_to_alice.creator_user_uuid,
