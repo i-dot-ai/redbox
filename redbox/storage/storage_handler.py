@@ -35,12 +35,12 @@ class BaseStorageHandler(ABC):
         pass
 
     @abstractmethod
-    def read_item(self, item_uuid: UUID, model_type: str):
+    def read_item(self, item_uuid: UUID, model_type: str) -> PersistableModel:
         """Read an object from a data store"""
         pass
 
     @abstractmethod
-    def read_items(self, item_uuids: list[UUID], model_type: str):
+    def read_items(self, item_uuids: list[UUID], model_type: str) -> list[PersistableModel]:
         """Read a list of objects from a data store"""
         pass
 
