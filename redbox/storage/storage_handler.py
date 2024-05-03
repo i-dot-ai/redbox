@@ -73,3 +73,8 @@ class BaseStorageHandler(ABC):
     def read_all_items(self, model_type: str, user_uuid: UUID):
         """Read all objects of a given type from a data store"""
         pass
+
+    @abstractmethod
+    def get_file_chunks(self, parent_file_uuid: UUID, user_uuid: UUID) -> list[Chunk]:
+        """get chunks for a given file"""
+        pass

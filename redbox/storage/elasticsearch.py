@@ -138,7 +138,7 @@ class ElasticsearchStorageHandler(BaseStorageHandler):
         uuids = [UUID(item["_id"]) for item in results]
         return uuids
 
-    def get_file_chunks(self, parent_file_uuid: UUID) -> list[Chunk]:
+    def get_file_chunks(self, parent_file_uuid: UUID, user_uuid: UUID) -> list[Chunk]:
         """get chunks for a given file"""
         target_index = f"{self.root_index}-chunk"
 
@@ -147,29 +147,27 @@ class ElasticsearchStorageHandler(BaseStorageHandler):
             for item in scan(
                 client=self.es_client,
                 index=target_index,
-                query={"query": {"match": {"parent_file_uuid": str(parent_file_uuid)}}},
+                query={
+                    "query": {
+                        "bool": {
+                            "must": [
+                                {
+                                    "match": {
+                                        "parent_file_uuid": str(parent_file_uuid),
+                                    }
+                                },
+                                {
+                                    "match": {
+                                        "creator_user_uuid": str(user_uuid),
+                                    }
+                                },
+                            ]
+                        }
+                    }
+                },
             )
         ]
         return res
-
-    def _get_child_chunks(self, parent_file_uuid: UUID) -> list[UUID]:
-        target_index = f"{self.root_index}-chunk"
-
-        try:
-            matched_chunk_ids = [
-                UUID(x["_id"])
-                for x in scan(
-                    client=self.es_client,
-                    index=target_index,
-                    query={"query": {"match": {"parent_file_uuid": str(parent_file_uuid)}}},
-                    _source=False,
-                )
-            ]
-        except NotFoundError:
-            print(f"Index {target_index} not found. Returning empty list.")
-            return []
-
-        return matched_chunk_ids
 
     def _get_embedded_child_chunks(self, parent_file_uuid: UUID) -> list[UUID]:
         target_index = f"{self.root_index}-chunk"
@@ -206,14 +204,14 @@ class ElasticsearchStorageHandler(BaseStorageHandler):
 
         # Test 1: Get the file
         try:
-            self.read_item(file_uuid, "File")
+            file = self.read_item(file_uuid, "File")
         except NotFoundError:
             raise ValueError(f"File {file_uuid} not found")
 
         # Test 2: Get the number of chunks for the file
-        chunk_uuids = self._get_child_chunks(file_uuid)
+        chunks = self.get_file_chunks(file_uuid, file.creator_user_uuid)
 
-        if len(chunk_uuids) == 0:
+        if not chunks:
             # File has not been chunked yet
             return FileStatus(
                 file_uuid=file_uuid,
@@ -221,24 +219,14 @@ class ElasticsearchStorageHandler(BaseStorageHandler):
                 processing_status=ProcessingStatusEnum.chunking,
             )
 
-        # Test 3: Get the number of embedded chunks for the file
-        embedded_chunk_uuids = self._get_embedded_child_chunks(file_uuid)
-
-        chunk_statuses = [
-            ChunkStatus(chunk_uuid=chunk_uuid, embedded=chunk_uuid in embedded_chunk_uuids)
-            for chunk_uuid in chunk_uuids
-        ]
+        # Test 3: Determine the number of embedded chunks for the file
+        chunk_statuses = [ChunkStatus(chunk_uuid=chunk.uuid, embedded=bool(chunk.embedding)) for chunk in chunks]
 
         # Test 4: Determine the latest status
-        if len(chunk_uuids) == len(embedded_chunk_uuids):
-            latest_status = ProcessingStatusEnum.complete
-        elif len(embedded_chunk_uuids) < len(chunk_uuids):
-            latest_status = ProcessingStatusEnum.embedding
-        else:
-            raise ValueError("The number of embedded chunks should never exceed the number of chunks")
+        is_complete = all(chunk_status.embedded for chunk_status in chunk_statuses)
 
         return FileStatus(
             file_uuid=file_uuid,
             chunk_statuses=chunk_statuses,
-            processing_status=latest_status,
+            processing_status=ProcessingStatusEnum.complete if is_complete else ProcessingStatusEnum.embedding,
         )

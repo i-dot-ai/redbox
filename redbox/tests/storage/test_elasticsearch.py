@@ -158,3 +158,36 @@ def test_elastic_delete_item(elasticsearch_storage_handler, stored_chunk_belongi
 
     with pytest.raises(NotFoundError):
         elasticsearch_storage_handler.read_item(stored_chunk_belonging_to_alice.uuid, "Chunk")
+
+
+def test_get_file_chunks(
+    elasticsearch_storage_handler: ElasticsearchStorageHandler,
+    stored_chunk_belonging_to_alice: Chunk,
+):
+    """
+    Given that a chunk belonging to a file belonging alice have been saved
+    When I call get_file_chunks with the right file id and alice's id
+    I Expect the single chunk to be retrieved
+    """
+    chunks = elasticsearch_storage_handler.get_file_chunks(
+        stored_chunk_belonging_to_alice.parent_file_uuid,
+        stored_chunk_belonging_to_alice.creator_user_uuid,
+    )
+
+    assert len(chunks) == 1
+
+
+def test_get_file_chunks_fail(
+    elasticsearch_storage_handler: ElasticsearchStorageHandler,
+    stored_chunk_belonging_to_alice: Chunk,
+):
+    """
+    Given that a chunk belonging to a file belonging alice have been saved
+    When I call get_file_chunks with the right file id and another id
+    I Expect the no chunks to be retrieved
+    """
+    other_chunks = elasticsearch_storage_handler.get_file_chunks(
+        stored_chunk_belonging_to_alice.parent_file_uuid,
+        uuid4(),
+    )
+    assert not other_chunks

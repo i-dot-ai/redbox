@@ -33,10 +33,32 @@ def claire():
 
 
 @pytest.fixture
-def chunk_belonging_to_alice(alice) -> Chunk:
-    chunk = Chunk(
+def file_belonging_to_alice(s3_client, file_pdf_path, alice) -> YieldFixture[File]:
+    file_name = os.path.basename(file_pdf_path)
+    file_type = f'.{file_name.split(".")[-1]}'
+
+    with open(file_pdf_path, "rb") as f:
+        s3_client.put_object(
+            Bucket=env.bucket_name,
+            Body=f.read(),
+            Key=file_name,
+            Tagging=f"file_type={file_type}",
+        )
+
+    file_record = File(
+        key=file_name,
+        bucket=env.bucket_name,
         creator_user_uuid=alice,
-        parent_file_uuid=uuid4(),
+    )
+
+    yield file_record
+
+
+@pytest.fixture
+def chunk_belonging_to_alice(file_belonging_to_alice) -> Chunk:
+    chunk = Chunk(
+        creator_user_uuid=file_belonging_to_alice.creator_user_uuid,
+        parent_file_uuid=file_belonging_to_alice.uuid,
         index=1,
         text="hello, i am Alice!",
     )
@@ -44,10 +66,32 @@ def chunk_belonging_to_alice(alice) -> Chunk:
 
 
 @pytest.fixture
-def chunk_belonging_to_bob(bob) -> Chunk:
-    chunk = Chunk(
+def file_belonging_to_bob(s3_client, file_pdf_path, bob) -> YieldFixture[File]:
+    file_name = os.path.basename(file_pdf_path)
+    file_type = f'.{file_name.split(".")[-1]}'
+
+    with open(file_pdf_path, "rb") as f:
+        s3_client.put_object(
+            Bucket=env.bucket_name,
+            Body=f.read(),
+            Key=file_name,
+            Tagging=f"file_type={file_type}",
+        )
+
+    file_record = File(
+        key=file_name,
+        bucket=env.bucket_name,
         creator_user_uuid=bob,
-        parent_file_uuid=uuid4(),
+    )
+
+    yield file_record
+
+
+@pytest.fixture
+def chunk_belonging_to_bob(file_belonging_to_bob) -> Chunk:
+    chunk = Chunk(
+        creator_user_uuid=file_belonging_to_bob.creator_user_uuid,
+        parent_file_uuid=file_belonging_to_bob.uuid,
         index=1,
         text="hello, i am Bob!",
     )
@@ -92,24 +136,6 @@ def s3_client():
             raise e
 
     yield _client
-
-
-@pytest.fixture
-def file(s3_client, file_pdf_path) -> YieldFixture[File]:
-    file_name = os.path.basename(file_pdf_path)
-    file_type = f'.{file_name.split(".")[-1]}'
-
-    with open(file_pdf_path, "rb") as f:
-        s3_client.put_object(
-            Bucket=env.bucket_name,
-            Body=f.read(),
-            Key=file_name,
-            Tagging=f"file_type={file_type}",
-        )
-
-    file_record = File(key=file_name, bucket=env.bucket_name)
-
-    yield file_record
 
 
 @pytest.fixture

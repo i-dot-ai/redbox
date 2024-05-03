@@ -119,7 +119,7 @@ def get_file(file_uuid: UUID, _user_uuid: Annotated[UUID, Depends(get_user_uuid)
 
 
 @file_app.delete("/{file_uuid}", response_model=File, tags=["file"])
-def delete_file(file_uuid: UUID, _user_uuid: Annotated[UUID, Depends(get_user_uuid)]) -> File:
+def delete_file(file_uuid: UUID, user_uuid: Annotated[UUID, Depends(get_user_uuid)]) -> File:
     """Delete a file from the object store and the database
 
     Args:
@@ -132,15 +132,15 @@ def delete_file(file_uuid: UUID, _user_uuid: Annotated[UUID, Depends(get_user_uu
     s3.delete_object(Bucket=env.bucket_name, Key=file.key)
     storage_handler.delete_item(file)
 
-    chunks = storage_handler.get_file_chunks(file.uuid)
+    chunks = storage_handler.get_file_chunks(file.uuid, user_uuid)
     storage_handler.delete_items(chunks)
     return file
 
 
 @file_app.get("/{file_uuid}/chunks", tags=["file"])
-def get_file_chunks(file_uuid: UUID) -> list[Chunk]:
+def get_file_chunks(file_uuid: UUID, user_uuid: Annotated[UUID, Depends(get_user_uuid)]) -> list[Chunk]:
     log.info(f"getting chunks for file {file_uuid}")
-    return storage_handler.get_file_chunks(file_uuid)
+    return storage_handler.get_file_chunks(file_uuid, user_uuid)
 
 
 @file_app.get("/{file_uuid}/status", tags=["file"])

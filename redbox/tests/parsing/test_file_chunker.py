@@ -8,8 +8,8 @@ env = Settings()
 
 
 @pytest.mark.parametrize("chunk_clustering, expected_chunk_number", [(False, 54), (True, 13)])
-def test_chunk_file(file, chunk_clustering, expected_chunk_number):
+def test_chunk_file(file_belonging_to_alice, chunk_clustering, expected_chunk_number):
     embedding_model = SentenceTransformerDB(env.embedding_model)
     file_chunker = FileChunker(embedding_model)
-    chunks = file_chunker.chunk_file(file, chunk_clustering)
+    chunks = file_chunker.chunk_file(file_belonging_to_alice, chunk_clustering)
     assert len(chunks) == expected_chunk_number

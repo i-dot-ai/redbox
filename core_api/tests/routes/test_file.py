@@ -53,10 +53,11 @@ def test_delete_file(s3_client, app_client, elasticsearch_storage_handler, chunk
     When I DELETE it to /file
     I Expect to see it removed from s3 and elastic-search, including the chunks
     """
+    user_uuid = chunked_file.creator_user_uuid
     # check assets exist
     assert s3_client.get_object(Bucket=env.bucket_name, Key=chunked_file.key)
     assert elasticsearch_storage_handler.read_item(item_uuid=chunked_file.uuid, model_type="file")
-    assert elasticsearch_storage_handler.get_file_chunks(chunked_file.uuid)
+    assert elasticsearch_storage_handler.get_file_chunks(chunked_file.uuid, user_uuid)
 
     response = app_client.delete(f"/file/{chunked_file.uuid}", headers=headers)
     assert response.status_code == 200
@@ -70,7 +71,7 @@ def test_delete_file(s3_client, app_client, elasticsearch_storage_handler, chunk
     with pytest.raises(NotFoundError):
         elasticsearch_storage_handler.read_item(item_uuid=chunked_file.uuid, model_type="file")
 
-    assert not elasticsearch_storage_handler.get_file_chunks(chunked_file.uuid)
+    assert not elasticsearch_storage_handler.get_file_chunks(chunked_file.uuid, user_uuid)
 
 
 def test_get_file_chunks(client, chunked_file, headers):
