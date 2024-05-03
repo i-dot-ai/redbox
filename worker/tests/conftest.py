@@ -91,11 +91,7 @@ def elasticsearch_storage_handler(
 
 @pytest.fixture
 def chunk() -> YieldFixture[Chunk]:
-    test_chunk = Chunk(
-        parent_file_uuid=uuid4(),
-        index=1,
-        text="test_text",
-    )
+    test_chunk = Chunk(parent_file_uuid=uuid4(), index=1, text="test_text", creator_user_uuid=uuid4())
     yield test_chunk
 
 
