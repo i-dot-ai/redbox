@@ -85,7 +85,7 @@ This project is licensed under the MIT License - see the [LICENSE](./LICENSE) fi
 
 > [!IMPORTANT]
 > The core-api is the http-gateway to the backend. Currently, this is unsecured, you should only run this on
-a private network. 
+> a private network. 
 
 However:
 * We have taken care to ensure that the backend is as stateless as possible, i.e. it only stores text chunks and 
