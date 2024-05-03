@@ -5,9 +5,7 @@ import socket
 from pathlib import Path
 
 import environ
-import sentry_sdk
 from django.core.files.storage import FileSystemStorage
-from sentry_sdk.integrations.django import DjangoIntegration
 
 from .hosting_environment import HostingEnvironment
 
@@ -195,6 +193,8 @@ SESSION_ENGINE = "django.contrib.sessions.backends.db"
 
 LOG_ROOT = "."
 LOG_HANDLER = "console"
+BUCKET_NAME = env.str("BUCKET_NAME")
+AWS_S3_REGION_NAME = env.str("AWS_REGION")
 
 if HostingEnvironment.is_local():
     # For Docker to work locally
@@ -208,12 +208,17 @@ if HostingEnvironment.is_local():
     MEDIA_URL = "/files/"
     DEFAULT_FILE_STORAGE = FileSystemStorage
 
-    ALLOWED_HOSTS = ["localhost", "127.0.0.1", "0.0.0.0"]  # nosec B104 - don't do this on server!
+    ALLOWED_HOSTS = [
+        "localhost",
+        "127.0.0.1",
+        "0.0.0.0",
+    ]  # nosec B104 - don't do this on server!
 else:
-    BUCKET_NAME = env.str("BUCKET_NAME")
-    AWS_S3_REGION_NAME = env.str("AWS_REGION")
+
     OBJECT_STORE = "s3"
-    AWS_STORAGE_BUCKET_NAME = BUCKET_NAME  # this duplication is required for django-storage
+    AWS_STORAGE_BUCKET_NAME = (
+        BUCKET_NAME  # this duplication is required for django-storage
+    )
     STATICFILES_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
 
     LOCALHOST = socket.gethostbyname(socket.gethostname())
@@ -221,7 +226,7 @@ else:
 
     INSTALLED_APPS += ["health_check.contrib.s3boto3_storage"]
 
-# https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Strict-Transport-Security
+    # https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Strict-Transport-Security
     # Mozilla guidance max-age 2 years
     SECURE_HSTS_SECONDS = 2 * 365 * 24 * 60 * 60
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
@@ -243,7 +248,9 @@ DATABASES = {
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
-    "formatters": {"verbose": {"format": "%(asctime)s %(levelname)s %(module)s: %(message)s"}},
+    "formatters": {
+        "verbose": {"format": "%(asctime)s %(levelname)s %(module)s: %(message)s"}
+    },
     "handlers": {
         "file": {
             "level": "DEBUG",
@@ -257,7 +264,9 @@ LOGGING = {
             "formatter": "verbose",
         },
     },
-    "loggers": {"application": {"handlers": [LOG_HANDLER], "level": "DEBUG", "propagate": True}},
+    "loggers": {
+        "application": {"handlers": [LOG_HANDLER], "level": "DEBUG", "propagate": True}
+    },
 }
 
 # link to core_api app
@@ -276,7 +285,9 @@ elif EMAIL_BACKEND_TYPE == "CONSOLE":
 elif EMAIL_BACKEND_TYPE == "GOVUKNOTIFY":
     EMAIL_BACKEND = "django_gov_notify.backends.NotifyEmailBackend"
     GOVUK_NOTIFY_API_KEY = env.str("GOVUK_NOTIFY_API_KEY")
-    GOVUK_NOTIFY_PLAIN_EMAIL_TEMPLATE_ID = env.str("GOVUK_NOTIFY_PLAIN_EMAIL_TEMPLATE_ID")
+    GOVUK_NOTIFY_PLAIN_EMAIL_TEMPLATE_ID = env.str(
+        "GOVUK_NOTIFY_PLAIN_EMAIL_TEMPLATE_ID"
+    )
 else:
     raise Exception(f"Unknown EMAIL_BACKEND_TYPE of {EMAIL_BACKEND_TYPE}")
 
