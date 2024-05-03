@@ -39,6 +39,7 @@ SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 # Application definition
 INSTALLED_APPS = [
+    "daphne",
     "redbox_app.redbox_core",
     "allauth",
     "allauth.account",
@@ -101,6 +102,7 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = "redbox_app.wsgi.application"
+ASGI_APPLICATION = "redbox_app.asgi.application"
 
 AUTHENTICATION_BACKENDS = [
     "django.contrib.auth.backends.ModelBackend",
