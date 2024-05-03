@@ -42,7 +42,7 @@ class ElasticsearchStorageHandler(BaseStorageHandler):
         )
         return resp
 
-    def write_items(self, items: list[PersistableModel]) -> list[ObjectApiResponse]:
+    def write_items(self, items: list[PersistableModel]) -> list:
         return list(map(self.write_item, items))
 
     def read_item(self, item_uuid: UUID, model_type: str):
