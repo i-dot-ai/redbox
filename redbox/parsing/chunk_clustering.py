@@ -10,8 +10,8 @@ from redbox.models.file import Chunk, Metadata
 
 def cluster_chunks(
     chunks: list[Chunk],
+    embedding_model: SentenceTransformer,
     desired_chunk_size: int = 300,
-    embedding_model: SentenceTransformer = None,
     dist_weight_split: float = 0.2,
     dist_use_log: bool = True,
 ) -> list[Chunk]:
@@ -20,8 +20,8 @@ def cluster_chunks(
 
     Args:
             chunks (List[File]): List of raw (small) chunks extracted from document.
+            embedding_model (SentenceTransformer): name of the sentence embedding model used to compare chunk similarity
             desired_chunk_size (int): Avarage size of the output chunks. Defaults to 300,
-            embed_model (SentenceTransformer): name of the sentence embedding model used to compare chunk similarity
             dist_weight_split (float): Expects value between 0 and 1.
                 When calculating the combined distance metric this is the relative weight (importance)
                 of the semantic similarity vs the token counts. Defaults to .2.
@@ -72,7 +72,7 @@ def cluster_chunks(
                     parent_file_uuid=chunks_in[0].parent_file_uuid,
                     index=i,
                     text=" ".join([chunk.text for chunk in chunks_in]),
-                    metadata=reduce(Metadata.merge, [chunk.metadata for chunk in chunks_in]),
+                    metadata=reduce(Metadata.merge, [chunk.metadata for chunk in chunks_in]),  # noqa
                     creator_user_uuid=chunks_in[0].creator_user_uuid,
                 )
             out_chunks.append(new_chunk)
