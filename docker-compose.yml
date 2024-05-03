@@ -44,8 +44,8 @@ services:
     ports:
       - 5010:5010
       - 5020:5020
-  ingester:
-    image: redbox-ingester:latest
+  worker:
+    image: redbox-worker:latest
     build:
       context: .
       dockerfile: worker/Dockerfile
