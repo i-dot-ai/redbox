@@ -65,7 +65,7 @@ class BaseStorageHandler(ABC):
         pass
 
     @abstractmethod
-    def list_all_items(self, model_type: str):
+    def list_all_items(self, model_type: str, user_uuid: UUID):
         """List all objects of a given type from a data store"""
         pass
 

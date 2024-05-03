@@ -18,25 +18,51 @@ env = Settings()
 
 
 @pytest.fixture
-def chunk() -> Chunk:
-    test_chunk = Chunk(
-        parent_file_uuid=uuid4(),
-        index=1,
-        text="test_text",
-        metadata={},
-    )
-    return test_chunk
+def alice():
+    yield uuid4()
 
 
 @pytest.fixture
-def another_chunk() -> Chunk:
-    test_chunk = Chunk(
+def bob():
+    yield uuid4()
+
+
+@pytest.fixture
+def claire():
+    yield uuid4()
+
+
+@pytest.fixture
+def chunk_belonging_to_alice(alice) -> Chunk:
+    chunk = Chunk(
+        creator_user_uuid=alice,
         parent_file_uuid=uuid4(),
         index=1,
-        text="test_text",
-        metadata={},
+        text="hello, i am Alice!",
     )
-    return test_chunk
+    return chunk
+
+
+@pytest.fixture
+def chunk_belonging_to_bob(bob) -> Chunk:
+    chunk = Chunk(
+        creator_user_uuid=bob,
+        parent_file_uuid=uuid4(),
+        index=1,
+        text="hello, i am Bob!",
+    )
+    return chunk
+
+
+@pytest.fixture
+def chunk_belonging_to_claire(claire) -> Chunk:
+    chunk = Chunk(
+        creator_user_uuid=claire,
+        parent_file_uuid=uuid4(),
+        index=1,
+        text="hello, i am Claire!",
+    )
+    return chunk
 
 
 @pytest.fixture
@@ -87,9 +113,17 @@ def file(s3_client, file_pdf_path) -> YieldFixture[File]:
 
 
 @pytest.fixture
-def stored_chunk(elasticsearch_storage_handler, chunk) -> Chunk:
-    elasticsearch_storage_handler.write_item(item=chunk)
-    return chunk
+def stored_chunk_belonging_to_alice(elasticsearch_storage_handler, chunk_belonging_to_alice, alice) -> Chunk:
+    elasticsearch_storage_handler.write_item(item=chunk_belonging_to_alice)
+    elasticsearch_storage_handler.refresh()
+    yield chunk_belonging_to_alice
+
+
+@pytest.fixture
+def stored_chunk_belonging_to_bob(elasticsearch_storage_handler, chunk_belonging_to_bob) -> Chunk:
+    elasticsearch_storage_handler.write_item(item=chunk_belonging_to_bob)
+    elasticsearch_storage_handler.refresh()
+    yield chunk_belonging_to_bob
 
 
 @pytest.fixture

@@ -110,7 +110,7 @@ class Chunk(PersistableModel):
     parent_file_uuid: UUID = Field(description="id of the original file which this text came from")
     index: int = Field(description="relative position of this chunk in the original file")
     text: str = Field(description="chunk of the original text")
-    metadata: Metadata = Field(description="subset of the unstructured Element.Metadata object")
+    metadata: Optional[Metadata] = Field(description="subset of the unstructured Element.Metadata object", default=None)
     embedding: Optional[list[float]] = Field(description="the vector representation of the text", default=None)
 
     @computed_field
