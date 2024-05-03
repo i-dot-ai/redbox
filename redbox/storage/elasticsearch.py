@@ -121,14 +121,14 @@ class ElasticsearchStorageHandler(BaseStorageHandler):
                 logging.error(e)
         return items
 
-    def list_all_items(self, model_type: str) -> list[UUID]:
+    def list_all_items(self, model_type: str, user_uuid: UUID) -> list[UUID]:
         target_index = f"{self.root_index}-{model_type.lower()}"
         try:
             # Only return _id
             results = scan(
                 client=self.es_client,
                 index=target_index,
-                query={"query": {"match_all": {}}},
+                query={"query": {"match": {"creator_user_uuid": str(user_uuid)}}},
                 _source=False,
             )
 
