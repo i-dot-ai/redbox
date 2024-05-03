@@ -106,7 +106,7 @@ if env.dev_mode:
 
 
 @file_app.get("/{file_uuid}", response_model=File, tags=["file"])
-def get_file(file_uuid: UUID, _user_uuid: Annotated[UUID, Depends(get_user_uuid)]) -> File:
+def get_file(file_uuid: UUID, user_uuid: Annotated[UUID, Depends(get_user_uuid)]) -> File:
     """Get a file from the object store
 
     Args:
@@ -115,7 +115,10 @@ def get_file(file_uuid: UUID, _user_uuid: Annotated[UUID, Depends(get_user_uuid)
     Returns:
         File: The file
     """
-    return storage_handler.read_item(file_uuid, model_type="File")
+    file = storage_handler.read_item(file_uuid, model_type="File")
+    if file.creator_user_uuid != user_uuid:
+        raise HTTPException(status_code=404)
+    return file
 
 
 @file_app.delete("/{file_uuid}", response_model=File, tags=["file"])
@@ -129,6 +132,9 @@ def delete_file(file_uuid: UUID, user_uuid: Annotated[UUID, Depends(get_user_uui
         File: The file that was deleted
     """
     file = storage_handler.read_item(file_uuid, model_type="File")
+    if file.creator_user_uuid != user_uuid:
+        raise HTTPException(status_code=404)
+
     s3.delete_object(Bucket=env.bucket_name, Key=file.key)
     storage_handler.delete_item(file)
 
@@ -144,7 +150,7 @@ def get_file_chunks(file_uuid: UUID, user_uuid: Annotated[UUID, Depends(get_user
 
 
 @file_app.get("/{file_uuid}/status", tags=["file"])
-def get_file_status(file_uuid: UUID, _user_uuid: Annotated[UUID, Depends(get_user_uuid)]) -> FileStatus:
+def get_file_status(file_uuid: UUID, user_uuid: Annotated[UUID, Depends(get_user_uuid)]) -> FileStatus:
     """Get the status of a file
 
     Args:
@@ -154,7 +160,7 @@ def get_file_status(file_uuid: UUID, _user_uuid: Annotated[UUID, Depends(get_use
         File: The file with the updated status
     """
     try:
-        status = storage_handler.get_file_status(file_uuid)
+        status = storage_handler.get_file_status(file_uuid, user_uuid)
     except ValueError:
         raise HTTPException(status_code=404, detail=f"File {file_uuid} not found")
 
