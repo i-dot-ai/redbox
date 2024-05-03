@@ -5,6 +5,9 @@ import socket
 from pathlib import Path
 
 import environ
+import sentry_sdk
+from django.core.files.storage import FileSystemStorage
+from sentry_sdk.integrations.django import DjangoIntegration
 
 from .hosting_environment import HostingEnvironment
 
@@ -193,11 +196,6 @@ SESSION_ENGINE = "django.contrib.sessions.backends.db"
 LOG_ROOT = "."
 LOG_HANDLER = "console"
 
-DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
-
-BUCKET_NAME = env.str("BUCKET_NAME")
-AWS_S3_REGION_NAME = env.str("AWS_REGION")
-
 if HostingEnvironment.is_local():
     # For Docker to work locally
     OBJECT_STORE = "minio"
@@ -205,9 +203,15 @@ if HostingEnvironment.is_local():
     MINIO_SECRET_KEY = env.str("MINIO_SECRET_KEY")
     MINIO_HOST = env.str("MINIO_HOST")
     MINIO_PORT = env.str("MINIO_PORT")
+    BUCKET_NAME = env.str("BUCKET_NAME")
+    MEDIA_ROOT = os.path.join(BASE_DIR, "files")
+    MEDIA_URL = "/files/"
+    DEFAULT_FILE_STORAGE = FileSystemStorage
 
     ALLOWED_HOSTS = ["localhost", "127.0.0.1", "0.0.0.0"]  # nosec B104 - don't do this on server!
 else:
+    BUCKET_NAME = env.str("BUCKET_NAME")
+    AWS_S3_REGION_NAME = env.str("AWS_REGION")
     OBJECT_STORE = "s3"
     AWS_STORAGE_BUCKET_NAME = BUCKET_NAME  # this duplication is required for django-storage
     STATICFILES_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
@@ -216,11 +220,13 @@ else:
     ALLOWED_HOSTS = [LOCALHOST]
 
     INSTALLED_APPS += ["health_check.contrib.s3boto3_storage"]
-    # https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Strict-Transport-Security
+
+# https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Strict-Transport-Security
     # Mozilla guidance max-age 2 years
     SECURE_HSTS_SECONDS = 2 * 365 * 24 * 60 * 60
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SESSION_COOKIE_SECURE = True
+    DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
 
 
 DATABASES = {
