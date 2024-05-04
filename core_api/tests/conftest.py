@@ -96,7 +96,6 @@ def chunked_file(elasticsearch_storage_handler, stored_file) -> YieldFixture[Fil
             text="hello",
             index=i,
             parent_file_uuid=stored_file.uuid,
-            metadata={},
             creator_user_uuid=stored_file.creator_user_uuid,
         )
         elasticsearch_storage_handler.write_item(chunk)
