@@ -169,29 +169,6 @@ class ElasticsearchStorageHandler(BaseStorageHandler):
         ]
         return res
 
-    def _get_embedded_child_chunks(self, parent_file_uuid: UUID) -> list[UUID]:
-        target_index = f"{self.root_index}-chunk"
-        matched_embedded_chunk_ids = [
-            UUID(x["_id"])
-            for x in scan(
-                client=self.es_client,
-                index=target_index,
-                query={
-                    "query": {
-                        "bool": {
-                            "must": [
-                                {"match": {"parent_file_uuid": str(parent_file_uuid)}},
-                                {"exists": {"field": "embedding"}},
-                            ]
-                        }
-                    }
-                },
-                _source=False,
-            )
-        ]
-
-        return matched_embedded_chunk_ids
-
     def get_file_status(self, file_uuid: UUID, user_uuid: UUID) -> FileStatus:
         """Get the status of a file and associated Chunks
 
