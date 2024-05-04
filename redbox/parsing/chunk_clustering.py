@@ -72,7 +72,7 @@ def cluster_chunks(
                     parent_file_uuid=chunks_in[0].parent_file_uuid,
                     index=i,
                     text=" ".join([chunk.text for chunk in chunks_in]),
-                    metadata=reduce(Metadata.merge, [chunk.metadata for chunk in chunks_in]),  # noqa
+                    metadata=reduce(Metadata.merge, [chunk.metadata for chunk in chunks_in]),
                     creator_user_uuid=chunks_in[0].creator_user_uuid,
                 )
             out_chunks.append(new_chunk)
