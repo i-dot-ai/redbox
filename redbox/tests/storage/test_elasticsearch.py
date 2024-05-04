@@ -89,7 +89,6 @@ def test_elastic_write_read_delete_items(elasticsearch_storage_handler):
             parent_file_uuid=uuid4(),
             index=i,
             text="test_text",
-            metadata={},
         )
         for i in range(10)
     ]
