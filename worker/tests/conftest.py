@@ -69,10 +69,7 @@ def file(s3_client, file_pdf_path):
             Tagging=f"file_type={file_type}",
         )
 
-    file_record = File(
-        key=file_name,
-        bucket=env.bucket_name,
-    )
+    file_record = File(key=file_name, bucket=env.bucket_name, creator_user_uuid=uuid4())
 
     yield file_record
 
