@@ -44,6 +44,12 @@ class SourceDocument(BaseModel):
     )
 
 
+class SourceDocuments(BaseModel):
+    source_documents: Optional[list[SourceDocument]] = Field(
+        description="documents retrieved to form this response", default=None
+    )
+
+
 class ChatResponse(BaseModel):
     source_documents: Optional[list[SourceDocument]] = Field(
         description="documents retrieved to form this response", default=None
