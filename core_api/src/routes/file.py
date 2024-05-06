@@ -76,10 +76,7 @@ async def add_file(file_request: FileRequest, user_uuid: Annotated[UUID, Depends
     log.info(f"publishing {file.uuid} for {file.creator_user_uuid}")
     await file_publisher.publish(file)
 
-    retrieved_file = storage_handler.read_item(file.uuid, "File")
-    log.info(f"published {retrieved_file.uuid} for {retrieved_file.creator_user_uuid}")
-
-    return retrieved_file
+    return file
 
 
 # Standard file upload endpoint for utility in quick testing
