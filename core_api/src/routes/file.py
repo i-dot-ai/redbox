@@ -63,6 +63,7 @@ async def add_file(file_request: FileRequest, user_uuid: Annotated[UUID, Depends
 
     Args:
         file_request (FileRequest): The file to be recorded
+        user_uuid (UUID): The UUID of the user
 
     Returns:
         File: The file uuid from the elastic database
@@ -72,10 +73,13 @@ async def add_file(file_request: FileRequest, user_uuid: Annotated[UUID, Depends
 
     storage_handler.write_item(file)
 
-    log.info(f"publishing {file.uuid}")
+    log.info(f"publishing {file.uuid} for {file.creator_user_uuid}")
     await file_publisher.publish(file)
 
-    return file
+    retrieved_file = storage_handler.read_item(file.uuid, "File")
+    log.info(f"published {retrieved_file.uuid} for {retrieved_file.creator_user_uuid}")
+
+    return retrieved_file
 
 
 # Standard file upload endpoint for utility in quick testing
@@ -110,14 +114,15 @@ def get_file(file_uuid: UUID, user_uuid: Annotated[UUID, Depends(get_user_uuid)]
     """Get a file from the object store
 
     Args:
-        file_uuid (str): The UUID of the file to get
+        file_uuid (UUID): The UUID of the file to get
+        user_uuid (UUID): The UUID of the user
 
     Returns:
         File: The file
     """
     file = storage_handler.read_item(file_uuid, model_type="File")
     if file.creator_user_uuid != user_uuid:
-        raise HTTPException(status_code=404)
+        raise HTTPException(status_code=404, detail=f"File {file_uuid} not found")
     return file
 
 
@@ -126,7 +131,8 @@ def delete_file(file_uuid: UUID, user_uuid: Annotated[UUID, Depends(get_user_uui
     """Delete a file from the object store and the database
 
     Args:
-        file_uuid (str): The UUID of the file to delete
+        file_uuid (UUID): The UUID of the file to delete
+        user_uuid (UUID): The UUID of the user
 
     Returns:
         File: The file that was deleted
@@ -154,7 +160,8 @@ def get_file_status(file_uuid: UUID, user_uuid: Annotated[UUID, Depends(get_user
     """Get the status of a file
 
     Args:
-        file_uuid (str): The UUID of the file to get the status of
+        file_uuid (UUID): The UUID of the file to get the status of
+        user_uuid (UUID): The UUID of the user
 
     Returns:
         File: The file with the updated status

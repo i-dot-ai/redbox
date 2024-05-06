@@ -11,6 +11,9 @@ from redbox.models import Chunk, ChunkStatus, FileStatus, ProcessingStatusEnum
 from redbox.models.base import PersistableModel
 from redbox.storage.storage_handler import BaseStorageHandler
 
+logging.basicConfig(level=logging.INFO)
+log = logging.getLogger()
+
 
 class ElasticsearchStorageHandler(BaseStorageHandler):
     """Storage Handler for Elasticsearch"""
@@ -38,7 +41,7 @@ class ElasticsearchStorageHandler(BaseStorageHandler):
         resp = self.es_client.index(
             index=target_index,
             id=str(item.uuid),
-            body=item.json(),
+            body=item.model_dump_json(),
         )
         return resp
 
@@ -174,6 +177,7 @@ class ElasticsearchStorageHandler(BaseStorageHandler):
 
         Args:
             file_uuid (UUID): The UUID of the file to get the status of
+            user_uuid (UUID): the UUID of the user
 
         Returns:
             FileStatus: The status of the file
@@ -183,8 +187,10 @@ class ElasticsearchStorageHandler(BaseStorageHandler):
         try:
             file = self.read_item(file_uuid, "File")
         except NotFoundError:
+            log.error(f"file/{file_uuid} not found")
             raise ValueError(f"File {file_uuid} not found")
-        if file.uuid != user_uuid:
+        if file.creator_user_uuid != user_uuid:
+            log.error(f"file/{file_uuid}.{file.creator_user_uuid} not owned by {user_uuid}")
             raise ValueError(f"File {file_uuid} not found")
 
         # Test 2: Get the number of chunks for the file
