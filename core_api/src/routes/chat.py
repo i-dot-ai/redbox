@@ -201,36 +201,29 @@ async def websocket_endpoint(websocket: WebSocket):
     document_chain = create_stuff_documents_chain(llm, prompt_get_answer)
     retrieval_chain = create_retrieval_chain(retriever_chain, document_chain)
 
-    chat_history = [
-        HumanMessage(content="who is the prime minister of the uk"),
-        AIMessage(content="Rishi Sunak"),
-    ]
-
     while True:
-        chat = {"chat_history": chat_history, "input": await websocket.receive_text()}
+        chat_request = ChatRequest.parse_raw(await websocket.receive_text())
+        chat_history = [
+            HumanMessage(content=x.text) if x.role == "user" else AIMessage(content=x.text)
+            for x in chat_request.message_history[:-1]
+        ]
+        chat = {"chat_history": chat_history, "input": chat_request.message_history[-1].text}
 
-        docs = []
         async for event in retrieval_chain.astream_events(chat, version="v1"):
             kind = event["event"]
             if kind == "on_chat_model_stream":
                 await websocket.send_text(event["data"]["chunk"].content)
-            # elif kind in {"on_chat_model_start"}:
-            #     await websocket.send_text("<chat>")
-            # elif kind in {"on_chat_model_end"}:
-            #     await websocket.send_text("</chat>")
             elif kind == "on_retriever_end":
-                docs = event["data"]["output"]["documents"]
-
-        source_documents = [
-            SourceDocument(
-                page_content=langchain_document.page_content,
-                file_uuid=langchain_document.metadata.get("parent_doc_uuid"),
-                page_numbers=langchain_document.metadata.get("page_numbers"),
-            )
-            for langchain_document in docs
-        ]
-        source_documents_bytes = SourceDocuments(source_documents=source_documents).model_dump_json().encode()
-        await websocket.send_bytes(source_documents_bytes)
+                source_documents = [
+                    SourceDocument(
+                        page_content=document.page_content,
+                        file_uuid=document.metadata.get("parent_doc_uuid"),
+                        page_numbers=document.metadata.get("page_numbers"),
+                    )
+                    for document in event["data"]["output"]["documents"]
+                ]
+                source_documents_bytes = SourceDocuments(source_documents=source_documents).model_dump_json().encode()
+                await websocket.send_bytes(source_documents_bytes)
 
 
 html = """
@@ -249,30 +242,46 @@ html = """
             // Listen for messages
             ws.addEventListener("message", (event) => {
               if (event.data instanceof ArrayBuffer) {
-                document.getElementById('documents').innerHTML = decoder.decode(event.data);
+                document.getElementById('documents').innerHTML = JSON.stringify(JSON.parse(decoder.decode(event.data)),null,2);
               } else {
-                document.getElementById('messages').innerHTML += event.data;
+                var li = document.getElementById("messages").getElementsByTagName("li");
+                li[li.length-1].innerHTML += event.data;
               }
             });
 
             function sendMessage(event) {
-                var input = document.getElementById("messageText")
-                ws.send(input.value)
-                input.value = ''
-                event.preventDefault()
+                message_history = [];
+
+                var question = document.getElementById('messageText');
+                var messages = document.getElementById("messages");
+                var li = document.createElement("li");
+                li.innerText = question.value;
+                messages.appendChild(li);
+                var input = messages.getElementsByTagName("li");
+
+                for (var i = 0; i < input.length; i++ ) {
+                    var role = i % 2 == 0? "user": "ai";
+                    message_history.push({"text": input[i].innerText, "role": role});
+                }
+                ws.send(JSON.stringify({"message_history": message_history}));
+
+                question.value = '';
+                messages.appendChild(document.createElement("li"));
+                event.preventDefault();
             }
         </script>
     </head>
     <body>
         <h1>WebSocket Chat</h1>
+        <div id='messages'>
+            <li>who is the prime minister</li>
+            <li>Rishi Sunak MP</li>
+        </div>
         <form action="" onsubmit="sendMessage(event)">
-            <input type="text" id="messageText" autocomplete="off"/>
+            <input type="text" id="messageText" placeholder="Enter your next question"  autocomplete="off"/>
             <button>Send</button>
         </form>
-        <div id='messages'>
-        </div>
         <pre id='documents'>
-        {"response-data": "goes here"}
         </pre>
     </body>
 </html>
