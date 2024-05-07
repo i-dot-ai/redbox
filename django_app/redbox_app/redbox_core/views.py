@@ -1,8 +1,6 @@
 import logging
 import os
-import uuid
 
-from boto3.s3.transfer import TransferConfig
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.http import HttpRequest, HttpResponse
@@ -23,7 +21,6 @@ from yarl import URL
 logger = logging.getLogger(__name__)
 logger.setLevel("DEBUG")
 
-s3 = s3_client()
 CHUNK_SIZE = 1024
 # move this somewhere
 APPROVED_FILE_EXTENSIONS = [
