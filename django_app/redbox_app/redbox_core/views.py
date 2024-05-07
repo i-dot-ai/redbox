@@ -108,7 +108,9 @@ def upload_view(request):
             )
 
             # ingest file
-            api = CoreApiClient(host=settings.CORE_API_HOST, port=settings.CORE_API_PORT)
+            api = CoreApiClient(
+                host=settings.CORE_API_HOST, port=settings.CORE_API_PORT
+            )
 
             try:
                 api.upload_file(uploaded_file.name, request.user)
@@ -150,7 +152,7 @@ def sessions_view(request, session_id: str = ""):
     USE_STREAMING = False
     STREAMING_ENDPOINT = "ws://localhost:8888"
 
-    chat_history = models.ChatHistory.objects.all().filter(users=request.user)
+    chat_history = models.ChatHistory.objects.filter(users=request.user)
 
     messages = []
     if session_id:
@@ -160,10 +162,7 @@ def sessions_view(request, session_id: str = ""):
         "session_id": session_id,
         "messages": messages,
         "chat_history": chat_history,
-        "streaming": {
-            "in_use": USE_STREAMING,
-            "endpoint": STREAMING_ENDPOINT
-        }
+        "streaming": {"in_use": USE_STREAMING, "endpoint": STREAMING_ENDPOINT},
     }
 
     return render(
@@ -187,22 +186,28 @@ def post_message(request: HttpRequest) -> HttpResponse:
         session_id = session.id
 
     # save user message
-    chat_message = models.ChatMessage(chat_history=session, text=message_text, role=models.ChatRoleEnum.user)
+    chat_message = models.ChatMessage(
+        chat_history=session, text=message_text, role=models.ChatRoleEnum.user
+    )
     chat_message.save()
 
     # get LLM response
     message_history = [
         {"role": message.role, "text": message.text}
-        for message in models.ChatMessage.objects.all().filter(chat_history=session)
+        for message in models.ChatMessage.objects.filter(chat_history=session)
     ]
     url = settings.CORE_API_HOST + ":" + settings.CORE_API_PORT + "/chat/rag"
     response = requests.post(
-        url, json={"message_history": message_history}, headers={"Authorization": request.user.get_bearer_token()}
+        url,
+        json={"message_history": message_history},
+        headers={"Authorization": request.user.get_bearer_token()},
     )
     llm_data = response.json()
 
     # save LLM response
-    llm_message = models.ChatMessage(chat_history=session, text=llm_data["output_text"], role=models.ChatRoleEnum.ai)
+    llm_message = models.ChatMessage(
+        chat_history=session, text=llm_data["output_text"], role=models.ChatRoleEnum.ai
+    )
     llm_message.save()
 
     return redirect(reverse(sessions_view, args=(session_id,)))
