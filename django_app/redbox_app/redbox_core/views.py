@@ -156,10 +156,9 @@ def remove_doc_view(request, doc_id: str):
 
 @login_required
 def sessions_view(request, session_id: str = ""):
-    
-    USE_STREAMING = False
-    STREAMING_ENDPOINT = "ws://localhost:8888"
-    
+    USE_STREAMING = True
+    STREAMING_ENDPOINT = "ws://localhost:8090/ws/chat/"
+
     chat_history = ChatHistory.objects.all().filter(users=request.user)
 
     messages = []
