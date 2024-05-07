@@ -57,7 +57,7 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
     processing_status = models.CharField(
         choices=ProcessingStatusEnum.choices, null=False, blank=False
     )
-    original_file = models.FileField(storage=settings.DEFAULT_FILE_STORAGE)
+    original_file = models.FileField(storage=settings.STORAGES["default"]["BACKEND"])
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     original_file_name = models.TextField(max_length=2048, blank=True, null=True)
 
