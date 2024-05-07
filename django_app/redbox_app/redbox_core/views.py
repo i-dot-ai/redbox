@@ -9,9 +9,8 @@ from django.urls import reverse
 from django.views.decorators.http import require_http_methods
 
 from redbox_app.redbox_core import models
-from redbox_app.redbox_core.client import CoreApiClient, s3_client
+from redbox_app.redbox_core.client import CoreApiClient
 
-s3 = s3_client()
 CHUNK_SIZE = 1024
 # move this somewhere
 APPROVED_FILE_EXTENSIONS = [
