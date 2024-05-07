@@ -64,12 +64,13 @@ class ChatController extends HTMLElement {
         const textArea = /** @type {HTMLInputElement | null} */ (this.querySelector('.js-user-text'));
         const messageContainer = this.querySelector('.js-message-container');
         const insertPosition = this.querySelector('.js-response-feedback');
+        const feedbackButtons = /** @type {HTMLElement | null} */ (this.querySelector('feedback-buttons'));
 
         sendButton?.addEventListener('click', (evt) => {
             
             evt.preventDefault();
             const userText = textArea?.value;
-            if (!userText) {
+            if (!textArea || !userText) {
                 return;
             }
 
@@ -82,6 +83,12 @@ class ChatController extends HTMLElement {
             aiMessage.setAttribute('data-role', 'ai');
             messageContainer?.insertBefore(aiMessage, insertPosition);
             aiMessage.stream(userText, this.dataset.sessionId, this.dataset.streamUrl || '');
+
+            // reset UI 
+            if (feedbackButtons) {
+                feedbackButtons.dataset.status = "";
+            }
+            textArea.value = "";
 
         });
 
