@@ -213,6 +213,8 @@ async def websocket_endpoint(websocket: WebSocket):
             kind = event["event"]
             if kind == "on_chat_model_stream":
                 await websocket.send_text(event["data"]["chunk"].content)
+            if kind == "on_chat_model_end":
+                await websocket.send_text("</chat>")
             elif kind == "on_retriever_end":
                 source_documents = [
                     SourceDocument(
