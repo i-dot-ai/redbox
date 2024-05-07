@@ -41,17 +41,14 @@ class Settings(BaseSettings):
     monitoring_internal_password: str = "redboxpass"
     beats_system_password: str = "redboxpass"
 
-    minio_host: str = "minio"
-    minio_port: int = 9000
-    minio_access_key: str = "minioadmin"
-    minio_secret_key: str = "minioadmin"
+    # minio_host: str = "minio"
+    # minio_port: int = 9000
+    # minio_access_key: str = "minioadmin"
+    # minio_secret_key: str = "minioadmin"
 
-    aws_access_key_id: Optional[str] = None
-    aws_secret_access_key: Optional[str] = None
     aws_region: str = "eu-west-2"
-
-    object_store: str = "minio"
-
+    aws_secret_key: Optional[str] = None
+    aws_access_key: Optional[str] = None
     bucket_name: str = "redbox-storage-dev"
     embedding_model: str = "all-mpnet-base-v2"
 
