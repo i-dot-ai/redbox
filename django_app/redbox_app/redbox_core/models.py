@@ -3,7 +3,6 @@ import uuid
 from django.conf import settings
 from django.db import models
 from django_use_email_as_username.models import BaseUser, BaseUserManager
-
 from dotenv import load_dotenv
 from jose import jwt
 
@@ -55,22 +54,39 @@ class ProcessingStatusEnum(models.TextChoices):
 
 
 class File(UUIDPrimaryKeyBase, TimeStampedModel):
-    processing_status = models.CharField(choices=ProcessingStatusEnum.choices, null=False, blank=False)
-    original_file = models.FileField(storage=settings.BUCKET_NAME)
+    processing_status = models.CharField(
+        choices=ProcessingStatusEnum.choices, null=False, blank=False
+    )
+    original_file = models.FileField(storage=settings.DEFAULT_FILE_STORAGE)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
+    original_file_name = models.TextField(max_length=2048, blank=True, null=True)
 
     @property
-    def file_type(self):
+    def file_type(self) -> str:
         name = self.original_file.name
         return name.split(".")[-1]
 
     @property
-    def file_url(self):
+    def url(self) -> str:
         return self.original_file.url
 
     @property
-    def name(self):
-        return self.original_file.name
+    def name(self) -> str:
+        return (
+            self.original_file_name
+            if self.original_file_name
+            else self.original_file.name
+        )
+
+    def get_processing_status_text(self) -> str:
+        return next(
+            (
+                status[1]
+                for status in ProcessingStatusEnum.choices
+                if self.processing_status == status[0]
+            ),
+            "Unknown",
+        )
 
 
 class ChatHistory(UUIDPrimaryKeyBase, TimeStampedModel):
