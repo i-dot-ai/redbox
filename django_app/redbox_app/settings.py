@@ -289,3 +289,6 @@ MAGIC_LINK = {
     # SESSION_COOKIE_AGE override for magic-link logins - in seconds (default is 1 week)
     "SESSION_EXPIRY": 7 * 24 * 60 * 60,
 }
+
+USE_STREAMING = env.bool("USE_STREAMING")
+STREAMING_ENDPOINT = env.str("STREAMING_ENDPOINT")
