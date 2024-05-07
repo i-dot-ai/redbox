@@ -6,6 +6,7 @@ from pathlib import Path
 
 import environ
 from django.core.files.storage import FileSystemStorage
+from storages.backends import s3boto3
 
 from .hosting_environment import HostingEnvironment
 
@@ -211,16 +212,6 @@ if HostingEnvironment.is_local():
             "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
         },
     }
-    # For Docker to work locally
-    # OBJECT_STORE = "minio"
-    # MINIO_ACCESS_KEY = env.str("MINIO_ACCESS_KEY")
-    # MINIO_SECRET_KEY = env.str("MINIO_SECRET_KEY")
-    # MINIO_HOST = env.str("MINIO_HOST")
-    # MINIO_PORT = env.str("MINIO_PORT")
-    # BUCKET_NAME = env.str("BUCKET_NAME")
-    # MEDIA_ROOT = os.path.join(BASE_DIR, "files")
-    # MEDIA_URL = "/files/"
-    # DEFAULT_FILE_STORAGE = FileSystemStorage
 
     ALLOWED_HOSTS = [
         "localhost",
@@ -233,15 +224,14 @@ else:
         BUCKET_NAME  # this duplication is required for django-storage
     )
 
-    STATICFILES_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
     AWS_S3_SECRET_ACCESS_KEY = env.str("AWS_SECRET_KEY")
     AWS_ACCESS_KEY_ID = env.str("AWS_ACCESS_KEY")
     STORAGES = {
         "default": {
-            "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
+            "BACKEND": s3boto3.S3Boto3Storage,
         },
         "staticfiles": {
-            "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
+            "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
         },
     }
 
@@ -255,7 +245,6 @@ else:
     SECURE_HSTS_SECONDS = 2 * 365 * 24 * 60 * 60
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SESSION_COOKIE_SECURE = True
-    # DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
 
 
 DATABASES = {
