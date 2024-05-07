@@ -2,12 +2,11 @@ import json
 import logging
 from time import sleep
 
+from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
 from django.conf import settings
 from redbox_app.redbox_core.client import CoreApiClient
 from redbox_app.redbox_core.models import ChatHistory, ChatMessage, ChatRoleEnum, User
-from channels.db import database_sync_to_async
-
 
 logger = logging.getLogger(__name__)
 logger.setLevel("DEBUG")
@@ -28,7 +27,9 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
         # get LLM response
         session_messages = await self.get_messages(session)
-        message_history = [{"role": message.role, "text": message.text} for message in session_messages]
+        message_history: list[dict[str, str]] = [
+            {"role": message.role, "text": message.text} for message in session_messages
+        ]
         core_api = CoreApiClient(host=settings.CORE_API_HOST, port=settings.CORE_API_PORT)
         ai_message_text = core_api.rag_chat(message_history, user.get_bearer_token())
 
@@ -36,11 +37,11 @@ class ChatConsumer(AsyncWebsocketConsumer):
         await self.save_message(session, ai_message_text, ChatRoleEnum.ai)
 
         await self.send(ai_message_text)
-        sleep(0.5)
+        sleep(0.1)
         await self.send(" MESSAGE END")
 
     @database_sync_to_async
-    def get_session(self, session_id: str, user: User, user_message_text: str):
+    def get_session(self, session_id: str, user: User, user_message_text: str) -> ChatHistory:
         if session_id:
             session = ChatHistory.objects.get(id=session_id)
         else:
@@ -50,10 +51,11 @@ class ChatConsumer(AsyncWebsocketConsumer):
         return session
 
     @database_sync_to_async
-    def get_messages(self, session):
+    def get_messages(self, session: ChatHistory) -> list[ChatMessage]:
         return list(ChatMessage.objects.filter(chat_history=session))
 
     @database_sync_to_async
-    def save_message(self, session, user_message_text, role):
+    def save_message(self, session: ChatHistory, user_message_text: str, role: ChatRoleEnum) -> ChatMessage:
         chat_message = ChatMessage(chat_history=session, text=user_message_text, role=role)
         chat_message.save()
+        return chat_message
