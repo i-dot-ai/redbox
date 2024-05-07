@@ -1,5 +1,8 @@
 // @ts-check
 
+let plausible = /** @type {any} */ (window).plausible;
+
+
 class FeedbackButtons extends HTMLElement {
 
     connectedCallback() {
@@ -18,6 +21,10 @@ class FeedbackButtons extends HTMLElement {
                     this.dataset.status = '';
                 } else {
                     this.dataset.status = response;
+                }
+                // send feedback to Plausible
+                if (this.dataset.status && typeof(plausible) !== 'undefined') {
+                    plausible(`Feedback-button-thumbs-${this.dataset.status}`);
                 }
             });
         });
