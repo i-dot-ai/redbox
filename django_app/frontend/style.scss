@@ -52,4 +52,32 @@ $iai-pink: #b62777;
   padding-top: 0.5rem;
 }
 
+
+.iai-response-feedback {
+  display: none;
+  position: relative;
+  top: -3rem;
+}
+/* only show response feedback for last AI message */
+.iai-chat-message--ai + .iai-response-feedback {
+  display: block;
+}
+.iai-response-feedback__buttons {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 1.75rem;
+}
+
+/* Only show feedback when correct buttons pressed */
+.iai-chat-message--feedback-thumbs-up, .iai-chat-message--feedback-thumbs-down {
+  display: none;
+}
+.iai-response-feedback__buttons[data-status="up"] ~ .iai-chat-message--feedback-thumbs-up {
+  display: block;
+}
+.iai-response-feedback__buttons[data-status="down"] ~ .iai-chat-message--feedback-thumbs-down {
+  display: block;
+}
+
+
 /*iai-chat-message--{{ message.role }}*/
