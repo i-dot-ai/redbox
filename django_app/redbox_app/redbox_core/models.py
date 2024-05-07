@@ -62,16 +62,16 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
     original_file_name = models.TextField(max_length=2048, blank=True, null=True)
 
     @property
-    def file_type(self):
+    def file_type(self) -> str:
         name = self.original_file.name
         return name.split(".")[-1]
 
     @property
-    def url(self):
+    def url(self) -> str:
         return self.original_file.url
 
     @property
-    def name(self):
+    def name(self) -> str:
         return (
             self.original_file_name
             if self.original_file_name
@@ -79,12 +79,14 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
         )
 
     def get_processing_status_text(self) -> str:
-        status = [
-            status
-            for status in ProcessingStatusEnum.choices
-            if self.processing_status == status[0]
-        ][0][1]
-        return status if status else "Unknown"
+        return next(
+            (
+                status[1]
+                for status in ProcessingStatusEnum.choices
+                if self.processing_status == status[0]
+            ),
+            "Unknown",
+        )
 
 
 class ChatHistory(UUIDPrimaryKeyBase, TimeStampedModel):
