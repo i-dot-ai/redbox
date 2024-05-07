@@ -11,6 +11,9 @@ from redbox.models import Chunk, ChunkStatus, FileStatus, ProcessingStatusEnum
 from redbox.models.base import PersistableModel
 from redbox.storage.storage_handler import BaseStorageHandler
 
+logging.basicConfig(level=logging.INFO)
+log = logging.getLogger()
+
 
 class ElasticsearchStorageHandler(BaseStorageHandler):
     """Storage Handler for Elasticsearch"""
@@ -38,11 +41,11 @@ class ElasticsearchStorageHandler(BaseStorageHandler):
         resp = self.es_client.index(
             index=target_index,
             id=str(item.uuid),
-            body=item.json(),
+            body=item.model_dump_json(),
         )
         return resp
 
-    def write_items(self, items: list[PersistableModel]) -> list[ObjectApiResponse]:
+    def write_items(self, items: list[PersistableModel]) -> list:
         return list(map(self.write_item, items))
 
     def read_item(self, item_uuid: UUID, model_type: str):
@@ -92,13 +95,13 @@ class ElasticsearchStorageHandler(BaseStorageHandler):
         )
         return result
 
-    def read_all_items(self, model_type: str) -> list[PersistableModel]:
+    def read_all_items(self, model_type: str, user_uuid: UUID) -> list[PersistableModel]:
         target_index = f"{self.root_index}-{model_type.lower()}"
         try:
             result = scan(
                 client=self.es_client,
                 index=target_index,
-                query={"query": {"match_all": {}}},
+                query={"query": {"match": {"creator_user_uuid": str(user_uuid)}}},
                 _source=True,
             )
 
@@ -121,14 +124,14 @@ class ElasticsearchStorageHandler(BaseStorageHandler):
                 logging.error(e)
         return items
 
-    def list_all_items(self, model_type: str) -> list[UUID]:
+    def list_all_items(self, model_type: str, user_uuid: UUID) -> list[UUID]:
         target_index = f"{self.root_index}-{model_type.lower()}"
         try:
             # Only return _id
             results = scan(
                 client=self.es_client,
                 index=target_index,
-                query={"query": {"match_all": {}}},
+                query={"query": {"match": {"creator_user_uuid": str(user_uuid)}}},
                 _source=False,
             )
 
@@ -138,7 +141,7 @@ class ElasticsearchStorageHandler(BaseStorageHandler):
         uuids = [UUID(item["_id"]) for item in results]
         return uuids
 
-    def get_file_chunks(self, parent_file_uuid: UUID) -> list[Chunk]:
+    def get_file_chunks(self, parent_file_uuid: UUID, user_uuid: UUID) -> list[Chunk]:
         """get chunks for a given file"""
         target_index = f"{self.root_index}-chunk"
 
@@ -147,58 +150,34 @@ class ElasticsearchStorageHandler(BaseStorageHandler):
             for item in scan(
                 client=self.es_client,
                 index=target_index,
-                query={"query": {"match": {"parent_file_uuid": str(parent_file_uuid)}}},
-            )
-        ]
-        return res
-
-    def _get_child_chunks(self, parent_file_uuid: UUID) -> list[UUID]:
-        target_index = f"{self.root_index}-chunk"
-
-        try:
-            matched_chunk_ids = [
-                UUID(x["_id"])
-                for x in scan(
-                    client=self.es_client,
-                    index=target_index,
-                    query={"query": {"match": {"parent_file_uuid": str(parent_file_uuid)}}},
-                    _source=False,
-                )
-            ]
-        except NotFoundError:
-            print(f"Index {target_index} not found. Returning empty list.")
-            return []
-
-        return matched_chunk_ids
-
-    def _get_embedded_child_chunks(self, parent_file_uuid: UUID) -> list[UUID]:
-        target_index = f"{self.root_index}-chunk"
-        matched_embedded_chunk_ids = [
-            UUID(x["_id"])
-            for x in scan(
-                client=self.es_client,
-                index=target_index,
                 query={
                     "query": {
                         "bool": {
                             "must": [
-                                {"match": {"parent_file_uuid": str(parent_file_uuid)}},
-                                {"exists": {"field": "embedding"}},
+                                {
+                                    "match": {
+                                        "parent_file_uuid": str(parent_file_uuid),
+                                    }
+                                },
+                                {
+                                    "match": {
+                                        "creator_user_uuid": str(user_uuid),
+                                    }
+                                },
                             ]
                         }
                     }
                 },
-                _source=False,
             )
         ]
+        return res
 
-        return matched_embedded_chunk_ids
-
-    def get_file_status(self, file_uuid: UUID) -> FileStatus:
+    def get_file_status(self, file_uuid: UUID, user_uuid: UUID) -> FileStatus:
         """Get the status of a file and associated Chunks
 
         Args:
             file_uuid (UUID): The UUID of the file to get the status of
+            user_uuid (UUID): the UUID of the user
 
         Returns:
             FileStatus: The status of the file
@@ -206,14 +185,18 @@ class ElasticsearchStorageHandler(BaseStorageHandler):
 
         # Test 1: Get the file
         try:
-            self.read_item(file_uuid, "File")
+            file = self.read_item(file_uuid, "File")
         except NotFoundError:
+            log.error(f"file/{file_uuid} not found")
+            raise ValueError(f"File {file_uuid} not found")
+        if file.creator_user_uuid != user_uuid:
+            log.error(f"file/{file_uuid}.{file.creator_user_uuid} not owned by {user_uuid}")
             raise ValueError(f"File {file_uuid} not found")
 
         # Test 2: Get the number of chunks for the file
-        chunk_uuids = self._get_child_chunks(file_uuid)
+        chunks = self.get_file_chunks(file_uuid, file.creator_user_uuid)
 
-        if len(chunk_uuids) == 0:
+        if not chunks:
             # File has not been chunked yet
             return FileStatus(
                 file_uuid=file_uuid,
@@ -221,24 +204,14 @@ class ElasticsearchStorageHandler(BaseStorageHandler):
                 processing_status=ProcessingStatusEnum.chunking,
             )
 
-        # Test 3: Get the number of embedded chunks for the file
-        embedded_chunk_uuids = self._get_embedded_child_chunks(file_uuid)
-
-        chunk_statuses = [
-            ChunkStatus(chunk_uuid=chunk_uuid, embedded=chunk_uuid in embedded_chunk_uuids)
-            for chunk_uuid in chunk_uuids
-        ]
+        # Test 3: Determine the number of embedded chunks for the file
+        chunk_statuses = [ChunkStatus(chunk_uuid=chunk.uuid, embedded=bool(chunk.embedding)) for chunk in chunks]
 
         # Test 4: Determine the latest status
-        if len(chunk_uuids) == len(embedded_chunk_uuids):
-            latest_status = ProcessingStatusEnum.complete
-        elif len(embedded_chunk_uuids) < len(chunk_uuids):
-            latest_status = ProcessingStatusEnum.embedding
-        else:
-            raise ValueError("The number of embedded chunks should never exceed the number of chunks")
+        is_complete = all(chunk_status.embedded for chunk_status in chunk_statuses)
 
         return FileStatus(
             file_uuid=file_uuid,
             chunk_statuses=chunk_statuses,
-            processing_status=latest_status,
+            processing_status=ProcessingStatusEnum.complete if is_complete else ProcessingStatusEnum.embedding,
         )

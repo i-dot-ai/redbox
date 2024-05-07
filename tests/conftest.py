@@ -1,5 +1,4 @@
 import os
-from uuid import uuid4
 
 import boto3
 import pytest
@@ -41,8 +40,8 @@ def s3_client():
 
 @pytest.fixture
 def headers():
-    user_uuid = uuid4()
-    token = jwt.encode({"user_uuid": str(user_uuid)}, key="super-secure-private-key")
+    static_user_uuid = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
+    token = jwt.encode({"user_uuid": static_user_uuid}, key="super-secure-private-key")
     yield {"Authorization": f"Bearer {token}"}
 
 

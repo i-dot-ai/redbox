@@ -56,7 +56,7 @@ def spotlight_complete_to_docx(
 
     document.add_heading("Summarised Files", level=1)
     for file in files:
-        document.add_paragraph(file.name, style="List Bullet")
+        document.add_paragraph(file.key, style="List Bullet")
 
     for task in spotlight_complete.tasks:
         document.add_heading(task.title, level=1)
@@ -65,11 +65,11 @@ def spotlight_complete_to_docx(
 
         raw = task.raw
         for uuid in uuid_to_file_map.keys():
-            raw = raw.replace(f"<Doc{uuid}>", f"{uuid_to_file_map[uuid].name}")
+            raw = raw.replace(f"<Doc{uuid}>", f"{uuid_to_file_map[uuid].key}")
             raw = raw.replace(f"</Doc{uuid}>", "")
 
-            raw = raw.replace(f"Doc{uuid}", f"{uuid_to_file_map[uuid].name}")
-            raw = raw.replace(f"{uuid}", f"{uuid_to_file_map[uuid].name}")
+            raw = raw.replace(f"Doc{uuid}", f"{uuid_to_file_map[uuid].key}")
+            raw = raw.replace(f"{uuid}", f"{uuid_to_file_map[uuid].key}")
 
         html_raw = markdown.markdown(task.raw)
         temp_file = tempfile.NamedTemporaryFile(delete=True, suffix=".html")

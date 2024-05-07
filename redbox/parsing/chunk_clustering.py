@@ -10,8 +10,8 @@ from redbox.models.file import Chunk, Metadata
 
 def cluster_chunks(
     chunks: list[Chunk],
+    embedding_model: SentenceTransformer,
     desired_chunk_size: int = 300,
-    embedding_model: SentenceTransformer = None,
     dist_weight_split: float = 0.2,
     dist_use_log: bool = True,
 ) -> list[Chunk]:
@@ -20,8 +20,8 @@ def cluster_chunks(
 
     Args:
             chunks (List[File]): List of raw (small) chunks extracted from document.
+            embedding_model (SentenceTransformer): name of the sentence embedding model used to compare chunk similarity
             desired_chunk_size (int): Avarage size of the output chunks. Defaults to 300,
-            embed_model (SentenceTransformer): name of the sentence embedding model used to compare chunk similarity
             dist_weight_split (float): Expects value between 0 and 1.
                 When calculating the combined distance metric this is the relative weight (importance)
                 of the semantic similarity vs the token counts. Defaults to .2.
@@ -127,10 +127,3 @@ def create_pdist(token_counts, pair_embed_dist, weight_embed_dist=0.2, use_log=T
     # the two above distance are combined either using sum or product (i.e. use_log=T)
     combined_dist = [x + y for x, y in zip(embed_dist, token_dist)]
     return combined_dist
-
-
-def merge_chunk_metadata(meta_in: list[Metadata]) -> Metadata:
-    """
-    Combine metadata for multiple chunks from the same document.
-    """
-    return reduce(Metadata.merge, meta_in)

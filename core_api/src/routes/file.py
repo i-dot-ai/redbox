@@ -63,6 +63,7 @@ async def add_file(file_request: FileRequest, user_uuid: Annotated[UUID, Depends
 
     Args:
         file_request (FileRequest): The file to be recorded
+        user_uuid (UUID): The UUID of the user
 
     Returns:
         File: The file uuid from the elastic database
@@ -72,7 +73,7 @@ async def add_file(file_request: FileRequest, user_uuid: Annotated[UUID, Depends
 
     storage_handler.write_item(file)
 
-    log.info(f"publishing {file.uuid}")
+    log.info(f"publishing {file.uuid} for {file.creator_user_uuid}")
     await file_publisher.publish(file)
 
     return file
@@ -106,55 +107,64 @@ if env.dev_mode:
 
 
 @file_app.get("/{file_uuid}", response_model=File, tags=["file"])
-def get_file(file_uuid: UUID, _user_uuid: Annotated[UUID, Depends(get_user_uuid)]) -> File:
+def get_file(file_uuid: UUID, user_uuid: Annotated[UUID, Depends(get_user_uuid)]) -> File:
     """Get a file from the object store
 
     Args:
-        file_uuid (str): The UUID of the file to get
+        file_uuid (UUID): The UUID of the file to get
+        user_uuid (UUID): The UUID of the user
 
     Returns:
         File: The file
     """
-    return storage_handler.read_item(file_uuid, model_type="File")
+    file = storage_handler.read_item(file_uuid, model_type="File")
+    if file.creator_user_uuid != user_uuid:
+        raise HTTPException(status_code=404, detail=f"File {file_uuid} not found")
+    return file
 
 
 @file_app.delete("/{file_uuid}", response_model=File, tags=["file"])
-def delete_file(file_uuid: UUID, _user_uuid: Annotated[UUID, Depends(get_user_uuid)]) -> File:
+def delete_file(file_uuid: UUID, user_uuid: Annotated[UUID, Depends(get_user_uuid)]) -> File:
     """Delete a file from the object store and the database
 
     Args:
-        file_uuid (str): The UUID of the file to delete
+        file_uuid (UUID): The UUID of the file to delete
+        user_uuid (UUID): The UUID of the user
 
     Returns:
         File: The file that was deleted
     """
     file = storage_handler.read_item(file_uuid, model_type="File")
+    if file.creator_user_uuid != user_uuid:
+        raise HTTPException(status_code=404)
+
     s3.delete_object(Bucket=env.bucket_name, Key=file.key)
     storage_handler.delete_item(file)
 
-    chunks = storage_handler.get_file_chunks(file.uuid)
+    chunks = storage_handler.get_file_chunks(file.uuid, user_uuid)
     storage_handler.delete_items(chunks)
     return file
 
 
 @file_app.get("/{file_uuid}/chunks", tags=["file"])
-def get_file_chunks(file_uuid: UUID) -> list[Chunk]:
+def get_file_chunks(file_uuid: UUID, user_uuid: Annotated[UUID, Depends(get_user_uuid)]) -> list[Chunk]:
     log.info(f"getting chunks for file {file_uuid}")
-    return storage_handler.get_file_chunks(file_uuid)
+    return storage_handler.get_file_chunks(file_uuid, user_uuid)
 
 
 @file_app.get("/{file_uuid}/status", tags=["file"])
-def get_file_status(file_uuid: UUID, _user_uuid: Annotated[UUID, Depends(get_user_uuid)]) -> FileStatus:
+def get_file_status(file_uuid: UUID, user_uuid: Annotated[UUID, Depends(get_user_uuid)]) -> FileStatus:
     """Get the status of a file
 
     Args:
-        file_uuid (str): The UUID of the file to get the status of
+        file_uuid (UUID): The UUID of the file to get the status of
+        user_uuid (UUID): The UUID of the user
 
     Returns:
         File: The file with the updated status
     """
     try:
-        status = storage_handler.get_file_status(file_uuid)
+        status = storage_handler.get_file_status(file_uuid, user_uuid)
     except ValueError:
         raise HTTPException(status_code=404, detail=f"File {file_uuid} not found")
 

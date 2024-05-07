@@ -30,7 +30,7 @@ class BaseStorageHandler(ABC):
         pass
 
     @abstractmethod
-    def write_items(self, items: list):
+    def write_items(self, items: list[PersistableModel]):
         """Write a list of objects to a data store"""
         pass
 
@@ -65,11 +65,16 @@ class BaseStorageHandler(ABC):
         pass
 
     @abstractmethod
-    def list_all_items(self, model_type: str):
+    def list_all_items(self, model_type: str, user_uuid: UUID):
         """List all objects of a given type from a data store"""
         pass
 
     @abstractmethod
-    def read_all_items(self, model_type: str):
+    def read_all_items(self, model_type: str, user_uuid: UUID):
         """Read all objects of a given type from a data store"""
+        pass
+
+    @abstractmethod
+    def get_file_chunks(self, parent_file_uuid: UUID, user_uuid: UUID) -> list[Chunk]:
+        """get chunks for a given file"""
         pass

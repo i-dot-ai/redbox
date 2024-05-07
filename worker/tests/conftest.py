@@ -69,10 +69,7 @@ def file(s3_client, file_pdf_path):
             Tagging=f"file_type={file_type}",
         )
 
-    file_record = File(
-        key=file_name,
-        bucket=env.bucket_name,
-    )
+    file_record = File(key=file_name, bucket=env.bucket_name, creator_user_uuid=uuid4())
 
     yield file_record
 
@@ -91,12 +88,7 @@ def elasticsearch_storage_handler(
 
 @pytest.fixture
 def chunk() -> YieldFixture[Chunk]:
-    test_chunk = Chunk(
-        parent_file_uuid=uuid4(),
-        index=1,
-        text="test_text",
-        metadata={},
-    )
+    test_chunk = Chunk(parent_file_uuid=uuid4(), index=1, text="test_text", creator_user_uuid=uuid4())
     yield test_chunk
 
 
