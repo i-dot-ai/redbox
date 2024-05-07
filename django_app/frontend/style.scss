@@ -59,7 +59,7 @@ $iai-pink: #b62777;
   top: -3rem;
 }
 /* only show response feedback for last AI message */
-.iai-chat-message--ai + .iai-response-feedback {
+[data-role="ai"] + .iai-response-feedback {
   display: block;
 }
 .iai-response-feedback__buttons {

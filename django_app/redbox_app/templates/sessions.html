@@ -45,7 +45,7 @@
 
 
     {% macro message_box(role, text, classes=None) %}
-      <div class="iai-chat-message iai-chat-message--{{ role }} govuk-body {{ classes }}">
+      <div class="iai-chat-message iai-chat-message--{{ role }} govuk-body {{ classes }}" data-role="{{ role }}">
         <div class="iai-chat-message__role">{{ role | upper }}</div>
         <div class="iai-chat-message__text">{{ text }}</div>
       </div>
@@ -61,7 +61,7 @@
         ) }}
       {% endfor %}
 
-      <div class="iai-response-feedback">
+      <div class="iai-response-feedback js-response-feedback">
         <feedback-buttons class="iai-response-feedback__buttons"></feedback-buttons>
         {{ message_box(
           role = "AI",
