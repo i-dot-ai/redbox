@@ -1,8 +1,7 @@
 import boto3
+import requests
 from botocore.exceptions import ClientError
 from django.conf import settings
-import requests
-
 from redbox_app.redbox_core.models import User
 
 
@@ -46,11 +45,11 @@ class CoreApiClient:
     def url(self) -> str:
         return f"{self.host}:{self.port}"
 
-    def upload_file(self, name: str, user: User):
+    def upload_file(self, bucket_name: str, name: str, user: User):
         if self.host == "testserver":
             file = {
                 "key": name,
-                "bucket": settings.BUCKET_NAME,
+                "bucket": bucket_name,
             }
             return file
 
@@ -60,3 +59,8 @@ class CoreApiClient:
         if response.status_code != 201:
             raise ValueError(response.text)
         return response.json()
+
+    def rag_chat(self, message_history: list[dict[str, str]], token: str) -> str:
+        url = f"{self.url}/chat/rag"
+        response = requests.post(url, json={"message_history": message_history}, headers={"Authorization": token})
+        return response.json()["output_text"]
