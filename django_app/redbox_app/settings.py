@@ -5,7 +5,6 @@ import socket
 from pathlib import Path
 
 import environ
-from django.core.files.storage import FileSystemStorage
 from storages.backends import s3boto3
 
 from .hosting_environment import HostingEnvironment
@@ -198,13 +197,11 @@ BUCKET_NAME = env.str("BUCKET_NAME")
 AWS_S3_REGION_NAME = env.str("AWS_REGION")
 
 if HostingEnvironment.is_local():
+    MINIO_ENDPOINT = f"http://{env.str('MINIO_HOST')}:{env.str('MINIO_PORT')}"
+    AWS_S3_ENDPOINT_URL = MINIO_ENDPOINT
     STORAGES = {
         "default": {
-            "BACKEND": FileSystemStorage,
-            "OPTIONS": {
-                "location": "/files",
-                "base_url": "/files/",
-            },
+            "BACKEND": s3boto3.S3Boto3Storage,
         },
         "staticfiles": {
             "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
@@ -243,7 +240,13 @@ else:
     SECURE_HSTS_SECONDS = 2 * 365 * 24 * 60 * 60
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SESSION_COOKIE_SECURE = True
-    AWS_S3_OBJECT_PARAMETERS = {"ContentDisposition": "attachment"}
+AWS_S3_OBJECT_PARAMETERS = {"ContentDisposition": "attachment"}
+
+ALLOWED_HOSTS = [
+    "localhost",
+    "127.0.0.1",
+    "0.0.0.0",
+]
 
 
 DATABASES = {
