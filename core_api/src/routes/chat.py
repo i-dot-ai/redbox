@@ -77,16 +77,6 @@ else:
     raise ValueError(f"Unknown Elastic subscription level {env.elastic.subscription_level}")
 
 
-class DebugApproxRetrievalStrategy(ApproxRetrievalStrategy):
-    def query(self, *args, **kwargs):
-        q = super().query(*args, **kwargs)
-        logging.info(f"query is: {q}")
-        return q
-
-
-strategy = DebugApproxRetrievalStrategy(hybrid=False)
-
-
 vector_store = ElasticsearchStore(
     es_connection=es,
     index_name="redbox-data-chunk",
