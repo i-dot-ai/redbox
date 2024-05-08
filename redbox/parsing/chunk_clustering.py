@@ -79,18 +79,8 @@ def cluster_chunks(
     return out_chunks
 
 
-def create_pdist(token_counts, pair_embed_dist, weight_embed_dist=0.2, use_log=True):
-    """
-    Creates a distance (upper) matrix for the chunk merging.
-    It combines embedding distance with token counts metric for adjacent chunks.
-    Distance between neighbours is always smaller than further away pair -> enforcing
-    the hierarchical clustering to merge only adjacent blocks in each step.
-
-    """
-    n = len(token_counts)
-
-    # Phase 1: Calculate the two forms of distance between adjacent chunks
-
+def compute_embed_dist(pair_embed_dist: np.array) -> np.array:
+    n = len(pair_embed_dist)
     # embedding distance between chunk i and j is taken as MAXIMUM of the pairwise embedding
     # distance of all the adjacent pairs between them
     embed_dims = np.tri(n, k=0) * np.array(pair_embed_dist)
@@ -98,16 +88,41 @@ def create_pdist(token_counts, pair_embed_dist, weight_embed_dist=0.2, use_log=T
     # Chebyshev distance is used to make sure that the distance between i and j is always
     # smaller than the distance between i and k and j and k for any k
     embed_dist = scipy.spatial.distance.pdist(embed_dims, "chebyshev")
+    return embed_dist
+
+
+def compute_token_dist(token_counts: np.array) -> np.array:
+    n = len(token_counts)
 
     # the token count distance between junk and i and j is the size of minimal text segment
     # containing them, i.e. sum of token counts of all the intermediate chunks
     token_dims = np.tri(n + 1, k=0) * np.concatenate([[0], np.array(token_counts)])
 
     # drop diagonal (sizes of individual chunks)
-    drop_ind = [y - x > 1 for x, y in zip(np.triu_indices(n + 1, k=1)[0], np.triu_indices(n + 1, k=1)[1])]
+    a, b = np.triu_indices(n + 1, k=1)
+    drop_ind = b - a > 1
 
     # calculate the token count distance between chunk i and j
     token_dist = scipy.spatial.distance.pdist(token_dims, "cityblock")[drop_ind]
+    return token_dist
+
+
+def create_pdist(
+    token_counts: np.array, pair_embed_dist: np.array, weight_embed_dist: float = 0.2, use_log: bool = True
+):
+    """
+    Creates a distance (upper) matrix for the chunk merging.
+    It combines embedding distance with token counts metric for adjacent chunks.
+    Distance between neighbours is always smaller than further away pair -> enforcing
+    the hierarchical clustering to merge only adjacent blocks in each step.
+    """
+
+    assert len(pair_embed_dist) == len(pair_embed_dist)
+
+    # Phase 1: Calculate the two forms of distance between adjacent chunks
+
+    embed_dist = compute_embed_dist(pair_embed_dist)
+    token_dist = compute_token_dist(token_counts)
 
     # scale the distances by log to make them more comparable
     if use_log:
@@ -119,11 +134,11 @@ def create_pdist(token_counts, pair_embed_dist, weight_embed_dist=0.2, use_log=T
     # bigger weight means more importance of the embedding distance
     if np.std(embed_dist) > 0:
         embed_dist = embed_dist / np.std(embed_dist) * weight_embed_dist
-    if np.std(embed_dist) > 0:
+    if np.std(token_dist) > 0:
         token_dist = token_dist / np.std(token_dist) * (1 - weight_embed_dist)
 
     # Phase 2: Combine the two distances into one
 
     # the two above distance are combined either using sum or product (i.e. use_log=T)
-    combined_dist = [x + y for x, y in zip(embed_dist, token_dist)]
+    combined_dist = embed_dist + token_dist
     return combined_dist
