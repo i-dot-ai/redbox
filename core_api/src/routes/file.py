@@ -2,7 +2,7 @@ import logging
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import FastAPI, HTTPException, UploadFile, Depends
+from fastapi import Depends, FastAPI, HTTPException, UploadFile
 from fastapi import File as FastAPIFile
 from faststream.redis.fastapi import RedisRouter
 from pydantic import BaseModel, Field
@@ -83,9 +83,7 @@ async def add_file(file_request: FileRequest, user_uuid: Annotated[UUID, Depends
 if env.dev_mode:
 
     @file_app.post("/upload", tags=["file"], response_model=File)
-    async def upload_file(
-        user_uuid: Annotated[UUID, Depends(get_user_uuid)], file: UploadFile = FastAPIFile(...)
-    ) -> File:
+    async def upload_file(user_uuid: Annotated[UUID, Depends(get_user_uuid)], file: UploadFile = None) -> File:
         """Upload a file to the object store
 
         Args:
@@ -94,6 +92,7 @@ if env.dev_mode:
         Returns:
             File: The file that was uploaded
         """
+        file = file or FastAPIFile(...)
         key = file.filename
         s3.upload_fileobj(file.file, env.bucket_name, key)
 
@@ -165,7 +164,7 @@ def get_file_status(file_uuid: UUID, user_uuid: Annotated[UUID, Depends(get_user
     """
     try:
         status = storage_handler.get_file_status(file_uuid, user_uuid)
-    except ValueError:
-        raise HTTPException(status_code=404, detail=f"File {file_uuid} not found")
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=f"File {file_uuid} not found") from e
 
     return status

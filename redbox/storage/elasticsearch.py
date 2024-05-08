@@ -106,7 +106,7 @@ class ElasticsearchStorageHandler(BaseStorageHandler):
             )
 
         except NotFoundError:
-            print(f"Index {target_index} not found. Returning empty list.")
+            log.info(f"Index {target_index} not found. Returning empty list.")
             return []
 
         # Grab the model we'll use to deserialize the items
@@ -136,7 +136,7 @@ class ElasticsearchStorageHandler(BaseStorageHandler):
             )
 
         except NotFoundError:
-            print(f"Index {target_index} not found. Returning empty list.")
+            log.info(f"Index {target_index} not found. Returning empty list.")
             return []
         uuids = [UUID(item["_id"]) for item in results]
         return uuids
@@ -186,9 +186,9 @@ class ElasticsearchStorageHandler(BaseStorageHandler):
         # Test 1: Get the file
         try:
             file = self.read_item(file_uuid, "File")
-        except NotFoundError:
+        except NotFoundError as e:
             log.error(f"file/{file_uuid} not found")
-            raise ValueError(f"File {file_uuid} not found")
+            raise ValueError(f"File {file_uuid} not found") from e
         if file.creator_user_uuid != user_uuid:
             log.error(f"file/{file_uuid}.{file.creator_user_uuid} not owned by {user_uuid}")
             raise ValueError(f"File {file_uuid} not found")

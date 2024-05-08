@@ -77,3 +77,24 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.scripts]
 download-model = 'download_embedder:download'
+
+[tool.ruff.format]
+exclude = ["django_app/redbox_app/redbox_core/migrations/*.py"]
+
+[tool.ruff.lint]
+select = [
+    "A",
+    "I",
+    "B",
+    "E",
+    "F",
+    "T",
+    "W",
+]
+exclude = ["django_app/redbox_app/redbox_core/migrations/*.py"]
+ignore = []
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["S101"]
+"*/tests/*" = ["S101"]
+"worker/*" = ["B008"]

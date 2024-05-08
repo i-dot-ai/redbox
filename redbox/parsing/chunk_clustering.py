@@ -104,7 +104,7 @@ def create_pdist(token_counts, pair_embed_dist, weight_embed_dist=0.2, use_log=T
     token_dims = np.tri(n + 1, k=0) * np.concatenate([[0], np.array(token_counts)])
 
     # drop diagonal (sizes of individual chunks)
-    drop_ind = [y - x > 1 for x, y in zip(np.triu_indices(n + 1, k=1)[0], np.triu_indices(n + 1, k=1)[1])]
+    drop_ind = [y - x > 1 for x, y in zip(np.triu_indices(n + 1, k=1)[0], np.triu_indices(n + 1, k=1)[1], strict=False)]
 
     # calculate the token count distance between chunk i and j
     token_dist = scipy.spatial.distance.pdist(token_dims, "cityblock")[drop_ind]
@@ -125,5 +125,5 @@ def create_pdist(token_counts, pair_embed_dist, weight_embed_dist=0.2, use_log=T
     # Phase 2: Combine the two distances into one
 
     # the two above distance are combined either using sum or product (i.e. use_log=T)
-    combined_dist = [x + y for x, y in zip(embed_dist, token_dist)]
+    combined_dist = [x + y for x, y in zip(embed_dist, token_dist, strict=False)]
     return combined_dist

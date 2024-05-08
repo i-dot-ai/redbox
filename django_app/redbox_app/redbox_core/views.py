@@ -1,3 +1,4 @@
+import logging
 import os
 import uuid
 
@@ -10,7 +11,16 @@ from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.views.decorators.http import require_http_methods
 from redbox_app.redbox_core.client import CoreApiClient, s3_client
-from redbox_app.redbox_core.models import ChatHistory, ChatMessage, ChatRoleEnum, File, ProcessingStatusEnum
+from redbox_app.redbox_core.models import (
+    ChatHistory,
+    ChatMessage,
+    ChatRoleEnum,
+    File,
+    ProcessingStatusEnum,
+)
+
+logger = logging.getLogger(__name__)
+logger.setLevel("DEBUG")
 
 s3 = s3_client()
 CHUNK_SIZE = 1024
@@ -142,7 +152,7 @@ def upload_view(request):
 @login_required
 def remove_doc_view(request, doc_id: str):
     if request.method == "POST":
-        print(f"Removing document: {request.POST['doc_id']}")
+        logger.info(f"Removing document: {request.POST['doc_id']}")
         # TO DO: handle document deletion here
 
     # Hard-coding document name for now, just to flag that this is needed in the template
@@ -203,7 +213,9 @@ def post_message(request: HttpRequest) -> HttpResponse:
     ]
     url = settings.CORE_API_HOST + ":" + settings.CORE_API_PORT + "/chat/rag"
     response = requests.post(
-        url, json={"message_history": message_history}, headers={"Authorization": request.user.get_bearer_token()}
+        url,
+        json={"message_history": message_history},
+        headers={"Authorization": request.user.get_bearer_token()},
     )
     llm_data = response.json()
 

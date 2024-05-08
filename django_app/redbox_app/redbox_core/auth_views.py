@@ -1,9 +1,8 @@
 from django.contrib.auth import logout
 from django.http import HttpRequest
-from django.shortcuts import render, redirect
+from django.shortcuts import redirect, render
 from magic_link.models import MagicLink
-
-from redbox_app.redbox_core import models, email_handler
+from redbox_app.redbox_core import email_handler, models
 
 
 def sign_in_view(request: HttpRequest):

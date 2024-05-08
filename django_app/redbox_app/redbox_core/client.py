@@ -1,8 +1,7 @@
 import boto3
+import requests
 from botocore.exceptions import ClientError
 from django.conf import settings
-import requests
-
 from redbox_app.redbox_core.models import User
 
 
@@ -55,7 +54,9 @@ class CoreApiClient:
             return file
 
         response = requests.post(
-            f"{self.url}/file", json={"key": name}, headers={"Authorization": user.get_bearer_token()}
+            f"{self.url}/file",
+            json={"key": name},
+            headers={"Authorization": user.get_bearer_token()},
         )
         if response.status_code != 201:
             raise ValueError(response.text)

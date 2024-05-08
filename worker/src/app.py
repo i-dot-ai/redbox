@@ -1,11 +1,11 @@
 import logging
 from datetime import datetime
 
-from fastapi import FastAPI, Depends
+from fastapi import Depends, FastAPI
 from faststream.redis.fastapi import RedisRouter
 
 from redbox.model_db import SentenceTransformerDB
-from redbox.models import EmbedQueueItem, File, Settings, StatusResponse, Chunk
+from redbox.models import Chunk, EmbedQueueItem, File, Settings, StatusResponse
 from redbox.parsing.file_chunker import FileChunker
 from redbox.storage.elasticsearch import ElasticsearchStorageHandler
 

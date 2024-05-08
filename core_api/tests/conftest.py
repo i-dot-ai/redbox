@@ -1,6 +1,6 @@
 import os
 from typing import Generator, TypeVar
-from uuid import uuid4, UUID
+from uuid import UUID, uuid4
 
 import pytest
 from botocore.exceptions import ClientError
