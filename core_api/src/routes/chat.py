@@ -76,6 +76,17 @@ elif env.elastic.subscription_level in ["platinum", "enterprise"]:
 else:
     raise ValueError(f"Unknown Elastic subscription level {env.elastic.subscription_level}")
 
+
+class DebugApproxRetrievalStrategy(ApproxRetrievalStrategy):
+    def query(self, *args, **kwargs):
+        q = super().query(*args, **kwargs)
+        logging.info(f"query is: {q}")
+        return q
+
+
+strategy = DebugApproxRetrievalStrategy(hybrid=False)
+
+
 vector_store = ElasticsearchStore(
     es_connection=es,
     index_name="redbox-data-chunk",
@@ -117,7 +128,7 @@ def simple_chat(chat_request: ChatRequest, _user_uuid: Annotated[UUID, Depends(g
 
 
 @chat_app.post("/rag", tags=["chat"])
-def rag_chat(chat_request: ChatRequest, _user_uuid: Annotated[UUID, Depends(get_user_uuid)]) -> ChatResponse:
+def rag_chat(chat_request: ChatRequest, user_uuid: Annotated[UUID, Depends(get_user_uuid)]) -> ChatResponse:
     """Get a LLM response to a question history and file
 
     Args:
@@ -144,7 +155,9 @@ def rag_chat(chat_request: ChatRequest, _user_uuid: Annotated[UUID, Depends(get_
 
     standalone_question = condense_question_chain({"question": question, "chat_history": previous_history})["text"]
 
-    docs = vector_store.as_retriever().get_relevant_documents(standalone_question)
+    docs = vector_store.as_retriever(
+        search_kwargs={"filter": {"term": {"creator_user_uuid.keyword": str(user_uuid)}}}
+    ).get_relevant_documents(standalone_question)
 
     result = docs_with_sources_chain(
         {
