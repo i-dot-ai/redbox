@@ -21,7 +21,7 @@ def cluster_chunks(
     Args:
             chunks (List[File]): List of raw (small) chunks extracted from document.
             embedding_model (SentenceTransformer): name of the sentence embedding model used to compare chunk similarity
-            desired_chunk_size (int): Avarage size of the output chunks. Defaults to 300,
+            desired_chunk_size (int): Average size of the output chunks. Defaults to 300,
             dist_weight_split (float): Expects value between 0 and 1.
                 When calculating the combined distance metric this is the relative weight (importance)
                 of the semantic similarity vs the token counts. Defaults to .2.
@@ -83,11 +83,43 @@ def compute_embed_dist(pair_embed_dist: np.array) -> np.array:
     n = len(pair_embed_dist)
     # embedding distance between chunk i and j is taken as MAXIMUM of the pairwise embedding
     # distance of all the adjacent pairs between them
+
     embed_dims = np.tri(n, k=0) * np.array(pair_embed_dist)
 
     # Chebyshev distance is used to make sure that the distance between i and j is always
     # smaller than the distance between i and k and j and k for any k
+
     embed_dist = scipy.spatial.distance.pdist(embed_dims, "chebyshev")
+
+    # example:
+    # suppose we have:
+    #   pair_embed_dist = [.1, .3, .2, .4]
+    #
+    # we convert this into triangular matrix, called `embed_dims`:
+    #   .1 .  .  .
+    #   .1 .3 .  .
+    #   .1 .3 .2 .
+    #   .1 .3 .2 .4
+    #
+    # We now compute the Chebyshev Distance, d(i, j), between all rows of
+    # `embed_dims` where i, j are its indices:
+    #
+    #   d(0, 1) d(0, 2) d(0, 3)
+    #           d(1, 2) d(1, 3)
+    #                   d(2, 3)
+    #
+    # The Chebyshev Distance function is (in pure python):
+    # def d(i, j):
+    #     result = max(abs(a, b) for a, b in zip(embed_dims[i], embed_dims[j]))
+    #
+    # So the embedding distances are:
+    #        .3      .2      .4
+    #                .2      .4
+    #                        .4
+    #
+    # This is rewritten from left-to-bottom (to save space in memory)
+    # [.3, .2, .4, .2, .4, .4]
+    #
     return embed_dist
 
 
@@ -96,7 +128,7 @@ def compute_token_dist(token_counts: np.array) -> np.array:
 
     # the token count distance between junk and i and j is the size of minimal text segment
     # containing them, i.e. sum of token counts of all the intermediate chunks
-    token_dims = np.tri(n + 1, k=0) * np.concatenate([[0], np.array(token_counts)])
+    token_dims = np.tri(n + 1, k=0) * np.concatenate(([0], token_counts))
 
     # drop diagonal (sizes of individual chunks)
     a, b = np.triu_indices(n + 1, k=1)
@@ -132,13 +164,14 @@ def create_pdist(
     # make the two distances comparable and then scale them using input weight parameter
     # smaller weight means more importance of the token count distance
     # bigger weight means more importance of the embedding distance
-    if np.std(embed_dist) > 0:
-        embed_dist = embed_dist / np.std(embed_dist) * weight_embed_dist
-    if np.std(token_dist) > 0:
-        token_dist = token_dist / np.std(token_dist) * (1 - weight_embed_dist)
+    if embed_dist_std := np.std(embed_dist) > 0:
+        embed_dist = embed_dist / embed_dist_std * weight_embed_dist
+    if token_dist_std := np.std(token_dist) > 0:
+        token_dist = token_dist / token_dist_std * (1 - weight_embed_dist)
 
     # Phase 2: Combine the two distances into one
 
+    assert len(embed_dist) == len(token_dist)
     # the two above distance are combined either using sum or product (i.e. use_log=T)
     combined_dist = embed_dist + token_dist
     return combined_dist
