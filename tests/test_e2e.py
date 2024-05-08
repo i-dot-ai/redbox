@@ -40,6 +40,7 @@ class TestEndToEnd:
                     "bucket": bucket_name,
                 },
                 headers=headers,
+                timeout=30,
             )
             TestEndToEnd.file_uuid = response.json()["uuid"]
             assert response.status_code == 200
@@ -53,7 +54,9 @@ class TestEndToEnd:
         while time.time() - start_time < timeout:
             time.sleep(1)
             chunk_response = requests.get(
-                f"http://localhost:5002/file/{TestEndToEnd.file_uuid}/status", headers=headers
+                f"http://localhost:5002/file/{TestEndToEnd.file_uuid}/status",
+                headers=headers,
+                timeout=30,
             )
             if chunk_response.status_code == 200 and chunk_response.json()["processing_status"] == "complete":
                 embedding_complete = True
@@ -65,7 +68,9 @@ class TestEndToEnd:
             pytest.fail(reason=f"failed to get embedded chunks within {timeout} seconds, potential error: {error}")
 
     def test_get_file_chunks(self, headers):
-        chunks_response = requests.get(f"http://localhost:5002/file/{TestEndToEnd.file_uuid}/chunks", headers=headers)
+        chunks_response = requests.get(
+            f"http://localhost:5002/file/{TestEndToEnd.file_uuid}/chunks", headers=headers, timeout=30
+        )
         assert chunks_response.status_code == 200
 
     def test_post_rag(self, headers):
@@ -78,6 +83,7 @@ class TestEndToEnd:
                 ]
             },
             headers=headers,
+            timeout=30,
         )
         assert rag_response.status_code == 200
         source_document_file_uuids = {

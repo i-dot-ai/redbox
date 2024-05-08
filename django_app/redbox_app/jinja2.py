@@ -13,7 +13,8 @@ markdown_converter = MarkdownIt("js-default")
 
 
 def url(path, *args, **kwargs):
-    assert not (args and kwargs)
+    if args and kwargs:
+        raise ValueError("Use *args or **kwargs, not both.")
     return reverse(path, args=args, kwargs=kwargs)
 
 
@@ -47,13 +48,13 @@ def humanize_timedelta(minutes=0, hours_limit=200, too_large_msg=""):
 
 def environment(**options):
     extra_options = {}
-    env = jinja2.Environment(  # nosec B701
+    env = jinja2.Environment(  # nosec B701 # noqa S701
         **{
             "autoescape": True,
             "extensions": [CompressorExtension],
             **options,
             **extra_options,
-        }
+        },
     )
     env.globals.update(
         {

@@ -54,9 +54,7 @@ class CoreApiClient:
             return file
 
         response = requests.post(
-            f"{self.url}/file",
-            json={"key": name},
-            headers={"Authorization": user.get_bearer_token()},
+            f"{self.url}/file", json={"key": name}, headers={"Authorization": user.get_bearer_token()}, timeout=30
         )
         if response.status_code != 201:
             raise ValueError(response.text)

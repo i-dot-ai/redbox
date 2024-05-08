@@ -216,6 +216,7 @@ def post_message(request: HttpRequest) -> HttpResponse:
         url,
         json={"message_history": message_history},
         headers={"Authorization": request.user.get_bearer_token()},
+        timeout=60,
     )
     llm_data = response.json()
 

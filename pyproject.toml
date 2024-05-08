@@ -92,7 +92,7 @@ select = [
     "I",
 #    "N",
 #    "Q",
-#    "S",
+    "S",
     "T",
     "W",
 #    "ARG",
@@ -128,6 +128,6 @@ exclude = ["django_app/redbox_app/redbox_core/migrations/*.py"]
 ignore = []
 
 [tool.ruff.lint.per-file-ignores]
-"tests/*" = ["S101"]
-"*/tests/*" = ["S101"]
+"tests/*" = ["S101", "S106"]
+"*/tests/*" = ["S101", "S106"]
 "worker/*" = ["B008"]

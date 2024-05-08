@@ -86,8 +86,9 @@ class ElasticsearchStorageHandler(BaseStorageHandler):
         if not items:
             return None
 
+        if len({item.model_type for item in items}) > 1:
+            raise ValueError("Items with differing model types: {item.model_type for item in items}")
         model_type = items[0].model_type
-        assert all(item.model_type == model_type for item in items)
         target_index = f"{self.root_index}-{model_type.lower()}"
         result = self.es_client.delete_by_query(
             index=target_index,
