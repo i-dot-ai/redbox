@@ -138,18 +138,6 @@ services:
       - .env
     networks:
       - redbox-app-network
-  # frontend-proto:
-  #   image: redbox-frontend-proto:latest
-  #   build:
-  #     context: ./frontend/prototypes/
-  #     dockerfile: Dockerfile
-  #   env_file:
-  #     - .env
-  #   ports:
-  #     - 3000:3000
-  #   networks:
-  #     - redbox-app-network
-  #   restart: unless-stopped
 
 networks:
   redbox-app-network:
