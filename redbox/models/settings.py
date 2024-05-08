@@ -41,14 +41,12 @@ class Settings(BaseSettings):
     monitoring_internal_password: str = "redboxpass"
     beats_system_password: str = "redboxpass"
 
-    # minio_host: str = "minio"
-    # minio_port: int = 9000
-    # minio_access_key: str = "minioadmin"
-    # minio_secret_key: str = "minioadmin"
+    minio_host: str = "minio"
+    minio_port: int = 9000
+    aws_access_key: str = "minioadmin"
+    aws_secret_key: str = "minioadmin"
 
     aws_region: str = "eu-west-2"
-    aws_secret_key: Optional[str] = None
-    aws_access_key: Optional[str] = None
     bucket_name: str = "redbox-storage-dev"
     embedding_model: str = "all-mpnet-base-v2"
 
@@ -57,6 +55,8 @@ class Settings(BaseSettings):
 
     redis_host: str = "redis"
     redis_port: int = 6379
+
+    object_store: str = "minio"
 
     dev_mode: bool = False
     django_settings_module: str = "redbox_app.settings"
