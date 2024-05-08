@@ -46,7 +46,7 @@ def humanize_timedelta(minutes=0, hours_limit=200, too_large_msg=""):
 
 
 def environment(**options):
-    extra_options = []
+    extra_options = {}
     env = jinja2.Environment(  # nosec B701
         **{
             "autoescape": True,

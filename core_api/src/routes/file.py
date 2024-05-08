@@ -73,7 +73,7 @@ async def add_file(file_request: FileRequest, user_uuid: Annotated[UUID, Depends
 
     storage_handler.write_item(file)
 
-    log.info(f"publishing {file.uuid} for {file.creator_user_uuid}")
+    log.info("publishing %s for %s", file.uuid, file.creator_user_uuid)
     await file_publisher.publish(file)
 
     return file
@@ -99,7 +99,7 @@ if env.dev_mode:
         file = File(key=key, bucket=env.bucket_name, creator_user_uuid=user_uuid)
         storage_handler.write_item(file)
 
-        log.info(f"publishing {file.uuid}")
+        log.info("publishing %s", file.uuid)
         await file_publisher.publish(file)
 
         return file
@@ -147,7 +147,7 @@ def delete_file(file_uuid: UUID, user_uuid: Annotated[UUID, Depends(get_user_uui
 
 @file_app.get("/{file_uuid}/chunks", tags=["file"])
 def get_file_chunks(file_uuid: UUID, user_uuid: Annotated[UUID, Depends(get_user_uuid)]) -> list[Chunk]:
-    log.info(f"getting chunks for file {file_uuid}")
+    log.info("getting chunks for file %s", file_uuid)
     return storage_handler.get_file_chunks(file_uuid, user_uuid)
 
 

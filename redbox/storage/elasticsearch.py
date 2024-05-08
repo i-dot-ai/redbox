@@ -106,7 +106,7 @@ class ElasticsearchStorageHandler(BaseStorageHandler):
             )
 
         except NotFoundError:
-            log.info(f"Index {target_index} not found. Returning empty list.")
+            log.info("Index %s not found. Returning empty list.", target_index)
             return []
 
         # Grab the model we'll use to deserialize the items
@@ -136,7 +136,7 @@ class ElasticsearchStorageHandler(BaseStorageHandler):
             )
 
         except NotFoundError:
-            log.info(f"Index {target_index} not found. Returning empty list.")
+            log.info("Index %s not found. Returning empty list.", target_index)
             return []
         uuids = [UUID(item["_id"]) for item in results]
         return uuids
@@ -187,10 +187,10 @@ class ElasticsearchStorageHandler(BaseStorageHandler):
         try:
             file = self.read_item(file_uuid, "File")
         except NotFoundError as e:
-            log.error(f"file/{file_uuid} not found")
+            log.error("file/%s not found", file_uuid)
             raise ValueError(f"File {file_uuid} not found") from e
         if file.creator_user_uuid != user_uuid:
-            log.error(f"file/{file_uuid}.{file.creator_user_uuid} not owned by {user_uuid}")
+            log.error("file/%s.%s not owned by %s", file_uuid, file.creator_user_uuid, user_uuid)
             raise ValueError(f"File {file_uuid} not found")
 
         # Test 2: Get the number of chunks for the file

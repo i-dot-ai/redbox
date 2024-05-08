@@ -49,18 +49,18 @@ async def ingest(
     4. Puts chunk on embedder-queue
     """
 
-    logging.info(f"Ingesting file: {file}")
+    logging.info("Ingesting file: %s", file)
 
     chunks = chunker.chunk_file(file=file)
 
-    logging.info(f"Writing {len(chunks)} chunks to storage for file uuid: {file.uuid}")
+    logging.info("Writing %s chunks to storage for file uuid: %s", len(chunks), file.uuid)
 
     items = storage_handler.write_items(chunks)
-    logging.info(f"written {len(items)} chunks to elasticsearch")
+    logging.info("written %s chunks to elasticsearch", len(items))
 
     for chunk in chunks:
         queue_item = EmbedQueueItem(chunk_uuid=chunk.uuid)
-        logging.info(f"Writing chunk to storage for chunk uuid: {chunk.uuid}")
+        logging.info("Writing chunk to storage for chunk uuid: %s", chunk.uuid)
         await publisher.publish(queue_item)
 
     return items
@@ -80,7 +80,7 @@ async def embed(
     chunk: Chunk = storage_handler.read_item(queue_item.chunk_uuid, "Chunk")
     embedded_sentences = embedding_model.embed_sentences([chunk.text])
     if len(embedded_sentences.data) != 1:
-        logging.error(f"expected just 1 embedding but got {len(embedded_sentences.data)}")
+        logging.error("expected just 1 embedding but got %s", len(embedded_sentences.data))
         return
     chunk.embedding = embedded_sentences.data[0].embedding
     storage_handler.update_item(chunk)

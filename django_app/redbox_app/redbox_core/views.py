@@ -152,7 +152,7 @@ def upload_view(request):
 @login_required
 def remove_doc_view(request, doc_id: str):
     if request.method == "POST":
-        logger.info(f"Removing document: {request.POST['doc_id']}")
+        logger.info("Removing document: %s", request.POST["doc_id"])
         # TO DO: handle document deletion here
 
     # Hard-coding document name for now, just to flag that this is needed in the template
