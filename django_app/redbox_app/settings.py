@@ -243,6 +243,7 @@ else:
     SECURE_HSTS_SECONDS = 2 * 365 * 24 * 60 * 60
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SESSION_COOKIE_SECURE = True
+    AWS_S3_OBJECT_PARAMETERS = {"ContentDisposition": "attachment"}
 
 
 DATABASES = {
