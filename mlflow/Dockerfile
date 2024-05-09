@@ -1,4 +1,4 @@
-FROM ghcr.io/mlflow/mlflow
+FROM ghcr.io/mlflow/mlflow:v2.21.1
 
 WORKDIR /mlflow
 
