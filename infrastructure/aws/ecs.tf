@@ -32,6 +32,14 @@ locals {
     "EMAIL_BACKEND_TYPE": "CONSOLE",
     "USE_STREAMING": false
   }
+
+  health_check = {
+    healthy_threshold   = 3
+    unhealthy_threshold = 3
+    accepted_response   = "200"
+    path                = "/health"
+    timeout             = 5
+  }
 }
 
 
@@ -57,23 +65,17 @@ resource "aws_route53_record" "type_a_record" {
 
 module "django-app" {
 #   registry_arn = aws_service_discovery_service.service_discovery.arn
-  create_listener    = true
-  create_networking  = true
   memory             = 4096
   cpu                = 2048
+  create_listener    = true
+  create_networking  = true
   source             = "../../../i-ai-core-infrastructure//modules/ecs"
   project_name       = "redbox-django-app"
   image_tag          = "049e11f4e4245862ffeed7fe33d36f8a206fff8b"
-  prefix             = "frontend"
+  prefix             = "backend"
   ecr_repository_uri = "${var.ecr_repository_uri}/redbox-django-app"
   ecs_cluster_id     = module.cluster.ecs_cluster_id
-  health_check = {
-    healthy_threshold   = 3
-    unhealthy_threshold = 3
-    accepted_response   = "200"
-    path                = "/health"
-    timeout             = 5
-  }
+  health_check       = local.health_check
   state_bucket                 = var.state_bucket
   vpc_id                       = data.terraform_remote_state.vpc.outputs.vpc_id
   private_subnets              = data.terraform_remote_state.vpc.outputs.private_subnets
@@ -94,18 +96,12 @@ module "core_api" {
   create_networking  = false
   source             = "../../../i-ai-core-infrastructure//modules/ecs"
   project_name       = "redbox-core-api"
-  image_tag          = "0a08cb1d50315e20258d835f904af19b26a26a78"
+  image_tag          = "049e11f4e4245862ffeed7fe33d36f8a206fff8b"
   prefix             = "backend"
   ecr_repository_uri = "${var.ecr_repository_uri}/redbox-core-api"
   ecs_cluster_id     = module.cluster.ecs_cluster_id
-  health_check = {
-    healthy_threshold   = 3
-    unhealthy_threshold = 3
-    accepted_response   = "200"
-    path                = "/health"
-    timeout             = 5
-  }
-  state_bucket                 = var.state_bucket
+   health_check       = local.health_check
+ state_bucket                 = var.state_bucket
   vpc_id                       = data.terraform_remote_state.vpc.outputs.vpc_id
   private_subnets              = data.terraform_remote_state.vpc.outputs.private_subnets
   container_port               = 5002
@@ -123,17 +119,11 @@ module "worker" {
   create_networking  = false
   source             = "../../../i-ai-core-infrastructure//modules/ecs"
   project_name       = "redbox-worker"
-  image_tag          = "0a08cb1d50315e20258d835f904af19b26a26a78"
+  image_tag          = "049e11f4e4245862ffeed7fe33d36f8a206fff8b"
   prefix             = "backend"
   ecr_repository_uri = "${var.ecr_repository_uri}/redbox-worker"
   ecs_cluster_id     = module.cluster.ecs_cluster_id
-  health_check = {
-    healthy_threshold   = 3
-    unhealthy_threshold = 3
-    accepted_response   = "200"
-    path                = "/health"
-    timeout             = 5
-  }
+  health_check       = local.health_check
   state_bucket                 = var.state_bucket
   vpc_id                       = data.terraform_remote_state.vpc.outputs.vpc_id
   private_subnets              = data.terraform_remote_state.vpc.outputs.private_subnets
