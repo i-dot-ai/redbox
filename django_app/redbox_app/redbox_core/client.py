@@ -17,9 +17,7 @@ def s3_client():
         try:
             client.create_bucket(
                 Bucket=settings.BUCKET_NAME,
-                CreateBucketConfiguration={
-                    "LocationConstraint": settings.AWS_S3_REGION_NAME
-                },
+                CreateBucketConfiguration={"LocationConstraint": settings.AWS_S3_REGION_NAME},
             )
         except ClientError as e:
             if e.response["Error"]["Code"] != "BucketAlreadyOwnedByYou":
