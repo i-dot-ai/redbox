@@ -33,7 +33,7 @@ WORKDIR /app/
 
 RUN pip install poetry
 
-RUN poetry install --no-ansi --with django-app
+RUN poetry install --no-ansi
 
 COPY --from=node_modules /app/node_modules /app/django_app/frontend/node_modules
 
