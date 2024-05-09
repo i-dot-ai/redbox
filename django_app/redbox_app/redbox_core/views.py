@@ -87,24 +87,6 @@ def upload_view(request):
             errors["upload_doc"].append(f"File type {file_extension} not supported")
 
         if not len(errors["upload_doc"]):
-            # file_key = f"{uuid.uuid4()}{file_extension}"
-
-            # TODO: can we upload chunks instead of having the file read?
-            # TODO: Move s3 upload to django-storages
-            # s3.upload_fileobj(
-            #     Bucket=settings.BUCKET_NAME,
-            #     Fileobj=uploaded_file,
-            #     Key=file_key,
-            #     ExtraArgs={"Tagging": f"file_type={uploaded_file.content_type}"},
-            #     Config=TransferConfig(
-            #         multipart_chunksize=CHUNK_SIZE,
-            #         preferred_transfer_client="auto",
-            #         multipart_threshold=CHUNK_SIZE,
-            #         use_threads=True,
-            #         max_concurrency=80,
-            #     ),
-            # )
-
             # ingest file
             api = CoreApiClient(
                 host=settings.CORE_API_HOST, port=settings.CORE_API_PORT
