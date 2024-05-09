@@ -4,7 +4,6 @@ from storages.backends import s3boto3
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("redbox_core", "0003_chathistory_file_chatmessage_and_more"),
     ]

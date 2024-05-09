@@ -88,9 +88,7 @@ def upload_view(request):
 
         if not len(errors["upload_doc"]):
             # ingest file
-            api = CoreApiClient(
-                host=settings.CORE_API_HOST, port=settings.CORE_API_PORT
-            )
+            api = CoreApiClient(host=settings.CORE_API_HOST, port=settings.CORE_API_PORT)
 
             try:
                 api.upload_file(uploaded_file.name, request.user)
@@ -166,9 +164,7 @@ def post_message(request: HttpRequest) -> HttpResponse:
         session_id = session.id
 
     # save user message
-    chat_message = models.ChatMessage(
-        chat_history=session, text=message_text, role=models.ChatRoleEnum.user
-    )
+    chat_message = models.ChatMessage(chat_history=session, text=message_text, role=models.ChatRoleEnum.user)
     chat_message.save()
 
     # get LLM response
@@ -185,9 +181,7 @@ def post_message(request: HttpRequest) -> HttpResponse:
     llm_data = response.json()
 
     # save LLM response
-    llm_message = models.ChatMessage(
-        chat_history=session, text=llm_data["output_text"], role=models.ChatRoleEnum.ai
-    )
+    llm_message = models.ChatMessage(chat_history=session, text=llm_data["output_text"], role=models.ChatRoleEnum.ai)
     llm_message.save()
 
     return redirect(reverse(sessions_view, args=(session_id,)))
