@@ -53,10 +53,6 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "single_session",
     "storages",
-    "health_check",
-    "health_check.db",
-    "health_check.contrib.migrations",
-    "health_check.cache",
     "compressor",
     "magic_link",
 ]
