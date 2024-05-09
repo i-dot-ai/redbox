@@ -35,6 +35,7 @@ other_urlpatterns = [
     path("sessions/<str:session_id>/", views.sessions_view, name="sessions"),
     path("sessions/", views.sessions_view, name="sessions"),
     path("post-message/", views.post_message, name="post_message"),
+    path("heath/", views.health, name="health"),
 ]
 
 urlpatterns = info_urlpatterns + other_urlpatterns + auth_urlpatterns
