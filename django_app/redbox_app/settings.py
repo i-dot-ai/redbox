@@ -5,7 +5,6 @@ import socket
 from pathlib import Path
 
 import environ
-from django.core.files.storage import FileSystemStorage
 from storages.backends import s3boto3
 
 from .hosting_environment import HostingEnvironment
@@ -197,14 +196,22 @@ LOG_HANDLER = "console"
 BUCKET_NAME = env.str("BUCKET_NAME")
 AWS_S3_REGION_NAME = env.str("AWS_REGION")
 
+#  Property added to each S3 file to make them downloadable by default
+AWS_S3_OBJECT_PARAMETERS = {"ContentDisposition": "attachment"}
+AWS_STORAGE_BUCKET_NAME = BUCKET_NAME  # this duplication is required for django-storage
+AWS_S3_SECRET_ACCESS_KEY = env.str("AWS_SECRET_KEY")
+AWS_ACCESS_KEY_ID = env.str("AWS_ACCESS_KEY")
+OBJECT_STORE = env.str("OBJECT_STORE")
+
 if HostingEnvironment.is_local():
+    MINIO_HOST = env.str("MINIO_HOST")
+    MINIO_PORT = env.str("MINIO_PORT")
+    MINIO_ENDPOINT = f"http://{MINIO_HOST}:{MINIO_PORT}"
+    AWS_S3_ENDPOINT_URL = MINIO_ENDPOINT
+
     STORAGES = {
         "default": {
-            "BACKEND": FileSystemStorage,
-            "OPTIONS": {
-                "location": "/files",
-                "base_url": "/files/",
-            },
+            "BACKEND": s3boto3.S3Boto3Storage,
         },
         "staticfiles": {
             "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
@@ -217,13 +224,6 @@ if HostingEnvironment.is_local():
         "0.0.0.0",
     ]  # nosec B104 - don't do this on server!
 else:
-    OBJECT_STORE = "s3"
-    AWS_STORAGE_BUCKET_NAME = (
-        BUCKET_NAME  # this duplication is required for django-storage
-    )
-
-    AWS_S3_SECRET_ACCESS_KEY = env.str("AWS_SECRET_KEY")
-    AWS_ACCESS_KEY_ID = env.str("AWS_ACCESS_KEY")
     STORAGES = {
         "default": {
             "BACKEND": s3boto3.S3Boto3Storage,
@@ -243,7 +243,6 @@ else:
     SECURE_HSTS_SECONDS = 2 * 365 * 24 * 60 * 60
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SESSION_COOKIE_SECURE = True
-    AWS_S3_OBJECT_PARAMETERS = {"ContentDisposition": "attachment"}
 
 
 DATABASES = {
