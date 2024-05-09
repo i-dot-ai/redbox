@@ -15,7 +15,7 @@ def cluster_chunks(
     dist_weight_split: float = 0.2,
     dist_use_log: bool = True,
 ) -> list[Chunk]:
-    """Merge together adjacent chanks based ion their semantic similarity (distance after sentence embedding)
+    """Merge together adjacent chunks based on their semantic similarity (distance after sentence embedding)
     and length(token count)
 
     Args:
@@ -102,7 +102,7 @@ def compute_embed_dist(pair_embed_dist: np.array) -> np.array:
     #   .1 .3 .2 .4
     #
     # We now compute the Chebyshev Distance, d(i, j), between all rows of
-    # `embed_dims` where i, j are its indices:
+    # `embed_dims` where i, j are the indices of the rows:
     #
     #   d(0, 1) d(0, 2) d(0, 3)
     #           d(1, 2) d(1, 3)
@@ -110,15 +110,15 @@ def compute_embed_dist(pair_embed_dist: np.array) -> np.array:
     #
     # The Chebyshev Distance function is (in pure python):
     # def d(i, j):
-    #     result = max(abs(a, b) for a, b in zip(embed_dims[i], embed_dims[j]))
+    #     result = max(abs(a-b) for a, b in zip(embed_dims[i], embed_dims[j]))
     #
     # So the embedding distances are:
-    #        .3      .2      .4
+    #        .3      .3      .4
     #                .2      .4
     #                        .4
     #
     # This is rewritten from left-to-bottom (to save space in memory)
-    # [.3, .2, .4, .2, .4, .4]
+    # [.3, .3, .4, .2, .4, .4]
     #
     return embed_dist
 
@@ -136,6 +136,47 @@ def compute_token_dist(token_counts: np.array) -> np.array:
 
     # calculate the token count distance between chunk i and j
     token_dist = scipy.spatial.distance.pdist(token_dims, "cityblock")[drop_ind]
+
+    # example:
+    # suppose we have:
+    #   token_counts = [10, 30, 20, 40]
+    #
+    # we convert this into triangular matrix, called `token_dims`:
+    #   0,  0,  0,  0,  0
+    #   0, 10,  0,  0,  0
+    #   0, 10, 30,  0,  0
+    #   0, 10, 30, 20,  0
+    #   0, 10, 30, 20, 40
+    #
+    # We now compute the City-Block Distance, d(i, j), between all rows of
+    # `token_dims` where i, j are the indices of the rows:
+    #
+    #   d(0, 1) d(0, 2) d(0, 3) d(0, 4)
+    #           d(1, 2) d(1, 3) d(1, 4)
+    #                   d(2, 3) d(2, 4)
+    #                           d(3, 4)
+    #
+    # The City-Block Distance function is (in pure python):
+    # def d(i, j):
+    #     result = sum(abs(a-b) for a, b in zip(token_dims[i], token_dims[j]))
+    #
+    # So the token distances are:
+    #        10      40      60     100
+    #                30      50      90
+    #                        20      60
+    #                                40
+    #
+    # We now exclude the diagonal terms:
+    #         .      40      60     100
+    #                 .      50      90
+    #                         .      60
+    #                                 .
+    #
+    # And rewrite from left-to-bottom (to save space in memory)
+    # [ 40,  60, 100,  50,  90,  60]
+    #
+    # N.B. This is equivalent but slower:
+    # [sum(token_counts[i:j+1]) for i in range(n) for j in range(i+1, n)]
     return token_dist
 
 
