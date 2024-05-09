@@ -9,7 +9,6 @@ from redbox_app.redbox_core.client import CoreApiClient
 from redbox_app.redbox_core.models import ChatHistory, ChatMessage, ChatRoleEnum, User
 
 logger = logging.getLogger(__name__)
-logger.setLevel("DEBUG")
 
 
 class ChatConsumer(AsyncWebsocketConsumer):
@@ -18,7 +17,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
         user_message_text = data.get("message", "")
         session_id = data.get("sessionId", None)
         user: User = self.scope.get("user", None)
-        logger.debug(f"receive {user_message_text=} {session_id=} {user=}")
 
         session = await self.get_session(session_id, user, user_message_text)
 

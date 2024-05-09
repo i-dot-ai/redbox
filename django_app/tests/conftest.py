@@ -12,7 +12,6 @@ from redbox_app.redbox_core.models import ChatHistory, User
 UTC = pytz.timezone("UTC")
 
 logger = logging.getLogger(__name__)
-logger.setLevel("DEBUG")
 
 
 @pytest.fixture
@@ -88,7 +87,6 @@ def s3_client():
 @pytest.fixture
 def chat_history(alice: User) -> ChatHistory:
     session_id = uuid.uuid4()
-    logger.debug(f"{session_id=}")
     chat_history = ChatHistory.objects.create(id=session_id, users=alice)
     yield chat_history
     chat_history.delete()

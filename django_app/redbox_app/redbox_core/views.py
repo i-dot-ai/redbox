@@ -161,7 +161,7 @@ def sessions_view(request: HttpRequest, session_id: str = ""):
     messages = []
     if session_id:
         messages = ChatMessage.objects.filter(chat_history__id=session_id)
-    endpoint = URL.build(scheme="ws", host=request.get_host(), path=settings.STREAMING_ENDPOINT)
+    endpoint = URL.build(scheme="ws", host=request.get_host(), path=r"/ws/chat/")
     context = {
         "session_id": session_id,
         "messages": messages,

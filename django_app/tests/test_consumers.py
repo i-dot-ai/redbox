@@ -12,7 +12,6 @@ from redbox_app.redbox_core.models import ChatMessage, ChatRoleEnum, User, ChatH
 from requests_mock import Mocker
 
 logger = logging.getLogger(__name__)
-logger.setLevel("DEBUG")
 
 
 @pytest.mark.django_db
@@ -32,7 +31,6 @@ async def test_chat_consumer_with_new_session(client: Client, requests_mock: Moc
 
     await communicator.send_to(text_data=json.dumps({"message": "Hello Hal."}))
     response = await communicator.receive_from(timeout=99)
-    logger.debug(f"{response=}")
 
     # Then
     assert response == "Good afternoon, Mr. Amor."
@@ -61,7 +59,6 @@ async def test_chat_consumer_with_existing_session(client: Client, requests_mock
 
     await communicator.send_to(text_data=json.dumps({"message": "Hello Hal.", "sessionId": str(session.id)}))
     response = await communicator.receive_from(timeout=99)
-    logger.debug(f"{response=}")
 
     # Then
     assert response == "Good afternoon, Mr. Amor."
