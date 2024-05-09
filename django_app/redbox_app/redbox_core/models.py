@@ -1,13 +1,13 @@
 import uuid
 
 import boto3
-from furl import furl
 from botocore.config import Config
 from django.conf import settings
 from django.db import models
 from django_use_email_as_username.models import BaseUser, BaseUserManager
 from dotenv import load_dotenv
 from jose import jwt
+from yarl import URL
 
 load_dotenv()
 
@@ -75,7 +75,7 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
         return name.split(".")[-1]
 
     @property
-    def url(self) -> furl:
+    def url(self) -> URL:
         #  In dev environment, get pre-signed url from minio
         if settings.ENVIRONMENT == "LOCAL":
             s3 = boto3.client(
@@ -94,8 +94,8 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
                     "Key": self.name,
                 },
             )
-            return furl(url)
-        return furl(self.original_file.url)
+            return URL(url)
+        return URL(self.original_file.url)
 
     @property
     def name(self) -> str:
