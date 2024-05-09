@@ -213,7 +213,6 @@ else:
     LOCALHOST = socket.gethostbyname(socket.gethostname())
     ALLOWED_HOSTS = [LOCALHOST]
 
-    INSTALLED_APPS += ["health_check.contrib.s3boto3_storage"]
     # https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Strict-Transport-Security
     # Mozilla guidance max-age 2 years
     SECURE_HSTS_SECONDS = 2 * 365 * 24 * 60 * 60

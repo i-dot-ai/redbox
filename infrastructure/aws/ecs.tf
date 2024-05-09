@@ -63,7 +63,7 @@ module "django-app" {
   cpu                = 2048
   source             = "../../../i-ai-core-infrastructure//modules/ecs"
   project_name       = "redbox-django-app"
-  image_tag          = "78e9f03e7e3e63cfce815a2b60e8f3345a112457"
+  image_tag          = "2bd03307c5854c9477b94abd82586bd9d95f71b2"
   prefix             = "frontend"
   ecr_repository_uri = "${var.ecr_repository_uri}/redbox-django-app"
   ecs_cluster_id     = module.cluster.ecs_cluster_id
