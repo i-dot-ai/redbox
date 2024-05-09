@@ -36,7 +36,7 @@ services:
     image: mlflow_server
     build:
       context: .
-      dockerfile: ./mlflow/docker/Dockerfile
+      dockerfile: ./mlflow/Dockerfile
       args:
       - OPENAI_API_KEY=${OPENAI_API_KEY:-}
     env_file:
