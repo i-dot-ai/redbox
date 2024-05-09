@@ -6,7 +6,7 @@ from faststream.redis.fastapi import RedisRouter
 
 from redbox.model_db import SentenceTransformerDB
 from redbox.models import EmbedQueueItem, File, Settings, StatusResponse, Chunk
-from redbox.parsing.file_chunker import FileChunker
+from redbox.parsing.file_chunker import chunk_file
 from redbox.storage.elasticsearch import ElasticsearchStorageHandler
 
 start_time = datetime.now()
@@ -26,12 +26,7 @@ def get_storage_handler():
     return ElasticsearchStorageHandler(es_client=es, root_index="redbox-data")
 
 
-def get_chunker():
-    model_db = SentenceTransformerDB(env.embedding_model)
-    return FileChunker(embedding_model=model_db)
-
-
-def get_model():
+def get_model() -> SentenceTransformerDB:
     model = SentenceTransformerDB(env.embedding_model)
     return model
 
@@ -40,7 +35,7 @@ def get_model():
 async def ingest(
     file: File,
     storage_handler: ElasticsearchStorageHandler = Depends(get_storage_handler),
-    chunker: FileChunker = Depends(get_chunker),
+    clustering_model: SentenceTransformerDB = Depends(get_model),
 ):
     """
     1. Chunks file
@@ -51,7 +46,7 @@ async def ingest(
 
     logging.info(f"Ingesting file: {file}")
 
-    chunks = chunker.chunk_file(file=file)
+    chunks = chunk_file(file=file, clustering_model=clustering_model)
 
     logging.info(f"Writing {len(chunks)} chunks to storage for file uuid: {file.uuid}")
 
