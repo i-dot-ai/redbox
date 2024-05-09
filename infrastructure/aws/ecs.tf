@@ -29,7 +29,8 @@ locals {
     "FROM_EMAIL" : var.from_email,
     "GOVUK_NOTIFY_PLAIN_EMAIL_TEMPLATE_ID": var.govuk_notify_plain_email_template_id
     "GOVUK_NOTIFY_API_KEY" : var.govuk_notify_api_key,
-    "EMAIL_BACKEND_TYPE": "CONSOLE"
+    "EMAIL_BACKEND_TYPE": "CONSOLE",
+    "USE_STREAMING": false
   }
 }
 
