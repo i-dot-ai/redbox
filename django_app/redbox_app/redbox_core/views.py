@@ -2,7 +2,6 @@ import logging
 import os
 import uuid
 
-import requests
 from boto3.s3.transfer import TransferConfig
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
@@ -18,6 +17,7 @@ from redbox_app.redbox_core.models import (
     File,
     ProcessingStatusEnum,
 )
+from yarl import URL
 
 logger = logging.getLogger(__name__)
 logger.setLevel("DEBUG")
@@ -136,7 +136,7 @@ def upload_view(request):
             api = CoreApiClient(host=settings.CORE_API_HOST, port=settings.CORE_API_PORT)
 
             try:
-                api.upload_file(uploaded_file.name, request.user)
+                api.upload_file(settings.BUCKET_NAME, uploaded_file.name, request.user)
                 # TODO: update improved File object with elastic uuid
                 uploaded = True
             except ValueError as value_error:
@@ -165,21 +165,18 @@ def remove_doc_view(request, doc_id: str):
 
 
 @login_required
-def sessions_view(request, session_id: str = ""):
-    USE_STREAMING = False
-    STREAMING_ENDPOINT = "ws://localhost:8888"
-
+def sessions_view(request: HttpRequest, session_id: str = ""):
     chat_history = ChatHistory.objects.all().filter(users=request.user)
 
     messages = []
     if session_id:
         messages = ChatMessage.objects.filter(chat_history__id=session_id)
-
+    endpoint = URL.build(scheme="ws", host=request.get_host(), path=r"/ws/chat/")
     context = {
         "session_id": session_id,
         "messages": messages,
         "chat_history": chat_history,
-        "streaming": {"in_use": USE_STREAMING, "endpoint": STREAMING_ENDPOINT},
+        "streaming": {"in_use": settings.USE_STREAMING, "endpoint": str(endpoint)},
     }
 
     return render(
@@ -194,13 +191,12 @@ def post_message(request: HttpRequest) -> HttpResponse:
     message_text = request.POST.get("message", "New chat")
 
     # get current session, or create a new one
-    if session_id := request.POST.get("session-id", ""):
+    if session_id := request.POST.get("session-id", None):
         session = ChatHistory.objects.get(id=session_id)
     else:
         session_name = message_text[0:20]
         session = ChatHistory(name=session_name, users=request.user)
         session.save()
-        session_id = session.id
 
     # save user message
     chat_message = ChatMessage(chat_history=session, text=message_text, role=ChatRoleEnum.user)
@@ -211,17 +207,11 @@ def post_message(request: HttpRequest) -> HttpResponse:
         {"role": message.role, "text": message.text}
         for message in ChatMessage.objects.all().filter(chat_history=session)
     ]
-    url = settings.CORE_API_HOST + ":" + settings.CORE_API_PORT + "/chat/rag"
-    response = requests.post(
-        url,
-        json={"message_history": message_history},
-        headers={"Authorization": request.user.get_bearer_token()},
-        timeout=60,
-    )
-    llm_data = response.json()
+    core_api = CoreApiClient(host=settings.CORE_API_HOST, port=settings.CORE_API_PORT)
+    output_text = core_api.rag_chat(message_history, request.user.get_bearer_token())
 
     # save LLM response
-    llm_message = ChatMessage(chat_history=session, text=llm_data["output_text"], role=ChatRoleEnum.ai)
+    llm_message = ChatMessage(chat_history=session, text=output_text, role=ChatRoleEnum.ai)
     llm_message.save()
 
-    return redirect(reverse(sessions_view, args=(session_id,)))
+    return redirect(reverse(sessions_view, args=(session.id,)))
