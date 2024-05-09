@@ -9,15 +9,17 @@ def s3_client():
     if settings.OBJECT_STORE == "minio":
         client = boto3.client(
             "s3",
-            aws_access_key_id=settings.MINIO_ACCESS_KEY,
-            aws_secret_access_key=settings.MINIO_SECRET_KEY,
+            aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
+            aws_secret_access_key=settings.AWS_S3_SECRET_ACCESS_KEY,
             endpoint_url=f"http://{settings.MINIO_HOST}:{settings.MINIO_PORT}",
         )
 
         try:
             client.create_bucket(
                 Bucket=settings.BUCKET_NAME,
-                CreateBucketConfiguration={"LocationConstraint": settings.AWS_S3_REGION_NAME},
+                CreateBucketConfiguration={
+                    "LocationConstraint": settings.AWS_S3_REGION_NAME
+                },
             )
         except ClientError as e:
             if e.response["Error"]["Code"] != "BucketAlreadyOwnedByYou":
