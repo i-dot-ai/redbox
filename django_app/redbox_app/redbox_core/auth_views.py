@@ -1,9 +1,14 @@
+import logging
+
 from django.contrib.auth import logout
 from django.http import HttpRequest
 from django.shortcuts import render, redirect
 from magic_link.models import MagicLink
 
 from redbox_app.redbox_core import models, email_handler
+
+
+logger = logging.getLogger(__name__)
 
 
 def sign_in_view(request: HttpRequest):
@@ -25,6 +30,8 @@ def sign_in_view(request: HttpRequest):
 
             # Email link to user
             email_handler.send_magic_link_email(full_link, email.lower())
+        else:
+            logger.debug("User with email %s not found", email)
 
         return redirect("sign-in-link-sent")
     return render(
