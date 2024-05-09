@@ -188,8 +188,6 @@ django_app/staticfiles/*
 django_app/node_modules
 django_app/frontend/CACHE
 django_app/frontend/govuk-assets
-# Django app local filestore
-django_app/files
 
 
 # Other
