@@ -204,7 +204,9 @@ AWS_ACCESS_KEY_ID = env.str("AWS_ACCESS_KEY")
 OBJECT_STORE = env.str("OBJECT_STORE")
 
 if HostingEnvironment.is_local():
-    MINIO_ENDPOINT = f"http://{env.str('MINIO_HOST')}:{env.str('MINIO_PORT')}"
+    MINIO_HOST = env.str("MINIO_HOST")
+    MINIO_PORT = env.str("MINIO_PORT")
+    MINIO_ENDPOINT = f"http://{MINIO_HOST}:{MINIO_PORT}"
     AWS_S3_ENDPOINT_URL = MINIO_ENDPOINT
 
     STORAGES = {
