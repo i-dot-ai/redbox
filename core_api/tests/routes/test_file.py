@@ -8,9 +8,7 @@ from core_api.src.routes.file import env, router
 
 
 @pytest.mark.asyncio
-async def test_post_file_upload(
-    s3_client, app_client, elasticsearch_storage_handler, file_pdf_path, headers
-):
+async def test_post_file_upload(s3_client, app_client, elasticsearch_storage_handler, file_pdf_path, headers):
     """
     Given a new file
     When I POST it to /file
@@ -49,9 +47,7 @@ def test_get_file(app_client, stored_file, headers):
     assert response.status_code == 200
 
 
-def test_delete_file(
-    s3_client, app_client, elasticsearch_storage_handler, chunked_file, headers
-):
+def test_delete_file(s3_client, app_client, elasticsearch_storage_handler, chunked_file, headers):
     """
     Given a previously saved file
     When I DELETE it to /file
@@ -59,12 +55,8 @@ def test_delete_file(
     """
     # check assets exist
     assert s3_client.get_object(Bucket=env.bucket_name, Key=chunked_file.key)
-    assert elasticsearch_storage_handler.read_item(
-        item_uuid=chunked_file.uuid, model_type="file"
-    )
-    assert elasticsearch_storage_handler.get_file_chunks(
-        chunked_file.uuid, chunked_file.creator_user_uuid
-    )
+    assert elasticsearch_storage_handler.read_item(item_uuid=chunked_file.uuid, model_type="file")
+    assert elasticsearch_storage_handler.get_file_chunks(chunked_file.uuid, chunked_file.creator_user_uuid)
 
     response = app_client.delete(f"/file/{chunked_file.uuid}", headers=headers)
     assert response.status_code == 200
@@ -76,13 +68,9 @@ def test_delete_file(
         s3_client.get_object(Bucket=env.bucket_name, Key=chunked_file.key)
 
     with pytest.raises(NotFoundError):
-        elasticsearch_storage_handler.read_item(
-            item_uuid=chunked_file.uuid, model_type="file"
-        )
+        elasticsearch_storage_handler.read_item(item_uuid=chunked_file.uuid, model_type="file")
 
-    assert not elasticsearch_storage_handler.get_file_chunks(
-        chunked_file.uuid, chunked_file.creator_user_uuid
-    )
+    assert not elasticsearch_storage_handler.get_file_chunks(chunked_file.uuid, chunked_file.creator_user_uuid)
 
 
 def test_get_file_chunks(client, chunked_file, headers):
