@@ -2,6 +2,7 @@ import boto3
 import requests
 from botocore.exceptions import ClientError
 from django.conf import settings
+
 from ...redbox_app.redbox_core.models import User
 
 
