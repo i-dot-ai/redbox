@@ -93,7 +93,8 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
                 },
             )
             return URL(url)
-        return URL(self.original_file.url)
+        else:
+            return URL(self.original_file.url)
 
     @property
     def name(self) -> str:
