@@ -3,6 +3,9 @@
 {% set pageTitle = "Support" %}
 
 {% block content %}
+
+<div class="govuk-width-container">
+
   <h1 class="govuk-heading-l">Support</h1>
 
   {#
@@ -26,6 +29,7 @@
 
   <p class="govuk-body">If you're still having trouble then you can contact us using the details at the bottom of this page.</p>
 
+  {#
   <h2 class="govuk-heading-m">Email address not allowed</h2>
   <p class="govuk-body">If you see the error message: "Currently you need a Civil Service email address to register", contact us using the details at the bottom of this page and include the name of your organisation.</p>
 
@@ -37,8 +41,9 @@
     <li>not sure then choose: Other</li>
   </ul>
 
-<h2 class="govuk-heading-m">Can’t find my grade</h2>
+  <h2 class="govuk-heading-m">Can’t find my grade</h2>
   <p class="govuk-body">If the grades shown do not fit with your role then either choose the one that is equivalent to your role or select ‘Other’.</p>
+  #}
 
   <h2 class="govuk-heading-m">Bug or site vulnerability</h2>
   <p class="govuk-body">If you've found an issue or a vulnerability, contact us using the details at the bottom of this page including as much information as possible.</p>
@@ -46,8 +51,9 @@
   <h2 class="govuk-heading-m">Website not loading</h2>
   <p class="govuk-body">If the website is not loading, please close the browser tab and try again later.</p>
 
-  <hr class="govuk-section-break govuk-section-break--m govuk-section-break--visible">
   <h2 class="govuk-heading-m">Contact us</h2>
   <p class="govuk-body">If you've read the information above but haven't been able to find a solution to your problem, please email us at <a href="mailto:{{contact_email}}" class="govuk-link">{{contact_email}}</a> including as much information as possible.</p>
+
+</div>
 
 {% endblock %}
