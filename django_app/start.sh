@@ -1,8 +1,7 @@
 #!/bin/sh
 
-set -o errexit
-set -o nounset
+venv/bin/django-admin migrate
+venv/bin/django-admin collectstatic --noinput
+venv/bin/django-admin compress --force --engine jinja2
 
-python django_app/manage.py migrate
-python django_app/manage.py collectstatic --noinput
-python django_app/manage.py runserver 0.0.0.0:8090
+exec venv/bin/gunicorn -c gunicorn.py redbox_app.wsgi
