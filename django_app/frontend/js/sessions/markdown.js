@@ -8,13 +8,24 @@ let showdown = window["showdown"];
 
 
 class MarkdownConverter extends HTMLElement {
-    connectedCallback() {
+    
+    /**
+     * Takes markdown and inserts as HTML
+     * @param {string} markdown 
+     */
+    update(markdown) {
         let converter = new showdown.Converter({
             disableForced4SpacesIndentedSublists: true,
             headerLevelStart: 3
         });
-        const html = converter.makeHtml(this.textContent || '');
+        const html = converter.makeHtml(markdown);
         this.innerHTML = /** @type any */ (DOMPurify.sanitize(html, {RETURN_TRUSTED_TYPE: true}));
     }
+
+    connectedCallback() {
+        this.update(this.textContent || '');
+    }
+
+    
 }
 customElements.define('markdown-converter', MarkdownConverter);
