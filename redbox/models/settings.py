@@ -80,6 +80,7 @@ class Settings(BaseSettings):
     email_file_path: str = "/app/mail"
     govuk_notify_plain_email_template_id: str = "example-id"
     use_streaming: bool = False
+    superuser_email: Optional[str] = None
 
     model_config = SettingsConfigDict(env_file=".env", env_nested_delimiter="__")
 
