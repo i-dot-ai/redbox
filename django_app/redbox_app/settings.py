@@ -22,7 +22,7 @@ COMPRESS_ENABLED = True
 COMPRESS_PRECOMPILERS = (("text/x-scss", "django_libsass.SassCompiler"),)
 
 STATIC_URL = "static/"
-STATIC_ROOT = "django_app/frontend/"
+STATIC_ROOT = "frontend/"
 STATICFILES_DIRS = [
     (
         "govuk-assets",

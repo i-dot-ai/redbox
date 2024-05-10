@@ -36,7 +36,7 @@ WORKDIR /usr/src/app
 
 COPY django_app/ .
 
-COPY --from=npm-packages /src/node_modules frontend/node_modules
+COPY --from=npm-packages /src/node_modules/ frontend/node_modules/
 COPY --from=poetry-packages /src/venv ./venv
 
 ENV DJANGO_SETTINGS_MODULE='redbox_app.settings.py'

@@ -2,7 +2,7 @@ $govuk-assets-path: "govuk-assets/";
 $govuk-font-family: sans-serif;
 $iai-pink: #b62777;
 
-@import "django_app/frontend/node_modules/govuk-frontend/dist/govuk/all";
+@import "frontend/node_modules/govuk-frontend/dist/govuk/all";
 
 
 /* Classification banner */
