@@ -3,7 +3,6 @@ import uuid
 from django.conf import settings
 from django.db import models
 from django_use_email_as_username.models import BaseUser, BaseUserManager
-
 from dotenv import load_dotenv
 from jose import jwt
 

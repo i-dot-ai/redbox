@@ -204,7 +204,7 @@ if HostingEnvironment.is_local():
     MINIO_HOST = env.str("MINIO_HOST")
     MINIO_PORT = env.str("MINIO_PORT")
 
-    ALLOWED_HOSTS = ["localhost", "127.0.0.1", "0.0.0.0"]  # nosec B104 - don't do this on server!
+    ALLOWED_HOSTS = ["localhost", "127.0.0.1", "0.0.0.0"]  # nosec B104 # noqa S104 - don't do this on server!
 else:
     OBJECT_STORE = "s3"
     AWS_STORAGE_BUCKET_NAME = BUCKET_NAME  # this duplication is required for django-storage
@@ -236,24 +236,26 @@ DATABASES = {
     }
 }
 
+LOG_LEVEL = env.str("DJANGO_LOG_LEVEL", "WARN")
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
     "formatters": {"verbose": {"format": "%(asctime)s %(levelname)s %(module)s: %(message)s"}},
     "handlers": {
         "file": {
-            "level": "DEBUG",
+            "level": LOG_LEVEL,
             "class": "logging.FileHandler",
             "filename": os.path.join(LOG_ROOT, "application.log"),
             "formatter": "verbose",
         },
         "console": {
-            "level": "DEBUG",
+            "level": LOG_LEVEL,
             "class": "logging.StreamHandler",
             "formatter": "verbose",
         },
     },
-    "loggers": {"application": {"handlers": [LOG_HANDLER], "level": "DEBUG", "propagate": True}},
+    "root": {"handlers": ["console"], "level": LOG_LEVEL},
+    "loggers": {"application": {"handlers": [LOG_HANDLER], "level": LOG_LEVEL, "propagate": True}},
 }
 
 # link to core_api app

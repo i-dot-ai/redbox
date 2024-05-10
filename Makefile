@@ -50,10 +50,12 @@ test-integration:
 	rm .env.backup
 
 lint:
+	poetry run ruff format . --check
 	poetry run ruff check .
 
 format:
 	poetry run ruff format .
+	poetry run ruff check . --fix
 
 safe:
 	poetry run bandit -ll -r ./redbox

@@ -54,7 +54,7 @@ class CoreApiClient:
             return file
 
         response = requests.post(
-            f"{self.url}/file", json={"key": name}, headers={"Authorization": user.get_bearer_token()}
+            f"{self.url}/file", json={"key": name}, headers={"Authorization": user.get_bearer_token()}, timeout=30
         )
         if response.status_code != 201:
             raise ValueError(response.text)
@@ -62,5 +62,7 @@ class CoreApiClient:
 
     def rag_chat(self, message_history: list[dict[str, str]], token: str) -> str:
         url = f"{self.url}/chat/rag"
-        response = requests.post(url, json={"message_history": message_history}, headers={"Authorization": token})
+        response = requests.post(
+            url, json={"message_history": message_history}, headers={"Authorization": token}, timeout=60
+        )
         return response.json()["output_text"]

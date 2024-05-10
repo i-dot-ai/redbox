@@ -1,9 +1,8 @@
 import pytest
 from faststream.redis import TestRedisBroker
 
-
-from worker.src.app import router, env
 from redbox.storage import ElasticsearchStorageHandler
+from worker.src.app import env, router
 
 
 @pytest.mark.asyncio

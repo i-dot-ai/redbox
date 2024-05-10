@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.urls import include, path
 from magic_link import urls as magic_link_urls
 
-from .redbox_core import info_views, auth_views, views
+from .redbox_core import auth_views, info_views, views
 
 auth_urlpatterns = [
     path("magic_link/", include(magic_link_urls)),
