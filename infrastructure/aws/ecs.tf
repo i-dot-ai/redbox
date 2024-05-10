@@ -29,8 +29,9 @@ locals {
     "FROM_EMAIL" : var.from_email,
     "GOVUK_NOTIFY_PLAIN_EMAIL_TEMPLATE_ID": var.govuk_notify_plain_email_template_id
     "GOVUK_NOTIFY_API_KEY" : var.govuk_notify_api_key,
-    "EMAIL_BACKEND_TYPE": "CONSOLE",
-    "USE_STREAMING": false
+    "EMAIL_BACKEND_TYPE": "GOVUKNOTIFY",
+    "USE_STREAMING": false,
+    "DJANGO_LOG_LEVEL": "DEBUG"
   }
 }
 
@@ -62,7 +63,7 @@ module "django-app" {
   create_networking  = true
   source             = "../../../i-ai-core-infrastructure//modules/ecs"
   project_name       = "redbox-django-app"
-  image_tag          = "f381355415c963e342c961d43cee42ba4615bab1"
+  image_tag          = var.image_tag
   prefix             = "backend"
   ecr_repository_uri = "${var.ecr_repository_uri}/redbox-django-app"
   ecs_cluster_id     = module.cluster.ecs_cluster_id
@@ -92,7 +93,7 @@ module "core_api" {
   create_networking  = false
   source             = "../../../i-ai-core-infrastructure//modules/ecs"
   project_name       = "redbox-core-api"
-  image_tag          = "f381355415c963e342c961d43cee42ba4615bab1"
+  image_tag          = var.image_tag
   prefix             = "backend"
   ecr_repository_uri = "${var.ecr_repository_uri}/redbox-core-api"
   ecs_cluster_id     = module.cluster.ecs_cluster_id
@@ -121,7 +122,7 @@ module "worker" {
   create_networking  = false
   source             = "../../../i-ai-core-infrastructure//modules/ecs"
   project_name       = "redbox-worker"
-  image_tag          = "f381355415c963e342c961d43cee42ba4615bab1"
+  image_tag          = var.image_tag
   prefix             = "backend"
   ecr_repository_uri = "${var.ecr_repository_uri}/redbox-worker"
   ecs_cluster_id     = module.cluster.ecs_cluster_id
