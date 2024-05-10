@@ -57,8 +57,10 @@ class FileRequest(BaseModel):
     key: str = Field(description="file key", examples=["policies.pdf"])
 
 
-@file_app.post("/", tags=["file"])
-async def add_file(file_request: FileRequest, user_uuid: Annotated[UUID, Depends(get_user_uuid)]) -> File:
+@file_app.post("/", tags=["file"], status_code=201)
+async def add_file(
+    file_request: FileRequest, user_uuid: Annotated[UUID, Depends(get_user_uuid)]
+) -> File:
     """Create a File record in the database
 
     Args:
@@ -69,7 +71,9 @@ async def add_file(file_request: FileRequest, user_uuid: Annotated[UUID, Depends
         File: The file uuid from the elastic database
     """
 
-    file = File(key=file_request.key, bucket=env.bucket_name, creator_user_uuid=user_uuid)
+    file = File(
+        key=file_request.key, bucket=env.bucket_name, creator_user_uuid=user_uuid
+    )
 
     storage_handler.write_item(file)
 
@@ -83,7 +87,9 @@ async def add_file(file_request: FileRequest, user_uuid: Annotated[UUID, Depends
 if env.dev_mode:
 
     @file_app.post("/upload", tags=["file"], response_model=File)
-    async def upload_file(user_uuid: Annotated[UUID, Depends(get_user_uuid)], file: UploadFile = None) -> File:
+    async def upload_file(
+        user_uuid: Annotated[UUID, Depends(get_user_uuid)], file: UploadFile = None
+    ) -> File:
         """Upload a file to the object store
 
         Args:
@@ -106,7 +112,9 @@ if env.dev_mode:
 
 
 @file_app.get("/{file_uuid}", response_model=File, tags=["file"])
-def get_file(file_uuid: UUID, user_uuid: Annotated[UUID, Depends(get_user_uuid)]) -> File:
+def get_file(
+    file_uuid: UUID, user_uuid: Annotated[UUID, Depends(get_user_uuid)]
+) -> File:
     """Get a file from the object store
 
     Args:
@@ -123,7 +131,9 @@ def get_file(file_uuid: UUID, user_uuid: Annotated[UUID, Depends(get_user_uuid)]
 
 
 @file_app.delete("/{file_uuid}", response_model=File, tags=["file"])
-def delete_file(file_uuid: UUID, user_uuid: Annotated[UUID, Depends(get_user_uuid)]) -> File:
+def delete_file(
+    file_uuid: UUID, user_uuid: Annotated[UUID, Depends(get_user_uuid)]
+) -> File:
     """Delete a file from the object store and the database
 
     Args:
@@ -146,13 +156,17 @@ def delete_file(file_uuid: UUID, user_uuid: Annotated[UUID, Depends(get_user_uui
 
 
 @file_app.get("/{file_uuid}/chunks", tags=["file"])
-def get_file_chunks(file_uuid: UUID, user_uuid: Annotated[UUID, Depends(get_user_uuid)]) -> list[Chunk]:
+def get_file_chunks(
+    file_uuid: UUID, user_uuid: Annotated[UUID, Depends(get_user_uuid)]
+) -> list[Chunk]:
     log.info("getting chunks for file %s", file_uuid)
     return storage_handler.get_file_chunks(file_uuid, user_uuid)
 
 
 @file_app.get("/{file_uuid}/status", tags=["file"])
-def get_file_status(file_uuid: UUID, user_uuid: Annotated[UUID, Depends(get_user_uuid)]) -> FileStatus:
+def get_file_status(
+    file_uuid: UUID, user_uuid: Annotated[UUID, Depends(get_user_uuid)]
+) -> FileStatus:
     """Get the status of a file
 
     Args:
@@ -165,6 +179,8 @@ def get_file_status(file_uuid: UUID, user_uuid: Annotated[UUID, Depends(get_user
     try:
         status = storage_handler.get_file_status(file_uuid, user_uuid)
     except ValueError as e:
-        raise HTTPException(status_code=404, detail=f"File {file_uuid} not found") from e
+        raise HTTPException(
+            status_code=404, detail=f"File {file_uuid} not found"
+        ) from e
 
     return status
