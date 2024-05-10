@@ -201,11 +201,11 @@ AWS_S3_REGION_NAME = env.str("AWS_REGION")
 #  Property added to each S3 file to make them downloadable by default
 AWS_S3_OBJECT_PARAMETERS = {"ContentDisposition": "attachment"}
 AWS_STORAGE_BUCKET_NAME = BUCKET_NAME  # this duplication is required for django-storage
-AWS_S3_SECRET_ACCESS_KEY = env.str("AWS_SECRET_KEY")
-AWS_ACCESS_KEY_ID = env.str("AWS_ACCESS_KEY")
 OBJECT_STORE = env.str("OBJECT_STORE")
 
 if HostingEnvironment.is_local():
+    AWS_S3_SECRET_ACCESS_KEY = env.str("AWS_SECRET_KEY")
+    AWS_ACCESS_KEY_ID = env.str("AWS_ACCESS_KEY")
     MINIO_HOST = env.str("MINIO_HOST")
     MINIO_PORT = env.str("MINIO_PORT")
     MINIO_ENDPOINT = f"http://{MINIO_HOST}:{MINIO_PORT}"
@@ -261,7 +261,9 @@ DATABASES = {
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
-    "formatters": {"verbose": {"format": "%(asctime)s %(levelname)s %(module)s: %(message)s"}},
+    "formatters": {
+        "verbose": {"format": "%(asctime)s %(levelname)s %(module)s: %(message)s"}
+    },
     "handlers": {
         "file": {
             "level": "DEBUG",
@@ -275,7 +277,9 @@ LOGGING = {
             "formatter": "verbose",
         },
     },
-    "loggers": {"application": {"handlers": [LOG_HANDLER], "level": "DEBUG", "propagate": True}},
+    "loggers": {
+        "application": {"handlers": [LOG_HANDLER], "level": "DEBUG", "propagate": True}
+    },
 }
 
 # link to core_api app
@@ -294,7 +298,9 @@ elif EMAIL_BACKEND_TYPE == "CONSOLE":
 elif EMAIL_BACKEND_TYPE == "GOVUKNOTIFY":
     EMAIL_BACKEND = "django_gov_notify.backends.NotifyEmailBackend"
     GOVUK_NOTIFY_API_KEY = env.str("GOVUK_NOTIFY_API_KEY")
-    GOVUK_NOTIFY_PLAIN_EMAIL_TEMPLATE_ID = env.str("GOVUK_NOTIFY_PLAIN_EMAIL_TEMPLATE_ID")
+    GOVUK_NOTIFY_PLAIN_EMAIL_TEMPLATE_ID = env.str(
+        "GOVUK_NOTIFY_PLAIN_EMAIL_TEMPLATE_ID"
+    )
 else:
     raise Exception(f"Unknown EMAIL_BACKEND_TYPE of {EMAIL_BACKEND_TYPE}")
 
