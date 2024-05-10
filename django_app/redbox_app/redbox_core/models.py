@@ -57,7 +57,9 @@ class ProcessingStatusEnum(models.TextChoices):
 
 
 class File(UUIDPrimaryKeyBase, TimeStampedModel):
-    processing_status = models.CharField(choices=ProcessingStatusEnum.choices, null=False, blank=False)
+    processing_status = models.CharField(
+        choices=ProcessingStatusEnum.choices, null=False, blank=False
+    )
     original_file = models.FileField(storage=settings.STORAGES["default"]["BACKEND"])
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     original_file_name = models.TextField(max_length=2048, blank=True, null=True)
@@ -78,7 +80,7 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
         if settings.ENVIRONMENT == "LOCAL":
             s3 = boto3.client(
                 "s3",
-                endpoint_url=f"http://localhost:9000",
+                endpoint_url="http://localhost:9000",
                 aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
                 aws_secret_access_key=settings.AWS_S3_SECRET_ACCESS_KEY,
                 config=Config(signature_version="s3v4"),
@@ -97,11 +99,19 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
 
     @property
     def name(self) -> str:
-        return self.original_file_name if self.original_file_name else self.original_file.name
+        return (
+            self.original_file_name
+            if self.original_file_name
+            else self.original_file.name
+        )
 
     def get_processing_status_text(self) -> str:
         return next(
-            (status[1] for status in ProcessingStatusEnum.choices if self.processing_status == status[0]),
+            (
+                status[1]
+                for status in ProcessingStatusEnum.choices
+                if self.processing_status == status[0]
+            ),
             "Unknown",
         )
 
