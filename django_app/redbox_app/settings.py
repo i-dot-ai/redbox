@@ -236,24 +236,26 @@ DATABASES = {
     }
 }
 
+LOG_LEVEL = env.str("DJANGO_LOG_LEVEL", "WARN")
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
     "formatters": {"verbose": {"format": "%(asctime)s %(levelname)s %(module)s: %(message)s"}},
     "handlers": {
         "file": {
-            "level": "DEBUG",
+            "level": LOG_LEVEL,
             "class": "logging.FileHandler",
             "filename": os.path.join(LOG_ROOT, "application.log"),
             "formatter": "verbose",
         },
         "console": {
-            "level": "DEBUG",
+            "level": LOG_LEVEL,
             "class": "logging.StreamHandler",
             "formatter": "verbose",
         },
     },
-    "loggers": {"application": {"handlers": [LOG_HANDLER], "level": "DEBUG", "propagate": True}},
+    "root": {"handlers": ["console"], "level": LOG_LEVEL},
+    "loggers": {"application": {"handlers": [LOG_HANDLER], "level": LOG_LEVEL, "propagate": True}},
 }
 
 # link to core_api app
