@@ -236,7 +236,7 @@ DATABASES = {
     }
 }
 
-LOG_LEVEL = "DEBUG"
+LOG_LEVEL = env.str("DJANGO_LOG_LEVEL", "WARN")
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
