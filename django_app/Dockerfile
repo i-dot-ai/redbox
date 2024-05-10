@@ -1,12 +1,11 @@
 # npm
-# use the same base image as the others for efficiency
-FROM python:3.11-slim AS npm-packages
 
-RUN apt-get update && apt-get install --yes nodejs npm > /dev/null
+FROM node:18 AS npm-packages
 
 WORKDIR /src
 
 COPY django_app/frontend/package.json .
+
 RUN npm install
 
 
@@ -35,10 +34,10 @@ RUN apt-get update && apt-get install --yes libpq-dev > /dev/null
 
 WORKDIR /usr/src/app
 
-COPY --from=npm-packages /src/node_modules /app/frontend/node_modules
-COPY --from=poetry-packages /src/venv ./venv
-
 COPY django_app/ .
+
+COPY --from=npm-packages /src/node_modules frontend/node_modules
+COPY --from=poetry-packages /src/venv ./venv
 
 ENV DJANGO_SETTINGS_MODULE='redbox_app.settings.py'
 ENV PYTHONPATH "${PYTHONPATH}:/."
