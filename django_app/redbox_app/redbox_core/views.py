@@ -215,3 +215,9 @@ def post_message(request: HttpRequest) -> HttpResponse:
     llm_message.save()
 
     return redirect(reverse(sessions_view, args=(session.id,)))
+
+
+@require_http_methods(["GET"])
+def health(_request: HttpRequest) -> HttpResponse:
+    """this required by ECS Fargate"""
+    return HttpResponse(status=200)
