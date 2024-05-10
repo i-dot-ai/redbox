@@ -223,8 +223,8 @@ if HostingEnvironment.is_local():
     ALLOWED_HOSTS = [
         "localhost",
         "127.0.0.1",
-        "0.0.0.0",
-    ]  # nosec B104 # noqa S104 - don't do this on server!
+        "0.0.0.0",  # noqa S104
+    ]  # nosec B104 - don't do this on server!
 else:
     STORAGES = {
         "default": {
@@ -277,7 +277,13 @@ LOGGING = {
         },
     },
     "root": {"handlers": ["console"], "level": LOG_LEVEL},
-    "loggers": {"application": {"handlers": [LOG_HANDLER], "level": LOG_LEVEL, "propagate": True}},
+    "loggers": {
+        "application": {
+            "handlers": [LOG_HANDLER],
+            "level": LOG_LEVEL,
+            "propagate": True,
+        }
+    },
 }
 
 # link to core_api app
