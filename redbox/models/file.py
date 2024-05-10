@@ -141,8 +141,3 @@ class FileStatus(BaseModel):
     file_uuid: UUID
     processing_status: ProcessingStatusEnum
     chunk_statuses: Optional[list[ChunkStatus]]
-
-
-class FileExistsException(Exception):
-    def __init__(self):
-        super().__init__("Document with same name already exists. Please rename if you want to upload anyway.")
