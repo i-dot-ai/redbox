@@ -1,8 +1,13 @@
+import logging
+from types import SimpleNamespace
+
 import boto3
 import requests
 from botocore.exceptions import ClientError
 from django.conf import settings
 from redbox_app.redbox_core.models import User
+
+logger = logging.getLogger(__name__)
 
 
 def s3_client():
@@ -41,7 +46,7 @@ class CoreApiClient:
     def url(self) -> str:
         return f"{self.host}:{self.port}"
 
-    def upload_file(self, bucket_name: str, name: str, user: User):
+    def upload_file(self, bucket_name: str, name: str, user: User) -> SimpleNamespace:
         if self.host == "testserver":
             file = {
                 "key": name,
@@ -54,11 +59,15 @@ class CoreApiClient:
         )
         if response.status_code != 201:
             raise ValueError(response.text)
-        return response.json()
+        return response.json(object_hook=lambda d: SimpleNamespace(**d))
 
-    def rag_chat(self, message_history: list[dict[str, str]], token: str) -> str:
+    def rag_chat(self, message_history: list[dict[str, str]], token: str) -> SimpleNamespace:
         url = f"{self.url}/chat/rag"
         response = requests.post(
             url, json={"message_history": message_history}, headers={"Authorization": token}, timeout=60
         )
-        return response.json()["output_text"]
+        response.raise_for_status()
+        response_data = response.json(object_hook=lambda d: SimpleNamespace(**d))
+        logger.debug("response_data: %s", response_data)
+
+        return response_data

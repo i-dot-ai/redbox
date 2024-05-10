@@ -18,7 +18,6 @@ from redbox_app.redbox_core.models import (
 from yarl import URL
 
 logger = logging.getLogger(__name__)
-logger.setLevel("DEBUG")
 
 CHUNK_SIZE = 1024
 # move this somewhere
@@ -99,21 +98,21 @@ def upload_view(request):
             api = CoreApiClient(host=settings.CORE_API_HOST, port=settings.CORE_API_PORT)
 
             try:
-                file = File.objects.create(
-                    processing_status=ProcessingStatusEnum.uploaded.value,
-                    user=request.user,
-                    original_file=uploaded_file,
-                    original_file_name=uploaded_file.name,
-                )
-                file.save()
-                # TODO: update improved File object with elastic uuid
+                upload_file_response = api.upload_file(settings.BUCKET_NAME, uploaded_file.name, request.user)
             except ValueError as value_error:
                 errors.append(value_error.args[0])
-
-            try:
-                api.upload_file(settings.BUCKET_NAME, uploaded_file.name, request.user)
-            except ValueError as value_error:
-                errors.append(value_error.args[0])
+            else:
+                try:
+                    file = File.objects.create(
+                        processing_status=ProcessingStatusEnum.uploaded.value,
+                        user=request.user,
+                        original_file=uploaded_file,
+                        original_file_name=uploaded_file.name,
+                        core_file_uuid=upload_file_response.uuid,
+                    )
+                    file.save()
+                except ValueError as value_error:
+                    errors.append(value_error.args[0])
 
     return render(
         request,
@@ -180,11 +179,15 @@ def post_message(request: HttpRequest) -> HttpResponse:
         for message in ChatMessage.objects.all().filter(chat_history=session)
     ]
     core_api = CoreApiClient(host=settings.CORE_API_HOST, port=settings.CORE_API_PORT)
-    output_text = core_api.rag_chat(message_history, request.user.get_bearer_token())
+    response_data = core_api.rag_chat(message_history, request.user.get_bearer_token())
 
-    # save LLM response
-    llm_message = ChatMessage(chat_history=session, text=output_text, role=ChatRoleEnum.ai)
+    llm_message = ChatMessage(chat_history=session, text=response_data.output_text, role=ChatRoleEnum.ai)
     llm_message.save()
+
+    files: list[File] = [
+        File.objects.get(core_file_uuid=doc.file_uuid, user=request.user) for doc in response_data.source_documents
+    ]
+    llm_message.source_files.set(files)
 
     return redirect(reverse(sessions_view, args=(session.id,)))
 

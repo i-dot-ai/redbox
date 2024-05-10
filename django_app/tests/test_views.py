@@ -9,7 +9,6 @@ from requests_mock import Mocker
 from yarl import URL
 
 logger = logging.getLogger(__name__)
-logger.setLevel("DEBUG")
 
 
 @pytest.mark.django_db
@@ -56,7 +55,9 @@ def test_post_message_to_new_session(alice: User, client: Client, requests_mock:
     # Given
     client.force_login(alice)
     rag_url = settings.CORE_API_HOST + ":" + settings.CORE_API_PORT + "/chat/rag"
-    requests_mock.register_uri("POST", rag_url, json={"output_text": "Good afternoon, Mr. Amor."})
+    requests_mock.register_uri(
+        "POST", rag_url, json={"output_text": "Good afternoon, Mr. Amor.", "source_documents": []}
+    )
 
     # When
     response = client.post("/post-message/", {"message": "Are you there?"})
@@ -77,7 +78,9 @@ def test_post_message_to_existing_session(chat_history: ChatHistory, client: Cli
     client.force_login(chat_history.users)
     session_id = chat_history.id
     rag_url = settings.CORE_API_HOST + ":" + settings.CORE_API_PORT + "/chat/rag"
-    requests_mock.register_uri("POST", rag_url, json={"output_text": "Good afternoon, Mr. Amor."})
+    requests_mock.register_uri(
+        "POST", rag_url, json={"output_text": "Good afternoon, Mr. Amor.", "source_documents": []}
+    )
 
     # When
     response = client.post("/post-message/", {"message": "Are you there?", "session-id": session_id})
