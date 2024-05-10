@@ -208,7 +208,7 @@ if HostingEnvironment.is_local():
 else:
     OBJECT_STORE = "s3"
     AWS_STORAGE_BUCKET_NAME = BUCKET_NAME  # this duplication is required for django-storage
-    STATICFILES_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
+    # STATICFILES_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
 
     LOCALHOST = socket.gethostbyname(socket.gethostname())
     ALLOWED_HOSTS = [
