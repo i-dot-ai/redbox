@@ -39,7 +39,7 @@ COPY --from=node_modules /app/node_modules /app/django_app/frontend/node_modules
 
 ADD django_app/ /app/django_app/
 
-COPY django_app/docker/web/start.sh /app/start.sh
+COPY django_app/start.sh /app/start.sh
 RUN chmod +x /app/start.sh
 
 EXPOSE 8090

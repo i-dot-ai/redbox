@@ -3,7 +3,7 @@ services:
     image: django-app:latest
     build:
       context: .
-      dockerfile: ./django_app/docker/web/Dockerfile
+      dockerfile: ./django_app/Dockerfile
     depends_on:
       - db
       - minio
