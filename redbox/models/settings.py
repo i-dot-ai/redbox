@@ -108,8 +108,8 @@ class Settings(BaseSettings):
         elif self.object_store == "s3":
             client = boto3.client(
                 "s3",
-                aws_access_key_id=self.aws_access_key_id,
-                aws_secret_access_key=self.aws_secret_access_key,
+                aws_access_key_id=self.aws_access_key,
+                aws_secret_access_key=self.aws_secret_key,
                 region_name=self.aws_region,
             )
         elif self.object_store == "moto":
@@ -120,8 +120,8 @@ class Settings(BaseSettings):
 
             client = boto3.client(
                 "s3",
-                aws_access_key_id=self.aws_access_key_id,
-                aws_secret_access_key=self.aws_secret_access_key,
+                aws_access_key_id=self.aws_access_key,
+                aws_secret_access_key=self.aws_secret_key,
                 region_name=self.aws_region,
             )
         else:
