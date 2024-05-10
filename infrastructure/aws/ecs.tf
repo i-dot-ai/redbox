@@ -23,7 +23,7 @@ locals {
     "CORE_API_PORT": 8000,
     "ENVIRONMENT": upper(terraform.workspace),
     "DJANGO_SETTINGS_MODULE": "redbox_app.settings",
-    "DEBUG": false,
+    "DEBUG": true,
     "AWS_REGION": var.region,
     "OPENAI_API_KEY" : var.openai_api_key,
     "FROM_EMAIL" : var.from_email,
@@ -62,7 +62,7 @@ module "django-app" {
   create_networking  = true
   source             = "../../../i-ai-core-infrastructure//modules/ecs"
   project_name       = "redbox-django-app"
-  image_tag          = "194805a83c524d2d6736b0efed49f17e34247b73"
+  image_tag          = "3688e43a0b8892804ff65c57783cdff149b01acc"
   prefix             = "backend"
   ecr_repository_uri = "${var.ecr_repository_uri}/redbox-django-app"
   ecs_cluster_id     = module.cluster.ecs_cluster_id
@@ -92,7 +92,7 @@ module "core_api" {
   create_networking  = false
   source             = "../../../i-ai-core-infrastructure//modules/ecs"
   project_name       = "redbox-core-api"
-  image_tag          = "194805a83c524d2d6736b0efed49f17e34247b73"
+  image_tag          = "3688e43a0b8892804ff65c57783cdff149b01acc"
   prefix             = "backend"
   ecr_repository_uri = "${var.ecr_repository_uri}/redbox-core-api"
   ecs_cluster_id     = module.cluster.ecs_cluster_id
@@ -121,7 +121,7 @@ module "worker" {
   create_networking  = false
   source             = "../../../i-ai-core-infrastructure//modules/ecs"
   project_name       = "redbox-worker"
-  image_tag          = "194805a83c524d2d6736b0efed49f17e34247b73"
+  image_tag          = "3688e43a0b8892804ff65c57783cdff149b01acc"
   prefix             = "backend"
   ecr_repository_uri = "${var.ecr_repository_uri}/redbox-worker"
   ecs_cluster_id     = module.cluster.ecs_cluster_id

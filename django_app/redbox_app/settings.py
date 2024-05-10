@@ -211,7 +211,12 @@ else:
     STATICFILES_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
 
     LOCALHOST = socket.gethostbyname(socket.gethostname())
-    ALLOWED_HOSTS = [LOCALHOST]
+    ALLOWED_HOSTS = [
+        LOCALHOST,
+        "redbox-dev.ai.cabinetoffice.gov.uk",
+        "redbox-preprod.ai.cabinetoffice.gov.uk",
+        "redbox.ai.cabinetoffice.gov.uk",
+    ]
 
     # https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Strict-Transport-Security
     # Mozilla guidance max-age 2 years
