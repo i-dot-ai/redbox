@@ -43,8 +43,8 @@ class Settings(BaseSettings):
 
     minio_host: str = "minio"
     minio_port: int = 9000
-    aws_access_key: str = "minioadmin"
-    aws_secret_key: str = "minioadmin"
+    aws_access_key: Optional[str] = None
+    aws_secret_key: Optional[str] = None
 
     aws_region: str = "eu-west-2"
     bucket_name: str = "redbox-storage-dev"
