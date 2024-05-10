@@ -1,11 +1,10 @@
 import os
 import time
-from uuid import uuid4, UUID
+from uuid import UUID, uuid4
 
 import pytest
 import requests
 from jose import jwt
-
 
 # TODO: add e2e tests involving the Django app, checking S3 upload
 
@@ -47,6 +46,7 @@ class TestEndToEnd:
                     "bucket": bucket_name,
                 },
                 headers=make_headers(user_uuid),
+                timeout=30,
             )
             TestEndToEnd.file_uuids[user_uuid] = response.json()["uuid"]
             assert response.status_code == 200
@@ -68,6 +68,7 @@ class TestEndToEnd:
             chunk_response = requests.get(
                 f"http://localhost:5002/file/{TestEndToEnd.file_uuids[user_uuid]}/status",
                 headers=make_headers(user_uuid),
+                timeout=30,
             )
             if chunk_response.status_code == 200 and chunk_response.json()["processing_status"] == "complete":
                 embedding_complete = True
@@ -87,7 +88,9 @@ class TestEndToEnd:
         I Expect a 200 response code
         """
         chunks_response = requests.get(
-            f"http://localhost:5002/file/{TestEndToEnd.file_uuids[user_uuid]}/chunks", headers=make_headers(user_uuid)
+            f"http://localhost:5002/file/{TestEndToEnd.file_uuids[user_uuid]}/chunks",
+            headers=make_headers(user_uuid),
+            timeout=30,
         )
         assert chunks_response.status_code == 200
 
@@ -108,6 +111,7 @@ class TestEndToEnd:
                 ]
             },
             headers=make_headers(user_uuid),
+            timeout=30,
         )
         assert rag_response.status_code == 200
         source_document_file_uuids = {
@@ -129,6 +133,4 @@ class TestEndToEnd:
 
         for other_user_uuid, source_document_file_uuids in TestEndToEnd.source_document_file_uuids.items():
             if other_user_uuid != user_uuid:
-                assert (
-                    TestEndToEnd.file_uuids[user_uuid] not in TestEndToEnd.source_document_file_uuids[other_user_uuid]
-                )
+                assert TestEndToEnd.file_uuids[user_uuid] not in source_document_file_uuids

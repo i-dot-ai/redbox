@@ -208,7 +208,7 @@ if HostingEnvironment.is_local():
     MINIO_HOST = env.str("MINIO_HOST")
     MINIO_PORT = env.str("MINIO_PORT")
 
-    ALLOWED_HOSTS = ["localhost", "127.0.0.1", "0.0.0.0"]  # nosec B104 - don't do this on server!
+    ALLOWED_HOSTS = ["localhost", "127.0.0.1", "0.0.0.0"]  # nosec B104 # noqa S104 - don't do this on server!
 else:
     OBJECT_STORE = "s3"
     AWS_STORAGE_BUCKET_NAME = BUCKET_NAME  # this duplication is required for django-storage
