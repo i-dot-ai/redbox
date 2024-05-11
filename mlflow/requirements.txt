@@ -1,9 +1,9 @@
-mlflow==2.11.3
+mlflow==2.12.2
 pydantic==1.10.15
 starlette==0.37.2
 limits==3.11.0
 watchfiles==0.21.0
-fastapi==0.110.3
+fastapi==0.111.0
 slowapi==0.1.9
 uvicorn==0.29.0
 aiohttp===3.9.5
