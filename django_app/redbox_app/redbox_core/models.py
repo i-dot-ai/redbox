@@ -29,6 +29,7 @@ class User(BaseUser, UUIDPrimaryKeyBase):
     invited_at = models.DateTimeField(default=None, blank=True, null=True)
     invite_accepted_at = models.DateTimeField(default=None, blank=True, null=True)
     last_token_sent_at = models.DateTimeField(editable=False, blank=True, null=True)
+    password = models.CharField("password", max_length=128, blank=True, null=True)
 
     def save(self, *args, **kwargs):
         self.email = self.email.lower()

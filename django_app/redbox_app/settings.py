@@ -27,17 +27,19 @@ COMPRESSION_ENABLED = env.bool("COMPRESSION_ENABLED")
 COMPRESS_PRECOMPILERS = (("text/x-scss", "django_libsass.SassCompiler"),)
 
 STATIC_URL = "static/"
-STATIC_ROOT = "frontend/"
+STATIC_ROOT = "staticfiles/"
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, "static/"),
-    (
-        "govuk-assets",
-        BASE_DIR / "frontend/node_modules/govuk-frontend/dist/govuk/assets",
-    ),
+    os.path.join(BASE_DIR, "frontend/"),
+    # (
+    #     "govuk-assets",
+    #     BASE_DIR / "frontend/node_modules/govuk-frontend/dist/govuk/assets",
+    # ),
 ]
 STATICFILES_FINDERS = [
     "compressor.finders.CompressorFinder",
     "django.contrib.staticfiles.finders.FileSystemFinder",
+    "django.contrib.staticfiles.finders.AppDirectoriesFinder",
 ]
 
 
@@ -95,7 +97,7 @@ TEMPLATES = [
     },
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [],
+        "DIRS": [os.path.join(BASE_DIR, "templates")],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -113,7 +115,6 @@ ASGI_APPLICATION = "redbox_app.asgi.application"
 
 AUTHENTICATION_BACKENDS = [
     "django.contrib.auth.backends.ModelBackend",
-    "magic_link.backends.MagicLinkBackend",
 ]
 
 AUTH_PASSWORD_VALIDATORS = [

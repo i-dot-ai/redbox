@@ -1,4 +1,4 @@
-from django_app.redbox_app import settings
+from django.conf import settings
 
 
 def compression_enabled(_request):
