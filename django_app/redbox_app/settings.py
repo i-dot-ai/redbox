@@ -22,7 +22,8 @@ DEBUG = env.bool("DEBUG")
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-COMPRESSION_ENABLED = env.str("COMPRESSION_ENABLED")
+COMPRESSION_ENABLED = env.bool("COMPRESSION_ENABLED")
+
 COMPRESS_PRECOMPILERS = (("text/x-scss", "django_libsass.SassCompiler"),)
 
 STATIC_URL = "static/"
@@ -130,15 +131,6 @@ AUTH_PASSWORD_VALIDATORS = [
     },
     {
         "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
-    },
-    {
-        "NAME": "redbox_app.custom_password_validators.SpecialCharacterValidator",
-    },
-    {
-        "NAME": "redbox_app.custom_password_validators.LowercaseUppercaseValidator",
-    },
-    {
-        "NAME": "redbox_app.custom_password_validators.BusinessPhraseSimilarityValidator",
     },
 ]
 

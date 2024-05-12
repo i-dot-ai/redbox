@@ -65,5 +65,5 @@ requests-mock = "^1.12.1"
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
-[pytest]
+[tool.pytest.ini_options]
 DJANGO_SETTINGS_MODULE = "redbox_app.settings"
