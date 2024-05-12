@@ -36,6 +36,7 @@ humanize = "^4.9.0"
 channels = {extras = ["daphne"], version = "^4.1.0"}
 django-gov-notify = "^0.5.0"
 gunicorn = "^22.0.0"
+libsass = "^0.23.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.1.1"
@@ -63,3 +64,6 @@ requests-mock = "^1.12.1"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[pytest]
+DJANGO_SETTINGS_MODULE = "redbox_app.settings"

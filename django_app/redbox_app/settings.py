@@ -5,8 +5,11 @@ import socket
 from pathlib import Path
 
 import environ
+from dotenv import load_dotenv
 
 from .hosting_environment import HostingEnvironment
+
+load_dotenv()
 
 env = environ.Env()
 
@@ -19,17 +22,17 @@ DEBUG = env.bool("DEBUG")
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-COMPRESS_ENABLED = True
+COMPRESSION_ENABLED = env.str("COMPRESSION_ENABLED")
 COMPRESS_PRECOMPILERS = (("text/x-scss", "django_libsass.SassCompiler"),)
 
 STATIC_URL = "static/"
 STATIC_ROOT = "frontend/"
 STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, 'static/'),
+    os.path.join(BASE_DIR, "static/"),
     (
         "govuk-assets",
         BASE_DIR / "frontend/node_modules/govuk-frontend/dist/govuk/assets",
-    )
+    ),
 ]
 STATICFILES_FINDERS = [
     "compressor.finders.CompressorFinder",
@@ -82,7 +85,12 @@ TEMPLATES = [
             BASE_DIR / "redbox_app" / "templates",
             BASE_DIR / "redbox_app" / "templates" / "auth",
         ],
-        "OPTIONS": {"environment": "redbox_app.jinja2.environment"},
+        "OPTIONS": {
+            "environment": "redbox_app.jinja2.environment",
+            "context_processors": [
+                "redbox_app.context_processors.compression_enabled",
+            ],
+        },
     },
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
