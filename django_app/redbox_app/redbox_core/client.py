@@ -13,28 +13,37 @@ def s3_client():
             aws_secret_access_key=settings.AWS_S3_SECRET_ACCESS_KEY,
             endpoint_url=f"http://{settings.MINIO_HOST}:{settings.MINIO_PORT}",
         )
+    elif settings.OBJECT_STORE == "s3":
+        client = boto3.client(
+            "s3",
+            aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
+            aws_secret_access_key=settings.AWS_S3_SECRET_ACCESS_KEY,
+            region_name=settings.AWS_S3_REGION_NAME,
+        )
+    elif settings.OBJECT_STORE == "moto":
+        from moto import mock_aws
 
-        try:
-            client.create_bucket(
-                Bucket=settings.BUCKET_NAME,
-                CreateBucketConfiguration={"LocationConstraint": settings.AWS_S3_REGION_NAME},
-            )
-        except ClientError as e:
-            if e.response["Error"]["Code"] != "BucketAlreadyOwnedByYou":
-                raise e
-        return client
-    raise Exception("OBJECT_STORE needs to be minio")
+        mock = mock_aws()
+        mock.start()
 
+        client = boto3.client(
+            "s3",
+            aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
+            aws_secret_access_key=settings.AWS_S3_SECRET_ACCESS_KEY,
+            region_name=settings.AWS_S3_REGION_NAME,
+        )
+    else:
+        raise NotImplementedError
 
-# TODO: rewrite with env vars
-# if settings.OBJECT_STORE == "s3":
-#     client = boto3.client(
-#         "s3",
-#         aws_access_key_id=???,
-#         aws_secret_access_key=???,
-#         region_name=settings.AWS_S3_REGION_NAME,
-#     )
-#     return client
+    try:
+        client.create_bucket(
+            Bucket=settings.BUCKET_NAME,
+            CreateBucketConfiguration={"LocationConstraint": settings.AWS_S3_REGION_NAME},
+        )
+    except ClientError as e:
+        if e.response["Error"]["Code"] != "BucketAlreadyOwnedByYou":
+            raise e
+    return client
 
 
 class CoreApiClient:
