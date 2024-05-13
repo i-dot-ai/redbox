@@ -49,6 +49,9 @@ test-integration:
 	cp .env.backup .env
 	rm .env.backup
 
+collect-static:
+	docker compose run django-app venv/bin/django-admin collectstatic --noinput
+
 lint:
 	poetry run ruff format . --check
 	poetry run ruff check .
