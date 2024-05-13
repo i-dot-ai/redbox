@@ -115,3 +115,4 @@ Format:
 Format:
 
 - \[Title\]\(URL\) --> 
+[Link to Redbox RAG evaluation notebook for this spike](/notebooks/evaluation/redbox_rag_evaluation.ipynb)
