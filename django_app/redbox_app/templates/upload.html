@@ -4,45 +4,51 @@
 {% from "macros/govuk-button.html" import govukButton %}
 
 {% block content %}
+
 <a href="{{url('documents')}}" class="govuk-back-link">Back</a>
 <form method="post" enctype="multipart/form-data">
 
-  <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+<div class="govuk-width-container">
+  <form method="post" enctype="multipart/form-data">
 
-  {% if uploaded %}
-  <div class="govuk-notification-banner govuk-notification-banner--success" role="alert" aria-labelledby="upload-success" data-module="govuk-notification-banner">
-    <div class="govuk-notification-banner__header">
-      <h2 class="govuk-notification-banner__title" id="upload-success">
-        Success
-      </h2>
+    <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+
+    {% if uploaded %}
+    <div class="govuk-notification-banner govuk-notification-banner--success" role="alert" aria-labelledby="upload-success" data-module="govuk-notification-banner">
+      <div class="govuk-notification-banner__header">
+        <h2 class="govuk-notification-banner__title" id="upload-success">
+          Success
+        </h2>
+      </div>
+      <div class="govuk-notification-banner__content">
+        <!-- TODO: add copy to outline next stages for ingestion etc. -->
+        <h3 class="govuk-notification-banner__heading">
+          Your file has been uploaded
+        </h3>
+      </div>
     </div>
-    <div class="govuk-notification-banner__content">
-      <!-- TODO: add copy to outline next stages for ingestion etc. -->
-      <h3 class="govuk-notification-banner__heading">
-        Your file has been uploaded
-      </h3>
+    {% endif %}
+
+    <div class="govuk-form-group {% if errors.upload_doc %} govuk-form-group--error{% endif %}">
+      <label class="govuk-label" for="upload-doc">
+        <h1 class="govuk-heading-l">{{ pageTitle }}</h1>
+      </label>    
+      <p class="govuk-body iai-file-types" id="upload-doc-filetypes">Limit 200MB per file: EML, HTML, JSON, MD, MSG, RST, RTF, TXT, XML, CSV, DOC, DOCX, EPUB, ODT, PDF, PPT, PPTX, TSV, XLSX, HTM</p>
+      {% for error in errors.upload_doc %}
+        <p id="file-upload-doc-error" class="govuk-error-message">
+          <span class="govuk-visually-hidden">Error:</span> {{ error }}
+        </p>
+      {% endfor %}
+      <input class="govuk-file-upload {% if errors.upload_doc %} govuk-file-upload--error{% endif %}" id="upload-doc" name="uploadDoc" type="file" aria-describedby="upload-doc-filetypes {% if errors.upload_doc %} file-upload-doc-error{% endif %}">
     </div>
-  </div>
-  {% endif %}
-
-  <div class="govuk-form-group {% if errors.upload_doc %} govuk-form-group--error{% endif %}">
-    <label class="govuk-label" for="upload-doc">
-      <h1 class="govuk-heading-l">{{ pageTitle }}</h1>
-    </label>
-    <p class="govuk-body iai-file-types" id="upload-doc-filetypes">Limit 200MB per file: EML, HTML, JSON, MD, MSG, RST, RTF, TXT, XML, CSV, DOC, DOCX, EPUB, ODT, PDF, PPT, PPTX, TSV, XLSX, HTM</p>
-    {% for error in errors.upload_doc %}
-      <p id="file-upload-doc-error" class="govuk-error-message">
-        <span class="govuk-visually-hidden">Error:</span> {{ error }}
-      </p>
-    {% endfor %}
-    <input class="govuk-file-upload {% if errors.upload_doc %} govuk-file-upload--error{% endif %}" id="upload-doc" name="uploadDoc" type="file" aria-describedby="upload-doc-filetypes {% if errors.upload_doc %} file-upload-doc-error{% endif %}">
-  </div>
 
 
-  <div class="govuk-button-group">
-    {{ govukButton(text="Upload") }}
-    {{ govukButton(text="Cancel", classes="govuk-button--secondary", href="/documents") }}
-  </div>
+    <div class="govuk-button-group">
+      {{ govukButton(text="Upload") }}
+      {{ govukButton(text="Cancel", classes="govuk-button--secondary", href="/documents") }}
+    </div>
 
-</form>
+  </form>
+</div>
+
 {% endblock %}

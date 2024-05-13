@@ -5,18 +5,20 @@
 
 {% block content %}
 
-<div class="govuk-grid-row">
-  <div class="govuk-grid-column-two-thirds">
+<div class="govuk-width-container">
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
 
-    <h1 class="govuk-heading-l">Sign in - confirmation</h1>
+      <h1 class="govuk-heading-l">Sign in - confirmation</h1>
 
-    <form method="POST" action="{{ link.get_absolute_url() }}">
-      {{ csrf_input }}
+      <form method="POST" action="{{ link.get_absolute_url() }}">
+        {{ csrf_input }}
 
-      {{ govukButton(text="Sign in") }}
+        {{ govukButton(text="Sign in") }}
 
-    </form>
-  
+      </form>
+    
+    </div>
   </div>
 </div>
 

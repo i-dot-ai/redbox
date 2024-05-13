@@ -5,28 +5,31 @@
 
 {% block content %}
 
-<div class="govuk-grid-row">
-  <div class="govuk-grid-column-two-thirds">
+<div class="govuk-width-container">
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
 
-    <h1 class="govuk-heading-l">Sign in</h1>
+      <h1 class="govuk-heading-l">Sign in</h1>
 
-    <form method="post" action="/sign-in/">
+      <form method="post" action="/sign-in/">
 
-      <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+        <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
 
-      <div class="govuk-form-group">
-        <label class="govuk-label" for="email">
-          Email address
-        </label>
-        <div id="email-hint" class="govuk-hint">
-          Enter your email address to generate a link to sign in
+        <div class="govuk-form-group">
+          <label class="govuk-label" for="email">
+            Email address
+          </label>
+          <div id="email-hint" class="govuk-hint">
+            Enter your email address to generate a link to sign in
+          </div>
+          <input class="govuk-input" id="email" name="email" type="email" spellcheck="false" aria-describedby="email-hint" autocomplete="email" required>
         </div>
-        <input class="govuk-input" id="email" name="email" type="email" spellcheck="false" aria-describedby="email-hint" autocomplete="email" required>
-      </div>
 
-      {{ govukButton(text="Continue") }}
+        {{ govukButton(text="Continue") }}
 
-    </form>
+      </form>
+    
+    </div>
   </div>
 </div>
 

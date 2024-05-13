@@ -1,6 +1,10 @@
 // @ts-check
 
-class chatMessage extends HTMLElement {
+/** @type {import ('../node_modules/@types/dompurify/index.d.ts')} */
+let DOMPurify = window["DOMPurify"];
+
+
+class ChatMessage extends HTMLElement {
 
     connectedCallback() {
         const html = `
@@ -9,18 +13,18 @@ class chatMessage extends HTMLElement {
                 <div class="iai-chat-message__text js-ai-response">${this.dataset.text || ''}</div>
             </div>
         `;
-        this.innerHTML = DOMPurify.sanitize(html, {RETURN_TRUSTED_TYPE: true});
+        this.innerHTML = /** @type {any} */ (DOMPurify.sanitize(html, {RETURN_TRUSTED_TYPE: true}));
     }
 
-
     /**
+     * Streams an LLM response
      * @param {string} message
-     * @param {string} sessionId
+     * @param {string | undefined} sessionId
      * @param {string} endPoint
      */
     stream = (message, sessionId, endPoint) => {
 
-        let responseContainer = this.querySelector('.js-ai-response');
+        let responseContainer = /** @type {HTMLElement} */ (this.querySelector('.js-ai-response'));
         let webSocket = new WebSocket(endPoint);
         let streamedHtml = '<p></p>';
     
@@ -30,59 +34,65 @@ class chatMessage extends HTMLElement {
         };
     
         webSocket.onerror = (event) => {
+            responseContainer.innerHTML = 'There was a problem. Please try sending this message again.';
             this.dataset.status = "error";
         };
+
         webSocket.onclose = (event) => {
             this.dataset.status = "complete";
         };
     
         webSocket.onmessage = (event) => {
-            if (!responseContainer) {
-                return;
-            }
             const newText = event.data.replace(/\n/g, "</p><p>");
             streamedHtml = streamedHtml.replace(/<\/p>$/, `${newText}</p>`);
-            responseContainer.innerHTML = DOMPurify.sanitize(streamedHtml, {RETURN_TRUSTED_TYPE: true});
+            responseContainer.innerHTML = /** @type {any} */ (DOMPurify.sanitize(streamedHtml, {RETURN_TRUSTED_TYPE: true}));
         };
     
     };
 
 }
-customElements.define('chat-message', chatMessage);
+customElements.define('chat-message', ChatMessage);
 
 
 
 
-class chatController extends HTMLElement {
+class ChatController extends HTMLElement {
 
     connectedCallback() {
 
         const sendButton = this.querySelector('.js-send-btn');
-        /** @type {HTMLInputElement | null} */
-        const textArea = this.querySelector('.js-user-text');
+        const textArea = /** @type {HTMLInputElement | null} */ (this.querySelector('.js-user-text'));
         const messageContainer = this.querySelector('.js-message-container');
+        const insertPosition = this.querySelector('.js-response-feedback');
+        const feedbackButtons = /** @type {HTMLElement | null} */ (this.querySelector('feedback-buttons'));
 
         sendButton?.addEventListener('click', (evt) => {
             
             evt.preventDefault();
             const userText = textArea?.value;
-            if (!userText) {
+            if (!textArea || !userText) {
                 return;
             }
 
             let userMessage = document.createElement('chat-message');
             userMessage.setAttribute('data-text', userText);
             userMessage.setAttribute('data-role', 'user');
-            messageContainer?.appendChild(userMessage);
+            messageContainer?.insertBefore(userMessage, insertPosition);
 
-            let aiMessage = document.createElement('chat-message');
+            let aiMessage = /** @type {ChatMessage} */ (document.createElement('chat-message'));
             aiMessage.setAttribute('data-role', 'ai');
-            messageContainer?.appendChild(aiMessage);
-            aiMessage.stream(userText, this.dataset.sessionId, this.dataset.streamUrl);
+            messageContainer?.insertBefore(aiMessage, insertPosition);
+            aiMessage.stream(userText, this.dataset.sessionId, this.dataset.streamUrl || '');
+
+            // reset UI 
+            if (feedbackButtons) {
+                feedbackButtons.dataset.status = "";
+            }
+            textArea.value = "";
 
         });
 
     }
   
 }
-customElements.define('chat-controller', chatController);
+customElements.define('chat-controller', ChatController);
