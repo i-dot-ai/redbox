@@ -5,7 +5,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("redbox_core", "0003_chathistory_file_chatmessage_and_more"),
+        ("redbox_core", "0004_alter_file_original_file"),
     ]
 
     operations = [
