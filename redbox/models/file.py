@@ -99,7 +99,7 @@ class Metadata(BaseModel):
 
         data = {
             field_name: sorted_list_or_none(listify(left, field_name) + listify(right, field_name))
-            for field_name in cls.model_fields.keys()
+            for field_name in cls.model_fields
         }
 
         if parent_doc_uuids := data.get("parent_doc_uuid"):
