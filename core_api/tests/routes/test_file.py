@@ -34,7 +34,7 @@ async def test_post_file_upload(s3_client, app_client, elasticsearch_storage_han
                 },
                 headers=headers,
             )
-    assert response.status_code == 200
+    assert response.status_code == 201
 
 
 def test_get_file(app_client, stored_file, headers):

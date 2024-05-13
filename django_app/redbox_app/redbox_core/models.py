@@ -1,9 +1,12 @@
 import uuid
 
+import boto3
+from botocore.config import Config
 from django.conf import settings
 from django.db import models
 from django_use_email_as_username.models import BaseUser, BaseUserManager
 from jose import jwt
+from yarl import URL
 
 
 class UUIDPrimaryKeyBase(models.Model):
@@ -53,21 +56,53 @@ class ProcessingStatusEnum(models.TextChoices):
 
 class File(UUIDPrimaryKeyBase, TimeStampedModel):
     processing_status = models.CharField(choices=ProcessingStatusEnum.choices, null=False, blank=False)
-    original_file = models.FileField(storage=settings.BUCKET_NAME)
+    original_file = models.FileField(storage=settings.STORAGES["default"]["BACKEND"])
     user = models.ForeignKey(User, on_delete=models.CASCADE)
+    original_file_name = models.TextField(max_length=2048, blank=True, null=True)
+
+    def delete(self, using=None, keep_parents=False):
+        #  Needed to make sure no orphaned files remain in the storage
+        self.original_file.storage.delete(self.original_file.name)
+        super().delete()
 
     @property
-    def file_type(self):
+    def file_type(self) -> str:
         name = self.original_file.name
         return name.split(".")[-1]
 
     @property
-    def file_url(self):
-        return self.original_file.url
+    def url(self) -> URL:
+        #  In dev environment, get pre-signed url from minio
+        if settings.ENVIRONMENT == "LOCAL":
+            s3 = boto3.client(
+                "s3",
+                endpoint_url="http://localhost:9000",
+                aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
+                aws_secret_access_key=settings.AWS_S3_SECRET_ACCESS_KEY,
+                config=Config(signature_version="s3v4"),
+                region_name=settings.AWS_S3_REGION_NAME,
+            )
+
+            url = s3.generate_presigned_url(
+                ClientMethod="get_object",
+                Params={
+                    "Bucket": settings.AWS_STORAGE_BUCKET_NAME,
+                    "Key": self.name,
+                },
+            )
+            return URL(url)
+        else:
+            return URL(self.original_file.url)
 
     @property
-    def name(self):
-        return self.original_file.name
+    def name(self) -> str:
+        return self.original_file_name if self.original_file_name else self.original_file.name
+
+    def get_processing_status_text(self) -> str:
+        return next(
+            (status[1] for status in ProcessingStatusEnum.choices if self.processing_status == status[0]),
+            "Unknown",
+        )
 
 
 class ChatHistory(UUIDPrimaryKeyBase, TimeStampedModel):
