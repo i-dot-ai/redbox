@@ -5,8 +5,12 @@ import socket
 from pathlib import Path
 
 import environ
+from dotenv import load_dotenv
+from storages.backends import s3boto3
 
 from .hosting_environment import HostingEnvironment
+
+load_dotenv()
 
 env = environ.Env()
 
@@ -19,21 +23,20 @@ DEBUG = env.bool("DEBUG")
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-COMPRESS_ENABLED = True
+COMPRESSION_ENABLED = env.bool("COMPRESSION_ENABLED")
+
 COMPRESS_PRECOMPILERS = (("text/x-scss", "django_libsass.SassCompiler"),)
 
 STATIC_URL = "static/"
-STATIC_ROOT = "frontend/"
+STATIC_ROOT = "staticfiles/"
 STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, 'static/'),
-    (
-        "govuk-assets",
-        BASE_DIR / "frontend/node_modules/govuk-frontend/dist/govuk/assets",
-    )
+    os.path.join(BASE_DIR, "static/"),
+    os.path.join(BASE_DIR, "frontend/"),
 ]
 STATICFILES_FINDERS = [
     "compressor.finders.CompressorFinder",
     "django.contrib.staticfiles.finders.FileSystemFinder",
+    "django.contrib.staticfiles.finders.AppDirectoriesFinder",
 ]
 
 
@@ -82,11 +85,16 @@ TEMPLATES = [
             BASE_DIR / "redbox_app" / "templates",
             BASE_DIR / "redbox_app" / "templates" / "auth",
         ],
-        "OPTIONS": {"environment": "redbox_app.jinja2.environment"},
+        "OPTIONS": {
+            "environment": "redbox_app.jinja2.environment",
+            "context_processors": [
+                "redbox_app.context_processors.compression_enabled",
+            ],
+        },
     },
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [],
+        "DIRS": [os.path.join(BASE_DIR, "templates")],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -104,7 +112,6 @@ ASGI_APPLICATION = "redbox_app.asgi.application"
 
 AUTHENTICATION_BACKENDS = [
     "django.contrib.auth.backends.ModelBackend",
-    "magic_link.backends.MagicLinkBackend",
 ]
 
 AUTH_PASSWORD_VALIDATORS = [
@@ -122,15 +129,6 @@ AUTH_PASSWORD_VALIDATORS = [
     },
     {
         "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
-    },
-    {
-        "NAME": "redbox_app.custom_password_validators.SpecialCharacterValidator",
-    },
-    {
-        "NAME": "redbox_app.custom_password_validators.LowercaseUppercaseValidator",
-    },
-    {
-        "NAME": "redbox_app.custom_password_validators.BusinessPhraseSimilarityValidator",
     },
 ]
 
@@ -192,25 +190,45 @@ SESSION_ENGINE = "django.contrib.sessions.backends.db"
 
 LOG_ROOT = "."
 LOG_HANDLER = "console"
-
-DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
-
 BUCKET_NAME = env.str("BUCKET_NAME")
 AWS_S3_REGION_NAME = env.str("AWS_REGION")
 
+#  Property added to each S3 file to make them downloadable by default
+AWS_S3_OBJECT_PARAMETERS = {"ContentDisposition": "attachment"}
+AWS_STORAGE_BUCKET_NAME = BUCKET_NAME  # this duplication is required for django-storage
+OBJECT_STORE = env.str("OBJECT_STORE")
+
 if HostingEnvironment.is_local():
-    # For Docker to work locally
-    OBJECT_STORE = "minio"
-    MINIO_ACCESS_KEY = env.str("MINIO_ACCESS_KEY")
-    MINIO_SECRET_KEY = env.str("MINIO_SECRET_KEY")
+    AWS_S3_SECRET_ACCESS_KEY = env.str("AWS_SECRET_KEY")
+    AWS_ACCESS_KEY_ID = env.str("AWS_ACCESS_KEY")
     MINIO_HOST = env.str("MINIO_HOST")
     MINIO_PORT = env.str("MINIO_PORT")
+    MINIO_ENDPOINT = f"http://{MINIO_HOST}:{MINIO_PORT}"
+    AWS_S3_ENDPOINT_URL = MINIO_ENDPOINT
 
-    ALLOWED_HOSTS = ["localhost", "127.0.0.1", "0.0.0.0"]  # nosec B104 # noqa S104 - don't do this on server!
+    STORAGES = {
+        "default": {
+            "BACKEND": s3boto3.S3Boto3Storage,
+        },
+        "staticfiles": {
+            "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+        },
+    }
+
+    ALLOWED_HOSTS = [
+        "localhost",
+        "127.0.0.1",
+        "0.0.0.0",  # noqa S104
+    ]  # nosec B104 - don't do this on server!
 else:
-    OBJECT_STORE = "s3"
-    AWS_STORAGE_BUCKET_NAME = BUCKET_NAME  # this duplication is required for django-storage
-    # STATICFILES_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
+    STORAGES = {
+        "default": {
+            "BACKEND": s3boto3.S3Boto3Storage,
+        },
+        "staticfiles": {
+            "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+        },
+    }
 
     LOCALHOST = socket.gethostbyname(socket.gethostname())
     ALLOWED_HOSTS = [
@@ -238,7 +256,7 @@ DATABASES = {
     }
 }
 
-LOG_LEVEL = env.str("DJANGO_LOG_LEVEL", "WARN")
+LOG_LEVEL = env.str("DJANGO_LOG_LEVEL", "WARNING")
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
@@ -257,7 +275,13 @@ LOGGING = {
         },
     },
     "root": {"handlers": ["console"], "level": LOG_LEVEL},
-    "loggers": {"application": {"handlers": [LOG_HANDLER], "level": LOG_LEVEL, "propagate": True}},
+    "loggers": {
+        "application": {
+            "handlers": [LOG_HANDLER],
+            "level": LOG_LEVEL,
+            "propagate": True,
+        }
+    },
 }
 
 # link to core_api app

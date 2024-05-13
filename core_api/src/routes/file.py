@@ -57,7 +57,7 @@ class FileRequest(BaseModel):
     key: str = Field(description="file key", examples=["policies.pdf"])
 
 
-@file_app.post("/", tags=["file"])
+@file_app.post("/", tags=["file"], status_code=201)
 async def add_file(file_request: FileRequest, user_uuid: Annotated[UUID, Depends(get_user_uuid)]) -> File:
     """Create a File record in the database
 

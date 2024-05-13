@@ -49,7 +49,7 @@ class TestEndToEnd:
                 timeout=30,
             )
             TestEndToEnd.file_uuids[user_uuid] = response.json()["uuid"]
-            assert response.status_code == 200
+            assert response.status_code == 201
 
     @pytest.mark.parametrize("user_uuid", USER_UUIDS)
     def test_get_file_status(self, user_uuid):
