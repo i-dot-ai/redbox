@@ -1,11 +1,12 @@
 $govuk-assets-path: "govuk-assets/";
 $govuk-font-family: sans-serif;
 $iai-pink: #b62777;
+$redbox-red: #A50202;
 
 @import "frontend/node_modules/govuk-frontend/dist/govuk/all";
 
 
-/* Classification banner */
+/* All pages */
 .iai-classification-banner {
   background-color: #2b71c7;
   color: white;
@@ -15,15 +16,31 @@ $iai-pink: #b62777;
   text-align: center;
 }
 
-
-/* i.AI pink in header */
-.govuk-header__container {
-  border-color: $iai-pink;
+.govuk-phase-banner__content__tag {
+  background-color: govuk-colour("blue");
+  color: white;
 }
 
-.govuk-phase-banner__content__tag {
-  background-color: $iai-pink;
+
+/* Home page */
+.govuk-main-wrapper:has(.iai-banner) {
+  padding-top: 0;
+}
+.iai-banner {
+  background-color: $redbox-red;
   color: white;
+  padding-bottom: 2rem;
+  padding-top: 3rem;
+}
+.iai-banner * {
+  color: white;
+}
+.iai-banner .govuk-link {
+  color: white;
+}
+.iai-banner .govuk-link:focus {
+  background-color: white;
+  color: black;
 }
 
 
@@ -51,7 +68,6 @@ $iai-pink: #b62777;
   font-size: 1rem;
   padding-top: 0.5rem;
 }
-
 
 .iai-response-feedback {
   display: none;

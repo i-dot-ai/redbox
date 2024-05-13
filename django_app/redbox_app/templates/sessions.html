@@ -4,32 +4,32 @@
 
 {% block content %}
 
-<div class="govuk-grid-row govuk-!-margin-top-3">
+<div class="govuk-width-container">
+  <div class="govuk-grid-row govuk-!-margin-top-3">
 
-  <div class="govuk-grid-column-one-third">
-
-    {{ govukButton(
-      text="Start a new session",
-      href="/sessions",
-      classes="govuk-button--secondary"
-    ) }}
-
-    <h2 class="govuk-heading-s">Recent sessions</h2>
-    <ul class="govuk-list govuk-list--spaced">
-      {% for session in chat_history %}
-        <li>
-          <a class="govuk-link" href="/sessions/{{ session.id }}">{{ session.name }}</a>
-        </li>
-      {% endfor %}
-    </ul>
-      
-  </div>
-
-  <div class="govuk-grid-column-two-thirds">
-    <chat-controller data-stream-url="{{ streaming.endpoint }}" data-session-id="{{ session_id }}">
-
+    <div class="govuk-grid-column-one-third">
+  
+      {{ govukButton(
+        text="Start a new session",
+        href="/sessions",
+        classes="govuk-button--secondary"
+      ) }}
+  
+      <h2 class="govuk-heading-s">Recent sessions</h2>
+      <ul class="govuk-list govuk-list--spaced">
+        {% for session in chat_history %}
+          <li>
+            <a class="govuk-link" href="/sessions/{{ session.id }}">{{ session.name }}</a>
+          </li>
+        {% endfor %}
+      </ul>
+        
+    </div>
+  
+    <chat-controller data-stream-url="{{ streaming.endpoint }}" data-session-id="{{ session_id }}" class="govuk-grid-column-two-thirds">
+  
       <h2 class="govuk-heading-m">Current session</h2>
-
+  
       <div class="govuk-notification-banner" role="region" aria-labelledby="govuk-notification-banner-title" data-module="govuk-notification-banner">
         <div class="govuk-notification-banner__header">
           <h2 class="govuk-notification-banner__title" id="govuk-notification-banner-title">
@@ -43,47 +43,21 @@
           </p>
         </div>
       </div>
-
-
-      {% macro message_box(role, text, classes=None) %}
-        <div class="iai-chat-message iai-chat-message--{{ role }} govuk-body {{ classes }}" data-role="{{ role }}">
-          <div class="iai-chat-message__role">{{ role | upper }}</div>
-          <div class="iai-chat-message__text">{{ text }}</div>
+  
+      {# SSR messages #}
+      {% for message in messages %}
+        <div class="iai-chat-message iai-chat-message--{{ message.role }} govuk-body">
+          <div class="iai-chat-message__role">{{ message.role | upper }}</div>
+          <div class="iai-chat-message__text">{{ message.text }}</div>
         </div>
-      {% endmacro %}
-
-      <div class="js-message-container">
-
-        {# SSR messages #}
-        {% for message in messages %}
-          {{ message_box(
-            role = message.role,
-            text = message.text
-          ) }}
-        {% endfor %}
-
-        {# CSR messages are inserted here #}
-
-        <div class="iai-response-feedback js-response-feedback">
-          <feedback-buttons class="iai-response-feedback__buttons"></feedback-buttons>
-          {{ message_box(
-            role = "AI",
-            text = "Thank you for your feedback",
-            classes = "iai-chat-message--feedback-thumbs-up"
-          ) }}
-          {{ message_box(
-            role = "AI",
-            text = "Ok. Can you let me know what wasn’t accurate? I can refine it again to make it more accurate.",
-            classes = "iai-chat-message--feedback-thumbs-down"
-          ) }}
-        </div>
-
-      </div>
-
+      {% endfor %}
+  
+      {# CSR messages #}
+      <div class="js-message-container"></div>
+  
       <form class="iai-new-message js-send-message" action="/post-message/" method="post">
-
+  
         <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}"/>
-        <input type="hidden" name="session-id" value="{{ session_id }}"/>
 
         <div class="govuk-form-group">
           <label class="govuk-label" for="message">
@@ -91,14 +65,15 @@
           </label>
           <textarea class="govuk-textarea js-user-text" id="message" name="message" rows="5" required></textarea>
         </div>
-
+  
         <button type="submit" class="govuk-button js-send-btn" data-module="govuk-button">
           Send
         </button>
-
+  
       </form>
-
+  
     </chat-controller>
+  
   </div>
 
 </div>

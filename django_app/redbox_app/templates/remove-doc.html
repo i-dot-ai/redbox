@@ -4,29 +4,35 @@
 {% from "macros/govuk-button.html" import govukButton %}
 
 {% block content %}
+
 <a href="{{url('documents')}}" class="govuk-back-link">Back</a>
 <form method="post" enctype="multipart/form-data">
 
-  <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
-  <input type="hidden" name="doc_id" value="{{ doc_id }}">
+<div class="govuk-width-container">
+  <form method="post" enctype="multipart/form-data">
 
-  <h1 class="govuk-heading-m">Are you sure you want to remove this document?</h1>
+    <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+    <input type="hidden" name="doc_id" value="{{ doc_id }}">
 
-  <dl class="govuk-summary-list">
-    <div class="govuk-summary-list__row">
-      <dt class="govuk-summary-list__key">
-        Document name:
-      </dt>
-      <dd class="govuk-summary-list__value">
-        {{ doc_name }}
-      </dd>
+    <h1 class="govuk-heading-m">Are you sure you want to remove this document?</h1>
+
+    <dl class="govuk-summary-list">
+      <div class="govuk-summary-list__row">
+        <dt class="govuk-summary-list__key">
+          Document name:
+        </dt>
+        <dd class="govuk-summary-list__value">
+          {{ doc_name }}
+        </dd>
+      </div>
+    </dl>
+
+    <div class="govuk-button-group">
+      {{ govukButton(text="Remove", classes="govuk-button--warning") }}
+      {{ govukButton(text="Cancel", classes="govuk-button--secondary", href="/documents") }}
     </div>
-  </dl>
 
-  <div class="govuk-button-group">
-    {{ govukButton(text="Remove", classes="govuk-button--warning") }}
-    {{ govukButton(text="Cancel", classes="govuk-button--secondary", href="/documents") }}
-  </div>
+  </form>
+</div>
 
-</form>
 {% endblock %}
