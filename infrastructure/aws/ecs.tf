@@ -31,7 +31,8 @@ locals {
     "GOVUK_NOTIFY_API_KEY" : var.govuk_notify_api_key,
     "EMAIL_BACKEND_TYPE": "GOVUKNOTIFY",
     "USE_STREAMING": false,
-    "DJANGO_LOG_LEVEL": "DEBUG"
+    "DJANGO_LOG_LEVEL": "DEBUG",
+    "COMPRESSION_ENABLED": true
   }
 }
 

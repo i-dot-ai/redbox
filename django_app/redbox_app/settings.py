@@ -5,9 +5,12 @@ import socket
 from pathlib import Path
 
 import environ
+from dotenv import load_dotenv
 from storages.backends import s3boto3
 
 from .hosting_environment import HostingEnvironment
+
+load_dotenv()
 
 env = environ.Env()
 
@@ -20,21 +23,20 @@ DEBUG = env.bool("DEBUG")
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-COMPRESS_ENABLED = True
+COMPRESSION_ENABLED = env.bool("COMPRESSION_ENABLED")
+
 COMPRESS_PRECOMPILERS = (("text/x-scss", "django_libsass.SassCompiler"),)
 
 STATIC_URL = "static/"
-STATIC_ROOT = "frontend/"
+STATIC_ROOT = "staticfiles/"
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, "static/"),
-    (
-        "govuk-assets",
-        BASE_DIR / "frontend/node_modules/govuk-frontend/dist/govuk/assets",
-    ),
+    os.path.join(BASE_DIR, "frontend/"),
 ]
 STATICFILES_FINDERS = [
     "compressor.finders.CompressorFinder",
     "django.contrib.staticfiles.finders.FileSystemFinder",
+    "django.contrib.staticfiles.finders.AppDirectoriesFinder",
 ]
 
 
@@ -83,11 +85,16 @@ TEMPLATES = [
             BASE_DIR / "redbox_app" / "templates",
             BASE_DIR / "redbox_app" / "templates" / "auth",
         ],
-        "OPTIONS": {"environment": "redbox_app.jinja2.environment"},
+        "OPTIONS": {
+            "environment": "redbox_app.jinja2.environment",
+            "context_processors": [
+                "redbox_app.context_processors.compression_enabled",
+            ],
+        },
     },
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [],
+        "DIRS": [os.path.join(BASE_DIR, "templates")],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -105,7 +112,6 @@ ASGI_APPLICATION = "redbox_app.asgi.application"
 
 AUTHENTICATION_BACKENDS = [
     "django.contrib.auth.backends.ModelBackend",
-    "magic_link.backends.MagicLinkBackend",
 ]
 
 AUTH_PASSWORD_VALIDATORS = [
@@ -123,15 +129,6 @@ AUTH_PASSWORD_VALIDATORS = [
     },
     {
         "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
-    },
-    {
-        "NAME": "redbox_app.custom_password_validators.SpecialCharacterValidator",
-    },
-    {
-        "NAME": "redbox_app.custom_password_validators.LowercaseUppercaseValidator",
-    },
-    {
-        "NAME": "redbox_app.custom_password_validators.BusinessPhraseSimilarityValidator",
     },
 ]
 
@@ -259,7 +256,7 @@ DATABASES = {
     }
 }
 
-LOG_LEVEL = env.str("DJANGO_LOG_LEVEL", "WARN")
+LOG_LEVEL = env.str("DJANGO_LOG_LEVEL", "WARNING")
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,

@@ -34,8 +34,8 @@ test-worker:
 	poetry run pytest worker/tests --cov=worker -v --cov-report=term-missing --cov-fail-under=40
 
 test-django:
-	docker-compose up -d --wait db minio
-	docker-compose run django-app venv/bin/pytest tests/ --ds redbox_app.settings -v --cov=redbox_app.redbox_core --cov-fail-under 60 -o log_cli=true
+	docker compose up -d --wait db minio
+	docker compose run django-app venv/bin/pytest tests/ --ds redbox_app.settings -v --cov=redbox_app.redbox_core --cov-fail-under 60 -o log_cli=true
 
 test-integration:
 	docker compose down
@@ -48,6 +48,9 @@ test-integration:
 	poetry run pytest tests
 	cp .env.backup .env
 	rm .env.backup
+
+collect-static:
+	docker compose run django-app venv/bin/django-admin collectstatic --noinput
 
 lint:
 	poetry run ruff format . --check
