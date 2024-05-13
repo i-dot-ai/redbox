@@ -80,7 +80,7 @@ class Settings(BaseSettings):
     superuser_email: Optional[str] = None
     compression_enabled: bool = True
 
-    model_config = SettingsConfigDict(env_file=".env", env_nested_delimiter="__")
+    model_config = SettingsConfigDict(env_file=".env", env_nested_delimiter="__", extra="allow")
 
     def elasticsearch_client(self) -> Elasticsearch:
         if isinstance(self.elastic, ElasticLocalSettings):
