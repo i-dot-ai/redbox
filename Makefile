@@ -44,6 +44,7 @@ test-integration:
 	docker compose build core-api worker minio
 	docker compose up -d core-api worker minio
 	poetry install --no-root --no-ansi --with dev --without ai,api,worker
+	poetry run playwright install
 	sleep 10
 	poetry run pytest tests
 	cp .env.backup .env

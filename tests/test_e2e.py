@@ -1,10 +1,12 @@
 import os
+import re
 import time
 from uuid import UUID, uuid4
 
 import pytest
 import requests
 from jose import jwt
+from playwright.sync_api import Page, expect
 
 # TODO: add e2e tests involving the Django app, checking S3 upload
 
@@ -134,3 +136,10 @@ class TestEndToEnd:
         for other_user_uuid, source_document_file_uuids in TestEndToEnd.source_document_file_uuids.items():
             if other_user_uuid != user_uuid:
                 assert TestEndToEnd.file_uuids[user_uuid] not in source_document_file_uuids
+
+
+def test_landing_page(page: Page):
+    page.goto("http://localhost:8090")
+
+    # Expect a title "to contain" a substring.
+    expect(page).to_have_title(re.compile("Redbox Copilot"))
