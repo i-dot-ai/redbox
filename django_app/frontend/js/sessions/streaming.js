@@ -1,9 +1,5 @@
 // @ts-check
 
-/** @type {import ('../node_modules/@types/dompurify/index.d.ts')} */
-let DOMPurify = window["DOMPurify"];
-
-
 class ChatMessage extends HTMLElement {
 
     connectedCallback() {
