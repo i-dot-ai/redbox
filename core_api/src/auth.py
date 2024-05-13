@@ -1,11 +1,10 @@
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import HTTPException, Depends
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from jose import jwt, JWTError
+from fastapi import Depends, HTTPException
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from jose import JWTError, jwt
 from starlette import status
-
 
 http_bearer = HTTPBearer()
 
@@ -16,10 +15,10 @@ async def get_user_uuid(token: Annotated[HTTPAuthorizationCredentials, Depends(h
     try:
         payload = jwt.get_unverified_claims(token.credentials)
         return UUID(payload["user_uuid"])
-    except (TypeError, ValueError, KeyError, JWTError):
+    except (TypeError, ValueError, KeyError, JWTError) as e:
         credentials_exception = HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Could not validate credentials",
             headers={"WWW-Authenticate": "Bearer"},
         )
-        raise credentials_exception
+        raise credentials_exception from e

@@ -1,14 +1,14 @@
+import logging
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import FastAPI, HTTPException, Depends
+from fastapi import Depends, FastAPI, HTTPException
 from langchain.chains.llm import LLMChain
 from langchain.chains.qa_with_sources import load_qa_with_sources_chain
 from langchain_community.chat_models import ChatLiteLLM
 from langchain_community.embeddings import SentenceTransformerEmbeddings
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_elasticsearch import ElasticsearchStore, ApproxRetrievalStrategy
-import logging
+from langchain_elasticsearch import ApproxRetrievalStrategy, ElasticsearchStore
 
 from core_api.src.auth import get_user_uuid
 from redbox.llm.prompts.chat import (
@@ -17,8 +17,8 @@ from redbox.llm.prompts.chat import (
     WITH_SOURCES_PROMPT,
 )
 from redbox.model_db import MODEL_PATH
-from redbox.models import Settings, EmbeddingModelInfo
-from redbox.models.chat import ChatRequest, ChatResponse, ChatMessage, SourceDocument
+from redbox.models import EmbeddingModelInfo, Settings
+from redbox.models.chat import ChatMessage, ChatRequest, ChatResponse, SourceDocument
 
 # === Logging ===
 
@@ -128,7 +128,7 @@ def rag_chat(chat_request: ChatRequest, user_uuid: Annotated[UUID, Depends(get_u
         StreamingResponse: a stream of the chain response
     """
     question = chat_request.message_history[-1].text
-    previous_history = [msg for msg in chat_request.message_history[:-1]]
+    previous_history = list(chat_request.message_history[:-1])
     previous_history = ChatPromptTemplate.from_messages(
         (msg.role, msg.text) for msg in previous_history
     ).format_messages()

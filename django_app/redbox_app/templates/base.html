@@ -14,9 +14,11 @@
   <link rel="manifest" href="{{static("govuk-assets/manifest.json")}}">
 
   <meta name="robots" content="noindex, nofollow">
-  {% compress css %}
-  <link rel="stylesheet" type="text/x-scss" href="{{static('style.scss')}}" />
-  {% endcompress %}
+  {% if COMPRESSION_ENABLED %}
+    {% compress css %}
+    <link rel="stylesheet" type="text/x-scss" href="{{static('style.scss')}}" />
+    {% endcompress %}
+  {% endif %}
 
 </head>
 

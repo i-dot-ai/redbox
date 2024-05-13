@@ -8,7 +8,7 @@ from channels.testing import WebsocketCommunicator
 from django.conf import settings
 from django.test import Client
 from redbox_app.redbox_core.consumers import ChatConsumer
-from redbox_app.redbox_core.models import ChatMessage, ChatRoleEnum, User, ChatHistory
+from redbox_app.redbox_core.models import ChatHistory, ChatMessage, ChatRoleEnum, User
 from requests_mock import Mocker
 
 logger = logging.getLogger(__name__)

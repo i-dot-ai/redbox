@@ -1,0 +1,36 @@
+host: 0.0.0.0
+port: 5020
+default_artifact_root: /mlflow
+
+OPENAI_API_KEY: ${OPENAI_API_KEY}
+
+mlflow_deployments:
+  default_target: http://0.0.0.0:5010
+
+endpoints:
+  - name: completions
+    endpoint_type: llm/v1/completions
+    model:
+      provider: openai
+      name: gpt-3.5-turbo
+      config:
+        openai_api_key: $OPENAI_API_KEY
+    limit:
+      renewal_period: minute
+      calls: 10
+
+  - name: chat
+    endpoint_type: llm/v1/chat
+    model:
+      provider: openai
+      name: gpt-3.5-turbo
+      config:
+        openai_api_key: $OPENAI_API_KEY
+
+  - name: embeddings
+    endpoint_type: llm/v1/embeddings
+    model:
+      provider: openai
+      name: text-embedding-3-large
+      config:
+        openai_api_key: $OPENAI_API_KEY

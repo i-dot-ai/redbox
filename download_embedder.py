@@ -18,9 +18,9 @@ def download():
 
     args = parser.parse_args()
 
-    log.info(f"💾 Downloading Sentence Transformer Embedder: {args.embedding_model}")
+    log.info("💾 Downloading Sentence Transformer Embedder: %s", args.embedding_model)
     SentenceTransformerDB(args.embedding_model)
-    log.info(f"✅ Downloaded Sentence Transformer Embedder: {args.embedding_model}")
+    log.info("✅ Downloaded Sentence Transformer Embedder: %s", args.embedding_model)
 
 
 if __name__ == "__main__":
