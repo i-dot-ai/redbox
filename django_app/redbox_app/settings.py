@@ -13,6 +13,7 @@ env = environ.Env()
 
 SECRET_KEY = env.str("DJANGO_SECRET_KEY")
 ENVIRONMENT = env.str("ENVIRONMENT")
+SUPERUSER_EMAIL = env.str("SUPERUSER_EMAIL", None)
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env.bool("DEBUG")
@@ -23,8 +24,9 @@ COMPRESS_ENABLED = True
 COMPRESS_PRECOMPILERS = (("text/x-scss", "django_libsass.SassCompiler"),)
 
 STATIC_URL = "static/"
-STATIC_ROOT = "django_app/frontend/"
+STATIC_ROOT = "frontend/"
 STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'static/'),
     (
         "govuk-assets",
         BASE_DIR / "frontend/node_modules/govuk-frontend/dist/govuk/assets",
@@ -54,10 +56,6 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "single_session",
     "storages",
-    "health_check",
-    "health_check.db",
-    "health_check.contrib.migrations",
-    "health_check.cache",
     "compressor",
     "magic_link",
 ]
@@ -236,9 +234,12 @@ else:
     }
 
     LOCALHOST = socket.gethostbyname(socket.gethostname())
-    ALLOWED_HOSTS = [LOCALHOST]
-
-    INSTALLED_APPS += ["health_check.contrib.s3boto3_storage"]
+    ALLOWED_HOSTS = [
+        LOCALHOST,
+        "redbox-dev.ai.cabinetoffice.gov.uk",
+        "redbox-preprod.ai.cabinetoffice.gov.uk",
+        "redbox.ai.cabinetoffice.gov.uk",
+    ]
 
     # https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Strict-Transport-Security
     # Mozilla guidance max-age 2 years
