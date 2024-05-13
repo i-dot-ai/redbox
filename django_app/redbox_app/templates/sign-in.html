@@ -10,6 +10,8 @@
 
     <h1 class="govuk-heading-l">Sign in</h1>
 
+
+
     <form method="post" action="/sign-in/">
 
       <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
@@ -21,13 +23,15 @@
         <div id="email-hint" class="govuk-hint">
           Enter your email address to generate a link to sign in
         </div>
+        <input type="submit" value="Submit" name="email">
+
         <input class="govuk-input" id="email" name="email" type="email" spellcheck="false" aria-describedby="email-hint" autocomplete="email" required>
       </div>
 
       {{ govukButton(text="Continue") }}
 
     </form>
-  
+
   </div>
 </div>
 

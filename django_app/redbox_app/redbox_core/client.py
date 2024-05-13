@@ -23,6 +23,7 @@ def s3_client():
             if e.response["Error"]["Code"] != "BucketAlreadyOwnedByYou":
                 raise e
         return client
+    raise Exception("OBJECT_STORE needs to be minio")
 
 
 # TODO: rewrite with env vars
