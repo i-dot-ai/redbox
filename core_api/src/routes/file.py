@@ -107,13 +107,7 @@ async def list_files(user_uuid: Annotated[UUID, Depends(get_user_uuid)]) -> list
     Returns:
         Files (list, File): A list of file objects
     """
-    files = [
-        file 
-        for file 
-        in storage_handler.read_all_items(model_type="File", user_uuid=user_uuid)
-    ]
-
-    return files
+    return storage_handler.read_all_items(model_type="File", user_uuid=user_uuid)
 
 
 # Standard file upload endpoint for utility in quick testing

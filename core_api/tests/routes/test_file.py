@@ -1,6 +1,6 @@
+import json
 import os
 from http import HTTPStatus
-import json
 
 import pytest
 from elasticsearch import NotFoundError
@@ -45,7 +45,7 @@ def test_list_files(app_client, stored_file, headers):
     When I GET all files from /file
     I Expect the response to contain this file
     """
-    response = app_client.get(f"/file", headers=headers)
+    response = app_client.get("/file", headers=headers)
     assert response.status_code == HTTPStatus.OK
 
     file_list = json.loads(response.content.decode("utf-8"))
