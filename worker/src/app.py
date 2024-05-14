@@ -35,7 +35,7 @@ def get_model() -> SentenceTransformerDB:
 async def ingest(
     file: File,
     storage_handler: ElasticsearchStorageHandler = Depends(get_storage_handler),
-    clustering_model: SentenceTransformerDB = Depends(get_model),
+    embedding_model: SentenceTransformerDB = Depends(get_model),
 ):
     """
     1. Chunks file
@@ -46,7 +46,7 @@ async def ingest(
 
     logging.info("Ingesting file: %s", file)
 
-    chunks = chunk_file(file=file, clustering_model=clustering_model)
+    chunks = chunk_file(file=file, embedding_model=embedding_model)
 
     logging.info("Writing %s chunks to storage for file uuid: %s", len(chunks), file.uuid)
 
