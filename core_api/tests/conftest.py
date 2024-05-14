@@ -19,11 +19,6 @@ YieldFixture = Generator[T, None, None]
 
 
 @pytest.fixture
-def client():
-    yield TestClient(application)
-
-
-@pytest.fixture
 def s3_client():
     _client = env.s3_client()
     try:
@@ -44,12 +39,12 @@ def es_client() -> YieldFixture[Elasticsearch]:
 
 
 @pytest.fixture
-def app_client():
+def app_client() -> YieldFixture[TestClient]:
     yield TestClient(application)
 
 
 @pytest.fixture
-def alice() -> UUID:
+def alice() -> YieldFixture[UUID]:
     yield uuid4()
 
 

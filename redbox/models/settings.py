@@ -103,8 +103,8 @@ class Settings(BaseSettings):
         if self.object_store == "minio":
             client = boto3.client(
                 "s3",
-                aws_access_key_id=self.aws_access_key,
-                aws_secret_access_key=self.aws_secret_key,
+                aws_access_key_id=self.aws_access_key or "",
+                aws_secret_access_key=self.aws_secret_key or "",
                 endpoint_url=f"http://{self.minio_host}:{self.minio_port}",
             )
 

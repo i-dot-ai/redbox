@@ -42,5 +42,5 @@ other_urlpatterns = [
 
 urlpatterns = info_urlpatterns + other_urlpatterns + auth_urlpatterns
 
-if settings.ENVIRONMENT and settings.ENVIRONMENT == "LOCAL":
-    urlpatterns = urlpatterns + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+if settings.DEBUG:
+    urlpatterns = urlpatterns + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
