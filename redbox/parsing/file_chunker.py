@@ -37,8 +37,7 @@ def chunk_file(
     file: File,
     embedding_model: Optional[SentenceTransformer] = None,
 ) -> list[Chunk]:
-    """_summary_
-
+    """
     Args:
         file (File): The file to read, analyse layout and chunk.
         embedding_model (SentenceTransformer): The model to use

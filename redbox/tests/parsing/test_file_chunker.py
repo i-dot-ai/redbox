@@ -1,7 +1,7 @@
 import pytest
 
 from redbox.model_db import SentenceTransformerDB
-from redbox.parsing.file_chunker import chunk_file
+from redbox.parsing import chunk_file
 
 
 @pytest.mark.parametrize("chunk_clustering, expected_chunk_number", [(False, 54), (True, 13)])

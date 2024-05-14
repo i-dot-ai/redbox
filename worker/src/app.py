@@ -6,7 +6,7 @@ from faststream.redis.fastapi import RedisRouter
 
 from redbox.model_db import SentenceTransformerDB
 from redbox.models import Chunk, EmbedQueueItem, File, Settings, StatusResponse
-from redbox.parsing.file_chunker import chunk_file
+from redbox.parsing import chunk_file
 from redbox.storage.elasticsearch import ElasticsearchStorageHandler
 
 start_time = datetime.now()
