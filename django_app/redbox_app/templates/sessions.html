@@ -50,7 +50,7 @@
           <div class="iai-chat-message__role">{{ message.role | upper }}</div>
           <div class="iai-chat-message__text">{{ message.text }}</div>
           {% for source in message.source_files.all() %}
-            <div class="iai-chat-message__text">{{ source.original_file_name }}</div>
+            <div class="iai-chat-message__text"><a href="{{ source.url}}">{{ source.original_file_name }}</a>a</div>
           {% endfor %}
         </div>
       {% endfor %}
