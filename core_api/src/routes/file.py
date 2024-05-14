@@ -97,6 +97,25 @@ async def add_file(file_request: FileRequest, user_uuid: Annotated[UUID, Depends
     return file
 
 
+@file_app.get("/", tags=["file"])
+async def list_files(user_uuid: Annotated[UUID, Depends(get_user_uuid)]) -> list[File]:
+    """Gets a list of files in the database.
+
+    Args:
+        user_uuid (UUID): The UUID of the user
+
+    Returns:
+        Files (list, File): A list of file objects
+    """
+    files = [
+        file 
+        for file 
+        in storage_handler.read_all_items(model_type="File", user_uuid=user_uuid)
+    ]
+
+    return files
+
+
 # Standard file upload endpoint for utility in quick testing
 if env.dev_mode:
 
