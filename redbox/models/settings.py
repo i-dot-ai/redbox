@@ -43,15 +43,10 @@ class Settings(BaseSettings):
 
     minio_host: str = "minio"
     minio_port: int = 9000
-    minio_access_key: str = "minioadmin"
-    minio_secret_key: str = "minioadmin"
+    aws_access_key: Optional[str] = None
+    aws_secret_key: Optional[str] = None
 
-    aws_access_key_id: Optional[str] = None
-    aws_secret_access_key: Optional[str] = None
     aws_region: str = "eu-west-2"
-
-    object_store: str = "minio"
-
     bucket_name: str = "redbox-storage-dev"
     embedding_model: str = "all-mpnet-base-v2"
 
@@ -61,10 +56,13 @@ class Settings(BaseSettings):
     redis_host: str = "redis"
     redis_port: int = 6379
 
+    object_store: str = "minio"
+
     dev_mode: bool = False
     django_settings_module: str = "redbox_app.settings"
     debug: bool = True
     django_secret_key: str
+    django_log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = "WARNING"
     environment: Literal["LOCAL", "DEV", "PREPROD", "PROD"] = "LOCAL"
     postgres_user: str = "redbox-core"
     postgres_db: str = "redbox-core"
@@ -74,12 +72,15 @@ class Settings(BaseSettings):
     core_api_host: str = "http://core-api"
     core_api_port: int = 5002
     email_backend_type: str = "CONSOLE"
-    notify_api_key: Optional[str] = None
+    gov_notify_api_key: Optional[str] = None
     from_email: Optional[str] = None
     email_file_path: str = "/app/mail"
     govuk_notify_plain_email_template_id: str = "example-id"
+    use_streaming: bool = False
+    superuser_email: Optional[str] = None
+    compression_enabled: bool = True
 
-    model_config = SettingsConfigDict(env_file=".env", env_nested_delimiter="__")
+    model_config = SettingsConfigDict(env_file=".env", env_nested_delimiter="__", extra="allow")
 
     def elasticsearch_client(self) -> Elasticsearch:
         if isinstance(self.elastic, ElasticLocalSettings):
@@ -102,16 +103,16 @@ class Settings(BaseSettings):
         if self.object_store == "minio":
             client = boto3.client(
                 "s3",
-                aws_access_key_id=self.minio_access_key,
-                aws_secret_access_key=self.minio_secret_key,
+                aws_access_key_id=self.aws_access_key or "",
+                aws_secret_access_key=self.aws_secret_key or "",
                 endpoint_url=f"http://{self.minio_host}:{self.minio_port}",
             )
 
         elif self.object_store == "s3":
             client = boto3.client(
                 "s3",
-                aws_access_key_id=self.aws_access_key_id,
-                aws_secret_access_key=self.aws_secret_access_key,
+                aws_access_key_id=self.aws_access_key,
+                aws_secret_access_key=self.aws_secret_key,
                 region_name=self.aws_region,
             )
         elif self.object_store == "moto":
@@ -122,8 +123,8 @@ class Settings(BaseSettings):
 
             client = boto3.client(
                 "s3",
-                aws_access_key_id=self.aws_access_key_id,
-                aws_secret_access_key=self.aws_secret_access_key,
+                aws_access_key_id=self.aws_access_key,
+                aws_secret_access_key=self.aws_secret_key,
                 region_name=self.aws_region,
             )
         else:

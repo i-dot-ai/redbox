@@ -191,7 +191,8 @@ def create_pdist(
     the hierarchical clustering to merge only adjacent blocks in each step.
     """
 
-    assert len(pair_embed_dist) == len(pair_embed_dist)
+    if len(pair_embed_dist) != len(pair_embed_dist):
+        raise ValueError("distances do not have the same length")
 
     # Phase 1: Calculate the two forms of distance between adjacent chunks
 
@@ -212,8 +213,6 @@ def create_pdist(
         token_dist = token_dist / token_dist_std * (1 - weight_embed_dist)
 
     # Phase 2: Combine the two distances into one
-
-    assert len(embed_dist) == len(token_dist)
     # the two above distance are combined either using sum or product (i.e. use_log=T)
     combined_dist = embed_dist + token_dist
     return combined_dist

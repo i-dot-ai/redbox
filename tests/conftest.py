@@ -3,7 +3,6 @@ import os
 import boto3
 import pytest
 from botocore.exceptions import ClientError
-from jose import jwt
 
 
 @pytest.fixture
@@ -36,13 +35,6 @@ def s3_client():
             raise e
 
     yield client
-
-
-@pytest.fixture
-def headers():
-    static_user_uuid = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
-    token = jwt.encode({"user_uuid": static_user_uuid}, key="super-secure-private-key")
-    yield {"Authorization": f"Bearer {token}"}
 
 
 # store history of failures per test class name and per index in parametrize (if parametrize used)

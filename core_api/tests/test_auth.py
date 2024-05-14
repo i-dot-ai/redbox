@@ -1,7 +1,7 @@
 from uuid import uuid4
 
-from jose import jwt
 import pytest
+from jose import jwt
 
 
 @pytest.mark.parametrize(

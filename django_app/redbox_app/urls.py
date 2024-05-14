@@ -1,8 +1,10 @@
+from django.conf import settings
+from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
 from magic_link import urls as magic_link_urls
 
-from .redbox_core import info_views, auth_views, views
+from .redbox_core import auth_views, info_views, views
 
 auth_urlpatterns = [
     path("magic_link/", include(magic_link_urls)),
@@ -35,6 +37,10 @@ other_urlpatterns = [
     path("sessions/<str:session_id>/", views.sessions_view, name="sessions"),
     path("sessions/", views.sessions_view, name="sessions"),
     path("post-message/", views.post_message, name="post_message"),
+    path("health/", views.health, name="health"),
 ]
 
 urlpatterns = info_urlpatterns + other_urlpatterns + auth_urlpatterns
+
+if settings.ENVIRONMENT and settings.ENVIRONMENT == "LOCAL":
+    urlpatterns = urlpatterns + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

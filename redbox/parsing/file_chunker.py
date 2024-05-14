@@ -35,13 +35,13 @@ class ContentType(str, Enum):
 
 def chunk_file(
     file: File,
-    clustering_model: Optional[SentenceTransformer] = None,
+    embedding_model: Optional[SentenceTransformer] = None,
 ) -> list[Chunk]:
     """_summary_
 
     Args:
         file (File): The file to read, analyse layout and chunk.
-        clustering_model (SentenceTransformer): The model to use
+        embedding_model (SentenceTransformer): The model to use
             to merge small semantically similar chunks, if not
             specified, not clustering will happen.
     Raises:
@@ -52,7 +52,7 @@ def chunk_file(
     """
     chunks = other_chunker(file)
 
-    if clustering_model is not None:
-        chunks = cluster_chunks(chunks, embedding_model=clustering_model)
+    if embedding_model is not None:
+        chunks = cluster_chunks(chunks, embedding_model=embedding_model)
 
     return chunks

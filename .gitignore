@@ -192,7 +192,7 @@ django_app/frontend/govuk-assets
 
 # Other
 .DS_Store
-
+.python-version
 
 # Local .terraform directories
 **/.terraform/*

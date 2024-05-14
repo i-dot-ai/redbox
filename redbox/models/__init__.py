@@ -1,7 +1,7 @@
-from redbox.models.chat import ChatMessage, ChatResponse, ChatRequest
+from redbox.models.chat import ChatMessage, ChatRequest, ChatResponse
 from redbox.models.embedding import (
-    EmbeddingResponse,
     EmbeddingModelInfo,
+    EmbeddingResponse,
     EmbedQueueItem,
     StatusResponse,
 )

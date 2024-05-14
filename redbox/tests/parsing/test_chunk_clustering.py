@@ -1,4 +1,4 @@
-from redbox.parsing.chunk_clustering import compute_embed_dist, create_pdist, compute_token_dist
+from redbox.parsing.chunk_clustering import compute_embed_dist, compute_token_dist, create_pdist
 
 
 def test_compute_embed_dist():
