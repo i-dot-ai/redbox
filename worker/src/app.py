@@ -35,7 +35,7 @@ def get_model() -> SentenceTransformerDB:
 async def ingest(
     file: File,
     storage_handler: ElasticsearchStorageHandler = Depends(get_storage_handler),
-    embedding_model: SentenceTransformerDB = Depends(get_model),
+    # embedding_model: SentenceTransformerDB = Depends(get_model),
 ):
     """
     1. Chunks file
@@ -46,9 +46,11 @@ async def ingest(
 
     logging.info("Ingesting file: %s", file)
 
-    chunks = chunk_file(file=file, embedding_model=embedding_model)
+    chunks = chunk_file(file=file)  # , embedding_model=embedding_model)
 
-    logging.info("Writing %s chunks to storage for file uuid: %s", len(chunks), file.uuid)
+    logging.info(
+        "Writing %s chunks to storage for file uuid: %s", len(chunks), file.uuid
+    )
 
     items = storage_handler.write_items(chunks)
     logging.info("written %s chunks to elasticsearch", len(items))
@@ -75,7 +77,9 @@ async def embed(
     chunk: Chunk = storage_handler.read_item(queue_item.chunk_uuid, "Chunk")
     embedded_sentences = embedding_model.embed_sentences([chunk.text])
     if len(embedded_sentences.data) != 1:
-        logging.error("expected just 1 embedding but got %s", len(embedded_sentences.data))
+        logging.error(
+            "expected just 1 embedding but got %s", len(embedded_sentences.data)
+        )
         return
     chunk.embedding = embedded_sentences.data[0].embedding
     storage_handler.update_item(chunk)
