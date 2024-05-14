@@ -6,9 +6,16 @@
 {% block content %}
 
 <div class="govuk-width-container">
-  <div class="govuk-grid-row govuk-!-margin-top-3">
 
-  <div class="govuk-grid-column-one-third">
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-one-third">
+      <h1 class="govuk-heading-l">Sessions</h1>
+    </div>
+  </div>
+
+  <div class="govuk-grid-row">
+
+    <div class="govuk-grid-column-one-third">
 
     {{ govukButton(
       text="Start a new session",
@@ -89,16 +96,15 @@
         <textarea class="govuk-textarea js-user-text" id="message" name="message" rows="5" required></textarea>
       </div>
 
-      <button type="submit" class="govuk-button js-send-btn" data-module="govuk-button">
-        Send
-      </button>
-
-    </form>
-
-  </chat-controller>
-
-</div>
-
+        <button type="submit" class="govuk-button js-send-btn" data-module="govuk-button">
+          Send
+        </button>
+  
+      </form>
+  
+    </chat-controller>
+  
+  </div>
 </div>
 
 <script src="{{ static('js/libs/dompurify.js') }}"></script>

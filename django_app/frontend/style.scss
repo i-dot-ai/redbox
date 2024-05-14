@@ -146,3 +146,5 @@ $redbox-red: #A50202;
 .iai-response-feedback__buttons[data-status="down"] ~ .iai-chat-message--feedback-thumbs-down {
   display: block;
 }
+
+@import "./i-ai.scss";

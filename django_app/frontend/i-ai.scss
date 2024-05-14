@@ -1,0 +1,129 @@
+/* GENERAL */
+:root {
+    --product-colour: #A50202;
+    --border-radius: 0.5rem;
+}
+.govuk-main-wrapper {
+    padding: 2rem 0;
+}
+
+/* HEADER */
+.govuk-header {
+    border-bottom: 0;
+}
+.govuk-header__container {
+    border-bottom: 0;
+    margin-bottom: 0;
+    padding-bottom: 0.625rem;
+    padding-top: 0.5rem;
+}
+.govuk-header__logo {
+    display: none;
+}
+.govuk-header__content {
+    align-items: center;
+    display: flex;
+    justify-content: space-between;
+    padding-left: 0;
+    width: 100%;
+}
+.iai-header__service-name-container {
+    align-items: center;
+    display: flex;
+    gap: 0.75rem;
+}
+.govuk-header__service-name {
+    margin-bottom: 0;
+}
+.govuk-header__navigation {
+    margin-bottom: 0;
+}
+
+/* BUTTON */
+.govuk-button {
+    background-color: var(--product-colour);
+    border: 0;
+    border-radius: var(--border-radius);
+    box-shadow: none;
+    color: white;
+    padding: 13px 12px 12px 12px;
+}
+.govuk-button--secondary {
+    background-color: transparent;
+    border: 2px solid var(--product-colour);
+    color: var(--product-colour) !important;
+}
+
+/* FOOTER */
+.govuk-footer {
+    padding-top: 0.75rem;
+}
+.govuk-footer__meta-item {
+    margin-bottom: 0;
+}
+.govuk-footer__meta-custom { /* temp - for Built by i.AI */
+    display: none;
+}
+.govuk-footer__copyright-logo {
+    background-image: url('/static/govuk-assets/i-dot-ai-Official-Logo.svg');
+    margin-bottom: -1rem;
+}
+
+/* LINKS */
+.govuk-link:visited {
+    color: inherit;
+}
+
+/* NOTIFICATION BANNER */
+.govuk-notification-banner {
+    background-color: var(--product-colour);
+    border-color: var(--product-colour);
+    border-radius: var(--border-radius);
+}
+.govuk-notification-banner__content {
+    border-bottom-right-radius: var(--border-radius);
+    border-bottom-left-radius: var(--border-radius);
+}
+
+/* PHASE BANNER */
+.govuk-phase-banner {
+    display: none;
+}
+.govuk-phase-banner__content__tag {
+    background-color: var(--product-colour);
+    font-weight: 700;
+    margin-top: -4px;
+    padding-top: 4px;
+    text-transform: uppercase;
+}
+
+/* TEXTAREA */
+.govuk-textarea {
+    border-color: var(--product-colour);
+    border-radius: var(--border-radius);
+}
+
+/** NEW COMPONENTS **/
+/* BOX OUT */
+.iai-box-out {
+    background-color: #f3f2f1;
+    border: 1px solid #b1b4b6;
+    border-radius: var(--border-radius);
+    padding: 1rem;
+}
+
+/* NEW MESSAGE */
+.iai-new-message {
+    align-items: flex-end;
+    display: flex;
+    gap: 0.5rem;
+}
+.iai-new-message .govuk-form-group {
+    margin: 0;
+    width: 100%;
+}
+.iai-new-message textarea, .iai-new-message button {
+    height: 4rem;
+    margin: 0;
+}
+
