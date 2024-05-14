@@ -4,10 +4,15 @@
 
 {% block content %}
 
-{% compress js %}
+{% if COMPRESSION_ENABLED %}
+  {% compress js %}
+    <script src="{{ static('js/alpine.min.js') }}"></script>
+    <script src="{{ static('js/documents.js') }}"></script>
+  {% endcompress %}
+{% else %}
   <script src="{{ static('js/alpine.min.js') }}"></script>
   <script src="{{ static('js/documents.js') }}"></script>
-{% endcompress %}
+{% endif %}
 
 <div class="govuk-width-container">
   <table class="govuk-table iai-doclist">

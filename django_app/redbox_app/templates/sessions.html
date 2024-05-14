@@ -81,15 +81,23 @@
 
 <script src="{{ static('js/libs/dompurify.js') }}"></script>
 <script src="{{ static('js/libs/showdown.min.js') }}"></script>
-{% compress js %}
+{% if COMPRESSION_ENABLED %}
+  {% compress js %}
+    <script src="{{ static('js/sessions/markdown.js') }}"></script>
+  {% endcompress %}
+{% else %}
   <script src="{{ static('js/sessions/markdown.js') }}"></script>
-{% endcompress %}
+{% endif %}
 
 
 {% if streaming.in_use %}
-  {% compress js %}
+  {% if COMPRESSION_ENABLED %}
+    {% compress js %}
+      <script src="{{ static('js/sessions/streaming.js') }}"></script>
+    {% endcompress %}
+  {% else %}
     <script src="{{ static('js/sessions/streaming.js') }}"></script>
-  {% endcompress %}
+  {% endif %}
 {% endif %}
 
 {% endblock %}
