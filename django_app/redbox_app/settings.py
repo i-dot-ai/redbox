@@ -5,33 +5,38 @@ import socket
 from pathlib import Path
 
 import environ
+from dotenv import load_dotenv
+from storages.backends import s3boto3
 
 from .hosting_environment import HostingEnvironment
+
+load_dotenv()
 
 env = environ.Env()
 
 SECRET_KEY = env.str("DJANGO_SECRET_KEY")
 ENVIRONMENT = env.str("ENVIRONMENT")
+SUPERUSER_EMAIL = env.str("SUPERUSER_EMAIL", None)
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env.bool("DEBUG")
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-COMPRESS_ENABLED = True
+COMPRESSION_ENABLED = env.bool("COMPRESSION_ENABLED")
+
 COMPRESS_PRECOMPILERS = (("text/x-scss", "django_libsass.SassCompiler"),)
 
 STATIC_URL = "static/"
-STATIC_ROOT = "django_app/frontend/"
+STATIC_ROOT = "staticfiles/"
 STATICFILES_DIRS = [
-    (
-        "govuk-assets",
-        BASE_DIR / "frontend/node_modules/govuk-frontend/dist/govuk/assets",
-    )
+    os.path.join(BASE_DIR, "static/"),
+    os.path.join(BASE_DIR, "frontend/"),
 ]
 STATICFILES_FINDERS = [
     "compressor.finders.CompressorFinder",
     "django.contrib.staticfiles.finders.FileSystemFinder",
+    "django.contrib.staticfiles.finders.AppDirectoriesFinder",
 ]
 
 
@@ -53,10 +58,6 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "single_session",
     "storages",
-    "health_check",
-    "health_check.db",
-    "health_check.contrib.migrations",
-    "health_check.cache",
     "compressor",
     "magic_link",
 ]
@@ -84,11 +85,16 @@ TEMPLATES = [
             BASE_DIR / "redbox_app" / "templates",
             BASE_DIR / "redbox_app" / "templates" / "auth",
         ],
-        "OPTIONS": {"environment": "redbox_app.jinja2.environment"},
+        "OPTIONS": {
+            "environment": "redbox_app.jinja2.environment",
+            "context_processors": [
+                "redbox_app.context_processors.compression_enabled",
+            ],
+        },
     },
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [],
+        "DIRS": [os.path.join(BASE_DIR, "templates")],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -106,7 +112,6 @@ ASGI_APPLICATION = "redbox_app.asgi.application"
 
 AUTHENTICATION_BACKENDS = [
     "django.contrib.auth.backends.ModelBackend",
-    "magic_link.backends.MagicLinkBackend",
 ]
 
 AUTH_PASSWORD_VALIDATORS = [
@@ -124,15 +129,6 @@ AUTH_PASSWORD_VALIDATORS = [
     },
     {
         "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
-    },
-    {
-        "NAME": "redbox_app.custom_password_validators.SpecialCharacterValidator",
-    },
-    {
-        "NAME": "redbox_app.custom_password_validators.LowercaseUppercaseValidator",
-    },
-    {
-        "NAME": "redbox_app.custom_password_validators.BusinessPhraseSimilarityValidator",
     },
 ]
 
@@ -194,30 +190,54 @@ SESSION_ENGINE = "django.contrib.sessions.backends.db"
 
 LOG_ROOT = "."
 LOG_HANDLER = "console"
-
-DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
-
 BUCKET_NAME = env.str("BUCKET_NAME")
 AWS_S3_REGION_NAME = env.str("AWS_REGION")
 
+#  Property added to each S3 file to make them downloadable by default
+AWS_S3_OBJECT_PARAMETERS = {"ContentDisposition": "attachment"}
+AWS_STORAGE_BUCKET_NAME = BUCKET_NAME  # this duplication is required for django-storage
+OBJECT_STORE = env.str("OBJECT_STORE")
+
 if HostingEnvironment.is_local():
-    # For Docker to work locally
-    OBJECT_STORE = "minio"
-    MINIO_ACCESS_KEY = env.str("MINIO_ACCESS_KEY")
-    MINIO_SECRET_KEY = env.str("MINIO_SECRET_KEY")
+    AWS_S3_SECRET_ACCESS_KEY = env.str("AWS_SECRET_KEY")
+    AWS_ACCESS_KEY_ID = env.str("AWS_ACCESS_KEY")
     MINIO_HOST = env.str("MINIO_HOST")
     MINIO_PORT = env.str("MINIO_PORT")
+    MINIO_ENDPOINT = f"http://{MINIO_HOST}:{MINIO_PORT}"
+    AWS_S3_ENDPOINT_URL = MINIO_ENDPOINT
 
-    ALLOWED_HOSTS = ["localhost", "127.0.0.1", "0.0.0.0"]  # nosec B104 # noqa S104 - don't do this on server!
+    STORAGES = {
+        "default": {
+            "BACKEND": s3boto3.S3Boto3Storage,
+        },
+        "staticfiles": {
+            "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+        },
+    }
+
+    ALLOWED_HOSTS = [
+        "localhost",
+        "127.0.0.1",
+        "0.0.0.0",  # noqa S104
+    ]  # nosec B104 - don't do this on server!
 else:
-    OBJECT_STORE = "s3"
-    AWS_STORAGE_BUCKET_NAME = BUCKET_NAME  # this duplication is required for django-storage
-    STATICFILES_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
+    STORAGES = {
+        "default": {
+            "BACKEND": s3boto3.S3Boto3Storage,
+        },
+        "staticfiles": {
+            "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+        },
+    }
 
     LOCALHOST = socket.gethostbyname(socket.gethostname())
-    ALLOWED_HOSTS = [LOCALHOST]
+    ALLOWED_HOSTS = [
+        LOCALHOST,
+        "redbox-dev.ai.cabinetoffice.gov.uk",
+        "redbox-preprod.ai.cabinetoffice.gov.uk",
+        "redbox.ai.cabinetoffice.gov.uk",
+    ]
 
-    INSTALLED_APPS += ["health_check.contrib.s3boto3_storage"]
     # https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Strict-Transport-Security
     # Mozilla guidance max-age 2 years
     SECURE_HSTS_SECONDS = 2 * 365 * 24 * 60 * 60
@@ -236,24 +256,32 @@ DATABASES = {
     }
 }
 
+LOG_LEVEL = env.str("DJANGO_LOG_LEVEL", "WARNING")
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
     "formatters": {"verbose": {"format": "%(asctime)s %(levelname)s %(module)s: %(message)s"}},
     "handlers": {
         "file": {
-            "level": "DEBUG",
+            "level": LOG_LEVEL,
             "class": "logging.FileHandler",
             "filename": os.path.join(LOG_ROOT, "application.log"),
             "formatter": "verbose",
         },
         "console": {
-            "level": "DEBUG",
+            "level": LOG_LEVEL,
             "class": "logging.StreamHandler",
             "formatter": "verbose",
         },
     },
-    "loggers": {"application": {"handlers": [LOG_HANDLER], "level": "DEBUG", "propagate": True}},
+    "root": {"handlers": ["console"], "level": LOG_LEVEL},
+    "loggers": {
+        "application": {
+            "handlers": [LOG_HANDLER],
+            "level": LOG_LEVEL,
+            "propagate": True,
+        }
+    },
 }
 
 # link to core_api app

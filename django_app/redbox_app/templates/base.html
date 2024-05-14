@@ -14,9 +14,11 @@
   <link rel="manifest" href="{{static("govuk-assets/manifest.json")}}">
 
   <meta name="robots" content="noindex, nofollow">
-  {% compress css %}
-  <link rel="stylesheet" type="text/x-scss" href="{{static('style.scss')}}" />
-  {% endcompress %}
+  {% if COMPRESSION_ENABLED %}
+    {% compress css %}
+    <link rel="stylesheet" type="text/x-scss" href="{{static('style.scss')}}" />
+    {% endcompress %}
+  {% endif %}
 
 </head>
 
@@ -76,9 +78,8 @@
   </header>
 
 
+  {# Phase banner #}
   <div class="govuk-width-container">
-
-    {# Phase banner #}
     <div class="govuk-phase-banner">
       <p class="govuk-phase-banner__content">
         <strong class="govuk-tag govuk-phase-banner__content__tag">
@@ -89,12 +90,13 @@
         </span>
       </p>
     </div>
-
-    <main class="govuk-main-wrapper" id="main-content" role="main">
-      {% block content %}
-      {% endblock %}
-    </main>
   </div>
+
+  <main class="govuk-main-wrapper" id="main-content" role="main">
+    {% block content %}
+    {% endblock %}
+  </main>
+
 
   <footer class="govuk-footer" role="contentinfo">
     <div class="govuk-width-container">
@@ -118,6 +120,9 @@
               </a>
             </li>
           </ul>
+          <div class="govuk-footer__meta-custom">
+            Built by <a href="https://ai.gov.uk" class="govuk-footer__link">i.AI</a>
+          </div>
           <svg
             aria-hidden="true"
             focusable="false"

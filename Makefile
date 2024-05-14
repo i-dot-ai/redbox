@@ -35,7 +35,7 @@ test-worker:
 
 test-django:
 	docker compose up -d --wait db minio
-	docker compose run django-app poetry run pytest django_app/tests/ --ds redbox_app.settings -v --cov=redbox_app.redbox_core --cov-fail-under 60 -o log_cli=true
+	docker compose run django-app venv/bin/pytest tests/ --ds redbox_app.settings -v --cov=redbox_app.redbox_core --cov-fail-under 60 -o log_cli=true
 
 test-integration:
 	docker compose down
@@ -48,6 +48,9 @@ test-integration:
 	poetry run pytest tests
 	cp .env.backup .env
 	rm .env.backup
+
+collect-static:
+	docker compose run django-app venv/bin/django-admin collectstatic --noinput
 
 lint:
 	poetry run ruff format . --check
@@ -69,8 +72,8 @@ checktypes:
 check-migrations:
 	docker compose build django-app
 	docker compose up -d --wait db minio
-	docker compose run django-app poetry run python django_app/manage.py migrate
-	docker compose run django-app poetry run python django_app/manage.py makemigrations --check
+	docker compose run django-app venv/bin/django-admin migrate
+	docker compose run django-app venv/bin/django-admin makemigrations --check
 
 reset-db:
 	docker compose down db --volumes
