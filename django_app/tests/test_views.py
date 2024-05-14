@@ -26,6 +26,8 @@ def count_s3_objects(s3_client) -> int:
 
 @pytest.mark.django_db
 def test_upload_view(alice, client, file_pdf_path, s3_client):
+    s3_client.delete_object(Bucket=settings.BUCKET_NAME, Key=file_pdf_path.split("/")[-1].replace(" ", "_"))
+
     previous_count = count_s3_objects(s3_client)
     client.force_login(alice)
 
