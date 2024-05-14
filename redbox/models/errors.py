@@ -8,7 +8,7 @@ class APIErrorDetail(BaseModel):
     detail: str = Field(
         description=(
             "A granular description on the specific error related to a body property, "
-            | "query parameter, path parameters, and/or header."
+            "query parameter, path parameters, and/or header."
         )
     )
 
