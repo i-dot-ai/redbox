@@ -92,3 +92,17 @@ def test_post_message_to_existing_session(chat_history: ChatHistory, client: Cli
     assert (
         ChatMessage.objects.get(chat_history__id=session_id, role=ChatRoleEnum.ai).text == "Good afternoon, Mr. Amor."
     )
+
+
+@pytest.mark.django_db
+def test_view_session_with_documents(chat_message: ChatMessage, client: Client):
+    # Given
+    client.force_login(chat_message.chat_history.users)
+    session_id = chat_message.chat_history.id
+
+    # When
+    response = client.get(f"/sessions/{session_id}/")
+
+    # Then
+    assert response.status_code == HTTPStatus.OK
+    assert b"uploaded_file.pdf" in response.content
