@@ -1,4 +1,5 @@
 import logging
+import uuid
 from types import SimpleNamespace
 
 import boto3
@@ -48,11 +49,7 @@ class CoreApiClient:
 
     def upload_file(self, bucket_name: str, name: str, user: User) -> SimpleNamespace:
         if self.host == "testserver":
-            file = {
-                "key": name,
-                "bucket": bucket_name,
-            }
-            return file
+            return SimpleNamespace(key=name, bucket=bucket_name, uuid=uuid.uuid4())
 
         response = requests.post(
             f"{self.url}/file", json={"key": name}, headers={"Authorization": user.get_bearer_token()}, timeout=30
