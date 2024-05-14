@@ -66,8 +66,6 @@ jobs:
         pip install pytest
         pip install boto3
         pip install python-jose
-        pip install pytest-playwright
-        playwright install
         python -m pytest tests
 
     - name: notify slack failure
