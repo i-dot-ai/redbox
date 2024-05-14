@@ -32,9 +32,8 @@ def test_upload_view(alice, client, file_pdf_path, s3_client):
     with open(file_pdf_path, "rb") as f:
         response = client.post("/upload/", {"uploadDoc": f})
 
-        assert response.status_code == 200
-        assert "Your file has been uploaded" in str(response.content)
-
+        assert response.status_code == 302
+        assert response.url == "/documents/"
         assert count_s3_objects(s3_client) == previous_count + 1
 
 
