@@ -58,6 +58,7 @@
       <form class="iai-new-message js-send-message" action="/post-message/" method="post">
   
         <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}"/>
+        <input type="hidden" name="session-id" value="{{ session_id }}"/>
 
         <div class="govuk-form-group">
           <label class="govuk-label" for="message">
