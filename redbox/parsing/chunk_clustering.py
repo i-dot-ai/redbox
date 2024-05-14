@@ -3,6 +3,7 @@ from itertools import compress
 
 import numpy as np
 import scipy
+from numpy._typing import ArrayLike  # noqa
 from sentence_transformers import SentenceTransformer
 
 from redbox.models.file import Chunk, Metadata
@@ -15,13 +16,13 @@ def cluster_chunks(
     dist_weight_split: float = 0.2,
     dist_use_log: bool = True,
 ) -> list[Chunk]:
-    """Merge together adjacent chanks based ion their semantic similarity (distance after sentence embedding)
+    """Merge together adjacent chunks based on their semantic similarity (distance after sentence embedding)
     and length(token count)
 
     Args:
             chunks (List[File]): List of raw (small) chunks extracted from document.
             embedding_model (SentenceTransformer): name of the sentence embedding model used to compare chunk similarity
-            desired_chunk_size (int): Avarage size of the output chunks. Defaults to 300,
+            desired_chunk_size (int): Average size of the output chunks. Defaults to 300,
             dist_weight_split (float): Expects value between 0 and 1.
                 When calculating the combined distance metric this is the relative weight (importance)
                 of the semantic similarity vs the token counts. Defaults to .2.
@@ -79,35 +80,124 @@ def cluster_chunks(
     return out_chunks
 
 
-def create_pdist(token_counts, pair_embed_dist, weight_embed_dist=0.2, use_log=True):
+def compute_embed_dist(pair_embed_dist: ArrayLike) -> ArrayLike:
+    n = len(pair_embed_dist)
+    # embedding distance between chunk i and j is taken as MAXIMUM of the pairwise embedding
+    # distance of all the adjacent pairs between them
+
+    embed_dims = np.tri(n, k=0) * np.array(pair_embed_dist)
+
+    # Chebyshev distance is used to make sure that the distance between i and j is always
+    # smaller than the distance between i and k and j and k for any k
+
+    embed_dist = scipy.spatial.distance.pdist(embed_dims, "chebyshev")
+
+    # example:
+    # suppose we have:
+    #   pair_embed_dist = [.1, .3, .2, .4]
+    #
+    # we convert this into triangular matrix, called `embed_dims`:
+    #   .1 .  .  .
+    #   .1 .3 .  .
+    #   .1 .3 .2 .
+    #   .1 .3 .2 .4
+    #
+    # We now compute the Chebyshev Distance, d(i, j), between all rows of
+    # `embed_dims` where i, j are the indices of the rows:
+    #
+    #   d(0, 1) d(0, 2) d(0, 3)
+    #           d(1, 2) d(1, 3)
+    #                   d(2, 3)
+    #
+    # The Chebyshev Distance function is (in pure python):
+    # def d(i, j):
+    #     result = max(abs(a-b) for a, b in zip(embed_dims[i], embed_dims[j]))
+    #
+    # So the embedding distances are:
+    #        .3      .3      .4
+    #                .2      .4
+    #                        .4
+    #
+    # This is rewritten from left-to-bottom (to save space in memory)
+    # [.3, .3, .4, .2, .4, .4]
+    #
+    return embed_dist
+
+
+def compute_token_dist(token_counts: ArrayLike) -> ArrayLike:
+    n = len(token_counts)
+
+    # the token count distance between junk and i and j is the size of minimal text segment
+    # containing them, i.e. sum of token counts of all the intermediate chunks
+    token_dims = np.tri(n + 1, k=0) * np.concatenate(([0], token_counts))
+
+    # drop diagonal (sizes of individual chunks)
+    a, b = np.triu_indices(n + 1, k=1)
+    drop_ind = b - a > 1
+
+    # calculate the token count distance between chunk i and j
+    token_dist = scipy.spatial.distance.pdist(token_dims, "cityblock")[drop_ind]
+
+    # example:
+    # suppose we have:
+    #   token_counts = [10, 30, 20, 40]
+    #
+    # we convert this into triangular matrix, called `token_dims`:
+    #   0,  0,  0,  0,  0
+    #   0, 10,  0,  0,  0
+    #   0, 10, 30,  0,  0
+    #   0, 10, 30, 20,  0
+    #   0, 10, 30, 20, 40
+    #
+    # We now compute the City-Block Distance, d(i, j), between all rows of
+    # `token_dims` where i, j are the indices of the rows:
+    #
+    #   d(0, 1) d(0, 2) d(0, 3) d(0, 4)
+    #           d(1, 2) d(1, 3) d(1, 4)
+    #                   d(2, 3) d(2, 4)
+    #                           d(3, 4)
+    #
+    # The City-Block Distance function is (in pure python):
+    # def d(i, j):
+    #     result = sum(abs(a-b) for a, b in zip(token_dims[i], token_dims[j]))
+    #
+    # So the token distances are:
+    #        10      40      60     100
+    #                30      50      90
+    #                        20      60
+    #                                40
+    #
+    # We now exclude the diagonal terms:
+    #         .      40      60     100
+    #                 .      50      90
+    #                         .      60
+    #                                 .
+    #
+    # And rewrite from left-to-bottom (to save space in memory)
+    # [ 40,  60, 100,  50,  90,  60]
+    #
+    # N.B. This is equivalent but slower:
+    # [sum(token_counts[i:j+1]) for i in range(n) for j in range(i+1, n)]
+    return token_dist
+
+
+def create_pdist(
+    token_counts: np.array, pair_embed_dist: np.array, weight_embed_dist: float = 0.2, use_log: bool = True
+):
     """
     Creates a distance (upper) matrix for the chunk merging.
     It combines embedding distance with token counts metric for adjacent chunks.
     Distance between neighbours is always smaller than further away pair -> enforcing
     the hierarchical clustering to merge only adjacent blocks in each step.
-
     """
-    n = len(token_counts)
+
+    if len(pair_embed_dist) != len(pair_embed_dist):
+        raise ValueError("distances do not have the same length")
 
     # Phase 1: Calculate the two forms of distance between adjacent chunks
 
-    # embedding distance between chunk i and j is taken as MAXIMUM of the pairwise embedding
-    # distance of all the adjacent pairs between them
-    embed_dims = np.tri(n, k=0) * np.array(pair_embed_dist)
-
-    # Chebyshev distance is used to make sure that the distance between i and j is always
-    # smaller than the distance between i and k and j and k for any k
-    embed_dist = scipy.spatial.distance.pdist(embed_dims, "chebyshev")
-
-    # the token count distance between junk and i and j is the size of minimal text segment
-    # containing them, i.e. sum of token counts of all the intermediate chunks
-    token_dims = np.tri(n + 1, k=0) * np.concatenate([[0], np.array(token_counts)])
-
-    # drop diagonal (sizes of individual chunks)
-    drop_ind = [y - x > 1 for x, y in zip(np.triu_indices(n + 1, k=1)[0], np.triu_indices(n + 1, k=1)[1], strict=False)]
-
-    # calculate the token count distance between chunk i and j
-    token_dist = scipy.spatial.distance.pdist(token_dims, "cityblock")[drop_ind]
+    embed_dist = compute_embed_dist(pair_embed_dist)
+    token_dist = compute_token_dist(token_counts)
 
     # scale the distances by log to make them more comparable
     if use_log:
@@ -117,13 +207,12 @@ def create_pdist(token_counts, pair_embed_dist, weight_embed_dist=0.2, use_log=T
     # make the two distances comparable and then scale them using input weight parameter
     # smaller weight means more importance of the token count distance
     # bigger weight means more importance of the embedding distance
-    if np.std(embed_dist) > 0:
-        embed_dist = embed_dist / np.std(embed_dist) * weight_embed_dist
-    if np.std(embed_dist) > 0:
-        token_dist = token_dist / np.std(token_dist) * (1 - weight_embed_dist)
+    if embed_dist_std := np.std(embed_dist) > 0:
+        embed_dist = embed_dist / embed_dist_std * weight_embed_dist
+    if token_dist_std := np.std(token_dist) > 0:
+        token_dist = token_dist / token_dist_std * (1 - weight_embed_dist)
 
     # Phase 2: Combine the two distances into one
-
     # the two above distance are combined either using sum or product (i.e. use_log=T)
-    combined_dist = [x + y for x, y in zip(embed_dist, token_dist, strict=False)]
+    combined_dist = embed_dist + token_dist
     return combined_dist

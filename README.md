@@ -167,4 +167,3 @@ for our CSS so it can be cached.
 The govuk assets are versioned in the `npm` package. On initial app setup you will need to run `poetry run python manage.py collectstatic` to copy them to the `frontend` folder from where `runserver` can serve them.
 
 We’ll revisit this process when we deploy the app.
-

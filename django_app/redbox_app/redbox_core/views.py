@@ -77,8 +77,7 @@ def get_file_extension(file):
 
 @login_required
 def upload_view(request):
-    errors = {"upload_doc": []}
-    uploaded = False
+    errors = []
 
     if request.method == "POST" and request.FILES["uploadDoc"]:
         # https://django-storages.readthedocs.io/en/1.13.2/backends/amazon-S3.html
@@ -87,20 +86,19 @@ def upload_view(request):
         file_extension = get_file_extension(uploaded_file)
 
         if uploaded_file.name is None:
-            errors["upload_doc"].append("File has no name")
+            errors.append("File has no name")
         if uploaded_file.content_type is None:
-            errors["upload_doc"].append("File has no content-type")
+            errors.append("File has no content-type")
         if uploaded_file.size > MAX_FILE_SIZE:
-            errors["upload_doc"].append("File is larger than 200MB")
+            errors.append("File is larger than 200MB")
         if file_extension not in APPROVED_FILE_EXTENSIONS:
-            errors["upload_doc"].append(f"File type {file_extension} not supported")
+            errors.append(f"File type {file_extension} not supported")
 
-        if not len(errors["upload_doc"]):
+        if not errors:
             # ingest file
             api = CoreApiClient(host=settings.CORE_API_HOST, port=settings.CORE_API_PORT)
 
             try:
-                api.upload_file(settings.BUCKET_NAME, uploaded_file.name, request.user)
                 file = File.objects.create(
                     processing_status=ProcessingStatusEnum.uploaded.value,
                     user=request.user,
@@ -109,14 +107,18 @@ def upload_view(request):
                 )
                 file.save()
                 # TODO: update improved File object with elastic uuid
-                uploaded = True
             except ValueError as value_error:
-                errors["upload_doc"].append(value_error.args[0])
+                errors.append(value_error.args[0])
+
+            try:
+                api.upload_file(settings.BUCKET_NAME, uploaded_file.name, request.user)
+            except ValueError as value_error:
+                errors.append(value_error.args[0])
 
     return render(
         request,
         template_name="upload.html",
-        context={"request": request, "errors": errors, "uploaded": uploaded},
+        context={"request": request, "errors": {"upload_doc": errors}, "uploaded": not errors},
     )
 
 
