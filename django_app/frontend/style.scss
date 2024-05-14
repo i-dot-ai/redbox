@@ -3,7 +3,7 @@ $govuk-font-family: sans-serif;
 $iai-pink: #b62777;
 $redbox-red: #A50202;
 
-@import "frontend/node_modules/govuk-frontend/dist/govuk/all";
+@import "./node_modules/govuk-frontend/dist/govuk/all";
 
 
 /* All pages */

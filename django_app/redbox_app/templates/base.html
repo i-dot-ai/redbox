@@ -16,8 +16,10 @@
   <meta name="robots" content="noindex, nofollow">
   {% if COMPRESSION_ENABLED %}
     {% compress css %}
-    <link rel="stylesheet" type="text/x-scss" href="{{static('style.scss')}}" />
+      <link rel="stylesheet" type="text/x-scss" href="{{static('style.scss')}}" />
     {% endcompress %}
+  {% else %}
+    <link rel="stylesheet" type="text/css" href="{{static('style.css')}}" />
   {% endif %}
 
 </head>
@@ -56,19 +58,19 @@
 
           {% if request.user.is_authenticated %}
             {% set menu_items = [
-              {"text": "Documents", "url": "/documents"},
-              {"text": "Sessions", "url": "/sessions"},
-              {"text": "Sign out", "url": "/signed-out"}
+              {"text": "Documents", "url": "documents"},
+              {"text": "Sessions", "url": "sessions"},
+              {"text": "Sign out", "url": "signed-out"}
             ] %}
           {% else %}
             {% set menu_items = [
-              {"text": "Sign in", "url": "/sign-in"}
+              {"text": "Sign in", "url": "sign-in"}
             ] %}
           {% endif %}
           <ul id="navigation" class="govuk-header__navigation-list">
             {% for menu_item in menu_items %}
               <li class="govuk-header__navigation-item {% if pageTitle == menu_item.text %}govuk-header__navigation-item--active{% endif %}">
-                <a class="govuk-header__link" href="{{ menu_item.url }}">{{ menu_item.text }}</a>
+                <a class="govuk-header__link" href="{{ url(menu_item.url) }}">{{ menu_item.text }}</a>
               </li>
             {% endfor %}
           </ul>
