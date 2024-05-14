@@ -42,7 +42,7 @@ class FileChunker:
     def chunk_file(
         self,
         file: File,
-        chunk_clustering: bool = True,
+        chunk_clustering: bool = False,
     ) -> list[Chunk]:
         """_summary_
 
