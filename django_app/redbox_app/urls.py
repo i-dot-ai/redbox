@@ -1,5 +1,3 @@
-from django.conf import settings
-from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
 from magic_link import urls as magic_link_urls
@@ -41,6 +39,3 @@ other_urlpatterns = [
 ]
 
 urlpatterns = info_urlpatterns + other_urlpatterns + auth_urlpatterns
-
-if settings.ENVIRONMENT and settings.ENVIRONMENT == "LOCAL":
-    urlpatterns = urlpatterns + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
