@@ -184,9 +184,8 @@ def post_message(request: HttpRequest) -> HttpResponse:
     llm_message = ChatMessage(chat_history=session, text=response_data.output_text, role=ChatRoleEnum.ai)
     llm_message.save()
 
-    files: list[File] = [
-        File.objects.get(core_file_uuid=doc.file_uuid, user=request.user) for doc in response_data.source_documents
-    ]
+    doc_uuids: list[str] = [doc.file_uuid for doc in response_data.source_documents]
+    files: list[File] = File.objects.filter(core_file_uuid__in=doc_uuids, user=request.user)
     llm_message.source_files.set(files)
 
     return redirect(reverse(sessions_view, args=(session.id,)))
