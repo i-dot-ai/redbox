@@ -8,13 +8,13 @@
   <div class="govuk-grid-row govuk-!-margin-top-3">
 
     <div class="govuk-grid-column-one-third">
-  
+
       {{ govukButton(
         text="Start a new session",
         href="/sessions",
         classes="govuk-button--secondary"
       ) }}
-  
+
       <h2 class="govuk-heading-s">Recent sessions</h2>
       <ul class="govuk-list govuk-list--spaced">
         {% for session in chat_history %}
@@ -23,13 +23,13 @@
           </li>
         {% endfor %}
       </ul>
-        
+
     </div>
-  
+
     <chat-controller data-stream-url="{{ streaming.endpoint }}" data-session-id="{{ session_id }}" class="govuk-grid-column-two-thirds">
-  
+
       <h2 class="govuk-heading-m">Current session</h2>
-  
+
       <div class="govuk-notification-banner" role="region" aria-labelledby="govuk-notification-banner-title" data-module="govuk-notification-banner">
         <div class="govuk-notification-banner__header">
           <h2 class="govuk-notification-banner__title" id="govuk-notification-banner-title">
@@ -43,20 +43,23 @@
           </p>
         </div>
       </div>
-  
+
       {# SSR messages #}
       {% for message in messages %}
         <div class="iai-chat-message iai-chat-message--{{ message.role }} govuk-body">
           <div class="iai-chat-message__role">{{ message.role | upper }}</div>
           <div class="iai-chat-message__text">{{ message.text }}</div>
+          {% for source in message.source_files.all() %}
+            <div class="iai-chat-message__text">{{ source.original_file_name }}</div>
+          {% endfor %}
         </div>
       {% endfor %}
-  
+
       {# CSR messages #}
       <div class="js-message-container"></div>
-  
+
       <form class="iai-new-message js-send-message" action="/post-message/" method="post">
-  
+
         <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}"/>
         <input type="hidden" name="session-id" value="{{ session_id }}"/>
 
@@ -66,15 +69,15 @@
           </label>
           <textarea class="govuk-textarea js-user-text" id="message" name="message" rows="5" required></textarea>
         </div>
-  
+
         <button type="submit" class="govuk-button js-send-btn" data-module="govuk-button">
           Send
         </button>
-  
+
       </form>
-  
+
     </chat-controller>
-  
+
   </div>
 
 </div>
