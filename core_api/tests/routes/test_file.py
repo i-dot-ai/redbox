@@ -1,3 +1,4 @@
+import json
 import os
 from http import HTTPStatus
 
@@ -36,6 +37,21 @@ async def test_post_file_upload(s3_client, app_client, elasticsearch_storage_han
                 headers=headers,
             )
     assert response.status_code == HTTPStatus.CREATED
+
+
+def test_list_files(app_client, stored_file, headers):
+    """
+    Given a previously saved file
+    When I GET all files from /file
+    I Expect the response to contain this file
+    """
+    response = app_client.get("/file", headers=headers)
+    assert response.status_code == HTTPStatus.OK
+
+    file_list = json.loads(response.content.decode("utf-8"))
+    assert len(file_list) > 0
+
+    assert str(stored_file.uuid) in [file["uuid"] for file in file_list]
 
 
 def test_get_file(app_client, stored_file, headers):
