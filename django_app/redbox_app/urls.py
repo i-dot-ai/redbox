@@ -1,3 +1,5 @@
+from django.conf import settings
+from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
 from magic_link import urls as magic_link_urls
@@ -38,4 +40,7 @@ other_urlpatterns = [
     path("health/", views.health, name="health"),
 ]
 
-urlpatterns = info_urlpatterns + other_urlpatterns + auth_urlpatterns
+urlpatterns = info_urlpatterns + other_urlpatterns + auth_urlpatterns  + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+
+if settings.DEBUG:
+    urlpatterns = urlpatterns + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
