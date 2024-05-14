@@ -2,14 +2,16 @@ import logging
 from typing import Annotated
 from uuid import UUID
 
+from elasticsearch import NotFoundError
 from fastapi import Depends, FastAPI, HTTPException, UploadFile
 from fastapi import File as FastAPIFile
+from fastapi.responses import JSONResponse
 from faststream.redis.fastapi import RedisRouter
 from pydantic import BaseModel, Field
 
 from core_api.src.auth import get_user_uuid
 from core_api.src.publisher_handler import FilePublisher
-from redbox.models import Chunk, File, FileStatus, Settings
+from redbox.models import APIError404, Chunk, File, FileStatus, Settings
 from redbox.storage import ElasticsearchStorageHandler
 
 # === Logging ===
@@ -105,7 +107,7 @@ if env.dev_mode:
         return file
 
 
-@file_app.get("/{file_uuid}", response_model=File, tags=["file"])
+@file_app.get("/{file_uuid}", response_model=File, tags=["file"], responses={404: {"model": APIError404}})
 def get_file(file_uuid: UUID, user_uuid: Annotated[UUID, Depends(get_user_uuid)]) -> File:
     """Get a file from the object store
 
@@ -115,10 +117,29 @@ def get_file(file_uuid: UUID, user_uuid: Annotated[UUID, Depends(get_user_uuid)]
 
     Returns:
         File: The file
+
+    Raises:
+        404: If the file isn't found, or the creator and requester don't match
     """
-    file = storage_handler.read_item(file_uuid, model_type="File")
+    not_found = JSONResponse(
+        status_code=404,
+        content={
+            "detail": "Item not found",
+            "errors": {
+                "parameter": "file_uuid",
+                "detail": f"File {file_uuid} not found",
+            },
+        },
+    )
+
+    try:
+        file = storage_handler.read_item(file_uuid, model_type="File")
+    except NotFoundError:
+        return not_found
+
     if file.creator_user_uuid != user_uuid:
-        raise HTTPException(status_code=404, detail=f"File {file_uuid} not found")
+        return not_found
+
     return file
 
 

@@ -5,6 +5,11 @@ from redbox.models.embedding import (
     EmbedQueueItem,
     StatusResponse,
 )
+from redbox.models.errors import (
+    APIError404,
+    APIErrorDetail,
+    APIErrorResponse,
+)
 from redbox.models.file import (
     Chunk,
     ChunkStatus,
@@ -40,4 +45,7 @@ __all__ = [
     "EmbedQueueItem",
     "StatusResponse",
     "ProcessingStatusEnum",
+    "APIErrorResponse",
+    "APIErrorDetail",
+    "APIError404",
 ]

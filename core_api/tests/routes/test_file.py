@@ -47,6 +47,16 @@ def test_get_file(app_client, stored_file, headers):
     assert response.status_code == 200
 
 
+def test_get_missing_file(app_client, headers):
+    """
+    Given a nonexistent file
+    When I GET it from /file/uuid
+    I Expect to receive a 404 error
+    """
+    response = app_client.get("/file/ffffffff-ffff-ffff-ffff-ffffffffffff", headers=headers)
+    assert response.status_code == 404
+
+
 def test_delete_file(s3_client, app_client, elasticsearch_storage_handler, chunked_file, headers):
     """
     Given a previously saved file
