@@ -40,7 +40,7 @@ other_urlpatterns = [
     path("health/", views.health, name="health"),
 ]
 
-urlpatterns = info_urlpatterns + other_urlpatterns + auth_urlpatterns  + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+urlpatterns = info_urlpatterns + other_urlpatterns + auth_urlpatterns
 
 if settings.DEBUG:
     urlpatterns = urlpatterns + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
