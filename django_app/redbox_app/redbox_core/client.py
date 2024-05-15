@@ -39,16 +39,9 @@ class CoreApiClient:
 
     @property
     def url(self) -> str:
-        return f"{self.host}:{self.port}"
+        return f"http://{self.host}:{self.port}"
 
-    def upload_file(self, bucket_name: str, name: str, user: User):
-        if self.host == "testserver":
-            file = {
-                "key": name,
-                "bucket": bucket_name,
-            }
-            return file
-
+    def embedd_file(self, name: str, user: User):
         response = requests.post(
             f"{self.url}/file", json={"key": name}, headers={"Authorization": user.get_bearer_token()}, timeout=30
         )
@@ -56,9 +49,13 @@ class CoreApiClient:
             raise ValueError(response.text)
         return response.json()
 
-    def rag_chat(self, message_history: list[dict[str, str]], token: str) -> str:
-        url = f"{self.url}/chat/rag"
+    def rag_chat(self, message_history: list[dict[str, str]], user: User) -> str:
         response = requests.post(
-            url, json={"message_history": message_history}, headers={"Authorization": token}, timeout=60
+            f"{self.url}/chat/rag",
+            json={"message_history": message_history},
+            headers={"Authorization": user.get_bearer_token()},
+            timeout=60,
         )
+        if response.status_code != 200:
+            raise ValueError(response.text)
         return response.json()["output_text"]

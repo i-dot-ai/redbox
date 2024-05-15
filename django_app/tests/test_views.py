@@ -2,6 +2,7 @@ import logging
 from http import HTTPStatus
 
 import pytest
+from botocore.exceptions import ClientError
 from django.conf import settings
 from django.test import Client
 from redbox_app.redbox_core.models import ChatHistory, ChatMessage, ChatRoleEnum, User
@@ -24,12 +25,41 @@ def count_s3_objects(s3_client) -> int:
     return sum(len(result.get("Contents", [])) for result in paginator.paginate(Bucket=settings.BUCKET_NAME) if result)
 
 
-@pytest.mark.django_db
-def test_upload_view(alice, client, file_pdf_path, s3_client):
-    s3_client.delete_object(Bucket=settings.BUCKET_NAME, Key=file_pdf_path.split("/")[-1].replace(" ", "_"))
+def file_exists(s3_client, file_name) -> bool:
+    """
+    * if the file key exists return True
+    * if the file key does not exist return False
+    """
+    try:
+        s3_client.get_object(Bucket=settings.BUCKET_NAME, Key=file_name.replace(" ", "_"))
+        return True
+    except ClientError as client_error:
+        if client_error.response["Error"]["Code"] == "NoSuchKey":
+            return False
+        raise client_error
 
-    previous_count = count_s3_objects(s3_client)
+
+@pytest.mark.django_db
+def test_upload_view(alice, client, file_pdf_path, s3_client, requests_mock):
+    """
+    Given that the object store does not have a file with our test file in it
+    When we POST our test file to /upload/
+    We Expect to see this file in the object store
+    """
+    file_name = file_pdf_path.split("/")[-1]
+
+    # we begin by removing any file in minio that has this key
+    s3_client.delete_object(Bucket=settings.BUCKET_NAME, Key=file_name.replace(" ", "_"))
+
+    assert not file_exists(s3_client, file_name)
+
     client.force_login(alice)
+
+    # we mock the response from the core-api
+    mocked_response = {"key": file_name, "bucket": settings.BUCKET_NAME}
+    requests_mock.post(
+        f"http://{settings.CORE_API_HOST}:{settings.CORE_API_PORT}/file", status_code=201, json=mocked_response
+    )
 
     with open(file_pdf_path, "rb") as f:
         response = client.post("/upload/", {"uploadDoc": f})
@@ -37,7 +67,7 @@ def test_upload_view(alice, client, file_pdf_path, s3_client):
         assert response.status_code == 200
         assert "Your file has been uploaded" in str(response.content)
 
-        assert count_s3_objects(s3_client) == previous_count + 1
+        assert file_exists(s3_client, file_name)
 
 
 @pytest.mark.django_db

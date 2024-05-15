@@ -69,7 +69,7 @@ class Settings(BaseSettings):
     postgres_password: str
     postgres_host: str = "db"
     contact_email: str = "test@example.com"
-    core_api_host: str = "http://core-api"
+    core_api_host: str = "core-api"
     core_api_port: int = 5002
     email_backend_type: str = "CONSOLE"
     gov_notify_api_key: Optional[str] = None
