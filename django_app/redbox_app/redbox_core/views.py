@@ -114,11 +114,11 @@ def upload_view(request):
             try:
                 api.upload_file(settings.BUCKET_NAME, uploaded_file.name, request.user)
             except ValueError as value_error:
-                errors.append(value_error.args[0])
+                logger.error("failed to connect to core-api: %s", value_error)
+                errors.append("failed to connect to core-api")
 
             if not errors:
                 return redirect(documents_view)
-
 
     return render(
         request,
