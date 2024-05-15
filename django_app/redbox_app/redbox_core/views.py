@@ -1,3 +1,4 @@
+import json
 import logging
 import os
 import uuid
@@ -5,9 +6,10 @@ from urllib.error import HTTPError
 
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
+from django.core.exceptions import ObjectDoesNotExist
 from django.core.exceptions import FieldError, ValidationError
 from django.core.files.uploadedfile import UploadedFile
-from django.http import HttpRequest, HttpResponse
+from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.views.decorators.http import require_http_methods
@@ -210,9 +212,21 @@ def post_message(request: HttpRequest) -> HttpResponse:
     return redirect(reverse(sessions_view, args=(session.id,)))
 
 
-def file_status(file_ids: list[uuid]) -> list[FileStatus]:
-    files_to_check = [file for file in file_ids if File.objects.filter(pk=file.id) and file.get_processing_status_text() != "complete"]
-    return []
+def file_status_api_view(request, file_id: uuid) -> JsonResponse:
+    try:
+        file = File.objects.get(pk=file_id)
+    except ObjectDoesNotExist as ex:
+        return JsonResponse({"status": FileStatus(
+            file_uuid=file_id,
+            processing_status=ProcessingStatusEnum.unknown,
+            chunk_statuses=None
+        )})
+    core_api = CoreApiClient(host=settings.CORE_API_HOST, port=settings.CORE_API_PORT)
+    core_file_status_response = core_api.get_file_status(file_id=file.id)
+    core_file_status = json.loads(core_file_status_response)
+    file_status = FileStatus(**core_file_status)
+    return JsonResponse({"status": file_status})
+
 
 
 @require_http_methods(["GET"])

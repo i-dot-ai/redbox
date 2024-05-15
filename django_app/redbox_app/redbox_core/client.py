@@ -6,6 +6,7 @@ import boto3
 import requests
 from botocore.exceptions import ClientError
 from django.conf import settings
+
 from redbox_app.redbox_core.models import User
 
 logger = logging.getLogger(__name__)
@@ -67,3 +68,9 @@ class CoreApiClient:
         logger.debug("response_data: %s", response_data)
 
         return response_data
+
+    def get_file_status(self, file_id:uuid):
+        url = f"{self.url}/file/{file_id}/status"
+        response = requests.get(url)
+        return response.json()
+
