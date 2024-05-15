@@ -124,7 +124,7 @@ def injest_file(uploaded_file: UploadedFile, user: User) -> list[str]:
         except HTTPError as e:
             logger.error("Error uploading file object %s.", file, exc_info=e)
             file.delete()
-            errors.append(e.args[0])
+            errors.append("failed to connect to core-api")
         else:
             file.core_file_uuid = upload_file_response.uuid
             file.save()
