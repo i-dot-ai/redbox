@@ -14,6 +14,11 @@ variable "cognito_usernames" {
   default     = []
 }
 
+variable "contact_email" {
+  description = "The email to use for 'contact us' pages"
+  type        = string
+}
+
 variable "developer_ips" {
   type        = list(string)
   description = "List of developer IPs"

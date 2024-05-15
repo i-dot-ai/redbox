@@ -1,6 +1,7 @@
 {% set pageTitle = "Documents" %}
 {% extends "base.html" %}
 {% from "macros/govuk-button.html" import govukButton %}
+{% from "macros/govuk-notification-banner.html" import govukNotificationBanner %}
 
 {% block content %}
 
@@ -15,51 +16,63 @@
 {% endif %}
 
 <div class="govuk-width-container">
-  <table class="govuk-table iai-doclist">
-    <caption class="govuk-table__caption govuk-table__caption--m">
-      <h1 class="govuk-heading-l govuk-!-margin-bottom-0">Documents</h1>
-    </caption>
-    <thead class="govuk-table__head">
-      <tr class="govuk-table__row">
-        <th scope="col" class="govuk-table__header">File Name</th>
-        <th scope="col" class="govuk-table__header">Status</th>
-        <th scope="col" class="govuk-table__header iai-doclist__actions">Actions</th>
-      </tr>
-    </thead>
-    <tbody class="govuk-table__body">
-      {% for file in files %}
-        <tr class="govuk-table__row">
-          <td class="govuk-table__cell govuk-!-padding-top-3">{{file.name}}</td>
-          <td class="govuk-table__cell govuk-!-padding-top-3">
-            {% if file.get_processing_status_text() == 'complete' %}
-              <strong class="govuk-tag govuk-tag--green">{{file.get_processing_status_text()}}</strong>
-            {% else %}
-              <strong class="govuk-tag govuk-tag--yellow" x-data="file-status" data-id="{{file.id}}" x-text="status">{{file.get_processing_status_text()}}</strong>
-            {% endif %}
-          </td>
-          <td class="govuk-table__cell">
-            {{ govukButton(
-              text="Download" + "<span class=\"govuk-visually-hidden\">" + file.name + "</span>",
-              href=file.path,
-              classes="govuk-button--secondary govuk-!-margin-bottom-0",
-              download=True
-            ) }}
-            {{ govukButton(
-              text="Remove" + "<span class=\"govuk-visually-hidden\">" + file.name + "</span>",
-              href="/remove-doc/" + file.id | string,
-              classes="govuk-button--warning govuk-!-margin-bottom-0"
-            ) }}
-          </td>
-        </tr>
-      {% endfor %}
-    </tbody>
-  </table>
 
-  {{ govukButton(
-    text="Upload a new document",
-    href="/upload"
-  ) }}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      {{ govukNotificationBanner(
+        title="Important",
+        text_list=[
+          {"text": "Your documents will be stored for up to 30 days."}
+        ]
+      ) }}
 
+      <table class="govuk-table iai-doclist">
+        <caption class="govuk-table__caption govuk-table__caption--m">
+          <h1 class="govuk-heading-l govuk-!-margin-bottom-0">Documents</h1>
+        </caption>
+        <thead class="govuk-table__head">
+          <tr class="govuk-table__row">
+            <th scope="col" class="govuk-table__header">File Name</th>
+            <th scope="col" class="govuk-table__header">Status</th>
+            <th scope="col" class="govuk-table__header iai-doclist__actions">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="govuk-table__body">
+          {% for file in files %}
+            <tr class="govuk-table__row">
+              <td class="govuk-table__cell govuk-!-padding-top-3">{{file.name}}</td>
+              <td class="govuk-table__cell govuk-!-padding-top-3">
+                {% if file.get_processing_status_text() == 'complete' %}
+                  <strong class="govuk-tag govuk-tag--green">{{file.get_processing_status_text()}}</strong>
+                {% else %}
+                  <strong class="govuk-tag govuk-tag--yellow" x-data="file-status" data-id="{{file.id}}" x-text="status">{{file.get_processing_status_text()}}</strong>
+                {% endif %}
+              </td>
+              <td class="govuk-table__cell iai-docs__actions">
+                {{ govukButton(
+                  text="Download" + "<span class=\"govuk-visually-hidden\">" + file.name + "</span>",
+                  href=file.url,
+                  classes="govuk-button--secondary govuk-!-margin-bottom-0",
+                  download=True
+                ) }}
+                {{ govukButton(
+                  text="Remove" + "<span class=\"govuk-visually-hidden\">" + file.name + "</span>",
+                  href=url('remove-doc', file.id),
+                  classes="govuk-button--warning govuk-!-margin-bottom-0"
+                ) }}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+
+      {{ govukButton(
+        text="Upload a new document",
+        href=url('upload')
+      ) }}
+
+    </div>
+  </div>
 </div>
 
 {% endblock %}

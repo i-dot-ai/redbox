@@ -2,35 +2,49 @@
 
 {% extends "base.html" %}
 {% from "macros/govuk-button.html" import govukButton %}
+{% from "macros/govuk-notification-banner.html" import govukNotificationBanner %}
 
 {% block content %}
 
 <div class="govuk-width-container">
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
 
-  <form method="post" enctype="multipart/form-data">
+      <a href="{{url('documents')}}" class="govuk-back-link govuk-!-margin-bottom-5 govuk-!-margin-top-0">Back</a>
 
-    <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+      <form method="post" enctype="multipart/form-data">
 
-    <div class="govuk-form-group {% if errors.upload_doc %} govuk-form-group--error{% endif %}">
-      <label class="govuk-label" for="upload-doc">
-        <h1 class="govuk-heading-l">{{ pageTitle }}</h1>
-      </label>    
-      <p class="govuk-body iai-file-types" id="upload-doc-filetypes">Limit 200MB per file: EML, HTML, JSON, MD, MSG, RST, RTF, TXT, XML, CSV, DOC, DOCX, EPUB, ODT, PDF, PPT, PPTX, TSV, XLSX, HTM</p>
-      {% for error in errors.upload_doc %}
-        <p id="file-upload-doc-error" class="govuk-error-message">
-          <span class="govuk-visually-hidden">Error:</span> {{ error }}
-        </p>
-      {% endfor %}
-      <input class="govuk-file-upload {% if errors.upload_doc %} govuk-file-upload--error{% endif %}" id="upload-doc" name="uploadDoc" type="file" aria-describedby="upload-doc-filetypes {% if errors.upload_doc %} file-upload-doc-error{% endif %}">
+        <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+
+        <div class="govuk-form-group {% if errors.upload_doc %} govuk-form-group--error{% endif %}">
+          <label class="govuk-label" for="upload-doc">
+            <h1 class="govuk-heading-l">{{ pageTitle }}</h1>
+          </label>
+          
+          <div id="upload-doc-notification">
+            {{ govukNotificationBanner(
+              title="Important",
+              text_list=[
+                {"text": "The AI will use all documents you upload. You can use up to, and including, Official Sensitive documents"}
+              ]
+            ) }}
+          </div>
+
+          <p class="govuk-body iai-file-types" id="upload-doc-filetypes">Limit 200MB per file: EML, HTML, JSON, MD, MSG, RST, RTF, TXT, XML, CSV, DOC, DOCX, EPUB, ODT, PDF, PPT, PPTX, TSV, XLSX, HTM</p>
+          {% for error in errors.upload_doc %}
+            <p id="file-upload-doc-error" class="govuk-error-message">
+              <span class="govuk-visually-hidden">Error:</span> {{ error }}
+            </p>
+          {% endfor %}
+          <input class="govuk-file-upload {% if errors.upload_doc %} govuk-file-upload--error{% endif %}" id="upload-doc" name="uploadDoc" type="file" aria-describedby="upload-doc-notification upload-doc-filetypes {% if errors.upload_doc %} file-upload-doc-error{% endif %}">
+        </div>
+
+        {{ govukButton(text="Upload") }}
+
+      </form>
+
     </div>
-
-
-    <div class="govuk-button-group">
-      {{ govukButton(text="Upload") }}
-      {{ govukButton(text="Cancel", classes="govuk-button--secondary", href="/documents") }}
-    </div>
-
-  </form>
+  </div>
 </div>
 
 {% endblock %}

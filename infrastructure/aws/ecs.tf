@@ -1,6 +1,6 @@
 locals {
-  record_prefix        = terraform.workspace == "prod" ? var.project_name : "${var.project_name}-${terraform.workspace}"
-  django_host          = "${local.record_prefix}.${var.domain_name}"
+  record_prefix = terraform.workspace == "prod" ? var.project_name : "${var.project_name}-${terraform.workspace}"
+  django_host   = "${local.record_prefix}.${var.domain_name}"
 
   environment_variables = {
     "ELASTIC__API_KEY" : var.elastic_api_key,
@@ -17,23 +17,24 @@ locals {
     "DJANGO_SECRET_KEY" : var.django_secret_key,
     "POSTGRES_PASSWORD" : var.postgres_password,
     "POSTGRES_USER" : module.rds.rds_instance_username,
-    "POSTGRES_PASSWORD": module.rds.rds_instance_db_password,
+    "POSTGRES_PASSWORD" : module.rds.rds_instance_db_password,
     "POSTGRES_DB" : module.rds.db_instance_name,
     "POSTGRES_HOST" : module.rds.db_instance_address,
     "CORE_API_HOST" : "http://${aws_service_discovery_service.service_discovery_service.name}.${aws_service_discovery_private_dns_namespace.private_dns_namespace.name}",
-    "CORE_API_PORT": 5002,
-    "ENVIRONMENT": upper(terraform.workspace),
-    "DJANGO_SETTINGS_MODULE": "redbox_app.settings",
-    "DEBUG": true,
-    "AWS_REGION": var.region,
+    "CORE_API_PORT" : 5002,
+    "ENVIRONMENT" : upper(terraform.workspace),
+    "DJANGO_SETTINGS_MODULE" : "redbox_app.settings",
+    "DEBUG" : true,
+    "AWS_REGION" : var.region,
     "OPENAI_API_KEY" : var.openai_api_key,
     "FROM_EMAIL" : var.from_email,
-    "GOVUK_NOTIFY_PLAIN_EMAIL_TEMPLATE_ID": var.govuk_notify_plain_email_template_id
+    "GOVUK_NOTIFY_PLAIN_EMAIL_TEMPLATE_ID" : var.govuk_notify_plain_email_template_id
     "GOVUK_NOTIFY_API_KEY" : var.govuk_notify_api_key,
-    "EMAIL_BACKEND_TYPE": "GOVUKNOTIFY",
-    "USE_STREAMING": false,
-    "DJANGO_LOG_LEVEL": "DEBUG",
-    "COMPRESSION_ENABLED": true
+    "EMAIL_BACKEND_TYPE" : "GOVUKNOTIFY",
+    "USE_STREAMING" : false,
+    "DJANGO_LOG_LEVEL" : "DEBUG",
+    "COMPRESSION_ENABLED" : true,
+    "CONTACT_EMAIL": var.contact_email,
   }
 }
 
@@ -93,7 +94,7 @@ module "django-app" {
   prefix             = "redbox"
   ecr_repository_uri = "${var.ecr_repository_uri}/redbox-django-app"
   ecs_cluster_id     = module.cluster.ecs_cluster_id
-  health_check       = {
+  health_check = {
     healthy_threshold   = 3
     unhealthy_threshold = 3
     accepted_response   = "200"
@@ -114,17 +115,17 @@ module "django-app" {
 
 module "core_api" {
   service_discovery_service_arn = aws_service_discovery_service.service_discovery_service.arn
-  memory             = 4096
-  cpu                = 2048
-  create_listener    = false
-  create_networking  = false
-  source             = "../../../i-ai-core-infrastructure//modules/ecs"
-  project_name       = "core-api"
-  image_tag          = var.image_tag
-  prefix             = "redbox"
-  ecr_repository_uri = "${var.ecr_repository_uri}/redbox-core-api"
-  ecs_cluster_id     = module.cluster.ecs_cluster_id
-  health_check       = {
+  memory                        = 4096
+  cpu                           = 2048
+  create_listener               = false
+  create_networking             = false
+  source                        = "../../../i-ai-core-infrastructure//modules/ecs"
+  project_name                  = "core-api"
+  image_tag                     = var.image_tag
+  prefix                        = "redbox"
+  ecr_repository_uri            = "${var.ecr_repository_uri}/redbox-core-api"
+  ecs_cluster_id                = module.cluster.ecs_cluster_id
+  health_check = {
     healthy_threshold   = 3
     unhealthy_threshold = 3
     accepted_response   = "200"
@@ -153,7 +154,7 @@ module "worker" {
   prefix             = "redbox"
   ecr_repository_uri = "${var.ecr_repository_uri}/redbox-worker"
   ecs_cluster_id     = module.cluster.ecs_cluster_id
-  health_check       = {
+  health_check = {
     healthy_threshold   = 3
     unhealthy_threshold = 3
     accepted_response   = "200"
