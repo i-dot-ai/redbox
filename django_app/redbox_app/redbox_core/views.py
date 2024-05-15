@@ -98,24 +98,27 @@ def upload_view(request):
             api = CoreApiClient(host=settings.CORE_API_HOST, port=settings.CORE_API_PORT)
 
             try:
-                upload_file_response = api.upload_file(settings.BUCKET_NAME, uploaded_file.name, request.user)
+                file = File.objects.create(
+                    processing_status=ProcessingStatusEnum.uploaded.value,
+                    user=request.user,
+                    original_file=uploaded_file,
+                    original_file_name=uploaded_file.name,
+                )
+                file.save()
             except ValueError as value_error:
                 errors.append(value_error.args[0])
             else:
                 try:
-                    file = File.objects.create(
-                        processing_status=ProcessingStatusEnum.uploaded.value,
-                        user=request.user,
-                        original_file=uploaded_file,
-                        original_file_name=uploaded_file.name,
-                        core_file_uuid=upload_file_response.uuid,
-                    )
-                    file.save()
+                    upload_file_response = api.upload_file(settings.BUCKET_NAME, uploaded_file.name, request.user)
                 except ValueError as value_error:
+                    logger.error("")
                     errors.append(value_error.args[0])
+                else:
+                    file.core_file_uuid = upload_file_response.uuid
+                    file.save()
 
-            if not errors:
-                return redirect(documents_view)
+        if not errors:
+            return redirect(documents_view)
 
 
     return render(
