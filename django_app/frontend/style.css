@@ -7499,6 +7499,17 @@
   overflow-x: auto;
 }
 
+.iai-chat-message__text table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.iai-chat-message__text th, .iai-chat-message__text td {
+  border: 1px solid black;
+  padding: 0.25rem;
+  text-align: left;
+}
+
 .iai-response-feedback {
   display: none;
   position: relative;
