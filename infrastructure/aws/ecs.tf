@@ -33,7 +33,8 @@ locals {
     "EMAIL_BACKEND_TYPE" : "GOVUKNOTIFY",
     "USE_STREAMING" : false,
     "DJANGO_LOG_LEVEL" : "DEBUG",
-    "COMPRESSION_ENABLED" : true
+    "COMPRESSION_ENABLED" : true,
+    "CONTACT_EMAIL": var.contact_email,
   }
 }
 
