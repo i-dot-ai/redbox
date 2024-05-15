@@ -15,7 +15,7 @@ Alpine.data('file-status', () => ({
         const checkStatus = async () => {
             
             // UPDATE THESE AS REQUIRED
-            const FILE_STATUS_ENDPOINT = '/api/get-status'; 
+            const FILE_STATUS_ENDPOINT = '/file-status';
             const CHECK_INTERVAL_MS = 5000;
             
             const response = await fetch(`${FILE_STATUS_ENDPOINT}?id=${this.$el.dataset.id}`);
