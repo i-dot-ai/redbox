@@ -97,7 +97,7 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
 
     @property
     def name(self) -> str:
-        return self.original_file_name if self.original_file_name else self.original_file.name
+        return self.original_file.file.name  # handles duplicate names
 
     def get_processing_status_text(self) -> str:
         return next(

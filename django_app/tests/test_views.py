@@ -6,7 +6,13 @@ import pytest
 from botocore.exceptions import ClientError
 from django.conf import settings
 from django.test import Client
-from redbox_app.redbox_core.models import ChatHistory, ChatMessage, ChatRoleEnum, User
+from redbox_app.redbox_core.models import (
+    ChatHistory,
+    ChatMessage,
+    ChatRoleEnum,
+    File,
+    User,
+)
 from requests_mock import Mocker
 from yarl import URL
 
@@ -66,6 +72,31 @@ def test_upload_view(alice, client, file_pdf_path, s3_client, requests_mock):
         assert file_exists(s3_client, file_name)
         assert response.status_code == 302
         assert response.url == "/documents/"
+
+
+@pytest.mark.django_db
+def test_upload_view_duplicate_files(alice, bob, client, file_pdf_path, s3_client):
+    previous_count = count_s3_objects(s3_client)
+    client.force_login(alice)
+
+    with open(file_pdf_path, "rb") as f:
+        client.post("/upload/", {"uploadDoc": f})
+        response = client.post("/upload/", {"uploadDoc": f})
+
+        assert response.status_code == 302
+        assert response.url == "/documents/"
+
+        assert count_s3_objects(s3_client) == previous_count + 2
+
+        client.force_login(bob)
+        response = client.post("/upload/", {"uploadDoc": f})
+
+        assert response.status_code == 302
+        assert response.url == "/documents/"
+
+        assert count_s3_objects(s3_client) == previous_count + 3
+
+        assert File.objects.order_by("-created_at")[0].name != File.objects.order_by("-created_at")[1].name
 
 
 @pytest.mark.django_db
