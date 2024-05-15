@@ -212,7 +212,14 @@ def post_message(request: HttpRequest) -> HttpResponse:
     return redirect(reverse(sessions_view, args=(session.id,)))
 
 
-def file_status_api_view(request, file_id: uuid) -> JsonResponse:
+def file_status_api_view(request) -> JsonResponse:
+    file_id = request.GET.get("id", None)
+    if not file_id:
+        return JsonResponse({"status": FileStatus(
+            file_uuid=file_id,
+            processing_status=ProcessingStatusEnum.unknown,
+            chunk_statuses=None
+        )})
     try:
         file = File.objects.get(pk=file_id)
     except ObjectDoesNotExist as ex:
@@ -222,7 +229,8 @@ def file_status_api_view(request, file_id: uuid) -> JsonResponse:
             chunk_statuses=None
         )})
     core_api = CoreApiClient(host=settings.CORE_API_HOST, port=settings.CORE_API_PORT)
-    core_file_status_response = core_api.get_file_status(file_id=file.id)
+    token = request.user.get_bearer_token()
+    core_file_status_response = core_api.get_file_status(file_id=file.id, token=token)
     core_file_status = json.loads(core_file_status_response)
     file_status = FileStatus(**core_file_status)
     return JsonResponse({"status": file_status})

@@ -47,7 +47,7 @@ admin_urlpatterns = [
 other_urlpatterns = [
     path("", views.homepage_view, name="homepage"),
     path("health/", views.health, name="health"),
-    path("file-status/<uuid:file_id>", views.file_status_api_view, name="file-status"),
+    path("file-status/", views.file_status_api_view, name="file-status"),
 ]
 
 urlpatterns = (

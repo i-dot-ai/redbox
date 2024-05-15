@@ -69,8 +69,8 @@ class CoreApiClient:
 
         return response_data
 
-    def get_file_status(self, file_id:uuid):
+    def get_file_status(self, file_id: uuid, token: str):
         url = f"{self.url}/file/{file_id}/status"
-        response = requests.get(url)
+        response = requests.get(url, headers={"Authorization": token}, timeout=60)
         return response.json()
 
