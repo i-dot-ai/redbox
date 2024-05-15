@@ -54,8 +54,7 @@ class CoreApiClient:
         response = requests.post(
             f"{self.url}/file", json={"key": name}, headers={"Authorization": user.get_bearer_token()}, timeout=30
         )
-        if response.status_code != 201:
-            raise ValueError(response.text)
+        response.raise_for_status()
         return response.json(object_hook=lambda d: SimpleNamespace(**d))
 
     def rag_chat(self, message_history: list[dict[str, str]], token: str) -> SimpleNamespace:
