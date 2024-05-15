@@ -16,7 +16,8 @@ class MarkdownConverter extends HTMLElement {
     update(markdown) {
         let converter = new showdown.Converter({
             disableForced4SpacesIndentedSublists: true,
-            headerLevelStart: 3
+            headerLevelStart: 3,
+            tables: true
         });
         const html = converter.makeHtml(markdown);
         this.innerHTML = /** @type any */ (DOMPurify.sanitize(html, {RETURN_TRUSTED_TYPE: true}));

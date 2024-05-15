@@ -21,7 +21,9 @@ async def test_chat_consumer_with_new_session(client: Client, requests_mock: Moc
     carlos = await create_user("carlos@example.com", client)
 
     rag_url = settings.CORE_API_HOST + ":" + settings.CORE_API_PORT + "/chat/rag"
-    requests_mock.register_uri("POST", rag_url, json={"output_text": "Good afternoon, Mr. Amor."})
+    requests_mock.register_uri(
+        "POST", rag_url, json={"output_text": "Good afternoon, Mr. Amor.", "source_documents": []}
+    )
 
     # When
     communicator = WebsocketCommunicator(ChatConsumer.as_asgi(), "/ws/chat/")
@@ -49,7 +51,9 @@ async def test_chat_consumer_with_existing_session(client: Client, requests_mock
     session = await create_chat_history(carol)
 
     rag_url = settings.CORE_API_HOST + ":" + settings.CORE_API_PORT + "/chat/rag"
-    requests_mock.register_uri("POST", rag_url, json={"output_text": "Good afternoon, Mr. Amor."})
+    requests_mock.register_uri(
+        "POST", rag_url, json={"output_text": "Good afternoon, Mr. Amor.", "source_documents": []}
+    )
 
     # When
     communicator = WebsocketCommunicator(ChatConsumer.as_asgi(), "/ws/chat/")
