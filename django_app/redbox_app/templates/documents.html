@@ -4,10 +4,15 @@
 
 {% block content %}
 
-{% compress js %}
+{% if COMPRESSION_ENABLED %}
+  {% compress js %}
+    <script src="{{ static('js/alpine.min.js') }}"></script>
+    <script src="{{ static('js/documents.js') }}"></script>
+  {% endcompress %}
+{% else %}
   <script src="{{ static('js/alpine.min.js') }}"></script>
   <script src="{{ static('js/documents.js') }}"></script>
-{% endcompress %}
+{% endif %}
 
 <div class="govuk-width-container">
   <table class="govuk-table iai-doclist">
@@ -26,10 +31,10 @@
         <tr class="govuk-table__row">
           <td class="govuk-table__cell govuk-!-padding-top-3">{{file.name}}</td>
           <td class="govuk-table__cell govuk-!-padding-top-3">
-            {% if file.processing_status == 'complete' %}
-              <strong class="govuk-tag govuk-tag--green">{{file.processing_status}}</strong>
+            {% if file.get_processing_status_text() == 'complete' %}
+              <strong class="govuk-tag govuk-tag--green">{{file.get_processing_status_text()}}</strong>
             {% else %}
-              <strong class="govuk-tag govuk-tag--yellow" x-data="file-status" data-id="{{file.id}}" x-text="status">{{file.processing_status}}</strong>
+              <strong class="govuk-tag govuk-tag--yellow" x-data="file-status" data-id="{{file.id}}" x-text="status">{{file.get_processing_status_text()}}</strong>
             {% endif %}
           </td>
           <td class="govuk-table__cell">

@@ -64,7 +64,6 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
-    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -192,6 +191,7 @@ LOG_ROOT = "."
 LOG_HANDLER = "console"
 BUCKET_NAME = env.str("BUCKET_NAME")
 AWS_S3_REGION_NAME = env.str("AWS_REGION")
+APPEND_SLASH = True
 
 #  Property added to each S3 file to make them downloadable by default
 AWS_S3_OBJECT_PARAMETERS = {"ContentDisposition": "attachment"}
