@@ -12,7 +12,14 @@ from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.views.decorators.http import require_http_methods
 from redbox_app.redbox_core.client import CoreApiClient
-from redbox_app.redbox_core.models import ChatHistory, ChatMessage, ChatRoleEnum, File, ProcessingStatusEnum, User
+from redbox_app.redbox_core.models import (
+    ChatHistory,
+    ChatMessage,
+    ChatRoleEnum,
+    File,
+    ProcessingStatusEnum,
+    User,
+)
 from yarl import URL
 
 logger = logging.getLogger(__name__)
@@ -100,7 +107,11 @@ def upload_view(request):
     return render(
         request,
         template_name="upload.html",
-        context={"request": request, "errors": {"upload_doc": errors}, "uploaded": not errors},
+        context={
+            "request": request,
+            "errors": {"upload_doc": errors},
+            "uploaded": not errors,
+        },
     )
 
 
@@ -120,7 +131,7 @@ def injest_file(uploaded_file: UploadedFile, user: User) -> list[str]:
         errors.append(e.args[0])
     else:
         try:
-            upload_file_response = api.upload_file(uploaded_file.name, user)
+            upload_file_response = api.upload_file(file.name, user)
         except HTTPError as e:
             logger.error("Error uploading file object %s.", file, exc_info=e)
             file.delete()
