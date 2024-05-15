@@ -7,4 +7,4 @@ You can only use this link once. If you do not use it within 1 hour, it will exp
 
 Regards
 
-<service_name>
+Redbox Copilot
