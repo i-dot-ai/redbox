@@ -14,7 +14,7 @@ module "rds" {
   private_subnet_ids_list = data.terraform_remote_state.vpc.outputs.private_subnets
   public_subnet_ids_list  = data.terraform_remote_state.vpc.outputs.public_subnets
   vpc_id                  = data.terraform_remote_state.vpc.outputs.vpc_id
-  instance_type           = var.env != "prod" ? "db.t2.small" : "db.t3.large"
+  instance_type           = var.env != "prod" ? "db.t3.micro" : "db.t3.large"
   service_sg_ids = [
     module.core_api.ecs_sg_id,
     module.worker.ecs_sg_id,
