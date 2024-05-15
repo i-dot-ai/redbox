@@ -111,7 +111,7 @@ def upload_view(request):
                 errors.append(value_error.args[0])
 
             try:
-                api.embedd_file(uploaded_file.name, request.user)
+                api.embed_file(uploaded_file.name, request.user)
             except ValueError as value_error:
                 errors.append(value_error.args[0])
 

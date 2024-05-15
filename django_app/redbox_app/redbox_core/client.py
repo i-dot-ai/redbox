@@ -41,7 +41,7 @@ class CoreApiClient:
     def url(self) -> str:
         return f"http://{self.host}:{self.port}"
 
-    def embedd_file(self, name: str, user: User):
+    def embed_file(self, name: str, user: User):
         response = requests.post(
             f"{self.url}/file", json={"key": name}, headers={"Authorization": user.get_bearer_token()}, timeout=30
         )
