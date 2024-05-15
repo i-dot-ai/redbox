@@ -27,20 +27,31 @@ info_urlpatterns = [
     path("support/", info_views.support_view, name="support"),
 ]
 
-other_urlpatterns = [
-    path("", views.homepage_view, name="homepage"),
-    path("admin/", admin.site.urls),
-    path("accounts/", include("allauth.urls")),
+file_urlpatterns = [
     path("documents/", views.documents_view, name="documents"),
     path("upload/", views.upload_view, name="upload"),
-    path("remove-doc/<str:doc_id>", views.remove_doc_view, name="remove_doc"),
-    path("sessions/<str:session_id>/", views.sessions_view, name="sessions"),
+    path("remove-doc/<uuid:doc_id>", views.remove_doc_view, name="remove-doc"),
+]
+
+chat_urlpatterns = [
+    path("sessions/<uuid:session_id>/", views.sessions_view, name="sessions"),
     path("sessions/", views.sessions_view, name="sessions"),
-    path("post-message/", views.post_message, name="post_message"),
+    path("post-message/", views.post_message, name="post-message"),
+]
+
+admin_urlpatterns = [
+    path("admin/", admin.site.urls),
+    path("accounts/", include("allauth.urls")),
+]
+
+other_urlpatterns = [
+    path("", views.homepage_view, name="homepage"),
     path("health/", views.health, name="health"),
 ]
 
-urlpatterns = info_urlpatterns + other_urlpatterns + auth_urlpatterns
+urlpatterns = (
+    info_urlpatterns + other_urlpatterns + auth_urlpatterns + chat_urlpatterns + file_urlpatterns + admin_urlpatterns
+)
 
 if settings.DEBUG:
     urlpatterns = urlpatterns + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

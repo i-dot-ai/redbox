@@ -11,7 +11,7 @@
 
     {{ govukButton(
       text="Start a new session",
-      href="/sessions",
+      href=url('sessions'),
       classes="govuk-button--secondary"
     ) }}
 
@@ -19,11 +19,11 @@
     <ul class="govuk-list govuk-list--spaced">
       {% for session in chat_history %}
         <li>
-          <a class="govuk-link" href="/sessions/{{ session.id }}">{{ session.name }}</a>
+          <a class="govuk-link" href="{{url('sessions', session.id)}}">{{ session.name }}</a>
         </li>
       {% endfor %}
     </ul>
-      
+
   </div>
 
   <chat-controller data-stream-url="{{ streaming.endpoint }}" data-session-id="{{ session_id }}" class="govuk-grid-column-two-thirds">
