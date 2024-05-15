@@ -1,5 +1,6 @@
 import logging
 import os
+import uuid
 
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
@@ -129,7 +130,7 @@ def upload_view(request):
 
 
 @login_required
-def remove_doc_view(request, doc_id: str):
+def remove_doc_view(request, doc_id: uuid):
     file = File.objects.get(pk=doc_id)
     if request.method == "POST":
         logger.info("Removing document: %s", request.POST["doc_id"])
@@ -143,7 +144,7 @@ def remove_doc_view(request, doc_id: str):
 
 
 @login_required
-def sessions_view(request: HttpRequest, session_id: str = ""):
+def sessions_view(request: HttpRequest, session_id: uuid = None):
     chat_history = ChatHistory.objects.all().filter(users=request.user)
 
     messages = []
