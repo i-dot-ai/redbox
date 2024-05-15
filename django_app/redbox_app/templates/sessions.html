@@ -55,7 +55,7 @@
           text = message.text
         ) }}
         {% for source in message.source_files.all() %}
-          <div class="iai-chat-message__text">{{ source.original_file_name }}</div>
+          <div class="iai-chat-message__text"><a href="{{ source.url }}">{{ source.original_file_name }}</a></div>
         {% endfor %}
       {% endfor %}
 
@@ -80,7 +80,7 @@
     <form class="iai-new-message js-send-message" action="/post-message/" method="post">
 
       <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}"/>
-      <input type="hidden" name="session-id" value="{{ session_id }}"/>
+      {% if session_id %}<input type="hidden" name="session-id" value="{{ session_id }}"/>{% endif %}
 
       <div class="govuk-form-group">
         <label class="govuk-label" for="message">
