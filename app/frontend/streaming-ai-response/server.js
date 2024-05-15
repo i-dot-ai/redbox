@@ -23,9 +23,13 @@ ws.on('connection', function connection(ws) {
 
     for (let i = 0; i < numberOfWordsToSend; i++) {
       let word = WORDS[Math.floor(Math.random() * WORDS.length)];
+      // Add a random **bold markdown** occasionally - to test markdown -> HTML conversion
+      if (word.indexOf('.') !== -1 && Math.random() > 0.5) {
+        word = `**${word}**`;
+      }
       // Add a random paragraph/new-line occasionally
       if (word.indexOf('.') !== -1 && Math.random() > 0.5) {
-        word = word + '\n';
+        word = word + '\n\n';
       }
       toSend += `${word} `;
     }

@@ -107,6 +107,8 @@ token = jwt.encode({"user_uuid": my_uuid}, key="")
 requests.get(..., headers={"Authorization": f"Bearer {token}"})
 ```
 
+You can find a link to a notebook on how to generate a JWT in the [here](./notebooks/token_generation.ipynb).
+
 If you discover a security vulnerability within this project, please follow our [Security Policy](./SECURITY.md).
 
 ## Troubleshooting
@@ -167,4 +169,3 @@ for our CSS so it can be cached.
 The govuk assets are versioned in the `npm` package. On initial app setup you will need to run `poetry run python manage.py collectstatic` to copy them to the `frontend` folder from where `runserver` can serve them.
 
 We’ll revisit this process when we deploy the app.
-

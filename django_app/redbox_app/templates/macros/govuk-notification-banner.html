@@ -1,0 +1,16 @@
+{% macro govukNotificationBanner(title="Important", text_list=None) %}
+
+<div class="govuk-notification-banner" role="region" aria-labelledby="govuk-notification-banner-title" data-module="govuk-notification-banner">
+  <div class="govuk-notification-banner__header">
+    <h2 class="govuk-notification-banner__title" id="govuk-notification-banner-title">{{ title }}</h2>
+  </div>
+  <div class="govuk-notification-banner__content">
+    {% for line in text_list %}
+      <p class="{% if loop.first %}govuk-!-margin-bottom-1 govuk-!-margin-top-0{% endif %} {% if line.bold %}govuk-notification-banner__heading{% endif %}">
+        {{ line.text }}
+      </p>
+    {% endfor %}
+  </div>
+</div>
+
+{% endmacro %}

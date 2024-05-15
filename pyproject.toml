@@ -128,6 +128,8 @@ select = [
 ]
 exclude = ["django_app/redbox_app/redbox_core/migrations/*.py"]
 ignore = ["COM812"]
+exclude = ["django_app/redbox_app/redbox_core/migrations/*.py", "out/*"]
+ignore = []
 
 [tool.ruff.lint.per-file-ignores]
 "tests/*" = ["S101", "S106"]

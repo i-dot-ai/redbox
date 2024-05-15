@@ -16,8 +16,10 @@
   <meta name="robots" content="noindex, nofollow">
   {% if COMPRESSION_ENABLED %}
     {% compress css %}
-    <link rel="stylesheet" type="text/x-scss" href="{{static('style.scss')}}" />
+      <link rel="stylesheet" type="text/x-scss" href="{{static('style.scss')}}" />
     {% endcompress %}
+  {% else %}
+    <link rel="stylesheet" type="text/css" href="{{static('style.css')}}" />
   {% endif %}
 
 </head>
@@ -46,7 +48,7 @@
         </a>
       </div>
       <div class="govuk-header__content">
-        <a href="/" class="govuk-header__link govuk-header__service-name">
+        <a href="{{url('homepage')}}" class="govuk-header__link govuk-header__service-name">
           Redbox Copilot
         </a>
         <nav aria-label="Menu" class="govuk-header__navigation">
@@ -56,19 +58,19 @@
 
           {% if request.user.is_authenticated %}
             {% set menu_items = [
-              {"text": "Documents", "url": "/documents"},
-              {"text": "Sessions", "url": "/sessions"},
-              {"text": "Sign out", "url": "/signed-out"}
+              {"text": "Documents", "url": "documents"},
+              {"text": "Sessions", "url": "sessions"},
+              {"text": "Sign out", "url": "signed-out"}
             ] %}
           {% else %}
             {% set menu_items = [
-              {"text": "Sign in", "url": "/sign-in"}
+              {"text": "Sign in", "url": "sign-in"}
             ] %}
           {% endif %}
           <ul id="navigation" class="govuk-header__navigation-list">
             {% for menu_item in menu_items %}
               <li class="govuk-header__navigation-item {% if pageTitle == menu_item.text %}govuk-header__navigation-item--active{% endif %}">
-                <a class="govuk-header__link" href="{{ menu_item.url }}">{{ menu_item.text }}</a>
+                <a class="govuk-header__link" href="{{ url(menu_item.url) }}">{{ menu_item.text }}</a>
               </li>
             {% endfor %}
           </ul>
@@ -86,7 +88,7 @@
           Beta
         </strong>
         <span class="govuk-phase-banner__text">
-          This is a new service – your <a class="govuk-link" href="#feedback">feedback</a> will help us to improve it.
+          This is a new service – your <a class="govuk-link" href="https://www.smartsurvey.co.uk/s/EOWJ04/">feedback</a> will help us to improve it.
         </span>
       </p>
     </div>

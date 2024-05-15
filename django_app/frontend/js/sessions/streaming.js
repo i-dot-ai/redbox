@@ -1,19 +1,22 @@
 // @ts-check
 
-/** @type {import ('../node_modules/@types/dompurify/index.d.ts')} */
-let DOMPurify = window["DOMPurify"];
-
-
 class ChatMessage extends HTMLElement {
 
     connectedCallback() {
         const html = `
             <div class="iai-chat-message iai-chat-message--${this.dataset.role} govuk-body">
                 <div class="iai-chat-message__role">${this.dataset.role?.toUpperCase()}</div>
-                <div class="iai-chat-message__text js-ai-response">${this.dataset.text || ''}</div>
+                <markdown-converter class="iai-chat-message__text">${this.dataset.text || ''}</markdown-converter>
             </div>
         `;
-        this.innerHTML = /** @type {any} */ (DOMPurify.sanitize(html, {RETURN_TRUSTED_TYPE: true}));
+        this.innerHTML = /** @type {any} */ (DOMPurify.sanitize(html, {
+            RETURN_TRUSTED_TYPE: true,
+            CUSTOM_ELEMENT_HANDLING: {
+                tagNameCheck: (tagName) => tagName === 'markdown-converter',
+                attributeNameCheck: (attr) => true,
+                allowCustomizedBuiltInElements: true
+            }
+        }));
     }
 
     /**
@@ -24,9 +27,9 @@ class ChatMessage extends HTMLElement {
      */
     stream = (message, sessionId, endPoint) => {
 
-        let responseContainer = /** @type {HTMLElement} */ (this.querySelector('.js-ai-response'));
+        let responseContainer = /** @type MarkdownConverter */(this.querySelector('markdown-converter'));
         let webSocket = new WebSocket(endPoint);
-        let streamedHtml = '<p></p>';
+        let streamedContent = '';
     
         webSocket.onopen = (event) => {
             webSocket.send(JSON.stringify({message: message, sessionId: sessionId}));
@@ -43,9 +46,11 @@ class ChatMessage extends HTMLElement {
         };
     
         webSocket.onmessage = (event) => {
-            const newText = event.data.replace(/\n/g, "</p><p>");
-            streamedHtml = streamedHtml.replace(/<\/p>$/, `${newText}</p>`);
-            responseContainer.innerHTML = /** @type {any} */ (DOMPurify.sanitize(streamedHtml, {RETURN_TRUSTED_TYPE: true}));
+            if (!responseContainer) {
+                return;
+            }
+            streamedContent += event.data;
+            responseContainer.update(streamedContent);
         };
     
     };

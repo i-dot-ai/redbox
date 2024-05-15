@@ -1,24 +1,21 @@
 import logging
 import os
+import uuid
+from urllib.error import HTTPError
 
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
+from django.core.exceptions import FieldError, ValidationError
+from django.core.files.uploadedfile import UploadedFile
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.views.decorators.http import require_http_methods
 from redbox_app.redbox_core.client import CoreApiClient
-from redbox_app.redbox_core.models import (
-    ChatHistory,
-    ChatMessage,
-    ChatRoleEnum,
-    File,
-    ProcessingStatusEnum,
-)
+from redbox_app.redbox_core.models import ChatHistory, ChatMessage, ChatRoleEnum, File, ProcessingStatusEnum, User
 from yarl import URL
 
 logger = logging.getLogger(__name__)
-logger.setLevel("DEBUG")
 
 CHUNK_SIZE = 1024
 # move this somewhere
@@ -77,8 +74,7 @@ def get_file_extension(file):
 
 @login_required
 def upload_view(request):
-    errors = {"upload_doc": []}
-    uploaded = False
+    errors = []
 
     if request.method == "POST" and request.FILES["uploadDoc"]:
         # https://django-storages.readthedocs.io/en/1.13.2/backends/amazon-S3.html
@@ -87,41 +83,56 @@ def upload_view(request):
         file_extension = get_file_extension(uploaded_file)
 
         if uploaded_file.name is None:
-            errors["upload_doc"].append("File has no name")
+            errors.append("File has no name")
         if uploaded_file.content_type is None:
-            errors["upload_doc"].append("File has no content-type")
+            errors.append("File has no content-type")
         if uploaded_file.size > MAX_FILE_SIZE:
-            errors["upload_doc"].append("File is larger than 200MB")
+            errors.append("File is larger than 200MB")
         if file_extension not in APPROVED_FILE_EXTENSIONS:
-            errors["upload_doc"].append(f"File type {file_extension} not supported")
+            errors.append(f"File type {file_extension} not supported")
 
-        if not len(errors["upload_doc"]):
-            # ingest file
-            api = CoreApiClient(host=settings.CORE_API_HOST, port=settings.CORE_API_PORT)
+        if not errors:
+            errors += injest_file(uploaded_file, request.user)
 
-            try:
-                api.upload_file(settings.BUCKET_NAME, uploaded_file.name, request.user)
-                file = File.objects.create(
-                    processing_status=ProcessingStatusEnum.uploaded.value,
-                    user=request.user,
-                    original_file=uploaded_file,
-                    original_file_name=uploaded_file.name,
-                )
-                file.save()
-                # TODO: update improved File object with elastic uuid
-                uploaded = True
-            except ValueError as value_error:
-                errors["upload_doc"].append(value_error.args[0])
+        if not errors:
+            return redirect(documents_view)
 
     return render(
         request,
         template_name="upload.html",
-        context={"request": request, "errors": errors, "uploaded": uploaded},
+        context={"request": request, "errors": {"upload_doc": errors}, "uploaded": not errors},
     )
 
 
+def injest_file(uploaded_file: UploadedFile, user: User) -> list[str]:
+    errors: list[str] = []
+    api = CoreApiClient(host=settings.CORE_API_HOST, port=settings.CORE_API_PORT)
+    try:
+        file = File.objects.create(
+            processing_status=ProcessingStatusEnum.uploaded.value,
+            user=user,
+            original_file=uploaded_file,
+            original_file_name=uploaded_file.name,
+        )
+        file.save()
+    except (ValueError, FieldError, ValidationError) as e:
+        logger.error("Error creating File model object for %s.", uploaded_file, exc_info=e)
+        errors.append(e.args[0])
+    else:
+        try:
+            upload_file_response = api.upload_file(settings.BUCKET_NAME, uploaded_file.name, user)
+        except HTTPError as e:
+            logger.error("Error uploading file object %s.", file, exc_info=e)
+            file.delete()
+            errors.append("failed to connect to core-api")
+        else:
+            file.core_file_uuid = upload_file_response.uuid
+            file.save()
+    return errors
+
+
 @login_required
-def remove_doc_view(request, doc_id: str):
+def remove_doc_view(request, doc_id: uuid):
     file = File.objects.get(pk=doc_id)
     if request.method == "POST":
         logger.info("Removing document: %s", request.POST["doc_id"])
@@ -135,7 +146,7 @@ def remove_doc_view(request, doc_id: str):
 
 
 @login_required
-def sessions_view(request: HttpRequest, session_id: str = ""):
+def sessions_view(request: HttpRequest, session_id: uuid = None):
     chat_history = ChatHistory.objects.all().filter(users=request.user)
 
     messages = []
@@ -178,11 +189,14 @@ def post_message(request: HttpRequest) -> HttpResponse:
         for message in ChatMessage.objects.all().filter(chat_history=session)
     ]
     core_api = CoreApiClient(host=settings.CORE_API_HOST, port=settings.CORE_API_PORT)
-    output_text = core_api.rag_chat(message_history, request.user.get_bearer_token())
+    response_data = core_api.rag_chat(message_history, request.user)
 
-    # save LLM response
-    llm_message = ChatMessage(chat_history=session, text=output_text, role=ChatRoleEnum.ai)
+    llm_message = ChatMessage(chat_history=session, text=response_data.output_text, role=ChatRoleEnum.ai)
     llm_message.save()
+
+    doc_uuids: list[str] = [doc.file_uuid for doc in response_data.source_documents]
+    files: list[File] = File.objects.filter(core_file_uuid__in=doc_uuids, user=request.user)
+    llm_message.source_files.set(files)
 
     return redirect(reverse(sessions_view, args=(session.id,)))
 
