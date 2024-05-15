@@ -1,18 +1,16 @@
-import json
 import logging
 import os
 import uuid
-from urllib.error import HTTPError
 
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
-from django.core.exceptions import ObjectDoesNotExist
-from django.core.exceptions import FieldError, ValidationError
+from django.core.exceptions import FieldError, ObjectDoesNotExist, ValidationError
 from django.core.files.uploadedfile import UploadedFile
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.views.decorators.http import require_http_methods
+from requests.exceptions import HTTPError
 from yarl import URL
 
 from redbox_app.redbox_core.client import CoreApiClient
@@ -24,8 +22,6 @@ from redbox_app.redbox_core.models import (
     ProcessingStatusEnum,
     User,
 )
-from redbox_app.redbox_core.types import FileStatus
-from yarl import URL
 
 logger = logging.getLogger(__name__)
 
@@ -104,7 +100,7 @@ def upload_view(request):
             errors.append(f"File type {file_extension} not supported")
 
         if not errors:
-            errors += injest_file(uploaded_file, request.user)
+            errors += ingest_file(uploaded_file, request.user)
 
         if not errors:
             return redirect(documents_view)
@@ -116,7 +112,7 @@ def upload_view(request):
     )
 
 
-def injest_file(uploaded_file: UploadedFile, user: User) -> list[str]:
+def ingest_file(uploaded_file: UploadedFile, user: User) -> list[str]:
     errors: list[str] = []
     api = CoreApiClient(host=settings.CORE_API_HOST, port=settings.CORE_API_PORT)
     try:
@@ -141,6 +137,7 @@ def injest_file(uploaded_file: UploadedFile, user: User) -> list[str]:
             file.core_file_uuid = upload_file_response.uuid
             file.save()
     return errors
+
 
 @login_required
 def remove_doc_view(request, doc_id: uuid):
@@ -212,29 +209,31 @@ def post_message(request: HttpRequest) -> HttpResponse:
     return redirect(reverse(sessions_view, args=(session.id,)))
 
 
+@require_http_methods(["GET"])
+@login_required
 def file_status_api_view(request) -> JsonResponse:
     file_id = request.GET.get("id", None)
     if not file_id:
-        return JsonResponse({"status": FileStatus(
-            file_uuid=file_id,
-            processing_status=ProcessingStatusEnum.unknown,
-            chunk_statuses=None
-        )})
+        logger.error("Error getting file object information - no file ID provided %s.")
+        return JsonResponse({"status": ProcessingStatusEnum.unknown.label})
     try:
         file = File.objects.get(pk=file_id)
     except ObjectDoesNotExist as ex:
-        return JsonResponse({"status": FileStatus(
-            file_uuid=file_id,
-            processing_status=ProcessingStatusEnum.unknown,
-            chunk_statuses=None
-        )})
+        logger.error("File object information not found in django - file does not exist %s.", file_id, exc_info=ex)
+        return JsonResponse({"status": ProcessingStatusEnum.unknown.label})
     core_api = CoreApiClient(host=settings.CORE_API_HOST, port=settings.CORE_API_PORT)
     token = request.user.get_bearer_token()
-    core_file_status_response = core_api.get_file_status(file_id=file.id, token=token)
-    core_file_status = json.loads(core_file_status_response)
-    file_status = FileStatus(**core_file_status)
-    return JsonResponse({"status": file_status})
-
+    try:
+        core_file_status_response = core_api.get_file_status(file_id=file.core_file_uuid, token=token)
+    except HTTPError as ex:
+        logger.error("File object information from core not found - file does not exist %s.", file_id, exc_info=ex)
+        if not file.processing_status:
+            file.processing_status = ProcessingStatusEnum.unknown.label
+            file.save()
+        return JsonResponse({"status": file.processing_status})
+    file.processing_status = core_file_status_response.processing_status
+    file.save()
+    return JsonResponse({"status": file.get_processing_status_text()})
 
 
 @require_http_methods(["GET"])
