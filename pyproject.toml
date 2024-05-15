@@ -125,7 +125,7 @@ select = [
 #    "UP",
 #    "YTT",
 ]
-exclude = ["django_app/redbox_app/redbox_core/migrations/*.py"]
+exclude = ["django_app/redbox_app/redbox_core/migrations/*.py", "out/*"]
 ignore = []
 
 [tool.ruff.lint.per-file-ignores]
