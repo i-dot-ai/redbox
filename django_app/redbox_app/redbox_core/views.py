@@ -38,7 +38,7 @@ APPROVED_FILE_EXTENSIONS = [
     ".pdf",
     ".ppt",
     ".pptx",
-    ".tsv"
+    ".tsv",
     ".xlsx",
     ".htm",
 ]
