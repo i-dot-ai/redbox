@@ -114,6 +114,10 @@ def upload_view(request):
                 except ValueError as value_error:
                     errors.append(value_error.args[0])
 
+            if not errors:
+                return redirect(documents_view)
+
+
     return render(
         request,
         template_name="upload.html",
