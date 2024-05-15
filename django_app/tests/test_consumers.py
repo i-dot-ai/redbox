@@ -20,7 +20,7 @@ async def test_chat_consumer_with_new_session(client: Client, requests_mock: Moc
     # Given
     carlos = await create_user("carlos@example.com", client)
 
-    rag_url = settings.CORE_API_HOST + ":" + settings.CORE_API_PORT + "/chat/rag"
+    rag_url = f"http://{settings.CORE_API_HOST}:{settings.CORE_API_PORT}/chat/rag"
     requests_mock.register_uri("POST", rag_url, json={"output_text": "Good afternoon, Mr. Amor."})
 
     # When
@@ -48,7 +48,7 @@ async def test_chat_consumer_with_existing_session(client: Client, requests_mock
     carol = await create_user("carol@example.com", client)
     session = await create_chat_history(carol)
 
-    rag_url = settings.CORE_API_HOST + ":" + settings.CORE_API_PORT + "/chat/rag"
+    rag_url = f"http://{settings.CORE_API_HOST}:{settings.CORE_API_PORT}/chat/rag"
     requests_mock.register_uri("POST", rag_url, json={"output_text": "Good afternoon, Mr. Amor."})
 
     # When
