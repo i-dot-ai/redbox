@@ -130,6 +130,7 @@ def injest_file(uploaded_file: UploadedFile, user: User) -> list[str]:
             file.save()
     return errors
 
+
 @login_required
 def remove_doc_view(request, doc_id: uuid):
     file = File.objects.get(pk=doc_id)
@@ -188,7 +189,7 @@ def post_message(request: HttpRequest) -> HttpResponse:
         for message in ChatMessage.objects.all().filter(chat_history=session)
     ]
     core_api = CoreApiClient(host=settings.CORE_API_HOST, port=settings.CORE_API_PORT)
-    response_data = core_api.rag_chat(message_history, request.user.get_bearer_token())
+    response_data = core_api.rag_chat(message_history, request.user)
 
     llm_message = ChatMessage(chat_history=session, text=response_data.output_text, role=ChatRoleEnum.ai)
     llm_message.save()

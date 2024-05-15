@@ -45,7 +45,7 @@ class CoreApiClient:
 
     @property
     def url(self) -> str:
-        return f"{self.host}:{self.port}"
+        return f"http://{self.host}:{self.port}"
 
     def upload_file(self, bucket_name: str, name: str, user: User) -> SimpleNamespace:
         if self.host == "testserver":
@@ -57,10 +57,12 @@ class CoreApiClient:
         response.raise_for_status()
         return response.json(object_hook=lambda d: SimpleNamespace(**d))
 
-    def rag_chat(self, message_history: list[dict[str, str]], token: str) -> SimpleNamespace:
-        url = f"{self.url}/chat/rag"
+    def rag_chat(self, message_history: list[dict[str, str]], user: User) -> SimpleNamespace:
         response = requests.post(
-            url, json={"message_history": message_history}, headers={"Authorization": token}, timeout=60
+            f"{self.url}/chat/rag",
+            json={"message_history": message_history},
+            headers={"Authorization": user.get_bearer_token()},
+            timeout=60,
         )
         response.raise_for_status()
         response_data = response.json(object_hook=lambda d: SimpleNamespace(**d))
