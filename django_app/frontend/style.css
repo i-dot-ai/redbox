@@ -7453,6 +7453,19 @@
   color: black;
 }
 
+/* Documents page */
+.iai-docs__actions .govuk-button {
+  width: 100%;
+}
+
+@media (min-width: 1024px) {
+  .iai-docs__actions {
+    width: 13.25rem;
+  }
+  .iai-docs__actions .govuk-button {
+    width: auto;
+  }
+}
 /* File upload */
 .iai-file-types {
   font-size: 0.875rem;
@@ -7479,6 +7492,11 @@
 .iai-chat-message__text {
   font-size: 1rem;
   padding-top: 0.5rem;
+}
+
+.iai-chat-message__text code {
+  display: block;
+  overflow-x: auto;
 }
 
 .iai-response-feedback {
