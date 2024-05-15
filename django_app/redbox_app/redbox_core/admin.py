@@ -9,3 +9,5 @@ class FileResource(admin.ModelAdmin):
 
 admin.site.register(models.User)
 admin.site.register(models.File, FileResource)
+admin.site.register(models.ChatHistory)
+admin.site.register(models.ChatMessage)
