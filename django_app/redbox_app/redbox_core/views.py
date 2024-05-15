@@ -183,7 +183,7 @@ def post_message(request: HttpRequest) -> HttpResponse:
         for message in ChatMessage.objects.all().filter(chat_history=session)
     ]
     core_api = CoreApiClient(host=settings.CORE_API_HOST, port=settings.CORE_API_PORT)
-    output_text = core_api.rag_chat(message_history, request.user.get_bearer_token())
+    output_text = core_api.rag_chat(message_history, request.user)
 
     # save LLM response
     llm_message = ChatMessage(chat_history=session, text=output_text, role=ChatRoleEnum.ai)
