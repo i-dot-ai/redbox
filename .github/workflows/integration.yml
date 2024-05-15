@@ -10,6 +10,54 @@ on:
   # or on-demand
   workflow_dispatch:
 
+env: 
+  OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+  DEV_MODE: true
+  ELASTIC__HOST: elasticsearch
+  ELASTIC__VERSION: 8.11.0
+  ELASTIC__USER: elastic
+  ELASTIC__PASSWORD: redboxpass
+  ELASTIC__PORT: 9200
+  ELASTIC__SCHEME: http
+  ELASTIC__SUBSCRIPTION_LEVEL: basic
+  KIBANA_SYSTEM_PASSWORD: redboxpass
+  METRICBEAT_INTERNAL_PASSWORD: redboxpass
+  FILEBEAT_INTERNAL_PASSWORD: redboxpass
+  HEARTBEAT_INTERNAL_PASSWORD: redboxpass
+  MONITORING_INTERNAL_PASSWORD: redboxpass
+  BEATS_SYSTEM_PASSWORD: redboxpass
+  EMBEDDING_MODEL: paraphrase-albert-small-v2
+  EMBED_QUEUE_NAME: redbox-embedder-queue
+  INGEST_QUEUE_NAME: redbox-ingester-queue
+  REDIS_HOST: redis
+  REDIS_PORT: 6379
+  MINIO_HOST: minio
+  MINIO_PORT: 9000
+  AWS_ACCESS_KEY: minioadmin
+  AWS_SECRET_KEY: minioadmin
+  AWS_REGION: eu-west-2
+  OBJECT_STORE: minio
+  BUCKET_NAME: redbox-storage-dev
+  DEBUG: True
+  DJANGO_SETTINGS_MODULE: redbox_app.settings
+  DJANGO_SECRET_KEY: 1n53cur3K3y
+  DJANGO_LOG_LEVEL: WARNING
+  POSTGRES_HOST: db
+  POSTGRES_USER: redbox-core
+  POSTGRES_DB: redbox-core
+  POSTGRES_PASSWORD: insecure
+  ENVIRONMENT: LOCAL
+  USE_STREAMING: False
+  COMPRESSION_ENABLED: False
+  CONTACT_EMAIL: redbox-copilot@cabinetoffice.gov.uk
+  CORE_API_HOST: http://core-api
+  CORE_API_PORT: 5002
+  EMAIL_BACKEND_TYPE: CONSOLE
+  GOV_NOTIFY_API_KEY: f4k3_k3y
+  FROM_EMAIL: test@example.com
+  GOVUK_NOTIFY_PLAIN_EMAIL_TEMPLATE_ID: example-id
+  EMAIL_FILE_PATH: '/app/mail'
+
 permissions:
   contents: read
 
@@ -51,8 +99,6 @@ jobs:
       run: |
         mkdir -p data/elastic/
         chmod -R 777 data/
-        cp .env.integration .env
-        echo OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }} >> .env
         docker compose up -d --wait core-api worker
         
 

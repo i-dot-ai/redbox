@@ -132,3 +132,14 @@ ignore = []
 "tests/*" = ["S101", "S106"]
 "*/tests/*" = ["S101", "S106"]
 "worker/*" = ["B008"]
+
+[tool.pytest_env]
+ELASTIC__HOST = "localhost"
+EMBEDDING_MODEL = "paraphrase-albert-small-v2"
+REDIS_HOST = "localhost"
+MINIO_HOST = "localhost"
+OBJECT_STORE = "moto"
+DJANGO_LOG_LEVEL = "WARNING"
+POSTGRES_HOST = "localhost"
+CORE_API_HOST = "http://localhost"
+EMAIL_BACKEND_TYPE = "FILE"

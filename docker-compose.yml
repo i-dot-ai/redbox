@@ -9,8 +9,6 @@ services:
       - minio
     networks:
       - redbox-app-network
-    env_file:
-      - .env
     volumes:
       - /app/django_app/frontend/node_modules
       - ./django_app:/app/django_app/
@@ -18,8 +16,6 @@ services:
       - "8090:8090"
   db:
     image: postgres:13
-    env_file:
-      - .env
     volumes:
       - local_postgres_data:/var/lib/postgresql/data:Z
     networks:
@@ -38,9 +34,7 @@ services:
       context: .
       dockerfile: ./mlflow/Dockerfile
       args:
-      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
-    env_file:
-      - .env
+        - OPENAI_API_KEY=${OPENAI_API_KEY:-}
     ports:
       - 5010:5010
       - 5020:5020
@@ -51,8 +45,6 @@ services:
       dockerfile: worker/Dockerfile
       args:
         - EMBEDDING_MODEL=${EMBEDDING_MODEL:-}
-    env_file:
-      - .env
     depends_on:
       - redis
       - elasticsearch
@@ -71,8 +63,6 @@ services:
       - 5002:5002
     environment:
       - PORT=5002
-    env_file:
-      - .env
     networks:
       - redbox-app-network
     depends_on:
@@ -137,8 +127,6 @@ services:
       - "6379:6379"
     volumes:
       - redis:/data/redis
-    env_file:
-      - .env
     networks:
       - redbox-app-network
 
