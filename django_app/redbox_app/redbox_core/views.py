@@ -1,5 +1,6 @@
 import logging
 import os
+import uuid
 
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
@@ -7,6 +8,8 @@ from django.http import HttpRequest, HttpResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.views.decorators.http import require_http_methods
+from yarl import URL
+
 from redbox_app.redbox_core.client import CoreApiClient
 from redbox_app.redbox_core.models import (
     ChatHistory,
@@ -15,7 +18,6 @@ from redbox_app.redbox_core.models import (
     File,
     ProcessingStatusEnum,
 )
-from yarl import URL
 
 logger = logging.getLogger(__name__)
 logger.setLevel("DEBUG")
@@ -127,7 +129,7 @@ def upload_view(request):
 
 
 @login_required
-def remove_doc_view(request, doc_id: str):
+def remove_doc_view(request, doc_id: uuid):
     file = File.objects.get(pk=doc_id)
     if request.method == "POST":
         logger.info("Removing document: %s", request.POST["doc_id"])
@@ -141,7 +143,7 @@ def remove_doc_view(request, doc_id: str):
 
 
 @login_required
-def sessions_view(request: HttpRequest, session_id: str = ""):
+def sessions_view(request: HttpRequest, session_id: uuid = None):
     chat_history = ChatHistory.objects.all().filter(users=request.user)
 
     messages = []

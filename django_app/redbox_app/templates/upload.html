@@ -14,7 +14,7 @@
     <div class="govuk-form-group {% if errors.upload_doc %} govuk-form-group--error{% endif %}">
       <label class="govuk-label" for="upload-doc">
         <h1 class="govuk-heading-l">{{ pageTitle }}</h1>
-      </label>    
+      </label>
       <p class="govuk-body iai-file-types" id="upload-doc-filetypes">Limit 200MB per file: EML, HTML, JSON, MD, MSG, RST, RTF, TXT, XML, CSV, DOC, DOCX, EPUB, ODT, PDF, PPT, PPTX, TSV, XLSX, HTM</p>
       {% for error in errors.upload_doc %}
         <p id="file-upload-doc-error" class="govuk-error-message">
@@ -27,7 +27,7 @@
 
     <div class="govuk-button-group">
       {{ govukButton(text="Upload") }}
-      {{ govukButton(text="Cancel", classes="govuk-button--secondary", href="/documents") }}
+      {{ govukButton(text="Cancel", classes="govuk-button--secondary", href=url('documents')) }}
     </div>
 
   </form>

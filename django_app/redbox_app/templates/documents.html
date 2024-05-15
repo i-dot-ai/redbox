@@ -40,13 +40,13 @@
           <td class="govuk-table__cell">
             {{ govukButton(
               text="Download" + "<span class=\"govuk-visually-hidden\">" + file.name + "</span>",
-              href=file.path,
+              href=file.url,
               classes="govuk-button--secondary govuk-!-margin-bottom-0",
               download=True
             ) }}
             {{ govukButton(
               text="Remove" + "<span class=\"govuk-visually-hidden\">" + file.name + "</span>",
-              href="/remove-doc/" + file.id | string,
+              href=url('remove-doc', file.id),
               classes="govuk-button--warning govuk-!-margin-bottom-0"
             ) }}
           </td>
@@ -57,7 +57,7 @@
 
   {{ govukButton(
     text="Upload a new document",
-    href="/upload"
+    href=url('upload')
   ) }}
 
 </div>
