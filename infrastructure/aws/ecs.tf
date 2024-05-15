@@ -113,7 +113,7 @@ module "django-app" {
 
 
 module "core_api" {
-  registry_arn = aws_service_discovery_service.service_discovery_service.arn
+  service_discovery_service_arn = aws_service_discovery_service.service_discovery_service.arn
   memory             = 4096
   cpu                = 2048
   create_listener    = false
