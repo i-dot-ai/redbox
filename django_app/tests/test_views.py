@@ -27,8 +27,7 @@ def count_s3_objects(s3_client) -> int:
 
 def file_exists(s3_client, file_name) -> bool:
     """
-    * if the file key exists return True
-    * if the file key does not exist return False
+    if the file key exists return True otherwise False
     """
     try:
         s3_client.get_object(Bucket=settings.BUCKET_NAME, Key=file_name.replace(" ", "_"))
@@ -64,10 +63,9 @@ def test_upload_view(alice, client, file_pdf_path, s3_client, requests_mock):
     with open(file_pdf_path, "rb") as f:
         response = client.post("/upload/", {"uploadDoc": f})
 
-        assert response.status_code == 200
-        assert "Your file has been uploaded" in str(response.content)
-
         assert file_exists(s3_client, file_name)
+        assert response.status_code == 302
+        assert response.url == "/documents/"
 
 
 @pytest.mark.django_db
