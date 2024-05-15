@@ -106,7 +106,7 @@ def test_post_message_to_existing_session(chat_history: ChatHistory, client: Cli
     # Given
     client.force_login(chat_history.users)
     session_id = chat_history.id
-    rag_url = f"http//:{settings.CORE_API_HOST}:{settings.CORE_API_PORT}/chat/rag"
+    rag_url = f"http://{settings.CORE_API_HOST}:{settings.CORE_API_PORT}/chat/rag"
     requests_mock.register_uri("POST", rag_url, json={"output_text": "Good afternoon, Mr. Amor."})
 
     # When
