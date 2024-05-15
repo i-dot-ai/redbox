@@ -11,13 +11,15 @@ logger = logging.getLogger(__name__)
 
 
 def sign_in_view(request: HttpRequest):
+    if request.user.is_authenticated:
+        return redirect("homepage")
     if request.method == "POST":
         form = SignInForm(request.POST)
         if form.is_valid():
             email = form.cleaned_data["email"].lower()
             try:
                 user = models.User.objects.get(email=email)
-                link = MagicLink.objects.create(user=user, redirect_to="/sessions")
+                link = MagicLink.objects.create(user=user, redirect_to="/")
                 full_link = request.build_absolute_uri(link.get_absolute_url())
 
                 # Email link to user
@@ -43,6 +45,8 @@ def sign_in_view(request: HttpRequest):
 
 
 def sign_in_link_sent_view(request: HttpRequest):
+    if request.user.is_authenticated:
+        return redirect("homepage")
     return render(
         request,
         template_name="sign-in-link-sent.html",
@@ -52,8 +56,4 @@ def sign_in_link_sent_view(request: HttpRequest):
 
 def signed_out_view(request: HttpRequest):
     logout(request)
-    return render(
-        request,
-        template_name="signed-out.html",
-        context={"request": request},
-    )
+    return redirect("homepage")

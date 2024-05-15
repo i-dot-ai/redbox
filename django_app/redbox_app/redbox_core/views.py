@@ -1,24 +1,21 @@
 import logging
 import os
+import uuid
+from urllib.error import HTTPError
 
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
+from django.core.exceptions import FieldError, ValidationError
+from django.core.files.uploadedfile import UploadedFile
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.views.decorators.http import require_http_methods
 from redbox_app.redbox_core.client import CoreApiClient
-from redbox_app.redbox_core.models import (
-    ChatHistory,
-    ChatMessage,
-    ChatRoleEnum,
-    File,
-    ProcessingStatusEnum,
-)
+from redbox_app.redbox_core.models import ChatHistory, ChatMessage, ChatRoleEnum, File, ProcessingStatusEnum, User
 from yarl import URL
 
 logger = logging.getLogger(__name__)
-logger.setLevel("DEBUG")
 
 CHUNK_SIZE = 1024
 # move this somewhere
@@ -95,28 +92,10 @@ def upload_view(request):
             errors.append(f"File type {file_extension} not supported")
 
         if not errors:
-            # ingest file
-            api = CoreApiClient(host=settings.CORE_API_HOST, port=settings.CORE_API_PORT)
+            errors += injest_file(uploaded_file, request.user)
 
-            try:
-                file = File.objects.create(
-                    processing_status=ProcessingStatusEnum.uploaded.value,
-                    user=request.user,
-                    original_file=uploaded_file,
-                    original_file_name=uploaded_file.name,
-                )
-                file.save()
-                # TODO: update improved File object with elastic uuid
-            except ValueError as value_error:
-                errors.append(value_error.args[0])
-
-            try:
-                api.embed_file(uploaded_file.name, request.user)
-            except ValueError as value_error:
-                errors.append(value_error.args[0])
-
-            if not errors:
-                return redirect(documents_view)
+        if not errors:
+            return redirect(documents_view)
 
     return render(
         request,
@@ -125,8 +104,35 @@ def upload_view(request):
     )
 
 
+def injest_file(uploaded_file: UploadedFile, user: User) -> list[str]:
+    errors: list[str] = []
+    api = CoreApiClient(host=settings.CORE_API_HOST, port=settings.CORE_API_PORT)
+    try:
+        file = File.objects.create(
+            processing_status=ProcessingStatusEnum.uploaded.value,
+            user=user,
+            original_file=uploaded_file,
+            original_file_name=uploaded_file.name,
+        )
+        file.save()
+    except (ValueError, FieldError, ValidationError) as e:
+        logger.error("Error creating File model object for %s.", uploaded_file, exc_info=e)
+        errors.append(e.args[0])
+    else:
+        try:
+            upload_file_response = api.upload_file(settings.BUCKET_NAME, uploaded_file.name, user)
+        except HTTPError as e:
+            logger.error("Error uploading file object %s.", file, exc_info=e)
+            file.delete()
+            errors.append(e.args[0])
+        else:
+            file.core_file_uuid = upload_file_response.uuid
+            file.save()
+    return errors
+
+
 @login_required
-def remove_doc_view(request, doc_id: str):
+def remove_doc_view(request, doc_id: uuid):
     file = File.objects.get(pk=doc_id)
     if request.method == "POST":
         logger.info("Removing document: %s", request.POST["doc_id"])
@@ -140,7 +146,7 @@ def remove_doc_view(request, doc_id: str):
 
 
 @login_required
-def sessions_view(request: HttpRequest, session_id: str = ""):
+def sessions_view(request: HttpRequest, session_id: uuid = None):
     chat_history = ChatHistory.objects.all().filter(users=request.user)
 
     messages = []
@@ -183,11 +189,14 @@ def post_message(request: HttpRequest) -> HttpResponse:
         for message in ChatMessage.objects.all().filter(chat_history=session)
     ]
     core_api = CoreApiClient(host=settings.CORE_API_HOST, port=settings.CORE_API_PORT)
-    output_text = core_api.rag_chat(message_history, request.user)
+    response_data = core_api.rag_chat(message_history, request.user)
 
-    # save LLM response
-    llm_message = ChatMessage(chat_history=session, text=output_text, role=ChatRoleEnum.ai)
+    llm_message = ChatMessage(chat_history=session, text=response_data.output_text, role=ChatRoleEnum.ai)
     llm_message.save()
+
+    doc_uuids: list[str] = [doc.file_uuid for doc in response_data.source_documents]
+    files: list[File] = File.objects.filter(core_file_uuid__in=doc_uuids, user=request.user)
+    llm_message.source_files.set(files)
 
     return redirect(reverse(sessions_view, args=(session.id,)))
 

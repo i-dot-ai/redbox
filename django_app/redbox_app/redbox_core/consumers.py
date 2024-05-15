@@ -29,12 +29,12 @@ class ChatConsumer(AsyncWebsocketConsumer):
             {"role": message.role, "text": message.text} for message in session_messages
         ]
         core_api = CoreApiClient(host=settings.CORE_API_HOST, port=settings.CORE_API_PORT)
-        ai_message_text = core_api.rag_chat(message_history, user)
+        ai_message_response = core_api.rag_chat(message_history, user)
 
         # save LLM response
-        await self.save_message(session, ai_message_text, ChatRoleEnum.ai)
+        await self.save_message(session, ai_message_response.output_text, ChatRoleEnum.ai)
 
-        await self.send(ai_message_text)
+        await self.send(ai_message_response.output_text)
         sleep(0.1)
         await self.send(" MESSAGE END")
 

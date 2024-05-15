@@ -9,7 +9,9 @@
             <div class="govuk-grid-column-two-thirds">
                 <h1 class="govuk-heading-xl">Ask any question of documents in your Redbox</h1>
                 <p class="govuk-body-l">Use Artificial Intelligence (AI) to get insights from your personal document set. You can use up to, and including, Official Sensitive documents.</p>
+                {% if not request.user.is_authenticated %}
                 <p class="govuk-body">If you have an account, please <a class="govuk-link" href="{{url('sign-in')}}">sign in</a> to get started</p>
+                {% endif %}
             </div>
         </div>
     </div>
