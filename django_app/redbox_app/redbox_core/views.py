@@ -211,7 +211,7 @@ def post_message(request: HttpRequest) -> HttpResponse:
 
 @require_http_methods(["GET"])
 @login_required
-def file_status_api_view(request) -> JsonResponse:
+def file_status_api_view(request: HttpRequest) -> JsonResponse:
     file_id = request.GET.get("id", None)
     if not file_id:
         logger.error("Error getting file object information - no file ID provided %s.")
