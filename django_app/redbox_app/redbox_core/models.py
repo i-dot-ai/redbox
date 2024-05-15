@@ -59,7 +59,7 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
     original_file = models.FileField(storage=settings.STORAGES["default"]["BACKEND"])
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     original_file_name = models.TextField(max_length=2048, blank=True, null=True)
-    core_file_uuid = models.UUIDField(unique=True, null=False)
+    core_file_uuid = models.UUIDField(null=True)
 
     def delete(self, using=None, keep_parents=False):
         #  Needed to make sure no orphaned files remain in the storage
