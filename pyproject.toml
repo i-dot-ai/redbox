@@ -83,6 +83,7 @@ download-model = 'download_embedder:download'
 exclude = ["django_app/redbox_app/redbox_core/migrations/*.py"]
 
 [tool.ruff.lint]
+# Dribble in those we have commented out, asterisked ones first
 select = [
     "A",
     "B",
@@ -91,44 +92,46 @@ select = [
     "F",
     "G",
     "I",
-#    "N",
-#    "Q",
+    "N",
+    "Q",
     "S",
     "T",
     "W",
-#    "ARG",
-#    "BLE",
-#    "COM",
-#    "DJ",
-#    "DTZ",
+#*    "ARG",
+    "BLE",
+    "LOG",
+    "COM",
+    "DJ",
+#*    "DTZ",
 #    "EM",
-#    "EXE",
-#    "FBT",
-#    "ICN",
+    "EXE",
+#*    "FBT",
+    "ICN",
 #    "ISC",
-#    "NPY",
-#    "PD",
+    "NPY",
+    "PD",
 #    "PGH",
-#    "PIE",
-#    "PL",
-#    "PT",
-#    "PTH",
-#    "PYI",
-#    "RET",
-#    "RSE",
-#    "RUF",
-#    "SIM",
-#    "SLF",
-#    "TCH",
-#    "TID",
-#    "TRY",
-#    "UP",
-#    "YTT",
+    "PIE",
+#*    "PL",
+#*    "PT",
+#*    "PTH",
+    "PYI",
+#*    "RET",
+    "RSE",
+#*    "RUF",
+    "SIM",
+    "SLF",
+    "TCH",
+    "TID",
+#*    "TRY",
+#*    "UP",
+    "YTT",
 ]
 exclude = ["django_app/redbox_app/redbox_core/migrations/*.py", "out/*"]
-ignore = []
+ignore = ["COM812", "DJ001"]
 
 [tool.ruff.lint.per-file-ignores]
 "tests/*" = ["S101", "S106"]
 "*/tests/*" = ["S101", "S106"]
 "worker/*" = ["B008"]
+"redbox/*" = ["TCH003"]

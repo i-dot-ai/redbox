@@ -22,59 +22,47 @@ class BaseStorageHandler(ABC):
     @abstractmethod
     def __init__(self):
         """Initialise the storage handler"""
-        pass
 
     @abstractmethod
     def write_item(self, item: PersistableModel):
         """Write an object to a data store"""
-        pass
 
     @abstractmethod
     def write_items(self, items: list[PersistableModel]):
         """Write a list of objects to a data store"""
-        pass
 
     @abstractmethod
     def read_item(self, item_uuid: UUID, model_type: str):
         """Read an object from a data store"""
-        pass
 
     @abstractmethod
     def read_items(self, item_uuids: list[UUID], model_type: str):
         """Read a list of objects from a data store"""
-        pass
 
     @abstractmethod
     def update_item(self, item: PersistableModel):
         """Update an object in a data store"""
-        pass
 
     @abstractmethod
     def update_items(self, items: list[PersistableModel]):
         """Update a list of objects in a data store"""
-        pass
 
     @abstractmethod
     def delete_item(self, item: PersistableModel):
         """Delete an object from a data store"""
-        pass
 
     @abstractmethod
     def delete_items(self, items: list[PersistableModel]):
         """Delete a list of objects from a data store"""
-        pass
 
     @abstractmethod
     def list_all_items(self, model_type: str, user_uuid: UUID):
         """List all objects of a given type from a data store"""
-        pass
 
     @abstractmethod
     def read_all_items(self, model_type: str, user_uuid: UUID):
         """Read all objects of a given type from a data store"""
-        pass
 
     @abstractmethod
     def get_file_chunks(self, parent_file_uuid: UUID, user_uuid: UUID) -> list[Chunk]:
         """get chunks for a given file"""
-        pass
