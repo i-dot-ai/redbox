@@ -17,7 +17,7 @@ from redbox_app.redbox_core.models import (
 from requests_mock import Mocker
 from yarl import URL
 
-from django_app.redbox_app.redbox_core.auth_views import get_or_create_user
+from redbox_app.redbox_core.auth_views import get_or_create_user
 
 logger = logging.getLogger(__name__)
 
