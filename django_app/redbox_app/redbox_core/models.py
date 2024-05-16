@@ -35,8 +35,7 @@ class User(BaseUser, UUIDPrimaryKeyBase):
     objects = BaseUserManager()
 
     def __str__(self) -> str:  # pragma: no cover
-        state = (f"{attr:s}={value!r:s}" for (attr, value) in vars(self).items())
-        return f"{self.__class__.__module__:s}.{self.__class__.__name__:s}({', '.join(state):s})"
+        return f"{self.email}"
 
     def save(self, *args, **kwargs):
         self.email = self.email.lower()
@@ -66,8 +65,7 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
     core_file_uuid = models.UUIDField(null=True)
 
     def __str__(self) -> str:  # pragma: no cover
-        state = (f"{attr:s}={value!r:s}" for (attr, value) in vars(self).items())
-        return f"{self.__class__.__module__:s}.{self.__class__.__name__:s}({', '.join(state):s})"
+        return f"{self.original_file_name} {self.user}"
 
     def delete(self, using=None, keep_parents=False):
         #  Needed to make sure no orphaned files remain in the storage
@@ -123,9 +121,11 @@ class ChatHistory(UUIDPrimaryKeyBase, TimeStampedModel):
         blank=True,
     )
 
+    class Meta:
+        verbose_name_plural = "Chat history"
+
     def __str__(self) -> str:  # pragma: no cover
-        state = (f"{attr:s}={value!r:s}" for (attr, value) in vars(self).items())
-        return f"{self.__class__.__module__:s}.{self.__class__.__name__:s}({', '.join(state):s})"
+        return f"{self.name} - {self.users}"
 
 
 class ChatRoleEnum(models.TextChoices):
@@ -145,5 +145,4 @@ class ChatMessage(UUIDPrimaryKeyBase, TimeStampedModel):
     )
 
     def __str__(self) -> str:  # pragma: no cover
-        state = (f"{attr:s}={value!r:s}" for (attr, value) in vars(self).items())
-        return f"{self.__class__.__module__:s}.{self.__class__.__name__:s}({', '.join(state):s})"
+        return f"{self.chat_history} - {self.text} - {self.role}"
