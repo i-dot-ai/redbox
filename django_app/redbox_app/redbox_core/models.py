@@ -65,14 +65,14 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
     original_file_name = models.TextField(max_length=2048, blank=True, null=True)
     core_file_uuid = models.UUIDField(null=True)
 
+    def __str__(self) -> str:  # pragma: no cover
+        state = (f"{attr:s}={value!r:s}" for (attr, value) in vars(self).items())
+        return f"{self.__class__.__module__:s}.{self.__class__.__name__:s}({', '.join(state):s})"
+
     def delete(self, using=None, keep_parents=False):
         #  Needed to make sure no orphaned files remain in the storage
         self.original_file.storage.delete(self.original_file.name)
         super().delete()
-
-    def __str__(self) -> str:  # pragma: no cover
-        state = (f"{attr:s}={value!r:s}" for (attr, value) in vars(self).items())
-        return f"{self.__class__.__module__:s}.{self.__class__.__name__:s}({', '.join(state):s})"
 
     @property
     def file_type(self) -> str:
