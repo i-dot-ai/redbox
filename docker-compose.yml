@@ -1,10 +1,10 @@
 services:
   django-app:
     image: django-app:latest
-    container_name: django-app
     build:
       context: .
       dockerfile: ./django_app/Dockerfile
+    container_name: django-app
     depends_on:
       - db
       - minio
@@ -52,23 +52,23 @@ services:
       - ./:/app/:z
   mlflow:
     image: mlflow_server
-    container_name: mlflow
     build:
       context: .
       dockerfile: ./mlflow/Dockerfile
       args:
         - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+    container_name: mlflow
     ports:
       - 5010:5010
       - 5020:5020
   worker:
     image: redbox-worker:latest
-    container_name: worker
     build:
       context: .
       dockerfile: worker/Dockerfile
       args:
         - EMBEDDING_MODEL=${EMBEDDING_MODEL}
+    container_name: worker
     environment:
       - ELASTIC__HOST=${ELASTIC__HOST}
       - ELASTIC__PORT=${ELASTIC__PORT}
@@ -83,12 +83,12 @@ services:
     restart: unless-stopped
   core-api:
     image: redbox-core-api:latest
-    container_name: core-api
     build:
       context: .
       dockerfile: core_api/Dockerfile
       args:
         - EMBEDDING_MODEL=${EMBEDDING_MODEL:-}
+    container_name: core-api
     ports:
       - 5002:5002
     environment:
