@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('redbox_core', '0006_file_core_file_uuid'),
+        ('redbox_core', '0007_alter_chathistory_options'),
     ]
 
     operations = [
