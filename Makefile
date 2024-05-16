@@ -34,10 +34,9 @@ test-worker:
 	poetry run pytest worker/tests --cov=worker -v --cov-report=term-missing --cov-fail-under=40
 
 test-django:
-	docker compose up -d --wait db minio core-api --build
+	docker compose up -d --wait db minio --build
 	docker exec minio rm -rf data/redbox-storage-dev/Cabinet_Office_-_Wikipedia.pdf/
 	cd django_app && poetry install
-	sleep 10
 	cd django_app && poetry run pytest tests/ -v --cov=redbox_app.redbox_core --cov-fail-under 60 -o log_cli=true
 
 test-integration:
