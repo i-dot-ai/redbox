@@ -19,7 +19,7 @@ def get_or_create_user(email: str) -> Optional[models.User]:
             logger.debug("creating user with email %s", email)
             return models.User.objects.create(email=email)
         else:
-            logger.error("rejecting user with email %s", email)
+            logger.debug("User with email %s not found", email)
     return None
 
 
@@ -37,8 +37,6 @@ def sign_in_view(request: HttpRequest):
 
                 # Email link to user
                 email_handler.send_magic_link_email(full_link, email)
-            else:
-                logger.debug("User with email %s not found", email)
 
             return redirect("sign-in-link-sent")
 
