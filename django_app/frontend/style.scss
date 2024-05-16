@@ -66,7 +66,9 @@ $redbox-red: #A50202;
 
 /* Chat page */
 .iai-chat-message {
-  background-color: #b1b4b6;
+  background-color: #f3f2f1;
+  border: 1px solid #b1b4b6;
+  border-radius: var(--border-radius);
   padding: 1rem;
 }
 .iai-chat-message--ai {
@@ -94,6 +96,25 @@ $redbox-red: #A50202;
   border: 1px solid black;
   padding: 0.25rem;
   text-align: left;
+}
+
+.iai-new-message textarea {
+  margin-bottom: 0.5rem;
+}
+.iai-new-message .govuk-form-group {
+  margin: 0;
+  width: 100%;
+}
+@media (min-width: 769px) {
+  .iai-new-message {
+    align-items: flex-end;
+    display: flex;
+    gap: 0.5rem;
+  }
+  .iai-new-message textarea, .iai-new-message button {
+    height: 4rem;
+    margin: 0;
+  }
 }
 
 .iai-response-feedback {
@@ -147,4 +168,4 @@ $redbox-red: #A50202;
   display: block;
 }
 
-@import "./i-ai.scss";
+@import "./iai.scss";
