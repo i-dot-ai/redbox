@@ -1,8 +1,5 @@
 name: Django
 
-env:
-  DOCKER_BUILDKIT: 1
-
 on:
   push:
     paths:
@@ -20,6 +17,7 @@ on:
   workflow_dispatch:
 
 env:
+  DOCKER_BUILDKIT: 1
   DEV_MODE: true
   ELASTIC__HOST: elasticsearch
   ELASTIC__VERSION: 8.11.0
