@@ -1,4 +1,5 @@
 import logging
+import uuid
 from http import HTTPStatus
 
 import pytest
@@ -54,7 +55,7 @@ def test_upload_view(alice, client, file_pdf_path, s3_client, requests_mock):
     client.force_login(alice)
 
     # we mock the response from the core-api
-    mocked_response = {"key": file_name, "bucket": settings.BUCKET_NAME}
+    mocked_response = {"key": file_name, "bucket": settings.BUCKET_NAME, "uuid": str(uuid.uuid4())}
     requests_mock.post(
         f"http://{settings.CORE_API_HOST}:{settings.CORE_API_PORT}/file", status_code=201, json=mocked_response
     )

@@ -20,7 +20,7 @@ locals {
     "POSTGRES_PASSWORD" : module.rds.rds_instance_db_password,
     "POSTGRES_DB" : module.rds.db_instance_name,
     "POSTGRES_HOST" : module.rds.db_instance_address,
-    "CORE_API_HOST" : "http://${aws_service_discovery_service.service_discovery_service.name}.${aws_service_discovery_private_dns_namespace.private_dns_namespace.name}",
+    "CORE_API_HOST" : "${aws_service_discovery_service.service_discovery_service.name}.${aws_service_discovery_private_dns_namespace.private_dns_namespace.name}",
     "CORE_API_PORT" : 5002,
     "ENVIRONMENT" : upper(terraform.workspace),
     "DJANGO_SETTINGS_MODULE" : "redbox_app.settings",
