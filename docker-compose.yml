@@ -70,8 +70,6 @@ services:
       args:
         - EMBEDDING_MODEL=${EMBEDDING_MODEL}
     environment:
-      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
-      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
       - ELASTIC__HOST=${ELASTIC__HOST}
       - ELASTIC__PORT=${ELASTIC__PORT}
       - DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY}
@@ -95,6 +93,8 @@ services:
       - 5002:5002
     environment:
       - PORT=5002
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
       - DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
     networks:

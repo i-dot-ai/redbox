@@ -133,6 +133,11 @@ ignore = []
 "*/tests/*" = ["S101", "S106"]
 "worker/*" = ["B008"]
 
+[tool.pytest.ini_options]
+markers = [
+    "incremental: marks tests as incremental (deselect with '-m \"not incremental\"')",
+]
+
 [tool.pytest_env]
 ELASTIC__HOST = "localhost"
 EMBEDDING_MODEL = "paraphrase-albert-small-v2"
