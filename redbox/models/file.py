@@ -2,15 +2,13 @@ from __future__ import annotations
 
 import hashlib
 from enum import Enum
-from typing import TYPE_CHECKING, Optional
+from typing import Optional
+from uuid import UUID
 
 import tiktoken
 from pydantic import BaseModel, Field, computed_field
 
 from redbox.models.base import PersistableModel
-
-if TYPE_CHECKING:
-    from uuid import UUID
 
 encoding = tiktoken.get_encoding("cl100k_base")
 
