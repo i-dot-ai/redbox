@@ -16,7 +16,10 @@ def get_or_create_user(email: str) -> Optional[models.User]:
         return models.User.objects.get(email=email)
     except models.User.DoesNotExist:
         if email.endswith("@cabinetoffice.gov.uk"):
+            logger.debug("creating user with email %s", email)
             return models.User.objects.create(email=email)
+        else:
+            logger.error("rejecting user with email %s", email)
     return None
 
 
@@ -29,7 +32,6 @@ def sign_in_view(request: HttpRequest):
             email = form.cleaned_data["email"].lower()
 
             if user := get_or_create_user(email):
-                logger.debug("creating user with email %s", email)
                 link = MagicLink.objects.create(user=user, redirect_to="/")
                 full_link = request.build_absolute_uri(link.get_absolute_url())
 
