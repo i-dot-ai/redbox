@@ -6,6 +6,9 @@ import pytest
 from botocore.exceptions import ClientError
 from django.conf import settings
 from django.test import Client
+from requests_mock import Mocker
+from yarl import URL
+
 from redbox_app.redbox_core.models import (
     ChatHistory,
     ChatMessage,
@@ -14,8 +17,6 @@ from redbox_app.redbox_core.models import (
     ProcessingStatusEnum,
     User,
 )
-from requests_mock import Mocker
-from yarl import URL
 
 logger = logging.getLogger(__name__)
 
@@ -82,9 +83,26 @@ def test_upload_view(alice, client, file_pdf_path, s3_client, requests_mock):
 
 
 @pytest.mark.django_db
-def test_document_upload_status(client: Client, alice, file_pdf_path, s3_client):
+def test_document_upload_status(client, alice, file_pdf_path, s3_client, requests_mock):
+    file_name = file_pdf_path.split("/")[-1]
+
+    # we begin by removing any file in minio that has this key
+    s3_client.delete_object(Bucket=settings.BUCKET_NAME, Key=file_name.replace(" ", "_"))
+
+    assert not file_exists(s3_client, file_name)
     client.force_login(alice)
     previous_count = count_s3_objects(s3_client)
+
+    mocked_response = {
+        "key": file_name,
+        "bucket": settings.BUCKET_NAME,
+        "uuid": str(uuid.uuid4()),
+    }
+    requests_mock.post(
+        f"http://{settings.CORE_API_HOST}:{settings.CORE_API_PORT}/file",
+        status_code=201,
+        json=mocked_response,
+    )
 
     with open(file_pdf_path, "rb") as f:
         response = client.post("/upload/", {"uploadDoc": f})
