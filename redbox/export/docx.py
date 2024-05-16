@@ -1,3 +1,4 @@
+import logging
 import tempfile
 from typing import Optional
 
@@ -9,6 +10,9 @@ from unstructured.partition.html import partition_html
 
 from redbox import __version__ as redbox_version
 from redbox.models import File, SpotlightComplete
+
+logging.basicConfig(level=logging.INFO)
+log = logging.getLogger()
 
 
 def lookup_indentedness(raw: str, line_str_to_match: str):
@@ -64,7 +68,7 @@ def spotlight_complete_to_docx(
         uuid_to_file_map = {f.uuid: f for f in files}
 
         raw = task.raw
-        for uuid in uuid_to_file_map.keys():
+        for uuid in uuid_to_file_map:
             raw = raw.replace(f"<Doc{uuid}>", f"{uuid_to_file_map[uuid].key}")
             raw = raw.replace(f"</Doc{uuid}>", "")
 
@@ -95,7 +99,7 @@ def spotlight_complete_to_docx(
             elif element_dict["type"] == "Title":
                 document.add_heading(element_dict["text"], level=2)
             else:
-                print(element_dict["type"], element_dict["text"])
+                log.debug(element_dict["type"], element_dict["text"])
 
         document.add_page_break()
 

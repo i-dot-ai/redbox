@@ -1,7 +1,8 @@
+import logging
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import FastAPI, HTTPException, Depends, WebSocket
+from fastapi import Depends, FastAPI, HTTPException, WebSocket
 from fastapi.responses import HTMLResponse
 from langchain.chains.combine_documents import create_stuff_documents_chain
 from langchain.chains.history_aware_retriever import create_history_aware_retriever
@@ -10,11 +11,9 @@ from langchain.chains.qa_with_sources import load_qa_with_sources_chain
 from langchain.chains.retrieval import create_retrieval_chain
 from langchain_community.chat_models import ChatLiteLLM
 from langchain_community.embeddings import SentenceTransformerEmbeddings
-from langchain_core.messages import HumanMessage, AIMessage
+from langchain_core.messages import AIMessage, HumanMessage
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
-from langchain_elasticsearch import ElasticsearchStore, ApproxRetrievalStrategy
-import logging
-
+from langchain_elasticsearch import ApproxRetrievalStrategy, ElasticsearchStore
 
 from core_api.src.auth import get_user_uuid
 from redbox.llm.prompts.chat import (
@@ -23,8 +22,8 @@ from redbox.llm.prompts.chat import (
     WITH_SOURCES_PROMPT,
 )
 from redbox.model_db import MODEL_PATH
-from redbox.models import Settings, EmbeddingModelInfo
-from redbox.models.chat import ChatRequest, ChatResponse, ChatMessage, SourceDocument, SourceDocuments
+from redbox.models import EmbeddingModelInfo, Settings
+from redbox.models.chat import ChatMessage, ChatRequest, ChatResponse, SourceDocument, SourceDocuments
 
 # === Logging ===
 
@@ -134,7 +133,7 @@ def rag_chat(chat_request: ChatRequest, user_uuid: Annotated[UUID, Depends(get_u
         StreamingResponse: a stream of the chain response
     """
     question = chat_request.message_history[-1].text
-    previous_history = [msg for msg in chat_request.message_history[:-1]]
+    previous_history = list(chat_request.message_history[:-1])
     previous_history = ChatPromptTemplate.from_messages(
         (msg.role, msg.text) for msg in previous_history
     ).format_messages()
@@ -183,7 +182,8 @@ async def websocket_endpoint(websocket: WebSocket):
             ("user", "{input}"),
             (
                 "user",
-                "Given the above conversation, generate a search query to look up to get information relevant to the conversation",
+                "Given the above conversation, generate a search query to look up to get information relevant to the "
+                "conversation",
             ),
         ]
     )
@@ -244,7 +244,8 @@ html = """
             // Listen for messages
             ws.addEventListener("message", (event) => {
               if (event.data instanceof ArrayBuffer) {
-                document.getElementById('documents').innerHTML = JSON.stringify(JSON.parse(decoder.decode(event.data)),null,2);
+                document.getElementById('documents').innerHTML =
+                  JSON.stringify(JSON.parse(decoder.decode(event.data)),null,2);
               } else {
                 var li = document.getElementById("messages").getElementsByTagName("li");
                 li[li.length-1].innerHTML += event.data;

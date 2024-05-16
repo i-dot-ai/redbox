@@ -1,12 +1,14 @@
+#!/usr/bin/env python
+
 import logging
 from datetime import datetime
 
-from fastapi import FastAPI, Depends
+from fastapi import Depends, FastAPI
 from faststream.redis.fastapi import RedisRouter
 
 from redbox.model_db import SentenceTransformerDB
-from redbox.models import EmbedQueueItem, File, Settings, StatusResponse, Chunk
-from redbox.parsing.file_chunker import FileChunker
+from redbox.models import Chunk, EmbedQueueItem, File, Settings, StatusResponse
+from redbox.parsing import chunk_file
 from redbox.storage.elasticsearch import ElasticsearchStorageHandler
 
 start_time = datetime.now()
@@ -26,12 +28,7 @@ def get_storage_handler():
     return ElasticsearchStorageHandler(es_client=es, root_index="redbox-data")
 
 
-def get_chunker():
-    model_db = SentenceTransformerDB(env.embedding_model)
-    return FileChunker(embedding_model=model_db)
-
-
-def get_model():
+def get_model() -> SentenceTransformerDB:
     model = SentenceTransformerDB(env.embedding_model)
     return model
 
@@ -40,7 +37,7 @@ def get_model():
 async def ingest(
     file: File,
     storage_handler: ElasticsearchStorageHandler = Depends(get_storage_handler),
-    chunker: FileChunker = Depends(get_chunker),
+    # embedding_model: SentenceTransformerDB = Depends(get_model),
 ):
     """
     1. Chunks file
@@ -49,18 +46,18 @@ async def ingest(
     4. Puts chunk on embedder-queue
     """
 
-    logging.info(f"Ingesting file: {file}")
+    logging.info("Ingesting file: %s", file)
 
-    chunks = chunker.chunk_file(file=file)
+    chunks = chunk_file(file=file)  # , embedding_model=embedding_model)
 
-    logging.info(f"Writing {len(chunks)} chunks to storage for file uuid: {file.uuid}")
+    logging.info("Writing %s chunks to storage for file uuid: %s", len(chunks), file.uuid)
 
     items = storage_handler.write_items(chunks)
-    logging.info(f"written {len(items)} chunks to elasticsearch")
+    logging.info("written %s chunks to elasticsearch", len(items))
 
     for chunk in chunks:
         queue_item = EmbedQueueItem(chunk_uuid=chunk.uuid)
-        logging.info(f"Writing chunk to storage for chunk uuid: {chunk.uuid}")
+        logging.info("Writing chunk to storage for chunk uuid: %s", chunk.uuid)
         await publisher.publish(queue_item)
 
     return items
@@ -80,7 +77,7 @@ async def embed(
     chunk: Chunk = storage_handler.read_item(queue_item.chunk_uuid, "Chunk")
     embedded_sentences = embedding_model.embed_sentences([chunk.text])
     if len(embedded_sentences.data) != 1:
-        logging.error(f"expected just 1 embedding but got {len(embedded_sentences.data)}")
+        logging.error("expected just 1 embedding but got %s", len(embedded_sentences.data))
         return
     chunk.embedding = embedded_sentences.data[0].embedding
     storage_handler.update_item(chunk)

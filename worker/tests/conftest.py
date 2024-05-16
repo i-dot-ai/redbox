@@ -4,13 +4,13 @@ from uuid import uuid4
 
 import pytest
 from botocore.exceptions import ClientError
-from fastapi.testclient import TestClient
 from elasticsearch import Elasticsearch
+from fastapi.testclient import TestClient
 from sentence_transformers import SentenceTransformer
 
-from worker.src.app import env, app
-from redbox.models import File, Chunk, EmbedQueueItem
+from redbox.models import Chunk, EmbedQueueItem, File
 from redbox.storage import ElasticsearchStorageHandler
+from worker.src.app import app, env
 
 T = TypeVar("T")
 

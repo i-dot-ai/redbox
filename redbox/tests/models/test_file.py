@@ -2,8 +2,7 @@ import uuid
 
 import pytest
 
-from redbox.models.file import Metadata, Link
-
+from redbox.models.file import Link, Metadata
 
 UUID_1 = uuid.UUID("7c66416e-eff7-441f-aafc-6f06e62fb4ec")
 UUID_2 = uuid.UUID("b7aadcce-806c-4dc6-8b95-d2477d717560")

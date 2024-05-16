@@ -1,9 +1,14 @@
-from redbox.models.chat import ChatMessage, ChatResponse, ChatRequest
+from redbox.models.chat import ChatMessage, ChatRequest, ChatResponse
 from redbox.models.embedding import (
-    EmbeddingResponse,
     EmbeddingModelInfo,
+    EmbeddingResponse,
     EmbedQueueItem,
     StatusResponse,
+)
+from redbox.models.errors import (
+    APIError404,
+    APIErrorDetail,
+    APIErrorResponse,
 )
 from redbox.models.file import (
     Chunk,
@@ -40,4 +45,7 @@ __all__ = [
     "EmbedQueueItem",
     "StatusResponse",
     "ProcessingStatusEnum",
+    "APIErrorResponse",
+    "APIErrorDetail",
+    "APIError404",
 ]

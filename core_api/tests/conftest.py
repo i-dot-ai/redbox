@@ -1,6 +1,6 @@
 import os
 from typing import Generator, TypeVar
-from uuid import uuid4, UUID
+from uuid import UUID, uuid4
 
 import pytest
 from botocore.exceptions import ClientError
@@ -16,11 +16,6 @@ from redbox.storage import ElasticsearchStorageHandler
 T = TypeVar("T")
 
 YieldFixture = Generator[T, None, None]
-
-
-@pytest.fixture
-def client():
-    yield TestClient(application)
 
 
 @pytest.fixture
@@ -44,12 +39,12 @@ def es_client() -> YieldFixture[Elasticsearch]:
 
 
 @pytest.fixture
-def app_client():
+def app_client() -> YieldFixture[TestClient]:
     yield TestClient(application)
 
 
 @pytest.fixture
-def alice() -> UUID:
+def alice() -> YieldFixture[UUID]:
     yield uuid4()
 
 
