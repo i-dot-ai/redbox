@@ -29,10 +29,10 @@ class Command(BaseCommand):
             logger.debug("latest: %s", latest)
             link: MagicLink = MagicLink.objects.get(user=user, created_at=latest)
         except MagicLink.DoesNotExist as e:
-            raise CommandError(f"No MagicLink found for user {user}") from e
+            raise CommandError(f"No MagicLink found for user {user.email}") from e
 
         logger.debug("link: %s", link)
         if link.is_valid:
             self.stdout.write(self.style.SUCCESS(link.get_absolute_url()))
         else:
-            raise CommandError(f"No active link for user {user}")
+            raise CommandError(f"No active link for user {user.email}")

@@ -10,9 +10,6 @@ from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.views.decorators.http import require_http_methods
-from requests.exceptions import HTTPError
-from yarl import URL
-
 from redbox_app.redbox_core.client import CoreApiClient
 from redbox_app.redbox_core.models import (
     ChatHistory,
@@ -22,6 +19,8 @@ from redbox_app.redbox_core.models import (
     ProcessingStatusEnum,
     User,
 )
+from requests.exceptions import HTTPError
+from yarl import URL
 
 logger = logging.getLogger(__name__)
 
@@ -103,12 +102,16 @@ def upload_view(request):
             errors += ingest_file(uploaded_file, request.user)
 
         if not errors:
-            return redirect(documents_view)
+            return redirect(reverse(documents_view))
 
     return render(
         request,
         template_name="upload.html",
-        context={"request": request, "errors": {"upload_doc": errors}, "uploaded": not errors},
+        context={
+            "request": request,
+            "errors": {"upload_doc": errors},
+            "uploaded": not errors,
+        },
     )
 
 
@@ -128,11 +131,11 @@ def ingest_file(uploaded_file: UploadedFile, user: User) -> list[str]:
         errors.append(e.args[0])
     else:
         try:
-            upload_file_response = api.upload_file(settings.BUCKET_NAME, uploaded_file.name, user)
+            upload_file_response = api.upload_file(file.unique_name, user)
         except HTTPError as e:
             logger.error("Error uploading file object %s.", file, exc_info=e)
             file.delete()
-            errors.append(e.args[0])
+            errors.append("failed to connect to core-api")
         else:
             file.core_file_uuid = upload_file_response.uuid
             file.save()
@@ -197,7 +200,7 @@ def post_message(request: HttpRequest) -> HttpResponse:
         for message in ChatMessage.objects.all().filter(chat_history=session)
     ]
     core_api = CoreApiClient(host=settings.CORE_API_HOST, port=settings.CORE_API_PORT)
-    response_data = core_api.rag_chat(message_history, request.user.get_bearer_token())
+    response_data = core_api.rag_chat(message_history, request.user)
 
     llm_message = ChatMessage(chat_history=session, text=response_data.output_text, role=ChatRoleEnum.ai)
     llm_message.save()

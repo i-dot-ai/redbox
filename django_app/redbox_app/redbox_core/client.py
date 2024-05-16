@@ -1,5 +1,4 @@
 import logging
-import uuid
 from types import SimpleNamespace
 
 import boto3
@@ -7,6 +6,7 @@ import requests
 from botocore.exceptions import ClientError
 from django.conf import settings
 from redbox_app.redbox_core.models import User
+from yarl import URL
 
 logger = logging.getLogger(__name__)
 
@@ -44,23 +44,22 @@ class CoreApiClient:
         self.port = port
 
     @property
-    def url(self) -> str:
-        return f"{self.host}:{self.port}"
+    def url(self) -> URL:
+        return URL(f"http://{self.host}:{self.port}")
 
-    def upload_file(self, bucket_name: str, name: str, user: User) -> SimpleNamespace:
-        if self.host == "testserver":
-            return SimpleNamespace(key=name, bucket=bucket_name, uuid=uuid.uuid4())
-
+    def upload_file(self, name: str, user: User) -> SimpleNamespace:
         response = requests.post(
-            f"{self.url}/file", json={"key": name}, headers={"Authorization": user.get_bearer_token()}, timeout=30
+            self.url / "file", json={"key": name}, headers={"Authorization": user.get_bearer_token()}, timeout=30
         )
         response.raise_for_status()
         return response.json(object_hook=lambda d: SimpleNamespace(**d))
 
-    def rag_chat(self, message_history: list[dict[str, str]], token: str) -> SimpleNamespace:
-        url = f"{self.url}/chat/rag"
+    def rag_chat(self, message_history: list[dict[str, str]], user: User) -> SimpleNamespace:
         response = requests.post(
-            url, json={"message_history": message_history}, headers={"Authorization": token}, timeout=60
+            self.url / "chat/rag",
+            json={"message_history": message_history},
+            headers={"Authorization": user.get_bearer_token()},
+            timeout=60,
         )
         response.raise_for_status()
         response_data = response.json(object_hook=lambda d: SimpleNamespace(**d))
