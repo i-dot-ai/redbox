@@ -27,6 +27,7 @@ This format should be <DocX> where X is the document UUID being cited.  \
 DO NOT INCLUDE ANY DOCUMENTS IN THE "Sources:" THAT YOU DID NOT USE IN YOUR RESPONSE. \
 YOU MUST CITE USING THE <DocX> FORMAT. NO OTHER FORMAT WILL BE ACCEPTED.
 Example: "Sources: <DocX> <DocY> <DocZ>"
+If no DOCUMENTS are CITED then omit the Sources section.
 
 Use **bold** to highlight the most question relevant parts in your response.
 If dealing dealing with lots of data return it in markdown table format.
