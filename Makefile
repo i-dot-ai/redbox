@@ -1,7 +1,7 @@
 
 -include .env
 
-.PHONY: app reqs
+.PHONY: reqs run stop clean build rebuild test-core-api test-redbox test-worker test-django test-integration collect-static lint format safe checktypes check-migrations reset-db docs-serve docs-build
 
 reqs:
 	poetry install
@@ -34,20 +34,17 @@ test-worker:
 	poetry run pytest worker/tests --cov=worker -v --cov-report=term-missing --cov-fail-under=40
 
 test-django:
-	docker compose up -d --wait db minio
-	docker compose run django-app venv/bin/pytest tests/ --ds redbox_app.settings -v --cov=redbox_app.redbox_core --cov-fail-under 60 -o log_cli=true
+	docker compose up -d --wait db minio --build
+	docker exec minio rm -rf data/redbox-storage-dev/Cabinet_Office_-_Wikipedia.pdf/
+	cd django_app && pytest tests/ -v --cov=redbox_app.redbox_core --cov-fail-under 60 -o log_cli=true
 
 test-integration:
 	docker compose down
-	cp .env .env.backup
-	cp .env.integration .env
 	docker compose build core-api worker minio
 	docker compose up -d core-api worker minio
 	poetry install --no-root --no-ansi --with dev --without ai,api,worker
 	sleep 10
 	poetry run pytest tests
-	cp .env.backup .env
-	rm .env.backup
 
 collect-static:
 	docker compose run django-app venv/bin/django-admin collectstatic --noinput

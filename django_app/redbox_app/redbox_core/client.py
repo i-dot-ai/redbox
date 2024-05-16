@@ -20,6 +20,8 @@ def s3_client():
             aws_secret_access_key=settings.AWS_S3_SECRET_ACCESS_KEY,
             endpoint_url=f"http://{settings.MINIO_HOST}:{settings.MINIO_PORT}",
         )
+    else:
+        raise NotImplementedError
 
     try:
         client.create_bucket(

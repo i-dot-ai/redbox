@@ -1,6 +1,7 @@
 services:
   django-app:
     image: django-app:latest
+    container_name: django-app
     build:
       context: .
       dockerfile: ./django_app/Dockerfile
@@ -9,6 +10,22 @@ services:
       - minio
     networks:
       - redbox-app-network
+    environment:
+      - DEBUG=${DEBUG}
+      - DJANGO_SETTINGS_MODULE=${DJANGO_SETTINGS_MODULE}
+      - DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY}
+      - DJANGO_LOG_LEVEL=${DJANGO_LOG_LEVEL}
+      - POSTGRES_HOST=${POSTGRES_HOST}
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - MINIO_HOST=${MINIO_HOST}
+      - MINIO_HOST=${MINIO_PORT}
+      - AWS_ACCESS_KEY=${AWS_ACCESS_KEY}
+      - AWS_SECRET_KEY=${AWS_SECRET_KEY}
+      - AWS_SECRET_KEY=${AWS_SECRET_KEY}
+      - OBJECT_STORE=${OBJECT_STORE}
+      - BUCKET_NAME=${BUCKET_NAME}
     volumes:
       - /app/django_app/frontend/node_modules
       - ./django_app:/app/django_app/
@@ -16,10 +33,15 @@ services:
       - "8090:8090"
   db:
     image: postgres:13
+    container_name: db
     volumes:
       - local_postgres_data:/var/lib/postgresql/data:Z
     networks:
       - redbox-app-network
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
     ports:
       - "5432:5432"
   requirements:
@@ -30,6 +52,7 @@ services:
       - ./:/app/:z
   mlflow:
     image: mlflow_server
+    container_name: mlflow
     build:
       context: .
       dockerfile: ./mlflow/Dockerfile
@@ -40,11 +63,19 @@ services:
       - 5020:5020
   worker:
     image: redbox-worker:latest
+    container_name: worker
     build:
       context: .
       dockerfile: worker/Dockerfile
       args:
-        - EMBEDDING_MODEL=${EMBEDDING_MODEL:-}
+        - EMBEDDING_MODEL=${EMBEDDING_MODEL}
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      - ELASTIC__HOST=${ELASTIC__HOST}
+      - ELASTIC__PORT=${ELASTIC__PORT}
+      - DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
     depends_on:
       - redis
       - elasticsearch
@@ -54,6 +85,7 @@ services:
     restart: unless-stopped
   core-api:
     image: redbox-core-api:latest
+    container_name: core-api
     build:
       context: .
       dockerfile: core_api/Dockerfile
@@ -63,24 +95,28 @@ services:
       - 5002:5002
     environment:
       - PORT=5002
+      - DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
     networks:
       - redbox-app-network
     depends_on:
       - elasticsearch
       - minio
       - redis
+      - worker
     restart: unless-stopped
   minio:
     image: minio/minio
+    container_name: minio
     expose:
-      - "9000"
+      - ${MINIO_PORT}
       - "9001"
     ports:
-      - "9000:9000"
+      - "9000:${MINIO_PORT}"
       - "9001:9001"
     environment:
-      - MINIO_ACCESS_KEY=minioadmin
-      - MINIO_SECRET_KEY=minioadmin
+      - MINIO_ACCESS_KEY=${AWS_ACCESS_KEY}
+      - MINIO_SECRET_KEY=${AWS_SECRET_KEY}
     command: server --console-address ":9001" /data
     networks:
       - redbox-app-network
@@ -88,15 +124,17 @@ services:
       - ./data/objectstore:/data
   elasticsearch:
     image: elasticsearch:8.12.0
+    container_name: elasticsearch
     volumes:
       - ./data/elastic/:/usr/share/elasticsearch/data:Z
     ports:
-      - 9200:9200
+      - 9200:${ELASTIC__PORT}
       - 9300:9300
     environment:
-      # node.name: elasticsearch
+      - node.name=${ELASTIC__HOST}
+      - ELASTIC_USER=${ELASTIC__USER}
+      - ELASTIC_PASSWORD=${ELASTIC__PASSWORD}
       - ES_JAVA_OPTS=-Xms512m -Xmx512m
-      # ELASTIC__PASSWORD: ${ELASTIC__PASSWORD:-}
       - bootstrap.memory_lock=true
       - discovery.type=single-node
       - xpack.security.enabled=false
@@ -107,11 +145,12 @@ services:
     restart: unless-stopped
   kibana:
     image: kibana:8.12.0
+    container_name: kibana
     ports:
       - 5601:5601
     environment:
-      # KIBANA_SYSTEM_PASSWORD: ${KIBANA_SYSTEM_PASSWORD:-}
-      # ELASTICSEARCH_PASSWORD: ${ELASTIC__PASSWORD:-}
+      # KIBANA_SYSTEM_PASSWORD: ${KIBANA_SYSTEM_PASSWORD}
+      # ELASTICSEARCH_PASSWORD: ${ELASTIC__PASSWORD}
       # ELASTICSEARCH_HOSTS: "http://elasticsearch:9200"
       # XPACK_SECURITY_ENABLED: "false"
       XPACK_ENCRYPTEDSAVEDOBJECTS_ENCRYPTIONKEY: 19264f57-b71d-46e1-8f20-33be19131a6c
@@ -122,9 +161,10 @@ services:
     restart: unless-stopped
   redis:
     image: redis:7-alpine
+    container_name: redis
     restart: always
     ports:
-      - "6379:6379"
+      - "6379:${REDIS_PORT}"
     volumes:
       - redis:/data/redis
     networks:
