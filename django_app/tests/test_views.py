@@ -6,15 +6,17 @@ import pytest
 from botocore.exceptions import ClientError
 from django.conf import settings
 from django.test import Client
+from requests_mock import Mocker
+from yarl import URL
+
 from redbox_app.redbox_core.models import (
     ChatHistory,
     ChatMessage,
     ChatRoleEnum,
     File,
+    ProcessingStatusEnum,
     User,
 )
-from requests_mock import Mocker
-from yarl import URL
 
 logger = logging.getLogger(__name__)
 
@@ -78,6 +80,21 @@ def test_upload_view(alice, client, file_pdf_path, s3_client, requests_mock):
         assert file_exists(s3_client, file_name)
         assert response.status_code == 302
         assert response.url == "/documents/"
+
+
+@pytest.mark.django_db
+def test_document_upload_status(client: Client, alice, file_pdf_path, s3_client):
+    client.force_login(alice)
+    previous_count = count_s3_objects(s3_client)
+
+    with open(file_pdf_path, "rb") as f:
+        response = client.post("/upload/", {"uploadDoc": f})
+
+        assert response.status_code == 302
+        assert response.url == "/documents/"
+        assert count_s3_objects(s3_client) == previous_count + 1
+        uploaded_file = File.objects.filter(user=alice).order_by("-created_at")[0]
+        assert uploaded_file.processing_status == ProcessingStatusEnum.uploaded
 
 
 @pytest.mark.django_db
@@ -192,18 +209,3 @@ def test_view_session_with_documents(chat_message: ChatMessage, client: Client):
     # Then
     assert response.status_code == HTTPStatus.OK
     assert b"uploaded_file.pdf" in response.content
-
-
-@pytest.mark.django_db
-def test_document_upload_status(client: Client, alice, file_pdf_path, s3_client):
-    client.force_login(alice)
-    previous_count = count_s3_objects(s3_client)
-
-    with open(file_pdf_path, "rb") as f:
-        response = client.post("/upload/", {"uploadDoc": f})
-
-        assert response.status_code == 302
-        assert response.url == "/documents/"
-        assert count_s3_objects(s3_client) == previous_count + 1
-        assert "Completed" in response.content
-        assert "Unknown" not in response.content
