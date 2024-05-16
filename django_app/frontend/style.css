@@ -7683,6 +7683,7 @@
 }
 
 .govuk-footer__copyright-logo img {
+  filter: grayscale(1);
   height: 5.25rem;
   width: 7rem;
 }
