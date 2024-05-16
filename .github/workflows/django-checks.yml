@@ -74,6 +74,11 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
+      - name: Set up Poetry
+        uses: abatilo/actions-poetry@v2
+        with:
+          poetry-version: 1.7.0
+
       - name: Run migrations
         run: |
           make check-migrations
@@ -86,6 +91,11 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
+
+      - name: Set up Poetry
+        uses: abatilo/actions-poetry@v2
+        with:
+          poetry-version: 1.7.0
 
       - name: Run tests
         run: |
