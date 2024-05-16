@@ -291,6 +291,7 @@ CORE_API_PORT = env.str("CORE_API_PORT")
 # Email
 EMAIL_BACKEND_TYPE = env.str("EMAIL_BACKEND_TYPE")
 FROM_EMAIL = env.str("FROM_EMAIL")
+CONTACT_EMAIL = env.str("CONTACT_EMAIL")
 
 if EMAIL_BACKEND_TYPE == "FILE":
     EMAIL_BACKEND = "django.core.mail.backends.filebased.EmailBackend"
