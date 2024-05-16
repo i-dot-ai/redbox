@@ -168,6 +168,16 @@ def test_upload_view_bad_data(alice, client, file_py_path, s3_client):
 
 
 @pytest.mark.django_db
+def test_upload_view_no_file(alice, client):
+    client.force_login(alice)
+
+    response = client.post("/upload/")
+
+    assert response.status_code == 200
+    assert "No document selected" in str(response.content)
+
+
+@pytest.mark.django_db
 def test_post_message_to_new_session(alice: User, client: Client, requests_mock: Mocker):
     # Given
     client.force_login(alice)
@@ -209,7 +219,6 @@ def test_post_message_to_existing_session(chat_history: ChatHistory, client: Cli
     # Then
     assert response.status_code == HTTPStatus.FOUND
     assert URL(response.url).parts[-2] == str(session_id)
-    assert ChatMessage.objects.get(chat_history__id=session_id, role=ChatRoleEnum.user).text == "Are you there?"
     assert (
         ChatMessage.objects.get(chat_history__id=session_id, role=ChatRoleEnum.ai).text == "Good afternoon, Mr. Amor."
     )

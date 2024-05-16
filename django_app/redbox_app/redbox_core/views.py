@@ -9,6 +9,7 @@ from django.core.files.uploadedfile import UploadedFile
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse
+from django.utils.datastructures import MultiValueDictKeyError
 from django.views.decorators.http import require_http_methods
 from redbox_app.redbox_core.client import CoreApiClient
 from redbox_app.redbox_core.models import (
@@ -83,20 +84,23 @@ def get_file_extension(file):
 def upload_view(request):
     errors = []
 
-    if request.method == "POST" and request.FILES["uploadDoc"]:
+    if request.method == "POST":
         # https://django-storages.readthedocs.io/en/1.13.2/backends/amazon-S3.html
-        uploaded_file = request.FILES["uploadDoc"]
+        try:
+            uploaded_file = request.FILES["uploadDoc"]
 
-        file_extension = get_file_extension(uploaded_file)
+            file_extension = get_file_extension(uploaded_file)
 
-        if uploaded_file.name is None:
-            errors.append("File has no name")
-        if uploaded_file.content_type is None:
-            errors.append("File has no content-type")
-        if uploaded_file.size > MAX_FILE_SIZE:
-            errors.append("File is larger than 200MB")
-        if file_extension not in APPROVED_FILE_EXTENSIONS:
-            errors.append(f"File type {file_extension} not supported")
+            if uploaded_file.name is None:
+                errors.append("File has no name")
+            if uploaded_file.content_type is None:
+                errors.append("File has no content-type")
+            if uploaded_file.size > MAX_FILE_SIZE:
+                errors.append("File is larger than 200MB")
+            if file_extension not in APPROVED_FILE_EXTENSIONS:
+                errors.append(f"File type {file_extension} not supported")
+        except MultiValueDictKeyError:
+            errors.append("No document selected")
 
         if not errors:
             errors += ingest_file(uploaded_file, request.user)

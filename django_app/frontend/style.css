@@ -7494,6 +7494,10 @@
   padding-top: 0.5rem;
 }
 
+.iai-chat-message__sources-heading, .iai-chat-messages__sources-link {
+  font-size: 0.875rem;
+}
+
 .iai-chat-message__text code {
   display: block;
   overflow-x: auto;
