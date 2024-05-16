@@ -10,6 +10,9 @@ from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.views.decorators.http import require_http_methods
+from requests.exceptions import HTTPError
+from yarl import URL
+
 from redbox_app.redbox_core.client import CoreApiClient
 from redbox_app.redbox_core.models import (
     ChatHistory,
@@ -19,8 +22,6 @@ from redbox_app.redbox_core.models import (
     ProcessingStatusEnum,
     User,
 )
-from requests.exceptions import HTTPError
-from yarl import URL
 
 logger = logging.getLogger(__name__)
 
@@ -225,9 +226,8 @@ def file_status_api_view(request: HttpRequest) -> JsonResponse:
         logger.error("File object information not found in django - file does not exist %s.", file_id, exc_info=ex)
         return JsonResponse({"status": ProcessingStatusEnum.unknown.label})
     core_api = CoreApiClient(host=settings.CORE_API_HOST, port=settings.CORE_API_PORT)
-    token = request.user.get_bearer_token()
     try:
-        core_file_status_response = core_api.get_file_status(file_id=file.core_file_uuid, token=token)
+        core_file_status_response = core_api.get_file_status(file_id=file.core_file_uuid, user=request.user)
     except HTTPError as ex:
         logger.error("File object information from core not found - file does not exist %s.", file_id, exc_info=ex)
         if not file.processing_status:
