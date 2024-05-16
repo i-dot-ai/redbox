@@ -102,7 +102,7 @@ def upload_view(request):
             errors += injest_file(uploaded_file, request.user)
 
         if not errors:
-            return redirect(documents_view)
+            return redirect(reverse(documents_view))
 
     return render(
         request,
@@ -131,7 +131,7 @@ def injest_file(uploaded_file: UploadedFile, user: User) -> list[str]:
         errors.append(e.args[0])
     else:
         try:
-            upload_file_response = api.upload_file(file.name, user)
+            upload_file_response = api.upload_file(file.unique_name, user)
         except HTTPError as e:
             logger.error("Error uploading file object %s.", file, exc_info=e)
             file.delete()

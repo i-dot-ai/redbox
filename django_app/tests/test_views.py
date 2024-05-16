@@ -61,9 +61,15 @@ def test_upload_view(alice, client, file_pdf_path, s3_client, requests_mock):
     client.force_login(alice)
 
     # we mock the response from the core-api
-    mocked_response = {"key": file_name, "bucket": settings.BUCKET_NAME, "uuid": str(uuid.uuid4())}
+    mocked_response = {
+        "key": file_name,
+        "bucket": settings.BUCKET_NAME,
+        "uuid": str(uuid.uuid4()),
+    }
     requests_mock.post(
-        f"http://{settings.CORE_API_HOST}:{settings.CORE_API_PORT}/file", status_code=201, json=mocked_response
+        f"http://{settings.CORE_API_HOST}:{settings.CORE_API_PORT}/file",
+        status_code=201,
+        json=mocked_response,
     )
 
     with open(file_pdf_path, "rb") as f:
@@ -75,7 +81,19 @@ def test_upload_view(alice, client, file_pdf_path, s3_client, requests_mock):
 
 
 @pytest.mark.django_db
-def test_upload_view_duplicate_files(alice, bob, client, file_pdf_path, s3_client):
+def test_upload_view_duplicate_files(alice, bob, client, file_pdf_path, s3_client, requests_mock):
+    # we mock the response from the core-api
+    mocked_response = {
+        "key": "file_key",
+        "bucket": settings.BUCKET_NAME,
+        "uuid": str(uuid.uuid4()),
+    }
+    requests_mock.post(
+        f"http://{settings.CORE_API_HOST}:{settings.CORE_API_PORT}/file",
+        status_code=201,
+        json=mocked_response,
+    )
+
     previous_count = count_s3_objects(s3_client)
     client.force_login(alice)
 
@@ -96,7 +114,9 @@ def test_upload_view_duplicate_files(alice, bob, client, file_pdf_path, s3_clien
 
         assert count_s3_objects(s3_client) == previous_count + 3
 
-        assert File.objects.order_by("-created_at")[0].name != File.objects.order_by("-created_at")[1].name
+        assert (
+            File.objects.order_by("-created_at")[0].unique_name != File.objects.order_by("-created_at")[1].unique_name
+        )
 
 
 @pytest.mark.django_db
@@ -118,7 +138,9 @@ def test_post_message_to_new_session(alice: User, client: Client, requests_mock:
     client.force_login(alice)
     rag_url = f"http://{settings.CORE_API_HOST}:{settings.CORE_API_PORT}/chat/rag"
     requests_mock.register_uri(
-        "POST", rag_url, json={"output_text": "Good afternoon, Mr. Amor.", "source_documents": []}
+        "POST",
+        rag_url,
+        json={"output_text": "Good afternoon, Mr. Amor.", "source_documents": []},
     )
 
     # When
@@ -141,7 +163,9 @@ def test_post_message_to_existing_session(chat_history: ChatHistory, client: Cli
     session_id = chat_history.id
     rag_url = f"http://{settings.CORE_API_HOST}:{settings.CORE_API_PORT}/chat/rag"
     requests_mock.register_uri(
-        "POST", rag_url, json={"output_text": "Good afternoon, Mr. Amor.", "source_documents": []}
+        "POST",
+        rag_url,
+        json={"output_text": "Good afternoon, Mr. Amor.", "source_documents": []},
     )
 
     # When
