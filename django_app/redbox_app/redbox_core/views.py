@@ -120,7 +120,7 @@ def injest_file(uploaded_file: UploadedFile, user: User) -> list[str]:
         errors.append(e.args[0])
     else:
         try:
-            upload_file_response = api.upload_file(settings.BUCKET_NAME, uploaded_file.name, user)
+            upload_file_response = api.upload_file(uploaded_file.name, user)
         except HTTPError as e:
             logger.error("Error uploading file object %s.", file, exc_info=e)
             file.delete()
