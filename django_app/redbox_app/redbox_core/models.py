@@ -55,6 +55,7 @@ class ProcessingStatusEnum(models.TextChoices):
     embedding = "embedding"
     indexing = "indexing"
     complete = "complete"
+    unknown = "unknown"
 
 
 class File(UUIDPrimaryKeyBase, TimeStampedModel):

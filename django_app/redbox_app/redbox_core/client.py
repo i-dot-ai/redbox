@@ -1,5 +1,6 @@
 import logging
 from types import SimpleNamespace
+from uuid import UUID
 
 import boto3
 import requests
@@ -65,4 +66,11 @@ class CoreApiClient:
         response_data = response.json(object_hook=lambda d: SimpleNamespace(**d))
         logger.debug("response_data: %s", response_data)
 
+        return response_data
+
+    def get_file_status(self, file_id: UUID, user: User) -> SimpleNamespace:
+        url = self.url / "file" / file_id / "status"
+        response = requests.get(url, headers={"Authorization": user.get_bearer_token()}, timeout=60)
+        response.raise_for_status()
+        response_data = response.json(object_hook=lambda d: SimpleNamespace(**d))
         return response_data
