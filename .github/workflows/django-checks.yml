@@ -74,10 +74,6 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Copy env file
-        run: |
-          cp .env.django .env
-
       - name: Run migrations
         run: |
           make check-migrations
@@ -90,10 +86,6 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
-
-    - name: Copy env file
-      run: |
-        cp .env.django .env
 
     - name: Run tests
       run: |
