@@ -56,6 +56,9 @@ $redbox-red: #A50202;
     width: auto;
   }
 }
+.iai-docs__status {
+  margin-top: 2px;
+}
 
 
 /* File upload */
@@ -65,10 +68,14 @@ $redbox-red: #A50202;
 
 
 /* Chat page */
+.iai-chat-message__container {
+  margin-top: -1rem;
+}
 .iai-chat-message {
   background-color: #f3f2f1;
   border: 1px solid #b1b4b6;
   border-radius: var(--border-radius);
+  margin-bottom: 0.75rem;
   padding: 1rem;
 }
 .iai-chat-message--ai {
@@ -120,7 +127,7 @@ $redbox-red: #A50202;
 .iai-response-feedback {
   display: none;
   position: relative;
-  top: -0.75rem;
+  top: -0.5rem;
 }
 /* only show response feedback for last AI message */
 [data-role="ai"] + .iai-response-feedback {
