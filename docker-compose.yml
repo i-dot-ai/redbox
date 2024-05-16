@@ -4,7 +4,7 @@ services:
     build:
       context: .
       dockerfile: ./django_app/Dockerfile
-    container_name: django-app
+    container_name: redbox-django-app
     depends_on:
       - db
       - minio
@@ -46,7 +46,7 @@ services:
       - "8090:8090"
   db:
     image: postgres:13
-    container_name: db
+    container_name: redbox-db
     volumes:
       - local_postgres_data:/var/lib/postgresql/data:Z
     networks:
@@ -70,7 +70,7 @@ services:
       dockerfile: ./mlflow/Dockerfile
       args:
         - OPENAI_API_KEY=${OPENAI_API_KEY:-}
-    container_name: mlflow
+    container_name: redbox-mlflow
     ports:
       - 5010:5010
       - 5020:5020
@@ -81,7 +81,7 @@ services:
       dockerfile: worker/Dockerfile
       args:
         - EMBEDDING_MODEL=${EMBEDDING_MODEL}
-    container_name: worker
+    container_name: redbox-worker
     environment:
       - ELASTIC__HOST=${ELASTIC__HOST}
       - ELASTIC__PORT=${ELASTIC__PORT}
@@ -101,7 +101,7 @@ services:
       dockerfile: core_api/Dockerfile
       args:
         - EMBEDDING_MODEL=${EMBEDDING_MODEL:-}
-    container_name: core-api
+    container_name: redbox-core-api
     ports:
       - 5002:5002
     environment:
@@ -120,7 +120,7 @@ services:
     restart: unless-stopped
   minio:
     image: minio/minio
-    container_name: minio
+    container_name: redbox-minio
     expose:
       - ${MINIO_PORT}
       - "9001"
@@ -137,7 +137,7 @@ services:
       - ./data/objectstore:/data
   elasticsearch:
     image: elasticsearch:8.12.0
-    container_name: elasticsearch
+    container_name: redbox-elasticsearch
     volumes:
       - ./data/elastic/:/usr/share/elasticsearch/data:Z
     ports:
@@ -158,7 +158,7 @@ services:
     restart: unless-stopped
   kibana:
     image: kibana:8.12.0
-    container_name: kibana
+    container_name: redbox-kibana
     ports:
       - 5601:5601
     environment:
@@ -174,7 +174,7 @@ services:
     restart: unless-stopped
   redis:
     image: redis:7-alpine
-    container_name: redis
+    container_name: redbox-redis
     restart: always
     ports:
       - "6379:${REDIS_PORT}"

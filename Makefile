@@ -35,7 +35,7 @@ test-worker:
 
 test-django:
 	docker compose up -d --wait db minio --build
-	docker exec minio rm -rf data/redbox-storage-dev/Cabinet_Office_-_Wikipedia.pdf/
+	docker exec redbox-minio rm -rf data/redbox-storage-dev/Cabinet_Office_-_Wikipedia.pdf/
 	cd django_app && poetry install
 	cd django_app && poetry run pytest tests/ -v --cov=redbox_app.redbox_core --cov-fail-under 60 -o log_cli=true
 
