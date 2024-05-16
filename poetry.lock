@@ -122,13 +122,13 @@ files = [
 
 [[package]]
 name = "anthropic"
-version = "0.25.9"
+version = "0.26.0"
 description = "The official Python library for the anthropic API"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "anthropic-0.25.9-py3-none-any.whl", hash = "sha256:d0b17d442160356a531593b237de55d3125cc6fa708f1268c214107e61c81c57"},
-    {file = "anthropic-0.25.9.tar.gz", hash = "sha256:a4ec810b1cfbf3340af99b6f5bf599a83d66986e0f572a5f3bc4ebcab284f629"},
+    {file = "anthropic-0.26.0-py3-none-any.whl", hash = "sha256:38fc415561d71dcf263b89da0cc6ecec498379b56256fc4242e9128bc707b283"},
+    {file = "anthropic-0.26.0.tar.gz", hash = "sha256:6aaffeb05d515cf9788eef57150a5f827f3786883628ccac71dbe5671ab6f44e"},
 ]
 
 [package.dependencies]
@@ -276,17 +276,17 @@ lxml = ["lxml"]
 
 [[package]]
 name = "boto3"
-version = "1.34.106"
+version = "1.34.107"
 description = "The AWS SDK for Python"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "boto3-1.34.106-py3-none-any.whl", hash = "sha256:d3be4e1dd5d546a001cd4da805816934cbde9d395316546e9411fec341ade5cf"},
-    {file = "boto3-1.34.106.tar.gz", hash = "sha256:6165b8cf1c7e625628ab28b32f9027064c8f5e5fca1c38d7fc228cd22069a19f"},
+    {file = "boto3-1.34.107-py3-none-any.whl", hash = "sha256:a7280f54babc8e285d85d2558dd6167e4deb069e03abe43a55b643e10c03952b"},
+    {file = "boto3-1.34.107.tar.gz", hash = "sha256:2500963ddd7fee0c891db596ed73f203a62e8ee6faf1543c7a14169b1d557bc3"},
 ]
 
 [package.dependencies]
-botocore = ">=1.34.106,<1.35.0"
+botocore = ">=1.34.107,<1.35.0"
 jmespath = ">=0.7.1,<2.0.0"
 s3transfer = ">=0.10.0,<0.11.0"
 
@@ -295,13 +295,13 @@ crt = ["botocore[crt] (>=1.21.0,<2.0a0)"]
 
 [[package]]
 name = "boto3-stubs"
-version = "1.34.106"
-description = "Type annotations for boto3 1.34.106 generated with mypy-boto3-builder 7.24.0"
+version = "1.34.107"
+description = "Type annotations for boto3 1.34.107 generated with mypy-boto3-builder 7.24.0"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "boto3_stubs-1.34.106-py3-none-any.whl", hash = "sha256:bdedc488dc068d74e5765c3eb00e0a331150679ece3727e979ed48527c928cbf"},
-    {file = "boto3_stubs-1.34.106.tar.gz", hash = "sha256:d484214f02a44f6eecc8010ef363303dc9537f13e8125babf47606698ac68c20"},
+    {file = "boto3_stubs-1.34.107-py3-none-any.whl", hash = "sha256:852092a62229590f01baff1ffea592a8bf3dbf7d40421a5d047fa36495c26428"},
+    {file = "boto3_stubs-1.34.107.tar.gz", hash = "sha256:8a2f7702b804ebd2cada85171954981ebbd6fbe4f17ee64c6a750eb1d9d53676"},
 ]
 
 [package.dependencies]
@@ -352,7 +352,7 @@ bedrock-agent = ["mypy-boto3-bedrock-agent (>=1.34.0,<1.35.0)"]
 bedrock-agent-runtime = ["mypy-boto3-bedrock-agent-runtime (>=1.34.0,<1.35.0)"]
 bedrock-runtime = ["mypy-boto3-bedrock-runtime (>=1.34.0,<1.35.0)"]
 billingconductor = ["mypy-boto3-billingconductor (>=1.34.0,<1.35.0)"]
-boto3 = ["boto3 (==1.34.106)", "botocore (==1.34.106)"]
+boto3 = ["boto3 (==1.34.107)", "botocore (==1.34.107)"]
 braket = ["mypy-boto3-braket (>=1.34.0,<1.35.0)"]
 budgets = ["mypy-boto3-budgets (>=1.34.0,<1.35.0)"]
 ce = ["mypy-boto3-ce (>=1.34.0,<1.35.0)"]
@@ -699,13 +699,13 @@ xray = ["mypy-boto3-xray (>=1.34.0,<1.35.0)"]
 
 [[package]]
 name = "botocore"
-version = "1.34.106"
+version = "1.34.107"
 description = "Low-level, data-driven core of boto 3."
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "botocore-1.34.106-py3-none-any.whl", hash = "sha256:4baf0e27c2dfc4f4d0dee7c217c716e0782f9b30e8e1fff983fce237d88f73ae"},
-    {file = "botocore-1.34.106.tar.gz", hash = "sha256:921fa5202f88c3e58fdcb4b3acffd56d65b24bca47092ee4b27aa988556c0be6"},
+    {file = "botocore-1.34.107-py3-none-any.whl", hash = "sha256:98bfab930391a21d24ed7a7bc86ec2ec076607318ab8de0c37d2587f73a88d89"},
+    {file = "botocore-1.34.107.tar.gz", hash = "sha256:4620286a814c3c8abc59145203650a6b2a4f538e887552fa1bc6896b6d11b28b"},
 ]
 
 [package.dependencies]
@@ -2576,13 +2576,13 @@ extended-testing = ["jinja2 (>=3,<4)"]
 
 [[package]]
 name = "langchain-elasticsearch"
-version = "0.2.0"
+version = "0.2.1"
 description = "An integration package connecting Elasticsearch and LangChain"
 optional = false
 python-versions = "<4.0,>=3.8.1"
 files = [
-    {file = "langchain_elasticsearch-0.2.0-py3-none-any.whl", hash = "sha256:8401e5dfdb25f5d553a7518edf5b4bfcd6e4dcd032ab08c7841a5cc70ed5b6e7"},
-    {file = "langchain_elasticsearch-0.2.0.tar.gz", hash = "sha256:6411241ba6c0057701ebbd680d9dff78a170de56cde03a272248d8ff6403458a"},
+    {file = "langchain_elasticsearch-0.2.1-py3-none-any.whl", hash = "sha256:410e1ee40b2eb3530f37f1465c7d117e158ce8fe3c5826b5602d3df410b194e7"},
+    {file = "langchain_elasticsearch-0.2.1.tar.gz", hash = "sha256:a49fced658840264ebf01c91d78a5157e4749c02f5c028bec657ece0789ffcd3"},
 ]
 
 [package.dependencies]
@@ -7412,4 +7412,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.11,<3.12"
-content-hash = "05006ae8bafc78531e4cd3414a0be42ccbbaf3ba92b72c6e64646059aa0720f7"
+content-hash = "c58f2d503ab8ba4d7ab2ab6abb6b40ea7809c3d27505bbeae8ef20fafe0b9790"
