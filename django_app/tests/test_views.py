@@ -4,9 +4,10 @@ from http import HTTPStatus
 import pytest
 from django.conf import settings
 from django.test import Client
-from redbox_app.redbox_core.models import ChatHistory, ChatMessage, ChatRoleEnum, User
 from requests_mock import Mocker
 from yarl import URL
+
+from redbox_app.redbox_core.models import ChatHistory, ChatMessage, ChatRoleEnum, User
 
 logger = logging.getLogger(__name__)
 
@@ -105,3 +106,18 @@ def test_view_session_with_documents(chat_message: ChatMessage, client: Client):
     # Then
     assert response.status_code == HTTPStatus.OK
     assert b"uploaded_file.pdf" in response.content
+
+
+@pytest.mark.django_db
+def test_document_upload_status(client: Client, alice, file_pdf_path, s3_client):
+    client.force_login(alice)
+    previous_count = count_s3_objects(s3_client)
+
+    with open(file_pdf_path, "rb") as f:
+        response = client.post("/upload/", {"uploadDoc": f})
+
+        assert response.status_code == 302
+        assert response.url == "/documents/"
+        assert count_s3_objects(s3_client) == previous_count + 1
+        assert "Completed" in response.content
+        assert "Unknown" not in response.content
