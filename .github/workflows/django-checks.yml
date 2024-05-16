@@ -72,12 +72,18 @@ jobs:
     environment: release
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
-      - name: Set up Poetry
-        uses: abatilo/actions-poetry@v2
+      - name: Install poetry
+        run: |
+          pipx install poetry
+
+      - name: Install python
+        uses: actions/setup-python@v5
         with:
-          poetry-version: 1.7.0
+          python-version: '3.11'
+          cache: poetry
+          cache-dependency-path: poetry.lock
 
       - name: Run migrations
         run: |
@@ -90,12 +96,18 @@ jobs:
     environment: release
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
-      - name: Set up Poetry
-        uses: abatilo/actions-poetry@v2
+      - name: Install poetry
+        run: |
+          pipx install poetry
+
+      - name: Install python
+        uses: actions/setup-python@v5
         with:
-          poetry-version: 1.7.0
+          python-version: '3.11'
+          cache: poetry
+          cache-dependency-path: poetry.lock
 
       - name: Run tests
         run: |
