@@ -95,7 +95,7 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
                 ClientMethod="get_object",
                 Params={
                     "Bucket": settings.AWS_STORAGE_BUCKET_NAME,
-                    "Key": self.unique_name,
+                    "Key": self.name,
                 },
             )
             return URL(url)
