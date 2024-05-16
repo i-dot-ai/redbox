@@ -10,9 +10,6 @@ from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.views.decorators.http import require_http_methods
-from requests.exceptions import HTTPError
-from yarl import URL
-
 from redbox_app.redbox_core.client import CoreApiClient
 from redbox_app.redbox_core.models import (
     ChatHistory,
@@ -22,6 +19,8 @@ from redbox_app.redbox_core.models import (
     ProcessingStatusEnum,
     User,
 )
+from requests.exceptions import HTTPError
+from yarl import URL
 
 logger = logging.getLogger(__name__)
 

@@ -6,9 +6,8 @@ import boto3
 import requests
 from botocore.exceptions import ClientError
 from django.conf import settings
-from yarl import URL
-
 from redbox_app.redbox_core.models import User
+from yarl import URL
 
 logger = logging.getLogger(__name__)
 
