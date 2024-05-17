@@ -15,7 +15,6 @@ locals {
 
     # django stuff
     "DJANGO_SECRET_KEY" : var.django_secret_key,
-    "POSTGRES_PASSWORD" : var.postgres_password,
     "POSTGRES_USER" : module.rds.rds_instance_username,
     "POSTGRES_PASSWORD" : module.rds.rds_instance_db_password,
     "POSTGRES_DB" : module.rds.db_instance_name,

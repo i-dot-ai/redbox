@@ -94,10 +94,6 @@ variable "openai_api_key" {
   description = "OPENAI api key"
 }
 
-variable "postgres_password" {
-  type        = string
-  description = "postgres password"
-}
 
 variable "project_name" {
   type        = string
