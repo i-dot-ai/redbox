@@ -51,7 +51,7 @@ file_publisher = FilePublisher(router.broker, env.ingest_queue_name)
 # === Storage ===
 
 es = env.elasticsearch_client()
-storage_handler = ElasticsearchStorageHandler(es_client=es, root_index="redbox-data")
+storage_handler = ElasticsearchStorageHandler(es_client=es, root_index=f"redbox-data-{env.environment}")
 
 
 file_app = FastAPI(
