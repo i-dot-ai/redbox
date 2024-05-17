@@ -6,6 +6,7 @@ import pytest
 from botocore.exceptions import ClientError
 from django.conf import settings
 from django.test import Client
+from redbox_app.redbox_core.auth_views import get_or_create_user
 from redbox_app.redbox_core.models import (
     ChatHistory,
     ChatMessage,
@@ -16,8 +17,6 @@ from redbox_app.redbox_core.models import (
 )
 from requests_mock import Mocker
 from yarl import URL
-
-from redbox_app.redbox_core.auth_views import get_or_create_user
 
 logger = logging.getLogger(__name__)
 
