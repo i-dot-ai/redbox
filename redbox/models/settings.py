@@ -62,7 +62,9 @@ class Settings(BaseSettings):
     django_settings_module: str = "redbox_app.settings"
     debug: bool = True
     django_secret_key: str
-    django_log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = "WARNING"
+    django_log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = (
+        "WARNING"
+    )
     environment: Literal["LOCAL", "DEV", "PREPROD", "PROD"] = "LOCAL"
     postgres_user: str = "redbox-core"
     postgres_db: str = "redbox-core"
@@ -80,7 +82,9 @@ class Settings(BaseSettings):
     superuser_email: Optional[str] = None
     compression_enabled: bool = True
 
-    model_config = SettingsConfigDict(env_file=".env", env_nested_delimiter="__", extra="allow")
+    model_config = SettingsConfigDict(
+        env_file=".env", env_nested_delimiter="__", extra="allow"
+    )
 
     def elasticsearch_client(self) -> Elasticsearch:
         if isinstance(self.elastic, ElasticLocalSettings):

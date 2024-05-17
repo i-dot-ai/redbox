@@ -5,7 +5,25 @@ from redbox.models import Chunk, File, Settings
 from redbox.models.file import Metadata
 
 env = Settings()
-s3_client = env.s3_client()
+# s3_client = env.s3_client()
+# === Object Store ===
+# import boto3
+
+
+# def s3_client():
+#     client = boto3.client(
+#         "s3",
+#         aws_access_key_id="",
+#         aws_secret_access_key="",
+#         endpoint_url=f"http://localhost:9000",
+#     )
+#     return client
+
+
+s3_client = Minio(
+    "localhost:9000", access_key="minioadmin", secret_key="minioadmin", secure=False
+)
+# s3_client = s3_client()  # Not consistently named - in worker, it is s3 = s3_client()
 
 
 def other_chunker(file: File) -> list[Chunk]:
@@ -18,11 +36,21 @@ def other_chunker(file: File) -> list[Chunk]:
     Returns:
         list[Chunk]: A list of chunks that have been created from the file.
     """
-    authenticated_s3_url = s3_client.generate_presigned_url(
-        "get_object",
-        Params={"Bucket": file.bucket, "Key": file.key},
-        ExpiresIn=3600,
+    # authenticated_s3_url = s3_client.generate_presigned_url(
+    #     "get_object",
+    #     Params={"Bucket": file.bucket, "Key": file.key},
+    #     ExpiresIn=3600,
+    # )
+
+    ################## EVAL HACK #####################
+    # Generate a presigned URL for an object
+    authenticated_s3_url = minioClient.presigned_url(
+        "GET",
+        "redbox-storage-dev",
+        "data_eval/Universal-Basic-Income-Scotland-Report.pdf",
+        expires=datetime.timedelta(days=1),
     )
+    ################## END OF EVAL HACK ###############
 
     elements = partition(url=authenticated_s3_url)
     raw_chunks = chunk_by_title(elements=elements)
