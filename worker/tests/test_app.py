@@ -1,8 +1,8 @@
 import pytest
-from faststream.redis import TestRedisBroker
+from faststream.redis import TestApp, TestRedisBroker
 
 from redbox.storage import ElasticsearchStorageHandler
-from worker.src.app import broker, env
+from worker.src.app import app, broker, env
 
 
 @pytest.mark.asyncio
@@ -19,7 +19,7 @@ async def test_ingest_file(s3_client, es_client, embedding_model, file):
 
     storage_handler.write_item(file)
 
-    async with TestRedisBroker(broker) as br:
+    async with TestRedisBroker(broker) as br, TestApp(app):
         await br.publish(file, channel=env.ingest_queue_name)
 
         file = storage_handler.read_item(

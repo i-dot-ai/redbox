@@ -1,9 +1,10 @@
 #!/usr/bin/env python
 
 import logging
+from contextlib import asynccontextmanager
 from datetime import datetime
 
-from faststream import Depends, FastStream
+from faststream import Context, ContextRepo, FastStream
 from faststream.redis import RedisBroker
 
 from redbox.model_db import SentenceTransformerDB
@@ -23,20 +24,22 @@ broker = RedisBroker(url=env.redis_url)
 publisher = broker.publisher(env.embed_queue_name)
 
 
-def get_storage_handler():
+@asynccontextmanager
+async def lifespan(context: ContextRepo):
     es = env.elasticsearch_client()
-    return ElasticsearchStorageHandler(es_client=es, root_index="redbox-data")
-
-
-def get_model() -> SentenceTransformerDB:
+    storage_handler = ElasticsearchStorageHandler(es_client=es, root_index="redbox-data")
     model = SentenceTransformerDB(env.embedding_model)
-    return model
+
+    context.set_global("storage_handler", storage_handler)
+    context.set_global("model", model)
+
+    yield
 
 
 @broker.subscriber(channel=env.ingest_queue_name)
 async def ingest(
     file: File,
-    storage_handler: ElasticsearchStorageHandler = Depends(get_storage_handler),
+    storage_handler: ElasticsearchStorageHandler = Context(),
 ):
     """
     1. Chunks file
@@ -65,8 +68,8 @@ async def ingest(
 @broker.subscriber(channel=env.embed_queue_name)
 async def embed(
     queue_item: EmbedQueueItem,
-    storage_handler: ElasticsearchStorageHandler = Depends(get_storage_handler),
-    embedding_model: SentenceTransformerDB = Depends(get_model),
+    storage_handler: ElasticsearchStorageHandler = Context(),
+    model: SentenceTransformerDB = Context(),
 ):
     """
     1. embed queue-item text
@@ -74,7 +77,7 @@ async def embed(
     """
 
     chunk: Chunk = storage_handler.read_item(queue_item.chunk_uuid, "Chunk")
-    embedded_sentences = embedding_model.embed_sentences([chunk.text])
+    embedded_sentences = model.embed_sentences([chunk.text])
     if len(embedded_sentences.data) != 1:
         logging.error("expected just 1 embedding but got %s", len(embedded_sentences.data))
         return
@@ -82,4 +85,4 @@ async def embed(
     storage_handler.update_item(chunk)
 
 
-app = FastStream(broker=broker)
+app = FastStream(broker=broker, lifespan=lifespan)
