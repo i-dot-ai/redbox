@@ -53,6 +53,7 @@ moto = {extras = ["s3"], version = "^5.0.5"}
 httpx = "^0.27.0"
 deepeval = "^0.21.15"
 minio = "^7.2.7"
+python-jose="^3.3.0"
 
 
 [tool.poetry.group.ai.dependencies]
