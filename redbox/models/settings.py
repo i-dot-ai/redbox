@@ -71,7 +71,7 @@ class Settings(BaseSettings):
     postgres_password: str
     postgres_host: str = "db"
     contact_email: str = "test@example.com"
-    core_api_host: str = "http://core-api"
+    core_api_host: str = "core-api"
     core_api_port: int = 5002
     email_backend_type: str = "CONSOLE"
     gov_notify_api_key: Optional[str] = None
@@ -79,7 +79,6 @@ class Settings(BaseSettings):
     email_file_path: str = "/app/mail"
     govuk_notify_plain_email_template_id: str = "example-id"
     use_streaming: bool = False
-    superuser_email: Optional[str] = None
     compression_enabled: bool = True
 
     model_config = SettingsConfigDict(

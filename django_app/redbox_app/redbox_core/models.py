@@ -10,10 +10,10 @@ from yarl import URL
 
 
 class UUIDPrimaryKeyBase(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+
     class Meta:
         abstract = True
-
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
 
 class TimeStampedModel(models.Model):
@@ -26,13 +26,16 @@ class TimeStampedModel(models.Model):
 
 
 class User(BaseUser, UUIDPrimaryKeyBase):
-    objects = BaseUserManager()
     username = None
     verified = models.BooleanField(default=False, blank=True, null=True)
     invited_at = models.DateTimeField(default=None, blank=True, null=True)
     invite_accepted_at = models.DateTimeField(default=None, blank=True, null=True)
     last_token_sent_at = models.DateTimeField(editable=False, blank=True, null=True)
     password = models.CharField("password", max_length=128, blank=True, null=True)
+    objects = BaseUserManager()
+
+    def __str__(self) -> str:  # pragma: no cover
+        return f"{self.email}"
 
     def save(self, *args, **kwargs):
         self.email = self.email.lower()
@@ -52,6 +55,7 @@ class ProcessingStatusEnum(models.TextChoices):
     embedding = "embedding"
     indexing = "indexing"
     complete = "complete"
+    unknown = "unknown"
 
 
 class File(UUIDPrimaryKeyBase, TimeStampedModel):
@@ -59,6 +63,10 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
     original_file = models.FileField(storage=settings.STORAGES["default"]["BACKEND"])
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     original_file_name = models.TextField(max_length=2048, blank=True, null=True)
+    core_file_uuid = models.UUIDField(null=True)
+
+    def __str__(self) -> str:  # pragma: no cover
+        return f"{self.original_file_name} {self.user}"
 
     def delete(self, using=None, keep_parents=False):
         #  Needed to make sure no orphaned files remain in the storage
@@ -96,7 +104,13 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
 
     @property
     def name(self) -> str:
+        # User-facing name
         return self.original_file_name if self.original_file_name else self.original_file.name
+
+    @property
+    def unique_name(self) -> str:
+        # Name used by core-api
+        return self.original_file.file.name
 
     def get_processing_status_text(self) -> str:
         return next(
@@ -114,6 +128,12 @@ class ChatHistory(UUIDPrimaryKeyBase, TimeStampedModel):
         blank=True,
     )
 
+    class Meta:
+        verbose_name_plural = "Chat history"
+
+    def __str__(self) -> str:  # pragma: no cover
+        return f"{self.name} - {self.users}"
+
 
 class ChatRoleEnum(models.TextChoices):
     ai = "ai"
@@ -130,3 +150,6 @@ class ChatMessage(UUIDPrimaryKeyBase, TimeStampedModel):
         related_name="chat_messages",
         blank=True,
     )
+
+    def __str__(self) -> str:  # pragma: no cover
+        return f"{self.chat_history} - {self.text} - {self.role}"

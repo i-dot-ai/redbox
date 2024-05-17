@@ -2,15 +2,33 @@ import logging
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import Depends, FastAPI, HTTPException, UploadFile
+from elasticsearch import NotFoundError
+from fastapi import Depends, FastAPI, UploadFile
 from fastapi import File as FastAPIFile
+from fastapi.responses import JSONResponse
 from faststream.redis.fastapi import RedisRouter
 from pydantic import BaseModel, Field
 
 from core_api.src.auth import get_user_uuid
 from core_api.src.publisher_handler import FilePublisher
-from redbox.models import Chunk, File, FileStatus, Settings
+from redbox.models import APIError404, Chunk, File, FileStatus, Settings
 from redbox.storage import ElasticsearchStorageHandler
+
+# === Functions ===
+
+
+def file_not_found_response(file_uuid: UUID) -> JSONResponse:
+    return JSONResponse(
+        status_code=404,
+        content={
+            "detail": "Item not found",
+            "errors": {
+                "parameter": "file_uuid",
+                "detail": f"File {file_uuid} not found",
+            },
+        },
+    )
+
 
 # === Logging ===
 
@@ -79,6 +97,19 @@ async def add_file(file_request: FileRequest, user_uuid: Annotated[UUID, Depends
     return file
 
 
+@file_app.get("/", tags=["file"])
+async def list_files(user_uuid: Annotated[UUID, Depends(get_user_uuid)]) -> list[File]:
+    """Gets a list of files in the database.
+
+    Args:
+        user_uuid (UUID): The UUID of the user
+
+    Returns:
+        Files (list, File): A list of file objects
+    """
+    return storage_handler.read_all_items(model_type="File", user_uuid=user_uuid)
+
+
 # Standard file upload endpoint for utility in quick testing
 if env.dev_mode:
 
@@ -105,7 +136,12 @@ if env.dev_mode:
         return file
 
 
-@file_app.get("/{file_uuid}", response_model=File, tags=["file"])
+@file_app.get(
+    "/{file_uuid}",
+    response_model=File,
+    tags=["file"],
+    responses={404: {"model": APIError404, "description": "The file was not found"}},
+)
 def get_file(file_uuid: UUID, user_uuid: Annotated[UUID, Depends(get_user_uuid)]) -> File:
     """Get a file from the object store
 
@@ -115,14 +151,27 @@ def get_file(file_uuid: UUID, user_uuid: Annotated[UUID, Depends(get_user_uuid)]
 
     Returns:
         File: The file
+
+    Raises:
+        404: If the file isn't found, or the creator and requester don't match
     """
-    file = storage_handler.read_item(file_uuid, model_type="File")
+    try:
+        file = storage_handler.read_item(file_uuid, model_type="File")
+    except NotFoundError:
+        return file_not_found_response(file_uuid=file_uuid)
+
     if file.creator_user_uuid != user_uuid:
-        raise HTTPException(status_code=404, detail=f"File {file_uuid} not found")
+        return file_not_found_response(file_uuid=file_uuid)
+
     return file
 
 
-@file_app.delete("/{file_uuid}", response_model=File, tags=["file"])
+@file_app.delete(
+    "/{file_uuid}",
+    response_model=File,
+    tags=["file"],
+    responses={404: {"model": APIError404, "description": "The file was not found"}},
+)
 def delete_file(file_uuid: UUID, user_uuid: Annotated[UUID, Depends(get_user_uuid)]) -> File:
     """Delete a file from the object store and the database
 
@@ -132,10 +181,17 @@ def delete_file(file_uuid: UUID, user_uuid: Annotated[UUID, Depends(get_user_uui
 
     Returns:
         File: The file that was deleted
+
+    Raises:
+        404: If the file isn't found, or the creator and requester don't match
     """
-    file = storage_handler.read_item(file_uuid, model_type="File")
+    try:
+        file = storage_handler.read_item(file_uuid, model_type="File")
+    except NotFoundError:
+        return file_not_found_response(file_uuid=file_uuid)
+
     if file.creator_user_uuid != user_uuid:
-        raise HTTPException(status_code=404)
+        return file_not_found_response(file_uuid=file_uuid)
 
     s3.delete_object(Bucket=env.bucket_name, Key=file.key)
     storage_handler.delete_item(file)
@@ -145,13 +201,42 @@ def delete_file(file_uuid: UUID, user_uuid: Annotated[UUID, Depends(get_user_uui
     return file
 
 
-@file_app.get("/{file_uuid}/chunks", tags=["file"])
+@file_app.get(
+    "/{file_uuid}/chunks",
+    tags=["file"],
+    responses={404: {"model": APIError404, "description": "The file was not found"}},
+)
 def get_file_chunks(file_uuid: UUID, user_uuid: Annotated[UUID, Depends(get_user_uuid)]) -> list[Chunk]:
+    """Gets a list of chunks for a file in the database
+
+    Args:
+        file_uuid (UUID): The UUID of the file to delete
+        user_uuid (UUID): The UUID of the user
+
+    Returns:
+        Chunks (list, Chunk): The chunks belonging to the requested file
+
+    Raises:
+        404: If the file isn't found, or the creator and requester don't match
+    """
+    try:
+        file = storage_handler.read_item(file_uuid, model_type="File")
+    except NotFoundError:
+        return file_not_found_response(file_uuid=file_uuid)
+
+    if file.creator_user_uuid != user_uuid:
+        return file_not_found_response(file_uuid=file_uuid)
+
     log.info("getting chunks for file %s", file_uuid)
+
     return storage_handler.get_file_chunks(file_uuid, user_uuid)
 
 
-@file_app.get("/{file_uuid}/status", tags=["file"])
+@file_app.get(
+    "/{file_uuid}/status",
+    tags=["file"],
+    responses={404: {"model": APIError404, "description": "The file was not found"}},
+)
 def get_file_status(file_uuid: UUID, user_uuid: Annotated[UUID, Depends(get_user_uuid)]) -> FileStatus:
     """Get the status of a file
 
@@ -161,10 +246,21 @@ def get_file_status(file_uuid: UUID, user_uuid: Annotated[UUID, Depends(get_user
 
     Returns:
         File: The file with the updated status
+
+    Raises:
+        404: If the file isn't found, or the creator and requester don't match
     """
     try:
+        file = storage_handler.read_item(file_uuid, model_type="File")
+    except NotFoundError:
+        return file_not_found_response(file_uuid=file_uuid)
+
+    if file.creator_user_uuid != user_uuid:
+        return file_not_found_response(file_uuid=file_uuid)
+
+    try:
         status = storage_handler.get_file_status(file_uuid, user_uuid)
-    except ValueError as e:
-        raise HTTPException(status_code=404, detail=f"File {file_uuid} not found") from e
+    except ValueError:
+        return file_not_found_response(file_uuid=file_uuid)
 
     return status

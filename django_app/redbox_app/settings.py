@@ -16,7 +16,6 @@ env = environ.Env()
 
 SECRET_KEY = env.str("DJANGO_SECRET_KEY")
 ENVIRONMENT = env.str("ENVIRONMENT")
-SUPERUSER_EMAIL = env.str("SUPERUSER_EMAIL", None)
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env.bool("DEBUG")
@@ -64,7 +63,6 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
-    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -192,11 +190,13 @@ LOG_ROOT = "."
 LOG_HANDLER = "console"
 BUCKET_NAME = env.str("BUCKET_NAME")
 AWS_S3_REGION_NAME = env.str("AWS_REGION")
+APPEND_SLASH = True
 
 #  Property added to each S3 file to make them downloadable by default
 AWS_S3_OBJECT_PARAMETERS = {"ContentDisposition": "attachment"}
 AWS_STORAGE_BUCKET_NAME = BUCKET_NAME  # this duplication is required for django-storage
 OBJECT_STORE = env.str("OBJECT_STORE")
+AWS_S3_FILE_OVERWRITE = False  # allows users to have duplicate file names
 
 if HostingEnvironment.is_local():
     AWS_S3_SECRET_ACCESS_KEY = env.str("AWS_SECRET_KEY")
@@ -291,6 +291,7 @@ CORE_API_PORT = env.str("CORE_API_PORT")
 # Email
 EMAIL_BACKEND_TYPE = env.str("EMAIL_BACKEND_TYPE")
 FROM_EMAIL = env.str("FROM_EMAIL")
+CONTACT_EMAIL = env.str("CONTACT_EMAIL")
 
 if EMAIL_BACKEND_TYPE == "FILE":
     EMAIL_BACKEND = "django.core.mail.backends.filebased.EmailBackend"

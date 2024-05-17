@@ -68,7 +68,7 @@ def spotlight_complete_to_docx(
         uuid_to_file_map = {f.uuid: f for f in files}
 
         raw = task.raw
-        for uuid in uuid_to_file_map.keys():
+        for uuid in uuid_to_file_map:
             raw = raw.replace(f"<Doc{uuid}>", f"{uuid_to_file_map[uuid].key}")
             raw = raw.replace(f"</Doc{uuid}>", "")
 

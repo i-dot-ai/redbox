@@ -5,10 +5,12 @@
 
 {% block content %}
 
-<a href="{{url('documents')}}" class="govuk-back-link">Back</a>
 <form method="post" enctype="multipart/form-data">
 
 <div class="govuk-width-container">
+
+  <a href="{{url('documents')}}" class="govuk-back-link govuk-!-margin-bottom-5 govuk-!-margin-top-0">Back</a>
+
   <form method="post" enctype="multipart/form-data">
 
     <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
@@ -27,10 +29,7 @@
       </div>
     </dl>
 
-    <div class="govuk-button-group">
-      {{ govukButton(text="Remove", classes="govuk-button--warning") }}
-      {{ govukButton(text="Cancel", classes="govuk-button--secondary", href="/documents") }}
-    </div>
+    {{ govukButton(text="Remove", classes="govuk-button--warning") }}
 
   </form>
 </div>

@@ -5,9 +5,10 @@ from datetime import datetime
 
 import pytest
 import pytz
+from django.core.files.uploadedfile import SimpleUploadedFile, UploadedFile
 from django.core.management import call_command
 from redbox_app.redbox_core import client
-from redbox_app.redbox_core.models import ChatHistory, User
+from redbox_app.redbox_core.models import ChatHistory, ChatMessage, ChatRoleEnum, File, User
 
 UTC = pytz.timezone("UTC")
 
@@ -95,3 +96,23 @@ def chat_history(alice: User) -> ChatHistory:
     chat_history = ChatHistory.objects.create(id=session_id, users=alice)
     yield chat_history
     chat_history.delete()
+
+
+@pytest.fixture
+def chat_message(chat_history: ChatHistory, uploaded_file: File) -> ChatMessage:
+    chat_message = ChatMessage.objects.create(chat_history=chat_history, text="A question?", role=ChatRoleEnum.user)
+    chat_message.source_files.set([uploaded_file])
+    return chat_message
+
+
+@pytest.fixture
+def uploaded_file(alice: User, original_file: UploadedFile) -> File:
+    file = File.objects.create(
+        user=alice, original_file=original_file, original_file_name=original_file.name, core_file_uuid=uuid.uuid4()
+    )
+    return file
+
+
+@pytest.fixture
+def original_file() -> UploadedFile:
+    return SimpleUploadedFile("original_file.txt", b"Lorem Ipsum.")
