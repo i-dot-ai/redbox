@@ -6,6 +6,7 @@ import pytest
 from botocore.exceptions import ClientError
 from django.conf import settings
 from django.test import Client
+from redbox_app.redbox_core.auth_views import get_or_create_user
 from redbox_app.redbox_core.models import (
     ChatHistory,
     ChatMessage,
@@ -16,8 +17,6 @@ from redbox_app.redbox_core.models import (
 )
 from requests_mock import Mocker
 from yarl import URL
-
-from redbox_app.redbox_core.auth_views import get_or_create_user
 
 logger = logging.getLogger(__name__)
 
@@ -235,7 +234,7 @@ def test_view_session_with_documents(chat_message: ChatMessage, client: Client):
 
     # Then
     assert response.status_code == HTTPStatus.OK
-    assert b"uploaded_file.pdf" in response.content
+    assert b"original_file.txt" in response.content
 
 
 @pytest.mark.django_db
