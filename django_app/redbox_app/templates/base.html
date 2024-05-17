@@ -20,6 +20,27 @@
     {% endcompress %}
   {% else %}
     <link rel="stylesheet" type="text/css" href="{{static('style.css')}}" />
+
+
+  {% if ENVIRONMENT == "LOCAL" %}
+    <script defer 
+    event-environment="LOCAL"
+    data-domain="redbox-dev.ai.cabinetoffice.gov.uk" src="https://plausible.io/js/script.pageview-props.tagged-events.outbound-links.file-downloads.local.js"></script>
+
+  {% elif ENVIRONMENT == "DEV"%}
+    <script defer 
+    event-environment="DEV"
+    data-domain="redbox-dev.ai.cabinetoffice.gov.uk" src="https://plausible.io/js/script.pageview-props.tagged-events.outbound-links.file-downloads.js"></script>
+
+  {% elif ENVIRONMENT == "PREPROD"%}
+    <script defer 
+    event-environment="PREPROD"
+    data-domain="redbox-dev.ai.cabinetoffice.gov.uk" src="https://plausible.io/js/script.pageview-props.tagged-events.outbound-links.file-downloads.js"></script>
+
+  {% elif ENVIRONMENT == "PROD"%}
+    <script defer 
+    data-domain="redbox.ai.cabinetoffice.gov.uk" src="https://plausible.io/js/script.pageview-props.tagged-events.outbound-links.file-downloads.js"></script>
+
   {% endif %}
 
 </head>
