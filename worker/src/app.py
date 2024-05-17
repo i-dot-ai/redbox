@@ -7,7 +7,7 @@ from fastapi import Depends, FastAPI
 from faststream.redis.fastapi import RedisRouter
 
 from redbox.model_db import SentenceTransformerDB
-from redbox.models import Chunk, EmbedQueueItem, File, Settings, StatusResponse
+from redbox.models import Chunk, EmbedQueueItem, File, Settings
 from redbox.parsing import chunk_file
 from redbox.storage.elasticsearch import ElasticsearchStorageHandler
 
@@ -85,23 +85,3 @@ async def embed(
 
 app = FastAPI(lifespan=router.lifespan_context)
 app.include_router(router)
-
-
-@app.get("/health", tags=["health"])
-def health() -> StatusResponse:
-    """Returns the health of the API
-
-    Returns:
-        StatusResponse: The health of the API
-    """
-
-    uptime = datetime.now() - start_time
-    uptime_seconds = uptime.total_seconds()
-
-    output = StatusResponse(
-        status="ready",
-        uptime_seconds=uptime_seconds,
-        version=app.version,
-    )
-
-    return output
