@@ -41,6 +41,16 @@ def test_simple_chat(chat_history, status_code, app_client, monkeypatch, headers
     assert response.status_code == status_code
 
 
+@pytest.mark.parametrize("chat_history, status_code", test_history)
+def test_streamed_chat(chat_history, status_code, app_client, monkeypatch, headers):
+    monkeypatch.setattr("langchain_core.prompts.ChatPromptTemplate.from_messages", mock_chat_prompt)
+    monkeypatch.setattr("core_api.src.routes.chat.LLMChain", mock_get_chain)
+
+    with app_client.websocket_connect("/chat/rag-stream") as websocket:
+        data = websocket.receive_json()
+        assert data == {"msg": "Hello WebSocket"}
+
+
 @pytest.mark.parametrize(
     "payload, error",
     [

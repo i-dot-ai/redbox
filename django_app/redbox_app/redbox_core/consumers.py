@@ -5,8 +5,10 @@ from time import sleep
 from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
 from django.conf import settings
-from redbox_app.redbox_core.client import CoreApiClient
 from redbox_app.redbox_core.models import ChatHistory, ChatMessage, ChatRoleEnum, User
+from websockets.client import connect
+from yarl import URL
+
 
 logger = logging.getLogger(__name__)
 
@@ -28,15 +30,21 @@ class ChatConsumer(AsyncWebsocketConsumer):
         message_history: list[dict[str, str]] = [
             {"role": message.role, "text": message.text} for message in session_messages
         ]
-        core_api = CoreApiClient(host=settings.CORE_API_HOST, port=settings.CORE_API_PORT)
-        ai_message_response = core_api.rag_chat(message_history, user)
+        url = URL.build(scheme="ws", host=settings.CORE_API_HOST, port=settings.CORE_API_PORT) / "chat/rag-stream"
+        async with connect(str(url), extra_headers={"Authorization": user.get_bearer_token()}) as websocket:
+            await websocket.send(json.dumps({"message_history": message_history}))
+            async for message in websocket:
+                logger.debug(f"Received: %s", message)
 
-        # save LLM response
-        await self.save_message(session, ai_message_response.output_text, ChatRoleEnum.ai)
 
-        await self.send(ai_message_response.output_text)
+
+
+        await self.send("ai_message_response.output_text")
         sleep(0.1)
         await self.send(" MESSAGE END")
+
+        # save LLM response
+        # await self.save_message(session, ai_message_response.output_text, ChatRoleEnum.ai)
 
     @database_sync_to_async
     def get_session(self, session_id: str, user: User, user_message_text: str) -> ChatHistory:

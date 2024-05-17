@@ -1,3 +1,4 @@
+import json
 import logging
 from typing import Annotated
 from uuid import UUID
@@ -23,7 +24,7 @@ from redbox.llm.prompts.chat import (
 )
 from redbox.model_db import MODEL_PATH
 from redbox.models import EmbeddingModelInfo, Settings
-from redbox.models.chat import ChatMessage, ChatRequest, ChatResponse, SourceDocument, SourceDocuments
+from redbox.models.chat import ChatMessage, ChatRequest, ChatResponse, SourceDocument
 
 # === Logging ===
 
@@ -212,9 +213,11 @@ async def websocket_endpoint(websocket: WebSocket):
         async for event in retrieval_chain.astream_events(chat, version="v1"):
             kind = event["event"]
             if kind == "on_chat_model_stream":
-                await websocket.send_text(event["data"]["chunk"].content)
+                message = json.dumps({"resource_type": "text", "data": event["data"]["chunk"].content})
+                await websocket.send_text(message)
             if kind == "on_chat_model_end":
-                await websocket.send_text("</chat>")
+                message = json.dumps({"resource_type": "end"})
+                await websocket.send_text(message)
             elif kind == "on_retriever_end":
                 source_documents = [
                     SourceDocument(
@@ -224,8 +227,8 @@ async def websocket_endpoint(websocket: WebSocket):
                     )
                     for document in event["data"]["output"]["documents"]
                 ]
-                source_documents_bytes = SourceDocuments(source_documents=source_documents).model_dump_json().encode()
-                await websocket.send_bytes(source_documents_bytes)
+                message = json.dumps({"resource_type": "documents", "data": source_documents})
+                await websocket.send_text(message)
 
 
 html = """

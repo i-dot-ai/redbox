@@ -287,7 +287,7 @@ LOGGING = {
 
 # link to core_api app
 CORE_API_HOST = env.str("CORE_API_HOST")
-CORE_API_PORT = env.str("CORE_API_PORT")
+CORE_API_PORT = env.int("CORE_API_PORT")
 
 # Email
 EMAIL_BACKEND_TYPE = env.str("EMAIL_BACKEND_TYPE")
