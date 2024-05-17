@@ -3,8 +3,8 @@
 import logging
 from datetime import datetime
 
-from fastapi import Depends, FastAPI
-from faststream.redis.fastapi import RedisRouter
+from faststream import Depends, FastStream
+from faststream.redis import RedisBroker
 
 from redbox.model_db import SentenceTransformerDB
 from redbox.models import Chunk, EmbedQueueItem, File, Settings
@@ -18,9 +18,9 @@ log = logging.getLogger()
 env = Settings()
 
 
-router = RedisRouter(url=env.redis_url)
+broker = RedisBroker(url=env.redis_url)
 
-publisher = router.broker.publisher(env.embed_queue_name)
+publisher = broker.publisher(env.embed_queue_name)
 
 
 def get_storage_handler():
@@ -33,11 +33,10 @@ def get_model() -> SentenceTransformerDB:
     return model
 
 
-@router.subscriber(channel=env.ingest_queue_name)
+@broker.subscriber(channel=env.ingest_queue_name)
 async def ingest(
     file: File,
     storage_handler: ElasticsearchStorageHandler = Depends(get_storage_handler),
-    # embedding_model: SentenceTransformerDB = Depends(get_model),
 ):
     """
     1. Chunks file
@@ -63,7 +62,7 @@ async def ingest(
     return items
 
 
-@router.subscriber(channel=env.embed_queue_name)
+@broker.subscriber(channel=env.embed_queue_name)
 async def embed(
     queue_item: EmbedQueueItem,
     storage_handler: ElasticsearchStorageHandler = Depends(get_storage_handler),
@@ -83,5 +82,4 @@ async def embed(
     storage_handler.update_item(chunk)
 
 
-app = FastAPI(lifespan=router.lifespan_context)
-app.include_router(router)
+app = FastStream(broker=broker)
