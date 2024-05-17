@@ -44,4 +44,4 @@ RUN python -m nltk.downloader averaged_perceptron_tagger
 # Download the OCR models
 RUN python download_ocr_models.py
 
-CMD ["uvicorn", "worker.src.app:app", "--host", "0.0.0.0", "--port", "5000"]
+CMD ["uvicorn", "worker.src.app:app", "--host", "0.0.0.0", "--port", "5000", "--workers", "5"]

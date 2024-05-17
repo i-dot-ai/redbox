@@ -22,22 +22,18 @@ router = RedisRouter(url=env.redis_url)
 
 publisher = router.broker.publisher(env.embed_queue_name)
 
+embedding_model = SentenceTransformerDB(env.embedding_model)
+
 
 def get_storage_handler():
     es = env.elasticsearch_client()
     return ElasticsearchStorageHandler(es_client=es, root_index="redbox-data")
 
 
-def get_model() -> SentenceTransformerDB:
-    model = SentenceTransformerDB(env.embedding_model)
-    return model
-
-
 @router.subscriber(channel=env.ingest_queue_name)
 async def ingest(
     file: File,
     storage_handler: ElasticsearchStorageHandler = Depends(get_storage_handler),
-    # embedding_model: SentenceTransformerDB = Depends(get_model),
 ):
     """
     1. Chunks file
@@ -48,7 +44,7 @@ async def ingest(
 
     logging.info("Ingesting file: %s", file)
 
-    chunks = chunk_file(file=file)  # , embedding_model=embedding_model)
+    chunks = chunk_file(file=file)
 
     logging.info("Writing %s chunks to storage for file uuid: %s", len(chunks), file.uuid)
 
@@ -67,7 +63,6 @@ async def ingest(
 async def embed(
     queue_item: EmbedQueueItem,
     storage_handler: ElasticsearchStorageHandler = Depends(get_storage_handler),
-    embedding_model: SentenceTransformerDB = Depends(get_model),
 ):
     """
     1. embed queue-item text
