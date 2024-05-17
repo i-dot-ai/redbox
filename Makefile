@@ -123,7 +123,7 @@ docker_build: ## Build the docker container
 	done
 
 
-.PHONY: docker_push
+.PHONY: docker_pushÏ
 docker_push:
 	@echo "Services to push: $(DOCKER_SERVICES)"
 	@for service in $(DOCKER_SERVICES); do \
