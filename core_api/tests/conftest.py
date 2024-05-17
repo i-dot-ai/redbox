@@ -56,7 +56,7 @@ def headers(alice):
 
 @pytest.fixture
 def elasticsearch_storage_handler(es_client):
-    yield ElasticsearchStorageHandler(es_client=es_client, root_index="redbox-data")
+    yield ElasticsearchStorageHandler(es_client=es_client, root_index=env.elastic_index)
 
 
 @pytest.fixture

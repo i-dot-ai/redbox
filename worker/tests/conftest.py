@@ -83,12 +83,12 @@ def app_client():
 def elasticsearch_storage_handler(
     es_client,
 ) -> YieldFixture[ElasticsearchStorageHandler]:
-    yield ElasticsearchStorageHandler(es_client=es_client, root_index="redbox-data")
+    yield ElasticsearchStorageHandler(es_client=es_client, root_index=env.elastic_index)
 
 
 @pytest.fixture
 def chunk() -> YieldFixture[Chunk]:
-    test_chunk = Chunk(parent_file_uuid=uuid4(), index=1, text="test_text", creator_user_uuid=uuid4())
+    test_chunk = Chunk(parent_file_uuid=uuid4(), index=1, text=env.elastic_index, creator_user_uuid=uuid4())
     yield test_chunk
 
 

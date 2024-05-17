@@ -25,7 +25,7 @@ publisher = router.broker.publisher(env.embed_queue_name)
 
 def get_storage_handler():
     es = env.elasticsearch_client()
-    return ElasticsearchStorageHandler(es_client=es, root_index="redbox-data")
+    return ElasticsearchStorageHandler(es_client=es, root_index=env.elastic_index)
 
 
 def get_model() -> SentenceTransformerDB:

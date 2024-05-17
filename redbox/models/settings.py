@@ -135,3 +135,7 @@ class Settings(BaseSettings):
     @property
     def redis_url(self) -> str:
         return f"redis://{self.redis_host}:{self.redis_port}/"
+
+    @property
+    def elastic_index(self) -> str:
+        return f"redbox-data-{self.environment.lower()}"
