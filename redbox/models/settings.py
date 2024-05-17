@@ -97,6 +97,7 @@ class Settings(BaseSettings):
             )
             return es
 
+        raise Exception("why am i here?", self.elastic)
         es = Elasticsearch(cloud_id=self.elastic.cloud_id, api_key=self.elastic.api_key)
         return es
 
