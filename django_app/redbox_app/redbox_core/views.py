@@ -1,16 +1,19 @@
 import logging
 import os
 import uuid
-from urllib.error import HTTPError
 
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import FieldError, ValidationError
 from django.core.files.uploadedfile import UploadedFile
-from django.http import HttpRequest, HttpResponse
+from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse
+from django.utils.datastructures import MultiValueDictKeyError
 from django.views.decorators.http import require_http_methods
+from requests.exceptions import HTTPError
+from yarl import URL
+
 from redbox_app.redbox_core.client import CoreApiClient
 from redbox_app.redbox_core.models import (
     ChatHistory,
@@ -20,7 +23,6 @@ from redbox_app.redbox_core.models import (
     ProcessingStatusEnum,
     User,
 )
-from yarl import URL
 
 logger = logging.getLogger(__name__)
 
@@ -83,23 +85,26 @@ def get_file_extension(file):
 def upload_view(request):
     errors = []
 
-    if request.method == "POST" and request.FILES["uploadDoc"]:
+    if request.method == "POST":
         # https://django-storages.readthedocs.io/en/1.13.2/backends/amazon-S3.html
-        uploaded_file = request.FILES["uploadDoc"]
+        try:
+            uploaded_file = request.FILES["uploadDoc"]
 
-        file_extension = get_file_extension(uploaded_file)
+            file_extension = get_file_extension(uploaded_file)
 
-        if uploaded_file.name is None:
-            errors.append("File has no name")
-        if uploaded_file.content_type is None:
-            errors.append("File has no content-type")
-        if uploaded_file.size > MAX_FILE_SIZE:
-            errors.append("File is larger than 200MB")
-        if file_extension not in APPROVED_FILE_EXTENSIONS:
-            errors.append(f"File type {file_extension} not supported")
+            if uploaded_file.name is None:
+                errors.append("File has no name")
+            if uploaded_file.content_type is None:
+                errors.append("File has no content-type")
+            if uploaded_file.size > MAX_FILE_SIZE:
+                errors.append("File is larger than 200MB")
+            if file_extension not in APPROVED_FILE_EXTENSIONS:
+                errors.append(f"File type {file_extension} not supported")
+        except MultiValueDictKeyError:
+            errors.append("No document selected")
 
         if not errors:
-            errors += injest_file(uploaded_file, request.user)
+            errors += ingest_file(uploaded_file, request.user)
 
         if not errors:
             return redirect(reverse(documents_view))
@@ -115,7 +120,7 @@ def upload_view(request):
     )
 
 
-def injest_file(uploaded_file: UploadedFile, user: User) -> list[str]:
+def ingest_file(uploaded_file: UploadedFile, user: User) -> list[str]:
     errors: list[str] = []
     api = CoreApiClient(host=settings.CORE_API_HOST, port=settings.CORE_API_PORT)
     try:
@@ -210,6 +215,32 @@ def post_message(request: HttpRequest) -> HttpResponse:
     llm_message.source_files.set(files)
 
     return redirect(reverse(sessions_view, args=(session.id,)))
+
+
+@require_http_methods(["GET"])
+@login_required
+def file_status_api_view(request: HttpRequest) -> JsonResponse:
+    file_id = request.GET.get("id", None)
+    if not file_id:
+        logger.error("Error getting file object information - no file ID provided %s.")
+        return JsonResponse({"status": ProcessingStatusEnum.unknown.label})
+    try:
+        file = File.objects.get(pk=file_id)
+    except File.DoesNotExist as ex:
+        logger.error("File object information not found in django - file does not exist %s.", file_id, exc_info=ex)
+        return JsonResponse({"status": ProcessingStatusEnum.unknown.label})
+    core_api = CoreApiClient(host=settings.CORE_API_HOST, port=settings.CORE_API_PORT)
+    try:
+        core_file_status_response = core_api.get_file_status(file_id=file.core_file_uuid, user=request.user)
+    except HTTPError as ex:
+        logger.error("File object information from core not found - file does not exist %s.", file_id, exc_info=ex)
+        if not file.processing_status:
+            file.processing_status = ProcessingStatusEnum.unknown.label
+            file.save()
+        return JsonResponse({"status": file.processing_status})
+    file.processing_status = core_file_status_response.processing_status
+    file.save()
+    return JsonResponse({"status": file.get_processing_status_text()})
 
 
 @require_http_methods(["GET"])

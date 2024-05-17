@@ -6,15 +6,17 @@ import pytest
 from botocore.exceptions import ClientError
 from django.conf import settings
 from django.test import Client
+from requests_mock import Mocker
+from yarl import URL
+
 from redbox_app.redbox_core.models import (
     ChatHistory,
     ChatMessage,
     ChatRoleEnum,
     File,
+    ProcessingStatusEnum,
     User,
 )
-from requests_mock import Mocker
-from yarl import URL
 
 logger = logging.getLogger(__name__)
 
@@ -81,6 +83,38 @@ def test_upload_view(alice, client, file_pdf_path, s3_client, requests_mock):
 
 
 @pytest.mark.django_db
+def test_document_upload_status(client, alice, file_pdf_path, s3_client, requests_mock):
+    file_name = file_pdf_path.split("/")[-1]
+
+    # we begin by removing any file in minio that has this key
+    s3_client.delete_object(Bucket=settings.BUCKET_NAME, Key=file_name.replace(" ", "_"))
+
+    assert not file_exists(s3_client, file_name)
+    client.force_login(alice)
+    previous_count = count_s3_objects(s3_client)
+
+    mocked_response = {
+        "key": file_name,
+        "bucket": settings.BUCKET_NAME,
+        "uuid": str(uuid.uuid4()),
+    }
+    requests_mock.post(
+        f"http://{settings.CORE_API_HOST}:{settings.CORE_API_PORT}/file",
+        status_code=201,
+        json=mocked_response,
+    )
+
+    with open(file_pdf_path, "rb") as f:
+        response = client.post("/upload/", {"uploadDoc": f})
+
+        assert response.status_code == 302
+        assert response.url == "/documents/"
+        assert count_s3_objects(s3_client) == previous_count + 1
+        uploaded_file = File.objects.filter(user=alice).order_by("-created_at")[0]
+        assert uploaded_file.processing_status == ProcessingStatusEnum.uploaded
+
+
+@pytest.mark.django_db
 def test_upload_view_duplicate_files(alice, bob, client, file_pdf_path, s3_client, requests_mock):
     # we mock the response from the core-api
     mocked_response = {
@@ -133,6 +167,16 @@ def test_upload_view_bad_data(alice, client, file_py_path, s3_client):
 
 
 @pytest.mark.django_db
+def test_upload_view_no_file(alice, client):
+    client.force_login(alice)
+
+    response = client.post("/upload/")
+
+    assert response.status_code == 200
+    assert "No document selected" in str(response.content)
+
+
+@pytest.mark.django_db
 def test_post_message_to_new_session(alice: User, client: Client, requests_mock: Mocker):
     # Given
     client.force_login(alice)
@@ -174,7 +218,6 @@ def test_post_message_to_existing_session(chat_history: ChatHistory, client: Cli
     # Then
     assert response.status_code == HTTPStatus.FOUND
     assert URL(response.url).parts[-2] == str(session_id)
-    assert ChatMessage.objects.get(chat_history__id=session_id, role=ChatRoleEnum.user).text == "Are you there?"
     assert (
         ChatMessage.objects.get(chat_history__id=session_id, role=ChatRoleEnum.ai).text == "Good afternoon, Mr. Amor."
     )

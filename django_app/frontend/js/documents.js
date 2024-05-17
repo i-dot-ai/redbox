@@ -15,15 +15,15 @@ Alpine.data('file-status', () => ({
         const checkStatus = async () => {
             
             // UPDATE THESE AS REQUIRED
-            const FILE_STATUS_ENDPOINT = '/api/get-status'; 
+            const FILE_STATUS_ENDPOINT = '/file-status';
             const CHECK_INTERVAL_MS = 5000;
             
             const response = await fetch(`${FILE_STATUS_ENDPOINT}?id=${this.$el.dataset.id}`);
-            const responseText = await response.text();
+            const responseText = await response.json();
             if (response.ok) {
-                this.status = responseText;
+                this.status = responseText["status"];
             }
-            if (responseText !== 'complete') {
+            if (this.status !== 'complete') {
                 window.setTimeout(checkStatus, CHECK_INTERVAL_MS);
             }
 
