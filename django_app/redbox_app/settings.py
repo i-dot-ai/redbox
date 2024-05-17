@@ -88,6 +88,7 @@ TEMPLATES = [
             "environment": "redbox_app.jinja2.environment",
             "context_processors": [
                 "redbox_app.context_processors.compression_enabled",
+                "redbox_app.context_processors.environment",
             ],
         },
     },
@@ -148,11 +149,12 @@ LOGIN_URL = "sign-in"
 CSP_DEFAULT_SRC = (
     "'self'",
     "s3.amazonaws.com",
+    "plausible.io",
 )
 CSP_SCRIPT_SRC = (
     "'self'",
-    "plausible.io",
     "'sha256-GUQ5ad8JK5KmEWmROf3LZd9ge94daqNvd8xy9YS1iDw='",
+    "plausible.io",
 )
 CSP_OBJECT_SRC = ("'none'",)
 CSP_REQUIRE_TRUSTED_TYPES_FOR = ("'script'",)
@@ -261,7 +263,9 @@ LOG_LEVEL = env.str("DJANGO_LOG_LEVEL", "WARNING")
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
-    "formatters": {"verbose": {"format": "%(asctime)s %(levelname)s %(module)s: %(message)s"}},
+    "formatters": {
+        "verbose": {"format": "%(asctime)s %(levelname)s %(module)s: %(message)s"}
+    },
     "handlers": {
         "file": {
             "level": LOG_LEVEL,
@@ -302,7 +306,9 @@ elif EMAIL_BACKEND_TYPE == "CONSOLE":
 elif EMAIL_BACKEND_TYPE == "GOVUKNOTIFY":
     EMAIL_BACKEND = "django_gov_notify.backends.NotifyEmailBackend"
     GOVUK_NOTIFY_API_KEY = env.str("GOVUK_NOTIFY_API_KEY")
-    GOVUK_NOTIFY_PLAIN_EMAIL_TEMPLATE_ID = env.str("GOVUK_NOTIFY_PLAIN_EMAIL_TEMPLATE_ID")
+    GOVUK_NOTIFY_PLAIN_EMAIL_TEMPLATE_ID = env.str(
+        "GOVUK_NOTIFY_PLAIN_EMAIL_TEMPLATE_ID"
+    )
 else:
     raise Exception(f"Unknown EMAIL_BACKEND_TYPE of {EMAIL_BACKEND_TYPE}")
 
