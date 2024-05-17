@@ -32,6 +32,9 @@ ADD worker/ /app/worker
 ADD download_embedder.py /app/
 ADD worker/download_ocr_models.py /app/
 
+ADD worker/health.sh /app/
+RUN chmod +x /app/health.sh
+
 # Download the model
 RUN python download_embedder.py --embedding_model ${EMBEDDING_MODEL}
 
