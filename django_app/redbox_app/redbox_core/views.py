@@ -149,14 +149,27 @@ def ingest_file(uploaded_file: UploadedFile, user: User) -> list[str]:
 @login_required
 def remove_doc_view(request, doc_id: uuid):
     file = File.objects.get(pk=doc_id)
+    errors: list[str] = []
+
     if request.method == "POST":
-        logger.info("Removing document: %s", request.POST["doc_id"])
-        file.delete()
+        api = CoreApiClient(host=settings.CORE_API_HOST, port=settings.CORE_API_PORT)
+
+        try:
+            api.delete_file(file.core_file_uuid, request.user)
+        except HTTPError as e:
+            logger.error("Error deleting file object %s.", file, exc_info=e)
+            file.delete()
+            errors.append("failed to connect to core-api")
+
+        else:
+            logger.info("Removing document: %s", request.POST["doc_id"])
+            file.delete()
         return redirect("documents")
+
     return render(
         request,
         template_name="remove-doc.html",
-        context={"request": request, "doc_id": doc_id, "doc_name": file.name},
+        context={"request": request, "doc_id": doc_id, "doc_name": file.name, "errors": errors},
     )
 
 
