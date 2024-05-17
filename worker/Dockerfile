@@ -47,4 +47,4 @@ RUN python -m nltk.downloader averaged_perceptron_tagger
 # Download the OCR models
 RUN python download_ocr_models.py
 
-CMD ["faststream", "run", "embedder.src.worker:app", "--workers", "3"]
+CMD ["faststream", "run", "worker.src.app:app", "--workers", "3"]
