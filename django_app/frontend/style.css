@@ -7454,10 +7454,10 @@
 }
 
 /* Documents page */
+/* Use this if more than one button in Actions
 .iai-docs__actions .govuk-button {
   width: 100%;
 }
-
 @media (min-width: 1024px) {
   .iai-docs__actions {
     width: 13.25rem;
@@ -7469,6 +7469,7 @@
 .iai-docs__status {
   margin-top: 2px;
 }
+
 
 /* File upload */
 .iai-file-types {
@@ -7503,6 +7504,10 @@
 .iai-chat-message__text {
   font-size: 1rem;
   padding-top: 0.5rem;
+}
+
+.iai-chat-message__sources-heading, .iai-chat-messages__sources-link {
+  font-size: 0.875rem;
 }
 
 .iai-chat-message__text code {

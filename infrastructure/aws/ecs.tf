@@ -15,12 +15,11 @@ locals {
 
     # django stuff
     "DJANGO_SECRET_KEY" : var.django_secret_key,
-    "POSTGRES_PASSWORD" : var.postgres_password,
     "POSTGRES_USER" : module.rds.rds_instance_username,
     "POSTGRES_PASSWORD" : module.rds.rds_instance_db_password,
     "POSTGRES_DB" : module.rds.db_instance_name,
     "POSTGRES_HOST" : module.rds.db_instance_address,
-    "CORE_API_HOST" : "http://${aws_service_discovery_service.service_discovery_service.name}.${aws_service_discovery_private_dns_namespace.private_dns_namespace.name}",
+    "CORE_API_HOST" : "${aws_service_discovery_service.service_discovery_service.name}.${aws_service_discovery_private_dns_namespace.private_dns_namespace.name}",
     "CORE_API_PORT" : 5002,
     "ENVIRONMENT" : upper(terraform.workspace),
     "DJANGO_SETTINGS_MODULE" : "redbox_app.settings",
@@ -154,13 +153,6 @@ module "worker" {
   prefix             = "redbox"
   ecr_repository_uri = "${var.ecr_repository_uri}/redbox-worker"
   ecs_cluster_id     = module.cluster.ecs_cluster_id
-  health_check = {
-    healthy_threshold   = 3
-    unhealthy_threshold = 3
-    accepted_response   = "200"
-    path                = "/health"
-    timeout             = 5
-  }
   state_bucket                 = var.state_bucket
   vpc_id                       = data.terraform_remote_state.vpc.outputs.vpc_id
   private_subnets              = data.terraform_remote_state.vpc.outputs.private_subnets
@@ -169,6 +161,7 @@ module "worker" {
   aws_lb_arn                   = module.load_balancer.alb_arn
   ip_whitelist                 = var.external_ips
   environment_variables        = local.environment_variables
+  http_healthcheck = false
 }
 
 

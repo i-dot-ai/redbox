@@ -1,11 +1,14 @@
+#!/usr/bin/env python
+
 import logging
+from contextlib import asynccontextmanager
 from datetime import datetime
 
-from fastapi import Depends, FastAPI
-from faststream.redis.fastapi import RedisRouter
+from faststream import Context, ContextRepo, FastStream
+from faststream.redis import RedisBroker
 
 from redbox.model_db import SentenceTransformerDB
-from redbox.models import Chunk, EmbedQueueItem, File, Settings, StatusResponse
+from redbox.models import Chunk, EmbedQueueItem, File, Settings
 from redbox.parsing import chunk_file
 from redbox.storage.elasticsearch import ElasticsearchStorageHandler
 
@@ -16,26 +19,27 @@ log = logging.getLogger()
 env = Settings()
 
 
-router = RedisRouter(url=env.redis_url)
+broker = RedisBroker(url=env.redis_url)
 
-publisher = router.broker.publisher(env.embed_queue_name)
+publisher = broker.publisher(env.embed_queue_name)
 
 
-def get_storage_handler():
+@asynccontextmanager
+async def lifespan(context: ContextRepo):
     es = env.elasticsearch_client()
-    return ElasticsearchStorageHandler(es_client=es, root_index="redbox-data")
-
-
-def get_model() -> SentenceTransformerDB:
+    storage_handler = ElasticsearchStorageHandler(es_client=es, root_index="redbox-data")
     model = SentenceTransformerDB(env.embedding_model)
-    return model
+
+    context.set_global("storage_handler", storage_handler)
+    context.set_global("model", model)
+
+    yield
 
 
-@router.subscriber(channel=env.ingest_queue_name)
+@broker.subscriber(channel=env.ingest_queue_name)
 async def ingest(
     file: File,
-    storage_handler: ElasticsearchStorageHandler = Depends(get_storage_handler),
-    # embedding_model: SentenceTransformerDB = Depends(get_model),
+    storage_handler: ElasticsearchStorageHandler = Context(),
 ):
     """
     1. Chunks file
@@ -61,11 +65,11 @@ async def ingest(
     return items
 
 
-@router.subscriber(channel=env.embed_queue_name)
+@broker.subscriber(channel=env.embed_queue_name)
 async def embed(
     queue_item: EmbedQueueItem,
-    storage_handler: ElasticsearchStorageHandler = Depends(get_storage_handler),
-    embedding_model: SentenceTransformerDB = Depends(get_model),
+    storage_handler: ElasticsearchStorageHandler = Context(),
+    model: SentenceTransformerDB = Context(),
 ):
     """
     1. embed queue-item text
@@ -73,7 +77,7 @@ async def embed(
     """
 
     chunk: Chunk = storage_handler.read_item(queue_item.chunk_uuid, "Chunk")
-    embedded_sentences = embedding_model.embed_sentences([chunk.text])
+    embedded_sentences = model.embed_sentences([chunk.text])
     if len(embedded_sentences.data) != 1:
         logging.error("expected just 1 embedding but got %s", len(embedded_sentences.data))
         return
@@ -81,25 +85,4 @@ async def embed(
     storage_handler.update_item(chunk)
 
 
-app = FastAPI(lifespan=router.lifespan_context)
-app.include_router(router)
-
-
-@app.get("/health", tags=["health"])
-def health() -> StatusResponse:
-    """Returns the health of the API
-
-    Returns:
-        StatusResponse: The health of the API
-    """
-
-    uptime = datetime.now() - start_time
-    uptime_seconds = uptime.total_seconds()
-
-    output = StatusResponse(
-        status="ready",
-        uptime_seconds=uptime_seconds,
-        version=app.version,
-    )
-
-    return output
+app = FastStream(broker=broker, lifespan=lifespan)

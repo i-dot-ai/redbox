@@ -32,6 +32,8 @@ class Settings(BaseSettings):
     anthropic_api_key: Optional[str] = None
     openai_api_key: Optional[str] = None
 
+    partition_strategy: Literal["auto", "fast", "ocr_only", "hi_res"] = "fast"
+
     elastic: ElasticCloudSettings | ElasticLocalSettings = ElasticLocalSettings()
 
     kibana_system_password: str = "redboxpass"
@@ -77,7 +79,6 @@ class Settings(BaseSettings):
     email_file_path: str = "/app/mail"
     govuk_notify_plain_email_template_id: str = "example-id"
     use_streaming: bool = False
-    superuser_email: Optional[str] = None
     compression_enabled: bool = True
 
     model_config = SettingsConfigDict(env_file=".env", env_nested_delimiter="__", extra="allow")
