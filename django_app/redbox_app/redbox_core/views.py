@@ -64,7 +64,7 @@ def homepage_view(request):
 
 @login_required
 def documents_view(request):
-    files = File.objects.filter(user=request.user)
+    files = File.objects.filter(user=request.user).order_by("original_file")
 
     return render(
         request,

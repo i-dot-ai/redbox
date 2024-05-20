@@ -89,7 +89,7 @@ module "django-app" {
   create_networking  = true
   source             = "../../../i-ai-core-infrastructure//modules/ecs"
   project_name       = "django-app"
-  image_tag          = var.image_tag
+  image_tag                     = "84fb575dfb19662f158f532b541aa4c4c60d3899"
   prefix             = "redbox"
   ecr_repository_uri = "${var.ecr_repository_uri}/redbox-django-app"
   ecs_cluster_id     = module.cluster.ecs_cluster_id
@@ -120,7 +120,7 @@ module "core_api" {
   create_networking             = false
   source                        = "../../../i-ai-core-infrastructure//modules/ecs"
   project_name                  = "core-api"
-  image_tag                     = var.image_tag
+  image_tag                     = "84fb575dfb19662f158f532b541aa4c4c60d3899"
   prefix                        = "redbox"
   ecr_repository_uri            = "${var.ecr_repository_uri}/redbox-core-api"
   ecs_cluster_id                = module.cluster.ecs_cluster_id
@@ -149,7 +149,7 @@ module "worker" {
   create_networking  = false
   source             = "../../../i-ai-core-infrastructure//modules/ecs"
   project_name       = "worker"
-  image_tag          = var.image_tag
+  image_tag                     = "84fb575dfb19662f158f532b541aa4c4c60d3899"
   prefix             = "redbox"
   ecr_repository_uri = "${var.ecr_repository_uri}/redbox-worker"
   ecs_cluster_id     = module.cluster.ecs_cluster_id
