@@ -1,6 +1,7 @@
 import json
 import logging
 from time import sleep
+from types import SimpleNamespace
 
 from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
@@ -30,18 +31,13 @@ class ChatConsumer(AsyncWebsocketConsumer):
         message_history: list[dict[str, str]] = [
             {"role": message.role, "text": message.text} for message in session_messages
         ]
-        url = URL.build(scheme="ws", host=settings.CORE_API_HOST, port=settings.CORE_API_PORT) / "chat/rag-stream"
+        url = URL.build(scheme="ws", host=settings.CORE_API_HOST, port=settings.CORE_API_PORT) / "chat/rag-chat-stream"
         async with connect(str(url), extra_headers={"Authorization": user.get_bearer_token()}) as websocket:
             await websocket.send(json.dumps({"message_history": message_history}))
-            async for message in websocket:
+            async for raw_message in websocket:
+                message = json.loads(raw_message, object_hook=lambda d: SimpleNamespace(**d))
                 logger.debug(f"Received: %s", message)
-
-
-
-
-        await self.send("ai_message_response.output_text")
-        sleep(0.1)
-        await self.send(" MESSAGE END")
+                await self.send(message.data)
 
         # save LLM response
         # await self.save_message(session, ai_message_response.output_text, ChatRoleEnum.ai)

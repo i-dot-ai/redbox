@@ -173,7 +173,7 @@ def rag_chat(chat_request: ChatRequest, user_uuid: Annotated[UUID, Depends(get_u
     return ChatResponse(output_text=result["output_text"], source_documents=source_documents)
 
 
-@chat_app.websocket("/rag-stream")
+@chat_app.websocket("/rag-stream-old")
 async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
 
@@ -229,6 +229,43 @@ async def websocket_endpoint(websocket: WebSocket):
                 ]
                 message = json.dumps({"resource_type": "documents", "data": source_documents})
                 await websocket.send_text(message)
+
+
+@chat_app.websocket("/rag-chat-stream")
+async def rag_chat_streamed(websocket: WebSocket):
+    await websocket.accept()
+    message_history = await websocket.receive_json()
+    log.info(f"{message_history=}")
+
+    await build_retrieval_chain()
+
+    await websocket.send_json({"resource_type": "text", "data": "Hello"})
+    await websocket.send_json({"resource_type": "text", "data": " there"})
+    await websocket.close()
+
+
+async def build_retrieval_chain():
+    prompt_search_query = ChatPromptTemplate.from_messages(
+        [
+            MessagesPlaceholder(variable_name="chat_history"),
+            ("user", "{input}"),
+            (
+                "user",
+                "Given the above conversation, generate a search query to look up to get information relevant to the "
+                "conversation",
+            ),
+        ]
+    )
+    retriever_chain = create_history_aware_retriever(llm, vector_store.as_retriever(), prompt_search_query)
+    prompt_get_answer = ChatPromptTemplate.from_messages(
+        [
+            ("system", "Answer the user's questions based on the below context:\\n\\n{context}"),
+            MessagesPlaceholder(variable_name="chat_history"),
+            ("user", "{input}"),
+        ]
+    )
+    document_chain = create_stuff_documents_chain(llm, prompt_get_answer)
+    retrieval_chain = create_retrieval_chain(retriever_chain, document_chain)
 
 
 html = """

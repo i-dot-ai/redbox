@@ -1,3 +1,5 @@
+import json
+
 import pytest
 from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_core.prompt_values import ChatPromptValue
@@ -41,14 +43,13 @@ def test_simple_chat(chat_history, status_code, app_client, monkeypatch, headers
     assert response.status_code == status_code
 
 
-@pytest.mark.parametrize("chat_history, status_code", test_history)
-def test_streamed_chat(chat_history, status_code, app_client, monkeypatch, headers):
-    monkeypatch.setattr("langchain_core.prompts.ChatPromptTemplate.from_messages", mock_chat_prompt)
-    monkeypatch.setattr("core_api.src.routes.chat.LLMChain", mock_get_chain)
-
-    with app_client.websocket_connect("/chat/rag-stream") as websocket:
+def test_rag_chat_streamed(app_client, headers):
+    with app_client.websocket_connect("/chat/rag-chat-stream", headers=headers) as websocket:
+        websocket.send_text(json.dumps({"foo": "bar"}))
         data = websocket.receive_json()
-        assert data == {"msg": "Hello WebSocket"}
+        assert data == {"resource_type": "text", "data": "Hello"}
+        data = websocket.receive_json()
+        assert data == {"resource_type": "text", "data": " there"}
 
 
 @pytest.mark.parametrize(
