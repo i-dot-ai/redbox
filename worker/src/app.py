@@ -36,7 +36,7 @@ async def lifespan(context: ContextRepo):
     yield
 
 
-@broker.subscriber(channel=env.ingest_queue_name)
+@broker.subscriber(list=env.ingest_queue_name)
 async def ingest(
     file: File,
     storage_handler: ElasticsearchStorageHandler = Context(),
