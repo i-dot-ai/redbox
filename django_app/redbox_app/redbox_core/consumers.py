@@ -18,7 +18,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
     async def receive(self, text_data):
         data = json.loads(text_data)
         user_message_text = data.get("message", "")
-        session_id = data.get("sessionId", None)
+        session_id = data.get("data-session-id", None)
         user: User = self.scope.get("user", None)
 
         session = await self.get_session(session_id, user, user_message_text)
@@ -34,13 +34,16 @@ class ChatConsumer(AsyncWebsocketConsumer):
         url = URL.build(scheme="ws", host=settings.CORE_API_HOST, port=settings.CORE_API_PORT) / "chat/rag-chat-stream"
         async with connect(str(url), extra_headers={"Authorization": user.get_bearer_token()}) as websocket:
             await websocket.send(json.dumps({"message_history": message_history}))
+            full_reply: list[str] = []
             async for raw_message in websocket:
                 message = json.loads(raw_message, object_hook=lambda d: SimpleNamespace(**d))
-                logger.debug(f"Received: %s", message)
-                await self.send(message.data)
-
-        # save LLM response
-        # await self.save_message(session, ai_message_response.output_text, ChatRoleEnum.ai)
+                logger.debug("Received: %s", message)
+                if message.resource_type == "text":
+                    await self.send(message.data)
+                    full_reply.append(message.data)
+                elif message.resource_type == "documents": pass
+                elif message.resource_type == "end":
+                    await self.save_message(session, "".join(full_reply), ChatRoleEnum.ai)
 
     @database_sync_to_async
     def get_session(self, session_id: str, user: User, user_message_text: str) -> ChatHistory:

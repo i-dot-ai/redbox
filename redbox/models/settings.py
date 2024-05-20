@@ -30,7 +30,7 @@ class Settings(BaseSettings):
     """Settings for the redbox application."""
 
     anthropic_api_key: Optional[str] = None
-    openai_api_key: Optional[str] = None
+    openai_api_key: str
 
     elastic: ElasticCloudSettings | ElasticLocalSettings = ElasticLocalSettings()
 
