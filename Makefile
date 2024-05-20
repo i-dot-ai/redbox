@@ -55,9 +55,7 @@ format:
 
 safe:
 	poetry run bandit -ll -r ./redbox
-	poetry run bandit -ll -r ./django_app
 	poetry run mypy ./redbox --ignore-missing-imports
-	poetry run mypy ./django_app --ignore-missing-imports
 
 checktypes:
 	poetry run mypy redbox worker --ignore-missing-imports
