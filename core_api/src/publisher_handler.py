@@ -20,4 +20,4 @@ class FilePublisher:
             # we only do this once
             await self.broker.connect()
             self.connected = True
-        await self.broker.publish(file, self.queue_name)
+        await self.broker.publish(file, list=self.queue_name)
