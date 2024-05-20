@@ -215,16 +215,12 @@ async def rag_chat_streamed(websocket: WebSocket):
     retrieval_chain = await build_retrieval_chain()
 
     chat_request = ChatRequest.parse_raw(await websocket.receive_text())
-    log.info(f"{chat_request=}")
     chat_history = [
         HumanMessage(content=x.text) if x.role == "user" else AIMessage(content=x.text)
         for x in chat_request.message_history[:-1]
     ]
-    log.info(f"{chat_history=}")
     chat = {"chat_history": chat_history, "input": chat_request.message_history[-1].text}
-    log.info(f"{chat=}")
     async for event in retrieval_chain.astream_events(chat, version="v1"):
-        log.info(f"{event=}")
         kind = event["event"]
         if kind == "on_chat_model_stream":
             message = json.dumps({"resource_type": "text", "data": event["data"]["chunk"].content})

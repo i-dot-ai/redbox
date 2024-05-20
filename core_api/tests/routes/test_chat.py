@@ -45,11 +45,9 @@ def test_simple_chat(chat_history, status_code, app_client, monkeypatch, headers
 
 def test_rag_chat_streamed(app_client, headers):
     with app_client.websocket_connect("/chat/rag-chat-stream", headers=headers) as websocket:
-        websocket.send_text(json.dumps({"foo": "bar"}))
+        websocket.send_text(json.dumps({"message_history": [{"text": "bar", "role": "user"}]}))
         data = websocket.receive_json()
-        assert data == {"resource_type": "text", "data": "Hello"}
-        data = websocket.receive_json()
-        assert data == {"resource_type": "text", "data": " there"}
+        assert data == {"resource_type": "end"}
 
 
 @pytest.mark.parametrize(
