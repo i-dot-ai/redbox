@@ -43,19 +43,19 @@ class ChatConsumer(AsyncWebsocketConsumer):
                     full_reply.append(message.data)
                 elif message.resource_type == "documents":
                     doc_uuids: list[str] = [doc.file_uuid for doc in message.data]
-                    sources = File.objects.filter(core_file_uuid__in=doc_uuids, user=user)
+                    sources = await self.get_files(doc_uuids, user)
                     for source in sources:
                         await self.send_json(
                             {
                                 "type": "source",
-                                "data": {"url": source.url, "original_file_name": source.original_file_name},
+                                "data": {"url": str(source.url), "original_file_name": source.original_file_name},
                             }
                         )
                 elif message.resource_type == "end":
                     await self.save_message(session, "".join(full_reply), ChatRoleEnum.ai, sources)
 
     async def send_json(self, data):
-        await self.send(json.dumps(data))
+        await self.send(json.dumps(data, default=str))
 
     @database_sync_to_async
     def get_session(self, session_id: str, user: User, user_message_text: str) -> ChatHistory:
@@ -77,5 +77,10 @@ class ChatConsumer(AsyncWebsocketConsumer):
     ) -> ChatMessage:
         chat_message = ChatMessage(chat_history=session, text=user_message_text, role=role)
         chat_message.save()
-        if source_files: chat_message.source_files.set(source_files)
+        if source_files:
+            chat_message.source_files.set(source_files)
         return chat_message
+
+    @database_sync_to_async
+    def get_files(self, uuids: list[str], user: User) -> list[File]:
+        return list(File.objects.filter(core_file_uuid__in=uuids, user=user))

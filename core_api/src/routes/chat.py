@@ -4,6 +4,7 @@ from typing import Annotated
 from uuid import UUID
 
 from fastapi import Depends, FastAPI, HTTPException, WebSocket
+from fastapi.encoders import jsonable_encoder
 from fastapi.responses import HTMLResponse
 from langchain.chains.combine_documents import create_stuff_documents_chain
 from langchain.chains.history_aware_retriever import create_history_aware_retriever
@@ -223,11 +224,21 @@ async def rag_chat_streamed(websocket: WebSocket):
     async for event in retrieval_chain.astream_events(chat, version="v1"):
         kind = event["event"]
         if kind == "on_chat_model_stream":
-            message = json.dumps({"resource_type": "text", "data": event["data"]["chunk"].content})
-            await websocket.send_text(message)
-        if kind == "on_chat_model_end":
-            message = json.dumps({"resource_type": "end"})
-            await websocket.send_text(message)
+            await websocket.send_json({"resource_type": "text", "data": event["data"]["chunk"].content})
+        elif kind == "on_chat_model_end":
+            await websocket.send_json({"resource_type": "end"})
+        elif kind == "on_retriever_end":
+            source_documents = [
+                jsonable_encoder(
+                    SourceDocument(
+                        page_content=document.page_content,
+                        file_uuid=document.metadata.get("parent_doc_uuid"),
+                        page_numbers=document.metadata.get("page_numbers"),
+                    )
+                )
+                for document in event["data"]["output"]["documents"]
+            ]
+            await websocket.send_json({"resource_type": "documents", "data": source_documents})
 
     await websocket.close()
 
