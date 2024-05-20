@@ -7,19 +7,19 @@ reqs:
 	poetry install
 
 run:
-	docker-compose up -d elasticsearch kibana worker minio redis core-api db django-app
+	docker compose up -d elasticsearch kibana worker minio redis core-api db django-app
 
 stop:
-	docker-compose down
+	docker compose down
 
 clean:
-	docker-compose down -v --rmi all --remove-orphans
+	docker compose down -v --rmi all --remove-orphans
 
 build:
-	docker-compose build
+	docker compose build
 
 rebuild:
-	docker-compose build --no-cache
+	docker compose build --no-cache
 
 test-core-api:
 	poetry install --no-root --no-ansi --with api,dev,ai --without worker
@@ -34,15 +34,15 @@ test-worker:
 	poetry run pytest worker/tests --cov=worker -v --cov-report=term-missing --cov-fail-under=40
 
 test-django:
-	docker-compose up -d --wait db minio
-	docker-compose run django-app venv/bin/pytest tests/ --ds redbox_app.settings -v --cov=redbox_app.redbox_core --cov-fail-under 60 -o log_cli=true
+	docker compose up -d --wait db minio
+	docker compose run django-app venv/bin/pytest tests/ --ds redbox_app.settings -v --cov=redbox_app.redbox_core --cov-fail-under 60 -o log_cli=true
 
 test-integration:
-	docker-compose down
+	docker compose down
 	cp .env .env.backup
 	cp .env.integration .env
-	docker-compose build core-api worker minio
-	docker-compose up -d core-api worker minio
+	docker compose build core-api worker minio
+	docker compose up -d core-api worker minio
 	poetry install --no-root --no-ansi --with dev --without ai,api,worker
 	sleep 10
 	poetry run pytest tests
@@ -50,7 +50,7 @@ test-integration:
 	rm .env.backup
 
 collect-static:
-	docker-compose run django-app venv/bin/django-admin collectstatic --noinput
+	docker compose run django-app venv/bin/django-admin collectstatic --noinput
 
 lint:
 	poetry run ruff format . --check
@@ -70,14 +70,14 @@ checktypes:
 	poetry run mypy redbox worker --ignore-missing-imports
 
 check-migrations:
-	docker-compose build django-app
-	docker-compose up -d --wait db minio
-	docker-compose run django-app venv/bin/django-admin migrate
-	docker-compose run django-app venv/bin/django-admin makemigrations --check
+	docker compose build django-app
+	docker compose up -d --wait db minio
+	docker compose run django-app venv/bin/django-admin migrate
+	docker compose run django-app venv/bin/django-admin makemigrations --check
 
 reset-db:
-	docker-compose down db --volumes
-	docker-compose up -d db
+	docker compose down db --volumes
+	docker compose up -d db
 
 docs-serve:
 	poetry run mkdocs serve
@@ -97,7 +97,7 @@ PREV_IMAGE_TAG=$$(git rev-parse HEAD~1)
 IMAGE_TAG=$$(git rev-parse HEAD)
 
 tf_build_args=-var "image_tag=$(IMAGE_TAG)"
-DOCKER_SERVICES=$$(docker-compose config --services | grep -v mlflow)
+DOCKER_SERVICES=$$(docker compose config --services | grep -v mlflow)
 
 .PHONY: docker_login
 docker_login:
@@ -106,7 +106,7 @@ docker_login:
 .PHONY: docker_build
 docker_build: ## Build the docker container
 	@cp .env.example .env
-	# Fetching list of services defined in docker-compose configuration
+	# Fetching list of services defined in docker compose configuration
 	@echo "Services to update: $(DOCKER_SERVICES)"
 	# Enabling Docker BuildKit for better build performance
 	export DOCKER_BUILDKIT=1
@@ -116,7 +116,7 @@ docker_build: ## Build the docker container
 			PREV_IMAGE="$(ECR_REPO_URL)-$$service:$(PREV_IMAGE_TAG)"; \
 			echo "Pulling previous image: $$PREV_IMAGE"; \
 			docker pull $$PREV_IMAGE; \
-			docker-compose build $$service; \
+			docker compose build $$service; \
 		else \
 			echo "Skipping $$service uses default image"; \
 		fi; \

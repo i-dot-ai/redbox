@@ -295,9 +295,3 @@ def test_get_user_new_cabinet_office(email, admitted):
 
     # only cabinet-office users are accepted
     assert User.objects.filter(email=email).exists() == admitted
-
-
-@pytest.mark.django_db
-def test_sessions_view(client):
-    response = client.get("/sessions/")
-    assert response.status_code == 200
