@@ -1,0 +1,103 @@
+/* GENERAL */
+:root {
+    --product-colour: #A50202;
+    --border-radius: 0.5rem;
+}
+.govuk-main-wrapper {
+    padding: 2rem 0;
+}
+
+/* HEADER */
+.govuk-header {
+    border-bottom: 0;
+}
+.govuk-header__container {
+    border-bottom: 0;
+    margin-bottom: 0;
+    padding-bottom: 0.625rem;
+    padding-top: 0.5rem;
+}
+.govuk-header__logo {
+    display: none;
+}
+.govuk-header__content {
+    padding-left: 0;
+    width: 100%;
+}
+.iai-header__service-name-container {
+    align-items: center;
+    display: flex;
+    gap: 0.75rem;
+}
+.govuk-header__service-name {
+    margin-bottom: 0;
+}
+.govuk-header__navigation {
+    margin-bottom: 0;
+}
+.govuk-header__navigation-list {
+    margin-top: 0.75rem;
+}
+@media (min-width: 769px) {
+    .govuk-header__content {
+        align-items: center;
+        display: flex;
+        justify-content: space-between;
+    }
+    .govuk-header__navigation-list {
+        margin-top: 0;
+    }
+}
+
+/* BUTTON */
+.govuk-button {
+    border: 0;
+    border-radius: var(--border-radius);
+    box-shadow: none;
+    padding: 13px 12px 12px 12px;
+}
+
+/* FOOTER */
+.govuk-footer {
+    padding-top: 1.75rem;
+}
+.govuk-footer__meta-item {
+    margin-bottom: 0;
+}
+.govuk-footer__copyright-logo {
+    background-image: none;
+    padding-top: 0.5rem;
+}
+.govuk-footer__copyright-logo img {
+    filter: grayscale(1);
+    height: 5.25rem;
+    width: 7rem;
+}
+
+/* LINKS */
+.govuk-link:visited {
+    color: inherit;
+}
+
+/* NOTIFICATION BANNER */
+.govuk-notification-banner {
+    border-radius: var(--border-radius);
+}
+.govuk-notification-banner__content {
+    border-bottom-right-radius: var(--border-radius);
+    border-bottom-left-radius: var(--border-radius);
+}
+
+/* PHASE BANNER */
+.govuk-phase-banner__content__tag {
+    background-color: var(--product-colour);
+    font-weight: 700;
+    margin-top: -4px;
+    padding-top: 4px;
+    text-transform: uppercase;
+}
+
+/* INPUT, TEXTAREA */
+.govuk-input, .govuk-textarea {
+    border-radius: var(--border-radius);
+}
