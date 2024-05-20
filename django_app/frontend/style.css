@@ -7454,10 +7454,10 @@
 }
 
 /* Documents page */
+/* Use this if more than one button in Actions
 .iai-docs__actions .govuk-button {
   width: 100%;
 }
-
 @media (min-width: 1024px) {
   .iai-docs__actions {
     width: 13.25rem;
@@ -7466,6 +7466,7 @@
     width: auto;
   }
 }
+*/
 /* File upload */
 .iai-file-types {
   font-size: 0.875rem;
