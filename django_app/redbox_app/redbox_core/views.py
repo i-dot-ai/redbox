@@ -156,7 +156,6 @@ def remove_doc_view(request, doc_id: uuid):
             core_api.delete_file(file.core_file_uuid, request.user)
         except HTTPError as e:
             logger.error("Error deleting file object %s.", file, exc_info=e)
-            file.delete()
             errors.append("failed to connect to core-api")
 
         else:
