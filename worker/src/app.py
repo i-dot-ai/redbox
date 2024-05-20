@@ -21,7 +21,7 @@ env = Settings()
 
 broker = RedisBroker(url=env.redis_url)
 
-publisher = broker.publisher(env.embed_queue_name)
+publisher = broker.publisher(list=env.embed_queue_name)
 
 
 @asynccontextmanager
@@ -36,7 +36,7 @@ async def lifespan(context: ContextRepo):
     yield
 
 
-@broker.subscriber(channel=env.ingest_queue_name)
+@broker.subscriber(list=env.ingest_queue_name)
 async def ingest(
     file: File,
     storage_handler: ElasticsearchStorageHandler = Context(),
@@ -65,7 +65,7 @@ async def ingest(
     return items
 
 
-@broker.subscriber(channel=env.embed_queue_name)
+@broker.subscriber(list=env.embed_queue_name)
 async def embed(
     queue_item: EmbedQueueItem,
     storage_handler: ElasticsearchStorageHandler = Context(),
@@ -83,6 +83,8 @@ async def embed(
         return
     chunk.embedding = embedded_sentences.data[0].embedding
     storage_handler.update_item(chunk)
+
+    logging.info("embedded: %s", chunk.uuid)
 
 
 app = FastStream(broker=broker, lifespan=lifespan)
