@@ -7,7 +7,7 @@ reqs:
 	poetry install
 
 run:
-	docker compose up -d elasticsearch kibana worker minio redis core-api db django-app
+	docker compose up -d elasticsearch kibana worker minio redis core-api
 
 stop:
 	docker compose down
@@ -33,10 +33,6 @@ test-worker:
 	poetry install --no-root --no-ansi --with worker,dev --without ai,api
 	poetry run pytest worker/tests --cov=worker -v --cov-report=term-missing --cov-fail-under=40
 
-test-django:
-	docker compose up -d --wait db minio
-	docker compose run django-app venv/bin/pytest tests/ --ds redbox_app.settings -v --cov=redbox_app.redbox_core --cov-fail-under 60 -o log_cli=true
-
 test-integration:
 	docker compose down
 	cp .env .env.backup
@@ -48,9 +44,6 @@ test-integration:
 	poetry run pytest tests
 	cp .env.backup .env
 	rm .env.backup
-
-collect-static:
-	docker compose run django-app venv/bin/django-admin collectstatic --noinput
 
 lint:
 	poetry run ruff format . --check
@@ -68,16 +61,6 @@ safe:
 
 checktypes:
 	poetry run mypy redbox worker --ignore-missing-imports
-
-check-migrations:
-	docker compose build django-app
-	docker compose up -d --wait db minio
-	docker compose run django-app venv/bin/django-admin migrate
-	docker compose run django-app venv/bin/django-admin makemigrations --check
-
-reset-db:
-	docker compose down db --volumes
-	docker compose up -d db
 
 docs-serve:
 	poetry run mkdocs serve

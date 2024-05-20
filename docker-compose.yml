@@ -1,37 +1,4 @@
 services:
-  django-app:
-    image: django-app:latest
-    build:
-      context: .
-      dockerfile: ./django_app/Dockerfile
-    depends_on:
-      - db
-      - minio
-    networks:
-      - redbox-app-network
-    env_file:
-      - .env
-    volumes:
-      - /app/django_app/frontend/node_modules
-      - ./django_app:/app/django_app/
-    ports:
-      - "8090:8090"
-  db:
-    image: postgres:13
-    env_file:
-      - .env
-    volumes:
-      - local_postgres_data:/var/lib/postgresql/data:Z
-    networks:
-      - redbox-app-network
-    ports:
-      - "5432:5432"
-  requirements:
-    image: python:3.11
-    profiles:
-      - utils
-    volumes:
-      - ./:/app/:z
   # mlflow:
   #   image: mlflow_server
   #   build:
