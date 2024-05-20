@@ -49,12 +49,14 @@
                 {% endif %}
               </td>
               <td class="govuk-table__cell iai-docs__actions">
+                {# Removed for now until we've validated a user need for this
                 {{ govukButton(
                   text="Download" + "<span class=\"govuk-visually-hidden\">" + file.name + "</span>",
                   href=file.url,
                   classes="govuk-button--secondary govuk-!-margin-bottom-0",
                   download=True
                 ) }}
+                #}
                 {{ govukButton(
                   text="Remove" + "<span class=\"govuk-visually-hidden\">" + file.name + "</span>",
                   href=url('remove-doc', file.id),
