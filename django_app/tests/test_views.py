@@ -177,6 +177,49 @@ def test_upload_view_no_file(alice, client):
 
 
 @pytest.mark.django_db
+def test_remove_doc_view(client: Client, alice: User, file_pdf_path: str, s3_client: Client, requests_mock: Mocker):
+    file_name = file_pdf_path.split("/")[-1]
+
+    client.force_login(alice)
+    # we begin by removing any file in minio that has this key
+    s3_client.delete_object(Bucket=settings.BUCKET_NAME, Key=file_name.replace(" ", "_"))
+
+    previous_count = count_s3_objects(s3_client)
+
+    mocked_response = {
+        "key": file_name,
+        "bucket": settings.BUCKET_NAME,
+        "uuid": str(uuid.uuid4()),
+    }
+    requests_mock.post(
+        f"http://{settings.CORE_API_HOST}:{settings.CORE_API_PORT}/file",
+        status_code=201,
+        json=mocked_response,
+    )
+
+    with open(file_pdf_path, "rb") as f:
+        # create file before testing deletion
+        client.post("/upload/", {"uploadDoc": f})
+        assert file_exists(s3_client, file_name)
+        assert count_s3_objects(s3_client) == previous_count + 1
+
+        new_file = File.objects.filter(user=alice).order_by("-created_at")[0]
+        requests_mock.delete(
+            f"http://{settings.CORE_API_HOST}:{settings.CORE_API_PORT}/file/{new_file.core_file_uuid}",
+            status_code=201,
+            json=mocked_response,
+        )
+
+        client.post(f"/remove-doc/{new_file.id}", {"doc_id": new_file.id})
+        assert not file_exists(s3_client, file_name)
+        assert count_s3_objects(s3_client) == previous_count
+        assert requests_mock.request_history[-1].method == "DELETE"
+
+        with pytest.raises(File.DoesNotExist):
+            File.objects.get(id=new_file.id)
+
+
+@pytest.mark.django_db
 def test_post_message_to_new_session(alice: User, client: Client, requests_mock: Mocker):
     # Given
     client.force_login(alice)
