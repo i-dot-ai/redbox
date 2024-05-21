@@ -7,7 +7,7 @@ from redbox_app.redbox_core.models import File, ProcessingStatusEnum
 
 
 @pytest.mark.django_db
-def test_file_model_expiry_date(peter_rabbit):
+def test_file_model_expiry_date(peter_rabbit, s3_client):
     mock_file = SimpleUploadedFile("test.txt", b"these are the file contents")
 
     new_file = File.objects.create(
