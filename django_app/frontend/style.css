@@ -7413,6 +7413,11 @@
 
 
 
+body {
+  background-color: white;
+  margin: 0;
+}
+
 /* All pages */
 .iai-classification-banner {
   background-color: #2b71c7;
@@ -7454,10 +7459,10 @@
 }
 
 /* Documents page */
+/* Use this if more than one button in Actions
 .iai-docs__actions .govuk-button {
   width: 100%;
 }
-
 @media (min-width: 1024px) {
   .iai-docs__actions {
     width: 13.25rem;
@@ -7466,15 +7471,31 @@
     width: auto;
   }
 }
+.iai-docs__status {
+  margin-top: 2px;
+}
+
+
 /* File upload */
 .iai-file-types {
   font-size: 0.875rem;
 }
 
 /* Chat page */
+.iai-chat-message__container {
+  margin-top: -1rem;
+}
+
 .iai-chat-message {
-  background-color: #b1b4b6;
+  background-color: #f3f2f1;
+  border: 1px solid #b1b4b6;
+  border-radius: var(--border-radius);
+  margin-bottom: 0.75rem;
   padding: 1rem;
+}
+
+.iai-chat-message:focus {
+  outline: 2px solid;
 }
 
 .iai-chat-message--ai {
@@ -7514,10 +7535,30 @@
   text-align: left;
 }
 
+.iai-new-message textarea {
+  margin-bottom: 0.5rem;
+}
+
+.iai-new-message .govuk-form-group {
+  margin: 0;
+  width: 100%;
+}
+
+@media (min-width: 769px) {
+  .iai-new-message {
+    align-items: flex-end;
+    display: flex;
+    gap: 0.5rem;
+  }
+  .iai-new-message textarea, .iai-new-message button {
+    height: 4rem;
+    margin: 0;
+  }
+}
 .iai-response-feedback {
   display: none;
   position: relative;
-  top: -0.75rem;
+  top: -0.5rem;
 }
 
 /* only show response feedback for last AI message */
@@ -7562,16 +7603,147 @@
 }
 
 /* Only show feedback when correct buttons pressed */
-.iai-chat-message--feedback-thumbs-up, .iai-chat-message--feedback-thumbs-down {
+.iai-response-feedback__thumbs-up, .iai-response-feedback__thumbs-down {
   display: none;
 }
 
-.iai-response-feedback__buttons[data-status=up] ~ .iai-chat-message--feedback-thumbs-up {
+.iai-response-feedback__buttons[data-status=up] ~ .iai-response-feedback__thumbs-up {
   display: block;
 }
 
-.iai-response-feedback__buttons[data-status=down] ~ .iai-chat-message--feedback-thumbs-down {
+.iai-response-feedback__buttons[data-status=down] ~ .iai-response-feedback__thumbs-down {
   display: block;
+}
+
+.iai-response-loading {
+  align-items: center;
+  display: flex;
+  padding: 0.5rem 0;
+  visibility: hidden;
+}
+
+.iai-response-loading:focus-visible {
+  outline: 1px solid;
+}
+
+.iai-response-loading__spinner {
+  width: 1.5rem;
+}
+
+/* GENERAL */
+:root {
+  --product-colour: #A50202;
+  --border-radius: 0.25rem;
+}
+
+.govuk-main-wrapper {
+  padding: 2rem 0;
+}
+
+/* HEADER */
+.govuk-header {
+  border-bottom: 0;
+}
+
+.govuk-header__container {
+  border-bottom: 0;
+  margin-bottom: 0;
+  padding-bottom: 0.625rem;
+  padding-top: 0.5rem;
+}
+
+.govuk-header__logo {
+  display: none;
+}
+
+.govuk-header__content {
+  padding-left: 0;
+  width: 100%;
+}
+
+.iai-header__service-name-container {
+  align-items: center;
+  display: flex;
+  gap: 0.75rem;
+}
+
+.govuk-header__service-name {
+  margin-bottom: 0;
+}
+
+.govuk-header__navigation {
+  margin-bottom: 0;
+}
+
+.govuk-header__navigation-list {
+  margin-top: 0.75rem;
+}
+
+@media (min-width: 769px) {
+  .govuk-header__content {
+    align-items: center;
+    display: flex;
+    justify-content: space-between;
+  }
+  .govuk-header__navigation-list {
+    margin-top: 0;
+  }
+}
+/* BUTTON */
+.govuk-button {
+  border: 0;
+  border-radius: var(--border-radius);
+  box-shadow: none;
+  padding: 13px 12px 12px 12px;
+}
+
+/* FOOTER */
+.govuk-footer {
+  padding-top: 1.75rem;
+}
+
+.govuk-footer__meta-item {
+  margin-bottom: 0;
+}
+
+.govuk-footer__copyright-logo {
+  background-image: none;
+  padding-top: 0.5rem;
+}
+
+.govuk-footer__copyright-logo img {
+  filter: grayscale(1);
+  height: 5.25rem;
+  width: 7rem;
+}
+
+/* LINKS */
+.govuk-link:visited {
+  color: inherit;
+}
+
+/* NOTIFICATION BANNER */
+.govuk-notification-banner {
+  border-radius: var(--border-radius);
+}
+
+.govuk-notification-banner__content {
+  border-bottom-right-radius: var(--border-radius);
+  border-bottom-left-radius: var(--border-radius);
+}
+
+/* PHASE BANNER */
+.govuk-phase-banner__content__tag {
+  background-color: var(--product-colour);
+  font-weight: 700;
+  margin-top: -4px;
+  padding-top: 4px;
+  text-transform: uppercase;
+}
+
+/* INPUT, TEXTAREA */
+.govuk-input, .govuk-textarea {
+  border-radius: var(--border-radius);
 }
 
 /*# sourceMappingURL=style.css.map */

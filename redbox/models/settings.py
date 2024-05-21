@@ -32,6 +32,8 @@ class Settings(BaseSettings):
     anthropic_api_key: Optional[str] = None
     openai_api_key: str
 
+    partition_strategy: Literal["auto", "fast", "ocr_only", "hi_res"] = "fast"
+
     elastic: ElasticCloudSettings | ElasticLocalSettings = ElasticLocalSettings()
 
     kibana_system_password: str = "redboxpass"

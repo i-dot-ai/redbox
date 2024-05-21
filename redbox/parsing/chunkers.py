@@ -24,7 +24,7 @@ def other_chunker(file: File) -> list[Chunk]:
         ExpiresIn=3600,
     )
 
-    elements = partition(url=authenticated_s3_url)
+    elements = partition(url=authenticated_s3_url, strategy=env.partition_strategy)
     raw_chunks = chunk_by_title(elements=elements)
 
     chunks = [
