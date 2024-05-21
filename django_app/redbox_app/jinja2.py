@@ -3,6 +3,7 @@ import datetime
 import humanize
 import jinja2
 from compressor.contrib.jinja2ext import CompressorExtension
+from django.conf import settings
 from django.templatetags.static import static
 from django.urls import reverse
 from markdown_it import MarkdownIt
@@ -56,11 +57,20 @@ def environment(**options):
             **extra_options,
         },
     )
+    env.filters.update(
+        {
+            "static": static,
+            "url": url,
+            "humanize_timedelta": humanize_timedelta,
+            "environment": settings.ENVIRONMENT,
+        }
+    )
     env.globals.update(
         {
             "static": static,
             "url": url,
             "humanize_timedelta": humanize_timedelta,
+            "environment": settings.ENVIRONMENT,
         }
     )
     return env

@@ -23,25 +23,13 @@
   {% endif %}
 
 
-  {% if ENVIRONMENT == "LOCAL" %}
-    <script defer 
-    event-environment="LOCAL"
+  {% if environment | lower in ["dev", "preprod"] %}
+    <script defer
+    event-environment="{{environment}}"
     data-domain="redbox-dev.ai.cabinetoffice.gov.uk" src="https://plausible.io/js/script.pageview-props.tagged-events.outbound-links.file-downloads.local.js"></script>
-
-  {% elif ENVIRONMENT == "DEV"%}
-    <script defer 
-    event-environment="DEV"
-    data-domain="redbox-dev.ai.cabinetoffice.gov.uk" src="https://plausible.io/js/script.pageview-props.tagged-events.outbound-links.file-downloads.js"></script>
-
-  {% elif ENVIRONMENT == "PREPROD"%}
-    <script defer 
-    event-environment="PREPROD"
-    data-domain="redbox-dev.ai.cabinetoffice.gov.uk" src="https://plausible.io/js/script.pageview-props.tagged-events.outbound-links.file-downloads.js"></script>
-
-  {% elif ENVIRONMENT == "PROD"%}
-    <script defer 
+  {% elif environment | lower == "prod" %}
+    <script defer
     data-domain="redbox.ai.cabinetoffice.gov.uk" src="https://plausible.io/js/script.pageview-props.tagged-events.outbound-links.file-downloads.js"></script>
-
   {% endif %}
 
   <script type="module" src="{{static('js/libs/govuk-frontend.min.js')}}"></script>
