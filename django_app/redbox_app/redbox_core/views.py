@@ -171,15 +171,15 @@ def remove_doc_view(request, doc_id: uuid):
 
 
 @login_required
-def sessions_view(request: HttpRequest, session_id: uuid = None):
+def chats_view(request: HttpRequest, chat_id: uuid = None):
     chat_history = ChatHistory.objects.filter(users=request.user).order_by("-created_at")
 
     messages = []
-    if session_id:
-        messages = ChatMessage.objects.filter(chat_history__id=session_id)
+    if chat_id:
+        messages = ChatMessage.objects.filter(chat_history__id=chat_id)
     endpoint = URL.build(scheme="ws", host=request.get_host(), path=r"/ws/chat/")
     context = {
-        "session_id": session_id,
+        "chat_id": chat_id,
         "messages": messages,
         "chat_history": chat_history,
         "streaming": {"in_use": settings.USE_STREAMING, "endpoint": str(endpoint)},
@@ -187,7 +187,7 @@ def sessions_view(request: HttpRequest, session_id: uuid = None):
 
     return render(
         request,
-        template_name="sessions.html",
+        template_name="chats.html",
         context=context,
     )
 
@@ -222,7 +222,7 @@ def post_message(request: HttpRequest) -> HttpResponse:
     files: list[File] = File.objects.filter(core_file_uuid__in=doc_uuids, user=request.user)
     llm_message.source_files.set(files)
 
-    return redirect(reverse(sessions_view, args=(session.id,)))
+    return redirect(reverse(chats_view, args=(session.id,)))
 
 
 @require_http_methods(["GET"])
