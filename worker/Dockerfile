@@ -32,6 +32,9 @@ ADD worker/ /app/worker
 ADD download_embedder.py /app/
 ADD worker/download_ocr_models.py /app/
 
+ADD worker/health.sh /app/
+RUN chmod +x /app/health.sh
+
 # Download the model
 RUN python download_embedder.py --embedding_model ${EMBEDDING_MODEL}
 
@@ -44,4 +47,4 @@ RUN python -m nltk.downloader averaged_perceptron_tagger
 # Download the OCR models
 RUN python download_ocr_models.py
 
-CMD ["uvicorn", "worker.src.app:app", "--host", "0.0.0.0", "--port", "5000"]
+CMD ["faststream", "run", "worker.src.app:app", "--workers", "3"]

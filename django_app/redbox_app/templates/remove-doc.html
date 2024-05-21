@@ -2,6 +2,7 @@
 
 {% extends "base.html" %}
 {% from "macros/govuk-button.html" import govukButton %}
+{% from "macros/govuk-error-summary.html" import govukErrorSummary %}
 
 {% block content %}
 
@@ -17,6 +18,8 @@
     <input type="hidden" name="doc_id" value="{{ doc_id }}">
 
     <h1 class="govuk-heading-m">Are you sure you want to remove this document?</h1>
+
+    {{ govukErrorSummary(error_list=errors) }}
 
     <dl class="govuk-summary-list">
       <div class="govuk-summary-list__row">

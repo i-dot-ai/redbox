@@ -44,6 +44,8 @@
 
   {% endif %}
 
+  <script type="module" src="{{static('js/libs/govuk-frontend.min.js')}}"></script>
+
 </head>
 
 <body class="govuk-template__body">
@@ -70,9 +72,14 @@
         </a>
       </div>
       <div class="govuk-header__content">
-        <a href="{{url('homepage')}}" class="govuk-header__link govuk-header__service-name">
-          Redbox Copilot
-        </a>
+        <div class="iai-header__service-name-container">
+          <a href="{{url('homepage')}}" class="govuk-header__link govuk-header__service-name">
+            Redbox Copilot
+          </a>
+          <strong class="govuk-tag govuk-phase-banner__content__tag">
+            Beta
+          </strong>
+        </div>
         <nav aria-label="Menu" class="govuk-header__navigation">
           <button type="button" class="govuk-header__menu-button govuk-js-header-toggle" aria-controls="navigation" hidden>
             Menu
@@ -103,6 +110,7 @@
 
 
   {# Phase banner #}
+  {#
   <div class="govuk-width-container">
     <div class="govuk-phase-banner">
       <p class="govuk-phase-banner__content">
@@ -115,6 +123,7 @@
       </p>
     </div>
   </div>
+  #}
 
   <main class="govuk-main-wrapper" id="main-content" role="main">
     {% block content %}
@@ -145,7 +154,7 @@
             </li>
           </ul>
           <div class="govuk-footer__meta-custom">
-            Built by <a href="https://ai.gov.uk" class="govuk-footer__link">i.AI</a>
+            This is a new service – your <a class="govuk-link" href="#feedback">feedback</a> will help us to improve it.
           </div>
           <svg
             aria-hidden="true"
@@ -168,10 +177,8 @@
           </span>
         </div>
         <div class="govuk-footer__meta-item">
-          <a
-            class="govuk-footer__link govuk-footer__copyright-logo"
-            href="https://www.nationalarchives.gov.uk/information-management/re-using-public-sector-information/uk-government-licensing-framework/crown-copyright/">
-            © Crown copyright
+          <a class="govuk-footer__link govuk-footer__copyright-logo" href="https://ai.gov.uk">
+            <img src="{{ static('images/iai-logo.svg') }}" alt="Incubator for Artificial Intelligence" loading="lazy"/>
           </a>
         </div>
       </div>

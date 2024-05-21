@@ -9,10 +9,8 @@ from django.core.files.uploadedfile import UploadedFile
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse
+from django.utils.datastructures import MultiValueDictKeyError
 from django.views.decorators.http import require_http_methods
-from requests.exceptions import HTTPError
-from yarl import URL
-
 from redbox_app.redbox_core.client import CoreApiClient
 from redbox_app.redbox_core.models import (
     ChatHistory,
@@ -22,8 +20,11 @@ from redbox_app.redbox_core.models import (
     ProcessingStatusEnum,
     User,
 )
+from requests.exceptions import HTTPError
+from yarl import URL
 
 logger = logging.getLogger(__name__)
+core_api = CoreApiClient(host=settings.CORE_API_HOST, port=settings.CORE_API_PORT)
 
 CHUNK_SIZE = 1024
 # move this somewhere
@@ -64,7 +65,7 @@ def homepage_view(request):
 
 @login_required
 def documents_view(request):
-    files = File.objects.filter(user=request.user)
+    files = File.objects.filter(user=request.user).order_by("original_file")
 
     return render(
         request,
@@ -84,20 +85,23 @@ def get_file_extension(file):
 def upload_view(request):
     errors = []
 
-    if request.method == "POST" and request.FILES["uploadDoc"]:
+    if request.method == "POST":
         # https://django-storages.readthedocs.io/en/1.13.2/backends/amazon-S3.html
-        uploaded_file = request.FILES["uploadDoc"]
+        try:
+            uploaded_file = request.FILES["uploadDoc"]
 
-        file_extension = get_file_extension(uploaded_file)
+            file_extension = get_file_extension(uploaded_file)
 
-        if uploaded_file.name is None:
-            errors.append("File has no name")
-        if uploaded_file.content_type is None:
-            errors.append("File has no content-type")
-        if uploaded_file.size > MAX_FILE_SIZE:
-            errors.append("File is larger than 200MB")
-        if file_extension not in APPROVED_FILE_EXTENSIONS:
-            errors.append(f"File type {file_extension} not supported")
+            if uploaded_file.name is None:
+                errors.append("File has no name")
+            if uploaded_file.content_type is None:
+                errors.append("File has no content-type")
+            if uploaded_file.size > MAX_FILE_SIZE:
+                errors.append("File is larger than 200MB")
+            if file_extension not in APPROVED_FILE_EXTENSIONS:
+                errors.append(f"File type {file_extension} not supported")
+        except MultiValueDictKeyError:
+            errors.append("No document selected")
 
         if not errors:
             errors += ingest_file(uploaded_file, request.user)
@@ -118,7 +122,6 @@ def upload_view(request):
 
 def ingest_file(uploaded_file: UploadedFile, user: User) -> list[str]:
     errors: list[str] = []
-    api = CoreApiClient(host=settings.CORE_API_HOST, port=settings.CORE_API_PORT)
     try:
         file = File.objects.create(
             processing_status=ProcessingStatusEnum.uploaded.value,
@@ -132,7 +135,7 @@ def ingest_file(uploaded_file: UploadedFile, user: User) -> list[str]:
         errors.append(e.args[0])
     else:
         try:
-            upload_file_response = api.upload_file(file.unique_name, user)
+            upload_file_response = core_api.upload_file(file.unique_name, user)
         except HTTPError as e:
             logger.error("Error uploading file object %s.", file, exc_info=e)
             file.delete()
@@ -146,20 +149,30 @@ def ingest_file(uploaded_file: UploadedFile, user: User) -> list[str]:
 @login_required
 def remove_doc_view(request, doc_id: uuid):
     file = File.objects.get(pk=doc_id)
+    errors: list[str] = []
+
     if request.method == "POST":
-        logger.info("Removing document: %s", request.POST["doc_id"])
-        file.delete()
-        return redirect("documents")
+        try:
+            core_api.delete_file(file.core_file_uuid, request.user)
+        except HTTPError as e:
+            logger.error("Error deleting file object %s.", file, exc_info=e)
+            errors.append("There was an error deleting this file")
+
+        else:
+            logger.info("Removing document: %s", request.POST["doc_id"])
+            file.delete()
+            return redirect("documents")
+
     return render(
         request,
         template_name="remove-doc.html",
-        context={"request": request, "doc_id": doc_id, "doc_name": file.name},
+        context={"request": request, "doc_id": doc_id, "doc_name": file.name, "errors": errors},
     )
 
 
 @login_required
 def sessions_view(request: HttpRequest, session_id: uuid = None):
-    chat_history = ChatHistory.objects.all().filter(users=request.user)
+    chat_history = ChatHistory.objects.filter(users=request.user).order_by("-created_at")
 
     messages = []
     if session_id:
@@ -200,7 +213,6 @@ def post_message(request: HttpRequest) -> HttpResponse:
         {"role": message.role, "text": message.text}
         for message in ChatMessage.objects.all().filter(chat_history=session)
     ]
-    core_api = CoreApiClient(host=settings.CORE_API_HOST, port=settings.CORE_API_PORT)
     response_data = core_api.rag_chat(message_history, request.user)
 
     llm_message = ChatMessage(chat_history=session, text=response_data.output_text, role=ChatRoleEnum.ai)
@@ -225,7 +237,6 @@ def file_status_api_view(request: HttpRequest) -> JsonResponse:
     except File.DoesNotExist as ex:
         logger.error("File object information not found in django - file does not exist %s.", file_id, exc_info=ex)
         return JsonResponse({"status": ProcessingStatusEnum.unknown.label})
-    core_api = CoreApiClient(host=settings.CORE_API_HOST, port=settings.CORE_API_PORT)
     try:
         core_file_status_response = core_api.get_file_status(file_id=file.core_file_uuid, user=request.user)
     except HTTPError as ex:
