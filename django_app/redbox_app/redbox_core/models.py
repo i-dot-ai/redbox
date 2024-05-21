@@ -1,4 +1,5 @@
 import uuid
+from datetime import timedelta
 
 import boto3
 from botocore.config import Config
@@ -64,6 +65,7 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     original_file_name = models.TextField(max_length=2048, blank=True, null=True)
     core_file_uuid = models.UUIDField(null=True)
+    expiry_date = models.DateTimeField(blank=True, null=True)
 
     def __str__(self) -> str:  # pragma: no cover
         return f"{self.original_file_name} {self.user}"
@@ -72,6 +74,12 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
         #  Needed to make sure no orphaned files remain in the storage
         self.original_file.storage.delete(self.original_file.name)
         super().delete()
+
+    def save(self, *args, **kwargs):
+        #  Needed to populate the initial expiry date for existing Files
+        if not self.expiry_date:
+            self.expiry_date = self.created_at + timedelta(seconds=settings.FILE_EXPIRY_IN_SECONDS)
+        super().save(*args, **kwargs)
 
     @property
     def file_type(self) -> str:
