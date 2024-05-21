@@ -33,6 +33,7 @@
         <thead class="govuk-table__head">
           <tr class="govuk-table__row">
             <th scope="col" class="govuk-table__header">File Name</th>
+            <th scope="col" class="govuk-table__header">Uploaded at</th>
             <th scope="col" class="govuk-table__header">Status</th>
             <th scope="col" class="govuk-table__header iai-doclist__actions">Actions</th>
           </tr>
@@ -41,6 +42,7 @@
           {% for file in files %}
             <tr class="govuk-table__row">
               <td class="govuk-table__cell govuk-!-padding-top-3">{{file.name}}</td>
+              <td class="govuk-table__cell govuk-!-padding-top-3">{{ file.created_at | to_user_timezone }}</td>
               <td class="govuk-table__cell govuk-!-padding-top-3">
                 {% if file.get_processing_status_text() | lower == 'complete' %}
                   <strong class="govuk-tag govuk-tag--green iai-docs__status">{{file.get_processing_status_text()}}</strong>
