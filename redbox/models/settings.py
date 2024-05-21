@@ -30,7 +30,7 @@ class Settings(BaseSettings):
     """Settings for the redbox application."""
 
     anthropic_api_key: Optional[str] = None
-    openai_api_key: str
+    openai_api_key: Optional[str] = None
 
     partition_strategy: Literal["auto", "fast", "ocr_only", "hi_res"] = "fast"
 
