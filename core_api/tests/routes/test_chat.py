@@ -3,6 +3,7 @@ import json
 import pytest
 from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_core.prompt_values import ChatPromptValue
+from starlette.websockets import WebSocketDisconnect
 
 system_chat = {"text": "test", "role": "system"}
 user_chat = {"text": "test", "role": "user"}
@@ -45,11 +46,28 @@ def test_simple_chat(chat_history, status_code, app_client, monkeypatch, headers
 
 def test_rag_chat_streamed(app_client, headers):
     with app_client.websocket_connect("/chat/rag", headers=headers) as websocket:
-        websocket.send_text(json.dumps({"message_history": [{"text": "Are you there?", "role": "user"}]}))
-        data_1 = websocket.receive_json()
-        assert data_1["resource_type"] == "documents"
-        data_2 = websocket.receive_json()
-        assert data_2["resource_type"] == "end"
+        websocket.send_text(
+            json.dumps(
+                {
+                    "message_history": [
+                        {"text": "What can I do for you?", "role": "system"},
+                        {"text": "Who is Jeroen Janssens?", "role": "user"},
+                    ]
+                }
+            )
+        )
+        all_text, docs = [], []
+        while True:
+            try:
+                actual = websocket.receive_json()
+                if actual["resource_type"] == "text":
+                    all_text.append(actual["data"])
+                if actual["resource_type"] == "documents":
+                    docs.append(actual["data"])
+            except WebSocketDisconnect:
+                break
+        text = "".join(all_text)
+        assert "Jeroen Janssens" in text
 
 
 @pytest.mark.parametrize(

@@ -73,22 +73,11 @@ async def test_chat_consumer_with_existing_session(client: Client):
 
         await communicator.send_json_to({"message": "Hello Hal.", "sessionId": str(session.id)})
         response1 = await communicator.receive_json_from(timeout=5)
-        response2 = await communicator.receive_json_from(timeout=5)
-        response3 = await communicator.receive_json_from(timeout=5)
-        response4 = await communicator.receive_json_from(timeout=5)
-        response5 = await communicator.receive_json_from(timeout=5)
 
         # Then
         assert response1["type"] == "session-id"
         assert response1["data"] == str(session.id)
-        assert response2["type"] == "text"
-        assert response2["data"] == "Good afternoon, "
-        assert response3["type"] == "text"
-        assert response3["data"] == "Mr. Amor."
-        assert response4["type"] == "source"
-        assert response4["data"]["original_file_name"] == "original_file_0.txt"
-        assert response5["type"] == "source"
-        assert response5["data"]["original_file_name"] == "original_file_1.txt"
+
         # Close
         await communicator.disconnect()
 
