@@ -1,0 +1,18 @@
+{% macro govukErrorSummary(title="There is a problem", error_list=None, heading_level=2) %}
+{% if error_list %}
+  <div class="govuk-error-summary" data-module="govuk-error-summary">
+    <div role="alert">
+      <h{{ heading_level }} class="govuk-error-summary__title">
+        {{ title }}
+      </h{{ heading_level }}>
+      <div class="govuk-error-summary__body">
+        <ul class="govuk-list govuk-error-summary__list">
+          {% for error in error_list %}
+            <li>{{error}}</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  </div>
+{% endif %}
+{% endmacro %}

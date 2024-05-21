@@ -5,6 +5,7 @@ from datetime import datetime
 
 import pytest
 import pytz
+from django.core.files.uploadedfile import SimpleUploadedFile, UploadedFile
 from django.core.management import call_command
 from redbox_app.redbox_core import client
 from redbox_app.redbox_core.models import ChatHistory, ChatMessage, ChatRoleEnum, File, User
@@ -105,6 +106,13 @@ def chat_message(chat_history: ChatHistory, uploaded_file: File) -> ChatMessage:
 
 
 @pytest.fixture
-def uploaded_file(alice: User) -> File:
-    file = File.objects.create(user=alice, original_file_name="uploaded_file.pdf", core_file_uuid=uuid.uuid4())
+def uploaded_file(alice: User, original_file: UploadedFile) -> File:
+    file = File.objects.create(
+        user=alice, original_file=original_file, original_file_name=original_file.name, core_file_uuid=uuid.uuid4()
+    )
     return file
+
+
+@pytest.fixture
+def original_file() -> UploadedFile:
+    return SimpleUploadedFile("original_file.txt", b"Lorem Ipsum.")
