@@ -90,7 +90,7 @@ class ChatMessage extends HTMLElement {
             }
 
             if (message.type === 'text') {
-                streamedContent += event.data;
+                streamedContent += message.data;
                 responseContainer.update(streamedContent);
             } else if (message.type === 'session-id') {
                 chatControllerRef.dataset.sessionId = message.data;
