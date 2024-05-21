@@ -42,7 +42,7 @@
             <tr class="govuk-table__row">
               <td class="govuk-table__cell govuk-!-padding-top-3">{{file.name}}</td>
               <td class="govuk-table__cell govuk-!-padding-top-3">
-                {% if file.get_processing_status_text() == 'complete' %}
+                {% if file.get_processing_status_text() | lower == 'complete' %}
                   <strong class="govuk-tag govuk-tag--green iai-docs__status">{{file.get_processing_status_text()}}</strong>
                 {% else %}
                   <strong class="govuk-tag govuk-tag--yellow iai-docs__status" x-data="file-status" data-id="{{file.id}}" x-text="status">{{file.get_processing_status_text()}}</strong>
