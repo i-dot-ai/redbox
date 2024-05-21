@@ -7,7 +7,7 @@ class ChatMessage extends HTMLElement {
             <div class="iai-chat-message iai-chat-message--${this.dataset.role} govuk-body">
                 <div class="iai-chat-message__role">${this.dataset.role?.toUpperCase()}</div>
                 <markdown-converter class="iai-chat-message__text">${this.dataset.text || ''}</markdown-converter>
-                <div class="js-sources></div>
+                <div class="js-sources"></div>
             </div>
         `;
         this.innerHTML = /** @type {any} */ (DOMPurify.sanitize(html, {
