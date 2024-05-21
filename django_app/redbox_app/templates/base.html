@@ -22,6 +22,8 @@
     <link rel="stylesheet" type="text/css" href="{{static('style.css')}}" />
   {% endif %}
 
+  <script type="module" src="{{static('js/libs/govuk-frontend.min.js')}}"></script>
+
 </head>
 
 <body class="govuk-template__body">
@@ -154,7 +156,7 @@
         </div>
         <div class="govuk-footer__meta-item">
           <a class="govuk-footer__link govuk-footer__copyright-logo" href="https://ai.gov.uk">
-            <img src="/static/iai-logo.svg" alt="Incubator for Artificial Intelligence" loading="lazy"/>
+            <img src="{{ static('images/iai-logo.svg') }}" alt="Incubator for Artificial Intelligence" loading="lazy"/>
           </a>
         </div>
       </div>
