@@ -16,3 +16,4 @@ updates:
           - "patch"
     ignore:
       - dependency-name: faststream
+      - dependency-name: torch
