@@ -1,11 +1,9 @@
-import json
 import logging
 from typing import Annotated
 from uuid import UUID
 
 from fastapi import Depends, FastAPI, HTTPException, WebSocket
 from fastapi.encoders import jsonable_encoder
-from fastapi.responses import HTMLResponse
 from langchain.chains.combine_documents import create_stuff_documents_chain
 from langchain.chains.history_aware_retriever import create_history_aware_retriever
 from langchain.chains.llm import LLMChain
@@ -174,41 +172,6 @@ def rag_chat(chat_request: ChatRequest, user_uuid: Annotated[UUID, Depends(get_u
     return ChatResponse(output_text=result["output_text"], source_documents=source_documents)
 
 
-@chat_app.websocket("/rag-stream-old")
-async def websocket_endpoint(websocket: WebSocket):
-    await websocket.accept()
-
-    retrieval_chain = await build_retrieval_chain()
-
-    while True:
-        chat_request = ChatRequest.parse_raw(await websocket.receive_text())
-        chat_history = [
-            HumanMessage(content=x.text) if x.role == "user" else AIMessage(content=x.text)
-            for x in chat_request.message_history[:-1]
-        ]
-        chat = {"chat_history": chat_history, "input": chat_request.message_history[-1].text}
-
-        async for event in retrieval_chain.astream_events(chat, version="v1"):
-            kind = event["event"]
-            if kind == "on_chat_model_stream":
-                message = json.dumps({"resource_type": "text", "data": event["data"]["chunk"].content})
-                await websocket.send_text(message)
-            if kind == "on_chat_model_end":
-                message = json.dumps({"resource_type": "end"})
-                await websocket.send_text(message)
-            elif kind == "on_retriever_end":
-                source_documents = [
-                    SourceDocument(
-                        page_content=document.page_content,
-                        file_uuid=document.metadata.get("parent_doc_uuid"),
-                        page_numbers=document.metadata.get("page_numbers"),
-                    )
-                    for document in event["data"]["output"]["documents"]
-                ]
-                message = json.dumps({"resource_type": "documents", "data": source_documents})
-                await websocket.send_text(message)
-
-
 @chat_app.websocket("/rag-chat-stream")
 async def rag_chat_streamed(websocket: WebSocket):
     await websocket.accept()
@@ -265,71 +228,3 @@ async def build_retrieval_chain():
     )
     document_chain = create_stuff_documents_chain(llm, prompt_get_answer)
     return create_retrieval_chain(retriever_chain, document_chain)
-
-
-html = """
-<!DOCTYPE html>
-<html>
-    <head>
-        <title>Chat</title>
-        <script>
-            var ws = new WebSocket("ws://localhost:5002/chat/rag-stream");
-
-            // Change binary type from "blob" to "arraybuffer"
-            ws.binaryType = "arraybuffer";
-
-            var decoder = new TextDecoder("utf-8");
-
-            // Listen for messages
-            ws.addEventListener("message", (event) => {
-              if (event.data instanceof ArrayBuffer) {
-                document.getElementById('documents').innerHTML =
-                  JSON.stringify(JSON.parse(decoder.decode(event.data)),null,2);
-              } else {
-                var li = document.getElementById("messages").getElementsByTagName("li");
-                li[li.length-1].innerHTML += event.data;
-              }
-            });
-
-            function sendMessage(event) {
-                message_history = [];
-
-                var question = document.getElementById('messageText');
-                var messages = document.getElementById("messages");
-                var li = document.createElement("li");
-                li.innerText = question.value;
-                messages.appendChild(li);
-                var input = messages.getElementsByTagName("li");
-
-                for (var i = 0; i < input.length; i++ ) {
-                    var role = i % 2 == 0? "user": "ai";
-                    message_history.push({"text": input[i].innerText, "role": role});
-                }
-                ws.send(JSON.stringify({"message_history": message_history}));
-
-                question.value = '';
-                messages.appendChild(document.createElement("li"));
-                event.preventDefault();
-            }
-        </script>
-    </head>
-    <body>
-        <h1>WebSocket Chat</h1>
-        <div id='messages'>
-            <li>who is the prime minister</li>
-            <li>Rishi Sunak MP</li>
-        </div>
-        <form action="" onsubmit="sendMessage(event)">
-            <input type="text" id="messageText" placeholder="Enter your next question"  autocomplete="off"/>
-            <button>Send</button>
-        </form>
-        <pre id='documents'>
-        </pre>
-    </body>
-</html>
-"""
-
-
-@chat_app.get("/chit-chat")
-async def get():
-    return HTMLResponse(html)
