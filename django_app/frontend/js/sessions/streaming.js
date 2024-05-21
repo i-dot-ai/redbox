@@ -50,6 +50,12 @@ class ChatMessage extends HTMLElement {
         const html = `
             <div class="iai-chat-message iai-chat-message--${this.dataset.role} govuk-body">
                 <div class="iai-chat-message__role">${this.dataset.role === 'ai' ? 'Redbox' : 'You'}</div>
+                ${!this.dataset.text ?
+                    `<div class="iai-streaming-response-loading js-streaming-response-loading govuk-!-margin-top-1" tabindex="-1">
+                        <img class="iai-streaming-response-loading__spinner" src="/static/images/spinner.gif" alt=""/>
+                        <p class="iai-streaming-response-loading__text govuk-body-s govuk-!-margin-bottom-0 govuk-!-margin-left-1">Response loading...</p>
+                    </div>`
+                : ''}
                 <markdown-converter class="iai-chat-message__text">${this.dataset.text || ''}</markdown-converter>
                 <sources-list></sources-list>
             </div>
@@ -75,6 +81,7 @@ class ChatMessage extends HTMLElement {
 
         let responseContainer = /** @type MarkdownConverter */(this.querySelector('markdown-converter'));
         let sourcesContainer = /** @type SourcesList */(this.querySelector('sources-list'));
+        let responseLoading = /** @type HTMLElement */(this.querySelector('.js-streaming-response-loading'));
         let webSocket = new WebSocket(endPoint);
         let streamedContent = '';
         let sources = [];
@@ -103,6 +110,7 @@ class ChatMessage extends HTMLElement {
             }
 
             if (message.type === 'text') {
+                responseLoading.style.display = 'none';
                 streamedContent += message.data;
                 responseContainer.update(streamedContent);
             } else if (message.type === 'session-id') {

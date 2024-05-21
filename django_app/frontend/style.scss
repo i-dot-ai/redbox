@@ -186,6 +186,12 @@ body {
   display: block;
 }
 
+.iai-streaming-response-loading {
+  align-items: center;
+  display: flex;
+  padding: 0.5rem 0;
+  gap: 0.25rem;
+}
 .iai-response-loading {
   align-items: center;
   display: flex;
@@ -195,7 +201,7 @@ body {
 .iai-response-loading:focus-visible {
   outline: 1px solid;
 }
-.iai-response-loading__spinner {
+.iai-response-loading__spinner, .iai-streaming-response-loading__spinner {
   width: 1.5rem;
 }
 
