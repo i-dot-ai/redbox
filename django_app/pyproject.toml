@@ -28,7 +28,7 @@ django-storages = "^1.14.2"
 boto3 = "^1.34.65"
 urllib3 = "<2.3"
 python-jose = {extras = ["cryptography"], version = "^3.3.0"}
-requests = "^2.31.0"
+requests = "^2.32.0"
 python-dotenv = "^1.0.0"
 yarl = "^1.9.4"
 django-allauth = "^0.61.1"
