@@ -154,8 +154,10 @@ class ChatController extends HTMLElement {
 
             let aiMessage = /** @type {ChatMessage} */ (document.createElement('chat-message'));
             aiMessage.setAttribute('data-role', 'ai');
+            aiMessage.setAttribute('tabindex', '-1');
             messageContainer?.insertBefore(aiMessage, insertPosition);
             aiMessage.stream(userText, this.dataset.sessionId, this.dataset.streamUrl || '', this);
+            aiMessage.focus();
 
             // reset UI 
             if (feedbackButtons) {
