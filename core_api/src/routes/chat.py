@@ -172,7 +172,7 @@ def rag_chat(chat_request: ChatRequest, user_uuid: Annotated[UUID, Depends(get_u
     return ChatResponse(output_text=result["output_text"], source_documents=source_documents)
 
 
-@chat_app.websocket("/rag-chat-stream")
+@chat_app.websocket("/rag")
 async def rag_chat_streamed(websocket: WebSocket):
     await websocket.accept()
 
