@@ -2,10 +2,12 @@ import datetime
 
 import humanize
 import jinja2
+import pytz
 from compressor.contrib.jinja2ext import CompressorExtension
 from django.conf import settings
 from django.templatetags.static import static
 from django.urls import reverse
+from django.utils.timezone import template_localtime
 from markdown_it import MarkdownIt
 
 # `js-default` setting required to sanitize inputs
@@ -47,6 +49,13 @@ def humanize_timedelta(minutes=0, hours_limit=200, too_large_msg=""):
         return humanize.precisedelta(delta, minimum_unit="minutes")
 
 
+def to_user_timezone(value):
+    # Assuming the user's timezone is stored in a variable called 'user_timezone'
+    # Replace 'Europe/London' with the actual timezone string for the user
+    user_tz = pytz.timezone("Europe/London")
+    return value.astimezone(user_tz).strftime("%H:%M %d/%m/%Y")
+
+
 def environment(**options):
     extra_options = {}
     env = jinja2.Environment(  # nosec B701 # noqa S701
@@ -62,6 +71,8 @@ def environment(**options):
             "static": static,
             "url": url,
             "humanize_timedelta": humanize_timedelta,
+            "template_localtime": template_localtime,
+            "to_user_timezone": to_user_timezone,
             "environment": settings.ENVIRONMENT,
             "security": settings.MAX_SECURITY_CLASSIFICATION.value,
         }
@@ -71,6 +82,8 @@ def environment(**options):
             "static": static,
             "url": url,
             "humanize_timedelta": humanize_timedelta,
+            "template_localtime": template_localtime,
+            "to_user_timezone": to_user_timezone,
             "environment": settings.ENVIRONMENT,
             "security": settings.MAX_SECURITY_CLASSIFICATION.value,
         }
