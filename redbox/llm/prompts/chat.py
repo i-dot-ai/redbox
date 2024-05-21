@@ -15,7 +15,7 @@ CONDENSE_QUESTION_PROMPT = PromptTemplate.from_template(_chat_template)
 
 
 _with_sources_template = """Given the following extracted parts of a long document and \
-a question, create a final answer with Sources at the end.  \
+a question, create a final answer.  \
 If you don't know the answer, just say that you don't know. Don't try to make \
 up an answer.
 Be concise in your response and summarise where appropriate.
