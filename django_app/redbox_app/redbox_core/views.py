@@ -1,6 +1,7 @@
 import logging
 import os
 import uuid
+from typing import Optional
 
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
@@ -124,7 +125,6 @@ def ingest_file(uploaded_file: UploadedFile, user: User) -> list[str]:
     errors: list[str] = []
     try:
         file = File.objects.create(
-            processing_status=ProcessingStatusEnum.uploaded.value,
             user=user,
             original_file=uploaded_file,
             original_file_name=uploaded_file.name,
@@ -171,12 +171,10 @@ def remove_doc_view(request, doc_id: uuid):
 
 
 @login_required
-def sessions_view(request: HttpRequest, session_id: uuid = None):
+def sessions_view(request: HttpRequest, session_id: Optional[uuid.UUID] = None):
     chat_history = ChatHistory.objects.filter(users=request.user).order_by("-created_at")
 
-    messages = []
-    if session_id:
-        messages = ChatMessage.objects.filter(chat_history__id=session_id)
+    messages = ChatMessage.objects.filter(chat_history__id=session_id)
     endpoint = URL.build(scheme="ws", host=request.get_host(), path=r"/ws/chat/")
     context = {
         "session_id": session_id,
@@ -241,13 +239,8 @@ def file_status_api_view(request: HttpRequest) -> JsonResponse:
         core_file_status_response = core_api.get_file_status(file_id=file.core_file_uuid, user=request.user)
     except HTTPError as ex:
         logger.error("File object information from core not found - file does not exist %s.", file_id, exc_info=ex)
-        if not file.processing_status:
-            file.processing_status = ProcessingStatusEnum.unknown.label
-            file.save()
-        return JsonResponse({"status": file.processing_status})
-    file.processing_status = core_file_status_response.processing_status
-    file.save()
-    return JsonResponse({"status": file.get_processing_status_text()})
+        return JsonResponse({"status": ProcessingStatusEnum.unknown.label})
+    return JsonResponse({"status": core_file_status_response.processing_status})
 
 
 @require_http_methods(["GET"])

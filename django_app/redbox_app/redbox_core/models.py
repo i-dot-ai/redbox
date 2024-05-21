@@ -59,7 +59,6 @@ class ProcessingStatusEnum(models.TextChoices):
 
 
 class File(UUIDPrimaryKeyBase, TimeStampedModel):
-    processing_status = models.CharField(choices=ProcessingStatusEnum.choices, null=False, blank=False)
     original_file = models.FileField(storage=settings.STORAGES["default"]["BACKEND"])
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     original_file_name = models.TextField(max_length=2048, blank=True, null=True)
@@ -111,12 +110,6 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
     def unique_name(self) -> str:
         # Name used by core-api
         return self.original_file.file.name
-
-    def get_processing_status_text(self) -> str:
-        return next(
-            (status[1] for status in ProcessingStatusEnum.choices if self.processing_status == status[0]),
-            "Unknown",
-        )
 
 
 class ChatHistory(UUIDPrimaryKeyBase, TimeStampedModel):
