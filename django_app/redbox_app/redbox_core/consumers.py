@@ -16,7 +16,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
     async def receive(self, text_data):
         data = json.loads(text_data)
         user_message_text = data.get("message", "")
-        session_id = data.get("data-session-id", None)
+        session_id = data.get("sessionId", None)
         user: User = self.scope.get("user", None)
 
         session = await self.get_session(session_id, user, user_message_text)
