@@ -1,9 +1,11 @@
 import uuid
+from datetime import timedelta
 
 import boto3
 from botocore.config import Config
 from django.conf import settings
 from django.db import models
+from django.utils import timezone
 from django_use_email_as_username.models import BaseUser, BaseUserManager
 from jose import jwt
 from yarl import URL
@@ -64,9 +66,19 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     original_file_name = models.TextField(max_length=2048, blank=True, null=True)
     core_file_uuid = models.UUIDField(null=True)
+    expiry_date = models.DateTimeField(blank=True, null=True)
 
     def __str__(self) -> str:  # pragma: no cover
         return f"{self.original_file_name} {self.user}"
+
+    def save(self, *args, **kwargs):
+        if not self.expiry_date:
+            if self.created_at:
+                #  Needed to populate the initial expiry date for existing Files
+                self.expiry_date = self.created_at + timedelta(seconds=settings.FILE_EXPIRY_IN_SECONDS)
+            else:
+                self.expiry_date = timezone.now() + timedelta(seconds=settings.FILE_EXPIRY_IN_SECONDS)
+        super().save(*args, **kwargs)
 
     def delete(self, using=None, keep_parents=False):
         #  Needed to make sure no orphaned files remain in the storage

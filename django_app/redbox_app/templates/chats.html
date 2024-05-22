@@ -1,4 +1,4 @@
-{% set pageTitle = "Chat" %}
+{% set pageTitle = "Chats" %}
 {% extends "base.html" %}
 {% from "macros/govuk-button.html" import govukButton %}
 {% from "macros/chat-macros.html" import message_box %}
@@ -10,7 +10,7 @@
 
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-one-third">
-      <h1 class="govuk-heading-l">Sessions</h1>
+      <h1 class="govuk-heading-l">Chats</h1>
     </div>
   </div>
 
@@ -19,16 +19,16 @@
     <div class="govuk-grid-column-one-third">
 
     {{ govukButton(
-      text="Start a new session",
-      href=url('sessions'),
+      text="Start a new chat",
+      href=url('chats'),
       classes="govuk-button--secondary"
     ) }}
 
-    <h2 class="govuk-heading-s">Recent sessions</h2>
+    <h2 class="govuk-heading-s">Recent chats</h2>
     <ul class="govuk-list govuk-list--spaced">
-      {% for session in chat_history %}
+      {% for chat in chat_history %}
         <li>
-          <a class="govuk-link" href="{{url('sessions', session.id)}}">{{ session.name }}</a>
+          <a class="govuk-link" href="{{url('chats', chat.id)}}">{{ chat.name }}</a>
         </li>
       {% endfor %}
     </ul>
@@ -36,9 +36,9 @@
   </div>
 
   <div class="govuk-grid-column-two-thirds">
-    <chat-controller data-stream-url="{{ streaming.endpoint }}" data-session-id="{{ session_id or '' }}">
+    <chat-controller data-stream-url="{{ streaming.endpoint }}" data-session-id="{{ chat_id or '' }}">
 
-      <h2 class="govuk-heading-m">Current session</h2>
+      <h2 class="govuk-heading-m">Current chat</h2>
 
       {{ govukNotificationBanner(
         title="Important",
@@ -81,7 +81,7 @@
       <form class="iai-new-message js-send-message" action="/post-message/" method="post">
 
         <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}"/>
-        {% if session_id %}<input type="hidden" name="session-id" value="{{ session_id }}"/>{% endif %}
+        {% if chat_id %}<input type="hidden" name="session-id" value="{{ chat_id }}"/>{% endif %}
 
         <div class="govuk-form-group">
           <label class="govuk-label" for="message">
@@ -111,25 +111,25 @@
 <script src="{{ static('js/libs/showdown.min.js') }}"></script>
 {% if COMPRESSION_ENABLED %}
   {% compress js %}
-    <script src="{{ static('js/sessions/markdown.js') }}"></script>
-    <script src="{{ static('js/sessions/feedback.js') }}"></script>
+    <script src="{{ static('js/chats/markdown.js') }}"></script>
+    <script src="{{ static('js/chats/feedback.js') }}"></script>
   {% endcompress %}
 {% else %}
-  <script src="{{ static('js/sessions/markdown.js') }}"></script>
-  <script src="{{ static('js/sessions/feedback.js') }}"></script>
+  <script src="{{ static('js/chats/markdown.js') }}"></script>
+  <script src="{{ static('js/chats/feedback.js') }}"></script>
 {% endif %}
 
 
 {% if streaming.in_use %}
   {% if COMPRESSION_ENABLED %}
     {% compress js %}
-      <script src="{{ static('js/sessions/streaming.js') }}"></script>
+      <script src="{{ static('js/chats/streaming.js') }}"></script>
     {% endcompress %}
   {% else %}
-    <script src="{{ static('js/sessions/streaming.js') }}"></script>
+    <script src="{{ static('js/chats/streaming.js') }}"></script>
   {% endif %}
 {% else %}
-  <script src="{{ static('js/sessions/fallback.js') }}"></script>
+  <script src="{{ static('js/chats/fallback.js') }}"></script>
 {% endif %}
 
 {% endblock %}

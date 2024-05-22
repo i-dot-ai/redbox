@@ -270,10 +270,10 @@ def test_post_message_to_existing_session(chat_history: ChatHistory, client: Cli
 def test_view_session_with_documents(chat_message: ChatMessage, client: Client):
     # Given
     client.force_login(chat_message.chat_history.users)
-    session_id = chat_message.chat_history.id
+    chat_id = chat_message.chat_history.id
 
     # When
-    response = client.get(f"/sessions/{session_id}/")
+    response = client.get(f"/chats/{chat_id}/")
 
     # Then
     assert response.status_code == HTTPStatus.OK
