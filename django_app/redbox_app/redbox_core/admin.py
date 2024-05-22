@@ -4,12 +4,12 @@ from . import models
 
 
 class UserResource(admin.ModelAdmin):
-    fields = ["email", "is_superuser", "is_staff"]
+    fields = ["email", "is_superuser", "is_staff", "last_login"]
+    list_display = ["email", "is_superuser", "is_staff", "last_login"]
 
 
 class FileResource(admin.ModelAdmin):
     list_display = ["original_file_name", "user", "processing_status"]
-
 
 
 class ChatMessageInline(admin.StackedInline):
