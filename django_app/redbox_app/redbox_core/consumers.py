@@ -1,12 +1,13 @@
 import json
 import logging
-from time import sleep
+from types import SimpleNamespace
 
 from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
 from django.conf import settings
-from redbox_app.redbox_core.client import CoreApiClient
-from redbox_app.redbox_core.models import ChatHistory, ChatMessage, ChatRoleEnum, User
+from redbox_app.redbox_core.models import ChatHistory, ChatMessage, ChatRoleEnum, File, User
+from websockets.client import connect
+from yarl import URL
 
 logger = logging.getLogger(__name__)
 
@@ -28,15 +29,33 @@ class ChatConsumer(AsyncWebsocketConsumer):
         message_history: list[dict[str, str]] = [
             {"role": message.role, "text": message.text} for message in session_messages
         ]
-        core_api = CoreApiClient(host=settings.CORE_API_HOST, port=settings.CORE_API_PORT)
-        ai_message_response = core_api.rag_chat(message_history, user)
+        url = URL.build(scheme="ws", host=settings.CORE_API_HOST, port=settings.CORE_API_PORT) / "chat/rag"
+        async with connect(str(url), extra_headers={"Authorization": user.get_bearer_token()}) as websocket:
+            await websocket.send(json.dumps({"message_history": message_history}))
+            await self.send_json({"type": "session-id", "data": str(session.id)})
+            full_reply: list[str] = []
+            sources: list[File] = []
+            async for raw_message in websocket:
+                message = json.loads(raw_message, object_hook=lambda d: SimpleNamespace(**d))
+                logger.debug("Received: %s", message)
+                if message.resource_type == "text":
+                    await self.send_json({"type": "text", "data": message.data})
+                    full_reply.append(message.data)
+                elif message.resource_type == "documents":
+                    doc_uuids: list[str] = [doc.file_uuid for doc in message.data]
+                    sources = await self.get_files(doc_uuids, user)
+                    for source in sources:
+                        await self.send_json(
+                            {
+                                "type": "source",
+                                "data": {"url": str(source.url), "original_file_name": source.original_file_name},
+                            }
+                        )
+                elif message.resource_type == "end":
+                    await self.save_message(session, "".join(full_reply), ChatRoleEnum.ai, sources)
 
-        # save LLM response
-        await self.save_message(session, ai_message_response.output_text, ChatRoleEnum.ai)
-
-        await self.send(ai_message_response.output_text)
-        sleep(0.1)
-        await self.send(" MESSAGE END")
+    async def send_json(self, data):
+        await self.send(json.dumps(data, default=str))
 
     @database_sync_to_async
     def get_session(self, session_id: str, user: User, user_message_text: str) -> ChatHistory:
@@ -53,7 +72,15 @@ class ChatConsumer(AsyncWebsocketConsumer):
         return list(ChatMessage.objects.filter(chat_history=session))
 
     @database_sync_to_async
-    def save_message(self, session: ChatHistory, user_message_text: str, role: ChatRoleEnum) -> ChatMessage:
+    def save_message(
+        self, session: ChatHistory, user_message_text: str, role: ChatRoleEnum, source_files: list[File] | None = None
+    ) -> ChatMessage:
         chat_message = ChatMessage(chat_history=session, text=user_message_text, role=role)
         chat_message.save()
+        if source_files:
+            chat_message.source_files.set(source_files)
         return chat_message
+
+    @database_sync_to_async
+    def get_files(self, uuids: list[str], user: User) -> list[File]:
+        return list(File.objects.filter(core_file_uuid__in=uuids, user=user))

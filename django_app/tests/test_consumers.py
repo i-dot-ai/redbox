@@ -1,76 +1,77 @@
 import json
 import logging
-import uuid
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from channels.db import database_sync_to_async
 from channels.testing import WebsocketCommunicator
-from django.conf import settings
-from django.test import Client
 from redbox_app.redbox_core.consumers import ChatConsumer
-from redbox_app.redbox_core.models import ChatHistory, ChatMessage, ChatRoleEnum, User
-from requests_mock import Mocker
+from redbox_app.redbox_core.models import ChatHistory, ChatMessage, ChatRoleEnum, File, User
+from websockets import WebSocketClientProtocol
+from websockets.legacy.client import Connect
 
 logger = logging.getLogger(__name__)
 
 
-@pytest.mark.django_db
+@pytest.mark.django_db(transaction=True)
 @pytest.mark.asyncio
-async def test_chat_consumer_with_new_session(client: Client, requests_mock: Mocker):
+async def test_chat_consumer_with_new_session(alice: User, uploaded_file: File):
     # Given
-    carlos = await create_user("carlos@example.com", client)
-
-    rag_url = f"http://{settings.CORE_API_HOST}:{settings.CORE_API_PORT}/chat/rag"
-    requests_mock.register_uri(
-        "POST", rag_url, json={"output_text": "Good afternoon, Mr. Amor.", "source_documents": []}
-    )
+    mocked_connect: Connect = create_mocked_connect(uploaded_file)
 
     # When
-    communicator = WebsocketCommunicator(ChatConsumer.as_asgi(), "/ws/chat/")
-    communicator.scope["user"] = carlos
-    connected, subprotocol = await communicator.connect()
-    assert connected
+    with patch("redbox_app.redbox_core.consumers.connect", new=mocked_connect):
+        communicator = WebsocketCommunicator(ChatConsumer.as_asgi(), "/ws/chat/")
+        communicator.scope["user"] = alice
+        connected, _ = await communicator.connect()
+        assert connected
 
-    await communicator.send_to(text_data=json.dumps({"message": "Hello Hal."}))
-    response = await communicator.receive_from(timeout=99)
+        await communicator.send_json_to({"message": "Hello Hal."})
+        response1 = await communicator.receive_json_from(timeout=5)
+        response2 = await communicator.receive_json_from(timeout=5)
+        response3 = await communicator.receive_json_from(timeout=5)
+        response4 = await communicator.receive_json_from(timeout=5)
 
-    # Then
-    assert response == "Good afternoon, Mr. Amor."
-    # Close
-    await communicator.disconnect()
+        # Then
+        assert response1["type"] == "session-id"
+        assert response2["type"] == "text"
+        assert response2["data"] == "Good afternoon, "
+        assert response3["type"] == "text"
+        assert response3["data"] == "Mr. Amor."
+        assert response4["type"] == "source"
+        assert response4["data"]["original_file_name"] == uploaded_file.original_file_name
+        # Close
+        await communicator.disconnect()
 
-    assert await get_chat_message_text(carlos, ChatRoleEnum.user) == "Hello Hal."
-    assert await get_chat_message_text(carlos, ChatRoleEnum.ai) == "Good afternoon, Mr. Amor."
+    assert await get_chat_message_text(alice, ChatRoleEnum.user) == "Hello Hal."
+    assert await get_chat_message_text(alice, ChatRoleEnum.ai) == "Good afternoon, Mr. Amor."
 
 
-@pytest.mark.django_db
+@pytest.mark.django_db(transaction=True)
 @pytest.mark.asyncio
-async def test_chat_consumer_with_existing_session(client: Client, requests_mock: Mocker):
+async def test_chat_consumer_with_existing_session(alice: User, uploaded_file: File, chat_history: ChatHistory):
     # Given
-    carol = await create_user("carol@example.com", client)
-    session = await create_chat_history(carol)
-
-    rag_url = f"http://{settings.CORE_API_HOST}:{settings.CORE_API_PORT}/chat/rag"
-    requests_mock.register_uri(
-        "POST", rag_url, json={"output_text": "Good afternoon, Mr. Amor.", "source_documents": []}
-    )
+    mocked_connect: Connect = create_mocked_connect(uploaded_file)
 
     # When
-    communicator = WebsocketCommunicator(ChatConsumer.as_asgi(), "/ws/chat/")
-    communicator.scope["user"] = carol
-    connected, subprotocol = await communicator.connect()
-    assert connected
+    with patch("redbox_app.redbox_core.consumers.connect", new=mocked_connect):
+        communicator = WebsocketCommunicator(ChatConsumer.as_asgi(), "/ws/chat/")
+        communicator.scope["user"] = alice
+        connected, _ = await communicator.connect()
+        assert connected
 
-    await communicator.send_to(text_data=json.dumps({"message": "Hello Hal.", "sessionId": str(session.id)}))
-    response = await communicator.receive_from(timeout=99)
+        await communicator.send_json_to({"message": "Hello Hal.", "sessionId": str(chat_history.id)})
+        response1 = await communicator.receive_json_from(timeout=5)
 
-    # Then
-    assert response == "Good afternoon, Mr. Amor."
-    # Close
-    await communicator.disconnect()
+        # Then
+        assert response1["type"] == "session-id"
+        assert response1["data"] == str(chat_history.id)
 
-    assert await get_chat_message_text(carol, ChatRoleEnum.user) == "Hello Hal."
-    assert await get_chat_message_text(carol, ChatRoleEnum.ai) == "Good afternoon, Mr. Amor."
+        # Close
+        await communicator.disconnect()
+
+    assert await get_chat_message_text(alice, ChatRoleEnum.user) == "Hello Hal."
+    assert await get_chat_message_text(alice, ChatRoleEnum.ai) == "Good afternoon, Mr. Amor."
 
 
 @database_sync_to_async
@@ -78,15 +79,14 @@ def get_chat_message_text(user: User, role: ChatRoleEnum) -> str:
     return ChatMessage.objects.get(chat_history__users=user, role=role).text
 
 
-@database_sync_to_async
-def create_user(email: str, client: Client) -> User:
-    user = User.objects.create_user(email, password="")
-    client.force_login(user)
-    return user
-
-
-@database_sync_to_async
-def create_chat_history(user: User) -> ChatHistory:
-    session_id = uuid.uuid4()
-    chat_history = ChatHistory.objects.create(id=session_id, users=user)
-    return chat_history
+def create_mocked_connect(file: File) -> Connect:
+    mocked_websocket = AsyncMock(spec=WebSocketClientProtocol, name="mocked_websocket")
+    mocked_connect = MagicMock(spec=Connect, name="mocked_connect")
+    mocked_connect.return_value.__aenter__.return_value = mocked_websocket
+    mocked_websocket.__aiter__.return_value = [
+        json.dumps({"resource_type": "text", "data": "Good afternoon, "}),
+        json.dumps({"resource_type": "text", "data": "Mr. Amor."}),
+        json.dumps({"resource_type": "documents", "data": [{"file_uuid": str(file.core_file_uuid)}]}),
+        json.dumps({"resource_type": "end"}),
+    ]
+    return mocked_connect
