@@ -1,6 +1,5 @@
 import logging
 import uuid
-from datetime import timedelta
 from pathlib import Path
 
 from django.conf import settings
@@ -218,7 +217,7 @@ def post_message(request: HttpRequest) -> HttpResponse:
     llm_message.source_files.set(files)
 
     for file in files:
-        file.expiry_date = timezone.now() + timedelta(seconds=settings.FILE_EXPIRY_IN_SECONDS)
+        file.last_referenced = timezone.now()
         file.save()
 
     return redirect(reverse(chats_view, args=(session.id,)))

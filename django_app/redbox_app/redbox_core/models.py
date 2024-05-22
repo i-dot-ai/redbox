@@ -1,5 +1,5 @@
 import uuid
-from datetime import timedelta
+from datetime import datetime, timedelta
 
 import boto3
 from botocore.config import Config
@@ -66,18 +66,18 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     original_file_name = models.TextField(max_length=2048, blank=True, null=True)
     core_file_uuid = models.UUIDField(null=True)
-    expiry_date = models.DateTimeField(blank=True, null=True)
+    last_referenced = models.DateTimeField(blank=True, null=True)
 
     def __str__(self) -> str:  # pragma: no cover
         return f"{self.original_file_name} {self.user}"
 
     def save(self, *args, **kwargs):
-        if not self.expiry_date:
+        if not self.last_referenced:
             if self.created_at:
-                #  Needed to populate the initial expiry date for existing Files
-                self.expiry_date = self.created_at + timedelta(seconds=settings.FILE_EXPIRY_IN_SECONDS)
+                #  Needed to populate the initial last_referenced field for existing Files
+                self.last_referenced = self.created_at
             else:
-                self.expiry_date = timezone.now() + timedelta(seconds=settings.FILE_EXPIRY_IN_SECONDS)
+                self.last_referenced = timezone.now()
         super().save(*args, **kwargs)
 
     def delete(self, using=None, keep_parents=False):  # noqa: ARG002  # remove at Python 3.12
@@ -129,6 +129,10 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
             (status[1] for status in ProcessingStatusEnum.choices if self.processing_status == status[0]),
             "Unknown",
         )
+
+    @property
+    def expiry_date(self) -> datetime:
+        return self.last_referenced + timedelta(seconds=settings.FILE_EXPIRY_IN_SECONDS)
 
 
 class ChatHistory(UUIDPrimaryKeyBase, TimeStampedModel):
