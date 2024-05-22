@@ -11,6 +11,9 @@ from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils.datastructures import MultiValueDictKeyError
 from django.views.decorators.http import require_http_methods
+from requests.exceptions import HTTPError
+from yarl import URL
+
 from redbox_app.redbox_core.client import CoreApiClient
 from redbox_app.redbox_core.models import (
     ChatHistory,
@@ -20,8 +23,6 @@ from redbox_app.redbox_core.models import (
     ProcessingStatusEnum,
     User,
 )
-from requests.exceptions import HTTPError
-from yarl import URL
 
 logger = logging.getLogger(__name__)
 core_api = CoreApiClient(host=settings.CORE_API_HOST, port=settings.CORE_API_PORT)
@@ -176,7 +177,7 @@ def chats_view(request: HttpRequest, chat_id: uuid = None):
 
     messages = []
     if chat_id:
-        messages = ChatMessage.objects.filter(chat_history__id=chat_id)
+        messages = ChatMessage.objects.filter(chat_history__id=chat_id).order_by("created_at")
     endpoint = URL.build(scheme="ws", host=request.get_host(), path=r"/ws/chat/")
     context = {
         "chat_id": chat_id,
