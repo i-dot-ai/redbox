@@ -34,8 +34,8 @@ file_urlpatterns = [
 ]
 
 chat_urlpatterns = [
-    path("sessions/<uuid:session_id>/", views.sessions_view, name="sessions"),
-    path("sessions/", views.sessions_view, name="sessions"),
+    path("chats/<uuid:chat_id>/", views.chats_view, name="chats"),
+    path("chats/", views.chats_view, name="chats"),
     path("post-message/", views.post_message, name="post-message"),
 ]
 

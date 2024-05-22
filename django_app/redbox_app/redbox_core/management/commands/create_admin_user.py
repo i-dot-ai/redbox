@@ -1,9 +1,10 @@
 import logging
 
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.core.management import BaseCommand
-from redbox_app.redbox_core.models import User
 
+USER = get_user_model()
 logger = logging.getLogger(__name__)
 logger.setLevel("DEBUG")
 
@@ -15,11 +16,10 @@ class Command(BaseCommand):
 
     def handle(self, *args, **kwargs):
         if email := settings.SUPERUSER_EMAIL:
-            user, created = User.objects.get_or_create(email=email)
+            user, created = USER.objects.get_or_create(email=email)
             user.is_superuser = True
             user.is_staff = True
             user.save()
-            user.refresh_from_db()
             if created:
                 logger.info("created superuser")
             return

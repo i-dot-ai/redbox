@@ -38,9 +38,15 @@ class ChatRequest(BaseModel):
 
 class SourceDocument(BaseModel):
     page_content: str = Field(description="chunk text")
-    file_uuid: UUID = Field(description="uuid of original file")
+    file_uuid: Optional[UUID] = Field(description="uuid of original file", default=None)
     page_numbers: Optional[list[int]] = Field(
         description="page number of the file that this chunk came from", default=None
+    )
+
+
+class SourceDocuments(BaseModel):
+    source_documents: Optional[list[SourceDocument]] = Field(
+        description="documents retrieved to form this response", default=None
     )
 
 

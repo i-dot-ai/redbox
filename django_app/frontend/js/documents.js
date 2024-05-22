@@ -13,7 +13,7 @@ Alpine.data('file-status', () => ({
         this.status = this.$el.textContent || '';
 
         const checkStatus = async () => {
-            
+
             // UPDATE THESE AS REQUIRED
             const FILE_STATUS_ENDPOINT = '/file-status';
             const CHECK_INTERVAL_MS = 5000;
@@ -23,7 +23,10 @@ Alpine.data('file-status', () => ({
             if (response.ok) {
                 this.status = responseText["status"];
             }
-            if (this.status !== 'complete') {
+            if (this.status.toLowerCase() === 'complete') {
+                this.$el.classList.add('govuk-tag--green');
+                this.$el.classList.remove('govuk-tag--yellow');
+            } else {
                 window.setTimeout(checkStatus, CHECK_INTERVAL_MS);
             }
 

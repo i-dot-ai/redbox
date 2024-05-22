@@ -1,8 +1,8 @@
 import pytest
-from faststream.redis import TestRedisBroker
+from faststream.redis import TestApp, TestRedisBroker
 
 from redbox.storage import ElasticsearchStorageHandler
-from worker.src.app import env, router
+from worker.src.app import app, broker, env
 
 
 @pytest.mark.asyncio
@@ -19,8 +19,8 @@ async def test_ingest_file(s3_client, es_client, embedding_model, file):
 
     storage_handler.write_item(file)
 
-    async with TestRedisBroker(router.broker) as br:
-        await br.publish(file, channel=env.ingest_queue_name)
+    async with TestRedisBroker(broker) as br, TestApp(app):
+        await br.publish(file, list=env.ingest_queue_name)
 
         file = storage_handler.read_item(
             item_uuid=file.uuid,
@@ -40,18 +40,8 @@ async def test_embed_item_callback(elasticsearch_storage_handler, embed_queue_it
     unembedded_chunk = elasticsearch_storage_handler.read_item(embed_queue_item.chunk_uuid, "Chunk")
     assert unembedded_chunk.embedding is None
 
-    async with TestRedisBroker(router.broker) as br:
-        await br.publish(embed_queue_item, channel=env.embed_queue_name)
+    async with TestRedisBroker(broker) as br:
+        await br.publish(embed_queue_item, list=env.embed_queue_name)
 
     embedded_chunk = elasticsearch_storage_handler.read_item(embed_queue_item.chunk_uuid, "Chunk")
     assert embedded_chunk.embedding is not None
-
-
-def test_get_health(app_client):
-    """
-    Given that the app is running
-    When I call /health
-    I Expect to see the docs
-    """
-    response = app_client.get("/health")
-    assert response.status_code == 200

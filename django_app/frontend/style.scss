@@ -5,6 +5,10 @@ $redbox-red: #A50202;
 
 @import "./node_modules/govuk-frontend/dist/govuk/all";
 
+body {
+  background-color: white;
+  margin: 0;
+}
 
 /* All pages */
 .iai-classification-banner {
@@ -45,6 +49,7 @@ $redbox-red: #A50202;
 
 
 /* Documents page */
+/* Use this if more than one button in Actions
 .iai-docs__actions .govuk-button {
   width: 100%;
 }
@@ -56,6 +61,9 @@ $redbox-red: #A50202;
     width: auto;
   }
 }
+.iai-docs__status {
+  margin-top: 2px;
+}
 
 
 /* File upload */
@@ -65,9 +73,18 @@ $redbox-red: #A50202;
 
 
 /* Chat page */
+.iai-chat-message__container {
+  margin-top: -1rem;
+}
 .iai-chat-message {
-  background-color: #b1b4b6;
+  background-color: #f3f2f1;
+  border: 1px solid #b1b4b6;
+  border-radius: var(--border-radius);
+  margin-bottom: 0.75rem;
   padding: 1rem;
+}
+.iai-chat-message:focus {
+  outline: 2px solid;
 }
 .iai-chat-message--ai {
   margin-right: clamp(2rem, 10vw, 5rem);
@@ -81,6 +98,9 @@ $redbox-red: #A50202;
 .iai-chat-message__text {
   font-size: 1rem;
   padding-top: 0.5rem;
+}
+.iai-chat-message__sources-heading, .iai-chat-messages__sources-link {
+  font-size: 0.875rem;
 }
 .iai-chat-message__text code {
   display: block;
@@ -96,10 +116,29 @@ $redbox-red: #A50202;
   text-align: left;
 }
 
+.iai-new-message textarea {
+  margin-bottom: 0.5rem;
+}
+.iai-new-message .govuk-form-group {
+  margin: 0;
+  width: 100%;
+}
+@media (min-width: 769px) {
+  .iai-new-message {
+    align-items: flex-end;
+    display: flex;
+    gap: 0.5rem;
+  }
+  .iai-new-message textarea, .iai-new-message button {
+    height: 4rem;
+    margin: 0;
+  }
+}
+
 .iai-response-feedback {
   display: none;
   position: relative;
-  top: -0.75rem;
+  top: -0.5rem;
 }
 /* only show response feedback for last AI message */
 [data-role="ai"] + .iai-response-feedback {
@@ -137,12 +176,33 @@ $redbox-red: #A50202;
 }
 
 /* Only show feedback when correct buttons pressed */
-.iai-chat-message--feedback-thumbs-up, .iai-chat-message--feedback-thumbs-down {
+.iai-response-feedback__thumbs-up, .iai-response-feedback__thumbs-down {
   display: none;
 }
-.iai-response-feedback__buttons[data-status="up"] ~ .iai-chat-message--feedback-thumbs-up {
+.iai-response-feedback__buttons[data-status="up"] ~ .iai-response-feedback__thumbs-up {
   display: block;
 }
-.iai-response-feedback__buttons[data-status="down"] ~ .iai-chat-message--feedback-thumbs-down {
+.iai-response-feedback__buttons[data-status="down"] ~ .iai-response-feedback__thumbs-down {
   display: block;
 }
+
+.iai-streaming-response-loading {
+  align-items: center;
+  display: flex;
+  padding: 0.5rem 0;
+  gap: 0.25rem;
+}
+.iai-response-loading {
+  align-items: center;
+  display: flex;
+  padding: 0.5rem 0;
+  visibility: hidden;
+}
+.iai-response-loading:focus-visible {
+  outline: 1px solid;
+}
+.iai-response-loading__spinner, .iai-streaming-response-loading__spinner {
+  width: 1.5rem;
+}
+
+@import "./iai.scss";

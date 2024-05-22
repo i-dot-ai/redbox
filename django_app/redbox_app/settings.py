@@ -16,7 +16,6 @@ env = environ.Env()
 
 SECRET_KEY = env.str("DJANGO_SECRET_KEY")
 ENVIRONMENT = env.str("ENVIRONMENT")
-SUPERUSER_EMAIL = env.str("SUPERUSER_EMAIL", None)
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env.bool("DEBUG")
@@ -64,6 +63,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -148,11 +148,12 @@ LOGIN_URL = "sign-in"
 CSP_DEFAULT_SRC = (
     "'self'",
     "s3.amazonaws.com",
+    "plausible.io",
 )
 CSP_SCRIPT_SRC = (
     "'self'",
-    "plausible.io",
     "'sha256-GUQ5ad8JK5KmEWmROf3LZd9ge94daqNvd8xy9YS1iDw='",
+    "plausible.io",
 )
 CSP_OBJECT_SRC = ("'none'",)
 CSP_REQUIRE_TRUSTED_TYPES_FOR = ("'script'",)
@@ -287,7 +288,7 @@ LOGGING = {
 
 # link to core_api app
 CORE_API_HOST = env.str("CORE_API_HOST")
-CORE_API_PORT = env.str("CORE_API_PORT")
+CORE_API_PORT = env.int("CORE_API_PORT")
 
 # Email
 EMAIL_BACKEND_TYPE = env.str("EMAIL_BACKEND_TYPE")
@@ -321,3 +322,5 @@ MAGIC_LINK = {
 }
 
 USE_STREAMING = env.bool("USE_STREAMING")
+FILE_EXPIRY_IN_SECONDS = env.int("FILE_EXPIRY_IN_DAYS") * 24 * 60 * 60
+SUPERUSER_EMAIL = env.str("SUPERUSER_EMAIL", None)

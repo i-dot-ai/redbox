@@ -20,7 +20,7 @@ boto3 = "^1.34.106"
 pydantic-settings = "^2.2.1"
 sentence-transformers = "^2.6.0"
 unstructured = {version = "0.13.7", extras = ["all-docs"]}
-torch = "2.3.0"
+torch = "2.2.2"
 
 
 [tool.poetry.group.api.dependencies]
@@ -30,6 +30,7 @@ uvicorn = "^0.29.0"
 langchain-elasticsearch = "^0.2.0"
 python-multipart = "^0.0.9"
 python-jose = "^3.3.0"
+websockets = "^12.0"
 
 [tool.poetry.group.worker.dependencies]
 opencv-python-headless = "^4.9.0.80"

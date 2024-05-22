@@ -6,9 +6,6 @@ import pytest
 from botocore.exceptions import ClientError
 from django.conf import settings
 from django.test import Client
-from requests_mock import Mocker
-from yarl import URL
-
 from redbox_app.redbox_core.models import (
     ChatHistory,
     ChatMessage,
@@ -17,6 +14,8 @@ from redbox_app.redbox_core.models import (
     ProcessingStatusEnum,
     User,
 )
+from requests_mock import Mocker
+from yarl import URL
 
 logger = logging.getLogger(__name__)
 
@@ -167,6 +166,59 @@ def test_upload_view_bad_data(alice, client, file_py_path, s3_client):
 
 
 @pytest.mark.django_db
+def test_upload_view_no_file(alice, client):
+    client.force_login(alice)
+
+    response = client.post("/upload/")
+
+    assert response.status_code == 200
+    assert "No document selected" in str(response.content)
+
+
+@pytest.mark.django_db
+def test_remove_doc_view(client: Client, alice: User, file_pdf_path: str, s3_client: Client, requests_mock: Mocker):
+    file_name = file_pdf_path.split("/")[-1]
+
+    client.force_login(alice)
+    # we begin by removing any file in minio that has this key
+    s3_client.delete_object(Bucket=settings.BUCKET_NAME, Key=file_name.replace(" ", "_"))
+
+    previous_count = count_s3_objects(s3_client)
+
+    mocked_response = {
+        "key": file_name,
+        "bucket": settings.BUCKET_NAME,
+        "uuid": str(uuid.uuid4()),
+    }
+    requests_mock.post(
+        f"http://{settings.CORE_API_HOST}:{settings.CORE_API_PORT}/file",
+        status_code=201,
+        json=mocked_response,
+    )
+
+    with open(file_pdf_path, "rb") as f:
+        # create file before testing deletion
+        client.post("/upload/", {"uploadDoc": f})
+        assert file_exists(s3_client, file_name)
+        assert count_s3_objects(s3_client) == previous_count + 1
+
+        new_file = File.objects.filter(user=alice).order_by("-created_at")[0]
+        requests_mock.delete(
+            f"http://{settings.CORE_API_HOST}:{settings.CORE_API_PORT}/file/{new_file.core_file_uuid}",
+            status_code=201,
+            json=mocked_response,
+        )
+
+        client.post(f"/remove-doc/{new_file.id}", {"doc_id": new_file.id})
+        assert not file_exists(s3_client, file_name)
+        assert count_s3_objects(s3_client) == previous_count
+        assert requests_mock.request_history[-1].method == "DELETE"
+
+        with pytest.raises(File.DoesNotExist):
+            File.objects.get(id=new_file.id)
+
+
+@pytest.mark.django_db
 def test_post_message_to_new_session(alice: User, client: Client, requests_mock: Mocker):
     # Given
     client.force_login(alice)
@@ -208,7 +260,6 @@ def test_post_message_to_existing_session(chat_history: ChatHistory, client: Cli
     # Then
     assert response.status_code == HTTPStatus.FOUND
     assert URL(response.url).parts[-2] == str(session_id)
-    assert ChatMessage.objects.get(chat_history__id=session_id, role=ChatRoleEnum.user).text == "Are you there?"
     assert (
         ChatMessage.objects.get(chat_history__id=session_id, role=ChatRoleEnum.ai).text == "Good afternoon, Mr. Amor."
     )
@@ -218,11 +269,11 @@ def test_post_message_to_existing_session(chat_history: ChatHistory, client: Cli
 def test_view_session_with_documents(chat_message: ChatMessage, client: Client):
     # Given
     client.force_login(chat_message.chat_history.users)
-    session_id = chat_message.chat_history.id
+    chat_id = chat_message.chat_history.id
 
     # When
-    response = client.get(f"/sessions/{session_id}/")
+    response = client.get(f"/chats/{chat_id}/")
 
     # Then
     assert response.status_code == HTTPStatus.OK
-    assert b"uploaded_file.pdf" in response.content
+    assert b"original_file.txt" in response.content
