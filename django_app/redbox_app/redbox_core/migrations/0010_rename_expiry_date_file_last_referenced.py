@@ -3,6 +3,14 @@
 from django.db import migrations
 
 
+def reset_last_referenced(apps, schema_editor):
+    # Required as we're moving from expiry date, which is 30 days further forward
+    File = apps.get_model("redbox_core", "File")
+    for file in File.objects.all():
+        file.last_referenced = file.created_at
+        file.save()
+
+
 class Migration(migrations.Migration):
     dependencies = [
         ("redbox_core", "0009_file_expiry_date"),
@@ -14,4 +22,5 @@ class Migration(migrations.Migration):
             old_name="expiry_date",
             new_name="last_referenced",
         ),
+        migrations.RunPython(reset_last_referenced, migrations.RunPython.noop)
     ]
