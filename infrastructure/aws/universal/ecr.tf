@@ -1,12 +1,11 @@
 locals {
   repos = [
     "core-api",
-    "django-app",
     "worker",
   ]
 }
 
-module "ecs" {
+module "ecr" {
   source = "../../../../i-ai-core-infrastructure//modules/ecr"
 
   for_each              = { for repo in local.repos : repo => repo }
