@@ -10,7 +10,7 @@ from core_api.src.routes.file import env, router
 
 
 @pytest.mark.asyncio
-async def test_post_file_upload(s3_client, app_client, elasticsearch_storage_handler, file_pdf_path, headers):
+async def test_post_file_upload(s3_client, app_client, file_pdf_path, headers):
     """
     Given a new file
     When I POST it to /file

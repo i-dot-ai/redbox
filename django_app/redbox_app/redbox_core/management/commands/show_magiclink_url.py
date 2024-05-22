@@ -15,7 +15,7 @@ class Command(BaseCommand):
     def add_arguments(self, parser: ArgumentParser):
         parser.add_argument("user_email", type=str)
 
-    def handle(self, *args, **options):
+    def handle(self, **options):
         user_email = options["user_email"]
         logger.debug("user email: %s", user_email)
 

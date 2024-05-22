@@ -141,9 +141,7 @@ def s3_client(env):
 
 
 @pytest.fixture
-def stored_chunk_belonging_to_alice(
-    elasticsearch_storage_handler, chunk_belonging_to_alice, alice
-) -> YieldFixture[Chunk]:
+def stored_chunk_belonging_to_alice(elasticsearch_storage_handler, chunk_belonging_to_alice) -> YieldFixture[Chunk]:
     elasticsearch_storage_handler.write_item(item=chunk_belonging_to_alice)
     elasticsearch_storage_handler.refresh()
     yield chunk_belonging_to_alice

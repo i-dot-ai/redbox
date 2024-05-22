@@ -21,7 +21,7 @@ test_history = [
 ]
 
 
-def mock_chat_prompt(user_input):
+def mock_chat_prompt():
     return ChatPromptValue(
         messages=[
             SystemMessage(content="You are a helpful AI bot."),
@@ -32,11 +32,11 @@ def mock_chat_prompt(user_input):
 
 class MockChain:
     @staticmethod
-    def stream(user_input):
+    def stream():
         yield [{"input": "Test input", "text": "Test output"}]
 
 
-def mock_get_chain(llm, prompt):
+def mock_get_chain():
     return MockChain()
 
 

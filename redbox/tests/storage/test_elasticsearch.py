@@ -108,13 +108,7 @@ def test_elastic_write_read_delete_items(elasticsearch_storage_handler):
     assert all(chunk.uuid not in items_left for chunk in chunks)
 
 
-def test_list_all_items(
-    elasticsearch_storage_handler: ElasticsearchStorageHandler,
-    stored_chunk_belonging_to_alice: Chunk,
-    stored_chunk_belonging_to_bob: Chunk,
-    chunk_belonging_to_claire: Chunk,
-    alice: UUID,
-):
+def test_list_all_items(elasticsearch_storage_handler: ElasticsearchStorageHandler, alice: UUID):
     """
     Given that I have
     * a saved chunk belonging to Alice
@@ -127,13 +121,7 @@ def test_list_all_items(
     assert len(uuids) == 1
 
 
-def test_read_all_items(
-    elasticsearch_storage_handler: ElasticsearchStorageHandler,
-    stored_chunk_belonging_to_alice: Chunk,
-    stored_chunk_belonging_to_bob: Chunk,
-    chunk_belonging_to_claire: Chunk,
-    alice: UUID,
-):
+def test_read_all_items(elasticsearch_storage_handler: ElasticsearchStorageHandler, alice: UUID):
     """
     Given that I have
     * a saved chunk belonging to Alice
