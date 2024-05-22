@@ -12,49 +12,18 @@ locals {
     "INGEST_QUEUE_NAME" : "redbox-ingester-queue",
     "REDIS_HOST" : module.elasticache.redis_address,
     "REDIS_PORT" : module.elasticache.redis_port,
-
-    # django stuff
-    "DJANGO_SECRET_KEY" : var.django_secret_key,
-    "POSTGRES_USER" : module.rds.rds_instance_username,
-    "POSTGRES_PASSWORD" : module.rds.rds_instance_db_password,
-    "POSTGRES_DB" : module.rds.db_instance_name,
-    "POSTGRES_HOST" : module.rds.db_instance_address,
-    "CORE_API_HOST" : "${aws_service_discovery_service.service_discovery_service.name}.${aws_service_discovery_private_dns_namespace.private_dns_namespace.name}",
-    "CORE_API_PORT" : 5002,
     "ENVIRONMENT" : upper(terraform.workspace),
-    "DJANGO_SETTINGS_MODULE" : "redbox_app.settings",
     "DEBUG" : true,
     "AWS_REGION" : var.region,
     "OPENAI_API_KEY" : var.openai_api_key,
-    "FROM_EMAIL" : var.from_email,
-    "GOVUK_NOTIFY_PLAIN_EMAIL_TEMPLATE_ID" : var.govuk_notify_plain_email_template_id
-    "GOVUK_NOTIFY_API_KEY" : var.govuk_notify_api_key,
-    "EMAIL_BACKEND_TYPE" : "GOVUKNOTIFY",
     "USE_STREAMING" : false,
-    "DJANGO_LOG_LEVEL" : "DEBUG",
-    "COMPRESSION_ENABLED" : true,
-    "CONTACT_EMAIL": var.contact_email,
   }
 }
-
 
 module "cluster" {
   source         = "../../../i-ai-core-infrastructure//modules/ecs_cluster"
   project_prefix = var.project_name
   name           = "${terraform.workspace}-${var.project_name}"
-}
-
-
-resource "aws_route53_record" "type_a_record" {
-  zone_id = var.hosted_zone_id
-  name    = local.django_host
-  type    = "A"
-
-  alias {
-    name                   = module.load_balancer.load_balancer_dns_name
-    zone_id                = module.load_balancer.load_balancer_zone_id
-    evaluate_target_health = true
-  }
 }
 
 resource "aws_service_discovery_private_dns_namespace" "private_dns_namespace" {
@@ -81,36 +50,6 @@ resource "aws_service_discovery_service" "service_discovery_service" {
     failure_threshold = 1
   }
 }
-
-module "django-app" {
-  memory             = 4096
-  cpu                = 2048
-  create_listener    = true
-  create_networking  = true
-  source             = "../../../i-ai-core-infrastructure//modules/ecs"
-  project_name       = "django-app"
-  image_tag          = var.image_tag
-  prefix             = "redbox"
-  ecr_repository_uri = "${var.ecr_repository_uri}/redbox-django-app"
-  ecs_cluster_id     = module.cluster.ecs_cluster_id
-  health_check = {
-    healthy_threshold   = 3
-    unhealthy_threshold = 3
-    accepted_response   = "200"
-    path                = "/health/"
-    timeout             = 5
-  }
-  state_bucket                 = var.state_bucket
-  vpc_id                       = data.terraform_remote_state.vpc.outputs.vpc_id
-  private_subnets              = data.terraform_remote_state.vpc.outputs.private_subnets
-  container_port               = 8090
-  load_balancer_security_group = module.load_balancer.load_balancer_security_group_id
-  aws_lb_arn                   = module.load_balancer.alb_arn
-  host                         = local.django_host
-  ip_whitelist                 = var.external_ips
-  environment_variables        = local.environment_variables
-}
-
 
 module "core_api" {
   service_discovery_service_arn = aws_service_discovery_service.service_discovery_service.arn
@@ -162,15 +101,4 @@ module "worker" {
   ip_whitelist                 = var.external_ips
   environment_variables        = local.environment_variables
   http_healthcheck = false
-}
-
-
-resource "aws_security_group_rule" "ecs_ingress_front_to_back" {
-  type                     = "ingress"
-  description              = "Allow all traffic from the django-app to the core-api"
-  from_port                = 0
-  to_port                  = 0
-  protocol                 = "-1"
-  source_security_group_id = module.django-app.ecs_sg_id
-  security_group_id        = module.core_api.ecs_sg_id
 }
