@@ -6,6 +6,7 @@ from django.shortcuts import redirect, render
 from magic_link.models import MagicLink
 from redbox_app.redbox_core import email_handler, models
 from redbox_app.redbox_core.forms import SignInForm
+from requests import HTTPError
 
 logger = logging.getLogger(__name__)
 
@@ -20,13 +21,17 @@ def sign_in_view(request: HttpRequest):
 
             try:
                 user = models.User.objects.get(email=email)
-                link = MagicLink.objects.create(user=user, redirect_to="/")
-                full_link = request.build_absolute_uri(link.get_absolute_url())
-
-                # Email link to user
-                email_handler.send_magic_link_email(full_link, email)
             except models.User.DoesNotExist:
                 logger.debug("User with email %s not found", email)
+
+            link = MagicLink.objects.create(user=user, redirect_to="/")
+            full_link = request.build_absolute_uri(link.get_absolute_url())
+
+            # Email link to user
+            try:
+                email_handler.send_magic_link_email(full_link, email)
+            except HTTPError:
+                logger.error("failed to send link to %s", email)
 
             return redirect("sign-in-link-sent")
 
