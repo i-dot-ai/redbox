@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 
 import pytest
 from django.conf import settings
@@ -25,7 +25,7 @@ def test_file_model_expiry_date(peter_rabbit):
     assert abs(new_file.expiry_date - expected_expiry_date) < timedelta(seconds=1)
 
     # Tests that the expiry_date can be updated
-    new_date = datetime(2028, 1, 1)
+    new_date = datetime(2028, 1, 1, tzinfo=UTC)
     new_file.expiry_date = new_date
     new_file.save()
     assert new_file.expiry_date == new_date

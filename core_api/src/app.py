@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import UTC, datetime
 
 from fastapi import FastAPI
 from fastapi.responses import RedirectResponse
@@ -14,7 +14,7 @@ env = Settings()
 
 # === API Setup ===
 
-start_time = datetime.now()
+start_time = datetime.now(tz=UTC)
 
 
 # Create API
@@ -50,7 +50,7 @@ def health() -> StatusResponse:
         StatusResponse: The health of the API
     """
 
-    uptime = datetime.now() - start_time
+    uptime = datetime.now(UTC) - start_time
     uptime_seconds = uptime.total_seconds()
 
     output = StatusResponse(

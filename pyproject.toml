@@ -103,7 +103,7 @@ select = [
     "LOG",
     "COM",
     "DJ",
-#*    "DTZ",
+    "DTZ",
 #    "EM",
     "EXE",
 #*    "FBT",

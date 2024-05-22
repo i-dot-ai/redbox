@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from io import StringIO
 
 import pytest
@@ -34,7 +34,7 @@ def test_command_output_no_links_ever(alice: User):
 @pytest.mark.django_db
 def test_command_output_no_valid_links(alice: User):
     # Given
-    MagicLink.objects.create(user=alice, expires_at=datetime.now() - timedelta(seconds=10))
+    MagicLink.objects.create(user=alice, expires_at=datetime.now(UTC) - timedelta(seconds=10))
 
     # When
     with pytest.raises(CommandError) as exception:
@@ -47,7 +47,7 @@ def test_command_output_no_valid_links(alice: User):
 @pytest.mark.django_db
 def test_command_output_with_valid_links(alice: User):
     # Given
-    link: MagicLink = MagicLink.objects.create(user=alice, expires_at=datetime.now() + timedelta(seconds=10))
+    link: MagicLink = MagicLink.objects.create(user=alice, expires_at=datetime.now(UTC) + timedelta(seconds=10))
     out, err = StringIO(), StringIO()
 
     # When
