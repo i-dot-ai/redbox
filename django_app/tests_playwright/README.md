@@ -6,6 +6,8 @@ The tests are currently located at `django_app/tests_playwright`. All commands b
 
 `poetry run playwright install`
 
+Add `USER_EMAIL` to your `.env` to allow for logging in
+
 ## Running tests
 
 From `django_app/tests_playwright` directory:
