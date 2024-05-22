@@ -1,5 +1,6 @@
 import os
 import time
+from http import HTTPStatus
 from uuid import UUID, uuid4
 
 import pytest
@@ -49,7 +50,7 @@ class TestEndToEnd:
                 timeout=30,
             )
             TestEndToEnd.file_uuids[user_uuid] = response.json()["uuid"]
-            assert response.status_code == 201
+            assert response.status_code == HTTPStatus.CREATED
 
     @pytest.mark.parametrize("user_uuid", USER_UUIDS)
     def test_get_file_status(self, user_uuid):
@@ -70,7 +71,7 @@ class TestEndToEnd:
                 headers=make_headers(user_uuid),
                 timeout=30,
             )
-            if chunk_response.status_code == 200 and chunk_response.json()["processing_status"] == "complete":
+            if chunk_response.status_code == HTTPStatus.OK and chunk_response.json()["processing_status"] == "complete":
                 embedding_complete = True
                 break  # test passed
             else:
@@ -92,7 +93,7 @@ class TestEndToEnd:
             headers=make_headers(user_uuid),
             timeout=30,
         )
-        assert chunks_response.status_code == 200
+        assert chunks_response.status_code == HTTPStatus.OK
 
     @pytest.mark.parametrize("user_uuid", USER_UUIDS)
     def test_post_rag(self, user_uuid):
@@ -113,7 +114,7 @@ class TestEndToEnd:
             headers=make_headers(user_uuid),
             timeout=30,
         )
-        assert rag_response.status_code == 200
+        assert rag_response.status_code == HTTPStatus.OK
         source_document_file_uuids = {
             source_document["file_uuid"] for source_document in rag_response.json()["source_documents"]
         }

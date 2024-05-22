@@ -1,4 +1,5 @@
 import logging
+from http import HTTPStatus
 from typing import Annotated
 from uuid import UUID
 
@@ -98,19 +99,19 @@ def simple_chat(chat_request: ChatRequest, _user_uuid: Annotated[UUID, Depends(g
 
     if len(chat_request.message_history) < 2:
         raise HTTPException(
-            status_code=422,
+            status_code=HTTPStatus.UNPROCESSABLE_ENTITY,
             detail="Chat history should include both system and user prompts",
         )
 
     if chat_request.message_history[0].role != "system":
         raise HTTPException(
-            status_code=422,
+            status_code=HTTPStatus.UNPROCESSABLE_ENTITY,
             detail="The first entry in the chat history should be a system prompt",
         )
 
     if chat_request.message_history[-1].role != "user":
         raise HTTPException(
-            status_code=422,
+            status_code=HTTPStatus.UNPROCESSABLE_ENTITY,
             detail="The final entry in the chat history should be a user question",
         )
 

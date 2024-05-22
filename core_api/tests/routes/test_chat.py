@@ -1,4 +1,5 @@
 import json
+from http import HTTPStatus
 from types import SimpleNamespace
 from typing import Iterable
 from unittest.mock import AsyncMock, MagicMock, patch
@@ -136,5 +137,5 @@ def test_chat_errors(app_client, payload, error, headers):
     I expect a 422 error and a meaningful message
     """
     response = app_client.post("/chat/vanilla", json={"message_history": payload}, headers=headers)
-    assert response.status_code == 422
+    assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
     assert response.json() == error
