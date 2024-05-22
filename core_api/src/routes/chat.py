@@ -13,6 +13,7 @@ from langchain_community.chat_models import ChatLiteLLM
 from langchain_community.embeddings import SentenceTransformerEmbeddings
 from langchain_core.messages import AIMessage, HumanMessage
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
+from langchain_core.runnables import Runnable
 from langchain_elasticsearch import ApproxRetrievalStrategy, ElasticsearchStore
 
 from core_api.src.auth import get_user_uuid
@@ -206,7 +207,7 @@ async def rag_chat_streamed(websocket: WebSocket):
     await websocket.close()
 
 
-async def build_retrieval_chain():
+async def build_retrieval_chain() -> Runnable:
     prompt_search_query = ChatPromptTemplate.from_messages(
         [
             MessagesPlaceholder(variable_name="chat_history"),

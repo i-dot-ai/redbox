@@ -1,8 +1,13 @@
 import json
+from types import SimpleNamespace
+from typing import Iterable
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_core.prompt_values import ChatPromptValue
+from langchain_core.runnables import Runnable
+from langchain_core.runnables.schema import StreamEvent
 from starlette.websockets import WebSocketDisconnect
 
 system_chat = {"text": "test", "role": "system"}
@@ -45,17 +50,39 @@ def test_simple_chat(chat_history, status_code, app_client, monkeypatch, headers
 
 
 def test_rag_chat_streamed(app_client, headers):
-    with app_client.websocket_connect("/chat/rag", headers=headers) as websocket:
-        websocket.send_text(
-            json.dumps(
-                {
-                    "message_history": [
-                        {"text": "What can I do for you?", "role": "system"},
-                        {"text": "Who is Jeroen Janssens?", "role": "user"},
-                    ]
-                }
-            )
-        )
+    # Given
+    message_history = [
+        {"text": "What can I do for you?", "role": "system"},
+        {"text": "Who put the ram in the rama lama ding dong?", "role": "user"},
+    ]
+    events: Iterable[StreamEvent] = [
+        StreamEvent(
+            event="on_chat_model_stream",
+            name="event-1",
+            data={
+                "chunk": SimpleNamespace(
+                    content="Who Put the Bomp (in the Bomp, Bomp, Bomp) is a doo-wop style novelty song from 1961 "
+                )
+            },
+            run_id="run_id",
+        ),
+        StreamEvent(
+            event="on_chat_model_stream",
+            name="event-2",
+            data={"chunk": SimpleNamespace(content="by the American songwriter Barry Mann.")},
+            run_id="run_id",
+        ),
+    ]
+
+    build_retrieval_chain = mock_build_retrieval_chain(events)
+
+    with (
+        patch("core_api.src.routes.chat.build_retrieval_chain", new=build_retrieval_chain),
+        app_client.websocket_connect("/chat/rag", headers=headers) as websocket,
+    ):
+        # When
+        websocket.send_text(json.dumps({"message_history": message_history}))
+
         all_text, docs = [], []
         while True:
             try:
@@ -66,8 +93,24 @@ def test_rag_chat_streamed(app_client, headers):
                     docs.append(actual["data"])
             except WebSocketDisconnect:
                 break
+
+        # Then
         text = "".join(all_text)
-        assert "Jeroen Janssens" in text
+        assert "Barry Mann" in text
+
+
+def mock_build_retrieval_chain(events):
+    event_iterable = MagicMock(name="event_iterable")
+    event_iterable.__aiter__.return_value = events
+
+    astream_events = MagicMock(name="astream_events", return_value=event_iterable)
+
+    retrieval_chain = AsyncMock(spec=Runnable, name="retrieval_chain")
+    retrieval_chain.astream_events = astream_events
+
+    build_retrieval_chain = AsyncMock(name="build_retrieval_chain", return_value=retrieval_chain)
+
+    return build_retrieval_chain
 
 
 @pytest.mark.parametrize(
