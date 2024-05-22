@@ -1,16 +1,13 @@
 import logging
-import os
 import uuid
-from datetime import datetime
+from datetime import UTC, datetime
+from pathlib import Path
 
 import pytest
-import pytz
 from django.core.files.uploadedfile import SimpleUploadedFile, UploadedFile
 from django.core.management import call_command
 from redbox_app.redbox_core import client
 from redbox_app.redbox_core.models import ChatHistory, ChatMessage, ChatRoleEnum, File, User
-
-UTC = pytz.timezone("UTC")
 
 logger = logging.getLogger(__name__)
 
@@ -23,7 +20,7 @@ def collect_static():
 @pytest.fixture
 def create_user():
     def _create_user(email, date_joined_iso):
-        date_joined = UTC.localize(datetime.fromisoformat(date_joined_iso))
+        date_joined = datetime.fromisoformat(date_joined_iso).astimezone(UTC)
         user = User.objects.create_user(email=email, date_joined=date_joined)
         return user
 
@@ -64,25 +61,13 @@ def mrs_tiggywinkle():
 
 
 @pytest.fixture
-def file_pdf_path():
-    path = os.path.join(
-        os.path.dirname(os.path.abspath(__file__)),
-        "data",
-        "pdf",
-        "Cabinet Office - Wikipedia.pdf",
-    )
-    yield path
+def file_pdf_path() -> Path:
+    return Path(__file__).parent / "data" / "pdf" / "Cabinet Office - Wikipedia.pdf"
 
 
 @pytest.fixture
-def file_py_path():
-    path = os.path.join(
-        os.path.dirname(os.path.abspath(__file__)),
-        "data",
-        "py",
-        "test_data.py",
-    )
-    yield path
+def file_py_path() -> Path:
+    return Path(__file__).parent / "data" / "py" / "test_data.py"
 
 
 @pytest.fixture

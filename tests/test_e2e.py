@@ -1,6 +1,6 @@
-import os
 import time
 from http import HTTPStatus
+from pathlib import Path
 from uuid import UUID, uuid4
 
 import pytest
@@ -23,15 +23,15 @@ class TestEndToEnd:
     source_document_file_uuids: dict[UUID, set[str]] = {}
 
     @pytest.mark.parametrize("user_uuid", USER_UUIDS)
-    def test_upload_to_search(self, file_path, s3_client, user_uuid):
+    def test_upload_to_search(self, file_path: Path, s3_client, user_uuid):
         """
         Given that I have uploaded a file to s3
         When I POST the file key to core-api/file
         I Expect a file uuid to be returned
         """
-        with open(file_path, "rb") as f:
-            file_key = os.path.basename(file_path)
-            file_type = os.path.splitext(file_key)[-1]
+        with file_path.open("rb") as f:
+            file_key = file_path.name
+            file_type = file_path.suffix
             bucket_name = "redbox-storage-dev"
             s3_client.upload_fileobj(
                 Bucket=bucket_name,

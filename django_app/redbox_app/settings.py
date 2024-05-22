@@ -1,6 +1,5 @@
 # mypy: ignore-errors
 
-import os
 import socket
 from pathlib import Path
 
@@ -29,8 +28,8 @@ COMPRESS_PRECOMPILERS = (("text/x-scss", "django_libsass.SassCompiler"),)
 STATIC_URL = "static/"
 STATIC_ROOT = "staticfiles/"
 STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, "static/"),
-    os.path.join(BASE_DIR, "frontend/"),
+    Path(BASE_DIR) / "static/",
+    Path(BASE_DIR) / "frontend/",
 ]
 STATICFILES_FINDERS = [
     "compressor.finders.CompressorFinder",
@@ -92,7 +91,7 @@ TEMPLATES = [
     },
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [os.path.join(BASE_DIR, "templates")],
+        "DIRS": [Path(BASE_DIR) / "templates"],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -266,7 +265,7 @@ LOGGING = {
         "file": {
             "level": LOG_LEVEL,
             "class": "logging.FileHandler",
-            "filename": os.path.join(LOG_ROOT, "application.log"),
+            "filename": Path(LOG_ROOT) / "application.log",
             "formatter": "verbose",
         },
         "console": {

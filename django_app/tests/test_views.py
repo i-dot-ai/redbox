@@ -1,6 +1,7 @@
 import logging
 import uuid
 from http import HTTPStatus
+from pathlib import Path
 
 import pytest
 from botocore.exceptions import ClientError
@@ -46,13 +47,13 @@ def file_exists(s3_client, file_name) -> bool:
 
 
 @pytest.mark.django_db
-def test_upload_view(alice, client, file_pdf_path, s3_client, requests_mock):
+def test_upload_view(alice, client, file_pdf_path: Path, s3_client, requests_mock):
     """
     Given that the object store does not have a file with our test file in it
     When we POST our test file to /upload/
     We Expect to see this file in the object store
     """
-    file_name = file_pdf_path.split("/")[-1]
+    file_name = file_pdf_path.name
 
     # we begin by removing any file in minio that has this key
     s3_client.delete_object(Bucket=settings.BUCKET_NAME, Key=file_name.replace(" ", "_"))
@@ -73,7 +74,7 @@ def test_upload_view(alice, client, file_pdf_path, s3_client, requests_mock):
         json=mocked_response,
     )
 
-    with open(file_pdf_path, "rb") as f:
+    with file_pdf_path.open("rb") as f:
         response = client.post("/upload/", {"uploadDoc": f})
 
         assert file_exists(s3_client, file_name)
@@ -82,8 +83,8 @@ def test_upload_view(alice, client, file_pdf_path, s3_client, requests_mock):
 
 
 @pytest.mark.django_db
-def test_document_upload_status(client, alice, file_pdf_path, s3_client, requests_mock):
-    file_name = file_pdf_path.split("/")[-1]
+def test_document_upload_status(client, alice, file_pdf_path: Path, s3_client, requests_mock):
+    file_name = file_pdf_path.name
 
     # we begin by removing any file in minio that has this key
     s3_client.delete_object(Bucket=settings.BUCKET_NAME, Key=file_name.replace(" ", "_"))
@@ -103,7 +104,7 @@ def test_document_upload_status(client, alice, file_pdf_path, s3_client, request
         json=mocked_response,
     )
 
-    with open(file_pdf_path, "rb") as f:
+    with file_pdf_path.open("rb") as f:
         response = client.post("/upload/", {"uploadDoc": f})
 
         assert response.status_code == HTTPStatus.FOUND
@@ -114,7 +115,7 @@ def test_document_upload_status(client, alice, file_pdf_path, s3_client, request
 
 
 @pytest.mark.django_db
-def test_upload_view_duplicate_files(alice, bob, client, file_pdf_path, s3_client, requests_mock):
+def test_upload_view_duplicate_files(alice, bob, client, file_pdf_path: Path, s3_client, requests_mock):
     # we mock the response from the core-api
     mocked_response = {
         "key": "file_key",
@@ -130,7 +131,7 @@ def test_upload_view_duplicate_files(alice, bob, client, file_pdf_path, s3_clien
     previous_count = count_s3_objects(s3_client)
     client.force_login(alice)
 
-    with open(file_pdf_path, "rb") as f:
+    with file_pdf_path.open("rb") as f:
         client.post("/upload/", {"uploadDoc": f})
         response = client.post("/upload/", {"uploadDoc": f})
 
@@ -153,11 +154,11 @@ def test_upload_view_duplicate_files(alice, bob, client, file_pdf_path, s3_clien
 
 
 @pytest.mark.django_db
-def test_upload_view_bad_data(alice, client, file_py_path, s3_client):
+def test_upload_view_bad_data(alice, client, file_py_path: Path, s3_client):
     previous_count = count_s3_objects(s3_client)
     client.force_login(alice)
 
-    with open(file_py_path, "rb") as f:
+    with file_py_path.open("rb") as f:
         response = client.post("/upload/", {"uploadDoc": f})
 
         assert response.status_code == HTTPStatus.OK
@@ -176,8 +177,8 @@ def test_upload_view_no_file(alice, client):
 
 
 @pytest.mark.django_db
-def test_remove_doc_view(client: Client, alice: User, file_pdf_path: str, s3_client: Client, requests_mock: Mocker):
-    file_name = file_pdf_path.split("/")[-1]
+def test_remove_doc_view(client: Client, alice: User, file_pdf_path: Path, s3_client: Client, requests_mock: Mocker):
+    file_name = file_pdf_path.name
 
     client.force_login(alice)
     # we begin by removing any file in minio that has this key
@@ -196,7 +197,7 @@ def test_remove_doc_view(client: Client, alice: User, file_pdf_path: str, s3_cli
         json=mocked_response,
     )
 
-    with open(file_pdf_path, "rb") as f:
+    with file_pdf_path.open("rb") as f:
         # create file before testing deletion
         client.post("/upload/", {"uploadDoc": f})
         assert file_exists(s3_client, file_name)

@@ -1,12 +1,12 @@
 import logging
-import os
+from pathlib import Path
 from uuid import uuid4
 
 from sentence_transformers import SentenceTransformer
 
 from redbox.models.embedding import Embedding, EmbeddingModelInfo, EmbeddingResponse
 
-MODEL_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "models")
+MODEL_PATH = str(Path(__file__).parent / ".." / "models")
 
 log = logging.getLogger()
 log.setLevel(logging.INFO)

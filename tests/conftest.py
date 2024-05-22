@@ -1,4 +1,4 @@
-import os
+from pathlib import Path
 
 import boto3
 import pytest
@@ -6,14 +6,8 @@ from botocore.exceptions import ClientError
 
 
 @pytest.fixture
-def file_path():
-    path = os.path.join(
-        os.path.dirname(os.path.abspath(__file__)),
-        "data",
-        "html",
-        "example.html",
-    )
-    yield path
+def file_path() -> Path:
+    return Path(__file__).parent / "data" / "html" / "example.html"
 
 
 @pytest.fixture
