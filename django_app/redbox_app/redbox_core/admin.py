@@ -4,7 +4,7 @@ from . import models
 
 
 class UserResource(admin.ModelAdmin):
-    exclude = ["password"]
+    fields = ["email", "is_superuser", "is_staff"]
 
 
 class FileResource(admin.ModelAdmin):
