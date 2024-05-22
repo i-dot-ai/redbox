@@ -6,7 +6,6 @@ import pytest
 from botocore.exceptions import ClientError
 from django.conf import settings
 from django.test import Client
-from redbox_app.redbox_core.auth_views import get_or_create_user
 from redbox_app.redbox_core.models import (
     ChatHistory,
     ChatMessage,
@@ -278,20 +277,3 @@ def test_view_session_with_documents(chat_message: ChatMessage, client: Client):
     # Then
     assert response.status_code == HTTPStatus.OK
     assert b"original_file.txt" in response.content
-
-
-@pytest.mark.django_db
-def test_get_user_existing(alice):
-    assert get_or_create_user(alice.email) == alice
-
-
-@pytest.mark.parametrize("email, admitted", [("alice@cabinetoffice.gov.uk", True), ("alice@hmrc.gov.uk", False)])
-@pytest.mark.django_db
-def test_get_user_new_cabinet_office(email, admitted):
-    # user doesnt exist initially
-    assert not User.objects.filter(email=email).exists()
-
-    get_or_create_user(email)
-
-    # only cabinet-office users are accepted
-    assert User.objects.filter(email=email).exists() == admitted

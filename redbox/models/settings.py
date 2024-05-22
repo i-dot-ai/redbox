@@ -80,7 +80,7 @@ class Settings(BaseSettings):
     govuk_notify_plain_email_template_id: str = "example-id"
     use_streaming: bool = False
     compression_enabled: bool = True
-
+    superuser_email: Optional[str] = None
     model_config = SettingsConfigDict(env_file=".env", env_nested_delimiter="__", extra="allow")
 
     def elasticsearch_client(self) -> Elasticsearch:
