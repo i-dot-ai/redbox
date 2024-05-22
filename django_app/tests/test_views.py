@@ -244,7 +244,9 @@ def test_post_message_to_new_session(alice: User, client: Client, requests_mock:
 
 
 @pytest.mark.django_db
-def test_post_message_to_existing_session(chat_history: ChatHistory, client: Client, requests_mock: Mocker):
+def test_post_message_to_existing_session(
+    chat_history: ChatHistory, client: Client, requests_mock: Mocker, uploaded_file: File
+):
     # Given
     client.force_login(chat_history.users)
     session_id = chat_history.id
@@ -252,8 +254,12 @@ def test_post_message_to_existing_session(chat_history: ChatHistory, client: Cli
     requests_mock.register_uri(
         "POST",
         rag_url,
-        json={"output_text": "Good afternoon, Mr. Amor.", "source_documents": []},
+        json={
+            "output_text": "Good afternoon, Mr. Amor.",
+            "source_documents": [{"file_uuid": str(uploaded_file.core_file_uuid)}],
+        },
     )
+    initial_file_expiry_date = File.objects.get(core_file_uuid=uploaded_file.core_file_uuid).expiry_date
 
     # When
     response = client.post("/post-message/", {"message": "Are you there?", "session-id": session_id})
@@ -264,6 +270,10 @@ def test_post_message_to_existing_session(chat_history: ChatHistory, client: Cli
     assert (
         ChatMessage.objects.get(chat_history__id=session_id, role=ChatRoleEnum.ai).text == "Good afternoon, Mr. Amor."
     )
+    assert (
+        ChatMessage.objects.get(chat_history__id=session_id, role=ChatRoleEnum.ai).source_files.first() == uploaded_file
+    )
+    assert initial_file_expiry_date != File.objects.get(core_file_uuid=uploaded_file.core_file_uuid).expiry_date
 
 
 @pytest.mark.django_db
