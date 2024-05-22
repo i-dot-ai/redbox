@@ -19,6 +19,16 @@
     <link rel="stylesheet" type="text/css" href="{{static('style.css')}}" />
   {% endif %}
 
+
+  {% if environment | lower in ["dev", "preprod"] %}
+    <script defer
+    event-environment="{{environment}}"
+    data-domain="redbox-dev.ai.cabinetoffice.gov.uk" src="https://plausible.io/js/script.pageview-props.tagged-events.outbound-links.file-downloads.local.js"></script>
+  {% elif environment | lower == "prod" %}
+    <script defer
+    data-domain="redbox.ai.cabinetoffice.gov.uk" src="https://plausible.io/js/script.pageview-props.tagged-events.outbound-links.file-downloads.js"></script>
+  {% endif %}
+
   <script type="module" src="{{static('js/libs/govuk-frontend.min.js')}}"></script>
 
 </head>
