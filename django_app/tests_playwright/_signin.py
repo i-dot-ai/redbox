@@ -24,9 +24,10 @@ def sign_in(page: Page):
     page.get_by_text("Continue").click()
 
     # Get magic link
-    os.chdir('..')
+    current_script_path = os.path.abspath(__file__)
+    django_dir = os.path.dirname(os.path.dirname(current_script_path))
     command = ["poetry", "run", "python", "manage.py", "show_magiclink_url", email_address]
-    result = subprocess.run(command, capture_output=True, text=True)
+    result = subprocess.run(command, capture_output=True, text=True, cwd=django_dir)
     magic_link = result.stdout.strip()
     
     # Complete sign-in and verify
