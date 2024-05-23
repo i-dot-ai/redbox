@@ -1,6 +1,4 @@
-from collections.abc import Generator
 from pathlib import Path
-from typing import TypeVar
 from uuid import uuid4
 
 import pytest
@@ -12,10 +10,6 @@ from sentence_transformers import SentenceTransformer
 from redbox.models import Chunk, EmbedQueueItem, File
 from redbox.storage import ElasticsearchStorageHandler
 from worker.src.app import app, env
-
-T = TypeVar("T")
-
-YieldFixture = Generator[T, None, None]
 
 
 @pytest.fixture()
@@ -34,12 +28,12 @@ def s3_client():
 
 
 @pytest.fixture()
-def es_client() -> YieldFixture[Elasticsearch]:
+def es_client() -> Elasticsearch:
     return env.elasticsearch_client()
 
 
 @pytest.fixture()
-def embedding_model() -> YieldFixture[SentenceTransformer]:
+def embedding_model() -> SentenceTransformer:
     return SentenceTransformer(env.embedding_model)
 
 
@@ -74,22 +68,22 @@ def app_client():
 @pytest.fixture()
 def elasticsearch_storage_handler(
     es_client,
-) -> YieldFixture[ElasticsearchStorageHandler]:
+) -> ElasticsearchStorageHandler:
     return ElasticsearchStorageHandler(es_client=es_client, root_index="redbox-data")
 
 
 @pytest.fixture()
-def chunk() -> YieldFixture[Chunk]:
+def chunk() -> Chunk:
     test_chunk = Chunk(parent_file_uuid=uuid4(), index=1, text="test_text", creator_user_uuid=uuid4())
     return test_chunk
 
 
 @pytest.fixture()
-def stored_chunk(chunk, elasticsearch_storage_handler) -> YieldFixture[Chunk]:
+def stored_chunk(chunk, elasticsearch_storage_handler) -> Chunk:
     elasticsearch_storage_handler.write_item(chunk)
     return chunk
 
 
 @pytest.fixture()
-def embed_queue_item(stored_chunk) -> YieldFixture[EmbedQueueItem]:
+def embed_queue_item(stored_chunk) -> EmbedQueueItem:
     return EmbedQueueItem(chunk_uuid=stored_chunk.uuid)

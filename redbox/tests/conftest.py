@@ -1,6 +1,4 @@
-from collections.abc import Generator
 from pathlib import Path
-from typing import TypeVar
 from uuid import uuid4
 
 import pytest
@@ -9,10 +7,6 @@ from elasticsearch import Elasticsearch
 
 from redbox.models import Chunk, File, Settings
 from redbox.storage.elasticsearch import ElasticsearchStorageHandler
-
-T = TypeVar("T")
-
-YieldFixture = Generator[T, None, None]
 
 
 @pytest.fixture()
@@ -36,7 +30,7 @@ def claire():
 
 
 @pytest.fixture()
-def file_belonging_to_alice(s3_client, file_pdf_path: Path, alice, env) -> YieldFixture[File]:
+def file_belonging_to_alice(s3_client, file_pdf_path: Path, alice, env) -> File:
     file_name = file_pdf_path.name
     file_type = file_pdf_path.suffix
 
@@ -58,7 +52,7 @@ def file_belonging_to_alice(s3_client, file_pdf_path: Path, alice, env) -> Yield
 
 
 @pytest.fixture()
-def chunk_belonging_to_alice(file_belonging_to_alice) -> YieldFixture[Chunk]:
+def chunk_belonging_to_alice(file_belonging_to_alice) -> Chunk:
     chunk = Chunk(
         creator_user_uuid=file_belonging_to_alice.creator_user_uuid,
         parent_file_uuid=file_belonging_to_alice.uuid,
@@ -69,7 +63,7 @@ def chunk_belonging_to_alice(file_belonging_to_alice) -> YieldFixture[Chunk]:
 
 
 @pytest.fixture()
-def file_belonging_to_bob(s3_client, file_pdf_path: Path, bob, env) -> YieldFixture[File]:
+def file_belonging_to_bob(s3_client, file_pdf_path: Path, bob, env) -> File:
     file_name = file_pdf_path.name
     file_type = file_pdf_path.suffix
 
@@ -91,7 +85,7 @@ def file_belonging_to_bob(s3_client, file_pdf_path: Path, bob, env) -> YieldFixt
 
 
 @pytest.fixture()
-def chunk_belonging_to_bob(file_belonging_to_bob) -> YieldFixture[Chunk]:
+def chunk_belonging_to_bob(file_belonging_to_bob) -> Chunk:
     chunk = Chunk(
         creator_user_uuid=file_belonging_to_bob.creator_user_uuid,
         parent_file_uuid=file_belonging_to_bob.uuid,
@@ -102,7 +96,7 @@ def chunk_belonging_to_bob(file_belonging_to_bob) -> YieldFixture[Chunk]:
 
 
 @pytest.fixture()
-def chunk_belonging_to_claire(claire) -> YieldFixture[Chunk]:
+def chunk_belonging_to_claire(claire) -> Chunk:
     chunk = Chunk(
         creator_user_uuid=claire,
         parent_file_uuid=uuid4(),
@@ -133,24 +127,24 @@ def s3_client(env):
 
 
 @pytest.fixture()
-def stored_chunk_belonging_to_alice(elasticsearch_storage_handler, chunk_belonging_to_alice) -> YieldFixture[Chunk]:
+def stored_chunk_belonging_to_alice(elasticsearch_storage_handler, chunk_belonging_to_alice) -> Chunk:
     elasticsearch_storage_handler.write_item(item=chunk_belonging_to_alice)
     elasticsearch_storage_handler.refresh()
     return chunk_belonging_to_alice
 
 
 @pytest.fixture()
-def stored_chunk_belonging_to_bob(elasticsearch_storage_handler, chunk_belonging_to_bob) -> YieldFixture[Chunk]:
+def stored_chunk_belonging_to_bob(elasticsearch_storage_handler, chunk_belonging_to_bob) -> Chunk:
     elasticsearch_storage_handler.write_item(item=chunk_belonging_to_bob)
     elasticsearch_storage_handler.refresh()
     return chunk_belonging_to_bob
 
 
 @pytest.fixture()
-def elasticsearch_client(env) -> YieldFixture[Elasticsearch]:
+def elasticsearch_client(env) -> Elasticsearch:
     return env.elasticsearch_client()
 
 
 @pytest.fixture()
-def elasticsearch_storage_handler(elasticsearch_client) -> YieldFixture[ElasticsearchStorageHandler]:
+def elasticsearch_storage_handler(elasticsearch_client) -> ElasticsearchStorageHandler:
     return ElasticsearchStorageHandler(es_client=elasticsearch_client, root_index="redbox-test-data")
