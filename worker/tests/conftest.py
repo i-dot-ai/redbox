@@ -17,7 +17,7 @@ T = TypeVar("T")
 YieldFixture = Generator[T, None, None]
 
 
-@pytest.fixture
+@pytest.fixture()
 def s3_client():
     _client = env.s3_client()
     try:
@@ -29,25 +29,25 @@ def s3_client():
         if e.response["Error"]["Code"] != "BucketAlreadyOwnedByYou":
             raise e
 
-    yield _client
+    return _client
 
 
-@pytest.fixture
+@pytest.fixture()
 def es_client() -> YieldFixture[Elasticsearch]:
-    yield env.elasticsearch_client()
+    return env.elasticsearch_client()
 
 
-@pytest.fixture
+@pytest.fixture()
 def embedding_model() -> YieldFixture[SentenceTransformer]:
-    yield SentenceTransformer(env.embedding_model)
+    return SentenceTransformer(env.embedding_model)
 
 
-@pytest.fixture
+@pytest.fixture()
 def file_pdf_path() -> Path:
     return Path(__file__).parents[2] / "tests" / "data" / "pdf" / "Cabinet Office - Wikipedia.pdf"
 
 
-@pytest.fixture
+@pytest.fixture()
 def file(s3_client, file_pdf_path: Path):
     file_name = file_pdf_path.name
     file_type = file_pdf_path.suffix
@@ -62,33 +62,33 @@ def file(s3_client, file_pdf_path: Path):
 
     file_record = File(key=file_name, bucket=env.bucket_name, creator_user_uuid=uuid4())
 
-    yield file_record
+    return file_record
 
 
-@pytest.fixture
+@pytest.fixture()
 def app_client():
-    yield TestClient(app)
+    return TestClient(app)
 
 
-@pytest.fixture
+@pytest.fixture()
 def elasticsearch_storage_handler(
     es_client,
 ) -> YieldFixture[ElasticsearchStorageHandler]:
-    yield ElasticsearchStorageHandler(es_client=es_client, root_index="redbox-data")
+    return ElasticsearchStorageHandler(es_client=es_client, root_index="redbox-data")
 
 
-@pytest.fixture
+@pytest.fixture()
 def chunk() -> YieldFixture[Chunk]:
     test_chunk = Chunk(parent_file_uuid=uuid4(), index=1, text="test_text", creator_user_uuid=uuid4())
-    yield test_chunk
+    return test_chunk
 
 
-@pytest.fixture
+@pytest.fixture()
 def stored_chunk(chunk, elasticsearch_storage_handler) -> YieldFixture[Chunk]:
     elasticsearch_storage_handler.write_item(chunk)
-    yield chunk
+    return chunk
 
 
-@pytest.fixture
+@pytest.fixture()
 def embed_queue_item(stored_chunk) -> YieldFixture[EmbedQueueItem]:
-    yield EmbedQueueItem(chunk_uuid=stored_chunk.uuid)
+    return EmbedQueueItem(chunk_uuid=stored_chunk.uuid)

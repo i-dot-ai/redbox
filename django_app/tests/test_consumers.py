@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 
 @pytest.mark.django_db(transaction=True)
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_chat_consumer_with_new_session(alice: User, uploaded_file: File):
     # Given
     mocked_connect: Connect = create_mocked_connect(uploaded_file)
@@ -48,7 +48,7 @@ async def test_chat_consumer_with_new_session(alice: User, uploaded_file: File):
 
 
 @pytest.mark.django_db(transaction=True)
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_chat_consumer_with_existing_session(alice: User, uploaded_file: File, chat_history: ChatHistory):
     # Given
     mocked_connect: Connect = create_mocked_connect(uploaded_file)

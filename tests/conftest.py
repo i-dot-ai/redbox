@@ -5,12 +5,12 @@ import pytest
 from botocore.exceptions import ClientError
 
 
-@pytest.fixture
+@pytest.fixture()
 def file_path() -> Path:
     return Path(__file__).parent / "data" / "html" / "example.html"
 
 
-@pytest.fixture
+@pytest.fixture()
 def s3_client():
     client = boto3.client(
         "s3",
@@ -28,7 +28,7 @@ def s3_client():
         if e.response["Error"]["Code"] != "BucketAlreadyOwnedByYou":
             raise e
 
-    yield client
+    return client
 
 
 # store history of failures per test class name and per index in parametrize (if parametrize used)

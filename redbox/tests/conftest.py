@@ -14,27 +14,27 @@ T = TypeVar("T")
 YieldFixture = Generator[T, None, None]
 
 
-@pytest.fixture
+@pytest.fixture()
 def env():
-    yield Settings(django_secret_key="", postgres_password="")
+    return Settings(django_secret_key="", postgres_password="")
 
 
-@pytest.fixture
+@pytest.fixture()
 def alice():
-    yield uuid4()
+    return uuid4()
 
 
-@pytest.fixture
+@pytest.fixture()
 def bob():
-    yield uuid4()
+    return uuid4()
 
 
-@pytest.fixture
+@pytest.fixture()
 def claire():
-    yield uuid4()
+    return uuid4()
 
 
-@pytest.fixture
+@pytest.fixture()
 def file_belonging_to_alice(s3_client, file_pdf_path: Path, alice, env) -> YieldFixture[File]:
     file_name = file_pdf_path.name
     file_type = file_pdf_path.suffix
@@ -53,10 +53,10 @@ def file_belonging_to_alice(s3_client, file_pdf_path: Path, alice, env) -> Yield
         creator_user_uuid=alice,
     )
 
-    yield file_record
+    return file_record
 
 
-@pytest.fixture
+@pytest.fixture()
 def chunk_belonging_to_alice(file_belonging_to_alice) -> YieldFixture[Chunk]:
     chunk = Chunk(
         creator_user_uuid=file_belonging_to_alice.creator_user_uuid,
@@ -64,10 +64,10 @@ def chunk_belonging_to_alice(file_belonging_to_alice) -> YieldFixture[Chunk]:
         index=1,
         text="hello, i am Alice!",
     )
-    yield chunk
+    return chunk
 
 
-@pytest.fixture
+@pytest.fixture()
 def file_belonging_to_bob(s3_client, file_pdf_path: Path, bob, env) -> YieldFixture[File]:
     file_name = file_pdf_path.name
     file_type = file_pdf_path.suffix
@@ -86,10 +86,10 @@ def file_belonging_to_bob(s3_client, file_pdf_path: Path, bob, env) -> YieldFixt
         creator_user_uuid=bob,
     )
 
-    yield file_record
+    return file_record
 
 
-@pytest.fixture
+@pytest.fixture()
 def chunk_belonging_to_bob(file_belonging_to_bob) -> YieldFixture[Chunk]:
     chunk = Chunk(
         creator_user_uuid=file_belonging_to_bob.creator_user_uuid,
@@ -97,10 +97,10 @@ def chunk_belonging_to_bob(file_belonging_to_bob) -> YieldFixture[Chunk]:
         index=1,
         text="hello, i am Bob!",
     )
-    yield chunk
+    return chunk
 
 
-@pytest.fixture
+@pytest.fixture()
 def chunk_belonging_to_claire(claire) -> YieldFixture[Chunk]:
     chunk = Chunk(
         creator_user_uuid=claire,
@@ -108,15 +108,15 @@ def chunk_belonging_to_claire(claire) -> YieldFixture[Chunk]:
         index=1,
         text="hello, i am Claire!",
     )
-    yield chunk
+    return chunk
 
 
-@pytest.fixture
+@pytest.fixture()
 def file_pdf_path() -> Path:
     return Path(__file__).parents[2] / "tests" / "data" / "pdf" / "Cabinet Office - Wikipedia.pdf"
 
 
-@pytest.fixture
+@pytest.fixture()
 def s3_client(env):
     _client = env.s3_client()
     try:
@@ -128,28 +128,28 @@ def s3_client(env):
         if e.response["Error"]["Code"] != "BucketAlreadyOwnedByYou":
             raise e
 
-    yield _client
+    return _client
 
 
-@pytest.fixture
+@pytest.fixture()
 def stored_chunk_belonging_to_alice(elasticsearch_storage_handler, chunk_belonging_to_alice) -> YieldFixture[Chunk]:
     elasticsearch_storage_handler.write_item(item=chunk_belonging_to_alice)
     elasticsearch_storage_handler.refresh()
-    yield chunk_belonging_to_alice
+    return chunk_belonging_to_alice
 
 
-@pytest.fixture
+@pytest.fixture()
 def stored_chunk_belonging_to_bob(elasticsearch_storage_handler, chunk_belonging_to_bob) -> YieldFixture[Chunk]:
     elasticsearch_storage_handler.write_item(item=chunk_belonging_to_bob)
     elasticsearch_storage_handler.refresh()
-    yield chunk_belonging_to_bob
+    return chunk_belonging_to_bob
 
 
-@pytest.fixture
+@pytest.fixture()
 def elasticsearch_client(env) -> YieldFixture[Elasticsearch]:
-    yield env.elasticsearch_client()
+    return env.elasticsearch_client()
 
 
-@pytest.fixture
+@pytest.fixture()
 def elasticsearch_storage_handler(elasticsearch_client) -> YieldFixture[ElasticsearchStorageHandler]:
-    yield ElasticsearchStorageHandler(es_client=elasticsearch_client, root_index="redbox-test-data")
+    return ElasticsearchStorageHandler(es_client=elasticsearch_client, root_index="redbox-test-data")

@@ -5,7 +5,7 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from redbox_app.redbox_core.models import File, ProcessingStatusEnum
 
 
-@pytest.mark.django_db
+@pytest.mark.django_db()
 def test_file_model_last_referenced(peter_rabbit, s3_client):  # noqa: ARG001
     mock_file = SimpleUploadedFile("test.txt", b"these are the file contents")
 

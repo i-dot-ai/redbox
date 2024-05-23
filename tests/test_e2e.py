@@ -17,7 +17,7 @@ def make_headers(user_uuid: UUID):
     return {"Authorization": f"Bearer {token}"}
 
 
-@pytest.mark.incremental
+@pytest.mark.incremental()
 class TestEndToEnd:
     file_uuids: dict[UUID, str] = {}
     source_document_file_uuids: dict[UUID, set[str]] = {}

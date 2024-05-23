@@ -18,7 +18,7 @@ T = TypeVar("T")
 YieldFixture = Generator[T, None, None]
 
 
-@pytest.fixture
+@pytest.fixture()
 def s3_client():
     _client = env.s3_client()
     try:
@@ -30,36 +30,36 @@ def s3_client():
         if e.response["Error"]["Code"] != "BucketAlreadyOwnedByYou":
             raise e
 
-    yield _client
+    return _client
 
 
-@pytest.fixture
+@pytest.fixture()
 def es_client() -> YieldFixture[Elasticsearch]:
-    yield env.elasticsearch_client()
+    return env.elasticsearch_client()
 
 
-@pytest.fixture
+@pytest.fixture()
 def app_client() -> YieldFixture[TestClient]:
-    yield TestClient(application)
+    return TestClient(application)
 
 
-@pytest.fixture
+@pytest.fixture()
 def alice() -> YieldFixture[UUID]:
-    yield uuid4()
+    return uuid4()
 
 
-@pytest.fixture
+@pytest.fixture()
 def headers(alice):
     bearer_token = jwt.encode({"user_uuid": str(alice)}, key="nvjkernd")
-    yield {"Authorization": f"Bearer {bearer_token}"}
+    return {"Authorization": f"Bearer {bearer_token}"}
 
 
-@pytest.fixture
+@pytest.fixture()
 def elasticsearch_storage_handler(es_client):
-    yield ElasticsearchStorageHandler(es_client=es_client, root_index="redbox-data")
+    return ElasticsearchStorageHandler(es_client=es_client, root_index="redbox-data")
 
 
-@pytest.fixture
+@pytest.fixture()
 def file(s3_client, file_pdf_path: Path, alice) -> YieldFixture[File]:
     file_name = file_pdf_path.name
     file_type = file_pdf_path.suffix
@@ -74,17 +74,17 @@ def file(s3_client, file_pdf_path: Path, alice) -> YieldFixture[File]:
 
     file_record = File(key=file_name, bucket=env.bucket_name, creator_user_uuid=alice)
 
-    yield file_record
+    return file_record
 
 
-@pytest.fixture
+@pytest.fixture()
 def stored_file(elasticsearch_storage_handler, file) -> YieldFixture[File]:
     elasticsearch_storage_handler.write_item(file)
     elasticsearch_storage_handler.refresh()
-    yield file
+    return file
 
 
-@pytest.fixture
+@pytest.fixture()
 def chunked_file(elasticsearch_storage_handler, stored_file) -> YieldFixture[File]:
     for i in range(5):
         chunk = Chunk(
@@ -95,9 +95,9 @@ def chunked_file(elasticsearch_storage_handler, stored_file) -> YieldFixture[Fil
         )
         elasticsearch_storage_handler.write_item(chunk)
     elasticsearch_storage_handler.refresh()
-    yield stored_file
+    return stored_file
 
 
-@pytest.fixture
+@pytest.fixture()
 def file_pdf_path() -> Path:
     return Path(__file__).parents[2] / "tests" / "data" / "pdf" / "Cabinet Office - Wikipedia.pdf"
