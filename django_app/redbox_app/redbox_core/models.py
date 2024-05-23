@@ -50,7 +50,7 @@ class User(BaseUser, UUIDPrimaryKeyBase):
         return f"Bearer {bearer_token}"
 
 
-class ProcessingStatusEnum(models.TextChoices):
+class StatusEnum(models.TextChoices):
     uploaded = "uploaded"
     parsing = "parsing"
     chunking = "chunking"
@@ -58,10 +58,11 @@ class ProcessingStatusEnum(models.TextChoices):
     indexing = "indexing"
     complete = "complete"
     unknown = "unknown"
+    deleted = "deleted"
 
 
 class File(UUIDPrimaryKeyBase, TimeStampedModel):
-    processing_status = models.CharField(choices=ProcessingStatusEnum.choices, null=False, blank=False)
+    status = models.CharField(choices=StatusEnum.choices, null=False, blank=False)
     original_file = models.FileField(storage=settings.STORAGES["default"]["BACKEND"])
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     original_file_name = models.TextField(max_length=2048, blank=True, null=True)
@@ -128,9 +129,9 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
         # Name used by core-api
         return self.original_file.file.name
 
-    def get_processing_status_text(self) -> str:
+    def get_status_text(self) -> str:
         return next(
-            (status[1] for status in ProcessingStatusEnum.choices if self.processing_status == status[0]),
+            (status[1] for status in StatusEnum.choices if self.status == status[0]),
             "Unknown",
         )
 

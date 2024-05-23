@@ -18,7 +18,7 @@ from redbox_app.redbox_core.models import (
     ChatMessage,
     ChatRoleEnum,
     File,
-    ProcessingStatusEnum,
+    StatusEnum,
     User,
 )
 from requests.exceptions import HTTPError
@@ -118,7 +118,7 @@ def ingest_file(uploaded_file: UploadedFile, user: User) -> list[str]:
     errors: list[str] = []
     try:
         file = File.objects.create(
-            processing_status=ProcessingStatusEnum.uploaded.value,
+            status=StatusEnum.uploaded.value,
             user=user,
             original_file=uploaded_file,
             original_file_name=uploaded_file.name,
@@ -229,23 +229,23 @@ def file_status_api_view(request: HttpRequest) -> JsonResponse:
     file_id = request.GET.get("id", None)
     if not file_id:
         logger.error("Error getting file object information - no file ID provided %s.")
-        return JsonResponse({"status": ProcessingStatusEnum.unknown.label})
+        return JsonResponse({"status": StatusEnum.unknown.label})
     try:
         file = File.objects.get(pk=file_id)
     except File.DoesNotExist as ex:
         logger.exception("File object information not found in django - file does not exist %s.", file_id, exc_info=ex)
-        return JsonResponse({"status": ProcessingStatusEnum.unknown.label})
+        return JsonResponse({"status": StatusEnum.unknown.label})
     try:
         core_file_status_response = core_api.get_file_status(file_id=file.core_file_uuid, user=request.user)
     except HTTPError as ex:
         logger.exception("File object information from core not found - file does not exist %s.", file_id, exc_info=ex)
-        if not file.processing_status:
-            file.processing_status = ProcessingStatusEnum.unknown.label
+        if not file.status:
+            file.status = StatusEnum.unknown.label
             file.save()
-        return JsonResponse({"status": file.processing_status})
-    file.processing_status = core_file_status_response.processing_status
+        return JsonResponse({"status": file.status})
+    file.status = core_file_status_response.status
     file.save()
-    return JsonResponse({"status": file.get_processing_status_text()})
+    return JsonResponse({"status": file.get_status_text()})
 
 
 @require_http_methods(["GET"])
