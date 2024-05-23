@@ -1,7 +1,14 @@
 import os
 import subprocess
 from playwright.sync_api import Page, expect
+from dotenv import load_dotenv
+from pathlib import Path
 from _settings import BASE_URL
+
+
+ROOT = Path(__file__).parents[1]
+load_dotenv(dotenv_path=ROOT / ".env", override=True)
+
 
 def sign_in(page: Page):
 
