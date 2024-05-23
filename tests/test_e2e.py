@@ -1,5 +1,6 @@
-import os
 import time
+from http import HTTPStatus
+from pathlib import Path
 from uuid import UUID, uuid4
 
 import pytest
@@ -22,15 +23,15 @@ class TestEndToEnd:
     source_document_file_uuids: dict[UUID, set[str]] = {}
 
     @pytest.mark.parametrize("user_uuid", USER_UUIDS)
-    def test_upload_to_search(self, file_path, s3_client, user_uuid):
+    def test_upload_to_search(self, file_path: Path, s3_client, user_uuid):
         """
         Given that I have uploaded a file to s3
         When I POST the file key to core-api/file
         I Expect a file uuid to be returned
         """
-        with open(file_path, "rb") as f:
-            file_key = os.path.basename(file_path)
-            file_type = os.path.splitext(file_key)[-1]
+        with file_path.open("rb") as f:
+            file_key = file_path.name
+            file_type = file_path.suffix
             bucket_name = "redbox-storage-dev"
             s3_client.upload_fileobj(
                 Bucket=bucket_name,
@@ -49,7 +50,7 @@ class TestEndToEnd:
                 timeout=30,
             )
             TestEndToEnd.file_uuids[user_uuid] = response.json()["uuid"]
-            assert response.status_code == 201
+            assert response.status_code == HTTPStatus.CREATED
 
     @pytest.mark.parametrize("user_uuid", USER_UUIDS)
     def test_get_file_status(self, user_uuid):
@@ -70,7 +71,7 @@ class TestEndToEnd:
                 headers=make_headers(user_uuid),
                 timeout=30,
             )
-            if chunk_response.status_code == 200 and chunk_response.json()["processing_status"] == "complete":
+            if chunk_response.status_code == HTTPStatus.OK and chunk_response.json()["processing_status"] == "complete":
                 embedding_complete = True
                 break  # test passed
             else:
@@ -92,7 +93,7 @@ class TestEndToEnd:
             headers=make_headers(user_uuid),
             timeout=30,
         )
-        assert chunks_response.status_code == 200
+        assert chunks_response.status_code == HTTPStatus.OK
 
     @pytest.mark.parametrize("user_uuid", USER_UUIDS)
     def test_post_rag(self, user_uuid):
@@ -113,7 +114,7 @@ class TestEndToEnd:
             headers=make_headers(user_uuid),
             timeout=30,
         )
-        assert rag_response.status_code == 200
+        assert rag_response.status_code == HTTPStatus.OK
         source_document_file_uuids = {
             source_document["file_uuid"] for source_document in rag_response.json()["source_documents"]
         }

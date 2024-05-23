@@ -1,4 +1,4 @@
-import os
+from pathlib import Path
 from typing import Generator, TypeVar
 from uuid import uuid4
 
@@ -43,25 +43,16 @@ def embedding_model() -> YieldFixture[SentenceTransformer]:
 
 
 @pytest.fixture
-def file_pdf_path() -> YieldFixture[str]:
-    path = os.path.join(
-        os.path.dirname(os.path.abspath(__file__)),
-        "..",
-        "..",
-        "tests",
-        "data",
-        "pdf",
-        "Cabinet Office - Wikipedia.pdf",
-    )
-    yield path
+def file_pdf_path() -> Path:
+    return Path(__file__).parents[2] / "tests" / "data" / "pdf" / "Cabinet Office - Wikipedia.pdf"
 
 
 @pytest.fixture
-def file(s3_client, file_pdf_path):
-    file_name = os.path.basename(file_pdf_path)
-    file_type = f'.{file_name.split(".")[-1]}'
+def file(s3_client, file_pdf_path: Path):
+    file_name = file_pdf_path.name
+    file_type = file_pdf_path.suffix
 
-    with open(file_pdf_path, "rb") as f:
+    with file_pdf_path.open("rb") as f:
         s3_client.put_object(
             Bucket=env.bucket_name,
             Body=f.read(),

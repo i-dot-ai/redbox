@@ -1,4 +1,5 @@
 import json
+from http import HTTPStatus
 from types import SimpleNamespace
 from typing import Iterable
 from unittest.mock import AsyncMock, MagicMock, patch
@@ -21,7 +22,7 @@ test_history = [
 ]
 
 
-def mock_chat_prompt(user_input):
+def mock_chat_prompt():
     return ChatPromptValue(
         messages=[
             SystemMessage(content="You are a helpful AI bot."),
@@ -32,11 +33,11 @@ def mock_chat_prompt(user_input):
 
 class MockChain:
     @staticmethod
-    def stream(user_input):
+    def stream():
         yield [{"input": "Test input", "text": "Test output"}]
 
 
-def mock_get_chain(llm, prompt):
+def mock_get_chain():
     return MockChain()
 
 
@@ -136,5 +137,5 @@ def test_chat_errors(app_client, payload, error, headers):
     I expect a 422 error and a meaningful message
     """
     response = app_client.post("/chat/vanilla", json={"message_history": payload}, headers=headers)
-    assert response.status_code == 422
+    assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
     assert response.json() == error

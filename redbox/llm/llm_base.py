@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import UTC, datetime
 from typing import Any, Optional
 
 from langchain.chains import MapReduceDocumentsChain, ReduceDocumentsChain
@@ -116,7 +116,7 @@ class LLMHandler(object):
                 "question": standalone_question,
                 "input_documents": docs,
                 "user_info": user_info,
-                "current_date": date.today().isoformat(),
+                "current_date": datetime.now(tz=UTC).date().isoformat(),
             },
             callbacks=callbacks or [],
         )
@@ -164,7 +164,7 @@ class LLMHandler(object):
         if map_reduce:
             result = map_reduce_chain.run(
                 user_info=user_info,
-                current_date=date.today().isoformat(),
+                current_date=datetime.now(tz=UTC).date().isoformat(),
                 input_documents=spotlight.to_documents(),
                 callbacks=callbacks or [],
             )
@@ -172,7 +172,7 @@ class LLMHandler(object):
         else:
             result = regular_chain.run(
                 user_info=user_info,
-                current_date=date.today().isoformat(),
+                current_date=datetime.now(tz=UTC).date().isoformat(),
                 input_documents=spotlight.to_documents(),
                 callbacks=callbacks or [],
             )

@@ -98,12 +98,12 @@ select = [
     "S",
     "T",
     "W",
-#*    "ARG",
+    "ARG",
     "BLE",
     "LOG",
     "COM",
     "DJ",
-#*    "DTZ",
+    "DTZ",
 #    "EM",
     "EXE",
 #*    "FBT",
@@ -115,7 +115,7 @@ select = [
     "PIE",
 #*    "PL",
 #*    "PT",
-#*    "PTH",
+    "PTH",
     "PYI",
 #*    "RET",
     "RSE",
@@ -136,3 +136,4 @@ ignore = ["COM812", "DJ001"]
 "*/tests/*" = ["S101", "S106"]
 "worker/*" = ["B008"]
 "redbox/*" = ["TCH003"]
+"redbox/tests/*" = ["ARG001"]

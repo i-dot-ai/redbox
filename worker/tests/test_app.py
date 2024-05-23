@@ -6,7 +6,7 @@ from worker.src.app import app, broker, env
 
 
 @pytest.mark.asyncio
-async def test_ingest_file(s3_client, es_client, embedding_model, file):
+async def test_ingest_file(es_client, file):
     """
     Given that I have written a text File to s3
     When I call ingest_file

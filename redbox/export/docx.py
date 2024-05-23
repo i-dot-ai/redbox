@@ -76,12 +76,12 @@ def spotlight_complete_to_docx(
             raw = raw.replace(f"{uuid}", f"{uuid_to_file_map[uuid].key}")
 
         html_raw = markdown.markdown(task.raw)
-        temp_file = tempfile.NamedTemporaryFile(delete=True, suffix=".html")
 
-        with open(temp_file.name, "w", encoding="utf-8") as f:
-            f.write(html_raw)
+        with tempfile.NamedTemporaryFile("w", encoding="utf-8", suffix=".html", delete=True) as temp_file:
+            temp_file_name = temp_file.name
+            temp_file.write(html_raw)
 
-        elements = partition_html(temp_file.name)
+        elements = partition_html(temp_file_name)
 
         for element in elements:
             element_dict = element.to_dict()

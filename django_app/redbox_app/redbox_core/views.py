@@ -1,6 +1,6 @@
 import logging
-import os
 import uuid
+from pathlib import Path
 
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
@@ -74,13 +74,6 @@ def documents_view(request):
     )
 
 
-def get_file_extension(file):
-    # TODO: use a third party checking service to validate this
-
-    _, extension = os.path.splitext(file.name)
-    return extension
-
-
 @login_required
 def upload_view(request):
     errors = []
@@ -88,9 +81,9 @@ def upload_view(request):
     if request.method == "POST":
         # https://django-storages.readthedocs.io/en/1.13.2/backends/amazon-S3.html
         try:
-            uploaded_file = request.FILES["uploadDoc"]
+            uploaded_file: UploadedFile = request.FILES["uploadDoc"]
 
-            file_extension = get_file_extension(uploaded_file)
+            file_extension = Path(uploaded_file.name).suffix
 
             if uploaded_file.name is None:
                 errors.append("File has no name")

@@ -1,3 +1,6 @@
+from http import HTTPStatus
+
+
 def test_get_health(app_client):
     """
     Given that the app is running
@@ -5,4 +8,4 @@ def test_get_health(app_client):
     I Expect to see the docs
     """
     response = app_client.get("/health")
-    assert response.status_code == 200
+    assert response.status_code == HTTPStatus.OK

@@ -1,4 +1,4 @@
-import os
+from pathlib import Path
 from typing import Generator, TypeVar
 from uuid import uuid4
 
@@ -35,11 +35,11 @@ def claire():
 
 
 @pytest.fixture
-def file_belonging_to_alice(s3_client, file_pdf_path, alice, env) -> YieldFixture[File]:
-    file_name = os.path.basename(file_pdf_path)
-    file_type = f'.{file_name.split(".")[-1]}'
+def file_belonging_to_alice(s3_client, file_pdf_path: Path, alice, env) -> YieldFixture[File]:
+    file_name = file_pdf_path.name
+    file_type = file_pdf_path.suffix
 
-    with open(file_pdf_path, "rb") as f:
+    with file_pdf_path.open("rb") as f:
         s3_client.put_object(
             Bucket=env.bucket_name,
             Body=f.read(),
@@ -68,11 +68,11 @@ def chunk_belonging_to_alice(file_belonging_to_alice) -> YieldFixture[Chunk]:
 
 
 @pytest.fixture
-def file_belonging_to_bob(s3_client, file_pdf_path, bob, env) -> YieldFixture[File]:
-    file_name = os.path.basename(file_pdf_path)
-    file_type = f'.{file_name.split(".")[-1]}'
+def file_belonging_to_bob(s3_client, file_pdf_path: Path, bob, env) -> YieldFixture[File]:
+    file_name = file_pdf_path.name
+    file_type = file_pdf_path.suffix
 
-    with open(file_pdf_path, "rb") as f:
+    with file_pdf_path.open("rb") as f:
         s3_client.put_object(
             Bucket=env.bucket_name,
             Body=f.read(),
@@ -112,17 +112,8 @@ def chunk_belonging_to_claire(claire) -> YieldFixture[Chunk]:
 
 
 @pytest.fixture
-def file_pdf_path() -> YieldFixture[str]:
-    path = os.path.join(
-        os.path.dirname(os.path.abspath(__file__)),
-        "..",
-        "..",
-        "tests",
-        "data",
-        "pdf",
-        "Cabinet Office - Wikipedia.pdf",
-    )
-    yield path
+def file_pdf_path() -> Path:
+    return Path(__file__).parents[2] / "tests" / "data" / "pdf" / "Cabinet Office - Wikipedia.pdf"
 
 
 @pytest.fixture
@@ -141,9 +132,7 @@ def s3_client(env):
 
 
 @pytest.fixture
-def stored_chunk_belonging_to_alice(
-    elasticsearch_storage_handler, chunk_belonging_to_alice, alice
-) -> YieldFixture[Chunk]:
+def stored_chunk_belonging_to_alice(elasticsearch_storage_handler, chunk_belonging_to_alice) -> YieldFixture[Chunk]:
     elasticsearch_storage_handler.write_item(item=chunk_belonging_to_alice)
     elasticsearch_storage_handler.refresh()
     yield chunk_belonging_to_alice

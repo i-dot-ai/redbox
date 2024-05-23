@@ -80,7 +80,7 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
                 self.expiry_date = timezone.now() + timedelta(seconds=settings.FILE_EXPIRY_IN_SECONDS)
         super().save(*args, **kwargs)
 
-    def delete(self, using=None, keep_parents=False):
+    def delete(self, using=None, keep_parents=False):  # noqa: ARG002  # remove at Python 3.12
         #  Needed to make sure no orphaned files remain in the storage
         self.original_file.storage.delete(self.original_file.name)
         super().delete()

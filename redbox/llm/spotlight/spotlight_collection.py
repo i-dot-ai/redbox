@@ -1,5 +1,5 @@
 from collections import defaultdict
-from datetime import date
+from datetime import UTC, datetime
 from typing import Optional
 
 from langchain.schema import HumanMessage, SystemMessage
@@ -42,7 +42,7 @@ class SpotlightCollection(object):
         messages_to_send = [
             SystemMessage(
                 content=SPOTLIGHT_COMBINATION_TASK_PROMPT.format(
-                    current_date=date.today().isoformat(),
+                    current_date=datetime.now(tz=UTC).date().isoformat(),
                     user_info=user_info,
                 )
             ),
