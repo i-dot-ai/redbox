@@ -60,4 +60,4 @@ def pytest_runtest_setup(item):
             test_name = _test_failed_incremental[cls_name].get(parametrize_index, None)
             # if name found, test has failed for the combination of class name & test name
             if test_name is not None:
-                pytest.xfail("previous test failed ({})".format(test_name))
+                pytest.xfail(f"previous test failed ({test_name})")

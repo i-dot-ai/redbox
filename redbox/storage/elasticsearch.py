@@ -1,5 +1,4 @@
 import logging
-from typing import Optional
 from uuid import UUID
 
 from elastic_transport import ObjectApiResponse
@@ -82,7 +81,7 @@ class ElasticsearchStorageHandler(BaseStorageHandler):
         result = self.es_client.delete(index=target_index, id=str(item.uuid))
         return result
 
-    def delete_items(self, items: list[PersistableModel]) -> Optional[ObjectApiResponse]:
+    def delete_items(self, items: list[PersistableModel]) -> ObjectApiResponse | None:
         if not items:
             return None
 

@@ -1,5 +1,5 @@
 from datetime import UTC, datetime
-from typing import Any, Optional
+from typing import Any
 
 from langchain.chains import MapReduceDocumentsChain, ReduceDocumentsChain
 from langchain.chains.combine_documents.base import BaseCombineDocumentsChain
@@ -28,7 +28,7 @@ from redbox.models.file import File
 from redbox.models.spotlight import Spotlight, SpotlightTask
 
 
-class LLMHandler(object):
+class LLMHandler:
     """A class to handle RedBox data suffused interactions with a given LLM"""
 
     def __init__(
@@ -36,7 +36,7 @@ class LLMHandler(object):
         llm,
         user_uuid: str,
         vector_store=None,
-        embedding_function: Optional[HuggingFaceEmbeddings] = None,
+        embedding_function: HuggingFaceEmbeddings | None = None,
     ):
         """Initialise LLMHandler
 
@@ -70,8 +70,8 @@ class LLMHandler(object):
         self,
         user_question: str,
         user_info: dict,
-        chat_history: Optional[list] = None,
-        callbacks: Optional[list] = None,
+        chat_history: list | None = None,
+        callbacks: list | None = None,
     ) -> tuple[dict, BaseCombineDocumentsChain]:
         """Answers user question by retrieving context from content stored in
         Vector DB
@@ -140,7 +140,7 @@ class LLMHandler(object):
         spotlight: Spotlight,
         task: SpotlightTask,
         user_info: dict,
-        callbacks: Optional[list] = None,
+        callbacks: list | None = None,
         map_reduce: bool = False,
         token_max: int = 100_000,
     ) -> tuple[Any, StuffDocumentsChain | MapReduceDocumentsChain]:

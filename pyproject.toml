@@ -127,7 +127,7 @@ select = [
     "TCH",
     "TID",
 #*    "TRY",
-#*    "UP",
+    "UP",
     "YTT",
 ]
 exclude = ["django_app/redbox_app/redbox_core/migrations/*.py", "out/*"]

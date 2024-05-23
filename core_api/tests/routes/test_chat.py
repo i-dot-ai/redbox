@@ -1,7 +1,7 @@
 import json
 from http import HTTPStatus
 from types import SimpleNamespace
-from typing import Iterable
+from typing import TYPE_CHECKING
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -10,6 +10,9 @@ from langchain_core.prompt_values import ChatPromptValue
 from langchain_core.runnables import Runnable
 from langchain_core.runnables.schema import StreamEvent
 from starlette.websockets import WebSocketDisconnect
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
 
 system_chat = {"text": "test", "role": "system"}
 user_chat = {"text": "test", "role": "user"}

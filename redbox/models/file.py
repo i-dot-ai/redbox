@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import hashlib
 from enum import Enum
-from typing import Optional
 from uuid import UUID
 
 import tiktoken
@@ -27,7 +26,7 @@ class File(PersistableModel):
 
 
 class Link(BaseModel):
-    text: Optional[str]
+    text: str | None
     url: str
     start_index: int
 
@@ -43,7 +42,7 @@ class Metadata(BaseModel):
     """this is a pydantic model for the unstructured Metadata class
     uncomment fields below and update merge as required"""
 
-    parent_doc_uuid: Optional[UUID | None] = Field(
+    parent_doc_uuid: UUID | None = Field(
         description="this field is not actually part of unstructured Metadata but is required by langchain",
         default=None,
     )
@@ -61,14 +60,14 @@ class Metadata(BaseModel):
     # header_footer_type: Optional[str] = None
     # image_path: Optional[str] = None
     # is_continuation: Optional[bool] = None
-    languages: Optional[list[str]] = None
+    languages: list[str] | None = None
     # last_modified: Optional[str] = None
-    link_texts: Optional[list[str]] = None
-    link_urls: Optional[list[str]] = None
-    links: Optional[list[Link]] = None
+    link_texts: list[str] | None = None
+    link_urls: list[str] | None = None
+    links: list[Link] | None = None
     # orig_elements: Optional[list[Element]] = None
     # page_name: Optional[str] = None
-    page_number: Optional[int | list[int]] = None
+    page_number: int | list[int] | None = None
     # parent_id: Optional[UUID] = None
     # regex_metadata: Optional[dict[str, list[RegexMetadata]]] = None
     # section: Optional[str] = None
@@ -80,7 +79,7 @@ class Metadata(BaseModel):
     # url: Optional[str] = None
 
     @classmethod
-    def merge(cls, left: Optional[Metadata], right: Optional[Metadata]) -> Optional[Metadata]:
+    def merge(cls, left: Metadata | None, right: Metadata | None) -> Metadata | None:
         if not left:
             return right
         if not right:
@@ -116,8 +115,8 @@ class Chunk(PersistableModel):
     parent_file_uuid: UUID = Field(description="id of the original file which this text came from")
     index: int = Field(description="relative position of this chunk in the original file")
     text: str = Field(description="chunk of the original text")
-    metadata: Optional[Metadata] = Field(description="subset of the unstructured Element.Metadata object", default=None)
-    embedding: Optional[list[float]] = Field(description="the vector representation of the text", default=None)
+    metadata: Metadata | None = Field(description="subset of the unstructured Element.Metadata object", default=None)
+    embedding: list[float] | None = Field(description="the vector representation of the text", default=None)
 
     @computed_field
     def text_hash(self) -> str:
@@ -140,4 +139,4 @@ class FileStatus(BaseModel):
 
     file_uuid: UUID
     processing_status: ProcessingStatusEnum
-    chunk_statuses: Optional[list[ChunkStatus]]
+    chunk_statuses: list[ChunkStatus] | None

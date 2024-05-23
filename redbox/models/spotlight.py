@@ -1,5 +1,3 @@
-from typing import Optional
-
 from langchain.chains.base import Chain
 from langchain.prompts import PromptTemplate
 from langchain_core.documents import Document
@@ -35,7 +33,7 @@ class SpotlightTaskComplete(PersistableModel):
     chain: object
     file_hash: str
     raw: str
-    processed: Optional[str] = None
+    processed: str | None = None
 
     @field_serializer("chain")
     def serialise_chain(self, chain: Chain, _info):

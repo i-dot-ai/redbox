@@ -1,5 +1,6 @@
+from collections.abc import Generator
 from pathlib import Path
-from typing import Generator, TypeVar
+from typing import TypeVar
 from uuid import UUID, uuid4
 
 import pytest

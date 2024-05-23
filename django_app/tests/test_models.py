@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 import pytest
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -24,7 +24,7 @@ def test_file_model_last_referenced(peter_rabbit, s3_client):  # noqa: ARG001
     assert abs(new_file.last_referenced - expected_last_referenced) < timedelta(seconds=1)
 
     # Tests that the last_referenced field can be updated
-    new_date = datetime(2028, 1, 1, tzinfo=timezone.utc)
+    new_date = datetime(2028, 1, 1, tzinfo=UTC)
     new_file.last_referenced = new_date
     new_file.save()
     assert new_file.last_referenced == new_date
