@@ -2193,8 +2193,8 @@ description = "pytest plugin for URL based testing"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "pytest-asyncio-0.23.6.tar.gz", hash = "sha256:ffe523a89c1c222598c76856e76852b787504ddb72dd5d9b6617ffa8aa2cde5f"},
-    {file = "pytest_asyncio-0.23.6-py3-none-any.whl", hash = "sha256:68516fdd1018ac57b846c9846b954f0393b26f094764a28c955eabb0536a4e8a"},
+    {file = "pytest_base_url-2.1.0-py3-none-any.whl", hash = "sha256:3ad15611778764d451927b2a53240c1a7a591b521ea44cebfe45849d2d2812e6"},
+    {file = "pytest_base_url-2.1.0.tar.gz", hash = "sha256:02748589a54f9e63fcbe62301d6b0496da0d10231b753e950c63e03aee745d45"},
 ]
 
 [package.dependencies]
@@ -3311,4 +3311,4 @@ testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.11.2,<3.13"
-content-hash = "81f5849cbdb32d676385951866ce843e7109984a8d64872e13878a2a54f70e50"
+content-hash = "ea2b87f48ada6dae4dc1984c9010968a9db498d9ba8256fec4d6db49933d8f32"
