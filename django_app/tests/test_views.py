@@ -215,9 +215,7 @@ def test_remove_doc_view(client: Client, alice: User, file_pdf_path: Path, s3_cl
         assert not file_exists(s3_client, file_name)
         assert count_s3_objects(s3_client) == previous_count
         assert requests_mock.request_history[-1].method == "DELETE"
-
-        with pytest.raises(File.DoesNotExist):
-            File.objects.get(id=new_file.id)
+        assert File.objects.get(id=new_file.id)  # Django model instance is retained for user reference
 
 
 @pytest.mark.django_db()

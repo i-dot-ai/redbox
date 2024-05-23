@@ -85,6 +85,10 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
         self.original_file.storage.delete(self.original_file.name)
         super().delete()
 
+    def delete_from_s3(self):
+        """Manually deletes the file from S3 storage."""
+        self.original_file.delete(save=False)
+
     @property
     def file_type(self) -> str:
         name = self.original_file.name
