@@ -5,6 +5,7 @@ from uuid import UUID
 
 from fastapi import Depends, FastAPI, HTTPException, WebSocket
 from fastapi.encoders import jsonable_encoder
+from fastapi.security import HTTPAuthorizationCredentials
 from langchain.chains.combine_documents import create_stuff_documents_chain
 from langchain.chains.history_aware_retriever import create_history_aware_retriever
 from langchain.chains.llm import LLMChain
@@ -17,7 +18,7 @@ from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.runnables import Runnable
 from langchain_elasticsearch import ApproxRetrievalStrategy, ElasticsearchStore
 
-from core_api.src.auth import get_user_uuid
+from core_api.src.auth import JWTAuth, get_user_uuid
 from redbox.llm.prompts.chat import (
     CONDENSE_QUESTION_PROMPT,
     STUFF_DOCUMENT_PROMPT,
@@ -175,8 +176,9 @@ def rag_chat(chat_request: ChatRequest, user_uuid: Annotated[UUID, Depends(get_u
 
 
 @chat_app.websocket("/rag")
-async def rag_chat_streamed(websocket: WebSocket):
+async def rag_chat_streamed(websocket: WebSocket, user_uuid: HTTPAuthorizationCredentials = Depends(JWTAuth())):  # noqa: B008
     await websocket.accept()
+    log.debug("user_uuid: %s", user_uuid)
 
     retrieval_chain = await build_retrieval_chain()
 
