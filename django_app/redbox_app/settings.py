@@ -323,3 +323,20 @@ MAGIC_LINK = {
 USE_STREAMING = env.bool("USE_STREAMING")
 FILE_EXPIRY_IN_SECONDS = env.int("FILE_EXPIRY_IN_DAYS") * 24 * 60 * 60
 SUPERUSER_EMAIL = env.str("SUPERUSER_EMAIL", None)
+
+# Security classifications
+# https://www.gov.uk/government/publications/government-security-classifications/
+
+MAX_SECURITY_CLASSIFICATION = env.str("MAX_SECURITY_CLASSIFICATION")
+
+match MAX_SECURITY_CLASSIFICATION:
+    case "OFFICIAL":
+        MAX_SECURITY_REPR = "Official"
+    case "OFFICIAL-SENSITIVE":
+        MAX_SECURITY_REPR = "Official Sensitive"
+    case "SECRET":
+        MAX_SECURITY_REPR = "Secret"
+    case "TOP-SECRET":
+        MAX_SECURITY_REPR = "Top Secret"
+    case _:
+        raise Exception(f"Unknown MAX_SECURITY_CLASSIFICATION of {MAX_SECURITY_CLASSIFICATION}")
