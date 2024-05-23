@@ -192,7 +192,8 @@ def create_pdist(
     """
 
     if len(pair_embed_dist) != len(pair_embed_dist):
-        raise ValueError("distances do not have the same length")
+        message = "distances do not have the same length"
+        raise ValueError(message)
 
     # Phase 1: Calculate the two forms of distance between adjacent chunks
 

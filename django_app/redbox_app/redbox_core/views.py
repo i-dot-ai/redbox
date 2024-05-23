@@ -125,13 +125,13 @@ def ingest_file(uploaded_file: UploadedFile, user: User) -> list[str]:
         )
         file.save()
     except (ValueError, FieldError, ValidationError) as e:
-        logger.error("Error creating File model object for %s.", uploaded_file, exc_info=e)
+        logger.exception("Error creating File model object for %s.", uploaded_file, exc_info=e)
         errors.append(e.args[0])
     else:
         try:
             upload_file_response = core_api.upload_file(file.unique_name, user)
         except HTTPError as e:
-            logger.error("Error uploading file object %s.", file, exc_info=e)
+            logger.exception("Error uploading file object %s.", file, exc_info=e)
             file.delete()
             errors.append("failed to connect to core-api")
         else:
@@ -149,7 +149,7 @@ def remove_doc_view(request, doc_id: uuid):
         try:
             core_api.delete_file(file.core_file_uuid, request.user)
         except HTTPError as e:
-            logger.error("Error deleting file object %s.", file, exc_info=e)
+            logger.exception("Error deleting file object %s.", file, exc_info=e)
             errors.append("There was an error deleting this file")
 
         else:
@@ -233,12 +233,12 @@ def file_status_api_view(request: HttpRequest) -> JsonResponse:
     try:
         file = File.objects.get(pk=file_id)
     except File.DoesNotExist as ex:
-        logger.error("File object information not found in django - file does not exist %s.", file_id, exc_info=ex)
+        logger.exception("File object information not found in django - file does not exist %s.", file_id, exc_info=ex)
         return JsonResponse({"status": ProcessingStatusEnum.unknown.label})
     try:
         core_file_status_response = core_api.get_file_status(file_id=file.core_file_uuid, user=request.user)
     except HTTPError as ex:
-        logger.error("File object information from core not found - file does not exist %s.", file_id, exc_info=ex)
+        logger.exception("File object information from core not found - file does not exist %s.", file_id, exc_info=ex)
         if not file.processing_status:
             file.processing_status = ProcessingStatusEnum.unknown.label
             file.save()

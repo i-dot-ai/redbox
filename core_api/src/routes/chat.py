@@ -81,7 +81,8 @@ if env.elastic.subscription_level == "basic":
 elif env.elastic.subscription_level in ["platinum", "enterprise"]:
     strategy = ApproxRetrievalStrategy(hybrid=True)
 else:
-    raise ValueError(f"Unknown Elastic subscription level {env.elastic.subscription_level}")
+    message = f"Unknown Elastic subscription level {env.elastic.subscription_level}"
+    raise ValueError(message)
 
 
 vector_store = ElasticsearchStore(

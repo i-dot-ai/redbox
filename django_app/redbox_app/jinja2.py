@@ -15,7 +15,8 @@ markdown_converter = MarkdownIt("js-default")
 
 def url(path, *args, **kwargs):
     if args and kwargs:
-        raise ValueError("Use *args or **kwargs, not both.")
+        message = "Use *args or **kwargs, not both."
+        raise ValueError(message)
     return reverse(path, args=args, kwargs=kwargs)
 
 

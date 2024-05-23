@@ -104,7 +104,8 @@ class Metadata(BaseModel):
         if parent_doc_uuids := data.get("parent_doc_uuid"):
             parent_doc_uuids_without_none = [uuid for uuid in parent_doc_uuids if uuid]
             if len(parent_doc_uuids) > 1:
-                raise ValueError("chunks do not have the same parent_doc_uuid")
+                message = "chunks do not have the same parent_doc_uuid"
+                raise ValueError(message)
             data["parent_doc_uuid"] = parent_doc_uuids_without_none[0]
         return cls(**data)
 

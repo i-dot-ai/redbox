@@ -127,7 +127,7 @@ def s3_client(env):
         )
     except ClientError as e:
         if e.response["Error"]["Code"] != "BucketAlreadyOwnedByYou":
-            raise e
+            raise
 
     return _client
 

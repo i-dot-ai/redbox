@@ -39,11 +39,12 @@ def file_exists(s3_client, file_name) -> bool:
     """
     try:
         s3_client.get_object(Bucket=settings.BUCKET_NAME, Key=file_name.replace(" ", "_"))
-        return True
     except ClientError as client_error:
         if client_error.response["Error"]["Code"] == "NoSuchKey":
             return False
-        raise client_error
+        raise
+    else:
+        return True
 
 
 @pytest.mark.django_db()

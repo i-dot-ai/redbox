@@ -86,7 +86,8 @@ class ElasticsearchStorageHandler(BaseStorageHandler):
             return None
 
         if len({item.model_type for item in items}) > 1:
-            raise ValueError("Items with differing model types: {item.model_type for item in items}")
+            message = "Items with differing model types: {item.model_type for item in items}"
+            raise ValueError(message)
         model_type = items[0].model_type
         target_index = f"{self.root_index}-{model_type.lower()}"
         result = self.es_client.delete_by_query(
@@ -121,7 +122,7 @@ class ElasticsearchStorageHandler(BaseStorageHandler):
             try:
                 items.append(model(**item["_source"]))
             except ValidationError as e:
-                logging.error(e)
+                log.exception(exc_info=e)
         return items
 
     def list_all_items(self, model_type: str, user_uuid: UUID) -> list[UUID]:
@@ -187,11 +188,13 @@ class ElasticsearchStorageHandler(BaseStorageHandler):
         try:
             file = self.read_item(file_uuid, "File")
         except NotFoundError as e:
-            log.error("file/%s not found", file_uuid)
-            raise ValueError(f"File {file_uuid} not found") from e
+            log.exception("file/%s not found", file_uuid)
+            message = f"File {file_uuid} not found"
+            raise ValueError(message) from e
         if file.creator_user_uuid != user_uuid:
             log.error("file/%s.%s not owned by %s", file_uuid, file.creator_user_uuid, user_uuid)
-            raise ValueError(f"File {file_uuid} not found")
+            message = f"File {file_uuid} not found"
+            raise ValueError(message)
 
         # Test 2: Get the number of chunks for the file
         chunks = self.get_file_chunks(file_uuid, file.creator_user_uuid)
