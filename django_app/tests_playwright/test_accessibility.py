@@ -5,6 +5,7 @@ from _signin import sign_in
 from axe_playwright_python.sync_playwright import Axe
 from playwright.sync_api import Page, expect
 
+logger = logging.getLogger(__name__)
 URLS = ["/", "/sign-in", "/privacy-notice", "/accessibility-statement", "/support", "/documents", "/upload", "/chats"]
 
 # All available rules/categories are here: https://github.com/dequelabs/axe-core/blob/develop/doc/rule-descriptions.md
@@ -39,8 +40,8 @@ def test_violations(page: Page):
     for url in URLS:
         page.goto(f"{BASE_URL}{url}")
         results = axe.run(page, context=None, options=AXE_OPTIONS)
-        logging.info("\nURL: %s", url)
-        logging.info(results.generate_report())
+        logger.debug("\nURL: %s", url)
+        logger.info(results.generate_report())
 
         if results.violations_count > 0:
             # Because Python Playwright assertions can't take normal expressions, booleans etc.
