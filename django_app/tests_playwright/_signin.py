@@ -7,7 +7,7 @@ from _settings import BASE_URL
 from dotenv import load_dotenv
 from playwright.sync_api import Page, expect
 
-logger = logging.getLogger(__name__)main
+logger = logging.getLogger(__name__)
 ROOT = Path(__file__).parents[1]
 load_dotenv(dotenv_path=ROOT / ".env", override=True)
 
