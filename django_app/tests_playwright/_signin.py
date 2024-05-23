@@ -7,6 +7,9 @@ def sign_in(page: Page):
 
     email_address = os.environ["USER_EMAIL"]
 
+    if not email_address:
+        raise Exception("USER_EMAIL not set in your .env - this must be set to the email address you use for signing in.")
+
     # Sign in page
     page.goto(f"{BASE_URL}/sign-in/")
     expect(page.get_by_text("Redbox Copilot")).to_be_visible()
