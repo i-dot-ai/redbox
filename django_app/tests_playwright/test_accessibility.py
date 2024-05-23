@@ -1,5 +1,6 @@
 from playwright.sync_api import Page, expect
 from axe_playwright_python.sync_playwright import Axe
+from _settings import BASE_URL
 from _signin import sign_in
 
 URLS = [
@@ -25,7 +26,7 @@ def test_violations(page: Page):
 
     for url in URLS:
 
-        page.goto(f"localhost:8090{url}")
+        page.goto(f"{BASE_URL}{url}")
         results = axe.run(page, context=None, options=AXE_OPTIONS)
         print(f"\nURL: {url}")
         print(results.generate_report())

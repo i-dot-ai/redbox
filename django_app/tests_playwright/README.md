@@ -8,6 +8,8 @@ The tests are currently located at `django_app/tests_playwright`. All commands b
 
 Add `USER_EMAIL` to your `.env` to allow for logging in
 
+The tests assume you are running the Django app at http://localhost:8090. If this is not the case you can update the `BASE_URL` in `_settings.py`.
+
 ## Running tests
 
 From `django_app/tests_playwright` directory:
