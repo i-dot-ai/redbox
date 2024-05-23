@@ -9,6 +9,7 @@ from django.core.files.uploadedfile import UploadedFile
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse
+from django.utils import timezone
 from django.utils.datastructures import MultiValueDictKeyError
 from django.views.decorators.http import require_http_methods
 from redbox_app.redbox_core.client import CoreApiClient
@@ -214,6 +215,10 @@ def post_message(request: HttpRequest) -> HttpResponse:
     doc_uuids: list[str] = [doc.file_uuid for doc in response_data.source_documents]
     files: list[File] = File.objects.filter(core_file_uuid__in=doc_uuids, user=request.user)
     llm_message.source_files.set(files)
+
+    for file in files:
+        file.last_referenced = timezone.now()
+        file.save()
 
     return redirect(reverse(chats_view, args=(session.id,)))
 
