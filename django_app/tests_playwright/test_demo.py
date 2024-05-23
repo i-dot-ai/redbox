@@ -1,5 +1,6 @@
 from playwright.sync_api import Page, expect
+from _settings import BASE_URL
 
 def test_has_title(page: Page):
-    page.goto("http://localhost:8090/")
+    page.goto(BASE_URL)
     expect(page.get_by_text("Redbox Copilot")).to_be_visible()
