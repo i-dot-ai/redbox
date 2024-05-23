@@ -6,7 +6,7 @@ from sentence_transformers import SentenceTransformer
 
 from redbox.models.embedding import Embedding, EmbeddingModelInfo, EmbeddingResponse
 
-MODEL_PATH = str(Path(__file__).parent / ".." / "models")
+MODEL_PATH = str(Path(__file__).parents[1] / "models")
 
 log = logging.getLogger()
 log.setLevel(logging.INFO)

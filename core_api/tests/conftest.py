@@ -100,4 +100,4 @@ def chunked_file(elasticsearch_storage_handler, stored_file) -> YieldFixture[Fil
 
 @pytest.fixture
 def file_pdf_path() -> Path:
-    return Path(__file__).parent / ".." / ".." / "tests" / "data" / "pdf" / "Cabinet Office - Wikipedia.pdf"
+    return Path(__file__).parents[2] / "tests" / "data" / "pdf" / "Cabinet Office - Wikipedia.pdf"

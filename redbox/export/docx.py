@@ -77,10 +77,11 @@ def spotlight_complete_to_docx(
 
         html_raw = markdown.markdown(task.raw)
 
-        with tempfile.NamedTemporaryFile("w", encoding="utf-8", delete=True, suffix=".html") as f:
-            f.write(html_raw)
+        with tempfile.NamedTemporaryFile("w", encoding="utf-8", suffix=".html", delete=True) as temp_file:
+            temp_file_name = temp_file.name
+            temp_file.write(html_raw)
 
-        elements = partition_html(f.name)
+        elements = partition_html(temp_file_name)
 
         for element in elements:
             element_dict = element.to_dict()
