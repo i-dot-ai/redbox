@@ -72,12 +72,10 @@ class CoreApiClient:
         url = self.url / "file" / str(file_id) / "status"
         response = requests.get(url, headers={"Authorization": user.get_bearer_token()}, timeout=60)
         response.raise_for_status()
-        response_data = response.json(object_hook=lambda d: SimpleNamespace(**d))
-        return response_data
+        return response.json(object_hook=lambda d: SimpleNamespace(**d))
 
     def delete_file(self, file_id: UUID, user: User) -> SimpleNamespace:
         url = self.url / "file" / str(file_id)
         response = requests.delete(url, headers={"Authorization": user.get_bearer_token()}, timeout=60)
         response.raise_for_status()
-        response_data = response.json(object_hook=lambda d: SimpleNamespace(**d))
-        return response_data
+        return response.json(object_hook=lambda d: SimpleNamespace(**d))

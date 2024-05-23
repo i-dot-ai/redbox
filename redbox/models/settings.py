@@ -85,7 +85,7 @@ class Settings(BaseSettings):
 
     def elasticsearch_client(self) -> Elasticsearch:
         if isinstance(self.elastic, ElasticLocalSettings):
-            es = Elasticsearch(
+            return Elasticsearch(
                 hosts=[
                     {
                         "host": self.elastic.host,
@@ -95,10 +95,8 @@ class Settings(BaseSettings):
                 ],
                 basic_auth=(self.elastic.user, self.elastic.password),
             )
-            return es
 
-        es = Elasticsearch(cloud_id=self.elastic.cloud_id, api_key=self.elastic.api_key)
-        return es
+        return Elasticsearch(cloud_id=self.elastic.cloud_id, api_key=self.elastic.api_key)
 
     def s3_client(self):
         if self.object_store == "minio":

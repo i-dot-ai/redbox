@@ -73,9 +73,7 @@ def file(s3_client, file_pdf_path: Path, alice) -> YieldFixture[File]:
             Tagging=f"file_type={file_type}",
         )
 
-    file_record = File(key=file_name, bucket=env.bucket_name, creator_user_uuid=alice)
-
-    return file_record
+    return File(key=file_name, bucket=env.bucket_name, creator_user_uuid=alice)
 
 
 @pytest.fixture()

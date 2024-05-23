@@ -29,7 +29,7 @@ class SentenceTransformerDB(SentenceTransformer):
             for i, embedding in enumerate(embeddings)
         ]
 
-        output = EmbeddingResponse(
+        return EmbeddingResponse(
             object="list",
             data=reformatted_embeddings,
             embedding_id=str(uuid4()),
@@ -37,11 +37,8 @@ class SentenceTransformerDB(SentenceTransformer):
             embedding_model_info=self.get_embedding_model_info(),
         )
 
-        return output
-
     def get_embedding_model_info(self) -> EmbeddingModelInfo:
-        embedding_model_info = EmbeddingModelInfo(
+        return EmbeddingModelInfo(
             embedding_model=self.embedding_model_name,
             vector_size=self.get_sentence_embedding_dimension(),
         )
-        return embedding_model_info

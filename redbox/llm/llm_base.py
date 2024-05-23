@@ -123,7 +123,7 @@ class LLMHandler:
         return result, docs_with_sources_chain
 
     def get_spotlight_tasks(self, files: list[File], file_hash: str) -> Spotlight:
-        spotlight = Spotlight(
+        return Spotlight(
             files=files,
             file_hash=file_hash,
             tasks=[
@@ -133,7 +133,6 @@ class LLMHandler:
                 key_people_task,
             ],
         )
-        return spotlight
 
     def run_spotlight_task(
         self,

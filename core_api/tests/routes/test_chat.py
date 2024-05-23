@@ -112,9 +112,7 @@ def mock_build_retrieval_chain(events):
     retrieval_chain = AsyncMock(spec=Runnable, name="retrieval_chain")
     retrieval_chain.astream_events = astream_events
 
-    build_retrieval_chain = AsyncMock(name="build_retrieval_chain", return_value=retrieval_chain)
-
-    return build_retrieval_chain
+    return AsyncMock(name="build_retrieval_chain", return_value=retrieval_chain)
 
 
 @pytest.mark.parametrize(

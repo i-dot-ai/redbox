@@ -55,9 +55,7 @@ def file(s3_client, file_pdf_path: Path):
             Tagging=f"file_type={file_type}",
         )
 
-    file_record = File(key=file_name, bucket=env.bucket_name, creator_user_uuid=uuid4())
-
-    return file_record
+    return File(key=file_name, bucket=env.bucket_name, creator_user_uuid=uuid4())
 
 
 @pytest.fixture()
@@ -74,8 +72,7 @@ def elasticsearch_storage_handler(
 
 @pytest.fixture()
 def chunk() -> Chunk:
-    test_chunk = Chunk(parent_file_uuid=uuid4(), index=1, text="test_text", creator_user_uuid=uuid4())
-    return test_chunk
+    return Chunk(parent_file_uuid=uuid4(), index=1, text="test_text", creator_user_uuid=uuid4())
 
 
 @pytest.fixture()

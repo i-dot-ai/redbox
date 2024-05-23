@@ -21,8 +21,7 @@ def _collect_static():
 def create_user():
     def _create_user(email, date_joined_iso):
         date_joined = datetime.fromisoformat(date_joined_iso).astimezone(UTC)
-        user = User.objects.create_user(email=email, date_joined=date_joined)
-        return user
+        return User.objects.create_user(email=email, date_joined=date_joined)
 
     return _create_user
 
@@ -44,20 +43,17 @@ def chris(create_user):
 
 @pytest.fixture()
 def peter_rabbit():
-    user = User.objects.create_user(email="peter.rabbit@example.com", password="P455W0rd")
-    return user
+    return User.objects.create_user(email="peter.rabbit@example.com", password="P455W0rd")
 
 
 @pytest.fixture()
 def jemima_puddleduck():
-    user = User.objects.create_user(email="jemima.puddleduck@example.com", password="P455W0rd")
-    return user
+    return User.objects.create_user(email="jemima.puddleduck@example.com", password="P455W0rd")
 
 
 @pytest.fixture()
 def mrs_tiggywinkle():
-    user = User.objects.create_user(email="mrs.tiggywinkle@example.com")
-    return user
+    return User.objects.create_user(email="mrs.tiggywinkle@example.com")
 
 
 @pytest.fixture()

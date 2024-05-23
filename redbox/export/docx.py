@@ -19,6 +19,7 @@ def lookup_indentedness(raw: str, line_str_to_match: str):
         if line_str_to_match in line:
             # count number of spaces at start of line
             return len(line) - len(line.lstrip(" "))
+    return None
 
 
 def spotlight_complete_to_docx(

@@ -42,24 +42,21 @@ def file_belonging_to_alice(s3_client, file_pdf_path: Path, alice, env) -> File:
             Tagging=f"file_type={file_type}",
         )
 
-    file_record = File(
+    return File(
         key=file_name,
         bucket=env.bucket_name,
         creator_user_uuid=alice,
     )
 
-    return file_record
-
 
 @pytest.fixture()
 def chunk_belonging_to_alice(file_belonging_to_alice) -> Chunk:
-    chunk = Chunk(
+    return Chunk(
         creator_user_uuid=file_belonging_to_alice.creator_user_uuid,
         parent_file_uuid=file_belonging_to_alice.uuid,
         index=1,
         text="hello, i am Alice!",
     )
-    return chunk
 
 
 @pytest.fixture()
@@ -75,35 +72,31 @@ def file_belonging_to_bob(s3_client, file_pdf_path: Path, bob, env) -> File:
             Tagging=f"file_type={file_type}",
         )
 
-    file_record = File(
+    return File(
         key=file_name,
         bucket=env.bucket_name,
         creator_user_uuid=bob,
     )
 
-    return file_record
-
 
 @pytest.fixture()
 def chunk_belonging_to_bob(file_belonging_to_bob) -> Chunk:
-    chunk = Chunk(
+    return Chunk(
         creator_user_uuid=file_belonging_to_bob.creator_user_uuid,
         parent_file_uuid=file_belonging_to_bob.uuid,
         index=1,
         text="hello, i am Bob!",
     )
-    return chunk
 
 
 @pytest.fixture()
 def chunk_belonging_to_claire(claire) -> Chunk:
-    chunk = Chunk(
+    return Chunk(
         creator_user_uuid=claire,
         parent_file_uuid=uuid4(),
         index=1,
         text="hello, i am Claire!",
     )
-    return chunk
 
 
 @pytest.fixture()
