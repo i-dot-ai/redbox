@@ -91,11 +91,13 @@ def chat_message(chat_history: ChatHistory, uploaded_file: File) -> ChatMessage:
 
 
 @pytest.fixture
-def uploaded_file(alice: User, original_file: UploadedFile) -> File:
+def uploaded_file(alice: User, original_file: UploadedFile, s3_client) -> File:  # noqa: ARG001
     file = File.objects.create(
         user=alice, original_file=original_file, original_file_name=original_file.name, core_file_uuid=uuid.uuid4()
     )
-    return file
+    file.save()
+    yield file
+    file.delete()
 
 
 @pytest.fixture
