@@ -155,6 +155,8 @@ def remove_doc_view(request, doc_id: uuid):
         else:
             logger.info("Removing document: %s", request.POST["doc_id"])
             file.delete_from_s3()
+            file.status = StatusEnum.deleted
+            file.save()
             return redirect("documents")
 
     return render(
