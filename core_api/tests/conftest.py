@@ -1,6 +1,4 @@
-from collections.abc import Generator
 from pathlib import Path
-from typing import TypeVar
 from uuid import UUID, uuid4
 
 import pytest
@@ -13,10 +11,6 @@ from core_api.src.app import app as application
 from core_api.src.app import env
 from redbox.models import Chunk, File
 from redbox.storage import ElasticsearchStorageHandler
-
-T = TypeVar("T")
-
-YieldFixture = Generator[T, None, None]
 
 
 @pytest.fixture()
@@ -35,17 +29,17 @@ def s3_client():
 
 
 @pytest.fixture()
-def es_client() -> YieldFixture[Elasticsearch]:
+def es_client() -> Elasticsearch:
     return env.elasticsearch_client()
 
 
 @pytest.fixture()
-def app_client() -> YieldFixture[TestClient]:
+def app_client() -> TestClient:
     return TestClient(application)
 
 
 @pytest.fixture()
-def alice() -> YieldFixture[UUID]:
+def alice() -> UUID:
     return uuid4()
 
 
@@ -61,7 +55,7 @@ def elasticsearch_storage_handler(es_client):
 
 
 @pytest.fixture()
-def file(s3_client, file_pdf_path: Path, alice) -> YieldFixture[File]:
+def file(s3_client, file_pdf_path: Path, alice) -> File:
     file_name = file_pdf_path.name
     file_type = file_pdf_path.suffix
 
@@ -77,14 +71,14 @@ def file(s3_client, file_pdf_path: Path, alice) -> YieldFixture[File]:
 
 
 @pytest.fixture()
-def stored_file(elasticsearch_storage_handler, file) -> YieldFixture[File]:
+def stored_file(elasticsearch_storage_handler, file) -> File:
     elasticsearch_storage_handler.write_item(file)
     elasticsearch_storage_handler.refresh()
     return file
 
 
 @pytest.fixture()
-def chunked_file(elasticsearch_storage_handler, stored_file) -> YieldFixture[File]:
+def chunked_file(elasticsearch_storage_handler, stored_file) -> File:
     for i in range(5):
         chunk = Chunk(
             text="hello",
