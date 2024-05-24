@@ -89,9 +89,7 @@ def compute_embed_dist(pair_embed_dist: ArrayLike) -> ArrayLike:
 
     # Chebyshev distance is used to make sure that the distance between i and j is always
     # smaller than the distance between i and k and j and k for any k
-
-    return scipy.spatial.distance.pdist(embed_dims, "chebyshev")
-
+    #
     # example:
     # suppose we have:
     #   pair_embed_dist = [.1, .3, .2, .4]
@@ -120,7 +118,8 @@ def compute_embed_dist(pair_embed_dist: ArrayLike) -> ArrayLike:
     #
     # This is rewritten from left-to-bottom (to save space in memory)
     # [.3, .3, .4, .2, .4, .4]
-    #
+
+    return scipy.spatial.distance.pdist(embed_dims, "chebyshev")
 
 
 def compute_token_dist(token_counts: ArrayLike) -> ArrayLike:
@@ -135,8 +134,7 @@ def compute_token_dist(token_counts: ArrayLike) -> ArrayLike:
     drop_ind = b - a > 1
 
     # calculate the token count distance between chunk i and j
-    return scipy.spatial.distance.pdist(token_dims, "cityblock")[drop_ind]
-
+    #
     # example:
     # suppose we have:
     #   token_counts = [10, 30, 20, 40]
@@ -177,6 +175,8 @@ def compute_token_dist(token_counts: ArrayLike) -> ArrayLike:
     #
     # N.B. This is equivalent but slower:
     # [sum(token_counts[i:j+1]) for i in range(n) for j in range(i+1, n)]
+
+    return scipy.spatial.distance.pdist(token_dims, "cityblock")[drop_ind]
 
 
 def create_pdist(
