@@ -26,8 +26,11 @@ def test_user_journey(page: Page):
     # Documents page
     documents_page = home_page.navigate_to_documents()
     document_upload_page = documents_page.navigate_to_upload()
+
+    # Upload a file
     upload_file = document_upload_page.DJANGO_ROOT / "files" / "RiskTriggersReport361.pdf"
     documents_page = document_upload_page.upload_document(upload_file)
+    documents_page.assert_contains_file_named(upload_file.name)
 
     # Chats page
     chats_page = documents_page.navigate_to_chats()

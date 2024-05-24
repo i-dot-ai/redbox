@@ -44,20 +44,29 @@ class BasePage(metaclass=ABCMeta):
     def check_title(self):
         expected_page_title = self.get_expected_page_title()
         expect(self.page).to_have_title(expected_page_title)
+        # expect(self.page).to_have_url("url")
 
     def check_a11y(self):
         results = self.axe.run(self.page, context=None, options=self.AXE_OPTIONS)
         if results.violations_count > 0:
             expect(
                 self.page.get_by_text("Accessibility issues"),
-                f"Accessibility issues in {self.__class__.__name__} at {self.page.url}",
+                f"Accessibility issues in {self.__class__.__name__} at {self.url}",
             ).to_be_visible()
 
     @abstractmethod
     def get_expected_page_title(self) -> str: ...
 
+    @property
+    def title(self) -> str:
+        return self.page.title()
+
+    @property
+    def url(self) -> URL:
+        return URL(self.page.url)
+
     def __str__(self) -> str:
-        return f"title: {self.page.title()}"
+        return f'"{self.title}" at {self.url}'
 
 
 class SignedInBasePage(BasePage, metaclass=ABCMeta):
@@ -141,6 +150,9 @@ class DocumentsPage(SignedInBasePage):
     def navigate_to_upload(self) -> "DocumentUploadPage":
         self.page.get_by_role("button", name="Upload a new document").click()
         return DocumentUploadPage(self.page)
+
+    def assert_contains_file_named(self, file_name: str):
+        expect(self.page.get_by_role("cell", name=file_name, exact=True)).to_be_visible()
 
 
 class DocumentUploadPage(SignedInBasePage):
