@@ -1,6 +1,7 @@
 # mypy: ignore-errors
 
 import socket
+from enum import StrEnum
 from pathlib import Path
 
 import environ
@@ -327,16 +328,12 @@ SUPERUSER_EMAIL = env.str("SUPERUSER_EMAIL", None)
 # Security classifications
 # https://www.gov.uk/government/publications/government-security-classifications/
 
-MAX_SECURITY_CLASSIFICATION = env.str("MAX_SECURITY_CLASSIFICATION")
 
-match MAX_SECURITY_CLASSIFICATION:
-    case "OFFICIAL":
-        MAX_SECURITY_REPR = "Official"
-    case "OFFICIAL-SENSITIVE":
-        MAX_SECURITY_REPR = "Official Sensitive"
-    case "SECRET":
-        MAX_SECURITY_REPR = "Secret"
-    case "TOP-SECRET":
-        MAX_SECURITY_REPR = "Top Secret"
-    case _:
-        raise Exception(f"Unknown MAX_SECURITY_CLASSIFICATION of {MAX_SECURITY_CLASSIFICATION}")
+class Classification(StrEnum):
+    OFFICIAL = "Official"
+    OFFICIAL_SENSITIVE = "Official Sensitive"
+    SECRET = "Secret"  # noqa S105
+    TOP_SECRET = "Top Secret"  # noqa S105
+
+
+MAX_SECURITY_CLASSIFICATION = Classification[env.str("MAX_SECURITY_CLASSIFICATION")]

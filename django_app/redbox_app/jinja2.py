@@ -63,7 +63,7 @@ def environment(**options):
             "url": url,
             "humanize_timedelta": humanize_timedelta,
             "environment": settings.ENVIRONMENT,
-            "security": settings.MAX_SECURITY_REPR,
+            "security": settings.MAX_SECURITY_CLASSIFICATION.value,
         }
     )
     env.globals.update(
@@ -72,7 +72,7 @@ def environment(**options):
             "url": url,
             "humanize_timedelta": humanize_timedelta,
             "environment": settings.ENVIRONMENT,
-            "security": settings.MAX_SECURITY_REPR,
+            "security": settings.MAX_SECURITY_CLASSIFICATION.value,
         }
     )
     return env

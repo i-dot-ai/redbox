@@ -8,8 +8,8 @@ from dotenv import load_dotenv
 from playwright.sync_api import Page, expect
 
 logger = logging.getLogger(__name__)
-ROOT = Path(__file__).parents[1]
-load_dotenv(dotenv_path=ROOT / ".env", override=True)
+DJANGO_ROOT = Path(__file__).parents[1]
+load_dotenv(dotenv_path=DJANGO_ROOT / ".env", override=True)
 
 
 def sign_in(page: Page):
@@ -26,9 +26,8 @@ def sign_in(page: Page):
     page.get_by_text("Continue").click()
 
     # Get magic link
-    django_dir = Path(__file__).parents[2]
     command = ["poetry", "run", "python", "manage.py", "show_magiclink_url", email_address]
-    result = subprocess.run(command, capture_output=True, text=True, cwd=django_dir)  # noqa: S603
+    result = subprocess.run(command, capture_output=True, text=True, cwd=DJANGO_ROOT)  # noqa: S603
     magic_link = result.stdout.strip()
 
     # Complete sign-in and verify
