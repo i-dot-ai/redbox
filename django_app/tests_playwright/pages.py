@@ -5,7 +5,7 @@ from pathlib import Path
 
 from _settings import BASE_URL
 from axe_playwright_python.sync_playwright import Axe
-from playwright.sync_api import Locator, Page, expect
+from playwright.sync_api import Page, expect
 from yarl import URL
 
 logger = logging.getLogger(__name__)
@@ -13,6 +13,7 @@ logger.setLevel(logging.DEBUG)
 
 
 class BasePage(metaclass=ABCMeta):
+    DJANGO_ROOT = Path(__file__).parents[1]
     AXE_OPTIONS = {
         "runOnly": {
             "type": "tag",
@@ -61,18 +62,15 @@ class BasePage(metaclass=ABCMeta):
 
 class SignedInBasePage(BasePage, metaclass=ABCMeta):
     def navigate_to_documents(self) -> "DocumentsPage":
-        sign_in_link: Locator = self.page.get_by_role("link", name="Documents", exact=True)
-        sign_in_link.click()
+        self.page.get_by_role("link", name="Documents", exact=True).click()
         return DocumentsPage(self.page)
 
     def navigate_to_chats(self) -> "ChatsPage":
-        sign_in_link: Locator = self.page.get_by_role("link", name="Chats", exact=True)
-        sign_in_link.click()
+        self.page.get_by_role("link", name="Chats", exact=True).click()
         return ChatsPage(self.page)
 
     def sign_out(self) -> "LandingPage":
-        sign_in_link: Locator = self.page.get_by_role("link", name="Chats", exact=True)
-        sign_in_link.click()
+        self.page.get_by_role("link", name="Chats", exact=True).click()
         return LandingPage(self.page)
 
 
@@ -85,8 +83,7 @@ class LandingPage(BasePage):
         return "Redbox Copilot"
 
     def navigate_to_sign_in(self) -> "SignInPage":
-        sign_in_link: Locator = self.page.get_by_role("link", name="Sign in", exact=True)
-        sign_in_link.click()
+        self.page.get_by_role("link", name="Sign in", exact=True).click()
         return SignInPage(self.page)
 
 
@@ -118,11 +115,9 @@ class SignInConfirmationPage(BasePage):
         page.goto(str(magic_link))
         super().__init__(page)
 
-    @staticmethod
-    def get_magic_link(email_address: str) -> URL:
-        django_root = Path(__file__).parents[1]
+    def get_magic_link(self, email_address: str) -> URL:
         command = ["poetry", "run", "python", "manage.py", "show_magiclink_url", email_address]
-        result = subprocess.run(command, capture_output=True, text=True, cwd=django_root)  # noqa: S603
+        result = subprocess.run(command, capture_output=True, text=True, cwd=self.DJANGO_ROOT)  # noqa: S603
         magic_link = result.stdout.strip().lstrip("/")
         return BASE_URL / magic_link
 
@@ -130,8 +125,7 @@ class SignInConfirmationPage(BasePage):
         return "Sign in - confirmation - Redbox Copilot"
 
     def navigate_to_home_page(self) -> "HomePage":
-        sign_in_link: Locator = self.page.get_by_role("button", name="Sign in", exact=True)
-        sign_in_link.click()
+        self.page.get_by_role("button", name="Sign in", exact=True).click()
         return HomePage(self.page)
 
 
@@ -143,6 +137,25 @@ class HomePage(SignedInBasePage):
 class DocumentsPage(SignedInBasePage):
     def get_expected_page_title(self) -> str:
         return "Documents - Redbox Copilot"
+
+    def navigate_to_upload(self) -> "DocumentUploadPage":
+        self.page.get_by_role("button", name="Upload a new document").click()
+        return DocumentUploadPage(self.page)
+
+
+class DocumentUploadPage(SignedInBasePage):
+    def get_expected_page_title(self) -> str:
+        return "Upload a document - Redbox Copilot"
+
+    def upload_document(self, upload_file: Path) -> DocumentsPage:
+        self.get_file_chooser_by_label().set_files(upload_file)
+        self.page.get_by_role("button", name="Upload").click()
+        return self.navigate_to_documents()
+
+    def get_file_chooser_by_label(self):
+        with self.page.expect_file_chooser() as fc_info:
+            self.page.get_by_label("Upload a document").click()
+        return fc_info.value
 
 
 class ChatsPage(SignedInBasePage):
