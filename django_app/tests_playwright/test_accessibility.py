@@ -6,7 +6,7 @@ from axe_playwright_python.sync_playwright import Axe
 from playwright.sync_api import Page, expect
 
 logger = logging.getLogger(__name__)
-URLS = ["/", "/sign-in", "/privacy-notice", "/accessibility-statement", "/support", "/documents", "/upload", "/chats"]
+URLS = ["", "sign-in", "privacy-notice", "accessibility-statement", "support", "documents", "upload", "chats"]
 
 # All available rules/categories are here: https://github.com/dequelabs/axe-core/blob/develop/doc/rule-descriptions.md
 # Can't include all as gov.uk design system violates the "region" rule
@@ -38,7 +38,7 @@ def test_violations(page: Page):
     sign_in(page)
 
     for url in URLS:
-        page.goto(f"{BASE_URL}{url}")
+        page.goto(f"{BASE_URL / url}")
         results = axe.run(page, context=None, options=AXE_OPTIONS)
         logger.debug("\nURL: %s", url)
         logger.info(results.generate_report())
