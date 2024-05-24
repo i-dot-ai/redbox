@@ -1,5 +1,4 @@
 from pathlib import Path
-from typing import Generator, TypeVar
 from uuid import UUID, uuid4
 
 import pytest
@@ -13,12 +12,8 @@ from core_api.src.app import env
 from redbox.models import Chunk, File
 from redbox.storage import ElasticsearchStorageHandler
 
-T = TypeVar("T")
 
-YieldFixture = Generator[T, None, None]
-
-
-@pytest.fixture
+@pytest.fixture()
 def s3_client():
     _client = env.s3_client()
     try:
@@ -28,39 +23,39 @@ def s3_client():
         )
     except ClientError as e:
         if e.response["Error"]["Code"] != "BucketAlreadyOwnedByYou":
-            raise e
+            raise
 
-    yield _client
-
-
-@pytest.fixture
-def es_client() -> YieldFixture[Elasticsearch]:
-    yield env.elasticsearch_client()
+    return _client
 
 
-@pytest.fixture
-def app_client() -> YieldFixture[TestClient]:
-    yield TestClient(application)
+@pytest.fixture()
+def es_client() -> Elasticsearch:
+    return env.elasticsearch_client()
 
 
-@pytest.fixture
-def alice() -> YieldFixture[UUID]:
-    yield uuid4()
+@pytest.fixture()
+def app_client() -> TestClient:
+    return TestClient(application)
 
 
-@pytest.fixture
+@pytest.fixture()
+def alice() -> UUID:
+    return uuid4()
+
+
+@pytest.fixture()
 def headers(alice):
     bearer_token = jwt.encode({"user_uuid": str(alice)}, key="nvjkernd")
-    yield {"Authorization": f"Bearer {bearer_token}"}
+    return {"Authorization": f"Bearer {bearer_token}"}
 
 
-@pytest.fixture
+@pytest.fixture()
 def elasticsearch_storage_handler(es_client):
-    yield ElasticsearchStorageHandler(es_client=es_client, root_index="redbox-data")
+    return ElasticsearchStorageHandler(es_client=es_client, root_index="redbox-data")
 
 
-@pytest.fixture
-def file(s3_client, file_pdf_path: Path, alice) -> YieldFixture[File]:
+@pytest.fixture()
+def file(s3_client, file_pdf_path: Path, alice) -> File:
     file_name = file_pdf_path.name
     file_type = file_pdf_path.suffix
 
@@ -72,20 +67,18 @@ def file(s3_client, file_pdf_path: Path, alice) -> YieldFixture[File]:
             Tagging=f"file_type={file_type}",
         )
 
-    file_record = File(key=file_name, bucket=env.bucket_name, creator_user_uuid=alice)
-
-    yield file_record
+    return File(key=file_name, bucket=env.bucket_name, creator_user_uuid=alice)
 
 
-@pytest.fixture
-def stored_file(elasticsearch_storage_handler, file) -> YieldFixture[File]:
+@pytest.fixture()
+def stored_file(elasticsearch_storage_handler, file) -> File:
     elasticsearch_storage_handler.write_item(file)
     elasticsearch_storage_handler.refresh()
-    yield file
+    return file
 
 
-@pytest.fixture
-def chunked_file(elasticsearch_storage_handler, stored_file) -> YieldFixture[File]:
+@pytest.fixture()
+def chunked_file(elasticsearch_storage_handler, stored_file) -> File:
     for i in range(5):
         chunk = Chunk(
             text="hello",
@@ -95,9 +88,9 @@ def chunked_file(elasticsearch_storage_handler, stored_file) -> YieldFixture[Fil
         )
         elasticsearch_storage_handler.write_item(chunk)
     elasticsearch_storage_handler.refresh()
-    yield stored_file
+    return stored_file
 
 
-@pytest.fixture
+@pytest.fixture()
 def file_pdf_path() -> Path:
     return Path(__file__).parents[2] / "tests" / "data" / "pdf" / "Cabinet Office - Wikipedia.pdf"

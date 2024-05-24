@@ -12,13 +12,12 @@ EMAIL_MAPPING = {
 
 def _send_email(subject: str, template_name: str, to_address: str, context: dict):
     body = render_to_string(template_name, context)
-    response = send_mail(
+    return send_mail(
         subject=subject,
         message=body,
         from_email=settings.FROM_EMAIL,
         recipient_list=[to_address],
     )
-    return response
 
 
 def send_magic_link_email(magic_link: str, to_address: str):

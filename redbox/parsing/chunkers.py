@@ -27,7 +27,7 @@ def other_chunker(file: File) -> list[Chunk]:
     elements = partition(url=authenticated_s3_url, strategy=env.partition_strategy)
     raw_chunks = chunk_by_title(elements=elements)
 
-    chunks = [
+    return [
         Chunk(
             parent_file_uuid=file.uuid,
             index=i,
@@ -44,5 +44,3 @@ def other_chunker(file: File) -> list[Chunk]:
         )
         for i, raw_chunk in enumerate(raw_chunks)
     ]
-
-    return chunks

@@ -1,7 +1,7 @@
 import json
 from http import HTTPStatus
 from types import SimpleNamespace
-from typing import Iterable
+from typing import TYPE_CHECKING
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -10,6 +10,9 @@ from langchain_core.prompt_values import ChatPromptValue
 from langchain_core.runnables import Runnable
 from langchain_core.runnables.schema import StreamEvent
 from starlette.websockets import WebSocketDisconnect
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
 
 system_chat = {"text": "test", "role": "system"}
 user_chat = {"text": "test", "role": "user"}
@@ -41,7 +44,7 @@ def mock_get_chain():
     return MockChain()
 
 
-@pytest.mark.parametrize("chat_history, status_code", test_history)
+@pytest.mark.parametrize(("chat_history", "status_code"), test_history)
 def test_simple_chat(chat_history, status_code, app_client, monkeypatch, headers):
     monkeypatch.setattr("langchain_core.prompts.ChatPromptTemplate.from_messages", mock_chat_prompt)
     monkeypatch.setattr("core_api.src.routes.chat.LLMChain", mock_get_chain)
@@ -109,13 +112,11 @@ def mock_build_retrieval_chain(events):
     retrieval_chain = AsyncMock(spec=Runnable, name="retrieval_chain")
     retrieval_chain.astream_events = astream_events
 
-    build_retrieval_chain = AsyncMock(name="build_retrieval_chain", return_value=retrieval_chain)
-
-    return build_retrieval_chain
+    return AsyncMock(name="build_retrieval_chain", return_value=retrieval_chain)
 
 
 @pytest.mark.parametrize(
-    "payload, error",
+    ("payload", "error"),
     [
         (
             [{"text": "hello", "role": "system"}],

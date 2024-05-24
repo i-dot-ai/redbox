@@ -24,10 +24,10 @@ def sign_in_view(request: HttpRequest):
                 link = MagicLink.objects.create(user=user, redirect_to="/")
                 full_link = request.build_absolute_uri(link.get_absolute_url())
                 email_handler.send_magic_link_email(full_link, email)
-            except models.User.DoesNotExist:
-                logger.debug("User with email %s not found", email)
-            except HTTPError:
-                logger.error("failed to send link to %s", email)
+            except models.User.DoesNotExist as e:
+                logger.debug("User with email %s not found", email, exc_info=e)
+            except HTTPError as e:
+                logger.exception("failed to send link to %s", email, exc_info=e)
 
             return redirect("sign-in-link-sent")
 

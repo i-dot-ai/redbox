@@ -15,7 +15,8 @@ markdown_converter = MarkdownIt("js-default")
 
 def url(path, *args, **kwargs):
     if args and kwargs:
-        raise ValueError("Use *args or **kwargs, not both.")
+        message = "Use *args or **kwargs, not both."
+        raise ValueError(message)
     return reverse(path, args=args, kwargs=kwargs)
 
 
@@ -32,8 +33,7 @@ def markdown(text, cls=None):
         Text converted to markdown
     """
     html = markdown_converter.render(text).strip()
-    html = html.replace("<p>", f'<p class="{cls or ""}">', 1).replace("</p>", "", 1)
-    return html
+    return html.replace("<p>", f'<p class="{cls or ""}">', 1).replace("</p>", "", 1)
 
 
 def humanize_timedelta(minutes=0, hours_limit=200, too_large_msg=""):

@@ -57,11 +57,10 @@ log.info("Loaded embedding model from environment: %s", env.embedding_model)
 def populate_embedding_model_info() -> EmbeddingModelInfo:
     test_text = "This is a test sentence."
     embedding = embedding_model.embed_documents([test_text])[0]
-    embedding_model_info = EmbeddingModelInfo(
+    return EmbeddingModelInfo(
         embedding_model=env.embedding_model,
         vector_size=len(embedding),
     )
-    return embedding_model_info
 
 
 embedding_model_info = populate_embedding_model_info()
@@ -81,7 +80,8 @@ if env.elastic.subscription_level == "basic":
 elif env.elastic.subscription_level in ["platinum", "enterprise"]:
     strategy = ApproxRetrievalStrategy(hybrid=True)
 else:
-    raise ValueError(f"Unknown Elastic subscription level {env.elastic.subscription_level}")
+    message = f"Unknown Elastic subscription level {env.elastic.subscription_level}"
+    raise ValueError(message)
 
 
 vector_store = ElasticsearchStore(

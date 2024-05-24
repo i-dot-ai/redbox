@@ -53,13 +53,11 @@ def health() -> StatusResponse:
     uptime = datetime.now(UTC) - start_time
     uptime_seconds = uptime.total_seconds()
 
-    output = StatusResponse(
+    return StatusResponse(
         status="ready",
         uptime_seconds=uptime_seconds,
         version=app.version,
     )
-
-    return output
 
 
 app.mount("/chat", chat_app)
