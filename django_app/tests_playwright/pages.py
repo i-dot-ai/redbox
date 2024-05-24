@@ -1,8 +1,15 @@
+import logging
+import subprocess
 from abc import ABCMeta, abstractmethod
+from pathlib import Path
 
 from _settings import BASE_URL
 from axe_playwright_python.sync_playwright import Axe
 from playwright.sync_api import Locator, Page, expect
+from yarl import URL
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
 
 
 class BasePage(metaclass=ABCMeta):
@@ -48,8 +55,28 @@ class BasePage(metaclass=ABCMeta):
     @abstractmethod
     def get_expected_page_title(self) -> str: ...
 
+    def __str__(self) -> str:
+        return f"title: {self.page.title()}"
 
-class HomePage(BasePage):
+
+class SignedInBasePage(BasePage, metaclass=ABCMeta):
+    def navigate_to_documents(self) -> "DocumentsPage":
+        sign_in_link: Locator = self.page.get_by_role("link", name="Documents", exact=True)
+        sign_in_link.click()
+        return DocumentsPage(self.page)
+
+    def navigate_to_chats(self) -> "ChatsPage":
+        sign_in_link: Locator = self.page.get_by_role("link", name="Chats", exact=True)
+        sign_in_link.click()
+        return ChatsPage(self.page)
+
+    def sign_out(self) -> "LandingPage":
+        sign_in_link: Locator = self.page.get_by_role("link", name="Chats", exact=True)
+        sign_in_link.click()
+        return LandingPage(self.page)
+
+
+class LandingPage(BasePage):
     def __init__(self, page):
         page.goto(str(BASE_URL))
         super().__init__(page)
@@ -57,7 +84,7 @@ class HomePage(BasePage):
     def get_expected_page_title(self) -> str:
         return "Redbox Copilot"
 
-    def sign_in(self) -> "SignInPage":
+    def navigate_to_sign_in(self) -> "SignInPage":
         sign_in_link: Locator = self.page.get_by_role("link", name="Sign in", exact=True)
         sign_in_link.click()
         return SignInPage(self.page)
@@ -74,3 +101,50 @@ class SignInPage(BasePage):
     @email.setter
     def email(self, value: str):
         self.page.locator("#email").fill(value)
+
+    def continue_(self):
+        self.page.get_by_text("Continue").click()
+        return SignInLinkSentPage(self.page)
+
+
+class SignInLinkSentPage(BasePage):
+    def get_expected_page_title(self) -> str:
+        return "Sign in - link sent - Redbox Copilot"
+
+
+class SignInConfirmationPage(BasePage):
+    def __init__(self, page, email_address):
+        magic_link = self.get_magic_link(email_address)
+        page.goto(str(magic_link))
+        super().__init__(page)
+
+    @staticmethod
+    def get_magic_link(email_address: str) -> URL:
+        django_root = Path(__file__).parents[1]
+        command = ["poetry", "run", "python", "manage.py", "show_magiclink_url", email_address]
+        result = subprocess.run(command, capture_output=True, text=True, cwd=django_root)  # noqa: S603
+        magic_link = result.stdout.strip().lstrip("/")
+        return BASE_URL / magic_link
+
+    def get_expected_page_title(self) -> str:
+        return "Sign in - confirmation - Redbox Copilot"
+
+    def navigate_to_home_page(self) -> "HomePage":
+        sign_in_link: Locator = self.page.get_by_role("button", name="Sign in", exact=True)
+        sign_in_link.click()
+        return HomePage(self.page)
+
+
+class HomePage(SignedInBasePage):
+    def get_expected_page_title(self) -> str:
+        return "Redbox Copilot"
+
+
+class DocumentsPage(SignedInBasePage):
+    def get_expected_page_title(self) -> str:
+        return "Documents - Redbox Copilot"
+
+
+class ChatsPage(SignedInBasePage):
+    def get_expected_page_title(self) -> str:
+        return "Chats - Redbox Copilot"
