@@ -1,6 +1,7 @@
 # mypy: ignore-errors
 
 import socket
+from enum import StrEnum
 from pathlib import Path
 
 import environ
@@ -324,3 +325,16 @@ MAGIC_LINK = {
 USE_STREAMING = env.bool("USE_STREAMING")
 FILE_EXPIRY_IN_SECONDS = env.int("FILE_EXPIRY_IN_DAYS") * 24 * 60 * 60
 SUPERUSER_EMAIL = env.str("SUPERUSER_EMAIL", None)
+
+# Security classifications
+# https://www.gov.uk/government/publications/government-security-classifications/
+
+
+class Classification(StrEnum):
+    OFFICIAL = "Official"
+    OFFICIAL_SENSITIVE = "Official Sensitive"
+    SECRET = "Secret"  # noqa S105
+    TOP_SECRET = "Top Secret"  # noqa S105
+
+
+MAX_SECURITY_CLASSIFICATION = Classification[env.str("MAX_SECURITY_CLASSIFICATION")]
