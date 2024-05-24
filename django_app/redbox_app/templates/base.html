@@ -9,8 +9,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#0b0c0c">
 
-  <link rel="icon" sizes="any" href="{{static("images/favicon.ico")}}" type="image/svg+xml">
-  <link rel="manifest" href="{{static("govuk-assets/manifest.json")}}">
+    <link rel="icon" sizes="any" href="{{static("images/favicon.ico")}}"
+    type="image/svg+xml"> <link rel="manifest"
+    href="{{static("govuk-assets/manifest.json")}}">
 
   <meta name="robots" content="noindex, nofollow">
   <link rel="stylesheet" type="text/css" href="{{static('styles.css')}}" />
@@ -28,17 +29,31 @@
       posthog.init('phc_3r2LNsBz7zJFRSpcMmE4PwXEq2m4CwfxJC9H1OeeMJg',{api_host:'https://eu.i.posthog.com'})
   </script>
 
-  {% elif environment | lower == "prod" %}
-    <script defer
-    data-domain="redbox.ai.cabinetoffice.gov.uk" src="https://plausible.io/js/script.pageview-props.tagged-events.outbound-links.file-downloads.js"></script>
-  {% endif %}
+    {% elif environment | lower == "prod" %}
+    <script
+      defer
+      data-domain="redbox.ai.cabinetoffice.gov.uk"
+      src="https://plausible.io/js/script.pageview-props.tagged-events.outbound-links.file-downloads.js"
+    ></script>
+    {% endif %}
 
 </head>
 
-<body class="govuk-template__body">
-  <script hash="sha256-GUQ5ad8JK5KmEWmROf3LZd9ge94daqNvd8xy9YS1iDw=">document.body.className += ' js-enabled' + ('noModule' in HTMLScriptElement.prototype ? ' govuk-frontend-supported' : '');</script>
+  <body class="govuk-template__body">
+    <script hash="sha256-GUQ5ad8JK5KmEWmROf3LZd9ge94daqNvd8xy9YS1iDw=">
+      document.body.className +=
+        " js-enabled" +
+        ("noModule" in HTMLScriptElement.prototype
+          ? " govuk-frontend-supported"
+          : "");
+    </script>
 
-  <a href="#main-content" class="govuk-skip-link" data-module="govuk-skip-link">Skip to main content</a>
+    <a
+      href="#main-content"
+      class="govuk-skip-link"
+      data-module="govuk-skip-link"
+      >Skip to main content</a
+    >
 
   {% if environment | lower != "prod" %}
     <div class="rb-classification-banner govuk-warning-text rb-environment-warning iai-environment-warning">

@@ -152,13 +152,22 @@ CSP_DEFAULT_SRC = (
 CSP_SCRIPT_SRC = (
     "'self'",
     "'sha256-GUQ5ad8JK5KmEWmROf3LZd9ge94daqNvd8xy9YS1iDw='",
+    "'sha256-iR05LWoOqIRgiZICIOC1iwidvGoFqxlewSZv3QaZtMA='",
+    "'sha256-VEpT7FJcfYkkqqWy0hQIfOW9O2aKxIJ7PzjTCxWi8xA='",
+    "'sha256-yCCaz0HljxeZ1PMr2eR9NFpIsGfqJ63AZXFghnFDbDQ='",
+    "'sha256-hEqoV4xWKopesLVVT3/pKqt/qfMvjEjz2NBaHtOKp3M='",
+    "'sha256-2EiSrBfOQYfVnKXN0816K03QGa6tKtpDZxhgzk2TKHc='",
     "plausible.io",
+    "eu.i.posthog.com",
+    "eu-assets.i.posthog.com",
 )
 CSP_OBJECT_SRC = ("'none'",)
 CSP_REQUIRE_TRUSTED_TYPES_FOR = ("'script'",)
 CSP_FONT_SRC = (
     "'self'",
     "s3.amazonaws.com",
+    "eu.i.posthog.com",
+    "eu-assets.i.posthog.com",
 )
 CSP_STYLE_SRC = ("'self'",)
 CSP_FRAME_ANCESTORS = ("'none'",)
@@ -259,7 +268,9 @@ LOG_LEVEL = env.str("DJANGO_LOG_LEVEL", "WARNING")
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
-    "formatters": {"verbose": {"format": "%(asctime)s %(levelname)s %(module)s: %(message)s"}},
+    "formatters": {
+        "verbose": {"format": "%(asctime)s %(levelname)s %(module)s: %(message)s"}
+    },
     "handlers": {
         "file": {
             "level": LOG_LEVEL,
@@ -300,7 +311,9 @@ elif EMAIL_BACKEND_TYPE == "CONSOLE":
 elif EMAIL_BACKEND_TYPE == "GOVUKNOTIFY":
     EMAIL_BACKEND = "django_gov_notify.backends.NotifyEmailBackend"
     GOVUK_NOTIFY_API_KEY = env.str("GOVUK_NOTIFY_API_KEY")
-    GOVUK_NOTIFY_PLAIN_EMAIL_TEMPLATE_ID = env.str("GOVUK_NOTIFY_PLAIN_EMAIL_TEMPLATE_ID")
+    GOVUK_NOTIFY_PLAIN_EMAIL_TEMPLATE_ID = env.str(
+        "GOVUK_NOTIFY_PLAIN_EMAIL_TEMPLATE_ID"
+    )
 else:
     message = f"Unknown EMAIL_BACKEND_TYPE of {EMAIL_BACKEND_TYPE}"
     raise ValueError(message)
