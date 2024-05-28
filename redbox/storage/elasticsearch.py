@@ -1,4 +1,5 @@
 import logging
+from collections.abc import Sequence
 from uuid import UUID
 
 from elastic_transport import ObjectApiResponse
@@ -40,10 +41,10 @@ class ElasticsearchStorageHandler(BaseStorageHandler):
         return self.es_client.index(
             index=target_index,
             id=str(item.uuid),
-            body=item.model_dump_json(),
+            body=item.model_dump(mode="json"),
         )
 
-    def write_items(self, items: list[PersistableModel]) -> list:
+    def write_items(self, items: Sequence[PersistableModel]) -> Sequence[ObjectApiResponse]:
         return list(map(self.write_item, items))
 
     def read_item(self, item_uuid: UUID, model_type: str):
@@ -65,7 +66,7 @@ class ElasticsearchStorageHandler(BaseStorageHandler):
         return self.es_client.index(
             index=target_index,
             id=str(item.uuid),
-            body=item.json(),
+            body=item.model_dump(mode="json"),
         )
 
     def update_items(self, items: list[PersistableModel]) -> list[ObjectApiResponse]:

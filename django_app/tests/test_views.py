@@ -12,7 +12,7 @@ from redbox_app.redbox_core.models import (
     ChatMessage,
     ChatRoleEnum,
     File,
-    ProcessingStatusEnum,
+    StatusEnum,
     User,
 )
 from requests_mock import Mocker
@@ -112,7 +112,7 @@ def test_document_upload_status(client, alice, file_pdf_path: Path, s3_client, r
         assert response.url == "/documents/"
         assert count_s3_objects(s3_client) == previous_count + 1
         uploaded_file = File.objects.filter(user=alice).order_by("-created_at")[0]
-        assert uploaded_file.processing_status == ProcessingStatusEnum.uploaded
+        assert uploaded_file.status == StatusEnum.uploaded
 
 
 @pytest.mark.django_db()
@@ -215,9 +215,7 @@ def test_remove_doc_view(client: Client, alice: User, file_pdf_path: Path, s3_cl
         assert not file_exists(s3_client, file_name)
         assert count_s3_objects(s3_client) == previous_count
         assert requests_mock.request_history[-1].method == "DELETE"
-
-        with pytest.raises(File.DoesNotExist):
-            File.objects.get(id=new_file.id)
+        assert File.objects.get(id=new_file.id).status == StatusEnum.deleted
 
 
 @pytest.mark.django_db()

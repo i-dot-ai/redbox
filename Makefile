@@ -27,7 +27,7 @@ test-core-api:
 
 test-redbox:
 	poetry install --no-root --no-ansi --with api,dev --without ai,worker
-	poetry run pytest redbox/tests --cov=redbox -v --cov-report=term-missing --cov-fail-under=45
+	poetry run pytest redbox/tests --cov=redbox -v --cov-report=term-missing --cov-fail-under=80
 
 test-worker:
 	poetry install --no-root --no-ansi --with worker,dev --without ai,api
@@ -35,7 +35,7 @@ test-worker:
 
 test-django:
 	docker compose up -d --wait db minio
-	docker compose run django-app venv/bin/pytest tests/ --ds redbox_app.settings -v --cov=redbox_app.redbox_core --cov-fail-under 60 -o log_cli=true
+	docker compose run django-app venv/bin/pytest tests/ --ds redbox_app.settings -v --cov=redbox_app.redbox_core --cov-fail-under 80 -o log_cli=true
 
 test-integration:
 	docker compose down
@@ -67,7 +67,7 @@ safe:
 	poetry run mypy ./django_app --ignore-missing-imports
 
 checktypes:
-	poetry run mypy redbox worker --ignore-missing-imports
+	poetry run mypy redbox worker --ignore-missing-imports --no-incremental
 
 check-migrations:
 	docker compose build django-app

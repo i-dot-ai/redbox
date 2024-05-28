@@ -9,7 +9,7 @@ class UserResource(admin.ModelAdmin):
 
 
 class FileResource(admin.ModelAdmin):
-    list_display = ["original_file_name", "user", "processing_status"]
+    list_display = ["original_file_name", "user", "status"]
 
 
 class ChatMessageInline(admin.StackedInline):
