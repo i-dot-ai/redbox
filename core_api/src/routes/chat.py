@@ -123,7 +123,7 @@ def simple_chat(chat_request: ChatRequest, _user_uuid: Annotated[UUID, Depends(g
 
 
 @chat_app.post("/rag", tags=["chat"])
-def rag_chat(chat_request: ChatRequest, user_uuid: Annotated[UUID, Depends(get_user_uuid)]) -> ChatResponse:
+async def rag_chat(chat_request: ChatRequest, user_uuid: Annotated[UUID, Depends(get_user_uuid)]) -> ChatResponse:
     """Get a LLM response to a question history and file
 
     Args:
@@ -131,7 +131,7 @@ def rag_chat(chat_request: ChatRequest, user_uuid: Annotated[UUID, Depends(get_u
     Returns:
         StreamingResponse: a stream of the chain response
     """
-    retrieval_chain = build_retrieval_chain(user_uuid)
+    retrieval_chain = await build_retrieval_chain(user_uuid)
 
     chat = get_chat_from_request(chat_request)
 
@@ -180,7 +180,7 @@ async def rag_chat_streamed(websocket: WebSocket):
     await websocket.close()
 
 
-def build_retrieval_chain(user_uuid: UUID | None = None) -> Runnable:
+async def build_retrieval_chain(user_uuid: UUID | None = None) -> Runnable:
     prompt_search_query = ChatPromptTemplate.from_messages(
         [
             MessagesPlaceholder(variable_name="chat_history"),
