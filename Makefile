@@ -67,7 +67,7 @@ safe:
 	poetry run mypy ./django_app --ignore-missing-imports
 
 checktypes:
-	poetry run mypy redbox worker --ignore-missing-imports
+	poetry run mypy redbox worker --ignore-missing-imports --no-incremental
 
 check-migrations:
 	docker compose build django-app
