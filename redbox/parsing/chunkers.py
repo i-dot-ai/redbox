@@ -1,3 +1,5 @@
+from collections.abc import Sequence
+
 from unstructured.chunking.title import chunk_by_title
 from unstructured.partition.auto import partition
 
@@ -8,7 +10,7 @@ env = Settings()
 s3_client = env.s3_client()
 
 
-def other_chunker(file: File) -> list[Chunk]:
+def other_chunker(file: File) -> Sequence[Chunk]:
     """The default unstructured chunker for Redbox. This chunker uses the unstructured partitioner and title chunker
     to split a file into chunks.
 
