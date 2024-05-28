@@ -19,12 +19,6 @@ from redbox.models.file import (
 )
 from redbox.models.persona import ChatPersona
 from redbox.models.settings import Settings
-from redbox.models.spotlight import (
-    Spotlight,
-    SpotlightComplete,
-    SpotlightTask,
-    SpotlightTaskComplete,
-)
 
 __all__ = [
     "ChatMessage",
@@ -36,10 +30,6 @@ __all__ = [
     "EmbeddingModelInfo",
     "File",
     "FileStatus",
-    "Spotlight",
-    "SpotlightComplete",
-    "SpotlightTask",
-    "SpotlightTaskComplete",
     "Settings",
     "EmbeddingResponse",
     "EmbedQueueItem",

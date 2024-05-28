@@ -1,9 +1,6 @@
 from datetime import UTC, datetime
-from typing import Any
 
-from langchain.chains import MapReduceDocumentsChain, ReduceDocumentsChain
 from langchain.chains.combine_documents.base import BaseCombineDocumentsChain
-from langchain.chains.combine_documents.stuff import StuffDocumentsChain
 from langchain.chains.llm import LLMChain
 from langchain.chains.qa_with_sources import load_qa_with_sources_chain
 from langchain.memory import ConversationBufferMemory
@@ -17,15 +14,6 @@ from redbox.llm.prompts.chat import (
     STUFF_DOCUMENT_PROMPT,
     WITH_SOURCES_PROMPT,
 )
-from redbox.llm.prompts.spotlight import SPOTLIGHT_COMBINATION_TASK_PROMPT
-from redbox.llm.spotlight.spotlight import (
-    key_actions_task,
-    key_discussion_task,
-    key_people_task,
-    summary_task,
-)
-from redbox.models.file import File
-from redbox.models.spotlight import Spotlight, SpotlightTask
 
 
 class LLMHandler:
@@ -121,59 +109,3 @@ class LLMHandler:
             callbacks=callbacks or [],
         )
         return result, docs_with_sources_chain
-
-    def get_spotlight_tasks(self, files: list[File], file_hash: str) -> Spotlight:
-        return Spotlight(
-            files=files,
-            file_hash=file_hash,
-            tasks=[
-                summary_task,
-                key_discussion_task,
-                key_actions_task,
-                key_people_task,
-            ],
-        )
-
-    def run_spotlight_task(
-        self,
-        spotlight: Spotlight,
-        task: SpotlightTask,
-        user_info: dict,
-        callbacks: list | None = None,
-        map_reduce: bool = False,
-        token_max: int = 100_000,
-    ) -> tuple[Any, StuffDocumentsChain | MapReduceDocumentsChain]:
-        map_chain = LLMChain(llm=self.llm, prompt=task.prompt_template)  # type: ignore
-        regular_chain = StuffDocumentsChain(llm_chain=map_chain, document_variable_name="text")
-
-        reduce_chain = LLMChain(llm=self.llm, prompt=SPOTLIGHT_COMBINATION_TASK_PROMPT)
-        combine_documents_chain = StuffDocumentsChain(llm_chain=reduce_chain, document_variable_name="text")
-        reduce_documents_chain = ReduceDocumentsChain(
-            combine_documents_chain=combine_documents_chain,
-            collapse_documents_chain=combine_documents_chain,
-            token_max=token_max,
-        )
-        map_reduce_chain = MapReduceDocumentsChain(
-            llm_chain=map_chain,
-            reduce_documents_chain=reduce_documents_chain,
-            document_variable_name="text",
-            return_intermediate_steps=False,
-        )
-
-        if map_reduce:
-            result = map_reduce_chain.run(
-                user_info=user_info,
-                current_date=datetime.now(tz=UTC).date().isoformat(),
-                input_documents=spotlight.to_documents(),
-                callbacks=callbacks or [],
-            )
-            return result, map_reduce_chain
-        else:
-            result = regular_chain.run(
-                user_info=user_info,
-                current_date=datetime.now(tz=UTC).date().isoformat(),
-                input_documents=spotlight.to_documents(),
-                callbacks=callbacks or [],
-            )
-
-            return result, regular_chain
