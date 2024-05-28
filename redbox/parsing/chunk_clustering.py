@@ -1,3 +1,4 @@
+from collections.abc import Sequence
 from functools import reduce
 from itertools import compress
 
@@ -10,12 +11,12 @@ from redbox.models.file import Chunk, Metadata
 
 
 def cluster_chunks(
-    chunks: list[Chunk],
+    chunks: Sequence[Chunk],
     embedding_model: SentenceTransformer,
     desired_chunk_size: int = 300,
     dist_weight_split: float = 0.2,
     dist_use_log: bool = True,
-) -> list[Chunk]:
+) -> Sequence[Chunk]:
     """Merge together adjacent chunks based on their semantic similarity (distance after sentence embedding)
     and length(token count)
 

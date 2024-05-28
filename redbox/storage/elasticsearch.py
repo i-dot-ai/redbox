@@ -1,3 +1,4 @@
+import json
 import logging
 from uuid import UUID
 
@@ -40,7 +41,7 @@ class ElasticsearchStorageHandler(BaseStorageHandler):
         return self.es_client.index(
             index=target_index,
             id=str(item.uuid),
-            body=item.model_dump_json(),
+            body=json.loads(item.model_dump_json()),
         )
 
     def write_items(self, items: list[PersistableModel]) -> list:
@@ -65,7 +66,7 @@ class ElasticsearchStorageHandler(BaseStorageHandler):
         return self.es_client.index(
             index=target_index,
             id=str(item.uuid),
-            body=item.json(),
+            body=json.loads(item.json()),
         )
 
     def update_items(self, items: list[PersistableModel]) -> list[ObjectApiResponse]:

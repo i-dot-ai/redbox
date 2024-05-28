@@ -120,12 +120,12 @@ class Chunk(PersistableModel):
     embedding: list[float] | None = Field(description="the vector representation of the text", default=None)
 
     @computed_field  # type: ignore[misc] # Remove if https://github.com/python/mypy/issues/1362 is fixed.
-    @property
+    @property  # Needed for type checking - see https://docs.pydantic.dev/2.0/usage/computed_fields/
     def text_hash(self) -> str:
         return hashlib.md5(self.text.encode(encoding="UTF-8", errors="strict"), usedforsecurity=False).hexdigest()
 
-    @computed_field  # type: ignore[misc]
-    @property
+    @computed_field  # type: ignore[misc] # Remove if https://github.com/python/mypy/issues/1362 is fixed.
+    @property  # Needed for type checking - see https://docs.pydantic.dev/2.0/usage/computed_fields/
     def token_count(self) -> int:
         return len(encoding.encode(self.text))
 

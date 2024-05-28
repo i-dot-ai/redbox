@@ -47,7 +47,7 @@ def chunk_file(
         ValueError: Will raise when a file is not supported.
 
     Returns:
-        List[Chunk]: The chunks generated from the given file.
+        Sequence[Chunk]: The chunks generated from the given file.
     """
     chunks = other_chunker(file)
 

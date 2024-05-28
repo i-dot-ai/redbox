@@ -3,6 +3,7 @@
 import logging
 from contextlib import asynccontextmanager
 from datetime import UTC, datetime
+from typing import cast
 
 from faststream import Context, ContextRepo, FastStream
 from faststream.redis import RedisBroker
@@ -54,7 +55,7 @@ async def ingest(
 
     logging.info("Writing %s chunks to storage for file uuid: %s", len(chunks), file.uuid)
 
-    items = storage_handler.write_items(chunks)
+    items = storage_handler.write_items(cast(list, chunks))
     logging.info("written %s chunks to elasticsearch", len(items))
 
     for chunk in chunks:
