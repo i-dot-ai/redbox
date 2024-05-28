@@ -245,7 +245,7 @@ def file_status_api_view(request: HttpRequest) -> JsonResponse:
             file.status = StatusEnum.unknown.label
             file.save()
         return JsonResponse({"status": file.status})
-    file.status = core_file_status_response.status
+    file.status = core_file_status_response.processing_status
     file.save()
     return JsonResponse({"status": file.get_status_text()})
 
