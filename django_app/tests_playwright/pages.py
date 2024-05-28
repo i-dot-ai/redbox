@@ -14,6 +14,9 @@ logger.setLevel(logging.DEBUG)
 
 
 class BasePage(metaclass=ABCMeta):
+
+    # All available rules/categories can be found at https://github.com/dequelabs/axe-core/blob/develop/doc/rule-descriptions.md
+    # Can't include all as gov.uk design system violates the "region" rule
     AXE_OPTIONS = {
         "runOnly": {
             "type": "tag",
@@ -53,6 +56,18 @@ class BasePage(metaclass=ABCMeta):
                 self.page.get_by_text("Accessibility issues"),
                 f"Accessibility issues in {self.__class__.__name__} at {self.url}",
             ).to_be_visible()
+
+    def navigate_to_privacy_page(self) -> "PrivacyPage":
+        self.page.get_by_role("link", name="Privacy", exact=True).click()
+        return PrivacyPage(self.page)
+    
+    def navigate_to_accessibility_page(self) -> "AccessibilityPage":
+        self.page.get_by_role("link", name="Accessibility", exact=True).click()
+        return AccessibilityPage(self.page)
+    
+    def navigate_to_support_page(self) -> "SupportPage":
+        self.page.get_by_role("link", name="Support", exact=True).click()
+        return SupportPage(self.page)
 
     @abstractmethod
     def get_expected_page_title(self) -> str: ...
@@ -187,6 +202,21 @@ class ChatsPage(SignedInBasePage):
 
     def all_messages(self) -> list[str]:
         return self.page.locator(".iai-chat-message").all_inner_texts()
+    
+
+class PrivacyPage(BasePage):
+    def get_expected_page_title(self) -> str:
+        return "Privacy notice - Redbox Copilot"
+    
+
+class AccessibilityPage(BasePage):
+    def get_expected_page_title(self) -> str:
+        return "Accessibility statement - Redbox Copilot"
+    
+
+class SupportPage(BasePage):
+    def get_expected_page_title(self) -> str:
+        return "Support - Redbox Copilot"
 
 
 def batched(iterable, n):
