@@ -151,7 +151,7 @@ class DocumentsPage(SignedInBasePage):
 
     def get_all_document_rows(self) -> list[DocumentRow]:
         cell_texts = self.page.get_by_role("cell").all_inner_texts()
-        return [DocumentRow(filename, status) for filename, status, action in batched(cell_texts, 3)]
+        return [DocumentRow(filename, status) for filename, uploaded_at, status, action in batched(cell_texts, 4)]
 
 
 class DocumentUploadPage(SignedInBasePage):
