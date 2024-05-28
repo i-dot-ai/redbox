@@ -18,9 +18,9 @@ from langchain_elasticsearch import ApproxRetrievalStrategy, ElasticsearchStore
 from core_api.src.auth import get_user_uuid
 from redbox.llm.prompts.chat import (
     CONDENSE_QUESTION_TEMPLATE,
-    CORE_REDBOX_TEMPLATE,
     WITH_SOURCES_TEMPLATE,
 )
+from redbox.llm.prompts.core import CORE_REDBOX_TEMPLATE
 from redbox.model_db import MODEL_PATH
 from redbox.models import EmbeddingModelInfo, Settings
 from redbox.models.chat import ChatMessage, ChatRequest, ChatResponse, SourceDocument
@@ -200,7 +200,7 @@ def build_retrieval_chain(user_uuid: UUID | None = None) -> Runnable:
     )
     prompt_get_answer = ChatPromptTemplate.from_messages(
         [
-            ("system", CORE_REDBOX_TEMPLATE + WITH_SOURCES_TEMPLATE),
+            ("system", CORE_REDBOX_TEMPLATE + "\n" + WITH_SOURCES_TEMPLATE),
             MessagesPlaceholder(variable_name="chat_history"),
             ("user", "{input}"),
         ]

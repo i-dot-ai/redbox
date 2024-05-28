@@ -1,7 +1,3 @@
-from langchain.prompts.prompt import PromptTemplate
-
-from redbox.llm.prompts.core import CORE_REDBOX_TEMPLATE
-
 CONDENSE_QUESTION_TEMPLATE = """Given the following conversation and a follow up question,
 rephrase the follow up question to be a standalone question, in its original
 language. include the follow up instructions in the standalone question.
@@ -10,8 +6,6 @@ Chat History:
 {chat_history}
 Follow Up Input: {input}
 Standalone question:"""
-
-CONDENSE_QUESTION_PROMPT = PromptTemplate.from_template(CONDENSE_QUESTION_TEMPLATE)
 
 
 WITH_SOURCES_TEMPLATE = """Given the following extracted parts of a long document and \
@@ -36,9 +30,3 @@ QUESTION: {input}
 {context}
 =========
 FINAL ANSWER:"""
-
-WITH_SOURCES_PROMPT = PromptTemplate.from_template(CORE_REDBOX_TEMPLATE + WITH_SOURCES_TEMPLATE)
-
-_stuff_document_template = "<Doc{parent_doc_uuid}>{page_content}</Doc{parent_doc_uuid}>"
-
-STUFF_DOCUMENT_PROMPT = PromptTemplate.from_template(_stuff_document_template)
