@@ -133,7 +133,7 @@ async def rag_chat(chat_request: ChatRequest, user_uuid: Annotated[UUID, Depends
     """
     retrieval_chain = await build_retrieval_chain(user_uuid)
 
-    chat = get_chat_from_request(chat_request)
+    chat = await get_chat_from_request(chat_request)
 
     result = retrieval_chain.invoke(chat)
 
@@ -156,7 +156,7 @@ async def rag_chat_streamed(websocket: WebSocket):
 
     retrieval_chain = build_retrieval_chain()
 
-    chat = get_chat_from_request(chat_request)
+    chat = await get_chat_from_request(chat_request)
 
     async for event in retrieval_chain.astream_events(chat, version="v1"):
         kind = event["event"]
@@ -209,7 +209,7 @@ async def build_retrieval_chain(user_uuid: UUID | None = None) -> Runnable:
     return create_retrieval_chain(retriever_chain, document_chain)
 
 
-def get_chat_from_request(chat_request: ChatRequest) -> dict:
+async def get_chat_from_request(chat_request: ChatRequest) -> dict:
     chat_history = [
         HumanMessage(content=x.text) if x.role == "user" else AIMessage(content=x.text)
         for x in chat_request.message_history[:-1]
