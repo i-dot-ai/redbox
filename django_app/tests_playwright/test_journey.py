@@ -36,7 +36,10 @@ def test_user_journey(page: Page):
     # Upload a file
     upload_file = DJANGO_ROOT / "files" / "RiskTriggersReport361.pdf"
     documents_page = document_upload_page.upload_document(upload_file)
-    documents_page.should_contain_file_named(upload_file.name)
+
+    document_rows = documents_page.get_all_document_rows()
+    logger.debug("document_rows: %s", document_rows)
+    assert any(row.filename == upload_file.name for row in document_rows)
 
     # Chats page
     chats_page = documents_page.navigate_to_chats()

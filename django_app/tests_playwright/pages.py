@@ -1,6 +1,8 @@
 import logging
 from abc import ABCMeta, abstractmethod
+from itertools import islice
 from pathlib import Path
+from typing import NamedTuple
 
 from _settings import BASE_URL
 from axe_playwright_python.sync_playwright import Axe
@@ -134,6 +136,11 @@ class HomePage(SignedInBasePage):
         return "Redbox Copilot"
 
 
+class DocumentRow(NamedTuple):
+    filename: str
+    status: str
+
+
 class DocumentsPage(SignedInBasePage):
     def get_expected_page_title(self) -> str:
         return "Documents - Redbox Copilot"
@@ -142,8 +149,9 @@ class DocumentsPage(SignedInBasePage):
         self.page.get_by_role("button", name="Upload a new document").click()
         return DocumentUploadPage(self.page)
 
-    def should_contain_file_named(self, file_name: str):
-        expect(self.page.get_by_role("cell", name=file_name, exact=True)).to_be_visible()
+    def get_all_document_rows(self) -> list[DocumentRow]:
+        cell_texts = self.page.get_by_role("cell").all_inner_texts()
+        return [DocumentRow(filename, status) for filename, status, action in batched(cell_texts, 3)]
 
 
 class DocumentUploadPage(SignedInBasePage):
@@ -179,3 +187,13 @@ class ChatsPage(SignedInBasePage):
 
     def all_messages(self) -> list[str]:
         return self.page.locator(".iai-chat-message").all_inner_texts()
+
+
+def batched(iterable, n):
+    # TODO: Use library version in Python 3.12: https://docs.python.org/3/library/itertools.html#itertools.batched
+    if n < 1:
+        message = "n must be at least one"
+        raise ValueError(message)
+    iterable = iter(iterable)
+    while batch := tuple(islice(iterable, n)):
+        yield batch
