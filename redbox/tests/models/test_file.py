@@ -51,6 +51,5 @@ def test_merge_pass_one_empty_parent_doc_uuid():
 def test_merge_pass_two_parent_doc_uuid():
     left = Metadata(parent_doc_uuid=UUID_1)
     right = Metadata(parent_doc_uuid=UUID_2)
-    with pytest.raises(ValueError) as value_error:
+    with pytest.raises(ValueError, match="chunks do not have the same parent_doc_uuid"):
         Metadata.merge(left, right)
-    assert value_error.value.args[0] == "chunks do not have the same parent_doc_uuid"

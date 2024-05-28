@@ -1,4 +1,4 @@
-from typing import Literal, Optional
+from typing import Literal
 from uuid import UUID
 
 from pydantic import BaseModel, Field
@@ -38,14 +38,20 @@ class ChatRequest(BaseModel):
 
 class SourceDocument(BaseModel):
     page_content: str = Field(description="chunk text")
-    file_uuid: UUID = Field(description="uuid of original file")
-    page_numbers: Optional[list[int]] = Field(
+    file_uuid: UUID | None = Field(description="uuid of original file", default=None)
+    page_numbers: list[int] | None = Field(
         description="page number of the file that this chunk came from", default=None
     )
 
 
+class SourceDocuments(BaseModel):
+    source_documents: list[SourceDocument] | None = Field(
+        description="documents retrieved to form this response", default=None
+    )
+
+
 class ChatResponse(BaseModel):
-    source_documents: Optional[list[SourceDocument]] = Field(
+    source_documents: list[SourceDocument] | None = Field(
         description="documents retrieved to form this response", default=None
     )
     output_text: str = Field(

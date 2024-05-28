@@ -1,12 +1,12 @@
 import logging
-import os
+from pathlib import Path
 from uuid import uuid4
 
 from sentence_transformers import SentenceTransformer
 
 from redbox.models.embedding import Embedding, EmbeddingModelInfo, EmbeddingResponse
 
-MODEL_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "models")
+MODEL_PATH = str(Path(__file__).parents[1] / "models")
 
 log = logging.getLogger()
 log.setLevel(logging.INFO)
@@ -29,7 +29,7 @@ class SentenceTransformerDB(SentenceTransformer):
             for i, embedding in enumerate(embeddings)
         ]
 
-        output = EmbeddingResponse(
+        return EmbeddingResponse(
             object="list",
             data=reformatted_embeddings,
             embedding_id=str(uuid4()),
@@ -37,11 +37,8 @@ class SentenceTransformerDB(SentenceTransformer):
             embedding_model_info=self.get_embedding_model_info(),
         )
 
-        return output
-
     def get_embedding_model_info(self) -> EmbeddingModelInfo:
-        embedding_model_info = EmbeddingModelInfo(
+        return EmbeddingModelInfo(
             embedding_model=self.embedding_model_name,
             vector_size=self.get_sentence_embedding_dimension(),
         )
-        return embedding_model_info

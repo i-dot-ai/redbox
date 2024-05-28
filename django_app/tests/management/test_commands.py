@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from io import StringIO
 
 import pytest
@@ -7,7 +7,7 @@ from magic_link.models import MagicLink
 from redbox_app.redbox_core.models import User
 
 
-@pytest.mark.django_db
+@pytest.mark.django_db()
 def test_command_output_no_such_user():
     # Given
 
@@ -19,7 +19,7 @@ def test_command_output_no_such_user():
     assert str(exception.value) == "No User found with email alice@example.com"
 
 
-@pytest.mark.django_db
+@pytest.mark.django_db()
 def test_command_output_no_links_ever(alice: User):
     # Given
 
@@ -31,10 +31,10 @@ def test_command_output_no_links_ever(alice: User):
     assert str(exception.value) == f"No MagicLink found for user {alice.email}"
 
 
-@pytest.mark.django_db
+@pytest.mark.django_db()
 def test_command_output_no_valid_links(alice: User):
     # Given
-    MagicLink.objects.create(user=alice, expires_at=datetime.now() - timedelta(seconds=10))
+    MagicLink.objects.create(user=alice, expires_at=datetime.now(UTC) - timedelta(seconds=10))
 
     # When
     with pytest.raises(CommandError) as exception:
@@ -44,10 +44,10 @@ def test_command_output_no_valid_links(alice: User):
     assert str(exception.value) == f"No active link for user {alice.email}"
 
 
-@pytest.mark.django_db
+@pytest.mark.django_db()
 def test_command_output_with_valid_links(alice: User):
     # Given
-    link: MagicLink = MagicLink.objects.create(user=alice, expires_at=datetime.now() + timedelta(seconds=10))
+    link: MagicLink = MagicLink.objects.create(user=alice, expires_at=datetime.now(UTC) + timedelta(seconds=10))
     out, err = StringIO(), StringIO()
 
     # When

@@ -5,6 +5,10 @@ $redbox-red: #A50202;
 
 @import "./node_modules/govuk-frontend/dist/govuk/all";
 
+body {
+  background-color: white;
+  margin: 0;
+}
 
 /* All pages */
 .iai-classification-banner {
@@ -78,6 +82,9 @@ $redbox-red: #A50202;
   border-radius: var(--border-radius);
   margin-bottom: 0.75rem;
   padding: 1rem;
+}
+.iai-chat-message:focus {
+  outline: 2px solid;
 }
 .iai-chat-message--ai {
   margin-right: clamp(2rem, 10vw, 5rem);
@@ -169,14 +176,33 @@ $redbox-red: #A50202;
 }
 
 /* Only show feedback when correct buttons pressed */
-.iai-chat-message--feedback-thumbs-up, .iai-chat-message--feedback-thumbs-down {
+.iai-response-feedback__thumbs-up, .iai-response-feedback__thumbs-down {
   display: none;
 }
-.iai-response-feedback__buttons[data-status="up"] ~ .iai-chat-message--feedback-thumbs-up {
+.iai-response-feedback__buttons[data-status="up"] ~ .iai-response-feedback__thumbs-up {
   display: block;
 }
-.iai-response-feedback__buttons[data-status="down"] ~ .iai-chat-message--feedback-thumbs-down {
+.iai-response-feedback__buttons[data-status="down"] ~ .iai-response-feedback__thumbs-down {
   display: block;
+}
+
+.iai-streaming-response-loading {
+  align-items: center;
+  display: flex;
+  padding: 0.5rem 0;
+  gap: 0.25rem;
+}
+.iai-response-loading {
+  align-items: center;
+  display: flex;
+  padding: 0.5rem 0;
+  visibility: hidden;
+}
+.iai-response-loading:focus-visible {
+  outline: 1px solid;
+}
+.iai-response-loading__spinner, .iai-streaming-response-loading__spinner {
+  width: 1.5rem;
 }
 
 @import "./iai.scss";

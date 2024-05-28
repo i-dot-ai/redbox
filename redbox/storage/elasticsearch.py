@@ -1,5 +1,4 @@
 import logging
-from typing import Optional
 from uuid import UUID
 
 from elastic_transport import ObjectApiResponse
@@ -38,12 +37,11 @@ class ElasticsearchStorageHandler(BaseStorageHandler):
     def write_item(self, item: PersistableModel) -> ObjectApiResponse:
         target_index = f"{self.root_index}-{item.model_type.lower()}"
 
-        resp = self.es_client.index(
+        return self.es_client.index(
             index=target_index,
             id=str(item.uuid),
             body=item.model_dump_json(),
         )
-        return resp
 
     def write_items(self, items: list[PersistableModel]) -> list:
         return list(map(self.write_item, items))
@@ -52,49 +50,44 @@ class ElasticsearchStorageHandler(BaseStorageHandler):
         target_index = f"{self.root_index}-{model_type.lower()}"
         result = self.es_client.get(index=target_index, id=str(item_uuid))
         model = self.get_model_by_model_type(model_type)
-        item = model(**result.body["_source"])
-        return item
+        return model(**result.body["_source"])
 
     def read_items(self, item_uuids: list[UUID], model_type: str):
         target_index = f"{self.root_index}-{model_type.lower()}"
         result = self.es_client.mget(index=target_index, body={"ids": list(map(str, item_uuids))})
 
         model = self.get_model_by_model_type(model_type)
-        items = [model(**item["_source"]) for item in result.body["docs"]]
-
-        return items
+        return [model(**item["_source"]) for item in result.body["docs"]]
 
     def update_item(self, item: PersistableModel) -> ObjectApiResponse:
         target_index = f"{self.root_index}-{item.model_type.lower()}"
 
-        resp = self.es_client.index(
+        return self.es_client.index(
             index=target_index,
             id=str(item.uuid),
             body=item.json(),
         )
-        return resp
 
     def update_items(self, items: list[PersistableModel]) -> list[ObjectApiResponse]:
         return list(map(self.update_item, items))
 
     def delete_item(self, item: PersistableModel) -> ObjectApiResponse:
         target_index = f"{self.root_index}-{item.model_type.lower()}"
-        result = self.es_client.delete(index=target_index, id=str(item.uuid))
-        return result
+        return self.es_client.delete(index=target_index, id=str(item.uuid))
 
-    def delete_items(self, items: list[PersistableModel]) -> Optional[ObjectApiResponse]:
+    def delete_items(self, items: list[PersistableModel]) -> ObjectApiResponse | None:
         if not items:
             return None
 
         if len({item.model_type for item in items}) > 1:
-            raise ValueError("Items with differing model types: {item.model_type for item in items}")
+            message = "Items with differing model types: {item.model_type for item in items}"
+            raise ValueError(message)
         model_type = items[0].model_type
         target_index = f"{self.root_index}-{model_type.lower()}"
-        result = self.es_client.delete_by_query(
+        return self.es_client.delete_by_query(
             index=target_index,
             body={"query": {"terms": {"_id": [str(item.uuid) for item in items]}}},
         )
-        return result
 
     def read_all_items(self, model_type: str, user_uuid: UUID) -> list[PersistableModel]:
         target_index = f"{self.root_index}-{model_type.lower()}"
@@ -122,7 +115,7 @@ class ElasticsearchStorageHandler(BaseStorageHandler):
             try:
                 items.append(model(**item["_source"]))
             except ValidationError as e:
-                logging.error(e)
+                log.exception("Validation exception for %s", item, exc_info=e)
         return items
 
     def list_all_items(self, model_type: str, user_uuid: UUID) -> list[UUID]:
@@ -139,14 +132,13 @@ class ElasticsearchStorageHandler(BaseStorageHandler):
         except NotFoundError:
             log.info("Index %s not found. Returning empty list.", target_index)
             return []
-        uuids = [UUID(item["_id"]) for item in results]
-        return uuids
+        return [UUID(item["_id"]) for item in results]
 
     def get_file_chunks(self, parent_file_uuid: UUID, user_uuid: UUID) -> list[Chunk]:
         """get chunks for a given file"""
         target_index = f"{self.root_index}-chunk"
 
-        res = [
+        return [
             Chunk(**item["_source"])
             for item in scan(
                 client=self.es_client,
@@ -171,7 +163,6 @@ class ElasticsearchStorageHandler(BaseStorageHandler):
                 },
             )
         ]
-        return res
 
     def get_file_status(self, file_uuid: UUID, user_uuid: UUID) -> FileStatus:
         """Get the status of a file and associated Chunks
@@ -188,11 +179,13 @@ class ElasticsearchStorageHandler(BaseStorageHandler):
         try:
             file = self.read_item(file_uuid, "File")
         except NotFoundError as e:
-            log.error("file/%s not found", file_uuid)
-            raise ValueError(f"File {file_uuid} not found") from e
+            log.exception("file/%s not found", file_uuid)
+            message = f"File {file_uuid} not found"
+            raise ValueError(message) from e
         if file.creator_user_uuid != user_uuid:
             log.error("file/%s.%s not owned by %s", file_uuid, file.creator_user_uuid, user_uuid)
-            raise ValueError(f"File {file_uuid} not found")
+            message = f"File {file_uuid} not found"
+            raise ValueError(message)
 
         # Test 2: Get the number of chunks for the file
         chunks = self.get_file_chunks(file_uuid, file.creator_user_uuid)

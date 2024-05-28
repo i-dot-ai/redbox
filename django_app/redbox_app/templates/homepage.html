@@ -8,7 +8,7 @@
         <div class="govuk-grid-row">
             <div class="govuk-grid-column-two-thirds">
                 <h1 class="govuk-heading-xl">Ask any question of documents in your Redbox</h1>
-                <p class="govuk-body-l">Use Artificial Intelligence (AI) to get insights from your personal document set. You can use up to, and including, Official Sensitive documents.</p>
+                <p class="govuk-body-l">Use Artificial Intelligence (AI) to get insights from your personal document set. You can use up to, and including, {{ security }} documents.</p>
                 {% if not request.user.is_authenticated %}
                 <p class="govuk-body">If you have an account, please <a class="govuk-link" href="{{url('sign-in')}}">sign in</a> to get started</p>
                 {% endif %}
@@ -20,12 +20,14 @@
 <div class="govuk-width-container">
     <div class="govuk-grid-row">
         <div class="govuk-grid-column-two-thirds">
-            <p class="govuk-heading-m govuk-!-margin-top-5 govuk-!-padding-top-5">Upload</p>
-            <p class="govuk-body ">Easily upload a wide range of document formats into your personal redbox</p>
-            <p class="govuk-heading-m govuk-!-margin-top-5 govuk-!-padding-top-5">Chat</p>
-            <p class="govuk-body">You can communicate with your redbox and ask questions of the documents contained within.Use redbox to unlock deeper insights in the various documents you have uploaded, pulling together summaries of individual or combined documents.</p>
-            <p class="govuk-heading-m govuk-!-margin-top-5 govuk-!-padding-top-5">Secure</p>
-            <p class="govuk-body">Redbox is built in our secure and private cloud which enables you to upload, up to, and including, Official Sensitive documents in your redbox.</p>
+
+            <h2 class="govuk-heading-m govuk-!-margin-top-5 govuk-!-padding-top-5">Upload</h2>
+            <p class="govuk-body ">Easily upload a wide range of document formats into your personal Redbox.</p>
+            <h2 class="govuk-heading-m govuk-!-margin-top-5 govuk-!-padding-top-5">Chat</h2>
+            <p class="govuk-body">You can communicate with your Redbox and ask questions of the documents contained within. Use Redbox to unlock deeper insights in the various documents you have uploaded, pulling together summaries of individual or combined documents.</p>
+            <h2 class="govuk-heading-m govuk-!-margin-top-5 govuk-!-padding-top-5">Secure</h2>
+            <p class="govuk-body">Redbox is built in our secure and private cloud which enables you to upload, up to, and including, {{ security }} documents in your Redbox.</p>
+
         </div>
     </div>
 </div>

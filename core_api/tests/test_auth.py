@@ -5,7 +5,7 @@ from jose import jwt
 
 
 @pytest.mark.parametrize(
-    "malformed_headers, status_code",
+    ("malformed_headers", "status_code"),
     [
         (None, 403),
         ({"Authorization": "blah blah"}, 403),

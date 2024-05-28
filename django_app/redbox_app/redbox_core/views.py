@@ -1,6 +1,6 @@
 import logging
-import os
 import uuid
+from pathlib import Path
 
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
@@ -9,6 +9,7 @@ from django.core.files.uploadedfile import UploadedFile
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse
+from django.utils import timezone
 from django.utils.datastructures import MultiValueDictKeyError
 from django.views.decorators.http import require_http_methods
 from redbox_app.redbox_core.client import CoreApiClient
@@ -74,13 +75,6 @@ def documents_view(request):
     )
 
 
-def get_file_extension(file):
-    # TODO: use a third party checking service to validate this
-
-    _, extension = os.path.splitext(file.name)
-    return extension
-
-
 @login_required
 def upload_view(request):
     errors = []
@@ -88,9 +82,9 @@ def upload_view(request):
     if request.method == "POST":
         # https://django-storages.readthedocs.io/en/1.13.2/backends/amazon-S3.html
         try:
-            uploaded_file = request.FILES["uploadDoc"]
+            uploaded_file: UploadedFile = request.FILES["uploadDoc"]
 
-            file_extension = get_file_extension(uploaded_file)
+            file_extension = Path(uploaded_file.name).suffix
 
             if uploaded_file.name is None:
                 errors.append("File has no name")
@@ -131,13 +125,13 @@ def ingest_file(uploaded_file: UploadedFile, user: User) -> list[str]:
         )
         file.save()
     except (ValueError, FieldError, ValidationError) as e:
-        logger.error("Error creating File model object for %s.", uploaded_file, exc_info=e)
+        logger.exception("Error creating File model object for %s.", uploaded_file, exc_info=e)
         errors.append(e.args[0])
     else:
         try:
             upload_file_response = core_api.upload_file(file.unique_name, user)
         except HTTPError as e:
-            logger.error("Error uploading file object %s.", file, exc_info=e)
+            logger.exception("Error uploading file object %s.", file, exc_info=e)
             file.delete()
             errors.append("failed to connect to core-api")
         else:
@@ -155,7 +149,7 @@ def remove_doc_view(request, doc_id: uuid):
         try:
             core_api.delete_file(file.core_file_uuid, request.user)
         except HTTPError as e:
-            logger.error("Error deleting file object %s.", file, exc_info=e)
+            logger.exception("Error deleting file object %s.", file, exc_info=e)
             errors.append("There was an error deleting this file")
 
         else:
@@ -171,15 +165,15 @@ def remove_doc_view(request, doc_id: uuid):
 
 
 @login_required
-def sessions_view(request: HttpRequest, session_id: uuid = None):
+def chats_view(request: HttpRequest, chat_id: uuid = None):
     chat_history = ChatHistory.objects.filter(users=request.user).order_by("-created_at")
 
     messages = []
-    if session_id:
-        messages = ChatMessage.objects.filter(chat_history__id=session_id)
+    if chat_id:
+        messages = ChatMessage.objects.filter(chat_history__id=chat_id).order_by("created_at")
     endpoint = URL.build(scheme="ws", host=request.get_host(), path=r"/ws/chat/")
     context = {
-        "session_id": session_id,
+        "chat_id": chat_id,
         "messages": messages,
         "chat_history": chat_history,
         "streaming": {"in_use": settings.USE_STREAMING, "endpoint": str(endpoint)},
@@ -187,7 +181,7 @@ def sessions_view(request: HttpRequest, session_id: uuid = None):
 
     return render(
         request,
-        template_name="sessions.html",
+        template_name="chats.html",
         context=context,
     )
 
@@ -222,7 +216,11 @@ def post_message(request: HttpRequest) -> HttpResponse:
     files: list[File] = File.objects.filter(core_file_uuid__in=doc_uuids, user=request.user)
     llm_message.source_files.set(files)
 
-    return redirect(reverse(sessions_view, args=(session.id,)))
+    for file in files:
+        file.last_referenced = timezone.now()
+        file.save()
+
+    return redirect(reverse(chats_view, args=(session.id,)))
 
 
 @require_http_methods(["GET"])
@@ -235,12 +233,12 @@ def file_status_api_view(request: HttpRequest) -> JsonResponse:
     try:
         file = File.objects.get(pk=file_id)
     except File.DoesNotExist as ex:
-        logger.error("File object information not found in django - file does not exist %s.", file_id, exc_info=ex)
+        logger.exception("File object information not found in django - file does not exist %s.", file_id, exc_info=ex)
         return JsonResponse({"status": ProcessingStatusEnum.unknown.label})
     try:
         core_file_status_response = core_api.get_file_status(file_id=file.core_file_uuid, user=request.user)
     except HTTPError as ex:
-        logger.error("File object information from core not found - file does not exist %s.", file_id, exc_info=ex)
+        logger.exception("File object information from core not found - file does not exist %s.", file_id, exc_info=ex)
         if not file.processing_status:
             file.processing_status = ProcessingStatusEnum.unknown.label
             file.save()

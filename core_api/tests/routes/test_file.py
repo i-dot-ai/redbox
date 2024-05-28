@@ -1,6 +1,6 @@
 import json
-import os
 from http import HTTPStatus
+from pathlib import Path
 
 import pytest
 from elasticsearch import NotFoundError
@@ -9,17 +9,17 @@ from faststream.redis import TestRedisBroker
 from core_api.src.routes.file import env, router
 
 
-@pytest.mark.asyncio
-async def test_post_file_upload(s3_client, app_client, elasticsearch_storage_handler, file_pdf_path, headers):
+@pytest.mark.asyncio()
+async def test_post_file_upload(s3_client, app_client, file_pdf_path: Path, headers):
     """
     Given a new file
     When I POST it to /file
     I Expect to see it persisted in elastic-search
     """
 
-    file_key = os.path.basename(file_pdf_path)
+    file_key = file_pdf_path.name
 
-    with open(file_pdf_path, "rb") as f:
+    with file_pdf_path.open("rb") as f:
         s3_client.upload_fileobj(
             Bucket=env.bucket_name,
             Fileobj=f,

@@ -6,9 +6,11 @@ This is a light-weight wrapper to go over the top of the gov.uk design system, a
 
 1. Import the `iai.scss` file
 
-2. Add the i.AI logo to govuk-assets folder (or other appropriate folder for serving static files)
+2. Add the i.AI logo and favicon to govuk-assets folder (or other appropriate folder for serving static files)
 
-3. In the footer, replace:
+3. In the base layout, replace the existing favicon url with the new one
+
+4. In the footer, replace:
 
 ```
 <a class="govuk-footer__link govuk-footer__copyright-logo" href="https://www.nationalarchives.gov.uk/information-management/re-using-public-sector-information/uk-government-licensing-framework/crown-copyright/"> © Crown copyright</a>
