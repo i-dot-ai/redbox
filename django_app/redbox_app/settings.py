@@ -246,6 +246,7 @@ else:
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SESSION_COOKIE_SECURE = True
 
+
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
