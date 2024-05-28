@@ -91,7 +91,7 @@ APP_NAME=redbox
 ECR_URL=$(AWS_ACCOUNT_ID).dkr.ecr.$(AWS_REGION).amazonaws.com
 ECR_REPO_URL=$(ECR_URL)/$(ECR_REPO_NAME)
 IMAGE=$(ECR_REPO_URL):$(IMAGE_TAG)
-DOCKER_BUILDER_CONTAINER=container
+DOCKER_BUILDER_CONTAINER=$(APP_NAME)
 DOCKER_CACHE_BUCKET=i-dot-ai-docker-cache
 
 ECR_REPO_NAME=$(APP_NAME)
@@ -118,7 +118,7 @@ docker_build: ## Build the docker container
 			echo "Building $$service with $$DOCKER_FILE  ..."; \
 			PREV_IMAGE="$(ECR_REPO_URL)-$$service:$(PREV_IMAGE_TAG)"; \
 			echo "Pulling previous image: $$PREV_IMAGE"; \
-			docker buildx build --load  --builder=$(DOCKER_BUILDER_CONTAINER) --tag $(PREV_IMAGE) --cache-to type=s3,region=$(AWS_REGION),bucket=$(DOCKER_CACHE_BUCKET),name=$(APP_NAME)/$(IMAGE) --cache-from type=s3,region=$(AWS_REGION),bucket=$(DOCKER_CACHE_BUCKET),name=$(APP_NAME)/$(IMAGE) --file $$DOCKER_FILE . ;\
+			docker buildx build --load --builder=$(DOCKER_BUILDER_CONTAINER) --tag $(PREV_IMAGE) --cache-to type=s3,region=$(AWS_REGION),bucket=$(DOCKER_CACHE_BUCKET),name=$(APP_NAME)/$(IMAGE) --cache-from type=s3,region=$(AWS_REGION),bucket=$(DOCKER_CACHE_BUCKET),name=$(APP_NAME)/$(IMAGE) --file $$DOCKER_FILE . ;\
 		else \
 			echo "Skipping $$service uses default image"; \
 		fi; \
