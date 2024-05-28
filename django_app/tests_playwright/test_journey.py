@@ -1,26 +1,32 @@
 import logging
 import os
+import subprocess
+from pathlib import Path
 
+from _settings import BASE_URL
 from playwright.sync_api import Page
 from tests_playwright.pages import LandingPage, SignInConfirmationPage
+from yarl import URL
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
-email_address = os.environ["USER_EMAIL"]
+EMAIL_ADDRESS = os.environ["USER_EMAIL"]
+DJANGO_ROOT = Path(__file__).parents[1]
 
 
 def test_user_journey(page: Page):
     # Landing page
     landing_page = LandingPage(page)
-    sign_in_page = landing_page.navigate_to_sign_in()
 
     # Sign in
-    sign_in_page.email = email_address
+    sign_in_page = landing_page.navigate_to_sign_in()
+    sign_in_page.email = EMAIL_ADDRESS
     sign_in_page.continue_()
 
     # Use magic link
-    sign_in_confirmation_page = SignInConfirmationPage(page, email_address)
+    magic_link = get_magic_link(EMAIL_ADDRESS, DJANGO_ROOT)
+    sign_in_confirmation_page = SignInConfirmationPage(page, magic_link)
     home_page = sign_in_confirmation_page.navigate_to_home_page()
 
     # Documents page
@@ -28,10 +34,21 @@ def test_user_journey(page: Page):
     document_upload_page = documents_page.navigate_to_upload()
 
     # Upload a file
-    upload_file = document_upload_page.DJANGO_ROOT / "files" / "RiskTriggersReport361.pdf"
+    upload_file = DJANGO_ROOT / "files" / "RiskTriggersReport361.pdf"
     documents_page = document_upload_page.upload_document(upload_file)
-    documents_page.assert_contains_file_named(upload_file.name)
+    documents_page.should_contain_file_named(upload_file.name)
 
     # Chats page
     chats_page = documents_page.navigate_to_chats()
+    chats_page.write_message = "Who put the bomp in the bomp bah bomp bah bomp?"
+    chats_page = chats_page.send()
+    all_messages = chats_page.all_messages()
     logger.debug("page: %s", chats_page)
+    logger.debug("all_messages: %s", all_messages)
+
+
+def get_magic_link(email_address: str, django_root: Path) -> URL:
+    command = ["poetry", "run", "python", "manage.py", "show_magiclink_url", email_address]
+    result = subprocess.run(command, capture_output=True, text=True, cwd=django_root)  # noqa: S603
+    magic_link = result.stdout.strip().lstrip("/")
+    return BASE_URL / magic_link

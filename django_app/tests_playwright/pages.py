@@ -1,5 +1,4 @@
 import logging
-import subprocess
 from abc import ABCMeta, abstractmethod
 from pathlib import Path
 
@@ -13,7 +12,6 @@ logger.setLevel(logging.DEBUG)
 
 
 class BasePage(metaclass=ABCMeta):
-    DJANGO_ROOT = Path(__file__).parents[1]
     AXE_OPTIONS = {
         "runOnly": {
             "type": "tag",
@@ -108,7 +106,7 @@ class SignInPage(BasePage):
     def email(self, value: str):
         self.page.locator("#email").fill(value)
 
-    def continue_(self):
+    def continue_(self) -> "SignInLinkSentPage":
         self.page.get_by_text("Continue").click()
         return SignInLinkSentPage(self.page)
 
@@ -119,16 +117,9 @@ class SignInLinkSentPage(BasePage):
 
 
 class SignInConfirmationPage(BasePage):
-    def __init__(self, page, email_address):
-        magic_link = self.get_magic_link(email_address)
+    def __init__(self, page, magic_link: URL):
         page.goto(str(magic_link))
         super().__init__(page)
-
-    def get_magic_link(self, email_address: str) -> URL:
-        command = ["poetry", "run", "python", "manage.py", "show_magiclink_url", email_address]
-        result = subprocess.run(command, capture_output=True, text=True, cwd=self.DJANGO_ROOT)  # noqa: S603
-        magic_link = result.stdout.strip().lstrip("/")
-        return BASE_URL / magic_link
 
     def get_expected_page_title(self) -> str:
         return "Sign in - confirmation - Redbox Copilot"
@@ -151,7 +142,7 @@ class DocumentsPage(SignedInBasePage):
         self.page.get_by_role("button", name="Upload a new document").click()
         return DocumentUploadPage(self.page)
 
-    def assert_contains_file_named(self, file_name: str):
+    def should_contain_file_named(self, file_name: str):
         expect(self.page.get_by_role("cell", name=file_name, exact=True)).to_be_visible()
 
 
@@ -173,3 +164,18 @@ class DocumentUploadPage(SignedInBasePage):
 class ChatsPage(SignedInBasePage):
     def get_expected_page_title(self) -> str:
         return "Chats - Redbox Copilot"
+
+    @property
+    def write_message(self) -> str:
+        return self.page.locator("#message").input_value()
+
+    @write_message.setter
+    def write_message(self, value: str):
+        self.page.locator("#message").fill(value)
+
+    def send(self) -> "ChatsPage":
+        self.page.get_by_text("Send").click()
+        return ChatsPage(self.page)
+
+    def all_messages(self) -> list[str]:
+        return self.page.locator(".iai-chat-message").all_inner_texts()
