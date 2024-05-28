@@ -1,13 +1,20 @@
 import logging
+from http import HTTPStatus
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import Depends, FastAPI, HTTPException
+from fastapi import Depends, FastAPI, HTTPException, WebSocket
+from fastapi.encoders import jsonable_encoder
+from langchain.chains.combine_documents import create_stuff_documents_chain
+from langchain.chains.history_aware_retriever import create_history_aware_retriever
 from langchain.chains.llm import LLMChain
 from langchain.chains.qa_with_sources import load_qa_with_sources_chain
+from langchain.chains.retrieval import create_retrieval_chain
 from langchain_community.chat_models import ChatLiteLLM
 from langchain_community.embeddings import SentenceTransformerEmbeddings
-from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.messages import AIMessage, HumanMessage
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
+from langchain_core.runnables import Runnable
 from langchain_elasticsearch import ApproxRetrievalStrategy, ElasticsearchStore
 
 from core_api.src.auth import get_user_uuid
@@ -50,11 +57,10 @@ log.info("Loaded embedding model from environment: %s", env.embedding_model)
 def populate_embedding_model_info() -> EmbeddingModelInfo:
     test_text = "This is a test sentence."
     embedding = embedding_model.embed_documents([test_text])[0]
-    embedding_model_info = EmbeddingModelInfo(
+    return EmbeddingModelInfo(
         embedding_model=env.embedding_model,
         vector_size=len(embedding),
     )
-    return embedding_model_info
 
 
 embedding_model_info = populate_embedding_model_info()
@@ -74,7 +80,8 @@ if env.elastic.subscription_level == "basic":
 elif env.elastic.subscription_level in ["platinum", "enterprise"]:
     strategy = ApproxRetrievalStrategy(hybrid=True)
 else:
-    raise ValueError(f"Unknown Elastic subscription level {env.elastic.subscription_level}")
+    message = f"Unknown Elastic subscription level {env.elastic.subscription_level}"
+    raise ValueError(message)
 
 
 vector_store = ElasticsearchStore(
@@ -92,19 +99,19 @@ def simple_chat(chat_request: ChatRequest, _user_uuid: Annotated[UUID, Depends(g
 
     if len(chat_request.message_history) < 2:
         raise HTTPException(
-            status_code=422,
+            status_code=HTTPStatus.UNPROCESSABLE_ENTITY,
             detail="Chat history should include both system and user prompts",
         )
 
     if chat_request.message_history[0].role != "system":
         raise HTTPException(
-            status_code=422,
+            status_code=HTTPStatus.UNPROCESSABLE_ENTITY,
             detail="The first entry in the chat history should be a system prompt",
         )
 
     if chat_request.message_history[-1].role != "user":
         raise HTTPException(
-            status_code=422,
+            status_code=HTTPStatus.UNPROCESSABLE_ENTITY,
             detail="The final entry in the chat history should be a user question",
         )
 
@@ -165,3 +172,61 @@ def rag_chat(chat_request: ChatRequest, user_uuid: Annotated[UUID, Depends(get_u
         for langchain_document in result.get("input_documents", [])
     ]
     return ChatResponse(output_text=result["output_text"], source_documents=source_documents)
+
+
+@chat_app.websocket("/rag")
+async def rag_chat_streamed(websocket: WebSocket):
+    await websocket.accept()
+
+    retrieval_chain = await build_retrieval_chain()
+
+    chat_request = ChatRequest.parse_raw(await websocket.receive_text())
+    chat_history = [
+        HumanMessage(content=x.text) if x.role == "user" else AIMessage(content=x.text)
+        for x in chat_request.message_history[:-1]
+    ]
+    chat = {"chat_history": chat_history, "input": chat_request.message_history[-1].text}
+    async for event in retrieval_chain.astream_events(chat, version="v1"):
+        kind = event["event"]
+        if kind == "on_chat_model_stream":
+            await websocket.send_json({"resource_type": "text", "data": event["data"]["chunk"].content})
+        elif kind == "on_chat_model_end":
+            await websocket.send_json({"resource_type": "end"})
+        elif kind == "on_retriever_end":
+            source_documents = [
+                jsonable_encoder(
+                    SourceDocument(
+                        page_content=document.page_content,
+                        file_uuid=document.metadata.get("parent_doc_uuid"),
+                        page_numbers=document.metadata.get("page_numbers"),
+                    )
+                )
+                for document in event["data"]["output"]["documents"]
+            ]
+            await websocket.send_json({"resource_type": "documents", "data": source_documents})
+
+    await websocket.close()
+
+
+async def build_retrieval_chain() -> Runnable:
+    prompt_search_query = ChatPromptTemplate.from_messages(
+        [
+            MessagesPlaceholder(variable_name="chat_history"),
+            ("user", "{input}"),
+            (
+                "user",
+                "Given the above conversation, generate a search query to look up to get information relevant to the "
+                "conversation",
+            ),
+        ]
+    )
+    retriever_chain = create_history_aware_retriever(llm, vector_store.as_retriever(), prompt_search_query)
+    prompt_get_answer = ChatPromptTemplate.from_messages(
+        [
+            ("system", "Answer the user's questions based on the below context:\\n\\n{context}"),
+            MessagesPlaceholder(variable_name="chat_history"),
+            ("user", "{input}"),
+        ]
+    )
+    document_chain = create_stuff_documents_chain(llm, prompt_get_answer)
+    return create_retrieval_chain(retriever_chain, document_chain)

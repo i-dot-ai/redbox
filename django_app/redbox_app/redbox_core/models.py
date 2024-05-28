@@ -1,9 +1,11 @@
 import uuid
+from datetime import datetime, timedelta
 
 import boto3
 from botocore.config import Config
 from django.conf import settings
 from django.db import models
+from django.utils import timezone
 from django_use_email_as_username.models import BaseUser, BaseUserManager
 from jose import jwt
 from yarl import URL
@@ -64,11 +66,21 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     original_file_name = models.TextField(max_length=2048, blank=True, null=True)
     core_file_uuid = models.UUIDField(null=True)
+    last_referenced = models.DateTimeField(blank=True, null=True)
 
     def __str__(self) -> str:  # pragma: no cover
         return f"{self.original_file_name} {self.user}"
 
-    def delete(self, using=None, keep_parents=False):
+    def save(self, *args, **kwargs):
+        if not self.last_referenced:
+            if self.created_at:
+                #  Needed to populate the initial last_referenced field for existing Files
+                self.last_referenced = self.created_at
+            else:
+                self.last_referenced = timezone.now()
+        super().save(*args, **kwargs)
+
+    def delete(self, using=None, keep_parents=False):  # noqa: ARG002  # remove at Python 3.12
         #  Needed to make sure no orphaned files remain in the storage
         self.original_file.storage.delete(self.original_file.name)
         super().delete()
@@ -117,6 +129,10 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
             (status[1] for status in ProcessingStatusEnum.choices if self.processing_status == status[0]),
             "Unknown",
         )
+
+    @property
+    def expiry_date(self) -> datetime:
+        return self.last_referenced + timedelta(seconds=settings.FILE_EXPIRY_IN_SECONDS)
 
 
 class ChatHistory(UUIDPrimaryKeyBase, TimeStampedModel):

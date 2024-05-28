@@ -1,13 +1,12 @@
 from collections import defaultdict
-from datetime import date
-from typing import Optional
+from datetime import UTC, datetime
 
 from langchain.schema import HumanMessage, SystemMessage
 
 from redbox.llm.prompts.spotlight import SPOTLIGHT_COMBINATION_TASK_PROMPT
 
 
-class SpotlightCollection(object):
+class SpotlightCollection:
     """A class for combining Spotlight task outputs into a cohesive briefing.
 
     Args:
@@ -29,7 +28,7 @@ class SpotlightCollection(object):
         task_id,
         user_info,
         llm,
-        callbacks: Optional[list] = None,
+        callbacks: list | None = None,
     ):
         """Combine the outputs of a task across all spotlights."""
         spotlight_payload = ""
@@ -42,7 +41,7 @@ class SpotlightCollection(object):
         messages_to_send = [
             SystemMessage(
                 content=SPOTLIGHT_COMBINATION_TASK_PROMPT.format(
-                    current_date=date.today().isoformat(),
+                    current_date=datetime.now(tz=UTC).date().isoformat(),
                     user_info=user_info,
                 )
             ),

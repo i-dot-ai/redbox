@@ -7,10 +7,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#0b0c0c">
 
-  <link rel="icon" sizes="48x48" href="{{static("govuk-assets/images/favicon.ico")}}">
-  <link rel="icon" sizes="any" href="{{static("govuk-assets/images/favicon.svg")}}" type="image/svg+xml">
-  <link rel="mask-icon" href="{{static("govuk-assets/images/govuk-icon-mask.svg")}}" color="#0b0c0c">
-  <link rel="apple-touch-icon" href="{{static("govuk-assets/images/govuk-icon-180.png")}}">
+  <link rel="icon" sizes="any" href="{{static("images/favicon.ico")}}" type="image/svg+xml">
   <link rel="manifest" href="{{static("govuk-assets/manifest.json")}}">
 
   <meta name="robots" content="noindex, nofollow">
@@ -22,6 +19,18 @@
     <link rel="stylesheet" type="text/css" href="{{static('style.css')}}" />
   {% endif %}
 
+
+  {% if environment | lower in ["dev", "preprod"] %}
+    <script defer
+    event-environment="{{environment}}"
+    data-domain="redbox-dev.ai.cabinetoffice.gov.uk" src="https://plausible.io/js/script.pageview-props.tagged-events.outbound-links.file-downloads.local.js"></script>
+  {% elif environment | lower == "prod" %}
+    <script defer
+    data-domain="redbox.ai.cabinetoffice.gov.uk" src="https://plausible.io/js/script.pageview-props.tagged-events.outbound-links.file-downloads.js"></script>
+  {% endif %}
+
+  <script type="module" src="{{static('js/libs/govuk-frontend.min.js')}}"></script>
+
 </head>
 
 <body class="govuk-template__body">
@@ -32,7 +41,7 @@
   <header class="govuk-header" role="banner" data-module="govuk-header">
 
     <div class="iai-classification-banner govuk-body">
-      Up to UK OFFICIAL SENSITIVE documents can be used in this tool
+      Up to UK {{ security | upper }} documents can be used in this tool
     </div>
 
     <div class="govuk-header__container govuk-width-container">
@@ -64,7 +73,7 @@
           {% if request.user.is_authenticated %}
             {% set menu_items = [
               {"text": "Documents", "url": "documents"},
-              {"text": "Sessions", "url": "sessions"},
+              {"text": "Chats", "url": "chats"},
               {"text": "Sign out", "url": "signed-out"}
             ] %}
           {% else %}
@@ -130,7 +139,7 @@
             </li>
           </ul>
           <div class="govuk-footer__meta-custom">
-            This is a new service – your <a class="govuk-link" href="#feedback">feedback</a> will help us to improve it.
+            This is a new service – your <a class="govuk-link" href="https://www.smartsurvey.co.uk/s/EOWJ04/">feedback</a> will help us to improve it.
           </div>
           <svg
             aria-hidden="true"
@@ -154,7 +163,7 @@
         </div>
         <div class="govuk-footer__meta-item">
           <a class="govuk-footer__link govuk-footer__copyright-logo" href="https://ai.gov.uk">
-            <img src="/static/iai-logo.svg" alt="Incubator for Artificial Intelligence" loading="lazy"/>
+            <img src="{{ static('images/iai-logo.svg') }}" alt="Incubator for Artificial Intelligence" loading="lazy"/>
           </a>
         </div>
       </div>

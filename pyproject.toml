@@ -30,6 +30,7 @@ uvicorn = "^0.29.0"
 langchain-elasticsearch = "^0.2.0"
 python-multipart = "^0.0.9"
 python-jose = "^3.3.0"
+websockets = "^12.0"
 
 [tool.poetry.group.worker.dependencies]
 opencv-python-headless = "^4.9.0.80"
@@ -103,41 +104,43 @@ select = [
     "S",
     "T",
     "W",
-#*    "ARG",
+    "ASYNC",
+    "ARG",
     "BLE",
     "LOG",
     "COM",
     "DJ",
-#*    "DTZ",
+    "DTZ",
 #    "EM",
     "EXE",
-#*    "FBT",
     "ICN",
 #    "ISC",
+    "LOG",
     "NPY",
     "PD",
 #    "PGH",
     "PIE",
 #*    "PL",
-#*    "PT",
-#*    "PTH",
+    "PT",
+    "PTH",
     "PYI",
-#*    "RET",
+    "RET",
     "RSE",
 #*    "RUF",
     "SIM",
     "SLF",
     "TCH",
     "TID",
-#*    "TRY",
-#*    "UP",
+    "TRY",
+    "UP",
     "YTT",
 ]
 exclude = ["django_app/redbox_app/redbox_core/migrations/*.py", "out/*"]
-ignore = ["COM812", "DJ001"]
+ignore = ["COM812", "DJ001", "RET505", "RET508"]
 
 [tool.ruff.lint.per-file-ignores]
 "tests/*" = ["S101", "S106"]
 "*/tests/*" = ["S101", "S106"]
 "worker/*" = ["B008"]
 "redbox/*" = ["TCH003"]
+"redbox/tests/*" = ["ARG001"]

@@ -5,8 +5,8 @@ from redbox.storage import ElasticsearchStorageHandler
 from worker.src.app import app, broker, env
 
 
-@pytest.mark.asyncio
-async def test_ingest_file(s3_client, es_client, embedding_model, file):
+@pytest.mark.asyncio()
+async def test_ingest_file(es_client, file):
     """
     Given that I have written a text File to s3
     When I call ingest_file
@@ -30,7 +30,7 @@ async def test_ingest_file(s3_client, es_client, embedding_model, file):
         assert file is not None
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_embed_item_callback(elasticsearch_storage_handler, embed_queue_item):
     """
     Given that I have created and persisted a chunk to ElasticSearch

@@ -3,6 +3,7 @@ import datetime
 import humanize
 import jinja2
 from compressor.contrib.jinja2ext import CompressorExtension
+from django.conf import settings
 from django.templatetags.static import static
 from django.urls import reverse
 from markdown_it import MarkdownIt
@@ -14,7 +15,8 @@ markdown_converter = MarkdownIt("js-default")
 
 def url(path, *args, **kwargs):
     if args and kwargs:
-        raise ValueError("Use *args or **kwargs, not both.")
+        message = "Use *args or **kwargs, not both."
+        raise ValueError(message)
     return reverse(path, args=args, kwargs=kwargs)
 
 
@@ -31,8 +33,7 @@ def markdown(text, cls=None):
         Text converted to markdown
     """
     html = markdown_converter.render(text).strip()
-    html = html.replace("<p>", f'<p class="{cls or ""}">', 1).replace("</p>", "", 1)
-    return html
+    return html.replace("<p>", f'<p class="{cls or ""}">', 1).replace("</p>", "", 1)
 
 
 def humanize_timedelta(minutes=0, hours_limit=200, too_large_msg=""):
@@ -56,11 +57,22 @@ def environment(**options):
             **extra_options,
         },
     )
+    env.filters.update(
+        {
+            "static": static,
+            "url": url,
+            "humanize_timedelta": humanize_timedelta,
+            "environment": settings.ENVIRONMENT,
+            "security": settings.MAX_SECURITY_CLASSIFICATION.value,
+        }
+    )
     env.globals.update(
         {
             "static": static,
             "url": url,
             "humanize_timedelta": humanize_timedelta,
+            "environment": settings.ENVIRONMENT,
+            "security": settings.MAX_SECURITY_CLASSIFICATION.value,
         }
     )
     return env

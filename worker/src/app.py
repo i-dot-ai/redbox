@@ -2,7 +2,7 @@
 
 import logging
 from contextlib import asynccontextmanager
-from datetime import datetime
+from datetime import UTC, datetime
 
 from faststream import Context, ContextRepo, FastStream
 from faststream.redis import RedisBroker
@@ -12,7 +12,7 @@ from redbox.models import Chunk, EmbedQueueItem, File, Settings
 from redbox.parsing import chunk_file
 from redbox.storage.elasticsearch import ElasticsearchStorageHandler
 
-start_time = datetime.now()
+start_time = datetime.now(UTC)
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger()
 

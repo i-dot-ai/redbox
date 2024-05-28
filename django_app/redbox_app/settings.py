@@ -1,7 +1,7 @@
 # mypy: ignore-errors
 
-import os
 import socket
+from enum import StrEnum
 from pathlib import Path
 
 import environ
@@ -29,8 +29,8 @@ COMPRESS_PRECOMPILERS = (("text/x-scss", "django_libsass.SassCompiler"),)
 STATIC_URL = "static/"
 STATIC_ROOT = "staticfiles/"
 STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, "static/"),
-    os.path.join(BASE_DIR, "frontend/"),
+    Path(BASE_DIR) / "static/",
+    Path(BASE_DIR) / "frontend/",
 ]
 STATICFILES_FINDERS = [
     "compressor.finders.CompressorFinder",
@@ -63,6 +63,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -92,7 +93,7 @@ TEMPLATES = [
     },
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [os.path.join(BASE_DIR, "templates")],
+        "DIRS": [Path(BASE_DIR) / "templates"],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -147,11 +148,12 @@ LOGIN_URL = "sign-in"
 CSP_DEFAULT_SRC = (
     "'self'",
     "s3.amazonaws.com",
+    "plausible.io",
 )
 CSP_SCRIPT_SRC = (
     "'self'",
-    "plausible.io",
     "'sha256-GUQ5ad8JK5KmEWmROf3LZd9ge94daqNvd8xy9YS1iDw='",
+    "plausible.io",
 )
 CSP_OBJECT_SRC = ("'none'",)
 CSP_REQUIRE_TRUSTED_TYPES_FOR = ("'script'",)
@@ -265,7 +267,7 @@ LOGGING = {
         "file": {
             "level": LOG_LEVEL,
             "class": "logging.FileHandler",
-            "filename": os.path.join(LOG_ROOT, "application.log"),
+            "filename": Path(LOG_ROOT) / "application.log",
             "formatter": "verbose",
         },
         "console": {
@@ -286,7 +288,7 @@ LOGGING = {
 
 # link to core_api app
 CORE_API_HOST = env.str("CORE_API_HOST")
-CORE_API_PORT = env.str("CORE_API_PORT")
+CORE_API_PORT = env.int("CORE_API_PORT")
 
 # Email
 EMAIL_BACKEND_TYPE = env.str("EMAIL_BACKEND_TYPE")
@@ -303,7 +305,8 @@ elif EMAIL_BACKEND_TYPE == "GOVUKNOTIFY":
     GOVUK_NOTIFY_API_KEY = env.str("GOVUK_NOTIFY_API_KEY")
     GOVUK_NOTIFY_PLAIN_EMAIL_TEMPLATE_ID = env.str("GOVUK_NOTIFY_PLAIN_EMAIL_TEMPLATE_ID")
 else:
-    raise Exception(f"Unknown EMAIL_BACKEND_TYPE of {EMAIL_BACKEND_TYPE}")
+    message = f"Unknown EMAIL_BACKEND_TYPE of {EMAIL_BACKEND_TYPE}"
+    raise ValueError(message)
 
 # Magic link
 
@@ -320,3 +323,18 @@ MAGIC_LINK = {
 }
 
 USE_STREAMING = env.bool("USE_STREAMING")
+FILE_EXPIRY_IN_SECONDS = env.int("FILE_EXPIRY_IN_DAYS") * 24 * 60 * 60
+SUPERUSER_EMAIL = env.str("SUPERUSER_EMAIL", None)
+
+# Security classifications
+# https://www.gov.uk/government/publications/government-security-classifications/
+
+
+class Classification(StrEnum):
+    OFFICIAL = "Official"
+    OFFICIAL_SENSITIVE = "Official Sensitive"
+    SECRET = "Secret"  # noqa S105
+    TOP_SECRET = "Top Secret"  # noqa S105
+
+
+MAX_SECURITY_CLASSIFICATION = Classification[env.str("MAX_SECURITY_CLASSIFICATION")]

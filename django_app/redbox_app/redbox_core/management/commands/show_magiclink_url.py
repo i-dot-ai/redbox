@@ -15,24 +15,27 @@ class Command(BaseCommand):
     def add_arguments(self, parser: ArgumentParser):
         parser.add_argument("user_email", type=str)
 
-    def handle(self, *args, **options):
+    def handle(self, **options):
         user_email = options["user_email"]
         logger.debug("user email: %s", user_email)
 
         try:
             user: User = User.objects.get(email=user_email)
         except User.DoesNotExist as e:
-            raise CommandError(f"No User found with email {user_email}") from e
+            message = f"No User found with email {user_email}"
+            raise CommandError(message) from e
 
         try:
             latest = MagicLink.objects.filter(user=user).aggregate(Max("created_at"))["created_at__max"]
             logger.debug("latest: %s", latest)
             link: MagicLink = MagicLink.objects.get(user=user, created_at=latest)
         except MagicLink.DoesNotExist as e:
-            raise CommandError(f"No MagicLink found for user {user.email}") from e
+            message = f"No MagicLink found for user {user.email}"
+            raise CommandError(message) from e
 
         logger.debug("link: %s", link)
         if link.is_valid:
             self.stdout.write(self.style.SUCCESS(link.get_absolute_url()))
         else:
-            raise CommandError(f"No active link for user {user.email}")
+            message = f"No active link for user {user.email}"
+            raise CommandError(message)

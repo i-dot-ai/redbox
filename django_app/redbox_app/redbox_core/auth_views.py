@@ -1,5 +1,4 @@
 import logging
-from typing import Optional
 
 from django.contrib.auth import logout
 from django.http import HttpRequest
@@ -7,20 +6,9 @@ from django.shortcuts import redirect, render
 from magic_link.models import MagicLink
 from redbox_app.redbox_core import email_handler, models
 from redbox_app.redbox_core.forms import SignInForm
+from requests import HTTPError
 
 logger = logging.getLogger(__name__)
-
-
-def get_or_create_user(email: str) -> Optional[models.User]:
-    try:
-        return models.User.objects.get(email=email)
-    except models.User.DoesNotExist:
-        if email.endswith("@cabinetoffice.gov.uk"):
-            logger.debug("creating user with email %s", email)
-            return models.User.objects.create(email=email)
-        else:
-            logger.debug("User with email %s not found", email)
-    return None
 
 
 def sign_in_view(request: HttpRequest):
@@ -31,12 +19,15 @@ def sign_in_view(request: HttpRequest):
         if form.is_valid():
             email = form.cleaned_data["email"].lower()
 
-            if user := get_or_create_user(email):
+            try:
+                user = models.User.objects.get(email=email)
                 link = MagicLink.objects.create(user=user, redirect_to="/")
                 full_link = request.build_absolute_uri(link.get_absolute_url())
-
-                # Email link to user
                 email_handler.send_magic_link_email(full_link, email)
+            except models.User.DoesNotExist as e:
+                logger.debug("User with email %s not found", email, exc_info=e)
+            except HTTPError as e:
+                logger.exception("failed to send link to %s", email, exc_info=e)
 
             return redirect("sign-in-link-sent")
 

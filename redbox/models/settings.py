@@ -1,4 +1,4 @@
-from typing import Literal, Optional
+from typing import Literal
 
 import boto3
 from elasticsearch import Elasticsearch
@@ -29,8 +29,8 @@ class ElasticCloudSettings(BaseModel):
 class Settings(BaseSettings):
     """Settings for the redbox application."""
 
-    anthropic_api_key: Optional[str] = None
-    openai_api_key: Optional[str] = None
+    anthropic_api_key: str | None = None
+    openai_api_key: str | None = None
 
     partition_strategy: Literal["auto", "fast", "ocr_only", "hi_res"] = "fast"
 
@@ -45,8 +45,8 @@ class Settings(BaseSettings):
 
     minio_host: str = "minio"
     minio_port: int = 9000
-    aws_access_key: Optional[str] = None
-    aws_secret_key: Optional[str] = None
+    aws_access_key: str | None = None
+    aws_secret_key: str | None = None
 
     aws_region: str = "eu-west-2"
     bucket_name: str = "redbox-storage-dev"
@@ -74,18 +74,18 @@ class Settings(BaseSettings):
     core_api_host: str = "core-api"
     core_api_port: int = 5002
     email_backend_type: str = "CONSOLE"
-    gov_notify_api_key: Optional[str] = None
-    from_email: Optional[str] = None
+    gov_notify_api_key: str | None = None
+    from_email: str | None = None
     email_file_path: str = "/app/mail"
     govuk_notify_plain_email_template_id: str = "example-id"
     use_streaming: bool = False
     compression_enabled: bool = True
-
+    superuser_email: str | None = None
     model_config = SettingsConfigDict(env_file=".env", env_nested_delimiter="__", extra="allow")
 
     def elasticsearch_client(self) -> Elasticsearch:
         if isinstance(self.elastic, ElasticLocalSettings):
-            es = Elasticsearch(
+            return Elasticsearch(
                 hosts=[
                     {
                         "host": self.elastic.host,
@@ -95,10 +95,8 @@ class Settings(BaseSettings):
                 ],
                 basic_auth=(self.elastic.user, self.elastic.password),
             )
-            return es
 
-        es = Elasticsearch(cloud_id=self.elastic.cloud_id, api_key=self.elastic.api_key)
-        return es
+        return Elasticsearch(cloud_id=self.elastic.cloud_id, api_key=self.elastic.api_key)
 
     def s3_client(self):
         if self.object_store == "minio":

@@ -1,5 +1,4 @@
 from enum import Enum
-from typing import Optional
 
 from sentence_transformers import SentenceTransformer
 
@@ -35,7 +34,7 @@ class ContentType(str, Enum):
 
 def chunk_file(
     file: File,
-    embedding_model: Optional[SentenceTransformer] = None,
+    embedding_model: SentenceTransformer | None = None,
 ) -> list[Chunk]:
     """
     Args:
