@@ -3,7 +3,7 @@ from itertools import compress
 
 import numpy as np
 import scipy
-from numpy._typing import ArrayLike  # noqa
+from numpy.typing import NDArray
 from sentence_transformers import SentenceTransformer
 
 from redbox.models.file import Chunk, Metadata
@@ -80,7 +80,7 @@ def cluster_chunks(
     return out_chunks
 
 
-def compute_embed_dist(pair_embed_dist: ArrayLike) -> ArrayLike:
+def compute_embed_dist(pair_embed_dist: list[float]) -> NDArray[np.float64]:
     n = len(pair_embed_dist)
     # embedding distance between chunk i and j is taken as MAXIMUM of the pairwise embedding
     # distance of all the adjacent pairs between them
@@ -122,12 +122,12 @@ def compute_embed_dist(pair_embed_dist: ArrayLike) -> ArrayLike:
     return scipy.spatial.distance.pdist(embed_dims, "chebyshev")
 
 
-def compute_token_dist(token_counts: ArrayLike) -> ArrayLike:
+def compute_token_dist(token_counts: list[int]) -> NDArray[np.float64]:
     n = len(token_counts)
 
     # the token count distance between junk and i and j is the size of minimal text segment
     # containing them, i.e. sum of token counts of all the intermediate chunks
-    token_dims = np.tri(n + 1, k=0) * np.concatenate(([0], token_counts))
+    token_dims = np.tri(n + 1, k=0) * np.array([0] + token_counts)
 
     # drop diagonal (sizes of individual chunks)
     a, b = np.triu_indices(n + 1, k=1)
@@ -180,8 +180,8 @@ def compute_token_dist(token_counts: ArrayLike) -> ArrayLike:
 
 
 def create_pdist(
-    token_counts: np.array, pair_embed_dist: np.array, weight_embed_dist: float = 0.2, use_log: bool = True
-):
+    token_counts: list[int], pair_embed_dist: list[float], weight_embed_dist: float = 0.2, use_log: bool = True
+) -> NDArray[np.float64]:
     """
     Creates a distance (upper) matrix for the chunk merging.
     It combines embedding distance with token counts metric for adjacent chunks.

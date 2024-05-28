@@ -119,11 +119,13 @@ class Chunk(PersistableModel):
     metadata: Metadata | None = Field(description="subset of the unstructured Element.Metadata object", default=None)
     embedding: list[float] | None = Field(description="the vector representation of the text", default=None)
 
-    @computed_field
+    @computed_field  # type: ignore[misc] # Remove if https://github.com/python/mypy/issues/1362 is fixed.
+    @property
     def text_hash(self) -> str:
         return hashlib.md5(self.text.encode(encoding="UTF-8", errors="strict"), usedforsecurity=False).hexdigest()
 
-    @computed_field
+    @computed_field  # type: ignore[misc]
+    @property
     def token_count(self) -> int:
         return len(encoding.encode(self.text))
 

@@ -1,4 +1,4 @@
-from pydantic import AnyUrl, BaseModel, Field
+from pydantic import AnyUrl, BaseModel, Field, HttpUrl
 
 
 class APIErrorDetail(BaseModel):
@@ -28,6 +28,6 @@ class APIErrorResponse(BaseModel):
 
 
 class APIError404(APIErrorResponse):
-    type: AnyUrl = "error/not-found"
+    type: AnyUrl = HttpUrl("http://example.com/error/not-found")
     status: int = 404
     title: str = "File not found"

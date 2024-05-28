@@ -1,3 +1,4 @@
+from collections.abc import Sequence
 from enum import Enum
 
 from sentence_transformers import SentenceTransformer
@@ -35,7 +36,7 @@ class ContentType(str, Enum):
 def chunk_file(
     file: File,
     embedding_model: SentenceTransformer | None = None,
-) -> list[Chunk]:
+) -> Sequence[Chunk]:
     """
     Args:
         file (File): The file to read, analyse layout and chunk.
