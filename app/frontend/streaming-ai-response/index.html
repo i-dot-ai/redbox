@@ -35,7 +35,7 @@
   <script>
     document.querySelector('#sendmsg')?.addEventListener("click", () => {
       let newChat = document.createElement("websocket-stream");
-      newChat.setAttribute("data-url", "ws://localhost:8888");
+      newChat.setAttribute("data-url", "wss://localhost:8888");
       document.querySelector("#container").appendChild(newChat);
       newChat.stream("Testing");
     });

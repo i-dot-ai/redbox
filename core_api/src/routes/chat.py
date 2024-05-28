@@ -154,7 +154,7 @@ async def rag_chat_streamed(websocket: WebSocket):
 
     chat_request = ChatRequest.parse_raw(await websocket.receive_text())
 
-    retrieval_chain = build_retrieval_chain()
+    retrieval_chain = await build_retrieval_chain()
 
     chat = await get_chat_from_request(chat_request)
 
