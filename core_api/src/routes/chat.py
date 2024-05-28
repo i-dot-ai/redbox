@@ -185,7 +185,7 @@ async def rag_chat_streamed(websocket: WebSocket):
         HumanMessage(content=x.text) if x.role == "user" else AIMessage(content=x.text)
         for x in chat_request.message_history[:-1]
     ]
-    chat = {"chat_history": chat_history, "input": chat_request.message_history[-1].text}
+    chat = {"chat_history": chat_history, "question": chat_request.message_history[-1].text}
     async for event in retrieval_chain.astream_events(chat, version="v1"):
         kind = event["event"]
         if kind == "on_chat_model_stream":
@@ -212,20 +212,19 @@ async def build_retrieval_chain() -> Runnable:
     prompt_search_query = ChatPromptTemplate.from_messages(
         [
             MessagesPlaceholder(variable_name="chat_history"),
-            ("user", "{input}"),
+            ("user", "{question}"),
             (
                 "user",
-                "Given the above conversation, generate a search query to look up to get information relevant to the "
-                "conversation",
+                CONDENSE_QUESTION_PROMPT,
             ),
         ]
     )
     retriever_chain = create_history_aware_retriever(llm, vector_store.as_retriever(), prompt_search_query)
     prompt_get_answer = ChatPromptTemplate.from_messages(
         [
-            ("system", "Answer the user's questions based on the below context:\\n\\n{context}"),
+            ("system", WITH_SOURCES_PROMPT),
             MessagesPlaceholder(variable_name="chat_history"),
-            ("user", "{input}"),
+            ("user", "{question}"),
         ]
     )
     document_chain = create_stuff_documents_chain(llm, prompt_get_answer)
