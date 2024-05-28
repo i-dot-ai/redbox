@@ -1,4 +1,5 @@
 import logging
+from smtplib import SMTPException
 
 from django.contrib.auth import logout
 from django.http import HttpRequest
@@ -26,7 +27,7 @@ def sign_in_view(request: HttpRequest):
                 email_handler.send_magic_link_email(full_link, email)
             except models.User.DoesNotExist as e:
                 logger.debug("User with email %s not found", email, exc_info=e)
-            except HTTPError as e:
+            except SMTPException as e:
                 logger.exception("failed to send link to %s", email, exc_info=e)
 
             return redirect("sign-in-link-sent")
