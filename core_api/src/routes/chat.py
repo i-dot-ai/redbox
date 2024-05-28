@@ -7,8 +7,6 @@ from fastapi import Depends, FastAPI, HTTPException, WebSocket
 from fastapi.encoders import jsonable_encoder
 from langchain.chains.combine_documents import create_stuff_documents_chain
 from langchain.chains.history_aware_retriever import create_history_aware_retriever
-from langchain.chains.llm import LLMChain
-from langchain.chains.qa_with_sources import load_qa_with_sources_chain
 from langchain.chains.retrieval import create_retrieval_chain
 from langchain_community.chat_models import ChatLiteLLM
 from langchain_community.embeddings import SentenceTransformerEmbeddings
@@ -19,9 +17,9 @@ from langchain_elasticsearch import ApproxRetrievalStrategy, ElasticsearchStore
 
 from core_api.src.auth import get_user_uuid
 from redbox.llm.prompts.chat import (
-    CONDENSE_QUESTION_PROMPT,
-    STUFF_DOCUMENT_PROMPT,
-    WITH_SOURCES_PROMPT,
+    CONDENSE_QUESTION_TEMPLATE,
+    CORE_REDBOX_TEMPLATE,
+    WITH_SOURCES_TEMPLATE,
 )
 from redbox.model_db import MODEL_PATH
 from redbox.models import EmbeddingModelInfo, Settings
@@ -130,38 +128,14 @@ def rag_chat(chat_request: ChatRequest, user_uuid: Annotated[UUID, Depends(get_u
 
     Args:
 
-
     Returns:
         StreamingResponse: a stream of the chain response
     """
-    question = chat_request.message_history[-1].text
-    previous_history = list(chat_request.message_history[:-1])
-    previous_history = ChatPromptTemplate.from_messages(
-        (msg.role, msg.text) for msg in previous_history
-    ).format_messages()
+    retrieval_chain = build_retrieval_chain(user_uuid)
 
-    docs_with_sources_chain = load_qa_with_sources_chain(
-        llm,
-        chain_type="stuff",
-        prompt=WITH_SOURCES_PROMPT,
-        document_prompt=STUFF_DOCUMENT_PROMPT,
-        verbose=True,
-    )
+    chat = get_chat_from_request(chat_request)
 
-    condense_question_chain = LLMChain(llm=llm, prompt=CONDENSE_QUESTION_PROMPT)
-
-    standalone_question = condense_question_chain({"question": question, "chat_history": previous_history})["text"]
-
-    docs = vector_store.as_retriever(
-        search_kwargs={"filter": {"term": {"creator_user_uuid.keyword": str(user_uuid)}}}
-    ).get_relevant_documents(standalone_question)
-
-    result = docs_with_sources_chain(
-        {
-            "question": standalone_question,
-            "input_documents": docs,
-        },
-    )
+    result = retrieval_chain.invoke(chat)
 
     source_documents = [
         SourceDocument(
@@ -169,23 +143,21 @@ def rag_chat(chat_request: ChatRequest, user_uuid: Annotated[UUID, Depends(get_u
             file_uuid=langchain_document.metadata.get("parent_doc_uuid"),
             page_numbers=langchain_document.metadata.get("page_numbers"),
         )
-        for langchain_document in result.get("input_documents", [])
+        for langchain_document in result.get("context", [])
     ]
-    return ChatResponse(output_text=result["output_text"], source_documents=source_documents)
+    return ChatResponse(output_text=result["answer"], source_documents=source_documents)
 
 
 @chat_app.websocket("/rag")
 async def rag_chat_streamed(websocket: WebSocket):
     await websocket.accept()
 
-    retrieval_chain = await build_retrieval_chain()
-
     chat_request = ChatRequest.parse_raw(await websocket.receive_text())
-    chat_history = [
-        HumanMessage(content=x.text) if x.role == "user" else AIMessage(content=x.text)
-        for x in chat_request.message_history[:-1]
-    ]
-    chat = {"chat_history": chat_history, "question": chat_request.message_history[-1].text}
+
+    retrieval_chain = build_retrieval_chain()
+
+    chat = get_chat_from_request(chat_request)
+
     async for event in retrieval_chain.astream_events(chat, version="v1"):
         kind = event["event"]
         if kind == "on_chat_model_stream":
@@ -208,24 +180,38 @@ async def rag_chat_streamed(websocket: WebSocket):
     await websocket.close()
 
 
-async def build_retrieval_chain() -> Runnable:
+def build_retrieval_chain(user_uuid: UUID | None = None) -> Runnable:
     prompt_search_query = ChatPromptTemplate.from_messages(
         [
             MessagesPlaceholder(variable_name="chat_history"),
-            ("user", "{question}"),
+            ("user", "{input}"),
             (
                 "user",
-                CONDENSE_QUESTION_PROMPT,
+                CONDENSE_QUESTION_TEMPLATE,
             ),
         ]
     )
-    retriever_chain = create_history_aware_retriever(llm, vector_store.as_retriever(), prompt_search_query)
+    search_kwargs = {"filter": {"term": {"creator_user_uuid.keyword": str(user_uuid)}}} if user_uuid else {}
+
+    retriever_chain = create_history_aware_retriever(
+        llm,
+        vector_store.as_retriever(search_kwargs=search_kwargs),
+        prompt_search_query,
+    )
     prompt_get_answer = ChatPromptTemplate.from_messages(
         [
-            ("system", WITH_SOURCES_PROMPT),
+            ("system", CORE_REDBOX_TEMPLATE + WITH_SOURCES_TEMPLATE),
             MessagesPlaceholder(variable_name="chat_history"),
-            ("user", "{question}"),
+            ("user", "{input}"),
         ]
     )
     document_chain = create_stuff_documents_chain(llm, prompt_get_answer)
     return create_retrieval_chain(retriever_chain, document_chain)
+
+
+def get_chat_from_request(chat_request: ChatRequest) -> dict:
+    chat_history = [
+        HumanMessage(content=x.text) if x.role == "user" else AIMessage(content=x.text)
+        for x in chat_request.message_history[:-1]
+    ]
+    return {"chat_history": chat_history, "input": chat_request.message_history[-1].text}

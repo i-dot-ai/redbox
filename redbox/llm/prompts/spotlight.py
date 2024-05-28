@@ -1,6 +1,6 @@
 from langchain.prompts.prompt import PromptTemplate
 
-from redbox.llm.prompts.core import _core_redbox_prompt
+from redbox.llm.prompts.core import CORE_REDBOX_TEMPLATE
 
 # ==================== SUMMARY ====================
 
@@ -29,7 +29,7 @@ This is so that the user can understand your responses.\
 {text} \
 """
 
-SPOTLIGHT_SUMMARY_TASK_PROMPT = PromptTemplate.from_template(_core_redbox_prompt + _spotlight_summary_template)
+SPOTLIGHT_SUMMARY_TASK_PROMPT = PromptTemplate.from_template(CORE_REDBOX_TEMPLATE + _spotlight_summary_template)
 
 # ==================== KEY PEOPLE ====================
 
@@ -61,7 +61,7 @@ Do not include any of the above examples in your response. \
 {text} \
 """
 
-SPOTLIGHT_KEY_PEOPLE_TASK_PROMPT = PromptTemplate.from_template(_core_redbox_prompt + _key_people_template)
+SPOTLIGHT_KEY_PEOPLE_TASK_PROMPT = PromptTemplate.from_template(CORE_REDBOX_TEMPLATE + _key_people_template)
 
 # ==================== KEY ACTIONS ====================
 
@@ -99,7 +99,7 @@ Do not include any of the above examples in your response. \
 {text} \
 """
 
-SPOTLIGHT_KEY_ACTIONS_TASK_PROMPT = PromptTemplate.from_template(_core_redbox_prompt + _key_actions_template)
+SPOTLIGHT_KEY_ACTIONS_TASK_PROMPT = PromptTemplate.from_template(CORE_REDBOX_TEMPLATE + _key_actions_template)
 
 # ==================== KEY DATES ====================
 
@@ -134,7 +134,7 @@ Do not include any of the above examples in your response. \
 {text} \
 """
 
-SPOTLIGHT_KEY_DATES_TASK_PROMPT = PromptTemplate.from_template(_core_redbox_prompt + _key_dates_prompt)
+SPOTLIGHT_KEY_DATES_TASK_PROMPT = PromptTemplate.from_template(CORE_REDBOX_TEMPLATE + _key_dates_prompt)
 
 # ==================== KEY DISCUSSION ====================
 
@@ -168,7 +168,7 @@ Do not include any of the above examples in your response. \
 {text} \
 """
 
-SPOTLIGHT_KEY_DISCUSSION_TASK_PROMPT = PromptTemplate.from_template(_core_redbox_prompt + _key_discussion_prompt)
+SPOTLIGHT_KEY_DISCUSSION_TASK_PROMPT = PromptTemplate.from_template(CORE_REDBOX_TEMPLATE + _key_discussion_prompt)
 
 # ==================== SPOTLIGHT COMBINATION ====================
 
@@ -190,4 +190,4 @@ DO NOT INCLUDE the example string "<DocX>" TAGS IN YOUR RESPONSE. \
 {text} \
 """
 
-SPOTLIGHT_COMBINATION_TASK_PROMPT = PromptTemplate.from_template(_core_redbox_prompt + _spotlight_combination_prompt)
+SPOTLIGHT_COMBINATION_TASK_PROMPT = PromptTemplate.from_template(CORE_REDBOX_TEMPLATE + _spotlight_combination_prompt)
