@@ -91,6 +91,8 @@ APP_NAME=redbox
 ECR_URL=$(AWS_ACCOUNT_ID).dkr.ecr.$(AWS_REGION).amazonaws.com
 ECR_REPO_URL=$(ECR_URL)/$(ECR_REPO_NAME)
 IMAGE=$(ECR_REPO_URL):$(IMAGE_TAG)
+DOCKER_BUILDER_CONTAINER=$(APP_NAME)
+DOCKER_CACHE_BUCKET=i-dot-ai-docker-cache
 
 ECR_REPO_NAME=$(APP_NAME)
 PREV_IMAGE_TAG=$$(git rev-parse HEAD~1)
@@ -112,11 +114,11 @@ docker_build: ## Build the docker container
 	export DOCKER_BUILDKIT=1
 	@for service in $(DOCKER_SERVICES); do \
 		if grep -A 2 "^\s*$$service:" docker-compose.yml | grep -q 'build:'; then \
-			echo "Building $$service..."; \
+			DOCKER_FILE=$$(grep -A 4 "^\s*$$service:" docker-compose.yml | grep 'dockerfile:' | sed 's/.*dockerfile:\s*//'); \
+			echo "Building $$service with $$DOCKER_FILE  ..."; \
 			PREV_IMAGE="$(ECR_REPO_URL)-$$service:$(PREV_IMAGE_TAG)"; \
 			echo "Pulling previous image: $$PREV_IMAGE"; \
-			docker pull $$PREV_IMAGE; \
-			docker compose build $$service; \
+			docker buildx build --load  --builder=$(DOCKER_BUILDER_CONTAINER) --tag $(PREV_IMAGE) --cache-to type=s3,region=$(AWS_REGION),bucket=$(DOCKER_CACHE_BUCKET),name=$(APP_NAME)/$(IMAGE) --cache-from type=s3,region=$(AWS_REGION),bucket=$(DOCKER_CACHE_BUCKET),name=$(APP_NAME)/$(IMAGE) --file $$DOCKER_FILE . ;\
 		else \
 			echo "Skipping $$service uses default image"; \
 		fi; \
@@ -124,13 +126,8 @@ docker_build: ## Build the docker container
 
 
 .PHONY: docker_push
-docker_push:
-	@echo "Services to push: $(DOCKER_SERVICES)"
-	@for service in $(DOCKER_SERVICES); do \
-		if grep -A 2 "^\s*$$service:" docker-compose.yml | grep -q 'build:'; then \
-			echo "Pushing $$service..."; \
-			ECR_REPO_SERVICE_TAG=$(ECR_REPO_URL)-$$service:$(IMAGE_TAG); \
-			CURRENT_TAG=$$(grep -A 1 "^\s*$$service:" docker-compose.yml | grep 'image:' | sed 's/.*image:\s*//'); \
+docker_push:			
+CURRENT_TAG=$$(grep -A 1 "^\s*$$service:" docker-compose.yml | grep 'image:' | sed 's/.*image:\s*//'); \
 			echo "Tagging $$service: $$CURRENT_TAG -> $$ECR_REPO_SERVICE_TAG"; \
 			docker tag $$CURRENT_TAG $$ECR_REPO_SERVICE_TAG; \
 			docker push $$ECR_REPO_SERVICE_TAG; \
