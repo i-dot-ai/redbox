@@ -7,7 +7,6 @@ from django.shortcuts import redirect, render
 from magic_link.models import MagicLink
 from redbox_app.redbox_core import email_handler, models
 from redbox_app.redbox_core.forms import SignInForm
-from requests import HTTPError
 
 logger = logging.getLogger(__name__)
 
