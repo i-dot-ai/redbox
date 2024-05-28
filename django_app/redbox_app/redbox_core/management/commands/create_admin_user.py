@@ -14,7 +14,7 @@ class Command(BaseCommand):
     Thereafter the superuser should be able to login and assign new staff users via the admin.
     """
 
-    def handle(self):
+    def handle(self, *_args, **_kwargs):
         if email := settings.SUPERUSER_EMAIL:
             user, created = USER.objects.get_or_create(email=email)
             user.is_superuser = True

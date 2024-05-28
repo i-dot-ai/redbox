@@ -49,6 +49,22 @@ body {
 
 
 /* Documents page */
+.iai-doclist-mobile__item {
+  border: 1px solid #b1b4b6;
+  border-radius: 0.25rem;
+  list-style-type: none;
+}
+.iai-doclist-desktop {
+  display: none;
+}
+@media (min-width: 448px) {
+  .iai-doclist-mobile {
+    display: none;
+  }
+  .iai-doclist-desktop {
+    display: block;
+  }
+}
 /* Use this if more than one button in Actions
 .iai-docs__actions .govuk-button {
   width: 100%;
