@@ -91,7 +91,36 @@ variable "internal_ips" {
 variable "openai_api_key" {
   type        = string
   sensitive   = true
+  default     = null
   description = "OPENAI api key"
+}
+
+
+variable "azure_api_key" {
+  type        = string
+  sensitive   = true
+  default     = null
+  description = "The API key for your Azure OpenAI resource.  You can find this in the Azure portal under your Azure OpenAI resource."
+}
+
+
+variable "llm_type" {
+  type        = string
+  default     = "openai"
+  description = "azure, openai etc"
+}
+
+variable "llm_name" {
+  type        = string
+  default     = "gpt-3.5-turbo"
+  description = "azure, bedrock etc"
+}
+
+
+variable "llm_api_base" {
+  type        = string
+  default     = null
+  description = "The base URL for your Azure OpenAI resource.  You can find this in the Azure portal under your Azure OpenAI resource."
 }
 
 

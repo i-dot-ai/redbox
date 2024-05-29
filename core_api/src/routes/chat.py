@@ -4,7 +4,6 @@ from http import HTTPStatus
 from typing import Annotated
 from uuid import UUID
 
-from awscrt.websocket import WebSocket
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.encoders import jsonable_encoder
 from langchain.chains.combine_documents import create_stuff_documents_chain
@@ -18,6 +17,7 @@ from langchain_core.messages import AIMessage, HumanMessage
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.runnables import Runnable
 from langchain_elasticsearch import ApproxRetrievalStrategy, ElasticsearchStore
+from starlette.websockets import WebSocket
 
 from core_api.src.auth import get_user_uuid
 from redbox.llm.prompts.chat import (
