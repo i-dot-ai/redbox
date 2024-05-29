@@ -25,6 +25,13 @@ body {
   color: white;
 }
 
+.iai-button--blue {
+  background-color: govuk-colour("blue");
+}
+.iai-button--blue:hover {
+  background-color: govuk-colour("dark-blue");
+}
+
 
 /* Home page */
 .govuk-main-wrapper:has(.iai-banner) {
@@ -54,6 +61,11 @@ body {
 
 
 /* Documents page */
+.iai-doc-retention {
+  align-items: center;
+  display: flex;
+  gap: 0.5rem;
+}
 .iai-doclist-mobile__item {
   border: 1px solid #b1b4b6;
   border-radius: 0.25rem;
