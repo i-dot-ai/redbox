@@ -31,6 +31,8 @@ class Settings(BaseSettings):
 
     anthropic_api_key: str | None = None
     openai_api_key: str | None = None
+    openai_api_version: str = "2023-12-01-preview"
+    azure_openai_endpoint: str | None = None
 
     partition_strategy: Literal["auto", "fast", "ocr_only", "hi_res"] = "fast"
 
