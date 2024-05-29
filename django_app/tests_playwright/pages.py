@@ -141,7 +141,7 @@ class SignInConfirmationPage(BasePage):
         return "Sign in - confirmation - Redbox Copilot"
 
     def navigate_to_documents_page(self) -> "DocumentsPage":
-        self.page.get_by_role("button", name="Sign in", exact=True).click()
+        self.page.get_by_role("button", name="Start", exact=True).click()
         return DocumentsPage(self.page)
 
 
