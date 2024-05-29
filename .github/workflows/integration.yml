@@ -52,7 +52,7 @@ jobs:
         mkdir -p data/elastic/
         chmod -R 777 data/
         cp .env.integration .env
-        echo LLM__API_BASE=${{ secrets.LLM__API_BASE }} >> .env
+        echo AZURE_OPENAI_ENDPOINT=${{ secrets.AZURE_OPENAI_ENDPOINT }} >> .env
         echo AZURE_OPENAI_API_KEY=${{ secrets.AZURE_OPENAI_API_KEY }} >> .env
         docker compose up -d --wait core-api worker
         

@@ -32,7 +32,6 @@ class ElasticCloudSettings(BaseModel):
 
 class LlmSettings(BaseModel):
     azure_openai_endpoint: str | None = None
-    api_base: str = "https://api.openai.com"
     open_api_version: str = "2023-12-01-preview"
     name: str = "gpt-3.5-turbo"
     type: Literal["azure", "openai"] = "openai"
@@ -44,6 +43,7 @@ class Settings(BaseSettings):
     anthropic_api_key: str | None = None
     openai_api_key: str | None = None
     azure_openai_api_key: str | None = None
+    azure_openai_endpoint: str | None = None
 
     partition_strategy: Literal["auto", "fast", "ocr_only", "hi_res"] = "fast"
 
