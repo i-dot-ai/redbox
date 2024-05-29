@@ -1,5 +1,6 @@
 {% set pageTitle = "" %}
 {% extends "base.html" %}
+{% from "macros/govuk-button.html" import govukButton %}
 
 {% block content %}
 
@@ -7,11 +8,18 @@
     <div class="govuk-width-container">
         <div class="govuk-grid-row">
             <div class="govuk-grid-column-two-thirds">
-                <h1 class="govuk-heading-xl">Ask any question of documents in your Redbox</h1>
-                <p class="govuk-body-l">Use Artificial Intelligence (AI) to get insights from your personal document set. You can use up to, and including, {{ security }} documents.</p>
-                {% if not request.user.is_authenticated %}
-                <p class="govuk-body">If you have an account, please <a class="govuk-link" href="{{url('sign-in')}}">sign in</a> to get started</p>
-                {% endif %}
+                <h1 class="govuk-heading-xl govuk-!-margin-bottom-7">Ask any question of documents in your Redbox</h1>
+                <p class="govuk-body-l govuk-!-margin-bottom-7">Use Artificial Intelligence (AI) to get insights from your personal document set. You can use up to, and including, {{ security }} documents.</p>
+                <div class="iai-banner__links">
+                    {% if not request.user.is_authenticated %}
+                        {{ govukButton(
+                            text="Sign in",
+                            href=url('sign-in'),
+                            classes="govuk-button--secondary govuk-!-margin-bottom-0"
+                        ) }}
+                        <span class="govuk-body govuk-!-margin-bottom-0">or <a class="govuk-link" href="https://docs.google.com/forms/d/e/1FAIpQLScNnl2vhazXDdZDpa9_11QYuaGPuNKGnelJC5uWJoEPtuW9zg/viewform">register your interest</a> to use Redbox</span>
+                    {% endif %}
+                </div>
             </div>
         </div>
     </div>

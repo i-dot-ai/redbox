@@ -141,7 +141,7 @@ class SignInConfirmationPage(BasePage):
         return "Sign in - confirmation - Redbox Copilot"
 
     def navigate_to_home_page(self) -> "HomePage":
-        self.page.get_by_role("button", name="Sign in", exact=True).click()
+        self.page.get_by_role("button", name="Start", exact=True).click()
         return HomePage(self.page)
 
 
