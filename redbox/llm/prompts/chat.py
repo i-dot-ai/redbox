@@ -23,11 +23,11 @@ If a user asks for bullet points you MUST give bullet points. \
 If the user asks for a specific number or range of bullet points you MUST give that number of bullet points. \
 For example
 QUESTION: Please give me 6-8 bullet points on tigers
-FINAL ANSWER: - Tigers are orange. \n- Tigers are big. \n- Tigers are scary. \n- Tigers are cool. \
-\n- Tigers are cats. -\n Tigers are animals. \
+FINAL ANSWER: - Tigers are orange. \n- Tigers are big. \n- Tigers are scary. \n- Tigers are cool. \n- Tigers are \
+cats. -\n Tigers are animals. \
 
-If the number of bullet points a user asks for is not supported by the amount of information that you have, \
-then say so, else give what the user asks for. \
+If the number of bullet points a user asks for is not supported by the amount of information that you have, then \
+say so, else give what the user asks for. \
 
 At the end of your response add a "Sources:" section with the documents you used. \
 DO NOT reference the source documents in your response. Only cite at the end. \
