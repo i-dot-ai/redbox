@@ -1,5 +1,6 @@
 import logging
 import os
+from http import HTTPStatus
 
 # from turtle import down
 from typing import Annotated
@@ -106,8 +107,8 @@ if env.elastic.subscription_level == "basic":
 elif env.elastic.subscription_level in ["platinum", "enterprise"]:
     strategy = ApproxRetrievalStrategy(hybrid=True)
 else:
-    msg = f"Unknown Elastic subscription level {env.elastic.subscription_level}"
-    raise ValueError(msg)
+    message = f"Unknown Elastic subscription level {env.elastic.subscription_level}"
+    raise ValueError(message)
 
 
 vector_store = ElasticsearchStore(
@@ -125,19 +126,19 @@ def simple_chat(chat_request: ChatRequest, _user_uuid: Annotated[UUID, Depends(g
 
     if len(chat_request.message_history) < 2:
         raise HTTPException(
-            status_code=422,
+            status_code=HTTPStatus.UNPROCESSABLE_ENTITY,
             detail="Chat history should include both system and user prompts",
         )
 
     if chat_request.message_history[0].role != "system":
         raise HTTPException(
-            status_code=422,
+            status_code=HTTPStatus.UNPROCESSABLE_ENTITY,
             detail="The first entry in the chat history should be a system prompt",
         )
 
     if chat_request.message_history[-1].role != "user":
         raise HTTPException(
-            status_code=422,
+            status_code=HTTPStatus.UNPROCESSABLE_ENTITY,
             detail="The final entry in the chat history should be a user question",
         )
 
