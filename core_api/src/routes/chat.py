@@ -101,6 +101,7 @@ elif env.anthropic_api_key is not None:
     raise ValueError(msg)
 else:
     msg = f"Unknown LLM model type {env.llm.type}"
+    log.exception(msg)
     raise ValueError(msg)
 
 
