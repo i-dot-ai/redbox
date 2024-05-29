@@ -60,6 +60,7 @@ jobs:
     - name: Wait 60s for services to be ready
       run: |
         sleep 60
+        docker ps
 
     - name: Test integration with pytest
       run: |

@@ -30,12 +30,6 @@ class ElasticCloudSettings(BaseModel):
     subscription_level: str = "basic"
 
 
-class LlmSettings(BaseModel):
-    open_api_version: str = "2023-12-01-preview"
-    name: str = "gpt-3.5-turbo"
-    type: Literal["azure", "openai"] = "openai"
-
-
 class Settings(BaseSettings):
     """Settings for the redbox application."""
 
@@ -44,11 +38,12 @@ class Settings(BaseSettings):
     azure_openai_api_key: str | None = None
     azure_openai_endpoint: str | None = None
 
+    openai_api_version: str = "2023-12-01-preview"
+    openai_model: str = "azure/gpt-35-turbo-16k"
+
     partition_strategy: Literal["auto", "fast", "ocr_only", "hi_res"] = "fast"
 
     elastic: ElasticCloudSettings | ElasticLocalSettings = ElasticLocalSettings()
-
-    llm: LlmSettings = LlmSettings()
 
     kibana_system_password: str = "redboxpass"
     metricbeat_internal_password: str = "redboxpass"
