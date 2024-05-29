@@ -34,7 +34,8 @@ locals {
     "DJANGO_LOG_LEVEL" : "DEBUG",
     "COMPRESSION_ENABLED" : true,
     "CONTACT_EMAIL": var.contact_email,
-    "FILE_EXPIRY_IN_DAYS": 30
+    "FILE_EXPIRY_IN_DAYS": 30,
+    "MAX_SECURITY_CLASSIFICATION": "OFFICIAL_SENSITIVE"
   }
 }
 
