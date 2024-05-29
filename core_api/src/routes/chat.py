@@ -97,7 +97,7 @@ elif env.azure_openai_api_key is not None:
     )
 elif env.anthropic_api_key is not None:
     msg = "anthropic LLM not yet implemented"
-    log.info(msg)
+    log.exception(msg)
     raise ValueError(msg)
 else:
     msg = f"Unknown LLM model type {env.llm.type}"
