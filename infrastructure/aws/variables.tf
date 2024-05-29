@@ -96,7 +96,7 @@ variable "openai_api_key" {
 }
 
 
-variable "azure_api_key" {
+variable "azure_openai_api_key" {
   type        = string
   sensitive   = true
   default     = null

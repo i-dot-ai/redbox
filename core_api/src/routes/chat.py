@@ -86,7 +86,7 @@ elif env.llm.type == "azure":
     llm = ChatLiteLLM(
         model=env.llm.name,
         streaming=True,
-        azure_key=env.azure_api_key,
+        azure_key=env.azure_openai_api_key,
         api_version=env.llm.open_api_version,
         api_base=env.llm.api_base,
     )

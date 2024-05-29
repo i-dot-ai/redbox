@@ -29,7 +29,7 @@ locals {
     "LLM__TYPE": var.llm_type,
     "LLM__NAME": var.llm_name,
     "LLM__API_BASE": var.llm_api_base,
-    "AZURE_API_KEY": var.azure_api_key
+    "AZURE_OPENAI_API_KEY": var.azure_openai_api_key
     "GOVUK_NOTIFY_PLAIN_EMAIL_TEMPLATE_ID" : var.govuk_notify_plain_email_template_id
     "GOVUK_NOTIFY_API_KEY" : var.govuk_notify_api_key,
     "EMAIL_BACKEND_TYPE" : "GOVUKNOTIFY",
