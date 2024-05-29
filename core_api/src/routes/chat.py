@@ -1,4 +1,5 @@
 import logging
+import os
 from http import HTTPStatus
 from typing import Annotated
 from uuid import UUID
@@ -81,6 +82,12 @@ elif env.azure_openai_api_key is not None:
     log.info("Creating Azure LLM Client")
     log.debug("api_base: %s", env.azure_openai_endpoint)
     log.debug("api_version: %s", env.openai_api_version)
+
+    # this nasty hack is required because, contrary to the docs:
+    # using the api_version argument is not sufficient, and we need
+    # to use the `OPENAI_API_VERSION` environment variable
+    os.environ["OPENAI_API_VERSION"] = env.openai_api_version
+
     llm = ChatLiteLLM(
         model=env.openai_model,
         streaming=True,
