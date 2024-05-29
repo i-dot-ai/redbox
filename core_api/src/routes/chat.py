@@ -64,12 +64,7 @@ embedding_model_info = populate_embedding_model_info()
 
 # === LLM setup ===
 
-# llm = ChatLiteLLM(
-#     model="gpt-3.5-turbo",
-#     streaming=True,
-# )
 # Create the appropriate LLM, either openai, Azure, anthropic or bedrock
-llm: ChatLiteLLM = None
 if env.llm.type == "openai":
     log.info("Creating OpenAI LLM Client")
     llm = ChatLiteLLM(
