@@ -1,8 +1,6 @@
 import logging
 import os
 from http import HTTPStatus
-
-# from turtle import down
 from typing import Annotated
 from uuid import UUID
 
