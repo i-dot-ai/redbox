@@ -134,5 +134,3 @@ jobs:
     - name: Dump logs
       if: failure()
       uses: jwalton/gh-docker-logs@v2
-      with:
-        images: 'core-api,worker'
