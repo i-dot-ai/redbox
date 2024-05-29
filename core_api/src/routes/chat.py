@@ -80,7 +80,7 @@ if env.llm.type == "openai":
     )
 elif env.llm.type == "azure":
     log.info("Creating Azure LLM Client")
-    log.debug("api_base: %s", env.llm.api_base)
+    log.debug("api_base: %s", env.azure_openai_endpoint)
     log.debug("api_version: %s", env.llm.open_api_version)
     os.environ["OPENAI_API_VERSION"] = env.llm.open_api_version
     llm = ChatLiteLLM(
@@ -88,7 +88,7 @@ elif env.llm.type == "azure":
         streaming=True,
         azure_key=env.azure_openai_api_key,
         api_version=env.llm.open_api_version,
-        api_base=env.llm.api_base,
+        api_base=env.azure_openai_endpoint,
     )
 elif env.llm.type in ("anthropic", "bedrock"):
     msg = f"{env.llm.type} LLM not yet implemented"

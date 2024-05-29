@@ -117,7 +117,7 @@ variable "llm_name" {
 }
 
 
-variable "llm_api_base" {
+variable "azure_openai_endpoint" {
   type        = string
   default     = null
   description = "The base URL for your Azure OpenAI resource.  You can find this in the Azure portal under your Azure OpenAI resource."
