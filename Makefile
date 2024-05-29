@@ -100,6 +100,8 @@ IMAGE_TAG=$$(git rev-parse HEAD)
 PREV_IMAGE=$(ECR_REPO_URL)-worker:$(PREV_IMAGE_TAG)
 IMAGE=$(ECR_REPO_URL)-worker:$(IMAGE_TAG)
 
+PREV_IMAGE=$(ECR_REPO_URL)-worker:$(PREV_IMAGE_TAG)
+
 tf_build_args=-var "image_tag=$(IMAGE_TAG)"
 DOCKER_SERVICES=$$(docker compose config --services | grep -v mlflow)
 
@@ -109,7 +111,6 @@ docker_login:
 
 .PHONY: docker_build
 docker_build: ## Build the docker container
-	docker pull $(PREV_IMAGE)|| true ;\
 	docker buildx build --load --builder=$(DOCKER_BUILDER_CONTAINER) -t $(IMAGE)  \
 		--cache-to type=s3,region=$(AWS_REGION),bucket=$(DOCKER_CACHE_BUCKET), name=$(APP_NAME)-worker/$$CURR_IMAG \
 		--cache-from type=s3,region=$(AWS_REGION),bucket=$(DOCKER_CACHE_BUCKET),name=$(APP_NAME)-worker/$$CURR_IMAG \
