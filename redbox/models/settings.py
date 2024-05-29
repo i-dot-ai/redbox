@@ -31,7 +31,6 @@ class ElasticCloudSettings(BaseModel):
 
 
 class LlmSettings(BaseModel):
-    azure_openai_endpoint: str | None = None
     open_api_version: str = "2023-12-01-preview"
     name: str = "gpt-3.5-turbo"
     type: Literal["azure", "openai"] = "openai"
