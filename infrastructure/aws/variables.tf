@@ -82,18 +82,42 @@ variable "image_tag" {
   description = "Image tag"
 }
 
-
 variable "internal_ips" {
   type        = list(string)
   description = "IP's of No10 and CO"
 }
 
+variable "openai_model" {
+  type        = string
+  default     = "gpt-3.5-turbo"
+  description = "OPENAI model to use"
+}
+
 variable "openai_api_key" {
   type        = string
   sensitive   = true
+  default     = null
   description = "OPENAI api key"
 }
 
+variable "openai_api_version" {
+  type        = string
+  default     = "2023-12-01-preview"
+  description = "OPENAI API version"
+}
+
+variable "azure_openai_api_key" {
+  type        = string
+  sensitive   = true
+  default     = null
+  description = "The API key for your Azure OpenAI resource.  You can find this in the Azure portal under your Azure OpenAI resource."
+}
+
+variable "azure_openai_endpoint" {
+  type        = string
+  default     = null
+  description = "The base URL for your Azure OpenAI resource.  You can find this in the Azure portal under your Azure OpenAI resource."
+}
 
 variable "project_name" {
   type        = string
