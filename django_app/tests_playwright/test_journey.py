@@ -27,10 +27,9 @@ def test_user_journey(page: Page):
     # Use magic link
     magic_link = get_magic_link(EMAIL_ADDRESS, DJANGO_ROOT)
     sign_in_confirmation_page = SignInConfirmationPage(page, magic_link)
-    home_page = sign_in_confirmation_page.navigate_to_home_page()
 
     # Documents page
-    documents_page = home_page.navigate_to_documents()
+    documents_page = sign_in_confirmation_page.navigate_to_documents_page()
     document_upload_page = documents_page.navigate_to_upload()
 
     # Upload a file
