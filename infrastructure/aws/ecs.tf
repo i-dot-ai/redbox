@@ -26,8 +26,7 @@ locals {
     "DEBUG" : true,
     "AWS_REGION" : var.region,
     "FROM_EMAIL" : var.from_email,
-    "LLM__TYPE": var.llm_type,
-    "LLM__NAME": var.llm_name,
+    "OPENAI_MODEL": var.openai_model,
     "AZURE_OPENAI_ENDPOINT": var.azure_openai_endpoint,
     "AZURE_OPENAI_API_KEY": var.azure_openai_api_key
     "GOVUK_NOTIFY_PLAIN_EMAIL_TEMPLATE_ID" : var.govuk_notify_plain_email_template_id

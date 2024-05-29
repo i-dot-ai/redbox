@@ -104,16 +104,11 @@ variable "azure_openai_api_key" {
 }
 
 
-variable "llm_type" {
-  type        = string
-  default     = "openai"
-  description = "azure, openai etc"
-}
 
-variable "llm_name" {
+variable "openai_model" {
   type        = string
   default     = "gpt-3.5-turbo"
-  description = "azure, bedrock etc"
+  description = "OPENAI model to use"
 }
 
 

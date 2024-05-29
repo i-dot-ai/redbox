@@ -82,7 +82,7 @@ elif env.azure_openai_api_key is not None:
     log.debug("api_base: %s", env.azure_openai_endpoint)
     log.debug("api_version: %s", env.openai_api_version)
     llm = ChatLiteLLM(
-        model=env.azure_openai_model,
+        model=env.openai_model,
         streaming=True,
         azure_key=env.azure_openai_api_key,
         api_version=env.openai_api_version,
