@@ -123,7 +123,8 @@ docker_build: ## Build the docker container
 				--tag $(PREV_IMAGE) \
 				--cache-to type=s3,region=$(AWS_REGION),bucket=$(DOCKER_CACHE_BUCKET),name=$(APP_NAME)/$(IMAGE) \
 				--cache-from type=s3,region=$(AWS_REGION),bucket=$(DOCKER_CACHE_BUCKET),name=$(APP_NAME)/$(IMAGE) \
-				--file $$DOCKER_FILE ./$$service ;\
+				--file $$DOCKER_FILE \
+				./$$service ;\
 		else \
 			echo "Skipping $$service uses default image"; \
 		fi; \
