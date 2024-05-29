@@ -88,12 +88,23 @@ variable "internal_ips" {
   description = "IP's of No10 and CO"
 }
 
-variable "openai_api_key" {
+variable "azure_api_key" {
   type        = string
   sensitive   = true
-  description = "OPENAI api key"
+  description = "The API key for your Azure OpenAI resource.  You can find this in the Azure portal under your Azure OpenAI resource."
 }
 
+variable "api_version" {
+  type        = string
+  default     = "2023-12-01-preview"
+  description = "The API version you want to use: set this to `2023-12-01-preview` for the released version."
+}
+
+variable "api_base" {
+  type        = string
+  default     = null
+  description = "The base URL for your Azure OpenAI resource.  You can find this in the Azure portal under your Azure OpenAI resource."
+}
 
 variable "project_name" {
   type        = string

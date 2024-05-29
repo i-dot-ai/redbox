@@ -68,10 +68,12 @@ embedding_model_info = populate_embedding_model_info()
 
 # === LLM setup ===
 
-
 llm = ChatLiteLLM(
     model="gpt-3.5-turbo",
     streaming=True,
+    api_base=env.api_base,
+    api_version=env.api_version,
+    api_key=env.azure_api_key,
 )
 
 es = env.elasticsearch_client()

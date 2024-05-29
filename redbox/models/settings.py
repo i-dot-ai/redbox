@@ -1,8 +1,8 @@
-from typing import Literal
+from typing import Literal, Self
 
 import boto3
 from elasticsearch import Elasticsearch
-from pydantic import BaseModel
+from pydantic import BaseModel, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -31,8 +31,10 @@ class Settings(BaseSettings):
 
     anthropic_api_key: str | None = None
     openai_api_key: str | None = None
-    openai_api_version: str = "2023-12-01-preview"
-    azure_openai_endpoint: str | None = None
+    azure_api_key: str | None = None
+
+    api_version: str = "2023-12-01-preview"
+    api_base: str | None = None
 
     partition_strategy: Literal["auto", "fast", "ocr_only", "hi_res"] = "fast"
 
@@ -81,6 +83,20 @@ class Settings(BaseSettings):
     compression_enabled: bool = True
     superuser_email: str | None = None
     model_config = SettingsConfigDict(env_file=".env", env_nested_delimiter="__", extra="allow")
+
+    @model_validator(mode="after")
+    def check_api_keys(self) -> Self:
+        count = 0
+        keys = "azure_api_key", "openai_api_key", "anthropic_api_key"
+        for key in keys:
+            if getattr(self, key) is not None:
+                count += 1
+
+        if count > 1:
+            msg = f"only one of {keys} can be set"
+            raise ValueError(msg)
+
+        return self
 
     def elasticsearch_client(self) -> Elasticsearch:
         if isinstance(self.elastic, ElasticLocalSettings):

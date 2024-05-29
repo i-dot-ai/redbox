@@ -25,7 +25,11 @@ locals {
     "DJANGO_SETTINGS_MODULE" : "redbox_app.settings",
     "DEBUG" : true,
     "AWS_REGION" : var.region,
-    "OPENAI_API_KEY" : var.openai_api_key,
+
+    "AZURE_API_KEY" : var.azure_api_key,
+    "API_VERSION" : var.api_version,
+    "API_BASE" : var.api_base,
+
     "FROM_EMAIL" : var.from_email,
     "GOVUK_NOTIFY_PLAIN_EMAIL_TEMPLATE_ID" : var.govuk_notify_plain_email_template_id
     "GOVUK_NOTIFY_API_KEY" : var.govuk_notify_api_key,
@@ -91,7 +95,7 @@ module "django-app" {
   create_networking  = true
   source             = "../../../i-ai-core-infrastructure//modules/ecs"
   project_name       = "django-app"
-  image_tag          = var.image_tag
+  image_tag          = "82020eaadcd0955702a80975233ed62babfc1051"
   prefix             = "redbox"
   ecr_repository_uri = "${var.ecr_repository_uri}/redbox-django-app"
   ecs_cluster_id     = module.cluster.ecs_cluster_id
@@ -122,7 +126,7 @@ module "core_api" {
   create_networking             = false
   source                        = "../../../i-ai-core-infrastructure//modules/ecs"
   project_name                  = "core-api"
-  image_tag                     = var.image_tag
+  image_tag                     = "82020eaadcd0955702a80975233ed62babfc1051"
   prefix                        = "redbox"
   ecr_repository_uri            = "${var.ecr_repository_uri}/redbox-core-api"
   ecs_cluster_id                = module.cluster.ecs_cluster_id
@@ -151,7 +155,7 @@ module "worker" {
   create_networking  = false
   source             = "../../../i-ai-core-infrastructure//modules/ecs"
   project_name       = "worker"
-  image_tag          = var.image_tag
+  image_tag          = "82020eaadcd0955702a80975233ed62babfc1051"
   prefix             = "redbox"
   ecr_repository_uri = "${var.ecr_repository_uri}/redbox-worker"
   ecs_cluster_id     = module.cluster.ecs_cluster_id
