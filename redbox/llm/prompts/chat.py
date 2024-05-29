@@ -18,7 +18,15 @@ _with_sources_template = """Given the following extracted parts of a long docume
 a question, create a final answer with Sources at the end.  \
 If you don't know the answer, just say that you don't know. Don't try to make \
 up an answer.
-Be concise in your response and summarise where appropriate. \
+If a user asks for a particular format to be returned, such as bullet points, then please use that format. \
+If a user asks for bullet points you MUST give bullet points. \
+If the user asks for a specific number or range of bullet points you MUST give that number of bullet points. \
+For example
+QUESTION: Please give me 6-8 bullet points on tigers
+FINAL ANSWER: - Tigers are orange. \n- Tigers are big. \n- Tigers are scary. \n- Tigers are cool. \n- Tigers are cats. -\n Tigers are animals. \
+
+If the number of bullet points a user asks for is not supported by the amount of information that you have, then say so, else give what the user asks for. \
+
 At the end of your response add a "Sources:" section with the documents you used. \
 DO NOT reference the source documents in your response. Only cite at the end. \
 ONLY PUT CITED DOCUMENTS IN THE "Sources:" SECTION AND NO WHERE ELSE IN YOUR RESPONSE. \
@@ -37,7 +45,9 @@ QUESTION: {question}
 =========
 FINAL ANSWER:"""
 
-WITH_SOURCES_PROMPT = PromptTemplate.from_template(_core_redbox_prompt + _with_sources_template)
+WITH_SOURCES_PROMPT = PromptTemplate.from_template(
+    _core_redbox_prompt + _with_sources_template
+)
 
 _stuff_document_template = "<Doc{parent_doc_uuid}>{page_content}</Doc{parent_doc_uuid}>"
 
