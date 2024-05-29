@@ -12,6 +12,9 @@ from django.urls import reverse
 from django.utils import timezone
 from django.utils.datastructures import MultiValueDictKeyError
 from django.views.decorators.http import require_http_methods
+from requests.exceptions import HTTPError
+from yarl import URL
+
 from redbox_app.redbox_core.client import CoreApiClient
 from redbox_app.redbox_core.models import (
     ChatHistory,
@@ -21,8 +24,6 @@ from redbox_app.redbox_core.models import (
     StatusEnum,
     User,
 )
-from requests.exceptions import HTTPError
-from yarl import URL
 
 logger = logging.getLogger(__name__)
 core_api = CoreApiClient(host=settings.CORE_API_HOST, port=settings.CORE_API_PORT)
@@ -179,6 +180,7 @@ def chats_view(request: HttpRequest, chat_id: uuid = None):
         "messages": messages,
         "chat_history": chat_history,
         "streaming": {"in_use": settings.USE_STREAMING, "endpoint": str(endpoint)},
+        "contact_email": settings.CONTACT_EMAIL,
     }
 
     return render(
