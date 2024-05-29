@@ -118,7 +118,12 @@ docker_build: ## Build the docker container
 			echo "Building $$service with $$DOCKER_FILE  ..."; \
 			PREV_IMAGE="$(ECR_REPO_URL)-$$service:$(PREV_IMAGE_TAG)"; \
 			echo "Pulling previous image: $$PREV_IMAGE"; \
-			docker buildx build --load --builder=$(DOCKER_BUILDER_CONTAINER) --tag $(PREV_IMAGE) --cache-to type=s3,region=$(AWS_REGION),bucket=$(DOCKER_CACHE_BUCKET),name=$(APP_NAME)/$(IMAGE) --cache-from type=s3,region=$(AWS_REGION),bucket=$(DOCKER_CACHE_BUCKET),name=$(APP_NAME)/$(IMAGE) --file $$DOCKER_FILE ./$$service ;\
+			docker buildx build --load \
+				--builder=$(DOCKER_BUILDER_CONTAINER) \
+				--tag $(PREV_IMAGE) \
+				--cache-to type=s3,region=$(AWS_REGION),bucket=$(DOCKER_CACHE_BUCKET),name=$(APP_NAME)/$(IMAGE) \
+				--cache-from type=s3,region=$(AWS_REGION),bucket=$(DOCKER_CACHE_BUCKET),name=$(APP_NAME)/$(IMAGE) \
+				--file $$DOCKER_FILE ./$$service ;\
 		else \
 			echo "Skipping $$service uses default image"; \
 		fi; \
