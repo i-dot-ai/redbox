@@ -13,7 +13,6 @@ from langchain.chains.qa_with_sources import load_qa_with_sources_chain
 from langchain.chains.retrieval import create_retrieval_chain
 from langchain_community.chat_models import ChatLiteLLM
 from langchain_community.embeddings import SentenceTransformerEmbeddings
-from langchain_core.messages import AIMessage, HumanMessage
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.runnables import Runnable
 from langchain_elasticsearch import ApproxRetrievalStrategy, ElasticsearchStore
@@ -153,16 +152,10 @@ def simple_chat(chat_request: ChatRequest, _user_uuid: Annotated[UUID, Depends(g
     return chat_response
 
 
-@chat_app.post("/rag", tags=["chat"])
-def rag_chat(chat_request: ChatRequest, user_uuid: Annotated[UUID, Depends(get_user_uuid)]) -> ChatResponse:
-    """Get a LLM response to a question history and file
-
-    Args:
-
-
-    Returns:
-        StreamingResponse: a stream of the chain response
-    """
+async def build_chain(
+    chat_request: ChatRequest,
+    user_uuid: UUID | None = None,
+):
     question = chat_request.message_history[-1].text
     previous_history = list(chat_request.message_history[:-1])
     previous_history = ChatPromptTemplate.from_messages(
@@ -178,19 +171,36 @@ def rag_chat(chat_request: ChatRequest, user_uuid: Annotated[UUID, Depends(get_u
     )
 
     condense_question_chain = LLMChain(llm=llm, prompt=CONDENSE_QUESTION_PROMPT)
+    # condense_question_chain = CONDENSE_QUESTION_PROMPT | llm
 
     standalone_question = condense_question_chain({"question": question, "chat_history": previous_history})["text"]
+    # standalone_question = condense_question_chain.invoke({"question": question, "chat_history": previous_history})[
+    #     "text"
+    # ]
 
-    docs = vector_store.as_retriever(
-        search_kwargs={"filter": {"term": {"creator_user_uuid.keyword": str(user_uuid)}}}
-    ).get_relevant_documents(standalone_question)
+    search_kwargs = {"filter": {"term": {"creator_user_uuid.keyword": str(user_uuid)}}} if user_uuid else {}
+    docs = vector_store.as_retriever(search_kwargs=search_kwargs).get_relevant_documents(standalone_question)
 
-    result = docs_with_sources_chain(
-        {
-            "question": standalone_question,
-            "input_documents": docs,
-        },
-    )
+    params = {
+        "question": standalone_question,
+        "input_documents": docs,
+    }
+
+    return docs_with_sources_chain, params
+
+
+@chat_app.post("/rag", tags=["chat"])
+async def rag_chat(chat_request: ChatRequest, user_uuid: Annotated[UUID, Depends(get_user_uuid)]) -> ChatResponse:
+    """Get a LLM response to a question history and file
+
+    Args:
+
+
+    Returns:
+        StreamingResponse: a stream of the chain response
+    """
+    chain, params = await build_chain(chat_request, user_uuid)
+    result = chain(params)
 
     source_documents = [
         SourceDocument(
@@ -207,15 +217,11 @@ def rag_chat(chat_request: ChatRequest, user_uuid: Annotated[UUID, Depends(get_u
 async def rag_chat_streamed(websocket: WebSocket):
     await websocket.accept()
 
-    retrieval_chain = await build_retrieval_chain()
+    chat_request = await build_retrieval_chain()
 
-    chat_request = ChatRequest.parse_raw(await websocket.receive_text())
-    chat_history = [
-        HumanMessage(content=x.text) if x.role == "user" else AIMessage(content=x.text)
-        for x in chat_request.message_history[:-1]
-    ]
-    chat = {"chat_history": chat_history, "input": chat_request.message_history[-1].text}
-    async for event in retrieval_chain.astream_events(chat, version="v1"):
+    chain, params = await build_chain(chat_request)
+
+    async for event in chain.astream_events(params, version="v1"):
         kind = event["event"]
         if kind == "on_chat_model_stream":
             await websocket.send_json({"resource_type": "text", "data": event["data"]["chunk"].content})
