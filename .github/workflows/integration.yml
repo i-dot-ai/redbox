@@ -69,6 +69,7 @@ jobs:
         pip install pytest
         pip install boto3
         pip install python-jose
+        pip install websockets
         python -m pytest tests
 
     - name: notify slack failure
