@@ -140,4 +140,4 @@ def elasticsearch_client(env) -> Elasticsearch:
 
 @pytest.fixture()
 def elasticsearch_storage_handler(elasticsearch_client, env) -> ElasticsearchStorageHandler:
-    return ElasticsearchStorageHandler(es_client=elasticsearch_client, root_index=env.root_index)
+    return ElasticsearchStorageHandler(es_client=elasticsearch_client, root_index=env.elastic_root_index)

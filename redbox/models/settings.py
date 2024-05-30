@@ -44,7 +44,7 @@ class Settings(BaseSettings):
     partition_strategy: Literal["auto", "fast", "ocr_only", "hi_res"] = "fast"
 
     elastic: ElasticCloudSettings | ElasticLocalSettings = ElasticLocalSettings()
-    root_index: str = "redbox-data"
+    elastic_root_index: str = "redbox-data"
 
     kibana_system_password: str = "redboxpass"
     metricbeat_internal_password: str = "redboxpass"

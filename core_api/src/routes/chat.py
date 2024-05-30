@@ -116,7 +116,7 @@ else:
 
 vector_store = ElasticsearchStore(
     es_connection=es,
-    index_name=f"{env.root_index}-chunk",
+    index_name=f"{env.elastic_root_index}-chunk",
     embedding=embedding_model,
     strategy=strategy,
     vector_query_field="embedding",
