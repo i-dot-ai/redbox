@@ -7,7 +7,7 @@ from redbox.models import Chunk
 from redbox.storage.elasticsearch import ElasticsearchStorageHandler
 
 
-def test_elasticsearch_client_connection(elasticsearch_client):
+def test_elasticsearch_client_connection(elasticsearch_client, elasticsearch_storage_handler):
     """
     Given that I have a valid Elasticsearch client
     When I call the info method
@@ -18,11 +18,7 @@ def test_elasticsearch_client_connection(elasticsearch_client):
     conn_test_resp = elasticsearch_client.info()
     assert conn_test_resp["tagline"] == "You Know, for Search"
 
-    test_elasticsearch_storage_handler = ElasticsearchStorageHandler(
-        es_client=elasticsearch_client, root_index="redbox-test-data"
-    )
-
-    assert isinstance(test_elasticsearch_storage_handler.model_type_map, dict)
+    assert isinstance(elasticsearch_storage_handler.model_type_map, dict)
 
 
 def test_elasticsearch_write_read_item(elasticsearch_storage_handler, chunk_belonging_to_alice):

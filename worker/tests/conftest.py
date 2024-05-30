@@ -67,7 +67,7 @@ def app_client():
 def elasticsearch_storage_handler(
     es_client,
 ) -> ElasticsearchStorageHandler:
-    return ElasticsearchStorageHandler(es_client=es_client, root_index="redbox-data")
+    return ElasticsearchStorageHandler(es_client=es_client, root_index=env.root_index)
 
 
 @pytest.fixture()
