@@ -26,8 +26,8 @@ locals {
     "DEBUG" : true,
     "AWS_REGION" : var.region,
     "FROM_EMAIL" : var.from_email,
-    "OPENAI_MODEL": var.openai_model,
     "OPENAI_API_VERSION": var.openai_api_version,
+    "AZURE_OPENAI_MODEL": var.azure_openai_model,
     "AZURE_OPENAI_ENDPOINT": var.azure_openai_endpoint,
     "AZURE_OPENAI_API_KEY": var.azure_openai_api_key
     "GOVUK_NOTIFY_PLAIN_EMAIL_TEMPLATE_ID" : var.govuk_notify_plain_email_template_id

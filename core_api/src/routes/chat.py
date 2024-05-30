@@ -73,7 +73,6 @@ embedding_model_info = populate_embedding_model_info()
 if env.openai_api_key is not None:
     log.info("Creating OpenAI LLM Client")
     llm = ChatLiteLLM(
-        model=env.openai_model,
         streaming=True,
         openai_key=env.openai_api_key,
     )
@@ -88,7 +87,7 @@ elif env.azure_openai_api_key is not None:
     os.environ["OPENAI_API_VERSION"] = env.openai_api_version
 
     llm = ChatLiteLLM(
-        model=env.openai_model,
+        model=env.azure_openai_model,
         streaming=True,
         azure_key=env.azure_openai_api_key,
         api_version=env.openai_api_version,
