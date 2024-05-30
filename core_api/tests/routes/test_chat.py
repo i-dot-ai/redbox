@@ -81,7 +81,7 @@ def test_rag_chat_streamed(app_client, headers):
     build_retrieval_chain = mock_build_retrieval_chain(events)
 
     with (
-        patch("core_api.src.routes.chat.build_retrieval_chain", new=build_retrieval_chain),
+        patch("core_api.src.routes.chat.build_chain", new=build_retrieval_chain),
         app_client.websocket_connect("/chat/rag", headers=headers) as websocket,
     ):
         # When
@@ -112,7 +112,7 @@ def mock_build_retrieval_chain(events):
     retrieval_chain = AsyncMock(spec=Runnable, name="retrieval_chain")
     retrieval_chain.astream_events = astream_events
 
-    return AsyncMock(name="build_retrieval_chain", return_value=retrieval_chain)
+    return AsyncMock(name="build_retrieval_chain", return_value=(retrieval_chain, None))
 
 
 @pytest.mark.parametrize(
