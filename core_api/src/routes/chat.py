@@ -6,15 +6,11 @@ from uuid import UUID
 
 from fastapi import Depends, FastAPI, HTTPException, WebSocket
 from fastapi.encoders import jsonable_encoder
-from langchain.chains.combine_documents import create_stuff_documents_chain
-from langchain.chains.history_aware_retriever import create_history_aware_retriever
 from langchain.chains.llm import LLMChain
 from langchain.chains.qa_with_sources import load_qa_with_sources_chain
-from langchain.chains.retrieval import create_retrieval_chain
 from langchain_community.chat_models import ChatLiteLLM
 from langchain_community.embeddings import SentenceTransformerEmbeddings
-from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
-from langchain_core.runnables import Runnable
+from langchain_core.prompts import ChatPromptTemplate
 from langchain_elasticsearch import ApproxRetrievalStrategy, ElasticsearchStore
 
 from core_api.src.auth import get_user_uuid
