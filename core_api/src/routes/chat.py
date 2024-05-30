@@ -4,8 +4,9 @@ from http import HTTPStatus
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import Depends, FastAPI, HTTPException, WebSocket
+from fastapi import Depends, FastAPI, HTTPException, WebSocket, WebSocketException
 from fastapi.encoders import jsonable_encoder
+from jose import JWTError, jwt
 from langchain.chains.llm import LLMChain
 from langchain.chains.qa_with_sources import load_qa_with_sources_chain
 from langchain_community.chat_models import ChatLiteLLM
@@ -150,7 +151,7 @@ def simple_chat(chat_request: ChatRequest, _user_uuid: Annotated[UUID, Depends(g
 
 async def build_retrieval_chain(
     chat_request: ChatRequest,
-    user_uuid: UUID | None = None,
+    user_uuid: UUID,
 ):
     question = chat_request.message_history[-1].text
     previous_history = list(chat_request.message_history[:-1])
@@ -170,7 +171,7 @@ async def build_retrieval_chain(
 
     standalone_question = condense_question_chain({"question": question, "chat_history": previous_history})["text"]
 
-    search_kwargs = {"filter": {"term": {"creator_user_uuid.keyword": str(user_uuid)}}} if user_uuid else {}
+    search_kwargs = {"filter": {"term": {"creator_user_uuid.keyword": str(user_uuid)}}}
     docs = vector_store.as_retriever(search_kwargs=search_kwargs).get_relevant_documents(standalone_question)
 
     params = {
@@ -205,13 +206,24 @@ async def rag_chat(chat_request: ChatRequest, user_uuid: Annotated[UUID, Depends
     return ChatResponse(output_text=result["output_text"], source_documents=source_documents)
 
 
+async def get_ws_user_uuid(websocket: WebSocket) -> UUID:
+    try:
+        token = dict(websocket.headers)["authorization"]
+        payload = jwt.get_unverified_claims(token.split(" ", 1)[-1])
+        return UUID(payload["user_uuid"])
+    except (KeyError, JWTError) as e:
+        raise WebSocketException(code=403, reason="authorized") from e
+
+
 @chat_app.websocket("/rag")
 async def rag_chat_streamed(websocket: WebSocket):
     await websocket.accept()
 
+    user_uuid = await get_ws_user_uuid(websocket)
+
     chat_request = ChatRequest.parse_raw(await websocket.receive_text())
 
-    chain, params = await build_retrieval_chain(chat_request)
+    chain, params = await build_retrieval_chain(chat_request, user_uuid)
 
     async for event in chain.astream_events(params, version="v1"):
         kind = event["event"]

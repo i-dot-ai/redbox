@@ -140,7 +140,8 @@ class TestEndToEnd:
                 assert TestEndToEnd.file_uuids[user_uuid] not in source_document_file_uuids
 
     @pytest.mark.asyncio()
-    async def test_streaming_rag(self):
+    @pytest.mark.parametrize("user_uuid", USER_UUIDS)
+    async def test_streaming_rag(self, user_uuid):
         """
         Given a legitimate message_history
         When I send to ws://<host>/chat/rag
@@ -154,7 +155,9 @@ class TestEndToEnd:
         }
         all_text, docs = [], []
 
-        async for websocket in websockets.connect("ws://localhost:5002/chat/rag"):
+        async for websocket in websockets.connect(
+            "ws://localhost:5002/chat/rag", extra_headers=make_headers(user_uuid)
+        ):
             await websocket.send(json.dumps(message_history))
 
             try:
