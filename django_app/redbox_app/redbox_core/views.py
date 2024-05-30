@@ -180,6 +180,7 @@ def chats_view(request: HttpRequest, chat_id: uuid = None):
         "messages": messages,
         "chat_history": chat_history,
         "streaming": {"in_use": settings.USE_STREAMING, "endpoint": str(endpoint)},
+        "contact_email": settings.CONTACT_EMAIL,
     }
 
     return render(
