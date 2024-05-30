@@ -1,9 +1,10 @@
 import logging
+import os
 from http import HTTPStatus
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import Depends, FastAPI, HTTPException
+from fastapi import Depends, FastAPI, HTTPException, WebSocket
 from fastapi.encoders import jsonable_encoder
 from langchain.chains.combine_documents import create_stuff_documents_chain
 from langchain.chains.history_aware_retriever import create_history_aware_retriever
@@ -16,7 +17,6 @@ from langchain_core.messages import AIMessage, HumanMessage
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.runnables import Runnable
 from langchain_elasticsearch import ApproxRetrievalStrategy, ElasticsearchStore
-from starlette.websockets import WebSocket
 
 from core_api.src.auth import get_user_uuid
 from redbox.llm.prompts.chat import (
@@ -81,6 +81,12 @@ elif env.azure_openai_api_key is not None:
     log.info("Creating Azure LLM Client")
     log.debug("api_base: %s", env.azure_openai_endpoint)
     log.debug("api_version: %s", env.openai_api_version)
+
+    # this nasty hack is required because, contrary to the docs:
+    # using the api_version argument is not sufficient, and we need
+    # to use the `OPENAI_API_VERSION` environment variable
+    os.environ["OPENAI_API_VERSION"] = env.openai_api_version
+
     llm = ChatLiteLLM(
         model=env.openai_model,
         streaming=True,
@@ -90,10 +96,11 @@ elif env.azure_openai_api_key is not None:
     )
 elif env.anthropic_api_key is not None:
     msg = "anthropic LLM not yet implemented"
-    log.info(msg)
+    log.exception(msg)
     raise ValueError(msg)
 else:
     msg = f"Unknown LLM model type {env.llm.type}"
+    log.exception(msg)
     raise ValueError(msg)
 
 
@@ -143,8 +150,8 @@ def simple_chat(chat_request: ChatRequest, _user_uuid: Annotated[UUID, Depends(g
     messages = chat_prompt.format_messages()
 
     response = llm(messages)
-
-    return ChatResponse(response_message=ChatMessage(text=response.text, role="ai"))
+    chat_response:ChatResponse = ChatResponse(output_text=response.content)
+    return chat_response
 
 
 @chat_app.post("/rag", tags=["chat"])
