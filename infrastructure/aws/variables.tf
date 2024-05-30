@@ -87,7 +87,7 @@ variable "internal_ips" {
   description = "IP's of No10 and CO"
 }
 
-variable "openai_model" {
+variable "azure_openai_model" {
   type        = string
   default     = "gpt-3.5-turbo"
   description = "OPENAI model to use"

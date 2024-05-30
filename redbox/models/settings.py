@@ -39,7 +39,7 @@ class Settings(BaseSettings):
     azure_openai_endpoint: str | None = None
 
     openai_api_version: str = "2023-12-01-preview"
-    openai_model: str = "azure/gpt-35-turbo-16k"
+    azure_openai_model: str = "azure/gpt-35-turbo-16k"
 
     partition_strategy: Literal["auto", "fast", "ocr_only", "hi_res"] = "fast"
 
