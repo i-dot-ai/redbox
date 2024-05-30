@@ -12,6 +12,9 @@ from django.urls import reverse
 from django.utils import timezone
 from django.utils.datastructures import MultiValueDictKeyError
 from django.views.decorators.http import require_http_methods
+from requests.exceptions import HTTPError
+from yarl import URL
+
 from redbox_app.redbox_core.client import CoreApiClient
 from redbox_app.redbox_core.models import (
     ChatHistory,
@@ -21,8 +24,6 @@ from redbox_app.redbox_core.models import (
     StatusEnum,
     User,
 )
-from requests.exceptions import HTTPError
-from yarl import URL
 
 logger = logging.getLogger(__name__)
 core_api = CoreApiClient(host=settings.CORE_API_HOST, port=settings.CORE_API_PORT)
@@ -66,7 +67,7 @@ def homepage_view(request):
 
 @login_required
 def documents_view(request):
-    files = File.objects.filter(user=request.user).order_by("-created_at")
+    files = File.objects.filter(user=request.user).exclude(status=StatusEnum.deleted).order_by("-created_at")
 
     return render(
         request,
