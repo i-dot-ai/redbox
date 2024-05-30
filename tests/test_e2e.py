@@ -1,11 +1,16 @@
+import json
 import time
 from http import HTTPStatus
 from pathlib import Path
 from uuid import UUID, uuid4
 
+import asyncio
+
 import pytest
 import requests
+import websockets
 from jose import jwt
+from websockets import ConnectionClosed
 
 # TODO: add e2e tests involving the Django app, checking S3 upload
 
@@ -135,3 +140,32 @@ class TestEndToEnd:
         for other_user_uuid, source_document_file_uuids in TestEndToEnd.source_document_file_uuids.items():
             if other_user_uuid != user_uuid:
                 assert TestEndToEnd.file_uuids[user_uuid] not in source_document_file_uuids
+
+    @pytest.mark.asyncio()
+    async def test_streaming_rag(self):
+        # When
+        message_history = {
+                    "message_history": [
+                        {"text": "You are a helpful AI Assistant", "role": "system"},
+                        {"text": "What is AI?", "role": "user"},
+                    ]
+                }
+        all_text, docs = [], []
+
+        async for websocket in websockets.connect("ws://localhost:5002/rag"):
+            websocket.send_json(message_history)
+
+            i = 0
+            try:
+                while True and i < 100:
+                    i+=1
+                    actual = websocket.receive_json()
+                    if actual["resource_type"] == "text":
+                        all_text.append(actual["data"])
+                    if actual["resource_type"] == "documents":
+                        docs.append(actual["data"])
+            except ConnectionClosed:
+                break
+
+        assert not all_text
+        assert not docs
