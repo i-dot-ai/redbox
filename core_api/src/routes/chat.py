@@ -167,12 +167,8 @@ async def build_chain(
     )
 
     condense_question_chain = LLMChain(llm=llm, prompt=CONDENSE_QUESTION_PROMPT)
-    # condense_question_chain = CONDENSE_QUESTION_PROMPT | llm
 
     standalone_question = condense_question_chain({"question": question, "chat_history": previous_history})["text"]
-    # standalone_question = condense_question_chain.invoke({"question": question, "chat_history": previous_history})[
-    #     "text"
-    # ]
 
     search_kwargs = {"filter": {"term": {"creator_user_uuid.keyword": str(user_uuid)}}} if user_uuid else {}
     docs = vector_store.as_retriever(search_kwargs=search_kwargs).get_relevant_documents(standalone_question)
