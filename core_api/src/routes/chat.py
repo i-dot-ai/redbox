@@ -148,7 +148,7 @@ def simple_chat(chat_request: ChatRequest, _user_uuid: Annotated[UUID, Depends(g
     return chat_response
 
 
-async def build_chain(
+async def build_retrieval_chain(
     chat_request: ChatRequest,
     user_uuid: UUID | None = None,
 ):
@@ -191,7 +191,7 @@ async def rag_chat(chat_request: ChatRequest, user_uuid: Annotated[UUID, Depends
     Returns:
         StreamingResponse: a stream of the chain response
     """
-    chain, params = await build_chain(chat_request, user_uuid)
+    chain, params = await build_retrieval_chain(chat_request, user_uuid)
     result = chain(params)
 
     source_documents = [
@@ -211,7 +211,7 @@ async def rag_chat_streamed(websocket: WebSocket):
 
     chat_request = ChatRequest.parse_raw(await websocket.receive_text())
 
-    chain, params = await build_chain(chat_request)
+    chain, params = await build_retrieval_chain(chat_request)
 
     async for event in chain.astream_events(params, version="v1"):
         kind = event["event"]
