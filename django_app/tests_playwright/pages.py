@@ -219,7 +219,8 @@ class SupportPage(BasePage):
 
 
 def batched(iterable, n):
-    # TODO: Use library version in Python 3.12: https://docs.python.org/3/library/itertools.html#itertools.batched
+    # TODO (@brunns): Use library version when we upgrade to Python 3.12.
+    # https://docs.python.org/3/library/itertools.html#itertools.batched
     if n < 1:
         message = "n must be at least one"
         raise ValueError(message)
