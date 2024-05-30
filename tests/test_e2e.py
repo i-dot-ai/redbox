@@ -1,10 +1,7 @@
-import json
 import time
 from http import HTTPStatus
 from pathlib import Path
 from uuid import UUID, uuid4
-
-import asyncio
 
 import pytest
 import requests
@@ -145,11 +142,11 @@ class TestEndToEnd:
     async def test_streaming_rag(self):
         # When
         message_history = {
-                    "message_history": [
-                        {"text": "You are a helpful AI Assistant", "role": "system"},
-                        {"text": "What is AI?", "role": "user"},
-                    ]
-                }
+            "message_history": [
+                {"text": "You are a helpful AI Assistant", "role": "system"},
+                {"text": "What is AI?", "role": "user"},
+            ]
+        }
         all_text, docs = [], []
 
         async for websocket in websockets.connect("ws://localhost:5002/rag"):
@@ -158,7 +155,7 @@ class TestEndToEnd:
             i = 0
             try:
                 while True and i < 100:
-                    i+=1
+                    i += 1
                     actual = websocket.receive_json()
                     if actual["resource_type"] == "text":
                         all_text.append(actual["data"])
