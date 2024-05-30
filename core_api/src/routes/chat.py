@@ -26,7 +26,7 @@ from redbox.llm.prompts.chat import (
 )
 from redbox.model_db import MODEL_PATH
 from redbox.models import EmbeddingModelInfo, Settings
-from redbox.models.chat import ChatMessage, ChatRequest, ChatResponse, SourceDocument
+from redbox.models.chat import ChatRequest, ChatResponse, SourceDocument
 
 # === Logging ===
 
@@ -150,7 +150,7 @@ def simple_chat(chat_request: ChatRequest, _user_uuid: Annotated[UUID, Depends(g
     messages = chat_prompt.format_messages()
 
     response = llm(messages)
-    chat_response:ChatResponse = ChatResponse(output_text=response.content)
+    chat_response: ChatResponse = ChatResponse(output_text=response.content)
     return chat_response
 
 
