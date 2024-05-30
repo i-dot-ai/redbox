@@ -96,7 +96,7 @@ class ElasticsearchStorageHandler(BaseStorageHandler):
             result = scan(
                 client=self.es_client,
                 index=target_index,
-                query={"query": {"match": {"creator_user_uuid": str(user_uuid)}}},
+                query={"query": {"match_phrase": {"creator_user_uuid": str(user_uuid)}}},
                 _source=True,
             )
 
@@ -126,7 +126,7 @@ class ElasticsearchStorageHandler(BaseStorageHandler):
             results = scan(
                 client=self.es_client,
                 index=target_index,
-                query={"query": {"match": {"creator_user_uuid": str(user_uuid)}}},
+                query={"query": {"match_phrase": {"creator_user_uuid": str(user_uuid)}}},
                 _source=False,
             )
 
@@ -149,12 +149,12 @@ class ElasticsearchStorageHandler(BaseStorageHandler):
                         "bool": {
                             "must": [
                                 {
-                                    "match": {
+                                    "match_phrase": {
                                         "parent_file_uuid": str(parent_file_uuid),
                                     }
                                 },
                                 {
-                                    "match": {
+                                    "match_phrase": {
                                         "creator_user_uuid": str(user_uuid),
                                     }
                                 },
