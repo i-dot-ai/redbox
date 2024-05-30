@@ -58,7 +58,7 @@ def to_user_timezone(value):
 
 def environment(**options):
     extra_options = {}
-    env = jinja2.Environment(  # nosec B701 # noqa S701
+    env = jinja2.Environment(  # nosec: B701 # noqa: S701
         **{
             "autoescape": True,
             "extensions": [CompressorExtension],

@@ -34,17 +34,18 @@ def cluster_chunks(
             List[Chunk]: A list of all the (merged) chunks extracted from the given file.
     """
     # filter out empty chunks
-    chunks = [chunk for chunk in chunks if chunk.token_count > 0]  # type: ignore
-    if len(chunks) < 2:
-        out_chunks = chunks
+    non_empty_chunks: Sequence[Chunk] = [chunk for chunk in chunks if chunk.token_count > 0]
+    if len(non_empty_chunks) < 2:
+        out_chunks = non_empty_chunks
     else:
-        token_counts = [chunk.token_count for chunk in chunks]  # type: ignore
+        token_counts: Sequence[int] = [chunk.token_count for chunk in non_empty_chunks]
         # calculate simple vector embedding and distances between adjacent chunks
 
-        chunk_embedding = embedding_model.encode([chunk.text for chunk in chunks])
+        chunk_embedding = embedding_model.encode([chunk.text for chunk in non_empty_chunks])
 
         pair_embed_dist = [0] + [
-            scipy.spatial.distance.cosine(chunk_embedding[i], chunk_embedding[i + 1]) for i in range(len(chunks) - 1)
+            scipy.spatial.distance.cosine(chunk_embedding[i], chunk_embedding[i + 1])
+            for i in range(len(non_empty_chunks) - 1)
         ]
         # create distance vector (upper triangular) by combining the token counts with embedding distance
         dist_triu = create_pdist(
@@ -58,12 +59,12 @@ def cluster_chunks(
         # Distance approach is Farthest Point Algorithm (complete linkage) which
         # gets the maximum distance between all the points in the cluster
         hc = scipy.cluster.hierarchy.linkage(dist_triu, "complete")
-        num_clusters = round(np.sum(token_counts) / desired_chunk_size)  # type: ignore
+        num_clusters = round(np.sum(token_counts) / desired_chunk_size)
         out_clusters = [lab[0] for lab in scipy.cluster.hierarchy.cut_tree(hc, n_clusters=num_clusters)]
         # merge clusters and create output chunks
         out_chunks = []
         for i, clust in enumerate(np.unique(out_clusters)):
-            chunks_in = list(compress(chunks, out_clusters == clust))
+            chunks_in = list(compress(non_empty_chunks, out_clusters == clust))
             # if there is only one chunk in the cluster, just use it
             if len(chunks_in) == 1:
                 new_chunk = chunks_in[0]
@@ -81,7 +82,7 @@ def cluster_chunks(
     return out_chunks
 
 
-def compute_embed_dist(pair_embed_dist: list[float]) -> NDArray[np.float64]:
+def compute_embed_dist(pair_embed_dist: Sequence[float]) -> NDArray[np.float64]:
     n = len(pair_embed_dist)
     # embedding distance between chunk i and j is taken as MAXIMUM of the pairwise embedding
     # distance of all the adjacent pairs between them
@@ -123,7 +124,7 @@ def compute_embed_dist(pair_embed_dist: list[float]) -> NDArray[np.float64]:
     return scipy.spatial.distance.pdist(embed_dims, "chebyshev")
 
 
-def compute_token_dist(token_counts: list[int]) -> NDArray[np.float64]:
+def compute_token_dist(token_counts: Sequence[int]) -> NDArray[np.float64]:
     n = len(token_counts)
 
     # the token count distance between junk and i and j is the size of minimal text segment
@@ -181,7 +182,7 @@ def compute_token_dist(token_counts: list[int]) -> NDArray[np.float64]:
 
 
 def create_pdist(
-    token_counts: list[int], pair_embed_dist: list[float], weight_embed_dist: float = 0.2, use_log: bool = True
+    token_counts: Sequence[int], pair_embed_dist: Sequence[float], weight_embed_dist: float = 0.2, use_log: bool = True
 ) -> NDArray[np.float64]:
     """
     Creates a distance (upper) matrix for the chunk merging.

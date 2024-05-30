@@ -220,7 +220,7 @@ if HostingEnvironment.is_local():
     ALLOWED_HOSTS = [
         "localhost",
         "127.0.0.1",
-        "0.0.0.0",  # noqa S104
+        "0.0.0.0",  # noqa: S104
     ]  # nosec B104 - don't do this on server!
 else:
     STORAGES = {
@@ -333,8 +333,8 @@ SUPERUSER_EMAIL = env.str("SUPERUSER_EMAIL", None)
 class Classification(StrEnum):
     OFFICIAL = "Official"
     OFFICIAL_SENSITIVE = "Official Sensitive"
-    SECRET = "Secret"  # noqa S105
-    TOP_SECRET = "Top Secret"  # noqa S105
+    SECRET = "Secret"  # noqa: S105
+    TOP_SECRET = "Top Secret"  # noqa: S105
 
 
 MAX_SECURITY_CLASSIFICATION = Classification[env.str("MAX_SECURITY_CLASSIFICATION")]
