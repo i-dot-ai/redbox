@@ -141,7 +141,11 @@ class TestEndToEnd:
 
     @pytest.mark.asyncio()
     async def test_streaming_rag(self):
-        # When
+        """
+        Given a legitimate message_history
+        When I send to ws://<host>/chat/rag
+        I expect a text response
+        """
         message_history = {
             "message_history": [
                 {"role": "system", "text": "You are a helpful AI Assistant"},
