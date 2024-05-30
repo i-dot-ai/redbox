@@ -7482,6 +7482,14 @@ body {
   color: white;
 }
 
+.iai-button--blue {
+  background-color: #1d70b8;
+}
+
+.iai-button--blue:hover {
+  background-color: #003078;
+}
+
 /* Home page */
 .govuk-main-wrapper:has(.iai-banner) {
   padding-top: 0;
@@ -7514,6 +7522,12 @@ body {
 }
 
 /* Documents page */
+.iai-doc-retention {
+  align-items: center;
+  display: flex;
+  gap: 0.5rem;
+}
+
 .iai-doclist-mobile__item {
   border: 1px solid #b1b4b6;
   border-radius: 0.25rem;
