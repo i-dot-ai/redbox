@@ -51,7 +51,7 @@ file_publisher = FilePublisher(router.broker, env.ingest_queue_name)
 # === Storage ===
 
 es = env.elasticsearch_client()
-storage_handler = ElasticsearchStorageHandler(es_client=es, root_index=env.root_index)
+storage_handler = ElasticsearchStorageHandler(es_client=es, root_index=env.elastic_root_index)
 
 
 file_app = FastAPI(
