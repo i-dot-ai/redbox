@@ -116,7 +116,7 @@ else:
 
 vector_store = ElasticsearchStore(
     es_connection=es,
-    index_name="redbox-data-chunk",
+    index_name=f"{env.root_index}-chunk",
     embedding=embedding_model,
     strategy=strategy,
     vector_query_field="embedding",
