@@ -4,9 +4,8 @@ from http import HTTPStatus
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import Depends, FastAPI, HTTPException, WebSocket, WebSocketException
+from fastapi import Depends, FastAPI, HTTPException, WebSocket
 from fastapi.encoders import jsonable_encoder
-from jose import JWTError, jwt
 from langchain.chains.llm import LLMChain
 from langchain.chains.qa_with_sources import load_qa_with_sources_chain
 from langchain_community.chat_models import ChatLiteLLM
@@ -14,7 +13,7 @@ from langchain_community.embeddings import SentenceTransformerEmbeddings
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_elasticsearch import ApproxRetrievalStrategy, ElasticsearchStore
 
-from core_api.src.auth import get_user_uuid
+from core_api.src.auth import get_user_uuid, get_ws_user_uuid
 from redbox.llm.prompts.chat import (
     CONDENSE_QUESTION_PROMPT,
     STUFF_DOCUMENT_PROMPT,
@@ -204,15 +203,6 @@ async def rag_chat(chat_request: ChatRequest, user_uuid: Annotated[UUID, Depends
         for langchain_document in result.get("input_documents", [])
     ]
     return ChatResponse(output_text=result["output_text"], source_documents=source_documents)
-
-
-async def get_ws_user_uuid(websocket: WebSocket) -> UUID:
-    try:
-        token = dict(websocket.headers)["authorization"]
-        payload = jwt.get_unverified_claims(token.split(" ", 1)[-1])
-        return UUID(payload["user_uuid"])
-    except (KeyError, JWTError) as e:
-        raise WebSocketException(code=403, reason="authorized") from e
 
 
 @chat_app.websocket("/rag")
