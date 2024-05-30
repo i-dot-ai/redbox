@@ -128,7 +128,7 @@ def compute_token_dist(token_counts: list[int]) -> NDArray[np.float64]:
 
     # the token count distance between junk and i and j is the size of minimal text segment
     # containing them, i.e. sum of token counts of all the intermediate chunks
-    token_dims = np.tri(n + 1, k=0) * np.array([0] + token_counts)
+    token_dims = np.tri(n + 1, k=0) * np.array([0, *token_counts])
 
     # drop diagonal (sizes of individual chunks)
     a, b = np.triu_indices(n + 1, k=1)

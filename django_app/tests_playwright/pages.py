@@ -2,7 +2,7 @@ import logging
 from abc import ABCMeta, abstractmethod
 from itertools import islice
 from pathlib import Path
-from typing import NamedTuple
+from typing import Any, ClassVar, NamedTuple
 
 from _settings import BASE_URL
 from axe_playwright_python.sync_playwright import Axe
@@ -16,7 +16,7 @@ logger.setLevel(logging.DEBUG)
 class BasePage(metaclass=ABCMeta):
     # All available rules/categories can be found at https://github.com/dequelabs/axe-core/blob/develop/doc/rule-descriptions.md
     # Can't include all as gov.uk design system violates the "region" rule
-    AXE_OPTIONS = {
+    AXE_OPTIONS: ClassVar[dict[str, Any]] = {
         "runOnly": {
             "type": "tag",
             "values": [

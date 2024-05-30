@@ -1,6 +1,7 @@
 import time
 from http import HTTPStatus
 from pathlib import Path
+from typing import ClassVar
 from uuid import UUID, uuid4
 
 import pytest
@@ -19,8 +20,8 @@ def make_headers(user_uuid: UUID):
 
 @pytest.mark.incremental()
 class TestEndToEnd:
-    file_uuids: dict[UUID, str] = {}
-    source_document_file_uuids: dict[UUID, set[str]] = {}
+    file_uuids: ClassVar[dict[UUID, str]] = {}
+    source_document_file_uuids: ClassVar[dict[UUID, set[str]]] = {}
 
     @pytest.mark.parametrize("user_uuid", USER_UUIDS)
     def test_upload_to_search(self, file_path: Path, s3_client, user_uuid):
