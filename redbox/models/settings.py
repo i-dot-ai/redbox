@@ -1,13 +1,9 @@
-import logging
 from typing import Literal
 
 import boto3
 from elasticsearch import Elasticsearch
 from pydantic import BaseModel
 from pydantic_settings import BaseSettings, SettingsConfigDict
-
-logging.basicConfig(level=logging.INFO)
-log = logging.getLogger()
 
 
 class ElasticLocalSettings(BaseModel):
@@ -35,11 +31,6 @@ class Settings(BaseSettings):
 
     anthropic_api_key: str | None = None
     openai_api_key: str | None = None
-    azure_openai_api_key: str | None = None
-    azure_openai_endpoint: str | None = None
-
-    openai_api_version: str = "2023-12-01-preview"
-    openai_model: str = "azure/gpt-35-turbo-16k"
 
     partition_strategy: Literal["auto", "fast", "ocr_only", "hi_res"] = "fast"
 
@@ -87,14 +78,11 @@ class Settings(BaseSettings):
     use_streaming: bool = False
     compression_enabled: bool = True
     superuser_email: str | None = None
-
     model_config = SettingsConfigDict(env_file=".env", env_nested_delimiter="__", extra="allow")
 
     def elasticsearch_client(self) -> Elasticsearch:
         if isinstance(self.elastic, ElasticLocalSettings):
-            log.info("Connecting to self managed Elasticsearch")
-            log.info("Elasticsearch host = %s", self.elastic.host)
-            es = Elasticsearch(
+            return Elasticsearch(
                 hosts=[
                     {
                         "host": self.elastic.host,
@@ -104,22 +92,8 @@ class Settings(BaseSettings):
                 ],
                 basic_auth=(self.elastic.user, self.elastic.password),
             )
-            if not es.ping():
-                msg = "Connection to Elasticsearch failed"
-                raise ValueError(msg)
-            return es
 
-        log.info("Connecting to Elastic Cloud Cluster")
-        log.info("Cloud ID = %s", self.elastic.cloud_id)
-        log.info("Elastic Cloud API Key = %s", self.elastic.api_key)
-
-        es = Elasticsearch(cloud_id=self.elastic.cloud_id, api_key=self.elastic.api_key)
-        if not es.ping():
-            log.info("API Key = %s", self.elastic.api_key)
-            log.info(es.info())
-            msg = "Connection to Elasticsearch failed"
-            raise ValueError(msg)
-        return es
+        return Elasticsearch(cloud_id=self.elastic.cloud_id, api_key=self.elastic.api_key)
 
     def s3_client(self):
         if self.object_store == "minio":

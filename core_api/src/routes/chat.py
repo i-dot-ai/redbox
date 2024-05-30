@@ -1,5 +1,4 @@
 import logging
-import os
 from http import HTTPStatus
 from typing import Annotated
 from uuid import UUID
@@ -69,40 +68,11 @@ embedding_model_info = populate_embedding_model_info()
 
 # === LLM setup ===
 
-# Create the appropriate LLM, either openai, Azure, anthropic or bedrock
-if env.openai_api_key is not None:
-    log.info("Creating OpenAI LLM Client")
-    llm = ChatLiteLLM(
-        model=env.openai_model,
-        streaming=True,
-        openai_key=env.openai_api_key,
-    )
-elif env.azure_openai_api_key is not None:
-    log.info("Creating Azure LLM Client")
-    log.debug("api_base: %s", env.azure_openai_endpoint)
-    log.debug("api_version: %s", env.openai_api_version)
 
-    # this nasty hack is required because, contrary to the docs:
-    # using the api_version argument is not sufficient, and we need
-    # to use the `OPENAI_API_VERSION` environment variable
-    os.environ["OPENAI_API_VERSION"] = env.openai_api_version
-
-    llm = ChatLiteLLM(
-        model=env.openai_model,
-        streaming=True,
-        azure_key=env.azure_openai_api_key,
-        api_version=env.openai_api_version,
-        api_base=env.azure_openai_endpoint,
-    )
-elif env.anthropic_api_key is not None:
-    msg = "anthropic LLM not yet implemented"
-    log.exception(msg)
-    raise ValueError(msg)
-else:
-    msg = f"Unknown LLM model type {env.llm.type}"
-    log.exception(msg)
-    raise ValueError(msg)
-
+llm = ChatLiteLLM(
+    model="gpt-3.5-turbo",
+    streaming=True,
+)
 
 es = env.elasticsearch_client()
 if env.elastic.subscription_level == "basic":
