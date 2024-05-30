@@ -5,7 +5,7 @@ locals {
   environment_variables = {
     "ELASTIC__API_KEY" : var.elastic_api_key,
     "ELASTIC__CLOUD_ID" : var.cloud_id,
-    "ROOT_INDEX": "redbox-date-${terraform.workspace}",
+    "ROOT_INDEX": "redbox-data-${terraform.workspace}",
     "OBJECT_STORE" : "s3",
     "BUCKET_NAME" : aws_s3_bucket.user_data_bucket.bucket,
     "EMBEDDING_MODEL" : "all-mpnet-base-v2",
