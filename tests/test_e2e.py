@@ -1,3 +1,4 @@
+import json
 import time
 from http import HTTPStatus
 from pathlib import Path
@@ -143,26 +144,25 @@ class TestEndToEnd:
         # When
         message_history = {
             "message_history": [
-                {"text": "You are a helpful AI Assistant", "role": "system"},
-                {"text": "What is AI?", "role": "user"},
+                {"role": "system", "text": "You are a helpful AI Assistant"},
+                {"role": "user", "text": "please summarise my document"},
             ]
         }
         all_text, docs = [], []
 
-        async for websocket in websockets.connect("ws://localhost:5002/rag"):
-            websocket.send_json(message_history)
+        async for websocket in websockets.connect("ws://localhost:5002/chat/rag"):
+            await websocket.send(json.dumps(message_history))
 
-            i = 0
             try:
-                while True and i < 100:
-                    i += 1
-                    actual = websocket.receive_json()
+                while True:
+                    actual_str = await websocket.recv()
+                    actual = json.loads(actual_str)
                     if actual["resource_type"] == "text":
                         all_text.append(actual["data"])
-                    if actual["resource_type"] == "documents":
+                    elif actual["resource_type"] == "documents":
                         docs.append(actual["data"])
             except ConnectionClosed:
                 break
 
-        assert not all_text
+        assert all_text
         assert not docs
