@@ -54,7 +54,7 @@ jobs:
         cp .env.integration .env
         echo AZURE_OPENAI_ENDPOINT=${{ secrets.AZURE_OPENAI_ENDPOINT }} >> .env
         echo AZURE_OPENAI_API_KEY=${{ secrets.AZURE_OPENAI_API_KEY }} >> .env
-        docker compose up -d --wait elasticsearch core-api worker db django-app
+        docker compose up -d --wait elasticsearch db worker minio core-api django-app
         
 
     - name: Wait 60s for services to be ready
@@ -64,8 +64,8 @@ jobs:
 
     - name: Test integration with pytest
       run: |
-        poetry install --with dev --without ai,api,worker,docs
-        python -m pytest tests
+        poetry install --only dev
+        poetry run pytest tests/
 
     - name: notify slack failure
       id: slack-failure

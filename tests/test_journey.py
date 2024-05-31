@@ -1,34 +1,35 @@
 import logging
-import os
+import string
 import subprocess
 from pathlib import Path
+from random import choice
 
+import pytest
+from pages import LandingPage, SignInConfirmationPage
 from playwright.sync_api import Page
 from yarl import URL
-
-from tests.pages import LandingPage, SignInConfirmationPage
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
 BASE_URL = URL("http://localhost:8090/")
-EMAIL_ADDRESS = "alice@cabinetoffice.gov.uk"
-TEST_ROOT = Path(__file__)
+TEST_ROOT = Path(__file__).parent
 
 
-def test_user_journey(page: Page):
-    create_user(EMAIL_ADDRESS)
+def test_user_journey(page: Page, email_address: str):
+    create_user(email_address)
 
     # Landing page
     landing_page = LandingPage(page, BASE_URL)
 
     # Sign in
     sign_in_page = landing_page.navigate_to_sign_in()
-    sign_in_page.email = EMAIL_ADDRESS
+    sign_in_page.email = email_address
     sign_in_page.continue_()
 
     # Use magic link
-    magic_link = get_magic_link(EMAIL_ADDRESS)
+    magic_link = get_magic_link(email_address)
+    logger.debug("magic_link: %s", magic_link)
     sign_in_confirmation_page = SignInConfirmationPage(page, magic_link)
 
     # Documents page
@@ -72,33 +73,26 @@ def create_user(email_address: str):
         "compose",
         "run",
         "django-app",
-        "poetry",
-        "run",
-        "python",
-        "manage.py",
+        "venv/bin/django-admin",
         "createsuperuser",
         "--noinput",
-    ]
-    env = os.environ.copy()
-    env["DJANGO_SUPERUSER_EMAIL"] = email_address
-    env["DJANGO_SUPERUSER_USERNAME"] = email_address
-    env["DJANGO_SUPERUSER_PASSWORD"] = email_address
-    subprocess.run(command, capture_output=True, text=True, env=env)  # noqa: S603
-
-
-def get_magic_link(email_address: str) -> URL:
-    command = [
-        "docker",
-        "compose",
-        "run",
-        "django-app",
-        "poetry",
-        "run",
-        "python",
-        "manage.py",
-        "show_magiclink_url",
+        "--email",
         email_address,
     ]
     result = subprocess.run(command, capture_output=True, text=True)  # noqa: S603
+    result.check_returncode()
+    logger.debug("create_user result: %s", result)
+
+
+def get_magic_link(email_address: str) -> URL:
+    command = ["docker", "compose", "run", "django-app", "venv/bin/django-admin", "show_magiclink_url", email_address]
+    result = subprocess.run(command, capture_output=True, text=True)  # noqa: S603
+    result.check_returncode()
     magic_link = result.stdout.strip().lstrip("/")
     return BASE_URL / magic_link
+
+
+@pytest.fixture()
+def email_address() -> str:
+    username = "".join(choice(string.ascii_lowercase) for _ in range(10))  # noqa: S311
+    return f"{username}@cabinetoffice.gov.uk"

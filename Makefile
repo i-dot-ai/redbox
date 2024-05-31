@@ -40,14 +40,14 @@ test-django:
 	docker compose run django-app venv/bin/pytest tests/ --ds redbox_app.settings -v --cov=redbox_app.redbox_core --cov-fail-under 80 -o log_cli=true
 
 test-integration: stop
-	cp .env $(BACKUP_ENV_FILENAME)
-	cp .env.integration .env
-	docker compose up -d core-api db minio elasticsearch worker core-api django-app
-	poetry install --no-root --no-ansi --with dev --without ai,api,worker
+#	cp .env $(BACKUP_ENV_FILENAME)
+#	cp .env.integration .env
+	docker compose up -d --wait elasticsearch db worker minio core-api django-app
+	poetry install --no-root --no-ansi --with dev --without ai,api,worker,docs
 	sleep 10
-	poetry run pytest tests
-	cp $(BACKUP_ENV_FILENAME) .env
-	rm $(BACKUP_ENV_FILENAME)
+	poetry run pytest tests/
+#	cp $(BACKUP_ENV_FILENAME) .env
+#	rm $(BACKUP_ENV_FILENAME)
 
 collect-static:
 	docker compose run django-app venv/bin/django-admin collectstatic --noinput

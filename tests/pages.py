@@ -180,7 +180,7 @@ class DocumentUploadPage(SignedInBasePage):
     def upload_document(self, upload_file: Path) -> DocumentsPage:
         self.get_file_chooser_by_label().set_files(upload_file)
         self.page.get_by_role("button", name="Upload").click()
-        return self.navigate_to_documents()
+        return DocumentsPage(self.page)
 
     def get_file_chooser_by_label(self):
         with self.page.expect_file_chooser() as fc_info:

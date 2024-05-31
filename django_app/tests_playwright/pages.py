@@ -1,5 +1,6 @@
 import logging
 from abc import ABCMeta, abstractmethod
+from enum import Enum
 from itertools import islice
 from pathlib import Path
 from typing import Any, ClassVar, NamedTuple
@@ -50,11 +51,7 @@ class BasePage(metaclass=ABCMeta):
 
     def check_a11y(self):
         results = self.axe.run(self.page, context=None, options=self.AXE_OPTIONS)
-        if results.violations_count > 0:
-            expect(
-                self.page.get_by_text("Accessibility issues"),
-                f"Accessibility issues in {self.__class__.__name__} at {self.url}",
-            ).to_be_visible()
+        assert results.violations_count == 0, f"{self.url} - {results.generate_report()}"
 
     def navigate_to_privacy_page(self) -> "PrivacyPage":
         self.page.get_by_role("link", name="Privacy", exact=True).click()
@@ -183,6 +180,11 @@ class DocumentUploadPage(SignedInBasePage):
         return fc_info.value
 
 
+class FeedbackType(Enum):
+    HELPFUL = "Helpful"
+    NOT_HELPFUL = "Not helpful"
+
+
 class ChatsPage(SignedInBasePage):
     def get_expected_page_title(self) -> str:
         return "Chats - Redbox Copilot"
@@ -201,6 +203,14 @@ class ChatsPage(SignedInBasePage):
 
     def all_messages(self) -> list[str]:
         return self.page.locator(".iai-chat-message").all_inner_texts()
+
+    def check_feedback_prompt_visible(self, feedback: FeedbackType) -> bool:
+        if feedback == FeedbackType.NOT_HELPFUL:
+            return self.page.get_by_text("Can you let me know what wasn’t accurate?").is_visible()  # noqa: RUF001
+        return self.page.get_by_text("Thank you for your feedback").first.is_visible()
+
+    def give_feedback(self, feedback: FeedbackType):
+        self.page.get_by_role("button", name=feedback.value, exact=True).click()
 
 
 class PrivacyPage(BasePage):
