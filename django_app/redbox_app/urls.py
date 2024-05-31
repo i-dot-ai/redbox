@@ -7,6 +7,7 @@ from magic_link import urls as magic_link_urls
 from .redbox_core import auth_views, info_views, views
 
 auth_urlpatterns = [
+    path("auth/", include("authbroker_client.urls")),
     path("magic_link/", include(magic_link_urls)),
     path("sign-in/", auth_views.sign_in_view, name="sign-in"),
     path(

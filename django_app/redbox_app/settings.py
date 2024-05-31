@@ -10,6 +10,8 @@ from storages.backends import s3boto3
 
 from .hosting_environment import HostingEnvironment
 
+from django.urls import reverse_lazy
+
 load_dotenv()
 
 env = environ.Env()
@@ -44,6 +46,7 @@ SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 # Application definition
 INSTALLED_APPS = [
+    "authbroker_client",
     "daphne",
     "redbox_app.redbox_core",
     "allauth",
@@ -112,6 +115,7 @@ ASGI_APPLICATION = "redbox_app.asgi.application"
 
 AUTHENTICATION_BACKENDS = [
     "django.contrib.auth.backends.ModelBackend",
+    "authbroker_client.backends.AuthbrokerBackend",
 ]
 
 AUTH_PASSWORD_VALIDATORS = [
@@ -141,8 +145,8 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 SITE_ID = 1
 AUTH_USER_MODEL = "redbox_core.User"
 ACCOUNT_EMAIL_VERIFICATION = "none"
-LOGIN_REDIRECT_URL = "homepage"
-LOGIN_URL = "sign-in"
+#LOGIN_REDIRECT_URL = "homepage"
+#LOGIN_URL = "sign-in"
 
 HOSTS = [
     "redbox-dev.ai.cabinetoffice.gov.uk",
@@ -343,3 +347,15 @@ class Classification(StrEnum):
 
 
 MAX_SECURITY_CLASSIFICATION = Classification[env.str("MAX_SECURITY_CLASSIFICATION")]
+
+AUTHBROKER_URL = env.str("AUTHBROKER_URL")
+AUTHBROKER_CLIENT_ID = env.str("AUTHBROKER_CLIENT_ID")
+AUTHBROKER_CLIENT_SECRET = env.str("AUTHBROKER_CLIENT_SECRET")
+AUTHBROKER_TOKEN_SESSION_KEY = env.str("AUTHBROKER_TOKEN_SESSION_KEY")
+AUTHBROKER_STAFF_SSO_SCOPE = env.str("AUTHBROKER_STAFF_SSO_SCOPE")
+
+OAUTHLIB_INSECURE_TRANSPORT = env.int("OAUTHLIB_INSECURE_TRANSPORT") # This is just needed in mock sso
+TEST_SSO_PROVIDER_SET_RETURNED_ACCESS_TOKEN = env.str("MOCK_SSO_TOKEN") # Nest into statement dependent upon hosting environment
+
+LOGIN_URL = reverse_lazy("authbroker_client:login")
+LOGIN_REDIRECT_URL = reverse_lazy('homepage') # Check auth views page
