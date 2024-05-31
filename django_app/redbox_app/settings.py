@@ -165,6 +165,13 @@ CSP_FONT_SRC = (
 CSP_STYLE_SRC = ("'self'",)
 CSP_FRAME_ANCESTORS = ("'none'",)
 
+CSP_CONNECT_SRC = [
+    "'self'",
+    "ws://redbox-dev.ai.cabinetoffice.gov.uk",
+    "ws://redbox-preprod.ai.cabinetoffice.gov.uk",
+    "ws://redbox.ai.cabinetoffice.gov.uk",
+]
+
 # https://pypi.org/project/django-permissions-policy/
 PERMISSIONS_POLICY: dict[str, list] = {
     "accelerometer": [],
