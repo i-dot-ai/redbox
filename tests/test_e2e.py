@@ -1,3 +1,4 @@
+import json
 import time
 from http import HTTPStatus
 from pathlib import Path
@@ -6,7 +7,9 @@ from uuid import UUID, uuid4
 
 import pytest
 import requests
+import websockets
 from jose import jwt
+from websockets import ConnectionClosed
 
 # TODO: add e2e tests involving the Django app, checking S3 upload
 
@@ -136,3 +139,38 @@ class TestEndToEnd:
         for other_user_uuid, source_document_file_uuids in TestEndToEnd.source_document_file_uuids.items():
             if other_user_uuid != user_uuid:
                 assert TestEndToEnd.file_uuids[user_uuid] not in source_document_file_uuids
+
+    @pytest.mark.asyncio()
+    @pytest.mark.parametrize("user_uuid", USER_UUIDS)
+    async def test_streaming_rag(self, user_uuid):
+        """
+        Given a legitimate message_history
+        When I send to ws://<host>/chat/rag
+        I expect a text response
+        """
+        message_history = {
+            "message_history": [
+                {"role": "system", "text": "You are a helpful AI Assistant"},
+                {"role": "user", "text": "please summarise my document"},
+            ]
+        }
+        all_text, docs = [], []
+
+        async for websocket in websockets.connect(
+            "ws://localhost:5002/chat/rag", extra_headers=make_headers(user_uuid)
+        ):
+            await websocket.send(json.dumps(message_history))
+
+            try:
+                while True:
+                    actual_str = await websocket.recv()
+                    actual = json.loads(actual_str)
+                    if actual["resource_type"] == "text":
+                        all_text.append(actual["data"])
+                    elif actual["resource_type"] == "documents":
+                        docs.append(actual["data"])
+            except ConnectionClosed:
+                break
+
+        assert all_text
+        assert not docs
