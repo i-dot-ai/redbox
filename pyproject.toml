@@ -66,6 +66,7 @@ ipywidgets="^8.1.2"
 anthropic = "^0.25.8"
 litellm = "^1.37.12"
 openai = "^1.28.0"
+pikepdf = "8.15.1"  # pinned to stop poetry complainning
 
 
 [tool.poetry.group.docs.dependencies]
