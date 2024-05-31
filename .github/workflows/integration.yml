@@ -54,7 +54,7 @@ jobs:
         cp .env.integration .env
         echo AZURE_OPENAI_ENDPOINT=${{ secrets.AZURE_OPENAI_ENDPOINT }} >> .env
         echo AZURE_OPENAI_API_KEY=${{ secrets.AZURE_OPENAI_API_KEY }} >> .env
-        docker compose up -d --wait elasticsearch core-api worker db django_app
+        docker compose up -d --wait elasticsearch core-api worker db django-app
         
 
     - name: Wait 60s for services to be ready
