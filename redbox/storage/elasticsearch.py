@@ -21,7 +21,7 @@ class ElasticsearchStorageHandler(BaseStorageHandler):
     def __init__(
         self,
         es_client: Elasticsearch,
-        root_index: str = "redbox",
+        root_index: str,
     ):
         """Initialise the storage handler
 

@@ -15,7 +15,7 @@ async def test_ingest_file(es_client, file):
     2. written to Elasticsearch
     """
 
-    storage_handler = ElasticsearchStorageHandler(es_client=es_client, root_index="redbox-data")
+    storage_handler = ElasticsearchStorageHandler(es_client=es_client, root_index=env.elastic_root_index)
 
     storage_handler.write_item(file)
 

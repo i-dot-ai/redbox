@@ -19,16 +19,28 @@
 
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds-from-desktop">
+      
+      <h1 class="govuk-heading-l govuk-!-margin-top-5">Your documents</h1>
+
+      <p class="govuk-body-l">Manage documents to use with your Redbox.</p>
+      <p class="govuk-body">Redbox generates a response using only the documents you upload. This is different to other Large Language Models (LLM) such as ChatGPT and&nbsp;Claude.</p>
+
+      <div class="iai-doc-retention govuk-!-margin-bottom-5">
+        <img width="32" height="32" src="{{ static('images/icon-30-days.png') }}" loading="lazy" alt=""/>
+        <p class="govuk-body-s govuk-!-margin-bottom-0">Documents will be stored for up to 30 days.</p>
+      </div>
+      
+      
       {{ govukNotificationBanner(
         title="Important",
         text_list=[
-          {"text": "Your documents will be stored for up to 30 days."}
+          {"text": "You can use up to, and including, Official Sensitive documents"}
         ]
       ) }}
 
       {# Mobile docs list #}
       <div class="iai-doclist-mobile">
-        <h1 class="govuk-heading-l govuk-!-margin-bottom-0">Documents</h1>
+        <h2 class="govuk-visually-hidden">Document list</h2>
         <ul class="govuk-!-padding-0">
           {% for file in files %}
             <li class="iai-doclist-mobile__item govuk-!-margin-top-3 govuk-!-padding-3">
@@ -67,58 +79,69 @@
       </div>
 
       {# Desktop docs list #}
-      <table class="govuk-table iai-doclist-desktop">
-        <caption class="govuk-table__caption govuk-table__caption--m">
-          <h1 class="govuk-heading-l govuk-!-margin-bottom-0">Documents</h1>
-        </caption>
-        <thead class="govuk-table__head">
-          <tr class="govuk-table__row">
-            <th scope="col" class="govuk-table__header">File Name</th>
-            <th scope="col" class="govuk-table__header">Uploaded at</th>
-            <th scope="col" class="govuk-table__header">Status</th>
-            <th scope="col" class="govuk-table__header iai-doclist__actions">Actions</th>
-          </tr>
-        </thead>
-        <tbody class="govuk-table__body">
-          {% for file in files %}
+      {% if files %}
+        <table class="govuk-table iai-doclist-desktop">
+          <caption class="govuk-table__caption govuk-table__caption--m">
+            <h2 class="govuk-visually-hidden">Document list</h2>
+          </caption>
+          <thead class="govuk-table__head">
             <tr class="govuk-table__row">
-              <td class="govuk-table__cell govuk-!-padding-top-3">{{ file.name }}</td>
-              <td class="govuk-table__cell govuk-!-padding-top-3">{{ file.created_at | to_user_timezone }}</td>
-              <td class="govuk-table__cell govuk-!-padding-top-3">
-                {% if file.get_status_text() | lower == 'complete' %}
-                  <strong class="govuk-tag govuk-tag--green iai-docs__status govuk-!-margin-top-0">{{ file.get_status_text() }}</strong>
-                {% elif file.get_status_text() | lower == 'deleted' %}
-                  <strong class="govuk-tag govuk-tag--red iai-docs__status govuk-!-margin-top-0">{{file.get_status_text()}}</strong>
-                {% else %}
-                  <strong class="govuk-tag govuk-tag--yellow iai-docs__status govuk-!-margin-top-0" x-data="file-status" data-id="{{file.id}}" x-text="status">{{ file.get_status_text() }}</strong>
-                {% endif %}
-              </td>
-              <td class="govuk-table__cell iai-docs__actions">
-                {% if file.get_status_text() | lower != 'deleted' %}
-                  {# Removed for now until we've validated a user need for this
-                  {{ govukButton(
-                    text="Download" + "<span class=\"govuk-visually-hidden\">" + file.name + "</span>",
-                    href=file.url,
-                    classes="govuk-button--secondary govuk-!-margin-bottom-0",
-                    download=True
-                  ) }}
-                  #}
-                  {{ govukButton(
-                    text="Remove" + "<span class=\"govuk-visually-hidden\">" + file.name + "</span>",
-                    href=url('remove-doc', file.id),
-                    classes="govuk-button--warning govuk-!-margin-bottom-0"
-                  ) }}
-                {% endif %}
-              </td>
+              <th scope="col" class="govuk-table__header">File Name</th>
+              <th scope="col" class="govuk-table__header">Uploaded at</th>
+              <th scope="col" class="govuk-table__header">Status</th>
+              <th scope="col" class="govuk-table__header iai-doclist__actions">Actions</th>
             </tr>
-          {% endfor %}
-        </tbody>
-      </table>
+          </thead>
+          <tbody class="govuk-table__body">
+            {% for file in files %}
+              <tr class="govuk-table__row">
+                <td class="govuk-table__cell govuk-!-padding-top-3">{{ file.name }}</td>
+                <td class="govuk-table__cell govuk-!-padding-top-3">{{ file.created_at | to_user_timezone }}</td>
+                <td class="govuk-table__cell govuk-!-padding-top-3">
+                  {% if file.get_status_text() | lower == 'complete' %}
+                    <strong class="govuk-tag govuk-tag--green iai-docs__status govuk-!-margin-top-0">{{ file.get_status_text() }}</strong>
+                  {% elif file.get_status_text() | lower == 'deleted' %}
+                    <strong class="govuk-tag govuk-tag--red iai-docs__status govuk-!-margin-top-0">{{file.get_status_text()}}</strong>
+                  {% else %}
+                    <strong class="govuk-tag govuk-tag--yellow iai-docs__status govuk-!-margin-top-0" x-data="file-status" data-id="{{file.id}}" x-text="status">{{ file.get_status_text() }}</strong>
+                  {% endif %}
+                </td>
+                <td class="govuk-table__cell iai-docs__actions">
+                  {% if file.get_status_text() | lower != 'deleted' %}
+                    {# Removed for now until we've validated a user need for this
+                    {{ govukButton(
+                      text="Download" + "<span class=\"govuk-visually-hidden\">" + file.name + "</span>",
+                      href=file.url,
+                      classes="govuk-button--secondary govuk-!-margin-bottom-0",
+                      download=True
+                    ) }}
+                    #}
+                    {{ govukButton(
+                      text="Remove" + "<span class=\"govuk-visually-hidden\">" + file.name + "</span>",
+                      href=url('remove-doc', file.id),
+                      classes="govuk-button--warning govuk-!-margin-bottom-0"
+                    ) }}
+                  {% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% endif %}
 
-      {{ govukButton(
-        text="Upload a new document",
-        href=url('upload')
-      ) }}
+      <div class="govuk-button-group">
+        {{ govukButton(
+          text="Add document",
+          href=url('upload'),
+          classes="iai-button--blue"
+        ) }}
+        {% if files %}
+          {{ govukButton(
+            text="Start chat",
+            href=url('chats')
+          ) }}
+        {% endif %}
+      </div>
 
     </div>
   </div>

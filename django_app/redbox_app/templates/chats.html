@@ -66,12 +66,13 @@
           <feedback-buttons class="iai-response-feedback__buttons"></feedback-buttons>
           {{ message_box(
             role = "ai",
-            text = "Thank you for your feedback",
+            text = "Thank you for your feedback.",
             classes = "iai-response-feedback__thumbs-up"
           ) }}
           {{ message_box(
             role = "ai",
-            text = "Ok. Can you let me know what wasn’t accurate? I can refine it again to make it more accurate.",
+            text = "<p>Thank you for your feedback. Can you let me know what wasn’t accurate? I can refine it again to make it more accurate.</p><p>Please <a href=\"mailto:" + contact_email + "?subject=%5BFEEDBACK%5D%20Redbox%20isn%E2%80%99t%20being%20helpful&body=Hi%20Redbox%20Support%2C%0D%0A%0D%0A%5BPlease%20include%20as%20many%20of%20the%20below%20as%20you%20can.%20The%20more%20details%20you%20provide%2C%20the%20more%20we%20can%20do%20to%20improve%20the%20response%20quality%5D%0D%0A%0D%0A1.%20Your%20query%20-%20the%20question%20you%20were%20asking%20(screenshot%20or%20copy%2Fpaste)%0D%0A%0D%0A2.%20Name%20of%20the%20document%20you%20were%20querying%0D%0A%0D%0A3.%20Your%20feedback%20-%20what%20wasn%E2%80%99t%20accurate%3F%20what%20could%E2%80%99ve%20been%20better%3F\"
+            class=\"govuk-link\">email us</a> with a few details on what wasn't accurate.</p>",
             classes = "iai-response-feedback__thumbs-down"
           ) }}
         </div>
@@ -93,17 +94,17 @@
           <button type="submit" class="govuk-button js-send-btn" {% if not streaming.in_use %}data-prevent-double-click="true"{% endif %} data-module="govuk-button">
             Send
           </button>
-    
+
         </form>
 
         <div class="iai-response-loading js-response-loading govuk-!-margin-top-1" tabindex="-1">
           <img class="iai-response-loading__spinner" src="{{ static('images/spinner.gif') }}" alt=""/>
           <p class="iai-response-loading__text govuk-body govuk-!-margin-bottom-0 govuk-!-margin-left-1">Response loading...</p>
         </div>
-    
+
       </chat-controller>
     </div>
-  
+
   </div>
 </div>
 

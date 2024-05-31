@@ -73,7 +73,6 @@ embedding_model_info = populate_embedding_model_info()
 if env.openai_api_key is not None:
     log.info("Creating OpenAI LLM Client")
     llm = ChatLiteLLM(
-        model=env.openai_model,
         streaming=True,
         openai_key=env.openai_api_key,
     )
@@ -88,7 +87,7 @@ elif env.azure_openai_api_key is not None:
     os.environ["OPENAI_API_VERSION"] = env.openai_api_version
 
     llm = ChatLiteLLM(
-        model=env.openai_model,
+        model=env.azure_openai_model,
         streaming=True,
         azure_key=env.azure_openai_api_key,
         api_version=env.openai_api_version,
@@ -99,7 +98,7 @@ elif env.anthropic_api_key is not None:
     log.exception(msg)
     raise ValueError(msg)
 else:
-    msg = f"Unknown LLM model type {env.llm.type}"
+    msg = "Unknown LLM model specified or missing"
     log.exception(msg)
     raise ValueError(msg)
 
@@ -116,7 +115,7 @@ else:
 
 vector_store = ElasticsearchStore(
     es_connection=es,
-    index_name="redbox-data-chunk",
+    index_name=f"{env.elastic_root_index}-chunk",
     embedding=embedding_model,
     strategy=strategy,
     vector_query_field="embedding",

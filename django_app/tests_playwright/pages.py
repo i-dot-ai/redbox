@@ -160,7 +160,7 @@ class DocumentsPage(SignedInBasePage):
         return "Documents - Redbox Copilot"
 
     def navigate_to_upload(self) -> "DocumentUploadPage":
-        self.page.get_by_role("button", name="Upload a new document").click()
+        self.page.get_by_role("button", name="Add document").click()
         return DocumentUploadPage(self.page)
 
     def get_all_document_rows(self) -> list[DocumentRow]:

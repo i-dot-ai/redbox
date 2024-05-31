@@ -39,11 +39,12 @@ class Settings(BaseSettings):
     azure_openai_endpoint: str | None = None
 
     openai_api_version: str = "2023-12-01-preview"
-    openai_model: str = "azure/gpt-35-turbo-16k"
+    azure_openai_model: str = "azure/gpt-35-turbo-16k"
 
     partition_strategy: Literal["auto", "fast", "ocr_only", "hi_res"] = "fast"
 
     elastic: ElasticCloudSettings | ElasticLocalSettings = ElasticLocalSettings()
+    elastic_root_index: str = "redbox-data"
 
     kibana_system_password: str = "redboxpass"
     metricbeat_internal_password: str = "redboxpass"
