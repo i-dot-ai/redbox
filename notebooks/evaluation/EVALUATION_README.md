@@ -45,29 +45,7 @@ We have a basic mlflow setup in the Redbox repo and this seems like a natural pl
 
 
 ### RAG prompt locations
-#### 1. System Prompt
-When the `/chat/rag` endpoint it used, a system prompt can be sent, which will be considered by the LLM. In future we may want to consolidate any system prompt being sent in a message with the backend prompts, but for now it is a source of variation/optimisation
-
-
-
-Below is an example `/chat/rag/` endpoint payload. Notice `"role": "system"` followed by text. You can make the response talk like a pirate if you ask it to here!
-
-```python
-    data = {
-        "message_history": [
-            {
-                "role": "system",
-                "text": "You are a helpful AI Assistant"
-            },
-            {
-                "role": "user",
-                "text": "What is AI?"
-            }
-        ]
-    }
-```
-
-#### 2. Prompts in core.py
+#### 1. Prompts in core.py
 One prompt, the `_core_redbox_prompt` is located in [core.py](../../redbox/llm/prompts/core.py)
 
 
@@ -90,7 +68,7 @@ CORE_REDBOX_PROMPT = PromptTemplate.from_template(_core_redbox_prompt)
 ```
 The _core_redbox_prompt is used in combination with _with_sources_templete in the prompt template in the next section
 
-#### 3. Prompts in chat.py
+#### 2. Prompts in chat.py
 There are 4 prompts located in [chat.py](../../redbox/llm/prompts/chat.py)
 
 Things to experiment with:
@@ -134,7 +112,7 @@ STUFF_DOCUMENT_PROMPT = PromptTemplate.from_template(_stuff_document_template)
 
 [Back to top](#title)
 
-#### 4. LLM being used
+#### 3. LLM being used
 We can also optimise the LLM being used, but please **bear in mind that prompts are per LLM and if you change the LLM you will need to optimise the prompts!**
 
 For now, please stick with gpt-3.5-turbo, as we establish a baseline quality
