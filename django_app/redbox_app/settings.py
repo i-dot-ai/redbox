@@ -171,7 +171,9 @@ CSP_FONT_SRC = (
 )
 CSP_STYLE_SRC = ("'self'",)
 CSP_FRAME_ANCESTORS = ("'none'",)
-CSP_CONNECT_SRC = ["'self'"] + [f"{WEBSOCKET_SCHEME}://{host}/ws/chat/" for host in HOSTS]
+CSP_CONNECT_SRC = (
+    ["'self'"] + [f"ws://{host}/ws/chat/" for host in HOSTS] + [f"wss://{host}/ws/chat/" for host in HOSTS]
+)
 
 # https://pypi.org/project/django-permissions-policy/
 PERMISSIONS_POLICY: dict[str, list] = {
