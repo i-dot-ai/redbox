@@ -4,7 +4,7 @@ from datetime import datetime
 from itertools import islice
 from pathlib import Path
 from time import strptime
-from typing import NamedTuple
+from typing import Any, ClassVar, NamedTuple
 
 from axe_playwright_python.sync_playwright import Axe
 from playwright.sync_api import Page, expect
@@ -17,7 +17,7 @@ logger.setLevel(logging.DEBUG)
 class BasePage(metaclass=ABCMeta):
     # All available rules/categories can be found at https://github.com/dequelabs/axe-core/blob/develop/doc/rule-descriptions.md
     # Can't include all as gov.uk design system violates the "region" rule
-    AXE_OPTIONS = {
+    AXE_OPTIONS: ClassVar[dict[str, Any]] = {
         "runOnly": {
             "type": "tag",
             "values": [

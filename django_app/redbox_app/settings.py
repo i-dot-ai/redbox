@@ -16,6 +16,7 @@ env = environ.Env()
 
 SECRET_KEY = env.str("DJANGO_SECRET_KEY")
 ENVIRONMENT = env.str("ENVIRONMENT")
+WEBSOCKET_SCHEME = env.str("WEBSOCKET_SCHEME", default="ws")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env.bool("DEBUG")
@@ -220,7 +221,7 @@ if HostingEnvironment.is_local():
     ALLOWED_HOSTS = [
         "localhost",
         "127.0.0.1",
-        "0.0.0.0",  # noqa S104
+        "0.0.0.0",  # noqa: S104
     ]  # nosec B104 - don't do this on server!
 else:
     STORAGES = {
@@ -326,15 +327,15 @@ USE_STREAMING = env.bool("USE_STREAMING")
 FILE_EXPIRY_IN_SECONDS = env.int("FILE_EXPIRY_IN_DAYS") * 24 * 60 * 60
 SUPERUSER_EMAIL = env.str("SUPERUSER_EMAIL", None)
 
-# Security classifications
-# https://www.gov.uk/government/publications/government-security-classifications/
-
 
 class Classification(StrEnum):
+    """Security classifications
+    https://www.gov.uk/government/publications/government-security-classifications/"""
+
     OFFICIAL = "Official"
     OFFICIAL_SENSITIVE = "Official Sensitive"
-    SECRET = "Secret"  # noqa S105
-    TOP_SECRET = "Top Secret"  # noqa S105
+    SECRET = "Secret"  # noqa: S105
+    TOP_SECRET = "Top Secret"  # noqa: S105
 
 
 MAX_SECURITY_CLASSIFICATION = Classification[env.str("MAX_SECURITY_CLASSIFICATION")]

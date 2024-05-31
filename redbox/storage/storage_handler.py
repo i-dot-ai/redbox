@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from typing import ClassVar
 from uuid import UUID
 
 from redbox.models import Chunk, File
@@ -14,7 +15,7 @@ class BaseStorageHandler(ABC):
     """
 
     # dict comprehension for lowercase class name to class
-    model_type_map = {v.__name__.lower(): v for v in [Chunk, File]}
+    model_type_map: ClassVar = {v.__name__.lower(): v for v in [Chunk, File]}
 
     def get_model_by_model_type(self, model_type):
         return self.model_type_map[model_type.lower()]
