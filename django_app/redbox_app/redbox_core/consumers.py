@@ -10,6 +10,7 @@ from websockets.client import connect
 from yarl import URL
 
 logger = logging.getLogger(__name__)
+logger.info("WEBSOCKET_SCHEME is: %s", settings.WEBSOCKET_SCHEME)
 
 
 class ChatConsumer(AsyncWebsocketConsumer):
