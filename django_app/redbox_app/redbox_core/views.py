@@ -167,7 +167,7 @@ def remove_doc_view(request, doc_id: uuid):
 
 
 @login_required
-def chats_view(request: HttpRequest, chat_id: uuid = None):
+def chats_view(request: HttpRequest, chat_id: uuid.UUID | None = None):
     chat_history = ChatHistory.objects.filter(users=request.user).order_by("-created_at")
 
     messages = []

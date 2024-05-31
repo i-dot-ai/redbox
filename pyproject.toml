@@ -106,15 +106,14 @@ select = [
     "COM",
     "DJ",
     "DTZ",
-#    "EM",
+    "EM",
     "EXE",
-#*    "FUTB",
     "ICN",
-#    "ISC",
+    "ISC",
     "LOG",
     "NPY",
     "PD",
-#    "PGH",
+    "PGH",
     "PIE",
 #*    "PL",
     "PT",
@@ -122,7 +121,7 @@ select = [
     "PYI",
     "RET",
     "RSE",
-#*    "RUF",
+    "RUF",
     "SIM",
     "SLF",
     "TCH",
@@ -142,3 +141,5 @@ ignore = ["COM812", "DJ001", "RET505", "RET508"]
 "worker/*" = ["B008"]
 "redbox/*" = ["TCH003"]
 "redbox/tests/*" = ["ARG001"]
+"*/admin.py" = ["RUF012"]
+"*/models.py" = ["RUF012"]
