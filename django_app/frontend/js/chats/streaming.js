@@ -133,13 +133,13 @@ class ChatController extends HTMLElement {
 
     connectedCallback() {
 
-        const sendButton = this.querySelector('.js-send-btn');
+        const messageForm = this.querySelector('.js-message-input');
         const textArea = /** @type {HTMLInputElement | null} */ (this.querySelector('.js-user-text'));
         const messageContainer = this.querySelector('.js-message-container');
         const insertPosition = this.querySelector('.js-response-feedback');
         const feedbackButtons = /** @type {HTMLElement | null} */ (this.querySelector('feedback-buttons'));
 
-        sendButton?.addEventListener('click', (evt) => {
+        messageForm?.addEventListener('submit', (evt) => {
             
             evt.preventDefault();
             const userText = textArea?.value;
