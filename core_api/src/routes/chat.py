@@ -20,7 +20,7 @@ from redbox.llm.prompts.chat import (
     WITH_SOURCES_PROMPT,
 )
 from redbox.model_db import MODEL_PATH
-from redbox.models import EmbeddingModelInfo, Settings
+from redbox.models import Settings
 from redbox.models.chat import ChatRequest, ChatResponse, SourceDocument
 
 # === Logging ===
@@ -45,21 +45,8 @@ chat_app = FastAPI(
     openapi_url="/openapi.json",
 )
 
-log.info("Loading embedding model from environment: %s", env.embedding_model)
 embedding_model = SentenceTransformerEmbeddings(model_name=env.embedding_model, cache_folder=MODEL_PATH)
 log.info("Loaded embedding model from environment: %s", env.embedding_model)
-
-
-def populate_embedding_model_info() -> EmbeddingModelInfo:
-    test_text = "This is a test sentence."
-    embedding = embedding_model.embed_documents([test_text])[0]
-    return EmbeddingModelInfo(
-        embedding_model=env.embedding_model,
-        vector_size=len(embedding),
-    )
-
-
-embedding_model_info = populate_embedding_model_info()
 
 
 # === LLM setup ===
