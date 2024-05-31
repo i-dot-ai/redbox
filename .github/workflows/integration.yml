@@ -52,13 +52,16 @@ jobs:
         mkdir -p data/elastic/
         chmod -R 777 data/
         cp .env.integration .env
-        echo OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }} >> .env
+        echo AZURE_OPENAI_ENDPOINT=${{ secrets.AZURE_OPENAI_ENDPOINT }} >> .env
+        echo AZURE_OPENAI_API_KEY=${{ secrets.AZURE_OPENAI_API_KEY }} >> .env
+        docker compose up -d --wait elasticsearch
         docker compose up -d --wait core-api worker
         
 
     - name: Wait 60s for services to be ready
       run: |
         sleep 60
+        docker ps
 
     - name: Test integration with pytest
       run: |
@@ -66,6 +69,7 @@ jobs:
         pip install pytest
         pip install boto3
         pip install python-jose
+        pip install websockets
         python -m pytest tests
 
     - name: notify slack failure
@@ -129,3 +133,7 @@ jobs:
       env:
         SLACK_WEBHOOK_URL: ${{ secrets.SLACK_NOTIFICATIONS_TOKEN }}
         SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
+
+    - name: Dump logs
+      if: failure()
+      uses: jwalton/gh-docker-logs@v2

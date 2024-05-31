@@ -27,7 +27,7 @@ publisher = broker.publisher(list=env.embed_queue_name)
 @asynccontextmanager
 async def lifespan(context: ContextRepo):
     es = env.elasticsearch_client()
-    storage_handler = ElasticsearchStorageHandler(es_client=es, root_index="redbox-data")
+    storage_handler = ElasticsearchStorageHandler(es_client=es, root_index=env.elastic_root_index)
     model = SentenceTransformerDB(env.embedding_model)
 
     context.set_global("storage_handler", storage_handler)

@@ -53,13 +53,13 @@ pytest-asyncio = "^0.23.6"
 boto3-stubs = "^1.34.106"
 moto = {extras = ["s3"], version = "^5.0.5"}
 httpx = "^0.27.0"
+websockets = "^12.0"
 pyarrow = "^16.1.0"
 deepeval = "^0.21.48"
 minio = "^7.2.7"
 python-jose="^3.3.0"
 jsonlines="^4.0.0"
 ipywidgets="^8.1.2"
-
 
 
 [tool.poetry.group.ai.dependencies]
@@ -112,15 +112,14 @@ select = [
     "COM",
     "DJ",
     "DTZ",
-#    "EM",
+    "EM",
     "EXE",
-#*    "FUTB",
     "ICN",
-#    "ISC",
+    "ISC",
     "LOG",
     "NPY",
     "PD",
-#    "PGH",
+    "PGH",
     "PIE",
 #*    "PL",
     "PT",
@@ -128,7 +127,7 @@ select = [
     "PYI",
     "RET",
     "RSE",
-#*    "RUF",
+    "RUF",
     "SIM",
     "SLF",
     "TCH",
@@ -148,3 +147,5 @@ ignore = ["COM812", "DJ001", "RET505", "RET508"]
 "worker/*" = ["B008"]
 "redbox/*" = ["TCH003"]
 "redbox/tests/*" = ["ARG001"]
+"*/admin.py" = ["RUF012"]
+"*/models.py" = ["RUF012"]

@@ -66,7 +66,7 @@ def homepage_view(request):
 
 @login_required
 def documents_view(request):
-    files = File.objects.filter(user=request.user).order_by("-created_at")
+    files = File.objects.filter(user=request.user).exclude(status=StatusEnum.deleted).order_by("-created_at")
 
     return render(
         request,
@@ -167,7 +167,7 @@ def remove_doc_view(request, doc_id: uuid):
 
 
 @login_required
-def chats_view(request: HttpRequest, chat_id: uuid = None):
+def chats_view(request: HttpRequest, chat_id: uuid.UUID | None = None):
     chat_history = ChatHistory.objects.filter(users=request.user).order_by("-created_at")
 
     messages = []
@@ -179,6 +179,7 @@ def chats_view(request: HttpRequest, chat_id: uuid = None):
         "messages": messages,
         "chat_history": chat_history,
         "streaming": {"in_use": settings.USE_STREAMING, "endpoint": str(endpoint)},
+        "contact_email": settings.CONTACT_EMAIL,
     }
 
     return render(

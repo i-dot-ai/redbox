@@ -2,7 +2,7 @@ import logging
 from abc import ABCMeta, abstractmethod
 from itertools import islice
 from pathlib import Path
-from typing import NamedTuple
+from typing import Any, ClassVar, NamedTuple
 
 from _settings import BASE_URL
 from axe_playwright_python.sync_playwright import Axe
@@ -16,7 +16,7 @@ logger.setLevel(logging.DEBUG)
 class BasePage(metaclass=ABCMeta):
     # All available rules/categories can be found at https://github.com/dequelabs/axe-core/blob/develop/doc/rule-descriptions.md
     # Can't include all as gov.uk design system violates the "region" rule
-    AXE_OPTIONS = {
+    AXE_OPTIONS: ClassVar[dict[str, Any]] = {
         "runOnly": {
             "type": "tag",
             "values": [
@@ -140,9 +140,9 @@ class SignInConfirmationPage(BasePage):
     def get_expected_page_title(self) -> str:
         return "Sign in - confirmation - Redbox Copilot"
 
-    def navigate_to_home_page(self) -> "HomePage":
-        self.page.get_by_role("button", name="Sign in", exact=True).click()
-        return HomePage(self.page)
+    def navigate_to_documents_page(self) -> "DocumentsPage":
+        self.page.get_by_role("button", name="Start", exact=True).click()
+        return DocumentsPage(self.page)
 
 
 class HomePage(SignedInBasePage):
@@ -160,7 +160,7 @@ class DocumentsPage(SignedInBasePage):
         return "Documents - Redbox Copilot"
 
     def navigate_to_upload(self) -> "DocumentUploadPage":
-        self.page.get_by_role("button", name="Upload a new document").click()
+        self.page.get_by_role("button", name="Add document").click()
         return DocumentUploadPage(self.page)
 
     def get_all_document_rows(self) -> list[DocumentRow]:
@@ -219,7 +219,8 @@ class SupportPage(BasePage):
 
 
 def batched(iterable, n):
-    # TODO: Use library version in Python 3.12: https://docs.python.org/3/library/itertools.html#itertools.batched
+    # TODO (@brunns): Use library version when we upgrade to Python 3.12.
+    # https://docs.python.org/3/library/itertools.html#itertools.batched
     if n < 1:
         message = "n must be at least one"
         raise ValueError(message)

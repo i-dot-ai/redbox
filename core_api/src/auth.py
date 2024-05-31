@@ -1,7 +1,7 @@
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import Depends, HTTPException
+from fastapi import Depends, HTTPException, WebSocket, WebSocketException
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError, jwt
 from starlette import status
@@ -22,3 +22,12 @@ async def get_user_uuid(token: Annotated[HTTPAuthorizationCredentials, Depends(h
             headers={"WWW-Authenticate": "Bearer"},
         )
         raise credentials_exception from e
+
+
+async def get_ws_user_uuid(websocket: WebSocket) -> UUID:
+    try:
+        token = dict(websocket.headers)["authorization"]
+        payload = jwt.get_unverified_claims(token.split(" ", 1)[-1])
+        return UUID(payload["user_uuid"])
+    except (KeyError, JWTError) as e:
+        raise WebSocketException(code=403, reason="authorized") from e

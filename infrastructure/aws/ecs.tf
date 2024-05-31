@@ -5,6 +5,7 @@ locals {
   environment_variables = {
     "ELASTIC__API_KEY" : var.elastic_api_key,
     "ELASTIC__CLOUD_ID" : var.cloud_id,
+    "ELASTIC_ROOT_INDEX": "redbox-data-${terraform.workspace}",
     "OBJECT_STORE" : "s3",
     "BUCKET_NAME" : aws_s3_bucket.user_data_bucket.bucket,
     "EMBEDDING_MODEL" : "all-mpnet-base-v2",
@@ -25,8 +26,11 @@ locals {
     "DJANGO_SETTINGS_MODULE" : "redbox_app.settings",
     "DEBUG" : true,
     "AWS_REGION" : var.region,
-    "OPENAI_API_KEY" : var.openai_api_key,
     "FROM_EMAIL" : var.from_email,
+    "OPENAI_API_VERSION": var.openai_api_version,
+    "AZURE_OPENAI_MODEL": var.azure_openai_model,
+    "AZURE_OPENAI_ENDPOINT": var.azure_openai_endpoint,
+    "AZURE_OPENAI_API_KEY": var.azure_openai_api_key
     "GOVUK_NOTIFY_PLAIN_EMAIL_TEMPLATE_ID" : var.govuk_notify_plain_email_template_id
     "GOVUK_NOTIFY_API_KEY" : var.govuk_notify_api_key,
     "EMAIL_BACKEND_TYPE" : "GOVUKNOTIFY",
@@ -34,7 +38,9 @@ locals {
     "DJANGO_LOG_LEVEL" : "DEBUG",
     "COMPRESSION_ENABLED" : true,
     "CONTACT_EMAIL": var.contact_email,
-    "FILE_EXPIRY_IN_DAYS": 30
+    "FILE_EXPIRY_IN_DAYS": 30,
+    "MAX_SECURITY_CLASSIFICATION": "OFFICIAL_SENSITIVE",
+    "WEBSOCKET_SCHEME": "wss"
   }
 }
 
