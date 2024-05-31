@@ -142,7 +142,7 @@ class ChatController extends HTMLElement {
         messageForm?.addEventListener('submit', (evt) => {
             
             evt.preventDefault();
-            const userText = textArea?.value;
+            const userText = textArea?.value.trim();
             if (!textArea || !userText) {
                 return;
             }
