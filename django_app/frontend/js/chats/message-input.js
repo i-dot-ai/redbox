@@ -9,7 +9,7 @@ class MessageInput extends HTMLElement {
         textarea?.addEventListener('keypress', (evt) => {
             if (evt.key === 'Enter' && !evt.shiftKey) {
                 evt.preventDefault();
-                if (textarea.value) {
+                if (textarea.value.trim()) {
                     this.closest('form')?.requestSubmit();
                 }
             }
