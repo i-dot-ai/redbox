@@ -1,38 +1,33 @@
-import logging
 import os
 import subprocess
 from pathlib import Path
 
 from _settings import BASE_URL
-from dotenv import load_dotenv
-from playwright.sync_api import Page, expect
+from playwright.sync_api import Page
+from tests_playwright.pages import HomePage, LandingPage, SignInConfirmationPage
+from yarl import URL
 
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
-
+EMAIL_ADDRESS = os.environ["USER_EMAIL"]
 DJANGO_ROOT = Path(__file__).parents[1]
-load_dotenv(dotenv_path=DJANGO_ROOT / ".env", override=True)
 
 
-def sign_in(page: Page):
-    email_address = os.environ["USER_EMAIL"]
+def sign_in(page: Page) -> "HomePage":
+    # Landing page
+    landing_page = LandingPage(page)
 
-    if not email_address:
-        message = "USER_EMAIL not set in your .env - this must be set to the email address you use for signing in."
-        raise ValueError(message)
+    # Sign in
+    sign_in_page = landing_page.navigate_to_sign_in()
+    sign_in_page.email = EMAIL_ADDRESS
+    sign_in_page.continue_()
 
-    # Sign in page
-    page.goto(f"{BASE_URL / 'sign-in'}")
-    expect(page.get_by_text("Redbox Copilot")).to_be_visible()
-    page.get_by_label("Email Address").type(email_address)
-    page.get_by_text("Continue").click()
+    # Use magic link
+    magic_link = get_magic_link(EMAIL_ADDRESS, DJANGO_ROOT)
+    sign_in_confirmation_page = SignInConfirmationPage(page, magic_link)
+    return sign_in_confirmation_page.navigate_to_documents_page()
 
-    # Get magic link
+
+def get_magic_link(email_address: str, django_root: Path) -> URL:
     command = ["poetry", "run", "python", "manage.py", "show_magiclink_url", email_address]
-    result = subprocess.run(command, capture_output=True, text=True, cwd=DJANGO_ROOT)  # noqa: S603
+    result = subprocess.run(command, capture_output=True, text=True, cwd=django_root)  # noqa: S603
     magic_link = result.stdout.strip().lstrip("/")
-
-    # Complete sign-in and verify
-    page.goto(f"{BASE_URL / magic_link}")
-    page.get_by_role("button").click()
-    expect(page.get_by_text("Sign out")).to_be_visible()
+    return BASE_URL / magic_link
