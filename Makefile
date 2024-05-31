@@ -3,6 +3,8 @@
 
 .PHONY: app reqs
 
+BACKUP_ENV_FILENAME = ".env.$(shell date +"%Y-%m-%d-%H:%M:%S").backup"
+
 reqs:
 	poetry install
 
@@ -37,17 +39,15 @@ test-django:
 	docker compose up -d --wait db minio
 	docker compose run django-app venv/bin/pytest tests/ --ds redbox_app.settings -v --cov=redbox_app.redbox_core --cov-fail-under 80 -o log_cli=true
 
-test-integration:
-	docker compose down
-	cp .env .env.backup
+test-integration: stop
+	cp .env $(BACKUP_ENV_FILENAME)
 	cp .env.integration .env
-	docker compose build core-api worker minio
-	docker compose up -d core-api worker minio
+	docker compose up -d core-api db minio elasticsearch worker core-api django-app
 	poetry install --no-root --no-ansi --with dev --without ai,api,worker
 	sleep 10
 	poetry run pytest tests
-	cp .env.backup .env
-	rm .env.backup
+	cp $(BACKUP_ENV_FILENAME) .env
+	rm $(BACKUP_ENV_FILENAME)
 
 collect-static:
 	docker compose run django-app venv/bin/django-admin collectstatic --noinput

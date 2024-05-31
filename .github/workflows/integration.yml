@@ -64,7 +64,7 @@ jobs:
 
     - name: Test integration with pytest
       run: |
-        poetry install --with dev
+        poetry install --with dev --without ai,api,worker,docs
         python -m pytest tests
 
     - name: notify slack failure

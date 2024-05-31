@@ -4,8 +4,9 @@ import subprocess
 from pathlib import Path
 
 from playwright.sync_api import Page
-from tests_playwright.pages import LandingPage, SignInConfirmationPage
 from yarl import URL
+
+from tests.pages import LandingPage, SignInConfirmationPage
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -19,7 +20,7 @@ def test_user_journey(page: Page):
     create_user(EMAIL_ADDRESS)
 
     # Landing page
-    landing_page = LandingPage(page)
+    landing_page = LandingPage(page, BASE_URL)
 
     # Sign in
     sign_in_page = landing_page.navigate_to_sign_in()
@@ -53,7 +54,7 @@ def test_user_journey(page: Page):
 
 def test_support_pages(page: Page):
     # Landing page
-    landing_page = LandingPage(page)
+    landing_page = LandingPage(page, BASE_URL)
 
     # Privacy page
     landing_page.navigate_to_privacy_page()
