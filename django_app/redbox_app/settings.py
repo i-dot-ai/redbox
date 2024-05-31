@@ -144,6 +144,13 @@ ACCOUNT_EMAIL_VERIFICATION = "none"
 LOGIN_REDIRECT_URL = "homepage"
 LOGIN_URL = "sign-in"
 
+HOSTS = [
+    "redbox-dev.ai.cabinetoffice.gov.uk",
+    "redbox-preprod.ai.cabinetoffice.gov.uk",
+    "redbox.ai.cabinetoffice.gov.uk",
+]
+
+
 # CSP settings https://content-security-policy.com/
 # https://django-csp.readthedocs.io/
 CSP_DEFAULT_SRC = (
@@ -164,6 +171,7 @@ CSP_FONT_SRC = (
 )
 CSP_STYLE_SRC = ("'self'",)
 CSP_FRAME_ANCESTORS = ("'none'",)
+CSP_CONNECT_SRC = ["'self'"] + [WEBSOCKET_SCHEME + "://" + host for host in HOSTS]
 
 # https://pypi.org/project/django-permissions-policy/
 PERMISSIONS_POLICY: dict[str, list] = {
@@ -201,6 +209,7 @@ AWS_STORAGE_BUCKET_NAME = BUCKET_NAME  # this duplication is required for django
 OBJECT_STORE = env.str("OBJECT_STORE")
 AWS_S3_FILE_OVERWRITE = False  # allows users to have duplicate file names
 
+
 if HostingEnvironment.is_local():
     AWS_S3_SECRET_ACCESS_KEY = env.str("AWS_SECRET_KEY")
     AWS_ACCESS_KEY_ID = env.str("AWS_ACCESS_KEY")
@@ -234,12 +243,7 @@ else:
     }
 
     LOCALHOST = socket.gethostbyname(socket.gethostname())
-    ALLOWED_HOSTS = [
-        LOCALHOST,
-        "redbox-dev.ai.cabinetoffice.gov.uk",
-        "redbox-preprod.ai.cabinetoffice.gov.uk",
-        "redbox.ai.cabinetoffice.gov.uk",
-    ]
+    ALLOWED_HOSTS = [LOCALHOST, *HOSTS]
 
     # https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Strict-Transport-Security
     # Mozilla guidance max-age 2 years

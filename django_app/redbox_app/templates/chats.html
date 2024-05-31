@@ -79,7 +79,7 @@
 
       </div>
 
-      <form class="iai-new-message js-send-message" action="/post-message/" method="post">
+      <form class="iai-new-message js-message-input" action="/post-message/" method="post">
 
         <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}"/>
         {% if chat_id %}<input type="hidden" name="session-id" value="{{ chat_id }}"/>{% endif %}
@@ -88,22 +88,23 @@
           <label class="govuk-label" for="message">
             Write a message
           </label>
-          <textarea class="govuk-textarea js-user-text" id="message" name="message" rows="5" required></textarea>
+          <message-input>
+            <textarea class="govuk-textarea js-user-text" id="message" name="message" rows="5" required></textarea>
+          </message-input>
         </div>
 
-          <button type="submit" class="govuk-button js-send-btn" {% if not streaming.in_use %}data-prevent-double-click="true"{% endif %} data-module="govuk-button">
-            Send
-          </button>
+        <button type="submit" class="govuk-button" {% if not streaming.in_use %}data-prevent-double-click="true"{% endif %} data-module="govuk-button">
+          Send
+        </button>
 
-        </form>
+      </form>
 
-        <div class="iai-response-loading js-response-loading govuk-!-margin-top-1" tabindex="-1">
-          <img class="iai-response-loading__spinner" src="{{ static('images/spinner.gif') }}" alt=""/>
-          <p class="iai-response-loading__text govuk-body govuk-!-margin-bottom-0 govuk-!-margin-left-1">Response loading...</p>
-        </div>
+      <div class="iai-response-loading js-response-loading govuk-!-margin-top-1" tabindex="-1">
+        <img class="iai-response-loading__spinner" src="{{ static('images/spinner.gif') }}" alt=""/>
+        <p class="iai-response-loading__text govuk-body govuk-!-margin-bottom-0 govuk-!-margin-left-1">Response loading...</p>
+      </div>
 
-      </chat-controller>
-    </div>
+    </chat-controller>
 
   </div>
 </div>
@@ -114,10 +115,12 @@
   {% compress js %}
     <script src="{{ static('js/chats/markdown.js') }}"></script>
     <script src="{{ static('js/chats/feedback.js') }}"></script>
+    <script src="{{ static('js/chats/message-input.js') }}"></script>
   {% endcompress %}
 {% else %}
   <script src="{{ static('js/chats/markdown.js') }}"></script>
   <script src="{{ static('js/chats/feedback.js') }}"></script>
+  <script src="{{ static('js/chats/message-input.js') }}"></script>
 {% endif %}
 
 

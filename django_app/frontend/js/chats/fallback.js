@@ -14,9 +14,9 @@
     }
 
     // show loading message when button is clicked
-    document.querySelector('.js-send-btn')?.addEventListener('click', (evt) => {
+    document.querySelector('.js-message-input')?.addEventListener('submit', (evt) => {      
         let textBox = /** @type {HTMLInputElement} */ (document.querySelector('.js-user-text'));
-        if (!textBox.value) {
+        if (!textBox.value.trim()) {
             return;
         }
         const loadingMessage = /** @type {HTMLElement} */ (document.querySelector('.js-response-loading'));

@@ -24,7 +24,7 @@ locals {
     "CORE_API_PORT" : 5002,
     "ENVIRONMENT" : upper(terraform.workspace),
     "DJANGO_SETTINGS_MODULE" : "redbox_app.settings",
-    "DEBUG" : true,
+    "DEBUG" : terraform.workspace == "dev",
     "AWS_REGION" : var.region,
     "FROM_EMAIL" : var.from_email,
     "OPENAI_API_VERSION": var.openai_api_version,
