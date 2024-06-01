@@ -173,7 +173,7 @@ def chats_view(request: HttpRequest, chat_id: uuid.UUID | None = None):
     messages = []
     if chat_id:
         messages = ChatMessage.objects.filter(chat_history__id=chat_id).order_by("created_at")
-    endpoint = URL.build(scheme="ws", host=request.get_host(), path=r"/ws/chat/")
+    endpoint = URL.build(scheme=settings.WEBSOCKET_SCHEME, host=request.get_host(), path=r"/ws/chat/")
     context = {
         "chat_id": chat_id,
         "messages": messages,
