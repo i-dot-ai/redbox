@@ -31,7 +31,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             {"role": message.role, "text": message.text} for message in session_messages
         ]
         url = (
-            URL.build(scheme=settings.WEBSOCKET_SCHEME, host=settings.CORE_API_HOST, port=settings.CORE_API_PORT)
+            URL.build(scheme="ws", host=settings.CORE_API_HOST, port=settings.CORE_API_PORT)
             / "chat/rag"
         )
         async with connect(str(url), extra_headers={"Authorization": user.get_bearer_token()}) as websocket:
