@@ -1,25 +1,17 @@
 # mypy: ignore-errors
 
 import socket
-from enum import StrEnum, auto
 from pathlib import Path
 
 import environ
 from dotenv import load_dotenv
 from storages.backends import s3boto3
 
+from setting_enums import Environment, Classification
+
 load_dotenv()
 
 env = environ.Env()
-
-
-class Environment(StrEnum):
-    LOCAL = auto()
-    INTEGRATION = auto()
-    DEV = auto()
-    PREPROD = auto()
-    PROD = auto()
-
 
 SECRET_KEY = env.str("DJANGO_SECRET_KEY")
 ENVIRONMENT = Environment[env.str("ENVIRONMENT")]
@@ -151,12 +143,6 @@ ACCOUNT_EMAIL_VERIFICATION = "none"
 LOGIN_REDIRECT_URL = "homepage"
 LOGIN_URL = "sign-in"
 
-HOST = (
-    "redbox.ai.cabinetoffice.gov.uk"
-    if ENVIRONMENT == "prod"
-    else f"redbox-{ENVIRONMENT.lower()}.ai.cabinetoffice.gov.uk"
-)
-
 
 # CSP settings https://content-security-policy.com/
 # https://django-csp.readthedocs.io/
@@ -178,7 +164,7 @@ CSP_FONT_SRC = (
 )
 CSP_STYLE_SRC = ("'self'",)
 CSP_FRAME_ANCESTORS = ("'none'",)
-CSP_CONNECT_SRC = ["'self'", f"wss://{HOST}/ws/chat/"]
+CSP_CONNECT_SRC = ["'self'", f"wss://{ENVIRONMENT.hosts[0]}/ws/chat/"]
 
 # https://pypi.org/project/django-permissions-policy/
 PERMISSIONS_POLICY: dict[str, list] = {
@@ -217,7 +203,7 @@ OBJECT_STORE = env.str("OBJECT_STORE")
 AWS_S3_FILE_OVERWRITE = False  # allows users to have duplicate file names
 
 
-if ENVIRONMENT is Environment.LOCAL:
+if ENVIRONMENT.is_local():
     AWS_S3_SECRET_ACCESS_KEY = env.str("AWS_SECRET_KEY")
     AWS_ACCESS_KEY_ID = env.str("AWS_ACCESS_KEY")
     MINIO_HOST = env.str("MINIO_HOST")
@@ -243,9 +229,6 @@ else:
         },
     }
 
-    LOCALHOST = socket.gethostbyname(socket.gethostname())
-    ALLOWED_HOSTS = [LOCALHOST, *HOSTS]
-
     # https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Strict-Transport-Security
     # Mozilla guidance max-age 2 years
     SECURE_HSTS_SECONDS = 2 * 365 * 24 * 60 * 60
@@ -253,11 +236,11 @@ else:
     SESSION_COOKIE_SECURE = True
 
 # Set ALLOWED_HOSTS
-if ENVIRONMENT in [Environment.LOCAL, Environment.INTEGRATION]:  # Test environments
+if ENVIRONMENT.is_test:  # Test environments
     ALLOWED_HOSTS = ["localhost", "127.0.0.1", "0.0.0.0"]  # noqa: S104 nosec: B104: Not in prod
 else:
     LOCALHOST = socket.gethostbyname(socket.gethostname())
-    ALLOWED_HOSTS = [LOCALHOST, HOST]
+    ALLOWED_HOSTS = [LOCALHOST, *ENVIRONMENT.hosts]
 
 
 DATABASES = {
@@ -338,16 +321,4 @@ MAGIC_LINK = {
 USE_STREAMING = env.bool("USE_STREAMING")
 FILE_EXPIRY_IN_SECONDS = env.int("FILE_EXPIRY_IN_DAYS") * 24 * 60 * 60
 SUPERUSER_EMAIL = env.str("SUPERUSER_EMAIL", None)
-
-
-class Classification(StrEnum):
-    """Security classifications
-    https://www.gov.uk/government/publications/government-security-classifications/"""
-
-    OFFICIAL = "Official"
-    OFFICIAL_SENSITIVE = "Official Sensitive"
-    SECRET = "Secret"  # noqa: S105
-    TOP_SECRET = "Top Secret"  # noqa: S105
-
-
 MAX_SECURITY_CLASSIFICATION = Classification[env.str("MAX_SECURITY_CLASSIFICATION")]
