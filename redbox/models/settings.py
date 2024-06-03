@@ -6,6 +6,8 @@ from elasticsearch import Elasticsearch
 from pydantic import BaseModel
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+from .secrets_manager import get_secrets
+
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger()
 
@@ -88,8 +90,13 @@ class Settings(BaseSettings):
     use_streaming: bool = False
     compression_enabled: bool = True
     superuser_email: str | None = None
+    aws_secrets_manager_key: str | None = None
+    # TODO if secrets manager then load keys from secret store
+    secret_storage: str | None = None
 
-    model_config = SettingsConfigDict(env_file=".env", env_nested_delimiter="__", extra="allow")
+    model_config = SettingsConfigDict(
+        env_file=".env", env_nested_delimiter="__", extra="allow"
+    )
 
     def elasticsearch_client(self) -> Elasticsearch:
         if isinstance(self.elastic, ElasticLocalSettings):
@@ -158,3 +165,26 @@ class Settings(BaseSettings):
     @property
     def redis_url(self) -> str:
         return f"redis://{self.redis_host}:{self.redis_port}/"
+
+
+# TODO make this work and not just a concept
+def load_secrets():
+    settings = Settings()
+
+    if settings.secret_storage == "secrets_manager":
+        sensitive_settings = [
+            "anthropic_api_key",
+            "openai_api_key",
+            "azure_openai_api_key",
+            "gov_notify_api_key",
+        ]
+        # Include? "kibana_system_password", "metricbeat_internal_password", "filebeat_internal_password", "heartbeat_internal_password", "monitoring_internal_password", "beats_system_password", "aws_access_key", "aws_secret_key"
+
+        loaded_secrets = get_secrets(
+            settings.aws_secrets_manager_key, settings.aws_region
+        )
+        for setting in sensitive_settings:
+            param_name = setting.upper()  # TODO get value from settings
+            if param_name and param_name in loaded_secrets:
+                secret_value = loaded_secrets.get(param_name)
+                setattr(settings, setting, secret_value)

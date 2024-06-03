@@ -9,12 +9,23 @@ from dotenv import load_dotenv
 from storages.backends import s3boto3
 
 from .hosting_environment import HostingEnvironment
+from .secrets_manager import get_secrets
 
 load_dotenv()
 
 env = environ.Env()
 
-SECRET_KEY = env.str("DJANGO_SECRET_KEY")
+region = env.str("AWS_REGION")
+
+if env.str("SECRET_STORAGE") == "secrets_manager":
+    secret_envs = get_secrets(env.str("AWS_SECRETS_MANAGER_KEY"), region)
+    django_secret_key = secret_envs.get("DJANGO_SECRET_KEY")
+    db_password = secret_envs.get("POSTGRES_PASSWORD")
+else:
+    django_secret_key = env.str("DJANGO_SECRET_KEY")
+    db_password = env.str("POSTGRES_PASSWORD")
+
+SECRET_KEY = django_secret_key
 ENVIRONMENT = env.str("ENVIRONMENT")
 WEBSOCKET_SCHEME = env.str("WEBSOCKET_SCHEME", default="ws")
 
@@ -257,7 +268,7 @@ DATABASES = {
         "ENGINE": "django.db.backends.postgresql",
         "NAME": env.str("POSTGRES_DB"),
         "USER": env.str("POSTGRES_USER"),
-        "PASSWORD": env.str("POSTGRES_PASSWORD"),
+        "PASSWORD": db_password,
         "HOST": env.str("POSTGRES_HOST"),
         "PORT": "5432",
     }
@@ -267,7 +278,9 @@ LOG_LEVEL = env.str("DJANGO_LOG_LEVEL", "WARNING")
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
-    "formatters": {"verbose": {"format": "%(asctime)s %(levelname)s %(module)s: %(message)s"}},
+    "formatters": {
+        "verbose": {"format": "%(asctime)s %(levelname)s %(module)s: %(message)s"}
+    },
     "handlers": {
         "file": {
             "level": LOG_LEVEL,
@@ -308,7 +321,9 @@ elif EMAIL_BACKEND_TYPE == "CONSOLE":
 elif EMAIL_BACKEND_TYPE == "GOVUKNOTIFY":
     EMAIL_BACKEND = "django_gov_notify.backends.NotifyEmailBackend"
     GOVUK_NOTIFY_API_KEY = env.str("GOVUK_NOTIFY_API_KEY")
-    GOVUK_NOTIFY_PLAIN_EMAIL_TEMPLATE_ID = env.str("GOVUK_NOTIFY_PLAIN_EMAIL_TEMPLATE_ID")
+    GOVUK_NOTIFY_PLAIN_EMAIL_TEMPLATE_ID = env.str(
+        "GOVUK_NOTIFY_PLAIN_EMAIL_TEMPLATE_ID"
+    )
 else:
     message = f"Unknown EMAIL_BACKEND_TYPE of {EMAIL_BACKEND_TYPE}"
     raise ValueError(message)
