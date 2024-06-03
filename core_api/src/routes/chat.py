@@ -208,7 +208,7 @@ async def rag_chat_streamed(websocket: WebSocket):
             await websocket.send_json({"resource_type": "text", "data": event["data"]["chunk"].content})
         elif kind == "on_chat_model_end":
             await websocket.send_json({"resource_type": "end"})
-        elif kind == "on_retriever_end":
+        elif kind == "on_chain_stream":
             source_documents = [
                 jsonable_encoder(
                     SourceDocument(
@@ -217,7 +217,7 @@ async def rag_chat_streamed(websocket: WebSocket):
                         page_numbers=document.metadata.get("page_numbers"),
                     )
                 )
-                for document in event["data"]["output"]["documents"]
+                for document in event["data"]["chunk"].get("input_documents", [])
             ]
             await websocket.send_json({"resource_type": "documents", "data": source_documents})
 

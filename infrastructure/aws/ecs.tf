@@ -34,13 +34,12 @@ locals {
     "GOVUK_NOTIFY_PLAIN_EMAIL_TEMPLATE_ID" : var.govuk_notify_plain_email_template_id
     "GOVUK_NOTIFY_API_KEY" : var.govuk_notify_api_key,
     "EMAIL_BACKEND_TYPE" : "GOVUKNOTIFY",
-    "USE_STREAMING" : false,
+    "USE_STREAMING" : true,
     "DJANGO_LOG_LEVEL" : "DEBUG",
     "COMPRESSION_ENABLED" : true,
     "CONTACT_EMAIL": var.contact_email,
     "FILE_EXPIRY_IN_DAYS": 30,
     "MAX_SECURITY_CLASSIFICATION": "OFFICIAL_SENSITIVE",
-    "WEBSOCKET_SCHEME": "wss"
   }
 }
 
@@ -90,17 +89,20 @@ resource "aws_service_discovery_service" "service_discovery_service" {
 }
 
 module "django-app" {
-  memory             = 4096
-  cpu                = 2048
-  create_listener    = true
-  create_networking  = true
-  source             = "../../../i-ai-core-infrastructure//modules/ecs"
-  project_name       = "django-app"
-  image_tag          = var.image_tag
-  prefix             = "redbox"
-  ecr_repository_uri = "${var.ecr_repository_uri}/redbox-django-app"
-  ecs_cluster_id     = module.cluster.ecs_cluster_id
-  health_check = {
+  memory                     = 4096
+  cpu                        = 2048
+  create_listener            = true
+  create_networking          = true
+  source                     = "../../../i-ai-core-infrastructure//modules/ecs"
+  project_name               = "django-app"
+  image_tag                  = var.image_tag
+  prefix                     = "redbox"
+  ecr_repository_uri         = "${var.ecr_repository_uri}/redbox-django-app"
+  ecs_cluster_id             = module.cluster.ecs_cluster_id
+  ecs_cluster_name           = module.cluster.ecs_cluster_name
+  autoscaling_minimum_target = 1
+  autoscaling_maximum_target = 10
+  health_check               = {
     healthy_threshold   = 3
     unhealthy_threshold = 3
     accepted_response   = "200"
@@ -131,7 +133,10 @@ module "core_api" {
   prefix                        = "redbox"
   ecr_repository_uri            = "${var.ecr_repository_uri}/redbox-core-api"
   ecs_cluster_id                = module.cluster.ecs_cluster_id
-  health_check = {
+  ecs_cluster_name              = module.cluster.ecs_cluster_name
+  autoscaling_minimum_target    = 1
+  autoscaling_maximum_target    = 10
+  health_check                  = {
     healthy_threshold   = 3
     unhealthy_threshold = 3
     accepted_response   = "200"
@@ -150,16 +155,19 @@ module "core_api" {
 
 
 module "worker" {
-  memory             = 6144
-  cpu                = 2048
-  create_listener    = false
-  create_networking  = false
-  source             = "../../../i-ai-core-infrastructure//modules/ecs"
-  project_name       = "worker"
-  image_tag          = var.image_tag
-  prefix             = "redbox"
-  ecr_repository_uri = "${var.ecr_repository_uri}/redbox-worker"
-  ecs_cluster_id     = module.cluster.ecs_cluster_id
+  memory                       = 6144
+  cpu                          = 2048
+  create_listener              = false
+  create_networking            = false
+  source                       = "../../../i-ai-core-infrastructure//modules/ecs"
+  project_name                 = "worker"
+  image_tag                    = var.image_tag
+  prefix                       = "redbox"
+  ecr_repository_uri           = "${var.ecr_repository_uri}/redbox-worker"
+  ecs_cluster_id               = module.cluster.ecs_cluster_id
+  ecs_cluster_name             = module.cluster.ecs_cluster_name
+  autoscaling_minimum_target = 1
+  autoscaling_maximum_target = 10
   state_bucket                 = var.state_bucket
   vpc_id                       = data.terraform_remote_state.vpc.outputs.vpc_id
   private_subnets              = data.terraform_remote_state.vpc.outputs.private_subnets
@@ -168,7 +176,7 @@ module "worker" {
   aws_lb_arn                   = module.load_balancer.alb_arn
   ip_whitelist                 = var.external_ips
   environment_variables        = local.environment_variables
-  http_healthcheck = false
+  http_healthcheck             = false
 }
 
 

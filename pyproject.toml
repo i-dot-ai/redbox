@@ -5,7 +5,7 @@ target-version = 'py311'
 [tool.poetry]
 name = "redbox"
 version = "1.0.0"
-description = ""
+description = "RAG application that uses GenAI to chat with and summarise civil service documents"
 authors = ["i.AI <i-dot-ai-enquiries@cabinetoffice.gov.uk>"]
 license = "MIT"
 readme = "README.md"
@@ -69,6 +69,7 @@ axe-playwright-python = "^0.1"
 anthropic = "^0.25.8"
 litellm = "^1.37.12"
 openai = "^1.28.0"
+pikepdf = "8.15.1"  # pinned to stop poetry complainning
 
 
 [tool.poetry.group.docs.dependencies]

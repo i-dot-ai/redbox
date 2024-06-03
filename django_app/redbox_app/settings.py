@@ -23,7 +23,7 @@ class Environment(StrEnum):
 
 SECRET_KEY = env.str("DJANGO_SECRET_KEY")
 ENVIRONMENT = Environment[env.str("ENVIRONMENT")]
-WEBSOCKET_SCHEME = env.str("WEBSOCKET_SCHEME", default="ws")
+WEBSOCKET_SCHEME = "ws" if ENVIRONMENT is Environment.LOCAL else "wss"
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env.bool("DEBUG")
@@ -151,11 +151,11 @@ ACCOUNT_EMAIL_VERIFICATION = "none"
 LOGIN_REDIRECT_URL = "homepage"
 LOGIN_URL = "sign-in"
 
-HOSTS = [
-    "redbox-dev.ai.cabinetoffice.gov.uk",
-    "redbox-preprod.ai.cabinetoffice.gov.uk",
-    "redbox.ai.cabinetoffice.gov.uk",
-]
+HOST = (
+    "redbox.ai.cabinetoffice.gov.uk"
+    if ENVIRONMENT == "prod"
+    else f"redbox-{ENVIRONMENT.lower()}.ai.cabinetoffice.gov.uk"
+)
 
 
 # CSP settings https://content-security-policy.com/
@@ -178,7 +178,7 @@ CSP_FONT_SRC = (
 )
 CSP_STYLE_SRC = ("'self'",)
 CSP_FRAME_ANCESTORS = ("'none'",)
-CSP_CONNECT_SRC = ["'self'"] + [WEBSOCKET_SCHEME + "://" + host for host in HOSTS]
+CSP_CONNECT_SRC = ["'self'", f"wss://{HOST}/ws/chat/"]
 
 # https://pypi.org/project/django-permissions-policy/
 PERMISSIONS_POLICY: dict[str, list] = {
@@ -243,6 +243,9 @@ else:
         },
     }
 
+    LOCALHOST = socket.gethostbyname(socket.gethostname())
+    ALLOWED_HOSTS = [LOCALHOST, *HOSTS]
+
     # https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Strict-Transport-Security
     # Mozilla guidance max-age 2 years
     SECURE_HSTS_SECONDS = 2 * 365 * 24 * 60 * 60
@@ -254,7 +257,7 @@ if ENVIRONMENT in [Environment.LOCAL, Environment.INTEGRATION]:  # Test environm
     ALLOWED_HOSTS = ["localhost", "127.0.0.1", "0.0.0.0"]  # noqa: S104 nosec: B104: Not in prod
 else:
     LOCALHOST = socket.gethostbyname(socket.gethostname())
-    ALLOWED_HOSTS = [LOCALHOST, *HOSTS]
+    ALLOWED_HOSTS = [LOCALHOST, HOST]
 
 
 DATABASES = {
