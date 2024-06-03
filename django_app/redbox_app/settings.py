@@ -1,21 +1,28 @@
 # mypy: ignore-errors
 
 import socket
-from enum import StrEnum
+from enum import StrEnum, auto
 from pathlib import Path
 
 import environ
 from dotenv import load_dotenv
 from storages.backends import s3boto3
 
-from .hosting_environment import HostingEnvironment
-
 load_dotenv()
 
 env = environ.Env()
 
+
+class Environment(StrEnum):
+    LOCAL = auto()
+    INTEGRATION = auto()
+    DEV = auto()
+    PREPROD = auto()
+    PROD = auto()
+
+
 SECRET_KEY = env.str("DJANGO_SECRET_KEY")
-ENVIRONMENT = env.str("ENVIRONMENT")
+ENVIRONMENT = Environment[env.str("ENVIRONMENT")]
 WEBSOCKET_SCHEME = env.str("WEBSOCKET_SCHEME", default="ws")
 
 # SECURITY WARNING: don't run with debug turned on in production!
@@ -210,7 +217,7 @@ OBJECT_STORE = env.str("OBJECT_STORE")
 AWS_S3_FILE_OVERWRITE = False  # allows users to have duplicate file names
 
 
-if HostingEnvironment.is_local():
+if ENVIRONMENT is Environment.LOCAL:
     AWS_S3_SECRET_ACCESS_KEY = env.str("AWS_SECRET_KEY")
     AWS_ACCESS_KEY_ID = env.str("AWS_ACCESS_KEY")
     MINIO_HOST = env.str("MINIO_HOST")
@@ -226,12 +233,6 @@ if HostingEnvironment.is_local():
             "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
         },
     }
-
-    ALLOWED_HOSTS = [
-        "localhost",
-        "127.0.0.1",
-        "0.0.0.0",  # noqa: S104
-    ]  # nosec B104 - don't do this on server!
 else:
     STORAGES = {
         "default": {
@@ -242,16 +243,18 @@ else:
         },
     }
 
-    LOCALHOST = socket.gethostbyname(socket.gethostname())
-    ALLOWED_HOSTS = [LOCALHOST, *HOSTS]
-
     # https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Strict-Transport-Security
     # Mozilla guidance max-age 2 years
     SECURE_HSTS_SECONDS = 2 * 365 * 24 * 60 * 60
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SESSION_COOKIE_SECURE = True
-if ENVIRONMENT == "INTEGRATION":
-    ALLOWED_HOSTS += ["localhost", "127.0.0.1", "0.0.0.0"]  # noqa: S104 nosec: B104: Not in prod
+
+# Set ALLOWED_HOSTS
+if ENVIRONMENT in [Environment.LOCAL, Environment.INTEGRATION]:  # Test environments
+    ALLOWED_HOSTS = ["localhost", "127.0.0.1", "0.0.0.0"]  # noqa: S104 nosec: B104: Not in prod
+else:
+    LOCALHOST = socket.gethostbyname(socket.gethostname())
+    ALLOWED_HOSTS = [LOCALHOST, *HOSTS]
 
 
 DATABASES = {
