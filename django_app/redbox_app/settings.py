@@ -5,7 +5,7 @@ from pathlib import Path
 
 import environ
 from dotenv import load_dotenv
-from setting_enums import Classification, Environment
+from redbox_app.setting_enums import Classification, Environment
 from storages.backends import s3boto3
 
 load_dotenv()
