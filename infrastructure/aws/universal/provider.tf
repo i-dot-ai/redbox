@@ -9,6 +9,7 @@ terraform {
 
   backend "s3" {
     key = "redbox/universal-terraform.tfstate"
+    dynamodb_table = "i-dot-ai-dev-dynamo-lock"
   }
 
 }
