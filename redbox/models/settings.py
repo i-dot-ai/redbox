@@ -71,22 +71,6 @@ class Settings(BaseSettings):
     object_store: str = "minio"
 
     dev_mode: bool = False
-    django_settings_module: str = "redbox_app.settings"
-    debug: bool = True
-    environment: Literal["LOCAL", "DEV", "PREPROD", "PROD"] = "LOCAL"
-    postgres_user: str = "redbox-core"
-    postgres_db: str = "redbox-core"
-    postgres_host: str = "db"
-    contact_email: str = "test@example.com"
-    core_api_host: str = "core-api"
-    core_api_port: int = 5002
-    email_backend_type: str = "CONSOLE"
-    gov_notify_api_key: str | None = None
-    from_email: str | None = None
-    email_file_path: str = "/app/mail"
-    govuk_notify_plain_email_template_id: str = "example-id"
-    use_streaming: bool = False
-    compression_enabled: bool = True
     superuser_email: str | None = None
 
     model_config = SettingsConfigDict(env_file=".env", env_nested_delimiter="__", extra="allow")
