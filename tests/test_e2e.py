@@ -154,7 +154,7 @@ class TestEndToEnd:
                 {"role": "user", "text": "please summarise my document"},
             ]
         }
-        all_text, docs = [], []
+        all_text, source_documents = [], []
 
         async for websocket in websockets.connect(
             "ws://localhost:5002/chat/rag", extra_headers=make_headers(user_uuid)
@@ -168,9 +168,12 @@ class TestEndToEnd:
                     if actual["resource_type"] == "text":
                         all_text.append(actual["data"])
                     elif actual["resource_type"] == "documents":
-                        docs.append(actual["data"])
+                        source_documents.extend(actual["data"])
             except ConnectionClosed:
                 break
 
         assert all_text
-        assert not docs
+        source_document_file_uuids = {source_document["file_uuid"] for source_document in source_documents}
+
+        assert TestEndToEnd.file_uuids[user_uuid] in source_document_file_uuids
+        TestEndToEnd.source_document_file_uuids[user_uuid] = source_document_file_uuids
