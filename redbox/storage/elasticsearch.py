@@ -89,7 +89,7 @@ class ElasticsearchStorageHandler(BaseStorageHandler):
 
         create_or_update_index_mapping(
             es=self.es_client,
-            alias="redbox-data-file",
+            alias=f"{self.root_index}-file",
             mapping={
                 "properties": {
                     "bucket": {"type": "keyword", "ignore_above": 50},
@@ -104,7 +104,7 @@ class ElasticsearchStorageHandler(BaseStorageHandler):
 
         create_or_update_index_mapping(
             es=self.es_client,
-            alias="redbox-data-chunk",
+            alias=f"{self.root_index}-chunk",
             mapping={
                 "properties": {
                     "created_datetime": {"type": "date"},
