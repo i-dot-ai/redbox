@@ -11,7 +11,7 @@ Redbox Copilot is a retrieval augmented generation (RAG) app that uses GenAI to 
 - **Better retrieval**. Redbox Copilot increases organisational memory by indexing documents
 - **Faster, accurate summarisation**. Redbox Copilot can summarise reports read months ago, supplement them with current work, and produce a first draft that lets civil servants focus on what they do best
 
-![intro](./docs/assets/intro.mp4)
+https://github.com/i-dot-ai/redbox-copilot/blob/main/docs/assets/intro.mp4
 
 # Setup
 
