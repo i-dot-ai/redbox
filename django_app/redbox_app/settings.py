@@ -250,6 +250,8 @@ else:
     SECURE_HSTS_SECONDS = 2 * 365 * 24 * 60 * 60
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SESSION_COOKIE_SECURE = True
+if ENVIRONMENT == "INTEGRATION":
+    ALLOWED_HOSTS += ["localhost", "127.0.0.1", "0.0.0.0"]  # noqa: S104 nosec: B104: Not in prod
 
 
 DATABASES = {
