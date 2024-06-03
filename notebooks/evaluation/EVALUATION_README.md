@@ -1,133 +1,86 @@
-# Redbox RAG Evaluation
+# 📮 Redbox RAG evaluation
 
-We want to be to baseline Redbox RAG performance and from there continually improve it. In order to do this we will use evaluation metrics that have emerged in the AI community, against the Redbox RAG chat endpoint. This will allow us to compare different configurations of our RAG pipeline to see whether these improve Redbox perofmrance or not.
+How can we unlock analysists of all technical abilities to produce reproducible, sharable, actionable evaluations of Redbox's RAG system?
+
+In this subdirectory, we aim to provide a common workflow so that no matter your department or profession, you can help make Redbox better.
 
 ## Overview
 
-The ultimate aim of any RAG evaluation should be an end-to-end (e2e) evaluation of the RAG pipeline. This e2e evaluation will be a combination of retrieval evaluation and generation evaluation. 
+The ultimate aim of any RAG evaluation should be an end-to-end (e2e) evaluation of the RAG pipeline. This pipeline covers all combinations and configurations of:
 
-RAG pipelines have many 'hyperparameters' that can be optimised.
+* Chunking
+* Embedding
+* Retrieval
+* Prompts
 
+With such a vast hyperparameter space, the first principle of our evaluation is that:
 
-**An aim for future is to make this experimentation process faster and better tracked**
+> [!NOTE]  
+> **Data is immutable.** Analysis is done on static, versioned datasets so our insights share a common subject.
 
-For now, this notebook links to all the files where `RAG prompts` can be changed to try and optimise Redbox Core API performance
+We therefore conceptualise evaluation as containing two roles:
 
+* I want to **create a new versioned dataset** for my colleagues to study
+* I want to **study a versioned dataset** I've been given to improve Redbox
 
-### Evaluation dataset
+## 📚 Creating a versioned dataset
 
-In order to perform evaluation, we need a suitable dataset.
+> [!NOTE]  
+> **Create a versioned datase**t with [`evaluation_dataset_generation.ipynb`](/notebooks/evaluation/rag_e2e_evaluation.ipynb)
 
-**Evaluate Redbox RAG chat on one stable, numbered version of these data**
+The goal of this notebook is to create a filesystem of data ready-made for others to study:
 
-The notebook to generate evaluation dataset can be found [**HERE**](/notebooks/evaluation/evaluation_dataset_generation.ipynb)
-
-### End-to-end evaluation
-Notebook for RAG end-to-end evaluation can be found [**HERE**](/notebooks/evaluation/rag_e2e_evaluation.ipynb)
-
-
-
-
-
-### Tracking evaluation
-[2024-05-14] 
-
-We have a basic mlflow setup in the Redbox repo and this seems like a natural place to track RAG evaluation experimentation. This, however, requires a little bit of set up, so focusing on setting up the evaluation notebooks for now
-
-
-
-### Workflow for RAG hyperparameter experimentation
-1. Review the various locations in the codebase where `RAG prompts` are used
-2. Make a change in one or more of these locations
-3. Rebuild the core-api docker image (and any other images modified), using `docker compose rebuild --no-cache`
-4. Follow the rag_e2e_evaluation notebook to generate evaluation score for the modified Redbox RAG based on your changes
-5. Record your changes in **TBD**
-
-
-### RAG prompt locations
-#### 1. Prompts in core.py
-One prompt, the `_core_redbox_prompt` is located in [core.py](../../redbox/llm/prompts/core.py)
-
-
-```python
-_core_redbox_prompt = """You are RedBox Copilot. An AI focused on helping UK Civil Servants, Political Advisors and\
-Ministers triage and summarise information from a wide variety of sources. You are impartial and\
-non-partisan. You are not a replacement for human judgement, but you can help humans\
-make more informed decisions. If you are asked a question you cannot answer based on your following instructions, you\
-should say so. Be concise and professional in your responses. Respond in markdown format.
-
-=== RULES ===
-
-All responses to Tasks **MUST** be translated into the user's preferred language.\
-This is so that the user can understand your responses.\
-"""
+```text
+.
+└── evaluation/
+    └── data/
+        └── {version_number}/
+            ├── chunks           # the chunked documents of study
+            ├── raw              # the raw documents of study
+            ├── results          # results from using this data
+            ├── synthetic        # Q&A datasets of study created with RAGAS
+            └── embeddings/      # vector store dumps of pre-embedded document chunks
+                └── {model}
 ```
 
-```python
-CORE_REDBOX_PROMPT = PromptTemplate.from_template(_core_redbox_prompt)
-```
-The _core_redbox_prompt is used in combination with _with_sources_templete in the prompt template in the next section
+We use [RAGAS](https://ragas.io) to create synthetic data, but are more than happy for users to manually create datasets too.
 
-#### 2. Prompts in chat.py
-There are 4 prompts located in [chat.py](../../redbox/llm/prompts/chat.py)
+## 🔎 Studying a versioned dataset
 
-Things to experiment with:
-1. `_with_sources_template`
-2. `WITH_SOURCES_PROMPT`
-3. `_stuff_document_template`
-4. `STUFF_DOCUMENT_PROMPT`
+> [!NOTE]  
+> **Study** a versioned dataset with [`rag_e2e_evaluation.ipynb`](/notebooks/evaluation/rag_e2e_evaluation.ipynb)
 
-```python
-_with_sources_template = """Given the following extracted parts of a long document and \
-a question, create a final answer with Sources at the end.  \
-If you don't know the answer, just say that you don't know. Don't try to make \
-up an answer.
-Be concise in your response and summarise where appropriate. \
-At the end of your response add a "Sources:" section with the documents you used. \
-DO NOT reference the source documents in your response. Only cite at the end. \
-ONLY PUT CITED DOCUMENTS IN THE "Sources:" SECTION AND NO WHERE ELSE IN YOUR RESPONSE. \
-IT IS CRUCIAL that citations only happens in the "Sources:" section. \
-This format should be <DocX> where X is the document UUID being cited.  \
-DO NOT INCLUDE ANY DOCUMENTS IN THE "Sources:" THAT YOU DID NOT USE IN YOUR RESPONSE. \
-YOU MUST CITE USING THE <DocX> FORMAT. NO OTHER FORMAT WILL BE ACCEPTED.
-Example: "Sources: <DocX> <DocY> <DocZ>"
+The goal of this notebook is that everything you need to study a versioned dataset should be contained in a single place that evaluators can run end to end.
 
-Use **bold** to highlight the most question relevant parts in your response.
-If dealing dealing with lots of data return it in markdown table format.
+We use [DeepEval](https://docs.confident-ai.com) to evaluate datasets.
 
-QUESTION: {question}
-=========
-{summaries}
-=========
-FINAL ANSWER:"""
-```
+Right now the notebook only contains the final retrieval engine: the interplay of prompts and retriever. Chunking and embedding strategies will need to be loaded outside this notebook, though you can certainly assess them using it.
 
-```python
-WITH_SOURCES_PROMPT = PromptTemplate.from_template(_core_redbox_prompt + _with_sources_template)
+## ⚡️ Success! What now?
 
-_stuff_document_template = "<Doc{parent_doc_uuid}>{page_content}</Doc{parent_doc_uuid}>"
+You've analysed a dataset, improved the RAG system, and you want those changes to make it into Redbox. Congratulations! 
 
-STUFF_DOCUMENT_PROMPT = PromptTemplate.from_template(_stuff_document_template)
-```
+If you feel confident enough to raise the PR yourself, you should, but we believe that great evaluation can come from a plurality of backgrounds.
 
-[Back to top](#title)
+> [!NOTE]  
+> **Evaluation doesn't need to be done by engineers.** Raise an issue with your evidence, and we'll implement it.
 
-#### 3. LLM being used
-We can also optimise the LLM being used, but please **bear in mind that prompts are per LLM and if you change the LLM you will need to optimise the prompts!**
+If you can evidence that your notebook performs better than production, we can take it from there.
 
-For now, please stick with gpt-3.5-turbo, as we establish a baseline quality
+## ❌ Failure! What now?
 
+Either as an evaluator or user, you've found a significant problem with the RAG system. Perhaps you're even struggling to explain exactly what's wrong, merely that it's "worse". Here we attempt to provide some clear actions to help refine responses to problems like this.
 
-## Promote optimised prompts into production
-If you find changes to the prompts above improve the generation evaluation scores, please consider making a PR to update the code in `core_api`. Follow these steps:
+We believe there's two ways we might fix this in our evaluation loop:
 
-1. Create a new branch off `main`
-2. Make changes in the locations listed below
-3. Run through the e2e RAG evaluation notebook
-4. If e2e RAG evaluation metrics are improved, please make a PR!
+### We need more data!
 
-All these prompts are locations in [chat.py](../../redbox/llm/prompts/chat.py), except `_core_redbox_prompt` which is located in [core.py](../../redbox/llm/prompts/core.py)
+Perhaps you've seen a document used in Redbox that performs badly, or a certain order of questions produces strange results.
 
-[Back to top](#title)
+In this case we need to **create a new versioned dataset**. This might contain more source documents that better-cover the problem space, or more nuanced or difficult Q&A scenarios to better-describe user interations. Either way, we need more data.
 
---------------------------
+### We need better metrics!
+
+Perhaps a user has given a piece of feedback that maps poorly onto our existing metrics. In early versions, for example, some users felt replies were too short.
+
+There are more metrics available for RAG systems than the ones we use, and it's potentially time to add another, or even develop our own. In this case we want to **extend our study of a versioned dataset** to add more appropriate measures of the things users care about.
