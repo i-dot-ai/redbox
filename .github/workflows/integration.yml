@@ -57,9 +57,9 @@ jobs:
         docker compose up -d --wait elasticsearch db worker minio core-api django-app
         
 
-    - name: Wait 60s for services to be ready
+    - name: Wait for services to be ready
       run: |
-        sleep 60
+        sleep 300
         docker ps
 
     - name: Test integration with pytest
