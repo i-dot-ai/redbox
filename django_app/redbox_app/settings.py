@@ -5,9 +5,8 @@ from pathlib import Path
 
 import environ
 from dotenv import load_dotenv
+from setting_enums import Classification, Environment
 from storages.backends import s3boto3
-
-from setting_enums import Environment, Classification
 
 load_dotenv()
 
@@ -203,7 +202,7 @@ OBJECT_STORE = env.str("OBJECT_STORE")
 AWS_S3_FILE_OVERWRITE = False  # allows users to have duplicate file names
 
 
-if ENVIRONMENT.is_local():
+if ENVIRONMENT.is_test:
     AWS_S3_SECRET_ACCESS_KEY = env.str("AWS_SECRET_KEY")
     AWS_ACCESS_KEY_ID = env.str("AWS_ACCESS_KEY")
     MINIO_HOST = env.str("MINIO_HOST")
@@ -235,13 +234,11 @@ else:
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SESSION_COOKIE_SECURE = True
 
-# Set ALLOWED_HOSTS
-if ENVIRONMENT.is_test:  # Test environments
-    ALLOWED_HOSTS = ["localhost", "127.0.0.1", "0.0.0.0"]  # noqa: S104 nosec: B104: Not in prod
+if ENVIRONMENT.is_test:
+    ALLOWED_HOSTS = ENVIRONMENT.hosts
 else:
     LOCALHOST = socket.gethostbyname(socket.gethostname())
     ALLOWED_HOSTS = [LOCALHOST, *ENVIRONMENT.hosts]
-
 
 DATABASES = {
     "default": {

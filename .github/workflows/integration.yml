@@ -59,7 +59,7 @@ jobs:
 
     - name: Wait for services to be ready
       run: |
-        sleep 300
+        sleep 150
         docker ps
 
     - name: Test integration with pytest
