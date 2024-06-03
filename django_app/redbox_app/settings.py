@@ -146,7 +146,7 @@ LOGIN_URL = "sign-in"
 
 HOST = (
     "redbox.ai.cabinetoffice.gov.uk"
-    if ENVIRONMENT == "prod"
+    if ENVIRONMENT.lower() == "prod"
     else f"redbox-{ENVIRONMENT.lower()}.ai.cabinetoffice.gov.uk"
 )
 
