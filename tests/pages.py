@@ -165,6 +165,10 @@ class DocumentsPage(SignedInBasePage):
         self.page.get_by_role("button", name="Add document").click()
         return DocumentUploadPage(self.page)
 
+    def delete_latest_document(self) -> "DocumentDeletePage":
+        self.page.get_by_role("button", name="Remove").first.click()
+        return DocumentDeletePage(self.page)
+
     def get_all_document_rows(self) -> list[DocumentRow]:
         cell_texts = self.page.get_by_role("cell").all_inner_texts()
         return [
@@ -186,6 +190,15 @@ class DocumentUploadPage(SignedInBasePage):
         with self.page.expect_file_chooser() as fc_info:
             self.page.get_by_label("Upload a document").click()
         return fc_info.value
+
+
+class DocumentDeletePage(SignedInBasePage):
+    def get_expected_page_title(self) -> str:
+        return "Remove document - Redbox Copilot"
+
+    def confirm_deletion(self) -> "DocumentsPage":
+        self.page.get_by_role("button", name="Remove").click()
+        return DocumentsPage(self.page)
 
 
 class ChatsPage(SignedInBasePage):
