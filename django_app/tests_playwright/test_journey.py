@@ -30,15 +30,23 @@ def test_user_journey(page: Page):
 
     # Documents page
     documents_page = sign_in_confirmation_page.navigate_to_documents_page()
-    document_upload_page = documents_page.navigate_to_upload()
+    document_rows = documents_page.get_all_document_rows()
+    original_docs_count = len(document_rows)
 
     # Upload a file
+    document_upload_page = documents_page.navigate_to_upload()
     upload_file = DJANGO_ROOT / "files" / "RiskTriggersReport361.pdf"
     documents_page = document_upload_page.upload_document(upload_file)
-
     document_rows = documents_page.get_all_document_rows()
     logger.debug("document_rows: %s", document_rows)
     assert any(row.filename == upload_file.name for row in document_rows)
+    assert len(document_rows) == original_docs_count + 1
+
+    # Delete a file
+    document_delete_page = documents_page.delete_latest_document()
+    documents_page = document_delete_page.confirm_deletion()
+    document_rows = documents_page.get_all_document_rows()
+    assert len(document_rows) == original_docs_count
 
     # Chats page
     chats_page = documents_page.navigate_to_chats()
