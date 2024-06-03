@@ -65,7 +65,8 @@ jobs:
     - name: Test integration with pytest
       run: |
         poetry install --only dev
-        poetry run pytest tests/
+        poetry run playwright install --with-deps chromium
+        poetry run pytest tests/ --browser chromium
 
     - name: notify slack failure
       id: slack-failure
