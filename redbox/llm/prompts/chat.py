@@ -3,8 +3,7 @@ from langchain.prompts.prompt import PromptTemplate
 from redbox.llm.prompts.core import _core_redbox_prompt
 
 _chat_template = """Given the following conversation and a follow up question,
-rephrase the follow up question to be a standalone question, in its original
-language. include the follow up instructions in the standalone question.
+rephrase the follow up question to be a standalone question. Include the follow up instructions in the standalone question.
 
 Chat History:
 {chat_history}
