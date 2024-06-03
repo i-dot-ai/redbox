@@ -56,7 +56,7 @@ We use [DeepEval](https://docs.confident-ai.com) to evaluate datasets.
 
 Right now the notebook only contains the final retrieval engine: the interplay of prompts and retriever. Chunking and embedding strategies will need to be loaded outside this notebook, though you can certainly assess them using it.
 
-## ⚡️ Success! What now?
+## ✅ Success! What now?
 
 You've analysed a dataset, improved the RAG system, and you want those changes to make it into Redbox. Congratulations! 
 
@@ -77,7 +77,7 @@ We believe there's two ways we might fix this in our evaluation loop:
 
 Perhaps you've seen a document used in Redbox that performs badly, or a certain order of questions produces strange results.
 
-In this case we need to **create a new versioned dataset**. This might contain more source documents that better-cover the problem space, or more nuanced or difficult Q&A scenarios to better-describe user interations. Either way, we need more data.
+In this case we need to **create a new versioned dataset**. This might contain more source documents that better-cover the problem space, or more nuanced or difficult Q&A scenarios to better-describe user interactions. Either way, we need more data.
 
 ### We need better metrics!
 
