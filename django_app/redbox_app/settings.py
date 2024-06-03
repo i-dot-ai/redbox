@@ -15,7 +15,7 @@ env = environ.Env()
 
 SECRET_KEY = env.str("DJANGO_SECRET_KEY")
 ENVIRONMENT = Environment[env.str("ENVIRONMENT")]
-WEBSOCKET_SCHEME = "ws" if ENVIRONMENT is Environment.LOCAL else "wss"
+WEBSOCKET_SCHEME = "ws" if ENVIRONMENT.is_local() else "wss"
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env.bool("DEBUG")

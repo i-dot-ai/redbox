@@ -70,8 +70,8 @@ def test_support_pages(page: Page):
 def create_user(email_address: str):
     command = [
         "docker",
-        "compose",
-        "run",
+        "exec",
+        "-it",
         "django-app",
         "venv/bin/django-admin",
         "createsuperuser",
@@ -85,7 +85,7 @@ def create_user(email_address: str):
 
 
 def get_magic_link(email_address: str) -> URL:
-    command = ["docker", "compose", "run", "django-app", "venv/bin/django-admin", "show_magiclink_url", email_address]
+    command = ["docker", "exec", "-it", "django-app", "venv/bin/django-admin", "show_magiclink_url", email_address]
     result = subprocess.run(command, capture_output=True, text=True)  # noqa: S603
     result.check_returncode()
     magic_link = result.stdout.strip().lstrip("/")
