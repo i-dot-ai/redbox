@@ -155,7 +155,7 @@ class DocumentRow(NamedTuple):
 class DocumentsPage(SignedInBasePage):
     def get_expected_page_title(self) -> str:
         return "Documents - Redbox Copilot"
-    
+
     def delete_latest_document(self) -> "DocumentDeletePage":
         self.page.get_by_role("button", name="Remove").first.click()
         return DocumentDeletePage(self.page)
@@ -172,7 +172,7 @@ class DocumentsPage(SignedInBasePage):
 class DocumentDeletePage(SignedInBasePage):
     def get_expected_page_title(self) -> str:
         return "Remove document - Redbox Copilot"
-    
+
     def confirm_deletion(self) -> "DocumentsPage":
         self.page.get_by_role("button", name="Remove").click()
         return DocumentsPage(self.page)
