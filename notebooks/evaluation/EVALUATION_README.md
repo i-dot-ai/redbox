@@ -1,6 +1,6 @@
 # 📮 Redbox RAG evaluation
 
-How can we unlock analysists of all technical abilities to produce reproducible, sharable, actionable evaluations of Redbox's RAG system?
+How can we unlock evaluators of all technical abilities to produce reproducible, sharable, actionable evaluations of Redbox's RAG system?
 
 In this subdirectory, we aim to provide a common workflow so that no matter your department or profession, you can help make Redbox better.
 
@@ -26,7 +26,7 @@ We therefore conceptualise evaluation as containing two roles:
 ## 📚 Creating a versioned dataset
 
 > [!NOTE]  
-> **Create a versioned datase**t with [`evaluation_dataset_generation.ipynb`](/notebooks/evaluation/rag_e2e_evaluation.ipynb)
+> **Create a versioned dataset** with [`evaluation_dataset_generation.ipynb`](/notebooks/evaluation/rag_e2e_evaluation.ipynb)
 
 The goal of this notebook is to create a filesystem of data ready-made for others to study:
 
@@ -45,6 +45,8 @@ The goal of this notebook is to create a filesystem of data ready-made for other
 
 We use [RAGAS](https://ragas.io) to create synthetic data, but are more than happy for users to manually create datasets too.
 
+Consider creating a **baseline** of your versioned dataset using the production system to help your colleagues out.
+
 ## 🔎 Studying a versioned dataset
 
 > [!NOTE]  
@@ -54,18 +56,35 @@ The goal of this notebook is that everything you need to study a versioned datas
 
 We use [DeepEval](https://docs.confident-ai.com) to evaluate datasets.
 
+The first evaluation run should be a **baseline** of the current system. You may even consider doing this baselining as part of the creation of the versioned dataset. From there, modify the RAG system via the notebook, and express findings in relation to these baseline metrics.
+
 Right now the notebook only contains the final retrieval engine: the interplay of prompts and retriever. Chunking and embedding strategies will need to be loaded outside this notebook, though you can certainly assess them using it.
 
 ## ✅ Success! What now?
 
-You've analysed a dataset, improved the RAG system, and you want those changes to make it into Redbox. Congratulations! 
-
-If you feel confident enough to raise the PR yourself, you should, but we believe that great evaluation can come from a plurality of backgrounds.
+You've studied a dataset and improved the RAG system. Congratulations! It's time to get those changes into Redbox.
 
 > [!NOTE]  
 > **Evaluation doesn't need to be done by engineers.** Raise an issue with your evidence, and we'll implement it.
 
-If you can evidence that your notebook performs better than production, we can take it from there.
+If you're confident enough to implement it yourself, we absolutely welcome changes as pull requests (PR), but this is by no means a requirement. We believe that great evaluation can come from a plurality of backgrounds. What we care about is your evidence.
+
+### What evidence do I include?
+
+An improved user experience is the heart of an accepted change. You should include the following, but always in service of how user experience is improved:
+
+* The dataset version
+* The baseline
+* The change to the baseline
+
+Never forget your metrics are just a proxy for user experience. They exist to justify, explain and contextualise changes -- they support your PR, and are never the PR themselves. What problem did updating the dataset seek to measure? How do your changes address this? Why are any drops in other metrics worth it?
+
+* Metrics are always in relation to a baseline, because difficulty changes with the dataset
+* As a rule of thumb, metrics moving $\pm5\%$ are significant
+* Some metrics dropping for other metrics to rise is a tradeoff justified by user experience of the system
+* LLMs typically aren't deterministic. Run metrics for your final proposal multiple times, and produce confidence intervals if you can
+
+If you can evidence that your notebook would make for a better experience than production, we can take it from there.
 
 ## ❌ Failure! What now?
 
