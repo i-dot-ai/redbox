@@ -102,7 +102,7 @@ jobs:
         working-directory: redbox-copilot
         run: |
           make tf_init
-          make tf_auto_deploy env=${{ github.event.inputs.env }} IMAGE_TAG=${{ github.event.inputs.image_tag }} CONFIG_DIR=redbox-copilot-infra-config
+          make tf_auto_deploy env=${{ github.event.inputs.env }} IMAGE_TAG=${{ github.event.inputs.image_tag }}
 
   stop-runner:
     uses: i-dot-ai/i-dot-ai-core-github-actions/.github/workflows/stop-runner.yml@main
