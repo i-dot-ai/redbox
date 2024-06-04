@@ -13,7 +13,7 @@ load_dotenv()
 env = environ.Env()
 
 SECRET_KEY = env.str("DJANGO_SECRET_KEY")
-ENVIRONMENT = Environment[env.str("ENVIRONMENT")]
+ENVIRONMENT = Environment[env.str("ENVIRONMENT").upper()]
 WEBSOCKET_SCHEME = "ws" if ENVIRONMENT.is_local() else "wss"
 
 # SECURITY WARNING: don't run with debug turned on in production!
@@ -141,7 +141,6 @@ AUTH_USER_MODEL = "redbox_core.User"
 ACCOUNT_EMAIL_VERIFICATION = "none"
 LOGIN_REDIRECT_URL = "homepage"
 LOGIN_URL = "sign-in"
-
 
 # CSP settings https://content-security-policy.com/
 # https://django-csp.readthedocs.io/
