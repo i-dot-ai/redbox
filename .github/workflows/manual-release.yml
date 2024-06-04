@@ -48,40 +48,40 @@ jobs:
       AWS_GITHUBRUNNER_PAT: ${{ secrets.AWS_GITHUBRUNNER_PAT}}
       AWS_REGION: ${{ secrets.AWS_REGION }}
 
-  release-terraform:
-    needs:
-      - set-vars
-      - start-runner
-    uses: i-dot-ai/i-dot-ai-core-github-actions/.github/workflows/apply-terraform.yml@main
-    with:
-      APP_NAME: ${{ needs.set-vars.outputs.app-name }}
-      RUNNER_LABEL: ${{ needs.start-runner.outputs.label }}
-      INFRASTRUCTURE_FOLDER: "infrastructure/aws"
-      PUBLIC_INFRA_DEPLOYMENT: true
-      ENVIRONMENT: ${{ github.event.inputs.env }}
-      INFRA_CONFIG_REPO: ${{ needs.set-vars.outputs.infra-config-repo }}
-    secrets:
-      AWS_GITHUBRUNNER_PAT: ${{ secrets.AWS_GITHUBRUNNER_PAT}}
-      AWS_GITHUBRUNNER_PAT_USER: ${{ secrets.AWS_GITHUBRUNNER_PAT_USER }}
-      AWS_REGION: ${{ secrets.AWS_REGION }}
-      AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
-
-#  release:
-#    runs-on: ${{ needs.start-runner.outputs.label }}
+#  release-terraform:
 #    needs:
 #      - set-vars
 #      - start-runner
-#    steps:
-#      - uses: actions/checkout@v3
-#
-#      - name: Set up Python 3.11
-#        uses: actions/setup-python@v3
-#        with:
-#          python-version: "3.11"
-#
-#      - name: Make release
-#        run: |
-#          make tf_auto_deploy env=${{ github.event.inputs.env }} IMAGE_TAG=${{ github.event.inputs.image_tag }}
+#    uses: i-dot-ai/i-dot-ai-core-github-actions/.github/workflows/apply-terraform.yml@main
+#    with:
+#      APP_NAME: ${{ needs.set-vars.outputs.app-name }}
+#      RUNNER_LABEL: ${{ needs.start-runner.outputs.label }}
+#      INFRASTRUCTURE_FOLDER: "infrastructure/aws"
+#      PUBLIC_INFRA_DEPLOYMENT: true
+#      ENVIRONMENT: ${{ github.event.inputs.env }}
+#      INFRA_CONFIG_REPO: ${{ needs.set-vars.outputs.infra-config-repo }}
+#    secrets:
+#      AWS_GITHUBRUNNER_PAT: ${{ secrets.AWS_GITHUBRUNNER_PAT}}
+#      AWS_GITHUBRUNNER_PAT_USER: ${{ secrets.AWS_GITHUBRUNNER_PAT_USER }}
+#      AWS_REGION: ${{ secrets.AWS_REGION }}
+#      AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
+
+  release-terraform:
+    runs-on: ${{ needs.start-runner.outputs.label }}
+    needs:
+      - set-vars
+      - start-runner
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v3
+        with:
+          python-version: "3.11"
+
+      - name: Make release
+        run: |
+          make tf_auto_deploy env=${{ github.event.inputs.env }} IMAGE_TAG=${{ github.event.inputs.image_tag }}
 
   stop-runner:
     uses: i-dot-ai/i-dot-ai-core-github-actions/.github/workflows/stop-runner.yml@main
