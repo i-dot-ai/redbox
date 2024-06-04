@@ -1,0 +1,100 @@
+name: Manual release
+
+on:
+  workflow_dispatch:
+    inputs:
+      env:
+        description: 'Environment to deploy to'
+        required: false
+      image_tag:
+        description: 'The SHA of the Git commit to use'
+        required: false
+
+permissions:
+  contents: read
+
+jobs:
+  set-vars:
+    runs-on: ubuntu-latest
+    outputs:
+      app-name: ${{ steps.export.outputs.app-name }}
+      ec2-instance-type: ${{ steps.export.outputs.ec2-instance-type }}
+      version: ${{ steps.export.outputs.version }}
+      runner-size: ${{ steps.export.outputs.runner-size }}
+      infra-config-repo: ${{ steps.export.outputs.infra-config-repo }}
+
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - id: export
+        run: |
+          . ./.github/.github.env
+          echo "ec2-instance-type=${EC2_INSTANCE_TYPE}" >> $GITHUB_OUTPUT
+          echo "app-name=${APP_NAME}" >> $GITHUB_OUTPUT
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "runner-size=${RUNNER_SIZE}" >> $GITHUB_OUTPUT
+          echo "infra-config-repo=${INFRA_CONFIG_REPO}" >> $GITHUB_OUTPUT
+
+  start-runner:
+    uses: i-dot-ai/i-dot-ai-core-github-actions/.github/workflows/start-runner.yml@main
+    needs: set-vars
+    with:
+      EC2_INSTANCE_TYPE: ${{ needs.set-vars.outputs.ec2-instance-type }}
+      RUNNER_SIZE: ${{ needs.set-vars.outputs.runner-size }}
+    secrets:
+      AWS_GITHUBRUNNER_USER_ACCESS_KEY: ${{ secrets.AWS_GITHUBRUNNER_USER_ACCESS_KEY }}
+      AWS_GITHUBRUNNER_USER_SECRET_ID: ${{ secrets.AWS_GITHUBRUNNER_USER_SECRET_ID }}
+      AWS_GITHUBRUNNER_PAT: ${{ secrets.AWS_GITHUBRUNNER_PAT}}
+      AWS_REGION: ${{ secrets.AWS_REGION }}
+
+  release-terraform:
+    needs:
+      - set-vars
+      - start-runner
+    uses: i-dot-ai/i-dot-ai-core-github-actions/.github/workflows/apply-terraform.yml@main
+    with:
+      APP_NAME: ${{ needs.set-vars.outputs.app-name }}
+      RUNNER_LABEL: ${{ needs.start-runner.outputs.label }}
+      INFRASTRUCTURE_FOLDER: "infrastructure/aws"
+      PUBLIC_INFRA_DEPLOYMENT: true
+      ENVIRONMENT: ${{ github.event.inputs.env }}
+      INFRA_CONFIG_REPO: ${{ needs.set-vars.outputs.infra-config-repo }}
+    secrets:
+      AWS_GITHUBRUNNER_PAT: ${{ secrets.AWS_GITHUBRUNNER_PAT}}
+      AWS_GITHUBRUNNER_PAT_USER: ${{ secrets.AWS_GITHUBRUNNER_PAT_USER }}
+      AWS_REGION: ${{ secrets.AWS_REGION }}
+      AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
+
+#  release:
+#    runs-on: ${{ needs.start-runner.outputs.label }}
+#    needs:
+#      - set-vars
+#      - start-runner
+#    steps:
+#      - uses: actions/checkout@v3
+#
+#      - name: Set up Python 3.11
+#        uses: actions/setup-python@v3
+#        with:
+#          python-version: "3.11"
+#
+#      - name: Make release
+#        run: |
+#          make tf_auto_deploy env=${{ github.event.inputs.env }} IMAGE_TAG=${{ github.event.inputs.image_tag }}
+
+  stop-runner:
+    uses: i-dot-ai/i-dot-ai-core-github-actions/.github/workflows/stop-runner.yml@main
+    if: needs.start-runner.outputs.use-persisted == 0 && always()
+    needs:
+      - set-vars
+      - start-runner
+      - build-image
+    with:
+      RUNNER_LABEL: ${{ needs.start-runner.outputs.label }}
+      EC2_INSTANCE_ID: ${{ needs.start-runner.outputs.ec2-instance-id }}
+    secrets:
+      AWS_GITHUBRUNNER_USER_ACCESS_KEY: ${{ secrets.AWS_GITHUBRUNNER_USER_ACCESS_KEY }}
+      AWS_GITHUBRUNNER_USER_SECRET_ID: ${{ secrets.AWS_GITHUBRUNNER_USER_SECRET_ID }}
+      AWS_GITHUBRUNNER_PAT: ${{ secrets.AWS_GITHUBRUNNER_PAT}}
+      AWS_REGION: ${{ secrets.AWS_REGION }}
