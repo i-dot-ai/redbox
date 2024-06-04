@@ -52,8 +52,6 @@ jobs:
         mkdir -p data/elastic/
         chmod -R 777 data/
         cp .env.integration .env
-        echo ANTHROPIC_API_KEY=${{ secrets.ANTHROPIC_API_KEY }} >> .env
-        echo OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }} >> .env
         echo AZURE_OPENAI_ENDPOINT=${{ secrets.AZURE_OPENAI_ENDPOINT }} >> .env
         echo AZURE_OPENAI_API_KEY=${{ secrets.AZURE_OPENAI_API_KEY }} >> .env
         docker compose up -d --wait elasticsearch db worker minio core-api django-app
