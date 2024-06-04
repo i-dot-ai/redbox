@@ -60,6 +60,9 @@ minio = "^7.2.7"
 python-jose="^3.3.0"
 jsonlines="^4.0.0"
 ipywidgets="^8.1.2"
+playwright = "^1.43"
+pytest-playwright = "^0.5"
+axe-playwright-python = "^0.1"
 
 
 [tool.poetry.group.ai.dependencies]

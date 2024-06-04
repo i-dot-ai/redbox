@@ -1,22 +1,20 @@
 # mypy: ignore-errors
 
 import socket
-from enum import StrEnum
 from pathlib import Path
 
 import environ
 from dotenv import load_dotenv
+from redbox_app.setting_enums import Classification, Environment
 from storages.backends import s3boto3
-
-from .hosting_environment import HostingEnvironment
 
 load_dotenv()
 
 env = environ.Env()
 
 SECRET_KEY = env.str("DJANGO_SECRET_KEY")
-ENVIRONMENT = env.str("ENVIRONMENT")
-WEBSOCKET_SCHEME = "ws" if HostingEnvironment.is_local() else "wss"
+ENVIRONMENT = Environment[env.str("ENVIRONMENT").upper()]
+WEBSOCKET_SCHEME = "ws" if ENVIRONMENT.is_local() else "wss"
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env.bool("DEBUG")
@@ -144,13 +142,6 @@ ACCOUNT_EMAIL_VERIFICATION = "none"
 LOGIN_REDIRECT_URL = "homepage"
 LOGIN_URL = "sign-in"
 
-HOST = (
-    "redbox.ai.cabinetoffice.gov.uk"
-    if ENVIRONMENT.lower() == "prod"
-    else f"redbox-{ENVIRONMENT.lower()}.ai.cabinetoffice.gov.uk"
-)
-
-
 # CSP settings https://content-security-policy.com/
 # https://django-csp.readthedocs.io/
 CSP_DEFAULT_SRC = (
@@ -171,7 +162,7 @@ CSP_FONT_SRC = (
 )
 CSP_STYLE_SRC = ("'self'",)
 CSP_FRAME_ANCESTORS = ("'none'",)
-CSP_CONNECT_SRC = ["'self'", f"wss://{HOST}/ws/chat/"]
+CSP_CONNECT_SRC = ["'self'", f"wss://{ENVIRONMENT.hosts[0]}/ws/chat/"]
 
 # https://pypi.org/project/django-permissions-policy/
 PERMISSIONS_POLICY: dict[str, list] = {
@@ -210,7 +201,7 @@ OBJECT_STORE = env.str("OBJECT_STORE")
 AWS_S3_FILE_OVERWRITE = False  # allows users to have duplicate file names
 
 
-if HostingEnvironment.is_local():
+if ENVIRONMENT.is_test:
     AWS_S3_SECRET_ACCESS_KEY = env.str("AWS_SECRET_KEY")
     AWS_ACCESS_KEY_ID = env.str("AWS_ACCESS_KEY")
     MINIO_HOST = env.str("MINIO_HOST")
@@ -226,12 +217,6 @@ if HostingEnvironment.is_local():
             "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
         },
     }
-
-    ALLOWED_HOSTS = [
-        "localhost",
-        "127.0.0.1",
-        "0.0.0.0",  # noqa: S104
-    ]  # nosec B104 - don't do this on server!
 else:
     STORAGES = {
         "default": {
@@ -242,15 +227,17 @@ else:
         },
     }
 
-    LOCALHOST = socket.gethostbyname(socket.gethostname())
-    ALLOWED_HOSTS = [LOCALHOST, HOST]
-
     # https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Strict-Transport-Security
     # Mozilla guidance max-age 2 years
     SECURE_HSTS_SECONDS = 2 * 365 * 24 * 60 * 60
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SESSION_COOKIE_SECURE = True
 
+if ENVIRONMENT.is_test:
+    ALLOWED_HOSTS = ENVIRONMENT.hosts
+else:
+    LOCALHOST = socket.gethostbyname(socket.gethostname())
+    ALLOWED_HOSTS = [LOCALHOST, *ENVIRONMENT.hosts]
 
 DATABASES = {
     "default": {
@@ -330,16 +317,4 @@ MAGIC_LINK = {
 USE_STREAMING = env.bool("USE_STREAMING")
 FILE_EXPIRY_IN_SECONDS = env.int("FILE_EXPIRY_IN_DAYS") * 24 * 60 * 60
 SUPERUSER_EMAIL = env.str("SUPERUSER_EMAIL", None)
-
-
-class Classification(StrEnum):
-    """Security classifications
-    https://www.gov.uk/government/publications/government-security-classifications/"""
-
-    OFFICIAL = "Official"
-    OFFICIAL_SENSITIVE = "Official Sensitive"
-    SECRET = "Secret"  # noqa: S105
-    TOP_SECRET = "Top Secret"  # noqa: S105
-
-
 MAX_SECURITY_CLASSIFICATION = Classification[env.str("MAX_SECURITY_CLASSIFICATION")]
