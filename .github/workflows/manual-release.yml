@@ -89,7 +89,7 @@ jobs:
           repository: i-dot-ai/i-ai-core-infrastructure
           ref: refs/heads/main
           token: ${{ secrets.AWS_GITHUBRUNNER_PAT }}
-          path: ../../../i-ai-core-infrastructure
+          path: i-ai-core-infrastructure
 
       - name: Checkout i-dot-ai-redbox-config repo
         uses: actions/checkout@v4
