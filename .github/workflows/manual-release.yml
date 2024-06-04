@@ -72,17 +72,25 @@ jobs:
       - set-vars
       - start-runner
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Set up Python 3.11
         uses: actions/setup-python@v3
         with:
           python-version: "3.11"
 
+      - name: Checkout i-dot-ai-core-terraform repo
+        uses: actions/checkout@v4
+        with:
+          repository: i-dot-ai/i-ai-core-infrastructure
+          ref: refs/heads/main
+          token: ${{ secrets.AWS_GITHUBRUNNER_PAT }}
+          path: i-ai-core-infrastructure
+
       - name: Make release
         run: |
           make tf_init
-          make tf_auto_deploy env=${{ github.event.inputs.env }} IMAGE_TAG=${{ github.event.inputs.image_tag }}
+          make tf_auto_deploy env=${{ github.event.inputs.env }} IMAGE_TAG=${{ github.event.inputs.image_tag }} CONFIG_DIR=i-ai-core-infrastructure
 
   stop-runner:
     uses: i-dot-ai/i-dot-ai-core-github-actions/.github/workflows/stop-runner.yml@main
