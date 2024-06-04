@@ -80,7 +80,7 @@ An improved user experience is the heart of an accepted change. You should inclu
 Never forget your metrics are just a proxy for user experience. They exist to justify, explain and contextualise changes -- they support your PR, and are never the PR themselves. What problem did updating the dataset seek to measure? How do your changes address this? Why are any drops in other metrics worth it?
 
 * Metrics are always in relation to a baseline, because difficulty changes with the dataset
-* As a rule of thumb, metrics moving $\pm5\%$ are significant
+* As a rule of thumb, metrics moving $\pm 5 \%$ are significant
 * Some metrics dropping for other metrics to rise is a tradeoff justified by user experience of the system
 * LLMs typically aren't deterministic. Run metrics for your final proposal multiple times, and produce confidence intervals if you can
 
