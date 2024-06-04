@@ -95,7 +95,6 @@ IMAGE=$(ECR_REPO_URL):$(IMAGE_TAG)
 ECR_REPO_NAME=$(APP_NAME)
 PREV_IMAGE_TAG=$$(git rev-parse HEAD~1)
 IMAGE_TAG=$$(git rev-parse HEAD)
-env=dev
 
 tf_build_args=-var "image_tag=$(IMAGE_TAG)"
 DOCKER_SERVICES=$$(docker compose config --services | grep -v mlflow)
@@ -178,7 +177,7 @@ tf_apply: ## Apply terraform
 	terraform -chdir=./infrastructure/aws apply -var-file=$(CONFIG_DIR)/${env}-input-params.tfvars ${tf_build_args}
 
 .PHONY: tf_auto_deploy
-tf_auto_deploy:
+tf_auto_deploy: ## Auto deploy terraform to specified environment with specified tag (default: dev and HEAD)
 	make tf_set_workspace && \
 	terraform -chdir=./infrastructure/aws apply -auto-approve -lock-timeout=300s -var-file=$(CONFIG_DIR)/$(env)-input-params.tfvars -var=image_tag=$(IMAGE_TAG) ${tf_build_args}
 
