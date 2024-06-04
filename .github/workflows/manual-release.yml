@@ -87,9 +87,17 @@ jobs:
           token: ${{ secrets.AWS_GITHUBRUNNER_PAT }}
           path: i-ai-core-infrastructure
 
+      - name: Checkout i-dot-ai-redbox-config repo
+        uses: actions/checkout@v4
+        with:
+          repository: i-dot-ai/redbox-copilot-infra-config
+          ref: refs/heads/main
+          token: ${{ secrets.AWS_GITHUBRUNNER_PAT }}
+          path: redbox-copilot-infra-config
+
       - name: Make release
         run: |
-          make tf_init
+          make tf_init CONFIG_DIR=redbox-copilot-infra-config TF_BACKEND_CONFIG=redbox-copilot-infra-config/backend.hcl
           make tf_auto_deploy env=${{ github.event.inputs.env }} IMAGE_TAG=${{ github.event.inputs.image_tag }} CONFIG_DIR=i-ai-core-infrastructure
 
   stop-runner:
