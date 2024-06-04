@@ -72,7 +72,11 @@ jobs:
       - set-vars
       - start-runner
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout redbox-copilot repo
+        uses: actions/checkout@v4
+        with:
+          path: /app/redbox/current
+
 
       - name: Set up Python 3.11
         uses: actions/setup-python@v3
@@ -96,6 +100,7 @@ jobs:
           path: redbox-copilot-infra-config
 
       - name: Make release
+        working-directory: /app/redbox/current
         run: |
           make tf_init CONFIG_DIR=redbox-copilot-infra-config TF_BACKEND_CONFIG=redbox-copilot-infra-config/backend.hcl
           make tf_auto_deploy env=${{ github.event.inputs.env }} IMAGE_TAG=${{ github.event.inputs.image_tag }} CONFIG_DIR=redbox-copilot-infra-config
