@@ -176,6 +176,11 @@ tf_apply: ## Apply terraform
 	make tf_set_workspace && \
 	terraform -chdir=./infrastructure/aws apply -var-file=$(CONFIG_DIR)/${env}-input-params.tfvars ${tf_build_args}
 
+.PHONY: tf_auto_deploy
+tf_auto_deploy: ## Auto deploy terraform to specified environment with specified tag (default: dev and HEAD)
+	make tf_set_workspace && \
+	terraform -chdir=./infrastructure/aws apply -auto-approve -lock-timeout=300s -var-file=$(CONFIG_DIR)/$(env)-input-params.tfvars -var=image_tag=$(IMAGE_TAG) ${tf_build_args}
+
 .PHONY: tf_init_universal
 tf_init_universal: ## Initialise terraform
 	terraform -chdir=./infrastructure/aws/universal init -backend-config=../$(TF_BACKEND_CONFIG)
