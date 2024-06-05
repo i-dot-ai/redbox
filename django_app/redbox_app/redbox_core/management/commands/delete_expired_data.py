@@ -6,7 +6,7 @@ from django.conf import settings
 from django.core.management import BaseCommand
 from django.utils import timezone
 from redbox_app.redbox_core.client import CoreApiClient
-from redbox_app.redbox_core.models import File, StatusEnum
+from redbox_app.redbox_core.models import ChatHistory, File, StatusEnum
 from requests.exceptions import RequestException
 
 logger = logging.getLogger(__name__)
@@ -15,7 +15,7 @@ core_api = CoreApiClient(host=settings.CORE_API_HOST, port=settings.CORE_API_POR
 
 class Command(BaseCommand):
     help = """This should be run daily per environment to remove expired data.
-    It removes Files that have exceeded their expiry date.
+    It removes Files, ChatMessages and ChatHistories that have exceeded their expiry date.
     """
 
     def handle(self, *_args, **_kwargs):
@@ -51,3 +51,23 @@ class Command(BaseCommand):
                 counter += 1
 
         self.stdout.write(self.style.SUCCESS(f"Successfully deleted {counter} file objects"))
+
+        self.stdout.write(self.style.NOTICE(f"Deleting chats expired before {cutoff_date}"))
+        counter = 0
+        message_counter = 0
+
+        for chat_history in ChatHistory.objects.all():
+            if chat_history.chatmessage_set.filter(modified_at__gte=cutoff_date).exists():
+                logger.debug("Skipping %s as in date", chat_history)
+                continue
+
+            logger.debug("Deleting %s and linked messages", chat_history)
+            message_counter += chat_history.chatmessage_set.count()
+            chat_history.delete()
+            counter += 1
+
+        self.stdout.write(
+            self.style.SUCCESS(
+                f"Successfully deleted {counter} ChatHistory objects and {message_counter} related ChatMessages"
+            )
+        )
