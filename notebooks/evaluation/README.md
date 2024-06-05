@@ -18,15 +18,16 @@ With such a vast hyperparameter space, the first principle of our evaluation is 
 > [!NOTE]  
 > **Data is immutable.** Analysis is done on static, versioned datasets so our insights share a common subject.
 
-We therefore conceptualise evaluation as containing two roles:
+We therefore conceptualise evaluation as containing three roles:
 
 * I want to **create a new versioned dataset** for my colleagues to study
+* I want to **baseline a new versioned dataset** to create metrics to improve on
 * I want to **study a versioned dataset** I've been given to improve Redbox
 
 ## 📚 Creating a versioned dataset
 
 > [!NOTE]  
-> **Create a versioned dataset** with [`evaluation_dataset_generation.ipynb`](/notebooks/evaluation/rag_e2e_evaluation.ipynb)
+> **Create a versioned dataset** with [`rag_create_evaluation_dataset.ipynb`](/notebooks/evaluation/rag_create_evaluation_dataset.ipynb)
 
 The goal of this notebook is to create a filesystem of data ready-made for others to study:
 
@@ -35,28 +36,34 @@ The goal of this notebook is to create a filesystem of data ready-made for other
 └── evaluation/
     └── data/
         └── {version_number}/
-            ├── chunks           # the chunked documents of study
-            ├── raw              # the raw documents of study
-            ├── results          # results from using this data
-            ├── synthetic        # Q&A datasets of study created with RAGAS
-            └── embeddings/      # vector store dumps of pre-embedded document chunks
-                └── {model}
+            ├── chunks               # the chunked documents of study
+            ├── raw                  # the raw documents of study
+            ├── results              # results from using this data
+            │   └── baseline.csv     # the baseline results
+            ├── synthetic            # Q&A datasets of study created with RAGAS
+            └── embeddings           # vector store dumps of pre-embedded document chunks
+                └── {model}.jsonl    # pre-embedded chunks to be loaded to the index
 ```
 
 We use [RAGAS](https://ragas.io) to create synthetic data, but are more than happy for users to manually create datasets too.
 
-Consider creating a **baseline** of your versioned dataset using the production system to help your colleagues out.
+## ⏱️ Baseline a versioned dataset
+
+> [!NOTE]  
+> **Baseline a versioned dataset** with [`rag_baseline_evaluation.ipynb`](/notebooks/evaluation/rag_baseline_evaluation.ipynb)
+
+Benchmarking is a one-off run of a versioned dataset against the production retrieval engine. Sharing the benchmark with the versioned data gives evaluators metrics they can aim to improve.
 
 ## 🔎 Studying a versioned dataset
 
 > [!NOTE]  
-> **Study** a versioned dataset with [`rag_e2e_evaluation.ipynb`](/notebooks/evaluation/rag_e2e_evaluation.ipynb)
+> **Study** a versioned dataset with [`rag_experiment_evaluation.ipynb`](/notebooks/evaluation/rag_experiment_evaluation.ipynb)
 
 The goal of this notebook is that everything you need to study a versioned dataset should be contained in a single place that evaluators can run end to end.
 
 We use [DeepEval](https://docs.confident-ai.com) to evaluate datasets.
 
-The first evaluation run should be a **baseline** of the current system. You may even consider doing this baselining as part of the creation of the versioned dataset. From there, modify the RAG system via the notebook, and express findings in relation to these baseline metrics.
+The versioned dataset should ideally have been **baselined**, providing you with metrics you can aim to improve. Modify the RAG system via the notebook, and express findings in relation to these baseline metrics.
 
 Right now the notebook only contains the final retrieval engine: the interplay of prompts and retriever. Chunking and embedding strategies will need to be loaded outside this notebook, though you can certainly assess them using it.
 
