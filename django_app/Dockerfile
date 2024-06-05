@@ -30,7 +30,7 @@ RUN poetry bundle venv ./venv
 # app
 FROM python:3.11-slim
 
-RUN apt-get update && apt-get install --yes libpq-dev > /dev/null
+RUN apt-get update && apt-get install --yes libpq-dev cron > /dev/null
 
 WORKDIR /usr/src/app
 
