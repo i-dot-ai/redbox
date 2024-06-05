@@ -9,6 +9,14 @@ on:
       image_tag:
         description: 'The SHA of the Git commit to use'
         required: false
+      core-repo-reference:
+        description: 'The SHA to set the core repo to'
+        required: false
+        default: refs/heads/main
+      config-repo-reference:
+        description: 'The SHA to set the config repo to'
+        required: false
+        default: refs/heads/main
 
 permissions:
   contents: read
@@ -93,7 +101,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: i-dot-ai/i-ai-core-infrastructure
-          ref: refs/heads/main
+          ref: ${{ github.event.inputs.core-repo-reference }}
           token: ${{ secrets.AWS_GITHUBRUNNER_PAT }}
           path: i-ai-core-infrastructure
 
@@ -101,7 +109,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: i-dot-ai/redbox-copilot-infra-config
-          ref: refs/heads/main
+          ref: ${{ github.event.inputs.config-repo-reference }}
           token: ${{ secrets.AWS_GITHUBRUNNER_PAT }}
           path: redbox-copilot-infra-config
 
