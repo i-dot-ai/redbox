@@ -120,7 +120,7 @@ def test_delete_expired_data_with_api_error(uploaded_file: File, requests_mock: 
     call_command("delete_expired_data")
 
     # Then
-    assert File.objects.get(id=mock_file.id).status != StatusEnum.deleted
+    assert File.objects.get(id=mock_file.id).status == StatusEnum.errored
 
 
 @pytest.mark.django_db()
@@ -147,4 +147,4 @@ def test_delete_expired_data_with_s3_error(uploaded_file: File, requests_mock: M
         call_command("delete_expired_data")
 
         # Then
-        assert File.objects.get(id=mock_file.id).status != StatusEnum.deleted
+        assert File.objects.get(id=mock_file.id).status == StatusEnum.errored

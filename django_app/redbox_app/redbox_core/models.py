@@ -59,6 +59,7 @@ class StatusEnum(models.TextChoices):
     complete = "complete"
     unknown = "unknown"
     deleted = "deleted"
+    errored = "errored"
 
 
 class File(UUIDPrimaryKeyBase, TimeStampedModel):

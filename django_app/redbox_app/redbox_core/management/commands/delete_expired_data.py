@@ -37,8 +37,12 @@ class Command(BaseCommand):
 
             except RequestException as e:
                 logger.exception("Error deleting file object %s using core-api", file, exc_info=e)
+                file.status = StatusEnum.errored
+                file.save()
             except BotoCoreError as e:
                 logger.exception("Error deleting file object %s from storage", file, exc_info=e)
+                file.status = StatusEnum.errored
+                file.save()
             else:
                 file.status = StatusEnum.deleted
                 file.save()

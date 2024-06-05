@@ -66,7 +66,8 @@ def homepage_view(request):
 
 @login_required
 def documents_view(request):
-    files = File.objects.filter(user=request.user).exclude(status=StatusEnum.deleted).order_by("-created_at")
+    hidden_statuses = [StatusEnum.deleted, StatusEnum.errored]
+    files = File.objects.filter(user=request.user).exclude(status__in=hidden_statuses).order_by("-created_at")
 
     return render(
         request,
