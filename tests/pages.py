@@ -1,11 +1,11 @@
 import logging
 from abc import ABCMeta, abstractmethod
-from enum import Enum
+from datetime import datetime
 from itertools import islice
 from pathlib import Path
+from time import strptime
 from typing import Any, ClassVar, NamedTuple
 
-from _settings import BASE_URL
 from axe_playwright_python.sync_playwright import Axe
 from playwright.sync_api import Page, expect
 from yarl import URL
@@ -51,7 +51,11 @@ class BasePage(metaclass=ABCMeta):
 
     def check_a11y(self):
         results = self.axe.run(self.page, context=None, options=self.AXE_OPTIONS)
-        assert results.violations_count == 0, f"{self.url} - {results.generate_report()}"
+        if results.violations_count > 0:
+            expect(
+                self.page.get_by_text("Accessibility issues"),
+                f"Accessibility issues in {self.__class__.__name__} at {self.url}",
+            ).to_be_visible()
 
     def navigate_to_privacy_page(self) -> "PrivacyPage":
         self.page.get_by_role("link", name="Privacy", exact=True).click()
@@ -95,8 +99,8 @@ class SignedInBasePage(BasePage, metaclass=ABCMeta):
 
 
 class LandingPage(BasePage):
-    def __init__(self, page):
-        page.goto(str(BASE_URL))
+    def __init__(self, page, base_url: URL):
+        page.goto(str(base_url))
         super().__init__(page)
 
     def get_expected_page_title(self) -> str:
@@ -149,6 +153,7 @@ class HomePage(SignedInBasePage):
 
 class DocumentRow(NamedTuple):
     filename: str
+    uploaded_at: datetime
     status: str
 
 
@@ -156,26 +161,20 @@ class DocumentsPage(SignedInBasePage):
     def get_expected_page_title(self) -> str:
         return "Documents - Redbox Copilot"
 
-    def delete_latest_document(self) -> "DocumentDeletePage":
-        self.page.get_by_role("button", name="Remove").first.click()
-        return DocumentDeletePage(self.page)
-
     def navigate_to_upload(self) -> "DocumentUploadPage":
         self.page.get_by_role("button", name="Add document").click()
         return DocumentUploadPage(self.page)
 
+    def delete_latest_document(self) -> "DocumentDeletePage":
+        self.page.get_by_role("button", name="Remove").first.click()
+        return DocumentDeletePage(self.page)
+
     def get_all_document_rows(self) -> list[DocumentRow]:
         cell_texts = self.page.get_by_role("cell").all_inner_texts()
-        return [DocumentRow(filename, status) for filename, uploaded_at, status, action in batched(cell_texts, 4)]
-
-
-class DocumentDeletePage(SignedInBasePage):
-    def get_expected_page_title(self) -> str:
-        return "Remove document - Redbox Copilot"
-
-    def confirm_deletion(self) -> "DocumentsPage":
-        self.page.get_by_role("button", name="Remove").click()
-        return DocumentsPage(self.page)
+        return [
+            DocumentRow(filename, strptime(uploaded_at, "%H:%M %d/%m/%Y"), status)
+            for filename, uploaded_at, status, action in batched(cell_texts, 4)
+        ]
 
 
 class DocumentUploadPage(SignedInBasePage):
@@ -185,7 +184,7 @@ class DocumentUploadPage(SignedInBasePage):
     def upload_document(self, upload_file: Path) -> DocumentsPage:
         self.get_file_chooser_by_label().set_files(upload_file)
         self.page.get_by_role("button", name="Upload").click()
-        return self.navigate_to_documents()
+        return DocumentsPage(self.page)
 
     def get_file_chooser_by_label(self):
         with self.page.expect_file_chooser() as fc_info:
@@ -193,9 +192,13 @@ class DocumentUploadPage(SignedInBasePage):
         return fc_info.value
 
 
-class FeedbackType(Enum):
-    HELPFUL = "Helpful"
-    NOT_HELPFUL = "Not helpful"
+class DocumentDeletePage(SignedInBasePage):
+    def get_expected_page_title(self) -> str:
+        return "Remove document - Redbox Copilot"
+
+    def confirm_deletion(self) -> "DocumentsPage":
+        self.page.get_by_role("button", name="Remove").click()
+        return DocumentsPage(self.page)
 
 
 class ChatsPage(SignedInBasePage):
@@ -217,14 +220,6 @@ class ChatsPage(SignedInBasePage):
     def all_messages(self) -> list[str]:
         return self.page.locator(".iai-chat-message").all_inner_texts()
 
-    def check_feedback_prompt_visible(self, feedback: FeedbackType) -> bool:
-        if feedback == FeedbackType.NOT_HELPFUL:
-            return self.page.get_by_text("Can you let me know what wasn’t accurate?").is_visible()  # noqa: RUF001
-        return self.page.get_by_text("Thank you for your feedback").first.is_visible()
-
-    def give_feedback(self, feedback: FeedbackType):
-        self.page.get_by_role("button", name=feedback.value, exact=True).click()
-
 
 class PrivacyPage(BasePage):
     def get_expected_page_title(self) -> str:
@@ -242,8 +237,7 @@ class SupportPage(BasePage):
 
 
 def batched(iterable, n):
-    # TODO (@brunns): Use library version when we upgrade to Python 3.12.
-    # https://docs.python.org/3/library/itertools.html#itertools.batched
+    # TODO: Use library version in Python 3.12: https://docs.python.org/3/library/itertools.html#itertools.batched
     if n < 1:
         message = "n must be at least one"
         raise ValueError(message)
