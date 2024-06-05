@@ -6,7 +6,7 @@ on:
       env:
         description: 'Environment to deploy to'
         required: false
-      image_tag:
+      image-tag:
         description: 'The SHA of the Git commit to use'
         required: false
       core-repo-reference:
@@ -60,7 +60,7 @@ jobs:
     needs:
       - set-vars
       - start-runner
-    uses: i-dot-ai/i-dot-ai-core-github-actions/.github/workflows/apply-terraform.yml@main
+    uses: i-dot-ai/i-dot-ai-core-github-actions/.github/workflows/apply-terraform.yml@feature/add-configurable-repo-PITs
     with:
       APP_NAME: ${{ needs.set-vars.outputs.app-name }}
       RUNNER_LABEL: ${{ needs.start-runner.outputs.label }}
@@ -68,6 +68,8 @@ jobs:
       PUBLIC_INFRA_DEPLOYMENT: true
       ENVIRONMENT: ${{ github.event.inputs.env }}
       INFRA_CONFIG_REPO: ${{ needs.set-vars.outputs.infra-config-repo }}
+      CORE_INFRA_REF: ${{ github.event.inputs.core-repo-reference }}
+      IMAGE_TAG: ${{ github.event.inputs.image-tag }}
     secrets:
       AWS_GITHUBRUNNER_PAT: ${{ secrets.AWS_GITHUBRUNNER_PAT}}
       AWS_GITHUBRUNNER_PAT_USER: ${{ secrets.AWS_GITHUBRUNNER_PAT_USER }}
