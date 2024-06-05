@@ -32,6 +32,8 @@ FROM python:3.11-slim
 
 RUN apt-get update && apt-get install --yes libpq-dev cron > /dev/null
 
+RUN touch /var/log/cron.log
+
 WORKDIR /usr/src/app
 
 COPY django_app/ .
@@ -45,4 +47,5 @@ ENV PYTHONPATH "${PYTHONPATH}:/."
 EXPOSE 8090
 
 RUN chmod +x start.sh
+
 CMD ["./start.sh"]
