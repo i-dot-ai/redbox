@@ -72,6 +72,13 @@ jobs:
       - set-vars
       - start-runner
     steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v3-node20
+        id: aws-credentials
+        with:
+          aws-region: ${{ secrets.AWS_REGION }}
+          mask-aws-account-id: 'yes'
+
       - name: Checkout redbox-copilot repo
         uses: actions/checkout@v4
         with:
