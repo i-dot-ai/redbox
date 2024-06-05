@@ -22,7 +22,7 @@ class SpotlightCollection:
                 self.combined_spotlight_tasks[task_id].append(individual_spotlight_dict["task_outputs"][task_id])
         self.combined_spotlight_dict: dict = {"combined_task_outputs": {}}
 
-    def combine_spotlight_task_outputs(
+    def combine_spotlight_task_outputs(  # noqa: PLR0913
         self,
         task_outputs: list[dict],
         task_id,

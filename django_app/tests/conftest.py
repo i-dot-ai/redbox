@@ -74,9 +74,7 @@ def s3_client():
 @pytest.fixture()
 def chat_history(alice: User) -> ChatHistory:
     session_id = uuid.uuid4()
-    chat_history = ChatHistory.objects.create(id=session_id, users=alice)
-    yield chat_history
-    chat_history.delete()
+    return ChatHistory.objects.create(id=session_id, users=alice)
 
 
 @pytest.fixture()
