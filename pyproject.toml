@@ -109,23 +109,25 @@ select = [
     "S",
     "T",
     "W",
-    "ASYNC",
     "ARG",
+    "ASYNC",
     "BLE",
-    "LOG",
     "COM",
     "DJ",
     "DTZ",
     "EM",
     "EXE",
+    "FURB",
     "ICN",
+    "INT",
     "ISC",
+    "LOG",
     "LOG",
     "NPY",
     "PD",
     "PGH",
     "PIE",
-#*    "PL",
+    "PL",
     "PT",
     "PTH",
     "PYI",
@@ -134,8 +136,9 @@ select = [
     "RUF",
     "SIM",
     "SLF",
+    "SLOT",
     "TCH",
-#*    "TD",
+    "TD",
     "TID",
     "TRY",
     "UP",
@@ -145,9 +148,9 @@ exclude = ["django_app/redbox_app/redbox_core/migrations/*.py", "out/*"]
 ignore = ["COM812", "DJ001", "RET505", "RET508"]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/*" = ["S101", "S106"]
-"*/tests/*" = ["S101", "S106"]
-"django_app/tests_playwright/*" = ["S101", "S106"]
+"tests/*" = ["S101", "S106", "PLR0913", "PLR2004"]
+"*/tests/*" = ["S101", "S106", "PLR0913", "PLR2004"]
+"django_app/tests_playwright/*" = ["S101", "S106", "PLR0913", "PLR2004"]
 "worker/*" = ["B008"]
 "redbox/*" = ["TCH003"]
 "redbox/tests/*" = ["ARG001"]

@@ -87,15 +87,13 @@ def create_user(email_address: str):
         "--email",
         email_address,
     ]
-    result = subprocess.run(command, capture_output=True, text=True)  # noqa: S603
-    result.check_returncode()
+    result = subprocess.run(command, capture_output=True, text=True, check=True)  # noqa: S603
     logger.debug("create_user result: %s", result)
 
 
 def get_magic_link(email_address: str) -> URL:
     command = ["docker", "compose", "run", "django-app", "venv/bin/django-admin", "show_magiclink_url", email_address]
-    result = subprocess.run(command, capture_output=True, text=True)  # noqa: S603
-    result.check_returncode()
+    result = subprocess.run(command, capture_output=True, text=True, check=True)  # noqa: S603
     magic_link = result.stdout.strip().lstrip("/")
     return BASE_URL / magic_link
 

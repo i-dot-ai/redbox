@@ -1,5 +1,5 @@
 import logging
-from abc import ABCMeta, abstractmethod
+from abc import ABC, abstractmethod
 from enum import Enum
 from itertools import islice
 from pathlib import Path
@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
 
-class BasePage(metaclass=ABCMeta):
+class BasePage(ABC):
     # All available rules/categories can be found at https://github.com/dequelabs/axe-core/blob/develop/doc/rule-descriptions.md
     # Can't include all as gov.uk design system violates the "region" rule
     AXE_OPTIONS: ClassVar[dict[str, Any]] = {
@@ -80,7 +80,7 @@ class BasePage(metaclass=ABCMeta):
         return f'"{self.title}" at {self.url}'
 
 
-class SignedInBasePage(BasePage, metaclass=ABCMeta):
+class SignedInBasePage(BasePage, ABC):
     def navigate_to_documents(self) -> "DocumentsPage":
         self.page.get_by_role("link", name="Documents", exact=True).click()
         return DocumentsPage(self.page)

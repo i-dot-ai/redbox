@@ -122,7 +122,7 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
     @property
     def name(self) -> str:
         # User-facing name
-        return self.original_file_name if self.original_file_name else self.original_file.name
+        return self.original_file_name or self.original_file.name
 
     @property
     def unique_name(self) -> str:

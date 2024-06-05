@@ -1,4 +1,4 @@
-from collections.abc import Sequence
+from collections.abc import MutableSequence, Sequence
 from functools import reduce
 from itertools import compress
 
@@ -34,10 +34,8 @@ def cluster_chunks(
             List[Chunk]: A list of all the (merged) chunks extracted from the given file.
     """
     # filter out empty chunks
-    non_empty_chunks: Sequence[Chunk] = [chunk for chunk in chunks if chunk.token_count > 0]
-    if len(non_empty_chunks) < 2:
-        out_chunks = non_empty_chunks
-    else:
+    non_empty_chunks: MutableSequence[Chunk] = [chunk for chunk in chunks if chunk.token_count > 0]
+    if len(non_empty_chunks) > 1:
         token_counts: Sequence[int] = [chunk.token_count for chunk in non_empty_chunks]
         # calculate simple vector embedding and distances between adjacent chunks
 
@@ -62,7 +60,7 @@ def cluster_chunks(
         num_clusters = round(np.sum(token_counts) / desired_chunk_size)
         out_clusters = [lab[0] for lab in scipy.cluster.hierarchy.cut_tree(hc, n_clusters=num_clusters)]
         # merge clusters and create output chunks
-        out_chunks = []
+        out_chunks: MutableSequence[Chunk] = []
         for i, clust in enumerate(np.unique(out_clusters)):
             chunks_in = list(compress(non_empty_chunks, out_clusters == clust))
             # if there is only one chunk in the cluster, just use it
@@ -79,6 +77,8 @@ def cluster_chunks(
                     creator_user_uuid=chunks_in[0].creator_user_uuid,
                 )
             out_chunks.append(new_chunk)
+    else:
+        out_chunks = non_empty_chunks
     return out_chunks
 
 
@@ -191,7 +191,7 @@ def create_pdist(
     the hierarchical clustering to merge only adjacent blocks in each step.
     """
 
-    if len(pair_embed_dist) != len(pair_embed_dist):
+    if len(token_counts) != len(pair_embed_dist):
         message = "distances do not have the same length"
         raise ValueError(message)
 

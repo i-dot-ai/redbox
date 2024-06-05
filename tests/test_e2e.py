@@ -11,8 +11,6 @@ import websockets
 from jose import jwt
 from websockets import ConnectionClosed
 
-# TODO: add e2e tests involving the Django app, checking S3 upload
-
 USER_UUIDS: list[UUID] = [uuid4(), uuid4()]
 
 

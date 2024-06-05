@@ -108,7 +108,7 @@ vector_store = ElasticsearchStore(
 def simple_chat(chat_request: ChatRequest, _user_uuid: Annotated[UUID, Depends(get_user_uuid)]) -> ChatResponse:
     """Get a LLM response to a question history"""
 
-    if len(chat_request.message_history) < 2:
+    if not len(chat_request.message_history) > 1:
         raise HTTPException(
             status_code=HTTPStatus.UNPROCESSABLE_ENTITY,
             detail="Chat history should include both system and user prompts",

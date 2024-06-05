@@ -28,6 +28,6 @@ def sign_in(page: Page) -> "HomePage":
 
 def get_magic_link(email_address: str, django_root: Path) -> URL:
     command = ["poetry", "run", "python", "manage.py", "show_magiclink_url", email_address]
-    result = subprocess.run(command, capture_output=True, text=True, cwd=django_root)  # noqa: S603
+    result = subprocess.run(command, capture_output=True, text=True, cwd=django_root, check=True)  # noqa: S603
     magic_link = result.stdout.strip().lstrip("/")
     return BASE_URL / magic_link
