@@ -32,9 +32,7 @@ class SourcesList extends HTMLElement {
         });
         html += `</ul>`;
     
-        this.innerHTML = /** @type {any} */ (DOMPurify.sanitize(html, {
-            RETURN_TRUSTED_TYPE: true
-        }));
+        this.innerHTML = html;
 
     }
 
@@ -47,7 +45,7 @@ customElements.define('sources-list', SourcesList);
 class ChatMessage extends HTMLElement {
 
     connectedCallback() {
-        const html = `
+        this.innerHTML = `
             <div class="iai-chat-message iai-chat-message--${this.dataset.role} govuk-body">
                 <div class="iai-chat-message__role">${this.dataset.role === 'ai' ? 'Redbox' : 'You'}</div>
                 ${!this.dataset.text ?
@@ -60,14 +58,6 @@ class ChatMessage extends HTMLElement {
                 <sources-list></sources-list>
             </div>
         `;
-        this.innerHTML = /** @type {any} */ (DOMPurify.sanitize(html, {
-            RETURN_TRUSTED_TYPE: true,
-            CUSTOM_ELEMENT_HANDLING: {
-                tagNameCheck: (tagName) => tagName === 'markdown-converter' || tagName === 'sources-list',
-                attributeNameCheck: (attr) => true,
-                allowCustomizedBuiltInElements: true
-            }
-        }));
     }
 
     /**
