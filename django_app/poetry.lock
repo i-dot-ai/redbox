@@ -1083,6 +1083,19 @@ rcssmin = "1.1.1"
 rjsmin = "1.2.1"
 
 [[package]]
+name = "django-crontab"
+version = "0.7.1"
+description = "dead simple crontab powered job scheduling for django"
+optional = false
+python-versions = "*"
+files = [
+    {file = "django-crontab-0.7.1.tar.gz", hash = "sha256:1201810a212460aaaa48eb6a766738740daf42c1a4f6aafecfb1525036929236"},
+]
+
+[package.dependencies]
+Django = ">=1.8"
+
+[[package]]
 name = "django-csp"
 version = "3.8"
 description = "Django Content Security Policy support."
@@ -3298,4 +3311,4 @@ testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.11.2,<3.13"
-content-hash = "9af0d8730770f57e30464561c76285251132d0324bed0769c31982e48ed15972"
+content-hash = "f73831d96d9799c841666aa2c5ccedd650815977233a0700da53cf06b4f53ef5"

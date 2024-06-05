@@ -58,6 +58,7 @@ INSTALLED_APPS = [
     "storages",
     "compressor",
     "magic_link",
+    "django_crontab",
 ]
 
 MIDDLEWARE = [
@@ -318,3 +319,7 @@ USE_STREAMING = env.bool("USE_STREAMING")
 FILE_EXPIRY_IN_SECONDS = env.int("FILE_EXPIRY_IN_DAYS") * 24 * 60 * 60
 SUPERUSER_EMAIL = env.str("SUPERUSER_EMAIL", None)
 MAX_SECURITY_CLASSIFICATION = Classification[env.str("MAX_SECURITY_CLASSIFICATION")]
+
+CRONJOBS = [
+    ("0 * * * *", "django.core.management.call_command", ["showmigrations"]),
+]
