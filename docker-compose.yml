@@ -79,6 +79,7 @@ services:
       - elasticsearch
       - minio
       - redis
+      - worker
     restart: unless-stopped
   minio:
     image: minio/minio
