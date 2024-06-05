@@ -23,6 +23,7 @@ unstructured = {version = "0.13.7", extras = ["all-docs"]}
 torch = "2.2.2"
 
 
+
 [tool.poetry.group.api.dependencies]
 fastapi = "^0.111.0"
 faststream = {extras = ["redis"], version = "<0.5.0"}
