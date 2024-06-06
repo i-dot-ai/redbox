@@ -10,7 +10,6 @@ from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils import timezone
-from django.utils.datastructures import MultiValueDictKeyError
 from django.views.decorators.http import require_http_methods
 from redbox_app.redbox_core.client import CoreApiClient
 from redbox_app.redbox_core.models import (
@@ -69,28 +68,31 @@ def documents_view(request):
     hidden_statuses = [StatusEnum.deleted, StatusEnum.errored]
     files = File.objects.filter(user=request.user).exclude(status__in=hidden_statuses).order_by("-created_at")
 
+    ingest_errors = request.session.get("ingest_errors", [])
+    request.session["ingest_errors"] = []
+
     return render(
         request,
         template_name="documents.html",
-        context={"request": request, "files": files},
+        context={"request": request, "files": files, "ingest_errors": ingest_errors},
     )
 
 
 @login_required
-def upload_view(request):
+def upload_view(request):  # noqa: C901
     errors = []
+    ingest_errors = []
 
     if request.method == "POST":
         # https://django-storages.readthedocs.io/en/1.13.2/backends/amazon-S3.html
-        
-        uploaded_files: list[UploadedFile] = request.FILES.getlist("uploadDoc")
 
-        if len(uploaded_files) == 0:
+        uploaded_files: list[UploadedFile] = request.FILES.getlist("uploadDocs")
+        if not uploaded_files:
             errors.append("No document selected")
 
         for uploaded_file in uploaded_files:
             file_extension = Path(uploaded_file.name).suffix
-            
+
             if uploaded_file.name is None:
                 errors.append("File has no name")
             if uploaded_file.content_type is None:
@@ -102,12 +104,12 @@ def upload_view(request):
 
         if not errors:
             for uploaded_file in uploaded_files:
-                errors += ingest_file(uploaded_file, request.user) 
-        
-        # TO DO: Do we want to redirect anyway, as otherwise users won't see the files that have been ingested
-        # This is only an issue at the ingest_file stage
-        # Maybe we just don't capture ingest_file errors in this way, e.g. instead let's add them to the documents list with "Error" status
-        if not errors:
+                # ingest errors are handled differently, as the other documents have started uploading by this point
+                ingest_error = ingest_file(uploaded_file, request.user)
+                if ingest_error:
+                    ingest_errors.append(f"{uploaded_file.name}: {ingest_error[0]}")
+
+            request.session["ingest_errors"] = ingest_errors
             return redirect(reverse(documents_view))
 
     return render(
