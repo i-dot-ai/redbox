@@ -21,7 +21,7 @@ from redbox_app.redbox_core.models import (
     StatusEnum,
     User,
 )
-from requests.exceptions import HTTPError
+from requests.exceptions import RequestException
 from yarl import URL
 
 logger = logging.getLogger(__name__)
@@ -66,7 +66,8 @@ def homepage_view(request):
 
 @login_required
 def documents_view(request):
-    files = File.objects.filter(user=request.user).exclude(status=StatusEnum.deleted).order_by("-created_at")
+    hidden_statuses = [StatusEnum.deleted, StatusEnum.errored]
+    files = File.objects.filter(user=request.user).exclude(status__in=hidden_statuses).order_by("-created_at")
 
     return render(
         request,
@@ -130,7 +131,7 @@ def ingest_file(uploaded_file: UploadedFile, user: User) -> list[str]:
     else:
         try:
             upload_file_response = core_api.upload_file(file.unique_name, user)
-        except HTTPError as e:
+        except RequestException as e:
             logger.exception("Error uploading file object %s.", file, exc_info=e)
             file.delete()
             errors.append("failed to connect to core-api")
@@ -148,7 +149,7 @@ def remove_doc_view(request, doc_id: uuid):
     if request.method == "POST":
         try:
             core_api.delete_file(file.core_file_uuid, request.user)
-        except HTTPError as e:
+        except RequestException as e:
             logger.exception("Error deleting file object %s.", file, exc_info=e)
             errors.append("There was an error deleting this file")
 
@@ -240,7 +241,7 @@ def file_status_api_view(request: HttpRequest) -> JsonResponse:
         return JsonResponse({"status": StatusEnum.unknown.label})
     try:
         core_file_status_response = core_api.get_file_status(file_id=file.core_file_uuid, user=request.user)
-    except HTTPError as ex:
+    except RequestException as ex:
         logger.exception("File object information from core not found - file does not exist %s.", file_id, exc_info=ex)
         if not file.status:
             file.status = StatusEnum.unknown.label
