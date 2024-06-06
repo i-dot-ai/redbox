@@ -20,7 +20,7 @@ clean:
 build:
 	docker compose build
 
-rebuild:
+rebuild: stop
 	docker compose build --no-cache
 
 test-core-api:
