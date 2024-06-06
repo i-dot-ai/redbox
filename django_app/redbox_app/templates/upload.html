@@ -36,7 +36,7 @@
               <span class="govuk-visually-hidden">Error:</span> {{ error }}
             </p>
           {% endfor %}
-          <input class="govuk-file-upload {% if errors.upload_doc %} govuk-file-upload--error{% endif %}" id="upload-doc" name="uploadDoc" type="file" aria-describedby="upload-doc-notification upload-doc-filetypes {% if errors.upload_doc %} file-upload-doc-error{% endif %}">
+          <input class="govuk-file-upload {% if errors.upload_doc %} govuk-file-upload--error{% endif %}" multiple id="upload-doc" name="uploadDoc" type="file" aria-describedby="upload-doc-notification upload-doc-filetypes {% if errors.upload_doc %} file-upload-doc-error{% endif %}">
         </div>
 
         {{ govukButton(text="Upload") }}
