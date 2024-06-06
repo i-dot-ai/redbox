@@ -21,6 +21,8 @@ ARG EMBEDDING_MODEL
 
 WORKDIR /app/
 
+RUN apt-get update && apt-get install --yes build-essential curl > /dev/null
+
 ENV VIRTUAL_ENV=/app/.venv \
     PATH="/app/.venv/bin:$PATH"
 COPY --from=builder ${VIRTUAL_ENV} ${VIRTUAL_ENV}

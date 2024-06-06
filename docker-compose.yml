@@ -5,8 +5,12 @@ services:
       context: .
       dockerfile: ./django_app/Dockerfile
     depends_on:
-      - db
-      - minio
+      db:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+      core-api:
+        condition: service_healthy
     networks:
       - redbox-app-network
     env_file:
@@ -16,6 +20,12 @@ services:
       - ./django_app:/app/django_app/
     ports:
       - "8090:8090"
+    healthcheck:
+      test: curl --fail http://localhost:8090/health/ || exit 1
+      interval: 5s
+      timeout: 30s
+      retries: 24
+      start_period: 60s
   db:
     image: postgres:13
     env_file:
@@ -26,6 +36,12 @@ services:
       - redbox-app-network
     ports:
       - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready", "-d", "db_prod"]
+      interval: 5s
+      timeout: 30s
+      retries: 24
+      start_period: 30s
   requirements:
     image: python:3.11
     profiles:
@@ -54,9 +70,12 @@ services:
     env_file:
       - .env
     depends_on:
-      - redis
-      - elasticsearch
-      - minio
+      elasticsearch:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     networks:
       - redbox-app-network
     restart: unless-stopped
@@ -76,11 +95,21 @@ services:
     networks:
       - redbox-app-network
     depends_on:
-      - elasticsearch
-      - minio
-      - redis
-      - worker
+      elasticsearch:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      worker:
+        condition: service_started
     restart: unless-stopped
+    healthcheck:
+      test: curl --fail http://localhost:5002/health || exit 1
+      interval: 5s
+      timeout: 30s
+      retries: 24
+      start_period: 60s
   minio:
     image: minio/minio
     expose:
@@ -97,6 +126,13 @@ services:
       - redbox-app-network
     volumes:
       - ./data/objectstore:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 5s
+      timeout: 30s
+      retries: 24
+      start_period: 30s
   elasticsearch:
     image: elasticsearch:8.12.0
     volumes:
@@ -116,6 +152,12 @@ services:
     networks:
       - redbox-app-network
     restart: unless-stopped
+    healthcheck:
+      test: curl --fail http://localhost:9200/_cluster/health || exit 1
+      interval: 5s
+      timeout: 30s
+      retries: 24
+      start_period: 60s
   kibana:
     image: kibana:8.12.0
     ports:
@@ -142,6 +184,12 @@ services:
       - .env
     networks:
       - redbox-app-network
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli ping | grep PONG"]
+      interval: 5s
+      timeout: 30s
+      retries: 24
+      start_period: 60s
 
 networks:
   redbox-app-network:
