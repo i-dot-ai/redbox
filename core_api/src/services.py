@@ -1,5 +1,6 @@
 import logging
 import os
+from pathlib import Path
 from typing import Annotated
 
 from elasticsearch import Elasticsearch
@@ -9,11 +10,14 @@ from langchain_community.embeddings import SentenceTransformerEmbeddings
 from langchain_core.embeddings import Embeddings
 from langchain_elasticsearch import ApproxRetrievalStrategy, ElasticsearchStore
 
-from redbox.model_db import MODEL_PATH
+# from redbox.model_db import MODEL_PATH
 from redbox.models import Settings
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger()
+
+# MODEL_PATH = str(Path(__file__).parents[2] / "models")
+MODEL_PATH = "/redbox-copilot/models"
 
 
 async def env() -> Settings:
@@ -25,7 +29,9 @@ async def elasticsearch_client(env: Annotated[Settings, Depends(env)]) -> Elasti
 
 
 async def embedding_model(env: Annotated[Settings, Depends(env)]) -> Embeddings:
-    embedding_model = SentenceTransformerEmbeddings(model_name=env.embedding_model, cache_folder=MODEL_PATH)
+    embedding_model = SentenceTransformerEmbeddings(
+        model_name=env.embedding_model, cache_folder=MODEL_PATH
+    )
     log.info("Loaded embedding model from environment: %s", env.embedding_model)
     return embedding_model
 
