@@ -25,7 +25,7 @@ rebuild:
 
 test-core-api:
 	poetry install --no-root --no-ansi --with api,dev,ai --without worker,docs
-	poetry run pytest core_api/tests --cov=core_api/src -v --cov-report=term-missing --cov-fail-under=45
+	poetry run pytest core_api/tests --cov=core_api/src -v --cov-report=term-missing --cov-fail-under=75
 
 test-redbox:
 	poetry install --no-root --no-ansi --with api,dev --without ai,worker,docs
