@@ -41,8 +41,8 @@ The goal of this notebook is to create a filesystem of data ready-made for other
             ├── results              # results from using this data
             │   └── baseline.csv     # the baseline results
             ├── synthetic            # Q&A datasets of study created with RAGAS
-            └── embeddings           # vector store dumps of pre-embedded document chunks
-                └── {model}.jsonl    # pre-embedded chunks to be loaded to the index
+            └── embeddings           # pre-embedded document chunks
+                └── {model}.jsonl    # pre-embedded chunks for a single embedding model
 ```
 
 We use [RAGAS](https://ragas.io) to create synthetic data, but are more than happy for users to manually create datasets too.
@@ -66,6 +66,8 @@ We use [DeepEval](https://docs.confident-ai.com) to evaluate datasets.
 The versioned dataset should ideally have been **baselined**, providing you with metrics you can aim to improve. Modify the RAG system via the notebook, and express findings in relation to these baseline metrics.
 
 Right now the notebook only contains the final retrieval engine: the interplay of prompts and retriever. Chunking and embedding strategies will need to be loaded outside this notebook, though you can certainly assess them using it.
+
+[Contect the Redbox team](mailto://i-dot-ai-enquiries@cabinetoffice.gov.uk) if you're interested in working on our existing versioned evaluation datasets.
 
 ## ✅ Success! What now?
 
