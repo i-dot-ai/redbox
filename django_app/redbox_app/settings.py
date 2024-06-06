@@ -14,7 +14,7 @@ env = environ.Env()
 
 SECRET_KEY = env.str("DJANGO_SECRET_KEY")
 ENVIRONMENT = Environment[env.str("ENVIRONMENT").upper()]
-WEBSOCKET_SCHEME = "ws" if ENVIRONMENT.is_local() else "wss"
+WEBSOCKET_SCHEME = "ws" if ENVIRONMENT.is_local else "wss"
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env.bool("DEBUG")
@@ -200,33 +200,23 @@ AWS_STORAGE_BUCKET_NAME = BUCKET_NAME  # this duplication is required for django
 OBJECT_STORE = env.str("OBJECT_STORE")
 AWS_S3_FILE_OVERWRITE = False  # allows users to have duplicate file names
 
+STORAGES = {
+    "default": {
+        "BACKEND": s3boto3.S3Boto3Storage,
+    },
+    "staticfiles": {
+        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+    },
+}
 
-if ENVIRONMENT.is_test:
+if ENVIRONMENT.uses_minio:
     AWS_S3_SECRET_ACCESS_KEY = env.str("AWS_SECRET_KEY")
     AWS_ACCESS_KEY_ID = env.str("AWS_ACCESS_KEY")
     MINIO_HOST = env.str("MINIO_HOST")
     MINIO_PORT = env.str("MINIO_PORT")
     MINIO_ENDPOINT = f"http://{MINIO_HOST}:{MINIO_PORT}"
     AWS_S3_ENDPOINT_URL = MINIO_ENDPOINT
-
-    STORAGES = {
-        "default": {
-            "BACKEND": s3boto3.S3Boto3Storage,
-        },
-        "staticfiles": {
-            "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
-        },
-    }
 else:
-    STORAGES = {
-        "default": {
-            "BACKEND": s3boto3.S3Boto3Storage,
-        },
-        "staticfiles": {
-            "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
-        },
-    }
-
     # https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Strict-Transport-Security
     # Mozilla guidance max-age 2 years
     SECURE_HSTS_SECONDS = 2 * 365 * 24 * 60 * 60
