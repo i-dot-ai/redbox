@@ -83,24 +83,30 @@ def upload_view(request):
     if request.method == "POST":
         # https://django-storages.readthedocs.io/en/1.13.2/backends/amazon-S3.html
         try:
-            uploaded_file: UploadedFile = request.FILES["uploadDoc"]
+            uploaded_files: list[UploadedFile] = request.FILES.getlist("uploadDoc")
 
-            file_extension = Path(uploaded_file.name).suffix
+            for uploaded_file in uploaded_files:
+                file_extension = Path(uploaded_file.name).suffix
+                
+                if uploaded_file.name is None:
+                    errors.append("File has no name")
+                if uploaded_file.content_type is None:
+                    errors.append(f"Error with {uploaded_file.name}: File has no content-type")
+                if uploaded_file.size > MAX_FILE_SIZE:
+                    errors.append(f"Error with {uploaded_file.name}: File is larger than 200MB")
+                if file_extension not in APPROVED_FILE_EXTENSIONS:
+                    errors.append(f"Error with {uploaded_file.name}: File type {file_extension} not supported")
 
-            if uploaded_file.name is None:
-                errors.append("File has no name")
-            if uploaded_file.content_type is None:
-                errors.append("File has no content-type")
-            if uploaded_file.size > MAX_FILE_SIZE:
-                errors.append("File is larger than 200MB")
-            if file_extension not in APPROVED_FILE_EXTENSIONS:
-                errors.append(f"File type {file_extension} not supported")
         except MultiValueDictKeyError:
             errors.append("No document selected")
 
         if not errors:
-            errors += ingest_file(uploaded_file, request.user)
-
+            for uploaded_file in uploaded_files:
+                errors += ingest_file(uploaded_file, request.user) 
+        
+        # TO DO: Do we want to redirect anyway, as otherwise users won't see the files that have been ingested
+        # This is only an issue at the ingest_file stage
+        # Maybe we just don't capture ingest_file errors in this way, e.g. instead let's add them to the documents list with "Error" status
         if not errors:
             return redirect(reverse(documents_view))
 
