@@ -10,9 +10,14 @@ from langchain.chains.qa_with_sources import load_qa_with_sources_chain
 from langchain_community.chat_models import ChatLiteLLM
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_elasticsearch import ElasticsearchStore
+from semantic_router import Route
+from semantic_router.encoders import OpenAIEncoder
+from semantic_router.layer import RouteLayer
 
 from core_api.src import services
 from core_api.src.auth import get_user_uuid, get_ws_user_uuid
+
+# from core_api.src.routes.semantic_router import rl
 from redbox.llm.prompts.chat import (
     CONDENSE_QUESTION_PROMPT,
     STUFF_DOCUMENT_PROMPT,
@@ -32,13 +37,51 @@ chat_app = FastAPI(
     version="0.1.0",
     openapi_tags=[
         {"name": "chat", "description": "Chat interactions with LLM and RAG backend"},
-        {"name": "embedding", "description": "Embedding interactions with SentenceTransformer"},
+        {
+            "name": "embedding",
+            "description": "Embedding interactions with SentenceTransformer",
+        },
         {"name": "llm", "description": "LLM information and parameters"},
     ],
     docs_url="/docs",
     redoc_url="/redoc",
     openapi_url="/openapi.json",
 )
+
+
+# === Set up the semantic router ===
+info = Route(
+    name="info",
+    utterances=[
+        "What is your name?",
+        "Who are you?",
+        "What can you do?",
+        "How can you help me?",
+        "What can I do",
+        "What is Redbox?",
+    ],
+)
+
+gratitude = Route(
+    name="gratitude",
+    utterances=[
+        "Thank you ever so much for your help!",
+        "I'm really grateful for your assistance.",
+        "Cheers for the detailed response!",
+        "Thanks a lot, that was very informative.",
+        "Nice one",
+        "Thanks!",
+    ],
+)
+
+routes = [
+    info,
+    gratitude,
+]
+
+encoder = OpenAIEncoder()
+
+rl = RouteLayer(encoder=encoder, routes=routes)
 
 
 @chat_app.post("/vanilla", tags=["chat"], response_model=ChatResponse)
@@ -67,7 +110,9 @@ def simple_chat(
             detail="The final entry in the chat history should be a user question",
         )
 
-    chat_prompt = ChatPromptTemplate.from_messages((msg.role, msg.text) for msg in chat_request.message_history)
+    chat_prompt = ChatPromptTemplate.from_messages(
+        (msg.role, msg.text) for msg in chat_request.message_history
+    )
     # Convert to LangChain style messages
     messages = chat_prompt.format_messages()
 
@@ -77,7 +122,10 @@ def simple_chat(
 
 
 async def build_retrieval_chain(
-    chat_request: ChatRequest, user_uuid: UUID, llm: ChatLiteLLM, vector_store: ElasticsearchStore
+    chat_request: ChatRequest,
+    user_uuid: UUID,
+    llm: ChatLiteLLM,
+    vector_store: ElasticsearchStore,
 ):
     question = chat_request.message_history[-1].text
     previous_history = list(chat_request.message_history[:-1])
@@ -95,10 +143,14 @@ async def build_retrieval_chain(
 
     condense_question_chain = LLMChain(llm=llm, prompt=CONDENSE_QUESTION_PROMPT)
 
-    standalone_question = condense_question_chain({"question": question, "chat_history": previous_history})["text"]
+    standalone_question = condense_question_chain(
+        {"question": question, "chat_history": previous_history}
+    )["text"]
 
     search_kwargs = {"filter": {"term": {"creator_user_uuid.keyword": str(user_uuid)}}}
-    docs = vector_store.as_retriever(search_kwargs=search_kwargs).get_relevant_documents(standalone_question)
+    docs = vector_store.as_retriever(
+        search_kwargs=search_kwargs
+    ).get_relevant_documents(standalone_question)
 
     params = {
         "question": standalone_question,
@@ -123,18 +175,36 @@ async def rag_chat(
     Returns:
         StreamingResponse: a stream of the chain response
     """
-    chain, params = await build_retrieval_chain(chat_request, user_uuid, llm, vector_store)
-    result = chain(params)
+    question = chat_request.message_history[-1].text
+    route = rl(question)
 
-    source_documents = [
-        SourceDocument(
-            page_content=langchain_document.page_content,
-            file_uuid=langchain_document.metadata.get("parent_doc_uuid"),
-            page_numbers=langchain_document.metadata.get("page_numbers"),
+    if route.name == "info":
+        return ChatResponse(
+            output_text="""
+            I am RedBox, an AI focused on helping UK Civil Servants, Political Advisors and\
+            Ministers triage and summarise information from a wide variety of sources.
+        """
         )
-        for langchain_document in result.get("input_documents", [])
-    ]
-    return ChatResponse(output_text=result["output_text"], source_documents=source_documents)
+    elif route.name == "gratitude":
+        return ChatResponse(output_text="You're welcome!")
+    else:
+        # RAG chat
+        chain, params = await build_retrieval_chain(
+            chat_request, user_uuid, llm, vector_store
+        )
+        result = chain(params)
+
+        source_documents = [
+            SourceDocument(
+                page_content=langchain_document.page_content,
+                file_uuid=langchain_document.metadata.get("parent_doc_uuid"),
+                page_numbers=langchain_document.metadata.get("page_numbers"),
+            )
+            for langchain_document in result.get("input_documents", [])
+        ]
+        return ChatResponse(
+            output_text=result["output_text"], source_documents=source_documents
+        )
 
 
 @chat_app.websocket("/rag")
@@ -149,12 +219,16 @@ async def rag_chat_streamed(
 
     chat_request = ChatRequest.parse_raw(await websocket.receive_text())
 
-    chain, params = await build_retrieval_chain(chat_request, user_uuid, llm, vector_store)
+    chain, params = await build_retrieval_chain(
+        chat_request, user_uuid, llm, vector_store
+    )
 
     async for event in chain.astream_events(params, version="v1"):
         kind = event["event"]
         if kind == "on_chat_model_stream":
-            await websocket.send_json({"resource_type": "text", "data": event["data"]["chunk"].content})
+            await websocket.send_json(
+                {"resource_type": "text", "data": event["data"]["chunk"].content}
+            )
         elif kind == "on_chat_model_end":
             await websocket.send_json({"resource_type": "end"})
         elif kind == "on_chain_stream":
@@ -168,6 +242,8 @@ async def rag_chat_streamed(
                 )
                 for document in event["data"]["chunk"].get("input_documents", [])
             ]
-            await websocket.send_json({"resource_type": "documents", "data": source_documents})
+            await websocket.send_json(
+                {"resource_type": "documents", "data": source_documents}
+            )
 
     await websocket.close()
