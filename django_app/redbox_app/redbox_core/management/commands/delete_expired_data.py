@@ -4,9 +4,10 @@ from datetime import timedelta
 from botocore.exceptions import BotoCoreError
 from django.conf import settings
 from django.core.management import BaseCommand
+from django.db.models import Max
 from django.utils import timezone
 from redbox_app.redbox_core.client import CoreApiClient
-from redbox_app.redbox_core.models import File, StatusEnum
+from redbox_app.redbox_core.models import ChatHistory, File, StatusEnum
 from requests.exceptions import RequestException
 
 logger = logging.getLogger(__name__)
@@ -15,7 +16,7 @@ core_api = CoreApiClient(host=settings.CORE_API_HOST, port=settings.CORE_API_POR
 
 class Command(BaseCommand):
     help = """This should be run daily per environment to remove expired data.
-    It removes Files that have exceeded their expiry date.
+    It removes Files, ChatMessages and ChatHistories that have exceeded their expiry date.
     """
 
     def handle(self, *_args, **_kwargs):
@@ -51,3 +52,12 @@ class Command(BaseCommand):
                 counter += 1
 
         self.stdout.write(self.style.SUCCESS(f"Successfully deleted {counter} file objects"))
+
+        self.stdout.write(self.style.NOTICE(f"Deleting chats expired before {cutoff_date}"))
+        chats_to_delete = ChatHistory.objects.annotate(last_modified_at=Max("chatmessage__modified_at")).filter(
+            last_modified_at__lt=cutoff_date
+        )
+        counter = chats_to_delete.count()
+        chats_to_delete.delete()
+
+        self.stdout.write(self.style.SUCCESS(f"Successfully deleted {counter} ChatHistory objects"))

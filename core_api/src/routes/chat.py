@@ -1,5 +1,4 @@
 import logging
-import os
 from http import HTTPStatus
 from typing import Annotated
 from uuid import UUID
@@ -9,26 +8,22 @@ from fastapi.encoders import jsonable_encoder
 from langchain.chains.llm import LLMChain
 from langchain.chains.qa_with_sources import load_qa_with_sources_chain
 from langchain_community.chat_models import ChatLiteLLM
-from langchain_community.embeddings import SentenceTransformerEmbeddings
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_elasticsearch import ApproxRetrievalStrategy, ElasticsearchStore
+from langchain_elasticsearch import ElasticsearchStore
 
+from core_api.src import services
 from core_api.src.auth import get_user_uuid, get_ws_user_uuid
 from redbox.llm.prompts.chat import (
     CONDENSE_QUESTION_PROMPT,
     STUFF_DOCUMENT_PROMPT,
     WITH_SOURCES_PROMPT,
 )
-from redbox.model_db import MODEL_PATH
-from redbox.models import Settings
 from redbox.models.chat import ChatRequest, ChatResponse, SourceDocument
 
 # === Logging ===
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger()
-
-env = Settings()
 
 
 chat_app = FastAPI(
@@ -45,67 +40,13 @@ chat_app = FastAPI(
     openapi_url="/openapi.json",
 )
 
-embedding_model = SentenceTransformerEmbeddings(model_name=env.embedding_model, cache_folder=MODEL_PATH)
-log.info("Loaded embedding model from environment: %s", env.embedding_model)
-
-
-# === LLM setup ===
-
-# Create the appropriate LLM, either openai, Azure, anthropic or bedrock
-if env.openai_api_key is not None:
-    log.info("Creating OpenAI LLM Client")
-    llm = ChatLiteLLM(
-        streaming=True,
-        openai_key=env.openai_api_key,
-    )
-elif env.azure_openai_api_key is not None:
-    log.info("Creating Azure LLM Client")
-    log.debug("api_base: %s", env.azure_openai_endpoint)
-    log.debug("api_version: %s", env.openai_api_version)
-
-    # this nasty hack is required because, contrary to the docs:
-    # using the api_version argument is not sufficient, and we need
-    # to use the `OPENAI_API_VERSION` environment variable
-    os.environ["OPENAI_API_VERSION"] = env.openai_api_version
-
-    llm = ChatLiteLLM(
-        model=env.azure_openai_model,
-        streaming=True,
-        azure_key=env.azure_openai_api_key,
-        api_version=env.openai_api_version,
-        api_base=env.azure_openai_endpoint,
-    )
-elif env.anthropic_api_key is not None:
-    msg = "anthropic LLM not yet implemented"
-    log.exception(msg)
-    raise ValueError(msg)
-else:
-    msg = "Unknown LLM model specified or missing"
-    log.exception(msg)
-    raise ValueError(msg)
-
-
-es = env.elasticsearch_client()
-if env.elastic.subscription_level == "basic":
-    strategy = ApproxRetrievalStrategy(hybrid=False)
-elif env.elastic.subscription_level in ["platinum", "enterprise"]:
-    strategy = ApproxRetrievalStrategy(hybrid=True)
-else:
-    message = f"Unknown Elastic subscription level {env.elastic.subscription_level}"
-    raise ValueError(message)
-
-
-vector_store = ElasticsearchStore(
-    es_connection=es,
-    index_name=f"{env.elastic_root_index}-chunk",
-    embedding=embedding_model,
-    strategy=strategy,
-    vector_query_field="embedding",
-)
-
 
 @chat_app.post("/vanilla", tags=["chat"], response_model=ChatResponse)
-def simple_chat(chat_request: ChatRequest, _user_uuid: Annotated[UUID, Depends(get_user_uuid)]) -> ChatResponse:
+def simple_chat(
+    chat_request: ChatRequest,
+    _user_uuid: Annotated[UUID, Depends(get_user_uuid)],
+    llm: Annotated[ChatLiteLLM, Depends(services.llm)],
+) -> ChatResponse:
     """Get a LLM response to a question history"""
 
     if len(chat_request.message_history) < 2:  # noqa: PLR2004
@@ -136,8 +77,7 @@ def simple_chat(chat_request: ChatRequest, _user_uuid: Annotated[UUID, Depends(g
 
 
 async def build_retrieval_chain(
-    chat_request: ChatRequest,
-    user_uuid: UUID,
+    chat_request: ChatRequest, user_uuid: UUID, llm: ChatLiteLLM, vector_store: ElasticsearchStore
 ):
     question = chat_request.message_history[-1].text
     previous_history = list(chat_request.message_history[:-1])
@@ -169,7 +109,12 @@ async def build_retrieval_chain(
 
 
 @chat_app.post("/rag", tags=["chat"])
-async def rag_chat(chat_request: ChatRequest, user_uuid: Annotated[UUID, Depends(get_user_uuid)]) -> ChatResponse:
+async def rag_chat(
+    chat_request: ChatRequest,
+    user_uuid: Annotated[UUID, Depends(get_user_uuid)],
+    llm: Annotated[ChatLiteLLM, Depends(services.llm)],
+    vector_store: Annotated[ElasticsearchStore, Depends(services.vector_store)],
+) -> ChatResponse:
     """Get a LLM response to a question history and file
 
     Args:
@@ -178,7 +123,7 @@ async def rag_chat(chat_request: ChatRequest, user_uuid: Annotated[UUID, Depends
     Returns:
         StreamingResponse: a stream of the chain response
     """
-    chain, params = await build_retrieval_chain(chat_request, user_uuid)
+    chain, params = await build_retrieval_chain(chat_request, user_uuid, llm, vector_store)
     result = chain(params)
 
     source_documents = [
@@ -193,14 +138,18 @@ async def rag_chat(chat_request: ChatRequest, user_uuid: Annotated[UUID, Depends
 
 
 @chat_app.websocket("/rag")
-async def rag_chat_streamed(websocket: WebSocket):
+async def rag_chat_streamed(
+    websocket: WebSocket,
+    llm: Annotated[ChatLiteLLM, Depends(services.llm)],
+    vector_store: Annotated[ElasticsearchStore, Depends(services.vector_store)],
+):
     await websocket.accept()
 
     user_uuid = await get_ws_user_uuid(websocket)
 
     chat_request = ChatRequest.parse_raw(await websocket.receive_text())
 
-    chain, params = await build_retrieval_chain(chat_request, user_uuid)
+    chain, params = await build_retrieval_chain(chat_request, user_uuid, llm, vector_store)
 
     async for event in chain.astream_events(params, version="v1"):
         kind = event["event"]

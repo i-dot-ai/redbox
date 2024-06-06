@@ -9,8 +9,9 @@ from botocore.exceptions import UnknownClientMethodError
 from django.conf import settings
 from django.core.management import CommandError, call_command
 from django.utils import timezone
+from freezegun import freeze_time
 from magic_link.models import MagicLink
-from redbox_app.redbox_core.models import File, StatusEnum, User
+from redbox_app.redbox_core.models import ChatHistory, ChatMessage, ChatRoleEnum, File, StatusEnum, User
 from requests_mock import Mocker
 
 # === show_magiclink_url command tests ===
@@ -78,7 +79,9 @@ EXPIRED_FILE_DATE = timezone.now() - timedelta(seconds=(settings.FILE_EXPIRY_IN_
     ],
 )
 @pytest.mark.django_db()
-def test_delete_expired_data(uploaded_file: File, requests_mock: Mocker, last_referenced: datetime, should_delete: bool):
+def test_delete_expired_files(
+    uploaded_file: File, requests_mock: Mocker, last_referenced: datetime, should_delete: bool
+):
     # Given
     mock_file = uploaded_file
     mock_file.last_referenced = last_referenced
@@ -103,7 +106,7 @@ def test_delete_expired_data(uploaded_file: File, requests_mock: Mocker, last_re
 
 
 @pytest.mark.django_db()
-def test_delete_expired_data_with_api_error(uploaded_file: File, requests_mock: Mocker):
+def test_delete_expired_files_with_api_error(uploaded_file: File, requests_mock: Mocker):
     # Given
     mock_file = uploaded_file
     mock_file.last_referenced = EXPIRED_FILE_DATE
@@ -124,7 +127,7 @@ def test_delete_expired_data_with_api_error(uploaded_file: File, requests_mock: 
 
 
 @pytest.mark.django_db()
-def test_delete_expired_data_with_s3_error(uploaded_file: File, requests_mock: Mocker):
+def test_delete_expired_files_with_s3_error(uploaded_file: File, requests_mock: Mocker):
     with mock.patch("redbox_app.redbox_core.models.File.delete_from_s3") as s3_mock:
         s3_mock.side_effect = UnknownClientMethodError(method_name="")
 
@@ -148,3 +151,35 @@ def test_delete_expired_data_with_s3_error(uploaded_file: File, requests_mock: M
 
         # Then
         assert File.objects.get(id=mock_file.id).status == StatusEnum.errored
+
+
+@pytest.mark.parametrize(
+    ("msg_1_date", "msg_2_date", "should_delete"),
+    [
+        (EXPIRED_FILE_DATE, EXPIRED_FILE_DATE, True),
+        (EXPIRED_FILE_DATE, timezone.now(), False),
+        (timezone.now(), timezone.now(), False),
+    ],
+)
+@pytest.mark.django_db()
+def test_delete_expired_chats(
+    chat_history: ChatHistory, msg_1_date: datetime, msg_2_date: datetime, should_delete: bool
+):
+    # Given
+    test_chat_history = chat_history
+    with freeze_time(msg_1_date):
+        chat_message_1 = ChatMessage.objects.create(
+            chat_history=test_chat_history, text="A question?", role=ChatRoleEnum.user
+        )
+    with freeze_time(msg_2_date):
+        chat_message_2 = ChatMessage.objects.create(
+            chat_history=test_chat_history, text="A question?", role=ChatRoleEnum.user
+        )
+
+    # When
+    call_command("delete_expired_data")
+
+    # Then
+    assert ChatHistory.objects.filter(id=chat_history.id).exists() != should_delete
+    assert ChatMessage.objects.filter(id=chat_message_1.id).exists() != should_delete
+    assert ChatMessage.objects.filter(id=chat_message_2.id).exists() != should_delete

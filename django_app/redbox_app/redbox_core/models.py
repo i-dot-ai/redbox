@@ -99,7 +99,7 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
     @property
     def url(self) -> URL:
         #  In dev environment, get pre-signed url from minio
-        if settings.ENVIRONMENT == "LOCAL":
+        if settings.ENVIRONMENT.uses_minio:
             s3 = boto3.client(
                 "s3",
                 endpoint_url="http://localhost:9000",

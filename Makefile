@@ -3,8 +3,6 @@
 
 .PHONY: app reqs
 
-BACKUP_ENV_FILENAME = ".env.$(shell date +"%Y-%m-%d-%H:%M:%S").backup"
-
 reqs:
 	poetry install
 
@@ -20,34 +18,29 @@ clean:
 build:
 	docker compose build
 
-rebuild:
+rebuild: stop
 	docker compose build --no-cache
 
 test-core-api:
-	poetry install --no-root --no-ansi --with api,dev,ai --without worker
-	poetry run pytest core_api/tests --cov=core_api/src -v --cov-report=term-missing --cov-fail-under=45
+	poetry install --no-root --no-ansi --with api,dev,ai --without worker,docs
+	poetry run pytest core_api/tests --cov=core_api/src -v --cov-report=term-missing --cov-fail-under=75
 
 test-redbox:
-	poetry install --no-root --no-ansi --with api,dev --without ai,worker
+	poetry install --no-root --no-ansi --with api,dev --without ai,worker,docs
 	poetry run pytest redbox/tests --cov=redbox -v --cov-report=term-missing --cov-fail-under=80
 
 test-worker:
-	poetry install --no-root --no-ansi --with worker,dev --without ai,api
+	poetry install --no-root --no-ansi --with worker,dev --without ai,api,docs
 	poetry run pytest worker/tests --cov=worker -v --cov-report=term-missing --cov-fail-under=40
 
-test-django:
+test-django: stop
 	docker compose up -d --wait db minio
-	docker compose run django-app venv/bin/pytest tests/ --ds redbox_app.settings -v --cov=redbox_app.redbox_core --cov-fail-under 80 -o log_cli=true
+	docker compose run --no-deps django-app venv/bin/pytest tests/ --ds redbox_app.settings -v --cov=redbox_app.redbox_core --cov-fail-under 80 -o log_cli=true
 
 test-integration: stop
-#	cp .env $(BACKUP_ENV_FILENAME)
-#	cp .env.integration .env
-	docker compose up -d --wait elasticsearch db worker minio core-api django-app
+	docker compose up -d --wait core-api django-app
 	poetry install --no-root --no-ansi --with dev --without ai,api,worker,docs
-	sleep 10
 	poetry run pytest tests/
-#	cp $(BACKUP_ENV_FILENAME) .env
-#	rm $(BACKUP_ENV_FILENAME)
 
 collect-static:
 	docker compose run django-app venv/bin/django-admin collectstatic --noinput
@@ -69,11 +62,11 @@ safe:
 checktypes:
 	poetry run mypy redbox worker --ignore-missing-imports --no-incremental
 
-check-migrations:
+check-migrations: stop
 	docker compose build django-app
 	docker compose up -d --wait db minio
-	docker compose run django-app venv/bin/django-admin migrate
-	docker compose run django-app venv/bin/django-admin makemigrations --check
+	docker compose run --no-deps django-app venv/bin/django-admin migrate
+	docker compose run --no-deps django-app venv/bin/django-admin makemigrations --check
 
 reset-db:
 	docker compose down db --volumes
