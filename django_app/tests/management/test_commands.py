@@ -78,7 +78,9 @@ EXPIRED_FILE_DATE = timezone.now() - timedelta(seconds=(settings.FILE_EXPIRY_IN_
     ],
 )
 @pytest.mark.django_db()
-def test_delete_expired_data(uploaded_file: File, requests_mock: Mocker, last_referenced: datetime, should_delete: bool):
+def test_delete_expired_data(
+    uploaded_file: File, requests_mock: Mocker, last_referenced: datetime, should_delete: bool
+):
     # Given
     mock_file = uploaded_file
     mock_file.last_referenced = last_referenced
