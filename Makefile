@@ -186,7 +186,7 @@ tf_apply_universal: ## Apply terraform
 .PHONY: tf_auto_apply
 tf_auto_apply: ## Auto apply terraform
 	make tf_set_workspace && \
-	terraform -chdir=./infrastructure/aws apply -auto-approve -var-file=$(CONFIG_DIR)/${env}-input-params.tfvars ${tf_build_args} -var=image_tag=$(IMAGE_TAG)
+	terraform -chdir=./infrastructure/aws apply -auto-approve -lock-timeout=300s -var-file=$(CONFIG_DIR)/${env}-input-params.tfvars -var=image_tag=$(IMAGE_TAG) ${tf_build_args}
 
 .PHONY: tf_destroy
 tf_destroy: ## Destroy terraform
