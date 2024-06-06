@@ -54,21 +54,10 @@ class Command(BaseCommand):
         self.stdout.write(self.style.SUCCESS(f"Successfully deleted {counter} file objects"))
 
         self.stdout.write(self.style.NOTICE(f"Deleting chats expired before {cutoff_date}"))
-        counter = 0
-        message_counter = 0
-
         chats_to_delete = ChatHistory.objects.annotate(last_modified_at=Max("chatmessage__modified_at")).filter(
             last_modified_at__lt=cutoff_date
         )
+        counter = chats_to_delete.count()
+        chats_to_delete.delete()
 
-        for chat_history in chats_to_delete:
-            logger.debug("Deleting %s and linked messages", chat_history)
-            message_counter += chat_history.chatmessage_set.count()
-            chat_history.delete()
-            counter += 1
-
-        self.stdout.write(
-            self.style.SUCCESS(
-                f"Successfully deleted {counter} ChatHistory objects and {message_counter} related ChatMessages"
-            )
-        )
+        self.stdout.write(self.style.SUCCESS(f"Successfully deleted {counter} ChatHistory objects"))
