@@ -6,8 +6,8 @@
 reqs:
 	poetry install
 
-run:
-	docker compose up -d elasticsearch kibana worker minio redis core-api db django-app
+run: stop
+	docker compose up -d --wait kibana core-api django-app
 
 stop:
 	docker compose down
