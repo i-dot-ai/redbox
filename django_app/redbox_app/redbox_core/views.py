@@ -1,5 +1,6 @@
 import logging
 import uuid
+from collections.abc import MutableSequence, Sequence
 from pathlib import Path
 
 from django.conf import settings
@@ -10,6 +11,8 @@ from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.decorators import method_decorator
+from django.views import View
 from django.views.decorators.http import require_http_methods
 from redbox_app.redbox_core.client import CoreApiClient
 from redbox_app.redbox_core.models import (
@@ -78,75 +81,92 @@ def documents_view(request):
     )
 
 
-@login_required
-def upload_view(request):  # noqa: C901
-    errors = []
-    ingest_errors = []
+class UploadView(View):
+    @method_decorator(login_required)
+    def get(self, request: HttpRequest) -> HttpResponse:
+        return self.build_response(request)
 
-    if request.method == "POST":
-        # https://django-storages.readthedocs.io/en/1.13.2/backends/amazon-S3.html
+    @method_decorator(login_required)
+    def post(self, request: HttpRequest) -> HttpResponse:
+        errors: MutableSequence[str] = []
+        ingest_errors: MutableSequence[str] = []
 
-        uploaded_files: list[UploadedFile] = request.FILES.getlist("uploadDocs")
+        uploaded_files: MutableSequence[UploadedFile] = request.FILES.getlist("uploadDocs")
+
         if not uploaded_files:
             errors.append("No document selected")
 
         for uploaded_file in uploaded_files:
-            file_extension = Path(uploaded_file.name).suffix
-
-            if uploaded_file.name is None:
-                errors.append("File has no name")
-            if uploaded_file.content_type is None:
-                errors.append(f"Error with {uploaded_file.name}: File has no content-type")
-            if uploaded_file.size > MAX_FILE_SIZE:
-                errors.append(f"Error with {uploaded_file.name}: File is larger than 200MB")
-            if file_extension not in APPROVED_FILE_EXTENSIONS:
-                errors.append(f"Error with {uploaded_file.name}: File type {file_extension} not supported")
+            errors += self.validate_uploaded_file(uploaded_file)
 
         if not errors:
             for uploaded_file in uploaded_files:
                 # ingest errors are handled differently, as the other documents have started uploading by this point
-                ingest_error = ingest_file(uploaded_file, request.user)
+                ingest_error = self.ingest_file(uploaded_file, request.user)
                 if ingest_error:
                     ingest_errors.append(f"{uploaded_file.name}: {ingest_error[0]}")
 
             request.session["ingest_errors"] = ingest_errors
             return redirect(reverse(documents_view))
 
-    return render(
-        request,
-        template_name="upload.html",
-        context={
-            "request": request,
-            "errors": {"upload_doc": errors},
-            "uploaded": not errors,
-        },
-    )
+        return self.build_response(request, errors)
 
-
-def ingest_file(uploaded_file: UploadedFile, user: User) -> list[str]:
-    errors: list[str] = []
-    try:
-        file = File.objects.create(
-            status=StatusEnum.uploaded.value,
-            user=user,
-            original_file=uploaded_file,
-            original_file_name=uploaded_file.name,
+    @staticmethod
+    def build_response(request: HttpRequest, errors: Sequence[str] | None = None) -> HttpResponse:
+        return render(
+            request,
+            template_name="upload.html",
+            context={
+                "request": request,
+                "errors": {"upload_doc": errors or []},
+                "uploaded": not errors,
+            },
         )
-        file.save()
-    except (ValueError, FieldError, ValidationError) as e:
-        logger.exception("Error creating File model object for %s.", uploaded_file, exc_info=e)
-        errors.append(e.args[0])
-    else:
-        try:
-            upload_file_response = core_api.upload_file(file.unique_name, user)
-        except RequestException as e:
-            logger.exception("Error uploading file object %s.", file, exc_info=e)
-            file.delete()
-            errors.append("failed to connect to core-api")
+
+    @staticmethod
+    def validate_uploaded_file(uploaded_file: UploadedFile) -> Sequence[str]:
+        errors: MutableSequence[str] = []
+
+        if not uploaded_file.name:
+            errors.append("File has no name")
         else:
-            file.core_file_uuid = upload_file_response.uuid
+            file_extension = Path(uploaded_file.name).suffix
+            if file_extension not in APPROVED_FILE_EXTENSIONS:
+                errors.append(f"Error with {uploaded_file.name}: File type {file_extension} not supported")
+
+        if not uploaded_file.content_type:
+            errors.append(f"Error with {uploaded_file.name}: File has no content-type")
+
+        if uploaded_file.size > MAX_FILE_SIZE:
+            errors.append(f"Error with {uploaded_file.name}: File is larger than 200MB")
+
+        return errors
+
+    @staticmethod
+    def ingest_file(uploaded_file: UploadedFile, user: User) -> Sequence[str]:
+        errors: MutableSequence[str] = []
+        try:
+            file = File.objects.create(
+                status=StatusEnum.uploaded.value,
+                user=user,
+                original_file=uploaded_file,
+                original_file_name=uploaded_file.name,
+            )
             file.save()
-    return errors
+        except (ValueError, FieldError, ValidationError) as e:
+            logger.exception("Error creating File model object for %s.", uploaded_file, exc_info=e)
+            errors.append(e.args[0])
+        else:
+            try:
+                upload_file_response = core_api.upload_file(file.unique_name, user)
+            except RequestException as e:
+                logger.exception("Error uploading file object %s.", file, exc_info=e)
+                file.delete()
+                errors.append("failed to connect to core-api")
+            else:
+                file.core_file_uuid = upload_file_response.uuid
+                file.save()
+        return errors
 
 
 @login_required
