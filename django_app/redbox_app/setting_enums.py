@@ -9,8 +9,13 @@ class Environment(StrEnum):
         obj.hosts = hosts
         return obj
 
+    @property
     def is_local(self) -> bool:
         return self is Environment.LOCAL
+
+    @property
+    def uses_minio(self) -> bool:
+        return self.is_test
 
     LOCAL = ("LOCAL", True, ["localhost", "127.0.0.1", "0.0.0.0"])  # noqa: S104 nosec: B104: Not in prod
     INTEGRATION = ("INTEGRATION", True, ["localhost", "127.0.0.1", "0.0.0.0"])  # noqa: S104 nosec: B104: Not in prod
