@@ -18,6 +18,23 @@
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds-from-desktop">
       
+      {% if ingest_errors %}
+        <div class="govuk-error-summary" data-module="govuk-error-summary">
+          <div role="alert">
+            <h2 class="govuk-error-summary__title">
+              There was a problem uploading some documents
+            </h2>
+            <div class="govuk-error-summary__body">
+              <ul class="govuk-list govuk-error-summary__list">
+                {% for error in ingest_errors %}
+                  <li>{{ error }}</li>
+                {% endfor %}
+              </ul>
+            </div>
+          </div>
+        </div>
+      {% endif %}
+
       <h1 class="govuk-heading-l govuk-!-margin-top-5">Your documents</h1>
 
       <p class="govuk-body-l">Manage documents to use with your Redbox.</p>
