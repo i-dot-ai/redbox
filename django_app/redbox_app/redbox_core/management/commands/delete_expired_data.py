@@ -4,6 +4,7 @@ from datetime import timedelta
 from botocore.exceptions import BotoCoreError
 from django.conf import settings
 from django.core.management import BaseCommand
+from django.db.models import Max
 from django.utils import timezone
 from redbox_app.redbox_core.client import CoreApiClient
 from redbox_app.redbox_core.models import ChatHistory, File, StatusEnum
@@ -56,11 +57,11 @@ class Command(BaseCommand):
         counter = 0
         message_counter = 0
 
-        for chat_history in ChatHistory.objects.all():
-            if chat_history.chatmessage_set.filter(modified_at__gte=cutoff_date).exists():
-                logger.debug("Skipping %s as in date", chat_history)
-                continue
+        chats_to_delete = ChatHistory.objects.annotate(last_modified_at=Max("chatmessage__modified_at")).filter(
+            last_modified_at__lt=cutoff_date
+        )
 
+        for chat_history in chats_to_delete:
             logger.debug("Deleting %s and linked messages", chat_history)
             message_counter += chat_history.chatmessage_set.count()
             chat_history.delete()
