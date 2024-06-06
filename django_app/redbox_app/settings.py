@@ -6,10 +6,9 @@ from pathlib import Path
 import environ
 import sentry_sdk
 from dotenv import load_dotenv
+from redbox_app.setting_enums import Classification, Environment
 from sentry_sdk.integrations.django import DjangoIntegration
 from storages.backends import s3boto3
-
-from redbox_app.setting_enums import Classification, Environment
 
 load_dotenv()
 
