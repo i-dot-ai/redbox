@@ -82,23 +82,23 @@ def upload_view(request):
 
     if request.method == "POST":
         # https://django-storages.readthedocs.io/en/1.13.2/backends/amazon-S3.html
-        try:
-            uploaded_files: list[UploadedFile] = request.FILES.getlist("uploadDoc")
+        
+        uploaded_files: list[UploadedFile] = request.FILES.getlist("uploadDoc")
 
-            for uploaded_file in uploaded_files:
-                file_extension = Path(uploaded_file.name).suffix
-                
-                if uploaded_file.name is None:
-                    errors.append("File has no name")
-                if uploaded_file.content_type is None:
-                    errors.append(f"Error with {uploaded_file.name}: File has no content-type")
-                if uploaded_file.size > MAX_FILE_SIZE:
-                    errors.append(f"Error with {uploaded_file.name}: File is larger than 200MB")
-                if file_extension not in APPROVED_FILE_EXTENSIONS:
-                    errors.append(f"Error with {uploaded_file.name}: File type {file_extension} not supported")
-
-        except MultiValueDictKeyError:
+        if len(uploaded_files) == 0:
             errors.append("No document selected")
+
+        for uploaded_file in uploaded_files:
+            file_extension = Path(uploaded_file.name).suffix
+            
+            if uploaded_file.name is None:
+                errors.append("File has no name")
+            if uploaded_file.content_type is None:
+                errors.append(f"Error with {uploaded_file.name}: File has no content-type")
+            if uploaded_file.size > MAX_FILE_SIZE:
+                errors.append(f"Error with {uploaded_file.name}: File is larger than 200MB")
+            if file_extension not in APPROVED_FILE_EXTENSIONS:
+                errors.append(f"Error with {uploaded_file.name}: File type {file_extension} not supported")
 
         if not errors:
             for uploaded_file in uploaded_files:
