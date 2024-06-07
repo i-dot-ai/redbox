@@ -81,31 +81,41 @@
 
       </div>
 
-      <form class="iai-new-message js-message-input" action="/post-message/" method="post">
+      <form class="js-message-input" action="/post-message/" method="post">
 
         <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}"/>
         {% if chat_id %}<input type="hidden" name="session-id" value="{{ chat_id }}"/>{% endif %}
 
-        <div class="govuk-form-group">
-          <label class="govuk-label" for="selected-files">
-            Files to use
-          </label>
-          <select id="selected-files" name="selected-files" multiple>
+        <fieldset class="govuk-fieldset">
+          <legend class="govuk-fieldset__legend govuk-fieldset__legend--s">
+            <h3 class="govuk-fieldset__heading">Files to use</h3>
+          </legend>
+          <div class="govuk-checkboxes govuk-checkboxes--small" data-module="govuk-checkboxes">
             {% for file in files %}
-              <option value="{{ file.id }}" selected="{{ file.selected }}">{{ file.original_file_name }}</option>
+              <div class="govuk-checkboxes__item">
+                <input class="govuk-checkboxes__input" id="file-{{ file.id }}" name="file-{{ file.id }}" type="checkbox" value="{{ file.id }}" {% if file.selected %}checked{% endif %}>
+                <label class="govuk-label govuk-checkboxes__label" for="file-{{ file.id }}">{{ file.original_file_name }}</label>
+              </div>
             {% endfor %}
-          </select>
-          <label class="govuk-label" for="message">
-            Write a message
-          </label>
-          <message-input>
-            <textarea class="govuk-textarea js-user-text" id="message" name="message" rows="5" required></textarea>
-          </message-input>
-        </div>
+          </div>
+        </fieldset>
+        
+        <div class="iai-new-message">
 
-        <button type="submit" class="govuk-button" {% if not streaming.in_use %}data-prevent-double-click="true"{% endif %} data-module="govuk-button">
-          Send
-        </button>
+          <div class="govuk-form-group">
+            <label class="govuk-label" for="message">
+              Write a message
+            </label>
+            <message-input>
+              <textarea class="govuk-textarea js-user-text" id="message" name="message" rows="5" required></textarea>
+            </message-input>
+          </div>
+
+          <button type="submit" class="govuk-button" {% if not streaming.in_use %}data-prevent-double-click="true"{% endif %} data-module="govuk-button">
+            Send
+          </button>
+
+        </div>
 
       </form>
 
