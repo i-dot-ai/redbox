@@ -6,6 +6,7 @@ from botocore.exceptions import ClientError
 from elasticsearch import Elasticsearch
 from fastapi.testclient import TestClient
 from jose import jwt
+from langchain_community.llms.fake import FakeListLLM
 
 from core_api.src.app import app as application
 from core_api.src.app import env
@@ -94,3 +95,8 @@ def chunked_file(elasticsearch_storage_handler, stored_file) -> File:
 @pytest.fixture()
 def file_pdf_path() -> Path:
     return Path(__file__).parents[2] / "tests" / "data" / "pdf" / "Cabinet Office - Wikipedia.pdf"
+
+
+@pytest.fixture()
+def mock_llm():
+    return FakeListLLM(responses=["<<TESTING>>"] * 128)

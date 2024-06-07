@@ -1,12 +1,11 @@
 from operator import itemgetter
 
-from langchain_core.runnables import Runnable, RunnableLambda
 from langchain.schema import StrOutputParser
 from langchain_community.chat_models import ChatLiteLLM
 from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.runnables import Runnable, RunnableLambda
 
 from core_api.src.format import format_docs
-
 
 
 def make_stuff_document_runnable(
@@ -14,7 +13,7 @@ def make_stuff_document_runnable(
     llm: ChatLiteLLM,
 ) -> Runnable:
     """Takes a system prompt and LLM returns a stuff document runnable.
-    
+
     Runnable takes input of a dict keyed to question, messages and documents.
     """
     chat_history = [
@@ -23,15 +22,13 @@ def make_stuff_document_runnable(
         ("user", "Question: {question}. \n\n Documents: \n\n {documents} \n\n Answer: "),
     ]
 
-    chain = (
+    return (
         {
             "question": itemgetter("question"),
             "messages": itemgetter("messages"),
-            "content": itemgetter("documents") | RunnableLambda(format_docs),
+            "documents": itemgetter("documents") | RunnableLambda(format_docs),
         }
         | ChatPromptTemplate.from_messages(chat_history)
         | llm
         | StrOutputParser()
     )
-
-    return chain
