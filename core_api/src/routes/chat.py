@@ -16,6 +16,7 @@ from semantic_router.layer import RouteLayer
 
 from core_api.src.auth import get_user_uuid, get_ws_user_uuid
 from core_api.src.dependencies import get_llm, get_vector_store
+from core_api.src.semantic_router_utils import ability_text, coach_text, info_text
 from redbox.llm.prompts.chat import (
     CONDENSE_QUESTION_PROMPT,
     STUFF_DOCUMENT_PROMPT,
@@ -54,10 +55,34 @@ info = Route(
     utterances=[
         "What is your name?",
         "Who are you?",
+        "What is Redbox?",
+    ],
+)
+
+ability = Route(
+    name="ability",
+    utterances=[
+        "What can you do?",
         "What can you do?",
         "How can you help me?",
-        "What can I do",
-        "What is Redbox?",
+        "What does Redbox do?",
+        "What can Redbox do",
+        "What don't you do",
+        "Please help me",
+        "Please help",
+        "Help me!",
+        "help",
+    ],
+)
+
+coach = Route(
+    name="coach",
+    utterances=[
+        "That is not the answer I wanted",
+        "Rubbish",
+        "No good",
+        "That's not what I wanted",
+        "How can I improve the results?",
     ],
 )
 
@@ -100,7 +125,7 @@ extract = Route(
 )
 
 
-routes = [info, gratitude, summarisation, extract]
+routes = [info, ability, coach, gratitude, summarisation, extract]
 
 encoder = HuggingFaceEncoder(name="sentence-transformers/paraphrase-albert-small-v2", cache_dir=MODEL_PATH)
 route_layer = RouteLayer(encoder=encoder, routes=routes)
@@ -176,29 +201,71 @@ async def build_chain(
     question = chat_request.message_history[-1].text
     route = route_layer(question)
 
-    if route.name == "info":
-        output_text = """
-            I am RedBox, an AI focused on helping UK Civil Servants, Political Advisors and\
-            Ministers triage and summarise information from a wide variety of sources.
-        """
-        return ChatPromptTemplate.from_template(output_text), {}
-    elif route.name == "gratitude":
-        return ChatPromptTemplate.from_template("You're welcome!"), {}
-    elif route.name == "summarisation":
-        return (
+    route_responses = {
+        "info": (ChatPromptTemplate.from_template(info_text), {}),
+        "ability": (ChatPromptTemplate.from_template(ability_text), {}),
+        "coach": (ChatPromptTemplate.from_template(coach_text), {}),
+        "gratitude": (ChatPromptTemplate.from_template("You're welcome!"), {}),
+        "summarisation": (
             ChatPromptTemplate.from_template("You are asking for summarisation - route not yet implemented"),
             {},
-        )
-    elif route.name == "extract":
-        return (
+        ),
+        "extract": (
             ChatPromptTemplate.from_template("You asking to extract some information - route not yet implemented"),
             {},
-        )
+        ),
+    }
+
+    if route.name in route_responses:
+        return route_responses.get(route.name)
     # build_vanilla_chain could go here
 
     # RAG chat
     chain, params = await build_retrieval_chain(chat_request, user_uuid, llm, vector_store)
     return chain, params
+
+    # if route.name == "info":
+    #     info_text = """
+    #         I am RedBox, an AI focused on helping UK Civil Servants, Political Advisors and\
+    #         Ministers triage and summarise information from a wide variety of sources.
+    #     """
+    #     return ChatPromptTemplate.from_template(info_text), {}
+    # elif route.name == "ability":
+    #     ability_text = """
+    #         I am help you search over selected documents and do Q&A on them.\
+    #         I can help you summarise selected documents.\
+    #         I can help you extract information from selected documents.\
+    #         I can return information in a variety of formats, such as bullet points.
+    #     """
+    #     return ChatPromptTemplate.from_template(ability_text), {}
+    # elif route.name == "coach":
+    #     coach_text = """
+    #         I am sorry that didn't work.\
+    #         You could try rephrasing your task, i.e if you want to summarise a document\
+    #         please use the term, "Summarise the selected document" or "extract all action\
+    #         items from the selected document."
+    #         If you want the results to be returned in a specific format, please specify the\
+    #         format in as much detail as possible.
+    #     """
+    #     return ChatPromptTemplate.from_template(coach_text), {}
+    # elif route.name == "gratitude":
+    #     return ChatPromptTemplate.from_template("You're welcome!"), {}
+    # elif route.name == "summarisation":
+    #     summarisation_text = "You are asking for summarisation - route not yet implemented"
+    #     return (
+    #         ChatPromptTemplate.from_template(summarisation_text),
+    #         {},
+    #     )
+    # elif route.name == "extract":
+    #     return (
+    #         ChatPromptTemplate.from_template("You asking to extract some information - route not yet implemented"),
+    #         {},
+    #     )
+    # build_vanilla_chain could go here
+
+    # RAG chat
+    # chain, params = await build_retrieval_chain(chat_request, user_uuid, llm, vector_store)
+    # return chain, params
 
 
 @chat_app.post("/rag", tags=["chat"])
@@ -220,36 +287,92 @@ async def rag_chat(
     question = chat_request.message_history[-1].text
     route = route_layer(question)
 
-    if route.name == "info":
-        info_text = """
-            I am RedBox, an AI focused on helping UK Civil Servants, Political Advisors and\
-            Ministers triage and summarise information from a wide variety of sources.
-        """
-        return ChatResponse(output_text=info_text)
+    route_responses = {
+        "info": ChatResponse(output_text=info_text),
+        "ability": ChatResponse(output_text=ability_text),
+        "coach": ChatResponse(output_text=coach_text),
+        "gratitude": ChatResponse(output_text="You're welcome!"),
+        "summarisation": ChatResponse(output_text="You are asking for summarisation - route not yet implemented"),
+        "extract": ChatResponse(output_text="You asking to extract some information - route not yet implemented"),
+    }
 
-    elif route.name == "gratitude":
-        return ChatResponse(output_text="You're welcome!")
+    if route.name in route_responses:
+        return route_responses.get(route.name)
+    # build_vanilla_chain could go here
 
-    elif route.name == "summarisation":
-        return ChatResponse(output_text="You are asking for summarisation - route not yet implemented")
+    # RAG chat
+    chain, params = await build_retrieval_chain(chat_request, user_uuid, llm, vector_store)
 
-    elif route.name == "extract":
-        return ChatResponse(output_text="You asking to extract some information - route not yet implemented")
+    result = chain(params)
 
-    else:
-        chain, params = await build_retrieval_chain(chat_request, user_uuid, llm, vector_store)
+    source_documents = [
+        SourceDocument(
+            page_content=langchain_document.page_content,
+            file_uuid=langchain_document.metadata.get("parent_doc_uuid"),
+            page_numbers=langchain_document.metadata.get("page_numbers"),
+        )
+        for langchain_document in result.get("input_documents", [])
+    ]
+    return ChatResponse(output_text=result["output_text"], source_documents=source_documents)
 
-        result = chain(params)
+    # if route.name == "info":
+    #     info_text = """
+    #         I am RedBox, an AI focused on helping UK Civil Servants, Political Advisors and\
+    #         Ministers triage and summarise information from a wide variety of sources.
+    #     """
+    #     return ChatResponse(output_text=info_text)
 
-        source_documents = [
-            SourceDocument(
-                page_content=langchain_document.page_content,
-                file_uuid=langchain_document.metadata.get("parent_doc_uuid"),
-                page_numbers=langchain_document.metadata.get("page_numbers"),
-            )
-            for langchain_document in result.get("input_documents", [])
-        ]
-        return ChatResponse(output_text=result["output_text"], source_documents=source_documents)
+    # elif route.name == "ability":
+    #     ability_text = """
+    #         I am help you search over selected documents and do Q&A on them.\
+    #         I can help you summarise selected documents.\
+    #         I can help you extract information from selected documents.\
+    #         I can return information in a variety of formats, such as bullet points.
+    #     """
+    #     return ChatResponse(output_text=ability_text)
+
+    # elif route.name == "coach":
+    #     coach_text = """
+    #         I am sorry that didn't work.\
+    #         You could try rephrasing your task, i.e if you want to summarise a document\
+    #         please use the term, "Summarise the selected document" or "extract all action\
+    #         items from the selected document."
+    #         If you want the results to be returned in a specific format, please specify the\
+    #         format in as much detail as possible.
+    #     """
+    #     return ChatResponse(output_text=coach_text)
+
+    # elif route.name == "gratitude":
+    #     return ChatResponse(output_text="You're welcome!")
+
+    # elif route.name == "summarisation":
+    #     return ChatResponse(
+    #         output_text="You are asking for summarisation - route not yet implemented"
+    #     )
+
+    # elif route.name == "extract":
+    #     return ChatResponse(
+    #         output_text="You asking to extract some information - route not yet implemented"
+    #     )
+
+    # else:
+    #     chain, params = await build_retrieval_chain(
+    #         chat_request, user_uuid, llm, vector_store
+    #     )
+
+    #     result = chain(params)
+
+    #     source_documents = [
+    #         SourceDocument(
+    #             page_content=langchain_document.page_content,
+    #             file_uuid=langchain_document.metadata.get("parent_doc_uuid"),
+    #             page_numbers=langchain_document.metadata.get("page_numbers"),
+    #         )
+    #         for langchain_document in result.get("input_documents", [])
+    #     ]
+    #     return ChatResponse(
+    #         output_text=result["output_text"], source_documents=source_documents
+    #     )
 
 
 @chat_app.websocket("/rag")
