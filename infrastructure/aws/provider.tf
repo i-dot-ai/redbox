@@ -8,7 +8,9 @@ terraform {
   required_version = ">= 1.3.5"
 
   backend "s3" {
-    key = "redbox/terraform.tfstate"
+    key            = "redbox/terraform.tfstate"
+    # TODO: Remove this before the end of ticket
+    dynamodb_table = "i-dot-ai-dev-dynamo-lock"
   }
 
 }
