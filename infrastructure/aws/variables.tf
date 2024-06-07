@@ -136,6 +136,18 @@ variable "rules" {
   default     = []
 }
 
+variable "sentry_dsn" {
+  description = "The sentry dsn to send sentry logs to"
+  type        = string
+  default     = null
+}
+
+variable "sentry_environment" {
+  description = "The sentry environment to send sentry logs to"
+  type        = string
+  default     = null
+}
+
 variable "scope" {
   description = "Scope of the WAF, either 'CLOUDFRONT' or 'REGIONAL'"
   type        = string

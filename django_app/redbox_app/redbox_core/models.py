@@ -59,6 +59,7 @@ class StatusEnum(models.TextChoices):
     complete = "complete"
     unknown = "unknown"
     deleted = "deleted"
+    errored = "errored"
 
 
 class File(UUIDPrimaryKeyBase, TimeStampedModel):
@@ -98,7 +99,7 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
     @property
     def url(self) -> URL:
         #  In dev environment, get pre-signed url from minio
-        if settings.ENVIRONMENT == "LOCAL":
+        if settings.ENVIRONMENT.uses_minio:
             s3 = boto3.client(
                 "s3",
                 endpoint_url="http://localhost:9000",
@@ -122,7 +123,7 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
     @property
     def name(self) -> str:
         # User-facing name
-        return self.original_file_name if self.original_file_name else self.original_file.name
+        return self.original_file_name or self.original_file.name
 
     @property
     def unique_name(self) -> str:

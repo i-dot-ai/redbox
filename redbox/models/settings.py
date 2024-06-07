@@ -71,22 +71,6 @@ class Settings(BaseSettings):
     object_store: str = "minio"
 
     dev_mode: bool = False
-    django_settings_module: str = "redbox_app.settings"
-    debug: bool = True
-    environment: Literal["LOCAL", "DEV", "PREPROD", "PROD"] = "LOCAL"
-    postgres_user: str = "redbox-core"
-    postgres_db: str = "redbox-core"
-    postgres_host: str = "db"
-    contact_email: str = "test@example.com"
-    core_api_host: str = "core-api"
-    core_api_port: int = 5002
-    email_backend_type: str = "CONSOLE"
-    gov_notify_api_key: str | None = None
-    from_email: str | None = None
-    email_file_path: str = "/app/mail"
-    govuk_notify_plain_email_template_id: str = "example-id"
-    use_streaming: bool = False
-    compression_enabled: bool = True
     superuser_email: str | None = None
 
     model_config = SettingsConfigDict(env_file=".env", env_nested_delimiter="__", extra="allow")
@@ -95,7 +79,7 @@ class Settings(BaseSettings):
         if isinstance(self.elastic, ElasticLocalSettings):
             log.info("Connecting to self managed Elasticsearch")
             log.info("Elasticsearch host = %s", self.elastic.host)
-            es = Elasticsearch(
+            return Elasticsearch(
                 hosts=[
                     {
                         "host": self.elastic.host,
@@ -105,22 +89,12 @@ class Settings(BaseSettings):
                 ],
                 basic_auth=(self.elastic.user, self.elastic.password),
             )
-            if not es.ping():
-                msg = "Connection to Elasticsearch failed"
-                raise ValueError(msg)
-            return es
 
         log.info("Connecting to Elastic Cloud Cluster")
         log.info("Cloud ID = %s", self.elastic.cloud_id)
         log.info("Elastic Cloud API Key = %s", self.elastic.api_key)
 
-        es = Elasticsearch(cloud_id=self.elastic.cloud_id, api_key=self.elastic.api_key)
-        if not es.ping():
-            log.info("API Key = %s", self.elastic.api_key)
-            log.info(es.info())
-            msg = "Connection to Elasticsearch failed"
-            raise ValueError(msg)
-        return es
+        return Elasticsearch(cloud_id=self.elastic.cloud_id, api_key=self.elastic.api_key)
 
     def s3_client(self):
         if self.object_store == "minio":

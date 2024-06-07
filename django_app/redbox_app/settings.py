@@ -1,22 +1,22 @@
 # mypy: ignore-errors
 
 import socket
-from enum import StrEnum
 from pathlib import Path
 
 import environ
+import sentry_sdk
 from dotenv import load_dotenv
+from redbox_app.setting_enums import Classification, Environment
+from sentry_sdk.integrations.django import DjangoIntegration
 from storages.backends import s3boto3
-
-from .hosting_environment import HostingEnvironment
 
 load_dotenv()
 
 env = environ.Env()
 
 SECRET_KEY = env.str("DJANGO_SECRET_KEY")
-ENVIRONMENT = env.str("ENVIRONMENT")
-WEBSOCKET_SCHEME = env.str("WEBSOCKET_SCHEME", default="ws")
+ENVIRONMENT = Environment[env.str("ENVIRONMENT").upper()]
+WEBSOCKET_SCHEME = "ws" if ENVIRONMENT.is_local else "wss"
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env.bool("DEBUG")
@@ -144,13 +144,6 @@ ACCOUNT_EMAIL_VERIFICATION = "none"
 LOGIN_REDIRECT_URL = "homepage"
 LOGIN_URL = "sign-in"
 
-HOSTS = [
-    "redbox-dev.ai.cabinetoffice.gov.uk",
-    "redbox-preprod.ai.cabinetoffice.gov.uk",
-    "redbox.ai.cabinetoffice.gov.uk",
-]
-
-
 # CSP settings https://content-security-policy.com/
 # https://django-csp.readthedocs.io/
 CSP_DEFAULT_SRC = (
@@ -171,7 +164,7 @@ CSP_FONT_SRC = (
 )
 CSP_STYLE_SRC = ("'self'",)
 CSP_FRAME_ANCESTORS = ("'none'",)
-CSP_CONNECT_SRC = ["'self'"] + [WEBSOCKET_SCHEME + "://" + host for host in HOSTS]
+CSP_CONNECT_SRC = ["'self'", f"wss://{ENVIRONMENT.hosts[0]}/ws/chat/"]
 
 # https://pypi.org/project/django-permissions-policy/
 PERMISSIONS_POLICY: dict[str, list] = {
@@ -209,48 +202,49 @@ AWS_STORAGE_BUCKET_NAME = BUCKET_NAME  # this duplication is required for django
 OBJECT_STORE = env.str("OBJECT_STORE")
 AWS_S3_FILE_OVERWRITE = False  # allows users to have duplicate file names
 
+STORAGES = {
+    "default": {
+        "BACKEND": s3boto3.S3Boto3Storage,
+    },
+    "staticfiles": {
+        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+    },
+}
 
-if HostingEnvironment.is_local():
+if ENVIRONMENT.uses_minio:
     AWS_S3_SECRET_ACCESS_KEY = env.str("AWS_SECRET_KEY")
     AWS_ACCESS_KEY_ID = env.str("AWS_ACCESS_KEY")
     MINIO_HOST = env.str("MINIO_HOST")
     MINIO_PORT = env.str("MINIO_PORT")
     MINIO_ENDPOINT = f"http://{MINIO_HOST}:{MINIO_PORT}"
     AWS_S3_ENDPOINT_URL = MINIO_ENDPOINT
-
-    STORAGES = {
-        "default": {
-            "BACKEND": s3boto3.S3Boto3Storage,
-        },
-        "staticfiles": {
-            "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
-        },
-    }
-
-    ALLOWED_HOSTS = [
-        "localhost",
-        "127.0.0.1",
-        "0.0.0.0",  # noqa: S104
-    ]  # nosec B104 - don't do this on server!
 else:
-    STORAGES = {
-        "default": {
-            "BACKEND": s3boto3.S3Boto3Storage,
-        },
-        "staticfiles": {
-            "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
-        },
-    }
-
-    LOCALHOST = socket.gethostbyname(socket.gethostname())
-    ALLOWED_HOSTS = [LOCALHOST, *HOSTS]
-
     # https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Strict-Transport-Security
     # Mozilla guidance max-age 2 years
     SECURE_HSTS_SECONDS = 2 * 365 * 24 * 60 * 60
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SESSION_COOKIE_SECURE = True
 
+if ENVIRONMENT.is_test:
+    ALLOWED_HOSTS = ENVIRONMENT.hosts
+else:
+    LOCALHOST = socket.gethostbyname(socket.gethostname())
+    ALLOWED_HOSTS = [LOCALHOST, *ENVIRONMENT.hosts]
+
+if not ENVIRONMENT.is_local:
+    SENTRY_DSN = env.str("SENTRY_DSN", None)
+    SENTRY_ENVIRONMENT = env.str("SENTRY_ENVIRONMENT", None)
+    if SENTRY_DSN and SENTRY_ENVIRONMENT:
+        sentry_sdk.init(
+            dsn=SENTRY_DSN,
+            integrations=[
+                DjangoIntegration(),
+            ],
+            environment=SENTRY_ENVIRONMENT,
+            send_default_pii=False,
+            traces_sample_rate=1.0,
+            profiles_sample_rate=0.0,
+        )
 
 DATABASES = {
     "default": {
@@ -330,16 +324,4 @@ MAGIC_LINK = {
 USE_STREAMING = env.bool("USE_STREAMING")
 FILE_EXPIRY_IN_SECONDS = env.int("FILE_EXPIRY_IN_DAYS") * 24 * 60 * 60
 SUPERUSER_EMAIL = env.str("SUPERUSER_EMAIL", None)
-
-
-class Classification(StrEnum):
-    """Security classifications
-    https://www.gov.uk/government/publications/government-security-classifications/"""
-
-    OFFICIAL = "Official"
-    OFFICIAL_SENSITIVE = "Official Sensitive"
-    SECRET = "Secret"  # noqa: S105
-    TOP_SECRET = "Top Secret"  # noqa: S105
-
-
 MAX_SECURITY_CLASSIFICATION = Classification[env.str("MAX_SECURITY_CLASSIFICATION")]

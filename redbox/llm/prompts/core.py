@@ -8,7 +8,7 @@ should say so. Be concise and professional in your responses. Respond in markdow
 
 === RULES ===
 
-All responses to Tasks **MUST** be translated into the user's preferred language.\
+All responses to Tasks **MUST** be in British English.\
 This is so that the user can understand your responses.\
 """
 

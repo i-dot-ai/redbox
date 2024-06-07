@@ -18,36 +18,29 @@ clean:
 build:
 	docker compose build
 
-rebuild:
+rebuild: stop
 	docker compose build --no-cache
 
 test-core-api:
-	poetry install --no-root --no-ansi --with api,dev,ai --without worker
-	poetry run pytest core_api/tests --cov=core_api/src -v --cov-report=term-missing --cov-fail-under=45
+	poetry install --no-root --no-ansi --with api,dev,ai --without worker,docs
+	poetry run pytest core_api/tests --cov=core_api/src -v --cov-report=term-missing --cov-fail-under=75
 
 test-redbox:
-	poetry install --no-root --no-ansi --with api,dev --without ai,worker
+	poetry install --no-root --no-ansi --with api,dev --without ai,worker,docs
 	poetry run pytest redbox/tests --cov=redbox -v --cov-report=term-missing --cov-fail-under=80
 
 test-worker:
-	poetry install --no-root --no-ansi --with worker,dev --without ai,api
+	poetry install --no-root --no-ansi --with worker,dev --without ai,api,docs
 	poetry run pytest worker/tests --cov=worker -v --cov-report=term-missing --cov-fail-under=40
 
-test-django:
+test-django: stop
 	docker compose up -d --wait db minio
-	docker compose run django-app venv/bin/pytest tests/ --ds redbox_app.settings -v --cov=redbox_app.redbox_core --cov-fail-under 80 -o log_cli=true
+	docker compose run --no-deps django-app venv/bin/pytest tests/ --ds redbox_app.settings -v --cov=redbox_app.redbox_core --cov-fail-under 80 -o log_cli=true
 
-test-integration:
-	docker compose down
-	cp .env .env.backup
-	cp .env.integration .env
-	docker compose build core-api worker minio
-	docker compose up -d core-api worker minio
-	poetry install --no-root --no-ansi --with dev --without ai,api,worker
-	sleep 10
-	poetry run pytest tests
-	cp .env.backup .env
-	rm .env.backup
+test-integration: stop
+	docker compose up -d --wait core-api django-app
+	poetry install --no-root --no-ansi --with dev --without ai,api,worker,docs
+	poetry run pytest tests/
 
 collect-static:
 	docker compose run django-app venv/bin/django-admin collectstatic --noinput
@@ -69,11 +62,11 @@ safe:
 checktypes:
 	poetry run mypy redbox worker --ignore-missing-imports --no-incremental
 
-check-migrations:
+check-migrations: stop
 	docker compose build django-app
 	docker compose up -d --wait db minio
-	docker compose run django-app venv/bin/django-admin migrate
-	docker compose run django-app venv/bin/django-admin makemigrations --check
+	docker compose run --no-deps django-app venv/bin/django-admin migrate
+	docker compose run --no-deps django-app venv/bin/django-admin makemigrations --check
 
 reset-db:
 	docker compose down db --volumes
@@ -175,6 +168,11 @@ tf_plan: ## Plan terraform
 tf_apply: ## Apply terraform
 	make tf_set_workspace && \
 	terraform -chdir=./infrastructure/aws apply -var-file=$(CONFIG_DIR)/${env}-input-params.tfvars ${tf_build_args} ${args}
+
+.PHONY: tf_auto_deploy
+tf_auto_deploy: ## Auto deploy terraform to specified environment with specified tag (default: dev and HEAD)
+	make tf_set_workspace && \
+	terraform -chdir=./infrastructure/aws apply -auto-approve -lock-timeout=300s -var-file=$(CONFIG_DIR)/$(env)-input-params.tfvars -var=image_tag=$(IMAGE_TAG) ${tf_build_args}
 
 .PHONY: tf_init_universal
 tf_init_universal: ## Initialise terraform

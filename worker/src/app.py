@@ -3,6 +3,7 @@
 import logging
 from contextlib import asynccontextmanager
 from datetime import UTC, datetime
+from typing import TYPE_CHECKING
 
 from faststream import Context, ContextRepo, FastStream
 from faststream.redis import RedisBroker
@@ -11,6 +12,11 @@ from redbox.model_db import SentenceTransformerDB
 from redbox.models import Chunk, EmbedQueueItem, File, Settings
 from redbox.parsing import chunk_file
 from redbox.storage.elasticsearch import ElasticsearchStorageHandler
+
+if TYPE_CHECKING:
+    from mypy_boto3_s3.client import S3Client
+else:
+    S3Client = object
 
 start_time = datetime.now(UTC)
 logging.basicConfig(level=logging.INFO)
@@ -27,11 +33,13 @@ publisher = broker.publisher(list=env.embed_queue_name)
 @asynccontextmanager
 async def lifespan(context: ContextRepo):
     es = env.elasticsearch_client()
+    s3_client = env.s3_client()
     storage_handler = ElasticsearchStorageHandler(es_client=es, root_index=env.elastic_root_index)
     model = SentenceTransformerDB(env.embedding_model)
 
     context.set_global("storage_handler", storage_handler)
     context.set_global("model", model)
+    context.set_global("s3_client", s3_client)
 
     yield
 
@@ -40,6 +48,7 @@ async def lifespan(context: ContextRepo):
 async def ingest(
     file: File,
     storage_handler: ElasticsearchStorageHandler = Context(),
+    s3_client: S3Client = Context(),
 ):
     """
     1. Chunks file
@@ -50,7 +59,7 @@ async def ingest(
 
     logging.info("Ingesting file: %s", file)
 
-    chunks = chunk_file(file=file)  # , embedding_model=embedding_model)
+    chunks = chunk_file(file=file, s3_client=s3_client)  # , embedding_model=embedding_model)
 
     logging.info("Writing %s chunks to storage for file uuid: %s", len(chunks), file.uuid)
 

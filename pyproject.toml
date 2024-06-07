@@ -5,7 +5,7 @@ target-version = 'py311'
 [tool.poetry]
 name = "redbox"
 version = "1.0.0"
-description = ""
+description = "RAG application that uses GenAI to chat with and summarise civil service documents"
 authors = ["i.AI <i-dot-ai-enquiries@cabinetoffice.gov.uk>"]
 license = "MIT"
 readme = "README.md"
@@ -50,7 +50,7 @@ types-python-dateutil = "^2.9.0.20240315"
 types-markdown = "^3.6.0.20240316"
 types-pytz = "^2024.1.0.20240203"
 pytest-asyncio = "^0.23.6"
-boto3-stubs = "^1.34.106"
+boto3-stubs = {extras = ["essential"], version = "^1.34.118"}
 moto = {extras = ["s3"], version = "^5.0.5"}
 httpx = "^0.27.0"
 websockets = "^12.0"
@@ -60,12 +60,16 @@ minio = "^7.2.7"
 python-jose="^3.3.0"
 jsonlines="^4.0.0"
 ipywidgets="^8.1.2"
+playwright = "^1.43"
+pytest-playwright = "^0.5"
+axe-playwright-python = "^0.1"
 
 
 [tool.poetry.group.ai.dependencies]
 anthropic = "^0.25.8"
 litellm = "^1.37.12"
 openai = "^1.28.0"
+pikepdf = "8.15.1"  # pinned to stop poetry complainning
 
 
 [tool.poetry.group.docs.dependencies]
@@ -105,23 +109,24 @@ select = [
     "S",
     "T",
     "W",
-    "ASYNC",
     "ARG",
+    "ASYNC",
     "BLE",
-    "LOG",
     "COM",
     "DJ",
     "DTZ",
     "EM",
     "EXE",
+    "FURB",
     "ICN",
+    "INT",
     "ISC",
     "LOG",
     "NPY",
     "PD",
     "PGH",
     "PIE",
-#*    "PL",
+    "PL",
     "PT",
     "PTH",
     "PYI",
@@ -130,8 +135,9 @@ select = [
     "RUF",
     "SIM",
     "SLF",
+    "SLOT",
     "TCH",
-#*    "TD",
+    "TD",
     "TID",
     "TRY",
     "UP",
@@ -141,9 +147,9 @@ exclude = ["django_app/redbox_app/redbox_core/migrations/*.py", "out/*"]
 ignore = ["COM812", "DJ001", "RET505", "RET508"]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/*" = ["S101", "S106"]
-"*/tests/*" = ["S101", "S106"]
-"django_app/tests_playwright/*" = ["S101", "S106"]
+"tests/*" = ["S101", "S106", "PLR0913", "PLR2004"]
+"*/tests/*" = ["S101", "S106", "PLR0913", "PLR2004"]
+"django_app/tests_playwright/*" = ["S101", "S106", "PLR0913", "PLR2004"]
 "worker/*" = ["B008"]
 "redbox/*" = ["TCH003"]
 "redbox/tests/*" = ["ARG001"]
