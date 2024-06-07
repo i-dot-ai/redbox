@@ -63,9 +63,7 @@ def mock_get_chain():
 
 @pytest.mark.parametrize("chat_history", test_gratitude)
 def test_rag_chat(chat_history, app_client, headers):
-    response = app_client.post(
-        "/chat/rag", json={"message_history": chat_history}, headers=headers
-    )
+    response = app_client.post("/chat/rag", json={"message_history": chat_history}, headers=headers)
     response_dict = response.json()
     assert response_dict["output_text"] == "You're welcome!"
 
@@ -90,11 +88,7 @@ def test_rag_chat_streamed(app_client, headers):
         StreamEvent(
             event="on_chat_model_stream",
             name="event-2",
-            data={
-                "chunk": SimpleNamespace(
-                    content="by the American songwriter Barry Mann."
-                )
-            },
+            data={"chunk": SimpleNamespace(content="by the American songwriter Barry Mann.")},
             run_id="run_id",
         ),
     ]
@@ -102,9 +96,7 @@ def test_rag_chat_streamed(app_client, headers):
     build_retrieval_chain = mock_build_retrieval_chain(events)
 
     with (
-        patch(
-            "core_api.src.routes.chat.build_retrieval_chain", new=build_retrieval_chain
-        ),
+        patch("core_api.src.routes.chat.build_retrieval_chain", new=build_retrieval_chain),
         app_client.websocket_connect("/chat/rag", headers=headers) as websocket,
     ):
         # When
