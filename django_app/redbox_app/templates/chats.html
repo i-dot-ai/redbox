@@ -87,6 +87,14 @@
         {% if chat_id %}<input type="hidden" name="session-id" value="{{ chat_id }}"/>{% endif %}
 
         <div class="govuk-form-group">
+          <label class="govuk-label" for="selected-files">
+            Files to use
+          </label>
+          <select id="selected-files" name="selected-files" multiple>
+            {% for file in files %}
+              <option value="{{ file.id }}" selected="{{ file.selected }}">{{ file.original_file_name }}</option>
+            {% endfor %}
+          </select>
           <label class="govuk-label" for="message">
             Write a message
           </label>
