@@ -73,12 +73,39 @@ gratitude = Route(
     ],
 )
 
-routes = [
-    info,
-    gratitude,
-]
+summarisation = Route(
+    name="summarisation",
+    utterances=[
+        "I'd like to summarise the documents I've uploaded.",
+        "Can you help me with summarising these documents?",
+        "Please summarise the documents with a focus on the impact on northern Englad",
+        "Please summarise the contents of the uploaded files.",
+        "I'd appreciate a summary of the documents I've just uploaded.",
+        "Could you provide a summary of these uploaded documents?",
+        "Summarise the documents with a focus on macro economic trends.",
+    ],
+)
 
-encoder = HuggingFaceEncoder(name="sentence-transformers/paraphrase-albert-small-v2", cache_dir=MODEL_PATH)
+extract = Route(
+    name="extract",
+    utterances=[
+        "I'd like to find some information in the documents I've uploaded",
+        "Can you help me identify details from these documents?",
+        "Please give me all action items from this document",
+        "Give me all the action items from these meeting notes",
+        "Could you locate some key information in these uploaded documents?",
+        "I need to obtain certain details from the documents I have uploaded, please",
+        "Please extract all action items from this document"
+        "Extract all the sentences with the word 'shall'",
+    ],
+)
+
+
+routes = [info, gratitude, summarisation, extract]
+
+encoder = HuggingFaceEncoder(
+    name="sentence-transformers/paraphrase-albert-small-v2", cache_dir=MODEL_PATH
+)
 route_layer = RouteLayer(encoder=encoder, routes=routes)
 
 
@@ -105,7 +132,9 @@ async def build_vanilla_chain(
             detail="The final entry in the chat history should be a user question",
         )
 
-    return ChatPromptTemplate.from_messages((msg.role, msg.text) for msg in chat_request.message_history)
+    return ChatPromptTemplate.from_messages(
+        (msg.role, msg.text) for msg in chat_request.message_history
+    )
 
 
 async def build_retrieval_chain(
@@ -130,10 +159,14 @@ async def build_retrieval_chain(
 
     condense_question_chain = LLMChain(llm=llm, prompt=CONDENSE_QUESTION_PROMPT)
 
-    standalone_question = condense_question_chain({"question": question, "chat_history": previous_history})["text"]
+    standalone_question = condense_question_chain(
+        {"question": question, "chat_history": previous_history}
+    )["text"]
 
     search_kwargs = {"filter": {"term": {"creator_user_uuid.keyword": str(user_uuid)}}}
-    docs = vector_store.as_retriever(search_kwargs=search_kwargs).get_relevant_documents(standalone_question)
+    docs = vector_store.as_retriever(
+        search_kwargs=search_kwargs
+    ).get_relevant_documents(standalone_question)
 
     params = {
         "question": standalone_question,
@@ -149,6 +182,7 @@ async def build_chain(
     llm: ChatLiteLLM,
     vector_store: ElasticsearchStore,
 ):
+
     question = chat_request.message_history[-1].text
     route = route_layer(question)
 
@@ -160,11 +194,26 @@ async def build_chain(
         return ChatPromptTemplate.from_template(output_text), {}
     elif route.name == "gratitude":
         return ChatPromptTemplate.from_template("You're welcome!"), {}
-
+    elif route.name == "summarisation":
+        return (
+            ChatPromptTemplate.from_template(
+                "You are asking for summarisation - route not yet implemented"
+            ),
+            {},
+        )
+    elif route.name == "extract":
+        return (
+            ChatPromptTemplate.from_template(
+                "You asking to extract some information - route not yet implemented"
+            ),
+            {},
+        )
     # build_vanilla_chain could go here
 
     # RAG chat
-    chain, params = await build_retrieval_chain(chat_request, user_uuid, llm, vector_store)
+    chain, params = await build_retrieval_chain(
+        chat_request, user_uuid, llm, vector_store
+    )
     return chain, params
 
 
@@ -183,19 +232,48 @@ async def rag_chat(
     Returns:
         StreamingResponse: a stream of the chain response
     """
-    chain, params = await build_chain(chat_request, user_uuid, llm, vector_store)
 
-    result = chain(params)
+    question = chat_request.message_history[-1].text
+    route = route_layer(question)
 
-    source_documents = [
-        SourceDocument(
-            page_content=langchain_document.page_content,
-            file_uuid=langchain_document.metadata.get("parent_doc_uuid"),
-            page_numbers=langchain_document.metadata.get("page_numbers"),
+    if route.name == "info":
+        info_text = """
+            I am RedBox, an AI focused on helping UK Civil Servants, Political Advisors and\
+            Ministers triage and summarise information from a wide variety of sources.
+        """
+        return ChatResponse(output_text=info_text)
+
+    elif route.name == "gratitude":
+        return ChatResponse(output_text="You're welcome!")
+
+    elif route.name == "summarisation":
+        return ChatResponse(
+            output_text="You are asking for summarisation - route not yet implemented"
         )
-        for langchain_document in result.get("input_documents", [])
-    ]
-    return ChatResponse(output_text=result["output_text"], source_documents=source_documents)
+
+    elif route.name == "extract":
+        return ChatResponse(
+            output_text="You asking to extract some information - route not yet implemented"
+        )
+
+    else:
+        chain, params = await build_retrieval_chain(
+            chat_request, user_uuid, llm, vector_store
+        )
+
+        result = chain(params)
+
+        source_documents = [
+            SourceDocument(
+                page_content=langchain_document.page_content,
+                file_uuid=langchain_document.metadata.get("parent_doc_uuid"),
+                page_numbers=langchain_document.metadata.get("page_numbers"),
+            )
+            for langchain_document in result.get("input_documents", [])
+        ]
+        return ChatResponse(
+            output_text=result["output_text"], source_documents=source_documents
+        )
 
 
 @chat_app.websocket("/rag")
@@ -215,7 +293,9 @@ async def rag_chat_streamed(
     async for event in chain.astream_events(params, version="v1"):
         kind = event["event"]
         if kind == "on_chat_model_stream":
-            await websocket.send_json({"resource_type": "text", "data": event["data"]["chunk"].content})
+            await websocket.send_json(
+                {"resource_type": "text", "data": event["data"]["chunk"].content}
+            )
         elif kind == "on_chat_model_end":
             await websocket.send_json({"resource_type": "end"})
         elif kind == "on_chain_stream":
@@ -229,12 +309,16 @@ async def rag_chat_streamed(
                 )
                 for document in event["data"]["chunk"].get("input_documents", [])
             ]
-            await websocket.send_json({"resource_type": "documents", "data": source_documents})
+            await websocket.send_json(
+                {"resource_type": "documents", "data": source_documents}
+            )
         elif kind == "on_prompt_stream":
             try:
                 msg = event["data"]["chunk"].messages[0].content
                 await websocket.send_json({"resource_type": "text", "data": msg})
             except (KeyError, AttributeError):
-                logging.exception("unknown message format %s", str(event["data"]["chunk"]))
+                logging.exception(
+                    "unknown message format %s", str(event["data"]["chunk"])
+                )
 
     await websocket.close()
