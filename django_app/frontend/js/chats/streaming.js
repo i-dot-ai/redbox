@@ -123,7 +123,7 @@ class ChatController extends HTMLElement {
 
     connectedCallback() {
 
-        const messageForm = this.querySelector('.js-message-input');
+        const messageForm = this.closest('form');
         const textArea = /** @type {HTMLInputElement | null} */ (this.querySelector('.js-user-text'));
         const messageContainer = this.querySelector('.js-message-container');
         const insertPosition = this.querySelector('.js-response-feedback');
