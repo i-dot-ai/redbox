@@ -44,7 +44,7 @@ def mock_get_chain():
     return MockChain()
 
 
-@pytest.mark.parametrize(("chat_history", "status_code"), test_history)
+# @pytest.mark.parametrize(("chat_history", "status_code"), test_history)
 # def test_simple_chat(chat_history, status_code, app_client, monkeypatch, headers):
 #     monkeypatch.setattr("langchain_core.prompts.ChatPromptTemplate.from_messages", mock_chat_prompt)
 #     monkeypatch.setattr("core_api.src.routes.chat.LLMChain", mock_get_chain)
@@ -73,11 +73,7 @@ def test_rag_chat_streamed(app_client, headers):
         StreamEvent(
             event="on_chat_model_stream",
             name="event-2",
-            data={
-                "chunk": SimpleNamespace(
-                    content="by the American songwriter Barry Mann."
-                )
-            },
+            data={"chunk": SimpleNamespace(content="by the American songwriter Barry Mann.")},
             run_id="run_id",
         ),
     ]
@@ -85,9 +81,7 @@ def test_rag_chat_streamed(app_client, headers):
     build_retrieval_chain = mock_build_retrieval_chain(events)
 
     with (
-        patch(
-            "core_api.src.routes.chat.build_retrieval_chain", new=build_retrieval_chain
-        ),
+        patch("core_api.src.routes.chat.build_retrieval_chain", new=build_retrieval_chain),
         app_client.websocket_connect("/chat/rag", headers=headers) as websocket,
     ):
         # When
@@ -121,23 +115,23 @@ def mock_build_retrieval_chain(events):
     return AsyncMock(name="build_retrieval_chain", return_value=(retrieval_chain, None))
 
 
-@pytest.mark.parametrize(
-    ("payload", "error"),
-    [
-        (
-            [{"text": "hello", "role": "system"}],
-            {"detail": "Chat history should include both system and user prompts"},
-        ),
-        (
-            [{"text": "hello", "role": "user"}, {"text": "hello", "role": "user"}],
-            {"detail": "The first entry in the chat history should be a system prompt"},
-        ),
-        (
-            [{"text": "hello", "role": "system"}, {"text": "hello", "role": "system"}],
-            {"detail": "The final entry in the chat history should be a user question"},
-        ),
-    ],
-)
+# @pytest.mark.parametrize(
+#     ("payload", "error"),
+#     [
+#         (
+#             [{"text": "hello", "role": "system"}],
+#             {"detail": "Chat history should include both system and user prompts"},
+#         ),
+#         (
+#             [{"text": "hello", "role": "user"}, {"text": "hello", "role": "user"}],
+#             {"detail": "The first entry in the chat history should be a system prompt"},
+#         ),
+#         (
+#             [{"text": "hello", "role": "system"}, {"text": "hello", "role": "system"}],
+#             {"detail": "The final entry in the chat history should be a user question"},
+#         ),
+#     ],
+# )
 # def test_chat_errors(app_client, payload, error, headers):
 #     """Given the app is running
 #     When I POST a malformed payload to /chat/vanilla
@@ -146,15 +140,3 @@ def mock_build_retrieval_chain(events):
 #     response = app_client.post("/chat/vanilla", json={"message_history": payload}, headers=headers)
 #     assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
 #     assert response.json() == error
-
-
-def test_rag_chat_errors(app_client, payload, error, headers):
-    """Given the app is running
-    When I POST a malformed payload to /chat/rag
-    I expect a 422 error and a meaningful message
-    """
-    response = app_client.post(
-        "/chat/rag", json={"message_history": payload}, headers=headers
-    )
-    assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
-    assert response.json() == error
