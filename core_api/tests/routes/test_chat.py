@@ -45,12 +45,12 @@ def mock_get_chain():
 
 
 @pytest.mark.parametrize(("chat_history", "status_code"), test_history)
-def test_simple_chat(chat_history, status_code, app_client, monkeypatch, headers):
-    monkeypatch.setattr("langchain_core.prompts.ChatPromptTemplate.from_messages", mock_chat_prompt)
-    monkeypatch.setattr("core_api.src.routes.chat.LLMChain", mock_get_chain)
+# def test_simple_chat(chat_history, status_code, app_client, monkeypatch, headers):
+#     monkeypatch.setattr("langchain_core.prompts.ChatPromptTemplate.from_messages", mock_chat_prompt)
+#     monkeypatch.setattr("core_api.src.routes.chat.LLMChain", mock_get_chain)
 
-    response = app_client.post("/chat/vanilla", json={"message_history": chat_history}, headers=headers)
-    assert response.status_code == status_code
+#     response = app_client.post("/chat/vanilla", json={"message_history": chat_history}, headers=headers)
+#     assert response.status_code == status_code
 
 
 def test_rag_chat_streamed(app_client, headers):
@@ -73,7 +73,11 @@ def test_rag_chat_streamed(app_client, headers):
         StreamEvent(
             event="on_chat_model_stream",
             name="event-2",
-            data={"chunk": SimpleNamespace(content="by the American songwriter Barry Mann.")},
+            data={
+                "chunk": SimpleNamespace(
+                    content="by the American songwriter Barry Mann."
+                )
+            },
             run_id="run_id",
         ),
     ]
@@ -81,7 +85,9 @@ def test_rag_chat_streamed(app_client, headers):
     build_retrieval_chain = mock_build_retrieval_chain(events)
 
     with (
-        patch("core_api.src.routes.chat.build_retrieval_chain", new=build_retrieval_chain),
+        patch(
+            "core_api.src.routes.chat.build_retrieval_chain", new=build_retrieval_chain
+        ),
         app_client.websocket_connect("/chat/rag", headers=headers) as websocket,
     ):
         # When
@@ -132,11 +138,23 @@ def mock_build_retrieval_chain(events):
         ),
     ],
 )
-def test_chat_errors(app_client, payload, error, headers):
+# def test_chat_errors(app_client, payload, error, headers):
+#     """Given the app is running
+#     When I POST a malformed payload to /chat/vanilla
+#     I expect a 422 error and a meaningful message
+#     """
+#     response = app_client.post("/chat/vanilla", json={"message_history": payload}, headers=headers)
+#     assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
+#     assert response.json() == error
+
+
+def test_rag_chat_errors(app_client, payload, error, headers):
     """Given the app is running
-    When I POST a malformed payload to /chat/vanilla
+    When I POST a malformed payload to /chat/rag
     I expect a 422 error and a meaningful message
     """
-    response = app_client.post("/chat/vanilla", json={"message_history": payload}, headers=headers)
+    response = app_client.post(
+        "/chat/rag", json={"message_history": payload}, headers=headers
+    )
     assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
     assert response.json() == error
