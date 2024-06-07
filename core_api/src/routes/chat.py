@@ -11,18 +11,17 @@ from langchain_community.chat_models import ChatLiteLLM
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_elasticsearch import ElasticsearchStore
 from semantic_router import Route
-from semantic_router.encoders import OpenAIEncoder
+from semantic_router.encoders import HuggingFaceEncoder
 from semantic_router.layer import RouteLayer
 
-from core_api.src import services
 from core_api.src.auth import get_user_uuid, get_ws_user_uuid
-
-# from core_api.src.routes.semantic_router import rl
+from core_api.src.dependencies import get_llm, get_vector_store
 from redbox.llm.prompts.chat import (
     CONDENSE_QUESTION_PROMPT,
     STUFF_DOCUMENT_PROMPT,
     WITH_SOURCES_PROMPT,
 )
+from redbox.model_db import MODEL_PATH
 from redbox.models.chat import ChatRequest, ChatResponse, SourceDocument
 
 # === Logging ===
@@ -79,16 +78,15 @@ routes = [
     gratitude,
 ]
 
-encoder = OpenAIEncoder()
-
-rl = RouteLayer(encoder=encoder, routes=routes)
+encoder = HuggingFaceEncoder(name="sentence-transformers/paraphrase-albert-small-v2", cache_dir=MODEL_PATH)
+route_layer = RouteLayer(encoder=encoder, routes=routes)
 
 
 @chat_app.post("/vanilla", tags=["chat"], response_model=ChatResponse)
 def simple_chat(
     chat_request: ChatRequest,
     _user_uuid: Annotated[UUID, Depends(get_user_uuid)],
-    llm: Annotated[ChatLiteLLM, Depends(services.llm)],
+    llm: Annotated[ChatLiteLLM, Depends(get_llm)],
 ) -> ChatResponse:
     """Get a LLM response to a question history"""
 
@@ -110,9 +108,7 @@ def simple_chat(
             detail="The final entry in the chat history should be a user question",
         )
 
-    chat_prompt = ChatPromptTemplate.from_messages(
-        (msg.role, msg.text) for msg in chat_request.message_history
-    )
+    chat_prompt = ChatPromptTemplate.from_messages((msg.role, msg.text) for msg in chat_request.message_history)
     # Convert to LangChain style messages
     messages = chat_prompt.format_messages()
 
@@ -143,14 +139,10 @@ async def build_retrieval_chain(
 
     condense_question_chain = LLMChain(llm=llm, prompt=CONDENSE_QUESTION_PROMPT)
 
-    standalone_question = condense_question_chain(
-        {"question": question, "chat_history": previous_history}
-    )["text"]
+    standalone_question = condense_question_chain({"question": question, "chat_history": previous_history})["text"]
 
     search_kwargs = {"filter": {"term": {"creator_user_uuid.keyword": str(user_uuid)}}}
-    docs = vector_store.as_retriever(
-        search_kwargs=search_kwargs
-    ).get_relevant_documents(standalone_question)
+    docs = vector_store.as_retriever(search_kwargs=search_kwargs).get_relevant_documents(standalone_question)
 
     params = {
         "question": standalone_question,
@@ -164,8 +156,8 @@ async def build_retrieval_chain(
 async def rag_chat(
     chat_request: ChatRequest,
     user_uuid: Annotated[UUID, Depends(get_user_uuid)],
-    llm: Annotated[ChatLiteLLM, Depends(services.llm)],
-    vector_store: Annotated[ElasticsearchStore, Depends(services.vector_store)],
+    llm: Annotated[ChatLiteLLM, Depends(get_llm)],
+    vector_store: Annotated[ElasticsearchStore, Depends(get_vector_store)],
 ) -> ChatResponse:
     """Get a LLM response to a question history and file
 
@@ -176,7 +168,7 @@ async def rag_chat(
         StreamingResponse: a stream of the chain response
     """
     question = chat_request.message_history[-1].text
-    route = rl(question)
+    route = route_layer(question)
 
     if route.name == "info":
         return ChatResponse(
@@ -189,9 +181,7 @@ async def rag_chat(
         return ChatResponse(output_text="You're welcome!")
     else:
         # RAG chat
-        chain, params = await build_retrieval_chain(
-            chat_request, user_uuid, llm, vector_store
-        )
+        chain, params = await build_retrieval_chain(chat_request, user_uuid, llm, vector_store)
         result = chain(params)
 
         source_documents = [
@@ -202,16 +192,14 @@ async def rag_chat(
             )
             for langchain_document in result.get("input_documents", [])
         ]
-        return ChatResponse(
-            output_text=result["output_text"], source_documents=source_documents
-        )
+        return ChatResponse(output_text=result["output_text"], source_documents=source_documents)
 
 
 @chat_app.websocket("/rag")
 async def rag_chat_streamed(
     websocket: WebSocket,
-    llm: Annotated[ChatLiteLLM, Depends(services.llm)],
-    vector_store: Annotated[ElasticsearchStore, Depends(services.vector_store)],
+    llm: Annotated[ChatLiteLLM, Depends(get_llm)],
+    vector_store: Annotated[ElasticsearchStore, Depends(get_vector_store)],
 ):
     await websocket.accept()
 
@@ -219,16 +207,12 @@ async def rag_chat_streamed(
 
     chat_request = ChatRequest.parse_raw(await websocket.receive_text())
 
-    chain, params = await build_retrieval_chain(
-        chat_request, user_uuid, llm, vector_store
-    )
+    chain, params = await build_retrieval_chain(chat_request, user_uuid, llm, vector_store)
 
     async for event in chain.astream_events(params, version="v1"):
         kind = event["event"]
         if kind == "on_chat_model_stream":
-            await websocket.send_json(
-                {"resource_type": "text", "data": event["data"]["chunk"].content}
-            )
+            await websocket.send_json({"resource_type": "text", "data": event["data"]["chunk"].content})
         elif kind == "on_chat_model_end":
             await websocket.send_json({"resource_type": "end"})
         elif kind == "on_chain_stream":
@@ -242,8 +226,6 @@ async def rag_chat_streamed(
                 )
                 for document in event["data"]["chunk"].get("input_documents", [])
             ]
-            await websocket.send_json(
-                {"resource_type": "documents", "data": source_documents}
-            )
+            await websocket.send_json({"resource_type": "documents", "data": source_documents})
 
     await websocket.close()
