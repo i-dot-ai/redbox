@@ -10,23 +10,20 @@ from langchain.chains.qa_with_sources import load_qa_with_sources_chain
 from langchain_community.chat_models import ChatLiteLLM
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_elasticsearch import ElasticsearchStore
-from semantic_router import Route
-from semantic_router.encoders import HuggingFaceEncoder
-from semantic_router.layer import RouteLayer
 
 from core_api.src.auth import get_user_uuid, get_ws_user_uuid
 from core_api.src.dependencies import get_llm, get_vector_store
-from core_api.src.semantic_router_utils import (
+from core_api.src.semantic_routes import (
     ABILITY_RESPONSE,
     COACH_RESPONSE,
     INFO_RESPONSE,
+    route_layer,
 )
 from redbox.llm.prompts.chat import (
     CONDENSE_QUESTION_PROMPT,
     STUFF_DOCUMENT_PROMPT,
     WITH_SOURCES_PROMPT,
 )
-from redbox.model_db import MODEL_PATH
 from redbox.models.chat import ChatRequest, ChatResponse, SourceDocument
 
 # === Logging ===
@@ -51,88 +48,6 @@ chat_app = FastAPI(
     redoc_url="/redoc",
     openapi_url="/openapi.json",
 )
-
-
-# === Set up the semantic router ===
-info = Route(
-    name="info",
-    utterances=[
-        "What is your name?",
-        "Who are you?",
-        "What is Redbox?",
-    ],
-)
-
-ability = Route(
-    name="ability",
-    utterances=[
-        "What can you do?",
-        "What can you do?",
-        "How can you help me?",
-        "What does Redbox do?",
-        "What can Redbox do",
-        "What don't you do",
-        "Please help me",
-        "Please help",
-        "Help me!",
-        "help",
-    ],
-)
-
-coach = Route(
-    name="coach",
-    utterances=[
-        "That is not the answer I wanted",
-        "Rubbish",
-        "No good",
-        "That's not what I wanted",
-        "How can I improve the results?",
-    ],
-)
-
-gratitude = Route(
-    name="gratitude",
-    utterances=[
-        "Thank you ever so much for your help!",
-        "I'm really grateful for your assistance.",
-        "Cheers for the detailed response!",
-        "Thanks a lot, that was very informative.",
-        "Nice one",
-        "Thanks!",
-    ],
-)
-
-summarisation = Route(
-    name="summarisation",
-    utterances=[
-        "I'd like to summarise the documents I've uploaded.",
-        "Can you help me with summarising these documents?",
-        "Please summarise the documents with a focus on the impact on northern Englad",
-        "Please summarise the contents of the uploaded files.",
-        "I'd appreciate a summary of the documents I've just uploaded.",
-        "Could you provide a summary of these uploaded documents?",
-        "Summarise the documents with a focus on macro economic trends.",
-    ],
-)
-
-extract = Route(
-    name="extract",
-    utterances=[
-        "I'd like to find some information in the documents I've uploaded",
-        "Can you help me identify details from these documents?",
-        "Please give me all action items from this document",
-        "Give me all the action items from these meeting notes",
-        "Could you locate some key information in these uploaded documents?",
-        "I need to obtain certain details from the documents I have uploaded, please",
-        "Please extract all action items from this documentExtract all the sentences with the word 'shall'",
-    ],
-)
-
-
-routes = [info, ability, coach, gratitude, summarisation, extract]
-
-encoder = HuggingFaceEncoder(name="sentence-transformers/paraphrase-albert-small-v2", cache_dir=MODEL_PATH)
-route_layer = RouteLayer(encoder=encoder, routes=routes)
 
 
 async def build_vanilla_chain(
