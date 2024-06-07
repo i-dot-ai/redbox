@@ -95,7 +95,7 @@ extract = Route(
         "Give me all the action items from these meeting notes",
         "Could you locate some key information in these uploaded documents?",
         "I need to obtain certain details from the documents I have uploaded, please",
-        "Please extract all action items from this document" "Extract all the sentences with the word 'shall'",
+        "Please extract all action items from this documentExtract all the sentences with the word 'shall'",
     ],
 )
 
