@@ -158,7 +158,8 @@ async def rag_chat(
     route = route_layer(question)
 
     if route_response := ROUTE_RESPONSES.get(route.name):
-        return route_response
+        response = route_response.invoke({})
+        return ChatResponse(output_text=response.messages[0].content)
 
     # build_vanilla_chain could go here
 
