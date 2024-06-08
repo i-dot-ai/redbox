@@ -49,6 +49,15 @@ chat_app = FastAPI(
     openapi_url="/openapi.json",
 )
 
+ROUTE_RESPONSES = {
+    "info": ChatPromptTemplate.from_template(INFO_RESPONSE),
+    "ability": ChatPromptTemplate.from_template(ABILITY_RESPONSE),
+    "coach": ChatPromptTemplate.from_template(COACH_RESPONSE),
+    "gratitude": ChatPromptTemplate.from_template("You're welcome!"),
+    "summarisation": ChatPromptTemplate.from_template("You are asking for summarisation - route not yet implemented"),
+    "extract": ChatPromptTemplate.from_template("You asking to extract some information - route not yet implemented"),
+}
+
 
 async def build_vanilla_chain(
     chat_request: ChatRequest,
@@ -120,23 +129,8 @@ async def build_chain(
     question = chat_request.message_history[-1].text
     route = route_layer(question)
 
-    route_responses = {
-        "info": (ChatPromptTemplate.from_template(INFO_RESPONSE), {}),
-        "ability": (ChatPromptTemplate.from_template(ABILITY_RESPONSE), {}),
-        "coach": (ChatPromptTemplate.from_template(COACH_RESPONSE), {}),
-        "gratitude": (ChatPromptTemplate.from_template("You're welcome!"), {}),
-        "summarisation": (
-            ChatPromptTemplate.from_template("You are asking for summarisation - route not yet implemented"),
-            {},
-        ),
-        "extract": (
-            ChatPromptTemplate.from_template("You asking to extract some information - route not yet implemented"),
-            {},
-        ),
-    }
-
-    if route.name in route_responses:
-        return route_responses.get(route.name)
+    if route_response := ROUTE_RESPONSES.get(route.name):
+        return route_response, {}
     # build_vanilla_chain could go here
 
     # RAG chat
@@ -163,17 +157,9 @@ async def rag_chat(
     question = chat_request.message_history[-1].text
     route = route_layer(question)
 
-    route_responses = {
-        "info": ChatResponse(output_text=INFO_RESPONSE),
-        "ability": ChatResponse(output_text=ABILITY_RESPONSE),
-        "coach": ChatResponse(output_text=COACH_RESPONSE),
-        "gratitude": ChatResponse(output_text="You're welcome!"),
-        "summarisation": ChatResponse(output_text="You are asking for summarisation - route not yet implemented"),
-        "extract": ChatResponse(output_text="You asking to extract some information - route not yet implemented"),
-    }
+    if route_response := ROUTE_RESPONSES.get(route.name):
+        return route_response
 
-    if route.name in route_responses:
-        return route_responses.get(route.name)
     # build_vanilla_chain could go here
 
     # RAG chat
