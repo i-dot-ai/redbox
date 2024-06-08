@@ -4,8 +4,10 @@ import socket
 from pathlib import Path
 
 import environ
+import sentry_sdk
 from dotenv import load_dotenv
 from redbox_app.setting_enums import Classification, Environment
+from sentry_sdk.integrations.django import DjangoIntegration
 from storages.backends import s3boto3
 
 load_dotenv()
@@ -228,6 +230,21 @@ if ENVIRONMENT.is_test:
 else:
     LOCALHOST = socket.gethostbyname(socket.gethostname())
     ALLOWED_HOSTS = [LOCALHOST, *ENVIRONMENT.hosts]
+
+if not ENVIRONMENT.is_local:
+    SENTRY_DSN = env.str("SENTRY_DSN", None)
+    SENTRY_ENVIRONMENT = env.str("SENTRY_ENVIRONMENT", None)
+    if SENTRY_DSN and SENTRY_ENVIRONMENT:
+        sentry_sdk.init(
+            dsn=SENTRY_DSN,
+            integrations=[
+                DjangoIntegration(),
+            ],
+            environment=SENTRY_ENVIRONMENT,
+            send_default_pii=False,
+            traces_sample_rate=1.0,
+            profiles_sample_rate=0.0,
+        )
 
 DATABASES = {
     "default": {

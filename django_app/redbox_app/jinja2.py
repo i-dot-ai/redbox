@@ -73,7 +73,7 @@ def environment(**options):
             "humanize_timedelta": humanize_timedelta,
             "template_localtime": template_localtime,
             "to_user_timezone": to_user_timezone,
-            "environment": settings.ENVIRONMENT,
+            "environment": settings.ENVIRONMENT.value,
             "security": settings.MAX_SECURITY_CLASSIFICATION.value,
         }
     )
@@ -84,7 +84,7 @@ def environment(**options):
             "humanize_timedelta": humanize_timedelta,
             "template_localtime": template_localtime,
             "to_user_timezone": to_user_timezone,
-            "environment": settings.ENVIRONMENT,
+            "environment": settings.ENVIRONMENT.value,
             "security": settings.MAX_SECURITY_CLASSIFICATION.value,
         }
     )
