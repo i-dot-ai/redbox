@@ -23,10 +23,6 @@ test_history = [
     # ([system_chat, user_chat], 200), TODO: restore this test
 ]
 
-# user_gratitude = {"message_history": [{"role": "user", "text": "Thank you"}]}
-user_gratitude = {"role": "user", "text": "Thank you"}
-test_gratitude = [([user_gratitude])]
-# user_gratitude = {"message_history": [{"role": "user", "text": "Thank you"}]}
 
 
 def mock_chat_prompt():
@@ -61,9 +57,12 @@ def mock_get_chain():
 #     assert response.status_code == status_code
 
 
-@pytest.mark.parametrize("chat_history", test_gratitude)
-def test_rag_chat(chat_history, app_client, headers):
-    response = app_client.post("/chat/rag", json={"message_history": chat_history}, headers=headers)
+def test_rag_chat(app_client, headers):
+    response = app_client.post(
+        "/chat/rag",
+        json={"message_history": [{"role": "user", "text": "Thank you"}]},
+        headers=headers,
+    )
     response_dict = response.json()
     assert response_dict["output_text"] == "You're welcome!"
 
