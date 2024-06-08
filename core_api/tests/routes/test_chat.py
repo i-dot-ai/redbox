@@ -3,7 +3,6 @@ from types import SimpleNamespace
 from typing import TYPE_CHECKING
 from unittest.mock import AsyncMock, MagicMock, patch
 
-import pytest
 from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_core.prompt_values import ChatPromptValue
 from langchain_core.runnables import Runnable
@@ -22,7 +21,6 @@ test_history = [
     ([system_chat, system_chat], 422),
     # ([system_chat, user_chat], 200), TODO: restore this test
 ]
-
 
 
 def mock_chat_prompt():
