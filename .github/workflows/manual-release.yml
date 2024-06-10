@@ -73,6 +73,7 @@ jobs:
       ENVIRONMENT: ${{ github.event.inputs.env }}
       INFRA_CONFIG_REPO: ${{ needs.set-vars.outputs.infra-config-repo }}
       CORE_INFRA_REF: ${{ github.event.inputs.core-repo-reference }}
+      INFRA_CONFIG_REF: ${{ github.event.inputs.config-repo-reference }}
       IMAGE_TAG: ${{ github.event.inputs.image-tag }}
       AWS_S3_BUCKET: ${{ github.event.inputs.AWS_S3_BUCKET }}
     secrets:
