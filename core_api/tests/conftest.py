@@ -7,11 +7,14 @@ from elasticsearch import Elasticsearch
 from fastapi.testclient import TestClient
 from jose import jwt
 from langchain_community.llms.fake import FakeListLLM
+from langchain_elasticsearch import ApproxRetrievalStrategy, ElasticsearchStore
+from langchain_community.embeddings import SentenceTransformerEmbeddings
 
 from core_api.src.app import app as application
 from core_api.src.app import env
 from redbox.models import Chunk, File
 from redbox.storage import ElasticsearchStorageHandler
+from redbox.model_db import MODEL_PATH
 
 
 @pytest.fixture()
@@ -109,3 +112,27 @@ def file_pdf_path() -> Path:
 @pytest.fixture()
 def mock_llm():
     return FakeListLLM(responses=["<<TESTING>>"] * 128)
+
+
+@pytest.fixture()
+def embedding_model() -> SentenceTransformerEmbeddings:
+    return SentenceTransformerEmbeddings(model_name=env.embedding_model, cache_folder=MODEL_PATH)
+
+
+@pytest.fixture()
+def vector_store(es_client, embedding_model):
+    if env.elastic.subscription_level == "basic":
+        strategy = ApproxRetrievalStrategy(hybrid=False)
+    elif env.elastic.subscription_level in ["platinum", "enterprise"]:
+        strategy = ApproxRetrievalStrategy(hybrid=True)
+    else:
+        message = f"Unknown Elastic subscription level {env.elastic.subscription_level}"
+        raise ValueError(message)
+
+    return ElasticsearchStore(
+        es_connection=es_client,
+        index_name=f"{env.elastic_root_index}-chunk",
+        embedding=embedding_model,
+        strategy=strategy,
+        vector_query_field="embedding",
+    )
