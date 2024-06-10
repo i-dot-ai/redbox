@@ -19,8 +19,15 @@ class ChatMessage(BaseModel):
     }
 
 
+class SelectedDocument(BaseModel):
+    uuid: UUID | None = Field(description="uuid of selected file", default=None)
+
+
 class ChatRequest(BaseModel):
     message_history: list[ChatMessage] = Field(description="The history of messages in the chat")
+    selected_files: list[SelectedDocument] = Field(
+        description="Documents selected to use for the current chat request", default_factory=list
+    )
 
     model_config = {
         "json_schema_extra": {
@@ -29,7 +36,11 @@ class ChatRequest(BaseModel):
                     "message_history": [
                         {"text": "You are a helpful AI Assistant", "role": "system"},
                         {"text": "What is AI?", "role": "user"},
-                    ]
+                    ],
+                    "selected_files": [
+                        {"uuid": "9aa1aa15-dde0-471f-ab27-fd410612025b"},
+                        {"uuid": "219c2e94-9877-4f83-ad6a-a59426f90171"},
+                    ],
                 }
             ]
         }
