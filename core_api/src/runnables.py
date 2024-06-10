@@ -5,7 +5,7 @@ from langchain_community.chat_models import ChatLiteLLM
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import Runnable, RunnableLambda
 
-from core_api.src.format import format_docs
+from core_api.src.format import format_chunks
 
 
 def make_stuff_document_runnable(
@@ -26,7 +26,7 @@ def make_stuff_document_runnable(
         {
             "question": itemgetter("question"),
             "messages": itemgetter("messages"),
-            "documents": itemgetter("documents") | RunnableLambda(format_docs),
+            "documents": itemgetter("documents") | RunnableLambda(format_chunks),
         }
         | ChatPromptTemplate.from_messages(chat_history)
         | llm

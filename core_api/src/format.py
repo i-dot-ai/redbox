@@ -1,55 +1,49 @@
-from functools import reduce
+from functools import partial, reduce
 from uuid import UUID
 
-from langchain.schema import Document
-
-from redbox.models.file import Metadata
+from redbox.models.file import Chunk, Metadata
 from redbox.storage import ElasticsearchStorageHandler
 
 
-def format_docs(docs: list[Document]) -> str:
+def format_chunks(chunks: list[Chunk]) -> str:
     formatted: list[str] = []
 
-    for doc in docs:
-        doc_xml = f"<document>\n {doc.page_content} \n</document>"
+    for chunk in chunks:
+        doc_xml = f"<Doc{chunk.parent_file_uuid}>\n {chunk.text} \n</Doc{chunk.parent_file_uuid}>"
         formatted.append(doc_xml)
 
     return "\n\n".join(formatted)
 
 
-def get_file_as_documents(
-    file_uuid: UUID, user_uuid: UUID, storage_handler: ElasticsearchStorageHandler, max_tokens: int | None = None
-) -> list[Document]:
-    """Gets a file as LangChain Documents, splitting it by max_tokens."""
-    documents: list[Document] = []
-    chunks_unsorted = storage_handler.get_file_chunks(parent_file_uuid=file_uuid, user_uuid=user_uuid)
-    chunks = sorted(chunks_unsorted, key=lambda x: x.index)
+def reduce_chunks_by_tokens(chunks: list[Chunk] | None, chunk: Chunk, max_tokens: int) -> list[Chunk]:
+    if not chunks:
+        return [chunk]
 
-    token_count: int = 0
-    n = max_tokens or float("inf")
-    page_content: list[str] = []
-    metadata: list[Metadata | None] = []
+    last_chunk = chunks[-1]
 
-    for chunk in chunks:
-        if token_count + chunk.token_count >= n:
-            document = Document(
-                page_content=" ".join(page_content),
-                metadata=reduce(Metadata.merge, metadata) or {},
-            )
-            documents.append(document)
-            token_count = 0
-            page_content = []
-            metadata = []
-
-        page_content.append(chunk.text)
-        metadata.append(chunk.metadata)
-        token_count += chunk.token_count
-
-    if len(page_content) > 0:
-        document = Document(
-            page_content=" ".join(page_content),
-            metadata=reduce(Metadata.merge, metadata) or {},
+    if chunk.token_count + last_chunk.token_count <= max_tokens:
+        chunks[-1] = Chunk(
+            parent_file_uuid=last_chunk.parent_file_uuid,
+            index=last_chunk.index,
+            text=last_chunk.text + chunk.text,
+            metadata=Metadata.merge(last_chunk.metadata, chunk.metadata),
+            creator_user_uuid=last_chunk.creator_user_uuid,
         )
-        documents.append(document)
+    else:
+        chunk.index = last_chunk.index + 1
+        chunks.append(chunk)
 
-    return documents
+    return chunks
+
+
+def get_file_chunked_to_tokens(
+    file_uuid: UUID, user_uuid: UUID, storage_handler: ElasticsearchStorageHandler, max_tokens: int | None = None
+) -> list[Chunk]:
+    """Gets a file as larger document-sized Chunks, splitting it by max_tokens."""
+    n = max_tokens or float("inf")
+    chunks_unsorted = storage_handler.get_file_chunks(parent_file_uuid=file_uuid, user_uuid=user_uuid)
+    chunks_sorted = sorted(chunks_unsorted, key=lambda x: x.index)
+
+    reduce_chunk_n = partial(reduce_chunks_by_tokens, max_tokens=n)
+
+    return reduce(lambda cs, c: reduce_chunk_n(cs, c), chunks_sorted, [])
