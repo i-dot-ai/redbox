@@ -49,6 +49,7 @@ async def ingest(
     file: File,
     storage_handler: ElasticsearchStorageHandler = Context(),
     s3_client: S3Client = Context(),
+    model: SentenceTransformerDB = Context(),
 ):
     """
     1. Chunks file
@@ -59,7 +60,7 @@ async def ingest(
 
     logging.info("Ingesting file: %s", file)
 
-    chunks = chunk_file(file=file, s3_client=s3_client)  # , embedding_model=embedding_model)
+    chunks = chunk_file(file=file, s3_client=s3_client, embedding_model=model)
 
     logging.info("Writing %s chunks to storage for file uuid: %s", len(chunks), file.uuid)
 
