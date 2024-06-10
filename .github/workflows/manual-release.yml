@@ -17,10 +17,6 @@ on:
         description: 'The SHA to set the config repo to'
         required: false
         default: refs/heads/main
-      AWS_S3_BUCKET:
-        description: 'The s3 bucket name to push logs to'
-        type: string
-        required: true
 
 permissions:
   contents: read
@@ -75,7 +71,6 @@ jobs:
       CORE_INFRA_REF: ${{ github.event.inputs.core-repo-reference }}
       INFRA_CONFIG_REF: ${{ github.event.inputs.config-repo-reference }}
       IMAGE_TAG: ${{ github.event.inputs.image-tag }}
-      AWS_S3_BUCKET: ${{ github.event.inputs.AWS_S3_BUCKET }}
     secrets:
       AWS_GITHUBRUNNER_PAT: ${{ secrets.AWS_GITHUBRUNNER_PAT}}
       AWS_GITHUBRUNNER_PAT_USER: ${{ secrets.AWS_GITHUBRUNNER_PAT_USER }}
