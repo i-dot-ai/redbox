@@ -153,7 +153,6 @@ class ChatHistory(UUIDPrimaryKeyBase, TimeStampedModel):
     class Meta:
         verbose_name_plural = "Chat history"
 
-
     def __str__(self) -> str:  # pragma: no cover
         return f"{self.name} - {self.users}"
 

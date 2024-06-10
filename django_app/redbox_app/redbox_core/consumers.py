@@ -5,11 +5,9 @@ from types import SimpleNamespace
 from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
 from django.conf import settings
-from redbox_app.redbox_core.models import ChatHistory, ChatMessage, ChatRoleEnum, File, User
+from redbox_app.redbox_core.models import ChatHistory, ChatMessage, ChatRoleEnum, File, User, get_ordered_chat_messages
 from websockets.client import connect
 from yarl import URL
-
-from django_app.redbox_app.redbox_core.models import get_ordered_chat_messages
 
 logger = logging.getLogger(__name__)
 logger.info("WEBSOCKET_SCHEME is: %s", settings.WEBSOCKET_SCHEME)

@@ -2,7 +2,7 @@ from datetime import UTC, datetime, timedelta
 
 import pytest
 from django.core.files.uploadedfile import SimpleUploadedFile
-from redbox_app.redbox_core.models import File, StatusEnum, get_ordered_chat_messages, ChatMessage, ChatRoleEnum
+from redbox_app.redbox_core.models import ChatMessage, ChatRoleEnum, File, StatusEnum, get_ordered_chat_messages
 
 
 @pytest.mark.django_db()
@@ -32,7 +32,7 @@ def test_file_model_last_referenced(peter_rabbit, s3_client):  # noqa: ARG001
 
 @pytest.mark.django_db()
 def test_get_ordered_chat_messages(chat_history):
-    now = datetime.now()
+    now = datetime.now(datetime.timezone.utc)
     for seconds, text in (3, "last"), (1, "first"), (2, "middle"):
         ChatMessage.objects.create(
             chat_history=chat_history,
