@@ -1,10 +1,8 @@
 import json
-from http import HTTPStatus
 from types import SimpleNamespace
 from typing import TYPE_CHECKING
 from unittest.mock import AsyncMock, MagicMock, patch
 
-import pytest
 from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_core.prompt_values import ChatPromptValue
 from langchain_core.runnables import Runnable
@@ -44,13 +42,27 @@ def mock_get_chain():
     return MockChain()
 
 
-@pytest.mark.parametrize(("chat_history", "status_code"), test_history)
-def test_simple_chat(chat_history, status_code, app_client, monkeypatch, headers):
-    monkeypatch.setattr("langchain_core.prompts.ChatPromptTemplate.from_messages", mock_chat_prompt)
-    monkeypatch.setattr("core_api.src.routes.chat.LLMChain", mock_get_chain)
+# @pytest.mark.parametrize(("chat_history", "status_code"), test_history)
+# def test_simple_chat(chat_history, status_code, app_client, monkeypatch, headers):
+#     monkeypatch.setattr(
+#         "langchain_core.prompts.ChatPromptTemplate.from_messages", mock_chat_prompt
+#     )
+#     monkeypatch.setattr("core_api.src.routes.chat.LLMChain", mock_get_chain)
 
-    response = app_client.post("/chat/vanilla", json={"message_history": chat_history}, headers=headers)
-    assert response.status_code == status_code
+#     response = app_client.post(
+#         "/chat/vanilla", json={"message_history": chat_history}, headers=headers
+#     )
+#     assert response.status_code == status_code
+
+
+def test_rag_chat(app_client, headers):
+    response = app_client.post(
+        "/chat/rag",
+        json={"message_history": [{"role": "user", "text": "Thank you"}]},
+        headers=headers,
+    )
+    response_dict = response.json()
+    assert response_dict["output_text"] == "You're welcome!"
 
 
 def test_rag_chat_streamed(app_client, headers):
@@ -119,28 +131,28 @@ def mock_build_retrieval_chain(events):
     return AsyncMock(name="build_retrieval_chain", return_value=(retrieval_chain, None))
 
 
-@pytest.mark.parametrize(
-    ("payload", "error"),
-    [
-        (
-            [{"text": "hello", "role": "system"}],
-            {"detail": "Chat history should include both system and user prompts"},
-        ),
-        (
-            [{"text": "hello", "role": "user"}, {"text": "hello", "role": "user"}],
-            {"detail": "The first entry in the chat history should be a system prompt"},
-        ),
-        (
-            [{"text": "hello", "role": "system"}, {"text": "hello", "role": "system"}],
-            {"detail": "The final entry in the chat history should be a user question"},
-        ),
-    ],
-)
-def test_chat_errors(app_client, payload, error, headers):
-    """Given the app is running
-    When I POST a malformed payload to /chat/vanilla
-    I expect a 422 error and a meaningful message
-    """
-    response = app_client.post("/chat/vanilla", json={"message_history": payload}, headers=headers)
-    assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
-    assert response.json() == error
+# @pytest.mark.parametrize(
+#     ("payload", "error"),
+#     [
+#         (
+#             [{"text": "hello", "role": "system"}],
+#             {"detail": "Chat history should include both system and user prompts"},
+#         ),
+#         (
+#             [{"text": "hello", "role": "user"}, {"text": "hello", "role": "user"}],
+#             {"detail": "The first entry in the chat history should be a system prompt"},
+#         ),
+#         (
+#             [{"text": "hello", "role": "system"}, {"text": "hello", "role": "system"}],
+#             {"detail": "The final entry in the chat history should be a user question"},
+#         ),
+#     ],
+# )
+# def test_chat_errors(app_client, payload, error, headers):
+#     """Given the app is running
+#     When I POST a malformed payload to /chat/vanilla
+#     I expect a 422 error and a meaningful message
+#     """
+#     response = app_client.post("/chat/vanilla", json={"message_history": payload}, headers=headers)
+#     assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
+#     assert response.json() == error

@@ -16,24 +16,24 @@ logging.basicConfig(level=logging.INFO)
 log = logging.getLogger()
 
 
-async def env() -> Settings:
+async def get_env() -> Settings:
     return Settings()
 
 
-async def elasticsearch_client(env: Annotated[Settings, Depends(env)]) -> Elasticsearch:
+async def get_elasticsearch_client(env: Annotated[Settings, Depends(get_env)]) -> Elasticsearch:
     return env.elasticsearch_client()
 
 
-async def embedding_model(env: Annotated[Settings, Depends(env)]) -> Embeddings:
+async def get_embedding_model(env: Annotated[Settings, Depends(get_env)]) -> Embeddings:
     embedding_model = SentenceTransformerEmbeddings(model_name=env.embedding_model, cache_folder=MODEL_PATH)
     log.info("Loaded embedding model from environment: %s", env.embedding_model)
     return embedding_model
 
 
-async def vector_store(
-    env: Annotated[Settings, Depends(env)],
-    es: Annotated[Elasticsearch, Depends(elasticsearch_client)],
-    embedding_model: Annotated[Embeddings, Depends(embedding_model)],
+async def get_vector_store(
+    env: Annotated[Settings, Depends(get_env)],
+    es: Annotated[Elasticsearch, Depends(get_elasticsearch_client)],
+    embedding_model: Annotated[Embeddings, Depends(get_embedding_model)],
 ) -> ElasticsearchStore:
     if env.elastic.subscription_level == "basic":
         strategy = ApproxRetrievalStrategy(hybrid=False)
@@ -52,7 +52,7 @@ async def vector_store(
     )
 
 
-async def llm(env: Annotated[Settings, Depends(env)]) -> ChatLiteLLM:
+async def get_llm(env: Annotated[Settings, Depends(get_env)]) -> ChatLiteLLM:
     # Create the appropriate LLM, either openai, Azure, anthropic or bedrock
     if env.openai_api_key is not None:
         log.info("Creating OpenAI LLM Client")

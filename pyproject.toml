@@ -21,6 +21,7 @@ pydantic-settings = "^2.2.1"
 sentence-transformers = "^2.6.0"
 unstructured = {version = "0.13.7", extras = ["all-docs"]}
 torch = "2.2.2"
+semantic-router = "^0.0.46"
 
 
 [tool.poetry.group.api.dependencies]

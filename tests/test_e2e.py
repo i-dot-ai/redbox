@@ -175,3 +175,36 @@ class TestEndToEnd:
 
         assert TestEndToEnd.file_uuids[user_uuid] in source_document_file_uuids
         TestEndToEnd.source_document_file_uuids[user_uuid] = source_document_file_uuids
+
+    @pytest.mark.asyncio()
+    @pytest.mark.parametrize("user_uuid", USER_UUIDS)
+    async def test_streaming_gratitude(self, user_uuid):
+        """
+        Given a pleasant message
+        When I send to ws://<host>/chat/rag
+        I expect a pleasant response!
+        """
+        message_history = {
+            "message_history": [
+                {"role": "user", "text": "thank you"},
+            ]
+        }
+        all_text, source_documents = [], []
+
+        async for websocket in websockets.connect(
+            "ws://localhost:5002/chat/rag", extra_headers=make_headers(user_uuid)
+        ):
+            await websocket.send(json.dumps(message_history))
+
+            try:
+                while True:
+                    actual_str = await websocket.recv()
+                    actual = json.loads(actual_str)
+                    if actual["resource_type"] == "text":
+                        all_text.append(actual["data"])
+                    elif actual["resource_type"] == "documents":
+                        source_documents.extend(actual["data"])
+            except ConnectionClosed:
+                break
+
+        assert all_text == ["You're welcome!"]
