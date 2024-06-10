@@ -52,8 +52,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
                                 "data": {"url": str(source.url), "original_file_name": source.original_file_name},
                             }
                         )
-                elif message.resource_type == "end":
-                    await self.save_message(session, "".join(full_reply), ChatRoleEnum.ai, sources)
+            await self.save_message(session, "".join(full_reply), ChatRoleEnum.ai, sources)
 
     async def send_json(self, data):
         await self.send(json.dumps(data, default=str))
