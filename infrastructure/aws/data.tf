@@ -34,16 +34,16 @@ locals {
     "GOVUK_NOTIFY_PLAIN_EMAIL_TEMPLATE_ID" : var.govuk_notify_plain_email_template_id
     "GOVUK_NOTIFY_API_KEY" : var.govuk_notify_api_key,
     "EMAIL_BACKEND_TYPE" : "GOVUKNOTIFY",
-    "USE_STREAMING" : false,
+    "USE_STREAMING" : true,
     "DJANGO_LOG_LEVEL" : "DEBUG",
     "COMPRESSION_ENABLED" : true,
     "CONTACT_EMAIL" : var.contact_email,
     "FILE_EXPIRY_IN_DAYS" : 30,
     "MAX_SECURITY_CLASSIFICATION" : "OFFICIAL_SENSITIVE",
-    "WEBSOCKET_SCHEME" : "wss"
+    "SENTRY_DSN" : var.sentry_dsn,
+    "SENTRY_ENVIRONMENT" : var.sentry_environment
   }
 }
-
 
 data "terraform_remote_state" "vpc" {
   backend   = "s3"
