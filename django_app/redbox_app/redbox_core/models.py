@@ -178,4 +178,4 @@ class ChatMessage(UUIDPrimaryKeyBase, TimeStampedModel):
 
 
 def get_ordered_chat_messages(session: ChatHistory):
-    return list(ChatMessage.objects.filter(chat_history=session).order_by("-created_at"))
+    return list(ChatMessage.objects.filter(chat_history=session))
