@@ -9,6 +9,8 @@ from redbox_app.redbox_core.models import ChatHistory, ChatMessage, ChatRoleEnum
 from websockets.client import connect
 from yarl import URL
 
+from django_app.redbox_app.redbox_core.models import get_ordered_chat_messages
+
 logger = logging.getLogger(__name__)
 logger.info("WEBSOCKET_SCHEME is: %s", settings.WEBSOCKET_SCHEME)
 
@@ -69,7 +71,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
     @database_sync_to_async
     def get_messages(self, session: ChatHistory) -> list[ChatMessage]:
-        return list(ChatMessage.objects.filter(chat_history=session).order_by("-created_at"))
+        return get_ordered_chat_messages(session)
 
     @database_sync_to_async
     def save_message(

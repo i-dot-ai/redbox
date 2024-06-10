@@ -2,7 +2,7 @@ from datetime import UTC, datetime, timedelta
 
 import pytest
 from django.core.files.uploadedfile import SimpleUploadedFile
-from redbox_app.redbox_core.models import File, StatusEnum
+from redbox_app.redbox_core.models import File, StatusEnum, get_ordered_chat_messages, ChatMessage, ChatRoleEnum
 
 
 @pytest.mark.django_db()
@@ -28,3 +28,19 @@ def test_file_model_last_referenced(peter_rabbit, s3_client):  # noqa: ARG001
     new_file.last_referenced = new_date
     new_file.save()
     assert new_file.last_referenced == new_date
+
+
+@pytest.mark.django_db()
+def test_get_ordered_chat_messages(chat_history):
+    now = datetime.now()
+    for seconds, text in (3, "last"), (1, "first"), (2, "middle"):
+        ChatMessage.objects.create(
+            chat_history=chat_history,
+            text=text,
+            role=ChatRoleEnum.user,
+            created_at=now + timedelta(seconds=seconds),
+        )
+
+    chat_history = get_ordered_chat_messages(chat_history)
+
+    assert [chat.text for chat in chat_history] == ["first", "middle", "last"]

@@ -153,6 +153,7 @@ class ChatHistory(UUIDPrimaryKeyBase, TimeStampedModel):
     class Meta:
         verbose_name_plural = "Chat history"
 
+
     def __str__(self) -> str:  # pragma: no cover
         return f"{self.name} - {self.users}"
 
@@ -175,3 +176,7 @@ class ChatMessage(UUIDPrimaryKeyBase, TimeStampedModel):
 
     def __str__(self) -> str:  # pragma: no cover
         return f"{self.chat_history} - {self.text} - {self.role}"
+
+
+def get_ordered_chat_messages(session: ChatHistory):
+    return list(ChatMessage.objects.filter(chat_history=session).order_by("-created_at"))
