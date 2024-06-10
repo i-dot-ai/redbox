@@ -189,7 +189,8 @@ async def rag_chat_streamed(
 
     user_uuid = await get_ws_user_uuid(websocket)
 
-    chat_request = ChatRequest.parse_raw(await websocket.receive_text())
+    request = await websocket.receive_text()
+    chat_request = ChatRequest.model_validate_json(request)
 
     chain, params = await build_chain(chat_request, user_uuid, llm, vector_store)
 
