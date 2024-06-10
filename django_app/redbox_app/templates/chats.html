@@ -35,19 +35,21 @@
         {% endfor %}
       </ul>
 
-      <fieldset class="govuk-fieldset govuk-!-margin-top-7">
-        <legend class="govuk-fieldset__legend govuk-fieldset__legend--s">
-          <h3 class="govuk-fieldset__heading">Files to use</h3>
-        </legend>
-        <div class="govuk-checkboxes govuk-checkboxes--small" data-module="govuk-checkboxes">
-          {% for file in files %}
-            <div class="govuk-checkboxes__item">
-              <input class="govuk-checkboxes__input" id="file-{{ file.id }}" name="file-{{ file.id }}" type="checkbox" value="{{ file.id }}" {% if file.selected %}checked{% endif %}>
-              <label class="{#govuk-label#}govuk-checkboxes__label govuk-body-s" for="file-{{ file.id }}">{{ file.original_file_name }}</label>
-            </div>
-          {% endfor %}
-        </div>
-      </fieldset>
+      <document-selector>
+        <fieldset class="govuk-fieldset govuk-!-margin-top-7">
+          <legend class="govuk-fieldset__legend govuk-fieldset__legend--s">
+            <h3 class="govuk-fieldset__heading">Documents to use</h3>
+          </legend>
+          <div class="govuk-checkboxes govuk-checkboxes--small" data-module="govuk-checkboxes">
+            {% for file in files %}
+              <div class="govuk-checkboxes__item">
+                <input class="govuk-checkboxes__input" id="file-{{ file.id }}" name="file-{{ file.id }}" type="checkbox" value="{{ file.id }}" {% if file.selected %}checked{% endif %}>
+                <label class="{#govuk-label#}govuk-checkboxes__label govuk-body-s" for="file-{{ file.id }}">{{ file.original_file_name }}</label>
+              </div>
+            {% endfor %}
+          </div>
+        </fieldset>
+      </document-selector>
 
     </div>
 
