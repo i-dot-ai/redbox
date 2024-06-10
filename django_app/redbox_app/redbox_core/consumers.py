@@ -102,7 +102,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
     @staticmethod
     @database_sync_to_async
     def get_messages(session: ChatHistory) -> Sequence[ChatMessage]:
-        return list(ChatMessage.objects.filter(chat_history=session))
+        return list(ChatMessage.objects.filter(chat_history=session).order_by("created_at"))
 
     @staticmethod
     @database_sync_to_async
