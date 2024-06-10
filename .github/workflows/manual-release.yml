@@ -64,7 +64,7 @@ jobs:
     needs:
       - set-vars
       - start-runner
-    uses: i-dot-ai/i-dot-ai-core-github-actions/.github/workflows/apply-terraform.yml@d013458921196b8eedc868054e46ce6825761b1d
+    uses: i-dot-ai/i-dot-ai-core-github-actions/.github/workflows/apply-terraform.yml@840f784bc4faba918a80ec75d45e7937444df703
     with:
       APP_NAME: ${{ needs.set-vars.outputs.app-name }}
       RUNNER_LABEL: ${{ needs.start-runner.outputs.label }}
