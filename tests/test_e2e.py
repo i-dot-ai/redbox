@@ -117,10 +117,10 @@ class TestEndToEnd:
         )
         assert rag_response.status_code == HTTPStatus.OK
         source_document_file_uuids = {
-            source_document["file_uuid"] for source_document in rag_response.json()["source_documents"] or []
+            source_document["file_uuid"] for source_document in rag_response.json()["source_documents"]
         }
 
-        # assert TestEndToEnd.file_uuids[user_uuid] in source_document_file_uuids
+        assert TestEndToEnd.file_uuids[user_uuid] in source_document_file_uuids
         TestEndToEnd.source_document_file_uuids[user_uuid] = source_document_file_uuids
 
     @pytest.mark.parametrize("user_uuid", USER_UUIDS)
