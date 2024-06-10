@@ -8,6 +8,7 @@ from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
 from django.conf import settings
 from redbox_app.redbox_core.models import ChatHistory, ChatMessage, ChatRoleEnum, File, User
+from websockets import WebSocketClientProtocol
 from websockets.client import connect
 from yarl import URL
 
@@ -24,13 +25,15 @@ class ChatConsumer(AsyncWebsocketConsumer):
         selected_file_uuids: Sequence[UUID] = [UUID(u) for u in data.get("selectedFiles", [])]
         user: User = self.scope.get("user", None)
 
-        session = await self.get_session(session_id, user, user_message_text)
+        session: ChatHistory = await self.get_session(session_id, user, user_message_text)
 
         # save user message
         selected_files = await self.get_files_by_id(selected_file_uuids, user)
         await self.save_message(session, user_message_text, ChatRoleEnum.user, selected_files=selected_files)
 
-        # get LLM response
+        await self.llm_conversation(selected_files, session, user)
+
+    async def llm_conversation(self, selected_files: Sequence[File], session: ChatHistory, user: User) -> None:
         session_messages = await self.get_messages(session)
         message_history: Sequence[Mapping[str, str]] = [
             {"role": message.role, "text": message.text} for message in session_messages
@@ -40,26 +43,39 @@ class ChatConsumer(AsyncWebsocketConsumer):
             await websocket.send(json.dumps({"message_history": message_history}))
             await websocket.send(json.dumps({"selected_files": [f.core_file_uuid for f in selected_files]}))
             await self.send_json({"type": "session-id", "data": str(session.id)})
-            full_reply: MutableSequence[str] = []
-            source_files: Sequence[File] = []
-            async for raw_message in websocket:
-                message = json.loads(raw_message, object_hook=lambda d: SimpleNamespace(**d))
-                logger.debug("Received: %s", message)
-                if message.resource_type == "text":
-                    await self.send_json({"type": "text", "data": message.data})
-                    full_reply.append(message.data)
-                elif message.resource_type == "documents":
-                    doc_uuids: Sequence[UUID] = [UUID(doc.file_uuid) for doc in message.data]
-                    source_files = await self.get_files_by_core_uuid(doc_uuids, user)
-                    for source in source_files:
-                        await self.send_json(
-                            {
-                                "type": "source",
-                                "data": {"url": str(source.url), "original_file_name": source.original_file_name},
-                            }
-                        )
-                elif message.resource_type == "end":
-                    await self.save_message(session, "".join(full_reply), ChatRoleEnum.ai, source_files=source_files)
+            await self.receive_llm_responses(session, user, websocket)
+
+    async def receive_llm_responses(self, session: ChatHistory, user: User, websocket: WebSocketClientProtocol):
+        full_reply: MutableSequence[str] = []
+        source_files: MutableSequence[File] = []
+        async for raw_message in websocket:
+            message = json.loads(raw_message, object_hook=lambda d: SimpleNamespace(**d))
+            logger.debug("Received: %s", message)
+            if message.resource_type == "text":
+                full_reply.append(await self.handle_text(message))
+            elif message.resource_type == "documents":
+                source_files += await self.handle_documents(message, user)
+            elif message.resource_type == "end":
+                await self.handle_end("".join(full_reply), session, source_files)
+
+    async def handle_end(self, reply: str, session: ChatHistory, source_files: Sequence[File]) -> None:
+        await self.save_message(session, reply, ChatRoleEnum.ai, source_files=source_files)
+
+    async def handle_documents(self, message: SimpleNamespace, user: User) -> Sequence[File]:
+        doc_uuids: Sequence[UUID] = [UUID(doc.file_uuid) for doc in message.data]
+        source_files = await self.get_files_by_core_uuid(doc_uuids, user)
+        for source in source_files:
+            await self.send_json(
+                {
+                    "type": "source",
+                    "data": {"url": str(source.url), "original_file_name": source.original_file_name},
+                }
+            )
+        return source_files
+
+    async def handle_text(self, message: SimpleNamespace) -> str:
+        await self.send_json({"type": "text", "data": message.data})
+        return message.data
 
     async def send_json(self, data):
         await self.send(json.dumps(data, default=str))
