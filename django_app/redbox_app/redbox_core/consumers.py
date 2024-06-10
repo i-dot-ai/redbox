@@ -39,33 +39,32 @@ class ChatConsumer(AsyncWebsocketConsumer):
             {"role": message.role, "text": message.text} for message in session_messages
         ]
         url = URL.build(scheme="ws", host=settings.CORE_API_HOST, port=settings.CORE_API_PORT) / "chat/rag"
-        async with connect(str(url), extra_headers={"Authorization": user.get_bearer_token()}) as websocket:
-            await websocket.send(json.dumps({"message_history": message_history}))
-            await websocket.send(json.dumps({"selected_files": [f.core_file_uuid for f in selected_files]}))
-            await self.send_json({"type": "session-id", "data": str(session.id)})
-            await self.receive_llm_responses(session, user, websocket)
+        async with connect(str(url), extra_headers={"Authorization": user.get_bearer_token()}) as core_websocket:
+            await self.send_to_server(core_websocket, {"message_history": message_history})
+            await self.send_to_server(core_websocket, {"selected_files": [f.core_file_uuid for f in selected_files]})
+            await self.send_to_client({"type": "session-id", "data": str(session.id)})
+            reply, source_files = await self.receive_llm_responses(user, core_websocket)
+        await self.save_message(session, reply, ChatRoleEnum.ai, source_files=source_files)
 
-    async def receive_llm_responses(self, session: ChatHistory, user: User, websocket: WebSocketClientProtocol):
+    async def receive_llm_responses(
+        self, user: User, core_websocket: WebSocketClientProtocol
+    ) -> tuple[str, Sequence[File]]:
         full_reply: MutableSequence[str] = []
         source_files: MutableSequence[File] = []
-        async for raw_message in websocket:
+        async for raw_message in core_websocket:
             message = json.loads(raw_message, object_hook=lambda d: SimpleNamespace(**d))
             logger.debug("Received: %s", message)
             if message.resource_type == "text":
                 full_reply.append(await self.handle_text(message))
             elif message.resource_type == "documents":
                 source_files += await self.handle_documents(message, user)
-            elif message.resource_type == "end":
-                await self.handle_end("".join(full_reply), session, source_files)
-
-    async def handle_end(self, reply: str, session: ChatHistory, source_files: Sequence[File]) -> None:
-        await self.save_message(session, reply, ChatRoleEnum.ai, source_files=source_files)
+        return "".join(full_reply), source_files
 
     async def handle_documents(self, message: SimpleNamespace, user: User) -> Sequence[File]:
         doc_uuids: Sequence[UUID] = [UUID(doc.file_uuid) for doc in message.data]
         source_files = await self.get_files_by_core_uuid(doc_uuids, user)
         for source in source_files:
-            await self.send_json(
+            await self.send_to_client(
                 {
                     "type": "source",
                     "data": {"url": str(source.url), "original_file_name": source.original_file_name},
@@ -74,11 +73,15 @@ class ChatConsumer(AsyncWebsocketConsumer):
         return source_files
 
     async def handle_text(self, message: SimpleNamespace) -> str:
-        await self.send_json({"type": "text", "data": message.data})
+        await self.send_to_client({"type": "text", "data": message.data})
         return message.data
 
-    async def send_json(self, data):
+    async def send_to_client(self, data):
         await self.send(json.dumps(data, default=str))
+
+    @staticmethod
+    async def send_to_server(websocket, data):
+        return await websocket.send(json.dumps(data, default=str))
 
     @staticmethod
     @database_sync_to_async
