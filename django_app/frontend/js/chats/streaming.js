@@ -63,11 +63,12 @@ class ChatMessage extends HTMLElement {
     /**
      * Streams an LLM response
      * @param {string} message
+     * @param {string[]} selectedDocuments
      * @param {string | undefined} sessionId
      * @param {string} endPoint
      * @param {HTMLElement} chatControllerRef
      */
-    stream = (message, sessionId, endPoint, chatControllerRef) => {
+    stream = (message, selectedDocuments, sessionId, endPoint, chatControllerRef) => {
 
         let responseContainer = /** @type MarkdownConverter */(this.querySelector('markdown-converter'));
         let sourcesContainer = /** @type SourcesList */(this.querySelector('sources-list'));
@@ -77,7 +78,7 @@ class ChatMessage extends HTMLElement {
         let sources = [];
     
         webSocket.onopen = (event) => {
-            webSocket.send(JSON.stringify({message: message, sessionId: sessionId}));
+            webSocket.send(JSON.stringify({message: message, sessionId: sessionId, selectedFiles: selectedDocuments}));
             this.dataset.status = "streaming";
         };
     
@@ -128,6 +129,7 @@ class ChatController extends HTMLElement {
         const messageContainer = this.querySelector('.js-message-container');
         const insertPosition = this.querySelector('.js-response-feedback');
         const feedbackButtons = /** @type {HTMLElement | null} */ (this.querySelector('feedback-buttons'));
+        let selectedDocuments = [];
 
         messageForm?.addEventListener('submit', (evt) => {
             
@@ -146,7 +148,7 @@ class ChatController extends HTMLElement {
             aiMessage.setAttribute('data-role', 'ai');
             aiMessage.setAttribute('tabindex', '-1');
             messageContainer?.insertBefore(aiMessage, insertPosition);
-            aiMessage.stream(userText, this.dataset.sessionId, this.dataset.streamUrl || '', this);
+            aiMessage.stream(userText, selectedDocuments, this.dataset.sessionId, this.dataset.streamUrl || '', this);
             aiMessage.focus();
 
             // reset UI 
@@ -157,7 +159,44 @@ class ChatController extends HTMLElement {
 
         });
 
+        document.body.addEventListener('selected-docs-change', (evt) => {
+            selectedDocuments = /** @type{CustomEvent} */(evt).detail;
+        });
+
     }
   
 }
 customElements.define('chat-controller', ChatController);
+
+
+
+
+class DocumentSelector extends HTMLElement {
+
+    connectedCallback() {
+
+        const documents = /** @type {NodeListOf<HTMLInputElement>} */ (this.querySelectorAll('input[type="checkbox"]'));
+
+        const getSelectedDocuments = () => {
+            let selectedDocuments = [];
+            documents.forEach((document) => {
+                if (document.checked) {
+                    selectedDocuments.push(document.value);
+                }
+            });
+            const evt = new CustomEvent('selected-docs-change', { detail: selectedDocuments });
+            document.body.dispatchEvent(evt);
+        }
+
+        // update on page load
+        getSelectedDocuments();
+
+        // update on any selection change
+        documents.forEach((document) => {
+            document.addEventListener('change', getSelectedDocuments);
+        });
+
+    }
+  
+}
+customElements.define('document-selector', DocumentSelector);
