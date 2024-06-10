@@ -74,8 +74,6 @@ async def get_llm(env: Annotated[Settings, Depends(get_env)]) -> ChatLiteLLM:
         llm = ChatLiteLLM(
             model=env.azure_openai_model,
             streaming=True,
-            azure_key=env.azure_openai_api_key,
-            api_version=env.openai_api_version,
             api_base=env.azure_openai_endpoint,
         )
     elif env.anthropic_api_key is not None:
