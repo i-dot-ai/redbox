@@ -6,6 +6,7 @@ from botocore.exceptions import ClientError
 from elasticsearch import Elasticsearch
 from fastapi.testclient import TestClient
 from jose import jwt
+from langchain_community.llms.fake import FakeListLLM
 
 from core_api.src.app import app as application
 from core_api.src.app import env
@@ -78,14 +79,23 @@ def stored_file(elasticsearch_storage_handler, file) -> File:
 
 
 @pytest.fixture()
-def chunked_file(elasticsearch_storage_handler, stored_file) -> File:
+def stored_file_chunks(stored_file) -> list[Chunk]:
+    chunks: list[Chunk] = []
     for i in range(5):
-        chunk = Chunk(
-            text="hello",
-            index=i,
-            parent_file_uuid=stored_file.uuid,
-            creator_user_uuid=stored_file.creator_user_uuid,
+        chunks.append(
+            Chunk(
+                text="hello",
+                index=i,
+                parent_file_uuid=stored_file.uuid,
+                creator_user_uuid=stored_file.creator_user_uuid,
+            )
         )
+    return chunks
+
+
+@pytest.fixture()
+def chunked_file(elasticsearch_storage_handler, stored_file_chunks, stored_file) -> File:
+    for chunk in stored_file_chunks:
         elasticsearch_storage_handler.write_item(chunk)
     elasticsearch_storage_handler.refresh()
     return stored_file
@@ -94,3 +104,8 @@ def chunked_file(elasticsearch_storage_handler, stored_file) -> File:
 @pytest.fixture()
 def file_pdf_path() -> Path:
     return Path(__file__).parents[2] / "tests" / "data" / "pdf" / "Cabinet Office - Wikipedia.pdf"
+
+
+@pytest.fixture()
+def mock_llm():
+    return FakeListLLM(responses=["<<TESTING>>"] * 128)
