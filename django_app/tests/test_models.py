@@ -34,12 +34,12 @@ def test_file_model_last_referenced(peter_rabbit, s3_client):  # noqa: ARG001
 def test_get_ordered_chat_messages(chat_history):
     now = datetime.now(UTC)
     for seconds, text in (3, "last"), (1, "first"), (2, "middle"):
-        ChatMessage.objects.create(
+        chat_message = ChatMessage.objects.create(
             chat_history=chat_history,
             text=text,
             role=ChatRoleEnum.user,
-            created_at=now + timedelta(seconds=seconds),
         )
+        chat_message.update(created_at=now + timedelta(seconds=seconds))
 
     chat_history = get_ordered_chat_messages(chat_history)
 
