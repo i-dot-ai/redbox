@@ -14,8 +14,8 @@ data "aws_iam_policy_document" "ecs_exec_role_policy" {
       "s3:ListMultipartUploadParts",
     ]
     resources = [
-      "arn:aws:s3:::${aws_s3_bucket.user_data_bucket.bucket}",
-      "arn:aws:s3:::${aws_s3_bucket.user_data_bucket.bucket}/*"
+      "arn:aws:s3:::${aws_s3_bucket.user_data.bucket}",
+      "arn:aws:s3:::${aws_s3_bucket.user_data.bucket}/*"
     ]
   }
 
@@ -29,7 +29,7 @@ data "aws_iam_policy_document" "ecs_exec_role_policy" {
 }
 
 resource "aws_iam_policy" "redbox_policy" {
-  name        = "backend-${var.project_name}-${terraform.workspace}-policy"
+  name        = "${local.name}-policy"
   description = "Allow application instance to log"
   policy      = data.aws_iam_policy_document.ecs_exec_role_policy.json
 }
@@ -37,9 +37,9 @@ resource "aws_iam_policy" "redbox_policy" {
 resource "aws_iam_role_policy_attachment" "redbox_role_policy" {
   for_each = tomap(
     {
-      "core-api"=module.core_api.ecs_task_execution_exec_role_name,
-      "worker"=module.worker.ecs_task_execution_exec_role_name,
-      "django"=module.django-app.ecs_task_execution_exec_role_name,
+      "core-api" = module.core_api.ecs_task_execution_exec_role_name,
+      "worker"   = module.worker.ecs_task_execution_exec_role_name,
+      "django"   = module.django-app.ecs_task_execution_exec_role_name,
     }
   )
   role       = each.value

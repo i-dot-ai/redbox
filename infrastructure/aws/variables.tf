@@ -169,3 +169,13 @@ variable "use_case" {
   type        = string
   default     = "load_balancer"
 }
+
+variable "team_name" {
+  type        = string
+  description = "The name of the team"
+}
+
+variable "publicly_accessible" {
+  type        = bool
+  description = "Flag to determine if the database is publicly accessible"
+}
