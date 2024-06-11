@@ -18,7 +18,7 @@ class FileResource(admin.ModelAdmin):
 class ChatMessageInline(admin.StackedInline):
     model = models.ChatMessage
     ordering = ("modified_at",)
-    readonly_fields = ["modified_at"]
+    readonly_fields = ["modified_at", "source_files"]
     extra = 1
 
 
