@@ -15,6 +15,10 @@ class FileResource(admin.ModelAdmin):
     list_display = ["original_file_name", "user", "status"]
 
 
+class ChatMessageResource(admin.ModelAdmin):
+    list_display = ["chat_history", "text", "role"]
+
+
 class ChatMessageInline(admin.StackedInline):
     model = models.ChatMessage
     ordering = ("modified_at",)
@@ -52,3 +56,4 @@ class ChatHistoryAdmin(admin.ModelAdmin):
 admin.site.register(models.User, UserResource)
 admin.site.register(models.File, FileResource)
 admin.site.register(models.ChatHistory, ChatHistoryAdmin)
+admin.site.register(models.ChatMessage, ChatMessageResource)

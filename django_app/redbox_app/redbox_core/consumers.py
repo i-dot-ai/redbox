@@ -1,14 +1,18 @@
 import json
 import logging
+from collections.abc import Mapping, MutableSequence, Sequence
 from types import SimpleNamespace
+from uuid import UUID
 
 from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
 from django.conf import settings
 from redbox_app.redbox_core.models import ChatHistory, ChatMessage, ChatRoleEnum, File, User
+from websockets import WebSocketClientProtocol
 from websockets.client import connect
 from yarl import URL
 
+OptFileSeq = Sequence[File] | None
 logger = logging.getLogger(__name__)
 logger.info("WEBSOCKET_SCHEME is: %s", settings.WEBSOCKET_SCHEME)
 
@@ -16,49 +20,77 @@ logger.info("WEBSOCKET_SCHEME is: %s", settings.WEBSOCKET_SCHEME)
 class ChatConsumer(AsyncWebsocketConsumer):
     async def receive(self, text_data):
         data = json.loads(text_data)
-        user_message_text = data.get("message", "")
-        session_id = data.get("sessionId", None)
+        user_message_text: str = data.get("message", "")
+        session_id: str | None = data.get("sessionId", None)
+        selected_file_uuids: Sequence[UUID] = [UUID(u) for u in data.get("selectedFiles", [])]
         user: User = self.scope.get("user", None)
 
-        session = await self.get_session(session_id, user, user_message_text)
+        session: ChatHistory = await self.get_session(session_id, user, user_message_text)
 
         # save user message
-        await self.save_message(session, user_message_text, ChatRoleEnum.user)
+        selected_files = await self.get_files_by_id(selected_file_uuids, user)
+        await self.save_message(session, user_message_text, ChatRoleEnum.user, selected_files=selected_files)
 
-        # get LLM response
+        await self.llm_conversation(selected_files, session, user)
+
+    async def llm_conversation(self, selected_files: Sequence[File], session: ChatHistory, user: User) -> None:
         session_messages = await self.get_messages(session)
-        message_history: list[dict[str, str]] = [
+        message_history: Sequence[Mapping[str, str]] = [
             {"role": message.role, "text": message.text} for message in session_messages
         ]
         url = URL.build(scheme="ws", host=settings.CORE_API_HOST, port=settings.CORE_API_PORT) / "chat/rag"
-        async with connect(str(url), extra_headers={"Authorization": user.get_bearer_token()}) as websocket:
-            await websocket.send(json.dumps({"message_history": message_history}))
-            await self.send_json({"type": "session-id", "data": str(session.id)})
-            full_reply: list[str] = []
-            sources: list[File] = []
-            async for raw_message in websocket:
-                message = json.loads(raw_message, object_hook=lambda d: SimpleNamespace(**d))
-                logger.debug("Received: %s", message)
-                if message.resource_type == "text":
-                    await self.send_json({"type": "text", "data": message.data})
-                    full_reply.append(message.data)
-                elif message.resource_type == "documents":
-                    doc_uuids: list[str] = [doc.file_uuid for doc in message.data]
-                    sources = await self.get_files(doc_uuids, user)
-                    for source in sources:
-                        await self.send_json(
-                            {
-                                "type": "source",
-                                "data": {"url": str(source.url), "original_file_name": source.original_file_name},
-                            }
-                        )
-            await self.save_message(session, "".join(full_reply), ChatRoleEnum.ai, sources)
+        async with connect(str(url), extra_headers={"Authorization": user.get_bearer_token()}) as core_websocket:
+            await self.send_to_server(
+                core_websocket,
+                {
+                    "message_history": message_history,
+                    "selected_files": [{"uuid": f.core_file_uuid} for f in selected_files],
+                },
+            )
+            await self.send_to_client({"type": "session-id", "data": str(session.id)})
+            reply, source_files = await self.receive_llm_responses(user, core_websocket)
+        await self.save_message(session, reply, ChatRoleEnum.ai, source_files=source_files)
 
-    async def send_json(self, data):
+    async def receive_llm_responses(
+        self, user: User, core_websocket: WebSocketClientProtocol
+    ) -> tuple[str, Sequence[File]]:
+        full_reply: MutableSequence[str] = []
+        source_files: MutableSequence[File] = []
+        async for raw_message in core_websocket:
+            message = json.loads(raw_message, object_hook=lambda d: SimpleNamespace(**d))
+            logger.debug("Received: %s", message)
+            if message.resource_type == "text":
+                full_reply.append(await self.handle_text(message))
+            elif message.resource_type == "documents":
+                source_files += await self.handle_documents(message, user)
+        return "".join(full_reply), source_files
+
+    async def handle_documents(self, message: SimpleNamespace, user: User) -> Sequence[File]:
+        doc_uuids: Sequence[UUID] = [UUID(doc.file_uuid) for doc in message.data]
+        source_files = await self.get_files_by_core_uuid(doc_uuids, user)
+        for source in source_files:
+            await self.send_to_client(
+                {
+                    "type": "source",
+                    "data": {"url": str(source.url), "original_file_name": source.original_file_name},
+                }
+            )
+        return source_files
+
+    async def handle_text(self, message: SimpleNamespace) -> str:
+        await self.send_to_client({"type": "text", "data": message.data})
+        return message.data
+
+    async def send_to_client(self, data):
         await self.send(json.dumps(data, default=str))
 
+    @staticmethod
+    async def send_to_server(websocket, data):
+        return await websocket.send(json.dumps(data, default=str))
+
+    @staticmethod
     @database_sync_to_async
-    def get_session(self, session_id: str, user: User, user_message_text: str) -> ChatHistory:
+    def get_session(session_id: str, user: User, user_message_text: str) -> ChatHistory:
         if session_id:
             session = ChatHistory.objects.get(id=session_id)
         else:
@@ -67,20 +99,34 @@ class ChatConsumer(AsyncWebsocketConsumer):
             session.save()
         return session
 
+    @staticmethod
     @database_sync_to_async
-    def get_messages(self, session: ChatHistory) -> list[ChatMessage]:
-        return list(ChatMessage.objects.filter(chat_history=session))
+    def get_messages(session: ChatHistory) -> Sequence[ChatMessage]:
+        return list(ChatMessage.objects.filter(chat_history=session).order_by("created_at"))
 
+    @staticmethod
     @database_sync_to_async
     def save_message(
-        self, session: ChatHistory, user_message_text: str, role: ChatRoleEnum, source_files: list[File] | None = None
+        session: ChatHistory,
+        user_message_text: str,
+        role: ChatRoleEnum,
+        source_files: OptFileSeq = None,
+        selected_files: OptFileSeq = None,
     ) -> ChatMessage:
         chat_message = ChatMessage(chat_history=session, text=user_message_text, role=role)
         chat_message.save()
         if source_files:
             chat_message.source_files.set(source_files)
+        if selected_files:
+            chat_message.selected_files.set(selected_files)
         return chat_message
 
+    @staticmethod
     @database_sync_to_async
-    def get_files(self, uuids: list[str], user: User) -> list[File]:
+    def get_files_by_id(uuids: Sequence[UUID], user: User) -> Sequence[File]:
+        return list(File.objects.filter(id__in=uuids, user=user))
+
+    @staticmethod
+    @database_sync_to_async
+    def get_files_by_core_uuid(uuids: Sequence[UUID], user: User) -> Sequence[File]:
         return list(File.objects.filter(core_file_uuid__in=uuids, user=user))
