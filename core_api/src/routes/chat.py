@@ -89,7 +89,7 @@ async def build_retrieval_chain(
     chat_request: ChatRequest,
     user_uuid: UUID,
     llm: ChatLiteLLM,
-    vector_store: ElasticsearchStore,
+    vector_store: ElasticsearchStore
 ):
     question = chat_request.message_history[-1].text
     previous_history = list(chat_request.message_history[:-1])
@@ -109,7 +109,21 @@ async def build_retrieval_chain(
 
     standalone_question = condense_question_chain({"question": question, "chat_history": previous_history})["text"]
 
-    search_kwargs = {"filter": {"term": {"creator_user_uuid.keyword": str(user_uuid)}}}
+    search_kwargs = {
+        "filter": {
+            "bool": {
+                "must": [
+                    {"term": {"creator_user_uuid.keyword": str(user_uuid)}}
+                ]
+            }
+        }
+    }
+
+    if chat_request.selected_files is not None:
+        search_kwargs["filter"]["bool"]["should"] = [
+            { "term": {"parent_file_uuid.keyword": str(file.uuid)} } for file in chat_request.selected_files
+        ]
+    
     docs = vector_store.as_retriever(search_kwargs=search_kwargs).get_relevant_documents(standalone_question)
 
     params = {
@@ -124,7 +138,7 @@ async def build_chain(
     chat_request: ChatRequest,
     user_uuid: UUID,
     llm: ChatLiteLLM,
-    vector_store: ElasticsearchStore,
+    vector_store: ElasticsearchStore
 ):
     question = chat_request.message_history[-1].text
     route = route_layer(question)
@@ -189,7 +203,8 @@ async def rag_chat_streamed(
 
     user_uuid = await get_ws_user_uuid(websocket)
 
-    chat_request = ChatRequest.parse_raw(await websocket.receive_text())
+    request = await websocket.receive_text()
+    chat_request = ChatRequest.model_validate_json(request)
 
     chain, params = await build_chain(chat_request, user_uuid, llm, vector_store)
 
