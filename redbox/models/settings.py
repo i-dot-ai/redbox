@@ -42,6 +42,7 @@ class Settings(BaseSettings):
     azure_openai_model: str = "azure/gpt-35-turbo-16k"
 
     partition_strategy: Literal["auto", "fast", "ocr_only", "hi_res"] = "fast"
+    clustering_strategy: Literal["full"] | None = None
 
     elastic: ElasticCloudSettings | ElasticLocalSettings = ElasticLocalSettings()
     elastic_root_index: str = "redbox-data"

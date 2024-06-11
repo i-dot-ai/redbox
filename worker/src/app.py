@@ -60,7 +60,12 @@ async def ingest(
 
     logging.info("Ingesting file: %s", file)
 
-    chunks = chunk_file(file=file, s3_client=s3_client, embedding_model=model)
+    if env.clustering_strategy == "full":
+        logging.info("embedding - full")
+        chunks = chunk_file(file=file, s3_client=s3_client, embedding_model=model)
+    else:
+        logging.info("embedding - None")
+        chunks = chunk_file(file=file, s3_client=s3_client)
 
     logging.info("Writing %s chunks to storage for file uuid: %s", len(chunks), file.uuid)
 
