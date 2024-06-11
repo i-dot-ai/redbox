@@ -11,7 +11,6 @@ from storages.backends import s3boto3
 
 from .hosting_environment import HostingEnvironment
 
-
 load_dotenv()
 
 env = environ.Env()
@@ -150,8 +149,10 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 SITE_ID = 1
 AUTH_USER_MODEL = "redbox_core.User"
 ACCOUNT_EMAIL_VERIFICATION = "none"
+
 # LOGIN_REDIRECT_URL = "homepage"
 # LOGIN_URL = "sign-in"
+
 
 HOSTS = [
     "redbox-dev.ai.cabinetoffice.gov.uk",
@@ -379,3 +380,4 @@ elif LOGIN_METHOD == "magic_link":
 else:
     LOGIN_REDIRECT_URL = "homepage"
     LOGIN_URL = "sign-in"
+

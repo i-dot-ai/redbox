@@ -7,7 +7,7 @@ license = "MIT"
 
 [tool.poetry.dependencies]
 python = ">=3.11.2,<3.13"
-django = "^4.2.2"
+django = "^5.0.6"
 django-compressor = "^4.4"
 django-libsass = "^0.9"
 django-magic-link = "^1.0.0"
@@ -34,8 +34,8 @@ yarl = "^1.9.4"
 django-allauth = "^0.61.1"
 humanize = "^4.9.0"
 channels = {extras = ["daphne"], version = "^4.1.0"}
+django-gov-notify = "^0.5.0"
 websockets = "^12.0"
-django-staff-sso-client = "^4.2.2"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.1.1"
