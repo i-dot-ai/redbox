@@ -1,7 +1,19 @@
+from enum import Enum
 from typing import Literal
 from uuid import UUID
 
 from pydantic import BaseModel, Field
+
+
+class ChatRouteEnum(str, Enum):
+    info = "info"
+    ability = "ability"
+    coach = "coach"
+    gratitude = "gratitude"
+    summarisation = "summarisation"
+    extract = "extract"
+    rag = "rag"
+    vanilla = "vanilla"
 
 
 class ChatMessage(BaseModel):
@@ -68,4 +80,7 @@ class ChatResponse(BaseModel):
     output_text: str = Field(
         description="response text",
         examples=["The current Prime Minister of the UK is The Rt Hon. Rishi Sunak MP."],
+    )
+    route: ChatRouteEnum = Field(
+        description="the conversation route taken"
     )

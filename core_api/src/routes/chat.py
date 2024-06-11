@@ -160,7 +160,7 @@ async def rag_chat(
 
     if route_response := ROUTE_RESPONSES.get(route.name):
         response = route_response.invoke({})
-        return ChatResponse(output_text=response.messages[0].content)
+        return ChatResponse(output_text=response.messages[0].content, route=route.name)
 
     # build_vanilla_chain could go here
 
@@ -177,7 +177,7 @@ async def rag_chat(
         )
         for langchain_document in result.get("input_documents", [])
     ]
-    return ChatResponse(output_text=result["output_text"], source_documents=source_documents)
+    return ChatResponse(output_text=result["output_text"], source_documents=source_documents, route='rag')
 
 
 @chat_app.websocket("/rag")

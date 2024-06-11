@@ -63,6 +63,7 @@ def test_rag_chat(app_client, headers):
     )
     response_dict = response.json()
     assert response_dict["output_text"] == "You're welcome!"
+    assert response_dict["route"] == "gratitude"
 
 
 def test_rag_chat_streamed(app_client, headers):
