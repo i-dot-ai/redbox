@@ -134,14 +134,10 @@ docker_push:
 
 .PHONY: docker_update_tag
 docker_update_tag:
-	MANIFEST=$$(aws ecr batch-get-image --repository-name $(ECR_REPO_NAME)-django-app --image-ids imageTag=$(IMAGE_TAG) --query 'images[].imageManifest' --output text) && \
-	aws ecr put-image --repository-name $(ECR_REPO_NAME)-django-app --image-tag $(tag) --image-manifest "$$MANIFEST"
-
-	MANIFEST=$$(aws ecr batch-get-image --repository-name $(ECR_REPO_NAME)-core-api --image-ids imageTag=$(IMAGE_TAG) --query 'images[].imageManifest' --output text) && \
-	aws ecr put-image --repository-name $(ECR_REPO_NAME)-core-api --image-tag $(tag) --image-manifest "$$MANIFEST"
-
-	MANIFEST=$$(aws ecr batch-get-image --repository-name $(ECR_REPO_NAME)-worker --image-ids imageTag=$(IMAGE_TAG) --query 'images[].imageManifest' --output text) && \
-	aws ecr put-image --repository-name $(ECR_REPO_NAME)-worker --image-tag $(tag) --image-manifest "$$MANIFEST"
+	for service in django-app core-api worker; do \
+		MANIFEST=$$(aws ecr batch-get-image --repository-name $(ECR_REPO_NAME)-$$service --image-ids imageTag=$(IMAGE_TAG) --query 'images[].imageManifest' --output text) && \
+		aws ecr put-image --repository-name $(ECR_REPO_NAME)-$$service--image-tag $(tag) --image-manifest "$$MANIFEST"
+	done
 
 
 # Ouputs the value that you're after - usefx	ul to get a value i.e. IMAGE_TAG out of the Makefile
