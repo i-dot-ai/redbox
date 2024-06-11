@@ -1,3 +1,4 @@
+import time
 from pathlib import Path
 from uuid import UUID, uuid4
 
@@ -55,7 +56,9 @@ def headers(alice):
 
 @pytest.fixture()
 def elasticsearch_storage_handler(es_client):
-    return ElasticsearchStorageHandler(es_client=es_client, root_index=env.elastic_root_index)
+    return ElasticsearchStorageHandler(
+        es_client=es_client, root_index=env.elastic_root_index
+    )
 
 
 @pytest.fixture()
@@ -82,17 +85,21 @@ def stored_file_1(elasticsearch_storage_handler, file) -> File:
 
 
 @pytest.fixture()
-def stored_file_chunks(stored_file_1) -> list[Chunk]:
+def embedding_model_dim(embedding_model) -> int:
+    return len(embedding_model.embed_query("foo"))
+
+
+@pytest.fixture()
+def stored_file_chunks(stored_file, embedding_model_dim) -> list[Chunk]:
     chunks: list[Chunk] = []
     for i in range(5):
         chunks.append(
             Chunk(
                 text="hello",
                 index=i,
-                parent_file_uuid=stored_file_1.uuid,
-                creator_user_uuid=stored_file_1.creator_user_uuid,
-                embedding=[1] * 768,
-                metadata={"parent_doc_uuid": str(stored_file_1.uuid)},
+                embedding=[1] * embedding_model_dim,
+                parent_file_uuid=stored_file.uuid,
+                creator_user_uuid=stored_file.creator_user_uuid,
             )
         )
     return chunks
@@ -117,16 +124,25 @@ def other_stored_file_chunks(stored_file_1) -> list[Chunk]:
 
 
 @pytest.fixture()
-def chunked_file(elasticsearch_storage_handler, stored_file_chunks, stored_file_1) -> File:
+def chunked_file(
+    elasticsearch_storage_handler, stored_file_chunks, stored_file_1
+) -> File:
     for chunk in stored_file_chunks:
         elasticsearch_storage_handler.write_item(chunk)
     elasticsearch_storage_handler.refresh()
-    return stored_file_1
+    time.sleep(1)
+    return stored_file
 
 
 @pytest.fixture()
 def file_pdf_path() -> Path:
-    return Path(__file__).parents[2] / "tests" / "data" / "pdf" / "Cabinet Office - Wikipedia.pdf"
+    return (
+        Path(__file__).parents[2]
+        / "tests"
+        / "data"
+        / "pdf"
+        / "Cabinet Office - Wikipedia.pdf"
+    )
 
 
 @pytest.fixture()
@@ -136,23 +152,11 @@ def mock_llm():
 
 @pytest.fixture()
 def embedding_model() -> SentenceTransformerEmbeddings:
-    return SentenceTransformerEmbeddings(model_name=env.embedding_model, cache_folder=MODEL_PATH)
+    return SentenceTransformerEmbeddings(
+        model_name=env.embedding_model, cache_folder=MODEL_PATH
+    )
 
 
 @pytest.fixture()
-def vector_store(es_client, embedding_model):
-    if env.elastic.subscription_level == "basic":
-        strategy = ApproxRetrievalStrategy(hybrid=False)
-    elif env.elastic.subscription_level in ["platinum", "enterprise"]:
-        strategy = ApproxRetrievalStrategy(hybrid=True)
-    else:
-        message = f"Unknown Elastic subscription level {env.elastic.subscription_level}"
-        raise ValueError(message)
-
-    return ElasticsearchStore(
-        es_connection=es_client,
-        index_name=f"{env.elastic_root_index}-chunk",
-        embedding=embedding_model,
-        strategy=strategy,
-        vector_query_field="embedding",
-    )
+def chunk_index_name():
+    return f"{env.elastic_root_index}-chunk"
