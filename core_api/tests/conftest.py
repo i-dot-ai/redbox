@@ -136,3 +136,7 @@ def vector_store(es_client, embedding_model):
         strategy=strategy,
         vector_query_field="embedding",
     )
+
+@pytest.fixture()
+def chunk_index_name():
+    return f"{env.elastic_root_index}-chunk"
