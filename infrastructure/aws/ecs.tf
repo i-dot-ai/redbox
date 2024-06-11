@@ -40,6 +40,33 @@ resource "aws_service_discovery_service" "service_discovery_service" {
   }
 }
 
+resource "aws_secretsmanager_secret" "core-api-secret" {
+  name = "${local.name}-core-api-secret"
+}
+
+resource "aws_secretsmanager_secret" "django-app-secret" {
+  name = "${local.name}-django-app-secret"
+}
+
+resource "aws_secretsmanager_secret" "worker-secret" {
+  name = "${local.name}-worker-secret"
+}
+
+resource "aws_secretsmanager_secret_version" "core-api-json-secret" {
+  secret_id     = aws_secretsmanager_secret.core-api-secret.id
+  secret_string = jsonencode(local.secrets)
+}
+
+resource "aws_secretsmanager_secret_version" "django-app-json-secret" {
+  secret_id     = aws_secretsmanager_secret.core-api-secret.id
+  secret_string = jsonencode(local.secrets)
+}
+
+resource "aws_secretsmanager_secret_version" "worker-json-secret" {
+  secret_id     = aws_secretsmanager_secret.core-api-secret.id
+  secret_string = jsonencode(local.secrets)
+}
+
 module "django-app" {
   memory                     = 4096
   cpu                        = 2048
@@ -47,7 +74,7 @@ module "django-app" {
   create_networking          = true
   source                     = "../../../i-ai-core-infrastructure//modules/ecs"
   name                       = "${local.name}-django-app"
-  image_tag                  = var.image_tag
+  image_tag                  = "0b3ab51276e9cc6880de232bd8620397f3ef9b7c"
   ecr_repository_uri         = "${var.ecr_repository_uri}/${var.project_name}-django-app"
   ecs_cluster_id             = module.cluster.ecs_cluster_id
   ecs_cluster_name           = module.cluster.ecs_cluster_name
@@ -80,7 +107,7 @@ module "core_api" {
   create_networking             = false
   source                        = "../../../i-ai-core-infrastructure//modules/ecs"
   name                          = "${local.name}-core-api"
-  image_tag                     = var.image_tag
+  image_tag                     = "0b3ab51276e9cc6880de232bd8620397f3ef9b7c"
   ecr_repository_uri            = "${var.ecr_repository_uri}/redbox-core-api"
   ecs_cluster_id                = module.cluster.ecs_cluster_id
   ecs_cluster_name              = module.cluster.ecs_cluster_name
@@ -111,7 +138,7 @@ module "worker" {
   create_networking            = false
   source                       = "../../../i-ai-core-infrastructure//modules/ecs"
   name                         = "${local.name}-worker"
-  image_tag                    = var.image_tag
+  image_tag                    = "0b3ab51276e9cc6880de232bd8620397f3ef9b7c"
   ecr_repository_uri           = "${var.ecr_repository_uri}/redbox-worker"
   ecs_cluster_id               = module.cluster.ecs_cluster_id
   ecs_cluster_name             = module.cluster.ecs_cluster_name

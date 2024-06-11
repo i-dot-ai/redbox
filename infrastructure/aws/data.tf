@@ -1,12 +1,22 @@
 locals {
   record_prefix = terraform.workspace == "prod" ? var.project_name : "${var.project_name}-${terraform.workspace}"
   django_host   = "${local.record_prefix}.${var.domain_name}"
-  name          = "${var.team_name}-${terraform.workspace}-${var.project_name}"
+  name          = "${var.team_name}-${terraform.workspace}-${var.project_name}"]
+
+  core_api_environment_variables = {
+    "ELASTIC_ROOT_INDEX" : "redbox-data-${terraform.workspace}",
+  }
+
+  django_app_environment_variables = {
+
+  }
+
+  worker_environment_variables = {
+
+  }
 
   environment_variables = {
-    "ELASTIC__API_KEY" : var.elastic_api_key,
-    "ELASTIC__CLOUD_ID" : var.cloud_id,
-    "ELASTIC_ROOT_INDEX" : "redbox-data-${terraform.workspace}",
+
     "OBJECT_STORE" : "s3",
     "BUCKET_NAME" : aws_s3_bucket.user_data.bucket,
     "EMBEDDING_MODEL" : "all-mpnet-base-v2",
@@ -15,11 +25,7 @@ locals {
     "REDIS_HOST" : module.elasticache.redis_address,
     "REDIS_PORT" : module.elasticache.redis_port,
     # django stuff
-    "DJANGO_SECRET_KEY" : var.django_secret_key,
-    "POSTGRES_USER" : module.rds.rds_instance_username,
-    "POSTGRES_PASSWORD" : module.rds.rds_instance_db_password,
     "POSTGRES_DB" : module.rds.db_instance_name,
-    "POSTGRES_HOST" : module.rds.db_instance_address,
     "CORE_API_HOST" : "${aws_service_discovery_service.service_discovery_service.name}.${aws_service_discovery_private_dns_namespace.private_dns_namespace.name}",
     "CORE_API_PORT" : 5002,
     "ENVIRONMENT" : upper(terraform.workspace),
@@ -29,10 +35,7 @@ locals {
     "FROM_EMAIL" : var.from_email,
     "OPENAI_API_VERSION" : var.openai_api_version,
     "AZURE_OPENAI_MODEL" : var.azure_openai_model,
-    "AZURE_OPENAI_ENDPOINT" : var.azure_openai_endpoint,
-    "AZURE_OPENAI_API_KEY" : var.azure_openai_api_key
-    "GOVUK_NOTIFY_PLAIN_EMAIL_TEMPLATE_ID" : var.govuk_notify_plain_email_template_id
-    "GOVUK_NOTIFY_API_KEY" : var.govuk_notify_api_key,
+    "GOVUK_NOTIFY_PLAIN_EMAIL_TEMPLATE_ID" : var.govuk_notify_plain_email_template_id,
     "EMAIL_BACKEND_TYPE" : "GOVUKNOTIFY",
     "USE_STREAMING" : true,
     "DJANGO_LOG_LEVEL" : "DEBUG",
@@ -40,8 +43,20 @@ locals {
     "CONTACT_EMAIL" : var.contact_email,
     "FILE_EXPIRY_IN_DAYS" : 30,
     "MAX_SECURITY_CLASSIFICATION" : "OFFICIAL_SENSITIVE",
-    "SENTRY_DSN" : var.sentry_dsn,
     "SENTRY_ENVIRONMENT" : var.sentry_environment
+  }
+
+  secrets = {
+    "ELASTIC__API_KEY" : var.elastic_api_key,
+    "ELASTIC__CLOUD_ID" : var.cloud_id,
+    "DJANGO_SECRET_KEY" : var.django_secret_key,
+    "POSTGRES_PASSWORD" : module.rds.rds_instance_db_password,
+    "POSTGRES_HOST" : module.rds.db_instance_address,
+    "POSTGRES_USER" : module.rds.rds_instance_username,
+    "AZURE_OPENAI_API_KEY" : var.azure_openai_api_key,
+    "GOVUK_NOTIFY_API_KEY" : var.govuk_notify_api_key,
+    "SENTRY_DSN" : var.sentry_dsn,
+    "AZURE_OPENAI_ENDPOINT" : var.azure_openai_endpoint,
   }
 }
 
