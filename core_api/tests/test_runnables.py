@@ -58,7 +58,7 @@ def test_make_stuff_document_runnable(mock_llm, stored_file_chunks):
 
 
 @pytest.mark.asyncio()
-async def test_build_retrieval_chain(mock_llm, chunked_file, vector_store):
+async def test_build_retrieval_chain(mock_llm, chunked_file, other_stored_file_chunks, vector_store):  # noqa: ARG001
     request = {
         "message_history": [
             {"text": "hello", "role": "user"},
@@ -73,4 +73,4 @@ async def test_build_retrieval_chain(mock_llm, chunked_file, vector_store):
         vector_store=vector_store,
     )
 
-    assert len(params["input_documents"]) == 1
+    assert all(doc.metadata["parent_doc_uuid"] == str(chunked_file.uuid) for doc in params["input_documents"])
