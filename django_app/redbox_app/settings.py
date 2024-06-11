@@ -5,6 +5,7 @@ from enum import StrEnum
 from pathlib import Path
 
 import environ
+from django.urls import reverse_lazy
 from dotenv import load_dotenv
 from storages.backends import s3boto3
 
@@ -14,6 +15,7 @@ load_dotenv()
 
 env = environ.Env()
 
+LOGIN_METHOD = env.str("LOGIN_METHOD", "magic_link")
 SECRET_KEY = env.str("DJANGO_SECRET_KEY")
 ENVIRONMENT = env.str("ENVIRONMENT")
 WEBSOCKET_SCHEME = env.str("WEBSOCKET_SCHEME", default="ws")
@@ -59,8 +61,12 @@ INSTALLED_APPS = [
     "single_session",
     "storages",
     "compressor",
-    "magic_link",
 ]
+
+if LOGIN_METHOD == "sso":
+    INSTALLED_APPS.append("authbroker_client")
+elif LOGIN_METHOD == "magic_link":
+    INSTALLED_APPS.append("magic_link")
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -114,6 +120,9 @@ AUTHENTICATION_BACKENDS = [
     "django.contrib.auth.backends.ModelBackend",
 ]
 
+if LOGIN_METHOD == "sso":
+    AUTHENTICATION_BACKENDS.append("authbroker_client.backends.AuthbrokerBackend")
+
 AUTH_PASSWORD_VALIDATORS = [
     {
         "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
@@ -141,8 +150,8 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 SITE_ID = 1
 AUTH_USER_MODEL = "redbox_core.User"
 ACCOUNT_EMAIL_VERIFICATION = "none"
-LOGIN_REDIRECT_URL = "homepage"
-LOGIN_URL = "sign-in"
+# LOGIN_REDIRECT_URL = "homepage"
+# LOGIN_URL = "sign-in"
 
 HOSTS = [
     "redbox-dev.ai.cabinetoffice.gov.uk",
@@ -267,7 +276,9 @@ LOG_LEVEL = env.str("DJANGO_LOG_LEVEL", "WARNING")
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
-    "formatters": {"verbose": {"format": "%(asctime)s %(levelname)s %(module)s: %(message)s"}},
+    "formatters": {
+        "verbose": {"format": "%(asctime)s %(levelname)s %(module)s: %(message)s"}
+    },
     "handlers": {
         "file": {
             "level": LOG_LEVEL,
@@ -308,7 +319,9 @@ elif EMAIL_BACKEND_TYPE == "CONSOLE":
 elif EMAIL_BACKEND_TYPE == "GOVUKNOTIFY":
     EMAIL_BACKEND = "django_gov_notify.backends.NotifyEmailBackend"
     GOVUK_NOTIFY_API_KEY = env.str("GOVUK_NOTIFY_API_KEY")
-    GOVUK_NOTIFY_PLAIN_EMAIL_TEMPLATE_ID = env.str("GOVUK_NOTIFY_PLAIN_EMAIL_TEMPLATE_ID")
+    GOVUK_NOTIFY_PLAIN_EMAIL_TEMPLATE_ID = env.str(
+        "GOVUK_NOTIFY_PLAIN_EMAIL_TEMPLATE_ID"
+    )
 else:
     message = f"Unknown EMAIL_BACKEND_TYPE of {EMAIL_BACKEND_TYPE}"
     raise ValueError(message)
@@ -343,3 +356,26 @@ class Classification(StrEnum):
 
 
 MAX_SECURITY_CLASSIFICATION = Classification[env.str("MAX_SECURITY_CLASSIFICATION")]
+
+if LOGIN_METHOD == "sso":
+    AUTHBROKER_URL = env.str("AUTHBROKER_URL")
+    AUTHBROKER_CLIENT_ID = env.str("AUTHBROKER_CLIENT_ID")
+    AUTHBROKER_CLIENT_SECRET = env.str("AUTHBROKER_CLIENT_SECRET")
+    AUTHBROKER_TOKEN_SESSION_KEY = env.str("AUTHBROKER_TOKEN_SESSION_KEY")
+    AUTHBROKER_STAFF_SSO_SCOPE = env.str("AUTHBROKER_STAFF_SSO_SCOPE")
+
+    OAUTHLIB_INSECURE_TRANSPORT = env.int(
+        "OAUTHLIB_INSECURE_TRANSPORT"
+    )  # This is just needed in mock sso
+    TEST_SSO_PROVIDER_SET_RETURNED_ACCESS_TOKEN = env.str(
+        "MOCK_SSO_TOKEN"
+    )  # Nest into statement dependent upon hosting environment
+
+    LOGIN_URL = reverse_lazy("authbroker_client:login")
+    LOGIN_REDIRECT_URL = reverse_lazy("homepage")  # Check auth views page
+elif LOGIN_METHOD == "magic_link":
+    LOGIN_REDIRECT_URL = "homepage"
+    LOGIN_URL = "sign-in"
+else:
+    LOGIN_REDIRECT_URL = "homepage"
+    LOGIN_URL = "sign-in"
