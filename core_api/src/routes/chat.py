@@ -108,8 +108,9 @@ async def build_retrieval_chain(
 
     search_kwargs = {"filter": {"bool": {"must": [{"term": {"creator_user_uuid.keyword": str(user_uuid)}}]}}}
 
-    if chat_request.selected_files is not None:
-        search_kwargs["filter"]["bool"]["should"] = [
+    if chat_request.selected_files:
+        logging.info("chat_request.selected_files: %s", str(chat_request.selected_files))
+        search_kwargs["filter"]["bool"]["must"] = [
             {"term": {"parent_file_uuid.keyword": str(file.uuid)}} for file in chat_request.selected_files
         ]
 
@@ -151,6 +152,8 @@ async def rag_chat(
     Returns:
         StreamingResponse: a stream of the chain response
     """
+
+    logging.info("chat_request: %s", chat_request)
 
     question = chat_request.message_history[-1].text
     route = route_layer(question)
