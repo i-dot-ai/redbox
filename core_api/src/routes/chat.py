@@ -24,7 +24,7 @@ from redbox.llm.prompts.chat import (
     STUFF_DOCUMENT_PROMPT,
     WITH_SOURCES_PROMPT,
 )
-from redbox.models.chat import ChatRequest, ChatResponse, SourceDocument
+from redbox.models.chat import ChatRequest, ChatResponse, ChatRouteEnum, SourceDocument
 
 # === Logging ===
 
@@ -50,12 +50,16 @@ chat_app = FastAPI(
 )
 
 ROUTE_RESPONSES = {
-    "info": ChatPromptTemplate.from_template(INFO_RESPONSE),
-    "ability": ChatPromptTemplate.from_template(ABILITY_RESPONSE),
-    "coach": ChatPromptTemplate.from_template(COACH_RESPONSE),
-    "gratitude": ChatPromptTemplate.from_template("You're welcome!"),
-    "summarisation": ChatPromptTemplate.from_template("You are asking for summarisation - route not yet implemented"),
-    "extract": ChatPromptTemplate.from_template("You asking to extract some information - route not yet implemented"),
+    ChatRouteEnum.info: ChatPromptTemplate.from_template(INFO_RESPONSE),
+    ChatRouteEnum.ability: ChatPromptTemplate.from_template(ABILITY_RESPONSE),
+    ChatRouteEnum.coach: ChatPromptTemplate.from_template(COACH_RESPONSE),
+    ChatRouteEnum.gratitude: ChatPromptTemplate.from_template("You're welcome!"),
+    ChatRouteEnum.summarisation: ChatPromptTemplate.from_template(
+        "You are asking for summarisation - route not yet implemented"
+    ),
+    ChatRouteEnum.extract: ChatPromptTemplate.from_template(
+        "You asking to extract some information - route not yet implemented"
+    ),
 }
 
 
@@ -177,7 +181,7 @@ async def rag_chat(
         )
         for langchain_document in result.get("input_documents", [])
     ]
-    return ChatResponse(output_text=result["output_text"], source_documents=source_documents, route='rag')
+    return ChatResponse(output_text=result["output_text"], source_documents=source_documents, route=ChatRouteEnum.rag)
 
 
 @chat_app.websocket("/rag")

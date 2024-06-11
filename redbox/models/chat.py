@@ -81,6 +81,4 @@ class ChatResponse(BaseModel):
         description="response text",
         examples=["The current Prime Minister of the UK is The Rt Hon. Rishi Sunak MP."],
     )
-    route: ChatRouteEnum = Field(
-        description="the conversation route taken"
-    )
+    route: ChatRouteEnum = Field(description="the conversation route taken")
