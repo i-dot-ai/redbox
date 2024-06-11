@@ -17,26 +17,26 @@
         <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
 
         <div class="govuk-form-group {% if errors.upload_doc %} govuk-form-group--error{% endif %}">
-          <label class="govuk-label" for="upload-doc">
+          <label class="govuk-label" for="upload-docs">
             <h1 class="govuk-heading-l">{{ pageTitle }}</h1>
           </label>
           
-          <div id="upload-doc-notification">
+          <div id="upload-docs-notification">
             {{ govukNotificationBanner(
               title="Important",
               text_list=[
-                {"text": "The AI will use all documents you upload. You can use up to, and including, " ~ security ~ " documents"}
+                {"text": "The AI will use all documents you upload. You can use up to, and including, " ~ security ~ " documents. Do not upload any documents with personal data."}
               ]
             ) }}
           </div>
 
-          <p class="govuk-body iai-file-types" id="upload-doc-filetypes">Limit 200MB per file: EML, HTML, JSON, MD, MSG, RST, RTF, TXT, XML, CSV, DOC, DOCX, EPUB, ODT, PDF, PPT, PPTX, TSV, XLSX, HTM</p>
+          <p class="govuk-body iai-file-types" id="upload-docs-filetypes">Limit 200MB per file: EML, HTML, JSON, MD, MSG, RST, RTF, TXT, XML, CSV, DOC, DOCX, EPUB, ODT, PDF, PPT, PPTX, TSV, XLSX, HTM</p>
           {% for error in errors.upload_doc %}
-            <p id="file-upload-doc-error" class="govuk-error-message">
+            <p id="file-upload-docs-error" class="govuk-error-message">
               <span class="govuk-visually-hidden">Error:</span> {{ error }}
             </p>
           {% endfor %}
-          <input class="govuk-file-upload {% if errors.upload_doc %} govuk-file-upload--error{% endif %}" id="upload-doc" name="uploadDoc" type="file" aria-describedby="upload-doc-notification upload-doc-filetypes {% if errors.upload_doc %} file-upload-doc-error{% endif %}">
+          <input class="govuk-file-upload {% if errors.upload_doc %} govuk-file-upload--error{% endif %}" multiple id="upload-docs" name="uploadDocs" type="file" aria-describedby="upload-docs-notification upload-docs-filetypes {% if errors.upload_doc %} file-upload-docs-error{% endif %}">
         </div>
 
         {{ govukButton(text="Upload") }}

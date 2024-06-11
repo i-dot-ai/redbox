@@ -109,8 +109,7 @@ class TestEndToEnd:
             "http://localhost:5002/chat/rag",
             json={
                 "message_history": [
-                    {"role": "system", "text": "You are a helpful AI Assistant"},
-                    {"role": "user", "text": "please summarise my document"},
+                    {"role": "user", "text": "what is routing?"},
                 ]
             },
             headers=make_headers(user_uuid),
@@ -148,8 +147,7 @@ class TestEndToEnd:
         """
         message_history = {
             "message_history": [
-                {"role": "system", "text": "You are a helpful AI Assistant"},
-                {"role": "user", "text": "please summarise my document"},
+                {"role": "user", "text": "what is routing"},
             ]
         }
         all_text, source_documents = [], []
