@@ -28,8 +28,8 @@ from redbox.models.chat import ChatRequest, ChatResponse, SourceDocument
 
 # === Logging ===
 
-logging.basicConfig(level=logging.INFO)
-log = logging.getLogger()
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger()
 
 
 chat_app = FastAPI(
@@ -188,7 +188,9 @@ async def rag_chat_streamed(
     user_uuid = await get_ws_user_uuid(websocket)
 
     request = await websocket.receive_text()
+    logger.debug("raw request from django-app: %s", request)
     chat_request = ChatRequest.model_validate_json(request)
+    logger.debug("chat request from django-app: %s", chat_request)
 
     chain, params = await build_chain(chat_request, user_uuid, llm, vector_store)
 
@@ -215,6 +217,6 @@ async def rag_chat_streamed(
                 msg = event["data"]["chunk"].messages[0].content
                 await websocket.send_json({"resource_type": "text", "data": msg})
             except (KeyError, AttributeError):
-                logging.exception("unknown message format %s", str(event["data"]["chunk"]))
+                logger.exception("unknown message format %s", str(event["data"]["chunk"]))
 
     await websocket.close()
