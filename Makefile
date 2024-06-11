@@ -134,8 +134,10 @@ docker_push:
 
 .PHONY: docker_update_tag
 docker_update_tag:
-	MANIFEST=$$(aws ecr batch-get-image --repository-name $(ECR_REPO_NAME) --image-ids imageTag=$(IMAGE_TAG) --query 'images[].imageManifest' --output text) && \
-	aws ecr put-image --repository-name $(ECR_REPO_NAME) --image-tag $(tag) --image-manifest "$$MANIFEST"
+	for service in django-app core-api worker; do \
+		MANIFEST=$$(aws ecr batch-get-image --repository-name $(ECR_REPO_NAME)-$$service --image-ids imageTag=$(IMAGE_TAG) --query 'images[].imageManifest' --output text) && \
+		aws ecr put-image --repository-name $(ECR_REPO_NAME)-$$service--image-tag $(tag) --image-manifest "$$MANIFEST"
+	done
 
 
 # Ouputs the value that you're after - usefx	ul to get a value i.e. IMAGE_TAG out of the Makefile
@@ -186,7 +188,7 @@ tf_apply_universal: ## Apply terraform
 .PHONY: tf_auto_apply
 tf_auto_apply: ## Auto apply terraform
 	make tf_set_workspace && \
-	terraform -chdir=./infrastructure/aws apply -auto-approve -var-file=$(CONFIG_DIR)/${env}-input-params.tfvars ${tf_build_args}
+	terraform -chdir=./infrastructure/aws apply -auto-approve -lock-timeout=300s -var-file=$(CONFIG_DIR)/${env}-input-params.tfvars ${tf_build_args} -target="module.django-app" -target="module.core-api" -target="module.worker"
 
 .PHONY: tf_destroy
 tf_destroy: ## Destroy terraform

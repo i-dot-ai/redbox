@@ -27,6 +27,8 @@ class ChatMessageResource(admin.ModelAdmin):
 
 class ChatMessageInline(admin.StackedInline):
     model = models.ChatMessage
+    ordering = ("modified_at",)
+    readonly_fields = ["modified_at", "source_files"]
     extra = 1
 
 
@@ -50,6 +52,7 @@ class ChatHistoryAdmin(admin.ModelAdmin):
         return response
 
     export_as_csv.short_description = "Export Selected"
+    fields = ["name", "users"]
     inlines = [ChatMessageInline]
     list_display = ["name", "users", "created_at"]
     list_filter = ["users"]

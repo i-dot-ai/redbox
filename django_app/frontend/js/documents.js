@@ -12,17 +12,15 @@ class FileStatus extends HTMLElement {
             const CHECK_INTERVAL_MS = 5000;
 
             // as we use different layouts for mobile and desktop - only request update if visible
-            if (this.checkVisibility()) {
+            if (!this.checkVisibility()) {
                 window.setTimeout(checkStatus, CHECK_INTERVAL_MS);
                 return;
             }
 
             const response = await fetch(`${FILE_STATUS_ENDPOINT}?id=${this.dataset.id}`);
-            const responseText = await response.json();
-            if (response.ok) {
-                this.textContent = responseText['status'];
-            }
-            if (responseText['status'].toLowerCase() === 'complete') {
+            const responseObj = await response.json();
+            this.textContent = responseObj.status;
+            if (responseObj.status.toLowerCase() === 'complete') {
                 this.classList.add('govuk-tag--green');
                 this.classList.remove('govuk-tag--yellow');
             } else {
