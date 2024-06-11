@@ -76,7 +76,7 @@ def test_upload_view(alice, client, file_pdf_path: Path, s3_client, requests_moc
     )
 
     with file_pdf_path.open("rb") as f:
-        response = client.post("/upload/", {"uploadDoc": f})
+        response = client.post("/upload/", {"uploadDocs": f})
 
         assert file_exists(s3_client, file_name)
         assert response.status_code == HTTPStatus.FOUND
@@ -106,7 +106,7 @@ def test_document_upload_status(client, alice, file_pdf_path: Path, s3_client, r
     )
 
     with file_pdf_path.open("rb") as f:
-        response = client.post("/upload/", {"uploadDoc": f})
+        response = client.post("/upload/", {"uploadDocs": f})
 
         assert response.status_code == HTTPStatus.FOUND
         assert response.url == "/documents/"
@@ -133,8 +133,8 @@ def test_upload_view_duplicate_files(alice, bob, client, file_pdf_path: Path, s3
     client.force_login(alice)
 
     with file_pdf_path.open("rb") as f:
-        client.post("/upload/", {"uploadDoc": f})
-        response = client.post("/upload/", {"uploadDoc": f})
+        client.post("/upload/", {"uploadDocs": f})
+        response = client.post("/upload/", {"uploadDocs": f})
 
         assert response.status_code == HTTPStatus.FOUND
         assert response.url == "/documents/"
@@ -142,7 +142,7 @@ def test_upload_view_duplicate_files(alice, bob, client, file_pdf_path: Path, s3
         assert count_s3_objects(s3_client) == previous_count + 2
 
         client.force_login(bob)
-        response = client.post("/upload/", {"uploadDoc": f})
+        response = client.post("/upload/", {"uploadDocs": f})
 
         assert response.status_code == HTTPStatus.FOUND
         assert response.url == "/documents/"
@@ -160,7 +160,7 @@ def test_upload_view_bad_data(alice, client, file_py_path: Path, s3_client):
     client.force_login(alice)
 
     with file_py_path.open("rb") as f:
-        response = client.post("/upload/", {"uploadDoc": f})
+        response = client.post("/upload/", {"uploadDocs": f})
 
         assert response.status_code == HTTPStatus.OK
         assert "File type .py not supported" in str(response.content)
@@ -200,7 +200,7 @@ def test_remove_doc_view(client: Client, alice: User, file_pdf_path: Path, s3_cl
 
     with file_pdf_path.open("rb") as f:
         # create file before testing deletion
-        client.post("/upload/", {"uploadDoc": f})
+        client.post("/upload/", {"uploadDocs": f})
         assert file_exists(s3_client, file_name)
         assert count_s3_objects(s3_client) == previous_count + 1
 

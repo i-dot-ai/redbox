@@ -109,13 +109,8 @@ class TestEndToEnd:
             "http://localhost:5002/chat/rag",
             json={
                 "message_history": [
-                    {"role": "system", "text": "You are a helpful AI Assistant"},
-                    {"role": "user", "text": "please summarise my document"},
-                ],
-                "selected_files": [
-                    {"uuid": "9aa1aa15-dde0-471f-ab27-fd410612025b"},
-                    {"uuid": "219c2e94-9877-4f83-ad6a-a59426f90171"},
-                ],
+                    {"role": "user", "text": "what is routing?"},
+                ]
             },
             headers=make_headers(user_uuid),
             timeout=30,
@@ -152,13 +147,8 @@ class TestEndToEnd:
         """
         message_history = {
             "message_history": [
-                {"role": "system", "text": "You are a helpful AI Assistant"},
-                {"role": "user", "text": "please summarise my document"},
-            ],
-            "selected_files": [
-                {"uuid": "9aa1aa15-dde0-471f-ab27-fd410612025b"},
-                {"uuid": "219c2e94-9877-4f83-ad6a-a59426f90171"},
-            ],
+                {"role": "user", "text": "what is routing"},
+            ]
         }
         all_text, source_documents = [], []
 
@@ -195,11 +185,7 @@ class TestEndToEnd:
         message_history = {
             "message_history": [
                 {"role": "user", "text": "thank you"},
-            ],
-            "selected_files": [
-                {"uuid": "9aa1aa15-dde0-471f-ab27-fd410612025b"},
-                {"uuid": "219c2e94-9877-4f83-ad6a-a59426f90171"},
-            ],
+            ]
         }
         all_text, source_documents = [], []
 
