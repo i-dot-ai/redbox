@@ -1,10 +1,10 @@
 import re
+
 import pytest
 
 from core_api.src.format import format_chunks, get_file_chunked_to_tokens
-from core_api.src.runnables import make_stuff_document_runnable
 from core_api.src.routes.chat import build_retrieval_chain
-
+from core_api.src.runnables import make_stuff_document_runnable
 from redbox.models.chat import ChatRequest
 
 
@@ -63,16 +63,14 @@ async def test_build_retrieval_chain(mock_llm, chunked_file, vector_store):
         "message_history": [
             {"text": "hello", "role": "user"},
         ],
-        "selected_files": [ 
-            {"uuid": chunked_file.uuid} 
-        ]
+        "selected_files": [{"uuid": chunked_file.uuid}],
     }
 
     docs_with_sources_chain, params = await build_retrieval_chain(
         chat_request=ChatRequest(**request),
         user_uuid=chunked_file.creator_user_uuid,
         llm=mock_llm,
-        vector_store=vector_store
+        vector_store=vector_store,
     )
 
     response = docs_with_sources_chain(params)

@@ -6,15 +6,15 @@ from botocore.exceptions import ClientError
 from elasticsearch import Elasticsearch
 from fastapi.testclient import TestClient
 from jose import jwt
+from langchain_community.embeddings import SentenceTransformerEmbeddings
 from langchain_community.llms.fake import FakeListLLM
 from langchain_elasticsearch import ApproxRetrievalStrategy, ElasticsearchStore
-from langchain_community.embeddings import SentenceTransformerEmbeddings
 
 from core_api.src.app import app as application
 from core_api.src.app import env
+from redbox.model_db import MODEL_PATH
 from redbox.models import Chunk, File
 from redbox.storage import ElasticsearchStorageHandler
-from redbox.model_db import MODEL_PATH
 
 
 @pytest.fixture()
