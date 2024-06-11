@@ -91,6 +91,8 @@ def stored_file_chunks(stored_file) -> list[Chunk]:
                 index=i,
                 parent_file_uuid=stored_file.uuid,
                 creator_user_uuid=stored_file.creator_user_uuid,
+                embedding = [1] * 768,
+                metadata={}
             )
         )
     return chunks

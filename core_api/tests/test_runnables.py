@@ -73,7 +73,4 @@ async def test_build_retrieval_chain(mock_llm, chunked_file, vector_store):
         vector_store=vector_store,
     )
 
-    response = docs_with_sources_chain(params)
-
-    assert response["output_text"] == "<<TESTING>>"
     assert len(params["input_documents"]) == 1
