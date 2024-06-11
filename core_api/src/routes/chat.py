@@ -63,7 +63,6 @@ ROUTE_RESPONSES = {
 }
 
 
-# TODO: use a different prompt for summarisation - do not use the _core_redbox_prompt
 async def build_chain(
     chat_request: ChatRequest,
     user_uuid: UUID,

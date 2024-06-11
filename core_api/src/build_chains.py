@@ -100,9 +100,6 @@ async def build_retrieval_chain(
     return docs_with_sources_chain, params
 
 
-# (build_stuff_chain, make_stuff_document_runnable)
-
-
 async def build_stuff_chain(
     chat_request: ChatRequest,
     user_uuid: UUID,
