@@ -1,3 +1,4 @@
+import time
 from pathlib import Path
 from uuid import UUID, uuid4
 
@@ -6,15 +7,14 @@ from botocore.exceptions import ClientError
 from elasticsearch import Elasticsearch
 from fastapi.testclient import TestClient
 from jose import jwt
-from langchain_community.llms.fake import FakeListLLM
-from langchain_elasticsearch import ApproxRetrievalStrategy, ElasticsearchStore
 from langchain_community.embeddings import SentenceTransformerEmbeddings
+from langchain_community.llms.fake import FakeListLLM
 
 from core_api.src.app import app as application
 from core_api.src.app import env
+from redbox.model_db import MODEL_PATH
 from redbox.models import Chunk, File
 from redbox.storage import ElasticsearchStorageHandler
-from redbox.model_db import MODEL_PATH
 
 
 @pytest.fixture()
@@ -82,13 +82,19 @@ def stored_file(elasticsearch_storage_handler, file) -> File:
 
 
 @pytest.fixture()
-def stored_file_chunks(stored_file) -> list[Chunk]:
+def embedding_model_dim(embedding_model) -> int:
+    return len(embedding_model.embed_query("foo"))
+
+
+@pytest.fixture()
+def stored_file_chunks(stored_file, embedding_model_dim) -> list[Chunk]:
     chunks: list[Chunk] = []
     for i in range(5):
         chunks.append(
             Chunk(
                 text="hello",
                 index=i,
+                embedding=[1] * embedding_model_dim,
                 parent_file_uuid=stored_file.uuid,
                 creator_user_uuid=stored_file.creator_user_uuid,
             )
@@ -101,6 +107,7 @@ def chunked_file(elasticsearch_storage_handler, stored_file_chunks, stored_file)
     for chunk in stored_file_chunks:
         elasticsearch_storage_handler.write_item(chunk)
     elasticsearch_storage_handler.refresh()
+    time.sleep(1)
     return stored_file
 
 

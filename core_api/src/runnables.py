@@ -1,18 +1,17 @@
 from operator import itemgetter
-from typing import TypedDict, Any
+from typing import Any, TypedDict
 from uuid import UUID
-from elasticsearch import Elasticsearch
 
+from elasticsearch import Elasticsearch
 from langchain.schema import StrOutputParser
 from langchain_community.chat_models import ChatLiteLLM
+from langchain_community.embeddings import SentenceTransformerEmbeddings
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import Runnable, RunnableLambda, RunnablePassthrough
 from langchain_core.vectorstores import VectorStoreRetriever
 from langchain_elasticsearch import ElasticsearchRetriever
-from langchain_community.embeddings import SentenceTransformerEmbeddings
 
 from core_api.src.format import format_chunks
-
 from redbox.models import Chunk
 
 
@@ -46,17 +45,15 @@ def make_stuff_document_runnable(
 
 class ESQuery(TypedDict):
     question: str
-    file_uuids: list[UUID] | None = None
+    file_uuids: list[UUID]
     user_uuid: UUID
 
 
 def make_es_retriever(
-    es: Elasticsearch,
-    embedding_model: SentenceTransformerEmbeddings,
-    chunk_index_name: str
+    es: Elasticsearch, embedding_model: SentenceTransformerEmbeddings, chunk_index_name: str
 ) -> ElasticsearchRetriever:
     """Creates an Elasticsearch retriever runnable.
-    
+
     Runnable takes input of a dict keyed to question, file_uuids and user_uuid.
 
     Runnable returns a list of Chunks.
@@ -64,48 +61,35 @@ def make_es_retriever(
 
     def es_query(query: ESQuery) -> dict[str, Any]:
         vector = embedding_model.embed_query(query["question"])
-        search_kwargs = {
+
+        knn_filter = [{"term": {"creator_user_uuid.keyword": str(query["user_uuid"])}}]
+
+        if len(query["file_uuids"]) != 0:
+            knn_filter.append({"terms": {"parent_file_uuid.keyword": [str(uuid) for uuid in query["file_uuids"]]}})
+
+        return {
+            "size": 5,
             "query": {
                 "bool": {
                     "must": [
-                        { "match": { "text": query["question"]} }
-                    ],
-                    "filter": [
                         {
-                            "term": { 
-                                "creator_user_uuid.keyword":  str(query["user_uuid"])
+                            "knn": {
+                                "field": "embedding",
+                                "query_vector": vector,
+                                "num_candidates": 10,
+                                "filter": knn_filter,
                             }
                         }
                     ]
                 }
             },
-            "knn": {
-                "field": "embedding",
-                "query_vector": vector,
-                "k": 5,
-                "num_candidates": 10,
-            }
         }
-
-        if query["file_uuids"] is not None:
-            search_kwargs["query"]["bool"]["filter"].append(
-                {
-                    "terms": {
-                        "parent_file_uuid.keyword": [str(uuid) for uuid in query["file_uuids"]]
-                    }
-                }
-            )
-        
-        return search_kwargs
 
     def chunk_mapper(hit: dict[str, Any]) -> Chunk:
         return Chunk(**hit["_source"])
 
     return ElasticsearchRetriever(
-        es_client=es,
-        index_name=chunk_index_name,
-        body_func=es_query,
-        document_mapper=chunk_mapper
+        es_client=es, index_name=chunk_index_name, body_func=es_query, document_mapper=chunk_mapper
     )
 
 
@@ -116,7 +100,7 @@ def make_rag_runnable(
 ) -> Runnable:
     """Takes a system prompt, LLM and retriever and returns a basic RAG runnable.
 
-    Runnable takes input of a dict keyed to question, messages and documents.
+    Runnable takes input of a dict keyed to question, messages and file_uuids and user_uuid.
 
     Runnable returns a dict keyed to response and sources.
     """
@@ -132,12 +116,12 @@ def make_rag_runnable(
         RunnablePassthrough()
         | {
             "question": itemgetter("question"),
-            "messages": itemgetter("message_history"),
-            "documents": retriever | format_chunks, 
+            "messages": itemgetter("messages"),
+            "documents": retriever | format_chunks,
             "sources": retriever,
         }
         | {
-            "response": prompt | llm,
+            "response": prompt | llm | StrOutputParser(),
             "sources": itemgetter("sources"),
         }
     )
