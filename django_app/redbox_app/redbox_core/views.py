@@ -205,7 +205,8 @@ class ChatsView(View):
             messages = ChatMessage.objects.filter(chat_history__id=chat_id).order_by("created_at")
         endpoint = URL.build(scheme=settings.WEBSOCKET_SCHEME, host=request.get_host(), path=r"/ws/chat/")
 
-        all_files = File.objects.filter(user=request.user, status=StatusEnum.complete).order_by("-created_at")
+        hidden_statuses = [StatusEnum.deleted, StatusEnum.errored]
+        all_files = File.objects.filter(user=request.user).exclude(status__in=hidden_statuses).order_by("-created_at")
         self.decorate_selected_files(all_files, messages)
 
         context = {

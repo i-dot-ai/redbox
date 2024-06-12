@@ -40,12 +40,13 @@ class ChatConsumer(AsyncWebsocketConsumer):
         ]
         url = URL.build(scheme="ws", host=settings.CORE_API_HOST, port=settings.CORE_API_PORT) / "chat/rag"
         async with connect(str(url), extra_headers={"Authorization": user.get_bearer_token()}) as core_websocket:
-            message = {
-                "message_history": message_history,
-                "selected_files": [{"uuid": f.core_file_uuid} for f in selected_files],
-            }
-            logger.debug("sending to core-api: %s", message)
-            await self.send_to_server(core_websocket, message)
+            await self.send_to_server(
+                core_websocket,
+                {
+                    "message_history": message_history,
+                    "selected_files": [{"uuid": f.core_file_uuid} for f in selected_files],
+                },
+            )
             await self.send_to_client({"type": "session-id", "data": str(session.id)})
             reply, source_files = await self.receive_llm_responses(user, core_websocket)
         await self.save_message(session, reply, ChatRoleEnum.ai, source_files=source_files)

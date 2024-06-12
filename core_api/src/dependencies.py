@@ -11,6 +11,7 @@ from langchain_elasticsearch import ApproxRetrievalStrategy, ElasticsearchStore
 
 from redbox.model_db import MODEL_PATH
 from redbox.models import Settings
+from redbox.storage import ElasticsearchStorageHandler
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger()
@@ -28,6 +29,13 @@ async def get_embedding_model(env: Annotated[Settings, Depends(get_env)]) -> Emb
     embedding_model = SentenceTransformerEmbeddings(model_name=env.embedding_model, cache_folder=MODEL_PATH)
     log.info("Loaded embedding model from environment: %s", env.embedding_model)
     return embedding_model
+
+
+async def get_storage_handler(
+    es: Annotated[Elasticsearch, Depends(get_elasticsearch_client)],
+    env: Annotated[Settings, Depends(get_env)],
+) -> ElasticsearchStorageHandler:
+    return ElasticsearchStorageHandler(es_client=es, root_index=env.elastic_root_index)
 
 
 async def get_vector_store(
