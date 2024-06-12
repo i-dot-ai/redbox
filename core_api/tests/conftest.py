@@ -82,16 +82,21 @@ def stored_file_1(elasticsearch_storage_handler, file) -> File:
 
 
 @pytest.fixture()
-def stored_file_chunks(stored_file_1) -> list[Chunk]:
+def embedding_model_dim(embedding_model) -> int:
+    return len(embedding_model.embed_query("foo"))
+
+
+@pytest.fixture()
+def stored_file_chunks(stored_file_1, embedding_model_dim) -> list[Chunk]:
     chunks: list[Chunk] = []
     for i in range(5):
         chunks.append(
             Chunk(
                 text="hello",
                 index=i,
+                embedding=[1] * embedding_model_dim,
                 parent_file_uuid=stored_file_1.uuid,
                 creator_user_uuid=stored_file_1.creator_user_uuid,
-                embedding=[1] * 768,
                 metadata={"parent_doc_uuid": str(stored_file_1.uuid)},
             )
         )
@@ -137,6 +142,11 @@ def mock_llm():
 @pytest.fixture()
 def embedding_model() -> SentenceTransformerEmbeddings:
     return SentenceTransformerEmbeddings(model_name=env.embedding_model, cache_folder=MODEL_PATH)
+
+
+@pytest.fixture()
+def chunk_index_name():
+    return f"{env.elastic_root_index}-chunk"
 
 
 @pytest.fixture()
