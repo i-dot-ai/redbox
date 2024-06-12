@@ -1,5 +1,6 @@
 import logging
 from abc import ABC, abstractmethod
+from collections.abc import Sequence
 from datetime import datetime
 from itertools import islice
 from pathlib import Path
@@ -176,13 +177,16 @@ class DocumentsPage(SignedInBasePage):
             for filename, uploaded_at, status, action in batched(cell_texts, 4)
         ]
 
+    def document_count(self) -> int:
+        return len(self.get_all_document_rows())
+
 
 class DocumentUploadPage(SignedInBasePage):
     def get_expected_page_title(self) -> str:
         return "Upload a document - Redbox Copilot"
 
-    def upload_document(self, upload_file: Path) -> DocumentsPage:
-        self.get_file_chooser_by_label().set_files(upload_file)
+    def upload_documents(self, upload_files: Sequence[Path]) -> DocumentsPage:
+        self.get_file_chooser_by_label().set_files(upload_files)
         self.page.get_by_role("button", name="Upload").click()
         return DocumentsPage(self.page)
 

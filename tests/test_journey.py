@@ -3,11 +3,15 @@ import string
 import subprocess
 from pathlib import Path
 from random import choice
+from typing import TYPE_CHECKING
 
 import pytest
 from pages import LandingPage, SignInConfirmationPage
 from playwright.sync_api import Page
 from yarl import URL
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -34,23 +38,22 @@ def test_user_journey(page: Page, email_address: str):
 
     # Documents page
     documents_page = sign_in_confirmation_page.navigate_to_documents_page()
-    document_rows = documents_page.get_all_document_rows()
-    original_docs_count = len(document_rows)
+    original_doc_count = documents_page.document_count()
 
     # Upload a file
     document_upload_page = documents_page.navigate_to_upload()
-    upload_file = TEST_ROOT / "data" / "pdf" / "Cabinet Office - Wikipedia.pdf"
-    documents_page = document_upload_page.upload_document(upload_file)
+    upload_files: Sequence[Path] = list((TEST_ROOT / "data" / "pdf").glob("*.pdf"))
+    documents_page = document_upload_page.upload_documents(upload_files)
     document_rows = documents_page.get_all_document_rows()
     logger.debug("document_rows: %s", document_rows)
-    assert any(row.filename == upload_file.name for row in document_rows)
-    assert len(document_rows) == original_docs_count + 1
+    assert {r.filename for r in document_rows} == {f.name for f in upload_files}
+    assert documents_page.document_count() == original_doc_count + len(upload_files)
 
     # Delete a file
+    pre_delete_doc_count = documents_page.document_count()
     document_delete_page = documents_page.delete_latest_document()
     documents_page = document_delete_page.confirm_deletion()
-    document_rows = documents_page.get_all_document_rows()
-    assert len(document_rows) == original_docs_count
+    assert documents_page.document_count() == pre_delete_doc_count - 1
 
     # Chats page
     chats_page = documents_page.navigate_to_chats()
@@ -58,7 +61,7 @@ def test_user_journey(page: Page, email_address: str):
     chats_page = chats_page.send()
     all_messages = chats_page.all_messages()
     logger.debug("page: %s", chats_page)
-    logger.debug("all_messages: %s", all_messages)
+    logger.info("all_messages: %s", all_messages)
 
 
 def test_support_pages(page: Page):

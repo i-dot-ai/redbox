@@ -12,7 +12,9 @@ class UserResource(admin.ModelAdmin):
 
 
 class FileResource(admin.ModelAdmin):
-    list_display = ["original_file_name", "user", "status"]
+    list_display = ["original_file_name", "user", "status", "created_at"]
+    list_filter = ["user", "status"]
+    date_hierarchy = "created_at"
 
 
 class ChatMessageResource(admin.ModelAdmin):
