@@ -74,7 +74,7 @@
             {{ message_box(
               role = message.role,
               text = message.text,
-              sources = message.source_files.all()
+              sources = message.chunks.all()
             ) }}
           {% endfor %}
 
@@ -101,7 +101,7 @@
 
           <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}"/>
           {% if chat_id %}<input type="hidden" name="session-id" value="{{ chat_id }}"/>{% endif %}
-          
+
           <div class="iai-new-message">
 
             <div class="govuk-form-group">

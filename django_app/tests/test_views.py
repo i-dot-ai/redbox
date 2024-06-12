@@ -270,7 +270,7 @@ def test_post_message_to_existing_session(
         ChatMessage.objects.get(chat_history__id=session_id, role=ChatRoleEnum.ai).text == "Good afternoon, Mr. Amor."
     )
     assert (
-        ChatMessage.objects.get(chat_history__id=session_id, role=ChatRoleEnum.ai).source_files.first() == uploaded_file
+        ChatMessage.objects.get(chat_history__id=session_id, role=ChatRoleEnum.ai).chunks.first().file == uploaded_file
     )
     assert initial_file_expiry_date != File.objects.get(core_file_uuid=uploaded_file.core_file_uuid).expiry_date
 

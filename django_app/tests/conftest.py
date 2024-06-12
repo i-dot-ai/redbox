@@ -8,7 +8,9 @@ import pytest
 from django.core.files.uploadedfile import SimpleUploadedFile, UploadedFile
 from django.core.management import call_command
 from redbox_app.redbox_core import client
-from redbox_app.redbox_core.models import ChatHistory, ChatMessage, ChatRoleEnum, File, User
+from redbox_app.redbox_core.models import ChatHistory, ChatMessage, ChatRoleEnum, File, User, TextChunk
+
+
 
 logger = logging.getLogger(__name__)
 
@@ -81,7 +83,7 @@ def chat_history(alice: User) -> ChatHistory:
 @pytest.fixture()
 def chat_message(chat_history: ChatHistory, uploaded_file: File) -> ChatMessage:
     chat_message = ChatMessage.objects.create(chat_history=chat_history, text="A question?", role=ChatRoleEnum.user)
-    chat_message.source_files.set([uploaded_file])
+    TextChunk(file=uploaded_file, chat_message=chat_message)
     return chat_message
 
 
@@ -104,13 +106,14 @@ def original_file() -> UploadedFile:
 def chat_history_with_files(chat_history: ChatHistory, several_files: Sequence[File]) -> ChatHistory:
     ChatMessage.objects.create(chat_history=chat_history, text="A question?", role=ChatRoleEnum.user)
     chat_message = ChatMessage.objects.create(chat_history=chat_history, text="An answer.", role=ChatRoleEnum.ai)
-    chat_message.source_files.set(several_files[0::2])
+    for file in several_files[0:2]:
+        TextChunk(chat_message=chat_message, file=file)
     chat_message = ChatMessage.objects.create(
         chat_history=chat_history, text="Another question?", role=ChatRoleEnum.user
     )
     chat_message.selected_files.set(several_files[0:2])
     chat_message = ChatMessage.objects.create(chat_history=chat_history, text="Another answer.", role=ChatRoleEnum.ai)
-    chat_message.source_files.set([several_files[2]])
+    TextChunk(chat_message=chat_message, file=several_files[2])
     return chat_history
 
 

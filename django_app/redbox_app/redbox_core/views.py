@@ -22,9 +22,12 @@ from redbox_app.redbox_core.models import (
     File,
     StatusEnum,
     User,
+TextChunk
 )
 from requests.exceptions import RequestException
 from yarl import URL
+
+
 
 logger = logging.getLogger(__name__)
 core_api = CoreApiClient(host=settings.CORE_API_HOST, port=settings.CORE_API_PORT)
@@ -264,9 +267,9 @@ def post_message(request: HttpRequest) -> HttpResponse:
 
     doc_uuids: list[str] = [doc.file_uuid for doc in response_data.source_documents]
     files: list[File] = File.objects.filter(core_file_uuid__in=doc_uuids, user=request.user)
-    llm_message.source_files.set(files)
 
     for file in files:
+        TextChunk(chat_message=llm_message, file=file)
         file.last_referenced = timezone.now()
         file.save()
 
