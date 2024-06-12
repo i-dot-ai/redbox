@@ -4,7 +4,7 @@ from collections.abc import Sequence
 from datetime import datetime
 from itertools import islice
 from pathlib import Path
-from time import strptime
+from time import sleep, strptime
 from typing import Any, ClassVar, NamedTuple
 
 from axe_playwright_python.sync_playwright import Axe
@@ -205,6 +205,11 @@ class DocumentDeletePage(SignedInBasePage):
         return DocumentsPage(self.page)
 
 
+class ChatMessage(NamedTuple):
+    role: str
+    text: str
+
+
 class ChatsPage(SignedInBasePage):
     def get_expected_page_title(self) -> str:
         return "Chats - Redbox Copilot"
@@ -221,8 +226,23 @@ class ChatsPage(SignedInBasePage):
         self.page.get_by_text("Send").click()
         return ChatsPage(self.page)
 
-    def all_messages(self) -> list[str]:
-        return self.page.locator(".iai-chat-message").all_inner_texts()
+    def all_messages(self, exclude_feedback=True) -> list[ChatMessage]:
+        messages = [
+            ChatMessage(*t.strip().split(maxsplit=1)) for t in self.page.locator(".iai-chat-message").all_inner_texts()
+        ]
+        return [m for m in messages if "Thank you for your feedback." not in m.text] if exclude_feedback else messages
+
+    def wait_for_loaded_response(self, retry_interval: int = 1, max_tries: int = 120) -> list[ChatMessage]:
+        tries = 0
+        while True:
+            messages = self.all_messages()
+            if not messages[-1].text.startswith("Response loading"):
+                return messages
+            if tries >= max_tries:
+                error_message = "Too many retries waiting for response"
+                raise ValueError(error_message)
+            tries += 1
+            sleep(retry_interval)
 
 
 class PrivacyPage(BasePage):

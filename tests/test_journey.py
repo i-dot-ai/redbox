@@ -45,7 +45,6 @@ def test_user_journey(page: Page, email_address: str):
     upload_files: Sequence[Path] = list((TEST_ROOT / "data" / "pdf").glob("*.pdf"))
     documents_page = document_upload_page.upload_documents(upload_files)
     document_rows = documents_page.get_all_document_rows()
-    logger.debug("document_rows: %s", document_rows)
     assert {r.filename for r in document_rows} == {f.name for f in upload_files}
     assert documents_page.document_count() == original_doc_count + len(upload_files)
 
@@ -59,9 +58,11 @@ def test_user_journey(page: Page, email_address: str):
     chats_page = documents_page.navigate_to_chats()
     chats_page.write_message = "What is the Cabinet Office?"
     chats_page = chats_page.send()
-    all_messages = chats_page.all_messages()
     logger.debug("page: %s", chats_page)
+    all_messages = chats_page.wait_for_loaded_response()
     logger.info("all_messages: %s", all_messages)
+    latest_chat_response = [m for m in all_messages if m.role == "Redbox"][-1]
+    assert "Cabinet Office" in latest_chat_response.text
 
 
 def test_support_pages(page: Page):
