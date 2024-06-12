@@ -106,10 +106,10 @@ def chat_history_with_files(chat_history: ChatHistory, several_files: Sequence[F
     chat_message = ChatMessage.objects.create(chat_history=chat_history, text="An answer.", role=ChatRoleEnum.ai)
     chat_message.source_files.set(several_files[0::2])
     chat_message = ChatMessage.objects.create(
-        chat_history=chat_history, text="Another question?", role=ChatRoleEnum.user
+        chat_history=chat_history, text="A second question?", role=ChatRoleEnum.user
     )
     chat_message.selected_files.set(several_files[0:2])
-    chat_message = ChatMessage.objects.create(chat_history=chat_history, text="Another answer.", role=ChatRoleEnum.ai)
+    chat_message = ChatMessage.objects.create(chat_history=chat_history, text="A second answer.", role=ChatRoleEnum.ai)
     chat_message.source_files.set([several_files[2]])
     return chat_history
 

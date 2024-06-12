@@ -78,6 +78,7 @@ def get_chat_message_text(user: User, role: ChatRoleEnum) -> Sequence[str]:
     return [m.text for m in ChatMessage.objects.filter(chat_history__users=user, role=role)]
 
 
+@pytest.mark.xfail()
 @pytest.mark.django_db(transaction=True)
 @pytest.mark.asyncio()
 async def test_chat_consumer_with_selected_files(
@@ -87,6 +88,7 @@ async def test_chat_consumer_with_selected_files(
     mocked_connect_with_several_files: Connect,
 ):
     # Given
+    selected_files: Sequence[File] = several_files[2:]
 
     # When
     with patch("redbox_app.redbox_core.consumers.connect", new=mocked_connect_with_several_files):
@@ -95,11 +97,12 @@ async def test_chat_consumer_with_selected_files(
         connected, _ = await communicator.connect()
         assert connected
 
+        selected_file_core_uuids: Sequence[str] = [str(f.core_file_uuid) for f in selected_files]
         await communicator.send_json_to(
             {
                 "message": "Third question, with selected files?",
                 "sessionId": str(chat_history_with_files.id),
-                "selectedFiles": [str(f.core_file_uuid) for f in several_files[2:]],
+                "selectedFiles": selected_file_core_uuids,
             }
         )
         response1 = await communicator.receive_json_from(timeout=5)
@@ -111,13 +114,41 @@ async def test_chat_consumer_with_selected_files(
         # Close
         await communicator.disconnect()
 
-    assert await get_chat_message_text(alice, ChatRoleEnum.user) == [
-        "A question?",
-        "Another question?",
-        "Third question, with selected files?",
-    ]
-    assert await get_chat_message_text(alice, ChatRoleEnum.ai) == ["An answer.", "Another answer.", "Third answer."]
-    # TODO (@brunns): Assert selected files sent to core, and saved to model.
+    # Then
+
+    # TODO (@brunns): Assert selected files sent to core.
+    # Requires fix for https://github.com/django/channels/issues/1091
+    mocked_websocket = mocked_connect_with_several_files.return_value.__aenter__.return_value
+    expected = json.dumps(
+        {
+            "message_history": [
+                {"role": "user", "text": "A question?"},
+                {"role": "ai", "text": "An answer."},
+                {"role": "user", "text": "A second question?"},
+                {"role": "ai", "text": "A second answer."},
+                {"role": "user", "text": "Third question, with selected files?"},
+            ],
+            "selected_files": selected_file_core_uuids,
+        }
+    )
+    mocked_websocket.send.assert_called_with(expected)
+
+    # TODO (@brunns): Assert selected files saved to model.
+    # Requires fix for https://github.com/django/channels/issues/1091
+    all_messages = get_chat_messages(alice)
+    last_user_message = [m for m in all_messages if m.rule == ChatRoleEnum.user][-1]
+    assert last_user_message.selected_files == selected_files
+
+
+@database_sync_to_async
+def get_chat_messages(user: User) -> Sequence[ChatMessage]:
+    return list(
+        ChatMessage.objects.filter(chat_history__users=user)
+        .order_by("created_at")
+        .prefetch_related("chat_history")
+        .prefetch_related("source_files")
+        .prefetch_related("selected_files")
+    )
 
 
 @pytest.fixture()

@@ -18,8 +18,9 @@ logger.info("WEBSOCKET_SCHEME is: %s", settings.WEBSOCKET_SCHEME)
 
 
 class ChatConsumer(AsyncWebsocketConsumer):
-    async def receive(self, text_data):
-        data = json.loads(text_data)
+    async def receive(self, text_data=None, bytes_data=None):
+        data = json.loads(text_data or bytes_data)
+        logger.debug("received %s from browser", data)
         user_message_text: str = data.get("message", "")
         session_id: str | None = data.get("sessionId", None)
         selected_file_uuids: Sequence[UUID] = [UUID(u) for u in data.get("selectedFiles", [])]
@@ -44,7 +45,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 "message_history": message_history,
                 "selected_files": [{"uuid": f.core_file_uuid} for f in selected_files],
             }
-            logger.debug("sending to core-api: %s", message)
             await self.send_to_server(core_websocket, message)
             await self.send_to_client({"type": "session-id", "data": str(session.id)})
             reply, source_files = await self.receive_llm_responses(user, core_websocket)
@@ -57,7 +57,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         source_files: MutableSequence[File] = []
         async for raw_message in core_websocket:
             message = json.loads(raw_message, object_hook=lambda d: SimpleNamespace(**d))
-            logger.debug("Received: %s", message)
+            logger.debug("received %s from core-api", message)
             if message.resource_type == "text":
                 full_reply.append(await self.handle_text(message))
             elif message.resource_type == "documents":
@@ -81,10 +81,12 @@ class ChatConsumer(AsyncWebsocketConsumer):
         return message.data
 
     async def send_to_client(self, data):
+        logger.debug("sending %s to browser", data)
         await self.send(json.dumps(data, default=str))
 
     @staticmethod
     async def send_to_server(websocket, data):
+        logger.debug("sending %s to core-api", data)
         return await websocket.send(json.dumps(data, default=str))
 
     @staticmethod
