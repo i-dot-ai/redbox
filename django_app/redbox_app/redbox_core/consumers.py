@@ -93,7 +93,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         if session_id:
             session = ChatHistory.objects.get(id=session_id)
         else:
-            session_name = user_message_text[0:20]
+            session_name = user_message_text[0 : settings.CHAT_TITLE_LENGTH]
             session = ChatHistory(name=session_name, users=user)
             session.save()
         return session
