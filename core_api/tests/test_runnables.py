@@ -1,7 +1,7 @@
 import re
 
 from core_api.src.format import format_chunks, get_file_chunked_to_tokens
-from core_api.src.runnables import make_stuff_document_runnable, make_chat_runnable
+from core_api.src.runnables import make_chat_runnable, make_stuff_document_runnable
 
 
 def test_make_chat_runnable(mock_llm):

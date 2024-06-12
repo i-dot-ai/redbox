@@ -13,9 +13,9 @@ def make_chat_runnable(
     llm: ChatLiteLLM,
 ) -> Runnable:
     """Takes a system prompt and LLM returns a chat runnable.
-    
+
     Runnable takes input of a dict keyed to question and messages.
-    
+
     Runnable returns a string.
     """
     chat_history = [
