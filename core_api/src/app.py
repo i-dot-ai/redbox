@@ -14,7 +14,7 @@ from redbox.models import Settings, StatusResponse
 
 # === Logging ===
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger()
 
 env = Settings()
