@@ -1,16 +1,23 @@
-from os import system
+import logging
+from uuid import UUID
 
+import numpy as np
 from langchain.chains.llm import LLMChain
 from langchain.chains.qa_with_sources import load_qa_with_sources_chain
 from langchain_community.chat_models import ChatLiteLLM
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_elasticsearch import ElasticsearchStore
+from networkx import dual_barabasi_albert_graph
 
-from core_api.src.runnables import (
-    make_es_retriever,
-    make_rag_runnable,
-    make_stuff_document_runnable,
-)
+from core_api.src.format import get_file_chunked_to_tokens
+from core_api.src.runnables import make_stuff_document_runnable
+from redbox.models.chat import ChatRequest
+from redbox.storage import ElasticsearchStorageHandler
+
+# === Logging ===
+
+logging.basicConfig(level=logging.INFO)
+log = logging.getLogger()
 
 # Define the system prompt for summarization
 summarisation_prompt = """
@@ -24,6 +31,7 @@ You are an AI assistant tasked with summarizing documents. Your goal is to extra
 
 async def build_vanilla_chain(
     chat_request: ChatRequest,
+    **kwargs,
 ) -> ChatPromptTemplate:
     """Get a LLM response to a question history"""
 
@@ -55,6 +63,7 @@ async def build_retrieval_chain(
     user_uuid: UUID,
     llm: ChatLiteLLM,
     vector_store: ElasticsearchStore,
+    **kwargs,
 ):
     question = chat_request.message_history[-1].text
     previous_history = list(chat_request.message_history[:-1])
@@ -104,19 +113,39 @@ async def build_stuff_chain(
     chat_request: ChatRequest,
     user_uuid: UUID,
     llm: ChatLiteLLM,
-    vector_store: ElasticsearchStore,
+    storage_handler: ElasticsearchStorageHandler,
+    **kwargs,
 ):
     question = chat_request.message_history[-1].text
     previous_history = list(chat_request.message_history[:-1])
 
-    context = chat_request.selected_files
-
     chain = make_stuff_document_runnable(summarisation_prompt, llm)
+
+    documents = [
+        get_file_chunked_to_tokens(
+            file_uuid=file_uuid,
+            user_uuid=user_uuid,
+            storage_handler=storage_handler,
+        )
+        for file_uuid in chat_request.selected_files
+    ]
+
+    documents = sum(documents, [])
+    # right now, can only handle a single document so we manually truncate
+    doc_token_sum = np.cumsum([doc.token_count for doc in documents])
+
+    doc_token_sum_limit_index = sum(1 for i in doc_token_sum if i < 20_000)
+
+    documents_trunc = documents[:doc_token_sum_limit_index]
+    if len(documents) < doc_token_sum_limit_index:
+        logging.info(
+            "Documents were longer than 20k tokens. Truncating to the first 20k."
+        )
 
     params = {
         "question": question,
-        "content": context,
-        "messages": [(msg.role, msg.text) for msg in previous_history],
+        "documents": documents_trunc,
+        "messages": [(msg["role"], msg["text"]) for msg in previous_history],
     }
 
     return chain, params

@@ -9,7 +9,6 @@ from fastapi.testclient import TestClient
 from jose import jwt
 from langchain_community.embeddings import SentenceTransformerEmbeddings
 from langchain_community.llms.fake import FakeListLLM
-from langchain_elasticsearch import ApproxRetrievalStrategy, ElasticsearchStore
 
 from core_api.src.app import app as application
 from core_api.src.app import env
@@ -56,9 +55,7 @@ def headers(alice):
 
 @pytest.fixture()
 def elasticsearch_storage_handler(es_client):
-    return ElasticsearchStorageHandler(
-        es_client=es_client, root_index=env.elastic_root_index
-    )
+    return ElasticsearchStorageHandler(es_client=es_client, root_index=env.elastic_root_index)
 
 
 @pytest.fixture()
@@ -124,9 +121,7 @@ def other_stored_file_chunks(stored_file_1) -> list[Chunk]:
 
 
 @pytest.fixture()
-def chunked_file(
-    elasticsearch_storage_handler, stored_file_chunks, stored_file_1
-) -> File:
+def chunked_file(elasticsearch_storage_handler, stored_file_chunks, stored_file_1) -> File:
     for chunk in stored_file_chunks:
         elasticsearch_storage_handler.write_item(chunk)
     elasticsearch_storage_handler.refresh()
@@ -136,13 +131,7 @@ def chunked_file(
 
 @pytest.fixture()
 def file_pdf_path() -> Path:
-    return (
-        Path(__file__).parents[2]
-        / "tests"
-        / "data"
-        / "pdf"
-        / "Cabinet Office - Wikipedia.pdf"
-    )
+    return Path(__file__).parents[2] / "tests" / "data" / "pdf" / "Cabinet Office - Wikipedia.pdf"
 
 
 @pytest.fixture()
@@ -152,9 +141,7 @@ def mock_llm():
 
 @pytest.fixture()
 def embedding_model() -> SentenceTransformerEmbeddings:
-    return SentenceTransformerEmbeddings(
-        model_name=env.embedding_model, cache_folder=MODEL_PATH
-    )
+    return SentenceTransformerEmbeddings(model_name=env.embedding_model, cache_folder=MODEL_PATH)
 
 
 @pytest.fixture()
