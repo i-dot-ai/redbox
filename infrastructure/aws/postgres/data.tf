@@ -3,10 +3,21 @@ data "terraform_remote_state" "redbox" {
   workspace = terraform.workspace
   config = {
     bucket = var.state_bucket
-    key    = "redboc/terraform.tfstate"
+    key    = "redbox/terraform.tfstate"
     region = var.region
   }
 }
+
+data "terraform_remote_state" "platform" {
+  backend   = "s3"
+  workspace = terraform.workspace
+  config = {
+    bucket = var.state_bucket
+    key    = "platform/terraform.tfstate"
+    region = var.region
+  }
+}
+
 
 provider "aws" {
   default_tags {
@@ -32,7 +43,7 @@ terraform {
   required_version = ">= 1.3.5"
 
   backend "s3" {
-    key = "redbox/terraform.tfstate"
+    key = "redbox-postgres-deployment/terraform.tfstate"
   }
 
 }
