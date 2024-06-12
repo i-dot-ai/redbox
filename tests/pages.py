@@ -8,7 +8,7 @@ from time import sleep, strptime
 from typing import Any, ClassVar, NamedTuple
 
 from axe_playwright_python.sync_playwright import Axe
-from playwright.sync_api import Page, expect
+from playwright.sync_api import Locator, Page, expect
 from yarl import URL
 
 logger = logging.getLogger(__name__)
@@ -50,7 +50,7 @@ class BasePage(ABC):
         self.check_a11y()
 
     def check_title(self):
-        expected_page_title = self.get_expected_page_title()
+        expected_page_title = self.expected_page_title
         expect(self.page).to_have_title(expected_page_title)
         # expect(self.page).to_have_url("url")
 
@@ -72,8 +72,9 @@ class BasePage(ABC):
         self.page.get_by_role("link", name="Support", exact=True).click()
         return SupportPage(self.page)
 
+    @property
     @abstractmethod
-    def get_expected_page_title(self) -> str: ...
+    def expected_page_title(self) -> str: ...
 
     @property
     def title(self) -> str:
@@ -106,7 +107,8 @@ class LandingPage(BasePage):
         page.goto(str(base_url))
         super().__init__(page)
 
-    def get_expected_page_title(self) -> str:
+    @property
+    def expected_page_title(self) -> str:
         return "Redbox Copilot"
 
     def navigate_to_sign_in(self) -> "SignInPage":
@@ -115,7 +117,8 @@ class LandingPage(BasePage):
 
 
 class SignInPage(BasePage):
-    def get_expected_page_title(self) -> str:
+    @property
+    def expected_page_title(self) -> str:
         return "Sign in - Redbox Copilot"
 
     @property
@@ -132,7 +135,8 @@ class SignInPage(BasePage):
 
 
 class SignInLinkSentPage(BasePage):
-    def get_expected_page_title(self) -> str:
+    @property
+    def expected_page_title(self) -> str:
         return "Sign in - link sent - Redbox Copilot"
 
 
@@ -141,7 +145,8 @@ class SignInConfirmationPage(BasePage):
         page.goto(str(magic_link))
         super().__init__(page)
 
-    def get_expected_page_title(self) -> str:
+    @property
+    def expected_page_title(self) -> str:
         return "Sign in - confirmation - Redbox Copilot"
 
     def navigate_to_documents_page(self) -> "DocumentsPage":
@@ -150,7 +155,8 @@ class SignInConfirmationPage(BasePage):
 
 
 class HomePage(SignedInBasePage):
-    def get_expected_page_title(self) -> str:
+    @property
+    def expected_page_title(self) -> str:
         return "Redbox Copilot"
 
 
@@ -161,7 +167,8 @@ class DocumentRow(NamedTuple):
 
 
 class DocumentsPage(SignedInBasePage):
-    def get_expected_page_title(self) -> str:
+    @property
+    def expected_page_title(self) -> str:
         return "Documents - Redbox Copilot"
 
     def navigate_to_upload(self) -> "DocumentUploadPage":
@@ -184,7 +191,8 @@ class DocumentsPage(SignedInBasePage):
 
 
 class DocumentUploadPage(SignedInBasePage):
-    def get_expected_page_title(self) -> str:
+    @property
+    def expected_page_title(self) -> str:
         return "Upload a document - Redbox Copilot"
 
     def upload_documents(self, upload_files: Sequence[Path]) -> DocumentsPage:
@@ -199,7 +207,8 @@ class DocumentUploadPage(SignedInBasePage):
 
 
 class DocumentDeletePage(SignedInBasePage):
-    def get_expected_page_title(self) -> str:
+    @property
+    def expected_page_title(self) -> str:
         return "Remove document - Redbox Copilot"
 
     def confirm_deletion(self) -> "DocumentsPage":
@@ -208,12 +217,15 @@ class DocumentDeletePage(SignedInBasePage):
 
 
 class ChatMessage(NamedTuple):
+    status: str | None
     role: str
     text: str
+    links: Sequence[str]
 
 
 class ChatsPage(SignedInBasePage):
-    def get_expected_page_title(self) -> str:
+    @property
+    def expected_page_title(self) -> str:
         return "Chats - Redbox Copilot"
 
     @property
@@ -226,7 +238,7 @@ class ChatsPage(SignedInBasePage):
 
     @property
     def available_file_names(self) -> Sequence[str]:
-        return self.page.locator(".govuk-checkboxes__label").all_inner_texts()
+        return self.page.locator("document-selector .govuk-checkboxes__label").all_inner_texts()
 
     @property
     def selected_file_names(self) -> Sequence[str]:
@@ -241,17 +253,25 @@ class ChatsPage(SignedInBasePage):
         self.page.get_by_text("Send").click()
         return ChatsPage(self.page)
 
-    def all_messages(self, exclude_feedback=True) -> list[ChatMessage]:
-        messages = [
-            ChatMessage(*t.strip().split(maxsplit=1)) for t in self.page.locator(".iai-chat-message").all_inner_texts()
-        ]
-        return [m for m in messages if "Thank you for your feedback." not in m.text] if exclude_feedback else messages
+    @property
+    def all_messages(self) -> list[ChatMessage]:
+        return [self._chat_message_from_element(element) for element in self.page.locator("chat-message").all()]
 
-    def wait_for_loaded_response(self, retry_interval: int = 1, max_tries: int = 120) -> list[ChatMessage]:
+    @staticmethod
+    def _chat_message_from_element(element: Locator) -> ChatMessage:
+        status = element.get_attribute("data-status")
+        role = element.locator(".iai-chat-message__role").inner_text()
+        text = element.locator(".iai-chat-message__text").inner_text()
+        links = element.locator(".iai-chat-messages__sources-link").all_inner_texts()
+        return ChatMessage(status, role, text, links)
+
+    def get_all_messages_once_streaming_has_completed(
+        self, retry_interval: int = 1, max_tries: int = 120
+    ) -> Sequence[ChatMessage]:
         tries = 0
         while True:
-            messages = self.all_messages()
-            if not messages[-1].text.startswith("Response loading"):
+            messages = self.all_messages
+            if not any(m.status == "streaming" for m in messages):
                 return messages
             if tries >= max_tries:
                 logger.error("messages: %s", messages)
@@ -261,21 +281,24 @@ class ChatsPage(SignedInBasePage):
             sleep(retry_interval)
 
     def wait_for_latest_message(self, role="Redbox") -> ChatMessage:
-        return [m for m in self.wait_for_loaded_response() if m.role == role][-1]
+        return [m for m in self.get_all_messages_once_streaming_has_completed() if m.role == role][-1]
 
 
 class PrivacyPage(BasePage):
-    def get_expected_page_title(self) -> str:
+    @property
+    def expected_page_title(self) -> str:
         return "Privacy notice - Redbox Copilot"
 
 
 class AccessibilityPage(BasePage):
-    def get_expected_page_title(self) -> str:
+    @property
+    def expected_page_title(self) -> str:
         return "Accessibility statement - Redbox Copilot"
 
 
 class SupportPage(BasePage):
-    def get_expected_page_title(self) -> str:
+    @property
+    def expected_page_title(self) -> str:
         return "Support - Redbox Copilot"
 
 
@@ -284,7 +307,7 @@ def batched(iterable, n):
     # https://docs.python.org/3/library/itertools.html#itertools.batched
     if n < 1:
         message = "n must be at least one"
-        raise PageError(message)
+        raise ValueError(message)
     iterable = iter(iterable)
     while batch := tuple(islice(iterable, n)):
         yield batch

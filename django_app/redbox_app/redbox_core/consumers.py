@@ -33,6 +33,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         await self.save_message(session, user_message_text, ChatRoleEnum.user, selected_files=selected_files)
 
         await self.llm_conversation(selected_files, session, user)
+        await self.close()
 
     async def llm_conversation(self, selected_files: Sequence[File], session: ChatHistory, user: User) -> None:
         session_messages = await self.get_messages(session)

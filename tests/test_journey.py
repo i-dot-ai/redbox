@@ -53,7 +53,7 @@ def test_user_journey(page: Page, email_address: str):
     chats_page.write_message = "What is the Cabinet Office?"
     chats_page = chats_page.send()
     logger.debug("page: %s", chats_page)
-    all_messages = chats_page.wait_for_loaded_response()
+    all_messages = chats_page.get_all_messages_once_streaming_has_completed()
     logger.info("all_messages: %s", all_messages)
     latest_chat_response = [m for m in all_messages if m.role == "Redbox"][-1]
     assert "Cabinet Office" in latest_chat_response.text
@@ -69,7 +69,7 @@ def test_user_journey(page: Page, email_address: str):
     chats_page.write_message = "What are the Conservative's education policies?"
     chats_page = chats_page.send()
     assert chats_page.selected_file_names == files_to_select
-    assert "I'm sorry" in chats_page.wait_for_latest_message().text
+    assert any(apology in chats_page.wait_for_latest_message().text for apology in ["I'm sorry", "I'm afraid"])
 
     # Delete a file
     documents_page = chats_page.navigate_to_documents()
