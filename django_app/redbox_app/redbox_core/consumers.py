@@ -7,11 +7,10 @@ from uuid import UUID
 from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
 from django.conf import settings
-from redbox_app.redbox_core.models import ChatHistory, ChatMessage, ChatRoleEnum, File, User,TextChunk
+from redbox_app.redbox_core.models import ChatHistory, ChatMessage, ChatRoleEnum, File, TextChunk, User
 from websockets import WebSocketClientProtocol
 from websockets.client import connect
 from yarl import URL
-
 
 OptFileSeq = Sequence[File] | None
 logger = logging.getLogger(__name__)

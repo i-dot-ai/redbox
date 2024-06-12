@@ -8,9 +8,7 @@ import pytest
 from django.core.files.uploadedfile import SimpleUploadedFile, UploadedFile
 from django.core.management import call_command
 from redbox_app.redbox_core import client
-from redbox_app.redbox_core.models import ChatHistory, ChatMessage, ChatRoleEnum, File, User, TextChunk
-
-
+from redbox_app.redbox_core.models import ChatHistory, ChatMessage, ChatRoleEnum, File, TextChunk, User
 
 logger = logging.getLogger(__name__)
 
