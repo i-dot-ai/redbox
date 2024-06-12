@@ -6,10 +6,13 @@ from botocore.exceptions import ClientError
 from elasticsearch import Elasticsearch
 from fastapi.testclient import TestClient
 from jose import jwt
+from langchain_community.embeddings import SentenceTransformerEmbeddings
 from langchain_community.llms.fake import FakeListLLM
+from langchain_elasticsearch import ApproxRetrievalStrategy, ElasticsearchStore
 
 from core_api.src.app import app as application
 from core_api.src.app import env
+from redbox.model_db import MODEL_PATH
 from redbox.models import Chunk, File
 from redbox.storage import ElasticsearchStorageHandler
 
@@ -72,33 +75,53 @@ def file(s3_client, file_pdf_path: Path, alice) -> File:
 
 
 @pytest.fixture()
-def stored_file(elasticsearch_storage_handler, file) -> File:
+def stored_file_1(elasticsearch_storage_handler, file) -> File:
     elasticsearch_storage_handler.write_item(file)
     elasticsearch_storage_handler.refresh()
     return file
 
 
 @pytest.fixture()
-def stored_file_chunks(stored_file) -> list[Chunk]:
+def stored_file_chunks(stored_file_1) -> list[Chunk]:
     chunks: list[Chunk] = []
     for i in range(5):
         chunks.append(
             Chunk(
                 text="hello",
                 index=i,
-                parent_file_uuid=stored_file.uuid,
-                creator_user_uuid=stored_file.creator_user_uuid,
+                parent_file_uuid=stored_file_1.uuid,
+                creator_user_uuid=stored_file_1.creator_user_uuid,
+                embedding=[1] * 768,
+                metadata={"parent_doc_uuid": str(stored_file_1.uuid)},
             )
         )
     return chunks
 
 
 @pytest.fixture()
-def chunked_file(elasticsearch_storage_handler, stored_file_chunks, stored_file) -> File:
+def other_stored_file_chunks(stored_file_1) -> list[Chunk]:
+    new_uuid = uuid4()
+    chunks: list[Chunk] = []
+    for i in range(5):
+        chunks.append(
+            Chunk(
+                text="hello",
+                index=i,
+                parent_file_uuid=new_uuid,
+                creator_user_uuid=stored_file_1.creator_user_uuid,
+                embedding=[1] * 768,
+                metadata={"parent_doc_uuid": str(new_uuid)},
+            )
+        )
+    return chunks
+
+
+@pytest.fixture()
+def chunked_file(elasticsearch_storage_handler, stored_file_chunks, stored_file_1) -> File:
     for chunk in stored_file_chunks:
         elasticsearch_storage_handler.write_item(chunk)
     elasticsearch_storage_handler.refresh()
-    return stored_file
+    return stored_file_1
 
 
 @pytest.fixture()
@@ -109,3 +132,27 @@ def file_pdf_path() -> Path:
 @pytest.fixture()
 def mock_llm():
     return FakeListLLM(responses=["<<TESTING>>"] * 128)
+
+
+@pytest.fixture()
+def embedding_model() -> SentenceTransformerEmbeddings:
+    return SentenceTransformerEmbeddings(model_name=env.embedding_model, cache_folder=MODEL_PATH)
+
+
+@pytest.fixture()
+def vector_store(es_client, embedding_model):
+    if env.elastic.subscription_level == "basic":
+        strategy = ApproxRetrievalStrategy(hybrid=False)
+    elif env.elastic.subscription_level in ["platinum", "enterprise"]:
+        strategy = ApproxRetrievalStrategy(hybrid=True)
+    else:
+        message = f"Unknown Elastic subscription level {env.elastic.subscription_level}"
+        raise ValueError(message)
+
+    return ElasticsearchStore(
+        es_connection=es_client,
+        index_name=f"{env.elastic_root_index}-chunk",
+        embedding=embedding_model,
+        strategy=strategy,
+        vector_query_field="embedding",
+    )

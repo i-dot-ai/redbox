@@ -195,27 +195,45 @@ def remove_doc_view(request, doc_id: uuid):
     )
 
 
-@login_required
-def chats_view(request: HttpRequest, chat_id: uuid.UUID | None = None):
-    chat_history = ChatHistory.objects.filter(users=request.user).order_by("-created_at")
+class ChatsView(View):
+    @method_decorator(login_required)
+    def get(self, request: HttpRequest, chat_id: uuid.UUID | None = None) -> HttpResponse:
+        chat_history = ChatHistory.objects.filter(users=request.user).order_by("-created_at")
 
-    messages = []
-    if chat_id:
-        messages = ChatMessage.objects.filter(chat_history__id=chat_id).order_by("created_at")
-    endpoint = URL.build(scheme=settings.WEBSOCKET_SCHEME, host=request.get_host(), path=r"/ws/chat/")
-    context = {
-        "chat_id": chat_id,
-        "messages": messages,
-        "chat_history": chat_history,
-        "streaming": {"in_use": settings.USE_STREAMING, "endpoint": str(endpoint)},
-        "contact_email": settings.CONTACT_EMAIL,
-    }
+        messages: Sequence[ChatMessage] = []
+        if chat_id:
+            messages = ChatMessage.objects.filter(chat_history__id=chat_id).order_by("created_at")
+        endpoint = URL.build(scheme=settings.WEBSOCKET_SCHEME, host=request.get_host(), path=r"/ws/chat/")
 
-    return render(
-        request,
-        template_name="chats.html",
-        context=context,
-    )
+        hidden_statuses = [StatusEnum.deleted, StatusEnum.errored]
+        all_files = File.objects.filter(user=request.user).exclude(status__in=hidden_statuses).order_by("-created_at")
+        self.decorate_selected_files(all_files, messages)
+
+        context = {
+            "chat_id": chat_id,
+            "messages": messages,
+            "chat_history": chat_history,
+            "streaming": {"in_use": settings.USE_STREAMING, "endpoint": str(endpoint)},
+            "contact_email": settings.CONTACT_EMAIL,
+            "files": all_files,
+        }
+
+        return render(
+            request,
+            template_name="chats.html",
+            context=context,
+        )
+
+    @staticmethod
+    def decorate_selected_files(all_files: Sequence[File], messages: Sequence[ChatMessage]) -> None:
+        if messages:
+            last_user_message = [m for m in messages if m.role == ChatRoleEnum.user][-1]
+            selected_files: Sequence[File] = last_user_message.selected_files.all() or []
+        else:
+            selected_files = []
+
+        for file in all_files:
+            file.selected = file in selected_files
 
 
 @require_http_methods(["POST"])
@@ -252,7 +270,7 @@ def post_message(request: HttpRequest) -> HttpResponse:
         file.last_referenced = timezone.now()
         file.save()
 
-    return redirect(reverse(chats_view, args=(session.id,)))
+    return redirect(reverse("chats", args=(session.id,)))
 
 
 @require_http_methods(["GET"])

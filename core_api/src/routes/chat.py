@@ -28,8 +28,8 @@ from redbox.models.chat import ChatRequest, ChatResponse, SourceDocument
 
 # === Logging ===
 
-logging.basicConfig(level=logging.INFO)
-log = logging.getLogger()
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger()
 
 
 chat_app = FastAPI(
@@ -86,10 +86,7 @@ async def build_vanilla_chain(
 
 
 async def build_retrieval_chain(
-    chat_request: ChatRequest,
-    user_uuid: UUID,
-    llm: ChatLiteLLM,
-    vector_store: ElasticsearchStore,
+    chat_request: ChatRequest, user_uuid: UUID, llm: ChatLiteLLM, vector_store: ElasticsearchStore
 ):
     question = chat_request.message_history[-1].text
     previous_history = list(chat_request.message_history[:-1])
@@ -109,7 +106,14 @@ async def build_retrieval_chain(
 
     standalone_question = condense_question_chain({"question": question, "chat_history": previous_history})["text"]
 
-    search_kwargs = {"filter": {"term": {"creator_user_uuid.keyword": str(user_uuid)}}}
+    search_kwargs = {"filter": {"bool": {"must": [{"term": {"creator_user_uuid.keyword": str(user_uuid)}}]}}}
+
+    if chat_request.selected_files:
+        logging.info("chat_request.selected_files: %s", str(chat_request.selected_files))
+        search_kwargs["filter"]["bool"]["must"] = [
+            {"term": {"parent_file_uuid.keyword": str(file.uuid)}} for file in chat_request.selected_files
+        ]
+
     docs = vector_store.as_retriever(search_kwargs=search_kwargs).get_relevant_documents(standalone_question)
 
     params = {
@@ -120,12 +124,7 @@ async def build_retrieval_chain(
     return docs_with_sources_chain, params
 
 
-async def build_chain(
-    chat_request: ChatRequest,
-    user_uuid: UUID,
-    llm: ChatLiteLLM,
-    vector_store: ElasticsearchStore,
-):
+async def build_chain(chat_request: ChatRequest, user_uuid: UUID, llm: ChatLiteLLM, vector_store: ElasticsearchStore):
     question = chat_request.message_history[-1].text
     route = route_layer(question)
 
@@ -153,6 +152,8 @@ async def rag_chat(
     Returns:
         StreamingResponse: a stream of the chain response
     """
+
+    logging.info("chat_request: %s", chat_request)
 
     question = chat_request.message_history[-1].text
     route = route_layer(question)
@@ -189,7 +190,10 @@ async def rag_chat_streamed(
 
     user_uuid = await get_ws_user_uuid(websocket)
 
-    chat_request = ChatRequest.parse_raw(await websocket.receive_text())
+    request = await websocket.receive_text()
+    logger.debug("raw request from django-app: %s", request)
+    chat_request = ChatRequest.model_validate_json(request)
+    logger.debug("chat request from django-app: %s", chat_request)
 
     chain, params = await build_chain(chat_request, user_uuid, llm, vector_store)
 
@@ -216,6 +220,6 @@ async def rag_chat_streamed(
                 msg = event["data"]["chunk"].messages[0].content
                 await websocket.send_json({"resource_type": "text", "data": msg})
             except (KeyError, AttributeError):
-                logging.exception("unknown message format %s", str(event["data"]["chunk"]))
+                logger.exception("unknown message format %s", str(event["data"]["chunk"]))
 
     await websocket.close()
