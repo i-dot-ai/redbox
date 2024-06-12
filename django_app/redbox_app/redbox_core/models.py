@@ -158,16 +158,22 @@ class ChatRoleEnum(models.TextChoices):
     system = "system"
 
 
+class TextChunk(UUIDPrimaryKeyBase, TimeStampedModel):
+    file = models.ForeignKey(File, on_delete=models.CASCADE)
+    chat_message = models.ForeignKey("ChatMessage", on_delete=models.CASCADE)
+    text = models.TextField(null=True, blank=True)
+    metadata = models.JSONField(null=True, blank=True)
+
+    def __str__(self):
+        return f"{self.file}: {self.text or ''}"
+
+
 class ChatMessage(UUIDPrimaryKeyBase, TimeStampedModel):
     chat_history = models.ForeignKey(ChatHistory, on_delete=models.CASCADE)
     text = models.TextField(max_length=32768, null=False, blank=False)
     role = models.CharField(choices=ChatRoleEnum.choices, null=False, blank=False)
-    source_files = models.ManyToManyField(
-        File,
-        related_name="chat_messages",
-        blank=True,
-    )
     selected_files = models.ManyToManyField(File, related_name="+", symmetrical=False, blank=True)
+    chunks = models.ManyToManyField(File, through=TextChunk)
 
     def __str__(self) -> str:  # pragma: no cover
         return f"{self.chat_history} - {self.text} - {self.role}"
