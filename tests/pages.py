@@ -222,6 +222,18 @@ class ChatsPage(SignedInBasePage):
     def write_message(self, value: str):
         self.page.locator("#message").fill(value)
 
+    @property
+    def available_file_names(self) -> Sequence[str]:
+        return []
+
+    @property
+    def selected_file_names(self) -> Sequence[str]:
+        return []
+
+    @selected_file_names.setter
+    def selected_file_names(self, values: Sequence[str]):
+        pass
+
     def send(self) -> "ChatsPage":
         self.page.get_by_text("Send").click()
         return ChatsPage(self.page)
@@ -239,6 +251,7 @@ class ChatsPage(SignedInBasePage):
             if not messages[-1].text.startswith("Response loading"):
                 return messages
             if tries >= max_tries:
+                logger.error("messages: %s", messages)
                 error_message = "Too many retries waiting for response"
                 raise ValueError(error_message)
             tries += 1

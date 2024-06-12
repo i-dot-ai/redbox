@@ -64,6 +64,23 @@ def test_user_journey(page: Page, email_address: str):
     latest_chat_response = [m for m in all_messages if m.role == "Redbox"][-1]
     assert "Cabinet Office" in latest_chat_response.text
 
+    # Select file
+    # selected_files = [f.name for f in upload_files if "Cabinet" in f.name]
+    # chats_page.selected_file_names = selected_files
+    # chats_page.write_message = "What is the Cabinet Office?"
+    # chats_page = chats_page.send()
+    # assert chats_page.selected_file_names == selected_files
+    # all_messages = chats_page.wait_for_loaded_response()
+    # latest_chat_response = [m for m in all_messages if m.role == "Redbox"][-1]
+    # assert "Cabinet Office" in latest_chat_response.text
+    #
+    # chats_page.write_message = "What are the Conservative's education policies?"
+    # chats_page = chats_page.send()
+    # assert chats_page.selected_file_names == selected_files
+    # all_messages = chats_page.wait_for_loaded_response()
+    # latest_chat_response = [m for m in all_messages if m.role == "Redbox"][-1]
+    # assert "Manifesto" in latest_chat_response.text
+
 
 def test_support_pages(page: Page):
     # Landing page
