@@ -15,6 +15,10 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
 
+class PageError(ValueError):
+    pass
+
+
 class BasePage(ABC):
     # All available rules/categories can be found at https://github.com/dequelabs/axe-core/blob/develop/doc/rule-descriptions.md
     # Can't include all as gov.uk design system violates the "region" rule
@@ -52,11 +56,9 @@ class BasePage(ABC):
 
     def check_a11y(self):
         results = self.axe.run(self.page, context=None, options=self.AXE_OPTIONS)
-        if results.violations_count > 0:
-            expect(
-                self.page.get_by_text("Accessibility issues"),
-                f"Accessibility issues in {self.__class__.__name__} at {self.url}",
-            ).to_be_visible()
+        if results.violations_count:
+            error_message = f"accessibility violations from page {self}: {results.generate_report()} "
+            raise PageError(error_message)
 
     def navigate_to_privacy_page(self) -> "PrivacyPage":
         self.page.get_by_role("link", name="Privacy", exact=True).click()
@@ -224,15 +226,16 @@ class ChatsPage(SignedInBasePage):
 
     @property
     def available_file_names(self) -> Sequence[str]:
-        return []
+        return self.page.locator(".govuk-checkboxes__label").all_inner_texts()
 
     @property
     def selected_file_names(self) -> Sequence[str]:
-        return []
+        return [file_name for file_name in self.available_file_names if self.page.get_by_label(file_name).is_checked()]
 
     @selected_file_names.setter
-    def selected_file_names(self, values: Sequence[str]):
-        pass
+    def selected_file_names(self, file_names: Sequence[str]):
+        for file_name in file_names:
+            self.page.get_by_label(file_name).check()
 
     def send(self) -> "ChatsPage":
         self.page.get_by_text("Send").click()
@@ -253,9 +256,12 @@ class ChatsPage(SignedInBasePage):
             if tries >= max_tries:
                 logger.error("messages: %s", messages)
                 error_message = "Too many retries waiting for response"
-                raise ValueError(error_message)
+                raise PageError(error_message)
             tries += 1
             sleep(retry_interval)
+
+    def wait_for_latest_message(self, role="Redbox") -> ChatMessage:
+        return [m for m in self.wait_for_loaded_response() if m.role == role][-1]
 
 
 class PrivacyPage(BasePage):
@@ -278,7 +284,7 @@ def batched(iterable, n):
     # https://docs.python.org/3/library/itertools.html#itertools.batched
     if n < 1:
         message = "n must be at least one"
-        raise ValueError(message)
+        raise PageError(message)
     iterable = iter(iterable)
     while batch := tuple(islice(iterable, n)):
         yield batch

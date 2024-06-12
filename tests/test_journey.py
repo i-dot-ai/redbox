@@ -40,19 +40,13 @@ def test_user_journey(page: Page, email_address: str):
     documents_page = sign_in_confirmation_page.navigate_to_documents_page()
     original_doc_count = documents_page.document_count()
 
-    # Upload a file
+    # Upload files
     document_upload_page = documents_page.navigate_to_upload()
     upload_files: Sequence[Path] = list((TEST_ROOT / "data" / "pdf").glob("*.pdf"))
     documents_page = document_upload_page.upload_documents(upload_files)
     document_rows = documents_page.get_all_document_rows()
     assert {r.filename for r in document_rows} == {f.name for f in upload_files}
     assert documents_page.document_count() == original_doc_count + len(upload_files)
-
-    # Delete a file
-    pre_delete_doc_count = documents_page.document_count()
-    document_delete_page = documents_page.delete_latest_document()
-    documents_page = document_delete_page.confirm_deletion()
-    assert documents_page.document_count() == pre_delete_doc_count - 1
 
     # Chats page
     chats_page = documents_page.navigate_to_chats()
@@ -65,21 +59,24 @@ def test_user_journey(page: Page, email_address: str):
     assert "Cabinet Office" in latest_chat_response.text
 
     # Select file
-    # selected_files = [f.name for f in upload_files if "Cabinet" in f.name]
-    # chats_page.selected_file_names = selected_files
-    # chats_page.write_message = "What is the Cabinet Office?"
-    # chats_page = chats_page.send()
-    # assert chats_page.selected_file_names == selected_files
-    # all_messages = chats_page.wait_for_loaded_response()
-    # latest_chat_response = [m for m in all_messages if m.role == "Redbox"][-1]
-    # assert "Cabinet Office" in latest_chat_response.text
-    #
-    # chats_page.write_message = "What are the Conservative's education policies?"
-    # chats_page = chats_page.send()
-    # assert chats_page.selected_file_names == selected_files
-    # all_messages = chats_page.wait_for_loaded_response()
-    # latest_chat_response = [m for m in all_messages if m.role == "Redbox"][-1]
-    # assert "Manifesto" in latest_chat_response.text
+    files_to_select = [f.name for f in upload_files if "Cabinet" in f.name]
+    chats_page.selected_file_names = files_to_select
+    chats_page.write_message = "What is the Cabinet Office?"
+    chats_page = chats_page.send()
+    assert chats_page.selected_file_names == files_to_select
+    assert "Cabinet Office" in chats_page.wait_for_latest_message().text
+
+    chats_page.write_message = "What are the Conservative's education policies?"
+    chats_page = chats_page.send()
+    assert chats_page.selected_file_names == files_to_select
+    assert "I'm sorry" in chats_page.wait_for_latest_message().text
+
+    # Delete a file
+    documents_page = chats_page.navigate_to_documents()
+    pre_delete_doc_count = documents_page.document_count()
+    document_delete_page = documents_page.delete_latest_document()
+    documents_page = document_delete_page.confirm_deletion()
+    assert documents_page.document_count() == pre_delete_doc_count - 1
 
 
 def test_support_pages(page: Page):
