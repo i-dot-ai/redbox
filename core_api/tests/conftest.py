@@ -115,7 +115,7 @@ def other_stored_file_chunks(stored_file_1) -> list[Chunk]:
                 parent_file_uuid=new_uuid,
                 creator_user_uuid=stored_file_1.creator_user_uuid,
                 embedding=[1] * 768,
-                metadata={"parent_doc_uuid": str(new_uuid)},
+                metadata={"parent_doc_uuid": str(new_uuid), "other": None},
             )
         )
     return chunks
