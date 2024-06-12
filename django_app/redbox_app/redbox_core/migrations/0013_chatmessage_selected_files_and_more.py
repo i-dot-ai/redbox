@@ -14,5 +14,5 @@ class Migration(migrations.Migration):
             model_name='chatmessage',
             name='selected_files',
             field=models.ManyToManyField(blank=True, related_name='+', to='redbox_core.file'),
-        )
+        ),
     ]

@@ -16,7 +16,13 @@ class FileResource(admin.ModelAdmin):
 
 
 class ChatMessageResource(admin.ModelAdmin):
-    list_display = ["chat_history", "text", "role"]
+    list_display = ["chat_history", "get_user", "text", "role", "created_at"]
+    list_filter = ["role", "chat_history__users"]
+    date_hierarchy = "created_at"
+
+    @admin.display(ordering="chat_history__users", description="User")
+    def get_user(self, obj):
+        return obj.chat_history.users
 
 
 class ChatMessageInline(admin.StackedInline):
@@ -48,8 +54,9 @@ class ChatHistoryAdmin(admin.ModelAdmin):
     export_as_csv.short_description = "Export Selected"
     fields = ["name", "users"]
     inlines = [ChatMessageInline]
-    list_display = ["name", "users", "modified_at"]
+    list_display = ["name", "users", "created_at"]
     list_filter = ["users"]
+    date_hierarchy = "created_at"
     actions = ["export_as_csv"]
 
 

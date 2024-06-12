@@ -1,8 +1,9 @@
 import logging
+from http import HTTPStatus
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import Depends, FastAPI, WebSocket
+from fastapi import Depends, FastAPI, HTTPException, WebSocket
 from fastapi.encoders import jsonable_encoder
 from langchain_community.chat_models import ChatLiteLLM
 from langchain_core.prompts import ChatPromptTemplate
@@ -22,8 +23,8 @@ from redbox.storage import ElasticsearchStorageHandler
 
 # === Logging ===
 
-logging.basicConfig(level=logging.INFO)
-log = logging.getLogger()
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger()
 
 
 chat_app = FastAPI(
@@ -85,6 +86,45 @@ async def semantic_router_to_chain(
     return chain, params
 
 
+async def build_vanilla_chain(
+    chat_request: ChatRequest,
+) -> ChatPromptTemplate:
+    """Get a LLM response to a question history"""
+
+    if len(chat_request.message_history) < 2:  # noqa: PLR2004
+        raise HTTPException(
+            status_code=HTTPStatus.UNPROCESSABLE_ENTITY,
+            detail="Chat history should include both system and user prompts",
+        )
+
+    if chat_request.message_history[0].role != "system":
+        raise HTTPException(
+            status_code=HTTPStatus.UNPROCESSABLE_ENTITY,
+            detail="The first entry in the chat history should be a system prompt",
+        )
+
+    if chat_request.message_history[-1].role != "user":
+        raise HTTPException(
+            status_code=HTTPStatus.UNPROCESSABLE_ENTITY,
+            detail="The final entry in the chat history should be a user question",
+        )
+
+    return ChatPromptTemplate.from_messages((msg.role, msg.text) for msg in chat_request.message_history)
+
+
+async def build_chain(chat_request: ChatRequest, user_uuid: UUID, llm: ChatLiteLLM, vector_store: ElasticsearchStore):
+    question = chat_request.message_history[-1].text
+    route = route_layer(question)
+
+    if route_response := ROUTE_RESPONSES.get(route.name):
+        return route_response, {}
+    # build_vanilla_chain could go here
+
+    # RAG chat
+    chain, params = await build_retrieval_chain(chat_request, user_uuid, llm, vector_store)
+    return chain, params
+
+
 @chat_app.post("/rag", tags=["chat"])
 async def rag_chat(
     chat_request: ChatRequest,
@@ -100,6 +140,8 @@ async def rag_chat(
     Returns:
         StreamingResponse: a stream of the chain response
     """
+
+    logging.info("chat_request: %s", chat_request)
 
     question = chat_request.message_history[-1].text
     route = route_layer(question)
@@ -138,7 +180,9 @@ async def rag_chat_streamed(
     user_uuid = await get_ws_user_uuid(websocket)
 
     request = await websocket.receive_text()
+    logger.debug("raw request from django-app: %s", request)
     chat_request = ChatRequest.model_validate_json(request)
+    logger.debug("chat request from django-app: %s", chat_request)
 
     chain, params = await semantic_router_to_chain(chat_request, user_uuid, llm, vector_store, storage_handler)
 
@@ -167,6 +211,6 @@ async def rag_chat_streamed(
                 msg = event["data"]["chunk"].messages[0].content
                 await websocket.send_json({"resource_type": "text", "data": msg})
             except (KeyError, AttributeError):
-                logging.exception("unknown message format %s", str(event["data"]["chunk"]))
+                logger.exception("unknown message format %s", str(event["data"]["chunk"]))
 
     await websocket.close()

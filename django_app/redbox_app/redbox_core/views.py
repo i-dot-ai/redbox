@@ -205,6 +205,22 @@ class ChatsView(View):
             messages = ChatMessage.objects.filter(chat_history__id=chat_id).order_by("created_at")
         endpoint = URL.build(scheme=settings.WEBSOCKET_SCHEME, host=request.get_host(), path=r"/ws/chat/")
 
+        all_files = File.objects.filter(user=request.user, status=StatusEnum.complete).order_by("-created_at")
+        self.decorate_selected_files(all_files, messages)
+
+        context = {
+            "chat_id": chat_id,
+            "messages": messages,
+            "chat_history": chat_history,
+            "streaming": {"in_use": settings.USE_STREAMING, "endpoint": str(endpoint)},
+            "contact_email": settings.CONTACT_EMAIL,
+            "files": all_files,
+        }
+        messages: Sequence[ChatMessage] = []
+        if chat_id:
+            messages = ChatMessage.objects.filter(chat_history__id=chat_id).order_by("created_at")
+        endpoint = URL.build(scheme=settings.WEBSOCKET_SCHEME, host=request.get_host(), path=r"/ws/chat/")
+
         hidden_statuses = [StatusEnum.deleted, StatusEnum.errored]
         all_files = File.objects.filter(user=request.user).exclude(status__in=hidden_statuses).order_by("-created_at")
         self.decorate_selected_files(all_files, messages)
