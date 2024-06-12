@@ -62,5 +62,21 @@ repos:
         args:
           - --skip-dirs
           - ./tests
+          - --skip-dirs
+          - ./.idea
+          - --skip-files
+          - ./.env
+          - --skip-files
+          - ./.env.backup
+          - --skip-dirs
+          - ./models
+          - --skip-dirs
+          - ./.vscode
+          - --skip-dirs
+          - ./data
+          - --skip-dirs
+          - ./.pre-commit-trivy-cache
+          - --skip-dirs
+          - ./infrastructure
           - --ignore-unfixed
           - . # last arg indicates the path/file to scan

@@ -209,3 +209,6 @@ django_app/tests/staticfiles
 # .tfstate files
 *.tfstate
 *.tfstate.*
+
+# pre commit files
+.pre-commit-trivy-cache
