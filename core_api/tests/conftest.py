@@ -97,7 +97,7 @@ def stored_file_chunks(stored_file_1, embedding_model_dim) -> list[Chunk]:
                 embedding=[1] * embedding_model_dim,
                 parent_file_uuid=stored_file_1.uuid,
                 creator_user_uuid=stored_file_1.creator_user_uuid,
-                metadata={"parent_doc_uuid": str(stored_file_1.new_uuid)},
+                metadata={"parent_doc_uuid": str(stored_file_1.uuid)},
             )
         )
     return chunks
