@@ -126,7 +126,7 @@ def chunked_file(elasticsearch_storage_handler, stored_file_chunks, stored_file_
         elasticsearch_storage_handler.write_item(chunk)
     elasticsearch_storage_handler.refresh()
     time.sleep(1)
-    return stored_file
+    return stored_file_1
 
 
 @pytest.fixture()
