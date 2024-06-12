@@ -64,7 +64,7 @@ def test_make_stuff_document_runnable(mock_llm, stored_file_chunks):
 
 
 @pytest.mark.asyncio()
-async def test_build_retrieval_chain(mock_llm, chunked_file, vector_store):
+async def test_build_retrieval_chain(mock_llm, chunked_file, other_stored_file_chunks, vector_store):  # noqa: ARG001
     request = {
         "message_history": [
             {"text": "hello", "role": "user"},
