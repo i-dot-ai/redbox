@@ -3,19 +3,13 @@ locals {
   django_host   = "${local.record_prefix}.${var.domain_name}"
   name          = "${var.team_name}-${terraform.workspace}-${var.project_name}"
 
-  core_api_environment_variables = {
-    "ELASTIC_ROOT_INDEX" : "redbox-data-${terraform.workspace}",
-    "BUCKET_NAME" : aws_s3_bucket.user_data.bucket,
-    "OBJECT_STORE" : "s3",
-    "EMBEDDING_MODEL" : "all-mpnet-base-v2",
-    "EMBED_QUEUE_NAME" : "redbox-embedder-queue",
-    "INGEST_QUEUE_NAME" : "redbox-ingester-queue",
-    "REDIS_HOST" : module.elasticache.redis_address,
-    "REDIS_PORT" : module.elasticache.redis_port,
-    "ENVIRONMENT" : upper(terraform.workspace),
-    "DEBUG" : terraform.workspace == "dev",
-    "AWS_REGION" : var.region,
-  }
+  core_api_environment_variables = merge(
+    local.worker_environment_variables,
+    {
+      "OPENAI_API_VERSION" : var.openai_api_version,
+      "AZURE_OPENAI_MODEL" : var.azure_openai_model,
+    }
+  )
 
   django_app_environment_variables = {
     "OBJECT_STORE" : "s3",
@@ -28,8 +22,6 @@ locals {
     "DEBUG" : terraform.workspace == "dev",
     "AWS_REGION" : var.region,
     "FROM_EMAIL" : var.from_email,
-    "OPENAI_API_VERSION" : var.openai_api_version,
-    "AZURE_OPENAI_MODEL" : var.azure_openai_model,
     "GOVUK_NOTIFY_PLAIN_EMAIL_TEMPLATE_ID" : var.govuk_notify_plain_email_template_id,
     "EMAIL_BACKEND_TYPE" : "GOVUKNOTIFY",
     "USE_STREAMING" : true,
@@ -58,6 +50,8 @@ locals {
   core_secrets = {
     "ELASTIC__API_KEY" : var.elastic_api_key,
     "ELASTIC__CLOUD_ID" : var.cloud_id,
+    "AZURE_OPENAI_API_KEY" : var.azure_openai_api_key,
+    "AZURE_OPENAI_ENDPOINT" : var.azure_openai_endpoint,
   }
 
   django_app_secrets = {
@@ -65,10 +59,8 @@ locals {
     "POSTGRES_PASSWORD" : module.rds.rds_instance_db_password,
     "POSTGRES_HOST" : module.rds.db_instance_address,
     "POSTGRES_USER" : module.rds.rds_instance_username,
-    "AZURE_OPENAI_API_KEY" : var.azure_openai_api_key,
     "GOVUK_NOTIFY_API_KEY" : var.govuk_notify_api_key,
     "SENTRY_DSN" : var.sentry_dsn,
-    "AZURE_OPENAI_ENDPOINT" : var.azure_openai_endpoint,
   }
 
   worker_secrets = {
