@@ -34,7 +34,7 @@ You are an AI assistant tasked with summarizing documents. Your goal is to extra
 
 async def build_vanilla_chain(
     chat_request: ChatRequest,
-    **kwargs,
+    **kwargs,  # noqa: ARG001
 ) -> ChatPromptTemplate:
     """Get a LLM response to a question history"""
 
@@ -66,7 +66,7 @@ async def build_retrieval_chain(
     user_uuid: UUID,
     llm: ChatLiteLLM,
     vector_store: ElasticsearchStore,
-    **kwargs,
+    **kwargs,  # noqa: ARG001
 ):
     question = chat_request.message_history[-1].text
     previous_history = list(chat_request.message_history[:-1])
@@ -117,35 +117,29 @@ async def build_stuff_chain(
     user_uuid: UUID,
     llm: ChatLiteLLM,
     storage_handler: ElasticsearchStorageHandler,
-    **kwargs,
+    **kwargs,  # noqa: ARG001
 ):
-    logging.info("I AM HERE, file_uuid: %s", str(chat_request.selected_files))
     question = chat_request.message_history[-1].text
     previous_history = list(chat_request.message_history[:-1])
 
-
-    chain = make_stuff_document_runnable(summarisation_prompt, llm)
+    chain = make_stuff_document_runnable(system_prompt=summarisation_prompt, llm=llm)
 
     documents = [
         get_file_chunked_to_tokens(
-            file_uuid=file_uuid,
+            file_uuid=selected_file.uuid,
             user_uuid=user_uuid,
             storage_handler=storage_handler,
         )
-        for file_uuid in chat_request.selected_files
+        for selected_file in chat_request.selected_files
     ]
 
-    logging.info("documents: %s", str(documents))
-
-    documents = sum(documents, [])
     # right now, can only handle a single document so we manually truncate
     doc_token_sum = np.cumsum([doc.token_count for doc in documents])
-
-    doc_token_sum_limit_index = sum(1 for i in doc_token_sum if i < 20_000)
+    doc_token_sum_limit_index = len(i for i in doc_token_sum if i < 20_000)
 
     documents_trunc = documents[:doc_token_sum_limit_index]
     if len(documents) < doc_token_sum_limit_index:
-        logging.info(
+        log.info(
             "Documents were longer than 20k tokens. Truncating to the first 20k."
         )
 
