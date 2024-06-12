@@ -88,7 +88,7 @@ async def build_retrieval_chain(
     search_kwargs = {"filter": {"bool": {"must": [{"term": {"creator_user_uuid.keyword": str(user_uuid)}}]}}}
 
     if chat_request.selected_files is not None:
-        search_kwargs["filter"]["bool"]["should"] = [
+        search_kwargs["filter"]["bool"]["must"] = [
             {"term": {"parent_file_uuid.keyword": str(file.uuid)}} for file in chat_request.selected_files
         ]
 
