@@ -87,16 +87,16 @@ def embedding_model_dim(embedding_model) -> int:
 
 
 @pytest.fixture()
-def stored_file_chunks(stored_file_1) -> list[Chunk]:
+def stored_file_chunks(stored_file_1, embedding_model_dim) -> list[Chunk]:
     chunks: list[Chunk] = []
     for i in range(5):
         chunks.append(
             Chunk(
                 text="hello",
                 index=i,
+                embedding=[1] * embedding_model_dim,
                 parent_file_uuid=stored_file_1.uuid,
                 creator_user_uuid=stored_file_1.creator_user_uuid,
-                embedding=[1] * 768,
                 metadata={"parent_doc_uuid": str(stored_file_1.uuid)},
             )
         )
@@ -115,7 +115,7 @@ def other_stored_file_chunks(stored_file_1) -> list[Chunk]:
                 parent_file_uuid=new_uuid,
                 creator_user_uuid=stored_file_1.creator_user_uuid,
                 embedding=[1] * 768,
-                metadata={"parent_doc_uuid": str(new_uuid), "other": None},
+                metadata={"parent_doc_uuid": str(new_uuid)},
             )
         )
     return chunks
