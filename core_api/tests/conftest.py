@@ -104,6 +104,24 @@ def stored_file_chunks(stored_file_1, embedding_model_dim) -> list[Chunk]:
 
 
 @pytest.fixture()
+def other_stored_file_chunks(stored_file_1) -> list[Chunk]:
+    new_uuid = uuid4()
+    chunks: list[Chunk] = []
+    for i in range(5):
+        chunks.append(
+            Chunk(
+                text="hello",
+                index=i,
+                parent_file_uuid=new_uuid,
+                creator_user_uuid=stored_file_1.creator_user_uuid,
+                embedding=[1] * 768,
+                metadata={"parent_doc_uuid": str(new_uuid)},
+            )
+        )
+    return chunks
+
+
+@pytest.fixture()
 def chunked_file(elasticsearch_storage_handler, stored_file_chunks, stored_file_1) -> File:
     for chunk in stored_file_chunks:
         elasticsearch_storage_handler.write_item(chunk)
