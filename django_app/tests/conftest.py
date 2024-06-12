@@ -1,5 +1,6 @@
 import logging
 import uuid
+from collections.abc import Sequence
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -97,3 +98,33 @@ def uploaded_file(alice: User, original_file: UploadedFile, s3_client) -> File: 
 @pytest.fixture()
 def original_file() -> UploadedFile:
     return SimpleUploadedFile("original_file.txt", b"Lorem Ipsum.")
+
+
+@pytest.fixture()
+def chat_history_with_files(chat_history: ChatHistory, several_files: Sequence[File]) -> ChatHistory:
+    ChatMessage.objects.create(chat_history=chat_history, text="A question?", role=ChatRoleEnum.user)
+    chat_message = ChatMessage.objects.create(chat_history=chat_history, text="An answer.", role=ChatRoleEnum.ai)
+    chat_message.source_files.set(several_files[0::2])
+    chat_message = ChatMessage.objects.create(
+        chat_history=chat_history, text="Another question?", role=ChatRoleEnum.user
+    )
+    chat_message.selected_files.set(several_files[0:2])
+    chat_message = ChatMessage.objects.create(chat_history=chat_history, text="Another answer.", role=ChatRoleEnum.ai)
+    chat_message.source_files.set([several_files[2]])
+    return chat_history
+
+
+@pytest.fixture()
+def several_files(alice: User, number_to_create: int = 4) -> Sequence[File]:
+    files = []
+    for i in range(number_to_create):
+        filename = f"original_file_{i}.txt"
+        files.append(
+            File.objects.create(
+                user=alice,
+                original_file=SimpleUploadedFile(filename, b"Lorem Ipsum."),
+                original_file_name=filename,
+                core_file_uuid=uuid.uuid4(),
+            )
+        )
+    return files
