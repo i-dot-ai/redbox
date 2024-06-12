@@ -3,6 +3,7 @@ import re
 import pytest
 
 from core_api.src.format import format_chunks, get_file_chunked_to_tokens
+from core_api.src.routes.chat import build_retrieval_chain
 from core_api.src.runnables import (
     make_condense_question_runnable,
     make_condense_rag_runnable,
@@ -10,6 +11,7 @@ from core_api.src.runnables import (
     make_rag_runnable,
     make_stuff_document_runnable,
 )
+from redbox.models import ChatRequest
 
 
 def test_format_chunks(stored_file_chunks):
@@ -62,7 +64,7 @@ def test_make_stuff_document_runnable(mock_llm, stored_file_chunks):
 
 
 @pytest.mark.asyncio()
-async def test_build_retrieval_chain(mock_llm, chunked_file, other_stored_file_chunks, vector_store):  # noqa: ARG001
+async def test_build_retrieval_chain(mock_llm, chunked_file, vector_store):
     request = {
         "message_history": [
             {"text": "hello", "role": "user"},
