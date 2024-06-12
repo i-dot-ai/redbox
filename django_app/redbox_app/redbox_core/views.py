@@ -243,7 +243,7 @@ def post_message(request: HttpRequest) -> HttpResponse:
     if session_id := request.POST.get("session-id", None):
         session = ChatHistory.objects.get(id=session_id)
     else:
-        session_name = message_text[0:20]
+        session_name = message_text[0 : settings.CHAT_TITLE_LENGTH]
         session = ChatHistory(name=session_name, users=request.user)
         session.save()
 
