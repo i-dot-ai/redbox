@@ -9,6 +9,7 @@ from . import models
 class UserResource(admin.ModelAdmin):
     fields = ["email", "is_superuser", "is_staff", "last_login"]
     list_display = ["email", "is_superuser", "is_staff", "last_login"]
+    date_hierarchy = "last_login"
 
 
 class FileResource(admin.ModelAdmin):

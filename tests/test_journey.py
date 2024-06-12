@@ -44,9 +44,10 @@ def test_user_journey(page: Page, email_address: str):
     document_upload_page = documents_page.navigate_to_upload()
     upload_files: Sequence[Path] = list((TEST_ROOT / "data" / "pdf").glob("*.pdf"))
     documents_page = document_upload_page.upload_documents(upload_files)
-    document_rows = documents_page.get_all_document_rows()
+    document_rows = documents_page.all_documents
     assert {r.filename for r in document_rows} == {f.name for f in upload_files}
     assert documents_page.document_count() == original_doc_count + len(upload_files)
+    # documents_page.wait_for_documents_to_complete()
 
     # Chats page
     chats_page = documents_page.navigate_to_chats()

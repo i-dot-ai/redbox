@@ -179,7 +179,8 @@ class DocumentsPage(SignedInBasePage):
         self.page.get_by_role("button", name="Remove").first.click()
         return DocumentDeletePage(self.page)
 
-    def get_all_document_rows(self) -> list[DocumentRow]:
+    @property
+    def all_documents(self) -> list[DocumentRow]:
         cell_texts = self.page.get_by_role("cell").all_inner_texts()
         return [
             DocumentRow(filename, strptime(uploaded_at, "%H:%M %d/%m/%Y"), status)
@@ -187,7 +188,19 @@ class DocumentsPage(SignedInBasePage):
         ]
 
     def document_count(self) -> int:
-        return len(self.get_all_document_rows())
+        return len(self.all_documents)
+
+    def wait_for_documents_to_complete(self, retry_interval: int = 5, max_tries: int = 60):
+        tries = 0
+        while True:
+            if all(d.status == "Complete" for d in self.all_documents):
+                return
+            if tries >= max_tries:
+                logger.error("documents: %s", self.all_documents)
+                error_message = "Too many retries waiting documents to complete"
+                raise PageError(error_message)
+            tries += 1
+            sleep(retry_interval)
 
 
 class DocumentUploadPage(SignedInBasePage):
