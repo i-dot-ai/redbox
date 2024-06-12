@@ -54,17 +54,17 @@ resource "aws_secretsmanager_secret" "worker-secret" {
 
 resource "aws_secretsmanager_secret_version" "core-api-json-secret" {
   secret_id     = aws_secretsmanager_secret.core-api-secret.id
-  secret_string = jsonencode(local.secrets)
+  secret_string = jsonencode(local.core_secrets)
 }
 
 resource "aws_secretsmanager_secret_version" "django-app-json-secret" {
-  secret_id     = aws_secretsmanager_secret.core-api-secret.id
-  secret_string = jsonencode(local.secrets)
+  secret_id     = aws_secretsmanager_secret.django-app-secret.id
+  secret_string = jsonencode(local.django_app_secrets)
 }
 
 resource "aws_secretsmanager_secret_version" "worker-json-secret" {
-  secret_id     = aws_secretsmanager_secret.core-api-secret.id
-  secret_string = jsonencode(local.secrets)
+  secret_id     = aws_secretsmanager_secret.worker-secret.id
+  secret_string = jsonencode(local.worker_secrets)
 }
 
 module "django-app" {
@@ -74,13 +74,13 @@ module "django-app" {
   create_networking          = true
   source                     = "../../../i-ai-core-infrastructure//modules/ecs"
   name                       = "${local.name}-django-app"
-  image_tag                  = "0b3ab51276e9cc6880de232bd8620397f3ef9b7c"
+  image_tag                  = var.image_tag
   ecr_repository_uri         = "${var.ecr_repository_uri}/${var.project_name}-django-app"
   ecs_cluster_id             = module.cluster.ecs_cluster_id
   ecs_cluster_name           = module.cluster.ecs_cluster_name
   autoscaling_minimum_target = 1
   autoscaling_maximum_target = 10
-  health_check = {
+  health_check               = {
     healthy_threshold   = 3
     unhealthy_threshold = 3
     accepted_response   = "200"
@@ -95,7 +95,8 @@ module "django-app" {
   aws_lb_arn                   = module.load_balancer.alb_arn
   host                         = local.django_host
   ip_whitelist                 = var.external_ips
-  environment_variables        = local.environment_variables
+  environment_variables        = local.django_app_environment_variables
+  secrets                      = local.reconstructed_django_secrets
 }
 
 
@@ -107,13 +108,13 @@ module "core_api" {
   create_networking             = false
   source                        = "../../../i-ai-core-infrastructure//modules/ecs"
   name                          = "${local.name}-core-api"
-  image_tag                     = "0b3ab51276e9cc6880de232bd8620397f3ef9b7c"
+  image_tag                     = var.image_tag
   ecr_repository_uri            = "${var.ecr_repository_uri}/redbox-core-api"
   ecs_cluster_id                = module.cluster.ecs_cluster_id
   ecs_cluster_name              = module.cluster.ecs_cluster_name
   autoscaling_minimum_target    = 1
   autoscaling_maximum_target    = 10
-  health_check = {
+  health_check                  = {
     healthy_threshold   = 3
     unhealthy_threshold = 3
     accepted_response   = "200"
@@ -127,7 +128,8 @@ module "core_api" {
   load_balancer_security_group = module.load_balancer.load_balancer_security_group_id
   aws_lb_arn                   = module.load_balancer.alb_arn
   ip_whitelist                 = var.external_ips
-  environment_variables        = local.environment_variables
+  environment_variables        = local.core_api_environment_variables
+  secrets                      = local.reconstructed_core_secrets
 }
 
 
@@ -138,7 +140,7 @@ module "worker" {
   create_networking            = false
   source                       = "../../../i-ai-core-infrastructure//modules/ecs"
   name                         = "${local.name}-worker"
-  image_tag                    = "0b3ab51276e9cc6880de232bd8620397f3ef9b7c"
+  image_tag                    = var.image_tag
   ecr_repository_uri           = "${var.ecr_repository_uri}/redbox-worker"
   ecs_cluster_id               = module.cluster.ecs_cluster_id
   ecs_cluster_name             = module.cluster.ecs_cluster_name
@@ -151,7 +153,8 @@ module "worker" {
   load_balancer_security_group = module.load_balancer.load_balancer_security_group_id
   aws_lb_arn                   = module.load_balancer.alb_arn
   ip_whitelist                 = var.external_ips
-  environment_variables        = local.environment_variables
+  environment_variables        = local.worker_environment_variables
+  secrets                      = local.reconstructed_worker_secrets
   http_healthcheck             = false
 }
 

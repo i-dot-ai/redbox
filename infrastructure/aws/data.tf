@@ -1,30 +1,25 @@
 locals {
   record_prefix = terraform.workspace == "prod" ? var.project_name : "${var.project_name}-${terraform.workspace}"
   django_host   = "${local.record_prefix}.${var.domain_name}"
-  name          = "${var.team_name}-${terraform.workspace}-${var.project_name}"]
+  name          = "${var.team_name}-${terraform.workspace}-${var.project_name}"
 
   core_api_environment_variables = {
     "ELASTIC_ROOT_INDEX" : "redbox-data-${terraform.workspace}",
-  }
-
-  django_app_environment_variables = {
-
-  }
-
-  worker_environment_variables = {
-
-  }
-
-  environment_variables = {
-
-    "OBJECT_STORE" : "s3",
     "BUCKET_NAME" : aws_s3_bucket.user_data.bucket,
+    "OBJECT_STORE" : "s3",
     "EMBEDDING_MODEL" : "all-mpnet-base-v2",
     "EMBED_QUEUE_NAME" : "redbox-embedder-queue",
     "INGEST_QUEUE_NAME" : "redbox-ingester-queue",
     "REDIS_HOST" : module.elasticache.redis_address,
     "REDIS_PORT" : module.elasticache.redis_port,
-    # django stuff
+    "ENVIRONMENT" : upper(terraform.workspace),
+    "DEBUG" : terraform.workspace == "dev",
+    "AWS_REGION" : var.region,
+  }
+
+  django_app_environment_variables = {
+    "OBJECT_STORE" : "s3",
+    "BUCKET_NAME" : aws_s3_bucket.user_data.bucket,
     "POSTGRES_DB" : module.rds.db_instance_name,
     "CORE_API_HOST" : "${aws_service_discovery_service.service_discovery_service.name}.${aws_service_discovery_private_dns_namespace.private_dns_namespace.name}",
     "CORE_API_PORT" : 5002,
@@ -46,9 +41,26 @@ locals {
     "SENTRY_ENVIRONMENT" : var.sentry_environment
   }
 
-  secrets = {
+  worker_environment_variables = {
+    "ELASTIC_ROOT_INDEX" : "redbox-data-${terraform.workspace}",
+    "BUCKET_NAME" : aws_s3_bucket.user_data.bucket,
+    "OBJECT_STORE" : "s3",
+    "EMBEDDING_MODEL" : "all-mpnet-base-v2",
+    "EMBED_QUEUE_NAME" : "redbox-embedder-queue",
+    "INGEST_QUEUE_NAME" : "redbox-ingester-queue",
+    "REDIS_HOST" : module.elasticache.redis_address,
+    "REDIS_PORT" : module.elasticache.redis_port,
+    "ENVIRONMENT" : upper(terraform.workspace),
+    "DEBUG" : terraform.workspace == "dev",
+    "AWS_REGION" : var.region,
+  }
+
+  core_secrets = {
     "ELASTIC__API_KEY" : var.elastic_api_key,
     "ELASTIC__CLOUD_ID" : var.cloud_id,
+  }
+
+  django_app_secrets = {
     "DJANGO_SECRET_KEY" : var.django_secret_key,
     "POSTGRES_PASSWORD" : module.rds.rds_instance_db_password,
     "POSTGRES_HOST" : module.rds.db_instance_address,
@@ -58,6 +70,15 @@ locals {
     "SENTRY_DSN" : var.sentry_dsn,
     "AZURE_OPENAI_ENDPOINT" : var.azure_openai_endpoint,
   }
+
+  worker_secrets = {
+    "ELASTIC__API_KEY" : var.elastic_api_key,
+    "ELASTIC__CLOUD_ID" : var.cloud_id,
+  }
+
+  reconstructed_worker_secrets = [ for k, _ in local.worker_secrets : {name = k, valueFrom = "${aws_secretsmanager_secret.worker-secret.arn}:${k}::" }]
+  reconstructed_core_secrets = [ for k, _ in local.core_secrets : {name = k, valueFrom = "${aws_secretsmanager_secret.core-api-secret.arn}:${k}::" }]
+  reconstructed_django_secrets = [ for k, _ in local.django_app_secrets : {name = k, valueFrom = "${aws_secretsmanager_secret.django-app-secret.arn}:${k}::" }]
 }
 
 data "terraform_remote_state" "vpc" {
