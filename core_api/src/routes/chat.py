@@ -163,7 +163,8 @@ async def rag_chat_streamed(
         elif kind == "on_chat_model_end":
             await websocket.send_json({"resource_type": "end"})
         elif kind == "on_chain_stream":
-            try:
+            if isinstance(event["data"]["chunk"], dict):
+                input_documents = event["data"]["chunk"].get("input_documents", [])
                 source_documents = [
                     jsonable_encoder(
                         SourceDocument(
@@ -172,13 +173,11 @@ async def rag_chat_streamed(
                             page_numbers=document.metadata.get("page_numbers"),
                         )
                     )
-                    for document in event["data"]["chunk"].get("input_documents", [])
+                    for document in input_documents
                 ]
                 await websocket.send_json(
                     {"resource_type": "documents", "data": source_documents}
                 )
-            except Exception as e:
-                logging.error(e)
         elif kind == "on_prompt_stream":
             try:
                 msg = event["data"]["chunk"].messages[0].content
@@ -187,7 +186,5 @@ async def rag_chat_streamed(
                 logging.exception(
                     "unknown message format %s", str(event["data"]["chunk"])
                 )
-        else:
-            logging.info(str(event))
 
     await websocket.close()

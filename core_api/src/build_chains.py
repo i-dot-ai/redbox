@@ -1,4 +1,6 @@
 import logging
+from http import HTTPStatus
+from http.client import HTTPException
 from uuid import UUID
 
 import numpy as np
@@ -11,6 +13,7 @@ from networkx import dual_barabasi_albert_graph
 
 from core_api.src.format import get_file_chunked_to_tokens
 from core_api.src.runnables import make_stuff_document_runnable
+from redbox.llm.prompts.chat import STUFF_DOCUMENT_PROMPT, WITH_SOURCES_PROMPT, CONDENSE_QUESTION_PROMPT
 from redbox.models.chat import ChatRequest
 from redbox.storage import ElasticsearchStorageHandler
 
@@ -116,8 +119,10 @@ async def build_stuff_chain(
     storage_handler: ElasticsearchStorageHandler,
     **kwargs,
 ):
+    logging.info("I AM HERE, file_uuid: %s", str(chat_request.selected_files))
     question = chat_request.message_history[-1].text
     previous_history = list(chat_request.message_history[:-1])
+
 
     chain = make_stuff_document_runnable(summarisation_prompt, llm)
 
@@ -129,6 +134,8 @@ async def build_stuff_chain(
         )
         for file_uuid in chat_request.selected_files
     ]
+
+    logging.info("documents: %s", str(documents))
 
     documents = sum(documents, [])
     # right now, can only handle a single document so we manually truncate
@@ -145,7 +152,7 @@ async def build_stuff_chain(
     params = {
         "question": question,
         "documents": documents_trunc,
-        "messages": [(msg["role"], msg["text"]) for msg in previous_history],
+        "messages": [(msg.role, msg.text) for msg in previous_history],
     }
 
     return chain, params

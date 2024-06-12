@@ -138,32 +138,44 @@ class ElasticsearchStorageHandler(BaseStorageHandler):
     def get_file_chunks(self, parent_file_uuid: UUID, user_uuid: UUID) -> list[Chunk]:
         """get chunks for a given file"""
         target_index = f"{self.root_index}-chunk"
+        logging.info("index: %s", target_index)
+        logging.info("es info: %s", str(self.es_client.info()))
 
-        return [
-            Chunk(**item["_source"])
-            for item in scan(
+        query = {
+            "query": {
+                "bool": {
+                    "must": [
+                        {
+                            "term": {
+                                "parent_file_uuid.keyword": str(parent_file_uuid),
+                            }
+                        },
+                        {
+                            "term": {
+                                "creator_user_uuid.keyword": str(user_uuid),
+                            }
+                        },
+                    ]
+                }
+            }
+        }
+        query = scan(
                 client=self.es_client,
                 index=target_index,
-                query={
-                    "query": {
-                        "bool": {
-                            "must": [
-                                {
-                                    "term": {
-                                        "parent_file_uuid.keyword": str(parent_file_uuid),
-                                    }
-                                },
-                                {
-                                    "term": {
-                                        "creator_user_uuid.keyword": str(user_uuid),
-                                    }
-                                },
-                            ]
-                        }
-                    }
-                },
+            query=query
             )
+
+        list_query = list(query)
+
+        r = [
+            Chunk(**item["_source"])
+            for item in list_query
         ]
+        logging.info("list_query: %s", str(list_query))
+        logging.info("parent_file_uuid: %s", parent_file_uuid)
+        logging.info("creator_user_uuid: %s", user_uuid)
+        logging.info("number chunks: %s", str(len(r)))
+        return r
 
     def get_file_status(self, file_uuid: UUID, user_uuid: UUID) -> FileStatus:
         """Get the status of a file and associated Chunks
