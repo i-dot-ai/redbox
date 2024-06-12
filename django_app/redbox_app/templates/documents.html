@@ -17,7 +17,7 @@
 
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds-from-desktop">
-      
+
       {% if ingest_errors %}
         <div class="govuk-error-summary" data-module="govuk-error-summary">
           <div role="alert">
@@ -44,12 +44,12 @@
         <img width="32" height="32" src="{{ static('images/icon-30-days.png') }}" loading="lazy" alt=""/>
         <p class="govuk-body-s govuk-!-margin-bottom-0">Documents will be stored for up to 30 days.</p>
       </div>
-      
-      
+
+
       {{ govukNotificationBanner(
         title="Important",
         text_list=[
-          {"text": "You can use up to, and including, Official Sensitive documents"}
+          {"text": "You can use up to, and including, Official Sensitive documents. You are not allowed to upload documents with personal data."}
         ]
       ) }}
 

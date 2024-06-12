@@ -20,12 +20,12 @@
           <label class="govuk-label" for="upload-docs">
             <h1 class="govuk-heading-l">{{ pageTitle }}</h1>
           </label>
-          
+
           <div id="upload-docs-notification">
             {{ govukNotificationBanner(
               title="Important",
               text_list=[
-                {"text": "The AI will use all documents you upload. You can use up to, and including, " ~ security ~ " documents"}
+                {"text": "The AI will use all documents you upload. You can use up to, and including, " ~ security ~ " documents. Do not upload any documents with personal data."}
               ]
             ) }}
           </div>
