@@ -1,7 +1,29 @@
 import re
 
 from core_api.src.format import format_chunks, get_file_chunked_to_tokens
-from core_api.src.runnables import make_stuff_document_runnable
+from core_api.src.runnables import make_stuff_document_runnable, make_chat_runnable
+
+
+def test_make_chat_runnable(mock_llm):
+    chain = make_chat_runnable(
+        system_prompt="Your job is chat.",
+        llm=mock_llm,
+    )
+
+    previous_history = [
+        {"text": "Lorem ipsum dolor sit amet.", "role": "user"},
+        {"text": "Consectetur adipiscing elit.", "role": "ai"},
+        {"text": "Donec cursus nunc tortor.", "role": "user"},
+    ]
+
+    response = chain.invoke(
+        input={
+            "question": "How are you today?",
+            "messages": [(msg["role"], msg["text"]) for msg in previous_history],
+        }
+    )
+
+    assert response == "<<TESTING>>"
 
 
 def test_format_chunks(stored_file_chunks):
