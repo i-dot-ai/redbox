@@ -151,6 +151,7 @@ tf_build_args=
 else ifeq ($(instance),universal) then
 CONFIG_DIR=../../../../redbox-copilot-infra-config
 env=prod
+tf_build_args=
 else
 CONFIG_DIR=../../../redbox-copilot-infra-config
 tf_build_args=-var "image_tag=$(IMAGE_TAG)"
@@ -169,7 +170,7 @@ tf_set_or_create_workspace:
 
 .PHONY: tf_init
 tf_init: ## Initialise terraform
-	terraform -chdir=./infrastructure/aws/$(instance) init -backend-config=$(TF_BACKEND_CONFIG) ${args} -migrate-state
+	terraform -chdir=./infrastructure/aws/$(instance) init -backend-config=$(TF_BACKEND_CONFIG) ${args} -reconfigure
 
 .PHONY: tf_plan
 tf_plan: ## Plan terraform
