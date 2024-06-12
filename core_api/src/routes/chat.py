@@ -119,7 +119,6 @@ async def build_chain(chat_request: ChatRequest, user_uuid: UUID, llm: ChatLiteL
     if route_response := ROUTE_RESPONSES.get(route.name):
         return route_response, {}
     # build_vanilla_chain could go here
-
     # RAG chat
     chain, params = await build_retrieval_chain(chat_request, user_uuid, llm, vector_store)
     return chain, params
