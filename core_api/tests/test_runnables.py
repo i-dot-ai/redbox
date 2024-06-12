@@ -1,5 +1,7 @@
 import re
 
+import pytest
+
 from core_api.src.format import format_chunks, get_file_chunked_to_tokens
 from core_api.src.runnables import (
     make_condense_question_runnable,
@@ -57,6 +59,25 @@ def test_make_stuff_document_runnable(mock_llm, stored_file_chunks):
     )
 
     assert response == "<<TESTING>>"
+
+
+@pytest.mark.asyncio()
+async def test_build_retrieval_chain(mock_llm, chunked_file, other_stored_file_chunks, vector_store):  # noqa: ARG001
+    request = {
+        "message_history": [
+            {"text": "hello", "role": "user"},
+        ],
+        "selected_files": [{"uuid": chunked_file.uuid}],
+    }
+
+    docs_with_sources_chain, params = await build_retrieval_chain(
+        chat_request=ChatRequest(**request),
+        user_uuid=chunked_file.creator_user_uuid,
+        llm=mock_llm,
+        vector_store=vector_store,
+    )
+
+    assert all(doc.metadata["parent_doc_uuid"] == str(chunked_file.uuid) for doc in params["input_documents"])
 
 
 def test_make_es_retriever(es_client, embedding_model, chunked_file, chunk_index_name):
