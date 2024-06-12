@@ -145,36 +145,41 @@ docker_update_tag:
 docker_echo:
 	echo $($(value))
 
+ifeq ($(instance),postgres) then
+CONFIG_DIR=../../../../redbox-copilot-infra-config
+tf_build_args=
+else ifeq ($(instance),universal) then
+CONFIG_DIR=../../../../redbox-copilot-infra-config
+env=prod
+else
 CONFIG_DIR=../../../redbox-copilot-infra-config
+tf_build_args=-var "image_tag=$(IMAGE_TAG)"
+endif
+
 TF_BACKEND_CONFIG=$(CONFIG_DIR)/backend.hcl
 
 tf_new_workspace:
-	terraform -chdir=./infrastructure/aws workspace new $(env)
+	terraform -chdir=./infrastructure/aws/$(instance)  workspace new $(env)
 
 tf_set_workspace:
-	terraform -chdir=./infrastructure/aws workspace select $(env)
+	terraform -chdir=./infrastructure/aws/$(instance) workspace select $(env)
 
 tf_set_or_create_workspace:
 	make tf_set_workspace || make tf_new_workspace
 
 .PHONY: tf_init
 tf_init: ## Initialise terraform
-	terraform -chdir=./infrastructure/aws init -backend-config=$(TF_BACKEND_CONFIG) ${args}
+	terraform -chdir=./infrastructure/aws/$(instance) init -backend-config=$(TF_BACKEND_CONFIG) ${args} -migrate-state
 
 .PHONY: tf_plan
 tf_plan: ## Plan terraform
 	make tf_set_workspace && \
-	terraform -chdir=./infrastructure/aws plan -var-file=$(CONFIG_DIR)/${env}-input-params.tfvars ${tf_build_args} ${args}
+	terraform -chdir=./infrastructure/aws/$(instance) plan -var-file=$(CONFIG_DIR)/${env}-input-params.tfvars ${tf_build_args}
 
 .PHONY: tf_apply
 tf_apply: ## Apply terraform
 	make tf_set_workspace && \
-	terraform -chdir=./infrastructure/aws apply -var-file=$(CONFIG_DIR)/${env}-input-params.tfvars ${tf_build_args} ${args}
-
-.PHONY: tf_auto_deploy
-tf_auto_deploy: ## Auto deploy terraform to specified environment with specified tag (default: dev and HEAD)
-	make tf_set_workspace && \
-	terraform -chdir=./infrastructure/aws apply -auto-approve -lock-timeout=300s -var-file=$(CONFIG_DIR)/$(env)-input-params.tfvars -var=image_tag=$(IMAGE_TAG) ${tf_build_args}
+	terraform -chdir=./infrastructure/aws/$(instance) apply -var-file=$(CONFIG_DIR)/${env}-input-params.tfvars ${tf_build_args} ${args}
 
 .PHONY: tf_init_universal
 tf_init_universal: ## Initialise terraform
@@ -188,22 +193,22 @@ tf_apply_universal: ## Apply terraform
 .PHONY: tf_auto_apply
 tf_auto_apply: ## Auto apply terraform
 	make tf_set_workspace && \
-	terraform -chdir=./infrastructure/aws apply -auto-approve -lock-timeout=300s -var-file=$(CONFIG_DIR)/${env}-input-params.tfvars ${tf_build_args} -target="module.django-app" -target="module.core-api" -target="module.worker"
+	terraform -chdir=./infrastructure/aws apply -auto-approve -var-file=$(CONFIG_DIR)/${env}-input-params.tfvars ${tf_build_args} $(target_modules)
 
 .PHONY: tf_destroy
 tf_destroy: ## Destroy terraform
 	make tf_set_workspace && \
-	terraform -chdir=./infrastructure/aws destroy -var-file=$(CONFIG_DIR)/${env}-input-params.tfvars ${tf_build_args} ${args}
+	terraform -chdir=./infrastructure/aws destroy -var-file=$(CONFIG_DIR)/${env}-input-params.tfvars ${tf_build_args}
 
 .PHONY: tf_import
 tf_import:
 	make tf_set_workspace && \
-	terraform -chdir=./infrastructure/aws import -var-file=$(CONFIG_DIR)/${env}-input-params.tfvars ${tf_build_args} ${name} ${id}
+	terraform -chdir=./infrastructure/aws/$(instance) import ${tf_build_args} -var-file=$(CONFIG_DIR)/${env}-input-params.tfvars ${name} ${id} 
 
 # Release commands to deploy your app to AWS
 .PHONY: release
 release: ## Deploy app
-	chmod +x ./infrastructure/scripts/release.sh && ./infrastructure/scripts/release.sh $(env)
+	chmod +x ./infrastructure/aws/scripts/release.sh && ./infrastructure/aws/scripts/release.sh $(env)
 
 # Runs the only the necessary backend for evaluation BUCKET_NAME
 .PHONY: eval_backend
