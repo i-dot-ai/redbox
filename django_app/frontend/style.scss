@@ -134,6 +134,9 @@ body {
 .iai-panel__scrollable .govuk-checkboxes__item {
   margin-left: 0.625rem;
 }
+.iai-panel__scrollable .govuk-checkboxes__label {
+  word-break: break-word;
+}
 
 .iai-chat-message__container {
   margin-top: -1rem;
