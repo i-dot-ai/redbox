@@ -156,3 +156,8 @@ ignore = ["COM812", "DJ001", "RET505", "RET508"]
 "redbox/tests/*" = ["ARG001"]
 "*/admin.py" = ["RUF012"]
 "*/models.py" = ["RUF012"]
+
+[tool.pytest.ini_options]
+markers = [
+    "incremental: marks tests as incremental (deselect with '-m \"not incremental\"')",
+]
