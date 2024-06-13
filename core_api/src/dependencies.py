@@ -70,8 +70,8 @@ async def get_llm(env: Annotated[Settings, Depends(get_env)]) -> ChatLiteLLM:
         )
     elif env.azure_openai_api_key is not None:
         log.info("Creating Azure LLM Client")
-        log.debug("api_base: %s", env.azure_openai_endpoint)
-        log.debug("api_version: %s", env.openai_api_version)
+        log.info("api_base: %s", env.azure_openai_endpoint)
+        log.info("api_version: %s", env.openai_api_version)
 
         # this nasty hack is required because, contrary to the docs:
         # using the api_version argument is not sufficient, and we need
@@ -82,8 +82,6 @@ async def get_llm(env: Annotated[Settings, Depends(get_env)]) -> ChatLiteLLM:
         llm = ChatLiteLLM(
             model=env.azure_openai_model,
             streaming=True,
-            azure_key=env.azure_openai_api_key,
-            api_version=env.openai_api_version,
             api_base=env.azure_openai_endpoint,
         )
     elif env.anthropic_api_key is not None:
