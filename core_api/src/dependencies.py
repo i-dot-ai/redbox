@@ -72,6 +72,7 @@ async def get_llm(env: Annotated[Settings, Depends(get_env)]) -> ChatLiteLLM:
         log.info("Creating Azure LLM Client")
         log.info("api_base: %s", env.azure_openai_endpoint)
         log.info("api_version: %s", env.openai_api_version)
+        log.info("llm_max_tokens: %i", env.llm_max_tokens)
 
         # this nasty hack is required because, contrary to the docs:
         # using the api_version argument is not sufficient, and we need
@@ -83,6 +84,7 @@ async def get_llm(env: Annotated[Settings, Depends(get_env)]) -> ChatLiteLLM:
             model=env.azure_openai_model,
             streaming=True,
             api_base=env.azure_openai_endpoint,
+            max_tokens=env.llm_max_tokens,
         )
     elif env.anthropic_api_key is not None:
         msg = "anthropic LLM not yet implemented"
