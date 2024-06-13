@@ -233,7 +233,7 @@ class ChatMessage(NamedTuple):
     status: str | None
     role: str
     text: str
-    links: Sequence[str]
+    sources: Sequence[str]
 
 
 class ChatsPage(SignedInBasePage):
@@ -283,8 +283,8 @@ class ChatsPage(SignedInBasePage):
         status = element.get_attribute("data-status")
         role = element.locator(".iai-chat-message__role").inner_text()
         text = element.locator(".iai-chat-message__text").inner_text()
-        links = element.locator("sources-list").get_by_role("listitem").all_inner_texts()
-        return ChatMessage(status, role, text, links)
+        sources = element.locator("sources-list").get_by_role("listitem").all_inner_texts()
+        return ChatMessage(status=status, role=role, text=text, sources=sources)
 
     def get_all_messages_once_streaming_has_completed(
         self, retry_interval: int = 1, max_tries: int = 120
