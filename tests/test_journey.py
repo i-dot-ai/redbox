@@ -3,11 +3,15 @@ import string
 import subprocess
 from pathlib import Path
 from random import choice
+from typing import TYPE_CHECKING
 
 import pytest
 from pages import LandingPage, SignInConfirmationPage
 from playwright.sync_api import Page
 from yarl import URL
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -17,6 +21,12 @@ TEST_ROOT = Path(__file__).parent
 
 
 def test_user_journey(page: Page, email_address: str):
+    """End to end user journey test.
+
+    Simulates a single user journey through the application, running against the full suite of microservices.
+
+    Uses the Page Object Model - see https://pinboard.in/u:brunns/t:page-object for some resources explaining this.
+    Please add to the page objects in `pages.py` where necessary - don't put page specific logic at this level."""
     create_user(email_address)
 
     # Landing page
@@ -34,31 +44,61 @@ def test_user_journey(page: Page, email_address: str):
 
     # Documents page
     documents_page = sign_in_confirmation_page.navigate_to_documents_page()
-    document_rows = documents_page.get_all_document_rows()
-    original_docs_count = len(document_rows)
+    original_doc_count = documents_page.document_count()
 
-    # Upload a file
+    # Upload files
     document_upload_page = documents_page.navigate_to_upload()
-    upload_file = TEST_ROOT / "data" / "pdf" / "Cabinet Office - Wikipedia.pdf"
-    documents_page = document_upload_page.upload_document(upload_file)
-    document_rows = documents_page.get_all_document_rows()
-    logger.debug("document_rows: %s", document_rows)
-    assert any(row.filename == upload_file.name for row in document_rows)
-    assert len(document_rows) == original_docs_count + 1
-
-    # Delete a file
-    document_delete_page = documents_page.delete_latest_document()
-    documents_page = document_delete_page.confirm_deletion()
-    document_rows = documents_page.get_all_document_rows()
-    assert len(document_rows) == original_docs_count
+    upload_files: Sequence[Path] = list(TEST_ROOT.parent.glob("*.md"))
+    documents_page = document_upload_page.upload_documents(upload_files)
+    document_rows = documents_page.all_documents
+    assert {r.filename for r in document_rows} == {f.name for f in upload_files}
+    assert documents_page.document_count() == original_doc_count + len(upload_files)
+    documents_page.wait_for_documents_to_complete()
 
     # Chats page
     chats_page = documents_page.navigate_to_chats()
-    chats_page.write_message = "What is the Cabinet Office?"
+    chats_page.write_message = "What architecture is in use?"
     chats_page = chats_page.send()
-    all_messages = chats_page.all_messages()
     logger.debug("page: %s", chats_page)
-    logger.debug("all_messages: %s", all_messages)
+    logger.info("all_messages: %s", chats_page.get_all_messages_once_streaming_has_completed())
+    latest_chat_response = chats_page.wait_for_latest_message()
+    assert "architecture" in latest_chat_response.text
+
+    # Select files
+    chats_page = chats_page.start_new_chat()
+    files_to_select = {f.name for f in upload_files if "README" in f.name}
+    chats_page.selected_file_names = files_to_select
+    chats_page.write_message = "What architecture is in use?"
+    chats_page = chats_page.send()
+
+    assert chats_page.selected_file_names == files_to_select
+    logger.info("all_messages: %s", chats_page.get_all_messages_once_streaming_has_completed())
+    latest_chat_response = chats_page.wait_for_latest_message()
+    assert "architecture" in latest_chat_response.text
+    assert files_to_select.pop() in latest_chat_response.sources
+
+    # Try a file which shouldn't apply to the chat
+    chats_page = chats_page.start_new_chat()
+    files_to_select = {f.name for f in upload_files if "CODE" in f.name}
+    chats_page.selected_file_names = files_to_select
+    chats_page.write_message = "What architecture is in use?"
+    chats_page = chats_page.send()
+
+    assert chats_page.selected_file_names == files_to_select
+    logger.info("all_messages: %s", chats_page.get_all_messages_once_streaming_has_completed())
+
+    # TODO (@brunns): Reinstate assertions once sile selection is affecting the chat response
+    # https://technologyprogramme.atlassian.net/browse/REDBOX-337
+    # latest_chat_response = chats_page.wait_for_latest_message()
+    # assert any(apology in latest_chat_response.text for apology in ["I'm sorry", "I'm afraid"])
+    # assert not latest_chat_response.links
+
+    # Delete a file
+    documents_page = chats_page.navigate_to_documents()
+    pre_delete_doc_count = documents_page.document_count()
+    document_delete_page = documents_page.delete_latest_document()
+    documents_page = document_delete_page.confirm_deletion()
+    assert documents_page.document_count() == pre_delete_doc_count - 1
 
 
 def test_support_pages(page: Page):
@@ -100,5 +140,5 @@ def get_magic_link(email_address: str) -> URL:
 
 @pytest.fixture()
 def email_address() -> str:
-    username = "".join(choice(string.ascii_lowercase) for _ in range(10))  # noqa: S311
+    username = "".join(choice(string.ascii_lowercase) for _ in range(20))  # noqa: S311
     return f"{username}@cabinetoffice.gov.uk"

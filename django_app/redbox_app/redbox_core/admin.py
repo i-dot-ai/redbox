@@ -9,10 +9,13 @@ from . import models
 class UserResource(admin.ModelAdmin):
     fields = ["email", "is_superuser", "is_staff", "last_login"]
     list_display = ["email", "is_superuser", "is_staff", "last_login"]
+    date_hierarchy = "last_login"
 
 
 class FileResource(admin.ModelAdmin):
-    list_display = ["original_file_name", "user", "status"]
+    list_display = ["original_file_name", "user", "status", "created_at"]
+    list_filter = ["user", "status"]
+    date_hierarchy = "created_at"
 
 
 class ChatMessageResource(admin.ModelAdmin):
