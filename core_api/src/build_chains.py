@@ -67,7 +67,6 @@ async def build_retrieval_chain(
     user_uuid: UUID,
     llm: ChatLiteLLM,
     vector_store: ElasticsearchStore,
-    **kwargs,  # noqa: ARG001
 ) -> tuple[Runnable, dict[str, Any]]:
     question = chat_request.message_history[-1].text
     previous_history = list(chat_request.message_history[:-1])
@@ -89,7 +88,8 @@ async def build_retrieval_chain(
 
     search_kwargs = {"filter": {"bool": {"must": [{"term": {"creator_user_uuid.keyword": str(user_uuid)}}]}}}
 
-    if chat_request.selected_files is not None:
+    if chat_request.selected_files:
+        logging.info("chat_request.selected_files: %s", str(chat_request.selected_files))
         search_kwargs["filter"]["bool"]["must"] = [
             {"term": {"parent_file_uuid.keyword": str(file.uuid)}} for file in chat_request.selected_files
         ]
