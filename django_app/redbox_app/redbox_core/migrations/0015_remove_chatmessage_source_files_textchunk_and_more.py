@@ -42,7 +42,6 @@ class Migration(migrations.Migration):
                 ("created_at", models.DateTimeField(auto_now_add=True)),
                 ("modified_at", models.DateTimeField(auto_now=True)),
                 ("text", models.TextField(blank=True, null=True)),
-                ("metadata", models.JSONField(blank=True, null=True)),
                 (
                     "chat_message",
                     models.ForeignKey(

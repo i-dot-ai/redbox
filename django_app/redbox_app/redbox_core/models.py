@@ -162,7 +162,6 @@ class TextChunk(UUIDPrimaryKeyBase, TimeStampedModel):
     file = models.ForeignKey(File, on_delete=models.CASCADE)
     chat_message = models.ForeignKey("ChatMessage", on_delete=models.CASCADE)
     text = models.TextField(null=True, blank=True)
-    metadata = models.JSONField(null=True, blank=True)
 
     def __str__(self):
         return f"{self.file}: {self.text or ''}"
