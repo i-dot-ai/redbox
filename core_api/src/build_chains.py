@@ -1,6 +1,7 @@
 import logging
 from http import HTTPStatus
 from http.client import HTTPException
+from typing import Any
 from uuid import UUID
 
 import numpy as np
@@ -8,6 +9,7 @@ from langchain.chains.llm import LLMChain
 from langchain.chains.qa_with_sources import load_qa_with_sources_chain
 from langchain_community.chat_models import ChatLiteLLM
 from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.runnables import Runnable
 from langchain_elasticsearch import ElasticsearchStore
 
 from core_api.src.format import get_file_chunked_to_tokens
@@ -66,7 +68,7 @@ async def build_retrieval_chain(
     llm: ChatLiteLLM,
     vector_store: ElasticsearchStore,
     **kwargs,  # noqa: ARG001
-):
+) -> tuple[Runnable, dict[str, Any]]:
     question = chat_request.message_history[-1].text
     previous_history = list(chat_request.message_history[:-1])
     previous_history = ChatPromptTemplate.from_messages(
@@ -102,13 +104,13 @@ async def build_retrieval_chain(
     return docs_with_sources_chain, params
 
 
-async def build_stuff_chain(
+async def build_summary_chain(
     chat_request: ChatRequest,
     user_uuid: UUID,
     llm: ChatLiteLLM,
     storage_handler: ElasticsearchStorageHandler,
     **kwargs,  # noqa: ARG001
-):
+) -> tuple[Runnable, dict[str, Any]]:
     question = chat_request.message_history[-1].text
     previous_history = list(chat_request.message_history[:-1])
 

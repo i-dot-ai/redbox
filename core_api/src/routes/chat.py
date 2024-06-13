@@ -1,15 +1,16 @@
 import logging
-from typing import Annotated
+from typing import Annotated, Any
 from uuid import UUID
 
 from fastapi import Depends, FastAPI, WebSocket
 from fastapi.encoders import jsonable_encoder
 from langchain_community.chat_models import ChatLiteLLM
 from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.runnables import Runnable
 from langchain_elasticsearch import ElasticsearchStore
 
 from core_api.src.auth import get_user_uuid, get_ws_user_uuid
-from core_api.src.build_chains import build_retrieval_chain, build_stuff_chain
+from core_api.src.build_chains import build_retrieval_chain, build_summary_chain
 from core_api.src.dependencies import get_llm, get_storage_handler, get_vector_store
 from core_api.src.semantic_routes import (
     ABILITY_RESPONSE,
@@ -48,7 +49,8 @@ ROUTE_RESPONSES = {
     "ability": ChatPromptTemplate.from_template(ABILITY_RESPONSE),
     "coach": ChatPromptTemplate.from_template(COACH_RESPONSE),
     "gratitude": ChatPromptTemplate.from_template("You're welcome!"),
-    "summarisation": build_stuff_chain,
+    "retrieval": build_retrieval_chain,
+    "summarisation": build_summary_chain,
     "extract": ChatPromptTemplate.from_template("You asking to extract some information - route not yet implemented"),
 }
 
@@ -59,17 +61,16 @@ async def semantic_router_to_chain(
     llm: ChatLiteLLM,
     vector_store: ElasticsearchStore,
     storage_handler: ElasticsearchStorageHandler,
-):
+) -> tuple[Runnable, dict[str, Any]]:
     question = chat_request.message_history[-1].text
     route = route_layer(question)
 
-    if route_response := ROUTE_RESPONSES.get(route.name):
+    if route_response := ROUTE_RESPONSES.get(route.name or "retrieval"):
         # check if route_response is an instance of ChatPromptTemplate
         if isinstance(route_response, ChatPromptTemplate):
             return route_response, {}
         if callable(route_response):
-            build_chain = route_response
-            chain, params = await build_chain(
+            chain, params = await route_response(
                 chat_request=chat_request,
                 user_uuid=user_uuid,
                 llm=llm,
@@ -81,7 +82,7 @@ async def semantic_router_to_chain(
     # build_vanilla_chain could go here
 
     # RAG chat
-    chain, params = await build_retrieval_chain(chat_request, user_uuid, llm, vector_store)
+    # chain, params = await build_retrieval_chain(chat_request, user_uuid, llm, vector_store)
     return chain, params
 
 
