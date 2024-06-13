@@ -1,6 +1,6 @@
 import logging
 from abc import ABC, abstractmethod
-from collections.abc import Sequence
+from collections.abc import Collection, Sequence
 from datetime import datetime
 from itertools import islice
 from pathlib import Path
@@ -190,7 +190,7 @@ class DocumentsPage(SignedInBasePage):
     def document_count(self) -> int:
         return len(self.all_documents)
 
-    def wait_for_documents_to_complete(self, retry_interval: int = 5, max_tries: int = 60):
+    def wait_for_documents_to_complete(self, retry_interval: int = 5, max_tries: int = 600):
         tries = 0
         while True:
             if all(d.status == "Complete" for d in self.all_documents):
@@ -254,13 +254,21 @@ class ChatsPage(SignedInBasePage):
         return self.page.locator("document-selector .govuk-checkboxes__label").all_inner_texts()
 
     @property
-    def selected_file_names(self) -> Sequence[str]:
-        return [file_name for file_name in self.available_file_names if self.page.get_by_label(file_name).is_checked()]
+    def selected_file_names(self) -> Collection[str]:
+        return {file_name for file_name in self.available_file_names if self.page.get_by_label(file_name).is_checked()}
 
     @selected_file_names.setter
-    def selected_file_names(self, file_names: Sequence[str]):
-        for file_name in file_names:
-            self.page.get_by_label(file_name).check()
+    def selected_file_names(self, file_names_to_select: Collection[str]):
+        for file_name in self.available_file_names:
+            checkbox = self.page.get_by_label(file_name)
+            if file_name in file_names_to_select:
+                checkbox.check()
+            else:
+                checkbox.uncheck()
+
+    def start_new_chat(self) -> "ChatsPage":
+        self.page.get_by_role("button", name="Start a new chat").click()
+        return ChatsPage(self.page)
 
     def send(self) -> "ChatsPage":
         self.page.get_by_text("Send").click()
@@ -275,7 +283,7 @@ class ChatsPage(SignedInBasePage):
         status = element.get_attribute("data-status")
         role = element.locator(".iai-chat-message__role").inner_text()
         text = element.locator(".iai-chat-message__text").inner_text()
-        links = element.locator(".iai-chat-messages__sources-link").all_inner_texts()
+        links = element.locator("sources-list").get_by_role("listitem").all_inner_texts()
         return ChatMessage(status, role, text, links)
 
     def get_all_messages_once_streaming_has_completed(
