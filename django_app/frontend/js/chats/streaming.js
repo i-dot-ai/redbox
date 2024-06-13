@@ -44,13 +44,7 @@ customElements.define('sources-list', SourcesList);
 
 class ChatMessage extends HTMLElement {
 
-    constructor() {
-        super();
-        /** Whether the stream has completed - separate to data-status, as it could be paused and completed at the same time */
-        this.complete = false;
-    }
-
-    connectedCallback() {        
+    connectedCallback() {
         this.innerHTML = `
             <div class="iai-chat-message iai-chat-message--${this.dataset.role} govuk-body">
                 <div class="iai-chat-message__role">${this.dataset.role === 'ai' ? 'Redbox' : 'You'}</div>
@@ -58,14 +52,12 @@ class ChatMessage extends HTMLElement {
                     `<div class="iai-streaming-response-loading js-streaming-response-loading govuk-!-margin-top-1" tabindex="-1">
                         <img class="iai-streaming-response-loading__spinner" src="/static/images/spinner.gif" alt=""/>
                         <p class="iai-streaming-response-loading__text govuk-body-s govuk-!-margin-bottom-0 govuk-!-margin-left-1">Response loading...</p>
-                    </div>
-                    <button class="iai-streaming-response-paused js-streaming-response-paused">Continue</button>`
+                    </div>`
                 : ''}
                 <markdown-converter class="iai-chat-message__text">${this.dataset.text || ''}</markdown-converter>
                 <sources-list></sources-list>
             </div>
         `;
-        /** @type HTMLButtonElement */(this.querySelector('.js-streaming-response-paused')).style.visibility = 'hidden';
     }
 
     /**
@@ -81,33 +73,16 @@ class ChatMessage extends HTMLElement {
         let responseContainer = /** @type MarkdownConverter */(this.querySelector('markdown-converter'));
         let sourcesContainer = /** @type SourcesList */(this.querySelector('sources-list'));
         let responseLoading = /** @type HTMLElement */(this.querySelector('.js-streaming-response-loading'));
-        let pauseButton = /** @type HTMLButtonElement */(this.querySelector('.js-streaming-response-paused'));
         let webSocket = new WebSocket(endPoint);
         let streamedContent = '';
         let sources = [];
 
-        const displayLatestContent = () => {
-            responseContainer.update(streamedContent);
-            sources.forEach((source) => {
-                sourcesContainer.add(source.name, source.url);
-            });
-            sources = [];
-        };
-
-        // pause streaming if user presses escape key and response is in view
-        document.body.addEventListener('keydown', (evt) => {
-            if (evt.key !== 'Escape' && !this.complete) {
-              return;
+        // Stop streaming on escape key press
+        this.addEventListener('keydown', (evt) => {
+            if (evt.key === 'Escape' && this.dataset.status === 'streaming') {
+                this.dataset.status = 'stopped';
+                webSocket.close();
             }
-            const rect = this.getBoundingClientRect();
-            if (rect.bottom > 0 && rect.top < window.innerHeight) {
-              this.dataset.status = 'paused';
-            }
-        });
-        pauseButton.addEventListener('click', () => {
-            this.dataset.status = this.complete ? 'complete' : 'streaming';
-            pauseButton.style.visibility = 'hidden';
-            displayLatestContent();
         });
     
         webSocket.onopen = (event) => {
@@ -121,13 +96,14 @@ class ChatMessage extends HTMLElement {
         };
 
         webSocket.onclose = (event) => {
-            this.complete = true;
-            if (this.dataset.status !== 'paused') {
+            responseLoading.style.display = 'none';
+            if (this.dataset.status !== 'stopped') {
                 this.dataset.status = 'complete';
             }
         };
     
         webSocket.onmessage = (event) => {
+            
             let message;
             try {
                 message = JSON.parse(event.data);
@@ -138,18 +114,11 @@ class ChatMessage extends HTMLElement {
             if (message.type === 'text') {
                 responseLoading.style.display = 'none';
                 streamedContent += message.data;
+                responseContainer.update(streamedContent);
             } else if (message.type === 'session-id') {
                 chatControllerRef.dataset.sessionId = message.data;
             } else if (message.type === 'source') {
-                sources.push({
-                    name: message.data.original_file_name,
-                    url: message.data.url
-                });
-            }
-
-            // Make update visible to user
-            if (this.dataset.status !== 'paused') {
-                displayLatestContent();
+                sourcesContainer.add(message.data.original_file_name, message.data.url);
             }
             
         };
