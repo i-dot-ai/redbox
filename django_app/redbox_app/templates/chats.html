@@ -74,7 +74,7 @@
             {{ message_box(
               role = message.role,
               text = message.text,
-              sources = message.chunks.all()
+              sources = message.source_files.all()
             ) }}
           {% endfor %}
 

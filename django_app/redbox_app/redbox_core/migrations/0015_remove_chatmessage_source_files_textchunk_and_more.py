@@ -9,7 +9,7 @@ def file_to_text_chunk(apps, schema_editor):
     ChatMessage = apps.get_model("redbox_core", "ChatMessage")
     TextChunk = apps.get_model("redbox_core", "TextChunk")
     for chat_message in ChatMessage.objects.all():
-        for file in chat_message.source_files.all():
+        for file in chat_message.old_source_files.all():
             TextChunk.objects.create(
                 file=file,
                 chat_message=chat_message,
@@ -22,6 +22,11 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
+        migrations.RenameField(
+            model_name="chatmessage",
+            old_name="source_files",
+            new_name="old_source_files",
+        ),
         migrations.CreateModel(
             name="TextChunk",
             fields=[
@@ -59,7 +64,7 @@ class Migration(migrations.Migration):
         ),
         migrations.AddField(
             model_name="chatmessage",
-            name="chunks",
+            name="source_files",
             field=models.ManyToManyField(
                 through="redbox_core.TextChunk", to="redbox_core.file"
             ),

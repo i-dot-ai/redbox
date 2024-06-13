@@ -257,7 +257,7 @@ def post_message(request: HttpRequest) -> HttpResponse:
 
     doc_uuids: list[str] = [doc.file_uuid for doc in response_data.source_documents]
     files: list[File] = File.objects.filter(core_file_uuid__in=doc_uuids, user=request.user)
-    llm_message.chunks.set(files)
+    llm_message.source_files.set(files)
 
     for file in files:
         file.last_referenced = timezone.now()

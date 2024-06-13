@@ -115,7 +115,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         chat_message = ChatMessage(chat_history=session, text=user_message_text, role=role)
         chat_message.save()
         if source_files:
-            chat_message.chunks.set(source_files)
+            chat_message.source_files.set(source_files)
         if selected_files:
             chat_message.selected_files.set(selected_files)
         return chat_message

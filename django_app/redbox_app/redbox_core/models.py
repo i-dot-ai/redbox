@@ -172,13 +172,13 @@ class ChatMessage(UUIDPrimaryKeyBase, TimeStampedModel):
     chat_history = models.ForeignKey(ChatHistory, on_delete=models.CASCADE)
     text = models.TextField(max_length=32768, null=False, blank=False)
     role = models.CharField(choices=ChatRoleEnum.choices, null=False, blank=False)
-    source_files = models.ManyToManyField(  # delete me
+    old_source_files = models.ManyToManyField(  # delete me
         File,
         related_name="chat_messages",
         blank=True,
     )
     selected_files = models.ManyToManyField(File, related_name="+", symmetrical=False, blank=True)
-    chunks = models.ManyToManyField(File, through=TextChunk)
+    source_files = models.ManyToManyField(File, through=TextChunk)
 
     def __str__(self) -> str:  # pragma: no cover
         return f"{self.chat_history} - {self.text} - {self.role}"

@@ -81,7 +81,7 @@ def chat_history(alice: User) -> ChatHistory:
 @pytest.fixture()
 def chat_message(chat_history: ChatHistory, uploaded_file: File) -> ChatMessage:
     chat_message = ChatMessage.objects.create(chat_history=chat_history, text="A question?", role=ChatRoleEnum.user)
-    chat_message.chunks.set([uploaded_file])
+    chat_message.source_files.set([uploaded_file])
     return chat_message
 
 
@@ -104,7 +104,7 @@ def original_file() -> UploadedFile:
 def chat_history_with_files(chat_history: ChatHistory, several_files: Sequence[File]) -> ChatHistory:
     ChatMessage.objects.create(chat_history=chat_history, text="A question?", role=ChatRoleEnum.user)
     chat_message = ChatMessage.objects.create(chat_history=chat_history, text="An answer.", role=ChatRoleEnum.ai)
-    chat_message.chunks.set(several_files[0::2])
+    chat_message.source_files.set(several_files[0::2])
     chat_message = ChatMessage.objects.create(
         chat_history=chat_history, text="Another question?", role=ChatRoleEnum.user
     )
