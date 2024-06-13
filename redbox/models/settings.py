@@ -40,6 +40,7 @@ class Settings(BaseSettings):
 
     openai_api_version: str = "2023-12-01-preview"
     azure_openai_model: str = "azure/gpt-35-turbo-16k"
+    llm_max_tokens: int = 1024
 
     partition_strategy: Literal["auto", "fast", "ocr_only", "hi_res"] = "fast"
     clustering_strategy: Literal["full"] | None = None

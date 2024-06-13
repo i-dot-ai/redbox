@@ -52,6 +52,7 @@ locals {
     "ELASTIC__CLOUD_ID" : var.cloud_id,
     "AZURE_OPENAI_API_KEY" : var.azure_openai_api_key,
     "AZURE_OPENAI_ENDPOINT" : var.azure_openai_endpoint,
+    "LLM_MAX_TOKENS" : 1024,
   }
 
   django_app_secrets = {
