@@ -66,7 +66,6 @@ async def semantic_router_to_chain(
     route = route_layer(question)
 
     if route_response := ROUTE_RESPONSES.get(route.name or "retrieval"):
-        # check if route_response is an instance of ChatPromptTemplate
         if isinstance(route_response, ChatPromptTemplate):
             return route_response, {}
         if callable(route_response):
@@ -77,12 +76,8 @@ async def semantic_router_to_chain(
                 vector_store=vector_store,
                 storage_handler=storage_handler,
             )
-            return chain, params  # params for summarisation
-
-    # build_vanilla_chain could go here
-
-    # RAG chat
-    # chain, params = await build_retrieval_chain(chat_request, user_uuid, llm, vector_store)
+            return chain, params
+        
     return chain, params
 
 
@@ -93,15 +88,7 @@ async def rag_chat(
     llm: Annotated[ChatLiteLLM, Depends(get_llm)],
     vector_store: Annotated[ElasticsearchStore, Depends(get_vector_store)],
 ) -> ChatResponse:
-    """Get a LLM response to a question history and file
-
-    Args:
-
-
-    Returns:
-        StreamingResponse: a stream of the chain response
-    """
-
+    """REST endpoint. Get a LLM response to a question history and file."""
     question = chat_request.message_history[-1].text
     route = route_layer(question)
     # TODO (@wpfl-dbt): will need updating - focused on streaming endpoint  # noqa: TD003
@@ -134,6 +121,7 @@ async def rag_chat_streamed(
     vector_store: Annotated[ElasticsearchStore, Depends(get_vector_store)],
     storage_handler: Annotated[ElasticsearchStorageHandler, Depends(get_storage_handler)],
 ):
+    """Websocket. Get a LLM response to a question history and file."""
     await websocket.accept()
 
     user_uuid = await get_ws_user_uuid(websocket)
