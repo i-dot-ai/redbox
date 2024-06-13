@@ -51,7 +51,9 @@ ROUTE_RESPONSES = {
     "gratitude": ChatPromptTemplate.from_template("You're welcome!"),
     "retrieval": build_retrieval_chain,
     "summarisation": build_summary_chain,
-    "extract": ChatPromptTemplate.from_template("You asking to extract some information - route not yet implemented"),
+    "extract": ChatPromptTemplate.from_template(
+        "You asking to extract some information - route not yet implemented"
+    ),
 }
 
 
@@ -78,7 +80,9 @@ async def semantic_router_to_chain(
             )
             return chain, params
 
-    chain, params = await build_retrieval_chain(chat_request, user_uuid, llm, vector_store)
+    chain, params = await build_retrieval_chain(
+        chat_request, user_uuid, llm, vector_store
+    )
     return chain, params
 
 
@@ -88,31 +92,41 @@ async def rag_chat(
     user_uuid: Annotated[UUID, Depends(get_user_uuid)],
     llm: Annotated[ChatLiteLLM, Depends(get_llm)],
     vector_store: Annotated[ElasticsearchStore, Depends(get_vector_store)],
+    storage_handler: Annotated[
+        ElasticsearchStorageHandler, Depends(get_storage_handler)
+    ],
 ) -> ChatResponse:
-    """REST endpoint. Get a LLM response to a question history and file."""
-    question = chat_request.message_history[-1].text
-    route = route_layer(question)
-    # TODO (@wpfl-dbt): will need updating - focused on streaming endpoint  # noqa: TD003
-    if route_response := ROUTE_RESPONSES.get(route.name):
-        response = route_response.invoke({})
-        return ChatResponse(output_text=response.messages[0].content)
+    """REST endpoint.
+    Chose the correct route based on the question.
+    Get a response to a question history and file.
+    """
+    chain, params = await semantic_router_to_chain(
+        chat_request, user_uuid, llm, vector_store, storage_handler
+    )
 
-    # build_vanilla_chain could go here
-
-    # RAG chat
-    chain, params = await build_retrieval_chain(chat_request, user_uuid, llm, vector_store)
-
-    result = chain(params)
-
-    source_documents = [
-        SourceDocument(
-            page_content=langchain_document.page_content,
-            file_uuid=langchain_document.metadata.get("parent_doc_uuid"),
-            page_numbers=langchain_document.metadata.get("page_numbers"),
+    result = chain.invoke(params)  # noqa: TD003
+    if isinstance(result, dict):
+        source_documents = [
+            SourceDocument(
+                page_content=document.page_content,
+                file_uuid=document.metadata.get("parent_doc_uuid"),
+                page_numbers=document.metadata.get("page_numbers"),
+            )
+            for document in result.get("input_documents", [])
+        ]
+        return ChatResponse(
+            output_text=result["output_text"], source_documents=source_documents
         )
-        for langchain_document in result.get("input_documents", [])
-    ]
-    return ChatResponse(output_text=result["output_text"], source_documents=source_documents)
+    # stuff_summarisation route
+    elif isinstance(result, str):
+        return ChatResponse(output_text=result)
+    # hard-coded routes
+    else:
+        try:
+            msg = result.messages[0].content
+            return ChatResponse(output_text=msg)
+        except (KeyError, AttributeError):
+            logging.exception("unknown message format %s", str(result))
 
 
 @chat_app.websocket("/rag")
@@ -120,7 +134,9 @@ async def rag_chat_streamed(
     websocket: WebSocket,
     llm: Annotated[ChatLiteLLM, Depends(get_llm)],
     vector_store: Annotated[ElasticsearchStore, Depends(get_vector_store)],
-    storage_handler: Annotated[ElasticsearchStorageHandler, Depends(get_storage_handler)],
+    storage_handler: Annotated[
+        ElasticsearchStorageHandler, Depends(get_storage_handler)
+    ],
 ):
     """Websocket. Get a LLM response to a question history and file."""
     await websocket.accept()
@@ -130,12 +146,16 @@ async def rag_chat_streamed(
     request = await websocket.receive_text()
     chat_request = ChatRequest.model_validate_json(request)
 
-    chain, params = await semantic_router_to_chain(chat_request, user_uuid, llm, vector_store, storage_handler)
+    chain, params = await semantic_router_to_chain(
+        chat_request, user_uuid, llm, vector_store, storage_handler
+    )
 
     async for event in chain.astream_events(params, version="v1"):
         kind = event["event"]
         if kind == "on_chat_model_stream":
-            await websocket.send_json({"resource_type": "text", "data": event["data"]["chunk"].content})
+            await websocket.send_json(
+                {"resource_type": "text", "data": event["data"]["chunk"].content}
+            )
         elif kind == "on_chat_model_end":
             await websocket.send_json({"resource_type": "end"})
         elif kind == "on_chain_stream":
@@ -151,12 +171,16 @@ async def rag_chat_streamed(
                     )
                     for document in input_documents
                 ]
-                await websocket.send_json({"resource_type": "documents", "data": source_documents})
+                await websocket.send_json(
+                    {"resource_type": "documents", "data": source_documents}
+                )
         elif kind == "on_prompt_stream":
             try:
                 msg = event["data"]["chunk"].messages[0].content
                 await websocket.send_json({"resource_type": "text", "data": msg})
             except (KeyError, AttributeError):
-                logging.exception("unknown message format %s", str(event["data"]["chunk"]))
+                logging.exception(
+                    "unknown message format %s", str(event["data"]["chunk"])
+                )
 
     await websocket.close()
