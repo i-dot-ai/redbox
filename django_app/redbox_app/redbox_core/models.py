@@ -144,11 +144,6 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
 class ChatHistory(UUIDPrimaryKeyBase, TimeStampedModel):
     name = models.TextField(max_length=1024, null=False, blank=False)
     users = models.ForeignKey(User, on_delete=models.CASCADE)
-    selected_files = models.ManyToManyField(
-        File,
-        related_name="chat_histories",
-        blank=True,
-    )
 
     class Meta:
         verbose_name_plural = "Chat history"
@@ -172,6 +167,7 @@ class ChatMessage(UUIDPrimaryKeyBase, TimeStampedModel):
         related_name="chat_messages",
         blank=True,
     )
+    selected_files = models.ManyToManyField(File, related_name="+", symmetrical=False, blank=True)
 
     def __str__(self) -> str:  # pragma: no cover
         return f"{self.chat_history} - {self.text} - {self.role}"

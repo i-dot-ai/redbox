@@ -111,6 +111,33 @@ body {
 
 
 /* Chat page */
+.iai-panel {
+  background-color: govuk-colour("light-grey");
+  border-radius: 0.25rem;
+  display: block;
+  margin-bottom: 2rem;
+  padding: 1rem;
+  padding-top: 1.5rem;
+}
+.iai-panel__scrollable {
+  overflow-y: auto;
+  padding-right: 0.5rem;
+  max-height: 16.75rem;
+}
+.iai-panel__scrollable::-webkit-scrollbar {
+  background-color: govuk-colour("mid-grey");
+  width: 5px;
+}
+.iai-panel__scrollable::-webkit-scrollbar-thumb {
+  background-color: govuk-colour("dark-grey");
+}
+.iai-panel__scrollable .govuk-checkboxes__item {
+  margin-left: 0.625rem;
+}
+.iai-panel__scrollable .govuk-checkboxes__label {
+  word-break: break-word;
+}
+
 .iai-chat-message__container {
   margin-top: -1rem;
 }
@@ -143,6 +170,9 @@ body {
 .iai-chat-message__text code {
   display: block;
   overflow-x: auto;
+}
+.iai-chat-message__text li {
+  padding: 0.125rem 0;
 }
 .iai-chat-message__text table {
   border-collapse: collapse;

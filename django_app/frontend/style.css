@@ -43,7 +43,7 @@
 
 
 :root {
-  --govuk-frontend-version: "5.4.0";
+  --govuk-frontend-version: "5.2.0";
   --govuk-frontend-breakpoint-mobile: 20rem;
   --govuk-frontend-breakpoint-tablet: 40.0625rem;
   --govuk-frontend-breakpoint-desktop: 48.0625rem;
@@ -3249,22 +3249,17 @@
 }
 
 .govuk-error-summary__body p {
-  margin-bottom: 0;
-}
-.govuk-error-summary__body > * + * {
-  margin-top: 15px;
+  margin-top: 0;
+  margin-bottom: 15px;
 }
 @media (min-width: 40.0625em) {
-  .govuk-error-summary__body > * + * {
-    margin-top: 20px;
+  .govuk-error-summary__body p {
+    margin-bottom: 20px;
   }
 }
 
 .govuk-error-summary__list {
-  margin-bottom: 0;
-}
-
-.govuk-error-summary__list li:last-child {
+  margin-top: 0;
   margin-bottom: 0;
 }
 
@@ -4610,40 +4605,6 @@
 
 .govuk-panel__title:last-child {
   margin-bottom: 0;
-}
-
-
-
-
-
-
-
-@media (min-width: 20em) {
-  .govuk-password-input__wrapper {
-    flex-direction: row;
-    align-items: flex-start;
-  }
-}
-
-.govuk-password-input__input::-ms-reveal {
-  display: none;
-}
-
-.govuk-password-input__toggle {
-  margin-top: 5px;
-  margin-bottom: 0;
-}
-.govuk-password-input__toggle[hidden] {
-  display: none;
-}
-@media (min-width: 20em) {
-  .govuk-password-input__toggle {
-    width: auto;
-    flex-shrink: 0;
-    flex-basis: 5em;
-    margin-top: 0;
-    margin-left: 5px;
-  }
 }
 
 
@@ -7399,10 +7360,6 @@
   font-weight: 700 !important;
 }
 
-.govuk-\!-font-tabular-numbers {
-  font-variant-numeric: tabular-nums !important;
-}
-
 
 .govuk-\!-width-full {
   width: 100% !important;
@@ -7452,7 +7409,6 @@
     width: 25% !important;
   }
 }
-
 
 
 
@@ -7569,6 +7525,38 @@ body {
 }
 
 /* Chat page */
+.iai-panel {
+  background-color: #f3f2f1;
+  border-radius: 0.25rem;
+  display: block;
+  margin-bottom: 2rem;
+  padding: 1rem;
+  padding-top: 1.5rem;
+}
+
+.iai-panel__scrollable {
+  overflow-y: auto;
+  padding-right: 0.5rem;
+  max-height: 16.75rem;
+}
+
+.iai-panel__scrollable::-webkit-scrollbar {
+  background-color: #b1b4b6;
+  width: 5px;
+}
+
+.iai-panel__scrollable::-webkit-scrollbar-thumb {
+  background-color: #505a5f;
+}
+
+.iai-panel__scrollable .govuk-checkboxes__item {
+  margin-left: 0.625rem;
+}
+
+.iai-panel__scrollable .govuk-checkboxes__label {
+  word-break: break-word;
+}
+
 .iai-chat-message__container {
   margin-top: -1rem;
 }
@@ -7609,6 +7597,10 @@ body {
 .iai-chat-message__text code {
   display: block;
   overflow-x: auto;
+}
+
+.iai-chat-message__text li {
+  padding: 0.125rem 0;
 }
 
 .iai-chat-message__text table {

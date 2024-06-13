@@ -71,6 +71,10 @@ def test_rag_chat_streamed(app_client, headers):
         {"text": "What can I do for you?", "role": "system"},
         {"text": "Who put the ram in the rama lama ding dong?", "role": "user"},
     ]
+    selected_files = [
+        {"uuid": "9aa1aa15-dde0-471f-ab27-fd410612025b"},
+        {"uuid": "219c2e94-9877-4f83-ad6a-a59426f90171"},
+    ]
     events: Iterable[StreamEvent] = [
         StreamEvent(
             event="on_chat_model_stream",
@@ -97,7 +101,7 @@ def test_rag_chat_streamed(app_client, headers):
         app_client.websocket_connect("/chat/rag", headers=headers) as websocket,
     ):
         # When
-        websocket.send_text(json.dumps({"message_history": message_history}))
+        websocket.send_text(json.dumps({"message_history": message_history, "selected_files": selected_files}))
 
         all_text, docs = [], []
         while True:

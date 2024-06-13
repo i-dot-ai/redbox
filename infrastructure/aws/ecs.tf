@@ -40,6 +40,33 @@ resource "aws_service_discovery_service" "service_discovery_service" {
   }
 }
 
+resource "aws_secretsmanager_secret" "core-api-secret" {
+  name = "${local.name}-core-api-secret"
+}
+
+resource "aws_secretsmanager_secret" "django-app-secret" {
+  name = "${local.name}-django-app-secret"
+}
+
+resource "aws_secretsmanager_secret" "worker-secret" {
+  name = "${local.name}-worker-secret"
+}
+
+resource "aws_secretsmanager_secret_version" "core-api-json-secret" {
+  secret_id     = aws_secretsmanager_secret.core-api-secret.id
+  secret_string = jsonencode(local.core_secrets)
+}
+
+resource "aws_secretsmanager_secret_version" "django-app-json-secret" {
+  secret_id     = aws_secretsmanager_secret.django-app-secret.id
+  secret_string = jsonencode(local.django_app_secrets)
+}
+
+resource "aws_secretsmanager_secret_version" "worker-json-secret" {
+  secret_id     = aws_secretsmanager_secret.worker-secret.id
+  secret_string = jsonencode(local.worker_secrets)
+}
+
 module "django-app" {
   memory                     = 4096
   cpu                        = 2048
@@ -53,7 +80,7 @@ module "django-app" {
   ecs_cluster_name           = module.cluster.ecs_cluster_name
   autoscaling_minimum_target = 1
   autoscaling_maximum_target = 10
-  health_check = {
+  health_check               = {
     healthy_threshold   = 3
     unhealthy_threshold = 3
     accepted_response   = "200"
@@ -68,7 +95,8 @@ module "django-app" {
   aws_lb_arn                   = module.load_balancer.alb_arn
   host                         = local.django_host
   ip_whitelist                 = var.external_ips
-  environment_variables        = local.environment_variables
+  environment_variables        = local.django_app_environment_variables
+  secrets                      = local.reconstructed_django_secrets
 }
 
 
@@ -86,7 +114,7 @@ module "core_api" {
   ecs_cluster_name              = module.cluster.ecs_cluster_name
   autoscaling_minimum_target    = 1
   autoscaling_maximum_target    = 10
-  health_check = {
+  health_check                  = {
     healthy_threshold   = 3
     unhealthy_threshold = 3
     accepted_response   = "200"
@@ -100,7 +128,8 @@ module "core_api" {
   load_balancer_security_group = module.load_balancer.load_balancer_security_group_id
   aws_lb_arn                   = module.load_balancer.alb_arn
   ip_whitelist                 = var.external_ips
-  environment_variables        = local.environment_variables
+  environment_variables        = local.core_api_environment_variables
+  secrets                      = local.reconstructed_core_secrets
 }
 
 
@@ -124,7 +153,8 @@ module "worker" {
   load_balancer_security_group = module.load_balancer.load_balancer_security_group_id
   aws_lb_arn                   = module.load_balancer.alb_arn
   ip_whitelist                 = var.external_ips
-  environment_variables        = local.environment_variables
+  environment_variables        = local.worker_environment_variables
+  secrets                      = local.reconstructed_worker_secrets
   http_healthcheck             = false
 }
 

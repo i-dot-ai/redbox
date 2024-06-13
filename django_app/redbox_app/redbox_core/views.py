@@ -195,51 +195,73 @@ def remove_doc_view(request, doc_id: uuid):
     )
 
 
-@login_required
-def chats_view(request: HttpRequest, chat_id: uuid.UUID | None = None):
-    chat_history = ChatHistory.objects.filter(users=request.user).order_by("-created_at")
+class ChatsView(View):
+    @method_decorator(login_required)
+    def get(self, request: HttpRequest, chat_id: uuid.UUID | None = None) -> HttpResponse:
+        chat_history = ChatHistory.objects.filter(users=request.user).order_by("-created_at")
 
-    messages = []
-    if chat_id:
-        messages = ChatMessage.objects.filter(chat_history__id=chat_id).order_by("created_at")
-    endpoint = URL.build(scheme=settings.WEBSOCKET_SCHEME, host=request.get_host(), path=r"/ws/chat/")
-    context = {
-        "chat_id": chat_id,
-        "messages": messages,
-        "chat_history": chat_history,
-        "streaming": {"in_use": settings.USE_STREAMING, "endpoint": str(endpoint)},
-        "contact_email": settings.CONTACT_EMAIL,
-    }
+        messages: Sequence[ChatMessage] = []
+        if chat_id:
+            messages = ChatMessage.objects.filter(chat_history__id=chat_id).order_by("created_at")
+        endpoint = URL.build(scheme=settings.WEBSOCKET_SCHEME, host=request.get_host(), path=r"/ws/chat/")
 
-    return render(
-        request,
-        template_name="chats.html",
-        context=context,
-    )
+        all_files = File.objects.filter(user=request.user, status=StatusEnum.complete).order_by("-created_at")
+        self.decorate_selected_files(all_files, messages)
+
+        context = {
+            "chat_id": chat_id,
+            "messages": messages,
+            "chat_history": chat_history,
+            "streaming": {"in_use": settings.USE_STREAMING, "endpoint": str(endpoint)},
+            "contact_email": settings.CONTACT_EMAIL,
+            "files": all_files,
+        }
+
+        return render(
+            request,
+            template_name="chats.html",
+            context=context,
+        )
+
+    @staticmethod
+    def decorate_selected_files(all_files: Sequence[File], messages: Sequence[ChatMessage]) -> None:
+        if messages:
+            last_user_message = [m for m in messages if m.role == ChatRoleEnum.user][-1]
+            selected_files: Sequence[File] = last_user_message.selected_files.all() or []
+        else:
+            selected_files = []
+
+        for file in all_files:
+            file.selected = file in selected_files
 
 
 @require_http_methods(["POST"])
 def post_message(request: HttpRequest) -> HttpResponse:
     message_text = request.POST.get("message", "New chat")
+    selected_file_uuids: Sequence[uuid.UUID] = [uuid.UUID(v) for k, v in request.POST.items() if k.startswith("file-")]
 
     # get current session, or create a new one
     if session_id := request.POST.get("session-id", None):
         session = ChatHistory.objects.get(id=session_id)
     else:
-        session_name = message_text[0:20]
+        session_name = message_text[0 : settings.CHAT_TITLE_LENGTH]
         session = ChatHistory(name=session_name, users=request.user)
         session.save()
 
+    selected_files = File.objects.filter(id__in=selected_file_uuids, user=request.user)
+
     # save user message
-    chat_message = ChatMessage(chat_history=session, text=message_text, role=ChatRoleEnum.user)
-    chat_message.save()
+    user_message = ChatMessage(chat_history=session, text=message_text, role=ChatRoleEnum.user)
+    user_message.save()
+    user_message.selected_files.set(selected_files)
 
     # get LLM response
     message_history = [
         {"role": message.role, "text": message.text}
         for message in ChatMessage.objects.all().filter(chat_history=session)
     ]
-    response_data = core_api.rag_chat(message_history, request.user)
+    selected_files_message = [{"uuid": str(f.core_file_uuid)} for f in selected_files]
+    response_data = core_api.rag_chat(message_history, selected_files_message, request.user)
 
     llm_message = ChatMessage(chat_history=session, text=response_data.output_text, role=ChatRoleEnum.ai)
     llm_message.save()
@@ -252,7 +274,7 @@ def post_message(request: HttpRequest) -> HttpResponse:
         file.last_referenced = timezone.now()
         file.save()
 
-    return redirect(reverse(chats_view, args=(session.id,)))
+    return redirect(reverse("chats", args=(session.id,)))
 
 
 @require_http_methods(["GET"])
