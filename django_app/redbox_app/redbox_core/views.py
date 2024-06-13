@@ -238,6 +238,7 @@ class ChatsView(View):
 @require_http_methods(["POST"])
 def post_message(request: HttpRequest) -> HttpResponse:
     message_text = request.POST.get("message", "New chat")
+    selected_file_uuids: Sequence[uuid.UUID] = [uuid.UUID(v) for k, v in request.POST.items() if k.startswith("file-")]
 
     # get current session, or create a new one
     if session_id := request.POST.get("session-id", None):
@@ -247,16 +248,20 @@ def post_message(request: HttpRequest) -> HttpResponse:
         session = ChatHistory(name=session_name, users=request.user)
         session.save()
 
+    selected_files = File.objects.filter(id__in=selected_file_uuids, user=request.user)
+
     # save user message
-    chat_message = ChatMessage(chat_history=session, text=message_text, role=ChatRoleEnum.user)
-    chat_message.save()
+    user_message = ChatMessage(chat_history=session, text=message_text, role=ChatRoleEnum.user)
+    user_message.save()
+    user_message.selected_files.set(selected_files)
 
     # get LLM response
     message_history = [
         {"role": message.role, "text": message.text}
         for message in ChatMessage.objects.all().filter(chat_history=session)
     ]
-    response_data = core_api.rag_chat(message_history, request.user)
+    selected_files_message = [{"uuid": str(f.core_file_uuid)} for f in selected_files]
+    response_data = core_api.rag_chat(message_history, selected_files_message, request.user)
 
     llm_message = ChatMessage(chat_history=session, text=response_data.output_text, role=ChatRoleEnum.ai)
     llm_message.save()

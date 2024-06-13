@@ -1,5 +1,7 @@
+import json
 import logging
 import uuid
+from collections.abc import Sequence
 from http import HTTPStatus
 from pathlib import Path
 
@@ -273,6 +275,46 @@ def test_post_message_to_existing_session(
         ChatMessage.objects.get(chat_history__id=session_id, role=ChatRoleEnum.ai).source_files.first() == uploaded_file
     )
     assert initial_file_expiry_date != File.objects.get(core_file_uuid=uploaded_file.core_file_uuid).expiry_date
+
+
+@pytest.mark.django_db()
+def test_post_message_with_files_selected(
+    chat_history: ChatHistory, client: Client, requests_mock: Mocker, several_files: Sequence[File]
+):
+    # Given
+    client.force_login(chat_history.users)
+    session_id = chat_history.id
+    selected_files = several_files[::2]
+
+    rag_url = f"http://{settings.CORE_API_HOST}:{settings.CORE_API_PORT}/chat/rag"
+    requests_mock.register_uri(
+        "POST",
+        rag_url,
+        json={
+            "output_text": "Only those, then.",
+            "source_documents": [{"file_uuid": str(f.core_file_uuid)} for f in selected_files],
+        },
+    )
+
+    # When
+    response = client.post(
+        "/post-message/",
+        {
+            "message": "Only tell me about these, please.",
+            "session-id": session_id,
+            **{f"file-{f.id}": f.id for f in selected_files},
+        },
+    )
+
+    # Then
+    assert response.status_code == HTTPStatus.FOUND
+    assert (
+        list(ChatMessage.objects.get(chat_history__id=session_id, role=ChatRoleEnum.user).selected_files.all())
+        == selected_files
+    )
+    assert json.loads(requests_mock.last_request.text).get("selected_files") == [
+        {"uuid": str(f.core_file_uuid)} for f in selected_files
+    ]
 
 
 @pytest.mark.django_db()
