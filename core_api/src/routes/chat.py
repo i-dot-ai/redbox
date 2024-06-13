@@ -77,7 +77,7 @@ async def semantic_router_to_chain(
                 storage_handler=storage_handler,
             )
             return chain, params
-        
+
     return chain, params
 
 
