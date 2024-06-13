@@ -65,7 +65,7 @@ async def semantic_router_to_chain(
     question = chat_request.message_history[-1].text
     route = route_layer(question)
 
-    if route_response := ROUTE_RESPONSES.get(route.name or "retrieval"):
+    if route_response := ROUTE_RESPONSES.get(route.name):
         if isinstance(route_response, ChatPromptTemplate):
             return route_response, {}
         if callable(route_response):
@@ -78,6 +78,7 @@ async def semantic_router_to_chain(
             )
             return chain, params
 
+    chain, params = await build_retrieval_chain(chat_request, user_uuid, llm, vector_store)
     return chain, params
 
 
