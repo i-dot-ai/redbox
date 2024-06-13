@@ -7,7 +7,7 @@ from uuid import UUID
 from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
 from django.conf import settings
-from redbox_app.redbox_core.models import ChatHistory, ChatMessage, ChatRoleEnum, File, TextChunk, User
+from redbox_app.redbox_core.models import ChatHistory, ChatMessage, ChatRoleEnum, File, User
 from websockets import WebSocketClientProtocol
 from websockets.client import connect
 from yarl import URL
@@ -114,8 +114,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
     ) -> ChatMessage:
         chat_message = ChatMessage(chat_history=session, text=user_message_text, role=role)
         chat_message.save()
-        for file in source_files or []:
-            TextChunk.objects.create(chat_message=chat_message, file=file)
+        if source_files:
+            chat_message.chunks.set(source_files)
         if selected_files:
             chat_message.selected_files.set(selected_files)
         return chat_message

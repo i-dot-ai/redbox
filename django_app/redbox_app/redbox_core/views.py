@@ -15,7 +15,7 @@ from django.utils.decorators import method_decorator
 from django.views import View
 from django.views.decorators.http import require_http_methods
 from redbox_app.redbox_core.client import CoreApiClient
-from redbox_app.redbox_core.models import ChatHistory, ChatMessage, ChatRoleEnum, File, StatusEnum, TextChunk, User
+from redbox_app.redbox_core.models import ChatHistory, ChatMessage, ChatRoleEnum, File, StatusEnum, User
 from requests.exceptions import RequestException
 from yarl import URL
 
@@ -257,9 +257,9 @@ def post_message(request: HttpRequest) -> HttpResponse:
 
     doc_uuids: list[str] = [doc.file_uuid for doc in response_data.source_documents]
     files: list[File] = File.objects.filter(core_file_uuid__in=doc_uuids, user=request.user)
+    llm_message.chunks.set(files)
 
     for file in files:
-        TextChunk.objects.create(chat_message=llm_message, file=file)
         file.last_referenced = timezone.now()
         file.save()
 
