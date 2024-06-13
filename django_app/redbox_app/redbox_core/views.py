@@ -259,7 +259,7 @@ def post_message(request: HttpRequest) -> HttpResponse:
     files: list[File] = File.objects.filter(core_file_uuid__in=doc_uuids, user=request.user)
 
     for file in files:
-        TextChunk(chat_message=llm_message, file=file)
+        TextChunk.objects.create(chat_message=llm_message, file=file)
         file.last_referenced = timezone.now()
         file.save()
 

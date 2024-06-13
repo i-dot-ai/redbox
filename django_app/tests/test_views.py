@@ -266,12 +266,10 @@ def test_post_message_to_existing_session(
     # Then
     assert response.status_code == HTTPStatus.FOUND
     assert URL(response.url).parts[-2] == str(session_id)
-    assert (
-        ChatMessage.objects.get(chat_history__id=session_id, role=ChatRoleEnum.ai).text == "Good afternoon, Mr. Amor."
-    )
-    assert (
-        ChatMessage.objects.get(chat_history__id=session_id, role=ChatRoleEnum.ai).chunks.first().file == uploaded_file
-    )
+
+    chat_message = ChatMessage.objects.get(chat_history__id=session_id, role=ChatRoleEnum.ai)
+    assert chat_message.text == "Good afternoon, Mr. Amor."
+    assert chat_message.chunks.first() == uploaded_file
     assert initial_file_expiry_date != File.objects.get(core_file_uuid=uploaded_file.core_file_uuid).expiry_date
 
 

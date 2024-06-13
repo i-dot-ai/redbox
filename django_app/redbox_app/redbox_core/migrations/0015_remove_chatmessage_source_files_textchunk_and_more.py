@@ -65,8 +65,4 @@ class Migration(migrations.Migration):
             ),
         ),
         migrations.RunPython(file_to_text_chunk, migrations.RunPython.noop),
-        migrations.RemoveField(
-            model_name="chatmessage",
-            name="source_files",
-        ),
     ]
