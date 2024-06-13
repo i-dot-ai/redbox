@@ -104,12 +104,14 @@ def test_rag_chat_streamed(app_client, headers):
         # When
         websocket.send_text(json.dumps({"message_history": message_history, "selected_files": selected_files}))
 
-        all_text, docs = [], []
+        all_text, docs, route = [], [], ""
         while True:
             try:
                 actual = websocket.receive_json()
                 if actual["resource_type"] == "text":
                     all_text.append(actual["data"])
+                    if route == "":
+                        route = actual["route"]
                 if actual["resource_type"] == "documents":
                     docs.append(actual["data"])
             except WebSocketDisconnect:
@@ -118,6 +120,7 @@ def test_rag_chat_streamed(app_client, headers):
         # Then
         text = "".join(all_text)
         assert "Barry Mann" in text
+        assert route == "rag"
 
 
 def mock_build_retrieval_chain(events):

@@ -133,12 +133,12 @@ async def build_chain(chat_request: ChatRequest, user_uuid: UUID, llm: ChatLiteL
     route = route_layer(question)
 
     if route_response := ROUTE_RESPONSES.get(route.name):
-        return route_response, {}
+        return route_response, {}, route.name
     # build_vanilla_chain could go here
 
     # RAG chat
     chain, params = await build_retrieval_chain(chat_request, user_uuid, llm, vector_store)
-    return chain, params
+    return chain, params, ChatRouteEnum.rag
 
 
 @chat_app.post("/rag", tags=["chat"])
@@ -199,12 +199,12 @@ async def rag_chat_streamed(
     chat_request = ChatRequest.model_validate_json(request)
     logger.debug("chat request from django-app: %s", chat_request)
 
-    chain, params = await build_chain(chat_request, user_uuid, llm, vector_store)
+    chain, params, route = await build_chain(chat_request, user_uuid, llm, vector_store)
 
     async for event in chain.astream_events(params, version="v1"):
         kind = event["event"]
         if kind == "on_chat_model_stream":
-            await websocket.send_json({"resource_type": "text", "data": event["data"]["chunk"].content})
+            await websocket.send_json({"resource_type": "text", "route": route, "data": event["data"]["chunk"].content})
         elif kind == "on_chat_model_end":
             await websocket.send_json({"resource_type": "end"})
         elif kind == "on_chain_stream":
@@ -222,7 +222,7 @@ async def rag_chat_streamed(
         elif kind == "on_prompt_stream":
             try:
                 msg = event["data"]["chunk"].messages[0].content
-                await websocket.send_json({"resource_type": "text", "data": msg})
+                await websocket.send_json({"resource_type": "text", "route": route, "data": msg})
             except (KeyError, AttributeError):
                 logger.exception("unknown message format %s", str(event["data"]["chunk"]))
 
