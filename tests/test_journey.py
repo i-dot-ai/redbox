@@ -21,6 +21,12 @@ TEST_ROOT = Path(__file__).parent
 
 
 def test_user_journey(page: Page, email_address: str):
+    """End to end user journey test.
+
+    Simulates a single user journey through the application, running against the full suite of microservices.
+
+    Uses the Page Object Model - see https://pinboard.in/u:brunns/t:page-object for some resources explaining this.
+    Please add to the page objects in `pages.py` where necessary - don't put page specific logic at this level."""
     create_user(email_address)
 
     # Landing page
