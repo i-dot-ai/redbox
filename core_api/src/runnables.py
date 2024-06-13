@@ -1,5 +1,5 @@
 from operator import itemgetter
-from typing import Any, TypedDict
+from typing import Any, TypedDict, List, Dict
 from uuid import UUID
 
 from elasticsearch import Elasticsearch
@@ -7,12 +7,14 @@ from langchain.schema import StrOutputParser
 from langchain_community.chat_models import ChatLiteLLM
 from langchain_community.embeddings import SentenceTransformerEmbeddings
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.runnables import Runnable, RunnableLambda, RunnablePassthrough
+from langchain_core.runnables import Runnable, RunnableLambda, RunnablePassthrough, chain
 from langchain_core.vectorstores import VectorStoreRetriever
 from langchain_elasticsearch import ElasticsearchRetriever
 
 from core_api.src.format import format_chunks
-from redbox.models import Chunk
+from redbox.models import Chunk, ChatMessage, ChatResponse
+from redbox.models.chat import SourceDocument
+from redbox.llm.prompts.chat import CONDENSE_QUESTION_PROMPT
 
 
 def make_chat_runnable(
@@ -60,10 +62,16 @@ def make_stuff_document_runnable(
 
     return (
         {
+            "chat_history": itemgetter("chat_history"),
+            "question": itemgetter("question")
+        }
+        | CONDENSE_QUESTION_PROMPT
+        | llm
+        | {
             "question": itemgetter("question"),
             "messages": itemgetter("messages"),
             "documents": itemgetter("documents") | RunnableLambda(format_chunks),
-        }
+          }
         | ChatPromptTemplate.from_messages(chat_history)
         | llm
         | StrOutputParser()
@@ -77,7 +85,9 @@ class ESQuery(TypedDict):
 
 
 def make_es_retriever(
-    es: Elasticsearch, embedding_model: SentenceTransformerEmbeddings, chunk_index_name: str
+    es: Elasticsearch, 
+    embedding_model: SentenceTransformerEmbeddings, 
+    chunk_index_name: str
 ) -> ElasticsearchRetriever:
     """Creates an Elasticsearch retriever runnable.
 
@@ -121,34 +131,47 @@ def make_es_retriever(
 
 
 def make_rag_runnable(
-    system_prompt: str,
     llm: ChatLiteLLM,
     retriever: VectorStoreRetriever,
+    **kwargs
 ) -> Runnable:
-    """Takes a system prompt, LLM and retriever and returns a basic RAG runnable.
+    """Takes a chat request, LLM and retriever and returns a basic RAG runnable.
 
     Runnable takes input of a dict keyed to question, messages and file_uuids and user_uuid.
 
     Runnable returns a dict keyed to response and sources.
     """
-    chat_history = [
-        ("system", system_prompt),
-        ("placeholder", "{messages}"),
-        ("user", "Question: {question}. \n\n Documents: \n\n {documents} \n\n Answer: "),
-    ]
-
-    prompt = ChatPromptTemplate.from_messages(chat_history)
+    @chain
+    def get_chat_prompt(input_dict: Dict):
+        return ChatPromptTemplate.from_messages([
+            (msg.role, msg.text) 
+            for msg in input_dict['chat_history']
+        ]).invoke(input_dict)
+    
+    @chain
+    def map_to_chat_response(input_dict: Dict):
+        return ChatResponse(
+            output_text=input_dict['response'],
+            source_documents=[
+                SourceDocument(
+                    page_content=chunk.text,
+                    file_uuid=chunk.parent_file_uuid,
+                    page_numbers=[chunk.metadata.page_number]
+                )
+                for chunk in input_dict['source_documents']
+            ]
+        )
 
     return (
-        RunnablePassthrough()
+        RunnablePassthrough.assign(
+            documents=retriever
+        )
+        | RunnablePassthrough.assign(
+            formatted_documents=(RunnablePassthrough() | itemgetter("documents") | format_chunks)
+        )
         | {
-            "question": itemgetter("question"),
-            "messages": itemgetter("messages"),
-            "documents": retriever | format_chunks,
-            "sources": retriever,
-        }
-        | {
-            "response": prompt | llm | StrOutputParser(),
-            "sources": itemgetter("sources"),
-        }
+            "response": get_chat_prompt | llm | StrOutputParser(),
+            "source_documents": itemgetter("documents"),
+          }
+        | map_to_chat_response
     )
