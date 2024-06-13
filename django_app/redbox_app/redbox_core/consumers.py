@@ -129,4 +129,4 @@ class ChatConsumer(AsyncWebsocketConsumer):
     @database_sync_to_async
     def get_files_by_core_uuid(docs: dict[UUID, str], user: User) -> Sequence[tuple[File, str]]:
         files = list(File.objects.filter(core_file_uuid__in=list(docs), user=user))
-        return [(file, docs[file]) for file in files]
+        return [(file, docs[file.core_file_uuid]) for file in files]
