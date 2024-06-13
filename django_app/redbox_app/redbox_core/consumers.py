@@ -65,7 +65,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         return "".join(full_reply), source_files
 
     async def handle_documents(self, message: SimpleNamespace, user: User) -> Sequence[tuple[File, str]]:
-        docs: dict[UUID, str] = [(UUID(doc.file_uuid), doc.page_content) for doc in message.data]
+        docs: dict[UUID, str] = {UUID(doc.file_uuid): doc.page_content for doc in message.data}
         source_files = await self.get_files_by_core_uuid(docs, user)
         for source, _ in source_files:
             await self.send_to_client(
