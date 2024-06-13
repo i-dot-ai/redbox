@@ -190,7 +190,7 @@ class DocumentsPage(SignedInBasePage):
     def document_count(self) -> int:
         return len(self.all_documents)
 
-    def wait_for_documents_to_complete(self, retry_interval: int = 5, max_tries: int = 600):
+    def wait_for_documents_to_complete(self, retry_interval: int = 5, max_tries: int = 120):
         tries = 0
         while True:
             if all(d.status == "Complete" for d in self.all_documents):
