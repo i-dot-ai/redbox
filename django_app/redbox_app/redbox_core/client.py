@@ -55,10 +55,12 @@ class CoreApiClient:
         response.raise_for_status()
         return response.json(object_hook=lambda d: SimpleNamespace(**d))
 
-    def rag_chat(self, message_history: list[dict[str, str]], user: User) -> SimpleNamespace:
+    def rag_chat(
+        self, message_history: list[dict[str, str]], selected_files: list[dict[str, str]], user: User
+    ) -> SimpleNamespace:
         response = requests.post(
             self.url / "chat/rag",
-            json={"message_history": message_history},
+            json={"message_history": message_history, "selected_files": selected_files},
             headers={"Authorization": user.get_bearer_token()},
             timeout=60,
         )
