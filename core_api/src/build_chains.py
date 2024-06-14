@@ -73,8 +73,8 @@ async def build_vanilla_chain(
 
 
 def build_retrieval_chain(
-    llm: ChatLiteLLM = Depends(dependencies.get_llm),
-    retriever: VectorStoreRetriever = Depends(dependencies.get_es_retriever),
+    llm: ChatLiteLLM,
+    retriever: VectorStoreRetriever,
     system_prompt: str = RETRIEVAL_SYSTEM_PROMPT_TEMPLATE,
     question_prompt: str = RETRIEVAL_QUESTION_PROMPT_TEMPLATE,
     **kwargs
@@ -94,8 +94,8 @@ def build_retrieval_chain(
 
 
 def build_summary_chain(
-    llm: ChatLiteLLM = Depends(dependencies.get_llm),
-    storage_handler: ElasticsearchStorageHandler = Depends(dependencies.get_storage_handler),
+    llm: ChatLiteLLM,
+    storage_handler: ElasticsearchStorageHandler,
     system_prompt: str = SUMMARISATION_SYSTEM_PROMPT_TEMPLATE,
     question_prompt: str = SUMMARISATION_QUESTION_PROMPT_TEMPLATE,
     **kwargs,  # noqa: ARG001

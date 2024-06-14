@@ -31,7 +31,7 @@ def make_chat_prompt_from_messages_runnable(
         return ChatPromptTemplate.from_messages(
             system_prompt_message +
             [
-            (msg.role, msg.text) 
+            (msg['role'], msg['text']) 
             for msg in input_dict['chat_history']
             ] + 
             [("user", question_prompt)]

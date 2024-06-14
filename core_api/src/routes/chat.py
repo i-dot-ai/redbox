@@ -11,7 +11,7 @@ from langchain_core.prompts import ChatPromptTemplate
 
 from core_api.src.auth import get_user_uuid, get_ws_user_uuid
 from core_api.src.build_chains import build_retrieval_chain, build_summary_chain, get_routable_chains
-from core_api.src.dependencies import get_llm, get_storage_handler, get_vector_store, get_es_retriever
+from core_api.src.dependencies import get_storage_handler, get_vector_store, get_llm, llm, es_retriever
 from core_api.src.runnables import map_to_chat_response, make_static_response_chain
 from redbox.llm.prompts.chat import RETRIEVAL_SYSTEM_PROMPT_TEMPLATE, RETRIEVAL_QUESTION_PROMPT_TEMPLATE
 from redbox.llm.prompts.summarisation import SUMMARISATION_SYSTEM_PROMPT_TEMPLATE, SUMMARISATION_QUESTION_PROMPT_TEMPLATE
@@ -35,8 +35,8 @@ ROUTABLE_CHAINS = {
     "ability": make_static_response_chain(ABILITY_RESPONSE),
     "coach": make_static_response_chain(COACH_RESPONSE),
     "gratitude": make_static_response_chain("You're welcome!"),
-    "retrieval": build_retrieval_chain(get_llm, get_es_retriever, RETRIEVAL_SYSTEM_PROMPT_TEMPLATE, RETRIEVAL_QUESTION_PROMPT_TEMPLATE),
-    "summarisation": build_summary_chain(get_llm, get_es_retriever, SUMMARISATION_SYSTEM_PROMPT_TEMPLATE, SUMMARISATION_QUESTION_PROMPT_TEMPLATE),
+    "retrieval": build_retrieval_chain(llm, es_retriever),
+    "summarisation": build_summary_chain(llm, es_retriever, SUMMARISATION_SYSTEM_PROMPT_TEMPLATE, SUMMARISATION_QUESTION_PROMPT_TEMPLATE),
     "extract": make_static_response_chain("You asking to extract some information - route not yet implemented")
 }
 
@@ -86,10 +86,7 @@ async def rag_chat(
 
 @chat_app.websocket("/rag")
 async def rag_chat_streamed(
-    websocket: WebSocket,
-    llm: Annotated[ChatLiteLLM, Depends(get_llm)],
-    vector_store: Annotated[ElasticsearchStore, Depends(get_vector_store)],
-    storage_handler: Annotated[ElasticsearchStorageHandler, Depends(get_storage_handler)],
+    websocket: WebSocket
 ):
     """Websocket. Get a LLM response to a question history and file."""
     await websocket.accept()
@@ -101,7 +98,7 @@ async def rag_chat_streamed(
 
     selected_chain, params = await semantic_router_to_chain(chat_request, user_uuid)
 
-    async for event in selected_chain.astream_events(params, version="v1"):
+    async for event in selected_chain.astream_events(params.model_dump(), version="v1"):
         kind = event["event"]
         if kind == "on_chat_model_stream":
             await websocket.send_json({"resource_type": "text", "data": event["data"]["chunk"].content})
@@ -109,16 +106,16 @@ async def rag_chat_streamed(
             await websocket.send_json({"resource_type": "end"})
         elif kind == "on_chain_stream":
             if isinstance(event["data"]["chunk"], dict):
-                input_documents = event["data"]["chunk"].get("source_documents", [])
+                source_chunks = event["data"]["chunk"].get("source_documents", [])
                 source_documents = [
                     jsonable_encoder(
                         SourceDocument(
-                            page_content=document.page_content,
-                            file_uuid=document.metadata.get("parent_doc_uuid"),
-                            page_numbers=document.metadata.get("page_numbers"),
+                            page_content=chunk.text,
+                            file_uuid=chunk.parent_file_uuid,
+                            page_numbers=[chunk.metadata.page_number]
                         )
                     )
-                    for document in input_documents
+                    for chunk in source_chunks
                 ]
                 await websocket.send_json({"resource_type": "documents", "data": source_documents})
         elif kind == "on_prompt_stream":

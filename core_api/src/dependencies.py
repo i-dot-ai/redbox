@@ -29,15 +29,15 @@ logging.basicConfig(level=logging.INFO)
 log = logging.getLogger()
 
 
-async def get_env() -> Settings:
+def get_env() -> Settings:
     return Settings()
 
 
-async def get_elasticsearch_client(env: Annotated[Settings, Depends(get_env)]) -> Elasticsearch:
+def get_elasticsearch_client(env: Annotated[Settings, Depends(get_env)]) -> Elasticsearch:
     return env.elasticsearch_client()
 
 
-async def get_embedding_model(env: Annotated[Settings, Depends(get_env)]) -> Embeddings:
+def get_embedding_model(env: Annotated[Settings, Depends(get_env)]) -> Embeddings:
     embedding_model = SentenceTransformerEmbeddings(model_name=env.embedding_model, cache_folder=MODEL_PATH)
     log.info("Loaded embedding model from environment: %s", env.embedding_model)
     return embedding_model
@@ -50,7 +50,7 @@ async def get_storage_handler(
     return ElasticsearchStorageHandler(es_client=es, root_index=env.elastic_root_index)
 
 
-async def get_vector_store(
+def get_vector_store(
     env: Annotated[Settings, Depends(get_env)],
     es: Annotated[Elasticsearch, Depends(get_elasticsearch_client)],
     embedding_model: Annotated[Embeddings, Depends(get_embedding_model)],
@@ -124,7 +124,7 @@ def get_es_retriever(
     )
 
 
-async def get_llm(env: Annotated[Settings, Depends(get_env)]) -> ChatLiteLLM:
+def get_llm(env: Annotated[Settings, Depends(get_env)]) -> ChatLiteLLM:
     # Create the appropriate LLM, either openai, Azure, anthropic or bedrock
     if env.openai_api_key is not None:
         log.info("Creating OpenAI LLM Client")
@@ -159,3 +159,7 @@ async def get_llm(env: Annotated[Settings, Depends(get_env)]) -> ChatLiteLLM:
         log.exception(msg)
         raise ValueError(msg)
     return llm
+
+# Hack before refactoring to dependency managed chains
+es_retriever = get_es_retriever(get_env(), get_elasticsearch_client(get_env()), get_embedding_model(get_env()))
+llm = get_llm(get_env())
