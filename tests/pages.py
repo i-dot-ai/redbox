@@ -281,8 +281,8 @@ class ChatsPage(SignedInBasePage):
     @staticmethod
     def _chat_message_from_element(element: Locator) -> ChatMessage:
         status = element.get_attribute("data-status")
-        role = element.locator(".iai-chat-message__role").inner_text()
-        text = element.locator(".iai-chat-message__text").inner_text()
+        role = element.locator(".rb-chat-message__role").inner_text()
+        text = element.locator(".rb-chat-message__text").inner_text()
         sources = element.locator("sources-list").get_by_role("listitem").all_inner_texts()
         return ChatMessage(status=status, role=role, text=text, sources=sources)
 
