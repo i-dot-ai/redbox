@@ -77,8 +77,15 @@ async def get_llm(env: Annotated[Settings, Depends(get_env)]) -> ChatLiteLLM:
         # this nasty hack is required because, contrary to the docs:
         # using the api_version argument is not sufficient, and we need
         # to use the `OPENAI_API_VERSION` environment variable
-        os.environ["AZURE_API_VERSION"] = env.openai_api_version
-        os.environ["AZURE_OPENAI_API_KEY"] = env.azure_openai_api_key
+        if env.azure_openai_api_key:
+            os.environ["AZURE_API_VERSION"] = env.openai_api_version
+            os.environ["AZURE_OPENAI_API_KEY"] = env.azure_openai_api_key
+        elif env.openai_api_key:
+            os.environ["OPENAI_API_VERSION"] = env.openai_api_version
+            os.environ["OPENAI_API_KEY"] = env.openai_api_key
+        else:
+            msg = "either AZURE_API_VERSION or OPENAI_API_VERSION must be set"
+            raise ValueError(msg)
 
         llm = ChatLiteLLM(
             model=env.azure_openai_model,
