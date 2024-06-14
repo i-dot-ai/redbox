@@ -76,19 +76,30 @@ class ChatMessage extends HTMLElement {
         let webSocket = new WebSocket(endPoint);
         let streamedContent = '';
         let sources = [];
+
+        // Stop streaming on escape key press
+        this.addEventListener('keydown', (evt) => {
+            if (evt.key === 'Escape' && this.dataset.status === 'streaming') {
+                this.dataset.status = 'stopped';
+                webSocket.close();
+            }
+        });
     
         webSocket.onopen = (event) => {
             webSocket.send(JSON.stringify({message: message, sessionId: sessionId, selectedFiles: selectedDocuments}));
-            this.dataset.status = "streaming";
+            this.dataset.status = 'streaming';
         };
     
         webSocket.onerror = (event) => {
             responseContainer.innerHTML = 'There was a problem. Please try sending this message again.';
-            this.dataset.status = "error";
+            this.dataset.status = 'error';
         };
 
         webSocket.onclose = (event) => {
-            this.dataset.status = "complete";
+            responseLoading.style.display = 'none';
+            if (this.dataset.status !== 'stopped') {
+                this.dataset.status = 'complete';
+            }
         };
     
         webSocket.onmessage = (event) => {
