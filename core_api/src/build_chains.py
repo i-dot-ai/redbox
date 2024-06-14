@@ -128,9 +128,7 @@ def build_summary_chain(
         RunnablePassthrough.assign(documents=(make_document_context | RunnableLambda(format_chunks)))
         | make_chat_prompt_from_messages_runnable(system_prompt, question_prompt)
         | llm
-        | {
-            "response": StrOutputParser()
-        }
+        | {"response": StrOutputParser()}
     )
 
     return summary_chain
