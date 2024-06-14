@@ -15,6 +15,9 @@ class UserAdmin(admin.ModelAdmin):
 
 
 class UserGradeAdmin(ImportMixin, admin.ModelAdmin):
+    fields = ["name"]
+    list_display = ["name"]
+
     class Meta:
         model = models.UserGrade
         fields = ["name"]
@@ -22,6 +25,9 @@ class UserGradeAdmin(ImportMixin, admin.ModelAdmin):
 
 
 class BusinessUnitAdmin(ImportMixin, admin.ModelAdmin):
+    fields = ["name"]
+    list_display = ["name"]
+
     class Meta:
         model = models.BusinessUnit
         fields = ["name"]
