@@ -9,6 +9,7 @@ import pytest
 from botocore.exceptions import ClientError
 from django.conf import settings
 from django.test import Client
+from pytest_django.asserts import assertRedirects
 from redbox_app.redbox_core.models import (
     ChatHistory,
     ChatMessage,
@@ -329,3 +330,27 @@ def test_view_session_with_documents(chat_message: ChatMessage, client: Client):
     # Then
     assert response.status_code == HTTPStatus.OK
     assert b"original_file.txt" in response.content
+
+
+@pytest.mark.django_db()
+def test_check_demographics_redirect_if_unpopulated(client: Client, alice: User):
+    # Given
+    client.force_login(alice)
+
+    # When
+    response = client.get("/check-demographics/", follow=True)
+
+    # Then
+    assertRedirects(response, "/demographics/")
+
+
+@pytest.mark.django_db()
+def test_check_demographics_redirect_if_populated(client: Client, mrs_tiggywinkle: User):
+    # Given
+    client.force_login(mrs_tiggywinkle)
+
+    # When
+    response = client.get("/check-demographics/", follow=True)
+
+    # Then
+    assertRedirects(response, "/documents/")

@@ -8,7 +8,16 @@ import pytest
 from django.core.files.uploadedfile import SimpleUploadedFile, UploadedFile
 from django.core.management import call_command
 from redbox_app.redbox_core import client
-from redbox_app.redbox_core.models import ChatHistory, ChatMessage, ChatRoleEnum, File, User
+from redbox_app.redbox_core.models import (
+    BusinessUnit,
+    ChatHistory,
+    ChatMessage,
+    ChatRoleEnum,
+    File,
+    Profession,
+    User,
+    UserGrade,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -53,8 +62,25 @@ def jemima_puddleduck():
 
 
 @pytest.fixture()
-def mrs_tiggywinkle():
-    return User.objects.create_user(email="mrs.tiggywinkle@example.com")
+def mrs_tiggywinkle(user_grade: UserGrade, business_unit: BusinessUnit, profession: Profession) -> User:
+    return User.objects.create_user(
+        email="mrs.tiggywinkle@example.com", grade=user_grade, business_unit=business_unit, profession=profession
+    )
+
+
+@pytest.fixture()
+def user_grade() -> UserGrade:
+    return UserGrade.objects.create(name="Big Boss")
+
+
+@pytest.fixture()
+def business_unit() -> BusinessUnit:
+    return BusinessUnit.objects.create(name="Paperclip Reconciliation")
+
+
+@pytest.fixture()
+def profession() -> Profession:
+    return Profession.objects.create(name="Paperclip Counter")
 
 
 @pytest.fixture()

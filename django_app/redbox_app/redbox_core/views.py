@@ -1,7 +1,8 @@
 import logging
 import uuid
-from collections.abc import MutableSequence, Sequence
+from collections.abc import Mapping, MutableSequence, Sequence
 from pathlib import Path
+from typing import ClassVar
 
 from django import forms
 from django.conf import settings
@@ -18,15 +19,12 @@ from django.views.decorators.http import require_http_methods
 from django.views.generic import UpdateView
 from redbox_app.redbox_core.client import CoreApiClient
 from redbox_app.redbox_core.models import (
-    BusinessUnit,
     ChatHistory,
     ChatMessage,
     ChatRoleEnum,
     File,
-    Profession,
     StatusEnum,
     User,
-    UserGrade,
 )
 from requests.exceptions import RequestException
 from yarl import URL
@@ -327,12 +325,12 @@ class DemographicsForm(forms.ModelForm):
     class Meta:
         model = User
         fields = ("grade", "profession", "business_unit")
-        labels = {
+        labels: ClassVar[Mapping[str, str]] = {
             "grade": "Grade",
             "profession": "Profession",
             "business_unit": "Business unit",
         }
-        widgets = {
+        widgets: ClassVar[Mapping[str, forms.Widget]] = {
             "grade": forms.Select(attrs={"class": "govuk-select"}),
             "profession": forms.Select(attrs={"class": "govuk-select"}),
             "business_unit": forms.Select(attrs={"class": "govuk-select"}),
