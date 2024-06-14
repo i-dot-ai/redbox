@@ -2,7 +2,7 @@ import csv
 
 from django.contrib import admin
 from django.http import HttpResponse
-from import_export.admin import ImportExportModelAdmin
+from import_export.admin import ImportMixin
 
 from . import models
 
@@ -14,17 +14,18 @@ class UserAdmin(admin.ModelAdmin):
     date_hierarchy = "last_login"
 
 
-class UserGradeAdmin(ImportExportModelAdmin):
-
+class UserGradeAdmin(ImportMixin, admin.ModelAdmin):
     class Meta:
         model = models.UserGrade
-        exclude = ['id']
+        fields = ["name"]
+        import_id_fields = ["name"]
 
 
-class BusinessUnitAdmin(ImportExportModelAdmin):
+class BusinessUnitAdmin(ImportMixin, admin.ModelAdmin):
     class Meta:
         model = models.BusinessUnit
-        exclude = ['id']
+        fields = ["name"]
+        import_id_fields = ["name"]
 
 
 class FileAdmin(admin.ModelAdmin):
