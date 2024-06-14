@@ -27,6 +27,20 @@ class TimeStampedModel(models.Model):
         ordering = ["created_at"]
 
 
+class UserGrade(UUIDPrimaryKeyBase):
+    name = models.TextField(max_length=32, null=False, blank=False, unique=True)
+
+    def __str__(self) -> str:  # pragma: no cover
+        return f"{self.name}"
+
+
+class BusinessUnit(UUIDPrimaryKeyBase):
+    name = models.TextField(max_length=64, null=False, blank=False, unique=True)
+
+    def __str__(self) -> str:  # pragma: no cover
+        return f"{self.name}"
+
+
 class User(BaseUser, UUIDPrimaryKeyBase):
     username = None
     verified = models.BooleanField(default=False, blank=True, null=True)
@@ -34,6 +48,8 @@ class User(BaseUser, UUIDPrimaryKeyBase):
     invite_accepted_at = models.DateTimeField(default=None, blank=True, null=True)
     last_token_sent_at = models.DateTimeField(editable=False, blank=True, null=True)
     password = models.CharField("password", max_length=128, blank=True, null=True)
+    grade = models.ForeignKey(UserGrade, null=True, on_delete=models.SET_NULL)
+    business_unit = models.ForeignKey(BusinessUnit, null=True, on_delete=models.SET_NULL)
     objects = BaseUserManager()
 
     def __str__(self) -> str:  # pragma: no cover
