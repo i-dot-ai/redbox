@@ -79,7 +79,6 @@
             {% set menu_items = [
               {"text": "Documents", "url": "documents"},
               {"text": "Chats", "url": "chats"},
-              {"text": "My Details", "url": "demographics"},
               {"text": "Sign out", "url": "signed-out"}
             ] %}
           {% else %}
@@ -141,6 +140,11 @@
             <li class="govuk-footer__inline-list-item">
               <a class="govuk-footer__link" href="{{ url('support') }}">
                 Support
+              </a>
+            </li>
+            <li class="govuk-footer__inline-list-item">
+              <a class="govuk-footer__link" href="{{ url('demographics') }}">
+                My Details
               </a>
             </li>
           </ul>

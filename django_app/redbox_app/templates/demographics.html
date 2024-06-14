@@ -15,7 +15,6 @@
 
     <form method='post'>
       <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
-{#      {{ form }}#}
       {% for field in form %}
         <label class="govuk-label" for="{{ field.auto_id }}">{{ field.label }}</label>
         {{ field }}
