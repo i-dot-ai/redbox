@@ -7,16 +7,20 @@ from pathlib import Path
 
 import pytest
 from botocore.exceptions import ClientError
+from bs4 import BeautifulSoup
 from django.conf import settings
 from django.test import Client
 from pytest_django.asserts import assertRedirects
 from redbox_app.redbox_core.models import (
+    BusinessUnit,
     ChatHistory,
     ChatMessage,
     ChatRoleEnum,
     File,
+    Profession,
     StatusEnum,
     User,
+    UserGrade,
 )
 from requests_mock import Mocker
 from yarl import URL
@@ -354,3 +358,39 @@ def test_check_demographics_redirect_if_populated(client: Client, mrs_tiggywinkl
 
     # Then
     assertRedirects(response, "/documents/")
+
+
+@pytest.mark.django_db()
+def test_view_demographic_details_form(client: Client, mrs_tiggywinkle: User):
+    # Given
+    client.force_login(mrs_tiggywinkle)
+
+    # When
+    response = client.get("/demographics/")
+
+    # Then
+    assert response.status_code == HTTPStatus.OK
+    soup = BeautifulSoup(response.content)
+    assert soup.find(id="id_grade").find_all("option", selected=True)[0].text == "Big Boss"
+    assert soup.find(id="id_profession").find_all("option", selected=True)[0].text == "Paperclip Counter"
+    assert soup.find(id="id_business_unit").find_all("option", selected=True)[0].text == "Paperclip Reconciliation"
+
+
+@pytest.mark.django_db()
+def test_post_to_demographic_details_form(
+    client: Client, alice: User, user_grade: UserGrade, business_unit: BusinessUnit, profession: Profession
+):
+    # Given
+    client.force_login(alice)
+
+    # When
+    response = client.post(
+        "/demographics/",
+        {"grade": user_grade.id, "profession": profession.id, "business_unit": business_unit.id},
+        follow=True,
+    )
+
+    # Then
+    assertRedirects(response, "/documents/")
+    alice.refresh_from_db()
+    assert alice.grade == user_grade
