@@ -11,6 +11,7 @@ from langchain_elasticsearch import ApproxRetrievalStrategy, ElasticsearchStore
 
 from redbox.model_db import MODEL_PATH
 from redbox.models import Settings
+from redbox.storage import ElasticsearchStorageHandler
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger()
@@ -28,6 +29,13 @@ async def get_embedding_model(env: Annotated[Settings, Depends(get_env)]) -> Emb
     embedding_model = SentenceTransformerEmbeddings(model_name=env.embedding_model, cache_folder=MODEL_PATH)
     log.info("Loaded embedding model from environment: %s", env.embedding_model)
     return embedding_model
+
+
+async def get_storage_handler(
+    es: Annotated[Elasticsearch, Depends(get_elasticsearch_client)],
+    env: Annotated[Settings, Depends(get_env)],
+) -> ElasticsearchStorageHandler:
+    return ElasticsearchStorageHandler(es_client=es, root_index=env.elastic_root_index)
 
 
 async def get_vector_store(
@@ -62,8 +70,9 @@ async def get_llm(env: Annotated[Settings, Depends(get_env)]) -> ChatLiteLLM:
         )
     elif env.azure_openai_api_key is not None:
         log.info("Creating Azure LLM Client")
-        log.debug("api_base: %s", env.azure_openai_endpoint)
-        log.debug("api_version: %s", env.openai_api_version)
+        log.info("api_base: %s", env.azure_openai_endpoint)
+        log.info("api_version: %s", env.openai_api_version)
+        log.info("llm_max_tokens: %i", env.llm_max_tokens)
 
         # this nasty hack is required because, contrary to the docs:
         # using the api_version argument is not sufficient, and we need
@@ -74,9 +83,8 @@ async def get_llm(env: Annotated[Settings, Depends(get_env)]) -> ChatLiteLLM:
         llm = ChatLiteLLM(
             model=env.azure_openai_model,
             streaming=True,
-            azure_key=env.azure_openai_api_key,
-            api_version=env.openai_api_version,
             api_base=env.azure_openai_endpoint,
+            max_tokens=env.llm_max_tokens,
         )
     elif env.anthropic_api_key is not None:
         msg = "anthropic LLM not yet implemented"

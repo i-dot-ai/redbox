@@ -2,12 +2,35 @@ import re
 
 from core_api.src.format import format_chunks, get_file_chunked_to_tokens
 from core_api.src.runnables import (
+    make_chat_runnable,
     make_condense_question_runnable,
     make_condense_rag_runnable,
     make_es_retriever,
     make_rag_runnable,
     make_stuff_document_runnable,
 )
+
+
+def test_make_chat_runnable(mock_llm):
+    chain = make_chat_runnable(
+        system_prompt="Your job is chat.",
+        llm=mock_llm,
+    )
+
+    previous_history = [
+        {"text": "Lorem ipsum dolor sit amet.", "role": "user"},
+        {"text": "Consectetur adipiscing elit.", "role": "ai"},
+        {"text": "Donec cursus nunc tortor.", "role": "user"},
+    ]
+
+    response = chain.invoke(
+        input={
+            "question": "How are you today?",
+            "messages": [(msg["role"], msg["text"]) for msg in previous_history],
+        }
+    )
+
+    assert response == "<<TESTING>>"
 
 
 def test_format_chunks(stored_file_chunks):
@@ -63,13 +86,21 @@ def test_make_es_retriever(es_client, embedding_model, chunked_file, chunk_index
     retriever = make_es_retriever(es=es_client, embedding_model=embedding_model, chunk_index_name=chunk_index_name)
 
     one_doc_chunks = retriever.invoke(
-        input={"question": "hello", "file_uuids": [chunked_file.uuid], "user_uuid": chunked_file.creator_user_uuid}
+        input={
+            "question": "hello",
+            "file_uuids": [chunked_file.uuid],
+            "user_uuid": chunked_file.creator_user_uuid,
+        }
     )
 
     assert {chunked_file.uuid} == {chunk.parent_file_uuid for chunk in one_doc_chunks}
 
     no_doc_chunks = retriever.invoke(
-        input={"question": "tell me about energy", "file_uuids": [], "user_uuid": chunked_file.creator_user_uuid}
+        input={
+            "question": "tell me about energy",
+            "file_uuids": [],
+            "user_uuid": chunked_file.creator_user_uuid,
+        }
     )
 
     assert len(no_doc_chunks) >= 1

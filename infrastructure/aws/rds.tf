@@ -1,5 +1,5 @@
 module "rds" {
-  source                  = "../../../i-ai-core-infrastructure//modules/postgres"
+  source                  = "../../../i-ai-core-infrastructure//modules/rds"
   name                    = local.name
   db_name                 = var.project_name
   domain_name             = var.domain_name

@@ -26,7 +26,7 @@ variable "developer_ips" {
 
 variable "django_secret_key" {
   type        = string
-  description = "cryptographic signature for djamngo app"
+  description = "cryptographic signature for django app"
 }
 
 variable "domain_name" {
