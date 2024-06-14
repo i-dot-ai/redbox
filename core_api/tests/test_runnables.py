@@ -5,7 +5,6 @@ from core_api.src.runnables import (
     make_chat_runnable,
     make_condense_question_runnable,
     make_condense_rag_runnable,
-    make_es_retriever,
     make_stuff_document_runnable,
 )
 from core_api.src.dependencies import get_es_retriever
@@ -104,7 +103,7 @@ def test_make_condense_question_runnable(mock_llm):
 
 
 def test_make_condense_rag_runnable(es_client, embedding_model, chunk_index_name, mock_llm, chunked_file):
-    retriever = make_es_retriever(es=es_client, embedding_model=embedding_model, chunk_index_name=chunk_index_name)
+    retriever = get_es_retriever(es=es_client, embedding_model=embedding_model, env=env)
 
     chain = make_condense_rag_runnable(system_prompt="Your job is Q&A.", llm=mock_llm, retriever=retriever)
 
