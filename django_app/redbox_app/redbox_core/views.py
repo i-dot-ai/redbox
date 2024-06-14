@@ -3,6 +3,7 @@ import uuid
 from collections.abc import MutableSequence, Sequence
 from pathlib import Path
 
+from django import forms
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import FieldError, ValidationError
@@ -14,14 +15,18 @@ from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.views import View
 from django.views.decorators.http import require_http_methods
+from django.views.generic import UpdateView
 from redbox_app.redbox_core.client import CoreApiClient
 from redbox_app.redbox_core.models import (
+    BusinessUnit,
     ChatHistory,
     ChatMessage,
     ChatRoleEnum,
     File,
+    Profession,
     StatusEnum,
     User,
+    UserGrade,
 )
 from requests.exceptions import RequestException
 from yarl import URL
@@ -306,3 +311,33 @@ def file_status_api_view(request: HttpRequest) -> JsonResponse:
 def health(_request: HttpRequest) -> HttpResponse:
     """this required by ECS Fargate"""
     return HttpResponse(status=200)
+
+
+class CheckDemographicsView(View):
+    @method_decorator(login_required)
+    def get(self, request: HttpRequest) -> HttpResponse:
+        user: User = request.user
+        if all([user.grade, user.business_unit, user.profession]):
+            return redirect(documents_view)
+        else:
+            return redirect("demographics")
+
+
+class DemographicsForm(forms.ModelForm):
+    class Meta:
+        model = User
+        fields = ("grade", "profession", "business_unit")
+
+    grade = forms.ModelChoiceField(queryset=UserGrade.objects.all(), required=True)
+    profession = forms.ModelChoiceField(queryset=Profession.objects.all(), required=True)
+    business_unit = forms.ModelChoiceField(queryset=BusinessUnit.objects.all(), required=True)
+
+
+class DemographicsView(UpdateView):
+    model = User
+    template_name = "demographics.html"
+    form_class = DemographicsForm
+    success_url = "/documents/"
+
+    def get_object(self, **kwargs):  # noqa: ARG002
+        return self.request.user

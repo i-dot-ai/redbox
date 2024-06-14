@@ -1,0 +1,14 @@
+{% set pageTitle = "My Details" %}
+{% extends "base.html" %}
+{% from "macros/govuk-button.html" import govukButton %}
+{% from "macros/govuk-notification-banner.html" import govukNotificationBanner %}
+
+{% block content %}
+
+  <form method='post'>
+    <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+    {{ form }}
+    <input type="submit" value="Update">
+  </form>
+
+{% endblock %}

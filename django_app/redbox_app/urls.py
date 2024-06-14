@@ -48,6 +48,8 @@ other_urlpatterns = [
     path("", views.homepage_view, name="homepage"),
     path("health/", views.health, name="health"),
     path("file-status/", views.file_status_api_view, name="file-status"),
+    path("check-demographics/", views.CheckDemographicsView.as_view(), name="check-demographics"),
+    path("demographics/", views.DemographicsView.as_view(), name="demographics"),
 ]
 
 urlpatterns = (
