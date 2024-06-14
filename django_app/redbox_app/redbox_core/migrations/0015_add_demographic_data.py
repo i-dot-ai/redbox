@@ -32,6 +32,16 @@ class Migration(migrations.Migration):
                 'abstract': False,
             },
         ),
+        migrations.CreateModel(
+            name='Profession',
+            fields=[
+                ('id', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
+                ('name', models.TextField(max_length=64, unique=True)),
+            ],
+            options={
+                'abstract': False,
+            },
+        ),
         migrations.AddField(
             model_name='user',
             name='business_unit',
@@ -41,5 +51,10 @@ class Migration(migrations.Migration):
             model_name='user',
             name='grade',
             field=models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, to='redbox_core.usergrade'),
+        ),
+        migrations.AddField(
+            model_name='user',
+            name='profession',
+            field=models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, to='redbox_core.profession'),
         ),
     ]

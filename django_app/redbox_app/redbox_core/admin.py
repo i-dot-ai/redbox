@@ -8,9 +8,9 @@ from . import models
 
 
 class UserAdmin(admin.ModelAdmin):
-    fields = ["email", "business_unit", "grade", "is_superuser", "is_staff", "last_login"]
-    list_display = ["email", "business_unit", "grade", "is_superuser", "is_staff", "last_login"]
-    list_filter = ["business_unit", "grade"]
+    fields = ["email", "business_unit", "grade", "profession", "is_superuser", "is_staff", "last_login"]
+    list_display = ["email", "business_unit", "grade", "profession", "is_superuser", "is_staff", "last_login"]
+    list_filter = ["business_unit", "grade", "profession"]
     date_hierarchy = "last_login"
 
 
@@ -30,6 +30,16 @@ class BusinessUnitAdmin(ImportMixin, admin.ModelAdmin):
 
     class Meta:
         model = models.BusinessUnit
+        fields = ["name"]
+        import_id_fields = ["name"]
+
+
+class ProfessionAdmin(ImportMixin, admin.ModelAdmin):
+    fields = ["name"]
+    list_display = ["name"]
+
+    class Meta:
+        model = models.Profession
         fields = ["name"]
         import_id_fields = ["name"]
 
@@ -91,3 +101,4 @@ admin.site.register(models.ChatHistory, ChatHistoryAdmin)
 admin.site.register(models.ChatMessage, ChatMessageAdmin)
 admin.site.register(models.UserGrade, UserGradeAdmin)
 admin.site.register(models.BusinessUnit, BusinessUnitAdmin)
+admin.site.register(models.Profession, ProfessionAdmin)
