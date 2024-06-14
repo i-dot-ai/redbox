@@ -39,6 +39,7 @@ class Settings(BaseSettings):
     azure_openai_endpoint: str | None = None
 
     openai_api_version: str = "2023-12-01-preview"
+    azure_api_version: str = "2023-12-01-preview"
     azure_openai_model: str = "azure/gpt-35-turbo-16k"
     llm_max_tokens: int = 1024
 
