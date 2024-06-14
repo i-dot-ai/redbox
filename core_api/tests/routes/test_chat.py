@@ -55,7 +55,7 @@ def mock_get_chain():
 #     assert response.status_code == status_code
 
 
-def test_rag_chat(app_client, headers):
+def test_rag_chat_rest_gratitude(app_client, headers):
     response = app_client.post(
         "/chat/rag",
         json={"message_history": [{"role": "user", "text": "Thank you"}]},
@@ -63,6 +63,23 @@ def test_rag_chat(app_client, headers):
     )
     response_dict = response.json()
     assert response_dict["output_text"] == "You're welcome!"
+
+
+def test_rag_chat_rest_stuff_summarise(app_client, headers):
+    response = app_client.post(
+        "/chat/rag",
+        json={
+            "message_history": [
+                {
+                    "role": "user",
+                    "text": "Please summarise the contents of the uploaded files.",
+                }
+            ]
+        },
+        headers=headers,
+    )
+    response_dict = response.json()
+    assert isinstance(response_dict["output_text"], str)
 
 
 def test_rag_chat_streamed(app_client, headers):
