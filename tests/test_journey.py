@@ -20,7 +20,7 @@ BASE_URL = URL("http://localhost:8090/")
 TEST_ROOT = Path(__file__).parent
 
 
-def test_user_journey(page: Page, email_address: str):
+def test_user_journey(page: Page, email_address: str):  # noqa: PLR0915
     """End to end user journey test.
 
     Simulates a single user journey through the application, running against the full suite of microservices.
@@ -42,8 +42,15 @@ def test_user_journey(page: Page, email_address: str):
     logger.debug("magic_link: %s", magic_link)
     sign_in_confirmation_page = SignInConfirmationPage(page, magic_link)
 
+    # My details page
+    my_details_page = sign_in_confirmation_page.start()
+    grade, business_unit, profession = create_demographic_reference_data(page)
+    my_details_page.grade = grade
+    my_details_page.business_unit = business_unit
+    my_details_page.profession = profession
+
     # Documents page
-    documents_page = sign_in_confirmation_page.navigate_to_documents_page()
+    documents_page = my_details_page.update()
     original_doc_count = documents_page.document_count()
 
     # Upload files
@@ -129,6 +136,7 @@ def create_user(email_address: str):
     ]
     result = subprocess.run(command, capture_output=True, text=True, check=True)  # noqa: S603
     logger.debug("create_user result: %s", result)
+    logger.debug("user created for %s", email_address)
 
 
 def get_magic_link(email_address: str) -> URL:
@@ -140,5 +148,34 @@ def get_magic_link(email_address: str) -> URL:
 
 @pytest.fixture()
 def email_address() -> str:
-    username = "".join(choice(string.ascii_lowercase) for _ in range(20))  # noqa: S311
+    username = "".join(choice(string.ascii_lowercase) for _ in range(20))
     return f"{username}@cabinetoffice.gov.uk"
+
+
+def create_demographic_reference_data(page: Page) -> tuple[str, str, str]:
+    """I am not proud of this."""
+    grade, business_unit, profession = tuple(
+        "".join(choice(string.ascii_lowercase) for _ in range(20)) for _ in range(3)
+    )
+    admin_url = BASE_URL / "admin" / "redbox_core"
+    placeholder = page.url
+
+    add_via_admin(admin_url / "usergrade" / "add", grade, page)
+    add_via_admin(admin_url / "businessunit" / "add", business_unit, page)
+    add_via_admin(admin_url / "profession" / "add", profession, page)
+
+    logger.debug(
+        "created grade %s business unit %s profession %s - returning to %s",
+        grade,
+        business_unit,
+        profession,
+        placeholder,
+    )
+    page.goto(placeholder)
+    return grade, business_unit, profession
+
+
+def add_via_admin(url, value, page):
+    page.goto(str(url))
+    page.get_by_label("Name:").fill(value)
+    page.get_by_role("button", name="Save", exact=True).click()

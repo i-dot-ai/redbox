@@ -5,7 +5,7 @@ from datetime import datetime
 from itertools import islice
 from pathlib import Path
 from time import sleep, strptime
-from typing import Any, ClassVar, NamedTuple
+from typing import Any, ClassVar, NamedTuple, Union
 
 from axe_playwright_python.sync_playwright import Axe
 from playwright.sync_api import Locator, Page, expect
@@ -97,6 +97,10 @@ class SignedInBasePage(BasePage, ABC):
         self.page.get_by_role("link", name="Chats", exact=True).click()
         return ChatsPage(self.page)
 
+    def navigate_my_details(self) -> "MyDetailsPage":
+        self.page.get_by_role("link", name="My details", exact=True).click()
+        return MyDetailsPage(self.page)
+
     def sign_out(self) -> "LandingPage":
         self.page.get_by_role("link", name="Chats", exact=True).click()
         return LandingPage(self.page)
@@ -149,15 +153,50 @@ class SignInConfirmationPage(BasePage):
     def expected_page_title(self) -> str:
         return "Sign in - confirmation - Redbox Copilot"
 
-    def navigate_to_documents_page(self) -> "DocumentsPage":
+    def start(self) -> Union["DocumentsPage", "MyDetailsPage"]:
         self.page.get_by_role("button", name="Start", exact=True).click()
-        return DocumentsPage(self.page)
+        logger.debug("sign in conmfirmation navigating to %s", self)
+        return MyDetailsPage(self.page) if self.page.title().startswith("My details") else DocumentsPage(self.page)
 
 
 class HomePage(SignedInBasePage):
     @property
     def expected_page_title(self) -> str:
         return "Redbox Copilot"
+
+
+class MyDetailsPage(SignedInBasePage):
+    @property
+    def expected_page_title(self) -> str:
+        return "My details - Redbox Copilot"
+
+    @property
+    def grade(self) -> str:
+        return self.page.get_by_label("Grade").get_by_role(role="option", selected=True).inner_text()
+
+    @grade.setter
+    def grade(self, grade: str):
+        self.page.get_by_label("Grade").select_option(grade)
+
+    @property
+    def business_unit(self) -> str:
+        return self.page.get_by_label("Business unit").get_by_role(role="option", selected=True).inner_text()
+
+    @business_unit.setter
+    def business_unit(self, grade: str):
+        self.page.get_by_label("Business unit").select_option(grade)
+
+    @property
+    def profession(self) -> str:
+        return self.page.get_by_label("Profession").get_by_role(role="option", selected=True).inner_text()
+
+    @profession.setter
+    def profession(self, grade: str):
+        self.page.get_by_label("Profession").select_option(grade)
+
+    def update(self) -> "DocumentsPage":
+        self.page.get_by_text("Update").click()
+        return DocumentsPage(self.page)
 
 
 class DocumentRow(NamedTuple):
