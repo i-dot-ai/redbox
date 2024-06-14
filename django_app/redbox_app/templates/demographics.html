@@ -9,15 +9,17 @@
 
     <div class="govuk-grid-row">
       <div class="govuk-grid-column-one-third">
-        <h1 class="govuk-heading-l">My Details</h1>
+        <h1 class="govuk-heading-l">My details</h1>
       </div>
     </div>
 
     <form method='post'>
       <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
       {% for field in form %}
-        <label class="govuk-label" for="{{ field.auto_id }}">{{ field.label }}</label>
-        {{ field }}
+        <div class="govuk-form-group">
+          <label class="govuk-label" for="{{ field.auto_id }}">{{ field.label }}</label>
+          {{ field }}
+        </div>
       {% endfor %}
       <input type="submit" class="govuk-button" value="Update">
     </form>
