@@ -75,7 +75,7 @@ jobs:
       - set-vars
       - start-runner
       - build-image
-    uses: i-dot-ai/redbox-copilot/.github/workflows/integration.yml@e6a0783948a8b50c554ed72f91fdafa60594fe3c
+    uses: i-dot-ai/redbox-copilot/.github/workflows/integration.yml@49be410ebe066d61fae05acf87528c3fe11eb3a4
 
   release-terraform:
     needs:
