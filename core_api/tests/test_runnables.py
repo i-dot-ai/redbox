@@ -1,6 +1,7 @@
 import re
 
 from core_api.src.format import format_chunks, get_file_chunked_to_tokens
+from core_api.src.build_chains import build_retrieval_chain, build_summary_chain
 from core_api.src.runnables import (
     make_chat_runnable,
     make_condense_question_runnable,
@@ -9,6 +10,9 @@ from core_api.src.runnables import (
 )
 from core_api.src.dependencies import get_es_retriever
 from core_api.src.app import env
+from redbox.models.chain import ChainInput
+from redbox.llm.prompts.chat import RETRIEVAL_SYSTEM_PROMPT_TEMPLATE, RETRIEVAL_QUESTION_PROMPT_TEMPLATE
+from redbox.llm.prompts.summarisation import SUMMARISATION_SYSTEM_PROMPT_TEMPLATE, SUMMARISATION_QUESTION_PROMPT_TEMPLATE
 
 
 def test_make_chat_runnable(mock_llm):
@@ -124,3 +128,57 @@ def test_make_condense_rag_runnable(es_client, embedding_model, chunk_index_name
 
     assert response["response"] == "<<TESTING>>"
     assert {chunked_file.uuid} == {chunk.parent_file_uuid for chunk in response["sources"]}
+
+def test_rag_runnable(es_client, embedding_model, chunk_index_name, mock_llm, chunked_file):
+    retriever = get_es_retriever(es=es_client, embedding_model=embedding_model, env=env)
+
+    chain = build_retrieval_chain(
+        llm=mock_llm, 
+        retriever=retriever,
+        system_prompt=RETRIEVAL_SYSTEM_PROMPT_TEMPLATE,
+        question_prompt=RETRIEVAL_QUESTION_PROMPT_TEMPLATE
+    )
+
+    previous_history = [
+        {"text": "Lorem ipsum dolor sit amet.", "role": "user"},
+        {"text": "Consectetur adipiscing elit.", "role": "ai"},
+        {"text": "Donec cursus nunc tortor.", "role": "user"},
+    ]
+
+    response = chain.invoke(
+        input=ChainInput(
+            question="Who are all these people?",
+            chat_history=previous_history,
+            file_uuids=[chunked_file.uuid],
+            user_uuid=chunked_file.creator_user_uuid
+        ).model_dump()
+    )
+
+    assert response["response"] == "<<TESTING>>"
+    assert {chunked_file.uuid} == {chunk.parent_file_uuid for chunk in response["source_documents"]}
+
+def test_summary_runnable(elasticsearch_storage_handler, embedding_model, chunk_index_name, mock_llm, chunked_file):
+
+    chain = build_summary_chain(
+        llm=mock_llm, 
+        storage_handler=elasticsearch_storage_handler,
+        system_prompt=SUMMARISATION_SYSTEM_PROMPT_TEMPLATE,
+        question_prompt=SUMMARISATION_QUESTION_PROMPT_TEMPLATE
+    )
+
+    previous_history = [
+        {"text": "Lorem ipsum dolor sit amet.", "role": "user"},
+        {"text": "Consectetur adipiscing elit.", "role": "ai"},
+        {"text": "Donec cursus nunc tortor.", "role": "user"},
+    ]
+
+    response = chain.invoke(
+        input=ChainInput(
+            question="Who are all these people?",
+            chat_history=previous_history,
+            file_uuids=[chunked_file.uuid],
+            user_uuid=chunked_file.creator_user_uuid
+        ).model_dump()
+    )
+
+    assert response == "<<TESTING>>"

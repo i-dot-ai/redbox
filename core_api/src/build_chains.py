@@ -106,7 +106,7 @@ def build_summary_chain(
         documents: list[Chunk] = []
         for selected_file in input_dict['file_uuids']:
             chunks = get_file_chunked_to_tokens(
-                file_uuid=selected_file.uuid,
+                file_uuid=selected_file,
                 user_uuid=input_dict['user_uuid'],
                 storage_handler=storage_handler,
             )
