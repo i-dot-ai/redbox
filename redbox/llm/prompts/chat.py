@@ -56,6 +56,4 @@ RETRIEVAL_SYSTEM_PROMPT_TEMPLATE = (
     "If dealing dealing with lots of data return it in markdown table format. "
 )
 
-RETRIEVAL_QUESTION_PROMPT_TEMPLATE = (
-    "{question} \n=========\n{formatted_documents}\n=========\nFINAL ANSWER: "
-)
+RETRIEVAL_QUESTION_PROMPT_TEMPLATE = "{question} \n=========\n{formatted_documents}\n=========\nFINAL ANSWER: "
