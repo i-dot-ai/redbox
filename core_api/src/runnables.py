@@ -53,7 +53,11 @@ def map_to_chat_response(input_dict: Dict):
         output_text=input_dict["response"],
         source_documents=[
             SourceDocument(
-                page_content=chunk.text, file_uuid=chunk.parent_file_uuid, page_numbers=[chunk.metadata.page_number]
+                page_content=chunk.text,
+                file_uuid=chunk.parent_file_uuid,
+                page_numbers=chunk.metadata.page_number
+                if isinstance(chunk.metadata.page_number, list)
+                else [chunk.metadata.page_number],
             )
             for chunk in input_dict.get("source_documents", [])
         ],
