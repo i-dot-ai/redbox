@@ -29,14 +29,8 @@ cats. -\n Tigers are animals. \
 If the number of bullet points a user asks for is not supported by the amount of information that you have, then \
 say so, else give what the user asks for. \
 
-At the end of your response add a "Sources:" section with the documents you used. \
-DO NOT reference the source documents in your response. Only cite at the end. \
-ONLY PUT CITED DOCUMENTS IN THE "Sources:" SECTION AND NO WHERE ELSE IN YOUR RESPONSE. \
-IT IS CRUCIAL that citations only happens in the "Sources:" section. \
-This format should be <DocX> where X is the document UUID being cited.  \
-DO NOT INCLUDE ANY DOCUMENTS IN THE "Sources:" THAT YOU DID NOT USE IN YOUR RESPONSE. \
-YOU MUST CITE USING THE <DocX> FORMAT. NO OTHER FORMAT WILL BE ACCEPTED.
-Example: "Sources: <DocX> <DocY> <DocZ>"
+At the end of your response do not add a "Sources:" section with the documents you used. \
+DO NOT NAME CITED DOCUMENTS IN YOUR RESPONSE. \
 
 Use **bold** to highlight the most question relevant parts in your response.
 If dealing dealing with lots of data return it in markdown table format.
