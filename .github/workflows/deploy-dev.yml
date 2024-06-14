@@ -58,7 +58,7 @@ jobs:
     needs:
       - set-vars
       - start-runner
-    uses: i-dot-ai/i-dot-ai-core-github-actions/.github/workflows/build-docker.yml@63114c236408442fcb83142a133fb639f2effedc
+    uses: i-dot-ai/i-dot-ai-core-github-actions/.github/workflows/build-docker.yml@9c4473481eafb33ea598291d1e13e79d53072824
     with:
       APP_NAME: ${{ needs.set-vars.outputs.app-name }}
       RUNNER_LABEL: ${{ needs.start-runner.outputs.label }}
