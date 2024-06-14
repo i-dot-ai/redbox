@@ -15,7 +15,7 @@ CONDENSE_QUESTION_PROMPT = PromptTemplate.from_template(_chat_template)
 
 
 _with_sources_template = """Given the following extracted parts of a long document and \
-a question, create a final answer with Sources at the end.  \
+a question, create a final answer which uses the sources.  \
 If you don't know the answer, just say that you don't know. Don't try to make \
 up an answer.
 If a user asks for a particular format to be returned, such as bullet points, then please use that format. \
@@ -29,7 +29,6 @@ cats. -\n Tigers are animals. \
 If the number of bullet points a user asks for is not supported by the amount of information that you have, then \
 say so, else give what the user asks for. \
 
-At the end of your response do not add a "Sources:" section with the documents you used. \
 DO NOT NAME CITED DOCUMENTS IN YOUR RESPONSE. \
 
 Use **bold** to highlight the most question relevant parts in your response.
