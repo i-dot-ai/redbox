@@ -1,17 +1,29 @@
 import logging
 import os
-from typing import Annotated
+from typing import Annotated, Any, TypedDict
 
 from elasticsearch import Elasticsearch
 from fastapi import Depends
 from langchain_community.chat_models import ChatLiteLLM
 from langchain_community.embeddings import SentenceTransformerEmbeddings
 from langchain_core.embeddings import Embeddings
+from langchain_elasticsearch import ElasticsearchRetriever
 from langchain_elasticsearch import ApproxRetrievalStrategy, ElasticsearchStore
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.runnables import Runnable
+import numpy as np
 
 from redbox.model_db import MODEL_PATH
 from redbox.models import Settings
+from redbox.models.file import UUID, Chunk
+from redbox.models.chat import ChatRequest
 from redbox.storage import ElasticsearchStorageHandler
+from core_api.src.semantic_routes import (
+    ABILITY_RESPONSE,
+    COACH_RESPONSE,
+    INFO_RESPONSE,
+    route_layer,
+)
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger()
@@ -57,6 +69,58 @@ async def get_vector_store(
         embedding=embedding_model,
         strategy=strategy,
         vector_query_field="embedding",
+    )
+
+
+class ESQuery(TypedDict):
+    question: str
+    file_uuids: list[UUID]
+    user_uuid: UUID
+
+
+def get_es_retriever(
+    env: Annotated[Settings, Depends(get_env)],
+    es: Elasticsearch = Depends(get_elasticsearch_client), 
+    embedding_model: SentenceTransformerEmbeddings = Depends(get_embedding_model), 
+) -> ElasticsearchRetriever:
+    """Creates an Elasticsearch retriever runnable.
+
+    Runnable takes input of a dict keyed to question, file_uuids and user_uuid.
+
+    Runnable returns a list of Chunks.
+    """
+
+    def es_query(query: ESQuery) -> dict[str, Any]:
+        vector = embedding_model.embed_query(query["question"])
+
+        knn_filter = [{"term": {"creator_user_uuid.keyword": str(query["user_uuid"])}}]
+
+        if len(query["file_uuids"]) != 0:
+            knn_filter.append({"terms": {"parent_file_uuid.keyword": [str(uuid) for uuid in query["file_uuids"]]}})
+
+        return {
+            "size": 5,
+            "query": {
+                "bool": {
+                    "must": [
+                        {
+                            "knn": {
+                                "field": "embedding",
+                                "query_vector": vector,
+                                "num_candidates": 10,
+                                "filter": knn_filter,
+                            }
+                        }
+                    ]
+                }
+            },
+        }
+
+    def chunk_mapper(hit: dict[str, Any]) -> Chunk:
+        return Chunk(**hit["_source"])
+
+    return ElasticsearchRetriever(
+        es_client=es, index_name=f"{env.elastic_root_index}-chunk", body_func=es_query, document_mapper=chunk_mapper
     )
 
 

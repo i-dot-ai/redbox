@@ -17,6 +17,60 @@ from redbox.models.chat import SourceDocument
 from redbox.llm.prompts.chat import CONDENSE_QUESTION_PROMPT
 
 
+def make_chat_prompt_from_messages_runnable(
+    system_prompt: str,
+    question_prompt: str
+):
+    system_prompt_message = [("system", system_prompt)]
+    @chain
+    def chat_prompt_from_messages(input_dict: Dict):
+        """
+        Create a ChatPrompTemplate as part of a chain using 'chat_history'. 
+        Returns the PromptValue using values in the input_dict
+        """
+        return ChatPromptTemplate.from_messages(
+            system_prompt_message +
+            [
+            (msg.role, msg.text) 
+            for msg in input_dict['chat_history']
+            ] + 
+            [("user", question_prompt)]
+        ).invoke(input_dict)
+    return chat_prompt_from_messages
+
+
+def make_static_response_chain(prompt_template):
+    return (
+        RunnablePassthrough.assign(
+            response=(
+                ChatPromptTemplate.from_template(prompt_template) 
+                | RunnableLambda(lambda p: p.messages[0].content)
+            ),
+            source_documents=RunnableLambda(lambda x: []),
+        )
+    )
+
+
+@chain
+def map_to_chat_response(input_dict: Dict):
+    """
+    Create a ChatResponse at the end of a chain from a dict containing
+    'response' a string to use as output_text 
+    'source_documents' a list of chunks to map to source_documents
+    """
+    return ChatResponse(
+        output_text=input_dict['response'],
+        source_documents=[
+            SourceDocument(
+                page_content=chunk.text,
+                file_uuid=chunk.parent_file_uuid,
+                page_numbers=[chunk.metadata.page_number]
+            )
+            for chunk in input_dict['source_documents']
+        ]
+    )
+
+
 def make_chat_runnable(
     system_prompt: str,
     llm: ChatLiteLLM,
@@ -75,105 +129,6 @@ def make_stuff_document_runnable(
         | ChatPromptTemplate.from_messages(chat_history)
         | llm
         | StrOutputParser()
-    )
-
-
-class ESQuery(TypedDict):
-    question: str
-    file_uuids: list[UUID]
-    user_uuid: UUID
-
-
-def make_es_retriever(
-    es: Elasticsearch, 
-    embedding_model: SentenceTransformerEmbeddings, 
-    chunk_index_name: str
-) -> ElasticsearchRetriever:
-    """Creates an Elasticsearch retriever runnable.
-
-    Runnable takes input of a dict keyed to question, file_uuids and user_uuid.
-
-    Runnable returns a list of Chunks.
-    """
-
-    def es_query(query: ESQuery) -> dict[str, Any]:
-        vector = embedding_model.embed_query(query["question"])
-
-        knn_filter = [{"term": {"creator_user_uuid.keyword": str(query["user_uuid"])}}]
-
-        if len(query["file_uuids"]) != 0:
-            knn_filter.append({"terms": {"parent_file_uuid.keyword": [str(uuid) for uuid in query["file_uuids"]]}})
-
-        return {
-            "size": 5,
-            "query": {
-                "bool": {
-                    "must": [
-                        {
-                            "knn": {
-                                "field": "embedding",
-                                "query_vector": vector,
-                                "num_candidates": 10,
-                                "filter": knn_filter,
-                            }
-                        }
-                    ]
-                }
-            },
-        }
-
-    def chunk_mapper(hit: dict[str, Any]) -> Chunk:
-        return Chunk(**hit["_source"])
-
-    return ElasticsearchRetriever(
-        es_client=es, index_name=chunk_index_name, body_func=es_query, document_mapper=chunk_mapper
-    )
-
-
-def make_rag_runnable(
-    llm: ChatLiteLLM,
-    retriever: VectorStoreRetriever,
-    **kwargs
-) -> Runnable:
-    """Takes a chat request, LLM and retriever and returns a basic RAG runnable.
-
-    Runnable takes input of a dict keyed to question, messages and file_uuids and user_uuid.
-
-    Runnable returns a dict keyed to response and sources.
-    """
-    @chain
-    def get_chat_prompt(input_dict: Dict):
-        return ChatPromptTemplate.from_messages([
-            (msg.role, msg.text) 
-            for msg in input_dict['chat_history']
-        ]).invoke(input_dict)
-    
-    @chain
-    def map_to_chat_response(input_dict: Dict):
-        return ChatResponse(
-            output_text=input_dict['response'],
-            source_documents=[
-                SourceDocument(
-                    page_content=chunk.text,
-                    file_uuid=chunk.parent_file_uuid,
-                    page_numbers=[chunk.metadata.page_number]
-                )
-                for chunk in input_dict['source_documents']
-            ]
-        )
-
-    return (
-        RunnablePassthrough.assign(
-            documents=retriever
-        )
-        | RunnablePassthrough.assign(
-            formatted_documents=(RunnablePassthrough() | itemgetter("documents") | format_chunks)
-        )
-        | {
-            "response": get_chat_prompt | llm | StrOutputParser(),
-            "source_documents": itemgetter("documents"),
-          }
-        | map_to_chat_response
     )
 
 
