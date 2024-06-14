@@ -7419,7 +7419,7 @@ body {
 }
 
 /* All pages */
-.iai-classification-banner {
+.rb-classification-banner {
   background-color: #2b71c7;
   color: white;
   font-size: 0.875rem;
@@ -7428,7 +7428,7 @@ body {
   text-align: center;
 }
 
-.iai-environment-warning {
+.rb-environment-warning {
   background-color: #FFBF47;
   color: black;
 }
@@ -7438,94 +7438,94 @@ body {
   color: white;
 }
 
-.iai-button--blue {
+.rb-button--blue {
   background-color: #1d70b8;
 }
 
-.iai-button--blue:hover {
+.rb-button--blue:hover {
   background-color: #003078;
 }
 
 /* Home page */
-.govuk-main-wrapper:has(.iai-banner) {
+.govuk-main-wrapper:has(.rb-banner) {
   padding-top: 0;
 }
 
-.iai-banner {
+.rb-banner {
   background-color: #A50202;
   color: white;
   padding-bottom: 3rem;
   padding-top: 2.75rem;
 }
 
-.iai-banner * {
+.rb-banner * {
   color: white;
 }
 
-.iai-banner .govuk-link {
+.rb-banner .govuk-link {
   color: white;
 }
 
-.iai-banner .govuk-link:focus {
+.rb-banner .govuk-link:focus {
   background-color: white;
   color: black;
 }
 
-.iai-banner__links {
+.rb-banner__links {
   align-items: center;
   display: flex;
   gap: 0.75rem;
 }
 
 /* Documents page */
-.iai-doc-retention {
+.rb-doc-retention {
   align-items: center;
   display: flex;
   gap: 0.5rem;
 }
 
-.iai-doclist-mobile__item {
+.rb-doclist-mobile__item {
   border: 1px solid #b1b4b6;
   border-radius: 0.25rem;
   list-style-type: none;
 }
 
-.iai-doclist-desktop {
+.rb-doclist-desktop {
   display: none;
 }
 
 @media (min-width: 448px) {
-  .iai-doclist-mobile {
+  .rb-doclist-mobile {
     display: none;
   }
-  .iai-doclist-desktop {
+  .rb-doclist-desktop {
     display: block;
   }
 }
 /* Use this if more than one button in Actions
-.iai-docs__actions .govuk-button {
+.rb-docs__actions .govuk-button {
   width: 100%;
 }
 @media (min-width: 1024px) {
-  .iai-docs__actions {
+  .rb-docs__actions {
     width: 13.25rem;
   }
-  .iai-docs__actions .govuk-button {
+  .rb-docs__actions .govuk-button {
     width: auto;
   }
 }
-.iai-docs__status {
+.rb-docs__status {
   margin-top: 2px;
 }
 
 
 /* File upload */
-.iai-file-types {
+.rb-file-types {
   font-size: 0.875rem;
 }
 
 /* Chat page */
-.iai-panel {
+.rb-panel {
   background-color: #f3f2f1;
   border-radius: 0.25rem;
   display: block;
@@ -7534,34 +7534,34 @@ body {
   padding-top: 1.5rem;
 }
 
-.iai-panel__scrollable {
+.rb-panel__scrollable {
   overflow-y: auto;
   padding-right: 0.5rem;
   max-height: 16.75rem;
 }
 
-.iai-panel__scrollable::-webkit-scrollbar {
+.rb-panel__scrollable::-webkit-scrollbar {
   background-color: #b1b4b6;
   width: 5px;
 }
 
-.iai-panel__scrollable::-webkit-scrollbar-thumb {
+.rb-panel__scrollable::-webkit-scrollbar-thumb {
   background-color: #505a5f;
 }
 
-.iai-panel__scrollable .govuk-checkboxes__item {
+.rb-panel__scrollable .govuk-checkboxes__item {
   margin-left: 0.625rem;
 }
 
-.iai-panel__scrollable .govuk-checkboxes__label {
+.rb-panel__scrollable .govuk-checkboxes__label {
   word-break: break-word;
 }
 
-.iai-chat-message__container {
+.rb-chat-message__container {
   margin-top: -1rem;
 }
 
-.iai-chat-message {
+.rb-chat-message {
   background-color: #f3f2f1;
   border: 1px solid #b1b4b6;
   border-radius: var(--border-radius);
@@ -7569,89 +7569,89 @@ body {
   padding: 1rem;
 }
 
-.iai-chat-message:focus {
+.rb-chat-message:focus {
   outline: 2px solid;
 }
 
-.iai-chat-message--ai {
+.rb-chat-message--ai {
   margin-right: clamp(2rem, 10vw, 5rem);
 }
 
-.iai-chat-message--user {
+.rb-chat-message--user {
   margin-left: clamp(2rem, 10vw, 5rem);
 }
 
-.iai-chat-message__role {
+.rb-chat-message__role {
   font-size: 0.75rem;
 }
 
-.iai-chat-message__text {
+.rb-chat-message__text {
   font-size: 1rem;
   padding-top: 0.5rem;
 }
 
-.iai-chat-message__sources-heading, .iai-chat-messages__sources-link {
+.rb-chat-message__sources-heading, .rb-chat-messages__sources-link {
   font-size: 0.875rem;
 }
 
-.iai-chat-message__text code {
+.rb-chat-message__text code {
   display: block;
   overflow-x: auto;
 }
 
-.iai-chat-message__text li {
+.rb-chat-message__text li {
   padding: 0.125rem 0;
 }
 
-.iai-chat-message__text table {
+.rb-chat-message__text table {
   border-collapse: collapse;
   width: 100%;
 }
 
-.iai-chat-message__text th, .iai-chat-message__text td {
+.rb-chat-message__text th, .rb-chat-message__text td {
   border: 1px solid black;
   padding: 0.25rem;
   text-align: left;
 }
 
-.iai-new-message textarea {
+.rb-new-message textarea {
   margin-bottom: 0.5rem;
 }
 
-.iai-new-message .govuk-form-group {
+.rb-new-message .govuk-form-group {
   margin: 0;
   width: 100%;
 }
 
 @media (min-width: 769px) {
-  .iai-new-message {
+  .rb-new-message {
     align-items: flex-end;
     display: flex;
     gap: 0.5rem;
   }
-  .iai-new-message textarea, .iai-new-message button {
+  .rb-new-message textarea, .rb-new-message button {
     height: 4rem;
     margin: 0;
   }
 }
-.iai-response-feedback {
+.rb-response-feedback {
   display: none;
   position: relative;
   top: -0.5rem;
 }
 
 /* only show response feedback for last AI message */
-[data-role=ai] + .iai-response-feedback {
+[data-role=ai] + .rb-response-feedback {
   display: block;
 }
 
-.iai-response-feedback__buttons {
+.rb-response-feedback__buttons {
   display: flex;
   gap: 0.25rem;
   margin-bottom: 1.25rem;
 }
 
-.iai-response-feedback__buttons button {
+.rb-response-feedback__buttons button {
   align-items: center;
   background-color: transparent;
   border: 0;
@@ -7663,56 +7663,56 @@ body {
   gap: 0.125rem;
 }
 
-.iai-response-feedback__buttons button[data-response=down] svg {
+.rb-response-feedback__buttons button[data-response=down] svg {
   transform: rotate(180deg);
 }
 
-.iai-response-feedback__thumb-fill {
+.rb-response-feedback__thumb-fill {
   fill: transparent;
 }
 
-.iai-response-feedback__buttons[data-status=down] button[data-response=down] *, .iai-response-feedback__buttons button[data-response=down]:hover * {
+.rb-response-feedback__buttons[data-status=down] button[data-response=down] *, .rb-response-feedback__buttons button[data-response=down]:hover * {
   color: #d4351c;
   fill: #d4351c;
 }
 
-.iai-response-feedback__buttons[data-status=up] button[data-response=up] *, .iai-response-feedback__buttons button[data-response=up]:hover * {
+.rb-response-feedback__buttons[data-status=up] button[data-response=up] *, .rb-response-feedback__buttons button[data-response=up]:hover * {
   color: #00703c;
   fill: #00703c;
 }
 
 /* Only show feedback when correct buttons pressed */
-.iai-response-feedback__thumbs-up, .iai-response-feedback__thumbs-down {
+.rb-response-feedback__thumbs-up, .rb-response-feedback__thumbs-down {
   display: none;
 }
 
-.iai-response-feedback__buttons[data-status=up] ~ .iai-response-feedback__thumbs-up {
+.rb-response-feedback__buttons[data-status=up] ~ .rb-response-feedback__thumbs-up {
   display: block;
 }
 
-.iai-response-feedback__buttons[data-status=down] ~ .iai-response-feedback__thumbs-down {
+.rb-response-feedback__buttons[data-status=down] ~ .rb-response-feedback__thumbs-down {
   display: block;
 }
 
-.iai-streaming-response-loading {
+.rb-streaming-response-loading {
   align-items: center;
   display: flex;
   padding: 0.5rem 0;
   gap: 0.25rem;
 }
 
-.iai-response-loading {
+.rb-response-loading {
   align-items: center;
   display: flex;
   padding: 0.5rem 0;
   visibility: hidden;
 }
 
-.iai-response-loading:focus-visible {
+.rb-response-loading:focus-visible {
   outline: 1px solid;
 }
 
-.iai-response-loading__spinner, .iai-streaming-response-loading__spinner {
+.rb-response-loading__spinner, .rb-streaming-response-loading__spinner {
   width: 1.5rem;
 }
 
