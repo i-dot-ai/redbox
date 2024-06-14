@@ -1,3 +1,4 @@
+from enum import Enum
 from typing import Literal
 from uuid import UUID
 
@@ -61,6 +62,17 @@ class SourceDocuments(BaseModel):
     )
 
 
+class ChatRoute(str, Enum):
+    info = "info"
+    ability = "ability"
+    coach = "coach"
+    gratitude = "gratitude"
+    retrieval = "retrieval"
+    summarisation = "summarisation"
+    extract = "extract"
+    vanilla = "vanilla"
+
+
 class ChatResponse(BaseModel):
     source_documents: list[SourceDocument] | None = Field(
         description="documents retrieved to form this response", default=None
@@ -69,3 +81,4 @@ class ChatResponse(BaseModel):
         description="response text",
         examples=["The current Prime Minister of the UK is The Rt Hon. Rishi Sunak MP."],
     )
+    route: ChatRoute = Field(description="the conversation route taken")

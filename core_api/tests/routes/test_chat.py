@@ -9,6 +9,8 @@ from langchain_core.runnables import Runnable
 from langchain_core.runnables.schema import StreamEvent
 from starlette.websockets import WebSocketDisconnect
 
+from redbox.models.chat import ChatRoute
+
 if TYPE_CHECKING:
     from collections.abc import Iterable
 
@@ -63,6 +65,7 @@ def test_rag_chat_rest_gratitude(app_client, headers):
     )
     response_dict = response.json()
     assert response_dict["output_text"] == "You're welcome!"
+    assert response_dict["route"] == ChatRoute.gratitude
 
 
 def test_rag_chat_rest_stuff_summarise(app_client, headers):
@@ -80,6 +83,7 @@ def test_rag_chat_rest_stuff_summarise(app_client, headers):
     )
     response_dict = response.json()
     assert isinstance(response_dict["output_text"], str)
+    assert response_dict["route"] == ChatRoute.gratitude
 
 
 def test_rag_chat_streamed(app_client, headers):
@@ -93,6 +97,11 @@ def test_rag_chat_streamed(app_client, headers):
         {"uuid": "219c2e94-9877-4f83-ad6a-a59426f90171"},
     ]
     events: Iterable[StreamEvent] = [
+        StreamEvent(
+            event="on_chat_model_start",
+            name="event-0",
+            run_id="run_id",
+        ),
         StreamEvent(
             event="on_chat_model_stream",
             name="event-1",
@@ -120,7 +129,7 @@ def test_rag_chat_streamed(app_client, headers):
         # When
         websocket.send_text(json.dumps({"message_history": message_history, "selected_files": selected_files}))
 
-        all_text, docs = [], []
+        all_text, docs, route = [], [], ""
         while True:
             try:
                 actual = websocket.receive_json()
@@ -128,12 +137,15 @@ def test_rag_chat_streamed(app_client, headers):
                     all_text.append(actual["data"])
                 if actual["resource_type"] == "documents":
                     docs.append(actual["data"])
+                if actual["resource_type"] == "route":
+                    route = actual["route"]
             except WebSocketDisconnect:
                 break
 
         # Then
         text = "".join(all_text)
         assert "Barry Mann" in text
+        assert route == "vanilla"
 
 
 def mock_build_retrieval_chain(events):

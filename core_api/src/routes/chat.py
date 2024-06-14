@@ -18,7 +18,7 @@ from core_api.src.semantic_routes import (
     INFO_RESPONSE,
     route_layer,
 )
-from redbox.models.chat import ChatRequest, ChatResponse, SourceDocument
+from redbox.models.chat import ChatRequest, ChatResponse, ChatRoute, SourceDocument
 from redbox.storage import ElasticsearchStorageHandler
 
 # === Logging ===
@@ -45,13 +45,15 @@ chat_app = FastAPI(
 )
 
 ROUTE_RESPONSES = {
-    "info": ChatPromptTemplate.from_template(INFO_RESPONSE),
-    "ability": ChatPromptTemplate.from_template(ABILITY_RESPONSE),
-    "coach": ChatPromptTemplate.from_template(COACH_RESPONSE),
-    "gratitude": ChatPromptTemplate.from_template("You're welcome!"),
-    "retrieval": build_retrieval_chain,
-    "summarisation": build_summary_chain,
-    "extract": ChatPromptTemplate.from_template("You asking to extract some information - route not yet implemented"),
+    ChatRoute.info: ChatPromptTemplate.from_template(INFO_RESPONSE),
+    ChatRoute.ability: ChatPromptTemplate.from_template(ABILITY_RESPONSE),
+    ChatRoute.coach: ChatPromptTemplate.from_template(COACH_RESPONSE),
+    ChatRoute.gratitude: ChatPromptTemplate.from_template("You're welcome!"),
+    ChatRoute.retrieval: build_retrieval_chain,
+    ChatRoute.summarisation: build_summary_chain,
+    ChatRoute.extract: ChatPromptTemplate.from_template(
+        "You asking to extract some information - route not yet implemented"
+    ),
 }
 
 
@@ -61,13 +63,13 @@ async def semantic_router_to_chain(
     llm: ChatLiteLLM,
     vector_store: ElasticsearchStore,
     storage_handler: ElasticsearchStorageHandler,
-) -> tuple[Runnable, dict[str, Any]]:
+) -> tuple[Runnable, dict[str, Any], str]:
     question = chat_request.message_history[-1].text
     route = route_layer(question)
 
     if route_response := ROUTE_RESPONSES.get(route.name):
         if isinstance(route_response, ChatPromptTemplate):
-            return route_response, {}
+            return route_response, {}, route.name
         if callable(route_response):
             chain, params = await route_response(
                 chat_request=chat_request,
@@ -76,10 +78,10 @@ async def semantic_router_to_chain(
                 vector_store=vector_store,
                 storage_handler=storage_handler,
             )
-            return chain, params
+            return chain, params, route.name
 
     chain, params = await build_retrieval_chain(chat_request, user_uuid, llm, vector_store)
-    return chain, params
+    return chain, params, ChatRoute.vanilla
 
 
 @chat_app.post("/rag", tags=["chat"])
@@ -94,7 +96,7 @@ async def rag_chat(
     Chose the correct route based on the question.
     Get a response to a question history and file.
     """
-    chain, params = await semantic_router_to_chain(chat_request, user_uuid, llm, vector_store, storage_handler)
+    chain, params, route = await semantic_router_to_chain(chat_request, user_uuid, llm, vector_store, storage_handler)
 
     result = chain.invoke(params)
     if isinstance(result, dict):
@@ -106,15 +108,15 @@ async def rag_chat(
             )
             for document in result.get("input_documents", [])
         ]
-        return ChatResponse(output_text=result["output_text"], source_documents=source_documents)
+        return ChatResponse(output_text=result["output_text"], source_documents=source_documents, route=route)
     # stuff_summarisation route
     elif isinstance(result, str):
-        return ChatResponse(output_text=result)
+        return ChatResponse(output_text=result, route=route)
     # hard-coded routes
     else:
         try:
             msg = result.messages[0].content
-            return ChatResponse(output_text=msg)
+            return ChatResponse(output_text=msg, route=route)
         except (KeyError, AttributeError):
             logging.exception("unknown message format %s", str(result))
 
@@ -134,7 +136,7 @@ async def rag_chat_streamed(
     request = await websocket.receive_text()
     chat_request = ChatRequest.model_validate_json(request)
 
-    chain, params = await semantic_router_to_chain(chat_request, user_uuid, llm, vector_store, storage_handler)
+    chain, params, route = await semantic_router_to_chain(chat_request, user_uuid, llm, vector_store, storage_handler)
 
     async for event in chain.astream_events(params, version="v1"):
         kind = event["event"]
@@ -162,5 +164,7 @@ async def rag_chat_streamed(
                 await websocket.send_json({"resource_type": "text", "data": msg})
             except (KeyError, AttributeError):
                 logging.exception("unknown message format %s", str(event["data"]["chunk"]))
+        elif kind == "on_chat_model_start":
+            await websocket.send_json({"resource_type": "route", "route": route})
 
     await websocket.close()
