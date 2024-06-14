@@ -152,3 +152,76 @@ def make_rag_runnable(
             "sources": itemgetter("sources"),
         }
     )
+
+
+def make_condense_question_runnable(llm: ChatLiteLLM) -> Runnable:
+    """Takes a system prompt and LLM returns a condense question runnable.
+
+    Runnable takes input of a dict keyed to question and messages.
+
+    Runnable returns a string.
+    """
+    condense_prompt = (
+        "Given the following conversation and a follow up question, "
+        "rephrase the follow up question to be a standalone question. \n"
+        "Chat history:"
+    )
+
+    chat_history = [
+        ("system", condense_prompt),
+        ("placeholder", "{messages}"),
+        ("user", "Follow up question: {question}. \nStandalone question: "),
+    ]
+
+    return (
+        {
+            "question": itemgetter("question"),
+            "messages": itemgetter("messages"),
+        }
+        | ChatPromptTemplate.from_messages(chat_history)
+        | llm
+        | StrOutputParser()
+    )
+
+
+def make_condense_rag_runnable(
+    system_prompt: str,
+    llm: ChatLiteLLM,
+    retriever: VectorStoreRetriever,
+) -> Runnable:
+    """Takes a system prompt, LLM and retriever and returns a condense RAG runnable.
+
+    This attempts to condense the chat history into a more salient question for the
+    LLM to answer, and doesn't pass the entire history on to RAG -- just the condensed
+    question.
+
+    Runnable takes input of a dict keyed to question, messages and file_uuids and user_uuid.
+
+    Runnable returns a dict keyed to response and sources.
+    """
+    chat_history = [
+        ("system", system_prompt),
+        ("user", "Question: {question}. \n\n Documents: \n\n {documents} \n\n Answer: "),
+    ]
+
+    prompt = ChatPromptTemplate.from_messages(chat_history)
+
+    condense_question_runnable = make_condense_question_runnable(llm=llm)
+
+    condense_question_chain = {
+        "question": itemgetter("question"),
+        "messages": itemgetter("messages"),
+    } | condense_question_runnable
+
+    return (
+        RunnablePassthrough()
+        | {
+            "question": condense_question_chain,
+            "documents": retriever | format_chunks,
+            "sources": retriever,
+        }
+        | {
+            "response": prompt | llm | StrOutputParser(),
+            "sources": itemgetter("sources"),
+        }
+    )
