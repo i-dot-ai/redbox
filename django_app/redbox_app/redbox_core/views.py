@@ -327,10 +327,16 @@ class DemographicsForm(forms.ModelForm):
     class Meta:
         model = User
         fields = ("grade", "profession", "business_unit")
-
-    grade = forms.ModelChoiceField(queryset=UserGrade.objects.all(), required=True)
-    profession = forms.ModelChoiceField(queryset=Profession.objects.all(), required=True)
-    business_unit = forms.ModelChoiceField(queryset=BusinessUnit.objects.all(), required=True)
+        labels = {
+            "grade": "Grade",
+            "profession": "Profession",
+            "business_unit": "Business unit",
+        }
+        widgets = {
+            "grade": forms.Select(attrs={"class": "govuk-select"}),
+            "profession": forms.Select(attrs={"class": "govuk-select"}),
+            "business_unit": forms.Select(attrs={"class": "govuk-select"}),
+        }
 
 
 class DemographicsView(UpdateView):
