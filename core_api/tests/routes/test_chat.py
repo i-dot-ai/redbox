@@ -9,6 +9,8 @@ from langchain_core.runnables import Runnable
 from langchain_core.runnables.schema import StreamEvent
 from starlette.websockets import WebSocketDisconnect
 
+import core_api
+
 if TYPE_CHECKING:
     from collections.abc import Iterable
 
@@ -96,8 +98,16 @@ def test_rag_chat_streamed(app_client, headers):
 
     build_retrieval_chain = mock_build_retrieval_chain(events)
 
+    original_retrieval_chain = core_api.src.routes.chat.ROUTABLE_CHAINS["retrieval"]
+    event_iterable = MagicMock(name="event_iterable")
+    event_iterable.__aiter__.return_value = events
+    astream_events = MagicMock(name="astream_events", return_value=event_iterable)
+    retrieval_chain = AsyncMock(spec=Runnable, name="retrieval_chain")
+    retrieval_chain.astream_events = astream_events
+    core_api.src.routes.chat.ROUTABLE_CHAINS["retrieval"] = retrieval_chain
+
     with (
-        patch("core_api.src.routes.chat.build_retrieval_chain", new=build_retrieval_chain),
+        #patch("core_api.src.routes.chat.build_retrieval_chain", new=build_retrieval_chain),
         app_client.websocket_connect("/chat/rag", headers=headers) as websocket,
     ):
         # When
@@ -117,7 +127,7 @@ def test_rag_chat_streamed(app_client, headers):
         # Then
         text = "".join(all_text)
         assert "Barry Mann" in text
-
+    core_api.src.routes.chat.ROUTABLE_CHAINS["retrieval"] = original_retrieval_chain
 
 def mock_build_retrieval_chain(events):
     event_iterable = MagicMock(name="event_iterable")
@@ -127,7 +137,6 @@ def mock_build_retrieval_chain(events):
 
     retrieval_chain = AsyncMock(spec=Runnable, name="retrieval_chain")
     retrieval_chain.astream_events = astream_events
-
     return AsyncMock(name="build_retrieval_chain", return_value=(retrieval_chain, None))
 
 

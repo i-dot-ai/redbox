@@ -3,20 +3,30 @@ from http import HTTPStatus
 from http.client import HTTPException
 from typing import Any
 from uuid import UUID
+from operator import itemgetter
 
 import numpy as np
 from langchain.chains.llm import LLMChain
-from langchain.chains.qa_with_sources import load_qa_with_sources_chain
 from langchain_community.chat_models import ChatLiteLLM
+from langchain_core.vectorstores import VectorStoreRetriever
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.runnables import Runnable
-from langchain_elasticsearch import ElasticsearchStore
+from langchain_core.runnables import Runnable, RunnablePassthrough, RunnableLambda, chain
+from langchain.schema import StrOutputParser
 
-from core_api.src.format import get_file_chunked_to_tokens
-from core_api.src.runnables import make_stuff_document_runnable
-from redbox.llm.prompts.chat import CONDENSE_QUESTION_PROMPT, STUFF_DOCUMENT_PROMPT, WITH_SOURCES_PROMPT
+from fastapi import Depends
+
+from core_api.src.format import format_chunks, get_file_chunked_to_tokens
+from core_api.src.runnables import make_chat_prompt_from_messages_runnable, map_to_chat_response
+from redbox.llm.prompts.summarisation import SUMMARISATION_QUESTION_PROMPT_TEMPLATE, SUMMARISATION_SYSTEM_PROMPT_TEMPLATE
+from redbox.llm.prompts.chat import RETRIEVAL_SYSTEM_PROMPT_TEMPLATE, RETRIEVAL_QUESTION_PROMPT_TEMPLATE
 from redbox.models import ChatRequest, Chunk
 from redbox.storage import ElasticsearchStorageHandler
+from core_api.src import dependencies
+from core_api.src.semantic_routes import (
+    ABILITY_RESPONSE,
+    COACH_RESPONSE,
+    INFO_RESPONSE,
+)
 
 # === Logging ===
 
@@ -62,82 +72,79 @@ async def build_vanilla_chain(
     return ChatPromptTemplate.from_messages((msg.role, msg.text) for msg in chat_request.message_history)
 
 
-async def build_retrieval_chain(
-    chat_request: ChatRequest,
-    user_uuid: UUID,
-    llm: ChatLiteLLM,
-    vector_store: ElasticsearchStore,
+def build_retrieval_chain(
+    llm: ChatLiteLLM = Depends(dependencies.get_llm),
+    retriever: VectorStoreRetriever = Depends(dependencies.get_es_retriever),
+    system_prompt: str = RETRIEVAL_SYSTEM_PROMPT_TEMPLATE,
+    question_prompt: str = RETRIEVAL_QUESTION_PROMPT_TEMPLATE,
+    **kwargs
 ) -> tuple[Runnable, dict[str, Any]]:
-    question = chat_request.message_history[-1].text
-    previous_history = list(chat_request.message_history[:-1])
-    previous_history = ChatPromptTemplate.from_messages(
-        (msg.role, msg.text) for msg in previous_history
-    ).format_messages()
-
-    docs_with_sources_chain = load_qa_with_sources_chain(
-        llm,
-        chain_type="stuff",
-        prompt=WITH_SOURCES_PROMPT,
-        document_prompt=STUFF_DOCUMENT_PROMPT,
-        verbose=True,
+    return (
+        RunnablePassthrough.assign(
+            documents=retriever
+        )
+        | RunnablePassthrough.assign(
+            formatted_documents=(RunnablePassthrough() | itemgetter("documents") | format_chunks)
+        )
+        | {
+            "response": make_chat_prompt_from_messages_runnable(system_prompt, question_prompt) | llm | StrOutputParser(),
+            "source_documents": itemgetter("documents"),
+          }
     )
 
-    condense_question_chain = LLMChain(llm=llm, prompt=CONDENSE_QUESTION_PROMPT)
 
-    standalone_question = condense_question_chain({"question": question, "chat_history": previous_history})["text"]
-
-    search_kwargs = {"filter": {"bool": {"must": [{"term": {"creator_user_uuid.keyword": str(user_uuid)}}]}}}
-
-    if chat_request.selected_files:
-        logging.info("chat_request.selected_files: %s", str(chat_request.selected_files))
-        search_kwargs["filter"]["bool"]["must"] = [
-            {"term": {"parent_file_uuid.keyword": str(file.uuid)}} for file in chat_request.selected_files
-        ]
-
-    docs = vector_store.as_retriever(search_kwargs=search_kwargs).get_relevant_documents(standalone_question)
-
-    params = {
-        "question": standalone_question,
-        "input_documents": docs,
-    }
-
-    return docs_with_sources_chain, params
-
-
-async def build_summary_chain(
-    chat_request: ChatRequest,
-    user_uuid: UUID,
-    llm: ChatLiteLLM,
-    storage_handler: ElasticsearchStorageHandler,
+def build_summary_chain(
+    llm: ChatLiteLLM = Depends(dependencies.get_llm),
+    storage_handler: ElasticsearchStorageHandler = Depends(dependencies.get_storage_handler),
+    system_prompt: str = SUMMARISATION_SYSTEM_PROMPT_TEMPLATE,
+    question_prompt: str = SUMMARISATION_QUESTION_PROMPT_TEMPLATE,
     **kwargs,  # noqa: ARG001
 ) -> tuple[Runnable, dict[str, Any]]:
-    question = chat_request.message_history[-1].text
-    previous_history = list(chat_request.message_history[:-1])
 
-    chain = make_stuff_document_runnable(system_prompt=summarisation_prompt, llm=llm)
+    @chain
+    def make_document_context(input_dict):
+        documents: list[Chunk] = []
+        for selected_file in input_dict['file_uuids']:
+            chunks = get_file_chunked_to_tokens(
+                file_uuid=selected_file.uuid,
+                user_uuid=input_dict['user_uuid'],
+                storage_handler=storage_handler,
+            )
+            documents += chunks
 
-    documents: list[Chunk] = []
-    for selected_file in chat_request.selected_files:
-        chunks = get_file_chunked_to_tokens(
-            file_uuid=selected_file.uuid,
-            user_uuid=user_uuid,
-            storage_handler=storage_handler,
+        # right now, can only handle a single document so we manually truncate
+        max_tokens = 20_000  # parameterise later
+        doc_token_sum = np.cumsum([doc.token_count for doc in documents])
+        doc_token_sum_limit_index = len([i for i in doc_token_sum if i < max_tokens])
+
+        documents_trunc = documents[:doc_token_sum_limit_index]
+        if len(documents) < doc_token_sum_limit_index:
+            log.info("Documents were longer than 20k tokens. Truncating to the first 20k.")
+        return documents_trunc
+
+    summary_chain = (
+        RunnablePassthrough.assign(
+            documents=(make_document_context | RunnableLambda(format_chunks))
         )
-        documents += chunks
+        | make_chat_prompt_from_messages_runnable(system_prompt, question_prompt)
+        | llm
+        | StrOutputParser()
+    )
 
-    # right now, can only handle a single document so we manually truncate
-    max_tokens = 20_000  # parameterise later
-    doc_token_sum = np.cumsum([doc.token_count for doc in documents])
-    doc_token_sum_limit_index = len([i for i in doc_token_sum if i < max_tokens])
+    return summary_chain
 
-    documents_trunc = documents[:doc_token_sum_limit_index]
-    if len(documents) < doc_token_sum_limit_index:
-        log.info("Documents were longer than 20k tokens. Truncating to the first 20k.")
 
-    params = {
-        "question": question,
-        "documents": documents_trunc,
-        "messages": [(msg.role, msg.text) for msg in previous_history],
+def get_routable_chains(
+    retrieval_chain: Runnable = Depends(build_retrieval_chain),
+    summary_chain: Runnable = Depends(build_summary_chain)
+):
+    return {
+        "default": retrieval_chain,
+        "info": ChatPromptTemplate.from_template(INFO_RESPONSE),
+        "ability": ChatPromptTemplate.from_template(ABILITY_RESPONSE),
+        "coach": ChatPromptTemplate.from_template(COACH_RESPONSE),
+        "gratitude": ChatPromptTemplate.from_template("You're welcome!"),
+        "retrieval": retrieval_chain,
+        "summarisation": summary_chain,
+        "extract": ChatPromptTemplate.from_template("You asking to extract some information - route not yet implemented"),
     }
-
-    return chain, params
