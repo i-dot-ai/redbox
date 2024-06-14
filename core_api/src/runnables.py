@@ -33,7 +33,7 @@ def make_chat_prompt_from_messages_runnable(system_prompt: str, question_prompt:
 def make_static_response_chain(prompt_template):
     return RunnablePassthrough.assign(
         response=(ChatPromptTemplate.from_template(prompt_template) | RunnableLambda(lambda p: p.messages[0].content)),
-        source_documents=RunnableLambda(lambda x: []), #noqa: ARG005
+        source_documents=RunnableLambda(lambda x: []),  # noqa: ARG005
     )
 
 
@@ -59,10 +59,7 @@ def map_to_chat_response(input_dict: dict):
     )
 
 
-def make_chat_runnable(
-    system_prompt: str,
-    llm: ChatLiteLLM
-) -> Runnable:
+def make_chat_runnable(system_prompt: str, llm: ChatLiteLLM) -> Runnable:
     """Takes a system prompt and LLM returns a chat runnable.
 
     Runnable takes input of a dict keyed to question and messages.
@@ -86,10 +83,7 @@ def make_chat_runnable(
     )
 
 
-def make_stuff_document_runnable(
-    system_prompt: str,
-    llm: ChatLiteLLM
-) -> Runnable:
+def make_stuff_document_runnable(system_prompt: str, llm: ChatLiteLLM) -> Runnable:
     """Takes a system prompt and LLM returns a stuff document runnable.
 
     Runnable takes input of a dict keyed to question, messages and documents.

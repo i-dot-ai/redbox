@@ -1,4 +1,3 @@
-
 from pydantic import BaseModel, Field
 
 from redbox.models.chat import ChatMessage

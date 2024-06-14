@@ -70,7 +70,7 @@ class ESQuery(TypedDict):
 def get_es_retriever(
     env: Annotated[Settings, Depends(get_env)],
     es: Annotated[Elasticsearch, Depends(get_elasticsearch_client)],
-    embedding_model: Annotated[SentenceTransformerEmbeddings, Depends(get_embedding_model)]
+    embedding_model: Annotated[SentenceTransformerEmbeddings, Depends(get_embedding_model)],
 ) -> ElasticsearchRetriever:
     """Creates an Elasticsearch retriever runnable.
 

@@ -76,7 +76,7 @@ def build_retrieval_chain(
     retriever: VectorStoreRetriever,
     system_prompt: str = RETRIEVAL_SYSTEM_PROMPT_TEMPLATE,
     question_prompt: str = RETRIEVAL_QUESTION_PROMPT_TEMPLATE,
-    **kwargs # noqa: ARG001
+    **kwargs,  # noqa: ARG001
 ) -> tuple[Runnable, dict[str, Any]]:
     return (
         RunnablePassthrough.assign(documents=retriever)
@@ -130,7 +130,7 @@ def build_summary_chain(
 
 def get_routable_chains(
     retrieval_chain: Annotated[Runnable, Depends(build_retrieval_chain)],
-    summary_chain: Annotated[Runnable, Depends(build_summary_chain)]
+    summary_chain: Annotated[Runnable, Depends(build_summary_chain)],
 ):
     return {
         "default": retrieval_chain,
