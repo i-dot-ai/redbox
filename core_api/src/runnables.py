@@ -17,37 +17,28 @@ from redbox.models.chat import SourceDocument
 from redbox.llm.prompts.chat import CONDENSE_QUESTION_PROMPT
 
 
-def make_chat_prompt_from_messages_runnable(
-    system_prompt: str,
-    question_prompt: str
-):
+def make_chat_prompt_from_messages_runnable(system_prompt: str, question_prompt: str):
     system_prompt_message = [("system", system_prompt)]
+
     @chain
     def chat_prompt_from_messages(input_dict: Dict):
         """
-        Create a ChatPrompTemplate as part of a chain using 'chat_history'. 
+        Create a ChatPrompTemplate as part of a chain using 'chat_history'.
         Returns the PromptValue using values in the input_dict
         """
         return ChatPromptTemplate.from_messages(
-            system_prompt_message +
-            [
-            (msg['role'], msg['text']) 
-            for msg in input_dict['chat_history']
-            ] + 
-            [("user", question_prompt)]
+            system_prompt_message
+            + [(msg["role"], msg["text"]) for msg in input_dict["chat_history"]]
+            + [("user", question_prompt)]
         ).invoke(input_dict)
+
     return chat_prompt_from_messages
 
 
 def make_static_response_chain(prompt_template):
-    return (
-        RunnablePassthrough.assign(
-            response=(
-                ChatPromptTemplate.from_template(prompt_template) 
-                | RunnableLambda(lambda p: p.messages[0].content)
-            ),
-            source_documents=RunnableLambda(lambda x: []),
-        )
+    return RunnablePassthrough.assign(
+        response=(ChatPromptTemplate.from_template(prompt_template) | RunnableLambda(lambda p: p.messages[0].content)),
+        source_documents=RunnableLambda(lambda x: []),
     )
 
 
@@ -55,19 +46,17 @@ def make_static_response_chain(prompt_template):
 def map_to_chat_response(input_dict: Dict):
     """
     Create a ChatResponse at the end of a chain from a dict containing
-    'response' a string to use as output_text 
+    'response' a string to use as output_text
     'source_documents' a list of chunks to map to source_documents
     """
     return ChatResponse(
-        output_text=input_dict['response'],
+        output_text=input_dict["response"],
         source_documents=[
             SourceDocument(
-                page_content=chunk.text,
-                file_uuid=chunk.parent_file_uuid,
-                page_numbers=[chunk.metadata.page_number]
+                page_content=chunk.text, file_uuid=chunk.parent_file_uuid, page_numbers=[chunk.metadata.page_number]
             )
-            for chunk in input_dict['source_documents']
-        ]
+            for chunk in input_dict.get("source_documents", [])
+        ],
     )
 
 
@@ -115,17 +104,14 @@ def make_stuff_document_runnable(
     ]
 
     return (
-        {
-            "chat_history": itemgetter("chat_history"),
-            "question": itemgetter("question")
-        }
+        {"chat_history": itemgetter("chat_history"), "question": itemgetter("question")}
         | CONDENSE_QUESTION_PROMPT
         | llm
         | {
             "question": itemgetter("question"),
             "messages": itemgetter("messages"),
             "documents": itemgetter("documents") | RunnableLambda(format_chunks),
-          }
+        }
         | ChatPromptTemplate.from_messages(chat_history)
         | llm
         | StrOutputParser()

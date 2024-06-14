@@ -124,7 +124,7 @@ def test_rag_chat_streamed(app_client, headers):
     core_api.src.routes.chat.ROUTABLE_CHAINS["retrieval"] = retrieval_chain
 
     with (
-        #patch("core_api.src.routes.chat.build_retrieval_chain", new=build_retrieval_chain),
+        # patch("core_api.src.routes.chat.build_retrieval_chain", new=build_retrieval_chain),
         app_client.websocket_connect("/chat/rag", headers=headers) as websocket,
     ):
         # When
@@ -145,6 +145,7 @@ def test_rag_chat_streamed(app_client, headers):
         text = "".join(all_text)
         assert "Barry Mann" in text
     core_api.src.routes.chat.ROUTABLE_CHAINS["retrieval"] = original_retrieval_chain
+
 
 def mock_build_retrieval_chain(events):
     event_iterable = MagicMock(name="event_iterable")

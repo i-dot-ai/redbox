@@ -14,7 +14,10 @@ from core_api.src.build_chains import build_retrieval_chain, build_summary_chain
 from core_api.src.dependencies import get_storage_handler, get_vector_store, get_llm, llm, es_retriever
 from core_api.src.runnables import map_to_chat_response, make_static_response_chain
 from redbox.llm.prompts.chat import RETRIEVAL_SYSTEM_PROMPT_TEMPLATE, RETRIEVAL_QUESTION_PROMPT_TEMPLATE
-from redbox.llm.prompts.summarisation import SUMMARISATION_SYSTEM_PROMPT_TEMPLATE, SUMMARISATION_QUESTION_PROMPT_TEMPLATE
+from redbox.llm.prompts.summarisation import (
+    SUMMARISATION_SYSTEM_PROMPT_TEMPLATE,
+    SUMMARISATION_QUESTION_PROMPT_TEMPLATE,
+)
 from core_api.src.semantic_routes import route_layer
 from redbox.models.chain import ChainInput
 from redbox.models.chat import ChatRequest, ChatResponse, SourceDocument
@@ -36,8 +39,10 @@ ROUTABLE_CHAINS = {
     "coach": make_static_response_chain(COACH_RESPONSE),
     "gratitude": make_static_response_chain("You're welcome!"),
     "retrieval": build_retrieval_chain(llm, es_retriever),
-    "summarisation": build_summary_chain(llm, es_retriever, SUMMARISATION_SYSTEM_PROMPT_TEMPLATE, SUMMARISATION_QUESTION_PROMPT_TEMPLATE),
-    "extract": make_static_response_chain("You asking to extract some information - route not yet implemented")
+    "summarisation": build_summary_chain(
+        llm, es_retriever, SUMMARISATION_SYSTEM_PROMPT_TEMPLATE, SUMMARISATION_QUESTION_PROMPT_TEMPLATE
+    ),
+    "extract": make_static_response_chain("You asking to extract some information - route not yet implemented"),
 }
 
 chat_app = FastAPI(
@@ -57,37 +62,30 @@ chat_app = FastAPI(
     openapi_url="/openapi.json",
 )
 
-async def semantic_router_to_chain(
-    chat_request: ChatRequest,
-    user_uuid: UUID
-) -> tuple[Runnable, ChainInput]:
+
+async def semantic_router_to_chain(chat_request: ChatRequest, user_uuid: UUID) -> tuple[Runnable, ChainInput]:
     question = chat_request.message_history[-1].text
     route = route_layer(question)
 
-    selected_chain = ROUTABLE_CHAINS.get(route.name, ROUTABLE_CHAINS.get('retrieval'))
+    selected_chain = ROUTABLE_CHAINS.get(route.name, ROUTABLE_CHAINS.get("retrieval"))
     params = ChainInput(
         question=chat_request.message_history[-1].text,
         file_uuids=[f.uuid for f in chat_request.selected_files],
         user_uuid=user_uuid,
-        chat_history=chat_request.message_history[:-1]
+        chat_history=chat_request.message_history[:-1],
     )
     return (selected_chain, params)
 
 
 @chat_app.post("/rag", tags=["chat"])
-async def rag_chat(
-    chat_request: ChatRequest,
-    user_uuid: Annotated[UUID, Depends(get_user_uuid)]
-) -> ChatResponse:
+async def rag_chat(chat_request: ChatRequest, user_uuid: Annotated[UUID, Depends(get_user_uuid)]) -> ChatResponse:
     """REST endpoint. Get a LLM response to a question history and file."""
     selected_chain, params = await semantic_router_to_chain(chat_request, user_uuid)
     return (selected_chain | map_to_chat_response).invoke(params.model_dump())
 
 
 @chat_app.websocket("/rag")
-async def rag_chat_streamed(
-    websocket: WebSocket
-):
+async def rag_chat_streamed(websocket: WebSocket):
     """Websocket. Get a LLM response to a question history and file."""
     await websocket.accept()
 
@@ -112,7 +110,7 @@ async def rag_chat_streamed(
                         SourceDocument(
                             page_content=chunk.text,
                             file_uuid=chunk.parent_file_uuid,
-                            page_numbers=[chunk.metadata.page_number]
+                            page_numbers=[chunk.metadata.page_number],
                         )
                     )
                     for chunk in source_chunks

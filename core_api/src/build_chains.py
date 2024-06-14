@@ -17,7 +17,10 @@ from fastapi import Depends
 
 from core_api.src.format import format_chunks, get_file_chunked_to_tokens
 from core_api.src.runnables import make_chat_prompt_from_messages_runnable, map_to_chat_response
-from redbox.llm.prompts.summarisation import SUMMARISATION_QUESTION_PROMPT_TEMPLATE, SUMMARISATION_SYSTEM_PROMPT_TEMPLATE
+from redbox.llm.prompts.summarisation import (
+    SUMMARISATION_QUESTION_PROMPT_TEMPLATE,
+    SUMMARISATION_SYSTEM_PROMPT_TEMPLATE,
+)
 from redbox.llm.prompts.chat import RETRIEVAL_SYSTEM_PROMPT_TEMPLATE, RETRIEVAL_QUESTION_PROMPT_TEMPLATE
 from redbox.models import ChatRequest, Chunk
 from redbox.storage import ElasticsearchStorageHandler
@@ -77,19 +80,19 @@ def build_retrieval_chain(
     retriever: VectorStoreRetriever,
     system_prompt: str = RETRIEVAL_SYSTEM_PROMPT_TEMPLATE,
     question_prompt: str = RETRIEVAL_QUESTION_PROMPT_TEMPLATE,
-    **kwargs
+    **kwargs,
 ) -> tuple[Runnable, dict[str, Any]]:
     return (
-        RunnablePassthrough.assign(
-            documents=retriever
-        )
+        RunnablePassthrough.assign(documents=retriever)
         | RunnablePassthrough.assign(
             formatted_documents=(RunnablePassthrough() | itemgetter("documents") | format_chunks)
         )
         | {
-            "response": make_chat_prompt_from_messages_runnable(system_prompt, question_prompt) | llm | StrOutputParser(),
+            "response": make_chat_prompt_from_messages_runnable(system_prompt, question_prompt)
+            | llm
+            | StrOutputParser(),
             "source_documents": itemgetter("documents"),
-          }
+        }
     )
 
 
@@ -100,14 +103,13 @@ def build_summary_chain(
     question_prompt: str = SUMMARISATION_QUESTION_PROMPT_TEMPLATE,
     **kwargs,  # noqa: ARG001
 ) -> tuple[Runnable, dict[str, Any]]:
-
     @chain
     def make_document_context(input_dict):
         documents: list[Chunk] = []
-        for selected_file in input_dict['file_uuids']:
+        for selected_file in input_dict["file_uuids"]:
             chunks = get_file_chunked_to_tokens(
                 file_uuid=selected_file,
-                user_uuid=input_dict['user_uuid'],
+                user_uuid=input_dict["user_uuid"],
                 storage_handler=storage_handler,
             )
             documents += chunks
@@ -123,20 +125,19 @@ def build_summary_chain(
         return documents_trunc
 
     summary_chain = (
-        RunnablePassthrough.assign(
-            documents=(make_document_context | RunnableLambda(format_chunks))
-        )
+        RunnablePassthrough.assign(documents=(make_document_context | RunnableLambda(format_chunks)))
         | make_chat_prompt_from_messages_runnable(system_prompt, question_prompt)
         | llm
-        | StrOutputParser()
+        | {
+            "response": StrOutputParser()
+        }
     )
 
     return summary_chain
 
 
 def get_routable_chains(
-    retrieval_chain: Runnable = Depends(build_retrieval_chain),
-    summary_chain: Runnable = Depends(build_summary_chain)
+    retrieval_chain: Runnable = Depends(build_retrieval_chain), summary_chain: Runnable = Depends(build_summary_chain)
 ):
     return {
         "default": retrieval_chain,
@@ -146,5 +147,7 @@ def get_routable_chains(
         "gratitude": ChatPromptTemplate.from_template("You're welcome!"),
         "retrieval": retrieval_chain,
         "summarisation": summary_chain,
-        "extract": ChatPromptTemplate.from_template("You asking to extract some information - route not yet implemented"),
+        "extract": ChatPromptTemplate.from_template(
+            "You asking to extract some information - route not yet implemented"
+        ),
     }

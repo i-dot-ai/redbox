@@ -1,6 +1,4 @@
-
-
-SUMMARISATION_SYSTEM_PROMPT_TEMPLATE=(
+SUMMARISATION_SYSTEM_PROMPT_TEMPLATE = (
     "You are an AI assistant tasked with summarizing documents. "
     "Your goal is to extract the most important information and present it in "
     "a concise and coherent manner. Please follow these guidelines while summarizing: \n"
@@ -10,4 +8,4 @@ SUMMARISATION_SYSTEM_PROMPT_TEMPLATE=(
     "4) Maintain the original context and meaning.\n"
 )
 
-SUMMARISATION_QUESTION_PROMPT_TEMPLATE="Question: {question}. \n\n Documents: \n\n {documents} \n\n Answer: "
+SUMMARISATION_QUESTION_PROMPT_TEMPLATE = "Question: {question}. \n\n Documents: \n\n {documents} \n\n Answer: "

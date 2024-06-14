@@ -80,8 +80,8 @@ class ESQuery(TypedDict):
 
 def get_es_retriever(
     env: Annotated[Settings, Depends(get_env)],
-    es: Elasticsearch = Depends(get_elasticsearch_client), 
-    embedding_model: SentenceTransformerEmbeddings = Depends(get_embedding_model), 
+    es: Elasticsearch = Depends(get_elasticsearch_client),
+    embedding_model: SentenceTransformerEmbeddings = Depends(get_embedding_model),
 ) -> ElasticsearchRetriever:
     """Creates an Elasticsearch retriever runnable.
 
@@ -159,6 +159,7 @@ def get_llm(env: Annotated[Settings, Depends(get_env)]) -> ChatLiteLLM:
         log.exception(msg)
         raise ValueError(msg)
     return llm
+
 
 # Hack before refactoring to dependency managed chains
 es_retriever = get_es_retriever(get_env(), get_elasticsearch_client(get_env()), get_embedding_model(get_env()))
