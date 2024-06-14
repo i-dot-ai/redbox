@@ -57,5 +57,5 @@ RETRIEVAL_SYSTEM_PROMPT_TEMPLATE = (
 )
 
 RETRIEVAL_QUESTION_PROMPT_TEMPLATE = (
-    "{question} \n" "=========\n" "{formatted_documents}\n" "=========\n" "FINAL ANSWER: "
+    "{question} \n=========\n{formatted_documents}\n=========\nFINAL ANSWER: "
 )
