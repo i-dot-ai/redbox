@@ -11,6 +11,7 @@ from langchain_elasticsearch import ElasticsearchStore
 
 from core_api.src.auth import get_user_uuid, get_ws_user_uuid
 from core_api.src.build_chains import build_retrieval_chain, build_summary_chain
+from core_api.src.runnables import make_rag_runnable
 from core_api.src.dependencies import get_llm, get_storage_handler, get_vector_store
 from core_api.src.semantic_routes import (
     ABILITY_RESPONSE,
