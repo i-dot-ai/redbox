@@ -1,21 +1,20 @@
 import re
 
-from core_api.src.format import format_chunks, get_file_chunked_to_tokens
+from core_api.src.app import env
 from core_api.src.build_chains import build_retrieval_chain, build_summary_chain
+from core_api.src.dependencies import get_es_retriever
+from core_api.src.format import format_chunks, get_file_chunked_to_tokens
 from core_api.src.runnables import (
     make_chat_runnable,
     make_condense_question_runnable,
     make_condense_rag_runnable,
-    make_stuff_document_runnable,
 )
-from core_api.src.dependencies import get_es_retriever
-from core_api.src.app import env
-from redbox.models.chain import ChainInput
-from redbox.llm.prompts.chat import RETRIEVAL_SYSTEM_PROMPT_TEMPLATE, RETRIEVAL_QUESTION_PROMPT_TEMPLATE
+from redbox.llm.prompts.chat import RETRIEVAL_QUESTION_PROMPT_TEMPLATE, RETRIEVAL_SYSTEM_PROMPT_TEMPLATE
 from redbox.llm.prompts.summarisation import (
-    SUMMARISATION_SYSTEM_PROMPT_TEMPLATE,
     SUMMARISATION_QUESTION_PROMPT_TEMPLATE,
+    SUMMARISATION_SYSTEM_PROMPT_TEMPLATE,
 )
+from redbox.models.chain import ChainInput
 
 
 def test_make_chat_runnable(mock_llm):
@@ -109,7 +108,7 @@ def test_make_condense_question_runnable(mock_llm):
     assert response == "<<TESTING>>"
 
 
-def test_make_condense_rag_runnable(es_client, embedding_model, chunk_index_name, mock_llm, chunked_file):
+def test_make_condense_rag_runnable(es_client, embedding_model, mock_llm, chunked_file):
     retriever = get_es_retriever(es=es_client, embedding_model=embedding_model, env=env)
 
     chain = make_condense_rag_runnable(system_prompt="Your job is Q&A.", llm=mock_llm, retriever=retriever)
@@ -133,7 +132,7 @@ def test_make_condense_rag_runnable(es_client, embedding_model, chunk_index_name
     assert {chunked_file.uuid} == {chunk.parent_file_uuid for chunk in response["sources"]}
 
 
-def test_rag_runnable(es_client, embedding_model, chunk_index_name, mock_llm, chunked_file):
+def test_rag_runnable(es_client, embedding_model, mock_llm, chunked_file):
     retriever = get_es_retriever(es=es_client, embedding_model=embedding_model, env=env)
 
     chain = build_retrieval_chain(
@@ -162,7 +161,7 @@ def test_rag_runnable(es_client, embedding_model, chunk_index_name, mock_llm, ch
     assert {chunked_file.uuid} == {chunk.parent_file_uuid for chunk in response["source_documents"]}
 
 
-def test_summary_runnable(elasticsearch_storage_handler, embedding_model, chunk_index_name, mock_llm, chunked_file):
+def test_summary_runnable(elasticsearch_storage_handler, mock_llm, chunked_file):
     chain = build_summary_chain(
         llm=mock_llm,
         storage_handler=elasticsearch_storage_handler,

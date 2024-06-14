@@ -1,32 +1,27 @@
 import logging
-from typing import Annotated, Any, Dict
+from typing import Annotated
 from uuid import UUID
 
 from fastapi import Depends, FastAPI, WebSocket
 from fastapi.encoders import jsonable_encoder
-from langchain_community.chat_models import ChatLiteLLM
 from langchain_core.runnables import Runnable
-from langchain_elasticsearch import ElasticsearchStore
-from langchain_core.prompts import ChatPromptTemplate
 
 from core_api.src.auth import get_user_uuid, get_ws_user_uuid
-from core_api.src.build_chains import build_retrieval_chain, build_summary_chain, get_routable_chains
-from core_api.src.dependencies import get_storage_handler, get_vector_store, get_llm, llm, es_retriever
-from core_api.src.runnables import map_to_chat_response, make_static_response_chain
-from redbox.llm.prompts.chat import RETRIEVAL_SYSTEM_PROMPT_TEMPLATE, RETRIEVAL_QUESTION_PROMPT_TEMPLATE
-from redbox.llm.prompts.summarisation import (
-    SUMMARISATION_SYSTEM_PROMPT_TEMPLATE,
-    SUMMARISATION_QUESTION_PROMPT_TEMPLATE,
-)
-from core_api.src.semantic_routes import route_layer
-from redbox.models.chain import ChainInput
-from redbox.models.chat import ChatRequest, ChatResponse, SourceDocument
-from redbox.storage import ElasticsearchStorageHandler
+from core_api.src.build_chains import build_retrieval_chain, build_summary_chain
+from core_api.src.dependencies import es_retriever, llm
+from core_api.src.runnables import make_static_response_chain, map_to_chat_response
 from core_api.src.semantic_routes import (
     ABILITY_RESPONSE,
     COACH_RESPONSE,
     INFO_RESPONSE,
+    route_layer,
 )
+from redbox.llm.prompts.summarisation import (
+    SUMMARISATION_QUESTION_PROMPT_TEMPLATE,
+    SUMMARISATION_SYSTEM_PROMPT_TEMPLATE,
+)
+from redbox.models.chain import ChainInput
+from redbox.models.chat import ChatRequest, ChatResponse, SourceDocument
 
 # === Logging ===
 

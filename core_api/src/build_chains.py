@@ -1,35 +1,31 @@
 import logging
 from http import HTTPStatus
 from http.client import HTTPException
-from typing import Any
-from uuid import UUID
 from operator import itemgetter
+from typing import Annotated, Any
 
 import numpy as np
-from langchain.chains.llm import LLMChain
-from langchain_community.chat_models import ChatLiteLLM
-from langchain_core.vectorstores import VectorStoreRetriever
-from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.runnables import Runnable, RunnablePassthrough, RunnableLambda, chain
-from langchain.schema import StrOutputParser
-
 from fastapi import Depends
+from langchain.schema import StrOutputParser
+from langchain_community.chat_models import ChatLiteLLM
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.runnables import Runnable, RunnableLambda, RunnablePassthrough, chain
+from langchain_core.vectorstores import VectorStoreRetriever
 
 from core_api.src.format import format_chunks, get_file_chunked_to_tokens
-from core_api.src.runnables import make_chat_prompt_from_messages_runnable, map_to_chat_response
-from redbox.llm.prompts.summarisation import (
-    SUMMARISATION_QUESTION_PROMPT_TEMPLATE,
-    SUMMARISATION_SYSTEM_PROMPT_TEMPLATE,
-)
-from redbox.llm.prompts.chat import RETRIEVAL_SYSTEM_PROMPT_TEMPLATE, RETRIEVAL_QUESTION_PROMPT_TEMPLATE
-from redbox.models import ChatRequest, Chunk
-from redbox.storage import ElasticsearchStorageHandler
-from core_api.src import dependencies
+from core_api.src.runnables import make_chat_prompt_from_messages_runnable
 from core_api.src.semantic_routes import (
     ABILITY_RESPONSE,
     COACH_RESPONSE,
     INFO_RESPONSE,
 )
+from redbox.llm.prompts.chat import RETRIEVAL_QUESTION_PROMPT_TEMPLATE, RETRIEVAL_SYSTEM_PROMPT_TEMPLATE
+from redbox.llm.prompts.summarisation import (
+    SUMMARISATION_QUESTION_PROMPT_TEMPLATE,
+    SUMMARISATION_SYSTEM_PROMPT_TEMPLATE,
+)
+from redbox.models import ChatRequest, Chunk
+from redbox.storage import ElasticsearchStorageHandler
 
 # === Logging ===
 
@@ -80,7 +76,7 @@ def build_retrieval_chain(
     retriever: VectorStoreRetriever,
     system_prompt: str = RETRIEVAL_SYSTEM_PROMPT_TEMPLATE,
     question_prompt: str = RETRIEVAL_QUESTION_PROMPT_TEMPLATE,
-    **kwargs,
+    **kwargs # noqa: ARG001
 ) -> tuple[Runnable, dict[str, Any]]:
     return (
         RunnablePassthrough.assign(documents=retriever)
@@ -124,18 +120,17 @@ def build_summary_chain(
             log.info("Documents were longer than 20k tokens. Truncating to the first 20k.")
         return documents_trunc
 
-    summary_chain = (
+    return (
         RunnablePassthrough.assign(documents=(make_document_context | RunnableLambda(format_chunks)))
         | make_chat_prompt_from_messages_runnable(system_prompt, question_prompt)
         | llm
         | {"response": StrOutputParser()}
     )
 
-    return summary_chain
-
 
 def get_routable_chains(
-    retrieval_chain: Runnable = Depends(build_retrieval_chain), summary_chain: Runnable = Depends(build_summary_chain)
+    retrieval_chain: Annotated[Runnable, Depends(build_retrieval_chain)],
+    summary_chain: Annotated[Runnable, Depends(build_summary_chain)]
 ):
     return {
         "default": retrieval_chain,

@@ -7,23 +7,12 @@ from fastapi import Depends
 from langchain_community.chat_models import ChatLiteLLM
 from langchain_community.embeddings import SentenceTransformerEmbeddings
 from langchain_core.embeddings import Embeddings
-from langchain_elasticsearch import ElasticsearchRetriever
-from langchain_elasticsearch import ApproxRetrievalStrategy, ElasticsearchStore
-from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.runnables import Runnable
-import numpy as np
+from langchain_elasticsearch import ApproxRetrievalStrategy, ElasticsearchRetriever, ElasticsearchStore
 
 from redbox.model_db import MODEL_PATH
 from redbox.models import Settings
 from redbox.models.file import UUID, Chunk
-from redbox.models.chat import ChatRequest
 from redbox.storage import ElasticsearchStorageHandler
-from core_api.src.semantic_routes import (
-    ABILITY_RESPONSE,
-    COACH_RESPONSE,
-    INFO_RESPONSE,
-    route_layer,
-)
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger()
@@ -80,8 +69,8 @@ class ESQuery(TypedDict):
 
 def get_es_retriever(
     env: Annotated[Settings, Depends(get_env)],
-    es: Elasticsearch = Depends(get_elasticsearch_client),
-    embedding_model: SentenceTransformerEmbeddings = Depends(get_embedding_model),
+    es: Annotated[Elasticsearch, Depends(get_elasticsearch_client)],
+    embedding_model: Annotated[SentenceTransformerEmbeddings, Depends(get_embedding_model)]
 ) -> ElasticsearchRetriever:
     """Creates an Elasticsearch retriever runnable.
 

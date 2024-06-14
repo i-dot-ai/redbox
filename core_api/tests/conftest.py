@@ -3,21 +3,17 @@ from pathlib import Path
 from uuid import UUID, uuid4
 
 import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
 from botocore.exceptions import ClientError
 from elasticsearch import Elasticsearch
 from fastapi.testclient import TestClient
 from jose import jwt
 from langchain_community.embeddings import SentenceTransformerEmbeddings
 from langchain_community.llms.fake import FakeListLLM
-from langchain_core.runnables import Runnable
 
 from core_api.src.app import app as application
 from core_api.src.app import env
-from core_api.src.build_chains import build_retrieval_chain
 from redbox.model_db import MODEL_PATH
 from redbox.models import Chunk, File
-from redbox.models.settings import Settings
 from redbox.storage import ElasticsearchStorageHandler
 
 
