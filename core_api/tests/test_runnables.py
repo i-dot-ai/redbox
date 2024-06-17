@@ -9,11 +9,6 @@ from core_api.src.runnables import (
     make_condense_question_runnable,
     make_condense_rag_runnable,
 )
-from redbox.llm.prompts.chat import RETRIEVAL_QUESTION_PROMPT_TEMPLATE, RETRIEVAL_SYSTEM_PROMPT_TEMPLATE
-from redbox.llm.prompts.summarisation import (
-    SUMMARISATION_QUESTION_PROMPT_TEMPLATE,
-    SUMMARISATION_SYSTEM_PROMPT_TEMPLATE,
-)
 from redbox.models.chain import ChainInput
 
 
@@ -135,12 +130,7 @@ def test_make_condense_rag_runnable(es_client, embedding_model, mock_llm, chunke
 def test_rag_runnable(es_client, embedding_model, mock_llm, chunked_file):
     retriever = get_es_retriever(es=es_client, embedding_model=embedding_model, env=env)
 
-    chain = build_retrieval_chain(
-        llm=mock_llm,
-        retriever=retriever,
-        system_prompt=RETRIEVAL_SYSTEM_PROMPT_TEMPLATE,
-        question_prompt=RETRIEVAL_QUESTION_PROMPT_TEMPLATE,
-    )
+    chain = build_retrieval_chain(llm=mock_llm, retriever=retriever)
 
     previous_history = [
         {"text": "Lorem ipsum dolor sit amet.", "role": "user"},
@@ -162,12 +152,7 @@ def test_rag_runnable(es_client, embedding_model, mock_llm, chunked_file):
 
 
 def test_summary_runnable(elasticsearch_storage_handler, mock_llm, chunked_file):
-    chain = build_summary_chain(
-        llm=mock_llm,
-        storage_handler=elasticsearch_storage_handler,
-        system_prompt=SUMMARISATION_SYSTEM_PROMPT_TEMPLATE,
-        question_prompt=SUMMARISATION_QUESTION_PROMPT_TEMPLATE,
-    )
+    chain = build_summary_chain(llm=mock_llm, storage_handler=elasticsearch_storage_handler)
 
     previous_history = [
         {"text": "Lorem ipsum dolor sit amet.", "role": "user"},
