@@ -33,6 +33,9 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.COMMIT_HASH }}
+          path: main
       - id: export
         run: |
           . ./.github/.github.env
@@ -55,21 +58,21 @@ jobs:
       AWS_GITHUBRUNNER_PAT: ${{ secrets.AWS_GITHUBRUNNER_PAT}}
       AWS_REGION: ${{ secrets.AWS_REGION }}
 
-  build-image:
-    needs:
-      - set-vars
-      - start-runner
-    uses: i-dot-ai/i-dot-ai-core-github-actions/.github/workflows/build-docker.yml@9c4473481eafb33ea598291d1e13e79d53072824
-    with:
-      APP_NAME: ${{ needs.set-vars.outputs.app-name }}
-      RUNNER_LABEL: ${{ needs.start-runner.outputs.label }}
-      INFRASTRUCTURE_FOLDER: "infrastructure/aws"
-      COMMIT_HASH: ${{ github.event.inputs.COMMIT_HASH }}
-    secrets:
-      AWS_GITHUBRUNNER_PAT: ${{ secrets.AWS_GITHUBRUNNER_PAT}}
-      AWS_GITHUBRUNNER_PAT_USER: ${{ secrets.AWS_GITHUBRUNNER_PAT_USER }}
-      AWS_REGION: ${{ secrets.AWS_REGION }}
-      AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
+#  build-image:
+#    needs:
+#      - set-vars
+#      - start-runner
+#    uses: i-dot-ai/i-dot-ai-core-github-actions/.github/workflows/build-docker.yml@9c4473481eafb33ea598291d1e13e79d53072824
+#    with:
+#      APP_NAME: ${{ needs.set-vars.outputs.app-name }}
+#      RUNNER_LABEL: ${{ needs.start-runner.outputs.label }}
+#      INFRASTRUCTURE_FOLDER: "infrastructure/aws"
+#      COMMIT_HASH: ${{ github.event.inputs.COMMIT_HASH }}
+#    secrets:
+#      AWS_GITHUBRUNNER_PAT: ${{ secrets.AWS_GITHUBRUNNER_PAT}}
+#      AWS_GITHUBRUNNER_PAT_USER: ${{ secrets.AWS_GITHUBRUNNER_PAT_USER }}
+#      AWS_REGION: ${{ secrets.AWS_REGION }}
+#      AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
 
 #  run-integration-tests:
 #    needs:
@@ -83,6 +86,7 @@ jobs:
     needs:
       - set-vars
       - start-runner
+      - build-image
     runs-on: ${{ needs.start-runner.outputs.label }}
     steps:
       - name: Build Containers
