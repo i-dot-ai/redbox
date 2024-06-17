@@ -1,7 +1,12 @@
+from typing import Annotated
+
+from fastapi import Depends
+from langchain_core.runnables import Runnable
 from semantic_router import Route
-from semantic_router.encoders import HuggingFaceEncoder
+from semantic_router.encoders import BaseEncoder, HuggingFaceEncoder
 from semantic_router.layer import RouteLayer
 
+from core_api.src.build_chains import build_retrieval_chain, build_static_response_chain, build_summary_chain
 from redbox.model_db import MODEL_PATH
 
 # === Pre-canned responses for non-LLM routes ===
@@ -101,7 +106,30 @@ extract = Route(
 )
 
 
-routes = [info, ability, coach, gratitude, summarisation, extract]
+def get_semantic_routes():
+    return [info, ability, coach, gratitude, summarisation]
 
-encoder = HuggingFaceEncoder(name="sentence-transformers/paraphrase-albert-small-v2", cache_dir=MODEL_PATH)
-route_layer = RouteLayer(encoder=encoder, routes=routes)
+
+def get_semantic_routing_encoder():
+    return HuggingFaceEncoder(name="sentence-transformers/paraphrase-albert-small-v2", cache_dir=MODEL_PATH)
+
+
+def get_semantic_route_layer(
+    routes: Annotated[list[Route], Depends(get_semantic_routes)],
+    encoder: Annotated[BaseEncoder, Depends(get_semantic_routing_encoder)],
+):
+    return RouteLayer(encoder=encoder, routes=routes)
+
+
+def get_routable_chains(
+    retrieval_chain: Annotated[Runnable, Depends(build_retrieval_chain)],
+    summary_chain: Annotated[Runnable, Depends(build_summary_chain)],
+):
+    return {
+        "info": build_static_response_chain(INFO_RESPONSE),
+        "ability": build_static_response_chain(ABILITY_RESPONSE),
+        "coach": build_static_response_chain(COACH_RESPONSE),
+        "gratitude": build_static_response_chain("You're welcome!"),
+        "retrieval": retrieval_chain,
+        "summarisation": summary_chain,
+    }

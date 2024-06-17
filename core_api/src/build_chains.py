@@ -2,15 +2,17 @@ import logging
 from http import HTTPStatus
 from http.client import HTTPException
 from operator import itemgetter
-from typing import Any
+from typing import Annotated
 
 import numpy as np
+from fastapi import Depends
 from langchain.schema import StrOutputParser
 from langchain_community.chat_models import ChatLiteLLM
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import Runnable, RunnableLambda, RunnablePassthrough, chain
 from langchain_core.vectorstores import VectorStoreRetriever
 
+from core_api.src import dependencies
 from core_api.src.format import format_chunks, get_file_chunked_to_tokens
 from core_api.src.runnables import make_chat_prompt_from_messages_runnable
 from redbox.llm.prompts.chat import RETRIEVAL_QUESTION_PROMPT_TEMPLATE, RETRIEVAL_SYSTEM_PROMPT_TEMPLATE
@@ -41,7 +43,7 @@ summarisation_prompt = (
 def build_vanilla_chain(
     chat_request: ChatRequest,
     **kwargs,  # noqa: ARG001
-) -> ChatPromptTemplate:
+) -> Runnable:
     """Get a LLM response to a question history"""
 
     if len(chat_request.message_history) < 2:  # noqa: PLR2004
@@ -66,12 +68,11 @@ def build_vanilla_chain(
 
 
 def build_retrieval_chain(
-    llm: ChatLiteLLM,
-    retriever: VectorStoreRetriever,
+    llm: Annotated[ChatLiteLLM, Depends(dependencies.get_llm)],
+    retriever: Annotated[VectorStoreRetriever, Depends(dependencies.get_es_retriever)],
     system_prompt: str = RETRIEVAL_SYSTEM_PROMPT_TEMPLATE,
     question_prompt: str = RETRIEVAL_QUESTION_PROMPT_TEMPLATE,
-    **kwargs,  # noqa: ARG001
-) -> tuple[Runnable, dict[str, Any]]:
+) -> Runnable:
     return (
         RunnablePassthrough.assign(documents=retriever)
         | RunnablePassthrough.assign(
@@ -87,12 +88,11 @@ def build_retrieval_chain(
 
 
 def build_summary_chain(
-    llm: ChatLiteLLM,
-    storage_handler: ElasticsearchStorageHandler,
+    llm: Annotated[ChatLiteLLM, Depends(dependencies.get_llm)],
+    storage_handler: Annotated[ElasticsearchStorageHandler, Depends(dependencies.get_storage_handler)],
     system_prompt: str = SUMMARISATION_SYSTEM_PROMPT_TEMPLATE,
     question_prompt: str = SUMMARISATION_QUESTION_PROMPT_TEMPLATE,
-    **kwargs,  # noqa: ARG001
-) -> tuple[Runnable, dict[str, Any]]:
+) -> Runnable:
     @chain
     def make_document_context(input_dict):
         documents: list[Chunk] = []
@@ -122,7 +122,7 @@ def build_summary_chain(
     )
 
 
-def build_static_response_chain(prompt_template):
+def build_static_response_chain(prompt_template) -> Runnable:
     return RunnablePassthrough.assign(
         response=(ChatPromptTemplate.from_template(prompt_template) | RunnableLambda(lambda p: p.messages[0].content)),
         source_documents=RunnableLambda(lambda _: []),

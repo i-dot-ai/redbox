@@ -5,21 +5,11 @@ from uuid import UUID
 from fastapi import Depends, FastAPI, WebSocket
 from fastapi.encoders import jsonable_encoder
 from langchain_core.runnables import Runnable
+from semantic_router import RouteLayer
 
 from core_api.src.auth import get_user_uuid, get_ws_user_uuid
-from core_api.src.build_chains import build_retrieval_chain, build_static_response_chain, build_summary_chain
-from core_api.src.dependencies import es_retriever, llm
 from core_api.src.runnables import map_to_chat_response
-from core_api.src.semantic_routes import (
-    ABILITY_RESPONSE,
-    COACH_RESPONSE,
-    INFO_RESPONSE,
-    route_layer,
-)
-from redbox.llm.prompts.summarisation import (
-    SUMMARISATION_QUESTION_PROMPT_TEMPLATE,
-    SUMMARISATION_SYSTEM_PROMPT_TEMPLATE,
-)
+from core_api.src.semantic_routes import get_routable_chains, get_semantic_route_layer
 from redbox.models.chain import ChainInput
 from redbox.models.chat import ChatRequest, ChatResponse, SourceDocument
 
@@ -27,17 +17,6 @@ from redbox.models.chat import ChatRequest, ChatResponse, SourceDocument
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger()
-
-ROUTABLE_CHAINS = {
-    "info": build_static_response_chain(INFO_RESPONSE),
-    "ability": build_static_response_chain(ABILITY_RESPONSE),
-    "coach": build_static_response_chain(COACH_RESPONSE),
-    "gratitude": build_static_response_chain("You're welcome!"),
-    "retrieval": build_retrieval_chain(llm, es_retriever),
-    "summarisation": build_summary_chain(
-        llm, es_retriever, SUMMARISATION_SYSTEM_PROMPT_TEMPLATE, SUMMARISATION_QUESTION_PROMPT_TEMPLATE
-    ),
-}
 
 chat_app = FastAPI(
     title="Core Chat API",
@@ -57,11 +36,13 @@ chat_app = FastAPI(
 )
 
 
-async def semantic_router_to_chain(chat_request: ChatRequest, user_uuid: UUID) -> tuple[Runnable, ChainInput]:
+async def semantic_router_to_chain(
+    chat_request: ChatRequest, user_uuid: UUID, routable_chains: dict[str, Runnable], route_layer: RouteLayer
+) -> tuple[Runnable, ChainInput]:
     question = chat_request.message_history[-1].text
     route = route_layer(question)
 
-    selected_chain = ROUTABLE_CHAINS.get(route.name, ROUTABLE_CHAINS.get("retrieval"))
+    selected_chain = routable_chains.get(route.name, routable_chains.get("retrieval"))
     params = ChainInput(
         question=chat_request.message_history[-1].text,
         file_uuids=[f.uuid for f in chat_request.selected_files],
@@ -72,14 +53,23 @@ async def semantic_router_to_chain(chat_request: ChatRequest, user_uuid: UUID) -
 
 
 @chat_app.post("/rag", tags=["chat"])
-async def rag_chat(chat_request: ChatRequest, user_uuid: Annotated[UUID, Depends(get_user_uuid)]) -> ChatResponse:
+async def rag_chat(
+    chat_request: ChatRequest,
+    user_uuid: Annotated[UUID, Depends(get_user_uuid)],
+    routable_chains: Annotated[dict[str, Runnable], Depends(get_routable_chains)],
+    route_layer: Annotated[RouteLayer, Depends(get_semantic_route_layer)],
+) -> ChatResponse:
     """REST endpoint. Get a LLM response to a question history and file."""
-    selected_chain, params = await semantic_router_to_chain(chat_request, user_uuid)
+    selected_chain, params = await semantic_router_to_chain(chat_request, user_uuid, routable_chains, route_layer)
     return (selected_chain | map_to_chat_response).invoke(params.model_dump())
 
 
 @chat_app.websocket("/rag")
-async def rag_chat_streamed(websocket: WebSocket):
+async def rag_chat_streamed(
+    websocket: WebSocket,
+    routable_chains: Annotated[dict[str, Runnable], Depends(get_routable_chains)],
+    route_layer: Annotated[RouteLayer, Depends(get_semantic_route_layer)],
+):
     """Websocket. Get a LLM response to a question history and file."""
     await websocket.accept()
 
@@ -88,7 +78,7 @@ async def rag_chat_streamed(websocket: WebSocket):
     request = await websocket.receive_text()
     chat_request = ChatRequest.model_validate_json(request)
 
-    selected_chain, params = await semantic_router_to_chain(chat_request, user_uuid)
+    selected_chain, params = await semantic_router_to_chain(chat_request, user_uuid, routable_chains, route_layer)
 
     async for event in selected_chain.astream_events(params.model_dump(), version="v1"):
         kind = event["event"]
