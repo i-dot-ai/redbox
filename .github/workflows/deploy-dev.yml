@@ -78,7 +78,7 @@ jobs:
       - build-image
     uses: i-dot-ai/redbox-copilot/.github/workflows/integration.yml@ebaf7141133025881bec8199c94187f729e21940
     with:
-      COMMIT_HASH: ${{ github.event.inputs.COMMIT_HASH }}
+      COMMIT_HASH: ${{ github.event.inputs.commit-hash }}
 
   release-terraform:
     needs:
