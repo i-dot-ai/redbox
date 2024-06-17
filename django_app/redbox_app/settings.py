@@ -6,6 +6,7 @@ from pathlib import Path
 import environ
 import sentry_sdk
 from dotenv import load_dotenv
+from import_export.formats.base_formats import CSV
 from redbox_app.setting_enums import Classification, Environment
 from sentry_sdk.integrations.django import DjangoIntegration
 from storages.backends import s3boto3
@@ -60,6 +61,7 @@ INSTALLED_APPS = [
     "storages",
     "compressor",
     "magic_link",
+    "import_export",
 ]
 
 MIDDLEWARE = [
@@ -320,6 +322,8 @@ MAGIC_LINK = {
     # SESSION_COOKIE_AGE override for magic-link logins - in seconds (default is 1 week)
     "SESSION_EXPIRY": 7 * 24 * 60 * 60,
 }
+
+IMPORT_FORMATS = [CSV]
 
 USE_STREAMING = env.bool("USE_STREAMING")
 CHAT_TITLE_LENGTH = 30

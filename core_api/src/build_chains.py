@@ -2,15 +2,17 @@ import logging
 from http import HTTPStatus
 from http.client import HTTPException
 from operator import itemgetter
-from typing import Any
+from typing import Annotated
 
 import numpy as np
+from fastapi import Depends
 from langchain.schema import StrOutputParser
 from langchain_community.chat_models import ChatLiteLLM
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import Runnable, RunnableLambda, RunnablePassthrough, chain
 from langchain_core.vectorstores import VectorStoreRetriever
 
+from core_api.src import dependencies
 from core_api.src.format import format_chunks, get_file_chunked_to_tokens
 from core_api.src.runnables import make_chat_prompt_from_messages_runnable
 from redbox.models import ChatRequest, Chunk
@@ -25,7 +27,7 @@ log = logging.getLogger()
 def build_vanilla_chain(
     chat_request: ChatRequest,
     **kwargs,  # noqa: ARG001
-) -> ChatPromptTemplate:
+) -> Runnable:
     """Get a LLM response to a question history"""
 
     if len(chat_request.message_history) < 2:  # noqa: PLR2004
@@ -50,19 +52,18 @@ def build_vanilla_chain(
 
 
 def build_retrieval_chain(
-    llm: ChatLiteLLM,
-    retriever: VectorStoreRetriever,
-    system_prompt: str,
-    question_prompt: str,
-    **kwargs,  # noqa: ARG001
-) -> tuple[Runnable, dict[str, Any]]:
+    llm: Annotated[ChatLiteLLM, Depends(dependencies.get_llm)],
+    retriever: Annotated[VectorStoreRetriever, Depends(dependencies.get_es_retriever)],
+) -> Runnable:
     return (
         RunnablePassthrough.assign(documents=retriever)
         | RunnablePassthrough.assign(
             formatted_documents=(RunnablePassthrough() | itemgetter("documents") | format_chunks)
         )
         | {
-            "response": make_chat_prompt_from_messages_runnable(system_prompt, question_prompt)
+            "response": make_chat_prompt_from_messages_runnable(
+                RETRIEVAL_SYSTEM_PROMPT_TEMPLATE, RETRIEVAL_QUESTION_PROMPT_TEMPLATE
+            )
             | llm
             | StrOutputParser(),
             "source_documents": itemgetter("documents"),
@@ -71,12 +72,9 @@ def build_retrieval_chain(
 
 
 def build_summary_chain(
-    llm: ChatLiteLLM,
-    storage_handler: ElasticsearchStorageHandler,
-    system_prompt: str,
-    question_prompt: str,
-    **kwargs,  # noqa: ARG001
-) -> tuple[Runnable, dict[str, Any]]:
+    llm: Annotated[ChatLiteLLM, Depends(dependencies.get_llm)],
+    storage_handler: Annotated[ElasticsearchStorageHandler, Depends(dependencies.get_storage_handler)],
+) -> Runnable:
     @chain
     def make_document_context(input_dict):
         documents: list[Chunk] = []
@@ -100,13 +98,15 @@ def build_summary_chain(
 
     return (
         RunnablePassthrough.assign(documents=(make_document_context | RunnableLambda(format_chunks)))
-        | make_chat_prompt_from_messages_runnable(system_prompt, question_prompt)
+        | make_chat_prompt_from_messages_runnable(
+            SUMMARISATION_SYSTEM_PROMPT_TEMPLATE, SUMMARISATION_QUESTION_PROMPT_TEMPLATE
+        )
         | llm
         | {"response": StrOutputParser()}
     )
 
 
-def build_static_response_chain(prompt_template):
+def build_static_response_chain(prompt_template) -> Runnable:
     return RunnablePassthrough.assign(
         response=(ChatPromptTemplate.from_template(prompt_template) | RunnableLambda(lambda p: p.messages[0].content)),
         source_documents=RunnableLambda(lambda _: []),

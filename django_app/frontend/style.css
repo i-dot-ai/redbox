@@ -7832,7 +7832,7 @@ body {
 }
 
 /* INPUT, TEXTAREA */
-.govuk-input, .govuk-textarea {
+.govuk-input, .govuk-textarea, .govuk-select {
   border-radius: var(--border-radius);
 }
 

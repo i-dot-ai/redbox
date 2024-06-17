@@ -148,8 +148,3 @@ def get_llm(env: Annotated[Settings, Depends(get_env)]) -> ChatLiteLLM:
         log.exception(msg)
         raise ValueError(msg)
     return llm
-
-
-# Hack before refactoring to dependency managed chains
-es_retriever = get_es_retriever(get_env(), get_elasticsearch_client(get_env()), get_embedding_model(get_env()))
-llm = get_llm(get_env())

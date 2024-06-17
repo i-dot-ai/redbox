@@ -3,13 +3,19 @@ from types import SimpleNamespace
 from typing import TYPE_CHECKING
 from unittest.mock import AsyncMock, MagicMock
 
+import pytest
+from fastapi.testclient import TestClient
+from langchain_community.llms.fake import FakeStreamingListLLM
 from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_core.prompt_values import ChatPromptValue
 from langchain_core.runnables import Runnable
 from langchain_core.runnables.schema import StreamEvent
 from starlette.websockets import WebSocketDisconnect
 
-import core_api
+from core_api.src import build_chains, dependencies
+from core_api.src.app import app as application
+from core_api.src.routes.chat import chat_app
+from redbox.models.chat import ChatResponse
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
@@ -17,12 +23,7 @@ if TYPE_CHECKING:
 system_chat = {"text": "test", "role": "system"}
 user_chat = {"text": "test", "role": "user"}
 
-test_history = [
-    ([system_chat], 422),
-    ([user_chat, system_chat], 422),
-    ([system_chat, system_chat], 422),
-    # ([system_chat, user_chat], 200), TODO: restore this test
-]
+RAG_LLM_RESPONSE = "Based on your documents the answer to your question is 7"
 
 
 def mock_chat_prompt():
@@ -34,27 +35,45 @@ def mock_chat_prompt():
     )
 
 
-class MockChain:
-    @staticmethod
-    def stream():
-        yield [{"input": "Test input", "text": "Test output"}]
+def embedding_model_dim(embedding_model) -> int:
+    return len(embedding_model.embed_query("foo"))
 
 
-def mock_get_chain():
-    return MockChain()
+def mock_get_llm(llm_responses):
+    def wrapped():
+        return FakeStreamingListLLM(responses=llm_responses)
+
+    return wrapped
 
 
-# @pytest.mark.parametrize(("chat_history", "status_code"), test_history)
-# def test_simple_chat(chat_history, status_code, app_client, monkeypatch, headers):
-#     monkeypatch.setattr(
-#         "langchain_core.prompts.ChatPromptTemplate.from_messages", mock_chat_prompt
-#     )
-#     monkeypatch.setattr("core_api.src.routes.chat.LLMChain", mock_get_chain)
+@pytest.fixture(scope="module")
+def mock_client():
+    chat_app.dependency_overrides[dependencies.get_llm] = mock_get_llm([RAG_LLM_RESPONSE])
+    return TestClient(application)
 
-#     response = app_client.post(
-#         "/chat/vanilla", json={"message_history": chat_history}, headers=headers
-#     )
-#     assert response.status_code == status_code
+
+@pytest.fixture(scope="module")
+def mock_streaming_client():
+    """
+    This client mocks the retrieval pipeline to just produce events for astream_events.
+    This tests only the streaming functionality as no pipeline is run
+    """
+    events: Iterable[StreamEvent] = [
+        StreamEvent(
+            event="on_chat_model_stream",
+            name=f"event-{i}",
+            data={"chunk": SimpleNamespace(content=response_chunk)},
+            run_id="run_id",
+        )
+        for i, response_chunk in enumerate(RAG_LLM_RESPONSE.split(" "))
+    ]
+    event_iterable = MagicMock(name="event_iterable")
+    event_iterable.__aiter__.return_value = events
+    astream_events = MagicMock(name="astream_events", return_value=event_iterable)
+    retrieval_chain = AsyncMock(spec=Runnable, name="retrieval_chain")
+    retrieval_chain.astream_events = astream_events
+    chat_app.dependency_overrides[build_chains.build_retrieval_chain] = lambda: retrieval_chain
+    return TestClient(application)
 
 
 def test_rag_chat_rest_gratitude(app_client, headers):
@@ -67,7 +86,46 @@ def test_rag_chat_rest_gratitude(app_client, headers):
     assert response_dict["output_text"] == "You're welcome!"
 
 
-def test_rag_chat_streamed(app_client, headers):
+def test_rag(mock_client, headers):
+    response = mock_client.post(
+        "/chat/rag",
+        headers=headers,
+        json={
+            "message_history": [
+                {"text": "What can I do for you?", "role": "system"},
+                {"text": "Who put the ram in the rama lama ding dong?", "role": "user"},
+            ],
+            "selected_files": [
+                {"uuid": "9aa1aa15-dde0-471f-ab27-fd410612025b"},
+                {"uuid": "219c2e94-9877-4f83-ad6a-a59426f90171"},
+            ],
+        },
+    )
+    assert response.status_code == 200
+    chat_response = ChatResponse.model_validate(response.json())
+    assert chat_response.output_text == RAG_LLM_RESPONSE
+
+
+def test_summary(mock_client, headers):
+    response = mock_client.post(
+        "/chat/rag",
+        headers=headers,
+        json={
+            "message_history": [
+                {"text": "What can I do for you?", "role": "system"},
+                {"text": "Summarise the provided docs?", "role": "user"},
+            ],
+            "selected_files": [
+                {"uuid": "9aa1aa15-dde0-471f-ab27-fd410612025b"},
+            ],
+        },
+    )
+    assert response.status_code == 200
+    chat_response = ChatResponse.model_validate(response.json())
+    assert chat_response.output_text == RAG_LLM_RESPONSE
+
+
+def test_rag_chat_streamed(mock_streaming_client, headers):
     # Given
     message_history = [
         {"text": "What can I do for you?", "role": "system"},
@@ -77,36 +135,8 @@ def test_rag_chat_streamed(app_client, headers):
         {"uuid": "9aa1aa15-dde0-471f-ab27-fd410612025b"},
         {"uuid": "219c2e94-9877-4f83-ad6a-a59426f90171"},
     ]
-    events: Iterable[StreamEvent] = [
-        StreamEvent(
-            event="on_chat_model_stream",
-            name="event-1",
-            data={
-                "chunk": SimpleNamespace(
-                    content="Who Put the Bomp (in the Bomp, Bomp, Bomp) is a doo-wop style novelty song from 1961 "
-                )
-            },
-            run_id="run_id",
-        ),
-        StreamEvent(
-            event="on_chat_model_stream",
-            name="event-2",
-            data={"chunk": SimpleNamespace(content="by the American songwriter Barry Mann.")},
-            run_id="run_id",
-        ),
-    ]
 
-    event_iterable = MagicMock(name="event_iterable")
-    event_iterable.__aiter__.return_value = events
-    astream_events = MagicMock(name="astream_events", return_value=event_iterable)
-    retrieval_chain = AsyncMock(spec=Runnable, name="retrieval_chain")
-    retrieval_chain.astream_events = astream_events
-    original_retrieval_chain = core_api.src.routes.chat.ROUTABLE_CHAINS["retrieval"]
-    core_api.src.routes.chat.ROUTABLE_CHAINS["retrieval"] = retrieval_chain
-
-    with (
-        app_client.websocket_connect("/chat/rag", headers=headers) as websocket,
-    ):
+    with mock_streaming_client.websocket_connect("/chat/rag", headers=headers) as websocket:
         # When
         websocket.send_text(json.dumps({"message_history": message_history, "selected_files": selected_files}))
 
@@ -122,6 +152,5 @@ def test_rag_chat_streamed(app_client, headers):
                 break
 
         # Then
-        text = "".join(all_text)
-        assert "Barry Mann" in text
-    core_api.src.routes.chat.ROUTABLE_CHAINS["retrieval"] = original_retrieval_chain
+        text = " ".join(all_text)
+        assert text == RAG_LLM_RESPONSE

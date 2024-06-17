@@ -6,6 +6,7 @@ from botocore.config import Config
 from django.conf import settings
 from django.db import models
 from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
 from django_use_email_as_username.models import BaseUser, BaseUserManager
 from jose import jwt
 from yarl import URL
@@ -27,13 +28,70 @@ class TimeStampedModel(models.Model):
         ordering = ["created_at"]
 
 
+class BusinessUnit(UUIDPrimaryKeyBase):
+    name = models.TextField(max_length=64, null=False, blank=False, unique=True)
+
+    def __str__(self) -> str:  # pragma: no cover
+        return f"{self.name}"
+
+
 class User(BaseUser, UUIDPrimaryKeyBase):
+    class UserGrade(models.TextChoices):
+        AA = "AA", _("AA")
+        AO = "AO", _("AO")
+        DEPUTY_DIRECTOR = "DD", _("Deputy Director")
+        DIRECTOR = "D", _("Director")
+        DIRECTOR_GENERAL = "DG", _("Director General")
+        EO = "EO", _("EO")
+        G6 = "G6", _("G6")
+        G7 = "G7", _("G7")
+        HEO = "HEO", _("HEO")
+        PS = "PS", _("Permanent Secretary")
+        SEO = "SEO", _("SEO")
+        OT = "OT", _("Other")
+
+    class Profession(models.TextChoices):
+        AN = "AN", _("Analysis")
+        CM = "CMC", _("Commercial")
+        COM = "COM", _("Communications")
+        CFIN = "CFIN", _("Corporate finance")
+        CF = "CF", _("Counter fraud")
+        DDT = "DDT", _("Digital, data and technology")
+        EC = "EC", _("Economics")
+        FIN = "FIN", _("Finance")
+        FEDG = "FEDG", _("Fraud, error, debts and grants")
+        HR = "HR", _("Human resources")
+        IA = "IA", _("Intelligence analysis")
+        IAUD = "IAUD", _("Internal audit")
+        IT = "IT", _("International trade")
+        KIM = "KIM", _("Knowledge and information management")
+        LG = "LG", _("Legal")
+        MD = "MD", _("Medical")
+        OP = "OP", _("Occupational psychology")
+        OD = "OD", _("Operational delivery")
+        OR = "OR", _("Operational research")
+        PL = "PL", _("Planning")
+        PI = "PI", _("Planning inspection")
+        POL = "POL", _("Policy")
+        PD = "PD", _("Project delivery")
+        PR = "PR", _("Property")
+        SE = "SE", _("Science and engineering")
+        SC = "SC", _("Security")
+        SR = "SR", _("Social research")
+        ST = "ST", _("Statistics")
+        TX = "TX", _("Tax")
+        VET = "VET", _("Veterinary")
+        OT = "OT", _("Other")
+
     username = None
     verified = models.BooleanField(default=False, blank=True, null=True)
     invited_at = models.DateTimeField(default=None, blank=True, null=True)
     invite_accepted_at = models.DateTimeField(default=None, blank=True, null=True)
     last_token_sent_at = models.DateTimeField(editable=False, blank=True, null=True)
     password = models.CharField("password", max_length=128, blank=True, null=True)
+    grade = models.CharField(null=True, max_length=3, choices=UserGrade)
+    profession = models.CharField(null=True, max_length=4, choices=Profession)
+    business_unit = models.ForeignKey(BusinessUnit, null=True, on_delete=models.SET_NULL)
     objects = BaseUserManager()
 
     def __str__(self) -> str:  # pragma: no cover

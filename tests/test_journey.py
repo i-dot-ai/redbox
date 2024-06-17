@@ -20,7 +20,7 @@ BASE_URL = URL("http://localhost:8090/")
 TEST_ROOT = Path(__file__).parent
 
 
-def test_user_journey(page: Page, email_address: str):
+def test_user_journey(page: Page, email_address: str):  # noqa: PLR0915
     """End to end user journey test.
 
     Simulates a single user journey through the application, running against the full suite of microservices.
@@ -42,8 +42,14 @@ def test_user_journey(page: Page, email_address: str):
     logger.debug("magic_link: %s", magic_link)
     sign_in_confirmation_page = SignInConfirmationPage(page, magic_link)
 
+    # My details page
+    my_details_page = sign_in_confirmation_page.start()
+    my_details_page.grade = "AA"
+    my_details_page.business_unit = "Delivery Group"
+    my_details_page.profession = "Digital, data and technology"
+
     # Documents page
-    documents_page = sign_in_confirmation_page.navigate_to_documents_page()
+    documents_page = my_details_page.update()
     original_doc_count = documents_page.document_count()
 
     # Upload files
@@ -129,6 +135,7 @@ def create_user(email_address: str):
     ]
     result = subprocess.run(command, capture_output=True, text=True, check=True)  # noqa: S603
     logger.debug("create_user result: %s", result)
+    logger.debug("user created for %s", email_address)
 
 
 def get_magic_link(email_address: str) -> URL:
@@ -140,5 +147,5 @@ def get_magic_link(email_address: str) -> URL:
 
 @pytest.fixture()
 def email_address() -> str:
-    username = "".join(choice(string.ascii_lowercase) for _ in range(20))  # noqa: S311
+    username = "".join(choice(string.ascii_lowercase) for _ in range(20))
     return f"{username}@cabinetoffice.gov.uk"
