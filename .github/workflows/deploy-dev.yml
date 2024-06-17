@@ -86,7 +86,7 @@ jobs:
     needs:
       - set-vars
       - start-runner
-      - build-image
+#      - build-image
     runs-on: ${{ needs.start-runner.outputs.label }}
     steps:
       - name: Build Containers
@@ -111,7 +111,7 @@ jobs:
     needs:
       - set-vars
       - start-runner
-      - build-image
+#      - build-image
       - run-integration-tests
     uses: i-dot-ai/i-dot-ai-core-github-actions/.github/workflows/apply-terraform.yml@main
     with:
@@ -136,7 +136,7 @@ jobs:
     needs:
       - set-vars
       - start-runner
-      - build-image
+#      - build-image
       - run-integration-tests
       - release-terraform
     with:
