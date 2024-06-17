@@ -96,7 +96,7 @@ def get_es_retriever(
                             "knn": {
                                 "field": "embedding",
                                 "query_vector": vector,
-                                "num_candidates": env.ai.num_candidates,
+                                "num_candidates": env.ai.rag_num_candidates,
                                 "filter": knn_filter,
                             }
                         }

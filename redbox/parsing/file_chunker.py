@@ -43,6 +43,7 @@ def chunk_file(
     file: File,
     s3_client: S3Client,
     embedding_model: SentenceTransformer | None = None,
+    desired_chunk_size: int = 300,
 ) -> Sequence[Chunk]:
     """
     Args:
@@ -59,6 +60,6 @@ def chunk_file(
     chunks = other_chunker(file=file, s3_client=s3_client)
 
     if embedding_model is not None:
-        chunks = cluster_chunks(chunks, embedding_model=embedding_model)
+        chunks = cluster_chunks(chunks, embedding_model=embedding_model, desired_chunk_size=desired_chunk_size)
 
     return chunks
