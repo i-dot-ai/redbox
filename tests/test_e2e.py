@@ -12,7 +12,7 @@ from jose import jwt
 from websockets import ConnectionClosed
 
 USER_UUIDS: list[UUID] = [uuid4(), uuid4()]
-TEST_ORIGIN = "localhost:8080"
+TEST_ORIGIN = "localhost:5002"
 
 
 def make_headers(user_uuid: UUID):
