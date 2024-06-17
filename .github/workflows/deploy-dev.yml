@@ -71,14 +71,37 @@ jobs:
       AWS_REGION: ${{ secrets.AWS_REGION }}
       AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
 
-  run-integration-tests:
+#  run-integration-tests:
+#    needs:
+#      - set-vars
+#      - start-runner
+#      - build-image
+#    uses: i-dot-ai/redbox-copilot/.github/workflows/integration.yml@7b0933f5318ed71badf2853ad41ba76f4cd7f8eb
+#    with:
+#      COMMIT_HASH: ${{ github.event.inputs.commit-hash }}
+  run-tests:
     needs:
       - set-vars
       - start-runner
-      - build-image
-    uses: i-dot-ai/redbox-copilot/.github/workflows/integration.yml@7b0933f5318ed71badf2853ad41ba76f4cd7f8eb
-    with:
-      COMMIT_HASH: ${{ github.event.inputs.commit-hash }}
+    runs-on: ${{ needs.start-runner.outputs.label }}
+    steps:
+      - name: Build Containers
+        run: |
+          cd main
+          mkdir -p data/elastic/
+          chmod -R 777 data/
+          cp .env.integration .env
+          echo AZURE_OPENAI_ENDPOINT=${{ secrets.AZURE_OPENAI_ENDPOINT }} >> .env
+          echo AZURE_OPENAI_API_KEY=${{ secrets.AZURE_OPENAI_API_KEY }} >> .env
+          docker compose up -d --wait core-api django-app
+          docker ps
+
+      - name: Test integration with pytest
+        run: |
+          cd main
+          poetry install --only dev
+          poetry run playwright install --with-deps chromium
+          poetry run pytest tests/ --browser chromium
 
   release-terraform:
     needs:
