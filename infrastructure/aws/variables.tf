@@ -181,19 +181,19 @@ variable "publicly_accessible" {
 }
 
 variable "rag_k" {
-    type        = integer
+    type        = number
     default     = 10
     description = "how many chunks to retrieve to form the basis of the response"
 }
 
 variable "rag_desired_chunk_size" {
-    type        = integer
+    type        = number
     default     = 300
     description = "how large should the chunk sizes be"
 }
 
 variable "rag_num_candidates" {
-    type        = integer
+    type        = number
     default     = 10
 }
 
