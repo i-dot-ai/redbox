@@ -88,7 +88,7 @@ def get_es_retriever(
             knn_filter.append({"terms": {"parent_file_uuid.keyword": [str(uuid) for uuid in query["file_uuids"]]}})
 
         return {
-            "size": 5,
+            "size": env.ai.rag_k,
             "query": {
                 "bool": {
                     "must": [
@@ -96,7 +96,7 @@ def get_es_retriever(
                             "knn": {
                                 "field": "embedding",
                                 "query_vector": vector,
-                                "num_candidates": 10,
+                                "num_candidates": env.ai.rag_num_candidates,
                                 "filter": knn_filter,
                             }
                         }

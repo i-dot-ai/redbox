@@ -11,14 +11,18 @@ from langchain_community.embeddings import SentenceTransformerEmbeddings
 from langchain_community.llms.fake import FakeListLLM
 
 from core_api.src.app import app as application
-from core_api.src.app import env
 from redbox.model_db import MODEL_PATH
-from redbox.models import Chunk, File
+from redbox.models import Chunk, File, Settings
 from redbox.storage import ElasticsearchStorageHandler
 
 
 @pytest.fixture()
-def s3_client():
+def env():
+    return Settings()
+
+
+@pytest.fixture()
+def s3_client(env):
     _client = env.s3_client()
     try:
         _client.create_bucket(
@@ -33,7 +37,7 @@ def s3_client():
 
 
 @pytest.fixture()
-def es_client() -> Elasticsearch:
+def es_client(env) -> Elasticsearch:
     return env.elasticsearch_client()
 
 
@@ -54,12 +58,12 @@ def headers(alice):
 
 
 @pytest.fixture()
-def elasticsearch_storage_handler(es_client):
+def elasticsearch_storage_handler(es_client, env):
     return ElasticsearchStorageHandler(es_client=es_client, root_index=env.elastic_root_index)
 
 
 @pytest.fixture()
-def file(s3_client, file_pdf_path: Path, alice) -> File:
+def file(s3_client, file_pdf_path: Path, alice, env) -> File:
     file_name = file_pdf_path.name
     file_type = file_pdf_path.suffix
 
@@ -140,10 +144,10 @@ def mock_llm():
 
 
 @pytest.fixture()
-def embedding_model() -> SentenceTransformerEmbeddings:
+def embedding_model(env) -> SentenceTransformerEmbeddings:
     return SentenceTransformerEmbeddings(model_name=env.embedding_model, cache_folder=MODEL_PATH)
 
 
 @pytest.fixture()
-def chunk_index_name():
+def chunk_index_name(env):
     return f"{env.elastic_root_index}-chunk"

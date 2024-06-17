@@ -18,6 +18,7 @@ from redbox.models.chat import ChatRequest, ChatResponse, SourceDocument
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger()
 
+
 chat_app = FastAPI(
     title="Core Chat API",
     description="Redbox Core Chat API",
