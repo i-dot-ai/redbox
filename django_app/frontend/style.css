@@ -7616,6 +7616,7 @@ body {
 
 .rb-loading-ellipsis {
   font-style: italic;
+  margin-top: 1rem;
 }
 
 .rb-loading-ellipsis span {
