@@ -26,9 +26,9 @@
         classes="govuk-button--secondary"
       ) }}
 
-      <div class="rb-panel">
+      <div class="iai-panel">
         <h2 class="govuk-heading-s">Recent chats</h2>
-        <ul class="govuk-list govuk-list--spaced rb-panel__scrollable">
+        <ul class="govuk-list govuk-list--spaced iai-panel__scrollable">
           {% for chat in chat_history %}
             <li class="govuk-!-margin-bottom-2">
               <a class="govuk-link govuk-body-s" href="{{url('chats', chat.id)}}">{{ chat.name }}</a>
@@ -37,12 +37,12 @@
         </ul>
       </div>
 
-      <document-selector class="rb-panel">
+      <document-selector class="iai-panel">
         <fieldset class="govuk-fieldset">
           <legend class="govuk-fieldset__legend govuk-fieldset__legend--s">
             <h3 class="govuk-fieldset__heading">Documents to use</h3>
           </legend>
-          <div class="govuk-checkboxes govuk-checkboxes--small rb-panel__scrollable" data-module="govuk-checkboxes">
+          <div class="govuk-checkboxes govuk-checkboxes--small iai-panel__scrollable" data-module="govuk-checkboxes">
             {% for file in files %}
               <div class="govuk-checkboxes__item">
                 <input class="govuk-checkboxes__input" id="file-{{ file.id }}" name="file-{{ file.id }}" type="checkbox" value="{{ file.id }}" {% if file.selected %}checked{% endif %}>
