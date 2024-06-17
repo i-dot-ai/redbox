@@ -14,7 +14,6 @@ body {
   background-color: #2b71c7;
   color: white;
   font-size: 0.875rem;
-  margin-bottom: 0.25rem;
   padding: 0.25rem 1rem;
   text-align: center;
 }
@@ -22,6 +21,7 @@ body {
 .rb-environment-warning {
   background-color: #FFBF47;
   color: black;
+  margin-bottom: 0;
 }
 
 .govuk-phase-banner__content__tag {
@@ -110,33 +110,6 @@ body {
 
 
 /* Chat page */
-.rb-panel {
-  background-color: govuk-colour("light-grey");
-  border-radius: 0.25rem;
-  display: block;
-  margin-bottom: 2rem;
-  padding: 1rem;
-  padding-top: 1.5rem;
-}
-.rb-panel__scrollable {
-  overflow-y: auto;
-  padding-right: 0.5rem;
-  max-height: 16.75rem;
-}
-.rb-panel__scrollable::-webkit-scrollbar {
-  background-color: govuk-colour("mid-grey");
-  width: 5px;
-}
-.rb-panel__scrollable::-webkit-scrollbar-thumb {
-  background-color: govuk-colour("dark-grey");
-}
-.rb-panel__scrollable .govuk-checkboxes__item {
-  margin-left: 0.625rem;
-}
-.rb-panel__scrollable .govuk-checkboxes__label {
-  word-break: break-word;
-}
-
 .rb-chat-message__container {
   margin-top: -1rem;
 }
