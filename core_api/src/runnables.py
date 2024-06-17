@@ -7,10 +7,8 @@ from langchain_core.runnables import Runnable, RunnableLambda, RunnablePassthrou
 from langchain_core.vectorstores import VectorStoreRetriever
 
 from core_api.src.format import format_chunks
-from redbox.models import ChatResponse, Settings
+from redbox.models import ChatResponse
 from redbox.models.chat import SourceDocument
-
-env = Settings()
 
 
 def make_chat_prompt_from_messages_runnable(system_prompt: str, question_prompt: str):
@@ -77,7 +75,7 @@ def make_chat_runnable(system_prompt: str, llm: ChatLiteLLM) -> Runnable:
     )
 
 
-def make_stuff_document_runnable(system_prompt: str, llm: ChatLiteLLM) -> Runnable:
+def make_stuff_document_runnable(system_prompt: str, question_prompt: str, llm: ChatLiteLLM) -> Runnable:
     """Takes a system prompt and LLM returns a stuff document runnable.
 
     Runnable takes input of a dict keyed to question, messages and documents.
@@ -92,7 +90,7 @@ def make_stuff_document_runnable(system_prompt: str, llm: ChatLiteLLM) -> Runnab
 
     return (
         {"chat_history": itemgetter("chat_history"), "question": itemgetter("question")}
-        | PromptTemplate.from_template(env.ai.condense_question_prompt)
+        | PromptTemplate.from_template(question_prompt)
         | llm
         | {
             "question": itemgetter("question"),
