@@ -347,9 +347,9 @@ def test_check_demographics_redirect_if_unpopulated(client: Client, alice: User)
 
 
 @pytest.mark.django_db()
-def test_check_demographics_redirect_if_populated(client: Client, mrs_tiggywinkle: User):
+def test_check_demographics_redirect_if_populated(client: Client, user_with_demographic_data: User):
     # Given
-    client.force_login(mrs_tiggywinkle)
+    client.force_login(user_with_demographic_data)
 
     # When
     response = client.get("/check-demographics/", follow=True)
@@ -359,9 +359,9 @@ def test_check_demographics_redirect_if_populated(client: Client, mrs_tiggywinkl
 
 
 @pytest.mark.django_db()
-def test_view_demographic_details_form(client: Client, mrs_tiggywinkle: User):
+def test_view_demographic_details_form(client: Client, user_with_demographic_data: User):
     # Given
-    client.force_login(mrs_tiggywinkle)
+    client.force_login(user_with_demographic_data)
 
     # When
     response = client.get("/demographics/")

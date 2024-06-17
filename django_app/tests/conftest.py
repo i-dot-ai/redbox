@@ -60,7 +60,7 @@ def jemima_puddleduck():
 
 
 @pytest.fixture()
-def mrs_tiggywinkle(business_unit: BusinessUnit) -> User:
+def user_with_demographic_data(business_unit: BusinessUnit) -> User:
     return User.objects.create_user(
         email="mrs.tiggywinkle@example.com", grade="DG", business_unit=business_unit, profession="AN"
     )

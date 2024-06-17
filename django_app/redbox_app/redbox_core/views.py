@@ -324,16 +324,16 @@ class CheckDemographicsView(View):
 class DemographicsForm(forms.ModelForm):
     class Meta:
         model = User
-        fields = ("grade", "profession", "business_unit")
+        fields = ("business_unit", "grade", "profession")
         labels: ClassVar[Mapping[str, str]] = {
+            "business_unit": "Business unit",
             "grade": "Grade",
             "profession": "Profession",
-            "business_unit": "Business unit",
         }
         widgets: ClassVar[Mapping[str, forms.Widget]] = {
+            "business_unit": forms.Select(attrs={"class": "govuk-select"}),
             "grade": forms.Select(attrs={"class": "govuk-select"}),
             "profession": forms.Select(attrs={"class": "govuk-select"}),
-            "business_unit": forms.Select(attrs={"class": "govuk-select"}),
         }
 
 
