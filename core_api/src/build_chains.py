@@ -63,7 +63,7 @@ def build_retrieval_chain(
         )
         | {
             "response": make_chat_prompt_from_messages_runnable(
-                env.ai.RETRIEVAL_SYSTEM_PROMPT_TEMPLATE, env.ai.RETRIEVAL_QUESTION_PROMPT_TEMPLATE
+                env.ai.retrieval_system_prompt, env.ai.retrieval_question_prompt
             )
             | llm
             | StrOutputParser(),
@@ -101,7 +101,7 @@ def build_summary_chain(
     return (
         RunnablePassthrough.assign(documents=(make_document_context | RunnableLambda(format_chunks)))
         | make_chat_prompt_from_messages_runnable(
-            env.ai.SUMMARISATION_SYSTEM_PROMPT_TEMPLATE, env.ai.SUMMARISATION_QUESTION_PROMPT_TEMPLATE
+            env.ai.summarisation_system_prompt, env.ai.summarisation_question_prompt
         )
         | llm
         | {"response": StrOutputParser()}

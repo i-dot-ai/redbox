@@ -127,10 +127,10 @@ def test_make_condense_rag_runnable(es_client, embedding_model, mock_llm, chunke
     assert {chunked_file.uuid} == {chunk.parent_file_uuid for chunk in response["sources"]}
 
 
-def test_rag_runnable(es_client, embedding_model, mock_llm, chunked_file):
+def test_rag_runnable(es_client, embedding_model, mock_llm, chunked_file, env):
     retriever = get_es_retriever(es=es_client, embedding_model=embedding_model, env=env)
 
-    chain = build_retrieval_chain(llm=mock_llm, retriever=retriever)
+    chain = build_retrieval_chain(llm=mock_llm, retriever=retriever, env=env)
 
     previous_history = [
         {"text": "Lorem ipsum dolor sit amet.", "role": "user"},
@@ -151,8 +151,8 @@ def test_rag_runnable(es_client, embedding_model, mock_llm, chunked_file):
     assert {chunked_file.uuid} == {chunk.parent_file_uuid for chunk in response["source_documents"]}
 
 
-def test_summary_runnable(elasticsearch_storage_handler, mock_llm, chunked_file):
-    chain = build_summary_chain(llm=mock_llm, storage_handler=elasticsearch_storage_handler)
+def test_summary_runnable(elasticsearch_storage_handler, mock_llm, chunked_file, env):
+    chain = build_summary_chain(llm=mock_llm, storage_handler=elasticsearch_storage_handler, env=env)
 
     previous_history = [
         {"text": "Lorem ipsum dolor sit amet.", "role": "user"},
