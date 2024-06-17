@@ -21,7 +21,10 @@
           {{ field }}
         </div>
       {% endfor %}
-      <input type="submit" class="govuk-button" value="Update">
+      <div class="govuk-button-group">
+        {{ govukButton(text="Update") }}
+        {{ govukButton(text="Skip", href=url('documents')) }}
+      </div>
     </form>
 
     {% if form.errors %}
