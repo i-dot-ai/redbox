@@ -16,6 +16,7 @@ from core_api.src.semantic_routes import (
     INFO_RESPONSE,
     route_layer,
 )
+from redbox.models import Settings
 from redbox.models.chain import ChainInput
 from redbox.models.chat import ChatRequest, ChatResponse, SourceDocument
 
@@ -23,15 +24,19 @@ from redbox.models.chat import ChatRequest, ChatResponse, SourceDocument
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger()
-
+env = Settings()
 
 ROUTABLE_CHAINS = {
     "info": build_static_response_chain(INFO_RESPONSE),
     "ability": build_static_response_chain(ABILITY_RESPONSE),
     "coach": build_static_response_chain(COACH_RESPONSE),
     "gratitude": build_static_response_chain("You're welcome!"),
-    "retrieval": build_retrieval_chain(llm, es_retriever),
-    "summarisation": build_summary_chain(llm, es_retriever),
+    "retrieval": build_retrieval_chain(
+        llm, es_retriever, env.ai.retrieval_system_prompt, env.ai.retrieval_question_prompt
+    ),
+    "summarisation": build_summary_chain(
+        llm, es_retriever, env.ai.summarisation_system_prompt, env.ai.summarisation_question_prompt
+    ),
 }
 
 chat_app = FastAPI(

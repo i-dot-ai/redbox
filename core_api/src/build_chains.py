@@ -65,6 +65,8 @@ def build_vanilla_chain(
 def build_retrieval_chain(
     llm: ChatLiteLLM,
     retriever: VectorStoreRetriever,
+    system_prompt: str,
+    question_prompt: str,
     **kwargs,  # noqa: ARG001
 ) -> tuple[Runnable, dict[str, Any]]:
     return (
@@ -73,9 +75,7 @@ def build_retrieval_chain(
             formatted_documents=(RunnablePassthrough() | itemgetter("documents") | format_chunks)
         )
         | {
-            "response": make_chat_prompt_from_messages_runnable(
-                env.ai.retrieval_system_prompt, env.ai.retrieval_question_prompt
-            )
+            "response": make_chat_prompt_from_messages_runnable(system_prompt, question_prompt)
             | llm
             | StrOutputParser(),
             "source_documents": itemgetter("documents"),
@@ -86,6 +86,8 @@ def build_retrieval_chain(
 def build_summary_chain(
     llm: ChatLiteLLM,
     storage_handler: ElasticsearchStorageHandler,
+    system_prompt: str,
+    question_prompt: str,
     **kwargs,  # noqa: ARG001
 ) -> tuple[Runnable, dict[str, Any]]:
     @chain
@@ -111,9 +113,7 @@ def build_summary_chain(
 
     return (
         RunnablePassthrough.assign(documents=(make_document_context | RunnableLambda(format_chunks)))
-        | make_chat_prompt_from_messages_runnable(
-            env.ai.summarisation_system_prompt, env.ai.summarisation_question_prompt
-        )
+        | make_chat_prompt_from_messages_runnable(system_prompt, question_prompt)
         | llm
         | {"response": StrOutputParser()}
     )
