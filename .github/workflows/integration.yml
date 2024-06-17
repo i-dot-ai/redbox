@@ -69,6 +69,7 @@ jobs:
 
     - name: Build Containers
       run: |
+        cd main
         mkdir -p data/elastic/
         chmod -R 777 data/
         cp .env.integration .env
@@ -80,6 +81,7 @@ jobs:
 
     - name: Test integration with pytest
       run: |
+        cd main
         poetry install --only dev
         poetry run playwright install --with-deps chromium
         poetry run pytest tests/ --browser chromium
