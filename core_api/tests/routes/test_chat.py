@@ -101,7 +101,6 @@ def test_rag_chat_streamed(app_client, headers):
     retrieval_chain.astream_events = astream_events
 
     with (
-        # patch("core_api.src.routes.chat.build_retrieval_chain", new=build_retrieval_chain),
         app_client.websocket_connect("/chat/rag", headers=headers) as websocket,
     ):
         # When
