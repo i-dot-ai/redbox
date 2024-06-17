@@ -10,11 +10,11 @@ locals {
       "AZURE_OPENAI_MODEL" : var.azure_openai_model,
       "AI__RAG_K" : var.rag_k,
       "AI__RAG_NUM_CANDIDATES": var.rag_num_candidates,
-      "AI__rag_desired_chunk_size": var.rag_desired_chunk_size,
-      "AI__retrieval_system_prompt": var.retrieval_system_prompt,
-      "AI__retrieval_question_prompt": var.retrieval_question_prompt,
-      "AI__summarisation_system_prompt": var.summarisation_system_prompt,
-      "AI__summarisation_question_prompt": var.summarisation_question_prompt,
+      "AI__RAG_DESIRED_CHUNK_SIZE": var.rag_desired_chunk_size,
+      "AI__RETRIEVAL_SYSTEM_PROMPT": var.retrieval_system_prompt,
+      "AI__RETRIEVAL_QUESTION_PROMPT": var.retrieval_question_prompt,
+      "AI__SUMMARISATION_SYSTEM_PROMPT": var.summarisation_system_prompt,
+      "AI__SUMMARISATION_QUESTION_PROMPT": var.summarisation_question_prompt,
     }
   )
 
