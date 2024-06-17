@@ -28,17 +28,6 @@ from redbox.storage import ElasticsearchStorageHandler
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger()
 
-# Define the system prompt for summarization
-summarisation_prompt = (
-    "You are an AI assistant tasked with summarizing documents. "
-    "Your goal is to extract the most important information and present it in "
-    "a concise and coherent manner. Please follow these guidelines while summarizing: \n"
-    "1) Identify and highlight key points,\n"
-    "2) Avoid repetition,\n"
-    "3) Ensure the summary is easy to understand,\n"
-    "4) Maintain the original context and meaning.\n"
-)
-
 
 def build_vanilla_chain(
     chat_request: ChatRequest,
@@ -69,9 +58,7 @@ def build_vanilla_chain(
 
 def build_retrieval_chain(
     llm: Annotated[ChatLiteLLM, Depends(dependencies.get_llm)],
-    retriever: Annotated[VectorStoreRetriever, Depends(dependencies.get_es_retriever)],
-    system_prompt: str = RETRIEVAL_SYSTEM_PROMPT_TEMPLATE,
-    question_prompt: str = RETRIEVAL_QUESTION_PROMPT_TEMPLATE,
+    retriever: Annotated[VectorStoreRetriever, Depends(dependencies.get_es_retriever)]
 ) -> Runnable:
     return (
         RunnablePassthrough.assign(documents=retriever)
@@ -79,7 +66,7 @@ def build_retrieval_chain(
             formatted_documents=(RunnablePassthrough() | itemgetter("documents") | format_chunks)
         )
         | {
-            "response": make_chat_prompt_from_messages_runnable(system_prompt, question_prompt)
+            "response": make_chat_prompt_from_messages_runnable(RETRIEVAL_SYSTEM_PROMPT_TEMPLATE, RETRIEVAL_QUESTION_PROMPT_TEMPLATE)
             | llm
             | StrOutputParser(),
             "source_documents": itemgetter("documents"),
@@ -89,9 +76,7 @@ def build_retrieval_chain(
 
 def build_summary_chain(
     llm: Annotated[ChatLiteLLM, Depends(dependencies.get_llm)],
-    storage_handler: Annotated[ElasticsearchStorageHandler, Depends(dependencies.get_storage_handler)],
-    system_prompt: str = SUMMARISATION_SYSTEM_PROMPT_TEMPLATE,
-    question_prompt: str = SUMMARISATION_QUESTION_PROMPT_TEMPLATE,
+    storage_handler: Annotated[ElasticsearchStorageHandler, Depends(dependencies.get_storage_handler)]
 ) -> Runnable:
     @chain
     def make_document_context(input_dict):
@@ -116,7 +101,7 @@ def build_summary_chain(
 
     return (
         RunnablePassthrough.assign(documents=(make_document_context | RunnableLambda(format_chunks)))
-        | make_chat_prompt_from_messages_runnable(system_prompt, question_prompt)
+        | make_chat_prompt_from_messages_runnable(SUMMARISATION_SYSTEM_PROMPT_TEMPLATE, SUMMARISATION_QUESTION_PROMPT_TEMPLATE)
         | llm
         | {"response": StrOutputParser()}
     )
