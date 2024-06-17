@@ -30,9 +30,6 @@ def make_chat_prompt_from_messages_runnable(system_prompt: str, question_prompt:
     return chat_prompt_from_messages
 
 
-
-
-
 @chain
 def map_to_chat_response(input_dict: dict):
     """

@@ -36,7 +36,7 @@ ROUTABLE_CHAINS = {
     "retrieval": build_retrieval_chain(llm, es_retriever),
     "summarisation": build_summary_chain(
         llm, es_retriever, SUMMARISATION_SYSTEM_PROMPT_TEMPLATE, SUMMARISATION_QUESTION_PROMPT_TEMPLATE
-    )
+    ),
 }
 
 chat_app = FastAPI(

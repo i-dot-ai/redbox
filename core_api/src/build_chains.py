@@ -2,10 +2,9 @@ import logging
 from http import HTTPStatus
 from http.client import HTTPException
 from operator import itemgetter
-from typing import Annotated, Any
+from typing import Any
 
 import numpy as np
-from fastapi import Depends
 from langchain.schema import StrOutputParser
 from langchain_community.chat_models import ChatLiteLLM
 from langchain_core.prompts import ChatPromptTemplate
@@ -14,11 +13,6 @@ from langchain_core.vectorstores import VectorStoreRetriever
 
 from core_api.src.format import format_chunks, get_file_chunked_to_tokens
 from core_api.src.runnables import make_chat_prompt_from_messages_runnable
-from core_api.src.semantic_routes import (
-    ABILITY_RESPONSE,
-    COACH_RESPONSE,
-    INFO_RESPONSE,
-)
 from redbox.llm.prompts.chat import RETRIEVAL_QUESTION_PROMPT_TEMPLATE, RETRIEVAL_SYSTEM_PROMPT_TEMPLATE
 from redbox.llm.prompts.summarisation import (
     SUMMARISATION_QUESTION_PROMPT_TEMPLATE,
@@ -127,8 +121,9 @@ def build_summary_chain(
         | {"response": StrOutputParser()}
     )
 
+
 def build_static_response_chain(prompt_template):
     return RunnablePassthrough.assign(
         response=(ChatPromptTemplate.from_template(prompt_template) | RunnableLambda(lambda p: p.messages[0].content)),
-        source_documents=RunnableLambda(lambda _: None),  # noqa: ARG005
+        source_documents=RunnableLambda(lambda _: None),
     )
