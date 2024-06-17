@@ -10,6 +10,95 @@ logging.basicConfig(level=logging.INFO)
 log = logging.getLogger()
 
 
+CONDENSE_QUESTION_PROMPT = """Given the following conversation and a follow up question,\
+rephrase the follow up question to be a standalone question. \
+Include the follow up instructions in the standalone question.
+
+Chat History:
+{chat_history}
+Follow Up Input: {question}
+Standalone question:"""
+
+WITH_SOURCES_PROMPT = """Given the following extracted parts of a long document and \
+a question, create a final answer which uses the sources.  \
+If you don't know the answer, just say that you don't know. Don't try to make \
+up an answer.
+If a user asks for a particular format to be returned, such as bullet points, then please use that format. \
+If a user asks for bullet points you MUST give bullet points. \
+If the user asks for a specific number or range of bullet points you MUST give that number of bullet points. \
+For example
+QUESTION: Please give me 6-8 bullet points on tigers
+FINAL ANSWER: - Tigers are orange. \n- Tigers are big. \n- Tigers are scary. \n- Tigers are cool. \n- Tigers are \
+cats. -\n Tigers are animals. \
+
+If the number of bullet points a user asks for is not supported by the amount of information that you have, then \
+say so, else give what the user asks for. \
+
+DO NOT NAME CITED DOCUMENTS IN YOUR RESPONSE. \
+
+Use **bold** to highlight the most question relevant parts in your response.
+If dealing dealing with lots of data return it in markdown table format.
+
+QUESTION: {question}
+=========
+{summaries}
+=========
+FINAL ANSWER:"""
+
+
+CORE_REDBOX_PROMPT = """You are RedBox Copilot. An AI focused on helping UK Civil Servants, Political Advisors and\
+Ministers triage and summarise information from a wide variety of sources. You are impartial and\
+non-partisan. You are not a replacement for human judgement, but you can help humans\
+make more informed decisions. If you are asked a question you cannot answer based on your following instructions, you\
+should say so. Be concise and professional in your responses. Respond in markdown format.
+
+=== RULES ===
+
+All responses to Tasks **MUST** be in British English.\
+This is so that the user can understand your responses.\
+"""
+
+STUFF_DOCUMENT_PROMPT = "<Doc{parent_doc_uuid}>{page_content}</Doc{parent_doc_uuid}>"
+
+RETRIEVAL_SYSTEM_PROMPT = (
+    "Given the following conversation and extracted parts of a long document and a question, create a final answer. \n"
+    "If you don't know the answer, just say that you don't know. Don't try to make up an answer. "
+    "If a user asks for a particular format to be returned, such as bullet points, then please use that format. "
+    "If a user asks for bullet points you MUST give bullet points. "
+    "If the user asks for a specific number or range of bullet points you MUST give that number of bullet points. \n"
+    "Use **bold** to highlight the most question relevant parts in your response. "
+    "If dealing dealing with lots of data return it in markdown table format. "
+)
+
+SUMMARISATION_SYSTEM_PROMPT = (
+    "You are an AI assistant tasked with summarizing documents. "
+    "Your goal is to extract the most important information and present it in "
+    "a concise and coherent manner. Please follow these guidelines while summarizing: \n"
+    "1) Identify and highlight key points,\n"
+    "2) Avoid repetition,\n"
+    "3) Ensure the summary is easy to understand,\n"
+    "4) Maintain the original context and meaning.\n"
+)
+
+
+RETRIEVAL_QUESTION_PROMPT = "{question} \n=========\n{formatted_documents}\n=========\nFINAL ANSWER: "
+
+
+SUMMARISATION_QUESTION_PROMPT = "Question: {question}. \n\n Documents: \n\n {documents} \n\n Answer: "
+
+
+class AISettings(BaseModel):
+    # PromptTemplate.from_template
+    condense_question_prompt: str = CONDENSE_QUESTION_PROMPT
+    with_sources_prompt: str = WITH_SOURCES_PROMPT
+    core_redbox_prompt: str = CORE_REDBOX_PROMPT
+    stuff_document_prompt: str = STUFF_DOCUMENT_PROMPT
+    retrieval_system_prompt: str = RETRIEVAL_SYSTEM_PROMPT
+    summarisation_system_prompt: str = SUMMARISATION_SYSTEM_PROMPT
+    retrieval_question_prompt: str = RETRIEVAL_QUESTION_PROMPT
+    summarisation_question_prompt: str = SUMMARISATION_QUESTION_PROMPT
+
+
 class ElasticLocalSettings(BaseModel):
     """settings required for a local/ec2 instance of elastic"""
 
@@ -32,6 +121,8 @@ class ElasticCloudSettings(BaseModel):
 
 class Settings(BaseSettings):
     """Settings for the redbox application."""
+
+    ai: AISettings = AISettings()
 
     anthropic_api_key: str | None = None
     openai_api_key: str | None = None

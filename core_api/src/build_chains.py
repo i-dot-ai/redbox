@@ -13,18 +13,15 @@ from langchain_core.vectorstores import VectorStoreRetriever
 
 from core_api.src.format import format_chunks, get_file_chunked_to_tokens
 from core_api.src.runnables import make_chat_prompt_from_messages_runnable
-from redbox.llm.prompts.chat import RETRIEVAL_QUESTION_PROMPT_TEMPLATE, RETRIEVAL_SYSTEM_PROMPT_TEMPLATE
-from redbox.llm.prompts.summarisation import (
-    SUMMARISATION_QUESTION_PROMPT_TEMPLATE,
-    SUMMARISATION_SYSTEM_PROMPT_TEMPLATE,
-)
-from redbox.models import ChatRequest, Chunk
+from redbox.models import ChatRequest, Chunk, Settings
 from redbox.storage import ElasticsearchStorageHandler
 
 # === Logging ===
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger()
+
+env = Settings()
 
 # Define the system prompt for summarization
 summarisation_prompt = (
@@ -68,8 +65,6 @@ def build_vanilla_chain(
 def build_retrieval_chain(
     llm: ChatLiteLLM,
     retriever: VectorStoreRetriever,
-    system_prompt: str = RETRIEVAL_SYSTEM_PROMPT_TEMPLATE,
-    question_prompt: str = RETRIEVAL_QUESTION_PROMPT_TEMPLATE,
     **kwargs,  # noqa: ARG001
 ) -> tuple[Runnable, dict[str, Any]]:
     return (
@@ -78,7 +73,9 @@ def build_retrieval_chain(
             formatted_documents=(RunnablePassthrough() | itemgetter("documents") | format_chunks)
         )
         | {
-            "response": make_chat_prompt_from_messages_runnable(system_prompt, question_prompt)
+            "response": make_chat_prompt_from_messages_runnable(
+                env.ai.retrieval_system_prompt, env.ai.retrieval_question_prompt
+            )
             | llm
             | StrOutputParser(),
             "source_documents": itemgetter("documents"),
@@ -89,8 +86,6 @@ def build_retrieval_chain(
 def build_summary_chain(
     llm: ChatLiteLLM,
     storage_handler: ElasticsearchStorageHandler,
-    system_prompt: str = SUMMARISATION_SYSTEM_PROMPT_TEMPLATE,
-    question_prompt: str = SUMMARISATION_QUESTION_PROMPT_TEMPLATE,
     **kwargs,  # noqa: ARG001
 ) -> tuple[Runnable, dict[str, Any]]:
     @chain
@@ -116,7 +111,9 @@ def build_summary_chain(
 
     return (
         RunnablePassthrough.assign(documents=(make_document_context | RunnableLambda(format_chunks)))
-        | make_chat_prompt_from_messages_runnable(system_prompt, question_prompt)
+        | make_chat_prompt_from_messages_runnable(
+            env.ai.summarisation_system_prompt, env.ai.summarisation_question_prompt
+        )
         | llm
         | {"response": StrOutputParser()}
     )

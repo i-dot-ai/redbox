@@ -2,14 +2,15 @@ from operator import itemgetter
 
 from langchain.schema import StrOutputParser
 from langchain_community.chat_models import ChatLiteLLM
-from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.prompts import ChatPromptTemplate, PromptTemplate
 from langchain_core.runnables import Runnable, RunnableLambda, RunnablePassthrough, chain
 from langchain_core.vectorstores import VectorStoreRetriever
 
 from core_api.src.format import format_chunks
-from redbox.llm.prompts.chat import CONDENSE_QUESTION_PROMPT
-from redbox.models import ChatResponse
+from redbox.models import ChatResponse, Settings
 from redbox.models.chat import SourceDocument
+
+env = Settings()
 
 
 def make_chat_prompt_from_messages_runnable(system_prompt: str, question_prompt: str):
@@ -91,7 +92,7 @@ def make_stuff_document_runnable(system_prompt: str, llm: ChatLiteLLM) -> Runnab
 
     return (
         {"chat_history": itemgetter("chat_history"), "question": itemgetter("question")}
-        | CONDENSE_QUESTION_PROMPT
+        | PromptTemplate.from_template(env.ai.condense_question_prompt)
         | llm
         | {
             "question": itemgetter("question"),

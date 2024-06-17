@@ -8,12 +8,11 @@ from langchain_community.embeddings import (
     HuggingFaceEmbeddings,
     SentenceTransformerEmbeddings,
 )
+from langchain_core.prompts import PromptTemplate
 
-from redbox.llm.prompts.chat import (
-    CONDENSE_QUESTION_PROMPT,
-    STUFF_DOCUMENT_PROMPT,
-    WITH_SOURCES_PROMPT,
-)
+from redbox.models import Settings
+
+env = Settings()
 
 
 class LLMHandler:
@@ -77,12 +76,14 @@ class LLMHandler:
         docs_with_sources_chain = load_qa_with_sources_chain(
             self.llm,
             chain_type="stuff",
-            prompt=WITH_SOURCES_PROMPT,
-            document_prompt=STUFF_DOCUMENT_PROMPT,
+            prompt=PromptTemplate.from_template(env.ai.core_redbox_prompt + env.ai.with_sources_prompt),
+            document_prompt=PromptTemplate.from_template(env.ai.stuff_document_prompt),
             verbose=True,
         )
 
-        condense_question_chain = LLMChain(llm=self.llm, prompt=CONDENSE_QUESTION_PROMPT)
+        condense_question_chain = LLMChain(
+            llm=self.llm, prompt=PromptTemplate.from_template(env.ai.condense_question_prompt)
+        )
 
         # split chain manually, so that the standalone question doesn't leak into chat
         # should we display some waiting message instead?
