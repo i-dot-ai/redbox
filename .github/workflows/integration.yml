@@ -9,11 +9,19 @@ on:
     - cron: '0 6,12,18 * * 1-5'
   # or on-demand
   workflow_dispatch:
+    commit-hash:
+      description: 'The SHA of the Git commit to use'
+      required: false
+      default: refs/heads/main
  # or on push to main
   push:
     branches:
       - 'main'
   workflow_call:
+    commit-hash:
+      description: 'The SHA of the Git commit to use'
+      required: false
+      default: refs/heads/main
 
 permissions:
   contents: read
@@ -24,7 +32,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
+      with:
+        ref: ${{ inputs.COMMIT_HASH }}
+        path: main
 
     - name: Free Disk Space (Ubuntu)
       uses: jlumbroso/free-disk-space@main
