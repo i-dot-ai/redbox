@@ -6,6 +6,7 @@ on:
       commit-hash:
         description: 'The SHA of the Git commit to use'
         required: false
+        default: refs/heads/main
       core-repo-reference:
         description: 'The SHA to set the core repo to'
         required: false
@@ -75,7 +76,9 @@ jobs:
       - set-vars
       - start-runner
       - build-image
-    uses: i-dot-ai/redbox-copilot/.github/workflows/integration.yml@49be410ebe066d61fae05acf87528c3fe11eb3a4
+    uses: i-dot-ai/redbox-copilot/.github/workflows/integration.yml@84065d3d53deb76245923a04d2854006287c06e1
+    with:
+      COMMIT_HASH: ${{ github.event.inputs.COMMIT_HASH }}
 
   release-terraform:
     needs:
