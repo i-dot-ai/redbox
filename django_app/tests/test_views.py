@@ -17,10 +17,8 @@ from redbox_app.redbox_core.models import (
     ChatMessage,
     ChatRoleEnum,
     File,
-    Profession,
     StatusEnum,
     User,
-    UserGrade,
 )
 from requests_mock import Mocker
 from yarl import URL
@@ -371,26 +369,24 @@ def test_view_demographic_details_form(client: Client, mrs_tiggywinkle: User):
     # Then
     assert response.status_code == HTTPStatus.OK
     soup = BeautifulSoup(response.content)
-    assert soup.find(id="id_grade").find_all("option", selected=True)[0].text == "Big Boss"
-    assert soup.find(id="id_profession").find_all("option", selected=True)[0].text == "Paperclip Counter"
+    assert soup.find(id="id_grade").find_all("option", selected=True)[0].text == "Director General"
+    assert soup.find(id="id_profession").find_all("option", selected=True)[0].text == "Analysis"
     assert soup.find(id="id_business_unit").find_all("option", selected=True)[0].text == "Paperclip Reconciliation"
 
 
 @pytest.mark.django_db()
-def test_post_to_demographic_details_form(
-    client: Client, alice: User, user_grade: UserGrade, business_unit: BusinessUnit, profession: Profession
-):
+def test_post_to_demographic_details_form(client: Client, alice: User, business_unit: BusinessUnit):
     # Given
     client.force_login(alice)
 
     # When
     response = client.post(
         "/demographics/",
-        {"grade": user_grade.id, "profession": profession.id, "business_unit": business_unit.id},
+        {"grade": "AO", "profession": "AN", "business_unit": business_unit.id},
         follow=True,
     )
 
     # Then
     assertRedirects(response, "/documents/")
     alice.refresh_from_db()
-    assert alice.grade == user_grade
+    assert alice.grade == "AO"

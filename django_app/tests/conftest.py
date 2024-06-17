@@ -14,9 +14,7 @@ from redbox_app.redbox_core.models import (
     ChatMessage,
     ChatRoleEnum,
     File,
-    Profession,
     User,
-    UserGrade,
 )
 
 logger = logging.getLogger(__name__)
@@ -62,25 +60,15 @@ def jemima_puddleduck():
 
 
 @pytest.fixture()
-def mrs_tiggywinkle(user_grade: UserGrade, business_unit: BusinessUnit, profession: Profession) -> User:
+def mrs_tiggywinkle(business_unit: BusinessUnit) -> User:
     return User.objects.create_user(
-        email="mrs.tiggywinkle@example.com", grade=user_grade, business_unit=business_unit, profession=profession
+        email="mrs.tiggywinkle@example.com", grade="DG", business_unit=business_unit, profession="AN"
     )
-
-
-@pytest.fixture()
-def user_grade() -> UserGrade:
-    return UserGrade.objects.create(name="Big Boss")
 
 
 @pytest.fixture()
 def business_unit() -> BusinessUnit:
     return BusinessUnit.objects.create(name="Paperclip Reconciliation")
-
-
-@pytest.fixture()
-def profession() -> Profession:
-    return Profession.objects.create(name="Paperclip Counter")
 
 
 @pytest.fixture()

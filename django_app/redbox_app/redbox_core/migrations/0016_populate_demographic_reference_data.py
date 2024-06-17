@@ -49,71 +49,12 @@ BUSINESS_UNITS = [
     "Inquiries Sponsorship Team",
     "Other",
 ]
-GRADES = [
-    "AA",
-    "AO",
-    "Deputy Director",
-    "Director",
-    "Director General",
-    "EO",
-    "G6",
-    "G7",
-    "HEO",
-    "Perm Sec",
-    "SEO",
-    "Other",
-]
-PROFESSIONS = [
-    "Analysis",
-    "Commercial",
-    "Communications",
-    "Corporate finance",
-    "Counter fraud",
-    "Digital, data and technology",
-    "Economics",
-    "Finance",
-    "Fraud, error, debts and grants",
-    "Human resources",
-    "Intelligence analysis",
-    "Internal audit",
-    "International trade",
-    "Knowledge and information management",
-    "Legal",
-    "Medical",
-    "Occupational psychology",
-    "Operational delivery",
-    "Operational research",
-    "Planning",
-    "Planning inspection",
-    "Policy",
-    "Project delivery",
-    "Property",
-    "Science and engineering",
-    "Security",
-    "Social research",
-    "Statistics",
-    "Tax",
-    "Veterinary",
-    "Other",
-]
 
 
 def populate_business_units(apps, schema_editor):
     BusinessUnit = apps.get_model('redbox_core', 'BusinessUnit')
     for name in BUSINESS_UNITS:
         BusinessUnit.objects.create(name=name)
-
-
-def populate_grades(apps, schema_editor):
-    UserGrade = apps.get_model('redbox_core', 'UserGrade')
-    for name in GRADES:
-        UserGrade.objects.create(name=name)
-
-
-def populate_professions(apps, schema_editor):
-    Profession = apps.get_model('redbox_core', 'Profession')
-    for name in PROFESSIONS:
-        Profession.objects.create(name=name)
 
 
 class Migration(migrations.Migration):
@@ -124,6 +65,4 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.RunPython(populate_business_units),
-        migrations.RunPython(populate_grades),
-        migrations.RunPython(populate_professions),
     ]
