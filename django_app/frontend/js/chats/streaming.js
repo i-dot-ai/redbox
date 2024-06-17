@@ -52,9 +52,9 @@ class ChatMessage extends HTMLElement {
                 ${!this.dataset.text ?
                     `<div class="rb-loading-ellipsis govuk-body-s">
                         Loading
-                        <span>.</span>
-                        <span>.</span>
-                        <span>.</span>
+                        <span aria-hidden="true">.</span>
+                        <span aria-hidden="true">.</span>
+                        <span aria-hidden="true">.</span>
                     </div>`
                 : ''}
                 <sources-list></sources-list>
