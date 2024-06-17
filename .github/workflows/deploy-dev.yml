@@ -90,6 +90,11 @@ jobs:
 #      - build-image
     runs-on: ${{ needs.start-runner.outputs.label }}
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.COMMIT_HASH }}
+          path: main
       - name: Build Containers
         run: |
           cd main
