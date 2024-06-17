@@ -183,6 +183,9 @@ body {
   text-align: left;
 }
 
+.rb-loading-ellipsis {
+  font-style: italic;
+}
 .rb-loading-ellipsis span {
   animation-duration: 1.5s;
   animation-iteration-count: infinite;
