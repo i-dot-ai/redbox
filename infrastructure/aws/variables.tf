@@ -182,7 +182,7 @@ variable "publicly_accessible" {
 
 variable "rag_k" {
     type        = number
-    default     = 10
+    default     = 15
     description = "how many chunks to retrieve to form the basis of the response"
 }
 
