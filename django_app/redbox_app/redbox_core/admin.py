@@ -2,23 +2,35 @@ import csv
 
 from django.contrib import admin
 from django.http import HttpResponse
+from import_export.admin import ImportMixin
 
 from . import models
 
 
-class UserResource(admin.ModelAdmin):
-    fields = ["email", "is_superuser", "is_staff", "last_login"]
-    list_display = ["email", "is_superuser", "is_staff", "last_login"]
+class UserAdmin(admin.ModelAdmin):
+    fields = ["email", "business_unit", "grade", "profession", "is_superuser", "is_staff", "last_login"]
+    list_display = ["email", "business_unit", "grade", "profession", "is_superuser", "is_staff", "last_login"]
+    list_filter = ["business_unit", "grade", "profession"]
     date_hierarchy = "last_login"
 
 
-class FileResource(admin.ModelAdmin):
+class BusinessUnitAdmin(ImportMixin, admin.ModelAdmin):
+    fields = ["name"]
+    list_display = ["name"]
+
+    class Meta:
+        model = models.BusinessUnit
+        fields = ["name"]
+        import_id_fields = ["name"]
+
+
+class FileAdmin(admin.ModelAdmin):
     list_display = ["original_file_name", "user", "status", "created_at"]
     list_filter = ["user", "status"]
     date_hierarchy = "created_at"
 
 
-class ChatMessageResource(admin.ModelAdmin):
+class ChatMessageAdmin(admin.ModelAdmin):
     list_display = ["chat_history", "get_user", "text", "role", "created_at"]
     list_filter = ["role", "chat_history__users"]
     date_hierarchy = "created_at"
@@ -63,7 +75,8 @@ class ChatHistoryAdmin(admin.ModelAdmin):
     actions = ["export_as_csv"]
 
 
-admin.site.register(models.User, UserResource)
-admin.site.register(models.File, FileResource)
+admin.site.register(models.User, UserAdmin)
+admin.site.register(models.File, FileAdmin)
 admin.site.register(models.ChatHistory, ChatHistoryAdmin)
-admin.site.register(models.ChatMessage, ChatMessageResource)
+admin.site.register(models.ChatMessage, ChatMessageAdmin)
+admin.site.register(models.BusinessUnit, BusinessUnitAdmin)

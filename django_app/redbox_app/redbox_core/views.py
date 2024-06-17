@@ -1,8 +1,10 @@
 import logging
 import uuid
-from collections.abc import MutableSequence, Sequence
+from collections.abc import Mapping, MutableSequence, Sequence
 from pathlib import Path
+from typing import ClassVar
 
+from django import forms
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import FieldError, ValidationError
@@ -14,6 +16,7 @@ from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.views import View
 from django.views.decorators.http import require_http_methods
+from django.views.generic import UpdateView
 from redbox_app.redbox_core.client import CoreApiClient
 from redbox_app.redbox_core.models import (
     ChatHistory,
@@ -306,3 +309,39 @@ def file_status_api_view(request: HttpRequest) -> JsonResponse:
 def health(_request: HttpRequest) -> HttpResponse:
     """this required by ECS Fargate"""
     return HttpResponse(status=200)
+
+
+class CheckDemographicsView(View):
+    @method_decorator(login_required)
+    def get(self, request: HttpRequest) -> HttpResponse:
+        user: User = request.user
+        if all([user.grade, user.business_unit, user.profession]):
+            return redirect(documents_view)
+        else:
+            return redirect("demographics")
+
+
+class DemographicsForm(forms.ModelForm):
+    class Meta:
+        model = User
+        fields = ("business_unit", "grade", "profession")
+        labels: ClassVar[Mapping[str, str]] = {
+            "business_unit": "Business unit",
+            "grade": "Grade",
+            "profession": "Profession",
+        }
+        widgets: ClassVar[Mapping[str, forms.Widget]] = {
+            "business_unit": forms.Select(attrs={"class": "govuk-select"}),
+            "grade": forms.Select(attrs={"class": "govuk-select"}),
+            "profession": forms.Select(attrs={"class": "govuk-select"}),
+        }
+
+
+class DemographicsView(UpdateView):
+    model = User
+    template_name = "demographics.html"
+    form_class = DemographicsForm
+    success_url = "/documents/"
+
+    def get_object(self, **kwargs):  # noqa: ARG002
+        return self.request.user
