@@ -16,7 +16,11 @@ terraform {
 provider "aws" {
   default_tags {
     tags = {
-      Environment = terraform.workspace
+      platform:environment = terraform.workspace
+
+      Organisation  = "co"
+      Department    = "i-dot-ai"
+      "Cost Centre" = "i-dot-ai"
     }
   }
 }

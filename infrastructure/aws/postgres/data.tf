@@ -22,8 +22,12 @@ data "terraform_remote_state" "platform" {
 provider "aws" {
   default_tags {
     tags = {
-      Environment = terraform.workspace
-      Deployed    = "github"
+      platform:environment  = terraform.workspace
+      platform:deployed-via = "github"
+
+      Organisation  = "co"
+      Department    = "i-dot-ai"
+      "Cost Centre" = "i-dot-ai"
     }
   }
 }
