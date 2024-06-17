@@ -125,5 +125,5 @@ def build_summary_chain(
 def build_static_response_chain(prompt_template):
     return RunnablePassthrough.assign(
         response=(ChatPromptTemplate.from_template(prompt_template) | RunnableLambda(lambda p: p.messages[0].content)),
-        source_documents=RunnableLambda(lambda _: None),
+        source_documents=RunnableLambda(lambda _: []),
     )

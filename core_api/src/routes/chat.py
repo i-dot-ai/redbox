@@ -7,9 +7,9 @@ from fastapi.encoders import jsonable_encoder
 from langchain_core.runnables import Runnable
 
 from core_api.src.auth import get_user_uuid, get_ws_user_uuid
-from core_api.src.build_chains import build_retrieval_chain, build_summary_chain
+from core_api.src.build_chains import build_retrieval_chain, build_summary_chain, build_static_response_chain
 from core_api.src.dependencies import es_retriever, llm
-from core_api.src.runnables import make_static_response_chain, map_to_chat_response
+from core_api.src.runnables import map_to_chat_response
 from core_api.src.semantic_routes import (
     ABILITY_RESPONSE,
     COACH_RESPONSE,
@@ -29,10 +29,10 @@ logging.basicConfig(level=logging.INFO)
 log = logging.getLogger()
 
 ROUTABLE_CHAINS = {
-    "info": make_static_response_chain(INFO_RESPONSE),
-    "ability": make_static_response_chain(ABILITY_RESPONSE),
-    "coach": make_static_response_chain(COACH_RESPONSE),
-    "gratitude": make_static_response_chain("You're welcome!"),
+    "info": build_static_response_chain(INFO_RESPONSE),
+    "ability": build_static_response_chain(ABILITY_RESPONSE),
+    "coach": build_static_response_chain(COACH_RESPONSE),
+    "gratitude": build_static_response_chain("You're welcome!"),
     "retrieval": build_retrieval_chain(llm, es_retriever),
     "summarisation": build_summary_chain(
         llm, es_retriever, SUMMARISATION_SYSTEM_PROMPT_TEMPLATE, SUMMARISATION_QUESTION_PROMPT_TEMPLATE
