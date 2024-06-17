@@ -45,3 +45,15 @@ WITH_SOURCES_PROMPT = PromptTemplate.from_template(_core_redbox_prompt + _with_s
 _stuff_document_template = "<Doc{parent_doc_uuid}>{page_content}</Doc{parent_doc_uuid}>"
 
 STUFF_DOCUMENT_PROMPT = PromptTemplate.from_template(_stuff_document_template)
+
+RETRIEVAL_SYSTEM_PROMPT_TEMPLATE = (
+    "Given the following conversation and extracted parts of a long document and a question, create a final answer. \n"
+    "If you don't know the answer, just say that you don't know. Don't try to make up an answer. "
+    "If a user asks for a particular format to be returned, such as bullet points, then please use that format. "
+    "If a user asks for bullet points you MUST give bullet points. "
+    "If the user asks for a specific number or range of bullet points you MUST give that number of bullet points. \n"
+    "Use **bold** to highlight the most question relevant parts in your response. "
+    "If dealing dealing with lots of data return it in markdown table format. "
+)
+
+RETRIEVAL_QUESTION_PROMPT_TEMPLATE = "{question} \n=========\n{formatted_documents}\n=========\nFINAL ANSWER: "

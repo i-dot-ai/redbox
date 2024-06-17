@@ -1,13 +1,15 @@
 import json
 from types import SimpleNamespace
 from typing import TYPE_CHECKING
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 
 from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_core.prompt_values import ChatPromptValue
 from langchain_core.runnables import Runnable
 from langchain_core.runnables.schema import StreamEvent
 from starlette.websockets import WebSocketDisconnect
+
+import core_api
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
@@ -94,10 +96,15 @@ def test_rag_chat_streamed(app_client, headers):
         ),
     ]
 
-    build_retrieval_chain = mock_build_retrieval_chain(events)
+    event_iterable = MagicMock(name="event_iterable")
+    event_iterable.__aiter__.return_value = events
+    astream_events = MagicMock(name="astream_events", return_value=event_iterable)
+    retrieval_chain = AsyncMock(spec=Runnable, name="retrieval_chain")
+    retrieval_chain.astream_events = astream_events
+    original_retrieval_chain = core_api.src.routes.chat.ROUTABLE_CHAINS["retrieval"]
+    core_api.src.routes.chat.ROUTABLE_CHAINS["retrieval"] = retrieval_chain
 
     with (
-        patch("core_api.src.routes.chat.build_retrieval_chain", new=build_retrieval_chain),
         app_client.websocket_connect("/chat/rag", headers=headers) as websocket,
     ):
         # When
@@ -117,42 +124,4 @@ def test_rag_chat_streamed(app_client, headers):
         # Then
         text = "".join(all_text)
         assert "Barry Mann" in text
-
-
-def mock_build_retrieval_chain(events):
-    event_iterable = MagicMock(name="event_iterable")
-    event_iterable.__aiter__.return_value = events
-
-    astream_events = MagicMock(name="astream_events", return_value=event_iterable)
-
-    retrieval_chain = AsyncMock(spec=Runnable, name="retrieval_chain")
-    retrieval_chain.astream_events = astream_events
-
-    return AsyncMock(name="build_retrieval_chain", return_value=(retrieval_chain, None))
-
-
-# @pytest.mark.parametrize(
-#     ("payload", "error"),
-#     [
-#         (
-#             [{"text": "hello", "role": "system"}],
-#             {"detail": "Chat history should include both system and user prompts"},
-#         ),
-#         (
-#             [{"text": "hello", "role": "user"}, {"text": "hello", "role": "user"}],
-#             {"detail": "The first entry in the chat history should be a system prompt"},
-#         ),
-#         (
-#             [{"text": "hello", "role": "system"}, {"text": "hello", "role": "system"}],
-#             {"detail": "The final entry in the chat history should be a user question"},
-#         ),
-#     ],
-# )
-# def test_chat_errors(app_client, payload, error, headers):
-#     """Given the app is running
-#     When I POST a malformed payload to /chat/vanilla
-#     I expect a 422 error and a meaningful message
-#     """
-#     response = app_client.post("/chat/vanilla", json={"message_history": payload}, headers=headers)
-#     assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
-#     assert response.json() == error
+    core_api.src.routes.chat.ROUTABLE_CHAINS["retrieval"] = original_retrieval_chain
