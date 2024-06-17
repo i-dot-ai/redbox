@@ -38,6 +38,7 @@ jobs:
           path: main
       - id: export
         run: |
+          cd main
           . ./.github/.github.env
           echo "ec2-instance-type=${EC2_INSTANCE_TYPE}" >> $GITHUB_OUTPUT
           echo "app-name=${APP_NAME}" >> $GITHUB_OUTPUT
