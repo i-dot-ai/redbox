@@ -232,3 +232,21 @@ class TestEndToEnd:
                 break
 
         assert all_text == ["You're welcome!"]
+
+    @pytest.mark.parametrize("user_uuid", USER_UUIDS)
+    def test_post_rag_stuff(self, user_uuid):
+        rag_response = requests.post(
+            "http://localhost:5002/chat/rag",
+            json={
+                "message_history": [
+                    {
+                        "role": "user",
+                        "text": "Please summarise the contents of the uploaded files.",
+                    }
+                ],
+                "selected_files": [{"uuid": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"}],
+            },
+            headers=make_headers(user_uuid),
+            timeout=30,
+        )
+        assert rag_response.status_code == HTTPStatus.OK
