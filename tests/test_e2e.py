@@ -12,7 +12,8 @@ from jose import jwt
 from websockets import ConnectionClosed
 
 USER_UUIDS: list[UUID] = [uuid4(), uuid4()]
-TEST_ORIGIN="localhost:8080"
+TEST_ORIGIN = "localhost:8080"
+
 
 def make_headers(user_uuid: UUID):
     token = jwt.encode({"user_uuid": str(user_uuid)}, key="super-secure-private-key")
