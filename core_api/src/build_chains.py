@@ -44,7 +44,7 @@ summarisation_prompt = (
 )
 
 
-async def build_vanilla_chain(
+def build_vanilla_chain(
     chat_request: ChatRequest,
     **kwargs,  # noqa: ARG001
 ) -> ChatPromptTemplate:
@@ -127,20 +127,8 @@ def build_summary_chain(
         | {"response": StrOutputParser()}
     )
 
-
-def get_routable_chains(
-    retrieval_chain: Annotated[Runnable, Depends(build_retrieval_chain)],
-    summary_chain: Annotated[Runnable, Depends(build_summary_chain)],
-):
-    return {
-        "default": retrieval_chain,
-        "info": ChatPromptTemplate.from_template(INFO_RESPONSE),
-        "ability": ChatPromptTemplate.from_template(ABILITY_RESPONSE),
-        "coach": ChatPromptTemplate.from_template(COACH_RESPONSE),
-        "gratitude": ChatPromptTemplate.from_template("You're welcome!"),
-        "retrieval": retrieval_chain,
-        "summarisation": summary_chain,
-        "extract": ChatPromptTemplate.from_template(
-            "You asking to extract some information - route not yet implemented"
-        ),
-    }
+def build_static_response_chain(prompt_template):
+    return RunnablePassthrough.assign(
+        response=(ChatPromptTemplate.from_template(prompt_template) | RunnableLambda(lambda p: p.messages[0].content)),
+        source_documents=RunnableLambda(lambda _: None),  # noqa: ARG005
+    )

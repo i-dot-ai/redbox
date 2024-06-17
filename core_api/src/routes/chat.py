@@ -36,8 +36,7 @@ ROUTABLE_CHAINS = {
     "retrieval": build_retrieval_chain(llm, es_retriever),
     "summarisation": build_summary_chain(
         llm, es_retriever, SUMMARISATION_SYSTEM_PROMPT_TEMPLATE, SUMMARISATION_QUESTION_PROMPT_TEMPLATE
-    ),
-    "extract": make_static_response_chain("You asking to extract some information - route not yet implemented"),
+    )
 }
 
 chat_app = FastAPI(

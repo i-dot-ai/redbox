@@ -30,11 +30,7 @@ def make_chat_prompt_from_messages_runnable(system_prompt: str, question_prompt:
     return chat_prompt_from_messages
 
 
-def make_static_response_chain(prompt_template):
-    return RunnablePassthrough.assign(
-        response=(ChatPromptTemplate.from_template(prompt_template) | RunnableLambda(lambda p: p.messages[0].content)),
-        source_documents=RunnableLambda(lambda x: []),  # noqa: ARG005
-    )
+
 
 
 @chain
