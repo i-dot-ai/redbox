@@ -44,10 +44,9 @@ def test_user_journey(page: Page, email_address: str):  # noqa: PLR0915
 
     # My details page
     my_details_page = sign_in_confirmation_page.start()
-    grade, business_unit, profession = create_demographic_reference_data(page)
-    my_details_page.grade = grade
-    my_details_page.business_unit = business_unit
-    my_details_page.profession = profession
+    my_details_page.grade = "AA"
+    my_details_page.business_unit = "Delivery Group"
+    my_details_page.profession = "Digital, data and technology"
 
     # Documents page
     documents_page = my_details_page.update()
@@ -150,32 +149,3 @@ def get_magic_link(email_address: str) -> URL:
 def email_address() -> str:
     username = "".join(choice(string.ascii_lowercase) for _ in range(20))
     return f"{username}@cabinetoffice.gov.uk"
-
-
-def create_demographic_reference_data(page: Page) -> tuple[str, str, str]:
-    """I am not proud of this."""
-    grade, business_unit, profession = tuple(
-        "".join(choice(string.ascii_lowercase) for _ in range(20)) for _ in range(3)
-    )
-    admin_url = BASE_URL / "admin" / "redbox_core"
-    placeholder = page.url
-
-    add_via_admin(admin_url / "usergrade" / "add", grade, page)
-    add_via_admin(admin_url / "businessunit" / "add", business_unit, page)
-    add_via_admin(admin_url / "profession" / "add", profession, page)
-
-    logger.debug(
-        "created grade %s business unit %s profession %s - returning to %s",
-        grade,
-        business_unit,
-        profession,
-        placeholder,
-    )
-    page.goto(placeholder)
-    return grade, business_unit, profession
-
-
-def add_via_admin(url, value, page):
-    page.goto(str(url))
-    page.get_by_label("Name:").fill(value)
-    page.get_by_role("button", name="Save", exact=True).click()
