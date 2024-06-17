@@ -58,7 +58,7 @@ def build_vanilla_chain(
 
 def build_retrieval_chain(
     llm: Annotated[ChatLiteLLM, Depends(dependencies.get_llm)],
-    retriever: Annotated[VectorStoreRetriever, Depends(dependencies.get_es_retriever)]
+    retriever: Annotated[VectorStoreRetriever, Depends(dependencies.get_es_retriever)],
 ) -> Runnable:
     return (
         RunnablePassthrough.assign(documents=retriever)
@@ -66,7 +66,9 @@ def build_retrieval_chain(
             formatted_documents=(RunnablePassthrough() | itemgetter("documents") | format_chunks)
         )
         | {
-            "response": make_chat_prompt_from_messages_runnable(RETRIEVAL_SYSTEM_PROMPT_TEMPLATE, RETRIEVAL_QUESTION_PROMPT_TEMPLATE)
+            "response": make_chat_prompt_from_messages_runnable(
+                RETRIEVAL_SYSTEM_PROMPT_TEMPLATE, RETRIEVAL_QUESTION_PROMPT_TEMPLATE
+            )
             | llm
             | StrOutputParser(),
             "source_documents": itemgetter("documents"),
@@ -76,7 +78,7 @@ def build_retrieval_chain(
 
 def build_summary_chain(
     llm: Annotated[ChatLiteLLM, Depends(dependencies.get_llm)],
-    storage_handler: Annotated[ElasticsearchStorageHandler, Depends(dependencies.get_storage_handler)]
+    storage_handler: Annotated[ElasticsearchStorageHandler, Depends(dependencies.get_storage_handler)],
 ) -> Runnable:
     @chain
     def make_document_context(input_dict):
@@ -101,7 +103,9 @@ def build_summary_chain(
 
     return (
         RunnablePassthrough.assign(documents=(make_document_context | RunnableLambda(format_chunks)))
-        | make_chat_prompt_from_messages_runnable(SUMMARISATION_SYSTEM_PROMPT_TEMPLATE, SUMMARISATION_QUESTION_PROMPT_TEMPLATE)
+        | make_chat_prompt_from_messages_runnable(
+            SUMMARISATION_SYSTEM_PROMPT_TEMPLATE, SUMMARISATION_QUESTION_PROMPT_TEMPLATE
+        )
         | llm
         | {"response": StrOutputParser()}
     )
