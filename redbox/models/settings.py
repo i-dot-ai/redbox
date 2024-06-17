@@ -92,7 +92,7 @@ class AISettings(BaseModel):
 
     rag_k: int = 5
     rag_num_candidates: int = 10
-    rag_desired_chunk_size: int=300
+    rag_desired_chunk_size: int = 300
     condense_question_prompt: str = CONDENSE_QUESTION_PROMPT
     with_sources_prompt: str = WITH_SOURCES_PROMPT
     core_redbox_prompt: str = CORE_REDBOX_PROMPT
