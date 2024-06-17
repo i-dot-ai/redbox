@@ -88,14 +88,16 @@ SUMMARISATION_QUESTION_PROMPT = "Question: {question}. \n\n Documents: \n\n {doc
 
 
 class AISettings(BaseModel):
-    # PromptTemplate.from_template
+    """prompts and other AI settings"""
+    rag_k: int = 5
+    rag_num_candidates: int = 10
     condense_question_prompt: str = CONDENSE_QUESTION_PROMPT
     with_sources_prompt: str = WITH_SOURCES_PROMPT
     core_redbox_prompt: str = CORE_REDBOX_PROMPT
     stuff_document_prompt: str = STUFF_DOCUMENT_PROMPT
     retrieval_system_prompt: str = RETRIEVAL_SYSTEM_PROMPT
-    summarisation_system_prompt: str = SUMMARISATION_SYSTEM_PROMPT
     retrieval_question_prompt: str = RETRIEVAL_QUESTION_PROMPT
+    summarisation_system_prompt: str = SUMMARISATION_SYSTEM_PROMPT
     summarisation_question_prompt: str = SUMMARISATION_QUESTION_PROMPT
 
 

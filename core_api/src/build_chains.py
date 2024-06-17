@@ -13,26 +13,13 @@ from langchain_core.vectorstores import VectorStoreRetriever
 
 from core_api.src.format import format_chunks, get_file_chunked_to_tokens
 from core_api.src.runnables import make_chat_prompt_from_messages_runnable
-from redbox.models import ChatRequest, Chunk, Settings
+from redbox.models import ChatRequest, Chunk
 from redbox.storage import ElasticsearchStorageHandler
 
 # === Logging ===
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger()
-
-env = Settings()
-
-# Define the system prompt for summarization
-summarisation_prompt = (
-    "You are an AI assistant tasked with summarizing documents. "
-    "Your goal is to extract the most important information and present it in "
-    "a concise and coherent manner. Please follow these guidelines while summarizing: \n"
-    "1) Identify and highlight key points,\n"
-    "2) Avoid repetition,\n"
-    "3) Ensure the summary is easy to understand,\n"
-    "4) Maintain the original context and meaning.\n"
-)
 
 
 def build_vanilla_chain(
