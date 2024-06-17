@@ -16,7 +16,9 @@ terraform {
 provider "aws" {
   default_tags {
     tags = {
-      platform:environment = terraform.workspace
+      platform:environment    = terraform.workspace
+      platform:repository     = "https://github.com/i-dot-ai/redbox-copilot"
+      platform:security-level = "base"
 
       Organisation  = "co"
       Department    = "i-dot-ai"
