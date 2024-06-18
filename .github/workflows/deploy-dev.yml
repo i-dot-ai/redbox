@@ -59,59 +59,59 @@ jobs:
       AWS_GITHUBRUNNER_PAT: ${{ secrets.AWS_GITHUBRUNNER_PAT}}
       AWS_REGION: ${{ secrets.AWS_REGION }}
 
-#  build-image:
-#    needs:
-#      - set-vars
-#      - start-runner
-#    uses: i-dot-ai/i-dot-ai-core-github-actions/.github/workflows/build-docker.yml@9c4473481eafb33ea598291d1e13e79d53072824
-#    with:
-#      APP_NAME: ${{ needs.set-vars.outputs.app-name }}
-#      RUNNER_LABEL: ${{ needs.start-runner.outputs.label }}
-#      INFRASTRUCTURE_FOLDER: "infrastructure/aws"
-#      COMMIT_HASH: ${{ github.event.inputs.COMMIT_HASH }}
-#    secrets:
-#      AWS_GITHUBRUNNER_PAT: ${{ secrets.AWS_GITHUBRUNNER_PAT}}
-#      AWS_GITHUBRUNNER_PAT_USER: ${{ secrets.AWS_GITHUBRUNNER_PAT_USER }}
-#      AWS_REGION: ${{ secrets.AWS_REGION }}
-#      AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
+  build-image:
+    needs:
+      - set-vars
+      - start-runner
+    uses: i-dot-ai/i-dot-ai-core-github-actions/.github/workflows/build-docker.yml@9c4473481eafb33ea598291d1e13e79d53072824
+    with:
+      APP_NAME: ${{ needs.set-vars.outputs.app-name }}
+      RUNNER_LABEL: ${{ needs.start-runner.outputs.label }}
+      INFRASTRUCTURE_FOLDER: "infrastructure/aws"
+      COMMIT_HASH: ${{ github.event.inputs.COMMIT_HASH }}
+    secrets:
+      AWS_GITHUBRUNNER_PAT: ${{ secrets.AWS_GITHUBRUNNER_PAT}}
+      AWS_GITHUBRUNNER_PAT_USER: ${{ secrets.AWS_GITHUBRUNNER_PAT_USER }}
+      AWS_REGION: ${{ secrets.AWS_REGION }}
+      AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
 
-#  run-integration-tests:
-#    needs:
-#      - set-vars
-#      - start-runner
-#      - build-image
-#    uses: i-dot-ai/redbox-copilot/.github/workflows/integration.yml@7b0933f5318ed71badf2853ad41ba76f4cd7f8eb
-#    with:
-#      COMMIT_HASH: ${{ github.event.inputs.commit-hash }}
   run-integration-tests:
     needs:
       - set-vars
       - start-runner
-#      - build-image
-    runs-on: ${{ needs.start-runner.outputs.label }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.inputs.COMMIT_HASH }}
-          path: main
-      - name: Build Containers
-        run: |
-          cd main
-          mkdir -p data/elastic/
-          chmod -R 777 data/
-          cp .env.integration .env
-          echo AZURE_OPENAI_ENDPOINT=${{ secrets.AZURE_OPENAI_ENDPOINT }} >> .env
-          echo AZURE_OPENAI_API_KEY=${{ secrets.AZURE_OPENAI_API_KEY }} >> .env
-          docker compose up -d --wait core-api django-app
-          docker ps
-
-      - name: Test integration with pytest
-        run: |
-          cd main
-          poetry install --only dev
-          poetry run playwright install --with-deps chromium
-          poetry run pytest tests/ --browser chromium
+      - build-image
+    uses: i-dot-ai/redbox-copilot/.github/workflows/integration.yml@7b0933f5318ed71badf2853ad41ba76f4cd7f8eb
+    with:
+      COMMIT_HASH: ${{ github.event.inputs.commit-hash }}
+#  run-integration-tests:
+#    needs:
+#      - set-vars
+#      - start-runner
+##      - build-image
+#    runs-on: ${{ needs.start-runner.outputs.label }}
+#    steps:
+#      - name: Checkout
+#        uses: actions/checkout@v4
+#        with:
+#          ref: ${{ github.event.inputs.COMMIT_HASH }}
+#          path: main
+#      - name: Build Containers
+#        run: |
+#          cd main
+#          mkdir -p data/elastic/
+#          chmod -R 777 data/
+#          cp .env.integration .env
+#          echo AZURE_OPENAI_ENDPOINT=${{ secrets.AZURE_OPENAI_ENDPOINT }} >> .env
+#          echo AZURE_OPENAI_API_KEY=${{ secrets.AZURE_OPENAI_API_KEY }} >> .env
+#          docker compose up -d --wait core-api django-app
+#          docker ps
+#
+#      - name: Test integration with pytest
+#        run: |
+#          cd main
+#          poetry install --only dev
+#          poetry run playwright install --with-deps chromium
+#          poetry run pytest tests/ --browser chromium
 
   release-terraform:
     needs:
