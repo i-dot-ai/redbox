@@ -12,7 +12,7 @@
             "args": [
                 "core_api.src.app:app",
                 "--reload",
-                "--port", "8080"
+                "--port", "5002"
             ],
             "jinja": true,
             "envFile": "${workspaceFolder}/.env"

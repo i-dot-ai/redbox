@@ -60,8 +60,8 @@ def test_get_file_chunked_to_tokens(chunked_file, elasticsearch_storage_handler)
     assert len(many_documents) > 1
 
 
-def test_make_es_retriever(es_client, embedding_model, chunked_file):
-    retriever = get_es_retriever(es=es_client, embedding_model=embedding_model, env=env)
+def test_make_es_retriever(es_client, chunked_file):
+    retriever = get_es_retriever(es=es_client, env=env)
 
     one_doc_chunks = retriever.invoke(
         input={
@@ -103,8 +103,8 @@ def test_make_condense_question_runnable(mock_llm):
     assert response == "<<TESTING>>"
 
 
-def test_make_condense_rag_runnable(es_client, embedding_model, mock_llm, chunked_file):
-    retriever = get_es_retriever(es=es_client, embedding_model=embedding_model, env=env)
+def test_make_condense_rag_runnable(es_client, mock_llm, chunked_file):
+    retriever = get_es_retriever(es=es_client, env=env)
 
     chain = make_condense_rag_runnable(system_prompt="Your job is Q&A.", llm=mock_llm, retriever=retriever)
 
@@ -127,8 +127,8 @@ def test_make_condense_rag_runnable(es_client, embedding_model, mock_llm, chunke
     assert {chunked_file.uuid} == {chunk.parent_file_uuid for chunk in response["sources"]}
 
 
-def test_rag_runnable(es_client, embedding_model, mock_llm, chunked_file, env):
-    retriever = get_es_retriever(es=es_client, embedding_model=embedding_model, env=env)
+def test_rag_runnable(es_client, mock_llm, chunked_file, env):
+    retriever = get_es_retriever(es=es_client, env=env)
 
     chain = build_retrieval_chain(llm=mock_llm, retriever=retriever, env=env)
 
