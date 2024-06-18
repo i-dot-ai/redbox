@@ -95,17 +95,21 @@ async def rag_chat_streamed(
                         SourceDocument(
                             page_content=chunk.text,
                             file_uuid=chunk.parent_file_uuid,
-                            page_numbers=[chunk.metadata.page_number],
+                            page_numbers=chunk.metadata.page_number
+                            if isinstance(chunk.metadata.page_number, list)
+                            else [chunk.metadata.page_number]
+                            if chunk.metadata.page_number
+                            else [],
                         )
                     )
                     for chunk in source_chunks
                 ]
                 await websocket.send_json({"resource_type": "documents", "data": source_documents})
-        elif kind == "on_prompt_stream":
+        elif kind == "on_prompt_end":
             try:
-                msg = event["data"]["chunk"].messages[0].content
+                msg = event["data"]["output"].messages[0].content
                 await websocket.send_json({"resource_type": "text", "data": msg})
             except (KeyError, AttributeError):
-                logging.exception("unknown message format %s", str(event["data"]["chunk"]))
+                logging.exception("unknown message format %s", str(event["data"]["output"]))
 
     await websocket.close()

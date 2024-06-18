@@ -44,7 +44,9 @@ def map_to_chat_response(input_dict: dict):
                 file_uuid=chunk.parent_file_uuid,
                 page_numbers=chunk.metadata.page_number
                 if isinstance(chunk.metadata.page_number, list)
-                else [chunk.metadata.page_number],
+                else [chunk.metadata.page_number]
+                if chunk.metadata.page_number
+                else [],
             )
             for chunk in input_dict.get("source_documents", [])
         ],
