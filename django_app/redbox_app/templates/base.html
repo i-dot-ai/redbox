@@ -102,6 +102,34 @@
     {% endblock %}
   </main>
 
+  {% set footer_links = [
+    {'text': 'Privacy', 'url': url('privacy-notice') },
+    {'text': 'Accessibility', 'url': url('accessibility-statement') },
+    {'text': 'Support', 'url': url('support') }
+  ] %}
+  <footer class="iai-footer">
+    <div class="iai-footer__container govuk-width-container">
+      <div class="iai-footer__links-container">
+        <a class="" href="https://ai.gov.uk">
+          <img class="iai-footer__logo" width="65" height="40" src="{{ static('images/iai-logo.svg') }}" alt="Incubator for Artificial Intelligence" loading="lazy"/>
+        </a>
+        <div>
+          <ul class="govuk-footer__inline-list">
+            {% for link in footer_links %}
+              <li class="govuk-footer__inline-list-item">
+                <a class="iai-footer__link" href="{{ link.url }}">
+                  {{ link.text }}
+                </a>
+              </li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+      <div>
+        {# Feedback link to go here #}
+      </div>
+    </div>
+  </footer>
 
   <footer class="govuk-footer" role="contentinfo">
     <div class="govuk-width-container">
