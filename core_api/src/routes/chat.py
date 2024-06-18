@@ -39,7 +39,7 @@ chat_app = FastAPI(
 
 async def semantic_router_to_chain(
     chat_request: ChatRequest, user_uuid: UUID, routable_chains: dict[str, Runnable], route_layer: RouteLayer
-) -> tuple[Runnable, ChainInput]:
+) -> tuple[Runnable, ChainInput, str]:
     question = chat_request.message_history[-1].text
     route = route_layer(question)
 
@@ -50,7 +50,7 @@ async def semantic_router_to_chain(
         user_uuid=user_uuid,
         chat_history=chat_request.message_history[:-1],
     )
-    return (selected_chain, params)
+    return selected_chain, params, route.name
 
 
 @chat_app.post("/rag", tags=["chat"])
@@ -61,7 +61,7 @@ async def rag_chat(
     route_layer: Annotated[RouteLayer, Depends(get_semantic_route_layer)],
 ) -> ChatResponse:
     """REST endpoint. Get a LLM response to a question history and file."""
-    selected_chain, params = await semantic_router_to_chain(chat_request, user_uuid, routable_chains, route_layer)
+    selected_chain, params, _ = await semantic_router_to_chain(chat_request, user_uuid, routable_chains, route_layer)
     return (selected_chain | map_to_chat_response).invoke(params.model_dump())
 
 
@@ -79,36 +79,41 @@ async def rag_chat_streamed(
     request = await websocket.receive_text()
     chat_request = ChatRequest.model_validate_json(request)
 
-    selected_chain, params = await semantic_router_to_chain(chat_request, user_uuid, routable_chains, route_layer)
+    selected_chain, params, route = await semantic_router_to_chain(
+        chat_request, user_uuid, routable_chains, route_layer
+    )
 
     async for event in selected_chain.astream_events(params.model_dump(), version="v1"):
         kind = event["event"]
+        log.info("%s %s %s", kind, route, event["data"])
         if kind == "on_chat_model_stream":
-            await websocket.send_json({"resource_type": "text", "data": event["data"]["chunk"].content})
+            await websocket.send_json({"resource_type": "text", "data": event["data"]["chunk"].content, "route": route})
         elif kind == "on_chat_model_end":
-            await websocket.send_json({"resource_type": "end"})
+            await websocket.send_json({"resource_type": "end", "route": route})
         elif kind == "on_chain_stream":
             if isinstance(event["data"]["chunk"], dict):
                 source_chunks = event["data"]["chunk"].get("source_documents", [])
                 source_documents = [
-                    jsonable_encoder(
-                        SourceDocument(
-                            page_content=chunk.text,
-                            file_uuid=chunk.parent_file_uuid,
-                            page_numbers=chunk.metadata.page_number
-                            if isinstance(chunk.metadata.page_number, list)
-                            else [chunk.metadata.page_number]
-                            if chunk.metadata.page_number
-                            else [],
-                        )
+                    SourceDocument(
+                        page_content=chunk.text,
+                        file_uuid=chunk.parent_file_uuid,
+                        page_numbers=chunk.metadata.page_number
+                        if isinstance(chunk.metadata.page_number, list)
+                        else [chunk.metadata.page_number]
+                        if chunk.metadata.page_number
+                        else [],
                     )
                     for chunk in source_chunks
                 ]
-                await websocket.send_json({"resource_type": "documents", "data": source_documents})
-        elif kind == "on_prompt_end":
+                source_documents = list(set(source_documents))
+                if source_documents:
+                    await websocket.send_json(
+                        {"resource_type": "documents", "data": jsonable_encoder(source_documents), "route": route}
+                    )
+        elif kind == "on_prompt_end" and route in ("info", "ability", "coach", "gratitude"):
             try:
                 msg = event["data"]["output"].messages[0].content
-                await websocket.send_json({"resource_type": "text", "data": msg})
+                await websocket.send_json({"resource_type": "text", "data": msg, "route": route})
             except (KeyError, AttributeError):
                 logging.exception("unknown message format %s", str(event["data"]["output"]))
 
