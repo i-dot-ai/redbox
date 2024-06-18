@@ -88,7 +88,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
         return "".join(full_reply), source_files
 
     async def handle_documents(self, message: CoreChatResponse, user: User) -> list[CoreChatResponseDoc]:
-        source_files = await self.get_files_by_core_uuid([UUID(msg.file_uuid) for msg in message.data], user)
+        doc_uuids: Sequence[UUID] = [UUID(doc.file_uuid) for doc in message.data]
+        source_files = await self.get_files_by_core_uuid(doc_uuids, user)
         for source in source_files:
             await self.send_to_client(
                 {
