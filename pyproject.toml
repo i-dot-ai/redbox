@@ -71,6 +71,7 @@ anthropic = "^0.28.1"
 litellm = "^1.40.15"
 openai = "^1.34.0"
 pikepdf = "8.15.1"  # pinned to stop poetry complainning
+langchain-community = "^0.2.5"
 
 
 [tool.poetry.group.docs.dependencies]
