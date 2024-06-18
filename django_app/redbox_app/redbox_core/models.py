@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 
 import boto3
 from botocore.config import Config
@@ -195,8 +195,12 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
         )
 
     @property
-    def expiry_date(self) -> datetime:
+    def expires_at(self) -> datetime:
         return self.last_referenced + timedelta(seconds=settings.FILE_EXPIRY_IN_SECONDS)
+
+    @property
+    def remaining_time(self) -> timedelta:
+        return self.expires_at - datetime.now(tz=UTC)
 
 
 class ChatHistory(UUIDPrimaryKeyBase, TimeStampedModel):

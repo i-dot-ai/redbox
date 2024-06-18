@@ -1,11 +1,12 @@
 import logging
 from abc import ABC, abstractmethod
 from collections.abc import Collection, Sequence
+from dataclasses import dataclass
 from datetime import datetime
 from itertools import islice
 from pathlib import Path
 from time import sleep, strptime
-from typing import Any, ClassVar, NamedTuple, Union
+from typing import Any, ClassVar, Union
 
 from axe_playwright_python.sync_playwright import Axe
 from playwright.sync_api import Locator, Page, expect
@@ -199,9 +200,11 @@ class MyDetailsPage(SignedInBasePage):
         return DocumentsPage(self.page)
 
 
-class DocumentRow(NamedTuple):
+@dataclass
+class DocumentRow:
     filename: str
     uploaded_at: datetime
+    remaining_time: str
     status: str
 
 
@@ -222,8 +225,13 @@ class DocumentsPage(SignedInBasePage):
     def all_documents(self) -> list[DocumentRow]:
         cell_texts = self.page.get_by_role("cell").all_inner_texts()
         return [
-            DocumentRow(filename, strptime(uploaded_at, "%H:%M %d/%m/%Y"), status)
-            for filename, uploaded_at, status, action in batched(cell_texts, 4)
+            DocumentRow(
+                filename=filename,
+                uploaded_at=strptime(uploaded_at, "%H:%M %d/%m/%Y"),
+                remaining_time=remaining_time,
+                status=status,
+            )
+            for filename, uploaded_at, remaining_time, status, action in batched(cell_texts, 5)
         ]
 
     def document_count(self) -> int:
@@ -268,7 +276,8 @@ class DocumentDeletePage(SignedInBasePage):
         return DocumentsPage(self.page)
 
 
-class ChatMessage(NamedTuple):
+@dataclass
+class ChatMessage:
     status: str | None
     role: str
     text: str

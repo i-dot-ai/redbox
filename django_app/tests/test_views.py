@@ -263,7 +263,7 @@ def test_post_message_to_existing_session(
             "source_documents": [{"file_uuid": str(uploaded_file.core_file_uuid)}],
         },
     )
-    initial_file_expiry_date = File.objects.get(core_file_uuid=uploaded_file.core_file_uuid).expiry_date
+    initial_file_expiry_date = File.objects.get(core_file_uuid=uploaded_file.core_file_uuid).expires_at
 
     # When
     response = client.post("/post-message/", {"message": "Are you there?", "session-id": session_id})
@@ -277,7 +277,7 @@ def test_post_message_to_existing_session(
     assert (
         ChatMessage.objects.get(chat_history__id=session_id, role=ChatRoleEnum.ai).source_files.first() == uploaded_file
     )
-    assert initial_file_expiry_date != File.objects.get(core_file_uuid=uploaded_file.core_file_uuid).expiry_date
+    assert initial_file_expiry_date != File.objects.get(core_file_uuid=uploaded_file.core_file_uuid).expires_at
 
 
 @pytest.mark.django_db()
