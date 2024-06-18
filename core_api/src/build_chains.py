@@ -15,12 +15,7 @@ from langchain_core.vectorstores import VectorStoreRetriever
 from core_api.src import dependencies
 from core_api.src.format import format_chunks, get_file_chunked_to_tokens
 from core_api.src.runnables import make_chat_prompt_from_messages_runnable
-from redbox.llm.prompts.chat import RETRIEVAL_QUESTION_PROMPT_TEMPLATE, RETRIEVAL_SYSTEM_PROMPT_TEMPLATE
-from redbox.llm.prompts.summarisation import (
-    SUMMARISATION_QUESTION_PROMPT_TEMPLATE,
-    SUMMARISATION_SYSTEM_PROMPT_TEMPLATE,
-)
-from redbox.models import ChatRequest, Chunk
+from redbox.models import ChatRequest, Chunk, Settings
 from redbox.storage import ElasticsearchStorageHandler
 
 # === Logging ===
@@ -59,6 +54,7 @@ def build_vanilla_chain(
 def build_retrieval_chain(
     llm: Annotated[ChatLiteLLM, Depends(dependencies.get_llm)],
     retriever: Annotated[VectorStoreRetriever, Depends(dependencies.get_es_retriever)],
+    env: Annotated[Settings, Depends(dependencies.get_env)],
 ) -> Runnable:
     return (
         RunnablePassthrough.assign(documents=retriever)
@@ -67,7 +63,7 @@ def build_retrieval_chain(
         )
         | {
             "response": make_chat_prompt_from_messages_runnable(
-                RETRIEVAL_SYSTEM_PROMPT_TEMPLATE, RETRIEVAL_QUESTION_PROMPT_TEMPLATE
+                env.ai.retrieval_system_prompt, env.ai.retrieval_question_prompt
             )
             | llm
             | StrOutputParser(),
@@ -79,6 +75,7 @@ def build_retrieval_chain(
 def build_summary_chain(
     llm: Annotated[ChatLiteLLM, Depends(dependencies.get_llm)],
     storage_handler: Annotated[ElasticsearchStorageHandler, Depends(dependencies.get_storage_handler)],
+    env: Annotated[Settings, Depends(dependencies.get_env)],
 ) -> Runnable:
     @chain
     def make_document_context(input_dict):
@@ -104,7 +101,7 @@ def build_summary_chain(
     return (
         RunnablePassthrough.assign(documents=(make_document_context | RunnableLambda(format_chunks)))
         | make_chat_prompt_from_messages_runnable(
-            SUMMARISATION_SYSTEM_PROMPT_TEMPLATE, SUMMARISATION_QUESTION_PROMPT_TEMPLATE
+            env.ai.summarisation_system_prompt, env.ai.summarisation_question_prompt
         )
         | llm
         | {"response": StrOutputParser()}
