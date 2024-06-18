@@ -40,12 +40,12 @@
 
   <header class="govuk-header" role="banner" data-module="govuk-header">
     {% if environment | lower != "prod" %}
-      <div class="iai-classification-banner govuk-warning-text iai-environment-warning">
+      <div class="rb-classification-banner govuk-warning-text rb-environment-warning">
         {{environment|upper}} - This is not a live service
       </div>
     {% endif %}
 
-    <div class="iai-classification-banner govuk-body">
+    <div class="rb-classification-banner govuk-body">
       Up to UK {{ security | upper }} documents can be used in this tool
     </div>
 
@@ -140,6 +140,11 @@
             <li class="govuk-footer__inline-list-item">
               <a class="govuk-footer__link" href="{{ url('support') }}">
                 Support
+              </a>
+            </li>
+            <li class="govuk-footer__inline-list-item">
+              <a class="govuk-footer__link" href="{{ url('demographics') }}">
+                My details
               </a>
             </li>
           </ul>

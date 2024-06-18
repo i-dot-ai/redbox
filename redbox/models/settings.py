@@ -10,8 +10,51 @@ logging.basicConfig(level=logging.INFO)
 log = logging.getLogger()
 
 
+RETRIEVAL_SYSTEM_PROMPT = (
+    "Given the following conversation and extracted parts of a long document and a question, create a final answer. \n"
+    "If you don't know the answer, just say that you don't know. Don't try to make up an answer. "
+    "If a user asks for a particular format to be returned, such as bullet points, then please use that format. "
+    "If a user asks for bullet points you MUST give bullet points. "
+    "If the user asks for a specific number or range of bullet points you MUST give that number of bullet points. \n"
+    "Use **bold** to highlight the most question relevant parts in your response. "
+    "If dealing dealing with lots of data return it in markdown table format. "
+)
+
+SUMMARISATION_SYSTEM_PROMPT = (
+    "You are an AI assistant tasked with summarizing documents. "
+    "Your goal is to extract the most important information and present it in "
+    "a concise and coherent manner. Please follow these guidelines while summarizing: \n"
+    "1) Identify and highlight key points,\n"
+    "2) Avoid repetition,\n"
+    "3) Ensure the summary is easy to understand,\n"
+    "4) Maintain the original context and meaning.\n"
+)
+
+
+RETRIEVAL_QUESTION_PROMPT = "{question} \n=========\n{formatted_documents}\n=========\nFINAL ANSWER: "
+
+
+SUMMARISATION_QUESTION_PROMPT = "Question: {question}. \n\n Documents: \n\n {documents} \n\n Answer: "
+
+
+class AISettings(BaseModel):
+    """prompts and other AI settings"""
+
+    model_config = SettingsConfigDict(frozen=True)
+
+    rag_k: int = 5
+    rag_num_candidates: int = 10
+    rag_desired_chunk_size: int = 300
+    retrieval_system_prompt: str = RETRIEVAL_SYSTEM_PROMPT
+    retrieval_question_prompt: str = RETRIEVAL_QUESTION_PROMPT
+    summarisation_system_prompt: str = SUMMARISATION_SYSTEM_PROMPT
+    summarisation_question_prompt: str = SUMMARISATION_QUESTION_PROMPT
+
+
 class ElasticLocalSettings(BaseModel):
     """settings required for a local/ec2 instance of elastic"""
+
+    model_config = SettingsConfigDict(frozen=True)
 
     host: str = "elasticsearch"
     port: int = 9200
@@ -25,6 +68,8 @@ class ElasticLocalSettings(BaseModel):
 class ElasticCloudSettings(BaseModel):
     """settings required for elastic-cloud"""
 
+    model_config = SettingsConfigDict(frozen=True)
+
     api_key: str
     cloud_id: str
     subscription_level: str = "basic"
@@ -33,6 +78,8 @@ class ElasticCloudSettings(BaseModel):
 class Settings(BaseSettings):
     """Settings for the redbox application."""
 
+    ai: AISettings = AISettings()
+
     anthropic_api_key: str | None = None
     openai_api_key: str | None = None
     azure_openai_api_key: str | None = None
@@ -40,6 +87,7 @@ class Settings(BaseSettings):
 
     openai_api_version: str = "2023-12-01-preview"
     azure_openai_model: str = "azure/gpt-35-turbo-16k"
+    llm_max_tokens: int = 1024
 
     partition_strategy: Literal["auto", "fast", "ocr_only", "hi_res"] = "fast"
     clustering_strategy: Literal["full"] | None = None
@@ -74,7 +122,7 @@ class Settings(BaseSettings):
     dev_mode: bool = False
     superuser_email: str | None = None
 
-    model_config = SettingsConfigDict(env_file=".env", env_nested_delimiter="__", extra="allow")
+    model_config = SettingsConfigDict(env_file=".env", env_nested_delimiter="__", extra="allow", frozen=True)
 
     def elasticsearch_client(self) -> Elasticsearch:
         if isinstance(self.elastic, ElasticLocalSettings):

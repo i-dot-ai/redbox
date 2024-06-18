@@ -26,21 +26,23 @@
         classes="govuk-button--secondary"
       ) }}
 
-      <h2 class="govuk-heading-s">Recent chats</h2>
-      <ul class="govuk-list govuk-list--spaced">
-        {% for chat in chat_history %}
-          <li>
-            <a class="govuk-link" href="{{url('chats', chat.id)}}">{{ chat.name }}</a>
-          </li>
-        {% endfor %}
-      </ul>
+      <div class="rb-panel">
+        <h2 class="govuk-heading-s">Recent chats</h2>
+        <ul class="govuk-list govuk-list--spaced rb-panel__scrollable">
+          {% for chat in chat_history %}
+            <li class="govuk-!-margin-bottom-2">
+              <a class="govuk-link govuk-body-s" href="{{url('chats', chat.id)}}">{{ chat.name }}</a>
+            </li>
+          {% endfor %}
+        </ul>
+      </div>
 
-      <document-selector>
-        <fieldset class="govuk-fieldset govuk-!-margin-top-7">
+      <document-selector class="rb-panel">
+        <fieldset class="govuk-fieldset">
           <legend class="govuk-fieldset__legend govuk-fieldset__legend--s">
             <h3 class="govuk-fieldset__heading">Documents to use</h3>
           </legend>
-          <div class="govuk-checkboxes govuk-checkboxes--small" data-module="govuk-checkboxes">
+          <div class="govuk-checkboxes govuk-checkboxes--small rb-panel__scrollable" data-module="govuk-checkboxes">
             {% for file in files %}
               <div class="govuk-checkboxes__item">
                 <input class="govuk-checkboxes__input" id="file-{{ file.id }}" name="file-{{ file.id }}" type="checkbox" value="{{ file.id }}" {% if file.selected %}checked{% endif %}>
@@ -67,7 +69,7 @@
           heading_level="3"
         ) }}
 
-        <div class="iai-chat-message__container js-message-container">
+        <div class="rb-chat-message__container js-message-container">
 
           {# SSR messages #}
           {% for message in messages %}
@@ -80,18 +82,18 @@
 
           {# CSR messages are inserted here #}
 
-          <div class="iai-response-feedback js-response-feedback">
-            <feedback-buttons class="iai-response-feedback__buttons"></feedback-buttons>
+          <div class="rb-response-feedback js-response-feedback">
+            <feedback-buttons class="rb-response-feedback__buttons"></feedback-buttons>
             {{ message_box(
               role = "ai",
               text = "Thank you for your feedback.",
-              classes = "iai-response-feedback__thumbs-up"
+              classes = "rb-response-feedback__thumbs-up"
             ) }}
             {{ message_box(
               role = "ai",
               text = "<p>Thank you for your feedback. Can you let me know what wasn’t accurate? I can refine it again to make it more accurate.</p><p>Please <a href=\"mailto:" + contact_email + "?subject=%5BFEEDBACK%5D%20Redbox%20isn%E2%80%99t%20being%20helpful&body=Hi%20Redbox%20Support%2C%0D%0A%0D%0A%5BPlease%20include%20as%20many%20of%20the%20below%20as%20you%20can.%20The%20more%20details%20you%20provide%2C%20the%20more%20we%20can%20do%20to%20improve%20the%20response%20quality%5D%0D%0A%0D%0A1.%20Your%20query%20-%20the%20question%20you%20were%20asking%20(screenshot%20or%20copy%2Fpaste)%0D%0A%0D%0A2.%20Name%20of%20the%20document%20you%20were%20querying%0D%0A%0D%0A3.%20Your%20feedback%20-%20what%20wasn%E2%80%99t%20accurate%3F%20what%20could%E2%80%99ve%20been%20better%3F\"
               class=\"govuk-link\">email us</a> with a few details on what wasn't accurate.</p>",
-              classes = "iai-response-feedback__thumbs-down"
+              classes = "rb-response-feedback__thumbs-down"
             ) }}
           </div>
 
@@ -102,7 +104,7 @@
           <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}"/>
           {% if chat_id %}<input type="hidden" name="session-id" value="{{ chat_id }}"/>{% endif %}
 
-          <div class="iai-new-message">
+          <div class="rb-new-message">
 
             <div class="govuk-form-group">
               <label class="govuk-label" for="message">
@@ -121,9 +123,9 @@
 
         </div>
 
-        <div class="iai-response-loading js-response-loading govuk-!-margin-top-1" tabindex="-1">
-          <img class="iai-response-loading__spinner" src="{{ static('images/spinner.gif') }}" alt=""/>
-          <p class="iai-response-loading__text govuk-body govuk-!-margin-bottom-0 govuk-!-margin-left-1">Response loading...</p>
+        <div class="rb-response-loading js-response-loading govuk-!-margin-top-1" tabindex="-1">
+          <img class="rb-response-loading__spinner" src="{{ static('images/spinner.gif') }}" alt=""/>
+          <p class="rb-response-loading__text govuk-body govuk-!-margin-bottom-0 govuk-!-margin-left-1">Response loading...</p>
         </div>
 
       </chat-controller>

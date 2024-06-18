@@ -15,7 +15,23 @@ data "aws_iam_policy_document" "ecs_exec_role_policy" {
     ]
     resources = [
       "arn:aws:s3:::${aws_s3_bucket.user_data.bucket}",
-      "arn:aws:s3:::${aws_s3_bucket.user_data.bucket}/*"
+      "arn:aws:s3:::${aws_s3_bucket.user_data.bucket}/*",
+
+    ]
+  }
+
+  statement {
+    effect = "Allow"
+    actions = [
+      "secretsmanager:GetSecretValue",
+    ]
+    resources = [
+       aws_secretsmanager_secret.core-api-secret.arn,
+       "${aws_secretsmanager_secret.core-api-secret.arn}:*",
+       aws_secretsmanager_secret.worker-secret.arn,
+       "${aws_secretsmanager_secret.worker-secret.arn}:*",
+       aws_secretsmanager_secret.django-app-secret.arn,
+       "${aws_secretsmanager_secret.django-app-secret.arn}:*",
     ]
   }
 

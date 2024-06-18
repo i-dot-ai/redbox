@@ -1,14 +1,21 @@
 import logging
 import uuid
 from collections.abc import Sequence
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 import pytest
 from django.core.files.uploadedfile import SimpleUploadedFile, UploadedFile
 from django.core.management import call_command
 from redbox_app.redbox_core import client
-from redbox_app.redbox_core.models import ChatHistory, ChatMessage, ChatRoleEnum, File, User
+from redbox_app.redbox_core.models import (
+    BusinessUnit,
+    ChatHistory,
+    ChatMessage,
+    ChatRoleEnum,
+    File,
+    User,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -53,8 +60,15 @@ def jemima_puddleduck():
 
 
 @pytest.fixture()
-def mrs_tiggywinkle():
-    return User.objects.create_user(email="mrs.tiggywinkle@example.com")
+def user_with_demographic_data(business_unit: BusinessUnit) -> User:
+    return User.objects.create_user(
+        email="mrs.tiggywinkle@example.com", grade="DG", business_unit=business_unit, profession="AN"
+    )
+
+
+@pytest.fixture()
+def business_unit() -> BusinessUnit:
+    return BusinessUnit.objects.create(name="Paperclip Reconciliation")
 
 
 @pytest.fixture()
@@ -88,7 +102,11 @@ def chat_message(chat_history: ChatHistory, uploaded_file: File) -> ChatMessage:
 @pytest.fixture()
 def uploaded_file(alice: User, original_file: UploadedFile, s3_client) -> File:  # noqa: ARG001
     file = File.objects.create(
-        user=alice, original_file=original_file, original_file_name=original_file.name, core_file_uuid=uuid.uuid4()
+        user=alice,
+        original_file=original_file,
+        original_file_name=original_file.name,
+        core_file_uuid=uuid.uuid4(),
+        last_referenced=datetime.now(tz=UTC) - timedelta(days=14),
     )
     file.save()
     yield file
@@ -106,10 +124,10 @@ def chat_history_with_files(chat_history: ChatHistory, several_files: Sequence[F
     chat_message = ChatMessage.objects.create(chat_history=chat_history, text="An answer.", role=ChatRoleEnum.ai)
     chat_message.source_files.set(several_files[0::2])
     chat_message = ChatMessage.objects.create(
-        chat_history=chat_history, text="Another question?", role=ChatRoleEnum.user
+        chat_history=chat_history, text="A second question?", role=ChatRoleEnum.user
     )
     chat_message.selected_files.set(several_files[0:2])
-    chat_message = ChatMessage.objects.create(chat_history=chat_history, text="Another answer.", role=ChatRoleEnum.ai)
+    chat_message = ChatMessage.objects.create(chat_history=chat_history, text="A second answer.", role=ChatRoleEnum.ai)
     chat_message.source_files.set([several_files[2]])
     return chat_history
 
