@@ -89,9 +89,9 @@ class User(BaseUser, UUIDPrimaryKeyBase):
     invite_accepted_at = models.DateTimeField(default=None, blank=True, null=True)
     last_token_sent_at = models.DateTimeField(editable=False, blank=True, null=True)
     password = models.CharField("password", max_length=128, blank=True, null=True)
+    business_unit = models.ForeignKey(BusinessUnit, null=True, blank=True, on_delete=models.SET_NULL)
     grade = models.CharField(null=True, blank=True, max_length=3, choices=UserGrade)
     profession = models.CharField(null=True, blank=True, max_length=4, choices=Profession)
-    business_unit = models.ForeignKey(BusinessUnit, null=True, blank=True, on_delete=models.SET_NULL)
     objects = BaseUserManager()
 
     def __str__(self) -> str:  # pragma: no cover
