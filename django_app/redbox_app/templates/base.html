@@ -58,7 +58,7 @@
     ] %}
   {% endif %}
 
-  <header class="iai-top-nav govuk-body">
+  <header class="iai-top-nav">
     <div class="iai-top-nav__container">
       <div class="iai-top-nav__product govuk-width-container">
         <svg aria-hidden="true" class="govuk-header__logotype-crown" height="30" width="32" focusable="false" viewBox="0 0 32 30" xmlns="http://www.w3.org/2000/svg">
@@ -72,7 +72,7 @@
         <ul id="navigation" class="govuk-header__navigation-list">
           {% for menu_item in menu_items %}
             <li class="govuk-header__navigation-item {% if pageTitle == menu_item.text %}govuk-header__navigation-item--active{% endif %}">
-              <a class="govuk-header__link" href="{{ url(menu_item.url) }}">{{ menu_item.text }}</a>
+              <a class="iai-top-nav__link govuk-header__link" href="{{ url(menu_item.url) }}">{{ menu_item.text }}</a>
             </li>
           {% endfor %}
         </ul>

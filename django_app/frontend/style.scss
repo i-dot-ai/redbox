@@ -281,4 +281,13 @@ body {
   width: 1.5rem;
 }
 
-@import "./iai.scss";
+
+/* i.AI Design System */
+:root {
+  --iai-product-colour: #9C0000; /*A50202*/
+  --iai-header-gradient-colour-1: #9C0000;
+  --iai-header-gradient-colour-2: #451818;
+  --iai-background-colour-1: #F6EEF0;
+  --iai-background-colour-2: #F8F8F8;
+}
+@import "./node_modules/i.ai-design-system/dist/styles.scss";
