@@ -54,6 +54,9 @@ class SourceDocument(BaseModel):
         description="page number of the file that this chunk came from", default=None
     )
 
+    def __hash__(self):
+        return hash(self.page_content) ^ hash(self.file_uuid) ^ hash(tuple(self.page_numbers))
+
 
 class SourceDocuments(BaseModel):
     source_documents: list[SourceDocument] | None = Field(
