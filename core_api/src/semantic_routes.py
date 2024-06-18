@@ -1,3 +1,4 @@
+from functools import lru_cache
 from typing import Annotated
 
 from fastapi import Depends
@@ -105,31 +106,42 @@ extract = Route(
     ],
 )
 
+__semantic_routing_encoder=None
+__routable_chains=None
+__semantic_route_layer=None
 
 def get_semantic_routes():
-    return [info, ability, coach, gratitude, summarisation]
+    return (info, ability, coach, gratitude, summarisation)
 
 
 def get_semantic_routing_encoder():
-    return HuggingFaceEncoder(name="sentence-transformers/paraphrase-albert-small-v2", cache_dir=MODEL_PATH)
+    global __semantic_routing_encoder
+    if not __semantic_routing_encoder:
+        __semantic_routing_encoder = HuggingFaceEncoder(name="sentence-transformers/paraphrase-albert-small-v2", cache_dir=MODEL_PATH)
+    return __semantic_routing_encoder
 
 
 def get_semantic_route_layer(
-    routes: Annotated[list[Route], Depends(get_semantic_routes)],
-    encoder: Annotated[BaseEncoder, Depends(get_semantic_routing_encoder)],
+    routes: Annotated[list[Route], Depends(get_semantic_routes)]
 ):
-    return RouteLayer(encoder=encoder, routes=routes)
+    global __semantic_route_layer
+    if not __semantic_route_layer:
+        __semantic_route_layer = RouteLayer(encoder=get_semantic_routing_encoder(), routes=routes)
+    return __semantic_route_layer
 
 
 def get_routable_chains(
     retrieval_chain: Annotated[Runnable, Depends(build_retrieval_chain)],
     summary_chain: Annotated[Runnable, Depends(build_summary_chain)],
 ):
-    return {
-        "info": build_static_response_chain(INFO_RESPONSE),
-        "ability": build_static_response_chain(ABILITY_RESPONSE),
-        "coach": build_static_response_chain(COACH_RESPONSE),
-        "gratitude": build_static_response_chain("You're welcome!"),
-        "retrieval": retrieval_chain,
-        "summarisation": summary_chain,
-    }
+    global __routable_chains
+    if not __routable_chains:
+        __routable_chains = {
+            "info": build_static_response_chain(INFO_RESPONSE),
+            "ability": build_static_response_chain(ABILITY_RESPONSE),
+            "coach": build_static_response_chain(COACH_RESPONSE),
+            "gratitude": build_static_response_chain("You're welcome!"),
+            "retrieval": retrieval_chain,
+            "summarisation": summary_chain,
+        }
+    return __routable_chains

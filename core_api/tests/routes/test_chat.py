@@ -13,6 +13,7 @@ from langchain_core.runnables.schema import StreamEvent
 from starlette.websockets import WebSocketDisconnect
 
 from core_api.src import build_chains, dependencies
+from core_api.src import semantic_routes
 from core_api.src.app import app as application
 from core_api.src.routes.chat import chat_app
 from redbox.models.chat import ChatResponse
@@ -42,17 +43,17 @@ def embedding_model_dim(embedding_model) -> int:
 def mock_get_llm(llm_responses):
     def wrapped():
         return FakeStreamingListLLM(responses=llm_responses)
-
     return wrapped
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="function")
 def mock_client():
-    chat_app.dependency_overrides[dependencies.get_llm] = mock_get_llm([RAG_LLM_RESPONSE])
-    return TestClient(application)
+    chat_app.dependency_overrides[dependencies.get_llm] = mock_get_llm([RAG_LLM_RESPONSE]*32)
+    yield TestClient(application)
+    chat_app.dependency_overrides = dict()
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="function")
 def mock_streaming_client():
     """
     This client mocks the retrieval pipeline to just produce events for astream_events.
@@ -72,12 +73,13 @@ def mock_streaming_client():
     astream_events = MagicMock(name="astream_events", return_value=event_iterable)
     retrieval_chain = AsyncMock(spec=Runnable, name="retrieval_chain")
     retrieval_chain.astream_events = astream_events
-    chat_app.dependency_overrides[build_chains.build_retrieval_chain] = lambda: retrieval_chain
-    return TestClient(application)
+    chat_app.dependency_overrides[semantic_routes.get_routable_chains] = lambda: {"retrieval": retrieval_chain}
+    yield TestClient(application)
+    chat_app.dependency_overrides = dict()
 
 
-def test_rag_chat_rest_gratitude(app_client, headers):
-    response = app_client.post(
+def test_rag_chat_rest_gratitude(mock_client, headers):
+    response = mock_client.post(
         "/chat/rag",
         json={"message_history": [{"role": "user", "text": "Thank you"}]},
         headers=headers,
