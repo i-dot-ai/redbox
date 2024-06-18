@@ -1,6 +1,7 @@
 import logging
 import os
 from typing import Annotated, Any, TypedDict
+from functools import lru_cache
 
 from elasticsearch import Elasticsearch
 from fastapi import Depends
@@ -18,31 +19,35 @@ logging.basicConfig(level=logging.INFO)
 log = logging.getLogger()
 
 
+@lru_cache(1)
 def get_env() -> Settings:
     return Settings()
 
 
+@lru_cache(1)
 def get_elasticsearch_client(env: Annotated[Settings, Depends(get_env)]) -> Elasticsearch:
     return env.elasticsearch_client()
 
 
+@lru_cache(1)
 def get_embedding_model(env: Annotated[Settings, Depends(get_env)]) -> Embeddings:
     embedding_model = SentenceTransformerEmbeddings(model_name=env.embedding_model, cache_folder=MODEL_PATH)
     log.info("Loaded embedding model from environment: %s", env.embedding_model)
     return embedding_model
 
 
-async def get_storage_handler(
+@lru_cache(1)
+def get_storage_handler(
     es: Annotated[Elasticsearch, Depends(get_elasticsearch_client)],
     env: Annotated[Settings, Depends(get_env)],
 ) -> ElasticsearchStorageHandler:
     return ElasticsearchStorageHandler(es_client=es, root_index=env.elastic_root_index)
 
 
+@lru_cache(1)
 def get_vector_store(
     env: Annotated[Settings, Depends(get_env)],
     es: Annotated[Elasticsearch, Depends(get_elasticsearch_client)],
-    embedding_model: Annotated[Embeddings, Depends(get_embedding_model)],
 ) -> ElasticsearchStore:
     if env.elastic.subscription_level == "basic":
         strategy = ApproxRetrievalStrategy(hybrid=False)
@@ -55,7 +60,7 @@ def get_vector_store(
     return ElasticsearchStore(
         es_connection=es,
         index_name=f"{env.elastic_root_index}-chunk",
-        embedding=embedding_model,
+        embedding=get_embedding_model(env),
         strategy=strategy,
         vector_query_field="embedding",
     )
@@ -67,10 +72,10 @@ class ESQuery(TypedDict):
     user_uuid: UUID
 
 
+@lru_cache(1)
 def get_es_retriever(
     env: Annotated[Settings, Depends(get_env)],
-    es: Annotated[Elasticsearch, Depends(get_elasticsearch_client)],
-    embedding_model: Annotated[SentenceTransformerEmbeddings, Depends(get_embedding_model)],
+    es: Annotated[Elasticsearch, Depends(get_elasticsearch_client)]
 ) -> ElasticsearchRetriever:
     """Creates an Elasticsearch retriever runnable.
 
@@ -80,7 +85,7 @@ def get_es_retriever(
     """
 
     def es_query(query: ESQuery) -> dict[str, Any]:
-        vector = embedding_model.embed_query(query["question"])
+        vector = get_embedding_model(env).embed_query(query["question"])
 
         knn_filter = [{"term": {"creator_user_uuid.keyword": str(query["user_uuid"])}}]
 
@@ -113,6 +118,7 @@ def get_es_retriever(
     )
 
 
+@lru_cache(1)
 def get_llm(env: Annotated[Settings, Depends(get_env)]) -> ChatLiteLLM:
     # Create the appropriate LLM, either openai, Azure, anthropic or bedrock
     if env.openai_api_key is not None:
