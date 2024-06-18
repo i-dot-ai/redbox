@@ -84,6 +84,7 @@ async def rag_chat_streamed(
     async for event in selected_chain.astream_events(params.model_dump(), version="v1"):
         kind = event["event"]
         if kind == "on_chat_model_stream":
+            log.info("1, kind: %s, content: %s", kind, event["data"]["chunk"].content)
             await websocket.send_json({"resource_type": "text", "data": event["data"]["chunk"].content})
         elif kind == "on_chat_model_end":
             await websocket.send_json({"resource_type": "end"})
@@ -104,12 +105,8 @@ async def rag_chat_streamed(
                     )
                     for chunk in source_chunks
                 ]
-                await websocket.send_json({"resource_type": "documents", "data": source_documents})
-        elif kind == "on_prompt_end":
-            try:
-                msg = event["data"]["output"].messages[0].content
-                await websocket.send_json({"resource_type": "text", "data": msg})
-            except (KeyError, AttributeError):
-                logging.exception("unknown message format %s", str(event["data"]["output"]))
+                if source_documents:
+                    log.info("2, kind: %s, content: %s", kind, str(source_documents))
+                    await websocket.send_json({"resource_type": "documents", "data": source_documents})
 
     await websocket.close()
