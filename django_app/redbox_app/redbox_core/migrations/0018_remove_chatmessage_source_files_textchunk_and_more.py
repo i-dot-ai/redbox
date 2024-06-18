@@ -18,7 +18,7 @@ def file_to_text_chunk(apps, schema_editor):
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("redbox_core", "0014_remove_chathistory_selected_files"),
+        ("redbox_core", "0017_alter_user_business_unit_alter_user_grade_and_more"),
     ]
 
     operations = [
