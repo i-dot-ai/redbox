@@ -199,7 +199,7 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
         return self.last_referenced + timedelta(seconds=settings.FILE_EXPIRY_IN_SECONDS)
 
     @property
-    def remaining_time(self) -> timedelta:
+    def expires(self) -> timedelta:
         return self.expires_at - datetime.now(tz=UTC)
 
 

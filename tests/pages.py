@@ -204,7 +204,7 @@ class MyDetailsPage(SignedInBasePage):
 class DocumentRow:
     filename: str
     uploaded_at: datetime
-    remaining_time: str
+    expires: str
     status: str
 
 
@@ -228,10 +228,10 @@ class DocumentsPage(SignedInBasePage):
             DocumentRow(
                 filename=filename,
                 uploaded_at=strptime(uploaded_at, "%H:%M %d/%m/%Y"),
-                remaining_time=remaining_time,
+                expires=expires,
                 status=status,
             )
-            for filename, uploaded_at, remaining_time, status, action in batched(cell_texts, 5)
+            for filename, uploaded_at, expires, status, action in batched(cell_texts, 5)
         ]
 
     def document_count(self) -> int:

@@ -69,8 +69,8 @@
                   <dd class="govuk-summary-list__value">{{ file.created_at | to_user_timezone }}</dd>
                 </div>
                 <div class="govuk-summary-list__row">
-                  <dt class="govuk-summary-list__key">Remaining time</dt>
-                  <dd class="govuk-summary-list__value">{{ file.remaining_time | humanize_timedelta }}</dd>
+                  <dt class="govuk-summary-list__key">Expires</dt>
+                  <dd class="govuk-summary-list__value">{{ file.expires | humanise_expiry }}</dd>
                 </div>
                 <div class="govuk-summary-list__row">
                   <dt class="govuk-summary-list__key">Status</dt>
@@ -107,7 +107,7 @@
             <tr class="govuk-table__row">
               <th scope="col" class="govuk-table__header">File Name</th>
               <th scope="col" class="govuk-table__header">Uploaded at</th>
-              <th scope="col" class="govuk-table__header">Remaining time</th>
+              <th scope="col" class="govuk-table__header">Expires</th>
               <th scope="col" class="govuk-table__header">Status</th>
               <th scope="col" class="govuk-table__header rb-doclist__actions">Actions</th>
             </tr>
@@ -117,7 +117,7 @@
               <tr class="govuk-table__row">
                 <td class="govuk-table__cell govuk-!-padding-top-3">{{ file.name }}</td>
                 <td class="govuk-table__cell govuk-!-padding-top-3">{{ file.created_at | to_user_timezone }}</td>
-                <td class="govuk-table__cell govuk-!-padding-top-3">{{ file.remaining_time | humanize_timedelta }}</td>
+                <td class="govuk-table__cell govuk-!-padding-top-3">{{ file.expires | humanise_expiry }}</td>
                 <td class="govuk-table__cell govuk-!-padding-top-3">
                   {% if file.get_status_text() | lower == 'complete' %}
                     <strong class="govuk-tag govuk-tag--green rb-docs__status govuk-!-margin-top-0">{{ file.get_status_text() }}</strong>

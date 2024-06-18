@@ -26,13 +26,9 @@ class BusinessUnitAdmin(ImportMixin, admin.ModelAdmin):
 
 
 class FileAdmin(admin.ModelAdmin):
-    list_display = ["original_file_name", "user", "status", "created_at", "last_referenced", "remaining_time_humanised"]
+    list_display = ["original_file_name", "user", "status", "created_at", "last_referenced"]
     list_filter = ["user", "status"]
     date_hierarchy = "created_at"
-
-    @admin.display(description="Remaining time")
-    def remaining_time_humanised(self, obj):
-        return humanize.precisedelta(obj.remaining_time)
 
 
 class ChatMessageAdmin(admin.ModelAdmin):
