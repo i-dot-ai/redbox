@@ -127,7 +127,7 @@ def test_summary(mock_client, headers):
     assert chat_response.output_text == RAG_LLM_RESPONSE
 
 
-def test_rag_chat_streamed(mock_streaming_client, headers):
+def test_rag_chat_streamed(mock_client, headers):
     # Given
     message_history = [
         {"text": "What can I do for you?", "role": "system"},
@@ -138,7 +138,7 @@ def test_rag_chat_streamed(mock_streaming_client, headers):
         {"uuid": "219c2e94-9877-4f83-ad6a-a59426f90171"},
     ]
 
-    with mock_streaming_client.websocket_connect("/chat/rag", headers=headers) as websocket:
+    with mock_client.websocket_connect("/chat/rag", headers=headers) as websocket:
         # When
         websocket.send_text(json.dumps({"message_history": message_history, "selected_files": selected_files}))
 
@@ -154,5 +154,5 @@ def test_rag_chat_streamed(mock_streaming_client, headers):
                 break
 
         # Then
-        text = " ".join(all_text)
+        text = "".join(all_text)
         assert text == RAG_LLM_RESPONSE
