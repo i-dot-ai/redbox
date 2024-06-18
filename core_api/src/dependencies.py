@@ -1,7 +1,7 @@
 import logging
 import os
-from typing import Annotated, Any, TypedDict
 from functools import lru_cache
+from typing import Annotated, Any, TypedDict
 
 from elasticsearch import Elasticsearch
 from fastapi import Depends
@@ -74,8 +74,7 @@ class ESQuery(TypedDict):
 
 @lru_cache(1)
 def get_es_retriever(
-    env: Annotated[Settings, Depends(get_env)],
-    es: Annotated[Elasticsearch, Depends(get_elasticsearch_client)]
+    env: Annotated[Settings, Depends(get_env)], es: Annotated[Elasticsearch, Depends(get_elasticsearch_client)]
 ) -> ElasticsearchRetriever:
     """Creates an Elasticsearch retriever runnable.
 

@@ -12,8 +12,7 @@ from langchain_core.runnables import Runnable
 from langchain_core.runnables.schema import StreamEvent
 from starlette.websockets import WebSocketDisconnect
 
-from core_api.src import build_chains, dependencies
-from core_api.src import semantic_routes
+from core_api.src import dependencies, semantic_routes
 from core_api.src.app import app as application
 from core_api.src.routes.chat import chat_app
 from redbox.models.chat import ChatResponse
@@ -43,17 +42,18 @@ def embedding_model_dim(embedding_model) -> int:
 def mock_get_llm(llm_responses):
     def wrapped():
         return FakeStreamingListLLM(responses=llm_responses)
+
     return wrapped
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture()
 def mock_client():
-    chat_app.dependency_overrides[dependencies.get_llm] = mock_get_llm([RAG_LLM_RESPONSE]*32)
+    chat_app.dependency_overrides[dependencies.get_llm] = mock_get_llm([RAG_LLM_RESPONSE] * 32)
     yield TestClient(application)
-    chat_app.dependency_overrides = dict()
+    chat_app.dependency_overrides = {}
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture()
 def mock_streaming_client():
     """
     This client mocks the retrieval pipeline to just produce events for astream_events.
@@ -75,7 +75,7 @@ def mock_streaming_client():
     retrieval_chain.astream_events = astream_events
     chat_app.dependency_overrides[semantic_routes.get_routable_chains] = lambda: {"retrieval": retrieval_chain}
     yield TestClient(application)
-    chat_app.dependency_overrides = dict()
+    chat_app.dependency_overrides = {}
 
 
 def test_rag_chat_rest_gratitude(mock_client, headers):

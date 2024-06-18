@@ -39,6 +39,7 @@ SUMMARISATION_QUESTION_PROMPT = "Question: {question}. \n\n Documents: \n\n {doc
 
 class AISettings(BaseModel):
     """prompts and other AI settings"""
+
     model_config = SettingsConfigDict(frozen=True)
 
     rag_k: int = 5
@@ -52,6 +53,7 @@ class AISettings(BaseModel):
 
 class ElasticLocalSettings(BaseModel):
     """settings required for a local/ec2 instance of elastic"""
+
     model_config = SettingsConfigDict(frozen=True)
 
     host: str = "elasticsearch"
@@ -65,6 +67,7 @@ class ElasticLocalSettings(BaseModel):
 
 class ElasticCloudSettings(BaseModel):
     """settings required for elastic-cloud"""
+
     model_config = SettingsConfigDict(frozen=True)
 
     api_key: str
@@ -178,4 +181,3 @@ class Settings(BaseSettings):
     @property
     def redis_url(self) -> str:
         return f"redis://{self.redis_host}:{self.redis_port}/"
-    
