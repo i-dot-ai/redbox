@@ -7,6 +7,7 @@ from uuid import UUID
 from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
 from django.conf import settings
+from django.utils import timezone
 from redbox_app.redbox_core.models import ChatHistory, ChatMessage, ChatRoleEnum, File, User
 from websockets import WebSocketClientProtocol
 from websockets.client import connect
@@ -50,6 +51,10 @@ class ChatConsumer(AsyncWebsocketConsumer):
             await self.send_to_client({"type": "session-id", "data": str(session.id)})
             reply, source_files = await self.receive_llm_responses(user, core_websocket)
         await self.save_message(session, reply, ChatRoleEnum.ai, source_files=source_files)
+
+        for file in source_files:
+            file.last_referenced = timezone.now()
+            await self.file_save(file)
 
     async def receive_llm_responses(
         self, user: User, core_websocket: WebSocketClientProtocol
@@ -132,3 +137,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
     @database_sync_to_async
     def get_files_by_core_uuid(uuids: Sequence[UUID], user: User) -> Sequence[File]:
         return list(File.objects.filter(core_file_uuid__in=uuids, user=user))
+
+    @staticmethod
+    @database_sync_to_async
+    def file_save(file):
+        return file.save()

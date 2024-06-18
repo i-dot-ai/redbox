@@ -1,7 +1,7 @@
 import logging
 import uuid
 from collections.abc import Sequence
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 import pytest
@@ -102,7 +102,11 @@ def chat_message(chat_history: ChatHistory, uploaded_file: File) -> ChatMessage:
 @pytest.fixture()
 def uploaded_file(alice: User, original_file: UploadedFile, s3_client) -> File:  # noqa: ARG001
     file = File.objects.create(
-        user=alice, original_file=original_file, original_file_name=original_file.name, core_file_uuid=uuid.uuid4()
+        user=alice,
+        original_file=original_file,
+        original_file_name=original_file.name,
+        core_file_uuid=uuid.uuid4(),
+        last_referenced=datetime.now(tz=UTC) - timedelta(days=14),
     )
     file.save()
     yield file
