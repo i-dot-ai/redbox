@@ -2,21 +2,33 @@ import logging
 from http import HTTPStatus
 from http.client import HTTPException
 from operator import itemgetter
-from typing import Annotated
+from typing import Annotated, Any
 
 import numpy as np
 from fastapi import Depends
 from langchain.schema import StrOutputParser
 from langchain_community.chat_models import ChatLiteLLM
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.runnables import Runnable, RunnableLambda, RunnablePassthrough, chain
+from langchain_core.runnables import (
+    Runnable,
+    RunnableLambda,
+    RunnablePassthrough,
+    chain,
+)
 from langchain_core.vectorstores import VectorStoreRetriever
 
 from core_api.src import dependencies
 from core_api.src.format import format_chunks, get_file_chunked_to_tokens
 from core_api.src.runnables import make_chat_prompt_from_messages_runnable
-from redbox.llm.prompts.chat import RETRIEVAL_QUESTION_PROMPT_TEMPLATE, RETRIEVAL_SYSTEM_PROMPT_TEMPLATE
+from redbox.llm.prompts.chat import (
+    RETRIEVAL_QUESTION_PROMPT_TEMPLATE,
+    RETRIEVAL_SYSTEM_PROMPT_TEMPLATE,
+)
 from redbox.llm.prompts.summarisation import (
+    MAP_QUESTION_PROMPT_TEMPLATE,
+    MAP_SYSTEM_PROMPT_TEMPLATE,
+    REDUCE_QUESTION_PROMPT_TEMPLATE,
+    REDUCE_SYSTEM_PROMPT_TEMPLATE,
     SUMMARISATION_QUESTION_PROMPT_TEMPLATE,
     SUMMARISATION_SYSTEM_PROMPT_TEMPLATE,
 )
@@ -106,6 +118,38 @@ def build_summary_chain(
         | make_chat_prompt_from_messages_runnable(
             SUMMARISATION_SYSTEM_PROMPT_TEMPLATE, SUMMARISATION_QUESTION_PROMPT_TEMPLATE
         )
+        | llm
+        | {"response": StrOutputParser()}
+    )
+
+
+def build_map_reduce_summary_chain(
+    llm: Annotated[ChatLiteLLM, Depends(dependencies.get_llm)],
+    storage_handler: Annotated[ElasticsearchStorageHandler, Depends(dependencies.get_storage_handler)],
+) -> Runnable:
+    def make_document_context(input_dict: dict[str, Any]):
+        documents: list[str] = []
+        for selected_file in input_dict["file_uuids"]:
+            chunks = get_file_chunked_to_tokens(
+                file_uuid=selected_file,
+                user_uuid=input_dict["user_uuid"],
+                storage_handler=storage_handler,
+                max_tokens=20_000,
+            )
+            documents += [chunk.text for chunk in chunks]
+
+        return documents
+
+    map_step = (
+        RunnablePassthrough.assign(documents=make_document_context)
+        | make_chat_prompt_from_messages_runnable(MAP_SYSTEM_PROMPT_TEMPLATE, MAP_QUESTION_PROMPT_TEMPLATE)
+        | llm
+        | StrOutputParser()
+    )
+
+    return (
+        map_step
+        | make_chat_prompt_from_messages_runnable(REDUCE_SYSTEM_PROMPT_TEMPLATE, REDUCE_QUESTION_PROMPT_TEMPLATE)
         | llm
         | {"response": StrOutputParser()}
     )
