@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 
 import boto3
 from botocore.config import Config
@@ -89,9 +89,9 @@ class User(BaseUser, UUIDPrimaryKeyBase):
     invite_accepted_at = models.DateTimeField(default=None, blank=True, null=True)
     last_token_sent_at = models.DateTimeField(editable=False, blank=True, null=True)
     password = models.CharField("password", max_length=128, blank=True, null=True)
-    grade = models.CharField(null=True, max_length=3, choices=UserGrade)
-    profession = models.CharField(null=True, max_length=4, choices=Profession)
-    business_unit = models.ForeignKey(BusinessUnit, null=True, on_delete=models.SET_NULL)
+    business_unit = models.ForeignKey(BusinessUnit, null=True, blank=True, on_delete=models.SET_NULL)
+    grade = models.CharField(null=True, blank=True, max_length=3, choices=UserGrade)
+    profession = models.CharField(null=True, blank=True, max_length=4, choices=Profession)
     objects = BaseUserManager()
 
     def __str__(self) -> str:  # pragma: no cover
@@ -195,8 +195,12 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
         )
 
     @property
-    def expiry_date(self) -> datetime:
+    def expires_at(self) -> datetime:
         return self.last_referenced + timedelta(seconds=settings.FILE_EXPIRY_IN_SECONDS)
+
+    @property
+    def expires(self) -> timedelta:
+        return self.expires_at - datetime.now(tz=UTC)
 
 
 class ChatHistory(UUIDPrimaryKeyBase, TimeStampedModel):

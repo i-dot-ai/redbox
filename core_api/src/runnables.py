@@ -2,12 +2,11 @@ from operator import itemgetter
 
 from langchain.schema import StrOutputParser
 from langchain_community.chat_models import ChatLiteLLM
-from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.prompts import ChatPromptTemplate, PromptTemplate
 from langchain_core.runnables import Runnable, RunnableLambda, RunnablePassthrough, chain
 from langchain_core.vectorstores import VectorStoreRetriever
 
 from core_api.src.format import format_chunks
-from redbox.llm.prompts.chat import CONDENSE_QUESTION_PROMPT
 from redbox.models import ChatResponse
 from redbox.models.chat import SourceDocument
 
@@ -45,7 +44,9 @@ def map_to_chat_response(input_dict: dict):
                 file_uuid=chunk.parent_file_uuid,
                 page_numbers=chunk.metadata.page_number
                 if isinstance(chunk.metadata.page_number, list)
-                else [chunk.metadata.page_number],
+                else [chunk.metadata.page_number]
+                if chunk.metadata.page_number
+                else [],
             )
             for chunk in input_dict.get("source_documents", [])
         ],
@@ -76,7 +77,7 @@ def make_chat_runnable(system_prompt: str, llm: ChatLiteLLM) -> Runnable:
     )
 
 
-def make_stuff_document_runnable(system_prompt: str, llm: ChatLiteLLM) -> Runnable:
+def make_stuff_document_runnable(system_prompt: str, question_prompt: str, llm: ChatLiteLLM) -> Runnable:
     """Takes a system prompt and LLM returns a stuff document runnable.
 
     Runnable takes input of a dict keyed to question, messages and documents.
@@ -91,7 +92,7 @@ def make_stuff_document_runnable(system_prompt: str, llm: ChatLiteLLM) -> Runnab
 
     return (
         {"chat_history": itemgetter("chat_history"), "question": itemgetter("question")}
-        | CONDENSE_QUESTION_PROMPT
+        | PromptTemplate.from_template(question_prompt)
         | llm
         | {
             "question": itemgetter("question"),

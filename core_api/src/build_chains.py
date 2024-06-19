@@ -20,19 +20,7 @@ from langchain_core.vectorstores import VectorStoreRetriever
 from core_api.src import dependencies
 from core_api.src.format import format_chunks, get_file_chunked_to_tokens
 from core_api.src.runnables import make_chat_prompt_from_messages_runnable
-from redbox.llm.prompts.chat import (
-    RETRIEVAL_QUESTION_PROMPT_TEMPLATE,
-    RETRIEVAL_SYSTEM_PROMPT_TEMPLATE,
-)
-from redbox.llm.prompts.summarisation import (
-    MAP_QUESTION_PROMPT_TEMPLATE,
-    MAP_SYSTEM_PROMPT_TEMPLATE,
-    REDUCE_QUESTION_PROMPT_TEMPLATE,
-    REDUCE_SYSTEM_PROMPT_TEMPLATE,
-    SUMMARISATION_QUESTION_PROMPT_TEMPLATE,
-    SUMMARISATION_SYSTEM_PROMPT_TEMPLATE,
-)
-from redbox.models import ChatRequest, Chunk
+from redbox.models import ChatRequest, Chunk, Settings
 from redbox.storage import ElasticsearchStorageHandler
 
 # === Logging ===
@@ -65,21 +53,26 @@ def build_vanilla_chain(
             detail="The final entry in the chat history should be a user question",
         )
 
-    return ChatPromptTemplate.from_messages((msg.role, msg.text) for msg in chat_request.message_history)
+    return ChatPromptTemplate.from_messages(
+        (msg.role, msg.text) for msg in chat_request.message_history
+    )
 
 
 def build_retrieval_chain(
     llm: Annotated[ChatLiteLLM, Depends(dependencies.get_llm)],
     retriever: Annotated[VectorStoreRetriever, Depends(dependencies.get_es_retriever)],
+    env: Annotated[Settings, Depends(dependencies.get_env)],
 ) -> Runnable:
     return (
         RunnablePassthrough.assign(documents=retriever)
         | RunnablePassthrough.assign(
-            formatted_documents=(RunnablePassthrough() | itemgetter("documents") | format_chunks)
+            formatted_documents=(
+                RunnablePassthrough() | itemgetter("documents") | format_chunks
+            )
         )
         | {
             "response": make_chat_prompt_from_messages_runnable(
-                RETRIEVAL_SYSTEM_PROMPT_TEMPLATE, RETRIEVAL_QUESTION_PROMPT_TEMPLATE
+                env.ai.retrieval_system_prompt, env.ai.retrieval_question_prompt
             )
             | llm
             | StrOutputParser(),
@@ -90,7 +83,10 @@ def build_retrieval_chain(
 
 def build_summary_chain(
     llm: Annotated[ChatLiteLLM, Depends(dependencies.get_llm)],
-    storage_handler: Annotated[ElasticsearchStorageHandler, Depends(dependencies.get_storage_handler)],
+    storage_handler: Annotated[
+        ElasticsearchStorageHandler, Depends(dependencies.get_storage_handler)
+    ],
+    env: Annotated[Settings, Depends(dependencies.get_env)],
 ) -> Runnable:
     @chain
     def make_document_context(input_dict):
@@ -110,13 +106,17 @@ def build_summary_chain(
 
         documents_trunc = documents[:doc_token_sum_limit_index]
         if len(documents) < doc_token_sum_limit_index:
-            log.info("Documents were longer than 20k tokens. Truncating to the first 20k.")
+            log.info(
+                "Documents were longer than 20k tokens. Truncating to the first 20k."
+            )
         return documents_trunc
 
     return (
-        RunnablePassthrough.assign(documents=(make_document_context | RunnableLambda(format_chunks)))
+        RunnablePassthrough.assign(
+            documents=(make_document_context | RunnableLambda(format_chunks))
+        )
         | make_chat_prompt_from_messages_runnable(
-            SUMMARISATION_SYSTEM_PROMPT_TEMPLATE, SUMMARISATION_QUESTION_PROMPT_TEMPLATE
+            env.ai.summarisation_system_prompt, env.ai.summarisation_question_prompt
         )
         | llm
         | {"response": StrOutputParser()}
@@ -125,7 +125,10 @@ def build_summary_chain(
 
 def build_map_reduce_summary_chain(
     llm: Annotated[ChatLiteLLM, Depends(dependencies.get_llm)],
-    storage_handler: Annotated[ElasticsearchStorageHandler, Depends(dependencies.get_storage_handler)],
+    storage_handler: Annotated[
+        ElasticsearchStorageHandler, Depends(dependencies.get_storage_handler)
+    ],
+    env: Annotated[Settings, Depends(dependencies.get_env)],
 ) -> Runnable:
     def make_document_context(input_dict: dict[str, Any]):
         documents: list[str] = []
@@ -142,14 +145,18 @@ def build_map_reduce_summary_chain(
 
     map_step = (
         RunnablePassthrough.assign(documents=make_document_context)
-        | make_chat_prompt_from_messages_runnable(MAP_SYSTEM_PROMPT_TEMPLATE, MAP_QUESTION_PROMPT_TEMPLATE)
+        | make_chat_prompt_from_messages_runnable(
+            env.ai.map_system_prompt, env.ai.map_question_prompt
+        )
         | llm
         | StrOutputParser()
     )
 
     return (
         map_step
-        | make_chat_prompt_from_messages_runnable(REDUCE_SYSTEM_PROMPT_TEMPLATE, REDUCE_QUESTION_PROMPT_TEMPLATE)
+        | make_chat_prompt_from_messages_runnable(
+            env.ai.reduce_system_prompt, env.ai.reduce_question_prompt
+        )
         | llm
         | {"response": StrOutputParser()}
     )
@@ -157,6 +164,9 @@ def build_map_reduce_summary_chain(
 
 def build_static_response_chain(prompt_template) -> Runnable:
     return RunnablePassthrough.assign(
-        response=(ChatPromptTemplate.from_template(prompt_template) | RunnableLambda(lambda p: p.messages[0].content)),
+        response=(
+            ChatPromptTemplate.from_template(prompt_template)
+            | RunnableLambda(lambda p: p.messages[0].content)
+        ),
         source_documents=RunnableLambda(lambda _: []),
     )

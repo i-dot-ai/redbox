@@ -263,7 +263,7 @@ def test_post_message_to_existing_session(
             "source_documents": [{"file_uuid": str(uploaded_file.core_file_uuid)}],
         },
     )
-    initial_file_expiry_date = File.objects.get(core_file_uuid=uploaded_file.core_file_uuid).expiry_date
+    initial_file_expiry_date = File.objects.get(core_file_uuid=uploaded_file.core_file_uuid).expires_at
 
     # When
     response = client.post("/post-message/", {"message": "Are you there?", "session-id": session_id})
@@ -277,7 +277,7 @@ def test_post_message_to_existing_session(
     assert (
         ChatMessage.objects.get(chat_history__id=session_id, role=ChatRoleEnum.ai).source_files.first() == uploaded_file
     )
-    assert initial_file_expiry_date != File.objects.get(core_file_uuid=uploaded_file.core_file_uuid).expiry_date
+    assert initial_file_expiry_date != File.objects.get(core_file_uuid=uploaded_file.core_file_uuid).expires_at
 
 
 @pytest.mark.django_db()
@@ -318,6 +318,31 @@ def test_post_message_with_files_selected(
     assert json.loads(requests_mock.last_request.text).get("selected_files") == [
         {"uuid": str(f.core_file_uuid)} for f in selected_files
     ]
+
+
+@pytest.mark.django_db()
+def test_user_can_see_their_own_chats(chat_history: ChatHistory, alice: User, client: Client):
+    # Given
+    client.force_login(alice)
+
+    # When
+    response = client.get(f"/chats/{chat_history.id}/")
+
+    # Then
+    assert response.status_code == HTTPStatus.OK
+
+
+@pytest.mark.django_db()
+def test_user_cannot_see_other_users_chats(chat_history: ChatHistory, bob: User, client: Client):
+    # Given
+    client.force_login(bob)
+
+    # When
+    response = client.get(f"/chats/{chat_history.id}/")
+
+    # Then
+    assert response.status_code == HTTPStatus.FOUND
+    assert response.headers.get("Location") == "/chats/"
 
 
 @pytest.mark.django_db()

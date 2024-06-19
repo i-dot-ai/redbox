@@ -25,7 +25,7 @@ class BusinessUnitAdmin(ImportMixin, admin.ModelAdmin):
 
 
 class FileAdmin(admin.ModelAdmin):
-    list_display = ["original_file_name", "user", "status", "created_at"]
+    list_display = ["original_file_name", "user", "status", "created_at", "last_referenced"]
     list_filter = ["user", "status"]
     date_hierarchy = "created_at"
 

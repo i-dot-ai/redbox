@@ -18,6 +18,7 @@ from redbox.models.chat import ChatRequest, ChatResponse, SourceDocument
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger()
 
+
 chat_app = FastAPI(
     title="Core Chat API",
     description="Redbox Core Chat API",
@@ -80,31 +81,26 @@ async def rag_chat_streamed(
 
     selected_chain, params = await semantic_router_to_chain(chat_request, user_uuid, routable_chains, route_layer)
 
-    async for event in selected_chain.astream_events(params.model_dump(), version="v1"):
-        kind = event["event"]
-        if kind == "on_chat_model_stream":
-            await websocket.send_json({"resource_type": "text", "data": event["data"]["chunk"].content})
-        elif kind == "on_chat_model_end":
-            await websocket.send_json({"resource_type": "end"})
-        elif kind == "on_chain_stream":
-            if isinstance(event["data"]["chunk"], dict):
-                source_chunks = event["data"]["chunk"].get("source_documents", [])
-                source_documents = [
-                    jsonable_encoder(
-                        SourceDocument(
-                            page_content=chunk.text,
-                            file_uuid=chunk.parent_file_uuid,
-                            page_numbers=[chunk.metadata.page_number],
-                        )
-                    )
-                    for chunk in source_chunks
-                ]
-                await websocket.send_json({"resource_type": "documents", "data": source_documents})
-        elif kind == "on_prompt_stream":
-            try:
-                msg = event["data"]["chunk"].messages[0].content
-                await websocket.send_json({"resource_type": "text", "data": msg})
-            except (KeyError, AttributeError):
-                logging.exception("unknown message format %s", str(event["data"]["chunk"]))
-
+    async for event in selected_chain.astream(params.model_dump()):
+        response = event.get("response", "")
+        source_chunks = event.get("source_documents", [])
+        source_documents = [
+            jsonable_encoder(
+                SourceDocument(
+                    page_content=chunk.text,
+                    file_uuid=chunk.parent_file_uuid,
+                    page_numbers=chunk.metadata.page_number
+                    if isinstance(chunk.metadata.page_number, list)
+                    else [chunk.metadata.page_number]
+                    if chunk.metadata.page_number
+                    else [],
+                )
+            )
+            for chunk in source_chunks
+        ]
+        if response:
+            await websocket.send_json({"resource_type": "text", "data": response})
+        if source_documents:
+            await websocket.send_json({"resource_type": "documents", "data": source_documents})
+    await websocket.send_json({"resource_type": "end"})
     await websocket.close()

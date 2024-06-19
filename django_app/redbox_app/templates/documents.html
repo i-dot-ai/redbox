@@ -17,7 +17,7 @@
 
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds-from-desktop">
-      
+
       {% if ingest_errors %}
         <div class="govuk-error-summary" data-module="govuk-error-summary">
           <div role="alert">
@@ -44,8 +44,8 @@
         <img width="32" height="32" src="{{ static('images/icon-30-days.png') }}" loading="lazy" alt=""/>
         <p class="govuk-body-s govuk-!-margin-bottom-0">Documents will be stored for up to 30 days.</p>
       </div>
-      
-      
+
+
       {{ govukNotificationBanner(
         title="Important",
         text_list=[
@@ -67,6 +67,10 @@
                 <div class="govuk-summary-list__row">
                   <dt class="govuk-summary-list__key">Uploaded at</dt>
                   <dd class="govuk-summary-list__value">{{ file.created_at | to_user_timezone }}</dd>
+                </div>
+                <div class="govuk-summary-list__row">
+                  <dt class="govuk-summary-list__key">Expires</dt>
+                  <dd class="govuk-summary-list__value">{{ file.expires | humanise_expiry }}</dd>
                 </div>
                 <div class="govuk-summary-list__row">
                   <dt class="govuk-summary-list__key">Status</dt>
@@ -103,6 +107,7 @@
             <tr class="govuk-table__row">
               <th scope="col" class="govuk-table__header">File Name</th>
               <th scope="col" class="govuk-table__header">Uploaded at</th>
+              <th scope="col" class="govuk-table__header">Expires</th>
               <th scope="col" class="govuk-table__header">Status</th>
               <th scope="col" class="govuk-table__header rb-doclist__actions">Actions</th>
             </tr>
@@ -112,6 +117,7 @@
               <tr class="govuk-table__row">
                 <td class="govuk-table__cell govuk-!-padding-top-3">{{ file.name }}</td>
                 <td class="govuk-table__cell govuk-!-padding-top-3">{{ file.created_at | to_user_timezone }}</td>
+                <td class="govuk-table__cell govuk-!-padding-top-3">{{ file.expires | humanise_expiry }}</td>
                 <td class="govuk-table__cell govuk-!-padding-top-3">
                   {% if file.get_status_text() | lower == 'complete' %}
                     <strong class="govuk-tag govuk-tag--green rb-docs__status govuk-!-margin-top-0">{{ file.get_status_text() }}</strong>

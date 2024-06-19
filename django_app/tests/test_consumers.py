@@ -1,11 +1,13 @@
 import json
 import logging
 from collections.abc import Sequence
+from datetime import UTC, datetime
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from channels.db import database_sync_to_async
 from channels.testing import WebsocketCommunicator
+from django.db.models import Model
 from redbox_app.redbox_core.consumers import ChatConsumer
 from redbox_app.redbox_core.models import ChatHistory, ChatMessage, ChatRoleEnum, File, User
 from websockets import WebSocketClientProtocol
@@ -45,6 +47,8 @@ async def test_chat_consumer_with_new_session(alice: User, uploaded_file: File, 
 
     assert await get_chat_message_text(alice, ChatRoleEnum.user) == ["Hello Hal."]
     assert await get_chat_message_text(alice, ChatRoleEnum.ai) == ["Good afternoon, Mr. Amor."]
+    await refresh_from_db(uploaded_file)
+    assert uploaded_file.last_referenced.date() == datetime.now(tz=UTC).date()
 
 
 @pytest.mark.django_db(transaction=True)
@@ -179,3 +183,8 @@ def mocked_connect_with_several_files(several_files: Sequence[File]) -> Connect:
         json.dumps({"resource_type": "end"}),
     ]
     return mocked_connect
+
+
+@database_sync_to_async
+def refresh_from_db(obj: Model) -> None:
+    obj.refresh_from_db()

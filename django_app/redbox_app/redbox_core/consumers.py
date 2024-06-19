@@ -1,12 +1,15 @@
 import json
 import logging
 from collections.abc import Mapping, MutableSequence, Sequence
-from types import SimpleNamespace
+from dataclasses import dataclass
+from typing import Literal
 from uuid import UUID
 
 from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
+from dataclasses_json import Undefined, dataclass_json
 from django.conf import settings
+from django.utils import timezone
 from redbox_app.redbox_core.models import ChatHistory, ChatMessage, ChatRoleEnum, File, User
 from websockets import WebSocketClientProtocol
 from websockets.client import connect
@@ -15,6 +18,19 @@ from yarl import URL
 OptFileSeq = Sequence[File] | None
 logger = logging.getLogger(__name__)
 logger.info("WEBSOCKET_SCHEME is: %s", settings.WEBSOCKET_SCHEME)
+
+
+@dataclass_json(undefined=Undefined.EXCLUDE)
+@dataclass(frozen=True)
+class CoreChatResponseDoc:
+    file_uuid: str
+
+
+@dataclass_json(undefined=Undefined.EXCLUDE)
+@dataclass(frozen=True)
+class CoreChatResponse:
+    resource_type: Literal["text", "documents", "end"]
+    data: list[CoreChatResponseDoc] | str | None = None
 
 
 class ChatConsumer(AsyncWebsocketConsumer):
@@ -51,13 +67,17 @@ class ChatConsumer(AsyncWebsocketConsumer):
             reply, source_files = await self.receive_llm_responses(user, core_websocket)
         await self.save_message(session, reply, ChatRoleEnum.ai, source_files=source_files)
 
+        for file in source_files:
+            file.last_referenced = timezone.now()
+            await self.file_save(file)
+
     async def receive_llm_responses(
         self, user: User, core_websocket: WebSocketClientProtocol
     ) -> tuple[str, Sequence[File]]:
         full_reply: MutableSequence[str] = []
         source_files: MutableSequence[File] = []
         async for raw_message in core_websocket:
-            message = json.loads(raw_message, object_hook=lambda d: SimpleNamespace(**d))
+            message = CoreChatResponse.schema().loads(raw_message)
             logger.debug("received %s from core-api", message)
             if message.resource_type == "text":
                 full_reply.append(await self.handle_text(message))
@@ -65,7 +85,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 source_files += await self.handle_documents(message, user)
         return "".join(full_reply), source_files
 
-    async def handle_documents(self, message: SimpleNamespace, user: User) -> Sequence[File]:
+    async def handle_documents(self, message: CoreChatResponse, user: User) -> Sequence[File]:
         doc_uuids: Sequence[UUID] = [UUID(doc.file_uuid) for doc in message.data]
         source_files = await self.get_files_by_core_uuid(doc_uuids, user)
         for source in source_files:
@@ -77,7 +97,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             )
         return source_files
 
-    async def handle_text(self, message: SimpleNamespace) -> str:
+    async def handle_text(self, message: CoreChatResponse) -> str:
         await self.send_to_client({"type": "text", "data": message.data})
         return message.data
 
@@ -132,3 +152,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
     @database_sync_to_async
     def get_files_by_core_uuid(uuids: Sequence[UUID], user: User) -> Sequence[File]:
         return list(File.objects.filter(core_file_uuid__in=uuids, user=user))
+
+    @staticmethod
+    @database_sync_to_async
+    def file_save(file):
+        return file.save()

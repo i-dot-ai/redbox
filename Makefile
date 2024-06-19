@@ -10,11 +10,15 @@ reqs:
 
 .PHONY: run
 run: stop
-	docker compose up -d --wait core-api django-app
+	docker compose up -d --wait django-app
 
 .PHONY: stop
 stop: ## Stop all containers
 	docker compose down
+
+.PHONY: prune
+prune: stop
+	docker system prune --all --force
 
 .PHONY: clean
 clean:
@@ -25,7 +29,7 @@ build:
 	docker compose build
 
 .PHONY: rebuild
-rebuild: stop ## Rebuild all images
+rebuild: stop prune ## Rebuild all images
 	docker compose build --no-cache
 
 .PHONY: test-core-api
@@ -46,10 +50,13 @@ test-worker: ## Test worker
 .PHONY: test-django
 test-django: stop ## Test django-app
 	docker compose up -d --wait db minio
-	docker compose run --no-deps django-app venv/bin/pytest tests/ --ds redbox_app.settings -v --cov=redbox_app.redbox_core --cov-fail-under 80 -o log_cli=true
+	docker compose run --no-deps django-app venv/bin/pytest tests/ --ds redbox_app.settings -v --cov=redbox_app.redbox_core --cov-fail-under 85 -o log_cli=true
 
 .PHONY: test-integration
-test-integration: stop run ## Run all integration tests
+test-integration: rebuild run test-integration-without-build ## Run all integration tests
+
+.PHONY: test-integration-without-build
+test-integration-without-build : ## Run all integration tests without rebuilding
 	poetry install --no-root --no-ansi --with dev --without ai,api,worker,docs
 	poetry run pytest tests/
 

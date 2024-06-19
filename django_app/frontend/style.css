@@ -43,7 +43,7 @@
 
 
 :root {
-  --govuk-frontend-version: "5.2.0";
+  --govuk-frontend-version: "5.4.0";
   --govuk-frontend-breakpoint-mobile: 20rem;
   --govuk-frontend-breakpoint-tablet: 40.0625rem;
   --govuk-frontend-breakpoint-desktop: 48.0625rem;
@@ -3249,17 +3249,22 @@
 }
 
 .govuk-error-summary__body p {
-  margin-top: 0;
-  margin-bottom: 15px;
+  margin-bottom: 0;
+}
+.govuk-error-summary__body > * + * {
+  margin-top: 15px;
 }
 @media (min-width: 40.0625em) {
-  .govuk-error-summary__body p {
-    margin-bottom: 20px;
+  .govuk-error-summary__body > * + * {
+    margin-top: 20px;
   }
 }
 
 .govuk-error-summary__list {
-  margin-top: 0;
+  margin-bottom: 0;
+}
+
+.govuk-error-summary__list li:last-child {
   margin-bottom: 0;
 }
 
@@ -4605,6 +4610,40 @@
 
 .govuk-panel__title:last-child {
   margin-bottom: 0;
+}
+
+
+
+
+
+
+
+@media (min-width: 20em) {
+  .govuk-password-input__wrapper {
+    flex-direction: row;
+    align-items: flex-start;
+  }
+}
+
+.govuk-password-input__input::-ms-reveal {
+  display: none;
+}
+
+.govuk-password-input__toggle {
+  margin-top: 5px;
+  margin-bottom: 0;
+}
+.govuk-password-input__toggle[hidden] {
+  display: none;
+}
+@media (min-width: 20em) {
+  .govuk-password-input__toggle {
+    width: auto;
+    flex-shrink: 0;
+    flex-basis: 5em;
+    margin-top: 0;
+    margin-left: 5px;
+  }
 }
 
 
@@ -7360,6 +7399,10 @@
   font-weight: 700 !important;
 }
 
+.govuk-\!-font-tabular-numbers {
+  font-variant-numeric: tabular-nums !important;
+}
+
 
 .govuk-\!-width-full {
   width: 100% !important;
@@ -7409,6 +7452,7 @@
     width: 25% !important;
   }
 }
+
 
 
 
@@ -7588,10 +7632,12 @@ body {
 .rb-chat-message__text {
   font-size: 1rem;
   padding-top: 0.5rem;
+  word-break: break-word;
 }
 
 .rb-chat-message__sources-heading, .rb-chat-messages__sources-link {
   font-size: 0.875rem;
+  word-break: break-word;
 }
 
 .rb-chat-message__text code {
@@ -7614,6 +7660,62 @@ body {
   text-align: left;
 }
 
+.rb-loading-ellipsis {
+  font-style: italic;
+  margin-top: 1rem;
+}
+
+.rb-loading-ellipsis span {
+  animation-duration: 1.5s;
+  animation-iteration-count: infinite;
+  margin: 0 -2px;
+}
+
+.rb-loading-ellipsis span:nth-of-type(1) {
+  animation-name: rb-ellipsis-1;
+}
+
+.rb-loading-ellipsis span:nth-of-type(2) {
+  animation-name: rb-ellipsis-2;
+}
+
+.rb-loading-ellipsis span:nth-of-type(3) {
+  animation-name: rb-ellipsis-3;
+}
+
+@keyframes rb-ellipsis-1 {
+  0% {
+    opacity: 0;
+  }
+  24% {
+    opacity: 0;
+  }
+  25% {
+    opacity: 1;
+  }
+}
+@keyframes rb-ellipsis-2 {
+  0% {
+    opacity: 0;
+  }
+  49% {
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+@keyframes rb-ellipsis-3 {
+  0% {
+    opacity: 0;
+  }
+  74% {
+    opacity: 0;
+  }
+  75% {
+    opacity: 1;
+  }
+}
 .rb-new-message textarea {
   margin-bottom: 0.5rem;
 }
