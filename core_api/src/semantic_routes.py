@@ -6,7 +6,11 @@ from semantic_router import Route
 from semantic_router.encoders import BaseEncoder, HuggingFaceEncoder
 from semantic_router.layer import RouteLayer
 
-from core_api.src.build_chains import build_retrieval_chain, build_static_response_chain, build_summary_chain
+from core_api.src.build_chains import (
+    build_map_reduce_summary_chain,
+    build_retrieval_chain,
+    build_static_response_chain,
+)
 from redbox.model_db import MODEL_PATH
 
 # === Pre-canned responses for non-LLM routes ===
@@ -123,7 +127,8 @@ def get_semantic_route_layer(
 
 def get_routable_chains(
     retrieval_chain: Annotated[Runnable, Depends(build_retrieval_chain)],
-    summary_chain: Annotated[Runnable, Depends(build_summary_chain)],
+    # summary_chain: Annotated[Runnable, Depends(build_summary_chain)],
+    summary_chain: Annotated[Runnable, Depends(build_map_reduce_summary_chain)],
 ):
     return {
         "info": build_static_response_chain(INFO_RESPONSE),
