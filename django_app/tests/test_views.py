@@ -321,6 +321,31 @@ def test_post_message_with_files_selected(
 
 
 @pytest.mark.django_db()
+def test_user_can_see_their_own_chats(chat_history: ChatHistory, alice: User, client: Client):
+    # Given
+    client.force_login(alice)
+
+    # When
+    response = client.get(f"/chats/{chat_history.id}/")
+
+    # Then
+    assert response.status_code == HTTPStatus.OK
+
+
+@pytest.mark.django_db()
+def test_user_cannot_see_other_users_chats(chat_history: ChatHistory, bob: User, client: Client):
+    # Given
+    client.force_login(bob)
+
+    # When
+    response = client.get(f"/chats/{chat_history.id}/")
+
+    # Then
+    assert response.status_code == HTTPStatus.FOUND
+    assert response.headers.get("Location") == "/chats/"
+
+
+@pytest.mark.django_db()
 def test_view_session_with_documents(chat_message: ChatMessage, client: Client):
     # Given
     client.force_login(chat_message.chat_history.users)

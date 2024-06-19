@@ -205,6 +205,9 @@ class ChatsView(View):
 
         messages: Sequence[ChatMessage] = []
         if chat_id:
+            current_chat = ChatHistory.objects.get(id=chat_id)
+            if current_chat.users != request.user:
+                return redirect(reverse("chats"))
             messages = ChatMessage.objects.filter(chat_history__id=chat_id).order_by("created_at")
         endpoint = URL.build(scheme=settings.WEBSOCKET_SCHEME, host=request.get_host(), path=r"/ws/chat/")
 
