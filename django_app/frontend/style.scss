@@ -162,9 +162,11 @@ body {
 .rb-chat-message__text {
   font-size: 1rem;
   padding-top: 0.5rem;
+  word-break: break-word;
 }
 .rb-chat-message__sources-heading, .rb-chat-messages__sources-link {
   font-size: 0.875rem;
+  word-break: break-word;
 }
 .rb-chat-message__text code {
   display: block;
