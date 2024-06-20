@@ -6,6 +6,7 @@ from typing import Annotated, Any
 
 import numpy as np
 from fastapi import Depends
+from langchain.globals import set_debug
 from langchain.schema import StrOutputParser
 from langchain_community.chat_models import ChatLiteLLM
 from langchain_core.prompts import ChatPromptTemplate
@@ -123,6 +124,29 @@ def build_summary_chain(
     )
 
 
+def prepare_list_of_docs(
+    llm: Annotated[ChatLiteLLM, Depends(dependencies.get_llm)],
+    storage_handler: Annotated[
+        ElasticsearchStorageHandler, Depends(dependencies.get_storage_handler)
+    ],
+    env: Annotated[Settings, Depends(dependencies.get_env)],
+) -> Runnable:
+    def make_document_context(input_dict: dict):
+        documents: list[str] = []
+        for selected_file in input_dict["file_uuids"]:
+            chunks = get_file_chunked_to_tokens(
+                file_uuid=selected_file,
+                user_uuid=input_dict["user_uuid"],
+                storage_handler=storage_handler,
+                max_tokens=20_000,
+            )
+            documents += [chunk.text for chunk in chunks]
+
+        return documents
+
+    return make_document_context
+
+
 def build_map_reduce_summary_chain(
     llm: Annotated[ChatLiteLLM, Depends(dependencies.get_llm)],
     storage_handler: Annotated[
@@ -130,7 +154,7 @@ def build_map_reduce_summary_chain(
     ],
     env: Annotated[Settings, Depends(dependencies.get_env)],
 ) -> Runnable:
-    def make_document_context(input_dict: dict[str, Any]):
+    def make_document_context(input_dict: dict):
         documents: list[str] = []
         for selected_file in input_dict["file_uuids"]:
             chunks = get_file_chunked_to_tokens(
@@ -152,8 +176,21 @@ def build_map_reduce_summary_chain(
         | StrOutputParser()
     )
 
+    # def map_operation(input_dict: dict):
+    #     log.info(f"input_dict before map_step {input_dict}")
+    #     return map_step.invoke(input_dict)
+    def map_operation(input_dict: dict):
+        # log.info(f"input_dict before map_step: {input_dict}")
+        output = map_step.invoke(input_dict)
+
+        # Add the output to the input_dict as a new key
+        input_dict["documents"] = output
+
+        log.info(f"input_dict after adding map_step_output: {input_dict}")
+        return input_dict
+
     return (
-        map_step
+        map_operation
         | make_chat_prompt_from_messages_runnable(
             env.ai.reduce_system_prompt, env.ai.reduce_question_prompt
         )
