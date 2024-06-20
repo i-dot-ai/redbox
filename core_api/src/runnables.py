@@ -50,6 +50,7 @@ def map_to_chat_response(input_dict: dict):
             )
             for chunk in input_dict.get("source_documents", [])
         ],
+        route_name=input_dict["route_name"],
     )
 
 

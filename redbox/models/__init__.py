@@ -1,4 +1,4 @@
-from redbox.models.chat import ChatMessage, ChatRequest, ChatResponse
+from redbox.models.chat import ChatMessage, ChatRequest, ChatResponse, ChatRoute
 from redbox.models.embedding import (
     EmbeddingModelInfo,
     EmbeddingResponse,
@@ -28,6 +28,7 @@ __all__ = [
     "ChatPersona",
     "ChatRequest",
     "ChatResponse",
+    "ChatRoute",
     "Chunk",
     "ChunkStatus",
     "EmbedQueueItem",
