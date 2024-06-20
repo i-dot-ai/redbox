@@ -50,7 +50,7 @@ async def semantic_router_to_chain(
     # Match keyword
     route_match = re_keyword_pattern.search(question)
     if route_match:
-        route_name = route_match.group()
+        route_name = route_match.group()[1:]
         selected_chain = routable_chains.get(route_name)
 
     # Semantic route
