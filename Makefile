@@ -238,11 +238,10 @@ tf_import:
 release: ## Deploy app
 	chmod +x ./infrastructure/aws/scripts/release.sh && ./infrastructure/aws/scripts/release.sh $(env)
 
-# Runs the only the necessary backend for evaluation BUCKET_NAME
 .PHONY: eval_backend
-eval_backend:
+eval_backend:  ## Runs the only the necessary backend for evaluation BUCKET_NAME
 	docker compose up core-api worker -d --build
-	docker exec -it $$(docker ps -q --filter "name=minio") mc mb data/$${BUCKET_NAME}
+	docker exec -it $$(docker ps -q --filter "name=minio") mc mb data/${BUCKET_NAME}
 
 .PHONY: help
 help: ## Show this help
