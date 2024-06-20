@@ -20,13 +20,13 @@ class SourcesList extends HTMLElement {
         });
 
         let html = `
-            <h3 class="rb-chat-message__sources-heading govuk-heading-s govuk-!-margin-bottom-1">Sources</h3>
+            <h3 class="iai-chat-bubble__sources-heading govuk-heading-s govuk-!-margin-bottom-1">Sources</h3>
             <ul class="govuk-list govuk-list--bullet govuk-!-margin-bottom-0">
         `;
         this.sources.forEach((source) => {
             html += `
                 <li class="govuk-!-margin-bottom-0">
-                    <a class="rb-chat-messages__sources-link govuk-link" href="${source.url}">${source.fileName}</a>
+                    <a class="iai-chat-bubbles__sources-link govuk-link" href="${source.url}">${source.fileName}</a>
                 </li>
             `;
         });
@@ -46,9 +46,9 @@ class ChatMessage extends HTMLElement {
 
     connectedCallback() {
         this.innerHTML = `
-            <div class="rb-chat-message rb-chat-message--${this.dataset.role} govuk-body">
-                <div class="rb-chat-message__role">${this.dataset.role === 'ai' ? 'Redbox' : 'You'}</div>
-                <markdown-converter class="rb-chat-message__text">${this.dataset.text || ''}</markdown-converter>
+            <div class="iai-chat-bubble iai-chat-bubble--${this.dataset.role === 'user' ? 'right' : 'left'} js-chat-message govuk-body {{ classes }}" data-role="{{ role }}" tabindex="-1">
+                <div class="iai-chat-bubble__role">${this.dataset.role === 'ai' ? 'Redbox' : 'You'}</div>
+                <markdown-converter class="iai-chat-bubble__text">${this.dataset.text || ''}</markdown-converter>
                 ${!this.dataset.text ?
                     `<div class="rb-loading-ellipsis govuk-body-s">
                         Loading

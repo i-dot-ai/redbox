@@ -48,13 +48,6 @@
       </div>
       #}
 
-      {{ govukNotificationBanner(
-        title="Important",
-        text_list=[
-          {"text": "You can use up to, and including, Official Sensitive documents. You are not allowed to upload documents with personal data."}
-        ]
-      ) }}
-
       {# New Docs list #}
       {% if completed_files or processing_files %}
         <h2 class="govuk-heading-m">Ready to use</h2>
@@ -77,15 +70,20 @@
       {% endif %}
 
       <div class="govuk-button-group govuk-!-margin-top-7">
-        {{ govukButton(
-          text="Add documents",
-          href=url('upload'),
-          classes="rb-button--blue"
-        ) }}
-        {% if files %}
+        {% if completed_files or processing_files %}
           {{ govukButton(
             text="Start chat",
             href=url('chats')
+          ) }}
+          {{ govukButton(
+            text="Add documents",
+            href=url('upload'),
+            classes="govuk-button--secondary"
+          ) }}
+        {% else %}
+          {{ govukButton(
+            text="Add documents",
+            href=url('upload')
           ) }}
         {% endif %}
       </div>

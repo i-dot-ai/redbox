@@ -62,6 +62,13 @@ body {
   display: flex;
   gap: 0.75rem;
 }
+.rb-banner__button {
+  background-color: white !important;
+}
+.rb-banner__button:hover {
+  color: $redbox-red !important;
+  filter: brightness(0.9);
+}
 
 
 /* Documents page */
@@ -110,27 +117,42 @@ body {
 
 
 /* Chat page */
-.rb-chat-message__container {
-  margin-top: -1rem;
+.rb-loading-ellipsis {
+  font-style: italic;
+  margin-top: 1rem;
+}
+.rb-loading-ellipsis span {
+  animation-duration: 1.5s;
+  animation-iteration-count: infinite;
+  margin: 0 -2px;
+}
+.rb-loading-ellipsis span:nth-of-type(1) {
+  animation-name: rb-ellipsis-1;
+}
+.rb-loading-ellipsis span:nth-of-type(2) {
+  animation-name: rb-ellipsis-2;
+}
+.rb-loading-ellipsis span:nth-of-type(3) {
+  animation-name: rb-ellipsis-3;
+}
+@keyframes rb-ellipsis-1 {
+  0% { opacity: 0; }
+  24% { opacity: 0; }
+  25% { opacity: 1; }
+}
+@keyframes rb-ellipsis-2 {
+  0% { opacity: 0; }
+  49% { opacity: 0; }
+  50% { opacity: 1; }
+}
+@keyframes rb-ellipsis-3 {
+  0% { opacity: 0; }
+  74% { opacity: 0; }
+  75% { opacity: 1; }
 }
 
-.rb-new-message textarea {
-  margin-bottom: 0.5rem;
-}
-.rb-new-message .govuk-form-group {
-  margin: 0;
-  width: 100%;
-}
-@media (min-width: 769px) {
-  .rb-new-message {
-    align-items: flex-end;
-    display: flex;
-    gap: 0.5rem;
-  }
-  .rb-new-message textarea, .rb-new-message button {
-    height: 4rem;
-    margin: 0;
-  }
+.rb-chat-message__container {
+  margin-top: -1rem;
 }
 
 .rb-response-feedback {

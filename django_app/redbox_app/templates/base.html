@@ -39,7 +39,7 @@
   <a href="#main-content" class="govuk-skip-link" data-module="govuk-skip-link">Skip to main content</a>
 
   {% if environment | lower != "prod" %}
-    <div class="rb-classification-banner govuk-warning-text rb-environment-warning">
+    <div class="rb-classification-banner govuk-warning-text rb-environment-warning iai-environment-warning">
       {{environment|upper}} - This is not a live service
     </div>
   {% endif %}
@@ -71,8 +71,8 @@
       <nav aria-label="Menu" class="iai-top-nav__nav govuk-width-container">
         <ul id="navigation" class="govuk-header__navigation-list">
           {% for menu_item in menu_items %}
-            <li class="govuk-header__navigation-item {% if pageTitle == menu_item.text %}govuk-header__navigation-item--active{% endif %}">
-              <a class="iai-top-nav__link govuk-header__link" href="{{ url(menu_item.url) }}">{{ menu_item.text }}</a>
+            <li class="iai-top-nav__link-item {% if pageTitle == menu_item.text %}iai-top-nav__link-item--active{% endif %}">
+              <a class="iai-top-nav__link" href="{{ url(menu_item.url) }}">{{ menu_item.text }}</a>
             </li>
           {% endfor %}
         </ul>
