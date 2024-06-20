@@ -15,7 +15,7 @@ from langchain_core.vectorstores import VectorStoreRetriever
 from core_api.src import dependencies
 from core_api.src.format import format_chunks, get_file_chunked_to_tokens
 from core_api.src.runnables import make_chat_prompt_from_messages_runnable
-from redbox.models import ChatRequest, Chunk, Settings
+from redbox.models import ChatRequest, ChatRoute, Chunk, Settings
 from redbox.storage import ElasticsearchStorageHandler
 
 # === Logging ===
@@ -68,6 +68,7 @@ def build_retrieval_chain(
             | llm
             | StrOutputParser(),
             "source_documents": itemgetter("documents"),
+            "route_name": RunnableLambda(lambda _: ChatRoute.retrieval.value),
         }
     )
 
@@ -104,12 +105,13 @@ def build_summary_chain(
             env.ai.summarisation_system_prompt, env.ai.summarisation_question_prompt
         )
         | llm
-        | {"response": StrOutputParser()}
+        | {"response": StrOutputParser(), "route_name": RunnableLambda(lambda _: ChatRoute.summarisation.value)}
     )
 
 
-def build_static_response_chain(prompt_template) -> Runnable:
+def build_static_response_chain(prompt_template, route_name) -> Runnable:
     return RunnablePassthrough.assign(
         response=(ChatPromptTemplate.from_template(prompt_template) | RunnableLambda(lambda p: p.messages[0].content)),
         source_documents=RunnableLambda(lambda _: []),
+        route_name=RunnableLambda(lambda _: route_name.value),
     )
