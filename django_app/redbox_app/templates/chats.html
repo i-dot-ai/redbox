@@ -20,12 +20,12 @@
 
     <div class="govuk-grid-column-one-third">
 
-      <a class="govuk-button" href="{{ url('chats') }}">
+      <a class="iai-large-button" href="{{ url('chats') }}">
         <svg width="22" height="22" fill="none" aria-hidden="true" focusable="false"><path d="M21 11c0-5.523-4.477-10-10-10S1 5.477 1 11s4.477 10 10 10 10-4.477 10-10z" stroke="currentColor" stroke-linejoin="round"/><g filter="url(#A)"><path d="M15.656 11.656h-4v4h-1.312v-4h-4v-1.312h4v-4h1.312v4h4v1.312z" fill="currentColor"/></g><defs><filter id="A" x="6" y="6" width="10" height="10" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB"><feFlood flood-opacity="0" result="A"/><feColorMatrix in="SourceAlpha" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0"/><feOffset dx="1" dy="1"/><feColorMatrix values="0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 1 0"/><feBlend in2="A"/><feBlend in="SourceGraphic"/></filter></defs></svg>
         New chat
       </a>
 
-      <div class="iai-panel">
+      <div class="iai-panel govuk-!-margin-top-6">
         <h2 class="govuk-heading-s">Recent chats</h2>
         <ul class="govuk-list govuk-list--spaced iai-panel__scrollable">
           {% for chat in chat_history %}

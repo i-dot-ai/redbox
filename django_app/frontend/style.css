@@ -7650,11 +7650,26 @@ body {
   font-weight: 500;
   src: url("fonts/static/Inter-Medium.ttf");
 }
+@font-face {
+  font-family: "Inter-SemiBold";
+  font-weight: 700;
+  src: url("fonts/static/Inter-Medium.ttf");
+}
+.govuk-body-s {
+  font-size: 0.875rem;
+  line-height: 1.5rem;
+}
+
 /* GENERAL */
 :root {
   --iai-border-radius: 0.25rem;
+  --iai-colour-brand: #C50878;
   --iai-colour-text-primary: #1F2937;
   --iai-colour-text-secondary: #6B7280;
+}
+
+* {
+  box-sizing: border-box;
 }
 
 body, button, .govuk-body, .govuk-body-s, .govuk-heading-l, .govuk-heading-m, .govuk-heading-s, .govuk-fieldset__heading, .govuk-label, .govuk-button, .govuk-notification-banner, .govuk-footer, .govuk-footer__link {
@@ -7743,6 +7758,26 @@ main {
 }
 /* BUTTONS AND LINKS */
 .govuk-button, .govuk-button--secondary, .govuk-button:visited, .govuk-button--secondary:visited {
+  font-size: 0.875rem;
+  line-height: 1.5rem;
+  align-items: center;
+  background-color: var(--iai-product-colour, var(--iai-colour-brand));
+  border: 0;
+  border-radius: 0.25rem;
+  box-shadow: none;
+  color: white;
+  display: flex;
+  font-weight: 700;
+  min-height: 3.5rem;
+}
+
+.govuk-button:hover {
+  background-color: #aa2a16;
+}
+
+.iai-large-button {
+  font-size: 0.875rem;
+  line-height: 1.5rem;
   align-items: center;
   background-color: white;
   background: radial-gradient(rgb(255, 255, 255), rgba(255, 255, 255, 0));
@@ -7753,21 +7788,16 @@ main {
   box-shadow: -4px -4px 14px #fff, 12px 12px 16px rgba(164, 174, 183, 0.15);
   color: var(--iai-product-colour, #C50878);
   display: inline-flex;
-  font-size: 0.875rem;
   font-weight: 500;
   gap: 0.5rem;
   padding: 1rem 1.25rem;
   min-height: 3.5rem;
 }
 
-.govuk-button:hover, .govuk-button--secondary:hover {
+.iai-large-button:hover {
   background-color: white;
   background: radial-gradient(rgb(240, 240, 240), rgba(240, 240, 240, 0));
   color: var(--iai-product-colour, #C50878);
-}
-
-.govuk-table .govuk-button {
-  padding: 11px 10px 10px 10px;
 }
 
 .govuk-link:visited {
@@ -7834,12 +7864,12 @@ main {
 
 .iai-chat-bubble--left {
   border-bottom-left-radius: 0;
-  margin-right: clamp(2rem, 10vw, 5rem);
+  margin-right: clamp(2rem, 10vw, 8rem);
 }
 
 .iai-chat-bubble--right {
   border-bottom-right-radius: 0;
-  margin-left: clamp(2rem, 10vw, 5rem);
+  margin-left: clamp(2rem, 10vw, 8rem);
 }
 
 .iai-chat-bubble__role {
@@ -7851,11 +7881,13 @@ main {
   font-size: 0.875rem;
   line-height: 1.5rem;
   padding-top: 0.5rem;
+  word-break: break-word;
 }
 
 .iai-chat-bubble__sources-heading, .iai-chat-bubbles__sources-link {
   font-size: 0.875rem;
   line-height: 1.5rem;
+  word-break: break-word;
 }
 
 .iai-chat-bubble__text code {
@@ -7937,6 +7969,102 @@ main {
   color: var(--iai-colour-text-primary);
   margin: 0.125rem 0;
   padding-left: 1rem;
+}
+
+/* DOC LIST */
+.iai-doc-list {
+  font-size: 0.875rem;
+  line-height: 1.5rem;
+  display: block;
+  padding: 1rem;
+  width: 100%;
+}
+
+.iai-doc-list--complete {
+  background-color: #f0f9f0;
+}
+
+.iai-doc-list--processing {
+  background-color: #fcf7f6;
+}
+
+.iai-doc-list_thead {
+  display: block;
+}
+
+.iai-doc-list__header, .doc-list__item {
+  align-items: center;
+  border-style: solid;
+  border-width: 2px;
+  padding: 0.5rem;
+  display: flex;
+  justify-content: space-between;
+}
+
+.iai-doc-list--complete .doc-list__item {
+  border-color: #50ae54;
+}
+
+.iai-doc-list--processing .doc-list__item {
+  border-color: #9b0000;
+}
+
+.iai-doc-list__header {
+  border-color: transparent;
+  padding-bottom: 0;
+  padding-top: 0;
+}
+
+.iai-doc-list__header-item {
+  font-size: 0.75rem;
+  line-height: 0.875rem;
+  font-weight: 400;
+  text-align: left;
+}
+
+.iai-doc-list__cell {
+  flex-shrink: 0;
+}
+
+.iai-doc-list__cell--file-name {
+  flex-grow: 1;
+}
+
+.iai-doc-list__cell--expiry {
+  width: 4rem;
+}
+
+.iai-doc-list--processing .iai-doc-list__cell--expiry {
+  display: none;
+}
+
+.iai-doc-list__cell--status {
+  width: 5rem;
+}
+
+.iai-doc-list--complete .iai-doc-list__cell--status {
+  display: none;
+}
+
+.iai-doc-list__cell--actions {
+  width: 3rem;
+}
+
+.iai-doc-list__tbody {
+  display: block;
+  width: 100%;
+}
+
+.doc-list__item {
+  background-color: white;
+  border-radius: 0.25rem;
+  margin-top: 0.5rem;
+}
+
+.iai-doc-list__delete {
+  font-size: 0.75rem;
+  line-height: 0.875rem;
+  color: var(--iai-colour-text-secondary);
 }
 
 /* FOOTER */
