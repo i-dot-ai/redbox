@@ -122,7 +122,8 @@ def get_semantic_routing_encoder():
     global __semantic_routing_encoder  # noqa: PLW0603
     if not __semantic_routing_encoder:
         __semantic_routing_encoder = HuggingFaceEncoder(
-            name="sentence-transformers/paraphrase-albert-small-v2", cache_dir=MODEL_PATH
+            name="sentence-transformers/paraphrase-albert-small-v2",
+            cache_dir=MODEL_PATH,
         )
     return __semantic_routing_encoder
 
@@ -136,7 +137,6 @@ def get_semantic_route_layer(routes: Annotated[list[Route], Depends(get_semantic
 
 def get_routable_chains(
     retrieval_chain: Annotated[Runnable, Depends(build_retrieval_chain)],
-    # summary_chain: Annotated[Runnable, Depends(build_summary_chain)],
     summary_chain: Annotated[Runnable, Depends(build_map_reduce_summary_chain)],
 ):
     global __routable_chains  # noqa: PLW0603
