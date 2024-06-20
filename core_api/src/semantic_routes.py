@@ -12,6 +12,7 @@ from core_api.src.build_chains import (
     build_static_response_chain,
 )
 from redbox.model_db import MODEL_PATH
+from redbox.models.chat import ChatRoute
 
 # === Pre-canned responses for non-LLM routes ===
 INFO_RESPONSE = """
@@ -35,7 +36,7 @@ If you want the results to be returned in a specific format, please specify the 
 
 # === Set up the semantic router ===
 info = Route(
-    name="info",
+    name=ChatRoute.info.value,
     utterances=[
         "What is your name?",
         "Who are you?",
@@ -44,7 +45,7 @@ info = Route(
 )
 
 ability = Route(
-    name="ability",
+    name=ChatRoute.ability.value,
     utterances=[
         "What can you do?",
         "What can you do?",
@@ -60,7 +61,7 @@ ability = Route(
 )
 
 coach = Route(
-    name="coach",
+    name=ChatRoute.coach.value,
     utterances=[
         "That is not the answer I wanted",
         "Rubbish",
@@ -71,7 +72,7 @@ coach = Route(
 )
 
 gratitude = Route(
-    name="gratitude",
+    name=ChatRoute.gratitude.value,
     utterances=[
         "Thank you ever so much for your help!",
         "I'm really grateful for your assistance.",
@@ -83,7 +84,7 @@ gratitude = Route(
 )
 
 summarisation = Route(
-    name="summarisation",
+    name=ChatRoute.summarisation.value,
     utterances=[
         "I'd like to summarise the documents I've uploaded.",
         "Can you help me with summarising these documents?",
@@ -96,7 +97,7 @@ summarisation = Route(
 )
 
 extract = Route(
-    name="extract",
+    name=ChatRoute.extract.value,
     utterances=[
         "I'd like to find some information in the documents I've uploaded",
         "Can you help me identify details from these documents?",
@@ -142,11 +143,11 @@ def get_routable_chains(
     global __routable_chains  # noqa: PLW0603
     if not __routable_chains:
         __routable_chains = {
-            "info": build_static_response_chain(INFO_RESPONSE),
-            "ability": build_static_response_chain(ABILITY_RESPONSE),
-            "coach": build_static_response_chain(COACH_RESPONSE),
-            "gratitude": build_static_response_chain("You're welcome!"),
-            "retrieval": retrieval_chain,
-            "summarisation": summary_chain,
+            ChatRoute.info: build_static_response_chain(INFO_RESPONSE, ChatRoute.info),
+            ChatRoute.ability: build_static_response_chain(ABILITY_RESPONSE, ChatRoute.ability),
+            ChatRoute.coach: build_static_response_chain(COACH_RESPONSE, ChatRoute.coach),
+            ChatRoute.gratitude: build_static_response_chain("You're welcome!", ChatRoute.gratitude),
+            ChatRoute.retrieval: retrieval_chain,
+            ChatRoute.summarisation: summary_chain,
         }
     return __routable_chains

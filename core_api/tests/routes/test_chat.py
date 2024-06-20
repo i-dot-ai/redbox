@@ -15,7 +15,7 @@ from starlette.websockets import WebSocketDisconnect
 from core_api.src import dependencies, semantic_routes
 from core_api.src.app import app as application
 from core_api.src.routes.chat import chat_app
-from redbox.models.chat import ChatResponse
+from redbox.models.chat import ChatResponse, ChatRoute
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
@@ -84,8 +84,9 @@ def test_rag_chat_rest_gratitude(mock_client, headers):
         json={"message_history": [{"role": "user", "text": "Thank you"}]},
         headers=headers,
     )
-    response_dict = response.json()
-    assert response_dict["output_text"] == "You're welcome!"
+    chat_response = ChatResponse.model_validate(response.json())
+    assert chat_response.output_text == "You're welcome!"
+    assert chat_response.route_name == ChatRoute.gratitude
 
 
 def test_rag(mock_client, headers):
@@ -106,6 +107,7 @@ def test_rag(mock_client, headers):
     assert response.status_code == 200
     chat_response = ChatResponse.model_validate(response.json())
     assert chat_response.output_text == RAG_LLM_RESPONSE
+    assert chat_response.route_name == ChatRoute.retrieval
 
 
 def test_summary(mock_client, headers):
@@ -125,6 +127,7 @@ def test_summary(mock_client, headers):
     assert response.status_code == 200
     chat_response = ChatResponse.model_validate(response.json())
     assert chat_response.output_text == RAG_LLM_RESPONSE
+    assert chat_response.route_name == ChatRoute.summarisation
 
 
 def test_rag_chat_streamed(mock_client, headers):
@@ -142,7 +145,7 @@ def test_rag_chat_streamed(mock_client, headers):
         # When
         websocket.send_text(json.dumps({"message_history": message_history, "selected_files": selected_files}))
 
-        all_text, docs = [], []
+        all_text, docs, route_name = [], [], ""
         while True:
             try:
                 actual = websocket.receive_json()
@@ -150,9 +153,12 @@ def test_rag_chat_streamed(mock_client, headers):
                     all_text.append(actual["data"])
                 if actual["resource_type"] == "documents":
                     docs.append(actual["data"])
+                if actual["resource_type"] == "route_name":
+                    route_name = actual["data"]
             except WebSocketDisconnect:
                 break
 
         # Then
         text = "".join(all_text)
         assert text == RAG_LLM_RESPONSE
+        assert route_name == ChatRoute.retrieval
