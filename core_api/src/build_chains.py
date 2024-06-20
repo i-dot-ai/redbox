@@ -145,8 +145,13 @@ def build_map_reduce_summary_chain(
         map_operation
         | make_chat_prompt_from_messages_runnable(env.ai.reduce_system_prompt, env.ai.reduce_question_prompt)
         | llm
-        | {"response": StrOutputParser()}
+        | {
+            "response": StrOutputParser(),
+            "route_name": RunnableLambda(lambda _: ChatRoute.summarisation.value),
+        }
     )
+    #     | {"response": StrOutputParser()}
+    # )
 
 
 def build_static_response_chain(prompt_template, route_name) -> Runnable:
