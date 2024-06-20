@@ -10,9 +10,10 @@ module "rds" {
   public_subnet_ids_list  = data.terraform_remote_state.vpc.outputs.public_subnets
   vpc_id                  = data.terraform_remote_state.vpc.outputs.vpc_id
   instance_type           = var.env != "prod" ? "db.t3.micro" : "db.t3.large"
-  service_sg_ids = [
+  service_sg_ids          = [
     module.core_api.ecs_sg_id,
     module.worker.ecs_sg_id,
   ]
+  secret_tags         = { SecretPurpose : "general" }
   publicly_accessible = var.publicly_accessible
 }
