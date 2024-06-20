@@ -30,11 +30,44 @@ SUMMARISATION_SYSTEM_PROMPT = (
     "4) Maintain the original context and meaning.\n"
 )
 
+MAP_SYSTEM_PROMPT = (
+    "You are an AI assistant tasked with summarizing documents. "
+    "Your goal is to extract the most important information and present it in "
+    "a concise and coherent manner. Please follow these guidelines while summarizing: \n"
+    "1) Identify and highlight key points,\n"
+    "2) Avoid repetition,\n"
+    "3) Ensure the summary is easy to understand,\n"
+    "4) Maintain the original context and meaning.\n"
+)
 
-RETRIEVAL_QUESTION_PROMPT = "{question} \n=========\n{formatted_documents}\n=========\nFINAL ANSWER: "
+REDUCE_SYSTEM_PROMPT = (
+    "You are an AI assistant tasked with summarizing documents. "
+    "Your goal is to write a concise summary of list of summaries from a list of summaries in "
+    "a concise and coherent manner. Please follow these guidelines while summarizing: \n"
+    "1) Identify and highlight key points,\n"
+    "2) Avoid repetition,\n"
+    "3) Ensure the summary is easy to understand,\n"
+    "4) Maintain the original context and meaning.\n"
+)
+
+RETRIEVAL_QUESTION_PROMPT = (
+    "{question} \n=========\n{formatted_documents}\n=========\nFINAL ANSWER: "
+)
 
 
-SUMMARISATION_QUESTION_PROMPT = "Question: {question}. \n\n Documents: \n\n {documents} \n\n Answer: "
+SUMMARISATION_QUESTION_PROMPT = (
+    "Question: {question}. \n\n Documents: \n\n {documents} \n\n Answer: "
+)
+
+
+MAP_QUESTION_PROMPT = (
+    "Question: {question}. \n\n Documents: \n\n {documents} \n\n Answer: "
+)
+
+
+REDUCE_QUESTION_PROMPT = (
+    "Question: {question}. \n\n Documents: \n\n {documents} \n\n Answer: "
+)
 
 
 class AISettings(BaseModel):
@@ -49,6 +82,10 @@ class AISettings(BaseModel):
     retrieval_question_prompt: str = RETRIEVAL_QUESTION_PROMPT
     summarisation_system_prompt: str = SUMMARISATION_SYSTEM_PROMPT
     summarisation_question_prompt: str = SUMMARISATION_QUESTION_PROMPT
+    map_system_prompt: str = MAP_SYSTEM_PROMPT
+    map_question_prompt: str = MAP_QUESTION_PROMPT
+    reduce_system_prompt: str = REDUCE_SYSTEM_PROMPT
+    reduce_question_prompt: str = REDUCE_QUESTION_PROMPT
 
 
 class ElasticLocalSettings(BaseModel):
@@ -122,7 +159,9 @@ class Settings(BaseSettings):
     dev_mode: bool = False
     superuser_email: str | None = None
 
-    model_config = SettingsConfigDict(env_file=".env", env_nested_delimiter="__", extra="allow", frozen=True)
+    model_config = SettingsConfigDict(
+        env_file=".env", env_nested_delimiter="__", extra="allow", frozen=True
+    )
 
     def elasticsearch_client(self) -> Elasticsearch:
         if isinstance(self.elastic, ElasticLocalSettings):
@@ -143,7 +182,9 @@ class Settings(BaseSettings):
         log.info("Cloud ID = %s", self.elastic.cloud_id)
         log.info("Elastic Cloud API Key = %s", self.elastic.api_key)
 
-        return Elasticsearch(cloud_id=self.elastic.cloud_id, api_key=self.elastic.api_key)
+        return Elasticsearch(
+            cloud_id=self.elastic.cloud_id, api_key=self.elastic.api_key
+        )
 
     def s3_client(self):
         if self.object_store == "minio":
