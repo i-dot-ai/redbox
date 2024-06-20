@@ -70,7 +70,7 @@ class AISettings(BaseModel):
     rag_k: int = 5
     rag_num_candidates: int = 10
     rag_desired_chunk_size: int = 300
-    max_tokens = 20_000
+    max_tokens: int = 20_000
     retrieval_system_prompt: str = RETRIEVAL_SYSTEM_PROMPT
     retrieval_question_prompt: str = RETRIEVAL_QUESTION_PROMPT
     summarisation_system_prompt: str = SUMMARISATION_SYSTEM_PROMPT
