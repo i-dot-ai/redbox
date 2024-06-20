@@ -22,12 +22,15 @@
           </label>
           
           <div id="upload-docs-notification">
+            {#
             {{ govukNotificationBanner(
               title="Important",
               text_list=[
                 {"text": "The AI will use all documents you upload. You can use up to, and including, " ~ security ~ " documents. Do not upload any documents with personal data."}
               ]
             ) }}
+            #}
+            <p class="govuk-body-l">The AI will use all documents you upload. You can use up to, and including, {{ security }} documents. Do not upload any documents with personal data.</p>
           </div>
 
           <p class="govuk-body rb-file-types" id="upload-docs-filetypes">Limit 200MB per file: EML, HTML, JSON, MD, MSG, RST, RTF, TXT, XML, CSV, DOC, DOCX, EPUB, ODT, PDF, PPT, PPTX, TSV, XLSX, HTM</p>
