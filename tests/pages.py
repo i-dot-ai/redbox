@@ -146,18 +146,30 @@ class SignInLinkSentPage(BasePage):
 
 
 class SignInConfirmationPage(BasePage):
+    EXPECTED_TITLE = "Sign in - confirmation - Redbox Copilot"
+
     def __init__(self, page, magic_link: URL):
         page.goto(str(magic_link))
         super().__init__(page)
 
     @property
     def expected_page_title(self) -> str:
-        return "Sign in - confirmation - Redbox Copilot"
+        return SignInConfirmationPage.EXPECTED_TITLE
 
     def start(self) -> Union["DocumentsPage", "MyDetailsPage"]:
         self.page.get_by_role("button", name="Start", exact=True).click()
-        logger.debug("sign in conmfirmation navigating to %s", self)
-        return MyDetailsPage(self.page) if self.page.title().startswith("My details") else DocumentsPage(self.page)
+        logger.debug("sign in confirmation navigating to %s", self)
+        return self._where_are_we(self.page)
+
+    @staticmethod
+    def autosubmit(page: Page, magic_link: URL) -> Union["DocumentsPage", "MyDetailsPage"]:
+        page.goto(str(magic_link))
+        expect(page).not_to_have_title(SignInConfirmationPage.EXPECTED_TITLE)
+        return SignInConfirmationPage._where_are_we(page)
+
+    @staticmethod
+    def _where_are_we(page: Page) -> Union["DocumentsPage", "MyDetailsPage"]:
+        return MyDetailsPage(page) if page.title().startswith("My details") else DocumentsPage(page)
 
 
 class HomePage(SignedInBasePage):
