@@ -70,7 +70,6 @@ axe-playwright-python = "^0.1"
 anthropic = "^0.28.1"
 litellm = "^1.40.17"
 openai = "^1.35.1"
-pikepdf = "9.0.0"  # pinned to stop poetry complainning
 langchain-community = "^0.2.5"
 
 
