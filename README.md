@@ -37,6 +37,7 @@ You will need to install `poppler` and `tesseract` to run the `worker`
 # Testing
 - Unit tests and QA run in CI
 - At this time integration test(s) take 10+ mins to run so are triggered manually in CI
+- Run `make help` to see all the available build activities.
 
 # Dependencies
 

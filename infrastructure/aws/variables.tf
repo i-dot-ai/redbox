@@ -26,7 +26,7 @@ variable "developer_ips" {
 
 variable "django_secret_key" {
   type        = string
-  description = "cryptographic signature for djamngo app"
+  description = "cryptographic signature for django app"
 }
 
 variable "domain_name" {
@@ -136,6 +136,18 @@ variable "rules" {
   default     = []
 }
 
+variable "sentry_dsn" {
+  description = "The sentry dsn to send sentry logs to"
+  type        = string
+  default     = null
+}
+
+variable "sentry_environment" {
+  description = "The sentry environment to send sentry logs to"
+  type        = string
+  default     = null
+}
+
 variable "scope" {
   description = "Scope of the WAF, either 'CLOUDFRONT' or 'REGIONAL'"
   type        = string
@@ -156,4 +168,71 @@ variable "use_case" {
   description = "Use case/resource for WAF"
   type        = string
   default     = "load_balancer"
+}
+
+variable "team_name" {
+  type        = string
+  description = "The name of the team"
+}
+
+variable "publicly_accessible" {
+  type        = bool
+  description = "Flag to determine if the database is publicly accessible"
+}
+
+variable "rag_k" {
+    type        = number
+    default     = 15
+    description = "how many chunks to retrieve to form the basis of the response"
+}
+
+variable "rag_desired_chunk_size" {
+    type        = number
+    default     = 300
+    description = "how large should the chunk sizes be"
+}
+
+variable "rag_num_candidates" {
+    type        = number
+    default     = 10
+}
+
+variable "retrieval_system_prompt" {
+    type        = string
+    default     = <<EOT
+Given the following conversation and extracted parts of a long document and a question, create a final answer.
+If you don't know the answer, just say that you don't know. Don't try to make up an answer.
+If a user asks for a particular format to be returned, such as bullet points, then please use that format.
+If a user asks for bullet points you MUST give bullet points.
+If the user asks for a specific number or range of bullet points you MUST give that number of bullet points.
+Use **bold** to highlight the most question relevant parts in your response.
+If dealing dealing with lots of data return it in markdown table format.
+    EOT
+    description = "base retrieval prompt"
+}
+
+variable "retrieval_question_prompt" {
+    type        = string
+    default     = "{question} \n=========\n{formatted_documents}\n=========\nFINAL ANSWER: "
+    description = "how to construct retrieval"
+}
+
+variable "summarisation_system_prompt" {
+    type        = string
+    default     = <<EOT
+You are an AI assistant tasked with summarizing documents.
+Your goal is to extract the most important information and present it in
+a concise and coherent manner. Please follow these guidelines while summarizing:
+1) Identify and highlight key points,
+2) Avoid repetition,
+3) Ensure the summary is easy to understand,
+4) Maintain the original context and meaning.
+    EOT
+    description = "base summarisation prompt"
+}
+
+variable "summarisation_question_prompt" {
+    type        = string
+    default     = "Question: {question}. \n\n Documents: \n\n {documents} \n\n Answer: "
+    description = "how to construct summarization"
 }

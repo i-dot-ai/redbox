@@ -1,0 +1,118 @@
+name: Manual release
+
+on:
+  workflow_dispatch:
+    inputs:
+      commit-hash:
+        description: 'The SHA of the Git commit to use'
+        required: false
+      core-repo-reference:
+        description: 'The SHA to set the core repo to'
+        required: false
+        default: refs/heads/main
+      config-repo-reference:
+        description: 'The SHA to set the config repo to'
+        required: false
+        default: refs/heads/main
+
+permissions:
+  contents: read
+
+jobs:
+  set-vars:
+    runs-on: ubuntu-latest
+    outputs:
+      app-name: ${{ steps.export.outputs.app-name }}
+      ec2-instance-type: ${{ steps.export.outputs.ec2-instance-type }}
+      version: ${{ steps.export.outputs.version }}
+      runner-size: ${{ steps.export.outputs.runner-size }}
+      infra-config-repo: ${{ steps.export.outputs.infra-config-repo }}
+
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - id: export
+        run: |
+          . ./.github/.github.env
+          echo "ec2-instance-type=${EC2_INSTANCE_TYPE}" >> $GITHUB_OUTPUT
+          echo "app-name=${APP_NAME}" >> $GITHUB_OUTPUT
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "runner-size=${RUNNER_SIZE}" >> $GITHUB_OUTPUT
+          echo "infra-config-repo=${INFRA_CONFIG_REPO}" >> $GITHUB_OUTPUT
+
+  start-runner:
+    uses: i-dot-ai/i-dot-ai-core-github-actions/.github/workflows/start-runner.yml@main
+    needs: set-vars
+    with:
+      EC2_INSTANCE_TYPE: ${{ needs.set-vars.outputs.ec2-instance-type }}
+      RUNNER_SIZE: ${{ needs.set-vars.outputs.runner-size }}
+    secrets:
+      AWS_GITHUBRUNNER_USER_ACCESS_KEY: ${{ secrets.AWS_GITHUBRUNNER_USER_ACCESS_KEY }}
+      AWS_GITHUBRUNNER_USER_SECRET_ID: ${{ secrets.AWS_GITHUBRUNNER_USER_SECRET_ID }}
+      AWS_GITHUBRUNNER_PAT: ${{ secrets.AWS_GITHUBRUNNER_PAT}}
+      AWS_REGION: ${{ secrets.AWS_REGION }}
+
+  build-image:
+    needs:
+      - set-vars
+      - start-runner
+    uses: i-dot-ai/i-dot-ai-core-github-actions/.github/workflows/build-docker.yml@main
+    with:
+      APP_NAME: ${{ needs.set-vars.outputs.app-name }}
+      RUNNER_LABEL: ${{ needs.start-runner.outputs.label }}
+      INFRASTRUCTURE_FOLDER: "infrastructure/aws"
+      COMMIT_HASH: ${{ github.event.inputs.COMMIT_HASH }}
+    secrets:
+      AWS_GITHUBRUNNER_PAT: ${{ secrets.AWS_GITHUBRUNNER_PAT}}
+      AWS_GITHUBRUNNER_PAT_USER: ${{ secrets.AWS_GITHUBRUNNER_PAT_USER }}
+      AWS_REGION: ${{ secrets.AWS_REGION }}
+      AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
+
+  run-integration-tests:
+    needs:
+      - set-vars
+      - start-runner
+      - build-image
+    uses: ../integration.yml
+
+  release-terraform:
+    needs:
+      - set-vars
+      - start-runner
+      - build-image
+      - run-integration-tests
+    uses: i-dot-ai/i-dot-ai-core-github-actions/.github/workflows/apply-terraform.yml@main
+    with:
+      APP_NAME: ${{ needs.set-vars.outputs.app-name }}
+      RUNNER_LABEL: ${{ needs.start-runner.outputs.label }}
+      INFRASTRUCTURE_FOLDER: "infrastructure/aws"
+      PUBLIC_INFRA_DEPLOYMENT: true
+      ENVIRONMENT: dev
+      INFRA_CONFIG_REPO: ${{ needs.set-vars.outputs.infra-config-repo }}
+      CORE_INFRA_REF: ${{ github.event.inputs.core-repo-reference }}
+      INFRA_CONFIG_REF: ${{ github.event.inputs.config-repo-reference }}
+      IMAGE_TAG: ${{ github.event.inputs.commit-hash }}
+    secrets:
+      AWS_GITHUBRUNNER_PAT: ${{ secrets.AWS_GITHUBRUNNER_PAT}}
+      AWS_GITHUBRUNNER_PAT_USER: ${{ secrets.AWS_GITHUBRUNNER_PAT_USER }}
+      AWS_REGION: ${{ secrets.AWS_REGION }}
+      AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
+
+  stop-runner:
+    uses: i-dot-ai/i-dot-ai-core-github-actions/.github/workflows/stop-runner.yml@main
+    if: needs.start-runner.outputs.use-persisted == 0 && always()
+    needs:
+      - set-vars
+      - start-runner
+      - build-image
+      - run-integration-tests
+      - release-terraform
+    with:
+      RUNNER_LABEL: ${{ needs.start-runner.outputs.label }}
+      EC2_INSTANCE_ID: ${{ needs.start-runner.outputs.ec2-instance-id }}
+    secrets:
+      AWS_GITHUBRUNNER_USER_ACCESS_KEY: ${{ secrets.AWS_GITHUBRUNNER_USER_ACCESS_KEY }}
+      AWS_GITHUBRUNNER_USER_SECRET_ID: ${{ secrets.AWS_GITHUBRUNNER_USER_SECRET_ID }}
+      AWS_GITHUBRUNNER_PAT: ${{ secrets.AWS_GITHUBRUNNER_PAT}}
+      AWS_REGION: ${{ secrets.AWS_REGION }}

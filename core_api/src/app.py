@@ -7,7 +7,7 @@ from elasticsearch import Elasticsearch
 from fastapi import Depends, FastAPI, Response
 from fastapi.responses import RedirectResponse
 
-from core_api.src import services
+from core_api.src.dependencies import get_elasticsearch_client
 from core_api.src.routes.chat import chat_app
 from core_api.src.routes.file import file_app
 from redbox.models import Settings, StatusResponse
@@ -50,7 +50,7 @@ def root():
 
 
 @app.get("/health", status_code=HTTPStatus.OK, tags=["health"])
-def health(response: Response, es: Annotated[Elasticsearch, Depends(services.elasticsearch_client)]) -> StatusResponse:
+def health(response: Response, es: Annotated[Elasticsearch, Depends(get_elasticsearch_client)]) -> StatusResponse:
     """Returns the health of the API
 
     Returns:

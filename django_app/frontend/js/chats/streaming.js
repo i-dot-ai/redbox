@@ -20,13 +20,13 @@ class SourcesList extends HTMLElement {
         });
 
         let html = `
-            <h3 class="iai-chat-message__sources-heading govuk-heading-s govuk-!-margin-bottom-1">Sources</h3>
+            <h3 class="rb-chat-message__sources-heading govuk-heading-s govuk-!-margin-bottom-1">Sources</h3>
             <ul class="govuk-list govuk-list--bullet govuk-!-margin-bottom-0">
         `;
         this.sources.forEach((source) => {
             html += `
                 <li class="govuk-!-margin-bottom-0">
-                    <a class="iai-chat-messages__sources-link govuk-link" href="${source.url}">${source.fileName}</a>
+                    <a class="rb-chat-messages__sources-link govuk-link" href="${source.url}">${source.fileName}</a>
                 </li>
             `;
         });
@@ -46,15 +46,17 @@ class ChatMessage extends HTMLElement {
 
     connectedCallback() {
         this.innerHTML = `
-            <div class="iai-chat-message iai-chat-message--${this.dataset.role} govuk-body">
-                <div class="iai-chat-message__role">${this.dataset.role === 'ai' ? 'Redbox' : 'You'}</div>
+            <div class="rb-chat-message rb-chat-message--${this.dataset.role} govuk-body">
+                <div class="rb-chat-message__role">${this.dataset.role === 'ai' ? 'Redbox' : 'You'}</div>
+                <markdown-converter class="rb-chat-message__text">${this.dataset.text || ''}</markdown-converter>
                 ${!this.dataset.text ?
-                    `<div class="iai-streaming-response-loading js-streaming-response-loading govuk-!-margin-top-1" tabindex="-1">
-                        <img class="iai-streaming-response-loading__spinner" src="/static/images/spinner.gif" alt=""/>
-                        <p class="iai-streaming-response-loading__text govuk-body-s govuk-!-margin-bottom-0 govuk-!-margin-left-1">Response loading...</p>
+                    `<div class="rb-loading-ellipsis govuk-body-s">
+                        Loading
+                        <span aria-hidden="true">.</span>
+                        <span aria-hidden="true">.</span>
+                        <span aria-hidden="true">.</span>
                     </div>`
                 : ''}
-                <markdown-converter class="iai-chat-message__text">${this.dataset.text || ''}</markdown-converter>
                 <sources-list></sources-list>
             </div>
         `;
@@ -63,31 +65,43 @@ class ChatMessage extends HTMLElement {
     /**
      * Streams an LLM response
      * @param {string} message
+     * @param {string[]} selectedDocuments
      * @param {string | undefined} sessionId
      * @param {string} endPoint
      * @param {HTMLElement} chatControllerRef
      */
-    stream = (message, sessionId, endPoint, chatControllerRef) => {
+    stream = (message, selectedDocuments, sessionId, endPoint, chatControllerRef) => {
 
         let responseContainer = /** @type MarkdownConverter */(this.querySelector('markdown-converter'));
         let sourcesContainer = /** @type SourcesList */(this.querySelector('sources-list'));
-        let responseLoading = /** @type HTMLElement */(this.querySelector('.js-streaming-response-loading'));
+        let responseLoading = /** @type HTMLElement */(this.querySelector('.rb-loading-ellipsis'));
         let webSocket = new WebSocket(endPoint);
         let streamedContent = '';
         let sources = [];
+
+        // Stop streaming on escape key press
+        this.addEventListener('keydown', (evt) => {
+            if (evt.key === 'Escape' && this.dataset.status === 'streaming') {
+                this.dataset.status = 'stopped';
+                webSocket.close();
+            }
+        });
     
         webSocket.onopen = (event) => {
-            webSocket.send(JSON.stringify({message: message, sessionId: sessionId}));
-            this.dataset.status = "streaming";
+            webSocket.send(JSON.stringify({message: message, sessionId: sessionId, selectedFiles: selectedDocuments}));
+            this.dataset.status = 'streaming';
         };
     
         webSocket.onerror = (event) => {
             responseContainer.innerHTML = 'There was a problem. Please try sending this message again.';
-            this.dataset.status = "error";
+            this.dataset.status = 'error';
         };
 
         webSocket.onclose = (event) => {
-            this.dataset.status = "complete";
+            responseLoading.style.display = 'none';
+            if (this.dataset.status !== 'stopped') {
+                this.dataset.status = 'complete';
+            }
         };
     
         webSocket.onmessage = (event) => {
@@ -100,7 +114,6 @@ class ChatMessage extends HTMLElement {
             }
 
             if (message.type === 'text') {
-                responseLoading.style.display = 'none';
                 streamedContent += message.data;
                 responseContainer.update(streamedContent);
             } else if (message.type === 'session-id') {
@@ -123,11 +136,12 @@ class ChatController extends HTMLElement {
 
     connectedCallback() {
 
-        const messageForm = this.querySelector('.js-message-input');
+        const messageForm = this.closest('form');
         const textArea = /** @type {HTMLInputElement | null} */ (this.querySelector('.js-user-text'));
         const messageContainer = this.querySelector('.js-message-container');
         const insertPosition = this.querySelector('.js-response-feedback');
         const feedbackButtons = /** @type {HTMLElement | null} */ (this.querySelector('feedback-buttons'));
+        let selectedDocuments = [];
 
         messageForm?.addEventListener('submit', (evt) => {
             
@@ -146,7 +160,7 @@ class ChatController extends HTMLElement {
             aiMessage.setAttribute('data-role', 'ai');
             aiMessage.setAttribute('tabindex', '-1');
             messageContainer?.insertBefore(aiMessage, insertPosition);
-            aiMessage.stream(userText, this.dataset.sessionId, this.dataset.streamUrl || '', this);
+            aiMessage.stream(userText, selectedDocuments, this.dataset.sessionId, this.dataset.streamUrl || '', this);
             aiMessage.focus();
 
             // reset UI 
@@ -157,7 +171,44 @@ class ChatController extends HTMLElement {
 
         });
 
+        document.body.addEventListener('selected-docs-change', (evt) => {
+            selectedDocuments = /** @type{CustomEvent} */(evt).detail;
+        });
+
     }
   
 }
 customElements.define('chat-controller', ChatController);
+
+
+
+
+class DocumentSelector extends HTMLElement {
+
+    connectedCallback() {
+
+        const documents = /** @type {NodeListOf<HTMLInputElement>} */ (this.querySelectorAll('input[type="checkbox"]'));
+
+        const getSelectedDocuments = () => {
+            let selectedDocuments = [];
+            documents.forEach((document) => {
+                if (document.checked) {
+                    selectedDocuments.push(document.value);
+                }
+            });
+            const evt = new CustomEvent('selected-docs-change', { detail: selectedDocuments });
+            document.body.dispatchEvent(evt);
+        }
+
+        // update on page load
+        getSelectedDocuments();
+
+        // update on any selection change
+        documents.forEach((document) => {
+            document.addEventListener('change', getSelectedDocuments);
+        });
+
+    }
+  
+}
+customElements.define('document-selector', DocumentSelector);

@@ -5,6 +5,19 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Core API",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "uvicorn",
+            "args": [
+                "core_api.src.app:app",
+                "--reload",
+                "--port", "5002"
+            ],
+            "jinja": true,
+            "envFile": "${workspaceFolder}/.env"
+        },
+        {
             "name": "Python Debugger: Django",
             "type": "debugpy",
             "request": "launch",

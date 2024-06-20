@@ -39,7 +39,7 @@ async def test_post_file_upload(s3_client, app_client, file_pdf_path: Path, head
     assert response.status_code == HTTPStatus.CREATED
 
 
-def test_list_files(app_client, stored_file, headers):
+def test_list_files(app_client, stored_file_1, headers):
     """
     Given a previously saved file
     When I GET all files from /file
@@ -51,16 +51,16 @@ def test_list_files(app_client, stored_file, headers):
     file_list = json.loads(response.content.decode("utf-8"))
     assert len(file_list) > 0
 
-    assert str(stored_file.uuid) in [file["uuid"] for file in file_list]
+    assert str(stored_file_1.uuid) in [file["uuid"] for file in file_list]
 
 
-def test_get_file(app_client, stored_file, headers):
+def test_get_file(app_client, stored_file_1, headers):
     """
     Given a previously saved file
     When I GET it from /file/uuid
     I Expect to receive it
     """
-    response = app_client.get(f"/file/{stored_file.uuid}", headers=headers)
+    response = app_client.get(f"/file/{stored_file_1.uuid}", headers=headers)
     assert response.status_code == HTTPStatus.OK
 
 

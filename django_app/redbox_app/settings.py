@@ -4,8 +4,11 @@ import socket
 from pathlib import Path
 
 import environ
+import sentry_sdk
 from dotenv import load_dotenv
+from import_export.formats.base_formats import CSV
 from redbox_app.setting_enums import Classification, Environment
+from sentry_sdk.integrations.django import DjangoIntegration
 from storages.backends import s3boto3
 
 load_dotenv()
@@ -14,7 +17,7 @@ env = environ.Env()
 
 SECRET_KEY = env.str("DJANGO_SECRET_KEY")
 ENVIRONMENT = Environment[env.str("ENVIRONMENT").upper()]
-WEBSOCKET_SCHEME = "ws" if ENVIRONMENT.is_local() else "wss"
+WEBSOCKET_SCHEME = "ws" if ENVIRONMENT.is_test else "wss"
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env.bool("DEBUG")
@@ -58,6 +61,7 @@ INSTALLED_APPS = [
     "storages",
     "compressor",
     "magic_link",
+    "import_export",
 ]
 
 MIDDLEWARE = [
@@ -162,7 +166,7 @@ CSP_FONT_SRC = (
 )
 CSP_STYLE_SRC = ("'self'",)
 CSP_FRAME_ANCESTORS = ("'none'",)
-CSP_CONNECT_SRC = ["'self'", f"wss://{ENVIRONMENT.hosts[0]}/ws/chat/"]
+CSP_CONNECT_SRC = ["'self'", f"wss://{ENVIRONMENT.hosts[0]}/ws/chat/", "plausible.io"]
 
 # https://pypi.org/project/django-permissions-policy/
 PERMISSIONS_POLICY: dict[str, list] = {
@@ -200,33 +204,23 @@ AWS_STORAGE_BUCKET_NAME = BUCKET_NAME  # this duplication is required for django
 OBJECT_STORE = env.str("OBJECT_STORE")
 AWS_S3_FILE_OVERWRITE = False  # allows users to have duplicate file names
 
+STORAGES = {
+    "default": {
+        "BACKEND": s3boto3.S3Boto3Storage,
+    },
+    "staticfiles": {
+        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+    },
+}
 
-if ENVIRONMENT.is_test:
+if ENVIRONMENT.uses_minio:
     AWS_S3_SECRET_ACCESS_KEY = env.str("AWS_SECRET_KEY")
     AWS_ACCESS_KEY_ID = env.str("AWS_ACCESS_KEY")
     MINIO_HOST = env.str("MINIO_HOST")
     MINIO_PORT = env.str("MINIO_PORT")
     MINIO_ENDPOINT = f"http://{MINIO_HOST}:{MINIO_PORT}"
     AWS_S3_ENDPOINT_URL = MINIO_ENDPOINT
-
-    STORAGES = {
-        "default": {
-            "BACKEND": s3boto3.S3Boto3Storage,
-        },
-        "staticfiles": {
-            "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
-        },
-    }
 else:
-    STORAGES = {
-        "default": {
-            "BACKEND": s3boto3.S3Boto3Storage,
-        },
-        "staticfiles": {
-            "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
-        },
-    }
-
     # https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Strict-Transport-Security
     # Mozilla guidance max-age 2 years
     SECURE_HSTS_SECONDS = 2 * 365 * 24 * 60 * 60
@@ -238,6 +232,21 @@ if ENVIRONMENT.is_test:
 else:
     LOCALHOST = socket.gethostbyname(socket.gethostname())
     ALLOWED_HOSTS = [LOCALHOST, *ENVIRONMENT.hosts]
+
+if not ENVIRONMENT.is_local:
+    SENTRY_DSN = env.str("SENTRY_DSN", None)
+    SENTRY_ENVIRONMENT = env.str("SENTRY_ENVIRONMENT", None)
+    if SENTRY_DSN and SENTRY_ENVIRONMENT:
+        sentry_sdk.init(
+            dsn=SENTRY_DSN,
+            integrations=[
+                DjangoIntegration(),
+            ],
+            environment=SENTRY_ENVIRONMENT,
+            send_default_pii=False,
+            traces_sample_rate=1.0,
+            profiles_sample_rate=0.0,
+        )
 
 DATABASES = {
     "default": {
@@ -314,7 +323,10 @@ MAGIC_LINK = {
     "SESSION_EXPIRY": 7 * 24 * 60 * 60,
 }
 
+IMPORT_FORMATS = [CSV]
+
 USE_STREAMING = env.bool("USE_STREAMING")
+CHAT_TITLE_LENGTH = 30
 FILE_EXPIRY_IN_SECONDS = env.int("FILE_EXPIRY_IN_DAYS") * 24 * 60 * 60
 SUPERUSER_EMAIL = env.str("SUPERUSER_EMAIL", None)
 MAX_SECURITY_CLASSIFICATION = Classification[env.str("MAX_SECURITY_CLASSIFICATION")]

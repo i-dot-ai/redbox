@@ -1,3 +1,3 @@
-resource "aws_s3_bucket" "user_data_bucket" {
-  bucket = "${var.project_name}-${terraform.workspace}"
+resource "aws_s3_bucket" "user_data" {
+  bucket = local.name
 }
