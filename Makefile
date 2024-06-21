@@ -119,6 +119,24 @@ IMAGE_TAG=$$(git rev-parse HEAD)
 tf_build_args=-var "image_tag=$(IMAGE_TAG)"
 DOCKER_SERVICES=$$(docker compose config --services | grep -v mlflow)
 
+AUTO_APPLY_RESOURCES = module.django-app.aws_ecs_task_definition.aws-ecs-task \
+                       module.django-app.aws_ecs_service.aws-ecs-service \
+                       module.django-app.data.aws_ecs_task_definition.main \
+                       module.core-api.aws_ecs_task_definition.aws-ecs-task \
+                       module.core-api.aws_ecs_service.aws-ecs-service \
+                       module.core-api.data.aws_ecs_task_definition.main \
+                       module.worker.aws_ecs_task_definition.aws-ecs-task \
+                       module.worker.aws_ecs_service.aws-ecs-service \
+                       module.worker.data.aws_ecs_task_definition.main \
+                       module.waf.aws_wafv2_ip_set.london \
+                       aws_secretsmanager_secret.django-app-secret \
+                       aws_secretsmanager_secret.worker-secret \
+                       aws_secretsmanager_secret.core-api-secret \
+					   module.load_balancer.aws_security_group_rule.load_balancer_http_whitelist \
+					   module.load_balancer.aws_security_group_rule.load_balancer_https_whitelist
+
+target_modules = $(foreach resource,$(AUTO_APPLY_RESOURCES),-target $(resource))
+
 .PHONY: docker_login
 docker_login:
 	aws ecr get-login-password --region $(AWS_REGION) | docker login --username AWS --password-stdin $(ECR_URL)
