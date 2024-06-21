@@ -56,7 +56,7 @@ async def semantic_router_to_chain(
     # Semantic route
     if selected_chain is None:
         route_name = route_layer(question).name
-        selected_chain = routable_chains.get(route_name, routable_chains.get("retrieval"))
+        selected_chain = routable_chains.get(route_name, routable_chains.get("search"))
 
     params = ChainInput(
         question=chat_request.message_history[-1].text,
@@ -64,6 +64,8 @@ async def semantic_router_to_chain(
         user_uuid=user_uuid,
         chat_history=chat_request.message_history[:-1],
     )
+
+    log.info("Routed to %s", route_name)
 
     return (selected_chain, params)
 
