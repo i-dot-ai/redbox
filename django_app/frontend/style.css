@@ -1,4 +1,5 @@
 @charset "UTF-8";
+/*old:#A50202*/
 
 
 
@@ -7452,7 +7453,7 @@ body {
 }
 
 .rb-banner {
-  background-color: #A50202;
+  background-color: #9C0000;
   color: white;
   padding-bottom: 3rem;
   padding-top: 2.75rem;
@@ -7482,7 +7483,7 @@ body {
 }
 
 .rb-banner__button:hover {
-  color: #A50202 !important;
+  color: #9C0000 !important;
   filter: brightness(0.9);
 }
 
@@ -7678,7 +7679,7 @@ body {
 
 /* i.AI Design System */
 :root {
-  --iai-product-colour: #9C0000; /*A50202*/
+  --iai-product-colour: #9C0000;
   --iai-header-gradient-colour-1: #9C0000;
   --iai-header-gradient-colour-2: #451818;
   --iai-background-colour-1: #F6EEF0;
@@ -7769,7 +7770,7 @@ body:has(.iai-environment-warning) main {
 }
 
 .iai-top-nav__product-name::before {
-  background: linear-gradient(90deg, var(--iai-header-gradient-colour-1, #C50878), var(--iai-header-gradient-colour-2, #5F043A));
+  background: linear-gradient(30deg, var(--iai-header-gradient-colour-1, #C50878) 62%, var(--iai-header-gradient-colour-2, #5F043A));
   content: "";
   display: block;
   height: 100%;
@@ -7822,15 +7823,11 @@ body:has(.iai-environment-warning) main {
   text-decoration: none;
 }
 
-@media (min-width: 840px) {
+@media (min-width: 1020px) {
   .iai-top-nav__container {
     align-items: center;
     display: flex;
     justify-content: space-between;
-  }
-}
-@media (min-width: 1020px) {
-  .iai-top-nav__container {
     margin: 0 auto;
     max-width: 960px;
   }
