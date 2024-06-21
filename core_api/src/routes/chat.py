@@ -65,7 +65,7 @@ async def semantic_router_to_chain(
         chat_history=chat_request.message_history[:-1],
     )
 
-    log.info("Routed to %s", route_name)
+    log.info("Routed to %s: %s", route_name, selected_chain.dict())
 
     return (selected_chain, params)
 
