@@ -7727,7 +7727,7 @@ body {
   box-sizing: border-box;
 }
 
-body, button, textarea, input, .govuk-body, .govuk-body-s, .govuk-heading-l, .govuk-heading-m, .govuk-heading-s, .govuk-fieldset__heading, .govuk-label, .govuk-button, .govuk-notification-banner, .govuk-footer, .govuk-footer__link {
+body, button, textarea, input, .govuk-body-l, .govuk-body, .govuk-body-s, .govuk-heading-xl, .govuk-heading-l, .govuk-heading-m, .govuk-heading-s, .govuk-fieldset__heading, .govuk-label, .govuk-button, .govuk-details, .govuk-notification-banner, .govuk-footer, .govuk-footer__link {
   font-family: Inter !important;
 }
 
@@ -7794,9 +7794,19 @@ body:has(.iai-environment-warning) main {
   width: 100%;
 }
 
+.iai-top-nav__phase {
+  font-size: 1rem;
+  line-height: 1.5rem;
+  background-color: var(--iai-colour-text-secondary);
+  font-weight: 500;
+  margin-left: 5.25rem;
+  padding: 1px 8px;
+  text-transform: uppercase;
+}
+
 .iai-top-nav__link-item {
   display: inline-block;
-  margin-left: 15px;
+  margin-left: 1rem;
   padding: 2px 0;
   border: 0;
 }
@@ -7812,7 +7822,7 @@ body:has(.iai-environment-warning) main {
   text-decoration: none;
 }
 
-@media (min-width: 769px) {
+@media (min-width: 840px) {
   .iai-top-nav__container {
     align-items: center;
     display: flex;
