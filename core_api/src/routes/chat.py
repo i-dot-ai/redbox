@@ -1,4 +1,5 @@
 import logging
+import re
 from typing import Annotated
 from uuid import UUID
 
@@ -17,6 +18,8 @@ from redbox.models.chat import ChatRequest, ChatResponse, ChatRoute, SourceDocum
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger()
+
+re_keyword_pattern = re.compile(r"@(\w+)")
 
 
 chat_app = FastAPI(
@@ -41,15 +44,27 @@ async def semantic_router_to_chain(
     chat_request: ChatRequest, user_uuid: UUID, routable_chains: dict[str, Runnable], route_layer: RouteLayer
 ) -> tuple[Runnable, ChainInput, ChatRoute]:
     question = chat_request.message_history[-1].text
-    route = route_layer(question)
 
-    selected_chain = routable_chains.get(route.name, routable_chains.get("retrieval"))
+    selected_chain = None
+
+    # Match keyword
+    route_match = re_keyword_pattern.search(question)
+    if route_match:
+        route_name = route_match.group()[1:]
+        selected_chain = routable_chains.get(route_name)
+
+    # Semantic route
+    if selected_chain is None:
+        route_name = route_layer(question).name
+        selected_chain = routable_chains.get(route_name, routable_chains.get("retrieval"))
+
     params = ChainInput(
         question=chat_request.message_history[-1].text,
         file_uuids=[f.uuid for f in chat_request.selected_files],
         user_uuid=user_uuid,
         chat_history=chat_request.message_history[:-1],
     )
+
     return (selected_chain, params)
 
 
