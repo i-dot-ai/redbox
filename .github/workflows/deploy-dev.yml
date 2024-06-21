@@ -59,10 +59,19 @@ jobs:
       AWS_GITHUBRUNNER_PAT: ${{ secrets.AWS_GITHUBRUNNER_PAT}}
       AWS_REGION: ${{ secrets.AWS_REGION }}
 
+  run-integration-tests:
+    needs:
+      - set-vars
+      - start-runner
+    uses: i-dot-ai/redbox-copilot/.github/workflows/integration.yml@86b3b12d8f7e290ef67ad290d408b1201080c60e
+    with:
+      COMMIT_HASH: ${{ github.event.inputs.commit-hash }}
+
   build-image:
     needs:
       - set-vars
       - start-runner
+      - run-integration-tests
     uses: i-dot-ai/i-dot-ai-core-github-actions/.github/workflows/build-docker.yml@9c4473481eafb33ea598291d1e13e79d53072824
     with:
       APP_NAME: ${{ needs.set-vars.outputs.app-name }}
@@ -75,14 +84,6 @@ jobs:
       AWS_REGION: ${{ secrets.AWS_REGION }}
       AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
 
-  run-integration-tests:
-    needs:
-      - set-vars
-      - start-runner
-      - build-image
-    uses: i-dot-ai/redbox-copilot/.github/workflows/integration.yml@86b3b12d8f7e290ef67ad290d408b1201080c60e
-    with:
-      COMMIT_HASH: ${{ github.event.inputs.commit-hash }}
 #  run-integration-tests:
 #    needs:
 #      - set-vars
