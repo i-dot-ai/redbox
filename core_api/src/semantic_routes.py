@@ -6,7 +6,11 @@ from semantic_router import Route
 from semantic_router.encoders import HuggingFaceEncoder
 from semantic_router.layer import RouteLayer
 
-from core_api.src.build_chains import build_retrieval_chain, build_static_response_chain, build_summary_chain
+from core_api.src.build_chains import (
+    build_map_reduce_summary_chain,
+    build_retrieval_chain,
+    build_static_response_chain,
+)
 from redbox.model_db import MODEL_PATH
 from redbox.models.chat import ChatRoute
 
@@ -119,7 +123,8 @@ def get_semantic_routing_encoder():
     global __semantic_routing_encoder  # noqa: PLW0603
     if not __semantic_routing_encoder:
         __semantic_routing_encoder = HuggingFaceEncoder(
-            name="sentence-transformers/paraphrase-albert-small-v2", cache_dir=MODEL_PATH
+            name="sentence-transformers/paraphrase-albert-small-v2",
+            cache_dir=MODEL_PATH,
         )
     return __semantic_routing_encoder
 
@@ -133,7 +138,7 @@ def get_semantic_route_layer(routes: Annotated[list[Route], Depends(get_semantic
 
 def get_routable_chains(
     retrieval_chain: Annotated[Runnable, Depends(build_retrieval_chain)],
-    summary_chain: Annotated[Runnable, Depends(build_summary_chain)],
+    summary_chain: Annotated[Runnable, Depends(build_map_reduce_summary_chain)],
 ):
     global __routable_chains  # noqa: PLW0603
     if not __routable_chains:

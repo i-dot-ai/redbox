@@ -40,7 +40,7 @@ def markdown(text, cls=None):
 
 def humanise_expiry(delta: datetime.timedelta) -> str:
     if delta.total_seconds() > 0:
-        return f"In {humanize.naturaldelta(delta)}"
+        return f"{humanize.naturaldelta(delta)}"
     else:
         return f"{humanize.naturaldelta(delta)} ago"
 

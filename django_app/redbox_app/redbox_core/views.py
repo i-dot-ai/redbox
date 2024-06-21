@@ -70,8 +70,11 @@ def homepage_view(request):
 
 @login_required
 def documents_view(request):
-    hidden_statuses = [StatusEnum.deleted, StatusEnum.errored]
-    files = File.objects.filter(user=request.user).exclude(status__in=hidden_statuses).order_by("-created_at")
+    completed_files = File.objects.filter(user=request.user, status=StatusEnum.complete).order_by("-created_at")
+    hidden_statuses = [StatusEnum.deleted, StatusEnum.errored, StatusEnum.complete]
+    processing_files = (
+        File.objects.filter(user=request.user).exclude(status__in=hidden_statuses).order_by("-created_at")
+    )
 
     ingest_errors = request.session.get("ingest_errors", [])
     request.session["ingest_errors"] = []
@@ -79,7 +82,12 @@ def documents_view(request):
     return render(
         request,
         template_name="documents.html",
-        context={"request": request, "files": files, "ingest_errors": ingest_errors},
+        context={
+            "request": request,
+            "completed_files": completed_files,
+            "processing_files": processing_files,
+            "ingest_errors": ingest_errors,
+        },
     )
 
 

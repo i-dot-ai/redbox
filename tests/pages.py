@@ -2,10 +2,9 @@ import logging
 from abc import ABC, abstractmethod
 from collections.abc import Collection, Sequence
 from dataclasses import dataclass
-from datetime import datetime
 from itertools import islice
 from pathlib import Path
-from time import sleep, strptime
+from time import sleep
 from typing import Any, ClassVar, Union
 
 from axe_playwright_python.sync_playwright import Axe
@@ -203,8 +202,6 @@ class MyDetailsPage(SignedInBasePage):
 @dataclass
 class DocumentRow:
     filename: str
-    uploaded_at: datetime
-    expires: str
     status: str
 
 
@@ -218,21 +215,18 @@ class DocumentsPage(SignedInBasePage):
         return DocumentUploadPage(self.page)
 
     def delete_latest_document(self) -> "DocumentDeletePage":
-        self.page.get_by_role("button", name="Remove").first.click()
+        self.page.get_by_role("button", name="Delete").first.click()
         return DocumentDeletePage(self.page)
 
     @property
     def all_documents(self) -> list[DocumentRow]:
-        cell_texts = self.page.get_by_role("cell").all_inner_texts()
-        return [
-            DocumentRow(
-                filename=filename,
-                uploaded_at=strptime(uploaded_at, "%H:%M %d/%m/%Y"),
-                expires=expires,
-                status=status,
-            )
-            for filename, uploaded_at, expires, status, action in batched(cell_texts, 5)
-        ]
+        return [self._doc_from_element(element) for element in self.page.locator(".iai-doc-list__item").all()]
+
+    @staticmethod
+    def _doc_from_element(element: Locator) -> DocumentRow:
+        filename = element.locator(".iai-doc-list__cell--file-name").inner_text()
+        status = element.locator("file-status").inner_text()
+        return DocumentRow(filename=filename, status=status)
 
     def document_count(self) -> int:
         return len(self.all_documents)
@@ -315,7 +309,7 @@ class ChatsPage(SignedInBasePage):
                 checkbox.uncheck()
 
     def start_new_chat(self) -> "ChatsPage":
-        self.page.get_by_role("button", name="Start a new chat").click()
+        self.page.get_by_role("button", name="New chat").click()
         return ChatsPage(self.page)
 
     def send(self) -> "ChatsPage":
@@ -329,8 +323,8 @@ class ChatsPage(SignedInBasePage):
     @staticmethod
     def _chat_message_from_element(element: Locator) -> ChatMessage:
         status = element.get_attribute("data-status")
-        role = element.locator(".rb-chat-message__role").inner_text()
-        text = element.locator(".rb-chat-message__text").inner_text()
+        role = element.locator(".iai-chat-bubble__role").inner_text()
+        text = element.locator(".iai-chat-bubble__text").inner_text()
         sources = element.locator("sources-list").get_by_role("listitem").all_inner_texts()
         return ChatMessage(status=status, role=role, text=text, sources=sources)
 

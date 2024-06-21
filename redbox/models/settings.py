@@ -30,11 +30,36 @@ SUMMARISATION_SYSTEM_PROMPT = (
     "4) Maintain the original context and meaning.\n"
 )
 
+MAP_SYSTEM_PROMPT = (
+    "You are an AI assistant tasked with summarizing documents. "
+    "Your goal is to extract the most important information and present it in "
+    "a concise and coherent manner. Please follow these guidelines while summarizing: \n"
+    "1) Identify and highlight key points,\n"
+    "2) Avoid repetition,\n"
+    "3) Ensure the summary is easy to understand,\n"
+    "4) Maintain the original context and meaning.\n"
+)
+
+REDUCE_SYSTEM_PROMPT = (
+    "You are an AI assistant tasked with summarizing documents. "
+    "Your goal is to write a concise summary of list of summaries from a list of summaries in "
+    "a concise and coherent manner. Please follow these guidelines while summarizing: \n"
+    "1) Identify and highlight key points,\n"
+    "2) Avoid repetition,\n"
+    "3) Ensure the summary is easy to understand,\n"
+    "4) Maintain the original context and meaning.\n"
+)
 
 RETRIEVAL_QUESTION_PROMPT = "{question} \n=========\n{formatted_documents}\n=========\nFINAL ANSWER: "
 
 
 SUMMARISATION_QUESTION_PROMPT = "Question: {question}. \n\n Documents: \n\n {documents} \n\n Answer: "
+
+
+MAP_QUESTION_PROMPT = "Question: {question}. \n\n Documents: \n\n {documents} \n\n Answer: "
+
+
+REDUCE_QUESTION_PROMPT = "Question: {question}. \n\n Documents: \n\n {documents} \n\n Answer: "
 
 
 class AISettings(BaseModel):
@@ -45,10 +70,15 @@ class AISettings(BaseModel):
     rag_k: int = 5
     rag_num_candidates: int = 10
     rag_desired_chunk_size: int = 300
+    max_tokens: int = 20_000
     retrieval_system_prompt: str = RETRIEVAL_SYSTEM_PROMPT
     retrieval_question_prompt: str = RETRIEVAL_QUESTION_PROMPT
     summarisation_system_prompt: str = SUMMARISATION_SYSTEM_PROMPT
     summarisation_question_prompt: str = SUMMARISATION_QUESTION_PROMPT
+    map_system_prompt: str = MAP_SYSTEM_PROMPT
+    map_question_prompt: str = MAP_QUESTION_PROMPT
+    reduce_system_prompt: str = REDUCE_SYSTEM_PROMPT
+    reduce_question_prompt: str = REDUCE_QUESTION_PROMPT
 
 
 class ElasticLocalSettings(BaseModel):
