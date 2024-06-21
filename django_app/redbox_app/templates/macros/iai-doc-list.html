@@ -14,14 +14,14 @@
         </thead>
         <tbody class="iai-doc-list__tbody">
             {% for doc in docs %}
-                <tr class="doc-list__item">
+                <tr class="iai-doc-list__item">
                     <td class="iai-doc-list__cell--file-name">{{ doc.name }}</td>
                     <td class="iai-doc-list__cell--expiry">{{ doc.expires | humanise_expiry }}</td>
                     <td class="iai-doc-list__cell--status">
                         <file-status data-id="{{ doc.id }}">{{ doc.get_status_text() }}</file-status>
                     </td>
                     <td class="iai-doc-list__cell--actions">
-                        <a class="iai-doc-list__delete" href="{{ url('remove-doc', doc.id) }}">
+                        <a class="iai-doc-list__delete" role="button" href="{{ url('remove-doc', doc.id) }}">
                             Delete
                             <span class="govuk-visually-hidden">{{ doc.name }}</span>
                         </a>

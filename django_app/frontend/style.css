@@ -8090,7 +8090,7 @@ body:has(.iai-environment-warning) main {
   display: block;
 }
 
-.iai-doc-list__header, .doc-list__item {
+.iai-doc-list__header, .iai-doc-list__item {
   align-items: center;
   border-style: solid;
   border-width: 2px;
@@ -8099,11 +8099,11 @@ body:has(.iai-environment-warning) main {
   justify-content: space-between;
 }
 
-.iai-doc-list--complete .doc-list__item {
+.iai-doc-list--complete .iai-doc-list__item {
   border-color: #50ae54;
 }
 
-.iai-doc-list--processing .doc-list__item {
+.iai-doc-list--processing .iai-doc-list__item {
   border-color: #9b0000;
 }
 
@@ -8153,7 +8153,7 @@ body:has(.iai-environment-warning) main {
   width: 100%;
 }
 
-.doc-list__item {
+.iai-doc-list__item {
   background-color: white;
   border-radius: 0.25rem;
   margin-top: 0.5rem;
