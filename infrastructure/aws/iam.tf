@@ -61,3 +61,21 @@ resource "aws_iam_role_policy_attachment" "redbox_role_policy" {
   role       = each.value
   policy_arn = aws_iam_policy.redbox_policy.arn
 }
+
+resource "aws_iam_role_policy" "github-runner-policy" {
+  name   = "${local.name}-github-runner-policy"
+  role   = data.terraform_remote_state.platform.outputs.github_runner_execution_role_arn
+  policy = data.aws_iam_policy_document.github-runner.json
+}
+
+data "aws_iam_policy_document" "github-runner" {
+  ### Allow access to redbox specific s3 buckets
+  statement {
+    effect  = "Allow"
+    actions = ["s3:*"]
+    resources = [
+      aws_s3_bucket.user_data.arn,
+      "${aws_s3_bucket.user_data.arn}/*",
+    ]
+  }
+}
