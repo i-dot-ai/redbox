@@ -1,9 +1,12 @@
 
 name: build
 on:
+  # On-demand
+  workflow_dispatch:
+  # or on push to main
   push:
     branches:
-      - "**"
+      - 'main'
 
 
 jobs:

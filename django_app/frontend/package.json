@@ -11,7 +11,8 @@
   },
   "author": "",
   "dependencies": {
-    "govuk-frontend": "^5.2.0"
+    "govuk-frontend": "^5.2.0",
+    "i.ai-design-system": "^0.1.6"
   },
   "devDependencies": {
     "@types/alpinejs": "^3.13.10",

@@ -215,7 +215,7 @@ class ChatsPage(SignedInBasePage):
         return ChatsPage(self.page)
 
     def all_messages(self) -> list[str]:
-        return self.page.locator(".iai-chat-message").all_inner_texts()
+        return self.page.locator(".rb-chat-message").all_inner_texts()
 
     def check_feedback_prompt_visible(self, feedback: FeedbackType) -> bool:
         if feedback == FeedbackType.NOT_HELPFUL:

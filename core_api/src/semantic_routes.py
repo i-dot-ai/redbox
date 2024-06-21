@@ -1,8 +1,18 @@
+from typing import Annotated
+
+from fastapi import Depends
+from langchain_core.runnables import Runnable
 from semantic_router import Route
 from semantic_router.encoders import HuggingFaceEncoder
 from semantic_router.layer import RouteLayer
 
+from core_api.src.build_chains import (
+    build_map_reduce_summary_chain,
+    build_retrieval_chain,
+    build_static_response_chain,
+)
 from redbox.model_db import MODEL_PATH
+from redbox.models.chat import ChatRoute
 
 # === Pre-canned responses for non-LLM routes ===
 INFO_RESPONSE = """
@@ -26,7 +36,7 @@ If you want the results to be returned in a specific format, please specify the 
 
 # === Set up the semantic router ===
 info = Route(
-    name="info",
+    name=ChatRoute.info.value,
     utterances=[
         "What is your name?",
         "Who are you?",
@@ -35,7 +45,7 @@ info = Route(
 )
 
 ability = Route(
-    name="ability",
+    name=ChatRoute.ability.value,
     utterances=[
         "What can you do?",
         "What can you do?",
@@ -51,7 +61,7 @@ ability = Route(
 )
 
 coach = Route(
-    name="coach",
+    name=ChatRoute.coach.value,
     utterances=[
         "That is not the answer I wanted",
         "Rubbish",
@@ -62,7 +72,7 @@ coach = Route(
 )
 
 gratitude = Route(
-    name="gratitude",
+    name=ChatRoute.gratitude.value,
     utterances=[
         "Thank you ever so much for your help!",
         "I'm really grateful for your assistance.",
@@ -74,7 +84,7 @@ gratitude = Route(
 )
 
 summarisation = Route(
-    name="summarisation",
+    name=ChatRoute.summarisation.value,
     utterances=[
         "I'd like to summarise the documents I've uploaded.",
         "Can you help me with summarising these documents?",
@@ -87,7 +97,7 @@ summarisation = Route(
 )
 
 extract = Route(
-    name="extract",
+    name=ChatRoute.extract.value,
     utterances=[
         "I'd like to find some information in the documents I've uploaded",
         "Can you help me identify details from these documents?",
@@ -100,8 +110,44 @@ extract = Route(
     ],
 )
 
+__semantic_routing_encoder = None
+__routable_chains = None
+__semantic_route_layer = None
 
-routes = [info, ability, coach, gratitude, summarisation, extract]
 
-encoder = HuggingFaceEncoder(name="sentence-transformers/paraphrase-albert-small-v2", cache_dir=MODEL_PATH)
-route_layer = RouteLayer(encoder=encoder, routes=routes)
+def get_semantic_routes():
+    return (info, ability, coach, gratitude, summarisation)
+
+
+def get_semantic_routing_encoder():
+    global __semantic_routing_encoder  # noqa: PLW0603
+    if not __semantic_routing_encoder:
+        __semantic_routing_encoder = HuggingFaceEncoder(
+            name="sentence-transformers/paraphrase-albert-small-v2",
+            cache_dir=MODEL_PATH,
+        )
+    return __semantic_routing_encoder
+
+
+def get_semantic_route_layer(routes: Annotated[list[Route], Depends(get_semantic_routes)]):
+    global __semantic_route_layer  # noqa: PLW0603
+    if not __semantic_route_layer:
+        __semantic_route_layer = RouteLayer(encoder=get_semantic_routing_encoder(), routes=routes)
+    return __semantic_route_layer
+
+
+def get_routable_chains(
+    retrieval_chain: Annotated[Runnable, Depends(build_retrieval_chain)],
+    summary_chain: Annotated[Runnable, Depends(build_map_reduce_summary_chain)],
+):
+    global __routable_chains  # noqa: PLW0603
+    if not __routable_chains:
+        __routable_chains = {
+            ChatRoute.info: build_static_response_chain(INFO_RESPONSE, ChatRoute.info),
+            ChatRoute.ability: build_static_response_chain(ABILITY_RESPONSE, ChatRoute.ability),
+            ChatRoute.coach: build_static_response_chain(COACH_RESPONSE, ChatRoute.coach),
+            ChatRoute.gratitude: build_static_response_chain("You're welcome!", ChatRoute.gratitude),
+            ChatRoute.retrieval: retrieval_chain,
+            ChatRoute.summarisation: summary_chain,
+        }
+    return __routable_chains

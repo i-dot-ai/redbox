@@ -1,17 +1,22 @@
 import logging
 from abc import ABC, abstractmethod
-from datetime import datetime
+from collections.abc import Collection, Sequence
+from dataclasses import dataclass
 from itertools import islice
 from pathlib import Path
-from time import strptime
-from typing import Any, ClassVar, NamedTuple
+from time import sleep
+from typing import Any, ClassVar, Union
 
 from axe_playwright_python.sync_playwright import Axe
-from playwright.sync_api import Page, expect
+from playwright.sync_api import Locator, Page, expect
 from yarl import URL
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
+
+
+class PageError(ValueError):
+    pass
 
 
 class BasePage(ABC):
@@ -45,17 +50,15 @@ class BasePage(ABC):
         self.check_a11y()
 
     def check_title(self):
-        expected_page_title = self.get_expected_page_title()
+        expected_page_title = self.expected_page_title
         expect(self.page).to_have_title(expected_page_title)
         # expect(self.page).to_have_url("url")
 
     def check_a11y(self):
         results = self.axe.run(self.page, context=None, options=self.AXE_OPTIONS)
-        if results.violations_count > 0:
-            expect(
-                self.page.get_by_text("Accessibility issues"),
-                f"Accessibility issues in {self.__class__.__name__} at {self.url}",
-            ).to_be_visible()
+        if results.violations_count:
+            error_message = f"accessibility violations from page {self}: {results.generate_report()} "
+            raise PageError(error_message)
 
     def navigate_to_privacy_page(self) -> "PrivacyPage":
         self.page.get_by_role("link", name="Privacy", exact=True).click()
@@ -69,8 +72,9 @@ class BasePage(ABC):
         self.page.get_by_role("link", name="Support", exact=True).click()
         return SupportPage(self.page)
 
+    @property
     @abstractmethod
-    def get_expected_page_title(self) -> str: ...
+    def expected_page_title(self) -> str: ...
 
     @property
     def title(self) -> str:
@@ -93,6 +97,10 @@ class SignedInBasePage(BasePage, ABC):
         self.page.get_by_role("link", name="Chats", exact=True).click()
         return ChatsPage(self.page)
 
+    def navigate_my_details(self) -> "MyDetailsPage":
+        self.page.get_by_role("link", name="My details", exact=True).click()
+        return MyDetailsPage(self.page)
+
     def sign_out(self) -> "LandingPage":
         self.page.get_by_role("link", name="Chats", exact=True).click()
         return LandingPage(self.page)
@@ -103,7 +111,8 @@ class LandingPage(BasePage):
         page.goto(str(base_url))
         super().__init__(page)
 
-    def get_expected_page_title(self) -> str:
+    @property
+    def expected_page_title(self) -> str:
         return "Redbox Copilot"
 
     def navigate_to_sign_in(self) -> "SignInPage":
@@ -112,7 +121,8 @@ class LandingPage(BasePage):
 
 
 class SignInPage(BasePage):
-    def get_expected_page_title(self) -> str:
+    @property
+    def expected_page_title(self) -> str:
         return "Sign in - Redbox Copilot"
 
     @property
@@ -129,7 +139,8 @@ class SignInPage(BasePage):
 
 
 class SignInLinkSentPage(BasePage):
-    def get_expected_page_title(self) -> str:
+    @property
+    def expected_page_title(self) -> str:
         return "Sign in - link sent - Redbox Copilot"
 
 
@@ -138,27 +149,65 @@ class SignInConfirmationPage(BasePage):
         page.goto(str(magic_link))
         super().__init__(page)
 
-    def get_expected_page_title(self) -> str:
+    @property
+    def expected_page_title(self) -> str:
         return "Sign in - confirmation - Redbox Copilot"
 
-    def navigate_to_documents_page(self) -> "DocumentsPage":
+    def start(self) -> Union["DocumentsPage", "MyDetailsPage"]:
         self.page.get_by_role("button", name="Start", exact=True).click()
-        return DocumentsPage(self.page)
+        logger.debug("sign in conmfirmation navigating to %s", self)
+        return MyDetailsPage(self.page) if self.page.title().startswith("My details") else DocumentsPage(self.page)
 
 
 class HomePage(SignedInBasePage):
-    def get_expected_page_title(self) -> str:
+    @property
+    def expected_page_title(self) -> str:
         return "Redbox Copilot"
 
 
-class DocumentRow(NamedTuple):
+class MyDetailsPage(SignedInBasePage):
+    @property
+    def expected_page_title(self) -> str:
+        return "My details - Redbox Copilot"
+
+    @property
+    def grade(self) -> str:
+        return self.page.get_by_label("Grade").get_by_role(role="option", selected=True).inner_text()
+
+    @grade.setter
+    def grade(self, grade: str):
+        self.page.get_by_label("Grade").select_option(grade)
+
+    @property
+    def business_unit(self) -> str:
+        return self.page.get_by_label("Business unit").get_by_role(role="option", selected=True).inner_text()
+
+    @business_unit.setter
+    def business_unit(self, grade: str):
+        self.page.get_by_label("Business unit").select_option(grade)
+
+    @property
+    def profession(self) -> str:
+        return self.page.get_by_label("Profession").get_by_role(role="option", selected=True).inner_text()
+
+    @profession.setter
+    def profession(self, grade: str):
+        self.page.get_by_label("Profession").select_option(grade)
+
+    def update(self) -> "DocumentsPage":
+        self.page.get_by_text("Update").click()
+        return DocumentsPage(self.page)
+
+
+@dataclass
+class DocumentRow:
     filename: str
-    uploaded_at: datetime
     status: str
 
 
 class DocumentsPage(SignedInBasePage):
-    def get_expected_page_title(self) -> str:
+    @property
+    def expected_page_title(self) -> str:
         return "Documents - Redbox Copilot"
 
     def navigate_to_upload(self) -> "DocumentUploadPage":
@@ -166,23 +215,42 @@ class DocumentsPage(SignedInBasePage):
         return DocumentUploadPage(self.page)
 
     def delete_latest_document(self) -> "DocumentDeletePage":
-        self.page.get_by_role("button", name="Remove").first.click()
+        self.page.get_by_role("button", name="Delete").first.click()
         return DocumentDeletePage(self.page)
 
-    def get_all_document_rows(self) -> list[DocumentRow]:
-        cell_texts = self.page.get_by_role("cell").all_inner_texts()
-        return [
-            DocumentRow(filename, strptime(uploaded_at, "%H:%M %d/%m/%Y"), status)
-            for filename, uploaded_at, status, action in batched(cell_texts, 4)
-        ]
+    @property
+    def all_documents(self) -> list[DocumentRow]:
+        return [self._doc_from_element(element) for element in self.page.locator(".iai-doc-list__item").all()]
+
+    @staticmethod
+    def _doc_from_element(element: Locator) -> DocumentRow:
+        filename = element.locator(".iai-doc-list__cell--file-name").inner_text()
+        status = element.locator("file-status").inner_text()
+        return DocumentRow(filename=filename, status=status)
+
+    def document_count(self) -> int:
+        return len(self.all_documents)
+
+    def wait_for_documents_to_complete(self, retry_interval: int = 5, max_tries: int = 120):
+        tries = 0
+        while True:
+            if all(d.status == "Complete" for d in self.all_documents):
+                return
+            if tries >= max_tries:
+                logger.error("documents: %s", self.all_documents)
+                error_message = "Too many retries waiting documents to complete"
+                raise PageError(error_message)
+            tries += 1
+            sleep(retry_interval)
 
 
 class DocumentUploadPage(SignedInBasePage):
-    def get_expected_page_title(self) -> str:
+    @property
+    def expected_page_title(self) -> str:
         return "Upload a document - Redbox Copilot"
 
-    def upload_document(self, upload_file: Path) -> DocumentsPage:
-        self.get_file_chooser_by_label().set_files(upload_file)
+    def upload_documents(self, upload_files: Sequence[Path]) -> DocumentsPage:
+        self.get_file_chooser_by_label().set_files(upload_files)
         self.page.get_by_role("button", name="Upload").click()
         return DocumentsPage(self.page)
 
@@ -193,7 +261,8 @@ class DocumentUploadPage(SignedInBasePage):
 
 
 class DocumentDeletePage(SignedInBasePage):
-    def get_expected_page_title(self) -> str:
+    @property
+    def expected_page_title(self) -> str:
         return "Remove document - Redbox Copilot"
 
     def confirm_deletion(self) -> "DocumentsPage":
@@ -201,8 +270,17 @@ class DocumentDeletePage(SignedInBasePage):
         return DocumentsPage(self.page)
 
 
+@dataclass
+class ChatMessage:
+    status: str | None
+    role: str
+    text: str
+    sources: Sequence[str]
+
+
 class ChatsPage(SignedInBasePage):
-    def get_expected_page_title(self) -> str:
+    @property
+    def expected_page_title(self) -> str:
         return "Chats - Redbox Copilot"
 
     @property
@@ -213,26 +291,77 @@ class ChatsPage(SignedInBasePage):
     def write_message(self, value: str):
         self.page.locator("#message").fill(value)
 
+    @property
+    def available_file_names(self) -> Sequence[str]:
+        return self.page.locator("document-selector .govuk-checkboxes__label").all_inner_texts()
+
+    @property
+    def selected_file_names(self) -> Collection[str]:
+        return {file_name for file_name in self.available_file_names if self.page.get_by_label(file_name).is_checked()}
+
+    @selected_file_names.setter
+    def selected_file_names(self, file_names_to_select: Collection[str]):
+        for file_name in self.available_file_names:
+            checkbox = self.page.get_by_label(file_name)
+            if file_name in file_names_to_select:
+                checkbox.check()
+            else:
+                checkbox.uncheck()
+
+    def start_new_chat(self) -> "ChatsPage":
+        self.page.get_by_role("button", name="New chat").click()
+        return ChatsPage(self.page)
+
     def send(self) -> "ChatsPage":
         self.page.get_by_text("Send").click()
         return ChatsPage(self.page)
 
-    def all_messages(self) -> list[str]:
-        return self.page.locator(".iai-chat-message").all_inner_texts()
+    @property
+    def all_messages(self) -> list[ChatMessage]:
+        return [self._chat_message_from_element(element) for element in self.page.locator("chat-message").all()]
+
+    @staticmethod
+    def _chat_message_from_element(element: Locator) -> ChatMessage:
+        status = element.get_attribute("data-status")
+        role = element.locator(".iai-chat-bubble__role").inner_text()
+        text = element.locator(".iai-chat-bubble__text").inner_text()
+        sources = element.locator("sources-list").get_by_role("listitem").all_inner_texts()
+        return ChatMessage(status=status, role=role, text=text, sources=sources)
+
+    def get_all_messages_once_streaming_has_completed(
+        self, retry_interval: int = 1, max_tries: int = 120
+    ) -> Sequence[ChatMessage]:
+        tries = 0
+        while True:
+            messages = self.all_messages
+            if not any(m.status == "streaming" for m in messages):
+                return messages
+            if tries >= max_tries:
+                logger.error("messages: %s", messages)
+                error_message = "Too many retries waiting for response"
+                raise PageError(error_message)
+            tries += 1
+            sleep(retry_interval)
+
+    def wait_for_latest_message(self, role="Redbox") -> ChatMessage:
+        return [m for m in self.get_all_messages_once_streaming_has_completed() if m.role == role][-1]
 
 
 class PrivacyPage(BasePage):
-    def get_expected_page_title(self) -> str:
+    @property
+    def expected_page_title(self) -> str:
         return "Privacy notice - Redbox Copilot"
 
 
 class AccessibilityPage(BasePage):
-    def get_expected_page_title(self) -> str:
+    @property
+    def expected_page_title(self) -> str:
         return "Accessibility statement - Redbox Copilot"
 
 
 class SupportPage(BasePage):
-    def get_expected_page_title(self) -> str:
+    @property
+    def expected_page_title(self) -> str:
         return "Support - Redbox Copilot"
 
 

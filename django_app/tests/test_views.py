@@ -1,13 +1,18 @@
+import json
 import logging
 import uuid
+from collections.abc import Sequence
 from http import HTTPStatus
 from pathlib import Path
 
 import pytest
 from botocore.exceptions import ClientError
+from bs4 import BeautifulSoup
 from django.conf import settings
 from django.test import Client
+from pytest_django.asserts import assertRedirects
 from redbox_app.redbox_core.models import (
+    BusinessUnit,
     ChatHistory,
     ChatMessage,
     ChatRoleEnum,
@@ -76,7 +81,7 @@ def test_upload_view(alice, client, file_pdf_path: Path, s3_client, requests_moc
     )
 
     with file_pdf_path.open("rb") as f:
-        response = client.post("/upload/", {"uploadDoc": f})
+        response = client.post("/upload/", {"uploadDocs": f})
 
         assert file_exists(s3_client, file_name)
         assert response.status_code == HTTPStatus.FOUND
@@ -106,7 +111,7 @@ def test_document_upload_status(client, alice, file_pdf_path: Path, s3_client, r
     )
 
     with file_pdf_path.open("rb") as f:
-        response = client.post("/upload/", {"uploadDoc": f})
+        response = client.post("/upload/", {"uploadDocs": f})
 
         assert response.status_code == HTTPStatus.FOUND
         assert response.url == "/documents/"
@@ -133,8 +138,8 @@ def test_upload_view_duplicate_files(alice, bob, client, file_pdf_path: Path, s3
     client.force_login(alice)
 
     with file_pdf_path.open("rb") as f:
-        client.post("/upload/", {"uploadDoc": f})
-        response = client.post("/upload/", {"uploadDoc": f})
+        client.post("/upload/", {"uploadDocs": f})
+        response = client.post("/upload/", {"uploadDocs": f})
 
         assert response.status_code == HTTPStatus.FOUND
         assert response.url == "/documents/"
@@ -142,7 +147,7 @@ def test_upload_view_duplicate_files(alice, bob, client, file_pdf_path: Path, s3
         assert count_s3_objects(s3_client) == previous_count + 2
 
         client.force_login(bob)
-        response = client.post("/upload/", {"uploadDoc": f})
+        response = client.post("/upload/", {"uploadDocs": f})
 
         assert response.status_code == HTTPStatus.FOUND
         assert response.url == "/documents/"
@@ -160,7 +165,7 @@ def test_upload_view_bad_data(alice, client, file_py_path: Path, s3_client):
     client.force_login(alice)
 
     with file_py_path.open("rb") as f:
-        response = client.post("/upload/", {"uploadDoc": f})
+        response = client.post("/upload/", {"uploadDocs": f})
 
         assert response.status_code == HTTPStatus.OK
         assert "File type .py not supported" in str(response.content)
@@ -200,7 +205,7 @@ def test_remove_doc_view(client: Client, alice: User, file_pdf_path: Path, s3_cl
 
     with file_pdf_path.open("rb") as f:
         # create file before testing deletion
-        client.post("/upload/", {"uploadDoc": f})
+        client.post("/upload/", {"uploadDocs": f})
         assert file_exists(s3_client, file_name)
         assert count_s3_objects(s3_client) == previous_count + 1
 
@@ -258,7 +263,7 @@ def test_post_message_to_existing_session(
             "source_documents": [{"file_uuid": str(uploaded_file.core_file_uuid)}],
         },
     )
-    initial_file_expiry_date = File.objects.get(core_file_uuid=uploaded_file.core_file_uuid).expiry_date
+    initial_file_expiry_date = File.objects.get(core_file_uuid=uploaded_file.core_file_uuid).expires_at
 
     # When
     response = client.post("/post-message/", {"message": "Are you there?", "session-id": session_id})
@@ -272,7 +277,72 @@ def test_post_message_to_existing_session(
     assert (
         ChatMessage.objects.get(chat_history__id=session_id, role=ChatRoleEnum.ai).source_files.first() == uploaded_file
     )
-    assert initial_file_expiry_date != File.objects.get(core_file_uuid=uploaded_file.core_file_uuid).expiry_date
+    assert initial_file_expiry_date != File.objects.get(core_file_uuid=uploaded_file.core_file_uuid).expires_at
+
+
+@pytest.mark.django_db()
+def test_post_message_with_files_selected(
+    chat_history: ChatHistory, client: Client, requests_mock: Mocker, several_files: Sequence[File]
+):
+    # Given
+    client.force_login(chat_history.users)
+    session_id = chat_history.id
+    selected_files = several_files[::2]
+
+    rag_url = f"http://{settings.CORE_API_HOST}:{settings.CORE_API_PORT}/chat/rag"
+    requests_mock.register_uri(
+        "POST",
+        rag_url,
+        json={
+            "output_text": "Only those, then.",
+            "source_documents": [{"file_uuid": str(f.core_file_uuid)} for f in selected_files],
+        },
+    )
+
+    # When
+    response = client.post(
+        "/post-message/",
+        {
+            "message": "Only tell me about these, please.",
+            "session-id": session_id,
+            **{f"file-{f.id}": f.id for f in selected_files},
+        },
+    )
+
+    # Then
+    assert response.status_code == HTTPStatus.FOUND
+    assert (
+        list(ChatMessage.objects.get(chat_history__id=session_id, role=ChatRoleEnum.user).selected_files.all())
+        == selected_files
+    )
+    assert json.loads(requests_mock.last_request.text).get("selected_files") == [
+        {"uuid": str(f.core_file_uuid)} for f in selected_files
+    ]
+
+
+@pytest.mark.django_db()
+def test_user_can_see_their_own_chats(chat_history: ChatHistory, alice: User, client: Client):
+    # Given
+    client.force_login(alice)
+
+    # When
+    response = client.get(f"/chats/{chat_history.id}/")
+
+    # Then
+    assert response.status_code == HTTPStatus.OK
+
+
+@pytest.mark.django_db()
+def test_user_cannot_see_other_users_chats(chat_history: ChatHistory, bob: User, client: Client):
+    # Given
+    client.force_login(bob)
+
+    # When
+    response = client.get(f"/chats/{chat_history.id}/")
+
+    # Then
+    assert response.status_code == HTTPStatus.FOUND
+    assert response.headers.get("Location") == "/chats/"
 
 
 @pytest.mark.django_db()
@@ -287,3 +357,61 @@ def test_view_session_with_documents(chat_message: ChatMessage, client: Client):
     # Then
     assert response.status_code == HTTPStatus.OK
     assert b"original_file.txt" in response.content
+
+
+@pytest.mark.django_db()
+def test_check_demographics_redirect_if_unpopulated(client: Client, alice: User):
+    # Given
+    client.force_login(alice)
+
+    # When
+    response = client.get("/check-demographics/", follow=True)
+
+    # Then
+    assertRedirects(response, "/demographics/")
+
+
+@pytest.mark.django_db()
+def test_check_demographics_redirect_if_populated(client: Client, user_with_demographic_data: User):
+    # Given
+    client.force_login(user_with_demographic_data)
+
+    # When
+    response = client.get("/check-demographics/", follow=True)
+
+    # Then
+    assertRedirects(response, "/documents/")
+
+
+@pytest.mark.django_db()
+def test_view_demographic_details_form(client: Client, user_with_demographic_data: User):
+    # Given
+    client.force_login(user_with_demographic_data)
+
+    # When
+    response = client.get("/demographics/")
+
+    # Then
+    assert response.status_code == HTTPStatus.OK
+    soup = BeautifulSoup(response.content)
+    assert soup.find(id="id_grade").find_all("option", selected=True)[0].text == "Director General"
+    assert soup.find(id="id_profession").find_all("option", selected=True)[0].text == "Analysis"
+    assert soup.find(id="id_business_unit").find_all("option", selected=True)[0].text == "Paperclip Reconciliation"
+
+
+@pytest.mark.django_db()
+def test_post_to_demographic_details_form(client: Client, alice: User, business_unit: BusinessUnit):
+    # Given
+    client.force_login(alice)
+
+    # When
+    response = client.post(
+        "/demographics/",
+        {"grade": "AO", "profession": "AN", "business_unit": business_unit.id},
+        follow=True,
+    )
+
+    # Then
+    assertRedirects(response, "/documents/")
+    alice.refresh_from_db()
+    assert alice.grade == "AO"

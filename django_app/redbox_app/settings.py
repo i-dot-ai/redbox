@@ -6,6 +6,7 @@ from pathlib import Path
 import environ
 import sentry_sdk
 from dotenv import load_dotenv
+from import_export.formats.base_formats import CSV
 from redbox_app.setting_enums import Classification, Environment
 from sentry_sdk.integrations.django import DjangoIntegration
 from storages.backends import s3boto3
@@ -16,7 +17,7 @@ env = environ.Env()
 
 SECRET_KEY = env.str("DJANGO_SECRET_KEY")
 ENVIRONMENT = Environment[env.str("ENVIRONMENT").upper()]
-WEBSOCKET_SCHEME = "ws" if ENVIRONMENT.is_local else "wss"
+WEBSOCKET_SCHEME = "ws" if ENVIRONMENT.is_test else "wss"
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env.bool("DEBUG")
@@ -60,6 +61,7 @@ INSTALLED_APPS = [
     "storages",
     "compressor",
     "magic_link",
+    "import_export",
 ]
 
 MIDDLEWARE = [
@@ -164,7 +166,7 @@ CSP_FONT_SRC = (
 )
 CSP_STYLE_SRC = ("'self'",)
 CSP_FRAME_ANCESTORS = ("'none'",)
-CSP_CONNECT_SRC = ["'self'", f"wss://{ENVIRONMENT.hosts[0]}/ws/chat/"]
+CSP_CONNECT_SRC = ["'self'", f"wss://{ENVIRONMENT.hosts[0]}/ws/chat/", "plausible.io"]
 
 # https://pypi.org/project/django-permissions-policy/
 PERMISSIONS_POLICY: dict[str, list] = {
@@ -321,7 +323,10 @@ MAGIC_LINK = {
     "SESSION_EXPIRY": 7 * 24 * 60 * 60,
 }
 
+IMPORT_FORMATS = [CSV]
+
 USE_STREAMING = env.bool("USE_STREAMING")
+CHAT_TITLE_LENGTH = 30
 FILE_EXPIRY_IN_SECONDS = env.int("FILE_EXPIRY_IN_DAYS") * 24 * 60 * 60
 SUPERUSER_EMAIL = env.str("SUPERUSER_EMAIL", None)
 MAX_SECURITY_CLASSIFICATION = Classification[env.str("MAX_SECURITY_CLASSIFICATION")]

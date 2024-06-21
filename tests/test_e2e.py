@@ -12,6 +12,7 @@ from jose import jwt
 from websockets import ConnectionClosed
 
 USER_UUIDS: list[UUID] = [uuid4(), uuid4()]
+TEST_ORIGIN = "localhost:5002"
 
 
 def make_headers(user_uuid: UUID):
@@ -43,7 +44,7 @@ class TestEndToEnd:
             )
 
             response = requests.post(
-                url="http://localhost:5002/file",
+                url=f"http://{TEST_ORIGIN}/file",
                 json={
                     "key": file_key,
                     "bucket": bucket_name,
@@ -69,7 +70,7 @@ class TestEndToEnd:
         while time.time() - start_time < timeout:
             time.sleep(1)
             chunk_response = requests.get(
-                f"http://localhost:5002/file/{TestEndToEnd.file_uuids[user_uuid]}/status",
+                f"http://{TEST_ORIGIN}/file/{TestEndToEnd.file_uuids[user_uuid]}/status",
                 headers=make_headers(user_uuid),
                 timeout=30,
             )
@@ -91,7 +92,7 @@ class TestEndToEnd:
         I Expect a 200 response code
         """
         chunks_response = requests.get(
-            f"http://localhost:5002/file/{TestEndToEnd.file_uuids[user_uuid]}/chunks",
+            f"http://{TEST_ORIGIN}/file/{TestEndToEnd.file_uuids[user_uuid]}/chunks",
             headers=make_headers(user_uuid),
             timeout=30,
         )
@@ -106,11 +107,10 @@ class TestEndToEnd:
         I Expect an answer and for the cited documents to be the one I uploaded
         """
         rag_response = requests.post(
-            "http://localhost:5002/chat/rag",
+            f"http://{TEST_ORIGIN}/chat/rag",
             json={
                 "message_history": [
-                    {"role": "system", "text": "You are a helpful AI Assistant"},
-                    {"role": "user", "text": "please summarise my document"},
+                    {"role": "user", "text": "what is routing?"},
                 ]
             },
             headers=make_headers(user_uuid),
@@ -123,6 +123,32 @@ class TestEndToEnd:
 
         assert TestEndToEnd.file_uuids[user_uuid] in source_document_file_uuids
         TestEndToEnd.source_document_file_uuids[user_uuid] = source_document_file_uuids
+
+    @pytest.mark.parametrize("user_uuid", USER_UUIDS)
+    def test_post_rag_fail(self, user_uuid):
+        """
+        Given that I have POSTed a file key to core-api/file
+        And the file status is complete
+        When I POST a question to the rag endpoint with the wrong file selected
+        I Expect an answer and for no cited documents to be returned
+        """
+        rag_response = requests.post(
+            f"http://{TEST_ORIGIN}/chat/rag",
+            json={
+                "message_history": [
+                    {"role": "user", "text": "what is routing?"},
+                ],
+                "selected_files": [{"uuid": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"}],
+            },
+            headers=make_headers(user_uuid),
+            timeout=30,
+        )
+        assert rag_response.status_code == HTTPStatus.OK
+
+        source_document_file_uuids = {
+            source_document["file_uuid"] for source_document in rag_response.json()["source_documents"]
+        }
+        assert TestEndToEnd.file_uuids[user_uuid] not in source_document_file_uuids
 
     @pytest.mark.parametrize("user_uuid", USER_UUIDS)
     def test_permissions(self, user_uuid):
@@ -148,14 +174,13 @@ class TestEndToEnd:
         """
         message_history = {
             "message_history": [
-                {"role": "system", "text": "You are a helpful AI Assistant"},
-                {"role": "user", "text": "please summarise my document"},
+                {"role": "user", "text": "what is routing"},
             ]
         }
         all_text, source_documents = [], []
 
         async for websocket in websockets.connect(
-            "ws://localhost:5002/chat/rag", extra_headers=make_headers(user_uuid)
+            f"ws://{TEST_ORIGIN}/chat/rag", extra_headers=make_headers(user_uuid)
         ):
             await websocket.send(json.dumps(message_history))
 
@@ -192,7 +217,7 @@ class TestEndToEnd:
         all_text, source_documents = [], []
 
         async for websocket in websockets.connect(
-            "ws://localhost:5002/chat/rag", extra_headers=make_headers(user_uuid)
+            f"ws://{TEST_ORIGIN}/chat/rag", extra_headers=make_headers(user_uuid)
         ):
             await websocket.send(json.dumps(message_history))
 
@@ -208,3 +233,21 @@ class TestEndToEnd:
                 break
 
         assert all_text == ["You're welcome!"]
+
+    @pytest.mark.parametrize("user_uuid", USER_UUIDS)
+    def test_post_rag_stuff(self, user_uuid):
+        rag_response = requests.post(
+            f"http://{TEST_ORIGIN}/chat/rag",
+            json={
+                "message_history": [
+                    {
+                        "role": "user",
+                        "text": "Please summarise the contents of the uploaded files.",
+                    }
+                ],
+                "selected_files": [{"uuid": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"}],
+            },
+            headers=make_headers(user_uuid),
+            timeout=30,
+        )
+        assert rag_response.status_code == HTTPStatus.OK

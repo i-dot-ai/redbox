@@ -7,15 +7,15 @@
         {% set role_text = "You" %}
     {% endif %}
 
-    <div class="iai-chat-message iai-chat-message--{{ role }} js-chat-message govuk-body {{ classes }}" data-role="{{ role }}" tabindex="-1">
-        <div class="iai-chat-message__role">{% if role == "ai" %}Redbox{% else %}You{% endif %}</div>
-        <markdown-converter class="iai-chat-message__text">{{ text }}</markdown-converter>
+    <div class="iai-chat-bubble iai-chat-bubble--{% if role == 'user' %}right{% else %}left{% endif %} js-chat-message govuk-body {{ classes }}" data-role="{{ role }}" tabindex="-1">
+        <div class="iai-chat-bubble__role">{% if role == "ai" %}Redbox{% else %}You{% endif %}</div>
+        <markdown-converter class="iai-chat-bubble__text">{{ text }}</markdown-converter>
         {% if sources %}
-            <h3 class="iai-chat-message__sources-heading govuk-heading-s govuk-!-margin-bottom-1">Sources</h3>
+            <h3 class="iai-chat-bubble__sources-heading govuk-heading-s govuk-!-margin-bottom-1">Sources</h3>
             <ul class="govuk-list govuk-list--bullet govuk-!-margin-bottom-0">
                 {% for source in sources %}
                 <li class="govuk-!-margin-bottom-0">
-                    <a class="iai-chat-messages__sources-link govuk-link" href="{{ source.url }}">{{ source.original_file_name }}</a>
+                    <a class="iai-chat-bubbles__sources-link govuk-link" href="{{ source.url }}">{{ source.original_file_name }}</a>
                 </li>
                 {% endfor %}
             </ul>
