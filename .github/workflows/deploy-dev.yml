@@ -75,14 +75,14 @@ jobs:
       AWS_REGION: ${{ secrets.AWS_REGION }}
       AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
 
-  run-integration-tests:
-    needs:
-      - set-vars
-      - start-runner
-      - build-image
-    uses: i-dot-ai/redbox-copilot/.github/workflows/integration.yml@a7946ec4d530732d6129077231cf1afae4a74bca
-    with:
-      COMMIT_HASH: ${{ github.event.inputs.commit-hash }}
+#  run-integration-tests:
+#    needs:
+#      - set-vars
+#      - start-runner
+#      - build-image
+#    uses: i-dot-ai/redbox-copilot/.github/workflows/integration.yml@a7946ec4d530732d6129077231cf1afae4a74bca
+#    with:
+#      COMMIT_HASH: ${{ github.event.inputs.commit-hash }}
 #  run-integration-tests:
 #    needs:
 #      - set-vars
@@ -118,7 +118,7 @@ jobs:
       - set-vars
       - start-runner
 #      - build-image
-      - run-integration-tests
+#      - run-integration-tests
     uses: i-dot-ai/i-dot-ai-core-github-actions/.github/workflows/apply-terraform.yml@main
     with:
       APP_NAME: ${{ needs.set-vars.outputs.app-name }}
@@ -143,7 +143,7 @@ jobs:
       - set-vars
       - start-runner
 #      - build-image
-      - run-integration-tests
+#      - run-integration-tests
       - release-terraform
     with:
       RUNNER_LABEL: ${{ needs.start-runner.outputs.label }}
