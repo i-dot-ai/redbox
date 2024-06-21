@@ -49,14 +49,14 @@
 
   {% if request.user.is_authenticated %}
     {% set menu_items = [
-      {"text": "Documents", "url": "documents"},
-      {"text": "Chats", "url": "chats"},
-      {"text": "My details", "url": "demographics"},
-      {"text": "Sign out", "url": "signed-out"}
+      {"text": "Documents", "href": "documents"},
+      {"text": "Chats", "href": "chats"},
+      {"text": "My details", "href": "demographics"},
+      {"text": "Sign out", "href": "signed-out"}
     ] %}
   {% else %}
     {% set menu_items = [
-      {"text": "Sign in", "url": "sign-in"}
+      {"text": "Sign in", "href": "sign-in"}
     ] %}
   {% endif %}
 

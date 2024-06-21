@@ -1,6 +1,6 @@
 $govuk-assets-path: "govuk-assets/";
 $govuk-font-family: sans-serif;
-$redbox-red: #A50202;
+$redbox-red: #9C0000; /*old:#A50202*/
 
 @import "./node_modules/govuk-frontend/dist/govuk/all";
 
@@ -228,7 +228,7 @@ body {
 
 /* i.AI Design System */
 :root {
-  --iai-product-colour: #9C0000; /*A50202*/
+  --iai-product-colour: #9C0000;
   --iai-header-gradient-colour-1: #9C0000;
   --iai-header-gradient-colour-2: #451818;
   --iai-background-colour-1: #F6EEF0;
