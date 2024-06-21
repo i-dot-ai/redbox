@@ -182,4 +182,4 @@ def test_rag_chat_streamed(mock_client, headers):
         # Then
         text = "".join(all_text)
         assert text == RAG_LLM_RESPONSE
-        assert route_name == ChatRoute.retrieval
+        assert route_name == ChatRoute.search
