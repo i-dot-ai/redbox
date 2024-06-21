@@ -64,7 +64,7 @@ resource "aws_iam_role_policy_attachment" "redbox_role_policy" {
 
 resource "aws_iam_role_policy" "github-runner-policy" {
   name   = "${local.name}-github-runner-policy"
-  role   = data.terraform_remote_state.platform.outputs.github_runner_execution_role_arn
+  role   = data.terraform_remote_state.platform.outputs.github_runner_execution_role_name
   policy = data.aws_iam_policy_document.github-runner.json
 }
 
