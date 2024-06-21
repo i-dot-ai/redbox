@@ -2,13 +2,10 @@ from uuid import uuid4
 
 import pytest
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django_test_migrations.migrator import Migrator
 
 
 @pytest.mark.django_db()
-def test_0012_alter_file_status():
-    migrator = Migrator(database="default")
-
+def test_0012_alter_file_status(migrator):
     old_state = migrator.apply_initial_migration(("redbox_core", "0012_alter_file_status"))
 
     original_file = SimpleUploadedFile("original_file.txt", b"Lorem Ipsum.")
