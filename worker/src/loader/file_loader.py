@@ -42,7 +42,7 @@ class UnstructuredDocumentLoader(BaseLoader):
         )
 
         elements = partition(url=authenticated_s3_url, strategy=self.env.partition_strategy)
-        raw_chunks = chunk_by_title(elements=elements, combine_text_under_n_chars=self.env.worker_min_chunk_size, max_characters=self.env.worker_max_chunk_size)
+        raw_chunks = chunk_by_title(elements=elements, combine_text_under_n_chars=self.env.worker_ingest_min_chunk_size, max_characters=self.env.worker_ingest_max_chunk_size)
 
         return [
             Document(
