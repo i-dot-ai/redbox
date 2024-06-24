@@ -64,6 +64,7 @@ ipywidgets="^8.1.2"
 playwright = "^1.43"
 pytest-playwright = "^0.5"
 axe-playwright-python = "^0.1"
+dj-notebook = "^0.7.0"
 
 
 [tool.poetry.group.ai.dependencies]
