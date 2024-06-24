@@ -89,7 +89,7 @@ Some parts of the project can be run independently for development, for example 
 docker compose up django-app
 ```
 
-For any other commands available, check the `Makefile` [here](https://github.com/i-dot-ai/redbox-copilot/blob/main/Makefile).
+For any other commands available, run `make help` or check the `Makefile` [here](https://github.com/i-dot-ai/redbox-copilot/blob/main/Makefile).
 
 ## How to run tests
 
@@ -118,6 +118,31 @@ For integration tests:
 ``` bash
 make test-integration
 ```
+
+## The changelog
+
+Every notable change should be added to the changelog. We are using [towncrier](https://pypi.org/project/towncrier/)
+to build our changelog, so in order to add an entry to the changelog, run:
+
+```bash
+poetry run towncrier create --edit <TICKET>.<TYPE>.md
+```
+
+`<TICKET>` should refer to the Jira ticket you are working on, and `<TYPE>` is one of "feature", "bugfix", "doc", 
+"removal", or "misc". For example:
+
+```bash
+poetry run towncrier create --edit REDBOX-406.doc.md
+```
+
+If you aren't working on any ticket in particular, just use a `+` instead of a ticket number.
+
+```bash
+poetry run towncrier create --edit +.bugfix.md
+```
+
+This will create a file in the `changelog.d` directory, which you should include in your pull request. 
+[towncrier](https://pypi.org/project/towncrier/) will do the rest.
 
 ## Pre-commit hooks
 
