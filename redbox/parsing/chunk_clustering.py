@@ -31,16 +31,12 @@ def cluster_chunks(
             List[Chunk]: A list of all the (merged) chunks extracted from the given file.
     """
     # filter out empty chunks
-    non_empty_chunks: MutableSequence[Chunk] = [
-        chunk for chunk in chunks if chunk.token_count > 0
-    ]
+    non_empty_chunks: MutableSequence[Chunk] = [chunk for chunk in chunks if chunk.token_count > 0]
     if len(non_empty_chunks) > 1:
         token_counts: Sequence[int] = [chunk.token_count for chunk in non_empty_chunks]
         # calculate simple vector embedding and distances between adjacent chunks
 
-        chunk_embedding = embedding_model.encode(
-            [chunk.text for chunk in non_empty_chunks]
-        )
+        chunk_embedding = embedding_model.encode([chunk.text for chunk in non_empty_chunks])
 
         pair_embed_dist = [0] + [
             scipy.spatial.distance.cosine(chunk_embedding[i], chunk_embedding[i + 1])
@@ -59,10 +55,7 @@ def cluster_chunks(
         # gets the maximum distance between all the points in the cluster
         hc = scipy.cluster.hierarchy.linkage(dist_triu, "complete")
         num_clusters = round(np.sum(token_counts) / desired_chunk_size)
-        out_clusters = [
-            lab[0]
-            for lab in scipy.cluster.hierarchy.cut_tree(hc, n_clusters=num_clusters)
-        ]
+        out_clusters = [lab[0] for lab in scipy.cluster.hierarchy.cut_tree(hc, n_clusters=num_clusters)]
         # merge clusters and create output chunks
         out_chunks: MutableSequence[Chunk] = []
         for i, clust in enumerate(np.unique(out_clusters)):
@@ -77,9 +70,7 @@ def cluster_chunks(
                     parent_file_uuid=chunks_in[0].parent_file_uuid,
                     index=i,
                     text=" ".join([chunk.text for chunk in chunks_in]),
-                    metadata=reduce(
-                        Metadata.merge, [chunk.metadata for chunk in chunks_in]
-                    ),
+                    metadata=reduce(Metadata.merge, [chunk.metadata for chunk in chunks_in]),
                     creator_user_uuid=chunks_in[0].creator_user_uuid,
                 )
             out_chunks.append(new_chunk)

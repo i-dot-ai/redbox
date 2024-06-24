@@ -51,9 +51,7 @@ def root():
 
 
 @app.get("/health", status_code=HTTPStatus.OK, tags=["health"])
-def health(
-    response: Response, es: Annotated[Elasticsearch, Depends(get_elasticsearch_client)]
-) -> StatusResponse:
+def health(response: Response, es: Annotated[Elasticsearch, Depends(get_elasticsearch_client)]) -> StatusResponse:
     """Returns the health of the API
 
     Returns:
