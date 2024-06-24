@@ -22,8 +22,14 @@ data "terraform_remote_state" "platform" {
 provider "aws" {
   default_tags {
     tags = {
-      Environment = terraform.workspace
-      Deployed    = "github"
+      "platform:environment"    = terraform.workspace
+      "platform:repository"     = "https://github.com/i-dot-ai/redbox-copilot"
+      "platform:security-level" = "base"
+      "platform:deployed-via"   = "github"
+
+      Organisation  = "co"
+      Department    = "i-dot-ai"
+      "Cost Centre" = "i-dot-ai"
     }
   }
 }

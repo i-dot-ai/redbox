@@ -9,11 +9,11 @@ class FeedbackButtons extends HTMLElement {
             <path class="rb-response-feedback__thumb-fill" d="M 22.088 10.651 z M 6 22 H 3 V 11 h 3 z m 14.571 -9.251 l -0.582 0.363 l 0.525 0.443 a 1.27 1.27 0 0 1 0.508 1.175 a 1.359 1.359 0 0 1 -0.892 1.013 l -0.747 0.305 l 0.604 0.533 a 1.208 1.208 0 0 1 0.395 1.227 a 1.167 1.167 0 0 1 -0.908 0.851 l -0.775 0.167 l 0.485 0.628 a 0.858 0.858 0 0 1 0.153 0.939 a 1.25 1.25 0 0 1 -1.148 0.607 h -6.646 l -2.472 -0.966 L 7 20.007 V 13 h 1.473 l 2.448 -3.395 a 9.933 9.933 0 0 0 2.683 -2.867 a 8.134 8.134 0 0 0 1.328 -3.772 a 0.654 0.654 0 0 1 0.562 -0.089 c 0.166 0.078 0.708 0.52 0.708 2.955 a 4.09 4.09 0 0 1 -1.101 2.614 a 1.051 1.051 0 0 0 -0.237 1.06 c 0.25 0.494 0.87 0.494 1.896 0.494 h 3.391 c 0.524 0 0.847 0.48 0.976 0.928 a 1.616 1.616 0 0 1 -0.556 1.821 z"/>    
         `;
         this.innerHTML = `
-            <button data-response="up">
+            <button type="button" data-response="up">
                 <svg width="22" viewBox="0 0 24 24" focusable="false" aria-hidden="true">${thumbIcon}</svg>
                 <span>Helpful</span>
             </button>
-            <button data-response="down">
+            <button type="button" data-response="down">
                 <svg width="22" viewBox="0 0 24 24" focusable="false" aria-hidden="true">${thumbIcon}</svg>
                 <span>Not helpful</span>
             </button>
