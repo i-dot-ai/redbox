@@ -64,6 +64,7 @@ ipywidgets="^8.1.2"
 playwright = "^1.43"
 pytest-playwright = "^0.5"
 axe-playwright-python = "^0.1"
+towncrier = "^23.11"
 
 
 [tool.poetry.group.ai.dependencies]
@@ -91,6 +92,14 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.scripts]
 download-model = 'download_embedder:download'
+
+[tool.towncrier]
+directory = "changelog.d"
+filename = "CHANGELOG.md"
+start_string = "<!-- towncrier release notes start -->\n"
+underlines = ["", "", ""]
+title_format = "## [{version}](https://github.com/i-dot-ai/redbox-copilot/releases/tag/{version}) - {project_date}"
+issue_format = "[#{issue}](https://technologyprogramme.atlassian.net/browse/{issue})"
 
 [tool.ruff.format]
 exclude = ["django_app/redbox_app/redbox_core/migrations/*.py"]
