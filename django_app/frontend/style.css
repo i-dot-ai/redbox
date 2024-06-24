@@ -7423,7 +7423,6 @@ body {
   background-color: #2b71c7;
   color: white;
   font-size: 0.875rem;
-  margin-bottom: 0.25rem;
   padding: 0.25rem 1rem;
   text-align: center;
 }
@@ -7431,6 +7430,7 @@ body {
 .rb-environment-warning {
   background-color: #FFBF47;
   color: black;
+  margin-bottom: 0;
 }
 
 .govuk-phase-banner__content__tag {
@@ -7475,6 +7475,15 @@ body {
   align-items: center;
   display: flex;
   gap: 0.75rem;
+}
+
+.rb-banner__button {
+  background-color: white !important;
+}
+
+.rb-banner__button:hover {
+  color: #A50202 !important;
+  filter: brightness(0.9);
 }
 
 /* Documents page */
@@ -7525,95 +7534,6 @@ body {
 }
 
 /* Chat page */
-.rb-panel {
-  background-color: #f3f2f1;
-  border-radius: 0.25rem;
-  display: block;
-  margin-bottom: 2rem;
-  padding: 1rem;
-  padding-top: 1.5rem;
-}
-
-.rb-panel__scrollable {
-  overflow-y: auto;
-  padding-right: 0.5rem;
-  max-height: 16.75rem;
-}
-
-.rb-panel__scrollable::-webkit-scrollbar {
-  background-color: #b1b4b6;
-  width: 5px;
-}
-
-.rb-panel__scrollable::-webkit-scrollbar-thumb {
-  background-color: #505a5f;
-}
-
-.rb-panel__scrollable .govuk-checkboxes__item {
-  margin-left: 0.625rem;
-}
-
-.rb-panel__scrollable .govuk-checkboxes__label {
-  word-break: break-word;
-}
-
-.rb-chat-message__container {
-  margin-top: -1rem;
-}
-
-.rb-chat-message {
-  background-color: #f3f2f1;
-  border: 1px solid #b1b4b6;
-  border-radius: var(--border-radius);
-  margin-bottom: 0.75rem;
-  padding: 1rem;
-}
-
-.rb-chat-message:focus {
-  outline: 2px solid;
-}
-
-.rb-chat-message--ai {
-  margin-right: clamp(2rem, 10vw, 5rem);
-}
-
-.rb-chat-message--user {
-  margin-left: clamp(2rem, 10vw, 5rem);
-}
-
-.rb-chat-message__role {
-  font-size: 0.75rem;
-}
-
-.rb-chat-message__text {
-  font-size: 1rem;
-  padding-top: 0.5rem;
-}
-
-.rb-chat-message__sources-heading, .rb-chat-messages__sources-link {
-  font-size: 0.875rem;
-}
-
-.rb-chat-message__text code {
-  display: block;
-  overflow-x: auto;
-}
-
-.rb-chat-message__text li {
-  padding: 0.125rem 0;
-}
-
-.rb-chat-message__text table {
-  border-collapse: collapse;
-  width: 100%;
-}
-
-.rb-chat-message__text th, .rb-chat-message__text td {
-  border: 1px solid black;
-  padding: 0.25rem;
-  text-align: left;
-}
-
 .rb-loading-ellipsis {
   font-style: italic;
   margin-top: 1rem;
@@ -7670,26 +7590,10 @@ body {
     opacity: 1;
   }
 }
-.rb-new-message textarea {
-  margin-bottom: 0.5rem;
+.rb-chat-message__container {
+  margin-top: -1rem;
 }
 
-.rb-new-message .govuk-form-group {
-  margin: 0;
-  width: 100%;
-}
-
-@media (min-width: 769px) {
-  .rb-new-message {
-    align-items: flex-end;
-    display: flex;
-    gap: 0.5rem;
-  }
-  .rb-new-message textarea, .rb-new-message button {
-    height: 4rem;
-    margin: 0;
-  }
-}
 .rb-response-feedback {
   display: none;
   position: relative;
@@ -7772,115 +7676,590 @@ body {
   width: 1.5rem;
 }
 
+/* i.AI Design System */
+:root {
+  --iai-product-colour: #9C0000; /*A50202*/
+  --iai-header-gradient-colour-1: #9C0000;
+  --iai-header-gradient-colour-2: #451818;
+  --iai-background-colour-1: #F6EEF0;
+  --iai-background-colour-2: #F8F8F8;
+}
+
+/* FONTS */
+@font-face {
+  font-family: "Inter";
+  src: url("fonts/static/Inter-Regular.ttf");
+}
+@font-face {
+  font-family: "Inter";
+  font-weight: 500;
+  src: url("fonts/static/Inter-Medium.ttf");
+}
+@font-face {
+  font-family: "Inter-SemiBold";
+  font-weight: 700;
+  src: url("fonts/static/Inter-Medium.ttf");
+}
+.govuk-body-l {
+  font-size: 1.1875rem;
+  line-height: 1.5rem;
+}
+
+.govuk-body {
+  font-size: 1rem;
+  line-height: 1.5rem;
+}
+
+.govuk-body-s {
+  font-size: 0.875rem;
+  line-height: 1.5rem;
+}
+
 /* GENERAL */
 :root {
-  --product-colour: #A50202;
-  --border-radius: 0.25rem;
+  --iai-border-radius: 0.25rem;
+  --iai-colour-brand: #C50878;
+  --iai-colour-text-primary: #1F2937;
+  --iai-colour-text-secondary: #6B7280;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body, button, textarea, input, .govuk-body, .govuk-body-s, .govuk-heading-l, .govuk-heading-m, .govuk-heading-s, .govuk-fieldset__heading, .govuk-label, .govuk-button, .govuk-notification-banner, .govuk-footer, .govuk-footer__link {
+  font-family: Inter !important;
+}
+
+main {
+  background: linear-gradient(145deg, var(--iai-background-colour-1, #F6EBF1) 0%, var(--iai-background-colour-2, #E6ECF2 100%));
+  color: var(--iai-colour-text-primary);
+  min-height: calc(100vh - 8.25rem);
+}
+
+body:has(.iai-environment-warning) main {
+  min-height: calc(100vh - 9.875rem);
 }
 
 .govuk-main-wrapper {
   padding: 2rem 0;
 }
 
+.iai-prevent-orphans {
+  display: inline-block;
+}
+
 /* HEADER */
-.govuk-header {
-  border-bottom: 0;
-}
-
-.govuk-header__container {
-  border-bottom: 0;
+.iai-top-nav {
+  background-color: black;
+  color: white;
   margin-bottom: 0;
-  padding-bottom: 0.625rem;
-  padding-top: 0.5rem;
 }
 
-.govuk-header__logo {
-  display: none;
+.iai-top-nav__product {
+  align-items: center;
+  display: flex;
+  height: 3rem;
 }
 
-.govuk-header__content {
-  padding-left: 0;
+.iai-top-nav__product-name {
+  color: white;
+  height: 100%;
+  position: relative;
+}
+
+.iai-top-nav__product-name::before {
+  background: linear-gradient(90deg, var(--iai-header-gradient-colour-1, #C50878), var(--iai-header-gradient-colour-2, #5F043A));
+  content: "";
+  display: block;
+  height: 100%;
+  margin-left: 1.25rem;
+  position: relative;
+  transform: skewX(-30deg);
+  width: calc(100% + 2rem);
+}
+
+.iai-top-nav__product-link {
+  align-items: center;
+  color: white;
+  display: flex;
+  font-size: 1.5rem;
+  height: 100%;
+  justify-content: center;
+  left: 1rem;
+  padding: 0 0.5rem 0 2rem;
+  position: relative;
+  text-decoration: none;
+  top: -3rem;
   width: 100%;
 }
 
-.iai-header__service-name-container {
-  align-items: center;
-  display: flex;
-  gap: 0.75rem;
+.iai-top-nav__link-item {
+  display: inline-block;
+  margin-left: 15px;
+  padding: 2px 0;
+  border: 0;
 }
 
-.govuk-header__service-name {
-  margin-bottom: 0;
+.iai-top-nav__link-item--active, .iai-top-nav__link-item:hover {
+  border-bottom: 1px solid white;
 }
 
-.govuk-header__navigation {
-  margin-bottom: 0;
-}
-
-.govuk-header__navigation-list {
-  margin-top: 0.75rem;
+.iai-top-nav__link {
+  color: white;
+  font-size: 1rem;
+  font-weight: 400;
+  text-decoration: none;
 }
 
 @media (min-width: 769px) {
-  .govuk-header__content {
+  .iai-top-nav__container {
     align-items: center;
     display: flex;
     justify-content: space-between;
   }
-  .govuk-header__navigation-list {
-    margin-top: 0;
+}
+@media (min-width: 1020px) {
+  .iai-top-nav__container {
+    margin: 0 auto;
+    max-width: 960px;
+  }
+  .iai-top-nav__product, .iai-top-nav__nav {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
   }
 }
-/* BUTTON */
-.govuk-button {
-  border: 0;
-  border-radius: var(--border-radius);
+/* BUTTONS AND LINKS */
+.govuk-button, .govuk-button--secondary, .govuk-button:visited, .govuk-button--secondary:visited {
+  font-size: 0.875rem;
+  line-height: 1.5rem;
+  align-items: center;
+  background-color: var(--iai-product-colour, var(--iai-colour-brand));
+  border: 1px solid transparent;
+  border-radius: 0.25rem;
   box-shadow: none;
-  padding: 13px 12px 12px 12px;
+  color: white;
+  display: flex;
+  font-weight: 700;
+  min-height: 3.5rem;
+  padding-left: 1rem;
+  padding-right: 1rem;
 }
 
-.govuk-table .govuk-button {
-  padding: 11px 10px 10px 10px;
+.govuk-button:hover {
+  /*background-color: #aa2a16;*/
+  background-color: transparent;
+  border-color: var(--iai-product-colour, var(--iai-colour-brand));
+  color: var(--iai-product-colour, var(--iai-colour-brand));
 }
 
-/* FOOTER */
-.govuk-footer {
-  padding-top: 1.75rem;
+.govuk-button--secondary, .govuk-button--secondary:visited {
+  background-color: transparent;
+  border-color: var(--iai-product-colour, var(--iai-colour-brand));
+  color: var(--iai-product-colour, var(--iai-colour-brand));
 }
 
-.govuk-footer__meta-item {
-  margin-bottom: 0;
+.govuk-button--secondary:hover {
+  background-color: var(--iai-product-colour, var(--iai-colour-brand));
+  color: white;
 }
 
-.govuk-footer__copyright-logo {
-  background-image: none;
-  padding-top: 0.5rem;
+.iai-large-button {
+  font-size: 0.875rem;
+  line-height: 1.5rem;
+  align-items: center;
+  background-color: white;
+  background: radial-gradient(rgb(255, 255, 255), rgba(255, 255, 255, 0));
+  border: 0;
+  border-left: 2px solid white;
+  border-top: 2px solid white;
+  border-radius: 0.75rem;
+  box-shadow: -4px -4px 14px #fff, 12px 12px 16px rgba(164, 174, 183, 0.15);
+  color: var(--iai-product-colour, var(--iai-colour-brand));
+  display: inline-flex;
+  font-weight: 500;
+  gap: 0.5rem;
+  padding: 1rem 1.25rem;
+  min-height: 3.5rem;
 }
 
-.govuk-footer__copyright-logo img {
-  filter: grayscale(1);
-  height: 5.25rem;
-  width: 7rem;
+.iai-large-button:hover {
+  background-color: white;
+  background: radial-gradient(rgb(240, 240, 240), rgba(240, 240, 240, 0));
 }
 
-/* LINKS */
 .govuk-link:visited {
   color: inherit;
 }
 
+.iai-icon-button {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  color: var(--iai-colour-text-primary);
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+}
+
+.iai-icon-button:hover {
+  color: var(--iai-product-colour, var(--iai-colour-brand));
+}
+
+/* SCROLLABLE PANELS */
+.iai-panel {
+  background-color: white;
+  border-radius: var(--iai-border-radius);
+  display: block;
+  margin-bottom: 2rem;
+  padding: 1rem;
+  padding-top: 1.5rem;
+}
+
+.iai-panel__scrollable {
+  overflow-y: auto;
+  padding-right: 0.5rem;
+  max-height: 16.75rem;
+}
+
+.iai-panel__scrollable::-webkit-scrollbar {
+  background-color: #b1b4b6;
+  width: 5px;
+}
+
+.iai-panel__scrollable::-webkit-scrollbar-thumb {
+  background-color: #505a5f;
+}
+
+.iai-panel__scrollable .govuk-checkboxes__item {
+  margin-left: 0.625rem;
+}
+
+.iai-panel__scrollable .govuk-checkboxes__label {
+  word-break: break-word;
+}
+
+/* CHAT BUBBLES */
+.iai-chat-bubble {
+  font-size: 0.875rem;
+  line-height: 1.5rem;
+  background-color: white;
+  border: 1px solid #E5E7EB;
+  border-radius: 1rem;
+  margin-bottom: 0.75rem;
+  padding: 1rem;
+}
+
+.iai-chat-bubble:focus {
+  outline: 2px solid;
+}
+
+.iai-chat-bubble--left {
+  border-bottom-left-radius: 0;
+  margin-right: clamp(2rem, 10vw, 8rem);
+}
+
+.iai-chat-bubble--right {
+  border-bottom-right-radius: 0;
+  margin-left: clamp(2rem, 10vw, 8rem);
+}
+
+.iai-chat-bubble__role {
+  font-size: 0.625rem;
+  line-height: 0.825rem;
+}
+
+.iai-chat-bubble__text {
+  font-size: 0.875rem;
+  line-height: 1.5rem;
+  padding-top: 0.5rem;
+  word-break: break-word;
+}
+
+.iai-chat-bubble__sources-heading, .iai-chat-bubbles__sources-link {
+  font-size: 0.875rem;
+  line-height: 1.5rem;
+  word-break: break-word;
+}
+
+.iai-chat-bubble__text code {
+  display: block;
+  overflow-x: auto;
+}
+
+.iai-chat-bubble__text li {
+  padding: 0;
+}
+
+.iai-chat-bubble__text table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.iai-chat-bubble__text th, .iai-chat-bubble__text td {
+  border: 1px solid black;
+  padding: 0.25rem;
+  text-align: left;
+}
+
+/* CHAT INPUT */
+.iai-chat-container {
+  display: block;
+  position: relative;
+  margin-top: 1rem;
+  padding-bottom: 10.5rem;
+}
+
+.iai-chat-input {
+  background: linear-gradient(309deg, #F2F3F6 4.42%, #E5E6EC 92.55%);
+  border-top-left-radius: 16px;
+  border-top-right-radius: 16px;
+  bottom: -2rem;
+  left: 0;
+  padding: 0.75rem 1rem;
+  position: absolute;
+  right: 0;
+}
+
+.iai-chat-input__container {
+  align-items: flex-end;
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.iai-chat-input__input-container {
+  flex-grow: 1;
+}
+
+.iai-chat-input__label {
+  font-size: 0.875rem;
+  line-height: 1.5rem;
+  color: var(--iai-colour-text-primary);
+  padding-left: 1rem;
+}
+
+.iai-chat-input__input {
+  font-size: 0.875rem;
+  line-height: 1.5rem;
+  border-radius: 1rem;
+  margin-bottom: 0;
+  padding: 0.375rem 1rem;
+  width: 100%;
+}
+
+.iai-chat-input__button {
+  font-size: 0.625rem;
+  line-height: 0.825rem;
+  color: var(--iai-colour-text-primary);
+}
+
+.iai-chat-input__info-text {
+  font-size: 0.625rem;
+  line-height: 0.825rem;
+  color: var(--iai-colour-text-primary);
+  margin: 0.125rem 0;
+  padding-left: 1rem;
+}
+
+@media (min-width: 641px) {
+  .iai-chat-container {
+    min-height: calc(100vh - 12.25rem);
+    padding-bottom: 4rem;
+  }
+}
+/* DOC LIST */
+.iai-doc-list {
+  font-size: 0.875rem;
+  line-height: 1.5rem;
+  display: block;
+  padding: 1rem;
+  width: 100%;
+}
+
+.iai-doc-list--complete {
+  background-color: #f0f9f0;
+}
+
+.iai-doc-list--processing {
+  background-color: #fcf7f6;
+}
+
+.iai-doc-list_thead {
+  display: block;
+}
+
+.iai-doc-list__header, .iai-doc-list__item {
+  align-items: center;
+  border-style: solid;
+  border-width: 2px;
+  padding: 0.5rem;
+  display: flex;
+  justify-content: space-between;
+}
+
+.iai-doc-list--complete .iai-doc-list__item {
+  border-color: #50ae54;
+}
+
+.iai-doc-list--processing .iai-doc-list__item {
+  border-color: #9b0000;
+}
+
+.iai-doc-list__header {
+  border-color: transparent;
+  padding-bottom: 0;
+  padding-top: 0;
+}
+
+.iai-doc-list__header-item {
+  font-size: 0.75rem;
+  line-height: 0.875rem;
+  font-weight: 400;
+  text-align: left;
+}
+
+.iai-doc-list__cell {
+  flex-shrink: 0;
+}
+
+.iai-doc-list__cell--file-name {
+  flex-grow: 1;
+}
+
+.iai-doc-list__cell--expiry {
+  width: 4rem;
+}
+
+.iai-doc-list--processing .iai-doc-list__cell--expiry {
+  display: none;
+}
+
+.iai-doc-list__cell--status {
+  width: 5rem;
+}
+
+.iai-doc-list--complete .iai-doc-list__cell--status {
+  display: none;
+}
+
+.iai-doc-list__cell--actions {
+  width: 3rem;
+}
+
+.iai-doc-list__tbody {
+  display: block;
+  width: 100%;
+}
+
+.iai-doc-list__item {
+  background-color: white;
+  border-radius: 0.25rem;
+  margin-top: 0.5rem;
+}
+
+.iai-doc-list__delete {
+  font-size: 0.75rem;
+  line-height: 0.875rem;
+  color: var(--iai-colour-text-secondary);
+}
+
+/* FOOTER */
+.iai-footer {
+  background-color: black;
+  color: white;
+  padding: 1.25rem 0;
+}
+
+.iai-footer__logo {
+  display: flex;
+  align-items: center;
+}
+
+.iai-footer__list {
+  margin: 0;
+  margin-bottom: 0.5rem;
+  margin-top: 0.75rem;
+  padding: 0;
+}
+
+.iai-footer__list-item {
+  display: inline-block;
+  margin-right: 1rem;
+}
+
+.iai-footer__link {
+  color: white;
+}
+
+.iai-footer__link--large {
+  font-size: 0.75rem;
+  line-height: 0.875rem;
+}
+
+.iai-footer__licence {
+  font-size: 0.625rem;
+  line-height: 0.825rem;
+  align-items: center;
+  display: flex;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.iai-footer__licence-logo {
+  flex-shrink: 0;
+}
+
+.iai-footer__feedback-container {
+  align-items: center;
+  display: flex;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.iai-footer__feedback-text {
+  font-size: 0.625rem;
+  line-height: 0.825rem;
+}
+
+@media (min-width: 1020px) {
+  .iai-footer__container {
+    align-items: center;
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+  .iai-footer__links-container {
+    display: flex;
+    gap: 2rem;
+  }
+  .iai-footer__list {
+    margin-top: 0;
+  }
+  .iai-footer__licence {
+    margin-top: 0;
+  }
+  .iai-footer__feedback-container {
+    margin-top: 0;
+  }
+  .iai-footer__feedback-text {
+    max-width: 11rem;
+  }
+}
 /* NOTIFICATION BANNER */
 .govuk-notification-banner {
-  border-radius: var(--border-radius);
+  border-radius: var(--iai-border-radius);
 }
 
 .govuk-notification-banner__content {
-  border-bottom-right-radius: var(--border-radius);
-  border-bottom-left-radius: var(--border-radius);
+  border-bottom-right-radius: var(--iai-border-radius);
+  border-bottom-left-radius: var(--iai-border-radius);
 }
 
 /* PHASE BANNER */
 .govuk-phase-banner__content__tag {
-  background-color: var(--product-colour);
+  background-color: var(--iai-product-colour);
   font-weight: 700;
   margin-top: -4px;
   padding-top: 4px;
@@ -7889,7 +8268,7 @@ body {
 
 /* INPUT, TEXTAREA */
 .govuk-input, .govuk-textarea, .govuk-select {
-  border-radius: var(--border-radius);
+  border-radius: var(--iai-border-radius);
 }
 
 /*# sourceMappingURL=style.css.map */

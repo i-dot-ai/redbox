@@ -50,7 +50,7 @@ test-worker: ## Test worker
 .PHONY: test-django
 test-django: stop ## Test django-app
 	docker compose up -d --wait db minio
-	docker compose run --no-deps django-app venv/bin/pytest tests/ --ds redbox_app.settings -v --cov=redbox_app.redbox_core --cov-fail-under 80 -o log_cli=true
+	docker compose run --no-deps django-app venv/bin/pytest tests/ --ds redbox_app.settings -v --cov=redbox_app.redbox_core --cov-fail-under 85 -o log_cli=true
 
 .PHONY: test-integration
 test-integration: rebuild run test-integration-without-build ## Run all integration tests
@@ -118,6 +118,24 @@ IMAGE_TAG=$$(git rev-parse HEAD)
 
 tf_build_args=-var "image_tag=$(IMAGE_TAG)"
 DOCKER_SERVICES=$$(docker compose config --services | grep -v mlflow)
+
+AUTO_APPLY_RESOURCES = module.django-app.aws_ecs_task_definition.aws-ecs-task \
+                       module.django-app.aws_ecs_service.aws-ecs-service \
+                       module.django-app.data.aws_ecs_task_definition.main \
+                       module.core-api.aws_ecs_task_definition.aws-ecs-task \
+                       module.core-api.aws_ecs_service.aws-ecs-service \
+                       module.core-api.data.aws_ecs_task_definition.main \
+                       module.worker.aws_ecs_task_definition.aws-ecs-task \
+                       module.worker.aws_ecs_service.aws-ecs-service \
+                       module.worker.data.aws_ecs_task_definition.main \
+                       module.waf.aws_wafv2_ip_set.london \
+                       aws_secretsmanager_secret.django-app-secret \
+                       aws_secretsmanager_secret.worker-secret \
+                       aws_secretsmanager_secret.core-api-secret \
+					   module.load_balancer.aws_security_group_rule.load_balancer_http_whitelist \
+					   module.load_balancer.aws_security_group_rule.load_balancer_https_whitelist
+
+target_modules = $(foreach resource,$(AUTO_APPLY_RESOURCES),-target $(resource))
 
 .PHONY: docker_login
 docker_login:
@@ -238,11 +256,10 @@ tf_import:
 release: ## Deploy app
 	chmod +x ./infrastructure/aws/scripts/release.sh && ./infrastructure/aws/scripts/release.sh $(env)
 
-# Runs the only the necessary backend for evaluation BUCKET_NAME
 .PHONY: eval_backend
-eval_backend:
-	docker compose up core-api worker -d --build
-	docker exec -it $$(docker ps -q --filter "name=minio") mc mb data/$${BUCKET_NAME}
+eval_backend:  ## Runs the only the necessary backend for evaluation BUCKET_NAME
+	docker compose up -d --wait core-api --build
+	docker exec -it $$(docker ps -q --filter "name=minio") mc mb data/${BUCKET_NAME}
 
 .PHONY: help
 help: ## Show this help

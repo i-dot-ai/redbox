@@ -1,4 +1,5 @@
 import logging
+import re
 from typing import Annotated
 from uuid import UUID
 
@@ -11,12 +12,14 @@ from core_api.src.auth import get_user_uuid, get_ws_user_uuid
 from core_api.src.runnables import map_to_chat_response
 from core_api.src.semantic_routes import get_routable_chains, get_semantic_route_layer
 from redbox.models.chain import ChainInput
-from redbox.models.chat import ChatRequest, ChatResponse, SourceDocument
+from redbox.models.chat import ChatRequest, ChatResponse, ChatRoute, SourceDocument
 
 # === Logging ===
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger()
+
+re_keyword_pattern = re.compile(r"@(\w+)")
 
 
 chat_app = FastAPI(
@@ -39,17 +42,29 @@ chat_app = FastAPI(
 
 async def semantic_router_to_chain(
     chat_request: ChatRequest, user_uuid: UUID, routable_chains: dict[str, Runnable], route_layer: RouteLayer
-) -> tuple[Runnable, ChainInput]:
+) -> tuple[Runnable, ChainInput, ChatRoute]:
     question = chat_request.message_history[-1].text
-    route = route_layer(question)
 
-    selected_chain = routable_chains.get(route.name, routable_chains.get("retrieval"))
+    selected_chain = None
+
+    # Match keyword
+    route_match = re_keyword_pattern.search(question)
+    if route_match:
+        route_name = route_match.group()[1:]
+        selected_chain = routable_chains.get(route_name)
+
+    # Semantic route
+    if selected_chain is None:
+        route_name = route_layer(question).name
+        selected_chain = routable_chains.get(route_name, routable_chains.get("retrieval"))
+
     params = ChainInput(
         question=chat_request.message_history[-1].text,
         file_uuids=[f.uuid for f in chat_request.selected_files],
         user_uuid=user_uuid,
         chat_history=chat_request.message_history[:-1],
     )
+
     return (selected_chain, params)
 
 
@@ -84,6 +99,7 @@ async def rag_chat_streamed(
     async for event in selected_chain.astream(params.model_dump()):
         response = event.get("response", "")
         source_chunks = event.get("source_documents", [])
+        route_name = event.get("route_name", "")
         source_documents = [
             jsonable_encoder(
                 SourceDocument(
@@ -102,5 +118,7 @@ async def rag_chat_streamed(
             await websocket.send_json({"resource_type": "text", "data": response})
         if source_documents:
             await websocket.send_json({"resource_type": "documents", "data": source_documents})
+        if route_name:
+            await websocket.send_json({"resource_type": "route_name", "data": route_name})
     await websocket.send_json({"resource_type": "end"})
     await websocket.close()

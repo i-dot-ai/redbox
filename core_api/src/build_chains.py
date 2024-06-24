@@ -9,13 +9,13 @@ from fastapi import Depends
 from langchain.schema import StrOutputParser
 from langchain_community.chat_models import ChatLiteLLM
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.runnables import Runnable, RunnableLambda, RunnablePassthrough, chain
+from langchain_core.runnables import Runnable, RunnableLambda, RunnablePassthrough
 from langchain_core.vectorstores import VectorStoreRetriever
 
 from core_api.src import dependencies
 from core_api.src.format import format_chunks, get_file_chunked_to_tokens
 from core_api.src.runnables import make_chat_prompt_from_messages_runnable
-from redbox.models import ChatRequest, Chunk, Settings
+from redbox.models import ChatRequest, ChatRoute, Chunk, Settings
 from redbox.storage import ElasticsearchStorageHandler
 
 # === Logging ===
@@ -68,6 +68,7 @@ def build_retrieval_chain(
             | llm
             | StrOutputParser(),
             "source_documents": itemgetter("documents"),
+            "route_name": RunnableLambda(lambda _: ChatRoute.retrieval.value),
         }
     )
 
@@ -77,7 +78,6 @@ def build_summary_chain(
     storage_handler: Annotated[ElasticsearchStorageHandler, Depends(dependencies.get_storage_handler)],
     env: Annotated[Settings, Depends(dependencies.get_env)],
 ) -> Runnable:
-    @chain
     def make_document_context(input_dict):
         documents: list[Chunk] = []
         for selected_file in input_dict["file_uuids"]:
@@ -89,7 +89,7 @@ def build_summary_chain(
             documents += chunks
 
         # right now, can only handle a single document so we manually truncate
-        max_tokens = 20_000  # parameterise later
+        max_tokens = (env.ai.max_tokens,)
         doc_token_sum = np.cumsum([doc.token_count for doc in documents])
         doc_token_sum_limit_index = len([i for i in doc_token_sum if i < max_tokens])
 
@@ -104,12 +104,59 @@ def build_summary_chain(
             env.ai.summarisation_system_prompt, env.ai.summarisation_question_prompt
         )
         | llm
-        | {"response": StrOutputParser()}
+        | {
+            "response": StrOutputParser(),
+            "route_name": RunnableLambda(lambda _: ChatRoute.summarisation.value),
+        }
     )
 
 
-def build_static_response_chain(prompt_template) -> Runnable:
+def build_map_reduce_summary_chain(
+    llm: Annotated[ChatLiteLLM, Depends(dependencies.get_llm)],
+    storage_handler: Annotated[ElasticsearchStorageHandler, Depends(dependencies.get_storage_handler)],
+    env: Annotated[Settings, Depends(dependencies.get_env)],
+) -> Runnable:
+    def make_document_context(input_dict: dict):
+        documents: list[str] = []
+        for selected_file in input_dict["file_uuids"]:
+            chunks = get_file_chunked_to_tokens(
+                file_uuid=selected_file,
+                user_uuid=input_dict["user_uuid"],
+                storage_handler=storage_handler,
+                max_tokens=env.ai.max_tokens,
+            )
+            documents += [chunk.text for chunk in chunks]
+
+        return documents
+
+    map_step = (
+        RunnablePassthrough.assign(documents=make_document_context)
+        | make_chat_prompt_from_messages_runnable(env.ai.map_system_prompt, env.ai.map_question_prompt)
+        | llm
+        | StrOutputParser()
+    )
+
+    def map_operation(input_dict: dict):
+        output = map_step.invoke(input_dict)
+        input_dict["documents"] = output
+        return input_dict
+
+    return (
+        map_operation
+        | make_chat_prompt_from_messages_runnable(env.ai.reduce_system_prompt, env.ai.reduce_question_prompt)
+        | llm
+        | {
+            "response": StrOutputParser(),
+            "route_name": RunnableLambda(lambda _: ChatRoute.summarisation.value),
+        }
+    )
+    #     | {"response": StrOutputParser()}
+    # )
+
+
+def build_static_response_chain(prompt_template, route_name) -> Runnable:
     return RunnablePassthrough.assign(
         response=(ChatPromptTemplate.from_template(prompt_template) | RunnableLambda(lambda p: p.messages[0].content)),
         source_documents=RunnableLambda(lambda _: []),
+        route_name=RunnableLambda(lambda _: route_name.value),
     )

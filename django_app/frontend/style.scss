@@ -14,7 +14,6 @@ body {
   background-color: #2b71c7;
   color: white;
   font-size: 0.875rem;
-  margin-bottom: 0.25rem;
   padding: 0.25rem 1rem;
   text-align: center;
 }
@@ -22,6 +21,7 @@ body {
 .rb-environment-warning {
   background-color: #FFBF47;
   color: black;
+  margin-bottom: 0;
 }
 
 .govuk-phase-banner__content__tag {
@@ -61,6 +61,13 @@ body {
   align-items: center;
   display: flex;
   gap: 0.75rem;
+}
+.rb-banner__button {
+  background-color: white !important;
+}
+.rb-banner__button:hover {
+  color: $redbox-red !important;
+  filter: brightness(0.9);
 }
 
 
@@ -110,79 +117,6 @@ body {
 
 
 /* Chat page */
-.rb-panel {
-  background-color: govuk-colour("light-grey");
-  border-radius: 0.25rem;
-  display: block;
-  margin-bottom: 2rem;
-  padding: 1rem;
-  padding-top: 1.5rem;
-}
-.rb-panel__scrollable {
-  overflow-y: auto;
-  padding-right: 0.5rem;
-  max-height: 16.75rem;
-}
-.rb-panel__scrollable::-webkit-scrollbar {
-  background-color: govuk-colour("mid-grey");
-  width: 5px;
-}
-.rb-panel__scrollable::-webkit-scrollbar-thumb {
-  background-color: govuk-colour("dark-grey");
-}
-.rb-panel__scrollable .govuk-checkboxes__item {
-  margin-left: 0.625rem;
-}
-.rb-panel__scrollable .govuk-checkboxes__label {
-  word-break: break-word;
-}
-
-.rb-chat-message__container {
-  margin-top: -1rem;
-}
-.rb-chat-message {
-  background-color: #f3f2f1;
-  border: 1px solid #b1b4b6;
-  border-radius: var(--border-radius);
-  margin-bottom: 0.75rem;
-  padding: 1rem;
-}
-.rb-chat-message:focus {
-  outline: 2px solid;
-}
-.rb-chat-message--ai {
-  margin-right: clamp(2rem, 10vw, 5rem);
-}
-.rb-chat-message--user {
-  margin-left: clamp(2rem, 10vw, 5rem);
-}
-.rb-chat-message__role {
-  font-size: 0.75rem;
-}
-.rb-chat-message__text {
-  font-size: 1rem;
-  padding-top: 0.5rem;
-}
-.rb-chat-message__sources-heading, .rb-chat-messages__sources-link {
-  font-size: 0.875rem;
-}
-.rb-chat-message__text code {
-  display: block;
-  overflow-x: auto;
-}
-.rb-chat-message__text li {
-  padding: 0.125rem 0;
-}
-.rb-chat-message__text table {
-  border-collapse: collapse;
-  width: 100%;
-}
-.rb-chat-message__text th, .rb-chat-message__text td {
-  border: 1px solid black;
-  padding: 0.25rem;
-  text-align: left;
-}
-
 .rb-loading-ellipsis {
   font-style: italic;
   margin-top: 1rem;
@@ -217,23 +151,8 @@ body {
   75% { opacity: 1; }
 }
 
-.rb-new-message textarea {
-  margin-bottom: 0.5rem;
-}
-.rb-new-message .govuk-form-group {
-  margin: 0;
-  width: 100%;
-}
-@media (min-width: 769px) {
-  .rb-new-message {
-    align-items: flex-end;
-    display: flex;
-    gap: 0.5rem;
-  }
-  .rb-new-message textarea, .rb-new-message button {
-    height: 4rem;
-    margin: 0;
-  }
+.rb-chat-message__container {
+  margin-top: -1rem;
 }
 
 .rb-response-feedback {
@@ -306,4 +225,13 @@ body {
   width: 1.5rem;
 }
 
-@import "./iai.scss";
+
+/* i.AI Design System */
+:root {
+  --iai-product-colour: #9C0000; /*A50202*/
+  --iai-header-gradient-colour-1: #9C0000;
+  --iai-header-gradient-colour-2: #451818;
+  --iai-background-colour-1: #F6EEF0;
+  --iai-background-colour-2: #F8F8F8;
+}
+@import "node_modules/i.ai-design-system/dist/styles.scss";

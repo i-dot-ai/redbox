@@ -1,10 +1,8 @@
 import logging
 import uuid
-from collections.abc import Mapping, MutableSequence, Sequence
+from collections.abc import MutableSequence, Sequence
 from pathlib import Path
-from typing import ClassVar
 
-from django import forms
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import FieldError, ValidationError
@@ -18,6 +16,7 @@ from django.views import View
 from django.views.decorators.http import require_http_methods
 from django.views.generic import UpdateView
 from redbox_app.redbox_core.client import CoreApiClient
+from redbox_app.redbox_core.forms import DemographicsForm
 from redbox_app.redbox_core.models import (
     ChatHistory,
     ChatMessage,
@@ -71,8 +70,11 @@ def homepage_view(request):
 
 @login_required
 def documents_view(request):
-    hidden_statuses = [StatusEnum.deleted, StatusEnum.errored]
-    files = File.objects.filter(user=request.user).exclude(status__in=hidden_statuses).order_by("-created_at")
+    completed_files = File.objects.filter(user=request.user, status=StatusEnum.complete).order_by("-created_at")
+    hidden_statuses = [StatusEnum.deleted, StatusEnum.errored, StatusEnum.complete]
+    processing_files = (
+        File.objects.filter(user=request.user).exclude(status__in=hidden_statuses).order_by("-created_at")
+    )
 
     ingest_errors = request.session.get("ingest_errors", [])
     request.session["ingest_errors"] = []
@@ -80,7 +82,12 @@ def documents_view(request):
     return render(
         request,
         template_name="documents.html",
-        context={"request": request, "files": files, "ingest_errors": ingest_errors},
+        context={
+            "request": request,
+            "completed_files": completed_files,
+            "processing_files": processing_files,
+            "ingest_errors": ingest_errors,
+        },
     )
 
 
@@ -205,6 +212,9 @@ class ChatsView(View):
 
         messages: Sequence[ChatMessage] = []
         if chat_id:
+            current_chat = ChatHistory.objects.get(id=chat_id)
+            if current_chat.users != request.user:
+                return redirect(reverse("chats"))
             messages = ChatMessage.objects.filter(chat_history__id=chat_id).order_by("created_at")
         endpoint = URL.build(scheme=settings.WEBSOCKET_SCHEME, host=request.get_host(), path=r"/ws/chat/")
 
@@ -319,22 +329,6 @@ class CheckDemographicsView(View):
             return redirect(documents_view)
         else:
             return redirect("demographics")
-
-
-class DemographicsForm(forms.ModelForm):
-    class Meta:
-        model = User
-        fields = ("business_unit", "grade", "profession")
-        labels: ClassVar[Mapping[str, str]] = {
-            "business_unit": "Business unit",
-            "grade": "Grade",
-            "profession": "Profession",
-        }
-        widgets: ClassVar[Mapping[str, forms.Widget]] = {
-            "business_unit": forms.Select(attrs={"class": "govuk-select"}),
-            "grade": forms.Select(attrs={"class": "govuk-select"}),
-            "profession": forms.Select(attrs={"class": "govuk-select"}),
-        }
 
 
 class DemographicsView(UpdateView):

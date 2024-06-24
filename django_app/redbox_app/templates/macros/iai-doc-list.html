@@ -1,0 +1,34 @@
+{% macro iaiDocList(docs, type=complete) %}
+
+    <table class="iai-doc-list iai-doc-list--{{type}}">
+        <caption class="govuk-visually-hidden">Document list</caption>
+        <thead class="iai-doc-list_thead">
+            <tr class="iai-doc-list__header">
+                <th scope="col" class="iai-doc-list__header-item iai-doc-list__cell--file-name">File Name</th>
+                <th scope="col" class="iai-doc-list__header-item iai-doc-list__cell--expiry">Expires in</th>
+                <th scope="col" class="iai-doc-list__header-item iai-doc-list__cell--status">Status</th>
+                <th scope="col" class="iai-doc-list__header-item iai-doc-list__cell--actions">
+                    <span class="govuk-visually-hidden">Actions</span>
+                </th>
+            </tr>
+        </thead>
+        <tbody class="iai-doc-list__tbody">
+            {% for doc in docs %}
+                <tr class="iai-doc-list__item">
+                    <td class="iai-doc-list__cell--file-name">{{ doc.name }}</td>
+                    <td class="iai-doc-list__cell--expiry">{{ doc.expires | humanise_expiry }}</td>
+                    <td class="iai-doc-list__cell--status">
+                        <file-status data-id="{{ doc.id }}">{{ doc.get_status_text() }}</file-status>
+                    </td>
+                    <td class="iai-doc-list__cell--actions">
+                        <a class="iai-doc-list__delete" role="button" href="{{ url('remove-doc', doc.id) }}">
+                            Delete
+                            <span class="govuk-visually-hidden">{{ doc.name }}</span>
+                        </a>
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+{% endmacro %}
