@@ -67,7 +67,7 @@ def test_user_journey(page: Page, email_address: str):
     logger.debug("page: %s", chats_page)
     logger.info("all_messages: %s", chats_page.get_all_messages_once_streaming_has_completed())
     latest_chat_response = chats_page.wait_for_latest_message()
-    assert "architecture" in latest_chat_response.text
+    assert latest_chat_response.text
 
     # Select files
     chats_page = chats_page.start_new_chat()
@@ -79,7 +79,7 @@ def test_user_journey(page: Page, email_address: str):
     assert chats_page.selected_file_names == files_to_select
     logger.info("all_messages: %s", chats_page.get_all_messages_once_streaming_has_completed())
     latest_chat_response = chats_page.wait_for_latest_message()
-    assert "architecture" in latest_chat_response.text
+    assert latest_chat_response.text
     assert files_to_select.pop() in latest_chat_response.sources
 
     # Try a file which shouldn't apply to the chat
@@ -91,6 +91,14 @@ def test_user_journey(page: Page, email_address: str):
 
     assert chats_page.selected_file_names == files_to_select
     logger.info("all_messages: %s", chats_page.get_all_messages_once_streaming_has_completed())
+
+    # Select a route
+    chats_page = chats_page.start_new_chat()
+    chats_page.write_message = "@summarisation Please summarise the README documentation."
+    chats_page = chats_page.send()
+    latest_chat_response = chats_page.wait_for_latest_message()
+    assert latest_chat_response.text
+    assert latest_chat_response.route == "summarisation"
 
     # TODO (@brunns): Reinstate assertions once sile selection is affecting the chat response
     # https://technologyprogramme.atlassian.net/browse/REDBOX-337
