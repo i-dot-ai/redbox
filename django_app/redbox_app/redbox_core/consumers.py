@@ -24,7 +24,7 @@ logger.info("WEBSOCKET_SCHEME is: %s", settings.WEBSOCKET_SCHEME)
 @dataclass(frozen=True)
 class CoreChatResponseDoc:
     file_uuid: UUID
-    page_content: str | None
+    page_content: str | None = None
     page_numbers: list[int] | None = None
 
 
