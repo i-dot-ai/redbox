@@ -49,10 +49,10 @@
 
   {% if request.user.is_authenticated %}
     {% set menu_items = [
-      {"text": "Documents", "href": "documents"},
-      {"text": "Chats", "href": "chats"},
-      {"text": "My details", "href": "demographics"},
-      {"text": "Sign out", "href": "signed-out"}
+      {"text": "Documents", "href": url('documents')},
+      {"text": "Chats", "href": url('chats')},
+      {"text": "My details", "href": url('demographics')},
+      {"text": "Sign out", "href": url('signed-out')}
     ] %}
   {% else %}
     {% set menu_items = [

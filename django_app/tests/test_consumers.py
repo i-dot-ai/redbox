@@ -174,6 +174,12 @@ def mocked_connect(uploaded_file: File) -> Connect:
         json.dumps({"resource_type": "text", "data": "Mr. Amor."}),
         json.dumps({"resource_type": "route_name", "data": "gratitude"}),
         json.dumps({"resource_type": "documents", "data": [{"file_uuid": str(uploaded_file.core_file_uuid)}]}),
+        json.dumps(
+            {
+                "resource_type": "documents",
+                "data": [{"file_uuid": str(uploaded_file.core_file_uuid), "page_content": "Good afternoon Mr Amor"}],
+            }
+        ),
         json.dumps({"resource_type": "end"}),
     ]
     return mocked_connect
@@ -188,7 +194,13 @@ def mocked_connect_with_several_files(several_files: Sequence[File]) -> Connect:
         json.dumps({"resource_type": "text", "data": "Third "}),
         json.dumps({"resource_type": "text", "data": "answer."}),
         json.dumps(
-            {"resource_type": "documents", "data": [{"file_uuid": str(f.core_file_uuid)} for f in several_files[2:]]}
+            {
+                "resource_type": "documents",
+                "data": [
+                    {"file_uuid": str(f.core_file_uuid), "page_content": "a secret forth answer"}
+                    for f in several_files[2:]
+                ],
+            }
         ),
         json.dumps({"resource_type": "end"}),
     ]
