@@ -9,7 +9,7 @@ from channels.db import database_sync_to_async
 from channels.testing import WebsocketCommunicator
 from django.db.models import Model
 from redbox_app.redbox_core.consumers import ChatConsumer
-from redbox_app.redbox_core.models import ChatHistory, ChatMessage, ChatRoleEnum, File, User
+from redbox_app.redbox_core.models import ChatHistory, ChatMessage, ChatRoleEnum, ChatRoute, File, User
 from websockets import WebSocketClientProtocol
 from websockets.legacy.client import Connect
 
@@ -33,6 +33,7 @@ async def test_chat_consumer_with_new_session(alice: User, uploaded_file: File, 
         response2 = await communicator.receive_json_from(timeout=5)
         response3 = await communicator.receive_json_from(timeout=5)
         response4 = await communicator.receive_json_from(timeout=5)
+        response5 = await communicator.receive_json_from(timeout=5)
 
         # Then
         assert response1["type"] == "session-id"
@@ -40,13 +41,16 @@ async def test_chat_consumer_with_new_session(alice: User, uploaded_file: File, 
         assert response2["data"] == "Good afternoon, "
         assert response3["type"] == "text"
         assert response3["data"] == "Mr. Amor."
-        assert response4["type"] == "source"
-        assert response4["data"]["original_file_name"] == uploaded_file.original_file_name
+        assert response4["type"] == "route"
+        assert response4["data"] == "gratitude"
+        assert response5["type"] == "source"
+        assert response5["data"]["original_file_name"] == uploaded_file.original_file_name
         # Close
         await communicator.disconnect()
 
     assert await get_chat_message_text(alice, ChatRoleEnum.user) == ["Hello Hal."]
     assert await get_chat_message_text(alice, ChatRoleEnum.ai) == ["Good afternoon, Mr. Amor."]
+    assert await get_chat_message_route(alice, ChatRoleEnum.ai) == [ChatRoute.gratitude]
     await refresh_from_db(uploaded_file)
     assert uploaded_file.last_referenced.date() == datetime.now(tz=UTC).date()
 
@@ -80,6 +84,11 @@ async def test_chat_consumer_with_existing_session(alice: User, chat_history: Ch
 @database_sync_to_async
 def get_chat_message_text(user: User, role: ChatRoleEnum) -> Sequence[str]:
     return [m.text for m in ChatMessage.objects.filter(chat_history__users=user, role=role)]
+
+
+@database_sync_to_async
+def get_chat_message_route(user: User, role: ChatRoleEnum) -> Sequence[ChatRoute]:
+    return [m.route for m in ChatMessage.objects.filter(chat_history__users=user, role=role)]
 
 
 @pytest.mark.xfail()
@@ -163,6 +172,7 @@ def mocked_connect(uploaded_file: File) -> Connect:
     mocked_websocket.__aiter__.return_value = [
         json.dumps({"resource_type": "text", "data": "Good afternoon, "}),
         json.dumps({"resource_type": "text", "data": "Mr. Amor."}),
+        json.dumps({"resource_type": "route_name", "data": "gratitude"}),
         json.dumps({"resource_type": "documents", "data": [{"file_uuid": str(uploaded_file.core_file_uuid)}]}),
         json.dumps({"resource_type": "end"}),
     ]
