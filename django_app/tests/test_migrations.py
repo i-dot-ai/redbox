@@ -64,7 +64,7 @@ def test_0019_remove_chatmessage_source_files_textchunk_and_more(migrator):
         ("redbox_core", "0019_remove_chatmessage_source_files_textchunk_and_more"),
     )
     NewChatMessage = new_state.apps.get_model("redbox_core", "ChatMessage")  # noqa: N806
-    TextChunk = old_state.apps.get_model("redbox_core", "TextChunk")
+    TextChunk = new_state.apps.get_model("redbox_core", "TextChunk")
 
     new_chat_message = NewChatMessage.objects.get(pk=chat_message.pk)
     assert new_chat_message.source_files.first().pk == file.pk
