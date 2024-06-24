@@ -10,6 +10,7 @@ from core_api.src.build_chains import (
     build_map_reduce_summary_chain,
     build_retrieval_chain,
     build_static_response_chain,
+    build_vanilla_chain,
 )
 from redbox.model_db import MODEL_PATH
 from redbox.models.chat import ChatRoute
@@ -110,13 +111,39 @@ extract = Route(
     ],
 )
 
+vanilla = Route(
+    name=ChatRoute.vanilla.value,
+    utterances=[
+        "What is the capital of France?",
+        "Write me a fun poem about frogs.",
+        "What is the meaning of life?",
+        "blah blah blah",
+        "How to make jam",
+        "Cool beans",
+        "Why is the sky blue?",
+        "recipe for scones",
+        "What?",
+        "Huh?",
+        "You tell me",
+        "Do that but shorter",
+        "Do that but in bullet points",
+        "markdown table please",
+        "Wow",
+        "I don't know",
+        "Does this work?",
+        "Why?",
+        "Gosh",
+        "What is this?",
+    ],
+)
+
 __semantic_routing_encoder = None
 __routable_chains = None
 __semantic_route_layer = None
 
 
 def get_semantic_routes():
-    return (info, ability, coach, gratitude, summarisation)
+    return (info, ability, coach, gratitude, summarisation, vanilla)
 
 
 def get_semantic_routing_encoder():
@@ -129,24 +156,36 @@ def get_semantic_routing_encoder():
     return __semantic_routing_encoder
 
 
-def get_semantic_route_layer(routes: Annotated[list[Route], Depends(get_semantic_routes)]):
+def get_semantic_route_layer(
+    routes: Annotated[list[Route], Depends(get_semantic_routes)]
+):
     global __semantic_route_layer  # noqa: PLW0603
     if not __semantic_route_layer:
-        __semantic_route_layer = RouteLayer(encoder=get_semantic_routing_encoder(), routes=routes)
+        __semantic_route_layer = RouteLayer(
+            encoder=get_semantic_routing_encoder(), routes=routes
+        )
     return __semantic_route_layer
 
 
 def get_routable_chains(
     retrieval_chain: Annotated[Runnable, Depends(build_retrieval_chain)],
     summary_chain: Annotated[Runnable, Depends(build_map_reduce_summary_chain)],
+    vanilla_chain: Annotated[Runnable, Depends(build_vanilla_chain)],
 ):
     global __routable_chains  # noqa: PLW0603
     if not __routable_chains:
         __routable_chains = {
             ChatRoute.info: build_static_response_chain(INFO_RESPONSE, ChatRoute.info),
-            ChatRoute.ability: build_static_response_chain(ABILITY_RESPONSE, ChatRoute.ability),
-            ChatRoute.coach: build_static_response_chain(COACH_RESPONSE, ChatRoute.coach),
-            ChatRoute.gratitude: build_static_response_chain("You're welcome!", ChatRoute.gratitude),
+            ChatRoute.ability: build_static_response_chain(
+                ABILITY_RESPONSE, ChatRoute.ability
+            ),
+            ChatRoute.coach: build_static_response_chain(
+                COACH_RESPONSE, ChatRoute.coach
+            ),
+            ChatRoute.gratitude: build_static_response_chain(
+                "You're welcome!", ChatRoute.gratitude
+            ),
+            ChatRoute.vanilla: vanilla_chain,
             ChatRoute.retrieval: retrieval_chain,
             ChatRoute.summarisation: summary_chain,
         }

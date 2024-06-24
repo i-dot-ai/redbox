@@ -10,6 +10,8 @@ logging.basicConfig(level=logging.INFO)
 log = logging.getLogger()
 
 
+VANILLA_SYSTEM_PROMPT = "You are an AI assistant called Redbox tasked with answering questions and providing information objectively."
+
 RETRIEVAL_SYSTEM_PROMPT = (
     "Given the following conversation and extracted parts of a long document and a question, create a final answer. \n"
     "If you don't know the answer, just say that you don't know. Don't try to make up an answer. "
@@ -50,16 +52,26 @@ REDUCE_SYSTEM_PROMPT = (
     "4) Maintain the original context and meaning.\n"
 )
 
-RETRIEVAL_QUESTION_PROMPT = "{question} \n=========\n{formatted_documents}\n=========\nFINAL ANSWER: "
+VANILLA_QUESTION_PROMPT = "{question}\n=========\n Response: "
+
+RETRIEVAL_QUESTION_PROMPT = (
+    "{question} \n=========\n{formatted_documents}\n=========\nFINAL ANSWER: "
+)
 
 
-SUMMARISATION_QUESTION_PROMPT = "Question: {question}. \n\n Documents: \n\n {documents} \n\n Answer: "
+SUMMARISATION_QUESTION_PROMPT = (
+    "Question: {question}. \n\n Documents: \n\n {documents} \n\n Answer: "
+)
 
 
-MAP_QUESTION_PROMPT = "Question: {question}. \n\n Documents: \n\n {documents} \n\n Answer: "
+MAP_QUESTION_PROMPT = (
+    "Question: {question}. \n\n Documents: \n\n {documents} \n\n Answer: "
+)
 
 
-REDUCE_QUESTION_PROMPT = "Question: {question}. \n\n Documents: \n\n {documents} \n\n Answer: "
+REDUCE_QUESTION_PROMPT = (
+    "Question: {question}. \n\n Documents: \n\n {documents} \n\n Answer: "
+)
 
 
 class AISettings(BaseModel):
@@ -71,6 +83,8 @@ class AISettings(BaseModel):
     rag_num_candidates: int = 10
     rag_desired_chunk_size: int = 300
     max_tokens: int = 20_000
+    vanilla_system_prompt: str = VANILLA_SYSTEM_PROMPT
+    vanilla_question_prompt: str = VANILLA_QUESTION_PROMPT
     retrieval_system_prompt: str = RETRIEVAL_SYSTEM_PROMPT
     retrieval_question_prompt: str = RETRIEVAL_QUESTION_PROMPT
     summarisation_system_prompt: str = SUMMARISATION_SYSTEM_PROMPT
@@ -152,7 +166,9 @@ class Settings(BaseSettings):
     dev_mode: bool = False
     superuser_email: str | None = None
 
-    model_config = SettingsConfigDict(env_file=".env", env_nested_delimiter="__", extra="allow", frozen=True)
+    model_config = SettingsConfigDict(
+        env_file=".env", env_nested_delimiter="__", extra="allow", frozen=True
+    )
 
     def elasticsearch_client(self) -> Elasticsearch:
         if isinstance(self.elastic, ElasticLocalSettings):
@@ -173,7 +189,9 @@ class Settings(BaseSettings):
         log.info("Cloud ID = %s", self.elastic.cloud_id)
         log.info("Elastic Cloud API Key = %s", self.elastic.api_key)
 
-        return Elasticsearch(cloud_id=self.elastic.cloud_id, api_key=self.elastic.api_key)
+        return Elasticsearch(
+            cloud_id=self.elastic.cloud_id, api_key=self.elastic.api_key
+        )
 
     def s3_client(self):
         if self.object_store == "minio":

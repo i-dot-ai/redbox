@@ -25,30 +25,27 @@ log = logging.getLogger()
 
 
 def build_vanilla_chain(
-    chat_request: ChatRequest,
-    **kwargs,  # noqa: ARG001
+    llm: Annotated[ChatLiteLLM, Depends(dependencies.get_llm)],
+    env: Annotated[Settings, Depends(dependencies.get_env)],
 ) -> Runnable:
-    """Get a LLM response to a question history"""
 
-    if len(chat_request.message_history) < 2:  # noqa: PLR2004
-        raise HTTPException(
-            status_code=HTTPStatus.UNPROCESSABLE_ENTITY,
-            detail="Chat history should include both system and user prompts",
+    def make_vanilla_context(input_dict):
+        vanilla_context = {
+            "question": input_dict["question"],
+            "chat_history": input_dict["chat_history"],
+        }
+
+    return (
+        RunnablePassthrough.assign(vanilla_context=make_vanilla_context)
+        | make_chat_prompt_from_messages_runnable(
+            env.ai.vanilla_system_prompt, env.ai.vanilla_question_prompt
         )
-
-    if chat_request.message_history[0].role != "system":
-        raise HTTPException(
-            status_code=HTTPStatus.UNPROCESSABLE_ENTITY,
-            detail="The first entry in the chat history should be a system prompt",
-        )
-
-    if chat_request.message_history[-1].role != "user":
-        raise HTTPException(
-            status_code=HTTPStatus.UNPROCESSABLE_ENTITY,
-            detail="The final entry in the chat history should be a user question",
-        )
-
-    return ChatPromptTemplate.from_messages((msg.role, msg.text) for msg in chat_request.message_history)
+        | llm
+        | {
+            "response": StrOutputParser(),
+            "route_name": RunnableLambda(lambda _: ChatRoute.vanilla.value),
+        }
+    )
 
 
 def build_retrieval_chain(
@@ -59,7 +56,9 @@ def build_retrieval_chain(
     return (
         RunnablePassthrough.assign(documents=retriever)
         | RunnablePassthrough.assign(
-            formatted_documents=(RunnablePassthrough() | itemgetter("documents") | format_chunks)
+            formatted_documents=(
+                RunnablePassthrough() | itemgetter("documents") | format_chunks
+            )
         )
         | {
             "response": make_chat_prompt_from_messages_runnable(
@@ -75,7 +74,9 @@ def build_retrieval_chain(
 
 def build_summary_chain(
     llm: Annotated[ChatLiteLLM, Depends(dependencies.get_llm)],
-    storage_handler: Annotated[ElasticsearchStorageHandler, Depends(dependencies.get_storage_handler)],
+    storage_handler: Annotated[
+        ElasticsearchStorageHandler, Depends(dependencies.get_storage_handler)
+    ],
     env: Annotated[Settings, Depends(dependencies.get_env)],
 ) -> Runnable:
     def make_document_context(input_dict):
@@ -95,11 +96,15 @@ def build_summary_chain(
 
         documents_trunc = documents[:doc_token_sum_limit_index]
         if len(documents) < doc_token_sum_limit_index:
-            log.info("Documents were longer than 20k tokens. Truncating to the first 20k.")
+            log.info(
+                "Documents were longer than 20k tokens. Truncating to the first 20k."
+            )
         return documents_trunc
 
     return (
-        RunnablePassthrough.assign(documents=(make_document_context | RunnableLambda(format_chunks)))
+        RunnablePassthrough.assign(
+            documents=(make_document_context | RunnableLambda(format_chunks))
+        )
         | make_chat_prompt_from_messages_runnable(
             env.ai.summarisation_system_prompt, env.ai.summarisation_question_prompt
         )
@@ -113,7 +118,9 @@ def build_summary_chain(
 
 def build_map_reduce_summary_chain(
     llm: Annotated[ChatLiteLLM, Depends(dependencies.get_llm)],
-    storage_handler: Annotated[ElasticsearchStorageHandler, Depends(dependencies.get_storage_handler)],
+    storage_handler: Annotated[
+        ElasticsearchStorageHandler, Depends(dependencies.get_storage_handler)
+    ],
     env: Annotated[Settings, Depends(dependencies.get_env)],
 ) -> Runnable:
     def make_document_context(input_dict: dict):
@@ -131,7 +138,9 @@ def build_map_reduce_summary_chain(
 
     map_step = (
         RunnablePassthrough.assign(documents=make_document_context)
-        | make_chat_prompt_from_messages_runnable(env.ai.map_system_prompt, env.ai.map_question_prompt)
+        | make_chat_prompt_from_messages_runnable(
+            env.ai.map_system_prompt, env.ai.map_question_prompt
+        )
         | llm
         | StrOutputParser()
     )
@@ -143,7 +152,9 @@ def build_map_reduce_summary_chain(
 
     return (
         map_operation
-        | make_chat_prompt_from_messages_runnable(env.ai.reduce_system_prompt, env.ai.reduce_question_prompt)
+        | make_chat_prompt_from_messages_runnable(
+            env.ai.reduce_system_prompt, env.ai.reduce_question_prompt
+        )
         | llm
         | {
             "response": StrOutputParser(),
@@ -156,7 +167,10 @@ def build_map_reduce_summary_chain(
 
 def build_static_response_chain(prompt_template, route_name) -> Runnable:
     return RunnablePassthrough.assign(
-        response=(ChatPromptTemplate.from_template(prompt_template) | RunnableLambda(lambda p: p.messages[0].content)),
+        response=(
+            ChatPromptTemplate.from_template(prompt_template)
+            | RunnableLambda(lambda p: p.messages[0].content)
+        ),
         source_documents=RunnableLambda(lambda _: []),
         route_name=RunnableLambda(lambda _: route_name.value),
     )
