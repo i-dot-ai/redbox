@@ -64,16 +64,16 @@ def test_0019_remove_chatmessage_source_files_textchunk_and_more(migrator):
         ("redbox_core", "0019_remove_chatmessage_source_files_textchunk_and_more"),
     )
     NewChatMessage = new_state.apps.get_model("redbox_core", "ChatMessage")  # noqa: N806
-    TextChunk = new_state.apps.get_model("redbox_core", "TextChunk")
+    Citation = new_state.apps.get_model("redbox_core", "Citation")
 
     new_chat_message = NewChatMessage.objects.get(pk=chat_message.pk)
     assert new_chat_message.source_files.first().pk == file.pk
     assert new_chat_message.old_source_files.first().pk == file.pk
 
-    assert TextChunk.objects.count() == 1
-    text_chunk = TextChunk.objects.first()
-    assert text_chunk.file.pk == file.pk
-    assert text_chunk.chat_message.pk == new_chat_message.pk
+    assert Citation.objects.count() == 1
+    citation = Citation.objects.first()
+    assert citation.file.pk == file.pk
+    assert citation.chat_message.pk == new_chat_message.pk
 
     # Cleanup:
     migrator.reset()
