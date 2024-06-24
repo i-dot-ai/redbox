@@ -148,6 +148,9 @@ class Settings(BaseSettings):
     embed_queue_name: str = "redbox-embedder-queue"
     ingest_queue_name: str = "redbox-ingester-queue"
 
+    worker_ingest_min_chunk_size: int = 120
+    worker_ingest_max_chunk_size: int = 300
+
     redis_host: str = "redis"
     redis_port: int = 6379
 

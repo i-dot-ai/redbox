@@ -27,7 +27,7 @@ class UnstructuredDocumentLoader(BaseLoader):
         """
         self.file = file
         self.s3_client = s3_client
-        self.partition_strategy = env.partition_strategy
+        self.env = env
 
     def lazy_load(self) -> Iterator[Document]:  # <-- Does not take any arguments
         """A lazy loader that reads a file line by line.
@@ -41,8 +41,8 @@ class UnstructuredDocumentLoader(BaseLoader):
             ExpiresIn=3600,
         )
 
-        elements = partition(url=authenticated_s3_url, strategy=self.partition_strategy)
-        raw_chunks = chunk_by_title(elements=elements)
+        elements = partition(url=authenticated_s3_url, strategy=self.env.partition_strategy)
+        raw_chunks = chunk_by_title(elements=elements, combine_text_under_n_chars=self.env.worker_min_chunk_size, max_characters=self.env.worker_max_chunk_size)
 
         return [
             Document(
