@@ -86,10 +86,28 @@ def get_es_retriever(
     def es_query(query: ESQuery) -> dict[str, Any]:
         vector = get_embedding_model(env).embed_query(query["question"])
 
-        knn_filter = [{"term": {"creator_user_uuid.keyword": str(query["user_uuid"])}}]
+        knn_filter = [
+            {
+                "bool": {
+                    "should": [
+                        {"term": {"creator_user_uuid.keyword": str(query["user_uuid"])}},
+                        {"term": {"metadata.creator_user_uuid.keyword": str(query["user_uuid"])}}
+                    ]
+                }
+        }]
 
         if len(query["file_uuids"]) != 0:
-            knn_filter.append({"terms": {"parent_file_uuid.keyword": [str(uuid) for uuid in query["file_uuids"]]}})
+            knn_filter.append(
+                {
+                    "bool": {
+                        "should": [
+                            {"terms": {"parent_file_uuid.keyword": [str(uuid) for uuid in query["file_uuids"]]}},
+                            {"terms": {"metadata.parent_file_uuid.keyword": [str(uuid) for uuid in query["file_uuids"]]}}
+                        ]
+                    }
+                }
+            )
+                
 
         return {
             "size": env.ai.rag_k,
@@ -110,7 +128,21 @@ def get_es_retriever(
         }
 
     def chunk_mapper(hit: dict[str, Any]) -> Chunk:
-        return Chunk(**hit["_source"])
+        if hit['_source'].get('uuid'):
+            #Legacy direct chunk storage
+            return Chunk(**hit["_source"])
+        else:
+            #Document storage
+            return Chunk(
+                uuid=hit['_id'],
+                text=hit['_source']['text'],
+                index=hit['_source']['metadata']['index'],
+                embedding=hit['_source']['embedding'],
+                created_datetime=hit['_source']['metadata']['created_datetime'],
+                creator_user_uuid=hit['_source']['metadata']['creator_user_uuid'],
+                parent_file_uuid=hit['_source']['metadata']['parent_file_uuid'],
+                metadata=hit['_source']['metadata']
+            )
 
     return ElasticsearchRetriever(
         es_client=es, index_name=f"{env.elastic_root_index}-chunk", body_func=es_query, document_mapper=chunk_mapper
