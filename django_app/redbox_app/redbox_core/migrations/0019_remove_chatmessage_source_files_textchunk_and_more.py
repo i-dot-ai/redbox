@@ -7,10 +7,10 @@ from django.db import migrations, models
 
 def file_to_text_chunk(apps, schema_editor):
     ChatMessage = apps.get_model("redbox_core", "ChatMessage")
-    TextChunk = apps.get_model("redbox_core", "TextChunk")
+    Citation = apps.get_model("redbox_core", "Citation")
     for chat_message in ChatMessage.objects.all():
         for file in chat_message.old_source_files.all():
-            TextChunk.objects.create(
+            Citation.objects.create(
                 file=file,
                 chat_message=chat_message,
             )
@@ -28,7 +28,7 @@ class Migration(migrations.Migration):
             new_name="old_source_files",
         ),
         migrations.CreateModel(
-            name="TextChunk",
+            name="Citation",
             fields=[
                 (
                     "id",
@@ -65,7 +65,7 @@ class Migration(migrations.Migration):
             model_name="chatmessage",
             name="source_files",
             field=models.ManyToManyField(
-                through="redbox_core.TextChunk", to="redbox_core.file"
+                through="redbox_core.Citation", to="redbox_core.file"
             ),
         ),
         migrations.RunPython(file_to_text_chunk, migrations.RunPython.noop),
