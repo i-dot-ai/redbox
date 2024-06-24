@@ -31,8 +31,8 @@ class FileAdmin(admin.ModelAdmin):
 
 
 class ChatMessageAdmin(admin.ModelAdmin):
-    list_display = ["chat_history", "get_user", "text", "role", "created_at"]
-    list_filter = ["role", "chat_history__users"]
+    list_display = ["chat_history", "get_user", "text", "role", "route", "created_at"]
+    list_filter = ["role", "route", "chat_history__users"]
     date_hierarchy = "created_at"
 
     @admin.display(ordering="chat_history__users", description="User")

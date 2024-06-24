@@ -20,7 +20,13 @@ provider "random" {
 provider "aws" {
   default_tags {
     tags = {
-      Environment = "prod"
+      "platform:environment"    = "prod"
+      "platform:repository"     = "https://github.com/i-dot-ai/redbox-copilot"
+      "platform:security-level" = "base"
+
+      Organisation  = "co"
+      Department    = "i-dot-ai"
+      "Cost Centre" = "i-dot-ai"
     }
   }
 }

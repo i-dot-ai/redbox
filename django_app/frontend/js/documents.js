@@ -21,7 +21,7 @@ class FileStatus extends HTMLElement {
             const responseObj = await response.json();
             this.textContent = responseObj.status;
             if (responseObj.status.toLowerCase() === 'complete') {
-                const evt = new CustomEvent('doc-complete', { detail: this.closest('.doc-list__item') });
+                const evt = new CustomEvent('doc-complete', { detail: this.closest('.iai-doc-list__item') });
                 document.body.dispatchEvent(evt);
             } else {
                 window.setTimeout(checkStatus, CHECK_INTERVAL_MS);

@@ -20,7 +20,7 @@ BASE_URL = URL("http://localhost:8090/")
 TEST_ROOT = Path(__file__).parent
 
 
-def test_user_journey(page: Page, email_address: str):  # noqa: PLR0915
+def test_user_journey(page: Page, email_address: str):
     """End to end user journey test.
 
     Simulates a single user journey through the application, running against the full suite of microservices.
@@ -40,10 +40,9 @@ def test_user_journey(page: Page, email_address: str):  # noqa: PLR0915
     # Use magic link
     magic_link = get_magic_link(email_address)
     logger.debug("magic_link: %s", magic_link)
-    sign_in_confirmation_page = SignInConfirmationPage(page, magic_link)
+    my_details_page = SignInConfirmationPage.autosubmit(page, magic_link)
 
     # My details page
-    my_details_page = sign_in_confirmation_page.start()
     my_details_page.grade = "AA"
     my_details_page.business_unit = "Delivery Group"
     my_details_page.profession = "Digital, data and technology"
