@@ -229,10 +229,22 @@ class TextChunk(UUIDPrimaryKeyBase, TimeStampedModel):
         return f"{self.file}: {self.text or ''}"
 
 
+class ChatRoute(models.TextChoices):
+    info = "info"
+    ability = "ability"
+    coach = "coach"
+    gratitude = "gratitude"
+    retrieval = "retrieval"
+    summarisation = "summarisation"
+    extract = "extract"
+    vanilla = "vanilla"
+
+
 class ChatMessage(UUIDPrimaryKeyBase, TimeStampedModel):
     chat_history = models.ForeignKey(ChatHistory, on_delete=models.CASCADE)
     text = models.TextField(max_length=32768, null=False, blank=False)
     role = models.CharField(choices=ChatRoleEnum.choices, null=False, blank=False)
+    route = models.CharField(choices=ChatRoute.choices, null=True, blank=True)
     old_source_files = models.ManyToManyField(  # delete me
         File,
         related_name="chat_messages",
