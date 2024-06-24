@@ -67,12 +67,6 @@ def document_loader(s3_client: S3Client, env: Settings):
     return wrapped
 
 
-def add_embedding(embedding: SentenceTransformerEmbeddings):
-    @chain
-    def wrapped(documents: list[Document]):
-        return embedding.embed_documents(documents)
-
-
 @broker.subscriber(list=env.ingest_queue_name)
 async def ingest(file: File, s3_client: S3Client = Context(), vectorstore: VectorStore = Context()):
     logging.info("Ingesting file: %s", file)
