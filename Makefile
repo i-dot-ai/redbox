@@ -30,6 +30,7 @@ build:
 
 .PHONY: rebuild
 rebuild: stop prune ## Rebuild all images
+	poetry install
 	docker compose build --no-cache
 
 .PHONY: test-core-api
@@ -68,6 +69,7 @@ collect-static:
 lint:  ## Check code formatting & linting
 	poetry run ruff format . --check
 	poetry run ruff check .
+	poetry run towncrier check
 
 .PHONY: format
 format:  ## Format and fix code
