@@ -112,7 +112,7 @@ extract = Route(
 )
 
 vanilla = Route(
-    name=ChatRoute.vanilla.value,
+    name=ChatRoute.chat.value,
     utterances=[
         "What is the capital of France?",
         "Write me a fun poem about frogs.",
@@ -175,7 +175,7 @@ def get_routable_chains(
             ChatRoute.ability: build_static_response_chain(ABILITY_RESPONSE, ChatRoute.ability),
             ChatRoute.coach: build_static_response_chain(COACH_RESPONSE, ChatRoute.coach),
             ChatRoute.gratitude: build_static_response_chain("You're welcome!", ChatRoute.gratitude),
-            ChatRoute.vanilla: vanilla_chain,
+            ChatRoute.chat: vanilla_chain,
             ChatRoute.search: retrieval_chain,
             ChatRoute.summarise: summary_chain,
             # Experimental routes

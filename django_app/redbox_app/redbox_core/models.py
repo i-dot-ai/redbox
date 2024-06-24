@@ -234,10 +234,10 @@ class ChatRoute(models.TextChoices):
     ability = "ability"
     coach = "coach"
     gratitude = "gratitude"
-    retrieval = "retrieval"
-    summarisation = "summarisation"
+    search = "search"
+    summarise = "summarise"
     extract = "extract"
-    vanilla = "vanilla"
+    chat = "chat"
 
 
 class ChatMessage(UUIDPrimaryKeyBase, TimeStampedModel):
