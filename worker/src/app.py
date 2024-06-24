@@ -3,15 +3,15 @@
 import logging
 from contextlib import asynccontextmanager
 from datetime import UTC, datetime
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING
 
 from faststream import Context, ContextRepo, FastStream
 from faststream.redis import RedisBroker
 from langchain_community.embeddings import SentenceTransformerEmbeddings
 from langchain_core.documents.base import Document
+from langchain_core.runnables import RunnableLambda, chain
 from langchain_core.vectorstores import VectorStore
 from langchain_elasticsearch.vectorstores import ElasticsearchStore
-from langchain_core.runnables import Runnable, RunnableLambda, chain
 
 from redbox.models import File, Settings
 from worker.src.loader import UnstructuredDocumentLoader
@@ -51,7 +51,7 @@ async def lifespan(context: ContextRepo):
         embedding=embeddings,
         es_connection=es,
         query_field="text",
-        vector_query_field=env.embedding_document_field_name
+        vector_query_field=env.embedding_document_field_name,
     )
 
     context.set_global("vectorstore", elasticsearch_store)
@@ -63,29 +63,23 @@ def document_loader(s3_client: S3Client, env: Settings):
     @chain
     def wrapped(file: File):
         return UnstructuredDocumentLoader(file, s3_client, env).lazy_load()
+
     return wrapped
 
 
 def add_embedding(embedding: SentenceTransformerEmbeddings):
     @chain
-    def wrapped(documents: List[Document]):
+    def wrapped(documents: list[Document]):
         return embedding.embed_documents(documents)
 
 
 @broker.subscriber(list=env.ingest_queue_name)
-async def ingest(
-    file: File,
-    s3_client: S3Client = Context(),
-    vectorstore: VectorStore = Context()
-):
-    logging.info(f"Ingesting file: {file}")
+async def ingest(file: File, s3_client: S3Client = Context(), vectorstore: VectorStore = Context()):
+    logging.info("Ingesting file: %s", file)
 
-    new_ids = (
-        document_loader(s3_client=s3_client, env=env)
-        | RunnableLambda(vectorstore.add_documents)
-    ).invoke(file)
+    new_ids = (document_loader(s3_client=s3_client, env=env) | RunnableLambda(vectorstore.add_documents)).invoke(file)
 
-    logging.info(f"File: {file} [{len(new_ids)}] chunks ingested")
+    logging.info("File: %s [%s] chunks ingested", file, len(new_ids))
 
 
 app = FastStream(broker=broker, lifespan=lifespan)

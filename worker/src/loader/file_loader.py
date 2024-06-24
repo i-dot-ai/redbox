@@ -1,12 +1,13 @@
-from typing import AsyncIterator, Iterator, TYPE_CHECKING
-from datetime import datetime, UTC
+from collections.abc import Iterator
+from datetime import UTC, datetime
+from typing import TYPE_CHECKING
 
 from langchain_core.document_loaders import BaseLoader
 from langchain_core.documents import Document
 from unstructured.chunking.title import chunk_by_title
 from unstructured.partition.auto import partition
 
-from redbox.models.file import Chunk, File, Metadata
+from redbox.models.file import File
 from redbox.models.settings import Settings
 
 if TYPE_CHECKING:
@@ -49,14 +50,14 @@ class UnstructuredDocumentLoader(BaseLoader):
                 metadata={
                     "parent_file_uuid": self.file.uuid,
                     "creator_user_uuid": self.file.creator_user_uuid,
-                    "index": i, 
+                    "index": i,
                     "page_number": raw_chunk.metadata.page_number,
                     "languages": raw_chunk.metadata.languages,
                     "link_texts": raw_chunk.metadata.link_texts,
                     "link_urls": raw_chunk.metadata.link_urls,
                     "links": raw_chunk.metadata.links,
-                    "created_datetime": datetime.now(UTC)
-                }
+                    "created_datetime": datetime.now(UTC),
+                },
             )
             for i, raw_chunk in enumerate(raw_chunks)
         ]

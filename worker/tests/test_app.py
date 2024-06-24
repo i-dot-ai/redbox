@@ -1,9 +1,10 @@
-import pytest
-from faststream.redis import TestApp, TestRedisBroker
-from elasticsearch.helpers import scan
 import asyncio
 
-from redbox.models.file import File, Chunk
+import pytest
+from elasticsearch.helpers import scan
+from faststream.redis import TestApp, TestRedisBroker
+
+from redbox.models.file import File
 from redbox.storage import ElasticsearchStorageHandler
 from worker.src.app import app, broker, env
 
@@ -25,26 +26,28 @@ async def test_ingest_file(es_client, file: File):
     async with TestRedisBroker(broker) as br, TestApp(app):
         await br.publish(file, list=env.ingest_queue_name)
         await asyncio.sleep(1)
-        chunks = list(scan(
-            client=es_client,
-            index="test-ingest-chunk",
-            query={
-                "query": {
-                    "bool": {
-                        "must": [
-                            {
-                                "term": {
-                                    "metadata.parent_file_uuid.keyword": str(file.uuid),
-                                }
-                            },
-                            {
-                                "term": {
-                                    "metadata.creator_user_uuid.keyword": str(file.creator_user_uuid),
-                                }
-                            },
-                        ]
+        chunks = list(
+            scan(
+                client=es_client,
+                index="test-ingest-chunk",
+                query={
+                    "query": {
+                        "bool": {
+                            "must": [
+                                {
+                                    "term": {
+                                        "metadata.parent_file_uuid.keyword": str(file.uuid),
+                                    }
+                                },
+                                {
+                                    "term": {
+                                        "metadata.creator_user_uuid.keyword": str(file.creator_user_uuid),
+                                    }
+                                },
+                            ]
+                        }
                     }
-                }
-            },
-        ))
+                },
+            )
+        )
         assert len(chunks) > 0
