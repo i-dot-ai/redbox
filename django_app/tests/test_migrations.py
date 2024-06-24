@@ -68,10 +68,11 @@ def test_0019_remove_chatmessage_source_files_textchunk_and_more(migrator):
 
     new_chat_message = NewChatMessage.objects.get(pk=chat_message.pk)
     assert new_chat_message.source_files.first().pk == file.pk
+    assert new_chat_message.old_source_files.first().pk == file.pk
 
     assert TextChunk.objects.count() == 1
     text_chunk = TextChunk.objects.first()
-    assert text_chunk.pk == file.pk
+    assert text_chunk.file.pk == file.pk
     assert text_chunk.chat_message.pk == new_chat_message.pk
 
     # Cleanup:

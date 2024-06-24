@@ -49,8 +49,8 @@ test-worker: ## Test worker
 
 .PHONY: test-django
 test-django: stop ## Test django-app
-	docker-compose up -d --wait db minio
-	docker-compose run --no-deps django-app venv/bin/pytest tests/ --ds redbox_app.settings -v --cov=redbox_app.redbox_core --cov-fail-under 85 -o log_cli=true
+	docker compose up -d --wait db minio
+	docker compose run --no-deps django-app venv/bin/pytest tests/ --ds redbox_app.settings -v --cov=redbox_app.redbox_core --cov-fail-under 85 -o log_cli=true
 
 .PHONY: test-integration
 test-integration: rebuild run test-integration-without-build ## Run all integration tests
