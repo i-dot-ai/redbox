@@ -10,7 +10,7 @@ from channels.generic.websocket import AsyncWebsocketConsumer
 from dataclasses_json import Undefined, dataclass_json
 from django.conf import settings
 from django.utils import timezone
-from redbox_app.redbox_core.models import ChatHistory, ChatMessage, ChatRoleEnum, ChatRoute, File, TextChunk, User
+from redbox_app.redbox_core.models import ChatHistory, ChatMessage, ChatRoleEnum, ChatRoute, File, User
 from websockets import WebSocketClientProtocol
 from websockets.client import connect
 from yarl import URL
@@ -23,9 +23,7 @@ logger.info("WEBSOCKET_SCHEME is: %s", settings.WEBSOCKET_SCHEME)
 @dataclass_json(undefined=Undefined.EXCLUDE)
 @dataclass(frozen=True)
 class CoreChatResponseDoc:
-    file_uuid: UUID
-    page_content: str | None = None
-    page_numbers: list[int] | None = None
+    file_uuid: str
 
 
 @dataclass_json(undefined=Undefined.EXCLUDE)
@@ -47,7 +45,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         session: ChatHistory = await self.get_session(session_id, user, user_message_text)
 
         # save user message
-        selected_files = [(file, None) for file in await self.get_files_by_id(selected_file_uuids, user)]
+        selected_files = await self.get_files_by_id(selected_file_uuids, user)
         await self.save_message(session, user_message_text, ChatRoleEnum.user, selected_files=selected_files)
 
         await self.llm_conversation(selected_files, session, user)
@@ -69,13 +67,13 @@ class ChatConsumer(AsyncWebsocketConsumer):
             reply, source_files, route = await self.receive_llm_responses(user, core_websocket)
         await self.save_message(session, reply, ChatRoleEnum.ai, source_files=source_files, route=route)
 
-        for file, _ in source_files:
+        for file in source_files:
             file.last_referenced = timezone.now()
             await self.file_save(file)
 
     async def receive_llm_responses(
         self, user: User, core_websocket: WebSocketClientProtocol
-    ) -> tuple[str, Sequence[tuple[File, CoreChatResponseDoc]], ChatRoute]:
+    ) -> tuple[str, Sequence[File], ChatRoute]:
         full_reply: MutableSequence[str] = []
         source_files: MutableSequence[File] = []
         route: ChatRoute | None = None
@@ -90,15 +88,14 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 route = await self.handle_route(message)
         return "".join(full_reply), source_files, route
 
-    async def handle_documents(
-        self, message: CoreChatResponse, user: User
-    ) -> Sequence[tuple[File, CoreChatResponseDoc]]:
-        source_files = await self.get_files_by_core_uuid(message.data, user)
-        for file, _ in source_files:
+    async def handle_documents(self, message: CoreChatResponse, user: User) -> Sequence[File]:
+        doc_uuids: Sequence[UUID] = [UUID(doc.file_uuid) for doc in message.data]
+        source_files = await self.get_files_by_core_uuid(doc_uuids, user)
+        for source in source_files:
             await self.send_to_client(
                 {
                     "type": "source",
-                    "data": {"url": str(file.url), "original_file_name": file.original_file_name},
+                    "data": {"url": str(source.url), "original_file_name": source.original_file_name},
                 }
             )
         return source_files
@@ -142,31 +139,27 @@ class ChatConsumer(AsyncWebsocketConsumer):
         session: ChatHistory,
         user_message_text: str,
         role: ChatRoleEnum,
-        source_files: Sequence[tuple[File, CoreChatResponseDoc]] | None = None,
+        source_files: OptFileSeq = None,
         selected_files: OptFileSeq = None,
         route: ChatRoute | None = None,
     ) -> ChatMessage:
         chat_message = ChatMessage(chat_history=session, text=user_message_text, role=role, route=route)
         chat_message.save()
-        for file, doc in source_files or []:
-            TextChunk.objects.create(chat_message=chat_message, file=file, text=doc.page_content)
+        if source_files:
+            chat_message.source_files.set(source_files)
         if selected_files:
             chat_message.selected_files.set(selected_files)
         return chat_message
 
     @staticmethod
     @database_sync_to_async
-    def get_files_by_id(docs: Sequence[UUID], user: User) -> Sequence[File]:
-        return File.objects.filter(id__in=docs, user=user)
+    def get_files_by_id(uuids: Sequence[UUID], user: User) -> Sequence[File]:
+        return list(File.objects.filter(id__in=uuids, user=user))
 
     @staticmethod
     @database_sync_to_async
-    def get_files_by_core_uuid(
-        docs: list[CoreChatResponseDoc], user: User
-    ) -> Sequence[tuple[File, CoreChatResponseDoc]]:
-        uuids = [doc.file_uuid for doc in docs]
-        files = File.objects.filter(core_file_uuid__in=uuids, user=user)
-        return [(file, next(doc for doc in docs if doc.file_uuid == file.core_file_uuid)) for file in files]
+    def get_files_by_core_uuid(uuids: Sequence[UUID], user: User) -> Sequence[File]:
+        return list(File.objects.filter(core_file_uuid__in=uuids, user=user))
 
     @staticmethod
     @database_sync_to_async
