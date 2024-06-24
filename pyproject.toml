@@ -94,6 +94,7 @@ build-backend = "poetry.core.masonry.api"
 download-model = 'download_embedder:download'
 
 [tool.towncrier]
+name = "Redbox"
 directory = "changelog.d"
 filename = "CHANGELOG.md"
 start_string = "<!-- towncrier release notes start -->\n"
