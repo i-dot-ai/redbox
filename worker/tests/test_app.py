@@ -29,7 +29,7 @@ async def test_ingest_file(es_client, file: File):
         chunks = list(
             scan(
                 client=es_client,
-                index="test-ingest-chunk",
+                index=f"{env.elastic_root_index}-chunk",
                 query={
                     "query": {
                         "bool": {

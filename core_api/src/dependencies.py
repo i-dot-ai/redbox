@@ -14,6 +14,7 @@ from redbox.model_db import MODEL_PATH
 from redbox.models import Settings
 from redbox.models.file import UUID, Chunk
 from redbox.storage import ElasticsearchStorageHandler
+from redbox.storage.elasticsearch import hit_to_chunk
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger()
@@ -131,25 +132,8 @@ def get_es_retriever(
             },
         }
 
-    def chunk_mapper(hit: dict[str, Any]) -> Chunk:
-        if hit["_source"].get("uuid"):
-            # Legacy direct chunk storage
-            return Chunk(**hit["_source"])
-        else:
-            # Document storage
-            return Chunk(
-                uuid=hit["_id"],
-                text=hit["_source"]["text"],
-                index=hit["_source"]["metadata"]["index"],
-                embedding=hit["_source"]["embedding"],
-                created_datetime=hit["_source"]["metadata"]["created_datetime"],
-                creator_user_uuid=hit["_source"]["metadata"]["creator_user_uuid"],
-                parent_file_uuid=hit["_source"]["metadata"]["parent_file_uuid"],
-                metadata=hit["_source"]["metadata"],
-            )
-
     return ElasticsearchRetriever(
-        es_client=es, index_name=f"{env.elastic_root_index}-chunk", body_func=es_query, document_mapper=chunk_mapper
+        es_client=es, index_name=f"{env.elastic_root_index}-chunk", body_func=es_query, document_mapper=hit_to_chunk
     )
 
 
