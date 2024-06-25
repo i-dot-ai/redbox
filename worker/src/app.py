@@ -34,6 +34,7 @@ publisher = broker.publisher(list=env.embed_queue_name)
 
 @asynccontextmanager
 async def lifespan(context: ContextRepo):
+    es_index_name = f"{env.elastic_root_index}-chunk"
     es = env.elasticsearch_client()
     s3_client = env.s3_client()
     # embeddings = AzureOpenAIEmbeddings(
@@ -46,13 +47,13 @@ async def lifespan(context: ContextRepo):
     # )
     embeddings = SentenceTransformerEmbeddings(model_name=env.embedding_model)
     elasticsearch_store = ElasticsearchStore(
-        index_name=f"{env.elastic_root_index}-chunk",
+        index_name=es_index_name,
         embedding=embeddings,
         es_connection=es,
         query_field="text",
-        vector_query_field=env.embedding_document_field_name,
+        vector_query_field=env.embedding_document_field_name
     )
-
+    es.indices.create(index=es_index_name)
     context.set_global("vectorstore", elasticsearch_store)
     context.set_global("s3_client", s3_client)
     yield
