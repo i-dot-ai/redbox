@@ -18,7 +18,7 @@ def file_to_text_chunk(apps, schema_editor):
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("redbox_core", "0018_chatmessage_route"),
+        ("redbox_core", "0019_alter_chatmessage_route"),
     ]
 
     operations = [
