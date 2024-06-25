@@ -24,9 +24,11 @@ from redbox_app.redbox_core.models import (
     File,
     StatusEnum,
     User,
+    Citation,
 )
 from requests.exceptions import RequestException
 from yarl import URL
+
 
 logger = logging.getLogger(__name__)
 core_api = CoreApiClient(host=settings.CORE_API_HOST, port=settings.CORE_API_PORT)
@@ -224,6 +226,7 @@ class ChatsView(View):
         context = {
             "chat_id": chat_id,
             "messages": messages,
+            "citations": Citation.objects.filter(chat_message__chat_history__id=chat_id, chat_message__role="ai"),
             "chat_history": chat_history,
             "streaming": {"in_use": settings.USE_STREAMING, "endpoint": str(endpoint)},
             "contact_email": settings.CONTACT_EMAIL,

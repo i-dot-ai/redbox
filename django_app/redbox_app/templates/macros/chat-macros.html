@@ -1,4 +1,4 @@
-{% macro message_box(role, text, sources, classes=None) %}
+{% macro message_box(role, text, sources, citations=None, classes=None) %}
 
     {% set role_text = role %}
     {% if role == "ai" %}
@@ -10,14 +10,21 @@
     <div class="iai-chat-bubble iai-chat-bubble--{% if role == 'user' %}right{% else %}left{% endif %} js-chat-message govuk-body {{ classes }}" data-role="{{ role }}" tabindex="-1">
         <div class="iai-chat-bubble__role">{% if role == "ai" %}Redbox{% else %}You{% endif %}</div>
         <markdown-converter class="iai-chat-bubble__text">{{ text }}</markdown-converter>
-        {% if sources %}
+        {% if citations %}
             <h3 class="iai-chat-bubble__sources-heading govuk-heading-s govuk-!-margin-bottom-1">Sources</h3>
             <ul class="govuk-list govuk-list--bullet govuk-!-margin-bottom-0">
-                {% for source in sources %}
-                <li class="govuk-!-margin-bottom-0">
-                    <a class="iai-chat-bubbles__sources-link govuk-link" href="{{ source.url }}">{{ source.original_file_name }}</a>
-                </li>
-                {% endfor %}
+
+            {% for citation in citations %}
+              <details class="govuk-details">
+                <summary class="govuk-details__summary">
+                  <span class="govuk-details__summary-text">
+                    <a class="iai-chat-bubbles__sources-link govuk-link" href="{{ citation.file.url }}">{{ citation.file.original_file_name }}</a>
+                  </span>
+                </summary>
+                <div class="govuk-details__text" style="font-size: 0.5em">{{ citation.text }}</div>
+              </details>
+            {% endfor %}
+
             </ul>
         {% endif %}
     </div>

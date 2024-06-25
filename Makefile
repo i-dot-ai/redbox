@@ -10,11 +10,11 @@ reqs:
 
 .PHONY: run
 run: stop
-	docker compose up -d --wait django-app
+	docker-compose up -d --wait django-app
 
 .PHONY: stop
 stop: ## Stop all containers
-	docker compose down
+	docker-compose down
 
 .PHONY: prune
 prune: stop
@@ -22,15 +22,15 @@ prune: stop
 
 .PHONY: clean
 clean:
-	docker compose down -v --rmi all --remove-orphans
+	docker-compose down -v --rmi all --remove-orphans
 
 .PHONY: build
 build:
-	docker compose build
+	docker-compose build
 
 .PHONY: rebuild
 rebuild: stop prune ## Rebuild all images
-	docker compose build --no-cache
+	docker-compose build --no-cache
 
 .PHONY: test-core-api
 test-core-api: ## Test core-api
@@ -49,8 +49,8 @@ test-worker: ## Test worker
 
 .PHONY: test-django
 test-django: stop ## Test django-app
-	docker compose up -d --wait db minio
-	docker compose run --no-deps django-app venv/bin/pytest tests/ --ds redbox_app.settings -v --cov=redbox_app.redbox_core --cov-fail-under 85 -o log_cli=true
+	docker-compose up -d --wait db minio
+	docker-compose run --no-deps django-app venv/bin/pytest tests/ --ds redbox_app.settings -v --cov=redbox_app.redbox_core --cov-fail-under 85 -o log_cli=true
 
 .PHONY: test-integration
 test-integration: rebuild run test-integration-without-build ## Run all integration tests
@@ -62,7 +62,7 @@ test-integration-without-build : ## Run all integration tests without rebuilding
 
 .PHONY: collect-static
 collect-static:
-	docker compose run django-app venv/bin/django-admin collectstatic --noinput
+	docker-compose run django-app venv/bin/django-admin collectstatic --noinput
 
 .PHONY: lint
 lint:  ## Check code formatting & linting
@@ -87,15 +87,15 @@ checktypes:  ## Check types in redbox and worker
 
 .PHONY: check-migrations
 check-migrations: stop  ## Check types in redbox and worker
-	docker compose build django-app
-	docker compose up -d --wait db minio
-	docker compose run --no-deps django-app venv/bin/django-admin migrate
-	docker compose run --no-deps django-app venv/bin/django-admin makemigrations --check
+	docker-compose build django-app
+	docker-compose up -d --wait db minio
+	docker-compose run --no-deps django-app venv/bin/django-admin migrate
+	docker-compose run --no-deps django-app venv/bin/django-admin makemigrations --check
 
 .PHONY: reset-db
 reset-db:  ## Reset Django database
-	docker compose down db --volumes
-	docker compose up -d db
+	docker-compose down db --volumes
+	docker-compose up -d db
 
 .PHONY: docs-serve
 docs-serve:  ## Build and serve documentation
@@ -117,7 +117,7 @@ PREV_IMAGE_TAG=$$(git rev-parse HEAD~1)
 IMAGE_TAG=$$(git rev-parse HEAD)
 
 tf_build_args=-var "image_tag=$(IMAGE_TAG)"
-DOCKER_SERVICES=$$(docker compose config --services | grep -v mlflow)
+DOCKER_SERVICES=$$(docker-compose config --services | grep -v mlflow)
 
 AUTO_APPLY_RESOURCES = module.django-app.aws_ecs_task_definition.aws-ecs-task \
                        module.django-app.aws_ecs_service.aws-ecs-service \
@@ -144,7 +144,7 @@ docker_login:
 .PHONY: docker_build
 docker_build: ## Build the docker container
 	@cp .env.example .env
-	# Fetching list of services defined in docker compose configuration
+	# Fetching list of services defined in docker-compose configuration
 	@echo "Services to update: $(DOCKER_SERVICES)"
 	# Enabling Docker BuildKit for better build performance
 	export DOCKER_BUILDKIT=1
@@ -154,7 +154,7 @@ docker_build: ## Build the docker container
 			PREV_IMAGE="$(ECR_REPO_URL)-$$service:$(PREV_IMAGE_TAG)"; \
 			echo "Pulling previous image: $$PREV_IMAGE"; \
 			docker pull $$PREV_IMAGE; \
-			docker compose build $$service; \
+			docker-compose build $$service; \
 		else \
 			echo "Skipping $$service uses default image"; \
 		fi; \
@@ -258,7 +258,7 @@ release: ## Deploy app
 
 .PHONY: eval_backend
 eval_backend:  ## Runs the only the necessary backend for evaluation BUCKET_NAME
-	docker compose up -d --wait core-api --build
+	docker-compose up -d --wait core-api --build
 	docker exec -it $$(docker ps -q --filter "name=minio") mc mb data/${BUCKET_NAME}
 
 .PHONY: help
