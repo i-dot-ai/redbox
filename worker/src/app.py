@@ -71,9 +71,7 @@ async def ingest(file: File, s3_client: S3Client = Context(), vectorstore: Vecto
     logging.info("Ingesting file: %s", file)
 
     new_ids = (
-        document_loader(s3_client=s3_client, env=env)
-        | RunnableLambda(list)
-        | RunnableLambda(vectorstore.add_documents)
+        document_loader(s3_client=s3_client, env=env) | RunnableLambda(list) | RunnableLambda(vectorstore.add_documents)
     ).invoke(file)
 
     logging.info("File: %s [%s] chunks ingested", file, len(new_ids))
