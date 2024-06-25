@@ -12,7 +12,7 @@ from langchain_elasticsearch import ApproxRetrievalStrategy, ElasticsearchRetrie
 
 from redbox.model_db import MODEL_PATH
 from redbox.models import Settings
-from redbox.models.file import UUID, Chunk
+from redbox.models.file import UUID
 from redbox.storage import ElasticsearchStorageHandler
 from redbox.storage.elasticsearch import hit_to_chunk
 

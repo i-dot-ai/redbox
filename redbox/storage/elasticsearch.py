@@ -1,7 +1,7 @@
 import logging
 from collections.abc import Sequence
+from typing import Any
 from uuid import UUID
-from typing import Any, Dict
 
 from elastic_transport import ObjectApiResponse
 from elasticsearch import Elasticsearch, NotFoundError
@@ -97,13 +97,16 @@ class ElasticsearchStorageHandler(BaseStorageHandler):
             result = scan(
                 client=self.es_client,
                 index=target_index,
-                query={"query": {
+                query={
+                    "query": {
                         "bool": {
                             "should": [
                                 {"term": {"creator_user_uuid.keyword": str(user_uuid)}},
                                 {"term": {"metadata.creator_user_uuid.keyword": str(user_uuid)}},
                             ]
-                        }}},
+                        }
+                    }
+                },
                 _source=True,
             )
 
@@ -133,13 +136,16 @@ class ElasticsearchStorageHandler(BaseStorageHandler):
             results = scan(
                 client=self.es_client,
                 index=target_index,
-                query={"query": {
+                query={
+                    "query": {
                         "bool": {
                             "should": [
                                 {"term": {"creator_user_uuid.keyword": str(user_uuid)}},
                                 {"term": {"metadata.creator_user_uuid.keyword": str(user_uuid)}},
                             ]
-                        }}},
+                        }
+                    }
+                },
                 _source=False,
             )
 
@@ -165,10 +171,7 @@ class ElasticsearchStorageHandler(BaseStorageHandler):
                                     "bool": {
                                         "should": [
                                             {"term": {"parent_file_uuid.keyword": str(parent_file_uuid)}},
-                                            {"term": {
-                                                    "metadata.parent_file_uuid.keyword": str(parent_file_uuid)
-                                                }
-                                            },
+                                            {"term": {"metadata.parent_file_uuid.keyword": str(parent_file_uuid)}},
                                         ]
                                     }
                                 },
@@ -234,7 +237,7 @@ class ElasticsearchStorageHandler(BaseStorageHandler):
         )
 
 
-def hit_to_chunk(hit: Dict[str, Any]) -> Chunk:
+def hit_to_chunk(hit: dict[str, Any]) -> Chunk:
     if hit["_source"].get("uuid"):
         # Legacy direct chunk storage
         return Chunk(**hit["_source"])
