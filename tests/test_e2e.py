@@ -11,8 +11,6 @@ import websockets
 from jose import jwt
 from websockets import ConnectionClosed
 
-from redbox.models import ChatRoute
-
 USER_UUIDS: list[UUID] = [uuid4(), uuid4()]
 TEST_ORIGIN = "localhost:5002"
 
@@ -128,7 +126,7 @@ class TestEndToEnd:
         TestEndToEnd.source_document_file_uuids[user_uuid] = source_document_file_uuids
 
         TestEndToEnd.route_name = rag_response.json()["route_name"]
-        assert TestEndToEnd.route_name == ChatRoute.search
+        assert TestEndToEnd.route_name == "search"
 
     @pytest.mark.parametrize("user_uuid", USER_UUIDS)
     def test_post_rag_fail(self, user_uuid):
@@ -157,7 +155,7 @@ class TestEndToEnd:
         assert TestEndToEnd.file_uuids[user_uuid] not in source_document_file_uuids
 
         TestEndToEnd.route_name = rag_response.json()["route_name"]
-        assert TestEndToEnd.route_name == ChatRoute.search
+        assert TestEndToEnd.route_name == "search"
 
     @pytest.mark.parametrize("user_uuid", USER_UUIDS)
     def test_post_rag_summarisation(self, user_uuid):
@@ -178,7 +176,7 @@ class TestEndToEnd:
         assert rag_response.status_code == HTTPStatus.OK
 
         TestEndToEnd.route_name = rag_response.json()["route_name"]
-        assert TestEndToEnd.route_name == ChatRoute.summarise
+        assert TestEndToEnd.route_name == "summarise"
 
     @pytest.mark.parametrize("user_uuid", USER_UUIDS)
     def test_permissions(self, user_uuid):
@@ -233,7 +231,7 @@ class TestEndToEnd:
         assert TestEndToEnd.file_uuids[user_uuid] in source_document_file_uuids
         TestEndToEnd.source_document_file_uuids[user_uuid] = source_document_file_uuids
 
-        assert TestEndToEnd.route_name == ChatRoute.search
+        assert TestEndToEnd.route_name == "search"
 
     @pytest.mark.asyncio()
     @pytest.mark.parametrize("user_uuid", USER_UUIDS)
@@ -270,4 +268,4 @@ class TestEndToEnd:
 
         assert all_text == ["You're welcome!"]
 
-        assert TestEndToEnd.route_name == ChatRoute.gratitude
+        assert TestEndToEnd.route_name == "gratitude"
