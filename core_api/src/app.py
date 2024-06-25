@@ -10,6 +10,7 @@ from fastapi.responses import RedirectResponse
 from core_api.src.dependencies import get_elasticsearch_client
 from core_api.src.routes.chat import chat_app
 from core_api.src.routes.file import file_app
+from redbox import __version__ as redbox_version
 from redbox.models import Settings, StatusResponse
 
 # === Logging ===
@@ -29,7 +30,7 @@ start_time = datetime.now(tz=UTC)
 app = FastAPI(
     title="Core API",
     description="Redbox Core API",
-    version="0.1.0",
+    version=redbox_version,
     openapi_tags=[
         {"name": "health", "description": "Health check"},
     ],
