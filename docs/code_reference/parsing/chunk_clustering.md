@@ -5,5 +5,3 @@ Chunk clustering is a post processing technique to clump together chunks that ar
 ::: redbox.parsing.chunk_clustering.cluster_chunks
 
 ::: redbox.parsing.chunk_clustering.create_pdist
-
-::: redbox.parsing.chunk_clustering.merge_chunk_metadata

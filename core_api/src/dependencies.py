@@ -1,6 +1,7 @@
 import logging
 import os
-from functools import lru_cache
+from collections.abc import Callable
+from functools import lru_cache, partial
 from typing import Annotated, Any, TypedDict
 
 from elasticsearch import Elasticsearch
@@ -8,6 +9,8 @@ from fastapi import Depends
 from langchain_community.chat_models import ChatLiteLLM
 from langchain_community.embeddings import SentenceTransformerEmbeddings
 from langchain_core.embeddings import Embeddings
+from langchain_core.retrievers import BaseRetriever
+from langchain_core.runnables import ConfigurableField
 from langchain_elasticsearch import ApproxRetrievalStrategy, ElasticsearchRetriever, ElasticsearchStore
 
 from redbox.model_db import MODEL_PATH
@@ -73,10 +76,18 @@ class ESQuery(TypedDict):
     user_uuid: UUID
 
 
+class ESParams(TypedDict):
+    size: int
+    num_candidates: int
+    match_boost: float
+    knn_boost: float
+    similarity_threshold: float
+
+
 @lru_cache(1)
 def get_es_retriever(
     env: Annotated[Settings, Depends(get_env)], es: Annotated[Elasticsearch, Depends(get_elasticsearch_client)]
-) -> ElasticsearchRetriever:
+) -> BaseRetriever:
     """Creates an Elasticsearch retriever runnable.
 
     Runnable takes input of a dict keyed to question, file_uuids and user_uuid.
@@ -84,10 +95,10 @@ def get_es_retriever(
     Runnable returns a list of Chunks.
     """
 
-    def es_query(query: ESQuery) -> dict[str, Any]:
+    def es_query(query: ESQuery, params: ESParams) -> dict[str, Any]:
         vector = get_embedding_model(env).embed_query(query["question"])
 
-        knn_filter = [
+        query_filter = [
             {
                 "bool": {
                     "should": [
@@ -99,7 +110,7 @@ def get_es_retriever(
         ]
 
         if len(query["file_uuids"]) != 0:
-            knn_filter.append(
+            query_filter.append(
                 {
                     "bool": {
                         "should": [
@@ -115,25 +126,60 @@ def get_es_retriever(
             )
 
         return {
-            "size": env.ai.rag_k,
+            "size": params["size"],
             "query": {
                 "bool": {
-                    "must": [
+                    "should": [
+                        {
+                            "match": {
+                                "text": {
+                                    "query": query["question"],
+                                    "boost": params["match_boost"],
+                                }
+                            }
+                        },
                         {
                             "knn": {
                                 "field": "embedding",
                                 "query_vector": vector,
-                                "num_candidates": env.ai.rag_num_candidates,
-                                "filter": knn_filter,
+                                "num_candidates": params["num_candidates"],
+                                "filter": query_filter,
+                                "boost": params["knn_boost"],
+                                "similarity": params["similarity_threshold"],
                             }
-                        }
-                    ]
+                        },
+                    ],
+                    "filter": query_filter,
                 }
             },
         }
 
-    return ElasticsearchRetriever(
-        es_client=es, index_name=f"{env.elastic_root_index}-chunk", body_func=es_query, document_mapper=hit_to_chunk
+    class ParameterisedElasticsearchRetriever(ElasticsearchRetriever):
+        params: ESParams
+        body_func: Callable[[str], dict]
+
+        def __init__(self, **kwargs: Any) -> None:
+            super().__init__(**kwargs)
+            self.body_func = partial(self.body_func, params=self.params)
+
+    default_params = {
+        "size": env.ai.rag_k,
+        "num_candidates": env.ai.rag_num_candidates,
+        "match_boost": 1,
+        "knn_boost": 1,
+        "similarity_threshold": 0,
+    }
+
+    return ParameterisedElasticsearchRetriever(
+        es_client=es,
+        index_name=f"{env.elastic_root_index}-chunk",
+        body_func=es_query,
+        document_mapper=hit_to_chunk,
+        params=default_params,
+    ).configurable_fields(
+        params=ConfigurableField(
+            id="params", name="Retriever parameters", description="A dictionary of parameters to use for the retriever."
+        )
     )
 
 

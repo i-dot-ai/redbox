@@ -10,7 +10,7 @@ from channels.generic.websocket import AsyncWebsocketConsumer
 from dataclasses_json import Undefined, dataclass_json
 from django.conf import settings
 from django.utils import timezone
-from redbox_app.redbox_core.models import ChatHistory, ChatMessage, ChatRoleEnum, ChatRoute, File, User
+from redbox_app.redbox_core.models import ChatHistory, ChatMessage, ChatRoleEnum, File, User
 from websockets import WebSocketClientProtocol
 from websockets.client import connect
 from yarl import URL
@@ -73,10 +73,10 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
     async def receive_llm_responses(
         self, user: User, core_websocket: WebSocketClientProtocol
-    ) -> tuple[str, Sequence[File], ChatRoute]:
+    ) -> tuple[str, Sequence[File], str]:
         full_reply: MutableSequence[str] = []
         source_files: MutableSequence[File] = []
-        route: ChatRoute | None = None
+        route: str | None = None
         async for raw_message in core_websocket:
             message = CoreChatResponse.schema().loads(raw_message)
             logger.debug("received %s from core-api", message)
@@ -104,9 +104,9 @@ class ChatConsumer(AsyncWebsocketConsumer):
         await self.send_to_client({"type": "text", "data": message.data})
         return message.data
 
-    async def handle_route(self, message: CoreChatResponse) -> ChatRoute:
+    async def handle_route(self, message: CoreChatResponse) -> str:
         await self.send_to_client({"type": "route", "data": message.data})
-        return ChatRoute[message.data]
+        return message.data
 
     async def send_to_client(self, data):
         logger.debug("sending %s to browser", data)
@@ -141,7 +141,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         role: ChatRoleEnum,
         source_files: OptFileSeq = None,
         selected_files: OptFileSeq = None,
-        route: ChatRoute | None = None,
+        route: str | None = None,
     ) -> ChatMessage:
         chat_message = ChatMessage(chat_history=session, text=user_message_text, role=role, route=route)
         chat_message.save()

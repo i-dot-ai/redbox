@@ -9,7 +9,7 @@ from channels.db import database_sync_to_async
 from channels.testing import WebsocketCommunicator
 from django.db.models import Model
 from redbox_app.redbox_core.consumers import ChatConsumer
-from redbox_app.redbox_core.models import ChatHistory, ChatMessage, ChatRoleEnum, ChatRoute, File, User
+from redbox_app.redbox_core.models import ChatHistory, ChatMessage, ChatRoleEnum, File, User
 from websockets import WebSocketClientProtocol
 from websockets.legacy.client import Connect
 
@@ -50,7 +50,7 @@ async def test_chat_consumer_with_new_session(alice: User, uploaded_file: File, 
 
     assert await get_chat_message_text(alice, ChatRoleEnum.user) == ["Hello Hal."]
     assert await get_chat_message_text(alice, ChatRoleEnum.ai) == ["Good afternoon, Mr. Amor."]
-    assert await get_chat_message_route(alice, ChatRoleEnum.ai) == [ChatRoute.gratitude]
+    assert await get_chat_message_route(alice, ChatRoleEnum.ai) == ["gratitude"]
     await refresh_from_db(uploaded_file)
     assert uploaded_file.last_referenced.date() == datetime.now(tz=UTC).date()
 
@@ -87,7 +87,7 @@ def get_chat_message_text(user: User, role: ChatRoleEnum) -> Sequence[str]:
 
 
 @database_sync_to_async
-def get_chat_message_route(user: User, role: ChatRoleEnum) -> Sequence[ChatRoute]:
+def get_chat_message_route(user: User, role: ChatRoleEnum) -> Sequence[str]:
     return [m.route for m in ChatMessage.objects.filter(chat_history__users=user, role=role)]
 
 

@@ -4,7 +4,7 @@ target-version = 'py311'
 
 [tool.poetry]
 name = "redbox"
-version = "1.0.0"
+version = "0.3.0"
 description = "RAG application that uses GenAI to chat with and summarise civil service documents"
 authors = ["i.AI <i-dot-ai-enquiries@cabinetoffice.gov.uk>"]
 license = "MIT"
@@ -22,6 +22,7 @@ sentence-transformers = "<3.0"
 unstructured = {version = "0.14.8", extras = ["all-docs"]}
 torch = "2.2.2"
 semantic-router = "^0.0.48"
+pikepdf = "<9.0.0"
 
 
 [tool.poetry.group.api.dependencies]
@@ -65,6 +66,7 @@ ipywidgets="^8.1.2"
 playwright = "^1.43"
 pytest-playwright = "^0.5"
 axe-playwright-python = "^0.1"
+dj-notebook = "^0.7.0"
 
 
 [tool.poetry.group.ai.dependencies]

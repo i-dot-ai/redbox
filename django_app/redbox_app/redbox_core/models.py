@@ -220,22 +220,11 @@ class ChatRoleEnum(models.TextChoices):
     system = "system"
 
 
-class ChatRoute(models.TextChoices):
-    info = "info"
-    ability = "ability"
-    coach = "coach"
-    gratitude = "gratitude"
-    retrieval = "retrieval"
-    summarisation = "summarisation"
-    extract = "extract"
-    vanilla = "vanilla"
-
-
 class ChatMessage(UUIDPrimaryKeyBase, TimeStampedModel):
     chat_history = models.ForeignKey(ChatHistory, on_delete=models.CASCADE)
     text = models.TextField(max_length=32768, null=False, blank=False)
     role = models.CharField(choices=ChatRoleEnum.choices, null=False, blank=False)
-    route = models.CharField(choices=ChatRoute.choices, null=True, blank=True)
+    route = models.CharField(max_length=25, null=True, blank=True)
     source_files = models.ManyToManyField(
         File,
         related_name="chat_messages",
