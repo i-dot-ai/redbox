@@ -233,14 +233,9 @@ class ChatMessage(UUIDPrimaryKeyBase, TimeStampedModel):
     chat_history = models.ForeignKey(ChatHistory, on_delete=models.CASCADE)
     text = models.TextField(max_length=32768, null=False, blank=False)
     role = models.CharField(choices=ChatRoleEnum.choices, null=False, blank=False)
-<<<<<<< HEAD
     route = models.CharField(max_length=25, null=True, blank=True)
-    old_source_files = models.ManyToManyField(
-=======
-    route = models.CharField(choices=ChatRoute.choices, null=True, blank=True)
     old_source_files = models.ManyToManyField(  # TODO (@gecBurton): delete me
         # https://technologyprogramme.atlassian.net/browse/REDBOX-367
->>>>>>> 7d86bb0b (Rename TextChunk to Citation.)
         File,
         related_name="chat_messages",
         blank=True,

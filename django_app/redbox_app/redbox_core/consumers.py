@@ -10,7 +10,7 @@ from channels.generic.websocket import AsyncWebsocketConsumer
 from dataclasses_json import Undefined, dataclass_json
 from django.conf import settings
 from django.utils import timezone
-from redbox_app.redbox_core.models import ChatHistory, ChatMessage, ChatRoleEnum, File, Citation, File, User
+from redbox_app.redbox_core.models import ChatHistory, ChatMessage, ChatRoleEnum, Citation, File, User
 from websockets import WebSocketClientProtocol
 from websockets.client import connect
 from yarl import URL
