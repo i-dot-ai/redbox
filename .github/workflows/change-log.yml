@@ -1,8 +1,8 @@
 name: Changelog CI
 
 on:
-#  pull_request:
-#    types: [ opened ]
+  pull_request:
+    types: [ opened ]
 
   workflow_dispatch:
     inputs:
