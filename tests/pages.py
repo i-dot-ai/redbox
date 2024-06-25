@@ -349,6 +349,7 @@ class ChatsPage(SignedInBasePage):
         while True:
             messages = self.all_messages
             if not any(m.status == "streaming" for m in messages):
+                logger.info("messages: %s", messages)
                 return messages
             if tries >= max_tries:
                 logger.error("messages: %s", messages)
