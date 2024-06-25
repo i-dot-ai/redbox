@@ -1,8 +1,8 @@
 name: Changelog CI
 
 on:
-#  pull_request:
-#    types: [ opened ]
+  pull_request:
+    types: [ opened ]
 
   workflow_dispatch:
     inputs:
@@ -11,11 +11,18 @@ on:
         required: true
 
 jobs:
+
   build:
     runs-on: ubuntu-latest
+
+    permissions: write-all
 
     steps:
       - uses: actions/checkout@v2
 
       - name: Run Changelog CI
         uses: saadmk11/changelog-ci@v1.1.2
+
+        with:
+          release_version: ${{ github.event.inputs.release_version }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
