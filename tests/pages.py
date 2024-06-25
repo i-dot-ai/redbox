@@ -2,7 +2,6 @@ import logging
 from abc import ABC, abstractmethod
 from collections.abc import Collection, Sequence
 from dataclasses import dataclass
-from itertools import islice
 from pathlib import Path
 from time import sleep
 from typing import Any, ClassVar, Union
@@ -378,14 +377,3 @@ class SupportPage(BasePage):
     @property
     def expected_page_title(self) -> str:
         return "Support - Redbox Copilot"
-
-
-def batched(iterable, n):
-    # TODO (@brunns): Use library version when we upgrade to Python 3.12.
-    # https://docs.python.org/3/library/itertools.html#itertools.batched
-    if n < 1:
-        message = "n must be at least one"
-        raise ValueError(message)
-    iterable = iter(iterable)
-    while batch := tuple(islice(iterable, n)):
-        yield batch
