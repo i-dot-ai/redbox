@@ -48,8 +48,8 @@ class UnstructuredDocumentLoader(BaseLoader):
             max_characters=self.env.worker_ingest_max_chunk_size,
         )
 
-        return [
-            Document(
+        for i, raw_chunk in enumerate(raw_chunks):
+            yield Document(
                 page_content=raw_chunk.text,
                 metadata={
                     "parent_file_uuid": self.file.uuid,
@@ -63,5 +63,3 @@ class UnstructuredDocumentLoader(BaseLoader):
                     "created_datetime": datetime.now(UTC),
                 },
             )
-            for i, raw_chunk in enumerate(raw_chunks)
-        ]
