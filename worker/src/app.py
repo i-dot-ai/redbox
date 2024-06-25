@@ -53,7 +53,8 @@ async def lifespan(context: ContextRepo):
         query_field="text",
         vector_query_field=env.embedding_document_field_name
     )
-    es.indices.create(index=es_index_name)
+    
+    es.indices.create(index=es_index_name, ignore=[400])
     context.set_global("vectorstore", elasticsearch_store)
     context.set_global("s3_client", s3_client)
     yield
