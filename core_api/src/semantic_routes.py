@@ -85,7 +85,7 @@ gratitude = Route(
 )
 
 summarisation = Route(
-    name=ChatRoute.summarisation.value,
+    name=ChatRoute.summarise.value,
     utterances=[
         "I'd like to summarise the documents I've uploaded.",
         "Can you help me with summarising these documents?",
@@ -112,7 +112,7 @@ extract = Route(
 )
 
 vanilla = Route(
-    name=ChatRoute.vanilla.value,
+    name=ChatRoute.chat.value,
     utterances=[
         "What is the capital of France?",
         "Write me a fun poem about frogs.",
@@ -175,8 +175,20 @@ def get_routable_chains(
             ChatRoute.ability: build_static_response_chain(ABILITY_RESPONSE, ChatRoute.ability),
             ChatRoute.coach: build_static_response_chain(COACH_RESPONSE, ChatRoute.coach),
             ChatRoute.gratitude: build_static_response_chain("You're welcome!", ChatRoute.gratitude),
-            ChatRoute.vanilla: vanilla_chain,
-            ChatRoute.retrieval: retrieval_chain,
-            ChatRoute.summarisation: summary_chain,
+            ChatRoute.chat: vanilla_chain,
+            ChatRoute.search: retrieval_chain,
+            ChatRoute.summarise: summary_chain,
+            # Experimental routes
+            ChatRoute.supasearch: retrieval_chain.with_config(
+                configurable={
+                    "params": {
+                        "size": 10,
+                        "num_candidates": 100,
+                        "match_boost": 1,
+                        "knn_boost": 2,
+                        "similarity_threshold": 0.7,
+                    }
+                }
+            ),
         }
     return __routable_chains
