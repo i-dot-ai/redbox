@@ -4,7 +4,7 @@ target-version = 'py311'
 
 [tool.poetry]
 name = "redbox"
-version = "1.0.0"
+version = "0.3.0"
 description = "RAG application that uses GenAI to chat with and summarise civil service documents"
 authors = ["i.AI <i-dot-ai-enquiries@cabinetoffice.gov.uk>"]
 license = "MIT"
