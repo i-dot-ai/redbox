@@ -16,10 +16,10 @@ pydantic = "^2.7.1"
 elasticsearch = "^8.14.0"
 langchain = "^0.2.5"
 tiktoken = "^0.7.0"
-boto3 = "^1.34.131"
-pydantic-settings = "^2.3.3"
-sentence-transformers = "^3.0.1"
-unstructured = {version = "0.14.7", extras = ["all-docs"]}
+boto3 = "^1.34.132"
+pydantic-settings = "^2.3.4"
+sentence-transformers = "<3.0"
+unstructured = {version = "0.14.8", extras = ["all-docs"]}
 torch = "2.2.2"
 semantic-router = "^0.0.48"
 
@@ -52,7 +52,7 @@ types-python-dateutil = "^2.9.0.20240315"
 types-markdown = "^3.6.0.20240316"
 types-pytz = "^2024.1.0.20240203"
 pytest-asyncio = "^0.23.6"
-boto3-stubs = {extras = ["essential"], version = "^1.34.131"}
+boto3-stubs = {extras = ["essential"], version = "^1.34.132"}
 moto = {extras = ["s3"], version = "^5.0.5"}
 httpx = "^0.27.0"
 websockets = "^12.0"
@@ -149,8 +149,8 @@ exclude = ["django_app/redbox_app/redbox_core/migrations/*.py", "out/*"]
 ignore = ["COM812", "DJ001", "RET505", "RET508", "PLR0913"]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/*" = ["S101", "S106", "PLR0913", "PLR2004", "TD003", "S311"]
-"*/tests/*" = ["S101", "S106", "PLR0913", "PLR2004", "TD003"]
+"tests/*" = ["S101", "S106", "PLR0913", "PLR0915", "PLR2004", "TD003", "S311"]
+"*/tests/*" = ["S101", "S106", "PLR0913", "PLR0915", "PLR2004", "TD003"]
 "django_app/tests_playwright/*" = ["S101", "S106", "PLR0913", "PLR2004", "TD003"]
 "worker/*" = ["B008"]
 "redbox/*" = ["TCH003"]

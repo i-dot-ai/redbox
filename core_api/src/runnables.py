@@ -3,7 +3,12 @@ from operator import itemgetter
 from langchain.schema import StrOutputParser
 from langchain_community.chat_models import ChatLiteLLM
 from langchain_core.prompts import ChatPromptTemplate, PromptTemplate
-from langchain_core.runnables import Runnable, RunnableLambda, RunnablePassthrough, chain
+from langchain_core.runnables import (
+    Runnable,
+    RunnableLambda,
+    RunnablePassthrough,
+    chain,
+)
 from langchain_core.vectorstores import VectorStoreRetriever
 
 from core_api.src.format import format_chunks
@@ -42,11 +47,11 @@ def map_to_chat_response(input_dict: dict):
             SourceDocument(
                 page_content=chunk.text,
                 file_uuid=chunk.parent_file_uuid,
-                page_numbers=chunk.metadata.page_number
-                if isinstance(chunk.metadata.page_number, list)
-                else [chunk.metadata.page_number]
-                if chunk.metadata.page_number
-                else [],
+                page_numbers=(
+                    chunk.metadata.page_number
+                    if isinstance(chunk.metadata.page_number, list)
+                    else ([chunk.metadata.page_number] if chunk.metadata.page_number else [])
+                ),
             )
             for chunk in input_dict.get("source_documents", [])
         ],
@@ -88,7 +93,10 @@ def make_stuff_document_runnable(system_prompt: str, question_prompt: str, llm: 
     chat_history = [
         ("system", system_prompt),
         ("placeholder", "{messages}"),
-        ("user", "Question: {question}. \n\n Documents: \n\n {documents} \n\n Answer: "),
+        (
+            "user",
+            "Question: {question}. \n\n Documents: \n\n {documents} \n\n Answer: ",
+        ),
     ]
 
     return (
@@ -153,7 +161,10 @@ def make_condense_rag_runnable(
     """
     chat_history = [
         ("system", system_prompt),
-        ("user", "Question: {question}. \n\n Documents: \n\n {documents} \n\n Answer: "),
+        (
+            "user",
+            "Question: {question}. \n\n Documents: \n\n {documents} \n\n Answer: ",
+        ),
     ]
 
     prompt = ChatPromptTemplate.from_messages(chat_history)

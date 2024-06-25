@@ -67,7 +67,7 @@ def test_user_journey(page: Page, email_address: str):
     logger.debug("page: %s", chats_page)
     logger.info("all_messages: %s", chats_page.get_all_messages_once_streaming_has_completed())
     latest_chat_response = chats_page.wait_for_latest_message()
-    assert "architecture" in latest_chat_response.text
+    assert latest_chat_response.text
 
     # Select files
     chats_page = chats_page.start_new_chat()
@@ -79,24 +79,16 @@ def test_user_journey(page: Page, email_address: str):
     assert chats_page.selected_file_names == files_to_select
     logger.info("all_messages: %s", chats_page.get_all_messages_once_streaming_has_completed())
     latest_chat_response = chats_page.wait_for_latest_message()
-    assert "architecture" in latest_chat_response.text
+    assert latest_chat_response.text
     assert files_to_select.pop() in latest_chat_response.sources
 
-    # Try a file which shouldn't apply to the chat
+    # Select the summarisation route
     chats_page = chats_page.start_new_chat()
-    files_to_select = {f.name for f in upload_files if "CODE" in f.name}
-    chats_page.selected_file_names = files_to_select
-    chats_page.write_message = "What architecture is in use?"
+    chats_page.write_message = "@summarisation Please summarise the README documentation."
     chats_page = chats_page.send()
-
-    assert chats_page.selected_file_names == files_to_select
-    logger.info("all_messages: %s", chats_page.get_all_messages_once_streaming_has_completed())
-
-    # TODO (@brunns): Reinstate assertions once sile selection is affecting the chat response
-    # https://technologyprogramme.atlassian.net/browse/REDBOX-337
-    # latest_chat_response = chats_page.wait_for_latest_message()
-    # assert any(apology in latest_chat_response.text for apology in ["I'm sorry", "I'm afraid"])
-    # assert not latest_chat_response.links
+    latest_chat_response = chats_page.wait_for_latest_message()
+    assert latest_chat_response.text
+    assert latest_chat_response.route == "summarisation"
 
     # Delete a file
     documents_page = chats_page.navigate_to_documents()

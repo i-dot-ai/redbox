@@ -7977,6 +7977,12 @@ body:has(.iai-environment-warning) main {
   line-height: 0.825rem;
 }
 
+.iai-chat-bubble__route {
+  font-size: 0.625rem;
+  line-height: 0.825rem;
+  display: none;
+}
+
 .iai-chat-bubble__text {
   font-size: 0.875rem;
   line-height: 1.5rem;

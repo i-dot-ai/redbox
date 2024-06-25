@@ -10,6 +10,10 @@ logging.basicConfig(level=logging.INFO)
 log = logging.getLogger()
 
 
+VANILLA_SYSTEM_PROMPT = (
+    "You are an AI assistant called Redbox tasked with answering questions and providing information objectively."
+)
+
 RETRIEVAL_SYSTEM_PROMPT = (
     "Given the following conversation and extracted parts of a long document and a question, create a final answer. \n"
     "If you don't know the answer, just say that you don't know. Don't try to make up an answer. "
@@ -50,6 +54,8 @@ REDUCE_SYSTEM_PROMPT = (
     "4) Maintain the original context and meaning.\n"
 )
 
+VANILLA_QUESTION_PROMPT = "{question}\n=========\n Response: "
+
 RETRIEVAL_QUESTION_PROMPT = "{question} \n=========\n{formatted_documents}\n=========\nFINAL ANSWER: "
 
 
@@ -71,6 +77,8 @@ class AISettings(BaseModel):
     rag_num_candidates: int = 10
     rag_desired_chunk_size: int = 300
     max_tokens: int = 20_000
+    vanilla_system_prompt: str = VANILLA_SYSTEM_PROMPT
+    vanilla_question_prompt: str = VANILLA_QUESTION_PROMPT
     retrieval_system_prompt: str = RETRIEVAL_SYSTEM_PROMPT
     retrieval_question_prompt: str = RETRIEVAL_QUESTION_PROMPT
     summarisation_system_prompt: str = SUMMARISATION_SYSTEM_PROMPT
