@@ -22,3 +22,4 @@ jobs:
 
         with:
           release_version: ${{ github.event.inputs.release_version }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
