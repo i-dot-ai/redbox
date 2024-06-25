@@ -129,9 +129,6 @@ class Chunk(PersistableModel):
     def token_count(self) -> int:
         return len(encoding.encode(self.text))
 
-    def __iter__(self):
-        return iter(self.text)
-
 
 class ChunkStatus(BaseModel):
     """Status of a chunk of a file."""
