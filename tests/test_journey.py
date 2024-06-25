@@ -82,13 +82,13 @@ def test_user_journey(page: Page, email_address: str):
     assert latest_chat_response.text
     assert files_to_select.pop() in latest_chat_response.sources
 
-    # Select the summarisation route
+    # Select the summarise route
     chats_page = chats_page.start_new_chat()
-    chats_page.write_message = "@summarisation Please summarise the README documentation."
+    chats_page.write_message = "@summarise Please summarise the README documentation."
     chats_page = chats_page.send()
     latest_chat_response = chats_page.wait_for_latest_message()
     assert latest_chat_response.text
-    assert latest_chat_response.route == "summarisation"
+    assert latest_chat_response.route == "summarise"
 
     # Delete a file
     documents_page = chats_page.navigate_to_documents()
