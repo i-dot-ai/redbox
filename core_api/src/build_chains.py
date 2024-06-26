@@ -37,7 +37,7 @@ def build_vanilla_chain(
 ) -> Runnable:
     return (
         make_chat_prompt_from_messages_runnable(
-            system_prompt=env.ai.vanilla_system_prompt, 
+            system_prompt=env.ai.vanilla_system_prompt,
             question_prompt=env.ai.vanilla_question_prompt,
             context_window_size=env.ai.context_window_size,
             tokeniser=tokeniser,
@@ -63,7 +63,7 @@ def build_retrieval_chain(
         )
         | {
             "response": make_chat_prompt_from_messages_runnable(
-                system_prompt=env.ai.vanilla_system_prompt, 
+                system_prompt=env.ai.vanilla_system_prompt,
                 question_prompt=env.ai.vanilla_question_prompt,
                 context_window_size=env.ai.context_window_size,
                 tokeniser=tokeniser,
@@ -79,6 +79,7 @@ def build_retrieval_chain(
 def build_summary_chain(
     llm: Annotated[ChatLiteLLM, Depends(dependencies.get_llm)],
     storage_handler: Annotated[ElasticsearchStorageHandler, Depends(dependencies.get_storage_handler)],
+    tokeniser: Annotated[Encoding, Depends(dependencies.get_tokeniser)],
     env: Annotated[Settings, Depends(dependencies.get_env)],
 ) -> Runnable:
     def make_document_context(input_dict):
@@ -104,7 +105,10 @@ def build_summary_chain(
     return (
         RunnablePassthrough.assign(documents=(make_document_context | RunnableLambda(format_chunks)))
         | make_chat_prompt_from_messages_runnable(
-            env.ai.summarisation_system_prompt, env.ai.summarisation_question_prompt
+            system_prompt=env.ai.vanilla_system_prompt,
+            question_prompt=env.ai.vanilla_question_prompt,
+            context_window_size=env.ai.context_window_size,
+            tokeniser=tokeniser,
         )
         | llm
         | {
@@ -117,6 +121,7 @@ def build_summary_chain(
 def build_map_reduce_summary_chain(
     llm: Annotated[ChatLiteLLM, Depends(dependencies.get_llm)],
     storage_handler: Annotated[ElasticsearchStorageHandler, Depends(dependencies.get_storage_handler)],
+    tokeniser: Annotated[Encoding, Depends(dependencies.get_tokeniser)],
     env: Annotated[Settings, Depends(dependencies.get_env)],
 ) -> Runnable:
     def make_document_context(input_dict: dict):
@@ -161,7 +166,12 @@ def build_map_reduce_summary_chain(
     return (
         RunnablePassthrough.assign(documents=make_document_context)
         | map_operation
-        | make_chat_prompt_from_messages_runnable(env.ai.reduce_system_prompt, env.ai.reduce_question_prompt)
+        | make_chat_prompt_from_messages_runnable(
+            system_prompt=env.ai.vanilla_system_prompt,
+            question_prompt=env.ai.vanilla_question_prompt,
+            context_window_size=env.ai.context_window_size,
+            tokeniser=tokeniser,
+        )
         | llm
         | {
             "response": StrOutputParser(),

@@ -31,3 +31,7 @@ class APIError404(APIErrorResponse):
     type: AnyUrl = AnyUrl("http://example.com/error/not-found")
     status: int = 404
     title: str = "File not found"
+
+
+class AIError(Exception):
+    """Basic error class for problems with the AI components."""

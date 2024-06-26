@@ -1,15 +1,19 @@
 import re
 
+import pytest
+
 from core_api.src.app import env
 from core_api.src.build_chains import build_retrieval_chain, build_summary_chain
-from core_api.src.dependencies import get_es_retriever
+from core_api.src.dependencies import get_es_retriever, get_tokeniser
 from core_api.src.format import format_chunks, get_file_chunked_to_tokens
 from core_api.src.runnables import (
+    make_chat_prompt_from_messages_runnable,
     make_chat_runnable,
     make_condense_question_runnable,
     make_condense_rag_runnable,
 )
 from redbox.models.chain import ChainInput
+from redbox.models.errors import AIError
 
 
 def test_make_chat_runnable(mock_llm):
@@ -28,6 +32,49 @@ def test_make_chat_runnable(mock_llm):
         input={
             "question": "How are you today?",
             "messages": [(msg["role"], msg["text"]) for msg in previous_history],
+        }
+    )
+
+    assert response == "<<TESTING>>"
+
+
+def test_make_chat_prompt_from_messages_runnable(mock_llm):
+    chain = (
+        make_chat_prompt_from_messages_runnable(
+            system_prompt="Your job is chat.",
+            question_prompt="{question}\n=========\n Response: ",
+            context_window_size=100,
+            tokeniser=get_tokeniser(),
+        )
+        | mock_llm
+    )
+
+    # Handles a normal call
+    response = chain.invoke(
+        input={
+            "question": "Lorem ipsum dolor sit amet.",
+            "chat_history": [],
+        }
+    )
+
+    assert response == "<<TESTING>>"
+
+    # Handles a long question
+    with pytest.raises(AIError):
+        response = chain.invoke(
+            input={
+                "question": "".join(["Lorem ipsum dolor sit amet. "] * 200),
+                "chat_history": [],
+            }
+        )
+
+    # Handles a long history
+    response = chain.invoke(
+        input={
+            "question": "Lorem ipsum dolor sit amet.",
+            "chat_history": [
+                {"text": str(i), "role": "user"} if i % 2 == 0 else {"text": str(i), "role": "ai"} for i in range(100)
+            ],
         }
     )
 
@@ -129,8 +176,9 @@ def test_make_condense_rag_runnable(es_client, mock_llm, chunked_file):
 
 def test_rag_runnable(es_client, mock_llm, chunked_file, env):
     retriever = get_es_retriever(es=es_client, env=env)
+    tokeniser = get_tokeniser()
 
-    chain = build_retrieval_chain(llm=mock_llm, retriever=retriever, env=env)
+    chain = build_retrieval_chain(llm=mock_llm, retriever=retriever, tokeniser=tokeniser, env=env)
 
     previous_history = [
         {"text": "Lorem ipsum dolor sit amet.", "role": "user"},
@@ -152,7 +200,11 @@ def test_rag_runnable(es_client, mock_llm, chunked_file, env):
 
 
 def test_summary_runnable(elasticsearch_storage_handler, mock_llm, chunked_file, env):
-    chain = build_summary_chain(llm=mock_llm, storage_handler=elasticsearch_storage_handler, env=env)
+    tokeniser = get_tokeniser()
+
+    chain = build_summary_chain(
+        llm=mock_llm, storage_handler=elasticsearch_storage_handler, tokeniser=tokeniser, env=env
+    )
 
     previous_history = [
         {"text": "Lorem ipsum dolor sit amet.", "role": "user"},

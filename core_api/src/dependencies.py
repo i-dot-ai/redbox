@@ -4,6 +4,7 @@ from collections.abc import Callable
 from functools import lru_cache, partial
 from typing import Annotated, Any, TypedDict
 
+import tiktoken
 from elasticsearch import Elasticsearch
 from fastapi import Depends
 from langchain_community.chat_models import ChatLiteLLM
@@ -12,7 +13,6 @@ from langchain_core.embeddings import Embeddings
 from langchain_core.retrievers import BaseRetriever
 from langchain_core.runnables import ConfigurableField
 from langchain_elasticsearch import ApproxRetrievalStrategy, ElasticsearchRetriever, ElasticsearchStore
-import tiktoken
 
 from redbox.model_db import MODEL_PATH
 from redbox.models import Settings
