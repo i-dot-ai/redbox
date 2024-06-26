@@ -244,4 +244,4 @@ class ChatMessage(UUIDPrimaryKeyBase, TimeStampedModel):
     source_files = models.ManyToManyField(File, through=Citation)
 
     def __str__(self) -> str:  # pragma: no cover
-        return f"{self.chat_history} - {self.text} - {self.role}"
+        return f"{self.text} - {self.role}"
