@@ -6,9 +6,10 @@ from django.conf import settings
 from django.core.management import BaseCommand
 from django.db.models import Max
 from django.utils import timezone
+from requests.exceptions import RequestException
+
 from redbox_app.redbox_core.client import CoreApiClient
 from redbox_app.redbox_core.models import ChatHistory, File, StatusEnum
-from requests.exceptions import RequestException
 
 logger = logging.getLogger(__name__)
 core_api = CoreApiClient(host=settings.CORE_API_HOST, port=settings.CORE_API_PORT)

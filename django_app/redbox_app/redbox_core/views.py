@@ -15,6 +15,9 @@ from django.utils.decorators import method_decorator
 from django.views import View
 from django.views.decorators.http import require_http_methods
 from django.views.generic import UpdateView
+from requests.exceptions import RequestException
+from yarl import URL
+
 from redbox_app.redbox_core.client import CoreApiClient
 from redbox_app.redbox_core.forms import DemographicsForm
 from redbox_app.redbox_core.models import (
@@ -25,8 +28,6 @@ from redbox_app.redbox_core.models import (
     StatusEnum,
     User,
 )
-from requests.exceptions import RequestException
-from yarl import URL
 
 logger = logging.getLogger(__name__)
 core_api = CoreApiClient(host=settings.CORE_API_HOST, port=settings.CORE_API_PORT)

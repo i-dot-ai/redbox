@@ -2,6 +2,7 @@ from collections.abc import Mapping
 from typing import ClassVar
 
 from django import forms
+
 from redbox_app.redbox_core.models import User
 
 
