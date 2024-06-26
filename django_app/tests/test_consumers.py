@@ -8,10 +8,11 @@ import pytest
 from channels.db import database_sync_to_async
 from channels.testing import WebsocketCommunicator
 from django.db.models import Model
-from redbox_app.redbox_core.consumers import ChatConsumer
-from redbox_app.redbox_core.models import ChatHistory, ChatMessage, ChatRoleEnum, File, User
 from websockets import WebSocketClientProtocol
 from websockets.legacy.client import Connect
+
+from redbox_app.redbox_core.consumers import ChatConsumer
+from redbox_app.redbox_core.models import ChatHistory, ChatMessage, ChatRoleEnum, File, User
 
 logger = logging.getLogger(__name__)
 
