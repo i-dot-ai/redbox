@@ -111,7 +111,7 @@ def build_map_reduce_summary_chain(
     def make_document_context(input_dict: dict):
         return (
             all_chunks_retriever
-            | {file_uuid: resize_documents(env.ai.rag_desired_chunk_size) for file_uuid in input_dict["file_uuids"]}
+            | {str(file_uuid): resize_documents(env.ai.rag_desired_chunk_size) for file_uuid in input_dict["file_uuids"]}
             | RunnableLambda(lambda f: [chunk.page_content for chunk_lists in f.values() for chunk in chunk_lists])
         ).invoke(input_dict)
 
