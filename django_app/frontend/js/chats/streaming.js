@@ -59,6 +59,16 @@ class ChatMessage extends HTMLElement {
                     </div>`
                 : ''}
                 <sources-list></sources-list>
+                <div class="govuk-error-summary" data-module="govuk-error-summary" hidden>
+                  <div role="alert">
+                    <h2 class="govuk-error-summary__title">Error</h2>
+                    <div class="govuk-error-summary__body">
+                      <ul class="govuk-list govuk-error-summary__list">
+                        <li>There was an unexpected error communicating with Redbox. Please try again, and contact <a href="/support/">support</a> if the problem persists.</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
             </div>
         `;
     }
@@ -70,9 +80,8 @@ class ChatMessage extends HTMLElement {
      * @param {string | undefined} sessionId
      * @param {string} endPoint
      * @param {HTMLElement} chatControllerRef
-     * @param {string} route
      */
-    stream = (message, selectedDocuments, sessionId, endPoint, chatControllerRef, route) => {
+    stream = (message, selectedDocuments, sessionId, endPoint, chatControllerRef) => {
 
         let responseContainer = /** @type MarkdownConverter */(this.querySelector('markdown-converter'));
         let sourcesContainer = /** @type SourcesList */(this.querySelector('sources-list'));
@@ -124,6 +133,8 @@ class ChatMessage extends HTMLElement {
                 sourcesContainer.add(message.data.original_file_name, message.data.url);
             } else if (message.type === 'route') {
                 this.querySelector(".iai-chat-bubble__route").textContent = message.data;
+            } else if (message.type === 'error') {
+                this.querySelector(".govuk-error-summary").removeAttribute("hidden");
             }
             
         };
