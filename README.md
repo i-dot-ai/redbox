@@ -11,6 +11,10 @@ Redbox Copilot is a retrieval augmented generation (RAG) app that uses GenAI to 
 - **Better retrieval**. Redbox Copilot increases organisational memory by indexing documents
 - **Faster, accurate summarisation**. Redbox Copilot can summarise reports read months ago, supplement them with current work, and produce a first draft that lets civil servants focus on what they do best
 
+
+https://github.com/i-dot-ai/redbox-copilot/assets/8233643/e7984242-1403-4c93-9e68-03b3f065b38d
+
+
 # Setup
 
 Please refer to the [DEVELOPER_SETUP.md](./docs/DEVELOPER_SETUP.md) for detailed instructions on setting up the project.
@@ -33,6 +37,7 @@ You will need to install `poppler` and `tesseract` to run the `worker`
 # Testing
 - Unit tests and QA run in CI
 - At this time integration test(s) take 10+ mins to run so are triggered manually in CI
+- Run `make help` to see all the available build activities.
 
 # Dependencies
 

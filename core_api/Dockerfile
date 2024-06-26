@@ -16,10 +16,12 @@ ADD redbox/ /app/redbox
 
 RUN --mount=type=cache,target=$POETRY_CACHE_DIR poetry install --no-root --no-ansi --with api,ai --without worker,dev
 
-FROM python:3.11-slim-buster as runtime
+FROM python:3.11-slim-bookworm as runtime
 ARG EMBEDDING_MODEL
 
 WORKDIR /app/
+
+RUN apt-get update && apt-get install --yes build-essential curl > /dev/null
 
 ENV VIRTUAL_ENV=/app/.venv \
     PATH="/app/.venv/bin:$PATH"

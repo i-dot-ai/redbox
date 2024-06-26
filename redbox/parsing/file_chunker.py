@@ -1,11 +1,17 @@
 from collections.abc import Sequence
 from enum import Enum
+from typing import TYPE_CHECKING
 
 from sentence_transformers import SentenceTransformer
 
 from redbox.models.file import Chunk, File
 from redbox.parsing.chunk_clustering import cluster_chunks
 from redbox.parsing.chunkers import other_chunker
+
+if TYPE_CHECKING:
+    from mypy_boto3_s3.client import S3Client
+else:
+    S3Client = object
 
 
 class ContentType(str, Enum):
@@ -35,7 +41,9 @@ class ContentType(str, Enum):
 
 def chunk_file(
     file: File,
+    s3_client: S3Client,
     embedding_model: SentenceTransformer | None = None,
+    desired_chunk_size: int = 300,
 ) -> Sequence[Chunk]:
     """
     Args:
@@ -49,9 +57,9 @@ def chunk_file(
     Returns:
         Sequence[Chunk]: The chunks generated from the given file.
     """
-    chunks = other_chunker(file)
+    chunks = other_chunker(file=file, s3_client=s3_client)
 
     if embedding_model is not None:
-        chunks = cluster_chunks(chunks, embedding_model=embedding_model)
+        chunks = cluster_chunks(chunks, embedding_model=embedding_model, desired_chunk_size=desired_chunk_size)
 
     return chunks

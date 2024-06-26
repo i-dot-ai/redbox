@@ -1,4 +1,5 @@
 from collections.abc import Sequence
+from typing import TYPE_CHECKING
 
 from unstructured.chunking.title import chunk_by_title
 from unstructured.partition.auto import partition
@@ -6,11 +7,15 @@ from unstructured.partition.auto import partition
 from redbox.models import Chunk, File, Settings
 from redbox.models.file import Metadata
 
+if TYPE_CHECKING:
+    from mypy_boto3_s3.client import S3Client
+else:
+    S3Client = object
+
 env = Settings()
-s3_client = env.s3_client()
 
 
-def other_chunker(file: File) -> Sequence[Chunk]:
+def other_chunker(file: File, s3_client: S3Client) -> Sequence[Chunk]:
     """The default unstructured chunker for Redbox. This chunker uses the unstructured partitioner and title chunker
     to split a file into chunks.
 

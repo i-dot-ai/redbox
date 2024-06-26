@@ -1,88 +1,108 @@
+makefile_name := $(word $(words $(MAKEFILE_LIST)),$(MAKEFILE_LIST))
 
 -include .env
 
-.PHONY: app reqs
+default: help
 
+.PHONY: reqs
 reqs:
 	poetry install
 
-run:
-	docker compose up -d elasticsearch kibana worker minio redis core-api db django-app
+.PHONY: run
+run: stop
+	docker compose up -d --wait django-app
 
-stop:
+.PHONY: stop
+stop: ## Stop all containers
 	docker compose down
 
+.PHONY: prune
+prune: stop
+	docker system prune --all --force
+
+.PHONY: clean
 clean:
 	docker compose down -v --rmi all --remove-orphans
 
+.PHONY: build
 build:
 	docker compose build
 
-rebuild:
+.PHONY: rebuild
+rebuild: stop prune ## Rebuild all images
 	docker compose build --no-cache
 
-test-core-api:
-	poetry install --no-root --no-ansi --with api,dev,ai --without worker
-	poetry run pytest core_api/tests --cov=core_api/src -v --cov-report=term-missing --cov-fail-under=45
+.PHONY: test-core-api
+test-core-api: ## Test core-api
+	poetry install --no-root --no-ansi --with api,dev,ai --without worker,docs
+	poetry run pytest core_api/tests --cov=core_api/src -v --cov-report=term-missing --cov-fail-under=75
 
-test-redbox:
-	poetry install --no-root --no-ansi --with api,dev --without ai,worker
+.PHONY: test-redbox
+test-redbox: ## Test redbox
+	poetry install --no-root --no-ansi --with api,dev --without ai,worker,docs
 	poetry run pytest redbox/tests --cov=redbox -v --cov-report=term-missing --cov-fail-under=80
 
-test-worker:
-	poetry install --no-root --no-ansi --with worker,dev --without ai,api
+.PHONY: test-worker
+test-worker: ## Test worker
+	poetry install --no-root --no-ansi --with worker,dev --without ai,api,docs
 	poetry run pytest worker/tests --cov=worker -v --cov-report=term-missing --cov-fail-under=40
 
-test-django:
+.PHONY: test-django
+test-django: stop ## Test django-app
 	docker compose up -d --wait db minio
-	docker compose run django-app venv/bin/pytest tests/ --ds redbox_app.settings -v --cov=redbox_app.redbox_core --cov-fail-under 80 -o log_cli=true
+	docker compose run --no-deps django-app venv/bin/pytest tests/ --ds redbox_app.settings -v --cov=redbox_app.redbox_core --cov-fail-under 85 -o log_cli=true
 
-test-integration:
-	docker compose down
-	cp .env .env.backup
-	cp .env.integration .env
-	docker compose build core-api worker minio
-	docker compose up -d core-api worker minio
-	poetry install --no-root --no-ansi --with dev --without ai,api,worker
-	sleep 10
-	poetry run pytest tests
-	cp .env.backup .env
-	rm .env.backup
+.PHONY: test-integration
+test-integration: rebuild run test-integration-without-build ## Run all integration tests
 
+.PHONY: test-integration-without-build
+test-integration-without-build : ## Run all integration tests without rebuilding
+	poetry install --no-root --no-ansi --with dev --without ai,api,worker,docs
+	poetry run pytest tests/
+
+.PHONY: collect-static
 collect-static:
 	docker compose run django-app venv/bin/django-admin collectstatic --noinput
 
-lint:
+.PHONY: lint
+lint:  ## Check code formatting & linting
 	poetry run ruff format . --check
 	poetry run ruff check .
 
-format:
+.PHONY: format
+format:  ## Format and fix code
 	poetry run ruff format .
 	poetry run ruff check . --fix
 
-safe:
+.PHONY: safe
+safe:  ##
 	poetry run bandit -ll -r ./redbox
 	poetry run bandit -ll -r ./django_app
 	poetry run mypy ./redbox --ignore-missing-imports
 	poetry run mypy ./django_app --ignore-missing-imports
 
-checktypes:
+.PHONY: checktypes
+checktypes:  ## Check types in redbox and worker
 	poetry run mypy redbox worker --ignore-missing-imports --no-incremental
 
-check-migrations:
+.PHONY: check-migrations
+check-migrations: stop  ## Check types in redbox and worker
 	docker compose build django-app
 	docker compose up -d --wait db minio
-	docker compose run django-app venv/bin/django-admin migrate
-	docker compose run django-app venv/bin/django-admin makemigrations --check
+	docker compose run --no-deps django-app venv/bin/django-admin migrate
+	docker compose run --no-deps django-app venv/bin/django-admin makemigrations --check
 
-reset-db:
+.PHONY: reset-db
+reset-db:  ## Reset Django database
 	docker compose down db --volumes
 	docker compose up -d db
 
-docs-serve:
+.PHONY: docs-serve
+docs-serve:  ## Build and serve documentation
 	poetry run mkdocs serve
 
-docs-build:
+.PHONY: docs-build
+docs-build:  ## Build documentation
 	poetry run mkdocs build
 
 # Docker
@@ -98,6 +118,24 @@ IMAGE_TAG=$$(git rev-parse HEAD)
 
 tf_build_args=-var "image_tag=$(IMAGE_TAG)"
 DOCKER_SERVICES=$$(docker compose config --services | grep -v mlflow)
+
+AUTO_APPLY_RESOURCES = module.django-app.aws_ecs_task_definition.aws-ecs-task \
+                       module.django-app.aws_ecs_service.aws-ecs-service \
+                       module.django-app.data.aws_ecs_task_definition.main \
+                       module.core-api.aws_ecs_task_definition.aws-ecs-task \
+                       module.core-api.aws_ecs_service.aws-ecs-service \
+                       module.core-api.data.aws_ecs_task_definition.main \
+                       module.worker.aws_ecs_task_definition.aws-ecs-task \
+                       module.worker.aws_ecs_service.aws-ecs-service \
+                       module.worker.data.aws_ecs_task_definition.main \
+                       module.waf.aws_wafv2_ip_set.london \
+                       aws_secretsmanager_secret.django-app-secret \
+                       aws_secretsmanager_secret.worker-secret \
+                       aws_secretsmanager_secret.core-api-secret \
+					   module.load_balancer.aws_security_group_rule.load_balancer_http_whitelist \
+					   module.load_balancer.aws_security_group_rule.load_balancer_https_whitelist
+
+target_modules = $(foreach resource,$(AUTO_APPLY_RESOURCES),-target $(resource))
 
 .PHONY: docker_login
 docker_login:
@@ -141,40 +179,53 @@ docker_push:
 
 .PHONY: docker_update_tag
 docker_update_tag:
-	MANIFEST=$$(aws ecr batch-get-image --repository-name $(ECR_REPO_NAME) --image-ids imageTag=$(IMAGE_TAG) --query 'images[].imageManifest' --output text) && \
-	aws ecr put-image --repository-name $(ECR_REPO_NAME) --image-tag $(tag) --image-manifest "$$MANIFEST"
+	for service in django-app core-api worker; do \
+		MANIFEST=$$(aws ecr batch-get-image --repository-name $(ECR_REPO_NAME)-$$service --image-ids imageTag=$(IMAGE_TAG) --query 'images[].imageManifest' --output text) && \
+		aws ecr put-image --repository-name $(ECR_REPO_NAME)-$$service--image-tag $(tag) --image-manifest "$$MANIFEST"
+	done
 
 
-# Ouputs the value that you're after - usefx	ul to get a value i.e. IMAGE_TAG out of the Makefile
+# Ouputs the value that you're after - useful to get a value i.e. IMAGE_TAG out of the Makefile
 .PHONY: docker_echo
 docker_echo:
 	echo $($(value))
 
-CONFIG_DIR=../../../redbox-copilot-infra-config
+ifeq ($(instance),postgres)
+ CONFIG_DIR=../../../../redbox-copilot-infra-config
+ tf_build_args=
+else ifeq ($(instance),universal)
+ CONFIG_DIR=../../../../redbox-copilot-infra-config
+ env=prod
+ tf_build_args=
+else
+ CONFIG_DIR=../../../redbox-copilot-infra-config
+ tf_build_args=-var "image_tag=$(IMAGE_TAG)"
+endif
+
 TF_BACKEND_CONFIG=$(CONFIG_DIR)/backend.hcl
 
 tf_new_workspace:
-	terraform -chdir=./infrastructure/aws workspace new $(env)
+	terraform -chdir=./infrastructure/aws/$(instance)  workspace new $(env)
 
 tf_set_workspace:
-	terraform -chdir=./infrastructure/aws workspace select $(env)
+	terraform -chdir=./infrastructure/aws/$(instance) workspace select $(env)
 
 tf_set_or_create_workspace:
 	make tf_set_workspace || make tf_new_workspace
 
 .PHONY: tf_init
 tf_init: ## Initialise terraform
-	terraform -chdir=./infrastructure/aws init -backend-config=$(TF_BACKEND_CONFIG)
+	terraform -chdir=./infrastructure/aws/$(instance) init -backend-config=$(TF_BACKEND_CONFIG) ${args} -reconfigure
 
 .PHONY: tf_plan
 tf_plan: ## Plan terraform
 	make tf_set_workspace && \
-	terraform -chdir=./infrastructure/aws plan -var-file=$(CONFIG_DIR)/${env}-input-params.tfvars ${tf_build_args}
+	terraform -chdir=./infrastructure/aws/$(instance) plan -var-file=$(CONFIG_DIR)/${env}-input-params.tfvars ${tf_build_args}
 
 .PHONY: tf_apply
 tf_apply: ## Apply terraform
 	make tf_set_workspace && \
-	terraform -chdir=./infrastructure/aws apply -var-file=$(CONFIG_DIR)/${env}-input-params.tfvars ${tf_build_args}
+	terraform -chdir=./infrastructure/aws/$(instance) apply -var-file=$(CONFIG_DIR)/${env}-input-params.tfvars ${tf_build_args} ${args}
 
 .PHONY: tf_init_universal
 tf_init_universal: ## Initialise terraform
@@ -188,20 +239,28 @@ tf_apply_universal: ## Apply terraform
 .PHONY: tf_auto_apply
 tf_auto_apply: ## Auto apply terraform
 	make tf_set_workspace && \
-	terraform -chdir=./infrastructure/aws apply -auto-approve -var-file=$(CONFIG_DIR)/${env}-input-params.tfvars ${tf_build_args}
+	terraform -chdir=./infrastructure/aws apply -auto-approve -var-file=$(CONFIG_DIR)/${env}-input-params.tfvars ${tf_build_args} $(target_modules)
 
 .PHONY: tf_destroy
 tf_destroy: ## Destroy terraform
 	make tf_set_workspace && \
 	terraform -chdir=./infrastructure/aws destroy -var-file=$(CONFIG_DIR)/${env}-input-params.tfvars ${tf_build_args}
 
+.PHONY: tf_import
+tf_import:
+	make tf_set_workspace && \
+	terraform -chdir=./infrastructure/aws/$(instance) import ${tf_build_args} -var-file=$(CONFIG_DIR)/${env}-input-params.tfvars ${name} ${id} 
+
 # Release commands to deploy your app to AWS
 .PHONY: release
 release: ## Deploy app
-	chmod +x ./infrastructure/scripts/release.sh && ./infrastructure/scripts/release.sh $(env)
+	chmod +x ./infrastructure/aws/scripts/release.sh && ./infrastructure/aws/scripts/release.sh $(env)
 
-# Runs the only the necessary backend for evaluation BUCKET_NAME
 .PHONY: eval_backend
-eval_backend:
-	docker compose up core-api worker -d --build
-	docker exec -it $$(docker ps -q --filter "name=minio") mc mb data/$${BUCKET_NAME}
+eval_backend:  ## Runs the only the necessary backend for evaluation BUCKET_NAME
+	docker compose up -d --wait core-api --build
+	docker exec -it $$(docker ps -q --filter "name=minio") mc mb data/${BUCKET_NAME}
+
+.PHONY: help
+help: ## Show this help
+	@ grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(makefile_name) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1,$$2}'

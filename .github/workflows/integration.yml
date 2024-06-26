@@ -9,6 +9,10 @@ on:
     - cron: '0 6,12,18 * * 1-5'
   # or on-demand
   workflow_dispatch:
+ # or on push to main
+  push:
+    branches:
+      - 'main'
 
 permissions:
   contents: read
@@ -54,23 +58,14 @@ jobs:
         cp .env.integration .env
         echo AZURE_OPENAI_ENDPOINT=${{ secrets.AZURE_OPENAI_ENDPOINT }} >> .env
         echo AZURE_OPENAI_API_KEY=${{ secrets.AZURE_OPENAI_API_KEY }} >> .env
-        docker compose up -d --wait elasticsearch
-        docker compose up -d --wait core-api worker
-        
-
-    - name: Wait 60s for services to be ready
-      run: |
-        sleep 60
+        docker compose up -d --wait core-api django-app
         docker ps
 
     - name: Test integration with pytest
       run: |
-        pip install requests
-        pip install pytest
-        pip install boto3
-        pip install python-jose
-        pip install websockets
-        python -m pytest tests
+        poetry install --only dev
+        poetry run playwright install --with-deps chromium
+        poetry run pytest tests/ --browser chromium
 
     - name: notify slack failure
       id: slack-failure

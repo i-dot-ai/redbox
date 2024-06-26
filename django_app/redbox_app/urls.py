@@ -32,13 +32,13 @@ info_urlpatterns = [
 
 file_urlpatterns = [
     path("documents/", views.documents_view, name="documents"),
-    path("upload/", views.upload_view, name="upload"),
+    path("upload/", views.UploadView.as_view(), name="upload"),
     path("remove-doc/<uuid:doc_id>", views.remove_doc_view, name="remove-doc"),
 ]
 
 chat_urlpatterns = [
-    path("chats/<uuid:chat_id>/", views.chats_view, name="chats"),
-    path("chats/", views.chats_view, name="chats"),
+    path("chats/<uuid:chat_id>/", views.ChatsView.as_view(), name="chats"),
+    path("chats/", views.ChatsView.as_view(), name="chats"),
     path("post-message/", views.post_message, name="post-message"),
 ]
 
@@ -51,6 +51,8 @@ other_urlpatterns = [
     path("", views.homepage_view, name="homepage"),
     path("health/", views.health, name="health"),
     path("file-status/", views.file_status_api_view, name="file-status"),
+    path("check-demographics/", views.CheckDemographicsView.as_view(), name="check-demographics"),
+    path("demographics/", views.DemographicsView.as_view(), name="demographics"),
 ]
 
 urlpatterns = (

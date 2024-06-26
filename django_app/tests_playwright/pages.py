@@ -1,5 +1,5 @@
 import logging
-from abc import ABCMeta, abstractmethod
+from abc import ABC, abstractmethod
 from enum import Enum
 from itertools import islice
 from pathlib import Path
@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
 
-class BasePage(metaclass=ABCMeta):
+class BasePage(ABC):
     # All available rules/categories can be found at https://github.com/dequelabs/axe-core/blob/develop/doc/rule-descriptions.md
     # Can't include all as gov.uk design system violates the "region" rule
     AXE_OPTIONS: ClassVar[dict[str, Any]] = {
@@ -80,7 +80,7 @@ class BasePage(metaclass=ABCMeta):
         return f'"{self.title}" at {self.url}'
 
 
-class SignedInBasePage(BasePage, metaclass=ABCMeta):
+class SignedInBasePage(BasePage, ABC):
     def navigate_to_documents(self) -> "DocumentsPage":
         self.page.get_by_role("link", name="Documents", exact=True).click()
         return DocumentsPage(self.page)
@@ -156,6 +156,10 @@ class DocumentsPage(SignedInBasePage):
     def get_expected_page_title(self) -> str:
         return "Documents - Redbox Copilot"
 
+    def delete_latest_document(self) -> "DocumentDeletePage":
+        self.page.get_by_role("button", name="Remove").first.click()
+        return DocumentDeletePage(self.page)
+
     def navigate_to_upload(self) -> "DocumentUploadPage":
         self.page.get_by_role("button", name="Add document").click()
         return DocumentUploadPage(self.page)
@@ -163,6 +167,15 @@ class DocumentsPage(SignedInBasePage):
     def get_all_document_rows(self) -> list[DocumentRow]:
         cell_texts = self.page.get_by_role("cell").all_inner_texts()
         return [DocumentRow(filename, status) for filename, uploaded_at, status, action in batched(cell_texts, 4)]
+
+
+class DocumentDeletePage(SignedInBasePage):
+    def get_expected_page_title(self) -> str:
+        return "Remove document - Redbox Copilot"
+
+    def confirm_deletion(self) -> "DocumentsPage":
+        self.page.get_by_role("button", name="Remove").click()
+        return DocumentsPage(self.page)
 
 
 class DocumentUploadPage(SignedInBasePage):
@@ -202,7 +215,7 @@ class ChatsPage(SignedInBasePage):
         return ChatsPage(self.page)
 
     def all_messages(self) -> list[str]:
-        return self.page.locator(".iai-chat-message").all_inner_texts()
+        return self.page.locator(".rb-chat-message").all_inner_texts()
 
     def check_feedback_prompt_visible(self, feedback: FeedbackType) -> bool:
         if feedback == FeedbackType.NOT_HELPFUL:

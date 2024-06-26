@@ -1,4 +1,4 @@
-from redbox.models.chat import ChatMessage, ChatRequest, ChatResponse
+from redbox.models.chat import ChatMessage, ChatRequest, ChatResponse, ChatRoute
 from redbox.models.embedding import (
     EmbeddingModelInfo,
     EmbeddingResponse,
@@ -21,21 +21,22 @@ from redbox.models.persona import ChatPersona
 from redbox.models.settings import Settings
 
 __all__ = [
+    "APIError404",
+    "APIErrorDetail",
+    "APIErrorResponse",
     "ChatMessage",
     "ChatPersona",
-    "ChatResponse",
     "ChatRequest",
+    "ChatResponse",
+    "ChatRoute",
     "Chunk",
     "ChunkStatus",
+    "EmbedQueueItem",
     "EmbeddingModelInfo",
+    "EmbeddingResponse",
     "File",
     "FileStatus",
-    "Settings",
-    "EmbeddingResponse",
-    "EmbedQueueItem",
-    "StatusResponse",
     "ProcessingStatusEnum",
-    "APIErrorResponse",
-    "APIErrorDetail",
-    "APIError404",
+    "Settings",
+    "StatusResponse",
 ]

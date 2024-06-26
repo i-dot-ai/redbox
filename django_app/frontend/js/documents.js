@@ -1,31 +1,28 @@
 // @ts-check
 
-/** @type {import ('../node_modules/@types/alpinejs/index.d.ts').Alpine} */
-let Alpine = window["Alpine"];
 
+class FileStatus extends HTMLElement {
 
-// Polls for updates to file statuses
-Alpine.data('file-status', () => ({
-    
-    status: '',
-    init() {
-
-        this.status = this.$el.textContent || '';
+    connectedCallback() {
 
         const checkStatus = async () => {
 
             // UPDATE THESE AS REQUIRED
             const FILE_STATUS_ENDPOINT = '/file-status';
             const CHECK_INTERVAL_MS = 5000;
-            
-            const response = await fetch(`${FILE_STATUS_ENDPOINT}?id=${this.$el.dataset.id}`);
-            const responseText = await response.json();
-            if (response.ok) {
-                this.status = responseText["status"];
+
+            // as we use different layouts for mobile and desktop - only request update if visible
+            if (!this.checkVisibility()) {
+                window.setTimeout(checkStatus, CHECK_INTERVAL_MS);
+                return;
             }
-            if (this.status.toLowerCase() === 'complete') {
-                this.$el.classList.add('govuk-tag--green');
-                this.$el.classList.remove('govuk-tag--yellow');
+
+            const response = await fetch(`${FILE_STATUS_ENDPOINT}?id=${this.dataset.id}`);
+            const responseObj = await response.json();
+            this.textContent = responseObj.status;
+            if (responseObj.status.toLowerCase() === 'complete') {
+                const evt = new CustomEvent('doc-complete', { detail: this.closest('.iai-doc-list__item') });
+                document.body.dispatchEvent(evt);
             } else {
                 window.setTimeout(checkStatus, CHECK_INTERVAL_MS);
             }
@@ -33,7 +30,21 @@ Alpine.data('file-status', () => ({
         };
 
         checkStatus();
+
     }
+  
+}
+customElements.define('file-status', FileStatus);
 
-}));
 
+
+/** So completed docs can be added to this list */
+class DocList extends HTMLElement {
+    connectedCallback() {
+        document.body.addEventListener('doc-complete', (evt) => {
+            const completedDoc = /** @type{CustomEvent} */(evt).detail;
+            this.querySelector('tbody')?.appendChild(completedDoc);
+        });
+    }
+}
+customElements.define('doc-list', DocList);

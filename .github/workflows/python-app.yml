@@ -8,6 +8,7 @@ on:
     paths:
       - redbox/**
       - core_api/**
+      - django_app/**
       - worker/**
       - Makefile
       - poetry.lock
