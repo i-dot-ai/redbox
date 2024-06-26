@@ -80,18 +80,8 @@ class ChatHistoryAdmin(admin.ModelAdmin):
     actions = ["export_as_csv"]
 
 
-class CitationAdmin(admin.ModelAdmin):
-    list_display = ["chat_message", "text", "get_user", "file"]
-    list_filter = ["chat_message__chat_history__users"]
-
-    @admin.display(ordering="chat_message__chat_history__users", description="User")
-    def get_user(self, obj):
-        return obj.chat_message.chat_history.users
-
-
 admin.site.register(models.User, UserAdmin)
 admin.site.register(models.File, FileAdmin)
 admin.site.register(models.ChatHistory, ChatHistoryAdmin)
 admin.site.register(models.ChatMessage, ChatMessageAdmin)
-admin.site.register(models.Citation, CitationAdmin)
 admin.site.register(models.BusinessUnit, BusinessUnitAdmin)
