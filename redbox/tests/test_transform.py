@@ -47,7 +47,9 @@ def test_map_document_to_source_document(document: Document):
     document_page_number = document.metadata["_source"]["metadata"].get("page_number")
     if isinstance(document_page_number, int):
         assert document_page_number in source_doc.page_numbers
+        assert len(source_doc.page_numbers) == 1
     elif isinstance(document_page_number, list):
+        assert isinstance(source_doc.page_numbers, list)
         assert set(document_page_number) == set(source_doc.page_numbers)
     else:
         assert source_doc.page_numbers == []

@@ -20,12 +20,20 @@ def reduce_chunks_by_tokens(chunks: list[Document] | None, chunk: Document, max_
     if not chunks:
         return [chunk]
 
-    last_chunk = chunks[-1]
     # Backwards compatible with worker which didn't store token_count
-    chunk_tokens = chunk.metadata["_source"]["metadata"].get("token_count") or len(encoding.encode(chunk.page_content))
-    last_chunk_tokens = last_chunk.metadata["_source"]["metadata"].get("token_count") or len(
-        encoding.encode(last_chunk.page_content)
-    )
+    # Everything is optional None so we have to check everything
+    # This will all be rolled up into a SummarisationChunkRetriever or similar in future work and this ugliness
+    # will all be gone
+    def get_chunk_tokens(d: Document):
+        if d.metadata is not None and d.metadata.get("_source", {}).get("metadata") is not None:
+            return d.metadata["_source"]["metadata"].get("token_count") or len(encoding.encode(d.page_content))
+        else:
+            return len(encoding.encode(d.page_content))
+
+    last_chunk = chunks[-1]
+    
+    chunk_tokens = get_chunk_tokens(chunk)
+    last_chunk_tokens = get_chunk_tokens(last_chunk)
     if chunk_tokens + last_chunk_tokens <= max_tokens:
         chunks[-1] = combine_documents(last_chunk, chunk)
     else:

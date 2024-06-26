@@ -1,6 +1,7 @@
+
 from core_api.src.app import env
 from core_api.src.build_chains import build_retrieval_chain, build_summary_chain
-from core_api.src.dependencies import get_es_retriever
+from core_api.src.dependencies import get_parameterised_retriever
 from core_api.src.runnables import (
     make_chat_runnable,
     make_condense_question_runnable,
@@ -31,30 +32,6 @@ def test_make_chat_runnable(mock_llm):
     assert response == "<<TESTING>>"
 
 
-def test_make_es_retriever(es_client, chunked_file):
-    retriever = get_es_retriever(es=es_client, env=env)
-
-    one_doc_chunks = retriever.invoke(
-        input={
-            "question": "hello",
-            "file_uuids": [chunked_file.uuid],
-            "user_uuid": chunked_file.creator_user_uuid,
-        }
-    )
-
-    assert {chunked_file.uuid} == {chunk.parent_file_uuid for chunk in one_doc_chunks}
-
-    no_doc_chunks = retriever.invoke(
-        input={
-            "question": "tell me about energy",
-            "file_uuids": [],
-            "user_uuid": chunked_file.creator_user_uuid,
-        }
-    )
-
-    assert len(no_doc_chunks) >= 1
-
-
 def test_make_condense_question_runnable(mock_llm):
     chain = make_condense_question_runnable(llm=mock_llm)
 
@@ -75,7 +52,7 @@ def test_make_condense_question_runnable(mock_llm):
 
 
 def test_make_condense_rag_runnable(es_client, mock_llm, chunked_file):
-    retriever = get_es_retriever(es=es_client, env=env)
+    retriever = get_parameterised_retriever(es=es_client, env=env)
 
     chain = make_condense_rag_runnable(system_prompt="Your job is Q&A.", llm=mock_llm, retriever=retriever)
 
@@ -93,13 +70,12 @@ def test_make_condense_rag_runnable(es_client, mock_llm, chunked_file):
             "user_uuid": chunked_file.creator_user_uuid,
         }
     )
-
     assert response["response"] == "<<TESTING>>"
-    assert {chunked_file.uuid} == {chunk.parent_file_uuid for chunk in response["sources"]}
+    assert {str(chunked_file.uuid)} == {chunk.metadata['_source']['parent_file_uuid'] for chunk in response["sources"]}
 
 
 def test_rag_runnable(es_client, mock_llm, chunked_file, env):
-    retriever = get_es_retriever(es=es_client, env=env)
+    retriever = get_parameterised_retriever(es=es_client, env=env)
 
     chain = build_retrieval_chain(llm=mock_llm, retriever=retriever, env=env)
 
@@ -119,11 +95,11 @@ def test_rag_runnable(es_client, mock_llm, chunked_file, env):
     )
 
     assert response["response"] == "<<TESTING>>"
-    assert {chunked_file.uuid} == {chunk.parent_file_uuid for chunk in response["source_documents"]}
+    assert {str(chunked_file.uuid)} == {chunk.metadata['_source']['parent_file_uuid'] for chunk in response["source_documents"]}
 
 
-def test_summary_runnable(elasticsearch_storage_handler, mock_llm, chunked_file, env):
-    chain = build_summary_chain(llm=mock_llm, storage_handler=elasticsearch_storage_handler, env=env)
+def test_summary_runnable(all_chunks_retriever, mock_llm, chunked_file, env):
+    chain = build_summary_chain(llm=mock_llm, all_chunks_retriever=all_chunks_retriever, env=env)
 
     previous_history = [
         {"text": "Lorem ipsum dolor sit amet.", "role": "user"},

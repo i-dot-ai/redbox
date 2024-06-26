@@ -1,6 +1,9 @@
+from functools import partial
 import time
 from pathlib import Path
 from uuid import UUID, uuid4
+from typing import List, Generator
+import json
 
 import pytest
 from botocore.exceptions import ClientError
@@ -9,11 +12,22 @@ from fastapi.testclient import TestClient
 from jose import jwt
 from langchain_community.embeddings import SentenceTransformerEmbeddings
 from langchain_community.llms.fake import FakeListLLM
+from langchain_core.embeddings.fake import FakeEmbeddings
+from langchain_core.documents.base import Document
+from langchain_elasticsearch import ElasticsearchStore
+from langchain_elasticsearch.retrievers import ElasticsearchRetriever
+from langchain_core.runnables import ConfigurableField
 
 from core_api.src.app import app as application
 from redbox.model_db import MODEL_PATH
 from redbox.models import Chunk, File, Settings
+from redbox.models.file import Metadata
 from redbox.storage import ElasticsearchStorageHandler
+from core_api.src.retriever import get_all_chunks_query, ParameterisedElasticsearchRetriever
+from core_api.src.retriever.parameterised import parameterised_document_mapper
+
+ALL_CHUNKS_RETRIEVER_RESOURCES = json.load(open("core_api/tests/resources/retriever/all_chunks.json"))
+PARAMETERISED_RETRIEVER_RESOURCES = json.load(open("core_api/tests/resources/retriever/parameterised.json"))
 
 
 @pytest.fixture()
@@ -101,9 +115,36 @@ def stored_file_chunks(stored_file_1, embedding_model_dim) -> list[Chunk]:
                 embedding=[1] * embedding_model_dim,
                 parent_file_uuid=stored_file_1.uuid,
                 creator_user_uuid=stored_file_1.creator_user_uuid,
+                metadata={"parent_doc_uuid": str(stored_file_1.uuid)}
             )
         )
     return chunks
+
+
+@pytest.fixture(params=ALL_CHUNKS_RETRIEVER_RESOURCES.keys())
+def stored_file_all_chunks(request, env, es_client) -> Generator[List[Document], None, None]:
+    store = ElasticsearchStore(
+        index_name=env.elastic_root_index+"-chunk",
+        es_connection=es_client,
+        query_field="text"
+    )
+    documents = list(map(Document.parse_obj, ALL_CHUNKS_RETRIEVER_RESOURCES[request.param]))
+    doc_ids = store.add_documents(documents)
+    yield documents
+    store.delete(doc_ids)
+
+
+@pytest.fixture(params=PARAMETERISED_RETRIEVER_RESOURCES.keys())
+def stored_file_parameterised(request, env, es_client) -> Generator[List[Document], None, None]:
+    store = ElasticsearchStore(
+        index_name=env.elastic_root_index+"-chunk",
+        es_connection=es_client,
+        query_field="text"
+    )
+    documents = list(map(Document.parse_obj, PARAMETERISED_RETRIEVER_RESOURCES[request.param]))
+    doc_ids = store.add_documents(documents)
+    yield documents
+    store.delete(doc_ids)
 
 
 @pytest.fixture()
@@ -151,3 +192,30 @@ def embedding_model(env) -> SentenceTransformerEmbeddings:
 @pytest.fixture()
 def chunk_index_name(env):
     return f"{env.elastic_root_index}-chunk"
+
+@pytest.fixture
+def all_chunks_retriever(env, es_client) -> ElasticsearchRetriever:
+    return ElasticsearchRetriever(
+        es_client=es_client, index_name=f"{env.elastic_root_index}-chunk", body_func=get_all_chunks_query, content_field="text"
+    )
+
+@pytest.fixture
+def parameterised_retriever(env, es_client):
+    default_params = {
+        "size": env.ai.rag_k,
+        "num_candidates": env.ai.rag_num_candidates,
+        "match_boost": 1,
+        "knn_boost": 1,
+        "similarity_threshold": 0,
+    }
+    return ParameterisedElasticsearchRetriever(
+        es_client=es_client,
+        index_name=f"{env.elastic_root_index}-chunk",
+        params=default_params,
+        embedding_model=FakeEmbeddings(size=768),
+        document_mapper=parameterised_document_mapper
+    ).configurable_fields(
+        params=ConfigurableField(
+            id="params", name="Retriever parameters", description="A dictionary of parameters to use for the retriever."
+        )
+    )

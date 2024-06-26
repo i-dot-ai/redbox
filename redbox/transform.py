@@ -17,8 +17,8 @@ def map_document_to_source_document(d: Document) -> SourceDocument:
         page_content=d.page_content,
         file_uuid=(
             d.metadata["_source"]["metadata"]["parent_file_uuid"]
-            if "parent_file_uuid" in d.metadata["_source"]["metadata"]
-            else d.metadata["_source"]["metadata"]["parent_doc_uuid"]
+            if "parent_file_uuid" in d.metadata["_source"].get("metadata", {})
+            else d.metadata["_source"].get("metadata", {}).get("parent_doc_uuid")
         ),
         page_numbers=map_page_numbers(d.metadata["_source"]["metadata"].get("page_number")),
     )
@@ -30,7 +30,7 @@ def combine_documents(a: Document, b: Document):
         return list(
             filter(
                 lambda x: x is not None,
-                [a.metadata["_source"]["metadata"].get(field_name), b.metadata["_source"]["metadata"].get(field_name)],
+                [a.metadata["_source"].get("metadata", {}).get(field_name), b.metadata["_source"].get("metadata", {}).get(field_name)],
             )
         )
 
