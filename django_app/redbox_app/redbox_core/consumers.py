@@ -1,8 +1,9 @@
 import json
 import logging
+from asyncio import CancelledError
 from collections.abc import Mapping, MutableSequence, Sequence
 from dataclasses import dataclass
-from typing import Literal
+from typing import Any, Literal
 from uuid import UUID
 
 from channels.db import database_sync_to_async
@@ -10,7 +11,7 @@ from channels.generic.websocket import AsyncWebsocketConsumer
 from dataclasses_json import Undefined, dataclass_json
 from django.conf import settings
 from django.utils import timezone
-from websockets import WebSocketClientProtocol
+from websockets import ConnectionClosedError, WebSocketClientProtocol
 from websockets.client import connect
 from yarl import URL
 
@@ -58,19 +59,23 @@ class ChatConsumer(AsyncWebsocketConsumer):
             {"role": message.role, "text": message.text} for message in session_messages
         ]
         url = URL.build(scheme="ws", host=settings.CORE_API_HOST, port=settings.CORE_API_PORT) / "chat/rag"
-        async with connect(str(url), extra_headers={"Authorization": user.get_bearer_token()}) as core_websocket:
-            message = {
-                "message_history": message_history,
-                "selected_files": [{"uuid": f.core_file_uuid} for f in selected_files],
-            }
-            await self.send_to_server(core_websocket, message)
-            await self.send_to_client({"type": "session-id", "data": str(session.id)})
-            reply, source_files, route = await self.receive_llm_responses(user, core_websocket)
-        await self.save_message(session, reply, ChatRoleEnum.ai, source_files=source_files, route=route)
+        try:
+            async with connect(str(url), extra_headers={"Authorization": user.get_bearer_token()}) as core_websocket:
+                message = {
+                    "message_history": message_history,
+                    "selected_files": [{"uuid": f.core_file_uuid} for f in selected_files],
+                }
+                await self.send_to_server(core_websocket, message)
+                await self.send_to_client("session-id", session.id)
+                reply, source_files, route = await self.receive_llm_responses(user, core_websocket)
+            await self.save_message(session, reply, ChatRoleEnum.ai, source_files=source_files, route=route)
 
-        for file in source_files:
-            file.last_referenced = timezone.now()
-            await self.file_save(file)
+            for file in source_files:
+                file.last_referenced = timezone.now()
+                await self.file_save(file)
+        except (TimeoutError, ConnectionClosedError, CancelledError) as e:
+            logger.exception("Exception waiting for message from core.", exc_info=e)
+            await self.send_to_client("error")
 
     async def receive_llm_responses(
         self, user: User, core_websocket: WebSocketClientProtocol
@@ -93,25 +98,21 @@ class ChatConsumer(AsyncWebsocketConsumer):
         doc_uuids: Sequence[UUID] = [UUID(doc.file_uuid) for doc in message.data]
         source_files = await self.get_files_by_core_uuid(doc_uuids, user)
         for source in source_files:
-            await self.send_to_client(
-                {
-                    "type": "source",
-                    "data": {"url": str(source.url), "original_file_name": source.original_file_name},
-                }
-            )
+            await self.send_to_client("source", {"url": source.url, "original_file_name": source.original_file_name})
         return source_files
 
     async def handle_text(self, message: CoreChatResponse) -> str:
-        await self.send_to_client({"type": "text", "data": message.data})
+        await self.send_to_client("text", message.data)
         return message.data
 
     async def handle_route(self, message: CoreChatResponse) -> str:
-        await self.send_to_client({"type": "route", "data": message.data})
+        await self.send_to_client("route", message.data)
         return message.data
 
-    async def send_to_client(self, data):
-        logger.debug("sending %s to browser", data)
-        await self.send(json.dumps(data, default=str))
+    async def send_to_client(self, message_type: str, data: str | Mapping[str, Any] | None = None) -> None:
+        message = {"type": message_type, "data": data}
+        logger.debug("sending %s to browser", message)
+        await self.send(json.dumps(message, default=str))
 
     @staticmethod
     async def send_to_server(websocket, data):
