@@ -20,7 +20,7 @@ from langchain_core.retrievers import BaseRetriever
 
 from core_api.src import dependencies
 from core_api.src.format import format_chunks, format_documents
-from core_api.src.runnables import make_chat_prompt_from_messages_runnable, rechunk_file
+from core_api.src.runnables import make_chat_prompt_from_messages_runnable, resize_documents
 from redbox.models import ChatRoute, Settings
 from redbox.storage import ElasticsearchStorageHandler
 
@@ -76,7 +76,7 @@ def build_summary_chain(
             all_chunks_retriever
             |
             {
-            str(file_uuid): rechunk_file(file_uuid, input_dict['user_uuid'], env.ai.rag_desired_chunk_size)
+            str(file_uuid): resize_documents(env.ai.rag_desired_chunk_size)
             for file_uuid in input_dict['file_uuids']
             }
             | RunnableLambda(lambda f: [chunk for chunk_lists in f.values() for chunk in chunk_lists])
@@ -116,7 +116,7 @@ def build_map_reduce_summary_chain(
             all_chunks_retriever
             |
             {
-            file_uuid: rechunk_file(file_uuid, input_dict['user_uuid'], env.ai.rag_desired_chunk_size)
+            file_uuid: resize_documents(env.ai.rag_desired_chunk_size)
             for file_uuid in input_dict['file_uuids']
             }
             | RunnableLambda(lambda f: [chunk.page_content for chunk_lists in f.values() for chunk in chunk_lists])

@@ -14,7 +14,7 @@ from langchain_core.runnables import (
 from langchain_core.documents.base import Document
 from langchain_core.vectorstores import VectorStoreRetriever
 
-from core_api.src.format import format_chunks
+from core_api.src.format import format_documents
 from core_api.src.format import reduce_chunks_by_tokens
 from redbox.models import ChatResponse
 from redbox.models.file import UUID, Chunk
@@ -116,7 +116,7 @@ def make_stuff_document_runnable(system_prompt: str, question_prompt: str, llm: 
         | {
             "question": itemgetter("question"),
             "messages": itemgetter("messages"),
-            "documents": itemgetter("documents") | RunnableLambda(format_chunks),
+            "documents": itemgetter("documents") | RunnableLambda(format_documents),
         }
         | ChatPromptTemplate.from_messages(chat_history)
         | llm
@@ -190,7 +190,7 @@ def make_condense_rag_runnable(
         RunnablePassthrough()
         | {
             "question": condense_question_chain,
-            "documents": retriever | format_chunks,
+            "documents": retriever | format_documents,
             "sources": retriever,
         }
         | {
@@ -200,16 +200,14 @@ def make_condense_rag_runnable(
     )
 
 
-def rechunk_file(
-    file_uuid: UUID, 
-    user_uuid: UUID, 
+def resize_documents(
     max_tokens: int | None = None
 ) -> List[Document]:
     """Gets a file as larger document-sized Chunks, splitting it by max_tokens."""
     n = max_tokens or float("inf")
     @chain
     def wrapped(chunks_unsorted: List[Document]):
-        chunks_sorted = sorted(chunks_unsorted, key=lambda x: x.index)
+        chunks_sorted = sorted(chunks_unsorted, key=lambda x: x.metadata["_source"]["metadata"]["index"])
         reduce_chunk_n = partial(reduce_chunks_by_tokens, max_tokens=n)
         return reduce(lambda cs, c: reduce_chunk_n(cs, c), chunks_sorted, [])
     return wrapped

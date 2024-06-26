@@ -41,25 +41,6 @@ def test_format_chunks(stored_file_chunks):
     assert len(list(re.finditer("hello", formatted_documents))) == len(stored_file_chunks)
 
 
-def test_get_file_chunked_to_tokens(chunked_file, elasticsearch_storage_handler):
-    one_document = get_file_chunked_to_tokens(
-        file_uuid=chunked_file.uuid,
-        user_uuid=chunked_file.creator_user_uuid,
-        storage_handler=elasticsearch_storage_handler,
-    )
-
-    assert len(one_document) == 1
-
-    many_documents = get_file_chunked_to_tokens(
-        file_uuid=chunked_file.uuid,
-        user_uuid=chunked_file.creator_user_uuid,
-        storage_handler=elasticsearch_storage_handler,
-        max_tokens=2,
-    )
-
-    assert len(many_documents) > 1
-
-
 def test_make_es_retriever(es_client, chunked_file):
     retriever = get_es_retriever(es=es_client, env=env)
 
