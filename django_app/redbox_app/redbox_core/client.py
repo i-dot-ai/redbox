@@ -8,8 +8,9 @@ import requests
 from botocore.exceptions import ClientError
 from dataclasses_json import Undefined, dataclass_json
 from django.conf import settings
-from redbox_app.redbox_core.models import User
 from yarl import URL
+
+from redbox_app.redbox_core.models import User
 
 logger = logging.getLogger(__name__)
 

@@ -11,8 +11,9 @@ from django.core.management import CommandError, call_command
 from django.utils import timezone
 from freezegun import freeze_time
 from magic_link.models import MagicLink
-from redbox_app.redbox_core.models import ChatHistory, ChatMessage, ChatRoleEnum, File, StatusEnum, User
 from requests_mock import Mocker
+
+from redbox_app.redbox_core.models import ChatHistory, ChatMessage, ChatRoleEnum, File, StatusEnum, User
 
 # === show_magiclink_url command tests ===
 
