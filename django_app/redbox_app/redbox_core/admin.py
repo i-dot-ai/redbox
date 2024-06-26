@@ -7,11 +7,16 @@ from import_export.admin import ImportMixin
 from . import models
 
 
-class UserAdmin(admin.ModelAdmin):
+class UserAdmin(ImportMixin, admin.ModelAdmin):
     fields = ["email", "business_unit", "grade", "profession", "is_superuser", "is_staff", "last_login"]
     list_display = ["email", "business_unit", "grade", "profession", "is_superuser", "is_staff", "last_login"]
     list_filter = ["business_unit", "grade", "profession"]
     date_hierarchy = "last_login"
+
+    class Meta:
+        model = models.User
+        fields = ["email"]
+        import_id_fields = ["email"]
 
 
 class BusinessUnitAdmin(ImportMixin, admin.ModelAdmin):

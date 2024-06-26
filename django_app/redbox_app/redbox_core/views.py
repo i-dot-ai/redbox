@@ -21,14 +21,13 @@ from redbox_app.redbox_core.models import (
     ChatHistory,
     ChatMessage,
     ChatRoleEnum,
+    Citation,
     File,
     StatusEnum,
     User,
-    Citation,
 )
 from requests.exceptions import RequestException
 from yarl import URL
-
 
 logger = logging.getLogger(__name__)
 core_api = CoreApiClient(host=settings.CORE_API_HOST, port=settings.CORE_API_PORT)
