@@ -16,6 +16,7 @@ from langchain_core.runnables import (
 )
 from langchain_core.runnables.config import RunnableConfig
 from langchain_core.vectorstores import VectorStoreRetriever
+from tiktoken import Encoding
 
 from core_api.src import dependencies
 from core_api.src.format import format_chunks, get_file_chunked_to_tokens
@@ -31,10 +32,16 @@ log = logging.getLogger()
 
 def build_vanilla_chain(
     llm: Annotated[ChatLiteLLM, Depends(dependencies.get_llm)],
+    tokeniser: Annotated[Encoding, Depends(dependencies.get_tokeniser)],
     env: Annotated[Settings, Depends(dependencies.get_env)],
 ) -> Runnable:
     return (
-        make_chat_prompt_from_messages_runnable(env.ai.vanilla_system_prompt, env.ai.vanilla_question_prompt)
+        make_chat_prompt_from_messages_runnable(
+            system_prompt=env.ai.vanilla_system_prompt, 
+            question_prompt=env.ai.vanilla_question_prompt,
+            context_window_size=env.ai.context_window_size,
+            tokeniser=tokeniser,
+        )
         | llm
         | {
             "response": StrOutputParser(),
@@ -46,6 +53,7 @@ def build_vanilla_chain(
 def build_retrieval_chain(
     llm: Annotated[ChatLiteLLM, Depends(dependencies.get_llm)],
     retriever: Annotated[VectorStoreRetriever, Depends(dependencies.get_es_retriever)],
+    tokeniser: Annotated[Encoding, Depends(dependencies.get_tokeniser)],
     env: Annotated[Settings, Depends(dependencies.get_env)],
 ) -> Runnable:
     return (
@@ -55,7 +63,10 @@ def build_retrieval_chain(
         )
         | {
             "response": make_chat_prompt_from_messages_runnable(
-                env.ai.retrieval_system_prompt, env.ai.retrieval_question_prompt
+                system_prompt=env.ai.vanilla_system_prompt, 
+                question_prompt=env.ai.vanilla_question_prompt,
+                context_window_size=env.ai.context_window_size,
+                tokeniser=tokeniser,
             )
             | llm
             | StrOutputParser(),

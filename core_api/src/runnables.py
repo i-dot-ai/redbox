@@ -1,4 +1,5 @@
 from operator import itemgetter
+from typing import Callable
 
 from langchain.schema import StrOutputParser
 from langchain_community.chat_models import ChatLiteLLM
@@ -10,14 +11,22 @@ from langchain_core.runnables import (
     chain,
 )
 from langchain_core.vectorstores import VectorStoreRetriever
+from litellm.exceptions import ContextWindowExceededError
+from tiktoken import Encoding
 
 from core_api.src.format import format_chunks
 from redbox.models import ChatResponse
 from redbox.models.chat import SourceDocument
 
 
-def make_chat_prompt_from_messages_runnable(system_prompt: str, question_prompt: str):
+def make_chat_prompt_from_messages_runnable(
+    system_prompt: str, 
+    question_prompt: str,
+    context_window_size: int,
+    tokeniser: Encoding,
+):
     system_prompt_message = [("system", system_prompt)]
+    system_context_budget = context_window_size - len(tokeniser.encode(system_prompt))
 
     @chain
     def chat_prompt_from_messages(input_dict: dict):
@@ -25,9 +34,22 @@ def make_chat_prompt_from_messages_runnable(system_prompt: str, question_prompt:
         Create a ChatPrompTemplate as part of a chain using 'chat_history'.
         Returns the PromptValue using values in the input_dict
         """
+        context_budget = system_context_budget - len(tokeniser.encode(question_prompt))
+
+        if context_budget <= 0:
+            raise ContextWindowExceededError("Question length exceeds context window.")
+
+        truncated_history: list[dict[str, str]] = []
+        for msg in input_dict["chat_history"][::-1]:
+            context_budget -= len(tokeniser.encode(msg["text"]))
+            if context_budget <= 0:
+                break
+            else:
+                truncated_history.insert(0, msg)
+
         return ChatPromptTemplate.from_messages(
             system_prompt_message
-            + [(msg["role"], msg["text"]) for msg in input_dict["chat_history"]]
+            + [(msg["role"], msg["text"]) for msg in truncated_history]
             + [("user", question_prompt)]
         ).invoke(input_dict)
 

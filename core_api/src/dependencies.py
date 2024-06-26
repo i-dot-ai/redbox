@@ -12,6 +12,7 @@ from langchain_core.embeddings import Embeddings
 from langchain_core.retrievers import BaseRetriever
 from langchain_core.runnables import ConfigurableField
 from langchain_elasticsearch import ApproxRetrievalStrategy, ElasticsearchRetriever, ElasticsearchStore
+import tiktoken
 
 from redbox.model_db import MODEL_PATH
 from redbox.models import Settings
@@ -219,3 +220,8 @@ def get_llm(env: Annotated[Settings, Depends(get_env)]) -> ChatLiteLLM:
         log.exception(msg)
         raise ValueError(msg)
     return llm
+
+
+@lru_cache(1)
+def get_tokeniser() -> tiktoken.Encoding:
+    return tiktoken.get_encoding("cl100k_base")
