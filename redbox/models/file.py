@@ -6,7 +6,6 @@ from uuid import UUID
 
 import tiktoken
 from pydantic import BaseModel, Field, computed_field
-from langchain_core.documents.base import Document
 
 from redbox.models.base import PersistableModel
 
@@ -24,7 +23,9 @@ class File(PersistableModel):
 
     key: str = Field(description="file key")
     bucket: str = Field(description="s3 bucket")
-    ingest_status: ProcessingStatusEnum | None = Field(description="Status of file ingest for files loaded by new worker", default=None)
+    ingest_status: ProcessingStatusEnum | None = Field(
+        description="Status of file ingest for files loaded by new worker", default=None
+    )
 
 
 class Link(BaseModel):
@@ -145,5 +146,3 @@ class FileStatus(BaseModel):
     file_uuid: UUID
     processing_status: ProcessingStatusEnum
     chunk_statuses: list[ChunkStatus] | None
-
-

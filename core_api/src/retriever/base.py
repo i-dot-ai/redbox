@@ -1,7 +1,7 @@
-
 from typing import TypedDict
 
 from redbox.models.file import UUID
+
 
 class ESQuery(TypedDict):
     question: str

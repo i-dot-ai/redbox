@@ -8,15 +8,15 @@ from fastapi import Depends
 from langchain_community.chat_models import ChatLiteLLM
 from langchain_community.embeddings import SentenceTransformerEmbeddings
 from langchain_core.embeddings import Embeddings
-from langchain_core.runnables import ConfigurableField
 from langchain_core.retrievers import BaseRetriever
+from langchain_core.runnables import ConfigurableField
 from langchain_elasticsearch import ApproxRetrievalStrategy, ElasticsearchRetriever, ElasticsearchStore
 
-from .retriever import ParameterisedElasticsearchRetriever, get_all_chunks_query
 from redbox.model_db import MODEL_PATH
 from redbox.models import Settings
 from redbox.storage import ElasticsearchStorageHandler
 
+from .retriever import ParameterisedElasticsearchRetriever, get_all_chunks_query
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger()
@@ -71,8 +71,7 @@ def get_vector_store(
 
 @lru_cache(1)
 def get_parameterised_retriever(
-    env: Annotated[Settings, Depends(get_env)], 
-    es: Annotated[Elasticsearch, Depends(get_elasticsearch_client)]
+    env: Annotated[Settings, Depends(get_env)], es: Annotated[Elasticsearch, Depends(get_elasticsearch_client)]
 ) -> BaseRetriever:
     """Creates an Elasticsearch retriever runnable.
 
@@ -92,7 +91,7 @@ def get_parameterised_retriever(
         index_name=f"{env.elastic_root_index}-chunk",
         params=default_params,
         embedding_model=get_embedding_model(env),
-        content_field="text"
+        content_field="text",
     ).configurable_fields(
         params=ConfigurableField(
             id="params", name="Retriever parameters", description="A dictionary of parameters to use for the retriever."
@@ -105,10 +104,7 @@ def get_all_chunks_retriever(
     env: Annotated[Settings, Depends(get_env)], es: Annotated[Elasticsearch, Depends(get_elasticsearch_client)]
 ):
     return ElasticsearchRetriever(
-        es_client=es,
-        index_name=f"{env.elastic_root_index}-chunk",
-        body_func=get_all_chunks_query,
-        content_field="text"
+        es_client=es, index_name=f"{env.elastic_root_index}-chunk", body_func=get_all_chunks_query, content_field="text"
     )
 
 

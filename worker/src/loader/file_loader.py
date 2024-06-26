@@ -2,11 +2,11 @@ from collections.abc import Iterator
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING
 
+import tiktoken
 from langchain_core.document_loaders import BaseLoader
 from langchain_core.documents import Document
 from unstructured.chunking.title import chunk_by_title
 from unstructured.partition.auto import partition
-import tiktoken
 
 from redbox.models.file import File
 from redbox.models.settings import Settings
@@ -64,6 +64,6 @@ class UnstructuredDocumentLoader(BaseLoader):
                     "link_urls": raw_chunk.metadata.link_urls,
                     "links": raw_chunk.metadata.links,
                     "created_datetime": datetime.now(UTC),
-                    "token_count": len(encoding.encode(raw_chunk.text))
-                }
+                    "token_count": len(encoding.encode(raw_chunk.text)),
+                },
             )

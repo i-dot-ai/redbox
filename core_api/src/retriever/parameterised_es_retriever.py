@@ -1,12 +1,10 @@
-
-from typing import Dict, TypedDict, Any, Callable
 from functools import partial
+from typing import Any, TypedDict
 
-from langchain_elasticsearch.retrievers import ElasticsearchRetriever
 from langchain_core.embeddings.embeddings import Embeddings
+from langchain_elasticsearch.retrievers import ElasticsearchRetriever
 
 from .base import ESQuery
-
 
 
 class ESParams(TypedDict):
@@ -17,11 +15,7 @@ class ESParams(TypedDict):
     similarity_threshold: float
 
 
-def parameterised_body_func(
-    embedding_model: Embeddings,
-    params: ESParams,
-    query: ESQuery
-) -> dict[str, Any]:
+def parameterised_body_func(embedding_model: Embeddings, params: ESParams, query: ESQuery) -> dict[str, Any]:
     vector = embedding_model.embed_query(query["question"])
 
     query_filter = [
@@ -41,11 +35,7 @@ def parameterised_body_func(
                 "bool": {
                     "should": [
                         {"terms": {"parent_file_uuid.keyword": [str(uuid) for uuid in query["file_uuids"]]}},
-                        {
-                            "terms": {
-                                "metadata.parent_file_uuid.keyword": [str(uuid) for uuid in query["file_uuids"]]
-                            }
-                        },
+                        {"terms": {"metadata.parent_file_uuid.keyword": [str(uuid) for uuid in query["file_uuids"]]}},
                     ]
                 }
             }
@@ -81,18 +71,11 @@ def parameterised_body_func(
     }
 
 
-    
-
 class ParameterisedElasticsearchRetriever(ElasticsearchRetriever):
     params: ESParams
 
-    def __init__(self, params: Dict, embedding_model: Embeddings, **kwargs: Any) -> None:
-        kwargs['params'] = params
-        kwargs['body_func'] = parameterised_body_func
+    def __init__(self, params: dict, embedding_model: Embeddings, **kwargs: Any) -> None:
+        kwargs["params"] = params
+        kwargs["body_func"] = parameterised_body_func
         super().__init__(**kwargs)
         self.body_func = partial(parameterised_body_func, embedding_model, self.params)
-
-
-
-
-    

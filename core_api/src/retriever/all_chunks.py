@@ -1,9 +1,7 @@
-
-from functools import lru_cache
 from typing import Any
 
-
 from .base import ESQuery
+
 
 def get_all_chunks_query(query: ESQuery) -> dict[str, Any]:
     query_filter = [
@@ -22,22 +20,9 @@ def get_all_chunks_query(query: ESQuery) -> dict[str, Any]:
                 "bool": {
                     "should": [
                         {"terms": {"parent_file_uuid.keyword": [str(uuid) for uuid in query["file_uuids"]]}},
-                        {
-                            "terms": {
-                                "metadata.parent_file_uuid.keyword": [str(uuid) for uuid in query["file_uuids"]]
-                            }
-                        },
+                        {"terms": {"metadata.parent_file_uuid.keyword": [str(uuid) for uuid in query["file_uuids"]]}},
                     ]
                 }
             }
         )
-    return {
-        "query": {
-            "bool" : {
-                "must" : {
-                    "match_all": {}
-                },
-                "filter": query_filter
-            }
-        }
-    }
+    return {"query": {"bool": {"must": {"match_all": {}}, "filter": query_filter}}}

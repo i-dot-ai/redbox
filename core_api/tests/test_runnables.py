@@ -1,9 +1,6 @@
-import re
-
 from core_api.src.app import env
 from core_api.src.build_chains import build_retrieval_chain, build_summary_chain
 from core_api.src.dependencies import get_es_retriever
-from core_api.src.format import format_chunks, get_file_chunked_to_tokens
 from core_api.src.runnables import (
     make_chat_runnable,
     make_condense_question_runnable,
@@ -32,13 +29,6 @@ def test_make_chat_runnable(mock_llm):
     )
 
     assert response == "<<TESTING>>"
-
-
-def test_format_chunks(stored_file_chunks):
-    formatted_documents = format_chunks(chunks=stored_file_chunks)
-
-    assert isinstance(formatted_documents, str)
-    assert len(list(re.finditer("hello", formatted_documents))) == len(stored_file_chunks)
 
 
 def test_make_es_retriever(es_client, chunked_file):

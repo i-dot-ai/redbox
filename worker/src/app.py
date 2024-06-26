@@ -12,7 +12,7 @@ from langchain_core.runnables import RunnableLambda, chain
 from langchain_core.vectorstores import VectorStore
 from langchain_elasticsearch.vectorstores import ElasticsearchStore
 
-from redbox.models import File, Settings, ProcessingStatusEnum
+from redbox.models import File, ProcessingStatusEnum, Settings
 from redbox.storage.elasticsearch import ElasticsearchStorageHandler
 from worker.src.loader import UnstructuredDocumentLoader
 
@@ -71,13 +71,12 @@ def document_loader(s3_client: S3Client, env: Settings):
     return wrapped
 
 
-
 @broker.subscriber(list=env.ingest_queue_name)
 async def ingest(
-    file: File, 
-    s3_client: S3Client = Context(), 
+    file: File,
+    s3_client: S3Client = Context(),
     vectorstore: VectorStore = Context(),
-    storage_handler: ElasticsearchStorageHandler = Context()
+    storage_handler: ElasticsearchStorageHandler = Context(),
 ):
     logging.info("Ingesting file: %s", file)
 
@@ -86,11 +85,13 @@ async def ingest(
 
     try:
         new_ids = (
-            document_loader(s3_client=s3_client, env=env) | RunnableLambda(list) | RunnableLambda(vectorstore.add_documents)
+            document_loader(s3_client=s3_client, env=env)
+            | RunnableLambda(list)
+            | RunnableLambda(vectorstore.add_documents)
         ).invoke(file)
         file.ingest_status = ProcessingStatusEnum.complete
-    except Exception as e:
-        logging.error("Error while processing file [%s]. %s", file, e)
+    except Exception:
+        logging.exception("Error while processing file [%s]", file)
         file.ingest_status = ProcessingStatusEnum.failed
     finally:
         storage_handler.update_item(file)

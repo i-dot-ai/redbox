@@ -12,7 +12,7 @@ from core_api.src.auth import get_user_uuid, get_ws_user_uuid
 from core_api.src.runnables import map_to_chat_response
 from core_api.src.semantic_routes import get_routable_chains, get_semantic_route_layer
 from redbox.models.chain import ChainInput
-from redbox.models.chat import ChatRequest, ChatResponse, ChatRoute, SourceDocument
+from redbox.models.chat import ChatRequest, ChatResponse, ChatRoute
 from redbox.transform import map_document_to_source_document
 
 # === Logging ===
@@ -103,13 +103,7 @@ async def rag_chat_streamed(
         response = event.get("response", "")
         source_documents = event.get("source_documents", [])
         route_name = event.get("route_name", "")
-        source_documents = [
-
-            jsonable_encoder(
-                map_document_to_source_document(doc)
-            )
-            for doc in source_documents
-        ]
+        source_documents = [jsonable_encoder(map_document_to_source_document(doc)) for doc in source_documents]
         if response:
             await websocket.send_json({"resource_type": "text", "data": response})
         if source_documents:

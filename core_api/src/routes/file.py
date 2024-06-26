@@ -257,17 +257,17 @@ def get_file_status(file_uuid: UUID, user_uuid: Annotated[UUID, Depends(get_user
 
     if file.creator_user_uuid != user_uuid:
         return file_not_found_response(file_uuid=file_uuid)
-    
+
     if file.ingest_status is not None:
         return FileStatus(
             file_uuid=file_uuid,
-            chunk_statuses=[], # We need to break the link between file status and a specific set of chunks to enable future work with many chunks or other indices etc
+            # We need to break the link between file status and a specific set of chunks
+            # to enable future work with many chunks or other indices etc
+            chunk_statuses=[],
             processing_status=file.ingest_status,
         )
     else:
         try:
-            status = storage_handler.get_file_status(file_uuid, user_uuid)
-            return status
+            return storage_handler.get_file_status(file_uuid, user_uuid)
         except ValueError:
             return file_not_found_response(file_uuid=file_uuid)
-

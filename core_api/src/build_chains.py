@@ -8,6 +8,7 @@ from langchain.prompts import PromptTemplate
 from langchain.schema import StrOutputParser
 from langchain_community.chat_models import ChatLiteLLM
 from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.retrievers import BaseRetriever
 from langchain_core.runnables import (
     Runnable,
     RunnableLambda,
@@ -16,13 +17,11 @@ from langchain_core.runnables import (
 )
 from langchain_core.runnables.config import RunnableConfig
 from langchain_core.vectorstores import VectorStoreRetriever
-from langchain_core.retrievers import BaseRetriever
 
 from core_api.src import dependencies
-from core_api.src.format import format_chunks, format_documents
+from core_api.src.format import format_documents
 from core_api.src.runnables import make_chat_prompt_from_messages_runnable, resize_documents
 from redbox.models import ChatRoute, Settings
-from redbox.storage import ElasticsearchStorageHandler
 
 # === Logging ===
 
@@ -74,17 +73,16 @@ def build_summary_chain(
     def make_document_context(input_dict):
         documents = (
             all_chunks_retriever
-            |
-            {
-            str(file_uuid): resize_documents(env.ai.rag_desired_chunk_size)
-            for file_uuid in input_dict['file_uuids']
+            | {
+                str(file_uuid): resize_documents(env.ai.rag_desired_chunk_size)
+                for file_uuid in input_dict["file_uuids"]
             }
             | RunnableLambda(lambda f: [chunk for chunk_lists in f.values() for chunk in chunk_lists])
         ).invoke(input_dict)
 
         # right now, can only handle a single document so we manually truncate
         max_tokens = (env.ai.summarisation_chunk_max_tokens,)
-        doc_token_sum = np.cumsum([doc.metadata['token_count'] for doc in documents])
+        doc_token_sum = np.cumsum([doc.metadata["token_count"] for doc in documents])
         doc_token_sum_limit_index = len([i for i in doc_token_sum if i < max_tokens])
 
         documents_trunc = documents[:doc_token_sum_limit_index]
@@ -111,14 +109,9 @@ def build_map_reduce_summary_chain(
     env: Annotated[Settings, Depends(dependencies.get_env)],
 ) -> Runnable:
     def make_document_context(input_dict: dict):
-
         return (
             all_chunks_retriever
-            |
-            {
-            file_uuid: resize_documents(env.ai.rag_desired_chunk_size)
-            for file_uuid in input_dict['file_uuids']
-            }
+            | {file_uuid: resize_documents(env.ai.rag_desired_chunk_size) for file_uuid in input_dict["file_uuids"]}
             | RunnableLambda(lambda f: [chunk.page_content for chunk_lists in f.values() for chunk in chunk_lists])
         ).invoke(input_dict)
 
