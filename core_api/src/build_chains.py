@@ -45,7 +45,7 @@ def build_vanilla_chain(
         | llm
         | {
             "response": StrOutputParser(),
-            "route_name": RunnableLambda(lambda _: ChatRoute.vanilla.value),
+            "route_name": RunnableLambda(lambda _: ChatRoute.chat.value),
         }
     )
 
