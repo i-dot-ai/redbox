@@ -81,7 +81,7 @@ def test_user_journey(page: Page, email_address: str):
     assert files_to_select.pop() in latest_chat_response.sources
 
     # Use specific routes
-    for route in ["summarise", "search", "info"]:
+    for route in ["summarise", "search", "info", "chat"]:
         chats_page = chats_page.start_new_chat()
         chats_page.write_message = f"@{route} What do I need to install?"
         chats_page = chats_page.send()
