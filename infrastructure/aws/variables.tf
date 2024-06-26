@@ -236,3 +236,10 @@ variable "summarisation_question_prompt" {
     default     = "Question: {question}. \n\n Documents: \n\n {documents} \n\n Answer: "
     description = "how to construct summarization"
 }
+
+
+variable "llm_max_tokens" {
+    type        = number
+    default     = 1024
+    description = "LLM token length"
+}
