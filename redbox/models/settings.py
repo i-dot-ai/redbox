@@ -78,6 +78,7 @@ class AISettings(BaseModel):
     rag_num_candidates: int = 10
     rag_desired_chunk_size: int = 300
     summarisation_chunk_max_tokens: int = 20_000
+    summarisation_max_concurrency: int = 128
     vanilla_system_prompt: str = VANILLA_SYSTEM_PROMPT
     vanilla_question_prompt: str = VANILLA_QUESTION_PROMPT
     retrieval_system_prompt: str = RETRIEVAL_SYSTEM_PROMPT

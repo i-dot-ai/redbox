@@ -96,7 +96,10 @@ def build_summary_chain(
             env.ai.summarisation_system_prompt, env.ai.summarisation_question_prompt
         )
         | llm
-        | {"response": StrOutputParser(), "route_name": RunnableLambda(lambda _: ChatRoute.summarise.value)}
+        | {
+            "response": StrOutputParser(),
+            "route_name": RunnableLambda(lambda _: ChatRoute.summarise.value),
+        }
     )
 
 
@@ -136,7 +139,8 @@ def build_map_reduce_summary_chain(
         documents = [chunk.text for chunk in input_dict["documents"]]
 
         map_summaries = (map_prompt | llm | StrOutputParser()).batch(
-            documents, config=RunnableConfig(max_concurrency=128)
+            documents,
+            config=RunnableConfig(max_concurrency=env.ai.summarisation_max_concurrency),
         )
 
         summaries = " ; ".join(map_summaries)
