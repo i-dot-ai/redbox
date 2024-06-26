@@ -16,11 +16,12 @@ from langchain_core.runnables import (
 )
 from langchain_core.runnables.config import RunnableConfig
 from langchain_core.vectorstores import VectorStoreRetriever
+from langchain_core.retrievers import BaseRetriever
 
 from core_api.src import dependencies
-from core_api.src.format import format_chunks, get_file_chunked_to_tokens
-from core_api.src.runnables import make_chat_prompt_from_messages_runnable
-from redbox.models import ChatRoute, Chunk, Settings
+from core_api.src.format import format_chunks, format_documents
+from core_api.src.runnables import make_chat_prompt_from_messages_runnable, rechunk_file
+from redbox.models import ChatRoute, Settings
 from redbox.storage import ElasticsearchStorageHandler
 
 # === Logging ===
@@ -45,13 +46,13 @@ def build_vanilla_chain(
 
 def build_retrieval_chain(
     llm: Annotated[ChatLiteLLM, Depends(dependencies.get_llm)],
-    retriever: Annotated[VectorStoreRetriever, Depends(dependencies.get_es_retriever)],
+    retriever: Annotated[VectorStoreRetriever, Depends(dependencies.get_parameterised_retriever)],
     env: Annotated[Settings, Depends(dependencies.get_env)],
 ) -> Runnable:
     return (
         RunnablePassthrough.assign(documents=retriever)
         | RunnablePassthrough.assign(
-            formatted_documents=(RunnablePassthrough() | itemgetter("documents") | format_chunks)
+            formatted_documents=(RunnablePassthrough() | itemgetter("documents") | format_documents)
         )
         | {
             "response": make_chat_prompt_from_messages_runnable(
@@ -67,22 +68,23 @@ def build_retrieval_chain(
 
 def build_summary_chain(
     llm: Annotated[ChatLiteLLM, Depends(dependencies.get_llm)],
-    storage_handler: Annotated[ElasticsearchStorageHandler, Depends(dependencies.get_storage_handler)],
+    all_chunks_retriever: Annotated[BaseRetriever, Depends(dependencies.get_all_chunks_retriever)],
     env: Annotated[Settings, Depends(dependencies.get_env)],
 ) -> Runnable:
     def make_document_context(input_dict):
-        documents: list[Chunk] = []
-        for selected_file in input_dict["file_uuids"]:
-            chunks = get_file_chunked_to_tokens(
-                file_uuid=selected_file,
-                user_uuid=input_dict["user_uuid"],
-                storage_handler=storage_handler,
-            )
-            documents += chunks
+        documents = (
+            all_chunks_retriever
+            |
+            {
+            str(file_uuid): rechunk_file(file_uuid, input_dict['user_uuid'], env.ai.rag_desired_chunk_size)
+            for file_uuid in input_dict['file_uuids']
+            }
+            | RunnableLambda(lambda f: [chunk for chunk_lists in f.values() for chunk in chunk_lists])
+        ).invoke(input_dict)
 
         # right now, can only handle a single document so we manually truncate
         max_tokens = (env.ai.summarisation_chunk_max_tokens,)
-        doc_token_sum = np.cumsum([doc.token_count for doc in documents])
+        doc_token_sum = np.cumsum([doc.metadata['token_count'] for doc in documents])
         doc_token_sum_limit_index = len([i for i in doc_token_sum if i < max_tokens])
 
         documents_trunc = documents[:doc_token_sum_limit_index]
@@ -91,7 +93,7 @@ def build_summary_chain(
         return documents_trunc
 
     return (
-        RunnablePassthrough.assign(documents=(make_document_context | RunnableLambda(format_chunks)))
+        RunnablePassthrough.assign(documents=(make_document_context | RunnableLambda(format_documents)))
         | make_chat_prompt_from_messages_runnable(
             env.ai.summarisation_system_prompt, env.ai.summarisation_question_prompt
         )
@@ -105,22 +107,20 @@ def build_summary_chain(
 
 def build_map_reduce_summary_chain(
     llm: Annotated[ChatLiteLLM, Depends(dependencies.get_llm)],
-    storage_handler: Annotated[ElasticsearchStorageHandler, Depends(dependencies.get_storage_handler)],
+    all_chunks_retriever: Annotated[BaseRetriever, Depends(dependencies.get_all_chunks_retriever)],
     env: Annotated[Settings, Depends(dependencies.get_env)],
 ) -> Runnable:
     def make_document_context(input_dict: dict):
-        documents: list[Chunk] = []
-        for selected_file in input_dict["file_uuids"]:
-            chunks = get_file_chunked_to_tokens(
-                file_uuid=selected_file,
-                user_uuid=input_dict["user_uuid"],
-                storage_handler=storage_handler,
-                max_tokens=env.ai.summarisation_chunk_max_tokens,
-            )
-            documents += chunks
 
-        input_dict["documents"] = documents
-        return documents
+        return (
+            all_chunks_retriever
+            |
+            {
+            file_uuid: rechunk_file(file_uuid, input_dict['user_uuid'], env.ai.rag_desired_chunk_size)
+            for file_uuid in input_dict['file_uuids']
+            }
+            | RunnableLambda(lambda f: [chunk.page_content for chunk_lists in f.values() for chunk in chunk_lists])
+        ).invoke(input_dict)
 
     @chain
     def map_operation(input_dict):

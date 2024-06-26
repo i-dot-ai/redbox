@@ -6,6 +6,7 @@ from uuid import UUID
 
 import tiktoken
 from pydantic import BaseModel, Field, computed_field
+from langchain_core.documents.base import Document
 
 from redbox.models.base import PersistableModel
 
@@ -13,8 +14,8 @@ encoding = tiktoken.get_encoding("cl100k_base")
 
 
 class ProcessingStatusEnum(str, Enum):
-    chunking = "chunking"
-    embedding = "embedding"
+    processing = "processing"
+    failed = "failed"
     complete = "complete"
 
 
@@ -23,6 +24,7 @@ class File(PersistableModel):
 
     key: str = Field(description="file key")
     bucket: str = Field(description="s3 bucket")
+    ingest_status: ProcessingStatusEnum | None = Field(description="Status of file ingest for files loaded by new worker", default=None)
 
 
 class Link(BaseModel):
@@ -143,3 +145,21 @@ class FileStatus(BaseModel):
     file_uuid: UUID
     processing_status: ProcessingStatusEnum
     chunk_statuses: list[ChunkStatus] | None
+
+
+def combine_documents(a: Document, b: Document):
+    def combine_values(field_name):
+        return a.metadata[field_name] + b.metadata[field_name]
+    
+    combined_content = a.page_content + b.page_content
+    combined_metadata = a.metadata.copy()
+    combined_metadata["token_count"] = len(encoding.encode(combined_content.text))
+    combined_metadata['page_number'] = combine_values("page_number")
+    combined_metadata['languages'] = combine_values("languages")
+    combined_metadata['link_texts'] = combine_values("link_texts")
+    combined_metadata['link_urls'] = combine_values("link_urls")
+    combined_metadata['links'] = combine_values("links")
+    yield Document(
+        page_content=combined_content,
+        metadata=combined_metadata
+    )

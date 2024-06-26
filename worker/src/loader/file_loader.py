@@ -6,9 +6,12 @@ from langchain_core.document_loaders import BaseLoader
 from langchain_core.documents import Document
 from unstructured.chunking.title import chunk_by_title
 from unstructured.partition.auto import partition
+import tiktoken
 
 from redbox.models.file import File
 from redbox.models.settings import Settings
+
+encoding = tiktoken.get_encoding("cl100k_base")
 
 if TYPE_CHECKING:
     from mypy_boto3_s3.client import S3Client
@@ -61,5 +64,6 @@ class UnstructuredDocumentLoader(BaseLoader):
                     "link_urls": raw_chunk.metadata.link_urls,
                     "links": raw_chunk.metadata.links,
                     "created_datetime": datetime.now(UTC),
-                },
+                    "token_count": len(encoding.encode(raw_chunk.text))
+                }
             )

@@ -1,7 +1,9 @@
 from functools import partial, reduce
 from uuid import UUID
 
-from redbox.models.file import Chunk, Metadata
+from langchain_core.documents.base import Document
+
+from redbox.models.file import Chunk, Metadata, combine_documents
 from redbox.storage import ElasticsearchStorageHandler
 
 
@@ -15,24 +17,27 @@ def format_chunks(chunks: list[Chunk]) -> str:
     return "\n\n".join(formatted)
 
 
-def reduce_chunks_by_tokens(chunks: list[Chunk] | None, chunk: Chunk, max_tokens: int) -> list[Chunk]:
+def format_documents(documents: list[Document]) -> str:
+    formatted: list[str] = []
+    for d in documents:
+        parent_file_uuid = d.metadata.get('parent_file_uuid') #New Style Ingest
+        if not parent_file_uuid:
+            parent_file_uuid = d.metadata.get('parent_doc_uuid') #Old Style Ingest
+        doc_xml = f"<Doc{parent_file_uuid}>\n {d.page_content} \n</Doc{parent_file_uuid}>"
+        formatted.append(doc_xml)
+
+    return "\n\n".join(formatted)
+
+
+def reduce_chunks_by_tokens(chunks: list[Document] | None, chunk: Document, max_tokens: int) -> list[Document]:
     if not chunks:
         return [chunk]
 
     last_chunk = chunks[-1]
-
-    if chunk.token_count + last_chunk.token_count <= max_tokens:
-        chunks[-1] = Chunk(
-            parent_file_uuid=last_chunk.parent_file_uuid,
-            index=last_chunk.index,
-            text=last_chunk.text + chunk.text,
-            metadata=Metadata.merge(last_chunk.metadata, chunk.metadata),
-            creator_user_uuid=last_chunk.creator_user_uuid,
-        )
+    if chunk.metadata['token_count'] + last_chunk.metadata['token_count'] <= max_tokens:
+        chunks[-1] = combine_documents(last_chunk, chunk)
     else:
-        chunk.index = last_chunk.index + 1
         chunks.append(chunk)
-
     return chunks
 
 
