@@ -8,10 +8,11 @@ import pytest
 from channels.db import database_sync_to_async
 from channels.testing import WebsocketCommunicator
 from django.db.models import Model
-from redbox_app.redbox_core.consumers import ChatConsumer
-from redbox_app.redbox_core.models import ChatHistory, ChatMessage, ChatRoleEnum, ChatRoute, File, User
 from websockets import WebSocketClientProtocol
 from websockets.legacy.client import Connect
+
+from redbox_app.redbox_core.consumers import ChatConsumer
+from redbox_app.redbox_core.models import ChatHistory, ChatMessage, ChatRoleEnum, File, User
 
 logger = logging.getLogger(__name__)
 
@@ -50,7 +51,7 @@ async def test_chat_consumer_with_new_session(alice: User, uploaded_file: File, 
 
     assert await get_chat_message_text(alice, ChatRoleEnum.user) == ["Hello Hal."]
     assert await get_chat_message_text(alice, ChatRoleEnum.ai) == ["Good afternoon, Mr. Amor."]
-    assert await get_chat_message_route(alice, ChatRoleEnum.ai) == [ChatRoute.gratitude]
+    assert await get_chat_message_route(alice, ChatRoleEnum.ai) == ["gratitude"]
     await refresh_from_db(uploaded_file)
     assert uploaded_file.last_referenced.date() == datetime.now(tz=UTC).date()
 
@@ -87,7 +88,7 @@ def get_chat_message_text(user: User, role: ChatRoleEnum) -> Sequence[str]:
 
 
 @database_sync_to_async
-def get_chat_message_route(user: User, role: ChatRoleEnum) -> Sequence[ChatRoute]:
+def get_chat_message_route(user: User, role: ChatRoleEnum) -> Sequence[str]:
     return [m.route for m in ChatMessage.objects.filter(chat_history__users=user, role=role)]
 
 
@@ -174,12 +175,6 @@ def mocked_connect(uploaded_file: File) -> Connect:
         json.dumps({"resource_type": "text", "data": "Mr. Amor."}),
         json.dumps({"resource_type": "route_name", "data": "gratitude"}),
         json.dumps({"resource_type": "documents", "data": [{"file_uuid": str(uploaded_file.core_file_uuid)}]}),
-        json.dumps(
-            {
-                "resource_type": "documents",
-                "data": [{"file_uuid": str(uploaded_file.core_file_uuid), "page_content": "Good afternoon Mr Amor"}],
-            }
-        ),
         json.dumps({"resource_type": "end"}),
     ]
     return mocked_connect
@@ -194,13 +189,7 @@ def mocked_connect_with_several_files(several_files: Sequence[File]) -> Connect:
         json.dumps({"resource_type": "text", "data": "Third "}),
         json.dumps({"resource_type": "text", "data": "answer."}),
         json.dumps(
-            {
-                "resource_type": "documents",
-                "data": [
-                    {"file_uuid": str(f.core_file_uuid), "page_content": "a secret forth answer"}
-                    for f in several_files[2:]
-                ],
-            }
+            {"resource_type": "documents", "data": [{"file_uuid": str(f.core_file_uuid)} for f in several_files[2:]]}
         ),
         json.dumps({"resource_type": "end"}),
     ]

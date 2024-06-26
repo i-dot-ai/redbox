@@ -11,6 +11,9 @@ from bs4 import BeautifulSoup
 from django.conf import settings
 from django.test import Client
 from pytest_django.asserts import assertRedirects
+from requests_mock import Mocker
+from yarl import URL
+
 from redbox_app.redbox_core.models import (
     BusinessUnit,
     ChatHistory,
@@ -20,8 +23,6 @@ from redbox_app.redbox_core.models import (
     StatusEnum,
     User,
 )
-from requests_mock import Mocker
-from yarl import URL
 
 logger = logging.getLogger(__name__)
 

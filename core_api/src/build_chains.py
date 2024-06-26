@@ -53,7 +53,7 @@ def build_retrieval_chain(
             | llm
             | StrOutputParser(),
             "source_documents": itemgetter("documents"),
-            "route_name": RunnableLambda(lambda _: ChatRoute.retrieval.value),
+            "route_name": RunnableLambda(lambda _: ChatRoute.search.value),
         }
     )
 
@@ -89,10 +89,7 @@ def build_summary_chain(
             env.ai.summarisation_system_prompt, env.ai.summarisation_question_prompt
         )
         | llm
-        | {
-            "response": StrOutputParser(),
-            "route_name": RunnableLambda(lambda _: ChatRoute.summarisation.value),
-        }
+        | {"response": StrOutputParser(), "route_name": RunnableLambda(lambda _: ChatRoute.summarise.value)}
     )
 
 
@@ -132,7 +129,7 @@ def build_map_reduce_summary_chain(
         | llm
         | {
             "response": StrOutputParser(),
-            "route_name": RunnableLambda(lambda _: ChatRoute.summarisation.value),
+            "route_name": RunnableLambda(lambda _: ChatRoute.summarise.value),
         }
     )
     #     | {"response": StrOutputParser()}

@@ -67,10 +67,11 @@ class ChatRoute(StrEnum):
     ability = "ability"
     coach = "coach"
     gratitude = "gratitude"
-    retrieval = "retrieval"
-    summarisation = "summarisation"
+    search = "search"
+    summarise = "summarise"
     extract = "extract"
-    vanilla = "vanilla"
+    chat = "chat"
+    supasearch = "supasearch"
 
 
 class ChatResponse(BaseModel):

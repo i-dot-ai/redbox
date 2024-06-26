@@ -2,7 +2,6 @@ import logging
 from abc import ABC, abstractmethod
 from collections.abc import Collection, Sequence
 from dataclasses import dataclass
-from itertools import islice
 from pathlib import Path
 from time import sleep
 from typing import Any, ClassVar, Union
@@ -286,6 +285,7 @@ class DocumentDeletePage(SignedInBasePage):
 class ChatMessage:
     status: str | None
     role: str
+    route: str
     text: str
     sources: Sequence[str]
 
@@ -336,9 +336,10 @@ class ChatsPage(SignedInBasePage):
     def _chat_message_from_element(element: Locator) -> ChatMessage:
         status = element.get_attribute("data-status")
         role = element.locator(".iai-chat-bubble__role").inner_text()
+        route = element.locator(".iai-chat-bubble__route").inner_text()
         text = element.locator(".iai-chat-bubble__text").inner_text()
         sources = element.locator("sources-list").get_by_role("listitem").all_inner_texts()
-        return ChatMessage(status=status, role=role, text=text, sources=sources)
+        return ChatMessage(status=status, role=role, route=route, text=text, sources=sources)
 
     def get_all_messages_once_streaming_has_completed(
         self, retry_interval: int = 1, max_tries: int = 120
@@ -347,6 +348,7 @@ class ChatsPage(SignedInBasePage):
         while True:
             messages = self.all_messages
             if not any(m.status == "streaming" for m in messages):
+                logger.info("messages: %s", messages)
                 return messages
             if tries >= max_tries:
                 logger.error("messages: %s", messages)
@@ -375,14 +377,3 @@ class SupportPage(BasePage):
     @property
     def expected_page_title(self) -> str:
         return "Support - Redbox Copilot"
-
-
-def batched(iterable, n):
-    # TODO (@brunns): Use library version when we upgrade to Python 3.12.
-    # https://docs.python.org/3/library/itertools.html#itertools.batched
-    if n < 1:
-        message = "n must be at least one"
-        raise ValueError(message)
-    iterable = iter(iterable)
-    while batch := tuple(islice(iterable, n)):
-        yield batch

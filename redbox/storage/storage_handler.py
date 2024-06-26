@@ -9,9 +9,6 @@ from redbox.models.base import PersistableModel
 class BaseStorageHandler(ABC):
     """Abstract Class for Storage Handler which manages all file and object IO
     the Redbox backend.
-
-    Args:
-        ABC (_type_): _description_
     """
 
     # dict comprehension for lowercase class name to class
