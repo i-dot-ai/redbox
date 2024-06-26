@@ -7,11 +7,16 @@ from import_export.admin import ImportMixin
 from . import models
 
 
-class UserAdmin(admin.ModelAdmin):
+class UserAdmin(ImportMixin, admin.ModelAdmin):
     fields = ["email", "business_unit", "grade", "profession", "is_superuser", "is_staff", "last_login"]
     list_display = ["email", "business_unit", "grade", "profession", "is_superuser", "is_staff", "last_login"]
     list_filter = ["business_unit", "grade", "profession"]
     date_hierarchy = "last_login"
+
+    class Meta:
+        model = models.User
+        fields = ["email"]
+        import_id_fields = ["email"]
 
 
 class BusinessUnitAdmin(ImportMixin, admin.ModelAdmin):
@@ -75,8 +80,18 @@ class ChatHistoryAdmin(admin.ModelAdmin):
     actions = ["export_as_csv"]
 
 
+class CitationAdmin(admin.ModelAdmin):
+    list_display = ["chat_message", "text", "get_user", "file"]
+    list_filter = ["chat_message__chat_history__users"]
+
+    @admin.display(ordering="chat_message__chat_history__users", description="User")
+    def get_user(self, obj):
+        return obj.chat_message.chat_history.users
+
+
 admin.site.register(models.User, UserAdmin)
 admin.site.register(models.File, FileAdmin)
 admin.site.register(models.ChatHistory, ChatHistoryAdmin)
 admin.site.register(models.ChatMessage, ChatMessageAdmin)
+admin.site.register(models.Citation, CitationAdmin)
 admin.site.register(models.BusinessUnit, BusinessUnitAdmin)
