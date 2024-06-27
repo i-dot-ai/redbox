@@ -175,10 +175,10 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
                 },
             )
             return URL(url)
-
-        elif hasattr(self.original_file, "url"):
+        try:
             return URL(self.original_file.url)
-        return None
+        except ValueError:
+            return None
 
     @property
     def name(self) -> str:
