@@ -176,8 +176,8 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
             )
             return URL(url)
 
-        elif url := self.original_file.url:
-            return URL(url)
+        elif hasattr(self.original_file, "url"):
+            return URL(self.original_file.url)
         return None
 
     @property
