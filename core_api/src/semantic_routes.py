@@ -10,7 +10,6 @@ from core_api.src.build_chains import (
     build_map_reduce_summary_chain,
     build_retrieval_chain,
     build_static_response_chain,
-    build_summary_chain,
     build_vanilla_chain,
 )
 from redbox.model_db import MODEL_PATH

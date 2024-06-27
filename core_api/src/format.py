@@ -31,7 +31,7 @@ def reduce_chunks_by_tokens(chunks: list[Document] | None, chunk: Document, max_
             return len(encoding.encode(d.page_content))
 
     last_chunk = chunks[-1]
-    
+
     chunk_tokens = get_chunk_tokens(chunk)
     last_chunk_tokens = get_chunk_tokens(last_chunk)
     if chunk_tokens + last_chunk_tokens <= max_tokens:

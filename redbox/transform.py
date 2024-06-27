@@ -30,7 +30,10 @@ def combine_documents(a: Document, b: Document):
         return list(
             filter(
                 lambda x: x is not None,
-                [a.metadata["_source"].get("metadata", {}).get(field_name), b.metadata["_source"].get("metadata", {}).get(field_name)],
+                [
+                    a.metadata["_source"].get("metadata", {}).get(field_name),
+                    b.metadata["_source"].get("metadata", {}).get(field_name),
+                ],
             )
         )
 

@@ -1,15 +1,13 @@
-
-from typing import List
-
-
-from langchain_elasticsearch.retrievers import ElasticsearchRetriever
 from langchain_core.documents.base import Document
+from langchain_elasticsearch.retrievers import ElasticsearchRetriever
 
 from core_api.src.retriever import ParameterisedElasticsearchRetriever
-from redbox.models.file import Chunk, File
+from redbox.models.file import File
 
 
-def test_parameterised_retriever(parameterised_retriever: ParameterisedElasticsearchRetriever, stored_file_parameterised: List[Document]):
+def test_parameterised_retriever(
+    parameterised_retriever: ParameterisedElasticsearchRetriever, stored_file_parameterised: list[Document]
+):
     for k in [1, 2]:
         result = parameterised_retriever.with_config(
             configurable={
@@ -21,11 +19,13 @@ def test_parameterised_retriever(parameterised_retriever: ParameterisedElasticse
                     "similarity_threshold": 0.7,
                 }
             }
-        ).invoke({
-            "question": "is this real?",
-            "file_uuids": [stored_file_parameterised[0].metadata['parent_file_uuid']],
-            "user_uuid": stored_file_parameterised[0].metadata['creator_user_uuid']
-        })
+        ).invoke(
+            {
+                "question": "is this real?",
+                "file_uuids": [stored_file_parameterised[0].metadata["parent_file_uuid"]],
+                "user_uuid": stored_file_parameterised[0].metadata["creator_user_uuid"],
+            }
+        )
         assert len(result) == k
 
 
@@ -41,9 +41,11 @@ def test_parameterised_retriever_legacy_chunks(parameterised_retriever: Elastics
                     "similarity_threshold": 0.7,
                 }
             }
-        ).invoke({
-            "question": "is this real?",
-            "file_uuids": [chunked_file.uuid],
-            "user_uuid": chunked_file.creator_user_uuid
-        })
+        ).invoke(
+            {
+                "question": "is this real?",
+                "file_uuids": [chunked_file.uuid],
+                "user_uuid": chunked_file.creator_user_uuid,
+            }
+        )
         assert len(result) == k

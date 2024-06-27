@@ -1,4 +1,3 @@
-
 from core_api.src.app import env
 from core_api.src.build_chains import build_retrieval_chain, build_summary_chain
 from core_api.src.dependencies import get_parameterised_retriever
@@ -71,7 +70,7 @@ def test_make_condense_rag_runnable(es_client, mock_llm, chunked_file):
         }
     )
     assert response["response"] == "<<TESTING>>"
-    assert {str(chunked_file.uuid)} == {chunk.metadata['_source']['parent_file_uuid'] for chunk in response["sources"]}
+    assert {str(chunked_file.uuid)} == {chunk.metadata["_source"]["parent_file_uuid"] for chunk in response["sources"]}
 
 
 def test_rag_runnable(es_client, mock_llm, chunked_file, env):
@@ -95,7 +94,9 @@ def test_rag_runnable(es_client, mock_llm, chunked_file, env):
     )
 
     assert response["response"] == "<<TESTING>>"
-    assert {str(chunked_file.uuid)} == {chunk.metadata['_source']['parent_file_uuid'] for chunk in response["source_documents"]}
+    assert {str(chunked_file.uuid)} == {
+        chunk.metadata["_source"]["parent_file_uuid"] for chunk in response["source_documents"]
+    }
 
 
 def test_summary_runnable(all_chunks_retriever, mock_llm, chunked_file, env):
