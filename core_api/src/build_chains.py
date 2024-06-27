@@ -63,8 +63,8 @@ def build_retrieval_chain(
         )
         | {
             "response": make_chat_prompt_from_messages_runnable(
-                system_prompt=env.ai.vanilla_system_prompt,
-                question_prompt=env.ai.vanilla_question_prompt,
+                system_prompt=env.ai.retrieval_system_prompt,
+                question_prompt=env.ai.retrieval_question_prompt,
                 input_token_budget=env.ai.context_window_size - env.llm_max_tokens,
                 tokeniser=tokeniser,
             )
@@ -105,8 +105,8 @@ def build_summary_chain(
     return (
         RunnablePassthrough.assign(documents=(make_document_context | RunnableLambda(format_documents)))
         | make_chat_prompt_from_messages_runnable(
-            system_prompt=env.ai.vanilla_system_prompt,
-            question_prompt=env.ai.vanilla_question_prompt,
+            system_prompt=env.ai.summarisation_system_prompt,
+            question_prompt=env.ai.summarisation_question_prompt,
             input_token_budget=env.ai.context_window_size - env.llm_max_tokens,
             tokeniser=tokeniser,
         )
@@ -163,8 +163,8 @@ def build_map_reduce_summary_chain(
         RunnablePassthrough.assign(documents=make_document_context)
         | map_operation
         | make_chat_prompt_from_messages_runnable(
-            system_prompt=env.ai.vanilla_system_prompt,
-            question_prompt=env.ai.vanilla_question_prompt,
+            system_prompt=env.ai.summarisation_system_prompt,
+            question_prompt=env.ai.summarisation_question_prompt,
             input_token_budget=env.ai.context_window_size - env.llm_max_tokens,
             tokeniser=tokeniser,
         )
