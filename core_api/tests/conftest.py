@@ -196,7 +196,7 @@ def all_chunks_retriever(env, es_client) -> ElasticsearchRetriever:
 
 
 @pytest.fixture()
-def parameterised_retriever(env, es_client):
+def parameterised_retriever(env, es_client, embedding_model_dim):
     default_params = {
         "size": env.ai.rag_k,
         "num_candidates": env.ai.rag_num_candidates,
@@ -208,7 +208,7 @@ def parameterised_retriever(env, es_client):
         es_client=es_client,
         index_name=f"{env.elastic_root_index}-chunk",
         params=default_params,
-        embedding_model=FakeEmbeddings(size=768),
+        embedding_model=FakeEmbeddings(size=embedding_model_dim),
         document_mapper=parameterised_document_mapper,
     ).configurable_fields(
         params=ConfigurableField(

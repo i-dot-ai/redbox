@@ -12,14 +12,23 @@ from langchain_core.runnables import (
     chain,
 )
 from langchain_core.vectorstores import VectorStoreRetriever
+from tiktoken import Encoding
 
 from core_api.src.format import format_documents, reduce_chunks_by_tokens
 from redbox.models import ChatResponse
+from redbox.models.errors import AIError
 from redbox.transform import map_document_to_source_document
 
 
-def make_chat_prompt_from_messages_runnable(system_prompt: str, question_prompt: str):
+def make_chat_prompt_from_messages_runnable(
+    system_prompt: str,
+    question_prompt: str,
+    input_token_budget: int,
+    tokeniser: Encoding,
+):
     system_prompt_message = [("system", system_prompt)]
+    prompts_budget = len(tokeniser.encode(system_prompt)) - len(tokeniser.encode(question_prompt))
+    token_budget = input_token_budget - prompts_budget
 
     @chain
     def chat_prompt_from_messages(input_dict: dict):
@@ -27,9 +36,23 @@ def make_chat_prompt_from_messages_runnable(system_prompt: str, question_prompt:
         Create a ChatPrompTemplate as part of a chain using 'chat_history'.
         Returns the PromptValue using values in the input_dict
         """
+        chat_history_budget = token_budget - len(tokeniser.encode(input_dict["question"]))
+
+        if chat_history_budget <= 0:
+            message = "Question length exceeds context window."
+            raise AIError(message)
+
+        truncated_history: list[dict[str, str]] = []
+        for msg in input_dict["chat_history"][::-1]:
+            chat_history_budget -= len(tokeniser.encode(msg["text"]))
+            if chat_history_budget <= 0:
+                break
+            else:
+                truncated_history.insert(0, msg)
+
         return ChatPromptTemplate.from_messages(
             system_prompt_message
-            + [(msg["role"], msg["text"]) for msg in input_dict["chat_history"]]
+            + [(msg["role"], msg["text"]) for msg in truncated_history]
             + [("user", question_prompt)]
         ).invoke(input_dict)
 

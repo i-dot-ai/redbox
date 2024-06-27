@@ -17,6 +17,7 @@ from langchain_core.runnables import (
 )
 from langchain_core.runnables.config import RunnableConfig
 from langchain_core.vectorstores import VectorStoreRetriever
+from tiktoken import Encoding
 
 from core_api.src import dependencies
 from core_api.src.format import format_documents
@@ -31,10 +32,16 @@ log = logging.getLogger()
 
 def build_vanilla_chain(
     llm: Annotated[ChatLiteLLM, Depends(dependencies.get_llm)],
+    tokeniser: Annotated[Encoding, Depends(dependencies.get_tokeniser)],
     env: Annotated[Settings, Depends(dependencies.get_env)],
 ) -> Runnable:
     return (
-        make_chat_prompt_from_messages_runnable(env.ai.vanilla_system_prompt, env.ai.vanilla_question_prompt)
+        make_chat_prompt_from_messages_runnable(
+            system_prompt=env.ai.vanilla_system_prompt,
+            question_prompt=env.ai.vanilla_question_prompt,
+            input_token_budget=env.ai.context_window_size - env.llm_max_tokens,
+            tokeniser=tokeniser,
+        )
         | llm
         | {
             "response": StrOutputParser(),
@@ -46,6 +53,7 @@ def build_vanilla_chain(
 def build_retrieval_chain(
     llm: Annotated[ChatLiteLLM, Depends(dependencies.get_llm)],
     retriever: Annotated[VectorStoreRetriever, Depends(dependencies.get_parameterised_retriever)],
+    tokeniser: Annotated[Encoding, Depends(dependencies.get_tokeniser)],
     env: Annotated[Settings, Depends(dependencies.get_env)],
 ) -> Runnable:
     return (
@@ -55,7 +63,10 @@ def build_retrieval_chain(
         )
         | {
             "response": make_chat_prompt_from_messages_runnable(
-                env.ai.retrieval_system_prompt, env.ai.retrieval_question_prompt
+                system_prompt=env.ai.vanilla_system_prompt,
+                question_prompt=env.ai.vanilla_question_prompt,
+                input_token_budget=env.ai.context_window_size - env.llm_max_tokens,
+                tokeniser=tokeniser,
             )
             | llm
             | StrOutputParser(),
@@ -68,6 +79,7 @@ def build_retrieval_chain(
 def build_summary_chain(
     llm: Annotated[ChatLiteLLM, Depends(dependencies.get_llm)],
     all_chunks_retriever: Annotated[BaseRetriever, Depends(dependencies.get_all_chunks_retriever)],
+    tokeniser: Annotated[Encoding, Depends(dependencies.get_tokeniser)],
     env: Annotated[Settings, Depends(dependencies.get_env)],
 ) -> Runnable:
     def make_document_context(input_dict):
@@ -93,7 +105,10 @@ def build_summary_chain(
     return (
         RunnablePassthrough.assign(documents=(make_document_context | RunnableLambda(format_documents)))
         | make_chat_prompt_from_messages_runnable(
-            env.ai.summarisation_system_prompt, env.ai.summarisation_question_prompt
+            system_prompt=env.ai.vanilla_system_prompt,
+            question_prompt=env.ai.vanilla_question_prompt,
+            input_token_budget=env.ai.context_window_size - env.llm_max_tokens,
+            tokeniser=tokeniser,
         )
         | llm
         | {
@@ -106,6 +121,7 @@ def build_summary_chain(
 def build_map_reduce_summary_chain(
     llm: Annotated[ChatLiteLLM, Depends(dependencies.get_llm)],
     all_chunks_retriever: Annotated[BaseRetriever, Depends(dependencies.get_all_chunks_retriever)],
+    tokeniser: Annotated[Encoding, Depends(dependencies.get_tokeniser)],
     env: Annotated[Settings, Depends(dependencies.get_env)],
 ) -> Runnable:
     def make_document_context(input_dict: dict):
@@ -146,7 +162,12 @@ def build_map_reduce_summary_chain(
     return (
         RunnablePassthrough.assign(documents=make_document_context)
         | map_operation
-        | make_chat_prompt_from_messages_runnable(env.ai.reduce_system_prompt, env.ai.reduce_question_prompt)
+        | make_chat_prompt_from_messages_runnable(
+            system_prompt=env.ai.vanilla_system_prompt,
+            question_prompt=env.ai.vanilla_question_prompt,
+            input_token_budget=env.ai.context_window_size - env.llm_max_tokens,
+            tokeniser=tokeniser,
+        )
         | llm
         | {
             "response": StrOutputParser(),

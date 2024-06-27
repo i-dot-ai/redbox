@@ -3,6 +3,7 @@ import os
 from functools import lru_cache
 from typing import Annotated
 
+import tiktoken
 from elasticsearch import Elasticsearch
 from fastapi import Depends
 from langchain_community.chat_models import ChatLiteLLM
@@ -144,3 +145,8 @@ def get_llm(env: Annotated[Settings, Depends(get_env)]) -> ChatLiteLLM:
         log.exception(msg)
         raise ValueError(msg)
     return llm
+
+
+@lru_cache(1)
+def get_tokeniser() -> tiktoken.Encoding:
+    return tiktoken.get_encoding("cl100k_base")

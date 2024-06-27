@@ -8,13 +8,14 @@ locals {
     {
       "OPENAI_API_VERSION" : var.openai_api_version,
       "AZURE_OPENAI_MODEL" : var.azure_openai_model,
+      "AI__CONTEXT_WINDOW_SIZE" : var.context_window_size,
       "AI__RAG_K" : var.rag_k,
-      "AI__RAG_NUM_CANDIDATES": var.rag_num_candidates,
-      "AI__RAG_DESIRED_CHUNK_SIZE": var.rag_desired_chunk_size,
-      "AI__RETRIEVAL_SYSTEM_PROMPT": var.retrieval_system_prompt,
-      "AI__RETRIEVAL_QUESTION_PROMPT": var.retrieval_question_prompt,
-      "AI__SUMMARISATION_SYSTEM_PROMPT": var.summarisation_system_prompt,
-      "AI__SUMMARISATION_QUESTION_PROMPT": var.summarisation_question_prompt,
+      "AI__RAG_NUM_CANDIDATES" : var.rag_num_candidates,
+      "AI__RAG_DESIRED_CHUNK_SIZE" : var.rag_desired_chunk_size,
+      "AI__RETRIEVAL_SYSTEM_PROMPT" : var.retrieval_system_prompt,
+      "AI__RETRIEVAL_QUESTION_PROMPT" : var.retrieval_question_prompt,
+      "AI__SUMMARISATION_SYSTEM_PROMPT" : var.summarisation_system_prompt,
+      "AI__SUMMARISATION_QUESTION_PROMPT" : var.summarisation_question_prompt,
     }
   )
 
@@ -76,9 +77,9 @@ locals {
     "ELASTIC__CLOUD_ID" : var.cloud_id,
   }
 
-  reconstructed_worker_secrets = [ for k, _ in local.worker_secrets : {name = k, valueFrom = "${aws_secretsmanager_secret.worker-secret.arn}:${k}::" }]
-  reconstructed_core_secrets = [ for k, _ in local.core_secrets : {name = k, valueFrom = "${aws_secretsmanager_secret.core-api-secret.arn}:${k}::" }]
-  reconstructed_django_secrets = [ for k, _ in local.django_app_secrets : {name = k, valueFrom = "${aws_secretsmanager_secret.django-app-secret.arn}:${k}::" }]
+  reconstructed_worker_secrets = [for k, _ in local.worker_secrets : { name = k, valueFrom = "${aws_secretsmanager_secret.worker-secret.arn}:${k}::" }]
+  reconstructed_core_secrets   = [for k, _ in local.core_secrets : { name = k, valueFrom = "${aws_secretsmanager_secret.core-api-secret.arn}:${k}::" }]
+  reconstructed_django_secrets = [for k, _ in local.django_app_secrets : { name = k, valueFrom = "${aws_secretsmanager_secret.django-app-secret.arn}:${k}::" }]
 }
 
 data "terraform_remote_state" "vpc" {
