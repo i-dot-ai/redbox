@@ -4,10 +4,17 @@ from typing import Annotated
 
 import numpy as np
 from fastapi import Depends
+from langchain.prompts import PromptTemplate
 from langchain.schema import StrOutputParser
 from langchain_community.chat_models import ChatLiteLLM
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.runnables import Runnable, RunnableLambda, RunnablePassthrough
+from langchain_core.runnables import (
+    Runnable,
+    RunnableLambda,
+    RunnablePassthrough,
+    chain,
+)
+from langchain_core.runnables.config import RunnableConfig
 from langchain_core.vectorstores import VectorStoreRetriever
 
 from core_api.src import dependencies
@@ -31,7 +38,7 @@ def build_vanilla_chain(
         | llm
         | {
             "response": StrOutputParser(),
-            "route_name": RunnableLambda(lambda _: ChatRoute.vanilla.value),
+            "route_name": RunnableLambda(lambda _: ChatRoute.chat.value),
         }
     )
 
@@ -74,7 +81,7 @@ def build_summary_chain(
             documents += chunks
 
         # right now, can only handle a single document so we manually truncate
-        max_tokens = (env.ai.max_tokens,)
+        max_tokens = (env.ai.summarisation_chunk_max_tokens,)
         doc_token_sum = np.cumsum([doc.token_count for doc in documents])
         doc_token_sum_limit_index = len([i for i in doc_token_sum if i < max_tokens])
 
@@ -89,7 +96,10 @@ def build_summary_chain(
             env.ai.summarisation_system_prompt, env.ai.summarisation_question_prompt
         )
         | llm
-        | {"response": StrOutputParser(), "route_name": RunnableLambda(lambda _: ChatRoute.summarise.value)}
+        | {
+            "response": StrOutputParser(),
+            "route_name": RunnableLambda(lambda _: ChatRoute.summarise.value),
+        }
     )
 
 
@@ -99,32 +109,47 @@ def build_map_reduce_summary_chain(
     env: Annotated[Settings, Depends(dependencies.get_env)],
 ) -> Runnable:
     def make_document_context(input_dict: dict):
-        documents: list[str] = []
+        documents: list[Chunk] = []
         for selected_file in input_dict["file_uuids"]:
             chunks = get_file_chunked_to_tokens(
                 file_uuid=selected_file,
                 user_uuid=input_dict["user_uuid"],
                 storage_handler=storage_handler,
-                max_tokens=env.ai.max_tokens,
+                max_tokens=env.ai.summarisation_chunk_max_tokens,
             )
-            documents += [chunk.text for chunk in chunks]
+            documents += chunks
 
+        input_dict["documents"] = documents
         return documents
 
-    map_step = (
-        RunnablePassthrough.assign(documents=make_document_context)
-        | make_chat_prompt_from_messages_runnable(env.ai.map_system_prompt, env.ai.map_question_prompt)
-        | llm
-        | StrOutputParser()
-    )
+    @chain
+    def map_operation(input_dict):
+        system_map_prompt = env.ai.map_system_prompt
+        prompt_template = PromptTemplate.from_template(env.ai.map_question_prompt)
 
-    def map_operation(input_dict: dict):
-        output = map_step.invoke(input_dict)
-        input_dict["documents"] = output
+        formatted_map_question_prompt = prompt_template.format(question=input_dict["question"])
+
+        map_prompt = ChatPromptTemplate.from_messages(
+            [
+                ("system", system_map_prompt),
+                ("human", formatted_map_question_prompt + env.ai.map_document_prompt),
+            ]
+        )
+
+        documents = [chunk.text for chunk in input_dict["documents"]]
+
+        map_summaries = (map_prompt | llm | StrOutputParser()).batch(
+            documents,
+            config=RunnableConfig(max_concurrency=env.ai.summarisation_max_concurrency),
+        )
+
+        summaries = " ; ".join(map_summaries)
+        input_dict["summaries"] = summaries
         return input_dict
 
     return (
-        map_operation
+        RunnablePassthrough.assign(documents=make_document_context)
+        | map_operation
         | make_chat_prompt_from_messages_runnable(env.ai.reduce_system_prompt, env.ai.reduce_question_prompt)
         | llm
         | {
@@ -132,8 +157,6 @@ def build_map_reduce_summary_chain(
             "route_name": RunnableLambda(lambda _: ChatRoute.summarise.value),
         }
     )
-    #     | {"response": StrOutputParser()}
-    # )
 
 
 def build_static_response_chain(prompt_template, route_name) -> Runnable:

@@ -61,11 +61,12 @@ RETRIEVAL_QUESTION_PROMPT = "{question} \n=========\n{formatted_documents}\n====
 
 SUMMARISATION_QUESTION_PROMPT = "Question: {question}. \n\n Documents: \n\n {documents} \n\n Answer: "
 
+MAP_QUESTION_PROMPT = "Question: {question}. "
 
-MAP_QUESTION_PROMPT = "Question: {question}. \n\n Documents: \n\n {documents} \n\n Answer: "
+MAP_DOCUMENT_PROMPT = "\n\n Documents: \n\n {documents} \n\n Answer: "
 
 
-REDUCE_QUESTION_PROMPT = "Question: {question}. \n\n Documents: \n\n {documents} \n\n Answer: "
+REDUCE_QUESTION_PROMPT = "Question: {question}. \n\n Documents: \n\n {summaries} \n\n Answer: "
 
 
 class AISettings(BaseModel):
@@ -76,7 +77,8 @@ class AISettings(BaseModel):
     rag_k: int = 5
     rag_num_candidates: int = 10
     rag_desired_chunk_size: int = 300
-    max_tokens: int = 20_000
+    summarisation_chunk_max_tokens: int = 20_000
+    summarisation_max_concurrency: int = 128
     vanilla_system_prompt: str = VANILLA_SYSTEM_PROMPT
     vanilla_question_prompt: str = VANILLA_QUESTION_PROMPT
     retrieval_system_prompt: str = RETRIEVAL_SYSTEM_PROMPT
@@ -85,6 +87,7 @@ class AISettings(BaseModel):
     summarisation_question_prompt: str = SUMMARISATION_QUESTION_PROMPT
     map_system_prompt: str = MAP_SYSTEM_PROMPT
     map_question_prompt: str = MAP_QUESTION_PROMPT
+    map_document_prompt: str = MAP_DOCUMENT_PROMPT
     reduce_system_prompt: str = REDUCE_SYSTEM_PROMPT
     reduce_question_prompt: str = REDUCE_QUESTION_PROMPT
 
