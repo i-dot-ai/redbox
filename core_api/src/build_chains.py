@@ -74,7 +74,7 @@ def build_summary_chain(
         documents = (
             all_chunks_retriever
             | {
-                str(file_uuid): resize_documents(env.ai.rag_desired_chunk_size)
+                str(file_uuid): resize_documents(env.ai.summarisation_chunk_max_tokens)
                 for file_uuid in input_dict["file_uuids"]
             }
             | RunnableLambda(lambda f: [chunk for chunk_lists in f.values() for chunk in chunk_lists])
@@ -112,7 +112,7 @@ def build_map_reduce_summary_chain(
         return (
             all_chunks_retriever
             | {
-                str(file_uuid): resize_documents(env.ai.rag_desired_chunk_size)
+                str(file_uuid): resize_documents(env.ai.summarisation_chunk_max_tokens)
                 for file_uuid in input_dict["file_uuids"]
             }
             | RunnableLambda(lambda f: [chunk.page_content for chunk_lists in f.values() for chunk in chunk_lists])

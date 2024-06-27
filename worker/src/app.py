@@ -80,7 +80,7 @@ async def ingest(
 ):
     logging.info("Ingesting file: %s", file)
 
-    file.ingest_status = ProcessingStatusEnum.processing
+    file.ingest_status = ProcessingStatusEnum.embedding
     storage_handler.update_item(file)
 
     try:

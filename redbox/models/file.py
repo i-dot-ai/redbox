@@ -14,6 +14,7 @@ encoding = tiktoken.get_encoding("cl100k_base")
 
 class ProcessingStatusEnum(str, Enum):
     processing = "processing"
+    embedding = "embedding"  # Used for processing while we transition to new statuses
     failed = "failed"
     complete = "complete"
 
