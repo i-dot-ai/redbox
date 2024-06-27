@@ -1,4 +1,3 @@
-
 import pytest
 
 from core_api.src.app import env
