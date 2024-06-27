@@ -176,7 +176,7 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
             )
             return URL(url)
 
-        elif url := getattr(self.original_file, "url"):
+        elif url := self.original_file.url:
             return URL(url)
         return None
 
