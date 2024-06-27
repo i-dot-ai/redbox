@@ -72,8 +72,8 @@ def build_retrieval_chain(
         )
         | {
             "response": make_chat_prompt_from_messages_runnable(
-                system_prompt=env.ai.vanilla_system_prompt,
-                question_prompt=env.ai.vanilla_question_prompt,
+                system_prompt=env.ai.retrieval_system_prompt,
+                question_prompt=env.ai.retrieval_question_prompt,
                 input_token_budget=env.ai.context_window_size - env.llm_max_tokens,
                 tokeniser=tokeniser,
             )
