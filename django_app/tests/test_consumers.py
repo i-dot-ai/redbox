@@ -1,5 +1,6 @@
 import json
 import logging
+from asyncio import CancelledError
 from collections.abc import Sequence
 from datetime import UTC, datetime
 from unittest.mock import AsyncMock, MagicMock, patch
@@ -154,6 +155,26 @@ async def test_chat_consumer_with_selected_files(
     assert last_user_message.selected_files == selected_files
 
 
+@pytest.mark.django_db(transaction=True)
+@pytest.mark.asyncio()
+async def test_chat_consumer_with_connection_error(alice: User, mocked_breaking_connect: Connect):
+    # Given
+
+    # When
+    with patch("redbox_app.redbox_core.consumers.connect", new=mocked_breaking_connect):
+        communicator = WebsocketCommunicator(ChatConsumer.as_asgi(), "/ws/chat/")
+        communicator.scope["user"] = alice
+        connected, _ = await communicator.connect()
+        assert connected
+
+        await communicator.send_json_to({"message": "Hello Hal."})
+        await communicator.receive_json_from(timeout=5)
+        response2 = await communicator.receive_json_from(timeout=5)
+
+        # Then
+        assert response2["type"] == "error"
+
+
 @database_sync_to_async
 def get_chat_messages(user: User) -> Sequence[ChatMessage]:
     return list(
@@ -175,8 +196,23 @@ def mocked_connect(uploaded_file: File) -> Connect:
         json.dumps({"resource_type": "text", "data": "Mr. Amor."}),
         json.dumps({"resource_type": "route_name", "data": "gratitude"}),
         json.dumps({"resource_type": "documents", "data": [{"file_uuid": str(uploaded_file.core_file_uuid)}]}),
+        json.dumps(
+            {
+                "resource_type": "documents",
+                "data": [{"file_uuid": str(uploaded_file.core_file_uuid), "page_content": "Good afternoon Mr Amor"}],
+            }
+        ),
         json.dumps({"resource_type": "end"}),
     ]
+    return mocked_connect
+
+
+@pytest.fixture()
+def mocked_breaking_connect() -> Connect:
+    mocked_websocket = AsyncMock(spec=WebSocketClientProtocol, name="mocked_websocket")
+    mocked_connect = MagicMock(spec=Connect, name="mocked_connect")
+    mocked_connect.return_value.__aenter__.return_value = mocked_websocket
+    mocked_websocket.__aiter__.side_effect = CancelledError()
     return mocked_connect
 
 
@@ -189,7 +225,13 @@ def mocked_connect_with_several_files(several_files: Sequence[File]) -> Connect:
         json.dumps({"resource_type": "text", "data": "Third "}),
         json.dumps({"resource_type": "text", "data": "answer."}),
         json.dumps(
-            {"resource_type": "documents", "data": [{"file_uuid": str(f.core_file_uuid)} for f in several_files[2:]]}
+            {
+                "resource_type": "documents",
+                "data": [
+                    {"file_uuid": str(f.core_file_uuid), "page_content": "a secret forth answer"}
+                    for f in several_files[2:]
+                ],
+            }
         ),
         json.dumps({"resource_type": "end"}),
     ]

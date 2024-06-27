@@ -48,7 +48,7 @@ class ChatMessage extends HTMLElement {
         this.innerHTML = `
             <div class="iai-chat-bubble iai-chat-bubble--${this.dataset.role === 'user' ? 'right' : 'left'} js-chat-message govuk-body {{ classes }}" data-role="{{ role }}" tabindex="-1">
                 <div class="iai-chat-bubble__role">${this.dataset.role === 'ai' ? 'Redbox' : 'You'}</div>
-                <div class="iai-chat-bubble__route">${this.dataset.route}</div>
+                <div class="iai-chat-bubble__route" hidden></div>
                 <markdown-converter class="iai-chat-bubble__text">${this.dataset.text || ''}</markdown-converter>
                 ${!this.dataset.text ?
                     `<div class="rb-loading-ellipsis govuk-body-s">
@@ -59,6 +59,16 @@ class ChatMessage extends HTMLElement {
                     </div>`
                 : ''}
                 <sources-list></sources-list>
+                <div class="govuk-error-summary" data-module="govuk-error-summary" hidden>
+                  <div role="alert">
+                    <h2 class="govuk-error-summary__title">Error</h2>
+                    <div class="govuk-error-summary__body">
+                      <ul class="govuk-list govuk-error-summary__list">
+                        <li>There was an unexpected error communicating with Redbox. Please try again, and contact <a href="/support/">support</a> if the problem persists.</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
             </div>
         `;
     }
@@ -70,9 +80,8 @@ class ChatMessage extends HTMLElement {
      * @param {string | undefined} sessionId
      * @param {string} endPoint
      * @param {HTMLElement} chatControllerRef
-     * @param {string} route
      */
-    stream = (message, selectedDocuments, sessionId, endPoint, chatControllerRef, route) => {
+    stream = (message, selectedDocuments, sessionId, endPoint, chatControllerRef) => {
 
         let responseContainer = /** @type MarkdownConverter */(this.querySelector('markdown-converter'));
         let sourcesContainer = /** @type SourcesList */(this.querySelector('sources-list'));
@@ -124,6 +133,9 @@ class ChatMessage extends HTMLElement {
                 sourcesContainer.add(message.data.original_file_name, message.data.url);
             } else if (message.type === 'route') {
                 this.querySelector(".iai-chat-bubble__route").textContent = message.data;
+                this.querySelector(".iai-chat-bubble__route").removeAttribute("hidden");
+            } else if (message.type === 'error') {
+                this.querySelector(".govuk-error-summary").removeAttribute("hidden");
             }
             
         };
