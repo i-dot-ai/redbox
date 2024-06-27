@@ -1,9 +1,7 @@
 import logging
-from email import message
 from operator import itemgetter
 from typing import Annotated
 
-import numpy as np
 from fastapi import Depends
 from langchain.prompts import PromptTemplate
 from langchain.schema import StrOutputParser
@@ -57,18 +55,14 @@ def build_vanilla_chain(
 
 def build_retrieval_chain(
     llm: Annotated[ChatLiteLLM, Depends(dependencies.get_llm)],
-    retriever: Annotated[
-        VectorStoreRetriever, Depends(dependencies.get_parameterised_retriever)
-    ],
+    retriever: Annotated[VectorStoreRetriever, Depends(dependencies.get_parameterised_retriever)],
     tokeniser: Annotated[Encoding, Depends(dependencies.get_tokeniser)],
     env: Annotated[Settings, Depends(dependencies.get_env)],
 ) -> Runnable:
     return (
         RunnablePassthrough.assign(documents=retriever)
         | RunnablePassthrough.assign(
-            formatted_documents=(
-                RunnablePassthrough() | itemgetter("documents") | format_documents
-            )
+            formatted_documents=(RunnablePassthrough() | itemgetter("documents") | format_documents)
         )
         | {
             "response": make_chat_prompt_from_messages_runnable(
@@ -87,9 +81,7 @@ def build_retrieval_chain(
 
 def build_summary_chain(
     llm: Annotated[ChatLiteLLM, Depends(dependencies.get_llm)],
-    all_chunks_retriever: Annotated[
-        BaseRetriever, Depends(dependencies.get_all_chunks_retriever)
-    ],
+    all_chunks_retriever: Annotated[BaseRetriever, Depends(dependencies.get_all_chunks_retriever)],
     tokeniser: Annotated[Encoding, Depends(dependencies.get_tokeniser)],
     env: Annotated[Settings, Depends(dependencies.get_env)],
 ) -> Runnable:
@@ -100,13 +92,7 @@ def build_summary_chain(
                 str(file_uuid): resize_documents(env.ai.summarisation_chunk_max_tokens)
                 for file_uuid in input_dict["file_uuids"]
             }
-            | RunnableLambda(
-                lambda f: [
-                    chunk.page_content
-                    for chunk_lists in f.values()
-                    for chunk in chunk_lists
-                ]
-            )
+            | RunnableLambda(lambda f: [chunk.page_content for chunk_lists in f.values() for chunk in chunk_lists])
         ).invoke(input_dict)
 
     # Stuff chain now missing the RunnabeLambda to format the chunks
@@ -120,7 +106,7 @@ def build_summary_chain(
         | llm
         | {
             "response": StrOutputParser(),
-            "route_name": RunnableLambda(lambda _: ChatRoute.summarise.value),
+            "route_name": RunnableLambda(lambda _: ChatRoute.stuff_summarise.value),
         }
     )
 
@@ -129,9 +115,7 @@ def build_summary_chain(
         system_map_prompt = env.ai.map_system_prompt
         prompt_template = PromptTemplate.from_template(env.ai.map_question_prompt)
 
-        formatted_map_question_prompt = prompt_template.format(
-            question=input_dict["question"]
-        )
+        formatted_map_question_prompt = prompt_template.format(question=input_dict["question"])
 
         map_prompt = ChatPromptTemplate.from_messages(
             [
@@ -162,14 +146,13 @@ def build_summary_chain(
         | llm
         | {
             "response": StrOutputParser(),
-            "route_name": RunnableLambda(lambda _: ChatRoute.summarise.value),
+            "route_name": RunnableLambda(lambda _: ChatRoute.map_reduce_summarise.value),
         }
     )
 
     @chain
     def summarisation_route(input_dict):
         if len(input_dict["documents"]) == 1:
-            log.info("Taken stuff chain route")
             return stuff_chain
 
         elif len(input_dict["documents"]) > 1:
@@ -179,18 +162,12 @@ def build_summary_chain(
             message = "No documents to summarise"
             raise AIError(message)
 
-    return (
-        RunnablePassthrough.assign(documents=make_document_context)
-        | summarisation_route
-    )
+    return RunnablePassthrough.assign(documents=make_document_context) | summarisation_route
 
 
 def build_static_response_chain(prompt_template, route_name) -> Runnable:
     return RunnablePassthrough.assign(
-        response=(
-            ChatPromptTemplate.from_template(prompt_template)
-            | RunnableLambda(lambda p: p.messages[0].content)
-        ),
+        response=(ChatPromptTemplate.from_template(prompt_template) | RunnableLambda(lambda p: p.messages[0].content)),
         source_documents=RunnableLambda(lambda _: []),
         route_name=RunnableLambda(lambda _: route_name.value),
     )
