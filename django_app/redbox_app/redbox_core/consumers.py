@@ -69,10 +69,10 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 }
                 await self.send_to_server(core_websocket, message)
                 await self.send_to_client("session-id", session.id)
-                reply, source_files, route = await self.receive_llm_responses(user, core_websocket)
-            await self.save_message(session, reply, ChatRoleEnum.ai, source_files=source_files, route=route)
+                reply, citations, route = await self.receive_llm_responses(user, core_websocket)
+            await self.save_message(session, reply, ChatRoleEnum.ai, sources=citations, route=route)
 
-            for file, _ in source_files:
+            for file, _ in citations:
                 file.last_referenced = timezone.now()
                 await self.file_save(file)
         except (TimeoutError, ConnectionClosedError, CancelledError) as e:
@@ -83,7 +83,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         self, user: User, core_websocket: WebSocketClientProtocol
     ) -> tuple[str, Sequence[tuple[File, CoreChatResponseDoc]], str]:
         full_reply: MutableSequence[str] = []
-        source_files: MutableSequence[tuple[File, CoreChatResponseDoc]] = []
+        citations: MutableSequence[tuple[File, CoreChatResponseDoc]] = []
         route: str | None = None
         async for raw_message in core_websocket:
             message = CoreChatResponse.schema().loads(raw_message)
@@ -91,18 +91,18 @@ class ChatConsumer(AsyncWebsocketConsumer):
             if message.resource_type == "text":
                 full_reply.append(await self.handle_text(message))
             elif message.resource_type == "documents":
-                source_files += await self.handle_documents(message, user)
+                citations += await self.handle_documents(message, user)
             elif message.resource_type == "route_name":
                 route = await self.handle_route(message)
-        return "".join(full_reply), source_files, route
+        return "".join(full_reply), citations, route
 
     async def handle_documents(
         self, message: CoreChatResponse, user: User
     ) -> Sequence[tuple[File, CoreChatResponseDoc]]:
-        source_files = await self.get_files_by_core_uuid(message.data, user)
-        for file, _ in source_files:
+        source_files, citations = await self.get_sources_with_files(message.data, user)
+        for file in source_files:
             await self.send_to_client("source", {"url": str(file.url), "original_file_name": file.original_file_name})
-        return source_files
+        return citations
 
     async def handle_text(self, message: CoreChatResponse) -> str:
         await self.send_to_client("text", message.data)
@@ -144,14 +144,16 @@ class ChatConsumer(AsyncWebsocketConsumer):
         session: ChatHistory,
         user_message_text: str,
         role: ChatRoleEnum,
-        source_files: Sequence[tuple[File, CoreChatResponseDoc]] | None = None,
+        sources: Sequence[tuple[File, CoreChatResponseDoc]] | None = None,
         selected_files: Sequence[File] | None = None,
         route: str | None = None,
     ) -> ChatMessage:
         chat_message = ChatMessage(chat_history=session, text=user_message_text, role=role, route=route)
         chat_message.save()
-        for file, doc in source_files or []:
-            Citation.objects.create(chat_message=chat_message, file=file, text=doc.page_content)
+        if sources:
+            for file, citations in sources:
+                for citation in citations:
+                    Citation.objects.create(chat_message=chat_message, file=file, text=citation.page_content)
         if selected_files:
             chat_message.selected_files.set(selected_files)
         return chat_message
@@ -163,12 +165,15 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
     @staticmethod
     @database_sync_to_async
-    def get_files_by_core_uuid(
+    def get_sources_with_files(
         docs: Sequence[CoreChatResponseDoc], user: User
-    ) -> Sequence[tuple[File, CoreChatResponseDoc]]:
+    ) -> tuple[Sequence[File], Sequence[tuple[File, CoreChatResponseDoc]]]:
         uuids = [doc.file_uuid for doc in docs]
         files = File.objects.filter(core_file_uuid__in=uuids, user=user)
-        return [(file, next(doc for doc in docs if doc.file_uuid == file.core_file_uuid)) for file in files]
+
+        return files, [
+            (file, [doc for doc in docs if doc.file_uuid == file.core_file_uuid]) for file in files
+        ]
 
     @staticmethod
     @database_sync_to_async
