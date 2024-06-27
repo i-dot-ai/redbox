@@ -39,8 +39,8 @@ def test_0012_alter_file_status(migrator):
 
 
 @pytest.mark.django_db()
-def test_0019_remove_chatmessage_source_files_textchunk_and_more(migrator):
-    old_state = migrator.apply_initial_migration(("redbox_core", "0018_chatmessage_route"))
+def test_0020_remove_chatmessage_source_files_textchunk_and_more(migrator):
+    old_state = migrator.apply_initial_migration(("redbox_core", "0019_alter_chatmessage_route"))
 
     original_file = SimpleUploadedFile("original_file.txt", b"Lorem Ipsum.")
 
