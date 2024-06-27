@@ -12,7 +12,8 @@ from langchain_core.runnables import RunnableLambda, chain
 from langchain_core.vectorstores import VectorStore
 from langchain_elasticsearch.vectorstores import ElasticsearchStore
 
-from redbox.models import File, Settings
+from redbox.models import File, ProcessingStatusEnum, Settings
+from redbox.storage.elasticsearch import ElasticsearchStorageHandler
 from worker.src.loader import UnstructuredDocumentLoader
 
 if TYPE_CHECKING:
@@ -45,6 +46,7 @@ async def lifespan(context: ContextRepo):
     #     retry_min_seconds=4,
     #     retry_max_seconds=30
     # )
+    storage_handler = ElasticsearchStorageHandler(es, env.elastic_root_index)
     embeddings = SentenceTransformerEmbeddings(model_name=env.embedding_model)
     elasticsearch_store = ElasticsearchStore(
         index_name=es_index_name,
@@ -57,6 +59,7 @@ async def lifespan(context: ContextRepo):
     es.indices.create(index=es_index_name, ignore=[400])
     context.set_global("vectorstore", elasticsearch_store)
     context.set_global("s3_client", s3_client)
+    context.set_global("storage_handler", storage_handler)
     yield
 
 
@@ -69,12 +72,29 @@ def document_loader(s3_client: S3Client, env: Settings):
 
 
 @broker.subscriber(list=env.ingest_queue_name)
-async def ingest(file: File, s3_client: S3Client = Context(), vectorstore: VectorStore = Context()):
+async def ingest(
+    file: File,
+    s3_client: S3Client = Context(),
+    vectorstore: VectorStore = Context(),
+    storage_handler: ElasticsearchStorageHandler = Context(),
+):
     logging.info("Ingesting file: %s", file)
 
-    new_ids = (
-        document_loader(s3_client=s3_client, env=env) | RunnableLambda(list) | RunnableLambda(vectorstore.add_documents)
-    ).invoke(file)
+    file.ingest_status = ProcessingStatusEnum.embedding
+    storage_handler.update_item(file)
+
+    try:
+        new_ids = (
+            document_loader(s3_client=s3_client, env=env)
+            | RunnableLambda(list)
+            | RunnableLambda(vectorstore.add_documents)
+        ).invoke(file)
+        file.ingest_status = ProcessingStatusEnum.complete
+    except Exception:
+        logging.exception("Error while processing file [%s]", file)
+        file.ingest_status = ProcessingStatusEnum.failed
+    finally:
+        storage_handler.update_item(file)
 
     logging.info("File: %s [%s] chunks ingested", file, len(new_ids))
 

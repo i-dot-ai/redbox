@@ -48,7 +48,7 @@ class ChatMessage extends HTMLElement {
         this.innerHTML = `
             <div class="iai-chat-bubble iai-chat-bubble--${this.dataset.role === 'user' ? 'right' : 'left'} js-chat-message govuk-body {{ classes }}" data-role="{{ role }}" tabindex="-1">
                 <div class="iai-chat-bubble__role">${this.dataset.role === 'ai' ? 'Redbox' : 'You'}</div>
-                <div class="iai-chat-bubble__route">${this.dataset.route}</div>
+                <div class="iai-chat-bubble__route" hidden></div>
                 <markdown-converter class="iai-chat-bubble__text">${this.dataset.text || ''}</markdown-converter>
                 ${!this.dataset.text ?
                     `<div class="rb-loading-ellipsis govuk-body-s">
@@ -133,6 +133,7 @@ class ChatMessage extends HTMLElement {
                 sourcesContainer.add(message.data.original_file_name, message.data.url);
             } else if (message.type === 'route') {
                 this.querySelector(".iai-chat-bubble__route").textContent = message.data;
+                this.querySelector(".iai-chat-bubble__route").removeAttribute("hidden");
             } else if (message.type === 'error') {
                 this.querySelector(".govuk-error-summary").removeAttribute("hidden");
             }

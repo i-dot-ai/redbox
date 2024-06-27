@@ -35,10 +35,18 @@ class FileAdmin(admin.ModelAdmin):
     date_hierarchy = "created_at"
 
 
+class CitationInline(admin.StackedInline):
+    model = models.Citation
+    ordering = ("modified_at",)
+
+    extra = 1
+
+
 class ChatMessageAdmin(admin.ModelAdmin):
-    list_display = ["chat_history", "get_user", "text", "role", "route", "created_at"]
+    list_display = ["text", "role", "get_user", "chat_history", "route", "created_at"]
     list_filter = ["role", "route", "chat_history__users"]
     date_hierarchy = "created_at"
+    inlines = [CitationInline]
 
     @admin.display(ordering="chat_history__users", description="User")
     def get_user(self, obj):
@@ -50,6 +58,7 @@ class ChatMessageInline(admin.StackedInline):
     ordering = ("modified_at",)
     readonly_fields = ["modified_at", "source_files"]
     extra = 1
+    show_change_link = True  # allows users to click through to look at Citations
 
 
 class ChatHistoryAdmin(admin.ModelAdmin):
@@ -80,8 +89,18 @@ class ChatHistoryAdmin(admin.ModelAdmin):
     actions = ["export_as_csv"]
 
 
+class CitationAdmin(admin.ModelAdmin):
+    list_display = ["text", "get_user", "chat_message", "file"]
+    list_filter = ["chat_message__chat_history__users"]
+
+    @admin.display(ordering="chat_message__chat_history__users", description="User")
+    def get_user(self, obj):
+        return obj.chat_message.chat_history.users
+
+
 admin.site.register(models.User, UserAdmin)
 admin.site.register(models.File, FileAdmin)
 admin.site.register(models.ChatHistory, ChatHistoryAdmin)
 admin.site.register(models.ChatMessage, ChatMessageAdmin)
+admin.site.register(models.Citation, CitationAdmin)
 admin.site.register(models.BusinessUnit, BusinessUnitAdmin)

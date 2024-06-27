@@ -1,7 +1,9 @@
+from functools import partial, reduce
 from operator import itemgetter
 
 from langchain.schema import StrOutputParser
 from langchain_community.chat_models import ChatLiteLLM
+from langchain_core.documents.base import Document
 from langchain_core.prompts import ChatPromptTemplate, PromptTemplate
 from langchain_core.runnables import (
     Runnable,
@@ -12,10 +14,10 @@ from langchain_core.runnables import (
 from langchain_core.vectorstores import VectorStoreRetriever
 from tiktoken import Encoding
 
-from core_api.src.format import format_chunks
+from core_api.src.format import format_documents, reduce_chunks_by_tokens
 from redbox.models import ChatResponse
-from redbox.models.chat import SourceDocument
 from redbox.models.errors import AIError
+from redbox.transform import map_document_to_source_document
 
 
 def make_chat_prompt_from_messages_runnable(
@@ -62,24 +64,21 @@ def map_to_chat_response(input_dict: dict):
     """
     Create a ChatResponse at the end of a chain from a dict containing
     'response' a string to use as output_text
-    'source_documents' a list of chunks to map to source_documents
+    'source_documents' a list of documents to map to source_documents
     """
-    return ChatResponse(
-        output_text=input_dict["response"],
-        source_documents=[
-            SourceDocument(
-                page_content=chunk.text,
-                file_uuid=chunk.parent_file_uuid,
-                page_numbers=(
-                    chunk.metadata.page_number
-                    if isinstance(chunk.metadata.page_number, list)
-                    else ([chunk.metadata.page_number] if chunk.metadata.page_number else [])
-                ),
+    return (
+        RunnablePassthrough.assign(
+            source_documents=(
+                RunnableLambda(lambda d: d.get("source_documents", []))
+                | RunnableLambda(lambda docs: list(map(map_document_to_source_document, docs)))
             )
-            for chunk in input_dict.get("source_documents", [])
-        ],
-        route_name=input_dict["route_name"],
-    )
+        )
+        | RunnableLambda(
+            lambda d: ChatResponse(
+                output_text=d["response"], source_documents=d.get("source_documents", []), route_name=d["route_name"]
+            )
+        )
+    ).invoke(input_dict)
 
 
 def make_chat_runnable(system_prompt: str, llm: ChatLiteLLM) -> Runnable:
@@ -129,7 +128,7 @@ def make_stuff_document_runnable(system_prompt: str, question_prompt: str, llm: 
         | {
             "question": itemgetter("question"),
             "messages": itemgetter("messages"),
-            "documents": itemgetter("documents") | RunnableLambda(format_chunks),
+            "documents": itemgetter("documents") | RunnableLambda(format_documents),
         }
         | ChatPromptTemplate.from_messages(chat_history)
         | llm
@@ -203,7 +202,7 @@ def make_condense_rag_runnable(
         RunnablePassthrough()
         | {
             "question": condense_question_chain,
-            "documents": retriever | format_chunks,
+            "documents": retriever | format_documents,
             "sources": retriever,
         }
         | {
@@ -211,3 +210,21 @@ def make_condense_rag_runnable(
             "sources": itemgetter("sources"),
         }
     )
+
+
+def resize_documents(max_tokens: int | None = None) -> list[Document]:
+    """Gets a file as larger document-sized Chunks, splitting it by max_tokens."""
+    n = max_tokens or float("inf")
+
+    @chain
+    def wrapped(chunks_unsorted: list[Document]):
+        chunks_sorted = sorted(
+            chunks_unsorted,
+            key=lambda x: x.metadata["_source"]["index"]
+            if "index" in x.metadata["_source"]
+            else x.metadata["_source"]["metadata"]["index"],
+        )
+        reduce_chunk_n = partial(reduce_chunks_by_tokens, max_tokens=n)
+        return reduce(lambda cs, c: reduce_chunk_n(cs, c), chunks_sorted, [])
+
+    return wrapped
