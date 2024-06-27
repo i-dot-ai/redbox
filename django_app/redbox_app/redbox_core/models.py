@@ -1,3 +1,4 @@
+import logging
 import uuid
 from datetime import UTC, datetime, timedelta
 
@@ -10,6 +11,8 @@ from django.utils.translation import gettext_lazy as _
 from django_use_email_as_username.models import BaseUser, BaseUserManager
 from jose import jwt
 from yarl import URL
+
+logger = logging.getLogger(__name__)
 
 
 class UUIDPrimaryKeyBase(models.Model):
@@ -177,6 +180,7 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
             return URL(url)
 
         if not self.original_file:
+            logger.error("attempt to access not existent file %s", self.pk)
             return None
 
         return URL(self.original_file.url)
