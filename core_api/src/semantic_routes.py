@@ -3,7 +3,7 @@ from typing import Annotated
 from fastapi import Depends
 from langchain_core.runnables import Runnable
 from semantic_router import Route
-from semantic_router.encoders import HuggingFaceEncoder
+from semantic_router.encoders import AzureOpenAIEncoder
 from semantic_router.layer import RouteLayer
 
 from core_api.src.build_chains import (
@@ -12,7 +12,7 @@ from core_api.src.build_chains import (
     build_static_response_chain,
     build_vanilla_chain,
 )
-from redbox.model_db import MODEL_PATH
+from core_api.src.dependencies import get_env
 from redbox.models.chat import ChatRoute
 
 # === Pre-canned responses for non-LLM routes ===
@@ -147,11 +147,11 @@ def get_semantic_routes():
 
 
 def get_semantic_routing_encoder():
+    env = get_env()
     global __semantic_routing_encoder  # noqa: PLW0603
     if not __semantic_routing_encoder:
-        __semantic_routing_encoder = HuggingFaceEncoder(
-            name="sentence-transformers/paraphrase-albert-small-v2",
-            cache_dir=MODEL_PATH,
+        __semantic_routing_encoder = AzureOpenAIEncoder(
+            azure_endpoint=env.azure_openai_endpoint, api_version="2023-05-15", model=env.azure_embedding_model
         )
     return __semantic_routing_encoder
 

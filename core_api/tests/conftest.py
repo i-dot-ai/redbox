@@ -20,7 +20,6 @@ from core_api.src.app import app as application
 from core_api.src.retriever import ParameterisedElasticsearchRetriever, get_all_chunks_query
 from core_api.src.retriever.parameterised import parameterised_document_mapper
 from core_api.tests.retriever.data import ALL_CHUNKS_RETRIEVER_DOCUMENTS, PARAMETERISED_RETRIEVER_DOCUMENTS
-from redbox.model_db import MODEL_PATH
 from redbox.models import Chunk, File, Settings
 from redbox.storage import ElasticsearchStorageHandler
 
@@ -95,8 +94,8 @@ def stored_file_1(elasticsearch_storage_handler, file) -> File:
 
 
 @pytest.fixture()
-def embedding_model_dim(embedding_model) -> int:
-    return len(embedding_model.embed_query("foo"))
+def embedding_model_dim() -> int:
+    return 1536
 
 
 @pytest.fixture()
@@ -176,8 +175,8 @@ def mock_llm():
 
 
 @pytest.fixture()
-def embedding_model(env) -> SentenceTransformerEmbeddings:
-    return SentenceTransformerEmbeddings(model_name=env.embedding_model, cache_folder=MODEL_PATH)
+def embedding_model(embedding_model_dim) -> SentenceTransformerEmbeddings:
+    return FakeEmbeddings(size=embedding_model_dim)
 
 
 @pytest.fixture()
@@ -196,7 +195,7 @@ def all_chunks_retriever(env, es_client) -> ElasticsearchRetriever:
 
 
 @pytest.fixture()
-def parameterised_retriever(env, es_client, embedding_model_dim):
+def parameterised_retriever(env, es_client, embedding_model):
     default_params = {
         "size": env.ai.rag_k,
         "num_candidates": env.ai.rag_num_candidates,
@@ -208,7 +207,7 @@ def parameterised_retriever(env, es_client, embedding_model_dim):
         es_client=es_client,
         index_name=f"{env.elastic_root_index}-chunk",
         params=default_params,
-        embedding_model=FakeEmbeddings(size=embedding_model_dim),
+        embedding_model=embedding_model,
         document_mapper=parameterised_document_mapper,
     ).configurable_fields(
         params=ConfigurableField(

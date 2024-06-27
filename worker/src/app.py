@@ -7,10 +7,10 @@ from typing import TYPE_CHECKING
 
 from faststream import Context, ContextRepo, FastStream
 from faststream.redis import RedisBroker
-from langchain_community.embeddings import SentenceTransformerEmbeddings
 from langchain_core.runnables import RunnableLambda, chain
 from langchain_core.vectorstores import VectorStore
 from langchain_elasticsearch.vectorstores import ElasticsearchStore
+from langchain_openai.embeddings import AzureOpenAIEmbeddings
 
 from redbox.models import File, ProcessingStatusEnum, Settings
 from redbox.storage.elasticsearch import ElasticsearchStorageHandler
@@ -38,16 +38,15 @@ async def lifespan(context: ContextRepo):
     es_index_name = f"{env.elastic_root_index}-chunk"
     es = env.elasticsearch_client()
     s3_client = env.s3_client()
-    # embeddings = AzureOpenAIEmbeddings(
-    #     azure_endpoint=env.azure_openai_endpoint,
-    #     openai_api_version="2023-05-15",
-    #     model=env.azure_embedding_model,
-    #     max_retries=env.embedding_max_retries,
-    #     retry_min_seconds=4,
-    #     retry_max_seconds=30
-    # )
+    embeddings = AzureOpenAIEmbeddings(
+        azure_endpoint=env.azure_openai_endpoint,
+        openai_api_version="2023-05-15",
+        model=env.azure_embedding_model,
+        max_retries=env.embedding_max_retries,
+        retry_min_seconds=4,
+        retry_max_seconds=30,
+    )
     storage_handler = ElasticsearchStorageHandler(es, env.elastic_root_index)
-    embeddings = SentenceTransformerEmbeddings(model_name=env.embedding_model)
     elasticsearch_store = ElasticsearchStore(
         index_name=es_index_name,
         embedding=embeddings,
@@ -84,19 +83,18 @@ async def ingest(
     storage_handler.update_item(file)
 
     try:
-        new_ids = (
+        new_ids = await (
             document_loader(s3_client=s3_client, env=env)
             | RunnableLambda(list)
-            | RunnableLambda(vectorstore.add_documents)
-        ).invoke(file)
+            | RunnableLambda(vectorstore.aadd_documents)
+        ).ainvoke(file)
         file.ingest_status = ProcessingStatusEnum.complete
+        logging.info("File: %s [%s] chunks ingested", file, len(new_ids))
     except Exception:
         logging.exception("Error while processing file [%s]", file)
         file.ingest_status = ProcessingStatusEnum.failed
     finally:
         storage_handler.update_item(file)
-
-    logging.info("File: %s [%s] chunks ingested", file, len(new_ids))
 
 
 app = FastStream(broker=broker, lifespan=lifespan)

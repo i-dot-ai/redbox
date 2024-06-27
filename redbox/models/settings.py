@@ -129,7 +129,7 @@ class Settings(BaseSettings):
 
     openai_api_version: str = "2023-12-01-preview"
     azure_openai_model: str = "azure/gpt-35-turbo-16k"
-    azure_embedding_model: str = "text-embedding-ada-002"
+    azure_embedding_model: str = "text-embedding-3-large"
     llm_max_tokens: int = 1024
 
     embedding_max_retries: int = 4

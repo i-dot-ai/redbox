@@ -11,13 +11,11 @@ ENV POETRY_NO_INTERACTION=1 \
 # Add redbox python package and install it with poetry
 ADD redbox/ /app/redbox
 ADD pyproject.toml poetry.lock /app/
-ADD download_embedder.py /app/
 ADD redbox/ /app/redbox
 
 RUN --mount=type=cache,target=$POETRY_CACHE_DIR poetry install --no-root --no-ansi --with api,ai --without worker,dev
 
 FROM python:3.11-slim-bookworm as runtime
-ARG EMBEDDING_MODEL
 
 WORKDIR /app/
 
@@ -29,10 +27,6 @@ COPY --from=builder ${VIRTUAL_ENV} ${VIRTUAL_ENV}
 
 COPY core_api/ /app/core_api/
 ADD redbox/ /app/redbox
-ADD download_embedder.py /app/
-
-# Download the model
-RUN type=cache python download_embedder.py --embedding_model ${EMBEDDING_MODEL}
 
 # Run FastAPI
 EXPOSE 5002
