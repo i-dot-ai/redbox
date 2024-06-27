@@ -155,7 +155,7 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
         return name.split(".")[-1]
 
     @property
-    def url(self) -> URL:
+    def url(self) -> URL | None:
         #  In dev environment, get pre-signed url from minio
         if settings.ENVIRONMENT.uses_minio:
             s3 = boto3.client(
@@ -175,8 +175,10 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
                 },
             )
             return URL(url)
-        else:
-            return URL(self.original_file.url)
+
+        elif url := getattr(self.original_file, "url"):
+            return URL(url)
+        return None
 
     @property
     def name(self) -> str:
