@@ -1,4 +1,3 @@
-import json
 import time
 from collections.abc import Generator
 from pathlib import Path
@@ -20,14 +19,10 @@ from langchain_elasticsearch.retrievers import ElasticsearchRetriever
 from core_api.src.app import app as application
 from core_api.src.retriever import ParameterisedElasticsearchRetriever, get_all_chunks_query
 from core_api.src.retriever.parameterised import parameterised_document_mapper
+from core_api.tests.retriever.data import ALL_CHUNKS_RETRIEVER_DOCUMENTS, PARAMETERISED_RETRIEVER_DOCUMENTS
 from redbox.model_db import MODEL_PATH
 from redbox.models import Chunk, File, Settings
 from redbox.storage import ElasticsearchStorageHandler
-
-with Path.open("core_api/tests/resources/retriever/all_chunks.json") as resources:
-    ALL_CHUNKS_RETRIEVER_RESOURCES = json.load(resources)
-with Path.open("core_api/tests/resources/retriever/parameterised.json") as resources:
-    PARAMETERISED_RETRIEVER_RESOURCES = json.load(resources)
 
 
 @pytest.fixture()
@@ -121,23 +116,23 @@ def stored_file_chunks(stored_file_1, embedding_model_dim) -> list[Chunk]:
     return chunks
 
 
-@pytest.fixture(params=ALL_CHUNKS_RETRIEVER_RESOURCES.keys())
+@pytest.fixture(params=ALL_CHUNKS_RETRIEVER_DOCUMENTS)
 def stored_file_all_chunks(request, env, es_client) -> Generator[list[Document], None, None]:
     store = ElasticsearchStore(
         index_name=env.elastic_root_index + "-chunk", es_connection=es_client, query_field="text"
     )
-    documents = list(map(Document.parse_obj, ALL_CHUNKS_RETRIEVER_RESOURCES[request.param]))
+    documents = list(map(Document.parse_obj, request.param))
     doc_ids = store.add_documents(documents)
     yield documents
     store.delete(doc_ids)
 
 
-@pytest.fixture(params=PARAMETERISED_RETRIEVER_RESOURCES.keys())
+@pytest.fixture(params=PARAMETERISED_RETRIEVER_DOCUMENTS)
 def stored_file_parameterised(request, env, es_client) -> Generator[list[Document], None, None]:
     store = ElasticsearchStore(
         index_name=env.elastic_root_index + "-chunk", es_connection=es_client, query_field="text"
     )
-    documents = list(map(Document.parse_obj, PARAMETERISED_RETRIEVER_RESOURCES[request.param]))
+    documents = list(map(Document.parse_obj, request.param))
     doc_ids = store.add_documents(documents)
     yield documents
     store.delete(doc_ids)

@@ -76,7 +76,7 @@ def parameterised_body_func(embedding_model: Embeddings, params: ESParams, query
 # It is a simple doc mapper, equivalent to setting content_field to 'text'
 # We don't get it in the app so there's something weird going on with tests
 def parameterised_document_mapper(hit: dict) -> Document:
-    return Document(page_content=hit["_source"]["text"], metadata=hit["_source"].get("metadata", {}))
+    return Document(page_content=hit["_source"]["text"], metadata=hit)
 
 
 class ParameterisedElasticsearchRetriever(ElasticsearchRetriever):

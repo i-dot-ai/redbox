@@ -25,5 +25,5 @@ def test_all_chunks_retriever_legacy_chunks(
     assert len(result) == len(stored_file_chunks)
     assert {c.metadata["_id"] for c in result} == {str(c.uuid) for c in stored_file_chunks}
     assert {c.metadata["_source"]["metadata"]["parent_doc_uuid"] for c in result} == {
-        c.parent_file_uuid for c in stored_file_chunks
+        str(c.parent_file_uuid) for c in stored_file_chunks
     }
