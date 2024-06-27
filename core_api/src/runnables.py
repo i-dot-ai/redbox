@@ -21,12 +21,12 @@ from redbox.models.errors import AIError
 def make_chat_prompt_from_messages_runnable(
     system_prompt: str,
     question_prompt: str,
-    context_window_size: int,
+    input_token_budget: int,
     tokeniser: Encoding,
 ):
     system_prompt_message = [("system", system_prompt)]
     prompts_budget = len(tokeniser.encode(system_prompt)) - len(tokeniser.encode(question_prompt))
-    token_budget = context_window_size - prompts_budget
+    token_budget = input_token_budget - prompts_budget
 
     @chain
     def chat_prompt_from_messages(input_dict: dict):
@@ -34,16 +34,16 @@ def make_chat_prompt_from_messages_runnable(
         Create a ChatPrompTemplate as part of a chain using 'chat_history'.
         Returns the PromptValue using values in the input_dict
         """
-        context_budget = token_budget - len(tokeniser.encode(input_dict["question"]))
+        chat_history_budget = token_budget - len(tokeniser.encode(input_dict["question"]))
 
-        if context_budget <= 0:
+        if chat_history_budget <= 0:
             message = "Question length exceeds context window."
             raise AIError(message)
 
         truncated_history: list[dict[str, str]] = []
         for msg in input_dict["chat_history"][::-1]:
-            context_budget -= len(tokeniser.encode(msg["text"]))
-            if context_budget <= 0:
+            chat_history_budget -= len(tokeniser.encode(msg["text"]))
+            if chat_history_budget <= 0:
                 break
             else:
                 truncated_history.insert(0, msg)

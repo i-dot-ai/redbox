@@ -39,7 +39,7 @@ def build_vanilla_chain(
         make_chat_prompt_from_messages_runnable(
             system_prompt=env.ai.vanilla_system_prompt,
             question_prompt=env.ai.vanilla_question_prompt,
-            context_window_size=env.ai.context_window_size,
+            input_token_budget=env.ai.context_window_size - env.llm_max_tokens,
             tokeniser=tokeniser,
         )
         | llm
@@ -65,7 +65,7 @@ def build_retrieval_chain(
             "response": make_chat_prompt_from_messages_runnable(
                 system_prompt=env.ai.vanilla_system_prompt,
                 question_prompt=env.ai.vanilla_question_prompt,
-                context_window_size=env.ai.context_window_size,
+                input_token_budget=env.ai.context_window_size - env.llm_max_tokens,
                 tokeniser=tokeniser,
             )
             | llm
@@ -107,7 +107,7 @@ def build_summary_chain(
         | make_chat_prompt_from_messages_runnable(
             system_prompt=env.ai.vanilla_system_prompt,
             question_prompt=env.ai.vanilla_question_prompt,
-            context_window_size=env.ai.context_window_size,
+            input_token_budget=env.ai.context_window_size - env.llm_max_tokens,
             tokeniser=tokeniser,
         )
         | llm
@@ -169,7 +169,7 @@ def build_map_reduce_summary_chain(
         | make_chat_prompt_from_messages_runnable(
             system_prompt=env.ai.vanilla_system_prompt,
             question_prompt=env.ai.vanilla_question_prompt,
-            context_window_size=env.ai.context_window_size,
+            input_token_budget=env.ai.context_window_size - env.llm_max_tokens,
             tokeniser=tokeniser,
         )
         | llm

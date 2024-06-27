@@ -43,7 +43,7 @@ def test_make_chat_prompt_from_messages_runnable(mock_llm):
         make_chat_prompt_from_messages_runnable(
             system_prompt="Your job is chat.",
             question_prompt="{question}\n=========\n Response: ",
-            context_window_size=100,
+            input_token_budget=100,
             tokeniser=get_tokeniser(),
         )
         | mock_llm
