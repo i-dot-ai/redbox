@@ -220,17 +220,28 @@ class ChatRoleEnum(models.TextChoices):
     system = "system"
 
 
+class Citation(UUIDPrimaryKeyBase, TimeStampedModel):
+    file = models.ForeignKey(File, on_delete=models.CASCADE)
+    chat_message = models.ForeignKey("ChatMessage", on_delete=models.CASCADE)
+    text = models.TextField(null=True, blank=True)
+
+    def __str__(self):
+        return f"{self.file}: {self.text or ''}"
+
+
 class ChatMessage(UUIDPrimaryKeyBase, TimeStampedModel):
     chat_history = models.ForeignKey(ChatHistory, on_delete=models.CASCADE)
     text = models.TextField(max_length=32768, null=False, blank=False)
     role = models.CharField(choices=ChatRoleEnum.choices, null=False, blank=False)
     route = models.CharField(max_length=25, null=True, blank=True)
-    source_files = models.ManyToManyField(
+    old_source_files = models.ManyToManyField(  # TODO (@gecBurton): delete me
+        # https://technologyprogramme.atlassian.net/browse/REDBOX-367
         File,
         related_name="chat_messages",
         blank=True,
     )
     selected_files = models.ManyToManyField(File, related_name="+", symmetrical=False, blank=True)
+    source_files = models.ManyToManyField(File, through=Citation)
 
     def __str__(self) -> str:  # pragma: no cover
-        return f"{self.chat_history} - {self.text} - {self.role}"
+        return f"{self.text} - {self.role}"
