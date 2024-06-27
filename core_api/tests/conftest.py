@@ -95,7 +95,7 @@ def stored_file_1(elasticsearch_storage_handler, file) -> File:
 
 @pytest.fixture()
 def embedding_model_dim() -> int:
-    return 1536
+    return 1536 #text-embedding-3-small default dimension
 
 
 @pytest.fixture()
