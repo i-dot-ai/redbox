@@ -171,9 +171,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         uuids = [doc.file_uuid for doc in docs]
         files = File.objects.filter(core_file_uuid__in=uuids, user=user)
 
-        return files, [
-            (file, [doc for doc in docs if doc.file_uuid == file.core_file_uuid]) for file in files
-        ]
+        return files, [(file, [doc for doc in docs if doc.file_uuid == file.core_file_uuid]) for file in files]
 
     @staticmethod
     @database_sync_to_async

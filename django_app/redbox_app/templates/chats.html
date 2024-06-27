@@ -67,7 +67,7 @@
               role = message.role,
               route = message.route,
               text = message.text,
-              sources = message.source_files.all()
+              sources = message.source_files.distinct()
             ) }}
           {% endfor %}
 

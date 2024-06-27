@@ -46,6 +46,7 @@ def s3_client():
 @dataclass(frozen=True)
 class CoreChatResponseDoc:
     file_uuid: str
+    page_content: str
 
 
 @dataclass_json(undefined=Undefined.EXCLUDE)
