@@ -92,9 +92,6 @@ mkdocs-glightbox = "^0.4.0"
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
-[tool.poetry.scripts]
-download-model = 'download_embedder:download'
-
 [tool.ruff.format]
 exclude = ["django_app/redbox_app/redbox_core/migrations/*.py"]
 
