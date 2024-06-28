@@ -14,6 +14,9 @@ def test_all_chunks_retriever(all_chunks_retriever: AllElasticsearchRetriever, s
     )
     assert len(result) == len(stored_file_all_chunks)
     assert {c.page_content for c in result} == {c.page_content for c in stored_file_all_chunks}
+    assert {c.metadata["parent_file_uuid"] for c in result} == {
+        str(c.metadata["parent_file_uuid"]) for c in stored_file_all_chunks
+    }
 
 
 def test_all_chunks_retriever_legacy_chunks(
@@ -24,3 +27,4 @@ def test_all_chunks_retriever_legacy_chunks(
     )
     assert len(result) == len(stored_file_chunks)
     assert {c.page_content for c in result} == {c.text for c in stored_file_chunks}
+    assert {c.metadata["parent_file_uuid"] for c in result} == {str(c.parent_file_uuid) for c in stored_file_chunks}

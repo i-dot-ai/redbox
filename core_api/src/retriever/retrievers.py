@@ -17,7 +17,7 @@ def hit_to_doc(hit: dict[str, Any]) -> Document:
     Chunks has two metadata fields in top-level: index and parent_file_uuid. This moves them.
     """
     source = hit["_source"]
-    c_meta = {"index": source.get("index"), "parent_file_uuid": source.get("index")}
+    c_meta = {"index": source.get("index"), "parent_file_uuid": source.get("parent_file_uuid")}
     return Document(
         page_content=source["text"], metadata={k: v for k, v in c_meta.items() if v is not None} | source["metadata"]
     )
