@@ -117,17 +117,10 @@ def test_rag_runnable(es_client, mock_llm, chunked_file, env):
     assert {str(chunked_file.uuid)} == {chunk.metadata["parent_file_uuid"] for chunk in response["source_documents"]}
 
 
-<<<<<<< HEAD
 def test_condense_runnable(es_client, mock_llm, chunked_file, env):
     retriever = get_parameterised_retriever(es=es_client, env=env)
 
     chain = build_condense_retrieval_chain(llm=mock_llm, retriever=retriever, tokeniser=get_tokeniser(), env=env)
-=======
-def test_summary_runnable_large_file(all_chunks_retriever, mock_llm, large_chunked_file, env):
-    chain = build_summary_chain(
-        llm=mock_llm, all_chunks_retriever=all_chunks_retriever, tokeniser=get_tokeniser(), env=env
-    )
->>>>>>> main
 
     previous_history = [
         {"text": "Lorem ipsum dolor sit amet.", "role": "user"},
@@ -139,30 +132,42 @@ def test_summary_runnable_large_file(all_chunks_retriever, mock_llm, large_chunk
         input=ChainInput(
             question="Who are all these people?",
             chat_history=previous_history,
-<<<<<<< HEAD
             file_uuids=[chunked_file.uuid],
             user_uuid=chunked_file.creator_user_uuid,
-=======
-            file_uuids=[large_chunked_file.uuid],
-            user_uuid=large_chunked_file.creator_user_uuid,
->>>>>>> main
         ).model_dump()
     )
 
     assert response["response"] == "<<TESTING>>"
-<<<<<<< HEAD
     assert {str(chunked_file.uuid)} == {
         chunk.metadata["_source"]["parent_file_uuid"] for chunk in response["source_documents"]
     }
 
 
-def test_summary_runnable(all_chunks_retriever, mock_llm, chunked_file, env):
-=======
+def test_summary_runnable_large_file(all_chunks_retriever, mock_llm, large_chunked_file, env):
+    chain = build_summary_chain(
+        llm=mock_llm, all_chunks_retriever=all_chunks_retriever, tokeniser=get_tokeniser(), env=env
+    )
+
+    previous_history = [
+        {"text": "Lorem ipsum dolor sit amet.", "role": "user"},
+        {"text": "Consectetur adipiscing elit.", "role": "ai"},
+        {"text": "Donec cursus nunc tortor.", "role": "user"},
+    ]
+
+    response = chain.invoke(
+        input=ChainInput(
+            question="Who are all these people?",
+            chat_history=previous_history,
+            file_uuids=[large_chunked_file.uuid],
+            user_uuid=large_chunked_file.creator_user_uuid,
+        ).model_dump()
+    )
+
+    assert response["response"] == "<<TESTING>>"
     assert response["route_name"] == ChatRoute.map_reduce_summarise
 
 
 def test_summary_runnable_small_file(all_chunks_retriever, mock_llm, chunked_file, env):
->>>>>>> main
     chain = build_summary_chain(
         llm=mock_llm, all_chunks_retriever=all_chunks_retriever, tokeniser=get_tokeniser(), env=env
     )
