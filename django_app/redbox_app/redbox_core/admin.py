@@ -1,10 +1,18 @@
 import csv
+import logging
 
+from django.conf import settings
 from django.contrib import admin
 from django.http import HttpResponse
 from import_export.admin import ImportMixin
+from requests.exceptions import RequestException
+
+from redbox_app.redbox_core.client import CoreApiClient
 
 from . import models
+
+logger = logging.getLogger(__name__)
+core_api = CoreApiClient(host=settings.CORE_API_HOST, port=settings.CORE_API_PORT)
 
 
 class UserAdmin(ImportMixin, admin.ModelAdmin):
@@ -30,9 +38,36 @@ class BusinessUnitAdmin(ImportMixin, admin.ModelAdmin):
 
 
 class FileAdmin(admin.ModelAdmin):
+    def reupload(self, request, queryset):  # noqa:ARG002
+        for file in queryset:
+            try:
+                logger.info("Deleting existing file from core-api: %s", file)
+                core_api.delete_file(file.core_file_uuid, file.user)
+            except RequestException as e:
+                logger.exception("Error deleting File model object %s.", file, exc_info=e)
+
+            else:
+                file.status = models.StatusEnum.deleted
+                file.save()
+
+                try:
+                    logger.info("Re-uploading file to core-api: %s", file)
+                    upload_file_response = core_api.upload_file(file.unique_name, file.user)
+                except RequestException as e:
+                    logger.exception("Error re-uploading File model object %s.", file, exc_info=e)
+                    file.status = models.StatusEnum.errored
+                    file.save()
+                else:
+                    file.core_file_uuid = upload_file_response.uuid
+                    file.status = models.StatusEnum.uploaded
+                    file.save()
+
+        logger.info("Successfully reuploaded file %s.", file)
+
     list_display = ["original_file_name", "user", "status", "created_at", "last_referenced"]
     list_filter = ["user", "status"]
     date_hierarchy = "created_at"
+    actions = ["reupload"]
 
 
 class CitationInline(admin.StackedInline):

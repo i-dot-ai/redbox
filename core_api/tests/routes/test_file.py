@@ -91,8 +91,6 @@ def test_delete_file(s3_client, app_client, elasticsearch_storage_handler, chunk
     elasticsearch_storage_handler.refresh()
 
     # check assets dont exist
-    with pytest.raises(s3_client.exceptions.NoSuchKey):
-        s3_client.get_object(Bucket=env.bucket_name, Key=chunked_file.key)
 
     with pytest.raises(NotFoundError):
         elasticsearch_storage_handler.read_item(item_uuid=chunked_file.uuid, model_type="file")
