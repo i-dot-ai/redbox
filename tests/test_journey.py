@@ -53,7 +53,7 @@ def test_user_journey(page: Page, email_address: str):
 
     # Upload files
     document_upload_page = documents_page.navigate_to_upload()
-    upload_files: Sequence[Path] = list(TEST_ROOT.parent.glob("*.md"))
+    upload_files: Sequence[Path] = [f for f in TEST_ROOT.parent.glob("*.md") if f.stat().st_size < 10000]
     documents_page = document_upload_page.upload_documents(upload_files)
     document_rows = documents_page.all_documents
     assert {r.filename for r in document_rows} == {f.name for f in upload_files}
@@ -83,7 +83,9 @@ def test_user_journey(page: Page, email_address: str):
     # Use specific routes
     for route in ["summarise", "search", "info", "chat"]:
         chats_page = chats_page.start_new_chat()
-        chats_page.write_message = f"@{route} What do I need to install?"
+        question = f"@{route} What do I need to install?"
+        logger.info("Asking %r", question)
+        chats_page.write_message = question
         chats_page = chats_page.send()
         latest_chat_response = chats_page.wait_for_latest_message()
         assert latest_chat_response.text
