@@ -52,11 +52,7 @@ def mock_parameterised_retriever(alice):
     docs = [
         Document(
             page_content="some text that doesn't actually matter " * 10,
-            metadata={
-                "_source": {
-                    "metadata": {"index": i, "parent_file_uuid": UPLOADED_FILE_UUID, "creator_user_uuid": str(alice)}
-                }
-            },
+            metadata={"index": i, "parent_file_uuid": UPLOADED_FILE_UUID, "creator_user_uuid": str(alice)},
         )
         for i in range(12)
     ]
@@ -67,11 +63,7 @@ def mock_all_chunks_retriever(alice):
     docs = [
         Document(
             page_content="some text that doesn't actually matter " * 10,
-            metadata={
-                "_source": {
-                    "metadata": {"index": i, "parent_file_uuid": UPLOADED_FILE_UUID, "creator_user_uuid": str(alice)}
-                }
-            },
+            metadata={"index": i, "parent_file_uuid": UPLOADED_FILE_UUID, "creator_user_uuid": str(alice)},
         )
         for i in range(12)
     ]

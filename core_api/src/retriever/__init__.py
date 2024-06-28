@@ -1,4 +1,3 @@
-from .all_chunks import get_all_chunks_query
-from .parameterised import ParameterisedElasticsearchRetriever
+from .retrievers import AllElasticsearchRetriever, ParameterisedElasticsearchRetriever
 
-__all__ = ["ParameterisedElasticsearchRetriever", "get_all_chunks_query"]
+__all__ = ["ParameterisedElasticsearchRetriever", "AllElasticsearchRetriever"]
