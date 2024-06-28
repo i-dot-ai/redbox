@@ -86,6 +86,13 @@ def file(s3_client, file_pdf_path: Path, alice, env) -> File:
 
 
 @pytest.fixture()
+def large_stored_file(elasticsearch_storage_handler, file) -> File:
+    elasticsearch_storage_handler.write_item(file)
+    elasticsearch_storage_handler.refresh()
+    return file
+
+
+@pytest.fixture()
 def stored_file_1(elasticsearch_storage_handler, file) -> File:
     elasticsearch_storage_handler.write_item(file)
     elasticsearch_storage_handler.refresh()
@@ -104,6 +111,23 @@ def stored_file_chunks(stored_file_1, embedding_model_dim) -> list[Chunk]:
         chunks.append(
             Chunk(
                 text="hello",
+                index=i,
+                embedding=[1] * embedding_model_dim,
+                parent_file_uuid=stored_file_1.uuid,
+                creator_user_uuid=stored_file_1.creator_user_uuid,
+                metadata={"parent_doc_uuid": str(stored_file_1.uuid)},
+            )
+        )
+    return chunks
+
+
+@pytest.fixture()
+def stored_large_file_chunks(stored_file_1, embedding_model_dim) -> list[Chunk]:
+    chunks: list[Chunk] = []
+    for i in range(5):
+        chunks.append(
+            Chunk(
+                text="hello " * 100,
                 index=i,
                 embedding=[1] * embedding_model_dim,
                 parent_file_uuid=stored_file_1.uuid,
@@ -157,6 +181,15 @@ def other_stored_file_chunks(stored_file_1) -> list[Chunk]:
 @pytest.fixture()
 def chunked_file(elasticsearch_storage_handler, stored_file_chunks, stored_file_1) -> File:
     for chunk in stored_file_chunks:
+        elasticsearch_storage_handler.write_item(chunk)
+    elasticsearch_storage_handler.refresh()
+    time.sleep(1)
+    return stored_file_1
+
+
+@pytest.fixture()
+def large_chunked_file(elasticsearch_storage_handler, stored_large_file_chunks, stored_file_1) -> File:
+    for chunk in stored_large_file_chunks:
         elasticsearch_storage_handler.write_item(chunk)
     elasticsearch_storage_handler.refresh()
     time.sleep(1)

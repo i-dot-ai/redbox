@@ -168,7 +168,7 @@ class TestEndToEnd:
                         "text": "Please summarise the contents of the uploaded files.",
                     }
                 ],
-                "selected_files": [{"uuid": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"}],
+                "selected_files": [{"uuid": TestEndToEnd.file_uuids[user_uuid]}],
             },
             headers=make_headers(user_uuid),
             timeout=30,
@@ -176,7 +176,7 @@ class TestEndToEnd:
         assert rag_response.status_code == HTTPStatus.OK
 
         TestEndToEnd.route_name = rag_response.json()["route_name"]
-        assert TestEndToEnd.route_name == "summarise"
+        assert TestEndToEnd.route_name.startswith("summarise")
 
     @pytest.mark.parametrize("user_uuid", USER_UUIDS)
     def test_permissions(self, user_uuid):
