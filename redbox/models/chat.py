@@ -71,7 +71,8 @@ class ChatRoute(StrEnum):
     summarise = "summarise"
     extract = "extract"
     chat = "chat"
-    supasearch = "supasearch"
+    holmes = "holmes"
+    columbo = "columbo"
 
 
 class ChatResponse(BaseModel):
