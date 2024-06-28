@@ -85,15 +85,12 @@ def build_summary_chain(
     tokeniser: Annotated[Encoding, Depends(dependencies.get_tokeniser)],
     env: Annotated[Settings, Depends(dependencies.get_env)],
 ) -> Runnable:
-    def make_document_context(input_dict: dict):
+    def make_document_context():
         return (
             all_chunks_retriever
-            | {
-                str(file_uuid): resize_documents(env.ai.summarisation_chunk_max_tokens)
-                for file_uuid in input_dict["file_uuids"]
-            }
-            | RunnableLambda(lambda f: [chunk.page_content for chunk_lists in f.values() for chunk in chunk_lists])
-        ).invoke(input_dict)
+            | resize_documents(env.ai.summarisation_chunk_max_tokens)
+            | RunnableLambda(lambda docs: [d.page_content for d in docs])
+        )
 
     # Stuff chain now missing the RunnabeLambda to format the chunks
     stuff_chain = (
@@ -162,7 +159,7 @@ def build_summary_chain(
             message = "No documents to summarise"
             raise AIError(message)
 
-    return RunnablePassthrough.assign(documents=make_document_context) | summarisation_route
+    return RunnablePassthrough.assign(documents=make_document_context()) | summarisation_route
 
 
 def build_static_response_chain(prompt_template, route_name) -> Runnable:

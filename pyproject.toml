@@ -164,6 +164,11 @@ known-first-party = ["redbox_app", "redbox", "core_api"]
 "*/models.py" = ["RUF012"]
 
 [tool.pytest.ini_options]
+env_override_existing_values = 1
+env_files = [
+    ".env.test",
+    ".env"
+]
 markers = [
     "incremental: marks tests as incremental (deselect with '-m \"not incremental\"')",
 ]
