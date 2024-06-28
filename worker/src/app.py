@@ -3,14 +3,16 @@
 import logging
 from contextlib import asynccontextmanager
 from datetime import UTC, datetime
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Annotated
 
+from elasticsearch import Elasticsearch
 from faststream import Context, ContextRepo, FastStream
 from faststream.redis import RedisBroker
 from langchain_core.runnables import RunnableLambda, chain
 from langchain_core.vectorstores import VectorStore
 from langchain_elasticsearch.vectorstores import ElasticsearchStore
 from langchain_openai.embeddings import AzureOpenAIEmbeddings
+from langchain_core.embeddings import Embeddings
 
 from redbox.models import File, ProcessingStatusEnum, Settings
 from redbox.storage.elasticsearch import ElasticsearchStorageHandler
@@ -33,12 +35,8 @@ broker = RedisBroker(url=env.redis_url)
 publisher = broker.publisher(list=env.embed_queue_name)
 
 
-@asynccontextmanager
-async def lifespan(context: ContextRepo):
-    es_index_name = f"{env.elastic_root_index}-chunk"
-    es = env.elasticsearch_client()
-    s3_client = env.s3_client()
-    embeddings = AzureOpenAIEmbeddings(
+def get_embeddings():
+    return AzureOpenAIEmbeddings(
         azure_endpoint=env.azure_openai_endpoint,
         api_version=env.azure_api_version_embeddings,
         model=env.azure_embedding_model,
@@ -46,19 +44,35 @@ async def lifespan(context: ContextRepo):
         retry_min_seconds=4,
         retry_max_seconds=30,
     )
-    storage_handler = ElasticsearchStorageHandler(es, env.elastic_root_index)
-    elasticsearch_store = ElasticsearchStore(
+
+
+def get_elasticsearch_store(
+        es: Elasticsearch,
+        es_index_name: str
+):
+    
+    return ElasticsearchStore(
         index_name=es_index_name,
-        embedding=embeddings,
+        embedding=get_embeddings(),
         es_connection=es,
         query_field="text",
         vector_query_field=env.embedding_document_field_name,
     )
 
+
+def get_elasticsearch_storage_handler(es: Elasticsearch):
+    return ElasticsearchStorageHandler(es, env.elastic_root_index)
+
+
+@asynccontextmanager
+async def lifespan(context: ContextRepo):
+    es = env.elasticsearch_client()
+    es_index_name = f"{env.elastic_root_index}-chunk"
+
     es.indices.create(index=es_index_name, ignore=[400])
-    context.set_global("vectorstore", elasticsearch_store)
-    context.set_global("s3_client", s3_client)
-    context.set_global("storage_handler", storage_handler)
+    context.set_global("vectorstore", get_elasticsearch_store(es, es_index_name))
+    context.set_global("s3_client", env.s3_client())
+    context.set_global("storage_handler", get_elasticsearch_storage_handler(es))
     yield
 
 
