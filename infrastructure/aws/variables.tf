@@ -223,6 +223,20 @@ variable "retrieval_question_prompt" {
     description = "how to construct retrieval"
 }
 
+variable "condense_system_prompt" {
+    type        = string
+    default     = <<EOT
+Given the following conversation and a follow up question, generate a follow up question to be a standalone question. You are only allowed to generate one question in response. Include sources from the chat history in the standalone question created, when they are available. If you don't know the answer, just say that you don't know, don't try to make up an answer.
+    EOT
+    description = "Base condense question prompt"
+}
+
+variable "condense_question_prompt" {
+    type        = string
+    default     = "{question}\n=========\n Standalone question: "
+    description = "How to construct a condensed question"
+}
+
 variable "summarisation_system_prompt" {
     type        = string
     default     = <<EOT

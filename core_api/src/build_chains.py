@@ -76,6 +76,42 @@ def build_retrieval_chain(
     )
 
 
+def build_condense_retrieval_chain(
+    llm: Annotated[ChatLiteLLM, Depends(dependencies.get_llm)],
+    retriever: Annotated[VectorStoreRetriever, Depends(dependencies.get_parameterised_retriever)],
+    tokeniser: Annotated[Encoding, Depends(dependencies.get_tokeniser)],
+    env: Annotated[Settings, Depends(dependencies.get_env)],
+) -> Runnable:
+    return (
+        RunnablePassthrough.assign(
+            question=make_chat_prompt_from_messages_runnable(
+                system_prompt=env.ai.condense_system_prompt,
+                question_prompt=env.ai.condense_question_prompt,
+                input_token_budget=env.ai.context_window_size - env.llm_max_tokens,
+                tokeniser=tokeniser,
+            )
+            | llm
+            | StrOutputParser()
+        )
+        | RunnablePassthrough.assign(documents=retriever)
+        | RunnablePassthrough.assign(
+            formatted_documents=(RunnablePassthrough() | itemgetter("documents") | format_documents)
+        )
+        | {
+            "response": make_chat_prompt_from_messages_runnable(
+                system_prompt=env.ai.vanilla_system_prompt,
+                question_prompt=env.ai.vanilla_question_prompt,
+                input_token_budget=env.ai.context_window_size - env.llm_max_tokens,
+                tokeniser=tokeniser,
+            )
+            | llm
+            | StrOutputParser(),
+            "source_documents": itemgetter("documents"),
+            "route_name": RunnableLambda(lambda _: ChatRoute.search.value),
+        }
+    )
+
+
 def build_summary_chain(
     llm: Annotated[ChatLiteLLM, Depends(dependencies.get_llm)],
     all_chunks_retriever: Annotated[BaseRetriever, Depends(dependencies.get_all_chunks_retriever)],

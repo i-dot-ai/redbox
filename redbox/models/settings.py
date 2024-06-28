@@ -54,10 +54,19 @@ REDUCE_SYSTEM_PROMPT = (
     "4) Maintain the original context and meaning.\n"
 )
 
+CONDENSE_SYSTEM_PROMPT = (
+    "Given the following conversation and a follow up question, generate a follow "
+    "up question to be a standalone question. "
+    "You are only allowed to generate one question in response. "
+    "Include sources from the chat history in the standalone question created, "
+    "when they are available. "
+    "If you don't know the answer, just say that you don't know, "
+    "don't try to make up an answer. \n"
+)
+
 VANILLA_QUESTION_PROMPT = "{question}\n=========\n Response: "
 
 RETRIEVAL_QUESTION_PROMPT = "{question} \n=========\n{formatted_documents}\n=========\nFINAL ANSWER: "
-
 
 SUMMARISATION_QUESTION_PROMPT = "Question: {question}. \n\n Documents: \n\n {documents} \n\n Answer: "
 
@@ -65,8 +74,9 @@ MAP_QUESTION_PROMPT = "Question: {question}. "
 
 MAP_DOCUMENT_PROMPT = "\n\n Documents: \n\n {documents} \n\n Answer: "
 
-
 REDUCE_QUESTION_PROMPT = "Question: {question}. \n\n Documents: \n\n {summaries} \n\n Answer: "
+
+CONDENSE_QUESTION_PROMPT = "{question}\n=========\n Standalone question: "
 
 
 class AISettings(BaseModel):
@@ -84,6 +94,8 @@ class AISettings(BaseModel):
     vanilla_question_prompt: str = VANILLA_QUESTION_PROMPT
     retrieval_system_prompt: str = RETRIEVAL_SYSTEM_PROMPT
     retrieval_question_prompt: str = RETRIEVAL_QUESTION_PROMPT
+    condense_system_prompt: str = CONDENSE_SYSTEM_PROMPT
+    condense_question_prompt: str = CONDENSE_QUESTION_PROMPT
     summarisation_system_prompt: str = SUMMARISATION_SYSTEM_PROMPT
     summarisation_question_prompt: str = SUMMARISATION_QUESTION_PROMPT
     map_system_prompt: str = MAP_SYSTEM_PROMPT
