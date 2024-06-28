@@ -86,7 +86,7 @@ async def ingest(
         new_ids = await (
             document_loader(s3_client=s3_client, env=env)
             | RunnableLambda(list)
-            | RunnableLambda(vectorstore.aadd_documents)
+            | RunnableLambda(vectorstore.aadd_documents) # type: ignore[arg-type]
         ).ainvoke(file)
         file.ingest_status = ProcessingStatusEnum.complete
         logging.info("File: %s [%s] chunks ingested", file, len(new_ids))
