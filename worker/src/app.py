@@ -3,7 +3,7 @@
 import logging
 from contextlib import asynccontextmanager
 from datetime import UTC, datetime
-from typing import TYPE_CHECKING, Annotated
+from typing import TYPE_CHECKING
 
 from elasticsearch import Elasticsearch
 from faststream import Context, ContextRepo, FastStream
@@ -12,7 +12,6 @@ from langchain_core.runnables import RunnableLambda, chain
 from langchain_core.vectorstores import VectorStore
 from langchain_elasticsearch.vectorstores import ElasticsearchStore
 from langchain_openai.embeddings import AzureOpenAIEmbeddings
-from langchain_core.embeddings import Embeddings
 
 from redbox.models import File, ProcessingStatusEnum, Settings
 from redbox.storage.elasticsearch import ElasticsearchStorageHandler
@@ -46,11 +45,7 @@ def get_embeddings():
     )
 
 
-def get_elasticsearch_store(
-        es: Elasticsearch,
-        es_index_name: str
-):
-    
+def get_elasticsearch_store(es: Elasticsearch, es_index_name: str):
     return ElasticsearchStore(
         index_name=es_index_name,
         embedding=get_embeddings(),
