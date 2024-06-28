@@ -7,11 +7,11 @@ from semantic_router.encoders import HuggingFaceEncoder
 from semantic_router.layer import RouteLayer
 
 from core_api.src.build_chains import (
+    build_condense_retrieval_chain,
     build_retrieval_chain,
     build_static_response_chain,
     build_summary_chain,
     build_vanilla_chain,
-    build_condense_retrieval_chain,
 )
 from redbox.model_db import MODEL_PATH
 from redbox.models.chat import ChatRoute

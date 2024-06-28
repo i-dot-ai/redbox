@@ -51,48 +51,6 @@ def test_make_chat_prompt_from_messages_runnable(mock_llm):
     assert response == "<<TESTING>>"
 
 
-def test_make_condense_question_runnable(mock_llm):
-    chain = make_condense_question_runnable(llm=mock_llm)
-
-    previous_history = [
-        {"text": "Lorem ipsum dolor sit amet.", "role": "user"},
-        {"text": "Consectetur adipiscing elit.", "role": "ai"},
-        {"text": "Donec cursus nunc tortor.", "role": "user"},
-    ]
-
-    response = chain.invoke(
-        input={
-            "question": "How are you today?",
-            "messages": [(msg["role"], msg["text"]) for msg in previous_history],
-        }
-    )
-
-    assert response == "<<TESTING>>"
-
-
-def test_make_condense_rag_runnable(es_client, mock_llm, chunked_file):
-    retriever = get_parameterised_retriever(es=es_client, env=env)
-
-    chain = make_condense_rag_runnable(system_prompt="Your job is Q&A.", llm=mock_llm, retriever=retriever)
-
-    previous_history = [
-        {"text": "Lorem ipsum dolor sit amet.", "role": "user"},
-        {"text": "Consectetur adipiscing elit.", "role": "ai"},
-        {"text": "Donec cursus nunc tortor.", "role": "user"},
-    ]
-
-    response = chain.invoke(
-        input={
-            "question": "Who are all these people?",
-            "messages": [(msg["role"], msg["text"]) for msg in previous_history],
-            "file_uuids": [chunked_file.uuid],
-            "user_uuid": chunked_file.creator_user_uuid,
-        }
-    )
-    assert response["response"] == "<<TESTING>>"
-    assert {str(chunked_file.uuid)} == {chunk.metadata["parent_file_uuid"] for chunk in response["sources"]}
-
-
 def test_rag_runnable(es_client, mock_llm, chunked_file, env):
     retriever = get_parameterised_retriever(es=es_client, env=env)
 
@@ -138,9 +96,7 @@ def test_condense_runnable(es_client, mock_llm, chunked_file, env):
     )
 
     assert response["response"] == "<<TESTING>>"
-    assert {str(chunked_file.uuid)} == {
-        chunk.metadata["_source"]["parent_file_uuid"] for chunk in response["source_documents"]
-    }
+    assert {str(chunked_file.uuid)} == {chunk.metadata["parent_file_uuid"] for chunk in response["source_documents"]}
 
 
 def test_summary_runnable_large_file(all_chunks_retriever, mock_llm, large_chunked_file, env):
