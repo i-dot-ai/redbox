@@ -36,7 +36,7 @@ def get_elasticsearch_client(env: Annotated[Settings, Depends(get_env)]) -> Elas
 def get_embedding_model(env: Annotated[Settings, Depends(get_env)]) -> Embeddings:
     return AzureOpenAIEmbeddings(
         azure_endpoint=env.azure_openai_endpoint,
-        openai_api_version="2023-05-15",
+        api_version=env.azure_api_version_embeddings,
         model=env.azure_embedding_model,
         max_retries=env.embedding_max_retries,
         retry_min_seconds=4,

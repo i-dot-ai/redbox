@@ -40,7 +40,7 @@ async def lifespan(context: ContextRepo):
     s3_client = env.s3_client()
     embeddings = AzureOpenAIEmbeddings(
         azure_endpoint=env.azure_openai_endpoint,
-        openai_api_version="2023-05-15",
+        api_version=env.azure_api_version_embeddings,
         model=env.azure_embedding_model,
         max_retries=env.embedding_max_retries,
         retry_min_seconds=4,
