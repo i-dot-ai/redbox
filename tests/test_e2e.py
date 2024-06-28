@@ -176,7 +176,7 @@ class TestEndToEnd:
         assert rag_response.status_code == HTTPStatus.OK
 
         TestEndToEnd.route_name = rag_response.json()["route_name"]
-        assert TestEndToEnd.route_name in {"large_document_summarisation", "small_document_summarisation"}
+        assert TestEndToEnd.route_name.startswith("summarise")
 
     @pytest.mark.parametrize("user_uuid", USER_UUIDS)
     def test_permissions(self, user_uuid):
