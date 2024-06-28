@@ -82,17 +82,23 @@ def build_condense_retrieval_chain(
     tokeniser: Annotated[Encoding, Depends(dependencies.get_tokeniser)],
     env: Annotated[Settings, Depends(dependencies.get_env)],
 ) -> Runnable:
-    return (
-        RunnablePassthrough.assign(
-            question=make_chat_prompt_from_messages_runnable(
-                system_prompt=env.ai.condense_system_prompt,
-                question_prompt=env.ai.condense_question_prompt,
-                input_token_budget=env.ai.context_window_size - env.llm_max_tokens,
-                tokeniser=tokeniser,
+    def route(input_dict: dict):
+        if len(input_dict["chat_history"]) > 0:
+            return RunnablePassthrough.assign(
+                question=make_chat_prompt_from_messages_runnable(
+                    system_prompt=env.ai.condense_system_prompt,
+                    question_prompt=env.ai.condense_question_prompt,
+                    input_token_budget=env.ai.context_window_size - env.llm_max_tokens,
+                    tokeniser=tokeniser,
+                )
+                | llm
+                | StrOutputParser()
             )
-            | llm
-            | StrOutputParser()
-        )
+        else:
+            return RunnablePassthrough()
+
+    return (
+        RunnableLambda(route)
         | RunnablePassthrough.assign(documents=retriever)
         | RunnablePassthrough.assign(
             formatted_documents=(RunnablePassthrough() | itemgetter("documents") | format_documents)
