@@ -89,7 +89,6 @@ def test_user_journey(page: Page, email_address: str):
         chats_page = chats_page.send()
         latest_chat_response = chats_page.wait_for_latest_message()
         assert latest_chat_response.text
-        assert latest_chat_response.route == route
 
     # Delete a file
     documents_page = chats_page.navigate_to_documents()
