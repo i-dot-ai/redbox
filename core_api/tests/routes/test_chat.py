@@ -6,9 +6,10 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 from fastapi.testclient import TestClient
 from langchain_community.llms.fake import FakeStreamingListLLM
+from langchain_core.documents.base import Document
 from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_core.prompt_values import ChatPromptValue
-from langchain_core.runnables import Runnable
+from langchain_core.runnables import Runnable, RunnableLambda
 from langchain_core.runnables.schema import StreamEvent
 from starlette.websockets import WebSocketDisconnect
 
@@ -24,6 +25,7 @@ system_chat = {"text": "test", "role": "system"}
 user_chat = {"text": "test", "role": "user"}
 
 RAG_LLM_RESPONSE = "Based on your documents the answer to your question is 7"
+UPLOADED_FILE_UUID = "9aa1aa15-dde0-471f-ab27-fd410612025b"
 
 
 def mock_chat_prompt():
@@ -46,9 +48,43 @@ def mock_get_llm(llm_responses):
     return wrapped
 
 
+def mock_parameterised_retriever(alice):
+    docs = [
+        Document(
+            page_content="some text that doesn't actually matter " * 10,
+            metadata={
+                "_source": {
+                    "metadata": {"index": i, "parent_file_uuid": UPLOADED_FILE_UUID, "creator_user_uuid": str(alice)}
+                }
+            },
+        )
+        for i in range(12)
+    ]
+    return RunnableLambda(lambda _: docs)
+
+
+def mock_all_chunks_retriever(alice):
+    docs = [
+        Document(
+            page_content="some text that doesn't actually matter " * 10,
+            metadata={
+                "_source": {
+                    "metadata": {"index": i, "parent_file_uuid": UPLOADED_FILE_UUID, "creator_user_uuid": str(alice)}
+                }
+            },
+        )
+        for i in range(12)
+    ]
+    return RunnableLambda(lambda _: docs)
+
+
 @pytest.fixture()
-def mock_client():
+def mock_client(alice):
     chat_app.dependency_overrides[dependencies.get_llm] = mock_get_llm([RAG_LLM_RESPONSE] * 32)
+    chat_app.dependency_overrides[dependencies.get_all_chunks_retriever] = lambda: mock_all_chunks_retriever(alice)
+    chat_app.dependency_overrides[dependencies.get_parameterised_retriever] = lambda: mock_parameterised_retriever(
+        alice
+    )
     yield TestClient(application)
     chat_app.dependency_overrides = {}
 
@@ -94,17 +130,11 @@ def test_rag(mock_client, headers):
         "/chat/rag",
         headers=headers,
         json={
-            "message_history": [
-                {"text": "What can I do for you?", "role": "system"},
-                {"text": "Who put the ram in the rama lama ding dong?", "role": "user"},
-            ],
-            "selected_files": [
-                {"uuid": "9aa1aa15-dde0-471f-ab27-fd410612025b"},
-                {"uuid": "219c2e94-9877-4f83-ad6a-a59426f90171"},
-            ],
+            "message_history": [{"text": "Who put the ram in the rama lama ding dong?", "role": "user"}],
+            "selected_files": [{"uuid": UPLOADED_FILE_UUID}],
         },
     )
-    assert response.status_code == 200
+    assert response.status_code == 200, response.text
     chat_response = ChatResponse.model_validate(response.json())
     assert chat_response.output_text == RAG_LLM_RESPONSE
     assert chat_response.route_name == ChatRoute.search
@@ -116,18 +146,15 @@ def test_summary(mock_client, headers):
         headers=headers,
         json={
             "message_history": [
-                {"text": "What can I do for you?", "role": "system"},
                 {"text": "Summarise the provided docs?", "role": "user"},
             ],
-            "selected_files": [
-                {"uuid": "9aa1aa15-dde0-471f-ab27-fd410612025b"},
-            ],
+            "selected_files": [{"uuid": UPLOADED_FILE_UUID}],
         },
     )
     assert response.status_code == 200
     chat_response = ChatResponse.model_validate(response.json())
     assert chat_response.output_text == RAG_LLM_RESPONSE
-    assert chat_response.route_name == ChatRoute.summarise
+    assert chat_response.route_name in {ChatRoute.map_reduce_summarise, ChatRoute.stuff_summarise}
 
 
 def test_keyword(mock_client, headers):
@@ -140,9 +167,7 @@ def test_keyword(mock_client, headers):
                 {"text": "What can I do for you?", "role": "system"},
                 {"text": "Summarise the provided docs? @search", "role": "user"},
             ],
-            "selected_files": [
-                {"uuid": "9aa1aa15-dde0-471f-ab27-fd410612025b"},
-            ],
+            "selected_files": [{"uuid": UPLOADED_FILE_UUID}],
         },
     )
     assert response.status_code == 200
@@ -157,10 +182,7 @@ def test_rag_chat_streamed(mock_client, headers):
         {"text": "What can I do for you?", "role": "system"},
         {"text": "Who put the ram in the rama lama ding dong?", "role": "user"},
     ]
-    selected_files = [
-        {"uuid": "9aa1aa15-dde0-471f-ab27-fd410612025b"},
-        {"uuid": "219c2e94-9877-4f83-ad6a-a59426f90171"},
-    ]
+    selected_files = [{"uuid": UPLOADED_FILE_UUID}]
 
     with mock_client.websocket_connect("/chat/rag", headers=headers) as websocket:
         # When
