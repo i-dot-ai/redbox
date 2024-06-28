@@ -14,11 +14,9 @@ from langchain_core.documents.base import Document
 from langchain_core.embeddings.fake import FakeEmbeddings
 from langchain_core.runnables import ConfigurableField
 from langchain_elasticsearch import ElasticsearchStore
-from langchain_elasticsearch.retrievers import ElasticsearchRetriever
 
 from core_api.src.app import app as application
-from core_api.src.retriever import ParameterisedElasticsearchRetriever, get_all_chunks_query
-from core_api.src.retriever.parameterised import parameterised_document_mapper
+from core_api.src.retriever import AllElasticsearchRetriever, ParameterisedElasticsearchRetriever
 from core_api.tests.retriever.data import ALL_CHUNKS_RETRIEVER_DOCUMENTS, PARAMETERISED_RETRIEVER_DOCUMENTS
 from redbox.model_db import MODEL_PATH
 from redbox.models import Chunk, File, Settings
@@ -186,17 +184,15 @@ def chunk_index_name(env):
 
 
 @pytest.fixture()
-def all_chunks_retriever(env, es_client) -> ElasticsearchRetriever:
-    return ElasticsearchRetriever(
+def all_chunks_retriever(env, es_client) -> AllElasticsearchRetriever:
+    return AllElasticsearchRetriever(
         es_client=es_client,
         index_name=f"{env.elastic_root_index}-chunk",
-        body_func=get_all_chunks_query,
-        content_field="text",
     )
 
 
 @pytest.fixture()
-def parameterised_retriever(env, es_client, embedding_model_dim):
+def parameterised_retriever(env, es_client, embedding_model_dim) -> ParameterisedElasticsearchRetriever:
     default_params = {
         "size": env.ai.rag_k,
         "num_candidates": env.ai.rag_num_candidates,
@@ -209,7 +205,6 @@ def parameterised_retriever(env, es_client, embedding_model_dim):
         index_name=f"{env.elastic_root_index}-chunk",
         params=default_params,
         embedding_model=FakeEmbeddings(size=embedding_model_dim),
-        document_mapper=parameterised_document_mapper,
     ).configurable_fields(
         params=ConfigurableField(
             id="params", name="Retriever parameters", description="A dictionary of parameters to use for the retriever."

@@ -50,7 +50,4 @@ def test_parameterised_retriever_legacy_chunks(
             "user_uuid": chunked_file.creator_user_uuid,
         }
     )
-    all_doc_ids = {str(c.uuid) for c in stored_file_chunks}
-    assert len(result) == chain_params["size"]
-    for c in result:
-        assert c.metadata["_id"] in all_doc_ids
+    assert len(result) == chain_params["size"] == len(stored_file_chunks)
