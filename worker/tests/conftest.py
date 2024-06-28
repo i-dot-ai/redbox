@@ -5,8 +5,9 @@ import pytest
 from botocore.exceptions import ClientError
 from elasticsearch import Elasticsearch
 from fastapi.testclient import TestClient
-from sentence_transformers import SentenceTransformer
 
+from langchain_core.embeddings.fake import FakeEmbeddings
+from langchain_core.embeddings import Embeddings
 from redbox.models import Chunk, EmbedQueueItem, File
 from redbox.storage import ElasticsearchStorageHandler
 from worker.src.app import app, env
@@ -33,8 +34,8 @@ def es_client() -> Elasticsearch:
 
 
 @pytest.fixture()
-def embedding_model() -> SentenceTransformer:
-    return SentenceTransformer(env.embedding_model)
+def embedding_model() -> Embeddings:
+    return FakeEmbeddings(3072)
 
 
 @pytest.fixture(scope="session")
