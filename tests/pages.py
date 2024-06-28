@@ -54,6 +54,7 @@ class BasePage(ABC):
         # expect(self.page).to_have_url("url")
 
     def check_a11y(self):
+        expect(self.page.locator(".iai-footer__container")).to_be_visible()  # Ensure page is fully loaded
         results = self.axe.run(self.page, context=None, options=self.AXE_OPTIONS)
         if results.violations_count:
             error_message = f"accessibility violations from page {self}: {results.generate_report()} "

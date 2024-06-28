@@ -82,12 +82,7 @@ def resize_documents(max_tokens: int | None = None) -> list[Document]:
 
     @chain
     def wrapped(chunks_unsorted: list[Document]):
-        chunks_sorted = sorted(
-            chunks_unsorted,
-            key=lambda x: x.metadata["_source"]["index"]
-            if "index" in x.metadata["_source"]
-            else x.metadata["_source"]["metadata"]["index"],
-        )
+        chunks_sorted = sorted(chunks_unsorted, key=lambda doc: doc.metadata["index"])
         reduce_chunk_n = partial(reduce_chunks_by_tokens, max_tokens=n)
         return reduce(lambda cs, c: reduce_chunk_n(cs, c), chunks_sorted, [])
 
