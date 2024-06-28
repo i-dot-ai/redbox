@@ -5,9 +5,9 @@ import pytest
 from botocore.exceptions import ClientError
 from elasticsearch import Elasticsearch
 from fastapi.testclient import TestClient
-
-from langchain_core.embeddings.fake import FakeEmbeddings
 from langchain_core.embeddings import Embeddings
+from langchain_core.embeddings.fake import FakeEmbeddings
+
 from redbox.models import Chunk, EmbedQueueItem, File
 from redbox.storage import ElasticsearchStorageHandler
 from worker.src.app import app, env
