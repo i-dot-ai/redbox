@@ -18,5 +18,5 @@ updates:
       - dependency-name: faststream
       - dependency-name: torch
       - dependency-name: sentence-transformers
-      - dependency-name: unstructured
+      - dependency-name: unstructured  # https://github.com/Unstructured-IO/unstructured/issues/3319
       - dependency-name: pikepdf
