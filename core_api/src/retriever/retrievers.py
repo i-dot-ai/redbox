@@ -28,13 +28,21 @@ class ParameterisedElasticsearchRetriever(ElasticsearchRetriever):
     embedding_model: Embeddings
 
     def __init__(self, **kwargs: Any) -> None:
-        super().__init__(body_func=get_some, document_mapper=hit_to_doc, content_field=None, **kwargs)
+        # Hack to pass validation before overwrite
+        # Partly necessary due to how .with_config() interacts with a retriever
+        kwargs["body_func"] = get_some
+        kwargs["document_mapper"] = hit_to_doc
+        super().__init__(**kwargs)
         self.body_func = partial(get_some, self.embedding_model, self.params)
 
 
 class AllElasticsearchRetriever(ElasticsearchRetriever):
     def __init__(self, **kwargs: Any) -> None:
-        super().__init__(body_func=get_all, document_mapper=hit_to_doc, content_field=None, **kwargs)
+        # Hack to pass validation before overwrite
+        # Partly necessary due to how .with_config() interacts with a retriever
+        kwargs["body_func"] = get_all
+        kwargs["document_mapper"] = hit_to_doc
+        super().__init__(**kwargs)
 
     def _get_relevant_documents(self, query: str, *, run_manager: CallbackManagerForRetrieverRun) -> list[Document]:  # noqa:ARG002
         if not self.es_client or not self.document_mapper:

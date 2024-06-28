@@ -15,25 +15,19 @@ document_created = datetime.now(UTC)
         (
             Document(
                 page_content="some random text",
-                metadata={"_source": {"metadata": {"parent_file_uuid": uuid4(), "page_number": 1}}},
+                metadata={"parent_file_uuid": uuid4(), "page_number": 1},
             )
         ),
         (
             Document(
                 page_content="some random text2",
-                metadata={"_source": {"metadata": {"parent_file_uuid": uuid4(), "page_number": [1, 2]}}},
+                metadata={"parent_file_uuid": uuid4(), "page_number": [1, 2]},
             )
         ),
         (
             Document(
                 page_content="some random text3",
-                metadata={
-                    "_source": {
-                        "metadata": {
-                            "parent_file_uuid": uuid4(),
-                        }
-                    }
-                },
+                metadata={"parent_file_uuid": uuid4()},
             )
         ),
     ],
@@ -43,8 +37,12 @@ def test_map_document_to_source_document(document: Document):
     Test that documents as pulled by the Elasticsearch retriever get properly mapped to source documents
     """
     source_doc = map_document_to_source_document(document)
+
+    # Test content
     assert source_doc.page_content == document.page_content
-    document_page_number = document.metadata["_source"]["metadata"].get("page_number")
+
+    # Test page numbers
+    document_page_number = document.metadata.get("page_number")
     if isinstance(document_page_number, int):
         assert document_page_number in source_doc.page_numbers  # type: ignore[operator]
         assert len(source_doc.page_numbers) == 1  # type: ignore[arg-type]
@@ -53,7 +51,9 @@ def test_map_document_to_source_document(document: Document):
         assert set(document_page_number) == set(source_doc.page_numbers)
     else:
         assert source_doc.page_numbers == []
-    assert source_doc.file_uuid == document.metadata["_source"]["metadata"]["parent_file_uuid"]
+
+    # Test UUID
+    assert source_doc.file_uuid == document.metadata["parent_file_uuid"]
 
 
 @pytest.mark.parametrize(
@@ -61,119 +61,95 @@ def test_map_document_to_source_document(document: Document):
     [
         (
             Document(
-                page_content="some random text",
+                page_content="these are four tokens ",
                 metadata={
-                    "_source": {
-                        "metadata": {
-                            "parent_file_uuid": "abcd",
-                            "creator_user_uuid": "xabcd",
-                            "index": 1,
-                            "page_number": 1,
-                            "languages": ["en"],
-                            "link_texts": ["alinktext"],
-                            "link_urls": ["alinkurl"],
-                            "links": ["alink"],
-                            "created_datetime": document_created,
-                            "token_count": 27,
-                        }
-                    }
+                    "parent_file_uuid": "abcd",
+                    "creator_user_uuid": "xabcd",
+                    "index": 1,
+                    "page_number": 1,
+                    "languages": ["en"],
+                    "link_texts": ["alinktext"],
+                    "link_urls": ["alinkurl"],
+                    "links": ["alink"],
+                    "created_datetime": document_created,
+                    "token_count": 4,
                 },
             ),
             Document(
-                page_content="some random text2",
+                page_content="these are three",
                 metadata={
-                    "_source": {
-                        "metadata": {
-                            "parent_file_uuid": "abcd",
-                            "creator_user_uuid": "xabcd",
-                            "index": 2,
-                            "page_number": 2,
-                            "languages": ["fr"],
-                            "link_texts": ["alinktext2"],
-                            "link_urls": ["alinkurl2"],
-                            "links": ["alink2"],
-                            "created_datetime": datetime.now(UTC),
-                            "token_count": 33,
-                        }
-                    }
+                    "parent_file_uuid": "abcd",
+                    "creator_user_uuid": "xabcd",
+                    "index": 2,
+                    "page_number": 2,
+                    "languages": ["fr"],
+                    "link_texts": ["alinktext2"],
+                    "link_urls": ["alinkurl2"],
+                    "links": ["alink2"],
+                    "created_datetime": datetime.now(UTC),
+                    "token_count": 3,
                 },
             ),
             Document(
-                page_content="some random textsome random text2",
+                page_content="these are four tokens these are three",
                 metadata={
-                    "_source": {
-                        "metadata": {
-                            "parent_file_uuid": "abcd",
-                            "creator_user_uuid": "xabcd",
-                            "index": 1,
-                            "page_number": [1, 2],
-                            "languages": ["en", "fr"],
-                            "link_texts": ["alinktext", "alinktext2"],
-                            "link_urls": ["alinkurl", "alinkurl2"],
-                            "links": ["alink", "alink2"],
-                            "created_datetime": document_created,
-                            "token_count": 60,
-                        }
-                    }
+                    "parent_file_uuid": "abcd",
+                    "creator_user_uuid": "xabcd",
+                    "index": 1,
+                    "page_number": [1, 2],
+                    "languages": ["en", "fr"],
+                    "link_texts": ["alinktext", "alinktext2"],
+                    "link_urls": ["alinkurl", "alinkurl2"],
+                    "links": ["alink", "alink2"],
+                    "created_datetime": document_created,
+                    "token_count": 7,
                 },
             ),
         ),
         (
             Document(
-                page_content="some random text",
+                page_content="there are six tokens right here ",
                 metadata={
-                    "_source": {
-                        "metadata": {
-                            "parent_file_uuid": "asdf",
-                            "creator_user_uuid": "xabcd",
-                            "index": 10,
-                            "page_number": [1, 2],
-                            "languages": ["en"],
-                            "link_texts": ["alinktext"],
-                            "link_urls": ["alinkurl"],
-                            "links": ["alink"],
-                            "created_datetime": document_created,
-                            "token_count": 12,
-                        }
-                    }
+                    "parent_file_uuid": "asdf",
+                    "creator_user_uuid": "xabcd",
+                    "index": 10,
+                    "page_number": [1, 2],
+                    "languages": ["en"],
+                    "link_texts": ["alinktext"],
+                    "link_urls": ["alinkurl"],
+                    "links": ["alink"],
+                    "created_datetime": document_created,
+                    "token_count": 6,
                 },
             ),
             Document(
-                page_content="some random text2",
+                page_content="these are three",
                 metadata={
-                    "_source": {
-                        "metadata": {
-                            "parent_file_uuid": "asdf",
-                            "creator_user_uuid": "xabcd",
-                            "index": 12,
-                            "page_number": 3,
-                            "languages": [],
-                            # "link_texts": [],
-                            "link_urls": [],
-                            "links": [],
-                            "created_datetime": datetime.now(UTC),
-                            "token_count": 10,
-                        }
-                    }
+                    "parent_file_uuid": "asdf",
+                    "creator_user_uuid": "xabcd",
+                    "index": 12,
+                    "page_number": 3,
+                    "languages": [],
+                    # "link_texts": [],
+                    "link_urls": [],
+                    "links": [],
+                    "created_datetime": datetime.now(UTC),
+                    "token_count": 3,
                 },
             ),
             Document(
-                page_content="some random textsome random text2",
+                page_content="there are six tokens right here these are three",
                 metadata={
-                    "_source": {
-                        "metadata": {
-                            "parent_file_uuid": "asdf",
-                            "creator_user_uuid": "xabcd",
-                            "index": 10,
-                            "page_number": [1, 2, 3],
-                            "languages": ["en"],
-                            "link_texts": ["alinktext"],
-                            "link_urls": ["alinkurl"],
-                            "links": ["alink"],
-                            "created_datetime": document_created,
-                            "token_count": 22,
-                        }
-                    }
+                    "parent_file_uuid": "asdf",
+                    "creator_user_uuid": "xabcd",
+                    "index": 10,
+                    "page_number": [1, 2, 3],
+                    "languages": ["en"],
+                    "link_texts": ["alinktext"],
+                    "link_urls": ["alinkurl"],
+                    "links": ["alink"],
+                    "created_datetime": document_created,
+                    "token_count": 9,
                 },
             ),
         ),
@@ -186,8 +162,8 @@ def test_combine_documents(a: Document, b: Document, combined: Document):
     test_combined = combine_documents(a, b)
 
     def get_field(document, field_name):
-        return test_combined.metadata["_source"]["metadata"].get(field_name)
+        return document.metadata.get(field_name)
 
     assert combined.page_content == test_combined.page_content
-    for field_name in combined.metadata["_source"]["metadata"]:
+    for field_name in combined.metadata:
         assert get_field(combined, field_name) == get_field(test_combined, field_name)
