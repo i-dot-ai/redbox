@@ -70,7 +70,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 await self.send_to_server(core_websocket, message)
                 await self.send_to_client("session-id", session.id)
                 reply, citations, route = await self.receive_llm_responses(user, core_websocket)
-            await self.save_message(session, reply, ChatRoleEnum.ai, sources=citations, route=route)
+            message = await self.save_message(session, reply, ChatRoleEnum.ai, sources=citations, route=route)
+            await self.send_to_client("end", {"message_id": message.id})
 
             for file, _ in citations:
                 file.last_referenced = timezone.now()

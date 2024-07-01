@@ -59,6 +59,7 @@ class ChatMessage extends HTMLElement {
                     </div>`
                 : ''}
                 <sources-list></sources-list>
+                <a href="" class="govuk-citation-linkypoos" hidden>View information behind this view</a>
                 <div class="govuk-error-summary" data-module="govuk-error-summary" hidden>
                   <div role="alert">
                     <h2 class="govuk-error-summary__title">Error</h2>
@@ -134,6 +135,9 @@ class ChatMessage extends HTMLElement {
             } else if (message.type === 'route') {
                 this.querySelector(".iai-chat-bubble__route").textContent = message.data;
                 this.querySelector(".iai-chat-bubble__route").removeAttribute("hidden");
+            } else if (message.type === 'end') {
+                this.querySelector(".govuk-citation-linkypoos").removeAttribute("hidden");
+                this.querySelector(".govuk-citation-linkypoos").setAttribute("href", `/citations/${message.data.message_id}`);
             } else if (message.type === 'error') {
                 this.querySelector(".govuk-error-summary").removeAttribute("hidden");
             }
