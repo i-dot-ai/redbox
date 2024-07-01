@@ -81,11 +81,22 @@ def test_user_journey(page: Page, email_address: str):
     assert files_to_select.pop() in latest_chat_response.sources
 
     # Use specific routes
-    for route in ["summarise", "search", "info", "chat"]:
+    for route, select_file in [
+        ("search", False),
+        ("search", True),
+        ("chat", False),
+        ("chat", True),
+        ("summarise", True),
+        ("info", False),
+    ]:
         chats_page = chats_page.start_new_chat()
         question = f"@{route} What do I need to install?"
         logger.info("Asking %r", question)
         chats_page.write_message = question
+        if select_file:
+            files_to_select = {f.name for f in upload_files if "README" in f.name}
+            logger.info("selected %s", files_to_select)
+            chats_page.selected_file_names = files_to_select
         chats_page = chats_page.send()
         latest_chat_response = chats_page.wait_for_latest_message()
         assert latest_chat_response.text
