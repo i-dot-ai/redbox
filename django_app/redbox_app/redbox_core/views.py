@@ -253,9 +253,10 @@ class ChatsView(View):
 class CitationsView(View):
     @method_decorator(login_required)
     def get(self, request: HttpRequest, message_id: uuid.UUID | None = None) -> HttpResponse:
+        message = ChatMessage.objects.get(id=message_id)
         citations = Citation.objects.filter(chat_message__id=message_id)
 
-        context = {"citations": citations}
+        context = {"message": message, "citations": citations}
 
         return render(
             request,
