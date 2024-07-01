@@ -193,7 +193,6 @@ def delete_file(file_uuid: UUID, user_uuid: Annotated[UUID, Depends(get_user_uui
     if file.creator_user_uuid != user_uuid:
         return file_not_found_response(file_uuid=file_uuid)
 
-    s3.delete_object(Bucket=env.bucket_name, Key=file.key)
     storage_handler.delete_item(file)
 
     chunks = storage_handler.get_file_chunks(file.uuid, user_uuid)
@@ -251,16 +250,23 @@ def get_file_status(file_uuid: UUID, user_uuid: Annotated[UUID, Depends(get_user
         404: If the file isn't found, or the creator and requester don't match
     """
     try:
-        file = storage_handler.read_item(file_uuid, model_type="File")
+        file: File = storage_handler.read_item(file_uuid, model_type="File")
     except NotFoundError:
         return file_not_found_response(file_uuid=file_uuid)
 
     if file.creator_user_uuid != user_uuid:
         return file_not_found_response(file_uuid=file_uuid)
 
-    try:
-        status = storage_handler.get_file_status(file_uuid, user_uuid)
-    except ValueError:
-        return file_not_found_response(file_uuid=file_uuid)
-
-    return status
+    if file.ingest_status is not None:
+        return FileStatus(
+            file_uuid=file_uuid,
+            # We need to break the link between file status and a specific set of chunks
+            # to enable future work with many chunks or other indices etc
+            chunk_statuses=[],
+            processing_status=file.ingest_status,
+        )
+    else:
+        try:
+            return storage_handler.get_file_status(file_uuid, user_uuid)
+        except ValueError:
+            return file_not_found_response(file_uuid=file_uuid)

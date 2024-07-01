@@ -13,8 +13,9 @@ encoding = tiktoken.get_encoding("cl100k_base")
 
 
 class ProcessingStatusEnum(str, Enum):
-    chunking = "chunking"
-    embedding = "embedding"
+    processing = "processing"
+    embedding = "embedding"  # Used for processing while we transition to new statuses
+    failed = "failed"
     complete = "complete"
 
 
@@ -23,6 +24,9 @@ class File(PersistableModel):
 
     key: str = Field(description="file key")
     bucket: str = Field(description="s3 bucket")
+    ingest_status: ProcessingStatusEnum | None = Field(
+        description="Status of file ingest for files loaded by new worker", default=None
+    )
 
 
 class Link(BaseModel):

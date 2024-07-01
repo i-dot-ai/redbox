@@ -24,6 +24,7 @@ from redbox_app.redbox_core.models import (
     ChatHistory,
     ChatMessage,
     ChatRoleEnum,
+    Citation,
     File,
     StatusEnum,
     User,
@@ -282,11 +283,16 @@ def post_message(request: HttpRequest) -> HttpResponse:
 
     doc_uuids: list[uuid.UUID] = [doc.file_uuid for doc in response_data.source_documents]
     files: list[File] = File.objects.filter(core_file_uuid__in=doc_uuids, user=request.user)
-    llm_message.source_files.set(files)
 
     for file in files:
         file.last_referenced = timezone.now()
         file.save()
+
+    for doc in response_data.source_documents:
+        new_citation = Citation(
+            file=File.objects.get(core_file_uuid=doc.file_uuid), chat_message=llm_message, text=doc.page_content
+        )
+        new_citation.save()
 
     return redirect(reverse("chats", args=(session.id,)))
 

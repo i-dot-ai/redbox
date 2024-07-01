@@ -180,6 +180,12 @@ variable "publicly_accessible" {
   description = "Flag to determine if the database is publicly accessible"
 }
 
+variable "context_window_size" {
+    type        = number
+    default     = 8000
+    description = "The size of the AI's context window"
+}
+
 variable "rag_k" {
     type        = number
     default     = 15

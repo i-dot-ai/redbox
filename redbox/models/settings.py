@@ -74,6 +74,7 @@ class AISettings(BaseModel):
 
     model_config = SettingsConfigDict(frozen=True)
 
+    context_window_size: int = 10_000
     rag_k: int = 5
     rag_num_candidates: int = 10
     rag_desired_chunk_size: int = 300

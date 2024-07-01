@@ -1,9 +1,9 @@
 import logging
 import os
-from collections.abc import Callable
-from functools import lru_cache, partial
-from typing import Annotated, Any, TypedDict
+from functools import lru_cache
+from typing import Annotated
 
+import tiktoken
 from elasticsearch import Elasticsearch
 from fastapi import Depends
 from langchain_community.chat_models import ChatLiteLLM
@@ -11,13 +11,12 @@ from langchain_community.embeddings import SentenceTransformerEmbeddings
 from langchain_core.embeddings import Embeddings
 from langchain_core.retrievers import BaseRetriever
 from langchain_core.runnables import ConfigurableField
-from langchain_elasticsearch import ApproxRetrievalStrategy, ElasticsearchRetriever, ElasticsearchStore
+from langchain_elasticsearch import ApproxRetrievalStrategy, ElasticsearchStore
 
+from core_api.src.retriever import AllElasticsearchRetriever, ParameterisedElasticsearchRetriever
 from redbox.model_db import MODEL_PATH
 from redbox.models import Settings
-from redbox.models.file import UUID
 from redbox.storage import ElasticsearchStorageHandler
-from redbox.storage.elasticsearch import hit_to_chunk
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger()
@@ -70,22 +69,8 @@ def get_vector_store(
     )
 
 
-class ESQuery(TypedDict):
-    question: str
-    file_uuids: list[UUID]
-    user_uuid: UUID
-
-
-class ESParams(TypedDict):
-    size: int
-    num_candidates: int
-    match_boost: float
-    knn_boost: float
-    similarity_threshold: float
-
-
 @lru_cache(1)
-def get_es_retriever(
+def get_parameterised_retriever(
     env: Annotated[Settings, Depends(get_env)], es: Annotated[Elasticsearch, Depends(get_elasticsearch_client)]
 ) -> BaseRetriever:
     """Creates an Elasticsearch retriever runnable.
@@ -94,74 +79,6 @@ def get_es_retriever(
 
     Runnable returns a list of Chunks.
     """
-
-    def es_query(query: ESQuery, params: ESParams) -> dict[str, Any]:
-        vector = get_embedding_model(env).embed_query(query["question"])
-
-        query_filter = [
-            {
-                "bool": {
-                    "should": [
-                        {"term": {"creator_user_uuid.keyword": str(query["user_uuid"])}},
-                        {"term": {"metadata.creator_user_uuid.keyword": str(query["user_uuid"])}},
-                    ]
-                }
-            }
-        ]
-
-        if len(query["file_uuids"]) != 0:
-            query_filter.append(
-                {
-                    "bool": {
-                        "should": [
-                            {"terms": {"parent_file_uuid.keyword": [str(uuid) for uuid in query["file_uuids"]]}},
-                            {
-                                "terms": {
-                                    "metadata.parent_file_uuid.keyword": [str(uuid) for uuid in query["file_uuids"]]
-                                }
-                            },
-                        ]
-                    }
-                }
-            )
-
-        return {
-            "size": params["size"],
-            "query": {
-                "bool": {
-                    "should": [
-                        {
-                            "match": {
-                                "text": {
-                                    "query": query["question"],
-                                    "boost": params["match_boost"],
-                                }
-                            }
-                        },
-                        {
-                            "knn": {
-                                "field": "embedding",
-                                "query_vector": vector,
-                                "num_candidates": params["num_candidates"],
-                                "filter": query_filter,
-                                "boost": params["knn_boost"],
-                                "similarity": params["similarity_threshold"],
-                            }
-                        },
-                    ],
-                    "filter": query_filter,
-                }
-            },
-        }
-
-    class ParameterisedElasticsearchRetriever(ElasticsearchRetriever):
-        params: ESParams
-        body_func: Callable[[str], dict]
-
-        def __init__(self, **kwargs: Any) -> None:
-            super().__init__(**kwargs)
-            self.body_func = partial(self.body_func, params=self.params)
-
     default_params = {
         "size": env.ai.rag_k,
         "num_candidates": env.ai.rag_num_candidates,
@@ -169,17 +86,25 @@ def get_es_retriever(
         "knn_boost": 1,
         "similarity_threshold": 0,
     }
-
     return ParameterisedElasticsearchRetriever(
         es_client=es,
         index_name=f"{env.elastic_root_index}-chunk",
-        body_func=es_query,
-        document_mapper=hit_to_chunk,
         params=default_params,
+        embedding_model=get_embedding_model(env),
     ).configurable_fields(
         params=ConfigurableField(
             id="params", name="Retriever parameters", description="A dictionary of parameters to use for the retriever."
         )
+    )
+
+
+@lru_cache(1)
+def get_all_chunks_retriever(
+    env: Annotated[Settings, Depends(get_env)], es: Annotated[Elasticsearch, Depends(get_elasticsearch_client)]
+):
+    return AllElasticsearchRetriever(
+        es_client=es,
+        index_name=f"{env.elastic_root_index}-chunk",
     )
 
 
@@ -219,3 +144,8 @@ def get_llm(env: Annotated[Settings, Depends(get_env)]) -> ChatLiteLLM:
         log.exception(msg)
         raise ValueError(msg)
     return llm
+
+
+@lru_cache(1)
+def get_tokeniser() -> tiktoken.Encoding:
+    return tiktoken.get_encoding("cl100k_base")

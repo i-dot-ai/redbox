@@ -19,6 +19,7 @@ from redbox_app.redbox_core.models import (
     ChatHistory,
     ChatMessage,
     ChatRoleEnum,
+    Citation,
     File,
     StatusEnum,
     User,
@@ -261,7 +262,9 @@ def test_post_message_to_existing_session(
         rag_url,
         json={
             "output_text": "Good afternoon, Mr. Amor.",
-            "source_documents": [{"file_uuid": str(uploaded_file.core_file_uuid)}],
+            "source_documents": [
+                {"file_uuid": str(uploaded_file.core_file_uuid), "page_content": "Here is a source chunk"}
+            ],
         },
     )
     initial_file_expiry_date = File.objects.get(core_file_uuid=uploaded_file.core_file_uuid).expires_at
@@ -279,6 +282,12 @@ def test_post_message_to_existing_session(
         ChatMessage.objects.get(chat_history__id=session_id, role=ChatRoleEnum.ai).source_files.first() == uploaded_file
     )
     assert initial_file_expiry_date != File.objects.get(core_file_uuid=uploaded_file.core_file_uuid).expires_at
+    assert (
+        Citation.objects.get(
+            chat_message=ChatMessage.objects.get(chat_history__id=session_id, role=ChatRoleEnum.ai)
+        ).text
+        == "Here is a source chunk"
+    )
 
 
 @pytest.mark.django_db()
@@ -296,7 +305,9 @@ def test_post_message_with_files_selected(
         rag_url,
         json={
             "output_text": "Only those, then.",
-            "source_documents": [{"file_uuid": str(f.core_file_uuid)} for f in selected_files],
+            "source_documents": [
+                {"file_uuid": str(f.core_file_uuid), "page_content": "Here is a source chunk"} for f in selected_files
+            ],
         },
     )
 
