@@ -63,7 +63,7 @@ jobs:
     needs:
       - set-vars
       - start-runner
-    uses: i-dot-ai/redbox-copilot/.github/workflows/integration.yml@25959ecaa0dc66e28b71fda9e09587a14eed4dbd
+    uses: i-dot-ai/redbox-copilot/.github/workflows/integration.yml@3d65c723f5043c0a07982af2974d28e57bd138d7
     with:
       COMMIT_HASH: ${{ github.event.inputs.commit-hash }}
 
