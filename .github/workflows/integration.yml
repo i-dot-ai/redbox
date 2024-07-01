@@ -74,8 +74,6 @@ jobs:
       env:
         workspace: ${{ github.workspace }}
       run: |
-        . ./.github/.github.env
-        ...
         echo "My workspace is ${{ env.workspace }}"
 
     - name: Build Containers
