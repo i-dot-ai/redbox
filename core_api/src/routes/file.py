@@ -193,7 +193,6 @@ def delete_file(file_uuid: UUID, user_uuid: Annotated[UUID, Depends(get_user_uui
     if file.creator_user_uuid != user_uuid:
         return file_not_found_response(file_uuid=file_uuid)
 
-    s3.delete_object(Bucket=env.bucket_name, Key=file.key)
     storage_handler.delete_item(file)
 
     chunks = storage_handler.get_file_chunks(file.uuid, user_uuid)

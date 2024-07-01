@@ -1,11 +1,13 @@
-from functools import partial
 from typing import Any, TypedDict
+from uuid import UUID
 
-from langchain_core.documents.base import Document
 from langchain_core.embeddings.embeddings import Embeddings
-from langchain_elasticsearch.retrievers import ElasticsearchRetriever
 
-from .base import ESQuery
+
+class ESQuery(TypedDict):
+    question: str
+    file_uuids: list[UUID]
+    user_uuid: UUID
 
 
 class ESParams(TypedDict):
@@ -16,7 +18,40 @@ class ESParams(TypedDict):
     similarity_threshold: float
 
 
-def parameterised_body_func(embedding_model: Embeddings, params: ESParams, query: ESQuery) -> dict[str, Any]:
+def get_all(query: ESQuery) -> dict[str, Any]:
+    """
+    Returns a parameterised elastic query that will return everything it matches.
+
+    As it's used in summarisation, it excludes embeddings.
+    """
+    query_filter = [
+        {
+            "bool": {
+                "should": [
+                    {"term": {"creator_user_uuid.keyword": str(query["user_uuid"])}},
+                    {"term": {"metadata.creator_user_uuid.keyword": str(query["user_uuid"])}},
+                ]
+            }
+        }
+    ]
+    if len(query["file_uuids"]) != 0:
+        query_filter.append(
+            {
+                "bool": {
+                    "should": [
+                        {"terms": {"parent_file_uuid.keyword": [str(uuid) for uuid in query["file_uuids"]]}},
+                        {"terms": {"metadata.parent_file_uuid.keyword": [str(uuid) for uuid in query["file_uuids"]]}},
+                    ]
+                }
+            }
+        )
+    return {
+        "_source": {"excludes": ["embedding"]},
+        "query": {"bool": {"must": {"match_all": {}}, "filter": query_filter}},
+    }
+
+
+def get_some(embedding_model: Embeddings, params: ESParams, query: ESQuery) -> dict[str, Any]:
     vector = embedding_model.embed_query(query["question"])
 
     query_filter = [
@@ -70,20 +105,3 @@ def parameterised_body_func(embedding_model: Embeddings, params: ESParams, query
             }
         },
     }
-
-
-# This is used in tests to avoid an issue when using with_config
-# It is a simple doc mapper, equivalent to setting content_field to 'text'
-# We don't get it in the app so there's something weird going on with tests
-def parameterised_document_mapper(hit: dict) -> Document:
-    return Document(page_content=hit["_source"]["text"], metadata=hit)
-
-
-class ParameterisedElasticsearchRetriever(ElasticsearchRetriever):
-    params: ESParams
-    embedding_model: Embeddings
-
-    def __init__(self, **kwargs: Any) -> None:
-        kwargs["body_func"] = parameterised_body_func  # Hack to pass validation before overwrite
-        super().__init__(**kwargs)
-        self.body_func = partial(parameterised_body_func, self.embedding_model, self.params)

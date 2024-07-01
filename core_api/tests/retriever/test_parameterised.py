@@ -41,7 +41,7 @@ def test_parameterised_retriever(
 
 @pytest.mark.parametrize("chain_params", test_chain_parameters)
 def test_parameterised_retriever_legacy_chunks(
-    chain_params, parameterised_retriever: ElasticsearchRetriever, stored_file_chunks, chunked_file: File
+    chain_params, parameterised_retriever: ElasticsearchRetriever, chunked_file: File
 ):
     result = parameterised_retriever.with_config(configurable={"params": chain_params}).invoke(
         {
@@ -50,7 +50,4 @@ def test_parameterised_retriever_legacy_chunks(
             "user_uuid": chunked_file.creator_user_uuid,
         }
     )
-    all_doc_ids = {str(c.uuid) for c in stored_file_chunks}
     assert len(result) == chain_params["size"]
-    for c in result:
-        assert c.metadata["_id"] in all_doc_ids

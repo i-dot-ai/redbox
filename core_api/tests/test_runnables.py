@@ -10,6 +10,7 @@ from core_api.src.runnables import (
     make_condense_rag_runnable,
 )
 from redbox.models.chain import ChainInput
+from redbox.models.chat import ChatRoute
 from redbox.models.errors import AIError
 
 
@@ -117,7 +118,7 @@ def test_make_condense_rag_runnable(es_client, mock_llm, chunked_file):
         }
     )
     assert response["response"] == "<<TESTING>>"
-    assert {str(chunked_file.uuid)} == {chunk.metadata["_source"]["parent_file_uuid"] for chunk in response["sources"]}
+    assert {str(chunked_file.uuid)} == {chunk.metadata["parent_file_uuid"] for chunk in response["sources"]}
 
 
 def test_rag_runnable(es_client, mock_llm, chunked_file, env):
@@ -141,12 +142,34 @@ def test_rag_runnable(es_client, mock_llm, chunked_file, env):
     )
 
     assert response["response"] == "<<TESTING>>"
-    assert {str(chunked_file.uuid)} == {
-        chunk.metadata["_source"]["parent_file_uuid"] for chunk in response["source_documents"]
-    }
+    assert {str(chunked_file.uuid)} == {chunk.metadata["parent_file_uuid"] for chunk in response["source_documents"]}
 
 
-def test_summary_runnable(all_chunks_retriever, mock_llm, chunked_file, env):
+def test_summary_runnable_large_file(all_chunks_retriever, mock_llm, large_chunked_file, env):
+    chain = build_summary_chain(
+        llm=mock_llm, all_chunks_retriever=all_chunks_retriever, tokeniser=get_tokeniser(), env=env
+    )
+
+    previous_history = [
+        {"text": "Lorem ipsum dolor sit amet.", "role": "user"},
+        {"text": "Consectetur adipiscing elit.", "role": "ai"},
+        {"text": "Donec cursus nunc tortor.", "role": "user"},
+    ]
+
+    response = chain.invoke(
+        input=ChainInput(
+            question="Who are all these people?",
+            chat_history=previous_history,
+            file_uuids=[large_chunked_file.uuid],
+            user_uuid=large_chunked_file.creator_user_uuid,
+        ).model_dump()
+    )
+
+    assert response["response"] == "<<TESTING>>"
+    assert response["route_name"] == ChatRoute.map_reduce_summarise
+
+
+def test_summary_runnable_small_file(all_chunks_retriever, mock_llm, chunked_file, env):
     chain = build_summary_chain(
         llm=mock_llm, all_chunks_retriever=all_chunks_retriever, tokeniser=get_tokeniser(), env=env
     )
@@ -167,3 +190,4 @@ def test_summary_runnable(all_chunks_retriever, mock_llm, chunked_file, env):
     )
 
     assert response["response"] == "<<TESTING>>"
+    assert response["route_name"] == ChatRoute.stuff_summarise

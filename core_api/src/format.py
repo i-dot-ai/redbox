@@ -25,10 +25,7 @@ def reduce_chunks_by_tokens(chunks: list[Document] | None, chunk: Document, max_
     # This will all be rolled up into a SummarisationChunkRetriever or similar in future work and this ugliness
     # will all be gone
     def get_chunk_tokens(d: Document):
-        if d.metadata is not None and d.metadata.get("_source", {}).get("metadata") is not None:
-            return d.metadata["_source"]["metadata"].get("token_count") or len(encoding.encode(d.page_content))
-        else:
-            return len(encoding.encode(d.page_content))
+        return d.metadata.get("token_count", len(encoding.encode(d.page_content)))
 
     last_chunk = chunks[-1]
 

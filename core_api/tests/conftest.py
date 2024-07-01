@@ -14,11 +14,9 @@ from langchain_core.documents.base import Document
 from langchain_core.embeddings.fake import FakeEmbeddings
 from langchain_core.runnables import ConfigurableField
 from langchain_elasticsearch import ElasticsearchStore
-from langchain_elasticsearch.retrievers import ElasticsearchRetriever
 
 from core_api.src.app import app as application
-from core_api.src.retriever import ParameterisedElasticsearchRetriever, get_all_chunks_query
-from core_api.src.retriever.parameterised import parameterised_document_mapper
+from core_api.src.retriever import AllElasticsearchRetriever, ParameterisedElasticsearchRetriever
 from core_api.tests.retriever.data import ALL_CHUNKS_RETRIEVER_DOCUMENTS, PARAMETERISED_RETRIEVER_DOCUMENTS
 from redbox.models import Chunk, File, Settings
 from redbox.storage import ElasticsearchStorageHandler
@@ -87,6 +85,13 @@ def file(s3_client, file_pdf_path: Path, alice, env) -> File:
 
 
 @pytest.fixture()
+def large_stored_file(elasticsearch_storage_handler, file) -> File:
+    elasticsearch_storage_handler.write_item(file)
+    elasticsearch_storage_handler.refresh()
+    return file
+
+
+@pytest.fixture()
 def stored_file_1(elasticsearch_storage_handler, file) -> File:
     elasticsearch_storage_handler.write_item(file)
     elasticsearch_storage_handler.refresh()
@@ -105,6 +110,23 @@ def stored_file_chunks(stored_file_1, embedding_model_dim) -> list[Chunk]:
         chunks.append(
             Chunk(
                 text="hello",
+                index=i,
+                embedding=[1] * embedding_model_dim,
+                parent_file_uuid=stored_file_1.uuid,
+                creator_user_uuid=stored_file_1.creator_user_uuid,
+                metadata={"parent_doc_uuid": str(stored_file_1.uuid)},
+            )
+        )
+    return chunks
+
+
+@pytest.fixture()
+def stored_large_file_chunks(stored_file_1, embedding_model_dim) -> list[Chunk]:
+    chunks: list[Chunk] = []
+    for i in range(5):
+        chunks.append(
+            Chunk(
+                text="hello " * 100,
                 index=i,
                 embedding=[1] * embedding_model_dim,
                 parent_file_uuid=stored_file_1.uuid,
@@ -165,6 +187,15 @@ def chunked_file(elasticsearch_storage_handler, stored_file_chunks, stored_file_
 
 
 @pytest.fixture()
+def large_chunked_file(elasticsearch_storage_handler, stored_large_file_chunks, stored_file_1) -> File:
+    for chunk in stored_large_file_chunks:
+        elasticsearch_storage_handler.write_item(chunk)
+    elasticsearch_storage_handler.refresh()
+    time.sleep(1)
+    return stored_file_1
+
+
+@pytest.fixture()
 def file_pdf_path() -> Path:
     return Path(__file__).parents[2] / "tests" / "data" / "pdf" / "Cabinet Office - Wikipedia.pdf"
 
@@ -185,12 +216,10 @@ def chunk_index_name(env):
 
 
 @pytest.fixture()
-def all_chunks_retriever(env, es_client) -> ElasticsearchRetriever:
-    return ElasticsearchRetriever(
+def all_chunks_retriever(env, es_client) -> AllElasticsearchRetriever:
+    return AllElasticsearchRetriever(
         es_client=es_client,
         index_name=f"{env.elastic_root_index}-chunk",
-        body_func=get_all_chunks_query,
-        content_field="text",
     )
 
 
@@ -207,8 +236,7 @@ def parameterised_retriever(env, es_client, embedding_model):
         es_client=es_client,
         index_name=f"{env.elastic_root_index}-chunk",
         params=default_params,
-        embedding_model=embedding_model,
-        document_mapper=parameterised_document_mapper,
+        embedding_model=FakeEmbeddings(size=embedding_model_dim),
     ).configurable_fields(
         params=ConfigurableField(
             id="params", name="Retriever parameters", description="A dictionary of parameters to use for the retriever."

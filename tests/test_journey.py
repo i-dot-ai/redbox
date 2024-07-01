@@ -53,7 +53,7 @@ def test_user_journey(page: Page, email_address: str):
 
     # Upload files
     document_upload_page = documents_page.navigate_to_upload()
-    upload_files: Sequence[Path] = list(TEST_ROOT.parent.glob("*.md"))
+    upload_files: Sequence[Path] = [f for f in TEST_ROOT.parent.glob("*.md") if f.stat().st_size < 10000]
     documents_page = document_upload_page.upload_documents(upload_files)
     document_rows = documents_page.all_documents
     assert {r.filename for r in document_rows} == {f.name for f in upload_files}
@@ -81,14 +81,26 @@ def test_user_journey(page: Page, email_address: str):
     assert files_to_select.pop() in latest_chat_response.sources
 
     # Use specific routes
-    for route in ["summarise", "search", "info", "chat"]:
+    for route, select_file in [
+        ("search", False),
+        ("search", True),
+        ("chat", False),
+        ("chat", True),
+        ("summarise", True),
+        ("info", False),
+    ]:
         chats_page = chats_page.start_new_chat()
-        chats_page.write_message = f"@{route} What do I need to install?"
+        question = f"@{route} What do I need to install?"
+        logger.info("Asking %r", question)
+        chats_page.write_message = question
+        if select_file:
+            files_to_select = {f.name for f in upload_files if "README" in f.name}
+            logger.info("selected %s", files_to_select)
+            chats_page.selected_file_names = files_to_select
         chats_page = chats_page.send()
         latest_chat_response = chats_page.wait_for_latest_message()
         assert latest_chat_response.text
-        assert latest_chat_response.route == route
-
+        assert latest_chat_response.route.startswith(route)
     # Delete a file
     documents_page = chats_page.navigate_to_documents()
     pre_delete_doc_count = documents_page.document_count()

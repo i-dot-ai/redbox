@@ -16,8 +16,6 @@ from langchain_openai.embeddings import AzureOpenAIEmbeddings
 from redbox.models import Settings
 from redbox.storage import ElasticsearchStorageHandler
 
-from .retriever import ParameterisedElasticsearchRetriever, get_all_chunks_query
-
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger()
 
@@ -96,7 +94,6 @@ def get_parameterised_retriever(
         index_name=f"{env.elastic_root_index}-chunk",
         params=default_params,
         embedding_model=get_embedding_model(env),
-        content_field="text",
     ).configurable_fields(
         params=ConfigurableField(
             id="params", name="Retriever parameters", description="A dictionary of parameters to use for the retriever."
@@ -108,8 +105,9 @@ def get_parameterised_retriever(
 def get_all_chunks_retriever(
     env: Annotated[Settings, Depends(get_env)], es: Annotated[Elasticsearch, Depends(get_elasticsearch_client)]
 ):
-    return ElasticsearchRetriever(
-        es_client=es, index_name=f"{env.elastic_root_index}-chunk", body_func=get_all_chunks_query, content_field="text"
+    return AllElasticsearchRetriever(
+        es_client=es,
+        index_name=f"{env.elastic_root_index}-chunk",
     )
 
 
