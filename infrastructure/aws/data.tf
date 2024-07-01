@@ -45,6 +45,7 @@ locals {
   }
 
   worker_environment_variables = {
+    "EMBEDDING_DOCUMENT_FIELD_NAME": var.embedding_document_field_name,
     "ELASTIC_ROOT_INDEX" : "redbox-data-${terraform.workspace}",
     "BUCKET_NAME" : aws_s3_bucket.user_data.bucket,
     "OBJECT_STORE" : "s3",
