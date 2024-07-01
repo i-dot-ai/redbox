@@ -372,6 +372,31 @@ def test_view_session_with_documents(chat_message: ChatMessage, client: Client):
 
 
 @pytest.mark.django_db()
+def test_user_can_see_their_own_citations(chat_message_with_citation: ChatMessage, alice: User, client: Client):
+    # Given
+    client.force_login(alice)
+
+    # When
+    response = client.get(f"/citations/{chat_message_with_citation.id}/")
+
+    # Then
+    assert response.status_code == HTTPStatus.OK
+
+
+@pytest.mark.django_db()
+def test_user_cannot_see_other_users_citations(chat_message_with_citation: ChatHistory, bob: User, client: Client):
+    # Given
+    client.force_login(bob)
+
+    # When
+    response = client.get(f"/citations/{chat_message_with_citation.id}/")
+
+    # Then
+    assert response.status_code == HTTPStatus.FOUND
+    assert response.headers.get("Location") == "/chats/"
+
+
+@pytest.mark.django_db()
 def test_check_demographics_redirect_if_unpopulated(client: Client, alice: User):
     # Given
     client.force_login(alice)

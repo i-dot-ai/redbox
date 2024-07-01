@@ -7721,6 +7721,50 @@ body {
   width: 1.5rem;
 }
 
+/* Citations page */
+.rb-citations {
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+}
+
+.rb-citations__item {
+  border-top: 1px solid #E5E7EB;
+  padding: 1rem 0;
+}
+
+.rb-citations__item:first-child {
+  border-top: none;
+}
+
+/* These will be removed on the next Design System update */
+.iai-chat-bubble__citations-button {
+  border: 1px solid #6B7280;
+  border-radius: 1rem;
+  color: #6B7280;
+  display: flex;
+  font-size: 0.75rem;
+  margin-top: 1rem;
+  padding: 0.75rem 1rem;
+  text-align: center;
+  text-decoration: none;
+}
+
+.iai-chat-bubble__citations-button:hover {
+  border-color: var(--iai-product-colour);
+  color: var(--iai-product-colour);
+}
+
+@media (min-width: 1020px) {
+  .iai-chat-bubble__citations-button {
+    margin-top: 0;
+  }
+  .iai-display-flex-from-desktop {
+    align-items: center;
+    display: flex;
+    justify-content: space-between;
+  }
+}
 /* i.AI Design System */
 :root {
   --iai-product-colour: #9C0000;
@@ -8631,7 +8675,7 @@ td:has(button[aria-expanded=true]) + .iai-themes-list__detail {
   border-color: var(--iai-product-colour, var(--iai-colour-brand));
 }
 
-.govuk-breadcrumbs__link, .govuk-breadcrumbs__link:visited {
+.govuk-breadcrumbs__link:link {
   color: var(--iai-product-colour, var(--iai-colour-brand));
 }
 
