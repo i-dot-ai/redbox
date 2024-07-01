@@ -3,6 +3,9 @@
 
 name: Integration Tests
 
+env:
+  ENVIRONMENT: INTEGRATION
+
 on:
   # weekday mealtimes
   schedule:
@@ -15,7 +18,7 @@ on:
         required: false
         type: string
         default: refs/heads/main
- # or on push to main
+  # or on push to main
   push:
     branches:
       - 'main'
