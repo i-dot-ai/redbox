@@ -14,6 +14,7 @@ from redbox_app.redbox_core.models import (
     ChatHistory,
     ChatMessage,
     ChatRoleEnum,
+    Citation,
     File,
     User,
 )
@@ -97,6 +98,13 @@ def chat_history(alice: User) -> ChatHistory:
 def chat_message(chat_history: ChatHistory, uploaded_file: File) -> ChatMessage:
     chat_message = ChatMessage.objects.create(chat_history=chat_history, text="A question?", role=ChatRoleEnum.user)
     chat_message.source_files.set([uploaded_file])
+    return chat_message
+
+
+@pytest.fixture()
+def chat_message_with_citation(chat_history: ChatHistory, uploaded_file: File) -> ChatMessage:
+    chat_message = ChatMessage.objects.create(chat_history=chat_history, text="An answer.", role=ChatRoleEnum.ai)
+    Citation.objects.create(file=uploaded_file, chat_message=chat_message, text="Lorem ipsum.")
     return chat_message
 
 

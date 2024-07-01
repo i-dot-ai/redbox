@@ -256,6 +256,9 @@ class CitationsView(View):
         message = ChatMessage.objects.get(id=message_id)
         citations = Citation.objects.filter(chat_message__id=message_id)
 
+        if message.chat_history.users != request.user:
+            return redirect(reverse("chats"))
+
         context = {"message": message, "citations": citations}
 
         return render(
