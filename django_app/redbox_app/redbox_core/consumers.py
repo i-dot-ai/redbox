@@ -93,11 +93,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 full_reply.append(await self.handle_text(response))
             elif response.resource_type == "documents":
                 citations += await self.handle_documents(response, user)
-            elif (
-                response.resource_type == "route_name" and user.is_staff
-            ):  # TODO(@rachaelcodes): remove is_staff conditional with new route design
-                # https://technologyprogramme.atlassian.net/browse/REDBOX-419
-                route = await self.handle_route(response)
+            elif response.resource_type == "route_name":
+                route = await self.handle_route(response, user.is_staff)
             elif response.resource_type == "error":
                 raise CoreError(response.data)
         return "".join(full_reply), citations, route
@@ -114,8 +111,11 @@ class ChatConsumer(AsyncWebsocketConsumer):
         await self.send_to_client("text", response.data)
         return response.data
 
-    async def handle_route(self, response: CoreChatResponse) -> str:
-        await self.send_to_client("route", response.data)
+    async def handle_route(self, response: CoreChatResponse, show_route: bool) -> str:
+        # TODO(@rachaelcodes): remove is_staff conditional with new route design
+        # https://technologyprogramme.atlassian.net/browse/REDBOX-419
+        if show_route:
+            await self.send_to_client("route", response.data)
         return response.data
 
     async def send_to_client(self, message_type: str, data: str | Mapping[str, Any] | None = None) -> None:

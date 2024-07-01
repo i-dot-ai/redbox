@@ -29,9 +29,9 @@ def _collect_static():
 
 @pytest.fixture()
 def create_user():
-    def _create_user(email, date_joined_iso):
+    def _create_user(email, date_joined_iso, is_staff=False):
         date_joined = datetime.fromisoformat(date_joined_iso).astimezone(UTC)
-        return User.objects.create_user(email=email, date_joined=date_joined)
+        return User.objects.create_user(email=email, date_joined=date_joined, is_staff=is_staff)
 
     return _create_user
 
@@ -66,6 +66,11 @@ def user_with_demographic_data(business_unit: BusinessUnit) -> User:
     return User.objects.create_user(
         email="mrs.tiggywinkle@example.com", grade="DG", business_unit=business_unit, profession="AN"
     )
+
+
+@pytest.fixture()
+def staff_user(create_user):
+    return create_user("staff@example.com", "2000-01-01", True)
 
 
 @pytest.fixture()
@@ -130,13 +135,17 @@ def original_file() -> UploadedFile:
 @pytest.fixture()
 def chat_history_with_files(chat_history: ChatHistory, several_files: Sequence[File]) -> ChatHistory:
     ChatMessage.objects.create(chat_history=chat_history, text="A question?", role=ChatRoleEnum.user)
-    chat_message = ChatMessage.objects.create(chat_history=chat_history, text="An answer.", role=ChatRoleEnum.ai)
+    chat_message = ChatMessage.objects.create(
+        chat_history=chat_history, text="An answer.", role=ChatRoleEnum.ai, route="search"
+    )
     chat_message.source_files.set(several_files[0::2])
     chat_message = ChatMessage.objects.create(
         chat_history=chat_history, text="A second question?", role=ChatRoleEnum.user
     )
     chat_message.selected_files.set(several_files[0:2])
-    chat_message = ChatMessage.objects.create(chat_history=chat_history, text="A second answer.", role=ChatRoleEnum.ai)
+    chat_message = ChatMessage.objects.create(
+        chat_history=chat_history, text="A second answer.", role=ChatRoleEnum.ai, route="search"
+    )
     chat_message.source_files.set([several_files[2]])
     return chat_history
 
