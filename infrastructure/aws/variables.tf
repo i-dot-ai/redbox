@@ -269,3 +269,9 @@ variable "embedding_document_field_name" {
     default     = "azure_embedding"
     description = "embedding document field name"
 }
+
+variable "embedding_max_retries" {
+  type          = string
+  default       = 10
+  description   = "Number of retries to external embedding services (rate limiting)"
+}
