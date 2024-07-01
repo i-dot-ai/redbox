@@ -74,7 +74,8 @@ class ChatRoute(StrEnum):
     map_reduce_summarise = "summarise/large_document"
     extract = "extract"
     chat = "chat"
-    supasearch = "supasearch"
+    holmes = "holmes"
+    columbo = "columbo"
 
 
 class ChatResponse(BaseModel):
