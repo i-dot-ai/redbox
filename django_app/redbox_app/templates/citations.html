@@ -2,7 +2,6 @@
 {% extends "base.html" %}
 {% from "macros/govuk-button.html" import govukButton %}
 {% from "macros/govuk-notification-banner.html" import govukNotificationBanner %}
-{% from "macros/use-trusted-types.html" import use_trusted_types %}
 
 
 {% block content %}
@@ -20,7 +19,6 @@
 
 </div>
 
-{{ use_trusted_types() }}
 <script src="{{ static('js/libs/showdown.min.js') }}"></script>
 {% if COMPRESSION_ENABLED %}
   {% compress js %}

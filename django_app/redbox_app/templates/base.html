@@ -1,4 +1,5 @@
 {% from "macros/iai-top-nav.html" import iaiTopNav %}
+{% from "macros/use-trusted-types.html" import use_trusted_types %}
 
 <!DOCTYPE html>
 <html lang="en" class="govuk-template">
@@ -30,9 +31,6 @@
     <script defer
     data-domain="redbox.ai.cabinetoffice.gov.uk" src="https://plausible.io/js/script.pageview-props.tagged-events.outbound-links.file-downloads.js"></script>
   {% endif %}
-
-  <script type="module" src="{{static('js/libs/govuk-frontend.min.js')}}"></script>
-  <script type="module" src="{{static('js/libs/iai-design-system.js')}}"></script>
 
 </head>
 
@@ -114,6 +112,10 @@
       </div>
     </div>
   </footer>
+
+  {{ use_trusted_types() }}
+  <script type="module" src="{{static('js/libs/govuk-frontend.min.js')}}"></script>
+  <script type="module" src="{{static('js/libs/iai-design-system.js')}}"></script>
 
 </body>
 
