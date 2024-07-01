@@ -70,7 +70,7 @@ def get_vector_store(
         index_name=f"{env.elastic_root_index}-chunk",
         embedding=get_embedding_model(env),
         strategy=strategy,
-        vector_query_field="embedding",
+        vector_query_field=env.embedding_document_field_name,
     )
 
 
