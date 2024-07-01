@@ -52,7 +52,7 @@ def app_client() -> TestClient:
     return TestClient(application)
 
 
-@pytest.fixture()
+@pytest.fixture(scope="session")
 def alice() -> UUID:
     return uuid4()
 
@@ -98,7 +98,7 @@ def stored_file_1(elasticsearch_storage_handler, file) -> File:
     return file
 
 
-@pytest.fixture()
+@pytest.fixture(scope="session")
 def embedding_model_dim() -> int:
     return 3072  # 3-large default size
 
@@ -205,7 +205,7 @@ def mock_llm():
     return FakeListLLM(responses=["<<TESTING>>"] * 128)
 
 
-@pytest.fixture()
+@pytest.fixture(scope="session")
 def embedding_model(embedding_model_dim) -> SentenceTransformerEmbeddings:
     return FakeEmbeddings(size=embedding_model_dim)
 
@@ -224,7 +224,7 @@ def all_chunks_retriever(env, es_client) -> AllElasticsearchRetriever:
 
 
 @pytest.fixture()
-def parameterised_retriever(env, es_client, embedding_model):
+def parameterised_retriever(env, es_client, embedding_model_dim):
     default_params = {
         "size": env.ai.rag_k,
         "num_candidates": env.ai.rag_num_candidates,

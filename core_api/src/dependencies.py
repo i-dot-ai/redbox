@@ -10,9 +10,10 @@ from langchain_community.chat_models import ChatLiteLLM
 from langchain_core.embeddings import Embeddings
 from langchain_core.retrievers import BaseRetriever
 from langchain_core.runnables import ConfigurableField
-from langchain_elasticsearch import ApproxRetrievalStrategy, ElasticsearchRetriever, ElasticsearchStore
+from langchain_elasticsearch import ApproxRetrievalStrategy, ElasticsearchStore
 from langchain_openai.embeddings import AzureOpenAIEmbeddings
 
+from core_api.src.retriever.retrievers import AllElasticsearchRetriever, ParameterisedElasticsearchRetriever
 from redbox.models import Settings
 from redbox.storage import ElasticsearchStorageHandler
 
