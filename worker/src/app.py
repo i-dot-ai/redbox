@@ -41,8 +41,8 @@ def get_embeddings():
         api_version=env.azure_api_version_embeddings,
         model=env.azure_embedding_model,
         max_retries=env.embedding_max_retries,
-        retry_min_seconds=4,
-        retry_max_seconds=30,
+        retry_min_seconds=env.embedding_retry_min_seconds,
+        retry_max_seconds=env.embedding_retry_max_seconds,
     )
 
 
