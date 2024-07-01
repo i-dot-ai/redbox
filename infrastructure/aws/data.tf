@@ -6,6 +6,7 @@ locals {
   core_api_environment_variables = merge(
     local.worker_environment_variables,
     {
+      "EMBEDDING_DOCUMENT_FIELD_NAME": var.embedding_document_field_name,
       "OPENAI_API_VERSION" : var.openai_api_version,
       "AZURE_OPENAI_MODEL" : var.azure_openai_model,
       "AI__CONTEXT_WINDOW_SIZE" : var.context_window_size,

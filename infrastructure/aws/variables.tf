@@ -263,3 +263,9 @@ variable "llm_max_tokens" {
     default     = 1024
     description = "LLM token length"
 }
+
+variable "embedding_document_field_name" {
+    type        = string
+    default     = "azure_embedding"
+    description = "embedding document field name"
+}
