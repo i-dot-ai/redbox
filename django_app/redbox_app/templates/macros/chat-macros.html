@@ -13,20 +13,24 @@
         <markdown-converter class="iai-chat-bubble__text">{{ text }}</markdown-converter>
         {% if citations %}
             <h3 class="iai-chat-bubble__sources-heading govuk-heading-s govuk-!-margin-bottom-1">Sources</h3>
-            <ul class="govuk-list govuk-list--bullet govuk-!-margin-bottom-0">
-              {% for source, citations in citations|groupby('file') %}
-                <li class="govuk-!-margin-bottom-0">
-                  {% if source.get_status_text() == "Complete" %}
-                    <a class="iai-chat-bubbles__sources-link govuk-link"
-                      href="{{ source.url }}">{{ source.original_file_name }}</a>
-                  {% else %}
-                    <span class="iai-chat-bubbles__sources-link">{{ source.original_file_name }}</span>
-                  {% endif %}
-                </li>
-                {% endfor %}
-            </ul>
+            <div class="iai-display-flex-from-desktop">
+                <ul class="govuk-list govuk-list--bullet govuk-!-margin-bottom-0">
+                  {% for source, citations in citations|groupby('file') %}
+                    <li class="govuk-!-margin-bottom-0">
+                      {% if source.get_status_text() == "Complete" %}
+                        <a class="iai-chat-bubbles__sources-link govuk-link"
+                          href="{{ source.url }}">{{ source.original_file_name }}</a>
+                      {% else %}
+                        <span class="iai-chat-bubbles__sources-link">{{ source.original_file_name }}</span>
+                      {% endif %}
+                    </li>
+                    {% endfor %}
+                </ul>
+             
+                <a class="iai-chat-bubble__citations-button govuk-!-margin-left-2" href="{{url('citations', id)}}">View information behind this answer</a>
+
+            </div>
           <br/>
-          <a href="{{url('citations', id)}}">View information behind this view</a>
         {% endif %}
     </div>
 
