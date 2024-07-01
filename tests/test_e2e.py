@@ -51,7 +51,7 @@ class TestEndToEnd:
                     "bucket": bucket_name,
                 },
                 headers=make_headers(user_uuid),
-                timeout=60,
+                timeout=30,
             )
             TestEndToEnd.file_uuids[user_uuid] = response.json()["uuid"]
             assert response.status_code == HTTPStatus.CREATED
@@ -73,7 +73,7 @@ class TestEndToEnd:
             chunk_response = requests.get(
                 f"http://{TEST_ORIGIN}/file/{TestEndToEnd.file_uuids[user_uuid]}/status",
                 headers=make_headers(user_uuid),
-                timeout=60,
+                timeout=30,
             )
             if chunk_response.status_code == HTTPStatus.OK and chunk_response.json()["processing_status"] == "complete":
                 embedding_complete = True
@@ -95,7 +95,7 @@ class TestEndToEnd:
         chunks_response = requests.get(
             f"http://{TEST_ORIGIN}/file/{TestEndToEnd.file_uuids[user_uuid]}/chunks",
             headers=make_headers(user_uuid),
-            timeout=60,
+            timeout=30,
         )
         assert chunks_response.status_code == HTTPStatus.OK
 
@@ -115,7 +115,7 @@ class TestEndToEnd:
                 ]
             },
             headers=make_headers(user_uuid),
-            timeout=60,
+            timeout=30,
         )
         assert rag_response.status_code == HTTPStatus.OK
         source_document_file_uuids = {
@@ -171,7 +171,7 @@ class TestEndToEnd:
                 "selected_files": [{"uuid": TestEndToEnd.file_uuids[user_uuid]}],
             },
             headers=make_headers(user_uuid),
-            timeout=60,
+            timeout=30,
         )
         assert rag_response.status_code == HTTPStatus.OK
 
