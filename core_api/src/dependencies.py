@@ -15,7 +15,6 @@ from langchain_openai.embeddings import AzureOpenAIEmbeddings
 
 from core_api.src.callbacks import LoggerCallbackHandler
 from core_api.src.retriever import AllElasticsearchRetriever, ParameterisedElasticsearchRetriever
-from redbox.model_db import MODEL_PATH
 from redbox.models import Settings
 from redbox.storage import ElasticsearchStorageHandler
 
