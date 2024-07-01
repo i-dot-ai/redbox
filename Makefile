@@ -34,21 +34,21 @@ rebuild: stop prune ## Rebuild all images
 
 .PHONY: test-core-api
 test-core-api: ## Test core-api
-	poetry install --no-ansi --without worker,docs
-	poetry run pytest core_api/tests --cov=core_api/src -v --cov-report=term-missing --cov-fail-under=75
+	cp .env.test core_api/.env
+	cd core_api && poetry run pytest tests --cov=core_api -v --cov-report=term-missing --cov-fail-under=75
 
 .PHONY: test-redbox
 test-redbox: ## Test redbox
-	poetry install --no-ansi --without worker,docs
-	poetry run pytest redbox-core/tests --cov=redbox-core -v --cov-report=term-missing --cov-fail-under=80
+	cp .env.test redbox-core/.env
+	cd redbox-core && poetry run pytest tests --cov=redbox -v --cov-report=term-missing --cov-fail-under=80
 
 .PHONY: test-worker
 test-worker: ## Test worker
-	poetry install --no-ansi --without docs
-	poetry run pytest worker/tests --cov=worker -v --cov-report=term-missing --cov-fail-under=40
+	cp .env.test worker/.env
+	cd worker && poetry run pytest tests --cov=worker -v --cov-report=term-missing --cov-fail-under=40
 
 .PHONY: test-django
-test-django: stop ## Test django-app
+test-django: stop ## Test django-appÏ
 	docker compose up -d --wait db minio
 	docker compose run --no-deps django-app venv/bin/pytest tests/ --ds redbox_app.settings -v --cov=redbox_app.redbox_core --cov-fail-under 85 -o log_cli=true
 
