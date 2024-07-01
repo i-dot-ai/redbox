@@ -4,12 +4,12 @@ from uuid import uuid4
 import pytest
 from botocore.exceptions import ClientError
 from elasticsearch import Elasticsearch
-from fastapi.testclient import TestClient
 from sentence_transformers import SentenceTransformer
 
 from redbox.models import Chunk, EmbedQueueItem, File
 from redbox.storage import ElasticsearchStorageHandler
-from worker.src.app import app, env
+
+from worker.app import env
 
 
 @pytest.fixture(scope="session")
@@ -56,11 +56,6 @@ def file(s3_client, file_pdf_path: Path):
         )
 
     return File(key=file_name, bucket=env.bucket_name, creator_user_uuid=uuid4())
-
-
-@pytest.fixture()
-def app_client():
-    return TestClient(app)
 
 
 @pytest.fixture()
