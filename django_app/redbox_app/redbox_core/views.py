@@ -211,6 +211,9 @@ class ChatsView(View):
     @method_decorator(login_required)
     def get(self, request: HttpRequest, chat_id: uuid.UUID | None = None) -> HttpResponse:
         chat_history = ChatHistory.objects.filter(users=request.user).order_by("-created_at")
+        # TODO(@rachaelcodes): remove this when we have a better route component design
+        # https://technologyprogramme.atlassian.net/browse/REDBOX-419
+        show_route = request.user.is_staff
 
         messages: Sequence[ChatMessage] = []
         if chat_id:
@@ -230,6 +233,7 @@ class ChatsView(View):
             "streaming": {"in_use": settings.USE_STREAMING, "endpoint": str(endpoint)},
             "contact_email": settings.CONTACT_EMAIL,
             "files": all_files,
+            "show_route": show_route,
         }
 
         return render(

@@ -93,7 +93,10 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 full_reply.append(await self.handle_text(response))
             elif response.resource_type == "documents":
                 citations += await self.handle_documents(response, user)
-            elif response.resource_type == "route_name":
+            elif (
+                response.resource_type == "route_name" and user.is_staff
+            ):  # TODO(@rachaelcodes): remove is_staff conditional with new route design
+                # https://technologyprogramme.atlassian.net/browse/REDBOX-419
                 route = await self.handle_route(response)
             elif response.resource_type == "error":
                 raise CoreError(response.data)
