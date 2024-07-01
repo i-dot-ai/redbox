@@ -8,7 +8,6 @@ from semantic_router.layer import RouteLayer
 
 from core_api.src.build_chains import (
     build_condense_retrieval_chain,
-    build_retrieval_chain,
     build_static_response_chain,
     build_summary_chain,
     build_vanilla_chain,
@@ -165,7 +164,6 @@ def get_semantic_route_layer(routes: Annotated[list[Route], Depends(get_semantic
 
 
 def get_routable_chains(
-    retrieval_chain: Annotated[Runnable, Depends(build_retrieval_chain)],
     summary_chain: Annotated[Runnable, Depends(build_summary_chain)],
     condense_chain: Annotated[Runnable, Depends(build_condense_retrieval_chain)],
     vanilla_chain: Annotated[Runnable, Depends(build_vanilla_chain)],
@@ -178,10 +176,7 @@ def get_routable_chains(
             ChatRoute.coach: build_static_response_chain(COACH_RESPONSE, ChatRoute.coach),
             ChatRoute.gratitude: build_static_response_chain("You're welcome!", ChatRoute.gratitude),
             ChatRoute.chat: vanilla_chain,
-            ChatRoute.search: retrieval_chain,
+            ChatRoute.search: condense_chain,
             ChatRoute.summarise: summary_chain,
-            # Experimental routes
-            ChatRoute.holmes: retrieval_chain,
-            ChatRoute.columbo: condense_chain,
         }
     return __routable_chains
