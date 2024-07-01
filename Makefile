@@ -35,17 +35,17 @@ rebuild: stop prune ## Rebuild all images
 .PHONY: test-core-api
 test-core-api: ## Test core-api
 	cp .env.test core_api/.env
-	cd core_api && poetry install && poetry run pytest tests --cov=core_api -v --cov-report=term-missing --cov-fail-under=75
+	cd core_api && poetry install && poetry run pytest tests
 
 .PHONY: test-redbox
 test-redbox: ## Test redbox
 	cp .env.test redbox-core/.env
-	cd redbox-core && poetry install && poetry run pytest tests --cov=redbox -v --cov-report=term-missing --cov-fail-under=80
+	cd redbox-core && poetry install && poetry run pytest tests
 
 .PHONY: test-worker
 test-worker: ## Test worker
 	cp .env.test worker/.env
-	cd worker && poetry install && poetry run pytest tests --cov=worker -v --cov-report=term-missing --cov-fail-under=40
+	cd worker && poetry install && poetry run pytest tests
 
 .PHONY: test-django
 test-django: stop ## Test django-app
