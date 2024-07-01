@@ -96,6 +96,7 @@ def get_parameterised_retriever(
         index_name=f"{env.elastic_root_index}-chunk",
         params=default_params,
         embedding_model=get_embedding_model(env),
+        embedding_field_name=env.embedding_document_field_name,
     ).configurable_fields(
         params=ConfigurableField(
             id="params", name="Retriever parameters", description="A dictionary of parameters to use for the retriever."
