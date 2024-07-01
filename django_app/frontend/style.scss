@@ -226,6 +226,21 @@ body {
 }
 
 
+/* Citations page */
+.rb-citations {
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+}
+.rb-citations__item {
+  border-top: 1px solid #E5E7EB;
+  padding: 1rem 0;
+}
+.rb-citations__item:first-child {
+  border-top: none;
+}
+
+
 /* i.AI Design System */
 :root {
   --iai-product-colour: #9C0000;

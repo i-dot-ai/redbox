@@ -7721,6 +7721,22 @@ body {
   width: 1.5rem;
 }
 
+/* Citations page */
+.rb-citations {
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+}
+
+.rb-citations__item {
+  border-top: 1px solid #E5E7EB;
+  padding: 1rem 0;
+}
+
+.rb-citations__item:first-child {
+  border-top: none;
+}
+
 /* i.AI Design System */
 :root {
   --iai-product-colour: #9C0000;
@@ -8631,7 +8647,7 @@ td:has(button[aria-expanded=true]) + .iai-themes-list__detail {
   border-color: var(--iai-product-colour, var(--iai-colour-brand));
 }
 
-.govuk-breadcrumbs__link, .govuk-breadcrumbs__link:visited {
+.govuk-breadcrumbs__link:link {
   color: var(--iai-product-colour, var(--iai-colour-brand));
 }
 
