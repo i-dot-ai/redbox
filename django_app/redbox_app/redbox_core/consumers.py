@@ -33,7 +33,7 @@ class CoreChatResponseDoc:
 @dataclass_json(undefined=Undefined.EXCLUDE)
 @dataclass(frozen=True)
 class CoreChatResponse:
-    resource_type: Literal["text", "documents", "route_name", "end"]
+    resource_type: Literal["text", "documents", "route_name", "end", "error"]
     data: list[CoreChatResponseDoc] | str | None = None
 
 
@@ -75,8 +75,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
             for file, _ in citations:
                 file.last_referenced = timezone.now()
                 await self.file_save(file)
-        except (TimeoutError, ConnectionClosedError, CancelledError) as e:
-            logger.exception("Exception waiting for message from core.", exc_info=e)
+        except (TimeoutError, ConnectionClosedError, CancelledError, CoreError) as e:
+            logger.exception("Error from core.", exc_info=e)
             await self.send_to_client("error")
 
     async def receive_llm_responses(
@@ -86,31 +86,33 @@ class ChatConsumer(AsyncWebsocketConsumer):
         citations: MutableSequence[tuple[File, CoreChatResponseDoc]] = []
         route: str | None = None
         async for raw_message in core_websocket:
-            message = CoreChatResponse.schema().loads(raw_message)
-            logger.debug("received %s from core-api", message)
-            if message.resource_type == "text":
-                full_reply.append(await self.handle_text(message))
-            elif message.resource_type == "documents":
-                citations += await self.handle_documents(message, user)
-            elif message.resource_type == "route_name":
-                route = await self.handle_route(message)
+            response: CoreChatResponse = CoreChatResponse.schema().loads(raw_message)
+            logger.debug("received %s from core-api", response)
+            if response.resource_type == "text":
+                full_reply.append(await self.handle_text(response))
+            elif response.resource_type == "documents":
+                citations += await self.handle_documents(response, user)
+            elif response.resource_type == "route_name":
+                route = await self.handle_route(response)
+            elif response.resource_type == "error":
+                raise CoreError(response.data)
         return "".join(full_reply), citations, route
 
     async def handle_documents(
-        self, message: CoreChatResponse, user: User
+        self, response: CoreChatResponse, user: User
     ) -> Sequence[tuple[File, CoreChatResponseDoc]]:
-        source_files, citations = await self.get_sources_with_files(message.data, user)
+        source_files, citations = await self.get_sources_with_files(response.data, user)
         for file in source_files:
             await self.send_to_client("source", {"url": str(file.url), "original_file_name": file.original_file_name})
         return citations
 
-    async def handle_text(self, message: CoreChatResponse) -> str:
-        await self.send_to_client("text", message.data)
-        return message.data
+    async def handle_text(self, response: CoreChatResponse) -> str:
+        await self.send_to_client("text", response.data)
+        return response.data
 
-    async def handle_route(self, message: CoreChatResponse) -> str:
-        await self.send_to_client("route", message.data)
-        return message.data
+    async def handle_route(self, response: CoreChatResponse) -> str:
+        await self.send_to_client("route", response.data)
+        return response.data
 
     async def send_to_client(self, message_type: str, data: str | Mapping[str, Any] | None = None) -> None:
         message = {"type": message_type, "data": data}
@@ -177,3 +179,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
     @database_sync_to_async
     def file_save(file):
         return file.save()
+
+
+class CoreError(Exception):
+    message: str

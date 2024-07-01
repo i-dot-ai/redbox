@@ -175,6 +175,32 @@ async def test_chat_consumer_with_connection_error(alice: User, mocked_breaking_
         assert response2["type"] == "error"
 
 
+@pytest.mark.django_db(transaction=True)
+@pytest.mark.asyncio()
+async def test_chat_consumer_with_explicit_error(alice: User, mocked_connect_with_explicit_error: Connect):
+    # Given
+
+    # When
+    with patch("redbox_app.redbox_core.consumers.connect", new=mocked_connect_with_explicit_error):
+        communicator = WebsocketCommunicator(ChatConsumer.as_asgi(), "/ws/chat/")
+        communicator.scope["user"] = alice
+        connected, _ = await communicator.connect()
+        assert connected
+
+        await communicator.send_json_to({"message": "Hello Hal."})
+        response1 = await communicator.receive_json_from(timeout=5)
+        response2 = await communicator.receive_json_from(timeout=5)
+        response3 = await communicator.receive_json_from(timeout=5)
+
+        # Then
+        assert response1["type"] == "session-id"
+        assert response2["type"] == "text"
+        assert response2["data"] == "Good afternoon, "
+        assert response3["type"] == "error"
+        # Close
+        await communicator.disconnect()
+
+
 @database_sync_to_async
 def get_chat_messages(user: User) -> Sequence[ChatMessage]:
     return list(
@@ -213,6 +239,18 @@ def mocked_breaking_connect() -> Connect:
     mocked_connect = MagicMock(spec=Connect, name="mocked_connect")
     mocked_connect.return_value.__aenter__.return_value = mocked_websocket
     mocked_websocket.__aiter__.side_effect = CancelledError()
+    return mocked_connect
+
+
+@pytest.fixture()
+def mocked_connect_with_explicit_error() -> Connect:
+    mocked_websocket = AsyncMock(spec=WebSocketClientProtocol, name="mocked_websocket")
+    mocked_connect = MagicMock(spec=Connect, name="mocked_connect")
+    mocked_connect.return_value.__aenter__.return_value = mocked_websocket
+    mocked_websocket.__aiter__.return_value = [
+        json.dumps({"resource_type": "text", "data": "Good afternoon, "}),
+        json.dumps({"resource_type": "error", "data": "Oh dear."}),
+    ]
     return mocked_connect
 
 
