@@ -47,6 +47,8 @@ locals {
   worker_environment_variables = {
     "EMBEDDING_DOCUMENT_FIELD_NAME": var.embedding_document_field_name,
     "EMBEDDING_MAX_RETRIES": var.embedding_max_retries,
+    "EMBEDDING_RETRY_MIN_SECONDS": var.embedding_retry_min_seconds,
+    "EMBEDDING_RETRY_MAX_SECONDS": var.embedding_retry_max_seconds,
     "ELASTIC_ROOT_INDEX" : "redbox-data-${terraform.workspace}",
     "BUCKET_NAME" : aws_s3_bucket.user_data.bucket,
     "OBJECT_STORE" : "s3",
