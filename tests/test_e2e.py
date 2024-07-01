@@ -145,7 +145,7 @@ class TestEndToEnd:
                 "selected_files": [{"uuid": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"}],
             },
             headers=make_headers(user_uuid),
-            timeout=60,
+            timeout=30,
         )
         assert rag_response.status_code == HTTPStatus.OK
 
