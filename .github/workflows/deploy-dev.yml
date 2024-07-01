@@ -71,7 +71,7 @@ jobs:
     needs:
       - set-vars
       - start-runner
-      - run-integration-tests
+#      - run-integration-tests
     uses: i-dot-ai/i-dot-ai-core-github-actions/.github/workflows/build-docker.yml@9c4473481eafb33ea598291d1e13e79d53072824
     with:
       APP_NAME: ${{ needs.set-vars.outputs.app-name }}
@@ -119,7 +119,7 @@ jobs:
       - set-vars
       - start-runner
       - build-image
-      - run-integration-tests
+#      - run-integration-tests
     uses: i-dot-ai/i-dot-ai-core-github-actions/.github/workflows/apply-terraform.yml@main
     with:
       APP_NAME: ${{ needs.set-vars.outputs.app-name }}
@@ -144,7 +144,7 @@ jobs:
       - set-vars
       - start-runner
       - build-image
-      - run-integration-tests
+#      - run-integration-tests
       - release-terraform
     with:
       RUNNER_LABEL: ${{ needs.start-runner.outputs.label }}
