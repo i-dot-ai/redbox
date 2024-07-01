@@ -1,0 +1,23 @@
+{% set pageTitle = "Citations" %}
+{% extends "base.html" %}
+{% from "macros/govuk-button.html" import govukButton %}
+{% from "macros/chat-macros.html" import message_box %}
+{% from "macros/govuk-notification-banner.html" import govukNotificationBanner %}
+{% from "macros/use-trusted-types.html" import use_trusted_types %}
+
+
+{% block content %}
+
+<div class="govuk-width-container">
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-one-third">
+      <h1 class="govuk-visually-hidden">Citations</h1>
+    </div>
+  </div>
+
+  {% include "citation_fragment.html" %}
+
+</div>
+
+{% endblock %}

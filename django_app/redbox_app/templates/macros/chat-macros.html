@@ -1,4 +1,4 @@
-{% macro message_box(role, route, text, citations, classes=None) %}
+{% macro message_box(id, role, route, text, citations, classes=None) %}
 
     {% set role_text = role %}
     {% if role == "ai" %}
@@ -22,19 +22,11 @@
                   {% else %}
                     <span class="iai-chat-bubbles__sources-link">{{ source.original_file_name }}</span>
                   {% endif %}
-                  <details class="govuk-details">
-                    <summary class="govuk-details__summary">
-                      <span class="govuk-details__summary-text govuk-body-s">Citations</span>
-                    </summary>
-                    <div class="govuk-details__text">
-                      {% for citation in citations %}
-                        <markdown-converter class="iai-chat-bubble__text">{{ citation.text }}</markdown-converter>
-                      {% endfor %}
-                    </div>
-                  </details>
                 </li>
                 {% endfor %}
             </ul>
+          <br/>
+          <a href="{{url('citations', id)}}">View information behind this view</a>
         {% endif %}
     </div>
 

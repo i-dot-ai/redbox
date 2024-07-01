@@ -250,6 +250,20 @@ class ChatsView(View):
             file.selected = file in selected_files
 
 
+class CitationsView(View):
+    @method_decorator(login_required)
+    def get(self, request: HttpRequest, message_id: uuid.UUID | None = None) -> HttpResponse:
+        citations = Citation.objects.filter(chat_message__id=message_id)
+
+        context = {"citations": citations}
+
+        return render(
+            request,
+            template_name="citations.html",
+            context=context,
+        )
+
+
 @require_http_methods(["POST"])
 def post_message(request: HttpRequest) -> HttpResponse:
     message_text = request.POST.get("message", "New chat")

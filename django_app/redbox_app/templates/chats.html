@@ -64,6 +64,7 @@
           {# SSR messages #}
           {% for message in messages %}
             {{ message_box(
+              id = message.id,
               role = message.role,
               route = message.route,
               text = message.text,

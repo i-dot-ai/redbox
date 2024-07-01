@@ -37,6 +37,7 @@ chat_urlpatterns = [
     path("chats/<uuid:chat_id>/", views.ChatsView.as_view(), name="chats"),
     path("chats/", views.ChatsView.as_view(), name="chats"),
     path("post-message/", views.post_message, name="post-message"),
+    path("citations/<uuid:message_id>/", views.CitationsView.as_view(), name="citations"),
 ]
 
 admin_urlpatterns = [
