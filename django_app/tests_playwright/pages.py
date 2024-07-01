@@ -100,7 +100,7 @@ class LandingPage(BasePage):
         super().__init__(page)
 
     def get_expected_page_title(self) -> str:
-        return "Redbox Copilot"
+        return "Redbox"
 
     def navigate_to_sign_in(self) -> "SignInPage":
         self.page.get_by_role("link", name="Sign in", exact=True).click()
@@ -109,7 +109,7 @@ class LandingPage(BasePage):
 
 class SignInPage(BasePage):
     def get_expected_page_title(self) -> str:
-        return "Sign in - Redbox Copilot"
+        return "Sign in - Redbox"
 
     @property
     def email(self) -> str:
@@ -126,7 +126,7 @@ class SignInPage(BasePage):
 
 class SignInLinkSentPage(BasePage):
     def get_expected_page_title(self) -> str:
-        return "Sign in - link sent - Redbox Copilot"
+        return "Sign in - link sent - Redbox"
 
 
 class SignInConfirmationPage(BasePage):
@@ -135,7 +135,7 @@ class SignInConfirmationPage(BasePage):
         super().__init__(page)
 
     def get_expected_page_title(self) -> str:
-        return "Sign in - confirmation - Redbox Copilot"
+        return "Sign in - confirmation - Redbox"
 
     def navigate_to_documents_page(self) -> "DocumentsPage":
         self.page.get_by_role("button", name="Start", exact=True).click()
@@ -144,7 +144,7 @@ class SignInConfirmationPage(BasePage):
 
 class HomePage(SignedInBasePage):
     def get_expected_page_title(self) -> str:
-        return "Redbox Copilot"
+        return "Redbox"
 
 
 class DocumentRow(NamedTuple):
@@ -154,7 +154,7 @@ class DocumentRow(NamedTuple):
 
 class DocumentsPage(SignedInBasePage):
     def get_expected_page_title(self) -> str:
-        return "Documents - Redbox Copilot"
+        return "Documents - Redbox"
 
     def delete_latest_document(self) -> "DocumentDeletePage":
         self.page.get_by_role("button", name="Remove").first.click()
@@ -171,7 +171,7 @@ class DocumentsPage(SignedInBasePage):
 
 class DocumentDeletePage(SignedInBasePage):
     def get_expected_page_title(self) -> str:
-        return "Remove document - Redbox Copilot"
+        return "Remove document - Redbox"
 
     def confirm_deletion(self) -> "DocumentsPage":
         self.page.get_by_role("button", name="Remove").click()
@@ -180,7 +180,7 @@ class DocumentDeletePage(SignedInBasePage):
 
 class DocumentUploadPage(SignedInBasePage):
     def get_expected_page_title(self) -> str:
-        return "Upload a document - Redbox Copilot"
+        return "Upload a document - Redbox"
 
     def upload_document(self, upload_file: Path) -> DocumentsPage:
         self.get_file_chooser_by_label().set_files(upload_file)
@@ -200,7 +200,7 @@ class FeedbackType(Enum):
 
 class ChatsPage(SignedInBasePage):
     def get_expected_page_title(self) -> str:
-        return "Chats - Redbox Copilot"
+        return "Chats - Redbox"
 
     @property
     def write_message(self) -> str:
@@ -228,17 +228,17 @@ class ChatsPage(SignedInBasePage):
 
 class PrivacyPage(BasePage):
     def get_expected_page_title(self) -> str:
-        return "Privacy notice - Redbox Copilot"
+        return "Privacy notice - Redbox"
 
 
 class AccessibilityPage(BasePage):
     def get_expected_page_title(self) -> str:
-        return "Accessibility statement - Redbox Copilot"
+        return "Accessibility statement - Redbox"
 
 
 class SupportPage(BasePage):
     def get_expected_page_title(self) -> str:
-        return "Support - Redbox Copilot"
+        return "Support - Redbox"
 
 
 def batched(iterable, n):

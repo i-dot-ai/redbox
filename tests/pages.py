@@ -113,7 +113,7 @@ class LandingPage(BasePage):
 
     @property
     def expected_page_title(self) -> str:
-        return "Redbox Copilot"
+        return "Redbox"
 
     def navigate_to_sign_in(self) -> "SignInPage":
         self.page.get_by_role("link", name="Sign in", exact=True).click()
@@ -123,7 +123,7 @@ class LandingPage(BasePage):
 class SignInPage(BasePage):
     @property
     def expected_page_title(self) -> str:
-        return "Sign in - Redbox Copilot"
+        return "Sign in - Redbox"
 
     @property
     def email(self) -> str:
@@ -141,11 +141,11 @@ class SignInPage(BasePage):
 class SignInLinkSentPage(BasePage):
     @property
     def expected_page_title(self) -> str:
-        return "Sign in - link sent - Redbox Copilot"
+        return "Sign in - link sent - Redbox"
 
 
 class SignInConfirmationPage(BasePage):
-    EXPECTED_TITLE = "Sign in - confirmation - Redbox Copilot"
+    EXPECTED_TITLE = "Sign in - confirmation - Redbox"
 
     def __init__(self, page, magic_link: URL):
         page.goto(str(magic_link))
@@ -174,13 +174,13 @@ class SignInConfirmationPage(BasePage):
 class HomePage(SignedInBasePage):
     @property
     def expected_page_title(self) -> str:
-        return "Redbox Copilot"
+        return "Redbox"
 
 
 class MyDetailsPage(SignedInBasePage):
     @property
     def expected_page_title(self) -> str:
-        return "My details - Redbox Copilot"
+        return "My details - Redbox"
 
     @property
     def grade(self) -> str:
@@ -220,7 +220,7 @@ class DocumentRow:
 class DocumentsPage(SignedInBasePage):
     @property
     def expected_page_title(self) -> str:
-        return "Documents - Redbox Copilot"
+        return "Documents - Redbox"
 
     def navigate_to_upload(self) -> "DocumentUploadPage":
         self.page.get_by_role("button", name="Add document").click()
@@ -259,7 +259,7 @@ class DocumentsPage(SignedInBasePage):
 class DocumentUploadPage(SignedInBasePage):
     @property
     def expected_page_title(self) -> str:
-        return "Upload a document - Redbox Copilot"
+        return "Upload a document - Redbox"
 
     def upload_documents(self, upload_files: Sequence[Path]) -> DocumentsPage:
         self.get_file_chooser_by_label().set_files(upload_files)
@@ -275,7 +275,7 @@ class DocumentUploadPage(SignedInBasePage):
 class DocumentDeletePage(SignedInBasePage):
     @property
     def expected_page_title(self) -> str:
-        return "Remove document - Redbox Copilot"
+        return "Remove document - Redbox"
 
     def confirm_deletion(self) -> "DocumentsPage":
         self.page.get_by_role("button", name="Remove").click()
@@ -300,7 +300,7 @@ class ChatMessage:
 class ChatsPage(SignedInBasePage):
     @property
     def expected_page_title(self) -> str:
-        return "Chats - Redbox Copilot"
+        return "Chats - Redbox"
 
     @property
     def write_message(self) -> str:
@@ -372,7 +372,7 @@ class ChatsPage(SignedInBasePage):
 class CitationsPage(SignedInBasePage):
     @property
     def expected_page_title(self) -> str:
-        return "Citations - Redbox Copilot"
+        return "Citations - Redbox"
 
     def back_to_chat(self) -> ChatsPage:
         self.page.get_by_role("link", name="Back to chat", exact=True).click()
@@ -382,16 +382,16 @@ class CitationsPage(SignedInBasePage):
 class PrivacyPage(BasePage):
     @property
     def expected_page_title(self) -> str:
-        return "Privacy notice - Redbox Copilot"
+        return "Privacy notice - Redbox"
 
 
 class AccessibilityPage(BasePage):
     @property
     def expected_page_title(self) -> str:
-        return "Accessibility statement - Redbox Copilot"
+        return "Accessibility statement - Redbox"
 
 
 class SupportPage(BasePage):
     @property
     def expected_page_title(self) -> str:
-        return "Support - Redbox Copilot"
+        return "Support - Redbox"
