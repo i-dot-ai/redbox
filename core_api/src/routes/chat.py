@@ -6,13 +6,14 @@ from uuid import UUID
 from fastapi import Depends, FastAPI, WebSocket
 from fastapi.encoders import jsonable_encoder
 from langchain_core.runnables import Runnable
+from openai import APIError
 from semantic_router import RouteLayer
 
 from core_api.src.auth import get_user_uuid, get_ws_user_uuid
 from core_api.src.runnables import map_to_chat_response
 from core_api.src.semantic_routes import get_routable_chains, get_semantic_route_layer
 from redbox.models.chain import ChainInput
-from redbox.models.chat import ChatRequest, ChatResponse, ChatRoute
+from redbox.models.chat import ChatRequest, ChatResponse
 from redbox.transform import map_document_to_source_document
 
 # === Logging ===
@@ -43,7 +44,7 @@ chat_app = FastAPI(
 
 async def semantic_router_to_chain(
     chat_request: ChatRequest, user_uuid: UUID, routable_chains: dict[str, Runnable], route_layer: RouteLayer
-) -> tuple[Runnable, ChainInput, ChatRoute]:
+) -> tuple[Runnable, ChainInput]:
     question = chat_request.message_history[-1].text
 
     selected_chain = None
@@ -68,7 +69,7 @@ async def semantic_router_to_chain(
 
     log.info("Routed to %s", route_name)
 
-    return (selected_chain, params)
+    return selected_chain, params
 
 
 @chat_app.post("/rag", tags=["chat"])
@@ -99,16 +100,21 @@ async def rag_chat_streamed(
 
     selected_chain, params = await semantic_router_to_chain(chat_request, user_uuid, routable_chains, route_layer)
 
-    async for event in selected_chain.astream(params.model_dump()):
-        response = event.get("response", "")
-        source_documents = event.get("source_documents", [])
-        route_name = event.get("route_name", "")
-        source_documents = [jsonable_encoder(map_document_to_source_document(doc)) for doc in source_documents]
-        if response:
-            await websocket.send_json({"resource_type": "text", "data": response})
-        if source_documents:
-            await websocket.send_json({"resource_type": "documents", "data": source_documents})
-        if route_name:
-            await websocket.send_json({"resource_type": "route_name", "data": route_name})
-    await websocket.send_json({"resource_type": "end"})
-    await websocket.close()
+    try:
+        async for event in selected_chain.astream(params.model_dump()):
+            response = event.get("response", "")
+            source_documents = event.get("source_documents", [])
+            route_name = event.get("route_name", "")
+            source_documents = [jsonable_encoder(map_document_to_source_document(doc)) for doc in source_documents]
+            if response:
+                await websocket.send_json({"resource_type": "text", "data": response})
+            if source_documents:
+                await websocket.send_json({"resource_type": "documents", "data": source_documents})
+            if route_name:
+                await websocket.send_json({"resource_type": "route_name", "data": route_name})
+    except APIError as e:
+        log.exception("Exception waiting for chain.", exc_info=e)
+        await websocket.send_json({"resource_type": "error", "data": e.message})
+    finally:
+        await websocket.send_json({"resource_type": "end"})
+        await websocket.close()

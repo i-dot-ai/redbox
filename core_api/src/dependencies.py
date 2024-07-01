@@ -13,7 +13,9 @@ from langchain_core.runnables import ConfigurableField
 from langchain_elasticsearch import ApproxRetrievalStrategy, ElasticsearchStore
 from langchain_openai.embeddings import AzureOpenAIEmbeddings
 
-from core_api.src.retriever.retrievers import AllElasticsearchRetriever, ParameterisedElasticsearchRetriever
+from core_api.src.callbacks import LoggerCallbackHandler
+from core_api.src.retriever import AllElasticsearchRetriever, ParameterisedElasticsearchRetriever
+from redbox.model_db import MODEL_PATH
 from redbox.models import Settings
 from redbox.storage import ElasticsearchStorageHandler
 
@@ -114,12 +116,15 @@ def get_all_chunks_retriever(
 
 @lru_cache(1)
 def get_llm(env: Annotated[Settings, Depends(get_env)]) -> ChatLiteLLM:
+    logger_callback = LoggerCallbackHandler(logger=log)
+
     # Create the appropriate LLM, either openai, Azure, anthropic or bedrock
     if env.openai_api_key is not None:
         log.info("Creating OpenAI LLM Client")
         llm = ChatLiteLLM(
             streaming=True,
             openai_key=env.openai_api_key,
+            callbacks=[logger_callback],
         )
     elif env.azure_openai_api_key is not None:
         log.info("Creating Azure LLM Client")
@@ -138,6 +143,7 @@ def get_llm(env: Annotated[Settings, Depends(get_env)]) -> ChatLiteLLM:
             streaming=True,
             api_base=env.azure_openai_endpoint,
             max_tokens=env.llm_max_tokens,
+            callbacks=[logger_callback],
         )
     elif env.anthropic_api_key is not None:
         msg = "anthropic LLM not yet implemented"

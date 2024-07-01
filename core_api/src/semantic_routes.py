@@ -7,6 +7,7 @@ from semantic_router.encoders import AzureOpenAIEncoder, BaseEncoder
 from semantic_router.layer import RouteLayer
 
 from core_api.src.build_chains import (
+    build_condense_retrieval_chain,
     build_retrieval_chain,
     build_static_response_chain,
     build_summary_chain,
@@ -170,6 +171,7 @@ def get_semantic_route_layer(
 def get_routable_chains(
     retrieval_chain: Annotated[Runnable, Depends(build_retrieval_chain)],
     summary_chain: Annotated[Runnable, Depends(build_summary_chain)],
+    condense_chain: Annotated[Runnable, Depends(build_condense_retrieval_chain)],
     vanilla_chain: Annotated[Runnable, Depends(build_vanilla_chain)],
 ):
     global __routable_chains  # noqa: PLW0603
@@ -183,16 +185,7 @@ def get_routable_chains(
             ChatRoute.search: retrieval_chain,
             ChatRoute.summarise: summary_chain,
             # Experimental routes
-            ChatRoute.supasearch: retrieval_chain.with_config(
-                configurable={
-                    "params": {
-                        "size": 10,
-                        "num_candidates": 100,
-                        "match_boost": 1,
-                        "knn_boost": 2,
-                        "similarity_threshold": 0.7,
-                    }
-                }
-            ),
+            ChatRoute.holmes: retrieval_chain,
+            ChatRoute.columbo: condense_chain,
         }
     return __routable_chains
