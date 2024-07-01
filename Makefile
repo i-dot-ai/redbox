@@ -76,14 +76,14 @@ format:  ## Format and fix code
 
 .PHONY: safe
 safe:  ##
-	poetry run bandit -ll -r ./redbox
+	poetry run bandit -ll -r ./redbox-core
 	poetry run bandit -ll -r ./django_app
-	poetry run mypy ./redbox --ignore-missing-imports
+	poetry run mypy ./redbox-core --ignore-missing-imports
 	poetry run mypy ./django_app --ignore-missing-imports
 
 .PHONY: checktypes
 checktypes:  ## Check types in redbox and worker
-	poetry run mypy redbox worker --ignore-missing-imports --no-incremental
+	poetry run mypy redbox-core worker --ignore-missing-imports --no-incremental
 
 .PHONY: check-migrations
 check-migrations: stop  ## Check types in redbox and worker
