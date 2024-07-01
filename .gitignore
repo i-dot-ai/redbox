@@ -8,6 +8,7 @@ db/
 !*/user_preferences/classes_format.json
 !*/user_preferences/classes_subject.json
 /models/
+/redbox-core/models/
 
 # npm package files
 
@@ -212,3 +213,4 @@ django_app/tests/staticfiles
 
 # pre commit files
 .pre-commit-trivy-cache
+/redbox/models/
