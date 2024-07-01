@@ -70,12 +70,6 @@ jobs:
       with:
         poetry-version: 1.7.0
 
-    - name: export
-      env:
-        workspace: ${{ github.workspace }}
-      run: |
-        echo "My workspace is ${{ env.workspace }}"
-
     - name: Build Containers
       run: |
         cd integration
