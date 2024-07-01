@@ -1,4 +1,4 @@
-{% macro message_box(id, role, route, text, citations, classes=None) %}
+{% macro message_box(id, role, route, text, citations, show_route=False, classes=None) %}
 
     {% set role_text = role %}
     {% if role == "ai" %}
@@ -9,7 +9,7 @@
 
     <div class="iai-chat-bubble iai-chat-bubble--{% if role == 'user' %}right{% else %}left{% endif %} js-chat-message govuk-body {{ classes }}" data-role="{{ role }}" tabindex="-1">
         <div class="iai-chat-bubble__role">{% if role == "ai" %}Redbox{% else %}You{% endif %}</div>
-        {% if route %}<div class="iai-chat-bubble__route">{{ route }}</div>{% endif %}
+        {% if route %}<div class="iai-chat-bubble__route {% if not show_route %}govuk-!-display-none{% endif %}">{{ route }}</div>{% endif %}
         <markdown-converter class="iai-chat-bubble__text">{{ text }}</markdown-converter>
         {% if citations %}
             <h3 class="iai-chat-bubble__sources-heading govuk-heading-s govuk-!-margin-bottom-1">Sources</h3>

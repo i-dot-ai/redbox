@@ -68,7 +68,8 @@
               role = message.role,
               route = message.route,
               text = message.text,
-              citations = message.citation_set.distinct().order_by("file")
+              citations = message.citation_set.distinct().order_by("file"),
+              show_route = show_route
             ) }}
           {% endfor %}
 
