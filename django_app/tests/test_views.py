@@ -396,6 +396,7 @@ def test_user_cannot_see_other_users_citations(chat_message_with_citation: ChatH
     assert response.headers.get("Location") == "/chats/"
 
 
+@pytest.mark.django_db()
 def test_user_cannot_see_route(chat_history_with_files: ChatHistory, client: Client):
     # Given
     client.force_login(chat_history_with_files.users)
