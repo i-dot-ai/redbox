@@ -60,13 +60,13 @@ jobs:
         poppler-utils \
         tesseract-ocr
 
-    - name: Test redbox with pytest
-      run: |
-        make test-redbox
-
     - name: Test worker with pytest
       run: |
         make test-worker
+
+    - name: Test redbox with pytest
+      run: |
+        make test-redbox
 
     - name: Test core with pytest
       run: |

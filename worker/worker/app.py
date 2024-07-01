@@ -12,8 +12,8 @@ from langchain_core.runnables import RunnableLambda, chain
 from langchain_core.vectorstores import VectorStore
 from langchain_elasticsearch.vectorstores import ElasticsearchStore
 
-from redbox.models import File, ProcessingStatusEnum, Settings
-from redbox.storage.elasticsearch import ElasticsearchStorageHandler
+from redbox.models import File, ProcessingStatusEnum, Settings  # type: ignore
+from redbox.storage.elasticsearch import ElasticsearchStorageHandler  # type: ignore
 from worker.loader import UnstructuredDocumentLoader
 
 if TYPE_CHECKING:

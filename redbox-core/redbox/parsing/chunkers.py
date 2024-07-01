@@ -2,7 +2,7 @@ from collections.abc import Sequence
 from typing import TYPE_CHECKING
 
 from unstructured.chunking.title import chunk_by_title
-from unstructured.partition.auto import partition
+from unstructured.partition.auto import partition  # type: ignore
 
 from redbox.models import Chunk, File, Settings
 from redbox.models.file import Metadata
@@ -45,7 +45,7 @@ def other_chunker(file: File, s3_client: S3Client) -> Sequence[Chunk]:
                 languages=raw_chunk.metadata.languages,
                 link_texts=raw_chunk.metadata.link_texts,
                 link_urls=raw_chunk.metadata.link_urls,
-                links=raw_chunk.metadata.links,
+                # links=raw_chunk.metadata.links,  wrong type
             ),
             creator_user_uuid=file.creator_user_uuid,
         )

@@ -1,7 +1,7 @@
 import logging
 from typing import Literal
 
-import boto3
+import boto3  # type: ignore
 from elasticsearch import Elasticsearch
 from pydantic import BaseModel
 from pydantic_settings import BaseSettings, SettingsConfigDict

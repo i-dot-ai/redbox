@@ -2,7 +2,7 @@ from collections.abc import Sequence
 from enum import Enum
 from typing import TYPE_CHECKING
 
-from sentence_transformers import SentenceTransformer
+from sentence_transformers import SentenceTransformer  # type: ignore
 
 from redbox.models.file import Chunk, File
 from redbox.parsing.chunk_clustering import cluster_chunks

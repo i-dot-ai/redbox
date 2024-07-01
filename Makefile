@@ -48,7 +48,7 @@ test-worker: ## Test worker
 	cd worker && poetry install && poetry run pytest tests --cov=worker -v --cov-report=term-missing --cov-fail-under=40
 
 .PHONY: test-django
-test-django: stop ## Test django-appÏ
+test-django: stop ## Test django-app
 	docker compose up -d --wait db minio
 	docker compose run --no-deps django-app venv/bin/pytest tests/ --ds redbox_app.settings -v --cov=redbox_app.redbox_core --cov-fail-under 85 -o log_cli=true
 
@@ -83,7 +83,8 @@ safe:  ##
 
 .PHONY: checktypes
 checktypes:  ## Check types in redbox and worker
-	poetry run mypy redbox-core worker --ignore-missing-imports --no-incremental
+	cd worker && poetry install && poetry run mypy worker
+	cd redbox-core && poetry install && poetry run mypy redbox
 
 .PHONY: check-migrations
 check-migrations: stop  ## Check types in redbox and worker

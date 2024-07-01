@@ -8,8 +8,8 @@ from langchain_core.documents import Document
 from unstructured.chunking.title import chunk_by_title
 from unstructured.partition.auto import partition
 
-from redbox.models.file import File
-from redbox.models.settings import Settings
+from redbox.models.file import File  # type: ignore
+from redbox.models.settings import Settings  # type: ignore
 
 encoding = tiktoken.get_encoding("cl100k_base")
 

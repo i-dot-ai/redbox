@@ -3,9 +3,9 @@ from functools import reduce
 from itertools import compress
 
 import numpy as np
-import scipy
+import scipy  # type: ignore
 from numpy.typing import NDArray
-from sentence_transformers import SentenceTransformer
+from sentence_transformers import SentenceTransformer  # type: ignore
 
 from redbox.models.file import Chunk, Metadata
 
