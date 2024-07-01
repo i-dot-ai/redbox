@@ -396,6 +396,34 @@ def test_user_cannot_see_other_users_citations(chat_message_with_citation: ChatH
     assert response.headers.get("Location") == "/chats/"
 
 
+def test_user_cannot_see_route(chat_history_with_files: ChatHistory, client: Client):
+    # Given
+    client.force_login(chat_history_with_files.users)
+
+    # When
+    response = client.get(f"/chats/{chat_history_with_files.id}/")
+
+    # Then
+    assert response.status_code == HTTPStatus.OK
+    assert b"iai-chat-bubble__route govuk-!-display-none" in response.content
+
+
+@pytest.mark.django_db()
+def test_staff_user_can_see_route(chat_history_with_files: ChatHistory, client: Client):
+    # Given
+    chat_history_with_files.users.is_staff = True
+    chat_history_with_files.users.save()
+    client.force_login(chat_history_with_files.users)
+
+    # When
+    response = client.get(f"/chats/{chat_history_with_files.id}/")
+
+    # Then
+    assert response.status_code == HTTPStatus.OK
+    assert b"iai-chat-bubble__route" in response.content
+    assert b"iai-chat-bubble__route govuk-!-display-none" not in response.content
+
+
 @pytest.mark.django_db()
 def test_check_demographics_redirect_if_unpopulated(client: Client, alice: User):
     # Given
