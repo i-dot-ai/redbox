@@ -241,39 +241,11 @@ body {
 }
 
 
-/* These will be removed on the next Design System update */
-.iai-chat-bubble__citations-button {
-  border: 1px solid #6B7280;
-  border-radius: 1rem;
-  color: #6B7280;
-  display: flex;
-  font-size: 0.75rem;
-  margin-top: 1rem;
-  padding: 0.75rem 1rem;
-  text-align: center;
-  text-decoration: none;
-}
-.iai-chat-bubble__citations-button:hover {
-  border-color: var(--iai-product-colour);
-  color: var(--iai-product-colour);
-}
-@media (min-width: 1020px) {
-  .iai-chat-bubble__citations-button {
-    margin-top: 0;
-  }
-  .iai-display-flex-from-desktop {
-    align-items: center;
-    display: flex;
-    justify-content: space-between;
-  }
-}
-
-
 /* i.AI Design System */
 :root {
   --iai-product-colour: #9C0000;
-  --iai-header-gradient-colour-1: #9C0000;
-  --iai-header-gradient-colour-2: #451818;
+  --iai-top-nav-gradient-colour-1: #9C0000;
+  --iai-top-nav-gradient-colour-2: #451818;
   --iai-background-colour-1: #F6EEF0;
   --iai-background-colour-2: #F8F8F8;
 }
