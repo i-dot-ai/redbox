@@ -51,7 +51,9 @@ def get_all(query: ESQuery) -> dict[str, Any]:
     }
 
 
-def get_some(embedding_model: Embeddings, params: ESParams, embedding_field_name: str, query: ESQuery) -> dict[str, Any]:
+def get_some(
+    embedding_model: Embeddings, params: ESParams, embedding_field_name: str, query: ESQuery
+) -> dict[str, Any]:
     vector = embedding_model.embed_query(query["question"])
 
     query_filter = [
