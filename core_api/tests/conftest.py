@@ -25,7 +25,9 @@ from redbox.storage import ElasticsearchStorageHandler
 
 @pytest.fixture()
 def env():
-    return Settings()
+    env = Settings(openai_api_key=None)
+    assert env.openai_api_key is None
+    # print(env)
 
 
 @pytest.fixture()

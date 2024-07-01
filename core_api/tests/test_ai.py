@@ -160,3 +160,14 @@ def contextual_precision_metric(eval_llm) -> ContextualPrecisionMetric:
 
 def test_ai_metrics(deepeval_test_case, contextual_precision_metric) -> None:
     assert_test(deepeval_test_case, [contextual_precision_metric])
+
+
+def test_print_env(env, llm, eval_llm):
+    print("------HERE------")
+    # print(env.openai_api_key)
+    # print(type(env.openai_api_key))
+    # print(env.openai_api_key is None)
+    # print(env.azure_openai_api_key)
+    # print(llm.model)
+    # print(llm.invoke("write three words of english"))
+    # print(eval_llm.invoke("habla tres palabras de español"))
