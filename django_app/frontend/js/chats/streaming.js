@@ -21,6 +21,7 @@ class SourcesList extends HTMLElement {
 
         let html = `
             <h3 class="iai-chat-bubble__sources-heading govuk-heading-s govuk-!-margin-bottom-1">Sources</h3>
+            <div class="iai-display-flex-from-desktop">
             <ul class="govuk-list govuk-list--bullet govuk-!-margin-bottom-0">
         `;
         this.sources.forEach((source) => {
@@ -30,10 +31,26 @@ class SourcesList extends HTMLElement {
                 </li>
             `;
         });
-        html += `</ul>`;
+        html += `</div></ul>`;
     
         this.innerHTML = html;
 
+    }
+
+
+    /** 
+     * Shows to citations link/button
+     * @param {string} chatId
+     */
+    showCitations = (chatId) => {
+        if (!chatId) {
+            return;
+        }
+        let link = document.createElement('a');
+        link.classList.add('iai-chat-bubble__citations-button', 'govuk-!-margin-left-2');
+        link.setAttribute('href', `/citations/${chatId}`);
+        link.textContent = 'View information behind this answer';
+        this.querySelector('.iai-display-flex-from-desktop')?.appendChild(link);
     }
 
 }
@@ -59,7 +76,6 @@ class ChatMessage extends HTMLElement {
                     </div>`
                 : ''}
                 <sources-list></sources-list>
-                <a href="" class="govuk-citation-linkypoos" hidden>View information behind this view</a>
                 <div class="govuk-error-summary" data-module="govuk-error-summary" hidden>
                   <div role="alert">
                     <h2 class="govuk-error-summary__title">Error</h2>
@@ -133,13 +149,15 @@ class ChatMessage extends HTMLElement {
             } else if (message.type === 'source') {
                 sourcesContainer.add(message.data.original_file_name, message.data.url);
             } else if (message.type === 'route') {
-                this.querySelector(".iai-chat-bubble__route").textContent = message.data;
-                this.querySelector(".iai-chat-bubble__route").removeAttribute("hidden");
+                let route = this.querySelector(".iai-chat-bubble__route");
+                if (route) {
+                    route.textContent = message.data;
+                    route.removeAttribute("hidden");
+                }
             } else if (message.type === 'end') {
-                this.querySelector(".govuk-citation-linkypoos").removeAttribute("hidden");
-                this.querySelector(".govuk-citation-linkypoos").setAttribute("href", `/citations/${message.data.message_id}`);
+                sourcesContainer.showCitations(message.data.message_id);
             } else if (message.type === 'error') {
-                this.querySelector(".govuk-error-summary").removeAttribute("hidden");
+                this.querySelector(".govuk-error-summary")?.removeAttribute("hidden");
             }
             
         };
