@@ -1,4 +1,4 @@
-# Code of Conduct - Redbox Copilot
+# Code of Conduct - Redbox
 
 ## Our Pledge
 
