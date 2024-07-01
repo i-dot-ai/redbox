@@ -3,6 +3,7 @@
 import logging
 from contextlib import asynccontextmanager
 from datetime import UTC, datetime
+from io import BytesIO
 from typing import TYPE_CHECKING
 
 from faststream import Context, ContextRepo, FastStream
@@ -66,7 +67,10 @@ async def lifespan(context: ContextRepo):
 def document_loader(s3_client: S3Client, env: Settings):
     @chain
     def wrapped(file: File):
-        return UnstructuredDocumentLoader(file, s3_client, env).lazy_load()
+        file_raw = BytesIO()
+        s3_client.download_fileobj(Bucket=file.bucket, Key=file.key, Fileobj=file_raw)
+        file_raw.seek(0)
+        return UnstructuredDocumentLoader(file=file, file_bytes=file_raw, env=env).lazy_load()
 
     return wrapped
 

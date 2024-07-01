@@ -1,6 +1,6 @@
 from collections.abc import Iterator
 from datetime import UTC, datetime
-from typing import TYPE_CHECKING
+from typing import IO, TYPE_CHECKING
 
 import tiktoken
 from langchain_core.document_loaders import BaseLoader
@@ -22,14 +22,14 @@ else:
 class UnstructuredDocumentLoader(BaseLoader):
     """Load, partition and chunk a document using local unstructured library"""
 
-    def __init__(self, file: File, s3_client: S3Client, env: Settings) -> None:
+    def __init__(self, file: File, file_bytes: IO[bytes], env: Settings) -> None:
         """Initialize the loader with a file path.
 
         Args:
             file: The RedBox File to load
         """
         self.file = file
-        self.s3_client = s3_client
+        self.file_bytes = file_bytes
         self.env = env
 
     def lazy_load(self) -> Iterator[Document]:  # <-- Does not take any arguments
@@ -38,13 +38,7 @@ class UnstructuredDocumentLoader(BaseLoader):
         When you're implementing lazy load methods, you should use a generator
         to yield documents one by one.
         """
-        authenticated_s3_url = self.s3_client.generate_presigned_url(
-            "get_object",
-            Params={"Bucket": self.file.bucket, "Key": self.file.key},
-            ExpiresIn=3600,
-        )
-
-        elements = partition(url=authenticated_s3_url, strategy=self.env.partition_strategy)
+        elements = partition(file=self.file_bytes, strategy=self.env.partition_strategy)
         raw_chunks = chunk_by_title(
             elements=elements,
             combine_text_under_n_chars=self.env.worker_ingest_min_chunk_size,

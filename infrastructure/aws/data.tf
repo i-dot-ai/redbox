@@ -14,6 +14,8 @@ locals {
       "AI__RAG_DESIRED_CHUNK_SIZE" : var.rag_desired_chunk_size,
       "AI__RETRIEVAL_SYSTEM_PROMPT" : var.retrieval_system_prompt,
       "AI__RETRIEVAL_QUESTION_PROMPT" : var.retrieval_question_prompt,
+      "AI__CONDENSE_SYSTEM_PROMPT" : var.condense_system_prompt,
+      "AI__CONDENSE_QUESTION_PROMPT" : var.condense_question_prompt,
       "AI__SUMMARISATION_SYSTEM_PROMPT" : var.summarisation_system_prompt,
       "AI__SUMMARISATION_QUESTION_PROMPT" : var.summarisation_question_prompt,
     }
