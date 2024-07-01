@@ -1,0 +1,43 @@
+[tool.ruff]
+line-length = 120
+target-version = 'py311'
+
+[tool.poetry]
+name = "core-api"
+version = "0.3.0"
+description = "RAG application that uses GenAI to chat with and summarise civil service documents"
+authors = ["i.AI <i-dot-ai-enquiries@cabinetoffice.gov.uk>"]
+license = "MIT"
+readme = "../README.md"
+
+[tool.poetry.dependencies]
+python = ">=3.11,<3.12"
+redbox = {path = "../redbox-core", develop = true}
+fastapi = "^0.111.0"
+faststream = {extras = ["redis"], version = "<0.5.0"}
+uvicorn = "^0.30.1"
+langchain-elasticsearch = "^0.2.0"
+python-multipart = "^0.0.9"
+python-jose = "^3.3.0"
+websockets = "^12.0"
+semantic-router = "^0.0.48"
+anthropic = "^0.30.0"
+litellm = "^1.40.28"
+openai = "^1.35.7"
+langchain-community = "^0.2.6"
+
+
+[tool.poetry.group.pytest.dependencies]
+moto = "^5.0.10"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+
+[tool.pytest.ini_options]
+env_override_existing_values = 1
+env_files = [
+    "../.env.test",
+    "../.env"
+]

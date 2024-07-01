@@ -1,9 +1,9 @@
 import pytest
 
-from core_api.src.app import env
-from core_api.src.build_chains import build_retrieval_chain, build_summary_chain
-from core_api.src.dependencies import get_parameterised_retriever, get_tokeniser
-from core_api.src.runnables import (
+from core_api.app import env
+from core_api.build_chains import build_retrieval_chain, build_summary_chain
+from core_api.dependencies import get_parameterised_retriever, get_tokeniser
+from core_api.runnables import (
     make_chat_prompt_from_messages_runnable,
     make_chat_runnable,
     make_condense_question_runnable,

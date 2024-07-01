@@ -14,7 +14,7 @@ ADD pyproject.toml poetry.lock /app/
 ADD download_embedder.py /app/
 ADD redbox/ /app/redbox
 
-RUN --mount=type=cache,target=$POETRY_CACHE_DIR poetry install --no-root --no-ansi --with api,ai --without worker,dev
+RUN --mount=type=cache,target=$POETRY_CACHE_DIR poetry install --no-root --no-ansi --with api --without dev
 
 FROM python:3.11-slim-bookworm as runtime
 ARG EMBEDDING_MODEL
@@ -36,4 +36,4 @@ RUN type=cache python download_embedder.py --embedding_model ${EMBEDDING_MODEL}
 
 # Run FastAPI
 EXPOSE 5002
-CMD ["uvicorn", "core_api.src.app:app", "--host", "0.0.0.0", "--port", "5002"]
+CMD ["uvicorn", "core_api.app:app", "--host", "0.0.0.0", "--port", "5002"]

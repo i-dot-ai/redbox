@@ -14,7 +14,7 @@ from langchain_core.runnables import (
 from langchain_core.vectorstores import VectorStoreRetriever
 from tiktoken import Encoding
 
-from core_api.src.format import format_documents, reduce_chunks_by_tokens
+from core_api.format import format_documents, reduce_chunks_by_tokens
 from redbox.models import ChatResponse
 from redbox.models.errors import AIError
 from redbox.transform import map_document_to_source_document

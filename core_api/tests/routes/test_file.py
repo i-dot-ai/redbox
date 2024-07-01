@@ -6,7 +6,7 @@ import pytest
 from elasticsearch import NotFoundError
 from faststream.redis import TestRedisBroker
 
-from core_api.src.routes.file import env, router
+from core_api.routes.file import env, router
 
 
 @pytest.mark.asyncio()

@@ -6,7 +6,7 @@ from semantic_router import Route
 from semantic_router.encoders import HuggingFaceEncoder
 from semantic_router.layer import RouteLayer
 
-from core_api.src.build_chains import (
+from core_api.build_chains import (
     build_retrieval_chain,
     build_static_response_chain,
     build_summary_chain,
