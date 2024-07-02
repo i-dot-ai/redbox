@@ -51,26 +51,29 @@ This means that our project is structured approximately like this:
 
 ```txt
 redbox-copilot/
-├── frontend/
 ├── django_app
 │  ├── app/
 │  ├── static/
 │  ├── tests/
 │  ├── manage.py
+│  ├── pyproject.toml
 │  └── Dockerfile
 ├── worker
 │  ├── src/
 │  │  └── app.py
 │  ├── tests/
 │  └── Dockerfile
-├── redbox/
-│  ├── exceptions/
-│  ├── export/
-│  ├── llm/
-│  ├── models/
-│  ├── parsing/
-│  ├── storage
+├── core-api
+│  ├── src/
+│  │  └── app.py
 │  ├── tests/
+│  └── Dockerfile
+├── redbox-core/
+│  ├── redbox
+│  │  ├── models/
+│  │  └── storage/
+│  ├── tests/
+│  ├── pyproject.toml
 │  └── Dockerfile
 ├── docker-compose.yaml
 ├── pyproject.toml
