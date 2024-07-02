@@ -1,3 +1,4 @@
+import ast
 import json
 import logging
 from collections.abc import Generator
@@ -9,7 +10,12 @@ import pandas as pd
 import pytest
 from deepeval import assert_test
 from deepeval.metrics import (
+    AnswerRelevancyMetric,
     ContextualPrecisionMetric,
+    ContextualRecallMetric,
+    ContextualRelevancyMetric,
+    FaithfulnessMetric,
+    HallucinationMetric,
 )
 from deepeval.models.base_model import DeepEvalBaseLLM
 from deepeval.test_case import LLMTestCase
@@ -81,11 +87,9 @@ def eval_llm(env: Settings) -> DeepEvalBaseLLM:
     return ChatLiteLLMDeepEval(model=get_llm(env))
 
 
-@pytest.fixture(params=[ExperimentData(csv=CSV, embeddings=EMBEDDINGS)])
-def deepeval_test_case(
-    request, llm: ChatLiteLLM, es_client: Elasticsearch, env: Settings
-) -> Generator[LLMTestCase, None, None]:
-    data = request.param
+@pytest.fixture()
+def deepeval_test_case(llm: ChatLiteLLM, es_client: Elasticsearch, env: Settings) -> Generator[LLMTestCase, None, None]:
+    data = ExperimentData(csv=CSV, embeddings=EMBEDDINGS)
     index_name = data.embeddings.stem
 
     # Clear embeddings from index (in case previous crash stopped teardown)
@@ -108,7 +112,7 @@ def deepeval_test_case(
         msg = "Embeddings have more than one creator_user_uuid"
         raise ValueError(msg)
     else:
-        user_uuid = list(user_uuids)[0]
+        user_uuid = next(iter(user_uuids))
 
     # Load incomplete evaluation dataset
     dataset = pd.read_csv(data.csv)
@@ -140,34 +144,100 @@ def deepeval_test_case(
         yield LLMTestCase(
             input=testcase.input,
             actual_output=answer["response"],
-            expected_output=testcase.expected_ouput,
-            context=testcase.context,
-            retrieval_context=answer["source_documents"],
+            expected_output=testcase.expected_output,
+            context=ast.literal_eval(testcase.context),
+            retrieval_context=[doc.page_content for doc in answer["source_documents"]],
         )
 
     # Delete embeddings from index
     clear_index(index=index_name, es=es_client)
 
 
-@pytest.fixture()
-def contextual_precision_metric(eval_llm) -> ContextualPrecisionMetric:
-    return ContextualPrecisionMetric(
+def test_contextual_precision(deepeval_test_case, eval_llm) -> None:
+    """Are relevant retrieval_context nodes ranked higher than irrelevant?
+
+    Retrieval metric. Higher is better.
+
+    https://docs.confident-ai.com/docs/metrics-contextual-precision
+    """
+    contextual_precision = ContextualPrecisionMetric(
         threshold=0.5,  # default is 0.5
         model=eval_llm,
         include_reason=True,
     )
+    assert_test(deepeval_test_case, [contextual_precision])
 
 
-def test_ai_metrics(deepeval_test_case, contextual_precision_metric) -> None:
-    assert_test(deepeval_test_case, [contextual_precision_metric])
+def test_contextual_recall(deepeval_test_case, eval_llm) -> None:
+    """How much does retrieval_context align with expected_output?
+
+    Retrieval metric. Higher is better.
+
+    https://docs.confident-ai.com/docs/metrics-contextual-recall
+    """
+    contextual_recall = ContextualRecallMetric(
+        threshold=0.5,  # default is 0.5
+        model=eval_llm,
+        include_reason=True,
+    )
+    assert_test(deepeval_test_case, [contextual_recall])
 
 
-def test_print_env(env, llm, eval_llm):
-    print("------HERE------")
-    # print(env.openai_api_key)
-    # print(type(env.openai_api_key))
-    # print(env.openai_api_key is None)
-    # print(env.azure_openai_api_key)
-    # print(llm.model)
-    # print(llm.invoke("write three words of english"))
-    # print(eval_llm.invoke("habla tres palabras de español"))
+def test_contextual_relevancy(deepeval_test_case, eval_llm) -> None:
+    """How relevant is the retrieval_context to the input?
+
+    Retrieval metric. Higher is better.
+
+    https://docs.confident-ai.com/docs/metrics-contextual-relevancy
+    """
+    contextual_relevancy = ContextualRelevancyMetric(
+        threshold=0.5,  # default is 0.5
+        model=eval_llm,
+        include_reason=True,
+    )
+    assert_test(deepeval_test_case, [contextual_relevancy])
+
+
+def test_answer_relevancy(deepeval_test_case, eval_llm) -> None:
+    """How relevant is the actual_answer to the input?
+
+    Generation metric. Higher is better.
+
+    https://docs.confident-ai.com/docs/metrics-answer-relevancy
+    """
+    answer_relevancy = AnswerRelevancyMetric(
+        threshold=0.5,  # default is 0.5
+        model=eval_llm,
+        include_reason=True,
+    )
+    assert_test(deepeval_test_case, [answer_relevancy])
+
+
+def test_faithfulness(deepeval_test_case, eval_llm) -> None:
+    """How factually faithful is the actual_output to the retrieval_context?
+
+    Generation metric. Higher is better.
+
+    https://docs.confident-ai.com/docs/metrics-faithfulness
+    """
+    faithfulness = FaithfulnessMetric(
+        threshold=0.5,  # default is 0.5
+        model=eval_llm,
+        include_reason=True,
+    )
+    assert_test(deepeval_test_case, [faithfulness])
+
+
+def test_hallucination(deepeval_test_case, eval_llm) -> None:
+    """How factually accurate is the output, comparing actual_output to context?
+
+    Generation metric. Lower is better.
+
+    https://docs.confident-ai.com/docs/metrics-hallucination
+    """
+    hallucination = HallucinationMetric(
+        threshold=0.5,  # default is 0.5
+        model=eval_llm,
+        include_reason=True,
+    )
+    assert_test(deepeval_test_case, [hallucination])
