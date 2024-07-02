@@ -21,7 +21,6 @@ pydantic-settings = "^2.3.4"
 unstructured = {version = "<0.14.9", extras = ["all-docs"]}
 semantic-router = "^0.0.48"
 pikepdf = "<9.0.0"
-torch = "2.2.2"
 
 
 [tool.poetry.group.api.dependencies]
