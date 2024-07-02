@@ -1,7 +1,7 @@
 import logging
 from abc import ABC, abstractmethod
 from collections.abc import Collection, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from time import sleep
 from typing import Any, ClassVar, Union
@@ -289,8 +289,8 @@ class ChatMessage:
     route: str | None
     text: str
     sources: Sequence[str]
-    element: Locator
-    chats_page: "ChatsPage"
+    element: Locator = field(repr=False)
+    chats_page: "ChatsPage" = field(repr=False)
 
     def navigate_to_citations(self) -> "CitationsPage":
         self.element.locator(".iai-chat-bubble__citations-button").click()

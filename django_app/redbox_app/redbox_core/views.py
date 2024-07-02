@@ -7,6 +7,7 @@ from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import FieldError, ValidationError
 from django.core.files.uploadedfile import UploadedFile
+from django.db.models import Min, Prefetch
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse
@@ -220,7 +221,18 @@ class ChatsView(View):
             current_chat = ChatHistory.objects.get(id=chat_id)
             if current_chat.users != request.user:
                 return redirect(reverse("chats"))
-            messages = ChatMessage.objects.filter(chat_history__id=chat_id).order_by("created_at")
+            messages = (
+                ChatMessage.objects.filter(chat_history__id=chat_id)
+                .order_by("created_at")
+                .prefetch_related(
+                    Prefetch(
+                        "source_files",
+                        queryset=File.objects.all()
+                        .annotate(min_created_at=Min("citation__created_at"))
+                        .order_by("min_created_at"),
+                    )
+                )
+            )
         endpoint = URL.build(scheme=settings.WEBSOCKET_SCHEME, host=request.get_host(), path=r"/ws/chat/")
 
         all_files = File.objects.filter(user=request.user, status=StatusEnum.complete).order_by("-created_at")
@@ -258,12 +270,18 @@ class CitationsView(View):
     @method_decorator(login_required)
     def get(self, request: HttpRequest, message_id: uuid.UUID | None = None) -> HttpResponse:
         message = ChatMessage.objects.get(id=message_id)
-        citations = Citation.objects.filter(chat_message__id=message_id)
 
         if message.chat_history.users != request.user:
             return redirect(reverse("chats"))
 
-        context = {"message": message, "citations": citations}
+        source_files = (
+            File.objects.filter(citation__chat_message_id=message_id)
+            .annotate(min_created_at=Min("citation__created_at"))
+            .order_by("min_created_at")
+            .prefetch_related(Prefetch("citation_set", queryset=Citation.objects.filter(chat_message_id=message_id)))
+        )
+
+        context = {"message": message, "source_files": source_files}
 
         return render(
             request,
