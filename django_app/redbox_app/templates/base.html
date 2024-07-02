@@ -1,5 +1,4 @@
 {% from "macros/iai-top-nav.html" import iaiTopNav %}
-{% from "macros/use-trusted-types.html" import use_trusted_types %}
 
 <!DOCTYPE html>
 <html lang="en" class="govuk-template">
@@ -22,6 +21,14 @@
     <link rel="stylesheet" type="text/css" href="{{static('style.css')}}" />
   {% endif %}
 
+  <script src="{{ static('js/libs/dompurify.js') }}"></script>
+  {% if COMPRESSION_ENABLED %}
+    {% compress js %}
+      <script src="{{ static('js/trusted-types.js') }}"></script>
+    {% endcompress %}
+  {% else %}
+    <script src="{{ static('js/trusted-types.js') }}"></script>
+  {% endif %}
 
   {% if environment | lower in ["dev", "preprod"] %}
     <script defer
@@ -113,7 +120,6 @@
     </div>
   </footer>
 
-  {{ use_trusted_types() }}
   <script type="module" src="{{static('js/libs/govuk-frontend.min.js')}}"></script>
   <script type="module" src="{{static('js/libs/iai-design-system.js')}}"></script>
 
