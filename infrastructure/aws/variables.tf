@@ -271,7 +271,7 @@ variable "embedding_document_field_name" {
 }
 
 variable "embedding_max_retries" {
-  type          = string
+  type          = number
   default       = 10
   description   = "Number of retries to external embedding services (rate limiting)"
 }
@@ -283,7 +283,7 @@ variable "embedding_retry_min_seconds" {
 }
 
 variable "embedding_retry_max_seconds" {
-  type          = string
+  type          = number
   default       = 120
   description   = "Maximum number of seconds to wait before retry to external embedding services (rate limiting)"
 }
