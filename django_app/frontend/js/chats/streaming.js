@@ -158,7 +158,7 @@ class ChatMessage extends HTMLElement {
                 // send route to Plausible
                 let plausible = /** @type {any} */ (window).plausible;
                 if (typeof(plausible) !== 'undefined') {
-                    plausible(`Chat-message-route-${message.data}`);
+                    plausible('Chat-message-route', {props: {route: message.data}});
                 }
             } else if (message.type === 'hidden-route') {
                 // TODO(@rachaelcodes): remove hidden-route with new route design
@@ -167,7 +167,7 @@ class ChatMessage extends HTMLElement {
                 // send route to Plausible
                 let plausible = /** @type {any} */ (window).plausible;
                 if (typeof(plausible) !== 'undefined') {
-                    plausible(`Chat-message-route-${message.data}`);
+                    plausible('Chat-message-route', {props: {route: message.data}});
                 }
             } else if (message.type === 'end') {
                 sourcesContainer.showCitations(message.data.message_id);
