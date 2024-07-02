@@ -128,12 +128,9 @@ AUTO_APPLY_RESOURCES = module.django-app.aws_ecs_task_definition.aws-ecs-task \
                        module.worker.aws_ecs_task_definition.aws-ecs-task \
                        module.worker.aws_ecs_service.aws-ecs-service \
                        module.worker.data.aws_ecs_task_definition.main \
-                       module.waf.aws_wafv2_ip_set.london \
                        aws_secretsmanager_secret.django-app-secret \
                        aws_secretsmanager_secret.worker-secret \
-                       aws_secretsmanager_secret.core-api-secret \
-					   module.load_balancer.aws_security_group_rule.load_balancer_http_whitelist \
-					   module.load_balancer.aws_security_group_rule.load_balancer_https_whitelist
+                       aws_secretsmanager_secret.core-api-secret
 
 target_modules = $(foreach resource,$(AUTO_APPLY_RESOURCES),-target $(resource))
 
