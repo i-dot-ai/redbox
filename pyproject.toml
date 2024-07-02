@@ -3,7 +3,7 @@ line-length = 120
 target-version = 'py311'
 
 [tool.poetry]
-name = "redbox-copilot"
+name = "redbox-root"
 version = "0.3.0"
 description = "RAG application that uses GenAI to chat with and summarise civil service documents"
 authors = ["i.AI <i-dot-ai-enquiries@cabinetoffice.gov.uk>"]
@@ -92,9 +92,6 @@ mkdocs-glightbox = "^0.4.0"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
-
-[tool.poetry.scripts]
-download-model = 'download_embedder:download'
 
 [tool.ruff.format]
 exclude = ["django_app/redbox_app/redbox_core/migrations/*.py"]
