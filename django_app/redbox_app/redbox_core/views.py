@@ -221,7 +221,18 @@ class ChatsView(View):
             current_chat = ChatHistory.objects.get(id=chat_id)
             if current_chat.users != request.user:
                 return redirect(reverse("chats"))
-            messages = ChatMessage.objects.filter(chat_history__id=chat_id).order_by("created_at")
+            messages = (
+                ChatMessage.objects.filter(chat_history__id=chat_id)
+                .order_by("created_at")
+                .prefetch_related(
+                    Prefetch(
+                        "source_files",
+                        queryset=File.objects.all()
+                        .annotate(min_created_at=Min("citation__created_at"))
+                        .order_by("min_created_at"),
+                    )
+                )
+            )
         endpoint = URL.build(scheme=settings.WEBSOCKET_SCHEME, host=request.get_host(), path=r"/ws/chat/")
 
         all_files = File.objects.filter(user=request.user, status=StatusEnum.complete).order_by("-created_at")
