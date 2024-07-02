@@ -81,7 +81,9 @@ def document_loader(s3_client: S3Client, env: Settings):
         s3_client.download_fileobj(Bucket=file.bucket, Key=file.key, Fileobj=file_raw)
         file_raw.seek(0)
         return UnstructuredDocumentLoader(file=file, file_bytes=file_raw, env=env).lazy_load()
+
     return wrapped
+
 
 @chain
 def log_chunks(chunks: list[Document]):

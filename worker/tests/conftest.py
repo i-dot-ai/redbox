@@ -4,13 +4,9 @@ from uuid import uuid4
 import pytest
 from botocore.exceptions import ClientError
 from elasticsearch import Elasticsearch
-<<<<<<< HEAD
 from fastapi.testclient import TestClient
 from langchain_core.embeddings import Embeddings
 from langchain_core.embeddings.fake import FakeEmbeddings
-=======
-from sentence_transformers import SentenceTransformer
->>>>>>> main
 
 from redbox.models import Chunk, EmbedQueueItem, File
 from redbox.storage import ElasticsearchStorageHandler
