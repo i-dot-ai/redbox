@@ -1,14 +1,16 @@
+from __future__ import annotations
+
 import ast
 import json
 import logging
-from collections.abc import Generator
 from pathlib import Path
+from typing import TYPE_CHECKING
 from uuid import UUID
 
 import jsonlines
 import pandas as pd
 import pytest
-from deepeval import assert_test
+from deepeval import evaluate
 from deepeval.metrics import (
     AnswerRelevancyMetric,
     ContextualPrecisionMetric,
@@ -19,17 +21,26 @@ from deepeval.metrics import (
 )
 from deepeval.models.base_model import DeepEvalBaseLLM
 from deepeval.test_case import LLMTestCase
-from elasticsearch import Elasticsearch
 from elasticsearch.helpers import bulk, scan
-from langchain_community.chat_models import ChatLiteLLM
 from pydantic import BaseModel
 
 from core_api.src.build_chains import build_retrieval_chain
 from core_api.src.dependencies import get_llm, get_parameterised_retriever, get_tokeniser
-from redbox.models import Settings
 from redbox.models.chain import ChainInput
 
+if TYPE_CHECKING:
+    from collections.abc import Callable, Generator
+
+    from deepeval.evaluate import TestResult
+    from elasticsearch import Elasticsearch
+    from langchain_community.chat_models import ChatLiteLLM
+
+    from redbox.models import Settings
+
+
 logging.getLogger("elastic_transport.transport").setLevel(logging.CRITICAL)
+logging.getLogger("root").setLevel(logging.CRITICAL)
+logging.getLogger("httpx").setLevel(logging.CRITICAL)
 
 ROOT = Path(__file__).parents[2]
 DATA = ROOT / "notebooks/evaluation/data/0.2.0"
@@ -45,18 +56,30 @@ class ExperimentData(BaseModel):
     embeddings: Path
 
 
+EXPERIMENT_DATA = ExperimentData(csv=CSV, embeddings=EMBEDDINGS)
+RAW_TESTS: list[tuple[str, str, list[str]]] = []
+
+for testcase in pd.read_csv(EXPERIMENT_DATA.csv).itertuples(index=False):
+    RAW_TESTS.append((testcase.input, testcase.expected_output, ast.literal_eval(testcase.context)))
+
+
 def clear_index(index: str, es: Elasticsearch) -> None:
     documents = scan(es, index=index, query={"query": {"match_all": {}}})
     bulk_data = [{"_op_type": "delete", "_index": doc["_index"], "_id": doc["_id"]} for doc in documents]
     bulk(es, bulk_data, request_timeout=300)
 
 
-@pytest.fixture()
+@pytest.fixture(scope="session")
+def ai_experiment_data() -> ExperimentData:
+    return EXPERIMENT_DATA
+
+
+@pytest.fixture(scope="session")
 def llm(env: Settings) -> ChatLiteLLM:
     return get_llm(env)
 
 
-@pytest.fixture()
+@pytest.fixture(scope="session")
 def eval_llm(env: Settings) -> DeepEvalBaseLLM:
     """Creates LLM for evaluating our data.
 
@@ -87,10 +110,11 @@ def eval_llm(env: Settings) -> DeepEvalBaseLLM:
     return ChatLiteLLMDeepEval(model=get_llm(env))
 
 
-@pytest.fixture()
-def deepeval_test_case(llm: ChatLiteLLM, es_client: Elasticsearch, env: Settings) -> Generator[LLMTestCase, None, None]:
-    data = ExperimentData(csv=CSV, embeddings=EMBEDDINGS)
-    index_name = data.embeddings.stem
+@pytest.fixture(scope="session")
+def elastic_index_and_user(
+    ai_experiment_data: ExperimentData, es_client: Elasticsearch
+) -> Generator[tuple[str, str], None, None]:
+    index_name = ai_experiment_data.embeddings.stem
 
     # Clear embeddings from index (in case previous crash stopped teardown)
     clear_index(index=index_name, es=es_client)
@@ -98,7 +122,7 @@ def deepeval_test_case(llm: ChatLiteLLM, es_client: Elasticsearch, env: Settings
     user_uuids: set[UUID] = set()
 
     # Load embeddings to index
-    with jsonlines.open(data.embeddings, mode="r") as reader:
+    with jsonlines.open(ai_experiment_data.embeddings, mode="r") as reader:
         for chunk_raw in reader:
             chunk = json.loads(chunk_raw)
             user_uuids.add(UUID(chunk["creator_user_uuid"]))
@@ -114,10 +138,18 @@ def deepeval_test_case(llm: ChatLiteLLM, es_client: Elasticsearch, env: Settings
     else:
         user_uuid = next(iter(user_uuids))
 
-    # Load incomplete evaluation dataset
-    dataset = pd.read_csv(data.csv)
+    yield index_name, user_uuid
 
-    # Set up retriever and RAG chain
+    # Delete embeddings from index
+    clear_index(index=index_name, es=es_client)
+
+
+@pytest.fixture()
+def make_test_case(
+    llm: ChatLiteLLM, es_client: Elasticsearch, elastic_index_and_user: tuple[str, str], env: Settings
+) -> Callable[[str, str, list[str]], LLMTestCase]:
+    index_name, user_uuid = elastic_index_and_user
+
     retriever = get_parameterised_retriever(
         env=env,
         es=es_client,
@@ -131,113 +163,66 @@ def deepeval_test_case(llm: ChatLiteLLM, es_client: Elasticsearch, env: Settings
         env=env,
     )
 
-    # Calculate real outputs and yield test cases one at a time
-    for testcase in dataset.itertuples(index=False):
+    def _make_test_case(prompt: str, expected_output: str, context: list[str]) -> LLMTestCase:
         prompt = ChainInput(
-            question=testcase.input,
+            question=prompt,
             file_uuids=[],
             user_uuid=str(user_uuid),
             chat_history=[],
         )
         answer = rag_chain.invoke(input=prompt.model_dump(mode="json"))
 
-        yield LLMTestCase(
-            input=testcase.input,
+        return LLMTestCase(
+            input=prompt,
             actual_output=answer["response"],
-            expected_output=testcase.expected_output,
-            context=ast.literal_eval(testcase.context),
+            expected_output=expected_output,
+            context=context,
             retrieval_context=[doc.page_content for doc in answer["source_documents"]],
         )
 
-    # Delete embeddings from index
-    clear_index(index=index_name, es=es_client)
+    return _make_test_case
 
 
-def test_contextual_precision(deepeval_test_case, eval_llm) -> None:
-    """Are relevant retrieval_context nodes ranked higher than irrelevant?
+@pytest.mark.parametrize("test_data", RAW_TESTS)
+def test_ai(make_test_case: Callable, eval_llm: DeepEvalBaseLLM, test_data: tuple[str, str, list[str]]):
+    prompt, expected_output, context = test_data
+    deepeval_test_case = make_test_case(prompt=prompt, expected_output=expected_output, context=context)
 
-    Retrieval metric. Higher is better.
-
-    https://docs.confident-ai.com/docs/metrics-contextual-precision
-    """
     contextual_precision = ContextualPrecisionMetric(
-        threshold=0.5,  # default is 0.5
+        threshold=0.5,  # default is 0.5, higher is better
         model=eval_llm,
-        include_reason=True,
     )
-    assert_test(deepeval_test_case, [contextual_precision])
-
-
-def test_contextual_recall(deepeval_test_case, eval_llm) -> None:
-    """How much does retrieval_context align with expected_output?
-
-    Retrieval metric. Higher is better.
-
-    https://docs.confident-ai.com/docs/metrics-contextual-recall
-    """
     contextual_recall = ContextualRecallMetric(
-        threshold=0.5,  # default is 0.5
+        threshold=0.5,  # default is 0.5, higher is better
         model=eval_llm,
-        include_reason=True,
     )
-    assert_test(deepeval_test_case, [contextual_recall])
-
-
-def test_contextual_relevancy(deepeval_test_case, eval_llm) -> None:
-    """How relevant is the retrieval_context to the input?
-
-    Retrieval metric. Higher is better.
-
-    https://docs.confident-ai.com/docs/metrics-contextual-relevancy
-    """
     contextual_relevancy = ContextualRelevancyMetric(
-        threshold=0.5,  # default is 0.5
+        threshold=0.5,  # default is 0.5, higher is better
         model=eval_llm,
-        include_reason=True,
     )
-    assert_test(deepeval_test_case, [contextual_relevancy])
-
-
-def test_answer_relevancy(deepeval_test_case, eval_llm) -> None:
-    """How relevant is the actual_answer to the input?
-
-    Generation metric. Higher is better.
-
-    https://docs.confident-ai.com/docs/metrics-answer-relevancy
-    """
     answer_relevancy = AnswerRelevancyMetric(
-        threshold=0.5,  # default is 0.5
+        threshold=0.5,  # default is 0.5, higher is better
         model=eval_llm,
-        include_reason=True,
     )
-    assert_test(deepeval_test_case, [answer_relevancy])
-
-
-def test_faithfulness(deepeval_test_case, eval_llm) -> None:
-    """How factually faithful is the actual_output to the retrieval_context?
-
-    Generation metric. Higher is better.
-
-    https://docs.confident-ai.com/docs/metrics-faithfulness
-    """
     faithfulness = FaithfulnessMetric(
-        threshold=0.5,  # default is 0.5
+        threshold=0.5,  # default is 0.5, higher is better
         model=eval_llm,
-        include_reason=True,
     )
-    assert_test(deepeval_test_case, [faithfulness])
-
-
-def test_hallucination(deepeval_test_case, eval_llm) -> None:
-    """How factually accurate is the output, comparing actual_output to context?
-
-    Generation metric. Lower is better.
-
-    https://docs.confident-ai.com/docs/metrics-hallucination
-    """
     hallucination = HallucinationMetric(
-        threshold=0.5,  # default is 0.5
+        threshold=0.5,  # default is 0.5, lower is better
         model=eval_llm,
-        include_reason=True,
     )
-    assert_test(deepeval_test_case, [hallucination])
+
+    evaluation_results: list[TestResult] = evaluate(
+        test_cases=[deepeval_test_case],
+        metrics=[
+            contextual_recall,
+            contextual_precision,
+            contextual_relevancy,
+            answer_relevancy,
+            faithfulness,
+            hallucination,
+        ],
+    )
+
+    assert all(result.success for result in evaluation_results), evaluation_results

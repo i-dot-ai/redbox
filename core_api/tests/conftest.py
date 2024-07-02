@@ -23,12 +23,12 @@ from redbox.models import Chunk, File, Settings
 from redbox.storage import ElasticsearchStorageHandler
 
 
-@pytest.fixture()
+@pytest.fixture(scope="session")
 def env():
     return Settings()
 
 
-@pytest.fixture()
+@pytest.fixture(scope="session")
 def s3_client(env):
     _client = env.s3_client()
     try:
@@ -43,7 +43,7 @@ def s3_client(env):
     return _client
 
 
-@pytest.fixture()
+@pytest.fixture(scope="session")
 def es_client(env) -> Elasticsearch:
     return env.elasticsearch_client()
 
