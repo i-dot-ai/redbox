@@ -178,7 +178,7 @@ docker_push:
 docker_update_tag:
 	for service in django-app core-api worker; do \
 		MANIFEST=$$(aws ecr batch-get-image --repository-name $(ECR_REPO_NAME)-$(service) --image-ids imageTag=$(IMAGE_TAG) --query 'images[].imageManifest' --output text) && \
-		aws ecr put-image --repository-name $(ECR_REPO_NAME)-$(service) --image-tag $(tag) --image-manifest "$(MANIFEST)"
+		aws ecr put-image --repository-name $(ECR_REPO_NAME)-$(service) --image-tag $(tag) --image-manifest "$$MANIFEST"
 	done
 
 
