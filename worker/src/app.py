@@ -9,8 +9,8 @@ from typing import TYPE_CHECKING
 from elasticsearch import Elasticsearch
 from faststream import Context, ContextRepo, FastStream
 from faststream.redis import RedisBroker
-from langchain_core.runnables import RunnableLambda, chain
 from langchain_core.documents.base import Document
+from langchain_core.runnables import RunnableLambda, chain
 from langchain_core.vectorstores import VectorStore
 from langchain_elasticsearch.vectorstores import ElasticsearchStore
 from langchain_openai.embeddings import AzureOpenAIEmbeddings

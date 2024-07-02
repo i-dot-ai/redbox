@@ -4,7 +4,6 @@ from uuid import uuid4
 import pytest
 from botocore.exceptions import ClientError
 from elasticsearch import Elasticsearch
-from fastapi.testclient import TestClient
 from langchain_core.embeddings import Embeddings
 from langchain_core.embeddings.fake import FakeEmbeddings
 
