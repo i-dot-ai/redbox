@@ -18,19 +18,10 @@ RUN apt update && apt-get install -y \
     tesseract-ocr \
     libmagic-dev
 
-
 ENV VIRTUAL_ENV=/app/.venv \
     PATH="/app/.venv/bin:$PATH"
 
 COPY --from=builder ${VIRTUAL_ENV} ${VIRTUAL_ENV}
-
-WORKDIR /app/
-ADD redbox/ /app/redbox
-ADD worker/ /app/worker
-ADD worker/download_ocr_models.py /app/
-
-ADD worker/health.sh /app/
-RUN chmod +x /app/health.sh
 
 # Downlaod Sentence Tokenizer
 RUN python -m nltk.downloader punkt
@@ -39,6 +30,15 @@ RUN python -m nltk.downloader punkt
 RUN python -m nltk.downloader averaged_perceptron_tagger
 
 # Download the OCR models
-RUN python download_ocr_models.py
+ADD worker/download_ocr_models.py /app/
+RUN python /app/download_ocr_models.py
 
-CMD ["faststream", "run", "worker.src.app:app", "--workers", "3"]
+
+WORKDIR /app/
+ADD redbox/ /app/redbox
+ADD worker/ /app/worker
+
+ADD worker/health.sh /app/
+RUN chmod +x /app/health.sh
+
+CMD ["faststream", "run", "worker.src.app:app", "--workers", "1"]

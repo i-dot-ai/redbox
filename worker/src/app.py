@@ -10,6 +10,7 @@ from elasticsearch import Elasticsearch
 from faststream import Context, ContextRepo, FastStream
 from faststream.redis import RedisBroker
 from langchain_core.runnables import RunnableLambda, chain
+from langchain_core.documents.base import Document
 from langchain_core.vectorstores import VectorStore
 from langchain_elasticsearch.vectorstores import ElasticsearchStore
 from langchain_openai.embeddings import AzureOpenAIEmbeddings
@@ -43,6 +44,7 @@ def get_embeddings():
         max_retries=env.embedding_max_retries,
         retry_min_seconds=env.embedding_retry_min_seconds,
         retry_max_seconds=env.embedding_retry_max_seconds,
+        chunk_size=env.embedding_max_batch_size,
     )
 
 
@@ -79,8 +81,12 @@ def document_loader(s3_client: S3Client, env: Settings):
         s3_client.download_fileobj(Bucket=file.bucket, Key=file.key, Fileobj=file_raw)
         file_raw.seek(0)
         return UnstructuredDocumentLoader(file=file, file_bytes=file_raw, env=env).lazy_load()
-
     return wrapped
+
+@chain
+def log_chunks(chunks: list[Document]):
+    log.info("Processing %s chunks", len(chunks))
+    return chunks
 
 
 @broker.subscriber(list=env.ingest_queue_name)
@@ -99,6 +105,7 @@ async def ingest(
         new_ids = await (
             document_loader(s3_client=s3_client, env=env)
             | RunnableLambda(list)
+            | log_chunks
             | RunnableLambda(vectorstore.aadd_documents)  # type: ignore[arg-type]
         ).ainvoke(file)
         file.ingest_status = ProcessingStatusEnum.complete
