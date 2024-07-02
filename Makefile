@@ -40,7 +40,7 @@ test-core-api: ## Test core-api
 .PHONY: test-redbox
 test-redbox: ## Test redbox
 	poetry install --no-root --no-ansi --with api,dev --without ai,worker,docs
-	poetry run pytest redbox/tests --cov=redbox -v --cov-report=term-missing --cov-fail-under=80
+	poetry run pytest redbox-core/tests --cov=redbox-core/redbox -v --cov-report=term-missing --cov-fail-under=80
 
 .PHONY: test-worker
 test-worker: ## Test worker
