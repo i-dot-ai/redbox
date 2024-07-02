@@ -155,7 +155,16 @@ class ChatMessage extends HTMLElement {
                     route.removeAttribute("hidden");
                 }
 
-                // send feedback to Plausible
+                // send route to Plausible
+                let plausible = /** @type {any} */ (window).plausible;
+                if (typeof(plausible) !== 'undefined') {
+                    plausible(`Chat-message-route-${message.data}`);
+                }
+            } else if (message.type === 'hidden-route') {
+                // TODO(@rachaelcodes): remove hidden-route with new route design
+                // https://technologyprogramme.atlassian.net/browse/REDBOX-419
+
+                // send route to Plausible
                 let plausible = /** @type {any} */ (window).plausible;
                 if (typeof(plausible) !== 'undefined') {
                     plausible(`Chat-message-route-${message.data}`);
