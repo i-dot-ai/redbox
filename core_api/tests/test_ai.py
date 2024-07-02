@@ -183,6 +183,7 @@ def make_test_case(
     return _make_test_case
 
 
+@pytest.mark.ai()
 @pytest.mark.parametrize("test_data", RAW_TESTS)
 def test_ai(make_test_case: Callable, eval_llm: DeepEvalBaseLLM, test_data: tuple[str, str, list[str]]):
     prompt, expected_output, context = test_data
