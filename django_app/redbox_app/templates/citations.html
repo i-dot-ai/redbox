@@ -1,0 +1,31 @@
+{% set pageTitle = "Citations" %}
+{% extends "base.html" %}
+{% from "macros/govuk-button.html" import govukButton %}
+{% from "macros/govuk-notification-banner.html" import govukNotificationBanner %}
+
+
+{% block content %}
+
+<div class="govuk-width-container">
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-one-third">
+      <h1 class="govuk-heading-l govuk-!-margin-bottom-0">Citations</h1>
+      <a class="govuk-breadcrumbs__link govuk-!-display-block govuk-!-margin-top-3" href="{{url('chats', message.chat_history.id)}}">Back to chat</a>
+    </div>
+  </div>
+
+  {% include "citation_fragment.html" %}
+
+</div>
+
+<script src="{{ static('js/libs/showdown.min.js') }}"></script>
+{% if COMPRESSION_ENABLED %}
+  {% compress js %}
+    <script src="{{ static('js/chats/markdown.js') }}"></script>
+  {% endcompress %}
+{% else %}
+  <script src="{{ static('js/chats/markdown.js') }}"></script>
+{% endif %}
+
+{% endblock %}

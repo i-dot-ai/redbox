@@ -226,11 +226,26 @@ body {
 }
 
 
+/* Citations page */
+.rb-citations {
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+}
+.rb-citations__item {
+  border-top: 1px solid #E5E7EB;
+  padding: 1rem 0;
+}
+.rb-citations__item:first-child {
+  border-top: none;
+}
+
+
 /* i.AI Design System */
 :root {
   --iai-product-colour: #9C0000;
-  --iai-header-gradient-colour-1: #9C0000;
-  --iai-header-gradient-colour-2: #451818;
+  --iai-top-nav-gradient-colour-1: #9C0000;
+  --iai-top-nav-gradient-colour-2: #451818;
   --iai-background-colour-1: #F6EEF0;
   --iai-background-colour-2: #F8F8F8;
 }

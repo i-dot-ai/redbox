@@ -8,8 +8,9 @@ ENV POETRY_NO_INTERACTION=1 \
     POETRY_CACHE_DIR=/tmp/poetry_cache
 
 WORKDIR /app/
+ADD redbox-core/ /app/redbox-core
+ADD README.md /app
 ADD pyproject.toml poetry.lock ./
-
 RUN --mount=type=cache,target=$POETRY_CACHE_DIR poetry install --no-root --no-ansi --with worker,api --without ai,dev
 
 FROM python:3.11-slim-buster as runtime
@@ -35,7 +36,8 @@ RUN python /app/download_ocr_models.py
 
 
 WORKDIR /app/
-ADD redbox/ /app/redbox
+ADD redbox-core/ /app/redbox-core
+ADD README.md /app/README.md
 ADD worker/ /app/worker
 
 ADD worker/health.sh /app/

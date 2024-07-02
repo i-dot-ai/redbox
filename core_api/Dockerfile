@@ -9,9 +9,8 @@ ENV POETRY_NO_INTERACTION=1 \
     POETRY_CACHE_DIR=/tmp/poetry_cache
 
 # Add redbox python package and install it with poetry
-ADD redbox/ /app/redbox
-ADD pyproject.toml poetry.lock /app/
-ADD redbox/ /app/redbox
+ADD redbox-core/ /app/redbox-core
+ADD pyproject.toml poetry.lock README.md /app/
 
 RUN --mount=type=cache,target=$POETRY_CACHE_DIR poetry install --no-root --no-ansi --with api,ai --without worker,dev
 
@@ -26,7 +25,8 @@ ENV VIRTUAL_ENV=/app/.venv \
 COPY --from=builder ${VIRTUAL_ENV} ${VIRTUAL_ENV}
 
 COPY core_api/ /app/core_api/
-ADD redbox/ /app/redbox
+ADD redbox-core/ /app/redbox-core
+ADD README.md /app/README.md
 
 # Run FastAPI
 EXPOSE 5002

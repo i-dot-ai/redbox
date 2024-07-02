@@ -4,13 +4,17 @@ from uuid import uuid4
 import pytest
 from botocore.exceptions import ClientError
 from elasticsearch import Elasticsearch
+<<<<<<< HEAD
 from fastapi.testclient import TestClient
 from langchain_core.embeddings import Embeddings
 from langchain_core.embeddings.fake import FakeEmbeddings
+=======
+from sentence_transformers import SentenceTransformer
+>>>>>>> main
 
 from redbox.models import Chunk, EmbedQueueItem, File
 from redbox.storage import ElasticsearchStorageHandler
-from worker.src.app import app, env
+from worker.src.app import env
 
 
 @pytest.fixture(scope="session")
@@ -57,11 +61,6 @@ def file(s3_client, file_pdf_path: Path):
         )
 
     return File(key=file_name, bucket=env.bucket_name, creator_user_uuid=uuid4())
-
-
-@pytest.fixture()
-def app_client():
-    return TestClient(app)
 
 
 @pytest.fixture()
