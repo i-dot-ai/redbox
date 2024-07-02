@@ -84,7 +84,7 @@ safe:  ##
 .PHONY: checktypes
 checktypes:  ## Check types in redbox and worker
 	poetry run mypy worker --ignore-missing-imports --no-incremental
-	cd redbox-core && poetry run mypy . --ignore-missing-imports
+	cd redbox-core && poetry install && poetry run mypy . --ignore-missing-imports
 
 .PHONY: check-migrations
 check-migrations: stop  ## Check types in redbox and worker
