@@ -154,6 +154,12 @@ class ChatMessage extends HTMLElement {
                     route.textContent = message.data;
                     route.removeAttribute("hidden");
                 }
+
+                // send feedback to Plausible
+                let plausible = /** @type {any} */ (window).plausible;
+                if (typeof(plausible) !== 'undefined') {
+                    plausible(`Chat-message-route-${message.data}`);
+                }
             } else if (message.type === 'end') {
                 sourcesContainer.showCitations(message.data.message_id);
             } else if (message.type === 'error') {
