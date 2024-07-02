@@ -395,7 +395,7 @@ def test_citations_shown_in_correct_order(
     files = sources_panel.find_all("h3")
     filenames = [h3.get_text().strip() for h3 in files]
     citations = [
-        [li.get_text().strip() for li in citations.find_all("li")]
+        [li.get_text().strip() for li in citations.find_all(class_="rb-citations__item")]
         for citations in [h3.next_sibling.next_sibling for h3 in files]
     ]
 
