@@ -1,3 +1,5 @@
+[![Integration Tests](https://github.com/i-dot-ai/redbox-copilot/actions/workflows/integration.yml/badge.svg?branch=main)](https://github.com/i-dot-ai/redbox-copilot/actions/workflows/integration.yml)
+
 # 📮 Redbox
 
 > [!IMPORTANT]
