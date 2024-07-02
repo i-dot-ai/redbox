@@ -94,13 +94,12 @@ async def ingest(
             | RunnableLambda(vectorstore.add_documents)
         ).invoke(file)
         file.ingest_status = ProcessingStatusEnum.complete
+        logging.info("File: %s [%s] chunks ingested", file, len(new_ids))
     except Exception:
         logging.exception("Error while processing file [%s]", file)
         file.ingest_status = ProcessingStatusEnum.failed
     finally:
         storage_handler.update_item(file)
-
-    logging.info("File: %s [%s] chunks ingested", file, len(new_ids))
 
 
 app = FastStream(broker=broker, lifespan=lifespan)

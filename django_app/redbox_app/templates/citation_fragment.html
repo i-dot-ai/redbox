@@ -1,0 +1,43 @@
+<div class="govuk-grid-row">
+  
+  <div class="govuk-grid-column-one-third govuk-!-margin-top-7">
+
+    <div class="iai-panel">
+      <div class="govuk-!-padding-left-1 govuk-!-padding-right-1">
+        <h2 class="govuk-heading-m">Message</h2>
+        <div class="iai-chat-bubble">
+          <markdown-converter class="iai-chat-bubble__text">{{ message.text }}</markdown-converter>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="govuk-grid-column-two-thirds govuk-!-margin-top-7">
+    {% if citations %}
+      <div class="iai-panel">
+        <div class="govuk-!-padding-left-1 govuk-!-padding-right-1">
+          <h2 class="govuk-heading-m">Sources</h2>
+          {% for source, citations in citations|groupby('file') %}
+            <h3 class="govuk-heading-s govuk-!-margin-bottom-0">
+              {% if source.get_status_text() == "Complete" %}
+                <a class="iai-chat-bubbles__sources-link govuk-link"
+                  href="{{ source.url }}">{{ source.original_file_name }}</a>
+              {% else %}
+                <span class="iai-chat-bubbles__sources-link">{{ source.original_file_name }}</span>
+              {% endif %}
+            </h3>
+            <ul class="rb-citations">
+              {% for citation in citations %}
+                <li class="rb-citations__item">
+                  <markdown-converter class="iai-chat-bubble__text">{{ citation.text }}</markdown-converter>
+                </li>
+              {% endfor %}
+            </ul>
+          {% endfor %}
+        </div>
+      </div>
+    {% endif %}
+  </div>
+
+</div>

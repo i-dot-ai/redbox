@@ -39,8 +39,8 @@ test-core-api: ## Test core-api
 
 .PHONY: test-redbox
 test-redbox: ## Test redbox
-	poetry install --no-root --no-ansi --with api,dev --without ai,worker,docs
-	poetry run pytest redbox/tests --cov=redbox -v --cov-report=term-missing --cov-fail-under=80
+	cp .env.test redbox-core/.env
+	cd redbox-core && poetry install && poetry run pytest --cov=redbox -v --cov-report=term-missing --cov-fail-under=80
 
 .PHONY: test-worker
 test-worker: ## Test worker
@@ -83,7 +83,8 @@ safe:  ##
 
 .PHONY: checktypes
 checktypes:  ## Check types in redbox and worker
-	poetry run mypy redbox worker --ignore-missing-imports --no-incremental
+	poetry run mypy worker --ignore-missing-imports --no-incremental
+	cd redbox-core && poetry install && poetry run mypy . --ignore-missing-imports
 
 .PHONY: check-migrations
 check-migrations: stop  ## Check types in redbox and worker

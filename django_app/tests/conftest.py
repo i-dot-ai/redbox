@@ -14,6 +14,7 @@ from redbox_app.redbox_core.models import (
     ChatHistory,
     ChatMessage,
     ChatRoleEnum,
+    Citation,
     File,
     User,
 )
@@ -28,9 +29,9 @@ def _collect_static():
 
 @pytest.fixture()
 def create_user():
-    def _create_user(email, date_joined_iso):
+    def _create_user(email, date_joined_iso, is_staff=False):
         date_joined = datetime.fromisoformat(date_joined_iso).astimezone(UTC)
-        return User.objects.create_user(email=email, date_joined=date_joined)
+        return User.objects.create_user(email=email, date_joined=date_joined, is_staff=is_staff)
 
     return _create_user
 
@@ -68,6 +69,11 @@ def user_with_demographic_data(business_unit: BusinessUnit) -> User:
 
 
 @pytest.fixture()
+def staff_user(create_user):
+    return create_user("staff@example.com", "2000-01-01", True)
+
+
+@pytest.fixture()
 def business_unit() -> BusinessUnit:
     return BusinessUnit.objects.create(name="Paperclip Reconciliation")
 
@@ -101,6 +107,13 @@ def chat_message(chat_history: ChatHistory, uploaded_file: File) -> ChatMessage:
 
 
 @pytest.fixture()
+def chat_message_with_citation(chat_history: ChatHistory, uploaded_file: File) -> ChatMessage:
+    chat_message = ChatMessage.objects.create(chat_history=chat_history, text="An answer.", role=ChatRoleEnum.ai)
+    Citation.objects.create(file=uploaded_file, chat_message=chat_message, text="Lorem ipsum.")
+    return chat_message
+
+
+@pytest.fixture()
 def uploaded_file(alice: User, original_file: UploadedFile, s3_client) -> File:  # noqa: ARG001
     file = File.objects.create(
         user=alice,
@@ -122,13 +135,17 @@ def original_file() -> UploadedFile:
 @pytest.fixture()
 def chat_history_with_files(chat_history: ChatHistory, several_files: Sequence[File]) -> ChatHistory:
     ChatMessage.objects.create(chat_history=chat_history, text="A question?", role=ChatRoleEnum.user)
-    chat_message = ChatMessage.objects.create(chat_history=chat_history, text="An answer.", role=ChatRoleEnum.ai)
+    chat_message = ChatMessage.objects.create(
+        chat_history=chat_history, text="An answer.", role=ChatRoleEnum.ai, route="search"
+    )
     chat_message.source_files.set(several_files[0::2])
     chat_message = ChatMessage.objects.create(
         chat_history=chat_history, text="A second question?", role=ChatRoleEnum.user
     )
     chat_message.selected_files.set(several_files[0:2])
-    chat_message = ChatMessage.objects.create(chat_history=chat_history, text="A second answer.", role=ChatRoleEnum.ai)
+    chat_message = ChatMessage.objects.create(
+        chat_history=chat_history, text="A second answer.", role=ChatRoleEnum.ai, route="search"
+    )
     chat_message.source_files.set([several_files[2]])
     return chat_history
 

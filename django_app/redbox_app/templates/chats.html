@@ -3,7 +3,6 @@
 {% from "macros/govuk-button.html" import govukButton %}
 {% from "macros/chat-macros.html" import message_box %}
 {% from "macros/govuk-notification-banner.html" import govukNotificationBanner %}
-{% from "macros/use-trusted-types.html" import use_trusted_types %}
 
 
 {% block content %}
@@ -36,7 +35,7 @@
         </ul>
       </div>
 
-      <document-selector class="iai-panel">
+      <document-selector class="iai-panel iai-panel govuk-!-margin-top-6 govuk-!-margin-bottom-9">
         <fieldset class="govuk-fieldset">
           <legend class="govuk-fieldset__legend govuk-fieldset__legend--s">
             <h3 class="govuk-fieldset__heading">Documents to use</h3>
@@ -64,10 +63,12 @@
           {# SSR messages #}
           {% for message in messages %}
             {{ message_box(
+              id = message.id,
               role = message.role,
               route = message.route,
               text = message.text,
-              sources = message.source_files.distinct()
+              citations = message.citation_set.distinct().order_by("file"),
+              show_route = show_route
             ) }}
           {% endfor %}
 
@@ -151,7 +152,6 @@
 </div>
 
 
-{{ use_trusted_types() }}
 <script src="{{ static('js/libs/showdown.min.js') }}"></script>
 {% if COMPRESSION_ENABLED %}
   {% compress js %}
