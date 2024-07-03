@@ -44,7 +44,7 @@ test-redbox: ## Test redbox
 
 .PHONY: test-worker
 test-worker: ## Test worker
-	cp .env.test redbox-core/.env
+	cp .env.test worker/.env
 	cd worker && poetry install && poetry run pytest --cov=worker -v --cov-report=term-missing --cov-fail-under=80
 
 
