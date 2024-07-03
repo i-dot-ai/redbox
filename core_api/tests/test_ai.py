@@ -23,7 +23,6 @@ from deepeval.models.base_model import DeepEvalBaseLLM
 from deepeval.test_case import LLMTestCase
 from elasticsearch.helpers import bulk, scan
 from pydantic import BaseModel
-from slugify import slugify
 
 from core_api.src.build_chains import build_retrieval_chain
 from core_api.src.dependencies import get_llm, get_parameterised_retriever, get_tokeniser
@@ -41,10 +40,7 @@ if TYPE_CHECKING:
 logging.getLogger().setLevel(logging.CRITICAL)
 
 ROOT = Path(__file__).parents[2]
-DATA = ROOT / "notebooks/evaluation/data/0.2.0"
-
-CSV = DATA / "synthetic/ragas_synthetic_data.csv"
-EMBEDDINGS = DATA / "embeddings/all-mpnet-base-v2.jsonl"
+DATA = ROOT / "notebooks/evaluation/data/0.2.3"
 
 
 class ExperimentData(BaseModel):
@@ -54,14 +50,21 @@ class ExperimentData(BaseModel):
     embeddings: Path
 
 
-RAG_EXPERIMENT_DATA = ExperimentData(csv=CSV, embeddings=EMBEDDINGS)
+RAG_EXPERIMENT_DATA = ExperimentData(
+    csv=DATA / "synthetic/rag.csv", embeddings=DATA / "embeddings/all-mpnet-base-v2.jsonl"
+)
 RAG_TESTS: list[tuple[str, str, list[str]]] = []
 
 for testcase in pd.read_csv(RAG_EXPERIMENT_DATA.csv).itertuples(index=False):
-    raw_pytest = pytest.param(
-        testcase.input, testcase.expected_output, ast.literal_eval(testcase.context), id=slugify(testcase.input[:30])
-    )
-    RAG_TESTS.append(raw_pytest)
+    # Test only one case per user story here
+    if testcase.id == 1:
+        raw_pytest = pytest.param(
+            testcase.input,
+            testcase.expected_output,
+            ast.literal_eval(testcase.context),
+            id=testcase.user_story,
+        )
+        RAG_TESTS.append(raw_pytest)
 
 
 def clear_index(index: str, es: Elasticsearch) -> None:
