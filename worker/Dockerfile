@@ -7,7 +7,7 @@ ENV POETRY_NO_INTERACTION=1 \
     POETRY_VIRTUALENVS_CREATE=1 \
     POETRY_CACHE_DIR=/tmp/poetry_cache
 
-WORKDIR /app/
+WORKDIR /app/worker
 ADD pyproject.toml poetry.lock ./
 ADD redbox-core/ /app/redbox-core
 ADD README.md /app/README.md
@@ -25,23 +25,25 @@ RUN apt update && apt-get install -y \
 
 ARG EMBEDDING_MODEL
 
-ENV VIRTUAL_ENV=/app/.venv \
-    PATH="/app/.venv/bin:$PATH"
+ENV VIRTUAL_ENV=/app/worker/.venv \
+    PATH="/app/worker/.venv/bin:$PATH"
 
 COPY --from=builder ${VIRTUAL_ENV} ${VIRTUAL_ENV}
 
-WORKDIR /app/
 ADD redbox-core/ /app/redbox-core
 ADD README.md /app/README.md
 ADD worker/ /app/worker
-ADD download_embedder.py /app/
+ADD download_embedder.py /app/download_embedder.py
 ADD worker/download_ocr_models.py /app/
 
 ADD worker/health.sh /app/
 RUN chmod +x /app/health.sh
 
+WORKDIR /app/
 # Download the model
-RUN python download_embedder.py --embedding_model ${EMBEDDING_MODEL}
+# RUN python download_embedder.py --embedding_model ${EMBEDDING_MODEL}
+
+WORKDIR /app/worker
 
 # Downlaod Sentence Tokenizer
 RUN python -m nltk.downloader punkt
