@@ -1,0 +1,62 @@
+name: Deploy to dev
+
+on:
+  push:
+    branches:
+      - main
+  release:
+    types:
+      - released
+  workflow_dispatch:
+    inputs:
+      commit_hash:
+        description: 'The SHA of the Git commit to use'
+        required: false
+        default: refs/heads/main
+      core_repo_reference:
+        description: 'The SHA to set the core repo to'
+        required: false
+        default: refs/heads/main
+      config_repo_reference:
+        description: 'The SHA to set the config repo to'
+        required: false
+        default: refs/heads/main
+
+permissions:
+  contents: read
+
+env:
+  core_repo_reference: ${{ inputs.core_repo_reference || 'refs/heads/main'}}
+  config_repo_reference: ${{ inputs.config_repo_reference || 'refs/heads/main'}}
+  commit_hash: ${{ inputs.commit_hash || github.sha }}
+
+jobs:
+  release-dev:
+    if: github.event_name == 'workflow_dispatch'
+    uses: .github/workflows/build-and-release.yml@main
+    with:
+      environment: dev
+      core_infra_repo_reference: ${{ env.core_repo_reference }}
+      config_repo_reference: ${{ env.config_repo_reference }}
+      commit_hash: ${{ env.commit_hash }}
+    secrets: inherit
+
+  release-preprod:
+    if: github.event_name == 'push' && github.ref_name == "main"
+    uses: .github/workflows/build-and-release.yml@main
+    with:
+      environment: preprod
+      core_infra_repo_reference: ${{ env.core_repo_reference }}
+      config_repo_reference: ${{ env.config_repo_reference }}
+      commit_hash: ${{ env.commit_hash }}
+    secrets: inherit
+
+  release-prod:
+    if: github.event_name == 'release'
+    uses: .github/workflows/build-and-release.yml@main
+    with:
+      environment: prod
+      core_infra_repo_reference: ${{ env.core_repo_reference }}
+      infra_config_ref: ${{ env.config_repo_reference }}
+      commit_hash: ${{ env.commit_hash }}
+    secrets: inherit

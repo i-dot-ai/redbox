@@ -1,29 +1,21 @@
-name: Deploy to dev
-
 on:
-  push:
-    branches:
-      - main
-  release:
-    types:
-      - released
-  workflow_dispatch:
+  workflow_call:
     inputs:
-      commit-hash:
-        description: 'The SHA of the Git commit to use'
-        required: false
-        default: refs/heads/main
-      core-repo-reference:
-        description: 'The SHA to set the core repo to'
-        required: false
-        default: refs/heads/main
-      config-repo-reference:
-        description: 'The SHA to set the config repo to'
-        required: false
-        default: refs/heads/main
+      environment:
+        required: true
+        type: string
+      core_infra_repo_reference:
+        required: true
+        type: string
+      config_repo_reference: 
+        required: true
+        type: string
+      commit_hash:
+        required: true
+        type: string
 
-permissions:
-  contents: read
+env: 
+  author_name: ${{ github.event.release.user.login || github.event.pull_request.user.login || github.actor }}
 
 jobs:
   set-vars:
@@ -34,69 +26,21 @@ jobs:
       version: ${{ steps.export.outputs.version }}
       runner-size: ${{ steps.export.outputs.runner-size }}
       infra-config-repo: ${{ steps.export.outputs.infra-config-repo }}
-      environment: ${{ steps.env-var.outputs.environment }}
-      commit-hash: ${{ steps.env-var.outputs.commit-hash }}
-      author-name: ${{ steps.env-var.outputs.author-name }}
-      core-repo-reference: ${{ steps.env-var.outputs.core-repo-reference }}
-      config-repo-reference: ${{ steps.env-var.outputs.config-repo-reference }}
 
-    steps:
-      - id: env-var
-        run: |
-          # prod env from release
-          if [[ "${{ github.event_name }}" == "release" ]]; then
-            export ENVIRONMENT=prod
-            echo "::set-output name=commit-hash::$GITHUB_SHA"
-            export AUTHOR_NAME=${{ github.event.release.user.login }}
-            export CORE_REPO_REFERENCE=refs/heads/main
-            export CONFIG_REPO_REFERENCE=refs/heads/main
-          # preprod env from merge to main
-          elif [[ "${{ github.event_name }}" == "push" ]] && [[ "${{ github.ref_name }}" == "main" ]]; then
-            export ENVIRONMENT=preprod
-            echo "::set-output name=commit-hash::$GITHUB_SHA"
-            export AUTHOR_NAME=${{ github.event.pull_request.user.login }}
-            export CORE_REPO_REFERENCE=refs/heads/main
-            export CONFIG_REPO_REFERENCE=refs/heads/main
-          # dev env from manual release
-          elif [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-            export ENVIRONMENT=dev
-            echo "::set-output name=commit-hash::${{ github.event.inputs.commit-hash }}"
-            export AUTHOR_NAME=${{ github.actor }}
-            export CORE_REPO_REFERENCE=${{ github.event.inputs.core-repo-reference }}
-            export CONFIG_REPO_REFERENCE=${{ github.event.inputs.config-repo-reference }}
-          # dev env for anything else, with default `main` release
-          else
-            export ENVIRONMENT=dev
-            echo "::set-output name=commit-hash::refs/heads/main"
-            export AUTHOR_NAME=unknown
-            export CORE_REPO_REFERENCE=refs/heads/main
-            export CONFIG_REPO_REFERENCE=refs/heads/main
-          fi
-          echo "environment=${ENVIRONMENT}"
-          echo "environment=${ENVIRONMENT}" >> $GITHUB_OUTPUT
-          echo "commit-hash=${{ steps.env-var.outputs.commit-hash }}"
-          echo "commit-hash=$(echo ${{ steps.env-var.outputs.commit-hash }})" >> $GITHUB_ENV
-          echo "author-name=${AUTHOR_NAME}"
-          echo "author-name=${AUTHOR_NAME}" >> $GITHUB_OUTPUT
-          echo "core-repo-reference=${CORE_REPO_REFERENCE}"
-          echo "core-repo-reference=${CORE_REPO_REFERENCE}" >> $GITHUB_OUTPUT
-          echo "config-repo-reference=${CONFIG_REPO_REFERENCE}"
-          echo "config-repo-reference=${CONFIG_REPO_REFERENCE}" >> $GITHUB_OUTPUT
-
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ steps.env-var.outputs.commit-hash }}
-          path: main
-      - id: export
-        run: |
-          cd main
-          . ./.github/.github.env
-          echo "ec2-instance-type=${EC2_INSTANCE_TYPE}" >> $GITHUB_OUTPUT
-          echo "app-name=${APP_NAME}" >> $GITHUB_OUTPUT
-          echo "version=${VERSION}" >> $GITHUB_OUTPUT
-          echo "runner-size=${RUNNER_SIZE}" >> $GITHUB_OUTPUT
-          echo "infra-config-repo=${INFRA_CONFIG_REPO}" >> $GITHUB_OUTPUT
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        ref: ${{ inputs.commit_hash }}
+        path: main
+    - id: export
+      run: |
+        cd main
+        . ./.github/.github.env
+        echo "ec2-instance-type=${EC2_INSTANCE_TYPE}" >> $GITHUB_OUTPUT
+        echo "app-name=${APP_NAME}" >> $GITHUB_OUTPUT
+        echo "version=${VERSION}" >> $GITHUB_OUTPUT
+        echo "runner-size=${RUNNER_SIZE}" >> $GITHUB_OUTPUT
+        echo "infra-config-repo=${INFRA_CONFIG_REPO}" >> $GITHUB_OUTPUT
 
   start-runner:
     uses: i-dot-ai/i-dot-ai-core-github-actions/.github/workflows/start-runner.yml@main
@@ -104,7 +48,7 @@ jobs:
     with:
       EC2_INSTANCE_TYPE: ${{ needs.set-vars.outputs.ec2-instance-type }}
       RUNNER_SIZE: ${{ needs.set-vars.outputs.runner-size }}
-      ENVIRONMENT: ${{ needs.set-vars.outputs.environment }}
+      ENVIRONMENT: ${{ inputs.environment }}
     secrets:
       AWS_GITHUBRUNNER_USER_ACCESS_KEY: ${{ secrets.AWS_GITHUBRUNNER_USER_ACCESS_KEY }}
       AWS_GITHUBRUNNER_USER_SECRET_ID: ${{ secrets.AWS_GITHUBRUNNER_USER_SECRET_ID }}
@@ -120,7 +64,7 @@ jobs:
       APP_NAME: ${{ needs.set-vars.outputs.app-name }}
       RUNNER_LABEL: ${{ needs.start-runner.outputs.label }}
       INFRASTRUCTURE_FOLDER: "infrastructure/aws"
-      COMMIT_HASH: ${{ needs.set-vars.outputs.commit-hash }}
+      COMMIT_HASH: ${{ inputs.commit_hash }}
     secrets:
       AWS_GITHUBRUNNER_PAT: ${{ secrets.AWS_GITHUBRUNNER_PAT}}
       AWS_GITHUBRUNNER_PAT_USER: ${{ secrets.AWS_GITHUBRUNNER_PAT_USER }}
@@ -138,11 +82,11 @@ jobs:
       RUNNER_LABEL: ${{ needs.start-runner.outputs.label }}
       INFRASTRUCTURE_FOLDER: "infrastructure/aws"
       PUBLIC_INFRA_DEPLOYMENT: true
-      ENVIRONMENT: ${{ needs.set-vars.outputs.environment }}
-      INFRA_CONFIG_REPO: ${{ needs.set-vars.outputs.infra-config-repo }}
-      CORE_INFRA_REF: ${{ needs.set-vars.outputs.core-repo-reference }}
-      INFRA_CONFIG_REF: ${{ needs.set-vars.outputs.config-repo-reference }}
-      IMAGE_TAG: ${{ needs.set-vars.outputs.commit-hash }}
+      ENVIRONMENT: ${{ inputs.environment }}
+      INFRA_CONFIG_REPO: ${{ inputs.infra-config-repo }}
+      CORE_INFRA_REF: ${{ inputs.core_infra_repo_reference }}
+      INFRA_CONFIG_REF: ${{ inputs.config_repo_reference }}
+      IMAGE_TAG: ${{ inputs.commit_hash }}
     secrets:
       AWS_GITHUBRUNNER_PAT: ${{ secrets.AWS_GITHUBRUNNER_PAT}}
       AWS_GITHUBRUNNER_PAT_USER: ${{ secrets.AWS_GITHUBRUNNER_PAT_USER }}
@@ -165,13 +109,13 @@ jobs:
           channel-id: 'C05D67P6M34'
           payload: |
             {
-              "text": "Failed to deploy to ${{ needs.set-vars.outputs.environment }}",
+              "text": "Failed to deploy to ${{ inputs.environment }}",
               "blocks": [
                 {
                   "type": "header",
                   "text": {
                     "type": "plain_text",
-                    "text": "User `${{ needs.set-vars.outputs.author-name }}` failed to deploy ${{ needs.set-vars.outputs.commit-hash }} to ${{ needs.set-vars.outputs.environment }} :aaaaaaaaaa:"
+                    "text": "User `${{ env.author_name }}` failed to deploy ${{ inputs.commit_hash }} to ${{ inputs.environment }} :aaaaaaaaaa:"
                   }
                 }
               ]
@@ -188,13 +132,13 @@ jobs:
           channel-id: 'C05D67P6M34'
           payload: |
             {
-              "text": "Deployment to ${{ needs.set-vars.outputs.environment }} succeeded :airplane:",
+              "text": "Deployment to ${{ inputs.environment }} succeeded :airplane:",
               "blocks": [
                 {
                   "type": "header",
                   "text": {
                     "type": "plain_text",
-                    "text": "User `${{ needs.set-vars.outputs.author-name }}` deployed ${{ needs.set-vars.outputs.commit-hash }} to ${{ needs.set-vars.outputs.environment }} :hype-elmo:"
+                    "text": "User `${{ env.author_name }}` deployed ${{ inputs.commit_hash }} to ${{ inputs.environment }} :hype-elmo:"
                   }
                 }
               ]
