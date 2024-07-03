@@ -6,13 +6,13 @@ name: LLM regression tests
 on:
   # weekdays at 6am
   schedule:
-    - cron: "0 6 * * 1-5"
+    - cron: '0 6 * * 1-5'
   # or on-demand
   workflow_dispatch:
   # or on push to main
   push:
     branches:
-      - "main"
+      - 'main'
 
 permissions:
   contents: read
