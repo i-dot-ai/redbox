@@ -3,6 +3,9 @@ name: build
 on:
   # On-demand
   workflow_dispatch:
+  push:
+    branches:
+      - main
 
 jobs:
   set-vars:
