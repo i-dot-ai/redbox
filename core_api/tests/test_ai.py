@@ -38,9 +38,7 @@ if TYPE_CHECKING:
     from redbox.models import Settings
 
 
-logging.getLogger("elastic_transport.transport").setLevel(logging.CRITICAL)
-logging.getLogger("root").setLevel(logging.CRITICAL)
-logging.getLogger("httpx").setLevel(logging.CRITICAL)
+logging.getLogger().setLevel(logging.CRITICAL)
 
 ROOT = Path(__file__).parents[2]
 DATA = ROOT / "notebooks/evaluation/data/0.2.0"

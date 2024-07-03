@@ -6,26 +6,13 @@ name: LLM regression tests
 on:
   # weekdays at 6am
   schedule:
-    - cron: '0 6 * * 1-5'
+    - cron: "0 6 * * 1-5"
   # or on-demand
   workflow_dispatch:
-    inputs:
-      COMMIT_HASH:
-        description: 'The SHA of the Git commit to use'
-        required: false
-        type: string
-        default: refs/heads/main
   # or on push to main
   push:
     branches:
-      - 'main'
-  workflow_call:
-    inputs:
-      COMMIT_HASH:
-        description: 'The SHA of the Git commit to use'
-        required: false
-        type: string
-        default: refs/heads/main
+      - "main"
 
 permissions:
   contents: read
