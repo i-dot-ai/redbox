@@ -9,9 +9,11 @@ ENV POETRY_NO_INTERACTION=1 \
 
 WORKDIR /app/
 ADD pyproject.toml poetry.lock ./
-ADD redbox-core /app/redbox-core
-ADD download_embedder.py /app/
+ADD redbox-core/ /app/redbox-core
 ADD README.md /app/README.md
+ADD worker/ /app/worker
+ADD download_embedder.py /app/
+ADD worker/download_ocr_models.py /app/
 
 RUN --mount=type=cache,target=$POETRY_CACHE_DIR poetry install --no-ansi
 
