@@ -12,7 +12,7 @@ ENV POETRY_NO_INTERACTION=1 \
 ADD redbox-core/ /app/redbox-core
 ADD pyproject.toml poetry.lock README.md download_embedder.py /app/
 
-RUN --mount=type=cache,target=$POETRY_CACHE_DIR poetry install --no-root --no-ansi --with api --without worker,dev
+RUN --mount=type=cache,target=$POETRY_CACHE_DIR poetry install --no-root --no-ansi --with api --without dev
 
 FROM python:3.11-slim-bookworm as runtime
 ARG EMBEDDING_MODEL
