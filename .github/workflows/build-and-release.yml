@@ -54,7 +54,7 @@ jobs:
           elif [[ "${{ github.event_name }}" == "push" ]] && [[ "${{ github.ref_name }}" == "main" ]]; then
             export ENVIRONMENT=preprod
             echo "::set-output name=commit-hash::$GITHUB_SHA"
-            export AUTHOR_NAME=${{ github.event.head_commit.author.name }}
+            export AUTHOR_NAME=${{ github.event.pull_request.user.login }}
             export CORE_REPO_REFERENCE=refs/heads/main
             export CONFIG_REPO_REFERENCE=refs/heads/main
           # dev env from manual release
