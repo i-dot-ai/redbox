@@ -1,4 +1,7 @@
-name: LLM Regression Test
+# This workflow will install Python dependencies and run AI regression tests with a single version of Python
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python
+
+name: LLM regression tests
 
 on:
   # weekdays at 6am
@@ -15,23 +18,25 @@ permissions:
   contents: read
 
 jobs:
-  test:
+  ai-tests:
+
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+    - name: Checkout code
+      uses: actions/checkout@v3
 
-      - name: Set up Python 3.11
-        uses: actions/setup-python@v3
-        with:
-          python-version: "3.11"
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v3
+      with:
+        python-version: "3.11"
 
-      - name: Set up Poetry
-        uses: abatilo/actions-poetry@v2
-        with:
-          poetry-version: 1.7.0
+    - name: Set up Poetry
+      uses: abatilo/actions-poetry@v2
+      with:
+        poetry-version: 1.7.0
 
-    - name: Build Containers
+    - name: Build containers
       run: |
         mkdir -p data/elastic/
         chmod 777 data/elastic/
@@ -47,5 +52,5 @@ jobs:
         poetry install --no-root --no-ansi --with dev,ai,api --without worker
         poetry run download-model --embedding_model all-mpnet-base-v2
 
-      - name: Run DeepEval Unit Tests
-        run: poetry run deepeval test run core_api/tests/test_ai.py --mark ai
+    - name: Run DeepEval Unit Tests
+      run: poetry run deepeval test run core_api/tests/test_ai.py --mark ai
