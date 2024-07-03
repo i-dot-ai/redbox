@@ -10,7 +10,7 @@ from uuid import UUID
 import jsonlines
 import pandas as pd
 import pytest
-from deepeval import evaluate
+from deepeval import assert_test
 from deepeval.metrics import (
     AnswerRelevancyMetric,
     ContextualPrecisionMetric,
@@ -23,6 +23,7 @@ from deepeval.models.base_model import DeepEvalBaseLLM
 from deepeval.test_case import LLMTestCase
 from elasticsearch.helpers import bulk, scan
 from pydantic import BaseModel
+from slugify import slugify
 
 from core_api.src.build_chains import build_retrieval_chain
 from core_api.src.dependencies import get_llm, get_parameterised_retriever, get_tokeniser
@@ -31,7 +32,6 @@ from redbox.models.chain import ChainInput
 if TYPE_CHECKING:
     from collections.abc import Callable, Generator
 
-    from deepeval.evaluate import TestResult
     from elasticsearch import Elasticsearch
     from langchain_community.chat_models import ChatLiteLLM
 
@@ -56,11 +56,14 @@ class ExperimentData(BaseModel):
     embeddings: Path
 
 
-EXPERIMENT_DATA = ExperimentData(csv=CSV, embeddings=EMBEDDINGS)
-RAW_TESTS: list[tuple[str, str, list[str]]] = []
+RAG_EXPERIMENT_DATA = ExperimentData(csv=CSV, embeddings=EMBEDDINGS)
+RAG_TESTS: list[tuple[str, str, list[str]]] = []
 
-for testcase in pd.read_csv(EXPERIMENT_DATA.csv).itertuples(index=False):
-    RAW_TESTS.append((testcase.input, testcase.expected_output, ast.literal_eval(testcase.context)))
+for testcase in pd.read_csv(RAG_EXPERIMENT_DATA.csv).itertuples(index=False):
+    raw_pytest = pytest.param(
+        testcase.input, testcase.expected_output, ast.literal_eval(testcase.context), id=slugify(testcase.input[:30])
+    )
+    RAG_TESTS.append(raw_pytest)
 
 
 def clear_index(index: str, es: Elasticsearch) -> None:
@@ -71,7 +74,7 @@ def clear_index(index: str, es: Elasticsearch) -> None:
 
 @pytest.fixture(scope="session")
 def ai_experiment_data() -> ExperimentData:
-    return EXPERIMENT_DATA
+    return RAG_EXPERIMENT_DATA
 
 
 @pytest.fixture(scope="session")
@@ -164,13 +167,13 @@ def make_test_case(
     )
 
     def _make_test_case(prompt: str, expected_output: str, context: list[str]) -> LLMTestCase:
-        prompt = ChainInput(
+        chain_input = ChainInput(
             question=prompt,
             file_uuids=[],
             user_uuid=str(user_uuid),
             chat_history=[],
         )
-        answer = rag_chain.invoke(input=prompt.model_dump(mode="json"))
+        answer = rag_chain.invoke(input=chain_input.model_dump(mode="json"))
 
         return LLMTestCase(
             input=prompt,
@@ -184,9 +187,14 @@ def make_test_case(
 
 
 @pytest.mark.ai()
-@pytest.mark.parametrize("test_data", RAW_TESTS)
-def test_ai(make_test_case: Callable, eval_llm: DeepEvalBaseLLM, test_data: tuple[str, str, list[str]]):
-    prompt, expected_output, context = test_data
+@pytest.mark.parametrize(("prompt", "expected_output", "context"), RAG_TESTS)
+def test_rag(
+    make_test_case: Callable,
+    eval_llm: DeepEvalBaseLLM,
+    prompt: str,
+    expected_output: str,
+    context: list[str],
+):
     deepeval_test_case = make_test_case(prompt=prompt, expected_output=expected_output, context=context)
 
     contextual_precision = ContextualPrecisionMetric(
@@ -214,8 +222,8 @@ def test_ai(make_test_case: Callable, eval_llm: DeepEvalBaseLLM, test_data: tupl
         model=eval_llm,
     )
 
-    evaluation_results: list[TestResult] = evaluate(
-        test_cases=[deepeval_test_case],
+    assert_test(
+        test_case=deepeval_test_case,
         metrics=[
             contextual_recall,
             contextual_precision,
@@ -225,5 +233,3 @@ def test_ai(make_test_case: Callable, eval_llm: DeepEvalBaseLLM, test_data: tupl
             hallucination,
         ],
     )
-
-    assert all(result.success for result in evaluation_results), evaluation_results

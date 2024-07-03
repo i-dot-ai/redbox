@@ -171,4 +171,5 @@ env_files = [
 ]
 markers = [
     "incremental: marks tests as incremental (deselect with '-m \"not incremental\"')",
+    "ai: marks tests as using a live LLM (deselect with '-m \"not ai\"')"
 ]
