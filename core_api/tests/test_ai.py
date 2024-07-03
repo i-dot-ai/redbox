@@ -67,9 +67,10 @@ for testcase in pd.read_csv(RAG_EXPERIMENT_DATA.csv).itertuples(index=False):
 
 
 def clear_index(index: str, es: Elasticsearch) -> None:
-    documents = scan(es, index=index, query={"query": {"match_all": {}}})
-    bulk_data = [{"_op_type": "delete", "_index": doc["_index"], "_id": doc["_id"]} for doc in documents]
-    bulk(es, bulk_data, request_timeout=300)
+    if es.indices.exists(index=index):
+        documents = scan(es, index=index, query={"query": {"match_all": {}}})
+        bulk_data = [{"_op_type": "delete", "_index": doc["_index"], "_id": doc["_id"]} for doc in documents]
+        bulk(es, bulk_data, request_timeout=300)
 
 
 @pytest.fixture(scope="session")
