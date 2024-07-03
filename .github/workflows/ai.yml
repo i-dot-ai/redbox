@@ -9,10 +9,23 @@ on:
     - cron: '0 6 * * 1-5'
   # or on-demand
   workflow_dispatch:
+    inputs:
+      COMMIT_HASH:
+        description: 'The SHA of the Git commit to use'
+        required: false
+        type: string
+        default: refs/heads/main
   # or on push to main
   push:
     branches:
       - 'main'
+  workflow_call:
+    inputs:
+      COMMIT_HASH:
+        description: 'The SHA of the Git commit to use'
+        required: false
+        type: string
+        default: refs/heads/main
 
 permissions:
   contents: read
@@ -50,7 +63,7 @@ jobs:
 
         docker compose up -d --wait elasticsearch
         poetry install --no-root --no-ansi --with dev,ai,api --without worker
-        poetry run download-model --embedding_model all-mpnet-base-v2
+        poetry run python download_embedder.py --embedding_model all-mpnet-base-v2
 
     - name: Run DeepEval Unit Tests
       run: poetry run deepeval test run core_api/tests/test_ai.py --mark ai
