@@ -46,7 +46,8 @@
   "author": "",
   "dependencies": {
     "govuk-frontend": "^5.2.0",
-    "i.ai-design-system": "^0.3.12"
+    "i.ai-design-system": "^0.3.12",
+    "posthog-js": "^1.143.0"
   },
   "devDependencies": {
     "@parcel/transformer-sass": "^2.12.0",
