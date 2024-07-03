@@ -209,6 +209,9 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
     def expires(self) -> timedelta:
         return self.expires_at - datetime.now(tz=UTC)
 
+    def __lt__(self, other):
+        return self.id < other.id
+
 
 class ChatHistory(UUIDPrimaryKeyBase, TimeStampedModel):
     name = models.TextField(max_length=1024, null=False, blank=False)

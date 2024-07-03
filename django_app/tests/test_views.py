@@ -372,6 +372,92 @@ def test_view_session_with_documents(chat_message: ChatMessage, client: Client):
 
 
 @pytest.mark.django_db()
+def test_citations_shown_in_correct_order(
+    client: Client, alice: User, chat_history: ChatHistory, several_files: Sequence[File]
+):
+    # Given
+    client.force_login(alice)
+    chat_message = ChatMessage.objects.create(chat_history=chat_history, text="Some answer.", role=ChatRoleEnum.ai)
+
+    Citation.objects.create(file=several_files[1], chat_message=chat_message, text="Citation 1")
+    Citation.objects.create(file=several_files[0], chat_message=chat_message, text="Citation 2")
+    Citation.objects.create(file=several_files[1], chat_message=chat_message, text="Citation 3")
+    Citation.objects.create(file=several_files[2], chat_message=chat_message, text="Citation 4")
+    Citation.objects.create(file=several_files[0], chat_message=chat_message, text="Citation 5")
+
+    # When
+    response = client.get(f"/citations/{chat_message.id}/")
+
+    # Then
+    assert response.status_code == HTTPStatus.OK
+    soup = BeautifulSoup(response.content)
+    sources_panel = soup.select("div.iai-panel")[1]
+    files = sources_panel.find_all("h3")
+    filenames = [h3.get_text().strip() for h3 in files]
+    citations = [
+        [li.get_text().strip() for li in citations.find_all(class_="rb-citations__item")]
+        for citations in [h3.next_sibling.next_sibling for h3 in files]
+    ]
+
+    assert filenames == ["original_file_1.txt", "original_file_0.txt", "original_file_2.txt"]
+    assert citations == [["Citation 1", "Citation 3"], ["Citation 2", "Citation 5"], ["Citation 4"]]
+
+
+@pytest.mark.django_db()
+def test_user_can_see_their_own_citations(chat_message_with_citation: ChatMessage, alice: User, client: Client):
+    # Given
+    client.force_login(alice)
+
+    # When
+    response = client.get(f"/citations/{chat_message_with_citation.id}/")
+
+    # Then
+    assert response.status_code == HTTPStatus.OK
+
+
+@pytest.mark.django_db()
+def test_user_cannot_see_other_users_citations(chat_message_with_citation: ChatHistory, bob: User, client: Client):
+    # Given
+    client.force_login(bob)
+
+    # When
+    response = client.get(f"/citations/{chat_message_with_citation.id}/")
+
+    # Then
+    assert response.status_code == HTTPStatus.FOUND
+    assert response.headers.get("Location") == "/chats/"
+
+
+@pytest.mark.django_db()
+def test_user_cannot_see_route(chat_history_with_files: ChatHistory, client: Client):
+    # Given
+    client.force_login(chat_history_with_files.users)
+
+    # When
+    response = client.get(f"/chats/{chat_history_with_files.id}/")
+
+    # Then
+    assert response.status_code == HTTPStatus.OK
+    assert b"iai-chat-bubble__route govuk-!-display-none" in response.content
+
+
+@pytest.mark.django_db()
+def test_staff_user_can_see_route(chat_history_with_files: ChatHistory, client: Client):
+    # Given
+    chat_history_with_files.users.is_staff = True
+    chat_history_with_files.users.save()
+    client.force_login(chat_history_with_files.users)
+
+    # When
+    response = client.get(f"/chats/{chat_history_with_files.id}/")
+
+    # Then
+    assert response.status_code == HTTPStatus.OK
+    assert b"iai-chat-bubble__route" in response.content
+    assert b"iai-chat-bubble__route govuk-!-display-none" not in response.content
+
+
+@pytest.mark.django_db()
 def test_check_demographics_redirect_if_unpopulated(client: Client, alice: User):
     # Given
     client.force_login(alice)

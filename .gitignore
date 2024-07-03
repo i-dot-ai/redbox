@@ -1,5 +1,6 @@
 **/*.db
 .idea/
+redbox-core/models/
 
 # data files
 elk/elasticsearch/data

@@ -43,7 +43,7 @@ async def test_chat_consumer_with_new_session(alice: User, uploaded_file: File, 
         assert response2["data"] == "Good afternoon, "
         assert response3["type"] == "text"
         assert response3["data"] == "Mr. Amor."
-        assert response4["type"] == "route"
+        assert response4["type"] == "hidden-route"
         assert response4["data"] == "gratitude"
         assert response5["type"] == "source"
         assert response5["data"]["original_file_name"] == uploaded_file.original_file_name
@@ -55,6 +55,38 @@ async def test_chat_consumer_with_new_session(alice: User, uploaded_file: File, 
     assert await get_chat_message_route(alice, ChatRoleEnum.ai) == ["gratitude"]
     await refresh_from_db(uploaded_file)
     assert uploaded_file.last_referenced.date() == datetime.now(tz=UTC).date()
+
+
+@pytest.mark.django_db(transaction=True)
+@pytest.mark.asyncio()
+async def test_chat_consumer_staff_user(staff_user: User, mocked_connect: Connect):
+    # Given
+
+    # When
+    with patch("redbox_app.redbox_core.consumers.connect", new=mocked_connect):
+        communicator = WebsocketCommunicator(ChatConsumer.as_asgi(), "/ws/chat/")
+        communicator.scope["user"] = staff_user
+        connected, _ = await communicator.connect()
+        assert connected
+
+        await communicator.send_json_to({"message": "Hello Hal."})
+        response1 = await communicator.receive_json_from(timeout=5)
+        response2 = await communicator.receive_json_from(timeout=5)
+        response3 = await communicator.receive_json_from(timeout=5)
+        response4 = await communicator.receive_json_from(timeout=5)
+
+        # Then
+        assert response1["type"] == "session-id"
+        assert response2["type"] == "text"
+        assert response2["data"] == "Good afternoon, "
+        assert response3["type"] == "text"
+        assert response3["data"] == "Mr. Amor."
+        assert response4["type"] == "route"
+        assert response4["data"] == "gratitude"
+        # Close
+        await communicator.disconnect()
+
+    assert await get_chat_message_route(staff_user, ChatRoleEnum.ai) == ["gratitude"]
 
 
 @pytest.mark.django_db(transaction=True)

@@ -3,16 +3,32 @@
 
 name: Integration Tests
 
+env:
+  ENVIRONMENT: INTEGRATION
+
 on:
   # weekday mealtimes
   schedule:
     - cron: '0 6,12,18 * * 1-5'
   # or on-demand
   workflow_dispatch:
- # or on push to main
+    inputs:
+      COMMIT_HASH:
+        description: 'The SHA of the Git commit to use'
+        required: false
+        type: string
+        default: refs/heads/main
+  # or on push to main
   push:
     branches:
       - 'main'
+  workflow_call:
+    inputs:
+      COMMIT_HASH:
+        description: 'The SHA of the Git commit to use'
+        required: false
+        type: string
+        default: refs/heads/main
 
 permissions:
   contents: read
@@ -23,7 +39,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
+      with:
+        ref: ${{ inputs.COMMIT_HASH }}
+        path: integration
 
     - name: Free Disk Space (Ubuntu)
       uses: jlumbroso/free-disk-space@main
@@ -53,16 +72,19 @@ jobs:
 
     - name: Build Containers
       run: |
+        cd integration
         mkdir -p data/elastic/
         chmod -R 777 data/
         cp .env.integration .env
         echo AZURE_OPENAI_ENDPOINT=${{ secrets.AZURE_OPENAI_ENDPOINT }} >> .env
         echo AZURE_OPENAI_API_KEY=${{ secrets.AZURE_OPENAI_API_KEY }} >> .env
+        echo AZURE_OPENAI_MODEL=azure/gpt-4-turbo-2024-04-09 >> .env
         docker compose up -d --wait core-api django-app
         docker ps
 
     - name: Test integration with pytest
       run: |
+        cd integration
         poetry install --only dev
         poetry run playwright install --with-deps chromium
         poetry run pytest tests/ --browser chromium

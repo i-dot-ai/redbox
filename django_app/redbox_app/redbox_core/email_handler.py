@@ -4,7 +4,7 @@ from django.template.loader import render_to_string
 
 EMAIL_MAPPING = {
     "magic_link": {
-        "subject": "Redbox Copilot sign-in",
+        "subject": "Redbox sign-in",
         "template_name": "email/verification.txt",
     },
 }

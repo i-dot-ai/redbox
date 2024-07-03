@@ -68,6 +68,10 @@ def test_user_journey(page: Page, email_address: str):
     latest_chat_response = chats_page.wait_for_latest_message()
     assert latest_chat_response.text
 
+    # Citations
+    citations_page = latest_chat_response.navigate_to_citations()
+    chats_page = citations_page.back_to_chat()
+
     # Select files
     chats_page = chats_page.start_new_chat()
     files_to_select = {f.name for f in upload_files if "README" in f.name}

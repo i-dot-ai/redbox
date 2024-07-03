@@ -70,7 +70,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 await self.send_to_server(core_websocket, message)
                 await self.send_to_client("session-id", session.id)
                 reply, citations, route = await self.receive_llm_responses(user, core_websocket)
-            await self.save_message(session, reply, ChatRoleEnum.ai, sources=citations, route=route)
+            message = await self.save_message(session, reply, ChatRoleEnum.ai, sources=citations, route=route)
+            await self.send_to_client("end", {"message_id": message.id})
 
             for file, _ in citations:
                 file.last_referenced = timezone.now()
@@ -93,7 +94,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             elif response.resource_type == "documents":
                 citations += await self.handle_documents(response, user)
             elif response.resource_type == "route_name":
-                route = await self.handle_route(response)
+                route = await self.handle_route(response, user.is_staff)
             elif response.resource_type == "error":
                 raise CoreError(response.data)
         return "".join(full_reply), citations, route
@@ -110,8 +111,13 @@ class ChatConsumer(AsyncWebsocketConsumer):
         await self.send_to_client("text", response.data)
         return response.data
 
-    async def handle_route(self, response: CoreChatResponse) -> str:
-        await self.send_to_client("route", response.data)
+    async def handle_route(self, response: CoreChatResponse, show_route: bool) -> str:
+        # TODO(@rachaelcodes): remove is_staff conditional and hidden-route with new route design
+        # https://technologyprogramme.atlassian.net/browse/REDBOX-419
+        if show_route:
+            await self.send_to_client("route", response.data)
+        else:
+            await self.send_to_client("hidden-route", response.data)
         return response.data
 
     async def send_to_client(self, message_type: str, data: str | Mapping[str, Any] | None = None) -> None:
