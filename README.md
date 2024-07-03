@@ -72,6 +72,7 @@ redbox-copilot/
 │  └── Dockerfile
 ├── redbox-core/
 │  ├── redbox
+│  │  ├── loader/
 │  │  ├── models/
 │  │  └── storage/
 │  ├── tests/
