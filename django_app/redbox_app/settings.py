@@ -171,7 +171,7 @@ CSP_FONT_SRC = (
 )
 CSP_STYLE_SRC = ("'self'",)
 CSP_FRAME_ANCESTORS = ("'none'",)
-CSP_CONNECT_SRC = ["'self'", f"wss://{ENVIRONMENT.hosts[0]}/ws/chat/", "plausible.io"]
+CSP_CONNECT_SRC = ["'self'", f"wss://{ENVIRONMENT.hosts[0]}/ws/chat/", "plausible.io", "eu.i.posthog.com"]
 
 # https://pypi.org/project/django-permissions-policy/
 PERMISSIONS_POLICY: dict[str, list] = {

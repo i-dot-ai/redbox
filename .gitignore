@@ -198,6 +198,7 @@ django_app/frontend/govuk-assets
 django_app/frontend/.parcel-cache
 # Django app tests staticfiles
 django_app/tests/staticfiles
+django_app/frontend/.parcel-cache
 
 
 # Other
