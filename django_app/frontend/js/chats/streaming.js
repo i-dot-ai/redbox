@@ -76,15 +76,13 @@ class ChatMessage extends HTMLElement {
                     </div>`
                 : ''}
                 <sources-list></sources-list>
-                <div class="govuk-error-summary" data-module="govuk-error-summary" hidden>
-                  <div role="alert">
-                    <h2 class="govuk-error-summary__title">Error</h2>
-                    <div class="govuk-error-summary__body">
-                      <ul class="govuk-list govuk-error-summary__list">
-                        <li>There was an unexpected error communicating with Redbox. Please try again, and contact <a href="/support/">support</a> if the problem persists.</li>
-                      </ul>
+                <div class="govuk-notification-banner govuk-notification-banner--error govuk-!-margin-bottom-3 govuk-!-margin-top-3" role="alert" aria-labelledby="govuk-notification-banner-title" data-module="govuk-notification-banner" hidden>
+                    <div class="govuk-notification-banner__header">
+                        <h3 class="govuk-notification-banner__title" id="govuk-notification-banner-title">Error</h3>
                     </div>
-                  </div>
+                    <div class="govuk-notification-banner__content">
+                        <p class="govuk-notification-banner__heading">There was an unexpected error communicating with Redbox. Please try again, and contact <a href="/support/">support</a> if the problem persists.</p>
+                    </div>
                 </div>
             </div>
         `;
