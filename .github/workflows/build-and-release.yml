@@ -84,7 +84,7 @@ jobs:
       INFRASTRUCTURE_FOLDER: "infrastructure/aws"
       PUBLIC_INFRA_DEPLOYMENT: true
       ENVIRONMENT: ${{ inputs.environment }}
-      INFRA_CONFIG_REPO: ${{ inputs.infra-config-repo }}
+      INFRA_CONFIG_REPO: ${{ needs.set-vars.outputs.infra-config-repo }}
       CORE_INFRA_REF: ${{ inputs.core_infra_repo_reference }}
       INFRA_CONFIG_REF: ${{ inputs.config_repo_reference }}
       IMAGE_TAG: ${{ inputs.commit_hash }}
