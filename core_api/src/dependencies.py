@@ -12,12 +12,15 @@ from langchain_core.embeddings import Embeddings
 from langchain_core.retrievers import BaseRetriever
 from langchain_core.runnables import ConfigurableField
 from langchain_elasticsearch import ApproxRetrievalStrategy, ElasticsearchStore
-
-from core_api.src.callbacks import LoggerCallbackHandler
-from core_api.src.retriever import AllElasticsearchRetriever, ParameterisedElasticsearchRetriever
 from redbox.model_db import MODEL_PATH
 from redbox.models import Settings
 from redbox.storage import ElasticsearchStorageHandler
+
+from core_api.src.callbacks import LoggerCallbackHandler
+from core_api.src.retriever import (
+    AllElasticsearchRetriever,
+    ParameterisedElasticsearchRetriever,
+)
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger()
@@ -29,13 +32,17 @@ def get_env() -> Settings:
 
 
 @lru_cache(1)
-def get_elasticsearch_client(env: Annotated[Settings, Depends(get_env)]) -> Elasticsearch:
+def get_elasticsearch_client(
+    env: Annotated[Settings, Depends(get_env)]
+) -> Elasticsearch:
     return env.elasticsearch_client()
 
 
 @lru_cache(1)
 def get_embedding_model(env: Annotated[Settings, Depends(get_env)]) -> Embeddings:
-    embedding_model = SentenceTransformerEmbeddings(model_name=env.embedding_model, cache_folder=MODEL_PATH)
+    embedding_model = SentenceTransformerEmbeddings(
+        model_name=env.embedding_model, cache_folder=MODEL_PATH
+    )
     log.info("Loaded embedding model from environment: %s", env.embedding_model)
     return embedding_model
 
@@ -72,7 +79,8 @@ def get_vector_store(
 
 @lru_cache(1)
 def get_parameterised_retriever(
-    env: Annotated[Settings, Depends(get_env)], es: Annotated[Elasticsearch, Depends(get_elasticsearch_client)]
+    env: Annotated[Settings, Depends(get_env)],
+    es: Annotated[Elasticsearch, Depends(get_elasticsearch_client)],
 ) -> BaseRetriever:
     """Creates an Elasticsearch retriever runnable.
 
@@ -94,14 +102,17 @@ def get_parameterised_retriever(
         embedding_model=get_embedding_model(env),
     ).configurable_fields(
         params=ConfigurableField(
-            id="params", name="Retriever parameters", description="A dictionary of parameters to use for the retriever."
+            id="params",
+            name="Retriever parameters",
+            description="A dictionary of parameters to use for the retriever.",
         )
     )
 
 
 @lru_cache(1)
 def get_all_chunks_retriever(
-    env: Annotated[Settings, Depends(get_env)], es: Annotated[Elasticsearch, Depends(get_elasticsearch_client)]
+    env: Annotated[Settings, Depends(get_env)],
+    es: Annotated[Elasticsearch, Depends(get_elasticsearch_client)],
 ):
     return AllElasticsearchRetriever(
         es_client=es,
@@ -120,6 +131,7 @@ def get_llm(env: Annotated[Settings, Depends(get_env)]) -> ChatLiteLLM:
             streaming=True,
             openai_key=env.openai_api_key,
             callbacks=[logger_callback],
+            model=env.openai_model,
         )
     elif env.azure_openai_api_key is not None:
         log.info("Creating Azure LLM Client")
