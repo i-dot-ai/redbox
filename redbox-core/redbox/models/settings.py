@@ -10,9 +10,7 @@ logging.basicConfig(level=logging.INFO)
 log = logging.getLogger()
 
 
-VANILLA_SYSTEM_PROMPT = (
-    "You are an AI assistant called Redbox tasked with answering questions and providing information objectively."
-)
+VANILLA_SYSTEM_PROMPT = "You are an AI assistant called Redbox tasked with answering questions and providing information objectively."
 
 RETRIEVAL_SYSTEM_PROMPT = (
     "Given the following conversation and extracted parts of a long document and a question, create a final answer. \n"
@@ -66,15 +64,21 @@ CONDENSE_SYSTEM_PROMPT = (
 
 VANILLA_QUESTION_PROMPT = "{question}\n=========\n Response: "
 
-RETRIEVAL_QUESTION_PROMPT = "{question} \n=========\n{formatted_documents}\n=========\nFINAL ANSWER: "
+RETRIEVAL_QUESTION_PROMPT = (
+    "{question} \n=========\n{formatted_documents}\n=========\nFINAL ANSWER: "
+)
 
-SUMMARISATION_QUESTION_PROMPT = "Question: {question}. \n\n Documents: \n\n {documents} \n\n Answer: "
+SUMMARISATION_QUESTION_PROMPT = (
+    "Question: {question}. \n\n Documents: \n\n {documents} \n\n Answer: "
+)
 
 MAP_QUESTION_PROMPT = "Question: {question}. "
 
 MAP_DOCUMENT_PROMPT = "\n\n Documents: \n\n {documents} \n\n Answer: "
 
-REDUCE_QUESTION_PROMPT = "Question: {question}. \n\n Documents: \n\n {summaries} \n\n Answer: "
+REDUCE_QUESTION_PROMPT = (
+    "Question: {question}. \n\n Documents: \n\n {summaries} \n\n Answer: "
+)
 
 CONDENSE_QUESTION_PROMPT = "{question}\n=========\n Standalone question: "
 
@@ -136,6 +140,7 @@ class Settings(BaseSettings):
 
     anthropic_api_key: str | None = None
     openai_api_key: str | None = None
+    openai_model: str | None = None
     azure_openai_api_key: str | None = None
     azure_openai_endpoint: str | None = None
 
@@ -183,7 +188,9 @@ class Settings(BaseSettings):
     dev_mode: bool = False
     superuser_email: str | None = None
 
-    model_config = SettingsConfigDict(env_file=".env", env_nested_delimiter="__", extra="allow", frozen=True)
+    model_config = SettingsConfigDict(
+        env_file=".env", env_nested_delimiter="__", extra="allow", frozen=True
+    )
 
     def elasticsearch_client(self) -> Elasticsearch:
         if isinstance(self.elastic, ElasticLocalSettings):
@@ -204,7 +211,9 @@ class Settings(BaseSettings):
         log.info("Cloud ID = %s", self.elastic.cloud_id)
         log.info("Elastic Cloud API Key = %s", self.elastic.api_key)
 
-        return Elasticsearch(cloud_id=self.elastic.cloud_id, api_key=self.elastic.api_key)
+        return Elasticsearch(
+            cloud_id=self.elastic.cloud_id, api_key=self.elastic.api_key
+        )
 
     def s3_client(self):
         if self.object_store == "minio":
