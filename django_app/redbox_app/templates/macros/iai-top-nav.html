@@ -21,7 +21,7 @@
                 <ul id="navigation" class="iai-top-nav__nav-list">
                     {% for menu_item in menu_items %}
                         <li class="iai-top-nav__link-item {% if menu_item.active %}iai-top-nav__link-item--active{% endif %}">
-                            <a class="iai-top-nav__link" href="{{ menu_item.href }}" {% if menu_item.active %}aria-current="page"{% endif %}>{{ menu_item.text }}</a>
+                            <a class="iai-top-nav__link" href="/{{ menu_item.href }}" {% if menu_item.active %}aria-current="page"{% endif %}>{{ menu_item.text }}</a>
                         </li>
                     {% endfor %}
                 </ul>
