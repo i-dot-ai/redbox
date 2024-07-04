@@ -69,7 +69,6 @@ playwright = "^1.43"
 pytest-playwright = "^0.5"
 axe-playwright-python = "^0.1"
 dj-notebook = "^0.7.0"
-pandas = "^2.2.2"
 
 [tool.poetry.group.ai.dependencies]
 anthropic = "^0.30.0"

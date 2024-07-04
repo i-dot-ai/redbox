@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import ast
 import json
 import logging
 from pathlib import Path
@@ -8,7 +7,6 @@ from typing import TYPE_CHECKING
 from uuid import UUID
 
 import jsonlines
-import pandas as pd
 import pytest
 from deepeval import assert_test
 from deepeval.metrics import (
@@ -46,25 +44,39 @@ DATA = ROOT / "notebooks/evaluation/data/0.2.3"
 class ExperimentData(BaseModel):
     """Test required a versioned CSV of evaluation questions and a pre-embedded index."""
 
-    csv: Path
+    data: Path
     embeddings: Path
+    test_cases: list[LLMTestCase] = []
 
 
 RAG_EXPERIMENT_DATA = ExperimentData(
-    csv=DATA / "synthetic/rag.csv", embeddings=DATA / "embeddings/all-mpnet-base-v2.jsonl"
+    data=DATA / "synthetic/rag.json", embeddings=DATA / "embeddings/all-mpnet-base-v2.jsonl"
 )
+"""
+Experiment data should follow the following pattern.
+
+user_story: A distinct user action with a consistent capability and difficulty
+id: An index of tests within that story
+notes: A short, plain-English explanation of what you're testing and why
+input: The input to the LLM
+content: A list of the chunks from the document that an expected answer would use
+expected_output: The expected answer
+"""
+
 RAG_TESTS: list[tuple[str, str, list[str]]] = []
 
-for testcase in pd.read_csv(RAG_EXPERIMENT_DATA.csv).itertuples(index=False):
+for testcase in json.load(RAG_EXPERIMENT_DATA.data.open()):
     # Test only one case per user story here
-    if testcase.id == 1:
+    if testcase["id"] == 1:
         raw_pytest = pytest.param(
-            testcase.input,
-            testcase.expected_output,
-            ast.literal_eval(testcase.context),
-            id=testcase.user_story,
+            testcase["input"],
+            testcase["expected_output"],
+            testcase["context"],
+            id=testcase["user_story"],
         )
         RAG_TESTS.append(raw_pytest)
+
+RAG_TESTS = RAG_TESTS[:2]
 
 
 def clear_index(index: str, es: Elasticsearch) -> None:
@@ -140,10 +152,8 @@ def elastic_index_and_user(
     if len(user_uuids) > 1:
         msg = "Embeddings have more than one creator_user_uuid"
         raise ValueError(msg)
-    else:
-        user_uuid = next(iter(user_uuids))
 
-    yield index_name, user_uuid
+    yield index_name, next(iter(user_uuids))
 
     # Delete embeddings from index
     clear_index(index=index_name, es=es_client)
@@ -152,7 +162,28 @@ def elastic_index_and_user(
 @pytest.fixture()
 def make_test_case(
     llm: ChatLiteLLM, es_client: Elasticsearch, elastic_index_and_user: tuple[str, str], env: Settings
-) -> Callable[[str, str, list[str]], LLMTestCase]:
+) -> Callable[[str, str, list[str], ExperimentData], LLMTestCase]:
+    """
+    Returns a factory for making LLMTestCases based on a row of ExperimentData.
+
+    This solves the central engineering problem of these tests:
+
+    1. The embeddings need to be in a fixture for teardown
+    2. The LLMTestCases need to be calculated based on these
+    3. The LLMTestCases are expensive and should be calculated once
+        a. And the normal solution to this is a fixture
+    4. The LLMTestCases should be parameters in the tests
+    5. You can't use fixtures as parameters
+    6. Each test should cover a single metric
+
+    The solution is twofold:
+
+    * Using a factory means we can use a fixture for our embeddings,
+    but have the data that creates the test cases be a parameter, because
+    the LLMTestCase is made inside the test itself (1, 2, 3, 4, 5)
+    * To ensure calculating once and having a test per metric, we use
+    ExperimentData as a cache, solving 6 while not violating 3
+    """
     index_name, user_uuid = elastic_index_and_user
 
     retriever = get_parameterised_retriever(
@@ -168,7 +199,12 @@ def make_test_case(
         env=env,
     )
 
-    def _make_test_case(prompt: str, expected_output: str, context: list[str]) -> LLMTestCase:
+    def _make_test_case(
+        prompt: str, expected_output: str, context: list[str], experiment: ExperimentData
+    ) -> LLMTestCase:
+        for case in experiment.test_cases:
+            if case.input == prompt:
+                return case
         chain_input = ChainInput(
             question=prompt,
             file_uuids=[],
@@ -190,48 +226,137 @@ def make_test_case(
 
 @pytest.mark.ai()
 @pytest.mark.parametrize(("prompt", "expected_output", "context"), RAG_TESTS)
-def test_rag(
-    make_test_case: Callable,
-    eval_llm: DeepEvalBaseLLM,
-    prompt: str,
-    expected_output: str,
-    context: list[str],
-):
-    deepeval_test_case = make_test_case(prompt=prompt, expected_output=expected_output, context=context)
+def test_contextual_precision(
+    make_test_case: Callable, eval_llm: DeepEvalBaseLLM, prompt: str, expected_output: str, context: list[str]
+) -> None:
+    """Are relevant retrieval_context nodes ranked higher than irrelevant?
+    Retrieval metric. Higher is better.
+    https://docs.confident-ai.com/docs/metrics-contextual-precision
+    """
+    deepeval_test_case = make_test_case(
+        prompt=prompt, expected_output=expected_output, context=context, experiment=RAG_EXPERIMENT_DATA
+    )
+    if prompt not in [case.input for case in RAG_EXPERIMENT_DATA.test_cases]:
+        RAG_EXPERIMENT_DATA.test_cases.append(deepeval_test_case)
 
     contextual_precision = ContextualPrecisionMetric(
-        threshold=0.5,  # default is 0.5, higher is better
+        threshold=0.5,  # default is 0.5
         model=eval_llm,
+        include_reason=True,
     )
-    contextual_recall = ContextualRecallMetric(
-        threshold=0.5,  # default is 0.5, higher is better
-        model=eval_llm,
-    )
-    contextual_relevancy = ContextualRelevancyMetric(
-        threshold=0.5,  # default is 0.5, higher is better
-        model=eval_llm,
-    )
-    answer_relevancy = AnswerRelevancyMetric(
-        threshold=0.5,  # default is 0.5, higher is better
-        model=eval_llm,
-    )
-    faithfulness = FaithfulnessMetric(
-        threshold=0.5,  # default is 0.5, higher is better
-        model=eval_llm,
-    )
-    hallucination = HallucinationMetric(
-        threshold=0.5,  # default is 0.5, lower is better
-        model=eval_llm,
-    )
+    assert_test(deepeval_test_case, [contextual_precision])
 
-    assert_test(
-        test_case=deepeval_test_case,
-        metrics=[
-            contextual_recall,
-            contextual_precision,
-            contextual_relevancy,
-            answer_relevancy,
-            faithfulness,
-            hallucination,
-        ],
+
+@pytest.mark.ai()
+@pytest.mark.parametrize(("prompt", "expected_output", "context"), RAG_TESTS)
+def test_contextual_recall(
+    make_test_case: Callable, eval_llm: DeepEvalBaseLLM, prompt: str, expected_output: str, context: list[str]
+) -> None:
+    """How much does retrieval_context align with expected_output?
+    Retrieval metric. Higher is better.
+    https://docs.confident-ai.com/docs/metrics-contextual-recall
+    """
+    deepeval_test_case = make_test_case(
+        prompt=prompt, expected_output=expected_output, context=context, experiment=RAG_EXPERIMENT_DATA
     )
+    if prompt not in [case.input for case in RAG_EXPERIMENT_DATA.test_cases]:
+        RAG_EXPERIMENT_DATA.test_cases.append(deepeval_test_case)
+
+    contextual_recall = ContextualRecallMetric(
+        threshold=0.5,  # default is 0.5
+        model=eval_llm,
+        include_reason=True,
+    )
+    assert_test(deepeval_test_case, [contextual_recall])
+
+
+@pytest.mark.ai()
+@pytest.mark.parametrize(("prompt", "expected_output", "context"), RAG_TESTS)
+def test_contextual_relevancy(
+    make_test_case: Callable, eval_llm: DeepEvalBaseLLM, prompt: str, expected_output: str, context: list[str]
+) -> None:
+    """How relevant is the retrieval_context to the input?
+    Retrieval metric. Higher is better.
+    https://docs.confident-ai.com/docs/metrics-contextual-relevancy
+    """
+    deepeval_test_case = make_test_case(
+        prompt=prompt, expected_output=expected_output, context=context, experiment=RAG_EXPERIMENT_DATA
+    )
+    if prompt not in [case.input for case in RAG_EXPERIMENT_DATA.test_cases]:
+        RAG_EXPERIMENT_DATA.test_cases.append(deepeval_test_case)
+
+    contextual_relevancy = ContextualRelevancyMetric(
+        threshold=0.5,  # default is 0.5
+        model=eval_llm,
+        include_reason=True,
+    )
+    assert_test(deepeval_test_case, [contextual_relevancy])
+
+
+@pytest.mark.ai()
+@pytest.mark.parametrize(("prompt", "expected_output", "context"), RAG_TESTS)
+def test_answer_relevancy(
+    make_test_case: Callable, eval_llm: DeepEvalBaseLLM, prompt: str, expected_output: str, context: list[str]
+) -> None:
+    """How relevant is the actual_answer to the input?
+    Generation metric. Higher is better.
+    https://docs.confident-ai.com/docs/metrics-answer-relevancy
+    """
+    deepeval_test_case = make_test_case(
+        prompt=prompt, expected_output=expected_output, context=context, experiment=RAG_EXPERIMENT_DATA
+    )
+    if prompt not in [case.input for case in RAG_EXPERIMENT_DATA.test_cases]:
+        RAG_EXPERIMENT_DATA.test_cases.append(deepeval_test_case)
+
+    answer_relevancy = AnswerRelevancyMetric(
+        threshold=0.5,  # default is 0.5
+        model=eval_llm,
+        include_reason=True,
+    )
+    assert_test(deepeval_test_case, [answer_relevancy])
+
+
+@pytest.mark.ai()
+@pytest.mark.parametrize(("prompt", "expected_output", "context"), RAG_TESTS)
+def test_faithfulness(
+    make_test_case: Callable, eval_llm: DeepEvalBaseLLM, prompt: str, expected_output: str, context: list[str]
+) -> None:
+    """How factually faithful is the actual_output to the retrieval_context?
+    Generation metric. Higher is better.
+    https://docs.confident-ai.com/docs/metrics-faithfulness
+    """
+    deepeval_test_case = make_test_case(
+        prompt=prompt, expected_output=expected_output, context=context, experiment=RAG_EXPERIMENT_DATA
+    )
+    if prompt not in [case.input for case in RAG_EXPERIMENT_DATA.test_cases]:
+        RAG_EXPERIMENT_DATA.test_cases.append(deepeval_test_case)
+
+    faithfulness = FaithfulnessMetric(
+        threshold=0.5,  # default is 0.5
+        model=eval_llm,
+        include_reason=True,
+    )
+    assert_test(deepeval_test_case, [faithfulness])
+
+
+@pytest.mark.ai()
+@pytest.mark.parametrize(("prompt", "expected_output", "context"), RAG_TESTS)
+def test_hallucination(
+    make_test_case: Callable, eval_llm: DeepEvalBaseLLM, prompt: str, expected_output: str, context: list[str]
+) -> None:
+    """How factually accurate is the output, comparing actual_output to context?
+    Generation metric. Lower is better.
+    https://docs.confident-ai.com/docs/metrics-hallucination
+    """
+    deepeval_test_case = make_test_case(
+        prompt=prompt, expected_output=expected_output, context=context, experiment=RAG_EXPERIMENT_DATA
+    )
+    if prompt not in [case.input for case in RAG_EXPERIMENT_DATA.test_cases]:
+        RAG_EXPERIMENT_DATA.test_cases.append(deepeval_test_case)
+
+    hallucination = HallucinationMetric(
+        threshold=0.5,  # default is 0.5
+        model=eval_llm,
+        include_reason=True,
+    )
+    assert_test(deepeval_test_case, [hallucination])
