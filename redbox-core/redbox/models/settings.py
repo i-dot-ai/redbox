@@ -10,7 +10,7 @@ logging.basicConfig(level=logging.INFO)
 log = logging.getLogger()
 
 
-VANILLA_SYSTEM_PROMPT =  (
+VANILLA_SYSTEM_PROMPT = (
     "You are an AI assistant called Redbox tasked with answering questions and providing information objectively."
 )
 
