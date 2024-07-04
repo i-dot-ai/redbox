@@ -156,8 +156,7 @@ jobs:
       - start-runner
       - build-image
       - release-terraform
-      - slack-failure
-      - slack-pass
+      - notify-slack
     with:
       RUNNER_LABEL: ${{ needs.start-runner.outputs.label }}
       EC2_INSTANCE_ID: ${{ needs.start-runner.outputs.ec2-instance-id }}
