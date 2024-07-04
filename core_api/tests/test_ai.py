@@ -55,8 +55,8 @@ RAG_EXPERIMENT_DATA = ExperimentData(
 """
 Experiment data should follow the following pattern.
 
-user_story: A distinct user action with a consistent capability and difficulty
-id: An index of tests within that story
+user_scenario: A distinct user action with a consistent capability and difficulty
+id: An index of tests within that scenario
 notes: A short, plain-English explanation of what you're testing and why
 input: The input to the LLM
 content: A list of the chunks from the document that an expected answer would use
@@ -66,13 +66,13 @@ expected_output: The expected answer
 RAG_TESTS: list[tuple[str, str, list[str]]] = []
 
 for testcase in json.load(RAG_EXPERIMENT_DATA.data.open()):
-    # Test only one case per user story here
+    # Test only one case per user scenario here
     if testcase["id"] == 1:
         raw_pytest = pytest.param(
             testcase["input"],
             testcase["expected_output"],
             testcase["context"],
-            id=testcase["user_story"],
+            id=testcase["user_scenario"],
         )
         RAG_TESTS.append(raw_pytest)
 

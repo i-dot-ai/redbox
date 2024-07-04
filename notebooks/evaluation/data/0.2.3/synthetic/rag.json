@@ -1,6 +1,6 @@
 [
     {
-        "user_story": "level1_lang_qa",
+        "user_scenario": "level1_lang_qa",
         "id": 1,
         "notes": "A basic factual question with an easy answer.",
         "input": "What is the relationship between science, publics and policy called?",
@@ -10,9 +10,9 @@
         "expected_output": "The relationship between science, publics and policy is called science-for-policymaking system."
     },
     {
-        "user_story": "level2_lang_qa",
+        "user_scenario": "level2_lang_qa",
         "id": 1,
-        "notes": "A more difficult question that doesn\u2019t explicitly refer to the answer.",
+        "notes": "A more difficult question that doesn't explicitly refer to the answer.",
         "input": "Who was in charge of creating the Public trust in science-for-Policymaking report?",
         "context": [
             "The project was led by a small working group of experts who continuously reviewed, analysed and scrutinised the evidence emerging over a 12-month period."
@@ -20,7 +20,7 @@
         "expected_output": "The project was led by a small working group of experts who continuously reviewed, analysed and scrutinised the evidence emerging over a 12-month period."
     },
     {
-        "user_story": "level1_math_qa",
+        "user_scenario": "level1_math_qa",
         "id": 1,
         "notes": "A basic number retrieval with an easy answer",
         "input": "How many impact topics were identified by topic modelling?",
@@ -30,7 +30,7 @@
         "expected_output": "79 impact topics were identified by topic modelling."
     },
     {
-        "user_story": "level2_math_qa",
+        "user_scenario": "level2_math_qa",
         "id": 1,
         "notes": "A question that requires changing a figure from the context.",
         "input": "It is 2024. How many years has it been since the first Research Excellence Framework (REF)?",
@@ -40,7 +40,7 @@
         "expected_output": "It has been 10 years since the first REF."
     },
     {
-        "user_story": "level3_math_qa",
+        "user_scenario": "level3_math_qa",
         "id": 1,
         "notes": "A question that requires combining multiple figures from the context.",
         "input": "What percent of the impact component were not considered 'outstanding' or 'considerable' in REF 2021 submissions?",
