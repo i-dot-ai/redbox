@@ -41,6 +41,7 @@ class ErrorDetail:
 @dataclass_json(undefined=Undefined.EXCLUDE)
 @dataclass(frozen=True)
 class CoreChatResponse:
+    # Needs to match ClientResponse in core_api/src/routes/chat.py
     resource_type: Literal["text", "documents", "route_name", "end", "error"]
     data: list[CoreChatResponseDoc] | str | ErrorDetail | None = None
 
