@@ -200,6 +200,46 @@ def delete_file(file_uuid: UUID, user_uuid: Annotated[UUID, Depends(get_user_uui
     return file
 
 
+@file_app.put(
+    "/{file_uuid}",
+    response_model=File,
+    tags=["file"],
+    responses={404: {"model": APIError404, "description": "The file was not found"}},
+)
+async def reingest_file(file_uuid: UUID, user_uuid: Annotated[UUID, Depends(get_user_uuid)]) -> File:
+    """Deletes exisiting file chunks and regenerates embeddings
+
+    Args:
+        file_uuid (UUID): The UUID of the file to delete
+        user_uuid (UUID): The UUID of the user
+
+    Returns:
+        File: The file that was deleted
+
+    Raises:
+        404: If the file isn't found, or the creator and requester don't match
+    """
+    try:
+        file = storage_handler.read_item(file_uuid, model_type="File")
+    except NotFoundError:
+        return file_not_found_response(file_uuid=file_uuid)
+
+    if file.creator_user_uuid != user_uuid:
+        return file_not_found_response(file_uuid=file_uuid)
+
+    log.info("reingesting %s", file.uuid)
+
+    # Remove old chunks
+    chunks = storage_handler.get_file_chunks(file.uuid, user_uuid)
+    storage_handler.delete_items(chunks)
+
+    # Add new chunks
+    log.info("publishing %s", file.uuid)
+    await file_publisher.publish(file)
+
+    return file
+
+
 @file_app.get(
     "/{file_uuid}/chunks",
     tags=["file"],
