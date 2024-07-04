@@ -3,7 +3,7 @@ name: Deploy to dev
 on:
   push:
     branches:
-      - feature/build-and-deploy-action
+      - main
   release:
     types:
       - released
@@ -37,14 +37,13 @@ jobs:
     secrets: inherit
 
   release-preprod:
-    if: github.event_name == 'push' && github.ref_name == 'feature/build-and-deploy-action'
+    if: github.event_name == 'push' && github.ref_name == 'main'
     uses: i-dot-ai/redbox-copilot/.github/workflows/build-and-release.yml@a37b08ab5253a8ba3b592b61cb367c47d022f298
     with:
       environment: preprod
       core_infra_repo_reference: 'refs/heads/main'
       config_repo_reference: 'refs/heads/main'
-      commit_hash: 'refs/heads/main'
-#      commit_hash: ${{ github.sha }}
+      commit_hash: ${{ github.sha }}
     secrets: inherit
 
   release-prod:
