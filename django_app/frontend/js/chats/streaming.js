@@ -64,7 +64,10 @@ class ChatMessage extends HTMLElement {
                 <div class="iai-chat-bubble__role">${
                   this.dataset.role === "ai" ? "Redbox" : "You"
                 }</div>
-                <div class="iai-chat-bubble__route" hidden></div>
+                <dl class="iai-chat-bubble__route" hidden>
+                    <dt>Route:</dt>
+                    <dd></dd>
+                </dl>
                 <markdown-converter class="iai-chat-bubble__text">${
                   this.dataset.text || ""
                 }</markdown-converter>
@@ -168,8 +171,9 @@ class ChatMessage extends HTMLElement {
         sourcesContainer.add(message.data.original_file_name, message.data.url);
       } else if (message.type === "route") {
         let route = this.querySelector(".iai-chat-bubble__route");
-        if (route) {
-          route.textContent = message.data;
+        let routeText = route?.querySelector("dd");
+        if (route && routeText) {
+          routeText.textContent = message.data;
           route.removeAttribute("hidden");
         }
 
