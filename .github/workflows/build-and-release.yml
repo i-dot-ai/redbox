@@ -20,13 +20,6 @@ env:
 jobs:
   set-vars:
     runs-on: ubuntu-latest
-    outputs:
-      app-name: ${{ steps.export.outputs.app-name }}
-      ec2-instance-type: ${{ steps.export.outputs.ec2-instance-type }}
-      version: ${{ steps.export.outputs.version }}
-      runner-size: ${{ steps.export.outputs.runner-size }}
-      infra-config-repo: ${{ steps.export.outputs.infra-config-repo }}
-
     - name: Checkout
       uses: actions/checkout@v4
       with:
@@ -36,18 +29,18 @@ jobs:
       run: |
         cd main
         . ./.github/.github.env
-        echo "ec2-instance-type=${EC2_INSTANCE_TYPE}" >> $GITHUB_OUTPUT
-        echo "app-name=${APP_NAME}" >> $GITHUB_OUTPUT
-        echo "version=${VERSION}" >> $GITHUB_OUTPUT
-        echo "runner-size=${RUNNER_SIZE}" >> $GITHUB_OUTPUT
-        echo "infra-config-repo=${INFRA_CONFIG_REPO}" >> $GITHUB_OUTPUT
+        echo "ec2-instance-type=${EC2_INSTANCE_TYPE}" >> $GITHUB_ENV
+        echo "app-name=${APP_NAME}" >> $GITHUB_ENV
+        echo "version=${VERSION}" >> $GITHUB_ENV
+        echo "runner-size=${RUNNER_SIZE}" >> $GITHUB_ENV
+        echo "infra-config-repo=${INFRA_CONFIG_REPO}" >> $GITHUB_ENV
 
   start-runner:
     uses: i-dot-ai/i-dot-ai-core-github-actions/.github/workflows/start-runner.yml@main
     needs: set-vars
     with:
-      EC2_INSTANCE_TYPE: ${{ needs.set-vars.outputs.ec2-instance-type }}
-      RUNNER_SIZE: ${{ needs.set-vars.outputs.runner-size }}
+      EC2_INSTANCE_TYPE: ${{ env.ec2-instance-type }}
+      RUNNER_SIZE: ${{ env.runner-size }}
       ENVIRONMENT: ${{ inputs.environment }}
     secrets:
       AWS_GITHUBRUNNER_USER_ACCESS_KEY: ${{ secrets.AWS_GITHUBRUNNER_USER_ACCESS_KEY }}
@@ -61,8 +54,8 @@ jobs:
       - start-runner
     uses: i-dot-ai/i-dot-ai-core-github-actions/.github/workflows/build-docker.yml@main
     with:
-      APP_NAME: ${{ needs.set-vars.outputs.app-name }}
-      RUNNER_LABEL: ${{ needs.start-runner.outputs.label }}
+      APP_NAME: ${{ env.app-name }}
+      RUNNER_LABEL: ${{ env.label }}
       INFRASTRUCTURE_FOLDER: "infrastructure/aws"
       COMMIT_HASH: ${{ inputs.commit_hash }}
     secrets:
@@ -78,7 +71,7 @@ jobs:
       - build-image
     uses: i-dot-ai/i-dot-ai-core-github-actions/.github/workflows/apply-terraform.yml@main
     with:
-      APP_NAME: ${{ needs.set-vars.outputs.app-name }}
+      APP_NAME: ${{ env.app-name }}
       RUNNER_LABEL: ${{ needs.start-runner.outputs.label }}
       INFRASTRUCTURE_FOLDER: "infrastructure/aws"
       PUBLIC_INFRA_DEPLOYMENT: true
