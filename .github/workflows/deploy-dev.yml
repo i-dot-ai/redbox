@@ -25,20 +25,15 @@ on:
 permissions:
   contents: read
 
-env:
-  core_repo_reference: ${{ inputs.core_repo_reference || 'refs/heads/main'}}
-  config_repo_reference: ${{ inputs.config_repo_reference || 'refs/heads/main'}}
-  commit_hash: ${{ inputs.commit_hash || github.sha }}
-
 jobs:
   release-dev:
     if: github.event_name == 'workflow_dispatch'
     uses: i-dot-ai/redbox-copilot/.github/workflows/build-and-release.yml@0625436f76e675721cc4cd0b17c96a5960ba801f
     with:
       environment: dev
-      core_infra_repo_reference: ${{ env.core_repo_reference }}
-      config_repo_reference: ${{ env.config_repo_reference }}
-      commit_hash: ${{ env.commit_hash }}
+      core_infra_repo_reference: ${{ inputs.core_repo_reference }}
+      config_repo_reference: ${{ inputs.config_repo_reference }}
+      commit_hash: ${{ inputs.commit_hash }}
     secrets: inherit
 
   release-preprod:
@@ -46,9 +41,9 @@ jobs:
     uses: i-dot-ai/redbox-copilot/.github/workflows/build-and-release.yml@0625436f76e675721cc4cd0b17c96a5960ba801f
     with:
       environment: preprod
-      core_infra_repo_reference: ${{ env.core_repo_reference }}
-      config_repo_reference: ${{ env.config_repo_reference }}
-      commit_hash: ${{ env.commit_hash }}
+      core_infra_repo_reference: 'refs/heads/main'
+      config_repo_reference: 'refs/heads/main'
+      commit_hash: ${{ github.sha }}
     secrets: inherit
 
   release-prod:
@@ -56,7 +51,7 @@ jobs:
     uses: i-dot-ai/redbox-copilot/.github/workflows/build-and-release.yml@0625436f76e675721cc4cd0b17c96a5960ba801f
     with:
       environment: prod
-      core_infra_repo_reference: ${{ env.core_repo_reference }}
-      infra_config_ref: ${{ env.config_repo_reference }}
-      commit_hash: ${{ env.commit_hash }}
+      core_infra_repo_reference: 'refs/heads/main'
+      config_repo_reference: 'refs/heads/main'
+      commit_hash: ${{ github.sha }}
     secrets: inherit
