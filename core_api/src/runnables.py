@@ -11,7 +11,7 @@ from tiktoken import Encoding
 
 from core_api.src.format import reduce_chunks_by_tokens
 from redbox.models import ChatResponse
-from redbox.models.errors import AIError
+from redbox.models.errors import QuestionLengthError
 from redbox.transform import map_document_to_source_document
 
 
@@ -35,7 +35,7 @@ def make_chat_prompt_from_messages_runnable(
 
         if chat_history_budget <= 0:
             message = "Question length exceeds context window."
-            raise AIError(message)
+            raise QuestionLengthError(message)
 
         truncated_history: list[dict[str, str]] = []
         for msg in input_dict["chat_history"][::-1]:

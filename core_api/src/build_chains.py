@@ -26,7 +26,7 @@ from core_api.src.runnables import (
     resize_documents,
 )
 from redbox.models import ChatRoute, Settings
-from redbox.models.errors import AIError
+from redbox.models.errors import NoDocumentSelected
 
 # === Logging ===
 
@@ -200,7 +200,7 @@ def build_summary_chain(
 
         else:
             message = "No documents to summarise"
-            raise AIError(message)
+            raise NoDocumentSelected(message)
 
     return RunnablePassthrough.assign(documents=make_document_context()) | summarisation_route
 

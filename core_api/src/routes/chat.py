@@ -1,19 +1,21 @@
 import logging
 import re
-from typing import Annotated
+from typing import Annotated, Literal
 from uuid import UUID
 
 from fastapi import Depends, FastAPI, WebSocket
 from fastapi.encoders import jsonable_encoder
 from langchain_core.runnables import Runnable
 from openai import APIError
+from pydantic import BaseModel
 from semantic_router import RouteLayer
 
 from core_api.src.auth import get_user_uuid, get_ws_user_uuid
 from core_api.src.runnables import map_to_chat_response
 from core_api.src.semantic_routes import get_routable_chains, get_semantic_route_layer
 from redbox.models.chain import ChainInput
-from redbox.models.chat import ChatRequest, ChatResponse
+from redbox.models.chat import ChatRequest, ChatResponse, SourceDocument
+from redbox.models.errors import NoDocumentSelected, QuestionLengthError
 from redbox.transform import map_document_to_source_document
 
 # === Logging ===
@@ -84,6 +86,16 @@ async def rag_chat(
     return (selected_chain | map_to_chat_response).invoke(params.model_dump())
 
 
+class ErrorDetail(BaseModel):
+    code: str
+    message: str
+
+
+class ClientResponse(BaseModel):
+    resource_type: Literal["text", "documents", "route_name", "end", "error"]
+    data: list[SourceDocument] | str | ErrorDetail | None = None
+
+
 @chat_app.websocket("/rag")
 async def rag_chat_streamed(
     websocket: WebSocket,
@@ -102,19 +114,38 @@ async def rag_chat_streamed(
 
     try:
         async for event in selected_chain.astream(params.model_dump()):
-            response = event.get("response", "")
-            source_documents = event.get("source_documents", [])
-            route_name = event.get("route_name", "")
-            source_documents = [jsonable_encoder(map_document_to_source_document(doc)) for doc in source_documents]
+            response: str = event.get("response", "")
+            source_documents: list[SourceDocument] = [
+                map_document_to_source_document(doc) for doc in event.get("source_documents", [])
+            ]
+            route_name: str = event.get("route_name", "")
             if response:
-                await websocket.send_json({"resource_type": "text", "data": response})
+                await send_to_client(ClientResponse(resource_type="text", data=response), websocket)
             if source_documents:
-                await websocket.send_json({"resource_type": "documents", "data": source_documents})
+                await send_to_client(ClientResponse(resource_type="documents", data=source_documents), websocket)
             if route_name:
-                await websocket.send_json({"resource_type": "route_name", "data": route_name})
+                await send_to_client(ClientResponse(resource_type="route_name", data=route_name), websocket)
+    except NoDocumentSelected as e:
+        log.info(exc_info=e)
+        await send_to_client(
+            ClientResponse(resource_type="error", data=ErrorDetail(code="no-document-selected", message=e.message)),
+            websocket,
+        )
+    except QuestionLengthError as e:
+        log.info(exc_info=e)
+        await send_to_client(
+            ClientResponse(resource_type="error", data=ErrorDetail(code="question-too-long", message=e.message)),
+            websocket,
+        )
     except APIError as e:
-        log.exception("Exception waiting for chain.", exc_info=e)
-        await websocket.send_json({"resource_type": "error", "data": e.message})
+        log.exception("Unhandled exception.", exc_info=e)
+        await send_to_client(
+            ClientResponse(resource_type="error", data=ErrorDetail(code="unexpected", message=e.message)), websocket
+        )
     finally:
-        await websocket.send_json({"resource_type": "end"})
+        await send_to_client(ClientResponse(resource_type="end"), websocket)
         await websocket.close()
+
+
+async def send_to_client(response: ClientResponse, websocket: WebSocket) -> None:
+    await websocket.send_json(jsonable_encoder(response))
