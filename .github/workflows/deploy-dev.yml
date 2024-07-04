@@ -37,7 +37,7 @@ jobs:
     secrets: inherit
 
   release-preprod:
-    if: github.event_name == 'push' && github.ref_name == "main"
+    if: github.event_name == 'push' && github.ref_name == 'main'
     uses: i-dot-ai/redbox-copilot/.github/workflows/build-and-release.yml@0625436f76e675721cc4cd0b17c96a5960ba801f
     with:
       environment: preprod
