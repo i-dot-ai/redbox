@@ -1,5 +1,7 @@
 # Posthog setup
 
+These instructions are based on the docs at https://posthog.com/docs/libraries/js#advanced-option---bundle-all-required-extensions
+
 After making changes to index.js, run from this folder:
 
 `npx parcel build index.html`
