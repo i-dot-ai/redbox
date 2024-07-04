@@ -35,7 +35,12 @@ rebuild: stop prune ## Rebuild all images
 .PHONY: test-core-api
 test-core-api: ## Test core-api
 	poetry install --no-root --no-ansi --with api,dev,ai --without worker,docs
-	poetry run pytest core_api/tests --cov=core_api/src -v --cov-report=term-missing --cov-fail-under=75
+	poetry run pytest core_api/tests -m "not ai" --cov=core_api/src -v --cov-report=term-missing --cov-fail-under=75
+
+.PHONY: test-ai
+test-ai: ## Test code with live LLM
+	poetry install --no-root --no-ansi --with api,dev,ai --without worker,docs
+	poetry run pytest core_api/tests -m "ai" -vv
 
 .PHONY: test-redbox
 test-redbox: ## Test redbox
