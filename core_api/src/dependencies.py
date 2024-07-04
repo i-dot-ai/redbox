@@ -72,7 +72,7 @@ def get_vector_store(
 
 @lru_cache(1)
 def get_parameterised_retriever(
-    env: Annotated[Settings, Depends(get_env)], es: Annotated[Elasticsearch, Depends(get_elasticsearch_client)],
+    env: Annotated[Settings, Depends(get_env)], es: Annotated[Elasticsearch, Depends(get_elasticsearch_client)]
 ) -> BaseRetriever:
     """Creates an Elasticsearch retriever runnable.
 
@@ -94,14 +94,14 @@ def get_parameterised_retriever(
         embedding_model=get_embedding_model(env),
     ).configurable_fields(
         params=ConfigurableField(
-            id="params", name="Retriever parameters", description="A dictionary of parameters to use for the retriever.",
+            id="params", name="Retriever parameters", description="A dictionary of parameters to use for the retriever."
         )
     )
 
 
 @lru_cache(1)
 def get_all_chunks_retriever(
-    env: Annotated[Settings, Depends(get_env)], es: Annotated[Elasticsearch, Depends(get_elasticsearch_client)],
+    env: Annotated[Settings, Depends(get_env)], es: Annotated[Elasticsearch, Depends(get_elasticsearch_client)]
 ):
     return AllElasticsearchRetriever(
         es_client=es,
