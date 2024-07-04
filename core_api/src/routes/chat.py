@@ -95,6 +95,7 @@ class ErrorDetail(BaseModel):
 
 
 class ClientResponse(BaseModel):
+    # Needs to match CoreChatResponse in django_app/redbox_app/redbox_core/consumers.py
     resource_type: Literal["text", "documents", "route_name", "end", "error"]
     data: list[SourceDocument] | str | ErrorDetail | None = None
 
