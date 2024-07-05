@@ -7,9 +7,9 @@ from elasticsearch import Elasticsearch
 from fastapi import Depends, FastAPI, Response
 from fastapi.responses import RedirectResponse
 
-from core_api.src.dependencies import get_elasticsearch_client
-from core_api.src.routes.chat import chat_app
-from core_api.src.routes.file import file_app
+from core_api.dependencies import get_elasticsearch_client
+from core_api.routes.chat import chat_app
+from core_api.routes.file import file_app
 from redbox import __version__ as redbox_version
 from redbox.models import Settings, StatusResponse
 

@@ -9,8 +9,8 @@ from fastapi.responses import JSONResponse
 from faststream.redis.fastapi import RedisRouter
 from pydantic import BaseModel, Field
 
-from core_api.src.auth import get_user_uuid
-from core_api.src.publisher_handler import FilePublisher
+from core_api.auth import get_user_uuid
+from core_api.publisher_handler import FilePublisher
 from redbox.models import APIError404, Chunk, File, FileStatus, Settings
 from redbox.storage import ElasticsearchStorageHandler
 
