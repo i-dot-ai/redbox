@@ -36,6 +36,7 @@ mypy = "^1.9.0"
 moto = {extras = ["s3"], version = "^5.0.10"}
 jsonlines = "^4.0.0"
 deepeval = "^0.21.64"
+pytest-mock = "^3.14.0"
 
 
 [build-system]
