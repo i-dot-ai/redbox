@@ -89,7 +89,7 @@ class ChatMessage extends HTMLElement {
                         <h3 class="govuk-notification-banner__title" id="notification-title-${uuid}">Error</h3>
                     </div>
                     <div class="govuk-notification-banner__content">
-                        <p class="govuk-notification-banner__heading">There was an unexpected error communicating with Redbox. Please try again, and contact <a href="/support/">support</a> if the problem persists.</p>
+                        <p class="govuk-notification-banner__heading"></p>
                     </div>
                 </div>
             </div>
@@ -196,7 +196,8 @@ class ChatMessage extends HTMLElement {
       } else if (message.type === "end") {
         sourcesContainer.showCitations(message.data.message_id);
       } else if (message.type === "error") {
-        this.querySelector(".govuk-error-summary")?.removeAttribute("hidden");
+        this.querySelector(".govuk-notification-banner")?.removeAttribute("hidden");
+        this.querySelector(".govuk-notification-banner__heading").innerHTML = message.data;
       }
     };
   };
