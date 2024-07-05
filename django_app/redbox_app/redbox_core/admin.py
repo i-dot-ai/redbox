@@ -41,28 +41,17 @@ class FileAdmin(admin.ModelAdmin):
     def reupload(self, request, queryset):  # noqa:ARG002
         for file in queryset:
             try:
-                logger.info("Deleting existing file from core-api: %s", file)
-                core_api.delete_file(file.core_file_uuid, file.user)
+                logger.info("Re-uploading file to core-api: %s", file)
+                core_api.reingest_file(file.core_file_uuid, file.user)
             except RequestException as e:
-                logger.exception("Error deleting File model object %s.", file, exc_info=e)
-
+                logger.exception("Error re-uploading File model object %s.", file, exc_info=e)
+                file.status = models.StatusEnum.errored
+                file.save()
             else:
-                file.status = models.StatusEnum.deleted
+                file.status = models.StatusEnum.uploaded
                 file.save()
 
-                try:
-                    logger.info("Re-uploading file to core-api: %s", file)
-                    upload_file_response = core_api.upload_file(file.unique_name, file.user)
-                except RequestException as e:
-                    logger.exception("Error re-uploading File model object %s.", file, exc_info=e)
-                    file.status = models.StatusEnum.errored
-                    file.save()
-                else:
-                    file.core_file_uuid = upload_file_response.uuid
-                    file.status = models.StatusEnum.uploaded
-                    file.save()
-
-        logger.info("Successfully reuploaded file %s.", file)
+                logger.info("Successfully reuploaded file %s.", file)
 
     list_display = ["original_file_name", "user", "status", "created_at", "last_referenced"]
     list_filter = ["user", "status"]
