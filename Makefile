@@ -49,7 +49,7 @@ test-redbox: ## Test redbox
 
 .PHONY: test-worker
 test-worker: ## Test worker
-	poetry install --no-root --no-ansi --with worker,dev --without ai,api,docs
+	poetry install --no-root --no-ansi --with worker,dev --without docs
 	poetry run pytest worker/tests --cov=worker -v --cov-report=term-missing --cov-fail-under=40
 
 .PHONY: test-django
@@ -62,7 +62,7 @@ test-integration: rebuild run test-integration-without-build ## Run all integrat
 
 .PHONY: test-integration-without-build
 test-integration-without-build : ## Run all integration tests without rebuilding
-	poetry install --no-root --no-ansi --with dev --without ai,api,worker,docs
+	poetry install --no-root --no-ansi --with dev --without worker,docs
 	poetry run pytest tests/
 
 .PHONY: collect-static
