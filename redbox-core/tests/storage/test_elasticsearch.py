@@ -188,3 +188,29 @@ def test_get_file_chunks_fail(
         uuid4(),
     )
     assert not other_chunks
+
+
+def test_delete_file_chunks(
+    elasticsearch_storage_handler: ElasticsearchStorageHandler,
+    stored_chunk_belonging_to_alice: Chunk,
+):
+    """
+    Given that a chunk belonging to a file belonging alice have been saved
+    When I call delete_file_chunks with the right file id and alice's id
+    I Expect the chunks to be removed
+    """
+    assert stored_chunk_belonging_to_alice.creator_user_uuid
+
+    elasticsearch_storage_handler.delete_file_chunks(
+        stored_chunk_belonging_to_alice.parent_file_uuid,
+        stored_chunk_belonging_to_alice.creator_user_uuid,
+    )
+
+    elasticsearch_storage_handler.refresh()
+
+    chunks = elasticsearch_storage_handler.get_file_chunks(
+        stored_chunk_belonging_to_alice.parent_file_uuid,
+        stored_chunk_belonging_to_alice.creator_user_uuid,
+    )
+
+    assert len(chunks) == 0

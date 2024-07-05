@@ -16,6 +16,35 @@ logging.basicConfig(level=logging.INFO)
 log = logging.getLogger()
 
 
+def build_chunk_query(parent_file_uuid: UUID, user_uuid: UUID) -> dict:
+    query = {
+        "query": {
+            "bool": {
+                "must": [
+                    {
+                        "bool": {
+                            "should": [
+                                {"term": {"parent_file_uuid.keyword": str(parent_file_uuid)}},
+                                {"term": {"metadata.parent_file_uuid.keyword": str(parent_file_uuid)}},
+                            ]
+                        }
+                    },
+                    {
+                        "bool": {
+                            "should": [
+                                {"term": {"creator_user_uuid.keyword": str(user_uuid)}},
+                                {"term": {"metadata.creator_user_uuid.keyword": str(user_uuid)}},
+                            ]
+                        }
+                    },
+                ]
+            }
+        }
+    }
+
+    return query
+
+
 class ElasticsearchStorageHandler(BaseStorageHandler):
     """Storage Handler for Elasticsearch"""
 
@@ -163,32 +192,18 @@ class ElasticsearchStorageHandler(BaseStorageHandler):
             for item in scan(
                 client=self.es_client,
                 index=target_index,
-                query={
-                    "query": {
-                        "bool": {
-                            "must": [
-                                {
-                                    "bool": {
-                                        "should": [
-                                            {"term": {"parent_file_uuid.keyword": str(parent_file_uuid)}},
-                                            {"term": {"metadata.parent_file_uuid.keyword": str(parent_file_uuid)}},
-                                        ]
-                                    }
-                                },
-                                {
-                                    "bool": {
-                                        "should": [
-                                            {"term": {"creator_user_uuid.keyword": str(user_uuid)}},
-                                            {"term": {"metadata.creator_user_uuid.keyword": str(user_uuid)}},
-                                        ]
-                                    }
-                                },
-                            ]
-                        }
-                    }
-                },
+                query=build_chunk_query(parent_file_uuid, user_uuid),
             )
         ]
+
+    def delete_file_chunks(self, parent_file_uuid: UUID, user_uuid: UUID) -> list[Chunk]:
+        """delete chunks for a given file"""
+        target_index = f"{self.root_index}-chunk"
+
+        self.es_client.delete_by_query(
+            index=target_index,
+            body=build_chunk_query(parent_file_uuid, user_uuid),
+        )
 
     def get_file_status(self, file_uuid: UUID, user_uuid: UUID) -> FileStatus:
         """Get the status of a file and associated Chunks

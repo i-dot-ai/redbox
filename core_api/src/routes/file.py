@@ -230,8 +230,7 @@ async def reingest_file(file_uuid: UUID, user_uuid: Annotated[UUID, Depends(get_
     log.info("reingesting %s", file.uuid)
 
     # Remove old chunks
-    chunks = storage_handler.get_file_chunks(file.uuid, user_uuid)
-    storage_handler.delete_items(chunks)
+    storage_handler.delete_file_chunks(file.uuid, user_uuid)
 
     # Add new chunks
     log.info("publishing %s", file.uuid)
