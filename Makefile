@@ -39,8 +39,8 @@ test-core-api: ## Test core-api
 
 .PHONY: test-ai
 test-ai: ## Test code with live LLM
-	poetry install --no-root --no-ansi --with api,dev,ai --without worker,docs
-	poetry run pytest core_api/tests -m "ai" -vv
+	cp .env.test core-api/.env
+	cd core-api && poetry install --with dev && poetry run python -m pytest -m "ai" --cov=core_api -v --cov-report=term-missing --cov-fail-under=80
 
 .PHONY: test-redbox
 test-redbox: ## Test redbox
