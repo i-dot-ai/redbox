@@ -91,6 +91,7 @@ def test_user_journey(page: Page, email_address: str):
         ("chat", False),
         ("chat", True),
         ("summarise", True),
+        ("summarise", False),
         ("info", False),
     ]:
         chats_page = chats_page.start_new_chat()
