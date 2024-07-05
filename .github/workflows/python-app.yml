@@ -7,7 +7,7 @@ on:
   push:
     paths:
       - redbox/**
-      - core_api/**
+      - core-api/**
       - django_app/**
       - worker/**
       - Makefile
