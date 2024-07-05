@@ -107,7 +107,7 @@
               </message-input>
             </div>
 
-            <button type="submit" class="govuk-button" {% if not streaming.in_use %}data-prevent-double-click="true"{% endif %} data-module="govuk-button">
+            <button type="submit" class="govuk-button" data-module="govuk-button">
               Send
             </button>
 
@@ -163,18 +163,14 @@
   <script src="{{ static('js/chats/feedback.js') }}"></script>
   <script src="{{ static('js/chats/message-input.js') }}"></script>
 {% endif %}
-
-
-{% if streaming.in_use %}
-  {% if COMPRESSION_ENABLED %}
-    {% compress js %}
-      <script src="{{ static('js/chats/streaming.js') }}"></script>
-    {% endcompress %}
-  {% else %}
+  
+  
+{% if COMPRESSION_ENABLED %}
+  {% compress js %}
     <script src="{{ static('js/chats/streaming.js') }}"></script>
-  {% endif %}
+  {% endcompress %}
 {% else %}
-  <script src="{{ static('js/chats/fallback.js') }}"></script>
+  <script src="{{ static('js/chats/streaming.js') }}"></script>
 {% endif %}
 
 {% endblock %}

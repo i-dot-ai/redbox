@@ -242,7 +242,7 @@ class ChatsView(View):
             "chat_id": chat_id,
             "messages": messages,
             "chat_history": chat_history,
-            "streaming": {"in_use": settings.USE_STREAMING, "endpoint": str(endpoint)},
+            "streaming": {"endpoint": str(endpoint)},
             "contact_email": settings.CONTACT_EMAIL,
             "files": all_files,
             "show_route": show_route,
