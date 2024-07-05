@@ -36,8 +36,6 @@ class APIError404(APIErrorResponse):
 class AIError(Exception):
     """Basic error class for problems with the AI components."""
 
-    message: str
-
 
 class QuestionLengthError(AIError):
     """Question length exceeds context window."""

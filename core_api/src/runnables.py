@@ -2,11 +2,7 @@ from functools import partial, reduce
 
 from langchain_core.documents.base import Document
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.runnables import (
-    RunnableLambda,
-    RunnablePassthrough,
-    chain,
-)
+from langchain_core.runnables import RunnableLambda, RunnablePassthrough, chain
 from tiktoken import Encoding
 
 from core_api.src.format import reduce_chunks_by_tokens
@@ -34,8 +30,7 @@ def make_chat_prompt_from_messages_runnable(
         chat_history_budget = token_budget - len(tokeniser.encode(input_dict["question"]))
 
         if chat_history_budget <= 0:
-            message = "Question length exceeds context window."
-            raise QuestionLengthError(message)
+            raise QuestionLengthError
 
         truncated_history: list[dict[str, str]] = []
         for msg in input_dict["chat_history"][::-1]:
@@ -70,7 +65,9 @@ def map_to_chat_response(input_dict: dict):
         )
         | RunnableLambda(
             lambda d: ChatResponse(
-                output_text=d["response"], source_documents=d.get("source_documents", []), route_name=d["route_name"]
+                output_text=d["response"],
+                source_documents=d.get("source_documents", []),
+                route_name=d["route_name"],
             )
         )
     ).invoke(input_dict)
