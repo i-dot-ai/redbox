@@ -45,5 +45,3 @@ class QuestionLengthError(AIError):
 
 class NoDocumentSelected(AIError):
     """No documents selected."""
-
-    message: str = "No documents selected to summarise"

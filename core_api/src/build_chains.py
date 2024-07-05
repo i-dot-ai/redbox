@@ -199,7 +199,8 @@ def build_summary_chain(
             return map_reduce_chain
 
         else:
-            raise NoDocumentSelected
+            message = "No documents selected to summarise"
+            raise NoDocumentSelected(message)
 
     return RunnablePassthrough.assign(documents=make_document_context()) | summarisation_route
 
