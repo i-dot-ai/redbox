@@ -1,4 +1,4 @@
-name: Deploy to dev
+name: _cicd (build and release entry)
 
 on:
   push:
