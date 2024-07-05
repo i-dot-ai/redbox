@@ -20,6 +20,7 @@ from deepeval.metrics import (
     FaithfulnessMetric,
     HallucinationMetric,
 )
+from dotenv import find_dotenv, load_dotenv
 from elasticsearch import Elasticsearch
 from elasticsearch.helpers import bulk, scan
 from fastapi import Depends
@@ -45,12 +46,11 @@ from redbox.models.settings import ElasticLocalSettings
 
 set_verbose(False)
 
-from dotenv import find_dotenv, load_dotenv
 
 _ = load_dotenv(find_dotenv())
 
 
-class UploadEmbeddings:
+class GetExperimentResults:
     def __init__(self):
         self.data_version = None
         self.V_EMBEDDINGS = ""
@@ -89,7 +89,6 @@ class UploadEmbeddings:
     def load_chunks_from_jsonl_to_index(self) -> set:
         file_uuids = set()
         file_path = self.V_EMBEDDINGS / f"{self.MODEL}.jsonl"
-        print(file_path)
 
         with jsonlines.open(file_path, mode="r") as reader:
             for chunk_raw in reader:
@@ -322,7 +321,7 @@ class UploadEmbeddings:
     def load_experiment_param_data(self, experiment_file_name):
         self.experiment_file_name = experiment_file_name
         self.experiment_parameters = pd.read_csv(
-            f"notebooks/evaluation/data/experiment_parameters/{self.experiment_file_name}"
+            f"notebooks/evaluation/data/experiment_parameters/{self.experiment_file_name}.csv"
         )
         # TODO: Add optionality to filter experiments to run
 
@@ -357,7 +356,6 @@ class UploadEmbeddings:
     def create_visualisation_plus_grouped_results(self):
         experiments = []
         experiment_names = self.experiment_parameters["experiment_name"]
-        print(experiment_names)
         for experiment_name in experiment_names:
             experiment = pd.read_csv(f"{self.V_RESULTS}/{self.experiment_name}_val_results.csv")
             experiment["experiment_name"] = experiment_name
@@ -367,12 +365,12 @@ class UploadEmbeddings:
 
         # Note that the confidence intervals in sns.barplot is calculated by bootstrapping.
         # See empirical_ci() above for empirical confidence interval calculation.
-        boxplot = sns.barplot(experiments_df, x="score", y="metric_name", hue="experiment_name", errorbar=("ci", 95))
-        boxplot.savefig(f"{self.V_RESULTS}/{self.experiment_file_name}_boxplot.png")
+        barplot = sns.barplot(experiments_df, x="score", y="metric_name", hue="experiment_name", errorbar=("ci", 95))
+        fig = barplot.get_figure()
+        fig.savefig(f"{self.V_RESULTS}/{self.experiment_file_name}_boxplot.png")
 
         experiment_metrics = self.empirical_ci(experiments_df)
-        experiment_metrics.to_csv(f"{self.V_RESULTS}/{self.experiment_file_name}eval_results_full.csv")
-        experiment_metrics
+        experiment_metrics.to_csv(f"{self.V_RESULTS}/{self.experiment_file_name}_eval_results_full.csv")
 
 
 @click.command()
@@ -388,22 +386,23 @@ class UploadEmbeddings:
     type=str,
     help="Specify the experiment data file name you want to use. (CSV)",
 )
+# @click.option(
+#     "--overwrite",
+#     "-o",
+#     required=False,
+#     is_flag=True,
+#     help="Overwrite existing results"
+# )
+# @click.option('--exp_data', help="Specify name of experiments to run")
 def main(data_version, experiment_file_name):
-    embedding_class = UploadEmbeddings()
-    embedding_class.set_data_version(data_version)
-    embedding_class.load_experiment_param_data(experiment_file_name)
-    embedding_class.load_chunks_from_jsonl_to_index()
-    embedding_class.loop_through_experiements()
-    embedding_class.create_visualisation_plus_grouped_results()
-    embedding_class.clear_index()
+    get_experiment_results = GetExperimentResults()
+    get_experiment_results.set_data_version(data_version)
+    get_experiment_results.load_experiment_param_data(experiment_file_name)
+    get_experiment_results.load_chunks_from_jsonl_to_index()
+    get_experiment_results.loop_through_experiements()
+    get_experiment_results.create_visualisation_plus_grouped_results()
+    get_experiment_results.clear_index()
 
 
 if __name__ == "__main__":
     main()
-
-
-# TODO: Integrate with experiment prompts csv
-# TODO: Import and use chain functions as existing in the repository
-# TODO: Generate metric results and store somwhere?
-# TODO: Delete data from elastic once done.???
-# @click.option('--exp_data', help="Specify name of experiments to run")
