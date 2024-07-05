@@ -196,7 +196,7 @@ class ElasticsearchStorageHandler(BaseStorageHandler):
             )
         ]
 
-    def delete_file_chunks(self, parent_file_uuid: UUID, user_uuid: UUID) -> list[Chunk]:
+    def delete_file_chunks(self, parent_file_uuid: UUID, user_uuid: UUID):
         """delete chunks for a given file"""
         target_index = f"{self.root_index}-chunk"
 
