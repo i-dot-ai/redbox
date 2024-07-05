@@ -62,14 +62,17 @@ jobs:
     - name: Test worker with pytest
       run: |
         make test-worker
+        rm -rf worker/.venv
 
     - name: Test core with pytest
       run: |
         make test-core-api
+        rm -rf core-api/.venv
 
     - name: Test redbox with pytest
       run: |
         make test-redbox
+        rm -rf redbox-core/.venv
 
 
   static_checks:
