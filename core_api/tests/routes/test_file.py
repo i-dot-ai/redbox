@@ -108,6 +108,24 @@ def test_delete_missing_file(app_client, headers):
     assert response.status_code == HTTPStatus.NOT_FOUND
 
 
+def test_reingest_file(app_client, chunked_file, elasticsearch_storage_handler, headers):
+    """
+    Given a previously chunked file
+    When I PUT it to /file/uuid/
+    I Expect the old chunks to be removed
+    """
+    previous_chunks = elasticsearch_storage_handler.get_file_chunks(chunked_file.uuid, chunked_file.creator_user_uuid)
+
+    response = app_client.put(f"/file/{chunked_file.uuid}", headers=headers)
+    assert response.status_code == HTTPStatus.OK
+
+    elasticsearch_storage_handler.refresh()
+    assert (
+        elasticsearch_storage_handler.get_file_chunks(chunked_file.uuid, chunked_file.creator_user_uuid)
+        != previous_chunks
+    )
+
+
 def test_get_file_chunks(app_client, chunked_file, headers):
     """
     Given a previously chunked file

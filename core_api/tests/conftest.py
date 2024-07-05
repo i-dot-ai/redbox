@@ -22,12 +22,12 @@ from redbox.models import Chunk, File, Settings
 from redbox.storage import ElasticsearchStorageHandler
 
 
-@pytest.fixture()
+@pytest.fixture(scope="session")
 def env():
     return Settings()
 
 
-@pytest.fixture()
+@pytest.fixture(scope="session")
 def s3_client(env):
     _client = env.s3_client()
     try:
@@ -42,9 +42,14 @@ def s3_client(env):
     return _client
 
 
-@pytest.fixture()
+@pytest.fixture(scope="session")
 def es_client(env) -> Elasticsearch:
     return env.elasticsearch_client()
+
+
+@pytest.fixture(scope="session")
+def es_index(env) -> str:
+    return f"{env.elastic_root_index}-chunk"
 
 
 @pytest.fixture()
@@ -138,10 +143,8 @@ def stored_large_file_chunks(stored_file_1, embedding_model_dim) -> list[Chunk]:
 
 
 @pytest.fixture(params=ALL_CHUNKS_RETRIEVER_DOCUMENTS)
-def stored_file_all_chunks(request, env, es_client) -> Generator[list[Document], None, None]:
-    store = ElasticsearchStore(
-        index_name=env.elastic_root_index + "-chunk", es_connection=es_client, query_field="text"
-    )
+def stored_file_all_chunks(request, es_client, es_index) -> Generator[list[Document], None, None]:
+    store = ElasticsearchStore(index_name=es_index, es_connection=es_client, query_field="text")
     documents = list(map(Document.parse_obj, request.param))
     doc_ids = store.add_documents(documents)
     yield documents
@@ -149,10 +152,8 @@ def stored_file_all_chunks(request, env, es_client) -> Generator[list[Document],
 
 
 @pytest.fixture(params=PARAMETERISED_RETRIEVER_DOCUMENTS)
-def stored_file_parameterised(request, env, es_client) -> Generator[list[Document], None, None]:
-    store = ElasticsearchStore(
-        index_name=env.elastic_root_index + "-chunk", es_connection=es_client, query_field="text"
-    )
+def stored_file_parameterised(request, es_client, es_index) -> Generator[list[Document], None, None]:
+    store = ElasticsearchStore(index_name=es_index, es_connection=es_client, query_field="text")
     documents = list(map(Document.parse_obj, request.param))
     doc_ids = store.add_documents(documents)
     yield documents
@@ -211,20 +212,15 @@ def embedding_model(embedding_model_dim) -> SentenceTransformerEmbeddings:
 
 
 @pytest.fixture()
-def chunk_index_name(env):
-    return f"{env.elastic_root_index}-chunk"
-
-
-@pytest.fixture()
-def all_chunks_retriever(env, es_client) -> AllElasticsearchRetriever:
+def all_chunks_retriever(es_client, es_index) -> AllElasticsearchRetriever:
     return AllElasticsearchRetriever(
         es_client=es_client,
-        index_name=f"{env.elastic_root_index}-chunk",
+        index_name=es_index,
     )
 
 
 @pytest.fixture()
-def parameterised_retriever(env, es_client, embedding_model_dim):
+def parameterised_retriever(env, es_client, es_index, embedding_model_dim) -> ParameterisedElasticsearchRetriever:
     default_params = {
         "size": env.ai.rag_k,
         "num_candidates": env.ai.rag_num_candidates,
@@ -234,7 +230,7 @@ def parameterised_retriever(env, es_client, embedding_model_dim):
     }
     return ParameterisedElasticsearchRetriever(
         es_client=es_client,
-        index_name=f"{env.elastic_root_index}-chunk",
+        index_name=es_index,
         params=default_params,
         embedding_model=FakeEmbeddings(size=embedding_model_dim),
         embedding_field_name=env.embedding_document_field_name,

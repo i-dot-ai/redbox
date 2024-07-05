@@ -1,4 +1,4 @@
-name: Manual release
+name: Deploy to dev
 
 on:
   workflow_dispatch:
@@ -6,6 +6,7 @@ on:
       commit-hash:
         description: 'The SHA of the Git commit to use'
         required: false
+        default: refs/heads/main
       core-repo-reference:
         description: 'The SHA to set the core repo to'
         required: false
@@ -32,8 +33,12 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.COMMIT_HASH }}
+          path: main
       - id: export
         run: |
+          cd main
           . ./.github/.github.env
           echo "ec2-instance-type=${EC2_INSTANCE_TYPE}" >> $GITHUB_OUTPUT
           echo "app-name=${APP_NAME}" >> $GITHUB_OUTPUT
@@ -70,19 +75,11 @@ jobs:
       AWS_REGION: ${{ secrets.AWS_REGION }}
       AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
 
-  run-integration-tests:
-    needs:
-      - set-vars
-      - start-runner
-      - build-image
-    uses: ../integration.yml
-
   release-terraform:
     needs:
       - set-vars
       - start-runner
       - build-image
-      - run-integration-tests
     uses: i-dot-ai/i-dot-ai-core-github-actions/.github/workflows/apply-terraform.yml@main
     with:
       APP_NAME: ${{ needs.set-vars.outputs.app-name }}
@@ -107,7 +104,6 @@ jobs:
       - set-vars
       - start-runner
       - build-image
-      - run-integration-tests
       - release-terraform
     with:
       RUNNER_LABEL: ${{ needs.start-runner.outputs.label }}

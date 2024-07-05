@@ -75,8 +75,17 @@ def get_vector_store(
 
 
 @lru_cache(1)
+def get_index_name(
+    env: Annotated[Settings, Depends(get_env)],
+) -> str:
+    return f"{env.elastic_root_index}-chunk"
+
+
+@lru_cache(1)
 def get_parameterised_retriever(
-    env: Annotated[Settings, Depends(get_env)], es: Annotated[Elasticsearch, Depends(get_elasticsearch_client)]
+    env: Annotated[Settings, Depends(get_env)],
+    es: Annotated[Elasticsearch, Depends(get_elasticsearch_client)],
+    index_name: Annotated[str, Depends(get_index_name)],
 ) -> BaseRetriever:
     """Creates an Elasticsearch retriever runnable.
 
@@ -93,7 +102,7 @@ def get_parameterised_retriever(
     }
     return ParameterisedElasticsearchRetriever(
         es_client=es,
-        index_name=f"{env.elastic_root_index}-chunk",
+        index_name=index_name,
         params=default_params,
         embedding_model=get_embedding_model(env),
         embedding_field_name=env.embedding_document_field_name,

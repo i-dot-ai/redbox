@@ -2,7 +2,6 @@
 {% extends "base.html" %}
 {% from "macros/govuk-button.html" import govukButton %}
 {% from "macros/chat-macros.html" import message_box %}
-{% from "macros/govuk-notification-banner.html" import govukNotificationBanner %}
 
 
 {% block content %}
@@ -67,7 +66,7 @@
               role = message.role,
               route = message.route,
               text = message.text,
-              citations = message.citation_set.distinct().order_by("file"),
+              source_files = message.source_files.all(),
               show_route = show_route
             ) }}
           {% endfor %}
