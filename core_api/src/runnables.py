@@ -65,9 +65,7 @@ def map_to_chat_response(input_dict: dict):
         )
         | RunnableLambda(
             lambda d: ChatResponse(
-                output_text=d["response"],
-                source_documents=d.get("source_documents", []),
-                route_name=d["route_name"],
+                output_text=d["response"], source_documents=d.get("source_documents", []), route_name=d["route_name"]
             )
         )
     ).invoke(input_dict)

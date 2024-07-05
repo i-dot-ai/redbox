@@ -45,10 +45,7 @@ chat_app = FastAPI(
 
 
 async def semantic_router_to_chain(
-    chat_request: ChatRequest,
-    user_uuid: UUID,
-    routable_chains: dict[str, Runnable],
-    route_layer: RouteLayer,
+    chat_request: ChatRequest, user_uuid: UUID, routable_chains: dict[str, Runnable], route_layer: RouteLayer
 ) -> tuple[Runnable, ChainInput]:
     question = chat_request.message_history[-1].text
 
@@ -126,40 +123,27 @@ async def rag_chat_streamed(
             if response:
                 await send_to_client(ClientResponse(resource_type="text", data=response), websocket)
             if source_documents:
-                await send_to_client(
-                    ClientResponse(resource_type="documents", data=source_documents),
-                    websocket,
-                )
+                await send_to_client(ClientResponse(resource_type="documents", data=source_documents), websocket)
             if route_name:
-                await send_to_client(
-                    ClientResponse(resource_type="route_name", data=route_name),
-                    websocket,
-                )
+                await send_to_client(ClientResponse(resource_type="route_name", data=route_name), websocket)
     except NoDocumentSelected as e:
         log.info("No documents have been selected to summarise", exc_info=e)
         await send_to_client(
             ClientResponse(
-                resource_type="error",
-                data=ErrorDetail(code="no-document-selected", message=type(e).__name__),
+                resource_type="error", data=ErrorDetail(code="no-document-selected", message=type(e).__name__)
             ),
             websocket,
         )
     except QuestionLengthError as e:
         log.info("Question is too long", exc_info=e)
         await send_to_client(
-            ClientResponse(
-                resource_type="error",
-                data=ErrorDetail(code="question-too-long", message=type(e).__name__),
-            ),
+            ClientResponse(resource_type="error", data=ErrorDetail(code="question-too-long", message=type(e).__name__)),
             websocket,
         )
     except APIError as e:
         log.exception("Unhandled exception.", exc_info=e)
         await send_to_client(
-            ClientResponse(
-                resource_type="error",
-                data=ErrorDetail(code="unexpected", message=type(e).__name__),
-            ),
+            ClientResponse(resource_type="error", data=ErrorDetail(code="unexpected", message=type(e).__name__)),
             websocket,
         )
     finally:
