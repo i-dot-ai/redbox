@@ -31,8 +31,8 @@ langchain_openai = "^0.1.9"
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.2.2"
 pytest-cov = "^5.0.0"
-mypy = "^1.9.0"
 pytest-asyncio = "^0.23.6"
+mypy = "^1.9.0"
 moto = {extras = ["s3"], version = "^5.0.10"}
 jsonlines = "^4.0.0"
 deepeval = "^0.21.64"
