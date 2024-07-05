@@ -196,8 +196,8 @@ class ChatMessage extends HTMLElement {
       } else if (message.type === "end") {
         sourcesContainer.showCitations(message.data.message_id);
       } else if (message.type === "error") {
-        this.querySelector(".govuk-error-summary")?.removeAttribute("hidden");
-        this.querySelector(".govuk-notification-banner__heading").innerText = message.data;
+        this.querySelector(".govuk-notification-banner")?.removeAttribute("hidden");
+        this.querySelector(".govuk-notification-banner__heading").innerHTML = message.data;
       }
     };
   };
