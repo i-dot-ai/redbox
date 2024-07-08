@@ -12,6 +12,7 @@ from django.db.models import Model
 from websockets import WebSocketClientProtocol
 from websockets.legacy.client import Connect
 
+from redbox_app.redbox_core import error_messages
 from redbox_app.redbox_core.consumers import ChatConsumer
 from redbox_app.redbox_core.models import ChatHistory, ChatMessage, ChatRoleEnum, File, User
 
@@ -35,6 +36,7 @@ async def test_chat_consumer_with_new_session(alice: User, uploaded_file: File, 
         response2 = await communicator.receive_json_from(timeout=5)
         response3 = await communicator.receive_json_from(timeout=5)
         response4 = await communicator.receive_json_from(timeout=5)
+        response5 = await communicator.receive_json_from(timeout=5)
 
         # Then
         assert response1["type"] == "session-id"
@@ -42,8 +44,10 @@ async def test_chat_consumer_with_new_session(alice: User, uploaded_file: File, 
         assert response2["data"] == "Good afternoon, "
         assert response3["type"] == "text"
         assert response3["data"] == "Mr. Amor."
-        assert response4["type"] == "source"
-        assert response4["data"]["original_file_name"] == uploaded_file.original_file_name
+        assert response4["type"] == "hidden-route"
+        assert response4["data"] == "gratitude"
+        assert response5["type"] == "source"
+        assert response5["data"]["original_file_name"] == uploaded_file.original_file_name
         # Close
         await communicator.disconnect()
 
@@ -206,11 +210,13 @@ async def test_chat_consumer_with_connection_error(alice: User, mocked_breaking_
 
 @pytest.mark.django_db(transaction=True)
 @pytest.mark.asyncio()
-async def test_chat_consumer_with_explicit_error(alice: User, mocked_connect_with_explicit_error: Connect):
+async def test_chat_consumer_with_explicit_unhandled_error(
+    alice: User, mocked_connect_with_explicit_unhandled_error: Connect
+):
     # Given
 
     # When
-    with patch("redbox_app.redbox_core.consumers.connect", new=mocked_connect_with_explicit_error):
+    with patch("redbox_app.redbox_core.consumers.connect", new=mocked_connect_with_explicit_unhandled_error):
         communicator = WebsocketCommunicator(ChatConsumer.as_asgi(), "/ws/chat/")
         communicator.scope["user"] = alice
         connected, _ = await communicator.connect()
@@ -226,6 +232,33 @@ async def test_chat_consumer_with_explicit_error(alice: User, mocked_connect_wit
         assert response2["type"] == "text"
         assert response2["data"] == "Good afternoon, "
         assert response3["type"] == "error"
+        assert response3["data"] == error_messages.CORE_ERROR_MESSAGE
+        # Close
+        await communicator.disconnect()
+
+
+@pytest.mark.django_db(transaction=True)
+@pytest.mark.asyncio()
+async def test_chat_consumer_with_explicit_no_document_selected_error(
+    alice: User, mocked_connect_with_explicit_no_document_selected_error: Connect
+):
+    # Given
+
+    # When
+    with patch("redbox_app.redbox_core.consumers.connect", new=mocked_connect_with_explicit_no_document_selected_error):
+        communicator = WebsocketCommunicator(ChatConsumer.as_asgi(), "/ws/chat/")
+        communicator.scope["user"] = alice
+        connected, _ = await communicator.connect()
+        assert connected
+
+        await communicator.send_json_to({"message": "Hello Hal."})
+        response1 = await communicator.receive_json_from(timeout=5)
+        response2 = await communicator.receive_json_from(timeout=5)
+
+        # Then
+        assert response1["type"] == "session-id"
+        assert response2["type"] == "text"
+        assert response2["data"] == error_messages.SELECT_DOCUMENT
         # Close
         await communicator.disconnect()
 
@@ -272,13 +305,24 @@ def mocked_breaking_connect() -> Connect:
 
 
 @pytest.fixture()
-def mocked_connect_with_explicit_error() -> Connect:
+def mocked_connect_with_explicit_unhandled_error() -> Connect:
     mocked_websocket = AsyncMock(spec=WebSocketClientProtocol, name="mocked_websocket")
     mocked_connect = MagicMock(spec=Connect, name="mocked_connect")
     mocked_connect.return_value.__aenter__.return_value = mocked_websocket
     mocked_websocket.__aiter__.return_value = [
         json.dumps({"resource_type": "text", "data": "Good afternoon, "}),
-        json.dumps({"resource_type": "error", "data": "Oh dear."}),
+        json.dumps({"resource_type": "error", "data": {"code": "unknown", "message": "Oh dear."}}),
+    ]
+    return mocked_connect
+
+
+@pytest.fixture()
+def mocked_connect_with_explicit_no_document_selected_error() -> Connect:
+    mocked_websocket = AsyncMock(spec=WebSocketClientProtocol, name="mocked_websocket")
+    mocked_connect = MagicMock(spec=Connect, name="mocked_connect")
+    mocked_connect.return_value.__aenter__.return_value = mocked_websocket
+    mocked_websocket.__aiter__.return_value = [
+        json.dumps({"resource_type": "error", "data": {"code": "no-document-selected", "message": "whatever"}}),
     ]
     return mocked_connect
 

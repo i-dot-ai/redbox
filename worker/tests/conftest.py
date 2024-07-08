@@ -4,9 +4,11 @@ from uuid import uuid4
 import pytest
 from botocore.exceptions import ClientError
 from elasticsearch import Elasticsearch
+from langchain_core.embeddings import Embeddings
+from langchain_core.embeddings.fake import FakeEmbeddings
 
 from redbox.models import File
-from worker.app import env
+from worker.src.app import env
 
 
 @pytest.fixture(scope="session")
@@ -27,6 +29,11 @@ def s3_client():
 @pytest.fixture(scope="session")
 def es_client() -> Elasticsearch:
     return env.elasticsearch_client()
+
+
+@pytest.fixture()
+def embedding_model() -> Embeddings:
+    return FakeEmbeddings(size=3072)
 
 
 @pytest.fixture(scope="session")

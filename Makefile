@@ -34,13 +34,19 @@ rebuild: stop prune ## Rebuild all images
 
 .PHONY: test-core-api
 test-core-api: ## Test core-api
-	poetry install --no-root --no-ansi --with api,dev --without docs
-	poetry run pytest core_api/tests --cov=core_api/src -v --cov-report=term-missing --cov-fail-under=75
+	cp .env.test core-api/.env
+	cd core-api && poetry install --with dev && poetry run python -m pytest -m "not ai" --cov=core_api -v --cov-report=term-missing --cov-fail-under=80
+
+.PHONY: test-ai
+test-ai: ## Test code with live LLM
+	cp .env.test core-api/.env
+	cd core-api && poetry install --with dev && poetry run python -m pytest -m "ai" --cov=core_api -v --cov-report=term-missing --cov-fail-under=80
 
 .PHONY: test-redbox
 test-redbox: ## Test redbox
 	cp .env.test redbox-core/.env
 	cd redbox-core && poetry install && poetry run pytest --cov=redbox -v --cov-report=term-missing --cov-fail-under=80
+
 
 .PHONY: test-worker
 test-worker: ## Test worker
@@ -58,7 +64,7 @@ test-integration: rebuild run test-integration-without-build ## Run all integrat
 
 .PHONY: test-integration-without-build
 test-integration-without-build : ## Run all integration tests without rebuilding
-	poetry install --no-root --no-ansi --with dev --without api,docs
+	poetry install --no-root --no-ansi --with dev --without docs
 	poetry run pytest tests/
 
 .PHONY: collect-static

@@ -64,11 +64,13 @@ redbox-copilot/
 │  ├── src/
 │  │  └── app.py
 │  ├── tests/
+│  ├── pyproject.toml
 │  └── Dockerfile
 ├── core-api
 │  ├── src/
 │  │  └── app.py
 │  ├── tests/
+│  ├── pyproject.toml
 │  └── Dockerfile
 ├── redbox-core/
 │  ├── redbox
@@ -190,9 +192,7 @@ checkout the `main` branch of the following repos:
 * https://github.com/i-dot-ai/i-ai-core-infrastructure/
 * https://github.com/i-dot-ai/redbox-copilot-infra-config
 
-
 If, and only if, you want to deploy something other than HEAD then replace `var.image_tag` in `infrastructure/aws/ecs.tf` with the hash of the build you want deployed.
-
 
 Now run the commands below remembering to replace ENVIRONMENT with `dev`, `preprod` or `prod`
 

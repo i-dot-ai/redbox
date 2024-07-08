@@ -7,7 +7,7 @@ on:
   push:
     paths:
       - redbox/**
-      - core_api/**
+      - core-api/**
       - django_app/**
       - worker/**
       - Makefile
@@ -27,7 +27,7 @@ permissions:
   contents: read
 
 jobs:
-  test:
+  test-core-api:
 
     runs-on: ubuntu-latest
 
@@ -51,18 +51,9 @@ jobs:
         cp .env.test .env
         docker compose up -d --wait elasticsearch
 
-        poetry install --no-root --no-ansi
-        poetry run python download_embedder.py --embedding_model paraphrase-albert-small-v2
-
     - name: Test core with pytest
       run: |
         make test-core-api
-
-
-    - name: Test redbox with pytest
-      run: |
-        make test-redbox
-
 
   test-worker:
 
@@ -88,9 +79,6 @@ jobs:
         cp .env.test .env
         docker compose up -d --wait elasticsearch
 
-        poetry install --no-root --no-ansi
-        poetry run python download_embedder.py --embedding_model paraphrase-albert-small-v2
-
     - name: Add dependencies for worker
       run: |
         sudo apt update && sudo apt-get install -y \
@@ -100,6 +88,34 @@ jobs:
     - name: Test worker with pytest
       run: |
         make test-worker
+
+  test-redbox:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v3
+      with:
+        python-version: "3.11"
+
+    - name: Set up Poetry
+      uses: abatilo/actions-poetry@v2
+      with:
+        poetry-version: 1.7.0
+
+    - name: Build Containers
+      run: |
+        mkdir -p data/elastic/
+        chmod 777 data/elastic/
+        cp .env.test .env
+        docker compose up -d --wait elasticsearch
+
+    - name: Test redbox with pytest
+      run: |
+        make test-redbox
 
 
   static_checks:

@@ -296,6 +296,15 @@ class ChatMessage:
         self.element.locator(".iai-chat-bubble__citations-button").click()
         return CitationsPage(self.chats_page.page)
 
+    @classmethod
+    def from_element(cls, element: Locator, page: "ChatsPage") -> "ChatMessage":
+        status = element.get_attribute("data-status")
+        role = element.locator(".iai-chat-bubble__role").inner_text()
+        route = element.locator(".iai-chat-bubble__route dd").inner_text() or None
+        text = element.locator(".iai-chat-bubble__text").inner_text()
+        sources = element.locator("sources-list").get_by_role("listitem").all_inner_texts()
+        return cls(status=status, role=role, route=route, text=text, sources=sources, element=element, chats_page=page)
+
 
 class ChatsPage(SignedInBasePage):
     @property
@@ -336,18 +345,8 @@ class ChatsPage(SignedInBasePage):
         return ChatsPage(self.page)
 
     @property
-    def all_messages(self) -> list[ChatMessage]:
-        return [self._chat_message_from_element(element) for element in self.page.locator("chat-message").all()]
-
-    def _chat_message_from_element(self, element: Locator) -> ChatMessage:
-        status = element.get_attribute("data-status")
-        role = element.locator(".iai-chat-bubble__role").inner_text()
-        route = element.locator(".iai-chat-bubble__route").inner_text() or None
-        text = element.locator(".iai-chat-bubble__text").inner_text()
-        sources = element.locator("sources-list").get_by_role("listitem").all_inner_texts()
-        return ChatMessage(
-            status=status, role=role, route=route, text=text, sources=sources, element=element, chats_page=self
-        )
+    def all_messages(self) -> Sequence[ChatMessage]:
+        return [ChatMessage.from_element(element, self) for element in self.page.locator("chat-message").all()]
 
     def get_all_messages_once_streaming_has_completed(
         self, retry_interval: int = 1, max_tries: int = 120
