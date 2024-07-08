@@ -5,6 +5,7 @@ from datetime import UTC, datetime, timedelta
 import boto3
 from botocore.config import Config
 from django.conf import settings
+from django.core import validators
 from django.db import models
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
@@ -255,3 +256,23 @@ class ChatMessage(UUIDPrimaryKeyBase, TimeStampedModel):
 
     def __str__(self) -> str:  # pragma: no cover
         return f"{self.text} - {self.role}"
+
+
+class ChatMessageRating(TimeStampedModel):
+    chat_message = models.OneToOneField(ChatMessage, on_delete=models.CASCADE, primary_key=True)
+    rating = models.PositiveIntegerField(validators=[validators.MinValueValidator(1), validators.MaxValueValidator(5)])
+    text = models.TextField(blank=True, null=True)
+
+    def __str__(self) -> str:  # pragma: no cover
+        return f"{self.chat_message} - {self.rating}"
+
+
+class ChatMessageRatingChip(UUIDPrimaryKeyBase, TimeStampedModel):
+    rating = models.ForeignKey(ChatMessageRating, on_delete=models.CASCADE)
+    text = models.CharField(max_length=32)
+
+    class Meta:
+        unique_together = "rating", "text"
+
+    def __str__(self) -> str:  # pragma: no cover
+        return f"{self.rating} - {self.text}"
