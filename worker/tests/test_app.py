@@ -8,6 +8,7 @@ from langchain_core.embeddings.fake import FakeEmbeddings
 from redbox.models.file import File
 from redbox.storage import ElasticsearchStorageHandler
 from worker.app import app, broker, env
+from worker import app as app_module
 
 
 @pytest.mark.asyncio()
@@ -24,7 +25,7 @@ async def test_ingest_file(es_client, file: File, monkeypatch):
 
     storage_handler.write_item(file)
 
-    monkeypatch.setattr("get_embeddings", lambda: FakeEmbeddings(size=3072))
+    monkeypatch.setattr(app_module, "get_embeddings", lambda: FakeEmbeddings(size=3072))
     async with TestRedisBroker(broker) as br, TestApp(app):
         await br.publish(file, list=env.ingest_queue_name)
         await asyncio.sleep(1)
