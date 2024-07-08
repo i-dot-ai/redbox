@@ -53,6 +53,7 @@ _ = load_dotenv(find_dotenv())
 class GetExperimentResults:
     def __init__(self):
         self.data_version = None
+        self.benchmark = None
         self.V_EMBEDDINGS = ""
         self.V_ROOT = None
         self.V_SYNTHETIC = None
@@ -200,10 +201,10 @@ class GetExperimentResults:
     def write_rag_results(self) -> None:
         """Format and write Redbox responses to evaluation dataset."""
 
-        df = pd.read_csv(f"{self.V_SYNTHETIC}/ragas_synthetic_data.csv")
-        inputs = df["input"].tolist()
+        synthetic_df = pd.read_csv(f"{self.V_SYNTHETIC}/ragas_synthetic_data.csv")
+        inputs = synthetic_df["input"].tolist()
 
-        df_function = df.copy()
+        df_function = synthetic_df.copy()
 
         actual_output = []
         retrieval_context = []
@@ -318,14 +319,29 @@ class GetExperimentResults:
         evaluation.to_csv(f"{self.V_RESULTS}/{self.experiment_name}_val_results.csv", index=False)
         evaluation.head()
 
-    def load_experiment_param_data(self, experiment_file_name):
-        self.experiment_file_name = experiment_file_name
-        self.experiment_parameters = pd.read_csv(
-            f"notebooks/evaluation/data/experiment_parameters/{self.experiment_file_name}.csv"
-        )
-        # TODO: Add optionality to filter experiments to run
+    def load_experiment_param_data(
+        self,
+        experiment_file_name=None,
+        benchmark=None,
+    ):
+        """ """
+
+        if benchmark:
+            self.benchmark = benchmark
+            self.experiment_file_name = "benchmark"
+            benchmark_df = pd.DataFrame()
+            benchmark_df["experiment_name"] = ["benchmark"]
+            benchmark_df["retrieval_system_prompt"] = [self.ENV.ai.retrieval_system_prompt]
+            benchmark_df["retrieval_question_prompt"] = [self.ENV.ai.retrieval_question_prompt]
+            self.experiment_parameters = benchmark_df
+        else:
+            self.experiment_file_name = experiment_file_name
+            self.experiment_parameters = pd.read_csv(
+                f"notebooks/evaluation/data/experiment_parameters/{self.experiment_file_name}.csv"
+            )
 
     def loop_through_experiements(self):
+        """ """
         for index, row in self.experiment_parameters.iterrows():
             self.experiment_name = row["experiment_name"]
             self.retrieval_system_prompt = (row["retrieval_system_prompt"],)
@@ -354,6 +370,7 @@ class GetExperimentResults:
         return df_grouped
 
     def create_visualisation_plus_grouped_results(self):
+        """ """
         experiments = []
         experiment_names = self.experiment_parameters["experiment_name"]
         for experiment_name in experiment_names:
@@ -367,7 +384,7 @@ class GetExperimentResults:
         # See empirical_ci() above for empirical confidence interval calculation.
         barplot = sns.barplot(experiments_df, x="score", y="metric_name", hue="experiment_name", errorbar=("ci", 95))
         fig = barplot.get_figure()
-        fig.savefig(f"{self.V_RESULTS}/{self.experiment_file_name}_boxplot.png")
+        fig.savefig(f"{self.V_RESULTS}/{self.experiment_file_name}_boxplot.png", bbox_inches="tight")
 
         experiment_metrics = self.empirical_ci(experiments_df)
         experiment_metrics.to_csv(f"{self.V_RESULTS}/{self.experiment_file_name}_eval_results_full.csv")
@@ -382,7 +399,7 @@ class GetExperimentResults:
 )
 @click.option(
     "--experiment_file_name",
-    required=True,
+    required=False,
     type=str,
     help="Specify the experiment data file name you want to use. (CSV)",
 )
@@ -394,10 +411,13 @@ class GetExperimentResults:
 #     help="Overwrite existing results"
 # )
 # @click.option('--exp_data', help="Specify name of experiments to run")
-def main(data_version, experiment_file_name):
+@click.option(
+    "--benchmark", "-b", required=False, is_flag=True, help="Use the baseline rag function to get benchmarking results."
+)
+def main(data_version, experiment_file_name, benchmark):
     get_experiment_results = GetExperimentResults()
     get_experiment_results.set_data_version(data_version)
-    get_experiment_results.load_experiment_param_data(experiment_file_name)
+    get_experiment_results.load_experiment_param_data(experiment_file_name=experiment_file_name, benchmark=benchmark)
     get_experiment_results.load_chunks_from_jsonl_to_index()
     get_experiment_results.loop_through_experiements()
     get_experiment_results.create_visualisation_plus_grouped_results()
