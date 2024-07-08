@@ -6,13 +6,13 @@ from semantic_router import Route
 from semantic_router.encoders import AzureOpenAIEncoder, BaseEncoder
 from semantic_router.layer import RouteLayer
 
-from core_api.src.build_chains import (
+from core_api.build_chains import (
     build_condense_retrieval_chain,
     build_static_response_chain,
     build_summary_chain,
     build_vanilla_chain,
 )
-from core_api.src.dependencies import get_env
+from core_api.dependencies import get_env
 from redbox.models import Settings
 from redbox.models.chat import ChatRoute
 

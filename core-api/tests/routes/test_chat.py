@@ -14,9 +14,9 @@ from langchain_core.runnables.schema import StreamEvent
 from semantic_router.encoders import TfidfEncoder
 from starlette.websockets import WebSocketDisconnect
 
-from core_api.src import dependencies, semantic_routes
-from core_api.src.app import app as application
-from core_api.src.routes.chat import chat_app
+from core_api import dependencies, semantic_routes
+from core_api.app import app as application
+from core_api.routes.chat import chat_app
 from redbox.models.chat import ChatResponse, ChatRoute
 
 if TYPE_CHECKING:

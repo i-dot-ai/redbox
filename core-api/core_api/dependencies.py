@@ -13,8 +13,8 @@ from langchain_core.runnables import ConfigurableField
 from langchain_elasticsearch import ApproxRetrievalStrategy, ElasticsearchStore
 from langchain_openai.embeddings import AzureOpenAIEmbeddings
 
-from core_api.src.callbacks import LoggerCallbackHandler
-from core_api.src.retriever import AllElasticsearchRetriever, ParameterisedElasticsearchRetriever
+from core_api.callbacks import LoggerCallbackHandler
+from core_api.retriever import AllElasticsearchRetriever, ParameterisedElasticsearchRetriever
 from redbox.models import Settings
 from redbox.storage import ElasticsearchStorageHandler
 

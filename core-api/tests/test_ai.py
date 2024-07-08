@@ -22,8 +22,8 @@ from deepeval.test_case import LLMTestCase
 from elasticsearch.helpers import bulk, scan
 from pydantic import BaseModel, Field
 
-from core_api.src.build_chains import build_retrieval_chain
-from core_api.src.dependencies import get_llm, get_parameterised_retriever, get_tokeniser
+from core_api.build_chains import build_retrieval_chain
+from core_api.dependencies import get_llm, get_parameterised_retriever, get_tokeniser
 from redbox.models.chain import ChainInput
 
 if TYPE_CHECKING:

@@ -34,22 +34,23 @@ rebuild: stop prune ## Rebuild all images
 
 .PHONY: test-core-api
 test-core-api: ## Test core-api
-	poetry install --no-root --no-ansi --with api,dev,ai --without worker,docs
-	poetry run pytest core_api/tests -m "not ai" --cov=core_api/src -v --cov-report=term-missing --cov-fail-under=75
+	cp .env.test core-api/.env
+	cd core-api && poetry install --with dev && poetry run python -m pytest -m "not ai" --cov=core_api -v --cov-report=term-missing --cov-fail-under=80
 
 .PHONY: test-ai
 test-ai: ## Test code with live LLM
-	poetry install --no-root --no-ansi --with api,dev,ai --without worker,docs
-	poetry run pytest core_api/tests -m "ai" -vv
+	cp .env.test core-api/.env
+	cd core-api && poetry install --with dev && poetry run python -m pytest -m "ai" --cov=core_api -v --cov-report=term-missing --cov-fail-under=80
 
 .PHONY: test-redbox
 test-redbox: ## Test redbox
 	cp .env.test redbox-core/.env
 	cd redbox-core && poetry install && poetry run pytest --cov=redbox -v --cov-report=term-missing --cov-fail-under=80
 
+
 .PHONY: test-worker
 test-worker: ## Test worker
-	poetry install --no-root --no-ansi --with worker,dev --without ai,api,docs
+	poetry install --no-root --no-ansi --with worker,dev --without docs
 	poetry run pytest worker/tests --cov=worker -v --cov-report=term-missing --cov-fail-under=40
 
 .PHONY: test-django
@@ -62,7 +63,7 @@ test-integration: rebuild run test-integration-without-build ## Run all integrat
 
 .PHONY: test-integration-without-build
 test-integration-without-build : ## Run all integration tests without rebuilding
-	poetry install --no-root --no-ansi --with dev --without ai,api,worker,docs
+	poetry install --no-root --no-ansi --with dev --without worker,docs
 	poetry run pytest tests/
 
 .PHONY: collect-static
