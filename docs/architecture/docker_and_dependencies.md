@@ -5,12 +5,13 @@ Each of the Microservices in the Redbox system is built into a Docker container.
 
 ## Poetry Groups
 
-We use Poetry to manage the dependencies for each of the Microservices. Poetry is a Python dependency management tool that allows us to specify the dependencies for a Microservice in a `pyproject.toml` file. Poetry also allows us to specify different groups of dependencies for different environments. We've used groups to collect dependencies for each Microservice into a single file. This makes it easier to manage versions for the entire system.
+We use Poetry to manage the dependencies for each of the Microservices. Poetry is a Python dependency management tool that allows us to specify the dependencies for a Microservice in a `pyproject.toml` file. 
 
-For example, the `api` Microservice has the following groups:
+For example, the `core-api` Microservice has the following groups:
 
 ```bash
-poetry install --no-root --no-ansi --without worker,dev
+cd core-api
+poetry install --without dev
 ```
 
 !!! warning "Be explicit with poetry groups"

@@ -17,7 +17,7 @@ from langchain_openai.embeddings import AzureOpenAIEmbeddings
 
 from redbox.models import File, ProcessingStatusEnum, Settings
 from redbox.storage.elasticsearch import ElasticsearchStorageHandler
-from worker.src.loader import UnstructuredDocumentLoader
+from redbox.loader import UnstructuredDocumentLoader
 
 if TYPE_CHECKING:
     from mypy_boto3_s3.client import S3Client

@@ -24,7 +24,7 @@
             "module": "faststream",
             "args": [
                 "run",
-                "worker.src.app:app",
+                "worker.app:app",
                 "--workers", "1"
             ],
             "jinja": true,

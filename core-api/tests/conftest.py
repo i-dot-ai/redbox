@@ -143,8 +143,13 @@ def stored_large_file_chunks(stored_file_1, embedding_model_dim) -> list[Chunk]:
 
 
 @pytest.fixture(params=ALL_CHUNKS_RETRIEVER_DOCUMENTS)
-def stored_file_all_chunks(request, es_client, es_index) -> Generator[list[Document], None, None]:
-    store = ElasticsearchStore(index_name=es_index, es_connection=es_client, query_field="text")
+def stored_file_all_chunks(request, es_client, es_index, embedding_model_dim) -> Generator[list[Document], None, None]:
+    store = ElasticsearchStore(
+        index_name=es_index,
+        es_connection=es_client,
+        query_field="text",
+        embedding=FakeEmbeddings(size=embedding_model_dim),
+    )
     documents = list(map(Document.parse_obj, request.param))
     doc_ids = store.add_documents(documents)
     yield documents

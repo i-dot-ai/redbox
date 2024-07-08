@@ -7,8 +7,8 @@ from langchain_core.embeddings.fake import FakeEmbeddings
 
 from redbox.models.file import File
 from redbox.storage import ElasticsearchStorageHandler
-from worker.src import app as app_module
-from worker.src.app import app, broker, env
+from worker.app import app, broker, env
+from worker import app as app_module
 
 
 @pytest.mark.asyncio()

@@ -23,5 +23,5 @@ The Worker is responsible for:
 * ingesting files into the system. The Ingester Worker reads a [`File`](../code_reference/models/file.md) reference from its queue and then reads the file from the Object Store. The Worker then processes the file and stores the file in the Database. The worker also sends created [`Chunk`](../code_reference/models/chunk.md) references to the Worker via the `embedding-queue`.
 * embedding chunks of text. The Embedder Worker reads a [`Chunk`](../code_reference/models/chunk.md) reference from its queue and then reads the text from the Database. The Worker then embeds the text with it instance of the embedding model. The worker then stores the embedding in the Database.
 
-::: worker.src.app.embed
-::: worker.src.app.ingest
+::: worker.app.embed
+::: worker.app.ingest
