@@ -10,6 +10,7 @@ from botocore.exceptions import ClientError
 from bs4 import BeautifulSoup
 from django.conf import settings
 from django.test import Client
+from django.urls import reverse
 from pytest_django.asserts import assertRedirects
 from requests_mock import Mocker
 from yarl import URL
@@ -18,6 +19,8 @@ from redbox_app.redbox_core.models import (
     BusinessUnit,
     ChatHistory,
     ChatMessage,
+    ChatMessageRating,
+    ChatMessageRatingChip,
     ChatRoleEnum,
     Citation,
     File,
@@ -369,6 +372,45 @@ def test_view_session_with_documents(chat_message: ChatMessage, client: Client):
     # Then
     assert response.status_code == HTTPStatus.OK
     assert b"original_file.txt" in response.content
+
+
+@pytest.mark.django_db()
+def test_post_new_rating(alice: User, chat_message: ChatMessage, client: Client):
+    # Given
+    client.force_login(alice)
+
+    # When
+    url = reverse("ratings", kwargs={"message_id": chat_message.id})
+    response = client.post(url, {"rating": 5, "text": "Lorem Ipsum.", "chips": ["speed", "accuracy", "swearing"]})
+
+    # Then
+    assert 100 <= response.status_code <= 299
+    rating = ChatMessageRating.objects.get(pk=chat_message.pk)
+    assert rating.rating == 5
+    assert rating.text == "Lorem Ipsum."
+    assert {c.text for c in rating.chatmessageratingchip_set.all()} == {"speed", "accuracy", "swearing"}
+
+
+@pytest.mark.django_db()
+def test_post_updated_rating(alice: User, chat_message: ChatMessage, client: Client):
+    # Given
+    client.force_login(alice)
+    chat_message_rating = ChatMessageRating(chat_message=chat_message, rating=3, text="Ipsum Lorem.")
+    chat_message_rating.save()
+    ChatMessageRatingChip(rating_id=chat_message_rating.pk, text="speed").save()
+    ChatMessageRatingChip(rating_id=chat_message_rating.pk, text="accuracy").save()
+    ChatMessageRatingChip(rating_id=chat_message_rating.pk, text="blasphemy").save()
+
+    # When
+    url = reverse("ratings", kwargs={"message_id": chat_message.id})
+    response = client.post(url, {"rating": 5, "text": "Lorem Ipsum.", "chips": ["speed", "accuracy", "swearing"]})
+
+    # Then
+    assert 100 <= response.status_code <= 299
+    rating = ChatMessageRating.objects.get(pk=chat_message.pk)
+    assert rating.rating == 5
+    assert rating.text == "Lorem Ipsum."
+    assert {c.text for c in rating.chatmessageratingchip_set.all()} == {"speed", "accuracy", "swearing"}
 
 
 @pytest.mark.django_db()
