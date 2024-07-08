@@ -11,7 +11,7 @@ WORKDIR /app/
 ADD redbox-core/ /app/redbox-core
 ADD README.md /app
 ADD pyproject.toml poetry.lock ./
-RUN --mount=type=cache,target=$POETRY_CACHE_DIR poetry install --no-root --no-ansi --with worker --without dev
+RUN --mount=type=cache,target=$POETRY_CACHE_DIR poetry install --no-root --no-ansi --with worker,api --without ai,dev
 
 FROM python:3.11-slim-buster as runtime
 RUN apt update && apt-get install -y \

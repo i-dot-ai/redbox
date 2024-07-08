@@ -35,7 +35,6 @@ locals {
     "FROM_EMAIL" : var.from_email,
     "GOVUK_NOTIFY_PLAIN_EMAIL_TEMPLATE_ID" : var.govuk_notify_plain_email_template_id,
     "EMAIL_BACKEND_TYPE" : "GOVUKNOTIFY",
-    "USE_STREAMING" : true,
     "DJANGO_LOG_LEVEL" : "DEBUG",
     "COMPRESSION_ENABLED" : true,
     "CONTACT_EMAIL" : var.contact_email,
