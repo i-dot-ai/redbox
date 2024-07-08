@@ -64,6 +64,7 @@ redbox-copilot/
 │  ├── src/
 │  │  └── app.py
 │  ├── tests/
+│  ├── pyproject.toml
 │  └── Dockerfile
 ├── core-api
 │  ├── src/
@@ -73,6 +74,7 @@ redbox-copilot/
 │  └── Dockerfile
 ├── redbox-core/
 │  ├── redbox
+│  │  ├── loader/
 │  │  ├── models/
 │  │  └── storage/
 │  ├── tests/
