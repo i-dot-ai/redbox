@@ -43,4 +43,4 @@ ADD worker/ /app/worker
 ADD worker/health.sh /app/
 RUN chmod +x /app/health.sh
 
-CMD ["faststream", "run", "worker.src.app:app", "--workers", "1"]
+CMD ["faststream", "run", "worker.app:app", "--workers", "1"]

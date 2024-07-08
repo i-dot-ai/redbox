@@ -8,7 +8,7 @@ from langchain_core.embeddings import Embeddings
 from langchain_core.embeddings.fake import FakeEmbeddings
 
 from redbox.models import File
-from worker.src.app import env
+from worker.app import env
 
 
 @pytest.fixture(scope="session")
