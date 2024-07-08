@@ -1,8 +1,14 @@
+[tool.ruff]
+line-length = 120
+target-version = 'py311'
+
+
 [tool.poetry]
 name = "core-api"
-version = "0.1.0"
-description = ""
-authors = ["George Burton <g.e.c.cburton@gmail.com>"]
+version = "0.4.0"
+description = "RAG application that uses GenAI to chat with and summarise civil service documents"
+authors = ["i.AI <i-dot-ai-enquiries@cabinetoffice.gov.uk>"]
+license = "MIT"
 readme = "../README.md"
 
 [tool.poetry.dependencies]
