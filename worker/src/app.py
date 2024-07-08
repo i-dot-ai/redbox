@@ -13,10 +13,10 @@ from langchain_core.documents.base import Document
 from langchain_core.runnables import RunnableLambda, chain
 from langchain_core.vectorstores import VectorStore
 from langchain_elasticsearch.vectorstores import ElasticsearchStore
-from langchain_openai.embeddings import AzureOpenAIEmbeddings
 
 from redbox.models import File, ProcessingStatusEnum, Settings
 from redbox.storage.elasticsearch import ElasticsearchStorageHandler
+from redbox.embeddings import get_embeddings
 from worker.src.loader import UnstructuredDocumentLoader
 
 if TYPE_CHECKING:
@@ -36,22 +36,10 @@ broker = RedisBroker(url=env.redis_url)
 publisher = broker.publisher(list=env.embed_queue_name)
 
 
-def get_embeddings():
-    return AzureOpenAIEmbeddings(
-        azure_endpoint=env.azure_openai_endpoint,
-        api_version=env.azure_api_version_embeddings,
-        model=env.azure_embedding_model,
-        max_retries=env.embedding_max_retries,
-        retry_min_seconds=env.embedding_retry_min_seconds,
-        retry_max_seconds=env.embedding_retry_max_seconds,
-        chunk_size=env.embedding_max_batch_size,
-    )
-
-
 def get_elasticsearch_store(es: Elasticsearch, es_index_name: str):
     return ElasticsearchStore(
         index_name=es_index_name,
-        embedding=get_embeddings(),
+        embedding=get_embeddings(env),
         es_connection=es,
         query_field="text",
         vector_query_field=env.embedding_document_field_name,

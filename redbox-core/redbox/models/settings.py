@@ -135,8 +135,8 @@ class Settings(BaseSettings):
     ai: AISettings = AISettings()
 
     anthropic_api_key: str | None = None
-    openai_api_key: str | None = None
-    azure_openai_api_key: str | None = None
+    openai_api_key: str = "NotAKey"
+    azure_openai_api_key: str = "NotAKey"
     azure_openai_endpoint: str | None = None
 
     openai_api_version: str = "2023-12-01-preview"
@@ -145,11 +145,18 @@ class Settings(BaseSettings):
     azure_embedding_model: str = "text-embedding-3-large"
     llm_max_tokens: int = 1024
 
+
+    embedding_backend: Literal["azure", "openai"] = "azure"
     embedding_max_retries: int = 10
     embedding_retry_min_seconds: int = 10
     embedding_retry_max_seconds: int = 120
     embedding_max_batch_size: int = 512
     embedding_document_field_name: str = "embedding"
+
+    embedding_openai_base_url: str | None = None
+    embedding_openai_model: str = "text-embedding-ada-002"
+
+    chat_backend: Literal["azure", "openai"] = "azure"
 
     partition_strategy: Literal["auto", "fast", "ocr_only", "hi_res"] = "fast"
     clustering_strategy: Literal["full"] | None = None

@@ -17,6 +17,7 @@ from core_api.src.callbacks import LoggerCallbackHandler
 from core_api.src.retriever import AllElasticsearchRetriever, ParameterisedElasticsearchRetriever
 from redbox.models import Settings
 from redbox.storage import ElasticsearchStorageHandler
+from redbox.embeddings import get_embeddings
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger()
@@ -34,14 +35,7 @@ def get_elasticsearch_client(env: Annotated[Settings, Depends(get_env)]) -> Elas
 
 @lru_cache(1)
 def get_embedding_model(env: Annotated[Settings, Depends(get_env)]) -> Embeddings:
-    return AzureOpenAIEmbeddings(
-        azure_endpoint=env.azure_openai_endpoint,
-        api_version=env.azure_api_version_embeddings,
-        model=env.azure_embedding_model,
-        max_retries=env.embedding_max_retries,
-        retry_min_seconds=4,
-        retry_max_seconds=30,
-    )
+    return get_embeddings(env)
 
 
 @lru_cache(1)
@@ -119,14 +113,14 @@ def get_llm(env: Annotated[Settings, Depends(get_env)]) -> ChatLiteLLM:
     logger_callback = LoggerCallbackHandler(logger=log)
 
     # Create the appropriate LLM, either openai, Azure, anthropic or bedrock
-    if env.openai_api_key is not None:
+    if env.chat_backend == "openai":
         log.info("Creating OpenAI LLM Client")
         llm = ChatLiteLLM(
             streaming=True,
             openai_key=env.openai_api_key,
             callbacks=[logger_callback],
         )
-    elif env.azure_openai_api_key is not None:
+    elif env.chat_backend == "azure":
         log.info("Creating Azure LLM Client")
         log.info("api_base: %s", env.azure_openai_endpoint)
         log.info("api_version: %s", env.openai_api_version)
@@ -145,10 +139,6 @@ def get_llm(env: Annotated[Settings, Depends(get_env)]) -> ChatLiteLLM:
             max_tokens=env.llm_max_tokens,
             callbacks=[logger_callback],
         )
-    elif env.anthropic_api_key is not None:
-        msg = "anthropic LLM not yet implemented"
-        log.exception(msg)
-        raise ValueError(msg)
     else:
         msg = "Unknown LLM model specified or missing"
         log.exception(msg)

@@ -191,6 +191,27 @@ services:
       timeout: 30s
       retries: 24
       start_period: 60s
+  embeddings:
+    image: localai/localai:v2.18.1-aio-cpu #localai/localai:v2.18.1 should allow use of sentencetransformers backend
+    expose:
+      - "8080"
+    ports:
+      - "8080:8080"
+    environment:
+      - MODELS=/aio/cpu/embeddings.yaml #Use defaults embedding model for aio image. Only aio images available in ARM architecture
+      - MINIO_SECRET_KEY=minioadmin
+      - DEBUG=true
+    networks:
+      - redbox-app-network
+    volumes:
+      - ./data/embeddings/models:/models:cached
+      - ./data/embeddings/config:/config
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/readyz"]
+      interval: 1m
+      timeout: 20m
+      retries: 5
 
 networks:
   redbox-app-network:
