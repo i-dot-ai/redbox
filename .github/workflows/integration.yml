@@ -12,23 +12,10 @@ on:
     - cron: '0 6,12,18 * * 1-5'
   # or on-demand
   workflow_dispatch:
-    inputs:
-      COMMIT_HASH:
-        description: 'The SHA of the Git commit to use'
-        required: false
-        type: string
-        default: refs/heads/main
   # or on push to main
   push:
     branches:
       - 'main'
-  workflow_call:
-    inputs:
-      COMMIT_HASH:
-        description: 'The SHA of the Git commit to use'
-        required: false
-        type: string
-        default: refs/heads/main
 
 permissions:
   contents: read
