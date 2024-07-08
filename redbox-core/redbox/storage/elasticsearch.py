@@ -8,12 +8,14 @@ from elasticsearch import Elasticsearch, NotFoundError
 from elasticsearch.helpers import scan
 from pydantic import ValidationError
 
-from redbox.models import Chunk, ChunkStatus, FileStatus, ProcessingStatusEnum
+from redbox.models import Chunk, ChunkStatus, FileStatus, ProcessingStatusEnum, Settings
 from redbox.models.base import PersistableModel
 from redbox.storage.storage_handler import BaseStorageHandler
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger()
+
+env = Settings()
 
 
 def build_chunk_query(parent_file_uuid: UUID, user_uuid: UUID) -> dict:
@@ -262,7 +264,7 @@ def hit_to_chunk(hit: dict[str, Any]) -> Chunk:
             uuid=hit["_id"],
             text=hit["_source"]["text"],
             index=hit["_source"]["metadata"]["index"],
-            embedding=hit["_source"]["embedding"],
+            embedding=hit["_source"][env.embedding_document_field_name],
             created_datetime=hit["_source"]["metadata"]["created_datetime"],
             creator_user_uuid=hit["_source"]["metadata"]["creator_user_uuid"],
             parent_file_uuid=hit["_source"]["metadata"]["parent_file_uuid"],
