@@ -18,7 +18,6 @@ from langchain_elasticsearch import ElasticsearchStore
 from core_api.src.app import app as application
 from core_api.src.retriever import AllElasticsearchRetriever, ParameterisedElasticsearchRetriever
 from core_api.tests.retriever.data import ALL_CHUNKS_RETRIEVER_DOCUMENTS, PARAMETERISED_RETRIEVER_DOCUMENTS
-from redbox.model_db import MODEL_PATH
 from redbox.models import Chunk, File, Settings
 from redbox.storage import ElasticsearchStorageHandler
 
@@ -58,7 +57,7 @@ def app_client() -> TestClient:
     return TestClient(application)
 
 
-@pytest.fixture()
+@pytest.fixture(scope="session")
 def alice() -> UUID:
     return uuid4()
 
@@ -104,9 +103,9 @@ def stored_file_1(elasticsearch_storage_handler, file) -> File:
     return file
 
 
-@pytest.fixture()
-def embedding_model_dim(embedding_model) -> int:
-    return len(embedding_model.embed_query("foo"))
+@pytest.fixture(scope="session")
+def embedding_model_dim() -> int:
+    return 3072  # 3-large default size
 
 
 @pytest.fixture()
@@ -207,9 +206,9 @@ def mock_llm():
     return FakeListLLM(responses=["<<TESTING>>"] * 128)
 
 
-@pytest.fixture()
-def embedding_model(env) -> SentenceTransformerEmbeddings:
-    return SentenceTransformerEmbeddings(model_name=env.embedding_model, cache_folder=MODEL_PATH)
+@pytest.fixture(scope="session")
+def embedding_model(embedding_model_dim) -> SentenceTransformerEmbeddings:
+    return FakeEmbeddings(size=embedding_model_dim)
 
 
 @pytest.fixture()
@@ -234,6 +233,7 @@ def parameterised_retriever(env, es_client, es_index, embedding_model_dim) -> Pa
         index_name=es_index,
         params=default_params,
         embedding_model=FakeEmbeddings(size=embedding_model_dim),
+        embedding_field_name=env.embedding_document_field_name,
     ).configurable_fields(
         params=ConfigurableField(
             id="params", name="Retriever parameters", description="A dictionary of parameters to use for the retriever."
