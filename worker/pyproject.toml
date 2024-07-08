@@ -24,6 +24,7 @@ nltk = "^3.8.1"
 unstructured-inference = "^0.7.36"
 langchain-openai = "^0.1.14"
 unstructured = {version = "<0.14.9", extras = ["all-docs"]}
+pikepdf = "<9.0.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.2.2"
