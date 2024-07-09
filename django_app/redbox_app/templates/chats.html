@@ -1,7 +1,7 @@
 {% set pageTitle = "Chats" %}
 {% extends "base.html" %}
 {% from "macros/govuk-button.html" import govukButton %}
-{% from "macros/chat-macros.html" import message_box %}
+{% from "macros/chat-macros.html" import message_box, route_display %}
 
 
 {% block content %}
@@ -58,6 +58,10 @@
         <h2 class="govuk-visually-hidden">Current chat</h2>
 
         <div class="rb-chat-message__container js-message-container">
+
+          <template id="template-route-display">
+            {{ route_display() }}
+          </template>
 
           {# SSR messages #}
           {% for message in messages %}
