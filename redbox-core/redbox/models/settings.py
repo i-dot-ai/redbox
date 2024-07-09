@@ -6,7 +6,6 @@ from elasticsearch import Elasticsearch
 from pydantic import BaseModel
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger()
 
