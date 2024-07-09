@@ -1,10 +1,10 @@
 {% macro route_display(route=None) %}
   <div class="iai-chat-bubble__route" {% if not route %}hidden{% endif %}>
     <tool-tip class="iai-tooltip">
-      <button class="iai-tooltip__button" type="button">
+      <div class="iai-tooltip__button" tabindex="0">
         <span>Response generated using <strong>@<span class="iai-chat-bubble__route-text">{{ route }}</span></strong> route</span>
         <img src="{{ static('icons/question-mark.svg') }}" alt="" width="14"/>
-      </button>
+      </div>
       <div class="iai-tooltip__content">
         <h3 class="iai-chat-bubble__route-heading">
           <img src="{{ static('icons/question-mark.svg') }}" alt="" width="24"/>
