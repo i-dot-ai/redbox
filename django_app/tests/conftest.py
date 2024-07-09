@@ -103,12 +103,14 @@ def s3_client():
 @pytest.fixture()
 def chat_history(alice: User) -> ChatHistory:
     session_id = uuid.uuid4()
-    return ChatHistory.objects.create(id=session_id, users=alice)
+    return ChatHistory.objects.create(id=session_id, users=alice, name="A chat")
 
 
 @pytest.fixture()
 def chat_message(chat_history: ChatHistory, uploaded_file: File) -> ChatMessage:
-    chat_message = ChatMessage.objects.create(chat_history=chat_history, text="A question?", role=ChatRoleEnum.user)
+    chat_message = ChatMessage.objects.create(
+        chat_history=chat_history, text="A question?", role=ChatRoleEnum.user, route="A route"
+    )
     chat_message.source_files.set([uploaded_file])
     return chat_message
 
