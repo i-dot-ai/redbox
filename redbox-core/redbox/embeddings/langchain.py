@@ -1,11 +1,6 @@
-
-from langchain_core.embeddings import Embeddings
 from langchain_openai.embeddings import AzureOpenAIEmbeddings, OpenAIEmbeddings
 
 from redbox.models.settings import Settings
-
-
-
 
 
 def get_azure_embeddings(env: Settings):
@@ -24,5 +19,5 @@ def get_openai_embeddings(env: Settings):
         openai_api_key=env.openai_api_key,
         openai_api_base=env.embedding_openai_base_url,
         model=env.embedding_openai_model,
-        chunk_size=env.embedding_max_batch_size
+        chunk_size=env.embedding_max_batch_size,
     )

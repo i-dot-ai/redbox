@@ -153,6 +153,7 @@ known-first-party = ["redbox_app", "redbox", "core_api"]
 "*/models.py" = ["RUF012"]
 
 [tool.pytest.ini_options]
+addopts = "--import-mode=importlib"
 env_override_existing_values = 1
 env_files = [
     ".env.test",

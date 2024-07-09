@@ -11,7 +11,6 @@ from langchain_core.embeddings import Embeddings
 from langchain_core.retrievers import BaseRetriever
 from langchain_core.runnables import ConfigurableField
 from langchain_elasticsearch import ApproxRetrievalStrategy, ElasticsearchStore
-from langchain_openai.embeddings import AzureOpenAIEmbeddings
 
 from core_api.callbacks import LoggerCallbackHandler
 from core_api.retriever import AllElasticsearchRetriever, ParameterisedElasticsearchRetriever
@@ -143,6 +142,7 @@ def get_llm(env: Annotated[Settings, Depends(get_env)]) -> ChatLiteLLM:
 
         llm = ChatLiteLLM(
             model=env.azure_openai_model,
+            azure_api_key=env.azure_openai_api_key,
             streaming=True,
             api_base=env.azure_openai_endpoint,
             max_tokens=env.llm_max_tokens,

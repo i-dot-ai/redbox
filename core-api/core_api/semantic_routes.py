@@ -161,7 +161,7 @@ def get_semantic_routing_encoder(env: Annotated[Settings, Depends(get_env)]):
         return OpenAIEncoder(
             openai_base_url=env.embedding_openai_base_url,
             openai_api_key=env.openai_api_key,
-            name=env.embedding_openai_model
+            name=env.embedding_openai_model,
         )
 
 

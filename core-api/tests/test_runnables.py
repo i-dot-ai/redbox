@@ -10,7 +10,7 @@ from redbox.models.errors import AIError
 
 @pytest.fixture(scope="module", autouse=True)
 def mock_embeddings(session_mocker, embedding_model):
-    session_mocker.patch("core_api.src.dependencies.get_embedding_model", return_value=embedding_model)
+    session_mocker.patch("core_api.dependencies.get_embedding_model", return_value=embedding_model)
     return embedding_model
 
 

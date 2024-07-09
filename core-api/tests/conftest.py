@@ -220,11 +220,7 @@ def all_chunks_retriever(es_client, es_index) -> AllElasticsearchRetriever:
 
 
 @pytest.fixture()
-<<<<<<< HEAD:core_api/tests/conftest.py
-def parameterised_retriever(env, es_client, embedding_model_dim):
-=======
 def parameterised_retriever(env, es_client, es_index, embedding_model_dim) -> ParameterisedElasticsearchRetriever:
->>>>>>> main:core-api/tests/conftest.py
     default_params = {
         "size": env.ai.rag_k,
         "num_candidates": env.ai.rag_num_candidates,

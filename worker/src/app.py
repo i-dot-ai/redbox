@@ -13,11 +13,10 @@ from langchain_core.documents.base import Document
 from langchain_core.runnables import RunnableLambda, chain
 from langchain_core.vectorstores import VectorStore
 from langchain_elasticsearch.vectorstores import ElasticsearchStore
-from langchain_openai.embeddings import AzureOpenAIEmbeddings
 
+from redbox.embeddings import get_embeddings
 from redbox.models import File, ProcessingStatusEnum, Settings
 from redbox.storage.elasticsearch import ElasticsearchStorageHandler
-from redbox.embeddings import get_embeddings
 from worker.src.loader import UnstructuredDocumentLoader
 
 if TYPE_CHECKING:

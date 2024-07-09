@@ -1,4 +1,3 @@
-
 from langchain_core.embeddings import Embeddings
 
 from .langchain import get_azure_embeddings, get_openai_embeddings
