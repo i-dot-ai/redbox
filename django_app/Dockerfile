@@ -5,8 +5,12 @@ FROM node:18 AS npm-packages
 WORKDIR /src
 
 COPY django_app/frontend/package.json .
-
 RUN npm install
+
+COPY django_app/frontend/staticfiles.json django_app/frontend/.parcelrc django_app/frontend/*.js ./
+COPY django_app/frontend/src/ ./src/
+COPY django_app/frontend/images/ ./images/
+RUN npx parcel build
 
 
 # poetry
@@ -37,6 +41,7 @@ WORKDIR /usr/src/app
 COPY django_app/ .
 
 COPY --from=npm-packages /src/node_modules/ frontend/node_modules/
+COPY --from=npm-packages /src/dist/ frontend/dist/
 COPY --from=poetry-packages /src/venv ./venv
 
 ENV DJANGO_SETTINGS_MODULE='redbox_app.settings'
