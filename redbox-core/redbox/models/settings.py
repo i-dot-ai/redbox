@@ -5,6 +5,11 @@ import boto3
 from elasticsearch import Elasticsearch
 from pydantic import BaseModel
 from pydantic_settings import BaseSettings, SettingsConfigDict
+import environ
+
+load_dotenv()
+
+env = environ.Env()
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger()
@@ -110,12 +115,12 @@ class ElasticLocalSettings(BaseModel):
 
     model_config = SettingsConfigDict(frozen=True)
 
-    elastic_host: str | None = None
+    elastic_host: str = env.str("ELASTIC_HOST")
     elastic_port: int = 9200
     elastic_scheme: str = "http"
     elastic_user: str = "elastic"
     elastic_version: str = "8.14.0"
-    elastic_password: str | None = None
+    elastic_password: str = env.str("ELASTIC__PASSWORD")
     elastic_subscription_level: str = "basic"
 
 
