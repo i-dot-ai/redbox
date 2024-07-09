@@ -4,6 +4,7 @@ import socket
 from pathlib import Path
 
 import environ
+from django.urls import reverse_lazy
 import sentry_sdk
 from dotenv import load_dotenv
 from import_export.formats.base_formats import CSV
@@ -19,6 +20,8 @@ env = environ.Env()
 SECRET_KEY = env.str("DJANGO_SECRET_KEY")
 ENVIRONMENT = Environment[env.str("ENVIRONMENT").upper()]
 WEBSOCKET_SCHEME = "ws" if ENVIRONMENT.is_test else "wss"
+LOGIN_METHOD = env.str("LOGIN_METHOD")
+
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env.bool("DEBUG")
@@ -64,6 +67,9 @@ INSTALLED_APPS = [
     "magic_link",
     "import_export",
 ]
+
+if LOGIN_METHOD == "sso":
+    INSTALLED_APPS.append("authbroker_client")
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -117,6 +123,9 @@ AUTHENTICATION_BACKENDS = [
     "django.contrib.auth.backends.ModelBackend",
 ]
 
+if LOGIN_METHOD == "sso":
+    AUTHENTICATION_BACKENDS.append("authbroker_client.backends.AuthbrokerBackend")
+
 AUTH_PASSWORD_VALIDATORS = [
     {
         "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
@@ -144,8 +153,8 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 SITE_ID = 1
 AUTH_USER_MODEL = "redbox_core.User"
 ACCOUNT_EMAIL_VERIFICATION = "none"
-LOGIN_REDIRECT_URL = "homepage"
-LOGIN_URL = "sign-in"
+# LOGIN_REDIRECT_URL = "homepage"
+# LOGIN_URL = "sign-in"
 
 # CSP settings https://content-security-policy.com/
 # https://django-csp.readthedocs.io/
@@ -232,7 +241,7 @@ if ENVIRONMENT.is_test:
     ALLOWED_HOSTS = ENVIRONMENT.hosts
 else:
     LOCALHOST = socket.gethostbyname(socket.gethostname())
-    ALLOWED_HOSTS = [LOCALHOST, *ENVIRONMENT.hosts]
+    ALLOWED_HOSTS = [LOCALHOST, *ENVIRONMENT.hosts,"redbox-sandbox.uktrade.digital","dbt-default-alb-1550180991.eu-west-2.elb.amazonaws.com"]
 
 if not ENVIRONMENT.is_local:
     SENTRY_DSN = env.str("SENTRY_DSN", None)
@@ -331,3 +340,16 @@ CHAT_TITLE_LENGTH = 30
 FILE_EXPIRY_IN_SECONDS = env.int("FILE_EXPIRY_IN_DAYS") * 24 * 60 * 60
 SUPERUSER_EMAIL = env.str("SUPERUSER_EMAIL", None)
 MAX_SECURITY_CLASSIFICATION = Classification[env.str("MAX_SECURITY_CLASSIFICATION")]
+
+if LOGIN_METHOD == "sso":
+    AUTHBROKER_URL = env.str("AUTHBROKER_URL")
+    AUTHBROKER_CLIENT_ID = env.str("AUTHBROKER_CLIENT_ID")
+    AUTHBROKER_CLIENT_SECRET = env.str("AUTHBROKER_CLIENT_SECRET")
+    LOGIN_URL = reverse_lazy("authbroker_client:login")
+    LOGIN_REDIRECT_URL = reverse_lazy("homepage")
+elif LOGIN_METHOD == "magic_link":
+    LOGIN_REDIRECT_URL = "homepage"
+    LOGIN_URL = "sign-in"
+else:
+    LOGIN_REDIRECT_URL = "homepage"
+    LOGIN_URL = "sign-in"

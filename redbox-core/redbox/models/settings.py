@@ -110,13 +110,13 @@ class ElasticLocalSettings(BaseModel):
 
     model_config = SettingsConfigDict(frozen=True)
 
-    host: str = "elasticsearch"
-    port: int = 9200
-    scheme: str = "http"
-    user: str = "elastic"
-    version: str = "8.11.0"
-    password: str = "redboxpass"
-    subscription_level: str = "basic"
+    elastic_host: str | None = None
+    elastic_port: int = 9200
+    elastic_scheme: str = "http"
+    elastic_user: str = "elastic"
+    elastic_version: str = "8.14.0"
+    elastic_password: str | None = None
+    elastic_subscription_level: str = "basic"
 
 
 class ElasticCloudSettings(BaseModel):
@@ -150,7 +150,7 @@ class Settings(BaseSettings):
     partition_strategy: Literal["auto", "fast", "ocr_only", "hi_res"] = "fast"
     clustering_strategy: Literal["full"] | None = None
 
-    elastic: ElasticCloudSettings | ElasticLocalSettings = ElasticLocalSettings()
+    elastic: ElasticLocalSettings = ElasticLocalSettings()
     elastic_root_index: str = "redbox-data"
 
     kibana_system_password: str = "redboxpass"
@@ -192,12 +192,12 @@ class Settings(BaseSettings):
             return Elasticsearch(
                 hosts=[
                     {
-                        "host": self.elastic.host,
-                        "port": self.elastic.port,
-                        "scheme": self.elastic.scheme,
+                        "host": self.elastic.elastic_host,
+                        "port": self.elastic.elastic_port,
+                        "scheme": self.elastic.elastic_scheme,
                     }
                 ],
-                basic_auth=(self.elastic.user, self.elastic.password),
+                basic_auth=(self.elastic.elastic_user, self.elastic.elastic_password),
             )
 
         log.info("Connecting to Elastic Cloud Cluster")
