@@ -107,7 +107,6 @@ jobs:
         uses: slackapi/slack-github-action@v1.24.0
         if: ${{ failure() }}
         with:
-          channel-id: 'C05D67P6M34'
           payload: |
             {
               "text": "Failed to deploy to ${{ inputs.environment }}",
@@ -122,7 +121,7 @@ jobs:
               ]
             }
         env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_NOTIFICATIONS_TOKEN }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
           SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
 
       - name: notify slack pass
@@ -130,7 +129,6 @@ jobs:
         uses: slackapi/slack-github-action@v1.24.0
         if: ${{ success() }}
         with:
-          channel-id: 'C05D67P6M34'
           payload: |
             {
               "text": "Deployment to ${{ inputs.environment }} succeeded :airplane:",
@@ -145,7 +143,7 @@ jobs:
               ]
             }
         env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_NOTIFICATIONS_TOKEN }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
           SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
 
   stop-runner:
