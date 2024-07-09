@@ -110,12 +110,12 @@ class ElasticLocalSettings(BaseModel):
 
     model_config = SettingsConfigDict(frozen=True)
 
-    host: str = "elasticsearch"
+    host: str = "elasticsearch.internal"
     port: int = 9200
     scheme: str = "http"
     user: str = "elastic"
-    version: str = "8.11.0"
-    password: str = "redboxpass"
+    version: str = "8.14.0"
+    password: str = "IngKKFLDMtGRF5Xb1L2Z"
     subscription_level: str = "basic"
 
 
@@ -150,7 +150,7 @@ class Settings(BaseSettings):
     partition_strategy: Literal["auto", "fast", "ocr_only", "hi_res"] = "fast"
     clustering_strategy: Literal["full"] | None = None
 
-    elastic: ElasticCloudSettings | ElasticLocalSettings = ElasticLocalSettings()
+    elastic: ElasticLocalSettings = ElasticLocalSettings()
     elastic_root_index: str = "redbox-data"
 
     kibana_system_password: str = "redboxpass"

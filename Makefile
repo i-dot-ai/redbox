@@ -107,15 +107,17 @@ docs-build:  ## Build documentation
 	poetry run mkdocs build
 
 # Docker
+AWS_ACCOUNT_ID=REPLACE_ME
+
 AWS_REGION=eu-west-2
-APP_NAME=redbox
+APP_NAME=dbt
 ECR_URL=$(AWS_ACCOUNT_ID).dkr.ecr.$(AWS_REGION).amazonaws.com
 ECR_REPO_URL=$(ECR_URL)/$(ECR_REPO_NAME)
-IMAGE=$(ECR_REPO_URL):$(IMAGE_TAG)
+IMAGE=latest
 
 ECR_REPO_NAME=$(APP_NAME)
-PREV_IMAGE_TAG=$$(git rev-parse HEAD~1)
-IMAGE_TAG=$$(git rev-parse HEAD)
+PREV_IMAGE_TAG=latest
+IMAGE_TAG=latest
 
 tf_build_args=-var "image_tag=$(IMAGE_TAG)"
 DOCKER_SERVICES=$$(docker compose config --services | grep -v mlflow)
@@ -152,7 +154,7 @@ docker_build: ## Build the docker container
 			PREV_IMAGE="$(ECR_REPO_URL)-$$service:$(PREV_IMAGE_TAG)"; \
 			echo "Pulling previous image: $$PREV_IMAGE"; \
 			docker pull $$PREV_IMAGE; \
-			docker compose build $$service; \
+			DOCKER_DEFAULT_PLATFORM=linux/amd64 docker compose build $$service; \
 		else \
 			echo "Skipping $$service uses default image"; \
 		fi; \
