@@ -8114,7 +8114,7 @@ body:has(.iai-environment-warning) main {
 .iai-top-nav__link-item {
   border-bottom: 1px solid var(--iai-colour-text-primary);
   display: block;
-  padding: 0.5rem 0;
+  padding: 0.5rem 0.25rem;
 }
 
 .iai-top-nav__link-item:last-child {
@@ -8433,7 +8433,15 @@ body:has(.iai-environment-warning) main {
 .iai-chat-bubble__route {
   font-size: 0.625rem;
   line-height: 0.825rem;
-  display: none;
+  display: flex;
+}
+
+.iai-chat-bubble__route dt {
+  font-weight: bold;
+}
+
+.iai-chat-bubble__route dd {
+  margin-left: 0.25rem;
 }
 
 .iai-chat-bubble__sources-heading, .iai-chat-bubbles__sources-link {
@@ -8937,11 +8945,14 @@ td:has(button[aria-expanded=true]) + .iai-themes-list__detail {
   box-shadow: 0px 4px 4px 0px rgba(164, 174, 183, 0.25), 12px 12px 16px 0px rgba(164, 174, 183, 0.15), -4px -4px 14px 0px #FFF;
   color: var(--iai-colour-text-primary);
   overflow: hidden;
-  padding: 0.5rem 2rem 0.5rem 4rem;
+  margin-bottom: 2rem;
+  padding: 0.5rem 1rem 0.5rem 4rem;
 }
 
 .govuk-notification-banner__header {
   background-color: transparent;
+  display: flex;
+  justify-content: space-between;
   margin-top: 0.5rem;
   padding: 0;
 }
@@ -8961,12 +8972,27 @@ td:has(button[aria-expanded=true]) + .iai-themes-list__detail {
   content: url("icons/State=warning.svg");
 }
 
+.govuk-notification-banner--error .govuk-notification-banner__title::before {
+  content: url("icons/State=error.svg");
+}
+
 .govuk-notification-banner__title {
   font-size: 1rem;
   line-height: 1.5rem;
   color: inherit;
   font-weight: 700;
   position: relative;
+}
+
+.govuk-notification-banner__close-btn {
+  background-color: transparent;
+  border: 0;
+  color: var(--iai-colour-text-primary);
+  cursor: pointer;
+}
+
+.govuk-notification-banner__close-btn:hover {
+  color: var(--iai-product-colour, var(--iai-colour-brand));
 }
 
 .govuk-notification-banner__content {

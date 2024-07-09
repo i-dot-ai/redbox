@@ -1,0 +1,167 @@
+on:
+  workflow_call:
+    inputs:
+      environment:
+        required: true
+        type: string
+      core_infra_repo_reference:
+        required: true
+        type: string
+      config_repo_reference: 
+        required: true
+        type: string
+      commit_hash:
+        required: true
+        type: string
+
+env: 
+  author_name: ${{ github.event.release.user.login || github.event.pull_request.user.login || github.actor }}
+
+jobs:
+  set-vars:
+    runs-on: ubuntu-latest
+    outputs:
+      app-name: ${{ steps.export.outputs.app-name }}
+      ec2-instance-type: ${{ steps.export.outputs.ec2-instance-type }}
+      version: ${{ steps.export.outputs.version }}
+      runner-size: ${{ steps.export.outputs.runner-size }}
+      infra-config-repo: ${{ steps.export.outputs.infra-config-repo }}
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        ref: ${{ inputs.commit_hash }}
+        path: main
+
+    - id: export
+      run: |
+        cd main
+        . ./.github/.github.env
+        echo "ec2-instance-type=${EC2_INSTANCE_TYPE}" >> $GITHUB_OUTPUT
+        echo "app-name=${APP_NAME}" >> $GITHUB_OUTPUT
+        echo "version=${VERSION}" >> $GITHUB_OUTPUT
+        echo "runner-size=${RUNNER_SIZE}" >> $GITHUB_OUTPUT
+        echo "infra-config-repo=${INFRA_CONFIG_REPO}" >> $GITHUB_OUTPUT
+
+  start-runner:
+    uses: i-dot-ai/i-dot-ai-core-github-actions/.github/workflows/start-runner.yml@main
+    needs: set-vars
+    with:
+      EC2_INSTANCE_TYPE: ${{ needs.set-vars.outputs.ec2-instance-type }}
+      RUNNER_SIZE: ${{ needs.set-vars.outputs.runner-size }}
+      ENVIRONMENT: ${{ inputs.environment }}
+    secrets:
+      AWS_GITHUBRUNNER_USER_ACCESS_KEY: ${{ secrets.AWS_GITHUBRUNNER_USER_ACCESS_KEY }}
+      AWS_GITHUBRUNNER_USER_SECRET_ID: ${{ secrets.AWS_GITHUBRUNNER_USER_SECRET_ID }}
+      AWS_GITHUBRUNNER_PAT: ${{ secrets.AWS_GITHUBRUNNER_PAT }}
+      AWS_REGION: ${{ secrets.AWS_REGION }}
+
+  build-image:
+    needs:
+      - set-vars
+      - start-runner
+    uses: i-dot-ai/i-dot-ai-core-github-actions/.github/workflows/build-docker.yml@main
+    with:
+      APP_NAME: ${{ needs.set-vars.outputs.app-name }}
+      RUNNER_LABEL: ${{ needs.start-runner.outputs.label }}
+      INFRASTRUCTURE_FOLDER: "infrastructure/aws"
+      COMMIT_HASH: ${{ inputs.commit_hash }}
+    secrets:
+      AWS_GITHUBRUNNER_PAT: ${{ secrets.AWS_GITHUBRUNNER_PAT}}
+      AWS_GITHUBRUNNER_PAT_USER: ${{ secrets.AWS_GITHUBRUNNER_PAT_USER }}
+      AWS_REGION: ${{ secrets.AWS_REGION }}
+      AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
+
+  release-terraform:
+    needs:
+      - set-vars
+      - start-runner
+      - build-image
+    uses: i-dot-ai/i-dot-ai-core-github-actions/.github/workflows/apply-terraform.yml@main
+    with:
+      APP_NAME: ${{ needs.set-vars.outputs.app-name }}
+      RUNNER_LABEL: ${{ needs.start-runner.outputs.label }}
+      INFRASTRUCTURE_FOLDER: "infrastructure/aws"
+      PUBLIC_INFRA_DEPLOYMENT: true
+      ENVIRONMENT: ${{ inputs.environment }}
+      INFRA_CONFIG_REPO: ${{ needs.set-vars.outputs.infra-config-repo }}
+      CORE_INFRA_REF: ${{ inputs.core_infra_repo_reference }}
+      INFRA_CONFIG_REF: ${{ inputs.config_repo_reference }}
+      IMAGE_TAG: ${{ inputs.commit_hash }}
+    secrets:
+      AWS_GITHUBRUNNER_PAT: ${{ secrets.AWS_GITHUBRUNNER_PAT}}
+      AWS_GITHUBRUNNER_PAT_USER: ${{ secrets.AWS_GITHUBRUNNER_PAT_USER }}
+      AWS_REGION: ${{ secrets.AWS_REGION }}
+      AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
+
+  notify-slack:
+    needs:
+      - set-vars
+      - start-runner
+      - build-image
+      - release-terraform
+    runs-on: ${{ needs.start-runner.outputs.label }}
+    steps:
+      - name: notify slack failure
+        id: slack-failure
+        uses: slackapi/slack-github-action@v1.24.0
+        if: ${{ failure() }}
+        with:
+          channel-id: 'C05D67P6M34'
+          payload: |
+            {
+              "text": "Failed to deploy to ${{ inputs.environment }}",
+              "blocks": [
+                {
+                  "type": "header",
+                  "text": {
+                    "type": "plain_text",
+                    "text": "User `${{ env.author_name }}` failed to deploy ${{ inputs.commit_hash }} to ${{ inputs.environment }} :aaaaaaaaaa:"
+                  }
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_NOTIFICATIONS_TOKEN }}
+          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
+
+      - name: notify slack pass
+        id: slack-pass
+        uses: slackapi/slack-github-action@v1.24.0
+        if: ${{ success() }}
+        with:
+          channel-id: 'C05D67P6M34'
+          payload: |
+            {
+              "text": "Deployment to ${{ inputs.environment }} succeeded :airplane:",
+              "blocks": [
+                {
+                  "type": "header",
+                  "text": {
+                    "type": "plain_text",
+                    "text": "User `${{ env.author_name }}` deployed ${{ inputs.commit_hash }} to ${{ inputs.environment }} :hype-elmo:"
+                  }
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_NOTIFICATIONS_TOKEN }}
+          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
+
+  stop-runner:
+    uses: i-dot-ai/i-dot-ai-core-github-actions/.github/workflows/stop-runner.yml@main
+    if: needs.start-runner.outputs.use-persisted == 0 && always()
+    needs:
+      - set-vars
+      - start-runner
+      - build-image
+      - release-terraform
+      - notify-slack
+    with:
+      RUNNER_LABEL: ${{ needs.start-runner.outputs.label }}
+      EC2_INSTANCE_ID: ${{ needs.start-runner.outputs.ec2-instance-id }}
+    secrets:
+      AWS_GITHUBRUNNER_USER_ACCESS_KEY: ${{ secrets.AWS_GITHUBRUNNER_USER_ACCESS_KEY }}
+      AWS_GITHUBRUNNER_USER_SECRET_ID: ${{ secrets.AWS_GITHUBRUNNER_USER_SECRET_ID }}
+      AWS_GITHUBRUNNER_PAT: ${{ secrets.AWS_GITHUBRUNNER_PAT}}
+      AWS_REGION: ${{ secrets.AWS_REGION }}

@@ -2,7 +2,6 @@
 {% extends "base.html" %}
 {% from "macros/govuk-button.html" import govukButton %}
 {% from "macros/chat-macros.html" import message_box %}
-{% from "macros/govuk-notification-banner.html" import govukNotificationBanner %}
 
 
 {% block content %}
@@ -67,7 +66,7 @@
               role = message.role,
               route = message.route,
               text = message.text,
-              citations = message.citation_set.distinct().order_by("file"),
+              source_files = message.source_files.all(),
               show_route = show_route
             ) }}
           {% endfor %}
@@ -108,7 +107,7 @@
               </message-input>
             </div>
 
-            <button type="submit" class="govuk-button" {% if not streaming.in_use %}data-prevent-double-click="true"{% endif %} data-module="govuk-button">
+            <button type="submit" class="govuk-button" data-module="govuk-button">
               Send
             </button>
 
@@ -164,18 +163,14 @@
   <script src="{{ static('js/chats/feedback.js') }}"></script>
   <script src="{{ static('js/chats/message-input.js') }}"></script>
 {% endif %}
-
-
-{% if streaming.in_use %}
-  {% if COMPRESSION_ENABLED %}
-    {% compress js %}
-      <script src="{{ static('js/chats/streaming.js') }}"></script>
-    {% endcompress %}
-  {% else %}
+  
+  
+{% if COMPRESSION_ENABLED %}
+  {% compress js %}
     <script src="{{ static('js/chats/streaming.js') }}"></script>
-  {% endif %}
+  {% endcompress %}
 {% else %}
-  <script src="{{ static('js/chats/fallback.js') }}"></script>
+  <script src="{{ static('js/chats/streaming.js') }}"></script>
 {% endif %}
 
 {% endblock %}

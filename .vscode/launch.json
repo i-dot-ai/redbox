@@ -10,7 +10,7 @@
             "request": "launch",
             "module": "uvicorn",
             "args": [
-                "core_api.src.app:app",
+                "core_api.app:app",
                 "--reload",
                 "--port", "5002"
             ],

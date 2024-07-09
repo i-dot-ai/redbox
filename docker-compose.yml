@@ -83,7 +83,7 @@ services:
     image: redbox-core-api:latest
     build:
       context: .
-      dockerfile: core_api/Dockerfile
+      dockerfile: core-api/Dockerfile
       args:
         - EMBEDDING_MODEL=${EMBEDDING_MODEL:-}
     ports:

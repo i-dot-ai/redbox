@@ -34,17 +34,23 @@ rebuild: stop prune ## Rebuild all images
 
 .PHONY: test-core-api
 test-core-api: ## Test core-api
-	poetry install --no-root --no-ansi --with api,dev,ai --without worker,docs
-	poetry run pytest core_api/tests --cov=core_api/src -v --cov-report=term-missing --cov-fail-under=75
+	cp .env.test core-api/.env
+	cd core-api && poetry install --with dev && poetry run python -m pytest -m "not ai" --cov=core_api -v --cov-report=term-missing --cov-fail-under=80
+
+.PHONY: test-ai
+test-ai: ## Test code with live LLM
+	cp .env.test core-api/.env
+	cd core-api && poetry install --with dev && poetry run python -m pytest -m "ai" --cov=core_api -v --cov-report=term-missing --cov-fail-under=80
 
 .PHONY: test-redbox
 test-redbox: ## Test redbox
 	cp .env.test redbox-core/.env
 	cd redbox-core && poetry install && poetry run pytest --cov=redbox -v --cov-report=term-missing --cov-fail-under=80
 
+
 .PHONY: test-worker
 test-worker: ## Test worker
-	poetry install --no-root --no-ansi --with worker,dev --without ai,api,docs
+	poetry install --no-root --no-ansi --with worker,dev --without docs
 	poetry run pytest worker/tests --cov=worker -v --cov-report=term-missing --cov-fail-under=40
 
 .PHONY: test-django
@@ -57,7 +63,7 @@ test-integration: rebuild run test-integration-without-build ## Run all integrat
 
 .PHONY: test-integration-without-build
 test-integration-without-build : ## Run all integration tests without rebuilding
-	poetry install --no-root --no-ansi --with dev --without ai,api,worker,docs
+	poetry install --no-root --no-ansi --with dev --without worker,docs
 	poetry run pytest tests/
 
 .PHONY: collect-static
@@ -129,12 +135,9 @@ AUTO_APPLY_RESOURCES = module.django-app.aws_ecs_task_definition.aws-ecs-task \
                        module.worker.aws_ecs_task_definition.aws-ecs-task \
                        module.worker.aws_ecs_service.aws-ecs-service \
                        module.worker.data.aws_ecs_task_definition.main \
-                       module.waf.aws_wafv2_ip_set.london \
                        aws_secretsmanager_secret.django-app-secret \
                        aws_secretsmanager_secret.worker-secret \
-                       aws_secretsmanager_secret.core-api-secret \
-					   module.load_balancer.aws_security_group_rule.load_balancer_http_whitelist \
-					   module.load_balancer.aws_security_group_rule.load_balancer_https_whitelist
+                       aws_secretsmanager_secret.core-api-secret
 
 target_modules = $(foreach resource,$(AUTO_APPLY_RESOURCES),-target $(resource))
 
@@ -181,10 +184,9 @@ docker_push:
 .PHONY: docker_update_tag
 docker_update_tag:
 	for service in django-app core-api worker; do \
-		MANIFEST=$$(aws ecr batch-get-image --repository-name $(ECR_REPO_NAME)-$$service --image-ids imageTag=$(IMAGE_TAG) --query 'images[].imageManifest' --output text) && \
-		aws ecr put-image --repository-name $(ECR_REPO_NAME)-$$service--image-tag $(tag) --image-manifest "$$MANIFEST"
+		MANIFEST=$$(aws ecr batch-get-image --repository-name $(ECR_REPO_NAME)-$$service --image-ids imageTag=$(IMAGE_TAG) --query 'images[].imageManifest' --output text) ; \
+		aws ecr put-image --repository-name $(ECR_REPO_NAME)-$$service --image-tag $(tag) --image-manifest "$$MANIFEST" ; \
 	done
-
 
 # Ouputs the value that you're after - useful to get a value i.e. IMAGE_TAG out of the Makefile
 .PHONY: docker_echo
@@ -250,7 +252,7 @@ tf_destroy: ## Destroy terraform
 .PHONY: tf_import
 tf_import:
 	make tf_set_workspace && \
-	terraform -chdir=./infrastructure/aws/$(instance) import ${tf_build_args} -var-file=$(CONFIG_DIR)/${env}-input-params.tfvars ${name} ${id} 
+	terraform -chdir=./infrastructure/aws/$(instance) import ${tf_build_args} -var-file=$(CONFIG_DIR)/${env}-input-params.tfvars ${name} ${id}
 
 # Release commands to deploy your app to AWS
 .PHONY: release

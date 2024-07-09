@@ -1,3 +1,5 @@
+[![Integration Tests](https://github.com/i-dot-ai/redbox-copilot/actions/workflows/integration.yml/badge.svg?branch=main)](https://github.com/i-dot-ai/redbox-copilot/actions/workflows/integration.yml?query=branch%3Amain)
+
 # 📮 Redbox
 
 > [!IMPORTANT]
@@ -67,6 +69,7 @@ redbox-copilot/
 │  ├── src/
 │  │  └── app.py
 │  ├── tests/
+│  ├── pyproject.toml
 │  └── Dockerfile
 ├── redbox-core/
 │  ├── redbox
