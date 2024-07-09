@@ -110,13 +110,13 @@ class ElasticLocalSettings(BaseModel):
 
     model_config = SettingsConfigDict(frozen=True)
 
-    host: str = "elasticsearch.internal"
-    port: int = 9200
-    scheme: str = "http"
-    user: str = "elastic"
-    version: str = "8.14.0"
-    password: str = "IngKKFLDMtGRF5Xb1L2Z"
-    subscription_level: str = "basic"
+    elastic_host: str | None = None
+    elastic_port: int = 9200
+    elastic_scheme: str = "http"
+    elastic_user: str = "elastic"
+    elastic_version: str = "8.14.0"
+    elastic_password: str | None = None
+    elastic_subscription_level: str = "basic"
 
 
 class ElasticCloudSettings(BaseModel):
@@ -192,12 +192,12 @@ class Settings(BaseSettings):
             return Elasticsearch(
                 hosts=[
                     {
-                        "host": self.elastic.host,
-                        "port": self.elastic.port,
-                        "scheme": self.elastic.scheme,
+                        "host": self.elastic.elastic_host,
+                        "port": self.elastic.elastic_port,
+                        "scheme": self.elastic.elastic_scheme,
                     }
                 ],
-                basic_auth=(self.elastic.user, self.elastic.password),
+                basic_auth=(self.elastic.elastic_user, self.elastic.elastic_password),
             )
 
         log.info("Connecting to Elastic Cloud Cluster")
