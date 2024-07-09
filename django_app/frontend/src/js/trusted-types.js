@@ -1,6 +1,6 @@
 // @ts-check
 
-/** @type {import ('../node_modules/@types/dompurify/index.d.ts')} */
+/** @type {import ('../../node_modules/@types/dompurify/index.d.ts')} */
 let DOMPurify = window["DOMPurify"];
 
 // Create default policy
