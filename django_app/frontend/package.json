@@ -7,9 +7,6 @@
     "src/js/documents.js",
     "src/js/trusted-types.js",
     "src/js/autosubmit.js",
-    "src/js/libs/dompurify.js",
-    "src/js/libs/govuk-frontend.min.js",
-    "src/js/libs/iai-design-system.js",
     "src/js/chats/feedback.js",
     "src/js/chats/markdown.js",
     "src/js/chats/message-input.js",
@@ -30,7 +27,11 @@
     },
     {
       "distDir": "./dist/js/libs",
-      "staticPath": "./src/js/libs/showdown.min.js"
+      "staticPath": "./src/js/libs"
+    },
+    {
+      "distDir": "./dist/js/libs",
+      "staticPath": "./node_modules/i.ai-design-system/dist/iai-design-system.js"
     }
   ],
   "scripts": {

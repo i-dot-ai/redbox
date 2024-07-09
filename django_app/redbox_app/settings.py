@@ -33,7 +33,7 @@ STATIC_URL = "static/"
 STATIC_ROOT = "staticfiles/"
 STATICFILES_DIRS = [
     Path(BASE_DIR) / "static/",
-    Path(BASE_DIR) / "frontend/",
+    Path(BASE_DIR) / "frontend/dist/",
 ]
 STATICFILES_FINDERS = [
     "compressor.finders.CompressorFinder",
