@@ -5,11 +5,7 @@ import boto3
 from elasticsearch import Elasticsearch
 from pydantic import BaseModel
 from pydantic_settings import BaseSettings, SettingsConfigDict
-import environ
 
-load_dotenv()
-
-env = environ.Env()
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger()
@@ -109,19 +105,18 @@ class AISettings(BaseModel):
     reduce_system_prompt: str = REDUCE_SYSTEM_PROMPT
     reduce_question_prompt: str = REDUCE_QUESTION_PROMPT
 
-
 class ElasticLocalSettings(BaseModel):
     """settings required for a local/ec2 instance of elastic"""
 
     model_config = SettingsConfigDict(frozen=True)
 
-    elastic_host: str = env.str("ELASTIC_HOST")
-    elastic_port: int = 9200
-    elastic_scheme: str = "http"
-    elastic_user: str = "elastic"
-    elastic_version: str = "8.14.0"
-    elastic_password: str = env.str("ELASTIC__PASSWORD")
-    elastic_subscription_level: str = "basic"
+    host: str = "elasticsearch"
+    port: int = 9200
+    scheme: str = "http"
+    user: str = "elastic"
+    version: str = "8.11.0"
+    password: str = "redboxpass"
+    subscription_level: str = "basic"
 
 
 class ElasticCloudSettings(BaseModel):
@@ -194,16 +189,16 @@ class Settings(BaseSettings):
     def elasticsearch_client(self) -> Elasticsearch:
         if isinstance(self.elastic, ElasticLocalSettings):
             log.info("Connecting to self managed Elasticsearch")
-            log.info("Elasticsearch host = %s", self.elastic.elastic_host)
+            log.info("Elasticsearch host = %s", self.elastic.host)
             return Elasticsearch(
                 hosts=[
                     {
-                        "host": self.elastic.elastic_host,
-                        "port": self.elastic.elastic_port,
-                        "scheme": self.elastic.elastic_scheme,
+                        "host": self.elastic.host,
+                        "port": self.elastic.port,
+                        "scheme": self.elastic.scheme,
                     }
                 ],
-                basic_auth=(self.elastic.elastic_user, self.elastic.elastic_password),
+                basic_auth=(self.elastic.user, self.elastic.password),
             )
 
         log.info("Connecting to Elastic Cloud Cluster")
