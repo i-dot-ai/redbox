@@ -97,6 +97,7 @@ class ChatMessage extends HTMLElement {
     );
     const routeClone = document.importNode(routeTemplate.content, true);
     this.querySelector(".iai-chat-bubble__header")?.appendChild(routeClone);
+    this.querySelector(".iai-chat-bubble__route")?.setAttribute("hidden", "");
   }
 
   /**
