@@ -189,7 +189,7 @@ class Settings(BaseSettings):
     def elasticsearch_client(self) -> Elasticsearch:
         if isinstance(self.elastic, ElasticLocalSettings):
             log.info("Connecting to self managed Elasticsearch")
-            log.info("Elasticsearch host = %s", self.elastic.host)
+            log.info("Elasticsearch host = %s", self.elastic.elastic_host)
             return Elasticsearch(
                 hosts=[
                     {
