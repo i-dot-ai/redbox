@@ -7,14 +7,14 @@ on:
       core_infra_repo_reference:
         required: true
         type: string
-      config_repo_reference: 
+      config_repo_reference:
         required: true
         type: string
       commit_hash:
         required: true
         type: string
 
-env: 
+env:
   author_name: ${{ github.event.release.user.login || github.event.pull_request.user.login || github.actor }}
 
 jobs:
