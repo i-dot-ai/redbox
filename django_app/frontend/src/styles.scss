@@ -1,8 +1,6 @@
 $govuk-assets-path: "govuk-assets/";
 $govuk-font-family: sans-serif;
-$redbox-red: #9C0000; /*old:#A50202*/
-
-@import "./node_modules/govuk-frontend/dist/govuk/all";
+$redbox-red: #9c0000; /*old:#A50202*/
 
 body {
   background-color: white;
@@ -19,7 +17,7 @@ body {
 }
 
 .rb-environment-warning {
-  background-color: #FFBF47;
+  background-color: #ffbf47;
   color: black;
   margin-bottom: 0;
 }
@@ -35,7 +33,6 @@ body {
 .rb-button--blue:hover {
   background-color: govuk-colour("dark-blue");
 }
-
 
 /* Home page */
 .govuk-main-wrapper:has(.rb-banner) {
@@ -69,7 +66,6 @@ body {
   color: $redbox-red !important;
   filter: brightness(0.9);
 }
-
 
 /* Documents page */
 .rb-doc-retention {
@@ -115,7 +111,6 @@ body {
   font-size: 0.875rem;
 }
 
-
 /* Chat page */
 .rb-loading-ellipsis {
   font-style: italic;
@@ -136,19 +131,37 @@ body {
   animation-name: rb-ellipsis-3;
 }
 @keyframes rb-ellipsis-1 {
-  0% { opacity: 0; }
-  24% { opacity: 0; }
-  25% { opacity: 1; }
+  0% {
+    opacity: 0;
+  }
+  24% {
+    opacity: 0;
+  }
+  25% {
+    opacity: 1;
+  }
 }
 @keyframes rb-ellipsis-2 {
-  0% { opacity: 0; }
-  49% { opacity: 0; }
-  50% { opacity: 1; }
+  0% {
+    opacity: 0;
+  }
+  49% {
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
 }
 @keyframes rb-ellipsis-3 {
-  0% { opacity: 0; }
-  74% { opacity: 0; }
-  75% { opacity: 1; }
+  0% {
+    opacity: 0;
+  }
+  74% {
+    opacity: 0;
+  }
+  75% {
+    opacity: 1;
+  }
 }
 
 .rb-chat-message__container {
@@ -186,23 +199,30 @@ body {
 .rb-response-feedback__thumb-fill {
   fill: transparent;
 }
-.rb-response-feedback__buttons[data-status="down"] button[data-response="down"] *, .rb-response-feedback__buttons button[data-response="down"]:hover * {
+.rb-response-feedback__buttons[data-status="down"]
+  button[data-response="down"]
+  *,
+.rb-response-feedback__buttons button[data-response="down"]:hover * {
   color: govuk-colour("red");
   fill: govuk-colour("red");
 }
-.rb-response-feedback__buttons[data-status="up"] button[data-response="up"] *, .rb-response-feedback__buttons button[data-response="up"]:hover * {
+.rb-response-feedback__buttons[data-status="up"] button[data-response="up"] *,
+.rb-response-feedback__buttons button[data-response="up"]:hover * {
   color: govuk-colour("green");
   fill: govuk-colour("green");
 }
 
 /* Only show feedback when correct buttons pressed */
-.rb-response-feedback__thumbs-up, .rb-response-feedback__thumbs-down {
+.rb-response-feedback__thumbs-up,
+.rb-response-feedback__thumbs-down {
   display: none;
 }
-.rb-response-feedback__buttons[data-status="up"] ~ .rb-response-feedback__thumbs-up {
+.rb-response-feedback__buttons[data-status="up"]
+  ~ .rb-response-feedback__thumbs-up {
   display: block;
 }
-.rb-response-feedback__buttons[data-status="down"] ~ .rb-response-feedback__thumbs-down {
+.rb-response-feedback__buttons[data-status="down"]
+  ~ .rb-response-feedback__thumbs-down {
   display: block;
 }
 
@@ -221,10 +241,10 @@ body {
 .rb-response-loading:focus-visible {
   outline: 1px solid;
 }
-.rb-response-loading__spinner, .rb-streaming-response-loading__spinner {
+.rb-response-loading__spinner,
+.rb-streaming-response-loading__spinner {
   width: 1.5rem;
 }
-
 
 /* Citations page */
 .rb-citations {
@@ -233,20 +253,20 @@ body {
   padding: 0;
 }
 .rb-citations__item {
-  border-top: 1px solid #E5E7EB;
+  border-top: 1px solid #e5e7eb;
   padding: 1rem 0;
 }
 .rb-citations__item:first-child {
   border-top: none;
 }
 
-
 /* i.AI Design System */
 :root {
-  --iai-product-colour: #9C0000;
-  --iai-top-nav-gradient-colour-1: #9C0000;
+  --iai-product-colour: #9c0000;
+  --iai-top-nav-gradient-colour-1: #9c0000;
   --iai-top-nav-gradient-colour-2: #451818;
-  --iai-background-colour-1: #F6EEF0;
-  --iai-background-colour-2: #F8F8F8;
+  --iai-background-colour-1: #f6eef0;
+  --iai-background-colour-2: #f8f8f8;
 }
-@import "node_modules/i.ai-design-system/dist/styles.scss";
+
+@import "../node_modules/i.ai-design-system/dist/styles.scss";

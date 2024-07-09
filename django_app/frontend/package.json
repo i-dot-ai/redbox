@@ -2,12 +2,11 @@
   "name": "redbox-django",
   "version": "1.0.0",
   "description": "Frontend dependencies for i.AI Redbox application",
-  "main": "index.js",
-  "directories": {
-    "test": "tests"
-  },
+  "source": [
+    "src/styles.scss"
+  ],
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "npx parcel build"
   },
   "author": "",
   "dependencies": {
@@ -15,8 +14,11 @@
     "i.ai-design-system": "^0.3.8"
   },
   "devDependencies": {
-    "@types/alpinejs": "^3.13.10",
+    "@parcel/transformer-sass": "^2.12.0",
     "@types/dompurify": "^3.0.5",
-    "@types/showdown": "^2.0.6"
+    "@types/showdown": "^2.0.6",
+    "parcel": "^2.12.0",
+    "postcss": "^8.4.39",
+    "postcss-url": "^10.1.3"
   }
 }
