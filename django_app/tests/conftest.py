@@ -13,6 +13,8 @@ from redbox_app.redbox_core.models import (
     BusinessUnit,
     ChatHistory,
     ChatMessage,
+    ChatMessageRating,
+    ChatMessageRatingChip,
     ChatRoleEnum,
     Citation,
     File,
@@ -71,6 +73,11 @@ def user_with_demographic_data(business_unit: BusinessUnit) -> User:
 @pytest.fixture()
 def staff_user(create_user):
     return create_user("staff@example.com", "2000-01-01", True)
+
+
+@pytest.fixture()
+def superuser() -> User:
+    return User.objects.create_superuser("super@example.com", "2000-01-01")
 
 
 @pytest.fixture()
@@ -164,3 +171,13 @@ def several_files(alice: User, number_to_create: int = 4) -> Sequence[File]:
             )
         )
     return files
+
+
+@pytest.fixture()
+def chat_message_with_rating(chat_message: ChatMessage) -> ChatMessage:
+    chat_message_rating = ChatMessageRating(chat_message=chat_message, rating=3, text="Ipsum Lorem.")
+    chat_message_rating.save()
+    ChatMessageRatingChip(rating_id=chat_message_rating.pk, text="speed").save()
+    ChatMessageRatingChip(rating_id=chat_message_rating.pk, text="accuracy").save()
+    ChatMessageRatingChip(rating_id=chat_message_rating.pk, text="blasphemy").save()
+    return chat_message

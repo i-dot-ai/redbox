@@ -20,7 +20,6 @@ from redbox_app.redbox_core.models import (
     ChatHistory,
     ChatMessage,
     ChatMessageRating,
-    ChatMessageRatingChip,
     ChatRoleEnum,
     Citation,
     File,
@@ -392,22 +391,17 @@ def test_post_new_rating(alice: User, chat_message: ChatMessage, client: Client)
 
 
 @pytest.mark.django_db()
-def test_post_updated_rating(alice: User, chat_message: ChatMessage, client: Client):
+def test_post_updated_rating(alice: User, chat_message_with_rating: ChatMessage, client: Client):
     # Given
     client.force_login(alice)
-    chat_message_rating = ChatMessageRating(chat_message=chat_message, rating=3, text="Ipsum Lorem.")
-    chat_message_rating.save()
-    ChatMessageRatingChip(rating_id=chat_message_rating.pk, text="speed").save()
-    ChatMessageRatingChip(rating_id=chat_message_rating.pk, text="accuracy").save()
-    ChatMessageRatingChip(rating_id=chat_message_rating.pk, text="blasphemy").save()
 
     # When
-    url = reverse("ratings", kwargs={"message_id": chat_message.id})
+    url = reverse("ratings", kwargs={"message_id": chat_message_with_rating.id})
     response = client.post(url, {"rating": 5, "text": "Lorem Ipsum.", "chips": ["speed", "accuracy", "swearing"]})
 
     # Then
     assert 100 <= response.status_code <= 299
-    rating = ChatMessageRating.objects.get(pk=chat_message.pk)
+    rating = ChatMessageRating.objects.get(pk=chat_message_with_rating.pk)
     assert rating.rating == 5
     assert rating.text == "Lorem Ipsum."
     assert {c.text for c in rating.chatmessageratingchip_set.all()} == {"speed", "accuracy", "swearing"}
