@@ -18,15 +18,19 @@
   "staticFiles": [
     {
       "distDir": "./dist/fonts",
-      "staticPath": "./src/fonts"
+      "staticPath": "./node_modules/i.ai-design-system/dist/fonts"
     },
     {
       "distDir": "./dist/icons",
-      "staticPath": "./src/icons"
+      "staticPath": "./node_modules/i.ai-design-system/dist/icons"
     },
     {
       "distDir": "./dist/govuk-assets",
       "staticPath": "./src/govuk-assets"
+    },
+    {
+      "distDir": "./dist/js/libs",
+      "staticPath": "./src/js/libs/showdown.min.js"
     }
   ],
   "scripts": {

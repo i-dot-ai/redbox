@@ -5,5 +5,13 @@
   "reporters": [
     "...",
     "parcel-reporter-static-files-copy"
-  ]
+  ],
+  "transformers": {
+    "*.scss": [
+      "@parcel/transformer-sass"
+    ],
+    "*.css": [
+      "@parcel/transformer-postcss"
+    ]
+  }
 }
