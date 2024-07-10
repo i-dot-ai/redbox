@@ -337,7 +337,7 @@ class ChatsPage(SignedInBasePage):
                 checkbox.uncheck()
 
     def feedback_stars(self, rating: int):
-        self.page.locator(".feedback__container").get_by_role("button").nth(rating-1).click()
+        self.page.locator(".feedback__container").get_by_role("button").nth(rating - 1).click()
 
     feedback_stars = property(fset=feedback_stars)
 
