@@ -84,6 +84,24 @@ class FeedbackButtons extends HTMLElement {
     `;
 
     /**
+     * Posts data back to the server
+     */
+    const sendFeedback = () => {
+      const csrfToken =
+        /** @type {HTMLInputElement | null} */ (
+          document.querySelector('[name="csrfmiddlewaretoken"]')
+        )?.value || "";
+      fetch(`/ratings/${messageId}/`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": csrfToken,
+        },
+        body: JSON.stringify(collectedData),
+      });
+    };
+
+    /**
      * @param {number} panelIndex - zero based
      */
     const showPanel = (panelIndex) => {
@@ -108,10 +126,7 @@ class FeedbackButtons extends HTMLElement {
     starButtons.forEach((starButton, buttonIndex) => {
       starButton.addEventListener("click", () => {
         collectedData.rating = parseInt(starButton.dataset.rating || "0");
-        fetch(`/ratings/${messageId}/`, {
-          method: "POST",
-          body: JSON.stringify(collectedData),
-        });
+        sendFeedback();
         showPanel(1);
       });
       starButton.addEventListener("mouseover", () => {
@@ -155,10 +170,7 @@ class FeedbackButtons extends HTMLElement {
           }
         });
         collectedData.text = textInput?.value || "";
-        fetch(`/ratings/${messageId}/`, {
-          method: "POST",
-          body: JSON.stringify(collectedData),
-        });
+        sendFeedback();
         showPanel(3);
       }
     );
