@@ -16,7 +16,7 @@ from langchain_core.runnables import ConfigurableField
 from langchain_elasticsearch import ElasticsearchStore
 
 from core_api.app import app as application
-from core_api.retriever import AllElasticsearchRetriever, ParameterisedElasticsearchRetriever
+from redbox.retriever import AllElasticsearchRetriever, ParameterisedElasticsearchRetriever
 from redbox.models import Chunk, File, Settings
 from redbox.storage import ElasticsearchStorageHandler
 from tests.retriever.data import ALL_CHUNKS_RETRIEVER_DOCUMENTS, PARAMETERISED_RETRIEVER_DOCUMENTS

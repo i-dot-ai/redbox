@@ -21,7 +21,7 @@ from tiktoken import Encoding
 
 from core_api import dependencies
 from redbox.api.format import format_documents
-from core_api.runnables import (
+from redbox.api.runnables import (
     make_chat_prompt_from_messages_runnable,
     resize_documents,
 )

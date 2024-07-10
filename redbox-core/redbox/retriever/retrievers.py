@@ -7,7 +7,7 @@ from langchain_core.documents import Document
 from langchain_core.embeddings.embeddings import Embeddings
 from langchain_elasticsearch.retrievers import ElasticsearchRetriever
 
-from core_api.retriever.queries import ESParams, get_all, get_some
+from redbox.retriever.queries import ESParams, get_all, get_some
 
 
 def hit_to_doc(hit: dict[str, Any]) -> Document:

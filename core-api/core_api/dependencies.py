@@ -13,7 +13,7 @@ from langchain_core.runnables import ConfigurableField
 from langchain_elasticsearch import ApproxRetrievalStrategy, ElasticsearchStore
 
 from redbox.api.callbacks import LoggerCallbackHandler
-from core_api.retriever import AllElasticsearchRetriever, ParameterisedElasticsearchRetriever
+from redbox.retriever import AllElasticsearchRetriever, ParameterisedElasticsearchRetriever
 from redbox.models import Settings
 from redbox.storage import ElasticsearchStorageHandler
 from redbox.embeddings import get_embeddings

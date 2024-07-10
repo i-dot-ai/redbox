@@ -11,7 +11,7 @@ from pydantic import BaseModel
 from semantic_router import RouteLayer
 
 from core_api.auth import get_user_uuid, get_ws_user_uuid
-from core_api.runnables import map_to_chat_response
+from redbox.api.runnables import map_to_chat_response
 from core_api.semantic_routes import get_routable_chains, get_semantic_route_layer
 from redbox.models.chain import ChainInput
 from redbox.models.chat import ChatRequest, ChatResponse, SourceDocument
