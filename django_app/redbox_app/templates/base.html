@@ -13,13 +13,7 @@
   <link rel="manifest" href="{{static("govuk-assets/manifest.json")}}">
 
   <meta name="robots" content="noindex, nofollow">
-  {% if COMPRESSION_ENABLED %}
-    {% compress css %}
-      <link rel="stylesheet" type="text/x-scss" href="{{static('style.scss')}}" />
-    {% endcompress %}
-  {% else %}
-    <link rel="stylesheet" type="text/css" href="{{static('style.css')}}" />
-  {% endif %}
+  <link rel="stylesheet" type="text/css" href="{{static('styles.css')}}" />
 
   <script src="{{ static('js/libs/dompurify.js') }}"></script>
   {% if COMPRESSION_ENABLED %}
