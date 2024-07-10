@@ -1,4 +1,5 @@
 from langchain_openai.embeddings import AzureOpenAIEmbeddings, OpenAIEmbeddings
+from langchain_core.utils.utils import convert_to_secret_str
 
 from redbox.models.settings import Settings
 
@@ -16,8 +17,8 @@ def get_azure_embeddings(env: Settings):
 
 def get_openai_embeddings(env: Settings):
     return OpenAIEmbeddings(
-        api_key=env.openai_api_key,
-        openai_api_base=env.embedding_openai_base_url,
+        api_key=convert_to_secret_str(env.openai_api_key),
+        base_url=env.embedding_openai_base_url,
         model=env.embedding_openai_model,
         chunk_size=env.embedding_max_batch_size,
     )
