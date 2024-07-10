@@ -68,7 +68,10 @@ services:
       args:
         - EMBEDDING_MODEL=${EMBEDDING_MODEL:-}
     env_file:
-      - .env
+      - path: .env.integration
+        required: false
+      - path: .env
+        required: false
     depends_on:
       elasticsearch:
         condition: service_healthy
@@ -91,7 +94,10 @@ services:
     environment:
       - PORT=5002
     env_file:
-      - .env
+      - path: .env.integration
+        required: false
+      - path: .env
+        required: false
     networks:
       - redbox-app-network
     depends_on:
@@ -182,7 +188,10 @@ services:
     volumes:
       - redis:/data/redis
     env_file:
-      - .env
+      - path: .env.integration
+        required: false
+      - path: .env
+        required: false
     networks:
       - redbox-app-network
     healthcheck:
