@@ -8,7 +8,7 @@ from redbox.models.chat import ChatRoute
 from redbox.models.errors import AIError
 
 
-@pytest.fixture(autouse=True)
+@pytest.fixture(scope="module", autouse=True)
 def mock_embeddings(session_mocker, embedding_model):
     session_mocker.patch("core_api.dependencies.get_embedding_model", return_value=embedding_model)
     return embedding_model
@@ -130,7 +130,7 @@ def test_summary_runnable_large_file(all_chunks_retriever, mock_llm, large_chunk
     )
 
     assert response["response"] == "<<TESTING>>"
-    assert response["route_name"] == ChatRoute.map_reduce_summarise
+    assert response["route_name"] == ChatRoute.map_reduce_summarise, response["route_name"]
 
 
 def test_summary_runnable_small_file(all_chunks_retriever, mock_llm, chunked_file, env):

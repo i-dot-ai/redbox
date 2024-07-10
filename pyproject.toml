@@ -41,6 +41,7 @@ pyarrow = "^16.1.0"
 deepeval = "^0.21.64"
 minio = "^7.2.7"
 jsonlines="^4.0.0"
+langchain_community = "^0.2.7"
 
 
 
@@ -128,13 +129,3 @@ known-first-party = ["redbox_app", "redbox", "core_api"]
 "*/admin.py" = ["RUF012"]
 "*/models.py" = ["RUF012"]
 
-[tool.pytest.ini_options]
-env_override_existing_values = 1
-env_files = [
-    ".env.test",
-    ".env"
-]
-markers = [
-    "incremental: marks tests as incremental (deselect with '-m \"not incremental\"')",
-    "ai: marks tests as using a live LLM (deselect with '-m \"not ai\"')"
-]

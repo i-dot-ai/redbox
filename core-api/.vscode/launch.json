@@ -1,0 +1,22 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Core API",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "uvicorn",
+            "python": "venv/bin/python",
+            "args": [
+                "core_api.app:app",
+                "--reload",
+                "--port", "5002"
+            ],
+            "jinja": true,
+            "envFile": "${workspaceFolder}/../.env"
+        }
+    ]
+}

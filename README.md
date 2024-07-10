@@ -36,6 +36,8 @@ You will need to install `poppler` and `tesseract` to run the `worker`
   - `pip install pre-commit`
   - `pre-commit install`
 
+
+
 # Testing
 
 - Unit tests and QA run in CI

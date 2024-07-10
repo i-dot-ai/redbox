@@ -305,17 +305,17 @@ lxml = ["lxml"]
 
 [[package]]
 name = "boto3"
-version = "1.34.141"
+version = "1.34.142"
 description = "The AWS SDK for Python"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "boto3-1.34.141-py3-none-any.whl", hash = "sha256:f906c797a02d37a3b88fe4c97e4d72b387e19ab6f3096d2f573578f020fd9bf4"},
-    {file = "boto3-1.34.141.tar.gz", hash = "sha256:947c7a94ac3a2131142914a53afc3b1c5a572d6a79515bf2f0473188817cfcd6"},
+    {file = "boto3-1.34.142-py3-none-any.whl", hash = "sha256:cae11cb54f79795e44248a9e53ec5c7328519019df1ba54bc01413f51c548626"},
+    {file = "boto3-1.34.142.tar.gz", hash = "sha256:72daee953cfa0631c584c9e3aef594079e1fe6a2f64c81ff791dab9a7b25c013"},
 ]
 
 [package.dependencies]
-botocore = ">=1.34.141,<1.35.0"
+botocore = ">=1.34.142,<1.35.0"
 jmespath = ">=0.7.1,<2.0.0"
 s3transfer = ">=0.10.0,<0.11.0"
 
@@ -738,13 +738,13 @@ xray = ["mypy-boto3-xray (>=1.34.0,<1.35.0)"]
 
 [[package]]
 name = "botocore"
-version = "1.34.141"
+version = "1.34.142"
 description = "Low-level, data-driven core of boto 3."
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "botocore-1.34.141-py3-none-any.whl", hash = "sha256:0e661a452c0489b6d62a9c91fed3320d5690a524489a7e50afc8efadb994dba8"},
-    {file = "botocore-1.34.141.tar.gz", hash = "sha256:d2815c09037039a287461eddc07af895d798bc897e6ba4b08f5a12eaa9886ff1"},
+    {file = "botocore-1.34.142-py3-none-any.whl", hash = "sha256:9d8095bab0b93b9064e856730a7ffbbb4f897353d3170bec9ddccc5f4a3753bc"},
+    {file = "botocore-1.34.142.tar.gz", hash = "sha256:2eeb8e6be729c1f8ded723970ed6c6ac29cc3014d86a99e73428fa8bdca81f63"},
 ]
 
 [package.dependencies]
@@ -757,13 +757,13 @@ crt = ["awscrt (==0.20.11)"]
 
 [[package]]
 name = "botocore-stubs"
-version = "1.34.141"
+version = "1.34.142"
 description = "Type annotations and code completion for botocore"
 optional = false
 python-versions = "<4.0,>=3.8"
 files = [
-    {file = "botocore_stubs-1.34.141-py3-none-any.whl", hash = "sha256:8c98be13bbe67ce963420ea0fc0975cdc923ef618cdfd65baa78a93f374fc6e0"},
-    {file = "botocore_stubs-1.34.141.tar.gz", hash = "sha256:6703ad1a16fac9a63191795bc331cb4feb5c84f646711f8d39cbd385b8a91903"},
+    {file = "botocore_stubs-1.34.142-py3-none-any.whl", hash = "sha256:5734d835ad9497333da91d5f3994c9e011007b46dbf6c283f813eee0c7aa3018"},
+    {file = "botocore_stubs-1.34.142.tar.gz", hash = "sha256:5b5537fe3638047933afd4997f32da24719d888c84718e3495d03ca67d7bebea"},
 ]
 
 [package.dependencies]
@@ -1175,13 +1175,13 @@ vision = ["Pillow (>=9.4.0)"]
 
 [[package]]
 name = "deepeval"
-version = "0.21.64"
+version = "0.21.65"
 description = "The open-source evaluation framework for LLMs."
 optional = false
 python-versions = "*"
 files = [
-    {file = "deepeval-0.21.64-py3-none-any.whl", hash = "sha256:ee1f4a8b105401e9f4b5007579c4dec6ac061ea5f7b4ab3fb4f6cc2d6c30f1d3"},
-    {file = "deepeval-0.21.64.tar.gz", hash = "sha256:c417182ff2bae25298fb086c512d9bbbc375ea33c9d407378eeb4dd5da31c8cf"},
+    {file = "deepeval-0.21.65-py3-none-any.whl", hash = "sha256:aa4ffc988f55bb452ec696e5fb5a752e4ec397ea853d59160b0de8eb8d542585"},
+    {file = "deepeval-0.21.65.tar.gz", hash = "sha256:9e3ffdfd2208c2e1bcb611ccebf4c5f9aa9af18949a58ebea8c96c4ea7e5a815"},
 ]
 
 [package.dependencies]
@@ -2826,13 +2826,13 @@ files = [
 
 [[package]]
 name = "openai"
-version = "1.35.10"
+version = "1.35.13"
 description = "The official Python library for the openai API"
 optional = false
 python-versions = ">=3.7.1"
 files = [
-    {file = "openai-1.35.10-py3-none-any.whl", hash = "sha256:962cb5c23224b5cbd16078308dabab97a08b0a5ad736a4fdb3dc2ffc44ac974f"},
-    {file = "openai-1.35.10.tar.gz", hash = "sha256:85966949f4f960f3e4b239a659f9fd64d3a97ecc43c44dc0a044b5c7f11cccc6"},
+    {file = "openai-1.35.13-py3-none-any.whl", hash = "sha256:36ec3e93e0d1f243f69be85c89b9221a471c3e450dfd9df16c9829e3cdf63e60"},
+    {file = "openai-1.35.13.tar.gz", hash = "sha256:c684f3945608baf7d2dcc0ef3ee6f3e27e4c66f21076df0b47be45d57e6ae6e4"},
 ]
 
 [package.dependencies]
@@ -4098,13 +4098,13 @@ crt = ["botocore[crt] (>=1.33.2,<2.0a.0)"]
 
 [[package]]
 name = "sentry-sdk"
-version = "2.8.0"
+version = "2.9.0"
 description = "Python client for Sentry (https://sentry.io)"
 optional = false
 python-versions = ">=3.6"
 files = [
-    {file = "sentry_sdk-2.8.0-py2.py3-none-any.whl", hash = "sha256:6051562d2cfa8087bb8b4b8b79dc44690f8a054762a29c07e22588b1f619bfb5"},
-    {file = "sentry_sdk-2.8.0.tar.gz", hash = "sha256:aa4314f877d9cd9add5a0c9ba18e3f27f99f7de835ce36bd150e48a41c7c646f"},
+    {file = "sentry_sdk-2.9.0-py2.py3-none-any.whl", hash = "sha256:0bea5fa8b564cc0d09f2e6f55893e8f70286048b0ffb3a341d5b695d1af0e6ee"},
+    {file = "sentry_sdk-2.9.0.tar.gz", hash = "sha256:4c85bad74df9767976afb3eeddc33e0e153300e887d637775a753a35ef99bee6"},
 ]
 
 [package.dependencies]
@@ -4148,13 +4148,13 @@ tornado = ["tornado (>=6)"]
 
 [[package]]
 name = "setuptools"
-version = "70.2.0"
+version = "70.3.0"
 description = "Easily download, build, install, upgrade, and uninstall Python packages"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "setuptools-70.2.0-py3-none-any.whl", hash = "sha256:b8b8060bb426838fbe942479c90296ce976249451118ef566a5a0b7d8b78fb05"},
-    {file = "setuptools-70.2.0.tar.gz", hash = "sha256:bd63e505105011b25c3c11f753f7e3b8465ea739efddaccef8f0efac2137bac1"},
+    {file = "setuptools-70.3.0-py3-none-any.whl", hash = "sha256:fe384da74336c398e0d956d1cae0669bc02eed936cdb1d49b57de1990dc11ffc"},
+    {file = "setuptools-70.3.0.tar.gz", hash = "sha256:f171bab1dfbc86b132997f26a119f6056a57950d058587841a0082e8830f9dc5"},
 ]
 
 [package.extras]
@@ -5049,4 +5049,4 @@ test = ["big-O", "importlib-resources", "jaraco.functools", "jaraco.itertools", 
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.11,<3.12"
-content-hash = "62f255169fd5d59d43099a42e0cc9acf070b79cd4dd65fd098145503b2e5d826"
+content-hash = "91ef938c502cd0561170090e1f843342fe88c679a9ed6017fd22cc010bdb7aec"

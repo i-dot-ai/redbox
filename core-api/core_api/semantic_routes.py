@@ -3,7 +3,7 @@ from typing import Annotated
 from fastapi import Depends
 from langchain_core.runnables import Runnable
 from semantic_router import Route
-from semantic_router.encoders import AzureOpenAIEncoder, BaseEncoder
+from semantic_router.encoders import AzureOpenAIEncoder, OpenAIEncoder, BaseEncoder
 from semantic_router.layer import RouteLayer
 
 from core_api.build_chains import (
@@ -149,9 +149,20 @@ def get_semantic_routes():
 
 
 def get_semantic_routing_encoder(env: Annotated[Settings, Depends(get_env)]):
-    return AzureOpenAIEncoder(
-        azure_endpoint=env.azure_openai_endpoint, api_version="2023-05-15", model=env.azure_embedding_model
-    )
+    """
+    TODO: This is a duplication of the logic for getting the LangChain embedding model used elsewhere
+    We should replace semanticrouter with our own implementation to avoid this
+    """
+    if env.embedding_backend == "azure":
+        return AzureOpenAIEncoder(
+            azure_endpoint=env.azure_openai_endpoint, api_version="2023-05-15", model=env.azure_embedding_model
+        )
+    elif env.embedding_backend == "openai":
+        return OpenAIEncoder(
+            openai_base_url=env.embedding_openai_base_url,
+            openai_api_key=env.openai_api_key,
+            name=env.embedding_openai_model,
+        )
 
 
 def get_semantic_route_layer(
