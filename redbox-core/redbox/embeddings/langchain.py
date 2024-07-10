@@ -16,7 +16,7 @@ def get_azure_embeddings(env: Settings):
 
 def get_openai_embeddings(env: Settings):
     return OpenAIEmbeddings(
-        openai_api_key=env.openai_api_key,
+        api_key=env.openai_api_key,
         openai_api_base=env.embedding_openai_base_url,
         model=env.embedding_openai_model,
         chunk_size=env.embedding_max_batch_size,
