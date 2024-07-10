@@ -8,26 +8,39 @@ class FeedbackButtons extends HTMLElement {
       chips: /** @type {string[]}*/ ([]),
     };
 
+    const starIcon = `
+        <svg width="25" height="25" viewBox="0 0 25 25" fill="none" focusable="false" aria-hidden="true">
+            <path d="M12.0172 1.68381C12.1639 1.21711 12.8244 1.21711 12.9711 1.68381L15.1648 8.66018C15.3613 9.28511 15.9406 9.71024 16.5957 9.71024H23.7624C24.2428 9.71024 24.4468 10.3217 24.0626 10.6101L18.2088 15.0049C17.7002 15.3867 17.4877 16.0477 17.6784 16.6544L19.901 23.7227C20.0468 24.1863 19.5124 24.5643 19.1238 24.2726L13.3947 19.9714C12.8612 19.5708 12.1271 19.5708 11.5936 19.9714L5.86446 24.2726C5.47585 24.5643 4.94152 24.1863 5.08728 23.7227L7.30983 16.6544C7.50059 16.0477 7.28806 15.3867 6.77949 15.0049L0.925668 10.6101C0.5415 10.3217 0.745481 9.71024 1.22586 9.71024H8.3926C9.0477 9.71024 9.62702 9.28511 9.82353 8.66017L12.0172 1.68381Z" fill="currentColor" stroke="#BEBEBE"/>
+        </svg>
+    `;
+
     this.innerHTML = `
         <div class="feedback__container feedback__container--1">
-            <h3>Rate this response:</h3>
-            <span aria-hidden="true">Not helpful</span>
-            <button class="feedback__star-button" data-rating="1" type="button">
-                <span class="govuk-visually-hidden">1 star out of 5 (not helpful)</span>
-            </button>
-            <button class="feedback__star-button" data-rating="2" type="button">
-                <span class="govuk-visually-hidden">2 star out of 5</span>
-            </button>
-            <button class="feedback__star-button" data-rating="3" type="button">
-                <span class="govuk-visually-hidden">3 star out of 5</span>
-            </button>
-            <button class="feedback__star-button" data-rating="4" type="button">
-                <span class="govuk-visually-hidden">4 star out of 5</span>
-            </button>
-            <button class="feedback__star-button" data-rating="5" type="button">
-                <span class="govuk-visually-hidden">5 star out of 5 (very helpful)</span>
-            </button>
-            <span aria-hidden="true">Very helpful</span>
+            <h3 class="feedback__heading">Rate this response:</h3>
+            <div class="feedback__star-container">
+                <span class="feedback__star-help-text" aria-hidden="true">Not helpful</span>
+                <button class="feedback__star-button" data-rating="1" type="button">
+                    ${starIcon}
+                    <span class="govuk-visually-hidden">1 star out of 5 (not helpful)</span>
+                </button>
+                <button class="feedback__star-button" data-rating="2" type="button">
+                    ${starIcon}
+                    <span class="govuk-visually-hidden">2 star out of 5</span>
+                </button>
+                <button class="feedback__star-button" data-rating="3" type="button">
+                    ${starIcon}
+                    <span class="govuk-visually-hidden">3 star out of 5</span>
+                </button>
+                <button class="feedback__star-button" data-rating="4" type="button">
+                    ${starIcon}
+                    <span class="govuk-visually-hidden">4 star out of 5</span>
+                </button>
+                <button class="feedback__star-button" data-rating="5" type="button">
+                    ${starIcon}
+                    <span class="govuk-visually-hidden">5 star out of 5 (very helpful)</span>
+                </button>
+                <span class="feedback__star-help-text" aria-hidden="true">Very helpful</span>
+            </div>
         </div>
         <div class="feedback__container feedback__container--2" hidden>
             <svg width="22" viewBox="0 0 24 24" focusable="false" aria-hidden="true">
@@ -89,7 +102,7 @@ class FeedbackButtons extends HTMLElement {
     let starButtons = /** @type {NodeListOf<HTMLElement>} */ (
       this.querySelectorAll(".feedback__star-button")
     );
-    starButtons.forEach((starButton) => {
+    starButtons.forEach((starButton, buttonIndex) => {
       starButton.addEventListener("click", () => {
         collectedData.rating = parseInt(starButton.dataset.rating || "0");
         fetch(`/ratings/${messageId}/`, {
@@ -97,6 +110,19 @@ class FeedbackButtons extends HTMLElement {
           body: JSON.stringify(collectedData),
         });
         showPanel(1);
+      });
+      starButton.addEventListener("mouseover", () => {
+        starButtons.forEach((btn) => {
+          btn.classList.remove("feedback__star-button--hover");
+        });
+        for (let i = 0; i <= buttonIndex; i++) {
+          starButtons[i].classList.add("feedback__star-button--hover");
+        }
+      });
+      starButton.addEventListener("mouseleave", () => {
+        starButtons.forEach((btn) => {
+          btn.classList.remove("feedback__star-button--hover");
+        });
       });
     });
 
@@ -141,6 +167,13 @@ class FeedbackButtons extends HTMLElement {
         showPanel(0);
       }
     );
+  }
+
+  // If the messageID already exists (e.g. for SSR messages), render the feedback HTML immediately
+  connectedCallback() {
+    if (this.dataset.id) {
+      this.showFeedback(this.dataset.id);
+    }
   }
 }
 customElements.define("feedback-buttons", FeedbackButtons);

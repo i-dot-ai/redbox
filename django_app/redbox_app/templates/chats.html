@@ -73,6 +73,9 @@
               source_files = message.source_files.all(),
               show_route = show_route
             ) }}
+            {% if message.role == 'ai' %}
+              <feedback-buttons data-id="{{ message.id }}"></feedback-buttons>
+            {% endif %}
           {% endfor %}
 
           {# CSR messages are inserted here #}
