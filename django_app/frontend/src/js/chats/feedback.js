@@ -51,27 +51,31 @@ class FeedbackButtons extends HTMLElement {
             <button class="feedback__improve-response-btn">Help improve the response</button>
         </div>
         <div class="feedback__container feedback__container--3" hidden>
-            <fieldset class="feedback__negative">
-                <legend>How would you describe the response?</legend>
-                <input class="feedback__chip" type="checkbox" id="chip1-negative-${messageId}"/>
-                <label for="chip1-negative-${messageId}">Inaccurate</label>
-                <input class="feedback__chip" type="checkbox" id="chip2-negative-${messageId}"/>
-                <label for="chip2-negative-${messageId}">Incomplete</label>
-                <input class="feedback__chip" type="checkbox" id="chip3-negative-${messageId}"/>
-                <label for="chip3-negative-${messageId}">Bad quality</label>
+            <fieldset class="feedback__chips-container feedback__negative">
+                <legend class="feedback__chips-legend">How would you describe the response?</legend>
+                <div class="feedback__chips-inner-container">
+                    <input class="feedback__chip" type="checkbox" id="chip1-negative-${messageId}"/>
+                    <label class="feedback__chip-label" for="chip1-negative-${messageId}"><img src="/static/icons/Chip_tick.svg" alt=""/> Inaccurate</label>
+                    <input class="feedback__chip" type="checkbox" id="chip2-negative-${messageId}"/>
+                    <label class="feedback__chip-label" for="chip2-negative-${messageId}"><img src="/static/icons/Chip_tick.svg" alt=""/> Incomplete</label>
+                    <input class="feedback__chip" type="checkbox" id="chip3-negative-${messageId}"/>
+                    <label class="feedback__chip-label" for="chip3-negative-${messageId}"><img src="/static/icons/Chip_tick.svg" alt=""/> Bad quality</label>
+                </div>
             </fieldset>
-            <fieldset class="feedback__positive">
-                <legend>How would you describe the response?</legend>
-                <input class="feedback__chip" type="checkbox" id="chip1-positive-${messageId}"/>
-                <label for="chip1-positive-${messageId}">Accurate</label>
-                <input class="feedback__chip" type="checkbox" id="chip2-positive-${messageId}"/>
-                <label for="chip2-positive-${messageId}">Complete</label>
-                <input class="feedback__chip" type="checkbox" id="chip3-positive-${messageId}"/>
-                <label for="chip3-positive-${messageId}">Good quality</label>
+            <fieldset class="feedback__chips-container feedback__positive">
+                <legend class="feedback__chips-legend">How would you describe the response?</legend>
+                <div class="feedback__chips-inner-container">
+                    <input class="feedback__chip" type="checkbox" id="chip1-positive-${messageId}"/>
+                    <label class="feedback__chip-label" for="chip1-positive-${messageId}"><img src="/static/icons/Chip_tick.svg" alt=""/> Accurate</label>
+                    <input class="feedback__chip" type="checkbox" id="chip2-positive-${messageId}"/>
+                    <label class="feedback__chip-label" for="chip2-positive-${messageId}"><img src="/static/icons/Chip_tick.svg" alt=""/> Complete</label>
+                    <input class="feedback__chip" type="checkbox" id="chip3-positive-${messageId}"/>
+                    <label class="feedback__chip-label" for="chip3-positive-${messageId}"><img src="/static/icons/Chip_tick.svg" alt=""/> Good quality</label>
+                </div>
             </fieldset>
             <label for="text-${messageId}">Or describe with your own words:</label>
-            <textarea id="text-${messageId}" rows="1"></textarea>
-            <button class="feedback_submit-btn" type="submit">Submit</button>
+            <textarea class="feedback__text-input" id="text-${messageId}" rows="1"></textarea>
+            <button class="feedback__submit-btn" type="submit">Submit</button>
         </div>
         <div class="feedback__container feedback__container--4" hidden>
            <span>Thanks for helping improve this response</span>
@@ -134,7 +138,9 @@ class FeedbackButtons extends HTMLElement {
     );
 
     /* Panel 3 - text and chips */
-    this.querySelector(".feedback_submit-btn")?.addEventListener(
+    /** @type {HTMLTextAreaElement | null} */
+    const textInput = this.querySelector(`#text-${messageId}`);
+    this.querySelector(".feedback__submit-btn")?.addEventListener(
       "click",
       (evt) => {
         evt.preventDefault();
@@ -148,9 +154,7 @@ class FeedbackButtons extends HTMLElement {
             }
           }
         });
-        collectedData.text = /** @type {HTMLTextAreaElement} */ (
-          this.querySelector(`#text-${messageId}`)
-        )?.value;
+        collectedData.text = textInput?.value || "";
         fetch(`/ratings/${messageId}/`, {
           method: "POST",
           body: JSON.stringify(collectedData),
@@ -158,6 +162,10 @@ class FeedbackButtons extends HTMLElement {
         showPanel(3);
       }
     );
+    textInput?.addEventListener("input", () => {
+      textInput.style.height = "auto";
+      textInput.style.height = `${textInput.scrollHeight}px`;
+    });
 
     /* Panel 4 - thank you */
     this.querySelector(".feedback__rate-again-btn")?.addEventListener(
