@@ -45,7 +45,7 @@ class FeedbackButtons extends HTMLElement {
         <div class="feedback__container feedback__container--2" hidden>
             <div class="feedback__response-container">
                 <img src="/static/icons/thumbs-up.svg" alt=""/>
-                <span class="feedback__negative">Sorry this didn't meed your expectations</span>
+                <span class="feedback__negative">Sorry this didn't meet your expectations</span>
                 <span class="feedback__positive">Thanks for the feedback</span>
             </div>
             <button class="feedback__improve-response-btn">Help improve the response</button>
