@@ -36,12 +36,7 @@ You will need to install `poppler` and `tesseract` to run the `worker`
   - `pip install pre-commit`
   - `pre-commit install`
 
-### VSCode
-To make use of the VSCode setup open the workspace file .vscode/redbox.code-workspace. This will open the relevant services as roots in a single workspace. The recommended way to use this is:
-* Create a venv in each of the main service directories (core-api, redbox-core, worker) this should be in a directory called _venv_
-* Configure each workspace directory to use it's own venv python interpreter. NB You may need to enter these manually when prompted as _./venv/bin/python_
 
-The tests should then all load separately and use their own env.
 
 # Testing
 - Unit tests and QA run in CI
