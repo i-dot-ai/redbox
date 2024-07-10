@@ -50,7 +50,7 @@ class ExperimentData(BaseModel):
 
 
 RAG_EXPERIMENT_DATA = ExperimentData(
-    data=DATA / "synthetic/rag.json", embeddings=DATA / "embeddings/all-mpnet-base-v2.jsonl"
+    data=DATA / "synthetic/rag.json", embeddings=DATA / "embeddings/text-embedding-3-large.jsonl"
 )
 """
 Experiment data should follow the following pattern.
