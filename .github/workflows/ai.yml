@@ -60,7 +60,6 @@ jobs:
       uses: slackapi/slack-github-action@v1.24.0
       if: ${{ failure() && github.event_name == 'schedule' }}
       with:
-        channel-id: 'C05D67P6M34'
         payload: |
           {
             "text": "Scheduled AI tests failed",
@@ -91,7 +90,7 @@ jobs:
             ]
           }
       env:
-        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_NOTIFICATIONS_TOKEN }}
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
         SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
 
     - name: Notify Slack pass
@@ -99,7 +98,6 @@ jobs:
       uses: slackapi/slack-github-action@v1.24.0
       if: ${{ success() && github.event_name == 'schedule' }}
       with:
-        channel-id: 'C05D67P6M34'
         payload: |
           {
             "text": "Scheduled AI tests passed",
@@ -114,7 +112,7 @@ jobs:
             ]
           }
       env:
-        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_NOTIFICATIONS_TOKEN }}
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
         SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
 
     - name: Dump logs

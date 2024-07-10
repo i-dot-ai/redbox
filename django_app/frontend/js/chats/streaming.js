@@ -61,14 +61,10 @@ class ChatMessage extends HTMLElement {
             <div class="iai-chat-bubble iai-chat-bubble--${
               this.dataset.role === "user" ? "right" : "left"
             } js-chat-message govuk-body {{ classes }}" data-role="{{ role }}" tabindex="-1">
-                <div class="iai-chat-bubble__role">${
-                  this.dataset.role === "ai" ? "Redbox" : "You"
-                }</div>
-                <div class="js-chat-bubble__route" hidden>
-                    <dl class="iai-chat-bubble__route">
-                        <dt>Route:</dt>
-                        <dd></dd>
-                    </dl>
+                <div class="iai-chat-bubble__header">
+                    <div class="iai-chat-bubble__role">${
+                      this.dataset.role === "ai" ? "Redbox" : "You"
+                    }</div>
                 </div>
                 <markdown-converter class="iai-chat-bubble__text">${
                   this.dataset.text || ""
@@ -94,6 +90,13 @@ class ChatMessage extends HTMLElement {
                 </div>
             </div>
         `;
+
+    // Insert route_display HTML
+    const routeTemplate = /** @type {HTMLTemplateElement} */ (
+      document.querySelector("#template-route-display")
+    );
+    const routeClone = document.importNode(routeTemplate.content, true);
+    this.querySelector(".iai-chat-bubble__header")?.appendChild(routeClone);
   }
 
   /**
@@ -172,8 +175,8 @@ class ChatMessage extends HTMLElement {
       } else if (message.type === "source") {
         sourcesContainer.add(message.data.original_file_name, message.data.url);
       } else if (message.type === "route") {
-        let route = this.querySelector(".js-chat-bubble__route");
-        let routeText = route?.querySelector("dd");
+        let route = this.querySelector(".iai-chat-bubble__route");
+        let routeText = route?.querySelector(".iai-chat-bubble__route-text");
         if (route && routeText) {
           routeText.textContent = message.data;
           route.removeAttribute("hidden");
@@ -196,8 +199,11 @@ class ChatMessage extends HTMLElement {
       } else if (message.type === "end") {
         sourcesContainer.showCitations(message.data.message_id);
       } else if (message.type === "error") {
-        this.querySelector(".govuk-notification-banner")?.removeAttribute("hidden");
-        this.querySelector(".govuk-notification-banner__heading").innerHTML = message.data;
+        this.querySelector(".govuk-notification-banner")?.removeAttribute(
+          "hidden"
+        );
+        this.querySelector(".govuk-notification-banner__heading").innerHTML =
+          message.data;
       }
     };
   };
