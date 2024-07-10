@@ -7,7 +7,7 @@ license = "MIT"
 
 [tool.poetry.dependencies]
 python = ">=3.11.2,<3.13"
-django = "^5.0.6"
+django = "^5.0.7"
 django-compressor = "^4.4"
 django-libsass = "^0.9"
 django-magic-link = "^1.0.0"
