@@ -33,7 +33,7 @@ def test_chat_history_export(superuser: User, chat_message_with_rating: ChatMess
     assert row["history_users"] == "alice@cabinetoffice.gov.uk"
     assert row["message_text"] == "A question?"
     assert row["rating_rating"] == "3"
-    assert row["rating_chips"] == "speed accuracy blasphemy"
+    assert row["rating_chips"] == "speed, accuracy, blasphemy"
 
 
 @pytest.mark.django_db()

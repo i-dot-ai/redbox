@@ -113,7 +113,7 @@ class ChatHistoryAdmin(admin.ModelAdmin):
                 if hasattr(chat_message, "chatmessagerating"):
                     chat_massage_rating = chat_message.chatmessagerating
                     row += [getattr(chat_massage_rating, field) for field in rating_field_names]
-                    row += [" ".join(c.text for c in chat_massage_rating.chatmessageratingchip_set.all())]
+                    row += [", ".join(c.text for c in chat_massage_rating.chatmessageratingchip_set.all())]
                 writer.writerow(row)
 
         return response
