@@ -47,17 +47,20 @@ test-redbox: ## Test redbox
 	cp .env.test redbox-core/.env
 	cd redbox-core && poetry install && poetry run pytest --cov=redbox -v --cov-report=term-missing --cov-fail-under=80
 
-
 .PHONY: test-worker
 test-worker: ## Test worker
 	cp .env.test worker/.env
 	cd worker && poetry install && poetry run pytest --cov=worker -v --cov-report=term-missing --cov-fail-under=80
 
-
 .PHONY: test-django
 test-django: stop ## Test django-app
 	docker compose up -d --wait db minio
 	docker compose run --no-deps django-app venv/bin/pytest tests/ --ds redbox_app.settings -v --cov=redbox_app.redbox_core --cov-fail-under 85 -o log_cli=true
+
+.PHONY: build-django-static
+build-django-static: ## Build django-app static files
+	cd django_app/frontend/ && npm install && npm run build
+	cd django_app/ && poetry run python manage.py collectstatic --noinput
 
 .PHONY: test-integration
 test-integration: rebuild run test-integration-without-build ## Run all integration tests
