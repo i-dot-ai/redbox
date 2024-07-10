@@ -1,6 +1,6 @@
 [tool.ruff]
 line-length = 120
-target-version = 'py311'
+target-version = 'py312'
 
 [tool.poetry]
 name = "redbox-root"
@@ -11,7 +11,7 @@ license = "MIT"
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = ">=3.11,<3.12"
+python = ">=3.12,<3.13"
 
 
 [tool.poetry.group.dev.dependencies]
@@ -38,9 +38,9 @@ websockets = "^12.0"
 python-jose = "^3.3.0"
 httpx = "^0.27.0"
 pyarrow = "^16.1.0"
-deepeval = "^0.21.64"
 minio = "^7.2.7"
-jsonlines="^4.0.0"
+jsonlines = "^4.0.0"
+yarl = "^1.9.4"
 langchain_community = "^0.2.7"
 
 
@@ -128,4 +128,3 @@ known-first-party = ["redbox_app", "redbox", "core_api"]
 "redbox/tests/*" = ["ARG001"]
 "*/admin.py" = ["RUF012"]
 "*/models.py" = ["RUF012"]
-

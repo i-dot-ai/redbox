@@ -1,4 +1,4 @@
-FROM python:3.11-buster as builder
+FROM python:3.12-bookworm as builder
 
 RUN apt update && apt-get install -y \
     poppler-utils \

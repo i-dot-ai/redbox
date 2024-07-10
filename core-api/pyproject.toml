@@ -1,6 +1,6 @@
 [tool.ruff]
 line-length = 120
-target-version = 'py311'
+target-version = 'py312'
 
 
 [tool.poetry]
@@ -12,7 +12,7 @@ license = "MIT"
 readme = "../README.md"
 
 [tool.poetry.dependencies]
-python = ">=3.11,<3.12"
+python = ">=3.12,<3.13"
 redbox = {path="../redbox-core", develop=true}
 pydantic = "^2.7.1"
 langchain = "^0.2.6"
@@ -26,6 +26,7 @@ python-multipart = "^0.0.9"
 python-jose = "^3.3.0"
 websockets = "^12.0"
 langchain_openai = "^0.1.9"
+langchain-community = "^0.2.6"
 pillow-heif = "<0.17.0"
 langchain-elasticsearch = "^0.2.2"
 litellm = "^1.41.11"
