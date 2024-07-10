@@ -243,7 +243,6 @@ if ENVIRONMENT.is_test:
     ALLOWED_HOSTS = env_hosts
 else:
     LOCALHOST = socket.gethostbyname(socket.gethostname())
-    ALLOWED_HOSTS = [LOCALHOST, *ENVIRONMENT.hosts,"redbox-trial.uktrade.digital","dbt-default-alb-1021417632.eu-west-2.elb.amazonaws.com"]
     ALLOWED_HOSTS = [
         LOCALHOST,
         *env_hosts,
