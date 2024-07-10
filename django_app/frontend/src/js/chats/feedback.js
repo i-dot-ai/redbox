@@ -92,7 +92,7 @@ class FeedbackButtons extends HTMLElement {
     starButtons.forEach((starButton) => {
       starButton.addEventListener("click", () => {
         collectedData.rating = parseInt(starButton.dataset.rating || "0");
-        fetch(`/ratings/${messageId}`, {
+        fetch(`/ratings/${messageId}/`, {
           method: "POST",
           body: JSON.stringify(collectedData),
         });
@@ -126,7 +126,7 @@ class FeedbackButtons extends HTMLElement {
         collectedData.text = /** @type {HTMLTextAreaElement} */ (
           this.querySelector(`#text-${messageId}`)
         )?.value;
-        fetch(`/ratings/${messageId}`, {
+        fetch(`/ratings/${messageId}/`, {
           method: "POST",
           body: JSON.stringify(collectedData),
         });

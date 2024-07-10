@@ -68,6 +68,13 @@ def test_user_journey(page: Page, email_address: str):
     latest_chat_response = chats_page.wait_for_latest_message()
     assert latest_chat_response.text
 
+    # Give user feedback
+    chats_page.feedback_stars = 2
+    chats_page.improve()
+    chats_page.feedback_chips = ["Inaccurate"]
+    chats_page.feedback_text = "Could be better."
+    chats_page.submit_feedback()
+
     # Citations
     citations_page = latest_chat_response.navigate_to_citations()
     chats_page = citations_page.back_to_chat()
