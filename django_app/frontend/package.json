@@ -35,13 +35,13 @@
     }
   ],
   "scripts": {
-    "build": "npx parcel build",
+    "build": "npx parcel build --no-cache",
     "watch": "npx parcel watch"
   },
   "author": "",
   "dependencies": {
     "govuk-frontend": "^5.2.0",
-    "i.ai-design-system": "^0.3.8"
+    "i.ai-design-system": "^0.3.12"
   },
   "devDependencies": {
     "@parcel/transformer-sass": "^2.12.0",
