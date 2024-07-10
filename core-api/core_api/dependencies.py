@@ -12,7 +12,7 @@ from langchain_core.retrievers import BaseRetriever
 from langchain_core.runnables import ConfigurableField
 from langchain_elasticsearch import ApproxRetrievalStrategy, ElasticsearchStore
 
-from core_api.callbacks import LoggerCallbackHandler
+from redbox.api.callbacks import LoggerCallbackHandler
 from core_api.retriever import AllElasticsearchRetriever, ParameterisedElasticsearchRetriever
 from redbox.models import Settings
 from redbox.storage import ElasticsearchStorageHandler
