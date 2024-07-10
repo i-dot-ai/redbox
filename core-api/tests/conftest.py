@@ -1,5 +1,4 @@
 import time
-from collections.abc import Generator
 from pathlib import Path
 from uuid import UUID, uuid4
 
@@ -10,16 +9,13 @@ from fastapi.testclient import TestClient
 from jose import jwt
 from langchain_community.embeddings import SentenceTransformerEmbeddings
 from langchain_community.llms.fake import FakeListLLM
-from langchain_core.documents.base import Document
 from langchain_core.embeddings.fake import FakeEmbeddings
 from langchain_core.runnables import ConfigurableField
-from langchain_elasticsearch import ElasticsearchStore
 
 from core_api.app import app as application
 from redbox.retriever import AllElasticsearchRetriever, ParameterisedElasticsearchRetriever
 from redbox.models import Chunk, File, Settings
 from redbox.storage import ElasticsearchStorageHandler
-from tests.retriever.data import ALL_CHUNKS_RETRIEVER_DOCUMENTS, PARAMETERISED_RETRIEVER_DOCUMENTS
 
 
 @pytest.fixture(scope="session")
@@ -140,29 +136,6 @@ def stored_large_file_chunks(stored_file_1, embedding_model_dim) -> list[Chunk]:
             )
         )
     return chunks
-
-
-@pytest.fixture(params=ALL_CHUNKS_RETRIEVER_DOCUMENTS)
-def stored_file_all_chunks(request, es_client, es_index, embedding_model_dim) -> Generator[list[Document], None, None]:
-    store = ElasticsearchStore(
-        index_name=es_index,
-        es_connection=es_client,
-        query_field="text",
-        embedding=FakeEmbeddings(size=embedding_model_dim),
-    )
-    documents = list(map(Document.parse_obj, request.param))
-    doc_ids = store.add_documents(documents)
-    yield documents
-    store.delete(doc_ids)
-
-
-@pytest.fixture(params=PARAMETERISED_RETRIEVER_DOCUMENTS)
-def stored_file_parameterised(request, es_client, es_index) -> Generator[list[Document], None, None]:
-    store = ElasticsearchStore(index_name=es_index, es_connection=es_client, query_field="text")
-    documents = list(map(Document.parse_obj, request.param))
-    doc_ids = store.add_documents(documents)
-    yield documents
-    store.delete(doc_ids)
 
 
 @pytest.fixture()
