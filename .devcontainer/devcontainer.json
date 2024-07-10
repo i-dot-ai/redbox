@@ -1,6 +1,6 @@
 {
   "image": "python:3.11-buster",
-  "postCreateCommand": "pip3 install poetry && apt update && apt install libgl-dev libmagic-dev docker.io  -y && poetry install && chmod 777 data/elastic",
+  "postCreateCommand": "pip3 install poetry && apt update && apt install libgl-dev libmagic-dev docker-ce  -y && poetry install && chmod 777 data/elastic",
   "name": "redbox-dev",
   "features": {
     "ghcr.io/devcontainers/features/git:1": {},

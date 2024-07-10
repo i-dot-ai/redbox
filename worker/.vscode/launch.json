@@ -1,0 +1,22 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Worker",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "faststream",
+            "python": "venv/bin/python",
+            "args": [
+                "run",
+                "worker.app:app",
+                "--workers", "1"
+            ],
+            "jinja": true,
+            "envFile": "${workspaceFolder}/../.env"
+        }
+    ]
+}

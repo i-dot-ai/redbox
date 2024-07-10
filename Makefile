@@ -105,6 +105,12 @@ reset-db:  ## Reset Django database
 	docker compose down db --volumes
 	docker compose up -d db
 
+.PHONY: reset-elastic
+reset-elastic:  ## Reset Django database
+	docker compose down elasticsearch
+	rm -rf data/elastic/*
+	docker compose up -d elasticsearch --wait
+
 .PHONY: docs-serve
 docs-serve:  ## Build and serve documentation
 	poetry run mkdocs serve

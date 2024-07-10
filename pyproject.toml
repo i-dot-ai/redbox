@@ -129,14 +129,3 @@ known-first-party = ["redbox_app", "redbox", "core_api"]
 "*/admin.py" = ["RUF012"]
 "*/models.py" = ["RUF012"]
 
-[tool.pytest.ini_options]
-addopts = "--import-mode=importlib"
-env_override_existing_values = 1
-env_files = [
-    ".env.test",
-    ".env"
-]
-markers = [
-    "incremental: marks tests as incremental (deselect with '-m \"not incremental\"')",
-    "ai: marks tests as using a live LLM (deselect with '-m \"not ai\"')"
-]

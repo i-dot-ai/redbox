@@ -130,7 +130,7 @@ def test_summary_runnable_large_file(all_chunks_retriever, mock_llm, large_chunk
     )
 
     assert response["response"] == "<<TESTING>>"
-    assert response["route_name"] == ChatRoute.map_reduce_summarise
+    assert response["route_name"] == ChatRoute.map_reduce_summarise, response["route_name"]
 
 
 def test_summary_runnable_small_file(all_chunks_retriever, mock_llm, chunked_file, env):
