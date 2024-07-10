@@ -264,7 +264,7 @@ class ChatMessageRating(TimeStampedModel):
     text = models.TextField(blank=True, null=True)
 
     def __str__(self) -> str:  # pragma: no cover
-        return f"{self.chat_message} - {self.rating}"
+        return f"{self.chat_message} - {self.rating} - {self.text}"
 
 
 class ChatMessageRatingChip(UUIDPrimaryKeyBase, TimeStampedModel):

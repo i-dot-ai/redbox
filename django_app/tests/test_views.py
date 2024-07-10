@@ -380,7 +380,7 @@ def test_post_new_rating_only(alice: User, chat_message: ChatMessage, client: Cl
 
     # When
     url = reverse("ratings", kwargs={"message_id": chat_message.id})
-    response = client.post(url, {"rating": 5})
+    response = client.post(url, json.dumps({"rating": 5}), content_type="application/json")
 
     # Then
     assert 100 <= response.status_code <= 299
@@ -397,7 +397,11 @@ def test_post_new_rating(alice: User, chat_message: ChatMessage, client: Client)
 
     # When
     url = reverse("ratings", kwargs={"message_id": chat_message.id})
-    response = client.post(url, {"rating": 5, "text": "Lorem Ipsum.", "chips": ["speed", "accuracy", "swearing"]})
+    response = client.post(
+        url,
+        json.dumps({"rating": 5, "text": "Lorem Ipsum.", "chips": ["speed", "accuracy", "swearing"]}),
+        content_type="application/json",
+    )
 
     # Then
     assert 100 <= response.status_code <= 299
@@ -414,7 +418,11 @@ def test_post_updated_rating(alice: User, chat_message_with_rating: ChatMessage,
 
     # When
     url = reverse("ratings", kwargs={"message_id": chat_message_with_rating.id})
-    response = client.post(url, {"rating": 5, "text": "Lorem Ipsum.", "chips": ["speed", "accuracy", "swearing"]})
+    response = client.post(
+        url,
+        json.dumps({"rating": 5, "text": "Lorem Ipsum.", "chips": ["speed", "accuracy", "swearing"]}),
+        content_type="application/json",
+    )
 
     # Then
     assert 100 <= response.status_code <= 299

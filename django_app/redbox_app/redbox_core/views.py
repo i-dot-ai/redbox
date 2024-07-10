@@ -5,6 +5,7 @@ from dataclasses import dataclass, field
 from http import HTTPStatus
 from pathlib import Path
 
+from dataclasses_json import Undefined, dataclass_json
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import FieldError, ValidationError
@@ -342,6 +343,7 @@ def post_message(request: HttpRequest) -> HttpResponse:
 
 
 class RatingsView(View):
+    @dataclass_json(undefined=Undefined.EXCLUDE)
     @dataclass(frozen=True)
     class Rating:
         rating: int
@@ -351,9 +353,7 @@ class RatingsView(View):
     @method_decorator(login_required)
     def post(self, request: HttpRequest, message_id: uuid.UUID) -> HttpResponse:
         message: ChatMessage = get_object_or_404(ChatMessage, id=message_id)
-        user_rating = RatingsView.Rating(
-            rating=request.POST["rating"], text=request.POST.get("text"), chips=set(request.POST.getlist("chips"))
-        )
+        user_rating = RatingsView.Rating.schema().loads(request.body)
 
         chat_message_rating: ChatMessageRating
         if chat_message_rating := ChatMessageRating.objects.filter(chat_message=message).first():
