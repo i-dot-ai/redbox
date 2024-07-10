@@ -20,7 +20,7 @@ from langchain_core.vectorstores import VectorStoreRetriever
 from tiktoken import Encoding
 
 from core_api import dependencies
-from core_api.format import format_documents
+from redbox.api.format import format_documents
 from core_api.runnables import (
     make_chat_prompt_from_messages_runnable,
     resize_documents,

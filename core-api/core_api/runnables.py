@@ -5,7 +5,7 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import RunnableLambda, RunnablePassthrough, chain
 from tiktoken import Encoding
 
-from core_api.format import reduce_chunks_by_tokens
+from redbox.api.format import reduce_chunks_by_tokens
 from redbox.models import ChatResponse
 from redbox.models.errors import QuestionLengthError
 from redbox.transform import map_document_to_source_document
