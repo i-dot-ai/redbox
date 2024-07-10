@@ -35,7 +35,8 @@
     }
   ],
   "scripts": {
-    "build": "npx parcel build"
+    "build": "npx parcel build",
+    "watch": "npx parcel watch"
   },
   "author": "",
   "dependencies": {
