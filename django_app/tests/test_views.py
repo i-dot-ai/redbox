@@ -374,6 +374,23 @@ def test_view_session_with_documents(chat_message: ChatMessage, client: Client):
 
 
 @pytest.mark.django_db()
+def test_post_new_rating_only(alice: User, chat_message: ChatMessage, client: Client):
+    # Given
+    client.force_login(alice)
+
+    # When
+    url = reverse("ratings", kwargs={"message_id": chat_message.id})
+    response = client.post(url, {"rating": 5})
+
+    # Then
+    assert 100 <= response.status_code <= 299
+    rating = ChatMessageRating.objects.get(pk=chat_message.pk)
+    assert rating.rating == 5
+    assert rating.text is None
+    assert {c.text for c in rating.chatmessageratingchip_set.all()} == set()
+
+
+@pytest.mark.django_db()
 def test_post_new_rating(alice: User, chat_message: ChatMessage, client: Client):
     # Given
     client.force_login(alice)
