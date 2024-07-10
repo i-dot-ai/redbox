@@ -4,14 +4,13 @@ import socket
 from pathlib import Path
 
 import environ
-from django.urls import reverse_lazy
 import sentry_sdk
+from django.urls import reverse_lazy
 from dotenv import load_dotenv
 from import_export.formats.base_formats import CSV
+from redbox_app.setting_enums import Classification, Environment
 from sentry_sdk.integrations.django import DjangoIntegration
 from storages.backends import s3boto3
-
-from redbox_app.setting_enums import Classification, Environment
 
 load_dotenv()
 
@@ -21,6 +20,11 @@ SECRET_KEY = env.str("DJANGO_SECRET_KEY")
 ENVIRONMENT = Environment[env.str("ENVIRONMENT").upper()]
 WEBSOCKET_SCHEME = "ws" if ENVIRONMENT.is_test else "wss"
 LOGIN_METHOD = env.str("LOGIN_METHOD")
+
+if env.str("HOSTS"):
+    env_hosts = env.str("HOSTS", "").split(",")
+else:
+    env_hosts = ENVIRONMENT.hosts
 
 
 # SECURITY WARNING: don't run with debug turned on in production!
@@ -153,8 +157,6 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 SITE_ID = 1
 AUTH_USER_MODEL = "redbox_core.User"
 ACCOUNT_EMAIL_VERIFICATION = "none"
-# LOGIN_REDIRECT_URL = "homepage"
-# LOGIN_URL = "sign-in"
 
 # CSP settings https://content-security-policy.com/
 # https://django-csp.readthedocs.io/
@@ -176,7 +178,7 @@ CSP_FONT_SRC = (
 )
 CSP_STYLE_SRC = ("'self'",)
 CSP_FRAME_ANCESTORS = ("'none'",)
-CSP_CONNECT_SRC = ["'self'", f"wss://{ENVIRONMENT.hosts[0]}/ws/chat/", "plausible.io"]
+CSP_CONNECT_SRC = ["'self'", f"wss://{env_hosts[0]}/ws/chat/", "plausible.io"]
 
 # https://pypi.org/project/django-permissions-policy/
 PERMISSIONS_POLICY: dict[str, list] = {
@@ -238,10 +240,13 @@ else:
     SESSION_COOKIE_SECURE = True
 
 if ENVIRONMENT.is_test:
-    ALLOWED_HOSTS = ENVIRONMENT.hosts
+    ALLOWED_HOSTS = env_hosts
 else:
     LOCALHOST = socket.gethostbyname(socket.gethostname())
-    ALLOWED_HOSTS = [LOCALHOST, *ENVIRONMENT.hosts,"redbox-sandbox.uktrade.digital","dbt-default-alb-1550180991.eu-west-2.elb.amazonaws.com"]
+    ALLOWED_HOSTS = [
+        LOCALHOST,
+        *env_hosts,
+    ]
 
 if not ENVIRONMENT.is_local:
     SENTRY_DSN = env.str("SENTRY_DSN", None)
@@ -273,7 +278,9 @@ LOG_LEVEL = env.str("DJANGO_LOG_LEVEL", "WARNING")
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
-    "formatters": {"verbose": {"format": "%(asctime)s %(levelname)s %(module)s: %(message)s"}},
+    "formatters": {
+        "verbose": {"format": "%(asctime)s %(levelname)s %(module)s: %(message)s"}
+    },
     "handlers": {
         "file": {
             "level": LOG_LEVEL,
@@ -314,7 +321,9 @@ elif EMAIL_BACKEND_TYPE == "CONSOLE":
 elif EMAIL_BACKEND_TYPE == "GOVUKNOTIFY":
     EMAIL_BACKEND = "django_gov_notify.backends.NotifyEmailBackend"
     GOVUK_NOTIFY_API_KEY = env.str("GOVUK_NOTIFY_API_KEY")
-    GOVUK_NOTIFY_PLAIN_EMAIL_TEMPLATE_ID = env.str("GOVUK_NOTIFY_PLAIN_EMAIL_TEMPLATE_ID")
+    GOVUK_NOTIFY_PLAIN_EMAIL_TEMPLATE_ID = env.str(
+        "GOVUK_NOTIFY_PLAIN_EMAIL_TEMPLATE_ID"
+    )
 else:
     message = f"Unknown EMAIL_BACKEND_TYPE of {EMAIL_BACKEND_TYPE}"
     raise ValueError(message)
