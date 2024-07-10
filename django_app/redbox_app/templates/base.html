@@ -57,7 +57,7 @@
     {% set menu_items = [
       {"text": "Documents", "href": url('documents')},
       {"text": "Chats", "href": url('chats')},
-      {"text": "My details", "href": url('demographics')},
+      <!--{"text": "My details", "href": url('demographics')},-->
       {"text": "Sign out", "href": url('signed-out')}
     ] %}
   {% else %}
@@ -115,7 +115,7 @@
           <path d="M9 17L27 12V24L9 20V17Z" stroke="white" stroke-linecap="round" stroke-linejoin="round"/>
           <path d="M17.5997 22.8C17.4947 23.1808 17.3156 23.5373 17.0728 23.8489C16.83 24.1605 16.5282 24.4213 16.1847 24.6163C15.8411 24.8113 15.4625 24.9367 15.0704 24.9854C14.6784 25.0341 14.2806 25.0051 13.8997 24.9C13.5189 24.795 13.1625 24.6159 12.8508 24.3731C12.5392 24.1303 12.2784 23.8285 12.0834 23.4849C11.8884 23.1414 11.763 22.7627 11.7143 22.3707C11.6657 21.9786 11.6947 21.5808 11.7997 21.2" stroke="white" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
-        <span class="iai-footer__feedback-text">This is a new service your <a class="iai-footer__link" href="https://www.smartsurvey.co.uk/s/EOWJ04/">feedback</a> will help us to <span class="iai-prevent-orphans">improve it</span></span>
+        <span class="iai-footer__feedback-text">This is a new service your <a class="iai-footer__link" href="mailto:{{contact_email}}">feedback</a> will help us to <span class="iai-prevent-orphans">improve it</span></span>
       </div>
     </div>
   </footer>
