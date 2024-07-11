@@ -26,6 +26,22 @@ services:
       timeout: 30s
       retries: 24
       start_period: 60s
+  django-q:
+    image: django-q:latest
+    build:
+      context: .
+      dockerfile: ./django_app/django_q/Dockerfile
+    networks:
+      - redbox-app-network
+    env_file:
+      - .env
+    volumes:
+      - ./django_app:/app/django_q/
+    depends_on:
+      redis:
+        condition: service_healthy
+      db:
+        condition: service_healthy
   db:
     image: postgres:13
     env_file:

@@ -63,6 +63,7 @@ INSTALLED_APPS = [
     "compressor",
     "magic_link",
     "import_export",
+    "django_q",
 ]
 
 MIDDLEWARE = [
@@ -330,3 +331,15 @@ CHAT_TITLE_LENGTH = 30
 FILE_EXPIRY_IN_SECONDS = env.int("FILE_EXPIRY_IN_DAYS") * 24 * 60 * 60
 SUPERUSER_EMAIL = env.str("SUPERUSER_EMAIL", None)
 MAX_SECURITY_CLASSIFICATION = Classification[env.str("MAX_SECURITY_CLASSIFICATION")]
+
+# settings for django-q2 task manager
+Q_CLUSTER = {
+    "name": "redbox-django",
+    "workers": 4,
+    "timeout": 90,
+    "retry": 120,
+    "queue_limit": 50,
+    "bulk": 10,
+    "label": "Django Q2",
+    "orm": "default",
+}
