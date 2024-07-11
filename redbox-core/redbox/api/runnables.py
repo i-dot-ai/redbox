@@ -2,7 +2,7 @@ from functools import partial, reduce
 
 from langchain_core.documents.base import Document
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.runnables import RunnableLambda, RunnablePassthrough, chain
+from langchain_core.runnables import RunnableLambda, RunnablePassthrough, chain, Runnable
 from tiktoken import Encoding
 
 from redbox.api.format import reduce_chunks_by_tokens
@@ -71,7 +71,7 @@ def map_to_chat_response(input_dict: dict):
     ).invoke(input_dict)
 
 
-def resize_documents(max_tokens: int | None = None) -> list[Document]:
+def resize_documents(max_tokens: int | None = None) -> Runnable[list[Document]]:
     """Gets a file as larger document-sized Chunks, splitting it by max_tokens."""
     n = max_tokens or float("inf")
 

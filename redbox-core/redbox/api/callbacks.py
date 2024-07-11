@@ -25,7 +25,7 @@ class LoggerCallbackHandler(BaseCallbackHandler):
         """Run when chain ends running."""
         self.logger.info("Chain end: %s", outputs)
 
-    def on_chain_error(self, error: Exception | KeyboardInterrupt, **kwargs: Any):  # noqa:ARG002
+    def on_chain_error(self, error: BaseException, **kwargs: Any):  # noqa:ARG002
         """Run when chain errors."""
         self.logger.error("Chain error: %s", error)
 
