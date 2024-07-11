@@ -89,6 +89,7 @@ class ChatMessage extends HTMLElement {
                     </div>
                 </div>
             </div>
+            <feedback-buttons></feedback-buttons>
         `;
 
     // Insert route_display HTML
@@ -120,6 +121,7 @@ class ChatMessage extends HTMLElement {
     let sourcesContainer = /** @type SourcesList */ (
       this.querySelector("sources-list")
     );
+    let feedbackContainer = this.querySelector("feedback-buttons");
     let responseLoading = /** @type HTMLElement */ (
       this.querySelector(".rb-loading-ellipsis")
     );
@@ -198,6 +200,7 @@ class ChatMessage extends HTMLElement {
         }
       } else if (message.type === "end") {
         sourcesContainer.showCitations(message.data.message_id);
+        feedbackContainer.showFeedback(message.data.message_id);
       } else if (message.type === "error") {
         this.querySelector(".govuk-notification-banner")?.removeAttribute(
           "hidden"
