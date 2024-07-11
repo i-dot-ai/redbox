@@ -297,3 +297,39 @@ class DocumentSelector extends HTMLElement {
   }
 }
 customElements.define("document-selector", DocumentSelector);
+
+class ChatTitle extends HTMLElement {
+  connectedCallback() {
+    this.switchToShow()
+  }
+
+  switchToShow = () => {
+    this.innerHTML = `<div class="chat_title__container"><h1>${this.dataset.title}</h1></div>`;
+    this.querySelector(".chat_title__container").addEventListener("click", this.switchToEdit);
+  }
+
+  switchToEdit = () => {
+    this.innerHTML = `<div class="chat_title__container"><textarea class="chat_title__text-input" id="chat_title" rows="1">${this.dataset.title}</textarea></div>`;
+    this.querySelector(".chat_title__container").addEventListener("keypress", (e) => {
+          switch (e.keyCode) {
+            case 13: // enter
+              this.update();
+              break;
+            case 27: // escape
+              this.switchToShow();
+              break;
+          }
+        }
+    )
+    this.querySelector(".chat_title__container").addEventListener("blur", this.update);
+  }
+
+  update = () => {
+    const textInput = this.querySelector("#chat_title");
+    console.log(`updating chat title to "${textInput.value}"`);
+    this.dataset.title = textInput.value;
+    this.switchToShow()
+  }
+}
+
+customElements.define("chat-title", ChatTitle);

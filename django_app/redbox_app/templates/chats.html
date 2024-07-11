@@ -53,6 +53,9 @@
     </div>
 
     <div class="govuk-grid-column-two-thirds">
+
+      <chat-title data-session-id="{{ chat_id or '' }}" data-title="{{ current_chat.name or '' }}"></chat-title>
+
       <chat-controller class="iai-chat-container" data-stream-url="{{ streaming.endpoint }}" data-session-id="{{ chat_id or '' }}">
 
         <h2 class="govuk-visually-hidden">Current chat</h2>

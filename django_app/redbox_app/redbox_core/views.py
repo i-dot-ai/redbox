@@ -222,6 +222,7 @@ class ChatsView(View):
         show_route = request.user.is_staff
 
         messages: Sequence[ChatMessage] = []
+        current_chat = None
         if chat_id:
             current_chat = ChatHistory.objects.get(id=chat_id)
             if current_chat.users != request.user:
@@ -247,6 +248,7 @@ class ChatsView(View):
             "chat_id": chat_id,
             "messages": messages,
             "chat_history": chat_history,
+            "current_chat": current_chat,
             "streaming": {"endpoint": str(endpoint)},
             "contact_email": settings.CONTACT_EMAIL,
             "files": all_files,
