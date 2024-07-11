@@ -273,6 +273,23 @@ class ChatsView(View):
             file.selected = file in selected_files
 
 
+class ChatsTitleView(View):
+    @dataclass_json(undefined=Undefined.EXCLUDE)
+    @dataclass(frozen=True)
+    class Title:
+        name: str
+
+    @method_decorator(login_required)
+    def post(self, request: HttpRequest, chat_id: uuid.UUID) -> HttpResponse:
+        chat_history: ChatHistory = get_object_or_404(ChatHistory, id=chat_id)
+        user_rating = ChatsTitleView.Title.schema().loads(request.body)
+
+        chat_history.name = user_rating.name
+        chat_history.save()
+
+        return HttpResponse(status=HTTPStatus.NO_CONTENT)
+
+
 class CitationsView(View):
     @method_decorator(login_required)
     def get(self, request: HttpRequest, message_id: uuid.UUID | None = None) -> HttpResponse:

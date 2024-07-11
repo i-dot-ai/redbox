@@ -374,6 +374,21 @@ def test_view_session_with_documents(chat_message: ChatMessage, client: Client):
 
 
 @pytest.mark.django_db()
+def test_post_chat_title(alice: User, chat_history: ChatHistory, client: Client):
+    # Given
+    client.force_login(alice)
+
+    # When
+    url = reverse("chat-titles", kwargs={"chat_id": chat_history.id})
+    response = client.post(url, json.dumps({"name": "New chat name"}), content_type="application/json")
+
+    # Then
+    assert 100 <= response.status_code <= 299
+    chat_history.refresh_from_db()
+    assert chat_history.name == "New chat name"
+
+
+@pytest.mark.django_db()
 def test_post_new_rating_only(alice: User, chat_message: ChatMessage, client: Client):
     # Given
     client.force_login(alice)

@@ -337,7 +337,7 @@ class ChatTitle extends HTMLElement {
         /** @type {HTMLInputElement | null} */ (
         document.querySelector('[name="csrfmiddlewaretoken"]')
     )?.value || "";
-    fetch(`/chat/${this.dataset.sessionId}/title`, {
+    fetch(`/chat/${this.dataset.sessionId}/title/`, {
       method: "POST",
       headers: {"Content-Type": "application/json", "X-CSRFToken": csrfToken},
       body: JSON.stringify({name: name}),
