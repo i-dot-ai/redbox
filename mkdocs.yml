@@ -1,13 +1,30 @@
 site_name: Redbox
 site_description: Bringing Generative AI to the way the Civil Service works
 site_author: Incubator for AI
-repo_url: https://github.com/i-dot-ai/redbox-copilot
+repo_url: https://github.com/i-dot-ai/redbox
 
 theme:
   name: "material"
+  font:
+    text: "Inter"
+    code: "DM Mono"
   palette:
-    primary: "red"
-    accent: "red"
+    # Palette toggle for light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: custom
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to dark mode
+
+    # Palette toggle for dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: custom
+      toggle:
+        icon: material/weather-night
+        name: Switch to light mode
+
   features:
     - search.suggest
     - search.highlight
@@ -41,7 +58,6 @@ nav:
       - Settings: code_reference/models/settings.md
     - Parsing:
       - Overview: code_reference/parsing/index.md
-      - FileChunker: code_reference/parsing/file_chunker.md
       - Chunkers: code_reference/parsing/chunkers.md
       - Chunk Clustering: code_reference/parsing/chunk_clustering.md
     - Storage:
@@ -60,6 +76,8 @@ plugins:
     mkdocstrings:
       handlers:
         python:
+          paths:
+            - redbox-core
           options:
             extensions:
             - griffe_typingdoc
@@ -99,8 +117,10 @@ markdown_extensions:
 extra:
   social:
     - icon: fontawesome/brands/github
-      link: https://github.com/i-dot-ai/redbox-copilot
+      link: https://github.com/i-dot-ai/redbox
     - icon: fontawesome/solid/envelope
       link: mailto:i-dot-ai-enquiries@cabinetoffice.gov.uk
 
+extra_css:
+  - stylesheets/extra.css
         
