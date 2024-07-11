@@ -4,6 +4,10 @@ site_author: Incubator for AI
 repo_url: https://github.com/i-dot-ai/redbox
 
 theme:
+  
+  logo: assets/briefcase_white.svg
+
+
   name: "material"
   font:
     text: "Inter"
