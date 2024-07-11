@@ -17,6 +17,9 @@ auth_urlpatterns = [
     path("signed-out/", auth_views.signed_out_view, name="signed-out"),
 ]
 
+if settings.LOGIN_METHOD == "sso":
+    auth_urlpatterns.append(path("auth/", include("authbroker_client.urls")))
+
 info_urlpatterns = [
     path("privacy-notice/", info_views.privacy_notice_view, name="privacy-notice"),
     path(

@@ -6,6 +6,7 @@ from elasticsearch import Elasticsearch
 from pydantic import BaseModel
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger()
 
@@ -104,7 +105,6 @@ class AISettings(BaseModel):
     reduce_system_prompt: str = REDUCE_SYSTEM_PROMPT
     reduce_question_prompt: str = REDUCE_QUESTION_PROMPT
 
-
 class ElasticLocalSettings(BaseModel):
     """settings required for a local/ec2 instance of elastic"""
 
@@ -136,6 +136,7 @@ class Settings(BaseSettings):
 
     anthropic_api_key: str | None = None
     openai_api_key: str | None = None
+    openai_model: str | None = None
     azure_openai_api_key: str | None = None
     azure_openai_endpoint: str | None = None
 
@@ -150,7 +151,7 @@ class Settings(BaseSettings):
     partition_strategy: Literal["auto", "fast", "ocr_only", "hi_res"] = "fast"
     clustering_strategy: Literal["full"] | None = None
 
-    elastic: ElasticCloudSettings | ElasticLocalSettings = ElasticLocalSettings()
+    elastic: ElasticLocalSettings = ElasticLocalSettings()
     elastic_root_index: str = "redbox-data"
 
     kibana_system_password: str = "redboxpass"
