@@ -136,6 +136,7 @@ class Settings(BaseSettings):
 
     anthropic_api_key: str | None = None
     openai_api_key: str | None = None
+    openai_model: str | None = None
     azure_openai_api_key: str | None = None
     azure_openai_endpoint: str | None = None
 
