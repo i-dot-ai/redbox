@@ -6,7 +6,7 @@ To run this project, you'll need the following installed:
 
 -  [Docker](https://docs.docker.com/get-docker/) - For building and running containers
 -  [Docker Compose](https://docs.docker.com/compose/install/) - For managing multiple containers
--  [Python 3.11](https://www.python.org/downloads/) - For intellisense and linting (not explicitly needed to run the project due to docker, but recommended for development)
+-  [Python 3.12](https://www.python.org/downloads/) - For intellisense and linting (not explicitly needed to run the project due to docker, but recommended for development)
 -  [pip](https://pip.pypa.io/en/stable/installation/) - For installing poetry
 -  [poetry](https://python-poetry.org/docs/) - For managing python packages
 -  [Make](https://www.gnu.org/software/make/) - For running commands in the `Makefile`

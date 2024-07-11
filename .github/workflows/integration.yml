@@ -47,10 +47,10 @@ jobs:
         docker-images: true
         swap-storage: true
 
-    - name: Set up Python 3.11
+    - name: Set up Python 3.12
       uses: actions/setup-python@v3
       with:
-        python-version: "3.11"
+        python-version: "3.12"
 
     - name: Set up Poetry
       uses: abatilo/actions-poetry@v2

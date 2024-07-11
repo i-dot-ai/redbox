@@ -195,6 +195,7 @@ django_app/staticfiles/*
 django_app/node_modules
 django_app/frontend/CACHE
 django_app/frontend/govuk-assets
+django_app/frontend/.parcel-cache
 # Django app tests staticfiles
 django_app/tests/staticfiles
 

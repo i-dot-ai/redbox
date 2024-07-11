@@ -1,0 +1,273 @@
+$govuk-assets-path: "govuk-assets/";
+$govuk-font-family: sans-serif;
+$redbox-red: #9c0000; /*old:#A50202*/
+
+@import "./node_modules/govuk-frontend/dist/govuk/all";
+
+body {
+  background-color: white;
+  margin: 0;
+}
+
+/* All pages */
+.rb-classification-banner {
+  background-color: #2b71c7;
+  color: white;
+  font-size: 0.875rem;
+  padding: 0.25rem 1rem;
+  text-align: center;
+}
+
+.rb-environment-warning {
+  background-color: #ffbf47;
+  color: black;
+  margin-bottom: 0;
+}
+
+.govuk-phase-banner__content__tag {
+  background-color: govuk-colour("blue");
+  color: white;
+}
+
+.rb-button--blue {
+  background-color: govuk-colour("blue");
+}
+.rb-button--blue:hover {
+  background-color: govuk-colour("dark-blue");
+}
+
+/* Home page */
+.govuk-main-wrapper:has(.rb-banner) {
+  padding-top: 0;
+}
+.rb-banner {
+  background-color: $redbox-red;
+  color: white;
+  padding-bottom: 3rem;
+  padding-top: 2.75rem;
+}
+.rb-banner * {
+  color: white;
+}
+.rb-banner .govuk-link {
+  color: white;
+}
+.rb-banner .govuk-link:focus {
+  background-color: white;
+  color: black;
+}
+.rb-banner__links {
+  align-items: center;
+  display: flex;
+  gap: 0.75rem;
+}
+.rb-banner__button {
+  background-color: white !important;
+}
+.rb-banner__button:hover {
+  color: $redbox-red !important;
+  filter: brightness(0.9);
+}
+
+/* Documents page */
+.rb-doc-retention {
+  align-items: center;
+  display: flex;
+  gap: 0.5rem;
+}
+.rb-doclist-mobile__item {
+  border: 1px solid #b1b4b6;
+  border-radius: 0.25rem;
+  list-style-type: none;
+}
+.rb-doclist-desktop {
+  display: none;
+}
+@media (min-width: 448px) {
+  .rb-doclist-mobile {
+    display: none;
+  }
+  .rb-doclist-desktop {
+    display: block;
+  }
+}
+/* Use this if more than one button in Actions
+.rb-docs__actions .govuk-button {
+  width: 100%;
+}
+@media (min-width: 1024px) {
+  .rb-docs__actions {
+    width: 13.25rem;
+  }
+  .rb-docs__actions .govuk-button {
+    width: auto;
+  }
+}
+.rb-docs__status {
+  margin-top: 2px;
+}
+
+
+/* File upload */
+.rb-file-types {
+  font-size: 0.875rem;
+}
+
+/* Chat page */
+.rb-loading-ellipsis {
+  font-style: italic;
+  margin-top: 1rem;
+}
+.rb-loading-ellipsis span {
+  animation-duration: 1.5s;
+  animation-iteration-count: infinite;
+  margin: 0 -2px;
+}
+.rb-loading-ellipsis span:nth-of-type(1) {
+  animation-name: rb-ellipsis-1;
+}
+.rb-loading-ellipsis span:nth-of-type(2) {
+  animation-name: rb-ellipsis-2;
+}
+.rb-loading-ellipsis span:nth-of-type(3) {
+  animation-name: rb-ellipsis-3;
+}
+@keyframes rb-ellipsis-1 {
+  0% {
+    opacity: 0;
+  }
+  24% {
+    opacity: 0;
+  }
+  25% {
+    opacity: 1;
+  }
+}
+@keyframes rb-ellipsis-2 {
+  0% {
+    opacity: 0;
+  }
+  49% {
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+@keyframes rb-ellipsis-3 {
+  0% {
+    opacity: 0;
+  }
+  74% {
+    opacity: 0;
+  }
+  75% {
+    opacity: 1;
+  }
+}
+
+.rb-chat-message__container {
+  margin-top: -1rem;
+}
+
+.rb-response-feedback {
+  display: none;
+  position: relative;
+  top: -0.5rem;
+}
+/* only show response feedback for last AI message */
+[data-role="ai"] + .rb-response-feedback {
+  display: block;
+}
+.rb-response-feedback__buttons {
+  display: flex;
+  gap: 0.25rem;
+  margin-bottom: 1.25rem;
+}
+.rb-response-feedback__buttons button {
+  align-items: center;
+  background-color: transparent;
+  border: 0;
+  cursor: pointer;
+  color: govuk-colour("dark-grey");
+  display: flex;
+  fill: govuk-colour("dark-grey");
+  font-size: 0.75rem;
+  gap: 0.125rem;
+}
+.rb-response-feedback__buttons button[data-response="down"] svg {
+  transform: rotate(180deg);
+}
+.rb-response-feedback__thumb-fill {
+  fill: transparent;
+}
+.rb-response-feedback__buttons[data-status="down"]
+  button[data-response="down"]
+  *,
+.rb-response-feedback__buttons button[data-response="down"]:hover * {
+  color: govuk-colour("red");
+  fill: govuk-colour("red");
+}
+.rb-response-feedback__buttons[data-status="up"] button[data-response="up"] *,
+.rb-response-feedback__buttons button[data-response="up"]:hover * {
+  color: govuk-colour("green");
+  fill: govuk-colour("green");
+}
+
+/* Only show feedback when correct buttons pressed */
+.rb-response-feedback__thumbs-up,
+.rb-response-feedback__thumbs-down {
+  display: none;
+}
+.rb-response-feedback__buttons[data-status="up"]
+  ~ .rb-response-feedback__thumbs-up {
+  display: block;
+}
+.rb-response-feedback__buttons[data-status="down"]
+  ~ .rb-response-feedback__thumbs-down {
+  display: block;
+}
+
+.rb-streaming-response-loading {
+  align-items: center;
+  display: flex;
+  padding: 0.5rem 0;
+  gap: 0.25rem;
+}
+.rb-response-loading {
+  align-items: center;
+  display: flex;
+  padding: 0.5rem 0;
+  visibility: hidden;
+}
+.rb-response-loading:focus-visible {
+  outline: 1px solid;
+}
+.rb-response-loading__spinner,
+.rb-streaming-response-loading__spinner {
+  width: 1.5rem;
+}
+
+/* Citations page */
+.rb-citations {
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+}
+.rb-citations__item {
+  border-top: 1px solid #e5e7eb;
+  padding: 1rem 0;
+}
+.rb-citations__item:first-child {
+  border-top: none;
+}
+
+/* i.AI Design System */
+:root {
+  --iai-product-colour: #9c0000;
+  --iai-top-nav-gradient-colour-1: #9c0000;
+  --iai-top-nav-gradient-colour-2: #451818;
+  --iai-background-colour-1: #f6eef0;
+  --iai-background-colour-2: #f8f8f8;
+}
+@import "../node_modules/i.ai-design-system/dist/styles.scss";
