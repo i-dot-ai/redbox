@@ -1,4 +1,5 @@
 from functools import partial, reduce
+from typing import Any
 
 from langchain_core.documents.base import Document
 from langchain_core.prompts import ChatPromptTemplate
@@ -71,7 +72,7 @@ def map_to_chat_response(input_dict: dict):
     ).invoke(input_dict)
 
 
-def resize_documents(max_tokens: int | None = None) -> Runnable[list[Document]]:
+def resize_documents(max_tokens: int | None = None) -> Runnable[list[Document], Any]:
     """Gets a file as larger document-sized Chunks, splitting it by max_tokens."""
     n = max_tokens or float("inf")
 
@@ -79,6 +80,6 @@ def resize_documents(max_tokens: int | None = None) -> Runnable[list[Document]]:
     def wrapped(chunks_unsorted: list[Document]):
         chunks_sorted = sorted(chunks_unsorted, key=lambda doc: doc.metadata["index"])
         reduce_chunk_n = partial(reduce_chunks_by_tokens, max_tokens=n)
-        return reduce(lambda cs, c: reduce_chunk_n(cs, c), chunks_sorted, [])
+        return reduce(lambda cs, c: reduce_chunk_n(cs, c), chunks_sorted, [])  # type: ignore
 
     return wrapped
