@@ -104,16 +104,16 @@ class ChatHistoryAdmin(admin.ModelAdmin):
         )
         chat_history: models.ChatHistory
         chat_message: models.ChatMessage
-        chat_massage_rating: models.ChatMessageRating
+        chat_message_rating: models.ChatMessageRating
         for chat_history in queryset:
             for chat_message in chat_history.chatmessage_set.all():
                 row = [getattr(chat_history, field) for field in history_field_names] + [
                     getattr(chat_message, field) for field in message_field_names
                 ]
                 if hasattr(chat_message, "chatmessagerating"):
-                    chat_massage_rating = chat_message.chatmessagerating
-                    row += [getattr(chat_massage_rating, field) for field in rating_field_names]
-                    row += [", ".join(c.text for c in chat_massage_rating.chatmessageratingchip_set.all())]
+                    chat_message_rating = chat_message.chatmessagerating
+                    row += [getattr(chat_message_rating, field) for field in rating_field_names]
+                    row += [", ".join(c.text for c in chat_message_rating.chatmessageratingchip_set.all())]
                 writer.writerow(row)
 
         return response
