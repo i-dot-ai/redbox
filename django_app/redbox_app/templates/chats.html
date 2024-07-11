@@ -27,9 +27,11 @@
         <h2 class="govuk-heading-s">Recent chats</h2>
         <ul class="govuk-list govuk-list--spaced iai-panel__scrollable">
           {% for chat in chat_history %}
+            {% if chat != current_chat %}
             <li class="govuk-!-margin-bottom-2">
               <a class="govuk-link govuk-body-s" href="{{url('chats', chat.id)}}">{{ chat.name }}</a>
             </li>
+            {% endif %}
           {% endfor %}
         </ul>
       </div>
