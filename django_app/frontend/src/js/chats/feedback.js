@@ -48,7 +48,7 @@ class FeedbackButtons extends HTMLElement {
                 <span class="feedback__negative">Sorry this didn't meet your expectations</span>
                 <span class="feedback__positive">Thanks for the feedback</span>
             </div>
-            <button class="feedback__improve-response-btn">Help improve the response</button>
+            <button class="feedback__improve-response-btn" type="button">Help improve the response</button>
         </div>
         <div class="feedback__container feedback__container--3" hidden>
             <fieldset class="feedback__chips-container feedback__negative">
@@ -75,11 +75,11 @@ class FeedbackButtons extends HTMLElement {
             </fieldset>
             <label for="text-${messageId}">Or describe with your own words:</label>
             <textarea class="feedback__text-input" id="text-${messageId}" rows="1"></textarea>
-            <button class="feedback__submit-btn" type="submit">Submit</button>
+            <button class="feedback__submit-btn" type="button">Submit</button>
         </div>
         <div class="feedback__container feedback__container--4" hidden>
            <span>Thanks for helping improve this response</span>
-           <button class="feedback__rate-again-btn">Rate response again</button> 
+           <button class="feedback__rate-again-btn" type="button">Rate response again</button> 
         </div>
     `;
 
