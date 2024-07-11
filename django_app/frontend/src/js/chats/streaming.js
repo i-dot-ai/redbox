@@ -327,8 +327,21 @@ class ChatTitle extends HTMLElement {
   update = () => {
     const textInput = this.querySelector("#chat_title");
     console.log(`updating chat title to "${textInput.value}"`);
+    this.send(textInput.value)
     this.dataset.title = textInput.value;
     this.switchToShow()
+  }
+
+  send = (name) => {
+    const csrfToken =
+        /** @type {HTMLInputElement | null} */ (
+        document.querySelector('[name="csrfmiddlewaretoken"]')
+    )?.value || "";
+    fetch(`/chat/${this.dataset.sessionId}/title`, {
+      method: "POST",
+      headers: {"Content-Type": "application/json", "X-CSRFToken": csrfToken},
+      body: JSON.stringify({name: name}),
+    })
   }
 }
 
