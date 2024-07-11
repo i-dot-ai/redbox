@@ -351,7 +351,7 @@ class ChatsPage(SignedInBasePage):
 
     def feedback_chips(self, chips: Collection[str]):
         for chip in chips:
-            self.page.locator(".feedback__container").get_by_label(chip).check()
+            self.page.locator(".feedback__container").get_by_test_id(chip).check()
 
     feedback_chips = property(fset=feedback_chips)
 

@@ -54,22 +54,22 @@ class FeedbackButtons extends HTMLElement {
             <fieldset class="feedback__chips-container feedback__negative">
                 <legend class="feedback__chips-legend">How would you describe the response?</legend>
                 <div class="feedback__chips-inner-container">
-                    <input class="feedback__chip" type="checkbox" id="chip1-negative-${messageId}"/>
+                    <input class="feedback__chip" type="checkbox" id="chip1-negative-${messageId}" data-testid="Inaccurate"/>
                     <label class="feedback__chip-label" for="chip1-negative-${messageId}"><img src="/static/icons/Chip_tick.svg" alt=""/> Inaccurate</label>
-                    <input class="feedback__chip" type="checkbox" id="chip2-negative-${messageId}"/>
+                    <input class="feedback__chip" type="checkbox" id="chip2-negative-${messageId}" data-testid="Incomplete"/>
                     <label class="feedback__chip-label" for="chip2-negative-${messageId}"><img src="/static/icons/Chip_tick.svg" alt=""/> Incomplete</label>
-                    <input class="feedback__chip" type="checkbox" id="chip3-negative-${messageId}"/>
+                    <input class="feedback__chip" type="checkbox" id="chip3-negative-${messageId}" data-testid="Bad quality"/>
                     <label class="feedback__chip-label" for="chip3-negative-${messageId}"><img src="/static/icons/Chip_tick.svg" alt=""/> Bad quality</label>
                 </div>
             </fieldset>
             <fieldset class="feedback__chips-container feedback__positive">
                 <legend class="feedback__chips-legend">How would you describe the response?</legend>
                 <div class="feedback__chips-inner-container">
-                    <input class="feedback__chip" type="checkbox" id="chip1-positive-${messageId}"/>
+                    <input class="feedback__chip" type="checkbox" id="chip1-positive-${messageId}" data-testid="Accurate"/>
                     <label class="feedback__chip-label" for="chip1-positive-${messageId}"><img src="/static/icons/Chip_tick.svg" alt=""/> Accurate</label>
-                    <input class="feedback__chip" type="checkbox" id="chip2-positive-${messageId}"/>
+                    <input class="feedback__chip" type="checkbox" id="chip2-positive-${messageId}" data-testid="Complete"/>
                     <label class="feedback__chip-label" for="chip2-positive-${messageId}"><img src="/static/icons/Chip_tick.svg" alt=""/> Complete</label>
-                    <input class="feedback__chip" type="checkbox" id="chip3-positive-${messageId}"/>
+                    <input class="feedback__chip" type="checkbox" id="chip3-positive-${messageId}" data-testid="Good quality"/>
                     <label class="feedback__chip-label" for="chip3-positive-${messageId}"><img src="/static/icons/Chip_tick.svg" alt=""/> Good quality</label>
                 </div>
             </fieldset>
