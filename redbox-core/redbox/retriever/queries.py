@@ -18,33 +18,40 @@ class ESParams(TypedDict):
     similarity_threshold: float
 
 
+def make_query_filter(user_uuid: UUID, file_uuids: list[UUID]) -> list[dict]:
+    query_filter: list[dict] = [
+        {
+            "bool": {
+                "should": [
+                    {"term": {"creator_user_uuid.keyword": str(user_uuid)}},
+                    {"term": {"metadata.creator_user_uuid.keyword": str(user_uuid)}},
+                ]
+            }
+        }
+    ]
+
+    if len(file_uuids) != 0:
+        query_filter.append(
+            {
+                "bool": {
+                    "should": [
+                        {"terms": {"parent_file_uuid.keyword": [str(uuid) for uuid in file_uuids]}},
+                        {"terms": {"metadata.parent_file_uuid.keyword": [str(uuid) for uuid in file_uuids]}},
+                    ]
+                }
+            }
+        )
+    return query_filter
+
+
 def get_all(query: ESQuery) -> dict[str, Any]:
     """
     Returns a parameterised elastic query that will return everything it matches.
 
     As it's used in summarisation, it excludes embeddings.
     """
-    query_filter = [
-        {
-            "bool": {
-                "should": [
-                    {"term": {"creator_user_uuid.keyword": str(query["user_uuid"])}},
-                    {"term": {"metadata.creator_user_uuid.keyword": str(query["user_uuid"])}},
-                ]
-            }
-        }
-    ]
-    if len(query["file_uuids"]) != 0:
-        query_filter.append(
-            {
-                "bool": {
-                    "should": [
-                        {"terms": {"parent_file_uuid.keyword": [str(uuid) for uuid in query["file_uuids"]]}},
-                        {"terms": {"metadata.parent_file_uuid.keyword": [str(uuid) for uuid in query["file_uuids"]]}},
-                    ]
-                }
-            }
-        )
+
+    query_filter = make_query_filter(query["user_uuid"], query["file_uuids"])
     return {
         "_source": {"excludes": ["*embedding"]},
         "query": {"bool": {"must": {"match_all": {}}, "filter": query_filter}},
@@ -56,28 +63,7 @@ def get_some(
 ) -> dict[str, Any]:
     vector = embedding_model.embed_query(query["question"])
 
-    query_filter = [
-        {
-            "bool": {
-                "should": [
-                    {"term": {"creator_user_uuid.keyword": str(query["user_uuid"])}},
-                    {"term": {"metadata.creator_user_uuid.keyword": str(query["user_uuid"])}},
-                ]
-            }
-        }
-    ]
-
-    if len(query["file_uuids"]) != 0:
-        query_filter.append(
-            {
-                "bool": {
-                    "should": [
-                        {"terms": {"parent_file_uuid.keyword": [str(uuid) for uuid in query["file_uuids"]]}},
-                        {"terms": {"metadata.parent_file_uuid.keyword": [str(uuid) for uuid in query["file_uuids"]]}},
-                    ]
-                }
-            }
-        )
+    query_filter = make_query_filter(query["user_uuid"], query["file_uuids"])
 
     return {
         "size": params["size"],

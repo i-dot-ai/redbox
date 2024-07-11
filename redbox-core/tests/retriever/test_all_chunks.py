@@ -1,6 +1,6 @@
 from langchain_core.documents.base import Document
 
-from core_api.retriever import AllElasticsearchRetriever
+from redbox.retriever import AllElasticsearchRetriever
 from redbox.models.file import Chunk, File
 
 
