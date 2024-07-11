@@ -2,8 +2,10 @@ from typing import Annotated
 
 from fastapi import Depends
 from langchain_core.runnables import Runnable
+from redbox.models import Settings
+from redbox.models.chat import ChatRoute
 from semantic_router import Route
-from semantic_router.encoders import AzureOpenAIEncoder, OpenAIEncoder, BaseEncoder
+from semantic_router.encoders import AzureOpenAIEncoder, BaseEncoder, OpenAIEncoder
 from semantic_router.layer import RouteLayer
 
 from core_api.build_chains import (
@@ -13,8 +15,6 @@ from core_api.build_chains import (
     build_vanilla_chain,
 )
 from core_api.dependencies import get_env
-from redbox.models import Settings
-from redbox.models.chat import ChatRoute
 
 # === Pre-canned responses for non-LLM routes ===
 INFO_RESPONSE = """
@@ -100,19 +100,6 @@ summarisation = Route(
     ],
 )
 
-extract = Route(
-    name=ChatRoute.extract.value,
-    utterances=[
-        "I'd like to find some information in the documents I've uploaded",
-        "Can you help me identify details from these documents?",
-        "Please give me all action items from this document",
-        "Give me all the action items from these meeting notes",
-        "Could you locate some key information in these uploaded documents?",
-        "I need to obtain certain details from the documents I have uploaded, please",
-        "Please extract all action items from this document",
-        "Extract all the sentences with the word 'shall'",
-    ],
-)
 
 vanilla = Route(
     name=ChatRoute.chat.value,
