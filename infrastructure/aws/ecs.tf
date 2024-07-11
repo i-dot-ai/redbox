@@ -139,6 +139,7 @@ module "core_api" {
   ip_whitelist                 = var.external_ips
   environment_variables        = local.core_api_environment_variables
   secrets                      = local.reconstructed_core_secrets
+  ephemeral_storage            = 30
 }
 
 
@@ -165,6 +166,7 @@ module "worker" {
   environment_variables        = local.worker_environment_variables
   secrets                      = local.reconstructed_worker_secrets
   http_healthcheck             = false
+  ephemeral_storage            = 30
 }
 
 
