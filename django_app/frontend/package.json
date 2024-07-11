@@ -22,6 +22,10 @@
       "staticPath": "./node_modules/i.ai-design-system/dist/icons"
     },
     {
+      "distDir": "./dist/icons",
+      "staticPath": "./src/icons"
+    },
+    {
       "distDir": "./dist/govuk-assets",
       "staticPath": "./src/govuk-assets"
     },
