@@ -299,13 +299,19 @@ class DocumentSelector extends HTMLElement {
 customElements.define("document-selector", DocumentSelector);
 
 class ChatTitle extends HTMLElement {
+
+  pencilIcon = `<svg width="25" height="24" viewBox="0 0 25 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                         <path d="M11.9766 4H4.97656C4.44613 4 3.93742 4.21071 3.56235 4.58579C3.18728 4.96086 2.97656 5.46957 2.97656 6V20C2.97656 20.5304 3.18728 21.0391 3.56235 21.4142C3.93742 21.7893 4.44613 22 4.97656 22H18.9766C19.507 22 20.0157 21.7893 20.3908 21.4142C20.7658 21.0391 20.9766 20.5304 20.9766 20V13" stroke="black" stroke-linecap="round" stroke-linejoin="round"/>
+                         <path d="M19.4766 2.49998C19.8744 2.10216 20.414 1.87866 20.9766 1.87866C21.5392 1.87866 22.0787 2.10216 22.4766 2.49998C22.8744 2.89781 23.0979 3.43737 23.0979 3.99998C23.0979 4.56259 22.8744 5.10216 22.4766 5.49998L12.9766 15L8.97656 16L9.97656 12L19.4766 2.49998Z" stroke="black" stroke-linecap="round" stroke-linejoin="round"/>
+                       </svg>`;
+
   connectedCallback() {
     this.switchToShow()
   }
 
   switchToShow = () => {
     if (this.dataset.sessionId) {
-      this.innerHTML = `<div class="chat_title__container"><h2 class="chat_title__heading">${this.dataset.title}</h2></div>`;
+      this.innerHTML = `<div class="chat_title__container"><h2 class="chat_title__heading">${this.dataset.title} ${this.pencilIcon}</h2></div>`;
       this.querySelector(".chat_title__container").addEventListener("click", this.switchToEdit);
     } else {
       this.innerHTML = `<h2 class="govuk-visually-hidden">Current chat</h2>`;
