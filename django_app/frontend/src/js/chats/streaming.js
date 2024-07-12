@@ -317,31 +317,37 @@ class ChatTitle extends HTMLElement {
                         <label for="chat_title" class="govuk-visually-hidden">Title</label>
                         <input type="text" class="chat_title__input" id="chat_title" maxlength=${this.dataset.titleLength} value="${this.dataset.title}"/>
                       </div>`;
+    this.escaped = false;
     this.querySelector(".chat_title__container").addEventListener("keydown", (e) => {
           switch (e.key) {
-            case "Enter":
-              this.update();
-              return false;
             case "Escape":
+              this.escaped = true;
               this.switchToShow();
-              return false;
+              return true;
             default:
               return true;
           }
         }
     )
-    this.querySelector(".chat_title__input").addEventListener("blur", this.update);
+    this.querySelector(".chat_title__input").addEventListener("change", (e) => {
+      if (!this.escaped) {
+        this.update();
+      }
+    });
+    this.querySelector(".chat_title__input").addEventListener("blur", (e) => {
+      this.switchToShow();
+    });
   }
 
   update = () => {
-    const textInput = this.querySelector("#chat_title");
-    console.log(`updating chat title to "${textInput.value}"`);
-    this.send(textInput.value)
-    this.dataset.title = textInput.value;
-    this.switchToShow()
+    const newTitle = this.querySelector("#chat_title")?.value;
+    console.log(`updating chat title to "${newTitle}"`);
+    this.send(newTitle)
+    this.dataset.title = newTitle;
+    this.switchToShow();
   }
 
-  send = (name) => {
+  send = (newTitle) => {
     const csrfToken =
         /** @type {HTMLInputElement | null} */ (
         document.querySelector('[name="csrfmiddlewaretoken"]')
@@ -349,7 +355,7 @@ class ChatTitle extends HTMLElement {
     fetch(`/chat/${this.dataset.sessionId}/title/`, {
       method: "POST",
       headers: {"Content-Type": "application/json", "X-CSRFToken": csrfToken},
-      body: JSON.stringify({name: name}),
+      body: JSON.stringify({name: newTitle}),
     })
   }
 }
