@@ -49,8 +49,9 @@ jobs:
         sed -i 's/^EMBEDDING_MODEL=.*/EMBEDDING_MODEL=all-mpnet-base-v2/' .env
 
         docker compose up -d --wait elasticsearch
-        poetry install --no-root --no-ansi --with dev,ai,api --without worker
-        poetry run python download_embedder.py --embedding_model all-mpnet-base-v2
+        cd redbox-core
+        poetry install
+        poetry run python ../download_embedder.py --embedding_model all-mpnet-base-v2
 
     - name: Run DeepEval Unit Tests
       run: poetry run deepeval test run core_api/tests/test_ai.py --mark ai
