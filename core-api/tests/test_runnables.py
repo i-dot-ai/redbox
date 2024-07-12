@@ -10,7 +10,7 @@ from redbox.models.errors import AIError
 
 @pytest.fixture(scope="module", autouse=True)
 def mock_embeddings(session_mocker, embedding_model):
-    session_mocker.patch("core_api.dependencies.get_embedding_model", return_value=embedding_model)
+    session_mocker.patch("redbox.models.Settings.get_embeddings", return_value=embedding_model)
     return embedding_model
 
 
@@ -59,9 +59,7 @@ def test_make_chat_prompt_from_messages_runnable(mock_llm):
 
 def test_rag_runnable(es_client, es_index, mock_llm, chunked_file, env):
     retriever = get_parameterised_retriever(
-        es=es_client,
         env=env,
-        index_name=es_index,
     )
 
     chain = build_retrieval_chain(llm=mock_llm, retriever=retriever, tokeniser=get_tokeniser(), env=env)
@@ -85,8 +83,8 @@ def test_rag_runnable(es_client, es_index, mock_llm, chunked_file, env):
     assert {str(chunked_file.uuid)} == {chunk.metadata["parent_file_uuid"] for chunk in response["source_documents"]}
 
 
-def test_condense_runnable(es_client, es_index, mock_llm, chunked_file, env):
-    retriever = get_parameterised_retriever(es=es_client, env=env, index_name=es_index)
+def test_condense_runnable(es_client, mock_llm, chunked_file, env):
+    retriever = get_parameterised_retriever(env=env)
 
     chain = build_condense_retrieval_chain(llm=mock_llm, retriever=retriever, tokeniser=get_tokeniser(), env=env)
 

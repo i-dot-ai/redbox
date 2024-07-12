@@ -188,8 +188,6 @@ def make_test_case(
 
     retriever = get_parameterised_retriever(
         env=env,
-        es=es_client,
-        index_name=index_name,
     )
 
     rag_chain = build_retrieval_chain(

@@ -1,10 +1,16 @@
 import logging
 from typing import Literal
 
+from functools import lru_cache
+
 import boto3
 from elasticsearch import Elasticsearch
+from langchain_community.embeddings import AzureOpenAIEmbeddings, OpenAIEmbeddings
+from langchain_core.embeddings import Embeddings
+from langchain_core.utils import convert_to_secret_str
 from pydantic import BaseModel
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger()
@@ -195,6 +201,7 @@ class Settings(BaseSettings):
 
     model_config = SettingsConfigDict(env_file=".env", env_nested_delimiter="__", extra="allow", frozen=True)
 
+    @lru_cache(1)
     def elasticsearch_client(self) -> Elasticsearch:
         if isinstance(self.elastic, ElasticLocalSettings):
             log.info("Connecting to self managed Elasticsearch")
@@ -216,6 +223,7 @@ class Settings(BaseSettings):
 
         return Elasticsearch(cloud_id=self.elastic.cloud_id, api_key=self.elastic.api_key)
 
+    @lru_cache(1)
     def s3_client(self):
         if self.object_store == "minio":
             client = boto3.client(
@@ -252,3 +260,24 @@ class Settings(BaseSettings):
     @property
     def redis_url(self) -> str:
         return f"redis://{self.redis_host}:{self.redis_port}/"
+
+    @lru_cache(1)
+    def get_embeddings(self) -> Embeddings:
+        if self.embedding_backend == "azure":
+            return AzureOpenAIEmbeddings(
+                azure_endpoint=self.azure_openai_endpoint,
+                api_version=self.azure_api_version_embeddings,
+                model=self.azure_embedding_model,
+                max_retries=self.embedding_max_retries,
+                retry_min_seconds=self.embedding_retry_min_seconds,
+                retry_max_seconds=self.embedding_retry_max_seconds,
+            )
+        elif self.embedding_backend == "openai":
+            return OpenAIEmbeddings(
+                api_key=convert_to_secret_str(self.openai_api_key),
+                base_url=self.embedding_openai_base_url,
+                model=self.embedding_openai_model,
+                chunk_size=self.embedding_max_batch_size,
+            )
+        else:
+            raise Exception("No configured embedding model")
