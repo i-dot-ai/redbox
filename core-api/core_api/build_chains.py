@@ -25,8 +25,10 @@ from redbox.api.runnables import (
     make_chat_prompt_from_messages_runnable,
     resize_documents,
 )
-from redbox.models import ChatRoute, Settings
+from redbox.models import ChatRoute
 from redbox.models.errors import NoDocumentSelected
+
+from core_api.dependencies import env
 
 # === Logging ===
 
@@ -37,7 +39,6 @@ log = logging.getLogger()
 def build_vanilla_chain(
     llm: Annotated[ChatLiteLLM, Depends(dependencies.get_llm)],
     tokeniser: Annotated[Encoding, Depends(dependencies.get_tokeniser)],
-    env: Annotated[Settings, Depends(dependencies.get_env)],
 ) -> Runnable:
     return (
         make_chat_prompt_from_messages_runnable(
@@ -58,7 +59,6 @@ def build_retrieval_chain(
     llm: Annotated[ChatLiteLLM, Depends(dependencies.get_llm)],
     retriever: Annotated[VectorStoreRetriever, Depends(dependencies.get_parameterised_retriever)],
     tokeniser: Annotated[Encoding, Depends(dependencies.get_tokeniser)],
-    env: Annotated[Settings, Depends(dependencies.get_env)],
 ) -> Runnable:
     return (
         RunnablePassthrough.assign(documents=retriever)
@@ -84,7 +84,6 @@ def build_condense_retrieval_chain(
     llm: Annotated[ChatLiteLLM, Depends(dependencies.get_llm)],
     retriever: Annotated[VectorStoreRetriever, Depends(dependencies.get_parameterised_retriever)],
     tokeniser: Annotated[Encoding, Depends(dependencies.get_tokeniser)],
-    env: Annotated[Settings, Depends(dependencies.get_env)],
 ) -> Runnable:
     def route(input_dict: dict):
         if len(input_dict["chat_history"]) > 0:
@@ -126,7 +125,6 @@ def build_summary_chain(
     llm: Annotated[ChatLiteLLM, Depends(dependencies.get_llm)],
     all_chunks_retriever: Annotated[BaseRetriever, Depends(dependencies.get_all_chunks_retriever)],
     tokeniser: Annotated[Encoding, Depends(dependencies.get_tokeniser)],
-    env: Annotated[Settings, Depends(dependencies.get_env)],
 ) -> Runnable:
     def make_document_context():
         return (

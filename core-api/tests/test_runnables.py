@@ -59,12 +59,10 @@ def test_make_chat_prompt_from_messages_runnable(mock_llm):
 
 def test_rag_runnable(es_client, es_index, mock_llm, chunked_file, env):
     retriever = get_parameterised_retriever(
-        es=es_client,
-        env=env,
         index_name=es_index,
     )
 
-    chain = build_retrieval_chain(llm=mock_llm, retriever=retriever, tokeniser=get_tokeniser(), env=env)
+    chain = build_retrieval_chain(llm=mock_llm, retriever=retriever, tokeniser=get_tokeniser())
 
     previous_history = [
         {"text": "Lorem ipsum dolor sit amet.", "role": "user"},
@@ -86,9 +84,9 @@ def test_rag_runnable(es_client, es_index, mock_llm, chunked_file, env):
 
 
 def test_condense_runnable(es_client, es_index, mock_llm, chunked_file, env):
-    retriever = get_parameterised_retriever(es=es_client, env=env, index_name=es_index)
+    retriever = get_parameterised_retriever(index_name=es_index)
 
-    chain = build_condense_retrieval_chain(llm=mock_llm, retriever=retriever, tokeniser=get_tokeniser(), env=env)
+    chain = build_condense_retrieval_chain(llm=mock_llm, retriever=retriever, tokeniser=get_tokeniser())
 
     previous_history = [
         {"text": "Lorem ipsum dolor sit amet.", "role": "user"},
@@ -110,9 +108,7 @@ def test_condense_runnable(es_client, es_index, mock_llm, chunked_file, env):
 
 
 def test_summary_runnable_large_file(all_chunks_retriever, mock_llm, large_chunked_file, env):
-    chain = build_summary_chain(
-        llm=mock_llm, all_chunks_retriever=all_chunks_retriever, tokeniser=get_tokeniser(), env=env
-    )
+    chain = build_summary_chain(llm=mock_llm, all_chunks_retriever=all_chunks_retriever, tokeniser=get_tokeniser())
 
     previous_history = [
         {"text": "Lorem ipsum dolor sit amet.", "role": "user"},
@@ -134,9 +130,7 @@ def test_summary_runnable_large_file(all_chunks_retriever, mock_llm, large_chunk
 
 
 def test_summary_runnable_small_file(all_chunks_retriever, mock_llm, chunked_file, env):
-    chain = build_summary_chain(
-        llm=mock_llm, all_chunks_retriever=all_chunks_retriever, tokeniser=get_tokeniser(), env=env
-    )
+    chain = build_summary_chain(llm=mock_llm, all_chunks_retriever=all_chunks_retriever, tokeniser=get_tokeniser())
 
     previous_history = [
         {"text": "Lorem ipsum dolor sit amet.", "role": "user"},

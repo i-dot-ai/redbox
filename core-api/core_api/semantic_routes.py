@@ -12,8 +12,7 @@ from core_api.build_chains import (
     build_summary_chain,
     build_vanilla_chain,
 )
-from core_api.dependencies import get_env
-from redbox.models import Settings
+from core_api.dependencies import env
 from redbox.models.chat import ChatRoute
 
 # === Pre-canned responses for non-LLM routes ===
@@ -148,7 +147,7 @@ def get_semantic_routes():
     return (info, ability, coach, gratitude, summarisation, vanilla)
 
 
-def get_semantic_routing_encoder(env: Annotated[Settings, Depends(get_env)]):
+def get_semantic_routing_encoder():
     """
     TODO: This is a duplication of the logic for getting the LangChain embedding model used elsewhere
     We should replace semanticrouter with our own implementation to avoid this

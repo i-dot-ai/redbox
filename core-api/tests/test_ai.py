@@ -93,7 +93,7 @@ def ai_experiment_data() -> ExperimentData:
 
 @pytest.fixture(scope="session")
 def llm(env: Settings) -> ChatLiteLLM:
-    return get_llm(env)
+    return get_llm()
 
 
 @pytest.fixture(scope="session")
@@ -124,7 +124,7 @@ def eval_llm(env: Settings) -> DeepEvalBaseLLM:
         def get_model_name(self):
             return "Custom LiteLLM Model"
 
-    return ChatLiteLLMDeepEval(model=get_llm(env))
+    return ChatLiteLLMDeepEval(model=get_llm())
 
 
 @pytest.fixture(scope="session")
@@ -187,8 +187,6 @@ def make_test_case(
     index_name, user_uuid = elastic_index_and_user
 
     retriever = get_parameterised_retriever(
-        env=env,
-        es=es_client,
         index_name=index_name,
     )
 
@@ -196,7 +194,6 @@ def make_test_case(
         llm=llm,
         retriever=retriever,
         tokeniser=get_tokeniser(),
-        env=env,
     )
 
     def _make_test_case(
