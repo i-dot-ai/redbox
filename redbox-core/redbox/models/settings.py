@@ -265,6 +265,7 @@ class Settings(BaseSettings):
     def get_embeddings(self) -> Embeddings:
         if self.embedding_backend == "azure":
             return AzureOpenAIEmbeddings(
+                openai_api_key=self.azure_openai_api_key,
                 azure_endpoint=self.azure_openai_endpoint,
                 api_version=self.azure_api_version_embeddings,
                 model=self.azure_embedding_model,
