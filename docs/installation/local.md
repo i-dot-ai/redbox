@@ -80,7 +80,7 @@ This command will output a URL that you can click on to log in to the Django adm
 django-app-1  | http://localhost:8090/magic_link/5f6a67a2-dcf4-4bbb-8b00-817294d1f251/
 ```
 
-## Step 9: **Uploading a File*
+## Step 9: **Uploading a File**
 
 Once you're logged in, you will see a screen for collecting details about the user. This is currently geared towards Civil Service users, but you skip this step by clicking the "Skip" button. You will then be taken to the main page of the application.
 
