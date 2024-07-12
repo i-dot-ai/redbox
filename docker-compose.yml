@@ -42,6 +42,8 @@ services:
         condition: service_healthy
       db:
         condition: service_healthy
+      core-api:
+        condition: service_healthy
   db:
     image: postgres:13
     env_file:
