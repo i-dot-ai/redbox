@@ -120,7 +120,9 @@ class Chunk(PersistableModel):
     parent_file_uuid: UUID = Field(description="id of the original file which this text came from")
     index: int = Field(description="relative position of this chunk in the original file")
     text: str = Field(description="chunk of the original text")
-    metadata: Metadata | None = Field(description="subset of the unstructured Element.Metadata object", default=None)
+    metadata: Metadata | dict | None = Field(
+        description="subset of the unstructured Element.Metadata object", default=None
+    )
     embedding: list[float] | None = Field(description="the vector representation of the text", default=None)
 
     @computed_field  # type: ignore[misc] # Remove if https://github.com/python/mypy/issues/1362 is fixed.

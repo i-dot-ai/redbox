@@ -34,8 +34,13 @@ rebuild: stop prune ## Rebuild all images
 
 .PHONY: test-core-api
 test-core-api: ## Test core-api
-	poetry install --no-root --no-ansi --with api,dev,ai --without worker,docs
-	poetry run pytest core_api/tests --cov=core_api/src -v --cov-report=term-missing --cov-fail-under=75
+	cp .env.test core-api/.env
+	cd core-api && poetry install --with dev && poetry run python -m pytest -m "not ai" --cov=core_api -v --cov-report=term-missing --cov-fail-under=80
+
+.PHONY: test-ai
+test-ai: ## Test code with live LLM
+	cp .env.test core-api/.env
+	cd core-api && poetry install --with dev && poetry run python -m pytest -m "ai" --cov=core_api -v --cov-report=term-missing --cov-fail-under=80
 
 .PHONY: test-redbox
 test-redbox: ## Test redbox
@@ -44,20 +49,25 @@ test-redbox: ## Test redbox
 
 .PHONY: test-worker
 test-worker: ## Test worker
-	poetry install --no-root --no-ansi --with worker,dev --without ai,api,docs
-	poetry run pytest worker/tests --cov=worker -v --cov-report=term-missing --cov-fail-under=40
+	cp .env.test worker/.env
+	cd worker && poetry install && poetry run pytest --cov=worker -v --cov-report=term-missing --cov-fail-under=80
 
 .PHONY: test-django
 test-django: stop ## Test django-app
 	docker compose up -d --wait db minio
 	docker compose run --no-deps django-app venv/bin/pytest tests/ --ds redbox_app.settings -v --cov=redbox_app.redbox_core --cov-fail-under 85 -o log_cli=true
 
+.PHONY: build-django-static
+build-django-static: ## Build django-app static files
+	cd django_app/frontend/ && npm install && npm run build
+	cd django_app/ && poetry run python manage.py collectstatic --noinput
+
 .PHONY: test-integration
 test-integration: rebuild run test-integration-without-build ## Run all integration tests
 
 .PHONY: test-integration-without-build
 test-integration-without-build : ## Run all integration tests without rebuilding
-	poetry install --no-root --no-ansi --with dev --without ai,api,worker,docs
+	poetry install --no-root --no-ansi --with dev --without docs
 	poetry run pytest tests/
 
 .PHONY: collect-static
@@ -83,8 +93,9 @@ safe:  ##
 
 .PHONY: checktypes
 checktypes:  ## Check types in redbox and worker
-	poetry run mypy worker --ignore-missing-imports --no-incremental
-	cd redbox-core && poetry install && poetry run mypy . --ignore-missing-imports
+	poetry install --with dev --without docs --no-root
+	poetry run mypy redbox-core --ignore-missing-imports
+	poetry run mypy worker --ignore-missing-imports
 
 .PHONY: check-migrations
 check-migrations: stop  ## Check types in redbox and worker
@@ -97,6 +108,12 @@ check-migrations: stop  ## Check types in redbox and worker
 reset-db:  ## Reset Django database
 	docker compose down db --volumes
 	docker compose up -d db
+
+.PHONY: reset-elastic
+reset-elastic:  ## Reset Django database
+	docker compose down elasticsearch
+	rm -rf data/elastic/*
+	docker compose up -d elasticsearch --wait
 
 .PHONY: docs-serve
 docs-serve:  ## Build and serve documentation

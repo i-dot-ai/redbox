@@ -4,11 +4,11 @@ from uuid import uuid4
 import pytest
 from botocore.exceptions import ClientError
 from elasticsearch import Elasticsearch
-from sentence_transformers import SentenceTransformer
+from langchain_core.embeddings import Embeddings
+from langchain_core.embeddings.fake import FakeEmbeddings
 
-from redbox.models import Chunk, EmbedQueueItem, File
-from redbox.storage import ElasticsearchStorageHandler
-from worker.src.app import env
+from redbox.models import File
+from worker.app import env
 
 
 @pytest.fixture(scope="session")
@@ -32,8 +32,8 @@ def es_client() -> Elasticsearch:
 
 
 @pytest.fixture()
-def embedding_model() -> SentenceTransformer:
-    return SentenceTransformer(env.embedding_model)
+def embedding_model() -> Embeddings:
+    return FakeEmbeddings(size=3072)
 
 
 @pytest.fixture(scope="session")
@@ -55,26 +55,3 @@ def file(s3_client, file_pdf_path: Path):
         )
 
     return File(key=file_name, bucket=env.bucket_name, creator_user_uuid=uuid4())
-
-
-@pytest.fixture()
-def elasticsearch_storage_handler(
-    es_client,
-) -> ElasticsearchStorageHandler:
-    return ElasticsearchStorageHandler(es_client=es_client, root_index=env.elastic_root_index)
-
-
-@pytest.fixture()
-def chunk() -> Chunk:
-    return Chunk(parent_file_uuid=uuid4(), index=1, text="test_text", creator_user_uuid=uuid4())
-
-
-@pytest.fixture()
-def stored_chunk(chunk, elasticsearch_storage_handler) -> Chunk:
-    elasticsearch_storage_handler.write_item(chunk)
-    return chunk
-
-
-@pytest.fixture()
-def embed_queue_item(stored_chunk) -> EmbedQueueItem:
-    return EmbedQueueItem(chunk_uuid=stored_chunk.uuid)

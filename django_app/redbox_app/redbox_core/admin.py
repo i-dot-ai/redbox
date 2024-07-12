@@ -3,6 +3,7 @@ import logging
 
 from django.conf import settings
 from django.contrib import admin
+from django.db.models import QuerySet
 from django.http import HttpResponse
 from import_export.admin import ImportMixin
 from requests.exceptions import RequestException
@@ -41,28 +42,17 @@ class FileAdmin(admin.ModelAdmin):
     def reupload(self, request, queryset):  # noqa:ARG002
         for file in queryset:
             try:
-                logger.info("Deleting existing file from core-api: %s", file)
-                core_api.delete_file(file.core_file_uuid, file.user)
+                logger.info("Re-uploading file to core-api: %s", file)
+                core_api.reingest_file(file.core_file_uuid, file.user)
             except RequestException as e:
-                logger.exception("Error deleting File model object %s.", file, exc_info=e)
-
+                logger.exception("Error re-uploading File model object %s.", file, exc_info=e)
+                file.status = models.StatusEnum.errored
+                file.save()
             else:
-                file.status = models.StatusEnum.deleted
+                file.status = models.StatusEnum.uploaded
                 file.save()
 
-                try:
-                    logger.info("Re-uploading file to core-api: %s", file)
-                    upload_file_response = core_api.upload_file(file.unique_name, file.user)
-                except RequestException as e:
-                    logger.exception("Error re-uploading File model object %s.", file, exc_info=e)
-                    file.status = models.StatusEnum.errored
-                    file.save()
-                else:
-                    file.core_file_uuid = upload_file_response.uuid
-                    file.status = models.StatusEnum.uploaded
-                    file.save()
-
-        logger.info("Successfully reuploaded file %s.", file)
+                logger.info("Successfully reuploaded file %s.", file)
 
     list_display = ["original_file_name", "user", "status", "created_at", "last_referenced"]
     list_filter = ["user", "status"]
@@ -97,21 +87,34 @@ class ChatMessageInline(admin.StackedInline):
 
 
 class ChatHistoryAdmin(admin.ModelAdmin):
-    def export_as_csv(self, request, queryset):  # noqa:ARG002
-        history_field_names = [field.name for field in models.ChatHistory._meta.fields]  # noqa:SLF001
-        message_field_names = [field.name for field in models.ChatMessage._meta.fields]  # noqa:SLF001
+    def export_as_csv(self, request, queryset: QuerySet):  # noqa:ARG002
+        history_field_names: list[str] = [field.name for field in models.ChatHistory._meta.fields]  # noqa:SLF001
+        message_field_names: list[str] = [field.name for field in models.ChatMessage._meta.fields]  # noqa:SLF001
+        rating_field_names: list[str] = [field.name for field in models.ChatMessageRating._meta.fields]  # noqa:SLF001
 
         response = HttpResponse(content_type="text/csv")
         response["Content-Disposition"] = "attachment; filename=chathistory.csv"
         writer = csv.writer(response)
 
-        writer.writerow(history_field_names + message_field_names)
+        writer.writerow(
+            ["history_" + n for n in history_field_names]
+            + ["message_" + n for n in message_field_names]
+            + ["rating_" + n for n in rating_field_names]
+            + ["rating_chips"]
+        )
+        chat_history: models.ChatHistory
+        chat_message: models.ChatMessage
+        chat_message_rating: models.ChatMessageRating
         for chat_history in queryset:
             for chat_message in chat_history.chatmessage_set.all():
-                writer.writerow(
-                    [getattr(chat_history, field) for field in history_field_names]
-                    + [getattr(chat_message, field) for field in message_field_names]
-                )
+                row = [getattr(chat_history, field) for field in history_field_names] + [
+                    getattr(chat_message, field) for field in message_field_names
+                ]
+                if hasattr(chat_message, "chatmessagerating"):
+                    chat_message_rating = chat_message.chatmessagerating
+                    row += [getattr(chat_message_rating, field) for field in rating_field_names]
+                    row += [", ".join(c.text for c in chat_message_rating.chatmessageratingchip_set.all())]
+                writer.writerow(row)
 
         return response
 
@@ -137,5 +140,7 @@ admin.site.register(models.User, UserAdmin)
 admin.site.register(models.File, FileAdmin)
 admin.site.register(models.ChatHistory, ChatHistoryAdmin)
 admin.site.register(models.ChatMessage, ChatMessageAdmin)
+admin.site.register(models.ChatMessageRating)
+admin.site.register(models.ChatMessageRatingChip)
 admin.site.register(models.Citation, CitationAdmin)
 admin.site.register(models.BusinessUnit, BusinessUnitAdmin)

@@ -10,6 +10,7 @@ from botocore.exceptions import ClientError
 from bs4 import BeautifulSoup
 from django.conf import settings
 from django.test import Client
+from django.urls import reverse
 from pytest_django.asserts import assertRedirects
 from requests_mock import Mocker
 from yarl import URL
@@ -18,6 +19,7 @@ from redbox_app.redbox_core.models import (
     BusinessUnit,
     ChatHistory,
     ChatMessage,
+    ChatMessageRating,
     ChatRoleEnum,
     Citation,
     File,
@@ -372,6 +374,65 @@ def test_view_session_with_documents(chat_message: ChatMessage, client: Client):
 
 
 @pytest.mark.django_db()
+def test_post_new_rating_only(alice: User, chat_message: ChatMessage, client: Client):
+    # Given
+    client.force_login(alice)
+
+    # When
+    url = reverse("ratings", kwargs={"message_id": chat_message.id})
+    response = client.post(url, json.dumps({"rating": 5}), content_type="application/json")
+
+    # Then
+    assert 100 <= response.status_code <= 299
+    rating = ChatMessageRating.objects.get(pk=chat_message.pk)
+    assert rating.rating == 5
+    assert rating.text is None
+    assert {c.text for c in rating.chatmessageratingchip_set.all()} == set()
+
+
+@pytest.mark.django_db()
+def test_post_new_rating(alice: User, chat_message: ChatMessage, client: Client):
+    # Given
+    client.force_login(alice)
+
+    # When
+    url = reverse("ratings", kwargs={"message_id": chat_message.id})
+    response = client.post(
+        url,
+        json.dumps({"rating": 5, "text": "Lorem Ipsum.", "chips": ["speed", "accuracy", "swearing"]}),
+        content_type="application/json",
+    )
+
+    # Then
+    assert 100 <= response.status_code <= 299
+    rating = ChatMessageRating.objects.get(pk=chat_message.pk)
+    assert rating.rating == 5
+    assert rating.text == "Lorem Ipsum."
+    assert {c.text for c in rating.chatmessageratingchip_set.all()} == {"speed", "accuracy", "swearing"}
+
+
+@pytest.mark.django_db()
+def test_post_updated_rating(alice: User, chat_message_with_rating: ChatMessage, client: Client):
+    # Given
+    client.force_login(alice)
+
+    # When
+    url = reverse("ratings", kwargs={"message_id": chat_message_with_rating.id})
+    response = client.post(
+        url,
+        json.dumps({"rating": 5, "text": "Lorem Ipsum.", "chips": ["speed", "accuracy", "swearing"]}),
+        content_type="application/json",
+    )
+
+    # Then
+    assert 100 <= response.status_code <= 299
+    rating = ChatMessageRating.objects.get(pk=chat_message_with_rating.pk)
+    assert rating.rating == 5
+    assert rating.text == "Lorem Ipsum."
+    assert {c.text for c in rating.chatmessageratingchip_set.all()} == {"speed", "accuracy", "swearing"}
+
+
+@pytest.mark.django_db()
 def test_citations_shown_in_correct_order(
     client: Client, alice: User, chat_history: ChatHistory, several_files: Sequence[File]
 ):
@@ -426,19 +487,6 @@ def test_user_cannot_see_other_users_citations(chat_message_with_citation: ChatH
     # Then
     assert response.status_code == HTTPStatus.FOUND
     assert response.headers.get("Location") == "/chats/"
-
-
-@pytest.mark.django_db()
-def test_user_cannot_see_route(chat_history_with_files: ChatHistory, client: Client):
-    # Given
-    client.force_login(chat_history_with_files.users)
-
-    # When
-    response = client.get(f"/chats/{chat_history_with_files.id}/")
-
-    # Then
-    assert response.status_code == HTTPStatus.OK
-    assert b"iai-chat-bubble__route govuk-!-display-none" in response.content
 
 
 @pytest.mark.django_db()

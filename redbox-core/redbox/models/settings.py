@@ -6,14 +6,11 @@ from elasticsearch import Elasticsearch
 from pydantic import BaseModel
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger()
 
 
-VANILLA_SYSTEM_PROMPT = (
-    "You are an AI assistant called Redbox tasked with answering questions and providing information objectively."
-)
+VANILLA_SYSTEM_PROMPT = "You are an AI assistant called Redbox tasked with answering questions and providing information objectively."
 
 RETRIEVAL_SYSTEM_PROMPT = (
     "Given the following conversation and extracted parts of a long document and a question, create a final answer. \n"
@@ -67,15 +64,21 @@ CONDENSE_SYSTEM_PROMPT = (
 
 VANILLA_QUESTION_PROMPT = "{question}\n=========\n Response: "
 
-RETRIEVAL_QUESTION_PROMPT = "{question} \n=========\n{formatted_documents}\n=========\nFINAL ANSWER: "
+RETRIEVAL_QUESTION_PROMPT = (
+    "{question} \n=========\n{formatted_documents}\n=========\nFINAL ANSWER: "
+)
 
-SUMMARISATION_QUESTION_PROMPT = "Question: {question}. \n\n Documents: \n\n {documents} \n\n Answer: "
+SUMMARISATION_QUESTION_PROMPT = (
+    "Question: {question}. \n\n Documents: \n\n {documents} \n\n Answer: "
+)
 
 MAP_QUESTION_PROMPT = "Question: {question}. "
 
 MAP_DOCUMENT_PROMPT = "\n\n Documents: \n\n {documents} \n\n Answer: "
 
-REDUCE_QUESTION_PROMPT = "Question: {question}. \n\n Documents: \n\n {summaries} \n\n Answer: "
+REDUCE_QUESTION_PROMPT = (
+    "Question: {question}. \n\n Documents: \n\n {summaries} \n\n Answer: "
+)
 
 CONDENSE_QUESTION_PROMPT = "{question}\n=========\n Standalone question: "
 
@@ -104,6 +107,7 @@ class AISettings(BaseModel):
     map_document_prompt: str = MAP_DOCUMENT_PROMPT
     reduce_system_prompt: str = REDUCE_SYSTEM_PROMPT
     reduce_question_prompt: str = REDUCE_QUESTION_PROMPT
+
 
 class ElasticLocalSettings(BaseModel):
     """settings required for a local/ec2 instance of elastic"""
@@ -135,18 +139,28 @@ class Settings(BaseSettings):
     ai: AISettings = AISettings()
 
     anthropic_api_key: str | None = None
-    openai_api_key: str | None = None
+    openai_api_key: str = "NotAKey"
     openai_model: str | None = None
-    azure_openai_api_key: str | None = None
+    azure_openai_api_key: str = "NotAKey"
     azure_openai_endpoint: str | None = None
 
     openai_api_version: str = "2023-12-01-preview"
+    azure_api_version_embeddings: str = "2024-02-01"
     azure_openai_model: str = "azure/gpt-35-turbo-16k"
-    azure_embedding_model: str = "text-embedding-ada-002"
+    azure_embedding_model: str = "text-embedding-3-large"
     llm_max_tokens: int = 1024
 
-    embedding_max_retries: int = 4
+    embedding_backend: Literal["azure", "openai"] = "azure"
+    embedding_max_retries: int = 10
+    embedding_retry_min_seconds: int = 10
+    embedding_retry_max_seconds: int = 120
+    embedding_max_batch_size: int = 512
     embedding_document_field_name: str = "embedding"
+
+    embedding_openai_base_url: str | None = None
+    embedding_openai_model: str = "text-embedding-ada-002"
+
+    chat_backend: Literal["azure", "openai"] = "azure"
 
     partition_strategy: Literal["auto", "fast", "ocr_only", "hi_res"] = "fast"
     clustering_strategy: Literal["full"] | None = None
@@ -184,7 +198,9 @@ class Settings(BaseSettings):
     dev_mode: bool = False
     superuser_email: str | None = None
 
-    model_config = SettingsConfigDict(env_file=".env", env_nested_delimiter="__", extra="allow", frozen=True)
+    model_config = SettingsConfigDict(
+        env_file=".env", env_nested_delimiter="__", extra="allow", frozen=True
+    )
 
     def elasticsearch_client(self) -> Elasticsearch:
         if isinstance(self.elastic, ElasticLocalSettings):
@@ -205,7 +221,9 @@ class Settings(BaseSettings):
         log.info("Cloud ID = %s", self.elastic.cloud_id)
         log.info("Elastic Cloud API Key = %s", self.elastic.api_key)
 
-        return Elasticsearch(cloud_id=self.elastic.cloud_id, api_key=self.elastic.api_key)
+        return Elasticsearch(
+            cloud_id=self.elastic.cloud_id, api_key=self.elastic.api_key
+        )
 
     def s3_client(self):
         if self.object_store == "minio":

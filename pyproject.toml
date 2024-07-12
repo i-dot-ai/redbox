@@ -1,44 +1,17 @@
 [tool.ruff]
 line-length = 120
-target-version = 'py311'
+target-version = 'py312'
 
 [tool.poetry]
 name = "redbox-root"
-version = "0.3.0"
+version = "0.4.0"
 description = "RAG application that uses GenAI to chat with and summarise civil service documents"
 authors = ["i.AI <i-dot-ai-enquiries@cabinetoffice.gov.uk>"]
 license = "MIT"
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = ">=3.11,<3.12"
-redbox = {path="redbox-core", develop=true}
-pydantic = "^2.7.1"
-elasticsearch = "^8.14.0"
-langchain = "^0.2.6"
-tiktoken = "^0.7.0"
-boto3 = "^1.34.137"
-pydantic-settings = "^2.3.4"
-sentence-transformers = "<3.0"
-unstructured = {version = "<0.14.9", extras = ["all-docs"]}
-torch = "2.2.2"
-semantic-router = "^0.0.48"
-pikepdf = "<9.0.0"
-faststream = {extras = ["redis"], version = "<0.5.0"}
-langchain-elasticsearch = "^0.2.0"
-
-
-[tool.poetry.group.api.dependencies]
-fastapi = "^0.111.0"
-uvicorn = "^0.30.1"
-python-multipart = "^0.0.9"
-python-jose = "^3.3.0"
-websockets = "^12.0"
-
-[tool.poetry.group.worker.dependencies]
-opencv-python-headless = "^4.10.0.84"
-nltk = "^3.8.1"
-langchain-community = "^0.2.6"
+python = ">=3.12,<3.13"
 
 [tool.poetry.group.dev.dependencies]
 bumpversion = "^0.6.0"
@@ -47,6 +20,7 @@ pytest-env = "^1.1.1"
 pytest-mock = "^3.14.0"
 pytest-cov = "^5.0.0"
 pytest-dotenv = "^0.5.2"
+pytest-asyncio = "^0.23.6"
 ruff = "^0.5.0"
 bandit = "^1.7.9"
 detect-secrets = "^1.5.0"
@@ -54,33 +28,21 @@ mypy = "^1.9.0"
 types-python-dateutil = "^2.9.0.20240315"
 types-markdown = "^3.6.0.20240316"
 types-pytz = "^2024.1.0.20240203"
-pytest-asyncio = "^0.23.6"
-boto3-stubs = {extras = ["essential"], version = "^1.34.137"}
+boto3-stubs = {extras = ["essential"], version = "^1.34.143"}
 moto = {extras = ["s3"], version = "^5.0.10"}
-httpx = "^0.27.0"
-websockets = "^12.0"
-pyarrow = "^16.1.0"
-deepeval = "^0.21.62"
-minio = "^7.2.7"
-python-jose="^3.3.0"
-jsonlines="^4.0.0"
-ipywidgets="^8.1.2"
-playwright = "^1.43"
+playwright = "^1.45"
 pytest-playwright = "^0.5"
 axe-playwright-python = "^0.1"
-dj-notebook = "^0.7.0"
-
-[tool.poetry.group.ai.dependencies]
-anthropic = "^0.30.0"
-litellm = "^1.41.2"
-openai = "^1.35.7"
-langchain-community = "^0.2.6"
-
+websockets = "^12.0"
+python-jose = "^3.3.0"
+httpx = "^0.27.0"
+minio = "^7.2.7"
+yarl = "^1.9.4"
 
 [tool.poetry.group.docs.dependencies]
 mkdocs = "^1.5.3"
 mkdocstrings = {extras = ["python"], version = "^0.25.1"}
-mkdocs-material = "^9.5.27"
+mkdocs-material = "^9.5.28"
 mkdocs-mermaid2-plugin = "^1.1.1"
 markdown-mdantic = "^2.1.0"
 pygments = "^2.18.0"
@@ -160,13 +122,3 @@ known-first-party = ["redbox_app", "redbox", "core_api"]
 "redbox/tests/*" = ["ARG001"]
 "*/admin.py" = ["RUF012"]
 "*/models.py" = ["RUF012"]
-
-[tool.pytest.ini_options]
-env_override_existing_values = 1
-env_files = [
-    ".env.test",
-    ".env"
-]
-markers = [
-    "incremental: marks tests as incremental (deselect with '-m \"not incremental\"')",
-]

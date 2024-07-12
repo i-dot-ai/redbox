@@ -8,12 +8,43 @@ from elasticsearch import Elasticsearch, NotFoundError
 from elasticsearch.helpers import scan
 from pydantic import ValidationError
 
-from redbox.models import Chunk, ChunkStatus, FileStatus, ProcessingStatusEnum
+from redbox.models import Chunk, ChunkStatus, FileStatus, ProcessingStatusEnum, Settings
 from redbox.models.base import PersistableModel
 from redbox.storage.storage_handler import BaseStorageHandler
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger()
+
+env = Settings()
+
+
+def build_chunk_query(parent_file_uuid: UUID, user_uuid: UUID) -> dict:
+    query = {
+        "query": {
+            "bool": {
+                "must": [
+                    {
+                        "bool": {
+                            "should": [
+                                {"term": {"parent_file_uuid.keyword": str(parent_file_uuid)}},
+                                {"term": {"metadata.parent_file_uuid.keyword": str(parent_file_uuid)}},
+                            ]
+                        }
+                    },
+                    {
+                        "bool": {
+                            "should": [
+                                {"term": {"creator_user_uuid.keyword": str(user_uuid)}},
+                                {"term": {"metadata.creator_user_uuid.keyword": str(user_uuid)}},
+                            ]
+                        }
+                    },
+                ]
+            }
+        }
+    }
+
+    return query
 
 
 class ElasticsearchStorageHandler(BaseStorageHandler):
@@ -163,32 +194,18 @@ class ElasticsearchStorageHandler(BaseStorageHandler):
             for item in scan(
                 client=self.es_client,
                 index=target_index,
-                query={
-                    "query": {
-                        "bool": {
-                            "must": [
-                                {
-                                    "bool": {
-                                        "should": [
-                                            {"term": {"parent_file_uuid.keyword": str(parent_file_uuid)}},
-                                            {"term": {"metadata.parent_file_uuid.keyword": str(parent_file_uuid)}},
-                                        ]
-                                    }
-                                },
-                                {
-                                    "bool": {
-                                        "should": [
-                                            {"term": {"creator_user_uuid.keyword": str(user_uuid)}},
-                                            {"term": {"metadata.creator_user_uuid.keyword": str(user_uuid)}},
-                                        ]
-                                    }
-                                },
-                            ]
-                        }
-                    }
-                },
+                query=build_chunk_query(parent_file_uuid, user_uuid),
             )
         ]
+
+    def delete_file_chunks(self, parent_file_uuid: UUID, user_uuid: UUID):
+        """delete chunks for a given file"""
+        target_index = f"{self.root_index}-chunk"
+
+        self.es_client.delete_by_query(
+            index=target_index,
+            body=build_chunk_query(parent_file_uuid, user_uuid),
+        )
 
     def get_file_status(self, file_uuid: UUID, user_uuid: UUID) -> FileStatus:
         """Get the status of a file and associated Chunks
@@ -247,7 +264,7 @@ def hit_to_chunk(hit: dict[str, Any]) -> Chunk:
             uuid=hit["_id"],
             text=hit["_source"]["text"],
             index=hit["_source"]["metadata"]["index"],
-            embedding=hit["_source"]["embedding"],
+            embedding=hit["_source"][env.embedding_document_field_name],
             created_datetime=hit["_source"]["metadata"]["created_datetime"],
             creator_user_uuid=hit["_source"]["metadata"]["creator_user_uuid"],
             parent_file_uuid=hit["_source"]["metadata"]["parent_file_uuid"],

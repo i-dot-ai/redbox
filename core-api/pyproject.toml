@@ -1,0 +1,60 @@
+[tool.ruff]
+line-length = 120
+target-version = 'py312'
+
+
+[tool.poetry]
+name = "core-api"
+version = "0.4.0"
+description = "RAG application that uses GenAI to chat with and summarise civil service documents"
+authors = ["i.AI <i-dot-ai-enquiries@cabinetoffice.gov.uk>"]
+license = "MIT"
+readme = "../README.md"
+
+[tool.poetry.dependencies]
+python = ">=3.12,<3.13"
+redbox = {path="../redbox-core", develop=true}
+pydantic = "^2.7.1"
+langchain = "^0.2.6"
+tiktoken = "^0.7.0"
+boto3 = "^1.34.139"
+semantic-router = "^0.0.48"
+faststream = {extras = ["redis"], version = "<0.5.0"}
+fastapi = "^0.111.0"
+uvicorn = "^0.30.1"
+python-multipart = "^0.0.9"
+python-jose = "^3.3.0"
+websockets = "^12.0"
+langchain_openai = "^0.1.9"
+langchain-community = "^0.2.6"
+pillow-heif = "<0.17.0"
+langchain-elasticsearch = "^0.2.2"
+litellm = "^1.41.11"
+
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.2.2"
+pytest-cov = "^5.0.0"
+pytest-asyncio = "^0.23.6"
+pytest-dotenv = "^0.5.2"
+pytest-mock = "^3.14.0"
+moto = {extras = ["s3"], version = "^5.0.10"}
+jsonlines = "^4.0.0"
+deepeval = "^0.21.64"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.pytest.ini_options]
+addopts = "--import-mode=importlib"
+env_override_existing_values = 1
+env_files = [
+    ".env.test",
+    ".env"
+]
+markers = [
+    "incremental: marks tests as incremental (deselect with '-m \"not incremental\"')",
+    "ai: marks tests as using a live LLM (deselect with '-m \"not ai\"')"
+]

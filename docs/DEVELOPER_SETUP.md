@@ -6,7 +6,7 @@ To run this project, you'll need the following installed:
 
 -  [Docker](https://docs.docker.com/get-docker/) - For building and running containers
 -  [Docker Compose](https://docs.docker.com/compose/install/) - For managing multiple containers
--  [Python 3.11](https://www.python.org/downloads/) - For intellisense and linting (not explicitly needed to run the project due to docker, but recommended for development)
+-  [Python 3.12](https://www.python.org/downloads/) - For intellisense and linting (not explicitly needed to run the project due to docker, but recommended for development)
 -  [pip](https://pip.pypa.io/en/stable/installation/) - For installing poetry
 -  [poetry](https://python-poetry.org/docs/) - For managing python packages
 -  [Make](https://www.gnu.org/software/make/) - For running commands in the `Makefile`
@@ -23,6 +23,13 @@ Run the following to install the packages into a virtual environment poetry will
 poetry install
 ```
 
+## VSCode
+To make use of the VSCode setup open the workspace file .vscode/redbox.code-workspace. This will open the relevant services as roots in a single workspace. The recommended way to use this is:
+* Create a venv in each of the main service directories (core-api, redbox-core, worker) this should be in a directory called _venv_
+* Configure each workspace directory to use it's own venv python interpreter. NB You may need to enter these manually when prompted as _./venv/bin/python_
+
+The tests should then all load separately and use their own env.
+
 ## Setting environment variables
 
 We use `.env` files to populate the environment variables for local development. When cloning the repository the files `.env.test`, `.env.django`, `.env.integration` and `.env.example` will be populated.
@@ -36,12 +43,18 @@ Typically this involves setting the following variables:
 
 **`.env` is in `.gitignore` and should not be committed to git**
 
+### Backend Profiles
+Redbox can use different backends for chat and embeddings, which are used is controlled by env vars. The defaults are currently to use Azure for both chat and embeddings but OpenAI can be used (and pointed to an OpenAI compliant local service).
+The relevant env vars for overriding to use OpenAI embeddings are:
+
+EMBEDDING_OPENAI_BASE_URL=http://myembeddings:8080/v1
+EMBEDDING_BACKEND=openai
+
 ## Other dependencies (for Document Ingestion and OCR)
 
 You will need to install `poppler` and `tesseract` to run the `worker`
 - `brew install poppler`
 - `brew install tesseract`
-
 
 
 ## Building and running the project

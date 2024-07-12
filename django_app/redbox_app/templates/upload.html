@@ -2,7 +2,6 @@
 
 {% extends "base.html" %}
 {% from "macros/govuk-button.html" import govukButton %}
-{% from "macros/govuk-notification-banner.html" import govukNotificationBanner %}
 
 {% block content %}
 
@@ -22,14 +21,6 @@
           </label>
           
           <div id="upload-docs-notification">
-            {#
-            {{ govukNotificationBanner(
-              title="Important",
-              text_list=[
-                {"text": "The AI will use all documents you upload. You can use up to, and including, " ~ security ~ " documents. Do not upload any documents with personal data."}
-              ]
-            ) }}
-            #}
             <p class="govuk-body-l">The AI will use all documents you upload. You can use up to, and including, {{ security }} documents. Do not upload any documents with personal data.</p>
           </div>
 
