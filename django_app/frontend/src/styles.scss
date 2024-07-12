@@ -333,6 +333,16 @@ feedback-buttons:last-of-type {
   margin-top: 0.5rem;
   padding: 0.5rem 1rem;
 }
+.chat_title__input {
+  display: block;
+  margin-top: 0.5rem;
+  padding: 0.375rem;
+  max-width: 18rem;
+  resize: none;
+  width: 100%;
+  font-size: 24px;
+  font-weight:700;
+}
 
 /* Citations page */
 .rb-citations {
