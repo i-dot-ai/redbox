@@ -314,7 +314,7 @@ class ChatTitle extends HTMLElement {
 
   switchToEdit = () => {
     this.innerHTML = `<div class="chat_title__container">
-                        <input type="text" class="chat_title__text-input" id="chat_title" maxlength="30" value="${this.dataset.title}"/>
+                        <input type="text" class="chat_title__text-input" id="chat_title" maxlength=${this.dataset.titleLength} value="${this.dataset.title}"/>
                       </div>`;
     this.querySelector(".chat_title__container").addEventListener("keydown", (e) => {
           switch (e.key) {

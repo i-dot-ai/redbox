@@ -253,6 +253,7 @@ class ChatsView(View):
             "contact_email": settings.CONTACT_EMAIL,
             "files": all_files,
             "show_route": show_route,
+            "chat_title_length": settings.CHAT_TITLE_LENGTH,
         }
 
         return render(
