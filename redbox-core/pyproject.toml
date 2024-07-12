@@ -13,14 +13,15 @@ readme = "../README.md"
 [tool.poetry.dependencies]
 python = ">=3.12,<3.13"
 pydantic = "^2.7.1"
+pydantic-settings = "^2.3.4"
 elasticsearch = "^8.14.0"
 langchain = "^0.2.6"
 langchain_openai = "^0.1.9"
+langchain-elasticsearch = "^0.2.2"
+langchain-community = "^0.2.7"
 tiktoken = "^0.7.0"
 boto3 = "^1.34.136"
-pydantic-settings = "^2.3.4"
 torch = "2.2.2"
-langchain-elasticsearch = "^0.2.2"
 
 
 [tool.poetry.group.dev.dependencies]
