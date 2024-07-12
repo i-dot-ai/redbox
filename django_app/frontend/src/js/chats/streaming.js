@@ -304,17 +304,18 @@ class ChatTitle extends HTMLElement {
   }
 
   switchToShow = () => {
-    this.innerHTML = `<div class="chat_title__container">
-                        <h1>
-                          ${this.dataset.title}
-                        </h1>
-                      </div>`;
-    this.querySelector(".chat_title__container").addEventListener("click", this.switchToEdit);
+    if (this.dataset.sessionId) {
+      this.innerHTML = `<div class="chat_title__container"><h2 class="chat_title__heading">${this.dataset.title}</h2></div>`;
+      this.querySelector(".chat_title__container").addEventListener("click", this.switchToEdit);
+    } else {
+      this.innerHTML = `<h2 class="govuk-visually-hidden">Current chat</h2>`;
+    }
   }
 
   switchToEdit = () => {
     this.innerHTML = `<div class="chat_title__container">
-                        <input type="text" class="chat_title__text-input" id="chat_title" maxlength=${this.dataset.titleLength} value="${this.dataset.title}"/>
+                        <label for="chat_title" class="govuk-visually-hidden">Title</label>
+                        <input type="text" class="chat_title__input" id="chat_title" maxlength=${this.dataset.titleLength} value="${this.dataset.title}"/>
                       </div>`;
     this.querySelector(".chat_title__container").addEventListener("keydown", (e) => {
           switch (e.key) {
@@ -329,7 +330,7 @@ class ChatTitle extends HTMLElement {
           }
         }
     )
-    this.querySelector(".chat_title__text-input").addEventListener("blur", this.update);
+    this.querySelector(".chat_title__input").addEventListener("blur", this.update);
   }
 
   update = () => {
