@@ -49,7 +49,7 @@ jobs:
         sed -i 's/^EMBEDDING_MODEL=.*/EMBEDDING_MODEL=all-mpnet-base-v2/' .env
 
         docker compose up -d --wait elasticsearch
-        poetry install --with dev
+        poetry install --no-root --no-ansi --with dev
 
     - name: Run DeepEval Unit Tests
       run: poetry run deepeval test run core_api/tests/test_ai.py --mark ai
