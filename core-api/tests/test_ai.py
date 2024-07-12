@@ -25,6 +25,7 @@ from pydantic import BaseModel, Field
 from core_api.build_chains import build_retrieval_chain
 from core_api.dependencies import get_llm, get_parameterised_retriever, get_tokeniser
 from redbox.models.chain import ChainInput
+from redbox.models import Settings
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Generator

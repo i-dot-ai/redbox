@@ -54,7 +54,7 @@ jobs:
       run: |
         cd core-api
         poetry install
-        poetry run deepeval test tests/test_ai.py --mark ai
+        poetry run deepeval test run tests --mark ai
 
     - name: Notify Slack failure
       id: slack-failure
