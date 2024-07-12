@@ -5,3 +5,10 @@
 .md-content {
     --md-typeset-a-color: #FF0000;
 }
+
+img[src*="#small-logo"] {
+    width: 150px;
+    height: 100px;
+    display: block;
+    margin: auto;
+}

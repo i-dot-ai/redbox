@@ -6,7 +6,7 @@ repo_url: https://github.com/i-dot-ai/redbox
 theme:
   
   logo: assets/briefcase_white.svg
-
+  favicon: assets/i-dot-ai.svg
 
   name: "material"
   font:
@@ -30,6 +30,7 @@ theme:
         name: Switch to light mode
 
   features:
+    - content.tooltips
     - search.suggest
     - search.highlight
     - content.tabs.link
@@ -44,7 +45,10 @@ theme:
 
 nav:
   - Home: index.md
-  - Installation: DEVELOPER_SETUP.md
+  - Installation:
+    - Overview: installation/index.md
+    - Local Development: installation/local.md
+    - AWS Deployment: installation/aws.md
   - Architecture:
     - Overview: architecture/index.md
     - Workers and Queues: architecture/workers_and_queues.md
@@ -70,6 +74,8 @@ nav:
   - Contributing: contributing.md
 
 plugins:
+    minify:
+      minify_html: true
     search: null
     mermaid2: null
     git-revision-date-localized:
@@ -100,6 +106,8 @@ plugins:
             show_symbol_type_toc: true
 
 markdown_extensions:
+  - abbr
+  - attr_list
   - meta
   - admonition
   - pymdownx.details
@@ -117,6 +125,9 @@ markdown_extensions:
         - name: mermaid
           class: mermaid
           format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.snippets:
+      auto_append:
+        - docs/abbreviations.md
 
 extra:
   social:
@@ -124,6 +135,11 @@ extra:
       link: https://github.com/i-dot-ai/redbox
     - icon: fontawesome/solid/envelope
       link: mailto:i-dot-ai-enquiries@cabinetoffice.gov.uk
+    - icon: fontawesome/solid/globe
+      link: https://ai.gov.uk
+  generator: false
+
+
 
 extra_css:
   - stylesheets/extra.css
