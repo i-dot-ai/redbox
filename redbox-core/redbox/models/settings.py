@@ -10,7 +10,7 @@ logging.basicConfig(level=logging.INFO)
 log = logging.getLogger()
 
 
-VANILLA_SYSTEM_PROMPT = (
+CHAT_SYSTEM_PROMPT = (
     "You are an AI assistant called Redbox tasked with answering questions and providing information objectively."
 )
 
@@ -64,7 +64,7 @@ CONDENSE_SYSTEM_PROMPT = (
     "don't try to make up an answer. \n"
 )
 
-VANILLA_QUESTION_PROMPT = "{question}\n=========\n Response: "
+CHAT_QUESTION_PROMPT = "{question}\n=========\n Response: "
 
 RETRIEVAL_QUESTION_PROMPT = "{question} \n=========\n{formatted_documents}\n=========\nFINAL ANSWER: "
 
@@ -90,8 +90,8 @@ class AISettings(BaseModel):
     rag_desired_chunk_size: int = 300
     summarisation_chunk_max_tokens: int = 20_000
     summarisation_max_concurrency: int = 128
-    vanilla_system_prompt: str = VANILLA_SYSTEM_PROMPT
-    vanilla_question_prompt: str = VANILLA_QUESTION_PROMPT
+    chat_system_prompt: str = CHAT_SYSTEM_PROMPT
+    chat_question_prompt: str = CHAT_QUESTION_PROMPT
     retrieval_system_prompt: str = RETRIEVAL_SYSTEM_PROMPT
     retrieval_question_prompt: str = RETRIEVAL_QUESTION_PROMPT
     condense_system_prompt: str = CONDENSE_SYSTEM_PROMPT

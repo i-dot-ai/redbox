@@ -3,28 +3,20 @@ import sys
 from operator import itemgetter
 from typing import Annotated
 
+from core_api import dependencies
 from fastapi import Depends
 from langchain.prompts import PromptTemplate
 from langchain.schema import StrOutputParser
 from langchain_community.chat_models import ChatLiteLLM
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.retrievers import BaseRetriever
-from langchain_core.runnables import (
-    Runnable,
-    RunnableLambda,
-    RunnablePassthrough,
-    chain,
-)
+from langchain_core.runnables import Runnable, RunnableLambda, RunnablePassthrough, chain
 from langchain_core.runnables.config import RunnableConfig
 from langchain_core.vectorstores import VectorStoreRetriever
 from tiktoken import Encoding
 
-from core_api import dependencies
 from redbox.api.format import format_documents
-from redbox.api.runnables import (
-    make_chat_prompt_from_messages_runnable,
-    resize_documents,
-)
+from redbox.api.runnables import make_chat_prompt_from_messages_runnable, resize_documents
 from redbox.models import ChatRoute, Settings
 from redbox.models.errors import NoDocumentSelected
 
@@ -34,15 +26,15 @@ logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 log = logging.getLogger()
 
 
-def build_vanilla_chain(
+def build_chat_chain(
     llm: Annotated[ChatLiteLLM, Depends(dependencies.get_llm)],
     tokeniser: Annotated[Encoding, Depends(dependencies.get_tokeniser)],
     env: Annotated[Settings, Depends(dependencies.get_env)],
 ) -> Runnable:
     return (
         make_chat_prompt_from_messages_runnable(
-            system_prompt=env.ai.vanilla_system_prompt,
-            question_prompt=env.ai.vanilla_question_prompt,
+            system_prompt=env.ai.chat_system_prompt,
+            question_prompt=env.ai.chat_question_prompt,
             input_token_budget=env.ai.context_window_size - env.llm_max_tokens,
             tokeniser=tokeniser,
         )
