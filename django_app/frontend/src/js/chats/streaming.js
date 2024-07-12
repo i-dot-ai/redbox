@@ -320,7 +320,7 @@ class ChatTitle extends HTMLElement {
 
   switchToEdit = () => {
     this.innerHTML = `<div class="chat_title__container">
-                        <label for="chat_title" class="govuk-visually-hidden">Title</label>
+                        <label for="chat_title" class="govuk-visually-hidden">Chat Title</label>
                         <input type="text" class="chat_title__input" id="chat_title" maxlength=${this.dataset.titleLength} value="${this.dataset.title}"/>
                       </div>`;
     this.escaped = false;
