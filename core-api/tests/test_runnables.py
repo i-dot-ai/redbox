@@ -1,7 +1,7 @@
 import pytest
 
 from core_api.build_chains import build_condense_retrieval_chain, build_retrieval_chain, build_summary_chain
-from core_api.dependencies import get_parameterised_retriever, get_tokeniser
+from core_api.dependencies import get_parameterised_retriever, tokeniser
 from redbox.api.runnables import make_chat_prompt_from_messages_runnable
 from redbox.models.chain import ChainInput
 from redbox.models.chat import ChatRoute
@@ -10,7 +10,7 @@ from redbox.models.errors import AIError
 
 @pytest.fixture(scope="module", autouse=True)
 def mock_embeddings(session_mocker, embedding_model):
-    session_mocker.patch("core_api.dependencies.get_embedding_model", return_value=embedding_model)
+    session_mocker.patch("core_api.dependencies.get_embeddings", return_value=embedding_model)
     return embedding_model
 
 
@@ -20,7 +20,7 @@ def test_make_chat_prompt_from_messages_runnable(mock_llm):
             system_prompt="Your job is chat.",
             question_prompt="{question}\n=========\n Response: ",
             input_token_budget=100,
-            tokeniser=get_tokeniser(),
+            tokeniser=tokeniser,
         )
         | mock_llm
     )
@@ -57,12 +57,10 @@ def test_make_chat_prompt_from_messages_runnable(mock_llm):
     assert response == "<<TESTING>>"
 
 
-def test_rag_runnable(es_client, es_index, mock_llm, chunked_file, env):
-    retriever = get_parameterised_retriever(
-        index_name=es_index,
-    )
+def test_rag_runnable(mock_llm, chunked_file):
+    retriever = get_parameterised_retriever()
 
-    chain = build_retrieval_chain(llm=mock_llm, retriever=retriever, tokeniser=get_tokeniser())
+    chain = build_retrieval_chain(llm=mock_llm, retriever=retriever)
 
     previous_history = [
         {"text": "Lorem ipsum dolor sit amet.", "role": "user"},
@@ -83,10 +81,10 @@ def test_rag_runnable(es_client, es_index, mock_llm, chunked_file, env):
     assert {str(chunked_file.uuid)} == {chunk.metadata["parent_file_uuid"] for chunk in response["source_documents"]}
 
 
-def test_condense_runnable(es_client, es_index, mock_llm, chunked_file, env):
-    retriever = get_parameterised_retriever(index_name=es_index)
+def test_condense_runnable(mock_llm, chunked_file):
+    retriever = get_parameterised_retriever()
 
-    chain = build_condense_retrieval_chain(llm=mock_llm, retriever=retriever, tokeniser=get_tokeniser())
+    chain = build_condense_retrieval_chain(llm=mock_llm, retriever=retriever)
 
     previous_history = [
         {"text": "Lorem ipsum dolor sit amet.", "role": "user"},
@@ -107,8 +105,8 @@ def test_condense_runnable(es_client, es_index, mock_llm, chunked_file, env):
     assert {str(chunked_file.uuid)} == {chunk.metadata["parent_file_uuid"] for chunk in response["source_documents"]}
 
 
-def test_summary_runnable_large_file(all_chunks_retriever, mock_llm, large_chunked_file, env):
-    chain = build_summary_chain(llm=mock_llm, all_chunks_retriever=all_chunks_retriever, tokeniser=get_tokeniser())
+def test_summary_runnable_large_file(all_chunks_retriever, mock_llm, large_chunked_file):
+    chain = build_summary_chain(llm=mock_llm, all_chunks_retriever=all_chunks_retriever)
 
     previous_history = [
         {"text": "Lorem ipsum dolor sit amet.", "role": "user"},
@@ -129,8 +127,8 @@ def test_summary_runnable_large_file(all_chunks_retriever, mock_llm, large_chunk
     assert response["route_name"] == ChatRoute.map_reduce_summarise, response["route_name"]
 
 
-def test_summary_runnable_small_file(all_chunks_retriever, mock_llm, chunked_file, env):
-    chain = build_summary_chain(llm=mock_llm, all_chunks_retriever=all_chunks_retriever, tokeniser=get_tokeniser())
+def test_summary_runnable_small_file(all_chunks_retriever, mock_llm, chunked_file):
+    chain = build_summary_chain(llm=mock_llm, all_chunks_retriever=all_chunks_retriever)
 
     previous_history = [
         {"text": "Lorem ipsum dolor sit amet.", "role": "user"},

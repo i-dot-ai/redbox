@@ -1,12 +1,9 @@
 import logging
 import os
 from functools import lru_cache
-from typing import Annotated
 
 import tiktoken
-from fastapi import Depends
 from langchain_community.chat_models import ChatLiteLLM
-from langchain_core.embeddings import Embeddings
 from langchain_core.retrievers import BaseRetriever
 from langchain_core.runnables import ConfigurableField
 
@@ -26,19 +23,7 @@ elasticsearch_client = env.elasticsearch_client()
 
 
 @lru_cache(1)
-def get_embedding_model() -> Embeddings:
-    return get_embeddings(env)
-
-
-@lru_cache(1)
-def get_index_name() -> str:
-    return f"{env.elastic_root_index}-chunk"
-
-
-@lru_cache(1)
-def get_parameterised_retriever(
-    index_name: Annotated[str, Depends(get_index_name)],
-) -> BaseRetriever:
+def get_parameterised_retriever() -> BaseRetriever:
     """Creates an Elasticsearch retriever runnable.
 
     Runnable takes input of a dict keyed to question, file_uuids and user_uuid.
@@ -54,9 +39,9 @@ def get_parameterised_retriever(
     }
     return ParameterisedElasticsearchRetriever(
         es_client=elasticsearch_client,
-        index_name=index_name,
+        index_name=f"{env.elastic_root_index}-chunk",
         params=default_params,
-        embedding_model=get_embedding_model(),
+        embedding_model=get_embeddings(env),
         embedding_field_name=env.embedding_document_field_name,
     ).configurable_fields(
         params=ConfigurableField(
@@ -112,6 +97,4 @@ def get_llm() -> ChatLiteLLM:
     return llm
 
 
-@lru_cache(1)
-def get_tokeniser() -> tiktoken.Encoding:
-    return tiktoken.get_encoding("cl100k_base")
+tokeniser = tiktoken.get_encoding("cl100k_base")

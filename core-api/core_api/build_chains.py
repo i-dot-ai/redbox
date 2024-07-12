@@ -17,7 +17,6 @@ from langchain_core.runnables import (
 )
 from langchain_core.runnables.config import RunnableConfig
 from langchain_core.vectorstores import VectorStoreRetriever
-from tiktoken import Encoding
 
 from core_api import dependencies
 from redbox.api.format import format_documents
@@ -28,7 +27,7 @@ from redbox.api.runnables import (
 from redbox.models import ChatRoute
 from redbox.models.errors import NoDocumentSelected
 
-from core_api.dependencies import env
+from core_api.dependencies import env, tokeniser
 
 # === Logging ===
 
@@ -38,7 +37,6 @@ log = logging.getLogger()
 
 def build_vanilla_chain(
     llm: Annotated[ChatLiteLLM, Depends(dependencies.get_llm)],
-    tokeniser: Annotated[Encoding, Depends(dependencies.get_tokeniser)],
 ) -> Runnable:
     return (
         make_chat_prompt_from_messages_runnable(
@@ -58,7 +56,6 @@ def build_vanilla_chain(
 def build_retrieval_chain(
     llm: Annotated[ChatLiteLLM, Depends(dependencies.get_llm)],
     retriever: Annotated[VectorStoreRetriever, Depends(dependencies.get_parameterised_retriever)],
-    tokeniser: Annotated[Encoding, Depends(dependencies.get_tokeniser)],
 ) -> Runnable:
     return (
         RunnablePassthrough.assign(documents=retriever)
@@ -83,7 +80,6 @@ def build_retrieval_chain(
 def build_condense_retrieval_chain(
     llm: Annotated[ChatLiteLLM, Depends(dependencies.get_llm)],
     retriever: Annotated[VectorStoreRetriever, Depends(dependencies.get_parameterised_retriever)],
-    tokeniser: Annotated[Encoding, Depends(dependencies.get_tokeniser)],
 ) -> Runnable:
     def route(input_dict: dict):
         if len(input_dict["chat_history"]) > 0:
@@ -124,7 +120,6 @@ def build_condense_retrieval_chain(
 def build_summary_chain(
     llm: Annotated[ChatLiteLLM, Depends(dependencies.get_llm)],
     all_chunks_retriever: Annotated[BaseRetriever, Depends(dependencies.get_all_chunks_retriever)],
-    tokeniser: Annotated[Encoding, Depends(dependencies.get_tokeniser)],
 ) -> Runnable:
     def make_document_context():
         return (

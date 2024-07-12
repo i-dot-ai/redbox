@@ -23,7 +23,7 @@ from elasticsearch.helpers import bulk, scan
 from pydantic import BaseModel, Field
 
 from core_api.build_chains import build_retrieval_chain
-from core_api.dependencies import get_llm, get_parameterised_retriever, get_tokeniser
+from core_api.dependencies import get_llm, get_parameterised_retriever, elasticsearch_client
 from redbox.models.chain import ChainInput
 
 if TYPE_CHECKING:
@@ -128,13 +128,11 @@ def eval_llm(env: Settings) -> DeepEvalBaseLLM:
 
 
 @pytest.fixture(scope="session")
-def elastic_index_and_user(
-    ai_experiment_data: ExperimentData, es_client: Elasticsearch
-) -> Generator[tuple[str, str], None, None]:
+def elastic_index_and_user(ai_experiment_data: ExperimentData) -> Generator[tuple[str, str], None, None]:
     index_name = ai_experiment_data.embeddings.stem
 
     # Clear embeddings from index (in case previous crash stopped teardown)
-    clear_index(index=index_name, es=es_client)
+    clear_index(index=index_name, es=elasticsearch_client)
 
     user_uuids: set[UUID] = set()
 
@@ -143,7 +141,7 @@ def elastic_index_and_user(
         for chunk_raw in reader:
             chunk = json.loads(chunk_raw)
             user_uuids.add(UUID(chunk["creator_user_uuid"]))
-            es_client.index(
+            elasticsearch_client.index(
                 index=index_name,
                 id=chunk["uuid"],
                 body=chunk,
@@ -156,12 +154,12 @@ def elastic_index_and_user(
     yield index_name, next(iter(user_uuids))
 
     # Delete embeddings from index
-    clear_index(index=index_name, es=es_client)
+    clear_index(index=index_name, es=elasticsearch_client)
 
 
 @pytest.fixture()
 def make_test_case(
-    llm: ChatLiteLLM, es_client: Elasticsearch, elastic_index_and_user: tuple[str, str], env: Settings
+    llm: ChatLiteLLM, elastic_index_and_user: tuple[str, str], env: Settings
 ) -> Callable[[str, str, list[str], ExperimentData], LLMTestCase]:
     """
     Returns a factory for making LLMTestCases based on a row of ExperimentData.
@@ -186,14 +184,11 @@ def make_test_case(
     """
     index_name, user_uuid = elastic_index_and_user
 
-    retriever = get_parameterised_retriever(
-        index_name=index_name,
-    )
+    retriever = get_parameterised_retriever()
 
     rag_chain = build_retrieval_chain(
         llm=llm,
         retriever=retriever,
-        tokeniser=get_tokeniser(),
     )
 
     def _make_test_case(
