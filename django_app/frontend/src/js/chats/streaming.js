@@ -304,24 +304,32 @@ class ChatTitle extends HTMLElement {
   }
 
   switchToShow = () => {
-    this.innerHTML = `<div class="chat_title__container"><h1>${this.dataset.title}</h1></div>`;
+    this.innerHTML = `<div class="chat_title__container">
+                        <h1>
+                          ${this.dataset.title}
+                        </h1>
+                      </div>`;
     this.querySelector(".chat_title__container").addEventListener("click", this.switchToEdit);
   }
 
   switchToEdit = () => {
-    this.innerHTML = `<div class="chat_title__container"><textarea class="chat_title__text-input" id="chat_title" rows="1">${this.dataset.title}</textarea></div>`;
-    this.querySelector(".chat_title__container").addEventListener("keypress", (e) => {
-          switch (e.keyCode) {
-            case 13: // enter
+    this.innerHTML = `<div class="chat_title__container">
+                        <input type="text" class="chat_title__text-input" id="chat_title" maxlength="30" value="${this.dataset.title}"/>
+                      </div>`;
+    this.querySelector(".chat_title__container").addEventListener("keydown", (e) => {
+          switch (e.key) {
+            case "Enter":
               this.update();
-              break;
-            case 27: // escape
+              return false;
+            case "Escape":
               this.switchToShow();
-              break;
+              return false;
+            default:
+              return true;
           }
         }
     )
-    this.querySelector(".chat_title__container").addEventListener("blur", this.update);
+    this.querySelector(".chat_title__text-input").addEventListener("blur", this.update);
   }
 
   update = () => {
