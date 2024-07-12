@@ -1,3 +1,14 @@
 :root {
     --md-primary-fg-color: #9c0000;
 }
+
+.md-content {
+    --md-typeset-a-color: #FF3838;
+}
+
+img[src*="#small-logo"] {
+    width: 150px;
+    height: 100px;
+    display: block;
+    margin: auto;
+}
