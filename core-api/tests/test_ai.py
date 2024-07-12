@@ -41,6 +41,11 @@ ROOT = Path(__file__).parents[2]
 DATA = ROOT / "notebooks/evaluation/data/0.2.3"
 
 
+@pytest.fixture(scope="session")
+def ai_env():
+    return Settings(elastic_root_index="redbox-test")
+
+
 class ExperimentData(BaseModel):
     """Test required a versioned CSV of evaluation questions and a pre-embedded index."""
 
@@ -92,12 +97,12 @@ def ai_experiment_data() -> ExperimentData:
 
 
 @pytest.fixture(scope="session")
-def llm(env: Settings) -> ChatLiteLLM:
-    return get_llm(env)
+def llm(ai_env: Settings) -> ChatLiteLLM:
+    return get_llm(ai_env)
 
 
 @pytest.fixture(scope="session")
-def eval_llm(env: Settings) -> DeepEvalBaseLLM:
+def eval_llm(ai_env: Settings) -> DeepEvalBaseLLM:
     """Creates LLM for evaluating our data.
 
     Note in its current form this hard-codes the same model for generation
@@ -124,17 +129,17 @@ def eval_llm(env: Settings) -> DeepEvalBaseLLM:
         def get_model_name(self):
             return "Custom LiteLLM Model"
 
-    return ChatLiteLLMDeepEval(model=get_llm(env))
+    return ChatLiteLLMDeepEval(model=get_llm(ai_env))
 
 
 @pytest.fixture(scope="session")
 def elastic_index_and_user(
-    ai_experiment_data: ExperimentData, es_client: Elasticsearch
+    ai_experiment_data: ExperimentData, ai_env: Settings
 ) -> Generator[tuple[str, str], None, None]:
     index_name = ai_experiment_data.embeddings.stem
 
     # Clear embeddings from index (in case previous crash stopped teardown)
-    clear_index(index=index_name, es=es_client)
+    clear_index(index=index_name, es=ai_env.elasticsearch_client())
 
     user_uuids: set[UUID] = set()
 
@@ -143,7 +148,7 @@ def elastic_index_and_user(
         for chunk_raw in reader:
             chunk = json.loads(chunk_raw)
             user_uuids.add(UUID(chunk["creator_user_uuid"]))
-            es_client.index(
+            ai_env.elasticsearch_client().index(
                 index=index_name,
                 id=chunk["uuid"],
                 body=chunk,
@@ -156,12 +161,12 @@ def elastic_index_and_user(
     yield index_name, next(iter(user_uuids))
 
     # Delete embeddings from index
-    clear_index(index=index_name, es=es_client)
+    clear_index(index=index_name, es=ai_env.elasticsearch_client())
 
 
 @pytest.fixture()
 def make_test_case(
-    llm: ChatLiteLLM, es_client: Elasticsearch, elastic_index_and_user: tuple[str, str], env: Settings
+    llm: ChatLiteLLM, elastic_index_and_user: tuple[str, str], ai_env: Settings
 ) -> Callable[[str, str, list[str], ExperimentData], LLMTestCase]:
     """
     Returns a factory for making LLMTestCases based on a row of ExperimentData.
@@ -187,14 +192,14 @@ def make_test_case(
     index_name, user_uuid = elastic_index_and_user
 
     retriever = get_parameterised_retriever(
-        env=env,
+        env=ai_env,
     )
 
     rag_chain = build_retrieval_chain(
         llm=llm,
         retriever=retriever,
         tokeniser=get_tokeniser(),
-        env=env,
+        env=ai_env,
     )
 
     def _make_test_case(
