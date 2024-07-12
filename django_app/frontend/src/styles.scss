@@ -170,64 +170,6 @@ body {
   margin-top: -1rem;
 }
 
-.rb-response-feedback {
-  display: none;
-  position: relative;
-  top: -0.5rem;
-}
-/* only show response feedback for last AI message */
-[data-role="ai"] + .rb-response-feedback {
-  display: block;
-}
-.rb-response-feedback__buttons {
-  display: flex;
-  gap: 0.25rem;
-  margin-bottom: 1.25rem;
-}
-.rb-response-feedback__buttons button {
-  align-items: center;
-  background-color: transparent;
-  border: 0;
-  cursor: pointer;
-  color: govuk-colour("dark-grey");
-  display: flex;
-  fill: govuk-colour("dark-grey");
-  font-size: 0.75rem;
-  gap: 0.125rem;
-}
-.rb-response-feedback__buttons button[data-response="down"] svg {
-  transform: rotate(180deg);
-}
-.rb-response-feedback__thumb-fill {
-  fill: transparent;
-}
-.rb-response-feedback__buttons[data-status="down"]
-  button[data-response="down"]
-  *,
-.rb-response-feedback__buttons button[data-response="down"]:hover * {
-  color: govuk-colour("red");
-  fill: govuk-colour("red");
-}
-.rb-response-feedback__buttons[data-status="up"] button[data-response="up"] *,
-.rb-response-feedback__buttons button[data-response="up"]:hover * {
-  color: govuk-colour("green");
-  fill: govuk-colour("green");
-}
-
-/* Only show feedback when correct buttons pressed */
-.rb-response-feedback__thumbs-up,
-.rb-response-feedback__thumbs-down {
-  display: none;
-}
-.rb-response-feedback__buttons[data-status="up"]
-  ~ .rb-response-feedback__thumbs-up {
-  display: block;
-}
-.rb-response-feedback__buttons[data-status="down"]
-  ~ .rb-response-feedback__thumbs-down {
-  display: block;
-}
-
 .rb-streaming-response-loading {
   align-items: center;
   display: flex;
@@ -246,6 +188,150 @@ body {
 .rb-response-loading__spinner,
 .rb-streaming-response-loading__spinner {
   width: 1.5rem;
+}
+
+/* Response feedback - differing content for negative and positive responses */
+.feedback__container--negative .feedback__negative,
+.feedback__container--positive .feedback__positive {
+  display: block;
+}
+.feedback__container--negative .feedback__positive,
+.feedback__container--positive .feedback__negative {
+  display: none;
+}
+.feedback__container--2.feedback__container--negative img {
+  transform: scaleY(-1);
+}
+
+/* Only show feedback buttons on last message, for now */
+feedback-buttons {
+  display: none;
+}
+feedback-buttons:last-of-type {
+  display: block;
+}
+
+/* Response feedback - general styles */
+.feedback__container {
+  font-size: 0.75rem;
+  margin-bottom: 1.5rem;
+  margin-top: -0.25rem;
+  padding: 0 1rem;
+}
+.feedback__container--1:not([hidden]) {
+  align-items: flex-start;
+  color: #6b7280;
+  display: flex;
+  flex-wrap: wrap;
+  font-size: 0.625rem;
+}
+.feedback__star-help-text {
+  max-width: 3rem;
+  text-align: center;
+}
+.feedback__heading {
+  color: black;
+  font-size: 0.75rem;
+  font-weight: 400;
+  margin: 0;
+  margin-right: 1rem;
+}
+.feedback__star-container {
+  align-items: center;
+  display: flex;
+}
+.feedback__star-button {
+  background-color: transparent;
+  border: 0;
+  color: white;
+  cursor: pointer;
+  padding: 0 0.25rem;
+}
+.feedback__star-button--hover {
+  color: #bebebe;
+}
+
+.feedback__response-container {
+  align-items: center;
+  display: flex;
+  gap: 0.5rem;
+}
+.feedback__improve-response-btn,
+.feedback__rate-again-btn {
+  background-color: transparent;
+  border: 0;
+  cursor: pointer;
+  display: block;
+  margin-bottom: 1.25rem;
+  margin-top: 0.5rem;
+  padding: 0;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.feedback__chips-container {
+  border: 0;
+  margin: 0;
+  padding: 0;
+}
+.feedback__chips-legend {
+  padding: 0;
+}
+.feedback__chips-inner-container {
+  display: flex;
+  flex-wrap: wrap;
+  margin: 0.75rem 0;
+}
+.feedback__chip {
+  height: 0.75rem;
+  margin: 0;
+  opacity: 0;
+  width: 0.75rem;
+}
+.feedback__chip-label {
+  border: 1px solid #b1b4b6;
+  border-radius: 0.25rem;
+  color: #60697b;
+  cursor: pointer;
+  display: flex;
+  gap: 0.25rem;
+  left: -0.75rem;
+  margin-top: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  position: relative;
+}
+.feedback__chip:focus-visible + .feedback__chip-label {
+  outline: 2px solid;
+}
+.feedback__chip:checked + .feedback__chip-label {
+  background-color: #b1b4b6;
+  color: black;
+}
+.feedback__chip-label img {
+  display: none;
+  width: 0.75rem;
+}
+.feedback__chip:checked + .feedback__chip-label img {
+  display: block;
+}
+.feedback__text-input {
+  display: block;
+  margin-top: 0.5rem;
+  padding: 0.375rem;
+  max-width: 18rem;
+  resize: none;
+  width: 100%;
+}
+.feedback__submit-btn {
+  background-color: $redbox-red;
+  border: none;
+  border-radius: 0.25rem;
+  color: white;
+  cursor: pointer;
+  display: block;
+  font-weight: 500;
+  margin-top: 0.5rem;
+  padding: 0.5rem 1rem;
 }
 
 /* Citations page */

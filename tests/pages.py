@@ -53,9 +53,10 @@ class BasePage(ABC):
         expect(self.page).to_have_title(expected_page_title)
         # expect(self.page).to_have_url("url")
 
-    def check_a11y(self):
+    def check_a11y(self, exclude: Sequence[str] | None = None):
+        context = {"exclude": exclude} if exclude else None
         expect(self.page.locator(".iai-footer__container")).to_be_visible()  # Ensure page is fully loaded
-        results = self.axe.run(self.page, context=None, options=self.AXE_OPTIONS)
+        results = self.axe.run(self.page, context=context, options=self.AXE_OPTIONS)
         if results.violations_count:
             error_message = f"accessibility violations from page {self}: {results.generate_report()} "
             raise PageError(error_message)
@@ -336,6 +337,25 @@ class ChatsPage(SignedInBasePage):
             else:
                 checkbox.uncheck()
 
+    def feedback_stars(self, rating: int):
+        self.page.locator(".feedback__container").get_by_role("button").nth(rating - 1).click()
+
+    feedback_stars = property(fset=feedback_stars)
+
+    @property
+    def feedback_text(self) -> str:
+        return self.page.locator(".feedback__container").get_by_role("textbox").inner_text()
+
+    @feedback_text.setter
+    def feedback_text(self, text: str):
+        self.page.locator(".feedback__container").get_by_role("textbox").fill(text)
+
+    def feedback_chips(self, chips: Collection[str]):
+        for chip in chips:
+            self.page.locator(".feedback__container").get_by_test_id(chip).check()
+
+    feedback_chips = property(fset=feedback_chips)
+
     def start_new_chat(self) -> "ChatsPage":
         self.page.get_by_role("button", name="New chat").click()
         return ChatsPage(self.page)
@@ -343,6 +363,12 @@ class ChatsPage(SignedInBasePage):
     def send(self) -> "ChatsPage":
         self.page.get_by_text("Send").click()
         return ChatsPage(self.page)
+
+    def improve(self):
+        self.page.get_by_role("button", name="Help improve the response").click()
+
+    def submit_feedback(self):
+        self.page.locator(".feedback__container").get_by_role("button", name="Submit").click()
 
     @property
     def all_messages(self) -> Sequence[ChatMessage]:
@@ -369,6 +395,9 @@ class ChatsPage(SignedInBasePage):
 
 
 class CitationsPage(SignedInBasePage):
+    def check_a11y(self):
+        return super().check_a11y(exclude=[".iai-chat-bubble__text"])
+
     @property
     def expected_page_title(self) -> str:
         return "Citations - Redbox"

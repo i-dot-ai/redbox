@@ -13,7 +13,8 @@ if (typeof window.trustedTypes !== "undefined") {
           tagNameCheck: (tagName) =>
             tagName === "markdown-converter" ||
             tagName === "sources-list" ||
-            tagName === "tool-tip",
+            tagName === "tool-tip" ||
+            tagName === "feedback-buttons",
           attributeNameCheck: (attr) => true,
           allowCustomizedBuiltInElements: true,
         },

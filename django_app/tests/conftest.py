@@ -13,6 +13,8 @@ from redbox_app.redbox_core.models import (
     BusinessUnit,
     ChatHistory,
     ChatMessage,
+    ChatMessageRating,
+    ChatMessageRatingChip,
     ChatRoleEnum,
     Citation,
     File,
@@ -74,6 +76,11 @@ def staff_user(create_user):
 
 
 @pytest.fixture()
+def superuser() -> User:
+    return User.objects.create_superuser("super@example.com", "2000-01-01")
+
+
+@pytest.fixture()
 def business_unit() -> BusinessUnit:
     return BusinessUnit.objects.create(name="Paperclip Reconciliation")
 
@@ -96,12 +103,14 @@ def s3_client():
 @pytest.fixture()
 def chat_history(alice: User) -> ChatHistory:
     session_id = uuid.uuid4()
-    return ChatHistory.objects.create(id=session_id, users=alice)
+    return ChatHistory.objects.create(id=session_id, users=alice, name="A chat")
 
 
 @pytest.fixture()
 def chat_message(chat_history: ChatHistory, uploaded_file: File) -> ChatMessage:
-    chat_message = ChatMessage.objects.create(chat_history=chat_history, text="A question?", role=ChatRoleEnum.user)
+    chat_message = ChatMessage.objects.create(
+        chat_history=chat_history, text="A question?", role=ChatRoleEnum.user, route="A route"
+    )
     chat_message.source_files.set([uploaded_file])
     return chat_message
 
@@ -164,3 +173,13 @@ def several_files(alice: User, number_to_create: int = 4) -> Sequence[File]:
             )
         )
     return files
+
+
+@pytest.fixture()
+def chat_message_with_rating(chat_message: ChatMessage) -> ChatMessage:
+    chat_message_rating = ChatMessageRating(chat_message=chat_message, rating=3, text="Ipsum Lorem.")
+    chat_message_rating.save()
+    ChatMessageRatingChip(rating_id=chat_message_rating.pk, text="speed").save()
+    ChatMessageRatingChip(rating_id=chat_message_rating.pk, text="accuracy").save()
+    ChatMessageRatingChip(rating_id=chat_message_rating.pk, text="blasphemy").save()
+    return chat_message
