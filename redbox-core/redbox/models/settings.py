@@ -1,5 +1,6 @@
 import logging
 from typing import Literal
+from functools import lru_cache
 
 import boto3
 from elasticsearch import Elasticsearch
@@ -195,6 +196,7 @@ class Settings(BaseSettings):
 
     model_config = SettingsConfigDict(env_file=".env", env_nested_delimiter="__", extra="allow", frozen=True)
 
+    @lru_cache(1)
     def elasticsearch_client(self) -> Elasticsearch:
         if isinstance(self.elastic, ElasticLocalSettings):
             log.info("Connecting to self managed Elasticsearch")
