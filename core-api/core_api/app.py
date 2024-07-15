@@ -1,13 +1,10 @@
 import logging
 from datetime import UTC, datetime
 from http import HTTPStatus
-from typing import Annotated
 
-from elasticsearch import Elasticsearch
-from fastapi import Depends, FastAPI, Response
+from fastapi import FastAPI, Response
 from fastapi.responses import RedirectResponse
 
-from core_api.dependencies import get_elasticsearch_client
 from core_api.routes.chat import chat_app
 from core_api.routes.file import file_app
 from redbox import __version__ as redbox_version
@@ -51,7 +48,7 @@ def root():
 
 
 @app.get("/health", status_code=HTTPStatus.OK, tags=["health"])
-def health(response: Response, es: Annotated[Elasticsearch, Depends(get_elasticsearch_client)]) -> StatusResponse:
+def health(response: Response) -> StatusResponse:
     """Returns the health of the API
 
     Returns:
@@ -61,8 +58,8 @@ def health(response: Response, es: Annotated[Elasticsearch, Depends(get_elastics
     uptime = datetime.now(UTC) - start_time
     uptime_seconds = uptime.total_seconds()
 
-    logger.info("es: %s", es)
-    ping = es.ping()
+    logger.info("es: %s", env.elasticsearch_client())
+    ping = env.elasticsearch_client().ping()
     if ping:
         status = "ready"
     else:
