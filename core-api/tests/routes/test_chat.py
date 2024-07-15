@@ -5,6 +5,9 @@ from unittest.mock import AsyncMock, MagicMock
 from math import exp
 
 import pytest
+from core_api import dependencies, semantic_routes
+from core_api.app import app as application
+from core_api.routes.chat import chat_app
 from fastapi.testclient import TestClient
 from langchain_community.llms.fake import FakeStreamingListLLM
 from langchain_core.documents.base import Document
@@ -15,9 +18,6 @@ from langchain_core.runnables.schema import StreamEvent
 from semantic_router.encoders import TfidfEncoder
 from starlette.websockets import WebSocketDisconnect
 
-from core_api import dependencies, semantic_routes
-from core_api.app import app as application
-from core_api.routes.chat import chat_app
 from redbox.models.chat import ChatResponse, ChatRoute
 
 if TYPE_CHECKING:
@@ -144,7 +144,7 @@ def test_rag(mock_client, headers):
     assert response.status_code == 200, response.text
     chat_response = ChatResponse.model_validate(response.json())
     assert chat_response.output_text == RAG_LLM_RESPONSE
-    assert chat_response.route_name == ChatRoute.search
+    assert chat_response.route_name == ChatRoute.chat_with_docs
 
 
 def test_summary(mock_client, headers):
@@ -161,7 +161,7 @@ def test_summary(mock_client, headers):
     assert response.status_code == 200
     chat_response = ChatResponse.model_validate(response.json())
     assert chat_response.output_text == RAG_LLM_RESPONSE
-    assert chat_response.route_name in {ChatRoute.map_reduce_summarise, ChatRoute.stuff_summarise}
+    assert chat_response.route_name == ChatRoute.chat_with_docs
 
 
 def test_keyword(mock_client, headers):
@@ -211,4 +211,4 @@ def test_rag_chat_streamed(mock_client, headers):
         # Then
         text = "".join(all_text)
         assert text == RAG_LLM_RESPONSE
-        assert route_name == ChatRoute.search
+        assert route_name == ChatRoute.chat_with_docs
