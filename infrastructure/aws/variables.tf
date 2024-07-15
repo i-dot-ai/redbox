@@ -203,6 +203,12 @@ variable "rag_num_candidates" {
     default     = 10
 }
 
+variable "elbow_filter_enabled" {
+    type        = bool
+    default     = false
+    description = "whether the elbow filter should be enabled"
+}
+
 variable "retrieval_system_prompt" {
     type        = string
     default     = <<EOT
