@@ -41,18 +41,17 @@ jobs:
         mkdir -p data/elastic/
         chmod 777 data/elastic/
 
-        cp .env.test .env
-        echo AZURE_OPENAI_ENDPOINT=${{ secrets.AZURE_OPENAI_ENDPOINT }} >> .env
-        echo AZURE_OPENAI_API_KEY=${{ secrets.AZURE_OPENAI_API_KEY }} >> .env
-        echo AZURE_OPENAI_MODEL=azure/gpt-4 >> .env
-        echo OPENAI_API_VERSION=2024-02-01 >> .env
+        cp .env.test core-api/.env
+        echo AZURE_OPENAI_ENDPOINT=${{ secrets.AZURE_OPENAI_ENDPOINT }} >> core-api/.env
+        echo AZURE_OPENAI_API_KEY=${{ secrets.AZURE_OPENAI_API_KEY }} >> core-api/.env
+        echo AZURE_OPENAI_MODEL=azure/gpt-4 >> core-api/.env
+        echo OPENAI_API_VERSION=2024-02-01 >> core-api/.env
 
         docker compose up -d --wait elasticsearch
 
     - name: Run DeepEval Unit Tests
       run: |
         cd core-api
-        cp ../core-api/.env .env
         poetry install
         poetry run deepeval test run tests/test_ai.py --mark ai
 
