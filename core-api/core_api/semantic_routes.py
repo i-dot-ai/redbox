@@ -1,7 +1,8 @@
 from typing import Annotated
 
 from core_api.build_chains import (
-    build_chat_chain,
+    build_chat_no_docs_chain,
+    build_chat_with_docs_chain,
     build_condense_retrieval_chain,
     build_static_response_chain,
     build_summary_chain,
@@ -127,7 +128,8 @@ def get_semantic_route_layer(
 def get_routable_chains(
     summary_chain: Annotated[Runnable, Depends(build_summary_chain)],
     condense_chain: Annotated[Runnable, Depends(build_condense_retrieval_chain)],
-    chat_chain: Annotated[Runnable, Depends(build_chat_chain)],
+    chat_no_docs_chain: Annotated[Runnable, Depends(build_chat_no_docs_chain)],
+    chat_with_docs_chain: Annotated[Runnable, Depends(build_chat_with_docs_chain)],
 ):
     global __routable_chains  # noqa: PLW0603
     if not __routable_chains:
@@ -136,7 +138,8 @@ def get_routable_chains(
             ChatRoute.ability: build_static_response_chain(ABILITY_RESPONSE, ChatRoute.ability),
             ChatRoute.coach: build_static_response_chain(COACH_RESPONSE, ChatRoute.coach),
             ChatRoute.gratitude: build_static_response_chain("You're welcome!", ChatRoute.gratitude),
-            ChatRoute.chat: chat_chain,
+            ChatRoute.chat_no_docs: chat_no_docs_chain,
+            ChatRoute.chat_with_docs: chat_with_docs_chain,
             ChatRoute.search: condense_chain,
             ChatRoute.summarise: summary_chain,
         }

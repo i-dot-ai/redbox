@@ -51,6 +51,12 @@ async def semantic_router_to_chain(
 
     selected_chain = None
 
+    def select_chat_chain(chat_request: ChatRequest, routable_chains: dict[str, Runnable]) -> Runnable:
+        if chat_request.selected_files:
+            return routable_chains.get("chat_with_docs")
+        else:
+            return routable_chains.get("chat_no_docs")
+
     # Match keyword
     route_match = re_keyword_pattern.search(question)
     if route_match:
@@ -60,7 +66,7 @@ async def semantic_router_to_chain(
     # Semantic route
     if selected_chain is None:
         route_name = route_layer(question).name
-        selected_chain = routable_chains.get(route_name, routable_chains.get("chat"))
+        selected_chain = routable_chains.get(route_name, select_chat_chain(chat_request, routable_chains))
 
     params = ChainInput(
         question=chat_request.message_history[-1].text,
@@ -70,6 +76,7 @@ async def semantic_router_to_chain(
     )
 
     log.info("Routed to %s", route_name)
+    log.info("Selected files: %s", chat_request.selected_files)
 
     return selected_chain, params
 
