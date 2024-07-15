@@ -406,7 +406,7 @@ class ChatsPage(SignedInBasePage):
 
     def navigate_to_titled_chat(self, title: str) -> "ChatsPage":
         self.page.get_by_role("link", name=title).click()
-        return self
+        return ChatsPage(self.page)
 
 
 class CitationsPage(SignedInBasePage):
