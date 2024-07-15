@@ -162,51 +162,58 @@ class ChatMessage extends HTMLElement {
     };
 
     webSocket.onmessage = (event) => {
-      let message;
+      let response;
       try {
-        message = JSON.parse(event.data);
+        response = JSON.parse(event.data);
       } catch (err) {
         console.log("Error getting JSON response", err);
       }
 
-      if (message.type === "text") {
-        streamedContent += message.data;
+      if (response.type === "text") {
+        streamedContent += response.data;
         responseContainer.update(streamedContent);
-      } else if (message.type === "session-id") {
-        chatControllerRef.dataset.sessionId = message.data;
-      } else if (message.type === "source") {
-        sourcesContainer.add(message.data.original_file_name, message.data.url);
-      } else if (message.type === "route") {
+      } else if (response.type === "session-id") {
+        chatControllerRef.dataset.sessionId = response.data;
+      } else if (response.type === "source") {
+        sourcesContainer.add(response.data.original_file_name, response.data.url);
+      } else if (response.type === "route") {
         let route = this.querySelector(".iai-chat-bubble__route");
         let routeText = route?.querySelector(".iai-chat-bubble__route-text");
         if (route && routeText) {
-          routeText.textContent = message.data;
+          routeText.textContent = response.data;
           route.removeAttribute("hidden");
         }
 
         // send route to Plausible
         let plausible = /** @type {any} */ (window).plausible;
         if (typeof plausible !== "undefined") {
-          plausible("Chat-message-route", { props: { route: message.data } });
+          plausible("Chat-message-route", {props: {route: response.data}});
         }
-      } else if (message.type === "hidden-route") {
+      } else if (response.type === "hidden-route") {
         // TODO(@rachaelcodes): remove hidden-route with new route design
         // https://technologyprogramme.atlassian.net/browse/REDBOX-419
 
         // send route to Plausible
         let plausible = /** @type {any} */ (window).plausible;
         if (typeof plausible !== "undefined") {
-          plausible("Chat-message-route", { props: { route: message.data } });
+          plausible("Chat-message-route", {props: {route: response.data}});
         }
-      } else if (message.type === "end") {
-        sourcesContainer.showCitations(message.data.message_id);
-        feedbackContainer.showFeedback(message.data.message_id);
-      } else if (message.type === "error") {
+      } else if (response.type === "end") {
+        sourcesContainer.showCitations(response.data.message_id);
+        feedbackContainer.showFeedback(response.data.message_id);
+        const chatResponseEndEvent = new CustomEvent("chat-response-end", {
+          detail: {
+            title: response.data.title,
+            session_id: response.data.session_id
+          }
+        });
+        document.dispatchEvent(chatResponseEndEvent);
+      } else if (response.type === "error") {
         this.querySelector(".govuk-notification-banner")?.removeAttribute(
           "hidden"
         );
         this.querySelector(".govuk-notification-banner__heading").innerHTML =
-          message.data;
+            response.data;
       }
     };
   };
@@ -317,6 +324,7 @@ class ChatTitle extends HTMLElement {
     this.input = this.querySelector(".chat_title__input");
 
     this.heading.addEventListener("click", this.switchToEdit);
+
     this.input.addEventListener("keydown", (e) => {
           switch (e.key) {
             case "Escape":
@@ -337,6 +345,10 @@ class ChatTitle extends HTMLElement {
     this.input.addEventListener("blur", (e) => {
       this.switchToShow();
     });
+
+    if (!this.dataset.sessionId) {
+      document.addEventListener("chat-response-end", this.onFirstResponse)
+    }
 
     this.switchToShow()
   }
@@ -365,6 +377,16 @@ class ChatTitle extends HTMLElement {
     this.hideElement(this.heading);
     this.showElement(this.input);
     this.input.focus();
+  }
+
+  onFirstResponse = (e) => {
+    this.dataset.title = e.detail.title;
+    this.input.value = e.detail.title;
+    this.heading.innerText = `${e.detail.title}`;
+    this.heading.innerHTML += ` ${this.pencilIcon}`;
+    this.dataset.sessionId = e.detail.session_id;
+    document.removeEventListener("chat-response-end", this.onFirstResponse);
+    this.switchToShow();
   }
 
   update = () => {

@@ -61,10 +61,12 @@ class ChatConsumer(AsyncWebsocketConsumer):
         selected_files = await self.get_files_by_id(selected_file_uuids, user)
         await self.save_message(session, user_message_text, ChatRoleEnum.user, selected_files=selected_files)
 
-        await self.llm_conversation(selected_files, session, user)
+        await self.llm_conversation(selected_files, session, user, user_message_text)
         await self.close()
 
-    async def llm_conversation(self, selected_files: Sequence[File], session: ChatHistory, user: User) -> None:
+    async def llm_conversation(
+        self, selected_files: Sequence[File], session: ChatHistory, user: User, title: str
+    ) -> None:
         session_messages = await self.get_messages(session)
         message_history: Sequence[Mapping[str, str]] = [
             {"role": message.role, "text": message.text} for message in session_messages
@@ -80,7 +82,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 await self.send_to_client("session-id", session.id)
                 reply, citations, route = await self.receive_llm_responses(user, core_websocket)
             message = await self.save_message(session, reply, ChatRoleEnum.ai, sources=citations, route=route)
-            await self.send_to_client("end", {"message_id": message.id})
+            await self.send_to_client("end", {"message_id": message.id, "title": title, "session_id": session.id})
 
             for file, _ in citations:
                 file.last_referenced = timezone.now()
