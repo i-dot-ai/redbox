@@ -46,14 +46,15 @@ jobs:
         echo AZURE_OPENAI_API_KEY=${{ secrets.AZURE_OPENAI_API_KEY }} >> .env
         echo AZURE_OPENAI_MODEL=azure/gpt-4 >> .env
         echo OPENAI_API_VERSION=2024-02-01 >> .env
-        sed -i 's/^EMBEDDING_MODEL=.*/EMBEDDING_MODEL=all-mpnet-base-v2/' .env
 
         docker compose up -d --wait elasticsearch
-        poetry install --no-root --no-ansi --with dev,ai,api --without worker
-        poetry run python download_embedder.py --embedding_model all-mpnet-base-v2
 
     - name: Run DeepEval Unit Tests
-      run: poetry run deepeval test run core_api/tests/test_ai.py --mark ai
+      run: |
+        cd core-api
+        cp ../core-api/.env .env
+        poetry install
+        poetry run deepeval test run tests/test_ai.py --mark ai
 
     - name: Notify Slack failure
       id: slack-failure
