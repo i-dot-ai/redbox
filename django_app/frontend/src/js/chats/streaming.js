@@ -372,7 +372,8 @@ class ChatTitle extends HTMLElement {
     console.log(`updating chat title to "${newTitle}"`);
     this.send(newTitle)
     this.dataset.title = newTitle;
-    this.heading.innerHTML = `${newTitle} ${this.pencilIcon}`;
+    this.heading.innerText = `${newTitle}`;
+    this.heading.innerHTML += ` ${this.pencilIcon}`;
     this.switchToShow();
   }
 
