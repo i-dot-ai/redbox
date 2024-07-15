@@ -10,7 +10,7 @@ logger = logging.getLogger()
 logger.setLevel("INFO")
 
 
-def lambda_handler(event, context):
+def lambda_handler(event, context):  # noqa: ARG001 unused args
     try:
         # Read FILE_EXPIRY_IN_SECONDS from environment
         logger.info("environment variable:  %s", os.environ["FILE_EXPIRY_IN_SECONDS"])
@@ -36,17 +36,17 @@ def lambda_handler(event, context):
                 client = Elasticsearch(cloud_id=os.environ["ELASTIC__CLOUD_ID"], api_key=os.environ["ELASTIC__API_KEY"])
                 results = scan(
                     client=client,
-                    index='redbox-data-file',
+                    index="redbox-data-file",
                     query={
-                        "query":{
+                        "query": {
                             "bool": {
                                 "should": [
                                     {"term": {"creator_user_uuid.keyword": str(user_id)}},
                                     {"term": {"metadata.creator_user_uuid.keyword": str(user_id)}},
-                                    ]
-                                }
+                                ]
                             }
-                        },
+                        }
+                    },
                     _source=False,
                 )
 
@@ -57,15 +57,12 @@ def lambda_handler(event, context):
             connection.close()
             logger.info("Database connection closed.")
 
-        except pg8000.dbapi.DatabaseError as error:
-            print(f"Error connecting to the postgres database: {error}")
+        except pg8000.dbapi.DatabaseError:
+            logger.exception("Error connecting to the postgres database")
 
-        # TODO: log success and errors + communicate (Slack?)
+        # TODO: log success and errors + communicate (Slack?)  # noqa: TD003, TD002 no author or issue link
 
-        return {
-            'statusCode': 200,
-            'body': json.dumps(os.environ["FILE_EXPIRY_IN_SECONDS"])
-        }
-    except Exception as ex:
-        logger.error(f"Exception {ex} occurred")
-        return {"message": f"General exception {ex} occurred. Exiting..."}
+        return {"statusCode": 200, "body": json.dumps(os.environ["FILE_EXPIRY_IN_SECONDS"])}
+    except Exception as exception:
+        logger.exception("Exception occurred")
+        return {"message": f"General exception {exception} occurred. Exiting..."}
