@@ -175,7 +175,10 @@ class ChatMessage extends HTMLElement {
       } else if (response.type === "session-id") {
         chatControllerRef.dataset.sessionId = response.data;
       } else if (response.type === "source") {
-        sourcesContainer.add(response.data.original_file_name, response.data.url);
+        sourcesContainer.add(
+          response.data.original_file_name,
+          response.data.url
+        );
       } else if (response.type === "route") {
         let route = this.querySelector(".iai-chat-bubble__route");
         let routeText = route?.querySelector(".iai-chat-bubble__route-text");
@@ -187,7 +190,7 @@ class ChatMessage extends HTMLElement {
         // send route to Plausible
         let plausible = /** @type {any} */ (window).plausible;
         if (typeof plausible !== "undefined") {
-          plausible("Chat-message-route", {props: {route: response.data}});
+          plausible("Chat-message-route", { props: { route: response.data } });
         }
       } else if (response.type === "hidden-route") {
         // TODO(@rachaelcodes): remove hidden-route with new route design
@@ -196,7 +199,7 @@ class ChatMessage extends HTMLElement {
         // send route to Plausible
         let plausible = /** @type {any} */ (window).plausible;
         if (typeof plausible !== "undefined") {
-          plausible("Chat-message-route", {props: {route: response.data}});
+          plausible("Chat-message-route", { props: { route: response.data } });
         }
       } else if (response.type === "end") {
         sourcesContainer.showCitations(response.data.message_id);
@@ -204,8 +207,8 @@ class ChatMessage extends HTMLElement {
         const chatResponseEndEvent = new CustomEvent("chat-response-end", {
           detail: {
             title: response.data.title,
-            session_id: response.data.session_id
-          }
+            session_id: response.data.session_id,
+          },
         });
         document.dispatchEvent(chatResponseEndEvent);
       } else if (response.type === "error") {
@@ -213,7 +216,7 @@ class ChatMessage extends HTMLElement {
           "hidden"
         );
         this.querySelector(".govuk-notification-banner__heading").innerHTML =
-            response.data;
+          response.data;
       }
     };
   };
@@ -306,110 +309,119 @@ class DocumentSelector extends HTMLElement {
 customElements.define("document-selector", DocumentSelector);
 
 class ChatTitle extends HTMLElement {
-
-  pencilIcon = `<svg width="25" height="24" viewBox="0 0 25 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                         <path d="M11.9766 4H4.97656C4.44613 4 3.93742 4.21071 3.56235 4.58579C3.18728 4.96086 2.97656 5.46957 2.97656 6V20C2.97656 20.5304 3.18728 21.0391 3.56235 21.4142C3.93742 21.7893 4.44613 22 4.97656 22H18.9766C19.507 22 20.0157 21.7893 20.3908 21.4142C20.7658 21.0391 20.9766 20.5304 20.9766 20V13" stroke="black" stroke-linecap="round" stroke-linejoin="round"/>
-                         <path d="M19.4766 2.49998C19.8744 2.10216 20.414 1.87866 20.9766 1.87866C21.5392 1.87866 22.0787 2.10216 22.4766 2.49998C22.8744 2.89781 23.0979 3.43737 23.0979 3.99998C23.0979 4.56259 22.8744 5.10216 22.4766 5.49998L12.9766 15L8.97656 16L9.97656 12L19.4766 2.49998Z" stroke="black" stroke-linecap="round" stroke-linejoin="round"/>
-                       </svg>`;
-
   connectedCallback() {
-    this.innerHTML = `<div class="chat_title__container">
-                        <h2 class="chat_title__heading govuk-visually-hidden" hidden>${this.dataset.title} ${this.pencilIcon}</h2>
-                        <h2 class="chat_title__no_session_heading govuk-visually-hidden" hidden>Current chat</h2>
-                        <label for="chat_title" class="govuk-visually-hidden">Chat Title</label>
-                        <input type="text" class="chat_title__input govuk-visually-hidden" id="chat_title" maxlength=${this.dataset.titleLength} value="${this.dataset.title}" hidden/>
-                      </div>`;
-
-    this.heading = this.querySelector(".chat_title__heading");
-    this.input = this.querySelector(".chat_title__input");
-
-    this.heading.addEventListener("click", this.switchToEdit);
-
-    this.input.addEventListener("keydown", (e) => {
-          switch (e.key) {
-            case "Escape":
-              this.escaped = true;
-              this.input.value = this.dataset.title;
-              this.switchToShow();
-              return true;
-            default:
-              return true;
-          }
+    this.innerHTML = `
+      <div class="chat_title__heading-container">
+        ${
+          this.dataset.title
+            ? `
+          <h2 class="chat_title__heading">${this.dataset.title}</h2>
+        `
+            : `
+          <h2 class="chat_title__heading govuk-visually-hidden">Current chat</h2>
+        `
         }
-    )
-    this.input.addEventListener("change", (e) => {
-      if (!this.escaped) {
-        this.update();
+        <button class="chat-title__edit-btn" type="button">
+          <span class="govuk-visually-hidden">Edit chat title</span>
+          <svg width="25" height="24" viewBox="0 0 25 24" fill="none" aria-hidden="true" focusable="false">
+            <path d="M11.9766 4H4.97656C4.44613 4 3.93742 4.21071 3.56235 4.58579C3.18728 4.96086 2.97656 5.46957 2.97656 6V20C2.97656 20.5304 3.18728 21.0391 3.56235 21.4142C3.93742 21.7893 4.44613 22 4.97656 22H18.9766C19.507 22 20.0157 21.7893 20.3908 21.4142C20.7658 21.0391 20.9766 20.5304 20.9766 20V13" stroke="black" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M19.4766 2.49998C19.8744 2.10216 20.414 1.87866 20.9766 1.87866C21.5392 1.87866 22.0787 2.10216 22.4766 2.49998C22.8744 2.89781 23.0979 3.43737 23.0979 3.99998C23.0979 4.56259 22.8744 5.10216 22.4766 5.49998L12.9766 15L8.97656 16L9.97656 12L19.4766 2.49998Z" stroke="black" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+      </div>
+      <div class="chat_title__form-container" hidden>
+        <label for="chat_title" class="govuk-visually-hidden">Chat Title</label>
+        <input type="text" class="chat_title__input" id="chat_title" maxlength="${
+          this.dataset.titleLength
+        }" value="${this.dataset.title}" tabindex="-1"/>
+      </div>
+    `;
+
+    this.headingContainer = this.querySelector(
+      ".chat_title__heading-container"
+    );
+    this.formContainer = this.querySelector(".chat_title__form-container");
+    /** @type {HTMLButtonElement | null} */
+    this.editButton = this.querySelector(".chat-title__edit-btn");
+    /** @type {HTMLInputElement | null} */
+    this.input = this.querySelector(".chat_title__input");
+    this.heading = this.querySelector(".chat_title__heading");
+
+    this.editButton?.addEventListener("click", this.showForm);
+    this.input?.addEventListener("keydown", (e) => {
+      if (!this.input) {
+        return false;
+      }
+      switch (/** @type {KeyboardEvent} */ (e).key) {
+        case "Escape":
+          this.input.value = this.dataset.title || "";
+          this.hideForm();
+          return true;
+        case "Enter":
+          e.preventDefault();
+          this.update();
+          return true;
+        default:
+          return true;
       }
     });
-    this.input.addEventListener("blur", (e) => {
-      this.switchToShow();
+    this.input?.addEventListener("change", (e) => {
+      this.update();
+    });
+    this.input?.addEventListener("blur", (e) => {
+      this.update();
     });
 
     if (!this.dataset.sessionId) {
-      document.addEventListener("chat-response-end", this.onFirstResponse)
+      document.addEventListener("chat-response-end", this.onFirstResponse);
     }
-
-    this.switchToShow()
   }
 
-  showElement(element) {
-    element.removeAttribute("hidden");
-    element.classList.remove("govuk-visually-hidden");
-  }
+  showForm = () => {
+    this.headingContainer?.setAttribute("hidden", "");
+    this.formContainer?.removeAttribute("hidden");
+    this.input?.focus();
+  };
 
-  hideElement(element) {
-    element.setAttribute("hidden", "");
-    element.classList.add("govuk-visually-hidden");
-  }
-
-  switchToShow = () => {
-    if (this.dataset.sessionId) {
-      this.showElement(this.heading);
-    } else {
-      this.hideElement(this.heading);
-    }
-    this.hideElement(this.input);
-  }
-
-  switchToEdit = () => {
-    this.escaped = false;
-    this.hideElement(this.heading);
-    this.showElement(this.input);
-    this.input.focus();
-  }
+  hideForm = () => {
+    this.headingContainer?.removeAttribute("hidden");
+    this.formContainer?.setAttribute("hidden", "");
+    this.editButton?.focus();
+  };
 
   onFirstResponse = (e) => {
     this.dataset.title = e.detail.title;
-    this.input.value = e.detail.title;
-    this.heading.innerText = `${e.detail.title}`;
-    this.heading.innerHTML += ` ${this.pencilIcon}`;
     this.dataset.sessionId = e.detail.session_id;
     document.removeEventListener("chat-response-end", this.onFirstResponse);
-    this.switchToShow();
-  }
+    if (this.input && this.heading) {
+      this.input.value = e.detail.title;
+      this.heading.textContent = `${e.detail.title}`;
+      this.heading.classList.remove("govuk-visually-hidden");
+    }
+  };
 
   update = () => {
-    const newTitle = this.input.value;
+    const newTitle = this.input?.value;
     console.log(`updating chat title to "${newTitle}"`);
-    this.send(newTitle)
+    this.send(newTitle);
     this.dataset.title = newTitle;
-    this.heading.innerText = `${newTitle}`;
-    this.heading.innerHTML += ` ${this.pencilIcon}`;
-    this.switchToShow();
-  }
+    if (this.heading) {
+      this.heading.textContent = newTitle || "";
+    }
+    this.hideForm();
+  };
 
   send = (newTitle) => {
     const csrfToken =
-        /** @type {HTMLInputElement | null} */ (
+      /** @type {HTMLInputElement | null} */ (
         document.querySelector('[name="csrfmiddlewaretoken"]')
-    )?.value || "";
+      )?.value || "";
     fetch(`/chat/${this.dataset.sessionId}/title/`, {
       method: "POST",
-      headers: {"Content-Type": "application/json", "X-CSRFToken": csrfToken},
-      body: JSON.stringify({name: newTitle}),
-    })
-  }
+      headers: { "Content-Type": "application/json", "X-CSRFToken": csrfToken },
+      body: JSON.stringify({ name: newTitle }),
+    });
+  };
 }
 
 customElements.define("chat-title", ChatTitle);

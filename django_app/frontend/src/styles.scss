@@ -114,6 +114,10 @@ body {
 }
 
 /* Chat page */
+.chat_title__heading.govuk-visually-hidden + .chat-title__edit-btn {
+  display: none;
+}
+
 .rb-loading-ellipsis {
   font-style: italic;
   margin-top: 1rem;
@@ -341,7 +345,7 @@ feedback-buttons:last-of-type {
   resize: none;
   width: 100%;
   font-size: 24px;
-  font-weight:700;
+  font-weight: 700;
 }
 
 /* Citations page */
