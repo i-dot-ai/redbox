@@ -1,6 +1,0 @@
-certifi==2024.7.4
-elasticsearch==8.14.0
-elastic-transport==8.13.1
-psycopg==3.2.1
-typing-extensions==4.12.2
-urllib3==2.2.2
