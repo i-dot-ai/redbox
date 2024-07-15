@@ -19,7 +19,7 @@ In this section we will cover some of the key dependencies for all of the deploy
 If you're on a Mac, you can install the above dependencies using [brew](https://brew.sh/). 
 
 ```bash
-brew install docker docker-compose python@3.12 make poppler tesseract
+brew install docker docker-compose make poppler tesseract
 ```
 
 ### Ubuntu/Debian
@@ -28,7 +28,7 @@ If you're on Ubuntu/Debian, you can install the above dependencies using `apt`.
 
 ```bash
 sudo apt update
-sudo apt install docker docker-compose python3.12 make poppler-utils tesseract-ocr
+sudo apt install docker docker-compose make poppler-utils tesseract-ocr
 ```
 
 If you don't have this python version, we'd recommend using [pyenv](https://github.com/pyenv/pyenv) to manage your python versions.
