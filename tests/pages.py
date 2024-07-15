@@ -358,11 +358,11 @@ class ChatsPage(SignedInBasePage):
 
     @property
     def chat_title(self) -> str:
-        return self.page.locator(".chat_title__container").inner_text()
+        return self.page.locator(".chat-title__heading").inner_text()
 
     @chat_title.setter
     def chat_title(self, title: str):
-        self.page.locator(".chat_title__container").click()
+        self.page.locator(".chat-title__edit-btn").click()
         input_ = self.page.get_by_label("Chat Title")
         input_.fill(title)
         input_.press("Enter")
