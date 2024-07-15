@@ -306,28 +306,23 @@ class ChatTitle extends HTMLElement {
                        </svg>`;
 
   connectedCallback() {
-    this.switchToShow()
-  }
-
-  switchToShow = () => {
-    if (this.dataset.sessionId) {
-      this.innerHTML = `<div class="chat_title__container"><h2 class="chat_title__heading">${this.dataset.title} ${this.pencilIcon}</h2></div>`;
-      this.querySelector(".chat_title__container").addEventListener("click", this.switchToEdit);
-    } else {
-      this.innerHTML = `<h2 class="govuk-visually-hidden">Current chat</h2>`;
-    }
-  }
-
-  switchToEdit = () => {
     this.innerHTML = `<div class="chat_title__container">
+                        <h2 class="chat_title__heading govuk-visually-hidden" hidden>${this.dataset.title} ${this.pencilIcon}</h2>
+                        <h2 class="chat_title__no_session_heading govuk-visually-hidden" hidden>Current chat</h2>
                         <label for="chat_title" class="govuk-visually-hidden">Chat Title</label>
-                        <input type="text" class="chat_title__input" id="chat_title" maxlength=${this.dataset.titleLength} value="${this.dataset.title}"/>
+                        <input type="text" class="chat_title__input govuk-visually-hidden" id="chat_title" maxlength=${this.dataset.titleLength} value="${this.dataset.title}" hidden/>
                       </div>`;
-    this.escaped = false;
-    this.querySelector(".chat_title__container").addEventListener("keydown", (e) => {
+
+    this.container = this.querySelector(".chat_title__container");
+    this.heading = this.querySelector(".chat_title__heading");
+    this.input = this.querySelector(".chat_title__input");
+
+    this.heading.addEventListener("click", this.switchToEdit);
+    this.input.addEventListener("keydown", (e) => {
           switch (e.key) {
             case "Escape":
               this.escaped = true;
+              this.input.value = this.dataset.title;
               this.switchToShow();
               return true;
             default:
@@ -335,21 +330,50 @@ class ChatTitle extends HTMLElement {
           }
         }
     )
-    this.querySelector(".chat_title__input").addEventListener("change", (e) => {
+    this.input.addEventListener("change", (e) => {
       if (!this.escaped) {
         this.update();
       }
     });
-    this.querySelector(".chat_title__input").addEventListener("blur", (e) => {
+    this.input.addEventListener("blur", (e) => {
       this.switchToShow();
     });
+
+    this.switchToShow()
+  }
+
+  show(element) {
+    element.removeAttribute("hidden");
+    element.classList.remove("govuk-visually-hidden");
+  }
+
+  hide(element) {
+    element.setAttribute("hidden", "");
+    element.classList.add("govuk-visually-hidden");
+  }
+
+  switchToShow = () => {
+    if (this.dataset.sessionId) {
+      this.show(this.heading);
+    } else {
+      this.hide(this.heading);
+    }
+    this.hide(this.input);
+  }
+
+  switchToEdit = () => {
+    this.escaped = false;
+    this.hide(this.heading);
+    this.show(this.input);
+    this.input.focus();
   }
 
   update = () => {
-    const newTitle = this.querySelector("#chat_title")?.value;
+    const newTitle = this.input.value;
     console.log(`updating chat title to "${newTitle}"`);
     this.send(newTitle)
     this.dataset.title = newTitle;
+    this.heading.innerHTML = `${newTitle} ${this.pencilIcon}`;
     this.switchToShow();
   }
 
