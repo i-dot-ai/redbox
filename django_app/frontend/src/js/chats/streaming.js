@@ -313,7 +313,6 @@ class ChatTitle extends HTMLElement {
                         <input type="text" class="chat_title__input govuk-visually-hidden" id="chat_title" maxlength=${this.dataset.titleLength} value="${this.dataset.title}" hidden/>
                       </div>`;
 
-    this.container = this.querySelector(".chat_title__container");
     this.heading = this.querySelector(".chat_title__heading");
     this.input = this.querySelector(".chat_title__input");
 
@@ -342,29 +341,29 @@ class ChatTitle extends HTMLElement {
     this.switchToShow()
   }
 
-  show(element) {
+  showElement(element) {
     element.removeAttribute("hidden");
     element.classList.remove("govuk-visually-hidden");
   }
 
-  hide(element) {
+  hideElement(element) {
     element.setAttribute("hidden", "");
     element.classList.add("govuk-visually-hidden");
   }
 
   switchToShow = () => {
     if (this.dataset.sessionId) {
-      this.show(this.heading);
+      this.showElement(this.heading);
     } else {
-      this.hide(this.heading);
+      this.hideElement(this.heading);
     }
-    this.hide(this.input);
+    this.hideElement(this.input);
   }
 
   switchToEdit = () => {
     this.escaped = false;
-    this.hide(this.heading);
-    this.show(this.input);
+    this.hideElement(this.heading);
+    this.showElement(this.input);
     this.input.focus();
   }
 
