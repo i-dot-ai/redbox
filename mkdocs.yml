@@ -1,14 +1,36 @@
 site_name: Redbox
 site_description: Bringing Generative AI to the way the Civil Service works
 site_author: Incubator for AI
-repo_url: https://github.com/i-dot-ai/redbox-copilot
+repo_url: https://github.com/i-dot-ai/redbox
 
 theme:
+  
+  logo: assets/briefcase_white.svg
+  favicon: assets/i-dot-ai.svg
+
   name: "material"
+  font:
+    text: "Inter"
+    code: "DM Mono"
   palette:
-    primary: "red"
-    accent: "red"
+    # Palette toggle for light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: custom
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to dark mode
+
+    # Palette toggle for dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: custom
+      toggle:
+        icon: material/weather-night
+        name: Switch to light mode
+
   features:
+    - content.tooltips
     - search.suggest
     - search.highlight
     - content.tabs.link
@@ -23,7 +45,10 @@ theme:
 
 nav:
   - Home: index.md
-  - Installation: DEVELOPER_SETUP.md
+  - Installation:
+    - Overview: installation/index.md
+    - Local Development: installation/local.md
+    - AWS Deployment: installation/aws.md
   - Architecture:
     - Overview: architecture/index.md
     - Workers and Queues: architecture/workers_and_queues.md
@@ -41,7 +66,6 @@ nav:
       - Settings: code_reference/models/settings.md
     - Parsing:
       - Overview: code_reference/parsing/index.md
-      - FileChunker: code_reference/parsing/file_chunker.md
       - Chunkers: code_reference/parsing/chunkers.md
       - Chunk Clustering: code_reference/parsing/chunk_clustering.md
     - Storage:
@@ -50,6 +74,8 @@ nav:
   - Contributing: contributing.md
 
 plugins:
+    minify:
+      minify_html: true
     search: null
     mermaid2: null
     git-revision-date-localized:
@@ -60,6 +86,8 @@ plugins:
     mkdocstrings:
       handlers:
         python:
+          paths:
+            - redbox-core
           options:
             extensions:
             - griffe_typingdoc
@@ -78,6 +106,8 @@ plugins:
             show_symbol_type_toc: true
 
 markdown_extensions:
+  - abbr
+  - attr_list
   - meta
   - admonition
   - pymdownx.details
@@ -95,12 +125,22 @@ markdown_extensions:
         - name: mermaid
           class: mermaid
           format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.snippets:
+      auto_append:
+        - docs/abbreviations.md
 
 extra:
   social:
     - icon: fontawesome/brands/github
-      link: https://github.com/i-dot-ai/redbox-copilot
+      link: https://github.com/i-dot-ai/redbox
     - icon: fontawesome/solid/envelope
       link: mailto:i-dot-ai-enquiries@cabinetoffice.gov.uk
+    - icon: fontawesome/solid/globe
+      link: https://ai.gov.uk
+  generator: false
 
+
+
+extra_css:
+  - stylesheets/extra.css
         
