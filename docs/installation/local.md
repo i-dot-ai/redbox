@@ -16,6 +16,9 @@ or
 docker compose up -d
 ```
 
+!!! info "Makefile tip"
+    If you're using the Makefile, you can use the `make` command to list all of the available commands.
+
 As the project deploys, you should eventually see the following message:
 
 ```
