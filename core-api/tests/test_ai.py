@@ -43,8 +43,9 @@ DATA = ROOT / "notebooks/evaluation/data/0.2.3"
 
 
 @pytest.fixture(scope="session")
-def ai_env():
-    return Settings(elastic_root_index="redbox-test")
+def ai_env(env):
+    new_env = env.model_copy(update={"elastic_root_index": "redbox-test"})
+    return new_env
 
 
 class ExperimentData(BaseModel):
