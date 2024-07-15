@@ -60,7 +60,7 @@ class ChatMessage extends HTMLElement {
     this.innerHTML = `
             <div class="iai-chat-bubble iai-chat-bubble--${
               this.dataset.role === "user" ? "right" : "left"
-            } js-chat-message govuk-body {{ classes }}" data-role="{{ role }}" tabindex="-1">
+            } govuk-body {{ classes }}" data-role="{{ role }}" tabindex="-1">
                 <div class="iai-chat-bubble__header">
                     <div class="iai-chat-bubble__role">${
                       this.dataset.role === "ai" ? "Redbox" : "You"
@@ -242,7 +242,6 @@ class ChatController extends HTMLElement {
         document.createElement("chat-message")
       );
       aiMessage.setAttribute("data-role", "ai");
-      aiMessage.setAttribute("tabindex", "-1");
       messageContainer?.insertBefore(aiMessage, insertPosition);
       aiMessage.stream(
         userText,
@@ -251,7 +250,9 @@ class ChatController extends HTMLElement {
         this.dataset.streamUrl || "",
         this
       );
-      aiMessage.focus();
+      /** @type {HTMLElement | null} */ (
+        aiMessage.querySelector(".iai-chat-bubble")
+      )?.focus();
 
       // reset UI
       if (feedbackButtons) {

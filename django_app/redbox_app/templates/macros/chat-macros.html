@@ -32,7 +32,7 @@
         {% set role_text = "You" %}
     {% endif %}
 
-    <div class="iai-chat-bubble iai-chat-bubble--{% if role == 'user' %}right{% else %}left{% endif %} js-chat-message govuk-body {{ classes }}" data-role="{{ role }}" tabindex="-1">
+    <div class="iai-chat-bubble iai-chat-bubble--{% if role == 'user' %}right{% else %}left{% endif %} govuk-body {{ classes }}" data-role="{{ role }}" tabindex="-1">
       <div class="iai-chat-bubble__header">
         <div class="iai-chat-bubble__role">{% if role == "ai" %}Redbox{% else %}You{% endif %}</div>
         {% if route and show_route %}
