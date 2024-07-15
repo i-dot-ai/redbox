@@ -2,6 +2,7 @@ import json
 from types import SimpleNamespace
 from typing import TYPE_CHECKING
 from unittest.mock import AsyncMock, MagicMock
+from math import exp
 
 import pytest
 from fastapi.testclient import TestClient
@@ -53,7 +54,12 @@ def mock_parameterised_retriever(alice):
     docs = [
         Document(
             page_content="some text that doesn't actually matter " * 10,
-            metadata={"index": i, "parent_file_uuid": UPLOADED_FILE_UUID, "creator_user_uuid": str(alice)},
+            metadata={
+                "index": i,
+                "parent_file_uuid": UPLOADED_FILE_UUID,
+                "creator_user_uuid": str(alice),
+                "score": 1 / (1 + exp(-i)),
+            },
         )
         for i in range(12)
     ]
