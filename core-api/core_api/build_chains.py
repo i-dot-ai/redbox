@@ -29,7 +29,7 @@ logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 log = logging.getLogger()
 
 
-def build_chat_chain(
+def build_chat_no_docs_chain(
     llm: Annotated[ChatLiteLLM, Depends(dependencies.get_llm)],
     tokeniser: Annotated[Encoding, Depends(dependencies.get_tokeniser)],
     env: Annotated[Settings, Depends(dependencies.get_env)],
@@ -44,9 +44,94 @@ def build_chat_chain(
         | llm
         | {
             "response": StrOutputParser(),
-            "route_name": RunnableLambda(lambda _: ChatRoute.chat.value),
+            "route_name": RunnableLambda(lambda _: ChatRoute.chat_no_docs.value),
         }
     )
+
+
+def build_chat_with_docs_chain(
+    llm: Annotated[ChatLiteLLM, Depends(dependencies.get_llm)],
+    all_chunks_retriever: Annotated[BaseRetriever, Depends(dependencies.get_all_chunks_retriever)],
+    tokeniser: Annotated[Encoding, Depends(dependencies.get_tokeniser)],
+    env: Annotated[Settings, Depends(dependencies.get_env)],
+) -> Runnable:
+    def make_document_context():
+        return (
+            all_chunks_retriever
+            | resize_documents(env.ai.summarisation_chunk_max_tokens)
+            | RunnableLambda(lambda docs: [d.page_content for d in docs])
+        )
+
+    # Stuff chain now missing the RunnabeLambda to format the chunks
+    stuff_chain = (
+        make_chat_prompt_from_messages_runnable(
+            system_prompt=env.ai.chat_with_docs_system_prompt,
+            question_prompt=env.ai.chat_with_docs_question_prompt,
+            input_token_budget=env.ai.context_window_size - env.llm_max_tokens,
+            tokeniser=tokeniser,
+        )
+        | llm
+        | {
+            "response": StrOutputParser(),
+            "route_name": RunnableLambda(lambda _: ChatRoute.chat_with_docs.value),
+        }
+    )
+
+    @chain
+    def map_operation(input_dict):
+        system_map_prompt = env.ai.map_system_prompt
+        prompt_template = PromptTemplate.from_template(env.ai.map_question_prompt)
+
+        formatted_map_question_prompt = prompt_template.format(question=input_dict["question"])
+
+        map_prompt = ChatPromptTemplate.from_messages(
+            [
+                ("system", system_map_prompt),
+                ("human", formatted_map_question_prompt + env.ai.map_document_prompt),
+            ]
+        )
+
+        documents = input_dict["documents"]
+
+        map_summaries = (map_prompt | llm | StrOutputParser()).batch(
+            documents,
+            config=RunnableConfig(max_concurrency=env.ai.summarisation_max_concurrency),
+        )
+
+        summaries = " ; ".join(map_summaries)
+        input_dict["summaries"] = summaries
+        return input_dict
+
+    map_reduce_chain = (
+        map_operation
+        | make_chat_prompt_from_messages_runnable(
+            system_prompt=env.ai.chat_with_docs_reduce_system_prompt,
+            question_prompt=env.ai.chat_with_docs_reduce_question_prompt,
+            input_token_budget=env.ai.context_window_size - env.llm_max_tokens,
+            tokeniser=tokeniser,
+        )
+        | llm
+        | {
+            "response": StrOutputParser(),
+            "route_name": RunnableLambda(lambda _: ChatRoute.chat_with_docs_map_reduce.value),
+        }
+    )
+
+    @chain
+    def chat_with_docs_route(input_dict):
+        log.info("Length of documents: %s", len(input_dict["documents"]))
+        log.info("Type of documents: %s", type(len(input_dict["documents"])))
+        # input_token_budget=env.ai.context_window_size - env.llm_max_tokens,
+        if len(input_dict["documents"]) <= 20_000:
+            return stuff_chain
+
+        elif len(input_dict["documents"]) > 20_000:
+            return map_reduce_chain
+
+        else:
+            raise NoDocumentSelected
+
+    return RunnablePassthrough.assign(documents=make_document_context()) | chat_with_docs_route
 
 
 def build_retrieval_chain(

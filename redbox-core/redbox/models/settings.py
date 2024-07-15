@@ -15,6 +15,18 @@ CHAT_SYSTEM_PROMPT = (
     "You are an AI assistant called Redbox tasked with answering questions and providing information objectively."
 )
 
+CHAT_WITH_DOCS_SYSTEM_PROMPT = "You are an AI assistant called Redbox tasked with answering questions on user provided documents and providing information objectively."
+
+CHAT_WITH_DOCS_REDUCE_SYSTEM_PROMPT = (
+    "You are an AI assistant tasked with answering questions on user provided documents. "
+    "Your goal is to answer the user question based on list of summaries in "
+    "a concise and coherent manner. Please follow these guidelines while answering the question: \n"
+    "1) Identify and highlight key points,\n"
+    "2) Avoid repetition,\n"
+    "3) Ensure the answer is easy to understand,\n"
+    "4) Maintain the original context and meaning.\n"
+)
+
 RETRIEVAL_SYSTEM_PROMPT = (
     "Given the following conversation and extracted parts of a long document and a question, create a final answer. \n"
     "If you don't know the answer, just say that you don't know. Don't try to make up an answer. "
@@ -67,6 +79,10 @@ CONDENSE_SYSTEM_PROMPT = (
 
 CHAT_QUESTION_PROMPT = "{question}\n=========\n Response: "
 
+CHAT_WITH_DOCS_QUESTION_PROMPT = "Question: {question}. \n\n Documents: \n\n {documents} \n\n Answer: "
+
+CHAT_WITH_DOCS_REDUCE_QUESTION_PROMPT = "Question: {question}. \n\n Documents: \n\n {summaries} \n\n Answer: "
+
 RETRIEVAL_QUESTION_PROMPT = "{question} \n=========\n{formatted_documents}\n=========\nFINAL ANSWER: "
 
 SUMMARISATION_QUESTION_PROMPT = "Question: {question}. \n\n Documents: \n\n {documents} \n\n Answer: "
@@ -94,6 +110,10 @@ class AISettings(BaseModel):
     summarisation_max_concurrency: int = 128
     chat_system_prompt: str = CHAT_SYSTEM_PROMPT
     chat_question_prompt: str = CHAT_QUESTION_PROMPT
+    chat_with_docs_system_prompt: str = CHAT_WITH_DOCS_SYSTEM_PROMPT
+    chat_with_docs_question_prompt: str = CHAT_WITH_DOCS_QUESTION_PROMPT
+    chat_with_docs_reduce_system_prompt: str = CHAT_WITH_DOCS_REDUCE_SYSTEM_PROMPT
+    chat_with_docs_reduce_question_prompt: str = CHAT_WITH_DOCS_REDUCE_QUESTION_PROMPT
     retrieval_system_prompt: str = RETRIEVAL_SYSTEM_PROMPT
     retrieval_question_prompt: str = RETRIEVAL_QUESTION_PROMPT
     condense_system_prompt: str = CONDENSE_SYSTEM_PROMPT
