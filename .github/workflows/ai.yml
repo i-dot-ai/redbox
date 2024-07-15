@@ -53,9 +53,8 @@ jobs:
       run: |
         cp .env core-api/.env
         cd core-api
-        cat .env
         poetry install
-        poetry run deepeval test run tests --mark ai
+        poetry run deepeval test run tests/test_ai.py --mark ai
 
     - name: Notify Slack failure
       id: slack-failure
