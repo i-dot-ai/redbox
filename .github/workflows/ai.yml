@@ -53,7 +53,6 @@ jobs:
       run: |
         cp .env core-api/.env
         cd core-api
-        cat .env
         poetry install
         poetry run deepeval test run tests/test_ai.py --mark ai
 
