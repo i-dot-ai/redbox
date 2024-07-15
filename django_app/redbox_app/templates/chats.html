@@ -56,11 +56,11 @@
 
     <div class="govuk-grid-column-two-thirds">
 
-      <chat-title data-session-id="{{ chat_id or '' }}" data-title="{{ current_chat.name or '' }}", data-title-length="{{ chat_title_length }}">
+      <chat-title class="chat-title" data-session-id="{{ chat_id or '' }}" data-title="{{ current_chat.name or '' }}", data-title-length="{{ chat_title_length }}">
         {% if current_chat.name %}
-          <h2 class="chat_title__heading">{{ current_chat.name }}</h2>
+          <h2 class="chat-title__heading govuk-heading-m">{{ current_chat.name }}</h2>
         {% else %}
-          <h2 class="chat_title__no_session_heading govuk-visually-hidden" hidden>Current chat</h2>
+          <h2 class="chat-title__heading govuk-visually-hidden" hidden>Current chat</h2>
         {% endif %}
       </chat-title>
 
