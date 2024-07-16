@@ -245,12 +245,6 @@ class ChatMessage(UUIDPrimaryKeyBase, TimeStampedModel):
     text = models.TextField(max_length=32768, null=False, blank=False)
     role = models.CharField(choices=ChatRoleEnum.choices, null=False, blank=False)
     route = models.CharField(max_length=25, null=True, blank=True)
-    old_source_files = models.ManyToManyField(  # TODO (@gecBurton): delete me
-        # https://technologyprogramme.atlassian.net/browse/REDBOX-367
-        File,
-        related_name="chat_messages",
-        blank=True,
-    )
     selected_files = models.ManyToManyField(File, related_name="+", symmetrical=False, blank=True)
     source_files = models.ManyToManyField(File, through=Citation)
 
