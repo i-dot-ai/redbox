@@ -75,8 +75,8 @@ def get_all(
 
 
 def get_some(
-    embedding_model: Embeddings, 
-    params: ESParams, 
+    embedding_model: Embeddings,
+    params: ESParams,
     embedding_field_name: str,
     chunk_resolution: ChunkResolution | None,
     query: ESQuery,

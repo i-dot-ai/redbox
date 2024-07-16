@@ -1,6 +1,5 @@
 from langchain_core.documents.base import Document
 
-from redbox.models.file import encoding
 from redbox.transform import combine_documents
 
 
@@ -22,8 +21,8 @@ def reduce_chunks_by_tokens(chunks: list[Document] | None, chunk: Document, max_
 
     last_chunk = chunks[-1]
 
-    chunk_tokens = chunk.metadata['token_count']
-    last_chunk_tokens = last_chunk.metadata['token_count']
+    chunk_tokens = chunk.metadata["token_count"]
+    last_chunk_tokens = last_chunk.metadata["token_count"]
     if chunk_tokens + last_chunk_tokens <= max_tokens:
         chunks[-1] = combine_documents(last_chunk, chunk)
     else:

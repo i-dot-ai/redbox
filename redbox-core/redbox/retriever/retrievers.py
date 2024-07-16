@@ -40,7 +40,9 @@ class ParameterisedElasticsearchRetriever(ElasticsearchRetriever):
         kwargs["body_func"] = get_some
         kwargs["document_mapper"] = hit_to_doc
         super().__init__(**kwargs)
-        self.body_func = partial(get_some, self.embedding_model, self.params, self.embedding_field_name, self.chunk_resolution)
+        self.body_func = partial(
+            get_some, self.embedding_model, self.params, self.embedding_field_name, self.chunk_resolution
+        )
 
 
 class AllElasticsearchRetriever(ElasticsearchRetriever):

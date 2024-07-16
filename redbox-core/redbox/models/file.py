@@ -113,7 +113,7 @@ class Metadata(BaseModel):
                 raise ValueError(message)
             data["parent_doc_uuid"] = parent_doc_uuids_without_none[0]
         return cls(**data)
-    
+
 
 class Chunk(PersistableModel):
     """Chunk of a File"""
@@ -164,6 +164,7 @@ class ChunkMetadata(BaseModel):
     """
     Model for document metadata for new style chunks
     """
+
     parent_file_uuid: UUID
     creator_user_uuid: UUID
     index: int

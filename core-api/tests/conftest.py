@@ -1,4 +1,3 @@
-import time
 from pathlib import Path
 from uuid import UUID, uuid4
 from datetime import UTC, datetime
@@ -57,7 +56,7 @@ def elasticsearch_store(es_index, es_client, embedding_model, env: Settings) -> 
         index_name=es_index,
         embedding=embedding_model,
         es_connection=es_client,
-        vector_query_field=env.embedding_document_field_name
+        vector_query_field=env.embedding_document_field_name,
     )
 
 
@@ -129,15 +128,15 @@ def stored_file_chunks(stored_file_1) -> list[Document]:
                 page_number=4,
                 created_datetime=datetime.now(UTC),
                 token_count=4,
-                chunk_resolution=ChunkResolution.normal              
-            ).model_dump()
+                chunk_resolution=ChunkResolution.normal,
+            ).model_dump(),
         )
         for i in range(10)
     ]
 
     large_chunks = [
         Document(
-            page_content="hello"*10,
+            page_content="hello" * 10,
             metadata=ChunkMetadata(
                 parent_file_uuid=str(stored_file_1.uuid),
                 index=i,
@@ -145,8 +144,8 @@ def stored_file_chunks(stored_file_1) -> list[Document]:
                 page_number=4,
                 created_datetime=datetime.now(UTC),
                 token_count=20,
-                chunk_resolution=ChunkResolution.largest              
-            ).model_dump()
+                chunk_resolution=ChunkResolution.largest,
+            ).model_dump(),
         )
         for i in range(2)
     ]
@@ -165,15 +164,15 @@ def stored_large_file_chunks(stored_file_1) -> list[Document]:
                 page_number=4,
                 created_datetime=datetime.now(UTC),
                 token_count=4,
-                chunk_resolution=ChunkResolution.normal              
-            ).model_dump()
+                chunk_resolution=ChunkResolution.normal,
+            ).model_dump(),
         )
         for i in range(25)
     ]
 
     large_chunks = [
         Document(
-            page_content="hello"*10,
+            page_content="hello" * 10,
             metadata=ChunkMetadata(
                 parent_file_uuid=str(stored_file_1.uuid),
                 index=i,
@@ -181,8 +180,8 @@ def stored_large_file_chunks(stored_file_1) -> list[Document]:
                 page_number=4,
                 created_datetime=datetime.now(UTC),
                 token_count=20,
-                chunk_resolution=ChunkResolution.largest              
-            ).model_dump()
+                chunk_resolution=ChunkResolution.largest,
+            ).model_dump(),
         )
         for i in range(5)
     ]

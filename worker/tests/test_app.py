@@ -35,7 +35,7 @@ async def test_ingest_file(es_client, file: File, monkeypatch):
                 break
         else:
             raise Exception(f"File never went to complete status. Final Status {file_status.processing_status}")
-        
+
         chunks = list(
             scan(
                 client=es_client,

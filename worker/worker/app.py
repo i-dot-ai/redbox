@@ -3,15 +3,12 @@
 import logging
 from contextlib import asynccontextmanager
 from datetime import UTC, datetime
-from io import BytesIO
 from typing import TYPE_CHECKING
 
 from elasticsearch import Elasticsearch
 from faststream import Context, ContextRepo, FastStream
 from faststream.redis import RedisBroker
-from langchain_core.documents.base import Document
 from langchain_core.runnables import Runnable, RunnableParallel
-from langchain_core.vectorstores import VectorStore
 from langchain_elasticsearch.vectorstores import ElasticsearchStore
 
 from redbox.embeddings import get_embeddings
@@ -47,6 +44,7 @@ def get_elasticsearch_store(es: Elasticsearch, es_index_name: str):
         vector_query_field=env.embedding_document_field_name,
     )
 
+
 def get_elasticsearch_store_without_embeddings(es: Elasticsearch, es_index_name: str):
     return ElasticsearchStore(
         index_name=es_index_name,
@@ -64,23 +62,28 @@ async def lifespan(context: ContextRepo):
     es = env.elasticsearch_client()
     es_index_name = f"{env.elastic_root_index}-chunk"
 
-
     es.indices.create(index=es_index_name, ignore=[400])
     context.set_global("storage_handler", get_elasticsearch_storage_handler(es))
 
-    context.set_global("chunk_ingest_chain", ingest_from_loader(
-        document_loader_type=UnstructuredTitleLoader,
-        s3_client=env.s3_client(),
-        vectorstore=get_elasticsearch_store(es, es_index_name),
-        env=env
-    ))
+    context.set_global(
+        "chunk_ingest_chain",
+        ingest_from_loader(
+            document_loader_type=UnstructuredTitleLoader,
+            s3_client=env.s3_client(),
+            vectorstore=get_elasticsearch_store(es, es_index_name),
+            env=env,
+        ),
+    )
 
-    context.set_global("large_chunk_ingest_chain", ingest_from_loader(
-        document_loader_type=UnstructuredLargeChunkLoader,
-        s3_client=env.s3_client(),
-        vectorstore=get_elasticsearch_store_without_embeddings(es, es_index_name),
-        env=env
-    ))
+    context.set_global(
+        "large_chunk_ingest_chain",
+        ingest_from_loader(
+            document_loader_type=UnstructuredLargeChunkLoader,
+            s3_client=env.s3_client(),
+            vectorstore=get_elasticsearch_store_without_embeddings(es, es_index_name),
+            env=env,
+        ),
+    )
     yield
 
 
@@ -97,12 +100,11 @@ async def ingest(
     storage_handler.update_item(file)
 
     try:
-        new_ids = await RunnableParallel({
-            "normal": chunk_ingest_chain,
-            "largest": large_chunk_ingest_chain
-        }).ainvoke(file)
+        new_ids = await RunnableParallel({"normal": chunk_ingest_chain, "largest": large_chunk_ingest_chain}).ainvoke(
+            file
+        )
         file.ingest_status = ProcessingStatusEnum.complete
-        logging.info("File: %s %s chunks ingested", file, {k:len(v) for k,v in new_ids.items()})
+        logging.info("File: %s %s chunks ingested", file, {k: len(v) for k, v in new_ids.items()})
     except Exception:
         logging.exception("Error while processing file [%s]", file)
         file.ingest_status = ProcessingStatusEnum.failed

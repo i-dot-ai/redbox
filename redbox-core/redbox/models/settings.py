@@ -106,6 +106,7 @@ class AISettings(BaseModel):
     reduce_system_prompt: str = REDUCE_SYSTEM_PROMPT
     reduce_question_prompt: str = REDUCE_QUESTION_PROMPT
 
+
 class ElasticLocalSettings(BaseModel):
     """settings required for a local/ec2 instance of elastic"""
 
@@ -183,8 +184,11 @@ class Settings(BaseSettings):
     embed_queue_name: str = "redbox-embedder-queue"
     ingest_queue_name: str = "redbox-ingester-queue"
 
+    ## Chunks
+    ### Normal
     worker_ingest_min_chunk_size: int = 120
     worker_ingest_max_chunk_size: int = 300
+    ### Largest
     worker_ingest_largest_chunk_size: int = 96000
     worker_ingest_largest_chunk_overlap: int = 0
 

@@ -1,7 +1,6 @@
 from langchain_core.documents.base import Document
 
 from redbox.retriever import AllElasticsearchRetriever
-from redbox.models.file import Chunk, File
 
 
 def test_all_chunks_retriever(all_chunks_retriever: AllElasticsearchRetriever, stored_file_all_chunks: list[Document]):

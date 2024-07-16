@@ -1,9 +1,7 @@
 import pytest
 from langchain_core.documents.base import Document
-from langchain_elasticsearch.retrievers import ElasticsearchRetriever
 
 from redbox.retriever import ParameterisedElasticsearchRetriever
-from redbox.models.file import File
 
 test_chain_parameters = (
     {

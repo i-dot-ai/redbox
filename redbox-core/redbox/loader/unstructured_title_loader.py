@@ -55,6 +55,6 @@ class UnstructuredTitleLoader(BaseLoader):
                     page_number=raw_chunk.metadata.page_number,
                     created_datetime=datetime.now(UTC),
                     token_count=len(encoding.encode(raw_chunk.text)),
-                    chunk_resolution=ChunkResolution.normal                    
+                    chunk_resolution=ChunkResolution.normal,
                 ).model_dump(),
             )
