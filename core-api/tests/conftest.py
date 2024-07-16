@@ -50,7 +50,8 @@ def es_index(env) -> str:
 @pytest.fixture(autouse=True)
 def create_index(env, es_index):
     es: Elasticsearch = env.elasticsearch_client()
-    es.indices.create(index=es_index)
+    if not es.indices.exists(index=es_index):
+        es.indices.create(index=es_index)
 
 
 @pytest.fixture()
