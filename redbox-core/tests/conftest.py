@@ -16,7 +16,9 @@ from langchain_core.embeddings.fake import FakeEmbeddings
 from langchain_core.runnables import ConfigurableField
 from langchain_elasticsearch import ElasticsearchStore
 
+
 from redbox.retriever import AllElasticsearchRetriever, ParameterisedElasticsearchRetriever
+from redbox.models.file import ChunkMetadata, ChunkResolution
 from tests.retriever.data import ALL_CHUNKS_RETRIEVER_DOCUMENTS, PARAMETERISED_RETRIEVER_DOCUMENTS
 
 
@@ -175,35 +177,6 @@ def file(s3_client, file_pdf_path: Path, alice, env) -> File:
     return File(key=file_name, bucket=env.bucket_name, creator_user_uuid=alice)
 
 
-@pytest.fixture()
-def stored_file_1(elasticsearch_storage_handler, file) -> File:
-    elasticsearch_storage_handler.write_item(file)
-    elasticsearch_storage_handler.refresh()
-    return file
-
-
-@pytest.fixture()
-def embedding_model_dim() -> int:
-    return 3072  # 3-large default size
-
-
-@pytest.fixture()
-def stored_file_chunks(stored_file_1, embedding_model_dim) -> list[Chunk]:
-    chunks: list[Chunk] = []
-    for i in range(5):
-        chunks.append(
-            Chunk(
-                text="hello",
-                index=i,
-                embedding=[1] * embedding_model_dim,
-                parent_file_uuid=stored_file_1.uuid,
-                creator_user_uuid=stored_file_1.creator_user_uuid,
-                metadata={"parent_doc_uuid": str(stored_file_1.uuid)},
-            )
-        )
-    return chunks
-
-
 @pytest.fixture(params=ALL_CHUNKS_RETRIEVER_DOCUMENTS)
 def stored_file_all_chunks(
     request, elasticsearch_client, es_index, embedding_model_dim
@@ -221,21 +194,18 @@ def stored_file_all_chunks(
 
 
 @pytest.fixture(params=PARAMETERISED_RETRIEVER_DOCUMENTS)
-def stored_file_parameterised(request, elasticsearch_client, es_index) -> Generator[list[Document], None, None]:
-    store = ElasticsearchStore(index_name=es_index, es_connection=elasticsearch_client, query_field="text")
+def stored_file_parameterised(request, elasticsearch_client, es_index, embedding_model, env: Settings) -> Generator[list[Document], None, None]:
+    store = ElasticsearchStore(
+        index_name=es_index, 
+        es_connection=elasticsearch_client, 
+        query_field="text", 
+        vector_query_field=env.embedding_document_field_name,
+        embedding=embedding_model
+    )
     documents = list(map(Document.parse_obj, request.param))
     doc_ids = store.add_documents(documents)
     yield documents
     store.delete(doc_ids)
-
-
-@pytest.fixture()
-def chunked_file(elasticsearch_storage_handler, stored_file_chunks, stored_file_1) -> File:
-    for chunk in stored_file_chunks:
-        elasticsearch_storage_handler.write_item(chunk)
-    elasticsearch_storage_handler.refresh()
-    time.sleep(1)
-    return stored_file_1
 
 
 @pytest.fixture()
@@ -268,3 +238,13 @@ def parameterised_retriever(
             id="params", name="Retriever parameters", description="A dictionary of parameters to use for the retriever."
         )
     )
+
+
+@pytest.fixture(scope="session")
+def embedding_model_dim() -> int:
+    return 3072  # 3-large default size
+
+
+@pytest.fixture(scope="session")
+def embedding_model(embedding_model_dim):
+    return FakeEmbeddings(size=embedding_model_dim)
