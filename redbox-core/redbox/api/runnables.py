@@ -105,6 +105,7 @@ def filter_by_elbow(enabled: bool = True) -> Runnable[list[Document], list[Docum
         if enabled:
             if len(docs) == 0:
                 return docs
+            
             # *100 because algorithm performs poorly on changes of ~1.0
             try:
                 scores = [doc.metadata["score"] * 100 for doc in docs]
@@ -115,7 +116,6 @@ def filter_by_elbow(enabled: bool = True) -> Runnable[list[Document], list[Docum
 
             # Convex curve, decreasing direction as scores descend in a pareto-like fashion
             kn = KneeLocator(rank, scores, curve="convex", direction="decreasing")
-            print(kn.elbow)
             return docs[: kn.elbow]
         else:
             return docs
