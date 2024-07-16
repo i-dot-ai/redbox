@@ -13,6 +13,7 @@ locals {
       "AI__RAG_K" : var.rag_k,
       "AI__RAG_NUM_CANDIDATES" : var.rag_num_candidates,
       "AI__RAG_DESIRED_CHUNK_SIZE" : var.rag_desired_chunk_size,
+      "AI__ELBOW_FILTER_ENABLED": var.elbow_filter_enabled,
       "AI__RETRIEVAL_SYSTEM_PROMPT" : var.retrieval_system_prompt,
       "AI__RETRIEVAL_QUESTION_PROMPT" : var.retrieval_question_prompt,
       "AI__CONDENSE_SYSTEM_PROMPT" : var.condense_system_prompt,

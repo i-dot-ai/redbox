@@ -5,6 +5,7 @@ from langchain_core.documents.base import Document
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import RunnableLambda, RunnablePassthrough, chain, Runnable
 from tiktoken import Encoding
+from kneed import KneeLocator
 
 from redbox.api.format import reduce_chunks_by_tokens
 from redbox.models import ChatResponse
@@ -83,3 +84,40 @@ def resize_documents(max_tokens: int | None = None) -> Runnable[list[Document], 
         return reduce(lambda cs, c: reduce_chunk_n(cs, c), chunks_sorted, [])  # type: ignore
 
     return wrapped
+
+
+# TODO: allow for nothing coming back/empty list -- don't error
+# https://github.com/i-dot-ai/redbox/actions/runs/9944427706/job/27470465428#step:10:7160
+
+
+def filter_by_elbow(enabled: bool = True) -> Runnable[list[Document], list[Document]]:
+    """Filters a list of documents by the elbow point on the curve of their scores.
+
+    Args:
+        enabled (bool, optional): Whether to enable the filter. Defaults to True.
+    Returns:
+        callable: A function that takes a list of documents and returns a list of documents.
+    """
+
+    @chain
+    def _filter_by_elbow(docs: list[Document]):
+        # If enabled, return only the documents up to the elbow point
+        if enabled:
+            if len(docs) == 0:
+                return docs
+
+            # *100 because algorithm performs poorly on changes of ~1.0
+            try:
+                scores = [doc.metadata["score"] * 100 for doc in docs]
+            except AttributeError as exc:
+                raise exc
+
+            rank = range(len(scores))
+
+            # Convex curve, decreasing direction as scores descend in a pareto-like fashion
+            kn = KneeLocator(rank, scores, curve="convex", direction="decreasing")
+            return docs[: kn.elbow]
+        else:
+            return docs
+
+    return _filter_by_elbow

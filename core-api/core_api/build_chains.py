@@ -24,6 +24,7 @@ from redbox.api.format import format_documents
 from redbox.api.runnables import (
     make_chat_prompt_from_messages_runnable,
     resize_documents,
+    filter_by_elbow,
 )
 from redbox.models import ChatRoute, Settings
 from redbox.models.errors import NoDocumentSelected
@@ -103,7 +104,7 @@ def build_condense_retrieval_chain(
 
     return (
         RunnableLambda(route)
-        | RunnablePassthrough.assign(documents=retriever)
+        | RunnablePassthrough.assign(documents=retriever | filter_by_elbow(enabled=env.ai.elbow_filter_enabled))
         | RunnablePassthrough.assign(
             formatted_documents=(RunnablePassthrough() | itemgetter("documents") | format_documents)
         )
