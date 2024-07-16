@@ -75,10 +75,6 @@ def test_user_journey(page: Page, email_address: str):
     chats_page.feedback_text = "Could be better."
     chats_page.submit_feedback()
 
-    # Citations
-    citations_page = latest_chat_response.navigate_to_citations()
-    chats_page = citations_page.back_to_chat()
-
     # Select files
     chats_page = chats_page.start_new_chat()
     files_to_select = {f.name for f in upload_files if "README" in f.name}
@@ -89,17 +85,16 @@ def test_user_journey(page: Page, email_address: str):
     assert chats_page.selected_file_names == files_to_select
     latest_chat_response = chats_page.wait_for_latest_message()
     assert latest_chat_response.text
-    assert files_to_select.pop() in latest_chat_response.sources
 
     # Use specific routes
-    for route, select_file in [
-        ("search", False),
-        ("search", True),
-        ("chat", False),
-        ("chat", True),
-        ("summarise", True),
-        ("summarise", False),
-        ("info", False),
+    for route, select_file, should_have_citation in [
+        ("search", False, True),
+        ("search", True, True),
+        ("chat_with_docs", False, False),
+        ("chat_with_docs", True, False),
+        ("summarise", True, False),
+        ("summarise", False, False),
+        ("info", False, False),
     ]:
         chats_page = chats_page.start_new_chat()
         question = f"@{route} What do I need to install?"
@@ -113,6 +108,12 @@ def test_user_journey(page: Page, email_address: str):
         latest_chat_response = chats_page.wait_for_latest_message()
         assert latest_chat_response.text
         assert latest_chat_response.route.startswith(route)
+        if should_have_citation:
+            # Citations
+            citations_page = latest_chat_response.navigate_to_citations()
+            chats_page = citations_page.back_to_chat()
+            assert files_to_select.pop() in latest_chat_response.sources
+
     # Delete a file
     documents_page = chats_page.navigate_to_documents()
     pre_delete_doc_count = documents_page.document_count()
