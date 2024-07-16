@@ -6,7 +6,7 @@ locals {
   core_api_environment_variables = merge(
     local.worker_environment_variables,
     {
-      "EMBEDDING_DOCUMENT_FIELD_NAME": var.embedding_document_field_name,
+      "EMBEDDING_DOCUMENT_FIELD_NAME" : var.embedding_document_field_name,
       "OPENAI_API_VERSION" : var.openai_api_version,
       "AZURE_OPENAI_MODEL" : var.azure_openai_model,
       "AI__CONTEXT_WINDOW_SIZE" : var.context_window_size,
@@ -22,7 +22,7 @@ locals {
     }
   )
 
-  django_app_environment_variables = {
+  django-app_environment_variables = {
     "OBJECT_STORE" : "s3",
     "BUCKET_NAME" : aws_s3_bucket.user_data.bucket,
     "POSTGRES_DB" : module.rds.db_instance_name,
@@ -44,10 +44,10 @@ locals {
   }
 
   worker_environment_variables = {
-    "EMBEDDING_DOCUMENT_FIELD_NAME": var.embedding_document_field_name,
-    "EMBEDDING_MAX_RETRIES": var.embedding_max_retries,
-    "EMBEDDING_RETRY_MIN_SECONDS": var.embedding_retry_min_seconds,
-    "EMBEDDING_RETRY_MAX_SECONDS": var.embedding_retry_max_seconds,
+    "EMBEDDING_DOCUMENT_FIELD_NAME" : var.embedding_document_field_name,
+    "EMBEDDING_MAX_RETRIES" : var.embedding_max_retries,
+    "EMBEDDING_RETRY_MIN_SECONDS" : var.embedding_retry_min_seconds,
+    "EMBEDDING_RETRY_MAX_SECONDS" : var.embedding_retry_max_seconds,
     "ELASTIC_ROOT_INDEX" : "redbox-data-${terraform.workspace}",
     "BUCKET_NAME" : aws_s3_bucket.user_data.bucket,
     "OBJECT_STORE" : "s3",
@@ -69,7 +69,7 @@ locals {
     "LLM_MAX_TOKENS" : var.llm_max_tokens,
   }
 
-  django_app_secrets = {
+  django-app_secrets = {
     "DJANGO_SECRET_KEY" : var.django_secret_key,
     "POSTGRES_PASSWORD" : module.rds.rds_instance_db_password,
     "POSTGRES_HOST" : module.rds.db_instance_address,
@@ -87,7 +87,7 @@ locals {
 
   reconstructed_worker_secrets = [for k, _ in local.worker_secrets : { name = k, valueFrom = "${aws_secretsmanager_secret.worker-secret.arn}:${k}::" }]
   reconstructed_core_secrets   = [for k, _ in local.core_secrets : { name = k, valueFrom = "${aws_secretsmanager_secret.core-api-secret.arn}:${k}::" }]
-  reconstructed_django_secrets = [for k, _ in local.django_app_secrets : { name = k, valueFrom = "${aws_secretsmanager_secret.django-app-secret.arn}:${k}::" }]
+  reconstructed_django_secrets = [for k, _ in local.django-app_secrets : { name = k, valueFrom = "${aws_secretsmanager_secret.django-app-secret.arn}:${k}::" }]
 }
 
 data "terraform_remote_state" "vpc" {

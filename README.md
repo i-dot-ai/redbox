@@ -56,7 +56,7 @@ This means that our project is structured approximately like this:
 
 ```txt
 redbox-copilot/
-├── django_app
+├── django-app
 │  ├── app/
 │  ├── static/
 │  ├── tests/
@@ -161,7 +161,7 @@ docker system prune --all --force
 
 ### Frontend
 
-To build the frontend assets, from the `django_app/frontend/` folder run:
+To build the frontend assets, from the `django-app/frontend/` folder run:
 
 ```
 npm install
