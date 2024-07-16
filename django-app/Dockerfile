@@ -32,7 +32,7 @@ RUN poetry bundle venv ./venv
 
 
 # app
-FROM python:3.12-slim
+FROM python:3.12-slim as runtime
 
 RUN apt-get update && apt-get install --yes libpq-dev curl > /dev/null
 
