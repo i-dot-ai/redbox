@@ -17,8 +17,7 @@ from langchain_core.vectorstores import VectorStoreRetriever
 from tiktoken import Encoding
 
 from redbox.api.format import format_documents
-from redbox.api.runnables import (filter_by_elbow,
-                                  make_chat_prompt_from_messages_runnable,
+from redbox.api.runnables import (make_chat_prompt_from_messages_runnable,
                                   resize_documents)
 from redbox.models import ChatRoute, Settings
 from redbox.models.errors import NoDocumentSelected
