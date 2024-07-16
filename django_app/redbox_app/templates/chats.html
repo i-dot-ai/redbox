@@ -27,9 +27,11 @@
         <h2 class="govuk-heading-s">Recent chats</h2>
         <ul class="govuk-list govuk-list--spaced iai-panel__scrollable">
           {% for chat in chat_history %}
+            {% if chat != current_chat %}
             <li class="govuk-!-margin-bottom-2">
               <a class="govuk-link govuk-body-s" href="{{url('chats', chat.id)}}">{{ chat.name }}</a>
             </li>
+            {% endif %}
           {% endfor %}
         </ul>
       </div>
@@ -53,9 +55,16 @@
     </div>
 
     <div class="govuk-grid-column-two-thirds">
-      <chat-controller class="iai-chat-container" data-stream-url="{{ streaming.endpoint }}" data-session-id="{{ chat_id or '' }}">
 
-        <h2 class="govuk-visually-hidden">Current chat</h2>
+      <chat-title class="chat-title" data-session-id="{{ chat_id or '' }}" data-title="{{ current_chat.name or '' }}", data-title-length="{{ chat_title_length }}">
+        {% if current_chat.name %}
+          <h2 class="chat-title__heading govuk-heading-m">{{ current_chat.name }}</h2>
+        {% else %}
+          <h2 class="chat-title__heading govuk-visually-hidden" hidden>Current chat</h2>
+        {% endif %}
+      </chat-title>
+
+      <chat-controller class="iai-chat-container" data-stream-url="{{ streaming.endpoint }}" data-session-id="{{ chat_id or '' }}">
 
         <div class="rb-chat-message__container js-message-container">
 
@@ -148,25 +157,10 @@
 
 
 <script src="{{ static('js/libs/showdown.min.js') }}"></script>
-{% if COMPRESSION_ENABLED %}
-  {% compress js %}
-    <script src="{{ static('js/chats/markdown.js') }}"></script>
-    <script src="{{ static('js/chats/feedback.js') }}"></script>
-    <script src="{{ static('js/chats/message-input.js') }}"></script>
-  {% endcompress %}
-{% else %}
-  <script src="{{ static('js/chats/markdown.js') }}"></script>
-  <script src="{{ static('js/chats/feedback.js') }}"></script>
-  <script src="{{ static('js/chats/message-input.js') }}"></script>
-{% endif %}
-  
-  
-{% if COMPRESSION_ENABLED %}
-  {% compress js %}
-    <script src="{{ static('js/chats/streaming.js') }}"></script>
-  {% endcompress %}
-{% else %}
-  <script src="{{ static('js/chats/streaming.js') }}"></script>
-{% endif %}
+<script src="{{ static('js/chats/markdown.js') }}"></script>
+<script src="{{ static('js/chats/feedback.js') }}"></script>
+<script src="{{ static('js/chats/message-input.js') }}"></script>
+<script src="{{ static('js/chats/streaming.js') }}"></script>
+<script src="{{ static('js/chats/chat-title.js') }}"></script>
 
 {% endblock %}

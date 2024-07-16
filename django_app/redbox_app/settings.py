@@ -25,8 +25,6 @@ DEBUG = env.bool("DEBUG")
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-COMPRESSION_ENABLED = env.bool("COMPRESSION_ENABLED")
-
 COMPRESS_PRECOMPILERS = (("text/x-scss", "django_libsass.SassCompiler"),)
 
 STATIC_URL = "static/"
@@ -90,9 +88,6 @@ TEMPLATES = [
         ],
         "OPTIONS": {
             "environment": "redbox_app.jinja2.environment",
-            "context_processors": [
-                "redbox_app.context_processors.compression_enabled",
-            ],
         },
     },
     {

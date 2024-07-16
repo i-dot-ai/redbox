@@ -2,6 +2,7 @@ import json
 from types import SimpleNamespace
 from typing import TYPE_CHECKING
 from unittest.mock import AsyncMock, MagicMock
+from math import exp
 
 import pytest
 from fastapi.testclient import TestClient
@@ -60,7 +61,10 @@ def mock_parameterised_retriever(alice):
                 index=i,
                 page_number=1,
                 token_count=40
-            ).model_dump()
+            ).model_dump() | {
+                "score": 1 / (1 + exp(-i)),
+
+            }
         )
         for i in range(12)
     ]

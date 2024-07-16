@@ -374,6 +374,22 @@ def test_view_session_with_documents(chat_message: ChatMessage, client: Client):
 
 
 @pytest.mark.django_db()
+def test_post_chat_title(alice: User, chat_history: ChatHistory, client: Client):
+    # Given
+    client.force_login(alice)
+
+    # When
+    url = reverse("chat-titles", kwargs={"chat_id": chat_history.id})
+    response = client.post(url, json.dumps({"name": "New chat name"}), content_type="application/json")
+
+    # Then
+    status = HTTPStatus(response.status_code)
+    assert status.is_success
+    chat_history.refresh_from_db()
+    assert chat_history.name == "New chat name"
+
+
+@pytest.mark.django_db()
 def test_post_new_rating_only(alice: User, chat_message: ChatMessage, client: Client):
     # Given
     client.force_login(alice)
@@ -383,7 +399,8 @@ def test_post_new_rating_only(alice: User, chat_message: ChatMessage, client: Cl
     response = client.post(url, json.dumps({"rating": 5}), content_type="application/json")
 
     # Then
-    assert 100 <= response.status_code <= 299
+    status = HTTPStatus(response.status_code)
+    assert status.is_success
     rating = ChatMessageRating.objects.get(pk=chat_message.pk)
     assert rating.rating == 5
     assert rating.text is None
@@ -404,7 +421,8 @@ def test_post_new_rating(alice: User, chat_message: ChatMessage, client: Client)
     )
 
     # Then
-    assert 100 <= response.status_code <= 299
+    status = HTTPStatus(response.status_code)
+    assert status.is_success
     rating = ChatMessageRating.objects.get(pk=chat_message.pk)
     assert rating.rating == 5
     assert rating.text == "Lorem Ipsum."
@@ -425,7 +443,8 @@ def test_post_updated_rating(alice: User, chat_message_with_rating: ChatMessage,
     )
 
     # Then
-    assert 100 <= response.status_code <= 299
+    status = HTTPStatus(response.status_code)
+    assert status.is_success
     rating = ChatMessageRating.objects.get(pk=chat_message_with_rating.pk)
     assert rating.rating == 5
     assert rating.text == "Lorem Ipsum."

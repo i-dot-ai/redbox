@@ -356,6 +356,17 @@ class ChatsPage(SignedInBasePage):
 
     feedback_chips = property(fset=feedback_chips)
 
+    @property
+    def chat_title(self) -> str:
+        return self.page.locator(".chat-title__heading").inner_text()
+
+    @chat_title.setter
+    def chat_title(self, title: str):
+        self.page.locator(".chat-title__edit-btn").click()
+        input_ = self.page.get_by_label("Chat Title")
+        input_.fill(title)
+        input_.press("Enter")
+
     def start_new_chat(self) -> "ChatsPage":
         self.page.get_by_role("button", name="New chat").click()
         return ChatsPage(self.page)
@@ -392,6 +403,10 @@ class ChatsPage(SignedInBasePage):
 
     def wait_for_latest_message(self, role="Redbox") -> ChatMessage:
         return [m for m in self.get_all_messages_once_streaming_has_completed() if m.role == role][-1]
+
+    def navigate_to_titled_chat(self, title: str) -> "ChatsPage":
+        self.page.get_by_role("link", name=title).click()
+        return ChatsPage(self.page)
 
 
 class CitationsPage(SignedInBasePage):

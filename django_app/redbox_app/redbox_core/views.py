@@ -222,6 +222,7 @@ class ChatsView(View):
         show_route = request.user.is_staff
 
         messages: Sequence[ChatMessage] = []
+        current_chat = None
         if chat_id:
             current_chat = ChatHistory.objects.get(id=chat_id)
             if current_chat.users != request.user:
@@ -247,10 +248,12 @@ class ChatsView(View):
             "chat_id": chat_id,
             "messages": messages,
             "chat_history": chat_history,
+            "current_chat": current_chat,
             "streaming": {"endpoint": str(endpoint)},
             "contact_email": settings.CONTACT_EMAIL,
             "files": all_files,
             "show_route": show_route,
+            "chat_title_length": settings.CHAT_TITLE_LENGTH,
         }
 
         return render(
@@ -269,6 +272,23 @@ class ChatsView(View):
 
         for file in all_files:
             file.selected = file in selected_files
+
+
+class ChatsTitleView(View):
+    @dataclass_json(undefined=Undefined.EXCLUDE)
+    @dataclass(frozen=True)
+    class Title:
+        name: str
+
+    @method_decorator(login_required)
+    def post(self, request: HttpRequest, chat_id: uuid.UUID) -> HttpResponse:
+        chat_history: ChatHistory = get_object_or_404(ChatHistory, id=chat_id)
+        user_rating = ChatsTitleView.Title.schema().loads(request.body)
+
+        chat_history.name = user_rating.name
+        chat_history.save()
+
+        return HttpResponse(status=HTTPStatus.NO_CONTENT)
 
 
 class CitationsView(View):

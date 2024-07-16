@@ -1,5 +1,6 @@
 import logging
 from typing import Literal
+from functools import lru_cache
 
 import boto3
 from elasticsearch import Elasticsearch
@@ -85,9 +86,10 @@ class AISettings(BaseModel):
     model_config = SettingsConfigDict(frozen=True)
 
     context_window_size: int = 8_000
-    rag_k: int = 15
+    rag_k: int = 30
     rag_num_candidates: int = 10
     rag_desired_chunk_size: int = 300
+    elbow_filter_enabled: bool = True
     summarisation_chunk_max_tokens: int = 20_000
     summarisation_max_concurrency: int = 128
     vanilla_system_prompt: str = VANILLA_SYSTEM_PROMPT
@@ -196,6 +198,7 @@ class Settings(BaseSettings):
 
     model_config = SettingsConfigDict(env_file=".env", env_nested_delimiter="__", extra="allow", frozen=True)
 
+    @lru_cache(1)
     def elasticsearch_client(self) -> Elasticsearch:
         if isinstance(self.elastic, ElasticLocalSettings):
             log.info("Connecting to self managed Elasticsearch")

@@ -1,9 +1,9 @@
 # Workers and Queues
 
-The Worker is a set of service that runs in the background and perform tasks that are too resource-intensive to run on the Core API. These workers include:
+The Worker is a set of service that runs in the background and perform tasks that are too resource-intensive to run on the Core API. This worker includes:
 
-- `ingester` - Ingesting files
-- `embedder` - Embedding chunks of text
+- Ingesting files
+- Embedding chunks of text
 
 The Workers are designed to be horizontally scalable. This means that we can add more instances of the Workers to handle more load. The Workers are also designed to be resilient. This means that if one instance of the Worker fails, another instance can take over.
 
@@ -22,6 +22,3 @@ We are using [FastStream](https://faststream.airt.ai/latest/faststream/) to hand
 The Worker is responsible for:
 * ingesting files into the system. The Ingester Worker reads a [`File`](../code_reference/models/file.md) reference from its queue and then reads the file from the Object Store. The Worker then processes the file and stores the file in the Database. The worker also sends created [`Chunk`](../code_reference/models/chunk.md) references to the Worker via the `embedding-queue`.
 * embedding chunks of text. The Embedder Worker reads a [`Chunk`](../code_reference/models/chunk.md) reference from its queue and then reads the text from the Database. The Worker then embeds the text with it instance of the embedding model. The worker then stores the embedding in the Database.
-
-::: worker.app.embed
-::: worker.app.ingest

@@ -188,7 +188,7 @@ variable "context_window_size" {
 
 variable "rag_k" {
     type        = number
-    default     = 15
+    default     = 30
     description = "how many chunks to retrieve to form the basis of the response"
 }
 
@@ -201,6 +201,12 @@ variable "rag_desired_chunk_size" {
 variable "rag_num_candidates" {
     type        = number
     default     = 10
+}
+
+variable "elbow_filter_enabled" {
+    type        = bool
+    default     = true
+    description = "whether the elbow filter should be enabled"
 }
 
 variable "retrieval_system_prompt" {

@@ -36,6 +36,7 @@ file_urlpatterns = [
 chat_urlpatterns = [
     path("chats/<uuid:chat_id>/", views.ChatsView.as_view(), name="chats"),
     path("chats/", views.ChatsView.as_view(), name="chats"),
+    path("chat/<uuid:chat_id>/title/", views.ChatsTitleView.as_view(), name="chat-titles"),
     path("post-message/", views.post_message, name="post-message"),
     path("citations/<uuid:message_id>/", views.CitationsView.as_view(), name="citations"),
     path("ratings/<uuid:message_id>/", views.RatingsView.as_view(), name="ratings"),

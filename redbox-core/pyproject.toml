@@ -24,6 +24,7 @@ langchain-elasticsearch = "^0.2.2"
 unstructured = {version = "<0.14.9", extras = ["all-docs"]}
 unstructured-inference = "^0.7.36"
 pytest-dotenv = "^0.5.2"
+kneed = "^0.8.5"
 
 
 [tool.poetry.group.dev.dependencies]
