@@ -10,7 +10,16 @@ def format_documents(documents: list[Document]) -> str:
         parent_file_uuid = d.metadata.get("parent_file_uuid")  # New Style Ingest
         if not parent_file_uuid:
             parent_file_uuid = d.metadata.get("parent_doc_uuid")  # Old Style Ingest
-        doc_xml = f"<Doc{parent_file_uuid}>\n {d.page_content} \n</Doc{parent_file_uuid}>"
+        
+        doc_xml = (
+            f"<Document>\n"
+            f"\t<UUID>{parent_file_uuid}</UUID>\n"
+            f"\t<Filename>{d.metadata.get("file_name", "")}</Filename>\n"
+            "\t<Content>\n"
+            f"{d.page_content}\n"
+            "\t</Content>\n"
+            f"</Document>"
+        )
         formatted.append(doc_xml)
 
     return "\n\n".join(formatted)
