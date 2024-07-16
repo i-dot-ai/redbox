@@ -162,7 +162,8 @@ class ChunkResolution(StrEnum):
 
 class ChunkMetadata(BaseModel):
     """
-    Model for document metadata for new style chunks
+    Worker model for document metadata for new style chunks.
+    This is the minimal metadata that all ingest chains provide and should not be used to map retrieved documents (as fields will be lost)
     """
 
     parent_file_uuid: UUID

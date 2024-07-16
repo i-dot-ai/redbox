@@ -8,7 +8,6 @@ from elasticsearch import Elasticsearch
 from redbox.models import Chunk, File, Settings
 from redbox.storage.elasticsearch import ElasticsearchStorageHandler
 
-import time
 from collections.abc import Generator
 
 from langchain_core.documents.base import Document
@@ -18,7 +17,6 @@ from langchain_elasticsearch import ElasticsearchStore
 
 
 from redbox.retriever import AllElasticsearchRetriever, ParameterisedElasticsearchRetriever
-from redbox.models.file import ChunkMetadata, ChunkResolution
 from tests.retriever.data import ALL_CHUNKS_RETRIEVER_DOCUMENTS, PARAMETERISED_RETRIEVER_DOCUMENTS
 
 
@@ -194,13 +192,15 @@ def stored_file_all_chunks(
 
 
 @pytest.fixture(params=PARAMETERISED_RETRIEVER_DOCUMENTS)
-def stored_file_parameterised(request, elasticsearch_client, es_index, embedding_model, env: Settings) -> Generator[list[Document], None, None]:
+def stored_file_parameterised(
+    request, elasticsearch_client, es_index, embedding_model, env: Settings
+) -> Generator[list[Document], None, None]:
     store = ElasticsearchStore(
-        index_name=es_index, 
-        es_connection=elasticsearch_client, 
-        query_field="text", 
+        index_name=es_index,
+        es_connection=elasticsearch_client,
+        query_field="text",
         vector_query_field=env.embedding_document_field_name,
-        embedding=embedding_model
+        embedding=embedding_model,
     )
     documents = list(map(Document.parse_obj, request.param))
     doc_ids = store.add_documents(documents)
