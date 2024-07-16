@@ -10,7 +10,7 @@ def format_documents(documents: list[Document]) -> str:
         parent_file_uuid = d.metadata.get("parent_file_uuid")  # New Style Ingest
         if not parent_file_uuid:
             parent_file_uuid = d.metadata.get("parent_doc_uuid")  # Old Style Ingest
-        
+
         doc_xml = (
             f"<Document>\n"
             f"\t<UUID>{parent_file_uuid}</UUID>\n"
