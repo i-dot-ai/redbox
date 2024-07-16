@@ -165,9 +165,7 @@ docker_login:
 
 .PHONY: docker_build_local
 docker_build_local: ## Build the docker container locally
-	# Enabling Docker BuildKit for better build performance
-	export DOCKER_BUILDKIT=1
-	docker build -t $(IMAGE) -f $(service)/Dockerfile .
+	DOCKER_BUILDKIT=1 docker build -t $(IMAGE) -f $(service)/Dockerfile .
 
 .PHONY: docker_build
 docker_build: ## Pull previous container (if it exists) build the docker container
