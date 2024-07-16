@@ -42,7 +42,7 @@ jobs:
   build-image:
     strategy:
       matrix:
-        service: [worker]
+        service: [core-api, worker]
     needs:
       - set-vars
       - start-runner

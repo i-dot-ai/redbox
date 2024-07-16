@@ -13,7 +13,6 @@ readme = "../README.md"
 
 [tool.poetry.dependencies]
 python = ">=3.12,<3.13"
-redbox = {path="../redbox-core", develop=true}
 pydantic = "^2.7.1"
 langchain = "^0.2.6"
 tiktoken = "^0.7.0"
