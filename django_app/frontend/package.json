@@ -10,7 +10,8 @@
     "src/js/chats/feedback.js",
     "src/js/chats/markdown.js",
     "src/js/chats/message-input.js",
-    "src/js/chats/streaming.js"
+    "src/js/chats/streaming.js",
+    "src/js/chats/chat-title.js"
   ],
   "staticFiles": [
     {

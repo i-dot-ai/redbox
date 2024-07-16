@@ -96,7 +96,6 @@ def test_user_journey(page: Page, email_address: str):
         ("summarise", False, False),
         ("info", False, False),
     ]:
-        chats_page = chats_page.start_new_chat()
         question = f"@{route} What do I need to install?"
         logger.info("Asking %r", question)
         chats_page.write_message = question
