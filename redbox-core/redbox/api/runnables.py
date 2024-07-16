@@ -105,7 +105,7 @@ def filter_by_elbow(enabled: bool = True) -> Runnable[list[Document], list[Docum
         if enabled:
             if len(docs) == 0:
                 return docs
-            
+
             # *100 because algorithm performs poorly on changes of ~1.0
             try:
                 scores = [doc.metadata["score"] * 100 for doc in docs]
