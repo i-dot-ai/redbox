@@ -104,14 +104,14 @@ class TestEndToEnd:
         """
         Given that I have POSTed a file key to core-api/file
         And the file status is complete
-        When I POST a question to the rag endpoint
+        When I POST a question to the rag endpoint using @search keyword
         I Expect an answer and for the cited documents to be the one I uploaded
         """
         rag_response = requests.post(
             f"http://{TEST_ORIGIN}/chat/rag",
             json={
                 "message_history": [
-                    {"role": "user", "text": "what is routing?"},
+                    {"role": "user", "text": "@search what is routing?"},
                 ]
             },
             headers=make_headers(user_uuid),
@@ -140,7 +140,7 @@ class TestEndToEnd:
             f"http://{TEST_ORIGIN}/chat/rag",
             json={
                 "message_history": [
-                    {"role": "user", "text": "what is routing?"},
+                    {"role": "user", "text": "@search what is routing?"},
                 ],
                 "selected_files": [{"uuid": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"}],
             },
@@ -165,7 +165,7 @@ class TestEndToEnd:
                 "message_history": [
                     {
                         "role": "user",
-                        "text": "Please summarise the contents of the uploaded files.",
+                        "text": "@summarise Please summarise the contents of the uploaded files.",
                     }
                 ],
                 "selected_files": [{"uuid": TestEndToEnd.file_uuids[user_uuid]}],
@@ -197,12 +197,12 @@ class TestEndToEnd:
     async def test_streaming_rag(self, user_uuid):
         """
         Given a legitimate message_history
-        When I send to ws://<host>/chat/rag
+        When I send to ws://<host>/chat/rag using @search keyword
         I expect a text response
         """
         message_history = {
             "message_history": [
-                {"role": "user", "text": "what is routing"},
+                {"role": "user", "text": "@search what is routing"},
             ]
         }
         all_text, source_documents = [], []
