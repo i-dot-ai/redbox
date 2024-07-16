@@ -169,10 +169,14 @@ docker_build_local: ## Build the docker container locally
 
 .PHONY: docker_build
 docker_build: ## Pull previous container (if it exists) build the docker container
+<<<<<<< Updated upstream
 	DOCKER_BUILDKIT=1 docker buildx build --platform linux/amd64 --load --builder=$(DOCKER_BUILDER_CONTAINER) -t $(IMAGE)  \
 	--cache-to type=s3,region=$(AWS_REGION),bucket=$(DOCKER_CACHE_BUCKET),name=$(APP_NAME)/$(IMAGE) \
 	--cache-from type=s3,region=$(AWS_REGION),bucket=$(DOCKER_CACHE_BUCKET),name=$(APP_NAME)/$(ECR_REPO_URL):$(PREV_IMAGE_TAG) \
 	--cache-from type=s3,region=$(AWS_REGION),bucket=$(DOCKER_CACHE_BUCKET),name=$(APP_NAME)/$(ECR_REPO_URL):$(MAIN_IMAGE_TAG) -f $(service)/Dockerfile .
+=======
+	DOCKER_BUILDKIT=1 docker build --target=runtime -t $(IMAGE) -f $(service)/Dockerfile .
+>>>>>>> Stashed changes
 
 
 .PHONY: docker_push
