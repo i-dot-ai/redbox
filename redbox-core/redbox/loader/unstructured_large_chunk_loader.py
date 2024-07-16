@@ -41,8 +41,8 @@ class UnstructuredLargeChunkLoader(BaseLoader):
         elements = partition(file=self.file_bytes, strategy=self.env.partition_strategy)
         raw_chunks = chunk_elements(
             elements=elements,
-            max_characters=96000,
-            overlap = 0,
+            max_characters=self.env.worker_ingest_max_largest_chunk_size,
+            overlap = self.env.worker_ingest_largest_chunk_overlap,
             overlap_all=True
         )
 
