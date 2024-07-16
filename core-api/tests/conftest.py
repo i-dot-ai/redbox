@@ -47,6 +47,12 @@ def es_index(env) -> str:
     return f"{env.elastic_root_index}-chunk"
 
 
+@pytest.fixture(autouse=True)
+def create_index(env, es_index):
+    es: Elasticsearch = env.elasticsearch_client()
+    es.indices.create(index=es_index)
+
+
 @pytest.fixture()
 def app_client() -> TestClient:
     return TestClient(application)
