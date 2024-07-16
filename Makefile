@@ -239,7 +239,7 @@ tf_plan: ## Plan terraform
 .PHONY: tf_apply
 tf_apply: ## Apply terraform
 	make tf_set_workspace && \
-	terraform -chdir=./infrastructure/aws/$(instance) apply -var-file=$(CONFIG_DIR)/${env}-input-params.tfvars ${tf_build_args} ${args} -target=module.lambda-cleanup
+	terraform -chdir=./infrastructure/aws/$(instance) apply -var-file=$(CONFIG_DIR)/${env}-input-params.tfvars ${tf_build_args} ${args} -target=module.lambda-cleanup -target=module.rds -target=aws_security_group_rule.lambda_to_rds_ingress -target=module.elasticache -target=module.lambda-test -target=module.lambda
 
 .PHONY: tf_init_universal
 tf_init_universal: ## Initialise terraform
