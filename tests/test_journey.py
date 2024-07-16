@@ -92,6 +92,7 @@ def test_user_journey(page: Page, email_address: str):
     assert files_to_select.pop() in latest_chat_response.sources
 
     # Use specific routes
+    chats_page = chats_page.start_new_chat()
     for route, select_file in [
         ("search", False),
         ("search", True),
@@ -101,7 +102,6 @@ def test_user_journey(page: Page, email_address: str):
         ("summarise", False),
         ("info", False),
     ]:
-        chats_page = chats_page.start_new_chat()
         question = f"@{route} What do I need to install?"
         logger.info("Asking %r", question)
         chats_page.write_message = question
@@ -113,6 +113,13 @@ def test_user_journey(page: Page, email_address: str):
         latest_chat_response = chats_page.wait_for_latest_message()
         assert latest_chat_response.text
         assert latest_chat_response.route.startswith(route)
+
+    # Navigate to old chat & rename
+    chats_page = chats_page.navigate_to_titled_chat("What architecture is in use?")
+    chats_page.chat_title = "About tech stuff."
+    chats_page = chats_page.start_new_chat()
+    chats_page = chats_page.navigate_to_titled_chat("About tech stuff.")
+
     # Delete a file
     documents_page = chats_page.navigate_to_documents()
     pre_delete_doc_count = documents_page.document_count()
