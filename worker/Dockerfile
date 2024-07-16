@@ -15,6 +15,7 @@ ENV POETRY_NO_INTERACTION=1 \
 WORKDIR /app/worker
 
 COPY worker/pyproject.toml worker/poetry.lock .
+COPY redbox-core/ /app/redbox-core
 COPY README.md /app/README.md
 
 RUN --mount=type=cache,target=$POETRY_CACHE_DIR poetry install --without dev --no-root
