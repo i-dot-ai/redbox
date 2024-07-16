@@ -36,8 +36,6 @@ You will need to install `poppler` and `tesseract` to run the `worker`
   - `pip install pre-commit`
   - `pre-commit install`
 
-
-
 # Testing
 
 - Unit tests and QA run in CI
@@ -179,19 +177,7 @@ Or, to watch for changes (e.g. if making CSS and JS changes):
 npx parcel watch
 ```
 
-Once this has been done, `django-compressor` should work automatically to
-compile the govuk-frontend SCSS on the first request and any subsequent request
-after the SCSS has changed. In the meantime it will read from `frontend/CACHE`,
-which is `.gitignore`d.
-
-When we get to production, we can prepopulate `frontend/CACHE` using `manage.py
-compress` before building our container, which will mean that every request
-will be served from the cache.
-
-`django-compressor` also takes care of fingerprinting and setting cache headers
-for our CSS so it can be cached.
-
-On initial app setup you will need to run `poetry run python manage.py collectstatic` to copy them to the `frontend` folder from where `runserver` can serve them.
+On initial app setup you will need to run `poetry run python manage.py collectstatic` to copy them to the `frontend` folder from where `runserver` can serve them. Or you can run `make build-django-static` which combines the parcel build and collectstatic commands.
 
 ## How to deploy
 

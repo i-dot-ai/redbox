@@ -5,13 +5,7 @@
 
 {% block content %}
 
-{% if COMPRESSION_ENABLED %}
-  {% compress js %}
-    <script src="{{ static('js/documents.js') }}"></script>
-  {% endcompress %}
-{% else %}
-  <script src="{{ static('js/documents.js') }}"></script>
-{% endif %}
+<script src="{{ static('js/documents.js') }}"></script>
 
 <div class="govuk-width-container">
 

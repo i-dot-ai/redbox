@@ -19,12 +19,6 @@
 </div>
 
 <script src="{{ static('js/libs/showdown.min.js') }}"></script>
-{% if COMPRESSION_ENABLED %}
-  {% compress js %}
-    <script src="{{ static('js/chats/markdown.js') }}"></script>
-  {% endcompress %}
-{% else %}
-  <script src="{{ static('js/chats/markdown.js') }}"></script>
-{% endif %}
+<script src="{{ static('js/chats/markdown.js') }}"></script>
 
 {% endblock %}
