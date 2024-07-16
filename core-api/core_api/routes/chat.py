@@ -55,7 +55,7 @@ async def semantic_router_to_chain(
         if chat_request.selected_files:
             return routable_chains.get("chat_with_docs")
         else:
-            return routable_chains.get("chat_no_docs")
+            return routable_chains.get("chat")
 
     # Match keyword
     route_match = re_keyword_pattern.search(question)

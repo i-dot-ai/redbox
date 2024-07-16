@@ -26,7 +26,7 @@ logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 log = logging.getLogger()
 
 
-def build_chat_no_docs_chain(
+def build_chat_chain(
     llm: Annotated[ChatLiteLLM, Depends(dependencies.get_llm)],
     tokeniser: Annotated[Encoding, Depends(dependencies.get_tokeniser)],
     env: Annotated[Settings, Depends(dependencies.get_env)],
@@ -41,7 +41,7 @@ def build_chat_no_docs_chain(
         | llm
         | {
             "response": StrOutputParser(),
-            "route_name": RunnableLambda(lambda _: ChatRoute.chat_no_docs.value),
+            "route_name": RunnableLambda(lambda _: ChatRoute.chat.value),
         }
     )
 
