@@ -54,10 +54,8 @@
 </code></pre></div> <div class="doc doc-contents "> </div> </div> <div class="doc doc-object doc-attribute"> <h3 id=redbox.models.settings.Settings.superuser_email class="doc doc-heading"> <code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code> <span class="doc doc-object-name doc-attribute-name">superuser_email</span> <span class="doc doc-labels"> <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small> <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small> </span> </h3> <div class="doc-signature highlight"><pre><span></span><code><span class=n>superuser_email</span> <span class=o>=</span> <span class=kc>None</span>
 </code></pre></div> <div class="doc doc-contents "> </div> </div> <div class="doc doc-object doc-attribute"> <h3 id=redbox.models.settings.Settings.model_config class="doc doc-heading"> <code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code> <span class="doc doc-object-name doc-attribute-name">model_config</span> <span class="doc doc-labels"> <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small> <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small> </span> </h3> <div class="doc-signature highlight"><pre><span></span><code><span class=n>model_config</span> <span class=o>=</span> <span class=n><span title="pydantic_settings.SettingsConfigDict">SettingsConfigDict</span></span><span class=p>(</span><span class=n>env_file</span><span class=o>=</span><span class=s1>&#39;.env&#39;</span><span class=p>,</span> <span class=n>env_nested_delimiter</span><span class=o>=</span><span class=s1>&#39;__&#39;</span><span class=p>,</span> <span class=n>extra</span><span class=o>=</span><span class=s1>&#39;allow&#39;</span><span class=p>,</span> <span class=n>frozen</span><span class=o>=</span><span class=kc>True</span><span class=p>)</span>
 </code></pre></div> <div class="doc doc-contents "> </div> </div> <div class="doc doc-object doc-attribute"> <h3 id=redbox.models.settings.Settings.redis_url class="doc doc-heading"> <code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code> <span class="doc doc-object-name doc-attribute-name">redis_url</span> <span class="doc doc-labels"> <small class="doc doc-label doc-label-property"><code>property</code></small> </span> </h3> <div class="doc-signature highlight"><pre><span></span><code><span class=n>redis_url</span>
-</code></pre></div> <div class="doc doc-contents "> </div> </div> <div class="doc doc-object doc-function"> <h3 id=redbox.models.settings.Settings.elasticsearch_client class="doc doc-heading"> <code class="doc-symbol doc-symbol-heading doc-symbol-method"></code> <span class="doc doc-object-name doc-function-name">elasticsearch_client</span> </h3> <div class="doc-signature highlight"><pre><span></span><code><span class=nf>elasticsearch_client</span><span class=p>()</span>
-</code></pre></div> <div class="doc doc-contents "> <details class=quote> <summary>Source code in <code>redbox-core/redbox/models/settings.py</code></summary> <div class=highlight><table class=highlighttable><tr><td class=linenos><div class=linenodiv><pre><span></span><span class=normal>198</span>
-<span class=normal>199</span>
-<span class=normal>200</span>
+</code></pre></div> <div class="doc doc-contents "> </div> </div> <div class="doc doc-object doc-function"> <h3 id=redbox.models.settings.Settings.elasticsearch_client class="doc doc-heading"> <code class="doc-symbol doc-symbol-heading doc-symbol-method"></code> <span class="doc doc-object-name doc-function-name">elasticsearch_client</span> <span class="doc doc-labels"> <small class="doc doc-label doc-label-cached"><code>cached</code></small> </span> </h3> <div class="doc-signature highlight"><pre><span></span><code><span class=nf>elasticsearch_client</span><span class=p>()</span>
+</code></pre></div> <div class="doc doc-contents "> <details class=quote> <summary>Source code in <code>redbox-core/redbox/models/settings.py</code></summary> <div class=highlight><table class=highlighttable><tr><td class=linenos><div class=linenodiv><pre><span></span><span class=normal>200</span>
 <span class=normal>201</span>
 <span class=normal>202</span>
 <span class=normal>203</span>
@@ -74,7 +72,11 @@
 <span class=normal>214</span>
 <span class=normal>215</span>
 <span class=normal>216</span>
-<span class=normal>217</span></pre></div></td><td class=code><div><pre><span></span><code><span class=k>def</span> <span class=nf>elasticsearch_client</span><span class=p>(</span><span class=bp>self</span><span class=p>)</span> <span class=o>-&gt;</span> <span class=n>Elasticsearch</span><span class=p>:</span>
+<span class=normal>217</span>
+<span class=normal>218</span>
+<span class=normal>219</span>
+<span class=normal>220</span></pre></div></td><td class=code><div><pre><span></span><code><span class=nd>@lru_cache</span><span class=p>(</span><span class=mi>1</span><span class=p>)</span>
+<span class=k>def</span> <span class=nf>elasticsearch_client</span><span class=p>(</span><span class=bp>self</span><span class=p>)</span> <span class=o>-&gt;</span> <span class=n>Elasticsearch</span><span class=p>:</span>
     <span class=k>if</span> <span class=nb>isinstance</span><span class=p>(</span><span class=bp>self</span><span class=o>.</span><span class=n>elastic</span><span class=p>,</span> <span class=n>ElasticLocalSettings</span><span class=p>):</span>
         <span class=n>log</span><span class=o>.</span><span class=n>info</span><span class=p>(</span><span class=s2>&quot;Connecting to self managed Elasticsearch&quot;</span><span class=p>)</span>
         <span class=n>log</span><span class=o>.</span><span class=n>info</span><span class=p>(</span><span class=s2>&quot;Elasticsearch host = </span><span class=si>%s</span><span class=s2>&quot;</span><span class=p>,</span> <span class=bp>self</span><span class=o>.</span><span class=n>elastic</span><span class=o>.</span><span class=n>host</span><span class=p>)</span>
@@ -95,10 +97,7 @@
 
     <span class=k>return</span> <span class=n>Elasticsearch</span><span class=p>(</span><span class=n>cloud_id</span><span class=o>=</span><span class=bp>self</span><span class=o>.</span><span class=n>elastic</span><span class=o>.</span><span class=n>cloud_id</span><span class=p>,</span> <span class=n>api_key</span><span class=o>=</span><span class=bp>self</span><span class=o>.</span><span class=n>elastic</span><span class=o>.</span><span class=n>api_key</span><span class=p>)</span>
 </code></pre></div></td></tr></table></div> </details> </div> </div> <div class="doc doc-object doc-function"> <h3 id=redbox.models.settings.Settings.s3_client class="doc doc-heading"> <code class="doc-symbol doc-symbol-heading doc-symbol-method"></code> <span class="doc doc-object-name doc-function-name">s3_client</span> </h3> <div class="doc-signature highlight"><pre><span></span><code><span class=nf>s3_client</span><span class=p>()</span>
-</code></pre></div> <div class="doc doc-contents "> <details class=quote> <summary>Source code in <code>redbox-core/redbox/models/settings.py</code></summary> <div class=highlight><table class=highlighttable><tr><td class=linenos><div class=linenodiv><pre><span></span><span class=normal>219</span>
-<span class=normal>220</span>
-<span class=normal>221</span>
-<span class=normal>222</span>
+</code></pre></div> <div class="doc doc-contents "> <details class=quote> <summary>Source code in <code>redbox-core/redbox/models/settings.py</code></summary> <div class=highlight><table class=highlighttable><tr><td class=linenos><div class=linenodiv><pre><span></span><span class=normal>222</span>
 <span class=normal>223</span>
 <span class=normal>224</span>
 <span class=normal>225</span>
@@ -126,7 +125,10 @@
 <span class=normal>247</span>
 <span class=normal>248</span>
 <span class=normal>249</span>
-<span class=normal>250</span></pre></div></td><td class=code><div><pre><span></span><code><span class=k>def</span> <span class=nf>s3_client</span><span class=p>(</span><span class=bp>self</span><span class=p>):</span>
+<span class=normal>250</span>
+<span class=normal>251</span>
+<span class=normal>252</span>
+<span class=normal>253</span></pre></div></td><td class=code><div><pre><span></span><code><span class=k>def</span> <span class=nf>s3_client</span><span class=p>(</span><span class=bp>self</span><span class=p>):</span>
     <span class=k>if</span> <span class=bp>self</span><span class=o>.</span><span class=n>object_store</span> <span class=o>==</span> <span class=s2>&quot;minio&quot;</span><span class=p>:</span>
         <span class=n>client</span> <span class=o>=</span> <span class=n>boto3</span><span class=o>.</span><span class=n>client</span><span class=p>(</span>
             <span class=s2>&quot;s3&quot;</span><span class=p>,</span>
