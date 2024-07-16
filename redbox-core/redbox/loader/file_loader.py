@@ -7,6 +7,7 @@ from langchain_core.document_loaders import BaseLoader
 from langchain_core.documents import Document
 from unstructured.chunking.title import chunk_by_title
 from unstructured.partition.auto import partition
+from pathlib import Path
 
 from redbox.models.file import File
 from redbox.models.settings import Settings
@@ -44,6 +45,7 @@ class UnstructuredDocumentLoader(BaseLoader):
             combine_text_under_n_chars=self.env.worker_ingest_min_chunk_size,
             max_characters=self.env.worker_ingest_max_chunk_size,
         )
+        file_name = Path(self.file.key).name
 
         for i, raw_chunk in enumerate(raw_chunks):
             yield Document(
@@ -52,6 +54,7 @@ class UnstructuredDocumentLoader(BaseLoader):
                     "parent_file_uuid": self.file.uuid,
                     "creator_user_uuid": self.file.creator_user_uuid,
                     "index": i,
+                    "file_name": file_name,
                     "page_number": raw_chunk.metadata.page_number,
                     "languages": raw_chunk.metadata.languages,
                     "link_texts": raw_chunk.metadata.link_texts,
