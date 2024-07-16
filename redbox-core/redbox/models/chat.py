@@ -73,7 +73,7 @@ class ChatRoute(StrEnum):
     stuff_summarise = "summarise"
     map_reduce_summarise = "summarise (large documents)"
     chat = "chat"
-    chat_with_docs = "chat with documents"
+    chat_with_docs = "chat with docs"
     chat_with_docs_map_reduce = "chat with docs (large documents)"
 
 

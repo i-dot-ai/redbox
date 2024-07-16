@@ -1,6 +1,6 @@
 import logging
-from typing import Literal
 from functools import lru_cache
+from typing import Literal
 
 import boto3
 from elasticsearch import Elasticsearch
@@ -19,8 +19,8 @@ CHAT_WITH_DOCS_SYSTEM_PROMPT = "You are an AI assistant called Redbox tasked wit
 
 CHAT_WITH_DOCS_REDUCE_SYSTEM_PROMPT = (
     "You are an AI assistant tasked with answering questions on user provided documents. "
-    "Your goal is to answer the user question based on list of summaries in "
-    "a concise and coherent manner. Please follow these guidelines while answering the question: \n"
+    "Your goal is to answer the user question based on list of summaries in a coherent manner."
+    "Please follow these guidelines while answering the question: \n"
     "1) Identify and highlight key points,\n"
     "2) Avoid repetition,\n"
     "3) Ensure the answer is easy to understand,\n"
