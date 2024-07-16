@@ -71,12 +71,15 @@ class ChatMessage extends HTMLElement {
                 }</markdown-converter>
                 ${
                   !this.dataset.text
-                    ? `<div class="rb-loading-ellipsis govuk-body-s">
+                    ? `
+                      <div class="rb-loading-ellipsis govuk-body-s" aria-label="Loading message">
                         Loading
                         <span aria-hidden="true">.</span>
                         <span aria-hidden="true">.</span>
                         <span aria-hidden="true">.</span>
-                    </div>`
+                      </div>
+                      <div class="rb-loading-complete govuk-visually-hidden" aria-live="assertive"></div>
+                      `
                     : ""
                 }
                 <sources-list></sources-list>
@@ -125,6 +128,7 @@ class ChatMessage extends HTMLElement {
     let responseLoading = /** @type HTMLElement */ (
       this.querySelector(".rb-loading-ellipsis")
     );
+    let responseComplete = this.querySelector(".rb-loading-complete");
     let webSocket = new WebSocket(endPoint);
     let streamedContent = "";
     let sources = [];
@@ -156,6 +160,9 @@ class ChatMessage extends HTMLElement {
 
     webSocket.onclose = (event) => {
       responseLoading.style.display = "none";
+      if (responseComplete) {
+        responseComplete.textContent = "Response complete";
+      }
       if (this.dataset.status !== "stopped") {
         this.dataset.status = "complete";
       }
