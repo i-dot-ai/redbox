@@ -59,8 +59,8 @@ test-django: stop ## Test django-app
 
 .PHONY: build-django-static
 build-django-static: ## Build django-app static files
-	cd django_app/frontend/ && npm install && npm run build
-	cd django_app/ && poetry run python manage.py collectstatic --noinput
+	cd django-app/frontend/ && npm install && npm run build
+	cd django-app/ && poetry run python manage.py collectstatic --noinput
 
 .PHONY: test-integration
 test-integration: rebuild run test-integration-without-build ## Run all integration tests
@@ -87,9 +87,9 @@ format:  ## Format and fix code
 .PHONY: safe
 safe:  ##
 	poetry run bandit -ll -r ./redbox
-	poetry run bandit -ll -r ./django_app
+	poetry run bandit -ll -r ./django-app
 	poetry run mypy ./redbox --ignore-missing-imports
-	poetry run mypy ./django_app --ignore-missing-imports
+	poetry run mypy ./django-app --ignore-missing-imports
 
 .PHONY: checktypes
 checktypes:  ## Check types in redbox and worker
@@ -169,14 +169,7 @@ docker_build_local: ## Build the docker container locally
 
 .PHONY: docker_build
 docker_build: ## Pull previous container (if it exists) build the docker container
-<<<<<<< Updated upstream
-	DOCKER_BUILDKIT=1 docker buildx build --platform linux/amd64 --load --builder=$(DOCKER_BUILDER_CONTAINER) -t $(IMAGE)  \
-	--cache-to type=s3,region=$(AWS_REGION),bucket=$(DOCKER_CACHE_BUCKET),name=$(APP_NAME)/$(IMAGE) \
-	--cache-from type=s3,region=$(AWS_REGION),bucket=$(DOCKER_CACHE_BUCKET),name=$(APP_NAME)/$(ECR_REPO_URL):$(PREV_IMAGE_TAG) \
-	--cache-from type=s3,region=$(AWS_REGION),bucket=$(DOCKER_CACHE_BUCKET),name=$(APP_NAME)/$(ECR_REPO_URL):$(MAIN_IMAGE_TAG) -f $(service)/Dockerfile .
-=======
 	DOCKER_BUILDKIT=1 docker build --target=runtime -t $(IMAGE) -f $(service)/Dockerfile .
->>>>>>> Stashed changes
 
 
 .PHONY: docker_push
