@@ -175,6 +175,7 @@ def test_combine_documents(a: Document, b: Document, combined: Document):
     [
         ([2.2, 2, 1.8, 0.2, 0.2, 0.2], 3),
         ([1, 1, 1, 1, 1, 1], 6),
+        ([], 0),
     ],
 )
 def test_elbow_filter(scores: list[float], target_len: int):

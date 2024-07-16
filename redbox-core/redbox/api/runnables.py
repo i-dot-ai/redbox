@@ -86,6 +86,10 @@ def resize_documents(max_tokens: int | None = None) -> Runnable[list[Document], 
     return wrapped
 
 
+# TODO: allow for nothing coming back/empty list -- don't error
+# https://github.com/i-dot-ai/redbox/actions/runs/9944427706/job/27470465428#step:10:7160
+
+
 def filter_by_elbow(enabled: bool = True) -> Runnable[list[Document], list[Document]]:
     """Filters a list of documents by the elbow point on the curve of their scores.
 
@@ -99,6 +103,8 @@ def filter_by_elbow(enabled: bool = True) -> Runnable[list[Document], list[Docum
     def _filter_by_elbow(docs: list[Document]):
         # If enabled, return only the documents up to the elbow point
         if enabled:
+            if len(docs) == 0:
+                return docs
             # *100 because algorithm performs poorly on changes of ~1.0
             try:
                 scores = [doc.metadata["score"] * 100 for doc in docs]

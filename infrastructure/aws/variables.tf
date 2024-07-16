@@ -188,7 +188,7 @@ variable "context_window_size" {
 
 variable "rag_k" {
     type        = number
-    default     = 15
+    default     = 30
     description = "how many chunks to retrieve to form the basis of the response"
 }
 
@@ -205,7 +205,7 @@ variable "rag_num_candidates" {
 
 variable "elbow_filter_enabled" {
     type        = bool
-    default     = false
+    default     = true
     description = "whether the elbow filter should be enabled"
 }
 
