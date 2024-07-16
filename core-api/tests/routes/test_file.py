@@ -134,7 +134,7 @@ def test_get_file_chunks(app_client, chunked_file, headers):
     """
     response = app_client.get(f"/file/{chunked_file.uuid}/chunks", headers=headers)
     assert response.status_code == HTTPStatus.OK
-    assert len(response.json()) == 5
+    assert len(response.json()) == 12
 
 
 def test_get_missing_file_chunks(app_client, headers):

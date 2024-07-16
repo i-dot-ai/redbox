@@ -38,7 +38,7 @@ def combine_documents(a: Document, b: Document):
 
     combined_content = a.page_content + b.page_content
     combined_metadata = a.metadata.copy()
-    combined_metadata["token_count"] = len(encoding.encode(combined_content))
+    combined_metadata["token_count"] = a.metadata['token_count'] + b.metadata['token_count']
     combined_metadata["page_number"] = combine_values("page_number")
     combined_metadata["languages"] = combine_values("languages")
     combined_metadata["link_texts"] = combine_values("link_texts")

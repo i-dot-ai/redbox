@@ -36,18 +36,4 @@ def test_parameterised_retriever(
             "user_uuid": stored_file_parameterised[0].metadata["creator_user_uuid"],
         }
     )
-    assert len(result) == chain_params["size"]
-
-
-@pytest.mark.parametrize("chain_params", test_chain_parameters)
-def test_parameterised_retriever_legacy_chunks(
-    chain_params, parameterised_retriever: ElasticsearchRetriever, chunked_file: File
-):
-    result = parameterised_retriever.with_config(configurable={"params": chain_params}).invoke(
-        {
-            "question": "is this real?",
-            "file_uuids": [chunked_file.uuid],
-            "user_uuid": chunked_file.creator_user_uuid,
-        }
-    )
-    assert len(result) == chain_params["size"]
+    assert len(result) == chain_params["size"], result

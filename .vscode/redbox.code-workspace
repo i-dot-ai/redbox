@@ -23,6 +23,10 @@
 		{
 			"name": "VSCode",
 			"path": "."
+		},
+		{
+			"name": "Notebooks",
+			"path": "../notebooks"
 		}
 	],
 	"settings": {

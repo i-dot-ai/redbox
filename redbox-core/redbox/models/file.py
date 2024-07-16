@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 import hashlib
-from enum import Enum
+from enum import Enum, StrEnum
 from uuid import UUID
+import datetime
 
 import tiktoken
 from pydantic import BaseModel, Field, computed_field
@@ -112,7 +113,7 @@ class Metadata(BaseModel):
                 raise ValueError(message)
             data["parent_doc_uuid"] = parent_doc_uuids_without_none[0]
         return cls(**data)
-
+    
 
 class Chunk(PersistableModel):
     """Chunk of a File"""
@@ -149,3 +150,24 @@ class FileStatus(BaseModel):
     file_uuid: UUID
     processing_status: ProcessingStatusEnum
     chunk_statuses: list[ChunkStatus] | None
+
+
+class ChunkResolution(StrEnum):
+    smallest = "smallest"
+    small = "small"
+    normal = "normal"
+    large = "large"
+    largest = "largest"
+
+
+class ChunkMetadata(BaseModel):
+    """
+    Model for document metadata for new style chunks
+    """
+    parent_file_uuid: UUID
+    creator_user_uuid: UUID
+    index: int
+    page_number: int | None = None
+    created_datetime: datetime.datetime = datetime.datetime.now(datetime.UTC)
+    token_count: int
+    chunk_resolution: ChunkResolution = ChunkResolution.normal

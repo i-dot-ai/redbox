@@ -7,6 +7,7 @@ from langchain_core.documents import Document
 from langchain_core.embeddings.embeddings import Embeddings
 from langchain_elasticsearch.retrievers import ElasticsearchRetriever
 
+from redbox.models.file import ChunkResolution
 from redbox.retriever.queries import ESParams, get_all, get_some
 
 
@@ -27,6 +28,7 @@ class ParameterisedElasticsearchRetriever(ElasticsearchRetriever):
     params: ESParams
     embedding_model: Embeddings
     embedding_field_name: str = "embedding"
+    chunk_resolution: ChunkResolution = ChunkResolution.normal
 
     def __init__(self, **kwargs: Any) -> None:
         # Hack to pass validation before overwrite
@@ -34,16 +36,19 @@ class ParameterisedElasticsearchRetriever(ElasticsearchRetriever):
         kwargs["body_func"] = get_some
         kwargs["document_mapper"] = hit_to_doc
         super().__init__(**kwargs)
-        self.body_func = partial(get_some, self.embedding_model, self.params, self.embedding_field_name)
+        self.body_func = partial(get_some, self.embedding_model, self.params, self.embedding_field_name, self.chunk_resolution)
 
 
 class AllElasticsearchRetriever(ElasticsearchRetriever):
+    chunk_resolution: ChunkResolution = ChunkResolution.largest
+
     def __init__(self, **kwargs: Any) -> None:
         # Hack to pass validation before overwrite
         # Partly necessary due to how .with_config() interacts with a retriever
         kwargs["body_func"] = get_all
         kwargs["document_mapper"] = hit_to_doc
         super().__init__(**kwargs)
+        self.body_func = partial(get_all, self.chunk_resolution)
 
     def _get_relevant_documents(self, query: str, *, run_manager: CallbackManagerForRetrieverRun) -> list[Document]:  # noqa:ARG002
         if not self.es_client or not self.document_mapper:

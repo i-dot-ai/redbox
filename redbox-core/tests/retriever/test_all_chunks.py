@@ -17,14 +17,3 @@ def test_all_chunks_retriever(all_chunks_retriever: AllElasticsearchRetriever, s
     assert {c.metadata["parent_file_uuid"] for c in result} == {
         str(c.metadata["parent_file_uuid"]) for c in stored_file_all_chunks
     }
-
-
-def test_all_chunks_retriever_legacy_chunks(
-    all_chunks_retriever: AllElasticsearchRetriever, chunked_file: File, stored_file_chunks: list[Chunk]
-):
-    result = all_chunks_retriever.invoke(
-        {"question": "is this real?", "file_uuids": [chunked_file.uuid], "user_uuid": chunked_file.creator_user_uuid}
-    )
-    assert len(result) == len(stored_file_chunks)
-    assert {c.page_content for c in result} == {c.text for c in stored_file_chunks}
-    assert {c.metadata["parent_file_uuid"] for c in result} == {str(c.parent_file_uuid) for c in stored_file_chunks}

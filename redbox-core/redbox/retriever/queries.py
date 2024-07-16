@@ -3,6 +3,8 @@ from uuid import UUID
 
 from langchain_core.embeddings.embeddings import Embeddings
 
+from redbox.models.file import ChunkResolution
+
 
 class ESQuery(TypedDict):
     question: str
@@ -18,7 +20,7 @@ class ESParams(TypedDict):
     similarity_threshold: float
 
 
-def make_query_filter(user_uuid: UUID, file_uuids: list[UUID]) -> list[dict]:
+def make_query_filter(user_uuid: UUID, file_uuids: list[UUID], chunk_resolution: str = None) -> list[dict]:
     query_filter: list[dict] = [
         {
             "bool": {
@@ -41,17 +43,31 @@ def make_query_filter(user_uuid: UUID, file_uuids: list[UUID]) -> list[dict]:
                 }
             }
         )
+
+    if chunk_resolution:
+        query_filter.append(
+            {
+                "bool": {
+                    "must": [
+                        {"term": {"metadata.chunk_resolution.keyword": str(chunk_resolution)}},
+                    ]
+                }
+            }
+        )
     return query_filter
 
 
-def get_all(query: ESQuery) -> dict[str, Any]:
+def get_all(
+    chunk_resolution: ChunkResolution | None,
+    query: ESQuery,
+) -> dict[str, Any]:
     """
     Returns a parameterised elastic query that will return everything it matches.
 
     As it's used in summarisation, it excludes embeddings.
     """
 
-    query_filter = make_query_filter(query["user_uuid"], query["file_uuids"])
+    query_filter = make_query_filter(query["user_uuid"], query["file_uuids"], chunk_resolution)
     return {
         "_source": {"excludes": ["*embedding"]},
         "query": {"bool": {"must": {"match_all": {}}, "filter": query_filter}},
@@ -59,11 +75,15 @@ def get_all(query: ESQuery) -> dict[str, Any]:
 
 
 def get_some(
-    embedding_model: Embeddings, params: ESParams, embedding_field_name: str, query: ESQuery
+    embedding_model: Embeddings, 
+    params: ESParams, 
+    embedding_field_name: str,
+    chunk_resolution: ChunkResolution | None,
+    query: ESQuery,
 ) -> dict[str, Any]:
     vector = embedding_model.embed_query(query["question"])
 
-    query_filter = make_query_filter(query["user_uuid"], query["file_uuids"])
+    query_filter = make_query_filter(query["user_uuid"], query["file_uuids"], chunk_resolution)
 
     return {
         "size": params["size"],
