@@ -35,6 +35,16 @@ As the project deploys, you should eventually see the following message:
 
 Redbox utilises health checks to ensure that the services are running correctly.
 
+!!! info "Elastic and Minio failure"
+    If you see that the Elasticsearch or MinIO containers are unhealthy, this may be due to a permission issue with the directory they're mounted to. You can fix this by running the following command:
+
+    ```bash
+    chmod -R 777 ./data/elastic/
+    chmod -R 777 ./data/objectstore/
+    ```
+
+    You can then repeat the run command above.
+
 ## Step 6: **Setting up MinIO**
 
 MinIO is an object storage server that is compatible with Amazon S3. It is used to store the documents that are used by the application. To set up MinIO, you can navigate to [`http://localhost:9001`](http://localhost:9001) in your browser. You should see the following screen:
