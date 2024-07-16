@@ -42,11 +42,7 @@ jobs:
   build-image:
     strategy:
       matrix:
-<<<<<<< Updated upstream
-        service: [django_app, core-api, worker]
-=======
         service: [worker]
->>>>>>> Stashed changes
     needs:
       - set-vars
       - start-runner
