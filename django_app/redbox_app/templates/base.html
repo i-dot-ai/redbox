@@ -24,12 +24,13 @@
     <script defer
     event-environment="{{environment}}"
     data-domain="redbox-dev.ai.cabinetoffice.gov.uk" src="https://plausible.io/js/script.pageview-props.tagged-events.outbound-links.file-downloads.local.js"></script>
-
-    <script type="module" src="{{ static('js/posthog.js') }}"></script>
-
   {% elif environment | lower == "prod" %}
     <script defer
     data-domain="redbox.ai.cabinetoffice.gov.uk" src="https://plausible.io/js/script.pageview-props.tagged-events.outbound-links.file-downloads.js"></script>
+  {% endif %}
+
+  {% if environment | lower == "preprod" %}
+    <script type="module" src="{{ static('js/posthog.js') }}"></script>
   {% endif %}
 
 </head>
