@@ -13,7 +13,7 @@ ADD README.md /app/README.md
 
 WORKDIR /app/worker
 
-RUN poetry install
+RUN poetry install --without dev
 
 # Downlaod Sentence Tokenizer
 RUN poetry run python -m nltk.downloader punkt
