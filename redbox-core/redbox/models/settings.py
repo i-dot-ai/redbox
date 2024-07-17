@@ -1,6 +1,6 @@
 import logging
-from typing import Literal
 from functools import lru_cache
+from typing import Literal
 
 import boto3
 from elasticsearch import Elasticsearch
@@ -11,8 +11,20 @@ logging.basicConfig(level=logging.INFO)
 log = logging.getLogger()
 
 
-VANILLA_SYSTEM_PROMPT = (
+CHAT_SYSTEM_PROMPT = (
     "You are an AI assistant called Redbox tasked with answering questions and providing information objectively."
+)
+
+CHAT_WITH_DOCS_SYSTEM_PROMPT = "You are an AI assistant called Redbox tasked with answering questions on user provided documents and providing information objectively."
+
+CHAT_WITH_DOCS_REDUCE_SYSTEM_PROMPT = (
+    "You are an AI assistant tasked with answering questions on user provided documents. "
+    "Your goal is to answer the user question based on list of summaries in a coherent manner."
+    "Please follow these guidelines while answering the question: \n"
+    "1) Identify and highlight key points,\n"
+    "2) Avoid repetition,\n"
+    "3) Ensure the answer is easy to understand,\n"
+    "4) Maintain the original context and meaning.\n"
 )
 
 RETRIEVAL_SYSTEM_PROMPT = (
@@ -65,7 +77,11 @@ CONDENSE_SYSTEM_PROMPT = (
     "don't try to make up an answer. \n"
 )
 
-VANILLA_QUESTION_PROMPT = "{question}\n=========\n Response: "
+CHAT_QUESTION_PROMPT = "{question}\n=========\n Response: "
+
+CHAT_WITH_DOCS_QUESTION_PROMPT = "Question: {question}. \n\n Documents: \n\n {documents} \n\n Answer: "
+
+CHAT_WITH_DOCS_REDUCE_QUESTION_PROMPT = "Question: {question}. \n\n Documents: \n\n {summaries} \n\n Answer: "
 
 RETRIEVAL_QUESTION_PROMPT = "{question} \n=========\n{formatted_documents}\n=========\nFINAL ANSWER: "
 
@@ -92,8 +108,12 @@ class AISettings(BaseModel):
     elbow_filter_enabled: bool = True
     summarisation_chunk_max_tokens: int = 20_000
     summarisation_max_concurrency: int = 128
-    vanilla_system_prompt: str = VANILLA_SYSTEM_PROMPT
-    vanilla_question_prompt: str = VANILLA_QUESTION_PROMPT
+    chat_system_prompt: str = CHAT_SYSTEM_PROMPT
+    chat_question_prompt: str = CHAT_QUESTION_PROMPT
+    chat_with_docs_system_prompt: str = CHAT_WITH_DOCS_SYSTEM_PROMPT
+    chat_with_docs_question_prompt: str = CHAT_WITH_DOCS_QUESTION_PROMPT
+    chat_with_docs_reduce_system_prompt: str = CHAT_WITH_DOCS_REDUCE_SYSTEM_PROMPT
+    chat_with_docs_reduce_question_prompt: str = CHAT_WITH_DOCS_REDUCE_QUESTION_PROMPT
     retrieval_system_prompt: str = RETRIEVAL_SYSTEM_PROMPT
     retrieval_question_prompt: str = RETRIEVAL_QUESTION_PROMPT
     condense_system_prompt: str = CONDENSE_SYSTEM_PROMPT

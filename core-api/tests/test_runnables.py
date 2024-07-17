@@ -1,7 +1,7 @@
 import pytest
-
 from core_api.build_chains import build_condense_retrieval_chain, build_retrieval_chain, build_summary_chain
 from core_api.dependencies import get_parameterised_retriever, get_tokeniser
+
 from redbox.api.runnables import make_chat_prompt_from_messages_runnable
 from redbox.models.chain import ChainInput
 from redbox.models.chat import ChatRoute
@@ -152,4 +152,4 @@ def test_summary_runnable_small_file(all_chunks_retriever, mock_llm, chunked_fil
     )
 
     assert response["response"] == "<<TESTING>>"
-    assert response["route_name"] == ChatRoute.stuff_summarise
+    assert response["route_name"] == ChatRoute.summarise
