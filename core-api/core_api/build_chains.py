@@ -114,23 +114,34 @@ def build_chat_with_docs_chain(
         }
     )
 
-    @chain
-    def chat_with_docs_route(input_dict):
-        log.info("Length of documents: %s", len(input_dict["documents"]))
-        log.info("Type of documents: %s", type(len(input_dict["documents"])))
-        # input_token_budget = env.ai.context_window_size - env.llm_max_tokens,
-        # if len(input_dict["documents"]) <= input_token_budget:
-        if len(input_dict["documents"]) <= 20_000:
-            return stuff_chat_chain
+    def make_chat_with_documents_runnable(
+        system_prompt: str,
+        question_prompt: str,
+        input_token_budget: int,
+        tokeniser: Encoding,
+    ):
+        prompts_budget = len(tokeniser.encode(system_prompt)) - len(tokeniser.encode(question_prompt))
+        chat_token_budget = input_token_budget - prompts_budget
 
-        # elif len(input_dict["documents"]) > input_token_budget:
-        elif len(input_dict["documents"]) > 20_000:
-            return map_reduce_chat_chain
+        @chain
+        def chat_with_docs_route(input_dict: dict):
+            if len(input_dict["documents"]) <= chat_token_budget:
+                return stuff_chat_chain
 
-        else:
-            raise NoDocumentSelected
+            elif len(input_dict["documents"]) > chat_token_budget:
+                return map_reduce_chat_chain
 
-    return RunnablePassthrough.assign(documents=make_document_context()) | chat_with_docs_route
+            else:
+                raise NoDocumentSelected
+
+        return chat_with_docs_route
+
+    return RunnablePassthrough.assign(documents=make_document_context()) | make_chat_with_documents_runnable(
+        system_prompt=env.ai.chat_with_docs_system_prompt,
+        question_prompt=env.ai.chat_with_docs_question_prompt,
+        input_token_budget=env.ai.context_window_size - env.llm_max_tokens,
+        tokeniser=tokeniser,
+    )
 
 
 def build_retrieval_chain(
