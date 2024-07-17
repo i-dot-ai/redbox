@@ -26,7 +26,10 @@ def test_user_journey(page: Page, email_address: str):
     Simulates a single user journey through the application, running against the full suite of microservices.
 
     Uses the Page Object Model - see https://pinboard.in/u:brunns/t:page-object for some resources explaining this.
-    Please add to the page objects in `pages.py` where necessary - don't put page specific logic at this level."""
+    Please add to the page objects in `pages.py` where necessary - don't put page specific logic at this level.
+
+    We should not be asserting anything about AI generated content in this test, aside from asserting that there
+    is some."""
     create_user(email_address)
 
     # Landing page
