@@ -1154,6 +1154,17 @@ wrapt = ">=1.10,<2"
 dev = ["PyTest", "PyTest-Cov", "bump2version (<1)", "sphinx (<2)", "tox"]
 
 [[package]]
+name = "distro"
+version = "1.9.0"
+description = "Distro - an OS platform information API"
+optional = false
+python-versions = ">=3.6"
+files = [
+    {file = "distro-1.9.0-py3-none-any.whl", hash = "sha256:7bffd925d65168f85027d8da9af6bddab658135b840670a223589bc0c8ef02b2"},
+    {file = "distro-1.9.0.tar.gz", hash = "sha256:2fa77c6fd8940f116ee1d6b94a2f90b13b5ea8d019b98bc8bafdcabcdd9bdbed"},
+]
+
+[[package]]
 name = "effdet"
 version = "0.4.1"
 description = "EfficientDet for PyTorch"
@@ -2087,6 +2098,25 @@ files = [
 ]
 
 [[package]]
+name = "kneed"
+version = "0.8.5"
+description = "Knee-point detection in Python"
+optional = false
+python-versions = ">=3.5"
+files = [
+    {file = "kneed-0.8.5-py3-none-any.whl", hash = "sha256:2f3fbd4e9bd808e65052841448702c41ea64d5fc78735cbfc97ab25f08bd9815"},
+    {file = "kneed-0.8.5.tar.gz", hash = "sha256:a4847ac4f1d04852fea278d5de7aa8bfdc3beb7fbca4a182fec0f0efee43f4b1"},
+]
+
+[package.dependencies]
+numpy = ">=1.14.2"
+scipy = ">=1.0.0"
+
+[package.extras]
+plot = ["matplotlib (>=2.2.5)"]
+testing = ["matplotlib (>=2.2.5)", "pytest (>=5.0.1)", "pytest-cov (>=3.0.0)"]
+
+[[package]]
 name = "langchain"
 version = "0.2.8"
 description = "Building applications with LLMs through composability"
@@ -2145,6 +2175,22 @@ files = [
 [package.dependencies]
 elasticsearch = {version = ">=8.13.1,<9.0.0", extras = ["vectorstore-mmr"]}
 langchain-core = ">=0.1.50,<0.3"
+
+[[package]]
+name = "langchain-openai"
+version = "0.1.16"
+description = "An integration package connecting OpenAI and LangChain"
+optional = false
+python-versions = "<4.0,>=3.8.1"
+files = [
+    {file = "langchain_openai-0.1.16-py3-none-any.whl", hash = "sha256:bff90e9d0be786495920a7851ae4d55247fb084d3a11d1b15bfe91904ce1cb0f"},
+    {file = "langchain_openai-0.1.16.tar.gz", hash = "sha256:3dedcc785a64a488ad6a313cc59b0dccea025d27413b55cec73a20dcf3ded4da"},
+]
+
+[package.dependencies]
+langchain-core = ">=0.2.17,<0.3.0"
+openai = ">=1.32.0,<2.0.0"
+tiktoken = ">=0.7,<1"
 
 [[package]]
 name = "langchain-text-splitters"
@@ -3188,6 +3234,29 @@ numpy = ">=1.21.6,<2.0"
 packaging = "*"
 protobuf = "*"
 sympy = "*"
+
+[[package]]
+name = "openai"
+version = "1.35.14"
+description = "The official Python library for the openai API"
+optional = false
+python-versions = ">=3.7.1"
+files = [
+    {file = "openai-1.35.14-py3-none-any.whl", hash = "sha256:adadf8c176e0b8c47ad782ed45dc20ef46438ee1f02c7103c4155cff79c8f68b"},
+    {file = "openai-1.35.14.tar.gz", hash = "sha256:394ba1dfd12ecec1d634c50e512d24ff1858bbc2674ffcce309b822785a058de"},
+]
+
+[package.dependencies]
+anyio = ">=3.5.0,<5"
+distro = ">=1.7.0,<2"
+httpx = ">=0.23.0,<1"
+pydantic = ">=1.9.0,<3"
+sniffio = "*"
+tqdm = ">4"
+typing-extensions = ">=4.7,<5"
+
+[package.extras]
+datalib = ["numpy (>=1)", "pandas (>=1.2.3)", "pandas-stubs (>=1.1.0.11)"]
 
 [[package]]
 name = "opencv-python"
@@ -4470,8 +4539,10 @@ develop = true
 [package.dependencies]
 boto3 = "^1.34.136"
 elasticsearch = "^8.14.0"
+kneed = "^0.8.5"
 langchain = "^0.2.6"
 langchain-elasticsearch = "^0.2.2"
+langchain-openai = "^0.1.16"
 pydantic = "^2.7.1"
 pydantic-settings = "^2.3.4"
 tiktoken = "^0.7.0"
@@ -5612,41 +5683,41 @@ backoff = "*"
 beautifulsoup4 = "*"
 chardet = "*"
 dataclasses-json = "*"
-effdet = {version = "*", optional = true, markers = "extra == \"all-docs\""}
+effdet = {version = "*", optional = true, markers = "extra == \"pdf\""}
 emoji = "*"
 filetype = "*"
-google-cloud-vision = {version = "*", optional = true, markers = "extra == \"all-docs\""}
+google-cloud-vision = {version = "*", optional = true, markers = "extra == \"pdf\""}
 langdetect = "*"
 lxml = "*"
-markdown = {version = "*", optional = true, markers = "extra == \"all-docs\""}
-networkx = {version = "*", optional = true, markers = "extra == \"all-docs\""}
+markdown = {version = "*", optional = true, markers = "extra == \"md\""}
+networkx = {version = "*", optional = true, markers = "extra == \"xlsx\""}
 nltk = "*"
 numpy = "*"
-onnx = {version = "*", optional = true, markers = "extra == \"all-docs\""}
-openpyxl = {version = "*", optional = true, markers = "extra == \"all-docs\""}
-pandas = {version = "*", optional = true, markers = "extra == \"all-docs\""}
-pdf2image = {version = "*", optional = true, markers = "extra == \"all-docs\""}
-"pdfminer.six" = {version = "*", optional = true, markers = "extra == \"all-docs\""}
-pikepdf = {version = "*", optional = true, markers = "extra == \"all-docs\""}
-pillow-heif = {version = "*", optional = true, markers = "extra == \"all-docs\""}
-pypandoc = {version = "*", optional = true, markers = "extra == \"all-docs\""}
-pypdf = {version = "*", optional = true, markers = "extra == \"all-docs\""}
-pytesseract = {version = "*", optional = true, markers = "extra == \"all-docs\""}
-python-docx = {version = ">=1.1.2", optional = true, markers = "extra == \"all-docs\""}
+onnx = {version = "*", optional = true, markers = "extra == \"pdf\""}
+openpyxl = {version = "*", optional = true, markers = "extra == \"xlsx\""}
+pandas = {version = "*", optional = true, markers = "extra == \"csv\" or extra == \"tsv\" or extra == \"xlsx\""}
+pdf2image = {version = "*", optional = true, markers = "extra == \"pdf\""}
+"pdfminer.six" = {version = "*", optional = true, markers = "extra == \"pdf\""}
+pikepdf = {version = "*", optional = true, markers = "extra == \"pdf\""}
+pillow-heif = {version = "*", optional = true, markers = "extra == \"pdf\""}
+pypandoc = {version = "*", optional = true, markers = "extra == \"epub\" or extra == \"odt\" or extra == \"rst\" or extra == \"rtf\""}
+pypdf = {version = "*", optional = true, markers = "extra == \"pdf\""}
+pytesseract = {version = "*", optional = true, markers = "extra == \"pdf\""}
+python-docx = {version = ">=1.1.2", optional = true, markers = "extra == \"doc\" or extra == \"docx\" or extra == \"odt\""}
 python-iso639 = "*"
 python-magic = "*"
-python-oxmsg = {version = "*", optional = true, markers = "extra == \"all-docs\""}
-python-pptx = {version = "<=0.6.23", optional = true, markers = "extra == \"all-docs\""}
+python-oxmsg = {version = "*", optional = true, markers = "extra == \"msg\""}
+python-pptx = {version = "<=0.6.23", optional = true, markers = "extra == \"ppt\" or extra == \"pptx\""}
 rapidfuzz = "*"
 requests = "*"
 tabulate = "*"
 tqdm = "*"
 typing-extensions = "*"
 unstructured-client = "*"
-unstructured-inference = {version = "0.7.36", optional = true, markers = "extra == \"all-docs\""}
-"unstructured.pytesseract" = {version = ">=0.3.12", optional = true, markers = "extra == \"all-docs\""}
+unstructured-inference = {version = "0.7.36", optional = true, markers = "extra == \"pdf\""}
+"unstructured.pytesseract" = {version = ">=0.3.12", optional = true, markers = "extra == \"pdf\""}
 wrapt = "*"
-xlrd = {version = "*", optional = true, markers = "extra == \"all-docs\""}
+xlrd = {version = "*", optional = true, markers = "extra == \"xlsx\""}
 
 [package.extras]
 airtable = ["pyairtable"]
@@ -6044,4 +6115,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.12,<3.13"
-content-hash = "961e275ad4380d67817981acc6a4dc077b04176dff5223e45eea9c2d7e8a39e8"
+content-hash = "ea462bb2ca0a7e7afcec634790861da0460f167f97215fa5d93d10cce2ff836f"
