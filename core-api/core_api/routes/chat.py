@@ -53,7 +53,7 @@ async def semantic_router_to_chain(
 
     def select_chat_chain(chat_request: ChatRequest, routable_chains: dict[str, Runnable]) -> Runnable:
         if chat_request.selected_files:
-            return routable_chains.get("chat_with_docs")
+            return routable_chains.get("chat/documents")
         else:
             return routable_chains.get("chat")
 
@@ -77,6 +77,7 @@ async def semantic_router_to_chain(
 
     log.info("Routed to %s", route_name)
     log.info("Selected files: %s", chat_request.selected_files)
+    log.info("Selected chain: %s", selected_chain)
 
     return selected_chain, params
 

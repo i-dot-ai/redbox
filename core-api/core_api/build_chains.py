@@ -60,7 +60,7 @@ def build_chat_with_docs_chain(
         )
 
     # Stuff chain now missing the RunnabeLambda to format the chunks
-    stuff_chain = (
+    stuff_chat_chain = (
         make_chat_prompt_from_messages_runnable(
             system_prompt=env.ai.chat_with_docs_system_prompt,
             question_prompt=env.ai.chat_with_docs_question_prompt,
@@ -99,7 +99,7 @@ def build_chat_with_docs_chain(
         input_dict["summaries"] = summaries
         return input_dict
 
-    map_reduce_chain = (
+    map_reduce_chat_chain = (
         map_operation
         | make_chat_prompt_from_messages_runnable(
             system_prompt=env.ai.chat_with_docs_reduce_system_prompt,
@@ -118,12 +118,14 @@ def build_chat_with_docs_chain(
     def chat_with_docs_route(input_dict):
         log.info("Length of documents: %s", len(input_dict["documents"]))
         log.info("Type of documents: %s", type(len(input_dict["documents"])))
-        # input_token_budget=env.ai.context_window_size - env.llm_max_tokens,
+        # input_token_budget = env.ai.context_window_size - env.llm_max_tokens,
+        # if len(input_dict["documents"]) <= input_token_budget:
         if len(input_dict["documents"]) <= 20_000:
-            return stuff_chain
+            return stuff_chat_chain
 
+        # elif len(input_dict["documents"]) > input_token_budget:
         elif len(input_dict["documents"]) > 20_000:
-            return map_reduce_chain
+            return map_reduce_chat_chain
 
         else:
             raise NoDocumentSelected
@@ -223,7 +225,7 @@ def build_summary_chain(
         | llm
         | {
             "response": StrOutputParser(),
-            "route_name": RunnableLambda(lambda _: ChatRoute.stuff_summarise.value),
+            "route_name": RunnableLambda(lambda _: ChatRoute.summarise.value),
         }
     )
 

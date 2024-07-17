@@ -70,11 +70,10 @@ class ChatRoute(StrEnum):
     gratitude = "gratitude"
     search = "search"
     summarise = "summarise"
-    stuff_summarise = "summarise"
-    map_reduce_summarise = "summarise (large documents)"
+    map_reduce_summarise = "summarise/documents/large"
     chat = "chat"
-    chat_with_docs = "chat with docs"
-    chat_with_docs_map_reduce = "chat with docs (large documents)"
+    chat_with_docs = "chat/documents"
+    chat_with_docs_map_reduce = "chat/documents/large"
 
 
 class ChatResponse(BaseModel):
