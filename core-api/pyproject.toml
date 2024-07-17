@@ -16,19 +16,18 @@ python = ">=3.12,<3.13"
 redbox = {path="../redbox-core", develop=true}
 pydantic = "^2.7.1"
 langchain = "^0.2.6"
+langchain-community = "^0.2.6"
+langchain-elasticsearch = "^0.2.2"
+semantic-router = "^0.0.48"
 tiktoken = "^0.7.0"
 boto3 = "^1.34.139"
-semantic-router = "^0.0.48"
 faststream = {extras = ["redis"], version = "<0.5.0"}
 fastapi = "^0.111.0"
 uvicorn = "^0.30.1"
 python-multipart = "^0.0.9"
 python-jose = "^3.3.0"
 websockets = "^12.0"
-langchain_openai = "^0.1.9"
-langchain-community = "^0.2.6"
 pillow-heif = "<0.17.0"
-langchain-elasticsearch = "^0.2.2"
 litellm = "^1.41.11"
 
 
