@@ -314,3 +314,9 @@ class DocumentSelector extends HTMLElement {
   }
 }
 customElements.define("document-selector", DocumentSelector);
+
+// Update URL when a new chat is created
+document.addEventListener("chat-response-end", (evt) => {
+  const sessionId = /** @type{CustomEvent} */ (evt).detail.session_id;
+  window.history.pushState({}, "", `/chats/${sessionId}`);
+});
