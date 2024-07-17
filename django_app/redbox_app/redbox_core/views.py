@@ -189,7 +189,7 @@ class UploadView(View):
 
 @login_required
 def remove_doc_view(request, doc_id: uuid):
-    file = File.objects.get(pk=doc_id)
+    file = get_object_or_404(File, id=doc_id)
     errors: list[str] = []
 
     if request.method == "POST":
@@ -224,7 +224,7 @@ class ChatsView(View):
         messages: Sequence[ChatMessage] = []
         current_chat = None
         if chat_id:
-            current_chat = ChatHistory.objects.get(id=chat_id)
+            current_chat = get_object_or_404(ChatHistory, id=chat_id)
             if current_chat.users != request.user:
                 return redirect(reverse("chats"))
             messages = (
@@ -294,7 +294,7 @@ class ChatsTitleView(View):
 class CitationsView(View):
     @method_decorator(login_required)
     def get(self, request: HttpRequest, message_id: uuid.UUID | None = None) -> HttpResponse:
-        message = ChatMessage.objects.get(id=message_id)
+        message = get_object_or_404(ChatMessage, id=message_id)
 
         if message.chat_history.users != request.user:
             return redirect(reverse("chats"))
@@ -403,7 +403,7 @@ def file_status_api_view(request: HttpRequest) -> JsonResponse:
         logger.error("Error getting file object information - no file ID provided %s.")
         return JsonResponse({"status": StatusEnum.unknown.label})
     try:
-        file = File.objects.get(pk=file_id)
+        file = get_object_or_404(File, id=file_id)
     except File.DoesNotExist as ex:
         logger.exception("File object information not found in django - file does not exist %s.", file_id, exc_info=ex)
         return JsonResponse({"status": StatusEnum.unknown.label})
