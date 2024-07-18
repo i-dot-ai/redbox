@@ -55,3 +55,15 @@ def file(s3_client, file_pdf_path: Path):
         )
 
     return File(key=file_name, bucket=env.bucket_name, creator_user_uuid=uuid4())
+
+
+@pytest.fixture(scope="session")
+def bad_file(s3_client):
+    s3_client.put_object(
+        Bucket=env.bucket_name,
+        Body=b"i am bytes, fear my wrath!",
+        Key="bad-file.pdf",
+        Tagging="file_type=pdf",
+    )
+
+    return File(key="bad-file.pdf", bucket=env.bucket_name, creator_user_uuid=uuid4())
