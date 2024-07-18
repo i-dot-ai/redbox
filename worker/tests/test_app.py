@@ -1,4 +1,3 @@
-
 import pytest
 from faststream.redis import TestApp, TestRedisBroker
 from langchain_core.embeddings.fake import FakeEmbeddings
