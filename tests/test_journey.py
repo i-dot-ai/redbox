@@ -91,12 +91,12 @@ def test_user_journey(page: Page, email_address: str):
 
     # Use specific routes
     for route, select_file, should_have_citation in [
+        ("chat", False, False),
+        ("chat", True, False),
         ("search", False, True),
         ("search", True, True),
-        ("chat_with_docs", False, False),
-        ("chat_with_docs", True, False),
-        ("summarise", True, False),
         ("summarise", False, False),
+        ("summarise", True, False),
         ("info", False, False),
     ]:
         question = f"@{route} What do I need to install?"
@@ -104,17 +104,20 @@ def test_user_journey(page: Page, email_address: str):
         chats_page.write_message = question
         if select_file:
             files_to_select = {f.name for f in upload_files if "README" in f.name}
-            logger.info("selected %s", files_to_select)
             chats_page.selected_file_names = files_to_select
+            logger.info("selected %s", files_to_select)
+        else:
+            chats_page.selected_file_names = []
         chats_page = chats_page.send()
         latest_chat_response = chats_page.wait_for_latest_message()
         assert latest_chat_response.text
         assert latest_chat_response.route.startswith(route)
         if should_have_citation:
-            # Citations
             citations_page = latest_chat_response.navigate_to_citations()
             chats_page = citations_page.back_to_chat()
             assert files_to_select.pop() in latest_chat_response.sources
+        else:
+            assert len(latest_chat_response.sources) == 0
 
     # Delete a file
     documents_page = chats_page.navigate_to_documents()
