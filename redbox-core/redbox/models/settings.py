@@ -105,7 +105,7 @@ class AISettings(BaseModel):
     rag_k: int = 30
     rag_num_candidates: int = 10
     rag_desired_chunk_size: int = 300
-    elbow_filter_enabled: bool = True
+    elbow_filter_enabled: bool = False
     chat_system_prompt: str = CHAT_SYSTEM_PROMPT
     chat_question_prompt: str = CHAT_QUESTION_PROMPT
     chat_with_docs_system_prompt: str = CHAT_WITH_DOCS_SYSTEM_PROMPT

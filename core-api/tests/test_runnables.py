@@ -102,7 +102,6 @@ def test_condense_runnable(mock_llm, chunked_file, env):
             user_uuid=chunked_file.creator_user_uuid,
         ).model_dump()
     )
-
     assert response["response"] == "<<TESTING>>"
     assert response["route_name"].startswith("search")
     all_results_file_uuids = {chunk.metadata["parent_file_uuid"] for chunk in response["source_documents"]}
