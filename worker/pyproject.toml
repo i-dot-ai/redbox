@@ -14,7 +14,6 @@ readme = "../README.md"
 python = ">=3.12,<3.13"
 redbox = {path="../redbox-core", develop=true}
 langchain = "^0.2.6"
-langchain-community = "^0.2.6"
 langchain-elasticsearch = "^0.2.2"
 elasticsearch = "^8.14.0"
 opencv-python-headless = "^4.10.0.84"
@@ -22,7 +21,6 @@ pillow-heif = "^0.16.0"
 faststream = {extras = ["redis"], version = "<0.5.0"}
 nltk = "^3.8.1"
 unstructured-inference = "^0.7.36"
-langchain-openai = "^0.1.14"
 unstructured = {version = "<0.14.9", extras = ["all-docs"]}
 pikepdf = "<9.0.0"
 
