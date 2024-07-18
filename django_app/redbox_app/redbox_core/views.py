@@ -286,7 +286,7 @@ class ChatsTitleView(View):
         user_rating = ChatsTitleView.Title.schema().loads(request.body)
 
         chat_history.name = user_rating.name
-        chat_history.save()
+        chat_history.save(update_fields=["name"])
 
         return HttpResponse(status=HTTPStatus.NO_CONTENT)
 
