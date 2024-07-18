@@ -1,7 +1,6 @@
 import asyncio
 
 import pytest
-from elasticsearch.helpers import scan
 from faststream.redis import TestApp, TestRedisBroker
 from langchain_core.embeddings.fake import FakeEmbeddings
 
@@ -29,28 +28,6 @@ async def test_ingest_file(es_client, file: File, monkeypatch):
     async with TestRedisBroker(broker) as br, TestApp(app):
         await br.publish(file, list=env.ingest_queue_name)
         await asyncio.sleep(1)
-        chunks = list(
-            scan(
-                client=es_client,
-                index=f"{env.elastic_root_index}-chunk",
-                query={
-                    "query": {
-                        "bool": {
-                            "must": [
-                                {
-                                    "term": {
-                                        "metadata.parent_file_uuid.keyword": str(file.uuid),
-                                    }
-                                },
-                                {
-                                    "term": {
-                                        "metadata.creator_user_uuid.keyword": str(file.creator_user_uuid),
-                                    }
-                                },
-                            ]
-                        }
-                    }
-                },
-            )
-        )
+
+        chunks = storage_handler.get_file_chunks(file.uuid, file.creator_user_uuid)
         assert len(chunks) > 0
