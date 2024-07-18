@@ -30,4 +30,3 @@ def es_client() -> Elasticsearch:
 @pytest.fixture()
 def embedding_model() -> Embeddings:
     return FakeEmbeddings(size=3072)
-
