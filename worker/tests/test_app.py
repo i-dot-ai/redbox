@@ -1,3 +1,5 @@
+from pathlib import Path
+from uuid import uuid4
 import asyncio
 
 import pytest
@@ -12,7 +14,14 @@ from worker import app as app_module
 
 
 @pytest.mark.asyncio()
-async def test_ingest_file(es_client, file: File, monkeypatch):
+@pytest.mark.parametrize(
+    "filename, status",
+    [
+        ("Cabinet Office - Wikipedia.pdf", ProcessingStatusEnum.complete),
+        ("Cabinet Office - Wikipedia.corrupt.pdf", ProcessingStatusEnum.failed),
+    ],
+)
+async def test_ingest_file(es_client, s3_client, monkeypatch, filename: str, status: ProcessingStatusEnum):
     """
     Given that I have written a text File to s3
     When I call ingest_file
@@ -20,6 +29,20 @@ async def test_ingest_file(es_client, file: File, monkeypatch):
     1. chunked
     2. written to Elasticsearch
     """
+
+    pdf = Path(__file__).parents[2] / "tests" / "data" / "pdf" / filename
+    file_name = pdf.name
+    file_type = pdf.suffix
+
+    with pdf.open("rb") as f:
+        s3_client.put_object(
+            Bucket=env.bucket_name,
+            Body=f.read(),
+            Key=file_name,
+            Tagging=f"file_type={file_type}",
+        )
+
+    file = File(key=file_name, bucket=env.bucket_name, creator_user_uuid=uuid4())
 
     storage_handler = ElasticsearchStorageHandler(es_client=es_client, root_index=env.elastic_root_index)
 
