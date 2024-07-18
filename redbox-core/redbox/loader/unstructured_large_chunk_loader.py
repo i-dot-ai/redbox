@@ -4,7 +4,6 @@ from typing import IO, TYPE_CHECKING
 from pathlib import Path
 
 import tiktoken
-from langchain_core.document_loaders import BaseLoader
 from langchain_core.documents import Document
 from unstructured.chunking.basic import chunk_elements
 from unstructured.partition.auto import partition
@@ -25,7 +24,7 @@ class UnstructuredLargeChunkLoader(BaseRedBoxFileLoader):
     """Load, partition and chunk a document using local unstructured library"""
 
     def __init__(self, file: File, file_bytes: IO[bytes], env: Settings) -> None:
-       super().__init__(file, file_bytes, env)
+        super().__init__(file, file_bytes, env)
 
     def lazy_load(self) -> Iterator[Document]:  # <-- Does not take any arguments
         """A lazy loader that reads a file line by line.

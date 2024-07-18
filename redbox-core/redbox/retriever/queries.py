@@ -1,4 +1,4 @@
-from typing import Any, Optional, TypedDict
+from typing import Any, TypedDict
 from uuid import UUID
 
 from langchain_core.embeddings.embeddings import Embeddings
@@ -20,9 +20,7 @@ class ESParams(TypedDict):
     similarity_threshold: float
 
 
-def make_query_filter(
-    user_uuid: UUID, file_uuids: list[UUID], chunk_resolution: Optional[ChunkResolution]
-) -> list[dict]:
+def make_query_filter(user_uuid: UUID, file_uuids: list[UUID], chunk_resolution: ChunkResolution | None) -> list[dict]:
     query_filter: list[dict] = [
         {
             "bool": {

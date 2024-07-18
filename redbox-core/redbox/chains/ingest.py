@@ -37,7 +37,9 @@ def document_loader(document_loader_type, s3_client: S3Client, env: Settings):
     return wrapped
 
 
-def ingest_from_loader(document_loader_type: type[BaseRedBoxFileLoader], s3_client: S3Client, vectorstore: VectorStore, env: Settings):
+def ingest_from_loader(
+    document_loader_type: type[BaseRedBoxFileLoader], s3_client: S3Client, vectorstore: VectorStore, env: Settings
+):
     return (
         document_loader(document_loader_type=document_loader_type, s3_client=s3_client, env=env)
         | RunnableLambda(list)
