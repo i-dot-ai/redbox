@@ -1,4 +1,3 @@
-import asyncio
 
 import pytest
 from faststream.redis import TestApp, TestRedisBroker
@@ -53,4 +52,4 @@ async def test_ingest_file_fail(es_client, bad_file: File, monkeypatch):
 
     storage_handler.refresh()
     status = storage_handler.get_file_status(bad_file.uuid, bad_file.creator_user_uuid)
-    assert status == ProcessingStatusEnum.failed
+    assert status.processing_status == ProcessingStatusEnum.failed
