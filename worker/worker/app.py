@@ -9,7 +9,7 @@ from elasticsearch import Elasticsearch
 from faststream import Context, ContextRepo, FastStream
 from faststream.redis import RedisBroker
 from langchain_core.runnables import Runnable, RunnableParallel
-from langchain_elasticsearch.vectorstores import ElasticsearchStore
+from langchain_elasticsearch.vectorstores import ElasticsearchStore, ExactRetrievalStrategy
 
 from redbox.embeddings import get_embeddings
 from redbox.models import File, ProcessingStatusEnum, Settings
@@ -47,9 +47,7 @@ def get_elasticsearch_store(es: Elasticsearch, es_index_name: str):
 
 def get_elasticsearch_store_without_embeddings(es: Elasticsearch, es_index_name: str):
     return ElasticsearchStore(
-        index_name=es_index_name,
-        es_connection=es,
-        query_field="text",
+        index_name=es_index_name, es_connection=es, query_field="text", strategy=ExactRetrievalStrategy
     )
 
 

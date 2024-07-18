@@ -16,7 +16,7 @@
                 "--workers", "1"
             ],
             "jinja": true,
-            "envFile": "${workspaceFolder}/../.env"
+            "envFile": "${workspaceFolder}/../.env.local"
         }
     ]
 }

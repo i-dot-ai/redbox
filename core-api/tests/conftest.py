@@ -58,11 +58,15 @@ def elasticsearch_store(es_index, es_client, embedding_model, env: Settings) -> 
         es_connection=es_client,
         vector_query_field=env.embedding_document_field_name,
     )
-@pytest.fixture(autouse=True)
+
+
+@pytest.fixture(autouse=True, scope="session")
 def create_index(env, es_index):
     es: Elasticsearch = env.elasticsearch_client()
     if not es.indices.exists(index=es_index):
         es.indices.create(index=es_index)
+    yield
+    es.indices.delete(index=es_index)
 
 
 @pytest.fixture()
@@ -129,6 +133,7 @@ def stored_file_chunks(stored_file_1) -> list[Document]:
             metadata=ChunkMetadata(
                 parent_file_uuid=str(stored_file_1.uuid),
                 index=i,
+                file_name="test_file",
                 creator_user_uuid=stored_file_1.creator_user_uuid,
                 page_number=4,
                 created_datetime=datetime.now(UTC),
@@ -145,6 +150,7 @@ def stored_file_chunks(stored_file_1) -> list[Document]:
             metadata=ChunkMetadata(
                 parent_file_uuid=str(stored_file_1.uuid),
                 index=i,
+                file_name="test_file",
                 creator_user_uuid=stored_file_1.creator_user_uuid,
                 page_number=4,
                 created_datetime=datetime.now(UTC),
@@ -165,6 +171,7 @@ def stored_large_file_chunks(stored_file_1) -> list[Document]:
             metadata=ChunkMetadata(
                 parent_file_uuid=str(stored_file_1.uuid),
                 index=i,
+                file_name="test_file",
                 creator_user_uuid=stored_file_1.creator_user_uuid,
                 page_number=4,
                 created_datetime=datetime.now(UTC),
@@ -181,6 +188,7 @@ def stored_large_file_chunks(stored_file_1) -> list[Document]:
             metadata=ChunkMetadata(
                 parent_file_uuid=str(stored_file_1.uuid),
                 index=i,
+                file_name="test_file",
                 creator_user_uuid=stored_file_1.creator_user_uuid,
                 page_number=4,
                 created_datetime=datetime.now(UTC),

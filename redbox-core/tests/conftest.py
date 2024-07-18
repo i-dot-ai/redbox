@@ -20,7 +20,7 @@ from redbox.retriever import AllElasticsearchRetriever, ParameterisedElasticsear
 from tests.retriever.data import ALL_CHUNKS_RETRIEVER_DOCUMENTS, PARAMETERISED_RETRIEVER_DOCUMENTS
 
 
-@pytest.fixture()
+@pytest.fixture(scope="session")
 def env():
     return Settings(django_secret_key="", postgres_password="")
 
@@ -154,9 +154,18 @@ def elasticsearch_storage_handler(elasticsearch_client, env) -> ElasticsearchSto
     return ElasticsearchStorageHandler(es_client=elasticsearch_client, root_index=env.elastic_root_index)
 
 
-@pytest.fixture()
+@pytest.fixture(scope="session")
 def es_index(env) -> str:
     return f"{env.elastic_root_index}-chunk"
+
+
+@pytest.fixture(autouse=True, scope="session")
+def create_index(env, es_index):
+    es: Elasticsearch = env.elasticsearch_client()
+    if not es.indices.exists(index=es_index):
+        es.indices.create(index=es_index)
+    yield
+    es.indices.delete(index=es_index)
 
 
 @pytest.fixture()

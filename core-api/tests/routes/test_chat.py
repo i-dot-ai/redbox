@@ -56,7 +56,12 @@ def mock_parameterised_retriever(alice):
         Document(
             page_content="some text that doesn't actually matter " * 10,
             metadata=ChunkMetadata(
-                parent_file_uuid=UPLOADED_FILE_UUID, creator_user_uuid=alice, index=i, page_number=1, token_count=40
+                parent_file_uuid=UPLOADED_FILE_UUID,
+                creator_user_uuid=alice,
+                index=i,
+                file_name="test_file",
+                page_number=1,
+                token_count=40,
             ).model_dump()
             | {
                 "score": 1 / (1 + exp(-i)),
@@ -72,7 +77,12 @@ def mock_all_chunks_retriever(alice):
         Document(
             page_content="some text that doesn't actually matter " * 10,
             metadata=ChunkMetadata(
-                parent_file_uuid=UPLOADED_FILE_UUID, creator_user_uuid=alice, index=i, page_number=1, token_count=40
+                parent_file_uuid=UPLOADED_FILE_UUID,
+                creator_user_uuid=alice,
+                index=i,
+                file_name="test_file",
+                page_number=1,
+                token_count=40,
             ).model_dump(),
         )
         for i in range(12)

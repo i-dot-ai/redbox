@@ -39,13 +39,13 @@ class UnstructuredTitleLoader(BaseLoader):
         When you're implementing lazy load methods, you should use a generator
         to yield documents one by one.
         """
+        file_name = Path(self.file.key).name
         elements = partition(file=self.file_bytes, strategy=self.env.partition_strategy)
         raw_chunks = chunk_by_title(
             elements=elements,
             combine_text_under_n_chars=self.env.worker_ingest_min_chunk_size,
             max_characters=self.env.worker_ingest_max_chunk_size,
         )
-        file_name = Path(self.file.key).name
 
         for i, raw_chunk in enumerate(raw_chunks):
             yield Document(
@@ -59,5 +59,5 @@ class UnstructuredTitleLoader(BaseLoader):
                     created_datetime=datetime.now(UTC),
                     token_count=len(encoding.encode(raw_chunk.text)),
                     chunk_resolution=ChunkResolution.normal,
-                ).model_dump()
+                ).model_dump(),
             )

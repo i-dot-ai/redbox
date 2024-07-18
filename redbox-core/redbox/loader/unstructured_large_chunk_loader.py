@@ -39,6 +39,7 @@ class UnstructuredLargeChunkLoader(BaseLoader):
         When you're implementing lazy load methods, you should use a generator
         to yield documents one by one.
         """
+        file_name = Path(self.file.key).name
         elements = partition(file=self.file_bytes, strategy=self.env.partition_strategy)
         raw_chunks = chunk_elements(
             elements=elements,
@@ -46,7 +47,6 @@ class UnstructuredLargeChunkLoader(BaseLoader):
             overlap=self.env.worker_ingest_largest_chunk_overlap,
             overlap_all=True,
         )
-        file_name = Path(self.file.key).name
 
         for i, raw_chunk in enumerate(raw_chunks):
             yield Document(

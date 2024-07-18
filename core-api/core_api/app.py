@@ -1,4 +1,5 @@
 import logging
+import os
 from datetime import UTC, datetime
 from http import HTTPStatus
 
@@ -12,7 +13,7 @@ from redbox.models import Settings, StatusResponse
 
 # === Logging ===
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=os.environ.get("LOG_LEVEL", "INFO"))
 logger = logging.getLogger()
 
 env = Settings()

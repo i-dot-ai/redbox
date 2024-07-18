@@ -8,11 +8,16 @@ from langchain_core.embeddings import Embeddings
 from langchain_core.embeddings.fake import FakeEmbeddings
 
 from redbox.models import File
-from worker.app import env
+from redbox.models.settings import Settings
 
 
 @pytest.fixture(scope="session")
-def s3_client():
+def env():
+    return Settings()
+
+
+@pytest.fixture(scope="session")
+def s3_client(env: Settings):
     _client = env.s3_client()
     try:
         _client.create_bucket(
@@ -27,8 +32,22 @@ def s3_client():
 
 
 @pytest.fixture(scope="session")
-def es_client() -> Elasticsearch:
+def es_client(env: Settings) -> Elasticsearch:
     return env.elasticsearch_client()
+
+
+@pytest.fixture(scope="session")
+def es_index(env: Settings) -> str:
+    return f"{env.elastic_root_index}-chunk"
+
+
+@pytest.fixture(autouse=True, scope="session")
+def create_index(env: Settings, es_index):
+    es: Elasticsearch = env.elasticsearch_client()
+    if not es.indices.exists(index=es_index):
+        es.indices.create(index=es_index)
+    yield
+    es.indices.delete(index=es_index)
 
 
 @pytest.fixture()
@@ -42,7 +61,7 @@ def file_pdf_path() -> Path:
 
 
 @pytest.fixture(scope="session")
-def file(s3_client, file_pdf_path: Path):
+def file(s3_client, file_pdf_path: Path, env: Settings):
     file_name = file_pdf_path.name
     file_type = file_pdf_path.suffix
 
