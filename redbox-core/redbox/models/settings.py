@@ -106,8 +106,6 @@ class AISettings(BaseModel):
     rag_num_candidates: int = 10
     rag_desired_chunk_size: int = 300
     elbow_filter_enabled: bool = True
-    summarisation_chunk_max_tokens: int = 20_000
-    summarisation_max_concurrency: int = 128
     chat_system_prompt: str = CHAT_SYSTEM_PROMPT
     chat_question_prompt: str = CHAT_QUESTION_PROMPT
     chat_with_docs_system_prompt: str = CHAT_WITH_DOCS_SYSTEM_PROMPT
@@ -120,6 +118,8 @@ class AISettings(BaseModel):
     condense_question_prompt: str = CONDENSE_QUESTION_PROMPT
     summarisation_system_prompt: str = SUMMARISATION_SYSTEM_PROMPT
     summarisation_question_prompt: str = SUMMARISATION_QUESTION_PROMPT
+    summarisation_chunk_max_tokens: int = 20_000
+    summarisation_max_concurrency: int = 128
     map_system_prompt: str = MAP_SYSTEM_PROMPT
     map_question_prompt: str = MAP_QUESTION_PROMPT
     map_document_prompt: str = MAP_DOCUMENT_PROMPT

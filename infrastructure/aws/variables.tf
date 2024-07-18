@@ -341,3 +341,10 @@ variable "embedding_retry_max_seconds" {
   default     = 120
   description = "Maximum number of seconds to wait before retry to external embedding services (rate limiting)"
 }
+
+
+variable "summarisation_chunk_max_tokens" {
+  type        = number
+  default     = 20000
+  description = "Maximum size (in tokens) of chunk used in summarisation"
+}
