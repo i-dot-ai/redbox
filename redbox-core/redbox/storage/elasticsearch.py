@@ -238,7 +238,7 @@ class ElasticsearchStorageHandler(BaseStorageHandler):
             return FileStatus(
                 file_uuid=file_uuid,
                 chunk_statuses=[],
-                processing_status=ProcessingStatusEnum.embedding,
+                processing_status=file.ingest_status,
             )
 
         # Test 3: Determine the number of embedded chunks for the file
