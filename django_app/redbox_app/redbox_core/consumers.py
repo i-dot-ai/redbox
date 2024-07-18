@@ -191,7 +191,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
                         file=file,
                         text=citation.page_content,
                         page_numbers=citation.page_numbers,
-                    ).save()
+                    )
         if selected_files:
             chat_message.selected_files.set(selected_files)
         return chat_message
