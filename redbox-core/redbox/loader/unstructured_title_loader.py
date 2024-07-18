@@ -10,7 +10,7 @@ from pathlib import Path
 
 from redbox.models.file import File, ChunkResolution, ChunkMetadata
 from redbox.models.settings import Settings
-from .base import BaseRedBoxFileLoader
+from .base import BaseRedboxFileLoader
 
 encoding = tiktoken.get_encoding("cl100k_base")
 
@@ -20,7 +20,7 @@ else:
     S3Client = object
 
 
-class UnstructuredTitleLoader(BaseRedBoxFileLoader):
+class UnstructuredTitleLoader(BaseRedboxFileLoader):
     """Load, partition and chunk a document using local unstructured library"""
 
     def __init__(self, file: File, file_bytes: IO[bytes], env: Settings) -> None:

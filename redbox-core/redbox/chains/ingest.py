@@ -8,7 +8,7 @@ from langchain_core.runnables import RunnableLambda, chain
 
 from redbox.models.settings import Settings
 from redbox.models.file import File
-from redbox.loader.base import BaseRedBoxFileLoader
+from redbox.loader.base import BaseRedboxFileLoader
 
 
 if TYPE_CHECKING:
@@ -26,7 +26,7 @@ def log_chunks(chunks: list[Document]):
     return chunks
 
 
-def document_loader(document_loader_type: type[BaseRedBoxFileLoader], s3_client: S3Client, env: Settings):
+def document_loader(document_loader_type: type[BasebedBoxFileLoader], s3_client: S3Client, env: Settings):
     @chain
     def wrapped(file: File):
         file_raw = BytesIO()
@@ -38,7 +38,7 @@ def document_loader(document_loader_type: type[BaseRedBoxFileLoader], s3_client:
 
 
 def ingest_from_loader(
-    document_loader_type: type[BaseRedBoxFileLoader], s3_client: S3Client, vectorstore: VectorStore, env: Settings
+    document_loader_type: type[BaseRedboxFileLoader], s3_client: S3Client, vectorstore: VectorStore, env: Settings
 ):
     return (
         document_loader(document_loader_type=document_loader_type, s3_client=s3_client, env=env)

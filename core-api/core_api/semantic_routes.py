@@ -19,7 +19,7 @@ from redbox.models.chat import ChatRoute
 
 # === Pre-canned responses for non-LLM routes ===
 INFO_RESPONSE = """
-I am RedBox, an AI focused on helping UK Civil Servants, Political Advisors and
+I am Redbox, an AI focused on helping UK Civil Servants, Political Advisors and
 Ministers triage and summarise information from a wide variety of sources.
 """
 
