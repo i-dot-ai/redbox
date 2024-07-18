@@ -41,7 +41,8 @@ class UnstructuredDocumentLoader(BaseLoader):
         """
         elements = partition(file=self.file_bytes, strategy=self.env.partition_strategy)
         if not elements:
-            raise ValueError("bad unstructured, bad!")
+            raise ValueError("Unstructured failed to extract text for this file")
+
         raw_chunks = chunk_by_title(
             elements=elements,
             combine_text_under_n_chars=self.env.worker_ingest_min_chunk_size,
