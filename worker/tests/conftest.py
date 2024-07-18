@@ -4,7 +4,6 @@ from elasticsearch import Elasticsearch
 from langchain_core.embeddings import Embeddings
 from langchain_core.embeddings.fake import FakeEmbeddings
 
-from redbox.models import File
 from redbox.models.settings import Settings
 
 

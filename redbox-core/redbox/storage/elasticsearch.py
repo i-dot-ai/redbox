@@ -8,7 +8,7 @@ from elasticsearch import Elasticsearch, NotFoundError
 from elasticsearch.helpers import scan
 from pydantic import ValidationError
 
-from redbox.models import Chunk, FileStatus, ProcessingStatusEnum, Settings
+from redbox.models import Chunk, FileStatus, Settings
 from redbox.models.base import PersistableModel
 from redbox.storage.storage_handler import BaseStorageHandler
 

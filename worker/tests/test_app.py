@@ -15,13 +15,13 @@ from worker import app as app_module
 
 @pytest.mark.asyncio()
 @pytest.mark.parametrize(
-    "filename, status",
+    "filename, status, expected_chunks",
     [
-        ("Cabinet Office - Wikipedia.pdf", ProcessingStatusEnum.complete),
-        ("Cabinet Office - Wikipedia.corrupt.pdf", ProcessingStatusEnum.failed),
+        ("Cabinet Office - Wikipedia.pdf", ProcessingStatusEnum.complete, True),
+        ("Cabinet Office - Wikipedia.corrupt.pdf", ProcessingStatusEnum.failed, False),
     ],
 )
-async def test_ingest_file(es_client, s3_client, monkeypatch, filename: str, status: ProcessingStatusEnum):
+async def test_ingest_file(es_client, s3_client, monkeypatch, filename: str, status: ProcessingStatusEnum, expected_chunks: bool):
     """
     Given that I have written a text File to s3
     When I call ingest_file
@@ -54,33 +54,34 @@ async def test_ingest_file(es_client, s3_client, monkeypatch, filename: str, sta
         for i in range(5):
             await asyncio.sleep(1)
             file_status = storage_handler.get_file_status(file.uuid, file.creator_user_uuid)
-            if file_status.processing_status == ProcessingStatusEnum.complete:
+            if file_status.processing_status == status:
                 break
         else:
-            raise Exception(f"File never went to complete status. Final Status {file_status.processing_status}")
+            raise Exception(f"File never went to expected status. Final Status {file_status.processing_status}")
 
-        chunks = list(
-            scan(
-                client=es_client,
-                index=f"{env.elastic_root_index}-chunk",
-                query={
-                    "query": {
-                        "bool": {
-                            "must": [
-                                {
-                                    "term": {
-                                        "metadata.parent_file_uuid.keyword": str(file.uuid),
-                                    }
-                                },
-                                {
-                                    "term": {
-                                        "metadata.creator_user_uuid.keyword": str(file.creator_user_uuid),
-                                    }
-                                },
-                            ]
+        if expected_chunks:
+            chunks = list(
+                scan(
+                    client=es_client,
+                    index=f"{env.elastic_root_index}-chunk",
+                    query={
+                        "query": {
+                            "bool": {
+                                "must": [
+                                    {
+                                        "term": {
+                                            "metadata.parent_file_uuid.keyword": str(file.uuid),
+                                        }
+                                    },
+                                    {
+                                        "term": {
+                                            "metadata.creator_user_uuid.keyword": str(file.creator_user_uuid),
+                                        }
+                                    },
+                                ]
+                            }
                         }
-                    }
-                },
+                    },
+                )
             )
-        )
-        assert len(chunks) > 0
+            assert len(chunks) > 0
