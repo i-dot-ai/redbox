@@ -228,6 +228,20 @@ def test_remove_doc_view(client: Client, alice: User, file_pdf_path: Path, s3_cl
 
 
 @pytest.mark.django_db()
+def test_remove_nonexistent_doc(alice: User, client: Client):
+    # Given
+    client.force_login(alice)
+    nonexistent_uuid = uuid.uuid4()
+
+    # When
+    url = reverse("remove-doc", kwargs={"doc_id": nonexistent_uuid})
+    response = client.get(url)
+
+    # Then
+    assert response.status_code == HTTPStatus.NOT_FOUND
+
+
+@pytest.mark.django_db()
 def test_post_message_to_new_session(alice: User, client: Client, requests_mock: Mocker):
     # Given
     client.force_login(alice)
@@ -374,6 +388,20 @@ def test_view_session_with_documents(chat_message: ChatMessage, client: Client):
 
 
 @pytest.mark.django_db()
+def test_nonexistent_chats(alice: User, client: Client):
+    # Given
+    client.force_login(alice)
+    nonexistent_uuid = uuid.uuid4()
+
+    # When
+    url = reverse("chats", kwargs={"chat_id": nonexistent_uuid})
+    response = client.get(url)
+
+    # Then
+    assert response.status_code == HTTPStatus.NOT_FOUND
+
+
+@pytest.mark.django_db()
 def test_post_chat_title(alice: User, chat_history: ChatHistory, client: Client):
     # Given
     client.force_login(alice)
@@ -506,6 +534,20 @@ def test_user_cannot_see_other_users_citations(chat_message_with_citation: ChatH
     # Then
     assert response.status_code == HTTPStatus.FOUND
     assert response.headers.get("Location") == "/chats/"
+
+
+@pytest.mark.django_db()
+def test_nonexistent_citations(alice: User, client: Client):
+    # Given
+    client.force_login(alice)
+    nonexistent_uuid = uuid.uuid4()
+
+    # When
+    url = reverse("citations", kwargs={"message_id": nonexistent_uuid})
+    response = client.get(url)
+
+    # Then
+    assert response.status_code == HTTPStatus.NOT_FOUND
 
 
 @pytest.mark.django_db()
