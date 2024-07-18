@@ -169,6 +169,7 @@ class ChunkMetadata(BaseModel):
     parent_file_uuid: UUID
     creator_user_uuid: UUID
     index: int
+    file_name: str
     page_number: int | None = None
     created_datetime: datetime.datetime = datetime.datetime.now(datetime.UTC)
     token_count: int

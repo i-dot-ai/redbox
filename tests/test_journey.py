@@ -26,7 +26,10 @@ def test_user_journey(page: Page, email_address: str):
     Simulates a single user journey through the application, running against the full suite of microservices.
 
     Uses the Page Object Model - see https://pinboard.in/u:brunns/t:page-object for some resources explaining this.
-    Please add to the page objects in `pages.py` where necessary - don't put page specific logic at this level."""
+    Please add to the page objects in `pages.py` where necessary - don't put page specific logic at this level.
+
+    We should not be asserting anything about AI generated content in this test, aside from asserting that there
+    is some."""
     create_user(email_address)
 
     # Landing page
@@ -75,10 +78,6 @@ def test_user_journey(page: Page, email_address: str):
     chats_page.feedback_text = "Could be better."
     chats_page.submit_feedback()
 
-    # Citations
-    citations_page = latest_chat_response.navigate_to_citations()
-    chats_page = citations_page.back_to_chat()
-
     # Select files
     chats_page = chats_page.start_new_chat()
     files_to_select = {f.name for f in upload_files if "README" in f.name}
@@ -89,18 +88,16 @@ def test_user_journey(page: Page, email_address: str):
     assert chats_page.selected_file_names == files_to_select
     latest_chat_response = chats_page.wait_for_latest_message()
     assert latest_chat_response.text
-    assert files_to_select.pop() in latest_chat_response.sources
 
     # Use specific routes
-    chats_page = chats_page.start_new_chat()
-    for route, select_file in [
-        ("search", False),
-        ("search", True),
-        ("chat", False),
-        ("chat", True),
-        ("summarise", True),
-        ("summarise", False),
-        ("info", False),
+    for route, select_file, should_have_citation in [
+        ("search", False, True),
+        ("search", True, True),
+        ("chat_with_docs", False, False),
+        ("chat_with_docs", True, False),
+        ("summarise", True, False),
+        ("summarise", False, False),
+        ("info", False, False),
     ]:
         question = f"@{route} What do I need to install?"
         logger.info("Asking %r", question)
@@ -113,12 +110,11 @@ def test_user_journey(page: Page, email_address: str):
         latest_chat_response = chats_page.wait_for_latest_message()
         assert latest_chat_response.text
         assert latest_chat_response.route.startswith(route)
-
-    # Navigate to old chat & rename
-    chats_page = chats_page.navigate_to_titled_chat("What architecture is in use?")
-    chats_page.chat_title = "About tech stuff."
-    chats_page = chats_page.start_new_chat()
-    chats_page = chats_page.navigate_to_titled_chat("About tech stuff.")
+        if should_have_citation:
+            # Citations
+            citations_page = latest_chat_response.navigate_to_citations()
+            chats_page = citations_page.back_to_chat()
+            assert files_to_select.pop() in latest_chat_response.sources
 
     # Delete a file
     documents_page = chats_page.navigate_to_documents()

@@ -58,6 +58,11 @@ def elasticsearch_store(es_index, es_client, embedding_model, env: Settings) -> 
         es_connection=es_client,
         vector_query_field=env.embedding_document_field_name,
     )
+@pytest.fixture(autouse=True)
+def create_index(env, es_index):
+    es: Elasticsearch = env.elasticsearch_client()
+    if not es.indices.exists(index=es_index):
+        es.indices.create(index=es_index)
 
 
 @pytest.fixture()

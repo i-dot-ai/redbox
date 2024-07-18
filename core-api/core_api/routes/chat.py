@@ -3,6 +3,8 @@ import re
 from typing import Annotated, Literal
 from uuid import UUID
 
+from core_api.auth import get_user_uuid, get_ws_user_uuid
+from core_api.semantic_routes import get_routable_chains, get_semantic_route_layer
 from fastapi import Depends, FastAPI, WebSocket
 from fastapi.encoders import jsonable_encoder
 from langchain_core.runnables import Runnable
@@ -10,9 +12,7 @@ from openai import APIError
 from pydantic import BaseModel
 from semantic_router import RouteLayer
 
-from core_api.auth import get_user_uuid, get_ws_user_uuid
 from redbox.api.runnables import map_to_chat_response
-from core_api.semantic_routes import get_routable_chains, get_semantic_route_layer
 from redbox.models.chain import ChainInput
 from redbox.models.chat import ChatRequest, ChatResponse, SourceDocument
 from redbox.models.errors import NoDocumentSelected, QuestionLengthError
@@ -51,6 +51,12 @@ async def semantic_router_to_chain(
 
     selected_chain = None
 
+    def select_chat_chain(chat_request: ChatRequest, routable_chains: dict[str, Runnable]) -> Runnable:
+        if chat_request.selected_files:
+            return routable_chains.get("chat/documents")
+        else:
+            return routable_chains.get("chat")
+
     # Match keyword
     route_match = re_keyword_pattern.search(question)
     if route_match:
@@ -60,7 +66,7 @@ async def semantic_router_to_chain(
     # Semantic route
     if selected_chain is None:
         route_name = route_layer(question).name
-        selected_chain = routable_chains.get(route_name, routable_chains.get("search"))
+        selected_chain = routable_chains.get(route_name, select_chat_chain(chat_request, routable_chains))
 
     params = ChainInput(
         question=chat_request.message_history[-1].text,
@@ -70,6 +76,7 @@ async def semantic_router_to_chain(
     )
 
     log.info("Routed to %s", route_name)
+    log.info("Selected files: %s", chat_request.selected_files)
 
     return selected_chain, params
 

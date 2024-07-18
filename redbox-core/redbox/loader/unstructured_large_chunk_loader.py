@@ -1,6 +1,7 @@
 from collections.abc import Iterator
 from datetime import UTC, datetime
 from typing import IO, TYPE_CHECKING
+from pathlib import Path
 
 import tiktoken
 from langchain_core.document_loaders import BaseLoader
@@ -45,6 +46,7 @@ class UnstructuredLargeChunkLoader(BaseLoader):
             overlap=self.env.worker_ingest_largest_chunk_overlap,
             overlap_all=True,
         )
+        file_name = Path(self.file.key).name
 
         for i, raw_chunk in enumerate(raw_chunks):
             yield Document(
@@ -53,6 +55,7 @@ class UnstructuredLargeChunkLoader(BaseLoader):
                     parent_file_uuid=self.file.uuid,
                     creator_user_uuid=self.file.creator_user_uuid,
                     index=i,
+                    file_name=file_name,
                     page_number=raw_chunk.metadata.page_number,
                     created_datetime=datetime.now(UTC),
                     token_count=len(encoding.encode(raw_chunk.text)),

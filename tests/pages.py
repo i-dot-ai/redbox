@@ -4,7 +4,7 @@ from collections.abc import Collection, Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
 from time import sleep
-from typing import Any, ClassVar, Union
+from typing import Any, ClassVar, Union, override
 
 from axe_playwright_python.sync_playwright import Axe
 from playwright.sync_api import Locator, Page, expect
@@ -308,6 +308,11 @@ class ChatMessage:
 
 
 class ChatsPage(SignedInBasePage):
+    @override
+    def check_a11y(self, **kwargs):
+        # Exclude AI generated content, since we can't control it.
+        return super().check_a11y(exclude=[".iai-chat-bubble__text"])
+
     @property
     def expected_page_title(self) -> str:
         return "Chats - Redbox"
@@ -410,7 +415,9 @@ class ChatsPage(SignedInBasePage):
 
 
 class CitationsPage(SignedInBasePage):
-    def check_a11y(self):
+    @override
+    def check_a11y(self, **kwargs):
+        # Exclude AI generated content, since we can't control it.
         return super().check_a11y(exclude=[".iai-chat-bubble__text"])
 
     @property
