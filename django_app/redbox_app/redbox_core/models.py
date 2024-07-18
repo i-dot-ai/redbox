@@ -5,6 +5,7 @@ from datetime import UTC, datetime, timedelta
 import boto3
 from botocore.config import Config
 from django.conf import settings
+from django.contrib.postgres.fields import ArrayField
 from django.core import validators
 from django.db import models
 from django.utils import timezone
@@ -245,6 +246,9 @@ class Citation(UUIDPrimaryKeyBase, TimeStampedModel):
     file = models.ForeignKey(File, on_delete=models.CASCADE)
     chat_message = models.ForeignKey("ChatMessage", on_delete=models.CASCADE)
     text = models.TextField(null=True, blank=True)
+    page_numbers = ArrayField(
+        models.PositiveIntegerField(), null=True, blank=True, help_text="location of citation in document"
+    )
 
     def __str__(self):
         return f"{self.file}: {self.text or ''}"
