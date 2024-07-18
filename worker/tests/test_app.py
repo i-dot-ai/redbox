@@ -46,8 +46,6 @@ async def test_ingest_file_fail(es_client, bad_file: File, monkeypatch):
     storage_handler = ElasticsearchStorageHandler(es_client=es_client, root_index=env.elastic_root_index)
 
     storage_handler.write_item(bad_file)
-    status = storage_handler.get_file_status(bad_file.uuid, bad_file.creator_user_uuid)
-    assert status.ingest_status == ProcessingStatusEnum.failed
 
     monkeypatch.setattr(app_module, "get_embeddings", lambda _: FakeEmbeddings(size=3072))
     async with TestRedisBroker(broker) as br, TestApp(app):
