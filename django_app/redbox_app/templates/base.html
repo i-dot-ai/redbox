@@ -15,8 +15,8 @@
   <meta name="robots" content="noindex, nofollow">
   <link rel="stylesheet" type="text/css" href="{{static('styles.css')}}" />
 
-  <script src="{{ static('js/libs/dompurify.js') }}"></script>
-  <script src="{{ static('js/trusted-types.js') }}"></script>
+  <script type="module" src="{{static('js/libs/dompurify.js')}}"></script>
+  <script type="module" src="{{static('js/main.js')}}"></script>
 
   {% if environment | lower in ["dev", "preprod"] %}
     <script defer
@@ -111,9 +111,6 @@
       </div>
     </div>
   </footer>
-
-  <script type="module" src="{{static('js/libs/govuk-frontend.min.js')}}"></script>
-  <script type="module" src="{{static('js/libs/iai-design-system.js')}}"></script>
 
 </body>
 
