@@ -186,7 +186,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         if sources:
             for file, citations in sources:
                 for citation in citations:
-                    Citation.objects.create(chat_message=chat_message, file=file, text=citation.page_content)
+                    Citation(chat_message=chat_message, file=file, text=citation.page_content).save()
         if selected_files:
             chat_message.selected_files.set(selected_files)
         return chat_message

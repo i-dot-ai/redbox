@@ -390,6 +390,22 @@ def test_post_chat_title(alice: User, chat_history: ChatHistory, client: Client)
 
 
 @pytest.mark.django_db()
+def test_post_chat_title_with_naughty_string(alice: User, chat_history: ChatHistory, client: Client):
+    # Given
+    client.force_login(alice)
+
+    # When
+    url = reverse("chat-titles", kwargs={"chat_id": chat_history.id})
+    response = client.post(url, json.dumps({"name": "New chat name \x00"}), content_type="application/json")
+
+    # Then
+    status = HTTPStatus(response.status_code)
+    assert status.is_success
+    chat_history.refresh_from_db()
+    assert chat_history.name == "New chat name \ufffd"
+
+
+@pytest.mark.django_db()
 def test_post_new_rating_only(alice: User, chat_message: ChatMessage, client: Client):
     # Given
     client.force_login(alice)
@@ -430,6 +446,28 @@ def test_post_new_rating(alice: User, chat_message: ChatMessage, client: Client)
 
 
 @pytest.mark.django_db()
+def test_post_new_rating_with_naughty_string(alice: User, chat_message: ChatMessage, client: Client):
+    # Given
+    client.force_login(alice)
+
+    # When
+    url = reverse("ratings", kwargs={"message_id": chat_message.id})
+    response = client.post(
+        url,
+        json.dumps({"rating": 5, "text": "Lorem Ipsum. \x00", "chips": ["speed", "accuracy", "swearing"]}),
+        content_type="application/json",
+    )
+
+    # Then
+    status = HTTPStatus(response.status_code)
+    assert status.is_success
+    rating = ChatMessageRating.objects.get(pk=chat_message.pk)
+    assert rating.rating == 5
+    assert rating.text == "Lorem Ipsum. \ufffd"
+    assert {c.text for c in rating.chatmessageratingchip_set.all()} == {"speed", "accuracy", "swearing"}
+
+
+@pytest.mark.django_db()
 def test_post_updated_rating(alice: User, chat_message_with_rating: ChatMessage, client: Client):
     # Given
     client.force_login(alice)
@@ -448,6 +486,28 @@ def test_post_updated_rating(alice: User, chat_message_with_rating: ChatMessage,
     rating = ChatMessageRating.objects.get(pk=chat_message_with_rating.pk)
     assert rating.rating == 5
     assert rating.text == "Lorem Ipsum."
+    assert {c.text for c in rating.chatmessageratingchip_set.all()} == {"speed", "accuracy", "swearing"}
+
+
+@pytest.mark.django_db()
+def test_post_updated_rating_with_naughty_string(alice: User, chat_message_with_rating: ChatMessage, client: Client):
+    # Given
+    client.force_login(alice)
+
+    # When
+    url = reverse("ratings", kwargs={"message_id": chat_message_with_rating.id})
+    response = client.post(
+        url,
+        json.dumps({"rating": 5, "text": "Lorem Ipsum. \x00", "chips": ["speed", "accuracy", "swearing"]}),
+        content_type="application/json",
+    )
+
+    # Then
+    status = HTTPStatus(response.status_code)
+    assert status.is_success
+    rating = ChatMessageRating.objects.get(pk=chat_message_with_rating.pk)
+    assert rating.rating == 5
+    assert rating.text == "Lorem Ipsum. \ufffd"
     assert {c.text for c in rating.chatmessageratingchip_set.all()} == {"speed", "accuracy", "swearing"}
 
 
