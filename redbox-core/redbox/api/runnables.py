@@ -107,7 +107,7 @@ def filter_by_elbow(
     @chain
     def _filter_by_elbow(docs: list[Document]):
         # If enabled, return only the documents up to the elbow point
-        if False:
+        if enabled:
             if len(docs) == 0:
                 return docs
 
