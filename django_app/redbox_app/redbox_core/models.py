@@ -32,6 +32,12 @@ class TimeStampedModel(models.Model):
         ordering = ["created_at"]
 
 
+def sanitise_string(string: str | None) -> str | None:
+    """We are seeing NUL (0x00) characters in user entered fields, and also in document citations.
+    We can't save these characters, so we need to sanitise them."""
+    return string.replace("\x00", "\ufffd") if string else string
+
+
 class BusinessUnit(UUIDPrimaryKeyBase):
     name = models.TextField(max_length=64, null=False, blank=False, unique=True)
 
@@ -225,7 +231,7 @@ class ChatHistory(UUIDPrimaryKeyBase, TimeStampedModel):
         return f"{self.name} - {self.users}"
 
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
-        self.name = self.name.replace("\x00", "\ufffd") if self.name else self.name
+        self.name = sanitise_string(self.name)
         super().save(force_insert, force_update, using, update_fields)
 
 
@@ -244,7 +250,7 @@ class Citation(UUIDPrimaryKeyBase, TimeStampedModel):
         return f"{self.file}: {self.text or ''}"
 
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
-        self.text = self.text.replace("\x00", "\ufffd") if self.text else self.text
+        self.text = sanitise_string(self.text)
         super().save(force_insert, force_update, using, update_fields)
 
 
@@ -260,7 +266,7 @@ class ChatMessage(UUIDPrimaryKeyBase, TimeStampedModel):
         return f"{self.text} - {self.role}"
 
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
-        self.text = self.text.replace("\x00", "\ufffd") if self.text else self.text
+        self.text = sanitise_string(self.text)
         super().save(force_insert, force_update, using, update_fields)
 
 
@@ -273,7 +279,7 @@ class ChatMessageRating(TimeStampedModel):
         return f"{self.chat_message} - {self.rating} - {self.text}"
 
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
-        self.text = self.text.replace("\x00", "\ufffd") if self.text else self.text
+        self.text = sanitise_string(self.text)
         super().save(force_insert, force_update, using, update_fields)
 
 
