@@ -157,7 +157,9 @@ def test_rag(mock_client, headers):
     assert response.status_code == 200, response.text
     chat_response = ChatResponse.model_validate(response.json())
     assert chat_response.output_text == RAG_LLM_RESPONSE
-    assert chat_response.route_name == ChatRoute.chat_with_docs, f"Expected route [{ChatRoute.chat_with_docs}] received [{chat_response.route_name}]"
+    assert (
+        chat_response.route_name == ChatRoute.chat_with_docs
+    ), f"Expected route [{ChatRoute.chat_with_docs}] received [{chat_response.route_name}]"
 
 
 def test_summary(mock_client, headers):
@@ -174,7 +176,9 @@ def test_summary(mock_client, headers):
     assert response.status_code == 200
     chat_response = ChatResponse.model_validate(response.json())
     assert chat_response.output_text == RAG_LLM_RESPONSE
-    assert chat_response.route_name == ChatRoute.chat_with_docs, f"Expected route [{ChatRoute.chat_with_docs}] received [{chat_response.route_name}]"
+    assert (
+        chat_response.route_name == ChatRoute.chat_with_docs
+    ), f"Expected route [{ChatRoute.chat_with_docs}] received [{chat_response.route_name}]"
 
 
 def test_keyword(mock_client, headers):
@@ -193,7 +197,9 @@ def test_keyword(mock_client, headers):
     assert response.status_code == 200
     chat_response = ChatResponse.model_validate(response.json())
     assert chat_response.output_text == RAG_LLM_RESPONSE
-    assert chat_response.route_name == ChatRoute.search, f"Expected route [{ChatRoute.search}] received [{chat_response.route_name}]"
+    assert (
+        chat_response.route_name == ChatRoute.search
+    ), f"Expected route [{ChatRoute.search}] received [{chat_response.route_name}]"
 
 
 def test_rag_chat_streamed(mock_client, headers):

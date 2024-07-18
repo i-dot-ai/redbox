@@ -21,7 +21,9 @@ from worker import app as app_module
         ("Cabinet Office - Wikipedia.corrupt.pdf", ProcessingStatusEnum.failed, False),
     ],
 )
-async def test_ingest_file(es_client, s3_client, monkeypatch, filename: str, status: ProcessingStatusEnum, expected_chunks: bool):
+async def test_ingest_file(
+    es_client, s3_client, monkeypatch, filename: str, status: ProcessingStatusEnum, expected_chunks: bool
+):
     """
     Given that I have written a text File to s3
     When I call ingest_file
