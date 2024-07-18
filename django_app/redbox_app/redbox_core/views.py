@@ -2,7 +2,10 @@ import logging
 import uuid
 from collections.abc import MutableSequence, Sequence
 from dataclasses import dataclass, field
+from datetime import datetime, timedelta
 from http import HTTPStatus
+from itertools import groupby
+from operator import attrgetter
 from pathlib import Path
 
 from dataclasses_json import Undefined, dataclass_json
@@ -243,10 +246,12 @@ class ChatsView(View):
 
         all_files = File.objects.filter(user=request.user, status=StatusEnum.complete).order_by("-created_at")
         self.decorate_selected_files(all_files, messages)
+        self.decorate_messages_with_date_group(messages)
+        messages_grouped_by_date_group = groupby(messages, attrgetter("date_group"))
 
         context = {
             "chat_id": chat_id,
-            "messages": messages,
+            "messages_grouped_by_date_group": messages_grouped_by_date_group,
             "chat_history": chat_history,
             "current_chat": current_chat,
             "streaming": {"endpoint": str(endpoint)},
@@ -272,6 +277,24 @@ class ChatsView(View):
 
         for file in all_files:
             file.selected = file in selected_files
+
+    def decorate_messages_with_date_group(self, messages: Sequence[ChatMessage]) -> None:
+        for message in messages:
+            message.date_group = self.get_date_group(message.created_at)
+
+    @staticmethod
+    def get_date_group(created_at: datetime) -> str:
+        now = timezone.now()
+        age = now - created_at
+        if age > timedelta(days=37):
+            return "Older than 30 days"
+        if age > timedelta(days=8):
+            return "Previous 30 days"
+        if age > timedelta(days=2):
+            return "Previous 7 days"
+        if created_at.date() == now.date() - timedelta(days=1):
+            return "Yesterday"
+        return "Today"
 
 
 class ChatsTitleView(View):

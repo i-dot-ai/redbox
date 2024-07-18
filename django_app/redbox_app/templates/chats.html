@@ -73,15 +73,17 @@
           </template>
 
           {# SSR messages #}
-          {% for message in messages %}
-            {{ message_box(
-              id = message.id,
-              role = message.role,
-              route = message.route,
-              text = message.text,
-              source_files = message.source_files.all(),
-              show_route = show_route
-            ) }}
+          {% for date_group, messages in messages_grouped_by_date_group %}
+          <h3 class="rb-chat-message__date_group">{{ date_group }}</h3>
+            {% for message in messages %}
+              {{ message_box(
+                id = message.id,
+                role = message.role,
+                route = message.route,
+                text = message.text,
+                source_files = message.source_files.all(),
+                show_route = show_route
+              ) }}
 
             {# If we want to collect feedback on SSR messages
             {% if message.role == 'ai' %}
@@ -89,6 +91,7 @@
             {% endif %}
             #}
 
+          {% endfor %}
           {% endfor %}
 
           {# CSR messages are inserted here #}

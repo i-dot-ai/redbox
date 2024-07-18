@@ -388,6 +388,33 @@ def test_view_session_with_documents(chat_message: ChatMessage, client: Client):
 
 
 @pytest.mark.django_db()
+def test_chats_grouped_by_age(chat_history_with_messages_over_time: ChatHistory, alice: User, client: Client):
+    # Given
+    client.force_login(alice)
+
+    # When
+    response = client.get(f"/chats/{chat_history_with_messages_over_time.id}/")
+
+    # Then
+    assert response.status_code == HTTPStatus.OK
+    soup = BeautifulSoup(response.content)
+    date_groups = soup.find_all("h3", {"class": "rb-chat-message__date_group"})
+    for date_group, (header, message) in zip(
+        date_groups,
+        [
+            ("Older than 30 days", "40 days old"),
+            ("Previous 30 days", "20 days old"),
+            ("Previous 7 days", "5 days old"),
+            ("Yesterday", "yesterday"),
+            ("Today", "today"),
+        ],
+        strict=False,
+    ):
+        assert date_group.text == header
+        assert date_group.find_next_sibling("div").find("markdown-converter").text == message
+
+
+@pytest.mark.django_db()
 def test_nonexistent_chats(alice: User, client: Client):
     # Given
     client.force_login(alice)
