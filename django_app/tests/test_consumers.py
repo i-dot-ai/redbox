@@ -54,6 +54,9 @@ async def test_chat_consumer_with_new_session(alice: User, uploaded_file: File, 
     assert await get_chat_message_text(alice, ChatRoleEnum.user) == ["Hello Hal."]
     assert await get_chat_message_text(alice, ChatRoleEnum.ai) == ["Good afternoon, Mr. Amor."]
     assert await get_chat_message_route(alice, ChatRoleEnum.ai) == ["gratitude"]
+
+    expected_citations = {(None, ()), ("Good afternoon Mr Amor", ()), ("Good afternoon Mr Amor", (34, 35))}
+    assert await get_chat_message_citation_set(alice, ChatRoleEnum.ai) == expected_citations
     await refresh_from_db(uploaded_file)
     assert uploaded_file.last_referenced.date() == datetime.now(tz=UTC).date()
 
@@ -75,6 +78,7 @@ async def test_chat_consumer_staff_user(staff_user: User, mocked_connect: Connec
         response2 = await communicator.receive_json_from(timeout=5)
         response3 = await communicator.receive_json_from(timeout=5)
         response4 = await communicator.receive_json_from(timeout=5)
+        _response5 = await communicator.receive_json_from(timeout=5)
 
         # Then
         assert response1["type"] == "session-id"
@@ -119,6 +123,16 @@ async def test_chat_consumer_with_existing_session(alice: User, chat_history: Ch
 @database_sync_to_async
 def get_chat_message_text(user: User, role: ChatRoleEnum) -> Sequence[str]:
     return [m.text for m in ChatMessage.objects.filter(chat_history__users=user, role=role)]
+
+
+@database_sync_to_async
+def get_chat_message_citation_set(user: User, role: ChatRoleEnum) -> Sequence[tuple[str, tuple[int]]]:
+    return {
+        (citation.text, tuple(citation.page_numbers or []))
+        for message in ChatMessage.objects.filter(chat_history__users=user, role=role)
+        for source_file in message.source_files.all()
+        for citation in source_file.citation_set.all()
+    }
 
 
 @database_sync_to_async
@@ -287,7 +301,14 @@ def mocked_connect(uploaded_file: File) -> Connect:
         json.dumps(
             {
                 "resource_type": "documents",
-                "data": [{"file_uuid": str(uploaded_file.core_file_uuid), "page_content": "Good afternoon Mr Amor"}],
+                "data": [
+                    {"file_uuid": str(uploaded_file.core_file_uuid), "page_content": "Good afternoon Mr Amor"},
+                    {
+                        "file_uuid": str(uploaded_file.core_file_uuid),
+                        "page_content": "Good afternoon Mr Amor",
+                        "page_numbers": [34, 35],
+                    },
+                ],
             }
         ),
         json.dumps({"resource_type": "end"}),
