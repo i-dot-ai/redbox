@@ -14,16 +14,13 @@ readme = "../README.md"
 python = ">=3.12,<3.13"
 redbox = {path="../redbox-core", develop=true}
 langchain = "^0.2.6"
-langchain-community = "^0.2.6"
 langchain-elasticsearch = "^0.2.2"
 elasticsearch = "^8.14.0"
 opencv-python-headless = "^4.10.0.84"
 pillow-heif = "^0.16.0"
 faststream = {extras = ["redis"], version = "<0.5.0"}
 nltk = "^3.8.1"
-
 langchain-openai = "^0.1.14"
-
 pikepdf = "<9.0.0"
 
 [tool.poetry.group.dev.dependencies]

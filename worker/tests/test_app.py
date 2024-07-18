@@ -1,9 +1,9 @@
 import asyncio
 
 import pytest
-from elasticsearch.helpers import scan
 from faststream.redis import TestApp, TestRedisBroker
 from langchain_core.embeddings.fake import FakeEmbeddings
+from elasticsearch.helpers import scan
 
 from redbox.models.file import File, ProcessingStatusEnum
 from redbox.storage import ElasticsearchStorageHandler

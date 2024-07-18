@@ -54,6 +54,9 @@ async def test_chat_consumer_with_new_session(alice: User, uploaded_file: File, 
     assert await get_chat_message_text(alice, ChatRoleEnum.user) == ["Hello Hal."]
     assert await get_chat_message_text(alice, ChatRoleEnum.ai) == ["Good afternoon, Mr. Amor."]
     assert await get_chat_message_route(alice, ChatRoleEnum.ai) == ["gratitude"]
+
+    expected_citations = {(None, ()), ("Good afternoon Mr Amor", ()), ("Good afternoon Mr Amor", (34, 35))}
+    assert await get_chat_message_citation_set(alice, ChatRoleEnum.ai) == expected_citations
     await refresh_from_db(uploaded_file)
     assert uploaded_file.last_referenced.date() == datetime.now(tz=UTC).date()
 
@@ -75,6 +78,7 @@ async def test_chat_consumer_staff_user(staff_user: User, mocked_connect: Connec
         response2 = await communicator.receive_json_from(timeout=5)
         response3 = await communicator.receive_json_from(timeout=5)
         response4 = await communicator.receive_json_from(timeout=5)
+        _response5 = await communicator.receive_json_from(timeout=5)
 
         # Then
         assert response1["type"] == "session-id"
@@ -116,9 +120,96 @@ async def test_chat_consumer_with_existing_session(alice: User, chat_history: Ch
     assert await get_chat_message_text(alice, ChatRoleEnum.ai) == ["Good afternoon, Mr. Amor."]
 
 
+@pytest.mark.django_db(transaction=True)
+@pytest.mark.asyncio()
+async def test_chat_consumer_with_naughty_question(alice: User, uploaded_file: File, mocked_connect: Connect):
+    # Given
+
+    # When
+    with patch("redbox_app.redbox_core.consumers.connect", new=mocked_connect):
+        communicator = WebsocketCommunicator(ChatConsumer.as_asgi(), "/ws/chat/")
+        communicator.scope["user"] = alice
+        connected, _ = await communicator.connect()
+        assert connected
+
+        await communicator.send_json_to({"message": "Hello Hal. \x00"})
+        response1 = await communicator.receive_json_from(timeout=5)
+        response2 = await communicator.receive_json_from(timeout=5)
+        response3 = await communicator.receive_json_from(timeout=5)
+        response4 = await communicator.receive_json_from(timeout=5)
+        response5 = await communicator.receive_json_from(timeout=5)
+
+        # Then
+        assert response1["type"] == "session-id"
+        assert response2["type"] == "text"
+        assert response2["data"] == "Good afternoon, "
+        assert response3["type"] == "text"
+        assert response3["data"] == "Mr. Amor."
+        assert response4["type"] == "hidden-route"
+        assert response4["data"] == "gratitude"
+        assert response5["type"] == "source"
+        assert response5["data"]["original_file_name"] == uploaded_file.original_file_name
+        # Close
+        await communicator.disconnect()
+
+    assert await get_chat_message_text(alice, ChatRoleEnum.user) == ["Hello Hal. \ufffd"]
+    assert await get_chat_message_text(alice, ChatRoleEnum.ai) == ["Good afternoon, Mr. Amor."]
+    assert await get_chat_message_route(alice, ChatRoleEnum.ai) == ["gratitude"]
+    await refresh_from_db(uploaded_file)
+    assert uploaded_file.last_referenced.date() == datetime.now(tz=UTC).date()
+
+
+@pytest.mark.django_db(transaction=True)
+@pytest.mark.asyncio()
+async def test_chat_consumer_with_naughty_citation(
+    alice: User, uploaded_file: File, mocked_connect_with_naughty_citation: Connect
+):
+    # Given
+
+    # When
+    with patch("redbox_app.redbox_core.consumers.connect", new=mocked_connect_with_naughty_citation):
+        communicator = WebsocketCommunicator(ChatConsumer.as_asgi(), "/ws/chat/")
+        communicator.scope["user"] = alice
+        connected, _ = await communicator.connect()
+        assert connected
+
+        await communicator.send_json_to({"message": "Hello Hal."})
+        response1 = await communicator.receive_json_from(timeout=5)
+        response2 = await communicator.receive_json_from(timeout=5)
+        response3 = await communicator.receive_json_from(timeout=5)
+        response4 = await communicator.receive_json_from(timeout=5)
+
+        # Then
+        assert response1["type"] == "session-id"
+        assert response2["type"] == "text"
+        assert response2["data"] == "Good afternoon, Mr. Amor."
+        assert response3["type"] == "hidden-route"
+        assert response3["data"] == "gratitude"
+        assert response4["type"] == "source"
+        assert response4["data"]["original_file_name"] == uploaded_file.original_file_name
+        # Close
+        await communicator.disconnect()
+
+    assert await get_chat_message_text(alice, ChatRoleEnum.user) == ["Hello Hal."]
+    assert await get_chat_message_text(alice, ChatRoleEnum.ai) == ["Good afternoon, Mr. Amor."]
+    assert await get_chat_message_route(alice, ChatRoleEnum.ai) == ["gratitude"]
+    await refresh_from_db(uploaded_file)
+    assert uploaded_file.last_referenced.date() == datetime.now(tz=UTC).date()
+
+
 @database_sync_to_async
 def get_chat_message_text(user: User, role: ChatRoleEnum) -> Sequence[str]:
     return [m.text for m in ChatMessage.objects.filter(chat_history__users=user, role=role)]
+
+
+@database_sync_to_async
+def get_chat_message_citation_set(user: User, role: ChatRoleEnum) -> Sequence[tuple[str, tuple[int]]]:
+    return {
+        (citation.text, tuple(citation.page_numbers or []))
+        for message in ChatMessage.objects.filter(chat_history__users=user, role=role)
+        for source_file in message.source_files.all()
+        for citation in source_file.citation_set.all()
+    }
 
 
 @database_sync_to_async
@@ -287,7 +378,36 @@ def mocked_connect(uploaded_file: File) -> Connect:
         json.dumps(
             {
                 "resource_type": "documents",
-                "data": [{"file_uuid": str(uploaded_file.core_file_uuid), "page_content": "Good afternoon Mr Amor"}],
+                "data": [
+                    {"file_uuid": str(uploaded_file.core_file_uuid), "page_content": "Good afternoon Mr Amor"},
+                    {
+                        "file_uuid": str(uploaded_file.core_file_uuid),
+                        "page_content": "Good afternoon Mr Amor",
+                        "page_numbers": [34, 35],
+                    },
+                ],
+            }
+        ),
+        json.dumps({"resource_type": "end"}),
+    ]
+    return mocked_connect
+
+
+@pytest.fixture()
+def mocked_connect_with_naughty_citation(uploaded_file: File) -> Connect:
+    mocked_websocket = AsyncMock(spec=WebSocketClientProtocol, name="mocked_websocket")
+    mocked_connect = MagicMock(spec=Connect, name="mocked_connect")
+    mocked_connect.return_value.__aenter__.return_value = mocked_websocket
+    mocked_websocket.__aiter__.return_value = [
+        json.dumps({"resource_type": "text", "data": "Good afternoon, Mr. Amor."}),
+        json.dumps({"resource_type": "route_name", "data": "gratitude"}),
+        json.dumps(
+            {
+                "resource_type": "documents",
+                "data": [
+                    {"file_uuid": str(uploaded_file.core_file_uuid), "page_content": "Good afternoon Mr Amor"},
+                    {"file_uuid": str(uploaded_file.core_file_uuid), "page_content": "I shouldn't send a \x00"},
+                ],
             }
         ),
         json.dumps({"resource_type": "end"}),
