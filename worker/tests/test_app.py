@@ -27,7 +27,7 @@ async def test_ingest_file(es_client, file: File, monkeypatch):
     monkeypatch.setattr(app_module, "get_embeddings", lambda _: FakeEmbeddings(size=3072))
     async with TestRedisBroker(broker) as br, TestApp(app):
         await br.publish(file, list=env.ingest_queue_name)
-        await asyncio.sleep(1)
+        storage_handler.refresh()
 
         chunks = storage_handler.get_file_chunks(file.uuid, file.creator_user_uuid)
         assert len(chunks) > 0
@@ -50,7 +50,7 @@ async def test_ingest_file_fail(es_client, bad_file: File, monkeypatch):
     monkeypatch.setattr(app_module, "get_embeddings", lambda _: FakeEmbeddings(size=3072))
     async with TestRedisBroker(broker) as br, TestApp(app):
         await br.publish(bad_file, list=env.ingest_queue_name)
-        await asyncio.sleep(1)
 
+    storage_handler.refresh()
     status = storage_handler.get_file_status(bad_file.uuid, bad_file.creator_user_uuid)
     assert status == ProcessingStatusEnum.failed
