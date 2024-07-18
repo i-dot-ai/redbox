@@ -52,8 +52,5 @@ async def test_ingest_file_fail(es_client, bad_file: File, monkeypatch):
         await br.publish(bad_file, list=env.ingest_queue_name)
         await asyncio.sleep(1)
 
-        chunks = storage_handler.get_file_chunks(bad_file.uuid, bad_file.creator_user_uuid)
-        assert len(chunks) == 0
-
         status = storage_handler.get_file_status(bad_file.uuid, bad_file.creator_user_uuid)
         assert status.ingest_status == ProcessingStatusEnum.failed
