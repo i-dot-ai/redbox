@@ -8,7 +8,7 @@ from elasticsearch import Elasticsearch, NotFoundError
 from elasticsearch.helpers import scan
 from pydantic import ValidationError
 
-from redbox.models import Chunk, ChunkStatus, FileStatus, ProcessingStatusEnum, Settings
+from redbox.models import Chunk, FileStatus, ProcessingStatusEnum, Settings
 from redbox.models.base import PersistableModel
 from redbox.storage.storage_handler import BaseStorageHandler
 
@@ -233,24 +233,10 @@ class ElasticsearchStorageHandler(BaseStorageHandler):
         # Test 2: Get the number of chunks for the file
         chunks = self.get_file_chunks(file_uuid, file.creator_user_uuid)
 
-        if not chunks:
-            # File has not been chunked yet
-            return FileStatus(
-                file_uuid=file_uuid,
-                chunk_statuses=[],
-                processing_status=file.ingest_status,
-            )
-
-        # Test 3: Determine the number of embedded chunks for the file
-        chunk_statuses = [ChunkStatus(chunk_uuid=chunk.uuid, embedded=bool(chunk.embedding)) for chunk in chunks]
-
-        # Test 4: Determine the latest status
-        is_complete = all(chunk_status.embedded for chunk_status in chunk_statuses)
-
         return FileStatus(
             file_uuid=file_uuid,
-            chunk_statuses=chunk_statuses,
-            processing_status=ProcessingStatusEnum.complete if is_complete else ProcessingStatusEnum.embedding,
+            chunk_statuses=None,
+            processing_status=ProcessingStatusEnum.complete if chunks else file.ingest_status,
         )
 
 
