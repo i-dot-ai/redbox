@@ -17,7 +17,7 @@ from worker import app as app_module
     [
         ("Cabinet Office - Wikipedia.pdf", ProcessingStatusEnum.complete),
         ("Cabinet Office - Wikipedia.corrupt.pdf", ProcessingStatusEnum.failed),
-    ]
+    ],
 )
 async def test_ingest_file(es_client, s3_client, monkeypatch, filename: str, status: ProcessingStatusEnum):
     """
@@ -57,5 +57,3 @@ async def test_ingest_file(es_client, s3_client, monkeypatch, filename: str, sta
         storage_handler.refresh()
         file_status = storage_handler.get_file_status(file.uuid, file.creator_user_uuid)
         assert file_status.processing_status == status, file_status.processing_status
-
-
