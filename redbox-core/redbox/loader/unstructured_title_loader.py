@@ -11,6 +11,7 @@ from pathlib import Path
 
 from redbox.models.file import File, ChunkResolution, ChunkMetadata
 from redbox.models.settings import Settings
+from .base import BaseRedBoxFileLoader
 
 encoding = tiktoken.get_encoding("cl100k_base")
 
@@ -20,18 +21,11 @@ else:
     S3Client = object
 
 
-class UnstructuredTitleLoader(BaseLoader):
+class UnstructuredTitleLoader(BaseRedBoxFileLoader):
     """Load, partition and chunk a document using local unstructured library"""
 
     def __init__(self, file: File, file_bytes: IO[bytes], env: Settings) -> None:
-        """Initialize the loader with a file path.
-
-        Args:
-            file: The RedBox File to load
-        """
-        self.file = file
-        self.file_bytes = file_bytes
-        self.env = env
+       super().__init__(file, file_bytes, env)
 
     def lazy_load(self) -> Iterator[Document]:  # <-- Does not take any arguments
         """A lazy loader that reads a file line by line.

@@ -8,6 +8,7 @@ from langchain_core.runnables import RunnableLambda, chain
 
 from redbox.models.settings import Settings
 from redbox.models.file import File
+from redbox.loader.base import BaseRedBoxFileLoader
 
 
 if TYPE_CHECKING:
@@ -36,7 +37,7 @@ def document_loader(document_loader_type, s3_client: S3Client, env: Settings):
     return wrapped
 
 
-def ingest_from_loader(document_loader_type: type, s3_client: S3Client, vectorstore: VectorStore, env: Settings):
+def ingest_from_loader(document_loader_type: type[BaseRedBoxFileLoader], s3_client: S3Client, vectorstore: VectorStore, env: Settings):
     return (
         document_loader(document_loader_type=document_loader_type, s3_client=s3_client, env=env)
         | RunnableLambda(list)
