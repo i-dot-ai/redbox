@@ -148,4 +148,4 @@ class FileStatus(BaseModel):
 
     file_uuid: UUID
     processing_status: ProcessingStatusEnum
-    chunk_statuses: list[ChunkStatus] | None
+    chunk_statuses: None = Field(None, description="deprecated, see processing_status")
