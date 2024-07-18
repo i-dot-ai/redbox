@@ -16,7 +16,12 @@
                 "--port", "5002"
             ],
             "jinja": true,
-            "envFile": "${workspaceFolder}/../.env.local"
+            "envFile": "${workspaceFolder}/../.env",
+            "env": {
+                "ELASTIC__HOST": "localhost",
+                "REDIS_HOST": "localhost",
+                "MINIO_HOST": "localhost"
+            }
         }
     ]
 }
