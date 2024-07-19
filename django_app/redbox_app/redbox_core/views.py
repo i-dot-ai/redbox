@@ -13,7 +13,7 @@ from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import FieldError, ValidationError
 from django.core.files.uploadedfile import UploadedFile
-from django.db.models import Min, Prefetch
+from django.db.models import Max, Min, Prefetch
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -219,10 +219,12 @@ def remove_doc_view(request, doc_id: uuid):
 class ChatsView(View):
     @method_decorator(login_required)
     def get(self, request: HttpRequest, chat_id: uuid.UUID | None = None) -> HttpResponse:
-        chat_history = ChatHistory.objects.filter(users=request.user).order_by("-created_at")
-        # TODO(@rachaelcodes): remove this when we have a better route component design
-        # https://technologyprogramme.atlassian.net/browse/REDBOX-419
-        show_route = request.user.is_staff
+        chat_history = (
+            ChatHistory.objects.filter(users=request.user)
+            .exclude(id=chat_id)
+            .annotate(latest_message_date=Max("chatmessage__created_at"))
+            .order_by("-latest_message_date")
+        )
 
         messages: Sequence[ChatMessage] = []
         current_chat = None
@@ -246,18 +248,17 @@ class ChatsView(View):
 
         all_files = File.objects.filter(user=request.user, status=StatusEnum.complete).order_by("-created_at")
         self.decorate_selected_files(all_files, messages)
-        self.decorate_messages_with_date_group(messages)
-        messages_grouped_by_date_group = groupby(messages, attrgetter("date_group"))
+        ChatsView.decorate_history_with_date_group(chat_history)
+        chat_history_grouped_by_date_group = groupby(chat_history, attrgetter("date_group"))
 
         context = {
             "chat_id": chat_id,
-            "messages_grouped_by_date_group": messages_grouped_by_date_group,
-            "chat_history": chat_history,
+            "messages": messages,
+            "chat_history_grouped_by_date_group": chat_history_grouped_by_date_group,
             "current_chat": current_chat,
             "streaming": {"endpoint": str(endpoint)},
             "contact_email": settings.CONTACT_EMAIL,
             "files": all_files,
-            "show_route": show_route,
             "chat_title_length": settings.CHAT_TITLE_LENGTH,
         }
 
@@ -278,9 +279,11 @@ class ChatsView(View):
         for file in all_files:
             file.selected = file in selected_files
 
-    def decorate_messages_with_date_group(self, messages: Sequence[ChatMessage]) -> None:
-        for message in messages:
-            message.date_group = self.get_date_group(message.created_at)
+    @staticmethod
+    def decorate_history_with_date_group(chats: Sequence[ChatHistory]) -> None:
+        for chat in chats:
+            newest_message_date = chat.chatmessage_set.aggregate(newest_date=Max("created_at"))["newest_date"]
+            chat.date_group = ChatsView.get_date_group(newest_message_date)
 
     @staticmethod
     def get_date_group(created_at: datetime) -> str:

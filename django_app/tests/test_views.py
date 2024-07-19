@@ -388,30 +388,31 @@ def test_view_session_with_documents(chat_message: ChatMessage, client: Client):
 
 
 @pytest.mark.django_db()
-def test_chats_grouped_by_age(chat_history_with_messages_over_time: ChatHistory, alice: User, client: Client):
+def test_chat_history_grouped_by_age(user_with_chats_with_messages_over_time: User, client: Client):
     # Given
-    client.force_login(alice)
+    client.force_login(user_with_chats_with_messages_over_time)
 
     # When
-    response = client.get(f"/chats/{chat_history_with_messages_over_time.id}/")
+    response = client.get(reverse("chats"))
 
     # Then
     assert response.status_code == HTTPStatus.OK
     soup = BeautifulSoup(response.content)
-    date_groups = soup.find_all("h3", {"class": "rb-chat-message__date_group"})
-    for date_group, (header, message) in zip(
+    date_groups = soup.find_all("h3", {"class": "rb-chat-history__date_group"})
+    assert len(date_groups) == 5
+    for date_group, (header, chat_name) in zip(
         date_groups,
         [
-            ("Older than 30 days", "40 days old"),
-            ("Previous 30 days", "20 days old"),
-            ("Previous 7 days", "5 days old"),
-            ("Yesterday", "yesterday"),
             ("Today", "today"),
+            ("Yesterday", "yesterday"),
+            ("Previous 7 days", "5 days old"),
+            ("Previous 30 days", "20 days old"),
+            ("Older than 30 days", "40 days old"),
         ],
         strict=False,
     ):
         assert date_group.text == header
-        assert date_group.find_next_sibling("div").find("markdown-converter").text == message
+        assert date_group.find_next_sibling("ul").find("a").text == chat_name
 
 
 @pytest.mark.django_db()

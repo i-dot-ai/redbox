@@ -177,6 +177,29 @@ def chat_history_with_messages_over_time(chat_history: ChatHistory) -> ChatHisto
 
 
 @pytest.fixture()
+def user_with_chats_with_messages_over_time(alice: User) -> User:
+    now = timezone.now()
+    with freeze_time(now - timedelta(days=40)):
+        chats = [
+            ChatHistory.objects.create(id=uuid.uuid4(), users=alice, name="40 days old"),
+            ChatHistory.objects.create(id=uuid.uuid4(), users=alice, name="20 days old"),
+            ChatHistory.objects.create(id=uuid.uuid4(), users=alice, name="5 days old"),
+            ChatHistory.objects.create(id=uuid.uuid4(), users=alice, name="yesterday"),
+            ChatHistory.objects.create(id=uuid.uuid4(), users=alice, name="today"),
+        ]
+        ChatMessage.objects.create(chat_history=chats[0], text="40 days old", role=ChatRoleEnum.user)
+    with freeze_time(now - timedelta(days=20)):
+        ChatMessage.objects.create(chat_history=chats[1], text="20 days old", role=ChatRoleEnum.user)
+    with freeze_time(now - timedelta(days=5)):
+        ChatMessage.objects.create(chat_history=chats[2], text="5 days old", role=ChatRoleEnum.user)
+    with freeze_time(now - timedelta(days=1)):
+        ChatMessage.objects.create(chat_history=chats[3], text="yesterday", role=ChatRoleEnum.user)
+    ChatMessage.objects.create(chat_history=chats[4], text="today", role=ChatRoleEnum.user)
+
+    return alice
+
+
+@pytest.fixture()
 def several_files(alice: User, number_to_create: int = 4) -> Sequence[File]:
     files = []
     for i in range(number_to_create):

@@ -27,7 +27,7 @@
 
 
 
-{% macro message_box(id, role, route, text, source_files, show_route=False, classes=None) %}
+{% macro message_box(id, role, route, text, source_files, classes=None) %}
 
 {% set role_text = role %}
 {% if role == "ai" %}
@@ -41,7 +41,7 @@
   data-role="{{ role }}" tabindex="-1">
   <div class="iai-chat-bubble__header">
     <div class="iai-chat-bubble__role">{% if role == "ai" %}Redbox{% else %}You{% endif %}</div>
-    {% if route and show_route %}
+    {% if route %}
     {{ route_display(route) }}
     {% endif %}
   </div>

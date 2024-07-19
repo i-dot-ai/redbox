@@ -25,15 +25,17 @@
 
       <div class="iai-panel govuk-!-margin-top-6">
         <h2 class="govuk-heading-s">Recent chats</h2>
+
+        {% for date_group, chats in chat_history_grouped_by_date_group %}
+        <h3 class="rb-chat-history__date_group govuk-body govuk-!-font-weight-bold">{{ date_group }}</h3>
         <ul class="govuk-list govuk-list--spaced iai-panel__scrollable">
-          {% for chat in chat_history %}
-            {% if chat != current_chat %}
+          {% for chat in chats %}
             <li class="govuk-!-margin-bottom-2">
               <a class="govuk-link govuk-body-s" href="{{url('chats', chat.id)}}">{{ chat.name }}</a>
             </li>
-            {% endif %}
           {% endfor %}
         </ul>
+        {% endfor %}
       </div>
 
       <document-selector class="iai-panel iai-panel govuk-!-margin-top-6 govuk-!-margin-bottom-9">
@@ -73,17 +75,14 @@
           </template>
 
           {# SSR messages #}
-          {% for date_group, messages in messages_grouped_by_date_group %}
-          <h3 class="rb-chat-message__date_group">{{ date_group }}</h3>
-            {% for message in messages %}
-              {{ message_box(
-                id = message.id,
-                role = message.role,
-                route = message.route,
-                text = message.text,
-                source_files = message.source_files.all(),
-                show_route = show_route
-              ) }}
+          {% for message in messages %}
+            {{ message_box(
+              id = message.id,
+              role = message.role,
+              route = message.route,
+              text = message.text,
+              source_files = message.source_files.all()
+            ) }}
 
             {# If we want to collect feedback on SSR messages
             {% if message.role == 'ai' %}
@@ -91,7 +90,6 @@
             {% endif %}
             #}
 
-          {% endfor %}
           {% endfor %}
 
           {# CSR messages are inserted here #}
