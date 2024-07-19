@@ -209,6 +209,10 @@ body {
 
 .rb-chat-message__container {
   margin-top: -1rem;
+  min-height: calc(100vh - 21.75rem);
+}
+.govuk-main-wrapper:has(.iai-chat-input) {
+  padding-bottom: 0;
 }
 
 .rb-streaming-response-loading {
