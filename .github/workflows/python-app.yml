@@ -80,7 +80,11 @@ jobs:
 
     - name: Test worker with pytest
       run: |
-        make test-worker
+        cp .env.test worker/.env
+        cd worker
+        poetry install
+        poetry run python -m nltk.downloader punkt
+        poetry run pytest --cov=worker -v --cov-report=term-missing --cov-fail-under=80
 
   test-redbox:
 
