@@ -17,8 +17,8 @@ from worker import app as app_module
 @pytest.mark.parametrize(
     "filename, status, expected_chunks",
     [
-        ("Cabinet Office - Wikipedia.pdf", ProcessingStatusEnum.complete, True),
-        ("Cabinet Office - Wikipedia.corrupt.pdf", ProcessingStatusEnum.failed, False),
+        ("example.html", ProcessingStatusEnum.complete, True),
+        ("corrupt.html", ProcessingStatusEnum.failed, False),
     ],
 )
 async def test_ingest_file(
@@ -32,7 +32,7 @@ async def test_ingest_file(
     2. written to Elasticsearch
     """
 
-    pdf = Path(__file__).parents[2] / "tests" / "data" / "pdf" / filename
+    pdf = Path(__file__).parents[2] / "tests" / "data" / "html" / filename
     file_name = pdf.name
     file_type = pdf.suffix
 
