@@ -4,8 +4,10 @@ import os
 
 import boto3
 import pg8000.dbapi
+import requests
 from elasticsearch import Elasticsearch
 from pg8000.native import literal
+from requests.exceptions import RequestException
 
 logger = logging.getLogger()
 logger.setLevel("INFO")
@@ -76,6 +78,21 @@ def delete_files(files):
     return results
 
 
+def post_summary_to_slack(message):
+    try:
+        r = requests.post(
+            os.environ["SLACK_NOTIFICATION_URL"],
+            data=json.dumps({"text": message}),
+            timeout=60,
+            headers={"Content-Type": "application/json"},
+        )
+
+        r.raise_for_status()
+
+    except RequestException:
+        logger.exception("Error trying to communicate with Slack")
+
+
 def lambda_handler(event, context):  # noqa: ARG001 unused args
     try:
         file_expiry_in_seconds = os.environ["FILE_EXPIRY_IN_SECONDS"]
@@ -139,12 +156,26 @@ def lambda_handler(event, context):  # noqa: ARG001 unused args
             connection.close()
             logger.info("Database connection closed.")
 
+            post_summary_to_slack(
+                f"""File deletion summary :put_litter_in_its_place:
+                    :tada: These files were successfully deleted {results["success"]}
+                    :do_not_litter: These files were not able to be deleted {results["failure"]}
+                """
+            )
+
         except pg8000.dbapi.DatabaseError:
             logger.exception("Error connecting to the postgres database")
+            post_summary_to_slack(
+                """File deletion task failed to run :in-progress:
+                """
+            )
 
-        # TODO: log success and errors + communicate (Slack?)  # noqa: TD003, TD002 no author or issue link
+        return {"statusCode": 200, "body": json.dumps("Task has run successfully")}
 
-        return {"statusCode": 200, "body": json.dumps(os.environ["FILE_EXPIRY_IN_SECONDS"])}
     except Exception as exception:
         logger.exception("Exception occurred")
+        post_summary_to_slack(
+            """File deletion task failed to run :in-progress:
+            """
+        )
         return {"message": f"General exception {exception} occurred. Exiting..."}
