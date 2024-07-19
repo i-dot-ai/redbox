@@ -54,6 +54,7 @@ async def test_ingest_file(
         await br.publish(file, list=env.ingest_queue_name)
         for i in range(5):
             await asyncio.sleep(1)
+            storage_handler.refresh()
             file_status = storage_handler.get_file_status(file.uuid, file.creator_user_uuid)
             if file_status.processing_status == status:
                 break
