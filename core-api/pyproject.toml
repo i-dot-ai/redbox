@@ -51,8 +51,8 @@ build-backend = "poetry.core.masonry.api"
 addopts = "--import-mode=importlib"
 env_override_existing_values = 1
 env_files = [
-    ".env.test",
-    ".env"
+    "../.env.test",
+    "../.env"
 ]
 markers = [
     "incremental: marks tests as incremental (deselect with '-m \"not incremental\"')",

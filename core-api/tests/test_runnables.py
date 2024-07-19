@@ -102,9 +102,12 @@ def test_condense_runnable(mock_llm, chunked_file, env):
             user_uuid=chunked_file.creator_user_uuid,
         ).model_dump()
     )
-
     assert response["response"] == "<<TESTING>>"
-    assert {str(chunked_file.uuid)} == {chunk.metadata["parent_file_uuid"] for chunk in response["source_documents"]}
+    assert response["route_name"].startswith("search")
+    all_results_file_uuids = {chunk.metadata["parent_file_uuid"] for chunk in response["source_documents"]}
+    assert {
+        str(chunked_file.uuid)
+    } == all_results_file_uuids, f"Expected {str(chunked_file.uuid)} in {all_results_file_uuids}"
 
 
 def test_summary_runnable_large_file(all_chunks_retriever, mock_llm, large_chunked_file, env):

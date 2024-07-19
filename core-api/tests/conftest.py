@@ -1,19 +1,22 @@
-import time
 from pathlib import Path
 from uuid import UUID, uuid4
+from datetime import UTC, datetime
 
 import pytest
 from botocore.exceptions import ClientError
 from elasticsearch import Elasticsearch
 from fastapi.testclient import TestClient
 from jose import jwt
+from langchain_core.documents.base import Document
+from langchain_elasticsearch.vectorstores import ElasticsearchStore
 from langchain_community.embeddings import SentenceTransformerEmbeddings
 from langchain_community.llms.fake import FakeListLLM
 from langchain_core.embeddings.fake import FakeEmbeddings
 
 from core_api.app import app as application
 from redbox.retriever import AllElasticsearchRetriever
-from redbox.models import Chunk, File, Settings
+from redbox.models import File, Settings
+from redbox.models.file import ChunkMetadata, ChunkResolution
 from redbox.storage import ElasticsearchStorageHandler
 
 
@@ -47,11 +50,23 @@ def es_index(env) -> str:
     return f"{env.elastic_root_index}-chunk"
 
 
-@pytest.fixture(autouse=True)
+@pytest.fixture(scope="session")
+def elasticsearch_store(es_index, es_client, embedding_model, env: Settings) -> str:
+    return ElasticsearchStore(
+        index_name=es_index,
+        embedding=embedding_model,
+        es_connection=es_client,
+        vector_query_field=env.embedding_document_field_name,
+    )
+
+
+@pytest.fixture(autouse=True, scope="session")
 def create_index(env, es_index):
     es: Elasticsearch = env.elasticsearch_client()
     if not es.indices.exists(index=es_index):
         es.indices.create(index=es_index)
+    yield
+    es.indices.delete(index=es_index)
 
 
 @pytest.fixture()
@@ -111,54 +126,90 @@ def embedding_model_dim() -> int:
 
 
 @pytest.fixture()
-def stored_file_chunks(stored_file_1, embedding_model_dim) -> list[Chunk]:
-    chunks: list[Chunk] = []
-    for i in range(5):
-        chunks.append(
-            Chunk(
-                text="hello",
+def stored_file_chunks(stored_file_1) -> list[Document]:
+    normal_chunks = [
+        Document(
+            page_content="hello",
+            metadata=ChunkMetadata(
+                parent_file_uuid=str(stored_file_1.uuid),
                 index=i,
-                embedding=[1] * embedding_model_dim,
-                parent_file_uuid=stored_file_1.uuid,
+                file_name="test_file",
                 creator_user_uuid=stored_file_1.creator_user_uuid,
-                metadata={"parent_doc_uuid": str(stored_file_1.uuid)},
-            )
+                page_number=4,
+                created_datetime=datetime.now(UTC),
+                token_count=4,
+                chunk_resolution=ChunkResolution.normal,
+            ).model_dump(),
         )
-    return chunks
+        for i in range(10)
+    ]
+
+    large_chunks = [
+        Document(
+            page_content="hello" * 10,
+            metadata=ChunkMetadata(
+                parent_file_uuid=str(stored_file_1.uuid),
+                index=i,
+                file_name="test_file",
+                creator_user_uuid=stored_file_1.creator_user_uuid,
+                page_number=4,
+                created_datetime=datetime.now(UTC),
+                token_count=20,
+                chunk_resolution=ChunkResolution.largest,
+            ).model_dump(),
+        )
+        for i in range(2)
+    ]
+    return normal_chunks + large_chunks
 
 
 @pytest.fixture()
-def stored_large_file_chunks(stored_file_1, embedding_model_dim) -> list[Chunk]:
-    chunks: list[Chunk] = []
-    for i in range(5):
-        chunks.append(
-            Chunk(
-                text="hello " * 100,
+def stored_large_file_chunks(stored_file_1) -> list[Document]:
+    normal_chunks = [
+        Document(
+            page_content="hello",
+            metadata=ChunkMetadata(
+                parent_file_uuid=str(stored_file_1.uuid),
                 index=i,
-                embedding=[1] * embedding_model_dim,
-                parent_file_uuid=stored_file_1.uuid,
+                file_name="test_file",
                 creator_user_uuid=stored_file_1.creator_user_uuid,
-                metadata={"parent_doc_uuid": str(stored_file_1.uuid)},
-            )
+                page_number=4,
+                created_datetime=datetime.now(UTC),
+                token_count=4,
+                chunk_resolution=ChunkResolution.normal,
+            ).model_dump(),
         )
-    return chunks
+        for i in range(25)
+    ]
+
+    large_chunks = [
+        Document(
+            page_content="hello" * 10,
+            metadata=ChunkMetadata(
+                parent_file_uuid=str(stored_file_1.uuid),
+                index=i,
+                file_name="test_file",
+                creator_user_uuid=stored_file_1.creator_user_uuid,
+                page_number=4,
+                created_datetime=datetime.now(UTC),
+                token_count=20,
+                chunk_resolution=ChunkResolution.largest,
+            ).model_dump(),
+        )
+        for i in range(5)
+    ]
+    return normal_chunks + large_chunks
 
 
 @pytest.fixture()
-def chunked_file(elasticsearch_storage_handler, stored_file_chunks, stored_file_1) -> File:
-    for chunk in stored_file_chunks:
-        elasticsearch_storage_handler.write_item(chunk)
-    elasticsearch_storage_handler.refresh()
-    time.sleep(1)
+def chunked_file(elasticsearch_store: ElasticsearchStore, stored_file_chunks, stored_file_1) -> File:
+    elasticsearch_store.add_documents(stored_file_chunks)
     return stored_file_1
 
 
 @pytest.fixture()
-def large_chunked_file(elasticsearch_storage_handler, stored_large_file_chunks, stored_file_1) -> File:
-    for chunk in stored_large_file_chunks:
-        elasticsearch_storage_handler.write_item(chunk)
-    elasticsearch_storage_handler.refresh()
-    time.sleep(1)
+def large_chunked_file(elasticsearch_store, stored_large_file_chunks, stored_file_1) -> File:
+    elasticsearch_store.add_documents(stored_large_file_chunks)
     return stored_file_1
 
 

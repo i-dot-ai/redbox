@@ -1,5 +1,6 @@
 from functools import partial, reduce
 from typing import Any
+from logging import getLogger
 
 from langchain_core.documents.base import Document
 from langchain_core.prompts import ChatPromptTemplate
@@ -11,6 +12,8 @@ from redbox.api.format import reduce_chunks_by_tokens
 from redbox.models import ChatResponse
 from redbox.models.errors import QuestionLengthError
 from redbox.transform import map_document_to_source_document
+
+logger = getLogger()
 
 
 def make_chat_prompt_from_messages_runnable(
@@ -90,7 +93,9 @@ def resize_documents(max_tokens: int | None = None) -> Runnable[list[Document], 
 # https://github.com/i-dot-ai/redbox/actions/runs/9944427706/job/27470465428#step:10:7160
 
 
-def filter_by_elbow(enabled: bool = True) -> Runnable[list[Document], list[Document]]:
+def filter_by_elbow(
+    enabled: bool = True, sensitivity: float = 1, score_scaling_factor: float = 100
+) -> Runnable[list[Document], list[Document]]:
     """Filters a list of documents by the elbow point on the curve of their scores.
 
     Args:
@@ -106,16 +111,16 @@ def filter_by_elbow(enabled: bool = True) -> Runnable[list[Document], list[Docum
             if len(docs) == 0:
                 return docs
 
-            # *100 because algorithm performs poorly on changes of ~1.0
+            # *scaling because algorithm performs poorly on changes of ~1.0
             try:
-                scores = [doc.metadata["score"] * 100 for doc in docs]
+                scores = [doc.metadata["score"] * score_scaling_factor for doc in docs]
             except AttributeError as exc:
                 raise exc
 
             rank = range(len(scores))
 
             # Convex curve, decreasing direction as scores descend in a pareto-like fashion
-            kn = KneeLocator(rank, scores, curve="convex", direction="decreasing")
+            kn = KneeLocator(rank, scores, S=sensitivity, curve="convex", direction="decreasing")
             return docs[: kn.elbow]
         else:
             return docs

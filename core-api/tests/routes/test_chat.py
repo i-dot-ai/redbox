@@ -19,6 +19,7 @@ from semantic_router.encoders import TfidfEncoder
 from starlette.websockets import WebSocketDisconnect
 
 from redbox.models.chat import ChatResponse, ChatRoute
+from redbox.models.file import ChunkMetadata
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
@@ -54,10 +55,15 @@ def mock_parameterised_retriever(alice):
     docs = [
         Document(
             page_content="some text that doesn't actually matter " * 10,
-            metadata={
-                "index": i,
-                "parent_file_uuid": UPLOADED_FILE_UUID,
-                "creator_user_uuid": str(alice),
+            metadata=ChunkMetadata(
+                parent_file_uuid=UPLOADED_FILE_UUID,
+                creator_user_uuid=alice,
+                index=i,
+                file_name="test_file",
+                page_number=1,
+                token_count=40,
+            ).model_dump()
+            | {
                 "score": 1 / (1 + exp(-i)),
             },
         )
@@ -69,10 +75,17 @@ def mock_parameterised_retriever(alice):
 def mock_all_chunks_retriever(alice):
     docs = [
         Document(
-            page_content="some text that doesn't actually matter " * 10,
-            metadata={"index": i, "parent_file_uuid": UPLOADED_FILE_UUID, "creator_user_uuid": str(alice)},
+            page_content="some text that doesn't actually matter ",
+            metadata=ChunkMetadata(
+                parent_file_uuid=UPLOADED_FILE_UUID,
+                creator_user_uuid=alice,
+                index=i,
+                file_name="test_file",
+                page_number=1,
+                token_count=10,
+            ).model_dump(),
         )
-        for i in range(12)
+        for i in range(6)
     ]
     return RunnableLambda(lambda _: docs)
 
@@ -144,7 +157,9 @@ def test_rag(mock_client, headers):
     assert response.status_code == 200, response.text
     chat_response = ChatResponse.model_validate(response.json())
     assert chat_response.output_text == RAG_LLM_RESPONSE
-    assert chat_response.route_name == ChatRoute.chat_with_docs_map_reduce
+    assert (
+        chat_response.route_name == ChatRoute.chat_with_docs
+    ), f"Expected route [{ChatRoute.chat_with_docs}] received [{chat_response.route_name}]"
 
 
 def test_summary(mock_client, headers):
@@ -161,7 +176,9 @@ def test_summary(mock_client, headers):
     assert response.status_code == 200
     chat_response = ChatResponse.model_validate(response.json())
     assert chat_response.output_text == RAG_LLM_RESPONSE
-    assert chat_response.route_name == ChatRoute.chat_with_docs_map_reduce
+    assert (
+        chat_response.route_name == ChatRoute.chat_with_docs
+    ), f"Expected route [{ChatRoute.chat_with_docs}] received [{chat_response.route_name}]"
 
 
 def test_keyword(mock_client, headers):
@@ -180,7 +197,9 @@ def test_keyword(mock_client, headers):
     assert response.status_code == 200
     chat_response = ChatResponse.model_validate(response.json())
     assert chat_response.output_text == RAG_LLM_RESPONSE
-    assert chat_response.route_name == ChatRoute.search
+    assert (
+        chat_response.route_name == ChatRoute.search
+    ), f"Expected route [{ChatRoute.search}] received [{chat_response.route_name}]"
 
 
 def test_rag_chat_streamed(mock_client, headers):
@@ -211,4 +230,4 @@ def test_rag_chat_streamed(mock_client, headers):
         # Then
         text = "".join(all_text)
         assert text == RAG_LLM_RESPONSE
-        assert route_name == ChatRoute.chat_with_docs_map_reduce
+        assert route_name == ChatRoute.chat_with_docs

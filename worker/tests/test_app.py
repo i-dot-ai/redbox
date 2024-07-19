@@ -1,9 +1,11 @@
 from pathlib import Path
 from uuid import uuid4
+import asyncio
 
 import pytest
 from faststream.redis import TestApp, TestRedisBroker
 from langchain_core.embeddings.fake import FakeEmbeddings
+from elasticsearch.helpers import scan
 
 from redbox.models.file import File, ProcessingStatusEnum
 from redbox.storage import ElasticsearchStorageHandler
@@ -13,13 +15,15 @@ from worker import app as app_module
 
 @pytest.mark.asyncio()
 @pytest.mark.parametrize(
-    "filename, status",
+    "filename, status, expected_chunks",
     [
-        ("Cabinet Office - Wikipedia.pdf", ProcessingStatusEnum.complete),
-        ("Cabinet Office - Wikipedia.corrupt.pdf", ProcessingStatusEnum.failed),
+        ("Cabinet Office - Wikipedia.pdf", ProcessingStatusEnum.complete, True),
+        ("Cabinet Office - Wikipedia.corrupt.pdf", ProcessingStatusEnum.failed, False),
     ],
 )
-async def test_ingest_file(es_client, s3_client, monkeypatch, filename: str, status: ProcessingStatusEnum):
+async def test_ingest_file(
+    es_client, s3_client, monkeypatch, filename: str, status: ProcessingStatusEnum, expected_chunks: bool
+):
     """
     Given that I have written a text File to s3
     When I call ingest_file
@@ -49,11 +53,37 @@ async def test_ingest_file(es_client, s3_client, monkeypatch, filename: str, sta
     monkeypatch.setattr(app_module, "get_embeddings", lambda _: FakeEmbeddings(size=3072))
     async with TestRedisBroker(broker) as br, TestApp(app):
         await br.publish(file, list=env.ingest_queue_name)
-        storage_handler.refresh()
+        for i in range(5):
+            await asyncio.sleep(1)
+            file_status = storage_handler.get_file_status(file.uuid, file.creator_user_uuid)
+            if file_status.processing_status == status:
+                break
+        else:
+            raise Exception(f"File never went to expected status. Final Status {file_status.processing_status}")
 
-        if status == ProcessingStatusEnum.complete:
-            chunks = storage_handler.get_file_chunks(file.uuid, file.creator_user_uuid)
+        if expected_chunks:
+            chunks = list(
+                scan(
+                    client=es_client,
+                    index=f"{env.elastic_root_index}-chunk",
+                    query={
+                        "query": {
+                            "bool": {
+                                "must": [
+                                    {
+                                        "term": {
+                                            "metadata.parent_file_uuid.keyword": str(file.uuid),
+                                        }
+                                    },
+                                    {
+                                        "term": {
+                                            "metadata.creator_user_uuid.keyword": str(file.creator_user_uuid),
+                                        }
+                                    },
+                                ]
+                            }
+                        }
+                    },
+                )
+            )
             assert len(chunks) > 0
-        storage_handler.refresh()
-        file_status = storage_handler.get_file_status(file.uuid, file.creator_user_uuid)
-        assert file_status.processing_status == status, file_status.processing_status

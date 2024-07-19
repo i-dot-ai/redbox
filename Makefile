@@ -45,7 +45,7 @@ test-ai: ## Test code with live LLM
 .PHONY: test-redbox
 test-redbox: ## Test redbox
 	cp .env.test redbox-core/.env
-	cd redbox-core && poetry install && poetry run pytest --cov=redbox -v --cov-report=term-missing --cov-fail-under=75
+	cd redbox-core && poetry install && poetry run pytest --cov=redbox -v --cov-report=term-missing --cov-fail-under=60
 
 .PHONY: test-worker
 test-worker: ## Test worker

@@ -16,7 +16,12 @@
                 "--workers", "1"
             ],
             "jinja": true,
-            "envFile": "${workspaceFolder}/../.env"
+            "envFile": "${workspaceFolder}/../.env",
+            "env": {
+                "ELASTIC__HOST": "localhost",
+                "REDIS_HOST": "localhost",
+                "MINIO_HOST": "localhost"
+            }
         }
     ]
 }
