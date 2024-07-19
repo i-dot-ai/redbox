@@ -47,10 +47,7 @@ def get_elasticsearch_store(es: Elasticsearch, es_index_name: str):
 
 def get_elasticsearch_store_without_embeddings(es: Elasticsearch, es_index_name: str):
     return ElasticsearchStore(
-        index_name=es_index_name, 
-        es_connection=es, 
-        query_field="text", 
-        strategy=BM25RetrievalStrategy()
+        index_name=es_index_name, es_connection=es, query_field="text", strategy=BM25RetrievalStrategy()
     )
 
 
