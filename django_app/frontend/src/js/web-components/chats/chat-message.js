@@ -41,6 +41,9 @@ class ChatMessage extends HTMLElement {
             <feedback-buttons></feedback-buttons>
         `;
 
+    // ensure new chat-messages aren't hidden behind the chat-input
+    this.scrollIntoView({ block: "end" });
+
     // Insert route_display HTML
     const routeTemplate = /** @type {HTMLTemplateElement} */ (
       document.querySelector("#template-route-display")
@@ -171,6 +174,9 @@ class ChatMessage extends HTMLElement {
         this.querySelector(".govuk-notification-banner__heading").innerHTML =
           response.data;
       }
+
+      // ensure new content isn't hidden behind the chat-input
+      this.scrollIntoView({ block: "end" });
     };
   };
 }
