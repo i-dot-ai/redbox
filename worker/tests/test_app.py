@@ -5,11 +5,10 @@ import asyncio
 import pytest
 from faststream.redis import TestApp, TestRedisBroker
 from langchain_core.embeddings.fake import FakeEmbeddings
-from elasticsearch.helpers import scan
 
 from redbox.models.file import File, ProcessingStatusEnum
 from redbox.storage import ElasticsearchStorageHandler
-from worker.app import app, broker, env
+from worker.app import app, broker
 from worker import app as app_module
 
 
@@ -22,7 +21,7 @@ from worker import app as app_module
     ],
 )
 async def test_ingest_file(
-    es_client, s3_client, monkeypatch, filename: str, status: ProcessingStatusEnum, expected_chunks: bool
+    es_client, s3_client, env, monkeypatch, filename: str, status: ProcessingStatusEnum, expected_chunks: bool
 ):
     """
     Given that I have written a text File to s3
@@ -62,28 +61,5 @@ async def test_ingest_file(
             raise Exception(f"File never went to expected status. Final Status {file_status.processing_status}")
 
         if expected_chunks:
-            chunks = list(
-                scan(
-                    client=es_client,
-                    index=f"{env.elastic_root_index}-chunk",
-                    query={
-                        "query": {
-                            "bool": {
-                                "must": [
-                                    {
-                                        "term": {
-                                            "metadata.parent_file_uuid.keyword": str(file.uuid),
-                                        }
-                                    },
-                                    {
-                                        "term": {
-                                            "metadata.creator_user_uuid.keyword": str(file.creator_user_uuid),
-                                        }
-                                    },
-                                ]
-                            }
-                        }
-                    },
-                )
-            )
+            chunks = storage_handler.get_file_chunks(file.uuid, file.creator_user_uuid)
             assert len(chunks) > 0
