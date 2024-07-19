@@ -1,6 +1,7 @@
 from typing import TYPE_CHECKING
 import logging
 from io import BytesIO
+from functools import partial
 
 from langchain.vectorstores import VectorStore
 from langchain_core.documents.base import Document
@@ -44,5 +45,5 @@ def ingest_from_loader(
         document_loader(document_loader_type=document_loader_type, s3_client=s3_client, env=env)
         | RunnableLambda(list)
         | log_chunks
-        | RunnableLambda(vectorstore.aadd_documents)  # type: ignore[arg-type]
+        | RunnableLambda(partial(vectorstore.aadd_documents, create_index_if_not_exists=False))  # type: ignore[arg-type]
     )
