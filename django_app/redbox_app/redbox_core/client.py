@@ -8,9 +8,10 @@ import requests
 from botocore.exceptions import ClientError
 from dataclasses_json import Undefined, dataclass_json
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from yarl import URL
 
-from redbox_app.redbox_core.models import User
+User = get_user_model()
 
 logger = logging.getLogger(__name__)
 
@@ -34,7 +35,9 @@ def s3_client():
     try:
         client.create_bucket(
             Bucket=settings.BUCKET_NAME,
-            CreateBucketConfiguration={"LocationConstraint": settings.AWS_S3_REGION_NAME},
+            CreateBucketConfiguration={
+                "LocationConstraint": settings.AWS_S3_REGION_NAME
+            },
         )
     except ClientError as e:
         if e.response["Error"]["Code"] != "BucketAlreadyOwnedByYou":
@@ -60,7 +63,14 @@ class CoreChatResponse:
 @dataclass(frozen=True)
 class FileStatus:
     processing_status: Literal[
-        "uploaded", "parsing", "chunking", "embedding", "indexing", "complete", "unknown", "errored"
+        "uploaded",
+        "parsing",
+        "chunking",
+        "embedding",
+        "indexing",
+        "complete",
+        "unknown",
+        "errored",
     ]
 
 
@@ -83,13 +93,19 @@ class CoreApiClient:
 
     def upload_file(self, name: str, user: User) -> FileOperation:
         response = requests.post(
-            self.url / "file", json={"key": name}, headers={"Authorization": user.get_bearer_token()}, timeout=30
+            self.url / "file",
+            json={"key": name},
+            headers={"Authorization": user.get_bearer_token()},
+            timeout=30,
         )
         response.raise_for_status()
         return FileOperation.schema().loads(response.content)
 
     def rag_chat(
-        self, message_history: list[dict[str, str]], selected_files: list[dict[str, str]], user: User
+        self,
+        message_history: list[dict[str, str]],
+        selected_files: list[dict[str, str]],
+        user: User,
     ) -> CoreChatResponse:
         response = requests.post(
             self.url / "chat/rag",
@@ -105,12 +121,16 @@ class CoreApiClient:
 
     def get_file_status(self, file_id: UUID, user: User) -> FileStatus:
         url = self.url / "file" / str(file_id) / "status"
-        response = requests.get(url, headers={"Authorization": user.get_bearer_token()}, timeout=60)
+        response = requests.get(
+            url, headers={"Authorization": user.get_bearer_token()}, timeout=60
+        )
         response.raise_for_status()
         return FileStatus.schema().loads(response.content)
 
     def delete_file(self, file_id: UUID, user: User) -> FileOperation:
         url = self.url / "file" / str(file_id)
-        response = requests.delete(url, headers={"Authorization": user.get_bearer_token()}, timeout=60)
+        response = requests.delete(
+            url, headers={"Authorization": user.get_bearer_token()}, timeout=60
+        )
         response.raise_for_status()
         return FileOperation.schema().loads(response.content)

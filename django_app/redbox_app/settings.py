@@ -72,8 +72,11 @@ INSTALLED_APPS = [
     "import_export",
 ]
 
+AUTH_USER_MODEL = "redbox_core.User"
+
 if LOGIN_METHOD == "sso":
     INSTALLED_APPS.append("authbroker_client")
+    AUTH_USER_MODEL = "redbox_core.SSOUser"
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",

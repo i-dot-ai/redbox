@@ -2,8 +2,9 @@ from collections.abc import Mapping
 from typing import ClassVar
 
 from django import forms
+from django.contrib.auth import get_user_model
 
-from redbox_app.redbox_core.models import User
+User = get_user_model()
 
 
 class SignInForm(forms.Form):
