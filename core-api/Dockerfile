@@ -9,7 +9,7 @@ ADD README.md /app/README.md
 
 WORKDIR /app/core-api
 
-RUN pip install poetry
+RUN pip install poetry --without dev
 RUN poetry install
 
 # Run FastAPI

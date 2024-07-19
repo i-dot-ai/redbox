@@ -203,17 +203,17 @@ lxml = ["lxml"]
 
 [[package]]
 name = "boto3"
-version = "1.34.144"
+version = "1.34.145"
 description = "The AWS SDK for Python"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "boto3-1.34.144-py3-none-any.whl", hash = "sha256:b8433d481d50b68a0162c0379c0dd4aabfc3d1ad901800beb5b87815997511c1"},
-    {file = "boto3-1.34.144.tar.gz", hash = "sha256:2f3e88b10b8fcc5f6100a9d74cd28230edc9d4fa226d99dd40a3ab38ac213673"},
+    {file = "boto3-1.34.145-py3-none-any.whl", hash = "sha256:69d5afb7a017d07dd6bdfb680d2912d5d369b3fafa0a45161207d9f393b14d7e"},
+    {file = "boto3-1.34.145.tar.gz", hash = "sha256:ac770fb53dde1743aec56bd8e56b7ee2e2f5ad42a37825968ec4ff8428822640"},
 ]
 
 [package.dependencies]
-botocore = ">=1.34.144,<1.35.0"
+botocore = ">=1.34.145,<1.35.0"
 jmespath = ">=0.7.1,<2.0.0"
 s3transfer = ">=0.10.0,<0.11.0"
 
@@ -222,13 +222,13 @@ crt = ["botocore[crt] (>=1.21.0,<2.0a0)"]
 
 [[package]]
 name = "boto3-stubs"
-version = "1.34.144"
-description = "Type annotations for boto3 1.34.144 generated with mypy-boto3-builder 7.25.0"
+version = "1.34.145"
+description = "Type annotations for boto3 1.34.145 generated with mypy-boto3-builder 7.25.0"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "boto3_stubs-1.34.144-py3-none-any.whl", hash = "sha256:4fc2f8d41ee7fb4952dc8d6a27bb616e7c0c5f9b71f3ad6d179f27df1bb69b0c"},
-    {file = "boto3_stubs-1.34.144.tar.gz", hash = "sha256:c19d0c4386ec160e6c06567b960b6f7c765acc4ed40f01f371c8e7a0b514520b"},
+    {file = "boto3_stubs-1.34.145-py3-none-any.whl", hash = "sha256:1303deb7d749a2c9bd5a30830e1d537c1474b70c5f429e3db9af5d3eaa7b9696"},
+    {file = "boto3_stubs-1.34.145.tar.gz", hash = "sha256:2d15ccfc44407baae897d3a531f9eb0826e207d70e92f5268e8703139bec2dba"},
 ]
 
 [package.dependencies]
@@ -285,7 +285,7 @@ bedrock-agent = ["mypy-boto3-bedrock-agent (>=1.34.0,<1.35.0)"]
 bedrock-agent-runtime = ["mypy-boto3-bedrock-agent-runtime (>=1.34.0,<1.35.0)"]
 bedrock-runtime = ["mypy-boto3-bedrock-runtime (>=1.34.0,<1.35.0)"]
 billingconductor = ["mypy-boto3-billingconductor (>=1.34.0,<1.35.0)"]
-boto3 = ["boto3 (==1.34.144)", "botocore (==1.34.144)"]
+boto3 = ["boto3 (==1.34.145)", "botocore (==1.34.145)"]
 braket = ["mypy-boto3-braket (>=1.34.0,<1.35.0)"]
 budgets = ["mypy-boto3-budgets (>=1.34.0,<1.35.0)"]
 ce = ["mypy-boto3-ce (>=1.34.0,<1.35.0)"]
@@ -635,13 +635,13 @@ xray = ["mypy-boto3-xray (>=1.34.0,<1.35.0)"]
 
 [[package]]
 name = "botocore"
-version = "1.34.144"
+version = "1.34.145"
 description = "Low-level, data-driven core of boto 3."
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "botocore-1.34.144-py3-none-any.whl", hash = "sha256:a2cf26e1bf10d5917a2285e50257bc44e94a1d16574f282f3274f7a5d8d1f08b"},
-    {file = "botocore-1.34.144.tar.gz", hash = "sha256:4215db28d25309d59c99507f1f77df9089e5bebbad35f6e19c7c44ec5383a3e8"},
+    {file = "botocore-1.34.145-py3-none-any.whl", hash = "sha256:2e72e262de02adcb0264ac2bac159a28f55dbba8d9e52aa0308773a42950dff5"},
+    {file = "botocore-1.34.145.tar.gz", hash = "sha256:edf0fb4c02186ae29b76263ac5fda18b0a085d334a310551c9984407cf1079e6"},
 ]
 
 [package.dependencies]
@@ -654,13 +654,13 @@ crt = ["awscrt (==0.20.11)"]
 
 [[package]]
 name = "botocore-stubs"
-version = "1.34.144"
+version = "1.34.145"
 description = "Type annotations and code completion for botocore"
 optional = false
 python-versions = "<4.0,>=3.8"
 files = [
-    {file = "botocore_stubs-1.34.144-py3-none-any.whl", hash = "sha256:eded7afc301a08b5355ab8843c9d9bdea7dc43ece3e9628f186897dae7a56ceb"},
-    {file = "botocore_stubs-1.34.144.tar.gz", hash = "sha256:3eb325b4b186e8d8e49d485cfe383f478ab8c07e0f4690e5ee9bcb6faceec4af"},
+    {file = "botocore_stubs-1.34.145-py3-none-any.whl", hash = "sha256:4c579734492713c142773c7405cf62b466dfaf5f05371b7510d3cd308b0ba6a5"},
+    {file = "botocore_stubs-1.34.145.tar.gz", hash = "sha256:69bcfc0c81eee294e681dc8049b7ca2a47a8f0510b88c05710f07dba6d0785c7"},
 ]
 
 [package.dependencies]
@@ -1809,13 +1809,13 @@ socks = ["socksio (==1.*)"]
 
 [[package]]
 name = "huggingface-hub"
-version = "0.23.5"
+version = "0.24.0"
 description = "Client library to download and publish models, datasets and other repos on the huggingface.co hub"
 optional = false
 python-versions = ">=3.8.0"
 files = [
-    {file = "huggingface_hub-0.23.5-py3-none-any.whl", hash = "sha256:d7a7d337615e11a45cc14a0ce5a605db6b038dc24af42866f731684825226e90"},
-    {file = "huggingface_hub-0.23.5.tar.gz", hash = "sha256:67a9caba79b71235be3752852ca27da86bd54311d2424ca8afdb8dda056edf98"},
+    {file = "huggingface_hub-0.24.0-py3-none-any.whl", hash = "sha256:7ad92edefb93d8145c061f6df8d99df2ff85f8379ba5fac8a95aca0642afa5d7"},
+    {file = "huggingface_hub-0.24.0.tar.gz", hash = "sha256:6c7092736b577d89d57b3cdfea026f1b0dc2234ae783fa0d59caf1bf7d52dfa7"},
 ]
 
 [package.dependencies]
@@ -1828,17 +1828,17 @@ tqdm = ">=4.42.1"
 typing-extensions = ">=3.7.4.3"
 
 [package.extras]
-all = ["InquirerPy (==0.3.4)", "Jinja2", "Pillow", "aiohttp", "fastapi", "gradio", "jedi", "minijinja (>=1.0)", "mypy (==1.5.1)", "numpy", "pytest", "pytest-asyncio", "pytest-cov", "pytest-env", "pytest-rerunfailures", "pytest-vcr", "pytest-xdist", "ruff (>=0.3.0)", "soundfile", "types-PyYAML", "types-requests", "types-simplejson", "types-toml", "types-tqdm", "types-urllib3", "typing-extensions (>=4.8.0)", "urllib3 (<2.0)"]
+all = ["InquirerPy (==0.3.4)", "Jinja2", "Pillow", "aiohttp", "fastapi", "gradio", "jedi", "minijinja (>=1.0)", "mypy (==1.5.1)", "numpy", "pytest (>=8.1.1,<8.2.2)", "pytest-asyncio", "pytest-cov", "pytest-env", "pytest-mock", "pytest-rerunfailures", "pytest-vcr", "pytest-xdist", "ruff (>=0.5.0)", "soundfile", "types-PyYAML", "types-requests", "types-simplejson", "types-toml", "types-tqdm", "types-urllib3", "typing-extensions (>=4.8.0)", "urllib3 (<2.0)"]
 cli = ["InquirerPy (==0.3.4)"]
-dev = ["InquirerPy (==0.3.4)", "Jinja2", "Pillow", "aiohttp", "fastapi", "gradio", "jedi", "minijinja (>=1.0)", "mypy (==1.5.1)", "numpy", "pytest", "pytest-asyncio", "pytest-cov", "pytest-env", "pytest-rerunfailures", "pytest-vcr", "pytest-xdist", "ruff (>=0.3.0)", "soundfile", "types-PyYAML", "types-requests", "types-simplejson", "types-toml", "types-tqdm", "types-urllib3", "typing-extensions (>=4.8.0)", "urllib3 (<2.0)"]
+dev = ["InquirerPy (==0.3.4)", "Jinja2", "Pillow", "aiohttp", "fastapi", "gradio", "jedi", "minijinja (>=1.0)", "mypy (==1.5.1)", "numpy", "pytest (>=8.1.1,<8.2.2)", "pytest-asyncio", "pytest-cov", "pytest-env", "pytest-mock", "pytest-rerunfailures", "pytest-vcr", "pytest-xdist", "ruff (>=0.5.0)", "soundfile", "types-PyYAML", "types-requests", "types-simplejson", "types-toml", "types-tqdm", "types-urllib3", "typing-extensions (>=4.8.0)", "urllib3 (<2.0)"]
 fastai = ["fastai (>=2.4)", "fastcore (>=1.3.27)", "toml"]
 hf-transfer = ["hf-transfer (>=0.1.4)"]
 inference = ["aiohttp", "minijinja (>=1.0)"]
-quality = ["mypy (==1.5.1)", "ruff (>=0.3.0)"]
+quality = ["mypy (==1.5.1)", "ruff (>=0.5.0)"]
 tensorflow = ["graphviz", "pydot", "tensorflow"]
 tensorflow-testing = ["keras (<3.0)", "tensorflow"]
-testing = ["InquirerPy (==0.3.4)", "Jinja2", "Pillow", "aiohttp", "fastapi", "gradio", "jedi", "minijinja (>=1.0)", "numpy", "pytest", "pytest-asyncio", "pytest-cov", "pytest-env", "pytest-rerunfailures", "pytest-vcr", "pytest-xdist", "soundfile", "urllib3 (<2.0)"]
-torch = ["safetensors", "torch"]
+testing = ["InquirerPy (==0.3.4)", "Jinja2", "Pillow", "aiohttp", "fastapi", "gradio", "jedi", "minijinja (>=1.0)", "numpy", "pytest (>=8.1.1,<8.2.2)", "pytest-asyncio", "pytest-cov", "pytest-env", "pytest-mock", "pytest-rerunfailures", "pytest-vcr", "pytest-xdist", "soundfile", "urllib3 (<2.0)"]
+torch = ["safetensors[torch]", "torch"]
 typing = ["types-PyYAML", "types-requests", "types-simplejson", "types-toml", "types-tqdm", "types-urllib3", "typing-extensions (>=4.8.0)"]
 
 [[package]]
@@ -2208,13 +2208,13 @@ six = "*"
 
 [[package]]
 name = "langsmith"
-version = "0.1.90"
+version = "0.1.92"
 description = "Client library to connect to the LangSmith LLM Tracing and Evaluation Platform."
 optional = false
 python-versions = "<4.0,>=3.8.1"
 files = [
-    {file = "langsmith-0.1.90-py3-none-any.whl", hash = "sha256:40b43d908ae0ff061a7ef6f4e7eabf2624db54359210b6bc784ddfa32484e524"},
-    {file = "langsmith-0.1.90.tar.gz", hash = "sha256:f7032acf3736a3db52698126b60da0d909aba20b20ad8a70b678e64bf878c17d"},
+    {file = "langsmith-0.1.92-py3-none-any.whl", hash = "sha256:8acb27844ff5263bde14b23425f83ee63996f4d5a8e9998cdeef07fd913137ff"},
+    {file = "langsmith-0.1.92.tar.gz", hash = "sha256:681a613a4dc8c8e57c8961c347a39ffcb64d6c697e8ddde1fd8458fcfaef6c13"},
 ]
 
 [package.dependencies]
@@ -2785,13 +2785,13 @@ files = [
 
 [[package]]
 name = "mypy-boto3-ec2"
-version = "1.34.143"
-description = "Type annotations for boto3.EC2 1.34.143 service generated with mypy-boto3-builder 7.25.0"
+version = "1.34.145"
+description = "Type annotations for boto3.EC2 1.34.145 service generated with mypy-boto3-builder 7.25.0"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "mypy_boto3_ec2-1.34.143-py3-none-any.whl", hash = "sha256:3953ba88c08e633a2c671a9d442ddbb4bdcbb05f9aa179aeef42ae2376999a20"},
-    {file = "mypy_boto3_ec2-1.34.143.tar.gz", hash = "sha256:79e5e929947e81f45e711a4059aacfbda0418027d407b3b3c917ac3f163ea9f2"},
+    {file = "mypy_boto3_ec2-1.34.145-py3-none-any.whl", hash = "sha256:d6a200a341e65b584cc9af9861e8a331dc85d19a5316d9d0637d192824ec9375"},
+    {file = "mypy_boto3_ec2-1.34.145.tar.gz", hash = "sha256:f676e9382ca2ad1e419804a2759779018d7f0006ac86bd602479855073fafc79"},
 ]
 
 [[package]]
@@ -2807,13 +2807,13 @@ files = [
 
 [[package]]
 name = "mypy-boto3-rds"
-version = "1.34.135"
-description = "Type annotations for boto3.RDS 1.34.135 service generated with mypy-boto3-builder 7.24.0"
+version = "1.34.145"
+description = "Type annotations for boto3.RDS 1.34.145 service generated with mypy-boto3-builder 7.25.0"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "mypy_boto3_rds-1.34.135-py3-none-any.whl", hash = "sha256:ce4872ee69cd10b895e11945b6c3255493b642e0410e48a2cfc6afe689cf6209"},
-    {file = "mypy_boto3_rds-1.34.135.tar.gz", hash = "sha256:66b50037073434eb894b00f1597ba39f1e86789717ff9676c5a099f31bc39c9a"},
+    {file = "mypy_boto3_rds-1.34.145-py3-none-any.whl", hash = "sha256:2c28c05b4269c7dcd2ee0c3350784ad02a4c1764728b3335dd56bdbdd6ebd2f6"},
+    {file = "mypy_boto3_rds-1.34.145.tar.gz", hash = "sha256:091a3605d4c2b010be2e61b306f7c877019344b3949b0bfceaee2db2a57bcc8c"},
 ]
 
 [[package]]
@@ -3204,13 +3204,13 @@ sympy = "*"
 
 [[package]]
 name = "openai"
-version = "1.35.14"
+version = "1.35.15"
 description = "The official Python library for the openai API"
 optional = false
 python-versions = ">=3.7.1"
 files = [
-    {file = "openai-1.35.14-py3-none-any.whl", hash = "sha256:adadf8c176e0b8c47ad782ed45dc20ef46438ee1f02c7103c4155cff79c8f68b"},
-    {file = "openai-1.35.14.tar.gz", hash = "sha256:394ba1dfd12ecec1d634c50e512d24ff1858bbc2674ffcce309b822785a058de"},
+    {file = "openai-1.35.15-py3-none-any.whl", hash = "sha256:1b9a6ada4239b91f38f51c426c6ee2746a2069c92cbf25ed8694e5ec00ff4597"},
+    {file = "openai-1.35.15.tar.gz", hash = "sha256:307007e2036d57115612c1ecb50e9bc98fcc93537109a9f9efa1b4eedb2ea968"},
 ]
 
 [package.dependencies]
@@ -4513,7 +4513,6 @@ langchain_openai = "^0.1.9"
 pydantic = "^2.7.1"
 pydantic-settings = "^2.3.4"
 tiktoken = "^0.7.0"
-torch = "2.2.2"
 
 [package.source]
 type = "directory"
@@ -5137,13 +5136,13 @@ sqlcipher = ["sqlcipher3_binary"]
 
 [[package]]
 name = "sympy"
-version = "1.13.0"
+version = "1.13.1"
 description = "Computer algebra system (CAS) in Python"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "sympy-1.13.0-py3-none-any.whl", hash = "sha256:6b0b32a4673fb91bd3cac3b55406c8e01d53ae22780be467301cc452f6680c92"},
-    {file = "sympy-1.13.0.tar.gz", hash = "sha256:3b6af8f4d008b9a1a6a4268b335b984b23835f26d1d60b0526ebc71d48a25f57"},
+    {file = "sympy-1.13.1-py3-none-any.whl", hash = "sha256:db36cdc64bf61b9b24578b6f7bab1ecdd2452cf008f34faa33776680c26d66f8"},
+    {file = "sympy-1.13.1.tar.gz", hash = "sha256:9cebf7e04ff162015ce31c9c6c9144daa34a93bd082f54fd8f12deca4f47515f"},
 ]
 
 [package.dependencies]
@@ -6079,4 +6078,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.12,<3.13"
-content-hash = "841955f711d1c43c3866c5abc60b65ef4d0848f675d2e6800a549034bc1e8cee"
+content-hash = "a3c3f2c3e3d7b6ef80b95a996e04c78f80617ff2ce87d8f1aeebc0121e6a52ec"
