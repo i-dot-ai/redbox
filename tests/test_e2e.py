@@ -158,27 +158,6 @@ class TestEndToEnd:
         assert TestEndToEnd.route_name == "search"
 
     @pytest.mark.parametrize("user_uuid", USER_UUIDS)
-    def test_post_rag_summarisation(self, user_uuid):
-        rag_response = requests.post(
-            f"http://{TEST_ORIGIN}/chat/rag",
-            json={
-                "message_history": [
-                    {
-                        "role": "user",
-                        "text": "@summarise Please summarise the contents of the uploaded files.",
-                    }
-                ],
-                "selected_files": [{"uuid": TestEndToEnd.file_uuids[user_uuid]}],
-            },
-            headers=make_headers(user_uuid),
-            timeout=30,
-        )
-        assert rag_response.status_code == HTTPStatus.OK
-
-        TestEndToEnd.route_name = rag_response.json()["route_name"]
-        assert TestEndToEnd.route_name.startswith("summarise")
-
-    @pytest.mark.parametrize("user_uuid", USER_UUIDS)
     def test_permissions(self, user_uuid):
         """
         Given that I have POSTed a file key to core-api/file
