@@ -64,6 +64,7 @@ redbox/
 │  └── Dockerfile
 ├── worker
 │  ├── src/
+│  │  ├── loader/
 │  │  └── app.py
 │  ├── tests/
 │  ├── pyproject.toml
@@ -76,7 +77,6 @@ redbox/
 │  └── Dockerfile
 ├── redbox-core/
 │  ├── redbox
-│  │  ├── loader/
 │  │  ├── models/
 │  │  └── storage/
 │  ├── tests/
