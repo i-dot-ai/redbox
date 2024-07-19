@@ -149,7 +149,7 @@ class FileStatus(BaseModel):
 
     file_uuid: UUID
     processing_status: ProcessingStatusEnum
-    chunk_statuses: None = Field(None, description="deprecated, see processing_status")
+    chunk_statuses: None = Field(default=None, description="deprecated, see processing_status")
 
 
 class ChunkResolution(StrEnum):
