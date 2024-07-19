@@ -299,9 +299,6 @@ def get_file_status(file_uuid: UUID, user_uuid: Annotated[UUID, Depends(get_user
     if file.ingest_status is not None:
         return FileStatus(
             file_uuid=file_uuid,
-            # We need to break the link between file status and a specific set of chunks
-            # to enable future work with many chunks or other indices etc
-            chunk_statuses=[],
             processing_status=file.ingest_status,
         )
     else:
