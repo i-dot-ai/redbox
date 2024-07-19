@@ -95,56 +95,28 @@
 
         </div>
 
-        <div>
+        <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}"/>
+        {% if chat_id %}<input type="hidden" name="session-id" value="{{ chat_id }}"/>{% endif %}
 
-          <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}"/>
-          {% if chat_id %}<input type="hidden" name="session-id" value="{{ chat_id }}"/>{% endif %}
-
-          {#
-          <div class="rb-new-message">
-
-            <div class="govuk-form-group">
-              <label class="govuk-label" for="message">
-                Write a message
+        <div class="iai-chat-input">
+          <div class="iai-chat-input__container">
+            <div class="iai-chat-input__input-container">
+              <label class="iai-chat-input__label govuk-label" for="message">
+                Message Redbox
               </label>
               <message-input>
-                <textarea class="govuk-textarea js-user-text" id="message" name="message" rows="5" required></textarea>
+                <textarea class="iai-chat-input__input js-user-text" id="message" name="message" rows="1" required></textarea>
               </message-input>
             </div>
-
-            <button type="submit" class="govuk-button" data-module="govuk-button">
-              Send
-            </button>
-
-          </div>
-          #}
-
-          <div class="iai-chat-input">
-            <div class="iai-chat-input__container">
-              <div class="iai-chat-input__input-container">
-                <label class="iai-chat-input__label govuk-label" for="message">
-                  Message Redbox
-                </label>
-                <message-input>
-                  <textarea class="iai-chat-input__input js-user-text" id="message" name="message" rows="1" required></textarea>
-                </message-input>
-              </div>
-              <div>
-                <button class="iai-chat-input__button iai-icon-button" type="submit">
-                  <svg width="32" height="32" viewBox="32 16 29 29" fill="none"><g filter="url(#A)"><use xlink:href="#C" fill="#edeef2"/></g><g filter="url(#B)"><use xlink:href="#C" fill="#fff"/></g><path d="M47.331 36.205v-8.438l3.89 3.89.972-1.007-5.556-5.556-5.556 5.556.972.972 3.889-3.854v8.438h1.389z" fill="currentColor"/><defs><filter x="17" y="1" width="65" height="65" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB"><feFlood flood-opacity="0" result="A"/><feColorMatrix in="SourceAlpha" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0"/><feOffset dx="3" dy="3"/><feGaussianBlur stdDeviation="10"/><feColorMatrix values="0 0 0 0 0.141176 0 0 0 0 0.254902 0 0 0 0 0.364706 0 0 0 0.302 0"/><feBlend in2="A"/><feBlend in="SourceGraphic"/></filter><filter id="B" x="0" y="-16" width="85" height="85" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB"><feFlood flood-opacity="0" result="A"/><feColorMatrix in="SourceAlpha" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0"/><feOffset dx="-4" dy="-4"/><feGaussianBlur stdDeviation="15"/><feColorMatrix values="0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 1 0"/><feBlend in2="A"/><feBlend in="SourceGraphic"/></filter><path id="C" d="M59 30.5C59 23.596 53.404 18 46.5 18S34 23.596 34 30.5 39.596 43 46.5 43 59 37.404 59 30.5z"/></defs></svg>
-                  Send
-                </button>
-              </div>
+            <div>
+              <button class="iai-chat-input__button iai-icon-button" type="submit">
+                <svg width="32" height="32" viewBox="32 16 29 29" fill="none" focusable="false" aria-hidden="true"><g filter="url(#A)"><use xlink:href="#C" fill="#edeef2"/></g><g filter="url(#B)"><use xlink:href="#C" fill="#fff"/></g><path d="M47.331 36.205v-8.438l3.89 3.89.972-1.007-5.556-5.556-5.556 5.556.972.972 3.889-3.854v8.438h1.389z" fill="currentColor"/><defs><filter x="17" y="1" width="65" height="65" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB"><feFlood flood-opacity="0" result="A"/><feColorMatrix in="SourceAlpha" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0"/><feOffset dx="3" dy="3"/><feGaussianBlur stdDeviation="10"/><feColorMatrix values="0 0 0 0 0.141176 0 0 0 0 0.254902 0 0 0 0 0.364706 0 0 0 0.302 0"/><feBlend in2="A"/><feBlend in="SourceGraphic"/></filter><filter id="B" x="0" y="-16" width="85" height="85" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB"><feFlood flood-opacity="0" result="A"/><feColorMatrix in="SourceAlpha" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0"/><feOffset dx="-4" dy="-4"/><feGaussianBlur stdDeviation="15"/><feColorMatrix values="0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 1 0"/><feBlend in2="A"/><feBlend in="SourceGraphic"/></filter><path id="C" d="M59 30.5C59 23.596 53.404 18 46.5 18S34 23.596 34 30.5 39.596 43 46.5 43 59 37.404 59 30.5z"/></defs></svg>
+                Send
+              </button>
             </div>
-            <p class="iai-chat-input__info-text">Redbox can make mistakes. You must check for accuracy before using the output.</p>
-            <p class="iai-chat-input__info-text">You can use up to, and including, official sensitive documents.</p>
           </div>
-
-        </div>
-
-        <div class="rb-response-loading js-response-loading govuk-!-margin-top-1" tabindex="-1">
-          <img class="rb-response-loading__spinner" src="{{ static('images/spinner.gif') }}" alt=""/>
-          <p class="rb-response-loading__text govuk-body govuk-!-margin-bottom-0 govuk-!-margin-left-1">Response loading...</p>
+          <p class="iai-chat-input__info-text">Redbox can make mistakes. You must check for accuracy before using the output.</p>
+          <p class="iai-chat-input__info-text">You can use up to, and including, official sensitive documents.</p>
         </div>
 
       </chat-controller>
