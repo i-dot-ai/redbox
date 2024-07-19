@@ -30,6 +30,7 @@ langchain-elasticsearch = "^0.2.0"
 
 seaborn = "^0.13.2"
 mock = "^5.1.0"
+wordcloud = "^1.9.3"
 [tool.poetry.group.api.dependencies]
 fastapi = "^0.111.0"
 uvicorn = "^0.30.1"
