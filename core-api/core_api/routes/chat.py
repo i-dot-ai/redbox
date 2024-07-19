@@ -8,13 +8,13 @@ from core_api.semantic_routes import get_routable_chains, get_semantic_route_lay
 from fastapi import Depends, FastAPI, WebSocket
 from fastapi.encoders import jsonable_encoder
 from langchain_core.runnables import Runnable
+from langchain_core.tools import Tool
 from openai import APIError
-from pydantic import BaseModel
 from semantic_router import RouteLayer
 
 from redbox.api.runnables import map_to_chat_response
-from redbox.models.chain import ChainInput
-from redbox.models.chat import ChatRequest, ChatResponse, SourceDocument
+from redbox.models.chain import ChainInput, ChainChatMessage
+from redbox.models.chat import ChatRequest, ChatResponse, SourceDocument, ClientResponse, ErrorDetail
 from redbox.models.errors import NoDocumentSelected, QuestionLengthError
 from redbox.transform import map_document_to_source_document
 
@@ -32,10 +32,6 @@ chat_app = FastAPI(
     version="0.1.0",
     openapi_tags=[
         {"name": "chat", "description": "Chat interactions with LLM and RAG backend"},
-        {
-            "name": "embedding",
-            "description": "Embedding interactions with SentenceTransformer",
-        },
         {"name": "llm", "description": "LLM information and parameters"},
     ],
     docs_url="/docs",
@@ -44,8 +40,10 @@ chat_app = FastAPI(
 )
 
 
-async def semantic_router_to_chain(
-    chat_request: ChatRequest, user_uuid: UUID, routable_chains: dict[str, Runnable], route_layer: RouteLayer
+async def route_chat(
+    chat_request: ChatRequest, 
+    user_uuid: UUID, 
+    routable_chains: dict[str, Tool]
 ) -> tuple[Runnable, ChainInput]:
     question = chat_request.message_history[-1].text
 
@@ -59,20 +57,17 @@ async def semantic_router_to_chain(
 
     # Match keyword
     route_match = re_keyword_pattern.search(question)
-    if route_match:
-        route_name = route_match.group()[1:]
-        selected_chain = routable_chains.get(route_name)
-
-    # Semantic route
-    if selected_chain is None:
-        route_name = route_layer(question).name
-        selected_chain = routable_chains.get(route_name, select_chat_chain(chat_request, routable_chains))
+    route_name = route_match.group()[1:] if route_match else None
+    selected_chain = routable_chains.get(route_name, select_chat_chain(chat_request, routable_chains))
 
     params = ChainInput(
         question=chat_request.message_history[-1].text,
-        file_uuids=[f.uuid for f in chat_request.selected_files],
-        user_uuid=user_uuid,
-        chat_history=chat_request.message_history[:-1],
+        file_uuids=[str(f.uuid) for f in chat_request.selected_files],
+        user_uuid=str(user_uuid),
+        chat_history=[
+            ChainChatMessage(role=message.role, text=message.text)
+            for message in chat_request.message_history[:-1]
+        ],
     )
 
     log.info("Routed to %s", route_name)
@@ -85,29 +80,30 @@ async def semantic_router_to_chain(
 async def rag_chat(
     chat_request: ChatRequest,
     user_uuid: Annotated[UUID, Depends(get_user_uuid)],
-    routable_chains: Annotated[dict[str, Runnable], Depends(get_routable_chains)],
-    route_layer: Annotated[RouteLayer, Depends(get_semantic_route_layer)],
+    routable_chains: Annotated[dict[str, Tool], Depends(get_routable_chains)],
 ) -> ChatResponse:
     """REST endpoint. Get a LLM response to a question history and file."""
-    selected_chain, params = await semantic_router_to_chain(chat_request, user_uuid, routable_chains, route_layer)
-    return (selected_chain | map_to_chat_response).invoke(params.model_dump())
+    selected_chain, params = await route_chat(chat_request, user_uuid, routable_chains)
+    return (selected_chain | map_to_chat_response).invoke(params.dict())
 
 
-class ErrorDetail(BaseModel):
-    code: str
-    message: str
-
-
-class ClientResponse(BaseModel):
-    # Needs to match CoreChatResponse in django_app/redbox_app/redbox_core/consumers.py
-    resource_type: Literal["text", "documents", "route_name", "end", "error"]
-    data: list[SourceDocument] | str | ErrorDetail | None = None
-
+@chat_app.get("/tools", tags=["chat"])
+async def available_tools(
+    routable_chains: Annotated[dict[str, Tool], Depends(get_routable_chains)],
+):
+    """REST endpoint. Get a mapping of all tools available via chat."""
+    return [
+        {
+            "name": chat_tool.name,
+            "description": chat_tool.description
+        }
+        for chat_tool in routable_chains.values()
+    ]
 
 @chat_app.websocket("/rag")
 async def rag_chat_streamed(
     websocket: WebSocket,
-    routable_chains: Annotated[dict[str, Runnable], Depends(get_routable_chains)],
+    routable_chains: Annotated[dict[str, Tool], Depends(get_routable_chains)],
     route_layer: Annotated[RouteLayer, Depends(get_semantic_route_layer)],
 ):
     """Websocket. Get a LLM response to a question history and file."""
@@ -118,10 +114,10 @@ async def rag_chat_streamed(
     request = await websocket.receive_text()
     chat_request = ChatRequest.model_validate_json(request)
 
-    selected_chain, params = await semantic_router_to_chain(chat_request, user_uuid, routable_chains, route_layer)
+    selected_chain, params = await route_chat(chat_request, user_uuid, routable_chains)
 
     try:
-        async for event in selected_chain.astream(params.model_dump()):
+        async for event in selected_chain.astream(params.dict()):
             response: str = event.get("response", "")
             source_documents: list[SourceDocument] = [
                 map_document_to_source_document(doc) for doc in event.get("source_documents", [])

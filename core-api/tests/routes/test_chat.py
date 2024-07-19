@@ -134,17 +134,6 @@ def mock_streaming_client():
     chat_app.dependency_overrides = {}
 
 
-def test_rag_chat_rest_gratitude(mock_client, headers):
-    response = mock_client.post(
-        "/chat/rag",
-        json={"message_history": [{"role": "user", "text": "Thank you"}]},
-        headers=headers,
-    )
-    chat_response = ChatResponse.model_validate(response.json())
-    assert chat_response.output_text == "You're welcome!"
-    assert chat_response.route_name == ChatRoute.gratitude
-
-
 def test_rag(mock_client, headers):
     response = mock_client.post(
         "/chat/rag",
@@ -162,44 +151,31 @@ def test_rag(mock_client, headers):
     ), f"Expected route [{ChatRoute.chat_with_docs}] received [{chat_response.route_name}]"
 
 
-def test_summary(mock_client, headers):
-    response = mock_client.post(
-        "/chat/rag",
-        headers=headers,
-        json={
-            "message_history": [
-                {"text": "Summarise the documents", "role": "user"},
-            ],
-            "selected_files": [{"uuid": UPLOADED_FILE_UUID}],
-        },
-    )
-    assert response.status_code == 200
-    chat_response = ChatResponse.model_validate(response.json())
-    assert chat_response.output_text == RAG_LLM_RESPONSE
-    assert (
-        chat_response.route_name == ChatRoute.chat_with_docs
-    ), f"Expected route [{ChatRoute.chat_with_docs}] received [{chat_response.route_name}]"
-
-
-def test_keyword(mock_client, headers):
+@pytest.mark.parametrize(
+        ("keyword"),
+        (
+            "search",
+            "gratitude",
+            "info"
+        )
+)
+def test_keywords(mock_client, headers, keyword):
     """Given a history that should summarise, force retrieval."""
     response = mock_client.post(
         "/chat/rag",
         headers=headers,
         json={
             "message_history": [
-                {"text": "What can I do for you?", "role": "system"},
-                {"text": "Summarise the provided docs? @search", "role": "user"},
+                {"text": f" @{keyword} Silly question", "role": "user"},
             ],
             "selected_files": [{"uuid": UPLOADED_FILE_UUID}],
         },
     )
     assert response.status_code == 200
     chat_response = ChatResponse.model_validate(response.json())
-    assert chat_response.output_text == RAG_LLM_RESPONSE
     assert (
-        chat_response.route_name == ChatRoute.search
-    ), f"Expected route [{ChatRoute.search}] received [{chat_response.route_name}]"
+        chat_response.route_name.startswith(keyword)
+    ), f"Expected route to match keyword[{keyword}] received [{chat_response.route_name}]"
 
 
 def test_rag_chat_streamed(mock_client, headers):
@@ -231,3 +207,13 @@ def test_rag_chat_streamed(mock_client, headers):
         text = "".join(all_text)
         assert text == RAG_LLM_RESPONSE
         assert route_name == ChatRoute.chat_with_docs
+
+
+def test_available_tools(mock_client, headers):
+    response = mock_client.get("/chat/tools", headers=headers)
+    assert response.status_code==200
+    tool_definitions = response.json()
+    assert len(tool_definitions) > 0
+    for tool_definition in tool_definitions:
+        assert "name" in tool_definition
+        assert "description" in tool_definition
