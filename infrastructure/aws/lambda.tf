@@ -16,9 +16,9 @@ module "lambda-cleanup" {
     POSTGRES_PASSWORD : module.rds.rds_instance_db_password,
     ELASTIC__CLOUD_ID : var.cloud_id,
     ELASTIC__API_KEY : var.elastic_api_key,
-    BUCKET_NAME : "i-dot-ai-preprod-redbox",
-    ELASTIC_ROOT_INDEX : "redbox-data-preprod",
-    SLACK_NOTIFICATION_URL: "https://hooks.slack.com/services/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"
+    BUCKET_NAME : "i-dot-ai-${var.env}-redbox",
+    ELASTIC_ROOT_INDEX : "redbox-data-${var.env}",
+    SLACK_NOTIFICATION_URL: var.slack_url
   }
   aws_security_group_ids = [aws_security_group.service_security_group.id]
   subnet_ids             = data.terraform_remote_state.vpc.outputs.private_subnets
@@ -33,25 +33,25 @@ resource "aws_security_group" "service_security_group" {
   }
 }
 
-#resource "aws_security_group_rule" "lambda_to_rds_egress" {
-#  type                     = "egress"
-#  from_port                = 5432
-#  to_port                  = 5432
-#  protocol                 = "tcp"
-#  source_security_group_id = module.rds.postgres_sg_id
-#  security_group_id        = aws_security_group.service_security_group.id
-#  description              = "Allow requests from the lambda to get to the RDS"
-#}
-#
-#resource "aws_security_group_rule" "lambda_to_443_egress" {
-#  type              = "egress"
-#  from_port         = 443
-#  to_port           = 443
-#  protocol          = "tcp"
-#  cidr_blocks       = ["0.0.0.0/0"]
-#  ipv6_cidr_blocks  = ["::/0"]
-#  security_group_id = aws_security_group.service_security_group.id
-#}
+resource "aws_security_group_rule" "lambda_to_rds_egress" {
+  type                     = "egress"
+  from_port                = 5432
+  to_port                  = 5432
+  protocol                 = "tcp"
+  source_security_group_id = module.rds.postgres_sg_id
+  security_group_id        = aws_security_group.service_security_group.id
+  description              = "Allow requests from the lambda to get to the RDS"
+}
+
+resource "aws_security_group_rule" "lambda_to_443_egress" {
+  type              = "egress"
+  from_port         = 443
+  to_port           = 443
+  protocol          = "tcp"
+  cidr_blocks       = ["0.0.0.0/0"]
+  ipv6_cidr_blocks  = ["::/0"]
+  security_group_id = aws_security_group.service_security_group.id
+}
 
 data "archive_file" "code" {
   type        = "zip"
