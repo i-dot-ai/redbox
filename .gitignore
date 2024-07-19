@@ -213,3 +213,7 @@ django_app/tests/staticfiles
 
 # pre commit files
 .pre-commit-trivy-cache
+
+# chat history files and personal data
+*chat_history_*
+notebooks/evaluation/results
