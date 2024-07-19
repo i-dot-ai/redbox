@@ -23,6 +23,7 @@ nltk = "^3.8.1"
 unstructured-inference = "^0.7.36"
 unstructured = {version = "<0.14.9", extras = ["all-docs"]}
 pikepdf = "<9.0.0"
+torch = "2.2.2"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.2.2"
