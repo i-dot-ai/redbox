@@ -5,7 +5,8 @@ import os
 import boto3
 import pg8000.dbapi
 import requests
-from elasticsearch import Elasticsearch
+from botocore.exceptions import ClientError
+from elasticsearch import ApiError, Elasticsearch
 from pg8000.native import literal
 from requests.exceptions import RequestException
 
@@ -14,44 +15,53 @@ logger.setLevel("INFO")
 
 
 def delete_from_elastic_and_s3(core_id, name, elastic_client, elastic_index, s3):
-    # delete chunks
-    elastic_client.delete_by_query(
-        index=elastic_index,
-        body={
-            "query": {
-                "bool": {
-                    "must": [
-                        {
-                            "bool": {
-                                "should": [
-                                    {"term": {"parent_file_uuid.keyword": str(core_id)}},
-                                    {"term": {"metadata.parent_file_uuid.keyword": str(core_id)}},
-                                ]
-                            }
-                        },
-                    ]
+    try:
+        # delete chunks
+        elastic_client.delete_by_query(
+            index=elastic_index,
+            body={
+                "query": {
+                    "bool": {
+                        "must": [
+                            {
+                                "bool": {
+                                    "should": [
+                                        {"term": {"parent_file_uuid.keyword": str(core_id)}},
+                                        {"term": {"metadata.parent_file_uuid.keyword": str(core_id)}},
+                                    ]
+                                }
+                            },
+                        ]
+                    }
                 }
-            }
-        },
-    )
-
-    # delete file from elastic
-    elastic_client.delete(index=elastic_index, id=str(core_id))
-
-    # delete from S3
-    if name:  # if not, there isn't a file in S3
-        s3.delete_object(
-            Bucket=os.environ["BUCKET_NAME"],
-            Key=str(name),
+            },
         )
+
+        # delete file from elastic
+        elastic_client.delete(index=elastic_index, id=str(core_id))
+
+    except ClientError:
+        logger.exception("Error deleting File %s from Elastic", name)
+        return False
+
+    else:
+        # delete from S3
+        return bool(delete_from_s3(name, s3))
 
 
 def delete_from_s3(name, s3):
-    if name:  # if not, there isn't a file in S3
+    try:
         s3.delete_object(
             Bucket=os.environ["BUCKET_NAME"],
             Key=str(name),
         )
+
+    except ApiError:
+        logger.exception("Error deleting File %s from S3", name)
+        return False
+
+    else:
+        return True
 
 
 def delete_files(files):
@@ -67,8 +77,12 @@ def delete_files(files):
         logger.info("Deleting file uuid:  %s", core_id)
 
         if elastic_client.exists(index=elastic_index, id=str(core_id)):
-            delete_from_elastic_and_s3(core_id, name, elastic_client, elastic_index, s3)
-            results["success"].append(django_id)
+            deletion_success = delete_from_elastic_and_s3(core_id, name, elastic_client, elastic_index, s3)
+
+            if deletion_success:
+                results["success"].append(django_id)
+            else:
+                results["failure"].append(django_id)
 
         else:
             logger.info("file uuid not found:  %s", core_id)
