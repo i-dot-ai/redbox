@@ -9,8 +9,8 @@ ADD README.md /app/README.md
 
 WORKDIR /app/core-api
 
-RUN pip install poetry --without dev
-RUN poetry install
+RUN pip install poetry
+RUN poetry install --without dev
 
 # Run FastAPI
 EXPOSE 5002
