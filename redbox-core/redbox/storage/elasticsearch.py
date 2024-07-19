@@ -232,7 +232,6 @@ class ElasticsearchStorageHandler(BaseStorageHandler):
 
         return FileStatus(
             file_uuid=file_uuid,
-            chunk_statuses=None,
             processing_status=file.ingest_status,
         )
 
