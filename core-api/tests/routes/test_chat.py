@@ -15,7 +15,6 @@ from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_core.prompt_values import ChatPromptValue
 from langchain_core.runnables import Runnable, RunnableLambda
 from langchain_core.runnables.schema import StreamEvent
-from semantic_router.encoders import TfidfEncoder
 from starlette.websockets import WebSocketDisconnect
 
 from redbox.models.chat import ChatResponse, ChatRoute
