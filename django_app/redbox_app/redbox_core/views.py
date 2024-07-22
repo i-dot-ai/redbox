@@ -2,7 +2,7 @@ import logging
 import uuid
 from collections.abc import MutableSequence, Sequence
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import date
 from http import HTTPStatus
 from itertools import groupby
 from operator import attrgetter
@@ -283,19 +283,19 @@ class ChatsView(View):
     def decorate_history_with_date_group(chats: Sequence[ChatHistory]) -> None:
         for chat in chats:
             newest_message_date = chat.chatmessage_set.aggregate(newest_date=Max("created_at"))["newest_date"]
-            chat.date_group = ChatsView.get_date_group(newest_message_date)
+            chat.date_group = ChatsView.get_date_group(newest_message_date.date())
 
     @staticmethod
-    def get_date_group(created_at: datetime) -> str:
-        now = timezone.now()
-        age = now - created_at
-        if age > timedelta(days=37):
+    def get_date_group(on: date) -> str:
+        today = timezone.now().date()
+        age = (today - on).days
+        if age > 30:  # noqa: PLR2004
             return "Older than 30 days"
-        if age > timedelta(days=8):
+        if age > 7:  # noqa: PLR2004
             return "Previous 30 days"
-        if age > timedelta(days=2):
+        if age > 1:
             return "Previous 7 days"
-        if created_at.date() == now.date() - timedelta(days=1):
+        if age > 0:
             return "Yesterday"
         return "Today"
 

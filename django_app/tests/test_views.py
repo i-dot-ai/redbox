@@ -2,6 +2,7 @@ import json
 import logging
 import uuid
 from collections.abc import Sequence
+from datetime import date, timedelta
 from http import HTTPStatus
 from pathlib import Path
 
@@ -11,6 +12,7 @@ from bs4 import BeautifulSoup
 from django.conf import settings
 from django.test import Client
 from django.urls import reverse
+from django.utils import timezone
 from pytest_django.asserts import assertRedirects
 from requests_mock import Mocker
 from yarl import URL
@@ -26,6 +28,7 @@ from redbox_app.redbox_core.models import (
     StatusEnum,
     User,
 )
+from redbox_app.redbox_core.views import ChatsView
 
 logger = logging.getLogger(__name__)
 
@@ -413,6 +416,28 @@ def test_chat_history_grouped_by_age(user_with_chats_with_messages_over_time: Us
     ):
         assert date_group.text == header
         assert date_group.find_next_sibling("ul").find("a").text == chat_name
+
+
+@pytest.mark.parametrize(
+    ("given", "expected"),
+    [
+        (timezone.now().date(), "Today"),
+        ((timezone.now() - timedelta(days=1)).date(), "Yesterday"),
+        ((timezone.now() - timedelta(days=2)).date(), "Previous 7 days"),
+        ((timezone.now() - timedelta(days=7)).date(), "Previous 7 days"),
+        ((timezone.now() - timedelta(days=8)).date(), "Previous 30 days"),
+        ((timezone.now() - timedelta(days=30)).date(), "Previous 30 days"),
+        ((timezone.now() - timedelta(days=31)).date(), "Older than 30 days"),
+    ],
+)
+def test_date_group_calculation(given: date, expected: str):
+    # Given
+
+    # When
+    actual = ChatsView.get_date_group(given)
+
+    # Then
+    assert actual == expected
 
 
 @pytest.mark.django_db()
