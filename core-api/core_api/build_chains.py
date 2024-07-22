@@ -10,16 +10,13 @@ from langchain.schema import StrOutputParser
 from langchain_community.chat_models import ChatLiteLLM
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.retrievers import BaseRetriever
-from langchain_core.runnables import (Runnable, RunnableLambda,
-                                      RunnablePassthrough, chain)
+from langchain_core.runnables import Runnable, RunnableLambda, RunnablePassthrough, chain
 from langchain_core.runnables.config import RunnableConfig
 from langchain_core.vectorstores import VectorStoreRetriever
 from tiktoken import Encoding
 
 from redbox.api.format import format_documents
-from redbox.api.runnables import (filter_by_elbow,
-                                  make_chat_prompt_from_messages_runnable,
-                                  resize_documents)
+from redbox.api.runnables import filter_by_elbow, make_chat_prompt_from_messages_runnable, resize_documents
 from redbox.models import ChatRoute, Settings
 from redbox.models.errors import NoDocumentSelected
 
@@ -56,28 +53,7 @@ def build_chat_with_docs_chain(
     env: Annotated[Settings, Depends(dependencies.get_env)],
 ) -> Runnable:
     def make_document_context():
-        return (
-            all_chunks_retriever
-            | resize_documents(env.ai.summarisation_chunk_max_tokens)
-        )
-
-
-    stuff_chat_chain = (
-        RunnablePassthrough.assign(
-            formatted_documents=(RunnablePassthrough() | itemgetter("documents") | format_documents)
-        )
-        | {
-            "response": make_chat_prompt_from_messages_runnable(
-                system_prompt=env.ai.chat_with_docs_system_prompt,
-                question_prompt=env.ai.chat_with_docs_question_prompt,
-                input_token_budget=env.ai.context_window_size - env.llm_max_tokens,
-                tokeniser=tokeniser,
-            )
-            | llm
-            | StrOutputParser(),
-            "route_name": RunnableLambda(lambda _: ChatRoute.chat_with_docs.value),
-        }
-    )
+        return all_chunks_retriever | resize_documents(env.ai.summarisation_chunk_max_tokens)
 
     @chain
     def map_operation(input_dict):
@@ -104,30 +80,43 @@ def build_chat_with_docs_chain(
         input_dict["summaries"] = summaries
         return input_dict
 
-    map_reduce_chat_chain = (
-        map_operation
-        | make_chat_prompt_from_messages_runnable(
-            system_prompt=env.ai.chat_with_docs_reduce_system_prompt,
-            question_prompt=env.ai.chat_with_docs_reduce_question_prompt,
-            input_token_budget=env.ai.context_window_size - env.llm_max_tokens,
-            tokeniser=tokeniser,
-        )
-        | llm
-        | {
-            "response": StrOutputParser(),
-            "route_name": RunnableLambda(lambda _: ChatRoute.chat_with_docs_map_reduce.value),
-        }
-    )
-
     @chain
     def chat_with_docs_route(input_dict: dict):
         log.info("Documents: %s", input_dict["documents"])
         log.info("Length documents: %s", len(input_dict["documents"]))
         if len(input_dict["documents"]) == 1:
-            return stuff_chat_chain
+            return RunnablePassthrough.assign(
+                formatted_documents=(RunnablePassthrough() | itemgetter("documents") | format_documents)
+            ) | {
+                "response": make_chat_prompt_from_messages_runnable(
+                    system_prompt=env.ai.chat_with_docs_system_prompt,
+                    question_prompt=env.ai.chat_with_docs_question_prompt,
+                    input_token_budget=env.ai.context_window_size - env.llm_max_tokens,
+                    tokeniser=tokeniser,
+                )
+                | llm
+                | StrOutputParser(),
+                "route_name": RunnableLambda(lambda _: ChatRoute.chat_with_docs.value),
+            }
 
         elif len(input_dict["documents"]) > 1:
-            return map_reduce_chat_chain
+            return (
+                map_operation
+                | RunnablePassthrough.assign(
+                    formatted_documents=(RunnablePassthrough() | itemgetter("documents") | format_documents)
+                )
+                | {
+                    "response": make_chat_prompt_from_messages_runnable(
+                        system_prompt=env.ai.chat_with_docs_reduce_system_prompt,
+                        question_prompt=env.ai.chat_with_docs_reduce_question_prompt,
+                        input_token_budget=env.ai.context_window_size - env.llm_max_tokens,
+                        tokeniser=tokeniser,
+                    )
+                    | llm
+                    | StrOutputParser(),
+                    "route_name": RunnableLambda(lambda _: ChatRoute.chat_with_docs.value),
+                }
+            )
 
         else:
             raise NoDocumentSelected
