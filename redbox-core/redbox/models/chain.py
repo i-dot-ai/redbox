@@ -9,7 +9,6 @@ from typing import TypedDict
 from langchain_core.pydantic_v1 import BaseModel, Field
 
 
-
 class ChainChatMessage(TypedDict):
     role: str
     text: str
