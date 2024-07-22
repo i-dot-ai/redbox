@@ -4,7 +4,7 @@ from collections.abc import MutableSequence, Sequence
 from pathlib import Path
 
 from django.conf import settings
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, user_passes_test
 from django.core.exceptions import FieldError, ValidationError
 from django.core.files.uploadedfile import UploadedFile
 from django.db.models import Min, Prefetch
@@ -386,3 +386,8 @@ class DemographicsView(UpdateView):
 
     def get_object(self, **kwargs):  # noqa: ARG002
         return self.request.user
+    
+
+# @user_passes_test(lambda u: u.is_superuser)
+def streamlit_view(request):
+    return render(request, 'streamlit_app.html')

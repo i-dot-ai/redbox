@@ -1,5 +1,6 @@
-from analysis_of_chat_history import ChatHistoryAnalysis
 import streamlit as st
+
+from analysis_of_chat_history import ChatHistoryAnalysis
 
 st.set_page_config(page_title = 'Redbox Chat Analysis', layout = 'centered')
 st.set_option('deprecation.showPyplotGlobalUse', False)
