@@ -74,9 +74,9 @@ def test_rag_runnable(mock_llm, chunked_file, env):
         input=ChainInput(
             question="Who are all these people?",
             chat_history=previous_history,
-            file_uuids=[chunked_file.uuid],
-            user_uuid=chunked_file.creator_user_uuid,
-        ).model_dump()
+            file_uuids=[str(chunked_file.uuid)],
+            user_uuid=str(chunked_file.creator_user_uuid),
+        ).dict()
     )
 
     assert response["response"] == "<<TESTING>>"
@@ -98,9 +98,9 @@ def test_condense_runnable(mock_llm, chunked_file, env):
         input=ChainInput(
             question="Who are all these people?",
             chat_history=previous_history,
-            file_uuids=[chunked_file.uuid],
-            user_uuid=chunked_file.creator_user_uuid,
-        ).model_dump()
+            file_uuids=[str(chunked_file.uuid)],
+            user_uuid=str(chunked_file.creator_user_uuid),
+        ).dict()
     )
     assert response["response"] == "<<TESTING>>"
     assert response["route_name"].startswith("search")
@@ -125,9 +125,9 @@ def test_summary_runnable_large_file(all_chunks_retriever, mock_llm, large_chunk
         input=ChainInput(
             question="Who are all these people?",
             chat_history=previous_history,
-            file_uuids=[large_chunked_file.uuid],
-            user_uuid=large_chunked_file.creator_user_uuid,
-        ).model_dump()
+            file_uuids=[str(large_chunked_file.uuid)],
+            user_uuid=str(large_chunked_file.creator_user_uuid),
+        ).dict()
     )
 
     assert response["response"] == "<<TESTING>>"
@@ -149,9 +149,9 @@ def test_summary_runnable_small_file(all_chunks_retriever, mock_llm, chunked_fil
         input=ChainInput(
             question="Who are all these people?",
             chat_history=previous_history,
-            file_uuids=[chunked_file.uuid],
-            user_uuid=chunked_file.creator_user_uuid,
-        ).model_dump()
+            file_uuids=[str(chunked_file.uuid)],
+            user_uuid=str(chunked_file.creator_user_uuid),
+        ).dict()
     )
 
     assert response["response"] == "<<TESTING>>"
