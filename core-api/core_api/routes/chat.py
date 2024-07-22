@@ -1,16 +1,15 @@
 import logging
 import re
-from typing import Annotated, Literal
+from typing import Annotated
 from uuid import UUID
 
 from core_api.auth import get_user_uuid, get_ws_user_uuid
-from core_api.semantic_routes import get_routable_chains, get_semantic_route_layer
+from core_api.semantic_routes import get_routable_chains
 from fastapi import Depends, FastAPI, WebSocket
 from fastapi.encoders import jsonable_encoder
 from langchain_core.runnables import Runnable
 from langchain_core.tools import Tool
 from openai import APIError
-from semantic_router import RouteLayer
 
 from redbox.api.runnables import map_to_chat_response
 from redbox.models.chain import ChainInput, ChainChatMessage
@@ -41,9 +40,7 @@ chat_app = FastAPI(
 
 
 async def route_chat(
-    chat_request: ChatRequest, 
-    user_uuid: UUID, 
-    routable_chains: dict[str, Tool]
+    chat_request: ChatRequest, user_uuid: UUID, routable_chains: dict[str, Tool]
 ) -> tuple[Runnable, ChainInput]:
     question = chat_request.message_history[-1].text
 
@@ -65,8 +62,7 @@ async def route_chat(
         file_uuids=[str(f.uuid) for f in chat_request.selected_files],
         user_uuid=str(user_uuid),
         chat_history=[
-            ChainChatMessage(role=message.role, text=message.text)
-            for message in chat_request.message_history[:-1]
+            ChainChatMessage(role=message.role, text=message.text) for message in chat_request.message_history[:-1]
         ],
     )
 
@@ -92,19 +88,13 @@ async def available_tools(
     routable_chains: Annotated[dict[str, Tool], Depends(get_routable_chains)],
 ):
     """REST endpoint. Get a mapping of all tools available via chat."""
-    return [
-        {
-            "name": chat_tool.name,
-            "description": chat_tool.description
-        }
-        for chat_tool in routable_chains.values()
-    ]
+    return [{"name": chat_tool.name, "description": chat_tool.description} for chat_tool in routable_chains.values()]
+
 
 @chat_app.websocket("/rag")
 async def rag_chat_streamed(
     websocket: WebSocket,
     routable_chains: Annotated[dict[str, Tool], Depends(get_routable_chains)],
-    route_layer: Annotated[RouteLayer, Depends(get_semantic_route_layer)],
 ):
     """Websocket. Get a LLM response to a question history and file."""
     await websocket.accept()

@@ -30,6 +30,8 @@ user_chat = {"text": "test", "role": "user"}
 RAG_LLM_RESPONSE = "Based on your documents the answer to your question is 7"
 UPLOADED_FILE_UUID = "9aa1aa15-dde0-471f-ab27-fd410612025b"
 
+EXPECTED_AVAILABLE_ROUTES = ("chat", "search", "info")
+
 
 def mock_chat_prompt():
     return ChatPromptValue(
@@ -104,7 +106,6 @@ def mock_client(alice):
     chat_app.dependency_overrides[dependencies.get_parameterised_retriever] = lambda: mock_parameterised_retriever(
         alice
     )
-    chat_app.dependency_overrides[semantic_routes.get_semantic_routing_encoder] = mock_semantic_route_encoder
     yield TestClient(application)
     chat_app.dependency_overrides = {}
 
@@ -151,14 +152,7 @@ def test_rag(mock_client, headers):
     ), f"Expected route [{ChatRoute.chat_with_docs}] received [{chat_response.route_name}]"
 
 
-@pytest.mark.parametrize(
-        ("keyword"),
-        (
-            "search",
-            "gratitude",
-            "info"
-        )
-)
+@pytest.mark.parametrize(("keyword"), EXPECTED_AVAILABLE_ROUTES)
 def test_keywords(mock_client, headers, keyword):
     """Given a history that should summarise, force retrieval."""
     response = mock_client.post(
@@ -173,8 +167,8 @@ def test_keywords(mock_client, headers, keyword):
     )
     assert response.status_code == 200
     chat_response = ChatResponse.model_validate(response.json())
-    assert (
-        chat_response.route_name.startswith(keyword)
+    assert chat_response.route_name.startswith(
+        keyword
     ), f"Expected route to match keyword[{keyword}] received [{chat_response.route_name}]"
 
 
@@ -211,9 +205,10 @@ def test_rag_chat_streamed(mock_client, headers):
 
 def test_available_tools(mock_client, headers):
     response = mock_client.get("/chat/tools", headers=headers)
-    assert response.status_code==200
+    assert response.status_code == 200
     tool_definitions = response.json()
     assert len(tool_definitions) > 0
+    assert set(EXPECTED_AVAILABLE_ROUTES).issubset({item["name"] for item in tool_definitions})
     for tool_definition in tool_definitions:
         assert "name" in tool_definition
         assert "description" in tool_definition
