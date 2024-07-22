@@ -91,13 +91,6 @@ def mock_all_chunks_retriever(alice):
     return RunnableLambda(lambda _: docs)
 
 
-def mock_semantic_route_encoder():
-    encoder = TfidfEncoder()
-    routes = semantic_routes.get_semantic_routes()
-    encoder.fit(routes)
-    return encoder
-
-
 @pytest.fixture(scope="session")
 def mock_client(alice):
     chat_app.dependency_overrides[dependencies.get_llm] = mock_get_llm([RAG_LLM_RESPONSE] * 32)
