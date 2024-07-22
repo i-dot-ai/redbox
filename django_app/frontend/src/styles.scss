@@ -383,6 +383,28 @@ feedback-buttons:last-of-type {
   padding: 0.5rem 1rem;
 }
 
+/* New Chat Options */
+.chat-options__heading {
+  color: $redbox-red;
+}
+.chat-options__options {
+  display: flex;
+  flex-wrap: wrap;
+}
+.chat-options__option {
+  border: 1px solid #b1b4b6;
+  border-radius: 0.25rem;
+  color: #60697b;
+  cursor: pointer;
+  display: flex;
+  gap: 1rem;
+  left: -0.75rem;
+  margin-top: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  flex-grow: 1;
+  min-width: 33%;
+}
+
 /* Citations page */
 .rb-citations {
   list-style-type: none;
