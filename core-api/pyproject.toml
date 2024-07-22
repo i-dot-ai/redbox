@@ -30,6 +30,7 @@ langchain-community = "^0.2.6"
 pillow-heif = "<0.17.0"
 langchain-elasticsearch = "^0.2.2"
 litellm = "^1.41.11"
+pikepdf = "<9.0.0"
 
 
 [tool.poetry.group.dev.dependencies]

@@ -61,7 +61,7 @@ class AllElasticsearchRetriever(ElasticsearchRetriever):
             msg = "faulty configuration"
             raise ValueError(msg)  # should not happen
 
-        body = self.body_func(query)
+        body = self.body_func(query)  # type: ignore
 
         results = [
             self.document_mapper(hit)
