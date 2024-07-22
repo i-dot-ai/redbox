@@ -4652,8 +4652,8 @@ unstructured-inference = "^0.7.36"
 [package.source]
 type = "git"
 url = "https://github.com/i-dot-ai/redbox.git"
-reference = "8a6a71d"
-resolved_reference = "8a6a71d15b0a8df1c15499cceac60d8de834aee2"
+reference = "0a11f61"
+resolved_reference = "0a11f6139774db1f1c870d1cbbecba6291008ca3"
 subdirectory = "redbox-core"
 
 [[package]]
@@ -6752,4 +6752,4 @@ test = ["big-O", "importlib-resources", "jaraco.functools", "jaraco.itertools", 
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.12,<3.13"
-content-hash = "1e9c415b1230b3c6719446d6d4439d5e1614f142531d2d775f161a81184b3eeb"
+content-hash = "b3a9720044df7615aa57976fdc2d1733d207caae115cf026f271386cf9bcf416"
