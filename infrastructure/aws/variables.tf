@@ -154,6 +154,11 @@ variable "scope" {
   default     = "REGIONAL"
 }
 
+variable "slack_url" {
+  description = "The slack webhook url"
+  type        = string
+}
+
 variable "state_bucket" {
   type        = string
   description = "Name of the S3 bucket to use a terraform state"
