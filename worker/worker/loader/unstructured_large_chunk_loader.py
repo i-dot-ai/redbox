@@ -1,16 +1,16 @@
 from collections.abc import Iterator
 from datetime import UTC, datetime
 from typing import IO, TYPE_CHECKING
+from pathlib import Path
 
 import tiktoken
 from langchain_core.documents import Document
-from unstructured.chunking.title import chunk_by_title
+from unstructured.chunking.basic import chunk_elements
 from unstructured.partition.auto import partition
-from pathlib import Path
 
-from redbox.models.file import File, ChunkResolution, ChunkMetadata
+from redbox.models.file import ChunkResolution, File, ChunkMetadata
 from redbox.models.settings import Settings
-from .base import BaseRedboxFileLoader
+from worker.loader.base import BaseRedboxFileLoader
 
 encoding = tiktoken.get_encoding("cl100k_base")
 
@@ -20,7 +20,7 @@ else:
     S3Client = object
 
 
-class UnstructuredTitleLoader(BaseRedboxFileLoader):
+class UnstructuredLargeChunkLoader(BaseRedboxFileLoader):
     """Load, partition and chunk a document using local unstructured library"""
 
     def __init__(self, file: File, file_bytes: IO[bytes], env: Settings) -> None:
@@ -34,13 +34,11 @@ class UnstructuredTitleLoader(BaseRedboxFileLoader):
         """
         file_name = Path(self.file.key).name
         elements = partition(file=self.file_bytes, strategy=self.env.partition_strategy)
-        if not elements:
-            raise ValueError("Unstructured failed to extract text for this file")
-
-        raw_chunks = chunk_by_title(
+        raw_chunks = chunk_elements(
             elements=elements,
-            combine_text_under_n_chars=self.env.worker_ingest_min_chunk_size,
-            max_characters=self.env.worker_ingest_max_chunk_size,
+            max_characters=self.env.worker_ingest_largest_chunk_size,
+            overlap=self.env.worker_ingest_largest_chunk_overlap,
+            overlap_all=True,
         )
 
         for i, raw_chunk in enumerate(raw_chunks):
@@ -54,6 +52,6 @@ class UnstructuredTitleLoader(BaseRedboxFileLoader):
                     page_number=raw_chunk.metadata.page_number,
                     created_datetime=datetime.now(UTC),
                     token_count=len(encoding.encode(raw_chunk.text)),
-                    chunk_resolution=ChunkResolution.normal,
+                    chunk_resolution=ChunkResolution.largest,
                 ).model_dump(),
             )

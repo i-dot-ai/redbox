@@ -1,3 +1,4 @@
+import sys
 from functools import partial, reduce
 from typing import Any
 from logging import getLogger
@@ -78,7 +79,7 @@ def map_to_chat_response(input_dict: dict):
 
 def resize_documents(max_tokens: int | None = None) -> Runnable[list[Document], Any]:
     """Gets a file as larger document-sized Chunks, splitting it by max_tokens."""
-    n = max_tokens or float("inf")
+    n = max_tokens or sys.maxsize
 
     @chain
     def wrapped(chunks_unsorted: list[Document]):

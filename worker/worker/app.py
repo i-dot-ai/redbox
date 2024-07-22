@@ -14,8 +14,8 @@ from langchain_elasticsearch.vectorstores import ElasticsearchStore, BM25Retriev
 from redbox.embeddings import get_embeddings
 from redbox.models import File, ProcessingStatusEnum, Settings
 from redbox.storage.elasticsearch import ElasticsearchStorageHandler
-from redbox.loader import UnstructuredLargeChunkLoader, UnstructuredTitleLoader
-from redbox.chains.ingest import ingest_from_loader
+from worker.loader import UnstructuredLargeChunkLoader, UnstructuredTitleLoader
+from worker.chains.ingest import ingest_from_loader
 
 if TYPE_CHECKING:
     from mypy_boto3_s3.client import S3Client
