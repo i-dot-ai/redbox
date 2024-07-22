@@ -6,14 +6,28 @@ import textwrap
 from collections import Counter
 from pathlib import Path
 
-import matplotlib.pyplot as plt
 import matplotlib as mpl
+import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 import seaborn as sns
-import numpy as np
+from bertopic import BERTopic
+from django.db.models import F, Prefetch
 from regex import D
 from wordcloud import STOPWORDS, WordCloud
-from bertopic import BERTopic
+
+packages = ["django-environ", "django-use-email-as-username", 'psycopg2-binary', 'django-magic-link', 'django-single-session', 'django-compressor']
+import pip
+
+for package in packages:
+    pip.main(['install', package])
+
+import django
+
+django.setup()
+
+from redbox_app.redbox_core.models import ChatHistory, ChatMessage
+
 
 class ChatHistoryAnalysis():
     def __init__(self) -> None:
@@ -26,12 +40,15 @@ class ChatHistoryAnalysis():
         os.makedirs(self.visualisation_dir, exist_ok=True)
         os.makedirs(self.table_dir, exist_ok=True)
 
-        # IMPORTANT - For this to work you must save your chat history CSV dump in notebooks/evaluation/data/chat_histories 
-        file_path = self.latest_chat_history_file()
-        self.chat_logs = pd.read_csv(file_path)
+        self.chat_logs = self.fetch_chat_history()
+        import logging
+        logging.basicConfig(level=logging.INFO)
+        logger = logging.getLogger()
+        logger.info('hello123456')
+        logger.info(self.chat_logs.columns.values)
 
         # Select specific columns and converting to readable timestamp
-        self.chat_logs = self.chat_logs[['created_at', 'users', 'chat_history', 'text', 'role', 'id']]
+        self.chat_logs = self.chat_logs[['created_at', 'users_id', 'user_email', 'chat_history', 'text', 'role', 'message_id']]
         self.chat_logs['created_at'] = pd.to_datetime(self.chat_logs['created_at'])
 
         self.ai_responses = self.chat_logs[self.chat_logs['role'] == 'ai']
@@ -50,10 +67,37 @@ class ChatHistoryAnalysis():
         mpl.rcParams.update({'font.size': 10})
         mpl.rcParams.update({'font.family': 'Arial'})
 
-    def latest_chat_history_file(self):
-        chat_history_folder = glob.glob(f'{self.evaluation_dir}/data/chat_histories/*')
-        latest_file = max(chat_history_folder, key=os.path.getctime)
-        return latest_file
+    def fetch_chat_history(self, limit=100):
+        chat_messages = ChatMessage.objects.all()
+        chat_history_objects = ChatHistory.objects.prefetch_related(
+            Prefetch('messages', queryset=chat_messages)
+        ).annotate(
+            user_email=F('users__email')
+        ).values(
+            'created_at',
+            'users_id',
+            'user_email',
+            chat_history=F('id'),
+        )[:limit]
+
+        results = []
+        for chat_history in chat_history_objects:
+            messages = ChatMessage.objects.filter(chat_history=chat_history['chat_history']).values('text', 'role', 'id')
+            for message in messages:
+                result = {
+                    'created_at': chat_history['created_at'],
+                    'users_id': chat_history['users_id'],
+                    'user_email': chat_history['user_email'],
+                    'chat_history': chat_history['chat_history'],
+                    'text': message['text'],
+                    'role': message['role'],
+                    'message_id': message['id']
+                }
+                results.append(result)
+
+        df = pd.DataFrame(results)
+        return df
+
 
     def preprocess_text(self, text):
         tokens = text.split()
@@ -62,7 +106,7 @@ class ChatHistoryAnalysis():
 
     # 1) Who uses Redbox the most?
     def user_frequency_analysis(self):
-        user_counts = self.chat_logs['users'].value_counts()
+        user_counts = self.chat_logs['user_email'].value_counts()
 
         user_name = [user_email.split('@')[0].replace('.', ' ').title() for user_email in user_counts.index]
         wrapped_user_name = ['\n'.join(textwrap.wrap(name, width=10)) for name in user_name]
@@ -199,7 +243,7 @@ class ChatHistoryAnalysis():
         # df = df.drop_duplicates(['text'])
 
         # User names
-        user_name = [user_email.split('@')[0].replace('.', ' ').title() for user_email in df.users]
+        user_name = [user_email.split('@')[0].replace('.', ' ').title() for user_email in df.user_email]
         wrapped_user_name = ['\n'.join(textwrap.wrap(name, width=10)) for name in user_name]
         df['user_name'] = wrapped_user_name
 
@@ -234,7 +278,7 @@ class ChatHistoryAnalysis():
     def route_transitions(self):
 
         # Get route transitions and counts per user session (is 'id' appropriate?)
-        df_transitions = self.user_responses.groupby('id').apply(self.get_route_transitions).reset_index(drop=True)
+        df_transitions = self.user_responses.groupby('users_id').apply(self.get_route_transitions).reset_index(drop=True)
 
         transition_counts = df_transitions['transition'].value_counts().reset_index()
 
