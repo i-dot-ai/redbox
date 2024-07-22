@@ -4516,7 +4516,7 @@ unstructured-inference = "^0.7.36"
 [package.source]
 type = "git"
 url = "https://github.com/i-dot-ai/redbox.git"
-reference = "main"
+reference = "8a6a71d"
 resolved_reference = "8a6a71d15b0a8df1c15499cceac60d8de834aee2"
 subdirectory = "redbox-core"
 
@@ -6080,4 +6080,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.12,<3.13"
-content-hash = "6da3df00a023fced1da328cd3ed9685fca60858c34a3d84c7ac44e21a7138da7"
+content-hash = "30eab59082589c74b7ff4263b6d0ad6a291a34b1a6ff09171053bc7ce9591fe4"
