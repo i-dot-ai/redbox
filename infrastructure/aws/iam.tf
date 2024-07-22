@@ -79,3 +79,19 @@ data "aws_iam_policy_document" "github-runner" {
     ]
   }
 }
+
+resource "aws_iam_role" "scheduler_role" {
+  name               = "${local.name}-cleanup-lambda-scheduler-role"
+  assume_role_policy = jsonencode({
+    Version   = "2012-10-17"
+    Statement = [
+      {
+        Action    = "sts:AssumeRole"
+        Effect    = "Allow"
+        Principal = {
+          Service = "scheduler.amazonaws.com"
+        }
+      }
+    ]
+  })
+}

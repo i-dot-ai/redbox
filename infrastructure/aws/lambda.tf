@@ -86,3 +86,14 @@ resource "null_resource" "pip_install" {
   }
 }
 
+resource "aws_scheduler_schedule" "invoke_lambda_schedule" {
+  name = "${local.name}-cleanup-lambda-schedule"
+  flexible_time_window {
+    mode = "OFF"
+  }
+  schedule_expression = "cron(0 2 * * ? *)"
+  target {
+    arn      = module.lambda-cleanup.arn
+    role_arn = aws_iam_role.scheduler_role.arn
+  }
+}
