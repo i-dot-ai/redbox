@@ -15,7 +15,6 @@ from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_core.prompt_values import ChatPromptValue
 from langchain_core.runnables import Runnable, RunnableLambda
 from langchain_core.runnables.schema import StreamEvent
-from semantic_router.encoders import TfidfEncoder
 from starlette.websockets import WebSocketDisconnect
 
 from redbox.models.chat import ChatResponse, ChatRoute
@@ -29,6 +28,8 @@ user_chat = {"text": "test", "role": "user"}
 
 RAG_LLM_RESPONSE = "Based on your documents the answer to your question is 7"
 UPLOADED_FILE_UUID = "9aa1aa15-dde0-471f-ab27-fd410612025b"
+
+EXPECTED_AVAILABLE_ROUTES = ("chat", "search", "info")
 
 
 def mock_chat_prompt():
@@ -90,13 +91,6 @@ def mock_all_chunks_retriever(alice):
     return RunnableLambda(lambda _: docs)
 
 
-def mock_semantic_route_encoder():
-    encoder = TfidfEncoder()
-    routes = semantic_routes.get_semantic_routes()
-    encoder.fit(routes)
-    return encoder
-
-
 @pytest.fixture(scope="session")
 def mock_client(alice):
     chat_app.dependency_overrides[dependencies.get_llm] = mock_get_llm([RAG_LLM_RESPONSE] * 32)
@@ -104,7 +98,6 @@ def mock_client(alice):
     chat_app.dependency_overrides[dependencies.get_parameterised_retriever] = lambda: mock_parameterised_retriever(
         alice
     )
-    chat_app.dependency_overrides[semantic_routes.get_semantic_routing_encoder] = mock_semantic_route_encoder
     yield TestClient(application)
     chat_app.dependency_overrides = {}
 
@@ -134,17 +127,6 @@ def mock_streaming_client():
     chat_app.dependency_overrides = {}
 
 
-def test_rag_chat_rest_gratitude(mock_client, headers):
-    response = mock_client.post(
-        "/chat/rag",
-        json={"message_history": [{"role": "user", "text": "Thank you"}]},
-        headers=headers,
-    )
-    chat_response = ChatResponse.model_validate(response.json())
-    assert chat_response.output_text == "You're welcome!"
-    assert chat_response.route_name == ChatRoute.gratitude
-
-
 def test_rag(mock_client, headers):
     response = mock_client.post(
         "/chat/rag",
@@ -162,44 +144,24 @@ def test_rag(mock_client, headers):
     ), f"Expected route [{ChatRoute.chat_with_docs}] received [{chat_response.route_name}]"
 
 
-def test_summary(mock_client, headers):
-    response = mock_client.post(
-        "/chat/rag",
-        headers=headers,
-        json={
-            "message_history": [
-                {"text": "Summarise the documents", "role": "user"},
-            ],
-            "selected_files": [{"uuid": UPLOADED_FILE_UUID}],
-        },
-    )
-    assert response.status_code == 200
-    chat_response = ChatResponse.model_validate(response.json())
-    assert chat_response.output_text == RAG_LLM_RESPONSE
-    assert (
-        chat_response.route_name == ChatRoute.chat_with_docs
-    ), f"Expected route [{ChatRoute.chat_with_docs}] received [{chat_response.route_name}]"
-
-
-def test_keyword(mock_client, headers):
+@pytest.mark.parametrize(("keyword"), EXPECTED_AVAILABLE_ROUTES)
+def test_keywords(mock_client, headers, keyword):
     """Given a history that should summarise, force retrieval."""
     response = mock_client.post(
         "/chat/rag",
         headers=headers,
         json={
             "message_history": [
-                {"text": "What can I do for you?", "role": "system"},
-                {"text": "Summarise the provided docs? @search", "role": "user"},
+                {"text": f" @{keyword} Silly question", "role": "user"},
             ],
             "selected_files": [{"uuid": UPLOADED_FILE_UUID}],
         },
     )
     assert response.status_code == 200
     chat_response = ChatResponse.model_validate(response.json())
-    assert chat_response.output_text == RAG_LLM_RESPONSE
-    assert (
-        chat_response.route_name == ChatRoute.search
-    ), f"Expected route [{ChatRoute.search}] received [{chat_response.route_name}]"
+    assert chat_response.route_name.startswith(
+        keyword
+    ), f"Expected route to match keyword[{keyword}] received [{chat_response.route_name}]"
 
 
 def test_rag_chat_streamed(mock_client, headers):
@@ -231,3 +193,14 @@ def test_rag_chat_streamed(mock_client, headers):
         text = "".join(all_text)
         assert text == RAG_LLM_RESPONSE
         assert route_name == ChatRoute.chat_with_docs
+
+
+def test_available_tools(mock_client, headers):
+    response = mock_client.get("/chat/tools", headers=headers)
+    assert response.status_code == 200
+    tool_definitions = response.json()
+    assert len(tool_definitions) > 0
+    assert set(EXPECTED_AVAILABLE_ROUTES).issubset({item["name"] for item in tool_definitions})
+    for tool_definition in tool_definitions:
+        assert "name" in tool_definition
+        assert "description" in tool_definition

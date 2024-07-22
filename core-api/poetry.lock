@@ -461,29 +461,6 @@ files = [
 colorama = {version = "*", markers = "platform_system == \"Windows\""}
 
 [[package]]
-name = "cohere"
-version = "5.6.1"
-description = ""
-optional = false
-python-versions = "<4.0,>=3.8"
-files = [
-    {file = "cohere-5.6.1-py3-none-any.whl", hash = "sha256:1c8bcd39a54622d64b83cafb865f102cd2565ce091b0856fd5ce11bf7169109a"},
-    {file = "cohere-5.6.1.tar.gz", hash = "sha256:5d7efda64f0e512d4cc35aa04b17a6f74b3d8c175a99f2797991a7f31dfac349"},
-]
-
-[package.dependencies]
-boto3 = ">=1.34.0,<2.0.0"
-fastavro = ">=1.9.4,<2.0.0"
-httpx = ">=0.21.2"
-httpx-sse = ">=0.4.0,<0.5.0"
-parameterized = ">=0.9.0,<0.10.0"
-pydantic = ">=1.9.2"
-requests = ">=2.0.0,<3.0.0"
-tokenizers = ">=0.15,<1"
-types-requests = ">=2.0.0,<3.0.0"
-typing_extensions = ">=4.0.0"
-
-[[package]]
 name = "colorama"
 version = "0.4.6"
 description = "Cross-platform colored terminal text."
@@ -510,23 +487,6 @@ humanfriendly = ">=9.1"
 
 [package.extras]
 cron = ["capturer (>=2.4)"]
-
-[[package]]
-name = "colorlog"
-version = "6.8.2"
-description = "Add colours to the output of Python's logging module."
-optional = false
-python-versions = ">=3.6"
-files = [
-    {file = "colorlog-6.8.2-py3-none-any.whl", hash = "sha256:4dcbb62368e2800cb3c5abd348da7e53f6c362dda502ec27c560b2e58a66bd33"},
-    {file = "colorlog-6.8.2.tar.gz", hash = "sha256:3e3e079a41feb5a1b64f978b5ea4f46040a94f11f0e8bbb8261e3dbbeca64d44"},
-]
-
-[package.dependencies]
-colorama = {version = "*", markers = "sys_platform == \"win32\""}
-
-[package.extras]
-development = ["black", "flake8", "mypy", "pytest", "types-colorama"]
 
 [[package]]
 name = "contourpy"
@@ -1093,52 +1053,6 @@ typer = ">=0.12.3"
 
 [package.extras]
 standard = ["fastapi", "uvicorn[standard] (>=0.15.0)"]
-
-[[package]]
-name = "fastavro"
-version = "1.9.5"
-description = "Fast read/write of AVRO files"
-optional = false
-python-versions = ">=3.8"
-files = [
-    {file = "fastavro-1.9.5-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:61253148e95dd2b6457247b441b7555074a55de17aef85f5165bfd5facf600fc"},
-    {file = "fastavro-1.9.5-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:b604935d671ad47d888efc92a106f98e9440874108b444ac10e28d643109c937"},
-    {file = "fastavro-1.9.5-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:0adbf4956fd53bd74c41e7855bb45ccce953e0eb0e44f5836d8d54ad843f9944"},
-    {file = "fastavro-1.9.5-cp310-cp310-musllinux_1_2_aarch64.whl", hash = "sha256:53d838e31457db8bf44460c244543f75ed307935d5fc1d93bc631cc7caef2082"},
-    {file = "fastavro-1.9.5-cp310-cp310-musllinux_1_2_x86_64.whl", hash = "sha256:07b6288e8681eede16ff077632c47395d4925c2f51545cd7a60f194454db2211"},
-    {file = "fastavro-1.9.5-cp310-cp310-win_amd64.whl", hash = "sha256:ef08cf247fdfd61286ac0c41854f7194f2ad05088066a756423d7299b688d975"},
-    {file = "fastavro-1.9.5-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:c52d7bb69f617c90935a3e56feb2c34d4276819a5c477c466c6c08c224a10409"},
-    {file = "fastavro-1.9.5-cp311-cp311-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:85e05969956003df8fa4491614bc62fe40cec59e94d06e8aaa8d8256ee3aab82"},
-    {file = "fastavro-1.9.5-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:06e6df8527493a9f0d9a8778df82bab8b1aa6d80d1b004e5aec0a31dc4dc501c"},
-    {file = "fastavro-1.9.5-cp311-cp311-musllinux_1_2_aarch64.whl", hash = "sha256:27820da3b17bc01cebb6d1687c9d7254b16d149ef458871aaa207ed8950f3ae6"},
-    {file = "fastavro-1.9.5-cp311-cp311-musllinux_1_2_x86_64.whl", hash = "sha256:195a5b8e33eb89a1a9b63fa9dce7a77d41b3b0cd785bac6044df619f120361a2"},
-    {file = "fastavro-1.9.5-cp311-cp311-win_amd64.whl", hash = "sha256:be612c109efb727bfd36d4d7ed28eb8e0506617b7dbe746463ebbf81e85eaa6b"},
-    {file = "fastavro-1.9.5-cp312-cp312-macosx_10_9_universal2.whl", hash = "sha256:b133456c8975ec7d2a99e16a7e68e896e45c821b852675eac4ee25364b999c14"},
-    {file = "fastavro-1.9.5-cp312-cp312-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:bf586373c3d1748cac849395aad70c198ee39295f92e7c22c75757b5c0300fbe"},
-    {file = "fastavro-1.9.5-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:724ef192bc9c55d5b4c7df007f56a46a21809463499856349d4580a55e2b914c"},
-    {file = "fastavro-1.9.5-cp312-cp312-musllinux_1_2_aarch64.whl", hash = "sha256:bfd11fe355a8f9c0416803afac298960eb4c603a23b1c74ff9c1d3e673ea7185"},
-    {file = "fastavro-1.9.5-cp312-cp312-musllinux_1_2_x86_64.whl", hash = "sha256:9827d1654d7bcb118ef5efd3e5b2c9ab2a48d44dac5e8c6a2327bc3ac3caa828"},
-    {file = "fastavro-1.9.5-cp312-cp312-win_amd64.whl", hash = "sha256:d84b69dca296667e6137ae7c9a96d060123adbc0c00532cc47012b64d38b47e9"},
-    {file = "fastavro-1.9.5-cp38-cp38-macosx_11_0_universal2.whl", hash = "sha256:fb744e9de40fb1dc75354098c8db7da7636cba50a40f7bef3b3fb20f8d189d88"},
-    {file = "fastavro-1.9.5-cp38-cp38-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:240df8bacd13ff5487f2465604c007d686a566df5cbc01d0550684eaf8ff014a"},
-    {file = "fastavro-1.9.5-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:c3bb35c25bbc3904e1c02333bc1ae0173e0a44aa37a8e95d07e681601246e1f1"},
-    {file = "fastavro-1.9.5-cp38-cp38-musllinux_1_2_aarch64.whl", hash = "sha256:b47a54a9700de3eabefd36dabfb237808acae47bc873cada6be6990ef6b165aa"},
-    {file = "fastavro-1.9.5-cp38-cp38-musllinux_1_2_x86_64.whl", hash = "sha256:48c7b5e6d2f3bf7917af301c275b05c5be3dd40bb04e80979c9e7a2ab31a00d1"},
-    {file = "fastavro-1.9.5-cp38-cp38-win_amd64.whl", hash = "sha256:05d13f98d4e325be40387e27da9bd60239968862fe12769258225c62ec906f04"},
-    {file = "fastavro-1.9.5-cp39-cp39-macosx_10_9_universal2.whl", hash = "sha256:5b47948eb196263f6111bf34e1cd08d55529d4ed46eb50c1bc8c7c30a8d18868"},
-    {file = "fastavro-1.9.5-cp39-cp39-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:85b7a66ad521298ad9373dfe1897a6ccfc38feab54a47b97922e213ae5ad8870"},
-    {file = "fastavro-1.9.5-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:44cb154f863ad80e41aea72a709b12e1533b8728c89b9b1348af91a6154ab2f5"},
-    {file = "fastavro-1.9.5-cp39-cp39-musllinux_1_2_aarch64.whl", hash = "sha256:b5f7f2b1fe21231fd01f1a2a90e714ae267fe633cd7ce930c0aea33d1c9f4901"},
-    {file = "fastavro-1.9.5-cp39-cp39-musllinux_1_2_x86_64.whl", hash = "sha256:88fbbe16c61d90a89d78baeb5a34dc1c63a27b115adccdbd6b1fb6f787deacf2"},
-    {file = "fastavro-1.9.5-cp39-cp39-win_amd64.whl", hash = "sha256:753f5eedeb5ca86004e23a9ce9b41c5f25eb64a876f95edcc33558090a7f3e4b"},
-    {file = "fastavro-1.9.5.tar.gz", hash = "sha256:6419ebf45f88132a9945c51fe555d4f10bb97c236288ed01894f957c6f914553"},
-]
-
-[package.extras]
-codecs = ["cramjam", "lz4", "zstandard"]
-lz4 = ["lz4"]
-snappy = ["cramjam"]
-zstandard = ["zstandard"]
 
 [[package]]
 name = "faststream"
@@ -1732,17 +1646,6 @@ brotli = ["brotli", "brotlicffi"]
 cli = ["click (==8.*)", "pygments (==2.*)", "rich (>=10,<14)"]
 http2 = ["h2 (>=3,<5)"]
 socks = ["socksio (==1.*)"]
-
-[[package]]
-name = "httpx-sse"
-version = "0.4.0"
-description = "Consume Server-Sent Event (SSE) messages with HTTPX."
-optional = false
-python-versions = ">=3.8"
-files = [
-    {file = "httpx-sse-0.4.0.tar.gz", hash = "sha256:1e81a3a3070ce322add1d3529ed42eb5f70817f45ed6ec915ab753f961139721"},
-    {file = "httpx_sse-0.4.0-py3-none-any.whl", hash = "sha256:f329af6eae57eaa2bdfd962b42524764af68075ea87370a2de920af5341e318f"},
-]
 
 [[package]]
 name = "huggingface-hub"
@@ -3511,20 +3414,6 @@ test = ["hypothesis (>=6.46.1)", "pytest (>=7.3.2)", "pytest-xdist (>=2.2.0)"]
 xml = ["lxml (>=4.9.2)"]
 
 [[package]]
-name = "parameterized"
-version = "0.9.0"
-description = "Parameterized testing with any Python test framework"
-optional = false
-python-versions = ">=3.7"
-files = [
-    {file = "parameterized-0.9.0-py2.py3-none-any.whl", hash = "sha256:4e0758e3d41bea3bbd05ec14fc2c24736723f243b28d702081aef438c9372b1b"},
-    {file = "parameterized-0.9.0.tar.gz", hash = "sha256:7fc905272cefa4f364c1a3429cbbe9c0f98b793988efb5bf90aac80f08db09b1"},
-]
-
-[package.extras]
-dev = ["jinja2"]
-
-[[package]]
 name = "pdf2image"
 version = "1.17.0"
 description = "A wrapper around the pdftoppm and pdftocairo command line tools to convert PDF to a PIL Image list."
@@ -4907,23 +4796,6 @@ socks = ["PySocks (>=1.5.6,!=1.5.7)"]
 use-chardet-on-py3 = ["chardet (>=3.0.2,<6)"]
 
 [[package]]
-name = "requests-mock"
-version = "1.12.1"
-description = "Mock out responses from the requests package"
-optional = false
-python-versions = ">=3.5"
-files = [
-    {file = "requests-mock-1.12.1.tar.gz", hash = "sha256:e9e12e333b525156e82a3c852f22016b9158220d2f47454de9cae8a77d371401"},
-    {file = "requests_mock-1.12.1-py2.py3-none-any.whl", hash = "sha256:b1e37054004cdd5e56c84454cc7df12b25f90f382159087f4b6915aaeef39563"},
-]
-
-[package.dependencies]
-requests = ">=2.22,<3"
-
-[package.extras]
-fixture = ["fixtures"]
-
-[[package]]
 name = "requests-toolbelt"
 version = "1.0.0"
 description = "A utility belt for advanced users of python-requests"
@@ -5276,42 +5148,6 @@ numpy = ">=1.23.5,<2.3"
 dev = ["cython-lint (>=0.12.2)", "doit (>=0.36.0)", "mypy (==1.10.0)", "pycodestyle", "pydevtool", "rich-click", "ruff (>=0.0.292)", "types-psutil", "typing_extensions"]
 doc = ["jupyterlite-pyodide-kernel", "jupyterlite-sphinx (>=0.13.1)", "jupytext", "matplotlib (>=3.5)", "myst-nb", "numpydoc", "pooch", "pydata-sphinx-theme (>=0.15.2)", "sphinx (>=5.0.0)", "sphinx-design (>=0.4.0)"]
 test = ["Cython", "array-api-strict", "asv", "gmpy2", "hypothesis (>=6.30)", "meson", "mpmath", "ninja", "pooch", "pytest", "pytest-cov", "pytest-timeout", "pytest-xdist", "scikit-umfpack", "threadpoolctl"]
-
-[[package]]
-name = "semantic-router"
-version = "0.0.48"
-description = "Super fast semantic router for AI decision making"
-optional = false
-python-versions = "<3.13,>=3.9"
-files = [
-    {file = "semantic_router-0.0.48-py3-none-any.whl", hash = "sha256:830ae0a3eb278d4154b369d3f8c4484ecb48a87512fdbf63cd9bdda3894fb883"},
-    {file = "semantic_router-0.0.48.tar.gz", hash = "sha256:23427c921ae9f2261d7e914896afb13e16890cec087320a9e5adf031d23524fe"},
-]
-
-[package.dependencies]
-aiohttp = ">=3.9.5,<4.0.0"
-cohere = ">=5.00,<6.00"
-colorama = ">=0.4.6,<0.5.0"
-colorlog = ">=6.8.0,<7.0.0"
-numpy = ">=1.25.2,<2.0.0"
-openai = ">=1.10.0,<2.0.0"
-pydantic = ">=2.5.3,<3.0.0"
-pyyaml = ">=6.0.1,<7.0.0"
-regex = ">=2023.12.25"
-requests-mock = ">=1.12.1,<2.0.0"
-tiktoken = ">=0.6.0,<1.0.0"
-
-[package.extras]
-bedrock = ["boto3 (>=1.34.98,<2.0.0)", "botocore (>=1.34.110,<2.0.0)"]
-fastembed = ["fastembed (>=0.3.0,<0.4.0)"]
-google = ["google-cloud-aiplatform (>=1.45.0,<2.0.0)"]
-hybrid = ["pinecone-text (>=0.7.1,<0.10.0)"]
-local = ["llama-cpp-python (>=0.2.28,<0.3.0)", "tokenizers (>=0.19)", "torch (>=2.1.0,<2.6.0)", "transformers (>=4.36.2)"]
-mistralai = ["mistralai (>=0.0.12,<0.1.0)"]
-pinecone = ["pinecone-client (>=3.0.0,<4.0.0)"]
-processing = ["matplotlib (>=3.8.3,<4.0.0)"]
-qdrant = ["qdrant-client (>=1.8.0,<2.0.0)"]
-vision = ["pillow (>=10.2.0,<11.0.0)", "torch (>=2.1.0,<2.6.0)", "torchvision (>=0.17.0,<0.18.0)", "transformers (>=4.36.2)"]
 
 [[package]]
 name = "sentry-sdk"
@@ -6061,20 +5897,6 @@ click = ">=8.0.0"
 rich = ">=10.11.0"
 shellingham = ">=1.3.0"
 typing-extensions = ">=3.7.4.3"
-
-[[package]]
-name = "types-requests"
-version = "2.32.0.20240712"
-description = "Typing stubs for requests"
-optional = false
-python-versions = ">=3.8"
-files = [
-    {file = "types-requests-2.32.0.20240712.tar.gz", hash = "sha256:90c079ff05e549f6bf50e02e910210b98b8ff1ebdd18e19c873cd237737c1358"},
-    {file = "types_requests-2.32.0.20240712-py3-none-any.whl", hash = "sha256:f754283e152c752e46e70942fa2a146b5bc70393522257bb85bd1ef7e019dcc3"},
-]
-
-[package.dependencies]
-urllib3 = ">=2"
 
 [[package]]
 name = "typing-extensions"
@@ -6930,4 +6752,4 @@ test = ["big-O", "importlib-resources", "jaraco.functools", "jaraco.itertools", 
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.12,<3.13"
-content-hash = "e3c080c3ea5d0aba581519a9d0805bf8cc4b7b378a31898f84608c5e79ada9dc"
+content-hash = "1e9c415b1230b3c6719446d6d4439d5e1614f142531d2d775f161a81184b3eeb"
