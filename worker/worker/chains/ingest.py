@@ -9,7 +9,7 @@ from langchain_core.runnables import RunnableLambda, chain
 
 from redbox.models.settings import Settings
 from redbox.models.file import File
-from redbox.loader.base import BaseRedboxFileLoader
+from worker.loader.base import BaseRedboxFileLoader
 
 
 if TYPE_CHECKING:
