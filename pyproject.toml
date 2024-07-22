@@ -33,6 +33,7 @@ mock = "^5.1.0"
 wordcloud = "^1.9.3"
 bertopic = "^0.16.2"
 streamlit = "^1.36.0"
+django-environ = "^0.11.2"
 [tool.poetry.group.api.dependencies]
 fastapi = "^0.111.0"
 uvicorn = "^0.30.1"
