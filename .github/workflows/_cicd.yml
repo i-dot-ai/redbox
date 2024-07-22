@@ -27,8 +27,8 @@ permissions:
 
 jobs:
   release-dev:
-    if: ${{ false }}
-#    if: github.event_name == 'workflow_dispatch'
+#    if: ${{ false }}  # Uncomment this, and comment out the line below, to disable this workflow path
+    if: github.event_name == 'workflow_dispatch'
     uses: i-dot-ai/redbox/.github/workflows/build-and-release.yml@main
     with:
       environment: dev
@@ -38,8 +38,8 @@ jobs:
     secrets: inherit
 
   release-preprod:
-    if: ${{ false }}
-#    if: github.event_name == 'push' && github.ref_name == 'main'
+#    if: ${{ false }}  # Uncomment this, and comment out the line below, to disable this workflow path
+    if: github.event_name == 'push' && github.ref_name == 'main'
     uses: i-dot-ai/redbox/.github/workflows/build-and-release.yml@main
     with:
       environment: preprod
@@ -49,8 +49,8 @@ jobs:
     secrets: inherit
 
   release-prod:
-    if: ${{ false }}
-#    if: github.event_name == 'release'
+#    if: ${{ false }}  # Uncomment this, and comment out the line below, to disable this workflow path
+    if: github.event_name == 'release'
     uses: i-dot-ai/redbox/.github/workflows/build-and-release.yml@main
     with:
       environment: prod
