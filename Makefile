@@ -239,7 +239,7 @@ tf_plan: ## Plan terraform
 .PHONY: tf_apply
 tf_apply: ## Apply terraform
 	make tf_set_workspace && \
-	terraform -chdir=./infrastructure/aws/$(instance) apply -var-file=$(CONFIG_DIR)/${env}-input-params.tfvars ${tf_build_args} ${args} -target=module.django-command -target=aws_iam_policy.redbox_policy -target=aws_secretsmanager_secret_version.django-command-json-secret -target=aws_iam_role_policy_attachment.redbox_role_policy -target=aws_security_group_rule.ecs_command_to_core
+	terraform -chdir=./infrastructure/aws/$(instance) apply -var-file=$(CONFIG_DIR)/${env}-input-params.tfvars ${tf_build_args} ${args}
 
 .PHONY: tf_init_universal
 tf_init_universal: ## Initialise terraform
