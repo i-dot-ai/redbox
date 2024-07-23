@@ -39,24 +39,6 @@ class NewChatOptions extends HTMLElement {
         this.prepopulateMessageBox("Summarise my document");
       }
     );
-
-    /**
-     * Ensures "Message Redbox" always aligns to the bottom (not proud of this code, but it works until I put in a better grid solution)
-     */
-    const setTopMargin = () => {
-      this.style.marginTop = "0px";
-      const offset = 47;
-      const topMargin =
-        document.querySelector("main").scrollHeight -
-        document.querySelector(".iai-chat-input").scrollHeight -
-        this.scrollHeight -
-        offset;
-      if (topMargin > 0) {
-        this.style.marginTop = `${topMargin}px`;
-      }
-    };
-    setTopMargin();
-    window.addEventListener("resize", setTopMargin);
   }
 
   prepopulateMessageBox = (prompt) => {

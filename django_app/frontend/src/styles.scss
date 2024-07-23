@@ -488,3 +488,35 @@ button.iai-chat-bubble__citations-button {
     margin-top: 0;
   }
 }
+
+main:has(.iai-chat-input),
+body:has(.iai-environment-warning) main {
+  min-height: 0;
+}
+@media (min-width: 641px) {
+  .govuk-grid-row:has(.iai-chat-input) {
+    display: flex;
+    .govuk-grid-column-one-third,
+    .govuk-grid-column-two-thirds {
+      float: none;
+      min-height: calc(100vh - 17.25rem);
+    }
+    .govuk-grid-column-two-thirds {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .iai-panel {
+      height: auto;
+    }
+  }
+}
+@media (min-width: 1020px) {
+  .govuk-grid-row:has(.iai-chat-input) {
+    .govuk-grid-column-one-third,
+    .govuk-grid-column-two-thirds {
+      min-height: calc(100vh - 10.25rem);
+    }
+  }
+}
