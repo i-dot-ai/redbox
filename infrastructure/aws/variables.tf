@@ -24,6 +24,12 @@ variable "developer_ips" {
   description = "List of developer IPs"
 }
 
+variable "django_command" {
+  type        = string
+  default     = "delete_expired_data"
+  description = "Name of Django management to be run. Use with caution"
+}
+
 variable "django_secret_key" {
   type        = string
   description = "cryptographic signature for django app"
@@ -352,10 +358,4 @@ variable "summarisation_chunk_max_tokens" {
   type        = number
   default     = 20000
   description = "Maximum size (in tokens) of chunk used in summarisation"
-}
-
-variable "django_command" {
-  type        = string
-  default     = "delete_expired_data"
-  description = "Name of Django management to be run. Use with caution"
 }
