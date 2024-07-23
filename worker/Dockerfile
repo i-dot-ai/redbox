@@ -1,10 +1,5 @@
 FROM python:3.12-bookworm as builder
 
-RUN apt-get update && apt-get install -y \
-    poppler-utils \
-    tesseract-ocr \
-    libmagic-dev
-
 RUN pip install poetry
 
 ENV POETRY_NO_INTERACTION=1 \
@@ -37,9 +32,13 @@ ENV VIRTUAL_ENV=/app/worker/.venv \
 
 COPY --from=builder ${VIRTUAL_ENV} ${VIRTUAL_ENV}
 
+RUN apt-get update && apt-get install -y \
+    poppler-utils \
+    tesseract-ocr \
+    libmagic-dev
+
 WORKDIR /app/worker
 
-COPY redbox-core/ /app/redbox-core
 COPY worker/ /app/worker
 
 RUN chmod +x health.sh

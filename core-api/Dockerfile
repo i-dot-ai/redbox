@@ -1,7 +1,5 @@
 FROM python:3.12-bookworm as builder
 
-RUN apt-get update && apt-get install --yes build-essential curl > /dev/null
-
 RUN pip install poetry
 
 ENV POETRY_NO_INTERACTION=1 \
@@ -18,7 +16,6 @@ COPY README.md /app/README.md
 RUN --mount=type=cache,target=$POETRY_CACHE_DIR poetry install --without dev --no-root
 
 FROM python:3.12-slim-bookworm as runtime
-
 
 ENV VIRTUAL_ENV=/app/core-api/.venv \
     PATH="/app/core-api/.venv/bin:$PATH"
