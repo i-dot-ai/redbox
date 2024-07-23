@@ -28,11 +28,12 @@ jobs:
           echo "docker-build-instance=${DOCKER_BUILD_INSTANCE}" >> $GITHUB_OUTPUT
 
   start-runner:
-    uses: i-dot-ai/i-dot-ai-core-github-actions/.github/workflows/start-runner.yml@main
+    uses: i-dot-ai/i-dot-ai-core-github-actions/.github/workflows/start-runner.yml@feature/runner-efs
     needs: set-vars
     with:
         EC2_INSTANCE_TYPE: ${{ needs.set-vars.outputs.ec2-instance-type }}
         RUNNER_SIZE: ${{ needs.set-vars.outputs.runner-size }}
+        ENVIRONMENT: dev
     secrets:
         AWS_GITHUBRUNNER_USER_ACCESS_KEY: ${{ secrets.AWS_GITHUBRUNNER_USER_ACCESS_KEY }}
         AWS_GITHUBRUNNER_USER_SECRET_ID: ${{ secrets.AWS_GITHUBRUNNER_USER_SECRET_ID }}
@@ -46,13 +47,14 @@ jobs:
     needs:
       - set-vars
       - start-runner
-    uses: i-dot-ai/i-dot-ai-core-github-actions/.github/workflows/build-docker.yml@main
+    uses: i-dot-ai/i-dot-ai-core-github-actions/.github/workflows/build-docker.yml@feature/runner-efs
     with:
       APP_NAME: ${{ needs.set-vars.outputs.app-name }}
       RUNNER_LABEL: ${{ needs.start-runner.outputs.label }}
       INFRASTRUCTURE_FOLDER: "infrastructure/aws"
       DOCKER_BUILD_INSTANCE: ${{ needs.set-vars.outputs.docker-build-instance }}
       SERVICE: ${{ matrix.service }}
+      ENVIRONMENT: dev
     secrets:
       AWS_GITHUBRUNNER_PAT: ${{ secrets.AWS_GITHUBRUNNER_PAT}}
       AWS_GITHUBRUNNER_PAT_USER: ${{ secrets.AWS_GITHUBRUNNER_PAT_USER }}
@@ -60,7 +62,7 @@ jobs:
       AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
 
   stop-runner:
-    uses: i-dot-ai/i-dot-ai-core-github-actions/.github/workflows/stop-runner.yml@main
+    uses: i-dot-ai/i-dot-ai-core-github-actions/.github/workflows/stop-runner.yml@feature/runner-efs
     if: needs.start-runner.outputs.use-persisted == 0 && always()
     needs:
         - set-vars

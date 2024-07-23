@@ -167,12 +167,14 @@ docker_login:
 docker_build_local: ## Build the docker container locally
 	DOCKER_BUILDKIT=1 docker build --target=runtime -t $(IMAGE) -f $(service)/Dockerfile .
 
+ifndef cache
+	override cache = ./.build-cache
+
 .PHONY: docker_build
 docker_build: ## Pull previous container (if it exists) build the docker container
 	DOCKER_BUILDKIT=1 docker buildx build --target=runtime --platform linux/amd64 --load --builder=$(DOCKER_BUILDER_CONTAINER) -t $(IMAGE) \
-	--cache-to type=s3,region=$(AWS_REGION),bucket=$(DOCKER_CACHE_BUCKET),name=$(APP_NAME)/$(IMAGE) \
-	--cache-from type=s3,region=$(AWS_REGION),bucket=$(DOCKER_CACHE_BUCKET),name=$(APP_NAME)/$(ECR_REPO_URL):$(PREV_IMAGE_TAG) \
-	--cache-from type=s3,region=$(AWS_REGION),bucket=$(DOCKER_CACHE_BUCKET),name=$(APP_NAME)/$(ECR_REPO_URL):$(MAIN_IMAGE_TAG) -f $(service)/Dockerfile .
+	--cache-to type=local,dest=$(cache) \
+	--cache-from type=local,src=$(cache) -f $(service)/Dockerfile .
 
 .PHONY: docker_push
 docker_push:
