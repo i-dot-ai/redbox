@@ -191,19 +191,10 @@ class MyDetailsPage(SignedInBasePage):
     def name(self, name: str):
         self.page.get_by_label("Full Name").fill(name)
 
-    @property
-    def ai_experience(self) -> str:
-        return (
-            self.page.get_by_label("How would you describe your level of experience with Generative AI tools?")
-            .get_by_role(role="option", selected=True)
-            .inner_text()
-        )
-
-    @ai_experience.setter
     def ai_experience(self, ai_experience: str):
-        self.page.get_by_label(
-            "How would you describe your level of experience with Generative AI tools?"
-        ).select_option(ai_experience)
+        self.page.get_by_test_id(ai_experience).click()
+
+    ai_experience = property(fset=ai_experience)
 
     @property
     def grade(self) -> str:

@@ -34,7 +34,8 @@
                        id="ai_experience_{{ loop.index0 }}"
                        name="{{ form.ai_experience.name }}"
                        value="{{ value }}"
-                       {% if value|string == form.ai_experience.value()|string %}checked{% endif %}>
+                       {% if value|string == form.ai_experience.value()|string %}checked{% endif %}
+                       data-testid="{{ value }}">
                 <label class="govuk-label govuk-radios__label"
                        for="ai_experience_{{ loop.index0 }}">
                   {{ value }}<br/>{{ label }}
