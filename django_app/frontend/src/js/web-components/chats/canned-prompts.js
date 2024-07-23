@@ -1,6 +1,6 @@
 // @ts-check
 
-class NewChatOptions extends HTMLElement {
+class CannedPrompts extends HTMLElement {
   connectedCallback() {
     this.innerHTML = `
         <h3 class="chat-options__heading govuk-heading-m">What would you like to ask your Redbox?</h3>
@@ -55,4 +55,4 @@ class NewChatOptions extends HTMLElement {
     }
   };
 }
-customElements.define("new-chat-options", NewChatOptions);
+customElements.define("canned-prompts", CannedPrompts);

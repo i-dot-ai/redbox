@@ -66,7 +66,7 @@
             <h2 class="chat-title__heading govuk-visually-hidden" hidden>Current chat</h2>
           {% endif %}
         </chat-title>
-      
+
 
         <chat-controller class="iai-chat-container" data-stream-url="{{ streaming.endpoint }}" data-session-id="{{ chat_id or '' }}">
 
@@ -106,7 +106,7 @@
       </div>
 
       {% if not messages %}
-        <new-chat-options class="chat-options"></new-chat-options>
+        <canned-prompts class="chat-options"></canned-prompts>
       {% endif %}
 
       <div class="iai-chat-input">
