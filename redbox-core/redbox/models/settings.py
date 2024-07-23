@@ -128,7 +128,7 @@ class AISettings(BaseModel):
     @computed_field
     @property
     def stuff_chunk_max_tokens(self) -> int:
-        return self.context_window_size * 0.8
+        return int(self.context_window_size * 0.8)
 
 
 class ElasticLocalSettings(BaseModel):
