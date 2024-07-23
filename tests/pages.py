@@ -4,7 +4,7 @@ from collections.abc import Collection, Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
 from time import sleep
-from typing import Any, ClassVar, Union
+from typing import Any, ClassVar, Union, override
 
 from axe_playwright_python.sync_playwright import Axe
 from playwright.sync_api import Locator, Page, expect
@@ -294,7 +294,7 @@ class ChatMessage:
     chats_page: "ChatsPage" = field(repr=False)
 
     def navigate_to_citations(self) -> "CitationsPage":
-        self.element.locator(".iai-chat-bubble__citations-button").click()
+        self.element.locator("a.iai-chat-bubble__citations-button").click()
         return CitationsPage(self.chats_page.page)
 
     @classmethod
@@ -308,6 +308,11 @@ class ChatMessage:
 
 
 class ChatsPage(SignedInBasePage):
+    @override
+    def check_a11y(self, **kwargs):
+        # Exclude AI generated content, since we can't control it.
+        return super().check_a11y(exclude=[".iai-chat-bubble__text"])
+
     @property
     def expected_page_title(self) -> str:
         return "Chats - Redbox"
@@ -356,6 +361,17 @@ class ChatsPage(SignedInBasePage):
 
     feedback_chips = property(fset=feedback_chips)
 
+    @property
+    def chat_title(self) -> str:
+        return self.page.locator(".chat-title__heading").inner_text()
+
+    @chat_title.setter
+    def chat_title(self, title: str):
+        self.page.locator(".chat-title__edit-btn").click()
+        input_ = self.page.get_by_label("Chat Title")
+        input_.fill(title)
+        input_.press("Enter")
+
     def start_new_chat(self) -> "ChatsPage":
         self.page.get_by_role("button", name="New chat").click()
         return ChatsPage(self.page)
@@ -393,9 +409,15 @@ class ChatsPage(SignedInBasePage):
     def wait_for_latest_message(self, role="Redbox") -> ChatMessage:
         return [m for m in self.get_all_messages_once_streaming_has_completed() if m.role == role][-1]
 
+    def navigate_to_titled_chat(self, title: str) -> "ChatsPage":
+        self.page.get_by_role("link", name=title).click()
+        return ChatsPage(self.page)
+
 
 class CitationsPage(SignedInBasePage):
-    def check_a11y(self):
+    @override
+    def check_a11y(self, **kwargs):
+        # Exclude AI generated content, since we can't control it.
         return super().check_a11y(exclude=[".iai-chat-bubble__text"])
 
     @property

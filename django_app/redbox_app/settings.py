@@ -25,8 +25,6 @@ DEBUG = env.bool("DEBUG")
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-COMPRESSION_ENABLED = env.bool("COMPRESSION_ENABLED")
-
 COMPRESS_PRECOMPILERS = (("text/x-scss", "django_libsass.SassCompiler"),)
 
 STATIC_URL = "static/"
@@ -90,9 +88,6 @@ TEMPLATES = [
         ],
         "OPTIONS": {
             "environment": "redbox_app.jinja2.environment",
-            "context_processors": [
-                "redbox_app.context_processors.compression_enabled",
-            ],
         },
     },
     {
@@ -158,6 +153,8 @@ CSP_SCRIPT_SRC = (
     "'self'",
     "'sha256-GUQ5ad8JK5KmEWmROf3LZd9ge94daqNvd8xy9YS1iDw='",
     "plausible.io",
+    "eu.i.posthog.com",
+    "eu-assets.i.posthog.com",
 )
 CSP_OBJECT_SRC = ("'none'",)
 CSP_REQUIRE_TRUSTED_TYPES_FOR = ("'script'",)
@@ -167,7 +164,13 @@ CSP_FONT_SRC = (
 )
 CSP_STYLE_SRC = ("'self'",)
 CSP_FRAME_ANCESTORS = ("'none'",)
-CSP_CONNECT_SRC = ["'self'", f"wss://{ENVIRONMENT.hosts[0]}/ws/chat/", "plausible.io"]
+CSP_CONNECT_SRC = [
+    "'self'",
+    f"wss://{ENVIRONMENT.hosts[0]}/ws/chat/",
+    "plausible.io",
+    "eu.i.posthog.com",
+    "eu-assets.i.posthog.com",
+]
 
 # https://pypi.org/project/django-permissions-policy/
 PERMISSIONS_POLICY: dict[str, list] = {

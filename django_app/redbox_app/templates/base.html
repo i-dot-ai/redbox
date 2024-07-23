@@ -15,14 +15,8 @@
   <meta name="robots" content="noindex, nofollow">
   <link rel="stylesheet" type="text/css" href="{{static('styles.css')}}" />
 
-  <script src="{{ static('js/libs/dompurify.js') }}"></script>
-  {% if COMPRESSION_ENABLED %}
-    {% compress js %}
-      <script src="{{ static('js/trusted-types.js') }}"></script>
-    {% endcompress %}
-  {% else %}
-    <script src="{{ static('js/trusted-types.js') }}"></script>
-  {% endif %}
+  <script type="module" src="{{static('js/libs/dompurify.js')}}"></script>
+  <script type="module" src="{{static('js/main.js')}}"></script>
 
   {% if environment | lower in ["dev", "preprod"] %}
     <script defer
@@ -31,6 +25,10 @@
   {% elif environment | lower == "prod" %}
     <script defer
     data-domain="redbox.ai.cabinetoffice.gov.uk" src="https://plausible.io/js/script.pageview-props.tagged-events.outbound-links.file-downloads.js"></script>
+  {% endif %}
+
+  {% if environment | lower == "preprod" %}
+    <script type="module" src="{{ static('js/posthog.js') }}"></script>
   {% endif %}
 
 </head>
@@ -113,9 +111,6 @@
       </div>
     </div>
   </footer>
-
-  <script type="module" src="{{static('js/libs/govuk-frontend.min.js')}}"></script>
-  <script type="module" src="{{static('js/libs/iai-design-system.js')}}"></script>
 
 </body>
 

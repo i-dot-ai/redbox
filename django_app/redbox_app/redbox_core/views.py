@@ -2,7 +2,10 @@ import logging
 import uuid
 from collections.abc import MutableSequence, Sequence
 from dataclasses import dataclass, field
+from datetime import date
 from http import HTTPStatus
+from itertools import groupby
+from operator import attrgetter
 from pathlib import Path
 
 from dataclasses_json import Undefined, dataclass_json
@@ -10,7 +13,7 @@ from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import FieldError, ValidationError
 from django.core.files.uploadedfile import UploadedFile
-from django.db.models import Min, Prefetch
+from django.db.models import Max, Min, Prefetch
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -189,7 +192,7 @@ class UploadView(View):
 
 @login_required
 def remove_doc_view(request, doc_id: uuid):
-    file = File.objects.get(pk=doc_id)
+    file = get_object_or_404(File, id=doc_id)
     errors: list[str] = []
 
     if request.method == "POST":
@@ -216,14 +219,17 @@ def remove_doc_view(request, doc_id: uuid):
 class ChatsView(View):
     @method_decorator(login_required)
     def get(self, request: HttpRequest, chat_id: uuid.UUID | None = None) -> HttpResponse:
-        chat_history = ChatHistory.objects.filter(users=request.user).order_by("-created_at")
-        # TODO(@rachaelcodes): remove this when we have a better route component design
-        # https://technologyprogramme.atlassian.net/browse/REDBOX-419
-        show_route = request.user.is_staff
+        chat_history = (
+            ChatHistory.objects.filter(users=request.user)
+            .exclude(id=chat_id)
+            .annotate(latest_message_date=Max("chatmessage__created_at"))
+            .order_by("-latest_message_date")
+        )
 
         messages: Sequence[ChatMessage] = []
+        current_chat = None
         if chat_id:
-            current_chat = ChatHistory.objects.get(id=chat_id)
+            current_chat = get_object_or_404(ChatHistory, id=chat_id)
             if current_chat.users != request.user:
                 return redirect(reverse("chats"))
             messages = (
@@ -242,15 +248,18 @@ class ChatsView(View):
 
         all_files = File.objects.filter(user=request.user, status=StatusEnum.complete).order_by("-created_at")
         self.decorate_selected_files(all_files, messages)
+        ChatsView.decorate_history_with_date_group(chat_history)
+        chat_history_grouped_by_date_group = groupby(chat_history, attrgetter("date_group"))
 
         context = {
             "chat_id": chat_id,
             "messages": messages,
-            "chat_history": chat_history,
+            "chat_history_grouped_by_date_group": chat_history_grouped_by_date_group,
+            "current_chat": current_chat,
             "streaming": {"endpoint": str(endpoint)},
             "contact_email": settings.CONTACT_EMAIL,
             "files": all_files,
-            "show_route": show_route,
+            "chat_title_length": settings.CHAT_TITLE_LENGTH,
         }
 
         return render(
@@ -270,11 +279,48 @@ class ChatsView(View):
         for file in all_files:
             file.selected = file in selected_files
 
+    @staticmethod
+    def decorate_history_with_date_group(chats: Sequence[ChatHistory]) -> None:
+        for chat in chats:
+            newest_message_date = chat.chatmessage_set.aggregate(newest_date=Max("created_at"))["newest_date"]
+            chat.date_group = ChatsView.get_date_group(newest_message_date.date())
+
+    @staticmethod
+    def get_date_group(on: date) -> str:
+        today = timezone.now().date()
+        age = (today - on).days
+        if age > 30:  # noqa: PLR2004
+            return "Older than 30 days"
+        if age > 7:  # noqa: PLR2004
+            return "Previous 30 days"
+        if age > 1:
+            return "Previous 7 days"
+        if age > 0:
+            return "Yesterday"
+        return "Today"
+
+
+class ChatsTitleView(View):
+    @dataclass_json(undefined=Undefined.EXCLUDE)
+    @dataclass(frozen=True)
+    class Title:
+        name: str
+
+    @method_decorator(login_required)
+    def post(self, request: HttpRequest, chat_id: uuid.UUID) -> HttpResponse:
+        chat_history: ChatHistory = get_object_or_404(ChatHistory, id=chat_id)
+        user_rating = ChatsTitleView.Title.schema().loads(request.body)
+
+        chat_history.name = user_rating.name
+        chat_history.save(update_fields=["name"])
+
+        return HttpResponse(status=HTTPStatus.NO_CONTENT)
+
 
 class CitationsView(View):
     @method_decorator(login_required)
     def get(self, request: HttpRequest, message_id: uuid.UUID | None = None) -> HttpResponse:
-        message = ChatMessage.objects.get(id=message_id)
+        message = get_object_or_404(ChatMessage, id=message_id)
 
         if message.chat_history.users != request.user:
             return redirect(reverse("chats"))
@@ -383,7 +429,7 @@ def file_status_api_view(request: HttpRequest) -> JsonResponse:
         logger.error("Error getting file object information - no file ID provided %s.")
         return JsonResponse({"status": StatusEnum.unknown.label})
     try:
-        file = File.objects.get(pk=file_id)
+        file = get_object_or_404(File, id=file_id)
     except File.DoesNotExist as ex:
         logger.exception("File object information not found in django - file does not exist %s.", file_id, exc_info=ex)
         return JsonResponse({"status": StatusEnum.unknown.label})

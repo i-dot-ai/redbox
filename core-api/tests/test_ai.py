@@ -161,7 +161,7 @@ def elastic_index_and_user(
 
 @pytest.fixture()
 def make_test_case(
-    llm: ChatLiteLLM, es_client: Elasticsearch, elastic_index_and_user: tuple[str, str], env: Settings
+    llm: ChatLiteLLM, elastic_index_and_user: tuple[str, str], env: Settings
 ) -> Callable[[str, str, list[str], ExperimentData], LLMTestCase]:
     """
     Returns a factory for making LLMTestCases based on a row of ExperimentData.
@@ -184,13 +184,9 @@ def make_test_case(
     * To ensure calculating once and having a test per metric, we use
     ExperimentData as a cache, solving 6 while not violating 3
     """
-    index_name, user_uuid = elastic_index_and_user
+    _, user_uuid = elastic_index_and_user
 
-    retriever = get_parameterised_retriever(
-        env=env,
-        es=es_client,
-        index_name=index_name,
-    )
+    retriever = get_parameterised_retriever(env=env)
 
     rag_chain = build_retrieval_chain(
         llm=llm,

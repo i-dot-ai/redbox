@@ -14,7 +14,9 @@ if (typeof window.trustedTypes !== "undefined") {
             tagName === "markdown-converter" ||
             tagName === "sources-list" ||
             tagName === "tool-tip" ||
-            tagName === "feedback-buttons",
+            tagName === "feedback-buttons" ||
+            tagName === "chat-title" ||
+            tagName === "copy-text",
           attributeNameCheck: (attr) => true,
           allowCustomizedBuiltInElements: true,
         },

@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 import hashlib
-from enum import Enum
+from enum import Enum, StrEnum
 from uuid import UUID
+import datetime
 
 import tiktoken
 from pydantic import BaseModel, Field, computed_field
@@ -148,4 +149,28 @@ class FileStatus(BaseModel):
 
     file_uuid: UUID
     processing_status: ProcessingStatusEnum
-    chunk_statuses: list[ChunkStatus] | None
+    chunk_statuses: None = Field(default=None, description="deprecated, see processing_status")
+
+
+class ChunkResolution(StrEnum):
+    smallest = "smallest"
+    small = "small"
+    normal = "normal"
+    large = "large"
+    largest = "largest"
+
+
+class ChunkMetadata(BaseModel):
+    """
+    Worker model for document metadata for new style chunks.
+    This is the minimal metadata that all ingest chains provide and should not be used to map retrieved documents (as fields will be lost)
+    """
+
+    parent_file_uuid: UUID
+    creator_user_uuid: UUID
+    index: int
+    file_name: str
+    page_number: int | None = None
+    created_datetime: datetime.datetime = datetime.datetime.now(datetime.UTC)
+    token_count: int
+    chunk_resolution: ChunkResolution = ChunkResolution.normal

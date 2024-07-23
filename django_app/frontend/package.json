@@ -4,13 +4,12 @@
   "description": "Frontend dependencies for i.AI Redbox application",
   "source": [
     "src/styles.scss",
-    "src/js/documents.js",
-    "src/js/trusted-types.js",
     "src/js/autosubmit.js",
-    "src/js/chats/feedback.js",
-    "src/js/chats/markdown.js",
-    "src/js/chats/message-input.js",
-    "src/js/chats/streaming.js"
+    "src/js/chats.js",
+    "src/js/citations.js",
+    "src/js/documents.js",
+    "src/js/main.js",
+    "src/js/posthog.js"
   ],
   "staticFiles": [
     {
@@ -32,10 +31,6 @@
     {
       "distDir": "./dist/js/libs",
       "staticPath": "./src/js/libs"
-    },
-    {
-      "distDir": "./dist/js/libs",
-      "staticPath": "./node_modules/i.ai-design-system/dist/iai-design-system.js"
     }
   ],
   "scripts": {
@@ -45,7 +40,8 @@
   "author": "",
   "dependencies": {
     "govuk-frontend": "^5.2.0",
-    "i.ai-design-system": "^0.3.12"
+    "i.ai-design-system": "^0.4.1",
+    "posthog-js": "^1.143.0"
   },
   "devDependencies": {
     "@parcel/transformer-sass": "^2.12.0",

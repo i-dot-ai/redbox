@@ -1,4 +1,4 @@
-[![Integration Tests](https://github.com/i-dot-ai/redbox-copilot/actions/workflows/integration.yml/badge.svg?branch=main)](https://github.com/i-dot-ai/redbox-copilot/actions/workflows/integration.yml?query=branch%3Amain)
+[![Integration Tests](https://github.com/i-dot-ai/redbox/actions/workflows/integration.yml/badge.svg?branch=main)](https://github.com/i-dot-ai/redbox/actions/workflows/integration.yml?query=branch%3Amain)
 
 # 📮 Redbox
 
@@ -12,6 +12,7 @@ Redbox is a retrieval augmented generation (RAG) app that uses GenAI to chat wit
 
 - **Better retrieval**. Redbox increases organisational memory by indexing documents
 - **Faster, accurate summarisation**. Redbox can summarise reports read months ago, supplement them with current work, and produce a first draft that lets civil servants focus on what they do best
+
 
 https://github.com/i-dot-ai/redbox-copilot/assets/8233643/e7984242-1403-4c93-9e68-03b3f065b38d
 
@@ -36,8 +37,6 @@ You will need to install `poppler` and `tesseract` to run the `worker`
   - `pip install pre-commit`
   - `pre-commit install`
 
-
-
 # Testing
 
 - Unit tests and QA run in CI
@@ -55,7 +54,7 @@ For every microservice that we have written in python we define its dependencies
 This means that our project is structured approximately like this:
 
 ```txt
-redbox-copilot/
+redbox/
 ├── django_app
 │  ├── app/
 │  ├── static/
@@ -179,34 +178,22 @@ Or, to watch for changes (e.g. if making CSS and JS changes):
 npx parcel watch
 ```
 
-Once this has been done, `django-compressor` should work automatically to
-compile the govuk-frontend SCSS on the first request and any subsequent request
-after the SCSS has changed. In the meantime it will read from `frontend/CACHE`,
-which is `.gitignore`d.
-
-When we get to production, we can prepopulate `frontend/CACHE` using `manage.py
-compress` before building our container, which will mean that every request
-will be served from the cache.
-
-`django-compressor` also takes care of fingerprinting and setting cache headers
-for our CSS so it can be cached.
-
-On initial app setup you will need to run `poetry run python manage.py collectstatic` to copy them to the `frontend` folder from where `runserver` can serve them.
+On initial app setup you will need to run `poetry run python manage.py collectstatic` to copy them to the `frontend` folder from where `runserver` can serve them. Or you can run `make build-django-static` which combines the parcel build and collectstatic commands.
 
 ## How to deploy
 
 checkout the `main` branch of the following repos:
 
-- https://github.com/i-dot-ai/redbox-copilot
-- https://github.com/i-dot-ai/i-ai-core-infrastructure/
-- https://github.com/i-dot-ai/redbox-copilot-infra-config
+* https://github.com/i-dot-ai/redbox
+* https://github.com/i-dot-ai/i-ai-core-infrastructure/
+* https://github.com/i-dot-ai/redbox-copilot-infra-config
 
 If, and only if, you want to deploy something other than HEAD then replace `var.image_tag` in `infrastructure/aws/ecs.tf` with the hash of the build you want deployed.
 
 Now run the commands below remembering to replace ENVIRONMENT with `dev`, `preprod` or `prod`
 
 ```commandline
-cd redbox-copilot
+cd redbox
 make tf_init
 make tf_apply env=<ENVIRONMENT>
 ```

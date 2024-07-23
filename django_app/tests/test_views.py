@@ -2,6 +2,7 @@ import json
 import logging
 import uuid
 from collections.abc import Sequence
+from datetime import date, timedelta
 from http import HTTPStatus
 from pathlib import Path
 
@@ -11,6 +12,7 @@ from bs4 import BeautifulSoup
 from django.conf import settings
 from django.test import Client
 from django.urls import reverse
+from django.utils import timezone
 from pytest_django.asserts import assertRedirects
 from requests_mock import Mocker
 from yarl import URL
@@ -26,6 +28,7 @@ from redbox_app.redbox_core.models import (
     StatusEnum,
     User,
 )
+from redbox_app.redbox_core.views import ChatsView
 
 logger = logging.getLogger(__name__)
 
@@ -228,6 +231,20 @@ def test_remove_doc_view(client: Client, alice: User, file_pdf_path: Path, s3_cl
 
 
 @pytest.mark.django_db()
+def test_remove_nonexistent_doc(alice: User, client: Client):
+    # Given
+    client.force_login(alice)
+    nonexistent_uuid = uuid.uuid4()
+
+    # When
+    url = reverse("remove-doc", kwargs={"doc_id": nonexistent_uuid})
+    response = client.get(url)
+
+    # Then
+    assert response.status_code == HTTPStatus.NOT_FOUND
+
+
+@pytest.mark.django_db()
 def test_post_message_to_new_session(alice: User, client: Client, requests_mock: Mocker):
     # Given
     client.force_login(alice)
@@ -374,6 +391,102 @@ def test_view_session_with_documents(chat_message: ChatMessage, client: Client):
 
 
 @pytest.mark.django_db()
+def test_chat_history_grouped_by_age(user_with_chats_with_messages_over_time: User, client: Client):
+    # Given
+    client.force_login(user_with_chats_with_messages_over_time)
+
+    # When
+    response = client.get(reverse("chats"))
+
+    # Then
+    assert response.status_code == HTTPStatus.OK
+    soup = BeautifulSoup(response.content)
+    date_groups = soup.find_all("h3", {"class": "rb-chat-history__date_group"})
+    assert len(date_groups) == 5
+    for date_group, (header, chat_name) in zip(
+        date_groups,
+        [
+            ("Today", "today"),
+            ("Yesterday", "yesterday"),
+            ("Previous 7 days", "5 days old"),
+            ("Previous 30 days", "20 days old"),
+            ("Older than 30 days", "40 days old"),
+        ],
+        strict=False,
+    ):
+        assert date_group.text == header
+        assert date_group.find_next_sibling("ul").find("a").text == chat_name
+
+
+@pytest.mark.parametrize(
+    ("given", "expected"),
+    [
+        (timezone.now().date(), "Today"),
+        ((timezone.now() - timedelta(days=1)).date(), "Yesterday"),
+        ((timezone.now() - timedelta(days=2)).date(), "Previous 7 days"),
+        ((timezone.now() - timedelta(days=7)).date(), "Previous 7 days"),
+        ((timezone.now() - timedelta(days=8)).date(), "Previous 30 days"),
+        ((timezone.now() - timedelta(days=30)).date(), "Previous 30 days"),
+        ((timezone.now() - timedelta(days=31)).date(), "Older than 30 days"),
+    ],
+)
+def test_date_group_calculation(given: date, expected: str):
+    # Given
+
+    # When
+    actual = ChatsView.get_date_group(given)
+
+    # Then
+    assert actual == expected
+
+
+@pytest.mark.django_db()
+def test_nonexistent_chats(alice: User, client: Client):
+    # Given
+    client.force_login(alice)
+    nonexistent_uuid = uuid.uuid4()
+
+    # When
+    url = reverse("chats", kwargs={"chat_id": nonexistent_uuid})
+    response = client.get(url)
+
+    # Then
+    assert response.status_code == HTTPStatus.NOT_FOUND
+
+
+@pytest.mark.django_db()
+def test_post_chat_title(alice: User, chat_history: ChatHistory, client: Client):
+    # Given
+    client.force_login(alice)
+
+    # When
+    url = reverse("chat-titles", kwargs={"chat_id": chat_history.id})
+    response = client.post(url, json.dumps({"name": "New chat name"}), content_type="application/json")
+
+    # Then
+    status = HTTPStatus(response.status_code)
+    assert status.is_success
+    chat_history.refresh_from_db()
+    assert chat_history.name == "New chat name"
+
+
+@pytest.mark.django_db()
+def test_post_chat_title_with_naughty_string(alice: User, chat_history: ChatHistory, client: Client):
+    # Given
+    client.force_login(alice)
+
+    # When
+    url = reverse("chat-titles", kwargs={"chat_id": chat_history.id})
+    response = client.post(url, json.dumps({"name": "New chat name \x00"}), content_type="application/json")
+
+    # Then
+    status = HTTPStatus(response.status_code)
+    assert status.is_success
+    chat_history.refresh_from_db()
+    assert chat_history.name == "New chat name \ufffd"
+
+
+@pytest.mark.django_db()
 def test_post_new_rating_only(alice: User, chat_message: ChatMessage, client: Client):
     # Given
     client.force_login(alice)
@@ -383,7 +496,8 @@ def test_post_new_rating_only(alice: User, chat_message: ChatMessage, client: Cl
     response = client.post(url, json.dumps({"rating": 5}), content_type="application/json")
 
     # Then
-    assert 100 <= response.status_code <= 299
+    status = HTTPStatus(response.status_code)
+    assert status.is_success
     rating = ChatMessageRating.objects.get(pk=chat_message.pk)
     assert rating.rating == 5
     assert rating.text is None
@@ -404,10 +518,33 @@ def test_post_new_rating(alice: User, chat_message: ChatMessage, client: Client)
     )
 
     # Then
-    assert 100 <= response.status_code <= 299
+    status = HTTPStatus(response.status_code)
+    assert status.is_success
     rating = ChatMessageRating.objects.get(pk=chat_message.pk)
     assert rating.rating == 5
     assert rating.text == "Lorem Ipsum."
+    assert {c.text for c in rating.chatmessageratingchip_set.all()} == {"speed", "accuracy", "swearing"}
+
+
+@pytest.mark.django_db()
+def test_post_new_rating_with_naughty_string(alice: User, chat_message: ChatMessage, client: Client):
+    # Given
+    client.force_login(alice)
+
+    # When
+    url = reverse("ratings", kwargs={"message_id": chat_message.id})
+    response = client.post(
+        url,
+        json.dumps({"rating": 5, "text": "Lorem Ipsum. \x00", "chips": ["speed", "accuracy", "swearing"]}),
+        content_type="application/json",
+    )
+
+    # Then
+    status = HTTPStatus(response.status_code)
+    assert status.is_success
+    rating = ChatMessageRating.objects.get(pk=chat_message.pk)
+    assert rating.rating == 5
+    assert rating.text == "Lorem Ipsum. \ufffd"
     assert {c.text for c in rating.chatmessageratingchip_set.all()} == {"speed", "accuracy", "swearing"}
 
 
@@ -425,10 +562,33 @@ def test_post_updated_rating(alice: User, chat_message_with_rating: ChatMessage,
     )
 
     # Then
-    assert 100 <= response.status_code <= 299
+    status = HTTPStatus(response.status_code)
+    assert status.is_success
     rating = ChatMessageRating.objects.get(pk=chat_message_with_rating.pk)
     assert rating.rating == 5
     assert rating.text == "Lorem Ipsum."
+    assert {c.text for c in rating.chatmessageratingchip_set.all()} == {"speed", "accuracy", "swearing"}
+
+
+@pytest.mark.django_db()
+def test_post_updated_rating_with_naughty_string(alice: User, chat_message_with_rating: ChatMessage, client: Client):
+    # Given
+    client.force_login(alice)
+
+    # When
+    url = reverse("ratings", kwargs={"message_id": chat_message_with_rating.id})
+    response = client.post(
+        url,
+        json.dumps({"rating": 5, "text": "Lorem Ipsum. \x00", "chips": ["speed", "accuracy", "swearing"]}),
+        content_type="application/json",
+    )
+
+    # Then
+    status = HTTPStatus(response.status_code)
+    assert status.is_success
+    rating = ChatMessageRating.objects.get(pk=chat_message_with_rating.pk)
+    assert rating.rating == 5
+    assert rating.text == "Lorem Ipsum. \ufffd"
     assert {c.text for c in rating.chatmessageratingchip_set.all()} == {"speed", "accuracy", "swearing"}
 
 
@@ -487,6 +647,20 @@ def test_user_cannot_see_other_users_citations(chat_message_with_citation: ChatH
     # Then
     assert response.status_code == HTTPStatus.FOUND
     assert response.headers.get("Location") == "/chats/"
+
+
+@pytest.mark.django_db()
+def test_nonexistent_citations(alice: User, client: Client):
+    # Given
+    client.force_login(alice)
+    nonexistent_uuid = uuid.uuid4()
+
+    # When
+    url = reverse("citations", kwargs={"message_id": nonexistent_uuid})
+    response = client.get(url)
+
+    # Then
+    assert response.status_code == HTTPStatus.NOT_FOUND
 
 
 @pytest.mark.django_db()

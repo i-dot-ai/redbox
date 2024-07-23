@@ -1,65 +1,82 @@
 {% macro route_display(route=None) %}
-  <div class="iai-chat-bubble__route" {% if not route %}hidden{% endif %}>
-    <tool-tip class="iai-tooltip">
-      <div class="iai-tooltip__button" tabindex="0">
-        <span>Response generated using <strong>@<span class="iai-chat-bubble__route-text">{{ route }}</span></strong> route</span>
-        <img src="{{ static('icons/question-mark.svg') }}" alt="" width="14"/>
-      </div>
-      <div class="iai-tooltip__content">
-        <h3 class="iai-chat-bubble__route-heading">
-          <img src="{{ static('icons/question-mark.svg') }}" alt="" width="24"/>
-          <span>Redbox uses different paths to generate the best response</span>
-        </h3>
-        <ul class="iai-chat-bubble__route-list">
-          <li class="iai-chat-bubble__route-list-item">I can help you <strong>@search</strong> over selected documents and do Q&amp;A on them</li>
-          <li class="iai-chat-bubble__route-list-item">I can help you <strong>@summarise</strong> selected documents</li>
-          <li class="iai-chat-bubble__route-list-item">I can help you <strong>@extract</strong> information from selected documents</li>
-          <li class="iai-chat-bubble__route-list-item">I can <strong>@chat</strong> about general questions, not related to your documents</li>
-        </ul>
-      </div>
-    </tool-tip>
-  </div>
+<div class="iai-chat-bubble__route" {% if not route %}hidden{% endif %}>
+  <tool-tip class="iai-tooltip">
+    <div class="iai-tooltip__button" tabindex="0">
+      <span>Response generated using <strong>@<span class="iai-chat-bubble__route-text">{{ route }}</span></strong>
+        route</span>
+      <img src="{{ static('icons/question-mark.svg') }}" alt="" width="14" />
+    </div>
+    <div class="iai-tooltip__content">
+      <h3 class="iai-chat-bubble__route-heading">
+        <img src="{{ static('icons/question-mark.svg') }}" alt="" width="24" />
+        <span>Redbox uses different paths to generate the best response</span>
+      </h3>
+      <ul class="iai-chat-bubble__route-list">
+        <li class="iai-chat-bubble__route-list-item">I can <strong>@chat</strong> about general questions, not related
+          to your documents</li>
+        <li class="iai-chat-bubble__route-list-item">I can <strong>@chat/documents</strong> over selected documents and
+          do Q&amp;A on them, extract information, summarise and more!</li>
+        <li class="iai-chat-bubble__route-list-item">I can help you <strong>@search</strong> over selected documents and
+          do Q&amp;A on them, with citations</li>
+        <li class="iai-chat-bubble__route-list-item">I can help you <strong>@summarise</strong> selected documents</li>
+      </ul>
+    </div>
+  </tool-tip>
+</div>
 {% endmacro %}
 
 
 
-{% macro message_box(id, role, route, text, source_files, show_route=False, classes=None) %}
+{% macro message_box(id, role, route, text, source_files, classes=None) %}
 
-    {% set role_text = role %}
-    {% if role == "ai" %}
-        {% set role_text = "Redbox" %}
-    {% elif role == "user" %}
-        {% set role_text = "You" %}
+{% set role_text = role %}
+{% if role == "ai" %}
+{% set role_text = "Redbox" %}
+{% elif role == "user" %}
+{% set role_text = "You" %}
+{% endif %}
+
+<div
+  class="iai-chat-bubble iai-chat-bubble--{% if role == 'user' %}right{% else %}left{% endif %} govuk-body {{ classes }}"
+  data-role="{{ role }}" tabindex="-1">
+  <div class="iai-chat-bubble__header">
+    <div class="iai-chat-bubble__role">{% if role == "ai" %}Redbox{% else %}You{% endif %}</div>
+    {% if route %}
+    {{ route_display(route) }}
     {% endif %}
+  </div>
 
-    <div class="iai-chat-bubble iai-chat-bubble--{% if role == 'user' %}right{% else %}left{% endif %} govuk-body {{ classes }}" data-role="{{ role }}" tabindex="-1">
-      <div class="iai-chat-bubble__header">
-        <div class="iai-chat-bubble__role">{% if role == "ai" %}Redbox{% else %}You{% endif %}</div>
-        {% if route and show_route %}
-          {{ route_display(route) }}
+  <markdown-converter class="iai-chat-bubble__text">{{ text }}</markdown-converter>
+  {% if source_files %}
+  <h3 class="iai-chat-bubble__sources-heading govuk-heading-s govuk-!-margin-bottom-1">Sources</h3>
+  <div class="iai-display-flex-from-desktop">
+    <ul class="govuk-list govuk-list--bullet govuk-!-margin-bottom-0">
+      {% for source_file in source_files %}
+      <li class="govuk-!-margin-bottom-0">
+        {% if source_file.get_status_text() == "Complete" %}
+        <a class="iai-chat-bubbles__sources-link govuk-link" href="{{ source_file.url }}">{{
+          source_file.original_file_name }}</a>
+        {% else %}
+        <span class="iai-chat-bubbles__sources-link">{{ source_file.original_file_name }}</span>
         {% endif %}
-      </div>  
-      
-      <markdown-converter class="iai-chat-bubble__text">{{ text }}</markdown-converter>
-      {% if source_files %}
-          <h3 class="iai-chat-bubble__sources-heading govuk-heading-s govuk-!-margin-bottom-1">Sources</h3>
-          <div class="iai-display-flex-from-desktop">
-              <ul class="govuk-list govuk-list--bullet govuk-!-margin-bottom-0">
-                {% for source_file in source_files %}
-                  <li class="govuk-!-margin-bottom-0">
-                    {% if source_file.get_status_text() == "Complete" %}
-                      <a class="iai-chat-bubbles__sources-link govuk-link"
-                        href="{{ source_file.url }}">{{ source_file.original_file_name }}</a>
-                    {% else %}
-                      <span class="iai-chat-bubbles__sources-link">{{ source_file.original_file_name }}</span>
-                    {% endif %}
-                  </li>
-                  {% endfor %}
-              </ul>
-              <a class="iai-chat-bubble__citations-button govuk-!-margin-left-2" href="{{url('citations', id)}}">View information behind this answer</a>
-          </div>
-        <br/>
-      {% endif %}
+      </li>
+      {% endfor %}
+    </ul>
+    <div class="iai-chat-bubble__citations-button-container">
+      <copy-text></copy-text>
+      <a class="iai-chat-bubble__citations-button" href="{{url('citations', id)}}">
+        <svg width="20" height="19" viewBox="0 0 20 19" fill="none" focusable="false" aria-hidden="true">
+            <path d="M1.5 9.62502C1.5 9.62502 4.59036 3.55359 10 3.55359C15.4084 3.55359 18.5 9.62502 18.5 9.62502C18.5 9.62502 15.4084 15.6964 10 15.6964C4.59036 15.6964 1.5 9.62502 1.5 9.62502Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M9.99993 10.8392C10.322 10.8392 10.6308 10.7113 10.8586 10.4836C11.0863 10.2558 11.2142 9.94698 11.2142 9.62493C11.2142 9.30288 11.0863 8.99402 10.8586 8.7663C10.6308 8.53858 10.322 8.41064 9.99993 8.41064C9.67788 8.41064 9.36902 8.53858 9.1413 8.7663C8.91358 8.99402 8.78564 9.30288 8.78564 9.62493C8.78564 9.94698 8.91358 10.2558 9.1413 10.4836C9.36902 10.7113 9.67788 10.8392 9.99993 10.8392Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        See the response info
+      </a>
     </div>
+  </div>
+  <br />
+  {% elif role == "ai" %}
+    <copy-text></copy-text>
+  {% endif %}
+</div>
 
 {% endmacro %}

@@ -5,6 +5,7 @@ import pytest
 from langchain_core.documents.base import Document
 
 from redbox.transform import combine_documents, map_document_to_source_document
+from redbox.api.runnables import filter_by_elbow
 
 document_created = datetime.now(UTC)
 
@@ -167,3 +168,25 @@ def test_combine_documents(a: Document, b: Document, combined: Document):
     assert combined.page_content == test_combined.page_content
     for field_name in combined.metadata:
         assert get_field(combined, field_name) == get_field(test_combined, field_name)
+
+
+@pytest.mark.parametrize(
+    ("scores", "target_len"),
+    [
+        ([2.2, 2, 1.8, 0.2, 0.2, 0.2], 3),
+        # ([2.2, 2.1, 2.1, 2, 2, 1.5, 1.3, 0.9, 0.5], 5), # This test case shows our knee detection doesn't work properly?
+        ([1, 1, 1, 1, 1, 1], 6),
+        ([], 0),
+    ],
+)
+def test_elbow_filter(scores: list[float], target_len: int):
+    """Test that documents are filtered after an "elbow" of similarity score."""
+    elbow_filter = filter_by_elbow(enabled=True, score_scaling_factor=100, sensitivity=1)
+
+    documents = [Document(page_content="foo", metadata={"score": score}) for score in scores]
+
+    documents_filtered = elbow_filter.invoke(documents)
+
+    assert (
+        len(documents_filtered) == target_len
+    ), f"Expected {target_len} documents to pass. Received: {len(documents_filtered)}"

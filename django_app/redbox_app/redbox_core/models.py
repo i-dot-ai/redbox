@@ -5,6 +5,7 @@ from datetime import UTC, datetime, timedelta
 import boto3
 from botocore.config import Config
 from django.conf import settings
+from django.contrib.postgres.fields import ArrayField
 from django.core import validators
 from django.db import models
 from django.utils import timezone
@@ -30,6 +31,12 @@ class TimeStampedModel(models.Model):
     class Meta:
         abstract = True
         ordering = ["created_at"]
+
+
+def sanitise_string(string: str | None) -> str | None:
+    """We are seeing NUL (0x00) characters in user entered fields, and also in document citations.
+    We can't save these characters, so we need to sanitise them."""
+    return string.replace("\x00", "\ufffd") if string else string
 
 
 class BusinessUnit(UUIDPrimaryKeyBase):
@@ -224,6 +231,10 @@ class ChatHistory(UUIDPrimaryKeyBase, TimeStampedModel):
     def __str__(self) -> str:  # pragma: no cover
         return f"{self.name} - {self.users}"
 
+    def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
+        self.name = sanitise_string(self.name)
+        super().save(force_insert, force_update, using, update_fields)
+
 
 class ChatRoleEnum(models.TextChoices):
     ai = "ai"
@@ -235,9 +246,16 @@ class Citation(UUIDPrimaryKeyBase, TimeStampedModel):
     file = models.ForeignKey(File, on_delete=models.CASCADE)
     chat_message = models.ForeignKey("ChatMessage", on_delete=models.CASCADE)
     text = models.TextField(null=True, blank=True)
+    page_numbers = ArrayField(
+        models.PositiveIntegerField(), null=True, blank=True, help_text="location of citation in document"
+    )
 
     def __str__(self):
         return f"{self.file}: {self.text or ''}"
+
+    def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
+        self.text = sanitise_string(self.text)
+        super().save(force_insert, force_update, using, update_fields)
 
 
 class ChatMessage(UUIDPrimaryKeyBase, TimeStampedModel):
@@ -245,17 +263,15 @@ class ChatMessage(UUIDPrimaryKeyBase, TimeStampedModel):
     text = models.TextField(max_length=32768, null=False, blank=False)
     role = models.CharField(choices=ChatRoleEnum.choices, null=False, blank=False)
     route = models.CharField(max_length=25, null=True, blank=True)
-    old_source_files = models.ManyToManyField(  # TODO (@gecBurton): delete me
-        # https://technologyprogramme.atlassian.net/browse/REDBOX-367
-        File,
-        related_name="chat_messages",
-        blank=True,
-    )
     selected_files = models.ManyToManyField(File, related_name="+", symmetrical=False, blank=True)
     source_files = models.ManyToManyField(File, through=Citation)
 
     def __str__(self) -> str:  # pragma: no cover
         return f"{self.text} - {self.role}"
+
+    def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
+        self.text = sanitise_string(self.text)
+        super().save(force_insert, force_update, using, update_fields)
 
 
 class ChatMessageRating(TimeStampedModel):
@@ -265,6 +281,10 @@ class ChatMessageRating(TimeStampedModel):
 
     def __str__(self) -> str:  # pragma: no cover
         return f"{self.chat_message} - {self.rating} - {self.text}"
+
+    def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
+        self.text = sanitise_string(self.text)
+        super().save(force_insert, force_update, using, update_fields)
 
 
 class ChatMessageRatingChip(UUIDPrimaryKeyBase, TimeStampedModel):
