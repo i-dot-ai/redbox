@@ -6,15 +6,15 @@ class CannedPrompts extends HTMLElement {
         <h3 class="chat-options__heading govuk-heading-m">What would you like to ask your Redbox?</h3>
         <div class="chat-options__options">
             <button class="chat-options__option chat-options__option_agenda" type="button">
-                <img src="/static/icons/icon_square_question.svg" alt=""/>
+                <img src="/static/icons/icon_square_doc.svg" alt=""/>
                 Draft an agenda for a team meeting
             </button>
             <button class="chat-options__option chat-options__option_objectives" type="button">
-                <img src="/static/icons/icon_square_doc.svg" alt=""/>
+                <img src="/static/icons/archery.svg" alt=""/>
                 Help me set my work objectives
             </button>
             <button class="chat-options__option chat-options__option_ps_role" type="button">
-                <img src="/static/icons/icon_pointer_dashed_square.svg" alt=""/>
+                <img src="/static/icons/person.svg" alt=""/>
                 Describe the role of a Permanent Secretary
             </button>
         </div>
@@ -36,7 +36,9 @@ class CannedPrompts extends HTMLElement {
     this.querySelector(".chat-options__option_ps_role")?.addEventListener(
       "click",
       (e) => {
-        this.prepopulateMessageBox("Describe the role of a Permanent Secretary");
+        this.prepopulateMessageBox(
+          "Describe the role of a Permanent Secretary"
+        );
       }
     );
 
