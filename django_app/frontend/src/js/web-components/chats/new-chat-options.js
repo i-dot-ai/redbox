@@ -39,6 +39,10 @@ class NewChatOptions extends HTMLElement {
         this.prepopulateMessageBox("Summarise my document");
       }
     );
+
+    window.setTimeout(() => {
+      this.scrollIntoView({ block: "end" });
+    }, 100);
   }
 
   prepopulateMessageBox = (prompt) => {

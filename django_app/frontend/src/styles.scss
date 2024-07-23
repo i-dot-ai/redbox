@@ -386,6 +386,8 @@ feedback-buttons:last-of-type {
 .chat-options {
   padding-bottom: 2rem;
   padding-left: 2rem;
+  padding-top: 2rem;
+  scroll-margin-bottom: 16rem;
 }
 main:has(.iai-chat-bubble) .chat-options {
   display: none;
