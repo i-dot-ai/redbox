@@ -22,11 +22,12 @@ class Command(BaseCommand):
 
     def handle(self, *_args, **_kwargs):
         cutoff_date = timezone.now() - timedelta(seconds=settings.FILE_EXPIRY_IN_SECONDS)
+        statuses_to_ignore = [StatusEnum.deleted, StatusEnum.errored]
 
         self.stdout.write(self.style.NOTICE(f"Deleting Files expired before {cutoff_date}"))
         counter = 0
 
-        for file in File.objects.filter(last_referenced__lt=cutoff_date):
+        for file in File.objects.filter(last_referenced__lt=cutoff_date).exclude(status__in=statuses_to_ignore):
             logger.debug(
                 "Deleting file object %s, last_referenced %s",
                 file,
