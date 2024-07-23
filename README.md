@@ -54,13 +54,8 @@ For every microservice that we have written in python we define its dependencies
 This means that our project is structured approximately like this:
 
 ```txt
-<<<<<<< HEAD
-redbox/
-├── django_app
-=======
 redbox-copilot/
 ├── django-app
->>>>>>> 96d5faf850a87bd7d9bb8a696a5b2343b6a47ba3
 │  ├── app/
 │  ├── static/
 │  ├── tests/
