@@ -141,7 +141,6 @@ module "django-command" {
     load_balancer_security_group = module.load_balancer.load_balancer_security_group_id
   aws_lb_arn                   = module.load_balancer.alb_arn
   host                         = local.django_host
-  ip_whitelist                 = var.external_ips
   environment_variables        = local.django_app_environment_variables
   secrets                      = local.reconstructed_django_command_secrets
   http_healthcheck             = false
