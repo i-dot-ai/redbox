@@ -59,6 +59,17 @@ class ChatHistoryAnalysis():
         tokens = text.split()
         tokens = [word.lower() for word in tokens if word.isalpha()]
         return tokens
+    
+    def process_user_names(self, user_names_column):
+        '''
+        Takes a pandas column and returns a dictionary of key value pairs for the tidy name.
+        This function tidies user names instead of their emails.
+        At a later date we could add an option for anonymyty (especially useful when presenting).
+        '''
+        unique_user_email = user_names_column.unique()
+        unique_user_names = [user_email.split('@')[0].replace('.', ' ').title() for user_email in unique_user_email]
+        user_name_dict =dict(zip(unique_user_email, unique_user_names))
+        return user_name_dict
 
     # 1) Who uses Redbox the most?
     def user_frequency_analysis(self):
@@ -102,6 +113,22 @@ class ChatHistoryAnalysis():
         plt.ylabel('Number of Conversations')
         conversation_frequency_path = os.path.join(self.visualisation_dir, 'usage_of_redbox_ai_over_time.png')
         plt.savefig(conversation_frequency_path)
+    
+    def redbox_traffic_by_user(self):
+        '''
+        Plotting how each users usage has changed over time
+        '''
+        user_responses_df = self.user_responses
+        user_dict = self.process_user_names(user_responses_df.users)
+        user_responses_df['users'] = user_responses_df['users'].map(user_dict)
+        # TODO: Ensure created_at column is changed to modified_at column in live version.
+        pivot_user_time = user_responses_df[['created_at', 'users']].groupby(pd.Grouper(key='created_at', axis=0, freq='2D', sort=True)).value_counts().reset_index(name='count').pivot(index='created_at', columns='users', values='count')
+        fig = sns.lineplot(data=pivot_user_time, markers=True)
+        fig.set_xlabel('Date')
+        fig.set_ylabel('No. of Prompts')
+        # fig.tick_params(axis='x', rotation=90)
+        sns.move_legend(fig, "upper left", bbox_to_anchor=(1, 1), title='Users')
+        fig.set_title('Usage of Redbox by User over Time')
 
     # 3) Which words are used the most frequently by USERS?
     def user_word_frequency_analysis(self):
