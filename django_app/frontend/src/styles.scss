@@ -496,6 +496,10 @@ body:has(.iai-environment-warning) main {
   min-height: 0;
 }
 @media (min-width: 641px) {
+  .rb-chats-section {
+    display: flex;
+    flex-grow: 1;
+  }
   .govuk-grid-row:has(.iai-chat-input) {
     display: flex;
     .govuk-grid-column-one-third,
