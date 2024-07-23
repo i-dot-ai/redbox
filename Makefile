@@ -169,6 +169,7 @@ docker_build_local: ## Build the docker container locally
 
 ifndef cache
 	override cache = ./.build-cache
+endif
 
 .PHONY: docker_build
 docker_build: ## Pull previous container (if it exists) build the docker container
