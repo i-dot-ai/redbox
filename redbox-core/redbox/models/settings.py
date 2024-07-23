@@ -125,7 +125,7 @@ class AISettings(BaseModel):
     reduce_system_prompt: str = REDUCE_SYSTEM_PROMPT
     reduce_question_prompt: str = REDUCE_QUESTION_PROMPT
 
-    @computed_field
+    @computed_field # type: ignore
     @property
     def stuff_chunk_max_tokens(self) -> int:
         return int(self.context_window_size * 0.8)
