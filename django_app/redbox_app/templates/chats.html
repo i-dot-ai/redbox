@@ -27,7 +27,7 @@
         <h2 class="govuk-heading-s">Recent chats</h2>
 
         {% for date_group, chats in chat_history_grouped_by_date_group %}
-        <h3 class="rb-chat-history__date_group govuk-body govuk-!-font-weight-bold govuk-!-margin-bottom-1">{{ date_group }}</h3>
+        <h3 class="rb-chat-history__date_group govuk-body-s govuk-!-font-weight-bold govuk-!-margin-bottom-1">{{ date_group }}</h3>
         <ul class="govuk-list govuk-list--spaced iai-panel__scrollable">
           {% for chat in chats %}
             <li class="govuk-!-margin-bottom-1">
