@@ -5,38 +5,38 @@ class CannedPrompts extends HTMLElement {
     this.innerHTML = `
         <h3 class="chat-options__heading govuk-heading-m">What would you like to ask your Redbox?</h3>
         <div class="chat-options__options">
-            <button class="chat-options__option chat-options__option_topic" type="button">
+            <button class="chat-options__option chat-options__option_agenda" type="button">
                 <img src="/static/icons/icon_square_question.svg" alt=""/>
-                Tell me about a specific topic
+                Draft an agenda for a team meeting
             </button>
-            <button class="chat-options__option chat-options__option_themes" type="button">
+            <button class="chat-options__option chat-options__option_objectives" type="button">
                 <img src="/static/icons/icon_square_doc.svg" alt=""/>
-                Find themes in my documents
+                Help me set my work objectives
             </button>
-            <button class="chat-options__option chat-options__option_summarise" type="button">
+            <button class="chat-options__option chat-options__option_ps_role" type="button">
                 <img src="/static/icons/icon_pointer_dashed_square.svg" alt=""/>
-                Summarise my document
+                Describe the role of a Permanent Secretary
             </button>
         </div>
         <p class="chat-options__info-text">Or type any question below</p>
         `;
 
-    this.querySelector(".chat-options__option_topic")?.addEventListener(
+    this.querySelector(".chat-options__option_agenda")?.addEventListener(
       "click",
       (e) => {
-        this.prepopulateMessageBox("Tell me about a specific topic");
+        this.prepopulateMessageBox("Draft an agenda for a team meeting");
       }
     );
-    this.querySelector(".chat-options__option_themes")?.addEventListener(
+    this.querySelector(".chat-options__option_objectives")?.addEventListener(
       "click",
       (e) => {
-        this.prepopulateMessageBox("Find themes in my documents");
+        this.prepopulateMessageBox("Help me set my work objectives");
       }
     );
-    this.querySelector(".chat-options__option_summarise")?.addEventListener(
+    this.querySelector(".chat-options__option_ps_role")?.addEventListener(
       "click",
       (e) => {
-        this.prepopulateMessageBox("Summarise my document");
+        this.prepopulateMessageBox("Describe the role of a Permanent Secretary");
       }
     );
 
