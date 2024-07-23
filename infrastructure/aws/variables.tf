@@ -238,7 +238,7 @@ You are an AI assistant called Redbox tasked with answering questions on user pr
 
 variable "chat_with_docs_question_prompt" {
   type        = string
-  default     = "Question: {question}. \n\n Documents: \n\n {documents} \n\n Answer: "
+  default     = "Question: {question}. \n\n Documents: \n\n {formatted_documents} \n\n Answer: "
   description = "how to construct chat with documents"
 }
 
@@ -348,7 +348,7 @@ variable "embedding_retry_max_seconds" {
 }
 
 
-variable "summarisation_chunk_max_tokens" {
+variable "stuff_chunk_max_tokens" {
   type        = number
   default     = 20000
   description = "Maximum size (in tokens) of chunk used in summarisation"

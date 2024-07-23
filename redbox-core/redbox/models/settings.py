@@ -4,7 +4,7 @@ from typing import Literal
 
 import boto3
 from elasticsearch import Elasticsearch
-from pydantic import BaseModel
+from pydantic import BaseModel, computed_field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 logging.basicConfig(level=logging.INFO)
@@ -118,13 +118,17 @@ class AISettings(BaseModel):
     condense_question_prompt: str = CONDENSE_QUESTION_PROMPT
     summarisation_system_prompt: str = SUMMARISATION_SYSTEM_PROMPT
     summarisation_question_prompt: str = SUMMARISATION_QUESTION_PROMPT
-    summarisation_chunk_max_tokens: int = 20_000
-    summarisation_max_concurrency: int = 128
+    map_max_concurrency: int = 128
     map_system_prompt: str = MAP_SYSTEM_PROMPT
     map_question_prompt: str = MAP_QUESTION_PROMPT
     map_document_prompt: str = MAP_DOCUMENT_PROMPT
     reduce_system_prompt: str = REDUCE_SYSTEM_PROMPT
     reduce_question_prompt: str = REDUCE_QUESTION_PROMPT
+
+    @computed_field
+    @property
+    def stuff_chunk_max_tokens(self) -> int:
+        return self.context_window_size * 0.8
 
 
 class ElasticLocalSettings(BaseModel):
