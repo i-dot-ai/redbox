@@ -106,6 +106,7 @@ module "django-app" {
   ip_whitelist                 = var.external_ips
   environment_variables        = local.django_app_environment_variables
   secrets                      = local.reconstructed_django_secrets
+  auto_scale_off_peak_times    = true
 }
 
 
@@ -140,6 +141,7 @@ module "core_api" {
   environment_variables        = local.core_api_environment_variables
   secrets                      = local.reconstructed_core_secrets
   ephemeral_storage            = 30
+  auto_scale_off_peak_times    = true
 }
 
 
@@ -167,6 +169,7 @@ module "worker" {
   secrets                      = local.reconstructed_worker_secrets
   http_healthcheck             = false
   ephemeral_storage            = 30
+  auto_scale_off_peak_times    = true
 }
 
 
