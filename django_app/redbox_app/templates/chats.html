@@ -66,9 +66,6 @@
         {% endif %}
       </chat-title>
     
-      {% if not messages %}
-        <new-chat-options class="chat-options"></new-chat-options>
-      {% endif %}
 
       <chat-controller class="iai-chat-container" data-stream-url="{{ streaming.endpoint }}" data-session-id="{{ chat_id or '' }}">
 
@@ -102,6 +99,10 @@
 
         <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}"/>
         {% if chat_id %}<input type="hidden" name="session-id" value="{{ chat_id }}"/>{% endif %}
+
+        {% if not messages %}
+          <new-chat-options class="chat-options"></new-chat-options>
+        {% endif %}
 
         <div class="iai-chat-input">
           <div class="iai-chat-input__container">

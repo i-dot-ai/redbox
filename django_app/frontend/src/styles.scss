@@ -213,7 +213,6 @@ chat-message {
 
 .rb-chat-message__container {
   margin-top: -1rem;
-  min-height: calc(100vh - 21.75rem);
 }
 .govuk-main-wrapper:has(.iai-chat-input) {
   padding-bottom: 0;
@@ -384,6 +383,10 @@ feedback-buttons:last-of-type {
 }
 
 /* New Chat Options */
+.chat-options {
+  padding-bottom: 2rem;
+  padding-left: 2rem;
+}
 main:has(.iai-chat-bubble) .chat-options {
   display: none;
 }
@@ -418,6 +421,12 @@ main:has(.iai-chat-bubble) .chat-options {
   color: #1f2937;
   font-size: 0.75rem;
   margin-top: 0.75rem;
+}
+@media (min-width: 641px) {
+  .chat-options {
+    display: block;
+    padding-right: 4rem;
+  }
 }
 @media (min-width: 1020px) {
   .chat-options__options {
