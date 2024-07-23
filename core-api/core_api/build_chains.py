@@ -10,16 +10,13 @@ from langchain.schema import StrOutputParser
 from langchain_community.chat_models import ChatLiteLLM
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.retrievers import BaseRetriever
-from langchain_core.runnables import (Runnable, RunnableLambda,
-                                      RunnablePassthrough, chain)
+from langchain_core.runnables import Runnable, RunnableLambda, RunnablePassthrough, chain
 from langchain_core.runnables.config import RunnableConfig
 from langchain_core.vectorstores import VectorStoreRetriever
 from tiktoken import Encoding
 
 from redbox.api.format import format_documents
-from redbox.api.runnables import (filter_by_elbow,
-                                  make_chat_prompt_from_messages_runnable,
-                                  resize_documents)
+from redbox.api.runnables import filter_by_elbow, make_chat_prompt_from_messages_runnable, resize_documents
 from redbox.models import ChatRoute, Settings
 from redbox.models.errors import NoDocumentSelected
 
