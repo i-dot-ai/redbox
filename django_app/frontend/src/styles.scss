@@ -49,7 +49,7 @@ body {
 .rb-banner * {
   color: white;
 }
-.rb-banner .govuk-link {
+.rb-banner .govuk-link:any-link {
   color: white;
 }
 .rb-banner .govuk-link:focus {
