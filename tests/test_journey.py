@@ -47,7 +47,8 @@ def test_user_journey(page: Page, email_address: str):
 
     # My details page
     my_details_page.name = "Roland Hamilton-Jones"
-    my_details_page.ai_experience = "Enthusiastic Experimenter"
+    # my_details_page.ai_experience = "Enthusiastic Experimenter"  #TODO (@brunns): Get this setter working
+    # https://technologyprogramme.atlassian.net/browse/REDBOX-551
     my_details_page.grade = "AA"
     my_details_page.business_unit = "Delivery Group"
     my_details_page.profession = "Digital, data and technology"
