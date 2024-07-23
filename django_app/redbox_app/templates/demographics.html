@@ -29,18 +29,21 @@
           </legend>
           <div class="govuk-radios">
             {% for value, label in form.ai_experience.field.choices %}
-              <div class="govuk-radios__item">
-                <input class="govuk-radios__input" type="radio"
-                       id="ai_experience_{{ loop.index0 }}"
-                       name="{{ form.ai_experience.name }}"
-                       value="{{ value }}"
-                       {% if value|string == form.ai_experience.value()|string %}checked{% endif %}
-                       data-testid="{{ value }}">
-                <label class="govuk-label govuk-radios__label"
-                       for="ai_experience_{{ loop.index0 }}">
-                  {{ value }}<br/>{{ label }}
-                </label>
-              </div>
+              {% if value %}
+                <div class="govuk-radios__item">
+                  <input class="govuk-radios__input" type="radio"
+                        id="ai_experience_{{ loop.index0 }}"
+                        name="{{ form.ai_experience.name }}"
+                        value="{{ value }}"
+                        {% if value|string == form.ai_experience.value()|string %}checked{% endif %}
+                        data-testid="{{ value }}" aria-describedby="ai_experience_{{ loop.index0 }}-hint">
+                  <label class="govuk-label govuk-radios__label"
+                        for="ai_experience_{{ loop.index0 }}">
+                    {{ value }}
+                  </label>
+                  <div id="ai_experience_{{ loop.index0 }}-hint" class="govuk-hint govuk-radios__hint">{{ label }}</div>         
+                </div>
+              {% endif %}
             {% endfor %}
           </div>
         </fieldset>
