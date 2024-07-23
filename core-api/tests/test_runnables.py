@@ -1,8 +1,11 @@
 import pytest
-from core_api.build_chains import (build_chat_chain,
-                                   build_chat_with_docs_chain,
-                                   build_condense_retrieval_chain,
-                                   build_retrieval_chain, build_summary_chain)
+from core_api.build_chains import (
+    build_chat_chain,
+    build_chat_with_docs_chain,
+    build_condense_retrieval_chain,
+    build_retrieval_chain,
+    build_summary_chain,
+)
 from core_api.dependencies import get_parameterised_retriever, get_tokeniser
 
 from redbox.api.runnables import make_chat_prompt_from_messages_runnable
@@ -184,7 +187,9 @@ def test_chat_runnable(mock_llm, chunked_file, env):
 
 
 def test_chat_with_documents_runnable(all_chunks_retriever, mock_llm, chunked_file, env):
-    chain = build_chat_with_docs_chain(llm=mock_llm, all_chunks_retriever=all_chunks_retriever, tokeniser=get_tokeniser(), env=env)
+    chain = build_chat_with_docs_chain(
+        llm=mock_llm, all_chunks_retriever=all_chunks_retriever, tokeniser=get_tokeniser(), env=env
+    )
 
     previous_history = [
         {"text": "Lorem ipsum dolor sit amet.", "role": "user"},
