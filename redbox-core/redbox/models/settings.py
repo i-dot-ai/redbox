@@ -79,7 +79,7 @@ CONDENSE_SYSTEM_PROMPT = (
 
 CHAT_QUESTION_PROMPT = "{question}\n=========\n Response: "
 
-CHAT_WITH_DOCS_QUESTION_PROMPT = "Question: {question}. \n\n Documents: \n\n {documents} \n\n Answer: "
+CHAT_WITH_DOCS_QUESTION_PROMPT = "Question: {question}. \n\n Documents: \n\n {formatted_documents} \n\n Answer: "
 
 CHAT_WITH_DOCS_REDUCE_QUESTION_PROMPT = "Question: {question}. \n\n Documents: \n\n {summaries} \n\n Answer: "
 

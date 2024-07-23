@@ -1,13 +1,13 @@
 import sys
 from functools import partial, reduce
-from typing import Any
 from logging import getLogger
+from typing import Any
 
+from kneed import KneeLocator
 from langchain_core.documents.base import Document
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.runnables import RunnableLambda, RunnablePassthrough, chain, Runnable
+from langchain_core.runnables import Runnable, RunnableLambda, RunnablePassthrough, chain
 from tiktoken import Encoding
-from kneed import KneeLocator
 
 from redbox.api.format import reduce_chunks_by_tokens
 from redbox.models import ChatResponse

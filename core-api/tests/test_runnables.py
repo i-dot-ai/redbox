@@ -1,5 +1,11 @@
 import pytest
-from core_api.build_chains import build_condense_retrieval_chain, build_retrieval_chain, build_summary_chain
+from core_api.build_chains import (
+    build_chat_chain,
+    build_chat_with_docs_chain,
+    build_condense_retrieval_chain,
+    build_retrieval_chain,
+    build_summary_chain,
+)
 from core_api.dependencies import get_parameterised_retriever, get_tokeniser
 
 from redbox.api.runnables import make_chat_prompt_from_messages_runnable
@@ -156,3 +162,49 @@ def test_summary_runnable_small_file(all_chunks_retriever, mock_llm, chunked_fil
 
     assert response["response"] == "<<TESTING>>"
     assert response["route_name"] == ChatRoute.summarise
+
+
+def test_chat_runnable(mock_llm, chunked_file, env):
+    chain = build_chat_chain(llm=mock_llm, tokeniser=get_tokeniser(), env=env)
+
+    previous_history = [
+        {"text": "Lorem ipsum dolor sit amet.", "role": "user"},
+        {"text": "Consectetur adipiscing elit.", "role": "ai"},
+        {"text": "Donec cursus nunc tortor.", "role": "user"},
+    ]
+
+    response = chain.invoke(
+        input=ChainInput(
+            question="Who are all these people?",
+            chat_history=previous_history,
+            file_uuids=[str(chunked_file.uuid)],
+            user_uuid=str(chunked_file.creator_user_uuid),
+        ).dict()
+    )
+
+    assert response["response"] == "<<TESTING>>"
+    assert response["route_name"] == ChatRoute.chat
+
+
+def test_chat_with_documents_runnable(all_chunks_retriever, mock_llm, chunked_file, env):
+    chain = build_chat_with_docs_chain(
+        llm=mock_llm, all_chunks_retriever=all_chunks_retriever, tokeniser=get_tokeniser(), env=env
+    )
+
+    previous_history = [
+        {"text": "Lorem ipsum dolor sit amet.", "role": "user"},
+        {"text": "Consectetur adipiscing elit.", "role": "ai"},
+        {"text": "Donec cursus nunc tortor.", "role": "user"},
+    ]
+
+    response = chain.invoke(
+        input=ChainInput(
+            question="Who are all these people?",
+            chat_history=previous_history,
+            file_uuids=[str(chunked_file.uuid)],
+            user_uuid=str(chunked_file.creator_user_uuid),
+        ).dict()
+    )
+
+    assert response["response"] == "<<TESTING>>"
+    assert response["route_name"] == ChatRoute.chat_with_docs
