@@ -199,6 +199,7 @@ Now run the commands below remembering to replace ENVIRONMENT with `dev`, `prepr
 
 ```commandline
 cd redbox
+
 make tf_init
 make tf_apply env=<ENVIRONMENT>
 ```
