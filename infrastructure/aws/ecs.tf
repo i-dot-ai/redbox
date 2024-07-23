@@ -95,7 +95,7 @@ module "django-app" {
   create_networking          = true
   source                     = "../../../i-ai-core-infrastructure//modules/ecs"
   name                       = "${local.name}-django-app"
-  image_tag                  = "e022dc5a91f45387eb59c3a32e90382bed038bba"
+  image_tag                  = var.image_tag
   ecr_repository_uri         = "${var.ecr_repository_uri}/${var.project_name}-django-app"
   ecs_cluster_id             = module.cluster.ecs_cluster_id
   ecs_cluster_name           = module.cluster.ecs_cluster_name
@@ -121,24 +121,24 @@ module "django-app" {
 }
 
 module "django-command" {
-  memory                     = 512
-  cpu                        = 256
-  create_listener            = false
-  create_networking          = false
-  source                     = "../../../i-ai-core-infrastructure//modules/ecs"
-  name                       = "${local.name}-django-command"
-  image_tag                  = "e022dc5a91f45387eb59c3a32e90382bed038bba"
-  command                    = ["venv/bin/django-admin", var.django_command]
-  ecr_repository_uri         = "${var.ecr_repository_uri}/${var.project_name}-django-app"
-  ecs_cluster_id             = module.cluster.ecs_cluster_id
-  ecs_cluster_name           = module.cluster.ecs_cluster_name
-  autoscaling_minimum_target = 1
-  autoscaling_maximum_target = 1
-  state_bucket               = var.state_bucket
-  vpc_id                     = data.terraform_remote_state.vpc.outputs.vpc_id
-  private_subnets            = data.terraform_remote_state.vpc.outputs.private_subnets
-  container_port             = 8091
-    load_balancer_security_group = module.load_balancer.load_balancer_security_group_id
+  memory                       = 512
+  cpu                          = 256
+  create_listener              = false
+  create_networking            = false
+  source                       = "../../../i-ai-core-infrastructure//modules/ecs"
+  name                         = "${local.name}-django-command"
+  image_tag                    = var.image_tag
+  command                      = ["venv/bin/django-admin", var.django_command]
+  ecr_repository_uri           = "${var.ecr_repository_uri}/${var.project_name}-django-app"
+  ecs_cluster_id               = module.cluster.ecs_cluster_id
+  ecs_cluster_name             = module.cluster.ecs_cluster_name
+  autoscaling_minimum_target   = 1
+  autoscaling_maximum_target   = 1
+  state_bucket                 = var.state_bucket
+  vpc_id                       = data.terraform_remote_state.vpc.outputs.vpc_id
+  private_subnets              = data.terraform_remote_state.vpc.outputs.private_subnets
+  container_port               = 8091
+  load_balancer_security_group = module.load_balancer.load_balancer_security_group_id
   aws_lb_arn                   = module.load_balancer.alb_arn
   host                         = local.django_host
   environment_variables        = local.django_app_environment_variables
@@ -155,7 +155,7 @@ module "core_api" {
   create_networking             = false
   source                        = "../../../i-ai-core-infrastructure//modules/ecs"
   name                          = "${local.name}-core-api"
-  image_tag                     = "e022dc5a91f45387eb59c3a32e90382bed038bba"
+  image_tag                     = var.image_tag
   ecr_repository_uri            = "${var.ecr_repository_uri}/redbox-core-api"
   ecs_cluster_id                = module.cluster.ecs_cluster_id
   ecs_cluster_name              = module.cluster.ecs_cluster_name
@@ -188,7 +188,7 @@ module "worker" {
   create_networking            = false
   source                       = "../../../i-ai-core-infrastructure//modules/ecs"
   name                         = "${local.name}-worker"
-  image_tag                    = "e022dc5a91f45387eb59c3a32e90382bed038bba"
+  image_tag                    = var.image_tag
   ecr_repository_uri           = "${var.ecr_repository_uri}/redbox-worker"
   ecs_cluster_id               = module.cluster.ecs_cluster_id
   ecs_cluster_name             = module.cluster.ecs_cluster_name
