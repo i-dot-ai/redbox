@@ -2,6 +2,10 @@
 
 class CopyText extends HTMLElement {
   connectedCallback() {
+    if (typeof ClipboardItem === "undefined") {
+      return;
+    }
+
     this.innerHTML = `
         <button class="iai-chat-bubble__citations-button" type="button">
           <svg width="19" height="18" viewBox="0 0 19 18" fill="none" focusable="false" aria-hidden="true">
@@ -12,27 +16,15 @@ class CopyText extends HTMLElement {
         </button>
     `;
 
-    const getTextWithLineBreaks = (element) => {
-      let text = "";
-      element.childNodes.forEach((node) => {
-        if (node.nodeType === Node.TEXT_NODE) {
-          text += node.textContent;
-        } else if (node.nodeType === Node.ELEMENT_NODE) {
-          text += getTextWithLineBreaks(node);
-          if (["P", "DIV", "BR"].includes(node.tagName)) {
-            text += "\n";
-          }
-        }
-      });
-      return text;
-    };
-
     this.querySelector("button")?.addEventListener("click", () => {
       const textEl = this.closest(".iai-chat-bubble")?.querySelector(
         ".iai-chat-bubble__text"
       );
-      const text = getTextWithLineBreaks(textEl);
-      navigator.clipboard.writeText(text || "");
+
+      const type = "text/html";
+      const blob = new Blob([textEl?.innerHTML || ""], { type });
+      const data = [new ClipboardItem({ [type]: blob })];
+      navigator.clipboard.write(data);
     });
   }
 }
