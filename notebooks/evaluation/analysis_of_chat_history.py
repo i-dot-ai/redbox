@@ -64,6 +64,7 @@ class ChatHistoryAnalysis:
         return tokens
 
     def process_user_names(self, user_names_column):
+        # TODO: Use this function across the board when displaying User Names. Decide whether surname is needed.
         """
         Takes a pandas column and returns a dictionary of key value pairs for the tidy name.
         This function tidies user names instead of their emails.
@@ -76,7 +77,7 @@ class ChatHistoryAnalysis:
 
     # 1) Who uses Redbox the most?
     def user_frequency_analysis(self):
-        user_counts = self.chat_logs["users"].value_counts()
+        user_counts = self.user_responses["users"].value_counts()
 
         user_name = [user_email.split("@")[0].replace(".", " ").title() for user_email in user_counts.index]
         wrapped_user_name = ["\n".join(textwrap.wrap(name, width=10)) for name in user_name]
@@ -93,14 +94,14 @@ class ChatHistoryAnalysis:
         plt.xticks(ha="right", size=9)
         plt.title("Unique Users by Total Number of Messages")
         plt.xlabel("Users")
-        plt.ylabel("Total No. of Messages")
+        plt.ylabel("Total No. of Prompts")
         top_users_path = os.path.join(self.visualisation_dir, "top_users.png")
         plt.savefig(top_users_path)
 
     # 2) Redbox traffic analysis
     def redbox_traffic_analysis(self):
         # think about GA integration?
-        self.chat_logs["date"] = self.chat_logs["created_at"].dt.date
+        self.chat_logs["date"] = self.user_responses["created_at"].dt.date
         date_counts = self.chat_logs["date"].value_counts().sort_index()
 
         # Table
@@ -113,7 +114,7 @@ class ChatHistoryAnalysis:
         date_counts.plot(kind="line")
         plt.title("Usage of Redbox AI Over Time")
         plt.xlabel("Date")
-        plt.ylabel("Number of Conversations")
+        plt.ylabel("Number of Prompts")
         conversation_frequency_path = os.path.join(self.visualisation_dir, "usage_of_redbox_ai_over_time.png")
         plt.savefig(conversation_frequency_path)
 
@@ -224,7 +225,9 @@ class ChatHistoryAnalysis:
         )
 
         # Table
-        words, counts = zip(*self.ai_responses["clean_text"].apply(lambda x: " ".join(x.split()[:2])).value_counts(), strict=False)
+        words, counts = zip(
+            *self.ai_responses["clean_text"].apply(lambda x: " ".join(x.split()[:2])).value_counts(), strict=False
+        )
         table_data = {"Word": words, "Frequency": counts}
         table_dataframe = pd.DataFrame(data=table_data)
         table_dataframe.to_csv(f"{self.table_dir}common_ai_patterns.csv", index=False)
@@ -324,6 +327,57 @@ class ChatHistoryAnalysis:
         return self.topic_model.visualize_topics_over_time(
             self.topics_over_time, top_n_topics=5, normalize_frequency=True
         )
+
+    def get_prompt_lengths(self):
+        """
+        Adds the prompt lengths to the user prompt column
+        """
+        user_responses_df = self.user_responses
+        user_responses_df["no_input_words"] = user_responses_df["text"].apply(lambda n: len(n.split()))
+        return user_responses_df
+
+    def filter_prompt_lengths(self, outlier_max: int):
+        """
+        Creates option to filter for outliers
+        """
+        user_responses_df = self.get_prompt_lengths()
+        user_responses_df = user_responses_df[user_responses_df["no_input_words"] < outlier_max]
+        return user_responses_df
+
+    def visualise_prompt_lengths(self, outlier_max: int):
+        """
+        How does prompt length vary?
+        """
+        user_responses_df = self.filter_prompt_lengths(outlier_max)
+        fig = sns.displot(user_responses_df["no_input_words"])
+        fig.set_axis_labels(x_var="No. of words in prompt", y_var="Count")
+
+    def get_prompt_length_vs_chat_length(self, outlier_max: int):
+        """
+        Compares average prompt length with chat length.
+        """
+        user_responses_df = self.filter_prompt_lengths(outlier_max)
+        mean_inputs_df = (
+            user_responses_df[["id", "users", "no_input_words"]]
+            .groupby(by=["id", "users"])
+            .agg({"no_input_words": "mean"})
+            .rename(columns={"no_input_words": "mean_input_words"})
+            .reset_index()
+        )
+        no_inputs_df = user_responses_df[["id", "users"]].groupby("id").value_counts().reset_index(name="no_inputs")
+        compare_inputs_words_df = no_inputs_df.merge(mean_inputs_df, left_on=["id", "users"], right_on=["id", "users"])
+
+        return compare_inputs_words_df
+
+    def vis_prompt_length_vs_chat_legnth(self, outlier_max: int):
+        compare_inputs_words_df = self.get_prompt_length_vs_chat_length(outlier_max=outlier_max)
+        user_dict = self.process_user_names(compare_inputs_words_df.users)
+        compare_inputs_words_df["users"] = compare_inputs_words_df["users"].map(user_dict)
+        fig = sns.scatterplot(data=compare_inputs_words_df, x="no_inputs", y="mean_input_words", hue="users")
+        fig.set_xlabel("No. of prompts")
+        fig.set_ylabel("Mean length of prompt")
+        fig.set_title("Scatter plot comparing number of prompts with the length of prompt for each user session")
+        sns.move_legend(fig, "upper left", bbox_to_anchor=(1, 1))
 
 
 def main():
