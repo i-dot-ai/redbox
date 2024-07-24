@@ -1,4 +1,6 @@
+import re
 import uuid
+from collections.abc import Sequence
 from datetime import UTC, datetime, timedelta
 from io import StringIO
 from unittest import mock
@@ -184,3 +186,35 @@ def test_delete_expired_chats(
     assert ChatHistory.objects.filter(id=chat_history.id).exists() != should_delete
     assert ChatMessage.objects.filter(id=chat_message_1.id).exists() != should_delete
     assert ChatMessage.objects.filter(id=chat_message_2.id).exists() != should_delete
+
+
+# === reingest_files command tests ===
+
+
+@pytest.mark.django_db()
+def test_reingest_files(several_files: Sequence[File], requests_mock: Mocker):
+    # Given
+    successful_file, failing_file = several_files[0:2]
+
+    matcher = re.compile(f"http://{settings.CORE_API_HOST}:{settings.CORE_API_PORT}/file/[0-9a-f]|\\-")
+
+    requests_mock.put(
+        matcher,
+        status_code=201,
+        json={
+            "key": successful_file.original_file_name,
+            "bucket": settings.BUCKET_NAME,
+            "uuid": str(uuid.uuid4()),
+        },
+    )
+    requests_mock.put(
+        f"http://{settings.CORE_API_HOST}:{settings.CORE_API_PORT}/file/{failing_file.core_file_uuid}",
+        exc=requests.exceptions.HTTPError,
+    )
+
+    # When
+    call_command("reingest_files")
+
+    # Then
+    assert File.objects.get(id=successful_file.id).status == StatusEnum.uploaded
+    assert File.objects.get(id=failing_file.id).status == StatusEnum.errored
