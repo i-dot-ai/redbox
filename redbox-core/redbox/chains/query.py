@@ -19,7 +19,6 @@ from redbox.models.errors import NoDocumentSelected
 
 # === Logging ===
 
-logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 log = logging.getLogger()
 
 

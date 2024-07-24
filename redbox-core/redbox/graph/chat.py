@@ -17,14 +17,14 @@ def get_chat_graph(
 ) -> CompiledGraph:
 
     app = StateGraph(ChatState)
-    app.add_edge(START, "set_chat_prompt_args")
+    app.set_entry_point("set_chat_prompt_args")
 
     app.add_node("set_chat_prompt_args", set_chat_prompt_args)
     app.add_edge("set_chat_prompt_args", "llm")
 
     app.add_node("llm", build_chat_chain(llm, tokeniser, env))
 
-    return app.compile()
+    return app.compile(debug=True)
 
 
 @chain

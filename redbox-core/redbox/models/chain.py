@@ -28,8 +28,8 @@ class ChainState(BaseModel):
     documents: Annotated[list[Document], add] = Field(default_factory=list)
     response: str | None = None
     route_name: str | None = None
+    prompt_args: dict[str, str] = Field(default_factory=dict, description="Arguments to chat prompt templating")
 
 
 class ChatState(ChainState):
-    prompt_args: dict[str, str] = Field(default_factory=dict, description="Arguments to chat prompt templating")
-    
+    pass
