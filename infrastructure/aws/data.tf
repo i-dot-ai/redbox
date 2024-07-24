@@ -97,6 +97,7 @@ locals {
   reconstructed_worker_secrets = [for k, _ in local.worker_secrets : { name = k, valueFrom = "${aws_secretsmanager_secret.worker-secret.arn}:${k}::" }]
   reconstructed_core_secrets   = [for k, _ in local.core_secrets : { name = k, valueFrom = "${aws_secretsmanager_secret.core-api-secret.arn}:${k}::" }]
   reconstructed_django_secrets = [for k, _ in local.django_app_secrets : { name = k, valueFrom = "${aws_secretsmanager_secret.django-app-secret.arn}:${k}::" }]
+  reconstructed_django_command_secrets = [for k, _ in local.django_app_secrets : { name = k, valueFrom = "${aws_secretsmanager_secret.django-command-secret.arn}:${k}::" }]
 }
 
 data "terraform_remote_state" "vpc" {

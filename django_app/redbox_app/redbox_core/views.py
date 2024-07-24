@@ -456,8 +456,8 @@ class CheckDemographicsView(View):
     @method_decorator(login_required)
     def get(self, request: HttpRequest) -> HttpResponse:
         user: User = request.user
-        if all([user.grade, user.business_unit, user.profession]):
-            return redirect(documents_view)
+        if all([user.name, user.ai_experience, user.grade, user.business_unit, user.profession]):
+            return redirect("chats")
         else:
             return redirect("demographics")
 
@@ -466,7 +466,7 @@ class DemographicsView(UpdateView):
     model = User
     template_name = "demographics.html"
     form_class = DemographicsForm
-    success_url = "/documents/"
+    success_url = "/chats/"
 
     def get_object(self, **kwargs):  # noqa: ARG002
         return self.request.user

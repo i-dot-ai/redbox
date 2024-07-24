@@ -700,7 +700,7 @@ def test_check_demographics_redirect_if_populated(client: Client, user_with_demo
     response = client.get("/check-demographics/", follow=True)
 
     # Then
-    assertRedirects(response, "/documents/")
+    assertRedirects(response, "/chats/")
 
 
 @pytest.mark.django_db()
@@ -727,11 +727,17 @@ def test_post_to_demographic_details_form(client: Client, alice: User, business_
     # When
     response = client.post(
         "/demographics/",
-        {"grade": "AO", "profession": "AN", "business_unit": business_unit.id},
+        {
+            "name": "Deryck Lennox-Brown",
+            "ai_experience": "Enthusiastic Experimenter",
+            "grade": "AO",
+            "profession": "AN",
+            "business_unit": business_unit.id,
+        },
         follow=True,
     )
 
     # Then
-    assertRedirects(response, "/documents/")
+    assertRedirects(response, "/chats/")
     alice.refresh_from_db()
     assert alice.grade == "AO"
