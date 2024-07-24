@@ -148,7 +148,7 @@ class FileStatus(BaseModel):
     """Status of a file."""
 
     file_uuid: UUID
-    processing_status: ProcessingStatusEnum
+    processing_status: ProcessingStatusEnum | None
     chunk_statuses: None = Field(default=None, description="deprecated, see processing_status")
 
 

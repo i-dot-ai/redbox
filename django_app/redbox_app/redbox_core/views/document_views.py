@@ -193,7 +193,7 @@ def file_status_api_view(request: HttpRequest) -> JsonResponse:
         logger.error("Error getting file object information - no file ID provided %s.")
         return JsonResponse({"status": StatusEnum.unknown.label})
     try:
-        file = get_object_or_404(File, id=file_id)
+        file: File = get_object_or_404(File, id=file_id)
     except File.DoesNotExist as ex:
         logger.exception("File object information not found in django - file does not exist %s.", file_id, exc_info=ex)
         return JsonResponse({"status": StatusEnum.unknown.label})
@@ -205,6 +205,6 @@ def file_status_api_view(request: HttpRequest) -> JsonResponse:
             file.status = StatusEnum.unknown.label
             file.save()
         return JsonResponse({"status": file.status})
-    file.status = core_file_status_response.processing_status
+    file.status = core_file_status_response.processing_status or StatusEnum.unknown.name
     file.save()
     return JsonResponse({"status": file.get_status_text()})
