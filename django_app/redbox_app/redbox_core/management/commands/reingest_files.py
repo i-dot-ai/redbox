@@ -19,10 +19,7 @@ class Command(BaseCommand):
 
     def handle(self, *_args, **_kwargs):
         self.stdout.write(self.style.NOTICE("Reingesting active files from Django"))
-        counters = {
-            "success": 0,
-            "errors": 0,
-        }
+        successes, errors = 0, 0
 
         for file in File.objects.exclude(status__in=INACTIVE_STATUSES):
             logger.debug("Reingesting file object %s", file)
@@ -34,15 +31,13 @@ class Command(BaseCommand):
                 logger.exception("Error reingesting file object %s using core-api", file, exc_info=e)
                 file.status = StatusEnum.errored
                 file.save()
-                counters["errors"] += 1
+                errors += 1
 
             else:
                 file.status = StatusEnum.uploaded
                 file.save()
-                counters["success"] += 1
+                successes += 1
 
         self.stdout.write(
-            self.style.NOTICE(
-                f"Successfully reuploaded {counters["success"]} files and failed to reupload {counters["errors"]} files"
-            )
+            self.style.NOTICE(f"Successfully reuploaded {successes} files and failed to reupload {errors} files")
         )
