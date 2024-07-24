@@ -25,7 +25,6 @@ COPY --from=builder ${VIRTUAL_ENV} ${VIRTUAL_ENV}
 WORKDIR /app/core-api
 
 # Add redbox python package and install it with poetry
-ADD redbox-core/ /app/redbox-core
 ADD core-api/ /app/core-api
 
 # Run FastAPI

@@ -132,17 +132,11 @@ ECR_URL=$(AWS_ACCOUNT_ID).dkr.ecr.$(AWS_REGION).amazonaws.com
 ECR_REPO_URL=$(ECR_URL)/$(ECR_REPO_NAME)
 
 IMAGE_TAG=$$(git rev-parse HEAD)
-PREV_IMAGE_TAG=$$(git rev-parse HEAD~1)
-MAIN_IMAGE_TAG=$$(git rev-parse origin/main)
-
 IMAGE=$(ECR_REPO_URL):$(IMAGE_TAG)
-PREV_IMAGE=$(ECR_REPO_URL):$(PREV_IMAGE_TAG)
 
-DOCKER_CACHE_BUCKET=i-dot-ai-docker-cache
 DOCKER_BUILDER_CONTAINER=$(APP_NAME)
 
 tf_build_args=-var "image_tag=$(IMAGE_TAG)"
-DOCKER_SERVICES=$$(docker compose config --services | grep -v mlflow)
 
 AUTO_APPLY_RESOURCES = module.django-app.aws_ecs_task_definition.aws-ecs-task \
                        module.django-app.aws_ecs_service.aws-ecs-service \
