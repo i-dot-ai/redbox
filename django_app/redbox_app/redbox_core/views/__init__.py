@@ -1,4 +1,4 @@
-from redbox_app.redbox_core.views.chat_views import ChatsTitleView, ChatsView, RatingsView, post_message
+from redbox_app.redbox_core.views.chat_views import ChatsTitleView, ChatsView, post_message
 from redbox_app.redbox_core.views.citation_views import CitationsView
 from redbox_app.redbox_core.views.demographics_views import CheckDemographicsView, DemographicsView
 from redbox_app.redbox_core.views.document_views import (
@@ -8,6 +8,7 @@ from redbox_app.redbox_core.views.document_views import (
     remove_doc_view,
 )
 from redbox_app.redbox_core.views.misc_views import health, homepage_view
+from redbox_app.redbox_core.views.ratings_views import RatingsView
 
 __all__ = [
     "ChatsTitleView",
