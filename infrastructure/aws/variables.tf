@@ -25,9 +25,21 @@ variable "developer_ips" {
 }
 
 variable "django_command" {
-  type        = string
-  default     = "delete_expired_data"
-  description = "Name of Django management to be run. Use with caution"
+  type = list(object({
+    command : string,
+    task_name : string,
+    min_tasks : number,
+    max_tasks : number,
+    mem : number,
+    cpu : number,
+    schedule_up: optional(string),
+    schedule_down: optional(string),
+  }))
+  default = [
+    { command : "delete_expired_data", task_name : "delete", min_tasks : 0, max_tasks : 0, mem : 512, cpu : 256, schedule_up: "cron(00 02 * * ? *)", schedule_down: "cron(30 02 * * ? *)" }, # default to not running, every day at 2-2:30am
+    { command : "reingest_files", task_name : "reingest", min_tasks : 0, max_tasks : 0, mem : 512, cpu : 256 } # default to not running, no schedule, manually triggered
+  ]
+  description = "An object describing the django command to run"
 }
 
 variable "django_secret_key" {
@@ -365,10 +377,8 @@ variable "worker_ingest_min_chunk_size" {
   description = "Minimum size of chunks to be produced by the worker"
 }
 
-
 variable "worker_ingest_max_chunk_size" {
   type        = number
   default     = 800
   description = "Maximum size of chunks to be produced by the worker"
 }
-

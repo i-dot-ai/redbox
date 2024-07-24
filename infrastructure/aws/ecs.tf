@@ -122,19 +122,23 @@ module "django-app" {
 }
 
 module "django-command" {
-  memory                       = 512
-  cpu                          = 256
+  for_each = {
+    for index, command in var.django_command :
+    command.task_name => command
+  }
+  memory                       = each.value.mem
+  cpu                          = each.value.cpu
   create_listener              = false
   create_networking            = false
   source                       = "../../../i-ai-core-infrastructure//modules/ecs"
-  name                         = "${local.name}-django-command"
+  name                         = "${local.name}-${each.value.task_name}-command"
   image_tag                    = var.image_tag
-  command                      = ["venv/bin/django-admin", var.django_command]
+  command                      = ["venv/bin/django-admin", each.value.command]
   ecr_repository_uri           = "${var.ecr_repository_uri}/${var.project_name}-django-app"
   ecs_cluster_id               = module.cluster.ecs_cluster_id
   ecs_cluster_name             = module.cluster.ecs_cluster_name
-  autoscaling_minimum_target   = 1
-  autoscaling_maximum_target   = 1
+  autoscaling_minimum_target   = each.value.min_tasks
+  autoscaling_maximum_target   = each.value.max_tasks
   state_bucket                 = var.state_bucket
   vpc_id                       = data.terraform_remote_state.vpc.outputs.vpc_id
   private_subnets              = data.terraform_remote_state.vpc.outputs.private_subnets
@@ -146,6 +150,9 @@ module "django-command" {
   secrets                      = local.reconstructed_django_command_secrets
   http_healthcheck             = false
   ephemeral_storage            = 30
+  auto_scale_off_peak_times    = false
+  schedule_up                  = each.value.schedule_up
+  schedule_down                = each.value.schedule_down
 }
 
 module "core_api" {
@@ -222,11 +229,12 @@ resource "aws_security_group_rule" "ecs_ingress_front_to_back" {
 }
 
 resource "aws_security_group_rule" "ecs_command_to_core" {
+  for_each = module.django-command
   type                     = "ingress"
   description              = "Allow all traffic from the django-command to the core-api"
   from_port                = 0
   to_port                  = 0
   protocol                 = "-1"
-  source_security_group_id = module.django-command.ecs_sg_id
+  source_security_group_id = each.value.ecs_sg_id
   security_group_id        = module.core_api.ecs_sg_id
 }

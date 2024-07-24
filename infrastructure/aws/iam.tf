@@ -52,14 +52,13 @@ resource "aws_iam_policy" "redbox_policy" {
 }
 
 resource "aws_iam_role_policy_attachment" "redbox_role_policy" {
-  for_each = tomap(
+  for_each = merge(tomap(
     {
       "core-api" = module.core_api.ecs_task_execution_exec_role_name,
       "worker"   = module.worker.ecs_task_execution_exec_role_name,
       "django"   = module.django-app.ecs_task_execution_exec_role_name,
-      "django-command"   = module.django-command.ecs_task_execution_exec_role_name,
-    }
-  )
+    },
+  ), local.django_command_roles_map)
   role       = each.value
   policy_arn = aws_iam_policy.redbox_policy.arn
 }
