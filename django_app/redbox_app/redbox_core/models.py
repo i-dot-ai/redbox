@@ -131,6 +131,9 @@ class StatusEnum(models.TextChoices):
     errored = "errored"
 
 
+INACTIVE_STATUSES = [StatusEnum.deleted, StatusEnum.errored, StatusEnum.unknown]
+
+
 class File(UUIDPrimaryKeyBase, TimeStampedModel):
     status = models.CharField(choices=StatusEnum.choices, null=False, blank=False)
     original_file = models.FileField(storage=settings.STORAGES["default"]["BACKEND"])
