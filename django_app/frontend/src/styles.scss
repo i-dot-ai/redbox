@@ -525,3 +525,39 @@ body:has(.iai-environment-warning) main {
     }
   }
 }
+
+/* RADIO BUTTONS (to be moved to design system in a future update) */
+.govuk-fieldset__legend {
+  font-size: 1rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+}
+.govuk-radios__label::before {
+  background-color: white;
+  height: 1.5rem;
+  width: 1.5rem;
+}
+.govuk-radios__label::after {
+  border-width: 6px;
+  left: 8px;
+  top: 8px;
+}
+.govuk-radios__item:has(.govuk-radios__hint) .govuk-radios__label::before {
+  top: 8px;
+}
+.govuk-radios__item:has(.govuk-radios__hint) .govuk-radios__label::after {
+  top: 14px;
+}
+.govuk-radios__input {
+  height: 1.5rem;
+  width: 1.5rem;
+}
+.govuk-radios__label,
+.govuk-radios__hint {
+  font-size: 0.75rem;
+  padding-bottom: 4px;
+  padding-top: 0;
+}
+.govuk-radios__hint {
+  padding-left: 39px;
+}

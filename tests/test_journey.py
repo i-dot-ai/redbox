@@ -46,12 +46,15 @@ def test_user_journey(page: Page, email_address: str):
     my_details_page = SignInConfirmationPage.autosubmit(page, magic_link)
 
     # My details page
+    my_details_page.name = "Roland Hamilton-Jones"
+    my_details_page.ai_experience = "Enthusiastic Experimenter"
     my_details_page.grade = "AA"
     my_details_page.business_unit = "Delivery Group"
     my_details_page.profession = "Digital, data and technology"
+    chats_page = my_details_page.update()
 
     # Documents page
-    documents_page = my_details_page.update()
+    documents_page = chats_page.navigate_to_documents()
     original_doc_count = documents_page.document_count()
 
     # Upload files

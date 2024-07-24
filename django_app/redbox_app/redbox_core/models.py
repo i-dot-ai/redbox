@@ -94,6 +94,25 @@ class User(BaseUser, UUIDPrimaryKeyBase):
         VET = "VET", _("Veterinary")
         OT = "OT", _("Other")
 
+    class AIExperienceLevel(models.TextChoices):
+        CURIOUS_NEWCOMER = "Curious Newcomer", _("I haven't used Generative AI tools")
+        CAUTIOUS_EXPLORER = "Cautious Explorer", _("I have a little experience using Generative AI tools")
+        ENTHUSIASTIC_EXPERIMENTER = (
+            "Enthusiastic Experimenter",
+            _("I occasionally use Generative AI tools but am still experimenting with their capabilities"),
+        )
+        EXPERIENCED_NAVIGATOR = (
+            "Experienced Navigator",
+            _("I use Generative AI tools regularly and have a good understanding of their strengths and limitations"),
+        )
+        AI_ALCHEMIST = (
+            "AI Alchemist",
+            _(
+                "I have extensive experience with Generative AI tools and can leverage them effectively in various "
+                "contexts"
+            ),
+        )
+
     username = None
     verified = models.BooleanField(default=False, blank=True, null=True)
     invited_at = models.DateTimeField(default=None, blank=True, null=True)
@@ -102,6 +121,8 @@ class User(BaseUser, UUIDPrimaryKeyBase):
     password = models.CharField("password", max_length=128, blank=True, null=True)
     business_unit = models.ForeignKey(BusinessUnit, null=True, blank=True, on_delete=models.SET_NULL)
     grade = models.CharField(null=True, blank=True, max_length=3, choices=UserGrade)
+    name = models.CharField(null=True, blank=True)
+    ai_experience = models.CharField(null=True, blank=True, max_length=25, choices=AIExperienceLevel)
     profession = models.CharField(null=True, blank=True, max_length=4, choices=Profession)
     objects = BaseUserManager()
 
