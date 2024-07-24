@@ -27,7 +27,6 @@ locals {
       "AI__CONDENSE_QUESTION_PROMPT" : var.condense_question_prompt,
       "AI__SUMMARISATION_SYSTEM_PROMPT" : var.summarisation_system_prompt,
       "AI__SUMMARISATION_QUESTION_PROMPT" : var.summarisation_question_prompt,
-      "AI__STUFF_CHUNK_MAX_TOKENS" : var.stuff_chunk_max_tokens
     }
   )
 
