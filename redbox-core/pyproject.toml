@@ -22,6 +22,7 @@ pydantic-settings = "^2.3.4"
 langchain-elasticsearch = "^0.2.2"
 pytest-dotenv = "^0.5.2"
 kneed = "^0.8.5"
+langgraph = "^0.1.9"
 
 
 [tool.poetry.group.dev.dependencies]

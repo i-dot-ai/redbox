@@ -3,6 +3,7 @@ from uuid import UUID
 
 from langchain_core.embeddings.embeddings import Embeddings
 
+from redbox.models.chain import ChainState
 from redbox.models.file import ChunkResolution
 
 
@@ -59,7 +60,7 @@ def make_query_filter(user_uuid: UUID, file_uuids: list[UUID], chunk_resolution:
 
 def get_all(
     chunk_resolution: ChunkResolution | None,
-    query: ESQuery,
+    state: ChainState,
 ) -> dict[str, Any]:
     """
     Returns a parameterised elastic query that will return everything it matches.
@@ -67,7 +68,7 @@ def get_all(
     As it's used in summarisation, it excludes embeddings.
     """
 
-    query_filter = make_query_filter(query["user_uuid"], query["file_uuids"], chunk_resolution)
+    query_filter = make_query_filter(state.query.user_uuid, state.query.file_uuids, chunk_resolution)
     return {
         "_source": {"excludes": ["*embedding"]},
         "query": {"bool": {"must": {"match_all": {}}, "filter": query_filter}},
@@ -79,11 +80,11 @@ def get_some(
     params: ESParams,
     embedding_field_name: str,
     chunk_resolution: ChunkResolution | None,
-    query: ESQuery,
+    state: ChainState,
 ) -> dict[str, Any]:
-    vector = embedding_model.embed_query(query["question"])
+    vector = embedding_model.embed_query(state.query.question)
 
-    query_filter = make_query_filter(query["user_uuid"], query["file_uuids"], chunk_resolution)
+    query_filter = make_query_filter(state.query.user_uuid, state.query.file_uuids, chunk_resolution)
 
     return {
         "size": params["size"],
@@ -93,7 +94,7 @@ def get_some(
                     {
                         "match": {
                             "text": {
-                                "query": query["question"],
+                                "query": state.query.question,
                                 "boost": params["match_boost"],
                             }
                         }
