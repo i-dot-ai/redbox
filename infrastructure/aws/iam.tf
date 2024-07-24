@@ -1,4 +1,3 @@
-
 data "aws_iam_policy_document" "ecs_exec_role_policy" {
   # checkov:skip=CKV_AWS_111:Allow for write access without constraints
   # checkov:skip=CKV_AWS_356:Allow for policies to not have resource limits
@@ -32,6 +31,8 @@ data "aws_iam_policy_document" "ecs_exec_role_policy" {
        "${aws_secretsmanager_secret.worker-secret.arn}:*",
        aws_secretsmanager_secret.django-app-secret.arn,
        "${aws_secretsmanager_secret.django-app-secret.arn}:*",
+       aws_secretsmanager_secret.django-command-secret.arn,
+       "${aws_secretsmanager_secret.django-command-secret.arn}:*",
     ]
   }
 
@@ -56,6 +57,7 @@ resource "aws_iam_role_policy_attachment" "redbox_role_policy" {
       "core-api" = module.core_api.ecs_task_execution_exec_role_name,
       "worker"   = module.worker.ecs_task_execution_exec_role_name,
       "django"   = module.django-app.ecs_task_execution_exec_role_name,
+      "django-command"   = module.django-command.ecs_task_execution_exec_role_name,
     }
   )
   role       = each.value

@@ -24,6 +24,12 @@ variable "developer_ips" {
   description = "List of developer IPs"
 }
 
+variable "django_command" {
+  type        = string
+  default     = "delete_expired_data"
+  description = "Name of Django management to be run. Use with caution"
+}
+
 variable "django_secret_key" {
   type        = string
   description = "cryptographic signature for django app"
