@@ -90,8 +90,9 @@ def test_delete_expired_files(
     mock_file.last_referenced = last_referenced
     mock_file.save()
 
+    matcher = re.compile(f"http://{settings.CORE_API_HOST}:{settings.CORE_API_PORT}/file/[0-9a-f]|\\-")
     requests_mock.delete(
-        f"http://{settings.CORE_API_HOST}:{settings.CORE_API_PORT}/file/{mock_file.core_file_uuid}",
+        matcher,
         status_code=201,
         json={
             "key": mock_file.original_file_name,
@@ -115,6 +116,17 @@ def test_delete_expired_files_with_api_error(uploaded_file: File, requests_mock:
     mock_file.last_referenced = EXPIRED_FILE_DATE
     mock_file.save()
 
+    matcher = re.compile(f"http://{settings.CORE_API_HOST}:{settings.CORE_API_PORT}/file/[0-9a-f]|\\-")
+
+    requests_mock.delete(
+        matcher,
+        status_code=201,
+        json={
+            "key": mock_file.original_file_name,
+            "bucket": settings.BUCKET_NAME,
+            "uuid": str(uuid.uuid4()),
+        },
+    )
     (
         requests_mock.delete(
             f"http://{settings.CORE_API_HOST}:{settings.CORE_API_PORT}/file/{mock_file.core_file_uuid}",
@@ -139,8 +151,10 @@ def test_delete_expired_files_with_s3_error(uploaded_file: File, requests_mock: 
         mock_file.last_referenced = EXPIRED_FILE_DATE
         mock_file.save()
 
+        matcher = re.compile(f"http://{settings.CORE_API_HOST}:{settings.CORE_API_PORT}/file/[0-9a-f]|\\-")
+
         requests_mock.delete(
-            f"http://{settings.CORE_API_HOST}:{settings.CORE_API_PORT}/file/{mock_file.core_file_uuid}",
+            matcher,
             status_code=201,
             json={
                 "key": mock_file.original_file_name,
