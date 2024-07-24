@@ -53,7 +53,7 @@ def build_chat_with_docs_chain(
     env: Annotated[Settings, Depends(dependencies.get_env)],
 ) -> Runnable:
     def make_document_context():
-        return all_chunks_retriever | resize_documents(env.ai.summarisation_chunk_max_tokens)
+        return all_chunks_retriever | resize_documents(env.ai.stuff_chunk_max_tokens)
 
     @chain
     def map_operation(input_dict):
@@ -73,7 +73,7 @@ def build_chat_with_docs_chain(
 
         map_summaries = (map_prompt | llm | StrOutputParser()).batch(
             documents,
-            config=RunnableConfig(max_concurrency=env.ai.summarisation_max_concurrency),
+            config=RunnableConfig(max_concurrency=env.ai.map_max_concurrency),
         )
 
         summaries = " ; ".join(map_summaries)
@@ -82,7 +82,6 @@ def build_chat_with_docs_chain(
 
     @chain
     def chat_with_docs_route(input_dict: dict):
-        log.info("Documents: %s", input_dict["documents"])
         log.info("Length documents: %s", len(input_dict["documents"]))
         if len(input_dict["documents"]) == 1:
             return RunnablePassthrough.assign(
@@ -201,7 +200,7 @@ def build_summary_chain(
     def make_document_context():
         return (
             all_chunks_retriever
-            | resize_documents(env.ai.summarisation_chunk_max_tokens)
+            | resize_documents(env.ai.stuff_chunk_max_tokens)
             | RunnableLambda(lambda docs: [d.page_content for d in docs])
         )
 
@@ -238,7 +237,7 @@ def build_summary_chain(
 
         map_summaries = (map_prompt | llm | StrOutputParser()).batch(
             documents,
-            config=RunnableConfig(max_concurrency=env.ai.summarisation_max_concurrency),
+            config=RunnableConfig(max_concurrency=env.ai.map_max_concurrency),
         )
 
         summaries = " ; ".join(map_summaries)

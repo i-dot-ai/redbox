@@ -234,6 +234,12 @@ variable "chat_question_prompt" {
   description = "how to construct chat with no documents"
 }
 
+variable "stuff_chunk_context_ratio" {
+  type        = number
+  default     = 0.75
+  description = "The ratio of the context_window_size to set stuff_chunk_max_tokens"
+}
+
 variable "chat_with_docs_system_prompt" {
   type        = string
   default     = <<EOT
@@ -244,7 +250,7 @@ You are an AI assistant called Redbox tasked with answering questions on user pr
 
 variable "chat_with_docs_question_prompt" {
   type        = string
-  default     = "Question: {question}. \n\n Documents: \n\n {documents} \n\n Answer: "
+  default     = "Question: {question}. \n\n Documents: \n\n {formatted_documents} \n\n Answer: "
   description = "how to construct chat with documents"
 }
 
@@ -353,9 +359,7 @@ variable "embedding_retry_max_seconds" {
   description = "Maximum number of seconds to wait before retry to external embedding services (rate limiting)"
 }
 
-
-variable "summarisation_chunk_max_tokens" {
+variable "stuff_chunk_max_tokens" {
   type        = number
-  default     = 20000
-  description = "Maximum size (in tokens) of chunk used in summarisation"
+  description = "Maximum size (in tokens) of chunk used in stuff method"
 }

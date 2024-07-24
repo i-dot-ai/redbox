@@ -77,7 +77,7 @@ def map_to_chat_response(input_dict: dict):
     ).invoke(input_dict)
 
 
-def resize_documents(max_tokens: int | None = None) -> Runnable[list[Document], Any]:
+def resize_documents(max_tokens: int) -> Runnable[list[Document], Any]:
     """Gets a file as larger document-sized Chunks, splitting it by max_tokens."""
     n = max_tokens or sys.maxsize
 
