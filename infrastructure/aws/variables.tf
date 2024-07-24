@@ -359,7 +359,3 @@ variable "embedding_retry_max_seconds" {
   description = "Maximum number of seconds to wait before retry to external embedding services (rate limiting)"
 }
 
-variable "stuff_chunk_max_tokens" {
-  type        = number
-  description = "Maximum size (in tokens) of chunk used in stuff method"
-}
