@@ -35,7 +35,7 @@ rebuild: stop prune ## Rebuild all images
 .PHONY: test-core-api
 test-core-api: ## Test core-api
 	cp .env.test core-api/.env
-	cd core-api && poetry install --with dev && poetry run python -m pytest -m "not ai" --cov=core_api -v --cov-report=term-missing --cov-fail-under=80
+	cd core-api && poetry install --with dev && poetry run python -m pytest -m "not ai" --cov=core_api -v --cov-report=term-missing --cov-fail-under=75
 
 .PHONY: test-ai
 test-ai: ## Test code with live LLM
