@@ -359,3 +359,16 @@ variable "embedding_retry_max_seconds" {
   description = "Maximum number of seconds to wait before retry to external embedding services (rate limiting)"
 }
 
+variable "worker_ingest_min_chunk_size" {
+  type        = number
+  default     = 600
+  description = "Minimum size of chunks to be produced by the worker"
+}
+
+
+variable "worker_ingest_max_chunk_size" {
+  type        = number
+  default     = 800
+  description = "Maximum size of chunks to be produced by the worker"
+}
+
