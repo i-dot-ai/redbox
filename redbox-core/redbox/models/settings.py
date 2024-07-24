@@ -108,6 +108,7 @@ class AISettings(BaseModel):
     elbow_filter_enabled: bool = False
     chat_system_prompt: str = CHAT_SYSTEM_PROMPT
     chat_question_prompt: str = CHAT_QUESTION_PROMPT
+    stuff_chunk_context_ratio: float = 0.75
     chat_with_docs_system_prompt: str = CHAT_WITH_DOCS_SYSTEM_PROMPT
     chat_with_docs_question_prompt: str = CHAT_WITH_DOCS_QUESTION_PROMPT
     chat_with_docs_reduce_system_prompt: str = CHAT_WITH_DOCS_REDUCE_SYSTEM_PROMPT
@@ -125,10 +126,10 @@ class AISettings(BaseModel):
     reduce_system_prompt: str = REDUCE_SYSTEM_PROMPT
     reduce_question_prompt: str = REDUCE_QUESTION_PROMPT
 
-    @computed_field  # type: ignore
+    @computed_field  # type: ignore[misc]
     @property
     def stuff_chunk_max_tokens(self) -> int:
-        return int(self.context_window_size * 0.8)
+        return int(self.context_window_size * self.stuff_chunk_context_ratio)
 
 
 class ElasticLocalSettings(BaseModel):

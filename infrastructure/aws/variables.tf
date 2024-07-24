@@ -228,6 +228,12 @@ variable "chat_question_prompt" {
   description = "how to construct chat with no documents"
 }
 
+variable "stuff_chunk_context_ratio" {
+  type        = number
+  default     = 0.75
+  description = "The ratio of the context_window_size to set stuff_chunk_max_tokens"
+}
+
 variable "chat_with_docs_system_prompt" {
   type        = string
   default     = <<EOT
@@ -347,9 +353,7 @@ variable "embedding_retry_max_seconds" {
   description = "Maximum number of seconds to wait before retry to external embedding services (rate limiting)"
 }
 
-
 variable "stuff_chunk_max_tokens" {
   type        = number
-  default     = 20000
-  description = "Maximum size (in tokens) of chunk used in summarisation"
+  description = "Maximum size (in tokens) of chunk used in stuff method"
 }
