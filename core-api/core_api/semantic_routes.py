@@ -8,7 +8,6 @@ from core_api.build_chains import (
 )
 from fastapi import Depends
 from langchain_core.runnables import Runnable
-from langchain_community.tools import Tool
 
 from redbox.models.chat import ChatRoute
 from redbox.models.chain import ChainInput
@@ -60,5 +59,5 @@ def get_routable_chains(
                 "Search for an answer to a question in provided documents",
             ),
         )
-        __routable_chains = {name: (runnable,description) for (name,runnable,description) in chat_tools}
+        __routable_chains = {name: (runnable, description) for (name, runnable, description) in chat_tools}
     return __routable_chains

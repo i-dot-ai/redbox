@@ -88,7 +88,7 @@ async def available_tools(
     routable_chains: Annotated[dict[str, tuple[Runnable, str]], Depends(get_routable_chains)],
 ):
     """REST endpoint. Get a mapping of all tools available via chat."""
-    return [{"name": name, "description": tool[1]} for (name,tool) in routable_chains.items()]
+    return [{"name": name, "description": tool[1]} for (name, tool) in routable_chains.items()]
 
 
 @chat_app.websocket("/rag")

@@ -4,7 +4,6 @@ from core_api.build_chains import (
     build_chat_with_docs_chain,
     build_condense_retrieval_chain,
     build_retrieval_chain,
-    build_summary_chain,
 )
 from core_api.dependencies import get_parameterised_retriever, get_tokeniser
 
