@@ -23,13 +23,14 @@ class ChainInput(BaseModel):
     user_uuid: UUID = Field(description="User the chain in executing for")
     chat_history: list[ChainChatMessage] = Field(description="All previous messages in chat (excluding question)")
 
-class ChainState(BaseModel):
+
+class ChainState(TypedDict):
     query: ChainInput
     documents: Annotated[list[Document], add] = Field(default_factory=list)
-    response: str | None = None
-    route_name: str | None = None
-    prompt_args: dict[str, str] = Field(default_factory=dict, description="Arguments to chat prompt templating")
+    response: str | None
+    route_name: str | None
 
 
 class ChatState(ChainState):
-    pass
+    prompt_args: dict[str, str]
+

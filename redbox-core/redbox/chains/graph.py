@@ -5,7 +5,7 @@ from langchain.prompts import PromptTemplate
 from langchain.schema import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.retrievers import BaseRetriever
-from langchain_core.runnables import Runnable, RunnableLambda, RunnablePassthrough, chain, RunnableConfig
+from langchain_core.runnables import Runnable, RunnableLambda, RunnableParallel, chain, RunnableConfig
 from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_core.tools import tool
 from langchain_core.vectorstores import VectorStoreRetriever
@@ -39,7 +39,7 @@ def set_route(state: ChainState):
     Choose an approach to chatting based on the current state
     """
     log.debug(f"Choosing how to include docs")
-    if len(state.query.file_uuids) > 0:
+    if len(state["query"].file_uuids) > 0:
         selected = ChatRoute.chat_with_docs.value
     else:
         selected = ChatRoute.chat.value
@@ -54,7 +54,7 @@ def chat_method_decision(state: ChatState):
     Choose an approach to chatting based on the current state
     """
     log.debug(f"Selecting chat method")
-    number_of_docs = len(state.documents)
+    number_of_docs = len(state["documents"])
     if number_of_docs == 0:
         selected_tool = ChatRoute.chat
     elif number_of_docs == 1:
@@ -82,13 +82,13 @@ def make_chat_prompt_from_messages_runnable(
         Returns the PromptValue using values in the input_dict
         """
         log.debug(f"Setting chat prompt")
-        chat_history_budget = token_budget - len(tokeniser.encode(state.query.question))
+        chat_history_budget = token_budget - len(tokeniser.encode(state["query"].question))
 
         if chat_history_budget <= 0:
             raise QuestionLengthError
 
         truncated_history: list[dict[str, str]] = []
-        for msg in state.query.chat_history[::-1]:
+        for msg in state["query"].chat_history[::-1]:
             chat_history_budget -= len(tokeniser.encode(msg["text"]))
             if chat_history_budget <= 0:
                 break
@@ -99,16 +99,16 @@ def make_chat_prompt_from_messages_runnable(
             system_prompt_message
             + [(msg["role"], msg["text"]) for msg in truncated_history]
             + [("user", question_prompt)]
-        ).invoke(state.query.dict() | state.prompt_args)
+        ).invoke(state["query"].dict() | state["prompt_args"])
 
     return chat_prompt_from_messages
 
 @chain
-def set_chat_prompt_args(state: ChainState):
+def set_chat_prompt_args(state: ChatState):
     log.debug(f"Setting prompt args")
     return {
         "prompt_args": {
-            "formatted_documents": format_documents(state.documents),
+            "formatted_documents": format_documents(state["documents"]),
         }
     }
     
@@ -123,17 +123,17 @@ def build_chat_chain(
     tokeniser: Encoding,
     env: Settings
 ) -> Runnable:
-    return {
+    return RunnableParallel({
         "response": make_chat_prompt_from_messages_runnable(
                 system_prompt=env.ai.chat_system_prompt,
                 question_prompt=env.ai.chat_question_prompt,
                 input_token_budget=env.ai.context_window_size - env.llm_max_tokens,
                 tokeniser=tokeniser,
             )
-            | llm
+            | llm.with_config(tags=["response"])
             | StrOutputParser(),
         "route_name": RunnableLambda(lambda _: ChatRoute.chat.value),
-    }
+    })
     
 
 
@@ -142,17 +142,17 @@ def build_chat_with_docs_chain(
     tokeniser: Encoding,
     env: Settings
 ):
-    return {
+    return RunnableParallel({
         "response": make_chat_prompt_from_messages_runnable(
                 system_prompt=env.ai.chat_with_docs_system_prompt,
                 question_prompt=env.ai.chat_with_docs_question_prompt,
                 input_token_budget=env.ai.context_window_size - env.llm_max_tokens,
                 tokeniser=tokeniser,
             )
-            | llm
+            | llm.with_config(tags=["response"])
             | StrOutputParser(),
         "route_name": RunnableLambda(lambda _: ChatRoute.chat_with_docs.value),
-    }
+    })
     
 def build_chat_with_docs_map_reduce_chain():
     return RunnableLambda(lambda state: {

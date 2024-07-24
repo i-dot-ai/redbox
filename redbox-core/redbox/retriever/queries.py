@@ -68,7 +68,7 @@ def get_all(
     As it's used in summarisation, it excludes embeddings.
     """
 
-    query_filter = make_query_filter(state.query.user_uuid, state.query.file_uuids, chunk_resolution)
+    query_filter = make_query_filter(state["query"].user_uuid, state["query"].file_uuids, chunk_resolution)
     return {
         "_source": {"excludes": ["*embedding"]},
         "query": {"bool": {"must": {"match_all": {}}, "filter": query_filter}},
@@ -82,9 +82,9 @@ def get_some(
     chunk_resolution: ChunkResolution | None,
     state: ChainState,
 ) -> dict[str, Any]:
-    vector = embedding_model.embed_query(state.query.question)
+    vector = embedding_model.embed_query(state["query"].question)
 
-    query_filter = make_query_filter(state.query.user_uuid, state.query.file_uuids, chunk_resolution)
+    query_filter = make_query_filter(state["query"].user_uuid, state["query"].file_uuids, chunk_resolution)
 
     return {
         "size": params["size"],
@@ -94,7 +94,7 @@ def get_some(
                     {
                         "match": {
                             "text": {
-                                "query": state.query.question,
+                                "query": state["query"].question,
                                 "boost": params["match_boost"],
                             }
                         }

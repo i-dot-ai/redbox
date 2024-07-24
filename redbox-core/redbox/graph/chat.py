@@ -48,7 +48,10 @@ def get_chat_with_docs_graph(
 
     app.add_edge(START, "get_chat_docs")
     app.add_node("get_chat_docs", build_get_chat_docs(env, all_chunks_retriever))
-    app.add_conditional_edges("get_chat_docs", chat_method_decision, {
+    app.add_edge("get_chat_docs", "set_chat_prompt_args")
+
+    app.add_node("set_chat_prompt_args", set_chat_prompt_args)
+    app.add_conditional_edges("set_chat_prompt_args", chat_method_decision, {
         ChatRoute.chat: "no_docs_available",
         ChatRoute.chat_with_docs: ChatRoute.chat_with_docs,
         ChatRoute.chat_with_docs_map_reduce: ChatRoute.chat_with_docs_map_reduce
