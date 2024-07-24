@@ -4,244 +4,28 @@ import uuid
 from collections.abc import Sequence
 from datetime import date, timedelta
 from http import HTTPStatus
-from pathlib import Path
 
 import pytest
-from botocore.exceptions import ClientError
 from bs4 import BeautifulSoup
 from django.conf import settings
 from django.test import Client
 from django.urls import reverse
 from django.utils import timezone
-from pytest_django.asserts import assertRedirects
 from requests_mock import Mocker
 from yarl import URL
 
 from redbox_app.redbox_core.models import (
-    BusinessUnit,
     ChatHistory,
     ChatMessage,
     ChatMessageRating,
     ChatRoleEnum,
     Citation,
     File,
-    StatusEnum,
     User,
 )
 from redbox_app.redbox_core.views import ChatsView
 
 logger = logging.getLogger(__name__)
-
-
-@pytest.mark.django_db()
-def test_declaration_view_get(peter_rabbit, client):
-    client.force_login(peter_rabbit)
-    response = client.get("/")
-    assert response.status_code == HTTPStatus.OK, response.status_code
-
-
-def count_s3_objects(s3_client) -> int:
-    paginator = s3_client.get_paginator("list_objects")
-    return sum(len(result.get("Contents", [])) for result in paginator.paginate(Bucket=settings.BUCKET_NAME) if result)
-
-
-def file_exists(s3_client, file_name) -> bool:
-    """
-    if the file key exists return True otherwise False
-    """
-    try:
-        s3_client.get_object(Bucket=settings.BUCKET_NAME, Key=file_name.replace(" ", "_"))
-    except ClientError as client_error:
-        if client_error.response["Error"]["Code"] == "NoSuchKey":
-            return False
-        raise
-    else:
-        return True
-
-
-@pytest.mark.django_db()
-def test_upload_view(alice, client, file_pdf_path: Path, s3_client, requests_mock):
-    """
-    Given that the object store does not have a file with our test file in it
-    When we POST our test file to /upload/
-    We Expect to see this file in the object store
-    """
-    file_name = file_pdf_path.name
-
-    # we begin by removing any file in minio that has this key
-    s3_client.delete_object(Bucket=settings.BUCKET_NAME, Key=file_name.replace(" ", "_"))
-
-    assert not file_exists(s3_client, file_name)
-
-    client.force_login(alice)
-
-    # we mock the response from the core-api
-    mocked_response = {
-        "key": file_name,
-        "bucket": settings.BUCKET_NAME,
-        "uuid": str(uuid.uuid4()),
-    }
-    requests_mock.post(
-        f"http://{settings.CORE_API_HOST}:{settings.CORE_API_PORT}/file",
-        status_code=201,
-        json=mocked_response,
-    )
-
-    with file_pdf_path.open("rb") as f:
-        response = client.post("/upload/", {"uploadDocs": f})
-
-        assert file_exists(s3_client, file_name)
-        assert response.status_code == HTTPStatus.FOUND
-        assert response.url == "/documents/"
-
-
-@pytest.mark.django_db()
-def test_document_upload_status(client, alice, file_pdf_path: Path, s3_client, requests_mock):
-    file_name = file_pdf_path.name
-
-    # we begin by removing any file in minio that has this key
-    s3_client.delete_object(Bucket=settings.BUCKET_NAME, Key=file_name.replace(" ", "_"))
-
-    assert not file_exists(s3_client, file_name)
-    client.force_login(alice)
-    previous_count = count_s3_objects(s3_client)
-
-    mocked_response = {
-        "key": file_name,
-        "bucket": settings.BUCKET_NAME,
-        "uuid": str(uuid.uuid4()),
-    }
-    requests_mock.post(
-        f"http://{settings.CORE_API_HOST}:{settings.CORE_API_PORT}/file",
-        status_code=201,
-        json=mocked_response,
-    )
-
-    with file_pdf_path.open("rb") as f:
-        response = client.post("/upload/", {"uploadDocs": f})
-
-        assert response.status_code == HTTPStatus.FOUND
-        assert response.url == "/documents/"
-        assert count_s3_objects(s3_client) == previous_count + 1
-        uploaded_file = File.objects.filter(user=alice).order_by("-created_at")[0]
-        assert uploaded_file.status == StatusEnum.uploaded
-
-
-@pytest.mark.django_db()
-def test_upload_view_duplicate_files(alice, bob, client, file_pdf_path: Path, s3_client, requests_mock):
-    # we mock the response from the core-api
-    mocked_response = {
-        "key": "file_key",
-        "bucket": settings.BUCKET_NAME,
-        "uuid": str(uuid.uuid4()),
-    }
-    requests_mock.post(
-        f"http://{settings.CORE_API_HOST}:{settings.CORE_API_PORT}/file",
-        status_code=201,
-        json=mocked_response,
-    )
-
-    previous_count = count_s3_objects(s3_client)
-    client.force_login(alice)
-
-    with file_pdf_path.open("rb") as f:
-        client.post("/upload/", {"uploadDocs": f})
-        response = client.post("/upload/", {"uploadDocs": f})
-
-        assert response.status_code == HTTPStatus.FOUND
-        assert response.url == "/documents/"
-
-        assert count_s3_objects(s3_client) == previous_count + 2
-
-        client.force_login(bob)
-        response = client.post("/upload/", {"uploadDocs": f})
-
-        assert response.status_code == HTTPStatus.FOUND
-        assert response.url == "/documents/"
-
-        assert count_s3_objects(s3_client) == previous_count + 3
-
-        assert (
-            File.objects.order_by("-created_at")[0].unique_name != File.objects.order_by("-created_at")[1].unique_name
-        )
-
-
-@pytest.mark.django_db()
-def test_upload_view_bad_data(alice, client, file_py_path: Path, s3_client):
-    previous_count = count_s3_objects(s3_client)
-    client.force_login(alice)
-
-    with file_py_path.open("rb") as f:
-        response = client.post("/upload/", {"uploadDocs": f})
-
-        assert response.status_code == HTTPStatus.OK
-        assert "File type .py not supported" in str(response.content)
-        assert count_s3_objects(s3_client) == previous_count
-
-
-@pytest.mark.django_db()
-def test_upload_view_no_file(alice, client):
-    client.force_login(alice)
-
-    response = client.post("/upload/")
-
-    assert response.status_code == HTTPStatus.OK
-    assert "No document selected" in str(response.content)
-
-
-@pytest.mark.django_db()
-def test_remove_doc_view(client: Client, alice: User, file_pdf_path: Path, s3_client: Client, requests_mock: Mocker):
-    file_name = file_pdf_path.name
-
-    client.force_login(alice)
-    # we begin by removing any file in minio that has this key
-    s3_client.delete_object(Bucket=settings.BUCKET_NAME, Key=file_name.replace(" ", "_"))
-
-    previous_count = count_s3_objects(s3_client)
-
-    mocked_response = {
-        "key": file_name,
-        "bucket": settings.BUCKET_NAME,
-        "uuid": str(uuid.uuid4()),
-    }
-    requests_mock.post(
-        f"http://{settings.CORE_API_HOST}:{settings.CORE_API_PORT}/file",
-        status_code=201,
-        json=mocked_response,
-    )
-
-    with file_pdf_path.open("rb") as f:
-        # create file before testing deletion
-        client.post("/upload/", {"uploadDocs": f})
-        assert file_exists(s3_client, file_name)
-        assert count_s3_objects(s3_client) == previous_count + 1
-
-        new_file = File.objects.filter(user=alice).order_by("-created_at")[0]
-        requests_mock.delete(
-            f"http://{settings.CORE_API_HOST}:{settings.CORE_API_PORT}/file/{new_file.core_file_uuid}",
-            status_code=201,
-            json=mocked_response,
-        )
-
-        client.post(f"/remove-doc/{new_file.id}", {"doc_id": new_file.id})
-        assert not file_exists(s3_client, file_name)
-        assert count_s3_objects(s3_client) == previous_count
-        assert requests_mock.request_history[-1].method == "DELETE"
-        assert File.objects.get(id=new_file.id).status == StatusEnum.deleted
-
-
-@pytest.mark.django_db()
-def test_remove_nonexistent_doc(alice: User, client: Client):
-    # Given
-    client.force_login(alice)
-    nonexistent_uuid = uuid.uuid4()
-
-    # When
-    url = reverse("remove-doc", kwargs={"doc_id": nonexistent_uuid})
-    response = client.get(url)
-
-    # Then
-    assert response.status_code == HTTPStatus.NOT_FOUND
 
 
 @pytest.mark.django_db()
@@ -677,67 +461,3 @@ def test_staff_user_can_see_route(chat_history_with_files: ChatHistory, client: 
     assert response.status_code == HTTPStatus.OK
     assert b"iai-chat-bubble__route" in response.content
     assert b"iai-chat-bubble__route govuk-!-display-none" not in response.content
-
-
-@pytest.mark.django_db()
-def test_check_demographics_redirect_if_unpopulated(client: Client, alice: User):
-    # Given
-    client.force_login(alice)
-
-    # When
-    response = client.get("/check-demographics/", follow=True)
-
-    # Then
-    assertRedirects(response, "/demographics/")
-
-
-@pytest.mark.django_db()
-def test_check_demographics_redirect_if_populated(client: Client, user_with_demographic_data: User):
-    # Given
-    client.force_login(user_with_demographic_data)
-
-    # When
-    response = client.get("/check-demographics/", follow=True)
-
-    # Then
-    assertRedirects(response, "/chats/")
-
-
-@pytest.mark.django_db()
-def test_view_demographic_details_form(client: Client, user_with_demographic_data: User):
-    # Given
-    client.force_login(user_with_demographic_data)
-
-    # When
-    response = client.get("/demographics/")
-
-    # Then
-    assert response.status_code == HTTPStatus.OK
-    soup = BeautifulSoup(response.content)
-    assert soup.find(id="id_grade").find_all("option", selected=True)[0].text == "Director General"
-    assert soup.find(id="id_profession").find_all("option", selected=True)[0].text == "Analysis"
-    assert soup.find(id="id_business_unit").find_all("option", selected=True)[0].text == "Paperclip Reconciliation"
-
-
-@pytest.mark.django_db()
-def test_post_to_demographic_details_form(client: Client, alice: User, business_unit: BusinessUnit):
-    # Given
-    client.force_login(alice)
-
-    # When
-    response = client.post(
-        "/demographics/",
-        {
-            "name": "Deryck Lennox-Brown",
-            "ai_experience": "Enthusiastic Experimenter",
-            "grade": "AO",
-            "profession": "AN",
-            "business_unit": business_unit.id,
-        },
-        follow=True,
-    )
-
-    # Then
-    assertRedirects(response, "/chats/")
-    alice.refresh_from_db()
-    assert alice.grade == "AO"
