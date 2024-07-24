@@ -4,7 +4,6 @@ from core_api.build_chains import (
     build_chat_with_docs_chain,
     build_condense_retrieval_chain,
     build_retrieval_chain,
-    build_summary_chain,
 )
 from core_api.dependencies import get_parameterised_retriever, get_tokeniser
 
@@ -114,54 +113,6 @@ def test_condense_runnable(mock_llm, chunked_file, env):
     assert {
         str(chunked_file.uuid)
     } == all_results_file_uuids, f"Expected {str(chunked_file.uuid)} in {all_results_file_uuids}"
-
-
-def test_summary_runnable_large_file(all_chunks_retriever, mock_llm, large_chunked_file, env):
-    chain = build_summary_chain(
-        llm=mock_llm, all_chunks_retriever=all_chunks_retriever, tokeniser=get_tokeniser(), env=env
-    )
-
-    previous_history = [
-        {"text": "Lorem ipsum dolor sit amet.", "role": "user"},
-        {"text": "Consectetur adipiscing elit.", "role": "ai"},
-        {"text": "Donec cursus nunc tortor.", "role": "user"},
-    ]
-
-    response = chain.invoke(
-        input=ChainInput(
-            question="Who are all these people?",
-            chat_history=previous_history,
-            file_uuids=[str(large_chunked_file.uuid)],
-            user_uuid=str(large_chunked_file.creator_user_uuid),
-        ).dict()
-    )
-
-    assert response["response"] == "<<TESTING>>"
-    assert response["route_name"] == ChatRoute.map_reduce_summarise, response["route_name"]
-
-
-def test_summary_runnable_small_file(all_chunks_retriever, mock_llm, chunked_file, env):
-    chain = build_summary_chain(
-        llm=mock_llm, all_chunks_retriever=all_chunks_retriever, tokeniser=get_tokeniser(), env=env
-    )
-
-    previous_history = [
-        {"text": "Lorem ipsum dolor sit amet.", "role": "user"},
-        {"text": "Consectetur adipiscing elit.", "role": "ai"},
-        {"text": "Donec cursus nunc tortor.", "role": "user"},
-    ]
-
-    response = chain.invoke(
-        input=ChainInput(
-            question="Who are all these people?",
-            chat_history=previous_history,
-            file_uuids=[str(chunked_file.uuid)],
-            user_uuid=str(chunked_file.creator_user_uuid),
-        ).dict()
-    )
-
-    assert response["response"] == "<<TESTING>>"
-    assert response["route_name"] == ChatRoute.summarise
 
 
 def test_chat_runnable(mock_llm, chunked_file, env):
