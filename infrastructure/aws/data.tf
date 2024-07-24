@@ -67,6 +67,8 @@ locals {
     "ENVIRONMENT" : upper(terraform.workspace),
     "DEBUG" : terraform.workspace == "dev",
     "AWS_REGION" : var.region,
+    "worker_ingest_min_chunk_size": var.worker_ingest_min_chunk_size,
+    "worker_ingest_max_chunk_size": var.worker_ingest_max_chunk_size,
   }
 
   core_secrets = {
