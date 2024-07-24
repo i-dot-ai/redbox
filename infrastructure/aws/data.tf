@@ -16,7 +16,7 @@ locals {
       "AI__ELBOW_FILTER_ENABLED" : var.elbow_filter_enabled,
       "AI__CHAT_SYSTEM_PROMPT" : var.chat_system_prompt,
       "AI__CHAT_QUESTION_PROMPT" : var.chat_question_prompt,
-      "AI__STUFF_CHUNK_CONTEXT_RATIO" : var.stuff_chunk_context_ratio
+      "AI__STUFF_CHUNK_CONTEXT_RATIO" : var.stuff_chunk_context_ratio,
       "AI__CHAT_WITH_DOCS_SYSTEM_PROMPT" : var.chat_with_docs_system_prompt,
       "AI__CHAT_WITH_DOCS_QUESTION_PROMPT" : var.chat_with_docs_question_prompt,
       "AI__CHAT_WITH_DOCS_REDUCE_SYSTEM_PROMPT" : var.chat_with_docs_reduce_system_prompt,
