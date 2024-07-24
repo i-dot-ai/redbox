@@ -95,7 +95,7 @@ module "django-app" {
   create_networking          = true
   source                     = "../../../i-ai-core-infrastructure//modules/ecs"
   name                       = "${local.name}-django-app"
-  image_tag                  = var.image_tag
+  image_tag                  = "8e2ca7cfe5f6b971c27cf87a6fd3b91595a65b9b"
   ecr_repository_uri         = "${var.ecr_repository_uri}/${var.project_name}-django-app"
   ecs_cluster_id             = module.cluster.ecs_cluster_id
   ecs_cluster_name           = module.cluster.ecs_cluster_name
@@ -118,6 +118,7 @@ module "django-app" {
   ip_whitelist                 = var.external_ips
   environment_variables        = local.django_app_environment_variables
   secrets                      = local.reconstructed_django_secrets
+  auto_scale_off_peak_times    = true
 }
 
 module "django-command" {
@@ -155,7 +156,7 @@ module "core_api" {
   create_networking             = false
   source                        = "../../../i-ai-core-infrastructure//modules/ecs"
   name                          = "${local.name}-core-api"
-  image_tag                     = var.image_tag
+  image_tag                     = "8e2ca7cfe5f6b971c27cf87a6fd3b91595a65b9b"
   ecr_repository_uri            = "${var.ecr_repository_uri}/redbox-core-api"
   ecs_cluster_id                = module.cluster.ecs_cluster_id
   ecs_cluster_name              = module.cluster.ecs_cluster_name
@@ -178,6 +179,7 @@ module "core_api" {
   environment_variables        = local.core_api_environment_variables
   secrets                      = local.reconstructed_core_secrets
   ephemeral_storage            = 30
+  auto_scale_off_peak_times    = true
 }
 
 
@@ -188,7 +190,7 @@ module "worker" {
   create_networking            = false
   source                       = "../../../i-ai-core-infrastructure//modules/ecs"
   name                         = "${local.name}-worker"
-  image_tag                    = var.image_tag
+  image_tag                    = "8e2ca7cfe5f6b971c27cf87a6fd3b91595a65b9b"
   ecr_repository_uri           = "${var.ecr_repository_uri}/redbox-worker"
   ecs_cluster_id               = module.cluster.ecs_cluster_id
   ecs_cluster_name             = module.cluster.ecs_cluster_name
@@ -205,6 +207,7 @@ module "worker" {
   secrets                      = local.reconstructed_worker_secrets
   http_healthcheck             = false
   ephemeral_storage            = 30
+  auto_scale_off_peak_times    = true
 }
 
 
