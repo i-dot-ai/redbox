@@ -33,6 +33,15 @@ class ChatHistoryAnalysis:
         self.chat_logs = self.chat_logs[["created_at", "users", "chat_history", "text", "role", "id"]]
         self.chat_logs["created_at"] = pd.to_datetime(self.chat_logs["created_at"])
 
+        # Create function for toggle to anonymise users
+        chat_log_users = self.chat_logs['users'].unique()
+        n_users = len(chat_log_users)
+        anon_users = []
+        for i in range(1,n_users+1):
+            anon_users.append(f"User {i}")
+        anon_user_dict = dict(zip(chat_log_users, anon_users))
+        self.chat_logs['users'] = self.chat_logs['users'].map(anon_user_dict)
+
         self.ai_responses = self.chat_logs[self.chat_logs["role"] == "ai"]
         self.user_responses = self.chat_logs[self.chat_logs["role"] == "user"]
 
