@@ -114,6 +114,33 @@ body {
 }
 
 /* Chat page */
+@media (min-width: 641px) {
+  .rb-chats-section {
+    flex-grow: 1;
+  }
+  .govuk-grid-row:has(.iai-chat-input) {
+    display: flex;
+    .govuk-grid-column-one-third,
+    .govuk-grid-column-two-thirds {
+      float: none;
+      min-height: calc(100vh - 17.25rem);
+    }
+    .govuk-grid-column-two-thirds {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+  }
+}
+@media (min-width: 1020px) {
+  .govuk-grid-row:has(.iai-chat-input) {
+    .govuk-grid-column-one-third,
+    .govuk-grid-column-two-thirds {
+      min-height: calc(100vh - 10.25rem);
+    }
+  }
+}
+
 .chat-title {
   display: block;
   margin-bottom: 2rem;
@@ -409,6 +436,7 @@ main:has(.iai-chat-bubble) .chat-options {
   color: #60697b;
   cursor: pointer;
   display: flex;
+  font-size: 0.875rem;
   gap: 1rem;
   margin-top: 0.5rem;
   padding: 0.875rem 1rem;
@@ -464,100 +492,15 @@ main:has(.iai-chat-bubble) .chat-options {
 }
 @import "../node_modules/i.ai-design-system/dist/styles.scss";
 
-.iai-chat-bubble__citations-button-container {
-  align-items: flex-start;
-  display: flex;
-  flex-direction: column;
-  flex-shrink: 0;
-  gap: 0.75rem;
-  margin-top: 1rem;
-}
-.iai-chat-bubble__citations-button {
-  align-items: center;
-  background-color: transparent;
-  cursor: pointer;
-  display: inline-flex;
-  gap: 0.375rem;
-  margin-top: 0;
-  padding: 0.5rem 0.75rem;
-}
-button.iai-chat-bubble__citations-button {
-  padding: 0.675rem 0.75rem;
-}
-@media (min-width: 1020px) {
-  .iai-chat-bubble__citations-button-container {
-    margin-left: 1rem;
-    margin-top: 0;
-  }
-}
-
+/* CHATS PAGE OVERRIDES */
 main:has(.iai-chat-input),
 body:has(.iai-environment-warning) main {
   min-height: 0;
 }
 @media (min-width: 641px) {
-  .rb-chats-section {
-    flex-grow: 1;
-  }
   .govuk-grid-row:has(.iai-chat-input) {
-    display: flex;
-    .govuk-grid-column-one-third,
-    .govuk-grid-column-two-thirds {
-      float: none;
-      min-height: calc(100vh - 17.25rem);
-    }
-    .govuk-grid-column-two-thirds {
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-    }
-
     .iai-panel {
       height: auto;
     }
   }
-}
-@media (min-width: 1020px) {
-  .govuk-grid-row:has(.iai-chat-input) {
-    .govuk-grid-column-one-third,
-    .govuk-grid-column-two-thirds {
-      min-height: calc(100vh - 10.25rem);
-    }
-  }
-}
-
-/* RADIO BUTTONS (to be moved to design system in a future update) */
-.govuk-fieldset__legend {
-  font-size: 1rem;
-  font-weight: 700;
-  margin-bottom: 1rem;
-}
-.govuk-radios__label::before {
-  background-color: white;
-  height: 1.5rem;
-  width: 1.5rem;
-}
-.govuk-radios__label::after {
-  border-width: 6px;
-  left: 8px;
-  top: 8px;
-}
-.govuk-radios__item:has(.govuk-radios__hint) .govuk-radios__label::before {
-  top: 8px;
-}
-.govuk-radios__item:has(.govuk-radios__hint) .govuk-radios__label::after {
-  top: 14px;
-}
-.govuk-radios__input {
-  height: 1.5rem;
-  width: 1.5rem;
-}
-.govuk-radios__label,
-.govuk-radios__hint {
-  font-size: 0.75rem;
-  padding-bottom: 4px;
-  padding-top: 0;
-}
-.govuk-radios__hint {
-  padding-left: 39px;
 }
