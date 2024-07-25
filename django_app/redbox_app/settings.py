@@ -270,12 +270,12 @@ LOGGING = {
     "disable_existing_loggers": False,
     "formatters": {"verbose": {"format": "%(asctime)s %(levelname)s %(module)s: %(message)s"}},
     "handlers": {
-        "file": {
-            "level": LOG_LEVEL,
-            "class": "logging.FileHandler",
-            "filename": Path(LOG_ROOT) / "application.log",
-            "formatter": "verbose",
-        },
+        # "file": {
+        #     "level": LOG_LEVEL,
+        #     "class": "logging.FileHandler",
+        #     "filename": Path(LOG_ROOT) / "application.log",
+        #     "formatter": "verbose",
+        # },
         "console": {
             "level": LOG_LEVEL,
             "class": "logging.StreamHandler",
