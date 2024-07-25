@@ -1,6 +1,7 @@
 import logging
 
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import redirect
 from django.utils.decorators import method_decorator
@@ -23,7 +24,7 @@ class CheckDemographicsView(View):
             return redirect("demographics")
 
 
-class DemographicsView(UpdateView):
+class DemographicsView(LoginRequiredMixin, UpdateView):
     model = User
     template_name = "demographics.html"
     form_class = DemographicsForm
