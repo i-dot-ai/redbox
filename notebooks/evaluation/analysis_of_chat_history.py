@@ -16,7 +16,7 @@ from django.db.models import F, Prefetch
 from regex import D
 from wordcloud import STOPWORDS, WordCloud
 
-packages = ["django-environ", "django-use-email-as-username", 'psycopg2-binary', 'django-magic-link', 'django-single-session', 'django-compressor']
+packages = ["django-environ", "django-use-email-as-username", 'psycopg2-binary', 'django-magic-link', 'django-single-session', 'django-compressor', 'django-import-export', 'django-storages', 'daphne', 'django-allauth']
 import pip
 
 for package in packages:
