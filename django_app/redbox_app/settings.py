@@ -324,7 +324,7 @@ MAGIC_LINK = {
     # than one specified in the `settings.AUTHORIZATION_BACKENDS` setting.
     "AUTHENTICATION_BACKEND": "django.contrib.auth.backends.ModelBackend",
     # SESSION_COOKIE_AGE override for magic-link logins - in seconds (default is 1 week)
-    "SESSION_EXPIRY": 7 * 24 * 60 * 60,
+    "SESSION_EXPIRY": 21 * 60 * 60,
 }
 
 IMPORT_FORMATS = [CSV]
