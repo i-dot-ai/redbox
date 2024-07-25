@@ -1,6 +1,7 @@
 import logging
 import uuid
 from datetime import UTC, datetime, timedelta
+from typing import override
 
 import boto3
 from botocore.config import Config
@@ -175,7 +176,8 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
                 self.last_referenced = timezone.now()
         super().save(*args, **kwargs)
 
-    def delete(self, using=None, keep_parents=False):  # noqa: ARG002  # remove at Python 3.12
+    @override
+    def delete(self, using=None, keep_parents=False):
         #  Needed to make sure no orphaned files remain in the storage
         self.original_file.storage.delete(self.original_file.name)
         super().delete()
@@ -212,7 +214,7 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
             return URL(url)
 
         if not self.original_file:
-            logger.error("attempt to access not existent file %s", self.pk)
+            logger.error("attempt to access non-existent file %s", self.pk, stack_info=True)
             return None
 
         return URL(self.original_file.url)
