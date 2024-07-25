@@ -21,13 +21,6 @@ class DemographicsForm(forms.ModelForm):
             "grade": "Grade",
             "profession": "Profession",
         }
-        widgets: ClassVar[Mapping[str, forms.Widget]] = {
-            "name": forms.Textarea(attrs={"class": "govuk-input"}),
-            "ai_experience": forms.RadioSelect(attrs={"class": "govuk-radios__item"}),
-            "business_unit": forms.Select(attrs={"class": "govuk-select"}),
-            "grade": forms.Select(attrs={"class": "govuk-select"}),
-            "profession": forms.Select(attrs={"class": "govuk-select"}),
-        }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
