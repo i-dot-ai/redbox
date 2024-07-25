@@ -1,3 +1,5 @@
+version: '3'
+
 services:
   django-app:
     image: django-app:latest
@@ -26,6 +28,22 @@ services:
       timeout: 30s
       retries: 24
       start_period: 60s
+
+  streamlit-app:
+    image: streamlit-app:latest
+    build:
+      context: .
+      dockerfile: ./notebooks/evaluation/Dockerfile
+    ports:
+      - "8501:8501"
+    networks:
+      - redbox-app-network
+    env_file:
+      - .env
+    volumes:
+      - ./notebooks/evaluation:/app/notebooks/evaluation
+
+
   db:
     image: postgres:13
     env_file:
@@ -42,6 +60,7 @@ services:
       timeout: 30s
       retries: 24
       start_period: 30s
+
   requirements:
     image: python:3.11
     profiles:
@@ -79,6 +98,7 @@ services:
     networks:
       - redbox-app-network
     restart: unless-stopped
+
   core-api:
     image: redbox-core-api:latest
     build:
@@ -110,6 +130,7 @@ services:
       timeout: 30s
       retries: 24
       start_period: 60s
+
   minio:
     image: minio/minio
     expose:
@@ -133,6 +154,7 @@ services:
       timeout: 30s
       retries: 24
       start_period: 30s
+
   elasticsearch:
     image: elasticsearch:8.12.0
     volumes:
@@ -158,6 +180,7 @@ services:
       timeout: 30s
       retries: 24
       start_period: 60s
+
   kibana:
     image: kibana:8.12.0
     ports:
@@ -174,6 +197,7 @@ services:
       elasticsearch:
         condition: service_healthy
     restart: unless-stopped
+
   redis:
     image: redis:7-alpine
     restart: always
@@ -192,6 +216,7 @@ services:
       retries: 24
       start_period: 60s
 
+
 networks:
   redbox-app-network:
     driver: bridge
@@ -204,3 +229,4 @@ volumes:
   redis:
     driver: local
   redis-insight:
+  streamlit-app:
