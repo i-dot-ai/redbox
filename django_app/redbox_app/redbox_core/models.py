@@ -222,7 +222,10 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
     @property
     def name(self) -> str:
         # User-facing name
-        return self.original_file_name or self.original_file.name
+        try:
+            return self.original_file_name or self.original_file.name
+        except ValueError as e:
+            logger.exception("attempt to access non-existent file %s", self.pk, exc_info=e)
 
     @property
     def unique_name(self) -> str:
