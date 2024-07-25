@@ -178,6 +178,7 @@ CSP_FONT_SRC = (
 )
 CSP_STYLE_SRC = ("'self'",)
 CSP_FRAME_ANCESTORS = ("'none'",)
+CSP_FRAME_SRC = ("'self'", env.str("STREAMLIT_HOST"))
 CSP_CONNECT_SRC = ["'self'", f"wss://{env_hosts[0]}/ws/chat/", "plausible.io"]
 
 # https://pypi.org/project/django-permissions-policy/
@@ -362,3 +363,5 @@ elif LOGIN_METHOD == "magic_link":
 else:
     LOGIN_REDIRECT_URL = "homepage"
     LOGIN_URL = "sign-in"
+
+STREAMLIT_HOST = env.str("STREAMLIT_HOST")

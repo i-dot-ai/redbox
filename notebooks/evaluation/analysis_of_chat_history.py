@@ -8,10 +8,25 @@ from pathlib import Path
 
 import matplotlib as mpl
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 import seaborn as sns
 from bertopic import BERTopic
+from django.db.models import F, Prefetch
+from regex import D
 from wordcloud import STOPWORDS, WordCloud
+
+packages = ["django-environ", "django-use-email-as-username", 'psycopg2-binary', 'django-magic-link', 'django-single-session', 'django-compressor', 'django-import-export', 'django-storages', 'daphne', 'django-allauth']
+import pip
+
+for package in packages:
+    pip.main(['install', package])
+
+import django
+
+django.setup()
+
+from redbox_app.redbox_core.models import ChatHistory, ChatMessage
 
 
 class ChatHistoryAnalysis:
@@ -25,22 +40,25 @@ class ChatHistoryAnalysis:
         os.makedirs(self.visualisation_dir, exist_ok=True)
         os.makedirs(self.table_dir, exist_ok=True)
 
-        # IMPORTANT - For this to work you must save your chat history CSV dump in notebooks/evaluation/data/chat_histories
-        file_path = self.latest_chat_history_file()
-        self.chat_logs = pd.read_csv(file_path)
+        self.chat_logs = self.fetch_chat_history()
+        import logging
+        logging.basicConfig(level=logging.INFO)
+        logger = logging.getLogger()
+        logger.info('hello123456')
+        logger.info(self.chat_logs.columns.values)
 
         # Select specific columns and converting to readable timestamp
-        self.chat_logs = self.chat_logs[["created_at", "users", "chat_history", "text", "role", "id"]]
-        self.chat_logs["created_at"] = pd.to_datetime(self.chat_logs["created_at"])
+        self.chat_logs = self.chat_logs[['created_at', 'users_id', 'user_email', 'chat_history', 'text', 'role', 'message_id']]
+        self.chat_logs['created_at'] = pd.to_datetime(self.chat_logs['created_at'])
 
         # Create function for toggle to anonymise users
-        chat_log_users = self.chat_logs['users'].unique()
-        n_users = len(chat_log_users)
-        anon_users = []
-        for i in range(1,n_users+1):
-            anon_users.append(f"User {i}")
-        anon_user_dict = dict(zip(chat_log_users, anon_users))
-        self.chat_logs['users'] = self.chat_logs['users'].map(anon_user_dict)
+        # chat_log_users = self.chat_logs['users'].unique()
+        # n_users = len(chat_log_users)
+        # anon_users = []
+        # for i in range(1,n_users+1):
+        #     anon_users.append(f"User {i}")
+        # anon_user_dict = dict(zip(chat_log_users, anon_users))
+        # self.chat_logs['users'] = self.chat_logs['users'].map(anon_user_dict)
 
         self.ai_responses = self.chat_logs[self.chat_logs["role"] == "ai"]
         self.user_responses = self.chat_logs[self.chat_logs["role"] == "user"]
@@ -62,10 +80,36 @@ class ChatHistoryAnalysis:
         mpl.rcParams.update({"font.size": 10})
         mpl.rcParams.update({"font.family": "Arial"})
 
-    def latest_chat_history_file(self):
-        chat_history_folder = glob.glob(f"{self.evaluation_dir}/data/chat_histories/*")
-        latest_file = max(chat_history_folder, key=os.path.getctime)
-        return latest_file
+    def fetch_chat_history(self, limit=100):
+        chat_messages = ChatMessage.objects.all()
+        chat_history_objects = ChatHistory.objects.prefetch_related(
+            Prefetch('messages', queryset=chat_messages)
+        ).annotate(
+            user_email=F('users__email')
+        ).values(
+            'created_at',
+            'users_id',
+            'user_email',
+            chat_history=F('id'),
+        )[:limit]
+
+        results = []
+        for chat_history in chat_history_objects:
+            messages = ChatMessage.objects.filter(chat_history=chat_history['chat_history']).values('text', 'role', 'id')
+            for message in messages:
+                result = {
+                    'created_at': chat_history['created_at'],
+                    'users_id': chat_history['users_id'],
+                    'user_email': chat_history['user_email'],
+                    'chat_history': chat_history['chat_history'],
+                    'text': message['text'],
+                    'role': message['role'],
+                    'message_id': message['id']
+                }
+                results.append(result)
+
+        df = pd.DataFrame(results)
+        return df
 
     def preprocess_text(self, text):
         tokens = text.split()
@@ -86,7 +130,7 @@ class ChatHistoryAnalysis:
 
     # 1) Who uses Redbox the most?
     def user_frequency_analysis(self):
-        user_counts = self.user_responses["users"].value_counts()
+        user_counts = self.user_responses["user_email"].value_counts()
 
         user_name = [user_email.split("@")[0].replace(".", " ").title() for user_email in user_counts.index]
         wrapped_user_name = ["\n".join(textwrap.wrap(name, width=10)) for name in user_name]
@@ -132,15 +176,15 @@ class ChatHistoryAnalysis:
         Plotting how each users usage has changed over time
         """
         user_responses_df = self.user_responses
-        user_dict = self.process_user_names(user_responses_df.users)
-        user_responses_df["users"] = user_responses_df["users"].map(user_dict)
+        user_dict = self.process_user_names(user_responses_df.user_email)
+        user_responses_df["user_email"] = user_responses_df["user_email"].map(user_dict)
         # TODO: Ensure created_at column is changed to modified_at column in live version.
         pivot_user_time = (
-            user_responses_df[["created_at", "users"]]
+            user_responses_df[["created_at", "user_email"]]
             .groupby(pd.Grouper(key="created_at", axis=0, freq="2D", sort=True))
             .value_counts()
             .reset_index(name="count")
-            .pivot(index="created_at", columns="users", values="count")
+            .pivot(index="created_at", columns="user_email", values="count")
         )
         fig = sns.lineplot(data=pivot_user_time, markers=True)
         fig.set_xlabel("Date")
@@ -258,7 +302,7 @@ class ChatHistoryAnalysis:
         # df = df.drop_duplicates(['text'])
 
         # User names
-        user_name = [user_email.split("@")[0].replace(".", " ").title() for user_email in df.users]
+        user_name = [user_email.split("@")[0].replace(".", " ").title() for user_email in df.user_email]
         wrapped_user_name = ["\n".join(textwrap.wrap(name, width=10)) for name in user_name]
         df["user_name"] = wrapped_user_name
 
@@ -290,7 +334,7 @@ class ChatHistoryAnalysis:
     # In what way are users switching between routes?
     def route_transitions(self):
         # Get route transitions and counts per user session (is 'id' appropriate?)
-        df_transitions = self.user_responses.groupby("id").apply(self.get_route_transitions).reset_index(drop=True)
+        df_transitions = self.user_responses.groupby("message_id").apply(self.get_route_transitions).reset_index(drop=True)
 
         transition_counts = df_transitions["transition"].value_counts().reset_index()
 
@@ -367,21 +411,21 @@ class ChatHistoryAnalysis:
         """
         user_responses_df = self.filter_prompt_lengths(outlier_max)
         mean_inputs_df = (
-            user_responses_df[["id", "users", "no_input_words"]]
-            .groupby(by=["id", "users"])
+            user_responses_df[["message_id", "user_email", "no_input_words"]]
+            .groupby(by=["message_id", "user_email"])
             .agg({"no_input_words": "mean"})
             .rename(columns={"no_input_words": "mean_input_words"})
             .reset_index()
         )
-        no_inputs_df = user_responses_df[["id", "users"]].groupby("id").value_counts().reset_index(name="no_inputs")
-        compare_inputs_words_df = no_inputs_df.merge(mean_inputs_df, left_on=["id", "users"], right_on=["id", "users"])
+        no_inputs_df = user_responses_df[["message_id", "user_email"]].groupby("message_id").value_counts().reset_index(name="no_inputs")
+        compare_inputs_words_df = no_inputs_df.merge(mean_inputs_df, left_on=["message_id", "user_email"], right_on=["message_id", "user_email"])
 
         return compare_inputs_words_df
 
     def vis_prompt_length_vs_chat_legnth(self, outlier_max: int):
         compare_inputs_words_df = self.get_prompt_length_vs_chat_length(outlier_max=outlier_max)
-        user_dict = self.process_user_names(compare_inputs_words_df.users)
-        compare_inputs_words_df["users"] = compare_inputs_words_df["users"].map(user_dict)
+        user_dict = self.process_user_names(compare_inputs_words_df.user_email)
+        compare_inputs_words_df["user_email"] = compare_inputs_words_df["user_email"].map(user_dict)
         fig = sns.scatterplot(data=compare_inputs_words_df, x="no_inputs", y="mean_input_words", hue="users")
         fig.set_xlabel("No. of prompts")
         fig.set_ylabel("Mean length of prompt")
