@@ -1,4 +1,4 @@
-module "lambda-cleanup" {
+module "django-lambda" {
   for_each = {
     for index, command in var.django_command :
     command.task_name => command
@@ -7,7 +7,7 @@ module "lambda-cleanup" {
   image_config = {
     command = ["venv/bin/django-admin", each.value.command]
   }
-  package_type = "Image"
+  package_type           = "Image"
   image_uri              = "${var.ecr_repository_uri}/${var.project_name}-django-app:57733c2d0a87c689987fda5c5ca37a185e6c7a75"
   function_name          = "${local.name}-${each.value.task_name}-lambda"
   iam_role_name          = "${local.name}-${each.value.task_name}-lambda-role"
@@ -15,6 +15,7 @@ module "lambda-cleanup" {
   environment_variables  = merge(local.django_app_secrets, local.django_lambda_environment_variables)
   aws_security_group_ids = [aws_security_group.service_security_group.id]
   subnet_ids             = data.terraform_remote_state.vpc.outputs.private_subnets
+  policies               = [jsonencode(data.aws_iam_policy_document.lambda_policy.json)]
 }
 
 resource "aws_security_group" "service_security_group" {
@@ -23,6 +24,33 @@ resource "aws_security_group" "service_security_group" {
   name        = "${local.name}-redbox-lambda-sg"
   lifecycle {
     create_before_destroy = true
+  }
+}
+
+# TODO: Move lambda policy into consuming apps instead of here
+data "aws_iam_policy_document" "lambda_policy" {
+  # checkov:skip=CKV_AWS_108 - * in resources (to be fixed in following PR)
+  # checkov:skip=CKV_AWS_109 - * in resources (to be fixed in following PR)
+  # checkov:skip=CKV_AWS_356 - * in resources (to be fixed in following PR)
+  # checkov:skip=CKV_AWS_111 - * in resources (to be fixed in following PR)
+  statement {
+    actions = [
+      "s3:ListBucket",
+      "s3:GetObject",
+      "s3:PutObject",
+      "s3:DeleteObject"
+    ]
+    effect    = "Allow"
+    resources = [aws_s3_bucket.user_data.arn, "${aws_s3_bucket.user_data.arn}/*"]
+  }
+  statement {
+    actions = [
+      "logs:CreateLogGroup",
+      "logs:CreateLogStream",
+      "logs:PutLogEvents"
+    ]
+    effect    = "Allow"
+    resources = ["*"]
   }
 }
 

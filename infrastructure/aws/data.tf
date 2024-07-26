@@ -107,6 +107,7 @@ locals {
     "POSTGRES_USER" : module.rds.rds_instance_username,
     "GOVUK_NOTIFY_API_KEY" : var.govuk_notify_api_key,
     "SENTRY_DSN" : var.sentry_dsn,
+    "SLACK_NOTIFICATION_URL": var.slack_url
   }
 
   worker_secrets = {
