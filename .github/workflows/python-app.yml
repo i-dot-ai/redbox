@@ -12,6 +12,7 @@ on:
       - 'bugfix/**'
       - 'hotfix/**'
       - 'dependabot/**'
+      - 'security/**'
       - 'develop'
   workflow_dispatch:
 

@@ -14,3 +14,4 @@ def test_declaration_view_get(peter_rabbit: User, client: Client):
     client.force_login(peter_rabbit)
     response = client.get("/")
     assert response.status_code == HTTPStatus.OK, response.status_code
+    assert response["Cache-control"] == "no-store"

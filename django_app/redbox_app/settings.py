@@ -75,6 +75,7 @@ MIDDLEWARE = [
     "django_permissions_policy.PermissionsPolicyMiddleware",
     "csp.middleware.CSPMiddleware",
     "allauth.account.middleware.AccountMiddleware",
+    "redbox_app.redbox_core.middleware.nocache_middleware",
 ]
 
 ROOT_URLCONF = "redbox_app.urls"
