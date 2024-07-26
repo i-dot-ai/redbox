@@ -26,7 +26,7 @@ class ChainInput(BaseModel):
 
 class ChainState(TypedDict):
     query: ChainInput
-    documents: Annotated[list[Document], add] = Field(default_factory=list)
+    documents: list[Document]
     response: str | None
     route_name: str | None
 
@@ -34,3 +34,6 @@ class ChainState(TypedDict):
 class ChatState(ChainState):
     prompt_args: dict[str, str]
 
+
+class ChatMapReduceState(ChatState):
+    intermediate_docs: Annotated[list[Document], add] 

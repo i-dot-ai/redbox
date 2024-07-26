@@ -1,25 +1,19 @@
 import logging
-import os, sys
 
-from langchain.prompts import PromptTemplate
 from langchain.schema import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.retrievers import BaseRetriever
-from langchain_core.runnables import Runnable, RunnableLambda, RunnableParallel, chain, RunnableConfig
+from langchain_core.runnables import Runnable, RunnableLambda, RunnableParallel, chain
 from langchain_core.language_models.chat_models import BaseChatModel
-from langchain_core.tools import tool
+from langchain_core.documents import Document
 from langchain_core.vectorstores import VectorStoreRetriever
-from regex import P
+from langchain_text_splitters import TextSplitter
+from langgraph.constants import Send
 from tiktoken import Encoding
 
 from redbox.api.format import format_documents
-from redbox.api.runnables import resize_documents
 from redbox.models import ChatRoute, Settings
-from redbox.models.chat import ChatResponse
-from redbox.models.chain import ChainState, ChatState
-from redbox.retriever.retrievers import AllElasticsearchRetriever
-from redbox.models.errors import NoDocumentSelected, QuestionLengthError
-from redbox.transform import map_document_to_source_document
+from redbox.models.chain import ChainState, ChatMapReduceState, ChatState
+from redbox.models.errors import QuestionLengthError
 
 log = logging.getLogger()
 
@@ -28,9 +22,9 @@ def build_get_chat_docs(
     env: Settings,
     retriever: VectorStoreRetriever
 ):
-    return {
-        "documents": retriever | resize_documents(env.ai.summarisation_chunk_max_tokens)
-    }
+    return RunnableParallel({
+        "documents": retriever
+    })
 
 
 @chain
@@ -49,7 +43,7 @@ def set_route(state: ChainState):
     }
 
 @chain
-def chat_method_decision(state: ChatState):
+def set_chat_method(state: ChatState):
     """
     Choose an approach to chatting based on the current state
     """
@@ -62,7 +56,9 @@ def chat_method_decision(state: ChatState):
     else:
         selected_tool = ChatRoute.chat_with_docs_map_reduce
     log.info(f"Selected: {selected_tool} for execution")
-    return selected_tool
+    return {
+        "route_name": selected_tool
+    }
 
 
 def make_chat_prompt_from_messages_runnable(
@@ -99,7 +95,7 @@ def make_chat_prompt_from_messages_runnable(
             system_prompt_message
             + [(msg["role"], msg["text"]) for msg in truncated_history]
             + [("user", question_prompt)]
-        ).invoke(state["query"].dict() | state["prompt_args"])
+        ).invoke(state["query"].dict() | state.get("prompt_args", {}))
 
     return chat_prompt_from_messages
 
@@ -108,58 +104,76 @@ def set_chat_prompt_args(state: ChatState):
     log.debug(f"Setting prompt args")
     return {
         "prompt_args": {
-            "formatted_documents": format_documents(state["documents"]),
+            "formatted_documents": format_documents(state.get("documents") or []),
         }
     }
-    
-@chain
-def no_docs_available(state: ChainState):
-    return {
-        "response": f"No available data for selected files. They may need to be removed and added again",
-    }
 
-def build_chat_chain(
+
+def build_llm_chain(
     llm: BaseChatModel,
     tokeniser: Encoding,
-    env: Settings
+    env: Settings,
+    system_prompt: str,
+    question_prompt: str
 ) -> Runnable:
     return RunnableParallel({
         "response": make_chat_prompt_from_messages_runnable(
-                system_prompt=env.ai.chat_system_prompt,
-                question_prompt=env.ai.chat_question_prompt,
+                system_prompt=system_prompt,
+                question_prompt=question_prompt,
                 input_token_budget=env.ai.context_window_size - env.llm_max_tokens,
                 tokeniser=tokeniser,
             )
             | llm.with_config(tags=["response"])
             | StrOutputParser(),
-        "route_name": RunnableLambda(lambda _: ChatRoute.chat.value),
     })
-    
 
 
-def build_chat_with_docs_chain(
+def build_llm_map_chain(
     llm: BaseChatModel,
     tokeniser: Encoding,
-    env: Settings
-):
-    return RunnableParallel({
-        "response": make_chat_prompt_from_messages_runnable(
-                system_prompt=env.ai.chat_with_docs_system_prompt,
-                question_prompt=env.ai.chat_with_docs_question_prompt,
-                input_token_budget=env.ai.context_window_size - env.llm_max_tokens,
-                tokeniser=tokeniser,
-            )
-            | llm.with_config(tags=["response"])
-            | StrOutputParser(),
-        "route_name": RunnableLambda(lambda _: ChatRoute.chat_with_docs.value),
-    })
+    env: Settings,
+    system_prompt: str,
+    question_prompt: str
+) -> Runnable:
     
-def build_chat_with_docs_map_reduce_chain():
-    return RunnableLambda(lambda state: {
-        "response": f"Max content exceeded. Try smaller or fewer documents",
-        "route_name": ChatRoute.chat_with_docs_map_reduce.value,
-    })
+    return (
+        make_chat_prompt_from_messages_runnable(
+            system_prompt=system_prompt,
+            question_prompt=question_prompt,
+            input_token_budget=env.ai.context_window_size - env.llm_max_tokens,
+            tokeniser=tokeniser,
+        )
+        | llm
+        | StrOutputParser()
+        | RunnableLambda(lambda s: {"intermediate_docs": [Document(page_content=s)]})
+    )
 
+
+@chain
+def to_map_step(state: ChatMapReduceState):
+    """
+    Map each doc in the state to an execution of the llm map step which will create an answer
+    per current document
+    """
+    return [
+        Send(
+            "llm_map", 
+            ChatMapReduceState(
+                query=state["query"],
+                documents=[doc],
+                route_name=state["route_name"],
+                prompt_args=state["prompt_args"]
+            )
+        )
+        for doc in state["documents"]
+    ]
+
+
+def build_reduce_docs_step(splitter: TextSplitter):
+    return (
+        RunnableLambda(lambda state: [Document(page_content=s) for s in splitter.split_text(format_documents(state["intermediate_docs"]))] )
+        | RunnableLambda(lambda docs: {"documents": docs})
+    )
 
 def empty_node(state: ChainState):
     log.info(f"Empty Node: {state}")

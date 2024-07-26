@@ -86,10 +86,10 @@ RETRIEVAL_QUESTION_PROMPT = "{question} \n=========\n{formatted_documents}\n====
 
 SUMMARISATION_QUESTION_PROMPT = "Question: {question}. \n\n Documents: \n\n {documents} \n\n Answer: "
 
-CHAT_MAP_QUESTION_PROMPT = "Question: {question}. \n Documents: \n {documents} \n\n Answer: "
+CHAT_MAP_QUESTION_PROMPT = "Question: {question}. \n Documents: \n {formatted_documents} \n\n Answer: "
 
 
-REDUCE_QUESTION_PROMPT = "Question: {question}. \n\n Documents: \n\n {summaries} \n\n Answer: "
+REDUCE_QUESTION_PROMPT = "Question: {question}. \n\n Documents: \n\n {formatted_documents} \n\n Answer: "
 
 CONDENSE_QUESTION_PROMPT = "{question}\n=========\n Standalone question: "
 
@@ -209,6 +209,8 @@ class Settings(BaseSettings):
     worker_ingest_largest_chunk_size: int = 96000
     worker_ingest_largest_chunk_overlap: int = 0
 
+    response_no_doc_available: str = "No available data for selected files. They may need to be removed and added again"
+    response_max_content_exceeded: str = "Max content exceeded. Try smaller or fewer documents"
     redis_host: str = "redis"
     redis_port: int = 6379
 
