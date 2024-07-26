@@ -5,10 +5,7 @@ from langchain.schema import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import Runnable, RunnableLambda, RunnableParallel, chain
 from langchain_core.language_models.chat_models import BaseChatModel
-from langchain_core.documents import Document
 from langchain_core.vectorstores import VectorStoreRetriever
-from langchain_text_splitters import TextSplitter
-from langgraph.constants import Send
 from tiktoken import Encoding
 
 from redbox.api.format import format_documents
@@ -20,13 +17,8 @@ log = logging.getLogger()
 re_keyword_pattern = re.compile(r"@(\w+)")
 
 
-def build_get_docs(
-    env: Settings,
-    retriever: VectorStoreRetriever
-):
-    return RunnableParallel({
-        "documents": retriever
-    })
+def build_get_docs(env: Settings, retriever: VectorStoreRetriever):
+    return RunnableParallel({"documents": retriever})
 
 
 @chain
@@ -43,9 +35,7 @@ def set_route(state: ChainState):
     else:
         selected = ChatRoute.chat.value
     log.info(f"Based on user query [{selected}] selected")
-    return {
-        "route_name": selected
-    }
+    return {"route_name": selected}
 
 
 def make_chat_prompt_from_messages_runnable(
@@ -64,7 +54,7 @@ def make_chat_prompt_from_messages_runnable(
         Create a ChatPrompTemplate as part of a chain using 'chat_history'.
         Returns the PromptValue using values in the input_dict
         """
-        log.debug(f"Setting chat prompt")
+        log.debug("Setting chat prompt")
         chat_history_budget = token_budget - len(tokeniser.encode(state["query"].question))
 
         if chat_history_budget <= 0:
@@ -86,9 +76,10 @@ def make_chat_prompt_from_messages_runnable(
 
     return chat_prompt_from_messages
 
+
 @chain
 def set_prompt_args(state: ChainState):
-    log.debug(f"Setting prompt args")
+    log.debug("Setting prompt args")
     return {
         "prompt_args": {
             "formatted_documents": format_documents(state.get("documents") or []),
@@ -97,14 +88,11 @@ def set_prompt_args(state: ChainState):
 
 
 def build_llm_chain(
-    llm: BaseChatModel,
-    tokeniser: Encoding,
-    env: Settings,
-    system_prompt: str,
-    question_prompt: str
+    llm: BaseChatModel, tokeniser: Encoding, env: Settings, system_prompt: str, question_prompt: str
 ) -> Runnable:
-    return RunnableParallel({
-        "response": make_chat_prompt_from_messages_runnable(
+    return RunnableParallel(
+        {
+            "response": make_chat_prompt_from_messages_runnable(
                 system_prompt=system_prompt,
                 question_prompt=question_prompt,
                 input_token_budget=env.ai.context_window_size - env.llm_max_tokens,
@@ -112,13 +100,17 @@ def build_llm_chain(
             )
             | llm.with_config(tags=["response"])
             | StrOutputParser(),
-    })
+        }
+    )
 
 
 def get_no_docs_available(env: Settings):
-    return RunnableLambda(lambda _: {
-        "response": env.response_no_doc_available,
-    })
+    return RunnableLambda(
+        lambda _: {
+            "response": env.response_no_doc_available,
+        }
+    )
+
 
 def empty_node(state: ChainState):
     log.info(f"Empty Node: {state}")

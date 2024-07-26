@@ -12,6 +12,7 @@ from operator import add
 from langchain_core.pydantic_v1 import BaseModel, Field
 from langchain_core.documents import Document
 
+
 class ChainChatMessage(TypedDict):
     role: Literal["user", "ai", "system"]
     text: str
@@ -33,4 +34,4 @@ class ChainState(TypedDict):
 
 
 class ChatMapReduceState(ChainState):
-    intermediate_docs: Annotated[list[Document], add] 
+    intermediate_docs: Annotated[list[Document], add]

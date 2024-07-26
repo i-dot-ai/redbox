@@ -1,4 +1,3 @@
-
 from langchain_elasticsearch import ElasticsearchRetriever
 from langchain_core.embeddings import Embeddings, FakeEmbeddings
 from langchain_openai import AzureChatOpenAI
@@ -11,13 +10,11 @@ from redbox.models.settings import Settings
 from redbox.graph.retriever import AllElasticsearchRetriever, ParameterisedElasticsearchRetriever
 
 
-def get_chat_llm(
-    env: Settings
-):
+def get_chat_llm(env: Settings):
     return AzureChatOpenAI(
         api_key=convert_to_secret_str(env.azure_openai_api_key),
         azure_endpoint=env.azure_openai_endpoint,
-        model=env.azure_openai_model
+        model=env.azure_openai_model,
     )
 
 
@@ -51,23 +48,19 @@ def get_embeddings(env: Settings) -> Embeddings:
     elif env.embedding_backend == "openai":
         return get_openai_embeddings(env)
     elif env.embedding_backend == "fake":
-        return FakeEmbeddings(size=3072) #TODO
+        return FakeEmbeddings(size=3072)  # TODO
     else:
         raise Exception("No configured embedding model")
-    
 
-def get_all_chunks_retriever(
-    env: Settings
-) -> ElasticsearchRetriever:
+
+def get_all_chunks_retriever(env: Settings) -> ElasticsearchRetriever:
     return AllElasticsearchRetriever(
         es_client=env.elasticsearch_client(),
         index_name=f"{env.elastic_root_index}-chunk",
     )
 
-def get_parameterised_retriever(
-    env: Settings,
-    embeddings: Embeddings = None
-) -> ElasticsearchRetriever:
+
+def get_parameterised_retriever(env: Settings, embeddings: Embeddings = None) -> ElasticsearchRetriever:
     """Creates an Elasticsearch retriever runnable.
 
     Runnable takes input of a dict keyed to question, file_uuids and user_uuid.

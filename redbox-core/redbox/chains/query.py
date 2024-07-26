@@ -1,5 +1,4 @@
 import logging
-import sys
 from operator import itemgetter
 
 from langchain.prompts import PromptTemplate
@@ -22,11 +21,7 @@ from redbox.models.errors import NoDocumentSelected
 log = logging.getLogger()
 
 
-def build_chat_chain(
-    llm: BaseChatModel,
-    tokeniser: Encoding,
-    env: Settings
-) -> Runnable:
+def build_chat_chain(llm: BaseChatModel, tokeniser: Encoding, env: Settings) -> Runnable:
     return (
         make_chat_prompt_from_messages_runnable(
             system_prompt=env.ai.chat_system_prompt,
@@ -41,17 +36,18 @@ def build_chat_chain(
         }
     )
 
-def retrieve_chunks_at_summarisation_length(
-    env: Settings,
-    retriever: VectorStoreRetriever=None
-):
-    return  (
-        retriever if retriever else AllElasticsearchRetriever(
+
+def retrieve_chunks_at_summarisation_length(env: Settings, retriever: VectorStoreRetriever = None):
+    return (
+        retriever
+        if retriever
+        else AllElasticsearchRetriever(
             es_client=env.elasticsearch_client(),
             index_name=f"{env.elastic_root_index}-chunk",
         )
         | resize_documents(env.ai.summarisation_chunk_max_tokens)
     )
+
 
 def build_chat_with_docs_chain(
     llm: BaseChatModel,
@@ -59,7 +55,6 @@ def build_chat_with_docs_chain(
     tokeniser: Encoding,
     env: Settings,
 ) -> Runnable:
-    
     @chain
     def map_operation(input_dict):
         system_map_prompt = env.ai.map_system_prompt
@@ -126,7 +121,10 @@ def build_chat_with_docs_chain(
         else:
             raise NoDocumentSelected
 
-    return RunnablePassthrough.assign(documents=retrieve_chunks_at_summarisation_length(env, all_chunks_retriever)) | chat_with_docs_route
+    return (
+        RunnablePassthrough.assign(documents=retrieve_chunks_at_summarisation_length(env, all_chunks_retriever))
+        | chat_with_docs_route
+    )
 
 
 def build_retrieval_chain(
