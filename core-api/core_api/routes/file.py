@@ -11,7 +11,7 @@ from pydantic import BaseModel, Field
 
 from core_api.auth import get_user_uuid
 from core_api.publisher_handler import FilePublisher
-from redbox.models import APIError404, Chunk, File, FileStatus, Settings
+from redbox.models import APIError404, Chunk, File, FileStatus, ProcessingStatusEnum, Settings
 from redbox.storage import ElasticsearchStorageHandler
 
 # === Functions ===
@@ -87,7 +87,12 @@ async def add_file(file_request: FileRequest, user_uuid: Annotated[UUID, Depends
         File: The file uuid from the elastic database
     """
 
-    file = File(key=file_request.key, bucket=env.bucket_name, creator_user_uuid=user_uuid)
+    file = File(
+        key=file_request.key,
+        bucket=env.bucket_name,
+        creator_user_uuid=user_uuid,
+        ingest_status=ProcessingStatusEnum.processing,
+    )
 
     storage_handler.write_item(file)
 
@@ -127,7 +132,9 @@ if env.dev_mode:
         key = file.filename
         s3.upload_fileobj(file.file, env.bucket_name, key)
 
-        file = File(key=key, bucket=env.bucket_name, creator_user_uuid=user_uuid)
+        file = File(
+            key=key, bucket=env.bucket_name, creator_user_uuid=user_uuid, ingest_status=ProcessingStatusEnum.processing
+        )
         storage_handler.write_item(file)
 
         log.info("publishing %s", file.uuid)
@@ -228,6 +235,8 @@ async def reingest_file(file_uuid: UUID, user_uuid: Annotated[UUID, Depends(get_
         return file_not_found_response(file_uuid=file_uuid)
 
     log.info("reingesting %s", file.uuid)
+    file.ingest_status = ProcessingStatusEnum.processing
+    storage_handler.update_item(file)
 
     # Remove old chunks
     storage_handler.delete_file_chunks(file.uuid, user_uuid)
