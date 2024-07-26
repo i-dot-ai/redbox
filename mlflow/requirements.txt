@@ -1,5 +1,5 @@
 mlflow==2.14.3
-pydantic==1.10.15
+pydantic==2.8.2
 starlette==0.38.1
 limits==3.13.0
 watchfiles==0.22.0
