@@ -64,8 +64,13 @@ class ChatsView(View):
             )
         endpoint = URL.build(scheme=settings.WEBSOCKET_SCHEME, host=request.get_host(), path=r"/ws/chat/")
 
-        all_files = File.objects.filter(user=request.user, status=StatusEnum.complete).order_by("-created_at")
-        self.decorate_selected_files(all_files, messages)
+        completed_files = File.objects.filter(user=request.user, status=StatusEnum.complete).order_by("-created_at")
+        hidden_statuses = [StatusEnum.deleted, StatusEnum.errored, StatusEnum.failed, StatusEnum.complete]
+        processing_files = (
+            File.objects.filter(user=request.user).exclude(status__in=hidden_statuses).order_by("-created_at")
+        )
+
+        self.decorate_selected_files(completed_files, messages)
         ChatsView.decorate_history_with_date_group(chat_history)
         chat_history_grouped_by_date_group = groupby(chat_history, attrgetter("date_group"))
 
@@ -76,7 +81,8 @@ class ChatsView(View):
             "current_chat": current_chat,
             "streaming": {"endpoint": str(endpoint)},
             "contact_email": settings.CONTACT_EMAIL,
-            "files": all_files,
+            "completed_files": completed_files,
+            "processing_files": processing_files,
             "chat_title_length": settings.CHAT_TITLE_LENGTH,
         }
 

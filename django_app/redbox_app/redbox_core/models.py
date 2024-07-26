@@ -152,6 +152,7 @@ class StatusEnum(models.TextChoices):
     deleted = "deleted"
     errored = "errored"
     processing = "processing"
+    failed = "failed"
 
 
 INACTIVE_STATUSES = [StatusEnum.deleted, StatusEnum.errored, StatusEnum.unknown]

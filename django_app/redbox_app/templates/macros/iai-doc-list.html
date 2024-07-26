@@ -18,7 +18,11 @@
                     <td class="iai-doc-list__cell--file-name">{{ doc.name }}</td>
                     <td class="iai-doc-list__cell--expiry">{{ doc.expires | humanise_expiry }}</td>
                     <td class="iai-doc-list__cell--status">
-                        <file-status data-id="{{ doc.id }}">{{ doc.get_status_text() }}</file-status>
+                        {% if type == "complete" %}
+                            {{ doc.get_status_text() }}
+                        {% else %}
+                            <file-status data-id="{{ doc.id }}">{{ doc.get_status_text() }}</file-status>
+                        {% endif %}
                     </td>
                     <td class="iai-doc-list__cell--actions">
                         <a class="iai-doc-list__delete" role="button" href="{{ url('remove-doc', doc.id) }}">

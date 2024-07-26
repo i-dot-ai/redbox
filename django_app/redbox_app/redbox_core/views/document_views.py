@@ -51,7 +51,7 @@ MAX_FILE_SIZE = 209715200  # 200 MB or 200 * 1024 * 1024
 @login_required
 def documents_view(request):
     completed_files = File.objects.filter(user=request.user, status=StatusEnum.complete).order_by("-created_at")
-    hidden_statuses = [StatusEnum.deleted, StatusEnum.errored, StatusEnum.complete]
+    hidden_statuses = [StatusEnum.deleted, StatusEnum.errored, StatusEnum.failed, StatusEnum.complete]
     processing_files = (
         File.objects.filter(user=request.user).exclude(status__in=hidden_statuses).order_by("-created_at")
     )
