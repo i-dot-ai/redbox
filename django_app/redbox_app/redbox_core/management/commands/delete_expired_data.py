@@ -84,6 +84,10 @@ class Command(BaseCommand):
             chats_to_delete.delete()
 
             self.stdout.write(self.style.SUCCESS(f"Successfully deleted {chat_counter} ChatHistory objects"))
-            post_summary_to_slack(f"The file deletion task succeeded :put_litter_in_its_place:. ${counter} files deleted. ${chat_counter} chats deleted. ${failure_counter} failures.")
-        except Exception as ex:
-            post_summary_to_slack("The file deletion task failed :do_not_litter:. ${counter} files deleted. ${chat_counter} chats deleted. ${failure_counter} failures.")
+            post_summary_to_slack(
+                f"The file deletion task succeeded :put_litter_in_its_place:. ${counter} files deleted. ${chat_counter} chats deleted. ${failure_counter} failures."
+            )
+        except Exception:
+            post_summary_to_slack(
+                "The file deletion task failed :do_not_litter:. ${counter} files deleted. ${chat_counter} chats deleted. ${failure_counter} failures."
+            )
