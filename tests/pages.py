@@ -251,7 +251,7 @@ class DocumentsPage(SignedInBasePage):
     @staticmethod
     def _doc_from_element(element: Locator) -> DocumentRow:
         filename = element.locator(".iai-doc-list__cell--file-name").inner_text()
-        status = element.locator("file-status").inner_text()
+        status = element.locator(".iai-doc-list__cell--status").inner_text()
         return DocumentRow(filename=filename, status=status)
 
     def document_count(self) -> int:
