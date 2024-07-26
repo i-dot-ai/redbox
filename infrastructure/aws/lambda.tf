@@ -16,6 +16,7 @@ module "django-lambda" {
   aws_security_group_ids = [aws_security_group.service_security_group.id]
   subnet_ids             = data.terraform_remote_state.vpc.outputs.private_subnets
   policies               = [jsonencode(data.aws_iam_policy_document.lambda_policy.json)]
+  schedule               = each.value.schedule
 }
 
 resource "aws_security_group" "service_security_group" {

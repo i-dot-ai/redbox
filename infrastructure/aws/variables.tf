@@ -28,16 +28,11 @@ variable "django_command" {
   type = list(object({
     command : string,
     task_name : string,
-    min_tasks : number,
-    max_tasks : number,
-    mem : number,
-    cpu : number,
-    schedule_up: optional(string),
-    schedule_down: optional(string),
+    schedule: optional(string),
   }))
   default = [
-    { command : "delete_expired_data", task_name : "delete", min_tasks : 0, max_tasks : 0, mem : 512, cpu : 256, schedule_up: "cron(00 02 * * ? *)", schedule_down: "cron(30 02 * * ? *)" }, # default to not running, every day at 2-2:30am
-    { command : "reingest_files", task_name : "reingest", min_tasks : 0, max_tasks : 0, mem : 512, cpu : 256 } # default to not running, no schedule, manually triggered
+    { command : "delete_expired_data", task_name : "delete", schedule: "cron(00 02 * * ? *)" }, # every day at 2-2:30am
+    { command : "reingest_files", task_name : "reingest"} # manually triggered
   ]
   description = "An object describing the django command to run"
 }
