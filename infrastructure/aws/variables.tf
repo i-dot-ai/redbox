@@ -161,6 +161,12 @@ variable "sentry_environment" {
   default     = null
 }
 
+variable "sentry_report_to_endpoint" {
+  description = "The sentry endpoint to which the Report-To header should refer"
+  type        = string
+  default     = null
+}
+
 variable "scope" {
   description = "Scope of the WAF, either 'CLOUDFRONT' or 'REGIONAL'"
   type        = string
@@ -378,4 +384,3 @@ variable "worker_ingest_max_chunk_size" {
   default     = 800
   description = "Maximum size of chunks to be produced by the worker"
 }
-

@@ -52,6 +52,7 @@ locals {
     "FILE_EXPIRY_IN_DAYS" : 30,
     "MAX_SECURITY_CLASSIFICATION" : "OFFICIAL_SENSITIVE",
     "SENTRY_ENVIRONMENT" : var.sentry_environment
+    "SENTRY_REPORT_TO_ENDPOINT" : var.sentry_report_to_endpoint
   }
 
   worker_environment_variables = {

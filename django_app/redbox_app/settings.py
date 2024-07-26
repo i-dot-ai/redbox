@@ -9,6 +9,7 @@ from dotenv import load_dotenv
 from import_export.formats.base_formats import CSV
 from sentry_sdk.integrations.django import DjangoIntegration
 from storages.backends import s3boto3
+from yarl import URL
 
 from redbox_app.setting_enums import Classification, Environment
 
@@ -76,6 +77,7 @@ MIDDLEWARE = [
     "csp.middleware.CSPMiddleware",
     "allauth.account.middleware.AccountMiddleware",
     "redbox_app.redbox_core.middleware.nocache_middleware",
+    "redbox_app.redbox_core.middleware.security_header_middleware",
 ]
 
 ROOT_URLCONF = "redbox_app.urls"
@@ -252,6 +254,7 @@ if not ENVIRONMENT.is_local:
             traces_sample_rate=1.0,
             profiles_sample_rate=0.0,
         )
+SENTRY_REPORT_TO_ENDPOINT = URL(env.str("SENTRY_REPORT_TO_ENDPOINT", "")) or None
 
 DATABASES = {
     "default": {
