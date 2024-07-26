@@ -38,6 +38,9 @@ async def test_post_file_upload(s3_client, app_client, file_pdf_path: Path, head
             )
     assert response.status_code == HTTPStatus.CREATED
 
+    file = json.loads(response.content.decode("utf-8"))
+    assert file["ingest_status"] == "processing"
+
 
 def test_list_files(app_client, stored_file_1, headers):
     """
