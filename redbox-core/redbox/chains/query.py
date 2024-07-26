@@ -63,7 +63,7 @@ def build_chat_with_docs_chain(
     @chain
     def map_operation(input_dict):
         system_map_prompt = env.ai.map_system_prompt
-        prompt_template = PromptTemplate.from_template(env.ai.map_question_prompt)
+        prompt_template = PromptTemplate.from_template(env.ai.chat_map_question_prompt)
 
         formatted_map_question_prompt = prompt_template.format(question=input_dict["question"])
 
@@ -228,7 +228,7 @@ def build_summary_chain(
     @chain
     def map_operation(input_dict):
         system_map_prompt = env.ai.map_system_prompt
-        prompt_template = PromptTemplate.from_template(env.ai.map_question_prompt)
+        prompt_template = PromptTemplate.from_template(env.ai.chat_map_question_prompt)
 
         formatted_map_question_prompt = prompt_template.format(question=input_dict["question"])
 
