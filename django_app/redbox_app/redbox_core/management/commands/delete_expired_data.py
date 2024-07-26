@@ -44,6 +44,7 @@ class Command(BaseCommand):
 
             self.stdout.write(self.style.NOTICE(f"Deleting Files expired before {cutoff_date}"))
             counter = 0
+            failure_counter = 0
 
             for file in File.objects.filter(last_referenced__lt=cutoff_date).exclude(status__in=INACTIVE_STATUSES):
                 logger.debug(
@@ -60,10 +61,12 @@ class Command(BaseCommand):
                     logger.exception("Error deleting file object %s using core-api", file, exc_info=e)
                     file.status = StatusEnum.errored
                     file.save()
+                    failure_counter += 1
                 except BotoCoreError as e:
                     logger.exception("Error deleting file object %s from storage", file, exc_info=e)
                     file.status = StatusEnum.errored
                     file.save()
+                    failure_counter += 1
                 else:
                     file.status = StatusEnum.deleted
                     file.save()
@@ -77,10 +80,10 @@ class Command(BaseCommand):
             chats_to_delete = ChatHistory.objects.annotate(last_modified_at=Max("chatmessage__modified_at")).filter(
                 last_modified_at__lt=cutoff_date
             )
-            counter = chats_to_delete.count()
+            chat_counter = chats_to_delete.count()
             chats_to_delete.delete()
 
-            self.stdout.write(self.style.SUCCESS(f"Successfully deleted {counter} ChatHistory objects"))
-            post_summary_to_slack(f"The file deletion task succeeded :put_litter_in_its_place:")
+            self.stdout.write(self.style.SUCCESS(f"Successfully deleted {chat_counter} ChatHistory objects"))
+            post_summary_to_slack(f"The file deletion task succeeded :put_litter_in_its_place:. ${counter} files deleted. ${chat_counter} chats deleted. ${failure_counter} failures.")
         except Exception as ex:
-            post_summary_to_slack("The file deletion task failed :do_not_litter:")
+            post_summary_to_slack("The file deletion task failed :do_not_litter:. ${counter} files deleted. ${chat_counter} chats deleted. ${failure_counter} failures.")
