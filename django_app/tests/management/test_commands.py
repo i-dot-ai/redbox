@@ -17,6 +17,69 @@ from requests_mock import Mocker
 
 from redbox_app.redbox_core.models import ChatHistory, ChatMessage, ChatRoleEnum, File, StatusEnum, User
 
+# === check_file_status command tests ===
+
+
+@pytest.mark.django_db()
+def test_check_file_status(several_files: Sequence[File], requests_mock: Mocker):
+    with mock.patch("redbox_app.redbox_core.models.File.delete_from_s3"):
+        # Given
+        file_in_core_api, file_not_in_core_api, file_core_api_error = several_files[0:3]
+
+        matcher = re.compile(f"http://{settings.CORE_API_HOST}:{settings.CORE_API_PORT}/file/[0-9a-f]|\\-/status")
+
+        requests_mock.get(
+            matcher,
+            status_code=201,
+            json={
+                "processing_status": StatusEnum.processing,
+            },
+        )
+        requests_mock.get(
+            f"http://{settings.CORE_API_HOST}:{settings.CORE_API_PORT}/file/{file_not_in_core_api.core_file_uuid}/status",
+            status_code=404,
+        )
+        requests_mock.get(
+            f"http://{settings.CORE_API_HOST}:{settings.CORE_API_PORT}/file/{file_core_api_error.core_file_uuid}/status",
+            exc=requests.exceptions.Timeout,
+        )
+        # When
+        call_command("check_file_status")
+
+        # Then
+        assert File.objects.get(id=file_in_core_api.id).status == StatusEnum.processing
+        assert File.objects.get(id=file_not_in_core_api.id).status == StatusEnum.deleted
+        assert File.objects.get(id=file_core_api_error.id).status == StatusEnum.errored
+
+
+@pytest.mark.django_db()
+def test_check_file_status_s3_error(uploaded_file: File, requests_mock: Mocker):
+    with mock.patch("redbox_app.redbox_core.models.File.delete_from_s3") as s3_mock:
+        s3_mock.side_effect = UnknownClientMethodError(method_name="")
+
+        # Given
+        mock_file = uploaded_file
+        matcher = re.compile(f"http://{settings.CORE_API_HOST}:{settings.CORE_API_PORT}/file/[0-9a-f]|\\-/status")
+
+        requests_mock.get(
+            matcher,
+            status_code=201,
+            json={
+                "processing_status": StatusEnum.processing,
+            },
+        )
+        requests_mock.get(
+            f"http://{settings.CORE_API_HOST}:{settings.CORE_API_PORT}/file/{mock_file.core_file_uuid}/status",
+            status_code=404,
+        )
+
+        # When
+        call_command("check_file_status")
+
+        # Then
+        assert File.objects.get(id=mock_file.id).status == StatusEnum.errored
+
+
 # === show_magiclink_url command tests ===
 
 
