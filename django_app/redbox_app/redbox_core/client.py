@@ -59,9 +59,9 @@ class CoreChatResponse:
 @dataclass_json(undefined=Undefined.EXCLUDE)
 @dataclass(frozen=True)
 class FileStatus:
-    processing_status: Literal[
-        "uploaded", "parsing", "chunking", "embedding", "indexing", "complete", "unknown", "errored"
-    ]
+    processing_status: (
+        Literal["uploaded", "parsing", "chunking", "embedding", "indexing", "complete", "unknown", "errored"] | None
+    )
 
 
 @dataclass_json(undefined=Undefined.EXCLUDE)

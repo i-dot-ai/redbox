@@ -9,7 +9,7 @@ from django.utils import timezone
 from requests.exceptions import RequestException
 
 from redbox_app.redbox_core.client import CoreApiClient
-from redbox_app.redbox_core.models import ChatHistory, File, StatusEnum
+from redbox_app.redbox_core.models import INACTIVE_STATUSES, ChatHistory, File, StatusEnum
 
 logger = logging.getLogger(__name__)
 core_api = CoreApiClient(host=settings.CORE_API_HOST, port=settings.CORE_API_PORT)
@@ -22,12 +22,11 @@ class Command(BaseCommand):
 
     def handle(self, *_args, **_kwargs):
         cutoff_date = timezone.now() - timedelta(seconds=settings.FILE_EXPIRY_IN_SECONDS)
-        statuses_to_ignore = [StatusEnum.deleted, StatusEnum.errored]
 
         self.stdout.write(self.style.NOTICE(f"Deleting Files expired before {cutoff_date}"))
         counter = 0
 
-        for file in File.objects.filter(last_referenced__lt=cutoff_date).exclude(status__in=statuses_to_ignore):
+        for file in File.objects.filter(last_referenced__lt=cutoff_date).exclude(status__in=INACTIVE_STATUSES):
             logger.debug(
                 "Deleting file object %s, last_referenced %s",
                 file,

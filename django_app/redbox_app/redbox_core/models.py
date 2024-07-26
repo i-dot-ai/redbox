@@ -1,6 +1,7 @@
 import logging
 import uuid
 from datetime import UTC, datetime, timedelta
+from typing import override
 
 import boto3
 from botocore.config import Config
@@ -94,6 +95,25 @@ class User(BaseUser, UUIDPrimaryKeyBase):
         VET = "VET", _("Veterinary")
         OT = "OT", _("Other")
 
+    class AIExperienceLevel(models.TextChoices):
+        CURIOUS_NEWCOMER = "Curious Newcomer", _("I haven't used Generative AI tools")
+        CAUTIOUS_EXPLORER = "Cautious Explorer", _("I have a little experience using Generative AI tools")
+        ENTHUSIASTIC_EXPERIMENTER = (
+            "Enthusiastic Experimenter",
+            _("I occasionally use Generative AI tools but am still experimenting with their capabilities"),
+        )
+        EXPERIENCED_NAVIGATOR = (
+            "Experienced Navigator",
+            _("I use Generative AI tools regularly and have a good understanding of their strengths and limitations"),
+        )
+        AI_ALCHEMIST = (
+            "AI Alchemist",
+            _(
+                "I have extensive experience with Generative AI tools and can leverage them effectively in various "
+                "contexts"
+            ),
+        )
+
     username = None
     verified = models.BooleanField(default=False, blank=True, null=True)
     invited_at = models.DateTimeField(default=None, blank=True, null=True)
@@ -102,6 +122,8 @@ class User(BaseUser, UUIDPrimaryKeyBase):
     password = models.CharField("password", max_length=128, blank=True, null=True)
     business_unit = models.ForeignKey(BusinessUnit, null=True, blank=True, on_delete=models.SET_NULL)
     grade = models.CharField(null=True, blank=True, max_length=3, choices=UserGrade)
+    name = models.CharField(null=True, blank=True)
+    ai_experience = models.CharField(null=True, blank=True, max_length=25, choices=AIExperienceLevel)
     profession = models.CharField(null=True, blank=True, max_length=4, choices=Profession)
     objects = BaseUserManager()
 
@@ -129,6 +151,10 @@ class StatusEnum(models.TextChoices):
     unknown = "unknown"
     deleted = "deleted"
     errored = "errored"
+    processing = "processing"
+
+
+INACTIVE_STATUSES = [StatusEnum.deleted, StatusEnum.errored, StatusEnum.unknown]
 
 
 class File(UUIDPrimaryKeyBase, TimeStampedModel):
@@ -151,7 +177,8 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
                 self.last_referenced = timezone.now()
         super().save(*args, **kwargs)
 
-    def delete(self, using=None, keep_parents=False):  # noqa: ARG002  # remove at Python 3.12
+    @override
+    def delete(self, using=None, keep_parents=False):
         #  Needed to make sure no orphaned files remain in the storage
         self.original_file.storage.delete(self.original_file.name)
         super().delete()
@@ -188,7 +215,7 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
             return URL(url)
 
         if not self.original_file:
-            logger.error("attempt to access not existent file %s", self.pk)
+            logger.error("attempt to access non-existent file %s", self.pk, stack_info=True)
             return None
 
         return URL(self.original_file.url)
@@ -196,7 +223,10 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
     @property
     def name(self) -> str:
         # User-facing name
-        return self.original_file_name or self.original_file.name
+        try:
+            return self.original_file_name or self.original_file.name
+        except ValueError as e:
+            logger.exception("attempt to access non-existent file %s", self.pk, exc_info=e)
 
     @property
     def unique_name(self) -> str:

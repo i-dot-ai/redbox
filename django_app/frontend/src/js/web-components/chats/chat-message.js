@@ -1,6 +1,11 @@
 // @ts-check
 
 class ChatMessage extends HTMLElement {
+  constructor() {
+    super();
+    this.programmaticScroll = false;
+  }
+
   connectedCallback() {
     const uuid = crypto.randomUUID();
     this.innerHTML = `
@@ -42,6 +47,7 @@ class ChatMessage extends HTMLElement {
         `;
 
     // ensure new chat-messages aren't hidden behind the chat-input
+    this.programmaticScroll = true;
     this.scrollIntoView({ block: "end" });
 
     // Insert route_display HTML
@@ -67,6 +73,15 @@ class ChatMessage extends HTMLElement {
     endPoint,
     chatControllerRef
   ) => {
+    let userScrollOverride = false;
+    window.addEventListener("scroll", (evt) => {
+      if (this.programmaticScroll) {
+        this.programmaticScroll = false;
+        return;
+      }
+      userScrollOverride = true;
+    });
+
     let responseContainer = /** @type MarkdownConverter */ (
       this.querySelector("markdown-converter")
     );
@@ -176,7 +191,10 @@ class ChatMessage extends HTMLElement {
       }
 
       // ensure new content isn't hidden behind the chat-input
-      this.scrollIntoView({ block: "end" });
+      if (!userScrollOverride) {
+        this.programmaticScroll = true;
+        this.scrollIntoView({ block: "end" });
+      }
     };
   };
 }

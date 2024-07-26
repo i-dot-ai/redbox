@@ -12,10 +12,10 @@ class CopyText extends HTMLElement {
         </button>
     `;
 
-    const copyToClip = (str) => {
+    const copyToClip = (html, text) => {
       function listener(evt) {
-        evt.clipboardData.setData("text/html", str);
-        evt.clipboardData.setData("text/plain", str);
+        evt.clipboardData.setData("text/html", html);
+        evt.clipboardData.setData("text/plain", text);
         evt.preventDefault();
       }
       document.addEventListener("copy", listener);
@@ -27,7 +27,7 @@ class CopyText extends HTMLElement {
       const textEl = this.closest(".iai-chat-bubble")?.querySelector(
         ".iai-chat-bubble__text"
       );
-      copyToClip(textEl?.innerHTML);
+      copyToClip(textEl?.innerHTML, textEl?.innerText);
     });
   }
 }

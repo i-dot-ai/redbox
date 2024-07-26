@@ -14,19 +14,19 @@ locals {
       "AI__RAG_NUM_CANDIDATES" : var.rag_num_candidates,
       "AI__RAG_DESIRED_CHUNK_SIZE" : var.rag_desired_chunk_size,
       "AI__ELBOW_FILTER_ENABLED" : var.elbow_filter_enabled,
-      "AI_CHAT_SYSTEM_PROMPT" : var.chat_system_prompt,
-      "AI_CHAT_QUESTION_PROMPT" : var.chat_question_prompt,
-      "AI_CHAT_WITH_DOCS_SYSTEM_PROMPT" : var.chat_with_docs_system_prompt,
-      "AI_CHAT_WITH_DOCS_QUESTION_PROMPT" : var.chat_with_docs_question_prompt,
-      "AI_CHAT_WITH_DOCS_REDUCE_SYSTEM_PROMPT" : var.chat_with_docs_reduce_system_prompt,
-      "AI_CHAT_WITH_DOCS_REDUCE_QUESTION_PROMPT" : var.chat_with_docs_reduce_question_prompt,
+      "AI__CHAT_SYSTEM_PROMPT" : var.chat_system_prompt,
+      "AI__CHAT_QUESTION_PROMPT" : var.chat_question_prompt,
+      "AI__STUFF_CHUNK_CONTEXT_RATIO" : var.stuff_chunk_context_ratio,
+      "AI__CHAT_WITH_DOCS_SYSTEM_PROMPT" : var.chat_with_docs_system_prompt,
+      "AI__CHAT_WITH_DOCS_QUESTION_PROMPT" : var.chat_with_docs_question_prompt,
+      "AI__CHAT_WITH_DOCS_REDUCE_SYSTEM_PROMPT" : var.chat_with_docs_reduce_system_prompt,
+      "AI__CHAT_WITH_DOCS_REDUCE_QUESTION_PROMPT" : var.chat_with_docs_reduce_question_prompt,
       "AI__RETRIEVAL_SYSTEM_PROMPT" : var.retrieval_system_prompt,
       "AI__RETRIEVAL_QUESTION_PROMPT" : var.retrieval_question_prompt,
       "AI__CONDENSE_SYSTEM_PROMPT" : var.condense_system_prompt,
       "AI__CONDENSE_QUESTION_PROMPT" : var.condense_question_prompt,
       "AI__SUMMARISATION_SYSTEM_PROMPT" : var.summarisation_system_prompt,
       "AI__SUMMARISATION_QUESTION_PROMPT" : var.summarisation_question_prompt,
-      "AI__SUMMARISATION_CHUNK_MAX_TOKENS": var.summarisation_chunk_max_tokens
     }
   )
 
@@ -67,6 +67,8 @@ locals {
     "ENVIRONMENT" : upper(terraform.workspace),
     "DEBUG" : terraform.workspace == "dev",
     "AWS_REGION" : var.region,
+    "worker_ingest_min_chunk_size": var.worker_ingest_min_chunk_size,
+    "worker_ingest_max_chunk_size": var.worker_ingest_max_chunk_size,
   }
 
   core_secrets = {
@@ -96,6 +98,7 @@ locals {
   reconstructed_worker_secrets = [for k, _ in local.worker_secrets : { name = k, valueFrom = "${aws_secretsmanager_secret.worker-secret.arn}:${k}::" }]
   reconstructed_core_secrets   = [for k, _ in local.core_secrets : { name = k, valueFrom = "${aws_secretsmanager_secret.core-api-secret.arn}:${k}::" }]
   reconstructed_django_secrets = [for k, _ in local.django_app_secrets : { name = k, valueFrom = "${aws_secretsmanager_secret.django-app-secret.arn}:${k}::" }]
+  reconstructed_django_command_secrets = [for k, _ in local.django_app_secrets : { name = k, valueFrom = "${aws_secretsmanager_secret.django-command-secret.arn}:${k}::" }]
 }
 
 data "terraform_remote_state" "vpc" {

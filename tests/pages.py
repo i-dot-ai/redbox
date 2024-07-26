@@ -162,14 +162,14 @@ class SignInConfirmationPage(BasePage):
         return self._where_are_we(self.page)
 
     @staticmethod
-    def autosubmit(page: Page, magic_link: URL) -> Union["DocumentsPage", "MyDetailsPage"]:
+    def autosubmit(page: Page, magic_link: URL) -> Union["ChatsPage", "MyDetailsPage"]:
         page.goto(str(magic_link))
         expect(page).not_to_have_title(SignInConfirmationPage.EXPECTED_TITLE)
         return SignInConfirmationPage._where_are_we(page)
 
     @staticmethod
-    def _where_are_we(page: Page) -> Union["DocumentsPage", "MyDetailsPage"]:
-        return MyDetailsPage(page) if page.title().startswith("My details") else DocumentsPage(page)
+    def _where_are_we(page: Page) -> Union["ChatsPage", "MyDetailsPage"]:
+        return MyDetailsPage(page) if page.title().startswith("My details") else ChatsPage(page)
 
 
 class HomePage(SignedInBasePage):
@@ -182,6 +182,19 @@ class MyDetailsPage(SignedInBasePage):
     @property
     def expected_page_title(self) -> str:
         return "My details - Redbox"
+
+    @property
+    def name(self) -> str:
+        return self.page.get_by_label("Full Name").get_by_role(role="option", selected=True).input_value()
+
+    @name.setter
+    def name(self, name: str):
+        self.page.get_by_label("Full Name").fill(name)
+
+    def ai_experience(self, ai_experience: str):
+        self.page.get_by_test_id(ai_experience).click()
+
+    ai_experience = property(fset=ai_experience)
 
     @property
     def grade(self) -> str:
@@ -207,9 +220,9 @@ class MyDetailsPage(SignedInBasePage):
     def profession(self, grade: str):
         self.page.get_by_label("Profession").select_option(grade)
 
-    def update(self) -> "DocumentsPage":
+    def update(self) -> "ChatsPage":
         self.page.get_by_text("Update").click()
-        return DocumentsPage(self.page)
+        return ChatsPage(self.page)
 
 
 @dataclass

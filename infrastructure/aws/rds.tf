@@ -12,8 +12,7 @@ module "rds" {
   instance_type           = var.env != "prod" ? "db.t3.micro" : "db.t3.large"
   service_sg_ids          = [
     module.core_api.ecs_sg_id,
-    module.worker.ecs_sg_id,
-    aws_security_group.service_security_group.id
+    module.worker.ecs_sg_id
   ]
   secret_tags         = { "platform:secret-purpose" = "general" }
   publicly_accessible = var.publicly_accessible

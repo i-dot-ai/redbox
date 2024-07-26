@@ -3,9 +3,6 @@
 class ChatController extends HTMLElement {
   connectedCallback() {
     const messageForm = this.closest("form");
-    const textArea = /** @type {HTMLInputElement | null} */ (
-      this.querySelector(".js-user-text")
-    );
     const messageContainer = this.querySelector(".js-message-container");
     const insertPosition = this.querySelector(".js-response-feedback");
     const feedbackButtons = /** @type {HTMLElement | null} */ (
@@ -15,6 +12,9 @@ class ChatController extends HTMLElement {
 
     messageForm?.addEventListener("submit", (evt) => {
       evt.preventDefault();
+      const textArea = /** @type {HTMLInputElement | null} */ (
+        document.querySelector(".js-user-text")
+      );
       const userText = textArea?.value.trim();
       if (!textArea || !userText) {
         return;

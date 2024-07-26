@@ -55,7 +55,7 @@ async def route_chat(
     # Match keyword
     route_match = re_keyword_pattern.search(question)
     route_name = route_match.group()[1:] if route_match else None
-    selected_chain = routable_chains.get(route_name, select_chat_chain(chat_request, routable_chains))
+    selected_chain, description = routable_chains.get(route_name, select_chat_chain(chat_request, routable_chains))
 
     params = ChainInput(
         question=chat_request.message_history[-1].text,
@@ -85,10 +85,10 @@ async def rag_chat(
 
 @chat_app.get("/tools", tags=["chat"])
 async def available_tools(
-    routable_chains: Annotated[dict[str, Tool], Depends(get_routable_chains)],
+    routable_chains: Annotated[dict[str, tuple[Runnable, str]], Depends(get_routable_chains)],
 ):
     """REST endpoint. Get a mapping of all tools available via chat."""
-    return [{"name": chat_tool.name, "description": chat_tool.description} for chat_tool in routable_chains.values()]
+    return [{"name": name, "description": tool[1]} for (name, tool) in routable_chains.items()]
 
 
 @chat_app.websocket("/rag")

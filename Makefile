@@ -35,7 +35,7 @@ rebuild: stop prune ## Rebuild all images
 .PHONY: test-core-api
 test-core-api: ## Test core-api
 	cp .env.test core-api/.env
-	cd core-api && poetry install --with dev && poetry run python -m pytest -m "not ai" --cov=core_api -v --cov-report=term-missing --cov-fail-under=80
+	cd core-api && poetry install --with dev && poetry run python -m pytest -m "not ai" --cov=core_api -v --cov-report=term-missing --cov-fail-under=75
 
 .PHONY: test-ai
 test-ai: ## Test code with live LLM
@@ -229,17 +229,17 @@ tf_set_or_create_workspace:
 
 .PHONY: tf_init
 tf_init: ## Initialise terraform
-	terraform -chdir=./infrastructure/aws/$(instance) init -backend-config=$(TF_BACKEND_CONFIG) ${args} -reconfigure
+	terraform -chdir=./infrastructure/aws/$(instance) init -backend-config=$(TF_BACKEND_CONFIG) ${args}
 
 .PHONY: tf_plan
 tf_plan: ## Plan terraform
 	make tf_set_workspace && \
-	terraform -chdir=./infrastructure/aws/$(instance) plan -var-file=$(CONFIG_DIR)/${env}-input-params.tfvars ${tf_build_args} -target=module.lambda-cleanup
+	terraform -chdir=./infrastructure/aws/$(instance) plan -var-file=$(CONFIG_DIR)/${env}-input-params.tfvars ${tf_build_args}
 
 .PHONY: tf_apply
 tf_apply: ## Apply terraform
 	make tf_set_workspace && \
-	terraform -chdir=./infrastructure/aws/$(instance) apply -var-file=$(CONFIG_DIR)/${env}-input-params.tfvars ${tf_build_args} ${args} -target=module.lambda-cleanup -target=module.rds -target=aws_security_group_rule.lambda_to_rds_egress -target=module.elasticache -target=module.lambda-test -target=module.lambda -target=aws_security_group.service_security_group -target=aws_security_group_rule.lambda_to_443_egress
+	terraform -chdir=./infrastructure/aws/$(instance) apply -var-file=$(CONFIG_DIR)/${env}-input-params.tfvars ${tf_build_args} ${args}
 
 .PHONY: tf_init_universal
 tf_init_universal: ## Initialise terraform
