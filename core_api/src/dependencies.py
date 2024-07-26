@@ -121,6 +121,7 @@ def get_llm(env: Annotated[Settings, Depends(get_env)]) -> ChatLiteLLM:
             openai_key=env.openai_api_key,
             callbacks=[logger_callback],
             model=env.openai_model,
+            max_tokens=env.llm_max_tokens
         )
     elif env.azure_openai_api_key is not None:
         log.info("Creating Azure LLM Client")
