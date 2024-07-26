@@ -8,6 +8,7 @@ import "./web-components/markdown-converter.js";
 import "./web-components/chats/message-input.js";
 import "./web-components/chats/sources-list.js";
 import "./web-components/chats/canned-prompts";
+import "./web-components/documents/file-status.js";
 
 // Update URL when a new chat is created
 document.addEventListener("chat-response-end", (evt) => {

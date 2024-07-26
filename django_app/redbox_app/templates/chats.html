@@ -44,12 +44,22 @@
             <h3 class="govuk-fieldset__heading">Documents to use</h3>
           </legend>
           <div class="govuk-checkboxes govuk-checkboxes--small iai-panel__scrollable" data-module="govuk-checkboxes">
-            {% for file in files %}
+            {% for file in completed_files %}
               <div class="govuk-checkboxes__item">
                 <input class="govuk-checkboxes__input" id="file-{{ file.id }}" name="file-{{ file.id }}" type="checkbox" value="{{ file.id }}" {% if file.selected %}checked{% endif %}>
-                <label class="{#govuk-label#}govuk-checkboxes__label govuk-body-s" for="file-{{ file.id }}">{{ file.original_file_name }}</label>
+                <label class="govuk-checkboxes__label govuk-body-s" for="file-{{ file.id }}">{{ file.original_file_name }} {{ file.status }}</label>
               </div>
             {% endfor %}
+            {# files not yet ready - stored here to be moved to main list once ready #}
+            <div hidden>
+              {% for file in processing_files %}
+                <div class="govuk-checkboxes__item">
+                  <input class="govuk-checkboxes__input" id="file-{{ file.id }}" name="file-{{ file.id }}" type="checkbox" value="{{ file.id }}" {% if file.selected %}checked{% endif %}>
+                  <label class="govuk-checkboxes__label govuk-body-s" for="file-{{ file.id }}">{{ file.original_file_name }}</label>
+                  <file-status data-id="{{ file.id }}"></file-status>
+                </div>
+              {% endfor %}
+            </div>
           </div>
         </fieldset>
       </document-selector>
