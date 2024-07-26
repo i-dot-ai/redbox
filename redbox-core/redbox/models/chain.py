@@ -29,11 +29,8 @@ class ChainState(TypedDict):
     documents: list[Document]
     response: str | None
     route_name: str | None
-
-
-class ChatState(ChainState):
     prompt_args: dict[str, str]
 
 
-class ChatMapReduceState(ChatState):
+class ChatMapReduceState(ChainState):
     intermediate_docs: Annotated[list[Document], add] 

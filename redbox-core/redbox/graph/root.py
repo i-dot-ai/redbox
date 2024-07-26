@@ -8,33 +8,45 @@ from tiktoken import Encoding
 import asyncio
 
 from redbox.chains.graph import *
+from redbox.graph.search import get_search_graph
 from redbox.models.chain import ChainInput, ChainState
 from redbox.models.settings import Settings
 from redbox.chains.components import (
     get_all_chunks_retriever,
+    get_parameterised_retriever,
     get_chat_llm,
     get_tokeniser
 )
 from redbox.graph.chat import get_chat_graph, get_chat_with_docs_graph
 
+
 def get_redbox_graph(
-    llm: BaseChatModel,
-    all_chunks_retriever: VectorStoreRetriever,
-    tokeniser: Encoding,
-    env: Settings,
+    llm: BaseChatModel = None,
+    all_chunks_retriever: VectorStoreRetriever= None,
+    parameterised_retriever: VectorStoreRetriever= None,
+    tokeniser: Encoding= None,
+    env: Settings= None,
     debug: bool = False
 ):
-
+    _env = env or Settings()
+    _all_chunks_retriever = all_chunks_retriever or get_all_chunks_retriever(_env)
+    _parameterised_retriever = parameterised_retriever or get_parameterised_retriever(_env)
+    _llm = llm or get_chat_llm(_env)
+    _tokeniser = tokeniser or get_tokeniser()
+    
     app = StateGraph(ChainState)
     app.set_entry_point("set_route")
 
     app.add_node("set_route", set_route)
     app.add_conditional_edges("set_route", lambda s: s["route_name"])
 
-    app.add_node(ChatRoute.chat, get_chat_graph(llm, tokeniser, env, debug))
+    app.add_node(ChatRoute.search, get_search_graph(_llm, _parameterised_retriever, _tokeniser, _env, debug))
+    app.add_edge(ChatRoute.search, END)
+
+    app.add_node(ChatRoute.chat, get_chat_graph(_llm, _tokeniser, _env, debug))
     app.add_edge(ChatRoute.chat, END)
 
-    app.add_node(ChatRoute.chat_with_docs, get_chat_with_docs_graph(llm, all_chunks_retriever, tokeniser, env, debug))
+    app.add_node(ChatRoute.chat_with_docs, get_chat_with_docs_graph(_llm, _all_chunks_retriever, _tokeniser, _env, debug))
     app.add_edge(ChatRoute.chat_with_docs, END)
 
     return app.compile(debug=debug)
@@ -61,11 +73,8 @@ async def run_redbox(
 if __name__ == "__main__":
     import os
     logging.basicConfig(stream=sys.stdout, level=os.environ.get("LOG_LEVEL", "INFO"))
-    env = Settings()
-    all_chunks_retriever = get_all_chunks_retriever(env)
-    llm = get_chat_llm(env)
-    tokeniser = get_tokeniser()
-    app = get_redbox_graph(llm, all_chunks_retriever, tokeniser, env)
+    
+    app = get_redbox_graph()
     response = asyncio.run(run_redbox(
         ChainState(
             query=ChainInput(
