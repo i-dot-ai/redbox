@@ -229,6 +229,7 @@ class MyDetailsPage(SignedInBasePage):
 class DocumentRow:
     filename: str
     status: str
+    completed: bool
 
 
 class DocumentsPage(SignedInBasePage):
@@ -251,8 +252,9 @@ class DocumentsPage(SignedInBasePage):
     @staticmethod
     def _doc_from_element(element: Locator) -> DocumentRow:
         filename = element.locator(".iai-doc-list__cell--file-name").inner_text()
-        status = element.locator("file-status").inner_text()
-        return DocumentRow(filename=filename, status=status)
+        status = element.locator(".iai-doc-list__cell--status").inner_text()
+        completed = element.evaluate("element => element.closest('.iai-doc-list').classList.contains('iai-doc-list--complete')")
+        return DocumentRow(filename=filename, status=status, completed=completed)
 
     def document_count(self) -> int:
         return len(self.all_documents)
@@ -260,7 +262,7 @@ class DocumentsPage(SignedInBasePage):
     def wait_for_documents_to_complete(self, retry_interval: int = 5, max_tries: int = 120):
         tries = 0
         while True:
-            if all(d.status == "Complete" for d in self.all_documents):
+            if all(d.completed for d in self.all_documents):
                 return
             if tries >= max_tries:
                 logger.error("documents: %s", self.all_documents)

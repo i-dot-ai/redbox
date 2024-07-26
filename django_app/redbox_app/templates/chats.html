@@ -47,7 +47,7 @@
             {% for file in completed_files %}
               <div class="govuk-checkboxes__item">
                 <input class="govuk-checkboxes__input" id="file-{{ file.id }}" name="file-{{ file.id }}" type="checkbox" value="{{ file.id }}" {% if file.selected %}checked{% endif %}>
-                <label class="govuk-checkboxes__label govuk-body-s" for="file-{{ file.id }}">{{ file.original_file_name }} {{ file.status }}</label>
+                <label class="govuk-checkboxes__label govuk-body-s" for="file-{{ file.id }}">{{ file.original_file_name }}</label>
               </div>
             {% endfor %}
             {# files not yet ready - stored here to be moved to main list once ready #}
