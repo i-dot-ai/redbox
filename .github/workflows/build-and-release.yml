@@ -95,6 +95,11 @@ jobs:
       AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
 
   determine-failure-state:
+    needs:
+      - set-vars
+      - start-runner
+      - build-image
+      - release-terraform
     runs-on: ${{ needs.start-runner.outputs.label }}
     if: always()
     steps:
