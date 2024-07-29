@@ -103,11 +103,11 @@ jobs:
     runs-on: ${{ needs.start-runner.outputs.label }}
     if: always()
     steps:
-      - name: Set output based on success
+      - name: Set success output to true
         if: success()
         id: set-output
         run: echo "::set-output name=success::true
-      - name: Set output based on success
+      - name: Set success output to false
         if: failure()
         id: set-output
         run: echo "::set-output name=success::false"
