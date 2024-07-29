@@ -95,6 +95,11 @@ jobs:
       AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
 
   notify-slack:
+    needs:
+      - set-vars
+      - start-runner
+      - build-image
+      - release-terraform
     uses: i-dot-ai/i-dot-ai-core-github-actions/.github/workflows/slack-notify.yml@53ef3220f890d9e240c8373dac779a7720c3d7b7
     if: always()
     with:
