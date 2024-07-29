@@ -1,5 +1,4 @@
 # npm
-
 FROM node:18 AS npm-packages
 
 WORKDIR /src
@@ -18,7 +17,7 @@ FROM python:3.12-slim AS poetry-packages
 
 RUN apt-get update && apt-get install --yes build-essential > /dev/null
 
-RUN pip install poetry poetry-plugin-bundle
+RUN pip install poetry poetry-plugin-bundle==1.3.0
 
 WORKDIR /src
 
