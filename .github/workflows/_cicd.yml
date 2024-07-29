@@ -35,7 +35,7 @@ jobs:
       core_infra_repo_reference: ${{ inputs.core_repo_reference }}
       config_repo_reference: ${{ inputs.config_repo_reference }}
       commit_hash: ${{ inputs.commit_hash }}
-      auther_name: ${{ github.actor }}
+      author_name: ${{ github.actor }}
     secrets: inherit
 
   release-preprod:
