@@ -29,7 +29,7 @@ jobs:
   release-dev:
     # if: ${{ false }}  # Uncomment this, and comment out the line below, to disable this workflow path
     if: github.event_name == 'workflow_dispatch'
-    uses: i-dot-ai/redbox/.github/workflows/build-and-release.yml@e08a000085c2308455ad4f46cd460e0a4bfbee9a
+    uses: i-dot-ai/redbox/.github/workflows/build-and-release.yml@8b48d330d8da5f0a990bc448a2bd3030a93669e5
     with:
       environment: dev
       core_infra_repo_reference: ${{ inputs.core_repo_reference }}
@@ -41,7 +41,7 @@ jobs:
   release-preprod:
     # if: ${{ false }}  # Uncomment this, and comment out the line below, to disable this workflow path
     if: github.event_name == 'push' && github.ref_name == 'main'
-    uses: i-dot-ai/redbox/.github/workflows/build-and-release.yml@e08a000085c2308455ad4f46cd460e0a4bfbee9a
+    uses: i-dot-ai/redbox/.github/workflows/build-and-release.yml@8b48d330d8da5f0a990bc448a2bd3030a93669e5
     with:
       environment: preprod
       core_infra_repo_reference: 'refs/heads/main'
@@ -53,7 +53,7 @@ jobs:
   release-prod:
 #    if: ${{ false }}  # Uncomment this, and comment out the line below, to disable this workflow path
     if: github.event_name == 'release'
-    uses: i-dot-ai/redbox/.github/workflows/build-and-release.yml@e08a000085c2308455ad4f46cd460e0a4bfbee9a
+    uses: i-dot-ai/redbox/.github/workflows/build-and-release.yml@8b48d330d8da5f0a990bc448a2bd3030a93669e5
     with:
       environment: prod
       core_infra_repo_reference: 'refs/heads/main'
