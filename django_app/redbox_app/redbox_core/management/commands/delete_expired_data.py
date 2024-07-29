@@ -19,18 +19,21 @@ core_api = CoreApiClient(host=settings.CORE_API_HOST, port=settings.CORE_API_POR
 
 
 def post_summary_to_slack(message):
-    try:
-        r = requests.post(
-            os.environ["SLACK_NOTIFICATION_URL"],
-            data=json.dumps({"text": message}),
-            timeout=60,
-            headers={"Content-Type": "application/json"},
-        )
+    if os.environ["SLACK_NOTIFICATION_URL"]:
+        try:
+            r = requests.post(
+                os.environ["SLACK_NOTIFICATION_URL"],
+                data=json.dumps({"text": message}),
+                timeout=60,
+                headers={"Content-Type": "application/json"},
+            )
 
-        r.raise_for_status()
+            r.raise_for_status()
 
-    except RequestException:
-        logger.exception("Error trying to communicate with Slack")
+        except RequestException:
+            logger.exception("Error trying to communicate with Slack")
+    else:
+        logger.info("The slack url for the feedback hook was not provided")
 
 
 class Command(BaseCommand):
