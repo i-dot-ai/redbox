@@ -131,7 +131,7 @@ jobs:
     if: always()
     with:
       RUNNER_LABEL: ${{ needs.start-runner.outputs.label }}
-      WORKFLOW_PASSED: ${{ needs.release-terraform.result == "success" }}
+      WORKFLOW_PASSED: ${{ needs.release-terraform.result }} == "success"
       FAILURE_PAYLOAD: |
             {
               "text": "Failed to deploy to ${{ inputs.environment }}",
