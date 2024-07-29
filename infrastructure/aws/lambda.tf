@@ -7,17 +7,20 @@ module "django-lambda" {
   image_config = {
     command = ["venv/bin/django-admin", each.value.command]
   }
-  package_type           = "Image"
-  image_uri              = "${var.ecr_repository_uri}/${var.project_name}-django-app:${var.env}"
-  function_name          = "${local.name}-${each.value.task_name}-lambda"
-  iam_role_name          = "${local.name}-${each.value.task_name}-lambda-role"
-  timeout                = 600
-  environment_variables  = merge(local.django_app_secrets, local.django_lambda_environment_variables)
-  aws_security_group_ids = [aws_security_group.service_security_group.id]
-  subnet_ids             = data.terraform_remote_state.vpc.outputs.private_subnets
-  policies               = [jsonencode(data.aws_iam_policy_document.lambda_policy.json)]
-  schedule               = each.value.schedule
-  account_id             = var.account_id
+  package_type                   = "Image"
+  image_uri                      = "${var.ecr_repository_uri}/${var.project_name}-django-app:${lower(var.env)}"
+  function_name                  = "${local.name}-${each.value.task_name}-lambda"
+  iam_role_name                  = "${local.name}-${each.value.task_name}-lambda-role"
+  timeout                        = 600
+  reserved_concurrent_executions = 1
+  environment_variables          = merge(local.django_app_secrets, local.django_lambda_environment_variables)
+  aws_security_group_ids         = [aws_security_group.service_security_group.id]
+  subnet_ids                     = data.terraform_remote_state.vpc.outputs.private_subnets
+  policies                       = [jsonencode(data.aws_iam_policy_document.lambda_policy.json)]
+  schedule                       = each.value.schedule
+  account_id                     = var.account_id
+  retries                        = 0
+  event_age                      = 60
 }
 
 resource "aws_security_group" "service_security_group" {
