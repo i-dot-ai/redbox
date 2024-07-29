@@ -32,7 +32,6 @@ resource "aws_security_group" "django_lambda_security_group" {
   }
 }
 
-# TODO: Move lambda policy into consuming apps instead of here
 data "aws_iam_policy_document" "lambda_policy" {
   # checkov:skip=CKV_AWS_108 - * in resources (to be fixed in following PR)
   # checkov:skip=CKV_AWS_109 - * in resources (to be fixed in following PR)

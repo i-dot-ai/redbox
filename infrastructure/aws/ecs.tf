@@ -181,13 +181,3 @@ resource "aws_security_group_rule" "ecs_ingress_front_to_back" {
   source_security_group_id = module.django-app.ecs_sg_id
   security_group_id        = module.core_api.ecs_sg_id
 }
-
-#resource "aws_security_group_rule" "ecs_command_to_core" {
-#  type                     = "ingress"
-#  description              = "Allow all traffic from the django-command to the core-api"
-#  from_port                = 0
-#  to_port                  = 0
-#  protocol                 = "-1"
-#  source_security_group_id = module.django-command.ecs_sg_id
-#  security_group_id        = module.core_api.ecs_sg_id
-#}
