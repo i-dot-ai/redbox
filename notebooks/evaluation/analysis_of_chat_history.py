@@ -41,11 +41,6 @@ class ChatHistoryAnalysis:
         os.makedirs(self.table_dir, exist_ok=True)
 
         self.chat_logs = self.fetch_chat_history()
-        import logging
-        logging.basicConfig(level=logging.INFO)
-        logger = logging.getLogger()
-        logger.info('hello123456')
-        logger.info(self.chat_logs.columns.values)
 
         # Select specific columns and converting to readable timestamp
         self.chat_logs = self.chat_logs[['created_at', 'users_id', 'user_email', 'chat_history', 'text', 'role', 'message_id']]

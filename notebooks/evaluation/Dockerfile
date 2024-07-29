@@ -1,6 +1,6 @@
 FROM python:3.11-buster as builder
 
-WORKDIR /app/
+WORKDIR /app
 
 RUN pip install poetry
 
@@ -26,7 +26,7 @@ COPY notebooks/evaluation/app.py /app/
 
 FROM python:3.11-slim as runtime
 
-WORKDIR /app/
+WORKDIR /app
 
 RUN apt-get update && apt-get install --yes libpq-dev curl > /dev/null
 
@@ -41,4 +41,4 @@ COPY --from=builder /app/django_app /app/django_app
 
 EXPOSE 8501
 
-CMD ["streamlit", "run", "notebooks/evaluation/app.py", "--server.port=8501", "--server.address=0.0.0.0"]
+ENTRYPOINT ["streamlit", "run", "notebooks/evaluation/app.py", "--server.port=8501", "--server.address=0.0.0.0"]
