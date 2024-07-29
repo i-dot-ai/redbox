@@ -1,5 +1,4 @@
 import logging
-import re
 from typing import Annotated
 from uuid import UUID
 
@@ -13,7 +12,6 @@ from langchain_core.documents import Document
 
 from redbox.models.chain import ChainInput, ChainChatMessage, ChainState
 from redbox.models.chat import ChatRequest, ChatResponse, ClientResponse, ErrorDetail
-from redbox.models.errors import NoDocumentSelected, QuestionLengthError
 from redbox.transform import map_document_to_source_document
 
 from core_api.dependencies import get_redbox
@@ -64,7 +62,7 @@ async def available_tools(
     redbox: Annotated[Redbox, Depends(get_redbox)],
 ):
     """REST endpoint. Get a mapping of all tools available via chat."""
-    return [{"name": name, "description": description} for name,description in redbox.get_available_keywords().items()]
+    return [{"name": name, "description": description} for name, description in redbox.get_available_keywords().items()]
 
 
 @chat_app.websocket("/rag")
@@ -93,19 +91,22 @@ async def rag_chat_streamed(
 
     async def on_llm_response(tokens: str):
         await send_to_client(ClientResponse(resource_type="text", data=tokens), websocket)
+
     async def on_route_choice(route_name: str):
         await send_to_client(ClientResponse(resource_type="route_name", data=route_name), websocket)
-    async def on_documents_available(docs: list[Document]):
-        await send_to_client(ClientResponse(resource_type="documents", data=[map_document_to_source_document(d) for d in docs]), websocket)
 
-    
+    async def on_documents_available(docs: list[Document]):
+        await send_to_client(
+            ClientResponse(resource_type="documents", data=[map_document_to_source_document(d) for d in docs]),
+            websocket,
+        )
 
     try:
-        final_state = await redbox.run(
+        await redbox.run(
             state,
             response_tokens_callback=on_llm_response,
             route_name_callback=on_route_choice,
-            documents_callback=on_documents_available
+            documents_callback=on_documents_available,
         )
     except APIError as e:
         log.exception("Unhandled exception.", exc_info=e)

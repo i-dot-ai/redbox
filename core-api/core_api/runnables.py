@@ -13,7 +13,7 @@ def map_to_chat_response(state: ChainState):
     'source_documents' a list of documents to map to source_documents
     """
     return ChatResponse(
-        output_text=state["response"], 
-        source_documents=[map_document_to_source_document(d) for d in state.get("documents") or []], 
-        route_name=state["route_name"]
+        output_text=state["response"],
+        source_documents=[map_document_to_source_document(d) for d in state.get("documents") or []],
+        route_name=state["route_name"],
     )

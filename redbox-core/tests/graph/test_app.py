@@ -25,55 +25,82 @@ TEST_CASES = [
                 TestData(1, 100, expected_llm_response=["Testing Response 1"], expected_route=ChatRoute.chat),
                 TestData(10, 1200, expected_llm_response=["Testing Response 1"], expected_route=ChatRoute.chat),
             ],
-            test_id="Basic Chat"
+            test_id="Basic Chat",
         ),
         generate_test_cases(
             query=ChainInput(question="What is AI?", file_uuids=[uuid4()], user_uuid=uuid4(), chat_history=[]),
             test_data=[
-                TestData(1, 1000, expected_llm_response=["Testing Response 1"], expected_route=ChatRoute.chat_with_docs),
-                TestData(1, 50000, expected_llm_response=["Testing Response 1"], expected_route=ChatRoute.chat_with_docs),
-                TestData(1, 200_000, expected_llm_response=["Testing Response 1"], expected_route=ChatRoute.chat_with_docs),
+                TestData(
+                    1, 1000, expected_llm_response=["Testing Response 1"], expected_route=ChatRoute.chat_with_docs
+                ),
+                TestData(
+                    1, 50000, expected_llm_response=["Testing Response 1"], expected_route=ChatRoute.chat_with_docs
+                ),
+                TestData(
+                    1, 200_000, expected_llm_response=["Testing Response 1"], expected_route=ChatRoute.chat_with_docs
+                ),
             ],
-            test_id="Chat with single doc"
+            test_id="Chat with single doc",
         ),
         generate_test_cases(
             query=ChainInput(question="What is AI?", file_uuids=[uuid4(), uuid4()], user_uuid=uuid4(), chat_history=[]),
             test_data=[
-                TestData(2, 40000, expected_llm_response=["Map Step Response"]*2 + ["Testing Response 1"], expected_route=ChatRoute.chat_with_docs),
-                TestData(2, 100_000, expected_llm_response=["Map Step Response"]*2 + ["Testing Response 1"], expected_route=ChatRoute.chat_with_docs),
-                TestData(2, 200_000, expected_llm_response=["Map Step Response"]*2 + ["Testing Response 1"], expected_route=ChatRoute.chat_with_docs),
+                TestData(
+                    2,
+                    40000,
+                    expected_llm_response=["Map Step Response"] * 2 + ["Testing Response 1"],
+                    expected_route=ChatRoute.chat_with_docs,
+                ),
+                TestData(
+                    2,
+                    100_000,
+                    expected_llm_response=["Map Step Response"] * 2 + ["Testing Response 1"],
+                    expected_route=ChatRoute.chat_with_docs,
+                ),
+                TestData(
+                    2,
+                    200_000,
+                    expected_llm_response=["Map Step Response"] * 2 + ["Testing Response 1"],
+                    expected_route=ChatRoute.chat_with_docs,
+                ),
             ],
-            test_id="Chat with multiple docs"
+            test_id="Chat with multiple docs",
         ),
         generate_test_cases(
             query=ChainInput(question="What is AI?", file_uuids=[uuid4()], user_uuid=uuid4(), chat_history=[]),
             test_data=[
-                TestData(1, 200_000, expected_llm_response=["Testing Response 1"], expected_route=ChatRoute.chat_with_docs),
+                TestData(
+                    1, 200_000, expected_llm_response=["Testing Response 1"], expected_route=ChatRoute.chat_with_docs
+                ),
             ],
-            test_id="Chat with large doc"
+            test_id="Chat with large doc",
         ),
         generate_test_cases(
-            query=ChainInput(
-                question="@search What is AI?", file_uuids=[uuid4()], user_uuid=uuid4(), chat_history=[]
-            ),
+            query=ChainInput(question="@search What is AI?", file_uuids=[uuid4()], user_uuid=uuid4(), chat_history=[]),
             test_data=[
                 TestData(1, 10000, expected_llm_response=["The cake is a lie"], expected_route=ChatRoute.search),
                 TestData(5, 10000, expected_llm_response=["The cake is a lie"], expected_route=ChatRoute.search),
             ],
-            test_id="Search"
+            test_id="Search",
         ),
         generate_test_cases(
-            query=ChainInput(question="@nosuchkeyword What is AI?", file_uuids=[uuid4()], user_uuid=uuid4(), chat_history=[]),
+            query=ChainInput(
+                question="@nosuchkeyword What is AI?", file_uuids=[uuid4()], user_uuid=uuid4(), chat_history=[]
+            ),
             test_data=[
                 TestData(
-                    2, 200_000, expected_llm_response=[test_env.response_no_such_keyword], expected_route=ChatRoute.error_no_keyword
+                    2,
+                    200_000,
+                    expected_llm_response=[test_env.response_no_such_keyword],
+                    expected_route=ChatRoute.error_no_keyword,
                 ),
             ],
-            test_id="No Such Keyword"
+            test_id="No Such Keyword",
         ),
     ]
     for test_case in generated_cases
 ]
+
 
 @pytest.fixture(scope="session")
 def env():
@@ -100,11 +127,7 @@ def parameterised_retriever(docs):
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize(
-    ("test_case"),
-    TEST_CASES,
-    ids=[t.test_id for t in TEST_CASES]
-)
+@pytest.mark.parametrize(("test_case"), TEST_CASES, ids=[t.test_id for t in TEST_CASES])
 async def test_chat(test_case: RedboxChatTestCase, env, tokeniser):
     app = Redbox(
         llm=GenericFakeChatModel(messages=iter(test_case.test_data.expected_llm_response)),
@@ -127,11 +150,7 @@ async def test_chat(test_case: RedboxChatTestCase, env, tokeniser):
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize(
-    ("test_case"),
-    TEST_CASES,
-    ids=[t.test_id for t in TEST_CASES]
-)
+@pytest.mark.parametrize(("test_case"), TEST_CASES, ids=[t.test_id for t in TEST_CASES])
 async def test_streaming(test_case: RedboxChatTestCase, env, tokeniser):
     app = Redbox(
         llm=GenericFakeChatModel(messages=iter(test_case.test_data.expected_llm_response)),
@@ -152,7 +171,7 @@ async def test_streaming(test_case: RedboxChatTestCase, env, tokeniser):
     )
     final_state = ChainState(response)
 
-    #Bit of a bodge to retain the ability to check that the LLM streaming is working in most cases
+    # Bit of a bodge to retain the ability to check that the LLM streaming is working in most cases
     if not final_state["route_name"].startswith("error"):
         assert len(token_events) > 1, f"Expected tokens as a stream. Received: {token_events}"
     llm_response = "".join(token_events)

@@ -1,19 +1,12 @@
-import sys
-from functools import partial, reduce
 from logging import getLogger
-from typing import Any
 
 from kneed import KneeLocator
 from langchain_core.documents.base import Document
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.runnables import Runnable, RunnableLambda, RunnablePassthrough, chain
+from langchain_core.runnables import Runnable, chain
 from tiktoken import Encoding
 
-from redbox.api.format import reduce_chunks_by_tokens
-from redbox.models import ChatResponse
-from redbox.models.chain import ChainState
 from redbox.models.errors import QuestionLengthError
-from redbox.transform import map_document_to_source_document
 
 logger = getLogger()
 

@@ -1,6 +1,5 @@
 import logging
 import re
-import select
 from typing import Any
 
 from langchain.schema import StrOutputParser
@@ -109,6 +108,7 @@ def build_llm_chain(
             | StrOutputParser(),
         }
     )
+
 
 def set_state_field(state_field: str, value: Any):
     return RunnableLambda(

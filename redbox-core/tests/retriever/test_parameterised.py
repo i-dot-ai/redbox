@@ -1,9 +1,8 @@
 import pytest
-from langchain_core.documents.base import Document
 
-from redbox.models.chain import ChainInput, ChainState
+from redbox.models.chain import ChainState
 from redbox.retriever import ParameterisedElasticsearchRetriever
-from redbox.test.data import RedboxChatTestCase, TestData
+from redbox.test.data import RedboxChatTestCase
 
 test_chain_parameters = (
     {
@@ -33,4 +32,3 @@ def test_parameterised_retriever(
         ChainState(query=stored_file_parameterised.query)
     )
     assert len(result) == chain_params["size"], result
-

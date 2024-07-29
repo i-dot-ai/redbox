@@ -60,8 +60,13 @@ class RedboxChatTestCase:
         # Use separate user uuid if specific else match the query
         docs_user_uuid = docs_user_uuid_override if docs_user_uuid_override else query.user_uuid
 
-        if test_data.expected_llm_response is not None and len(test_data.expected_llm_response) < test_data.number_of_docs:
-            log.warning(f"Number of configured LLM responses might be less than number of docs. For Map-Reduce actions this will give a Generator Error!")
+        if (
+            test_data.expected_llm_response is not None
+            and len(test_data.expected_llm_response) < test_data.number_of_docs
+        ):
+            log.warning(
+                "Number of configured LLM responses might be less than number of docs. For Map-Reduce actions this will give a Generator Error!"
+            )
 
         file_generators = [
             generate_docs(
@@ -79,9 +84,15 @@ class RedboxChatTestCase:
         self.test_id = test_id
 
     def get_docs_matching_query(self):
-        return [doc for doc in self.docs if doc.metadata["parent_file_uuid"] in set(self.query.file_uuids) and doc.metadata["creator_user_uuid"] == self.query.user_uuid]
-
+        return [
+            doc
+            for doc in self.docs
+            if doc.metadata["parent_file_uuid"] in set(self.query.file_uuids)
+            and doc.metadata["creator_user_uuid"] == self.query.user_uuid
+        ]
 
 
 def generate_test_cases(query: ChainInput, test_data: list[TestData], test_id: str):
-    return [RedboxChatTestCase(test_id=f"{test_id}-{i}", query=query, test_data=data) for i, data in enumerate(test_data)]
+    return [
+        RedboxChatTestCase(test_id=f"{test_id}-{i}", query=query, test_data=data) for i, data in enumerate(test_data)
+    ]

@@ -1,9 +1,5 @@
 import typing
-import os
-import sys
-import logging
-from langgraph.graph import StateGraph, END
-from langgraph.graph.graph import CompiledGraph
+from langgraph.graph import StateGraph
 from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_core.vectorstores import VectorStoreRetriever
 from tiktoken import Encoding
@@ -17,30 +13,20 @@ from redbox.chains.components import get_all_chunks_retriever, get_parameterised
 from redbox.graph.chat import get_chat_graph, get_chat_with_docs_graph
 
 
-
-
-
 async def _default_callback(*args, **kwargs):
     return None
 
 
 class Redbox:
-
-    FINAL_RESPONSE_TAG="response_flag"
-    SOURCE_DOCUMENTS_TAG="source_documents_flag"
-    ROUTE_NAME_TAG="route_flag"
+    FINAL_RESPONSE_TAG = "response_flag"
+    SOURCE_DOCUMENTS_TAG = "source_documents_flag"
+    ROUTE_NAME_TAG = "route_flag"
 
     # Non keywords
-    ROUTABLE_BUILTIIN = [
-        ChatRoute.chat,
-        ChatRoute.chat_with_docs,
-        ChatRoute.error_no_keyword
-    ]
+    ROUTABLE_BUILTIIN = [ChatRoute.chat, ChatRoute.chat_with_docs, ChatRoute.error_no_keyword]
 
     # Keyword routes
-    ROUTABLE_KEYWORDS = {
-        ChatRoute.search: "Search for an answer to the question in the document"
-    }
+    ROUTABLE_KEYWORDS = {ChatRoute.search: "Search for an answer to the question in the document"}
 
     def __init__(
         self,
@@ -62,17 +48,28 @@ class Redbox:
 
         app.add_node("set_route", set_route.with_config(tags=[Redbox.ROUTE_NAME_TAG]))
         app.add_conditional_edges(
-            "set_route", 
-            lambda s: s["route_name"], 
-            {x:x for x in Redbox.ROUTABLE_BUILTIIN + list(Redbox.ROUTABLE_KEYWORDS.keys())}
+            "set_route",
+            lambda s: s["route_name"],
+            {x: x for x in Redbox.ROUTABLE_BUILTIIN + list(Redbox.ROUTABLE_KEYWORDS.keys())},
         )
 
-        app.add_node(ChatRoute.search, get_search_graph(_llm, _parameterised_retriever.with_config(tags=[Redbox.SOURCE_DOCUMENTS_TAG]), _tokeniser, _env, debug))
+        app.add_node(
+            ChatRoute.search,
+            get_search_graph(
+                _llm, _parameterised_retriever.with_config(tags=[Redbox.SOURCE_DOCUMENTS_TAG]), _tokeniser, _env, debug
+            ),
+        )
         app.add_node(ChatRoute.chat, get_chat_graph(_llm, _tokeniser, _env, debug))
         app.add_node(
-            ChatRoute.chat_with_docs, get_chat_with_docs_graph(_llm, _all_chunks_retriever.with_config(tags=[Redbox.SOURCE_DOCUMENTS_TAG]), _tokeniser, _env, debug)
+            ChatRoute.chat_with_docs,
+            get_chat_with_docs_graph(
+                _llm, _all_chunks_retriever.with_config(tags=[Redbox.SOURCE_DOCUMENTS_TAG]), _tokeniser, _env, debug
+            ),
         )
-        app.add_node(ChatRoute.error_no_keyword, set_state_field("response", env.response_no_such_keyword).with_config(tags=[Redbox.FINAL_RESPONSE_TAG]))
+        app.add_node(
+            ChatRoute.error_no_keyword,
+            set_state_field("response", env.response_no_such_keyword).with_config(tags=[Redbox.FINAL_RESPONSE_TAG]),
+        )
 
         self.graph = app.compile(debug=debug)
 
@@ -101,5 +98,3 @@ class Redbox:
 
     def get_available_keywords(self) -> dict[ChatRoute, str]:
         return Redbox.ROUTABLE_KEYWORDS
-
-    

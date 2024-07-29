@@ -117,12 +117,6 @@ def get_redbox(
     all_chunks_retriever: Annotated[AllElasticsearchRetriever, Depends(get_all_chunks_retriever)],
     parameterised_retriever: Annotated[ParameterisedElasticsearchRetriever, Depends(get_parameterised_retriever)],
     tokeniser: Annotated[tiktoken.Encoding, Depends(get_tokeniser)],
-    env: Annotated[Settings, Depends(get_env)]
+    env: Annotated[Settings, Depends(get_env)],
 ) -> Redbox:
-    return Redbox(
-        llm,
-        all_chunks_retriever,
-        parameterised_retriever,
-        tokeniser,
-        env
-    )
+    return Redbox(llm, all_chunks_retriever, parameterised_retriever, tokeniser, env)

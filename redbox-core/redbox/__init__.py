@@ -4,6 +4,4 @@ from redbox.app import Redbox
 
 __version__ = "0.3.0"
 
-__all__ = [
-    "Redbox"
-]
+__all__ = ["Redbox"]

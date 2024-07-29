@@ -1,5 +1,5 @@
 from pathlib import Path
-from uuid import UUID, uuid4
+from uuid import uuid4
 
 import pytest
 from botocore.exceptions import ClientError
@@ -10,7 +10,6 @@ from redbox.storage.elasticsearch import ElasticsearchStorageHandler
 
 from collections.abc import Generator
 
-from langchain_core.documents.base import Document
 from langchain_core.embeddings.fake import FakeEmbeddings
 from langchain_core.runnables import ConfigurableField
 from langchain_elasticsearch import ElasticsearchStore

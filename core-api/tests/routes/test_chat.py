@@ -1,9 +1,6 @@
 import json
-from types import SimpleNamespace
-from typing import TYPE_CHECKING, Iterable
-from unittest.mock import AsyncMock, MagicMock
+from typing import TYPE_CHECKING
 from uuid import uuid4
-import uuid
 from jose import jwt
 
 from langchain_elasticsearch import ElasticsearchStore
@@ -13,19 +10,14 @@ from core_api.app import app as application
 from core_api.routes.chat import chat_app
 from fastapi.testclient import TestClient
 from langchain_core.language_models.fake_chat_models import GenericFakeChatModel
-from langchain_core.documents.base import Document
-from langchain_core.messages import HumanMessage, SystemMessage
-from langchain_core.prompt_values import ChatPromptValue
-from langchain_core.runnables import Runnable, RunnableLambda
-from langchain_core.runnables.schema import StreamEvent
 from starlette.websockets import WebSocketDisconnect
 
-from redbox.models.chain import ChainState, ChainInput
+from redbox.models.chain import ChainInput
 from redbox.models.chat import ChatResponse, ChatRoute
 from redbox.test.data import RedboxChatTestCase, generate_test_cases, TestData
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable
+    pass
 
 system_chat = {"text": "test", "role": "system"}
 user_chat = {"text": "test", "role": "user"}
@@ -45,49 +37,74 @@ TEST_CASES = [
                 TestData(1, 100, expected_llm_response=["Testing Response 1"], expected_route=ChatRoute.chat),
                 TestData(10, 1200, expected_llm_response=["Testing Response 1"], expected_route=ChatRoute.chat),
             ],
-            test_id="Basic Chat"
+            test_id="Basic Chat",
         ),
         generate_test_cases(
             query=ChainInput(question="What is AI?", file_uuids=[uuid4()], user_uuid=uuid4(), chat_history=[]),
             test_data=[
-                TestData(1, 1000, expected_llm_response=["Testing Response 1"], expected_route=ChatRoute.chat_with_docs),
-                TestData(1, 50000, expected_llm_response=["Testing Response 1"], expected_route=ChatRoute.chat_with_docs),
-                TestData(1, 200_000, expected_llm_response=["Testing Response 1"], expected_route=ChatRoute.chat_with_docs),
+                TestData(
+                    1, 1000, expected_llm_response=["Testing Response 1"], expected_route=ChatRoute.chat_with_docs
+                ),
+                TestData(
+                    1, 50000, expected_llm_response=["Testing Response 1"], expected_route=ChatRoute.chat_with_docs
+                ),
+                TestData(
+                    1, 200_000, expected_llm_response=["Testing Response 1"], expected_route=ChatRoute.chat_with_docs
+                ),
             ],
-            test_id="Chat with single doc"
+            test_id="Chat with single doc",
         ),
         generate_test_cases(
             query=ChainInput(question="What is AI?", file_uuids=[uuid4(), uuid4()], user_uuid=uuid4(), chat_history=[]),
             test_data=[
-                TestData(2, 40000, expected_llm_response=["Map Response"]*2 + ["Testing Response 1"], expected_route=ChatRoute.chat_with_docs),
-                TestData(2, 100_000, expected_llm_response=["Map Response"]*2 + ["Testing Response 1"], expected_route=ChatRoute.chat_with_docs),
-                TestData(4, 200_000, expected_llm_response=["Map Response"]*4 + ["Testing Response 1"], expected_route=ChatRoute.chat_with_docs),
+                TestData(
+                    2,
+                    40000,
+                    expected_llm_response=["Map Response"] * 2 + ["Testing Response 1"],
+                    expected_route=ChatRoute.chat_with_docs,
+                ),
+                TestData(
+                    2,
+                    100_000,
+                    expected_llm_response=["Map Response"] * 2 + ["Testing Response 1"],
+                    expected_route=ChatRoute.chat_with_docs,
+                ),
+                TestData(
+                    4,
+                    200_000,
+                    expected_llm_response=["Map Response"] * 4 + ["Testing Response 1"],
+                    expected_route=ChatRoute.chat_with_docs,
+                ),
             ],
-            test_id="Chat with multiple docs"
+            test_id="Chat with multiple docs",
         ),
         generate_test_cases(
             query=ChainInput(question="What is AI?", file_uuids=[uuid4()], user_uuid=uuid4(), chat_history=[]),
             test_data=[
-                TestData(2, 200_000, expected_llm_response=["Map Response"]*2 + ["Testing Response 1"], expected_route=ChatRoute.chat_with_docs),
+                TestData(
+                    2,
+                    200_000,
+                    expected_llm_response=["Map Response"] * 2 + ["Testing Response 1"],
+                    expected_route=ChatRoute.chat_with_docs,
+                ),
             ],
-            test_id="Chat with large doc"
+            test_id="Chat with large doc",
         ),
     ]
     for test_case in generated_cases
 ]
 
 
-
-@pytest.fixture(
-    params=TEST_CASES,
-    ids=[t.test_id for t in TEST_CASES]
-)
+@pytest.fixture(params=TEST_CASES, ids=[t.test_id for t in TEST_CASES])
 def test_case(request):
     return request.param
 
+
 @pytest.fixture
 def client(test_case: RedboxChatTestCase):
-    chat_app.dependency_overrides[dependencies.get_llm] = lambda: GenericFakeChatModel(messages=iter(test_case.test_data.expected_llm_response))
+    chat_app.dependency_overrides[dependencies.get_llm] = lambda: GenericFakeChatModel(
+        messages=iter(test_case.test_data.expected_llm_response)
+    )
     yield TestClient(application)
     chat_app.dependency_overrides = {}
 
@@ -110,38 +127,45 @@ def test_rag(test_case: RedboxChatTestCase, client, uploaded_docs, query_headers
         headers=query_headers,
         json={
             "message_history": [
-                    {"role": message.role, "text": message.text} 
-                    for message in test_case.query.chat_history
-                ] + 
-                [{"role": "user", "text": test_case.query.question}],
+                {"role": message.role, "text": message.text} for message in test_case.query.chat_history
+            ]
+            + [{"role": "user", "text": test_case.query.question}],
             "selected_files": [{"uuid": str(file_uuid)} for file_uuid in test_case.query.file_uuids],
         },
     )
     assert response.status_code == 200, response.text
     chat_response = ChatResponse.model_validate(response.json())
 
-    assert chat_response.output_text == test_case.test_data.expected_llm_response[-1], \
-        f"Expected response [{test_case.test_data.expected_llm_response}] received [{chat_response.output_text}]"
-    assert chat_response.route_name == test_case.test_data.expected_route, \
-        f"Expected route [{test_case.test_data.expected_route}] received [{chat_response.route_name}]"
+    assert (
+        chat_response.output_text == test_case.test_data.expected_llm_response[-1]
+    ), f"Expected response [{test_case.test_data.expected_llm_response}] received [{chat_response.output_text}]"
+    assert (
+        chat_response.route_name == test_case.test_data.expected_route
+    ), f"Expected route [{test_case.test_data.expected_route}] received [{chat_response.route_name}]"
     returned_document_texts = set([d.page_content for d in chat_response.source_documents])
     test_query_matching_document_texts = set([d.page_content for d in test_case.get_docs_matching_query()])
-    unexpected_returned_documents = list(filter(lambda d: d.page_content in returned_document_texts-test_query_matching_document_texts, chat_response.source_documents))
-    assert len(unexpected_returned_documents) == 0, \
-        f"Unexpected source docs in result {unexpected_returned_documents}"
+    unexpected_returned_documents = list(
+        filter(
+            lambda d: d.page_content in returned_document_texts - test_query_matching_document_texts,
+            chat_response.source_documents,
+        )
+    )
+    assert len(unexpected_returned_documents) == 0, f"Unexpected source docs in result {unexpected_returned_documents}"
 
 
 def test_rag_chat_streamed(test_case: RedboxChatTestCase, client, uploaded_docs, query_headers):
     with client.websocket_connect("/chat/rag", headers=query_headers) as websocket:
         # When
-        websocket.send_text(json.dumps({
-            "message_history": [
-                    {"role": message.role, "text": message.text} 
-                    for message in test_case.query.chat_history
-                ] + 
-                [{"role": "user", "text": test_case.query.question}],
-            "selected_files": [{"uuid": str(file_uuid)} for file_uuid in test_case.query.file_uuids],
-            })
+        websocket.send_text(
+            json.dumps(
+                {
+                    "message_history": [
+                        {"role": message.role, "text": message.text} for message in test_case.query.chat_history
+                    ]
+                    + [{"role": "user", "text": test_case.query.question}],
+                    "selected_files": [{"uuid": str(file_uuid)} for file_uuid in test_case.query.file_uuids],
+                }
+            )
         )
 
         all_text, docs, route_name = [], [], ""
@@ -159,15 +183,20 @@ def test_rag_chat_streamed(test_case: RedboxChatTestCase, client, uploaded_docs,
 
         # Then
         text = "".join(all_text)
-        assert text == test_case.test_data.expected_llm_response[-1], \
-            f"Expected response [{test_case.test_data.expected_llm_response}] received [{text}]"
-        assert route_name == test_case.test_data.expected_route, \
-            f"Expected route [{test_case.test_data.expected_route}] received [{route_name}]"
+        assert (
+            text == test_case.test_data.expected_llm_response[-1]
+        ), f"Expected response [{test_case.test_data.expected_llm_response}] received [{text}]"
+        assert (
+            route_name == test_case.test_data.expected_route
+        ), f"Expected route [{test_case.test_data.expected_route}] received [{route_name}]"
         returned_document_texts = set([d["page_content"] for d in docs])
         test_query_matching_document_texts = set([d.page_content for d in test_case.get_docs_matching_query()])
-        unexpected_returned_documents = list(filter(lambda d: d["page_content"] in returned_document_texts-test_query_matching_document_texts, docs))
-        assert len(unexpected_returned_documents) == 0, \
-            f"Unexpected source docs in result {unexpected_returned_documents}"
+        unexpected_returned_documents = list(
+            filter(lambda d: d["page_content"] in returned_document_texts - test_query_matching_document_texts, docs)
+        )
+        assert (
+            len(unexpected_returned_documents) == 0
+        ), f"Unexpected source docs in result {unexpected_returned_documents}"
 
 
 def test_available_tools(client, query_headers):
