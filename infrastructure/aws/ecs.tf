@@ -95,7 +95,7 @@ module "django-app" {
   create_networking          = true
   source                     = "../../../i-ai-core-infrastructure//modules/ecs"
   name                       = "${local.name}-django-app"
-  image_tag                  = "37d4ac8fe83c92653e79f2edc870747ffcc82d61"
+  image_tag                  = "8b1de0cbab7e93971505bd11b07d5b9574115554"
   ecr_repository_uri         = "${var.ecr_repository_uri}/${var.project_name}-django-app"
   ecs_cluster_id             = module.cluster.ecs_cluster_id
   ecs_cluster_name           = module.cluster.ecs_cluster_name
@@ -128,7 +128,7 @@ module "django-app" {
 #  create_networking            = false
 #  source                       = "../../../i-ai-core-infrastructure//modules/ecs"
 #  name                         = "${local.name}-django-command"
-#  image_tag                    = "37d4ac8fe83c92653e79f2edc870747ffcc82d61"
+#  image_tag                    = "8b1de0cbab7e93971505bd11b07d5b9574115554"
 #  command                      = ["venv/bin/django-admin", var.django_command]
 #  ecr_repository_uri           = "${var.ecr_repository_uri}/${var.project_name}-django-app"
 #  ecs_cluster_id               = module.cluster.ecs_cluster_id
@@ -156,7 +156,7 @@ module "core_api" {
   create_networking             = false
   source                        = "../../../i-ai-core-infrastructure//modules/ecs"
   name                          = "${local.name}-core-api"
-  image_tag                     = "37d4ac8fe83c92653e79f2edc870747ffcc82d61"
+  image_tag                     = "8b1de0cbab7e93971505bd11b07d5b9574115554"
   ecr_repository_uri            = "${var.ecr_repository_uri}/redbox-core-api"
   ecs_cluster_id                = module.cluster.ecs_cluster_id
   ecs_cluster_name              = module.cluster.ecs_cluster_name
@@ -190,7 +190,7 @@ module "worker" {
   create_networking            = false
   source                       = "../../../i-ai-core-infrastructure//modules/ecs"
   name                         = "${local.name}-worker"
-  image_tag                    = "37d4ac8fe83c92653e79f2edc870747ffcc82d61"
+  image_tag                    = "8b1de0cbab7e93971505bd11b07d5b9574115554"
   ecr_repository_uri           = "${var.ecr_repository_uri}/redbox-worker"
   ecs_cluster_id               = module.cluster.ecs_cluster_id
   ecs_cluster_name             = module.cluster.ecs_cluster_name
