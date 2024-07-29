@@ -29,12 +29,13 @@ jobs:
   release-dev:
     # if: ${{ false }}  # Uncomment this, and comment out the line below, to disable this workflow path
     if: github.event_name == 'workflow_dispatch'
-    uses: i-dot-ai/redbox/.github/workflows/build-and-release.yml@9d2c6866c50fbf7124e15040f81fea0a78210a62
+    uses: i-dot-ai/redbox/.github/workflows/build-and-release.yml@9ecabfb2bdd7c39b7f79f84a310329d511f3babc
     with:
       environment: dev
       core_infra_repo_reference: ${{ inputs.core_repo_reference }}
       config_repo_reference: ${{ inputs.config_repo_reference }}
       commit_hash: ${{ inputs.commit_hash }}
+      auther_name: ${{ github.actor }}
     secrets: inherit
 
   release-preprod:
@@ -46,6 +47,7 @@ jobs:
       core_infra_repo_reference: 'refs/heads/main'
       config_repo_reference: 'refs/heads/main'
       commit_hash: ${{ github.sha }}
+      author_name: ${{ github.event.pull_request.user.login }}
     secrets: inherit
 
   release-prod:
@@ -57,4 +59,5 @@ jobs:
       core_infra_repo_reference: 'refs/heads/main'
       config_repo_reference: 'refs/heads/main'
       commit_hash: ${{ github.sha }}
+      author_name: ${{ github.event.release.user.login }}
     secrets: inherit
