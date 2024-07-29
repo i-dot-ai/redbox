@@ -14,7 +14,7 @@ module "django-lambda" {
   timeout                        = 600
   reserved_concurrent_executions = 1
   environment_variables          = merge(local.django_app_secrets, local.django_lambda_environment_variables)
-  aws_security_group_ids         = [aws_security_group.service_security_group.id]
+  aws_security_group_ids         = [aws_security_group.django_lambda_security_group.id]
   subnet_ids                     = data.terraform_remote_state.vpc.outputs.private_subnets
   policies                       = [jsonencode(data.aws_iam_policy_document.lambda_policy.json)]
   schedule                       = each.value.schedule
@@ -23,7 +23,7 @@ module "django-lambda" {
   event_age                      = 60
 }
 
-resource "aws_security_group" "service_security_group" {
+resource "aws_security_group" "django_lambda_security_group" {
   vpc_id      = data.terraform_remote_state.vpc.outputs.vpc_id
   description = "${local.name} redbox lambda security group"
   name        = "${local.name}-redbox-lambda-sg"
@@ -65,7 +65,7 @@ resource "aws_security_group_rule" "lambda_to_rds_egress" {
   to_port                  = 5432
   protocol                 = "tcp"
   source_security_group_id = module.rds.postgres_sg_id
-  security_group_id        = aws_security_group.service_security_group.id
+  security_group_id        = aws_security_group.django_lambda_security_group.id
   description              = "Allow requests from the lambda to get to the RDS"
 }
 
@@ -76,5 +76,5 @@ resource "aws_security_group_rule" "lambda_to_443_egress" {
   protocol          = "tcp"
   cidr_blocks       = ["0.0.0.0/0"]
   ipv6_cidr_blocks  = ["::/0"]
-  security_group_id = aws_security_group.service_security_group.id
+  security_group_id = aws_security_group.django_lambda_security_group.id
 }

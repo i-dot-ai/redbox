@@ -7,7 +7,7 @@ module "elasticache" {
     {
       "worker"   = module.worker.ecs_sg_id,
       "core_api" = module.core_api.ecs_sg_id
-      "django-command-lambda" = aws_security_group.service_security_group.id
+      "django-command-lambda" = aws_security_group.django_lambda_security_group.id
     }
   )
 }

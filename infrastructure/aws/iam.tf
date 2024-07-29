@@ -30,9 +30,7 @@ data "aws_iam_policy_document" "ecs_exec_role_policy" {
        aws_secretsmanager_secret.worker-secret.arn,
        "${aws_secretsmanager_secret.worker-secret.arn}:*",
        aws_secretsmanager_secret.django-app-secret.arn,
-       "${aws_secretsmanager_secret.django-app-secret.arn}:*",
-       aws_secretsmanager_secret.django-command-secret.arn,
-       "${aws_secretsmanager_secret.django-command-secret.arn}:*",
+       "${aws_secretsmanager_secret.django-app-secret.arn}:*"
     ]
   }
 
