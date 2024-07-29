@@ -7,7 +7,7 @@ from langchain_core.runnables import ConfigurableField
 import tiktoken
 
 from redbox.models.settings import Settings
-from redbox.graph.retriever import AllElasticsearchRetriever, ParameterisedElasticsearchRetriever
+from redbox.retriever import AllElasticsearchRetriever, ParameterisedElasticsearchRetriever
 
 
 def get_chat_llm(env: Settings):

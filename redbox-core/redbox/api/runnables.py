@@ -11,6 +11,7 @@ from tiktoken import Encoding
 
 from redbox.api.format import reduce_chunks_by_tokens
 from redbox.models import ChatResponse
+from redbox.models.chain import ChainState
 from redbox.models.errors import QuestionLengthError
 from redbox.transform import map_document_to_source_document
 
@@ -53,41 +54,6 @@ def make_chat_prompt_from_messages_runnable(
         ).invoke(input_dict)
 
     return chat_prompt_from_messages
-
-
-@chain
-def map_to_chat_response(input_dict: dict):
-    """
-    Create a ChatResponse at the end of a chain from a dict containing
-    'response' a string to use as output_text
-    'source_documents' a list of documents to map to source_documents
-    """
-    return (
-        RunnablePassthrough.assign(
-            source_documents=(
-                RunnableLambda(lambda d: d.get("source_documents", []))
-                | RunnableLambda(lambda docs: list(map(map_document_to_source_document, docs)))
-            )
-        )
-        | RunnableLambda(
-            lambda d: ChatResponse(
-                output_text=d["response"], source_documents=d.get("source_documents", []), route_name=d["route_name"]
-            )
-        )
-    ).invoke(input_dict)
-
-
-def resize_documents(max_tokens: int) -> Runnable[list[Document], Any]:
-    """Gets a file as larger document-sized Chunks, splitting it by max_tokens."""
-    n = max_tokens or sys.maxsize
-
-    @chain
-    def wrapped(chunks_unsorted: list[Document]):
-        chunks_sorted = sorted(chunks_unsorted, key=lambda doc: doc.metadata["index"])
-        reduce_chunk_n = partial(reduce_chunks_by_tokens, max_tokens=n)
-        return reduce(lambda cs, c: reduce_chunk_n(cs, c), chunks_sorted, [])  # type: ignore
-
-    return wrapped
 
 
 # TODO: allow for nothing coming back/empty list -- don't error

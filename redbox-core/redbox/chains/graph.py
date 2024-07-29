@@ -1,5 +1,7 @@
 import logging
 import re
+import select
+from typing import Any
 
 from langchain.schema import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
@@ -29,7 +31,12 @@ def set_route(state: ChainState):
     # Match keyword
     route_match = re_keyword_pattern.search(state["query"].question)
     if route_match:
-        selected = route_match.group()[1:]
+        match = route_match.group()[1:]
+        try:
+            if ChatRoute(match):
+                selected = match
+        except ValueError:
+            selected = ChatRoute.error_no_keyword.value
     elif len(state["query"].file_uuids) > 0:
         selected = ChatRoute.chat_with_docs.value
     else:
@@ -98,16 +105,15 @@ def build_llm_chain(
                 input_token_budget=env.ai.context_window_size - env.llm_max_tokens,
                 tokeniser=tokeniser,
             )
-            | llm.with_config(tags=["response"])
+            | llm.with_config(tags=["response_flag"])
             | StrOutputParser(),
         }
     )
 
-
-def get_no_docs_available(env: Settings):
+def set_state_field(state_field: str, value: Any):
     return RunnableLambda(
         lambda _: {
-            "response": env.response_no_doc_available,
+            state_field: value,
         }
     )
 

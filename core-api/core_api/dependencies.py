@@ -3,6 +3,7 @@ import os
 from functools import lru_cache
 from typing import Annotated
 
+from redbox import Redbox
 import tiktoken
 from fastapi import Depends
 from langchain_community.chat_models import ChatLiteLLM
@@ -109,3 +110,19 @@ def get_llm(env: Annotated[Settings, Depends(get_env)]) -> ChatLiteLLM:
 @lru_cache(1)
 def get_tokeniser() -> tiktoken.Encoding:
     return tiktoken.get_encoding("cl100k_base")
+
+
+def get_redbox(
+    llm: Annotated[ChatLiteLLM, Depends(get_llm)],
+    all_chunks_retriever: Annotated[AllElasticsearchRetriever, Depends(get_all_chunks_retriever)],
+    parameterised_retriever: Annotated[ParameterisedElasticsearchRetriever, Depends(get_parameterised_retriever)],
+    tokeniser: Annotated[tiktoken.Encoding, Depends(get_tokeniser)],
+    env: Annotated[Settings, Depends(get_env)]
+) -> Redbox:
+    return Redbox(
+        llm,
+        all_chunks_retriever,
+        parameterised_retriever,
+        tokeniser,
+        env
+    )

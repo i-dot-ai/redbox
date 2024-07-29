@@ -18,7 +18,7 @@ from redbox.chains.graph import (
     build_llm_chain,
     make_chat_prompt_from_messages_runnable,
     build_get_docs,
-    get_no_docs_available,
+    set_state_field,
 )
 from redbox.models.settings import Settings
 
@@ -108,7 +108,7 @@ def get_chat_with_docs_graph(
     app.add_node("set_chat_prompt_args", set_prompt_args)
     app.add_node("set_chat_method", set_chat_method)
 
-    app.add_node("no_docs_available", get_no_docs_available(env))
+    app.add_node("no_docs_available", set_state_field("response", env.response_no_doc_available))
     app.add_node(
         "llm",
         build_llm_chain(
@@ -116,6 +116,7 @@ def get_chat_with_docs_graph(
         ),
     )
     app.add_node(ChatRoute.chat_with_docs_map_reduce, get_chat_with_docs_map_reduce_graph(llm, tokeniser, env, debug))
+    app.add_node("clear_documents", set_state_field("documents", []))
 
     app.add_edge(START, "get_chat_docs")
     app.add_edge("get_chat_docs", "set_chat_prompt_args")
@@ -130,6 +131,10 @@ def get_chat_with_docs_graph(
         },
     )
     app.add_edge(ChatRoute.chat_with_docs_map_reduce, "set_chat_prompt_args")
+
+    # Remove docs so we don't provide citations for chat (using whole doc so irrelevant anyway)
+    app.add_edge("llm", "clear_documents")
+
     return app.compile(debug=debug)
 
 

@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 import datetime
+import logging
 from uuid import UUID
 
 from langchain_core.documents import Document
@@ -7,6 +8,8 @@ from langchain_core.documents import Document
 from redbox.models.chain import ChainInput
 from redbox.models.chat import ChatRoute
 from redbox.models.file import ChunkMetadata, ChunkResolution
+
+log = logging.getLogger()
 
 
 def generate_docs(
@@ -38,13 +41,15 @@ def generate_docs(
 class TestData:
     number_of_docs: int
     tokens_in_all_docs: int
-    expected_llm_response: list[str]
-    expected_route: ChatRoute
+    chunk_resolution: ChunkResolution = ChunkResolution.largest
+    expected_llm_response: list[str] = None
+    expected_route: ChatRoute = None
 
 
 class RedboxChatTestCase:
     def __init__(
         self,
+        test_id: str,
         query: ChainInput,
         test_data: TestData,
         docs_user_uuid_override: UUID = None,
@@ -54,21 +59,29 @@ class RedboxChatTestCase:
         all_file_uuids = docs_file_uuids_override if docs_file_uuids_override else [id for id in query.file_uuids]
         # Use separate user uuid if specific else match the query
         docs_user_uuid = docs_user_uuid_override if docs_user_uuid_override else query.user_uuid
+
+        if test_data.expected_llm_response is not None and len(test_data.expected_llm_response) < test_data.number_of_docs:
+            log.warning(f"Number of configured LLM responses might be less than number of docs. For Map-Reduce actions this will give a Generator Error!")
+
         file_generators = [
             generate_docs(
                 parent_file_uuid=file_uuid,
                 creator_user_uuid=docs_user_uuid,
-                total_tokens=test_data.tokens_in_all_docs,
-                number_of_docs=test_data.number_of_docs,
-                chunk_resolution=ChunkResolution.largest,
+                total_tokens=int(test_data.tokens_in_all_docs / len(all_file_uuids)),
+                number_of_docs=int(test_data.number_of_docs / len(all_file_uuids)),
+                chunk_resolution=test_data.chunk_resolution,
             )
             for file_uuid in all_file_uuids
         ]
         self.query = query
         self.docs = [doc for generator in file_generators for doc in generator]
-        self.llm_response = test_data.expected_llm_response
-        self.expected_route = test_data.expected_route
+        self.test_data = test_data
+        self.test_id = test_id
+
+    def get_docs_matching_query(self):
+        return [doc for doc in self.docs if doc.metadata["parent_file_uuid"] in set(self.query.file_uuids) and doc.metadata["creator_user_uuid"] == self.query.user_uuid]
 
 
-def generate_test_cases(query: ChainInput, test_data: list[TestData]):
-    return [RedboxChatTestCase(query=query, test_data=data) for data in test_data]
+
+def generate_test_cases(query: ChainInput, test_data: list[TestData], test_id: str):
+    return [RedboxChatTestCase(test_id=f"{test_id}-{i}", query=query, test_data=data) for i, data in enumerate(test_data)]

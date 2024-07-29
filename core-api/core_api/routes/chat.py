@@ -3,26 +3,26 @@ import re
 from typing import Annotated
 from uuid import UUID
 
+from redbox import Redbox
+
 from core_api.auth import get_user_uuid, get_ws_user_uuid
-from core_api.semantic_routes import get_routable_chains
 from fastapi import Depends, FastAPI, WebSocket
 from fastapi.encoders import jsonable_encoder
-from langchain_core.runnables import Runnable
-from langchain_core.tools import Tool
 from openai import APIError
+from langchain_core.documents import Document
 
-from redbox.api.runnables import map_to_chat_response
-from redbox.models.chain import ChainInput, ChainChatMessage
-from redbox.models.chat import ChatRequest, ChatResponse, SourceDocument, ClientResponse, ErrorDetail
+from redbox.models.chain import ChainInput, ChainChatMessage, ChainState
+from redbox.models.chat import ChatRequest, ChatResponse, ClientResponse, ErrorDetail
 from redbox.models.errors import NoDocumentSelected, QuestionLengthError
 from redbox.transform import map_document_to_source_document
+
+from core_api.dependencies import get_redbox
+from core_api.runnables import map_to_chat_response
 
 # === Logging ===
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger()
-
-re_keyword_pattern = re.compile(r"@(\w+)")
 
 
 chat_app = FastAPI(
@@ -39,62 +39,38 @@ chat_app = FastAPI(
 )
 
 
-async def route_chat(
-    chat_request: ChatRequest, user_uuid: UUID, routable_chains: dict[str, Tool]
-) -> tuple[Runnable, ChainInput]:
-    question = chat_request.message_history[-1].text
-
-    selected_chain = None
-
-    def select_chat_chain(chat_request: ChatRequest, routable_chains: dict[str, Runnable]) -> Runnable:
-        if chat_request.selected_files:
-            return routable_chains.get("chat/documents")
-        else:
-            return routable_chains.get("chat")
-
-    # Match keyword
-    route_match = re_keyword_pattern.search(question)
-    route_name = route_match.group()[1:] if route_match else None
-    selected_chain, description = routable_chains.get(route_name, select_chat_chain(chat_request, routable_chains))
-
-    params = ChainInput(
-        question=chat_request.message_history[-1].text,
-        file_uuids=[str(f.uuid) for f in chat_request.selected_files],
-        user_uuid=str(user_uuid),
-        chat_history=[
-            ChainChatMessage(role=message.role, text=message.text) for message in chat_request.message_history[:-1]
-        ],
-    )
-
-    log.info("Routed to %s", route_name)
-    log.info("Selected files: %s", chat_request.selected_files)
-
-    return selected_chain, params
-
-
 @chat_app.post("/rag", tags=["chat"])
 async def rag_chat(
     chat_request: ChatRequest,
     user_uuid: Annotated[UUID, Depends(get_user_uuid)],
-    routable_chains: Annotated[dict[str, Tool], Depends(get_routable_chains)],
+    redbox: Annotated[Redbox, Depends(get_redbox)],
 ) -> ChatResponse:
     """REST endpoint. Get a LLM response to a question history and file."""
-    selected_chain, params = await route_chat(chat_request, user_uuid, routable_chains)
-    return (selected_chain | map_to_chat_response).invoke(params.dict())
+    state = ChainState(
+        query=ChainInput(
+            question=chat_request.message_history[-1].text,
+            file_uuids=[f.uuid for f in chat_request.selected_files],
+            user_uuid=user_uuid,
+            chat_history=[
+                ChainChatMessage(role=message.role, text=message.text) for message in chat_request.message_history[:-1]
+            ],
+        ),
+    )
+    return await (redbox.graph | map_to_chat_response).ainvoke(state)
 
 
 @chat_app.get("/tools", tags=["chat"])
 async def available_tools(
-    routable_chains: Annotated[dict[str, tuple[Runnable, str]], Depends(get_routable_chains)],
+    redbox: Annotated[Redbox, Depends(get_redbox)],
 ):
     """REST endpoint. Get a mapping of all tools available via chat."""
-    return [{"name": name, "description": tool[1]} for (name, tool) in routable_chains.items()]
+    return [{"name": name, "description": description} for name,description in redbox.get_available_keywords().items()]
 
 
 @chat_app.websocket("/rag")
 async def rag_chat_streamed(
     websocket: WebSocket,
-    routable_chains: Annotated[dict[str, Tool], Depends(get_routable_chains)],
+    redbox: Annotated[Redbox, Depends(get_redbox)],
 ):
     """Websocket. Get a LLM response to a question history and file."""
     await websocket.accept()
@@ -104,34 +80,32 @@ async def rag_chat_streamed(
     request = await websocket.receive_text()
     chat_request = ChatRequest.model_validate_json(request)
 
-    selected_chain, params = await route_chat(chat_request, user_uuid, routable_chains)
+    state = ChainState(
+        query=ChainInput(
+            question=chat_request.message_history[-1].text,
+            file_uuids=[f.uuid for f in chat_request.selected_files],
+            user_uuid=user_uuid,
+            chat_history=[
+                ChainChatMessage(role=message.role, text=message.text) for message in chat_request.message_history[:-1]
+            ],
+        ),
+    )
+
+    async def on_llm_response(tokens: str):
+        await send_to_client(ClientResponse(resource_type="text", data=tokens), websocket)
+    async def on_route_choice(route_name: str):
+        await send_to_client(ClientResponse(resource_type="route_name", data=route_name), websocket)
+    async def on_documents_available(docs: list[Document]):
+        await send_to_client(ClientResponse(resource_type="documents", data=[map_document_to_source_document(d) for d in docs]), websocket)
+
+    
 
     try:
-        async for event in selected_chain.astream(params.dict()):
-            response: str = event.get("response", "")
-            source_documents: list[SourceDocument] = [
-                map_document_to_source_document(doc) for doc in event.get("source_documents", [])
-            ]
-            route_name: str = event.get("route_name", "")
-            if response:
-                await send_to_client(ClientResponse(resource_type="text", data=response), websocket)
-            if source_documents:
-                await send_to_client(ClientResponse(resource_type="documents", data=source_documents), websocket)
-            if route_name:
-                await send_to_client(ClientResponse(resource_type="route_name", data=route_name), websocket)
-    except NoDocumentSelected as e:
-        log.info("No documents have been selected to summarise", exc_info=e)
-        await send_to_client(
-            ClientResponse(
-                resource_type="error", data=ErrorDetail(code="no-document-selected", message=type(e).__name__)
-            ),
-            websocket,
-        )
-    except QuestionLengthError as e:
-        log.info("Question is too long", exc_info=e)
-        await send_to_client(
-            ClientResponse(resource_type="error", data=ErrorDetail(code="question-too-long", message=type(e).__name__)),
-            websocket,
+        final_state = await redbox.run(
+            state,
+            response_tokens_callback=on_llm_response,
+            route_name_callback=on_route_choice,
+            documents_callback=on_documents_available
         )
     except APIError as e:
         log.exception("Unhandled exception.", exc_info=e)
