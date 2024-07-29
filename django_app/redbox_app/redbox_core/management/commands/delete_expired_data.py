@@ -88,9 +88,8 @@ class Command(BaseCommand):
 
             self.stdout.write(self.style.SUCCESS(f"Successfully deleted {chat_counter} ChatHistory objects"))
             post_summary_to_slack(
-                f"The file deletion task succeeded in {os.environ["ENVIRONMENT"]} :put_litter_in_its_place:. {counter} files deleted. {chat_counter} chats deleted. {failure_counter} failures."
+                f"The file deletion task succeeded in {os.environ["ENVIRONMENT"]} :put_litter_in_its_place:. {counter} "
+                f"files deleted. {chat_counter} chats deleted. {failure_counter} failures."
             )
-        except Exception:
-            post_summary_to_slack(
-                "The file deletion task failed :do_not_litter:"
-            )
+        except Exception:  # noqa: BLE001 - ignore catchall exception
+            post_summary_to_slack("The file deletion task failed :do_not_litter:")
