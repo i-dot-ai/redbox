@@ -94,23 +94,30 @@ jobs:
       AWS_REGION: ${{ secrets.AWS_REGION }}
       AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
 
-  determine-failure-state:
-    needs:
-      - set-vars
-      - start-runner
-      - build-image
-      - release-terraform
-    runs-on: ${{ needs.start-runner.outputs.label }}
-    if: always()
-    steps:
-      - name: Set success output to true
-        if: success()
-        id: set-output
-        run: echo "::set-output name=success::true
-      - name: Set success output to false
-        if: failure()
-        id: set-output
-        run: echo "::set-output name=success::false"
+#  determine-success:
+#    needs:
+#      - set-vars
+#      - start-runner
+#      - build-image
+#      - release-terraform
+#    runs-on: ${{ needs.start-runner.outputs.label }}
+#    if: success()
+#    steps:
+#      - name: Set success output to true
+#        run: echo "::set-output name=success::true"
+#
+#  determine-failure:
+#    needs:
+#      - set-vars
+#      - start-runner
+#      - build-image
+#      - release-terraform
+#      - determine-success
+#    runs-on: ${{ needs.start-runner.outputs.label }}
+#    if: failure()
+#    steps:
+#      - name: Set success output to false
+#        run: echo "::set-output name=success::false"
 
   notify-slack:
     needs:
@@ -118,12 +125,13 @@ jobs:
       - start-runner
       - build-image
       - release-terraform
-      - determine-failure-state
+#      - determine-success
+#      - determine-failure
     uses: i-dot-ai/i-dot-ai-core-github-actions/.github/workflows/slack-notify.yml@d711948346703a11b3638ea4b1a10f3fc36678a2
     if: always()
     with:
       RUNNER_LABEL: ${{ needs.start-runner.outputs.label }}
-      WORKFLOW_PASSED: ${{ needs.determine-failure-state.outputs.success }}
+      WORKFLOW_PASSED: ${{ steps.release-terraform.outcome == "success" }}
       FAILURE_PAYLOAD: |
             {
               "text": "Failed to deploy to ${{ inputs.environment }}",
