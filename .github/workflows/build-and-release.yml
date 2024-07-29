@@ -96,7 +96,7 @@ jobs:
 
   notify-slack:
     uses: i-dot-ai/i-dot-ai-core-github-actions/.github/workflows/slack-notify.yml@main
-    if: always()
+    if: ${{ always() }}
     with:
       RUNNER_LABEL: ${{ needs.start-runner.outputs.label }}
       FAILURE_PAYLOAD: |
