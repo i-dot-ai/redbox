@@ -113,7 +113,8 @@ def client(test_case: RedboxChatTestCase):
 def uploaded_docs(test_case: RedboxChatTestCase, elasticsearch_store: ElasticsearchStore):
     docs_ids = elasticsearch_store.add_documents(test_case.docs)
     yield
-    elasticsearch_store.delete(docs_ids, refresh_indices=True)
+    if docs_ids:
+        elasticsearch_store.delete(docs_ids)
 
 
 @pytest.fixture

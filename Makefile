@@ -34,13 +34,12 @@ rebuild: stop prune ## Rebuild all images
 
 .PHONY: test-core-api
 test-core-api: ## Test core-api
-	cp .env.test core-api/.env
 	cd core-api && poetry install --with dev && poetry run python -m pytest  --cov=core_api -v --cov-report=term-missing --cov-fail-under=75
 
 .PHONY: test-ai
 test-ai: ## Test code with live LLM
 	cp .env.test redbox-core/.env
-	cd redbox-core && poetry install --with dev && poetry run python -m pytest -m "ai" --cov=redbox-cor -v --cov-report=term-missing --cov-fail-under=80
+	cd redbox-core && poetry install --with dev && poetry run python -m pytest -m "ai" --cov=redbox -v --cov-report=term-missing --cov-fail-under=80
 
 .PHONY: test-redbox
 test-redbox: ## Test redbox
