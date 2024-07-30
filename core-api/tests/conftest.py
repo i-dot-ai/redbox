@@ -66,7 +66,7 @@ def create_index(env, es_index):
     if not es.indices.exists(index=es_index):
         es.indices.create(index=es_index)
     yield
-    es.indices.delete(index=es_index)
+    es.indices.delete(index=es_index, ignore_unavailable=True)
 
 
 @pytest.fixture()

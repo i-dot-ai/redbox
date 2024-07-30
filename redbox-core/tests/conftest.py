@@ -10,14 +10,14 @@ from redbox.storage.elasticsearch import ElasticsearchStorageHandler
 
 from collections.abc import Generator
 
-from langchain_core.documents.base import Document
 from langchain_core.embeddings.fake import FakeEmbeddings
 from langchain_core.runnables import ConfigurableField
 from langchain_elasticsearch import ElasticsearchStore
 
 
 from redbox.retriever import AllElasticsearchRetriever, ParameterisedElasticsearchRetriever
-from tests.retriever.data import ALL_CHUNKS_RETRIEVER_DOCUMENTS, PARAMETERISED_RETRIEVER_DOCUMENTS
+from redbox.test.data import RedboxChatTestCase
+from tests.retriever.data import ALL_CHUNKS_RETRIEVER_CASES, PARAMETERISED_RETRIEVER_CASES
 
 
 @pytest.fixture(scope="session")
@@ -184,26 +184,27 @@ def file(s3_client, file_pdf_path: Path, alice, env) -> File:
     return File(key=file_name, bucket=env.bucket_name, creator_user_uuid=alice)
 
 
-@pytest.fixture(params=ALL_CHUNKS_RETRIEVER_DOCUMENTS)
+@pytest.fixture(params=ALL_CHUNKS_RETRIEVER_CASES)
 def stored_file_all_chunks(
     request, elasticsearch_client, es_index, embedding_model_dim
-) -> Generator[list[Document], None, None]:
+) -> Generator[RedboxChatTestCase, None, None]:
+    test_case: RedboxChatTestCase = request.param
     store = ElasticsearchStore(
         index_name=es_index,
         es_connection=elasticsearch_client,
         query_field="text",
         embedding=FakeEmbeddings(size=embedding_model_dim),
     )
-    documents = list(map(Document.parse_obj, request.param))
-    doc_ids = store.add_documents(documents)
-    yield documents
+    doc_ids = store.add_documents(test_case.docs)
+    yield test_case
     store.delete(doc_ids)
 
 
-@pytest.fixture(params=PARAMETERISED_RETRIEVER_DOCUMENTS)
+@pytest.fixture(params=PARAMETERISED_RETRIEVER_CASES)
 def stored_file_parameterised(
     request, elasticsearch_client, es_index, embedding_model, env: Settings
-) -> Generator[list[Document], None, None]:
+) -> Generator[RedboxChatTestCase, None, None]:
+    test_case: RedboxChatTestCase = request.param
     store = ElasticsearchStore(
         index_name=es_index,
         es_connection=elasticsearch_client,
@@ -211,9 +212,8 @@ def stored_file_parameterised(
         vector_query_field=env.embedding_document_field_name,
         embedding=embedding_model,
     )
-    documents = list(map(Document.parse_obj, request.param))
-    doc_ids = store.add_documents(documents)
-    yield documents
+    doc_ids = store.add_documents(test_case.docs)
+    yield test_case
     store.delete(doc_ids)
 
 

@@ -1,27 +1,23 @@
 import json
-from types import SimpleNamespace
 from typing import TYPE_CHECKING
-from unittest.mock import AsyncMock, MagicMock
-from math import exp
+from uuid import uuid4
+from jose import jwt
 
+from langchain_elasticsearch import ElasticsearchStore
 import pytest
-from core_api import dependencies, semantic_routes
+from core_api import dependencies
 from core_api.app import app as application
 from core_api.routes.chat import chat_app
 from fastapi.testclient import TestClient
-from langchain_community.llms.fake import FakeStreamingListLLM
-from langchain_core.documents.base import Document
-from langchain_core.messages import HumanMessage, SystemMessage
-from langchain_core.prompt_values import ChatPromptValue
-from langchain_core.runnables import Runnable, RunnableLambda
-from langchain_core.runnables.schema import StreamEvent
+from langchain_core.language_models.fake_chat_models import GenericFakeChatModel
 from starlette.websockets import WebSocketDisconnect
 
+from redbox.models.chain import ChainInput
 from redbox.models.chat import ChatResponse, ChatRoute
-from redbox.models.file import ChunkMetadata
+from redbox.test.data import RedboxChatTestCase, generate_test_cases, TestData
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable
+    pass
 
 system_chat = {"text": "test", "role": "system"}
 user_chat = {"text": "test", "role": "user"}
@@ -29,152 +25,150 @@ user_chat = {"text": "test", "role": "user"}
 RAG_LLM_RESPONSE = "Based on your documents the answer to your question is 7"
 UPLOADED_FILE_UUID = "9aa1aa15-dde0-471f-ab27-fd410612025b"
 
-EXPECTED_AVAILABLE_ROUTES = ("chat", "search", "info")
+EXPECTED_AVAILABLE_ROUTES = {"search"}
 
-
-def mock_chat_prompt():
-    return ChatPromptValue(
-        messages=[
-            SystemMessage(content="You are a helpful AI bot."),
-            HumanMessage(content="Hello, how are you doing?"),
-        ]
-    )
-
-
-def embedding_model_dim(embedding_model) -> int:
-    return len(embedding_model.embed_query("foo"))
-
-
-def mock_get_llm(llm_responses):
-    def wrapped():
-        return FakeStreamingListLLM(responses=llm_responses)
-
-    return wrapped
-
-
-def mock_parameterised_retriever(alice):
-    docs = [
-        Document(
-            page_content="some text that doesn't actually matter " * 10,
-            metadata=ChunkMetadata(
-                parent_file_uuid=UPLOADED_FILE_UUID,
-                creator_user_uuid=alice,
-                index=i,
-                file_name="test_file",
-                page_number=1,
-                token_count=40,
-            ).model_dump()
-            | {
-                "score": 1 / (1 + exp(-i)),
-            },
-        )
-        for i in range(12)
+TEST_CASES = [
+    test_case
+    for generated_cases in [
+        generate_test_cases(
+            query=ChainInput(question="What is AI?", file_uuids=[], user_uuid=uuid4(), chat_history=[]),
+            test_data=[
+                TestData(0, 0, expected_llm_response=["Testing Response 1"], expected_route=ChatRoute.chat),
+                TestData(1, 100, expected_llm_response=["Testing Response 1"], expected_route=ChatRoute.chat),
+                TestData(10, 1200, expected_llm_response=["Testing Response 1"], expected_route=ChatRoute.chat),
+            ],
+            test_id="Basic Chat",
+        ),
+        generate_test_cases(
+            query=ChainInput(question="What is AI?", file_uuids=[uuid4()], user_uuid=uuid4(), chat_history=[]),
+            test_data=[
+                TestData(
+                    1, 1000, expected_llm_response=["Testing Response 1"], expected_route=ChatRoute.chat_with_docs
+                ),
+                TestData(
+                    1, 50000, expected_llm_response=["Testing Response 1"], expected_route=ChatRoute.chat_with_docs
+                ),
+                TestData(
+                    1, 200_000, expected_llm_response=["Testing Response 1"], expected_route=ChatRoute.chat_with_docs
+                ),
+            ],
+            test_id="Chat with single doc",
+        ),
+        generate_test_cases(
+            query=ChainInput(question="What is AI?", file_uuids=[uuid4(), uuid4()], user_uuid=uuid4(), chat_history=[]),
+            test_data=[
+                TestData(
+                    2,
+                    40000,
+                    expected_llm_response=["Map Response"] * 2 + ["Testing Response 1"],
+                    expected_route=ChatRoute.chat_with_docs,
+                ),
+                TestData(
+                    2,
+                    100_000,
+                    expected_llm_response=["Map Response"] * 2 + ["Testing Response 1"],
+                    expected_route=ChatRoute.chat_with_docs,
+                ),
+                TestData(
+                    4,
+                    200_000,
+                    expected_llm_response=["Map Response"] * 4 + ["Testing Response 1"],
+                    expected_route=ChatRoute.chat_with_docs,
+                ),
+            ],
+            test_id="Chat with multiple docs",
+        ),
+        generate_test_cases(
+            query=ChainInput(question="What is AI?", file_uuids=[uuid4()], user_uuid=uuid4(), chat_history=[]),
+            test_data=[
+                TestData(
+                    2,
+                    200_000,
+                    expected_llm_response=["Map Response"] * 2 + ["Testing Response 1"],
+                    expected_route=ChatRoute.chat_with_docs,
+                ),
+            ],
+            test_id="Chat with large doc",
+        ),
     ]
-    return RunnableLambda(lambda _: docs)
+    for test_case in generated_cases
+]
 
 
-def mock_all_chunks_retriever(alice):
-    docs = [
-        Document(
-            page_content="some text that doesn't actually matter ",
-            metadata=ChunkMetadata(
-                parent_file_uuid=UPLOADED_FILE_UUID,
-                creator_user_uuid=alice,
-                index=i,
-                file_name="test_file",
-                page_number=1,
-                token_count=10,
-            ).model_dump(),
-        )
-        for i in range(6)
-    ]
-    return RunnableLambda(lambda _: docs)
+@pytest.fixture(params=TEST_CASES, ids=[t.test_id for t in TEST_CASES])
+def test_case(request):
+    return request.param
 
 
-@pytest.fixture(scope="session")
-def mock_client(alice):
-    chat_app.dependency_overrides[dependencies.get_llm] = mock_get_llm([RAG_LLM_RESPONSE] * 32)
-    chat_app.dependency_overrides[dependencies.get_all_chunks_retriever] = lambda: mock_all_chunks_retriever(alice)
-    chat_app.dependency_overrides[dependencies.get_parameterised_retriever] = lambda: mock_parameterised_retriever(
-        alice
+@pytest.fixture
+def client(test_case: RedboxChatTestCase, embedding_model):
+    chat_app.dependency_overrides[dependencies.get_embedding_model] = lambda: embedding_model
+    chat_app.dependency_overrides[dependencies.get_llm] = lambda: GenericFakeChatModel(
+        messages=iter(test_case.test_data.expected_llm_response)
     )
     yield TestClient(application)
     chat_app.dependency_overrides = {}
 
 
-@pytest.fixture()
-def mock_streaming_client():
-    """
-    This client mocks the retrieval pipeline to just produce events for astream_events.
-    This tests only the streaming functionality as no pipeline is run
-    """
-    events: Iterable[StreamEvent] = [
-        StreamEvent(
-            event="on_chat_model_stream",
-            name=f"event-{i}",
-            data={"chunk": SimpleNamespace(content=response_chunk)},
-            run_id="run_id",
-        )
-        for i, response_chunk in enumerate(RAG_LLM_RESPONSE.split(" "))
-    ]
-    event_iterable = MagicMock(name="event_iterable")
-    event_iterable.__aiter__.return_value = events
-    astream_events = MagicMock(name="astream_events", return_value=event_iterable)
-    retrieval_chain = AsyncMock(spec=Runnable, name="retrieval_chain")
-    retrieval_chain.astream_events = astream_events
-    chat_app.dependency_overrides[semantic_routes.get_routable_chains] = lambda: {"retrieval": retrieval_chain}
-    yield TestClient(application)
-    chat_app.dependency_overrides = {}
+@pytest.fixture
+def uploaded_docs(test_case: RedboxChatTestCase, elasticsearch_store: ElasticsearchStore):
+    docs_ids = elasticsearch_store.add_documents(test_case.docs)
+    yield
+    if docs_ids:
+        elasticsearch_store.delete(docs_ids)
 
 
-def test_rag(mock_client, headers):
-    response = mock_client.post(
+@pytest.fixture
+def query_headers(test_case: RedboxChatTestCase):
+    return {"Authorization": f"Bearer {jwt.encode({"user_uuid": str(test_case.query.user_uuid)}, key="nvjkernd")}"}
+
+
+def test_rag(test_case: RedboxChatTestCase, client, uploaded_docs, query_headers):
+    response = client.post(
         "/chat/rag",
-        headers=headers,
+        headers=query_headers,
         json={
-            "message_history": [{"text": "Who put the ram in the rama lama ding dong?", "role": "user"}],
-            "selected_files": [{"uuid": UPLOADED_FILE_UUID}],
+            "message_history": [
+                {"role": message.role, "text": message.text} for message in test_case.query.chat_history
+            ]
+            + [{"role": "user", "text": test_case.query.question}],
+            "selected_files": [{"uuid": str(file_uuid)} for file_uuid in test_case.query.file_uuids],
         },
     )
     assert response.status_code == 200, response.text
     chat_response = ChatResponse.model_validate(response.json())
-    assert chat_response.output_text == RAG_LLM_RESPONSE
+
     assert (
-        chat_response.route_name == ChatRoute.chat_with_docs
-    ), f"Expected route [{ChatRoute.chat_with_docs}] received [{chat_response.route_name}]"
-
-
-@pytest.mark.parametrize(("keyword"), EXPECTED_AVAILABLE_ROUTES)
-def test_keywords(mock_client, headers, keyword):
-    """Given a history that should summarise, force retrieval."""
-    response = mock_client.post(
-        "/chat/rag",
-        headers=headers,
-        json={
-            "message_history": [
-                {"text": f" @{keyword} Silly question", "role": "user"},
-            ],
-            "selected_files": [{"uuid": UPLOADED_FILE_UUID}],
-        },
+        chat_response.output_text == test_case.test_data.expected_llm_response[-1]
+    ), f"Expected response [{test_case.test_data.expected_llm_response}] received [{chat_response.output_text}]"
+    assert (
+        chat_response.route_name == test_case.test_data.expected_route
+    ), f"Expected route [{test_case.test_data.expected_route}] received [{chat_response.route_name}]"
+    returned_document_texts = set([d.page_content for d in chat_response.source_documents])
+    test_query_matching_document_texts = set([d.page_content for d in test_case.get_docs_matching_query()])
+    unexpected_returned_documents = list(
+        filter(
+            lambda d: d.page_content in returned_document_texts - test_query_matching_document_texts,
+            chat_response.source_documents,
+        )
     )
-    assert response.status_code == 200
-    chat_response = ChatResponse.model_validate(response.json())
-    assert chat_response.route_name.startswith(
-        keyword
-    ), f"Expected route to match keyword[{keyword}] received [{chat_response.route_name}]"
+    assert len(unexpected_returned_documents) == 0, f"Unexpected source docs in result {unexpected_returned_documents}"
 
 
-def test_rag_chat_streamed(mock_client, headers):
-    # Given
-    message_history = [
-        {"text": "What can I do for you?", "role": "system"},
-        {"text": "Who put the ram in the rama lama ding dong?", "role": "user"},
-    ]
-    selected_files = [{"uuid": UPLOADED_FILE_UUID}]
-
-    with mock_client.websocket_connect("/chat/rag", headers=headers) as websocket:
+def test_rag_chat_streamed(test_case: RedboxChatTestCase, client, uploaded_docs, query_headers):
+    with client.websocket_connect("/chat/rag", headers=query_headers) as websocket:
         # When
-        websocket.send_text(json.dumps({"message_history": message_history, "selected_files": selected_files}))
+        websocket.send_text(
+            json.dumps(
+                {
+                    "message_history": [
+                        {"role": message.role, "text": message.text} for message in test_case.query.chat_history
+                    ]
+                    + [{"role": "user", "text": test_case.query.question}],
+                    "selected_files": [{"uuid": str(file_uuid)} for file_uuid in test_case.query.file_uuids],
+                }
+            )
+        )
 
         all_text, docs, route_name = [], [], ""
         while True:
@@ -183,7 +177,7 @@ def test_rag_chat_streamed(mock_client, headers):
                 if actual["resource_type"] == "text":
                     all_text.append(actual["data"])
                 if actual["resource_type"] == "documents":
-                    docs.append(actual["data"])
+                    docs.extend(actual["data"])
                 if actual["resource_type"] == "route_name":
                     route_name = actual["data"]
             except WebSocketDisconnect:
@@ -191,16 +185,28 @@ def test_rag_chat_streamed(mock_client, headers):
 
         # Then
         text = "".join(all_text)
-        assert text == RAG_LLM_RESPONSE
-        assert route_name == ChatRoute.chat_with_docs
+        assert (
+            text == test_case.test_data.expected_llm_response[-1]
+        ), f"Expected response [{test_case.test_data.expected_llm_response}] received [{text}]"
+        assert (
+            route_name == test_case.test_data.expected_route
+        ), f"Expected route [{test_case.test_data.expected_route}] received [{route_name}]"
+        returned_document_texts = set([d["page_content"] for d in docs])
+        test_query_matching_document_texts = set([d.page_content for d in test_case.get_docs_matching_query()])
+        unexpected_returned_documents = list(
+            filter(lambda d: d["page_content"] in returned_document_texts - test_query_matching_document_texts, docs)
+        )
+        assert (
+            len(unexpected_returned_documents) == 0
+        ), f"Unexpected source docs in result {unexpected_returned_documents}"
 
 
-def test_available_tools(mock_client, headers):
-    response = mock_client.get("/chat/tools", headers=headers)
+def test_available_tools(client, query_headers):
+    response = client.get("/chat/tools", headers=query_headers)
     assert response.status_code == 200
     tool_definitions = response.json()
     assert len(tool_definitions) > 0
-    assert set(EXPECTED_AVAILABLE_ROUTES).issubset({item["name"] for item in tool_definitions})
+    assert EXPECTED_AVAILABLE_ROUTES == {item["name"] for item in tool_definitions}
     for tool_definition in tool_definitions:
         assert "name" in tool_definition
         assert "description" in tool_definition

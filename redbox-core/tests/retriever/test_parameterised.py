@@ -1,7 +1,8 @@
 import pytest
-from langchain_core.documents.base import Document
 
+from redbox.models.chain import ChainState
 from redbox.retriever import ParameterisedElasticsearchRetriever
+from redbox.test.data import RedboxChatTestCase
 
 test_chain_parameters = (
     {
@@ -9,14 +10,14 @@ test_chain_parameters = (
         "num_candidates": 100,
         "match_boost": 1,
         "knn_boost": 2,
-        "similarity_threshold": 0.7,
+        "similarity_threshold": 0,
     },
     {
         "size": 2,
         "num_candidates": 100,
         "match_boost": 1,
         "knn_boost": 2,
-        "similarity_threshold": 0.7,
+        "similarity_threshold": 0,
     },
 )
 
@@ -25,13 +26,9 @@ test_chain_parameters = (
 def test_parameterised_retriever(
     chain_params,
     parameterised_retriever: ParameterisedElasticsearchRetriever,
-    stored_file_parameterised: list[Document],
+    stored_file_parameterised: RedboxChatTestCase,
 ):
     result = parameterised_retriever.with_config(configurable={"params": chain_params}).invoke(
-        {
-            "question": "is this real?",
-            "file_uuids": [stored_file_parameterised[0].metadata["parent_file_uuid"]],
-            "user_uuid": stored_file_parameterised[0].metadata["creator_user_uuid"],
-        }
+        ChainState(query=stored_file_parameterised.query)
     )
     assert len(result) == chain_params["size"], result

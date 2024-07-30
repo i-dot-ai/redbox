@@ -22,9 +22,9 @@ from deepeval.test_case import LLMTestCase
 from elasticsearch.helpers import bulk, scan
 from pydantic import BaseModel, Field
 
-from core_api.build_chains import build_retrieval_chain
-from core_api.dependencies import get_llm, get_parameterised_retriever, get_tokeniser
-from redbox.models.chain import ChainInput
+from redbox.chains.components import get_chat_llm, get_parameterised_retriever, get_tokeniser
+from redbox.graph.search import get_search_graph
+from redbox.models.chain import ChainInput, ChainState
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Generator
@@ -93,7 +93,7 @@ def ai_experiment_data() -> ExperimentData:
 
 @pytest.fixture(scope="session")
 def llm(env: Settings) -> ChatLiteLLM:
-    return get_llm(env)
+    return get_chat_llm(env)
 
 
 @pytest.fixture(scope="session")
@@ -124,7 +124,7 @@ def eval_llm(env: Settings) -> DeepEvalBaseLLM:
         def get_model_name(self):
             return "Custom LiteLLM Model"
 
-    return ChatLiteLLMDeepEval(model=get_llm(env))
+    return ChatLiteLLMDeepEval(model=get_chat_llm(env))
 
 
 @pytest.fixture(scope="session")
@@ -188,7 +188,7 @@ def make_test_case(
 
     retriever = get_parameterised_retriever(env=env)
 
-    rag_chain = build_retrieval_chain(
+    rag_chain = get_search_graph(
         llm=llm,
         retriever=retriever,
         tokeniser=get_tokeniser(),
@@ -201,13 +201,16 @@ def make_test_case(
         for case in experiment.test_cases:
             if case.input == prompt:
                 return case
-        chain_input = ChainInput(
-            question=prompt,
-            file_uuids=[],
-            user_uuid=str(user_uuid),
-            chat_history=[],
+        answer: ChainState = rag_chain.invoke(
+            input=ChainState(
+                query=ChainInput(
+                    question=prompt,
+                    file_uuids=[],
+                    user_uuid=str(user_uuid),
+                    chat_history=[],
+                )
+            )
         )
-        answer = rag_chain.invoke(input=chain_input.model_dump(mode="json"))
 
         return LLMTestCase(
             input=prompt,

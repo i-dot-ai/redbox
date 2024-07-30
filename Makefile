@@ -34,22 +34,18 @@ rebuild: stop prune ## Rebuild all images
 
 .PHONY: test-core-api
 test-core-api: ## Test core-api
-	cp .env.test core-api/.env
-	cd core-api && poetry install --with dev && poetry run python -m pytest -m "not ai" --cov=core_api -v --cov-report=term-missing --cov-fail-under=75
+	cd core-api && poetry install --with dev && poetry run python -m pytest  --cov=core_api -v --cov-report=term-missing --cov-fail-under=75
 
 .PHONY: test-ai
 test-ai: ## Test code with live LLM
-	cp .env.test core-api/.env
-	cd core-api && poetry install --with dev && poetry run python -m pytest -m "ai" --cov=core_api -v --cov-report=term-missing --cov-fail-under=80
+	cd redbox-core && poetry install --with dev && poetry run python -m pytest -m "ai" --cov=redbox -v --cov-report=term-missing --cov-fail-under=80
 
 .PHONY: test-redbox
 test-redbox: ## Test redbox
-	cp .env.test redbox-core/.env
-	cd redbox-core && poetry install && poetry run pytest --cov=redbox -v --cov-report=term-missing --cov-fail-under=60
+	cd redbox-core && poetry install && poetry run pytest -m "not ai" --cov=redbox -v --cov-report=term-missing --cov-fail-under=60
 
 .PHONY: test-worker
 test-worker: ## Test worker
-	cp .env.test worker/.env
 	cd worker && poetry install && poetry run pytest --cov=worker -v --cov-report=term-missing --cov-fail-under=80
 
 .PHONY: test-django

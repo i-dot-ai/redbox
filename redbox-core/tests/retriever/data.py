@@ -1,139 +1,30 @@
-from langchain_core.documents.base import Document
+from uuid import uuid4
 
-ALL_CHUNKS_RETRIEVER_DOCUMENTS = [
-    [
-        Document(
-            page_content="ABC",
-            metadata={
-                "parent_file_uuid": "abcd",
-                "creator_user_uuid": "xabcd",
-                "index": 1,
-                "page_number": 1,
-                "languages": ["en"],
-                "link_texts": [],
-                "link_urls": [],
-                "links": [],
-                "created_datetime": "2024-06-01T12:00:00Z",
-                "token_count": 12,
-                "chunk_resolution": "largest",
-            },
-        ),
-        Document(
-            page_content="DEF",
-            metadata={
-                "parent_file_uuid": "abcd",
-                "creator_user_uuid": "xabcd",
-                "index": 2,
-                "page_number": 1,
-                "languages": ["en"],
-                "link_texts": [],
-                "link_urls": [],
-                "links": [],
-                "created_datetime": "2024-06-01T12:00:00Z",
-                "token_count": 12,
-                "chunk_resolution": "largest",
-            },
-        ),
-        Document(
-            page_content="GHI",
-            metadata={
-                "parent_file_uuid": "abcd",
-                "creator_user_uuid": "xabcd",
-                "index": 3,
-                "page_number": 1,
-                "languages": ["en"],
-                "link_texts": [],
-                "link_urls": [],
-                "links": [],
-                "created_datetime": "2024-06-01T12:00:00Z",
-                "token_count": 12,
-                "chunk_resolution": "largest",
-            },
-        ),
-        Document(
-            page_content="JKL",
-            metadata={
-                "parent_file_uuid": "abcd",
-                "creator_user_uuid": "xabcd",
-                "index": 4,
-                "page_number": 1,
-                "languages": ["en"],
-                "link_texts": [],
-                "link_urls": [],
-                "links": [],
-                "created_datetime": "2024-06-01T12:00:00Z",
-                "token_count": 12,
-                "chunk_resolution": "largest",
-            },
-        ),
+
+from redbox.models.chain import ChainInput
+from redbox.models.file import ChunkResolution
+from redbox.test.data import TestData, generate_test_cases
+
+ALL_CHUNKS_RETRIEVER_CASES = [
+    test_case
+    for generator in [
+        generate_test_cases(
+            query=ChainInput(question="Irrelevant Question", file_uuids=[uuid4()], user_uuid=uuid4(), chat_history=[]),
+            test_data=[TestData(8, 8000)],
+            test_id="Successful Path",
+        )
     ]
+    for test_case in generator
 ]
 
-PARAMETERISED_RETRIEVER_DOCUMENTS = [
-    [
-        Document(
-            page_content="ABC",
-            metadata={
-                "parent_file_uuid": "abcd",
-                "creator_user_uuid": "xabcd",
-                "index": 1,
-                "page_number": 1,
-                "languages": ["en"],
-                "link_texts": [],
-                "link_urls": [],
-                "links": [],
-                "created_datetime": "2024-06-01T12:00:00Z",
-                "token_count": 12,
-                "chunk_resolution": "normal",
-            },
-        ),
-        Document(
-            page_content="DEF",
-            metadata={
-                "parent_file_uuid": "abcd",
-                "creator_user_uuid": "xabcd",
-                "index": 2,
-                "page_number": 1,
-                "languages": ["en"],
-                "link_texts": [],
-                "link_urls": [],
-                "links": [],
-                "created_datetime": "2024-06-01T12:00:00Z",
-                "token_count": 12,
-                "chunk_resolution": "normal",
-            },
-        ),
-        Document(
-            page_content="GHI",
-            metadata={
-                "parent_file_uuid": "abcd",
-                "creator_user_uuid": "xabcd",
-                "index": 3,
-                "page_number": 1,
-                "languages": ["en"],
-                "link_texts": [],
-                "link_urls": [],
-                "links": [],
-                "created_datetime": "2024-06-01T12:00:00Z",
-                "token_count": 12,
-                "chunk_resolution": "normal",
-            },
-        ),
-        Document(
-            page_content="JKL",
-            metadata={
-                "parent_file_uuid": "abcd",
-                "creator_user_uuid": "xabcd",
-                "index": 4,
-                "page_number": 1,
-                "languages": ["en"],
-                "link_texts": [],
-                "link_urls": [],
-                "links": [],
-                "created_datetime": "2024-06-01T12:00:00Z",
-                "token_count": 12,
-                "chunk_resolution": "normal",
-            },
-        ),
+PARAMETERISED_RETRIEVER_CASES = [
+    test_case
+    for generator in [
+        generate_test_cases(
+            query=ChainInput(question="Irrelevant Question", file_uuids=[uuid4()], user_uuid=uuid4(), chat_history=[]),
+            test_data=[TestData(8, 8000, ChunkResolution.normal)],
+            test_id="Successful Path",
+        )
     ]
+    for test_case in generator
 ]

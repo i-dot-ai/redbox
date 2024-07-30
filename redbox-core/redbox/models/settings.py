@@ -7,7 +7,6 @@ from elasticsearch import Elasticsearch
 from pydantic import BaseModel, computed_field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-logging.basicConfig(level=logging.INFO)
 log = logging.getLogger()
 
 
@@ -87,11 +86,10 @@ RETRIEVAL_QUESTION_PROMPT = "{question} \n=========\n{formatted_documents}\n====
 
 SUMMARISATION_QUESTION_PROMPT = "Question: {question}. \n\n Documents: \n\n {documents} \n\n Answer: "
 
-MAP_QUESTION_PROMPT = "Question: {question}. "
+CHAT_MAP_QUESTION_PROMPT = "Question: {question}. \n Documents: \n {formatted_documents} \n\n Answer: "
 
-MAP_DOCUMENT_PROMPT = "\n\n Documents: \n\n {documents} \n\n Answer: "
 
-REDUCE_QUESTION_PROMPT = "Question: {question}. \n\n Documents: \n\n {summaries} \n\n Answer: "
+REDUCE_QUESTION_PROMPT = "Question: {question}. \n\n Documents: \n\n {formatted_documents} \n\n Answer: "
 
 CONDENSE_QUESTION_PROMPT = "{question}\n=========\n Standalone question: "
 
@@ -121,8 +119,7 @@ class AISettings(BaseModel):
     summarisation_question_prompt: str = SUMMARISATION_QUESTION_PROMPT
     map_max_concurrency: int = 128
     map_system_prompt: str = MAP_SYSTEM_PROMPT
-    map_question_prompt: str = MAP_QUESTION_PROMPT
-    map_document_prompt: str = MAP_DOCUMENT_PROMPT
+    chat_map_question_prompt: str = CHAT_MAP_QUESTION_PROMPT
     reduce_system_prompt: str = REDUCE_SYSTEM_PROMPT
     reduce_question_prompt: str = REDUCE_QUESTION_PROMPT
 
@@ -172,7 +169,7 @@ class Settings(BaseSettings):
     azure_embedding_model: str = "text-embedding-3-large"
     llm_max_tokens: int = 1024
 
-    embedding_backend: Literal["azure", "openai"] = "azure"
+    embedding_backend: Literal["azure", "openai", "fake"] = "azure"
     embedding_max_retries: int = 10
     embedding_retry_min_seconds: int = 10
     embedding_retry_max_seconds: int = 120
@@ -216,6 +213,10 @@ class Settings(BaseSettings):
     ### Largest
     worker_ingest_largest_chunk_size: int = 96000
     worker_ingest_largest_chunk_overlap: int = 0
+
+    response_no_doc_available: str = "No available data for selected files. They may need to be removed and added again"
+    response_max_content_exceeded: str = "Max content exceeded. Try smaller or fewer documents"
+    response_no_such_keyword: str = "That keyword isn't recognised"
 
     redis_host: str = "redis"
     redis_port: int = 6379

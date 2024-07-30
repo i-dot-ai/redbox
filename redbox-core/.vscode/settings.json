@@ -10,7 +10,8 @@
     "python.testing.unittestEnabled": false,
     "python.testing.pytestEnabled": true,
     "python.testing.pytestArgs": [
-        "."
+        ".",
+        "-m not ( ai )"
     ],
     "python.testing.pytestPath": "venv/bin/python -m pytest"
 }

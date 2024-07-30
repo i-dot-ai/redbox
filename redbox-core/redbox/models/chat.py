@@ -64,16 +64,11 @@ class SourceDocuments(BaseModel):
 
 
 class ChatRoute(StrEnum):
-    info = "info"
-    ability = "ability"
-    coach = "coach"
-    gratitude = "gratitude"
     search = "search"
-    summarise = "summarise"
-    map_reduce_summarise = "summarise/documents/large"
     chat = "chat"
     chat_with_docs = "chat/documents"
     chat_with_docs_map_reduce = "chat/documents/large"
+    error_no_keyword = "error/no-keyword"
 
 
 class ChatResponse(BaseModel):
