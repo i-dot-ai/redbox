@@ -132,7 +132,7 @@ jobs:
     steps:
       - id: success
         run: | 
-          if [[ "${needs.release-terraform.result}" == "success" ]]; then
+          if [[ "${needs.release-terraform.result} == 'success'" ]]; then
               echo "success=true" >> $GITHUB_OUTPUT
           else
               echo "success=false" >> $GITHUB_OUTPUT
