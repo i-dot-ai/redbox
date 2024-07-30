@@ -57,7 +57,12 @@ def get_chat_graph(llm: BaseChatModel, tokeniser: Encoding, env: Settings, debug
     app.add_node("set_chat_prompt_args", set_prompt_args)
     app.add_edge("set_chat_prompt_args", "llm")
 
-    app.add_node("llm", build_llm_chain(llm, tokeniser, env, env.ai.chat_system_prompt, env.ai.chat_question_prompt, final_response_chain=True))
+    app.add_node(
+        "llm",
+        build_llm_chain(
+            llm, tokeniser, env, env.ai.chat_system_prompt, env.ai.chat_question_prompt, final_response_chain=True
+        ),
+    )
 
     return app.compile(debug=debug)
 
@@ -112,7 +117,12 @@ def get_chat_with_docs_graph(
     app.add_node(
         "llm",
         build_llm_chain(
-            llm, tokeniser, env, env.ai.chat_with_docs_system_prompt, env.ai.chat_with_docs_question_prompt, final_response_chain=True
+            llm,
+            tokeniser,
+            env,
+            env.ai.chat_with_docs_system_prompt,
+            env.ai.chat_with_docs_question_prompt,
+            final_response_chain=True,
         ),
     )
     app.add_node(ChatRoute.chat_with_docs_map_reduce, get_chat_with_docs_map_reduce_graph(llm, tokeniser, env, debug))

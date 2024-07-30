@@ -21,15 +21,26 @@ def get_search_graph(
         "condense", build_llm_chain(llm, tokeniser, env, env.ai.condense_system_prompt, env.ai.condense_question_prompt)
     )
     app.add_node(
-        "map_condense_to_question", lambda s: {"query": ChainInput(
-            question=s["response"], 
-            file_uuids=s["query"].file_uuids, 
-            user_uuid=s["query"].user_uuid,
-            chat_history=[]
-        )}
+        "map_condense_to_question",
+        lambda s: {
+            "query": ChainInput(
+                question=s["response"],
+                file_uuids=s["query"].file_uuids,
+                user_uuid=s["query"].user_uuid,
+                chat_history=[],
+            )
+        },
     )
     app.add_node(
-        "llm", build_llm_chain(llm, tokeniser, env, env.ai.retrieval_system_prompt, env.ai.retrieval_question_prompt, final_response_chain=True)
+        "llm",
+        build_llm_chain(
+            llm,
+            tokeniser,
+            env,
+            env.ai.retrieval_system_prompt,
+            env.ai.retrieval_question_prompt,
+            final_response_chain=True,
+        ),
     )
 
     app.add_edge(START, "get_docs")

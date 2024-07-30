@@ -30,8 +30,7 @@ def get_embedding_model(env: Annotated[Settings, Depends(get_env)]) -> Embedding
 
 
 def get_parameterised_retriever(
-    env: Annotated[Settings, Depends(get_env)],
-    embeddings: Annotated[Embeddings, Depends(get_embedding_model)]
+    env: Annotated[Settings, Depends(get_env)], embeddings: Annotated[Embeddings, Depends(get_embedding_model)]
 ) -> BaseRetriever:
     """Creates an Elasticsearch retriever runnable.
 

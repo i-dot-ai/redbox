@@ -1,4 +1,3 @@
-import typing
 from langgraph.graph import StateGraph
 from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_core.vectorstores import VectorStoreRetriever
@@ -76,9 +75,9 @@ class Redbox:
     async def run(
         self,
         input: ChainState,
-        response_tokens_callback = _default_callback,
-        route_name_callback = _default_callback,
-        documents_callback = _default_callback,
+        response_tokens_callback=_default_callback,
+        route_name_callback=_default_callback,
+        documents_callback=_default_callback,
     ) -> ChainState:
         final_state = None
         async for event in self.graph.astream_events(input, version="v2"):

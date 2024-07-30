@@ -78,8 +78,18 @@ TEST_CASES = [
         generate_test_cases(
             query=ChainInput(question="@search What is AI?", file_uuids=[uuid4()], user_uuid=uuid4(), chat_history=[]),
             test_data=[
-                TestData(1, 10000, expected_llm_response=["Condense response", "The cake is a lie"], expected_route=ChatRoute.search),
-                TestData(5, 10000, expected_llm_response=["Condense response", "The cake is a lie"], expected_route=ChatRoute.search),
+                TestData(
+                    1,
+                    10000,
+                    expected_llm_response=["Condense response", "The cake is a lie"],
+                    expected_route=ChatRoute.search,
+                ),
+                TestData(
+                    5,
+                    10000,
+                    expected_llm_response=["Condense response", "The cake is a lie"],
+                    expected_route=ChatRoute.search,
+                ),
             ],
             test_id="Search",
         ),

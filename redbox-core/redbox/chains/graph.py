@@ -33,8 +33,7 @@ def set_route(state: ChainState):
     Choose an approach to chatting based on the current state
     """
     # Match keyword
-    route_match = re_keyword_pattern.search(state["query"].question)
-    if route_match:
+    if route_match := re_keyword_pattern.search(state["query"].question):
         match = route_match.group()[1:]
         try:
             if ChatRoute(match):
@@ -99,7 +98,12 @@ def set_prompt_args(state: ChainState):
 
 
 def build_llm_chain(
-    llm: BaseChatModel, tokeniser: Encoding, env: Settings, system_prompt: str, question_prompt: str, final_response_chain=False
+    llm: BaseChatModel,
+    tokeniser: Encoding,
+    env: Settings,
+    system_prompt: str,
+    question_prompt: str,
+    final_response_chain=False,
 ) -> Runnable:
     _llm = llm.with_config(tags=["response_flag"]) if final_response_chain else llm
     return RunnableParallel(
