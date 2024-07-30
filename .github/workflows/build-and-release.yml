@@ -94,31 +94,6 @@ jobs:
       AWS_REGION: ${{ secrets.AWS_REGION }}
       AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
 
-#  determine-success:
-#    needs:
-#      - set-vars
-#      - start-runner
-#      - build-image
-#      - release-terraform
-#    runs-on: ${{ needs.start-runner.outputs.label }}
-#    if: success()
-#    steps:
-#      - name: Set success output to true
-#        run: echo "::set-output name=success::true"
-#
-#  determine-failure:
-#    needs:
-#      - set-vars
-#      - start-runner
-#      - build-image
-#      - release-terraform
-#      - determine-success
-#    runs-on: ${{ needs.start-runner.outputs.label }}
-#    if: failure()
-#    steps:
-#      - name: Set success output to false
-#        run: echo "::set-output name=success::false"
-
   determine-success:
     needs:
       - set-vars
@@ -146,7 +121,6 @@ jobs:
       - build-image
       - release-terraform
       - determine-success
-#      - determine-failure
     uses: i-dot-ai/i-dot-ai-core-github-actions/.github/workflows/slack-notify.yml@d711948346703a11b3638ea4b1a10f3fc36678a2
     if: always()
     with:
@@ -179,58 +153,6 @@ jobs:
               ]
             }
     secrets: inherit
-
-  #  notify-slack:
-#    needs:
-#      - set-vars
-#      - start-runner
-#      - build-image
-#      - release-terraform
-#    runs-on: ${{ needs.start-runner.outputs.label }}
-#    steps:
-#      - name: notify slack failure
-#        id: slack-failure
-#        uses: slackapi/slack-github-action@v1.24.0
-#        if: ${{ failure() }}
-#        with:
-#          payload: |
-#            {
-#              "text": "Failed to deploy to ${{ inputs.environment }}",
-#              "blocks": [
-#                {
-#                  "type": "header",
-#                  "text": {
-#                    "type": "plain_text",
-#                    "text": "User `${{ env.author_name }}` failed to deploy ${{ inputs.commit_hash }} to ${{ inputs.environment }} :aaaaaaaaaa:"
-#                  }
-#                }
-#              ]
-#            }
-#        env:
-#          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-#          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
-#
-#      - name: notify slack pass
-#        id: slack-pass
-#        uses: slackapi/slack-github-action@v1.24.0
-#        if: ${{ success() }}
-#        with:
-#          payload: |
-#            {
-#              "text": "Deployment to ${{ inputs.environment }} succeeded :airplane:",
-#              "blocks": [
-#                {
-#                  "type": "header",
-#                  "text": {
-#                    "type": "plain_text",
-#                    "text": "User `${{ env.author_name }}` deployed ${{ inputs.commit_hash }} to ${{ inputs.environment }} :hype-elmo:"
-#                  }
-#                }
-#              ]
-#            }
-#        env:
-#          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-#          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
 
   stop-runner:
     uses: i-dot-ai/i-dot-ai-core-github-actions/.github/workflows/stop-runner.yml@main
