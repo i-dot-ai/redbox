@@ -87,7 +87,7 @@ jobs:
       INFRA_CONFIG_REPO: ${{ needs.set-vars.outputs.infra-config-repo }}
       CORE_INFRA_REF: ${{ inputs.core_infra_repo_reference }}
       INFRA_CONFIG_REF: ${{ inputs.config_repo_reference }}
-      IMAGE_TAG: ${{ inputs.commit_hash }}
+      IMAGE_TAG: ${{ github.sha }}
     secrets:
       AWS_GITHUBRUNNER_PAT: ${{ secrets.AWS_GITHUBRUNNER_PAT}}
       AWS_GITHUBRUNNER_PAT_USER: ${{ secrets.AWS_GITHUBRUNNER_PAT_USER }}
