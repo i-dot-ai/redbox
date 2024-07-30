@@ -119,19 +119,39 @@ jobs:
 #      - name: Set success output to false
 #        run: echo "::set-output name=success::false"
 
+  determine-success:
+    needs:
+      - set-vars
+      - start-runner
+      - build-image
+      - release-terraform
+    runs-on: ${{ needs.start-runner.outputs.label }}
+    if: always()
+    outputs:
+      success: ${{ steps.success.outputs.success }}
+    steps:
+      - id: success
+        run: | 
+          if [[ "${needs.release-terraform-output}" == "success" ]]; then
+              echo "success=true" >> $GITHUB_OUTPUT
+          else
+              echo "success=false" >> $GITHUB_OUTPUT
+          fi
+          
+
   notify-slack:
     needs:
       - set-vars
       - start-runner
       - build-image
       - release-terraform
-#      - determine-success
+      - determine-success
 #      - determine-failure
     uses: i-dot-ai/i-dot-ai-core-github-actions/.github/workflows/slack-notify.yml@d711948346703a11b3638ea4b1a10f3fc36678a2
     if: always()
     with:
       RUNNER_LABEL: ${{ needs.start-runner.outputs.label }}
-      WORKFLOW_PASSED: ${{ success() }}
+      WORKFLOW_PASSED: ${{ needs.success.outputs.success }}
       FAILURE_PAYLOAD: |
             {
               "text": "Failed to deploy to ${{ inputs.environment }}",
