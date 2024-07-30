@@ -151,7 +151,7 @@ jobs:
     if: always()
     with:
       RUNNER_LABEL: ${{ needs.start-runner.outputs.label }}
-      WORKFLOW_PASSED: ${{ needs.success.outputs.success }}
+      WORKFLOW_PASSED: ${{ needs.determine-success.outputs.success }}
       FAILURE_PAYLOAD: |
             {
               "text": "Failed to deploy to ${{ inputs.environment }}",
