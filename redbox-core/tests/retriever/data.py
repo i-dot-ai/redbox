@@ -3,7 +3,7 @@ from uuid import uuid4
 
 from redbox.models.chain import ChainInput
 from redbox.models.file import ChunkResolution
-from redbox.test.data import TestData, generate_test_cases
+from tests.data import generate_test_cases, TestData
 
 ALL_CHUNKS_RETRIEVER_CASES = [
     test_case

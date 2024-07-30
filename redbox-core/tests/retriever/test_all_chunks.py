@@ -1,6 +1,6 @@
 from redbox.models.chain import ChainState
 from redbox.retriever import AllElasticsearchRetriever
-from redbox.test.data import RedboxChatTestCase
+from tests.data import RedboxChatTestCase
 
 
 def test_all_chunks_retriever(

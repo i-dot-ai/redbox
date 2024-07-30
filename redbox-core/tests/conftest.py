@@ -16,7 +16,7 @@ from langchain_elasticsearch import ElasticsearchStore
 
 
 from redbox.retriever import AllElasticsearchRetriever, ParameterisedElasticsearchRetriever
-from redbox.test.data import RedboxChatTestCase
+from tests.data import RedboxChatTestCase
 from tests.retriever.data import ALL_CHUNKS_RETRIEVER_CASES, PARAMETERISED_RETRIEVER_CASES
 
 

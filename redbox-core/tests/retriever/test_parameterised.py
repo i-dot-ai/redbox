@@ -2,7 +2,7 @@ import pytest
 
 from redbox.models.chain import ChainState
 from redbox.retriever import ParameterisedElasticsearchRetriever
-from redbox.test.data import RedboxChatTestCase
+from tests.data import RedboxChatTestCase
 
 test_chain_parameters = (
     {

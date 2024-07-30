@@ -8,8 +8,7 @@ from redbox.models.chain import ChainInput, ChainState
 from redbox import Redbox
 from redbox.models.chat import ChatRoute
 from redbox.models.settings import Settings
-from redbox.test.data import TestData, RedboxChatTestCase, generate_test_cases
-
+from tests.data import generate_test_cases, TestData, RedboxChatTestCase
 
 LANGGRAPH_DEBUG = False
 
