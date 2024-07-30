@@ -60,7 +60,7 @@ def get_all_chunks_retriever(env: Settings) -> ElasticsearchRetriever:
     )
 
 
-def get_parameterised_retriever(env: Settings, embeddings: Embeddings = None) -> ElasticsearchRetriever:
+def get_parameterised_retriever(env: Settings, embeddings: Embeddings | None = None):
     """Creates an Elasticsearch retriever runnable.
 
     Runnable takes input of a dict keyed to question, file_uuids and user_uuid.

@@ -25,14 +25,13 @@ def get_env() -> Settings:
     return Settings()
 
 
-@lru_cache(1)
 def get_embedding_model(env: Annotated[Settings, Depends(get_env)]) -> Embeddings:
     return get_embeddings(env)
 
 
-@lru_cache(1)
 def get_parameterised_retriever(
     env: Annotated[Settings, Depends(get_env)],
+    embeddings: Annotated[Embeddings, Depends(get_embedding_model)]
 ) -> BaseRetriever:
     """Creates an Elasticsearch retriever runnable.
 
@@ -51,7 +50,7 @@ def get_parameterised_retriever(
         es_client=env.elasticsearch_client(),
         index_name=f"{env.elastic_root_index}-chunk",
         params=default_params,
-        embedding_model=get_embedding_model(env),
+        embedding_model=embeddings,
         embedding_field_name=env.embedding_document_field_name,
     ).configurable_fields(
         params=ConfigurableField(

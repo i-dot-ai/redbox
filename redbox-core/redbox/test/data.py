@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 import datetime
 import logging
+from typing import Iterable, Tuple
 from uuid import UUID
 
 from langchain_core.documents import Document
@@ -42,8 +43,8 @@ class TestData:
     number_of_docs: int
     tokens_in_all_docs: int
     chunk_resolution: ChunkResolution = ChunkResolution.largest
-    expected_llm_response: list[str] = None
-    expected_route: ChatRoute = None
+    expected_llm_response: list[str] | Tuple[str] = ()
+    expected_route: ChatRoute | None = None
 
 
 class RedboxChatTestCase:
@@ -52,8 +53,8 @@ class RedboxChatTestCase:
         test_id: str,
         query: ChainInput,
         test_data: TestData,
-        docs_user_uuid_override: UUID = None,
-        docs_file_uuids_override: list[UUID] = None,
+        docs_user_uuid_override: UUID | None = None,
+        docs_file_uuids_override: list[UUID] | None = None,
     ):
         # Use separate file_uuids if specified else match the query
         all_file_uuids = docs_file_uuids_override if docs_file_uuids_override else [id for id in query.file_uuids]

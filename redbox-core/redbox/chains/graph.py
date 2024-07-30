@@ -10,8 +10,9 @@ from langchain_core.vectorstores import VectorStoreRetriever
 from tiktoken import Encoding
 
 from redbox.api.format import format_documents
+from redbox.api.runnables import filter_by_elbow
 from redbox.models import ChatRoute, Settings
-from redbox.models.chain import ChainState
+from redbox.models.chain import ChainChatMessage, ChainState
 from redbox.models.errors import QuestionLengthError
 
 log = logging.getLogger()
@@ -20,6 +21,10 @@ re_keyword_pattern = re.compile(r"@(\w+)")
 
 def build_get_docs(env: Settings, retriever: VectorStoreRetriever):
     return RunnableParallel({"documents": retriever})
+
+
+def build_get_docs_with_filter(env: Settings, retriever: VectorStoreRetriever):
+    return RunnableParallel({"documents": retriever | filter_by_elbow(env.ai.elbow_filter_enabled)})
 
 
 @chain
@@ -66,7 +71,7 @@ def make_chat_prompt_from_messages_runnable(
         if chat_history_budget <= 0:
             raise QuestionLengthError
 
-        truncated_history: list[dict[str, str]] = []
+        truncated_history: list[ChainChatMessage] = []
         for msg in state["query"].chat_history[::-1]:
             chat_history_budget -= len(tokeniser.encode(msg["text"]))
             if chat_history_budget <= 0:
@@ -94,8 +99,9 @@ def set_prompt_args(state: ChainState):
 
 
 def build_llm_chain(
-    llm: BaseChatModel, tokeniser: Encoding, env: Settings, system_prompt: str, question_prompt: str
+    llm: BaseChatModel, tokeniser: Encoding, env: Settings, system_prompt: str, question_prompt: str, final_response_chain=False
 ) -> Runnable:
+    _llm = llm.with_config(tags=["response_flag"]) if final_response_chain else llm
     return RunnableParallel(
         {
             "response": make_chat_prompt_from_messages_runnable(
@@ -104,7 +110,7 @@ def build_llm_chain(
                 input_token_budget=env.ai.context_window_size - env.llm_max_tokens,
                 tokeniser=tokeniser,
             )
-            | llm.with_config(tags=["response_flag"])
+            | _llm
             | StrOutputParser(),
         }
     )

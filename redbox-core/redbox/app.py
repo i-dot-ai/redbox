@@ -30,11 +30,11 @@ class Redbox:
 
     def __init__(
         self,
-        llm: BaseChatModel = None,
-        all_chunks_retriever: VectorStoreRetriever = None,
-        parameterised_retriever: VectorStoreRetriever = None,
-        tokeniser: Encoding = None,
-        env: Settings = None,
+        llm: BaseChatModel | None = None,
+        all_chunks_retriever: VectorStoreRetriever | None = None,
+        parameterised_retriever: VectorStoreRetriever | None = None,
+        tokeniser: Encoding | None = None,
+        env: Settings | None = None,
         debug: bool = False,
     ):
         _env = env or Settings()
@@ -76,9 +76,9 @@ class Redbox:
     async def run(
         self,
         input: ChainState,
-        response_tokens_callback: typing.Coroutine = _default_callback,
-        route_name_callback: typing.Coroutine = _default_callback,
-        documents_callback: typing.Coroutine = _default_callback,
+        response_tokens_callback = _default_callback,
+        route_name_callback = _default_callback,
+        documents_callback = _default_callback,
     ) -> ChainState:
         final_state = None
         async for event in self.graph.astream_events(input, version="v2"):

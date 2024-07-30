@@ -5,7 +5,7 @@ to provide a pydantic v1 definition to work with these. As these models are most
 used in conjunction with langchain this is the tidiest boxing of pydantic v1 we can do
 """
 
-from typing import TypedDict, Literal, Annotated
+from typing import TypedDict, Literal, Annotated, Required, NotRequired
 from uuid import UUID
 from operator import add
 
@@ -26,12 +26,12 @@ class ChainInput(BaseModel):
 
 
 class ChainState(TypedDict):
-    query: ChainInput
-    documents: list[Document]
-    response: str | None
-    route_name: str | None
-    prompt_args: dict[str, str]
+    query: Required[ChainInput]
+    documents: NotRequired[list[Document]]
+    response: NotRequired[str | None]
+    route_name: NotRequired[str | None]
+    prompt_args: NotRequired[dict[str, str]]
 
 
 class ChatMapReduceState(ChainState):
-    intermediate_docs: Annotated[list[Document], add]
+    intermediate_docs: Annotated[NotRequired[list[Document]], add]
