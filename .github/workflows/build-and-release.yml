@@ -150,8 +150,8 @@ jobs:
     uses: i-dot-ai/i-dot-ai-core-github-actions/.github/workflows/slack-notify.yml@d711948346703a11b3638ea4b1a10f3fc36678a2
     if: always()
     with:
+      WORKFLOW_PASSED: ${{ toBoolean(needs.determine-success.outputs.success) }}
       RUNNER_LABEL: ${{ needs.start-runner.outputs.label }}
-      WORKFLOW_PASSED: ${{ needs.determine-success.outputs.success }}
       FAILURE_PAYLOAD: |
             {
               "text": "Failed to deploy to ${{ inputs.environment }}",
