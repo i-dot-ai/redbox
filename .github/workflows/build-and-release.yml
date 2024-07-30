@@ -10,9 +10,6 @@ on:
       config_repo_reference:
         required: true
         type: string
-      commit_hash:
-        required: true
-        type: string
       author_name:
         required: true
         type: string
@@ -30,7 +27,6 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v4
       with:
-        ref: ${{ inputs.commit_hash }}
         path: main
 
     - id: export
@@ -65,7 +61,7 @@ jobs:
       APP_NAME: ${{ needs.set-vars.outputs.app-name }}
       RUNNER_LABEL: ${{ needs.start-runner.outputs.label }}
       INFRASTRUCTURE_FOLDER: "infrastructure/aws"
-      COMMIT_HASH: ${{ inputs.commit_hash }}
+      COMMIT_HASH: ${{ github.sha }}
     secrets:
       AWS_GITHUBRUNNER_PAT: ${{ secrets.AWS_GITHUBRUNNER_PAT}}
       AWS_GITHUBRUNNER_PAT_USER: ${{ secrets.AWS_GITHUBRUNNER_PAT_USER }}
@@ -134,7 +130,7 @@ jobs:
                   "type": "header",
                   "text": {
                     "type": "plain_text",
-                    "text": "User `${{ inputs.author_name }}` failed to deploy ${{ inputs.commit_hash }} to ${{ inputs.environment }} :aaaaaaaaaa:"
+                    "text": "User `${{ inputs.author_name }}` failed to deploy ${{ github.sha }} to ${{ inputs.environment }} :aaaaaaaaaa:"
                   }
                 }
               ]
@@ -147,7 +143,7 @@ jobs:
                   "type": "header",
                   "text": {
                     "type": "plain_text",
-                    "text": "User `${{ inputs.author_name }}` deployed ${{ inputs.commit_hash }} to ${{ inputs.environment }} :hype-elmo:"
+                    "text": "User `${{ inputs.author_name }}` deployed ${{ github.sha }} to ${{ inputs.environment }} :hype-elmo:"
                   }
                 }
               ]
