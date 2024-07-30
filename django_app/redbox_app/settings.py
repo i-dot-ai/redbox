@@ -177,9 +177,11 @@ CSP_FONT_SRC = (
     "s3.amazonaws.com",
 )
 CSP_STYLE_SRC = ("'self'",)
-CSP_FRAME_ANCESTORS = ("'none'",)
+# CSP_FRAME_ANCESTORS = ("'none'",)
 CSP_FRAME_SRC = ("'self'", f"http://{env.str('STREAMLIT_HOST')}")
 CSP_CONNECT_SRC = ["'self'", f"wss://{env_hosts[0]}/ws/chat/", "plausible.io"]
+
+X_FRAME_OPTIONS = 'SAMEORIGIN'
 
 # https://pypi.org/project/django-permissions-policy/
 PERMISSIONS_POLICY: dict[str, list] = {
@@ -247,6 +249,7 @@ else:
     ALLOWED_HOSTS = [
         LOCALHOST,
         *env_hosts,
+        "streamlit.redbox-sandbox.uktrade.digital"
     ]
 
 if not ENVIRONMENT.is_local:

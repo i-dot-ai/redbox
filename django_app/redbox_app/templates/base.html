@@ -13,6 +13,7 @@
   <link rel="manifest" href="{{static("govuk-assets/manifest.json")}}">
 
   <meta name="robots" content="noindex, nofollow">
+  <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests"> 
   {% if COMPRESSION_ENABLED %}
     {% compress css %}
       <link rel="stylesheet" type="text/x-scss" href="{{static('style.scss')}}" />
