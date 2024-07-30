@@ -1,4 +1,4 @@
-from dataclasses import Field, dataclass
+from dataclasses import dataclass, field
 import datetime
 import logging
 from typing import Tuple
@@ -43,7 +43,7 @@ class TestData:
     number_of_docs: int
     tokens_in_all_docs: int
     chunk_resolution: ChunkResolution = ChunkResolution.largest
-    expected_llm_response: list[str] = Field(default_factory=list)
+    expected_llm_response: list[str] = field(default_factory=list)
     expected_route: ChatRoute | None = None
 
 
