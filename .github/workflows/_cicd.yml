@@ -9,10 +9,6 @@ on:
       - released
   workflow_dispatch:
     inputs:
-      commit_hash:
-        description: 'The SHA of the Git commit to use'
-        required: false
-        default: refs/heads/main
       core_repo_reference:
         description: 'The SHA to set the core repo to'
         required: false
@@ -34,7 +30,7 @@ jobs:
       environment: dev
       core_infra_repo_reference: ${{ inputs.core_repo_reference }}
       config_repo_reference: ${{ inputs.config_repo_reference }}
-      commit_hash: ${{ inputs.commit_hash }}
+      author_name: ${{ github.actor }}
     secrets: inherit
 
   release-preprod:
@@ -45,7 +41,7 @@ jobs:
       environment: preprod
       core_infra_repo_reference: 'refs/heads/main'
       config_repo_reference: 'refs/heads/main'
-      commit_hash: ${{ github.sha }}
+      author_name: ${{ github.event.pull_request.user.login }}
     secrets: inherit
 
   release-prod:
@@ -56,5 +52,5 @@ jobs:
       environment: prod
       core_infra_repo_reference: 'refs/heads/main'
       config_repo_reference: 'refs/heads/main'
-      commit_hash: ${{ github.sha }}
+      author_name: ${{ github.event.release.user.login }}
     secrets: inherit
