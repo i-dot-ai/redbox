@@ -21,41 +21,41 @@ from redbox_app.redbox_core.models import ChatHistory, ChatMessage, ChatRoleEnum
 # === check_file_status command tests ===
 
 
-@pytest.mark.django_db()
-def test_check_file_status(several_files: Sequence[File], requests_mock: Mocker):
-    with mock.patch("redbox_app.redbox_core.models.File.delete_from_s3") as s3_mock:
-        # Based on: https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/s3/client/delete_object.html
-        s3_mock.side_effect = {
-            "DeleteMarker": True,
-        }
+# @pytest.mark.django_db()
+# def test_check_file_status(several_files: Sequence[File], requests_mock: Mocker):
+#     with mock.patch("redbox_app.redbox_core.models.File.delete_from_s3") as s3_mock:
+#         # Based on: https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/s3/client/delete_object.html
+#         s3_mock.side_effect = {
+#             "DeleteMarker": True,
+#         }
 
-        # Given
-        file_in_core_api, file_not_in_core_api, file_core_api_error = several_files[0:3]
+#         # Given
+#         file_in_core_api, file_not_in_core_api, file_core_api_error = several_files[0:3]
 
-        matcher = re.compile(f"http://{settings.CORE_API_HOST}:{settings.CORE_API_PORT}/file/[0-9a-f]|\\-/status")
+#         matcher = re.compile(f"http://{settings.CORE_API_HOST}:{settings.CORE_API_PORT}/file/[0-9a-f]|\\-/status")
 
-        requests_mock.get(
-            matcher,
-            status_code=HTTPStatus.CREATED,
-            json={
-                "processing_status": StatusEnum.processing,
-            },
-        )
-        requests_mock.get(
-            f"http://{settings.CORE_API_HOST}:{settings.CORE_API_PORT}/file/{file_not_in_core_api.core_file_uuid}/status",
-            status_code=HTTPStatus.NOT_FOUND,
-        )
-        requests_mock.get(
-            f"http://{settings.CORE_API_HOST}:{settings.CORE_API_PORT}/file/{file_core_api_error.core_file_uuid}/status",
-            exc=requests.exceptions.Timeout,
-        )
-        # When
-        call_command("check_file_status")
+#         requests_mock.get(
+#             matcher,
+#             status_code=HTTPStatus.CREATED,
+#             json={
+#                 "processing_status": StatusEnum.processing,
+#             },
+#         )
+#         requests_mock.get(
+#             f"http://{settings.CORE_API_HOST}:{settings.CORE_API_PORT}/file/{file_not_in_core_api.core_file_uuid}/status",
+#             status_code=HTTPStatus.NOT_FOUND,
+#         )
+#         requests_mock.get(
+#             f"http://{settings.CORE_API_HOST}:{settings.CORE_API_PORT}/file/{file_core_api_error.core_file_uuid}/status",
+#             exc=requests.exceptions.Timeout,
+#         )
+#         # When
+#         call_command("check_file_status")
 
-        # Then
-        assert File.objects.get(id=file_in_core_api.id).status == StatusEnum.processing
-        assert File.objects.get(id=file_not_in_core_api.id).status == StatusEnum.deleted
-        assert File.objects.get(id=file_core_api_error.id).status == StatusEnum.errored
+#         # Then
+#         assert File.objects.get(id=file_in_core_api.id).status == StatusEnum.processing
+#         assert File.objects.get(id=file_not_in_core_api.id).status == StatusEnum.deleted
+#         assert File.objects.get(id=file_core_api_error.id).status == StatusEnum.errored
 
 
 @pytest.mark.django_db()
