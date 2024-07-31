@@ -19,7 +19,7 @@ core_api = CoreApiClient(host=settings.CORE_API_HOST, port=settings.CORE_API_POR
 
 
 def post_summary_to_slack(message):
-    slack_url = os.environ["SLACK_NOTIFICATION_URL"] or None
+    slack_url = os.environ.get("SLACK_NOTIFICATION_URL", None)
     if slack_url:
         try:
             r = requests.post(
