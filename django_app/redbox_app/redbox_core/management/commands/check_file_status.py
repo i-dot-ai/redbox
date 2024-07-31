@@ -1,4 +1,5 @@
 import logging
+from http import HTTPStatus
 
 from botocore.exceptions import BotoCoreError
 from django.conf import settings
@@ -17,7 +18,7 @@ def remove_from_django(file: File):
         file.delete_from_s3()
     except BotoCoreError as e:
         if getattr(e, "response", None) and (
-            e.response["Error"]["Code"] == "404" or e.response["Error"]["Code"] == "NoSuchKey"
+            e.response["Error"]["Code"] == str(HTTPStatus.NOT_FOUND) or e.response["Error"]["Code"] == "NoSuchKey"
         ):
             logger.exception("File %s does not exist in s3, marking as deleted", file, exc_info=e)
             file.status = StatusEnum.deleted
@@ -53,7 +54,7 @@ class Command(BaseCommand):
             try:
                 core_file_status_response = core_api.get_file_status(file.core_file_uuid, file.user)
             except RequestException as e:
-                if getattr(e.response, "status_code", None) == 404:  # noqa: PLR2004
+                if getattr(e.response, "status_code", None) == HTTPStatus.NOT_FOUND:
                     logger.exception("File %s does not exist in core-api, removing from django", file, exc_info=e)
                     remove_from_django(file)
 

@@ -2,6 +2,7 @@ import re
 import uuid
 from collections.abc import Sequence
 from datetime import UTC, datetime, timedelta
+from http import HTTPStatus
 from io import StringIO
 from unittest import mock
 
@@ -22,7 +23,12 @@ from redbox_app.redbox_core.models import ChatHistory, ChatMessage, ChatRoleEnum
 
 @pytest.mark.django_db()
 def test_check_file_status(several_files: Sequence[File], requests_mock: Mocker):
-    with mock.patch("redbox_app.redbox_core.models.File.delete_from_s3"):
+    with mock.patch("redbox_app.redbox_core.models.File.delete_from_s3") as s3_mock:
+        # Based on: https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/s3/client/delete_object.html
+        s3_mock.side_effect = {
+            "DeleteMarker": True,
+        }
+
         # Given
         file_in_core_api, file_not_in_core_api, file_core_api_error = several_files[0:3]
 
@@ -30,14 +36,14 @@ def test_check_file_status(several_files: Sequence[File], requests_mock: Mocker)
 
         requests_mock.get(
             matcher,
-            status_code=201,
+            status_code=HTTPStatus.CREATED,
             json={
                 "processing_status": StatusEnum.processing,
             },
         )
         requests_mock.get(
             f"http://{settings.CORE_API_HOST}:{settings.CORE_API_PORT}/file/{file_not_in_core_api.core_file_uuid}/status",
-            status_code=404,
+            status_code=HTTPStatus.NOT_FOUND,
         )
         requests_mock.get(
             f"http://{settings.CORE_API_HOST}:{settings.CORE_API_PORT}/file/{file_core_api_error.core_file_uuid}/status",
@@ -63,14 +69,14 @@ def test_check_file_status_s3_error(uploaded_file: File, requests_mock: Mocker):
 
         requests_mock.get(
             matcher,
-            status_code=201,
+            status_code=HTTPStatus.CREATED,
             json={
                 "processing_status": StatusEnum.processing,
             },
         )
         requests_mock.get(
             f"http://{settings.CORE_API_HOST}:{settings.CORE_API_PORT}/file/{mock_file.core_file_uuid}/status",
-            status_code=404,
+            status_code=HTTPStatus.NOT_FOUND,
         )
 
         # When
@@ -156,7 +162,7 @@ def test_delete_expired_files(
     matcher = re.compile(f"http://{settings.CORE_API_HOST}:{settings.CORE_API_PORT}/file/[0-9a-f]|\\-")
     requests_mock.delete(
         matcher,
-        status_code=201,
+        status_code=HTTPStatus.CREATED,
         json={
             "key": mock_file.original_file_name,
             "bucket": settings.BUCKET_NAME,
@@ -183,7 +189,7 @@ def test_delete_expired_files_with_api_error(uploaded_file: File, requests_mock:
 
     requests_mock.delete(
         matcher,
-        status_code=201,
+        status_code=HTTPStatus.CREATED,
         json={
             "key": mock_file.original_file_name,
             "bucket": settings.BUCKET_NAME,
@@ -218,7 +224,7 @@ def test_delete_expired_files_with_s3_error(uploaded_file: File, requests_mock: 
 
         requests_mock.delete(
             matcher,
-            status_code=201,
+            status_code=HTTPStatus.CREATED,
             json={
                 "key": mock_file.original_file_name,
                 "bucket": settings.BUCKET_NAME,
@@ -277,7 +283,7 @@ def test_reingest_files(several_files: Sequence[File], requests_mock: Mocker):
 
     requests_mock.put(
         matcher,
-        status_code=201,
+        status_code=HTTPStatus.CREATED,
         json={
             "key": successful_file.original_file_name,
             "bucket": settings.BUCKET_NAME,
