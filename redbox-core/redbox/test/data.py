@@ -1,7 +1,6 @@
 from dataclasses import dataclass, field
 import datetime
 import logging
-from typing import Tuple
 from uuid import UUID
 
 from langchain_core.documents import Document

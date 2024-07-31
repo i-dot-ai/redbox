@@ -253,7 +253,9 @@ class DocumentsPage(SignedInBasePage):
     def _doc_from_element(element: Locator) -> DocumentRow:
         filename = element.locator(".iai-doc-list__cell--file-name").inner_text()
         status = element.locator(".iai-doc-list__cell--status").inner_text()
-        completed = element.evaluate("element => element.closest('.iai-doc-list').classList.contains('iai-doc-list--complete')")
+        completed = element.evaluate(
+            "element => element.closest('.iai-doc-list').classList.contains('iai-doc-list--complete')"
+        )
         return DocumentRow(filename=filename, status=status, completed=completed)
 
     def document_count(self) -> int:
