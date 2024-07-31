@@ -4,12 +4,13 @@ from collections.abc import Sequence
 from datetime import UTC, datetime, timedelta
 from http import HTTPStatus
 from io import StringIO
-from unittest import mock
+from unittest.mock import MagicMock, patch
 
 import pytest
 import requests
 from botocore.exceptions import UnknownClientMethodError
 from django.conf import settings
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.management import CommandError, call_command
 from django.utils import timezone
 from freezegun import freeze_time
@@ -21,69 +22,86 @@ from redbox_app.redbox_core.models import ChatHistory, ChatMessage, ChatRoleEnum
 # === check_file_status command tests ===
 
 
-# @pytest.mark.django_db()
-# def test_check_file_status(several_files: Sequence[File], requests_mock: Mocker):
-#     with mock.patch("redbox_app.redbox_core.models.File.delete_from_s3") as s3_mock:
-#         # Based on: https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/s3/client/delete_object.html
-#         s3_mock.side_effect = {
-#             "DeleteMarker": True,
-#         }
-
-#         # Given
-#         file_in_core_api, file_not_in_core_api, file_core_api_error = several_files[0:3]
-
-#         matcher = re.compile(f"http://{settings.CORE_API_HOST}:{settings.CORE_API_PORT}/file/[0-9a-f]|\\-/status")
-
-#         requests_mock.get(
-#             matcher,
-#             status_code=HTTPStatus.CREATED,
-#             json={
-#                 "processing_status": StatusEnum.processing,
-#             },
-#         )
-#         requests_mock.get(
-#             f"http://{settings.CORE_API_HOST}:{settings.CORE_API_PORT}/file/{file_not_in_core_api.core_file_uuid}/status",
-#             status_code=HTTPStatus.NOT_FOUND,
-#         )
-#         requests_mock.get(
-#             f"http://{settings.CORE_API_HOST}:{settings.CORE_API_PORT}/file/{file_core_api_error.core_file_uuid}/status",
-#             exc=requests.exceptions.Timeout,
-#         )
-#         # When
-#         call_command("check_file_status")
-
-#         # Then
-#         assert File.objects.get(id=file_in_core_api.id).status == StatusEnum.processing
-#         assert File.objects.get(id=file_not_in_core_api.id).status == StatusEnum.deleted
-#         assert File.objects.get(id=file_core_api_error.id).status == StatusEnum.errored
-
-
+@patch("redbox_app.redbox_core.models.File.delete_from_s3")
+@patch("redbox_app.redbox_core.models.File.original_file.field.storage.save")
 @pytest.mark.django_db()
-def test_check_file_status_s3_error(uploaded_file: File, requests_mock: Mocker):
-    with mock.patch("redbox_app.redbox_core.models.File.delete_from_s3") as s3_mock:
-        s3_mock.side_effect = UnknownClientMethodError(method_name="")
+def test_check_file_status(deletion_mock: MagicMock, put_mock: MagicMock, alice: User, requests_mock: Mocker):
+    # Based on: https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/s3/client/delete_object.html
+    deletion_mock.side_effect = {
+        "DeleteMarker": True,
+    }
+    put_mock.side_effect = yield
 
-        # Given
-        mock_file = uploaded_file
-        matcher = re.compile(f"http://{settings.CORE_API_HOST}:{settings.CORE_API_PORT}/file/[0-9a-f]|\\-/status")
+    # Given
+    def create_files():
+        files = []
 
-        requests_mock.get(
-            matcher,
-            status_code=HTTPStatus.CREATED,
-            json={
-                "processing_status": StatusEnum.processing,
-            },
-        )
-        requests_mock.get(
-            f"http://{settings.CORE_API_HOST}:{settings.CORE_API_PORT}/file/{mock_file.core_file_uuid}/status",
-            status_code=HTTPStatus.NOT_FOUND,
-        )
+        for i in range(3):
+            filename = f"original_file_{i}.txt"
+            files.append(
+                File.objects.create(
+                    user=alice,
+                    original_file=SimpleUploadedFile(filename, b"Lorem Ipsum."),
+                    original_file_name=filename,
+                    core_file_uuid=uuid.uuid4(),
+                )
+            )
+        return files
 
-        # When
-        call_command("check_file_status")
+    file_in_core_api, file_not_in_core_api, file_core_api_error = create_files()
 
-        # Then
-        assert File.objects.get(id=mock_file.id).status == StatusEnum.errored
+    matcher = re.compile(f"http://{settings.CORE_API_HOST}:{settings.CORE_API_PORT}/file/[0-9a-f]|\\-/status")
+
+    requests_mock.get(
+        matcher,
+        status_code=HTTPStatus.CREATED,
+        json={
+            "processing_status": StatusEnum.processing,
+        },
+    )
+    requests_mock.get(
+        f"http://{settings.CORE_API_HOST}:{settings.CORE_API_PORT}/file/{file_not_in_core_api.core_file_uuid}/status",
+        status_code=HTTPStatus.NOT_FOUND,
+    )
+    requests_mock.get(
+        f"http://{settings.CORE_API_HOST}:{settings.CORE_API_PORT}/file/{file_core_api_error.core_file_uuid}/status",
+        exc=requests.exceptions.Timeout,
+    )
+    # When
+    call_command("check_file_status")
+
+    # Then
+    assert File.objects.get(id=file_in_core_api.id).status == StatusEnum.processing
+    assert File.objects.get(id=file_not_in_core_api.id).status == StatusEnum.deleted
+    assert File.objects.get(id=file_core_api_error.id).status == StatusEnum.errored
+
+
+@patch("redbox_app.redbox_core.models.File.delete_from_s3")
+@pytest.mark.django_db()
+def test_check_file_status_s3_error(deletion_mock: MagicMock, uploaded_file: File, requests_mock: Mocker):
+    deletion_mock.side_effect = UnknownClientMethodError(method_name="")
+
+    # Given
+    mock_file = uploaded_file
+    matcher = re.compile(f"http://{settings.CORE_API_HOST}:{settings.CORE_API_PORT}/file/[0-9a-f]|\\-/status")
+
+    requests_mock.get(
+        matcher,
+        status_code=HTTPStatus.CREATED,
+        json={
+            "processing_status": StatusEnum.processing,
+        },
+    )
+    requests_mock.get(
+        f"http://{settings.CORE_API_HOST}:{settings.CORE_API_PORT}/file/{mock_file.core_file_uuid}/status",
+        status_code=HTTPStatus.NOT_FOUND,
+    )
+
+    # When
+    call_command("check_file_status")
+
+    # Then
+    assert File.objects.get(id=mock_file.id).status == StatusEnum.errored
 
 
 # === show_magiclink_url command tests ===
@@ -210,33 +228,33 @@ def test_delete_expired_files_with_api_error(uploaded_file: File, requests_mock:
     assert File.objects.get(id=mock_file.id).status == StatusEnum.errored
 
 
+@patch("redbox_app.redbox_core.models.File.delete_from_s3")
 @pytest.mark.django_db()
-def test_delete_expired_files_with_s3_error(uploaded_file: File, requests_mock: Mocker):
-    with mock.patch("redbox_app.redbox_core.models.File.delete_from_s3") as s3_mock:
-        s3_mock.side_effect = UnknownClientMethodError(method_name="")
+def test_delete_expired_files_with_s3_error(deletion_mock: MagicMock, uploaded_file: File, requests_mock: Mocker):
+    deletion_mock.side_effect = UnknownClientMethodError(method_name="")
 
-        # Given
-        mock_file = uploaded_file
-        mock_file.last_referenced = EXPIRED_FILE_DATE
-        mock_file.save()
+    # Given
+    mock_file = uploaded_file
+    mock_file.last_referenced = EXPIRED_FILE_DATE
+    mock_file.save()
 
-        matcher = re.compile(f"http://{settings.CORE_API_HOST}:{settings.CORE_API_PORT}/file/[0-9a-f]|\\-")
+    matcher = re.compile(f"http://{settings.CORE_API_HOST}:{settings.CORE_API_PORT}/file/[0-9a-f]|\\-")
 
-        requests_mock.delete(
-            matcher,
-            status_code=HTTPStatus.CREATED,
-            json={
-                "key": mock_file.original_file_name,
-                "bucket": settings.BUCKET_NAME,
-                "uuid": str(uuid.uuid4()),
-            },
-        )
+    requests_mock.delete(
+        matcher,
+        status_code=HTTPStatus.CREATED,
+        json={
+            "key": mock_file.original_file_name,
+            "bucket": settings.BUCKET_NAME,
+            "uuid": str(uuid.uuid4()),
+        },
+    )
 
-        # When
-        call_command("delete_expired_data")
+    # When
+    call_command("delete_expired_data")
 
-        # Then
-        assert File.objects.get(id=mock_file.id).status == StatusEnum.errored
+    # Then
+    assert File.objects.get(id=mock_file.id).status == StatusEnum.errored
 
 
 @pytest.mark.parametrize(
