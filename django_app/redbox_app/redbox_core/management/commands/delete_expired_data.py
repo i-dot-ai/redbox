@@ -19,10 +19,11 @@ core_api = CoreApiClient(host=settings.CORE_API_HOST, port=settings.CORE_API_POR
 
 
 def post_summary_to_slack(message):
-    if os.environ["SLACK_NOTIFICATION_URL"]:
+    slack_url = os.environ["SLACK_NOTIFICATION_URL"] or None
+    if slack_url:
         try:
             r = requests.post(
-                os.environ["SLACK_NOTIFICATION_URL"],
+                slack_url,
                 data=json.dumps({"text": message}),
                 timeout=60,
                 headers={"Content-Type": "application/json"},
