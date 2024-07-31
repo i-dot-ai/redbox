@@ -30,9 +30,7 @@ data "aws_iam_policy_document" "ecs_exec_role_policy" {
        aws_secretsmanager_secret.worker-secret.arn,
        "${aws_secretsmanager_secret.worker-secret.arn}:*",
        aws_secretsmanager_secret.django-app-secret.arn,
-       "${aws_secretsmanager_secret.django-app-secret.arn}:*",
-       aws_secretsmanager_secret.django-command-secret.arn,
-       "${aws_secretsmanager_secret.django-command-secret.arn}:*",
+       "${aws_secretsmanager_secret.django-app-secret.arn}:*"
     ]
   }
 
@@ -57,7 +55,6 @@ resource "aws_iam_role_policy_attachment" "redbox_role_policy" {
       "core-api" = module.core_api.ecs_task_execution_exec_role_name,
       "worker"   = module.worker.ecs_task_execution_exec_role_name,
       "django"   = module.django-app.ecs_task_execution_exec_role_name,
-      "django-command"   = module.django-command.ecs_task_execution_exec_role_name,
     }
   )
   role       = each.value

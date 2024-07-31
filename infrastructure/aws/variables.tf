@@ -25,9 +25,16 @@ variable "developer_ips" {
 }
 
 variable "django_command" {
-  type        = string
-  default     = "delete_expired_data"
-  description = "Name of Django management to be run. Use with caution"
+  type = list(object({
+    command : string,
+    task_name : string,
+    schedule : optional(string),
+  }))
+  default = [
+    { command : "delete_expired_data", task_name : "delete", schedule : "cron(00 02 * * ? *)" }, # every day at 2-2:30am
+    { command : "reingest_files", task_name : "reingest" } # manually triggered
+  ]
+  description = "An object describing the django command to run"
 }
 
 variable "django_secret_key" {
