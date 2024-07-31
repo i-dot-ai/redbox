@@ -117,7 +117,7 @@ jobs:
       - build-image
       - release-terraform
       - determine-success
-    uses: i-dot-ai/i-dot-ai-core-github-actions/.github/workflows/slack-notify.yml@d711948346703a11b3638ea4b1a10f3fc36678a2
+    uses: i-dot-ai/i-dot-ai-core-github-actions/.github/workflows/slack-notify.yml@main
     if: always()
     with:
       WORKFLOW_PASSED: ${{ needs.determine-success.outputs.success == 'true' }}
