@@ -147,11 +147,9 @@ class ChatHistoryAnalysis:
         return tokens
 
     def process_user_names(self, user_names_column: pd.Series) -> pd.Series:
-        # TODO: Use this function across the board when displaying User Names. Decide whether surname is needed.
         """
-        Takes a pandas column and returns a dictionary of key value pairs for the tidy name.
-        This function tidies user names instead of their emails.
-        At a later date we could add an option for anonymyty (especially useful when presenting).
+        Takes a pandas column and returns a tidied pandas column.
+        Creates dictionary of key value pairs for the tidy name.
         """
         unique_user_email = user_names_column.unique()
         unique_user_names = [user_email.split("@")[0].replace(".", " ").title() for user_email in unique_user_email]
@@ -233,7 +231,6 @@ class ChatHistoryAnalysis:
         all_tokens = [token for tokens in self.user_responses["tokens"] for token in tokens]
         stopwords_removed_from_all_tokens = [word for word in all_tokens if word not in STOPWORDS]
         word_freq = Counter(stopwords_removed_from_all_tokens)
-
         return word_freq
 
     def get_ai_word_frequency(self) -> pd.DataFrame:
@@ -250,7 +247,6 @@ class ChatHistoryAnalysis:
         Creates wordcloud of user prompts.
         """
         word_freq = self.get_user_word_frequency()
-
         # TODO: assess value
         wordcloud = WordCloud(width=800, height=400, background_color="white").generate_from_frequencies(word_freq)
         plt.figure(figsize=self.figsize)
@@ -342,7 +338,6 @@ class ChatHistoryAnalysis:
         user_responses = self.user_responses
         user_responses["user_email"] = self.process_user_names(user_responses["user_email"])
         user_routes_df = user_responses.groupby(["user_email"])["route"].value_counts().unstack()
-
         return user_routes_df
 
     def plot_user_routes(self):
@@ -360,6 +355,9 @@ class ChatHistoryAnalysis:
         plt.title("Routes taken per user")
 
     def get_route_transitions(self) -> pd.DataFrame:
+        """
+        Returns a dataframe of route transitions.
+        """
         # TODO: Check this works with the groupby ID and time order of events
         def route_transitions(df):
             df["next_route"] = df["route"].shift(1)
@@ -406,19 +404,15 @@ class ChatHistoryAnalysis:
         self.topics_over_time = topics_over_time
 
     def plot_topics(self):
-        # Plot
         return self.topic_model.visualize_topics(width=800, height=500)
 
     def plot_hierarchy(self):
-        # Plot
         return self.topic_model.visualize_hierarchy(width=800, height=400)
 
     def plot_barchart(self):
-        # Plot
         return self.topic_model.visualize_barchart(width=800, height=400)
 
     def plot_topics_over_time(self):
-        # Plot
         return self.topic_model.visualize_topics_over_time(
             self.topics_over_time, top_n_topics=5, normalize_frequency=True
         )
