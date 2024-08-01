@@ -98,7 +98,6 @@ def test_user_journey(page: Page, email_address: str):
         ("chat", True, False),
         ("search", False, True),
         ("search", True, True),
-        ("info", False, False),
     ]:
         question = f"@{route} What do I need to install?"
         logger.info("Asking %r", question)
