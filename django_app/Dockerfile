@@ -14,42 +14,44 @@ RUN npx parcel build
 
 
 # poetry
-# FROM python:3.12-slim AS poetry-packages
+FROM python:3.12-slim AS poetry-packages
 
-# RUN apt-get update && apt-get install --yes build-essential > /dev/null
+RUN apt-get update && apt-get install --yes build-essential > /dev/null
 
-# RUN pip install poetry poetry-plugin-bundle
+RUN pip install poetry poetry-plugin-bundle
 
-# WORKDIR /src
+WORKDIR /src
 
-# COPY django_app/pyproject.toml .
-# COPY django_app/poetry.lock .
+COPY django_app/pyproject.toml .
+COPY django_app/poetry.lock .
 
-# # do this so that poetry bundle can run without the project - can't pass --no-root to bundle
-# #RUN touch README.md
-# RUN poetry install
-# RUN poetry bundle venv ./venv
+# do this so that poetry bundle can run without the project - can't pass --no-root to bundle
+# RUN touch README.md
+RUN poetry install
 
+# Diagnostic step to check the installation
+RUN ls -al /src
+
+# Create the virtual environment using a traditional method as an alternative
+RUN python -m venv /src/venv
+
+# Activate the virtual environment and install dependencies
+RUN . /src/venv/bin/activate && poetry export -f requirements.txt --output requirements.txt && pip install -r requirements.txt
+
+# Diagnostic step to check if venv is created
+RUN ls -al /src/venv
 
 # app
 FROM python:3.12-slim
 
-RUN apt-get update && apt-get install --yes build-essential libpq-dev curl > /dev/null
-
-#temp line
-RUN pip install poetry poetry-plugin-bundle 
+RUN apt-get update && apt-get install --yes libpq-dev curl > /dev/null
 
 WORKDIR /usr/src/app
 
 COPY django_app/ .
 
 COPY --from=npm-packages /src/node_modules/ frontend/node_modules/
-COPY --from=npm-packages /src/dist/ frontend/dist/
-#COPY --from=poetry-packages /src/venv ./venv
-# temp lines (2)
-RUN poetry install
-RUN poetry bundle venv ./venv
-
+COPY --from=poetry-packages /src/venv ./venv
 
 ENV DJANGO_SETTINGS_MODULE='redbox_app.settings'
 ENV PYTHONPATH "${PYTHONPATH}:/."
