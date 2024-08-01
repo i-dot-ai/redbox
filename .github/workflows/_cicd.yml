@@ -41,7 +41,7 @@ jobs:
       environment: preprod
       core_infra_repo_reference: 'refs/heads/main'
       config_repo_reference: 'refs/heads/main'
-      author_name: ${{ github.event.pull_request.user.login }}
+      author_name: ${{ github.actor }}
     secrets: inherit
 
   release-prod:
