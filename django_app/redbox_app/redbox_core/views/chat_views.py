@@ -21,14 +21,7 @@ from django.views.decorators.http import require_http_methods
 from yarl import URL
 
 from redbox_app.redbox_core.client import CoreApiClient
-from redbox_app.redbox_core.models import (
-    ChatHistory,
-    ChatMessage,
-    ChatRoleEnum,
-    Citation,
-    File,
-    StatusEnum,
-)
+from redbox_app.redbox_core.models import ChatHistory, ChatMessage, ChatRoleEnum, Citation, File
 
 logger = logging.getLogger(__name__)
 core_api = CoreApiClient(host=settings.CORE_API_HOST, port=settings.CORE_API_PORT)
@@ -64,14 +57,10 @@ class ChatsView(View):
             )
         endpoint = URL.build(scheme=settings.WEBSOCKET_SCHEME, host=request.get_host(), path=r"/ws/chat/")
 
-        completed_files = File.objects.filter(user=request.user, status=StatusEnum.complete).order_by("-created_at")
-        hidden_statuses = [StatusEnum.deleted, StatusEnum.errored, StatusEnum.failed, StatusEnum.complete]
-        processing_files = (
-            File.objects.filter(user=request.user).exclude(status__in=hidden_statuses).order_by("-created_at")
-        )
+        completed_files, processing_files = File.get_completed_and_processing_files(request.user)
 
         self.decorate_selected_files(completed_files, messages)
-        ChatsView.decorate_history_with_date_group(chat_history)
+        self.decorate_history_with_date_group(chat_history)
         chat_history_grouped_by_date_group = groupby(chat_history, attrgetter("date_group"))
 
         context = {

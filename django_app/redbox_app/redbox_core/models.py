@@ -1,5 +1,6 @@
 import logging
 import uuid
+from collections.abc import Sequence
 from datetime import UTC, datetime, timedelta
 from typing import override
 
@@ -250,6 +251,14 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
 
     def __lt__(self, other):
         return self.id < other.id
+
+    @staticmethod
+    def get_completed_and_processing_files(user: User) -> tuple[Sequence["File"], Sequence["File"]]:
+        hidden_statuses = [StatusEnum.deleted, StatusEnum.errored, StatusEnum.failed, StatusEnum.complete]
+
+        completed_files = File.objects.filter(user=user, status=StatusEnum.complete).order_by("-created_at")
+        processing_files = File.objects.filter(user=user).exclude(status__in=hidden_statuses).order_by("-created_at")
+        return completed_files, processing_files
 
 
 class ChatHistory(UUIDPrimaryKeyBase, TimeStampedModel):
