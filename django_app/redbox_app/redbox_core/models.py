@@ -1,6 +1,6 @@
 import logging
 import uuid
-from collections.abc import Sequence
+from collections.abc import Collection, Sequence
 from datetime import UTC, datetime, timedelta
 from typing import override
 
@@ -10,6 +10,7 @@ from django.conf import settings
 from django.contrib.postgres.fields import ArrayField
 from django.core import validators
 from django.db import models
+from django.db.models import Max, Min, Prefetch
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django_use_email_as_username.models import BaseUser, BaseUserManager
@@ -260,6 +261,17 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
         processing_files = File.objects.filter(user=user).exclude(status__in=hidden_statuses).order_by("-created_at")
         return completed_files, processing_files
 
+    @staticmethod
+    def get_ordered_by_citation_priority(chat_message_id: uuid.UUID) -> Sequence["File"]:
+        return (
+            File.objects.filter(citation__chat_message_id=chat_message_id)
+            .annotate(min_created_at=Min("citation__created_at"))
+            .order_by("min_created_at")
+            .prefetch_related(
+                Prefetch("citation_set", queryset=Citation.objects.filter(chat_message_id=chat_message_id))
+            )
+        )
+
 
 class ChatHistory(UUIDPrimaryKeyBase, TimeStampedModel):
     name = models.TextField(max_length=1024, null=False, blank=False)
@@ -274,6 +286,18 @@ class ChatHistory(UUIDPrimaryKeyBase, TimeStampedModel):
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
         self.name = sanitise_string(self.name)
         super().save(force_insert, force_update, using, update_fields)
+
+    @staticmethod
+    def get_ordered_by_last_message_date(
+        user: User, exclude_chat_ids: Collection[uuid.UUID] | None = None
+    ) -> Sequence["ChatHistory"]:
+        exclude_chat_ids = exclude_chat_ids or []
+        return (
+            ChatHistory.objects.filter(users=user)
+            .exclude(id__in=exclude_chat_ids)
+            .annotate(latest_message_date=Max("chatmessage__created_at"))
+            .order_by("-latest_message_date")
+        )
 
 
 class ChatRoleEnum(models.TextChoices):
@@ -312,6 +336,21 @@ class ChatMessage(UUIDPrimaryKeyBase, TimeStampedModel):
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
         self.text = sanitise_string(self.text)
         super().save(force_insert, force_update, using, update_fields)
+
+    @staticmethod
+    def get_messages_ordered_by_citation_priority(chat_history_id: uuid.UUID) -> Sequence["ChatMessage"]:
+        return (
+            ChatMessage.objects.filter(chat_history__id=chat_history_id)
+            .order_by("created_at")
+            .prefetch_related(
+                Prefetch(
+                    "source_files",
+                    queryset=File.objects.all()
+                    .annotate(min_created_at=Min("citation__created_at"))
+                    .order_by("min_created_at"),
+                )
+            )
+        )
 
 
 class ChatMessageRating(TimeStampedModel):
