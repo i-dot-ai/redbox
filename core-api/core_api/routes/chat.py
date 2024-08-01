@@ -52,6 +52,7 @@ async def rag_chat(
             chat_history=[
                 ChainChatMessage(role=message.role, text=message.text) for message in chat_request.message_history[:-1]
             ],
+            ai_settings=chat_request.ai_settings,
         ),
     )
     return await (redbox.graph | map_to_chat_response).ainvoke(state)
@@ -86,6 +87,7 @@ async def rag_chat_streamed(
             chat_history=[
                 ChainChatMessage(role=message.role, text=message.text) for message in chat_request.message_history[:-1]
             ],
+            ai_settings=chat_request.ai_settings,
         ),
     )
 

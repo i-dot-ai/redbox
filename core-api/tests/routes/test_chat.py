@@ -31,7 +31,7 @@ TEST_CASES = [
     test_case
     for generated_cases in [
         generate_test_cases(
-            query=ChainInput(question="What is AI?", file_uuids=[], user_uuid=uuid4(), chat_history=[]),
+            query=ChainInput(question="What is AI?", file_uuids=[], user_uuid=uuid4(), chat_history=[], ai_settings={}),
             test_data=[
                 TestData(0, 0, expected_llm_response=["Testing Response 1"], expected_route=ChatRoute.chat),
                 TestData(1, 100, expected_llm_response=["Testing Response 1"], expected_route=ChatRoute.chat),
@@ -40,7 +40,9 @@ TEST_CASES = [
             test_id="Basic Chat",
         ),
         generate_test_cases(
-            query=ChainInput(question="What is AI?", file_uuids=[uuid4()], user_uuid=uuid4(), chat_history=[]),
+            query=ChainInput(
+                question="What is AI?", file_uuids=[uuid4()], user_uuid=uuid4(), chat_history=[], ai_settings={}
+            ),
             test_data=[
                 TestData(
                     1, 1000, expected_llm_response=["Testing Response 1"], expected_route=ChatRoute.chat_with_docs
@@ -55,7 +57,13 @@ TEST_CASES = [
             test_id="Chat with single doc",
         ),
         generate_test_cases(
-            query=ChainInput(question="What is AI?", file_uuids=[uuid4(), uuid4()], user_uuid=uuid4(), chat_history=[]),
+            query=ChainInput(
+                question="What is AI?",
+                file_uuids=[uuid4(), uuid4()],
+                user_uuid=uuid4(),
+                chat_history=[],
+                ai_settings={},
+            ),
             test_data=[
                 TestData(
                     2,
@@ -79,7 +87,9 @@ TEST_CASES = [
             test_id="Chat with multiple docs",
         ),
         generate_test_cases(
-            query=ChainInput(question="What is AI?", file_uuids=[uuid4()], user_uuid=uuid4(), chat_history=[]),
+            query=ChainInput(
+                question="What is AI?", file_uuids=[uuid4()], user_uuid=uuid4(), chat_history=[], ai_settings={}
+            ),
             test_data=[
                 TestData(
                     2,
