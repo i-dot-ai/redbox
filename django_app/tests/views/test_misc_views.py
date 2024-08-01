@@ -3,7 +3,7 @@ import logging
 from http import HTTPStatus
 
 import pytest
-from django.conf import Settings
+from django.conf import Settings, settings
 from django.test import Client
 from yarl import URL
 
@@ -35,3 +35,11 @@ def test_declaration_view_get_with_sentry_security_header_endpoint(
         "endpoints": [{"url": "http://example.com"}],
         "include_subdomains": True,
     }
+
+
+@pytest.mark.parametrize("path", ["/security", "/.well-known/security.txt"])
+def test_security_txt_redirect(path: str, client: Client):
+    response = client.get(path)
+
+    assert HTTPStatus(response.status_code).is_redirection
+    assert response.headers["Location"] == f"{settings.SECURITY_TXT_REDIRECT}"
