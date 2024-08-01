@@ -24,7 +24,7 @@ def build_get_docs(env: Settings, retriever: VectorStoreRetriever):
     return RunnableParallel({"documents": retriever})
 
 
-def build_get_docs_with_filter(env: Settings, ai: AISettings, retriever: VectorStoreRetriever):
+def build_get_docs_with_filter(ai: AISettings, retriever: VectorStoreRetriever):
     return RunnableParallel({"documents": retriever | filter_by_elbow(ai.elbow_filter_enabled)})
 
 
@@ -103,16 +103,14 @@ def build_llm_chain(
     tokeniser: Encoding,
     env: Settings,
     ai: AISettings,
-    system_prompt: str,
-    question_prompt: str,
     final_response_chain=False,
 ) -> Runnable:
     _llm = llm.with_config(tags=["response_flag"]) if final_response_chain else llm
     return RunnableParallel(
         {
             "response": make_chat_prompt_from_messages_runnable(
-                system_prompt=system_prompt,
-                question_prompt=question_prompt,
+                system_prompt=ai.chat_system_prompt,
+                question_prompt=ai.chat_question_prompt,
                 input_token_budget=ai.context_window_size - env.llm_max_tokens,
                 tokeniser=tokeniser,
             )

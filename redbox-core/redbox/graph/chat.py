@@ -61,9 +61,7 @@ def get_chat_graph(
 
     app.add_node(
         "llm",
-        build_llm_chain(
-            llm, tokeniser, env, ai, ai.chat_system_prompt, ai.chat_question_prompt, final_response_chain=True
-        ),
+        build_llm_chain(llm, tokeniser, env, ai, final_response_chain=True),
     )
 
     return app.compile(debug=debug)
@@ -86,13 +84,11 @@ def set_chat_method(state: ChainState):
     return {"route_name": selected_tool}
 
 
-def build_llm_map_chain(
-    llm: BaseChatModel, tokeniser: Encoding, env: Settings, ai: AISettings, system_prompt: str, question_prompt: str
-) -> Runnable:
+def build_llm_map_chain(llm: BaseChatModel, tokeniser: Encoding, env: Settings, ai: AISettings) -> Runnable:
     return (
         make_chat_prompt_from_messages_runnable(
-            system_prompt=system_prompt,
-            question_prompt=question_prompt,
+            system_prompt=ai.map_system_prompt,
+            question_prompt=ai.chat_map_question_prompt,
             input_token_budget=ai.context_window_size - env.llm_max_tokens,
             tokeniser=tokeniser,
         )
@@ -124,8 +120,6 @@ def get_chat_with_docs_graph(
             tokeniser,
             env,
             ai,
-            ai.chat_with_docs_system_prompt,
-            ai.chat_with_docs_question_prompt,
             final_response_chain=True,
         ),
     )
