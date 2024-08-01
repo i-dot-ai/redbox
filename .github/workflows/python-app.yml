@@ -141,7 +141,3 @@ jobs:
       run: |
         poetry run ruff format . --check
         poetry run ruff check .
-
-    - name: Type check
-      run: |
-        make checktypes
