@@ -5,7 +5,7 @@ from tiktoken import Encoding
 
 from redbox.chains.graph import set_route, set_state_field
 from redbox.graph.search import get_search_graph
-from redbox.models.chain import ChainState, AISettings
+from redbox.models.chain import ChainState
 from redbox.models.chat import ChatRoute
 from redbox.models.settings import Settings
 from redbox.chains.components import get_all_chunks_retriever, get_parameterised_retriever, get_chat_llm, get_tokeniser
@@ -34,10 +34,8 @@ class Redbox:
         parameterised_retriever: VectorStoreRetriever | None = None,
         tokeniser: Encoding | None = None,
         env: Settings | None = None,
-        ai_settings: AISettings = None,
         debug: bool = False,
     ):
-        # ai_settings = ai_settings or AISettings()
         _env = env or Settings()
         _all_chunks_retriever = all_chunks_retriever or get_all_chunks_retriever(_env)
         _parameterised_retriever = parameterised_retriever or get_parameterised_retriever(_env)
@@ -60,7 +58,6 @@ class Redbox:
                 _llm,
                 _parameterised_retriever.with_config(tags=[Redbox.SOURCE_DOCUMENTS_TAG]),
                 _tokeniser,
-                ai_settings,
                 debug,
             ),
         )
