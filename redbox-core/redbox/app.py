@@ -8,7 +8,6 @@ from redbox.graph.search import get_search_graph
 from redbox.models.chain import ChainState
 from redbox.models.chat import ChatRoute
 from redbox.models.settings import Settings
-from redbox.chains.components import get_all_chunks_retriever, get_parameterised_retriever, get_chat_llm, get_tokeniser
 from redbox.graph.chat import get_chat_graph, get_chat_with_docs_graph
 
 
@@ -29,19 +28,13 @@ class Redbox:
 
     def __init__(
         self,
-        llm: BaseChatModel | None = None,
-        all_chunks_retriever: VectorStoreRetriever | None = None,
-        parameterised_retriever: VectorStoreRetriever | None = None,
-        tokeniser: Encoding | None = None,
-        env: Settings | None = None,
+        llm: BaseChatModel,
+        all_chunks_retriever: VectorStoreRetriever,
+        parameterised_retriever: VectorStoreRetriever,
+        tokeniser: Encoding,
+        env: Settings,
         debug: bool = False,
     ):
-        _env = env or Settings()
-        _all_chunks_retriever = all_chunks_retriever or get_all_chunks_retriever(_env)
-        _parameterised_retriever = parameterised_retriever or get_parameterised_retriever(_env)
-        _llm = llm or get_chat_llm(_env)
-        _tokeniser = tokeniser or get_tokeniser()
-
         app = StateGraph(ChainState)
         app.set_entry_point("set_route")
 
@@ -55,20 +48,20 @@ class Redbox:
         app.add_node(
             ChatRoute.search,
             get_search_graph(
-                _llm,
-                _parameterised_retriever.with_config(tags=[Redbox.SOURCE_DOCUMENTS_TAG]),
-                _tokeniser,
+                llm,
+                parameterised_retriever.with_config(tags=[Redbox.SOURCE_DOCUMENTS_TAG]),
+                tokeniser,
                 debug,
             ),
         )
-        app.add_node(ChatRoute.chat, get_chat_graph(_llm, _tokeniser, debug))
+        app.add_node(ChatRoute.chat, get_chat_graph(llm, tokeniser, debug))
         app.add_node(
             ChatRoute.chat_with_docs,
             get_chat_with_docs_graph(
-                _llm,
-                _all_chunks_retriever.with_config(tags=[Redbox.SOURCE_DOCUMENTS_TAG]),
-                _tokeniser,
-                _env,
+                llm,
+                all_chunks_retriever.with_config(tags=[Redbox.SOURCE_DOCUMENTS_TAG]),
+                tokeniser,
+                env,
                 debug,
             ),
         )

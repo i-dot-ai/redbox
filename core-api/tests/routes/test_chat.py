@@ -112,7 +112,7 @@ def test_case(request):
 
 @pytest.fixture
 def client(test_case: RedboxChatTestCase, embedding_model):
-    chat_app.dependency_overrides[dependencies.get_embedding_model] = lambda: embedding_model
+    # chat_app.dependency_overrides[dependencies.get_embedding_model] = lambda: embedding_model
     chat_app.dependency_overrides[dependencies.get_llm] = lambda: GenericFakeChatModel(
         messages=iter(test_case.test_data.expected_llm_response)
     )

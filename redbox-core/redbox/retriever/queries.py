@@ -7,6 +7,14 @@ from redbox.models.chain import ChainState
 from redbox.models.file import ChunkResolution
 
 
+# class ESParams(TypedDict):
+#     size: int
+#     num_candidates: int
+#     match_boost: float
+#     knn_boost: float
+#     similarity_threshold: float
+
+
 def make_query_filter(user_uuid: UUID, file_uuids: list[UUID], chunk_resolution: ChunkResolution | None) -> list[dict]:
     query_filter: list[dict] = [
         {

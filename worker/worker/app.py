@@ -11,7 +11,6 @@ from faststream.redis import RedisBroker
 from langchain_core.runnables import Runnable, RunnableParallel
 from langchain_elasticsearch.vectorstores import ElasticsearchStore, BM25RetrievalStrategy
 
-from redbox.embeddings import get_embeddings
 from redbox.models import File, ProcessingStatusEnum, Settings
 from redbox.storage.elasticsearch import ElasticsearchStorageHandler
 from worker.loader import UnstructuredLargeChunkLoader, UnstructuredTitleLoader
@@ -38,7 +37,7 @@ publisher = broker.publisher(list=env.embed_queue_name)
 def get_elasticsearch_store(es: Elasticsearch, es_index_name: str):
     return ElasticsearchStore(
         index_name=es_index_name,
-        embedding=get_embeddings(env),
+        embedding=env.get_embeddings(),
         es_connection=es,
         query_field="text",
         vector_query_field=env.embedding_document_field_name,

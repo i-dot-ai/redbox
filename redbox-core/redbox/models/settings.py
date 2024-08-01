@@ -6,6 +6,17 @@ import boto3
 from elasticsearch import Elasticsearch
 from pydantic import BaseModel
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from langchain_core.embeddings import Embeddings
+
+from langchain_openai.embeddings import AzureOpenAIEmbeddings, OpenAIEmbeddings
+from langchain_core.utils.utils import convert_to_secret_str
+
+from langchain_core.embeddings.fake import FakeEmbeddings
+
+from langchain_core.retrievers import BaseRetriever
+
+from redbox.retriever import AllElasticsearchRetriever, ParameterisedElasticsearchRetriever
+
 
 log = logging.getLogger()
 
@@ -164,3 +175,45 @@ class Settings(BaseSettings):
     @property
     def redis_url(self) -> str:
         return f"redis://{self.redis_host}:{self.redis_port}/"
+
+    def get_embeddings(self) -> Embeddings:
+        if self.embedding_backend == "azure":
+            return AzureOpenAIEmbeddings(
+                azure_endpoint=self.azure_openai_endpoint,
+                api_version=self.azure_api_version_embeddings,
+                model=self.azure_embedding_model,
+                max_retries=self.embedding_max_retries,
+                retry_min_seconds=self.embedding_retry_min_seconds,
+                retry_max_seconds=self.embedding_retry_max_seconds,
+            )
+        if self.embedding_backend == "openai":
+            return OpenAIEmbeddings(
+                api_key=convert_to_secret_str(self.openai_api_key),
+                base_url=self.embedding_openai_base_url,
+                model=self.embedding_openai_model,
+                chunk_size=self.embedding_max_batch_size,
+            )
+        if self.embedding_backend == "fake":
+            return FakeEmbeddings(size=3072)
+        else:
+            raise Exception("No configured embedding model")
+
+    def get_parameterised_retriever(self) -> BaseRetriever:
+        """Creates an Elasticsearch retriever runnable.
+
+        Runnable takes input of a dict keyed to question, file_uuids and user_uuid.
+
+        Runnable returns a list of Chunks.
+        """
+        return ParameterisedElasticsearchRetriever(
+            es_client=self.elasticsearch_client(),
+            index_name=f"{self.elastic_root_index}-chunk",
+            embedding_model=self.get_embeddings(),
+            embedding_field_name=self.embedding_document_field_name,
+        )
+
+    def get_all_chunks_retriever(self):
+        return AllElasticsearchRetriever(
+            es_client=self.elasticsearch_client(),
+            index_name=f"{self.elastic_root_index}-chunk",
+        )
