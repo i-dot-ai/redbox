@@ -1,4 +1,3 @@
-import glob
 import inspect
 import os
 import re
@@ -8,25 +7,33 @@ from pathlib import Path
 
 import matplotlib as mpl
 import matplotlib.pyplot as plt
-import numpy as np
 import pandas as pd
 import seaborn as sns
 from bertopic import BERTopic
 from django.db.models import F, Prefetch
-from regex import D
 from wordcloud import STOPWORDS, WordCloud
 
-packages = ["django-environ", "django-use-email-as-username", 'psycopg2-binary', 'django-magic-link', 'django-single-session', 'django-compressor', 'django-import-export', 'django-storages', 'daphne', 'django-allauth']
-import pip
+# packages = [
+#     "django-environ",
+#     "django-use-email-as-username",
+#     "psycopg2-binary",
+#     "django-magic-link",
+#     "django-single-session",
+#     "django-compressor",
+#     "django-import-export",
+#     "django-storages",
+#     "daphne",
+#     "django-allauth",
+# ]
+# import pip
 
-for package in packages:
-    pip.main(['install', package])
+# for package in packages:
+# pip.main(["install", package])
 
-import django
 
-django.setup()
+# django.setup()
 
-from redbox_app.redbox_core.models import ChatHistory, ChatMessage
+# from redbox_app.redbox_core.models import ChatHistory, ChatMessage
 
 
 class ChatHistoryAnalysis:
@@ -40,20 +47,32 @@ class ChatHistoryAnalysis:
         os.makedirs(self.visualisation_dir, exist_ok=True)
         os.makedirs(self.table_dir, exist_ok=True)
 
-        self.chat_logs = self.fetch_chat_history()
+        # Commenting out this whilst testing with just data dump
+
+        # self.chat_logs = self.fetch_chat_history()
+        self.chat_logs = pd.read_csv("notebooks/evaluation/data/chat_histories/chathistory.csv")
+        # This column dictionary will change keys depending on names given in data frame structure
+        COLUMNS_DICT = {
+            "modified_at": "created_at",
+            "id": "message_id",
+            "users": "user_email",
+            "role": "role",
+            "text": "text",
+        }
+
+        TEAM_EMAILS = ["alfie.dennen@trade.gov.uk", "isobel.daley@trade.gov.uk"]
+
+        # TODO: Add row to map column headings to new streamlined ones
 
         # Select specific columns and converting to readable timestamp
-        self.chat_logs = self.chat_logs[['created_at', 'users_id', 'user_email', 'chat_history', 'text', 'role', 'message_id']]
-        self.chat_logs['created_at'] = pd.to_datetime(self.chat_logs['created_at'])
+        self.chat_logs = self.chat_logs[list(COLUMNS_DICT.keys())]
+        # Note I tried the following with .rename() and it did not work.
+        self.chat_logs.columns = [COLUMNS_DICT[col] if col in COLUMNS_DICT else col for col in self.chat_logs.columns]
 
-        # Create function for toggle to anonymise users
-        # chat_log_users = self.chat_logs['users'].unique()
-        # n_users = len(chat_log_users)
-        # anon_users = []
-        # for i in range(1,n_users+1):
-        #     anon_users.append(f"User {i}")
-        # anon_user_dict = dict(zip(chat_log_users, anon_users))
-        # self.chat_logs['users'] = self.chat_logs['users'].map(anon_user_dict)
+        # self.chat_logs = self.chat_logs[['created_at', 'users_id', 'user_email', 'chat_history', 'text', 'role', 'message_id']]
+        self.chat_logs["created_at"] = pd.to_datetime(self.chat_logs["created_at"])
+        # Remove users that are redbox team
+        self.chat_logs = self.chat_logs[~self.chat_logs["user_email"].isin(TEAM_EMAILS)]
 
         self.ai_responses = self.chat_logs[self.chat_logs["role"] == "ai"]
         self.user_responses = self.chat_logs[self.chat_logs["role"] == "user"]
@@ -75,31 +94,47 @@ class ChatHistoryAnalysis:
         mpl.rcParams.update({"font.size": 10})
         mpl.rcParams.update({"font.family": "Arial"})
 
+    def anonymise_users(self):
+        """
+        If toggle switched in streamlit app then users are anonymised.
+        """
+        chat_log_users = self.chat_logs["user_email"].unique()
+        n_users = len(chat_log_users)
+        anon_users = []
+        for i in range(1, n_users + 1):
+            anon_users.append(f"User {i}")
+        anon_user_dict = dict(zip(chat_log_users, anon_users, strict=False))
+        self.chat_logs["user_email"] = self.chat_logs["user_email"].map(anon_user_dict)
+        self.ai_responses["user_email"] = self.ai_responses["user_email"].map(anon_user_dict)
+        self.user_responses["user_email"] = self.user_responses["user_email"].map(anon_user_dict)
+
     def fetch_chat_history(self, limit=100):
         chat_messages = ChatMessage.objects.all()
-        chat_history_objects = ChatHistory.objects.prefetch_related(
-            Prefetch('messages', queryset=chat_messages)
-        ).annotate(
-            user_email=F('users__email')
-        ).values(
-            'created_at',
-            'users_id',
-            'user_email',
-            chat_history=F('id'),
-        )[:limit]
+        chat_history_objects = (
+            ChatHistory.objects.prefetch_related(Prefetch("messages", queryset=chat_messages))
+            .annotate(user_email=F("users__email"))
+            .values(
+                "created_at",
+                "users_id",
+                "user_email",
+                chat_history=F("id"),
+            )[:limit]
+        )
 
         results = []
         for chat_history in chat_history_objects:
-            messages = ChatMessage.objects.filter(chat_history=chat_history['chat_history']).values('text', 'role', 'id')
+            messages = ChatMessage.objects.filter(chat_history=chat_history["chat_history"]).values(
+                "text", "role", "id"
+            )
             for message in messages:
                 result = {
-                    'created_at': chat_history['created_at'],
-                    'users_id': chat_history['users_id'],
-                    'user_email': chat_history['user_email'],
-                    'chat_history': chat_history['chat_history'],
-                    'text': message['text'],
-                    'role': message['role'],
-                    'message_id': message['id']
+                    "created_at": chat_history["created_at"],
+                    "users_id": chat_history["users_id"],
+                    "user_email": chat_history["user_email"],
+                    "chat_history": chat_history["chat_history"],
+                    "text": message["text"],
+                    "role": message["role"],
+                    "message_id": message["id"],
                 }
                 results.append(result)
 
@@ -111,7 +146,7 @@ class ChatHistoryAnalysis:
         tokens = [word.lower() for word in tokens if word.isalpha()]
         return tokens
 
-    def process_user_names(self, user_names_column):
+    def process_user_names(self, user_names_column: pd.Series) -> pd.Series:
         # TODO: Use this function across the board when displaying User Names. Decide whether surname is needed.
         """
         Takes a pandas column and returns a dictionary of key value pairs for the tidy name.
@@ -121,135 +156,130 @@ class ChatHistoryAnalysis:
         unique_user_email = user_names_column.unique()
         unique_user_names = [user_email.split("@")[0].replace(".", " ").title() for user_email in unique_user_email]
         user_name_dict = dict(zip(unique_user_email, unique_user_names, strict=False))
-        return user_name_dict
+        new_user_names_column = user_names_column.map(user_name_dict)
+        print(type(new_user_names_column))
+        return new_user_names_column
 
-    # 1) Who uses Redbox the most?
-    def user_frequency_analysis(self):
-        user_counts = self.user_responses["user_email"].value_counts()
+    def get_user_frequency(self) -> pd.DataFrame:
+        """
+        Creates a data frame of total inputs by user.
+        """
+        user_counts = self.user_responses["user_email"].value_counts().reset_index(name="values")
+        user_counts["user_email"] = self.process_user_names(user_counts.user_email)
+        return user_counts
 
-        user_name = [user_email.split("@")[0].replace(".", " ").title() for user_email in user_counts.index]
-        wrapped_user_name = ["\n".join(textwrap.wrap(name, width=10)) for name in user_name]
-
-        # Table
-        table_data = {"Name": user_name, "Email": user_counts.index, "Number of times used": user_counts.values}
-        table_dataframe = pd.DataFrame(data=table_data, index=user_name)
-        table_dataframe.to_csv(f"{self.table_dir}top_users.csv", index=False)
-
-        # Barplot
+    def plot_user_frequency(self):
+        """
+        Generates a bar plot of total inputs per user.
+        """
+        user_counts = self.get_user_frequency()
         plt.figure(figsize=self.figsize)
-        sns.barplot(x=wrapped_user_name, y=user_counts.values, palette="viridis")
-
-        plt.xticks(ha="right", size=9)
+        sns.barplot(data=user_counts, x="user_email", y="values", palette="viridis")
         plt.title("Unique Users by Total Number of Messages")
+        xlabels = user_counts.user_email
+        xlabels_new = ["\n".join(textwrap.wrap(name, width=10)) for name in xlabels]
+        plt.xticks(range(len(xlabels_new)), xlabels_new)
         plt.xlabel("Users")
         plt.ylabel("Total No. of Prompts")
-        top_users_path = os.path.join(self.visualisation_dir, "top_users.png")
-        plt.savefig(top_users_path)
 
-    # 2) Redbox traffic analysis
-    def redbox_traffic_analysis(self):
-        # think about GA integration?
-        self.chat_logs["date"] = self.user_responses["created_at"].dt.date
-        date_counts = self.chat_logs["date"].value_counts().sort_index()
+    def get_redbox_traffic(self) -> pd.DataFrame:
+        """
+        Returns a dataframe of redbox usage by time.
+        """
+        redbox_traffic_df = (
+            self.user_responses["created_at"].groupby(by=self.user_responses["created_at"].dt.date).count()
+        )
 
-        # Table
-        table_data = {"Date": date_counts.index, "Usage": date_counts.values}
-        table_dataframe = pd.DataFrame(data=table_data)
-        table_dataframe.to_csv(f"{self.table_dir}usage_of_redbox_ai_over_time.csv", index=False)
+        return redbox_traffic_df
 
-        # Line graph
+    def plot_redbox_traffic(self):
+        """
+        Generates a line plot of redbox usage over time
+        """
+        redbox_traffic_df = self.get_redbox_traffic()
         plt.figure(figsize=self.figsize)
-        date_counts.plot(kind="line")
+        redbox_traffic_df.plot(kind="line")
         plt.title("Usage of Redbox AI Over Time")
         plt.xlabel("Date")
         plt.ylabel("Number of Prompts")
-        conversation_frequency_path = os.path.join(self.visualisation_dir, "usage_of_redbox_ai_over_time.png")
-        plt.savefig(conversation_frequency_path)
 
-    def redbox_traffic_by_user(self):
+    def get_redbox_traffic_by_user(self) -> pd.DataFrame:
         """
-        Plotting how each users usage has changed over time
+        Returns a dataframe of redbox usage by user over time.
         """
-        user_responses_df = self.user_responses
-        user_dict = self.process_user_names(user_responses_df.user_email)
-        user_responses_df["user_email"] = user_responses_df["user_email"].map(user_dict)
-        # TODO: Ensure created_at column is changed to modified_at column in live version.
-        pivot_user_time = (
-            user_responses_df[["created_at", "user_email"]]
-            .groupby(pd.Grouper(key="created_at", axis=0, freq="2D", sort=True))
-            .value_counts()
-            .reset_index(name="count")
-            .pivot(index="created_at", columns="user_email", values="count")
+        user_responses = self.user_responses
+        user_responses["user_email"] = self.process_user_names(user_responses["user_email"])
+        redbox_traffic_by_user_df = (
+            user_responses.groupby([user_responses["created_at"].dt.date, "user_email"]).size().unstack(fill_value=0)
         )
-        fig = sns.lineplot(data=pivot_user_time, markers=True)
+
+        return redbox_traffic_by_user_df
+
+    def plot_redbox_traffic_by_user(self):
+        """
+        Generates a plot of redbox usage by user over time
+        """
+        redbox_traffic_by_user_df = self.get_redbox_traffic_by_user()
+        plt.figure(figsize=self.figsize)
+        fig = sns.lineplot(data=redbox_traffic_by_user_df, markers=True)
         fig.set_xlabel("Date")
         fig.set_ylabel("No. of Prompts")
-        # fig.tick_params(axis='x', rotation=90)
-        sns.move_legend(fig, "upper left", bbox_to_anchor=(1, 1), title="Users")
         fig.set_title("Usage of Redbox by User over Time")
+        sns.move_legend(fig, "upper left", bbox_to_anchor=(1, 1), title="Users")
 
-    # 3) Which words are used the most frequently by USERS?
-    def user_word_frequency_analysis(self):
+    def get_user_word_frequency(self) -> pd.DataFrame:
+        """
+        Returns a dataframe with word frequency, removing stopwords.
+        """
         all_tokens = [token for tokens in self.user_responses["tokens"] for token in tokens]
-
-        # far too many stopwords and wordcloud has a lovely constant attached to resolve this
         stopwords_removed_from_all_tokens = [word for word in all_tokens if word not in STOPWORDS]
-
         word_freq = Counter(stopwords_removed_from_all_tokens)
 
-        most_common_words = word_freq.most_common(
-            20
-        )  # TODO - determine how many common words we want and the right vis. for this
-        words, counts = zip(*most_common_words, strict=False)
+        return word_freq
 
-        # Table
-        table_data = {"Word": list(word_freq.keys()), "Frequency": list(word_freq.values())}
-        table_dataframe = pd.DataFrame(data=table_data).sort_values("Frequency", ascending=False)
-        table_dataframe.to_csv(f"{self.table_dir}user_most_frequent_words_table.csv", index=False)
+    def get_ai_word_frequency(self) -> pd.DataFrame:
+        """
+        Returns a dataframe with word frequency, removing stopwords.
+        """
+        ai_word_freq = Counter(
+            [token for tokens in self.ai_responses["tokens"] for token in tokens if token not in STOPWORDS]
+        )
+        return ai_word_freq
 
-        # Barplot
-        plt.figure(figsize=self.figsize)
-        sns.barplot(x=list(counts), y=list(words), palette="viridis")
-        plt.title("Top 20 Most Frequent Words")
-        plt.xlabel("Frequency")
-        plt.ylabel("Words")
-        barplot_path = os.path.join(self.visualisation_dir, "user_most_frequent_words_barplot.png")
-        plt.savefig(barplot_path)
+    def plot_user_wordcloud(self):
+        """
+        Creates wordcloud of user prompts.
+        """
+        word_freq = self.get_user_word_frequency()
 
-        # Wordcloud - TODO - assess value
+        # TODO: assess value
         wordcloud = WordCloud(width=800, height=400, background_color="white").generate_from_frequencies(word_freq)
         plt.figure(figsize=self.figsize)
         plt.imshow(wordcloud, interpolation="bilinear")
         plt.axis("off")
         plt.title("Most Frequent Words")
-        wordcloud_path = os.path.join(self.visualisation_dir, "user_most_frequent_words.png")
-        plt.savefig(wordcloud_path)
 
-    # 4) Which words are used the most frequently by AI?
-    def ai_word_frequency_analysis(self):
-        ai_word_freq = Counter(
-            [token for tokens in self.ai_responses["tokens"] for token in tokens if token not in STOPWORDS]
+    def plot_top_user_word_frequency(self):
+        """
+        Creates bar plot of most common user words.
+        """
+        word_freq = self.get_user_word_frequency()
+        most_common_words = word_freq.most_common(
+            20  # TODO - determine how many common words we want and the right vis. for this
         )
-        most_common_words = ai_word_freq.most_common(
-            20
-        )  # TODO - determine how many common words we want and the right vis. for this
         words, counts = zip(*most_common_words, strict=False)
-
-        # Table
-        table_data = {"Word": list(ai_word_freq.keys()), "Frequency": list(ai_word_freq.values())}
-        table_dataframe = pd.DataFrame(data=table_data).sort_values("Frequency", ascending=False)
-        table_dataframe.to_csv(f"{self.table_dir}ai_most_frequent_words_table.csv", index=False)
-
-        # Barplot
         plt.figure(figsize=self.figsize)
         sns.barplot(x=list(counts), y=list(words), palette="viridis")
         plt.title("Top 20 Most Frequent Words")
         plt.xlabel("Frequency")
         plt.ylabel("Words")
-        barplot_path = os.path.join(self.visualisation_dir, "ai_most_frequent_words_barplot.png")
-        plt.savefig(barplot_path)
 
-        # Wordcloud - TODO - assess value
+    def plot_ai_wordcloud(self):
+        """
+        Creates wordcloud of AI outputs.
+        """
+        ai_word_freq = self.get_ai_word_frequency()
+        # TODO - assess value
         ai_wordcloud = WordCloud(width=800, height=400, background_color="white").generate_from_frequencies(
             ai_word_freq
         )
@@ -257,8 +287,23 @@ class ChatHistoryAnalysis:
         plt.imshow(ai_wordcloud, interpolation="bilinear")
         plt.axis("off")
         plt.title("Most Frequent Words in AI Responses")
-        ai_wordcloud_path = os.path.join(self.visualisation_dir, "ai_most_frequent_words.png")
-        plt.savefig(ai_wordcloud_path)
+
+    def plot_top_ai_word_frequency(self):
+        """
+        Creates bar plot of most common user words.
+        """
+        ai_word_freq = self.get_ai_word_frequency()
+
+        most_common_words = ai_word_freq.most_common(
+            20
+        )  # TODO - determine how many common words we want and the right vis. for this
+
+        words, counts = zip(*most_common_words, strict=False)
+        plt.figure(figsize=self.figsize)
+        sns.barplot(x=list(counts), y=list(words), palette="viridis")
+        plt.title("Top 20 Most Frequent Words")
+        plt.xlabel("Frequency")
+        plt.ylabel("Words")
 
     # 5) Is there a clear pattern behind AI responses?
     def ai_response_pattern_analysis(self):
@@ -329,7 +374,9 @@ class ChatHistoryAnalysis:
     # In what way are users switching between routes?
     def route_transitions(self):
         # Get route transitions and counts per user session (is 'id' appropriate?)
-        df_transitions = self.user_responses.groupby("message_id").apply(self.get_route_transitions).reset_index(drop=True)
+        df_transitions = (
+            self.user_responses.groupby("message_id").apply(self.get_route_transitions).reset_index(drop=True)
+        )
 
         transition_counts = df_transitions["transition"].value_counts().reset_index()
 
@@ -412,16 +459,22 @@ class ChatHistoryAnalysis:
             .rename(columns={"no_input_words": "mean_input_words"})
             .reset_index()
         )
-        no_inputs_df = user_responses_df[["message_id", "user_email"]].groupby("message_id").value_counts().reset_index(name="no_inputs")
-        compare_inputs_words_df = no_inputs_df.merge(mean_inputs_df, left_on=["message_id", "user_email"], right_on=["message_id", "user_email"])
+        no_inputs_df = (
+            user_responses_df[["message_id", "user_email"]]
+            .groupby("message_id")
+            .value_counts()
+            .reset_index(name="no_inputs")
+        )
+        compare_inputs_words_df = no_inputs_df.merge(
+            mean_inputs_df, left_on=["message_id", "user_email"], right_on=["message_id", "user_email"]
+        )
 
         return compare_inputs_words_df
 
     def vis_prompt_length_vs_chat_legnth(self, outlier_max: int):
         compare_inputs_words_df = self.get_prompt_length_vs_chat_length(outlier_max=outlier_max)
-        user_dict = self.process_user_names(compare_inputs_words_df.user_email)
-        compare_inputs_words_df["user_email"] = compare_inputs_words_df["user_email"].map(user_dict)
-        fig = sns.scatterplot(data=compare_inputs_words_df, x="no_inputs", y="mean_input_words", hue="users")
+        compare_inputs_words_df["user_email"] = self.process_user_names(compare_inputs_words_df.user_email)
+        fig = sns.scatterplot(data=compare_inputs_words_df, x="no_inputs", y="mean_input_words", hue="user_email")
         fig.set_xlabel("No. of prompts")
         fig.set_ylabel("Mean length of prompt")
         fig.set_title("Scatter plot comparing number of prompts with the length of prompt for each user session")
