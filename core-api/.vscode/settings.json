@@ -13,5 +13,5 @@
         ".",
         "-m not ( ai )"
     ],
-    "python.testing.pytestPath": "venv/bin/python -m pytest"
+    "python.testing.pytestPath": "venv/bin/python -m pytest",
 }
