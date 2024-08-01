@@ -101,7 +101,6 @@ def set_prompt_args(state: ChainState):
 def build_llm_chain(
     llm: BaseChatModel,
     tokeniser: Encoding,
-    env: Settings,
     ai: AISettings,
     final_response_chain=False,
 ) -> Runnable:
@@ -111,7 +110,7 @@ def build_llm_chain(
             "response": make_chat_prompt_from_messages_runnable(
                 system_prompt=ai.chat_system_prompt,
                 question_prompt=ai.chat_question_prompt,
-                input_token_budget=ai.context_window_size - env.llm_max_tokens,
+                input_token_budget=ai.context_window_size - ai.llm_max_tokens,
                 tokeniser=tokeniser,
             )
             | _llm
