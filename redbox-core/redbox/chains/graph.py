@@ -25,12 +25,12 @@ def build_get_docs(retriever: VectorStoreRetriever):
 
 def build_get_docs_with_filter(retriever: VectorStoreRetriever):
     @chain
-    def f(state: ChainState):
+    def _build_get_docs_with_filter(state: ChainState):
         return RunnableParallel(
             {"documents": retriever | filter_by_elbow(state["query"].ai_settings.elbow_filter_enabled)}
         )
 
-    return f
+    return _build_get_docs_with_filter
 
 
 @chain
