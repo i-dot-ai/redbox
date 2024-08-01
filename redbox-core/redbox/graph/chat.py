@@ -51,7 +51,7 @@ def build_reduce_docs_step(splitter: TextSplitter):
 
 
 def get_chat_graph(
-    llm: BaseChatModel, tokeniser: Encoding, env: Settings, ai: AISettings, debug: bool = False
+    llm: BaseChatModel, tokeniser: Encoding, ai_settings: AISettings, debug: bool = False
 ) -> CompiledGraph:
     app = StateGraph(ChainState)
     app.set_entry_point("set_chat_prompt_args")
@@ -61,7 +61,7 @@ def get_chat_graph(
 
     app.add_node(
         "llm",
-        build_llm_chain(llm, tokeniser, ai, final_response_chain=True),
+        build_llm_chain(llm, tokeniser, ai_settings, final_response_chain=True),
     )
 
     return app.compile(debug=debug)
@@ -84,12 +84,12 @@ def set_chat_method(state: ChainState):
     return {"route_name": selected_tool}
 
 
-def build_llm_map_chain(llm: BaseChatModel, tokeniser: Encoding, ai: AISettings) -> Runnable:
+def build_llm_map_chain(llm: BaseChatModel, tokeniser: Encoding, ai_settings: AISettings) -> Runnable:
     return (
         make_chat_prompt_from_messages_runnable(
-            system_prompt=ai.map_system_prompt,
-            question_prompt=ai.chat_map_question_prompt,
-            input_token_budget=ai.context_window_size - ai.llm_max_tokens,
+            system_prompt=ai_settings.map_system_prompt,
+            question_prompt=ai_settings.chat_map_question_prompt,
+            input_token_budget=ai_settings.context_window_size - ai_settings.llm_max_tokens,
             tokeniser=tokeniser,
         )
         | llm
@@ -103,12 +103,12 @@ def get_chat_with_docs_graph(
     all_chunks_retriever: VectorStoreRetriever,
     tokeniser: Encoding,
     env: Settings,
-    ai: AISettings,
+    ai_settings: AISettings,
     debug: bool = False,
 ) -> CompiledGraph:
     app = StateGraph(ChainState)
 
-    app.add_node("get_chat_docs", build_get_docs(env, all_chunks_retriever))
+    app.add_node("get_chat_docs", build_get_docs(all_chunks_retriever))
     app.add_node("set_chat_prompt_args", set_prompt_args)
     app.add_node("set_chat_method", set_chat_method)
 
@@ -118,12 +118,13 @@ def get_chat_with_docs_graph(
         build_llm_chain(
             llm,
             tokeniser,
-            ai,
+            ai_settings,
             final_response_chain=True,
         ),
     )
     app.add_node(
-        ChatRoute.chat_with_docs_map_reduce, get_chat_with_docs_map_reduce_graph(llm, tokeniser, env, ai, debug)
+        ChatRoute.chat_with_docs_map_reduce,
+        get_chat_with_docs_map_reduce_graph(llm, tokeniser, env, ai_settings, debug),
     )
     app.add_node("clear_documents", set_state_field("documents", []))
 

@@ -34,10 +34,10 @@ class Redbox:
         parameterised_retriever: VectorStoreRetriever | None = None,
         tokeniser: Encoding | None = None,
         env: Settings | None = None,
-        ai: AISettings = None,
+        ai_settings: AISettings = None,
         debug: bool = False,
     ):
-        ai = ai or AISettings()
+        ai_settings = ai_settings or AISettings()
         _env = env or Settings()
         _all_chunks_retriever = all_chunks_retriever or get_all_chunks_retriever(_env)
         _parameterised_retriever = parameterised_retriever or get_parameterised_retriever(_env)
@@ -60,16 +60,20 @@ class Redbox:
                 _llm,
                 _parameterised_retriever.with_config(tags=[Redbox.SOURCE_DOCUMENTS_TAG]),
                 _tokeniser,
-                _env,
-                ai,
+                ai_settings,
                 debug,
             ),
         )
-        app.add_node(ChatRoute.chat, get_chat_graph(_llm, _tokeniser, _env, ai, debug))
+        app.add_node(ChatRoute.chat, get_chat_graph(_llm, _tokeniser, ai_settings, debug))
         app.add_node(
             ChatRoute.chat_with_docs,
             get_chat_with_docs_graph(
-                _llm, _all_chunks_retriever.with_config(tags=[Redbox.SOURCE_DOCUMENTS_TAG]), _tokeniser, _env, ai, debug
+                _llm,
+                _all_chunks_retriever.with_config(tags=[Redbox.SOURCE_DOCUMENTS_TAG]),
+                _tokeniser,
+                _env,
+                ai_settings,
+                debug,
             ),
         )
         app.add_node(

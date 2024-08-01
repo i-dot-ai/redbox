@@ -145,7 +145,7 @@ async def test_chat(test_case: RedboxChatTestCase, env, tokeniser):
         parameterised_retriever=parameterised_retriever(test_case.docs),
         tokeniser=tokeniser,
         env=env,
-        ai=None,
+        ai_settings=None,
         debug=LANGGRAPH_DEBUG,
     )
     response = await app.run(
@@ -169,7 +169,7 @@ async def test_streaming(test_case: RedboxChatTestCase, env, tokeniser):
         parameterised_retriever=parameterised_retriever(test_case.docs),
         tokeniser=tokeniser,
         env=env,
-        ai=None,
+        ai_settings=None,
         debug=LANGGRAPH_DEBUG,
     )
 

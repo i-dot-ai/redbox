@@ -11,7 +11,7 @@ from tiktoken import Encoding
 
 from redbox.api.format import format_documents
 from redbox.api.runnables import filter_by_elbow
-from redbox.models import ChatRoute, Settings
+from redbox.models import ChatRoute
 from redbox.models.chain import ChainChatMessage, ChainState
 from redbox.models.errors import QuestionLengthError
 from redbox.models.settings import AISettings
@@ -20,12 +20,12 @@ log = logging.getLogger()
 re_keyword_pattern = re.compile(r"@(\w+)")
 
 
-def build_get_docs(env: Settings, retriever: VectorStoreRetriever):
+def build_get_docs(retriever: VectorStoreRetriever):
     return RunnableParallel({"documents": retriever})
 
 
-def build_get_docs_with_filter(ai: AISettings, retriever: VectorStoreRetriever):
-    return RunnableParallel({"documents": retriever | filter_by_elbow(ai.elbow_filter_enabled)})
+def build_get_docs_with_filter(ai_settings: AISettings, retriever: VectorStoreRetriever):
+    return RunnableParallel({"documents": retriever | filter_by_elbow(ai_settings.elbow_filter_enabled)})
 
 
 @chain

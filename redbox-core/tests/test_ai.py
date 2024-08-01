@@ -192,7 +192,6 @@ def make_test_case(
         llm=llm,
         retriever=retriever,
         tokeniser=get_tokeniser(),
-        env=env,
     )
 
     def _make_test_case(
