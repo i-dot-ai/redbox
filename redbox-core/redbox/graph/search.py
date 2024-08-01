@@ -5,8 +5,7 @@ from langchain_core.vectorstores import VectorStoreRetriever
 from tiktoken import Encoding
 
 from redbox.chains.graph import build_get_docs_with_filter, build_llm_chain, set_prompt_args
-from redbox.models.chain import ChainInput, ChainState
-from redbox.models.settings import AISettings
+from redbox.models.chain import ChainInput, ChainState, AISettings
 
 
 def get_search_graph(
@@ -30,6 +29,7 @@ def get_search_graph(
                 file_uuids=s["query"].file_uuids,
                 user_uuid=s["query"].user_uuid,
                 chat_history=[],
+                ai_settings=s["query"].ai_settings,
             )
         },
     )

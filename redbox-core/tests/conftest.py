@@ -6,13 +6,12 @@ from botocore.exceptions import ClientError
 from elasticsearch import Elasticsearch
 
 from redbox.models import Chunk, File, Settings
-from redbox.models.settings import AISettings
+from redbox.models.chain import AISettings
 from redbox.storage.elasticsearch import ElasticsearchStorageHandler
 
 from collections.abc import Generator
 
 from langchain_core.embeddings.fake import FakeEmbeddings
-from langchain_core.runnables import ConfigurableField
 from langchain_elasticsearch import ElasticsearchStore
 
 
@@ -235,23 +234,11 @@ def ai_config():
 def parameterised_retriever(
     env, ai_config, elasticsearch_client, es_index, embedding_model_dim
 ) -> ParameterisedElasticsearchRetriever:
-    default_params = {
-        "size": ai_config.rag_k,
-        "num_candidates": ai_config.rag_num_candidates,
-        "match_boost": 1,
-        "knn_boost": 1,
-        "similarity_threshold": 0,
-    }
     return ParameterisedElasticsearchRetriever(
         es_client=elasticsearch_client,
         index_name=es_index,
-        params=default_params,
         embedding_model=FakeEmbeddings(size=embedding_model_dim),
         embedding_field_name=env.embedding_document_field_name,
-    ).configurable_fields(
-        params=ConfigurableField(
-            id="params", name="Retriever parameters", description="A dictionary of parameters to use for the retriever."
-        )
     )
 
 

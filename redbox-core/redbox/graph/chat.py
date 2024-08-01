@@ -11,7 +11,7 @@ from langchain_text_splitters import TextSplitter, TokenTextSplitter
 from tiktoken import Encoding
 
 from redbox.api.format import format_documents
-from redbox.models.chain import ChainState, ChatMapReduceState
+from redbox.models.chain import ChainState, ChatMapReduceState, AISettings
 from redbox.models.chat import ChatRoute
 from redbox.chains.graph import (
     set_prompt_args,
@@ -20,7 +20,7 @@ from redbox.chains.graph import (
     build_get_docs,
     set_state_field,
 )
-from redbox.models.settings import Settings, AISettings
+from redbox.models.settings import Settings
 
 log = logging.getLogger()
 

@@ -12,9 +12,8 @@ from tiktoken import Encoding
 from redbox.api.format import format_documents
 from redbox.api.runnables import filter_by_elbow
 from redbox.models import ChatRoute
-from redbox.models.chain import ChainChatMessage, ChainState
+from redbox.models.chain import ChainChatMessage, ChainState, AISettings
 from redbox.models.errors import QuestionLengthError
-from redbox.models.settings import AISettings
 
 log = logging.getLogger()
 re_keyword_pattern = re.compile(r"@(\w+)")

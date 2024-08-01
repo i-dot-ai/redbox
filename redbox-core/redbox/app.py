@@ -5,9 +5,9 @@ from tiktoken import Encoding
 
 from redbox.chains.graph import set_route, set_state_field
 from redbox.graph.search import get_search_graph
-from redbox.models.chain import ChainState
+from redbox.models.chain import ChainState, AISettings
 from redbox.models.chat import ChatRoute
-from redbox.models.settings import Settings, AISettings
+from redbox.models.settings import Settings
 from redbox.chains.components import get_all_chunks_retriever, get_parameterised_retriever, get_chat_llm, get_tokeniser
 from redbox.graph.chat import get_chat_graph, get_chat_with_docs_graph
 
