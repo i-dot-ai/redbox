@@ -47,10 +47,10 @@ class ChatHistoryAnalysis:
         os.makedirs(self.visualisation_dir, exist_ok=True)
         os.makedirs(self.table_dir, exist_ok=True)
 
-        # Commenting out this whilst testing with just data dump
-
+        # Need to inversley comment out lines for live data
         # self.chat_logs = self.fetch_chat_history()
         self.chat_logs = pd.read_csv("notebooks/evaluation/data/chat_histories/chathistory.csv")
+
         # This column dictionary will change keys depending on names given in data frame structure
         COLUMNS_DICT = {
             "modified_at": "created_at",
@@ -60,15 +60,15 @@ class ChatHistoryAnalysis:
             "text": "text",
         }
 
+        # Specifying team members to remove from data
         TEAM_EMAILS = ["alfie.dennen@trade.gov.uk", "isobel.daley@trade.gov.uk"]
-
-        # TODO: Add row to map column headings to new streamlined ones
 
         # Select specific columns and converting to readable timestamp
         self.chat_logs = self.chat_logs[list(COLUMNS_DICT.keys())]
         # Note I tried the following with .rename() and it did not work.
         self.chat_logs.columns = [COLUMNS_DICT[col] if col in COLUMNS_DICT else col for col in self.chat_logs.columns]
 
+        # Some of this code will change when running live.
         # self.chat_logs = self.chat_logs[['created_at', 'users_id', 'user_email', 'chat_history', 'text', 'role', 'message_id']]
         self.chat_logs["created_at"] = pd.to_datetime(self.chat_logs["created_at"])
         # Remove users that are redbox team
@@ -157,7 +157,6 @@ class ChatHistoryAnalysis:
         unique_user_names = [user_email.split("@")[0].replace(".", " ").title() for user_email in unique_user_email]
         user_name_dict = dict(zip(unique_user_email, unique_user_names, strict=False))
         new_user_names_column = user_names_column.map(user_name_dict)
-        print(type(new_user_names_column))
         return new_user_names_column
 
     def get_user_frequency(self) -> pd.DataFrame:
@@ -265,7 +264,7 @@ class ChatHistoryAnalysis:
         """
         word_freq = self.get_user_word_frequency()
         most_common_words = word_freq.most_common(
-            20  # TODO - determine how many common words we want and the right vis. for this
+            20  # TODO: determine how many common words we want and the right vis. for this
         )
         words, counts = zip(*most_common_words, strict=False)
         plt.figure(figsize=self.figsize)
@@ -279,7 +278,7 @@ class ChatHistoryAnalysis:
         Creates wordcloud of AI outputs.
         """
         ai_word_freq = self.get_ai_word_frequency()
-        # TODO - assess value
+        # TODO: Assess value
         ai_wordcloud = WordCloud(width=800, height=400, background_color="white").generate_from_frequencies(
             ai_word_freq
         )
@@ -296,7 +295,7 @@ class ChatHistoryAnalysis:
 
         most_common_words = ai_word_freq.most_common(
             20
-        )  # TODO - determine how many common words we want and the right vis. for this
+        )  # TODO: determine how many common words we want and the right vis. for this
 
         words, counts = zip(*most_common_words, strict=False)
         plt.figure(figsize=self.figsize)
@@ -305,94 +304,95 @@ class ChatHistoryAnalysis:
         plt.xlabel("Frequency")
         plt.ylabel("Words")
 
-    # 5) Is there a clear pattern behind AI responses?
-    def ai_response_pattern_analysis(self):
+    def get_ai_response_pattern(self):
+        """
+        Returns a dataframe of ai repsonse patterns.
+        """
+
         def clean_text(
             text,
-        ):  # was including asterisks giving useless info to the graph I'm still not entirely convinced on the benefit of this analysis
+        ):
+            # was including asterisks giving useless info to the graph I'm still not
+            # entirely convinced on the benefit of this analysis
             return re.sub("[!@#$*]", "", text).strip()
 
         self.ai_responses["clean_text"] = self.ai_responses["text"].apply(clean_text)
-        ai_response_patterns = (
+        ai_response_patterns_df = (
             self.ai_responses["clean_text"].apply(lambda x: " ".join(x.split()[:2])).value_counts().head(10)
         )
+        return ai_response_patterns_df
 
-        # Table
-        words, counts = zip(
-            *self.ai_responses["clean_text"].apply(lambda x: " ".join(x.split()[:2])).value_counts(), strict=False
-        )
-        table_data = {"Word": words, "Frequency": counts}
-        table_dataframe = pd.DataFrame(data=table_data)
-        table_dataframe.to_csv(f"{self.table_dir}common_ai_patterns.csv", index=False)
-
-        # Barplot
+    def plot_ai_response_pattern(self):
+        """
+        Bar plot of most common ai response patterns.
+        """
+        ai_response_pattern_df = self.get_ai_response_pattern()
         plt.figure(figsize=self.figsize)
-        sns.barplot(x=ai_response_patterns.values, y=ai_response_patterns.index, palette="magma")
+        sns.barplot(x=ai_response_pattern_df.values, y=ai_response_pattern_df.index, palette="magma")
         plt.title("Common Patterns in AI Responses")
         plt.xlabel("Frequency")
         plt.ylabel("Patterns")
-        ai_patterns_path = os.path.join(self.visualisation_dir, "common_ai_patterns.png")
-        plt.savefig(ai_patterns_path)
 
-    # What routes are people using?
-    def route_analysis(self):
-        df = self.user_responses.copy()
-
-        # # Some users repeat the same message several times (drop?)
+    def get_routes(self) -> pd.DataFrame:
+        """
+        Returns dataframe of common user routes.
+        """
+        # TODO: Some users repeat the same message several times (drop?)
         # df = df.drop_duplicates(['text'])
+        user_responses = self.user_responses
+        user_responses["user_email"] = self.process_user_names(user_responses["user_email"])
+        user_routes_df = user_responses.groupby(["user_email"])["route"].value_counts().unstack()
 
-        # User names
-        user_name = [user_email.split("@")[0].replace(".", " ").title() for user_email in df.user_email]
-        wrapped_user_name = ["\n".join(textwrap.wrap(name, width=10)) for name in user_name]
-        df["user_name"] = wrapped_user_name
+        return user_routes_df
 
-        # Groupby routes
-        df_grouped = df.groupby(["user_name"])["route"].value_counts().unstack()
-
-        # Plot
+    def plot_user_routes(self):
+        """
+        Creates bar plot of user routes taken.
+        """
+        user_routes_df = self.get_routes()
         plt.figure(figsize=self.figsize)
-        df_grouped.plot(
+        user_routes_df.plot(
             kind="bar", color={"chat": "teal", "no_route": "yellowgreen", "summarise": "gold"}, figsize=self.figsize
         )
         plt.xticks(rotation=0)
         plt.xlabel("Users")
         plt.ylabel("Number of routes taken")
         plt.title("Routes taken per user")
-        routes_count_path = os.path.join(self.visualisation_dir, "routes_per_user.png")
-        plt.savefig(routes_count_path)
 
-    def get_route_transitions(self, df):
-        # TODO Check this works with the groupby ID and time order of events
-        df["next_route"] = df["route"].shift(1)
+    def get_route_transitions(self) -> pd.DataFrame:
+        # TODO: Check this works with the groupby ID and time order of events
+        def route_transitions(df):
+            df["next_route"] = df["route"].shift(1)
+            df["transition"] = df.apply(
+                lambda row: f"{row['route']} to {row['next_route']}" if pd.notna(row["next_route"]) else None, axis=1
+            )
+            return df
 
-        df["transition"] = df.apply(
-            lambda row: f"{row['route']} to {row['next_route']}" if pd.notna(row["next_route"]) else None, axis=1
-        )
-
-        return df
-
-    # In what way are users switching between routes?
-    def route_transitions(self):
         # Get route transitions and counts per user session (is 'id' appropriate?)
-        df_transitions = (
-            self.user_responses.groupby("message_id").apply(self.get_route_transitions).reset_index(drop=True)
-        )
+        df_transitions = self.user_responses.groupby("message_id").apply(route_transitions).reset_index(drop=True)
 
-        transition_counts = df_transitions["transition"].value_counts().reset_index()
+        route_transitions_df = df_transitions["transition"].value_counts().reset_index()
+        return route_transitions_df
 
-        # Plot
-        sns.barplot(x=transition_counts["transition"], y=transition_counts["count"], palette="viridis")
+    def plot_route_transitions(self):
+        """
+        Bar plot of common route transition.
+        """
+        route_transitions_df = self.get_route_transitions()
+        sns.barplot(x=route_transitions_df["transition"], y=route_transitions_df["count"], palette="viridis")
         plt.xticks(rotation=45, ha="right")
         plt.title("Number of different route transitions")
         plt.xlabel("Route transition")
         plt.ylabel("Number of route transitions")
 
-    # Are users asking about common topics?
     def get_topics(self):
+        """
+        Aims to answer: Are users asking about common topics?
+        Removes stopwords and fits a simple topic model.
+        """
         STOPWORDS.add("@chat")
         STOPWORDS.add("@summarise")
 
-        # Remove stopwords and fit (simple) topic model
         text_without_stopwords = self.user_responses["text"].apply(
             lambda row: " ".join([word for word in row.split() if word not in (STOPWORDS)])
         )
@@ -405,25 +405,25 @@ class ChatHistoryAnalysis:
         self.topic_model = topic_model
         self.topics_over_time = topics_over_time
 
-    def visualise_topics(self):
+    def plot_topics(self):
         # Plot
         return self.topic_model.visualize_topics(width=800, height=500)
 
-    def visualise_hierarchy(self):
+    def plot_hierarchy(self):
         # Plot
         return self.topic_model.visualize_hierarchy(width=800, height=400)
 
-    def visualise_barchart(self):
+    def plot_barchart(self):
         # Plot
         return self.topic_model.visualize_barchart(width=800, height=400)
 
-    def visualise_topics_over_time(self):
+    def plot_topics_over_time(self):
         # Plot
         return self.topic_model.visualize_topics_over_time(
             self.topics_over_time, top_n_topics=5, normalize_frequency=True
         )
 
-    def get_prompt_lengths(self):
+    def get_prompt_lengths(self) -> pd.DataFrame:
         """
         Adds the prompt lengths to the user prompt column
         """
@@ -439,7 +439,7 @@ class ChatHistoryAnalysis:
         user_responses_df = user_responses_df[user_responses_df["no_input_words"] < outlier_max]
         return user_responses_df
 
-    def visualise_prompt_lengths(self, outlier_max: int):
+    def plot_prompt_lengths(self, outlier_max: int):
         """
         How does prompt length vary?
         """
@@ -447,9 +447,9 @@ class ChatHistoryAnalysis:
         fig = sns.displot(user_responses_df["no_input_words"])
         fig.set_axis_labels(x_var="No. of words in prompt", y_var="Count")
 
-    def get_prompt_length_vs_chat_length(self, outlier_max: int):
+    def get_prompt_length_vs_chat_length(self, outlier_max: int) -> pd.DataFrame:
         """
-        Compares average prompt length with chat length.
+        Returns a dataframe comparing average prompt length with chat length.
         """
         user_responses_df = self.filter_prompt_lengths(outlier_max)
         mean_inputs_df = (
@@ -471,14 +471,17 @@ class ChatHistoryAnalysis:
 
         return compare_inputs_words_df
 
-    def vis_prompt_length_vs_chat_legnth(self, outlier_max: int):
+    def plot_prompt_length_vs_chat_legnth(self, outlier_max: int):
+        """
+        Creates a scatterplot of prompt length vs chat legnth.
+        """
         compare_inputs_words_df = self.get_prompt_length_vs_chat_length(outlier_max=outlier_max)
         compare_inputs_words_df["user_email"] = self.process_user_names(compare_inputs_words_df.user_email)
         fig = sns.scatterplot(data=compare_inputs_words_df, x="no_inputs", y="mean_input_words", hue="user_email")
         fig.set_xlabel("No. of prompts")
         fig.set_ylabel("Mean length of prompt")
         fig.set_title("Scatter plot comparing number of prompts with the length of prompt for each user session")
-        sns.move_legend(fig, "upper left", bbox_to_anchor=(1, 1))
+        sns.move_legend(fig, "upper left", bbox_to_anchor=(1, 1), title="Users")
 
 
 def main():
