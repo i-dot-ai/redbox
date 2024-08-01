@@ -7,7 +7,7 @@ from redbox.chains.graph import set_route, set_state_field
 from redbox.graph.search import get_search_graph
 from redbox.models.chain import ChainState
 from redbox.models.chat import ChatRoute
-from redbox.models.settings import Settings
+from redbox.models.settings import Settings, AISettings
 from redbox.chains.components import get_all_chunks_retriever, get_parameterised_retriever, get_chat_llm, get_tokeniser
 from redbox.graph.chat import get_chat_graph, get_chat_with_docs_graph
 
@@ -34,8 +34,10 @@ class Redbox:
         parameterised_retriever: VectorStoreRetriever | None = None,
         tokeniser: Encoding | None = None,
         env: Settings | None = None,
+        ai: AISettings = None,
         debug: bool = False,
     ):
+        ai = ai or AISettings()
         _env = env or Settings()
         _all_chunks_retriever = all_chunks_retriever or get_all_chunks_retriever(_env)
         _parameterised_retriever = parameterised_retriever or get_parameterised_retriever(_env)
@@ -55,14 +57,19 @@ class Redbox:
         app.add_node(
             ChatRoute.search,
             get_search_graph(
-                _llm, _parameterised_retriever.with_config(tags=[Redbox.SOURCE_DOCUMENTS_TAG]), _tokeniser, _env, debug
+                _llm,
+                _parameterised_retriever.with_config(tags=[Redbox.SOURCE_DOCUMENTS_TAG]),
+                _tokeniser,
+                _env,
+                ai,
+                debug,
             ),
         )
-        app.add_node(ChatRoute.chat, get_chat_graph(_llm, _tokeniser, _env, debug))
+        app.add_node(ChatRoute.chat, get_chat_graph(_llm, _tokeniser, _env, ai, debug))
         app.add_node(
             ChatRoute.chat_with_docs,
             get_chat_with_docs_graph(
-                _llm, _all_chunks_retriever.with_config(tags=[Redbox.SOURCE_DOCUMENTS_TAG]), _tokeniser, _env, debug
+                _llm, _all_chunks_retriever.with_config(tags=[Redbox.SOURCE_DOCUMENTS_TAG]), _tokeniser, _env, ai, debug
             ),
         )
         app.add_node(

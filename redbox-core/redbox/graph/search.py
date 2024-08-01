@@ -6,19 +6,24 @@ from tiktoken import Encoding
 
 from redbox.chains.graph import build_get_docs_with_filter, build_llm_chain, set_prompt_args
 from redbox.models.chain import ChainInput, ChainState
-from redbox.models.settings import Settings
+from redbox.models.settings import Settings, AISettings
 
 
 def get_search_graph(
-    llm: BaseChatModel, retriever: VectorStoreRetriever, tokeniser: Encoding, env: Settings, debug: bool = False
+    llm: BaseChatModel,
+    retriever: VectorStoreRetriever,
+    tokeniser: Encoding,
+    env: Settings,
+    ai: AISettings,
+    debug: bool = False,
 ) -> CompiledGraph:
     app = StateGraph(ChainState)
 
-    app.add_node("get_docs", build_get_docs_with_filter(env, retriever))
+    app.add_node("get_docs", build_get_docs_with_filter(env, ai, retriever))
     app.add_node("set_prompt_args", set_prompt_args)
 
     app.add_node(
-        "condense", build_llm_chain(llm, tokeniser, env, env.ai.condense_system_prompt, env.ai.condense_question_prompt)
+        "condense", build_llm_chain(llm, tokeniser, env, ai, ai.condense_system_prompt, ai.condense_question_prompt)
     )
     app.add_node(
         "map_condense_to_question",
@@ -37,8 +42,9 @@ def get_search_graph(
             llm,
             tokeniser,
             env,
-            env.ai.retrieval_system_prompt,
-            env.ai.retrieval_question_prompt,
+            ai,
+            ai.retrieval_system_prompt,
+            ai.retrieval_question_prompt,
             final_response_chain=True,
         ),
     )

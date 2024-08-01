@@ -145,6 +145,7 @@ async def test_chat(test_case: RedboxChatTestCase, env, tokeniser):
         parameterised_retriever=parameterised_retriever(test_case.docs),
         tokeniser=tokeniser,
         env=env,
+        ai=None,
         debug=LANGGRAPH_DEBUG,
     )
     response = await app.run(
@@ -168,6 +169,7 @@ async def test_streaming(test_case: RedboxChatTestCase, env, tokeniser):
         parameterised_retriever=parameterised_retriever(test_case.docs),
         tokeniser=tokeniser,
         env=env,
+        ai=None,
         debug=LANGGRAPH_DEBUG,
     )
 
@@ -200,6 +202,7 @@ def get_available_keywords():
         parameterised_retriever=parameterised_retriever([]),
         tokeniser=tokeniser,
         env=env,
+        ai=None,
         debug=LANGGRAPH_DEBUG,
     )
     keywords = {ChatRoute.search}

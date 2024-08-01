@@ -14,6 +14,7 @@ from redbox.api.runnables import filter_by_elbow
 from redbox.models import ChatRoute, Settings
 from redbox.models.chain import ChainChatMessage, ChainState
 from redbox.models.errors import QuestionLengthError
+from redbox.models.settings import AISettings
 
 log = logging.getLogger()
 re_keyword_pattern = re.compile(r"@(\w+)")
@@ -23,8 +24,8 @@ def build_get_docs(env: Settings, retriever: VectorStoreRetriever):
     return RunnableParallel({"documents": retriever})
 
 
-def build_get_docs_with_filter(env: Settings, retriever: VectorStoreRetriever):
-    return RunnableParallel({"documents": retriever | filter_by_elbow(env.ai.elbow_filter_enabled)})
+def build_get_docs_with_filter(env: Settings, ai: AISettings, retriever: VectorStoreRetriever):
+    return RunnableParallel({"documents": retriever | filter_by_elbow(ai.elbow_filter_enabled)})
 
 
 @chain
@@ -101,6 +102,7 @@ def build_llm_chain(
     llm: BaseChatModel,
     tokeniser: Encoding,
     env: Settings,
+    ai: AISettings,
     system_prompt: str,
     question_prompt: str,
     final_response_chain=False,
@@ -111,7 +113,7 @@ def build_llm_chain(
             "response": make_chat_prompt_from_messages_runnable(
                 system_prompt=system_prompt,
                 question_prompt=question_prompt,
-                input_token_budget=env.ai.context_window_size - env.llm_max_tokens,
+                input_token_budget=ai.context_window_size - env.llm_max_tokens,
                 tokeniser=tokeniser,
             )
             | _llm

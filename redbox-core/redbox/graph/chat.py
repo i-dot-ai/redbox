@@ -20,7 +20,7 @@ from redbox.chains.graph import (
     build_get_docs,
     set_state_field,
 )
-from redbox.models.settings import Settings
+from redbox.models.settings import Settings, AISettings
 
 log = logging.getLogger()
 
@@ -50,7 +50,9 @@ def build_reduce_docs_step(splitter: TextSplitter):
     ) | RunnableLambda(lambda docs: {"documents": docs})
 
 
-def get_chat_graph(llm: BaseChatModel, tokeniser: Encoding, env: Settings, debug: bool = False) -> CompiledGraph:
+def get_chat_graph(
+    llm: BaseChatModel, tokeniser: Encoding, env: Settings, ai: AISettings, debug: bool = False
+) -> CompiledGraph:
     app = StateGraph(ChainState)
     app.set_entry_point("set_chat_prompt_args")
 
@@ -60,7 +62,7 @@ def get_chat_graph(llm: BaseChatModel, tokeniser: Encoding, env: Settings, debug
     app.add_node(
         "llm",
         build_llm_chain(
-            llm, tokeniser, env, env.ai.chat_system_prompt, env.ai.chat_question_prompt, final_response_chain=True
+            llm, tokeniser, env, ai, ai.chat_system_prompt, ai.chat_question_prompt, final_response_chain=True
         ),
     )
 
@@ -85,13 +87,13 @@ def set_chat_method(state: ChainState):
 
 
 def build_llm_map_chain(
-    llm: BaseChatModel, tokeniser: Encoding, env: Settings, system_prompt: str, question_prompt: str
+    llm: BaseChatModel, tokeniser: Encoding, env: Settings, ai: AISettings, system_prompt: str, question_prompt: str
 ) -> Runnable:
     return (
         make_chat_prompt_from_messages_runnable(
             system_prompt=system_prompt,
             question_prompt=question_prompt,
-            input_token_budget=env.ai.context_window_size - env.llm_max_tokens,
+            input_token_budget=ai.context_window_size - env.llm_max_tokens,
             tokeniser=tokeniser,
         )
         | llm
@@ -105,6 +107,7 @@ def get_chat_with_docs_graph(
     all_chunks_retriever: VectorStoreRetriever,
     tokeniser: Encoding,
     env: Settings,
+    ai: AISettings,
     debug: bool = False,
 ) -> CompiledGraph:
     app = StateGraph(ChainState)
@@ -120,12 +123,15 @@ def get_chat_with_docs_graph(
             llm,
             tokeniser,
             env,
-            env.ai.chat_with_docs_system_prompt,
-            env.ai.chat_with_docs_question_prompt,
+            ai,
+            ai.chat_with_docs_system_prompt,
+            ai.chat_with_docs_question_prompt,
             final_response_chain=True,
         ),
     )
-    app.add_node(ChatRoute.chat_with_docs_map_reduce, get_chat_with_docs_map_reduce_graph(llm, tokeniser, env, debug))
+    app.add_node(
+        ChatRoute.chat_with_docs_map_reduce, get_chat_with_docs_map_reduce_graph(llm, tokeniser, env, ai, debug)
+    )
     app.add_node("clear_documents", set_state_field("documents", []))
 
     app.add_edge(START, "get_chat_docs")
@@ -149,12 +155,12 @@ def get_chat_with_docs_graph(
 
 
 def get_chat_with_docs_map_reduce_graph(
-    llm: BaseChatModel, tokeniser: Encoding, env: Settings, debug: bool = False
+    llm: BaseChatModel, tokeniser: Encoding, env: Settings, ai: AISettings, debug: bool = False
 ) -> CompiledGraph:
     app = StateGraph(ChatMapReduceState)
 
     app.add_node(
-        "llm_map", build_llm_map_chain(llm, tokeniser, env, env.ai.map_system_prompt, env.ai.chat_map_question_prompt)
+        "llm_map", build_llm_map_chain(llm, tokeniser, env, ai, ai.map_system_prompt, ai.chat_map_question_prompt)
     )
     app.add_node(
         "reduce",

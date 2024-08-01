@@ -6,6 +6,7 @@ from botocore.exceptions import ClientError
 from elasticsearch import Elasticsearch
 
 from redbox.models import Chunk, File, Settings
+from redbox.models.settings import AISettings
 from redbox.storage.elasticsearch import ElasticsearchStorageHandler
 
 from collections.abc import Generator
@@ -226,12 +227,17 @@ def all_chunks_retriever(elasticsearch_client, es_index) -> AllElasticsearchRetr
 
 
 @pytest.fixture()
+def ai_config():
+    return AISettings()
+
+
+@pytest.fixture()
 def parameterised_retriever(
-    env, elasticsearch_client, es_index, embedding_model_dim
+    env, ai_config, elasticsearch_client, es_index, embedding_model_dim
 ) -> ParameterisedElasticsearchRetriever:
     default_params = {
-        "size": env.ai.rag_k,
-        "num_candidates": env.ai.rag_num_candidates,
+        "size": ai_config.rag_k,
+        "num_candidates": ai_config.rag_num_candidates,
         "match_boost": 1,
         "knn_boost": 1,
         "similarity_threshold": 0,

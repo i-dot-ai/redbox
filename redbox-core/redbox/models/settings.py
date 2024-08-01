@@ -156,8 +156,6 @@ class ElasticCloudSettings(BaseModel):
 class Settings(BaseSettings):
     """Settings for the redbox application."""
 
-    ai: AISettings = AISettings()
-
     anthropic_api_key: str | None = None
     openai_api_key: str = "NotAKey"
     azure_openai_api_key: str = "NotAKey"
