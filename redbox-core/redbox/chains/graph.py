@@ -49,22 +49,22 @@ def set_route(state: ChainState):
 
 
 def make_chat_prompt_from_messages_runnable(
-    system_prompt: str,
-    question_prompt: str,
-    input_token_budget: int,
     tokeniser: Encoding,
 ):
-    system_prompt_message = [("system", system_prompt)]
-    prompts_budget = len(tokeniser.encode(system_prompt)) - len(tokeniser.encode(question_prompt))
-    token_budget = input_token_budget - prompts_budget
-
     @chain
     def chat_prompt_from_messages(state: ChainState):
         """
-        Create a ChatPrompTemplate as part of a chain using 'chat_history'.
+        Create a ChatPromptTemplate as part of a chain using 'chat_history'.
         Returns the PromptValue using values in the input_dict
         """
         log.debug("Setting chat prompt")
+        system_prompt_message = [("system", state["query"].ai_settings.chat_system_prompt)]
+        prompts_budget = len(tokeniser.encode(state["query"].ai_settings.chat_system_prompt)) - len(
+            tokeniser.encode(state["query"].ai_settings.chat_question_prompt)
+        )
+        token_budget = (
+            state["query"].ai_settings.context_window_size - state["query"].ai_settings.llm_max_tokens - prompts_budget
+        )
         chat_history_budget = token_budget - len(tokeniser.encode(state["query"].question))
 
         if chat_history_budget <= 0:
@@ -81,7 +81,7 @@ def make_chat_prompt_from_messages_runnable(
         return ChatPromptTemplate.from_messages(
             system_prompt_message
             + [(msg["role"], msg["text"]) for msg in truncated_history]
-            + [("user", question_prompt)]
+            + [("user", state["query"].ai_settings.chat_question_prompt)]
         ).invoke(state["query"].dict() | state.get("prompt_args", {}))
 
     return chat_prompt_from_messages
@@ -100,20 +100,12 @@ def set_prompt_args(state: ChainState):
 def build_llm_chain(
     llm: BaseChatModel,
     tokeniser: Encoding,
-    ai: AISettings,
     final_response_chain=False,
 ) -> Runnable:
     _llm = llm.with_config(tags=["response_flag"]) if final_response_chain else llm
     return RunnableParallel(
         {
-            "response": make_chat_prompt_from_messages_runnable(
-                system_prompt=ai.chat_system_prompt,
-                question_prompt=ai.chat_question_prompt,
-                input_token_budget=ai.context_window_size - ai.llm_max_tokens,
-                tokeniser=tokeniser,
-            )
-            | _llm
-            | StrOutputParser(),
+            "response": make_chat_prompt_from_messages_runnable(tokeniser=tokeniser) | _llm | StrOutputParser(),
         }
     )
 

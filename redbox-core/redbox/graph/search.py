@@ -38,7 +38,6 @@ def get_search_graph(
         build_llm_chain(
             llm,
             tokeniser,
-            ai_settings,
             final_response_chain=True,
         ),
     )
