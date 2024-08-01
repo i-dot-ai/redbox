@@ -33,23 +33,24 @@ with word_freq_tab:
     st.subheader("AI")
     st.pyplot(cha.plot_ai_wordcloud())
     st.pyplot(cha.plot_top_ai_word_frequency())
+    st.pyplot(cha.plot_ai_response_pattern())
 
 with route_tab:
-    st.pyplot(cha.route_analysis())
-    st.pyplot(cha.route_transitions())
+    st.pyplot(cha.plot_user_routes())
+    st.pyplot(cha.plot_route_transitions())
 
 with topic_tab:
     with st.spinner("Fitting topic model..."):
         cha.get_topics()
 
-    st.plotly_chart(cha.visualise_topics())
-    st.plotly_chart(cha.visualise_topics_over_time())
-    st.plotly_chart(cha.visualise_barchart())
-    st.plotly_chart(cha.visualise_hierarchy())
+    st.plotly_chart(cha.plot_topics())
+    st.plotly_chart(cha.plot_topics_over_time())
+    st.plotly_chart(cha.plot_barchart())
+    st.plotly_chart(cha.plot_hierarchy())
 
 with prompt_complex:
     # Adding slider for prompt legnth
     max_outlier = cha.get_prompt_lengths()["no_input_words"].max() + 10
     outlier = st.slider("Please use the slicer if you wish to remove outliers.", 0, max_outlier, max_outlier)
-    st.pyplot(cha.visualise_prompt_lengths(outlier_max=outlier))
-    st.pyplot(cha.vis_prompt_length_vs_chat_legnth(outlier_max=outlier))
+    st.pyplot(cha.plot_prompt_lengths(outlier_max=outlier))
+    st.pyplot(cha.plot_prompt_length_vs_chat_legnth(outlier_max=outlier))
