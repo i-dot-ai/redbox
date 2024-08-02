@@ -9,11 +9,7 @@ from redbox.models.chain import ChainInput, ChainState
 
 
 def get_search_graph(
-    llm: BaseChatModel,
-    retriever: VectorStoreRetriever,
-    tokeniser: Encoding,
-    llm_max_tokens: int,
-    debug: bool = False,
+    llm: BaseChatModel, retriever: VectorStoreRetriever, tokeniser: Encoding, llm_max_tokens: int, debug: bool = False
 ) -> CompiledGraph:
     app = StateGraph(ChainState)
 
