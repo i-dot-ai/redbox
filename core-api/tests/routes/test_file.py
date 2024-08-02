@@ -86,7 +86,7 @@ def test_delete_file(s3_client, app_client, elasticsearch_storage_handler, chunk
     # check assets exist
     assert s3_client.get_object(Bucket=env.bucket_name, Key=chunked_file.key)
     assert elasticsearch_storage_handler.read_item(item_uuid=chunked_file.uuid, model_type="file")
-    assert elasticsearch_storage_handler.get_file_chunks(chunked_file.uuid, chunked_file.creator_user_uuid)
+    assert elasticsearch_storage_handler.list_all_items("chunk", chunked_file.creator_user_uuid)
 
     response = app_client.delete(f"/file/{chunked_file.uuid}", headers=headers)
     assert response.status_code == HTTPStatus.OK
@@ -98,7 +98,7 @@ def test_delete_file(s3_client, app_client, elasticsearch_storage_handler, chunk
     with pytest.raises(NotFoundError):
         elasticsearch_storage_handler.read_item(item_uuid=chunked_file.uuid, model_type="file")
 
-    assert not elasticsearch_storage_handler.get_file_chunks(chunked_file.uuid, chunked_file.creator_user_uuid)
+    assert not elasticsearch_storage_handler.list_all_items("chunk", chunked_file.creator_user_uuid)
 
 
 def test_delete_missing_file(app_client, headers):
@@ -117,27 +117,16 @@ def test_reingest_file(app_client, chunked_file, elasticsearch_storage_handler, 
     When I PUT it to /file/uuid/
     I Expect the old chunks to be removed
     """
-    previous_chunks = elasticsearch_storage_handler.get_file_chunks(chunked_file.uuid, chunked_file.creator_user_uuid)
+    previous_chunks = elasticsearch_storage_handler.list_all_items("chunk", chunked_file.creator_user_uuid)
 
     response = app_client.put(f"/file/{chunked_file.uuid}", headers=headers)
     assert response.status_code == HTTPStatus.OK
 
     elasticsearch_storage_handler.refresh()
     assert (
-        elasticsearch_storage_handler.get_file_chunks(chunked_file.uuid, chunked_file.creator_user_uuid)
+        elasticsearch_storage_handler.list_all_items("chunk", chunked_file.creator_user_uuid)
         != previous_chunks
-    )
-
-
-def test_get_file_chunks(app_client, chunked_file, headers):
-    """
-    Given a previously chunked file
-    When I GET it from /file/uuid/chunks
-    I Expect to receive the chunks
-    """
-    response = app_client.get(f"/file/{chunked_file.uuid}/chunks", headers=headers)
-    assert response.status_code == HTTPStatus.OK
-    assert len(response.json()) == 12
+    ), f"Pre and post chunks matched and both had {len(previous_chunks)} chunks"
 
 
 def test_get_missing_file_chunks(app_client, headers):

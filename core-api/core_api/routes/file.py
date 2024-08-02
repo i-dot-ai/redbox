@@ -11,7 +11,7 @@ from pydantic import BaseModel, Field
 
 from core_api.auth import get_user_uuid
 from core_api.publisher_handler import FilePublisher
-from redbox.models import APIError404, Chunk, File, FileStatus, ProcessingStatusEnum, Settings
+from redbox.models import APIError404, File, FileStatus, ProcessingStatusEnum, Settings
 from redbox.storage import ElasticsearchStorageHandler
 
 # === Functions ===
@@ -202,8 +202,7 @@ def delete_file(file_uuid: UUID, user_uuid: Annotated[UUID, Depends(get_user_uui
 
     storage_handler.delete_item(file)
 
-    chunks = storage_handler.get_file_chunks(file.uuid, user_uuid)
-    storage_handler.delete_items(chunks)
+    storage_handler.delete_user_items("chunk", user_uuid)
     return file
 
 
@@ -239,45 +238,13 @@ async def reingest_file(file_uuid: UUID, user_uuid: Annotated[UUID, Depends(get_
     storage_handler.update_item(file)
 
     # Remove old chunks
-    storage_handler.delete_file_chunks(file.uuid, user_uuid)
+    storage_handler.delete_user_items("chunk", user_uuid)
 
     # Add new chunks
     log.info("publishing %s", file.uuid)
     await file_publisher.publish(file)
 
     return file
-
-
-@file_app.get(
-    "/{file_uuid}/chunks",
-    tags=["file"],
-    responses={404: {"model": APIError404, "description": "The file was not found"}},
-)
-def get_file_chunks(file_uuid: UUID, user_uuid: Annotated[UUID, Depends(get_user_uuid)]) -> list[Chunk]:
-    """Gets a list of chunks for a file in the database
-
-    Args:
-        file_uuid (UUID): The UUID of the file to delete
-        user_uuid (UUID): The UUID of the user
-
-    Returns:
-        Chunks (list, Chunk): The chunks belonging to the requested file
-
-    Raises:
-        404: If the file isn't found, or the creator and requester don't match
-    """
-    try:
-        file = storage_handler.read_item(file_uuid, model_type="File")
-    except NotFoundError:
-        return file_not_found_response(file_uuid=file_uuid)
-
-    if file.creator_user_uuid != user_uuid:
-        return file_not_found_response(file_uuid=file_uuid)
-
-    log.info("getting chunks for file %s", file_uuid)
-
-    return storage_handler.get_file_chunks(file_uuid, user_uuid)
-
 
 @file_app.get(
     "/{file_uuid}/status",

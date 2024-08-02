@@ -4,7 +4,7 @@ from uuid import uuid4
 import pytest
 from elasticsearch import Elasticsearch
 
-from redbox.models import Chunk, File, Settings
+from redbox.models import File, Settings
 from redbox.storage.elasticsearch import ElasticsearchStorageHandler
 
 from collections.abc import Generator
@@ -39,70 +39,44 @@ def claire():
 
 
 @pytest.fixture()
-def file_belonging_to_alice(file_pdf_path, alice, env) -> File:
-    return File(
+def file_belonging_to_alice(file_pdf_path, alice, env, elasticsearch_storage_handler: ElasticsearchStorageHandler) -> File:
+    f = File(
         key=file_pdf_path.name,
         bucket=env.bucket_name,
         creator_user_uuid=alice,
     )
+    elasticsearch_storage_handler.write_item(f)
+    elasticsearch_storage_handler.refresh()
+    return f
 
 
 @pytest.fixture()
-def file_belonging_to_bob(file_pdf_path, bob, env) -> File:
-    return File(
+def file_belonging_to_bob(file_pdf_path, bob, env, elasticsearch_storage_handler: ElasticsearchStorageHandler) -> File:
+    f = File(
         key=file_pdf_path.name,
         bucket=env.bucket_name,
         creator_user_uuid=bob,
     )
+    elasticsearch_storage_handler.write_item(f)
+    elasticsearch_storage_handler.refresh()
+    return f
 
 
 @pytest.fixture()
-def chunk_belonging_to_alice(file_belonging_to_alice) -> Chunk:
-    return Chunk(
-        creator_user_uuid=file_belonging_to_alice.creator_user_uuid,
-        parent_file_uuid=file_belonging_to_alice.uuid,
-        index=1,
-        text="hello, i am Alice!",
-    )
-
-
-@pytest.fixture()
-def chunk_belonging_to_bob(file_belonging_to_bob) -> Chunk:
-    return Chunk(
-        creator_user_uuid=file_belonging_to_bob.creator_user_uuid,
-        parent_file_uuid=file_belonging_to_bob.uuid,
-        index=1,
-        text="hello, i am Bob!",
-    )
-
-
-@pytest.fixture()
-def chunk_belonging_to_claire(claire) -> Chunk:
-    return Chunk(
+def file_belonging_to_claire(file_pdf_path, claire, env, elasticsearch_storage_handler: ElasticsearchStorageHandler) -> File:
+    f = File(
+        key=file_pdf_path.name,
+        bucket=env.bucket_name,
         creator_user_uuid=claire,
-        parent_file_uuid=uuid4(),
-        index=1,
-        text="hello, i am Claire!",
     )
+    elasticsearch_storage_handler.write_item(f)
+    elasticsearch_storage_handler.refresh()
+    return f
 
 
 @pytest.fixture
 def file_pdf_path() -> Path:
     return Path(__file__).parents[2] / "tests" / "data" / "pdf" / "Cabinet Office - Wikipedia.pdf"
-
-
-@pytest.fixture()
-def stored_chunk_belonging_to_alice(elasticsearch_storage_handler, chunk_belonging_to_alice) -> Chunk:
-    elasticsearch_storage_handler.write_item(item=chunk_belonging_to_alice)
-    elasticsearch_storage_handler.refresh()
-    return chunk_belonging_to_alice
-
-
-@pytest.fixture()
-def stored_chunk_belonging_to_bob(elasticsearch_storage_handler, chunk_belonging_to_bob) -> Chunk:
-    elasticsearch_storage_handler.write_item(item=chunk_belonging_to_bob)
-    elasticsearch_storage_handler.refresh()
-    return chunk_belonging_to_bob
 
 
 @pytest.fixture()
@@ -120,13 +94,21 @@ def es_index(env) -> str:
     return f"{env.elastic_root_index}-chunk"
 
 
+@pytest.fixture(scope="session")
+def es_index_file(env) -> str:
+    return f"{env.elastic_root_index}-file"
+
+
 @pytest.fixture(autouse=True, scope="session")
-def create_index(env, es_index):
+def create_index(env, es_index, es_index_file):
     es = env.elasticsearch_client()
     if not es.indices.exists(index=es_index):
         es.indices.create(index=es_index)
+    if not es.indices.exists(index=es_index_file):
+        es.indices.create(index=es_index_file)
     yield
     es.indices.delete(index=es_index)
+    es.indices.delete(index=es_index_file)
 
 
 @pytest.fixture()
