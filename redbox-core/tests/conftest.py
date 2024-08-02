@@ -2,7 +2,6 @@ from pathlib import Path
 from uuid import uuid4
 
 import pytest
-from botocore.exceptions import ClientError
 from elasticsearch import Elasticsearch
 
 from redbox.models import Chunk, File, Settings
@@ -48,6 +47,7 @@ def file_belonging_to_alice(file_pdf_path, alice, env) -> File:
         creator_user_uuid=alice,
     )
 
+
 @pytest.fixture()
 def file_belonging_to_bob(file_pdf_path, bob, env) -> File:
     return File(
@@ -55,6 +55,7 @@ def file_belonging_to_bob(file_pdf_path, bob, env) -> File:
         bucket=env.bucket_name,
         creator_user_uuid=bob,
     )
+
 
 @pytest.fixture()
 def chunk_belonging_to_alice(file_belonging_to_alice) -> Chunk:
@@ -64,6 +65,7 @@ def chunk_belonging_to_alice(file_belonging_to_alice) -> Chunk:
         index=1,
         text="hello, i am Alice!",
     )
+
 
 @pytest.fixture()
 def chunk_belonging_to_bob(file_belonging_to_bob) -> Chunk:
@@ -84,9 +86,11 @@ def chunk_belonging_to_claire(claire) -> Chunk:
         text="hello, i am Claire!",
     )
 
+
 @pytest.fixture
 def file_pdf_path() -> Path:
     return Path(__file__).parents[2] / "tests" / "data" / "pdf" / "Cabinet Office - Wikipedia.pdf"
+
 
 @pytest.fixture()
 def stored_chunk_belonging_to_alice(elasticsearch_storage_handler, chunk_belonging_to_alice) -> Chunk:
