@@ -29,7 +29,4 @@
 			"path": ".."
 		}
 	],
-	"settings": {
-		"python.envFile": "${workspaceFolder}/../.env"
-	}
 }

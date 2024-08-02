@@ -12,6 +12,7 @@ def get_azure_embeddings(env: Settings):
         max_retries=env.embedding_max_retries,
         retry_min_seconds=env.embedding_retry_min_seconds,
         retry_max_seconds=env.embedding_retry_max_seconds,
+        chunk_size=env.embedding_max_batch_size,
     )
 
 
