@@ -15,20 +15,20 @@ readme = "../README.md"
 python = ">=3.12,<3.13"
 redbox = {path="../redbox-core", develop=true}
 pydantic = "^2.7.1"
-langchain = "^0.2.11"
+langchain = "^0.2.12"
 tiktoken = "^0.7.0"
-boto3 = "^1.34.150"
+boto3 = "^1.34.152"
 faststream = {extras = ["redis"], version = "<0.5.0"}
 fastapi = "^0.111.0"
-uvicorn = "^0.30.1"
+uvicorn = "^0.30.4"
 python-multipart = "^0.0.9"
 python-jose = "^3.3.0"
 websockets = "^12.0"
-langchain_openai = "^0.1.19"
+langchain_openai = "^0.1.20"
 langchain-community = "^0.2.10"
 pillow-heif = "<0.19.0"
 langchain-elasticsearch = "^0.2.2"
-litellm = "^1.42.5"
+litellm = "^1.42.9"
 
 
 [tool.poetry.group.dev.dependencies]

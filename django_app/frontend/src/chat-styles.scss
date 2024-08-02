@@ -1,5 +1,5 @@
 main:has(.iai-chat-input),
-body:has(.iai-environment-warning) main {
+body:has(.iai-environment-warning) main:has(.iai-chat-input) {
   min-height: 0;
 }
 @media (min-width: 641px) {

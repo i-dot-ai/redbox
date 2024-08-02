@@ -60,7 +60,19 @@ class CoreChatResponse:
 @dataclass(frozen=True)
 class FileStatus:
     processing_status: (
-        Literal["uploaded", "parsing", "chunking", "embedding", "indexing", "complete", "unknown", "errored"] | None
+        Literal[
+            "uploaded",
+            "parsing",
+            "chunking",
+            "embedding",
+            "indexing",
+            "complete",
+            "unknown",
+            "errored",
+            "deleted",
+            "processing",
+        ]
+        | None
     )
 
 
