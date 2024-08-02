@@ -128,9 +128,9 @@ DOCKER_SERVICES=$$(docker compose config --services | grep -v mlflow)
 AUTO_APPLY_RESOURCES = module.django-app.aws_ecs_task_definition.aws-ecs-task \
                        module.django-app.aws_ecs_service.aws-ecs-service \
                        module.django-app.data.aws_ecs_task_definition.main \
-                       module.core-api.aws_ecs_task_definition.aws-ecs-task \
-                       module.core-api.aws_ecs_service.aws-ecs-service \
-                       module.core-api.data.aws_ecs_task_definition.main \
+                       module.core_api.aws_ecs_task_definition.aws-ecs-task \
+                       module.core_api.aws_ecs_service.aws-ecs-service \
+                       module.core_api.data.aws_ecs_task_definition.main \
                        module.worker.aws_ecs_task_definition.aws-ecs-task \
                        module.worker.aws_ecs_service.aws-ecs-service \
                        module.worker.data.aws_ecs_task_definition.main \
