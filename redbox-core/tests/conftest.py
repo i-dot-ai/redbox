@@ -39,7 +39,9 @@ def claire():
 
 
 @pytest.fixture()
-def file_belonging_to_alice(file_pdf_path, alice, env, elasticsearch_storage_handler: ElasticsearchStorageHandler) -> File:
+def file_belonging_to_alice(
+    file_pdf_path, alice, env, elasticsearch_storage_handler: ElasticsearchStorageHandler
+) -> File:
     f = File(
         key=file_pdf_path.name,
         bucket=env.bucket_name,
@@ -63,7 +65,9 @@ def file_belonging_to_bob(file_pdf_path, bob, env, elasticsearch_storage_handler
 
 
 @pytest.fixture()
-def file_belonging_to_claire(file_pdf_path, claire, env, elasticsearch_storage_handler: ElasticsearchStorageHandler) -> File:
+def file_belonging_to_claire(
+    file_pdf_path, claire, env, elasticsearch_storage_handler: ElasticsearchStorageHandler
+) -> File:
     f = File(
         key=file_pdf_path.name,
         bucket=env.bucket_name,

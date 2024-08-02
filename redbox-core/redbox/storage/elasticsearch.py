@@ -1,6 +1,5 @@
 import logging
 from collections.abc import Sequence
-from typing import Any
 from uuid import UUID
 
 from elastic_transport import ObjectApiResponse
@@ -8,7 +7,6 @@ from elasticsearch import Elasticsearch, NotFoundError
 from elasticsearch.helpers import scan
 from pydantic import ValidationError
 
-from redbox.models import Settings
 from redbox.models.base import PersistableModel
 from redbox.storage.storage_handler import BaseStorageHandler
 
@@ -27,6 +25,7 @@ def get_query_match_all_for_user(user_uuid: UUID):
             }
         }
     }
+
 
 class ElasticsearchStorageHandler(BaseStorageHandler):
     """Storage Handler for Elasticsearch"""
@@ -59,8 +58,6 @@ class ElasticsearchStorageHandler(BaseStorageHandler):
 
     def write_items(self, items: Sequence[PersistableModel]) -> Sequence[ObjectApiResponse]:
         return list(map(self.write_item, items))
-
-    
 
     def read_item(self, item_uuid: UUID, model_type: str):
         target_index = f"{self.root_index}-{model_type.lower()}"
@@ -104,7 +101,7 @@ class ElasticsearchStorageHandler(BaseStorageHandler):
             index=target_index,
             body={"query": {"terms": {"_id": [str(item.uuid) for item in items]}}},
         )
-    
+
     def delete_user_items(self, model_type: str, user_uuid: UUID) -> ObjectApiResponse | None:
         target_index = f"{self.root_index}-{model_type.lower()}"
         return self.es_client.delete_by_query(

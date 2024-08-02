@@ -40,7 +40,7 @@ class Link(BaseModel):
 
     def __hash__(self):
         return hash(self.text) ^ hash(self.url) ^ hash(self.start_index)
-    
+
 
 class FileStatus(BaseModel):
     """Status of a file."""

@@ -124,8 +124,7 @@ def test_reingest_file(app_client, chunked_file, elasticsearch_storage_handler, 
 
     elasticsearch_storage_handler.refresh()
     assert (
-        elasticsearch_storage_handler.list_all_items("chunk", chunked_file.creator_user_uuid)
-        != previous_chunks
+        elasticsearch_storage_handler.list_all_items("chunk", chunked_file.creator_user_uuid) != previous_chunks
     ), f"Pre and post chunks matched and both had {len(previous_chunks)} chunks"
 
 

@@ -67,14 +67,7 @@ def test_elastic_write_read_delete_items(elasticsearch_storage_handler):
     Then I expect to see them written to the database
     """
     creator_user_uuid = uuid4()
-    files = [
-        File(
-            creator_user_uuid=creator_user_uuid,
-            key=f"somefile-{i}.txt",
-            bucket="a-bucket"
-        )
-        for i in range(10)
-    ]
+    files = [File(creator_user_uuid=creator_user_uuid, key=f"somefile-{i}.txt", bucket="a-bucket") for i in range(10)]
 
     elasticsearch_storage_handler.write_items(files)
 

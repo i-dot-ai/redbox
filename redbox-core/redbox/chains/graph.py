@@ -76,9 +76,7 @@ def make_chat_prompt_from_messages_runnable(tokeniser: Encoding, llm_max_tokens:
 
         log.debug("Setting chat prompt")
         system_prompt_message = [("system", system_prompt)]
-        prompts_budget = len(tokeniser.encode(system_prompt)) + len(
-            tokeniser.encode(question_prompt)
-        )
+        prompts_budget = len(tokeniser.encode(system_prompt)) + len(tokeniser.encode(question_prompt))
         chat_history_budget = state["query"].ai_settings.context_window_size - llm_max_tokens - prompts_budget
 
         if chat_history_budget <= 0:
@@ -99,8 +97,6 @@ def make_chat_prompt_from_messages_runnable(tokeniser: Encoding, llm_max_tokens:
         ).invoke(state["query"].model_dump() | state.get("prompt_args", {}))
 
     return chat_prompt_from_messages
-
-
 
 
 @chain
