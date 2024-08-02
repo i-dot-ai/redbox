@@ -54,9 +54,7 @@ def set_route(state: ChainState):
     return {"route_name": selected}
 
 
-def make_chat_prompt_from_messages_runnable(
-    tokeniser: Encoding,
-):
+def make_chat_prompt_from_messages_runnable(tokeniser: Encoding, llm_max_tokens: int):
     @chain
     def chat_prompt_from_messages(state: ChainState):
         """
@@ -68,9 +66,7 @@ def make_chat_prompt_from_messages_runnable(
         prompts_budget = len(tokeniser.encode(state["query"].ai_settings.chat_system_prompt)) - len(
             tokeniser.encode(state["query"].ai_settings.chat_question_prompt)
         )
-        token_budget = (
-            state["query"].ai_settings.context_window_size - state["query"].ai_settings.llm_max_tokens - prompts_budget
-        )
+        token_budget = state["query"].ai_settings.context_window_size - llm_max_tokens - prompts_budget
         chat_history_budget = token_budget - len(tokeniser.encode(state["query"].question))
 
         if chat_history_budget <= 0:
@@ -106,12 +102,15 @@ def set_prompt_args(state: ChainState):
 def build_llm_chain(
     llm: BaseChatModel,
     tokeniser: Encoding,
+    llm_max_tokens: int,
     final_response_chain=False,
 ) -> Runnable:
     _llm = llm.with_config(tags=["response_flag"]) if final_response_chain else llm
     return RunnableParallel(
         {
-            "response": make_chat_prompt_from_messages_runnable(tokeniser=tokeniser) | _llm | StrOutputParser(),
+            "response": make_chat_prompt_from_messages_runnable(tokeniser=tokeniser, llm_max_tokens=llm_max_tokens)
+            | _llm
+            | StrOutputParser(),
         }
     )
 

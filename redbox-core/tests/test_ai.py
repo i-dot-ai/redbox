@@ -192,6 +192,7 @@ def make_test_case(
         llm=llm,
         retriever=retriever,
         tokeniser=get_tokeniser(),
+        llm_max_tokens=env.llm_max_tokens,
     )
 
     def _make_test_case(

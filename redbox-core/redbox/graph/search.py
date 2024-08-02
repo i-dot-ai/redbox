@@ -12,6 +12,7 @@ def get_search_graph(
     llm: BaseChatModel,
     retriever: VectorStoreRetriever,
     tokeniser: Encoding,
+    llm_max_tokens: int,
     debug: bool = False,
 ) -> CompiledGraph:
     app = StateGraph(ChainState)
@@ -19,7 +20,7 @@ def get_search_graph(
     app.add_node("get_docs", build_get_docs_with_filter(retriever))
     app.add_node("set_prompt_args", set_prompt_args)
 
-    app.add_node("condense", build_llm_chain(llm, tokeniser))
+    app.add_node("condense", build_llm_chain(llm, tokeniser, llm_max_tokens))
     app.add_node(
         "map_condense_to_question",
         lambda s: {
@@ -37,6 +38,7 @@ def get_search_graph(
         build_llm_chain(
             llm,
             tokeniser,
+            llm_max_tokens,
             final_response_chain=True,
         ),
     )
