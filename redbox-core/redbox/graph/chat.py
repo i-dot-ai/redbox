@@ -4,13 +4,13 @@ from langgraph.constants import Send
 from langgraph.graph.graph import CompiledGraph
 from langchain_core.runnables import chain, RunnableLambda, Runnable
 from langchain_core.documents import Document
-from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.vectorstores import VectorStoreRetriever
 from langchain_text_splitters import TextSplitter, TokenTextSplitter
 from tiktoken import Encoding
 
 from redbox.api.format import format_documents
+from redbox.chains.components import get_llm
 from redbox.models.chain import ChainState, ChatMapReduceState
 from redbox.models.chat import ChatRoute
 from redbox.chains.graph import (
@@ -82,9 +82,10 @@ def set_chat_method(state: ChainState):
     return {"route_name": selected_tool}
 
 
-def build_llm_map_chain(llm: BaseChatModel, tokeniser: Encoding) -> Runnable:
+def build_llm_map_chain(tokeniser: Encoding) -> Runnable:
     @chain
     def _build_llm_map_chain(chain_state: ChainState):
+        llm = get_llm(chain_state["query"].ai_settings)
         return (
             make_chat_prompt_from_messages_runnable(
                 tokeniser=tokeniser, llm_max_tokens=chain_state["query"].ai_settings.llm_max_tokens
@@ -143,12 +144,10 @@ def get_chat_with_docs_graph(
     return app.compile(debug=debug)
 
 
-def get_chat_with_docs_map_reduce_graph(
-    llm: BaseChatModel, tokeniser: Encoding, env: Settings, debug: bool = False
-) -> CompiledGraph:
+def get_chat_with_docs_map_reduce_graph(tokeniser: Encoding, env: Settings, debug: bool = False) -> CompiledGraph:
     app = StateGraph(ChatMapReduceState)
 
-    app.add_node("llm_map", build_llm_map_chain(llm, tokeniser))
+    app.add_node("llm_map", build_llm_map_chain(tokeniser))
     app.add_node(
         "reduce",
         build_reduce_docs_step(

@@ -49,7 +49,7 @@ def get_llm(ai_settings: AISettings) -> ChatLiteLLM:
             callbacks=[logger_callback],
         )
     elif ai_settings.chat_backend == "fake":
-        return GenericFakeChatModel(messages=iter(["test_case.test_data.expected_llm_response"]))
+        return GenericFakeChatModel(messages=iter(ai_settings.fake_backend_responses))
     else:
         msg = "Unknown LLM model specified or missing"
         log.exception(msg)

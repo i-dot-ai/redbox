@@ -133,7 +133,8 @@ class AISettings(BaseModel):
     knn_boost: int = 1
     similarity_threshold: int = 0
 
-    chat_backend: Literal["azure", "openai"] = "azure"
+    chat_backend: Literal["azure", "openai", "fake"] = "azure"
+    fake_backend_responses: list = ["hello"]
     llm_max_tokens: int = 1024
 
     openai_api_key: str = "NotAKey"  # also in settings for embeddings
