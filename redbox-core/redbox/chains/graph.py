@@ -61,13 +61,23 @@ def make_chat_prompt_from_messages_runnable(tokeniser: Encoding, llm_max_tokens:
         Create a ChatPromptTemplate as part of a chain using 'chat_history'.
         Returns the PromptValue using values in the input_dict
         """
+        if state["route_name"] == ChatRoute.chat:
+            system_prompt = state["query"].ai_settings.chat_system_prompt
+            question_prompt = state["query"].ai_settings.chat_question_prompt
+        elif state["route_name"] == ChatRoute.chat_with_docs:
+            system_prompt = state["query"].ai_settings.chat_with_docs_system_prompt
+            question_prompt = state["query"].ai_settings.chat_with_docs_question_prompt
+        elif state["route_name"] == ChatRoute.chat_with_docs_map_reduce:
+            system_prompt = state["query"].ai_settings.chat_map_system_prompt
+            question_prompt = state["query"].ai_settings.chat_map_question_prompt
+        elif state["route_name"] == ChatRoute.search:
+            system_prompt = state["query"].ai_settings.retrieval_system_prompt
+            question_prompt = state["query"].ai_settings.retrieval_question_prompt
+
         log.debug("Setting chat prompt")
-        system_prompt_message = [("system", state["query"].ai_settings.chat_system_prompt)]
-        prompts_budget = len(tokeniser.encode(state["query"].ai_settings.chat_system_prompt)) - len(
-            tokeniser.encode(state["query"].ai_settings.chat_question_prompt)
-        )
-        token_budget = state["query"].ai_settings.context_window_size - llm_max_tokens - prompts_budget
-        chat_history_budget = token_budget - len(tokeniser.encode(state["query"].question))
+        system_prompt_message = [("system", system_prompt)]
+        prompts_budget = len(tokeniser.encode(system_prompt)) + len(tokeniser.encode(question_prompt))
+        chat_history_budget = state["query"].ai_settings.context_window_size - llm_max_tokens - prompts_budget
 
         if chat_history_budget <= 0:
             raise QuestionLengthError
@@ -83,8 +93,8 @@ def make_chat_prompt_from_messages_runnable(tokeniser: Encoding, llm_max_tokens:
         return ChatPromptTemplate.from_messages(
             system_prompt_message
             + [(msg["role"], msg["text"]) for msg in truncated_history]
-            + [("user", state["query"].ai_settings.chat_question_prompt)]
-        ).invoke(state["query"].dict() | state.get("prompt_args", {}))
+            + [("user", question_prompt)]
+        ).invoke(state["query"].model_dump() | state.get("prompt_args", {}))
 
     return chat_prompt_from_messages
 

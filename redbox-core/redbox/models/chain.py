@@ -9,7 +9,7 @@ from typing import TypedDict, Literal, Annotated, Required, NotRequired
 from uuid import UUID
 from operator import add
 
-from langchain_core.pydantic_v1 import BaseModel, Field
+from pydantic import BaseModel, Field
 from langchain_core.documents import Document
 
 
@@ -44,17 +44,7 @@ RETRIEVAL_SYSTEM_PROMPT = (
     "If dealing dealing with lots of data return it in markdown table format. "
 )
 
-SUMMARISATION_SYSTEM_PROMPT = (
-    "You are an AI assistant tasked with summarizing documents. "
-    "Your goal is to extract the most important information and present it in "
-    "a concise and coherent manner. Please follow these guidelines while summarizing: \n"
-    "1) Identify and highlight key points,\n"
-    "2) Avoid repetition,\n"
-    "3) Ensure the summary is easy to understand,\n"
-    "4) Maintain the original context and meaning.\n"
-)
-
-MAP_SYSTEM_PROMPT = (
+CHAT_MAP_SYSTEM_PROMPT = (
     "You are an AI assistant tasked with summarizing documents. "
     "Your goal is to extract the most important information and present it in "
     "a concise and coherent manner. Please follow these guidelines while summarizing: \n"
@@ -88,16 +78,9 @@ CHAT_QUESTION_PROMPT = "{question}\n=========\n Response: "
 
 CHAT_WITH_DOCS_QUESTION_PROMPT = "Question: {question}. \n\n Documents: \n\n {formatted_documents} \n\n Answer: "
 
-CHAT_WITH_DOCS_REDUCE_QUESTION_PROMPT = "Question: {question}. \n\n Documents: \n\n {summaries} \n\n Answer: "
-
 RETRIEVAL_QUESTION_PROMPT = "{question} \n=========\n{formatted_documents}\n=========\nFINAL ANSWER: "
 
-SUMMARISATION_QUESTION_PROMPT = "Question: {question}. \n\n Documents: \n\n {documents} \n\n Answer: "
-
 CHAT_MAP_QUESTION_PROMPT = "Question: {question}. \n Documents: \n {formatted_documents} \n\n Answer: "
-
-
-REDUCE_QUESTION_PROMPT = "Question: {question}. \n\n Documents: \n\n {formatted_documents} \n\n Answer: "
 
 CONDENSE_QUESTION_PROMPT = "{question}\n=========\n Standalone question: "
 
@@ -116,18 +99,14 @@ class AISettings(BaseModel):
     chat_with_docs_system_prompt: str = CHAT_WITH_DOCS_SYSTEM_PROMPT
     chat_with_docs_question_prompt: str = CHAT_WITH_DOCS_QUESTION_PROMPT
     chat_with_docs_reduce_system_prompt: str = CHAT_WITH_DOCS_REDUCE_SYSTEM_PROMPT
-    chat_with_docs_reduce_question_prompt: str = CHAT_WITH_DOCS_REDUCE_QUESTION_PROMPT
     retrieval_system_prompt: str = RETRIEVAL_SYSTEM_PROMPT
     retrieval_question_prompt: str = RETRIEVAL_QUESTION_PROMPT
     condense_system_prompt: str = CONDENSE_SYSTEM_PROMPT
     condense_question_prompt: str = CONDENSE_QUESTION_PROMPT
-    summarisation_system_prompt: str = SUMMARISATION_SYSTEM_PROMPT
-    summarisation_question_prompt: str = SUMMARISATION_QUESTION_PROMPT
     map_max_concurrency: int = 128
-    map_system_prompt: str = MAP_SYSTEM_PROMPT
+    chat_map_system_prompt: str = CHAT_MAP_SYSTEM_PROMPT
     chat_map_question_prompt: str = CHAT_MAP_QUESTION_PROMPT
     reduce_system_prompt: str = REDUCE_SYSTEM_PROMPT
-    reduce_question_prompt: str = REDUCE_QUESTION_PROMPT
     llm_max_tokens: int = 1024
 
     # size: int = 19 rag_k
@@ -135,10 +114,6 @@ class AISettings(BaseModel):
     # num_candidates: int = 13 rag_num_candidates
     knn_boost: int = 1
     similarity_threshold: int = 0
-
-    @property
-    def stuff_chunk_max_tokens(self) -> int:
-        return int(self.context_window_size * self.stuff_chunk_context_ratio)
 
 
 class ChainInput(BaseModel):
