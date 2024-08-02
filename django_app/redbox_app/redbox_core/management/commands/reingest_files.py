@@ -34,7 +34,7 @@ class Command(BaseCommand):
                 errors += 1
 
             else:
-                file.status = StatusEnum.uploaded
+                file.status = StatusEnum.processing
                 file.save()
                 successes += 1
 

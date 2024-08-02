@@ -317,5 +317,5 @@ def test_reingest_files(several_files: Sequence[File], requests_mock: Mocker):
     call_command("reingest_files")
 
     # Then
-    assert File.objects.get(id=successful_file.id).status == StatusEnum.uploaded
+    assert File.objects.get(id=successful_file.id).status == StatusEnum.processing
     assert File.objects.get(id=failing_file.id).status == StatusEnum.errored

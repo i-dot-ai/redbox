@@ -42,9 +42,7 @@ class Command(BaseCommand):
     def handle(self, *_args, **_kwargs):
         self.stdout.write(self.style.NOTICE("Checking file status"))
 
-        statuses_to_ignore = [StatusEnum.complete, StatusEnum.deleted, StatusEnum.errored]
-
-        for file in File.objects.exclude(status__in=statuses_to_ignore):
+        for file in File.objects.filter(status=StatusEnum.processing):
             logger.debug(
                 "Chcking file object %s, status %s",
                 file,
@@ -66,5 +64,6 @@ class Command(BaseCommand):
                     file.save()
 
             else:
-                file.status = core_file_status_response.processing_status or StatusEnum.unknown
+                # TODO: check how to handle this with unexpected statuses
+                file.status = core_file_status_response.processing_status or StatusEnum.errored
                 file.save()

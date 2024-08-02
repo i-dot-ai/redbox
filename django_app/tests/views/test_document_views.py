@@ -80,7 +80,7 @@ def test_document_upload_status(client, alice, file_pdf_path: Path, s3_client, r
         assert response.url == "/documents/"
         assert count_s3_objects(s3_client) == previous_count + 1
         uploaded_file = File.objects.filter(user=alice).order_by("-created_at")[0]
-        assert uploaded_file.status == StatusEnum.uploaded
+        assert uploaded_file.status == StatusEnum.processing
 
 
 @pytest.mark.django_db()

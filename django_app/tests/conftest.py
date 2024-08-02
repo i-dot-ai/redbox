@@ -20,6 +20,7 @@ from redbox_app.redbox_core.models import (
     ChatRoleEnum,
     Citation,
     File,
+    StatusEnum,
     User,
 )
 
@@ -137,6 +138,7 @@ def uploaded_file(alice: User, original_file: UploadedFile, s3_client) -> File: 
         original_file_name=original_file.name,
         core_file_uuid=uuid.uuid4(),
         last_referenced=datetime.now(tz=UTC) - timedelta(days=14),
+        status=StatusEnum.processing
     )
     file.save()
     yield file
