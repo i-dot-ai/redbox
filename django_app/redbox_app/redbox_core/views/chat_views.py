@@ -2,7 +2,6 @@ import logging
 import uuid
 from collections.abc import Sequence
 from dataclasses import dataclass
-from datetime import date
 from http import HTTPStatus
 from itertools import groupby
 from operator import attrgetter
@@ -10,7 +9,6 @@ from operator import attrgetter
 from dataclasses_json import Undefined, dataclass_json
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
-from django.db.models import Max
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -44,7 +42,6 @@ class ChatsView(View):
         completed_files, processing_files = File.get_completed_and_processing_files(request.user)
 
         self.decorate_selected_files(completed_files, messages)
-        self.decorate_history_with_date_group(chat_history)
         chat_history_grouped_by_date_group = groupby(chat_history, attrgetter("date_group"))
 
         context = {
@@ -75,26 +72,6 @@ class ChatsView(View):
 
         for file in all_files:
             file.selected = file in selected_files
-
-    @staticmethod
-    def decorate_history_with_date_group(chats: Sequence[ChatHistory]) -> None:
-        for chat in chats:
-            newest_message_date = chat.chatmessage_set.aggregate(newest_date=Max("created_at"))["newest_date"]
-            chat.date_group = ChatsView.get_date_group(newest_message_date.date())
-
-    @staticmethod
-    def get_date_group(on: date) -> str:
-        today = timezone.now().date()
-        age = (today - on).days
-        if age > 30:  # noqa: PLR2004
-            return "Older than 30 days"
-        if age > 7:  # noqa: PLR2004
-            return "Previous 30 days"
-        if age > 1:
-            return "Previous 7 days"
-        if age > 0:
-            return "Yesterday"
-        return "Today"
 
 
 class ChatsTitleView(View):
