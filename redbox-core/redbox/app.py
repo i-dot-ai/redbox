@@ -66,11 +66,7 @@ class Redbox:
         app.add_node(
             ChatRoute.chat_with_docs,
             get_chat_with_docs_graph(
-                _llm,
-                _all_chunks_retriever.with_config(tags=[Redbox.SOURCE_DOCUMENTS_TAG]),
-                _tokeniser,
-                _env,
-                debug,
+                _llm, _all_chunks_retriever.with_config(tags=[Redbox.SOURCE_DOCUMENTS_TAG]), _tokeniser, _env, debug
             ),
         )
         app.add_node(
