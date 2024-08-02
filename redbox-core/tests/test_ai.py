@@ -203,7 +203,12 @@ def make_test_case(
                 return case
         answer: ChainState = rag_chain.invoke(
             input=ChainState(
-                query=ChainInput(question=prompt, file_uuids=[], user_uuid=str(user_uuid), chat_history=[])
+                query=ChainInput(
+                    question=prompt,
+                    file_uuids=[],
+                    user_uuid=str(user_uuid),
+                    chat_history=[],
+                )
             )
         )
 
