@@ -146,7 +146,7 @@ class ChainInput(BaseModel):
     file_uuids: list[UUID] = Field(description="List of files to process")
     user_uuid: UUID = Field(description="User the chain in executing for")
     chat_history: list[ChainChatMessage] = Field(description="All previous messages in chat (excluding question)")
-    ai_settings: AISettings
+    ai_settings: AISettings = Field(description="User request AI settings", default_factory=AISettings)
 
 
 class ChainState(TypedDict):
