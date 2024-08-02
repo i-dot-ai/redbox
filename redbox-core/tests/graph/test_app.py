@@ -43,12 +43,7 @@ TEST_CASES = [
             test_id="Chat with single doc",
         ),
         generate_test_cases(
-            query=ChainInput(
-                question="What is AI?",
-                file_uuids=[uuid4(), uuid4()],
-                user_uuid=uuid4(),
-                chat_history=[],
-            ),
+            query=ChainInput(question="What is AI?", file_uuids=[uuid4(), uuid4()], user_uuid=uuid4(), chat_history=[]),
             test_data=[
                 TestData(
                     2,
@@ -100,10 +95,7 @@ TEST_CASES = [
         ),
         generate_test_cases(
             query=ChainInput(
-                question="@nosuchkeyword What is AI?",
-                file_uuids=[uuid4()],
-                user_uuid=uuid4(),
-                chat_history=[],
+                question="@nosuchkeyword What is AI?", file_uuids=[uuid4()], user_uuid=uuid4(), chat_history=[]
             ),
             test_data=[
                 TestData(
