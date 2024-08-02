@@ -12,6 +12,7 @@ from redbox.api.callbacks import LoggerCallbackHandler
 from redbox.models.chain import AISettings
 from redbox.models.settings import Settings
 from redbox.retriever import AllElasticsearchRetriever, ParameterisedElasticsearchRetriever
+from langchain_core.language_models.fake_chat_models import GenericFakeChatModel
 
 log = logging.getLogger()
 
@@ -47,6 +48,8 @@ def get_llm(ai_settings: AISettings) -> ChatLiteLLM:
             max_tokens=ai_settings.llm_max_tokens,
             callbacks=[logger_callback],
         )
+    elif ai_settings.chat_backend == "fake":
+        return GenericFakeChatModel(messages=iter(["test_case.test_data.expected_llm_response"]))
     else:
         msg = "Unknown LLM model specified or missing"
         log.exception(msg)
