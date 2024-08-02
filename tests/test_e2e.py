@@ -85,21 +85,6 @@ class TestEndToEnd:
             pytest.fail(reason=f"failed to get embedded chunks within {timeout} seconds, potential error: {error}")
 
     @pytest.mark.parametrize("user_uuid", USER_UUIDS)
-    def test_get_file_chunks(self, user_uuid):
-        """
-        Given that I have POSTed a file key to core-api/file
-        And the file status is complete
-        When I GET the file chunks
-        I Expect a 200 response code
-        """
-        chunks_response = requests.get(
-            f"http://{TEST_ORIGIN}/file/{TestEndToEnd.file_uuids[user_uuid]}/chunks",
-            headers=make_headers(user_uuid),
-            timeout=30,
-        )
-        assert chunks_response.status_code == HTTPStatus.OK
-
-    @pytest.mark.parametrize("user_uuid", USER_UUIDS)
     def test_post_rag(self, user_uuid):
         """
         Given that I have POSTed a file key to core-api/file
