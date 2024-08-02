@@ -146,20 +146,20 @@ class User(BaseUser, UUIDPrimaryKeyBase):
 
 
 class StatusEnum(models.TextChoices):
-    uploaded = "uploaded"
-    parsing = "parsing"
-    chunking = "chunking"
-    embedding = "embedding"
-    indexing = "indexing"
+    # uploaded = "uploaded"
+    # parsing = "parsing"
+    # chunking = "chunking"
+    # embedding = "embedding"
+    # indexing = "indexing"
     complete = "complete"
-    unknown = "unknown"
+    # unknown = "unknown"
     deleted = "deleted"
     errored = "errored"
     processing = "processing"
-    failed = "failed"
+    # failed = "failed"
 
 
-INACTIVE_STATUSES = [StatusEnum.deleted, StatusEnum.errored, StatusEnum.unknown]
+INACTIVE_STATUSES = [StatusEnum.deleted, StatusEnum.errored]
 
 
 class File(UUIDPrimaryKeyBase, TimeStampedModel):
@@ -258,10 +258,9 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
     @classmethod
     def get_completed_and_processing_files(cls, user: User) -> tuple[Sequence["File"], Sequence["File"]]:
         """Returns all files that are completed and processing for a given user."""
-        hidden_statuses = [StatusEnum.deleted, StatusEnum.errored, StatusEnum.failed, StatusEnum.complete]
 
         completed_files = cls.objects.filter(user=user, status=StatusEnum.complete).order_by("-created_at")
-        processing_files = cls.objects.filter(user=user).exclude(status__in=hidden_statuses).order_by("-created_at")
+        processing_files = cls.objects.filter(user=user, status=StatusEnum.processing).order_by("-created_at")
         return completed_files, processing_files
 
     @classmethod
