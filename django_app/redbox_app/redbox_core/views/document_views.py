@@ -48,27 +48,24 @@ APPROVED_FILE_EXTENSIONS = [
 MAX_FILE_SIZE = 209715200  # 200 MB or 200 * 1024 * 1024
 
 
-@login_required
-def documents_view(request):
-    completed_files = File.objects.filter(user=request.user, status=StatusEnum.complete).order_by("-created_at")
-    hidden_statuses = [StatusEnum.deleted, StatusEnum.errored, StatusEnum.failed, StatusEnum.complete]
-    processing_files = (
-        File.objects.filter(user=request.user).exclude(status__in=hidden_statuses).order_by("-created_at")
-    )
+class DocumentView(View):
+    @method_decorator(login_required)
+    def get(self, request: HttpRequest) -> HttpResponse:
+        completed_files, processing_files = File.get_completed_and_processing_files(request.user)
 
-    ingest_errors = request.session.get("ingest_errors", [])
-    request.session["ingest_errors"] = []
+        ingest_errors = request.session.get("ingest_errors", [])
+        request.session["ingest_errors"] = []
 
-    return render(
-        request,
-        template_name="documents.html",
-        context={
-            "request": request,
-            "completed_files": completed_files,
-            "processing_files": processing_files,
-            "ingest_errors": ingest_errors,
-        },
-    )
+        return render(
+            request,
+            template_name="documents.html",
+            context={
+                "request": request,
+                "completed_files": completed_files,
+                "processing_files": processing_files,
+                "ingest_errors": ingest_errors,
+            },
+        )
 
 
 class UploadView(View):
@@ -97,7 +94,7 @@ class UploadView(View):
                     ingest_errors.append(f"{uploaded_file.name}: {ingest_error[0]}")
 
             request.session["ingest_errors"] = ingest_errors
-            return redirect(reverse(documents_view))
+            return redirect(reverse("documents"))
 
         return self.build_response(request, errors)
 
