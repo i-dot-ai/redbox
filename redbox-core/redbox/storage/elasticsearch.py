@@ -14,17 +14,8 @@ logging.basicConfig(level=logging.INFO)
 log = logging.getLogger()
 
 
-def get_query_match_all_for_user(user_uuid: UUID):
-    return {
-        "query": {
-            "bool": {
-                "should": [
-                    {"term": {"creator_user_uuid.keyword": str(user_uuid)}},
-                    {"term": {"metadata.creator_user_uuid.keyword": str(user_uuid)}},
-                ]
-            }
-        }
-    }
+
+
 
 
 class ElasticsearchStorageHandler(BaseStorageHandler):
@@ -102,11 +93,11 @@ class ElasticsearchStorageHandler(BaseStorageHandler):
             body={"query": {"terms": {"_id": [str(item.uuid) for item in items]}}},
         )
 
-    def delete_user_items(self, model_type: str, user_uuid: UUID) -> ObjectApiResponse | None:
+    def delete_user_items(self, model_type: str, user_uuid: UUID, filters: list[dict] = None) -> ObjectApiResponse | None:
         target_index = f"{self.root_index}-{model_type.lower()}"
         return self.es_client.delete_by_query(
             index=target_index,
-            body=get_query_match_all_for_user(user_uuid),
+            body=ElasticsearchStorageHandler.get_query_match_all_for_user(user_uuid, filters),
         )
 
     def read_all_items(self, model_type: str, user_uuid: UUID) -> list[PersistableModel]:
@@ -115,7 +106,7 @@ class ElasticsearchStorageHandler(BaseStorageHandler):
             result = scan(
                 client=self.es_client,
                 index=target_index,
-                query=get_query_match_all_for_user(user_uuid),
+                query=ElasticsearchStorageHandler.get_query_match_all_for_user(user_uuid),
                 _source=True,
             )
 
@@ -138,14 +129,14 @@ class ElasticsearchStorageHandler(BaseStorageHandler):
                 log.exception("Validation exception for %s", item, exc_info=e)
         return items
 
-    def list_all_items(self, model_type: str, user_uuid: UUID) -> list[UUID]:
+    def list_all_items(self, model_type: str, user_uuid: UUID, filters: list[dict] = None) -> list[UUID]:
         target_index = f"{self.root_index}-{model_type.lower()}"
         try:
             # Only return _id
             results = scan(
                 client=self.es_client,
                 index=target_index,
-                query=get_query_match_all_for_user(user_uuid),
+                query=ElasticsearchStorageHandler.get_query_match_all_for_user(user_uuid, filters),
                 _source=False,
             )
 
@@ -153,3 +144,26 @@ class ElasticsearchStorageHandler(BaseStorageHandler):
             log.info("Index %s not found. Returning empty list.", target_index)
             return []
         return [UUID(item["_id"]) for item in results]
+
+
+    @classmethod
+    def get_query_match_all_for_user(cls, user_uuid: UUID, filters: list[dict] = None):
+        query = {
+            "query": {
+                "bool": {
+                    "should": [
+                        {"term": {"creator_user_uuid.keyword": str(user_uuid)}},
+                        {"term": {"metadata.creator_user_uuid.keyword": str(user_uuid)}},
+                    ]
+                },
+            }
+        }
+        if filters:
+            query["query"]["bool"]["filter"] = filters
+        return query
+
+    @classmethod
+    def get_with_parent_file_filter(cls, parent_file_uuid: UUID | str):
+        return{
+            "term": {"metadata.parent_file_uuid.keyword": str(parent_file_uuid)},
+        }
