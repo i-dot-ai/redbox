@@ -60,7 +60,6 @@ TEST_CASES = [
                 file_uuids=[uuid4(), uuid4()],
                 user_uuid=uuid4(),
                 chat_history=[],
-                ai_settings={},
             ),
             test_data=[
                 TestData(
