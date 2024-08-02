@@ -6,15 +6,15 @@ from redbox.test.data import RedboxChatTestCase
 
 test_chain_parameters = (
     {
-        "size": 1,
-        "num_candidates": 100,
+        "rag_k": 1,
+        "rag_num_candidates": 100,
         "match_boost": 1,
         "knn_boost": 2,
         "similarity_threshold": 0,
     },
     {
-        "size": 2,
-        "num_candidates": 100,
+        "rag_k": 2,
+        "rag_num_candidates": 100,
         "match_boost": 1,
         "knn_boost": 2,
         "similarity_threshold": 0,
@@ -28,7 +28,8 @@ def test_parameterised_retriever(
     parameterised_retriever: ParameterisedElasticsearchRetriever,
     stored_file_parameterised: RedboxChatTestCase,
 ):
-    result = parameterised_retriever.with_config(configurable={"params": chain_params}).invoke(
-        ChainState(query=stored_file_parameterised.query)
-    )
-    assert len(result) == chain_params["size"], result
+    for k, v in chain_params.items():
+        setattr(stored_file_parameterised.query.ai_settings, k, v)
+
+    result = parameterised_retriever.invoke(ChainState(query=stored_file_parameterised.query))
+    assert len(result) == chain_params["rag_k"], result

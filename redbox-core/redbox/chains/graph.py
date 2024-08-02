@@ -11,7 +11,7 @@ from tiktoken import Encoding
 
 from redbox.api.format import format_documents
 from redbox.api.runnables import filter_by_elbow
-from redbox.models import ChatRoute, Settings
+from redbox.models import ChatRoute
 from redbox.models.chain import ChainChatMessage, ChainState
 from redbox.models.errors import QuestionLengthError
 
@@ -19,12 +19,18 @@ log = logging.getLogger()
 re_keyword_pattern = re.compile(r"@(\w+)")
 
 
-def build_get_docs(env: Settings, retriever: VectorStoreRetriever):
+def build_get_docs(retriever: VectorStoreRetriever):
     return RunnableParallel({"documents": retriever})
 
 
-def build_get_docs_with_filter(env: Settings, retriever: VectorStoreRetriever):
-    return RunnableParallel({"documents": retriever | filter_by_elbow(env.ai.elbow_filter_enabled)})
+def build_get_docs_with_filter(retriever: VectorStoreRetriever):
+    @chain
+    def _build_get_docs_with_filter(state: ChainState):
+        return RunnableParallel(
+            {"documents": retriever | filter_by_elbow(state["query"].ai_settings.elbow_filter_enabled)}
+        )
+
+    return _build_get_docs_with_filter
 
 
 @chain
@@ -48,23 +54,19 @@ def set_route(state: ChainState):
     return {"route_name": selected}
 
 
-def make_chat_prompt_from_messages_runnable(
-    system_prompt: str,
-    question_prompt: str,
-    input_token_budget: int,
-    tokeniser: Encoding,
-):
-    system_prompt_message = [("system", system_prompt)]
-    prompts_budget = len(tokeniser.encode(system_prompt)) - len(tokeniser.encode(question_prompt))
-    token_budget = input_token_budget - prompts_budget
-
+def make_chat_prompt_from_messages_runnable(tokeniser: Encoding, llm_max_tokens: int):
     @chain
     def chat_prompt_from_messages(state: ChainState):
         """
-        Create a ChatPrompTemplate as part of a chain using 'chat_history'.
+        Create a ChatPromptTemplate as part of a chain using 'chat_history'.
         Returns the PromptValue using values in the input_dict
         """
         log.debug("Setting chat prompt")
+        system_prompt_message = [("system", state["query"].ai_settings.chat_system_prompt)]
+        prompts_budget = len(tokeniser.encode(state["query"].ai_settings.chat_system_prompt)) - len(
+            tokeniser.encode(state["query"].ai_settings.chat_question_prompt)
+        )
+        token_budget = state["query"].ai_settings.context_window_size - llm_max_tokens - prompts_budget
         chat_history_budget = token_budget - len(tokeniser.encode(state["query"].question))
 
         if chat_history_budget <= 0:
@@ -81,7 +83,7 @@ def make_chat_prompt_from_messages_runnable(
         return ChatPromptTemplate.from_messages(
             system_prompt_message
             + [(msg["role"], msg["text"]) for msg in truncated_history]
-            + [("user", question_prompt)]
+            + [("user", state["query"].ai_settings.chat_question_prompt)]
         ).invoke(state["query"].dict() | state.get("prompt_args", {}))
 
     return chat_prompt_from_messages
@@ -100,20 +102,13 @@ def set_prompt_args(state: ChainState):
 def build_llm_chain(
     llm: BaseChatModel,
     tokeniser: Encoding,
-    env: Settings,
-    system_prompt: str,
-    question_prompt: str,
+    llm_max_tokens: int,
     final_response_chain=False,
 ) -> Runnable:
     _llm = llm.with_config(tags=["response_flag"]) if final_response_chain else llm
     return RunnableParallel(
         {
-            "response": make_chat_prompt_from_messages_runnable(
-                system_prompt=system_prompt,
-                question_prompt=question_prompt,
-                input_token_budget=env.ai.context_window_size - env.llm_max_tokens,
-                tokeniser=tokeniser,
-            )
+            "response": make_chat_prompt_from_messages_runnable(tokeniser=tokeniser, llm_max_tokens=llm_max_tokens)
             | _llm
             | StrOutputParser(),
         }

@@ -3,7 +3,6 @@ from langchain_core.embeddings import Embeddings, FakeEmbeddings
 from langchain_openai import AzureChatOpenAI
 from langchain_openai.embeddings import AzureOpenAIEmbeddings, OpenAIEmbeddings
 from langchain_core.utils import convert_to_secret_str
-from langchain_core.runnables import ConfigurableField
 import tiktoken
 
 from redbox.models.settings import Settings
@@ -67,21 +66,9 @@ def get_parameterised_retriever(env: Settings, embeddings: Embeddings | None = N
 
     Runnable returns a list of Chunks.
     """
-    default_params = {
-        "size": env.ai.rag_k,
-        "num_candidates": env.ai.rag_num_candidates,
-        "match_boost": 1,
-        "knn_boost": 1,
-        "similarity_threshold": 0,
-    }
     return ParameterisedElasticsearchRetriever(
         es_client=env.elasticsearch_client(),
         index_name=f"{env.elastic_root_index}-chunk",
-        params=default_params,
         embedding_model=embeddings or get_embeddings(env),
         embedding_field_name=env.embedding_document_field_name,
-    ).configurable_fields(
-        params=ConfigurableField(
-            id="params", name="Retriever parameters", description="A dictionary of parameters to use for the retriever."
-        )
     )

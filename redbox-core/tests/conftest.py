@@ -10,7 +10,6 @@ from redbox.storage.elasticsearch import ElasticsearchStorageHandler
 from collections.abc import Generator
 
 from langchain_core.embeddings.fake import FakeEmbeddings
-from langchain_core.runnables import ConfigurableField
 from langchain_elasticsearch import ElasticsearchStore
 
 
@@ -191,23 +190,11 @@ def all_chunks_retriever(elasticsearch_client, es_index) -> AllElasticsearchRetr
 def parameterised_retriever(
     env, elasticsearch_client, es_index, embedding_model_dim
 ) -> ParameterisedElasticsearchRetriever:
-    default_params = {
-        "size": env.ai.rag_k,
-        "num_candidates": env.ai.rag_num_candidates,
-        "match_boost": 1,
-        "knn_boost": 1,
-        "similarity_threshold": 0,
-    }
     return ParameterisedElasticsearchRetriever(
         es_client=elasticsearch_client,
         index_name=es_index,
-        params=default_params,
         embedding_model=FakeEmbeddings(size=embedding_model_dim),
         embedding_field_name=env.embedding_document_field_name,
-    ).configurable_fields(
-        params=ConfigurableField(
-            id="params", name="Retriever parameters", description="A dictionary of parameters to use for the retriever."
-        )
     )
 
 
