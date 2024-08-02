@@ -1,7 +1,7 @@
 import logging
 import uuid
 from collections.abc import Collection, Sequence
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, date, datetime, timedelta
 from typing import override
 
 import boto3
@@ -16,6 +16,8 @@ from django.utils.translation import gettext_lazy as _
 from django_use_email_as_username.models import BaseUser, BaseUserManager
 from jose import jwt
 from yarl import URL
+
+from redbox_app.redbox_core.utils import get_date_group
 
 logger = logging.getLogger(__name__)
 
@@ -253,18 +255,20 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
     def __lt__(self, other):
         return self.id < other.id
 
-    @staticmethod
-    def get_completed_and_processing_files(user: User) -> tuple[Sequence["File"], Sequence["File"]]:
+    @classmethod
+    def get_completed_and_processing_files(cls, user: User) -> tuple[Sequence["File"], Sequence["File"]]:
+        """Returns all files that are completed and processing for a given user."""
         hidden_statuses = [StatusEnum.deleted, StatusEnum.errored, StatusEnum.failed, StatusEnum.complete]
 
-        completed_files = File.objects.filter(user=user, status=StatusEnum.complete).order_by("-created_at")
-        processing_files = File.objects.filter(user=user).exclude(status__in=hidden_statuses).order_by("-created_at")
+        completed_files = cls.objects.filter(user=user, status=StatusEnum.complete).order_by("-created_at")
+        processing_files = cls.objects.filter(user=user).exclude(status__in=hidden_statuses).order_by("-created_at")
         return completed_files, processing_files
 
-    @staticmethod
-    def get_ordered_by_citation_priority(chat_message_id: uuid.UUID) -> Sequence["File"]:
+    @classmethod
+    def get_ordered_by_citation_priority(cls, chat_message_id: uuid.UUID) -> Sequence["File"]:
+        """Returns all files that are cited in a given chat message, ordered by citation priority."""
         return (
-            File.objects.filter(citation__chat_message_id=chat_message_id)
+            cls.objects.filter(citation__chat_message_id=chat_message_id)
             .annotate(min_created_at=Min("citation__created_at"))
             .order_by("min_created_at")
             .prefetch_related(
@@ -283,21 +287,31 @@ class ChatHistory(UUIDPrimaryKeyBase, TimeStampedModel):
     def __str__(self) -> str:  # pragma: no cover
         return f"{self.name} - {self.users}"
 
+    @override
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
         self.name = sanitise_string(self.name)
         super().save(force_insert, force_update, using, update_fields)
 
-    @staticmethod
+    @classmethod
     def get_ordered_by_last_message_date(
-        user: User, exclude_chat_ids: Collection[uuid.UUID] | None = None
+        cls, user: User, exclude_chat_ids: Collection[uuid.UUID] | None = None
     ) -> Sequence["ChatHistory"]:
+        """Returns all chat histories for a given user, ordered by the date of the latest message."""
         exclude_chat_ids = exclude_chat_ids or []
         return (
-            ChatHistory.objects.filter(users=user)
+            cls.objects.filter(users=user)
             .exclude(id__in=exclude_chat_ids)
             .annotate(latest_message_date=Max("chatmessage__created_at"))
             .order_by("-latest_message_date")
         )
+
+    @property
+    def newest_message_date(self) -> date:
+        return self.chatmessage_set.aggregate(newest_date=Max("created_at"))["newest_date"].date()
+
+    @property
+    def date_group(self):
+        return get_date_group(self.newest_message_date)
 
 
 class ChatRoleEnum(models.TextChoices):
@@ -337,10 +351,11 @@ class ChatMessage(UUIDPrimaryKeyBase, TimeStampedModel):
         self.text = sanitise_string(self.text)
         super().save(force_insert, force_update, using, update_fields)
 
-    @staticmethod
-    def get_messages_ordered_by_citation_priority(chat_history_id: uuid.UUID) -> Sequence["ChatMessage"]:
+    @classmethod
+    def get_messages_ordered_by_citation_priority(cls, chat_history_id: uuid.UUID) -> Sequence["ChatMessage"]:
+        """Returns all chat messages for a given chat history, ordered by citation priority."""
         return (
-            ChatMessage.objects.filter(chat_history__id=chat_history_id)
+            cls.objects.filter(chat_history__id=chat_history_id)
             .order_by("created_at")
             .prefetch_related(
                 Prefetch(
