@@ -44,7 +44,6 @@ chat_urlpatterns = [
 
 admin_urlpatterns = [
     path("admin/", admin.site.urls),
-    path("accounts/", include("allauth.urls")),
 ]
 
 other_urlpatterns = [
