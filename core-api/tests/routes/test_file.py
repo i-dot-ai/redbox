@@ -10,6 +10,7 @@ from faststream.redis import TestRedisBroker
 from core_api.routes.file import env, router
 from redbox.storage.elasticsearch import ElasticsearchStorageHandler
 
+
 @pytest.mark.asyncio()
 async def test_post_file_upload(app_client, file_pdf_path: Path, headers):
     """
@@ -20,17 +21,15 @@ async def test_post_file_upload(app_client, file_pdf_path: Path, headers):
 
     file_key = file_pdf_path.name
 
-    with file_pdf_path.open("rb") as f:
-
-        async with TestRedisBroker(router.broker):
-            response = app_client.post(
-                "/file",
-                json={
-                    "key": file_key,
-                    "bucket": env.bucket_name,
-                },
-                headers=headers,
-            )
+    async with TestRedisBroker(router.broker):
+        response = app_client.post(
+            "/file",
+            json={
+                "key": file_key,
+                "bucket": env.bucket_name,
+            },
+            headers=headers,
+        )
     assert response.status_code == HTTPStatus.CREATED
 
     file = json.loads(response.content.decode("utf-8"))
@@ -118,11 +117,11 @@ def test_reingest_file(app_client, chunked_user_files, stored_user_files, elasti
 
     previous_chunks_by_file = [
         elasticsearch_storage_handler.list_all_items(
-            "chunk", 
-            file.creator_user_uuid, 
-            filters=[ElasticsearchStorageHandler.get_with_parent_file_filter(file.uuid)]
+            "chunk",
+            file.creator_user_uuid,
+            filters=[ElasticsearchStorageHandler.get_with_parent_file_filter(file.uuid)],
         )
-        for file in stored_user_files 
+        for file in stored_user_files
     ]
 
     response = app_client.put(f"/file/{test_file.uuid}", headers=headers_for_user)
@@ -135,7 +134,9 @@ def test_reingest_file(app_client, chunked_user_files, stored_user_files, elasti
 
     for file, previous_chunks in zip(stored_user_files[1:], previous_chunks_by_file[1:]):
         post_chunks = elasticsearch_storage_handler.list_all_items("chunk", file.creator_user_uuid)
-        assert post_chunks == previous_chunks, f"Additional files had their chunks changed! Pre: {len(previous_chunks)} Post: {len(post_chunks)}"
+        assert (
+            post_chunks == previous_chunks
+        ), f"Additional files had their chunks changed! Pre: {len(previous_chunks)} Post: {len(post_chunks)}"
 
 
 def test_get_missing_file_chunks(app_client, headers):

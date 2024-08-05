@@ -14,10 +14,6 @@ logging.basicConfig(level=logging.INFO)
 log = logging.getLogger()
 
 
-
-
-
-
 class ElasticsearchStorageHandler(BaseStorageHandler):
     """Storage Handler for Elasticsearch"""
 
@@ -93,7 +89,9 @@ class ElasticsearchStorageHandler(BaseStorageHandler):
             body={"query": {"terms": {"_id": [str(item.uuid) for item in items]}}},
         )
 
-    def delete_user_items(self, model_type: str, user_uuid: UUID, filters: list[dict] = None) -> ObjectApiResponse | None:
+    def delete_user_items(
+        self, model_type: str, user_uuid: UUID, filters: list[dict] = None
+    ) -> ObjectApiResponse | None:
         target_index = f"{self.root_index}-{model_type.lower()}"
         return self.es_client.delete_by_query(
             index=target_index,
@@ -145,7 +143,6 @@ class ElasticsearchStorageHandler(BaseStorageHandler):
             return []
         return [UUID(item["_id"]) for item in results]
 
-
     @classmethod
     def get_query_match_all_for_user(cls, user_uuid: UUID, filters: list[dict] = None):
         query = {
@@ -164,6 +161,6 @@ class ElasticsearchStorageHandler(BaseStorageHandler):
 
     @classmethod
     def get_with_parent_file_filter(cls, parent_file_uuid: UUID | str):
-        return{
+        return {
             "term": {"metadata.parent_file_uuid.keyword": str(parent_file_uuid)},
         }

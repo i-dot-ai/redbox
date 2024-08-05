@@ -1,10 +1,8 @@
 from pathlib import Path
 from uuid import UUID, uuid4
 from datetime import UTC, datetime
-import uuid
 
 import pytest
-from botocore.exceptions import ClientError
 from elasticsearch import Elasticsearch
 from fastapi.testclient import TestClient
 from jose import jwt
@@ -100,21 +98,14 @@ def stored_file_1(elasticsearch_storage_handler, file) -> File:
 def stored_user_files(elasticsearch_storage_handler) -> list[File]:
     user = uuid4()
     files = [
-        File(
-            creator_user_uuid=user,
-            key="testfile1.txt",
-            bucket="local"
-        ),
-        File(
-            creator_user_uuid=user,
-            key="testfile2.txt",
-            bucket="local"
-        )
+        File(creator_user_uuid=user, key="testfile1.txt", bucket="local"),
+        File(creator_user_uuid=user, key="testfile2.txt", bucket="local"),
     ]
     for file in files:
         elasticsearch_storage_handler.write_item(file)
     elasticsearch_storage_handler.refresh()
     return files
+
 
 @pytest.fixture(scope="session")
 def embedding_model_dim() -> int:
@@ -234,7 +225,7 @@ def stored_user_chunks(stored_user_files) -> list[list[Document]]:
             )
             for i in range(5)
         ]
-        chunks_by_file.append(normal_chunks+large_chunks)
+        chunks_by_file.append(normal_chunks + large_chunks)
     return chunks_by_file
 
 
@@ -248,6 +239,7 @@ def chunked_file(elasticsearch_store: ElasticsearchStore, stored_file_chunks, st
 def large_chunked_file(elasticsearch_store, stored_large_file_chunks, stored_file_1) -> File:
     elasticsearch_store.add_documents(stored_large_file_chunks)
     return stored_file_1
+
 
 @pytest.fixture()
 def chunked_user_files(elasticsearch_store, stored_user_chunks) -> File:

@@ -212,10 +212,7 @@ def delete_file(file_uuid: UUID, user_uuid: Annotated[UUID, Depends(get_user_uui
     tags=["file"],
     responses={404: {"model": APIError404, "description": "The file was not found"}},
 )
-async def reingest_file(
-    file_uuid: UUID, 
-    user_uuid: Annotated[UUID, Depends(get_user_uuid)]
-) -> File:
+async def reingest_file(file_uuid: UUID, user_uuid: Annotated[UUID, Depends(get_user_uuid)]) -> File:
     """Deletes exisiting file chunks and regenerates embeddings
 
     Args:
@@ -241,7 +238,9 @@ async def reingest_file(
     storage_handler.update_item(file)
 
     # Remove old chunks
-    storage_handler.delete_user_items("chunk", user_uuid, filters=[ElasticsearchStorageHandler.get_with_parent_file_filter(file.uuid)])
+    storage_handler.delete_user_items(
+        "chunk", user_uuid, filters=[ElasticsearchStorageHandler.get_with_parent_file_filter(file.uuid)]
+    )
 
     # Add new chunks
     log.info("publishing %s", file.uuid)
