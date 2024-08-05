@@ -202,7 +202,5 @@ def file_status_api_view(request: HttpRequest) -> JsonResponse:
             file.status = StatusEnum.errored.label
             file.save()
         return JsonResponse({"status": file.status})
-    # TODO: handle unexpected core file status
-    file.status = core_file_status_response.processing_status or StatusEnum.errored.name
-    file.save()
+    file.update_status_from_core(status_label=core_file_status_response.processing_status)
     return JsonResponse({"status": file.get_status_text()})

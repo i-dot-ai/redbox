@@ -200,6 +200,53 @@ def test_remove_nonexistent_doc(alice: User, client: Client):
     assert response.status_code == HTTPStatus.NOT_FOUND
 
 
+@pytest.mark.parametrize(
+    ("core_status", "expected_status", "expected_status_text"),
+    [
+        ("complete", "complete", "Complete"),
+        ("failed", "errored", "Errored"),
+        ("processing", "processing", "Processing"),
+        ("some_other_status", "processing", "Processing"),
+    ],
+)
+@pytest.mark.django_db()
+def test_file_status_api_view(
+    core_status: str,
+    expected_status: str,
+    expected_status_text: str,
+    alice: User,
+    client: Client,
+    uploaded_file: File,
+    requests_mock: Mocker,
+):
+    # Given
+    client.force_login(alice)
+
+    mocked_response = {
+        "processing_status": core_status,
+        "file_uuid": str(uploaded_file.core_file_uuid),
+    }
+    requests_mock.get(
+        f"http://{settings.CORE_API_HOST}:{settings.CORE_API_PORT}/file/{uploaded_file.core_file_uuid}/status",
+        status_code=201,
+        json=mocked_response,
+    )
+
+    # When
+    # url = reverse("file-status", kwargs={"id": uploaded_file.id})
+    # response = client.get(url)
+    response = client.get("/file-status/", {"id": uploaded_file.id})
+
+    # Then
+    assert File.objects.get(id=uploaded_file.id).status == expected_status
+    assert response.json()["status"] == expected_status_text
+
+
+# test_file_status_api_view_nonexistent_file
+
+# test_file_status_api_view_file_not_in_coreapi
+
+
 def count_s3_objects(s3_client) -> int:
     paginator = s3_client.get_paginator("list_objects")
     return sum(len(result.get("Contents", [])) for result in paginator.paginate(Bucket=settings.BUCKET_NAME) if result)
