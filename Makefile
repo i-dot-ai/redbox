@@ -136,7 +136,8 @@ AUTO_APPLY_RESOURCES = module.django-app.aws_ecs_task_definition.aws-ecs-task \
                        module.worker.data.aws_ecs_task_definition.main \
                        aws_secretsmanager_secret.django-app-secret \
                        aws_secretsmanager_secret.worker-secret \
-                       aws_secretsmanager_secret.core-api-secret
+                       aws_secretsmanager_secret.core-api-secret \
+                       module.django-lambda.aws_lambda_function.lambda_function
 
 target_modules = $(foreach resource,$(AUTO_APPLY_RESOURCES),-target $(resource))
 
