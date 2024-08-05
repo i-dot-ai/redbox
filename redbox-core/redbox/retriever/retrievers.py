@@ -22,6 +22,7 @@ def hit_to_doc(hit: dict[str, Any]) -> Document:
         "index": source.get("index"),
         "parent_file_uuid": source.get("parent_file_uuid"),
         "score": hit["_score"],
+        "uuid": hit["_id"]
     }
     return Document(
         page_content=source["text"], metadata={k: v for k, v in c_meta.items() if v is not None} | source["metadata"]

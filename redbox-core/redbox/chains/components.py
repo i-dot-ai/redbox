@@ -1,3 +1,4 @@
+from functools import cache
 from langchain_elasticsearch import ElasticsearchRetriever
 from langchain_core.embeddings import Embeddings, FakeEmbeddings
 from langchain_openai import AzureChatOpenAI
@@ -16,7 +17,7 @@ def get_chat_llm(env: Settings):
         model=env.azure_openai_model,
     )
 
-
+@cache
 def get_tokeniser() -> tiktoken.Encoding:
     return tiktoken.get_encoding("cl100k_base")
 

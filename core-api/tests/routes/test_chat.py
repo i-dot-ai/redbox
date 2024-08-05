@@ -12,7 +12,7 @@ from fastapi.testclient import TestClient
 from langchain_core.language_models.fake_chat_models import GenericFakeChatModel
 from starlette.websockets import WebSocketDisconnect
 
-from redbox.models.chain import ChainInput
+from redbox.models.chain import RedboxQuery
 from redbox.models.chat import ChatResponse, ChatRoute
 from redbox.test.data import RedboxChatTestCase, generate_test_cases, TestData
 
@@ -31,7 +31,7 @@ TEST_CASES = [
     test_case
     for generated_cases in [
         generate_test_cases(
-            query=ChainInput(question="What is AI?", file_uuids=[], user_uuid=uuid4(), chat_history=[]),
+            query=RedboxQuery(question="What is AI?", file_uuids=[], user_uuid=uuid4(), chat_history=[]),
             test_data=[
                 TestData(0, 0, expected_llm_response=["Testing Response 1"], expected_route=ChatRoute.chat),
                 TestData(1, 100, expected_llm_response=["Testing Response 1"], expected_route=ChatRoute.chat),
@@ -40,7 +40,7 @@ TEST_CASES = [
             test_id="Basic Chat",
         ),
         generate_test_cases(
-            query=ChainInput(question="What is AI?", file_uuids=[uuid4()], user_uuid=uuid4(), chat_history=[]),
+            query=RedboxQuery(question="What is AI?", file_uuids=[uuid4()], user_uuid=uuid4(), chat_history=[]),
             test_data=[
                 TestData(
                     1, 1000, expected_llm_response=["Testing Response 1"], expected_route=ChatRoute.chat_with_docs
@@ -55,7 +55,7 @@ TEST_CASES = [
             test_id="Chat with single doc",
         ),
         generate_test_cases(
-            query=ChainInput(question="What is AI?", file_uuids=[uuid4(), uuid4()], user_uuid=uuid4(), chat_history=[]),
+            query=RedboxQuery(question="What is AI?", file_uuids=[uuid4(), uuid4()], user_uuid=uuid4(), chat_history=[]),
             test_data=[
                 TestData(
                     2,
@@ -79,7 +79,7 @@ TEST_CASES = [
             test_id="Chat with multiple docs",
         ),
         generate_test_cases(
-            query=ChainInput(question="What is AI?", file_uuids=[uuid4()], user_uuid=uuid4(), chat_history=[]),
+            query=RedboxQuery(question="What is AI?", file_uuids=[uuid4()], user_uuid=uuid4(), chat_history=[]),
             test_data=[
                 TestData(
                     2,

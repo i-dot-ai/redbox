@@ -1,6 +1,6 @@
 import pytest
 
-from redbox.models.chain import ChainState
+from redbox.models.chain import RedboxState
 from redbox.retriever import ParameterisedElasticsearchRetriever
 from redbox.test.data import RedboxChatTestCase
 
@@ -31,5 +31,5 @@ def test_parameterised_retriever(
     for k, v in chain_params.items():
         setattr(stored_file_parameterised.query.ai_settings, k, v)
 
-    result = parameterised_retriever.invoke(ChainState(query=stored_file_parameterised.query))
+    result = parameterised_retriever.invoke(RedboxState(query=stored_file_parameterised.query))
     assert len(result) == chain_params["rag_k"], result

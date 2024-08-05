@@ -1,3 +1,4 @@
+from uuid import UUID
 from langchain_core.documents.base import Document
 
 from redbox.models.chat import SourceDocument
@@ -45,3 +46,13 @@ def combine_documents(a: Document, b: Document):
     combined_metadata["links"] = combine_values("links")
 
     return Document(page_content=combined_content, metadata=combined_metadata)
+
+
+def structure_documents(docs: list[Document]) -> dict[UUID, dict[UUID, Document]]:
+    return {
+        g_id: {
+            d.metadata["uuid"]: d
+            for d in [d for d in docs if d.metadata["parent_file_uuid"] == g_id]
+        }
+        for g_id in [d.metadata["parent_file_uuid"] for d in docs]
+    }
