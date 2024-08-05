@@ -2,6 +2,7 @@ import pytest
 
 
 @pytest.mark.usefixtures("alice", "bob")
+@pytest.mark.django_db()
 def test_admin_create_location_sets_public_id(client, admin_user, django_assert_num_queries):
     client.force_login(admin_user)
 
