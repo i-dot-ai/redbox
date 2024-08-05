@@ -78,7 +78,6 @@ services:
         required: false
     depends_on:
       unstructured:
-        condition: service_healthy
       elasticsearch:
         condition: service_healthy
       minio:
