@@ -221,7 +221,6 @@ def test_file_status_api_view(
 ):
     # Given
     client.force_login(alice)
-
     mocked_response = {
         "processing_status": core_status,
         "file_uuid": str(uploaded_file.core_file_uuid),
@@ -233,8 +232,6 @@ def test_file_status_api_view(
     )
 
     # When
-    # url = reverse("file-status", kwargs={"id": uploaded_file.id})
-    # response = client.get(url)
     response = client.get("/file-status/", {"id": uploaded_file.id})
 
     # Then
@@ -242,9 +239,55 @@ def test_file_status_api_view(
     assert response.json()["status"] == expected_status_text
 
 
-# test_file_status_api_view_nonexistent_file
+@pytest.mark.django_db()
+def test_file_status_api_view_nonexistent_file(alice: User, client: Client):
+    # Given
+    client.force_login(alice)
+    nonexistent_uuid = uuid.uuid4()
 
-# test_file_status_api_view_file_not_in_coreapi
+    # When
+    response = client.get("/file-status/", {"id": nonexistent_uuid})
+
+    # Then
+    assert response.status_code == HTTPStatus.NOT_FOUND
+
+
+@pytest.mark.django_db()
+def test_file_status_api_view_file_not_in_coreapi(
+    alice: User, client: Client, uploaded_file: File, requests_mock: Mocker
+):
+    # Given
+    client.force_login(alice)
+    requests_mock.get(
+        f"http://{settings.CORE_API_HOST}:{settings.CORE_API_PORT}/file/{uploaded_file.core_file_uuid}/status",
+        status_code=HTTPStatus.NOT_FOUND,
+    )
+
+    # When
+    response = client.get("/file-status/", {"id": uploaded_file.id})
+
+    # Then
+    assert File.objects.get(id=uploaded_file.id).status == "errored"
+    assert response.json()["status"] == "Errored"
+
+
+@pytest.mark.django_db()
+def test_file_status_api_view_file_core_api_error(
+    alice: User, client: Client, uploaded_file: File, requests_mock: Mocker
+):
+    # Given
+    client.force_login(alice)
+    requests_mock.get(
+        f"http://{settings.CORE_API_HOST}:{settings.CORE_API_PORT}/file/{uploaded_file.core_file_uuid}/status",
+        status_code=HTTPStatus.SERVICE_UNAVAILABLE,
+    )
+
+    # When
+    response = client.get("/file-status/", {"id": uploaded_file.id})
+
+    # Then
+    assert File.objects.get(id=uploaded_file.id).status == "errored"
+    assert response.json()["status"] == "Errored"
 
 
 def count_s3_objects(s3_client) -> int:

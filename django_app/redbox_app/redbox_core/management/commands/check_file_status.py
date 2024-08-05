@@ -64,6 +64,4 @@ class Command(BaseCommand):
                     file.save()
 
             else:
-                # TODO: check how to handle this with unexpected statuses
-                file.status = core_file_status_response.processing_status or StatusEnum.errored
-                file.save()
+                file.update_status_from_core(status_label=core_file_status_response.processing_status)

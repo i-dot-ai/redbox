@@ -48,7 +48,7 @@ def test_check_file_status(deletion_mock: MagicMock, put_mock: MagicMock, alice:
             )
         return files
 
-    file_in_core_api, file_not_in_core_api, file_core_api_error = create_files()
+    file_in_core_api, file_with_surprising_status, file_not_in_core_api, file_core_api_error = create_files()
 
     matcher = re.compile(f"http://{settings.CORE_API_HOST}:{settings.CORE_API_PORT}/file/[0-9a-f]|\\-/status")
 
@@ -57,6 +57,13 @@ def test_check_file_status(deletion_mock: MagicMock, put_mock: MagicMock, alice:
         status_code=HTTPStatus.CREATED,
         json={
             "processing_status": StatusEnum.processing,
+        },
+    )
+    requests_mock.get(
+        f"http://{settings.CORE_API_HOST}:{settings.CORE_API_PORT}/file/{file_with_surprising_status.core_file_uuid}/status",
+        status_code=HTTPStatus.CREATED,
+        json={
+            "processing_status": "this_is_a_surprising_string",
         },
     )
     requests_mock.get(
@@ -72,6 +79,7 @@ def test_check_file_status(deletion_mock: MagicMock, put_mock: MagicMock, alice:
 
     # Then
     assert File.objects.get(id=file_in_core_api.id).status == StatusEnum.processing
+    assert File.objects.get(id=file_with_surprising_status.id).status == StatusEnum.processing
     assert File.objects.get(id=file_not_in_core_api.id).status == StatusEnum.deleted
     assert File.objects.get(id=file_core_api_error.id).status == StatusEnum.errored
 
