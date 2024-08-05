@@ -1,6 +1,5 @@
 import logging
 from dataclasses import dataclass
-from typing import Literal
 from uuid import UUID
 
 import boto3
@@ -59,21 +58,7 @@ class CoreChatResponse:
 @dataclass_json(undefined=Undefined.EXCLUDE)
 @dataclass(frozen=True)
 class FileStatus:
-    processing_status: (
-        Literal[
-            "uploaded",
-            "parsing",
-            "chunking",
-            "embedding",
-            "indexing",
-            "complete",
-            "unknown",
-            "errored",
-            "deleted",
-            "processing",
-        ]
-        | None
-    )
+    processing_status: str
 
 
 @dataclass_json(undefined=Undefined.EXCLUDE)
