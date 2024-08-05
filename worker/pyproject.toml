@@ -16,14 +16,9 @@ redbox = {git = "https://github.com/i-dot-ai/redbox.git", rev = "1f9e018", subdi
 langchain = "^0.2.12"
 langchain-elasticsearch = "^0.2.2"
 elasticsearch = "^8.14.0"
-opencv-python-headless = "^4.10.0.84"
-pillow-heif = "^0.18.0"
 faststream = {extras = ["redis"], version = "<0.5.0"}
-nltk = "^3.8.1"
 pikepdf = "<9.0.0"
-torch = "2.2.2"
-unstructured = {version = "<0.15.1", extras = ["all-docs"]}
-unstructured-inference = "^0.7.36"
+pillow-heif = "<0.17.0"
 
 
 [tool.poetry.group.dev.dependencies]

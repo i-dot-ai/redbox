@@ -2,10 +2,10 @@ from collections.abc import Iterator
 from datetime import UTC, datetime
 from typing import IO, TYPE_CHECKING
 
+import requests
+
 import tiktoken
 from langchain_core.documents import Document
-from unstructured.chunking.title import chunk_by_title
-from unstructured.partition.auto import partition
 from pathlib import Path
 
 from redbox.models.file import File, ChunkResolution, ChunkMetadata
@@ -32,28 +32,30 @@ class UnstructuredTitleLoader(BaseRedboxFileLoader):
         When you're implementing lazy load methods, you should use a generator
         to yield documents one by one.
         """
-        file_name = Path(self.file.key).name
-        elements = partition(file=self.file_bytes, strategy=self.env.partition_strategy)
+
+        url = "http://unstructured:8000/general/v0/general"
+        files = {"upload_file": open(Path(self.file.key), "rb")}
+        response = requests.post(url, files=files, data={"strategy": "fast"})
+
+        if response.status_code != 200:
+            raise ValueError(response.text)
+
+        elements = response.json()
+
         if not elements:
             raise ValueError("Unstructured failed to extract text for this file")
 
-        raw_chunks = chunk_by_title(
-            elements=elements,
-            combine_text_under_n_chars=self.env.worker_ingest_min_chunk_size,
-            max_characters=self.env.worker_ingest_max_chunk_size,
-        )
-
-        for i, raw_chunk in enumerate(raw_chunks):
+        for i, raw_chunk in enumerate(elements):
             yield Document(
-                page_content=raw_chunk.text,
+                page_content=raw_chunk["text"],
                 metadata=ChunkMetadata(
                     parent_file_uuid=self.file.uuid,
                     creator_user_uuid=self.file.creator_user_uuid,
                     index=i,
-                    file_name=file_name,
-                    page_number=raw_chunk.metadata.page_number,
+                    file_name=raw_chunk["metadata"]["filename"],
+                    page_number=raw_chunk["metadata"]["page_number"],
                     created_datetime=datetime.now(UTC),
-                    token_count=len(encoding.encode(raw_chunk.text)),
+                    token_count=len(encoding.encode(raw_chunk["text"])),
                     chunk_resolution=ChunkResolution.normal,
                 ).model_dump(),
             )
