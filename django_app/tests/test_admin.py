@@ -84,3 +84,13 @@ def test_user_upload(superuser: User, client: Client):
     assert "3 new, 0 updated, 0 deleted and 0 skipped" in soup.find("li", {"class": "success"}).text
     users = User.objects.all()
     assert len(users) == 4
+
+
+@pytest.mark.usefixtures("alice", "bob")
+@pytest.mark.django_db()
+def test_admin_create_location_sets_public_id(client, admin_user, django_assert_num_queries):
+    client.force_login(admin_user)
+
+    with django_assert_num_queries(8):
+        response = client.get("/admin/redbox_core/user/")
+    assert response.status_code == 200

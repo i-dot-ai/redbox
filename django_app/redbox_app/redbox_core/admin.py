@@ -46,8 +46,8 @@ class UserAdmin(ImportMixin, admin.ModelAdmin):
     def get_ai(self, obj: models.User):
         return obj.ai_experience
 
-    def get_queryset(self, request):
-        return super().get_queryset(request).select_related("business_unit")
+    # def get_queryset(self, request):
+    #     return super().get_queryset(request).select_related("business_unit")
 
     class Meta:
         model = models.User
