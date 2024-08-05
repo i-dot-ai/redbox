@@ -45,7 +45,7 @@ async def rag_chat(
 ) -> ChatResponse:
     """REST endpoint. Get a LLM response to a question history and file."""
     state = RedboxState(
-        query=RedboxQuery(
+        request=RedboxQuery(
             question=chat_request.message_history[-1].text,
             file_uuids=[f.uuid for f in chat_request.selected_files],
             user_uuid=user_uuid,
@@ -80,7 +80,7 @@ async def rag_chat_streamed(
     chat_request = ChatRequest.model_validate_json(request)
 
     state = RedboxState(
-        query=RedboxQuery(
+        request=RedboxQuery(
             question=chat_request.message_history[-1].text,
             file_uuids=[f.uuid for f in chat_request.selected_files],
             user_uuid=user_uuid,

@@ -1,4 +1,4 @@
-from langgraph.graph import StateGraph, START
+from langgraph.graph import END, StateGraph, START
 from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_core.vectorstores import VectorStoreRetriever
 from tiktoken import Encoding
@@ -37,14 +37,14 @@ def get_root_graph(
 
     app.set_entry_point("set_route")
     app.add_node("set_route", set_route.with_config(tags=[ROUTE_NAME_TAG]))
-    app.add_node("error/no-keyword", set_state_field("text", env.response_no_such_keyword).with_config(tags=[FINAL_RESPONSE_TAG])),
+    app.add_node(ChatRoute.error_no_keyword, set_state_field("text", env.response_no_such_keyword).with_config(tags=[FINAL_RESPONSE_TAG])),
 
     app.add_conditional_edges(
         "set_route",
         lambda s: s["route_name"],
         {x: x for x in ROUTABLE_BUILTIIN + list(ROUTABLE_KEYWORDS.keys())},
     )
-
+    app.add_edge(ChatRoute.error_no_keyword, END)
 
     # Search
     app.add_node(ChatRoute.search, empty_node)
@@ -55,31 +55,35 @@ def get_root_graph(
     app.add_edge(ChatRoute.search, "condense_question")
     app.add_edge("condense_question", "get_docs")
     app.add_edge("get_docs", "search_llm")
-
+    app.add_edge("search_llm", END)
 
     # Chat
     app.add_node(ChatRoute.chat, build_llm_chain(llm, PromptSet.Chat, final_response_chain=True))
-    
+    app.add_edge(ChatRoute.chat, END)
 
     # Chat with Docs
     app.add_node(ChatRoute.chat_with_docs, empty_node)
     app.add_node("get_chat_docs", build_get_docs(all_chunks_retriever))
+    app.add_node("documents_larger_than_context_window", empty_node)
     app.add_node("send_chunk_to_shrink", empty_node)
     app.add_node("map_document_to_shorter_answer", build_merge_pattern(llm, PromptSet.ChatwithDocsMapReduce))
 
-    app.add_edge("map_document_to_shorter_answer", ChatRoute.chat)
     app.add_node("chat_with_docs_llm", build_llm_chain(llm, PromptSet.ChatwithDocs, final_response_chain=True))
 
     app.add_edge(ChatRoute.chat_with_docs, "get_chat_docs")
+    app.add_edge("get_chat_docs", "documents_larger_than_context_window")
     app.add_conditional_edges(
-        "get_chat_docs", 
+        "documents_larger_than_context_window", 
         build_conditional_documents_bigger_than_context(PromptSet.ChatwithDocs), 
         {True: "send_chunk_to_shrink", False: "chat_with_docs_llm"}
     )
     app.add_conditional_edges(
         "send_chunk_to_shrink", 
-        make_document_chunk_send("map_document_to_shorter_answer")
+        make_document_chunk_send("map_document_to_shorter_answer"),
+        {"map_document_to_shorter_answer":"map_document_to_shorter_answer"},
+        then="chat_with_docs_llm"
     )
+    app.add_edge("chat_with_docs_llm", END)
 
     return app.compile(debug=debug)
 

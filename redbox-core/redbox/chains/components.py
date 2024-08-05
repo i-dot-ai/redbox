@@ -15,6 +15,7 @@ def get_chat_llm(env: Settings):
         api_key=convert_to_secret_str(env.azure_openai_api_key),
         azure_endpoint=env.azure_openai_endpoint,
         model=env.azure_openai_model,
+        api_version=env.azure_api_version_embeddings
     )
 
 @cache
@@ -24,6 +25,7 @@ def get_tokeniser() -> tiktoken.Encoding:
 
 def get_azure_embeddings(env: Settings):
     return AzureOpenAIEmbeddings(
+        api_key=convert_to_secret_str(env.azure_openai_api_key),
         azure_endpoint=env.azure_openai_endpoint,
         api_version=env.azure_api_version_embeddings,
         model=env.azure_embedding_model,
