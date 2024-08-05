@@ -1,7 +1,6 @@
 from collections.abc import Iterator
 from datetime import UTC, datetime
 from typing import IO, TYPE_CHECKING
-from pathlib import Path
 
 import requests
 import tiktoken
@@ -32,8 +31,10 @@ class UnstructuredLargeChunkLoader(BaseRedboxFileLoader):
         to yield documents one by one.
         """
 
-        url = "http://unstructured:8000/general/v0/general"
-        files = {"upload_file": open(Path(self.file.key), "rb")}
+        url = f"http://{self.host}:8000/general/v0/general"
+        files = {
+            "files": (self.file.key, self.file_bytes.read().decode()),
+        }
         response = requests.post(
             url,
             files=files,
@@ -60,8 +61,8 @@ class UnstructuredLargeChunkLoader(BaseRedboxFileLoader):
                     parent_file_uuid=self.file.uuid,
                     creator_user_uuid=self.file.creator_user_uuid,
                     index=i,
-                    file_name=raw_chunk["metadata"]["filename"],
-                    page_number=raw_chunk["metadata"]["page_number"],
+                    file_name=raw_chunk["metadata"].get("filename"),
+                    page_number=raw_chunk["metadata"].get("page_number"),
                     created_datetime=datetime.now(UTC),
                     token_count=len(encoding.encode(raw_chunk["text"])),
                     chunk_resolution=ChunkResolution.largest,

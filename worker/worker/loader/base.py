@@ -1,3 +1,4 @@
+import sys
 from typing import IO
 
 from langchain_core.document_loaders import BaseLoader
@@ -16,3 +17,5 @@ class BaseRedboxFileLoader(BaseLoader):
         self.file = file
         self.file_bytes = file_bytes
         self.env = env
+
+        self.host = "localhost" if "pytest" in sys.modules else "unstructured"
