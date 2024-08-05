@@ -107,6 +107,7 @@ module "django-app" {
   environment_variables        = local.django_app_environment_variables
   secrets                      = local.reconstructed_django_secrets
   auto_scale_off_peak_times    = true
+  wait_for_ready_state         = true
 }
 
 module "core_api" {
@@ -141,6 +142,7 @@ module "core_api" {
   secrets                      = local.reconstructed_core_secrets
   ephemeral_storage            = 30
   auto_scale_off_peak_times    = true
+  wait_for_ready_state         = true
 }
 
 
@@ -169,6 +171,7 @@ module "worker" {
   http_healthcheck             = false
   ephemeral_storage            = 30
   auto_scale_off_peak_times    = true
+  wait_for_ready_state         = true
 }
 
 
