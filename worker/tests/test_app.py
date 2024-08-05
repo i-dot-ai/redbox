@@ -56,7 +56,7 @@ async def test_ingest_file(
         for i in range(5):
             await asyncio.sleep(1)
             file_status = storage_handler.read_item(file.uuid, "file")
-            if file_status.processing_status == status:
+            if file_status.ingest_status == status:
                 break
         else:
             raise Exception(f"File never went to expected status. Final Status {file_status.processing_status}")
