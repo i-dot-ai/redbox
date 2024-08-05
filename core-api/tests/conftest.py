@@ -3,7 +3,6 @@ from uuid import UUID, uuid4
 from datetime import UTC, datetime
 
 import pytest
-from botocore.exceptions import ClientError
 from elasticsearch import Elasticsearch
 from fastapi.testclient import TestClient
 from jose import jwt
@@ -23,21 +22,6 @@ from redbox.storage import ElasticsearchStorageHandler
 @pytest.fixture(scope="session")
 def env():
     return Settings()
-
-
-@pytest.fixture(scope="session")
-def s3_client(env):
-    _client = env.s3_client()
-    try:
-        _client.create_bucket(
-            Bucket=env.bucket_name,
-            CreateBucketConfiguration={"LocationConstraint": env.aws_region},
-        )
-    except ClientError as e:
-        if e.response["Error"]["Code"] != "BucketAlreadyOwnedByYou":
-            raise
-
-    return _client
 
 
 @pytest.fixture(scope="session")
@@ -91,18 +75,8 @@ def elasticsearch_storage_handler(es_client, env):
 
 
 @pytest.fixture()
-def file(s3_client, file_pdf_path: Path, alice, env) -> File:
+def file(file_pdf_path: Path, alice, env) -> File:
     file_name = file_pdf_path.name
-    file_type = file_pdf_path.suffix
-
-    with file_pdf_path.open("rb") as f:
-        s3_client.put_object(
-            Bucket=env.bucket_name,
-            Body=f.read(),
-            Key=file_name,
-            Tagging=f"file_type={file_type}",
-        )
-
     return File(key=file_name, bucket=env.bucket_name, creator_user_uuid=alice)
 
 
@@ -118,6 +92,19 @@ def stored_file_1(elasticsearch_storage_handler, file) -> File:
     elasticsearch_storage_handler.write_item(file)
     elasticsearch_storage_handler.refresh()
     return file
+
+
+@pytest.fixture()
+def stored_user_files(elasticsearch_storage_handler) -> list[File]:
+    user = uuid4()
+    files = [
+        File(creator_user_uuid=user, key="testfile1.txt", bucket="local"),
+        File(creator_user_uuid=user, key="testfile2.txt", bucket="local"),
+    ]
+    for file in files:
+        elasticsearch_storage_handler.write_item(file)
+    elasticsearch_storage_handler.refresh()
+    return files
 
 
 @pytest.fixture(scope="session")
@@ -202,6 +189,47 @@ def stored_large_file_chunks(stored_file_1) -> list[Document]:
 
 
 @pytest.fixture()
+def stored_user_chunks(stored_user_files) -> list[list[Document]]:
+    chunks_by_file = []
+    for file in stored_user_files:
+        normal_chunks = [
+            Document(
+                page_content="hello",
+                metadata=ChunkMetadata(
+                    parent_file_uuid=str(file.uuid),
+                    index=i,
+                    file_name="test_file",
+                    creator_user_uuid=file.creator_user_uuid,
+                    page_number=4,
+                    created_datetime=datetime.now(UTC),
+                    token_count=4,
+                    chunk_resolution=ChunkResolution.normal,
+                ).model_dump(),
+            )
+            for i in range(25)
+        ]
+
+        large_chunks = [
+            Document(
+                page_content="hello" * 10,
+                metadata=ChunkMetadata(
+                    parent_file_uuid=str(file.uuid),
+                    index=i,
+                    file_name="test_file",
+                    creator_user_uuid=file.creator_user_uuid,
+                    page_number=4,
+                    created_datetime=datetime.now(UTC),
+                    token_count=20,
+                    chunk_resolution=ChunkResolution.largest,
+                ).model_dump(),
+            )
+            for i in range(5)
+        ]
+        chunks_by_file.append(normal_chunks + large_chunks)
+    return chunks_by_file
+
+
+@pytest.fixture()
 def chunked_file(elasticsearch_store: ElasticsearchStore, stored_file_chunks, stored_file_1) -> File:
     elasticsearch_store.add_documents(stored_file_chunks)
     return stored_file_1
@@ -211,6 +239,13 @@ def chunked_file(elasticsearch_store: ElasticsearchStore, stored_file_chunks, st
 def large_chunked_file(elasticsearch_store, stored_large_file_chunks, stored_file_1) -> File:
     elasticsearch_store.add_documents(stored_large_file_chunks)
     return stored_file_1
+
+
+@pytest.fixture()
+def chunked_user_files(elasticsearch_store, stored_user_chunks) -> File:
+    for chunks in stored_user_chunks:
+        elasticsearch_store.add_documents(chunks)
+    return stored_user_chunks
 
 
 @pytest.fixture()

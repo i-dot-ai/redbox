@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from typing import ClassVar
 from uuid import UUID
 
-from redbox.models import Chunk, File
+from redbox.models import File
 from redbox.models.base import PersistableModel
 
 
@@ -12,7 +12,7 @@ class BaseStorageHandler(ABC):
     """
 
     # dict comprehension for lowercase class name to class
-    model_type_map: ClassVar = {v.__name__.lower(): v for v in [Chunk, File]}
+    model_type_map: ClassVar = {v.__name__.lower(): v for v in [File]}
 
     def get_model_by_model_type(self, model_type):
         return self.model_type_map[model_type.lower()]
@@ -60,7 +60,3 @@ class BaseStorageHandler(ABC):
     @abstractmethod
     def read_all_items(self, model_type: str, user_uuid: UUID):
         """Read all objects of a given type from a data store"""
-
-    @abstractmethod
-    def get_file_chunks(self, parent_file_uuid: UUID, user_uuid: UUID) -> list[Chunk]:
-        """get chunks for a given file"""

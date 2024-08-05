@@ -11,8 +11,6 @@ from redbox.models.errors import (
     APIErrorResponse,
 )
 from redbox.models.file import (
-    Chunk,
-    ChunkStatus,
     File,
     FileStatus,
     ProcessingStatusEnum,
@@ -29,8 +27,6 @@ __all__ = [
     "ChatRequest",
     "ChatResponse",
     "ChatRoute",
-    "Chunk",
-    "ChunkStatus",
     "EmbedQueueItem",
     "EmbeddingModelInfo",
     "EmbeddingResponse",
