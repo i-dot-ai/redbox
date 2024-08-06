@@ -77,3 +77,54 @@ def test_0020_remove_chatmessage_source_files_textchunk_and_more(migrator):
 
     # Cleanup:
     migrator.reset()
+
+
+@pytest.mark.django_db()
+def test_0027_alter_file_status(migrator):
+    # Not using test parametrisation to avoid repeatedly rerunning migration
+    status_options = [
+        ("uploaded", "processing"),
+        ("parsing", "processing"),
+        ("chunking", "processing"),
+        ("embedding", "processing"),
+        ("indexing", "processing"),
+        ("unknown", "errored"),
+        ("failed", "errored"),
+        ("complete", "complete"),
+        ("deleted", "deleted"),
+        ("errored", "errored"),
+        ("processing", "processing"),
+    ]
+    files = []
+
+    old_state = migrator.apply_initial_migration(("redbox_core", "0026_alter_file_status"))
+
+    original_file = SimpleUploadedFile("original_file.txt", b"Lorem Ipsum.")
+
+    User = old_state.apps.get_model("redbox_core", "User")
+    File = old_state.apps.get_model("redbox_core", "File")
+
+    user = User.objects.create(email="someone@example.com")
+
+    for status_option in status_options:
+        files.append(
+            File.objects.create(
+                user=user,
+                original_file=original_file,
+                original_file_name=original_file.name,
+                core_file_uuid=uuid4(),
+                status=status_option[0],
+            )
+        )
+
+    new_state = migrator.apply_tested_migration(
+        ("redbox_core", "0027_alter_file_status"),
+    )
+    NewFile = new_state.apps.get_model("redbox_core", "File")  # noqa: N806
+
+    for idx, file in enumerate(files):
+        new_file = NewFile.objects.get(pk=file.pk)
+        assert new_file.status == status_options[idx][1]
+
+    # Cleanup:
+    migrator.reset()

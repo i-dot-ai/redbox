@@ -252,34 +252,22 @@ def test_file_status_api_view_nonexistent_file(alice: User, client: Client):
     assert response.status_code == HTTPStatus.NOT_FOUND
 
 
+@pytest.mark.parametrize(
+    ("core_response"),
+    [
+        HTTPStatus.NOT_FOUND,
+        HTTPStatus.SERVICE_UNAVAILABLE,
+    ],
+)
 @pytest.mark.django_db()
-def test_file_status_api_view_file_not_in_coreapi(
-    alice: User, client: Client, uploaded_file: File, requests_mock: Mocker
+def test_file_status_api_view_core_errors(
+    core_response: HTTPStatus, alice: User, client: Client, uploaded_file: File, requests_mock: Mocker
 ):
     # Given
     client.force_login(alice)
     requests_mock.get(
         f"http://{settings.CORE_API_HOST}:{settings.CORE_API_PORT}/file/{uploaded_file.core_file_uuid}/status",
-        status_code=HTTPStatus.NOT_FOUND,
-    )
-
-    # When
-    response = client.get("/file-status/", {"id": uploaded_file.id})
-
-    # Then
-    assert File.objects.get(id=uploaded_file.id).status == "errored"
-    assert response.json()["status"] == "Errored"
-
-
-@pytest.mark.django_db()
-def test_file_status_api_view_file_core_api_error(
-    alice: User, client: Client, uploaded_file: File, requests_mock: Mocker
-):
-    # Given
-    client.force_login(alice)
-    requests_mock.get(
-        f"http://{settings.CORE_API_HOST}:{settings.CORE_API_PORT}/file/{uploaded_file.core_file_uuid}/status",
-        status_code=HTTPStatus.SERVICE_UNAVAILABLE,
+        status_code=core_response,
     )
 
     # When
