@@ -1,4 +1,4 @@
-{% macro govukButton(text=None, visually_hidden_text=None, href=None, classes=None, download=False) %}
+{% macro govukButton(text=None, visually_hidden_text=None, href=None, classes=None, download=False, prevent_double_click=False) %}
 
 {% if href %}
   <a href="{{ href }}" role="button" draggable="false" class="govuk-button {{ classes }}" data-module="govuk-button" 
@@ -6,7 +6,7 @@
     {{ text | safe }}
   </a>
 {% else %}
-  <button type="submit" class="govuk-button {{ classes }}" data-module="govuk-button">
+  <button type="submit" class="govuk-button {{ classes }}" data-module="govuk-button" {% if prevent_double_click %}data-prevent-double-click="true"{% endif %}>
     {{ text | safe }}
   </button>
 {% endif %}
