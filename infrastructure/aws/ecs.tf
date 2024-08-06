@@ -21,8 +21,27 @@ resource "aws_service_discovery_private_dns_namespace" "private_dns_namespace" {
   vpc         = data.terraform_remote_state.vpc.outputs.vpc_id
 }
 
-resource "aws_service_discovery_service" "service_discovery_service" {
+resource "aws_service_discovery_service" "core_api_service_discovery_service" {
   name = "${local.name}-core-api"
+
+  dns_config {
+    namespace_id = aws_service_discovery_private_dns_namespace.private_dns_namespace.id
+
+    dns_records {
+      ttl  = 10
+      type = "A"
+    }
+
+    routing_policy = "MULTIVALUE"
+  }
+
+  health_check_custom_config {
+    failure_threshold = 1
+  }
+}
+
+resource "aws_service_discovery_service" "unstructured_service_discovery_service" {
+  name = "${local.name}-unstructured"
 
   dns_config {
     namespace_id = aws_service_discovery_private_dns_namespace.private_dns_namespace.id
@@ -111,7 +130,7 @@ module "django-app" {
 }
 
 module "core_api" {
-  service_discovery_service_arn = aws_service_discovery_service.service_discovery_service.arn
+  service_discovery_service_arn = core_api_service_discovery_service.service_discovery_service.arn
   memory                        = 4096
   cpu                           = 2048
   create_listener               = false
@@ -135,6 +154,41 @@ module "core_api" {
   vpc_id                       = data.terraform_remote_state.vpc.outputs.vpc_id
   private_subnets              = data.terraform_remote_state.vpc.outputs.private_subnets
   container_port               = 5002
+  load_balancer_security_group = module.load_balancer.load_balancer_security_group_id
+  aws_lb_arn                   = module.load_balancer.alb_arn
+  ip_whitelist                 = var.external_ips
+  environment_variables        = local.core_api_environment_variables
+  secrets                      = local.reconstructed_core_secrets
+  ephemeral_storage            = 30
+  auto_scale_off_peak_times    = true
+  wait_for_ready_state         = true
+}
+
+module "unstructured" {
+  service_discovery_service_arn = unstructured_service_discovery_service.service_discovery_service.arn
+  memory                        = 4096
+  cpu                           = 2048
+  create_listener               = false
+  create_networking             = false
+  source                        = "../../../i-ai-core-infrastructure//modules/ecs"
+  name                          = "${local.name}-unstructured"
+  image_tag                     = "latest"
+  ecr_repository_uri            = "quay.io/unstructured-io/unstructured-api"
+  ecs_cluster_id                = module.cluster.ecs_cluster_id
+  ecs_cluster_name              = module.cluster.ecs_cluster_name
+  autoscaling_minimum_target    = 1
+  autoscaling_maximum_target    = 1
+  health_check                  = {
+    healthy_threshold   = 3
+    unhealthy_threshold = 3
+    accepted_response   = "200"
+    path                = "/healthcheck"
+    timeout             = 5
+  }
+  state_bucket                 = var.state_bucket
+  vpc_id                       = data.terraform_remote_state.vpc.outputs.vpc_id
+  private_subnets              = data.terraform_remote_state.vpc.outputs.private_subnets
+  container_port               = 8000
   load_balancer_security_group = module.load_balancer.load_balancer_security_group_id
   aws_lb_arn                   = module.load_balancer.alb_arn
   ip_whitelist                 = var.external_ips
