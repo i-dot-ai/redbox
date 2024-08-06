@@ -102,7 +102,7 @@ module "django-app" {
   create_networking          = true
   source                     = "../../../i-ai-core-infrastructure//modules/ecs"
   name                       = "${local.name}-django-app"
-  image_tag                  = "2e458d2a52ef7858bdbd8bcee4894b8bb44e34c7"
+  image_tag                  = var.image_tag
   ecr_repository_uri         = "${var.ecr_repository_uri}/${var.project_name}-django-app"
   ecs_cluster_id             = module.cluster.ecs_cluster_id
   ecs_cluster_name           = module.cluster.ecs_cluster_name
@@ -137,7 +137,7 @@ module "core_api" {
   create_networking             = false
   source                        = "../../../i-ai-core-infrastructure//modules/ecs"
   name                          = "${local.name}-core-api"
-  image_tag                     = "2e458d2a52ef7858bdbd8bcee4894b8bb44e34c7"
+  image_tag                     = var.image_tag
   ecr_repository_uri            = "${var.ecr_repository_uri}/redbox-core-api"
   ecs_cluster_id                = module.cluster.ecs_cluster_id
   ecs_cluster_name              = module.cluster.ecs_cluster_name
@@ -191,9 +191,6 @@ module "unstructured" {
   container_port               = 8000
   load_balancer_security_group = module.load_balancer.load_balancer_security_group_id
   aws_lb_arn                   = module.load_balancer.alb_arn
-  ip_whitelist                 = var.external_ips
-  environment_variables        = local.core_api_environment_variables
-  secrets                      = local.reconstructed_core_secrets
   ephemeral_storage            = 30
   auto_scale_off_peak_times    = true
   wait_for_ready_state         = true
@@ -207,7 +204,7 @@ module "worker" {
   create_networking            = false
   source                       = "../../../i-ai-core-infrastructure//modules/ecs"
   name                         = "${local.name}-worker"
-  image_tag                    = "2e458d2a52ef7858bdbd8bcee4894b8bb44e34c7"
+  image_tag                    = var.image_tag
   ecr_repository_uri           = "${var.ecr_repository_uri}/redbox-worker"
   ecs_cluster_id               = module.cluster.ecs_cluster_id
   ecs_cluster_name             = module.cluster.ecs_cluster_name
@@ -237,4 +234,15 @@ resource "aws_security_group_rule" "ecs_ingress_front_to_back" {
   protocol                 = "-1"
   source_security_group_id = module.django-app.ecs_sg_id
   security_group_id        = module.core_api.ecs_sg_id
+}
+
+
+resource "aws_security_group_rule" "ecs_ingress_worker_to_unstructured" {
+  type                     = "ingress"
+  description              = "Allow all traffic from the worker to unstructured"
+  from_port                = 0
+  to_port                  = 0
+  protocol                 = "-1"
+  source_security_group_id = module.worker.ecs_sg_id
+  security_group_id        = module.unstructured.ecs_sg_id
 }
