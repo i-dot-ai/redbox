@@ -7,6 +7,7 @@
     "src/js/autosubmit.js",
     "src/js/chats.js",
     "src/js/citations.js",
+    "src/js/document-upload.js",
     "src/js/documents.js",
     "src/js/main.js",
     "src/js/posthog.js"
