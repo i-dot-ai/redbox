@@ -30,7 +30,11 @@ locals {
     }
   )
 
-  django_app_environment_variables = {
+  django_app_environment_variables = merge({
+    "AWS_REGION" : var.region
+  }, local.django_lambda_environment_variables)
+
+  django_lambda_environment_variables = {
     "OBJECT_STORE" : "s3",
     "BUCKET_NAME" : aws_s3_bucket.user_data.bucket,
     "POSTGRES_DB" : module.rds.db_instance_name,
@@ -39,16 +43,15 @@ locals {
     "ENVIRONMENT" : upper(terraform.workspace),
     "DJANGO_SETTINGS_MODULE" : "redbox_app.settings",
     "DEBUG" : terraform.workspace == "dev",
-    "AWS_REGION" : var.region,
     "FROM_EMAIL" : var.from_email,
     "GOVUK_NOTIFY_PLAIN_EMAIL_TEMPLATE_ID" : var.govuk_notify_plain_email_template_id,
     "EMAIL_BACKEND_TYPE" : "GOVUKNOTIFY",
     "DJANGO_LOG_LEVEL" : "DEBUG",
-    "COMPRESSION_ENABLED" : false,
     "CONTACT_EMAIL" : var.contact_email,
     "FILE_EXPIRY_IN_DAYS" : 30,
     "MAX_SECURITY_CLASSIFICATION" : "OFFICIAL_SENSITIVE",
     "SENTRY_ENVIRONMENT" : var.sentry_environment
+    "SENTRY_REPORT_TO_ENDPOINT" : var.sentry_report_to_endpoint
   }
 
   worker_environment_variables = {
@@ -86,6 +89,7 @@ locals {
     "POSTGRES_USER" : module.rds.rds_instance_username,
     "GOVUK_NOTIFY_API_KEY" : var.govuk_notify_api_key,
     "SENTRY_DSN" : var.sentry_dsn,
+    "SLACK_NOTIFICATION_URL": var.slack_url
   }
 
   worker_secrets = {
@@ -98,7 +102,6 @@ locals {
   reconstructed_worker_secrets = [for k, _ in local.worker_secrets : { name = k, valueFrom = "${aws_secretsmanager_secret.worker-secret.arn}:${k}::" }]
   reconstructed_core_secrets   = [for k, _ in local.core_secrets : { name = k, valueFrom = "${aws_secretsmanager_secret.core-api-secret.arn}:${k}::" }]
   reconstructed_django_secrets = [for k, _ in local.django_app_secrets : { name = k, valueFrom = "${aws_secretsmanager_secret.django-app-secret.arn}:${k}::" }]
-  reconstructed_django_command_secrets = [for k, _ in local.django_app_secrets : { name = k, valueFrom = "${aws_secretsmanager_secret.django-command-secret.arn}:${k}::" }]
 }
 
 data "terraform_remote_state" "vpc" {

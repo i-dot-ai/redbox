@@ -2,6 +2,7 @@ from enum import StrEnum
 from typing import Literal
 from uuid import UUID
 
+from redbox.models.chain import AISettings
 from pydantic import BaseModel, Field
 
 
@@ -30,6 +31,7 @@ class ChatRequest(BaseModel):
         description="Documents selected to use for the current chat request",
         default_factory=list,
     )
+    ai_settings: AISettings = Field(default_factory=AISettings)
 
     model_config = {
         "json_schema_extra": {

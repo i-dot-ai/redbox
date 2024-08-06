@@ -25,9 +25,16 @@ variable "developer_ips" {
 }
 
 variable "django_command" {
-  type        = string
-  default     = "delete_expired_data"
-  description = "Name of Django management to be run. Use with caution"
+  type = list(object({
+    command : string,
+    task_name : string,
+    schedule : optional(string),
+  }))
+  default = [
+    { command : "delete_expired_data", task_name : "delete", schedule : "cron(00 02 * * ? *)" }, # every day at 2-2:30am
+    { command : "reingest_files", task_name : "reingest" } # manually triggered
+  ]
+  description = "An object describing the django command to run"
 }
 
 variable "django_secret_key" {
@@ -150,6 +157,12 @@ variable "sentry_dsn" {
 
 variable "sentry_environment" {
   description = "The sentry environment to send sentry logs to"
+  type        = string
+  default     = null
+}
+
+variable "sentry_report_to_endpoint" {
+  description = "The sentry endpoint to which the Report-To header should refer"
   type        = string
   default     = null
 }
@@ -371,4 +384,3 @@ variable "worker_ingest_max_chunk_size" {
   default     = 800
   description = "Maximum size of chunks to be produced by the worker"
 }
-

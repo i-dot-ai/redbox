@@ -1,6 +1,5 @@
 {% set pageTitle = "Citations" %}
 {% extends "base.html" %}
-{% from "macros/govuk-button.html" import govukButton %}
 
 
 {% block content %}
@@ -19,6 +18,6 @@
 </div>
 
 <script src="{{ static('js/libs/showdown.min.js') }}"></script>
-<script src="{{ static('js/citations.js') }}"></script>
+<script type="module" src="{{ static('js/citations.js') }}" ></script>
 
 {% endblock %}

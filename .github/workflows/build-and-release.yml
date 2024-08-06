@@ -10,12 +10,9 @@ on:
       config_repo_reference:
         required: true
         type: string
-      commit_hash:
+      author_name:
         required: true
         type: string
-
-env:
-  author_name: ${{ github.event.release.user.login || github.event.pull_request.user.login || github.actor }}
 
 jobs:
   set-vars:
@@ -30,7 +27,6 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v4
       with:
-        ref: ${{ inputs.commit_hash }}
         path: main
 
     - id: export
@@ -65,7 +61,7 @@ jobs:
       APP_NAME: ${{ needs.set-vars.outputs.app-name }}
       RUNNER_LABEL: ${{ needs.start-runner.outputs.label }}
       INFRASTRUCTURE_FOLDER: "infrastructure/aws"
-      COMMIT_HASH: ${{ inputs.commit_hash }}
+      COMMIT_HASH: ${{ github.sha }}
     secrets:
       AWS_GITHUBRUNNER_PAT: ${{ secrets.AWS_GITHUBRUNNER_PAT}}
       AWS_GITHUBRUNNER_PAT_USER: ${{ secrets.AWS_GITHUBRUNNER_PAT_USER }}
@@ -87,12 +83,32 @@ jobs:
       INFRA_CONFIG_REPO: ${{ needs.set-vars.outputs.infra-config-repo }}
       CORE_INFRA_REF: ${{ inputs.core_infra_repo_reference }}
       INFRA_CONFIG_REF: ${{ inputs.config_repo_reference }}
-      IMAGE_TAG: ${{ inputs.commit_hash }}
+      IMAGE_TAG: ${{ github.sha }}
     secrets:
       AWS_GITHUBRUNNER_PAT: ${{ secrets.AWS_GITHUBRUNNER_PAT}}
       AWS_GITHUBRUNNER_PAT_USER: ${{ secrets.AWS_GITHUBRUNNER_PAT_USER }}
       AWS_REGION: ${{ secrets.AWS_REGION }}
       AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
+
+  determine-success:
+    needs:
+      - set-vars
+      - start-runner
+      - build-image
+      - release-terraform
+    runs-on: ${{ needs.start-runner.outputs.label }}
+    if: always()
+    outputs:
+      success: ${{ steps.success.outputs.success }}
+    steps:
+      - id: success
+        run: | 
+          if [[ "${{ needs.release-terraform.result }}" == "success" ]]; then
+              echo "success=true" >> $GITHUB_OUTPUT
+          else
+              echo "success=false" >> $GITHUB_OUTPUT
+          fi
+          
 
   notify-slack:
     needs:
@@ -100,14 +116,13 @@ jobs:
       - start-runner
       - build-image
       - release-terraform
-    runs-on: ${{ needs.start-runner.outputs.label }}
-    steps:
-      - name: notify slack failure
-        id: slack-failure
-        uses: slackapi/slack-github-action@v1.24.0
-        if: ${{ failure() }}
-        with:
-          payload: |
+      - determine-success
+    uses: i-dot-ai/i-dot-ai-core-github-actions/.github/workflows/slack-notify.yml@main
+    if: always()
+    with:
+      WORKFLOW_PASSED: ${{ needs.determine-success.outputs.success == 'true' }}
+      RUNNER_LABEL: ${{ needs.start-runner.outputs.label }}
+      FAILURE_PAYLOAD: |
             {
               "text": "Failed to deploy to ${{ inputs.environment }}",
               "blocks": [
@@ -115,21 +130,12 @@ jobs:
                   "type": "header",
                   "text": {
                     "type": "plain_text",
-                    "text": "User `${{ env.author_name }}` failed to deploy ${{ inputs.commit_hash }} to ${{ inputs.environment }} :aaaaaaaaaa:"
+                    "text": "User `${{ inputs.author_name }}` failed to deploy ${{ github.sha }} to ${{ inputs.environment }} :aaaaaaaaaa:"
                   }
                 }
               ]
             }
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
-
-      - name: notify slack pass
-        id: slack-pass
-        uses: slackapi/slack-github-action@v1.24.0
-        if: ${{ success() }}
-        with:
-          payload: |
+      SUCCESS_PAYLOAD: |
             {
               "text": "Deployment to ${{ inputs.environment }} succeeded :airplane:",
               "blocks": [
@@ -137,14 +143,12 @@ jobs:
                   "type": "header",
                   "text": {
                     "type": "plain_text",
-                    "text": "User `${{ env.author_name }}` deployed ${{ inputs.commit_hash }} to ${{ inputs.environment }} :hype-elmo:"
+                    "text": "User `${{ inputs.author_name }}` deployed ${{ github.sha }} to ${{ inputs.environment }} :hype-elmo:"
                   }
                 }
               ]
             }
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
+    secrets: inherit
 
   stop-runner:
     uses: i-dot-ai/i-dot-ai-core-github-actions/.github/workflows/stop-runner.yml@main

@@ -55,10 +55,14 @@ class Redbox:
         app.add_node(
             ChatRoute.search,
             get_search_graph(
-                _llm, _parameterised_retriever.with_config(tags=[Redbox.SOURCE_DOCUMENTS_TAG]), _tokeniser, _env, debug
+                _llm,
+                _parameterised_retriever.with_config(tags=[Redbox.SOURCE_DOCUMENTS_TAG]),
+                _tokeniser,
+                env.llm_max_tokens,
+                debug,
             ),
         )
-        app.add_node(ChatRoute.chat, get_chat_graph(_llm, _tokeniser, _env, debug))
+        app.add_node(ChatRoute.chat, get_chat_graph(_llm, _tokeniser, env.llm_max_tokens, debug))
         app.add_node(
             ChatRoute.chat_with_docs,
             get_chat_with_docs_graph(

@@ -28,7 +28,7 @@ info_urlpatterns = [
 ]
 
 file_urlpatterns = [
-    path("documents/", views.documents_view, name="documents"),
+    path("documents/", views.DocumentView.as_view(), name="documents"),
     path("upload/", views.UploadView.as_view(), name="upload"),
     path("remove-doc/<uuid:doc_id>", views.remove_doc_view, name="remove-doc"),
 ]
@@ -44,7 +44,6 @@ chat_urlpatterns = [
 
 admin_urlpatterns = [
     path("admin/", admin.site.urls),
-    path("accounts/", include("allauth.urls")),
 ]
 
 other_urlpatterns = [
@@ -53,6 +52,8 @@ other_urlpatterns = [
     path("file-status/", views.file_status_api_view, name="file-status"),
     path("check-demographics/", views.CheckDemographicsView.as_view(), name="check-demographics"),
     path("demographics/", views.DemographicsView.as_view(), name="demographics"),
+    path(".well-known/security.txt", views.SecurityTxtRedirectView.as_view(), name="security.txt"),
+    path("security", views.SecurityTxtRedirectView.as_view(), name="security"),
 ]
 
 urlpatterns = (

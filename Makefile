@@ -84,14 +84,6 @@ format:  ## Format and fix code
 safe:  ##
 	poetry run bandit -ll -r ./redbox
 	poetry run bandit -ll -r ./django_app
-	poetry run mypy ./redbox --ignore-missing-imports
-	poetry run mypy ./django_app --ignore-missing-imports
-
-.PHONY: checktypes
-checktypes:  ## Check types in redbox and worker
-	poetry install --with dev --without docs --no-root
-	poetry run mypy redbox-core --ignore-missing-imports
-	poetry run mypy worker --ignore-missing-imports
 
 .PHONY: check-migrations
 check-migrations: stop  ## Check types in redbox and worker
@@ -136,15 +128,16 @@ DOCKER_SERVICES=$$(docker compose config --services | grep -v mlflow)
 AUTO_APPLY_RESOURCES = module.django-app.aws_ecs_task_definition.aws-ecs-task \
                        module.django-app.aws_ecs_service.aws-ecs-service \
                        module.django-app.data.aws_ecs_task_definition.main \
-                       module.core-api.aws_ecs_task_definition.aws-ecs-task \
-                       module.core-api.aws_ecs_service.aws-ecs-service \
-                       module.core-api.data.aws_ecs_task_definition.main \
+                       module.core_api.aws_ecs_task_definition.aws-ecs-task \
+                       module.core_api.aws_ecs_service.aws-ecs-service \
+                       module.core_api.data.aws_ecs_task_definition.main \
                        module.worker.aws_ecs_task_definition.aws-ecs-task \
                        module.worker.aws_ecs_service.aws-ecs-service \
                        module.worker.data.aws_ecs_task_definition.main \
                        aws_secretsmanager_secret.django-app-secret \
                        aws_secretsmanager_secret.worker-secret \
-                       aws_secretsmanager_secret.core-api-secret
+                       aws_secretsmanager_secret.core-api-secret \
+                       module.django-lambda.aws_lambda_function.lambda_function
 
 target_modules = $(foreach resource,$(AUTO_APPLY_RESOURCES),-target $(resource))
 

@@ -200,6 +200,7 @@ def get_available_keywords():
         parameterised_retriever=parameterised_retriever([]),
         tokeniser=tokeniser,
         env=env,
+        ai=None,
         debug=LANGGRAPH_DEBUG,
     )
     keywords = {ChatRoute.search}

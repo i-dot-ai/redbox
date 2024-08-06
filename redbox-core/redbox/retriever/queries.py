@@ -1,18 +1,10 @@
-from typing import Any, TypedDict
+from typing import Any
 from uuid import UUID
 
 from langchain_core.embeddings.embeddings import Embeddings
 
 from redbox.models.chain import ChainState
 from redbox.models.file import ChunkResolution
-
-
-class ESParams(TypedDict):
-    size: int
-    num_candidates: int
-    match_boost: float
-    knn_boost: float
-    similarity_threshold: float
 
 
 def make_query_filter(user_uuid: UUID, file_uuids: list[UUID], chunk_resolution: ChunkResolution | None) -> list[dict]:
@@ -71,7 +63,6 @@ def get_all(
 
 def get_some(
     embedding_model: Embeddings,
-    params: ESParams,
     embedding_field_name: str,
     chunk_resolution: ChunkResolution | None,
     state: ChainState,
@@ -81,7 +72,7 @@ def get_some(
     query_filter = make_query_filter(state["query"].user_uuid, state["query"].file_uuids, chunk_resolution)
 
     return {
-        "size": params["size"],
+        "size": state["query"].ai_settings.rag_k,
         "query": {
             "bool": {
                 "should": [
@@ -89,7 +80,7 @@ def get_some(
                         "match": {
                             "text": {
                                 "query": state["query"].question,
-                                "boost": params["match_boost"],
+                                "boost": state["query"].ai_settings.match_boost,
                             }
                         }
                     },
@@ -97,10 +88,10 @@ def get_some(
                         "knn": {
                             "field": embedding_field_name,
                             "query_vector": vector,
-                            "num_candidates": params["num_candidates"],
+                            "num_candidates": state["query"].ai_settings.rag_num_candidates,
                             "filter": query_filter,
-                            "boost": params["knn_boost"],
-                            "similarity": params["similarity_threshold"],
+                            "boost": state["query"].ai_settings.knn_boost,
+                            "similarity": state["query"].ai_settings.similarity_threshold,
                         }
                     },
                 ],

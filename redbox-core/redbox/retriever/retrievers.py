@@ -8,7 +8,7 @@ from langchain_core.embeddings.embeddings import Embeddings
 from langchain_elasticsearch.retrievers import ElasticsearchRetriever
 
 from redbox.models.file import ChunkResolution
-from redbox.retriever.queries import ESParams, get_all, get_some
+from redbox.retriever.queries import get_all, get_some
 
 
 def hit_to_doc(hit: dict[str, Any]) -> Document:
@@ -29,7 +29,6 @@ def hit_to_doc(hit: dict[str, Any]) -> Document:
 
 
 class ParameterisedElasticsearchRetriever(ElasticsearchRetriever):
-    params: ESParams
     embedding_model: Embeddings
     embedding_field_name: str = "embedding"
     chunk_resolution: ChunkResolution = ChunkResolution.normal
@@ -40,9 +39,7 @@ class ParameterisedElasticsearchRetriever(ElasticsearchRetriever):
         kwargs["body_func"] = get_some
         kwargs["document_mapper"] = hit_to_doc
         super().__init__(**kwargs)
-        self.body_func = partial(
-            get_some, self.embedding_model, self.params, self.embedding_field_name, self.chunk_resolution
-        )
+        self.body_func = partial(get_some, self.embedding_model, self.embedding_field_name, self.chunk_resolution)
 
 
 class AllElasticsearchRetriever(ElasticsearchRetriever):

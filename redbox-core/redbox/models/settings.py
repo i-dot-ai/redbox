@@ -4,129 +4,10 @@ from typing import Literal
 
 import boto3
 from elasticsearch import Elasticsearch
-from pydantic import BaseModel, computed_field
+from pydantic import BaseModel
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 log = logging.getLogger()
-
-
-CHAT_SYSTEM_PROMPT = (
-    "You are an AI assistant called Redbox tasked with answering questions and providing information objectively."
-)
-
-CHAT_WITH_DOCS_SYSTEM_PROMPT = "You are an AI assistant called Redbox tasked with answering questions on user provided documents and providing information objectively."
-
-CHAT_WITH_DOCS_REDUCE_SYSTEM_PROMPT = (
-    "You are an AI assistant tasked with answering questions on user provided documents. "
-    "Your goal is to answer the user question based on list of summaries in a coherent manner."
-    "Please follow these guidelines while answering the question: \n"
-    "1) Identify and highlight key points,\n"
-    "2) Avoid repetition,\n"
-    "3) Ensure the answer is easy to understand,\n"
-    "4) Maintain the original context and meaning.\n"
-)
-
-RETRIEVAL_SYSTEM_PROMPT = (
-    "Given the following conversation and extracted parts of a long document and a question, create a final answer. \n"
-    "If you don't know the answer, just say that you don't know. Don't try to make up an answer. "
-    "If a user asks for a particular format to be returned, such as bullet points, then please use that format. "
-    "If a user asks for bullet points you MUST give bullet points. "
-    "If the user asks for a specific number or range of bullet points you MUST give that number of bullet points. \n"
-    "Use **bold** to highlight the most question relevant parts in your response. "
-    "If dealing dealing with lots of data return it in markdown table format. "
-)
-
-SUMMARISATION_SYSTEM_PROMPT = (
-    "You are an AI assistant tasked with summarizing documents. "
-    "Your goal is to extract the most important information and present it in "
-    "a concise and coherent manner. Please follow these guidelines while summarizing: \n"
-    "1) Identify and highlight key points,\n"
-    "2) Avoid repetition,\n"
-    "3) Ensure the summary is easy to understand,\n"
-    "4) Maintain the original context and meaning.\n"
-)
-
-MAP_SYSTEM_PROMPT = (
-    "You are an AI assistant tasked with summarizing documents. "
-    "Your goal is to extract the most important information and present it in "
-    "a concise and coherent manner. Please follow these guidelines while summarizing: \n"
-    "1) Identify and highlight key points,\n"
-    "2) Avoid repetition,\n"
-    "3) Ensure the summary is easy to understand,\n"
-    "4) Maintain the original context and meaning.\n"
-)
-
-REDUCE_SYSTEM_PROMPT = (
-    "You are an AI assistant tasked with summarizing documents. "
-    "Your goal is to write a concise summary of list of summaries from a list of summaries in "
-    "a concise and coherent manner. Please follow these guidelines while summarizing: \n"
-    "1) Identify and highlight key points,\n"
-    "2) Avoid repetition,\n"
-    "3) Ensure the summary is easy to understand,\n"
-    "4) Maintain the original context and meaning.\n"
-)
-
-CONDENSE_SYSTEM_PROMPT = (
-    "Given the following conversation and a follow up question, generate a follow "
-    "up question to be a standalone question. "
-    "You are only allowed to generate one question in response. "
-    "Include sources from the chat history in the standalone question created, "
-    "when they are available. "
-    "If you don't know the answer, just say that you don't know, "
-    "don't try to make up an answer. \n"
-)
-
-CHAT_QUESTION_PROMPT = "{question}\n=========\n Response: "
-
-CHAT_WITH_DOCS_QUESTION_PROMPT = "Question: {question}. \n\n Documents: \n\n {formatted_documents} \n\n Answer: "
-
-CHAT_WITH_DOCS_REDUCE_QUESTION_PROMPT = "Question: {question}. \n\n Documents: \n\n {summaries} \n\n Answer: "
-
-RETRIEVAL_QUESTION_PROMPT = "{question} \n=========\n{formatted_documents}\n=========\nFINAL ANSWER: "
-
-SUMMARISATION_QUESTION_PROMPT = "Question: {question}. \n\n Documents: \n\n {documents} \n\n Answer: "
-
-CHAT_MAP_QUESTION_PROMPT = "Question: {question}. \n Documents: \n {formatted_documents} \n\n Answer: "
-
-
-REDUCE_QUESTION_PROMPT = "Question: {question}. \n\n Documents: \n\n {formatted_documents} \n\n Answer: "
-
-CONDENSE_QUESTION_PROMPT = "{question}\n=========\n Standalone question: "
-
-
-class AISettings(BaseModel):
-    """prompts and other AI settings"""
-
-    model_config = SettingsConfigDict(frozen=True)
-
-    context_window_size: int = 8_000
-    rag_k: int = 30
-    rag_num_candidates: int = 10
-    rag_desired_chunk_size: int = 300
-    elbow_filter_enabled: bool = False
-    chat_system_prompt: str = CHAT_SYSTEM_PROMPT
-    chat_question_prompt: str = CHAT_QUESTION_PROMPT
-    stuff_chunk_context_ratio: float = 0.75
-    chat_with_docs_system_prompt: str = CHAT_WITH_DOCS_SYSTEM_PROMPT
-    chat_with_docs_question_prompt: str = CHAT_WITH_DOCS_QUESTION_PROMPT
-    chat_with_docs_reduce_system_prompt: str = CHAT_WITH_DOCS_REDUCE_SYSTEM_PROMPT
-    chat_with_docs_reduce_question_prompt: str = CHAT_WITH_DOCS_REDUCE_QUESTION_PROMPT
-    retrieval_system_prompt: str = RETRIEVAL_SYSTEM_PROMPT
-    retrieval_question_prompt: str = RETRIEVAL_QUESTION_PROMPT
-    condense_system_prompt: str = CONDENSE_SYSTEM_PROMPT
-    condense_question_prompt: str = CONDENSE_QUESTION_PROMPT
-    summarisation_system_prompt: str = SUMMARISATION_SYSTEM_PROMPT
-    summarisation_question_prompt: str = SUMMARISATION_QUESTION_PROMPT
-    map_max_concurrency: int = 128
-    map_system_prompt: str = MAP_SYSTEM_PROMPT
-    chat_map_question_prompt: str = CHAT_MAP_QUESTION_PROMPT
-    reduce_system_prompt: str = REDUCE_SYSTEM_PROMPT
-    reduce_question_prompt: str = REDUCE_QUESTION_PROMPT
-
-    @computed_field  # type: ignore[misc]
-    @property
-    def stuff_chunk_max_tokens(self) -> int:
-        return int(self.context_window_size * self.stuff_chunk_context_ratio)
 
 
 class ElasticLocalSettings(BaseModel):
@@ -155,8 +36,6 @@ class ElasticCloudSettings(BaseModel):
 
 class Settings(BaseSettings):
     """Settings for the redbox application."""
-
-    ai: AISettings = AISettings()
 
     anthropic_api_key: str | None = None
     openai_api_key: str = "NotAKey"

@@ -41,13 +41,14 @@ class ErrorDetail:
 @dataclass_json(undefined=Undefined.EXCLUDE)
 @dataclass(frozen=True)
 class CoreChatResponse:
-    # Needs to match ClientResponse in core_api/src/routes/chat.py
+    # Needs to be a subset of ClientResponse in core_api/src/routes/chat.py
     resource_type: Literal["text", "documents", "route_name", "end", "error"]
     data: list[CoreChatResponseDoc] | str | ErrorDetail | None = None
 
 
 class ChatConsumer(AsyncWebsocketConsumer):
     async def receive(self, text_data=None, bytes_data=None):
+        """Receive & respond to message from browser websocket."""
         data = json.loads(text_data or bytes_data)
         logger.debug("received %s from browser", data)
         user_message_text: str = data.get("message", "")
@@ -67,6 +68,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
     async def llm_conversation(
         self, selected_files: Sequence[File], session: ChatHistory, user: User, title: str
     ) -> None:
+        """Initiate & close websocket conversation with the core-api message endpoint."""
         session_messages = await self.get_messages(session)
         message_history: Sequence[Mapping[str, str]] = [
             {"role": message.role, "text": message.text} for message in session_messages
@@ -94,6 +96,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
     async def receive_llm_responses(
         self, user: User, core_websocket: WebSocketClientProtocol
     ) -> tuple[str, Sequence[tuple[File, CoreChatResponseDoc]], str]:
+        """Conduct websocket conversation with the core-api message endpoint."""
         full_reply: MutableSequence[str] = []
         citations: MutableSequence[tuple[File, CoreChatResponseDoc]] = []
         route: str | None = None
@@ -151,7 +154,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         await self.send(json.dumps(message, default=str))
 
     @staticmethod
-    async def send_to_server(websocket, data):
+    async def send_to_server(websocket: WebSocketClientProtocol, data: Mapping[str, Any]) -> None:
         logger.debug("sending %s to core-api", data)
         return await websocket.send(json.dumps(data, default=str))
 
@@ -205,7 +208,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
     @database_sync_to_async
     def get_sources_with_files(
         docs: Sequence[CoreChatResponseDoc], user: User
-    ) -> tuple[Sequence[File], Sequence[tuple[File, CoreChatResponseDoc]]]:
+    ) -> tuple[Sequence[File], Sequence[tuple[File, Sequence[CoreChatResponseDoc]]]]:
         uuids = [doc.file_uuid for doc in docs]
         files = File.objects.filter(core_file_uuid__in=uuids, user=user)
 

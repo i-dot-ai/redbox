@@ -50,7 +50,7 @@ def build_reduce_docs_step(splitter: TextSplitter):
     ) | RunnableLambda(lambda docs: {"documents": docs})
 
 
-def get_chat_graph(llm: BaseChatModel, tokeniser: Encoding, env: Settings, debug: bool = False) -> CompiledGraph:
+def get_chat_graph(llm: BaseChatModel, tokeniser: Encoding, llm_max_tokens: int, debug: bool = False) -> CompiledGraph:
     app = StateGraph(ChainState)
     app.set_entry_point("set_chat_prompt_args")
 
@@ -59,9 +59,7 @@ def get_chat_graph(llm: BaseChatModel, tokeniser: Encoding, env: Settings, debug
 
     app.add_node(
         "llm",
-        build_llm_chain(
-            llm, tokeniser, env, env.ai.chat_system_prompt, env.ai.chat_question_prompt, final_response_chain=True
-        ),
+        build_llm_chain(llm, tokeniser, llm_max_tokens, final_response_chain=True),
     )
 
     return app.compile(debug=debug)
@@ -84,16 +82,9 @@ def set_chat_method(state: ChainState):
     return {"route_name": selected_tool}
 
 
-def build_llm_map_chain(
-    llm: BaseChatModel, tokeniser: Encoding, env: Settings, system_prompt: str, question_prompt: str
-) -> Runnable:
+def build_llm_map_chain(llm: BaseChatModel, tokeniser: Encoding, llm_max_tokens: int) -> Runnable:
     return (
-        make_chat_prompt_from_messages_runnable(
-            system_prompt=system_prompt,
-            question_prompt=question_prompt,
-            input_token_budget=env.ai.context_window_size - env.llm_max_tokens,
-            tokeniser=tokeniser,
-        )
+        make_chat_prompt_from_messages_runnable(tokeniser=tokeniser, llm_max_tokens=llm_max_tokens)
         | llm
         | StrOutputParser()
         | RunnableLambda(lambda s: {"intermediate_docs": [Document(page_content=s)]})
@@ -109,7 +100,7 @@ def get_chat_with_docs_graph(
 ) -> CompiledGraph:
     app = StateGraph(ChainState)
 
-    app.add_node("get_chat_docs", build_get_docs(env, all_chunks_retriever))
+    app.add_node("get_chat_docs", build_get_docs(all_chunks_retriever))
     app.add_node("set_chat_prompt_args", set_prompt_args)
     app.add_node("set_chat_method", set_chat_method)
 
@@ -119,13 +110,14 @@ def get_chat_with_docs_graph(
         build_llm_chain(
             llm,
             tokeniser,
-            env,
-            env.ai.chat_with_docs_system_prompt,
-            env.ai.chat_with_docs_question_prompt,
+            env.llm_max_tokens,
             final_response_chain=True,
         ),
     )
-    app.add_node(ChatRoute.chat_with_docs_map_reduce, get_chat_with_docs_map_reduce_graph(llm, tokeniser, env, debug))
+    app.add_node(
+        ChatRoute.chat_with_docs_map_reduce,
+        get_chat_with_docs_map_reduce_graph(llm, tokeniser, env, debug),
+    )
     app.add_node("clear_documents", set_state_field("documents", []))
 
     app.add_edge(START, "get_chat_docs")
@@ -153,9 +145,7 @@ def get_chat_with_docs_map_reduce_graph(
 ) -> CompiledGraph:
     app = StateGraph(ChatMapReduceState)
 
-    app.add_node(
-        "llm_map", build_llm_map_chain(llm, tokeniser, env, env.ai.map_system_prompt, env.ai.chat_map_question_prompt)
-    )
+    app.add_node("llm_map", build_llm_map_chain(llm, tokeniser, env.llm_max_tokens))
     app.add_node(
         "reduce",
         build_reduce_docs_step(
