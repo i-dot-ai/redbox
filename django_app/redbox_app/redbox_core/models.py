@@ -146,20 +146,13 @@ class User(BaseUser, UUIDPrimaryKeyBase):
 
 
 class StatusEnum(models.TextChoices):
-    uploaded = "uploaded"
-    parsing = "parsing"
-    chunking = "chunking"
-    embedding = "embedding"
-    indexing = "indexing"
     complete = "complete"
-    unknown = "unknown"
     deleted = "deleted"
     errored = "errored"
     processing = "processing"
-    failed = "failed"
 
 
-INACTIVE_STATUSES = [StatusEnum.deleted, StatusEnum.errored, StatusEnum.unknown]
+INACTIVE_STATUSES = [StatusEnum.deleted, StatusEnum.errored]
 
 
 class File(UUIDPrimaryKeyBase, TimeStampedModel):
@@ -191,6 +184,16 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
     def delete_from_s3(self):
         """Manually deletes the file from S3 storage."""
         self.original_file.delete(save=False)
+
+    def update_status_from_core(self, status_label):
+        match status_label:
+            case "complete":
+                self.status = StatusEnum.complete
+            case "failed":
+                self.status = StatusEnum.errored
+            case _:
+                self.status = StatusEnum.processing
+        self.save()
 
     @property
     def file_type(self) -> str:
@@ -258,10 +261,9 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
     @classmethod
     def get_completed_and_processing_files(cls, user: User) -> tuple[Sequence["File"], Sequence["File"]]:
         """Returns all files that are completed and processing for a given user."""
-        hidden_statuses = [StatusEnum.deleted, StatusEnum.errored, StatusEnum.failed, StatusEnum.complete]
 
         completed_files = cls.objects.filter(user=user, status=StatusEnum.complete).order_by("-created_at")
-        processing_files = cls.objects.filter(user=user).exclude(status__in=hidden_statuses).order_by("-created_at")
+        processing_files = cls.objects.filter(user=user, status=StatusEnum.processing).order_by("-created_at")
         return completed_files, processing_files
 
     @classmethod
