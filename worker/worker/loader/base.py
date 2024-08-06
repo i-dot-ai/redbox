@@ -16,3 +16,9 @@ class BaseRedboxFileLoader(BaseLoader):
         self.file = file
         self.file_bytes = file_bytes
         self.env = env
+
+    def get_file_bytes(self):
+        try:
+            return self.file_bytes.read().decode()
+        except UnicodeError:
+            self.file_bytes.read()
