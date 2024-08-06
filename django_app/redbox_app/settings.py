@@ -1,5 +1,5 @@
 # mypy: ignore-errors
-
+import os
 import socket
 from pathlib import Path
 
@@ -335,3 +335,4 @@ SUPERUSER_EMAIL = env.str("SUPERUSER_EMAIL", None)
 MAX_SECURITY_CLASSIFICATION = Classification[env.str("MAX_SECURITY_CLASSIFICATION")]
 
 SECURITY_TXT_REDIRECT = URL("https://vdp.cabinetoffice.gov.uk/.well-known/security.txt")
+REDBOX_VERSION = os.environ.get("REDBOX_VERSION", "not set")
