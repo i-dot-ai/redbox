@@ -73,7 +73,7 @@ class FileAdmin(admin.ModelAdmin):
                 file.status = models.StatusEnum.errored
                 file.save()
             else:
-                file.status = models.StatusEnum.uploaded
+                file.status = models.StatusEnum.processing
                 file.save()
 
                 logger.info("Successfully reuploaded file %s.", file)

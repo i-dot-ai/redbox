@@ -11,7 +11,7 @@ def test_file_model_last_referenced(peter_rabbit, s3_client):  # noqa: ARG001
     mock_file = SimpleUploadedFile("test.txt", b"these are the file contents")
 
     new_file = File.objects.create(
-        status=StatusEnum.uploaded,
+        status=StatusEnum.processing,
         original_file=mock_file,
         user=peter_rabbit,
         original_file_name="test.txt",

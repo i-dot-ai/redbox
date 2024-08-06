@@ -134,7 +134,7 @@ class UploadView(View):
         errors: MutableSequence[str] = []
         try:
             file = File.objects.create(
-                status=StatusEnum.uploaded.value,
+                status=StatusEnum.processing.value,
                 user=user,
                 original_file=uploaded_file,
                 original_file_name=uploaded_file.name,
@@ -188,20 +188,18 @@ def file_status_api_view(request: HttpRequest) -> JsonResponse:
     file_id = request.GET.get("id", None)
     if not file_id:
         logger.error("Error getting file object information - no file ID provided %s.")
-        return JsonResponse({"status": StatusEnum.unknown.label})
+        return JsonResponse({"status": StatusEnum.errored.label})
     try:
         file: File = get_object_or_404(File, id=file_id)
     except File.DoesNotExist as ex:
         logger.exception("File object information not found in django - file does not exist %s.", file_id, exc_info=ex)
-        return JsonResponse({"status": StatusEnum.unknown.label})
+        return JsonResponse({"status": StatusEnum.errored.label})
     try:
         core_file_status_response = core_api.get_file_status(file_id=file.core_file_uuid, user=request.user)
     except RequestException as ex:
-        logger.exception("File object information from core not found - file does not exist %s.", file_id, exc_info=ex)
-        if not file.status:
-            file.status = StatusEnum.unknown.label
-            file.save()
-        return JsonResponse({"status": file.status})
-    file.status = core_file_status_response.processing_status or StatusEnum.unknown.name
-    file.save()
+        logger.exception("File object information from core not found - for file %s.", file_id, exc_info=ex)
+        file.status = StatusEnum.errored
+        file.save()
+        return JsonResponse({"status": file.get_status_text()})
+    file.update_status_from_core(status_label=core_file_status_response.processing_status)
     return JsonResponse({"status": file.get_status_text()})
