@@ -39,6 +39,7 @@ class UnstructuredLargeChunkLoader(BaseRedboxFileLoader):
                 "max_characters": self.env.worker_ingest_largest_chunk_size,
                 "overlap": self.env.worker_ingest_largest_chunk_overlap,
                 "overlap_all": True,
+                "combine_under_n_chars": self.env.worker_ingest_min_chunk_size,
             },
         )
 

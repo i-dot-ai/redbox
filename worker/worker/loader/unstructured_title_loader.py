@@ -31,7 +31,15 @@ class UnstructuredTitleLoader(BaseRedboxFileLoader):
         files = {
             "files": (self.file.key, self.file_bytes),
         }
-        response = requests.post(url, files=files, data={"strategy": "fast"})
+        response = requests.post(
+            url,
+            files=files,
+            data={
+                "strategy": "fast",
+                "combine_text_under_n_chars": self.env.worker_ingest_min_chunk_size,
+                "max_characters": self.env.worker_ingest_max_chunk_size,
+            },
+        )
 
         if response.status_code != 200:
             raise ValueError(response.text)
