@@ -33,12 +33,16 @@
           <input class="govuk-file-upload {% if errors.upload_doc %} govuk-file-upload--error{% endif %}" multiple id="upload-docs" name="uploadDocs" type="file" aria-describedby="upload-docs-notification upload-docs-filetypes {% if errors.upload_doc %} file-upload-docs-error{% endif %}">
         </div>
 
-        {{ govukButton(text="Upload", prevent_double_click=True) }}
+        <upload-button>
+          {{ govukButton(text="Upload", prevent_double_click=True, classes="govuk-!-display-inline-block") }}
+        </upload-button>
 
       </form>
 
     </div>
   </div>
 </div>
+
+<script src="{{ static('js/document-upload.js') }}" type="module"></script>
 
 {% endblock %}

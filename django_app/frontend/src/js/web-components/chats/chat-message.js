@@ -1,5 +1,7 @@
 // @ts-check
 
+import "../loading-message.js";
+
 class ChatMessage extends HTMLElement {
   constructor() {
     super();
@@ -23,14 +25,9 @@ class ChatMessage extends HTMLElement {
                 ${
                   !this.dataset.text
                     ? `
-                      <div class="rb-loading-ellipsis govuk-body-s" aria-label="Loading message">
-                        Loading
-                        <span aria-hidden="true">.</span>
-                        <span aria-hidden="true">.</span>
-                        <span aria-hidden="true">.</span>
-                      </div>
+                      <loading-message data-aria-label="Loading message"></loading-message>
                       <div class="rb-loading-complete govuk-visually-hidden" aria-live="assertive"></div>
-                      `
+                    `
                     : ""
                 }
                 <sources-list></sources-list>
