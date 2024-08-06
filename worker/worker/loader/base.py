@@ -16,5 +16,3 @@ class BaseRedboxFileLoader(BaseLoader):
         self.file = file
         self.file_bytes = file_bytes
         self.env = env
-
-        self.host = env.unstructured_host

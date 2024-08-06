@@ -1,14 +1,12 @@
 from collections.abc import Iterator
 from datetime import UTC, datetime
-from typing import IO, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
 import requests
-
 import tiktoken
 from langchain_core.documents import Document
 
-from redbox.models.file import File, ChunkResolution, ChunkMetadata
-from redbox.models.settings import Settings
+from redbox.models.file import ChunkResolution, ChunkMetadata
 from worker.loader.base import BaseRedboxFileLoader
 
 encoding = tiktoken.get_encoding("cl100k_base")
@@ -22,9 +20,6 @@ else:
 class UnstructuredTitleLoader(BaseRedboxFileLoader):
     """Load, partition and chunk a document using local unstructured library"""
 
-    def __init__(self, file: File, file_bytes: IO[bytes], env: Settings) -> None:
-        super().__init__(file, file_bytes, env)
-
     def lazy_load(self) -> Iterator[Document]:  # <-- Does not take any arguments
         """A lazy loader that reads a file line by line.
 
@@ -32,7 +27,7 @@ class UnstructuredTitleLoader(BaseRedboxFileLoader):
         to yield documents one by one.
         """
 
-        url = f"http://{self.host}:8000/general/v0/general"
+        url = f"http://{self.env.unstructured_host}:8000/general/v0/general"
         files = {
             "files": (self.file.key, self.file_bytes.read().decode()),
         }
