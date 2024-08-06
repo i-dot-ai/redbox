@@ -30,10 +30,8 @@ def log_chunks(chunks: list[Document]):
 def document_loader(document_loader_type: type[BaseRedboxFileLoader], s3_client: S3Client, env: Settings):
     @chain
     def wrapped(file: File):
-        file_raw = BytesIO()
-        s3_client.download_fileobj(Bucket=file.bucket, Key=file.key, Fileobj=file_raw)
-        file_raw.seek(0)
-        return document_loader_type(file=file, file_bytes=file_raw, env=env).lazy_load()
+        file_bytes = s3_client.get_object(Bucket=file.bucket, Key=file.key)["Body"].read()
+        return document_loader_type(file=file, file_bytes=BytesIO(file_bytes), env=env).lazy_load()
 
     return wrapped
 
