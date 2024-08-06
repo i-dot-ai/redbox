@@ -36,7 +36,7 @@ class UnstructuredTitleLoader(BaseRedboxFileLoader):
             files=files,
             data={
                 "strategy": "fast",
-                "combine_text_under_n_chars": self.env.worker_ingest_min_chunk_size,
+                "combine_under_n_chars": self.env.worker_ingest_min_chunk_size,
                 "max_characters": self.env.worker_ingest_max_chunk_size,
             },
         )
