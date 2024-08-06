@@ -102,7 +102,7 @@ module "django-app" {
   create_networking          = true
   source                     = "../../../i-ai-core-infrastructure//modules/ecs"
   name                       = "${local.name}-django-app"
-  image_tag                  = var.image_tag
+  image_tag                  = "2e458d2a52ef7858bdbd8bcee4894b8bb44e34c7"
   ecr_repository_uri         = "${var.ecr_repository_uri}/${var.project_name}-django-app"
   ecs_cluster_id             = module.cluster.ecs_cluster_id
   ecs_cluster_name           = module.cluster.ecs_cluster_name
@@ -130,14 +130,14 @@ module "django-app" {
 }
 
 module "core_api" {
-  service_discovery_service_arn = core_api_service_discovery_service.service_discovery_service.arn
+  service_discovery_service_arn = aws_service_discovery_service.core_api_service_discovery_service.arn
   memory                        = 4096
   cpu                           = 2048
   create_listener               = false
   create_networking             = false
   source                        = "../../../i-ai-core-infrastructure//modules/ecs"
   name                          = "${local.name}-core-api"
-  image_tag                     = var.image_tag
+  image_tag                     = "2e458d2a52ef7858bdbd8bcee4894b8bb44e34c7"
   ecr_repository_uri            = "${var.ecr_repository_uri}/redbox-core-api"
   ecs_cluster_id                = module.cluster.ecs_cluster_id
   ecs_cluster_name              = module.cluster.ecs_cluster_name
@@ -165,7 +165,7 @@ module "core_api" {
 }
 
 module "unstructured" {
-  service_discovery_service_arn = unstructured_service_discovery_service.service_discovery_service.arn
+  service_discovery_service_arn = aws_service_discovery_service.unstructured_service_discovery_service.arn
   memory                        = 4096
   cpu                           = 2048
   create_listener               = false
@@ -207,7 +207,7 @@ module "worker" {
   create_networking            = false
   source                       = "../../../i-ai-core-infrastructure//modules/ecs"
   name                         = "${local.name}-worker"
-  image_tag                    = var.image_tag
+  image_tag                    = "2e458d2a52ef7858bdbd8bcee4894b8bb44e34c7"
   ecr_repository_uri           = "${var.ecr_repository_uri}/redbox-worker"
   ecs_cluster_id               = module.cluster.ecs_cluster_id
   ecs_cluster_name             = module.cluster.ecs_cluster_name
