@@ -17,6 +17,7 @@ from django_use_email_as_username.models import BaseUser, BaseUserManager
 from jose import jwt
 from yarl import URL
 
+from redbox_app.redbox_core import prompts
 from redbox_app.redbox_core.utils import get_date_group
 
 logger = logging.getLogger(__name__)
@@ -392,3 +393,33 @@ class ChatMessageRatingChip(UUIDPrimaryKeyBase, TimeStampedModel):
 
     def __str__(self) -> str:  # pragma: no cover
         return f"{self.rating} - {self.text}"
+
+
+class AISettings(UUIDPrimaryKeyBase, TimeStampedModel):
+    label = models.CharField(max_length=50, unique=True)
+    context_window_size = models.PositiveIntegerField(default=8_000)
+    rag_k = models.PositiveIntegerField(default=30)
+    rag_num_candidates = models.PositiveIntegerField(default=10)
+    rag_desired_chunk_size = models.PositiveIntegerField(default=300)
+    elbow_filter_enabled = models.BooleanField(default=False)
+    chat_system_prompt = models.TextField(default=prompts.CHAT_SYSTEM_PROMPT)
+    chat_question_prompt = models.TextField(default=prompts.CHAT_QUESTION_PROMPT)
+    stuff_chunk_context_ratio = models.FloatField(default=0.75)
+    chat_with_docs_system_prompt = models.TextField(default=prompts.CHAT_WITH_DOCS_SYSTEM_PROMPT)
+    chat_with_docs_question_prompt = models.TextField(default=prompts.CHAT_WITH_DOCS_QUESTION_PROMPT)
+    chat_with_docs_reduce_system_prompt = models.TextField(default=prompts.CHAT_WITH_DOCS_REDUCE_SYSTEM_PROMPT)
+    retrieval_system_prompt = models.TextField(default=prompts.RETRIEVAL_SYSTEM_PROMPT)
+    retrieval_question_prompt = models.TextField(default=prompts.RETRIEVAL_QUESTION_PROMPT)
+    condense_system_prompt = models.TextField(default=prompts.CONDENSE_SYSTEM_PROMPT)
+    condense_question_prompt = models.TextField(default=prompts.CONDENSE_QUESTION_PROMPT)
+    map_max_concurrency = models.PositiveIntegerField(default=128)
+    chat_map_system_prompt = models.TextField(default=prompts.CHAT_MAP_SYSTEM_PROMPT)
+    chat_map_question_prompt = models.TextField(default=prompts.CHAT_MAP_QUESTION_PROMPT)
+    reduce_system_prompt = models.TextField(default=prompts.REDUCE_SYSTEM_PROMPT)
+    llm_max_tokens = models.PositiveIntegerField(default=1024)
+    match_boost = models.PositiveIntegerField(default=1)
+    knn_boost = models.PositiveIntegerField(default=1)
+    similarity_threshold = models.PositiveIntegerField(default=0)
+
+    def __str__(self) -> str:
+        return str(self.label)
