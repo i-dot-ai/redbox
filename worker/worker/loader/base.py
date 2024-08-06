@@ -1,4 +1,4 @@
-from typing import IO
+from io import BytesIO
 
 from langchain_core.document_loaders import BaseLoader
 
@@ -7,7 +7,7 @@ from redbox.models.settings import Settings
 
 
 class BaseRedboxFileLoader(BaseLoader):
-    def __init__(self, file: File, file_bytes: IO[bytes], env: Settings) -> None:
+    def __init__(self, file: File, file_bytes: BytesIO, env: Settings) -> None:
         """Initialize the loader with a file path.
 
         Args:
@@ -16,9 +16,3 @@ class BaseRedboxFileLoader(BaseLoader):
         self.file = file
         self.file_bytes = file_bytes
         self.env = env
-
-    def get_file_bytes(self):
-        try:
-            return self.file_bytes.read().decode()
-        except UnicodeError:
-            self.file_bytes.read()
