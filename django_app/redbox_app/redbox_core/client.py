@@ -86,12 +86,22 @@ class CoreApiClient:
         response.raise_for_status()
         return FileOperation.schema().loads(response.content)
 
+    def get_ai_settings(self, user: User) -> AISettings:
+        return model_to_dict(
+            user.ai_settings,
+            fields=[field.name for field in user.ai_settings._meta.fields if field.name != "label"],  # noqa: SLF001
+        )
+
     def rag_chat(
         self, message_history: list[dict[str, str]], selected_files: list[dict[str, str]], user: User
     ) -> CoreChatResponse:
         response = requests.post(
             self.url / "chat/rag",
-            json={"message_history": message_history, "selected_files": selected_files},
+            json={
+                "message_history": message_history,
+                "selected_files": selected_files,
+                "ai_settings": self.get_ai_settings(user),
+            },
             headers={"Authorization": user.get_bearer_token()},
             timeout=60,
         )
@@ -118,9 +128,3 @@ class CoreApiClient:
         response = requests.put(url, headers={"Authorization": user.get_bearer_token()}, timeout=60)
         response.raise_for_status()
         return FileOperation.schema().loads(response.content)
-
-    def get_ai_settings(self, user: User) -> AISettings:
-        return model_to_dict(
-            user.ai_settings,
-            fields=[field.name for field in user.ai_settings._meta.fields if field.name != "label"],  # noqa: SLF001
-        )
