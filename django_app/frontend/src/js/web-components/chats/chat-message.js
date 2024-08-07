@@ -25,7 +25,6 @@ class ChatMessage extends HTMLElement {
                 ${
                   !this.dataset.text
                     ? `
-                      <button class="iai-chat-bubble__button iai-chat-bubble__button--stop" type="button">Stop</button>
                       <loading-message data-aria-label="Loading message"></loading-message>
                       <div class="rb-loading-complete govuk-visually-hidden" aria-live="assertive"></div>
                     `
@@ -74,24 +73,11 @@ class ChatMessage extends HTMLElement {
     // Scroll behaviour - depending on whether user has overridden this or not
     let userScrollOverride = false;
     window.addEventListener("scroll", (evt) => {
-      const bottomOfPage = (() => {
-        const THRESHOLD = 150;
-        const docHeight = document.documentElement.scrollHeight;
-        const windowHeight = window.innerHeight;
-        const scrollPosition =
-          window.scrollY || document.documentElement.scrollTop;
-        return windowHeight + scrollPosition + THRESHOLD >= docHeight;
-      })();
-
-      if (userScrollOverride && bottomOfPage) {
-        userScrollOverride = false;
-      } else if (!this.programmaticScroll) {
-        userScrollOverride = true;
+      if (this.programmaticScroll) {
+        this.programmaticScroll = false;
+        return;
       }
-
-      //window.setTimeout(() => {
-      this.programmaticScroll = false;
-      //}, 100);
+      userScrollOverride = true;
     });
 
     let responseContainer = /** @type MarkdownConverter */ (
@@ -101,9 +87,6 @@ class ChatMessage extends HTMLElement {
       this.querySelector("sources-list")
     );
     let feedbackContainer = this.querySelector("feedback-buttons");
-    let stopStreamingButton = /** @type HTMLButton */ (
-      this.querySelector(".iai-chat-bubble__button--stop")
-    );
     let responseLoading = /** @type HTMLElement */ (
       this.querySelector(".rb-loading-ellipsis")
     );
@@ -121,7 +104,6 @@ class ChatMessage extends HTMLElement {
         stopStreaming();
       }
     });
-    stopStreamingButton.addEventListener("click", stopStreaming);
     document.addEventListener("stop-streaming", stopStreaming);
 
     webSocket.onopen = (event) => {
@@ -144,7 +126,6 @@ class ChatMessage extends HTMLElement {
     };
 
     webSocket.onclose = (event) => {
-      stopStreamingButton.style.display = "none";
       responseLoading.style.display = "none";
       if (responseComplete) {
         responseComplete.textContent = "Response complete";
