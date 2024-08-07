@@ -15,6 +15,7 @@ from websockets.legacy.client import Connect
 from redbox_app.redbox_core import error_messages
 from redbox_app.redbox_core.consumers import ChatConsumer
 from redbox_app.redbox_core.models import ChatHistory, ChatMessage, ChatRoleEnum, File, User
+from redbox_app.redbox_core.prompts import CHAT_MAP_QUESTION_PROMPT
 
 logger = logging.getLogger(__name__)
 
@@ -257,6 +258,8 @@ async def test_chat_consumer_with_selected_files(
 
     # TODO (@brunns): Assert selected files sent to core.
     # Requires fix for https://github.com/django/channels/issues/1091
+    # fixed now merged in https://github.com/django/channels/pull/2101, but not released
+    # Retry this when a version of Channels after 4.1.0 is released
     mocked_websocket = mocked_connect_with_several_files.return_value.__aenter__.return_value
     expected = json.dumps(
         {
@@ -268,6 +271,7 @@ async def test_chat_consumer_with_selected_files(
                 {"role": "user", "text": "Third question, with selected files?"},
             ],
             "selected_files": selected_file_core_uuids,
+            "ai_settings": await ChatConsumer.get_ai_settings(alice),
         }
     )
     mocked_websocket.send.assert_called_with(expected)
@@ -350,6 +354,27 @@ async def test_chat_consumer_with_explicit_no_document_selected_error(
         assert response1["type"] == "session-id"
         assert response2["type"] == "text"
         assert response2["data"] == error_messages.SELECT_DOCUMENT
+        # Close
+        await communicator.disconnect()
+
+
+@pytest.mark.django_db()
+@pytest.mark.asyncio()
+async def test_chat_consumer_get_ai_settings(
+    alice: User, mocked_connect_with_explicit_no_document_selected_error: Connect
+):
+    with patch("redbox_app.redbox_core.consumers.connect", new=mocked_connect_with_explicit_no_document_selected_error):
+        communicator = WebsocketCommunicator(ChatConsumer.as_asgi(), "/ws/chat/")
+        communicator.scope["user"] = alice
+        connected, _ = await communicator.connect()
+        assert connected
+
+        ai_settings = await ChatConsumer.get_ai_settings(alice)
+
+        assert ai_settings["chat_map_question_prompt"] == CHAT_MAP_QUESTION_PROMPT
+        with pytest.raises(KeyError):
+            ai_settings["label"]
+
         # Close
         await communicator.disconnect()
 

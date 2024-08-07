@@ -12,6 +12,7 @@ from freezegun import freeze_time
 
 from redbox_app.redbox_core import client
 from redbox_app.redbox_core.models import (
+    AISettings,
     BusinessUnit,
     ChatHistory,
     ChatMessage,
@@ -34,6 +35,8 @@ def _collect_static():
 
 @pytest.fixture()
 def create_user():
+    AISettings.objects.get_or_create(label="default")
+
     def _create_user(email, date_joined_iso, is_staff=False):
         date_joined = datetime.fromisoformat(date_joined_iso).astimezone(UTC)
         return User.objects.create_user(email=email, date_joined=date_joined, is_staff=is_staff)

@@ -10,13 +10,14 @@ from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
 from dataclasses_json import Undefined, dataclass_json
 from django.conf import settings
+from django.forms.models import model_to_dict
 from django.utils import timezone
 from websockets import ConnectionClosedError, WebSocketClientProtocol
 from websockets.client import connect
 from yarl import URL
 
 from redbox_app.redbox_core import error_messages
-from redbox_app.redbox_core.models import ChatHistory, ChatMessage, ChatRoleEnum, Citation, File, User
+from redbox_app.redbox_core.models import AISettings, ChatHistory, ChatMessage, ChatRoleEnum, Citation, File, User
 
 OptFileSeq = Sequence[File] | None
 logger = logging.getLogger(__name__)
@@ -79,6 +80,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 message = {
                     "message_history": message_history,
                     "selected_files": [{"uuid": f.core_file_uuid} for f in selected_files],
+                    "ai_settings": await self.get_ai_settings(user),
                 }
                 await self.send_to_server(core_websocket, message)
                 await self.send_to_client("session-id", session.id)
@@ -218,6 +220,14 @@ class ChatConsumer(AsyncWebsocketConsumer):
     @database_sync_to_async
     def file_save(file):
         return file.save()
+
+    @staticmethod
+    @database_sync_to_async
+    def get_ai_settings(user: User) -> AISettings:
+        return model_to_dict(
+            user.ai_settings,
+            fields=[field.name for field in user.ai_settings._meta.fields if field.name != "label"],  # noqa: SLF001
+        )
 
 
 class CoreError(Exception):
