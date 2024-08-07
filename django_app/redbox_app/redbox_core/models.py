@@ -75,10 +75,6 @@ class AISettings(UUIDPrimaryKeyBase, TimeStampedModel):
         return str(self.label)
 
 
-def get_default_ai_settings():
-    return AISettings.objects.get_or_create(label="default")[0].id
-
-
 class BusinessUnit(UUIDPrimaryKeyBase):
     name = models.TextField(max_length=64, null=False, blank=False, unique=True)
 
@@ -164,7 +160,7 @@ class User(BaseUser, UUIDPrimaryKeyBase):
     name = models.CharField(null=True, blank=True)
     ai_experience = models.CharField(null=True, blank=True, max_length=25, choices=AIExperienceLevel)
     profession = models.CharField(null=True, blank=True, max_length=4, choices=Profession)
-    ai_settings = models.ForeignKey(AISettings, on_delete=models.SET_DEFAULT, default=get_default_ai_settings)
+    ai_settings = models.ForeignKey(AISettings, on_delete=models.SET_DEFAULT, default="default", to_field="label")
     objects = BaseUserManager()
 
     def __str__(self) -> str:  # pragma: no cover

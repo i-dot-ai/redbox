@@ -131,14 +131,14 @@ def test_0027_alter_file_status(migrator):
 
 
 @pytest.mark.django_db()
-def test_0029_user_ai_settings(migrator):
-    old_state = migrator.apply_initial_migration(("redbox_core", "0028_aisettings"))
+def test_0028_aisettings(migrator):
+    old_state = migrator.apply_initial_migration(("redbox_core", "0027_alter_file_status"))
 
     User = old_state.apps.get_model("redbox_core", "User")
     User.objects.create(email="someone@example.com")
 
     new_state = migrator.apply_tested_migration(
-        ("redbox_core", "0029_user_ai_settings"),
+        ("redbox_core", "0028_aisettings"),
     )
     NewUser = new_state.apps.get_model("redbox_core", "User")  # noqa: N806
 
