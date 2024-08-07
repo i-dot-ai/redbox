@@ -3,7 +3,6 @@ import datetime
 import humanize
 import jinja2
 import pytz
-from compressor.contrib.jinja2ext import CompressorExtension
 from django.conf import settings
 from django.templatetags.static import static
 from django.urls import reverse
@@ -72,7 +71,6 @@ def environment(**options):
     env = jinja2.Environment(  # nosec: B701 # noqa: S701
         **{
             "autoescape": True,
-            "extensions": [CompressorExtension],
             **options,
             **extra_options,
         },

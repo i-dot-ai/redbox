@@ -70,21 +70,14 @@ jobs:
         mkdir -p data/elastic/
         chmod 777 data/elastic/
         cp .env.test .env
-        docker compose up -d --wait elasticsearch
+        docker compose up -d --wait elasticsearch unstructured
 
-    - name: Add dependencies for worker
-      run: |
-        sudo apt update && sudo apt-get install -y \
-        poppler-utils \
-        tesseract-ocr \
-        libmagic-dev
 
     - name: Test worker with pytest
       run: |
         cp .env.test worker/.env
         cd worker
         poetry install
-        poetry run python -m nltk.downloader punkt
         poetry run pytest --cov=worker -v --cov-report=term-missing --cov-fail-under=80
 
   test-redbox:
