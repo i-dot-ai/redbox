@@ -1,0 +1,9 @@
+# Custom Events
+
+| Event                | Pages                 | Data                                 | Description                                          |
+| -------------------- | --------------------- | ------------------------------------ | ---------------------------------------------------- |
+| chat-response-start  | /chats                | (none)                               | When the streaming connection is opened              |
+| chat-response-end    | /chats                | title: string<br/>session_id: string | When the stream "end" event is sent from the server  |
+| doc-complete         | /chats<br/>/documents | file-status element                  | When a document status changes to "complete"         |
+| selected-docs-change | /chats                | string[] of document IDs             | When a user selects or deselects a document          |
+| stop-streaming       | /chats                | (none)                               | When a user presses the global stop-streaming button |

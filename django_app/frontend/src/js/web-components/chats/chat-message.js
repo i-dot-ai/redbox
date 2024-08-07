@@ -25,6 +25,7 @@ class ChatMessage extends HTMLElement {
                 ${
                   !this.dataset.text
                     ? `
+                      <button class="iai-chat-bubble__button iai-chat-bubble__button--stop" type="button">Stop</button>
                       <loading-message data-aria-label="Loading message"></loading-message>
                       <div class="rb-loading-complete govuk-visually-hidden" aria-live="assertive"></div>
                     `
@@ -132,6 +133,8 @@ class ChatMessage extends HTMLElement {
         })
       );
       this.dataset.status = "streaming";
+      const chatResponseStartEvent = new CustomEvent("chat-response-start");
+      document.dispatchEvent(chatResponseStartEvent);
     };
 
     webSocket.onerror = (event) => {
@@ -149,6 +152,8 @@ class ChatMessage extends HTMLElement {
       if (this.dataset.status !== "stopped") {
         this.dataset.status = "complete";
       }
+      const stopStreamingEvent = new CustomEvent("stop-streaming");
+      document.dispatchEvent(stopStreamingEvent);
     };
 
     webSocket.onmessage = (event) => {
