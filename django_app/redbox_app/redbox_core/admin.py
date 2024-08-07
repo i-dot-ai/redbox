@@ -27,7 +27,7 @@ class UserAdmin(ImportMixin, admin.ModelAdmin):
         "is_superuser",
         "is_staff",
         "last_login",
-        "ai_settings"
+        "ai_settings",
     ]
     list_display = [
         "email",
