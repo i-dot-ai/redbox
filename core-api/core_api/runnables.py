@@ -4,6 +4,7 @@ from redbox.models.chain import RedboxState
 from redbox.models.chat import ChatResponse
 from redbox.transform import map_document_to_source_document, flatten_document_state
 
+
 @chain
 def map_to_chat_response(state: RedboxState):
     """
@@ -13,6 +14,8 @@ def map_to_chat_response(state: RedboxState):
     """
     return ChatResponse(
         output_text=state["text"],
-        source_documents=[map_document_to_source_document(d) for d in flatten_document_state(state.get("documents") or {})],
+        source_documents=[
+            map_document_to_source_document(d) for d in flatten_document_state(state.get("documents") or {})
+        ],
         route_name=state["route_name"],
     )

@@ -13,6 +13,7 @@ from enum import StrEnum
 from pydantic import BaseModel, Field
 from langchain_core.documents import Document
 
+
 class ChainChatMessage(TypedDict):
     role: Literal["user", "ai", "system"]
     text: str
@@ -116,45 +117,44 @@ class AISettings(BaseModel):
     similarity_threshold: int = 0
 
 
-
 type DocumentState = dict[UUID, dict[UUID, Document]]
+
 
 def document_reducer(left: DocumentState | None, right: DocumentState | list[DocumentState]) -> DocumentState:
     """Merges two document states based on the following rules.
-    
+
     * Groups are matched by the group key.
     * Documents are matched by the group key and document key.
 
     Then:
-    
+
     * If key(s) are matched, the group or Document is replaced
     * If key(s) are matched and the key is None, the key is cleared
     * If key(s) aren't matched, group or Document is added
     """
     # If right is actually a list of state updates, run them one by one
     if isinstance(right, list):
-        reduced = reduce(lambda l, r: document_reducer(l, r), right, left)
+        reduced = reduce(lambda left, right: document_reducer(left, right), right, left)
         return reduced
 
     # If state is empty, return right
     if left is None:
         return right
-    
+
     # Copy left
     reduced = {k: v.copy() for k, v in left.items()}
-    
+
     # Update with right
     for group_key, group in right.items():
         # If group is None, remove from output if a group key is matched
         if group is None:
             reduced.pop(group_key, None)
             continue
-        
+
         # If group key isn't matched, add it
         if group_key not in reduced:
             reduced[group_key] = group
 
-        
         for document_key, document in group.items():
             if document is None:
                 # If Document is None, remove from output if a group and document key is matched

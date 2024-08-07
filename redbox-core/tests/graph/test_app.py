@@ -39,12 +39,13 @@ TEST_CASES = [
                 TestData(
                     1, 80_000, expected_llm_response=["Testing Response 1"], expected_route=ChatRoute.chat_with_docs
                 ),
-                
             ],
             test_id="Chat with single doc",
         ),
         generate_test_cases(
-            query=RedboxQuery(question="What is AI?", file_uuids=[uuid4(), uuid4()], user_uuid=uuid4(), chat_history=[]),
+            query=RedboxQuery(
+                question="What is AI?", file_uuids=[uuid4(), uuid4()], user_uuid=uuid4(), chat_history=[]
+            ),
             test_data=[
                 TestData(
                     2, 40_000, expected_llm_response=["Testing Response 1"], expected_route=ChatRoute.chat_with_docs
@@ -65,7 +66,10 @@ TEST_CASES = [
             query=RedboxQuery(question="What is AI?", file_uuids=[uuid4()], user_uuid=uuid4(), chat_history=[]),
             test_data=[
                 TestData(
-                    2, 200_000, expected_llm_response=["Map Step Response"] * 2 + ["Testing Response 1"], expected_route=ChatRoute.chat_with_docs
+                    2,
+                    200_000,
+                    expected_llm_response=["Map Step Response"] * 2 + ["Testing Response 1"],
+                    expected_route=ChatRoute.chat_with_docs,
                 ),
             ],
             test_id="Chat with large doc",
@@ -142,9 +146,7 @@ async def test_chat(test_case: RedboxChatTestCase, env, tokeniser):
         env=env,
         debug=LANGGRAPH_DEBUG,
     )
-    response = await app.run(
-        input=RedboxState(request=test_case.query)
-    )
+    response = await app.run(input=RedboxState(request=test_case.query))
     final_state = RedboxState(response)
     assert (
         final_state["text"] == test_case.test_data.expected_llm_response[-1]

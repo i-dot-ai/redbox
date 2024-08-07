@@ -34,7 +34,11 @@ def build_get_docs_with_filter(retriever: VectorStoreRetriever):
     @chain
     def _build_get_docs_with_filter(state: RedboxState):
         return RunnableParallel(
-            {"documents": retriever | filter_by_elbow(state["request"].ai_settings.elbow_filter_enabled) | structure_documents}
+            {
+                "documents": retriever
+                | filter_by_elbow(state["request"].ai_settings.elbow_filter_enabled)
+                | structure_documents
+            }
         )
 
     return _build_get_docs_with_filter
@@ -91,7 +95,11 @@ def make_chat_prompt_from_messages_runnable(prompt_set: PromptSet, tokeniser: En
         log.debug("Setting chat prompt")
         system_prompt_message = [("system", system_prompt)]
         prompts_budget = len(_tokeniser.encode(system_prompt)) + len(_tokeniser.encode(question_prompt))
-        chat_history_budget = state["request"].ai_settings.context_window_size - state["request"].ai_settings.llm_max_tokens - prompts_budget
+        chat_history_budget = (
+            state["request"].ai_settings.context_window_size
+            - state["request"].ai_settings.llm_max_tokens
+            - prompts_budget
+        )
 
         if chat_history_budget <= 0:
             raise QuestionLengthError
@@ -106,7 +114,7 @@ def make_chat_prompt_from_messages_runnable(prompt_set: PromptSet, tokeniser: En
 
         prompt_template_context = state["request"].model_dump() | {
             "formatted_documents": format_documents(flatten_document_state(state["documents"])),
-            "text": state.get("text")
+            "text": state.get("text"),
         }
 
         return ChatPromptTemplate.from_messages(
@@ -124,11 +132,7 @@ def build_llm_chain(
     final_response_chain=False,
 ) -> Runnable:
     _llm = llm.with_config(tags=["response_flag"]) if final_response_chain else llm
-    return (
-        make_chat_prompt_from_messages_runnable(prompt_set)
-        | _llm
-        | {"text": StrOutputParser()}
-    )
+    return make_chat_prompt_from_messages_runnable(prompt_set) | _llm | {"text": StrOutputParser()}
 
 
 def build_merge_pattern(
@@ -142,50 +146,48 @@ def build_merge_pattern(
         tokeniser = get_tokeniser()
 
         flattened_documents = flatten_document_state(state["documents"])
-        merged_document = reduce(lambda l, r: combine_documents(l, r), flattened_documents)
+        merged_document = reduce(lambda left, right: combine_documents(left, right), flattened_documents)
         merged_document.page_content = build_llm_chain(_llm, prompt_set).invoke(
             RedboxState(
                 request=state["request"],
-                documents={merged_document.metadata["parent_file_uuid"]: {merged_document.metadata["uuid"]: merged_document}}
+                documents={
+                    merged_document.metadata["parent_file_uuid"]: {merged_document.metadata["uuid"]: merged_document}
+                },
             )
         )["text"]
 
-        merged_document.metadata["token_count"] = len(
-            tokeniser.encode(merged_document.page_content)
-        )
+        merged_document.metadata["token_count"] = len(tokeniser.encode(merged_document.page_content))
         group_uuid = merged_document.metadata.get("parent_file_uuid", uuid4())
         document_uuid = merged_document.metadata.get("uuid", uuid4())
 
         # Clear old documents, add new one
         document_state = state["documents"].copy()
-        
+
         for group in document_state:
             for document in document_state[group]:
                 document_state[group][document] = None
-        
+
         document_state[group_uuid][document_uuid] = merged_document
-        
-        return {
-            "documents": document_state
-        }
+
+        return {"documents": document_state}
+
     return wrapped
 
 
 def make_passthrough_pattern() -> Callable[[RedboxState], dict[str, Any]]:
     """Returns a function that uses state["request"] to set state["text"]."""
+
     def _passthrough(state: RedboxState) -> dict[str, Any]:
         return {
             "text": state["request"]["question"],
         }
-    
+
     return _passthrough
 
+
 def clear_documents(state: RedboxState):
-    return {
-        "documents": {
-            group_id: None for group_id in state["documents"].keys()
-        }
-    }
+    return {"documents": {group_id: None for group_id in state["documents"].keys()}}
+
 
 def set_state_field(state_field: str, value: Any):
     return RunnableLambda(

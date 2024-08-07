@@ -49,13 +49,18 @@ TEST_CASES = [
                     1, 50000, expected_llm_response=["Testing Response 1"], expected_route=ChatRoute.chat_with_docs
                 ),
                 TestData(
-                    1, 180_000, expected_llm_response=["Map Response"]+["Testing Response 1"], expected_route=ChatRoute.chat_with_docs
+                    1,
+                    180_000,
+                    expected_llm_response=["Map Response"] + ["Testing Response 1"],
+                    expected_route=ChatRoute.chat_with_docs,
                 ),
             ],
             test_id="Chat with single doc",
         ),
         generate_test_cases(
-            query=RedboxQuery(question="What is AI?", file_uuids=[uuid4(), uuid4()], user_uuid=uuid4(), chat_history=[]),
+            query=RedboxQuery(
+                question="What is AI?", file_uuids=[uuid4(), uuid4()], user_uuid=uuid4(), chat_history=[]
+            ),
             test_data=[
                 TestData(
                     2,
