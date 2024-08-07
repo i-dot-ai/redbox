@@ -80,7 +80,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 message = {
                     "message_history": message_history,
                     "selected_files": [{"uuid": f.core_file_uuid} for f in selected_files],
-                    "ai_settings": self.get_ai_settings(user),
+                    "ai_settings": await self.get_ai_settings(user),
                 }
                 await self.send_to_server(core_websocket, message)
                 await self.send_to_client("session-id", session.id)
