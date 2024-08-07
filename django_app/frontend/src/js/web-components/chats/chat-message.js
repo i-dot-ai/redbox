@@ -70,13 +70,27 @@ class ChatMessage extends HTMLElement {
     endPoint,
     chatControllerRef
   ) => {
+    // Scroll behaviour - depending on whether user has overridden this or not
     let userScrollOverride = false;
     window.addEventListener("scroll", (evt) => {
-      if (this.programmaticScroll) {
-        this.programmaticScroll = false;
-        return;
+      const bottomOfPage = (() => {
+        const THRESHOLD = 150;
+        const docHeight = document.documentElement.scrollHeight;
+        const windowHeight = window.innerHeight;
+        const scrollPosition =
+          window.scrollY || document.documentElement.scrollTop;
+        return windowHeight + scrollPosition + THRESHOLD >= docHeight;
+      })();
+
+      if (userScrollOverride && bottomOfPage) {
+        userScrollOverride = false;
+      } else if (!this.programmaticScroll) {
+        userScrollOverride = true;
       }
-      userScrollOverride = true;
+
+      //window.setTimeout(() => {
+      this.programmaticScroll = false;
+      //}, 100);
     });
 
     let responseContainer = /** @type MarkdownConverter */ (
@@ -86,21 +100,28 @@ class ChatMessage extends HTMLElement {
       this.querySelector("sources-list")
     );
     let feedbackContainer = this.querySelector("feedback-buttons");
+    let stopStreamingButton = /** @type HTMLButton */ (
+      this.querySelector(".iai-chat-bubble__button--stop")
+    );
     let responseLoading = /** @type HTMLElement */ (
       this.querySelector(".rb-loading-ellipsis")
     );
     let responseComplete = this.querySelector(".rb-loading-complete");
     let webSocket = new WebSocket(endPoint);
     let streamedContent = "";
-    let sources = [];
 
-    // Stop streaming on escape key press
+    // Stop streaming on escape-key or stop-button press
+    const stopStreaming = () => {
+      this.dataset.status = "stopped";
+      webSocket.close();
+    };
     this.addEventListener("keydown", (evt) => {
       if (evt.key === "Escape" && this.dataset.status === "streaming") {
-        this.dataset.status = "stopped";
-        webSocket.close();
+        stopStreaming();
       }
     });
+    stopStreamingButton.addEventListener("click", stopStreaming);
+    document.addEventListener("stop-streaming", stopStreaming);
 
     webSocket.onopen = (event) => {
       webSocket.send(
@@ -120,6 +141,7 @@ class ChatMessage extends HTMLElement {
     };
 
     webSocket.onclose = (event) => {
+      stopStreamingButton.style.display = "none";
       responseLoading.style.display = "none";
       if (responseComplete) {
         responseComplete.textContent = "Response complete";
