@@ -4,7 +4,7 @@ from langchain_core.vectorstores import VectorStoreRetriever
 from tiktoken import Encoding
 
 from redbox.graph.edges import build_conditional_documents_bigger_than_context, make_document_chunk_send
-from redbox.graph.nodes import PromptSet, build_merge_pattern, empty_node, set_route, set_state_field
+from redbox.graph.nodes import PromptSet, build_merge_pattern, clear_documents, empty_node, set_route, set_state_field
 from redbox.models.chain import RedboxQuery, RedboxState
 from redbox.models.chat import ChatRoute
 from redbox.models.settings import Settings
@@ -69,6 +69,7 @@ def get_root_graph(
     app.add_node("map_document_to_shorter_answer", build_merge_pattern(llm, PromptSet.ChatwithDocsMapReduce))
 
     app.add_node("chat_with_docs_llm", build_llm_chain(llm, PromptSet.ChatwithDocs, final_response_chain=True))
+    app.add_node("clear_documents", clear_documents)
 
     app.add_edge(ChatRoute.chat_with_docs, "get_chat_docs")
     app.add_edge("get_chat_docs", "documents_larger_than_context_window")
@@ -83,7 +84,8 @@ def get_root_graph(
         {"map_document_to_shorter_answer":"map_document_to_shorter_answer"},
         then="chat_with_docs_llm"
     )
-    app.add_edge("chat_with_docs_llm", END)
+    app.add_edge("chat_with_docs_llm", "clear_documents")
+    app.add_edge("clear_documents", END)
 
     return app.compile(debug=debug)
 

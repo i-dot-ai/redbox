@@ -1,4 +1,5 @@
 from uuid import UUID
+from langchain_core.documents import Document
 from langchain_core.documents.base import Document
 
 from redbox.models.chat import SourceDocument
@@ -56,3 +57,13 @@ def structure_documents(docs: list[Document]) -> dict[UUID, dict[UUID, Document]
         }
         for g_id in [d.metadata["parent_file_uuid"] for d in docs]
     }
+
+
+def flatten_document_state(documents: dict[UUID, dict[UUID, Document]]) -> list[Document]:
+    if not documents:
+        return []
+    return [
+        document
+        for group in documents.values()
+        for document in group.values()
+    ]

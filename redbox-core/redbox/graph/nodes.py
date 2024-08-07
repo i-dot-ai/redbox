@@ -1,11 +1,10 @@
 import logging
 import re
 from typing import Any, Callable
-from uuid import UUID, uuid4
+from uuid import uuid4
 from functools import reduce
 
 from langchain.schema import StrOutputParser
-from langchain_core.documents import Document
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import Runnable, RunnableLambda, RunnableParallel, chain
 from langchain_core.language_models.chat_models import BaseChatModel
@@ -20,6 +19,7 @@ from redbox.models.chain import ChainChatMessage, RedboxState
 from redbox.models.errors import QuestionLengthError
 from redbox.transform import combine_documents, structure_documents
 from redbox.models.chain import PromptSet, get_prompts
+from redbox.transform import flatten_document_state
 
 
 log = logging.getLogger()
@@ -171,16 +171,6 @@ def build_merge_pattern(
     return wrapped
 
 
-def flatten_document_state(documents: dict[UUID, dict[UUID, Document]]) -> list[Document]:
-    if not documents:
-        return []
-    return [
-        document
-        for group in documents.values()
-        for document in group.values()
-    ]
-
-
 def make_passthrough_pattern() -> Callable[[RedboxState], dict[str, Any]]:
     """Returns a function that uses state["request"] to set state["text"]."""
     def _passthrough(state: RedboxState) -> dict[str, Any]:
@@ -190,6 +180,12 @@ def make_passthrough_pattern() -> Callable[[RedboxState], dict[str, Any]]:
     
     return _passthrough
 
+def clear_documents(state: RedboxState):
+    return {
+        "documents": {
+            group_id: None for group_id in state["documents"].keys()
+        }
+    }
 
 def set_state_field(state_field: str, value: Any):
     return RunnableLambda(

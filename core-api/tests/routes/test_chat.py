@@ -49,7 +49,7 @@ TEST_CASES = [
                     1, 50000, expected_llm_response=["Testing Response 1"], expected_route=ChatRoute.chat_with_docs
                 ),
                 TestData(
-                    1, 200_000, expected_llm_response=["Testing Response 1"], expected_route=ChatRoute.chat_with_docs
+                    1, 180_000, expected_llm_response=["Map Response"]+["Testing Response 1"], expected_route=ChatRoute.chat_with_docs
                 ),
             ],
             test_id="Chat with single doc",
@@ -60,13 +60,13 @@ TEST_CASES = [
                 TestData(
                     2,
                     40000,
-                    expected_llm_response=["Map Response"] * 2 + ["Testing Response 1"],
+                    expected_llm_response=["Testing Response 1"],
                     expected_route=ChatRoute.chat_with_docs,
                 ),
                 TestData(
                     2,
                     100_000,
-                    expected_llm_response=["Map Response"] * 2 + ["Testing Response 1"],
+                    expected_llm_response=["Testing Response 1"],
                     expected_route=ChatRoute.chat_with_docs,
                 ),
                 TestData(

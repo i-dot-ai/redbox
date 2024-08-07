@@ -18,10 +18,11 @@ from langgraph.constants import Send
 from redbox.api.format import format_documents
 from redbox.api.runnables import filter_by_elbow
 from redbox.chains.components import get_tokeniser
-from redbox.graph.nodes import PromptSet, flatten_document_state
+from redbox.graph.nodes import PromptSet
 from redbox.models import ChatRoute
 from redbox.models.chain import ChainChatMessage, RedboxState
 from redbox.models.errors import QuestionLengthError
+from redbox.transform import flatten_document_state
 
 log = logging.getLogger()
 
