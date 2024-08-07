@@ -142,15 +142,3 @@ upload-button {
 
 /* Chats Page - to come after i.AI Design System */
 @import "./chat-styles.scss";
-
-/* To eventually make it's way into i.AI design system: */
-.iai-chat-bubble__button--stop::before {
-  background-color: #6b7280;
-  content: "";
-  display: block;
-  height: 0.75rem;
-  width: 0.75rem;
-}
-.iai-chat-bubble__button--stop:hover::before {
-  background-color: var(--iai-product-colour);
-}
