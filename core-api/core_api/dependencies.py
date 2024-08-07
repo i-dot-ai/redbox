@@ -13,7 +13,7 @@ from langchain_core.retrievers import BaseRetriever
 from redbox.api.callbacks import LoggerCallbackHandler
 from redbox.retriever import AllElasticsearchRetriever, ParameterisedElasticsearchRetriever
 from redbox.models import Settings
-from redbox.embeddings import get_embeddings
+from redbox.chains.components import get_embeddings
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger()

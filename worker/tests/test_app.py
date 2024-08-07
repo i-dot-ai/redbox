@@ -59,7 +59,7 @@ async def test_ingest_file(
             if file_status.processing_status == status:
                 break
         else:
-            raise Exception(f"File never went to expected status. Final Status {file_status.processing_status}")
+            raise Exception(f"File never went to expected status. Final Status {file_status.ingest_status}")
 
         if expected_chunks:
             chunks = list(
