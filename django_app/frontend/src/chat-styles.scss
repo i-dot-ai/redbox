@@ -24,11 +24,42 @@ body:has(.iai-environment-warning) main:has(.iai-chat-input) {
   }
 }
 @media (min-width: 1020px) {
+  body:has(.iai-chat-input) .iai-environment-warning {
+    position: fixed;
+    width: 100%;
+    z-index: 10;
+  }
+  body:has(.iai-chat-input) .iai-top-nav {
+    position: fixed;
+    width: 100%;
+    z-index: 10;
+  }
+  body:has(.iai-environment-warning) .iai-top-nav {
+    top: 26px;
+  }
+  main:has(.iai-chat-input) {
+    padding-top: 4.5rem;
+  }
+  body:has(.iai-environment-warning) main:has(.iai-chat-input) {
+    padding-top: 6.5rem;
+  }
   .govuk-grid-row:has(.iai-chat-input) {
     .govuk-grid-column-one-third,
     .govuk-grid-column-two-thirds {
       min-height: calc(100vh - 10.25rem);
     }
+  }
+  .rb-left-column-container {
+    left: 0;
+    position: sticky;
+    top: 4.5rem;
+    width: calc(100% - 30px);
+  }
+  body:has(.iai-environment-warning) .rb-left-column-container {
+    top: 6.5rem;
+  }
+  .iai-panel__scrollable {
+    max-height: calc(50vh - 12rem);
   }
 }
 
