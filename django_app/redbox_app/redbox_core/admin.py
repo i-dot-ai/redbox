@@ -114,27 +114,18 @@ class ChatAdmin(admin.ModelAdmin):
     def export_as_csv(self, request, queryset: QuerySet):  # noqa:ARG002
         history_field_names: list[str] = [field.name for field in models.Chat._meta.fields]  # noqa:SLF001
         message_field_names: list[str] = [field.name for field in models.ChatMessage._meta.fields]  # noqa:SLF001
-        rating_field_names: list[str] = [field.name for field in models.ChatMessageRating._meta.fields]  # noqa:SLF001
 
         response = HttpResponse(content_type="text/csv")
         response["Content-Disposition"] = "attachment; filename=chat.csv"
         writer = csv.writer(response)
 
-        writer.writerow(
-            ["history_" + n for n in history_field_names]
-            + ["message_" + n for n in message_field_names]
-            + ["rating_" + n for n in rating_field_names]
-        )
+        writer.writerow(["history_" + n for n in history_field_names] + ["message_" + n for n in message_field_names])
         chat_message: models.ChatMessage
-        chat_message_rating: models.ChatMessageRating
         for chat in queryset:
             for chat_message in chat.chatmessage_set.all():
                 row = [getattr(chat, field) for field in history_field_names] + [
                     getattr(chat_message, field) for field in message_field_names
                 ]
-                if hasattr(chat_message, "chatmessagerating"):
-                    chat_message_rating = chat_message.chatmessagerating
-                    row += [getattr(chat_message_rating, field) for field in rating_field_names]
                 writer.writerow(row)
 
         return response
@@ -161,6 +152,5 @@ admin.site.register(models.User, UserAdmin)
 admin.site.register(models.File, FileAdmin)
 admin.site.register(models.Chat, ChatAdmin)
 admin.site.register(models.ChatMessage, ChatMessageAdmin)
-admin.site.register(models.ChatMessageRating)
 admin.site.register(models.Citation, CitationAdmin)
 admin.site.register(models.BusinessUnit, BusinessUnitAdmin)

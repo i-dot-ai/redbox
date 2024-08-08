@@ -375,11 +375,19 @@ class ChatMessage(UUIDPrimaryKeyBase, TimeStampedModel):
     selected_files = models.ManyToManyField(File, related_name="+", symmetrical=False, blank=True)
     source_files = models.ManyToManyField(File, through=Citation)
 
+    rating = models.PositiveIntegerField(
+        blank=True, null=True, validators=[validators.MinValueValidator(1), validators.MaxValueValidator(5)]
+    )
+    rating_text = models.TextField(blank=True, null=True)
+    rating_chips = ArrayField(models.CharField(max_length=32), null=True, blank=True)
+
     def __str__(self) -> str:  # pragma: no cover
-        return f"{self.text} - {self.role}"
+        return self.text[:20] + "..."
 
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
         self.text = sanitise_string(self.text)
+        self.rating_text = sanitise_string(self.rating_text)
+
         super().save(force_insert, force_update, using, update_fields)
 
     @classmethod
@@ -397,17 +405,3 @@ class ChatMessage(UUIDPrimaryKeyBase, TimeStampedModel):
                 )
             )
         )
-
-
-class ChatMessageRating(TimeStampedModel):
-    chat_message = models.OneToOneField(ChatMessage, on_delete=models.CASCADE, primary_key=True)
-    rating = models.PositiveIntegerField(validators=[validators.MinValueValidator(1), validators.MaxValueValidator(5)])
-    text = models.TextField(blank=True, null=True)
-    chips = ArrayField(models.CharField(max_length=32), null=True, blank=True)
-
-    def __str__(self) -> str:  # pragma: no cover
-        return f"{self.chat_message} - {self.rating} - {self.text}"
-
-    def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
-        self.text = sanitise_string(self.text)
-        super().save(force_insert, force_update, using, update_fields)
