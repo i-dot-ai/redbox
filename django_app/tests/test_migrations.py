@@ -144,3 +144,31 @@ def test_0028_aisettings(migrator):
 
     for user in NewUser.objects.all():
         assert user.ai_settings.label == "default"
+
+
+@pytest.mark.django_db()
+def test_0030_chatmessagerating_chips(migrator):
+    old_state = migrator.apply_initial_migration(("redbox_core", "0029_rename_chathistory_chat_alter_chat_options"))
+
+    User = old_state.apps.get_model("redbox_core", "User")
+    user = User.objects.create(email="someone@example.com")
+
+    Chat = old_state.apps.get_model("redbox_core", "Chat")
+    chat = Chat.objects.create(users=user, name="my-chat")
+
+    ChatMessage = old_state.apps.get_model("redbox_core", "ChatMessage")
+    chat_message = ChatMessage.objects.create(chat=chat)
+
+    ChatMessageRating = old_state.apps.get_model("redbox_core", "ChatMessageRating")
+    chat_message_rating = ChatMessageRating.objects.create(chat_message=chat_message, rating=3, text="very average")
+
+    ChatMessageRatingChip = old_state.apps.get_model("redbox_core", "ChatMessageRatingChip")
+    ChatMessageRatingChip.objects.create(rating=chat_message_rating, text="apple")
+    ChatMessageRatingChip.objects.create(rating=chat_message_rating, text="pear")
+
+    new_state = migrator.apply_tested_migration(
+        ("redbox_core", "0030_chatmessagerating_chips"),
+    )
+    NewChatMessageRating = new_state.apps.get_model("redbox_core", "ChatMessageRating")  # noqa: N806
+    new_chat_message_rating = NewChatMessageRating.objects.get(pk=chat_message_rating.pk)
+    assert new_chat_message_rating.chips == ["apple", "pear"]
