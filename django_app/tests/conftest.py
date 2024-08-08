@@ -126,8 +126,8 @@ def chat_message(chat: Chat, uploaded_file: File) -> ChatMessage:
 
 @pytest.fixture()
 def chat_message_with_citation(chat: Chat, uploaded_file: File) -> ChatMessage:
-    chat_message = ChatMessage.objects.create(chat=chat, text="An answer.", role=ChatRoleEnum.ai)
-    Citation.objects.create(file=uploaded_file, chat=chat, text="Lorem ipsum.")
+    chat_message = ChatMessage.objects.create(chat_message=chat, text="An answer.", role=ChatRoleEnum.ai)
+    Citation.objects.create(file=uploaded_file, chat_message=chat_message, text="Lorem ipsum.")
     return chat_message
 
 
