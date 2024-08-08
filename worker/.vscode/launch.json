@@ -20,7 +20,8 @@
             "env": {
                 "ELASTIC__HOST": "localhost",
                 "REDIS_HOST": "localhost",
-                "MINIO_HOST": "localhost"
+                "MINIO_HOST": "localhost",
+                "UNSTRUCTURED_HOST": "localhost"
             }
         }
     ]
