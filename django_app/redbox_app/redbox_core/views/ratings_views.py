@@ -31,4 +31,5 @@ class RatingsView(View):
         message.rating = user_rating.rating
         message.rating_text = user_rating.text
         message.rating_chips = sorted(user_rating.chips)
+        message.save()
         return HttpResponse(status=HTTPStatus.NO_CONTENT)

@@ -25,7 +25,7 @@ def test_post_new_rating_only(alice: User, chat_message: ChatMessage, client: Cl
     assert status.is_success
     assert chat_message.rating == 5
     assert chat_message.rating_text is None
-    assert chat_message.rating_chips == []
+    assert chat_message.rating_chips is None
 
 
 @pytest.mark.django_db()
