@@ -17,7 +17,7 @@ from websockets.client import connect
 from yarl import URL
 
 from redbox_app.redbox_core import error_messages
-from redbox_app.redbox_core.models import AISettings, ChatHistory, ChatMessage, ChatRoleEnum, Citation, File, User
+from redbox_app.redbox_core.models import AISettings, Chat, ChatMessage, ChatRoleEnum, Citation, File, User
 
 OptFileSeq = Sequence[File] | None
 logger = logging.getLogger(__name__)
@@ -57,7 +57,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         selected_file_uuids: Sequence[UUID] = [UUID(u) for u in data.get("selectedFiles", [])]
         user: User = self.scope.get("user", None)
 
-        session: ChatHistory = await self.get_session(session_id, user, user_message_text)
+        session: Chat = await self.get_session(session_id, user, user_message_text)
 
         # save user message
         selected_files = await self.get_files_by_id(selected_file_uuids, user)
@@ -66,9 +66,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         await self.llm_conversation(selected_files, session, user, user_message_text)
         await self.close()
 
-    async def llm_conversation(
-        self, selected_files: Sequence[File], session: ChatHistory, user: User, title: str
-    ) -> None:
+    async def llm_conversation(self, selected_files: Sequence[File], session: Chat, user: User, title: str) -> None:
         """Initiate & close websocket conversation with the core-api message endpoint."""
         session_messages = await self.get_messages(session)
         message_history: Sequence[Mapping[str, str]] = [
@@ -162,31 +160,31 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
     @staticmethod
     @database_sync_to_async
-    def get_session(session_id: str, user: User, user_message_text: str) -> ChatHistory:
+    def get_session(session_id: str, user: User, user_message_text: str) -> Chat:
         if session_id:
-            session = ChatHistory.objects.get(id=session_id)
+            session = Chat.objects.get(id=session_id)
         else:
             session_name = user_message_text[0 : settings.CHAT_TITLE_LENGTH]
-            session = ChatHistory(name=session_name, users=user)
+            session = Chat(name=session_name, users=user)
             session.save()
         return session
 
     @staticmethod
     @database_sync_to_async
-    def get_messages(session: ChatHistory) -> Sequence[ChatMessage]:
-        return list(ChatMessage.objects.filter(chat_history=session).order_by("created_at"))
+    def get_messages(session: Chat) -> Sequence[ChatMessage]:
+        return list(ChatMessage.objects.filter(chat=session).order_by("created_at"))
 
     @staticmethod
     @database_sync_to_async
     def save_message(
-        session: ChatHistory,
+        session: Chat,
         user_message_text: str,
         role: ChatRoleEnum,
         sources: Sequence[tuple[File, CoreChatResponseDoc]] | None = None,
         selected_files: Sequence[File] | None = None,
         route: str | None = None,
     ) -> ChatMessage:
-        chat_message = ChatMessage(chat_history=session, text=user_message_text, role=role, route=route)
+        chat_message = ChatMessage(chat=session, text=user_message_text, role=role, route=route)
         chat_message.save()
         if sources:
             for file, citations in sources:

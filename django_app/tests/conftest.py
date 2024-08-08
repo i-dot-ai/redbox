@@ -14,7 +14,7 @@ from redbox_app.redbox_core import client
 from redbox_app.redbox_core.models import (
     AISettings,
     BusinessUnit,
-    ChatHistory,
+    Chat,
     ChatMessage,
     ChatMessageRating,
     ChatMessageRatingChip,
@@ -112,24 +112,22 @@ def s3_client():
 
 
 @pytest.fixture()
-def chat_history(alice: User) -> ChatHistory:
+def chat(alice: User) -> Chat:
     session_id = uuid.uuid4()
-    return ChatHistory.objects.create(id=session_id, users=alice, name="A chat")
+    return Chat.objects.create(id=session_id, users=alice, name="A chat")
 
 
 @pytest.fixture()
-def chat_message(chat_history: ChatHistory, uploaded_file: File) -> ChatMessage:
-    chat_message = ChatMessage.objects.create(
-        chat_history=chat_history, text="A question?", role=ChatRoleEnum.user, route="A route"
-    )
+def chat_message(chat: Chat, uploaded_file: File) -> ChatMessage:
+    chat_message = ChatMessage.objects.create(chat=chat, text="A question?", role=ChatRoleEnum.user, route="A route")
     chat_message.source_files.set([uploaded_file])
     return chat_message
 
 
 @pytest.fixture()
-def chat_message_with_citation(chat_history: ChatHistory, uploaded_file: File) -> ChatMessage:
-    chat_message = ChatMessage.objects.create(chat_history=chat_history, text="An answer.", role=ChatRoleEnum.ai)
-    Citation.objects.create(file=uploaded_file, chat_message=chat_message, text="Lorem ipsum.")
+def chat_message_with_citation(chat: Chat, uploaded_file: File) -> ChatMessage:
+    chat_message = ChatMessage.objects.create(chat=chat, text="An answer.", role=ChatRoleEnum.ai)
+    Citation.objects.create(file=uploaded_file, chat=chat, text="Lorem ipsum.")
     return chat_message
 
 
@@ -154,36 +152,30 @@ def original_file() -> UploadedFile:
 
 
 @pytest.fixture()
-def chat_history_with_files(chat_history: ChatHistory, several_files: Sequence[File]) -> ChatHistory:
-    ChatMessage.objects.create(chat_history=chat_history, text="A question?", role=ChatRoleEnum.user)
-    chat_message = ChatMessage.objects.create(
-        chat_history=chat_history, text="An answer.", role=ChatRoleEnum.ai, route="search"
-    )
+def chat_with_files(chat: Chat, several_files: Sequence[File]) -> Chat:
+    ChatMessage.objects.create(chat=chat, text="A question?", role=ChatRoleEnum.user)
+    chat_message = ChatMessage.objects.create(chat=chat, text="An answer.", role=ChatRoleEnum.ai, route="search")
     chat_message.source_files.set(several_files[0::2])
-    chat_message = ChatMessage.objects.create(
-        chat_history=chat_history, text="A second question?", role=ChatRoleEnum.user
-    )
+    chat_message = ChatMessage.objects.create(chat=chat, text="A second question?", role=ChatRoleEnum.user)
     chat_message.selected_files.set(several_files[0:2])
-    chat_message = ChatMessage.objects.create(
-        chat_history=chat_history, text="A second answer.", role=ChatRoleEnum.ai, route="search"
-    )
+    chat_message = ChatMessage.objects.create(chat=chat, text="A second answer.", role=ChatRoleEnum.ai, route="search")
     chat_message.source_files.set([several_files[2]])
-    return chat_history
+    return chat
 
 
 @pytest.fixture()
-def chat_history_with_messages_over_time(chat_history: ChatHistory) -> ChatHistory:
+def chat_with_messages_over_time(chat: Chat) -> Chat:
     now = timezone.now()
     with freeze_time(now - timedelta(days=40)):
-        ChatMessage.objects.create(chat_history=chat_history, text="40 days old", role=ChatRoleEnum.user)
+        ChatMessage.objects.create(chat=chat, text="40 days old", role=ChatRoleEnum.user)
     with freeze_time(now - timedelta(days=20)):
-        ChatMessage.objects.create(chat_history=chat_history, text="20 days old", role=ChatRoleEnum.user)
+        ChatMessage.objects.create(chat=chat, text="20 days old", role=ChatRoleEnum.user)
     with freeze_time(now - timedelta(days=5)):
-        ChatMessage.objects.create(chat_history=chat_history, text="5 days old", role=ChatRoleEnum.user)
+        ChatMessage.objects.create(chat=chat, text="5 days old", role=ChatRoleEnum.user)
     with freeze_time(now - timedelta(days=1)):
-        ChatMessage.objects.create(chat_history=chat_history, text="yesterday", role=ChatRoleEnum.user)
-    ChatMessage.objects.create(chat_history=chat_history, text="today", role=ChatRoleEnum.user)
-    return chat_history
+        ChatMessage.objects.create(chat=chat, text="yesterday", role=ChatRoleEnum.user)
+    ChatMessage.objects.create(chat=chat, text="today", role=ChatRoleEnum.user)
+    return chat
 
 
 @pytest.fixture()
@@ -191,20 +183,20 @@ def user_with_chats_with_messages_over_time(alice: User) -> User:
     now = timezone.now()
     with freeze_time(now - timedelta(days=40)):
         chats = [
-            ChatHistory.objects.create(id=uuid.uuid4(), users=alice, name="40 days old"),
-            ChatHistory.objects.create(id=uuid.uuid4(), users=alice, name="20 days old"),
-            ChatHistory.objects.create(id=uuid.uuid4(), users=alice, name="5 days old"),
-            ChatHistory.objects.create(id=uuid.uuid4(), users=alice, name="yesterday"),
-            ChatHistory.objects.create(id=uuid.uuid4(), users=alice, name="today"),
+            Chat.objects.create(id=uuid.uuid4(), users=alice, name="40 days old"),
+            Chat.objects.create(id=uuid.uuid4(), users=alice, name="20 days old"),
+            Chat.objects.create(id=uuid.uuid4(), users=alice, name="5 days old"),
+            Chat.objects.create(id=uuid.uuid4(), users=alice, name="yesterday"),
+            Chat.objects.create(id=uuid.uuid4(), users=alice, name="today"),
         ]
-        ChatMessage.objects.create(chat_history=chats[0], text="40 days old", role=ChatRoleEnum.user)
+        ChatMessage.objects.create(chat=chats[0], text="40 days old", role=ChatRoleEnum.user)
     with freeze_time(now - timedelta(days=20)):
-        ChatMessage.objects.create(chat_history=chats[1], text="20 days old", role=ChatRoleEnum.user)
+        ChatMessage.objects.create(chat=chats[1], text="20 days old", role=ChatRoleEnum.user)
     with freeze_time(now - timedelta(days=5)):
-        ChatMessage.objects.create(chat_history=chats[2], text="5 days old", role=ChatRoleEnum.user)
+        ChatMessage.objects.create(chat=chats[2], text="5 days old", role=ChatRoleEnum.user)
     with freeze_time(now - timedelta(days=1)):
-        ChatMessage.objects.create(chat_history=chats[3], text="yesterday", role=ChatRoleEnum.user)
-    ChatMessage.objects.create(chat_history=chats[4], text="today", role=ChatRoleEnum.user)
+        ChatMessage.objects.create(chat=chats[3], text="yesterday", role=ChatRoleEnum.user)
+    ChatMessage.objects.create(chat=chats[4], text="today", role=ChatRoleEnum.user)
 
     return alice
 
