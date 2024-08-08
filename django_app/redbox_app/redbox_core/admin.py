@@ -136,7 +136,6 @@ class ChatAdmin(admin.ModelAdmin):
                 if hasattr(chat_message, "chatmessagerating"):
                     chat_message_rating = chat_message.chatmessagerating
                     row += [getattr(chat_message_rating, field) for field in rating_field_names]
-                    row += [", ".join(c.text for c in chat_message_rating.chatmessageratingchip_set.all())]
                 writer.writerow(row)
 
         return response
@@ -164,6 +163,5 @@ admin.site.register(models.File, FileAdmin)
 admin.site.register(models.Chat, ChatAdmin)
 admin.site.register(models.ChatMessage, ChatMessageAdmin)
 admin.site.register(models.ChatMessageRating)
-admin.site.register(models.ChatMessageRatingChip)
 admin.site.register(models.Citation, CitationAdmin)
 admin.site.register(models.BusinessUnit, BusinessUnitAdmin)

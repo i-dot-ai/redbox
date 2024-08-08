@@ -26,7 +26,7 @@ def test_post_new_rating_only(alice: User, chat_message: ChatMessage, client: Cl
     rating = ChatMessageRating.objects.get(pk=chat_message.pk)
     assert rating.rating == 5
     assert rating.text is None
-    assert {c.text for c in rating.chatmessageratingchip_set.all()} == set()
+    assert rating.chips is None
 
 
 @pytest.mark.django_db()
@@ -48,7 +48,7 @@ def test_post_new_rating(alice: User, chat_message: ChatMessage, client: Client)
     rating = ChatMessageRating.objects.get(pk=chat_message.pk)
     assert rating.rating == 5
     assert rating.text == "Lorem Ipsum."
-    assert {c.text for c in rating.chatmessageratingchip_set.all()} == {"speed", "accuracy", "swearing"}
+    assert set(rating.chips) == {"speed", "accuracy", "swearing"}
 
 
 @pytest.mark.django_db()
@@ -70,7 +70,7 @@ def test_post_new_rating_with_naughty_string(alice: User, chat_message: ChatMess
     rating = ChatMessageRating.objects.get(pk=chat_message.pk)
     assert rating.rating == 5
     assert rating.text == "Lorem Ipsum. \ufffd"
-    assert {c.text for c in rating.chatmessageratingchip_set.all()} == {"speed", "accuracy", "swearing"}
+    assert set(rating.chips) == {"speed", "accuracy", "swearing"}
 
 
 @pytest.mark.django_db()
@@ -92,7 +92,7 @@ def test_post_updated_rating(alice: User, chat_message_with_rating: ChatMessage,
     rating = ChatMessageRating.objects.get(pk=chat_message_with_rating.pk)
     assert rating.rating == 5
     assert rating.text == "Lorem Ipsum."
-    assert {c.text for c in rating.chatmessageratingchip_set.all()} == {"speed", "accuracy", "swearing"}
+    assert set(rating.chips) == {"speed", "accuracy", "swearing"}
 
 
 @pytest.mark.django_db()
@@ -114,4 +114,4 @@ def test_post_updated_rating_with_naughty_string(alice: User, chat_message_with_
     rating = ChatMessageRating.objects.get(pk=chat_message_with_rating.pk)
     assert rating.rating == 5
     assert rating.text == "Lorem Ipsum. \ufffd"
-    assert {c.text for c in rating.chatmessageratingchip_set.all()} == {"speed", "accuracy", "swearing"}
+    assert set(rating.chips) == {"speed", "accuracy", "swearing"}

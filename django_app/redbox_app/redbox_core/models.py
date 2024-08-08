@@ -403,6 +403,7 @@ class ChatMessageRating(TimeStampedModel):
     chat_message = models.OneToOneField(ChatMessage, on_delete=models.CASCADE, primary_key=True)
     rating = models.PositiveIntegerField(validators=[validators.MinValueValidator(1), validators.MaxValueValidator(5)])
     text = models.TextField(blank=True, null=True)
+    chips = ArrayField(models.CharField(max_length=32), null=True, blank=True)
 
     def __str__(self) -> str:  # pragma: no cover
         return f"{self.chat_message} - {self.rating} - {self.text}"
@@ -410,14 +411,3 @@ class ChatMessageRating(TimeStampedModel):
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
         self.text = sanitise_string(self.text)
         super().save(force_insert, force_update, using, update_fields)
-
-
-class ChatMessageRatingChip(UUIDPrimaryKeyBase, TimeStampedModel):
-    rating = models.ForeignKey(ChatMessageRating, on_delete=models.CASCADE)
-    text = models.CharField(max_length=32)
-
-    class Meta:
-        unique_together = "rating", "text"
-
-    def __str__(self) -> str:  # pragma: no cover
-        return f"{self.rating} - {self.text}"
