@@ -86,7 +86,7 @@ def test_post_updated_rating(alice: User, chat_message_with_rating: ChatMessage,
     # Then
     status = HTTPStatus(response.status_code)
     assert status.is_success
-    assert chat_message_with_rating.rating == 3
+    assert chat_message_with_rating.rating == 5
     assert chat_message_with_rating.rating_text == "Lorem Ipsum."
     assert set(chat_message_with_rating.rating_chips) == {"speed", "accuracy", "swearing"}
 
@@ -107,6 +107,6 @@ def test_post_updated_rating_with_naughty_string(alice: User, chat_message_with_
     # Then
     status = HTTPStatus(response.status_code)
     assert status.is_success
-    assert chat_message_with_rating.rating == 3
+    assert chat_message_with_rating.rating == 5
     assert chat_message_with_rating.rating_text == "Lorem Ipsum. \ufffd"
     assert set(chat_message_with_rating.rating_chips) == {"speed", "accuracy", "swearing"}
