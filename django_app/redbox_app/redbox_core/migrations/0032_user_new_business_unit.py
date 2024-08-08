@@ -7,7 +7,7 @@ def back_business_units(apps, schema_editor):
     User = apps.get_model("redbox_core", "User")
     for user in User.objects.filter(business_unit__isnull=False):
         user.new_business_unit = user.business_unit.name
-        user.chat_message.save()
+        user.save()
 
 
 

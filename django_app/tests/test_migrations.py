@@ -229,13 +229,13 @@ def test_0032_user_new_business_unit(migrator):
     )
 
     BusinessUnit = old_state.apps.get_model("redbox_core", "BusinessUnit")
-    pm_office = BusinessUnit.objects.create(name="Prime Minister's Office")
+    pm_office = BusinessUnit.objects.get(name="Prime Minister's Office")
 
     User = old_state.apps.get_model("redbox_core", "User")
     user = User.objects.create(email="someone@example.com", business_unit=pm_office)
 
     new_state = migrator.apply_tested_migration(
-        ("redbox_core", "test_0032_user_new_business_unit"),
+        ("redbox_core", "0032_user_new_business_unit"),
     )
     NewUser = new_state.apps.get_model("redbox_core", "User")  # noqa: N806
     user = NewUser.objects.get(pk=user.pk)
