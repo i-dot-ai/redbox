@@ -35,7 +35,7 @@ class RatingsView(View):
         if chat_message_rating := ChatMessageRating.objects.filter(chat_message=message).first():
             chat_message_rating.rating = user_rating.rating
             chat_message_rating.text = user_rating.text
-            chat_message_rating = user_rating.chips
+            chat_message_rating.chips = user_rating.chips
             chat_message_rating.save()
         else:
             chat_message_rating = ChatMessageRating(
