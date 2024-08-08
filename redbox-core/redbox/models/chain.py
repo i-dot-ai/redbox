@@ -79,7 +79,7 @@ CHAT_QUESTION_PROMPT = "{question}\n=========\n Response: "
 
 CHAT_WITH_DOCS_QUESTION_PROMPT = "Question: {question}. \n\n Documents: \n\n {formatted_documents} \n\n Answer: "
 
-RETRIEVAL_QUESTION_PROMPT = "{text} \n=========\n{formatted_documents}\n=========\nFINAL ANSWER: "
+RETRIEVAL_QUESTION_PROMPT = "{question} \n=========\n{formatted_documents}\n=========\nFINAL ANSWER: "
 
 CHAT_MAP_QUESTION_PROMPT = "Question: {question}. \n Documents: \n {formatted_documents} \n\n Answer: "
 
@@ -185,7 +185,7 @@ class RedboxQuery(BaseModel):
 
 class RedboxState(TypedDict):
     request: Required[RedboxQuery]
-    documents: Annotated[NotRequired[dict[UUID, dict[UUID, Document]]], document_reducer]
+    documents: Annotated[NotRequired[DocumentState], document_reducer]
     text: NotRequired[str | None]
     route_name: NotRequired[str | None]
 
