@@ -24,7 +24,7 @@ class RatingsView(View):
     class Rating:
         rating: int
         text: str | None = None
-        chips: set[str] = field(default_factory=set)
+        chips: list[str] = field(default_factory=list)
 
     @method_decorator(login_required)
     def post(self, request: HttpRequest, message_id: uuid.UUID) -> HttpResponse:
@@ -39,7 +39,7 @@ class RatingsView(View):
             chat_message_rating.save()
         else:
             chat_message_rating = ChatMessageRating(
-                chat_message=message, rating=user_rating.rating, text=user_rating.text, chips=user_rating.chips
+                chat_message=message, rating=user_rating.rating, text=user_rating.text, chips=sorted(user_rating.chips)
             )
             chat_message_rating.save()
         return HttpResponse(status=HTTPStatus.NO_CONTENT)
