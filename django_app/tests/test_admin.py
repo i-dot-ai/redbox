@@ -35,7 +35,7 @@ def test_chat_export(superuser: User, chat_message_with_rating: ChatMessage, cli
     assert row["history_name"] == "A chat"
     assert row["history_users"] == "alice@cabinetoffice.gov.uk"
     assert row["message_text"] == "A question?"
-    assert row["rating_rating"] == "3"
+    assert row["rating"] == "3"
     assert row["rating_chips"] == "['speed', 'accuracy', 'blasphemy']"
 
 
@@ -57,7 +57,7 @@ def test_chat_export_without_ratings(superuser: User, chat_message: ChatMessage,
     assert row["history_name"] == "A chat"
     assert row["history_users"] == "alice@cabinetoffice.gov.uk"
     assert row["message_text"] == "A question?"
-    assert row["rating_rating"] is None
+    assert row["rating"] is None
     assert row["rating_chips"] is None
 
 
