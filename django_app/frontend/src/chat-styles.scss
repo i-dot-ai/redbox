@@ -24,6 +24,14 @@ body:has(.iai-environment-warning) main:has(.iai-chat-input) {
   }
 }
 @media (min-width: 1020px) {
+  .govuk-grid-row:has(.iai-chat-input) {
+    .govuk-grid-column-one-third,
+    .govuk-grid-column-two-thirds {
+      min-height: calc(100vh - 10.25rem);
+    }
+  }
+}
+@media (min-width: 1020px) and (min-height: 600px) {
   body:has(.iai-chat-input) .iai-environment-warning {
     position: fixed;
     width: 100%;
@@ -42,12 +50,6 @@ body:has(.iai-environment-warning) main:has(.iai-chat-input) {
   }
   body:has(.iai-environment-warning) main:has(.iai-chat-input) {
     padding-top: 6.5rem;
-  }
-  .govuk-grid-row:has(.iai-chat-input) {
-    .govuk-grid-column-one-third,
-    .govuk-grid-column-two-thirds {
-      min-height: calc(100vh - 10.25rem);
-    }
   }
   .rb-left-column-container {
     left: 0;
