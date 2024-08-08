@@ -17,7 +17,7 @@ def test_0012_alter_file_status(migrator):
 
     user = User.objects.create(email="someone@example.com")
     chat = ChatHistory.objects.create(users=user)
-    chat_message = ChatMessage.objects.create(chat=chat, text="hello", role="user")
+    chat_message = ChatMessage.objects.create(chat_history=chat, text="hello", role="user")
 
     file = File.objects.create(
         user=user, original_file=original_file, original_file_name=original_file.name, core_file_uuid=uuid4()
