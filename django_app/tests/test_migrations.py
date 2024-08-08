@@ -147,6 +147,28 @@ def test_0028_aisettings(migrator):
 
 
 @pytest.mark.django_db()
+def test_0029_rename_chathistory_chat_alter_chat_options(migrator):
+    old_state = migrator.apply_initial_migration(("redbox_core", "0028_aisettings"))
+
+    User = old_state.apps.get_model("redbox_core", "User")
+    user = User.objects.create(email="someone@example.com")
+
+    ChatHistory = old_state.apps.get_model("redbox_core", "ChatHistory")
+    chat_history = ChatHistory.objects.create(name="my-chat", users=user)
+
+    ChatMessage = old_state.apps.get_model("redbox_core", "ChatMessage")
+    ChatMessage.objects.create(chat_history=chat_history)
+
+    new_state = migrator.apply_tested_migration(
+        ("redbox_core", "0029_rename_chathistory_chat_alter_chat_options"),
+    )
+    Chat = new_state.apps.get_model("redbox_core", "Chat")
+    chat = Chat.objects.get(pk=chat_history.pk)
+
+    assert chat.chatmessage_set.count() == 1
+
+
+@pytest.mark.django_db()
 def test_0030_chatmessagerating_chips(migrator):
     old_state = migrator.apply_initial_migration(("redbox_core", "0029_rename_chathistory_chat_alter_chat_options"))
 
