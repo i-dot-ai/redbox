@@ -16,7 +16,6 @@ from redbox_app.redbox_core.models import (
     BusinessUnit,
     ChatHistory,
     ChatMessage,
-    ChatMessageRating,
     ChatMessageRatingChip,
     ChatRoleEnum,
     Citation,
@@ -227,8 +226,9 @@ def several_files(alice: User, number_to_create: int = 4) -> Sequence[File]:
 
 @pytest.fixture()
 def chat_message_with_rating(chat_message: ChatMessage) -> ChatMessage:
-    chat_message_rating = ChatMessageRating(chat_message=chat_message, rating=3, text="Ipsum Lorem.")
-    chat_message_rating.save()
+    chat_message.rating = 3
+    chat_message.rating_text = "Ipsum Lorem."
+    chat_message.save()
     ChatMessageRatingChip(chat_message=chat_message, text="speed").save()
     ChatMessageRatingChip(chat_message=chat_message, text="accuracy").save()
     ChatMessageRatingChip(chat_message=chat_message, text="blasphemy").save()

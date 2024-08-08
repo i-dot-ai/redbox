@@ -6,7 +6,7 @@ import pytest
 from django.test import Client
 from django.urls import reverse
 
-from redbox_app.redbox_core.models import ChatMessage, ChatMessageRating, User
+from redbox_app.redbox_core.models import ChatMessage, User
 
 logger = logging.getLogger(__name__)
 
@@ -23,10 +23,9 @@ def test_post_new_rating_only(alice: User, chat_message: ChatMessage, client: Cl
     # Then
     status = HTTPStatus(response.status_code)
     assert status.is_success
-    rating = ChatMessageRating.objects.get(pk=chat_message.pk)
-    assert rating.rating == 5
-    assert rating.text is None
-    assert {c.text for c in rating.chatmessageratingchip_set.all()} == set()
+    assert chat_message.rating == 5
+    assert chat_message.rating_text is None
+    assert {c.text for c in chat_message.chatmessagechip_set.all()} == set()
 
 
 @pytest.mark.django_db()
@@ -45,10 +44,9 @@ def test_post_new_rating(alice: User, chat_message: ChatMessage, client: Client)
     # Then
     status = HTTPStatus(response.status_code)
     assert status.is_success
-    rating = ChatMessageRating.objects.get(pk=chat_message.pk)
-    assert rating.rating == 5
-    assert rating.text == "Lorem Ipsum."
-    assert {c.text for c in rating.chatmessageratingchip_set.all()} == {"speed", "accuracy", "swearing"}
+    assert chat_message.rating == 5
+    assert chat_message.rating_text == "Lorem Ipsum."
+    assert {c.text for c in chat_message.chatmessagechip_set.all()} == {"speed", "accuracy", "swearing"}
 
 
 @pytest.mark.django_db()
@@ -67,10 +65,9 @@ def test_post_new_rating_with_naughty_string(alice: User, chat_message: ChatMess
     # Then
     status = HTTPStatus(response.status_code)
     assert status.is_success
-    rating = ChatMessageRating.objects.get(pk=chat_message.pk)
-    assert rating.rating == 5
-    assert rating.text == "Lorem Ipsum. \ufffd"
-    assert {c.text for c in rating.chatmessageratingchip_set.all()} == {"speed", "accuracy", "swearing"}
+    assert chat_message.rating == 5
+    assert chat_message.rating_text == "Lorem Ipsum. \ufffd"
+    assert {c.text for c in chat_message.chatmessagechip_set.all()} == {"speed", "accuracy", "swearing"}
 
 
 @pytest.mark.django_db()
@@ -89,10 +86,9 @@ def test_post_updated_rating(alice: User, chat_message_with_rating: ChatMessage,
     # Then
     status = HTTPStatus(response.status_code)
     assert status.is_success
-    rating = ChatMessageRating.objects.get(pk=chat_message_with_rating.pk)
-    assert rating.rating == 5
-    assert rating.text == "Lorem Ipsum."
-    assert {c.text for c in rating.chatmessageratingchip_set.all()} == {"speed", "accuracy", "swearing"}
+    assert chat_message_with_rating.rating == 5
+    assert chat_message_with_rating.rating_text == "Lorem Ipsum."
+    assert {c.text for c in chat_message_with_rating.chatmessagechip_set.all()} == {"speed", "accuracy", "swearing"}
 
 
 @pytest.mark.django_db()
@@ -111,7 +107,6 @@ def test_post_updated_rating_with_naughty_string(alice: User, chat_message_with_
     # Then
     status = HTTPStatus(response.status_code)
     assert status.is_success
-    rating = ChatMessageRating.objects.get(pk=chat_message_with_rating.pk)
-    assert rating.rating == 5
-    assert rating.text == "Lorem Ipsum. \ufffd"
-    assert {c.text for c in rating.chatmessageratingchip_set.all()} == {"speed", "accuracy", "swearing"}
+    assert chat_message_with_rating.rating == 5
+    assert chat_message_with_rating.rating_text == "Lorem Ipsum. \ufffd"
+    assert {c.text for c in chat_message_with_rating.chatmessagechip_set.all()} == {"speed", "accuracy", "swearing"}

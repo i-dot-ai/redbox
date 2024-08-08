@@ -12,7 +12,6 @@ from django.views import View
 
 from redbox_app.redbox_core.models import (
     ChatMessage,
-    ChatMessageRating,
     ChatMessageRatingChip,
 )
 
@@ -32,21 +31,12 @@ class RatingsView(View):
         message: ChatMessage = get_object_or_404(ChatMessage, id=message_id)
         user_rating = RatingsView.Rating.schema().loads(request.body)
 
-        chat_message_rating: ChatMessageRating
-        if chat_message_rating := ChatMessageRating.objects.filter(chat_message=message).first():
-            existing_chips = {c.text for c in chat_message_rating.chatmessageratingchip_set.all()}
-            chat_message_rating.rating = user_rating.rating
-            chat_message_rating.text = user_rating.text
-            for new_chip in user_rating.chips - existing_chips:
-                ChatMessageRatingChip(chat_message=message, text=new_chip).save()
-            for removed_chip in existing_chips - user_rating.chips:
-                ChatMessageRatingChip.objects.get(chat_message=message, text=removed_chip).delete()
-            chat_message_rating.save()
-        else:
-            chat_message_rating = ChatMessageRating(
-                chat_message=message, rating=user_rating.rating, text=user_rating.text
-            )
-            for chip in user_rating.chips:
-                chat_message_rating.chatmessageratingchip_set.create(rating=chat_message_rating, text=chip)
-            chat_message_rating.save()
+        existing_chips = {c.text for c in message.chatmessagechip_set.all()}
+        message.rating = user_rating.rating
+        message.rating_text = user_rating.text
+        for new_chip in user_rating.chips - existing_chips:
+            ChatMessageRatingChip(chat_message=message, text=new_chip).save()
+        for removed_chip in existing_chips - user_rating.chips:
+            ChatMessageRatingChip.objects.get(chat_message=message, text=removed_chip).delete()
+        message.save()
         return HttpResponse(status=HTTPStatus.NO_CONTENT)
