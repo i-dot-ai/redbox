@@ -124,7 +124,6 @@ class ChatAdmin(admin.ModelAdmin):
             ["history_" + n for n in history_field_names]
             + ["message_" + n for n in message_field_names]
             + ["rating_" + n for n in rating_field_names]
-            + ["rating_chips"]
         )
         chat_message: models.ChatMessage
         chat_message_rating: models.ChatMessageRating
