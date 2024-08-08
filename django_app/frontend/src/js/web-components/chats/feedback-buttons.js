@@ -86,19 +86,29 @@ class FeedbackButtons extends HTMLElement {
     /**
      * Posts data back to the server
      */
-    const sendFeedback = () => {
+    const sendFeedback = async (retry = 0) => {
+      const MAX_RETRIES = 10;
+      const RETRY_INTERVAL_SECONDS = 10;
       const csrfToken =
         /** @type {HTMLInputElement | null} */ (
           document.querySelector('[name="csrfmiddlewaretoken"]')
         )?.value || "";
-      fetch(`/ratings/${messageId}/`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-CSRFToken": csrfToken,
-        },
-        body: JSON.stringify(collectedData),
-      });
+      try {
+        await fetch(`/ratings/${messageId}/`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": csrfToken,
+          },
+          body: JSON.stringify(collectedData),
+        });
+      } catch (err) {
+        if (retry < MAX_RETRIES) {
+          window.setTimeout(() => {
+            sendFeedback(retry + 1);
+          }, RETRY_INTERVAL_SECONDS * 1000);
+        }
+      }
     };
 
     /**

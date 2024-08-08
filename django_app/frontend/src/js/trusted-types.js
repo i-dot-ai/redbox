@@ -11,11 +11,12 @@ if (typeof window.trustedTypes !== "undefined") {
         RETURN_TRUSTED_TYPE: false,
         CUSTOM_ELEMENT_HANDLING: {
           tagNameCheck: (tagName) =>
+            tagName === "copy-text" ||
+            tagName === "feedback-buttons" ||
+            tagName === "loading-message" ||
             tagName === "markdown-converter" ||
             tagName === "sources-list" ||
-            tagName === "tool-tip" ||
-            tagName === "feedback-buttons" ||
-            tagName === "copy-text",
+            tagName === "tool-tip",
           attributeNameCheck: (attr) => true,
           allowCustomizedBuiltInElements: true,
         },

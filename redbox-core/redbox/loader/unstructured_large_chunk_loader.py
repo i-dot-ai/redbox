@@ -7,7 +7,7 @@ import tiktoken
 from langchain_core.documents import Document
 
 from redbox.models.file import ChunkResolution, ChunkMetadata
-from worker.loader.base import BaseRedboxFileLoader
+from redbox.loader.base import BaseRedboxFileLoader
 
 encoding = tiktoken.get_encoding("cl100k_base")
 
