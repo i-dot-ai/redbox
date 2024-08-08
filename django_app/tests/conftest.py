@@ -217,7 +217,7 @@ def several_files(alice: User, number_to_create: int = 4) -> Sequence[File]:
 
 @pytest.fixture()
 def chat_message_with_rating(chat_message: ChatMessage) -> ChatMessage:
-    chat_message.rating = 5
+    chat_message.rating = 3
     chat_message.rating_text = "Ipsum Lorem."
     chat_message.rating_chips = ["speed", "accuracy", "blasphemy"]
     chat_message.save()
