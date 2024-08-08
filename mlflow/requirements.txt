@@ -8,4 +8,4 @@ slowapi==0.1.9
 uvicorn==0.30.5
 aiohttp===3.10.1
 gunicorn==22.0.0
-boto3==1.34.155
+boto3==1.34.156
