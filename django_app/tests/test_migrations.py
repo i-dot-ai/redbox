@@ -16,8 +16,8 @@ def test_0012_alter_file_status(migrator):
     File = old_state.apps.get_model("redbox_core", "File")
 
     user = User.objects.create(email="someone@example.com")
-    chat = ChatHistory.objects.create(users=user)
-    chat_message = ChatMessage.objects.create(chat_history=chat, text="hello", role="user")
+    chat_history = ChatHistory.objects.create(users=user)
+    chat_message = ChatMessage.objects.create(chat_history=chat_history, text="hello", role="user")
 
     file = File.objects.create(
         user=user, original_file=original_file, original_file_name=original_file.name, core_file_uuid=uuid4()
