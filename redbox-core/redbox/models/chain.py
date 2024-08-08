@@ -110,6 +110,10 @@ class AISettings(BaseModel):
     reduce_system_prompt: str = REDUCE_SYSTEM_PROMPT
     llm_max_tokens: int = 1024
 
+    response_no_doc_available: str = "No available data for selected files. They may need to be removed and added again"
+    response_max_content_exceeded: str = "Max content exceeded. Try smaller or fewer documents"
+    response_no_such_keyword: str = "That keyword isn't recognised"
+
     # size: int = 19 rag_k
     match_boost: int = 1
     # num_candidates: int = 13 rag_num_candidates
@@ -117,7 +121,8 @@ class AISettings(BaseModel):
     similarity_threshold: int = 0
 
 
-type DocumentState = dict[UUID, dict[UUID, Document]]
+class DocumentState(TypedDict):
+    group: dict[UUID, Document]
 
 
 def document_reducer(left: DocumentState | None, right: DocumentState | list[DocumentState]) -> DocumentState:
@@ -193,7 +198,7 @@ class PromptSet(StrEnum):
     CondenseQuestion = "condense_question"
 
 
-def get_prompts(state: RedboxState, prompt_set: PromptSet):
+def get_prompts(state: RedboxState, prompt_set: PromptSet) -> tuple[str, str]:
     if prompt_set == PromptSet.Chat:
         system_prompt = state["request"].ai_settings.chat_system_prompt
         question_prompt = state["request"].ai_settings.chat_question_prompt

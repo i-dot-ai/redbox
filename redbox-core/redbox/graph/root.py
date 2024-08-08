@@ -1,90 +1,239 @@
-from langgraph.graph import END, StateGraph
+from langgraph.graph import START, END, StateGraph
+from langgraph.graph.graph import CompiledGraph
 from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_core.vectorstores import VectorStoreRetriever
 
-from redbox.graph.edges import build_conditional_documents_bigger_than_context, make_document_chunk_send
-from redbox.graph.nodes import PromptSet, build_merge_pattern, clear_documents, empty_node, set_route, set_state_field
-from redbox.models.chain import RedboxState
+from redbox.graph.edges import (
+    build_documents_bigger_than_context_conditional,
+    multiple_docs_in_group_conditional,
+    build_keyword_detection_conditional,
+    documents_selected_conditional,
+)
+from redbox.graph.nodes.processes import (
+    PromptSet,
+    build_merge_pattern,
+)
+from redbox.models.chain import RedboxState, AISettings
 from redbox.models.chat import ChatRoute
-from redbox.models.settings import Settings
-from redbox.graph.nodes import build_get_docs_with_filter, build_llm_chain, build_get_docs
+from redbox.graph.nodes.processes import (
+    build_chat_pattern,
+    build_set_route_pattern,
+    build_retrieve_pattern,
+    build_stuff_pattern,
+    build_passthrough_pattern,
+    build_set_state_pattern,
+    empty_process,
+)
+from redbox.graph.nodes.sends import build_document_chunk_send, build_document_group_send
+from redbox.chains.runnables import filter_by_elbow
 
-FINAL_RESPONSE_TAG = "response_flag"
-SOURCE_DOCUMENTS_TAG = "source_documents_flag"
-ROUTE_NAME_TAG = "route_flag"
+
+def get_chat_graph(
+    llm: BaseChatModel,
+    debug: bool = False,
+) -> CompiledGraph:
+    """Creates a subgraph for standard chat."""
+    builder = StateGraph(RedboxState)
+
+    # Processes
+    builder.add_node("p_set_chat_route", build_set_route_pattern(route=ChatRoute.chat))
+    builder.add_node("p_chat", build_chat_pattern(llm=llm, prompt_set=PromptSet.Chat, final_response_chain=True))
+
+    # Edges
+    builder.add_edge(START, "p_set_chat_route")
+    builder.add_edge("p_set_chat_route", "p_chat")
+    builder.add_edge("p_chat", END)
+
+    return builder.compile(debug=debug)
 
 
-# Non keywords
-ROUTABLE_BUILTIIN = [ChatRoute.chat, ChatRoute.chat_with_docs, ChatRoute.error_no_keyword]
+def get_search_graph(
+    llm: BaseChatModel,
+    env: AISettings,
+    retriever: VectorStoreRetriever,
+    debug: bool = False,
+) -> CompiledGraph:
+    """Creates a subgraph for retrieval augmented generation (RAG)."""
+    builder = StateGraph(RedboxState)
 
-# Keyword routes
-ROUTABLE_KEYWORDS = {ChatRoute.search: "Search for an answer to the question in the document"}
+    # Processes
+    builder.add_node("p_set_search_route", build_set_route_pattern(route=ChatRoute.search))
+    builder.add_node("p_condense_question", build_chat_pattern(llm=llm, prompt_set=PromptSet.CondenseQuestion))
+    builder.add_node(
+        "p_retrieve_docs",
+        build_retrieve_pattern(retriever=retriever, filter_fn=filter_by_elbow(enabled=env.elbow_filter_enabled)),
+    )
+    builder.add_node(
+        "p_stuff_docs", build_stuff_pattern(llm=llm, prompt_set=PromptSet.Search, final_response_chain=True)
+    )
+
+    # Edges
+    builder.add_edge(START, "p_set_search_route")
+    builder.add_edge("p_set_search_route", "p_condense_question")
+    builder.add_edge("p_condense_question", "p_retrieve_docs")
+    builder.add_edge("p_retrieve_docs", "p_stuff_docs")
+    builder.add_edge("p_stuff_docs", END)
+
+    return builder.compile(debug=debug)
+
+
+def get_chat_with_documents_graph(
+    llm: BaseChatModel,
+    env: AISettings,
+    retriever: VectorStoreRetriever,
+    debug: bool = False,
+) -> CompiledGraph:
+    """Creates a subgraph for chatting with documents."""
+    builder = StateGraph(RedboxState)
+
+    # Processes
+    builder.add_node("p_pass_question_to_text", build_passthrough_pattern())
+    builder.add_node("p_retrieve_docs", build_retrieve_pattern(retriever=retriever))
+    builder.add_node("p_set_chat_docs_route", build_set_route_pattern(route=ChatRoute.chat_with_docs))
+    builder.add_node("p_set_chat_docs_large_route", build_set_route_pattern(route=ChatRoute.chat_with_docs_map_reduce))
+    builder.add_node(
+        "p_summarise_each_document", build_merge_pattern(llm=llm, prompt_set=PromptSet.ChatwithDocsMapReduce)
+    )
+    builder.add_node(
+        "p_summarise_document_by_document", build_merge_pattern(llm=llm, prompt_set=PromptSet.ChatwithDocsMapReduce)
+    )
+    builder.add_node(
+        "p_summarise",
+        build_stuff_pattern(
+            llm=llm,
+            prompt_set=PromptSet.ChatwithDocs,
+            final_response_chain=True,
+        ),
+    )
+    builder.add_node(
+        "p_too_large_error",
+        build_set_state_pattern(
+            state_field="text",
+            value="These documents are too large to work with.",
+            final_response_chain=True,
+        ),
+    )
+
+    # Decisions
+    builder.add_node("d_all_docs_bigger_than_context", empty_process)
+    builder.add_node("d_single_doc_summaries_bigger_than_context", empty_process)
+    builder.add_node("d_doc_summaries_bigger_than_context", empty_process)
+    builder.add_node("d_groups_have_multiple_docs", empty_process)
+
+    # Sends
+    builder.add_node("s_chunk", empty_process)
+    builder.add_node("s_group_1", empty_process)
+    builder.add_node("s_group_2", empty_process)
+
+    # Edges
+    builder.add_edge(START, "p_pass_question_to_text")
+    builder.add_edge("p_pass_question_to_text", "p_retrieve_docs")
+    builder.add_edge("p_retrieve_docs", "d_all_docs_bigger_than_context")
+    builder.add_conditional_edges(
+        "d_all_docs_bigger_than_context",
+        build_documents_bigger_than_context_conditional(PromptSet.ChatwithDocsMa),
+        {
+            True: "p_set_chat_docs_large_route",
+            False: "p_set_chat_docs_route",
+        },
+    )
+    builder.add_edge("p_set_chat_docs_route", "p_summarise")
+    builder.add_edge("p_set_chat_docs_large_route", "s_chunk")
+    builder.add_conditional_edges(
+        "s_chunk", build_document_chunk_send("p_summarise_each_document"), path_map=["p_summarise_each_document"]
+    )
+    builder.add_edge("p_summarise_each_document", "d_groups_have_multiple_docs")
+    builder.add_conditional_edges(
+        "d_groups_have_multiple_docs",
+        multiple_docs_in_group_conditional,
+        {
+            True: "s_group_1",
+            False: "d_doc_summaries_bigger_than_context",
+        },
+    )
+    builder.add_conditional_edges(
+        "s_group_1",
+        build_document_group_send("d_single_doc_summaries_bigger_than_context"),
+        path_map=["d_single_doc_summaries_bigger_than_context"],
+    )
+    builder.add_conditional_edges(
+        "d_single_doc_summaries_bigger_than_context",
+        build_documents_bigger_than_context_conditional(PromptSet.ChatwithDocsMapReduce),
+        {
+            True: "s_group_2",
+            False: "p_too_large_error",
+        },
+    )
+    builder.add_conditional_edges(
+        "s_group_2",
+        build_document_group_send("p_summarise_document_by_document"),
+        path_map=["p_summarise_document_by_document"],
+    )
+    builder.add_edge("p_summarise_document_by_document", "d_doc_summaries_bigger_than_context")
+    builder.add_conditional_edges(
+        "d_doc_summaries_bigger_than_context",
+        build_documents_bigger_than_context_conditional(PromptSet.ChatwithDocs),
+        {
+            True: "p_too_large_error",
+            False: "p_summarise",
+        },
+    )
+    builder.add_edge("p_too_large_error", END)
+    builder.add_edge("p_summarise", END)
+
+    return builder.compile(debug=debug)
 
 
 def get_root_graph(
     llm: BaseChatModel,
     all_chunks_retriever: VectorStoreRetriever,
     parameterised_retriever: VectorStoreRetriever,
-    env: Settings,
+    env: AISettings,
     debug: bool = False,
-):
-    app = StateGraph(RedboxState)
+) -> CompiledGraph:
+    """Creates the core Redbox graph."""
+    builder = StateGraph(RedboxState)
 
-    app.set_entry_point("set_route")
-    app.add_node("set_route", set_route.with_config(tags=[ROUTE_NAME_TAG]))
-    (
-        app.add_node(
-            ChatRoute.error_no_keyword,
-            set_state_field("text", env.response_no_such_keyword).with_config(tags=[FINAL_RESPONSE_TAG]),
+    # Subgraphs
+    chat_subgraph = get_chat_graph(llm=llm, debug=debug)
+    rag_subgraph = get_search_graph(llm=llm, env=env, retriever=parameterised_retriever, debug=debug)
+    cwd_subgraph = get_chat_with_documents_graph(llm=llm, env=env, retriever=all_chunks_retriever, debug=debug)
+
+    # Processes
+    builder.add_node("p_search", rag_subgraph)
+    builder.add_node(
+        "p_no_keyword_error",
+        build_set_state_pattern(
+            state_field="text",
+            value=env.response_no_such_keyword,
+            final_response_chain=True,
         ),
     )
+    builder.add_node("p_chat", chat_subgraph)
+    builder.add_node("p_chat_with_documents", cwd_subgraph)
 
-    app.add_conditional_edges(
-        "set_route",
-        lambda s: s["route_name"],
-        {x: x for x in ROUTABLE_BUILTIIN + list(ROUTABLE_KEYWORDS.keys())},
+    # Decisions
+    builder.add_node("d_keyword_exists", empty_process)
+    builder.add_node("d_docs_selected", empty_process)
+
+    # Edges
+    builder.add_edge(START, "d_keyword_exists")
+    builder.add_conditional_edges(
+        "d_keyword_exists",
+        build_keyword_detection_conditional(ChatRoute.search),
+        {ChatRoute.search: "p_search", ChatRoute.error_no_keyword: "p_no_keyword_error", "DEFAULT": "d_docs_selected"},
     )
-    app.add_edge(ChatRoute.error_no_keyword, END)
-
-    # Search
-    app.add_node(ChatRoute.search, empty_node)
-    app.add_node("condense_question", build_llm_chain(llm, PromptSet.CondenseQuestion))
-    app.add_node("get_docs", build_get_docs_with_filter(parameterised_retriever))
-    app.add_node("search_llm", build_llm_chain(llm, PromptSet.Search, final_response_chain=True))
-
-    app.add_edge(ChatRoute.search, "condense_question")
-    app.add_edge("condense_question", "get_docs")
-    app.add_edge("get_docs", "search_llm")
-    app.add_edge("search_llm", END)
-
-    # Chat
-    app.add_node(ChatRoute.chat, build_llm_chain(llm, PromptSet.Chat, final_response_chain=True))
-    app.add_edge(ChatRoute.chat, END)
-
-    # Chat with Docs
-    app.add_node(ChatRoute.chat_with_docs, empty_node)
-    app.add_node("get_chat_docs", build_get_docs(all_chunks_retriever))
-    app.add_node("documents_larger_than_context_window", empty_node)
-    app.add_node("send_chunk_to_shrink", empty_node)
-    app.add_node("map_document_to_shorter_answer", build_merge_pattern(llm, PromptSet.ChatwithDocsMapReduce))
-
-    app.add_node("chat_with_docs_llm", build_llm_chain(llm, PromptSet.ChatwithDocs, final_response_chain=True))
-    app.add_node("clear_documents", clear_documents)
-
-    app.add_edge(ChatRoute.chat_with_docs, "get_chat_docs")
-    app.add_edge("get_chat_docs", "documents_larger_than_context_window")
-    app.add_conditional_edges(
-        "documents_larger_than_context_window",
-        build_conditional_documents_bigger_than_context(PromptSet.ChatwithDocs),
-        {True: "send_chunk_to_shrink", False: "chat_with_docs_llm"},
+    builder.add_conditional_edges(
+        "d_docs_selected",
+        documents_selected_conditional,
+        {
+            True: "p_chat_with_documents",
+            False: "p_chat",
+        },
     )
-    app.add_conditional_edges(
-        "send_chunk_to_shrink",
-        make_document_chunk_send("map_document_to_shorter_answer"),
-        {"map_document_to_shorter_answer": "map_document_to_shorter_answer"},
-        then="chat_with_docs_llm",
-    )
-    app.add_edge("chat_with_docs_llm", "clear_documents")
-    app.add_edge("clear_documents", END)
+    builder.add_edge("p_search", END)
+    builder.add_edge("p_no_keyword_error", END)
+    builder.add_edge("p_chat", END)
+    builder.add_edge("p_chat_with_documents", END)
 
-    return app.compile(debug=debug)
+    return builder.compile(debug=debug)
