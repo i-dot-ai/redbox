@@ -13,7 +13,6 @@ from freezegun import freeze_time
 from redbox_app.redbox_core import client
 from redbox_app.redbox_core.models import (
     AISettings,
-    BusinessUnit,
     Chat,
     ChatMessage,
     ChatRoleEnum,
@@ -68,13 +67,13 @@ def jemima_puddleduck():
 
 
 @pytest.fixture()
-def user_with_demographic_data(business_unit: BusinessUnit) -> User:
+def user_with_demographic_data() -> User:
     return User.objects.create_user(
         name="Sir Gregory Pitkin",
         ai_experience=User.AIExperienceLevel.EXPERIENCED_NAVIGATOR,
         email="mrs.tiggywinkle@example.com",
         grade="DG",
-        business_unit=business_unit,
+        business_unit="Prime Minister's Office",
         profession="AN",
     )
 
@@ -87,11 +86,6 @@ def staff_user(create_user):
 @pytest.fixture()
 def superuser() -> User:
     return User.objects.create_superuser("super@example.com", "2000-01-01")
-
-
-@pytest.fixture()
-def business_unit() -> BusinessUnit:
-    return BusinessUnit.objects.create(name="Paperclip Reconciliation")
 
 
 @pytest.fixture()

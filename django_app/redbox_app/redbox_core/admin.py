@@ -52,16 +52,6 @@ class UserAdmin(ImportMixin, admin.ModelAdmin):
         import_id_fields = ["email"]
 
 
-class BusinessUnitAdmin(ImportMixin, admin.ModelAdmin):
-    fields = ["name"]
-    list_display = ["name"]
-
-    class Meta:
-        model = models.BusinessUnit
-        fields = ["name"]
-        import_id_fields = ["name"]
-
-
 class FileAdmin(admin.ModelAdmin):
     def reupload(self, request, queryset):  # noqa:ARG002
         for file in queryset:
@@ -153,4 +143,3 @@ admin.site.register(models.File, FileAdmin)
 admin.site.register(models.Chat, ChatAdmin)
 admin.site.register(models.ChatMessage, ChatMessageAdmin)
 admin.site.register(models.Citation, CitationAdmin)
-admin.site.register(models.BusinessUnit, BusinessUnitAdmin)
