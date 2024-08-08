@@ -85,7 +85,7 @@ redbox-copilot/
 
 # Contributing
 
-We welcome contributions to this project. Please see the [CONTRIBUTING.md](./CONTRIBUTING.md) file for more information.
+We welcome contributions to this project. Please see the [CONTRIBUTING.md](./docs/contributing.md) file for more information.
 
 # License
 
