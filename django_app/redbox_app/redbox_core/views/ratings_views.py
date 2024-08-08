@@ -38,9 +38,9 @@ class RatingsView(View):
             chat_message_rating.rating = user_rating.rating
             chat_message_rating.text = user_rating.text
             for new_chip in user_rating.chips - existing_chips:
-                ChatMessageRatingChip(rating_id=chat_message_rating.pk, text=new_chip).save()
+                ChatMessageRatingChip(chat_message=message, text=new_chip).save()
             for removed_chip in existing_chips - user_rating.chips:
-                ChatMessageRatingChip.objects.get(rating_id=chat_message_rating.pk, text=removed_chip).delete()
+                ChatMessageRatingChip.objects.get(chat_message=message, text=removed_chip).delete()
             chat_message_rating.save()
         else:
             chat_message_rating = ChatMessageRating(

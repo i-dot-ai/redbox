@@ -416,11 +416,11 @@ class ChatMessageRating(TimeStampedModel):
 
 
 class ChatMessageRatingChip(UUIDPrimaryKeyBase, TimeStampedModel):
-    rating = models.ForeignKey(ChatMessageRating, on_delete=models.CASCADE)
+    chat_message = models.ForeignKey(ChatMessage, on_delete=models.CASCADE)
     text = models.CharField(max_length=32)
 
     class Meta:
-        unique_together = "rating", "text"
+        unique_together = "chat_message", "text"
 
     def __str__(self) -> str:  # pragma: no cover
-        return f"{self.rating} - {self.text}"
+        return self.text
