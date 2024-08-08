@@ -27,6 +27,7 @@ class UserAdmin(ImportMixin, admin.ModelAdmin):
         "is_superuser",
         "is_staff",
         "last_login",
+        "ai_settings",
     ]
     list_display = [
         "email",
@@ -164,6 +165,7 @@ admin.site.register(models.User, UserAdmin)
 admin.site.register(models.File, FileAdmin)
 admin.site.register(models.ChatHistory, ChatHistoryAdmin)
 admin.site.register(models.ChatMessage, ChatMessageAdmin)
+admin.site.register(models.AISettings)
 admin.site.register(models.ChatMessageRating)
 admin.site.register(models.ChatMessageRatingChip)
 admin.site.register(models.Citation, CitationAdmin)
