@@ -110,10 +110,6 @@ class AISettings(BaseModel):
     reduce_system_prompt: str = REDUCE_SYSTEM_PROMPT
     llm_max_tokens: int = 1024
 
-    response_no_doc_available: str = "No available data for selected files. They may need to be removed and added again"
-    response_max_content_exceeded: str = "Max content exceeded. Try smaller or fewer documents"
-    response_no_such_keyword: str = "That keyword isn't recognised"
-
     # size: int = 19 rag_k
     match_boost: int = 1
     # num_candidates: int = 13 rag_num_candidates

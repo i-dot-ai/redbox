@@ -28,6 +28,18 @@ from redbox.graph.nodes.sends import build_document_chunk_send, build_document_g
 from redbox.chains.runnables import filter_by_elbow
 
 
+# Global constants
+
+
+FINAL_RESPONSE_TAG = "response_flag"
+SOURCE_DOCUMENTS_TAG = "source_documents_flag"
+ROUTE_NAME_TAG = "route_flag"
+ROUTABLE_KEYWORDS = {ChatRoute.search: "Search for an answer to the question in the document"}
+
+
+# Subgraphs
+
+
 def get_chat_graph(
     llm: BaseChatModel,
     debug: bool = False,
@@ -184,6 +196,9 @@ def get_chat_with_documents_graph(
     return builder.compile(debug=debug)
 
 
+# Root graph
+
+
 def get_root_graph(
     llm: BaseChatModel,
     all_chunks_retriever: VectorStoreRetriever,
@@ -205,7 +220,7 @@ def get_root_graph(
         "p_no_keyword_error",
         build_set_state_pattern(
             state_field="text",
-            value=env.response_no_such_keyword,
+            value="That keyword isn't recognised",  # TODO: replace with env
             final_response_chain=True,
         ),
     )
@@ -220,7 +235,7 @@ def get_root_graph(
     builder.add_edge(START, "d_keyword_exists")
     builder.add_conditional_edges(
         "d_keyword_exists",
-        build_keyword_detection_conditional(ChatRoute.search),
+        build_keyword_detection_conditional(ROUTABLE_KEYWORDS.keys()),
         {ChatRoute.search: "p_search", ChatRoute.error_no_keyword: "p_no_keyword_error", "DEFAULT": "d_docs_selected"},
     )
     builder.add_conditional_edges(
