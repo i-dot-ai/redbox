@@ -165,7 +165,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             session = Chat.objects.get(id=session_id)
         else:
             session_name = user_message_text[0 : settings.CHAT_TITLE_LENGTH]
-            session = Chat(name=session_name, users=user)
+            session = Chat(name=session_name, user=user)
             session.save()
         return session
 

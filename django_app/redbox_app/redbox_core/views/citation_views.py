@@ -21,7 +21,7 @@ class CitationsView(View):
     def get(self, request: HttpRequest, message_id: uuid.UUID | None = None) -> HttpResponse:
         message = get_object_or_404(ChatMessage, id=message_id)
 
-        if message.chat.users != request.user:
+        if message.chat.user != request.user:
             return redirect(reverse("chats"))
 
         source_files = File.get_ordered_by_citation_priority(message_id)

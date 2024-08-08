@@ -375,7 +375,7 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
 
 class Chat(UUIDPrimaryKeyBase, TimeStampedModel):
     name = models.TextField(max_length=1024, null=False, blank=False)
-    users = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
 
     def __str__(self) -> str:  # pragma: no cover
         return self.name or ""
@@ -392,7 +392,7 @@ class Chat(UUIDPrimaryKeyBase, TimeStampedModel):
         """Returns all chat histories for a given user, ordered by the date of the latest message."""
         exclude_chat_ids = exclude_chat_ids or []
         return (
-            cls.objects.filter(users=user)
+            cls.objects.filter(user=user)
             .exclude(id__in=exclude_chat_ids)
             .annotate(latest_message_date=Max("chatmessage__created_at"))
             .order_by("-latest_message_date")

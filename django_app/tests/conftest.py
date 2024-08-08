@@ -106,7 +106,7 @@ def s3_client():
 @pytest.fixture()
 def chat(alice: User) -> Chat:
     session_id = uuid.uuid4()
-    return Chat.objects.create(id=session_id, users=alice, name="A chat")
+    return Chat.objects.create(id=session_id, user=alice, name="A chat")
 
 
 @pytest.fixture()
@@ -175,11 +175,11 @@ def user_with_chats_with_messages_over_time(alice: User) -> User:
     now = timezone.now()
     with freeze_time(now - timedelta(days=40)):
         chats = [
-            Chat.objects.create(id=uuid.uuid4(), users=alice, name="40 days old"),
-            Chat.objects.create(id=uuid.uuid4(), users=alice, name="20 days old"),
-            Chat.objects.create(id=uuid.uuid4(), users=alice, name="5 days old"),
-            Chat.objects.create(id=uuid.uuid4(), users=alice, name="yesterday"),
-            Chat.objects.create(id=uuid.uuid4(), users=alice, name="today"),
+            Chat.objects.create(id=uuid.uuid4(), user=alice, name="40 days old"),
+            Chat.objects.create(id=uuid.uuid4(), user=alice, name="20 days old"),
+            Chat.objects.create(id=uuid.uuid4(), user=alice, name="5 days old"),
+            Chat.objects.create(id=uuid.uuid4(), user=alice, name="yesterday"),
+            Chat.objects.create(id=uuid.uuid4(), user=alice, name="today"),
         ]
         ChatMessage.objects.create(chat=chats[0], text="40 days old", role=ChatRoleEnum.user)
     with freeze_time(now - timedelta(days=20)):
