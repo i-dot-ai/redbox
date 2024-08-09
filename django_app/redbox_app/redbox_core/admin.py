@@ -78,6 +78,7 @@ class FileAdmin(ExportMixin, admin.ModelAdmin):
 class CitationInline(admin.StackedInline):
     model = models.Citation
     ordering = ("modified_at",)
+    readonly_fields = ["text", "role", "route", "rating"]
 
     extra = 1
 
@@ -95,7 +96,7 @@ class ChatMessageAdmin(ExportMixin, admin.ModelAdmin):
 
     @admin.display(description="text")
     def short_text(self, obj):
-        max_length = 32
+        max_length = 128
         if len(obj.text) < max_length:
             return obj.text
         return obj.text[: max_length - 3] + "..."
