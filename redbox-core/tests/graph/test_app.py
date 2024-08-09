@@ -1,14 +1,18 @@
 from uuid import uuid4
 import pytest
 from langchain_core.language_models.fake_chat_models import GenericFakeChatModel
-from langchain_core.runnables import RunnableLambda
-import tiktoken
 
 from redbox.models.chain import RedboxQuery, RedboxState
 from redbox import Redbox
 from redbox.models.chat import ChatRoute
 from redbox.models.settings import Settings
-from redbox.test.data import TestData, RedboxChatTestCase, generate_test_cases
+from redbox.test.data import (
+    TestData,
+    RedboxChatTestCase,
+    generate_test_cases,
+    mock_all_chunks_retriever,
+    mock_parameterised_retriever,
+)
 
 
 LANGGRAPH_DEBUG = True
@@ -116,32 +120,13 @@ def env():
     return Settings()
 
 
-@pytest.fixture(scope="session")
-def tokeniser():
-    return tiktoken.get_encoding("cl100k_base")
-
-
-def all_chunks_retriever(docs):
-    def mock_retrieve(query):
-        return docs
-
-    return RunnableLambda(mock_retrieve)
-
-
-def parameterised_retriever(docs):
-    def mock_retrieve(query):
-        return docs
-
-    return RunnableLambda(mock_retrieve)
-
-
 @pytest.mark.asyncio
 @pytest.mark.parametrize(("test_case"), TEST_CASES, ids=[t.test_id for t in TEST_CASES])
 async def test_chat(test_case: RedboxChatTestCase, env, tokeniser):
     app = Redbox(
         llm=GenericFakeChatModel(messages=iter(test_case.test_data.expected_llm_response)),
-        all_chunks_retriever=all_chunks_retriever(test_case.docs),
-        parameterised_retriever=parameterised_retriever(test_case.docs),
+        all_chunks_retriever=mock_all_chunks_retriever(test_case.docs),
+        parameterised_retriever=mock_parameterised_retriever(test_case.docs),
         tokeniser=tokeniser,
         env=env,
         debug=LANGGRAPH_DEBUG,
@@ -161,8 +146,8 @@ async def test_chat(test_case: RedboxChatTestCase, env, tokeniser):
 async def test_streaming(test_case: RedboxChatTestCase, env, tokeniser):
     app = Redbox(
         llm=GenericFakeChatModel(messages=iter(test_case.test_data.expected_llm_response)),
-        all_chunks_retriever=all_chunks_retriever(test_case.docs),
-        parameterised_retriever=parameterised_retriever(test_case.docs),
+        all_chunks_retriever=mock_all_chunks_retriever(test_case.docs),
+        parameterised_retriever=mock_parameterised_retriever(test_case.docs),
         tokeniser=tokeniser,
         env=env,
         debug=LANGGRAPH_DEBUG,
@@ -190,14 +175,13 @@ async def test_streaming(test_case: RedboxChatTestCase, env, tokeniser):
     ), f"Expected Route: '{ test_case.test_data.expected_route}'. Received '{final_state["route_name"]}'"
 
 
-def get_available_keywords():
+def test_get_available_keywords(tokeniser):
     app = Redbox(
         llm=GenericFakeChatModel(messages=iter([])),
-        all_chunks_retriever=all_chunks_retriever([]),
-        parameterised_retriever=parameterised_retriever([]),
+        all_chunks_retriever=mock_all_chunks_retriever([]),
+        parameterised_retriever=mock_parameterised_retriever([]),
         tokeniser=tokeniser,
         env=env,
-        ai=None,
         debug=LANGGRAPH_DEBUG,
     )
     keywords = {ChatRoute.search}

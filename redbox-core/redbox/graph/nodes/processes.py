@@ -31,7 +31,7 @@ def build_retrieve_pattern(retriever: VectorStoreRetriever) -> Callable[[RedboxS
     """Returns a function that uses state["request"] and state["text"] to set state["documents"]."""
 
     def _retrieve(state: RedboxState) -> dict[str, Any]:
-        return RunnableParallel({"documents": retriever | structure_documents})
+        return RunnableParallel({"documents": retriever | structure_documents}).invoke(state)
 
     return _retrieve
 
@@ -82,7 +82,7 @@ def build_merge_pattern(
             },
         )
 
-        merged_document.page_content = merge_chain.invoke(merge_state)["text"]
+        merged_document.page_content = merge_chain.invoke(merge_state)
         merged_document.metadata["token_count"] = len(tokeniser.encode(merged_document.page_content))
 
         group_uuid = merged_document.metadata.get("parent_file_uuid", uuid4())
@@ -124,7 +124,7 @@ def build_set_route_pattern(route: ChatRoute) -> Callable[[RedboxState], dict[st
     """Returns a function that sets state["route_name"]."""
 
     def _set_route(state: RedboxState) -> dict[str, Any]:
-        set_route_chain = RunnableParallel({"route_name": route.value})
+        set_route_chain = RunnableParallel({"route_name": lambda x: route.value})
         return set_route_chain.with_config(tags=["route_flag"]).invoke(state)
 
     return _set_route
@@ -145,7 +145,7 @@ def build_set_state_pattern(state_field: str, value: Any, final_response_chain: 
     """Returns a function that can arbitrarily set a field in the state."""
 
     def _set_state(state: RedboxState) -> dict[str, Any]:
-        set_state_chain = RunnableParallel({state_field: value})
+        set_state_chain = RunnableParallel({state_field: lambda x: value})
         if final_response_chain:
             return set_state_chain.with_config(tags=["response_flag"]).invoke(state)
 
