@@ -33,10 +33,10 @@ def test_chat_export(superuser: User, chat_message_with_rating: ChatMessage, cli
     assert len(rows) == 1
     row = rows[0]
     assert row["history_name"] == "A chat"
-    assert row["history_users"] == "alice@cabinetoffice.gov.uk"
+    assert row["history_user"] == "alice@cabinetoffice.gov.uk"
     assert row["message_text"] == "A question?"
-    assert row["rating_rating"] == "3"
-    assert row["rating_chips"] == "speed, accuracy, blasphemy"
+    assert row["message_rating"] == "3"
+    assert row["message_rating_chips"] == "['speed', 'accuracy', 'blasphemy']"
 
 
 @pytest.mark.django_db()
@@ -55,10 +55,10 @@ def test_chat_export_without_ratings(superuser: User, chat_message: ChatMessage,
     assert len(rows) == 1
     row = rows[0]
     assert row["history_name"] == "A chat"
-    assert row["history_users"] == "alice@cabinetoffice.gov.uk"
+    assert row["history_user"] == "alice@cabinetoffice.gov.uk"
     assert row["message_text"] == "A question?"
-    assert row["rating_rating"] is None
-    assert row["rating_chips"] is None
+    assert row["message_rating"] == ""
+    assert row["message_rating_chips"] == ""
 
 
 @pytest.mark.django_db()

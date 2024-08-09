@@ -34,7 +34,7 @@ class ChatsView(View):
         current_chat = None
         if chat_id:
             current_chat = get_object_or_404(Chat, id=chat_id)
-            if current_chat.users != request.user:
+            if current_chat.user != request.user:
                 return redirect(reverse("chats"))
             messages = ChatMessage.get_messages_ordered_by_citation_priority(chat_id)
         endpoint = URL.build(scheme=settings.WEBSOCKET_SCHEME, host=request.get_host(), path=r"/ws/chat/")
@@ -101,7 +101,7 @@ def post_message(request: HttpRequest) -> HttpResponse:
         session = Chat.objects.get(id=session_id)
     else:
         session_name = message_text[0 : settings.CHAT_TITLE_LENGTH]
-        session = Chat(name=session_name, users=request.user)
+        session = Chat(name=session_name, user=request.user)
         session.save()
 
     selected_files = File.objects.filter(id__in=selected_file_uuids, user=request.user)

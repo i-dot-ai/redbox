@@ -6,7 +6,7 @@ from bs4 import BeautifulSoup
 from django.test import Client
 from pytest_django.asserts import assertRedirects
 
-from redbox_app.redbox_core.models import BusinessUnit, User
+from redbox_app.redbox_core.models import User
 
 logger = logging.getLogger(__name__)
 
@@ -48,11 +48,11 @@ def test_view_demographic_details_form(client: Client, user_with_demographic_dat
     soup = BeautifulSoup(response.content)
     assert soup.find(id="id_grade").find_all("option", selected=True)[0].text == "Director General"
     assert soup.find(id="id_profession").find_all("option", selected=True)[0].text == "Analysis"
-    assert soup.find(id="id_business_unit").find_all("option", selected=True)[0].text == "Paperclip Reconciliation"
+    assert soup.find(id="id_business_unit").find_all("option", selected=True)[0].text == "Prime Minister's Office"
 
 
 @pytest.mark.django_db()
-def test_post_to_demographic_details_form(client: Client, alice: User, business_unit: BusinessUnit):
+def test_post_to_demographic_details_form(client: Client, alice: User):
     # Given
     client.force_login(alice)
 
@@ -64,7 +64,7 @@ def test_post_to_demographic_details_form(client: Client, alice: User, business_
             "ai_experience": "Enthusiastic Experimenter",
             "grade": "AO",
             "profession": "AN",
-            "business_unit": business_unit.id,
+            "business_unit": "Prime Minister's Office",
         },
         follow=True,
     )
