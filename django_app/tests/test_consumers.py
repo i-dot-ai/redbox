@@ -200,14 +200,14 @@ async def test_chat_consumer_with_naughty_citation(
 
 @database_sync_to_async
 def get_chat_message_text(user: User, role: ChatRoleEnum) -> Sequence[str]:
-    return [m.text for m in ChatMessage.objects.filter(chat__users=user, role=role)]
+    return [m.text for m in ChatMessage.objects.filter(chat__user=user, role=role)]
 
 
 @database_sync_to_async
 def get_chat_message_citation_set(user: User, role: ChatRoleEnum) -> Sequence[tuple[str, tuple[int]]]:
     return {
         (citation.text, tuple(citation.page_numbers or []))
-        for message in ChatMessage.objects.filter(chat__users=user, role=role)
+        for message in ChatMessage.objects.filter(chat__user=user, role=role)
         for source_file in message.source_files.all()
         for citation in source_file.citation_set.all()
     }
@@ -215,7 +215,7 @@ def get_chat_message_citation_set(user: User, role: ChatRoleEnum) -> Sequence[tu
 
 @database_sync_to_async
 def get_chat_message_route(user: User, role: ChatRoleEnum) -> Sequence[str]:
-    return [m.route for m in ChatMessage.objects.filter(chat__users=user, role=role)]
+    return [m.route for m in ChatMessage.objects.filter(chat__user=user, role=role)]
 
 
 @pytest.mark.xfail()
@@ -382,7 +382,7 @@ async def test_chat_consumer_get_ai_settings(
 @database_sync_to_async
 def get_chat_messages(user: User) -> Sequence[ChatMessage]:
     return list(
-        ChatMessage.objects.filter(chat__users=user)
+        ChatMessage.objects.filter(chat__user=user)
         .order_by("created_at")
         .prefetch_related("chat")
         .prefetch_related("source_files")

@@ -49,7 +49,7 @@ def test_post_message_to_new_session(alice: User, client: Client, requests_mock:
 @pytest.mark.django_db()
 def test_post_message_to_existing_session(chat: Chat, client: Client, requests_mock: Mocker, uploaded_file: File):
     # Given
-    client.force_login(chat.users)
+    client.force_login(chat.user)
     session_id = chat.id
     rag_url = f"http://{settings.CORE_API_HOST}:{settings.CORE_API_PORT}/chat/rag"
     requests_mock.register_uri(
@@ -84,7 +84,7 @@ def test_post_message_with_files_selected(
     chat: Chat, client: Client, requests_mock: Mocker, several_files: Sequence[File]
 ):
     # Given
-    client.force_login(chat.users)
+    client.force_login(chat.user)
     session_id = chat.id
     selected_files = several_files[::2]
 
@@ -149,7 +149,7 @@ def test_user_cannot_see_other_users_chats(chat: Chat, bob: User, client: Client
 @pytest.mark.django_db()
 def test_view_session_with_documents(chat_message: ChatMessage, client: Client):
     # Given
-    client.force_login(chat_message.chat.users)
+    client.force_login(chat_message.chat.user)
     chat_id = chat_message.chat.id
 
     # When
@@ -237,9 +237,9 @@ def test_post_chat_title_with_naughty_string(alice: User, chat: Chat, client: Cl
 @pytest.mark.django_db()
 def test_staff_user_can_see_route(chat_with_files: Chat, client: Client):
     # Given
-    chat_with_files.users.is_staff = True
-    chat_with_files.users.save()
-    client.force_login(chat_with_files.users)
+    chat_with_files.user.is_staff = True
+    chat_with_files.user.save()
+    client.force_login(chat_with_files.user)
 
     # When
     response = client.get(f"/chats/{chat_with_files.id}/")
