@@ -11,12 +11,14 @@ from langchain_core.embeddings import Embeddings
 from langchain_core.retrievers import BaseRetriever
 from langchain_core.runnables import ConfigurableField
 from langchain_elasticsearch import ApproxRetrievalStrategy, ElasticsearchStore
-
 from redbox.api.callbacks import LoggerCallbackHandler
-from redbox.retriever import AllElasticsearchRetriever, ParameterisedElasticsearchRetriever
-from redbox.models import Settings
-from redbox.storage import ElasticsearchStorageHandler
 from redbox.embeddings import get_embeddings
+from redbox.models import Settings
+from redbox.retriever import (
+    AllElasticsearchRetriever,
+    ParameterisedElasticsearchRetriever,
+)
+from redbox.storage import ElasticsearchStorageHandler
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger()
@@ -28,7 +30,9 @@ def get_env() -> Settings:
 
 
 @lru_cache(1)
-def get_elasticsearch_client(env: Annotated[Settings, Depends(get_env)]) -> Elasticsearch:
+def get_elasticsearch_client(
+    env: Annotated[Settings, Depends(get_env)]
+) -> Elasticsearch:
     return env.elasticsearch_client()
 
 
@@ -101,14 +105,17 @@ def get_parameterised_retriever(
         embedding_field_name=env.embedding_document_field_name,
     ).configurable_fields(
         params=ConfigurableField(
-            id="params", name="Retriever parameters", description="A dictionary of parameters to use for the retriever."
+            id="params",
+            name="Retriever parameters",
+            description="A dictionary of parameters to use for the retriever.",
         )
     )
 
 
 @lru_cache(1)
 def get_all_chunks_retriever(
-    env: Annotated[Settings, Depends(get_env)], es: Annotated[Elasticsearch, Depends(get_elasticsearch_client)]
+    env: Annotated[Settings, Depends(get_env)],
+    es: Annotated[Elasticsearch, Depends(get_elasticsearch_client)],
 ):
     return AllElasticsearchRetriever(
         es_client=es,
