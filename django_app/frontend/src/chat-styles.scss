@@ -358,3 +358,29 @@ main:has(.iai-chat-bubble) .chat-options {
     width: 33%;
   }
 }
+
+.rb-send-button svg {
+  background-color: white;
+  border-radius: 100%;
+  box-shadow: 3px 3px 10px #edeef2;
+}
+.rb-send-button .rb-square-icon {
+  align-items: center;
+  background-color: white;
+  border-radius: 100%;
+  box-shadow: 3px 3px 10px #edeef2;
+  display: flex;
+  height: 1.75rem;
+  justify-content: center;
+  width: 1.75rem;
+}
+.rb-send-button .rb-square-icon::before {
+  background-color: #60697b;
+  border-radius: 2px;
+  content: "";
+  height: 0.625rem;
+  width: 0.625rem;
+}
+.rb-send-button:hover .rb-square-icon::before {
+  background-color: $redbox-red;
+}
