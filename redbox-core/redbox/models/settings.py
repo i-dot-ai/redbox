@@ -238,7 +238,7 @@ class Settings(BaseSettings):
         env_file=".env", env_nested_delimiter="__", extra="allow", frozen=True
     )
 
-    @lru_cache(1)
+    # @lru_cache(1)
     def elasticsearch_client(self) -> Elasticsearch:
         log.info(self.elastic)
         log.info("isinstance %s", isinstance(self.elastic, ElasticLocalSettings))
