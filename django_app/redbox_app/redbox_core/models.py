@@ -100,6 +100,12 @@ class SSOUser(AbstractBaseUser, PermissionsMixin, UUIDPrimaryKeyBase):
     )
     grade = models.CharField(null=True, blank=True, max_length=3)
     profession = models.CharField(null=True, blank=True, max_length=4)
+    name = models.CharField(null=True, blank=True)
+    ai_experience = models.CharField(
+        null=True,
+        blank=True,
+        max_length=25,
+    )
 
     USERNAME_FIELD = "username"
     REQUIRED_FIELDS = []
