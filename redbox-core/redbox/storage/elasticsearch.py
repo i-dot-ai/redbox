@@ -8,7 +8,7 @@ from elasticsearch import Elasticsearch, NotFoundError
 from elasticsearch.helpers import scan
 from pydantic import ValidationError
 
-from redbox.models import Chunk, ChunkStatus, FileStatus, ProcessingStatusEnum, Settings
+from redbox.models import Chunk, FileStatus, Settings
 from redbox.models.base import PersistableModel
 from redbox.storage.storage_handler import BaseStorageHandler
 
@@ -230,27 +230,9 @@ class ElasticsearchStorageHandler(BaseStorageHandler):
             message = f"File {file_uuid} not found"
             raise ValueError(message)
 
-        # Test 2: Get the number of chunks for the file
-        chunks = self.get_file_chunks(file_uuid, file.creator_user_uuid)
-
-        if not chunks:
-            # File has not been chunked yet
-            return FileStatus(
-                file_uuid=file_uuid,
-                chunk_statuses=[],
-                processing_status=ProcessingStatusEnum.embedding,
-            )
-
-        # Test 3: Determine the number of embedded chunks for the file
-        chunk_statuses = [ChunkStatus(chunk_uuid=chunk.uuid, embedded=bool(chunk.embedding)) for chunk in chunks]
-
-        # Test 4: Determine the latest status
-        is_complete = all(chunk_status.embedded for chunk_status in chunk_statuses)
-
         return FileStatus(
             file_uuid=file_uuid,
-            chunk_statuses=chunk_statuses,
-            processing_status=ProcessingStatusEnum.complete if is_complete else ProcessingStatusEnum.embedding,
+            processing_status=file.ingest_status,
         )
 
 
@@ -264,7 +246,7 @@ def hit_to_chunk(hit: dict[str, Any]) -> Chunk:
             uuid=hit["_id"],
             text=hit["_source"]["text"],
             index=hit["_source"]["metadata"]["index"],
-            embedding=hit["_source"][env.embedding_document_field_name],
+            embedding=hit["_source"].get(env.embedding_document_field_name),
             created_datetime=hit["_source"]["metadata"]["created_datetime"],
             creator_user_uuid=hit["_source"]["metadata"]["creator_user_uuid"],
             parent_file_uuid=hit["_source"]["metadata"]["parent_file_uuid"],

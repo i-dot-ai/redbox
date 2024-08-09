@@ -15,6 +15,7 @@ ALL_CHUNKS_RETRIEVER_DOCUMENTS = [
                 "links": [],
                 "created_datetime": "2024-06-01T12:00:00Z",
                 "token_count": 12,
+                "chunk_resolution": "largest",
             },
         ),
         Document(
@@ -30,6 +31,7 @@ ALL_CHUNKS_RETRIEVER_DOCUMENTS = [
                 "links": [],
                 "created_datetime": "2024-06-01T12:00:00Z",
                 "token_count": 12,
+                "chunk_resolution": "largest",
             },
         ),
         Document(
@@ -45,6 +47,7 @@ ALL_CHUNKS_RETRIEVER_DOCUMENTS = [
                 "links": [],
                 "created_datetime": "2024-06-01T12:00:00Z",
                 "token_count": 12,
+                "chunk_resolution": "largest",
             },
         ),
         Document(
@@ -60,6 +63,7 @@ ALL_CHUNKS_RETRIEVER_DOCUMENTS = [
                 "links": [],
                 "created_datetime": "2024-06-01T12:00:00Z",
                 "token_count": 12,
+                "chunk_resolution": "largest",
             },
         ),
     ]
@@ -80,6 +84,7 @@ PARAMETERISED_RETRIEVER_DOCUMENTS = [
                 "links": [],
                 "created_datetime": "2024-06-01T12:00:00Z",
                 "token_count": 12,
+                "chunk_resolution": "normal",
             },
         ),
         Document(
@@ -95,6 +100,7 @@ PARAMETERISED_RETRIEVER_DOCUMENTS = [
                 "links": [],
                 "created_datetime": "2024-06-01T12:00:00Z",
                 "token_count": 12,
+                "chunk_resolution": "normal",
             },
         ),
         Document(
@@ -110,6 +116,7 @@ PARAMETERISED_RETRIEVER_DOCUMENTS = [
                 "links": [],
                 "created_datetime": "2024-06-01T12:00:00Z",
                 "token_count": 12,
+                "chunk_resolution": "normal",
             },
         ),
         Document(
@@ -125,6 +132,7 @@ PARAMETERISED_RETRIEVER_DOCUMENTS = [
                 "links": [],
                 "created_datetime": "2024-06-01T12:00:00Z",
                 "token_count": 12,
+                "chunk_resolution": "normal",
             },
         ),
     ]

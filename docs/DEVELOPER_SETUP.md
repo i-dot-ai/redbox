@@ -2,20 +2,10 @@
 
 ## Requirements
 
-To run this project, you'll need the following installed:
-
--  [Docker](https://docs.docker.com/get-docker/) - For building and running containers
--  [Docker Compose](https://docs.docker.com/compose/install/) - For managing multiple containers
--  [Python 3.12](https://www.python.org/downloads/) - For intellisense and linting (not explicitly needed to run the project due to docker, but recommended for development)
--  [pip](https://pip.pypa.io/en/stable/installation/) - For installing poetry
--  [poetry](https://python-poetry.org/docs/) - For managing python packages
--  [Make](https://www.gnu.org/software/make/) - For running commands in the `Makefile`
-
-If you don't have this python version, we'd recommend using [pyenv](https://github.com/pyenv/pyenv) to manage your python versions.
 
 ## Installing packages
 
-Currently, we use [poetry](https://python-poetry.org/) to manage our python packages. The list of poetry groups and python packages we install can be found [here](https://github.com/i-dot-ai/redbox-copilot/blob/main/pyproject.toml) in `pyproject.toml`.
+Currently, we use [poetry](https://python-poetry.org/) to manage our python packages. The list of poetry groups and python packages we install can be found [here](https://github.com/i-dot-ai/redbox/blob/main/pyproject.toml) in `pyproject.toml`.
 
 Run the following to install the packages into a virtual environment poetry will create.
 
@@ -59,7 +49,7 @@ You will need to install `poppler` and `tesseract` to run the `worker`
 
 ## Building and running the project
 
-To view all the build commands, check the `Makefile` that can be found [here](https://github.com/i-dot-ai/redbox-copilot/blob/main/Makefile).
+To view all the build commands, check the `Makefile` that can be found [here](https://github.com/i-dot-ai/redbox/blob/main/Makefile).
 
 The project currently consists of multiple docker images needed to run the project in its entirety. If you only need a subsection of the project running, for example if you're only editing the django app, you can run a subset of the images. The images currently in the project are:
 
@@ -102,7 +92,7 @@ Some parts of the project can be run independently for development, for example 
 docker compose up django-app
 ```
 
-For any other commands available, check the `Makefile` [here](https://github.com/i-dot-ai/redbox-copilot/blob/main/Makefile).
+For any other commands available, check the `Makefile` [here](https://github.com/i-dot-ai/redbox/blob/main/Makefile).
 
 ## How to run tests
 

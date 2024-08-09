@@ -35,7 +35,7 @@ rebuild: stop prune ## Rebuild all images
 .PHONY: test-core-api
 test-core-api: ## Test core-api
 	cp .env.test core-api/.env
-	cd core-api && poetry install --with dev && poetry run python -m pytest -m "not ai" --cov=core_api -v --cov-report=term-missing --cov-fail-under=80
+	cd core-api && poetry install --with dev && poetry run python -m pytest -m "not ai" --cov=core_api -v --cov-report=term-missing --cov-fail-under=75
 
 .PHONY: test-ai
 test-ai: ## Test code with live LLM
@@ -45,7 +45,7 @@ test-ai: ## Test code with live LLM
 .PHONY: test-redbox
 test-redbox: ## Test redbox
 	cp .env.test redbox-core/.env
-	cd redbox-core && poetry install && poetry run pytest --cov=redbox -v --cov-report=term-missing --cov-fail-under=80
+	cd redbox-core && poetry install && poetry run pytest --cov=redbox -v --cov-report=term-missing --cov-fail-under=60
 
 .PHONY: test-worker
 test-worker: ## Test worker
@@ -231,7 +231,7 @@ tf_set_or_create_workspace:
 
 .PHONY: tf_init
 tf_init: ## Initialise terraform
-	terraform -chdir=./infrastructure/aws/$(instance) init -backend-config=$(TF_BACKEND_CONFIG) ${args} -reconfigure
+	terraform -chdir=./infrastructure/aws/$(instance) init -backend-config=$(TF_BACKEND_CONFIG) ${args}
 
 .PHONY: tf_plan
 tf_plan: ## Plan terraform

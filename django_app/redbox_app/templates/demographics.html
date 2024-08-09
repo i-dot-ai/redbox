@@ -14,12 +14,62 @@
 
     <form method='post'>
       <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
-      {% for field in form %}
-        <div class="govuk-form-group">
-          <label class="govuk-label" for="{{ field.auto_id }}">{{ field.label }}</label>
-          {{ field }}
-        </div>
-      {% endfor %}
+
+      <div class="govuk-form-group">
+        <label class="govuk-label" for="{{ form.name.id_for_label }}">
+          {{ form.name.label }}
+        </label>
+        {{ form.name }}
+      </div>
+
+      <div class="govuk-form-group">
+        <fieldset class="govuk-fieldset">
+          <legend class="govuk-fieldset__legend">
+            {{ form.ai_experience.label }}
+          </legend>
+          <div class="govuk-radios">
+            {% for value, label in form.ai_experience.field.choices %}
+              {% if value %}
+                <div class="govuk-radios__item">
+                  <input class="govuk-radios__input" type="radio"
+                        id="ai_experience_{{ loop.index0 }}"
+                        name="{{ form.ai_experience.name }}"
+                        value="{{ value }}"
+                        {% if value|string == form.ai_experience.value()|string %}checked{% endif %}
+                        data-testid="{{ value }}" aria-describedby="ai_experience_{{ loop.index0 }}-hint">
+                  <label class="govuk-label govuk-radios__label"
+                        for="ai_experience_{{ loop.index0 }}">
+                    {{ value }}
+                  </label>
+                  <div id="ai_experience_{{ loop.index0 }}-hint" class="govuk-hint govuk-radios__hint">{{ label }}</div>         
+                </div>
+              {% endif %}
+            {% endfor %}
+          </div>
+        </fieldset>
+      </div>
+
+      <div class="govuk-form-group">
+        <label class="govuk-label" for="{{ form.business_unit.id_for_label }}">
+          {{ form.business_unit.label }}
+        </label>
+        {{ form.business_unit }}
+      </div>
+
+      <div class="govuk-form-group">
+        <label class="govuk-label" for="{{ form.grade.id_for_label }}">
+          {{ form.grade.label }}
+        </label>
+        {{ form.grade }}
+      </div>
+
+      <div class="govuk-form-group">
+        <label class="govuk-label" for="{{ form.profession.id_for_label }}">
+          {{ form.profession.label }}
+        </label>
+        {{ form.profession }}
+      </div>
+    
       <div class="govuk-button-group">
         {{ govukButton(text="Update") }}
         {{ govukButton(text="Skip", href=url('documents'), classes="govuk-button--secondary") }}

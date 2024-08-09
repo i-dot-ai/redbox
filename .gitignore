@@ -215,6 +215,11 @@ django_app/tests/staticfiles
 # pre commit files
 .pre-commit-trivy-cache
 
+# lambda files
+infrastructure/aws/cleanup_lambda/*.zip
+infrastructure/aws/cleanup_lambda/layer/*
+
+
 # chat history files and personal data
 *chat_history_*
 notebooks/evaluation/results

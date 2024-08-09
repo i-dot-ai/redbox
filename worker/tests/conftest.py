@@ -1,18 +1,19 @@
-from pathlib import Path
-from uuid import uuid4
-
 import pytest
 from botocore.exceptions import ClientError
 from elasticsearch import Elasticsearch
 from langchain_core.embeddings import Embeddings
 from langchain_core.embeddings.fake import FakeEmbeddings
 
-from redbox.models import File
-from worker.app import env
+from redbox.models.settings import Settings
 
 
 @pytest.fixture(scope="session")
-def s3_client():
+def env():
+    return Settings()
+
+
+@pytest.fixture(scope="session")
+def s3_client(env: Settings):
     _client = env.s3_client()
     try:
         _client.create_bucket(
@@ -27,31 +28,24 @@ def s3_client():
 
 
 @pytest.fixture(scope="session")
-def es_client() -> Elasticsearch:
+def es_client(env: Settings) -> Elasticsearch:
     return env.elasticsearch_client()
+
+
+@pytest.fixture(scope="session")
+def es_index(env: Settings) -> str:
+    return f"{env.elastic_root_index}-chunk"
+
+
+@pytest.fixture(autouse=True, scope="session")
+def create_index(env: Settings, es_index):
+    es: Elasticsearch = env.elasticsearch_client()
+    if not es.indices.exists(index=es_index):
+        es.indices.create(index=es_index)
+    yield
+    es.indices.delete(index=es_index)
 
 
 @pytest.fixture()
 def embedding_model() -> Embeddings:
     return FakeEmbeddings(size=3072)
-
-
-@pytest.fixture(scope="session")
-def file_pdf_path() -> Path:
-    return Path(__file__).parents[2] / "tests" / "data" / "pdf" / "Cabinet Office - Wikipedia.pdf"
-
-
-@pytest.fixture(scope="session")
-def file(s3_client, file_pdf_path: Path):
-    file_name = file_pdf_path.name
-    file_type = file_pdf_path.suffix
-
-    with file_pdf_path.open("rb") as f:
-        s3_client.put_object(
-            Bucket=env.bucket_name,
-            Body=f.read(),
-            Key=file_name,
-            Tagging=f"file_type={file_type}",
-        )
-
-    return File(key=file_name, bucket=env.bucket_name, creator_user_uuid=uuid4())

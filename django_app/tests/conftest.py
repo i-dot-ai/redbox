@@ -7,6 +7,8 @@ from pathlib import Path
 import pytest
 from django.core.files.uploadedfile import SimpleUploadedFile, UploadedFile
 from django.core.management import call_command
+from django.utils import timezone
+from freezegun import freeze_time
 
 from redbox_app.redbox_core import client
 from redbox_app.redbox_core.models import (
@@ -66,7 +68,12 @@ def jemima_puddleduck():
 @pytest.fixture()
 def user_with_demographic_data(business_unit: BusinessUnit) -> User:
     return User.objects.create_user(
-        email="mrs.tiggywinkle@example.com", grade="DG", business_unit=business_unit, profession="AN"
+        name="Sir Gregory Pitkin",
+        ai_experience=User.AIExperienceLevel.EXPERIENCED_NAVIGATOR,
+        email="mrs.tiggywinkle@example.com",
+        grade="DG",
+        business_unit=business_unit,
+        profession="AN",
     )
 
 
@@ -157,6 +164,44 @@ def chat_history_with_files(chat_history: ChatHistory, several_files: Sequence[F
     )
     chat_message.source_files.set([several_files[2]])
     return chat_history
+
+
+@pytest.fixture()
+def chat_history_with_messages_over_time(chat_history: ChatHistory) -> ChatHistory:
+    now = timezone.now()
+    with freeze_time(now - timedelta(days=40)):
+        ChatMessage.objects.create(chat_history=chat_history, text="40 days old", role=ChatRoleEnum.user)
+    with freeze_time(now - timedelta(days=20)):
+        ChatMessage.objects.create(chat_history=chat_history, text="20 days old", role=ChatRoleEnum.user)
+    with freeze_time(now - timedelta(days=5)):
+        ChatMessage.objects.create(chat_history=chat_history, text="5 days old", role=ChatRoleEnum.user)
+    with freeze_time(now - timedelta(days=1)):
+        ChatMessage.objects.create(chat_history=chat_history, text="yesterday", role=ChatRoleEnum.user)
+    ChatMessage.objects.create(chat_history=chat_history, text="today", role=ChatRoleEnum.user)
+    return chat_history
+
+
+@pytest.fixture()
+def user_with_chats_with_messages_over_time(alice: User) -> User:
+    now = timezone.now()
+    with freeze_time(now - timedelta(days=40)):
+        chats = [
+            ChatHistory.objects.create(id=uuid.uuid4(), users=alice, name="40 days old"),
+            ChatHistory.objects.create(id=uuid.uuid4(), users=alice, name="20 days old"),
+            ChatHistory.objects.create(id=uuid.uuid4(), users=alice, name="5 days old"),
+            ChatHistory.objects.create(id=uuid.uuid4(), users=alice, name="yesterday"),
+            ChatHistory.objects.create(id=uuid.uuid4(), users=alice, name="today"),
+        ]
+        ChatMessage.objects.create(chat_history=chats[0], text="40 days old", role=ChatRoleEnum.user)
+    with freeze_time(now - timedelta(days=20)):
+        ChatMessage.objects.create(chat_history=chats[1], text="20 days old", role=ChatRoleEnum.user)
+    with freeze_time(now - timedelta(days=5)):
+        ChatMessage.objects.create(chat_history=chats[2], text="5 days old", role=ChatRoleEnum.user)
+    with freeze_time(now - timedelta(days=1)):
+        ChatMessage.objects.create(chat_history=chats[3], text="yesterday", role=ChatRoleEnum.user)
+    ChatMessage.objects.create(chat_history=chats[4], text="today", role=ChatRoleEnum.user)
+
+    return alice
 
 
 @pytest.fixture()

@@ -26,7 +26,7 @@ PR is the pull request that submitted the change, including information such as 
 
 Format:
 
-- \[ADR in review]\(https://github.com/i-dot-ai/redbox-copilot/pull/330) 2024-05-13
+- \[ADR in review]\(https://github.com/i-dot-ai/redbox/pull/330) 2024-05-13
 
 <!-- - \[Status of ADR e.g. approved, amended, etc.\]\(URL of pull request\) YYYY-MM-DD -->
 

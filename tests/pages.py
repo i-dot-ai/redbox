@@ -4,7 +4,7 @@ from collections.abc import Collection, Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
 from time import sleep
-from typing import Any, ClassVar, Union
+from typing import Any, ClassVar, Union, override
 
 from axe_playwright_python.sync_playwright import Axe
 from playwright.sync_api import Locator, Page, expect
@@ -162,14 +162,14 @@ class SignInConfirmationPage(BasePage):
         return self._where_are_we(self.page)
 
     @staticmethod
-    def autosubmit(page: Page, magic_link: URL) -> Union["DocumentsPage", "MyDetailsPage"]:
+    def autosubmit(page: Page, magic_link: URL) -> Union["ChatsPage", "MyDetailsPage"]:
         page.goto(str(magic_link))
         expect(page).not_to_have_title(SignInConfirmationPage.EXPECTED_TITLE)
         return SignInConfirmationPage._where_are_we(page)
 
     @staticmethod
-    def _where_are_we(page: Page) -> Union["DocumentsPage", "MyDetailsPage"]:
-        return MyDetailsPage(page) if page.title().startswith("My details") else DocumentsPage(page)
+    def _where_are_we(page: Page) -> Union["ChatsPage", "MyDetailsPage"]:
+        return MyDetailsPage(page) if page.title().startswith("My details") else ChatsPage(page)
 
 
 class HomePage(SignedInBasePage):
@@ -182,6 +182,19 @@ class MyDetailsPage(SignedInBasePage):
     @property
     def expected_page_title(self) -> str:
         return "My details - Redbox"
+
+    @property
+    def name(self) -> str:
+        return self.page.get_by_label("Full Name").get_by_role(role="option", selected=True).input_value()
+
+    @name.setter
+    def name(self, name: str):
+        self.page.get_by_label("Full Name").fill(name)
+
+    def ai_experience(self, ai_experience: str):
+        self.page.get_by_test_id(ai_experience).click()
+
+    ai_experience = property(fset=ai_experience)
 
     @property
     def grade(self) -> str:
@@ -207,9 +220,9 @@ class MyDetailsPage(SignedInBasePage):
     def profession(self, grade: str):
         self.page.get_by_label("Profession").select_option(grade)
 
-    def update(self) -> "DocumentsPage":
+    def update(self) -> "ChatsPage":
         self.page.get_by_text("Update").click()
-        return DocumentsPage(self.page)
+        return ChatsPage(self.page)
 
 
 @dataclass
@@ -294,7 +307,7 @@ class ChatMessage:
     chats_page: "ChatsPage" = field(repr=False)
 
     def navigate_to_citations(self) -> "CitationsPage":
-        self.element.locator(".iai-chat-bubble__citations-button").click()
+        self.element.locator("a.iai-chat-bubble__citations-button").click()
         return CitationsPage(self.chats_page.page)
 
     @classmethod
@@ -308,6 +321,11 @@ class ChatMessage:
 
 
 class ChatsPage(SignedInBasePage):
+    @override
+    def check_a11y(self, **kwargs):
+        # Exclude AI generated content, since we can't control it.
+        return super().check_a11y(exclude=[".iai-chat-bubble__text"])
+
     @property
     def expected_page_title(self) -> str:
         return "Chats - Redbox"
@@ -356,6 +374,17 @@ class ChatsPage(SignedInBasePage):
 
     feedback_chips = property(fset=feedback_chips)
 
+    @property
+    def chat_title(self) -> str:
+        return self.page.locator(".chat-title__heading").inner_text()
+
+    @chat_title.setter
+    def chat_title(self, title: str):
+        self.page.locator(".chat-title__edit-btn").click()
+        input_ = self.page.get_by_label("Chat Title")
+        input_.fill(title)
+        input_.press("Enter")
+
     def start_new_chat(self) -> "ChatsPage":
         self.page.get_by_role("button", name="New chat").click()
         return ChatsPage(self.page)
@@ -393,9 +422,15 @@ class ChatsPage(SignedInBasePage):
     def wait_for_latest_message(self, role="Redbox") -> ChatMessage:
         return [m for m in self.get_all_messages_once_streaming_has_completed() if m.role == role][-1]
 
+    def navigate_to_titled_chat(self, title: str) -> "ChatsPage":
+        self.page.get_by_role("link", name=title).click()
+        return ChatsPage(self.page)
+
 
 class CitationsPage(SignedInBasePage):
-    def check_a11y(self):
+    @override
+    def check_a11y(self, **kwargs):
+        # Exclude AI generated content, since we can't control it.
         return super().check_a11y(exclude=[".iai-chat-bubble__text"])
 
     @property

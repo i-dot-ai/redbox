@@ -15,7 +15,7 @@ class FeedbackButtons extends HTMLElement {
     `;
 
     this.innerHTML = `
-        <div class="feedback__container feedback__container--1">
+        <div class="feedback__container feedback__container--1" tabindex="-1">
             <h3 class="feedback__heading">Rate this response:</h3>
             <div class="feedback__star-container">
                 <span class="feedback__star-help-text" aria-hidden="true">Not helpful</span>
@@ -42,7 +42,7 @@ class FeedbackButtons extends HTMLElement {
                 <span class="feedback__star-help-text" aria-hidden="true">Very helpful</span>
             </div>
         </div>
-        <div class="feedback__container feedback__container--2" hidden>
+        <div class="feedback__container feedback__container--2" hidden tabindex="-1">
             <div class="feedback__response-container">
                 <img src="/static/icons/thumbs-up.svg" alt=""/>
                 <span class="feedback__negative">Sorry this didn't meet your expectations</span>
@@ -50,7 +50,7 @@ class FeedbackButtons extends HTMLElement {
             </div>
             <button class="feedback__improve-response-btn" type="button">Help improve the response</button>
         </div>
-        <div class="feedback__container feedback__container--3" hidden>
+        <div class="feedback__container feedback__container--3" hidden tabindex="-1">
             <fieldset class="feedback__chips-container feedback__negative">
                 <legend class="feedback__chips-legend">How would you describe the response?</legend>
                 <div class="feedback__chips-inner-container">
@@ -77,7 +77,7 @@ class FeedbackButtons extends HTMLElement {
             <textarea class="feedback__text-input" id="text-${messageId}" rows="1"></textarea>
             <button class="feedback__submit-btn" type="button">Submit</button>
         </div>
-        <div class="feedback__container feedback__container--4" hidden>
+        <div class="feedback__container feedback__container--4" hidden tabindex="-1">
            <span>Thanks for helping improve this response</span>
            <button class="feedback__rate-again-btn" type="button">Rate response again</button> 
         </div>
@@ -105,11 +105,13 @@ class FeedbackButtons extends HTMLElement {
      * @param {number} panelIndex - zero based
      */
     const showPanel = (panelIndex) => {
+      /** @type {NodeListOf<HTMLElement>} */
       let panels = this.querySelectorAll(".feedback__container");
       panels.forEach((panel) => {
         panel.setAttribute("hidden", "");
       });
       panels[panelIndex].removeAttribute("hidden");
+      panels[panelIndex].focus();
       if (collectedData.rating >= 3) {
         panels[panelIndex].classList.remove("feedback__container--negative");
         panels[panelIndex].classList.add("feedback__container--positive");
