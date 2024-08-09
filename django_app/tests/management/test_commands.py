@@ -17,7 +17,7 @@ from freezegun import freeze_time
 from magic_link.models import MagicLink
 from requests_mock import Mocker
 
-from redbox_app.redbox_core.models import ChatHistory, ChatMessage, ChatRoleEnum, File, StatusEnum, User
+from redbox_app.redbox_core.models import Chat, ChatMessage, ChatRoleEnum, File, StatusEnum, User
 
 # === check_file_status command tests ===
 
@@ -274,25 +274,19 @@ def test_delete_expired_files_with_s3_error(deletion_mock: MagicMock, uploaded_f
     ],
 )
 @pytest.mark.django_db()
-def test_delete_expired_chats(
-    chat_history: ChatHistory, msg_1_date: datetime, msg_2_date: datetime, should_delete: bool
-):
+def test_delete_expired_chats(chat: Chat, msg_1_date: datetime, msg_2_date: datetime, should_delete: bool):
     # Given
-    test_chat_history = chat_history
+    test_chat = chat
     with freeze_time(msg_1_date):
-        chat_message_1 = ChatMessage.objects.create(
-            chat_history=test_chat_history, text="A question?", role=ChatRoleEnum.user
-        )
+        chat_message_1 = ChatMessage.objects.create(chat=test_chat, text="A question?", role=ChatRoleEnum.user)
     with freeze_time(msg_2_date):
-        chat_message_2 = ChatMessage.objects.create(
-            chat_history=test_chat_history, text="A question?", role=ChatRoleEnum.user
-        )
+        chat_message_2 = ChatMessage.objects.create(chat=test_chat, text="A question?", role=ChatRoleEnum.user)
 
     # When
     call_command("delete_expired_data")
 
     # Then
-    assert ChatHistory.objects.filter(id=chat_history.id).exists() != should_delete
+    assert Chat.objects.filter(id=chat.id).exists() != should_delete
     assert ChatMessage.objects.filter(id=chat_message_1.id).exists() != should_delete
     assert ChatMessage.objects.filter(id=chat_message_2.id).exists() != should_delete
 

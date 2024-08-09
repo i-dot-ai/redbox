@@ -12,7 +12,7 @@ from django.utils import timezone
 from requests.exceptions import RequestException
 
 from redbox_app.redbox_core.client import CoreApiClient
-from redbox_app.redbox_core.models import INACTIVE_STATUSES, ChatHistory, File, StatusEnum
+from redbox_app.redbox_core.models import INACTIVE_STATUSES, Chat, File, StatusEnum
 
 logger = logging.getLogger(__name__)
 core_api = CoreApiClient(host=settings.CORE_API_HOST, port=settings.CORE_API_PORT)
@@ -81,7 +81,7 @@ class Command(BaseCommand):
             self.stdout.write(self.style.SUCCESS(f"Successfully deleted {counter} file objects"))
 
             self.stdout.write(self.style.NOTICE(f"Deleting chats expired before {cutoff_date}"))
-            chats_to_delete = ChatHistory.objects.annotate(last_modified_at=Max("chatmessage__modified_at")).filter(
+            chats_to_delete = Chat.objects.annotate(last_modified_at=Max("chatmessage__modified_at")).filter(
                 last_modified_at__lt=cutoff_date
             )
             chat_counter = chats_to_delete.count()

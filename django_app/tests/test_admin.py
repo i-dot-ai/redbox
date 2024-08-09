@@ -16,15 +16,15 @@ logger = logging.getLogger(__name__)
 
 
 @pytest.mark.django_db()
-def test_chat_history_export(superuser: User, chat_message_with_rating: ChatMessage, client: Client):
+def test_chat_export(superuser: User, chat_message_with_rating: ChatMessage, client: Client):
     # Given
     client.force_login(superuser)
 
     # When
 
     # See https://docs.djangoproject.com/en/dev/ref/contrib/admin/#reversing-admin-urls
-    url = reverse("admin:redbox_core_chathistory_changelist")
-    data = {"action": "export_as_csv", "_selected_action": [chat_message_with_rating.chat_history.pk]}
+    url = reverse("admin:redbox_core_chat_changelist")
+    data = {"action": "export_as_csv", "_selected_action": [chat_message_with_rating.chat.pk]}
     response = client.post(url, data, follow=True)
 
     # Then
@@ -40,13 +40,13 @@ def test_chat_history_export(superuser: User, chat_message_with_rating: ChatMess
 
 
 @pytest.mark.django_db()
-def test_chat_history_export_without_ratings(superuser: User, chat_message: ChatMessage, client: Client):
+def test_chat_export_without_ratings(superuser: User, chat_message: ChatMessage, client: Client):
     # Given
     client.force_login(superuser)
 
     # When
-    url = reverse("admin:redbox_core_chathistory_changelist")
-    data = {"action": "export_as_csv", "_selected_action": [chat_message.chat_history.pk]}
+    url = reverse("admin:redbox_core_chat_changelist")
+    data = {"action": "export_as_csv", "_selected_action": [chat_message.chat.pk]}
     response = client.post(url, data, follow=True)
 
     # Then

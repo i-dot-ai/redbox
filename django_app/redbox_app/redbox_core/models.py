@@ -311,15 +311,12 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
         )
 
 
-class ChatHistory(UUIDPrimaryKeyBase, TimeStampedModel):
+class Chat(UUIDPrimaryKeyBase, TimeStampedModel):
     name = models.TextField(max_length=1024, null=False, blank=False)
     users = models.ForeignKey(User, on_delete=models.CASCADE)
 
-    class Meta:
-        verbose_name_plural = "Chat history"
-
     def __str__(self) -> str:  # pragma: no cover
-        return f"{self.name} - {self.users}"
+        return self.name or ""
 
     @override
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
@@ -329,7 +326,7 @@ class ChatHistory(UUIDPrimaryKeyBase, TimeStampedModel):
     @classmethod
     def get_ordered_by_last_message_date(
         cls, user: User, exclude_chat_ids: Collection[uuid.UUID] | None = None
-    ) -> Sequence["ChatHistory"]:
+    ) -> Sequence["Chat"]:
         """Returns all chat histories for a given user, ordered by the date of the latest message."""
         exclude_chat_ids = exclude_chat_ids or []
         return (
@@ -371,7 +368,7 @@ class Citation(UUIDPrimaryKeyBase, TimeStampedModel):
 
 
 class ChatMessage(UUIDPrimaryKeyBase, TimeStampedModel):
-    chat_history = models.ForeignKey(ChatHistory, on_delete=models.CASCADE)
+    chat = models.ForeignKey(Chat, on_delete=models.CASCADE)
     text = models.TextField(max_length=32768, null=False, blank=False)
     role = models.CharField(choices=ChatRoleEnum.choices, null=False, blank=False)
     route = models.CharField(max_length=25, null=True, blank=True)
@@ -386,10 +383,10 @@ class ChatMessage(UUIDPrimaryKeyBase, TimeStampedModel):
         super().save(force_insert, force_update, using, update_fields)
 
     @classmethod
-    def get_messages_ordered_by_citation_priority(cls, chat_history_id: uuid.UUID) -> Sequence["ChatMessage"]:
+    def get_messages_ordered_by_citation_priority(cls, chat_id: uuid.UUID) -> Sequence["ChatMessage"]:
         """Returns all chat messages for a given chat history, ordered by citation priority."""
         return (
-            cls.objects.filter(chat_history__id=chat_history_id)
+            cls.objects.filter(chat_id=chat_id)
             .order_by("created_at")
             .prefetch_related(
                 Prefetch(
