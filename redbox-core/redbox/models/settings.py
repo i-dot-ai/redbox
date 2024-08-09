@@ -240,6 +240,8 @@ class Settings(BaseSettings):
 
     @lru_cache(1)
     def elasticsearch_client(self) -> Elasticsearch:
+        log.info(self.elastic)
+        log.info("isinstance %s", isinstance(self.elastic, ElasticLocalSettings))
         if isinstance(self.elastic, ElasticLocalSettings):
             log.info("Connecting to self managed Elasticsearch")
             log.info("Elasticsearch host = %s", self.elastic.host)
