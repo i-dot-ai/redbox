@@ -21,7 +21,7 @@ ENVIRONMENT = Environment[env.str("ENVIRONMENT").upper()]
 WEBSOCKET_SCHEME = "ws" if ENVIRONMENT.is_test else "wss"
 LOGIN_METHOD = env.str("LOGIN_METHOD")
 
-if env.str("HOSTS"):
+if env.str("HOSTS", ""):
     env_hosts = env.str("HOSTS", "").split(",")
 else:
     env_hosts = ENVIRONMENT.hosts
