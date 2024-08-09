@@ -5,7 +5,7 @@ from uuid import uuid4
 from functools import reduce
 
 from langchain.schema import StrOutputParser
-from langchain_core.runnables import RunnableParallel, RunnablePassthrough, RunnableLambda
+from langchain_core.runnables import RunnableParallel
 from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_core.vectorstores import VectorStoreRetriever
 
@@ -27,15 +27,11 @@ re_keyword_pattern = re.compile(r"@(\w+)")
 ## Core patterns
 
 
-def build_retrieve_pattern(
-    retriever: VectorStoreRetriever, filter_fn: Callable | None
-) -> Callable[[RedboxState], dict[str, Any]]:
+def build_retrieve_pattern(retriever: VectorStoreRetriever) -> Callable[[RedboxState], dict[str, Any]]:
     """Returns a function that uses state["request"] and state["text"] to set state["documents"]."""
-    if not filter_fn:
-        filter_fn = RunnablePassthrough()
 
     def _retrieve(state: RedboxState) -> dict[str, Any]:
-        return RunnableParallel({"documents": retriever | filter_fn | structure_documents})
+        return RunnableParallel({"documents": retriever | structure_documents})
 
     return _retrieve
 
@@ -128,7 +124,8 @@ def build_set_route_pattern(route: ChatRoute) -> Callable[[RedboxState], dict[st
     """Returns a function that sets state["route_name"]."""
 
     def _set_route(state: RedboxState) -> dict[str, Any]:
-        return RunnableLambda({"route_name": route.value}).with_config(tags=["route_flag"])
+        set_route_chain = RunnableParallel({"route_name": route.value})
+        return set_route_chain.with_config(tags=["route_flag"]).invoke(state)
 
     return _set_route
 
@@ -138,7 +135,7 @@ def build_passthrough_pattern() -> Callable[[RedboxState], dict[str, Any]]:
 
     def _passthrough(state: RedboxState) -> dict[str, Any]:
         return {
-            "text": state["request"]["question"],
+            "text": state["request"].question,
         }
 
     return _passthrough
@@ -148,11 +145,11 @@ def build_set_state_pattern(state_field: str, value: Any, final_response_chain: 
     """Returns a function that can arbitrarily set a field in the state."""
 
     def _set_state(state: RedboxState) -> dict[str, Any]:
-        set_state_chain = RunnableLambda({state_field: value})
+        set_state_chain = RunnableParallel({state_field: value})
         if final_response_chain:
-            return set_state_chain.with_config(tags=["response_flag"])
+            return set_state_chain.with_config(tags=["response_flag"]).invoke(state)
 
-        return set_state_chain
+        return set_state_chain.invoke(state)
 
     return _set_state
 

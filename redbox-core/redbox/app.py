@@ -34,7 +34,7 @@ class Redbox:
         _parameterised_retriever = parameterised_retriever or get_parameterised_retriever(_env)
         _llm = llm or get_chat_llm(_env)
 
-        self.graph = get_root_graph(_llm, _all_chunks_retriever, _parameterised_retriever, _env, debug)
+        self.graph = get_root_graph(_llm, _all_chunks_retriever, _parameterised_retriever, debug)
 
     async def run(
         self,

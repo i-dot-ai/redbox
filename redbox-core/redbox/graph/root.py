@@ -13,7 +13,7 @@ from redbox.graph.nodes.processes import (
     PromptSet,
     build_merge_pattern,
 )
-from redbox.models.chain import RedboxState, AISettings
+from redbox.models.chain import RedboxState
 from redbox.models.chat import ChatRoute
 from redbox.graph.nodes.processes import (
     build_chat_pattern,
@@ -25,7 +25,6 @@ from redbox.graph.nodes.processes import (
     empty_process,
 )
 from redbox.graph.nodes.sends import build_document_chunk_send, build_document_group_send
-from redbox.chains.runnables import filter_by_elbow
 
 
 # Global constants
@@ -61,7 +60,6 @@ def get_chat_graph(
 
 def get_search_graph(
     llm: BaseChatModel,
-    env: AISettings,
     retriever: VectorStoreRetriever,
     debug: bool = False,
 ) -> CompiledGraph:
@@ -71,10 +69,7 @@ def get_search_graph(
     # Processes
     builder.add_node("p_set_search_route", build_set_route_pattern(route=ChatRoute.search))
     builder.add_node("p_condense_question", build_chat_pattern(llm=llm, prompt_set=PromptSet.CondenseQuestion))
-    builder.add_node(
-        "p_retrieve_docs",
-        build_retrieve_pattern(retriever=retriever, filter_fn=filter_by_elbow(enabled=env.elbow_filter_enabled)),
-    )
+    builder.add_node("p_retrieve_docs", build_retrieve_pattern(retriever=retriever))
     builder.add_node(
         "p_stuff_docs", build_stuff_pattern(llm=llm, prompt_set=PromptSet.Search, final_response_chain=True)
     )
@@ -91,7 +86,6 @@ def get_search_graph(
 
 def get_chat_with_documents_graph(
     llm: BaseChatModel,
-    env: AISettings,
     retriever: VectorStoreRetriever,
     debug: bool = False,
 ) -> CompiledGraph:
@@ -143,7 +137,7 @@ def get_chat_with_documents_graph(
     builder.add_edge("p_retrieve_docs", "d_all_docs_bigger_than_context")
     builder.add_conditional_edges(
         "d_all_docs_bigger_than_context",
-        build_documents_bigger_than_context_conditional(PromptSet.ChatwithDocsMa),
+        build_documents_bigger_than_context_conditional(PromptSet.ChatwithDocsMapReduce),
         {
             True: "p_set_chat_docs_large_route",
             False: "p_set_chat_docs_route",
@@ -203,7 +197,6 @@ def get_root_graph(
     llm: BaseChatModel,
     all_chunks_retriever: VectorStoreRetriever,
     parameterised_retriever: VectorStoreRetriever,
-    env: AISettings,
     debug: bool = False,
 ) -> CompiledGraph:
     """Creates the core Redbox graph."""
@@ -211,8 +204,8 @@ def get_root_graph(
 
     # Subgraphs
     chat_subgraph = get_chat_graph(llm=llm, debug=debug)
-    rag_subgraph = get_search_graph(llm=llm, env=env, retriever=parameterised_retriever, debug=debug)
-    cwd_subgraph = get_chat_with_documents_graph(llm=llm, env=env, retriever=all_chunks_retriever, debug=debug)
+    rag_subgraph = get_search_graph(llm=llm, retriever=parameterised_retriever, debug=debug)
+    cwd_subgraph = get_chat_with_documents_graph(llm=llm, retriever=all_chunks_retriever, debug=debug)
 
     # Processes
     builder.add_node("p_search", rag_subgraph)

@@ -11,6 +11,7 @@ test_chain_parameters = (
         "match_boost": 1,
         "knn_boost": 2,
         "similarity_threshold": 0,
+        "elbow_filter_enabled": True,
     },
     {
         "rag_k": 2,
@@ -18,6 +19,7 @@ test_chain_parameters = (
         "match_boost": 1,
         "knn_boost": 2,
         "similarity_threshold": 0,
+        "elbow_filter_enabled": False,
     },
 )
 
