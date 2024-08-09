@@ -194,3 +194,49 @@ def test_0030_chatmessagerating_chips(migrator):
     NewChatMessageRating = new_state.apps.get_model("redbox_core", "ChatMessageRating")  # noqa: N806
     new_chat_message_rating = NewChatMessageRating.objects.get(pk=chat_message_rating.pk)
     assert new_chat_message_rating.chips == ["apple", "pear"]
+
+
+@pytest.mark.django_db()
+def test_0031_chatmessage_rating_chatmessage_rating_chips_and_more(migrator):
+    old_state = migrator.apply_initial_migration(("redbox_core", "0030_chatmessagerating_chips"))
+
+    User = old_state.apps.get_model("redbox_core", "User")
+    user = User.objects.create(email="someone@example.com")
+
+    Chat = old_state.apps.get_model("redbox_core", "Chat")
+    chat = Chat.objects.create(users=user, name="my-chat")
+
+    ChatMessage = old_state.apps.get_model("redbox_core", "ChatMessage")
+    chat_message = ChatMessage.objects.create(chat=chat)
+
+    ChatMessageRating = old_state.apps.get_model("redbox_core", "ChatMessageRating")
+    ChatMessageRating.objects.create(chat_message=chat_message, rating=3, text="very average", chips=["apple", "pear"])
+
+    new_state = migrator.apply_tested_migration(
+        ("redbox_core", "0031_chatmessage_rating_chatmessage_rating_chips_and_more"),
+    )
+    NewChatMessage = new_state.apps.get_model("redbox_core", "ChatMessage")  # noqa: N806
+    new_chat_message = NewChatMessage.objects.get(pk=chat_message.pk)
+    assert new_chat_message.rating_chips == ["apple", "pear"]
+    assert new_chat_message.rating == 3
+    assert new_chat_message.rating_text == "very average"
+
+
+@pytest.mark.django_db()
+def test_0032_user_new_business_unit(migrator):
+    old_state = migrator.apply_initial_migration(
+        ("redbox_core", "0031_chatmessage_rating_chatmessage_rating_chips_and_more")
+    )
+
+    BusinessUnit = old_state.apps.get_model("redbox_core", "BusinessUnit")
+    pm_office = BusinessUnit.objects.get(name="Prime Minister's Office")
+
+    User = old_state.apps.get_model("redbox_core", "User")
+    user = User.objects.create(email="someone@example.com", business_unit=pm_office)
+
+    new_state = migrator.apply_tested_migration(
+        ("redbox_core", "0032_user_new_business_unit"),
+    )
+    NewUser = new_state.apps.get_model("redbox_core", "User")  # noqa: N806
+    user = NewUser.objects.get(pk=user.pk)
+    assert user.business_unit == "Prime Minister's Office"

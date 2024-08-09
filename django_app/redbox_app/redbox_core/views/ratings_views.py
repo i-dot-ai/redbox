@@ -10,10 +10,7 @@ from django.shortcuts import get_object_or_404
 from django.utils.decorators import method_decorator
 from django.views import View
 
-from redbox_app.redbox_core.models import (
-    ChatMessage,
-    ChatMessageRating,
-)
+from redbox_app.redbox_core.models import ChatMessage
 
 logger = logging.getLogger(__name__)
 
@@ -31,15 +28,8 @@ class RatingsView(View):
         message: ChatMessage = get_object_or_404(ChatMessage, id=message_id)
         user_rating = RatingsView.Rating.schema().loads(request.body)
 
-        chat_message_rating: ChatMessageRating
-        if chat_message_rating := ChatMessageRating.objects.filter(chat_message=message).first():
-            chat_message_rating.rating = user_rating.rating
-            chat_message_rating.text = user_rating.text
-            chat_message_rating.chips = sorted(user_rating.chips)
-            chat_message_rating.save()
-        else:
-            chat_message_rating = ChatMessageRating(
-                chat_message=message, rating=user_rating.rating, text=user_rating.text, chips=sorted(user_rating.chips)
-            )
-            chat_message_rating.save()
+        message.rating = user_rating.rating
+        message.rating_text = user_rating.text
+        message.rating_chips = sorted(user_rating.chips)
+        message.save()
         return HttpResponse(status=HTTPStatus.NO_CONTENT)
