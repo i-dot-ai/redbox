@@ -1,7 +1,6 @@
 import pytest
 from contextlib import nullcontext as does_not_raise
 from uuid import uuid4
-from typing import Any
 
 from langgraph.graph import START, END, StateGraph
 from langchain_core.language_models.fake_chat_models import GenericFakeChatModel
@@ -12,7 +11,7 @@ from redbox.graph.nodes.processes import (
     build_merge_pattern,
     build_set_route_pattern,
     build_retrieve_pattern,
-    build_set_state_pattern,
+    build_set_text_pattern,
     build_passthrough_pattern,
     build_stuff_pattern,
     empty_process,
@@ -208,31 +207,17 @@ def test_build_passthrough_pattern():
     assert final_state["text"] == "What is AI?"
 
 
-@pytest.mark.parametrize(
-    ("state_field", "state_value"),
-    [
-        ("text", "foo"),
-        (
-            "documents",
-            structure_documents([doc for doc in generate_docs(parent_file_uuid=uuid4(), creator_user_uuid=uuid4())]),
-        ),
-        ("route", ChatRoute.chat),
-    ],
-    ids=["Set state pattern"] * 3,
-)
-def test_build_set_state_pattern(state_field: str, state_value: Any):
-    """Tests a given value correctly changes the given state field."""
-    set_state = build_set_state_pattern(state_field=state_field, value=state_value)
+def test_build_set_text_pattern():
+    """Tests a given value correctly changes the state["text"]."""
+    set_text = build_set_text_pattern(text="An hendy hap ychabbe ychent.")
     state = RedboxState(
         request=RedboxQuery(question="What is AI?", file_uuids=[], user_uuid=uuid4(), chat_history=[]),
     )
 
-    response = set_state(state)
+    response = set_text(state)
     final_state = RedboxState(response)
 
-    assert (
-        final_state[state_field] == state_value
-    ), f"Expected {state_field}: '{state_value}'. Received '{final_state[state_field]}'"
+    assert final_state["text"] == "An hendy hap ychabbe ychent."
 
 
 def test_empty_process():

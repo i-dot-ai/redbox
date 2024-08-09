@@ -23,7 +23,7 @@ from elasticsearch.helpers import bulk, scan
 from pydantic import BaseModel, Field
 
 from redbox.chains.components import get_chat_llm, get_parameterised_retriever, get_tokeniser
-from redbox.graph.search import get_search_graph
+from redbox.graph.root import get_search_graph
 from redbox.models.chain import RedboxQuery, RedboxState
 
 if TYPE_CHECKING:

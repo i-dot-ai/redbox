@@ -21,7 +21,7 @@ from redbox.graph.nodes.processes import (
     build_retrieve_pattern,
     build_stuff_pattern,
     build_passthrough_pattern,
-    build_set_state_pattern,
+    build_set_text_pattern,
     empty_process,
 )
 from redbox.graph.nodes.sends import build_document_chunk_send, build_document_group_send
@@ -113,9 +113,8 @@ def get_chat_with_documents_graph(
     )
     builder.add_node(
         "p_too_large_error",
-        build_set_state_pattern(
-            state_field="text",
-            value="These documents are too large to work with.",
+        build_set_text_pattern(
+            text="These documents are too large to work with.",
             final_response_chain=True,
         ),
     )
@@ -211,9 +210,8 @@ def get_root_graph(
     builder.add_node("p_search", rag_subgraph)
     builder.add_node(
         "p_no_keyword_error",
-        build_set_state_pattern(
-            state_field="text",
-            value="That keyword isn't recognised",  # TODO: replace with env
+        build_set_text_pattern(
+            text="That keyword isn't recognised",  # TODO: replace with env
             final_response_chain=True,
         ),
     )

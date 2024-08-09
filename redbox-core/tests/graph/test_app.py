@@ -161,12 +161,15 @@ async def test_streaming(test_case: RedboxChatTestCase, env, tokeniser):
     response = await app.run(
         input=RedboxState(request=test_case.query), response_tokens_callback=streaming_response_handler
     )
+
     final_state = RedboxState(response)
 
     # Bit of a bodge to retain the ability to check that the LLM streaming is working in most cases
     if not final_state["route_name"].startswith("error"):
         assert len(token_events) > 1, f"Expected tokens as a stream. Received: {token_events}"
+
     llm_response = "".join(token_events)
+
     assert (
         final_state["text"] == llm_response
     ), f"Expected LLM response: '{llm_response}'. Received '{final_state["text"]}'"

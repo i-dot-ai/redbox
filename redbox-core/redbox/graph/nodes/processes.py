@@ -5,7 +5,7 @@ from uuid import uuid4
 from functools import reduce
 
 from langchain.schema import StrOutputParser
-from langchain_core.runnables import RunnableParallel
+from langchain_core.runnables import RunnableParallel, RunnablePassthrough
 from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_core.vectorstores import VectorStoreRetriever
 
@@ -124,8 +124,9 @@ def build_set_route_pattern(route: ChatRoute) -> Callable[[RedboxState], dict[st
     """Returns a function that sets state["route_name"]."""
 
     def _set_route(state: RedboxState) -> dict[str, Any]:
-        set_route_chain = RunnableParallel({"route_name": lambda x: route.value})
-        return set_route_chain.with_config(tags=["route_flag"]).invoke(state)
+        set_route_chain = (RunnablePassthrough() | StrOutputParser()).with_config(tags=["route_flag"])
+
+        return {"route_name": set_route_chain.invoke(route.value)}
 
     return _set_route
 
@@ -141,17 +142,18 @@ def build_passthrough_pattern() -> Callable[[RedboxState], dict[str, Any]]:
     return _passthrough
 
 
-def build_set_state_pattern(state_field: str, value: Any, final_response_chain: bool = False):
-    """Returns a function that can arbitrarily set a field in the state."""
+def build_set_text_pattern(text: str, final_response_chain: bool = False):
+    """Returns a function that can arbitrarily set state["text"] to a value."""
 
-    def _set_state(state: RedboxState) -> dict[str, Any]:
-        set_state_chain = RunnableParallel({state_field: lambda x: value})
+    def _set_text(state: RedboxState) -> dict[str, Any]:
+        set_text_chain = RunnablePassthrough() | StrOutputParser()
+
         if final_response_chain:
-            return set_state_chain.with_config(tags=["response_flag"]).invoke(state)
+            set_text_chain = set_text_chain.with_config(tags=["response_flag"])
 
-        return set_state_chain.invoke(state)
+        return {"text": set_text_chain.invoke(text)}
 
-    return _set_state
+    return _set_text
 
 
 # Raw processes
