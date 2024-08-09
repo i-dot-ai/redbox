@@ -53,16 +53,6 @@ class UserAdmin(ImportMixin, admin.ModelAdmin):
         import_id_fields = ["email"]
 
 
-class BusinessUnitAdmin(ImportMixin, admin.ModelAdmin):
-    fields = ["name"]
-    list_display = ["name"]
-
-    class Meta:
-        model = models.BusinessUnit
-        fields = ["name"]
-        import_id_fields = ["name"]
-
-
 class FileAdmin(admin.ModelAdmin):
     def reupload(self, request, queryset):  # noqa:ARG002
         for file in queryset:
@@ -94,13 +84,13 @@ class CitationInline(admin.StackedInline):
 
 class ChatMessageAdmin(admin.ModelAdmin):
     list_display = ["text", "role", "get_user", "chat", "route", "created_at"]
-    list_filter = ["role", "route", "chat__users"]
+    list_filter = ["role", "route", "chat__user"]
     date_hierarchy = "created_at"
     inlines = [CitationInline]
 
-    @admin.display(ordering="chat__users", description="User")
+    @admin.display(ordering="chat__user", description="User")
     def get_user(self, obj):
-        return obj.chat.users
+        return obj.chat.user
 
 
 class ChatMessageInline(admin.StackedInline):
@@ -132,21 +122,21 @@ class ChatAdmin(admin.ModelAdmin):
         return response
 
     export_as_csv.short_description = "Export Selected"
-    fields = ["name", "users"]
+    fields = ["name", "user"]
     inlines = [ChatMessageInline]
-    list_display = ["name", "users", "created_at"]
-    list_filter = ["users"]
+    list_display = ["name", "user", "created_at"]
+    list_filter = ["user"]
     date_hierarchy = "created_at"
     actions = ["export_as_csv"]
 
 
 class CitationAdmin(admin.ModelAdmin):
     list_display = ["text", "get_user", "chat_message", "file"]
-    list_filter = ["chat_message__chat__users"]
+    list_filter = ["chat_message__chat__user"]
 
-    @admin.display(ordering="chat_message__chat__users", description="User")
+    @admin.display(ordering="chat_message__chat__user", description="User")
     def get_user(self, obj):
-        return obj.chat_message.chat.users
+        return obj.chat_message.chat.user
 
 
 admin.site.register(models.User, UserAdmin)
@@ -155,4 +145,3 @@ admin.site.register(models.Chat, ChatAdmin)
 admin.site.register(models.ChatMessage, ChatMessageAdmin)
 admin.site.register(models.AISettings)
 admin.site.register(models.Citation, CitationAdmin)
-admin.site.register(models.BusinessUnit, BusinessUnitAdmin)

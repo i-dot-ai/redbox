@@ -28,7 +28,3 @@ class DemographicsForm(forms.ModelForm):
             "grade": forms.Select(attrs={"class": "govuk-select govuk-!-width-one-third"}),
             "profession": forms.Select(attrs={"class": "govuk-select govuk-!-width-one-third"}),
         }
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields["business_unit"].queryset = self.fields["business_unit"].queryset.order_by("name")

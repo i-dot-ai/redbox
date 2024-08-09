@@ -13,7 +13,6 @@ from freezegun import freeze_time
 from redbox_app.redbox_core import client
 from redbox_app.redbox_core.models import (
     AISettings,
-    BusinessUnit,
     Chat,
     ChatMessage,
     ChatRoleEnum,
@@ -68,13 +67,13 @@ def jemima_puddleduck():
 
 
 @pytest.fixture()
-def user_with_demographic_data(business_unit: BusinessUnit) -> User:
+def user_with_demographic_data() -> User:
     return User.objects.create_user(
         name="Sir Gregory Pitkin",
         ai_experience=User.AIExperienceLevel.EXPERIENCED_NAVIGATOR,
         email="mrs.tiggywinkle@example.com",
         grade="DG",
-        business_unit=business_unit,
+        business_unit="Prime Minister's Office",
         profession="AN",
     )
 
@@ -87,11 +86,6 @@ def staff_user(create_user):
 @pytest.fixture()
 def superuser() -> User:
     return User.objects.create_superuser("super@example.com", "2000-01-01")
-
-
-@pytest.fixture()
-def business_unit() -> BusinessUnit:
-    return BusinessUnit.objects.create(name="Paperclip Reconciliation")
 
 
 @pytest.fixture()
@@ -112,7 +106,7 @@ def s3_client():
 @pytest.fixture()
 def chat(alice: User) -> Chat:
     session_id = uuid.uuid4()
-    return Chat.objects.create(id=session_id, users=alice, name="A chat")
+    return Chat.objects.create(id=session_id, user=alice, name="A chat")
 
 
 @pytest.fixture()
@@ -181,11 +175,11 @@ def user_with_chats_with_messages_over_time(alice: User) -> User:
     now = timezone.now()
     with freeze_time(now - timedelta(days=40)):
         chats = [
-            Chat.objects.create(id=uuid.uuid4(), users=alice, name="40 days old"),
-            Chat.objects.create(id=uuid.uuid4(), users=alice, name="20 days old"),
-            Chat.objects.create(id=uuid.uuid4(), users=alice, name="5 days old"),
-            Chat.objects.create(id=uuid.uuid4(), users=alice, name="yesterday"),
-            Chat.objects.create(id=uuid.uuid4(), users=alice, name="today"),
+            Chat.objects.create(id=uuid.uuid4(), user=alice, name="40 days old"),
+            Chat.objects.create(id=uuid.uuid4(), user=alice, name="20 days old"),
+            Chat.objects.create(id=uuid.uuid4(), user=alice, name="5 days old"),
+            Chat.objects.create(id=uuid.uuid4(), user=alice, name="yesterday"),
+            Chat.objects.create(id=uuid.uuid4(), user=alice, name="today"),
         ]
         ChatMessage.objects.create(chat=chats[0], text="40 days old", role=ChatRoleEnum.user)
     with freeze_time(now - timedelta(days=20)):
