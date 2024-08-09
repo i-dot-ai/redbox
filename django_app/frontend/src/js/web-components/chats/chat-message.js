@@ -70,6 +70,7 @@ class ChatMessage extends HTMLElement {
     endPoint,
     chatControllerRef
   ) => {
+    // Scroll behaviour - depending on whether user has overridden this or not
     let userScrollOverride = false;
     window.addEventListener("scroll", (evt) => {
       if (this.programmaticScroll) {
@@ -92,15 +93,18 @@ class ChatMessage extends HTMLElement {
     let responseComplete = this.querySelector(".rb-loading-complete");
     let webSocket = new WebSocket(endPoint);
     let streamedContent = "";
-    let sources = [];
 
-    // Stop streaming on escape key press
+    // Stop streaming on escape-key or stop-button press
+    const stopStreaming = () => {
+      this.dataset.status = "stopped";
+      webSocket.close();
+    };
     this.addEventListener("keydown", (evt) => {
       if (evt.key === "Escape" && this.dataset.status === "streaming") {
-        this.dataset.status = "stopped";
-        webSocket.close();
+        stopStreaming();
       }
     });
+    document.addEventListener("stop-streaming", stopStreaming);
 
     webSocket.onopen = (event) => {
       webSocket.send(
@@ -111,6 +115,8 @@ class ChatMessage extends HTMLElement {
         })
       );
       this.dataset.status = "streaming";
+      const chatResponseStartEvent = new CustomEvent("chat-response-start");
+      document.dispatchEvent(chatResponseStartEvent);
     };
 
     webSocket.onerror = (event) => {
@@ -127,6 +133,8 @@ class ChatMessage extends HTMLElement {
       if (this.dataset.status !== "stopped") {
         this.dataset.status = "complete";
       }
+      const stopStreamingEvent = new CustomEvent("stop-streaming");
+      document.dispatchEvent(stopStreamingEvent);
     };
 
     webSocket.onmessage = (event) => {
