@@ -50,9 +50,9 @@ class Redbox:
             if kind == "on_chat_model_stream" and FINAL_RESPONSE_TAG in tags:
                 await response_tokens_callback(event["data"]["chunk"].content)
             elif kind == "on_chain_end" and FINAL_RESPONSE_TAG in tags:
-                await response_tokens_callback(event["data"]["output"]["text"])
+                await response_tokens_callback(event["data"]["output"])
             elif kind == "on_chain_end" and ROUTE_NAME_TAG in tags:
-                await route_name_callback(event["data"]["output"]["route_name"])
+                await route_name_callback(event["data"]["output"])
             elif kind == "on_retriever_end" and SOURCE_DOCUMENTS_TAG in tags:
                 await documents_callback(event["data"]["output"])
             elif kind == "on_chain_end" and event["name"] == "LangGraph":

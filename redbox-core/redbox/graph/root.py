@@ -217,6 +217,10 @@ def get_root_graph(
             final_response_chain=True,
         ),
     )
+    builder.add_node(
+        "p_no_keyword_route",
+        build_set_route_pattern(route=ChatRoute.error_no_keyword),
+    )
     builder.add_node("p_chat", chat_subgraph)
     builder.add_node("p_chat_with_documents", cwd_subgraph)
 
@@ -228,7 +232,7 @@ def get_root_graph(
     builder.add_edge(START, "d_keyword_exists")
     builder.add_conditional_edges(
         "d_keyword_exists",
-        build_keyword_detection_conditional(ROUTABLE_KEYWORDS.keys()),
+        build_keyword_detection_conditional(*ROUTABLE_KEYWORDS.keys()),
         {ChatRoute.search: "p_search", ChatRoute.error_no_keyword: "p_no_keyword_error", "DEFAULT": "d_docs_selected"},
     )
     builder.add_conditional_edges(
@@ -240,7 +244,8 @@ def get_root_graph(
         },
     )
     builder.add_edge("p_search", END)
-    builder.add_edge("p_no_keyword_error", END)
+    builder.add_edge("p_no_keyword_error", "p_no_keyword_route")
+    builder.add_edge("p_no_keyword_route", END)
     builder.add_edge("p_chat", END)
     builder.add_edge("p_chat_with_documents", END)
 
