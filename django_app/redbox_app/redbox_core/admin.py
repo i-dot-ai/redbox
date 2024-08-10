@@ -78,7 +78,6 @@ class FileAdmin(ExportMixin, admin.ModelAdmin):
 class CitationInline(admin.StackedInline):
     model = models.Citation
     ordering = ("modified_at",)
-    readonly_fields = ["text", "role", "route", "rating"]
 
     extra = 1
 
