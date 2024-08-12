@@ -13,7 +13,7 @@ from requests_mock import Mocker
 from yarl import URL
 
 from redbox_app.redbox_core.models import (
-    ChatHistory,
+    Chat,
     ChatMessage,
     ChatRoleEnum,
     Citation,
@@ -42,19 +42,15 @@ def test_post_message_to_new_session(alice: User, client: Client, requests_mock:
     assert response.status_code == HTTPStatus.FOUND
     assert "Location" in response.headers
     session_id = URL(response.url).parts[-2]
-    assert ChatMessage.objects.get(chat_history__id=session_id, role=ChatRoleEnum.user).text == "Are you there?"
-    assert (
-        ChatMessage.objects.get(chat_history__id=session_id, role=ChatRoleEnum.ai).text == "Good afternoon, Mr. Amor."
-    )
+    assert ChatMessage.objects.get(chat__id=session_id, role=ChatRoleEnum.user).text == "Are you there?"
+    assert ChatMessage.objects.get(chat__id=session_id, role=ChatRoleEnum.ai).text == "Good afternoon, Mr. Amor."
 
 
 @pytest.mark.django_db()
-def test_post_message_to_existing_session(
-    chat_history: ChatHistory, client: Client, requests_mock: Mocker, uploaded_file: File
-):
+def test_post_message_to_existing_session(chat: Chat, client: Client, requests_mock: Mocker, uploaded_file: File):
     # Given
-    client.force_login(chat_history.users)
-    session_id = chat_history.id
+    client.force_login(chat.user)
+    session_id = chat.id
     rag_url = f"http://{settings.CORE_API_HOST}:{settings.CORE_API_PORT}/chat/rag"
     requests_mock.register_uri(
         "POST",
@@ -74,28 +70,22 @@ def test_post_message_to_existing_session(
     # Then
     assert response.status_code == HTTPStatus.FOUND
     assert URL(response.url).parts[-2] == str(session_id)
-    assert (
-        ChatMessage.objects.get(chat_history__id=session_id, role=ChatRoleEnum.ai).text == "Good afternoon, Mr. Amor."
-    )
-    assert (
-        ChatMessage.objects.get(chat_history__id=session_id, role=ChatRoleEnum.ai).source_files.first() == uploaded_file
-    )
+    assert ChatMessage.objects.get(chat__id=session_id, role=ChatRoleEnum.ai).text == "Good afternoon, Mr. Amor."
+    assert ChatMessage.objects.get(chat__id=session_id, role=ChatRoleEnum.ai).source_files.first() == uploaded_file
     assert initial_file_expiry_date != File.objects.get(core_file_uuid=uploaded_file.core_file_uuid).expires_at
     assert (
-        Citation.objects.get(
-            chat_message=ChatMessage.objects.get(chat_history__id=session_id, role=ChatRoleEnum.ai)
-        ).text
+        Citation.objects.get(chat_message=ChatMessage.objects.get(chat__id=session_id, role=ChatRoleEnum.ai)).text
         == "Here is a source chunk"
     )
 
 
 @pytest.mark.django_db()
 def test_post_message_with_files_selected(
-    chat_history: ChatHistory, client: Client, requests_mock: Mocker, several_files: Sequence[File]
+    chat: Chat, client: Client, requests_mock: Mocker, several_files: Sequence[File]
 ):
     # Given
-    client.force_login(chat_history.users)
-    session_id = chat_history.id
+    client.force_login(chat.user)
+    session_id = chat.id
     selected_files = several_files[::2]
 
     rag_url = f"http://{settings.CORE_API_HOST}:{settings.CORE_API_PORT}/chat/rag"
@@ -123,7 +113,7 @@ def test_post_message_with_files_selected(
     # Then
     assert response.status_code == HTTPStatus.FOUND
     assert (
-        list(ChatMessage.objects.get(chat_history__id=session_id, role=ChatRoleEnum.user).selected_files.all())
+        list(ChatMessage.objects.get(chat__id=session_id, role=ChatRoleEnum.user).selected_files.all())
         == selected_files
     )
     assert json.loads(requests_mock.last_request.text).get("selected_files") == [
@@ -132,24 +122,24 @@ def test_post_message_with_files_selected(
 
 
 @pytest.mark.django_db()
-def test_user_can_see_their_own_chats(chat_history: ChatHistory, alice: User, client: Client):
+def test_user_can_see_their_own_chats(chat: Chat, alice: User, client: Client):
     # Given
     client.force_login(alice)
 
     # When
-    response = client.get(f"/chats/{chat_history.id}/")
+    response = client.get(f"/chats/{chat.id}/")
 
     # Then
     assert response.status_code == HTTPStatus.OK
 
 
 @pytest.mark.django_db()
-def test_user_cannot_see_other_users_chats(chat_history: ChatHistory, bob: User, client: Client):
+def test_user_cannot_see_other_users_chats(chat: Chat, bob: User, client: Client):
     # Given
     client.force_login(bob)
 
     # When
-    response = client.get(f"/chats/{chat_history.id}/")
+    response = client.get(f"/chats/{chat.id}/")
 
     # Then
     assert response.status_code == HTTPStatus.FOUND
@@ -159,8 +149,8 @@ def test_user_cannot_see_other_users_chats(chat_history: ChatHistory, bob: User,
 @pytest.mark.django_db()
 def test_view_session_with_documents(chat_message: ChatMessage, client: Client):
     # Given
-    client.force_login(chat_message.chat_history.users)
-    chat_id = chat_message.chat_history.id
+    client.force_login(chat_message.chat.user)
+    chat_id = chat_message.chat.id
 
     # When
     response = client.get(f"/chats/{chat_id}/")
@@ -171,7 +161,7 @@ def test_view_session_with_documents(chat_message: ChatMessage, client: Client):
 
 
 @pytest.mark.django_db()
-def test_chat_history_grouped_by_age(user_with_chats_with_messages_over_time: User, client: Client):
+def test_chat_grouped_by_age(user_with_chats_with_messages_over_time: User, client: Client):
     # Given
     client.force_login(user_with_chats_with_messages_over_time)
 
@@ -213,46 +203,46 @@ def test_nonexistent_chats(alice: User, client: Client):
 
 
 @pytest.mark.django_db()
-def test_post_chat_title(alice: User, chat_history: ChatHistory, client: Client):
+def test_post_chat_title(alice: User, chat: Chat, client: Client):
     # Given
     client.force_login(alice)
 
     # When
-    url = reverse("chat-titles", kwargs={"chat_id": chat_history.id})
+    url = reverse("chat-titles", kwargs={"chat_id": chat.id})
     response = client.post(url, json.dumps({"name": "New chat name"}), content_type="application/json")
 
     # Then
     status = HTTPStatus(response.status_code)
     assert status.is_success
-    chat_history.refresh_from_db()
-    assert chat_history.name == "New chat name"
+    chat.refresh_from_db()
+    assert chat.name == "New chat name"
 
 
 @pytest.mark.django_db()
-def test_post_chat_title_with_naughty_string(alice: User, chat_history: ChatHistory, client: Client):
+def test_post_chat_title_with_naughty_string(alice: User, chat: Chat, client: Client):
     # Given
     client.force_login(alice)
 
     # When
-    url = reverse("chat-titles", kwargs={"chat_id": chat_history.id})
+    url = reverse("chat-titles", kwargs={"chat_id": chat.id})
     response = client.post(url, json.dumps({"name": "New chat name \x00"}), content_type="application/json")
 
     # Then
     status = HTTPStatus(response.status_code)
     assert status.is_success
-    chat_history.refresh_from_db()
-    assert chat_history.name == "New chat name \ufffd"
+    chat.refresh_from_db()
+    assert chat.name == "New chat name \ufffd"
 
 
 @pytest.mark.django_db()
-def test_staff_user_can_see_route(chat_history_with_files: ChatHistory, client: Client):
+def test_staff_user_can_see_route(chat_with_files: Chat, client: Client):
     # Given
-    chat_history_with_files.users.is_staff = True
-    chat_history_with_files.users.save()
-    client.force_login(chat_history_with_files.users)
+    chat_with_files.user.is_staff = True
+    chat_with_files.user.save()
+    client.force_login(chat_with_files.user)
 
     # When
-    response = client.get(f"/chats/{chat_history_with_files.id}/")
+    response = client.get(f"/chats/{chat_with_files.id}/")
 
     # Then
     assert response.status_code == HTTPStatus.OK

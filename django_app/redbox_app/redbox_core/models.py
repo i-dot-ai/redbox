@@ -75,13 +75,6 @@ class AISettings(UUIDPrimaryKeyBase, TimeStampedModel):
         return str(self.label)
 
 
-class BusinessUnit(UUIDPrimaryKeyBase):
-    name = models.TextField(max_length=64, null=False, blank=False, unique=True)
-
-    def __str__(self) -> str:  # pragma: no cover
-        return f"{self.name}"
-
-
 class User(BaseUser, UUIDPrimaryKeyBase):
     class UserGrade(models.TextChoices):
         AA = "AA", _("AA")
@@ -130,6 +123,75 @@ class User(BaseUser, UUIDPrimaryKeyBase):
         VET = "VET", _("Veterinary")
         OT = "OT", _("Other")
 
+    class BusinessUnit(models.TextChoices):
+        PRIME_MINISTERS_OFFICE = "Prime Minister's Office", _("Prime Minister's Office")
+        DELIVERY_GROUP = "Delivery Group", _("Delivery Group")
+        NATIONAL_SECURITY_SECRETARIAT = "National Security Secretariat", _("National Security Secretariat")
+        ECONOMIC_AND_DOMESTIC_SECRETARIAT = "Economic and Domestic Secretariat", _("Economic and Domestic Secretariat")
+        PROPRIETY_AND_CONSTITUTION_GROUP = "Propriety and Constitution Group", _("Propriety and Constitution Group")
+        GOVERNMENT_IN_PARLIAMENT = "Government in Parliament", _("Government in Parliament")
+        JOINT_INTELLIGENCE_ORGANISATION = "Joint Intelligence Organisation", _("Joint Intelligence Organisation")
+        INTELLIGENCE_AND_SECURITY_COMMITTEE = (
+            "Intelligence and Security Committee",
+            _("Intelligence and Security Committee"),
+        )
+        GOVERNMENT_DIGITAL_SERVICE = "Government Digital Service", _("Government Digital Service")
+        CENTRAL_DIGITAL_AND_DATA_OFFICE = "Central Digital and Data Office", _("Central Digital and Data Office")
+        GOVERNMENT_COMMUNICATION_SERVICE = "Government Communication Service", _("Government Communication Service")
+        GOVERNMENT_SECURITY_GROUP = "Government Security Group", _("Government Security Group")
+        UKSV = "UKSV", _("UKSV")
+        GOVERNMENT_COMMERCIAL_AND_GRANTS_FUNCTION = (
+            "Government Commercial and Grants Function",
+            _("Government Commercial and Grants Function"),
+        )
+        CIVIL_SERVICE_HUMAN_RESOURCES = "Civil Service Human Resources", _("Civil Service Human Resources")
+        INFRASTRUCTURE_AND_PROJECTS_AUTHORITY = (
+            "Infrastructure and Projects Authority",
+            _("Infrastructure and Projects Authority"),
+        )
+        OFFICE_OF_GOVERNMENT_PROPERTY = "Office of Government Property", _("Office of Government Property")
+        GOVERNMENT_BUSINESS_SERVICES = "Government Business Services", _("Government Business Services")
+        BORDERS_UNIT = "Borders Unit", _("Borders Unit")
+        EQUALITY_HUB = "Equality Hub", _("Equality Hub")
+        PUBLIC_SECTOR_FRAUD_AUTHORITY = "Public Sector Fraud Authority", _("Public Sector Fraud Authority")
+        CO_CHIEF_OPERATING_OFFICER = "CO Chief Operating Officer", _("CO Chief Operating Officer")
+        FLEXIBLE_CS_POOL = "Flexible CS Pool", _("Flexible CS Pool")
+        CO_PEOPLE_AND_PLACES = "CO People and Places", _("CO People and Places")
+        CO_STRATEGY_FINANCE_AND_PERFORMANCE = (
+            "CO Strategy, Finance, and Performance",
+            _("CO Strategy Finance, and Performance"),
+        )
+        CENTRAL_COSTS = "Central Costs", _("Central Costs")
+        CO_HMT_COMMERCIAL = "CO HMT Commercial", _("CO HMT Commercial")
+        CO_DIGITAL = "CO Digital", _("CO Digital")
+        PUBLIC_BODIES_AND_PRIORITY_PROJECTS_UNIT = (
+            "Public Bodies and Priority Projects Unit",
+            _("Public Bodies and Priority Projects Unit"),
+        )
+        PUBLIC_INQUIRY_RESPONSE_UNIT = "Public Inquiry Response Unit", _("Public Inquiry Response Unit")
+        CS_MODERNISATION_AND_REFORM_UNIT = "CS Modernisation and Reform Unit", _("CS Modernisation and Reform Unit")
+        OFFICE_FOR_VETERANS_AFFAIRS = "Office for Veterans' Affairs", _("Office for Veterans' Affairs")
+        GRENFELL_INQUIRY = "Grenfell Inquiry", _("Grenfell Inquiry")
+        INFECTED_BLOOD_INQUIRY = "Infected Blood Inquiry", _("Infected Blood Inquiry")
+        COVID_INQUIRY = "Covid Inquiry", _("Covid Inquiry")
+        CIVIL_SERVICE_COMMISSION = "Civil Service Commission", _("Civil Service Commission")
+        EQUALITY_AND_HUMAN_RIGHTS_COMMISSION = (
+            "Equality and Human Rights Commission",
+            _("Equality and Human Rights Commission"),
+        )
+        GOVERNMENT_PROPERTY_AGENCY = "Government Property Agency", _("Government Property Agency")
+        OFFICE_OF_THE_REGISTRAR_OF_CONSULTANT_LOBBYISTS = (
+            "Office of the Registrar of Consultant Lobbyists",
+            _("Office of the Registrar of Consultant Lobbyists"),
+        )
+        CROWN_COMMERCIAL_SERVICE = "Crown Commercial Service", _("Crown Commercial Service")
+        UNION_AND_CONSTITUTION_GROUP = "Union and Constitution Group", _("Union and Constitution Group")
+        GEOSPATIAL_COMMISSION = "Geospatial Commission", _("Geospatial Commission")
+        COMMERCIAL_MODELS = "Commercial Models", _("Commercial Models")
+        COP_PRESIDENCY = "COP Presidency", _("COP Presidency")
+        INQUIRIES_SPONSORSHIP_TEAM = "Inquiries Sponsorship Team", _("Inquiries Sponsorship Team")
+        OTHER = "Other", _("Other")
+
     class AIExperienceLevel(models.TextChoices):
         CURIOUS_NEWCOMER = "Curious Newcomer", _("I haven't used Generative AI tools")
         CAUTIOUS_EXPLORER = "Cautious Explorer", _("I have a little experience using Generative AI tools")
@@ -155,7 +217,7 @@ class User(BaseUser, UUIDPrimaryKeyBase):
     invite_accepted_at = models.DateTimeField(default=None, blank=True, null=True)
     last_token_sent_at = models.DateTimeField(editable=False, blank=True, null=True)
     password = models.CharField("password", max_length=128, blank=True, null=True)
-    business_unit = models.ForeignKey(BusinessUnit, null=True, blank=True, on_delete=models.SET_NULL)
+    business_unit = models.CharField(null=True, blank=True, max_length=64, choices=BusinessUnit)
     grade = models.CharField(null=True, blank=True, max_length=3, choices=UserGrade)
     name = models.CharField(null=True, blank=True)
     ai_experience = models.CharField(null=True, blank=True, max_length=25, choices=AIExperienceLevel)
@@ -311,15 +373,12 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
         )
 
 
-class ChatHistory(UUIDPrimaryKeyBase, TimeStampedModel):
+class Chat(UUIDPrimaryKeyBase, TimeStampedModel):
     name = models.TextField(max_length=1024, null=False, blank=False)
-    users = models.ForeignKey(User, on_delete=models.CASCADE)
-
-    class Meta:
-        verbose_name_plural = "Chat history"
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
 
     def __str__(self) -> str:  # pragma: no cover
-        return f"{self.name} - {self.users}"
+        return self.name or ""
 
     @override
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
@@ -329,11 +388,11 @@ class ChatHistory(UUIDPrimaryKeyBase, TimeStampedModel):
     @classmethod
     def get_ordered_by_last_message_date(
         cls, user: User, exclude_chat_ids: Collection[uuid.UUID] | None = None
-    ) -> Sequence["ChatHistory"]:
+    ) -> Sequence["Chat"]:
         """Returns all chat histories for a given user, ordered by the date of the latest message."""
         exclude_chat_ids = exclude_chat_ids or []
         return (
-            cls.objects.filter(users=user)
+            cls.objects.filter(user=user)
             .exclude(id__in=exclude_chat_ids)
             .annotate(latest_message_date=Max("chatmessage__created_at"))
             .order_by("-latest_message_date")
@@ -371,25 +430,33 @@ class Citation(UUIDPrimaryKeyBase, TimeStampedModel):
 
 
 class ChatMessage(UUIDPrimaryKeyBase, TimeStampedModel):
-    chat_history = models.ForeignKey(ChatHistory, on_delete=models.CASCADE)
+    chat = models.ForeignKey(Chat, on_delete=models.CASCADE)
     text = models.TextField(max_length=32768, null=False, blank=False)
     role = models.CharField(choices=ChatRoleEnum.choices, null=False, blank=False)
     route = models.CharField(max_length=25, null=True, blank=True)
     selected_files = models.ManyToManyField(File, related_name="+", symmetrical=False, blank=True)
     source_files = models.ManyToManyField(File, through=Citation)
 
+    rating = models.PositiveIntegerField(
+        blank=True, null=True, validators=[validators.MinValueValidator(1), validators.MaxValueValidator(5)]
+    )
+    rating_text = models.TextField(blank=True, null=True)
+    rating_chips = ArrayField(models.CharField(max_length=32), null=True, blank=True)
+
     def __str__(self) -> str:  # pragma: no cover
-        return f"{self.text} - {self.role}"
+        return self.text[:20] + "..."
 
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
         self.text = sanitise_string(self.text)
+        self.rating_text = sanitise_string(self.rating_text)
+
         super().save(force_insert, force_update, using, update_fields)
 
     @classmethod
-    def get_messages_ordered_by_citation_priority(cls, chat_history_id: uuid.UUID) -> Sequence["ChatMessage"]:
+    def get_messages_ordered_by_citation_priority(cls, chat_id: uuid.UUID) -> Sequence["ChatMessage"]:
         """Returns all chat messages for a given chat history, ordered by citation priority."""
         return (
-            cls.objects.filter(chat_history__id=chat_history_id)
+            cls.objects.filter(chat_id=chat_id)
             .order_by("created_at")
             .prefetch_related(
                 Prefetch(
@@ -400,27 +467,3 @@ class ChatMessage(UUIDPrimaryKeyBase, TimeStampedModel):
                 )
             )
         )
-
-
-class ChatMessageRating(TimeStampedModel):
-    chat_message = models.OneToOneField(ChatMessage, on_delete=models.CASCADE, primary_key=True)
-    rating = models.PositiveIntegerField(validators=[validators.MinValueValidator(1), validators.MaxValueValidator(5)])
-    text = models.TextField(blank=True, null=True)
-
-    def __str__(self) -> str:  # pragma: no cover
-        return f"{self.chat_message} - {self.rating} - {self.text}"
-
-    def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
-        self.text = sanitise_string(self.text)
-        super().save(force_insert, force_update, using, update_fields)
-
-
-class ChatMessageRatingChip(UUIDPrimaryKeyBase, TimeStampedModel):
-    rating = models.ForeignKey(ChatMessageRating, on_delete=models.CASCADE)
-    text = models.CharField(max_length=32)
-
-    class Meta:
-        unique_together = "rating", "text"
-
-    def __str__(self) -> str:  # pragma: no cover
-        return f"{self.rating} - {self.text}"

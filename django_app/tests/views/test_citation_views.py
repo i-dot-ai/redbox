@@ -9,7 +9,7 @@ from django.test import Client
 from django.urls import reverse
 
 from redbox_app.redbox_core.models import (
-    ChatHistory,
+    Chat,
     ChatMessage,
     ChatRoleEnum,
     Citation,
@@ -21,12 +21,10 @@ logger = logging.getLogger(__name__)
 
 
 @pytest.mark.django_db()
-def test_citations_shown_in_correct_order(
-    client: Client, alice: User, chat_history: ChatHistory, several_files: Sequence[File]
-):
+def test_citations_shown_in_correct_order(client: Client, alice: User, chat: Chat, several_files: Sequence[File]):
     # Given
     client.force_login(alice)
-    chat_message = ChatMessage.objects.create(chat_history=chat_history, text="Some answer.", role=ChatRoleEnum.ai)
+    chat_message = ChatMessage.objects.create(chat=chat, text="Some answer.", role=ChatRoleEnum.ai)
 
     Citation.objects.create(file=several_files[1], chat_message=chat_message, text="Citation 1")
     Citation.objects.create(file=several_files[0], chat_message=chat_message, text="Citation 2")
@@ -65,7 +63,7 @@ def test_user_can_see_their_own_citations(chat_message_with_citation: ChatMessag
 
 
 @pytest.mark.django_db()
-def test_user_cannot_see_other_users_citations(chat_message_with_citation: ChatHistory, bob: User, client: Client):
+def test_user_cannot_see_other_users_citations(chat_message_with_citation: Chat, bob: User, client: Client):
     # Given
     client.force_login(bob)
 

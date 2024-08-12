@@ -14,7 +14,7 @@ from websockets.legacy.client import Connect
 
 from redbox_app.redbox_core import error_messages
 from redbox_app.redbox_core.consumers import ChatConsumer
-from redbox_app.redbox_core.models import ChatHistory, ChatMessage, ChatRoleEnum, File, User
+from redbox_app.redbox_core.models import Chat, ChatMessage, ChatRoleEnum, File, User
 from redbox_app.redbox_core.prompts import CHAT_MAP_QUESTION_PROMPT
 
 logger = logging.getLogger(__name__)
@@ -97,7 +97,7 @@ async def test_chat_consumer_staff_user(staff_user: User, mocked_connect: Connec
 
 @pytest.mark.django_db(transaction=True)
 @pytest.mark.asyncio()
-async def test_chat_consumer_with_existing_session(alice: User, chat_history: ChatHistory, mocked_connect: Connect):
+async def test_chat_consumer_with_existing_session(alice: User, chat: Chat, mocked_connect: Connect):
     # Given
 
     # When
@@ -107,12 +107,12 @@ async def test_chat_consumer_with_existing_session(alice: User, chat_history: Ch
         connected, _ = await communicator.connect()
         assert connected
 
-        await communicator.send_json_to({"message": "Hello Hal.", "sessionId": str(chat_history.id)})
+        await communicator.send_json_to({"message": "Hello Hal.", "sessionId": str(chat.id)})
         response1 = await communicator.receive_json_from(timeout=5)
 
         # Then
         assert response1["type"] == "session-id"
-        assert response1["data"] == str(chat_history.id)
+        assert response1["data"] == str(chat.id)
 
         # Close
         await communicator.disconnect()
@@ -200,14 +200,14 @@ async def test_chat_consumer_with_naughty_citation(
 
 @database_sync_to_async
 def get_chat_message_text(user: User, role: ChatRoleEnum) -> Sequence[str]:
-    return [m.text for m in ChatMessage.objects.filter(chat_history__users=user, role=role)]
+    return [m.text for m in ChatMessage.objects.filter(chat__user=user, role=role)]
 
 
 @database_sync_to_async
 def get_chat_message_citation_set(user: User, role: ChatRoleEnum) -> Sequence[tuple[str, tuple[int]]]:
     return {
         (citation.text, tuple(citation.page_numbers or []))
-        for message in ChatMessage.objects.filter(chat_history__users=user, role=role)
+        for message in ChatMessage.objects.filter(chat__user=user, role=role)
         for source_file in message.source_files.all()
         for citation in source_file.citation_set.all()
     }
@@ -215,7 +215,7 @@ def get_chat_message_citation_set(user: User, role: ChatRoleEnum) -> Sequence[tu
 
 @database_sync_to_async
 def get_chat_message_route(user: User, role: ChatRoleEnum) -> Sequence[str]:
-    return [m.route for m in ChatMessage.objects.filter(chat_history__users=user, role=role)]
+    return [m.route for m in ChatMessage.objects.filter(chat__user=user, role=role)]
 
 
 @pytest.mark.xfail()
@@ -224,7 +224,7 @@ def get_chat_message_route(user: User, role: ChatRoleEnum) -> Sequence[str]:
 async def test_chat_consumer_with_selected_files(
     alice: User,
     several_files: Sequence[File],
-    chat_history_with_files: ChatHistory,
+    chat_with_files: Chat,
     mocked_connect_with_several_files: Connect,
 ):
     # Given
@@ -241,7 +241,7 @@ async def test_chat_consumer_with_selected_files(
         await communicator.send_json_to(
             {
                 "message": "Third question, with selected files?",
-                "sessionId": str(chat_history_with_files.id),
+                "sessionId": str(chat_with_files.id),
                 "selectedFiles": selected_file_core_uuids,
             }
         )
@@ -249,7 +249,7 @@ async def test_chat_consumer_with_selected_files(
 
         # Then
         assert response1["type"] == "session-id"
-        assert response1["data"] == str(chat_history_with_files.id)
+        assert response1["data"] == str(chat_with_files.id)
 
         # Close
         await communicator.disconnect()
@@ -382,9 +382,9 @@ async def test_chat_consumer_get_ai_settings(
 @database_sync_to_async
 def get_chat_messages(user: User) -> Sequence[ChatMessage]:
     return list(
-        ChatMessage.objects.filter(chat_history__users=user)
+        ChatMessage.objects.filter(chat__user=user)
         .order_by("created_at")
-        .prefetch_related("chat_history")
+        .prefetch_related("chat")
         .prefetch_related("source_files")
         .prefetch_related("selected_files")
     )

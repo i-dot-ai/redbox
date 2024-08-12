@@ -53,16 +53,6 @@ class UserAdmin(ImportMixin, admin.ModelAdmin):
         import_id_fields = ["email"]
 
 
-class BusinessUnitAdmin(ImportMixin, admin.ModelAdmin):
-    fields = ["name"]
-    list_display = ["name"]
-
-    class Meta:
-        model = models.BusinessUnit
-        fields = ["name"]
-        import_id_fields = ["name"]
-
-
 class FileAdmin(admin.ModelAdmin):
     def reupload(self, request, queryset):  # noqa:ARG002
         for file in queryset:
@@ -93,14 +83,14 @@ class CitationInline(admin.StackedInline):
 
 
 class ChatMessageAdmin(admin.ModelAdmin):
-    list_display = ["text", "role", "get_user", "chat_history", "route", "created_at"]
-    list_filter = ["role", "route", "chat_history__users"]
+    list_display = ["text", "role", "get_user", "chat", "route", "created_at"]
+    list_filter = ["role", "route", "chat__user"]
     date_hierarchy = "created_at"
     inlines = [CitationInline]
 
-    @admin.display(ordering="chat_history__users", description="User")
+    @admin.display(ordering="chat__user", description="User")
     def get_user(self, obj):
-        return obj.chat_history.users
+        return obj.chat.user
 
 
 class ChatMessageInline(admin.StackedInline):
@@ -111,62 +101,47 @@ class ChatMessageInline(admin.StackedInline):
     show_change_link = True  # allows users to click through to look at Citations
 
 
-class ChatHistoryAdmin(admin.ModelAdmin):
+class ChatAdmin(admin.ModelAdmin):
     def export_as_csv(self, request, queryset: QuerySet):  # noqa:ARG002
-        history_field_names: list[str] = [field.name for field in models.ChatHistory._meta.fields]  # noqa:SLF001
+        history_field_names: list[str] = [field.name for field in models.Chat._meta.fields]  # noqa:SLF001
         message_field_names: list[str] = [field.name for field in models.ChatMessage._meta.fields]  # noqa:SLF001
-        rating_field_names: list[str] = [field.name for field in models.ChatMessageRating._meta.fields]  # noqa:SLF001
 
         response = HttpResponse(content_type="text/csv")
-        response["Content-Disposition"] = "attachment; filename=chathistory.csv"
+        response["Content-Disposition"] = "attachment; filename=chat.csv"
         writer = csv.writer(response)
 
-        writer.writerow(
-            ["history_" + n for n in history_field_names]
-            + ["message_" + n for n in message_field_names]
-            + ["rating_" + n for n in rating_field_names]
-            + ["rating_chips"]
-        )
-        chat_history: models.ChatHistory
+        writer.writerow(["history_" + n for n in history_field_names] + ["message_" + n for n in message_field_names])
         chat_message: models.ChatMessage
-        chat_message_rating: models.ChatMessageRating
-        for chat_history in queryset:
-            for chat_message in chat_history.chatmessage_set.all():
-                row = [getattr(chat_history, field) for field in history_field_names] + [
+        for chat in queryset:
+            for chat_message in chat.chatmessage_set.all():
+                row = [getattr(chat, field) for field in history_field_names] + [
                     getattr(chat_message, field) for field in message_field_names
                 ]
-                if hasattr(chat_message, "chatmessagerating"):
-                    chat_message_rating = chat_message.chatmessagerating
-                    row += [getattr(chat_message_rating, field) for field in rating_field_names]
-                    row += [", ".join(c.text for c in chat_message_rating.chatmessageratingchip_set.all())]
                 writer.writerow(row)
 
         return response
 
     export_as_csv.short_description = "Export Selected"
-    fields = ["name", "users"]
+    fields = ["name", "user"]
     inlines = [ChatMessageInline]
-    list_display = ["name", "users", "created_at"]
-    list_filter = ["users"]
+    list_display = ["name", "user", "created_at"]
+    list_filter = ["user"]
     date_hierarchy = "created_at"
     actions = ["export_as_csv"]
 
 
 class CitationAdmin(admin.ModelAdmin):
     list_display = ["text", "get_user", "chat_message", "file"]
-    list_filter = ["chat_message__chat_history__users"]
+    list_filter = ["chat_message__chat__user"]
 
-    @admin.display(ordering="chat_message__chat_history__users", description="User")
+    @admin.display(ordering="chat_message__chat__user", description="User")
     def get_user(self, obj):
-        return obj.chat_message.chat_history.users
+        return obj.chat_message.chat.user
 
 
 admin.site.register(models.User, UserAdmin)
 admin.site.register(models.File, FileAdmin)
-admin.site.register(models.ChatHistory, ChatHistoryAdmin)
+admin.site.register(models.Chat, ChatAdmin)
 admin.site.register(models.ChatMessage, ChatMessageAdmin)
 admin.site.register(models.AISettings)
-admin.site.register(models.ChatMessageRating)
-admin.site.register(models.ChatMessageRatingChip)
 admin.site.register(models.Citation, CitationAdmin)
-admin.site.register(models.BusinessUnit, BusinessUnitAdmin)
