@@ -88,7 +88,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
             for file, _ in citations:
                 file.last_referenced = timezone.now()
-                await self.file_save(file)
+                await file.asave()
         except (TimeoutError, ConnectionClosedError, CancelledError, CoreError) as e:
             logger.exception("Error from core.", exc_info=e)
             await self.send_to_client("error", error_messages.CORE_ERROR_MESSAGE)
@@ -214,10 +214,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
         return files, [(file, [doc for doc in docs if doc.file_uuid == file.core_file_uuid]) for file in files]
 
-    @staticmethod
-    @database_sync_to_async
-    def file_save(file):
-        return file.save()
 
     @staticmethod
     @database_sync_to_async
