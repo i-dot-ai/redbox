@@ -10,7 +10,7 @@ from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_core.vectorstores import VectorStoreRetriever
 
 from redbox.chains.components import get_tokeniser
-from redbox.chains.runnables import build_chat_prompt_from_messages_runnable
+from redbox.chains.runnables import build_chat_prompt_from_messages_runnable, CannedLLM
 from redbox.models import ChatRoute
 from redbox.models.chain import RedboxState
 from redbox.transform import combine_documents, structure_documents
@@ -146,7 +146,7 @@ def build_set_text_pattern(text: str, final_response_chain: bool = False):
     """Returns a function that can arbitrarily set state["text"] to a value."""
 
     def _set_text(state: RedboxState) -> dict[str, Any]:
-        set_text_chain = RunnablePassthrough() | StrOutputParser()
+        set_text_chain = CannedLLM(text=text) | StrOutputParser()
 
         if final_response_chain:
             set_text_chain = set_text_chain.with_config(tags=["response_flag"])
