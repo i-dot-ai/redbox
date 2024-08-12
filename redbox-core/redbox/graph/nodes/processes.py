@@ -10,7 +10,7 @@ from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_core.vectorstores import VectorStoreRetriever
 
 from redbox.chains.components import get_tokeniser
-from redbox.chains.runnables import build_chat_prompt_from_messages_runnable, CannedLLM
+from redbox.chains.runnables import build_chat_prompt_from_messages_runnable, CannedChatLLM
 from redbox.models import ChatRoute
 from redbox.models.chain import RedboxState
 from redbox.transform import combine_documents, structure_documents
@@ -144,12 +144,11 @@ def build_passthrough_pattern() -> Callable[[RedboxState], dict[str, Any]]:
 
 def build_set_text_pattern(text: str, final_response_chain: bool = False):
     """Returns a function that can arbitrarily set state["text"] to a value."""
+    llm = CannedChatLLM(text=text)
+    _llm = llm.with_config(tags=["response_flag"]) if final_response_chain else llm
 
     def _set_text(state: RedboxState) -> dict[str, Any]:
-        set_text_chain = CannedLLM(text=text) | StrOutputParser()
-
-        if final_response_chain:
-            set_text_chain = set_text_chain.with_config(tags=["response_flag"])
+        set_text_chain = _llm | StrOutputParser()
 
         return {"text": set_text_chain.invoke(text)}
 

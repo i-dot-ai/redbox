@@ -1,9 +1,11 @@
 import logging
 from typing import Any, Iterator
+import re
 
 from langchain_core.callbacks.manager import CallbackManagerForLLMRun
-from langchain_core.language_models.llms import LLM
-from langchain_core.outputs import GenerationChunk
+from langchain_core.language_models import BaseChatModel
+from langchain_core.messages import AIMessageChunk, BaseMessage, AIMessage
+from langchain_core.outputs import ChatGeneration, ChatGenerationChunk, ChatResult
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import Runnable, chain
 from tiktoken import Encoding
@@ -17,6 +19,7 @@ from redbox.transform import flatten_document_state
 
 
 log = logging.getLogger()
+re_string_pattern = re.compile(r"(\S+)")
 
 
 def build_chat_prompt_from_messages_runnable(prompt_set: PromptSet, tokeniser: Encoding = None):
@@ -62,62 +65,78 @@ def build_chat_prompt_from_messages_runnable(prompt_set: PromptSet, tokeniser: E
     return _chat_prompt_from_messages
 
 
-class CannedLLM(LLM):
+class CannedChatLLM(BaseChatModel):
     """A custom chat model that returns its text as if an LLM returned it."""
 
     text: str
 
-    def _call(
+    def _generate(
         self,
-        prompt: str,
+        messages: list[BaseMessage],
         stop: list[str] | None = None,
         run_manager: CallbackManagerForLLMRun | None = None,
         **kwargs: Any,
-    ) -> str:
+    ) -> ChatResult:
         """Run the LLM on the given input.
 
         Args:
-            prompt: The prompt to generate from.
-            stop: Stop words to use when generating. Model output is cut off at the
-                first occurrence of any of the stop substrings.
-                If stop tokens are not supported consider raising NotImplementedError.
-            run_manager: Callback manager for the run.
-            **kwargs: Arbitrary additional keyword arguments. These are usually passed
-                to the model provider API call.
-
-        Returns:
-            The model output as a string. Actual completions SHOULD NOT include the prompt.
+            messages: the prompt composed of a list of messages.
+            stop: a list of strings on which the model should stop generating.
+                  If generation stops due to a stop token, the stop token itself
+                  SHOULD BE INCLUDED as part of the output. This is not enforced
+                  across models right now, but it's a good practice to follow since
+                  it makes it much easier to parse the output of the model
+                  downstream and understand why generation stopped.
+            run_manager: A run manager with callbacks for the LLM.
         """
-        if stop is not None:
-            raise ValueError("stop kwargs are not permitted.")
-        return self.text
+        message = AIMessage(
+            content=self.text,
+            # additional_kwargs={},
+            # response_metadata={  # Use for response metadata
+            #     "time_in_seconds": 3,
+            # },
+        )
+
+        generation = ChatGeneration(message=message)
+        return ChatResult(generations=[generation])
 
     def _stream(
         self,
-        prompt: str,
+        messages: list[BaseMessage],
         stop: list[str] | None = None,
         run_manager: CallbackManagerForLLMRun | None = None,
         **kwargs: Any,
-    ) -> Iterator[GenerationChunk]:
+    ) -> Iterator[ChatGenerationChunk]:
         """Stream the LLM on the given prompt.
 
         Args:
-            prompt: The prompt to generate from.
-            stop: Stop words to use when generating. Model output is cut off at the
-                first occurrence of any of these substrings.
-            run_manager: Callback manager for the run.
-            **kwargs: Arbitrary additional keyword arguments. These are usually passed
-                to the model provider API call.
-
-        Returns:
-            An iterator of GenerationChunks.
+            messages: the prompt composed of a list of messages.
+            stop: a list of strings on which the model should stop generating.
+                  If generation stops due to a stop token, the stop token itself
+                  SHOULD BE INCLUDED as part of the output. This is not enforced
+                  across models right now, but it's a good practice to follow since
+                  it makes it much easier to parse the output of the model
+                  downstream and understand why generation stopped.
+            run_manager: A run manager with callbacks for the LLM.
         """
-        for char in self.text.split():
-            chunk = GenerationChunk(text=char)
+        for token in re_string_pattern.split(self.text):
+            chunk = ChatGenerationChunk(message=AIMessageChunk(content=token))
+
             if run_manager:
-                run_manager.on_llm_new_token(chunk.text, chunk=chunk)
+                # This is optional in newer versions of LangChain
+                # The on_llm_new_token will be called automatically
+                run_manager.on_llm_new_token(token, chunk=chunk)
 
             yield chunk
+
+        # Final token should be empty
+        chunk = ChatGenerationChunk(message=AIMessageChunk(content=""))
+        if run_manager:
+            # This is optional in newer versions of LangChain
+            # The on_llm_new_token will be called automatically
+            run_manager.on_llm_new_token(token, chunk=chunk)
+
+        yield chunk
 
     @property
     def _identifying_params(self) -> dict[str, Any]:

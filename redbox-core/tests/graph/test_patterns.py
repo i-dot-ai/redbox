@@ -16,7 +16,7 @@ from redbox.graph.nodes.processes import (
     build_stuff_pattern,
     empty_process,
 )
-from redbox.chains.runnables import build_chat_prompt_from_messages_runnable, CannedLLM
+from redbox.chains.runnables import build_chat_prompt_from_messages_runnable, CannedChatLLM
 from redbox.test.data import (
     TestData,
     RedboxChatTestCase,
@@ -246,21 +246,21 @@ def test_empty_process():
 def test_canned_llm():
     """Tests that the CannedLLM works in a normal call."""
     text = "Lorem ipsum dolor sit amet."
-    canned = CannedLLM(text=text)
+    canned = CannedChatLLM(text=text)
     response = canned.invoke("Foo")
-    assert text == response
+    assert text == response.content
 
 
 @pytest.mark.asyncio
 async def test_canned_llm_async():
     """Tests that the CannedLLM works asynchronously."""
     text = "Lorem ipsum dolor sit amet."
-    canned = CannedLLM(text=text)
+    canned = CannedChatLLM(text=text)
 
     events: list[dict] = []
     async for e in canned.astream_events("Foo", version="v2"):
         events.append(e)
 
-    response = " ".join([d["data"]["chunk"] for d in events if d.get("event") == "on_llm_stream"])
+    response = "".join([d["data"]["chunk"].content for d in events if d.get("event") == "on_chat_model_stream"])
 
     assert text == response
