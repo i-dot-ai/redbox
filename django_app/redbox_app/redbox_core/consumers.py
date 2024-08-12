@@ -60,7 +60,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         session: Chat = await self.get_session(session_id, user, user_message_text)
 
         # save user message
-        selected_files = await self.get_files_by_id(selected_file_uuids, user)
+        selected_files = [file async for file in File.objects.filter(id__in=selected_file_uuids, user=user)]
         await self.save_message(session, user_message_text, ChatRoleEnum.user, selected_files=selected_files)
 
         await self.llm_conversation(selected_files, session, user, user_message_text)
@@ -194,11 +194,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
         if selected_files:
             chat_message.selected_files.set(selected_files)
         return chat_message
-
-    @staticmethod
-    @database_sync_to_async
-    def get_files_by_id(docs: Sequence[UUID], user: User) -> Sequence[File]:
-        return list(File.objects.filter(id__in=docs, user=user))
 
     @staticmethod
     @database_sync_to_async
