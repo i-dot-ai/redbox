@@ -165,8 +165,8 @@ def get_chat_with_documents_graph(
         "d_single_doc_summaries_bigger_than_context",
         build_documents_bigger_than_context_conditional(PromptSet.ChatwithDocsMapReduce),
         {
-            True: "s_group_2",
-            False: "p_too_large_error",
+            True: "p_too_large_error",
+            False: "s_group_2",
         },
     )
     builder.add_conditional_edges(

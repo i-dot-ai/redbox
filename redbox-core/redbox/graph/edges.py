@@ -67,6 +67,6 @@ def documents_selected_conditional(state: RedboxState) -> bool:
 
 def multiple_docs_in_group_conditional(state: RedboxState) -> bool:
     for group in state["documents"]:
-        if len(state["documents"][group]) > 0:
+        if len(state["documents"][group]) > 1:
             return True
     return False

@@ -58,9 +58,17 @@ TEST_CASES = [
                     2, 80_000, expected_llm_response=["Testing Response 1"], expected_route=ChatRoute.chat_with_docs
                 ),
                 TestData(
+                    2,
+                    140_000,
+                    expected_llm_response=["Map Step Response"] * 2 + ["Testing Response 1"],
+                    expected_route=ChatRoute.chat_with_docs_map_reduce,
+                ),
+                TestData(
                     4,
                     140_000,
-                    expected_llm_response=["Map Step Response"] * 4 + ["These documents are too large to work with."],
+                    expected_llm_response=["Map Step Response"] * 4
+                    + ["Merge Per Document Response"] * 2
+                    + ["Testing Response 1"],
                     expected_route=ChatRoute.chat_with_docs_map_reduce,
                 ),
             ],
@@ -72,7 +80,9 @@ TEST_CASES = [
                 TestData(
                     2,
                     200_000,
-                    expected_llm_response=["Map Step Response"] * 2 + ["These documents are too large to work with."],
+                    expected_llm_response=["Map Step Response"] * 2
+                    + ["Merge Per Document Response"]
+                    + ["Testing Response 1"],
                     expected_route=ChatRoute.chat_with_docs_map_reduce,
                 ),
             ],
