@@ -7,12 +7,16 @@ from pathlib import Path
 import pytest
 from django.core.files.uploadedfile import SimpleUploadedFile, UploadedFile
 from django.core.management import call_command
+from django.utils import timezone
+from freezegun import freeze_time
 
 from redbox_app.redbox_core import client
 from redbox_app.redbox_core.models import (
     BusinessUnit,
     ChatHistory,
     ChatMessage,
+    ChatMessageRating,
+    ChatMessageRatingChip,
     ChatRoleEnum,
     Citation,
     File,
@@ -64,13 +68,23 @@ def jemima_puddleduck():
 @pytest.fixture()
 def user_with_demographic_data(business_unit: BusinessUnit) -> User:
     return User.objects.create_user(
-        email="mrs.tiggywinkle@example.com", grade="DG", business_unit=business_unit, profession="AN"
+        name="Sir Gregory Pitkin",
+        ai_experience=User.AIExperienceLevel.EXPERIENCED_NAVIGATOR,
+        email="mrs.tiggywinkle@example.com",
+        grade="DG",
+        business_unit=business_unit,
+        profession="AN",
     )
 
 
 @pytest.fixture()
 def staff_user(create_user):
     return create_user("staff@example.com", "2000-01-01", True)
+
+
+@pytest.fixture()
+def superuser() -> User:
+    return User.objects.create_superuser("super@example.com", "2000-01-01")
 
 
 @pytest.fixture()
@@ -96,12 +110,14 @@ def s3_client():
 @pytest.fixture()
 def chat_history(alice: User) -> ChatHistory:
     session_id = uuid.uuid4()
-    return ChatHistory.objects.create(id=session_id, users=alice)
+    return ChatHistory.objects.create(id=session_id, users=alice, name="A chat")
 
 
 @pytest.fixture()
 def chat_message(chat_history: ChatHistory, uploaded_file: File) -> ChatMessage:
-    chat_message = ChatMessage.objects.create(chat_history=chat_history, text="A question?", role=ChatRoleEnum.user)
+    chat_message = ChatMessage.objects.create(
+        chat_history=chat_history, text="A question?", role=ChatRoleEnum.user, route="A route"
+    )
     chat_message.source_files.set([uploaded_file])
     return chat_message
 
@@ -151,6 +167,44 @@ def chat_history_with_files(chat_history: ChatHistory, several_files: Sequence[F
 
 
 @pytest.fixture()
+def chat_history_with_messages_over_time(chat_history: ChatHistory) -> ChatHistory:
+    now = timezone.now()
+    with freeze_time(now - timedelta(days=40)):
+        ChatMessage.objects.create(chat_history=chat_history, text="40 days old", role=ChatRoleEnum.user)
+    with freeze_time(now - timedelta(days=20)):
+        ChatMessage.objects.create(chat_history=chat_history, text="20 days old", role=ChatRoleEnum.user)
+    with freeze_time(now - timedelta(days=5)):
+        ChatMessage.objects.create(chat_history=chat_history, text="5 days old", role=ChatRoleEnum.user)
+    with freeze_time(now - timedelta(days=1)):
+        ChatMessage.objects.create(chat_history=chat_history, text="yesterday", role=ChatRoleEnum.user)
+    ChatMessage.objects.create(chat_history=chat_history, text="today", role=ChatRoleEnum.user)
+    return chat_history
+
+
+@pytest.fixture()
+def user_with_chats_with_messages_over_time(alice: User) -> User:
+    now = timezone.now()
+    with freeze_time(now - timedelta(days=40)):
+        chats = [
+            ChatHistory.objects.create(id=uuid.uuid4(), users=alice, name="40 days old"),
+            ChatHistory.objects.create(id=uuid.uuid4(), users=alice, name="20 days old"),
+            ChatHistory.objects.create(id=uuid.uuid4(), users=alice, name="5 days old"),
+            ChatHistory.objects.create(id=uuid.uuid4(), users=alice, name="yesterday"),
+            ChatHistory.objects.create(id=uuid.uuid4(), users=alice, name="today"),
+        ]
+        ChatMessage.objects.create(chat_history=chats[0], text="40 days old", role=ChatRoleEnum.user)
+    with freeze_time(now - timedelta(days=20)):
+        ChatMessage.objects.create(chat_history=chats[1], text="20 days old", role=ChatRoleEnum.user)
+    with freeze_time(now - timedelta(days=5)):
+        ChatMessage.objects.create(chat_history=chats[2], text="5 days old", role=ChatRoleEnum.user)
+    with freeze_time(now - timedelta(days=1)):
+        ChatMessage.objects.create(chat_history=chats[3], text="yesterday", role=ChatRoleEnum.user)
+    ChatMessage.objects.create(chat_history=chats[4], text="today", role=ChatRoleEnum.user)
+
+    return alice
+
+
+@pytest.fixture()
 def several_files(alice: User, number_to_create: int = 4) -> Sequence[File]:
     files = []
     for i in range(number_to_create):
@@ -164,3 +218,13 @@ def several_files(alice: User, number_to_create: int = 4) -> Sequence[File]:
             )
         )
     return files
+
+
+@pytest.fixture()
+def chat_message_with_rating(chat_message: ChatMessage) -> ChatMessage:
+    chat_message_rating = ChatMessageRating(chat_message=chat_message, rating=3, text="Ipsum Lorem.")
+    chat_message_rating.save()
+    ChatMessageRatingChip(rating_id=chat_message_rating.pk, text="speed").save()
+    ChatMessageRatingChip(rating_id=chat_message_rating.pk, text="accuracy").save()
+    ChatMessageRatingChip(rating_id=chat_message_rating.pk, text="blasphemy").save()
+    return chat_message

@@ -1,11 +1,12 @@
 import logging
 from argparse import ArgumentParser
 
+from django.contrib.auth import get_user_model
 from django.core.management import BaseCommand, CommandError
 from django.db.models import Max
 from magic_link.models import MagicLink
 
-from redbox_app.redbox_core.models import User
+User = get_user_model()
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +28,9 @@ class Command(BaseCommand):
             raise CommandError(message) from e
 
         try:
-            latest = MagicLink.objects.filter(user=user).aggregate(Max("created_at"))["created_at__max"]
+            latest = MagicLink.objects.filter(user=user).aggregate(Max("created_at"))[
+                "created_at__max"
+            ]
             logger.debug("latest: %s", latest)
             link: MagicLink = MagicLink.objects.get(user=user, created_at=latest)
         except MagicLink.DoesNotExist as e:

@@ -39,8 +39,10 @@ file_urlpatterns = [
 chat_urlpatterns = [
     path("chats/<uuid:chat_id>/", views.ChatsView.as_view(), name="chats"),
     path("chats/", views.ChatsView.as_view(), name="chats"),
+    path("chat/<uuid:chat_id>/title/", views.ChatsTitleView.as_view(), name="chat-titles"),
     path("post-message/", views.post_message, name="post-message"),
     path("citations/<uuid:message_id>/", views.CitationsView.as_view(), name="citations"),
+    path("ratings/<uuid:message_id>/", views.RatingsView.as_view(), name="ratings"),
 ]
 
 admin_urlpatterns = [
@@ -54,6 +56,7 @@ other_urlpatterns = [
     path("file-status/", views.file_status_api_view, name="file-status"),
     path("check-demographics/", views.CheckDemographicsView.as_view(), name="check-demographics"),
     path("demographics/", views.DemographicsView.as_view(), name="demographics"),
+    path("streamlit/", views.streamlit_view, name="streamlit_view"),
 ]
 
 urlpatterns = (

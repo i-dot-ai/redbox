@@ -15,6 +15,7 @@ from websockets import ConnectionClosedError, WebSocketClientProtocol
 from websockets.client import connect
 from yarl import URL
 
+from redbox_app.redbox_core import error_messages
 from redbox_app.redbox_core.models import ChatHistory, ChatMessage, ChatRoleEnum, Citation, File, User
 
 OptFileSeq = Sequence[File] | None
@@ -32,9 +33,17 @@ class CoreChatResponseDoc:
 
 @dataclass_json(undefined=Undefined.EXCLUDE)
 @dataclass(frozen=True)
+class ErrorDetail:
+    code: str
+    message: str
+
+
+@dataclass_json(undefined=Undefined.EXCLUDE)
+@dataclass(frozen=True)
 class CoreChatResponse:
+    # Needs to match ClientResponse in core_api/src/routes/chat.py
     resource_type: Literal["text", "documents", "route_name", "end", "error"]
-    data: list[CoreChatResponseDoc] | str | None = None
+    data: list[CoreChatResponseDoc] | str | ErrorDetail | None = None
 
 
 class ChatConsumer(AsyncWebsocketConsumer):
@@ -52,10 +61,12 @@ class ChatConsumer(AsyncWebsocketConsumer):
         selected_files = await self.get_files_by_id(selected_file_uuids, user)
         await self.save_message(session, user_message_text, ChatRoleEnum.user, selected_files=selected_files)
 
-        await self.llm_conversation(selected_files, session, user)
+        await self.llm_conversation(selected_files, session, user, user_message_text)
         await self.close()
 
-    async def llm_conversation(self, selected_files: Sequence[File], session: ChatHistory, user: User) -> None:
+    async def llm_conversation(
+        self, selected_files: Sequence[File], session: ChatHistory, user: User, title: str
+    ) -> None:
         session_messages = await self.get_messages(session)
         message_history: Sequence[Mapping[str, str]] = [
             {"role": message.role, "text": message.text} for message in session_messages
@@ -71,14 +82,14 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 await self.send_to_client("session-id", session.id)
                 reply, citations, route = await self.receive_llm_responses(user, core_websocket)
             message = await self.save_message(session, reply, ChatRoleEnum.ai, sources=citations, route=route)
-            await self.send_to_client("end", {"message_id": message.id})
+            await self.send_to_client("end", {"message_id": message.id, "title": title, "session_id": session.id})
 
             for file, _ in citations:
                 file.last_referenced = timezone.now()
                 await self.file_save(file)
         except (TimeoutError, ConnectionClosedError, CancelledError, CoreError) as e:
             logger.exception("Error from core.", exc_info=e)
-            await self.send_to_client("error")
+            await self.send_to_client("error", error_messages.CORE_ERROR_MESSAGE)
 
     async def receive_llm_responses(
         self, user: User, core_websocket: WebSocketClientProtocol
@@ -96,7 +107,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             elif response.resource_type == "route_name":
                 route = await self.handle_route(response, user.is_staff)
             elif response.resource_type == "error":
-                raise CoreError(response.data)
+                full_reply.append(await self.handle_error(response))
         return "".join(full_reply), citations, route
 
     async def handle_documents(
@@ -119,6 +130,20 @@ class ChatConsumer(AsyncWebsocketConsumer):
         else:
             await self.send_to_client("hidden-route", response.data)
         return response.data
+
+    async def handle_error(self, response: CoreChatResponse) -> str:
+        match response.data.code:
+            case "no-document-selected":
+                message = error_messages.SELECT_DOCUMENT
+                await self.send_to_client("text", message)
+                return message
+            case "question-too-long":
+                message = error_messages.QUESTION_TOO_LONG
+                await self.send_to_client("text", message)
+                return message
+            case _:
+                message = f"{response.data.code}: {response.data.message}"
+                raise CoreError(message)
 
     async def send_to_client(self, message_type: str, data: str | Mapping[str, Any] | None = None) -> None:
         message = {"type": message_type, "data": data}
@@ -161,7 +186,12 @@ class ChatConsumer(AsyncWebsocketConsumer):
         if sources:
             for file, citations in sources:
                 for citation in citations:
-                    Citation.objects.create(chat_message=chat_message, file=file, text=citation.page_content)
+                    Citation.objects.create(
+                        chat_message=chat_message,
+                        file=file,
+                        text=citation.page_content,
+                        page_numbers=citation.page_numbers,
+                    )
         if selected_files:
             chat_message.selected_files.set(selected_files)
         return chat_message
