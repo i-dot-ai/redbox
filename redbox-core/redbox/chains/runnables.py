@@ -46,7 +46,7 @@ def build_chat_prompt_from_messages_runnable(prompt_set: PromptSet, tokeniser: E
 
         truncated_history: list[ChainChatMessage] = []
         for msg in state["request"].chat_history[::-1]:
-            chat_history_budget -= len(tokeniser.encode(msg["text"]))
+            chat_history_budget -= len(_tokeniser.encode(msg["text"]))
             if chat_history_budget <= 0:
                 break
             else:
