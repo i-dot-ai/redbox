@@ -37,16 +37,28 @@ class ElasticCloudSettings(BaseModel):
 class Settings(BaseSettings):
     """Settings for the redbox application."""
 
-    anthropic_api_key: str | None = None
-    openai_api_key: str = "NotAKey"
-    azure_openai_api_key: str = "NotAKey"
-    azure_openai_endpoint: str | None = None
+    chat_backend: Literal["azure_35t", "azure_4t", "azure_4o"] = "azure_4o"
 
-    openai_api_version: str = "2023-12-01-preview"
-    azure_api_version_embeddings: str = "2024-02-01"
-    azure_openai_model: str = "azure/gpt-35-turbo-16k"
-    azure_embedding_model: str = "text-embedding-3-large"
+    azure_openai_model_35t: str = "azure/gpt-35-turbo-16k"
+    openai_api_version_35t: str = "2023-12-01-preview"
+    azure_openai_api_key_35t: str | None = None
+    azure_openai_endpoint_35t: str | None = None
+
+    azure_openai_model_4t: str = "azure/gpt-4"
+    openai_api_version_4t: str = "2024-02-01"
+    azure_openai_api_key_4t: str | None = None
+    azure_openai_endpoint_4t: str | None = None
+
+    azure_openai_model_4o: str = "azure/gpt-4o"
+    openai_api_version_4o: str = "2024-02-01"
+    azure_openai_api_key_4o: str | None = None
+    azure_openai_endpoint_4o: str | None = None
+
     llm_max_tokens: int = 1024
+
+    azure_api_version_embeddings: str = "2024-02-01"
+    azure_embedding_model: str = "text-embedding-3-large"
+    azure_embedding_api_key: str | None = None
 
     embedding_backend: Literal["azure", "openai", "fake"] = "azure"
     embedding_max_retries: int = 10
@@ -57,11 +69,6 @@ class Settings(BaseSettings):
 
     embedding_openai_base_url: str | None = None
     embedding_openai_model: str = "text-embedding-ada-002"
-
-    chat_backend: Literal["azure", "openai"] = "azure"
-
-    partition_strategy: Literal["auto", "fast", "ocr_only", "hi_res"] = "fast"
-    clustering_strategy: Literal["full"] | None = None
 
     elastic: ElasticCloudSettings | ElasticLocalSettings = ElasticLocalSettings()
     elastic_root_index: str = "redbox-data"
@@ -101,9 +108,6 @@ class Settings(BaseSettings):
     redis_port: int = 6379
 
     object_store: str = "minio"
-
-    dev_mode: bool = False
-    superuser_email: str | None = None
 
     unstructured_host: str = "unstructured"
 
