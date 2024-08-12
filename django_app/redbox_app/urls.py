@@ -4,27 +4,27 @@ from django.contrib import admin
 from django.urls import include, path
 from magic_link import urls as magic_link_urls
 
-from .redbox_core import auth_views, info_views, views
+from .redbox_core import views
 
 auth_urlpatterns = [
     path("magic_link/", include(magic_link_urls)),
-    path("sign-in/", auth_views.sign_in_view, name="sign-in"),
+    path("sign-in/", views.sign_in_view, name="sign-in"),
     path(
         "sign-in-link-sent/",
-        auth_views.sign_in_link_sent_view,
+        views.sign_in_link_sent_view,
         name="sign-in-link-sent",
     ),
-    path("signed-out/", auth_views.signed_out_view, name="signed-out"),
+    path("signed-out/", views.signed_out_view, name="signed-out"),
 ]
 
 info_urlpatterns = [
-    path("privacy-notice/", info_views.privacy_notice_view, name="privacy-notice"),
+    path("privacy-notice/", views.info_views.privacy_notice_view, name="privacy-notice"),
     path(
         "accessibility-statement/",
-        info_views.accessibility_statement_view,
+        views.accessibility_statement_view,
         name="accessibility-statement",
     ),
-    path("support/", info_views.support_view, name="support"),
+    path("support/", views.support_view, name="support"),
 ]
 
 file_urlpatterns = [
