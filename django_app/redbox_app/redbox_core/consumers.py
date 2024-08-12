@@ -57,7 +57,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
         selected_file_uuids: Sequence[UUID] = [UUID(u) for u in data.get("selectedFiles", [])]
         user: User = self.scope.get("user", None)
 
-        # session: Chat = await self.get_session(session_id, user, user_message_text)
         if session_id := data.get("sessionId"):
             session = await Chat.objects.aget(id=session_id)
         else:
@@ -88,21 +87,21 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 }
                 await self.send_to_server(core_websocket, message)
                 await self.send_to_client("session-id", session.id)
-                reply, citations, route = await self.receive_llm_responses(user, core_websocket)
+                reply, files_and_citations, route = await self.receive_llm_responses(user, core_websocket)
 
             chat_message = await ChatMessage.objects.acreate(
                 chat=session, text=reply, role=ChatRoleEnum.ai, route=route
             )
 
-            for file, _citations in citations:
+            for file, citations in files_and_citations:
                 file.last_referenced = timezone.now()
                 await file.asave()
-                for _citation in _citations:
+                for citation in citations:
                     await Citation.objects.acreate(
                         chat_message=chat_message,
                         file=file,
-                        text=_citation.page_content,
-                        page_numbers=_citation.page_numbers,
+                        text=citation.page_content,
+                        page_numbers=citation.page_numbers,
                     )
 
             await self.send_to_client("end", {"message_id": chat_message.id, "title": title, "session_id": session.id})
