@@ -68,9 +68,10 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
     async def llm_conversation(self, selected_files: Sequence[File], session: Chat, user: User, title: str) -> None:
         """Initiate & close websocket conversation with the core-api message endpoint."""
-        session_messages = await self.get_messages(session)
+
         message_history: Sequence[Mapping[str, str]] = [
-            {"role": message.role, "text": message.text} for message in session_messages
+            {"role": message.role, "text": message.text}
+            async for message in ChatMessage.objects.filter(chat=session).order_by("created_at")
         ]
         url = URL.build(scheme="ws", host=settings.CORE_API_HOST, port=settings.CORE_API_PORT) / "chat/rag"
         try:
@@ -171,11 +172,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
     @staticmethod
     @database_sync_to_async
-    def get_messages(session: Chat) -> Sequence[ChatMessage]:
-        return list(ChatMessage.objects.filter(chat=session).order_by("created_at"))
-
-    @staticmethod
-    @database_sync_to_async
     def save_message(
         session: Chat,
         user_message_text: str,
@@ -213,7 +209,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
         files = File.objects.filter(core_file_uuid__in=uuids, user=user)
 
         return files, [(file, [doc for doc in docs if doc.file_uuid == file.core_file_uuid]) for file in files]
-
 
     @staticmethod
     @database_sync_to_async
