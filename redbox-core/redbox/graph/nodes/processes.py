@@ -27,11 +27,19 @@ re_keyword_pattern = re.compile(r"@(\w+)")
 ## Core patterns
 
 
-def build_retrieve_pattern(retriever: VectorStoreRetriever) -> Callable[[RedboxState], dict[str, Any]]:
+def build_retrieve_pattern(
+    retriever: VectorStoreRetriever, final_source_chain: bool = False
+) -> Callable[[RedboxState], dict[str, Any]]:
     """Returns a function that uses state["request"] and state["text"] to set state["documents"]."""
+    retriever = RunnableParallel({"documents": retriever | structure_documents})
+
+    if final_source_chain:
+        _retriever = retriever.with_config(tags=["source_documents_flag"])
+    else:
+        _retriever = retriever
 
     def _retrieve(state: RedboxState) -> dict[str, Any]:
-        return RunnableParallel({"documents": retriever | structure_documents}).invoke(state)
+        return _retriever.invoke(state)
 
     return _retrieve
 

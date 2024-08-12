@@ -174,7 +174,7 @@ class TestEndToEnd:
         async for websocket in websockets.connect(
             f"ws://{TEST_ORIGIN}/chat/rag", extra_headers=make_headers(user_uuid)
         ):
-            await websocket.send_text(json.dumps(message_history))
+            await websocket.send(json.dumps(message_history))
 
             try:
                 while True:

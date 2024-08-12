@@ -70,7 +70,7 @@ def get_search_graph(
     # Processes
     builder.add_node("p_set_search_route", build_set_route_pattern(route=ChatRoute.search))
     builder.add_node("p_condense_question", build_chat_pattern(llm=llm, prompt_set=PromptSet.CondenseQuestion))
-    builder.add_node("p_retrieve_docs", build_retrieve_pattern(retriever=retriever))
+    builder.add_node("p_retrieve_docs", build_retrieve_pattern(retriever=retriever, final_source_chain=True))
     builder.add_node(
         "p_stuff_docs", build_stuff_pattern(llm=llm, prompt_set=PromptSet.Search, final_response_chain=True)
     )

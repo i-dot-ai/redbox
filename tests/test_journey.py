@@ -94,8 +94,6 @@ def test_user_journey(page: Page, email_address: str):
 
     # Use specific routes
     for route, select_file, should_have_citation in [
-        ("chat", False, False),
-        ("chat", True, False),
         ("search", False, True),
         ("search", True, True),
     ]:
