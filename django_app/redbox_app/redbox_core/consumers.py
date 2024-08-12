@@ -58,39 +58,39 @@ class ChatConsumer(AsyncWebsocketConsumer):
         user: User = self.scope.get("user", None)
 
         if session_id := data.get("sessionId"):
-            session = await Chat.objects.aget(id=session_id)
+            chat = await Chat.objects.aget(id=session_id)
         else:
-            session = await Chat.objects.acreate(name=user_message_text[0 : settings.CHAT_TITLE_LENGTH], user=user)
+            chat = await Chat.objects.acreate(name=user_message_text[0 : settings.CHAT_TITLE_LENGTH], user=user)
 
         # save user message
-        message = await ChatMessage.objects.acreate(chat=session, text=user_message_text, role=ChatRoleEnum.user)
+        message = await ChatMessage.objects.acreate(chat=chat, text=user_message_text, role=ChatRoleEnum.user)
         async for file in File.objects.filter(id__in=selected_file_uuids, user=user):
             message.selected_files.add(file)
 
-        await self.llm_conversation(message.selected_files.all(), session, user, user_message_text)
+        await self.llm_conversation(message, user)
         await self.close()
 
-    async def llm_conversation(self, selected_files: Sequence[File], session: Chat, user: User, title: str) -> None:
+    async def llm_conversation(self, chat_message: ChatMessage, user: User) -> None:
         """Initiate & close websocket conversation with the core-api message endpoint."""
 
         message_history: Sequence[Mapping[str, str]] = [
             {"role": message.role, "text": message.text}
-            async for message in ChatMessage.objects.filter(chat=session).order_by("created_at")
+            async for message in ChatMessage.objects.filter(chat=chat_message.chat).order_by("created_at")
         ]
         url = URL.build(scheme="ws", host=settings.CORE_API_HOST, port=settings.CORE_API_PORT) / "chat/rag"
         try:
             async with connect(str(url), extra_headers={"Authorization": user.get_bearer_token()}) as core_websocket:
                 message = {
                     "message_history": message_history,
-                    "selected_files": [{"uuid": f.core_file_uuid} async for f in selected_files],
+                    "selected_files": [{"uuid": f.core_file_uuid} async for f in chat_message.selected_files.all()],
                     "ai_settings": await self.get_ai_settings(user),
                 }
                 await self.send_to_server(core_websocket, message)
-                await self.send_to_client("session-id", session.id)
+                await self.send_to_client("session-id", chat_message.chat.id)
                 reply, files_and_citations, route = await self.receive_llm_responses(user, core_websocket)
 
             chat_message = await ChatMessage.objects.acreate(
-                chat=session, text=reply, role=ChatRoleEnum.ai, route=route
+                chat=chat_message.chat, text=reply, role=ChatRoleEnum.ai, route=route
             )
 
             for file, citations in files_and_citations:
@@ -104,7 +104,14 @@ class ChatConsumer(AsyncWebsocketConsumer):
                         page_numbers=citation.page_numbers,
                     )
 
-            await self.send_to_client("end", {"message_id": chat_message.id, "title": title, "session_id": session.id})
+            await self.send_to_client(
+                "end",
+                {
+                    "message_id": chat_message.id,
+                    "title": chat_message.text,
+                    "session_id": chat_message.chat.id,
+                },
+            )
 
         except (TimeoutError, ConnectionClosedError, CancelledError, CoreError) as e:
             logger.exception("Error from core.", exc_info=e)
