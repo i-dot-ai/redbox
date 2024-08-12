@@ -64,10 +64,11 @@ class ChatConsumer(AsyncWebsocketConsumer):
             session = await Chat.objects.acreate(name=user_message_text[0 : settings.CHAT_TITLE_LENGTH], user=user)
 
         # save user message
-        selected_files = [file async for file in File.objects.filter(id__in=selected_file_uuids, user=user)]
-        await self.save_message(session, user_message_text, ChatRoleEnum.user, selected_files=selected_files)
+        message = await ChatMessage.objects.acreate(chat=session, text=user_message_text, role=ChatRoleEnum.user)
+        async for file in File.objects.filter(id__in=selected_file_uuids, user=user):
+            message.selected_files.add(file)
 
-        await self.llm_conversation(selected_files, session, user, user_message_text)
+        await self.llm_conversation(message.selected_files.all(), session, user, user_message_text)
         await self.close()
 
     async def llm_conversation(self, selected_files: Sequence[File], session: Chat, user: User, title: str) -> None:
@@ -82,18 +83,30 @@ class ChatConsumer(AsyncWebsocketConsumer):
             async with connect(str(url), extra_headers={"Authorization": user.get_bearer_token()}) as core_websocket:
                 message = {
                     "message_history": message_history,
-                    "selected_files": [{"uuid": f.core_file_uuid} for f in selected_files],
+                    "selected_files": [{"uuid": f.core_file_uuid} async for f in selected_files],
                     "ai_settings": await self.get_ai_settings(user),
                 }
                 await self.send_to_server(core_websocket, message)
                 await self.send_to_client("session-id", session.id)
                 reply, citations, route = await self.receive_llm_responses(user, core_websocket)
-            message = await self.save_message(session, reply, ChatRoleEnum.ai, sources=citations, route=route)
-            await self.send_to_client("end", {"message_id": message.id, "title": title, "session_id": session.id})
 
-            for file, _ in citations:
+            chat_message = await ChatMessage.objects.acreate(
+                chat=session, text=reply, role=ChatRoleEnum.ai, route=route
+            )
+
+            for file, _citations in citations:
                 file.last_referenced = timezone.now()
                 await file.asave()
+                for _citation in _citations:
+                    await Citation.objects.acreate(
+                        chat_message=chat_message,
+                        file=file,
+                        text=_citation.page_content,
+                        page_numbers=_citation.page_numbers,
+                    )
+
+            await self.send_to_client("end", {"message_id": chat_message.id, "title": title, "session_id": session.id})
+
         except (TimeoutError, ConnectionClosedError, CancelledError, CoreError) as e:
             logger.exception("Error from core.", exc_info=e)
             await self.send_to_client("error", error_messages.CORE_ERROR_MESSAGE)
@@ -168,31 +181,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
     async def send_to_server(websocket: WebSocketClientProtocol, data: Mapping[str, Any]) -> None:
         logger.debug("sending %s to core-api", data)
         return await websocket.send(json.dumps(data, default=str))
-
-    @staticmethod
-    @database_sync_to_async
-    def save_message(
-        session: Chat,
-        user_message_text: str,
-        role: ChatRoleEnum,
-        sources: Sequence[tuple[File, CoreChatResponseDoc]] | None = None,
-        selected_files: Sequence[File] | None = None,
-        route: str | None = None,
-    ) -> ChatMessage:
-        chat_message = ChatMessage(chat=session, text=user_message_text, role=role, route=route)
-        chat_message.save()
-        if sources:
-            for file, citations in sources:
-                for citation in citations:
-                    Citation.objects.create(
-                        chat_message=chat_message,
-                        file=file,
-                        text=citation.page_content,
-                        page_numbers=citation.page_numbers,
-                    )
-        if selected_files:
-            chat_message.selected_files.set(selected_files)
-        return chat_message
 
     @staticmethod
     @database_sync_to_async
