@@ -1,5 +1,7 @@
 from uuid import uuid4
 import pytest
+import copy
+
 from langchain_core.language_models.fake_chat_models import GenericFakeChatModel
 
 from redbox.models.chain import RedboxQuery, RedboxState
@@ -131,8 +133,11 @@ def env():
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize(("test_case"), TEST_CASES, ids=[t.test_id for t in TEST_CASES])
-async def test_chat(test_case: RedboxChatTestCase, env, tokeniser):
+@pytest.mark.parametrize(("test"), TEST_CASES, ids=[t.test_id for t in TEST_CASES])
+async def test_chat(test: RedboxChatTestCase, env, tokeniser):
+    # Current setup modifies test data as it's not a fixture. This is a hack
+    test_case = copy.deepcopy(test)
+
     app = Redbox(
         llm=GenericFakeChatModel(messages=iter(test_case.test_data.expected_llm_response)),
         all_chunks_retriever=mock_all_chunks_retriever(test_case.docs),
@@ -152,8 +157,11 @@ async def test_chat(test_case: RedboxChatTestCase, env, tokeniser):
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize(("test_case"), TEST_CASES, ids=[t.test_id for t in TEST_CASES])
-async def test_streaming(test_case: RedboxChatTestCase, env, tokeniser):
+@pytest.mark.parametrize(("test"), TEST_CASES, ids=[t.test_id for t in TEST_CASES])
+async def test_streaming(test: RedboxChatTestCase, env, tokeniser):
+    # Current setup modifies test data as it's not a fixture. This is a hack
+    test_case = copy.deepcopy(test)
+
     app = Redbox(
         llm=GenericFakeChatModel(messages=iter(test_case.test_data.expected_llm_response)),
         all_chunks_retriever=mock_all_chunks_retriever(test_case.docs),
