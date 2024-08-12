@@ -15,6 +15,7 @@ from redbox.graph.nodes.processes import (
     build_passthrough_pattern,
     build_stuff_pattern,
     empty_process,
+    clear_documents_process,
 )
 from redbox.chains.runnables import build_chat_prompt_from_messages_runnable, CannedChatLLM
 from redbox.test.data import (
@@ -241,6 +242,39 @@ def test_empty_process():
     final_state = RedboxState(response)
 
     assert final_state == state
+
+
+CLEAR_DOC_TEST_CASES = [
+    RedboxState(
+        request=RedboxQuery(question="What is AI?", file_uuids=[], user_uuid=uuid4(), chat_history=[]),
+        documents=structure_documents(
+            [doc for doc in generate_docs(parent_file_uuid=uuid4(), creator_user_uuid=uuid4())]
+        ),
+        text="Foo",
+        route_name=ChatRoute.chat_with_docs_map_reduce,
+    ),
+    RedboxState(
+        request=RedboxQuery(question="What is AI?", file_uuids=[], user_uuid=uuid4(), chat_history=[]),
+        documents={},
+        text="Foo",
+        route_name=ChatRoute.chat_with_docs_map_reduce,
+    ),
+]
+
+
+@pytest.mark.parametrize(("test_case"), CLEAR_DOC_TEST_CASES)
+def test_clear_documents(test_case: list[RedboxState]):
+    """Tests that clear documents does what it says."""
+    builder = StateGraph(RedboxState)
+    builder.add_node("clear", clear_documents_process)
+    builder.add_edge(START, "clear")
+    builder.add_edge("clear", END)
+    graph = builder.compile()
+
+    response = graph.invoke(test_case)
+    final_state = RedboxState(response)
+
+    assert final_state["documents"] == {}
 
 
 def test_canned_llm():

@@ -23,6 +23,7 @@ from redbox.graph.nodes.processes import (
     build_passthrough_pattern,
     build_set_text_pattern,
     empty_process,
+    clear_documents_process,
 )
 from redbox.graph.nodes.sends import build_document_chunk_send, build_document_group_send
 
@@ -111,6 +112,7 @@ def get_chat_with_documents_graph(
             final_response_chain=True,
         ),
     )
+    builder.add_node("p_clear_documents", clear_documents_process)
     builder.add_node(
         "p_too_large_error",
         build_set_text_pattern(
@@ -183,8 +185,9 @@ def get_chat_with_documents_graph(
             False: "p_summarise",
         },
     )
+    builder.add_edge("p_summarise", "p_clear_documents")
+    builder.add_edge("p_clear_documents", END)
     builder.add_edge("p_too_large_error", END)
-    builder.add_edge("p_summarise", END)
 
     return builder.compile(debug=debug)
 
