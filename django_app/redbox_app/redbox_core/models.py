@@ -103,6 +103,16 @@ class SSOUser(AbstractBaseUser, PermissionsMixin, UUIDPrimaryKeyBase):
         blank=True,
         max_length=25,
     )
+    # To avoid clashing with User Model
+    user_permissions = models.ManyToManyField(
+        "auth.Permission",
+        verbose_name="user permissions",
+        blank=True,
+        related_name="sso_user_set",
+    )
+    user_permissions = models.ManyToManyField(
+        "auth.Group", verbose_name="groups", blank=True, related_name="sso_user_set"
+    )
 
     USERNAME_FIELD = "username"
     REQUIRED_FIELDS = []
