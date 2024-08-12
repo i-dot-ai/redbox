@@ -88,6 +88,10 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 await self.send_to_server(core_websocket, message)
                 await self.send_to_client("session-id", chat_message.chat.id)
                 reply, files_and_citations, route = await self.receive_llm_responses(user, core_websocket)
+                for file, _ in files_and_citations:
+                    await self.send_to_client(
+                        "source", {"url": str(file.url), "original_file_name": file.original_file_name}
+                    )
 
             chat_message = await ChatMessage.objects.acreate(
                 chat=chat_message.chat, text=reply, role=ChatRoleEnum.ai, route=route
@@ -140,16 +144,14 @@ class ChatConsumer(AsyncWebsocketConsumer):
     async def handle_documents(
         self, response: CoreChatResponse, user: User
     ) -> Sequence[tuple[File, CoreChatResponseDoc]]:
+        """this function enriches the citations received from the core-api with
+        the matching djangio File objects."""
         docs = response.data
 
-        files_and_citations = [
+        return [
             (file, [doc for doc in docs if doc.file_uuid == file.core_file_uuid])
             async for file in File.objects.filter(core_file_uuid__in=[doc.file_uuid for doc in docs], user=user)
         ]
-
-        for file, _ in files_and_citations:
-            await self.send_to_client("source", {"url": str(file.url), "original_file_name": file.original_file_name})
-        return files_and_citations
 
     async def handle_text(self, response: CoreChatResponse) -> str:
         await self.send_to_client("text", response.data)
