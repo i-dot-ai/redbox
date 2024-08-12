@@ -7,7 +7,7 @@ import boto3
 from botocore.config import Config
 from django.conf import settings
 from django.contrib.auth.base_user import BaseUserManager as BaseSSOUserManager
-from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
+from django.contrib.auth.models import AbstractBaseUser, Group, PermissionsMixin
 from django.contrib.postgres.fields import ArrayField
 from django.core import validators
 from django.db import models
@@ -111,7 +111,7 @@ class SSOUser(AbstractBaseUser, PermissionsMixin, UUIDPrimaryKeyBase):
         related_name="sso_user_set",
     )
     user_permissions = models.ManyToManyField(
-        "auth.Group", verbose_name="groups", blank=True, related_name="sso_user_set"
+        Group, verbose_name="groups", blank=True, related_name="sso_user_set"
     )
 
     USERNAME_FIELD = "username"
