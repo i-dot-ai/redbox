@@ -6,19 +6,16 @@ from typing import override
 import boto3
 from botocore.config import Config
 from django.conf import settings
+from django.contrib.auth.base_user import BaseUserManager as BaseSSOUserManager
+from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
 from django.contrib.postgres.fields import ArrayField
 from django.core import validators
 from django.db import models
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
+from django_use_email_as_username.models import BaseUser, BaseUserManager
 from jose import jwt
 from yarl import URL
-
-if settings.LOGIN_METHOD == "sso":
-    from django.contrib.auth.base_user import BaseUserManager
-    from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
-else:
-    from django_use_email_as_username.models import BaseUser, BaseUserManager
 
 logger = logging.getLogger(__name__)
 
@@ -52,7 +49,7 @@ class BusinessUnit(UUIDPrimaryKeyBase):
         return f"{self.name}"
 
 
-class SSOUserManager(BaseUserManager):
+class SSOUserManager(BaseSSOUserManager):
 
     use_in_migrations = True
 
