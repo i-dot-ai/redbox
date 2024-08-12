@@ -368,4 +368,4 @@ else:
     LOGIN_REDIRECT_URL = "homepage"
     LOGIN_URL = "sign-in"
 
-STREAMLIT_HOST = env.str("STREAMLIT_HOST")
+STREAMLIT_HOST = env.str("STREAMLIT_HOST", "")
