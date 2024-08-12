@@ -46,13 +46,10 @@ TEST_CASES = [
                     1, 1000, expected_llm_response=["Testing Response 1"], expected_route=ChatRoute.chat_with_docs
                 ),
                 TestData(
-                    1, 50000, expected_llm_response=["Testing Response 1"], expected_route=ChatRoute.chat_with_docs
+                    1, 50_000, expected_llm_response=["Testing Response 1"], expected_route=ChatRoute.chat_with_docs
                 ),
                 TestData(
-                    1,
-                    180_000,
-                    expected_llm_response=["Map Response"] + ["Testing Response 1"],
-                    expected_route=ChatRoute.chat_with_docs,
+                    1, 80_000, expected_llm_response=["Testing Response 1"], expected_route=ChatRoute.chat_with_docs
                 ),
             ],
             test_id="Chat with single doc",
@@ -63,22 +60,24 @@ TEST_CASES = [
             ),
             test_data=[
                 TestData(
-                    2,
-                    40000,
-                    expected_llm_response=["Testing Response 1"],
-                    expected_route=ChatRoute.chat_with_docs,
+                    2, 40_000, expected_llm_response=["Testing Response 1"], expected_route=ChatRoute.chat_with_docs
+                ),
+                TestData(
+                    2, 80_000, expected_llm_response=["Testing Response 1"], expected_route=ChatRoute.chat_with_docs
                 ),
                 TestData(
                     2,
-                    100_000,
-                    expected_llm_response=["Testing Response 1"],
-                    expected_route=ChatRoute.chat_with_docs,
+                    140_000,
+                    expected_llm_response=["Map Step Response"] * 2 + ["Testing Response 1"],
+                    expected_route=ChatRoute.chat_with_docs_map_reduce,
                 ),
                 TestData(
                     4,
-                    200_000,
-                    expected_llm_response=["Map Response"] * 4 + ["Testing Response 1"],
-                    expected_route=ChatRoute.chat_with_docs,
+                    140_000,
+                    expected_llm_response=["Map Step Response"] * 4
+                    + ["Merge Per Document Response"] * 2
+                    + ["Testing Response 1"],
+                    expected_route=ChatRoute.chat_with_docs_map_reduce,
                 ),
             ],
             test_id="Chat with multiple docs",
@@ -89,11 +88,45 @@ TEST_CASES = [
                 TestData(
                     2,
                     200_000,
-                    expected_llm_response=["Map Response"] * 2 + ["Testing Response 1"],
-                    expected_route=ChatRoute.chat_with_docs,
+                    expected_llm_response=["Map Step Response"] * 2
+                    + ["Merge Per Document Response"]
+                    + ["Testing Response 1"],
+                    expected_route=ChatRoute.chat_with_docs_map_reduce,
                 ),
             ],
             test_id="Chat with large doc",
+        ),
+        generate_test_cases(
+            query=RedboxQuery(question="@search What is AI?", file_uuids=[uuid4()], user_uuid=uuid4(), chat_history=[]),
+            test_data=[
+                TestData(
+                    1,
+                    10000,
+                    expected_llm_response=["Condense response", "The cake is a lie"],
+                    expected_route=ChatRoute.search,
+                ),
+                TestData(
+                    5,
+                    10000,
+                    expected_llm_response=["Condense response", "The cake is a lie"],
+                    expected_route=ChatRoute.search,
+                ),
+            ],
+            test_id="Search",
+        ),
+        generate_test_cases(
+            query=RedboxQuery(
+                question="@nosuchkeyword What is AI?", file_uuids=[uuid4()], user_uuid=uuid4(), chat_history=[]
+            ),
+            test_data=[
+                TestData(
+                    2,
+                    200_000,
+                    expected_llm_response=["That keyword isn't recognised"],
+                    expected_route=ChatRoute.error_no_keyword,
+                ),
+            ],
+            test_id="No Such Keyword",
         ),
     ]
     for test_case in generated_cases

@@ -66,7 +66,10 @@ def build_chat_prompt_from_messages_runnable(prompt_set: PromptSet, tokeniser: E
 
 
 class CannedChatLLM(BaseChatModel):
-    """A custom chat model that returns its text as if an LLM returned it."""
+    """A custom chat model that returns its text as if an LLM returned it.
+    
+    Based on https://python.langchain.com/v0.2/docs/how_to/custom_chat_model/
+    """
 
     text: str
 
