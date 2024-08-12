@@ -110,7 +110,7 @@ class SSOUser(AbstractBaseUser, PermissionsMixin, UUIDPrimaryKeyBase):
         blank=True,
         related_name="sso_user_set",
     )
-    user_permissions = models.ManyToManyField(
+    groups = models.ManyToManyField(
         Group, verbose_name="groups", blank=True, related_name="sso_user_set"
     )
 
