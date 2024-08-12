@@ -121,10 +121,16 @@ class ChatConsumer(AsyncWebsocketConsumer):
     async def handle_documents(
         self, response: CoreChatResponse, user: User
     ) -> Sequence[tuple[File, CoreChatResponseDoc]]:
-        source_files, citations = await self.get_sources_with_files(response.data, user)
-        for file in source_files:
+        docs = response.data
+
+        files_and_citations = [
+            (file, [doc for doc in docs if doc.file_uuid == file.core_file_uuid])
+            async for file in File.objects.filter(core_file_uuid__in=[doc.file_uuid for doc in docs], user=user)
+        ]
+
+        for file, _ in files_and_citations:
             await self.send_to_client("source", {"url": str(file.url), "original_file_name": file.original_file_name})
-        return citations
+        return files_and_citations
 
     async def handle_text(self, response: CoreChatResponse) -> str:
         await self.send_to_client("text", response.data)
@@ -187,16 +193,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
         if selected_files:
             chat_message.selected_files.set(selected_files)
         return chat_message
-
-    @staticmethod
-    @database_sync_to_async
-    def get_sources_with_files(
-        docs: Sequence[CoreChatResponseDoc], user: User
-    ) -> tuple[Sequence[File], Sequence[tuple[File, Sequence[CoreChatResponseDoc]]]]:
-        uuids = [doc.file_uuid for doc in docs]
-        files = File.objects.filter(core_file_uuid__in=uuids, user=user)
-
-        return files, [(file, [doc for doc in docs if doc.file_uuid == file.core_file_uuid]) for file in files]
 
     @staticmethod
     @database_sync_to_async
