@@ -33,6 +33,7 @@ pytest-cov = "^5.0.0"
 pytest-asyncio = "^0.23.6"
 jsonlines = "^4.0.0"
 deepeval = "^0.21.74"
+pytest-mock = "^3.14.0"
 
 [build-system]
 requires = ["poetry-core"]
