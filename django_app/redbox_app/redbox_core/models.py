@@ -217,7 +217,6 @@ class User(BaseUser, UUIDPrimaryKeyBase):
             ),
         )
 
-
     username = None
     verified = models.BooleanField(default=False, blank=True, null=True)
     invited_at = models.DateTimeField(default=None, blank=True, null=True)
