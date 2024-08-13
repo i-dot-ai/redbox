@@ -189,7 +189,6 @@ def make_test_case(
     retriever = get_parameterised_retriever(env=env)
 
     rag_chain = get_search_graph(
-        llm=llm,
         retriever=retriever,
         tokeniser=get_tokeniser(),
         llm_max_tokens=env.llm_max_tokens,
