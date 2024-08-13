@@ -2,9 +2,10 @@ import logging
 from http import HTTPStatus
 
 import pytest
+from django.contrib.auth import get_user_model
 from django.test import Client
 
-from redbox_app.redbox_core.models import User
+User = get_user_model()
 
 logger = logging.getLogger(__name__)
 
