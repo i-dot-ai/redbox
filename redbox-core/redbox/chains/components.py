@@ -52,7 +52,7 @@ def get_tokeniser() -> tiktoken.Encoding:
 
 def get_azure_embeddings(env: Settings):
     return AzureOpenAIEmbeddings(
-        api_key=convert_to_secret_str(env.azure_openai_api_key),
+        api_key=convert_to_secret_str(env.embedding_openai_api_key),
         azure_endpoint=env.embedding_azure_openai_endpoint,
         api_version=env.azure_api_version_embeddings,
         model=env.azure_embedding_model,
