@@ -1,0 +1,52 @@
+[
+    {
+        "user_scenario": "level1_lang_qa",
+        "id": 1,
+        "notes": "A basic factual question with an easy answer.",
+        "input": "What is the relationship between science, publics and policy called?",
+        "context": [
+            "The report focuses on the three-way relationship between science, publics, and policy (see Figure 1) that comprise the science-for-policymaking system."
+        ],
+        "expected_output": "The relationship between science, publics and policy is called science-for-policymaking system."
+    },
+    {
+        "user_scenario": "level2_lang_qa",
+        "id": 1,
+        "notes": "A more difficult question that doesn't explicitly refer to the answer.",
+        "input": "Who was in charge of creating the Public trust in science-for-Policymaking report?",
+        "context": [
+            "The project was led by a small working group of experts who continuously reviewed, analysed and scrutinised the evidence emerging over a 12-month period."
+        ],
+        "expected_output": "The project was led by a small working group of experts who continuously reviewed, analysed and scrutinised the evidence emerging over a 12-month period."
+    },
+    {
+        "user_scenario": "level1_math_qa",
+        "id": 1,
+        "notes": "A basic number retrieval with an easy answer",
+        "input": "How many impact topics were identified by topic modelling?",
+        "context": [
+            "Based on this empirically-driven topic modelling approach, we identified 79 impact topics, as summarised in Table 1."
+        ],
+        "expected_output": "79 impact topics were identified by topic modelling."
+    },
+    {
+        "user_scenario": "level2_math_qa",
+        "id": 1,
+        "notes": "A question that requires changing a figure from the context.",
+        "input": "It is 2024. How many years has it been since the first Research Excellence Framework (REF)?",
+        "context": [
+            "First carried out in 2014, the REF replaced the Research Assessment Exercise and is managed by Research England on behalf of the four UK higher education funding bodies:"
+        ],
+        "expected_output": "It has been 10 years since the first REF."
+    },
+    {
+        "user_scenario": "level3_math_qa",
+        "id": 1,
+        "notes": "A question that requires combining multiple figures from the context.",
+        "input": "What percent of the impact component were not considered 'outstanding' or 'considerable' in REF 2021 submissions?",
+        "context": [
+            "In REF 2021, 157 UK higher education institutions made submissions across the 34 UoAs. High-level analysis of the results showed that 50% of the impact component was considered outstanding, with a further 38% deemed considerable."
+        ],
+        "expected_output": "12% of the impact component in the REF 2021 submissions were not considered 'outstanding' or 'considerable'."
+    }
+]

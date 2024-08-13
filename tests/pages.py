@@ -4,7 +4,7 @@ from collections.abc import Collection, Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
 from time import sleep
-from typing import Any, ClassVar, Union
+from typing import Any, ClassVar, Union, override
 
 from axe_playwright_python.sync_playwright import Axe
 from playwright.sync_api import Locator, Page, expect
@@ -53,9 +53,10 @@ class BasePage(ABC):
         expect(self.page).to_have_title(expected_page_title)
         # expect(self.page).to_have_url("url")
 
-    def check_a11y(self):
+    def check_a11y(self, exclude: Sequence[str] | None = None):
+        context = {"exclude": exclude} if exclude else None
         expect(self.page.locator(".iai-footer__container")).to_be_visible()  # Ensure page is fully loaded
-        results = self.axe.run(self.page, context=None, options=self.AXE_OPTIONS)
+        results = self.axe.run(self.page, context=context, options=self.AXE_OPTIONS)
         if results.violations_count:
             error_message = f"accessibility violations from page {self}: {results.generate_report()} "
             raise PageError(error_message)
@@ -161,14 +162,14 @@ class SignInConfirmationPage(BasePage):
         return self._where_are_we(self.page)
 
     @staticmethod
-    def autosubmit(page: Page, magic_link: URL) -> Union["DocumentsPage", "MyDetailsPage"]:
+    def autosubmit(page: Page, magic_link: URL) -> Union["ChatsPage", "MyDetailsPage"]:
         page.goto(str(magic_link))
         expect(page).not_to_have_title(SignInConfirmationPage.EXPECTED_TITLE)
         return SignInConfirmationPage._where_are_we(page)
 
     @staticmethod
-    def _where_are_we(page: Page) -> Union["DocumentsPage", "MyDetailsPage"]:
-        return MyDetailsPage(page) if page.title().startswith("My details") else DocumentsPage(page)
+    def _where_are_we(page: Page) -> Union["ChatsPage", "MyDetailsPage"]:
+        return MyDetailsPage(page) if page.title().startswith("My details") else ChatsPage(page)
 
 
 class HomePage(SignedInBasePage):
@@ -181,6 +182,19 @@ class MyDetailsPage(SignedInBasePage):
     @property
     def expected_page_title(self) -> str:
         return "My details - Redbox"
+
+    @property
+    def name(self) -> str:
+        return self.page.get_by_label("Full Name").get_by_role(role="option", selected=True).input_value()
+
+    @name.setter
+    def name(self, name: str):
+        self.page.get_by_label("Full Name").fill(name)
+
+    def ai_experience(self, ai_experience: str):
+        self.page.get_by_test_id(ai_experience).click()
+
+    ai_experience = property(fset=ai_experience)
 
     @property
     def grade(self) -> str:
@@ -206,9 +220,9 @@ class MyDetailsPage(SignedInBasePage):
     def profession(self, grade: str):
         self.page.get_by_label("Profession").select_option(grade)
 
-    def update(self) -> "DocumentsPage":
+    def update(self) -> "ChatsPage":
         self.page.get_by_text("Update").click()
-        return DocumentsPage(self.page)
+        return ChatsPage(self.page)
 
 
 @dataclass
@@ -293,11 +307,25 @@ class ChatMessage:
     chats_page: "ChatsPage" = field(repr=False)
 
     def navigate_to_citations(self) -> "CitationsPage":
-        self.element.locator(".iai-chat-bubble__citations-button").click()
+        self.element.locator("a.iai-chat-bubble__citations-button").click()
         return CitationsPage(self.chats_page.page)
+
+    @classmethod
+    def from_element(cls, element: Locator, page: "ChatsPage") -> "ChatMessage":
+        status = element.get_attribute("data-status")
+        role = element.locator(".iai-chat-bubble__role").inner_text()
+        route = element.locator(".iai-chat-bubble__route-text").inner_text() or None
+        text = element.locator(".iai-chat-bubble__text").inner_text()
+        sources = element.locator("sources-list").get_by_role("listitem").all_inner_texts()
+        return cls(status=status, role=role, route=route, text=text, sources=sources, element=element, chats_page=page)
 
 
 class ChatsPage(SignedInBasePage):
+    @override
+    def check_a11y(self, **kwargs):
+        # Exclude AI generated content, since we can't control it.
+        return super().check_a11y(exclude=[".iai-chat-bubble__text"])
+
     @property
     def expected_page_title(self) -> str:
         return "Chats - Redbox"
@@ -327,6 +355,36 @@ class ChatsPage(SignedInBasePage):
             else:
                 checkbox.uncheck()
 
+    def feedback_stars(self, rating: int):
+        self.page.locator(".feedback__container").get_by_role("button").nth(rating - 1).click()
+
+    feedback_stars = property(fset=feedback_stars)
+
+    @property
+    def feedback_text(self) -> str:
+        return self.page.locator(".feedback__container").get_by_role("textbox").inner_text()
+
+    @feedback_text.setter
+    def feedback_text(self, text: str):
+        self.page.locator(".feedback__container").get_by_role("textbox").fill(text)
+
+    def feedback_chips(self, chips: Collection[str]):
+        for chip in chips:
+            self.page.locator(".feedback__container").get_by_test_id(chip).check()
+
+    feedback_chips = property(fset=feedback_chips)
+
+    @property
+    def chat_title(self) -> str:
+        return self.page.locator(".chat-title__heading").inner_text()
+
+    @chat_title.setter
+    def chat_title(self, title: str):
+        self.page.locator(".chat-title__edit-btn").click()
+        input_ = self.page.get_by_label("Chat Title")
+        input_.fill(title)
+        input_.press("Enter")
+
     def start_new_chat(self) -> "ChatsPage":
         self.page.get_by_role("button", name="New chat").click()
         return ChatsPage(self.page)
@@ -335,19 +393,15 @@ class ChatsPage(SignedInBasePage):
         self.page.get_by_text("Send").click()
         return ChatsPage(self.page)
 
-    @property
-    def all_messages(self) -> list[ChatMessage]:
-        return [self._chat_message_from_element(element) for element in self.page.locator("chat-message").all()]
+    def improve(self):
+        self.page.get_by_role("button", name="Help improve the response").click()
 
-    def _chat_message_from_element(self, element: Locator) -> ChatMessage:
-        status = element.get_attribute("data-status")
-        role = element.locator(".iai-chat-bubble__role").inner_text()
-        route = element.locator(".iai-chat-bubble__route").inner_text() or None
-        text = element.locator(".iai-chat-bubble__text").inner_text()
-        sources = element.locator("sources-list").get_by_role("listitem").all_inner_texts()
-        return ChatMessage(
-            status=status, role=role, route=route, text=text, sources=sources, element=element, chats_page=self
-        )
+    def submit_feedback(self):
+        self.page.locator(".feedback__container").get_by_role("button", name="Submit").click()
+
+    @property
+    def all_messages(self) -> Sequence[ChatMessage]:
+        return [ChatMessage.from_element(element, self) for element in self.page.locator("chat-message").all()]
 
     def get_all_messages_once_streaming_has_completed(
         self, retry_interval: int = 1, max_tries: int = 120
@@ -368,8 +422,17 @@ class ChatsPage(SignedInBasePage):
     def wait_for_latest_message(self, role="Redbox") -> ChatMessage:
         return [m for m in self.get_all_messages_once_streaming_has_completed() if m.role == role][-1]
 
+    def navigate_to_titled_chat(self, title: str) -> "ChatsPage":
+        self.page.get_by_role("link", name=title).click()
+        return ChatsPage(self.page)
+
 
 class CitationsPage(SignedInBasePage):
+    @override
+    def check_a11y(self, **kwargs):
+        # Exclude AI generated content, since we can't control it.
+        return super().check_a11y(exclude=[".iai-chat-bubble__text"])
+
     @property
     def expected_page_title(self) -> str:
         return "Citations - Redbox"

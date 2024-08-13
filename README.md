@@ -1,4 +1,4 @@
-[![Integration Tests](https://github.com/i-dot-ai/redbox-copilot/actions/workflows/integration.yml/badge.svg?branch=main)](https://github.com/i-dot-ai/redbox-copilot/actions/workflows/integration.yml?query=branch%3Amain)
+[![Integration Tests](https://github.com/i-dot-ai/redbox/actions/workflows/integration.yml/badge.svg?branch=main)](https://github.com/i-dot-ai/redbox/actions/workflows/integration.yml?query=branch%3Amain)
 
 # 📮 Redbox
 
@@ -16,12 +16,12 @@ Redbox is a retrieval augmented generation (RAG) app that uses GenAI to chat wit
 
 https://github.com/i-dot-ai/redbox-copilot/assets/8233643/e7984242-1403-4c93-9e68-03b3f065b38d
 
-
 # Setup
 
 Please refer to the [DEVELOPER_SETUP.md](./docs/DEVELOPER_SETUP.md) for detailed instructions on setting up the project.
 
 # Codespace
+
 For a quick start, you can use GitHub Codespaces to run the project in a cloud-based development environment. Click the button below to open the project in a new Codespace.
 
 [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/i-dot-ai/redbox-copilot?quickstart=1)
@@ -29,6 +29,7 @@ For a quick start, you can use GitHub Codespaces to run the project in a cloud-b
 # Development
 
 You will need to install `poppler` and `tesseract` to run the `worker`
+
 - `brew install poppler`
 - `brew install tesseract`
 
@@ -37,6 +38,7 @@ You will need to install `poppler` and `tesseract` to run the `worker`
   - `pre-commit install`
 
 # Testing
+
 - Unit tests and QA run in CI
 - At this time integration test(s) take 10+ mins to run so are triggered manually in CI
 - Run `make help` to see all the available build activities.
@@ -52,7 +54,7 @@ For every microservice that we have written in python we define its dependencies
 This means that our project is structured approximately like this:
 
 ```txt
-redbox-copilot/
+redbox/
 ├── django_app
 │  ├── app/
 │  ├── static/
@@ -64,14 +66,17 @@ redbox-copilot/
 │  ├── src/
 │  │  └── app.py
 │  ├── tests/
+│  ├── pyproject.toml
 │  └── Dockerfile
 ├── core-api
 │  ├── src/
 │  │  └── app.py
 │  ├── tests/
+│  ├── pyproject.toml
 │  └── Dockerfile
 ├── redbox-core/
 │  ├── redbox
+│  │  ├── loader/
 │  │  ├── models/
 │  │  └── storage/
 │  ├── tests/
@@ -85,7 +90,7 @@ redbox-copilot/
 
 # Contributing
 
-We welcome contributions to this project. Please see the [CONTRIBUTING.md](./CONTRIBUTING.md) file for more information.
+We welcome contributions to this project. Please see the [CONTRIBUTING.md](./docs/contributing.md) file for more information.
 
 # License
 
@@ -95,17 +100,18 @@ This project is licensed under the MIT License - see the [LICENSE](./LICENSE) fi
 
 > [!IMPORTANT]
 > The core-api is the http-gateway to the backend. Currently, this is unsecured, you should only run this on
-> a private network. 
+> a private network.
 
 However:
-* We have taken care to ensure that the backend is as stateless as possible, i.e. it only stores text chunks and 
-  embeddings. All data is associated with a user, and a user can access their own data. 
-* The only user data stored is the user-uuid, and no chat history is stored.
-* We are considering making the core-api secure. To this end the user-uuid is passed to the core-api as a JWT.
+
+- We have taken care to ensure that the backend is as stateless as possible, i.e. it only stores text chunks and
+  embeddings. All data is associated with a user, and a user can access their own data.
+- The only user data stored is the user-uuid, and no chat history is stored.
+- We are considering making the core-api secure. To this end the user-uuid is passed to the core-api as a JWT.
   Currently no attempt is made to verify the JWT, but in the future we may do so, e.g. via Cognito or similar
 
 You can generate your JWT using the following snippet. Note that you whilst you can use a more secure key than an
-empty string this is currently not verified.  
+empty string this is currently not verified.
 
 ```python
 from jose import jwt
@@ -128,6 +134,7 @@ If you discover a security vulnerability within this project, please follow our 
 ```commandline
 ERROR: Elasticsearch exited unexpectedly, with exit code 137
 ```
+
 This is caused by Elasticsearch not having enough memory.
 
 Increase total memory available to 8gb.
@@ -153,50 +160,40 @@ docker system prune --all --force
 
 ### Frontend
 
-
-#### CSS
-
-We depend on `govuk-frontend` for GOV.UK Design System styles.
+To build the frontend assets, from the `django_app/frontend/` folder run:
 
 ```
 npm install
 ```
 
-Once this has been done, `django-compressor` should work automatically to
-compile the govuk-frontend SCSS on the first request and any subsequent request
-after the SCSS has changed. In the meantime it will read from `frontend/CACHE`,
-which is `.gitignore`d.
+Then, for a one-off build run:
 
-When we get to production, we can prepopulate `frontend/CACHE` using `manage.py
-compress` before building our container, which will mean that every request
-will be served from the cache.
+```
+npx parcel build
+```
 
-`django-compressor` also takes care of fingerprinting and setting cache headers
-for our CSS so it can be cached.
+Or, to watch for changes (e.g. if making CSS and JS changes):
 
-#### Fonts and images
+```
+npx parcel watch
+```
 
-The govuk assets are versioned in the `npm` package. On initial app setup you will need to run `poetry run python manage.py collectstatic` to copy them to the `frontend` folder from where `runserver` can serve them.
-
-We’ll revisit this process when we deploy the app.
-
-
+On initial app setup you will need to run `poetry run python manage.py collectstatic` to copy them to the `frontend` folder from where `runserver` can serve them. Or you can run `make build-django-static` which combines the parcel build and collectstatic commands.
 
 ## How to deploy
 
 checkout the `main` branch of the following repos:
-* https://github.com/i-dot-ai/redbox-copilot
+
+* https://github.com/i-dot-ai/redbox
 * https://github.com/i-dot-ai/i-ai-core-infrastructure/
 * https://github.com/i-dot-ai/redbox-copilot-infra-config
 
-
 If, and only if, you want to deploy something other than HEAD then replace `var.image_tag` in `infrastructure/aws/ecs.tf` with the hash of the build you want deployed.
-
 
 Now run the commands below remembering to replace ENVIRONMENT with `dev`, `preprod` or `prod`
 
 ```commandline
-cd redbox-copilot
+cd redbox
 make tf_init
 make tf_apply env=<ENVIRONMENT>
 ```

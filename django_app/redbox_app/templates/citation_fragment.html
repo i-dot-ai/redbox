@@ -1,5 +1,5 @@
 <div class="govuk-grid-row">
-  
+
   <div class="govuk-grid-column-one-third govuk-!-margin-top-7">
 
     <div class="iai-panel">
@@ -30,6 +30,9 @@
             <ul class="rb-citations">
               {% for citation in source_file.citation_set.all() %}
                 <li class="rb-citations__item">
+                  {% if citation.page_numbers %}
+                    <div class="govuk-body-s govuk-!-margin-top-3">Page number(s): {{ citation.page_numbers | join(", ") }}</div>
+                  {% endif %}
                   <markdown-converter class="iai-chat-bubble__text">{{ citation.text }}</markdown-converter>
                 </li>
               {% endfor %}

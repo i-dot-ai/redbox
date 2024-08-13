@@ -5,14 +5,6 @@ name: Python application
 
 on:
   push:
-    paths:
-      - redbox/**
-      - core_api/**
-      - django_app/**
-      - worker/**
-      - Makefile
-      - poetry.lock
-      - .github/**
     branches:
       - 'main'
       - 'feature/**'
@@ -27,17 +19,17 @@ permissions:
   contents: read
 
 jobs:
-  test:
+  test-core-api:
 
     runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v3
 
-    - name: Set up Python 3.11
+    - name: Set up Python 3.12
       uses: actions/setup-python@v3
       with:
-        python-version: "3.11"
+        python-version: "3.12"
 
     - name: Set up Poetry
       uses: abatilo/actions-poetry@v2
@@ -51,22 +43,72 @@ jobs:
         cp .env.test .env
         docker compose up -d --wait elasticsearch
 
-        poetry install --no-root --no-ansi --with dev --without ai,api,worker
-        poetry run python download_embedder.py --embedding_model paraphrase-albert-small-v2
+    - name: Test core with pytest
+      run: |
+        make test-core-api
+
+  test-worker:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Python 3.12
+      uses: actions/setup-python@v3
+      with:
+        python-version: "3.12"
+
+    - name: Set up Poetry
+      uses: abatilo/actions-poetry@v2
+      with:
+        poetry-version: 1.7.0
+
+    - name: Build Containers
+      run: |
+        mkdir -p data/elastic/
+        chmod 777 data/elastic/
+        cp .env.test .env
+        docker compose up -d --wait elasticsearch
 
     - name: Add dependencies for worker
       run: |
         sudo apt update && sudo apt-get install -y \
         poppler-utils \
-        tesseract-ocr
+        tesseract-ocr \
+        libmagic-dev
 
     - name: Test worker with pytest
       run: |
-        make test-worker
+        cp .env.test worker/.env
+        cd worker
+        poetry install
+        poetry run python -m nltk.downloader punkt
+        poetry run pytest --cov=worker -v --cov-report=term-missing --cov-fail-under=80
 
-    - name: Test core with pytest
+  test-redbox:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Python 3.12
+      uses: actions/setup-python@v3
+      with:
+        python-version: "3.12"
+
+    - name: Set up Poetry
+      uses: abatilo/actions-poetry@v2
+      with:
+        poetry-version: 1.7.0
+
+    - name: Build Containers
       run: |
-        make test-core-api
+        mkdir -p data/elastic/
+        chmod 777 data/elastic/
+        cp .env.test .env
+        docker compose up -d --wait elasticsearch
 
     - name: Test redbox with pytest
       run: |
@@ -80,10 +122,10 @@ jobs:
     steps:
     - uses: actions/checkout@v3
 
-    - name: Set up Python 3.11
+    - name: Set up Python 3.13
       uses: actions/setup-python@v3
       with:
-        python-version: "3.11"
+        python-version: "3.12"
 
     - name: Set up Poetry
       uses: abatilo/actions-poetry@v2
