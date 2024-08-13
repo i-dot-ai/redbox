@@ -32,7 +32,7 @@ variable "django_command" {
   }))
   default = [
     { command : "delete_expired_data", task_name : "delete", schedule : "cron(00 02 * * ? *)" }, # every day at 2-2:30am
-    { command : "reingest_files", task_name : "reingest" } # manually triggered
+    { command : "reingest_files", task_name : "reingest" }                                       # manually triggered
   ]
   description = "An object describing the django command to run"
 }
@@ -375,12 +375,23 @@ variable "embedding_retry_max_seconds" {
 variable "worker_ingest_min_chunk_size" {
   type        = number
   default     = 600
-  description = "Minimum size of chunks to be produced by the worker"
+  description = "Normal chunk resolution. Minimum size of chunks to be produced by the worker"
 }
-
 
 variable "worker_ingest_max_chunk_size" {
   type        = number
   default     = 800
-  description = "Maximum size of chunks to be produced by the worker"
+  description = "Normal chunk resolution. Maximum size of chunks to be produced by the worker"
+}
+
+variable "worker_ingest_largest_chunk_size" {
+  type        = number
+  default     = 96000
+  description = "Largest chunk resolution. Maximum size of chunks to be produced by the worker"
+}
+
+variable "worker_ingest_largest_chunk_overlap" {
+  type        = number
+  default     = 0
+  description = "Largest chunk resolution. Size of overlap between chunks produced by the worker"
 }
