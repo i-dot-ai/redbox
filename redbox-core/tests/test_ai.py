@@ -24,7 +24,7 @@ from pydantic import BaseModel, Field
 
 from redbox.chains.components import get_chat_llm, get_parameterised_retriever, get_tokeniser
 from redbox.graph.search import get_search_graph
-from redbox.models.chain import ChainInput, ChainState
+from redbox.models.chain import ChainInput, ChainState, AISettings
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Generator
@@ -92,12 +92,12 @@ def ai_experiment_data() -> ExperimentData:
 
 
 @pytest.fixture(scope="session")
-def llm(env: Settings) -> ChatLiteLLM:
-    return get_chat_llm(env)
+def llm(env: Settings, ai_settings: AISettings) -> ChatLiteLLM:
+    return get_chat_llm(env, ai_settings)
 
 
 @pytest.fixture(scope="session")
-def eval_llm(env: Settings) -> DeepEvalBaseLLM:
+def eval_llm(env: Settings, ai_settings: AISettings) -> DeepEvalBaseLLM:
     """Creates LLM for evaluating our data.
 
     Note in its current form this hard-codes the same model for generation
@@ -124,7 +124,7 @@ def eval_llm(env: Settings) -> DeepEvalBaseLLM:
         def get_model_name(self):
             return "Custom LiteLLM Model"
 
-    return ChatLiteLLMDeepEval(model=get_chat_llm(env))
+    return ChatLiteLLMDeepEval(model=get_chat_llm(env, ai_settings))
 
 
 @pytest.fixture(scope="session")

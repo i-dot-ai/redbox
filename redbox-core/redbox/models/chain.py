@@ -109,11 +109,11 @@ class AISettings(BaseModel):
     reduce_system_prompt: str = REDUCE_SYSTEM_PROMPT
     llm_max_tokens: int = 1024
 
-    # size: int = 19 rag_k
     match_boost: int = 1
-    # num_candidates: int = 13 rag_num_candidates
     knn_boost: int = 1
     similarity_threshold: int = 0
+
+    chat_backend: Literal["azure_35t", "azure_4t", "azure_4o"] = "azure_4o"
 
 
 class ChainInput(BaseModel):

@@ -5,6 +5,7 @@ import pytest
 from elasticsearch import Elasticsearch
 
 from redbox.models import File, Settings
+from redbox.models.chain import AISettings
 from redbox.storage.elasticsearch import ElasticsearchStorageHandler
 
 from collections.abc import Generator
@@ -21,6 +22,11 @@ from tests.retriever.data import ALL_CHUNKS_RETRIEVER_CASES, PARAMETERISED_RETRI
 @pytest.fixture(scope="session")
 def env():
     return Settings(django_secret_key="", postgres_password="")
+
+
+@pytest.fixture()
+def ai_settings():
+    return AISettings()
 
 
 @pytest.fixture()

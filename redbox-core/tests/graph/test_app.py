@@ -138,59 +138,67 @@ def parameterised_retriever(docs):
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(("test_case"), TEST_CASES, ids=[t.test_id for t in TEST_CASES])
-async def test_chat(test_case: RedboxChatTestCase, env, tokeniser):
-    app = Redbox(
-        llm=GenericFakeChatModel(messages=iter(test_case.test_data.expected_llm_response)),
-        all_chunks_retriever=all_chunks_retriever(test_case.docs),
-        parameterised_retriever=parameterised_retriever(test_case.docs),
-        tokeniser=tokeniser,
-        env=env,
-        debug=LANGGRAPH_DEBUG,
-    )
-    response = await app.run(
-        input=ChainState(query=test_case.query),
-    )
-    final_state = ChainState(response)
-    assert (
-        final_state["response"] == test_case.test_data.expected_llm_response[-1]
-    ), f"Expected LLM response: '{test_case.test_data.expected_llm_response[-1]}'. Received '{final_state["response"]}'"
-    assert (
-        final_state["route_name"] == test_case.test_data.expected_route
-    ), f"Expected Route: '{ test_case.test_data.expected_route}'. Received '{final_state["route_name"]}'"
+async def test_chat(test_case: RedboxChatTestCase, env, tokeniser, mocker):
+    llm = GenericFakeChatModel(messages=iter(test_case.test_data.expected_llm_response))
+    with (
+        mocker.patch("redbox.chains.graph.get_chat_llm", return_value=llm),
+        mocker.patch("redbox.graph.chat.get_chat_llm", return_value=llm),
+    ):
+        app = Redbox(
+            all_chunks_retriever=all_chunks_retriever(test_case.docs),
+            parameterised_retriever=parameterised_retriever(test_case.docs),
+            tokeniser=tokeniser,
+            env=env,
+            debug=LANGGRAPH_DEBUG,
+        )
+        response = await app.run(
+            input=ChainState(query=test_case.query),
+        )
+        final_state = ChainState(response)
+        assert (
+            final_state["response"] == test_case.test_data.expected_llm_response[-1]
+        ), f"Expected LLM response: '{test_case.test_data.expected_llm_response[-1]}'. Received '{final_state["response"]}'"
+        assert (
+            final_state["route_name"] == test_case.test_data.expected_route
+        ), f"Expected Route: '{ test_case.test_data.expected_route}'. Received '{final_state["route_name"]}'"
 
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(("test_case"), TEST_CASES, ids=[t.test_id for t in TEST_CASES])
-async def test_streaming(test_case: RedboxChatTestCase, env, tokeniser):
-    app = Redbox(
-        llm=GenericFakeChatModel(messages=iter(test_case.test_data.expected_llm_response)),
-        all_chunks_retriever=all_chunks_retriever(test_case.docs),
-        parameterised_retriever=parameterised_retriever(test_case.docs),
-        tokeniser=tokeniser,
-        env=env,
-        debug=LANGGRAPH_DEBUG,
-    )
+async def test_streaming(test_case: RedboxChatTestCase, env, tokeniser, mocker):
+    llm = GenericFakeChatModel(messages=iter(test_case.test_data.expected_llm_response))
+    with (
+        mocker.patch("redbox.chains.graph.get_chat_llm", return_value=llm),
+        mocker.patch("redbox.graph.chat.get_chat_llm", return_value=llm),
+    ):
+        app = Redbox(
+            all_chunks_retriever=all_chunks_retriever(test_case.docs),
+            parameterised_retriever=parameterised_retriever(test_case.docs),
+            tokeniser=tokeniser,
+            env=env,
+            debug=LANGGRAPH_DEBUG,
+        )
 
-    token_events = []
+        token_events = []
 
-    async def streaming_response_handler(tokens: str):
-        token_events.append(tokens)
+        async def streaming_response_handler(tokens: str):
+            token_events.append(tokens)
 
-    response = await app.run(
-        input=ChainState(query=test_case.query), response_tokens_callback=streaming_response_handler
-    )
-    final_state = ChainState(response)
+        response = await app.run(
+            input=ChainState(query=test_case.query), response_tokens_callback=streaming_response_handler
+        )
+        final_state = ChainState(response)
 
-    # Bit of a bodge to retain the ability to check that the LLM streaming is working in most cases
-    if not final_state["route_name"].startswith("error"):
-        assert len(token_events) > 1, f"Expected tokens as a stream. Received: {token_events}"
-    llm_response = "".join(token_events)
-    assert (
-        final_state["response"] == llm_response
-    ), f"Expected LLM response: '{llm_response}'. Received '{final_state["response"]}'"
-    assert (
-        final_state["route_name"] == test_case.test_data.expected_route
-    ), f"Expected Route: '{ test_case.test_data.expected_route}'. Received '{final_state["route_name"]}'"
+        # Bit of a bodge to retain the ability to check that the LLM streaming is working in most cases
+        if not final_state["route_name"].startswith("error"):
+            assert len(token_events) > 1, f"Expected tokens as a stream. Received: {token_events}"
+        llm_response = "".join(token_events)
+        assert (
+            final_state["response"] == llm_response
+        ), f"Expected LLM response: '{llm_response}'. Received '{final_state["response"]}'"
+        assert (
+            final_state["route_name"] == test_case.test_data.expected_route
+        ), f"Expected Route: '{ test_case.test_data.expected_route}'. Received '{final_state["route_name"]}'"
 
 
 def get_available_keywords():
@@ -200,7 +208,6 @@ def get_available_keywords():
         parameterised_retriever=parameterised_retriever([]),
         tokeniser=tokeniser,
         env=env,
-        ai=None,
         debug=LANGGRAPH_DEBUG,
     )
     keywords = {ChatRoute.search}
