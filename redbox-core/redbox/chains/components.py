@@ -13,36 +13,31 @@ from redbox.retriever import AllElasticsearchRetriever, ParameterisedElasticsear
 
 
 def get_chat_llm(env: Settings, ai_settings: AISettings):
-    os.environ["AZURE_OPENAI_MODEL"] = ai_settings.chat_backend
-
-    if ai_settings.chat_backend == "azure/gpt-35-turbo-16k":
-        os.environ["AZURE_OPENAI_ENDPOINT"] = env.azure_openai_endpoint_35t
-        os.environ["AZURE_OPENAI_API_KEY"] = env.azure_openai_api_key_35t
-        return AzureChatOpenAI(
+    if ai_settings.chat_backend == "gpt-35-turbo-16k":
+        llm = AzureChatOpenAI(
             api_key=convert_to_secret_str(env.azure_openai_api_key_35t),
             azure_endpoint=env.azure_openai_endpoint_35t,
             model=ai_settings.chat_backend,
             api_version=env.openai_api_version_35t,
         )
-    if ai_settings.chat_backend == "azure/gpt-4":
-        os.environ["AZURE_OPENAI_ENDPOINT"] = env.azure_openai_endpoint_4t
-        os.environ["AZURE_OPENAI_API_KEY"] = env.azure_openai_api_key_4t
-        return AzureChatOpenAI(
+    elif ai_settings.chat_backend == "gpt-4-turbo-2024-04-09":
+        llm = AzureChatOpenAI(
             api_key=convert_to_secret_str(env.azure_openai_api_key_4t),
             azure_endpoint=env.azure_openai_endpoint_4t,
             model=ai_settings.chat_backend,
             api_version=env.openai_api_version_4t,
         )
-    if ai_settings.chat_backend == "azure/gpt-4o":
-        os.environ["AZURE_OPENAI_ENDPOINT"] = env.azure_openai_endpoint_4o
-        os.environ["AZURE_OPENAI_API_KEY"] = env.azure_openai_api_key_4o
-        return AzureChatOpenAI(
+    elif ai_settings.chat_backend == "gpt-4o":
+        llm = AzureChatOpenAI(
             api_key=convert_to_secret_str(env.azure_openai_api_key_4o),
             azure_endpoint=env.azure_openai_endpoint_4o,
             model=ai_settings.chat_backend,
             api_version=env.openai_api_version_4o,
         )
-    raise Exception(f"{ai_settings.chat_backend} not recognised")
+    else:
+        raise Exception("%s not recognised", ai_settings.chat_backend)
+
+    return llm
 
 
 @cache

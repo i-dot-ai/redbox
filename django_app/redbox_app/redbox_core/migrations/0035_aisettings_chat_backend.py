@@ -6,7 +6,7 @@ from django.db import migrations, models
 def back_populate_ai_settings_chat_backend(apps, schema_editor):
     AISettings = apps.get_model("redbox_core", "AISettings")
     for ai_settings in AISettings.objects.all():
-        ai_settings.chat_backend = "azure/gpt-4"
+        ai_settings.chat_backend = "gpt-4o"
         ai_settings.save()
 
 
@@ -20,15 +20,15 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='aisettings',
             name='chat_backend',
-            field=models.CharField(blank=True, choices=[('azure/gpt-35-turbo-16k', 'azure/gpt-35-turbo-16k'), ('azure/gpt-4', 'azure/gpt-4'), ('azure/gpt-4o', 'azure/gpt-4o')], help_text='LLM to use in chat', max_length=64, null=True),
+            field=models.CharField(blank=True, choices=[('gpt-35-turbo-16k', 'gpt-35-turbo-16k'), ('gpt-4-turbo-2024-04-09', 'gpt-4-turbo-2024-04-09'), ('gpt-4o', 'gpt-4o')], help_text='LLM to use in chat', max_length=64, null=True),
         ),
         migrations.RunPython(back_populate_ai_settings_chat_backend, migrations.RunPython.noop),
         migrations.AlterField(
             model_name='aisettings',
             name='chat_backend',
             field=models.CharField(
-                choices=[('azure/gpt-35-turbo-16k', 'azure/gpt-35-turbo-16k'), ('azure/gpt-4', 'azure/gpt-4'),
-                         ('azure/gpt-4o', 'azure/gpt-4o')], help_text='LLM to use in chat', max_length=64),
+                choices=[('gpt-35-turbo-16k', 'gpt-35-turbo-16k'), ('gpt-4-turbo-2024-04-09', 'gpt-4-turbo-2024-04-09'),
+                         ('gpt-4o', 'gpt-4o')], help_text='LLM to use in chat', max_length=64),
         ),
 
     ]

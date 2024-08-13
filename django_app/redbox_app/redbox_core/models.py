@@ -47,9 +47,9 @@ def sanitise_string(string: str | None) -> str | None:
 
 class AISettings(UUIDPrimaryKeyBase, TimeStampedModel):
     class ChatBackend(models.TextChoices):
-        GPT_35_TURBO = "azure/gpt-35-turbo-16k", _("azure/gpt-35-turbo-16k")
-        GPT_4_TURBO = "azure/gpt-4", _("azure/gpt-4")
-        GPT_35_OMNI = "azure/gpt-4o", _("azure/gpt-4o")
+        GPT_35_TURBO = "gpt-35-turbo-16k", _("gpt-35-turbo-16k")
+        GPT_4_TURBO = "gpt-4-turbo-2024-04-09", _("gpt-4-turbo-2024-04-09")
+        GPT_35_OMNI = "gpt-4o", _("gpt-4o")
 
     label = models.CharField(max_length=50, unique=True)
     context_window_size = models.PositiveIntegerField(default=8_000)
