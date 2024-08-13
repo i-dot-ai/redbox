@@ -12,7 +12,7 @@ from requests.exceptions import RequestException
 
 from . import models
 
-# User = get_user_model()
+User = get_user_model()
 
 logger = logging.getLogger(__name__)
 core_api = CoreApiClient(host=settings.CORE_API_HOST, port=settings.CORE_API_PORT)
@@ -45,11 +45,11 @@ class UserAdmin(ImportMixin, admin.ModelAdmin):
     date_hierarchy = "last_login"
 
     @admin.display(ordering="ai_experience", description="AI Experience")
-    def get_ai(self, obj: models.User):
+    def get_ai(self, obj: User):
         return obj.ai_experience
 
     class Meta:
-        model = models.User
+        model = User
         fields = ["email"]
         import_id_fields = ["email"]
 
@@ -184,7 +184,7 @@ class CitationAdmin(admin.ModelAdmin):
         return obj.chat_message.chat_history.users
 
 
-admin.site.register(models.User, UserAdmin)
+admin.site.register(User, UserAdmin)
 admin.site.register(models.File, FileAdmin)
 admin.site.register(models.ChatHistory, ChatHistoryAdmin)
 admin.site.register(models.ChatMessage, ChatMessageAdmin)
