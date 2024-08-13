@@ -92,13 +92,7 @@ class CannedChatLLM(BaseChatModel):
                   downstream and understand why generation stopped.
             run_manager: A run manager with callbacks for the LLM.
         """
-        message = AIMessage(
-            content=self.text,
-            # additional_kwargs={},
-            # response_metadata={  # Use for response metadata
-            #     "time_in_seconds": 3,
-            # },
-        )
+        message = AIMessage(content=self.text)
 
         generation = ChatGeneration(message=message)
         return ChatResult(generations=[generation])

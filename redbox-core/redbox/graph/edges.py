@@ -31,10 +31,7 @@ def build_documents_bigger_than_context_conditional(prompt_set: PromptSet) -> Ru
         system_prompt, question_prompt = get_prompts(state, prompt_set)
         token_budget = calculate_token_budget(state, system_prompt, question_prompt)
 
-        if sum(d.metadata["token_count"] for d in flatten_document_state(state["documents"])) > token_budget:
-            return True
-        else:
-            return False
+        return sum(d.metadata["token_count"] for d in flatten_document_state(state["documents"])) > token_budget
 
     return _documents_bigger_than_context_conditional
 
@@ -66,7 +63,4 @@ def documents_selected_conditional(state: RedboxState) -> bool:
 
 
 def multiple_docs_in_group_conditional(state: RedboxState) -> bool:
-    for group in state["documents"]:
-        if len(state["documents"][group]) > 1:
-            return True
-    return False
+    return any(len(group) > 1 for group in state["documents"].values())
