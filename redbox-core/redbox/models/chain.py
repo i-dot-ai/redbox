@@ -75,6 +75,19 @@ CONDENSE_SYSTEM_PROMPT = (
     "don't try to make up an answer. \n"
 )
 
+CHOOSE_ROUTE_SYSTEM_PROMPT = (
+    "You are a helpful assistant with access to a large document base.\n"
+    "Would the following request be best served by (A) searching the document base for "
+    "small chunks, or by (B) giving you the entire document? "
+    "Reply with A or B. "
+    "Do not explain your choice. \n\n"
+    "For example: \n\n"
+    "Question: How much was spent in quarter 3?\n"
+    "Answer: A\n\n"
+    "Question: What does this document have to say about spending?\n"
+    "Answer: B\n\n"
+)
+
 CHAT_QUESTION_PROMPT = "{question}\n=========\n Response: "
 
 CHAT_WITH_DOCS_QUESTION_PROMPT = "Question: {question}. \n\n Documents: \n\n {formatted_documents} \n\n Answer: "
@@ -84,6 +97,8 @@ RETRIEVAL_QUESTION_PROMPT = "{question} \n=========\n{formatted_documents}\n====
 CHAT_MAP_QUESTION_PROMPT = "Question: {question}. \n Documents: \n {formatted_documents} \n\n Answer: "
 
 CONDENSE_QUESTION_PROMPT = "{question}\n=========\n Standalone question: "
+
+CHOOSE_ROUTE_QUESTION_PROMPT = "Question: {question}\n Answer: "
 
 
 class AISettings(BaseModel):
@@ -108,6 +123,8 @@ class AISettings(BaseModel):
     chat_map_system_prompt: str = CHAT_MAP_SYSTEM_PROMPT
     chat_map_question_prompt: str = CHAT_MAP_QUESTION_PROMPT
     reduce_system_prompt: str = REDUCE_SYSTEM_PROMPT
+    choose_route_system_prompt: str = CHOOSE_ROUTE_SYSTEM_PROMPT
+    choose_route_question_prompt: str = CHOOSE_ROUTE_QUESTION_PROMPT
     llm_max_tokens: int = 1024
 
     # size: int = 19 rag_k
@@ -192,6 +209,7 @@ class PromptSet(StrEnum):
     ChatwithDocsMapReduce = "chat_with_docs_map_reduce"
     Search = "search"
     CondenseQuestion = "condense_question"
+    ChooseRoute = "choose_route"
 
 
 def get_prompts(state: RedboxState, prompt_set: PromptSet) -> tuple[str, str]:
@@ -210,4 +228,7 @@ def get_prompts(state: RedboxState, prompt_set: PromptSet) -> tuple[str, str]:
     elif prompt_set == PromptSet.CondenseQuestion:
         system_prompt = state["request"].ai_settings.condense_system_prompt
         question_prompt = state["request"].ai_settings.condense_question_prompt
+    elif prompt_set == PromptSet.ChooseRoute:
+        system_prompt = state["request"].ai_settings.choose_route_system_prompt
+        question_prompt = state["request"].ai_settings.choose_route_question_prompt
     return (system_prompt, question_prompt)

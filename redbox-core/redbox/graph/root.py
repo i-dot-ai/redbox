@@ -8,6 +8,7 @@ from redbox.graph.edges import (
     multiple_docs_in_group_conditional,
     build_keyword_detection_conditional,
     documents_selected_conditional,
+    first_character_conditional,
 )
 from redbox.graph.nodes.processes import (
     PromptSet,
@@ -222,12 +223,14 @@ def get_root_graph(
         "p_no_keyword_route",
         build_set_route_pattern(route=ChatRoute.error_no_keyword),
     )
+    builder.add_node("p_choose_route", build_chat_pattern(llm=llm, prompt_set=PromptSet.ChooseRoute))
     builder.add_node("p_chat", chat_subgraph)
     builder.add_node("p_chat_with_documents", cwd_subgraph)
 
     # Decisions
     builder.add_node("d_keyword_exists", empty_process)
     builder.add_node("d_docs_selected", empty_process)
+    builder.add_node("d_ai_route_choice", empty_process)
 
     # Edges
     builder.add_edge(START, "d_keyword_exists")
@@ -240,8 +243,18 @@ def get_root_graph(
         "d_docs_selected",
         documents_selected_conditional,
         {
-            True: "p_chat_with_documents",
+            True: "p_choose_route",
             False: "p_chat",
+        },
+    )
+    builder.add_edge("p_choose_route", "d_ai_route_choice")
+    builder.add_conditional_edges(
+        "d_ai_route_choice",
+        first_character_conditional,
+        {
+            "A": "p_search",
+            "B": "p_chat_with_documents",
+            "DEFAULT": "p_chat_with_documents",
         },
     )
     builder.add_edge("p_search", END)

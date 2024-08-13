@@ -58,6 +58,11 @@ def build_keyword_detection_conditional(*allowed_routes: ChatRoute) -> Runnable:
     return _keyword_detection_conditional
 
 
+def first_character_conditional(state: RedboxState) -> str:
+    s = state.get("text")
+    return s[0].upper() if s else "DEFAULT"
+
+
 def documents_selected_conditional(state: RedboxState) -> bool:
     return len(state["request"].file_uuids) > 0
 
