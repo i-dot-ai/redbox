@@ -69,8 +69,6 @@ class Settings(BaseSettings):
     embedding_openai_base_url: str | None = None
     embedding_openai_model: str = "text-embedding-ada-002"
 
-    chat_backend: Literal["azure", "openai"] = "azure"
-
     partition_strategy: Literal["auto", "fast", "ocr_only", "hi_res"] = "fast"
     clustering_strategy: Literal["full"] | None = None
 

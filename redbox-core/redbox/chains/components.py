@@ -13,6 +13,8 @@ from redbox.retriever import AllElasticsearchRetriever, ParameterisedElasticsear
 
 
 def get_chat_llm(env: Settings, ai_settings: AISettings):
+    os.environ["AZURE_OPENAI_MODEL"] = ai_settings.chat_backend
+
     if ai_settings.chat_backend == "azure/gpt-35-turbo-16k":
         os.environ["AZURE_OPENAI_ENDPOINT"] = env.azure_openai_endpoint_35t
         os.environ["AZURE_OPENAI_API_KEY"] = env.azure_openai_api_key_35t
