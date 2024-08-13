@@ -87,8 +87,8 @@ class Settings(BaseSettings):
 
     ## Chunks
     ### Normal
-    worker_ingest_min_chunk_size: int = 120
-    worker_ingest_max_chunk_size: int = 300
+    worker_ingest_min_chunk_size: int = 600
+    worker_ingest_max_chunk_size: int = 800
     ### Largest
     worker_ingest_largest_chunk_size: int = 96000
     worker_ingest_largest_chunk_overlap: int = 0
