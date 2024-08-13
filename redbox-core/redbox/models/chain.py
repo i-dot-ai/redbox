@@ -110,11 +110,12 @@ class AISettings(BaseModel):
     reduce_system_prompt: str = REDUCE_SYSTEM_PROMPT
     llm_max_tokens: int = 1024
 
-    # size: int = 19 rag_k
     match_boost: int = 1
-    # num_candidates: int = 13 rag_num_candidates
     knn_boost: int = 1
     similarity_threshold: int = 0
+
+    # this is also the azure_openai_model
+    chat_backend: Literal["azure/gpt-35-turbo-16k", "azure/gpt-4", "azure/gpt-4o"] = "azure/gpt-4o"
 
 
 class DocumentState(TypedDict):

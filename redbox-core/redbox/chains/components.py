@@ -6,17 +6,34 @@ from langchain_openai.embeddings import AzureOpenAIEmbeddings, OpenAIEmbeddings
 from langchain_core.utils import convert_to_secret_str
 import tiktoken
 
+from redbox.models.chain import AISettings
 from redbox.models.settings import Settings
 from redbox.retriever import AllElasticsearchRetriever, ParameterisedElasticsearchRetriever
 
 
-def get_chat_llm(env: Settings):
-    return AzureChatOpenAI(
-        api_key=convert_to_secret_str(env.azure_openai_api_key),
-        azure_endpoint=env.azure_openai_endpoint,
-        model=env.azure_openai_model,
-        api_version=env.azure_api_version_embeddings,
-    )
+def get_chat_llm(env: Settings, ai_settings: AISettings):
+    if ai_settings.chat_backend == "azure/gpt-35-turbo-16k":
+        return AzureChatOpenAI(
+            api_key=convert_to_secret_str(env.azure_openai_api_key_35t),
+            azure_endpoint=env.azure_openai_endpoint_35t,
+            model=ai_settings.chat_backend,
+            api_version=env.openai_api_version_35t,
+        )
+    if ai_settings.chat_backend == "azure/gpt-4":
+        return AzureChatOpenAI(
+            api_key=convert_to_secret_str(env.azure_openai_api_key_4t),
+            azure_endpoint=env.azure_openai_endpoint_4t,
+            model=ai_settings.chat_backend,
+            api_version=env.openai_api_version_4t,
+        )
+    if ai_settings.chat_backend == "azure/gpt-4o":
+        return AzureChatOpenAI(
+            api_key=convert_to_secret_str(env.azure_openai_api_key_4o),
+            azure_endpoint=env.azure_openai_endpoint_4o,
+            model=ai_settings.chat_backend,
+            api_version=env.openai_api_version_4o,
+        )
+    raise Exception(f"{ai_settings.chat_backend} not recognised")
 
 
 @cache
@@ -27,7 +44,7 @@ def get_tokeniser() -> tiktoken.Encoding:
 def get_azure_embeddings(env: Settings):
     return AzureOpenAIEmbeddings(
         api_key=convert_to_secret_str(env.azure_openai_api_key),
-        azure_endpoint=env.azure_openai_endpoint,
+        azure_endpoint=env.embedding_azure_openai_endpoint,
         api_version=env.azure_api_version_embeddings,
         model=env.azure_embedding_model,
         max_retries=env.embedding_max_retries,
@@ -38,7 +55,7 @@ def get_azure_embeddings(env: Settings):
 
 def get_openai_embeddings(env: Settings):
     return OpenAIEmbeddings(
-        api_key=convert_to_secret_str(env.openai_api_key),
+        api_key=convert_to_secret_str(env.embedding_openai_api_key),
         base_url=env.embedding_openai_base_url,
         model=env.embedding_openai_model,
         chunk_size=env.embedding_max_batch_size,

@@ -1,12 +1,10 @@
-from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_core.vectorstores import VectorStoreRetriever
-from tiktoken import Encoding
 
 from redbox.graph.root import get_root_graph
 from redbox.models.chain import RedboxState
 from redbox.models.chat import ChatRoute
 from redbox.models.settings import Settings
-from redbox.chains.components import get_all_chunks_retriever, get_parameterised_retriever, get_chat_llm
+from redbox.chains.components import get_all_chunks_retriever, get_parameterised_retriever
 from redbox.graph.root import (
     ROUTABLE_KEYWORDS,
     ROUTE_NAME_TAG,
@@ -22,19 +20,16 @@ async def _default_callback(*args, **kwargs):
 class Redbox:
     def __init__(
         self,
-        llm: BaseChatModel | None = None,
         all_chunks_retriever: VectorStoreRetriever | None = None,
         parameterised_retriever: VectorStoreRetriever | None = None,
-        tokeniser: Encoding | None = None,
         env: Settings | None = None,
         debug: bool = False,
     ):
         _env = env or Settings()
         _all_chunks_retriever = all_chunks_retriever or get_all_chunks_retriever(_env)
         _parameterised_retriever = parameterised_retriever or get_parameterised_retriever(_env)
-        _llm = llm or get_chat_llm(_env)
 
-        self.graph = get_root_graph(_llm, _all_chunks_retriever, _parameterised_retriever, debug)
+        self.graph = get_root_graph(_all_chunks_retriever, _parameterised_retriever, debug)
 
     async def run(
         self,

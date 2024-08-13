@@ -1,6 +1,5 @@
 from langgraph.graph import START, END, StateGraph
 from langgraph.graph.graph import CompiledGraph
-from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_core.vectorstores import VectorStoreRetriever
 
 from redbox.graph.edges import (
@@ -41,7 +40,6 @@ ROUTABLE_KEYWORDS = {ChatRoute.search: "Search for an answer to the question in 
 
 
 def get_chat_graph(
-    llm: BaseChatModel,
     debug: bool = False,
 ) -> CompiledGraph:
     """Creates a subgraph for standard chat."""
@@ -49,7 +47,7 @@ def get_chat_graph(
 
     # Processes
     builder.add_node("p_set_chat_route", build_set_route_pattern(route=ChatRoute.chat))
-    builder.add_node("p_chat", build_chat_pattern(llm=llm, prompt_set=PromptSet.Chat, final_response_chain=True))
+    builder.add_node("p_chat", build_chat_pattern(prompt_set=PromptSet.Chat, final_response_chain=True))
 
     # Edges
     builder.add_edge(START, "p_set_chat_route")
@@ -60,7 +58,6 @@ def get_chat_graph(
 
 
 def get_search_graph(
-    llm: BaseChatModel,
     retriever: VectorStoreRetriever,
     debug: bool = False,
 ) -> CompiledGraph:
@@ -69,11 +66,9 @@ def get_search_graph(
 
     # Processes
     builder.add_node("p_set_search_route", build_set_route_pattern(route=ChatRoute.search))
-    builder.add_node("p_condense_question", build_chat_pattern(llm=llm, prompt_set=PromptSet.CondenseQuestion))
+    builder.add_node("p_condense_question", build_chat_pattern(prompt_set=PromptSet.CondenseQuestion))
     builder.add_node("p_retrieve_docs", build_retrieve_pattern(retriever=retriever, final_source_chain=True))
-    builder.add_node(
-        "p_stuff_docs", build_stuff_pattern(llm=llm, prompt_set=PromptSet.Search, final_response_chain=True)
-    )
+    builder.add_node("p_stuff_docs", build_stuff_pattern(prompt_set=PromptSet.Search, final_response_chain=True))
 
     # Edges
     builder.add_edge(START, "p_set_search_route")
@@ -86,7 +81,6 @@ def get_search_graph(
 
 
 def get_chat_with_documents_graph(
-    llm: BaseChatModel,
     retriever: VectorStoreRetriever,
     debug: bool = False,
 ) -> CompiledGraph:
@@ -98,16 +92,13 @@ def get_chat_with_documents_graph(
     builder.add_node("p_retrieve_docs", build_retrieve_pattern(retriever=retriever))
     builder.add_node("p_set_chat_docs_route", build_set_route_pattern(route=ChatRoute.chat_with_docs))
     builder.add_node("p_set_chat_docs_large_route", build_set_route_pattern(route=ChatRoute.chat_with_docs_map_reduce))
+    builder.add_node("p_summarise_each_document", build_merge_pattern(prompt_set=PromptSet.ChatwithDocsMapReduce))
     builder.add_node(
-        "p_summarise_each_document", build_merge_pattern(llm=llm, prompt_set=PromptSet.ChatwithDocsMapReduce)
-    )
-    builder.add_node(
-        "p_summarise_document_by_document", build_merge_pattern(llm=llm, prompt_set=PromptSet.ChatwithDocsMapReduce)
+        "p_summarise_document_by_document", build_merge_pattern(prompt_set=PromptSet.ChatwithDocsMapReduce)
     )
     builder.add_node(
         "p_summarise",
         build_stuff_pattern(
-            llm=llm,
             prompt_set=PromptSet.ChatwithDocs,
             final_response_chain=True,
         ),
@@ -196,7 +187,6 @@ def get_chat_with_documents_graph(
 
 
 def get_root_graph(
-    llm: BaseChatModel,
     all_chunks_retriever: VectorStoreRetriever,
     parameterised_retriever: VectorStoreRetriever,
     debug: bool = False,
@@ -205,9 +195,9 @@ def get_root_graph(
     builder = StateGraph(RedboxState)
 
     # Subgraphs
-    chat_subgraph = get_chat_graph(llm=llm, debug=debug)
-    rag_subgraph = get_search_graph(llm=llm, retriever=parameterised_retriever, debug=debug)
-    cwd_subgraph = get_chat_with_documents_graph(llm=llm, retriever=all_chunks_retriever, debug=debug)
+    chat_subgraph = get_chat_graph(debug=debug)
+    rag_subgraph = get_search_graph(retriever=parameterised_retriever, debug=debug)
+    cwd_subgraph = get_chat_with_documents_graph(retriever=all_chunks_retriever, debug=debug)
 
     # Processes
     builder.add_node("p_search", rag_subgraph)
