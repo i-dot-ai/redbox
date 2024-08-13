@@ -223,6 +223,7 @@ class User(BaseUser, UUIDPrimaryKeyBase):
     ai_experience = models.CharField(null=True, blank=True, max_length=25, choices=AIExperienceLevel)
     profession = models.CharField(null=True, blank=True, max_length=4, choices=Profession)
     ai_settings = models.ForeignKey(AISettings, on_delete=models.SET_DEFAULT, default="default", to_field="label")
+    is_developer = models.BooleanField(null=True, blank=True, default=False, help_text="is this user a developer?")
     objects = BaseUserManager()
 
     def __str__(self) -> str:  # pragma: no cover
