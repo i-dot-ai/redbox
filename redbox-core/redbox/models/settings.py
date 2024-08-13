@@ -53,7 +53,7 @@ class Settings(BaseSettings):
     azure_openai_endpoint_4o: str = "not an endpoint"
 
     embedding_openai_api_key: str = "NotAKey"
-    embedding_azure_openai_endpoint: str | None = None
+    embedding_azure_openai_endpoint: str = "not an endpoint"
     azure_api_version_embeddings: str = "2024-02-01"
     azure_embedding_model: str = "text-embedding-3-large"
 
@@ -66,7 +66,7 @@ class Settings(BaseSettings):
     embedding_max_batch_size: int = 512
     embedding_document_field_name: str = "embedding"
 
-    embedding_openai_base_url: str | None = None
+    embedding_openai_base_url: str = "not an endpoint"
     embedding_openai_model: str = "text-embedding-ada-002"
 
     partition_strategy: Literal["auto", "fast", "ocr_only", "hi_res"] = "fast"
