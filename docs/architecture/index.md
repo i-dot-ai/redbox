@@ -29,13 +29,12 @@ The Retrieval Augmented Generation (RAG) architecture grounds our Large Language
 | Component | AWS | Azure | Local | Purpose/Function                           |
 |-----------|-----|-------|---------|--------------------------------------------|
 | Object Store | S3 | Blob Storage | Minio | Storage of files                           |
-| Queue | SQS | Storage Queues | Redis | Distributing many compute tasks            |
+| Queue | ElastiCache | Storage Queues | Redis | Distributing many compute tasks            |
 | Frontend App | ECS | App Service | Docker | Django GOV.UK/AlpineJS                     |
 | Core API | ECS | App Service | Docker | FastAPI AI Interaction and DB Intermediary |
 | Worker | ECS | App Service | Docker | Queue fed file ingester and embedder               |
-| Document Database | DynamoDB | CosmosDB | PostGres | Conversation and Doc storage               |
+| Database | RDS/Postgres | Postgres | Postgres | Chat history & user data          |
 | Vector Database | ElasticCloud | ElasticCloud | Elasticsearch | RAG Database                               |
 | Container Registry | ECR | ACR | Harbor | Storage for app containers                 |
-| Embedding API | Bedrock | Azure OpenAI Service | Huggingface Containers | Embedding for docs into VectorDB           |
-| LLM API | Bedrock | Azure OpenAI Service | Huggingface Containers | Chat model                                 |
-| Authentication | Cognito | Entra | NONE | User auth and management                   |
+| Embedding API | Azure OpenAI Service | Azure OpenAI Service | Huggingface Containers | Embedding for docs into VectorDB           |
+| LLM API | Azure OpenAI Service | Azure OpenAI Service | Huggingface Containers | Chat model                                 |

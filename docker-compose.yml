@@ -1,3 +1,5 @@
+version: '3'
+
 services:
   django-app:
     image: django-app:latest
@@ -26,6 +28,22 @@ services:
       timeout: 30s
       retries: 24
       start_period: 60s
+
+  streamlit-app:
+    image: streamlit-app:latest
+    build:
+      context: .
+      dockerfile: ./notebooks/evaluation/Dockerfile
+    ports:
+      - "8501:8501"
+    networks:
+      - redbox-app-network
+    env_file:
+      - .env
+    volumes:
+      - ./notebooks/evaluation:/app/notebooks/evaluation
+
+
   db:
     image: postgres:13
     env_file:
@@ -42,8 +60,9 @@ services:
       timeout: 30s
       retries: 24
       start_period: 30s
+
   requirements:
-    image: python:3.11
+    image: python:3.12
     profiles:
       - utils
     volumes:
@@ -68,7 +87,10 @@ services:
       args:
         - EMBEDDING_MODEL=${EMBEDDING_MODEL:-}
     env_file:
-      - .env
+      - path: .env.integration
+        required: false
+      - path: .env
+        required: false
     depends_on:
       elasticsearch:
         condition: service_healthy
@@ -79,11 +101,12 @@ services:
     networks:
       - redbox-app-network
     restart: unless-stopped
+
   core-api:
     image: redbox-core-api:latest
     build:
       context: .
-      dockerfile: core_api/Dockerfile
+      dockerfile: core-api/Dockerfile
       args:
         - EMBEDDING_MODEL=${EMBEDDING_MODEL:-}
     ports:
@@ -91,7 +114,10 @@ services:
     environment:
       - PORT=5002
     env_file:
-      - .env
+      - path: .env.integration
+        required: false
+      - path: .env
+        required: false
     networks:
       - redbox-app-network
     depends_on:
@@ -110,6 +136,7 @@ services:
       timeout: 30s
       retries: 24
       start_period: 60s
+
   minio:
     image: minio/minio
     expose:
@@ -133,6 +160,7 @@ services:
       timeout: 30s
       retries: 24
       start_period: 30s
+
   elasticsearch:
     image: elasticsearch:8.12.0
     volumes:
@@ -158,6 +186,7 @@ services:
       timeout: 30s
       retries: 24
       start_period: 60s
+
   kibana:
     image: kibana:8.12.0
     ports:
@@ -174,6 +203,7 @@ services:
       elasticsearch:
         condition: service_healthy
     restart: unless-stopped
+
   redis:
     image: redis:7-alpine
     restart: always
@@ -182,7 +212,10 @@ services:
     volumes:
       - redis:/data/redis
     env_file:
-      - .env
+      - path: .env.integration
+        required: false
+      - path: .env
+        required: false
     networks:
       - redbox-app-network
     healthcheck:
@@ -191,6 +224,28 @@ services:
       timeout: 30s
       retries: 24
       start_period: 60s
+  embeddings:
+    image: localai/localai:v2.18.1-aio-cpu #localai/localai:v2.18.1 should allow use of sentencetransformers backend
+    expose:
+      - "8080"
+    ports:
+      - "8080:8080"
+    environment:
+      - MODELS=/aio/cpu/embeddings.yaml #Use defaults embedding model for aio image. Only aio images available in ARM architecture
+      - MINIO_SECRET_KEY=minioadmin
+      - DEBUG=true
+    networks:
+      - redbox-app-network
+    volumes:
+      - ./data/embeddings/models:/models:cached
+      - ./data/embeddings/config:/config
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/readyz"]
+      interval: 1m
+      timeout: 20m
+      retries: 5
+
 
 networks:
   redbox-app-network:
@@ -204,3 +259,4 @@ volumes:
   redis:
     driver: local
   redis-insight:
+  streamlit-app:

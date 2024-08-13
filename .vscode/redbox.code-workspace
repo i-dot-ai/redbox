@@ -1,0 +1,35 @@
+{
+	"folders": [
+		{
+			"name": "Core API",
+			"path": "../core-api"
+		},
+		{
+			"name": "Redbox Core",
+			"path": "../redbox-core"
+		},
+		{
+			"name": "Worker",
+			"path": "../worker"
+		},
+		{
+			"name": "Integration Tests",
+			"path": "../tests"
+		},
+		{
+			"name": "Notebooks",
+			"path": "../notebooks"
+		},
+		{
+			"name": "VSCode",
+			"path": "."
+		},
+		{
+			"name": "Redbox root",
+			"path": ".."
+		}
+	],
+	"settings": {
+		"python.envFile": "${workspaceFolder}/../.env"
+	}
+}

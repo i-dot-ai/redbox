@@ -21,7 +21,7 @@ provider "aws" {
   default_tags {
     tags = {
       "platform:environment"    = "prod"
-      "platform:repository"     = "https://github.com/i-dot-ai/redbox-copilot"
+      "platform:repository"     = "https://github.com/i-dot-ai/redbox"
       "platform:security-level" = "base"
 
       Organisation  = "co"

@@ -6,7 +6,7 @@ module "elasticache" {
   security_group_ids = tomap(
     {
       "worker"   = module.worker.ecs_sg_id,
-      "core_api" = module.core_api.ecs_sg_id,
+      "core_api" = module.core_api.ecs_sg_id
     }
   )
 }

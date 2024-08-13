@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 import hashlib
-from enum import Enum
+from enum import Enum, StrEnum
 from uuid import UUID
+import datetime
 
 import tiktoken
 from pydantic import BaseModel, Field, computed_field
@@ -120,7 +121,9 @@ class Chunk(PersistableModel):
     parent_file_uuid: UUID = Field(description="id of the original file which this text came from")
     index: int = Field(description="relative position of this chunk in the original file")
     text: str = Field(description="chunk of the original text")
-    metadata: Metadata | None = Field(description="subset of the unstructured Element.Metadata object", default=None)
+    metadata: Metadata | dict | None = Field(
+        description="subset of the unstructured Element.Metadata object", default=None
+    )
     embedding: list[float] | None = Field(description="the vector representation of the text", default=None)
 
     @computed_field  # type: ignore[misc] # Remove if https://github.com/python/mypy/issues/1362 is fixed.
@@ -145,5 +148,29 @@ class FileStatus(BaseModel):
     """Status of a file."""
 
     file_uuid: UUID
-    processing_status: ProcessingStatusEnum
-    chunk_statuses: list[ChunkStatus] | None
+    processing_status: ProcessingStatusEnum | None
+    chunk_statuses: None = Field(default=None, description="deprecated, see processing_status")
+
+
+class ChunkResolution(StrEnum):
+    smallest = "smallest"
+    small = "small"
+    normal = "normal"
+    large = "large"
+    largest = "largest"
+
+
+class ChunkMetadata(BaseModel):
+    """
+    Worker model for document metadata for new style chunks.
+    This is the minimal metadata that all ingest chains provide and should not be used to map retrieved documents (as fields will be lost)
+    """
+
+    parent_file_uuid: UUID
+    creator_user_uuid: UUID
+    index: int
+    file_name: str
+    page_number: int | None = None
+    created_datetime: datetime.datetime = datetime.datetime.now(datetime.UTC)
+    token_count: int
+    chunk_resolution: ChunkResolution = ChunkResolution.normal
