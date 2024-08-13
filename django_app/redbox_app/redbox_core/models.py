@@ -211,6 +211,11 @@ class User(BaseUser, UUIDPrimaryKeyBase):
             ),
         )
 
+    class ChatBackend(models.TextChoices):
+        GPT_35_TURBO = "azure/gpt-35-turbo-16k", _("azure/gpt-35-turbo-16k")
+        GPT_4_TURBO = "azure/gpt-4", _("azure/gpt-4")
+        GPT_35_OMNI = "azure/gpt-4o", _("azure/gpt-4o")
+
     username = None
     verified = models.BooleanField(default=False, blank=True, null=True)
     invited_at = models.DateTimeField(default=None, blank=True, null=True)
@@ -224,6 +229,7 @@ class User(BaseUser, UUIDPrimaryKeyBase):
     profession = models.CharField(null=True, blank=True, max_length=4, choices=Profession)
     ai_settings = models.ForeignKey(AISettings, on_delete=models.SET_DEFAULT, default="default", to_field="label")
     is_developer = models.BooleanField(null=True, blank=True, default=False, help_text="is this user a developer?")
+    chat_backend = models.CharField(max_length=64, choices=ChatBackend, help_text="LLM to use in chat")
     objects = BaseUserManager()
 
     def __str__(self) -> str:  # pragma: no cover
