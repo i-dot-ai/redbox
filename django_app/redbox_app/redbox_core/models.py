@@ -82,7 +82,7 @@ class SSOUserManager(BaseSSOUserManager):
         return self._create_user(username, password, **extra_fields)
 
 
-class SSOUser(AbstractBaseUser, PermissionsMixin, UUIDPrimaryKeyBase):
+class User(AbstractBaseUser, PermissionsMixin, UUIDPrimaryKeyBase):
     username = models.EmailField(unique=True, default="default@default.co.uk")
     password = models.CharField(default="fakepassword")
     email = models.EmailField(unique=True)
@@ -132,110 +132,110 @@ class SSOUser(AbstractBaseUser, PermissionsMixin, UUIDPrimaryKeyBase):
         return f"Bearer {bearer_token}"
 
 
-class User(BaseUser, UUIDPrimaryKeyBase):
-    class UserGrade(models.TextChoices):
-        AA = "AA", _("AA")
-        AO = "AO", _("AO")
-        DEPUTY_DIRECTOR = "DD", _("Deputy Director")
-        DIRECTOR = "D", _("Director")
-        DIRECTOR_GENERAL = "DG", _("Director General")
-        EO = "EO", _("EO")
-        G6 = "G6", _("G6")
-        G7 = "G7", _("G7")
-        HEO = "HEO", _("HEO")
-        PS = "PS", _("Permanent Secretary")
-        SEO = "SEO", _("SEO")
-        OT = "OT", _("Other")
+# class User(BaseUser, UUIDPrimaryKeyBase):
+#     class UserGrade(models.TextChoices):
+#         AA = "AA", _("AA")
+#         AO = "AO", _("AO")
+#         DEPUTY_DIRECTOR = "DD", _("Deputy Director")
+#         DIRECTOR = "D", _("Director")
+#         DIRECTOR_GENERAL = "DG", _("Director General")
+#         EO = "EO", _("EO")
+#         G6 = "G6", _("G6")
+#         G7 = "G7", _("G7")
+#         HEO = "HEO", _("HEO")
+#         PS = "PS", _("Permanent Secretary")
+#         SEO = "SEO", _("SEO")
+#         OT = "OT", _("Other")
 
-    class Profession(models.TextChoices):
-        AN = "AN", _("Analysis")
-        CM = "CMC", _("Commercial")
-        COM = "COM", _("Communications")
-        CFIN = "CFIN", _("Corporate finance")
-        CF = "CF", _("Counter fraud")
-        DDT = "DDT", _("Digital, data and technology")
-        EC = "EC", _("Economics")
-        FIN = "FIN", _("Finance")
-        FEDG = "FEDG", _("Fraud, error, debts and grants")
-        HR = "HR", _("Human resources")
-        IA = "IA", _("Intelligence analysis")
-        IAUD = "IAUD", _("Internal audit")
-        IT = "IT", _("International trade")
-        KIM = "KIM", _("Knowledge and information management")
-        LG = "LG", _("Legal")
-        MD = "MD", _("Medical")
-        OP = "OP", _("Occupational psychology")
-        OD = "OD", _("Operational delivery")
-        OR = "OR", _("Operational research")
-        PL = "PL", _("Planning")
-        PI = "PI", _("Planning inspection")
-        POL = "POL", _("Policy")
-        PD = "PD", _("Project delivery")
-        PR = "PR", _("Property")
-        SE = "SE", _("Science and engineering")
-        SC = "SC", _("Security")
-        SR = "SR", _("Social research")
-        ST = "ST", _("Statistics")
-        TX = "TX", _("Tax")
-        VET = "VET", _("Veterinary")
-        OT = "OT", _("Other")
+#     class Profession(models.TextChoices):
+#         AN = "AN", _("Analysis")
+#         CM = "CMC", _("Commercial")
+#         COM = "COM", _("Communications")
+#         CFIN = "CFIN", _("Corporate finance")
+#         CF = "CF", _("Counter fraud")
+#         DDT = "DDT", _("Digital, data and technology")
+#         EC = "EC", _("Economics")
+#         FIN = "FIN", _("Finance")
+#         FEDG = "FEDG", _("Fraud, error, debts and grants")
+#         HR = "HR", _("Human resources")
+#         IA = "IA", _("Intelligence analysis")
+#         IAUD = "IAUD", _("Internal audit")
+#         IT = "IT", _("International trade")
+#         KIM = "KIM", _("Knowledge and information management")
+#         LG = "LG", _("Legal")
+#         MD = "MD", _("Medical")
+#         OP = "OP", _("Occupational psychology")
+#         OD = "OD", _("Operational delivery")
+#         OR = "OR", _("Operational research")
+#         PL = "PL", _("Planning")
+#         PI = "PI", _("Planning inspection")
+#         POL = "POL", _("Policy")
+#         PD = "PD", _("Project delivery")
+#         PR = "PR", _("Property")
+#         SE = "SE", _("Science and engineering")
+#         SC = "SC", _("Security")
+#         SR = "SR", _("Social research")
+#         ST = "ST", _("Statistics")
+#         TX = "TX", _("Tax")
+#         VET = "VET", _("Veterinary")
+#         OT = "OT", _("Other")
 
-    class AIExperienceLevel(models.TextChoices):
-        CURIOUS_NEWCOMER = "Curious Newcomer", _("I haven't used Generative AI tools")
-        CAUTIOUS_EXPLORER = "Cautious Explorer", _(
-            "I have a little experience using Generative AI tools"
-        )
-        ENTHUSIASTIC_EXPERIMENTER = (
-            "Enthusiastic Experimenter",
-            _(
-                "I occasionally use Generative AI tools but am still experimenting with their capabilities"
-            ),
-        )
-        EXPERIENCED_NAVIGATOR = (
-            "Experienced Navigator",
-            _(
-                "I use Generative AI tools regularly and have a good understanding of their strengths and limitations"
-            ),
-        )
-        AI_ALCHEMIST = (
-            "AI Alchemist",
-            _(
-                "I have extensive experience with Generative AI tools and can leverage them effectively in various "
-                "contexts"
-            ),
-        )
+#     class AIExperienceLevel(models.TextChoices):
+#         CURIOUS_NEWCOMER = "Curious Newcomer", _("I haven't used Generative AI tools")
+#         CAUTIOUS_EXPLORER = "Cautious Explorer", _(
+#             "I have a little experience using Generative AI tools"
+#         )
+#         ENTHUSIASTIC_EXPERIMENTER = (
+#             "Enthusiastic Experimenter",
+#             _(
+#                 "I occasionally use Generative AI tools but am still experimenting with their capabilities"
+#             ),
+#         )
+#         EXPERIENCED_NAVIGATOR = (
+#             "Experienced Navigator",
+#             _(
+#                 "I use Generative AI tools regularly and have a good understanding of their strengths and limitations"
+#             ),
+#         )
+#         AI_ALCHEMIST = (
+#             "AI Alchemist",
+#             _(
+#                 "I have extensive experience with Generative AI tools and can leverage them effectively in various "
+#                 "contexts"
+#             ),
+#         )
 
-    username = None
-    verified = models.BooleanField(default=False, blank=True, null=True)
-    invited_at = models.DateTimeField(default=None, blank=True, null=True)
-    invite_accepted_at = models.DateTimeField(default=None, blank=True, null=True)
-    last_token_sent_at = models.DateTimeField(editable=False, blank=True, null=True)
-    password = models.CharField("password", max_length=128, blank=True, null=True)
-    business_unit = models.ForeignKey(
-        BusinessUnit, null=True, blank=True, on_delete=models.SET_NULL
-    )
-    grade = models.CharField(null=True, blank=True, max_length=3, choices=UserGrade)
-    name = models.CharField(null=True, blank=True)
-    ai_experience = models.CharField(
-        null=True, blank=True, max_length=25, choices=AIExperienceLevel
-    )
-    profession = models.CharField(
-        null=True, blank=True, max_length=4, choices=Profession
-    )
-    objects = BaseUserManager()
+#     username = None
+#     verified = models.BooleanField(default=False, blank=True, null=True)
+#     invited_at = models.DateTimeField(default=None, blank=True, null=True)
+#     invite_accepted_at = models.DateTimeField(default=None, blank=True, null=True)
+#     last_token_sent_at = models.DateTimeField(editable=False, blank=True, null=True)
+#     password = models.CharField("password", max_length=128, blank=True, null=True)
+#     business_unit = models.ForeignKey(
+#         BusinessUnit, null=True, blank=True, on_delete=models.SET_NULL
+#     )
+#     grade = models.CharField(null=True, blank=True, max_length=3, choices=UserGrade)
+#     name = models.CharField(null=True, blank=True)
+#     ai_experience = models.CharField(
+#         null=True, blank=True, max_length=25, choices=AIExperienceLevel
+#     )
+#     profession = models.CharField(
+#         null=True, blank=True, max_length=4, choices=Profession
+#     )
+#     objects = BaseUserManager()
 
-    def __str__(self) -> str:  # pragma: no cover
-        return f"{self.email}"
+#     def __str__(self) -> str:  # pragma: no cover
+#         return f"{self.email}"
 
-    def save(self, *args, **kwargs):
-        self.email = self.email.lower()
-        super().save(*args, **kwargs)
+#     def save(self, *args, **kwargs):
+#         self.email = self.email.lower()
+#         super().save(*args, **kwargs)
 
-    def get_bearer_token(self) -> str:
-        """the bearer token expected by the core-api"""
-        user_uuid = str(self.id)
-        bearer_token = jwt.encode({"user_uuid": user_uuid}, key=settings.SECRET_KEY)
-        return f"Bearer {bearer_token}"
+#     def get_bearer_token(self) -> str:
+#         """the bearer token expected by the core-api"""
+#         user_uuid = str(self.id)
+#         bearer_token = jwt.encode({"user_uuid": user_uuid}, key=settings.SECRET_KEY)
+#         return f"Bearer {bearer_token}"
 
 
 class StatusEnum(models.TextChoices):
