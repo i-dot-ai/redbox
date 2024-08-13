@@ -9,11 +9,14 @@
             "type": "debugpy",
             "request": "launch",
             "module": "faststream",
-            "python": "venv/bin/python",
+            "cwd": "${workspaceFolder}/worker",
+            "python": "python",
+            "justMyCode": false,
             "args": [
                 "run",
                 "worker.app:app",
-                "--workers", "1"
+                "--workers",
+                "1"
             ],
             "jinja": true,
             "envFile": "${workspaceFolder}/../.env",

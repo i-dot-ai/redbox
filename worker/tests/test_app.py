@@ -8,6 +8,7 @@ from langchain_core.embeddings.fake import FakeEmbeddings
 from elasticsearch.helpers import scan
 
 from redbox.models.file import File, ProcessingStatusEnum
+from redbox.retriever.retrievers import hit_to_doc
 from redbox.storage import ElasticsearchStorageHandler
 from worker.app import app, broker, env
 from worker import app as app_module
@@ -87,3 +88,15 @@ async def test_ingest_file(
                 )
             )
             assert len(chunks) > 0
+
+            documents = list(map(hit_to_doc, chunks))
+            assert len(documents) > 0
+
+            normal = [doc for doc in documents if doc.metadata["chunk_resolution"] == "normal"]
+            assert len(normal) > 0
+
+            normal = [doc for doc in documents if doc.metadata["chunk_resolution"] == "large"]
+            assert len(normal) > 0
+
+            largest = [doc for doc in documents if doc.metadata["chunk_resolution"] == "largest"]
+            assert len(largest) > 0
