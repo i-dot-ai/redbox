@@ -18,13 +18,13 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.AddField(
-            model_name='user',
+            model_name='aisettings',
             name='chat_backend',
             field=models.CharField(blank=True, choices=[('azure/gpt-35-turbo-16k', 'azure/gpt-35-turbo-16k'), ('azure/gpt-4', 'azure/gpt-4'), ('azure/gpt-4o', 'azure/gpt-4o')], help_text='LLM to use in chat', max_length=64, null=True),
         ),
         migrations.RunPython(back_populate_ai_settings_chat_backend, migrations.RunPython.noop),
         migrations.AlterField(
-            model_name='user',
+            model_name='aisettings',
             name='chat_backend',
             field=models.CharField(
                 choices=[('azure/gpt-35-turbo-16k', 'azure/gpt-35-turbo-16k'), ('azure/gpt-4', 'azure/gpt-4'),
