@@ -11,7 +11,8 @@
     "python.testing.pytestEnabled": true,
     "python.testing.pytestArgs": [
         ".",
-        "-m not ( ai )"
+        "-m not ( ai )",
+        "-c ${workspaceFolder}"
     ],
-    "python.testing.pytestPath": "venv/bin/python -m pytest",
+    "python.testing.pytestPath": "poetry run python -m pytest",
 }

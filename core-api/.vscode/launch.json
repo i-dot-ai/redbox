@@ -9,11 +9,14 @@
             "type": "debugpy",
             "request": "launch",
             "module": "uvicorn",
-            "python": "venv/bin/python",
+            "cwd": "${workspaceFolder}/core_api",
+            "python": "python",
+            "justMyCode": false,
             "args": [
                 "core_api.app:app",
                 "--reload",
-                "--port", "5002"
+                "--port",
+                "5002"
             ],
             "jinja": true,
             "envFile": "${workspaceFolder}/../.env",

@@ -112,132 +112,78 @@ def embedding_model_dim() -> int:
     return 3072  # 3-large default size
 
 
-@pytest.fixture()
-def stored_file_chunks(stored_file_1) -> list[Document]:
+def generate_chunks(file: File) -> list[Document]:
     normal_chunks = [
         Document(
-            page_content="hello",
+            page_content="hello" * 8,
             metadata=ChunkMetadata(
-                parent_file_uuid=str(stored_file_1.uuid),
+                parent_file_uuid=str(file.uuid),
                 index=i,
                 file_name="test_file",
-                creator_user_uuid=stored_file_1.creator_user_uuid,
+                creator_user_uuid=file.creator_user_uuid,
                 page_number=4,
                 created_datetime=datetime.now(UTC),
-                token_count=4,
+                token_count=8,
                 chunk_resolution=ChunkResolution.normal,
             ).model_dump(),
         )
-        for i in range(10)
+        for i in range(12)
     ]
 
     large_chunks = [
         Document(
-            page_content="hello" * 10,
+            page_content="hello" * 12,
             metadata=ChunkMetadata(
-                parent_file_uuid=str(stored_file_1.uuid),
+                parent_file_uuid=str(file.uuid),
                 index=i,
                 file_name="test_file",
-                creator_user_uuid=stored_file_1.creator_user_uuid,
+                creator_user_uuid=file.creator_user_uuid,
                 page_number=4,
                 created_datetime=datetime.now(UTC),
-                token_count=20,
+                token_count=12,
+                chunk_resolution=ChunkResolution.large,
+            ).model_dump(),
+        )
+        for i in range(8)
+    ]
+
+    largest_chunks = [
+        Document(
+            page_content="hello" * 24,
+            metadata=ChunkMetadata(
+                parent_file_uuid=str(file.uuid),
+                index=i,
+                file_name="test_file",
+                creator_user_uuid=file.creator_user_uuid,
+                page_number=4,
+                created_datetime=datetime.now(UTC),
+                token_count=24,
                 chunk_resolution=ChunkResolution.largest,
             ).model_dump(),
         )
-        for i in range(2)
+        for i in range(4)
     ]
-    return normal_chunks + large_chunks
+
+    return normal_chunks + large_chunks + largest_chunks
 
 
 @pytest.fixture()
-def stored_large_file_chunks(stored_file_1) -> list[Document]:
-    normal_chunks = [
-        Document(
-            page_content="hello",
-            metadata=ChunkMetadata(
-                parent_file_uuid=str(stored_file_1.uuid),
-                index=i,
-                file_name="test_file",
-                creator_user_uuid=stored_file_1.creator_user_uuid,
-                page_number=4,
-                created_datetime=datetime.now(UTC),
-                token_count=4,
-                chunk_resolution=ChunkResolution.normal,
-            ).model_dump(),
-        )
-        for i in range(25)
-    ]
-
-    large_chunks = [
-        Document(
-            page_content="hello" * 10,
-            metadata=ChunkMetadata(
-                parent_file_uuid=str(stored_file_1.uuid),
-                index=i,
-                file_name="test_file",
-                creator_user_uuid=stored_file_1.creator_user_uuid,
-                page_number=4,
-                created_datetime=datetime.now(UTC),
-                token_count=20,
-                chunk_resolution=ChunkResolution.largest,
-            ).model_dump(),
-        )
-        for i in range(5)
-    ]
-    return normal_chunks + large_chunks
+def stored_file_chunks(stored_file_1):
+    return generate_chunks(file=stored_file_1)
 
 
 @pytest.fixture()
 def stored_user_chunks(stored_user_files) -> list[list[Document]]:
     chunks_by_file = []
     for file in stored_user_files:
-        normal_chunks = [
-            Document(
-                page_content="hello",
-                metadata=ChunkMetadata(
-                    parent_file_uuid=str(file.uuid),
-                    index=i,
-                    file_name="test_file",
-                    creator_user_uuid=file.creator_user_uuid,
-                    page_number=4,
-                    created_datetime=datetime.now(UTC),
-                    token_count=4,
-                    chunk_resolution=ChunkResolution.normal,
-                ).model_dump(),
-            )
-            for i in range(25)
-        ]
+        chunks_by_file.append(generate_chunks(file=file))
 
-        large_chunks = [
-            Document(
-                page_content="hello" * 10,
-                metadata=ChunkMetadata(
-                    parent_file_uuid=str(file.uuid),
-                    index=i,
-                    file_name="test_file",
-                    creator_user_uuid=file.creator_user_uuid,
-                    page_number=4,
-                    created_datetime=datetime.now(UTC),
-                    token_count=20,
-                    chunk_resolution=ChunkResolution.largest,
-                ).model_dump(),
-            )
-            for i in range(5)
-        ]
-        chunks_by_file.append(normal_chunks + large_chunks)
     return chunks_by_file
 
 
 @pytest.fixture()
 def chunked_file(elasticsearch_store: ElasticsearchStore, stored_file_chunks, stored_file_1) -> File:
     elasticsearch_store.add_documents(stored_file_chunks)
-    return stored_file_1
-
-
-@pytest.fixture()
-def large_chunked_file(elasticsearch_store, stored_large_file_chunks, stored_file_1) -> File:
-    elasticsearch_store.add_documents(stored_large_file_chunks)
     return stored_file_1
 
 
