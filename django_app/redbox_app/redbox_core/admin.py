@@ -3,14 +3,16 @@ import logging
 
 from django.conf import settings
 from django.contrib import admin
+from django.contrib.auth import get_user_model
 from django.db.models import QuerySet
 from django.http import HttpResponse
 from import_export.admin import ImportMixin
+from redbox_app.redbox_core.client import CoreApiClient
 from requests.exceptions import RequestException
 
-from redbox_app.redbox_core.client import CoreApiClient
-
 from . import models
+
+# User = get_user_model()
 
 logger = logging.getLogger(__name__)
 core_api = CoreApiClient(host=settings.CORE_API_HOST, port=settings.CORE_API_PORT)
@@ -69,7 +71,9 @@ class FileAdmin(admin.ModelAdmin):
                 logger.info("Re-uploading file to core-api: %s", file)
                 core_api.reingest_file(file.core_file_uuid, file.user)
             except RequestException as e:
-                logger.exception("Error re-uploading File model object %s.", file, exc_info=e)
+                logger.exception(
+                    "Error re-uploading File model object %s.", file, exc_info=e
+                )
                 file.status = models.StatusEnum.errored
                 file.save()
             else:
@@ -78,7 +82,13 @@ class FileAdmin(admin.ModelAdmin):
 
                 logger.info("Successfully reuploaded file %s.", file)
 
-    list_display = ["original_file_name", "user", "status", "created_at", "last_referenced"]
+    list_display = [
+        "original_file_name",
+        "user",
+        "status",
+        "created_at",
+        "last_referenced",
+    ]
     list_filter = ["user", "status"]
     date_hierarchy = "created_at"
     actions = ["reupload"]
@@ -112,9 +122,15 @@ class ChatMessageInline(admin.StackedInline):
 
 class ChatHistoryAdmin(admin.ModelAdmin):
     def export_as_csv(self, request, queryset: QuerySet):  # noqa:ARG002
-        history_field_names: list[str] = [field.name for field in models.ChatHistory._meta.fields]  # noqa:SLF001
-        message_field_names: list[str] = [field.name for field in models.ChatMessage._meta.fields]  # noqa:SLF001
-        rating_field_names: list[str] = [field.name for field in models.ChatMessageRating._meta.fields]  # noqa:SLF001
+        history_field_names: list[str] = [
+            field.name for field in models.ChatHistory._meta.fields
+        ]  # noqa:SLF001
+        message_field_names: list[str] = [
+            field.name for field in models.ChatMessage._meta.fields
+        ]  # noqa:SLF001
+        rating_field_names: list[str] = [
+            field.name for field in models.ChatMessageRating._meta.fields
+        ]  # noqa:SLF001
 
         response = HttpResponse(content_type="text/csv")
         response["Content-Disposition"] = "attachment; filename=chathistory.csv"
@@ -131,13 +147,21 @@ class ChatHistoryAdmin(admin.ModelAdmin):
         chat_message_rating: models.ChatMessageRating
         for chat_history in queryset:
             for chat_message in chat_history.chatmessage_set.all():
-                row = [getattr(chat_history, field) for field in history_field_names] + [
-                    getattr(chat_message, field) for field in message_field_names
-                ]
+                row = [
+                    getattr(chat_history, field) for field in history_field_names
+                ] + [getattr(chat_message, field) for field in message_field_names]
                 if hasattr(chat_message, "chatmessagerating"):
                     chat_message_rating = chat_message.chatmessagerating
-                    row += [getattr(chat_message_rating, field) for field in rating_field_names]
-                    row += [", ".join(c.text for c in chat_message_rating.chatmessageratingchip_set.all())]
+                    row += [
+                        getattr(chat_message_rating, field)
+                        for field in rating_field_names
+                    ]
+                    row += [
+                        ", ".join(
+                            c.text
+                            for c in chat_message_rating.chatmessageratingchip_set.all()
+                        )
+                    ]
                 writer.writerow(row)
 
         return response
