@@ -113,7 +113,8 @@ class AISettings(BaseModel):
     knn_boost: int = 1
     similarity_threshold: int = 0
 
-    chat_backend: Literal["azure_35t", "azure_4t", "azure_4o"] = "azure_4o"
+    # this is also the azure_openai_model
+    chat_backend: Literal["azure/gpt-35-turbo-16k", "azure/gpt-4", "azure/gpt-4o"] = "azure/gpt-4o"
 
 
 class ChainInput(BaseModel):

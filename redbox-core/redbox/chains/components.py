@@ -11,25 +11,25 @@ from redbox.retriever import AllElasticsearchRetriever, ParameterisedElasticsear
 
 
 def get_chat_llm(env: Settings, ai_settings: AISettings):
-    if ai_settings.chat_backend == "azure_35t":
+    if ai_settings.chat_backend == "azure/gpt-35-turbo-16k":
         return AzureChatOpenAI(
             api_key=convert_to_secret_str(env.azure_openai_api_key_35t),
             azure_endpoint=env.azure_openai_endpoint_35t,
-            model=env.azure_openai_model_35t,
+            model=ai_settings.chat_backend,
             api_version=env.openai_api_version_35t,
         )
-    if ai_settings.chat_backend == "azure_4t":
+    if ai_settings.chat_backend == "azure/gpt-4":
         return AzureChatOpenAI(
             api_key=convert_to_secret_str(env.azure_openai_api_key_4t),
             azure_endpoint=env.azure_openai_endpoint_4t,
-            model=env.azure_openai_model_4t,
+            model=ai_settings.chat_backend,
             api_version=env.openai_api_version_4t,
         )
-    if ai_settings.chat_backend == "azure_4o":
+    if ai_settings.chat_backend == "azure/gpt-4o":
         return AzureChatOpenAI(
             api_key=convert_to_secret_str(env.azure_openai_api_key_4o),
             azure_endpoint=env.azure_openai_endpoint_4o,
-            model=env.azure_openai_model_4o,
+            model=ai_settings.chat_backend,
             api_version=env.openai_api_version_4o,
         )
     raise Exception(f"{ai_settings.chat_backend} not recognised")
