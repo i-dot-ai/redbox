@@ -70,11 +70,12 @@ INSTALLED_APPS = [
     "import_export",
 ]
 
-AUTH_USER_MODEL = "redbox_core.User"
 
 if LOGIN_METHOD == "sso":
     INSTALLED_APPS.append("authbroker_client")
     AUTH_USER_MODEL = "redbox_core.SSOUser"
+else:
+    AUTH_USER_MODEL = "redbox_core.User"
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -153,7 +154,6 @@ USE_I18N = True
 USE_TZ = True
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 SITE_ID = 1
-AUTH_USER_MODEL = "redbox_core.User"
 ACCOUNT_EMAIL_VERIFICATION = "none"
 
 # CSP settings https://content-security-policy.com/
