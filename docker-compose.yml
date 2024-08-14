@@ -70,9 +70,8 @@ services:
     image: redbox-worker:latest
     build:
       context: .
-      dockerfile: django_app/Dockerfile-worker
-      args:
-        - EMBEDDING_MODEL=${EMBEDDING_MODEL:-}
+      dockerfile: django_app/Dockerfile
+    command: "venv/bin/celery -A redbox_app multi start -l INFO"
     env_file:
       - path: .env.integration
         required: false
