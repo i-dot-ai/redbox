@@ -8,9 +8,11 @@ from django.http import HttpResponse
 from import_export.admin import ExportMixin, ImportExportMixin
 from requests.exceptions import RequestException
 
+from redbox.models.file import File as CoreFile
 from redbox_app.redbox_core.client import CoreApiClient
 
 from . import models
+from .celery import ingest
 
 logger = logging.getLogger(__name__)
 core_api = CoreApiClient(host=settings.CORE_API_HOST, port=settings.CORE_API_PORT)
@@ -56,9 +58,11 @@ class UserAdmin(ImportExportMixin, admin.ModelAdmin):
 class FileAdmin(ExportMixin, admin.ModelAdmin):
     def reupload(self, request, queryset):  # noqa:ARG002
         for file in queryset:
+            file: models.File
             try:
                 logger.info("Re-uploading file to core-api: %s", file)
-                core_api.reingest_file(file.core_file_uuid, file.user)
+                core_file = CoreFile(key=file.unique_name, bucket=settings.BUCKET_NAME)
+                ingest(core_file)
             except RequestException as e:
                 logger.exception("Error re-uploading File model object %s.", file, exc_info=e)
                 file.status = models.StatusEnum.errored

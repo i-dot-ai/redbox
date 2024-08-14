@@ -15,6 +15,7 @@ from django.views import View
 from django.views.decorators.http import require_http_methods
 from requests.exceptions import RequestException
 
+from redbox_app.redbox_core.celery import ingest
 from redbox_app.redbox_core.client import CoreApiClient
 from redbox_app.redbox_core.models import File, StatusEnum, User
 
@@ -146,6 +147,7 @@ class UploadView(View):
         else:
             try:
                 upload_file_response = core_api.upload_file(file.unique_name, user)
+                ingest(upload_file_response)
             except RequestException as e:
                 logger.exception("Error uploading file object %s.", file, exc_info=e)
                 file.delete()

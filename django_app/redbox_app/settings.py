@@ -58,6 +58,7 @@ INSTALLED_APPS = [
     "storages",
     "magic_link",
     "import_export",
+    "django_celery_results",
 ]
 
 MIDDLEWARE = [
@@ -332,3 +333,12 @@ MAX_SECURITY_CLASSIFICATION = Classification[env.str("MAX_SECURITY_CLASSIFICATIO
 
 SECURITY_TXT_REDIRECT = URL("https://vdp.cabinetoffice.gov.uk/.well-known/security.txt")
 REDBOX_VERSION = os.environ.get("REDBOX_VERSION", "not set")
+
+
+# Celery settings
+REDIS_HOST = "redis"  # env.str("REDIS_HOST")
+REDIS_PORT = "6379"  # env.str("REDIS_PORT")
+
+CELERY_BROKER_URL = f"redis://{REDIS_HOST}:{REDIS_PORT}"
+CELERY_RESULT_BACKEND = "django-db"
+CELERY_CACHE_BACKEND = "django-cache"

@@ -10,6 +10,7 @@ from django.conf import settings
 from django.forms.models import model_to_dict
 from yarl import URL
 
+from redbox.models.file import File as CoreFile
 from redbox_app.redbox_core.models import AISettings, User
 
 logger = logging.getLogger(__name__)
@@ -62,14 +63,6 @@ class FileStatus:
     processing_status: str
 
 
-@dataclass_json(undefined=Undefined.EXCLUDE)
-@dataclass(frozen=True)
-class FileOperation:
-    key: str
-    bucket: str
-    uuid: str
-
-
 class CoreApiClient:
     def __init__(self, host: str, port: int):
         self.host = host
@@ -79,12 +72,12 @@ class CoreApiClient:
     def url(self) -> URL:
         return URL(f"http://{self.host}:{self.port}")
 
-    def upload_file(self, name: str, user: User) -> FileOperation:
+    def upload_file(self, name: str, user: User) -> CoreFile:
         response = requests.post(
             self.url / "file", json={"key": name}, headers={"Authorization": user.get_bearer_token()}, timeout=30
         )
         response.raise_for_status()
-        return FileOperation.schema().loads(response.content)
+        return CoreFile.parse_raw(response.content)
 
     def get_ai_settings(self, user: User) -> AISettings:
         return model_to_dict(
@@ -117,14 +110,8 @@ class CoreApiClient:
         response.raise_for_status()
         return FileStatus.schema().loads(response.content)
 
-    def delete_file(self, file_id: UUID, user: User) -> FileOperation:
+    def delete_file(self, file_id: UUID, user: User) -> CoreFile:
         url = self.url / "file" / str(file_id)
         response = requests.delete(url, headers={"Authorization": user.get_bearer_token()}, timeout=60)
         response.raise_for_status()
-        return FileOperation.schema().loads(response.content)
-
-    def reingest_file(self, file_id: UUID, user: User) -> FileOperation:
-        url = self.url / "file" / str(file_id)
-        response = requests.put(url, headers={"Authorization": user.get_bearer_token()}, timeout=60)
-        response.raise_for_status()
-        return FileOperation.schema().loads(response.content)
+        return CoreFile.parse_raw(response.content)

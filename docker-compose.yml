@@ -70,7 +70,7 @@ services:
     image: redbox-worker:latest
     build:
       context: .
-      dockerfile: worker/Dockerfile
+      dockerfile: django_app/Dockerfile-worker
       args:
         - EMBEDDING_MODEL=${EMBEDDING_MODEL:-}
     env_file:
