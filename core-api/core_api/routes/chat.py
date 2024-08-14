@@ -7,7 +7,7 @@ from redbox import Redbox
 from core_api.auth import get_user_uuid, get_ws_user_uuid
 from fastapi import Depends, FastAPI, WebSocket
 from fastapi.encoders import jsonable_encoder
-from openai import APIError
+from openai import APIError, RateLimitError
 from langchain_core.documents import Document
 
 from redbox.models.chain import RedboxQuery, RedboxState, ChainChatMessage
@@ -110,12 +110,20 @@ async def rag_chat_streamed(
             route_name_callback=on_route_choice,
             documents_callback=on_documents_available,
         )
+    except RateLimitError as e:
+        log.exception("Rate limit error", exc_info=e)
+        await send_to_client(
+            ClientResponse(resource_type="error", data=ErrorDetail(code="rate-limit", message=type(e).__name__)),
+            websocket,
+        )
+        await websocket.close()
     except APIError as e:
         log.exception("Unhandled exception.", exc_info=e)
         await send_to_client(
             ClientResponse(resource_type="error", data=ErrorDetail(code="unexpected", message=type(e).__name__)),
             websocket,
         )
+        await websocket.close()
     finally:
         await send_to_client(ClientResponse(resource_type="end"), websocket)
         await websocket.close()
