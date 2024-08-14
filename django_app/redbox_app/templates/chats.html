@@ -16,18 +16,18 @@
   <form class="govuk-grid-row js-message-input" action="/post-message/" method="post">
 
     <div class="govuk-grid-column-one-third">
-      <div class="rb-left-column-container govuk-!-margin-bottom-6">
+      <div class="rb-left-column-container govuk-!-margin-bottom-5">
 
         <a class="iai-large-button" role="button" href="{{ url('chats') }}">
           <svg width="22" height="22" fill="none" aria-hidden="true" focusable="false"><path d="M21 11c0-5.523-4.477-10-10-10S1 5.477 1 11s4.477 10 10 10 10-4.477 10-10z" stroke="currentColor" stroke-linejoin="round"/><g filter="url(#A)"><path d="M15.656 11.656h-4v4h-1.312v-4h-4v-1.312h4v-4h1.312v4h4v1.312z" fill="currentColor"/></g><defs><filter x="6" y="6" width="10" height="10" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB"><feFlood flood-opacity="0" result="A"/><feColorMatrix in="SourceAlpha" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0"/><feOffset dx="1" dy="1"/><feColorMatrix values="0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 1 0"/><feBlend in2="A"/><feBlend in="SourceGraphic"/></filter></defs></svg>
           New chat
         </a>
 
-      <div class="iai-panel govuk-!-margin-top-6">
-        <h2 class="govuk-heading-s">Recent chats</h2>
+      <div class="iai-panel govuk-!-margin-top-5 govuk-!-padding-top-3">
+        <h2 class="govuk-body govuk-!-font-weight-bold">Recent chats</h2>
         <div class="iai-panel__scrollable">
           {% for date_group, chats in chat_grouped_by_date_group %}
-          <h3 class="rb-chat-history__date_group govuk-body-s govuk-!-font-weight-bold govuk-!-margin-bottom-1">{{ date_group }}</h3>
+          <h3 class="rb-chat-history__date_group govuk-body-xs govuk-!-font-weight-bold govuk-!-margin-bottom-1">{{ date_group }}</h3>
           <ul class="govuk-list govuk-list--spaced">
             {% for chat in chats %}
               <li class="govuk-!-margin-bottom-1">
@@ -39,7 +39,7 @@
         </div>
       </div>
 
-        <document-selector class="iai-panel iai-panel govuk-!-margin-top-6">
+        <document-selector class="iai-panel govuk-!-margin-top-5 govuk-!-padding-top-3">
           <fieldset class="govuk-fieldset">
             <legend class="govuk-fieldset__legend govuk-fieldset__legend--s">
               <h3 class="govuk-fieldset__heading">Documents to use</h3>
@@ -64,6 +64,21 @@
             </div>
           </fieldset>
         </document-selector>
+
+        {# Temporary until this comes from the view data #}
+        {% set llm_options = [
+          {"name": "gpt-4o", "default": True, "selected": True},
+          {"name": "gpt-4-turbo-2024-04-09"},
+          {"name": "gpt-35-turbo-16k"}
+        ] %}
+        <div class="iai-panel govuk-!-margin-top-5 govuk-!-padding-top-3">
+          <label class="govuk-body-s govuk-!-font-weight-bold" for="llm-selector">Model</label>
+          <select id="llm-selector" class="govuk-select govuk-!-margin-top-1">
+            {% for option in llm_options %}
+              <option {% if option.selected %}selected{% endif %}>{{ option.name }}{% if option.default %} (default){% endif %}</option>
+            {% endfor %}
+          </select>
+        </div>
 
       </div>
     </div>
