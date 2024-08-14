@@ -14,30 +14,27 @@ from redbox.retriever import AllElasticsearchRetriever, ParameterisedElasticsear
 
 def get_chat_llm(env: Settings, ai_settings: AISettings):
     if ai_settings.chat_backend == "gpt-35-turbo-16k":
-        llm = AzureChatOpenAI(
+        return AzureChatOpenAI(
             api_key=convert_to_secret_str(env.azure_openai_api_key_35t),
             azure_endpoint=env.azure_openai_endpoint_35t,
             model=ai_settings.chat_backend,
             api_version=env.openai_api_version_35t,
         )
     elif ai_settings.chat_backend == "gpt-4-turbo-2024-04-09":
-        llm = AzureChatOpenAI(
+        return AzureChatOpenAI(
             api_key=convert_to_secret_str(env.azure_openai_api_key_4t),
             azure_endpoint=env.azure_openai_endpoint_4t,
             model=ai_settings.chat_backend,
             api_version=env.openai_api_version_4t,
         )
     elif ai_settings.chat_backend == "gpt-4o":
-        llm = AzureChatOpenAI(
+        return AzureChatOpenAI(
             api_key=convert_to_secret_str(env.azure_openai_api_key_4o),
             azure_endpoint=env.azure_openai_endpoint_4o,
             model=ai_settings.chat_backend,
             api_version=env.openai_api_version_4o,
         )
-    else:
-        raise Exception("%s not recognised", ai_settings.chat_backend)
-
-    return llm
+    raise Exception("%s not recognised", ai_settings.chat_backend)
 
 
 @cache
@@ -46,9 +43,6 @@ def get_tokeniser() -> tiktoken.Encoding:
 
 
 def get_azure_embeddings(env: Settings):
-    os.environ["AZURE_OPENAI_API_KEY"] = env.embedding_openai_api_key
-    os.environ["AZURE_OPENAI_ENDPOINT"] = env.embedding_azure_openai_endpoint
-    os.environ["AZURE_OPENAI_API_VERSION"] = env.azure_api_version_embeddings
     return AzureOpenAIEmbeddings(
         api_key=convert_to_secret_str(env.embedding_openai_api_key),
         azure_endpoint=env.embedding_azure_openai_endpoint,
