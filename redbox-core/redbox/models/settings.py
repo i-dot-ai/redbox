@@ -181,7 +181,7 @@ class Settings(BaseSettings):
     azure_embedding_model: str = "text-embedding-3-large"
     llm_max_tokens: int = 1024
 
-    embedding_backend: Literal["azure", "openai"] = "azure"
+    embedding_backend: Literal["azure", "openai", "sentencetransformers"] = "azure"
     embedding_max_retries: int = 10
     embedding_retry_min_seconds: int = 10
     embedding_retry_max_seconds: int = 120
