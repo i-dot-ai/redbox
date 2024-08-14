@@ -24,6 +24,7 @@ pikepdf = "<9.0.0"
 torch = "2.2.2"
 unstructured = {version = "<0.14.9", extras = ["all-docs"]}
 unstructured-inference = "^0.7.36"
+langchain-huggingface = "^0.0.3"
 
 
 [tool.poetry.group.dev.dependencies]

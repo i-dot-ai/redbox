@@ -29,6 +29,7 @@ langchain-community = "^0.2.10"
 pillow-heif = "<0.17.0"
 langchain-elasticsearch = "^0.2.2"
 litellm = "^1.41.11"
+langchain-huggingface = "^0.0.3"
 
 
 [tool.poetry.group.dev.dependencies]
