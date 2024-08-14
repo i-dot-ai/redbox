@@ -146,6 +146,7 @@ class User(BaseUser, UUIDPrimaryKeyBase):
         GOVERNMENT_DIGITAL_SERVICE = "Government Digital Service", _("Government Digital Service")
         CENTRAL_DIGITAL_AND_DATA_OFFICE = "Central Digital and Data Office", _("Central Digital and Data Office")
         GOVERNMENT_COMMUNICATION_SERVICE = "Government Communication Service", _("Government Communication Service")
+        GOVERNMENT_PEOPLE_GROUP = "Government People Group", _("Government People Group")
         GOVERNMENT_SECURITY_GROUP = "Government Security Group", _("Government Security Group")
         UKSV = "UKSV", _("UKSV")
         GOVERNMENT_COMMERCIAL_AND_GRANTS_FUNCTION = (
