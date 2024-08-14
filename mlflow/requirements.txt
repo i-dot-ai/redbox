@@ -5,7 +5,7 @@ limits==3.13.0
 watchfiles==0.23.0
 fastapi==0.112.0
 slowapi==0.1.9
-uvicorn==0.30.5
-aiohttp===3.10.1
+uvicorn==0.30.6
+aiohttp===3.10.3
 gunicorn==22.0.0
-boto3==1.34.155
+boto3==1.34.160
