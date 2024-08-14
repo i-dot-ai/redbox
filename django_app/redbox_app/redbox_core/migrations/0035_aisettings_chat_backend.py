@@ -26,9 +26,6 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='aisettings',
             name='chat_backend',
-            field=models.CharField(
-                choices=[('gpt-35-turbo-16k', 'gpt-35-turbo-16k'), ('gpt-4-turbo-2024-04-09', 'gpt-4-turbo-2024-04-09'),
-                         ('gpt-4o', 'gpt-4o')], help_text='LLM to use in chat', max_length=64),
+            field=models.CharField(choices=[('gpt-35-turbo-16k', 'gpt-35-turbo-16k'), ('gpt-4-turbo-2024-04-09', 'gpt-4-turbo-2024-04-09'), ('gpt-4o', 'gpt-4o')], default='gpt-4o', help_text='LLM to use in chat', max_length=64),
         ),
-
     ]
