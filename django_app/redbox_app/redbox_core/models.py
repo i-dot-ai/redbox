@@ -46,6 +46,11 @@ def sanitise_string(string: str | None) -> str | None:
 
 
 class AISettings(UUIDPrimaryKeyBase, TimeStampedModel):
+    class ChatBackend(models.TextChoices):
+        GPT_35_TURBO = "gpt-35-turbo-16k", _("gpt-35-turbo-16k")
+        GPT_4_TURBO = "gpt-4-turbo-2024-04-09", _("gpt-4-turbo-2024-04-09")
+        GPT_4_OMNI = "gpt-4o", _("gpt-4o")
+
     label = models.CharField(max_length=50, unique=True)
     context_window_size = models.PositiveIntegerField(default=8_000)
     rag_k = models.PositiveIntegerField(default=30)
@@ -70,6 +75,9 @@ class AISettings(UUIDPrimaryKeyBase, TimeStampedModel):
     match_boost = models.PositiveIntegerField(default=1)
     knn_boost = models.PositiveIntegerField(default=1)
     similarity_threshold = models.PositiveIntegerField(default=0)
+    chat_backend = models.CharField(
+        max_length=64, choices=ChatBackend, help_text="LLM to use in chat", default=ChatBackend.GPT_4_OMNI
+    )
 
     def __str__(self) -> str:
         return str(self.label)

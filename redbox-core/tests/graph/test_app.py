@@ -134,19 +134,23 @@ def env():
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(("test"), TEST_CASES, ids=[t.test_id for t in TEST_CASES])
-async def test_chat(test: RedboxChatTestCase, env, tokeniser):
+async def test_chat(test: RedboxChatTestCase, env, mocker):
     # Current setup modifies test data as it's not a fixture. This is a hack
     test_case = copy.deepcopy(test)
 
     app = Redbox(
-        llm=GenericFakeChatModel(messages=iter(test_case.test_data.expected_llm_response)),
         all_chunks_retriever=mock_all_chunks_retriever(test_case.docs),
         parameterised_retriever=mock_parameterised_retriever(test_case.docs),
-        tokeniser=tokeniser,
         env=env,
         debug=LANGGRAPH_DEBUG,
     )
-    response = await app.run(input=RedboxState(request=test_case.query))
+
+    llm = GenericFakeChatModel(messages=iter(test_case.test_data.expected_llm_response))
+    with (
+        mocker.patch("redbox.graph.nodes.processes.get_chat_llm", return_value=llm),
+    ):
+        response = await app.run(input=RedboxState(request=test_case.query))
+
     final_state = RedboxState(response)
     assert (
         final_state["text"] == test_case.test_data.expected_llm_response[-1]
@@ -158,15 +162,13 @@ async def test_chat(test: RedboxChatTestCase, env, tokeniser):
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(("test"), TEST_CASES, ids=[t.test_id for t in TEST_CASES])
-async def test_streaming(test: RedboxChatTestCase, env, tokeniser):
+async def test_streaming(test: RedboxChatTestCase, env, mocker):
     # Current setup modifies test data as it's not a fixture. This is a hack
     test_case = copy.deepcopy(test)
 
     app = Redbox(
-        llm=GenericFakeChatModel(messages=iter(test_case.test_data.expected_llm_response)),
         all_chunks_retriever=mock_all_chunks_retriever(test_case.docs),
         parameterised_retriever=mock_parameterised_retriever(test_case.docs),
-        tokeniser=tokeniser,
         env=env,
         debug=LANGGRAPH_DEBUG,
     )
@@ -176,9 +178,13 @@ async def test_streaming(test: RedboxChatTestCase, env, tokeniser):
     async def streaming_response_handler(tokens: str):
         token_events.append(tokens)
 
-    response = await app.run(
-        input=RedboxState(request=test_case.query), response_tokens_callback=streaming_response_handler
-    )
+    llm = GenericFakeChatModel(messages=iter(test_case.test_data.expected_llm_response))
+    with (
+        mocker.patch("redbox.graph.nodes.processes.get_chat_llm", return_value=llm),
+    ):
+        response = await app.run(
+            input=RedboxState(request=test_case.query), response_tokens_callback=streaming_response_handler
+        )
 
     final_state = RedboxState(response)
 
@@ -198,10 +204,8 @@ async def test_streaming(test: RedboxChatTestCase, env, tokeniser):
 
 def test_get_available_keywords(tokeniser):
     app = Redbox(
-        llm=GenericFakeChatModel(messages=iter([])),
         all_chunks_retriever=mock_all_chunks_retriever([]),
         parameterised_retriever=mock_parameterised_retriever([]),
-        tokeniser=tokeniser,
         env=env,
         debug=LANGGRAPH_DEBUG,
     )
