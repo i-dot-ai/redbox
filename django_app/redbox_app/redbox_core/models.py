@@ -75,7 +75,9 @@ class AISettings(UUIDPrimaryKeyBase, TimeStampedModel):
     match_boost = models.PositiveIntegerField(default=1)
     knn_boost = models.PositiveIntegerField(default=1)
     similarity_threshold = models.PositiveIntegerField(default=0)
-    chat_backend = models.CharField(max_length=64, choices=ChatBackend, help_text="LLM to use in chat", default=ChatBackend.GPT_35_OMNI)
+    chat_backend = models.CharField(
+        max_length=64, choices=ChatBackend, help_text="LLM to use in chat", default=ChatBackend.GPT_35_OMNI
+    )
 
     def __str__(self) -> str:
         return str(self.label)
