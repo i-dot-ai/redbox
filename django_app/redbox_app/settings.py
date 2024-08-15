@@ -58,6 +58,7 @@ INSTALLED_APPS = [
     "storages",
     "magic_link",
     "import_export",
+    "django_q",
 ]
 
 MIDDLEWARE = [
@@ -332,3 +333,22 @@ MAX_SECURITY_CLASSIFICATION = Classification[env.str("MAX_SECURITY_CLASSIFICATIO
 
 SECURITY_TXT_REDIRECT = URL("https://vdp.cabinetoffice.gov.uk/.well-known/security.txt")
 REDBOX_VERSION = os.environ.get("REDBOX_VERSION", "not set")
+
+
+# django-q2 settings
+Q_CLUSTER = {
+    "name": "redbox_django",
+    "timeout": 120,
+    "retry": 600,
+    "catch_up": False,
+    "redis": {
+        "host": env.str("REDIS_HOST"),
+        "port": env.int("REDIS_PORT"),
+        "db": 0,
+        "password": None,
+        "socket_timeout": None,
+        "charset": "utf-8",
+        "errors": "strict",
+        "unix_socket_path": None,
+    },
+}
