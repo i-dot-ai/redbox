@@ -63,6 +63,9 @@ def get_elasticsearch_storage_handler(es):
 async def ingest(
     file: File,
 ):
+    from redbox_app.redbox_core.models import File as DJFile
+    from redbox_app.redbox_core.models import StatusEnum
+
     logging.info("Ingesting file: %s", file)
 
     file.ingest_status = ProcessingStatusEnum.embedding
@@ -91,10 +94,14 @@ async def ingest(
         new_ids = await RunnableParallel({"normal": chunk_ingest_chain, "largest": large_chunk_ingest_chain}).ainvoke(
             file
         )
+        DJFile.objects.filter(core_file_uuid=file.uuid).update(status=StatusEnum.complete)
+
         file.ingest_status = ProcessingStatusEnum.complete
         logging.info("File: %s %s chunks ingested", file, {k: len(v) for k, v in new_ids.items()})
     except Exception:
         logging.exception("Error while processing file [%s]", file)
         file.ingest_status = ProcessingStatusEnum.failed
+        DJFile.objects.filter(core_file_uuid=file.uuid).update(status=StatusEnum.errored)
+
     finally:
         storage_handler.update_item(file)

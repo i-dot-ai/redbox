@@ -134,6 +134,7 @@ class UploadView(View):
     def ingest_file(uploaded_file: UploadedFile, user: User) -> Sequence[str]:
         errors: MutableSequence[str] = []
         try:
+            logger.info("getting file from s3")
             file = File.objects.create(
                 status=StatusEnum.processing.value,
                 user=user,
@@ -146,8 +147,11 @@ class UploadView(View):
             errors.append(e.args[0])
         else:
             try:
+                logger.info("pushing file to core")
                 upload_file_response = core_api.upload_file(file.unique_name, user)
+                logger.info("ingesting file...")
                 ingest(upload_file_response)
+                logger.info("...ingested?")
             except RequestException as e:
                 logger.exception("Error uploading file object %s.", file, exc_info=e)
                 file.delete()

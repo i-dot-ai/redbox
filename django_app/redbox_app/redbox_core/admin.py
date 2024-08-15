@@ -6,7 +6,6 @@ from django.contrib import admin
 from django.db.models import QuerySet
 from django.http import HttpResponse
 from import_export.admin import ExportMixin, ImportExportMixin
-from requests.exceptions import RequestException
 
 from redbox.models.file import File as CoreFile
 from redbox_app.celery import ingest
@@ -56,22 +55,12 @@ class UserAdmin(ImportExportMixin, admin.ModelAdmin):
 
 
 class FileAdmin(ExportMixin, admin.ModelAdmin):
-    def reupload(self, request, queryset):  # noqa:ARG002
+    def reupload(self, request, queryset):
         for file in queryset:
-            file: models.File
-            try:
-                logger.info("Re-uploading file to core-api: %s", file)
-                core_file = CoreFile(key=file.unique_name, bucket=settings.BUCKET_NAME)
-                ingest(core_file)
-            except RequestException as e:
-                logger.exception("Error re-uploading File model object %s.", file, exc_info=e)
-                file.status = models.StatusEnum.errored
-                file.save()
-            else:
-                file.status = models.StatusEnum.processing
-                file.save()
-
-                logger.info("Successfully reuploaded file %s.", file)
+            logger.info("Re-uploading file to core-api: %s", file)
+            core_file = CoreFile(key=file.unique_name, bucket=settings.BUCKET_NAME, creator_user_uuid=request.user.id)
+            ingest(core_file)
+            logger.info("Successfully reuploaded file %s.", file)
 
     list_display = ["original_file_name", "user", "status", "created_at", "last_referenced"]
     list_filter = ["user", "status"]
