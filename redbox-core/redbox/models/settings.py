@@ -4,6 +4,7 @@ from typing import Literal
 
 import boto3
 from elasticsearch import Elasticsearch
+from langchain_elasticsearch.cache import ElasticsearchCache
 from pydantic import BaseModel
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -139,6 +140,22 @@ class Settings(BaseSettings):
         log.info("Elastic Cloud API Key = %s", self.elastic.api_key)
 
         return Elasticsearch(cloud_id=self.elastic.cloud_id, api_key=self.elastic.api_key)
+
+    def elasticsearch_cache(self) -> ElasticsearchCache:
+        cache_index = self.elastic_root_index + "-cache"
+        if isinstance(self.elastic, ElasticLocalSettings):
+            return ElasticsearchCache(
+                index_name=cache_index,
+                es_user=self.elastic.user,
+                es_password=self.elastic.password,
+                es_url=f"{self.elastic.scheme}://{self.elastic.host}:{self.elastic.port}",
+            )
+
+        return ElasticsearchCache(
+            index_name=cache_index,
+            es_cloud_id=self.elastic.cloud_id,
+            es_api_key=self.elastic.api_key,
+        )
 
     def s3_client(self):
         if self.object_store == "minio":

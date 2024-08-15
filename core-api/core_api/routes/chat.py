@@ -2,7 +2,9 @@ import logging
 from typing import Annotated
 from uuid import UUID
 
+from langchain.globals import set_llm_cache
 from redbox import Redbox
+from redbox.models import Settings
 
 from core_api.auth import get_user_uuid, get_ws_user_uuid
 from fastapi import Depends, FastAPI, WebSocket
@@ -14,7 +16,7 @@ from redbox.models.chain import RedboxQuery, RedboxState, ChainChatMessage
 from redbox.models.chat import ChatRequest, ChatResponse, ClientResponse, ErrorDetail
 from redbox.transform import map_document_to_source_document
 
-from core_api.dependencies import get_redbox
+from core_api.dependencies import get_redbox, get_env
 from core_api.runnables import map_to_chat_response
 
 # === Logging ===
@@ -70,8 +72,10 @@ async def available_tools(
 async def rag_chat_streamed(
     websocket: WebSocket,
     redbox: Annotated[Redbox, Depends(get_redbox)],
+    env: Annotated[Settings, Depends(get_env)],
 ):
     """Websocket. Get a LLM response to a question history and file."""
+    set_llm_cache(env.elasticsearch_cache())
     await websocket.accept()
 
     user_uuid = await get_ws_user_uuid(websocket)
