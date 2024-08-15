@@ -75,7 +75,7 @@
           <label class="govuk-body-s govuk-!-font-weight-bold" for="llm-selector">Model</label>
           <select id="llm-selector" name="llm" class="govuk-select govuk-!-margin-top-1">
             {% for option in llm_options %}
-              <option {% if option.selected %}selected{% endif %}>{{ option.name }}{% if option.default %} (default){% endif %}</option>
+              <option value="{{ option.name }}" {% if option.selected %}selected{% endif %}>{{ option.name }}{% if option.default %} (default){% endif %}</option>
             {% endfor %}
           </select>
         </div>
