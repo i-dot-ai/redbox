@@ -9,10 +9,10 @@ from import_export.admin import ExportMixin, ImportExportMixin
 from requests.exceptions import RequestException
 
 from redbox.models.file import File as CoreFile
+from redbox_app.celery import ingest
 from redbox_app.redbox_core.client import CoreApiClient
 
 from . import models
-from .celery import ingest
 
 logger = logging.getLogger(__name__)
 core_api = CoreApiClient(host=settings.CORE_API_HOST, port=settings.CORE_API_PORT)

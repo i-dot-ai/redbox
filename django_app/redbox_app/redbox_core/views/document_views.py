@@ -15,7 +15,7 @@ from django.views import View
 from django.views.decorators.http import require_http_methods
 from requests.exceptions import RequestException
 
-from redbox_app.redbox_core.celery import ingest
+from redbox_app.celery import ingest
 from redbox_app.redbox_core.client import CoreApiClient
 from redbox_app.redbox_core.models import File, StatusEnum, User
 
