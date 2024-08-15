@@ -30,9 +30,15 @@ class ChatController extends HTMLElement {
       );
       aiMessage.setAttribute("data-role", "ai");
       messageContainer?.insertBefore(aiMessage, insertPosition);
+
+      const llm = /** @type {HTMLInputElement | null}*/ (
+        document.querySelector("#llm-selector")
+      )?.value;
+
       aiMessage.stream(
         userText,
         selectedDocuments,
+        llm,
         this.dataset.sessionId,
         this.dataset.streamUrl || "",
         this
