@@ -4,6 +4,7 @@ from typing import Literal
 
 import boto3
 from elasticsearch import Elasticsearch
+from langchain_elasticsearch.cache import ElasticsearchCache
 from pydantic import BaseModel
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -138,6 +139,25 @@ class Settings(BaseSettings):
         log.info("Elastic Cloud API Key = %s", self.elastic.api_key)
 
         return Elasticsearch(cloud_id=self.elastic.cloud_id, api_key=self.elastic.api_key)
+
+    @lru_cache(1)
+    def elasticsearch_cache(self) -> ElasticsearchCache:
+        index_name = f"{self.elastic_root_index}-cache"
+        if isinstance(self.elastic, ElasticLocalSettings):
+            log.info("Connecting to self managed Elasticsearch")
+            log.info("Elasticsearch host = %s", self.elastic.host)
+            return ElasticsearchCache(
+                index_name=index_name,
+                es_password=self.elastic.password,
+                es_user=self.elastic.user,
+                es_url=f"{self.elastic.scheme}://{self.elastic.host}:{self.elastic.port}",
+            )
+
+        log.info("Connecting to Elastic Cloud Cluster")
+        log.info("Cloud ID = %s", self.elastic.cloud_id)
+        log.info("Elastic Cloud API Key = %s", self.elastic.api_key)
+
+        return ElasticsearchCache(index_name, es_cloud_id=self.elastic.cloud_id, es_api_key=self.elastic.api_key)
 
     def s3_client(self):
         if self.object_store == "minio":

@@ -4,6 +4,8 @@ from langchain_elasticsearch import ElasticsearchRetriever
 from langchain_core.embeddings import Embeddings, FakeEmbeddings
 from langchain_openai import AzureChatOpenAI
 from langchain_openai.embeddings import AzureOpenAIEmbeddings, OpenAIEmbeddings
+from langchain_core.globals import set_llm_cache
+
 from langchain_core.utils import convert_to_secret_str
 import tiktoken
 
@@ -12,13 +14,17 @@ from redbox.models.settings import Settings
 from redbox.retriever import AllElasticsearchRetriever, ParameterisedElasticsearchRetriever
 
 
-def get_chat_llm(env: Settings, ai_settings: AISettings):
+def get_chat_llm(env: Settings, ai_settings: AISettings, cache: bool = False):
+    if cache:
+        set_llm_cache(env.elasticsearch_cache())
+
     if ai_settings.chat_backend == "gpt-35-turbo-16k":
         return AzureChatOpenAI(
             api_key=convert_to_secret_str(env.azure_openai_api_key_35t),
             azure_endpoint=env.azure_openai_endpoint_35t,
             model=ai_settings.chat_backend,
             api_version=env.openai_api_version_35t,
+            cache=cache,
         )
     elif ai_settings.chat_backend == "gpt-4-turbo-2024-04-09":
         return AzureChatOpenAI(
@@ -26,6 +32,7 @@ def get_chat_llm(env: Settings, ai_settings: AISettings):
             azure_endpoint=env.azure_openai_endpoint_4t,
             model=ai_settings.chat_backend,
             api_version=env.openai_api_version_4t,
+            cache=cache,
         )
     elif ai_settings.chat_backend == "gpt-4o":
         return AzureChatOpenAI(
@@ -33,6 +40,7 @@ def get_chat_llm(env: Settings, ai_settings: AISettings):
             azure_endpoint=env.azure_openai_endpoint_4o,
             model=ai_settings.chat_backend,
             api_version=env.openai_api_version_4o,
+            cache=cache,
         )
     raise Exception("%s not recognised", ai_settings.chat_backend)
 

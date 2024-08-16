@@ -74,7 +74,7 @@ def build_merge_pattern(
     tokeniser = get_tokeniser()
 
     def _merge(state: RedboxState) -> dict[str, Any]:
-        llm = get_chat_llm(Settings(), state["request"].ai_settings)
+        llm = get_chat_llm(Settings(), state["request"].ai_settings, True)
         _llm = llm.with_config(tags=["response_flag"]) if final_response_chain else llm
 
         flattened_documents = flatten_document_state(state["documents"])
