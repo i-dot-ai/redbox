@@ -108,8 +108,6 @@ locals {
   worker_secrets = {
     "ELASTIC__API_KEY" : var.elastic_api_key,
     "ELASTIC__CLOUD_ID" : var.cloud_id,
-    "AZURE_OPENAI_API_KEY" : var.azure_openai_api_key,
-    "AZURE_OPENAI_ENDPOINT" : var.azure_openai_endpoint,
     "EMBEDDING_OPENAI_API_KEY": var.embedding_openai_api_key,
     "EMBEDDING_AZURE_OPENAI_ENDPOINT": var.embedding_azure_openai_endpoint,
   }

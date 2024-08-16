@@ -89,7 +89,6 @@ class Settings(BaseSettings):
 
     aws_region: str = "eu-west-2"
     bucket_name: str = "redbox-storage-dev"
-    embedding_model: str = "all-mpnet-base-v2"
 
     embed_queue_name: str = "redbox-embedder-queue"
     ingest_queue_name: str = "redbox-ingester-queue"
