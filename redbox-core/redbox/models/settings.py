@@ -66,7 +66,7 @@ class Settings(BaseSettings):
     embedding_max_batch_size: int = 512
     embedding_document_field_name: str = "embedding"
 
-    embedding_openai_base_url: str = "not an endpoint"
+    embedding_openai_base_url: str | None = None
     embedding_openai_model: str = "text-embedding-ada-002"
 
     partition_strategy: Literal["auto", "fast", "ocr_only", "hi_res"] = "fast"
