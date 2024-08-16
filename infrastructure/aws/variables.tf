@@ -100,6 +100,19 @@ variable "internal_ips" {
   description = "IP's of No10 and CO"
 }
 
+variable "embedding_openai_api_key" {
+  type        = string
+  sensitive   = true
+  default     = null
+  description = "OPENAI api key"
+}
+
+variable "embedding_azure_openai_endpoint" {
+  type        = string
+  default     = null
+  description = "The base URL for your Azure OpenAI resource.  You can find this in the Azure portal under your Azure OpenAI resource."
+}
+
 variable "azure_openai_model" {
   type        = string
   default     = "gpt-3.5-turbo"

@@ -110,6 +110,8 @@ locals {
     "ELASTIC__CLOUD_ID" : var.cloud_id,
     "AZURE_OPENAI_API_KEY" : var.azure_openai_api_key,
     "AZURE_OPENAI_ENDPOINT" : var.azure_openai_endpoint,
+    "EMBEDDING_OPENAI_API_KEY": var.embedding_openai_api_key,
+    "EMBEDDING_AZURE_OPENAI_ENDPOINT": var.embedding_azure_openai_endpoint,
   }
 
   reconstructed_worker_secrets = [for k, _ in local.worker_secrets : { name = k, valueFrom = "${aws_secretsmanager_secret.worker-secret.arn}:${k}::" }]
