@@ -8,7 +8,6 @@ locals {
     {
       "EMBEDDING_DOCUMENT_FIELD_NAME" : var.embedding_document_field_name,
       "AZURE_OPENAI_MODEL" : var.azure_openai_model,
-      "EMBEDDING_OPENAI_BASE_URL": var.azure_openai_endpoint,
       "AI__CONTEXT_WINDOW_SIZE" : var.context_window_size,
       "AI__RAG_K" : var.rag_k,
       "AI__RAG_NUM_CANDIDATES" : var.rag_num_candidates,
@@ -56,7 +55,6 @@ locals {
 
   worker_environment_variables = {
     "EMBEDDING_DOCUMENT_FIELD_NAME" : var.embedding_document_field_name,
-    "OPENAI_API_VERSION" : var.openai_api_version,
     "EMBEDDING_MAX_RETRIES" : var.embedding_max_retries,
     "EMBEDDING_RETRY_MIN_SECONDS" : var.embedding_retry_min_seconds,
     "EMBEDDING_RETRY_MAX_SECONDS" : var.embedding_retry_max_seconds,
@@ -91,6 +89,9 @@ locals {
     "AZURE_OPENAI_API_KEY_4O" : var.azure_openai_api_key_4o,
     "AZURE_OPENAI_ENDPOINT_4O" : var.azure_openai_endpoint_4o,
     "OPENAI_API_VERSION_4O" : var.openai_api_version_4o,
+
+    "EMBEDDING_OPENAI_API_KEY": var.embedding_openai_api_key,
+    "EMBEDDING_AZURE_OPENAI_ENDPOINT": var.embedding_azure_openai_endpoint,
 
     "LLM_MAX_TOKENS" : var.llm_max_tokens,
   }
