@@ -54,6 +54,7 @@ locals {
   }
 
   worker_environment_variables = {
+    "OPENAI_API_VERSION": var.openai_api_version,
     "EMBEDDING_DOCUMENT_FIELD_NAME" : var.embedding_document_field_name,
     "EMBEDDING_MAX_RETRIES" : var.embedding_max_retries,
     "EMBEDDING_RETRY_MIN_SECONDS" : var.embedding_retry_min_seconds,

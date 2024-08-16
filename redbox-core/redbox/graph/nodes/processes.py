@@ -1,4 +1,3 @@
-import logging
 import re
 from typing import Any, Callable
 from uuid import uuid4
@@ -17,7 +16,6 @@ from redbox.models.chain import PromptSet
 from redbox.transform import flatten_document_state
 
 
-log = logging.getLogger()
 re_keyword_pattern = re.compile(r"@(\w+)")
 
 
