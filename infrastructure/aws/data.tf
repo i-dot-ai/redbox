@@ -8,6 +8,7 @@ locals {
     {
       "EMBEDDING_DOCUMENT_FIELD_NAME" : var.embedding_document_field_name,
       "AZURE_OPENAI_MODEL" : var.azure_openai_model,
+      "EMBEDDING_OPENAI_BASE_URL": var.azure_openai_endpoint,
       "AI__CONTEXT_WINDOW_SIZE" : var.context_window_size,
       "AI__RAG_K" : var.rag_k,
       "AI__RAG_NUM_CANDIDATES" : var.rag_num_candidates,
