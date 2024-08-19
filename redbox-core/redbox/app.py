@@ -11,6 +11,7 @@ from redbox.graph.root import (
     FINAL_RESPONSE_TAG,
     SOURCE_DOCUMENTS_TAG,
 )
+from langchain_community.callbacks import get_openai_callback
 
 
 async def _default_callback(*args, **kwargs):
@@ -39,19 +40,23 @@ class Redbox:
         documents_callback=_default_callback,
     ) -> RedboxState:
         final_state = None
-        async for event in self.graph.astream_events(input, version="v2"):
-            kind = event["event"]
-            tags = event.get("tags", [])
-            if kind == "on_chat_model_stream" and FINAL_RESPONSE_TAG in tags:
-                await response_tokens_callback(event["data"]["chunk"].content)
-            elif kind == "on_chain_end" and FINAL_RESPONSE_TAG in tags:
-                await response_tokens_callback(event["data"]["output"])
-            elif kind == "on_chain_end" and ROUTE_NAME_TAG in tags:
-                await route_name_callback(event["data"]["output"])
-            elif kind == "on_retriever_end" and SOURCE_DOCUMENTS_TAG in tags:
-                await documents_callback(event["data"]["output"])
-            elif kind == "on_chain_end" and event["name"] == "LangGraph":
-                final_state = RedboxState(**event["data"]["output"])
+        with get_openai_callback() as cb:
+            async for event in self.graph.astream_events(input, version="v2"):
+                kind = event["event"]
+                tags = event.get("tags", [])
+                if kind == "on_chat_model_stream" and FINAL_RESPONSE_TAG in tags:
+                    await response_tokens_callback(event["data"]["chunk"].content)
+                elif kind == "on_chain_end" and FINAL_RESPONSE_TAG in tags:
+                    await response_tokens_callback(event["data"]["output"])
+                elif kind == "on_chain_end" and ROUTE_NAME_TAG in tags:
+                    await route_name_callback(event["data"]["output"])
+                elif kind == "on_retriever_end" and SOURCE_DOCUMENTS_TAG in tags:
+                    await documents_callback(event["data"]["output"])
+                elif kind == "on_chain_end" and event["name"] == "LangGraph":
+                    final_state = RedboxState(**event["data"]["output"])
+
+        if final_state:
+            final_state["total_tokens"] = cb.total_tokens
         return final_state
 
     def get_available_keywords(self) -> dict[ChatRoute, str]:

@@ -185,6 +185,7 @@ class RedboxState(TypedDict):
     documents: Annotated[NotRequired[DocumentState], document_reducer]
     text: NotRequired[str | None]
     route_name: NotRequired[str | None]
+    total_tokens: int | None
 
 
 class PromptSet(StrEnum):

@@ -104,11 +104,14 @@ async def rag_chat_streamed(
         )
 
     try:
-        await redbox.run(
+        final_state = await redbox.run(
             state,
             response_tokens_callback=on_llm_response,
             route_name_callback=on_route_choice,
             documents_callback=on_documents_available,
+        )
+        await send_to_client(
+            ClientResponse(resource_type="text", data=f"you used {final_state['total_token']}"), websocket
         )
     except RateLimitError as e:
         log.exception("Rate limit error", exc_info=e)
