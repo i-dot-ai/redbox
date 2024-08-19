@@ -107,7 +107,6 @@ def get_chat_with_large_documents_graph(
     )
     builder.add_node("p_clear_documents", clear_documents_process)
 
-
     # Sends
     builder.add_node("s_chunk", empty_process)
     builder.add_node("s_group_1", empty_process)
@@ -159,7 +158,6 @@ def get_chat_with_large_documents_graph(
         },
     )
 
-    builder.add_edge("p_set_chat_docs_route", "p_summarise")
     builder.add_edge("p_summarise", "p_clear_documents")
     builder.add_edge("p_clear_documents", END)
     builder.add_edge("p_too_large_error", END)
