@@ -98,6 +98,13 @@ def get_chat_with_large_documents_graph(
             final_response_chain=True,
         ),
     )
+    builder.add_node(
+        "p_too_large_error",
+        build_set_text_pattern(
+            text="These documents are too large to work with.",
+            final_response_chain=True,
+        ),
+    )
 
     # Sends
     builder.add_node("s_chunk", empty_process)
@@ -180,13 +187,6 @@ def get_chat_with_documents_graph(
         ),
     )
     builder.add_node("p_clear_documents", clear_documents_process)
-    builder.add_node(
-        "p_too_large_error",
-        build_set_text_pattern(
-            text="These documents are too large to work with.",
-            final_response_chain=True,
-        ),
-    )
 
     # Decisions
     builder.add_node("d_all_docs_bigger_than_context", empty_process)
@@ -206,7 +206,7 @@ def get_chat_with_documents_graph(
     builder.add_edge("p_set_chat_docs_route", "p_summarise")
     builder.add_edge("p_summarise", "p_clear_documents")
     builder.add_edge("p_clear_documents", END)
-    builder.add_edge("p_too_large_error", END)
+    builder.add_edge("p_set_chat_docs_large_route", END)
 
     return builder.compile(debug=debug)
 
