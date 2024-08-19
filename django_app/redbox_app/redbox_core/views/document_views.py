@@ -150,9 +150,9 @@ class UploadView(View):
             try:
                 logger.info("pushing file to core")
                 upload_file_response = core_api.upload_file(file.unique_name, user)
-                logger.info("ingesting file...")
-                async_task(ingest, upload_file_response)
-                logger.info("...ingested?")
+                async_task(
+                    ingest, upload_file_response, task_name=upload_file_response.original_file_name, group="ingest"
+                )
             except RequestException as e:
                 logger.exception("Error uploading file object %s.", file, exc_info=e)
                 file.delete()
