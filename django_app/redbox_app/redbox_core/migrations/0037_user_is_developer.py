@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('redbox_core', '0033_rename_users_chat_user'),
+        ('redbox_core', '0036_alter_user_business_unit'),
     ]
 
     operations = [
