@@ -159,7 +159,7 @@ def get_chat_with_large_documents_graph(
     )
 
     builder.add_edge(START, "p_set_chat_docs_large_route")
-    builder.add_edge("p_summarise", "p_clear_documents")
+    builder.add_edge("p_summarise", "p_clear_documents")  # this stage may not be needed
     builder.add_edge("p_clear_documents", END)
     builder.add_edge("p_too_large_error", END)
 
@@ -205,6 +205,7 @@ def get_chat_with_documents_graph(
         },
     )
     builder.add_edge("p_set_chat_docs_route", "p_summarise")
+    builder.add_edge("p_set_chat_docs_large_route", "p_clear_documents")
     builder.add_edge("p_summarise", "p_clear_documents")
     builder.add_edge("p_clear_documents", END)
     builder.add_edge("p_set_chat_docs_large_route", END)
