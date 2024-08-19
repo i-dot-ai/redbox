@@ -27,7 +27,7 @@ class Command(BaseCommand):
             logger.debug("Reingesting file object %s", file)
 
             try:
-                async_task(ingest, file)
+                async_task(ingest, file.original_file_name)
 
             except RequestException as e:
                 logger.exception("Error reingesting file object %s using core-api", file, exc_info=e)

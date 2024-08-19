@@ -71,7 +71,7 @@ services:
     build:
       context: .
       dockerfile: django_app/Dockerfile
-    command: "venv/bin/celery -A redbox_app worker  --loglevel=info"
+    command: "venv/bin/django-admin qcluster"
     env_file:
       - path: .env.integration
         required: false

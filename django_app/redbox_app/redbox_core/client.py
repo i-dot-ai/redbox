@@ -77,7 +77,9 @@ class CoreApiClient:
             self.url / "file", json={"key": name}, headers={"Authorization": user.get_bearer_token()}, timeout=30
         )
         response.raise_for_status()
-        return CoreFile(creator_user_uuid=user.id, **response.json())
+        core_file = response.json()
+        core_file["creator_user_uuid"] = user.id
+        return CoreFile(**core_file)
 
     def get_ai_settings(self, user: User) -> AISettings:
         return model_to_dict(
@@ -114,4 +116,6 @@ class CoreApiClient:
         url = self.url / "file" / str(file_id)
         response = requests.delete(url, headers={"Authorization": user.get_bearer_token()}, timeout=60)
         response.raise_for_status()
-        return CoreFile(creator_user_uuid=user.id, **response.json())
+        core_file = response.json()
+        core_file["creator_user_uuid"] = user.id
+        return CoreFile(**core_file)

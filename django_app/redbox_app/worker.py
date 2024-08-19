@@ -41,7 +41,7 @@ def get_elasticsearch_storage_handler(es):
     return ElasticsearchStorageHandler(es, env.elastic_root_index)
 
 
-async def ingest(
+def ingest(
     file: File,
 ):
     from redbox_app.redbox_core.models import File as DJFile
@@ -72,9 +72,7 @@ async def ingest(
     storage_handler.update_item(file)
 
     try:
-        new_ids = await RunnableParallel({"normal": chunk_ingest_chain, "largest": large_chunk_ingest_chain}).ainvoke(
-            file
-        )
+        new_ids = RunnableParallel({"normal": chunk_ingest_chain, "largest": large_chunk_ingest_chain}).invoke(file)
         DJFile.objects.filter(core_file_uuid=file.uuid).update(status=StatusEnum.complete)
 
         file.ingest_status = ProcessingStatusEnum.complete

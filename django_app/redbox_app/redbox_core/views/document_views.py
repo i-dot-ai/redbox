@@ -201,12 +201,4 @@ def file_status_api_view(request: HttpRequest) -> JsonResponse:
     except File.DoesNotExist as ex:
         logger.exception("File object information not found in django - file does not exist %s.", file_id, exc_info=ex)
         return JsonResponse({"status": StatusEnum.errored.label})
-    try:
-        core_file_status_response = core_api.get_file_status(file_id=file.core_file_uuid, user=request.user)
-    except RequestException as ex:
-        logger.exception("File object information from core not found - for file %s.", file_id, exc_info=ex)
-        file.status = StatusEnum.errored
-        file.save()
-        return JsonResponse({"status": file.get_status_text()})
-    file.update_status_from_core(status_label=core_file_status_response.processing_status)
     return JsonResponse({"status": file.get_status_text()})
