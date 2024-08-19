@@ -48,37 +48,6 @@ jobs:
       run: |
         make test-core-api
 
-  test-worker:
-
-    runs-on: ubuntu-latest
-
-    steps:
-    - uses: actions/checkout@v3
-
-    - name: Set up Python 3.12
-      uses: actions/setup-python@v3
-      with:
-        python-version: "3.12"
-
-    - name: Set up Poetry
-      uses: abatilo/actions-poetry@v2
-      with:
-        poetry-version: 1.7.0
-
-    - name: Build Containers
-      run: |
-        mkdir -p data/elastic/
-        chmod 777 data/elastic/
-        cp .env.test .env
-        docker compose up -d --wait elasticsearch unstructured
-
-
-    - name: Test worker with pytest
-      run: |
-        cp .env.test worker/.env
-        cd worker
-        poetry install
-        poetry run pytest --cov=worker -v --cov-report=term-missing --cov-fail-under=80
 
   test-redbox:
 
