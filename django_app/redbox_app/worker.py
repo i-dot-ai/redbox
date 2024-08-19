@@ -7,7 +7,7 @@ from langchain_elasticsearch.vectorstores import BM25RetrievalStrategy, Elastics
 from redbox.chains.components import get_embeddings
 from redbox.chains.ingest import ingest_from_loader
 from redbox.loader import UnstructuredLargeChunkLoader, UnstructuredTitleLoader
-from redbox.models import File, ProcessingStatusEnum, Settings
+from redbox.models import File as CoreFile, ProcessingStatusEnum, Settings
 from redbox.storage.elasticsearch import ElasticsearchStorageHandler
 
 if TYPE_CHECKING:
@@ -42,9 +42,10 @@ def get_elasticsearch_storage_handler(es):
 
 
 def ingest(
-    file: File,
+    file: CoreFile,
 ):
-    from redbox_app.redbox_core.models import File as DJFile
+    # These models need to be loaded at runtime otherwise they can be loaded before they exist
+    from redbox_app.redbox_core.models import File
     from redbox_app.redbox_core.models import StatusEnum
 
     logging.info("Ingesting file: %s", file)
@@ -73,14 +74,14 @@ def ingest(
 
     try:
         new_ids = RunnableParallel({"normal": chunk_ingest_chain, "largest": large_chunk_ingest_chain}).invoke(file)
-        DJFile.objects.filter(core_file_uuid=file.uuid).update(status=StatusEnum.complete)
+        File.objects.filter(core_file_uuid=file.uuid).update(status=StatusEnum.complete)
 
         file.ingest_status = ProcessingStatusEnum.complete
         logging.info("File: %s %s chunks ingested", file, {k: len(v) for k, v in new_ids.items()})
     except Exception:
         logging.exception("Error while processing file [%s]", file)
         file.ingest_status = ProcessingStatusEnum.failed
-        DJFile.objects.filter(core_file_uuid=file.uuid).update(status=StatusEnum.errored)
+        File.objects.filter(core_file_uuid=file.uuid).update(status=StatusEnum.errored)
 
     finally:
         storage_handler.update_item(file)
