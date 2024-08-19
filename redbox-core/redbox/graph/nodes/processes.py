@@ -53,7 +53,6 @@ def build_chat_pattern(
         llm = get_chat_llm(Settings(), state["request"].ai_settings)
         _llm = llm.with_config(tags=["response_flag"]) if final_response_chain else llm
         chat_chain = build_chat_prompt_from_messages_runnable(prompt_set) | _llm | {"text": StrOutputParser()}
-
         return chat_chain.invoke(state)
 
     return _chat
@@ -133,8 +132,9 @@ def build_set_route_pattern(route: ChatRoute) -> Callable[[RedboxState], dict[st
 
     def _set_route(state: RedboxState) -> dict[str, Any]:
         set_route_chain = (RunnablePassthrough() | StrOutputParser()).with_config(tags=["route_flag"])
-
-        return {"route_name": set_route_chain.invoke(route.value)}
+        route_name = set_route_chain.invoke(route.value)
+        log.info(f"Setting route name to: {route_name}")
+        return {"route_name": route_name}
 
     return _set_route
 

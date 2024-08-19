@@ -93,6 +93,8 @@ class Settings(BaseSettings):
     embed_queue_name: str = "redbox-embedder-queue"
     ingest_queue_name: str = "redbox-ingester-queue"
 
+    langgraph_debug: bool = False
+
     ## Chunks
     ### Normal
     worker_ingest_min_chunk_size: int = 600

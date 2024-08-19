@@ -167,19 +167,21 @@ def get_chat_with_large_documents_graph(
 
 
 def get_chat_with_documents_graph(
-    retriever: VectorStoreRetriever,
+    all_chunks_retriever: VectorStoreRetriever,
+    parameterised_retriever: VectorStoreRetriever,
     debug: bool = False,
 ) -> CompiledGraph:
     """Creates a subgraph for chatting with documents."""
     builder = StateGraph(RedboxState)
 
-    large_doc_graph = get_search_graph(retriever=retriever, debug=debug)
+    large_doc_graph = get_search_graph(retriever=parameterised_retriever, debug=True)
 
     # Processes
     builder.add_node("p_pass_question_to_text", build_passthrough_pattern())
-    builder.add_node("p_retrieve_docs", build_retrieve_pattern(retriever=retriever))
+    builder.add_node("p_retrieve_docs", build_retrieve_pattern(retriever=all_chunks_retriever))
     builder.add_node("p_set_chat_docs_route", build_set_route_pattern(route=ChatRoute.chat_with_docs))
-    builder.add_node("p_set_chat_docs_large_route", large_doc_graph)
+    builder.add_node("p_clear_docs_for_search", clear_documents_process)
+    builder.add_node("p_search_in_large_docs", large_doc_graph)
     builder.add_node(
         "p_summarise",
         build_stuff_pattern(
@@ -200,15 +202,16 @@ def get_chat_with_documents_graph(
         "d_all_docs_bigger_than_context",
         build_documents_bigger_than_context_conditional(PromptSet.ChatwithDocsMapReduce),
         {
-            True: "p_set_chat_docs_large_route",
+            True: "p_clear_docs_for_search",
             False: "p_set_chat_docs_route",
         },
     )
     builder.add_edge("p_set_chat_docs_route", "p_summarise")
-    builder.add_edge("p_set_chat_docs_large_route", "p_clear_documents")
     builder.add_edge("p_summarise", "p_clear_documents")
     builder.add_edge("p_clear_documents", END)
-    builder.add_edge("p_set_chat_docs_large_route", END)
+
+    builder.add_edge("p_clear_docs_for_search", "p_search_in_large_docs")
+    builder.add_edge("p_search_in_large_docs", END)
 
     return builder.compile(debug=debug)
 
@@ -227,7 +230,11 @@ def get_root_graph(
     # Subgraphs
     chat_subgraph = get_chat_graph(debug=debug)
     rag_subgraph = get_search_graph(retriever=parameterised_retriever, debug=debug)
-    cwd_subgraph = get_chat_with_documents_graph(retriever=all_chunks_retriever, debug=debug)
+    cwd_subgraph = get_chat_with_documents_graph(
+        all_chunks_retriever=all_chunks_retriever, 
+        parameterised_retriever=parameterised_retriever,
+        debug=debug
+    )
 
     # Processes
     builder.add_node("p_search", rag_subgraph)

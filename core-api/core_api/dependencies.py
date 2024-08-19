@@ -54,4 +54,4 @@ def get_redbox(
     parameterised_retriever: Annotated[ParameterisedElasticsearchRetriever, Depends(get_parameterised_retriever)],
     env: Annotated[Settings, Depends(get_env)],
 ) -> Redbox:
-    return Redbox(all_chunks_retriever, parameterised_retriever, env, debug=True)
+    return Redbox(all_chunks_retriever, parameterised_retriever, env, debug=env.langgraph_debug)
