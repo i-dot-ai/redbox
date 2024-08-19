@@ -173,7 +173,7 @@ def get_chat_with_documents_graph(
     """Creates a subgraph for chatting with documents."""
     builder = StateGraph(RedboxState)
 
-    large_doc_graph = get_chat_with_large_documents_graph(debug=debug)
+    large_doc_graph = get_search_graph(retriever=retriever, debug=debug)
 
     # Processes
     builder.add_node("p_pass_question_to_text", build_passthrough_pattern())
