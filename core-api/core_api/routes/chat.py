@@ -110,9 +110,8 @@ async def rag_chat_streamed(
             route_name_callback=on_route_choice,
             documents_callback=on_documents_available,
         )
-        await send_to_client(
-            ClientResponse(resource_type="text", data=f"you used {final_state['total_token']}"), websocket
-        )
+        if total_tokens := final_state.get("total_token"):
+            await send_to_client(ClientResponse(resource_type="text", data=f"you used {total_tokens}"), websocket)
     except RateLimitError as e:
         log.exception("Rate limit error", exc_info=e)
         await send_to_client(
