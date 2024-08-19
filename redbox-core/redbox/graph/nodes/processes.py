@@ -6,12 +6,11 @@ from functools import reduce
 
 from langchain.schema import StrOutputParser
 from langchain_core.runnables import RunnableParallel, RunnablePassthrough
-from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_core.vectorstores import VectorStoreRetriever
 
-from redbox.chains.components import get_tokeniser
+from redbox.chains.components import get_tokeniser, get_chat_llm
 from redbox.chains.runnables import build_chat_prompt_from_messages_runnable, CannedChatLLM
-from redbox.models import ChatRoute
+from redbox.models import ChatRoute, Settings
 from redbox.models.chain import RedboxState
 from redbox.transform import combine_documents, structure_documents
 from redbox.models.chain import PromptSet
@@ -45,14 +44,14 @@ def build_retrieve_pattern(
 
 
 def build_chat_pattern(
-    llm: BaseChatModel,
     prompt_set: PromptSet,
     final_response_chain: bool = False,
 ) -> Callable[[RedboxState], dict[str, Any]]:
     """Returns a function that uses state["request"] to set state["text"]."""
-    _llm = llm.with_config(tags=["response_flag"]) if final_response_chain else llm
 
     def _chat(state: RedboxState) -> dict[str, Any]:
+        llm = get_chat_llm(Settings(), state["request"].ai_settings)
+        _llm = llm.with_config(tags=["response_flag"]) if final_response_chain else llm
         chat_chain = build_chat_prompt_from_messages_runnable(prompt_set) | _llm | {"text": StrOutputParser()}
 
         return chat_chain.invoke(state)
@@ -61,7 +60,6 @@ def build_chat_pattern(
 
 
 def build_merge_pattern(
-    llm: BaseChatModel,
     prompt_set: PromptSet,
     final_response_chain: bool = False,
 ) -> Callable[[RedboxState], dict[str, Any]]:
@@ -73,10 +71,12 @@ def build_merge_pattern(
 
     When used without a send, the first Document receieved defines the metadata.
     """
-    _llm = llm.with_config(tags=["response_flag"]) if final_response_chain else llm
     tokeniser = get_tokeniser()
 
     def _merge(state: RedboxState) -> dict[str, Any]:
+        llm = get_chat_llm(Settings(), state["request"].ai_settings)
+        _llm = llm.with_config(tags=["response_flag"]) if final_response_chain else llm
+
         flattened_documents = flatten_document_state(state["documents"])
 
         merged_document = reduce(lambda left, right: combine_documents(left, right), flattened_documents)
@@ -111,14 +111,14 @@ def build_merge_pattern(
 
 
 def build_stuff_pattern(
-    llm: BaseChatModel,
     prompt_set: PromptSet,
     final_response_chain: bool = False,
 ) -> Callable[[RedboxState], dict[str, Any]]:
     """Returns a function that uses state["request"] and state["documents"] to set state["text"]."""
-    _llm = llm.with_config(tags=["response_flag"]) if final_response_chain else llm
 
     def _stuff(state: RedboxState) -> dict[str, Any]:
+        llm = get_chat_llm(Settings(), state["request"].ai_settings)
+        _llm = llm.with_config(tags=["response_flag"]) if final_response_chain else llm
         stuff_chain = build_chat_prompt_from_messages_runnable(prompt_set) | _llm | StrOutputParser()
         return {"text": stuff_chain.invoke(state)}
 

@@ -7,7 +7,6 @@ locals {
     local.worker_environment_variables,
     {
       "EMBEDDING_DOCUMENT_FIELD_NAME" : var.embedding_document_field_name,
-      "OPENAI_API_VERSION" : var.openai_api_version,
       "AZURE_OPENAI_MODEL" : var.azure_openai_model,
       "AI__CONTEXT_WINDOW_SIZE" : var.context_window_size,
       "AI__RAG_K" : var.rag_k,
@@ -78,8 +77,22 @@ locals {
   core_secrets = {
     "ELASTIC__API_KEY" : var.elastic_api_key,
     "ELASTIC__CLOUD_ID" : var.cloud_id,
-    "AZURE_OPENAI_API_KEY" : var.azure_openai_api_key,
-    "AZURE_OPENAI_ENDPOINT" : var.azure_openai_endpoint,
+
+    "AZURE_OPENAI_API_KEY_35T" : var.azure_openai_api_key_35t,
+    "AZURE_OPENAI_ENDPOINT_35T" : var.azure_openai_endpoint_35t,
+    "OPENAI_API_VERSION_35T" : var.openai_api_version_35t,
+
+    "AZURE_OPENAI_API_KEY_4T" : var.azure_openai_api_key_4t,
+    "AZURE_OPENAI_ENDPOINT_4T" : var.azure_openai_endpoint_4t,
+    "OPENAI_API_VERSION_4T" : var.openai_api_version_4t,
+
+    "AZURE_OPENAI_API_KEY_4O" : var.azure_openai_api_key_4o,
+    "AZURE_OPENAI_ENDPOINT_4O" : var.azure_openai_endpoint_4o,
+    "OPENAI_API_VERSION_4O" : var.openai_api_version_4o,
+
+    "EMBEDDING_OPENAI_API_KEY": var.embedding_openai_api_key,
+    "EMBEDDING_AZURE_OPENAI_ENDPOINT": var.embedding_azure_openai_endpoint,
+
     "LLM_MAX_TOKENS" : var.llm_max_tokens,
   }
 
@@ -96,8 +109,8 @@ locals {
   worker_secrets = {
     "ELASTIC__API_KEY" : var.elastic_api_key,
     "ELASTIC__CLOUD_ID" : var.cloud_id,
-    "AZURE_OPENAI_API_KEY" : var.azure_openai_api_key,
-    "AZURE_OPENAI_ENDPOINT" : var.azure_openai_endpoint,
+    "EMBEDDING_OPENAI_API_KEY": var.embedding_openai_api_key,
+    "EMBEDDING_AZURE_OPENAI_ENDPOINT": var.embedding_azure_openai_endpoint,
   }
 
   reconstructed_worker_secrets = [for k, _ in local.worker_secrets : { name = k, valueFrom = "${aws_secretsmanager_secret.worker-secret.arn}:${k}::" }]

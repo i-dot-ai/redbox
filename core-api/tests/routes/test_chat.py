@@ -141,9 +141,6 @@ def test_case(request):
 @pytest.fixture
 def client(test_case: RedboxChatTestCase, embedding_model):
     chat_app.dependency_overrides[dependencies.get_embedding_model] = lambda: embedding_model
-    chat_app.dependency_overrides[dependencies.get_llm] = lambda: GenericFakeChatModel(
-        messages=iter(test_case.test_data.expected_llm_response)
-    )
     yield TestClient(application)
     chat_app.dependency_overrides = {}
 
@@ -161,18 +158,23 @@ def query_headers(test_case: RedboxChatTestCase):
     return {"Authorization": f"Bearer {jwt.encode({"user_uuid": str(test_case.query.user_uuid)}, key="nvjkernd")}"}
 
 
-def test_rag(test_case: RedboxChatTestCase, client, uploaded_docs, query_headers):
-    response = client.post(
-        "/chat/rag",
-        headers=query_headers,
-        json={
-            "message_history": [
-                {"role": message.role, "text": message.text} for message in test_case.query.chat_history
-            ]
-            + [{"role": "user", "text": test_case.query.question}],
-            "selected_files": [{"uuid": str(file_uuid)} for file_uuid in test_case.query.file_uuids],
-        },
-    )
+def test_rag(test_case: RedboxChatTestCase, client, uploaded_docs, query_headers, mocker):
+    llm = GenericFakeChatModel(messages=iter(test_case.test_data.expected_llm_response))
+
+    with (
+        mocker.patch("redbox.graph.nodes.processes.get_chat_llm", return_value=llm),
+    ):
+        response = client.post(
+            "/chat/rag",
+            headers=query_headers,
+            json={
+                "message_history": [
+                    {"role": message.role, "text": message.text} for message in test_case.query.chat_history
+                ]
+                + [{"role": "user", "text": test_case.query.question}],
+                "selected_files": [{"uuid": str(file_uuid)} for file_uuid in test_case.query.file_uuids],
+            },
+        )
     assert response.status_code == 200, response.text
     chat_response = ChatResponse.model_validate(response.json())
 
@@ -193,8 +195,12 @@ def test_rag(test_case: RedboxChatTestCase, client, uploaded_docs, query_headers
     assert len(unexpected_returned_documents) == 0, f"Unexpected source docs in result {unexpected_returned_documents}"
 
 
-def test_rag_chat_streamed(test_case: RedboxChatTestCase, client, uploaded_docs, query_headers):
-    with client.websocket_connect("/chat/rag", headers=query_headers) as websocket:
+def test_rag_chat_streamed(test_case: RedboxChatTestCase, client, uploaded_docs, query_headers, mocker):
+    llm = GenericFakeChatModel(messages=iter(test_case.test_data.expected_llm_response))
+    with (
+        client.websocket_connect("/chat/rag", headers=query_headers) as websocket,
+        mocker.patch("redbox.graph.nodes.processes.get_chat_llm", return_value=llm),
+    ):
         # When
         websocket.send_text(
             json.dumps(
