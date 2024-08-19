@@ -105,6 +105,8 @@ def get_chat_with_large_documents_graph(
             final_response_chain=True,
         ),
     )
+    builder.add_node("p_clear_documents", clear_documents_process)
+
 
     # Sends
     builder.add_node("s_chunk", empty_process)
