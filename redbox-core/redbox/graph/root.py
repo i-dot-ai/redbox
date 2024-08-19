@@ -80,17 +80,12 @@ def get_search_graph(
     return builder.compile(debug=debug)
 
 
-def get_chat_with_documents_graph(
-    retriever: VectorStoreRetriever,
+def get_chat_with_large_documents_graph(
     debug: bool = False,
 ) -> CompiledGraph:
-    """Creates a subgraph for chatting with documents."""
-    builder = StateGraph(RedboxState)
+    """Creates a subgraph for chatting with large documents."""
 
-    # Processes
-    builder.add_node("p_pass_question_to_text", build_passthrough_pattern())
-    builder.add_node("p_retrieve_docs", build_retrieve_pattern(retriever=retriever))
-    builder.add_node("p_set_chat_docs_route", build_set_route_pattern(route=ChatRoute.chat_with_docs))
+    builder = StateGraph(RedboxState)
     builder.add_node("p_set_chat_docs_large_route", build_set_route_pattern(route=ChatRoute.chat_with_docs_map_reduce))
     builder.add_node("p_summarise_each_document", build_merge_pattern(prompt_set=PromptSet.ChatwithDocsMapReduce))
     builder.add_node(
@@ -103,44 +98,22 @@ def get_chat_with_documents_graph(
             final_response_chain=True,
         ),
     )
-    builder.add_node("p_clear_documents", clear_documents_process)
-    builder.add_node(
-        "p_too_large_error",
-        build_set_text_pattern(
-            text="These documents are too large to work with.",
-            final_response_chain=True,
-        ),
-    )
-
-    # Decisions
-    builder.add_node("d_all_docs_bigger_than_context", empty_process)
-    builder.add_node("d_single_doc_summaries_bigger_than_context", empty_process)
-    builder.add_node("d_doc_summaries_bigger_than_context", empty_process)
-    builder.add_node("d_groups_have_multiple_docs", empty_process)
 
     # Sends
     builder.add_node("s_chunk", empty_process)
     builder.add_node("s_group_1", empty_process)
     builder.add_node("s_group_2", empty_process)
 
-    # Edges
-    builder.add_edge(START, "p_pass_question_to_text")
-    builder.add_edge("p_pass_question_to_text", "p_retrieve_docs")
-    builder.add_edge("p_retrieve_docs", "d_all_docs_bigger_than_context")
-    builder.add_conditional_edges(
-        "d_all_docs_bigger_than_context",
-        build_documents_bigger_than_context_conditional(PromptSet.ChatwithDocsMapReduce),
-        {
-            True: "p_set_chat_docs_large_route",
-            False: "p_set_chat_docs_route",
-        },
-    )
-    builder.add_edge("p_set_chat_docs_route", "p_summarise")
+    builder.add_node("d_groups_have_multiple_docs", empty_process)
+    builder.add_node("d_single_doc_summaries_bigger_than_context", empty_process)
+    builder.add_node("d_doc_summaries_bigger_than_context", empty_process)
+
     builder.add_edge("p_set_chat_docs_large_route", "s_chunk")
     builder.add_conditional_edges(
         "s_chunk", build_document_chunk_send("p_summarise_each_document"), path_map=["p_summarise_each_document"]
     )
     builder.add_edge("p_summarise_each_document", "d_groups_have_multiple_docs")
+
     builder.add_conditional_edges(
         "d_groups_have_multiple_docs",
         multiple_docs_in_group_conditional,
@@ -176,6 +149,61 @@ def get_chat_with_documents_graph(
             False: "p_summarise",
         },
     )
+
+    builder.add_edge("p_set_chat_docs_route", "p_summarise")
+    builder.add_edge("p_summarise", "p_clear_documents")
+    builder.add_edge("p_clear_documents", END)
+    builder.add_edge("p_too_large_error", END)
+
+    return builder.compile(debug=debug)
+
+
+def get_chat_with_documents_graph(
+    retriever: VectorStoreRetriever,
+    debug: bool = False,
+) -> CompiledGraph:
+    """Creates a subgraph for chatting with documents."""
+    builder = StateGraph(RedboxState)
+
+    large_doc_graph = get_chat_with_large_documents_graph(debug=debug)
+
+    # Processes
+    builder.add_node("p_pass_question_to_text", build_passthrough_pattern())
+    builder.add_node("p_retrieve_docs", build_retrieve_pattern(retriever=retriever))
+    builder.add_node("p_set_chat_docs_route", build_set_route_pattern(route=ChatRoute.chat_with_docs))
+    builder.add_node("p_set_chat_docs_large_route", large_doc_graph)
+    builder.add_node(
+        "p_summarise",
+        build_stuff_pattern(
+            prompt_set=PromptSet.ChatwithDocs,
+            final_response_chain=True,
+        ),
+    )
+    builder.add_node("p_clear_documents", clear_documents_process)
+    builder.add_node(
+        "p_too_large_error",
+        build_set_text_pattern(
+            text="These documents are too large to work with.",
+            final_response_chain=True,
+        ),
+    )
+
+    # Decisions
+    builder.add_node("d_all_docs_bigger_than_context", empty_process)
+
+    # Edges
+    builder.add_edge(START, "p_pass_question_to_text")
+    builder.add_edge("p_pass_question_to_text", "p_retrieve_docs")
+    builder.add_edge("p_retrieve_docs", "d_all_docs_bigger_than_context")
+    builder.add_conditional_edges(
+        "d_all_docs_bigger_than_context",
+        build_documents_bigger_than_context_conditional(PromptSet.ChatwithDocsMapReduce),
+        {
+            True: "p_set_chat_docs_large_route",
+            False: "p_set_chat_docs_route",
+        },
+    )
+    builder.add_edge("p_set_chat_docs_route", "p_summarise")
     builder.add_edge("p_summarise", "p_clear_documents")
     builder.add_edge("p_clear_documents", END)
     builder.add_edge("p_too_large_error", END)
