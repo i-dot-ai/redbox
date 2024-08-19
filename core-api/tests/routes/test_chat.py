@@ -68,16 +68,14 @@ TEST_CASES = [
                 TestData(
                     2,
                     140_000,
-                    expected_llm_response=["Map Step Response"] * 2 + ["Testing Response 1"],
-                    expected_route=ChatRoute.chat_with_docs_map_reduce,
+                    expected_llm_response=["Condense response", "The cake is a lie"],
+                    expected_route=ChatRoute.search,
                 ),
                 TestData(
                     4,
                     140_000,
-                    expected_llm_response=["Map Step Response"] * 4
-                    + ["Merge Per Document Response"] * 2
-                    + ["Testing Response 1"],
-                    expected_route=ChatRoute.chat_with_docs_map_reduce,
+                    expected_llm_response=["Condense response", "The cake is a lie"],
+                    expected_route=ChatRoute.search,
                 ),
             ],
             test_id="Chat with multiple docs",
@@ -88,10 +86,8 @@ TEST_CASES = [
                 TestData(
                     2,
                     200_000,
-                    expected_llm_response=["Map Step Response"] * 2
-                    + ["Merge Per Document Response"]
-                    + ["Testing Response 1"],
-                    expected_route=ChatRoute.chat_with_docs_map_reduce,
+                    expected_llm_response=["Condense response", "The cake is a lie"],
+                    expected_route=ChatRoute.search,
                 ),
             ],
             test_id="Chat with large doc",
