@@ -231,9 +231,7 @@ def get_root_graph(
     chat_subgraph = get_chat_graph(debug=debug)
     rag_subgraph = get_search_graph(retriever=parameterised_retriever, debug=debug)
     cwd_subgraph = get_chat_with_documents_graph(
-        all_chunks_retriever=all_chunks_retriever, 
-        parameterised_retriever=parameterised_retriever,
-        debug=debug
+        all_chunks_retriever=all_chunks_retriever, parameterised_retriever=parameterised_retriever, debug=debug
     )
 
     # Processes

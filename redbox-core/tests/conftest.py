@@ -23,9 +23,11 @@ from tests.retriever.data import ALL_CHUNKS_RETRIEVER_CASES, PARAMETERISED_RETRI
 def env():
     return Settings(django_secret_key="", postgres_password="")
 
+
 @pytest.fixture()
 def mocker():
     return unittest.mock
+
 
 @pytest.fixture()
 def alice():
