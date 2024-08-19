@@ -2,10 +2,12 @@ import logging
 
 from django.conf import settings
 from django.core.management import BaseCommand
+from django_q.tasks import async_task
 from requests.exceptions import RequestException
 
 from redbox_app.redbox_core.client import CoreApiClient
 from redbox_app.redbox_core.models import INACTIVE_STATUSES, File, StatusEnum
+from redbox_app.worker import ingest
 
 logger = logging.getLogger(__name__)
 core_api = CoreApiClient(host=settings.CORE_API_HOST, port=settings.CORE_API_PORT)
@@ -25,7 +27,7 @@ class Command(BaseCommand):
             logger.debug("Reingesting file object %s", file)
 
             try:
-                core_api.reingest_file(file.core_file_uuid, file.user)
+                async_task(ingest, file)
 
             except RequestException as e:
                 logger.exception("Error reingesting file object %s using core-api", file, exc_info=e)

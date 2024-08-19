@@ -13,11 +13,12 @@ from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.views import View
 from django.views.decorators.http import require_http_methods
+from django_q.tasks import async_task
 from requests.exceptions import RequestException
 
-from redbox_app.celery import ingest
 from redbox_app.redbox_core.client import CoreApiClient
 from redbox_app.redbox_core.models import File, StatusEnum, User
+from redbox_app.worker import ingest
 
 logger = logging.getLogger(__name__)
 core_api = CoreApiClient(host=settings.CORE_API_HOST, port=settings.CORE_API_PORT)
@@ -150,7 +151,7 @@ class UploadView(View):
                 logger.info("pushing file to core")
                 upload_file_response = core_api.upload_file(file.unique_name, user)
                 logger.info("ingesting file...")
-                ingest(upload_file_response)
+                async_task(ingest, upload_file_response)
                 logger.info("...ingested?")
             except RequestException as e:
                 logger.exception("Error uploading file object %s.", file, exc_info=e)

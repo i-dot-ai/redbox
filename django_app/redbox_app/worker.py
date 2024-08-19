@@ -1,8 +1,6 @@
 import logging
-import os
 from typing import TYPE_CHECKING
 
-from celery import Celery, shared_task
 from langchain_core.runnables import RunnableParallel
 from langchain_elasticsearch.vectorstores import BM25RetrievalStrategy, ElasticsearchStore
 
@@ -21,22 +19,6 @@ logging.basicConfig(level=logging.INFO)
 log = logging.getLogger()
 
 env = Settings()
-
-
-# Set the default Django settings module for the 'celery' program.
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "redbox_app.settings")
-
-app = Celery("redbox_app", broker="redis://redis:6379")
-
-# Using a string here means the worker doesn't have to serialize
-# the configuration object to child processes.
-# - namespace='CELERY' means all celery-related configuration keys
-#   should have a `CELERY_` prefix.
-app.config_from_object("django.conf:settings", namespace="CELERY")
-
-
-# Load task modules from all registered Django apps.
-app.autodiscover_tasks()
 
 
 def get_elasticsearch_store(es, es_index_name: str):
@@ -59,7 +41,6 @@ def get_elasticsearch_storage_handler(es):
     return ElasticsearchStorageHandler(es, env.elastic_root_index)
 
 
-@shared_task
 async def ingest(
     file: File,
 ):
