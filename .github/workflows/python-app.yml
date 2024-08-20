@@ -102,6 +102,7 @@ jobs:
         cp .env.test .env
         docker compose down
         docker system prune --all --force
+        docker volume rm $(docker volume ls)
         docker compose up -d --wait elasticsearch minio db
         docker ps
 
