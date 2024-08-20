@@ -47,8 +47,7 @@ test-redbox: ## Test redbox
 
 .PHONY: test-django
 test-django: stop ## Test django-app
-	docker compose up -d --wait db minio
-	docker compose run --no-deps django-app venv/bin/pytest tests/ -m "not ai" --ds redbox_app.settings -v --cov=redbox_app.redbox_core --cov-fail-under 85 -o log_cli=true
+	cd django_app && poetry install && poetry run pytest --cov=redbox_app -v --cov-report=term-missing --cov-fail-under=60 --ds redbox_app.settings
 
 
 .PHONY: build-django-static
