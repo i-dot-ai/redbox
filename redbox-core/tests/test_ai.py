@@ -6,20 +6,24 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 from uuid import UUID
 
-import jsonlines
-import pytest
-from deepeval import assert_test
-from deepeval.metrics import (
-    AnswerRelevancyMetric,
-    ContextualPrecisionMetric,
-    ContextualRecallMetric,
-    ContextualRelevancyMetric,
-    FaithfulnessMetric,
-    HallucinationMetric,
-)
-from deepeval.models.base_model import DeepEvalBaseLLM
-from deepeval.test_case import LLMTestCase
-from elasticsearch.helpers import bulk, scan
+try:
+    import jsonlines
+    import pytest
+    from deepeval import assert_test
+    from deepeval.metrics import (
+        AnswerRelevancyMetric,
+        ContextualPrecisionMetric,
+        ContextualRecallMetric,
+        ContextualRelevancyMetric,
+        FaithfulnessMetric,
+        HallucinationMetric,
+    )
+    from deepeval.models.base_model import DeepEvalBaseLLM
+    from deepeval.test_case import LLMTestCase
+    from elasticsearch.helpers import bulk, scan
+except ImportError:
+    pass
+
 from pydantic import BaseModel, Field
 
 from redbox.chains.components import get_chat_llm, get_parameterised_retriever, get_tokeniser
@@ -224,7 +228,6 @@ def make_test_case(
 
 
 @pytest.mark.ai()
-@pytest.mark.skip(reason="AI test not reliable yet")
 @pytest.mark.parametrize(("prompt", "expected_output", "context"), RAG_TESTS)
 def test_contextual_precision(
     make_test_case: Callable, eval_llm: DeepEvalBaseLLM, prompt: str, expected_output: str, context: list[str]
@@ -248,7 +251,6 @@ def test_contextual_precision(
 
 
 @pytest.mark.ai()
-@pytest.mark.skip(reason="AI test not reliable yet")
 @pytest.mark.parametrize(("prompt", "expected_output", "context"), RAG_TESTS)
 def test_contextual_recall(
     make_test_case: Callable, eval_llm: DeepEvalBaseLLM, prompt: str, expected_output: str, context: list[str]
@@ -272,7 +274,6 @@ def test_contextual_recall(
 
 
 @pytest.mark.ai()
-@pytest.mark.skip(reason="AI test not reliable yet")
 @pytest.mark.parametrize(("prompt", "expected_output", "context"), RAG_TESTS)
 def test_contextual_relevancy(
     make_test_case: Callable, eval_llm: DeepEvalBaseLLM, prompt: str, expected_output: str, context: list[str]
@@ -296,7 +297,6 @@ def test_contextual_relevancy(
 
 
 @pytest.mark.ai()
-@pytest.mark.skip(reason="AI test not reliable yet")
 @pytest.mark.parametrize(("prompt", "expected_output", "context"), RAG_TESTS)
 def test_answer_relevancy(
     make_test_case: Callable, eval_llm: DeepEvalBaseLLM, prompt: str, expected_output: str, context: list[str]
@@ -320,7 +320,6 @@ def test_answer_relevancy(
 
 
 @pytest.mark.ai()
-@pytest.mark.skip(reason="AI test not reliable yet")
 @pytest.mark.parametrize(("prompt", "expected_output", "context"), RAG_TESTS)
 def test_faithfulness(
     make_test_case: Callable, eval_llm: DeepEvalBaseLLM, prompt: str, expected_output: str, context: list[str]
@@ -344,7 +343,6 @@ def test_faithfulness(
 
 
 @pytest.mark.ai()
-@pytest.mark.skip(reason="AI test not reliable yet")
 @pytest.mark.parametrize(("prompt", "expected_output", "context"), RAG_TESTS)
 def test_hallucination(
     make_test_case: Callable, eval_llm: DeepEvalBaseLLM, prompt: str, expected_output: str, context: list[str]

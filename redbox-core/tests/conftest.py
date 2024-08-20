@@ -23,6 +23,13 @@ def env():
     return Settings(django_secret_key="", postgres_password="")
 
 
+@pytest.fixture(scope="session", autouse=True)
+def bucket(s3_client, env):
+    s3_client.create_bucket(
+        Bucket=env.bucket_name,
+    )
+
+
 @pytest.fixture()
 def alice():
     return uuid4()
