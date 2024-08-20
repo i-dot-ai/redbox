@@ -1,13 +1,11 @@
 import json
 from http import HTTPStatus
 from pathlib import Path
-from jose import jwt
 
 import pytest
 from elasticsearch import NotFoundError
 
 from core_api.routes.file import env
-from redbox.storage.elasticsearch import ElasticsearchStorageHandler
 
 
 @pytest.mark.asyncio()
