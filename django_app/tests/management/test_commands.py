@@ -294,10 +294,10 @@ def test_delete_expired_chats(chat: Chat, msg_1_date: datetime, msg_2_date: date
 # === reingest_files command tests ===
 
 
-@pytest.mark.django_db()
-def test_reingest_files(several_files: Sequence[File], requests_mock: Mocker):
+@pytest.mark.django_db(transaction=True)
+def test_reingest_files(uploaded_file: File, requests_mock: Mocker):
     # Given
-    successful_file, failing_file = several_files[0:2]
+    assert uploaded_file.status == StatusEnum.processing
 
     matcher = re.compile(f"http://{settings.CORE_API_HOST}:{settings.CORE_API_PORT}/file/[0-9a-f]|\\-")
 
@@ -305,19 +305,19 @@ def test_reingest_files(several_files: Sequence[File], requests_mock: Mocker):
         matcher,
         status_code=HTTPStatus.CREATED,
         json={
-            "key": successful_file.original_file_name,
+            "key": uploaded_file.original_file_name,
             "bucket": settings.BUCKET_NAME,
             "uuid": str(uuid.uuid4()),
         },
     )
-    requests_mock.put(
-        f"http://{settings.CORE_API_HOST}:{settings.CORE_API_PORT}/file/{failing_file.core_file_uuid}",
-        exc=requests.exceptions.HTTPError,
+    requests_mock.post(
+        f"http://{settings.UNSTRUCTURED_HOST}:8000/general/v0/general",
+        json=[{"text": "hello", "metadata": {"filename": "my-file.txt"}}],
     )
 
     # When
-    call_command("reingest_files")
+    call_command("reingest_files", sync=True)
 
     # Then
-    assert File.objects.get(id=successful_file.id).status == StatusEnum.processing
-    assert File.objects.get(id=failing_file.id).status == StatusEnum.errored
+    uploaded_file.refresh_from_db()
+    assert uploaded_file.status == StatusEnum.complete

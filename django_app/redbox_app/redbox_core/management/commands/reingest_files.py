@@ -17,7 +17,11 @@ class Command(BaseCommand):
 
     It attempts to reupload file data to core-api for reingestion."""
 
-    def handle(self, *_args, **_kwargs):
+    def add_arguments(self, parser):
+        """sync only to be used for testing"""
+        parser.add_argument("sync", nargs="?", type=bool, default=False)
+
+    def handle(self, *_args, **kwargs):
         self.stdout.write(self.style.NOTICE("Reingesting active files from Django"))
 
         for file in File.objects.exclude(status__in=INACTIVE_STATUSES):
@@ -28,4 +32,5 @@ class Command(BaseCommand):
                 uuid=file.core_file_uuid,
                 bucket=settings.BUCKET_NAME,
             )
-            async_task(ingest, core_file, task_name=file.original_file_name, group="re-ingest")
+
+            async_task(ingest, core_file, task_name=file.original_file_name, group="re-ingest", sync=kwargs["sync"])

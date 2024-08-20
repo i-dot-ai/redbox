@@ -72,16 +72,18 @@ def ingest(
     )
     storage_handler.update_item(file)
 
+    django_file = File.objects.get(core_file_uuid=file.uuid)
+
     try:
         new_ids = RunnableParallel({"normal": chunk_ingest_chain, "largest": large_chunk_ingest_chain}).invoke(file)
-        File.objects.filter(core_file_uuid=file.uuid).update(status=StatusEnum.complete)
-
+        django_file.status=StatusEnum.complete
         file.ingest_status = ProcessingStatusEnum.complete
         logging.info("File: %s %s chunks ingested", file, {k: len(v) for k, v in new_ids.items()})
     except Exception:
         logging.exception("Error while processing file [%s]", file)
         file.ingest_status = ProcessingStatusEnum.failed
-        File.objects.filter(core_file_uuid=file.uuid).update(status=StatusEnum.errored)
+        django_file.status=StatusEnum.errored
 
     finally:
         storage_handler.update_item(file)
+        django_file.save()
