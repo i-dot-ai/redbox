@@ -31,7 +31,7 @@ def s3_client():
     return client
 
 
-@pytest.fixture(scope="session", autouse=True)
+@pytest.fixture(autouse=True)
 def bucket(s3_client, env):
     return s3_client.create_bucket(
         Bucket=env.bucket_name,
