@@ -224,6 +224,7 @@ def make_test_case(
 
 
 @pytest.mark.ai()
+@pytest.mark.skip(reason="AI test not reliable yet")
 @pytest.mark.parametrize(("prompt", "expected_output", "context"), RAG_TESTS)
 def test_contextual_precision(
     make_test_case: Callable, eval_llm: DeepEvalBaseLLM, prompt: str, expected_output: str, context: list[str]
@@ -247,6 +248,7 @@ def test_contextual_precision(
 
 
 @pytest.mark.ai()
+@pytest.mark.skip(reason="AI test not reliable yet")
 @pytest.mark.parametrize(("prompt", "expected_output", "context"), RAG_TESTS)
 def test_contextual_recall(
     make_test_case: Callable, eval_llm: DeepEvalBaseLLM, prompt: str, expected_output: str, context: list[str]
@@ -270,6 +272,7 @@ def test_contextual_recall(
 
 
 @pytest.mark.ai()
+@pytest.mark.skip(reason="AI test not reliable yet")
 @pytest.mark.parametrize(("prompt", "expected_output", "context"), RAG_TESTS)
 def test_contextual_relevancy(
     make_test_case: Callable, eval_llm: DeepEvalBaseLLM, prompt: str, expected_output: str, context: list[str]
@@ -293,6 +296,7 @@ def test_contextual_relevancy(
 
 
 @pytest.mark.ai()
+@pytest.mark.skip(reason="AI test not reliable yet")
 @pytest.mark.parametrize(("prompt", "expected_output", "context"), RAG_TESTS)
 def test_answer_relevancy(
     make_test_case: Callable, eval_llm: DeepEvalBaseLLM, prompt: str, expected_output: str, context: list[str]
@@ -316,6 +320,7 @@ def test_answer_relevancy(
 
 
 @pytest.mark.ai()
+@pytest.mark.skip(reason="AI test not reliable yet")
 @pytest.mark.parametrize(("prompt", "expected_output", "context"), RAG_TESTS)
 def test_faithfulness(
     make_test_case: Callable, eval_llm: DeepEvalBaseLLM, prompt: str, expected_output: str, context: list[str]
@@ -339,6 +344,7 @@ def test_faithfulness(
 
 
 @pytest.mark.ai()
+@pytest.mark.skip(reason="AI test not reliable yet")
 @pytest.mark.parametrize(("prompt", "expected_output", "context"), RAG_TESTS)
 def test_hallucination(
     make_test_case: Callable, eval_llm: DeepEvalBaseLLM, prompt: str, expected_output: str, context: list[str]

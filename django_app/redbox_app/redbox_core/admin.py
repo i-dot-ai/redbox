@@ -71,7 +71,7 @@ class CitationInline(admin.StackedInline):
     model = models.Citation
     ordering = ("modified_at",)
 
-    extra = 1
+    extra = 0
 
 
 class ChatMessageAdmin(ExportMixin, admin.ModelAdmin):
