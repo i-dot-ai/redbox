@@ -4,6 +4,8 @@ import boto3
 import pytest
 from botocore.exceptions import ClientError
 
+from redbox.models import Settings
+
 
 @pytest.fixture()
 def file_path() -> Path:
@@ -32,7 +34,8 @@ def s3_client():
 
 
 @pytest.fixture(autouse=True)
-def bucket(s3_client, env):
+def bucket(s3_client):
+    env = Settings()
     return s3_client.create_bucket(
         Bucket=env.bucket_name,
     )
