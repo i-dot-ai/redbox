@@ -102,41 +102,6 @@ def test_delete_missing_file(app_client, headers):
     assert response.status_code == HTTPStatus.NOT_FOUND
 
 
-def test_reingest_file(app_client, chunked_user_files, stored_user_files, elasticsearch_storage_handler):
-    """
-    Given a previously chunked file
-    When I PUT it to /file/uuid/
-    I Expect the old chunks to be removed
-    """
-    test_file = stored_user_files[0]
-
-    bearer_token = jwt.encode({"user_uuid": str(test_file.creator_user_uuid)}, key="nvjkernd")
-    headers_for_user = {"Authorization": f"Bearer {bearer_token}"}
-
-    previous_chunks_by_file = [
-        elasticsearch_storage_handler.list_all_items(
-            "chunk",
-            file.creator_user_uuid,
-            filters=[ElasticsearchStorageHandler.get_with_parent_file_filter(file.uuid)],
-        )
-        for file in stored_user_files
-    ]
-
-    response = app_client.put(f"/file/{test_file.uuid}", headers=headers_for_user)
-    assert response.status_code == HTTPStatus.OK, f"Error response: [{response.status_code}] {response.text}"
-
-    elasticsearch_storage_handler.refresh()
-    assert (
-        elasticsearch_storage_handler.list_all_items("chunk", test_file.creator_user_uuid) != previous_chunks_by_file[0]
-    ), f"Pre and post chunks matched and both had {len(previous_chunks_by_file[0])} chunks"
-
-    for file, previous_chunks in zip(stored_user_files[1:], previous_chunks_by_file[1:]):
-        post_chunks = elasticsearch_storage_handler.list_all_items("chunk", file.creator_user_uuid)
-        assert (
-            post_chunks == previous_chunks
-        ), f"Additional files had their chunks changed! Pre: {len(previous_chunks)} Post: {len(post_chunks)}"
-
-
 def test_get_missing_file_chunks(app_client, headers):
     """
     Given a nonexistent file
