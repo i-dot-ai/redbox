@@ -97,8 +97,8 @@ jobs:
 
     - name: Build Containers
       run: |
-        mkdir -p data/elastic/
-        chmod 777 data/elastic/
+        mkdir -p data/
+        chmod 777 data/
         cp .env.test .env
         docker compose up -d --wait elasticsearch minio db
         docker ps
