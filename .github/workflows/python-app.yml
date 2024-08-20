@@ -106,6 +106,10 @@ jobs:
       run: |
         make test-django
 
+    - name: Dump logs
+      if: failure()
+      uses: jwalton/gh-docker-logs@v2
+
 
   static_checks:
 
