@@ -8,7 +8,6 @@ from django.http import HttpResponse
 from django_q.tasks import async_task
 from import_export.admin import ExportMixin, ImportExportMixin
 
-from redbox.models.file import File as CoreFile
 from redbox_app.redbox_core.client import CoreApiClient
 from redbox_app.worker import ingest
 
@@ -56,11 +55,10 @@ class UserAdmin(ImportExportMixin, admin.ModelAdmin):
 
 
 class FileAdmin(ExportMixin, admin.ModelAdmin):
-    def reupload(self, request, queryset):
+    def reupload(self, _request, queryset):
         for file in queryset:
             logger.info("Re-uploading file to core-api: %s", file)
-            core_file = CoreFile(key=file.unique_name, bucket=settings.BUCKET_NAME, creator_user_uuid=request.user.id)
-            async_task(ingest, core_file)
+            async_task(ingest, file)
             logger.info("Successfully reuploaded file %s.", file)
 
     list_display = ["original_file_name", "user", "status", "created_at", "last_referenced"]

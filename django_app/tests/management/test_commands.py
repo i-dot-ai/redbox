@@ -1,6 +1,5 @@
 import re
 import uuid
-from collections.abc import Sequence
 from datetime import UTC, datetime, timedelta
 from http import HTTPStatus
 from io import StringIO
@@ -295,29 +294,39 @@ def test_delete_expired_chats(chat: Chat, msg_1_date: datetime, msg_2_date: date
 
 
 @pytest.mark.django_db(transaction=True)
-def test_reingest_files(uploaded_file: File, requests_mock: Mocker):
+def test_reingest_files(uploaded_file: File, requests_mock: Mocker, mocker):
     # Given
     assert uploaded_file.status == StatusEnum.processing
 
-    matcher = re.compile(f"http://{settings.CORE_API_HOST}:{settings.CORE_API_PORT}/file/[0-9a-f]|\\-")
-
-    requests_mock.put(
-        matcher,
-        status_code=HTTPStatus.CREATED,
-        json={
-            "key": uploaded_file.original_file_name,
-            "bucket": settings.BUCKET_NAME,
-            "uuid": str(uuid.uuid4()),
-        },
-    )
     requests_mock.post(
         f"http://{settings.UNSTRUCTURED_HOST}:8000/general/v0/general",
         json=[{"text": "hello", "metadata": {"filename": "my-file.txt"}}],
     )
 
     # When
-    call_command("reingest_files", sync=True)
+    with mocker.patch("redbox.chains.ingest.VectorStore.add_documents", return_value=[]):
+        call_command("reingest_files", sync=True)
 
     # Then
     uploaded_file.refresh_from_db()
     assert uploaded_file.status == StatusEnum.complete
+
+
+@pytest.mark.django_db(transaction=True)
+def test_reingest_files_unstructured_fail(uploaded_file: File, requests_mock: Mocker, mocker):
+    # Given
+    assert uploaded_file.status == StatusEnum.processing
+
+    requests_mock.post(
+        f"http://{settings.UNSTRUCTURED_HOST}:8000/general/v0/general",
+        json=[],
+    )
+
+    # When
+    with mocker.patch("redbox.chains.ingest.VectorStore.add_documents", return_value=[]):
+        call_command("reingest_files", sync=True)
+
+    # Then
+    uploaded_file.refresh_from_db()
+    assert uploaded_file.status == StatusEnum.errored
+    assert uploaded_file.ingest_error == "Unstructured failed to extract text for this file"

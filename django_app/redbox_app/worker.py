@@ -1,6 +1,7 @@
 import logging
 from typing import TYPE_CHECKING
 
+from django.conf import settings
 from langchain_core.runnables import RunnableParallel
 from langchain_elasticsearch.vectorstores import BM25RetrievalStrategy, ElasticsearchStore
 
@@ -43,14 +44,17 @@ def get_elasticsearch_storage_handler(es):
 
 
 def ingest(
-    file: CoreFile,
+    file,
 ):
     # These models need to be loaded at runtime otherwise they can be loaded before they exist
     from redbox_app.redbox_core.models import File, StatusEnum
 
+    file: File
+
     logging.info("Ingesting file: %s", file)
 
-    file.ingest_status = ProcessingStatusEnum.embedding
+    core_file = CoreFile(key=file.unique_name, bucket=settings.BUCKET_NAME, creator_user_uuid=file.user.id)
+    core_file.ingest_status = ProcessingStatusEnum.embedding
     es = env.elasticsearch_client()
     es_index_name = f"{env.elastic_root_index}-chunk"
 
@@ -70,20 +74,20 @@ def ingest(
         vectorstore=get_elasticsearch_store_without_embeddings(es, es_index_name),
         env=env,
     )
-    storage_handler.update_item(file)
-
-    django_file = File.objects.get(core_file_uuid=file.uuid)
 
     try:
-        new_ids = RunnableParallel({"normal": chunk_ingest_chain, "largest": large_chunk_ingest_chain}).invoke(file)
-        django_file.status=StatusEnum.complete
-        file.ingest_status = ProcessingStatusEnum.complete
+        new_ids = RunnableParallel({"normal": chunk_ingest_chain, "largest": large_chunk_ingest_chain}).invoke(
+            core_file
+        )
+        file.status = StatusEnum.complete
+        core_file.ingest_status = ProcessingStatusEnum.complete
         logging.info("File: %s %s chunks ingested", file, {k: len(v) for k, v in new_ids.items()})
-    except Exception:
+    except Exception as e:
         logging.exception("Error while processing file [%s]", file)
-        file.ingest_status = ProcessingStatusEnum.failed
-        django_file.status=StatusEnum.errored
+        core_file.ingest_status = ProcessingStatusEnum.failed
+        file.ingest_error = str(e.args[0])
+        file.status = StatusEnum.errored
 
     finally:
-        storage_handler.update_item(file)
-        django_file.save()
+        storage_handler.update_item(core_file)
+        file.save()
