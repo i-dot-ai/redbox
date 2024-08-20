@@ -1,5 +1,6 @@
 import logging
 
+from django.conf import settings
 from django.core.management import BaseCommand
 from django_q.tasks import async_task
 
@@ -21,5 +22,10 @@ class Command(BaseCommand):
 
         for file in File.objects.exclude(status__in=INACTIVE_STATUSES):
             logger.debug("Reingesting file object %s", file)
-            core_file = CoreFile(creator_user_uuid=file.user.id, key=file.original_file_name, uuid=file.core_file_uuid)
+            core_file = CoreFile(
+                creator_user_uuid=file.user.id,
+                key=file.original_file_name,
+                uuid=file.core_file_uuid,
+                bucket=settings.BUCKET_NAME,
+            )
             async_task(ingest, core_file, task_name=file.original_file_name, group="re-ingest")

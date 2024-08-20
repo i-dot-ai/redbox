@@ -5,9 +5,8 @@ from jose import jwt
 
 import pytest
 from elasticsearch import NotFoundError
-from faststream.redis import TestRedisBroker
 
-from core_api.routes.file import env, router
+from core_api.routes.file import env
 from redbox.storage.elasticsearch import ElasticsearchStorageHandler
 
 
@@ -21,15 +20,14 @@ async def test_post_file_upload(app_client, file_pdf_path: Path, headers):
 
     file_key = file_pdf_path.name
 
-    async with TestRedisBroker(router.broker):
-        response = app_client.post(
-            "/file",
-            json={
-                "key": file_key,
-                "bucket": env.bucket_name,
-            },
-            headers=headers,
-        )
+    response = app_client.post(
+        "/file",
+        json={
+            "key": file_key,
+            "bucket": env.bucket_name,
+        },
+        headers=headers,
+    )
     assert response.status_code == HTTPStatus.CREATED
 
     file = json.loads(response.content.decode("utf-8"))
