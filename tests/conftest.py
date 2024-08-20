@@ -31,6 +31,13 @@ def s3_client():
     return client
 
 
+@pytest.fixture(scope="session", autouse=True)
+def bucket(s3_client, env):
+    return s3_client.create_bucket(
+        Bucket=env.bucket_name,
+    )
+
+
 # store history of failures per test class name and per index in parametrize (if parametrize used)
 _test_failed_incremental: dict[str, dict[tuple[int, ...], str]] = {}
 
