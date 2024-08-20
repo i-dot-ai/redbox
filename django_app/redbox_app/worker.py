@@ -7,7 +7,8 @@ from langchain_elasticsearch.vectorstores import BM25RetrievalStrategy, Elastics
 from redbox.chains.components import get_embeddings
 from redbox.chains.ingest import ingest_from_loader
 from redbox.loader import UnstructuredLargeChunkLoader, UnstructuredTitleLoader
-from redbox.models import File as CoreFile, ProcessingStatusEnum, Settings
+from redbox.models import File as CoreFile
+from redbox.models import ProcessingStatusEnum, Settings
 from redbox.storage.elasticsearch import ElasticsearchStorageHandler
 
 if TYPE_CHECKING:
@@ -45,8 +46,7 @@ def ingest(
     file: CoreFile,
 ):
     # These models need to be loaded at runtime otherwise they can be loaded before they exist
-    from redbox_app.redbox_core.models import File
-    from redbox_app.redbox_core.models import StatusEnum
+    from redbox_app.redbox_core.models import File, StatusEnum
 
     logging.info("Ingesting file: %s", file)
 

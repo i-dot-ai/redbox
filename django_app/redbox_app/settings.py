@@ -340,14 +340,6 @@ Q_CLUSTER = {
     "retry": 600,
     "catch_up": False,
     "orm": "default",
-    # "redis": {
-    #     "host": env.str("REDIS_HOST"),
-    #     "port": env.int("REDIS_PORT"),
-    #     "db": 0,
-    #     "password": None,
-    #     "socket_timeout": None,
-    #     "charset": "utf-8",
-    #     "errors": "strict",
-    #     "unix_socket_path": None,
-    # },
 }
+
+UNSTRUCTURED_HOST = env.str("UNSTRUCTURED_HOST")
