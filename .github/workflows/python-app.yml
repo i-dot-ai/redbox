@@ -100,6 +100,8 @@ jobs:
         mkdir -p data/elastic/
         chmod -R 777 data/
         cp .env.test .env
+        docker compose down
+        docker system prune --all --force
         docker compose up -d --wait elasticsearch minio db
         docker ps
 
