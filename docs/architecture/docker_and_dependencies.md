@@ -28,7 +28,7 @@ We use multi-stage builds to keep the size of our Docker containers small. This 
 
 ```Dockerfile
 # BUILDER
-FROM python:3.12-bookworm as builder
+FROM python:3.12-bookworm AS builder
 
 WORKDIR /app/
 
