@@ -7,7 +7,7 @@ license = "MIT"
 
 [tool.poetry.dependencies]
 python = ">=3.12,<3.13"
-redbox = {path="../redbox-core", develop=true}
+redbox = {path="../redbox-core", develop=false}
 django = "^5.1"
 django-libsass = "^0.9"
 django-magic-link = "^1.0.0"
