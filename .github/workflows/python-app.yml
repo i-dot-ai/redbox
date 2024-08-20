@@ -101,6 +101,11 @@ jobs:
         chmod 777 data/elastic/
         cp .env.test .env
         docker compose up -d --wait elasticsearch minio db
+        docker ps
+
+    - name: Inspect docker
+      run: |
+        docker compose logs db
 
     - name: Test django with pytest
       run: |
