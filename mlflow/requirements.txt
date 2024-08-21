@@ -3,9 +3,9 @@ pydantic==2.8.2
 starlette==0.38.2
 limits==3.13.0
 watchfiles==0.23.0
-fastapi==0.112.0
+fastapi==0.112.1
 slowapi==0.1.9
 uvicorn==0.30.6
-aiohttp===3.10.3
+aiohttp===3.10.5
 gunicorn==22.0.0
-boto3==1.34.160
+boto3==1.35.2
