@@ -11,7 +11,7 @@ def file_path() -> Path:
     return Path(__file__).parent / "data" / "html" / "example.html"
 
 
-@pytest.fixture()
+@pytest.fixture(autouse=True)
 def s3_client():
     client = boto3.client(
         "s3",
