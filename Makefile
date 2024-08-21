@@ -46,7 +46,7 @@ test-redbox: ## Test redbox
 
 
 .PHONY: test-django
-test-django: stop ## Test django-app
+test-django: ## Test django-app
 	cd django_app && poetry install && poetry run pytest --cov=redbox_app -v --cov-report=term-missing --cov-fail-under=60 --ds redbox_app.settings
 
 
