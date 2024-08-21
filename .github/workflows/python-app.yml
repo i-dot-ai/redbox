@@ -104,10 +104,6 @@ jobs:
 
 
     steps:
-    - name: Create root role
-      run: |
-        sudo -u postgres psql -c "CREATE ROLE root WITH LOGIN SUPERUSER PASSWORD 'insecure';"
-
     - uses: actions/checkout@v3
 
     - name: Set up Python 3.12
