@@ -112,8 +112,6 @@ services:
         condition: service_healthy
       minio:
         condition: service_healthy
-      worker:
-        condition: service_started
     restart: unless-stopped
     healthcheck:
       test: curl --fail http://localhost:5002/health || exit 1
