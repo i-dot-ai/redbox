@@ -84,7 +84,7 @@ services:
         condition: service_healthy
       minio:
         condition: service_healthy
-      redis:
+      django-app:
         condition: service_healthy
     networks:
       - redbox-app-network
@@ -111,8 +111,6 @@ services:
       elasticsearch:
         condition: service_healthy
       minio:
-        condition: service_healthy
-      redis:
         condition: service_healthy
       worker:
         condition: service_started
@@ -187,26 +185,6 @@ services:
       elasticsearch:
         condition: service_healthy
     restart: unless-stopped
-  redis:
-    image: redis:7-alpine
-    restart: always
-    ports:
-      - "6379:6379"
-    volumes:
-      - redis:/data/redis
-    env_file:
-      - path: .env.integration
-        required: false
-      - path: .env
-        required: false
-    networks:
-      - redbox-app-network
-    healthcheck:
-      test: [ "CMD-SHELL", "redis-cli ping | grep PONG" ]
-      interval: 5s
-      timeout: 30s
-      retries: 24
-      start_period: 60s
   embeddings:
     image: localai/localai:v2.18.1-aio-cpu #localai/localai:v2.18.1 should allow use of sentencetransformers backend
     expose:
@@ -238,6 +216,3 @@ volumes:
   redbox-app-data:
   local_postgres_data: {}
   mlflow-data:
-  redis:
-    driver: local
-  redis-insight:
