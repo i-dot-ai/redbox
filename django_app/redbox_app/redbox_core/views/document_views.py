@@ -157,7 +157,7 @@ class UploadView(View):
             else:
                 file.core_file_uuid = upload_file_response.uuid
                 file.save()
-                async_task(ingest, file, task_name=file.original_file_name, group="ingest")
+                async_task(ingest, file, task_name=file.unique_name, group="ingest")
         return errors
 
 

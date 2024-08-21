@@ -53,7 +53,12 @@ def ingest(
 
     logging.info("Ingesting file: %s", file)
 
-    core_file = CoreFile(key=file.unique_name, bucket=settings.BUCKET_NAME, creator_user_uuid=file.user.id)
+    core_file = CoreFile(
+        key=file.unique_name,
+        bucket=settings.BUCKET_NAME,
+        creator_user_uuid=file.user.id,
+        uuid=file.core_file_uuid,
+    )
     core_file.ingest_status = ProcessingStatusEnum.embedding
     es = env.elasticsearch_client()
     es_index_name = f"{env.elastic_root_index}-chunk"
