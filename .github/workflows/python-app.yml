@@ -120,6 +120,7 @@ jobs:
         mkdir -p data/elastic/
         chmod -R 777 data/
         cp .env.test .env
+        sed -i -e "s/^POSTGRES_HOST=.*/POSTGRES_HOST=postgres/" .env
         docker compose up -d --wait elasticsearch minio
         docker ps
 
@@ -128,8 +129,6 @@ jobs:
         docker compose logs db
 
     - name: Test django with pytest
-      env:
-        POSTGRES_HOST: postgres
       run: |
         make test-django
 
