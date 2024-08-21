@@ -4,7 +4,8 @@ from uuid import uuid4
 import pytest
 from langchain_core.documents.base import Document
 
-from redbox.transform import combine_documents, map_document_to_source_document
+from redbox.models.chain import RequestMetadata
+from redbox.transform import combine_documents, map_document_to_source_document, to_request_metadata
 from redbox.retriever.retrievers import filter_by_elbow
 
 document_created = datetime.now(UTC)
@@ -190,3 +191,50 @@ def test_elbow_filter(scores: list[float], target_len: int):
     assert (
         len(documents_filtered) == target_len
     ), f"Expected {target_len} documents to pass. Received: {len(documents_filtered)}"
+
+
+# Example call metadata structure https://python.langchain.com/v0.1/docs/modules/model_io/chat/response_metadata/#openai
+
+
+@pytest.mark.parametrize(
+    "response_metadata,expected",
+    [
+        (
+            {
+                "token_usage": {"completion_tokens": 164, "prompt_tokens": 17, "total_tokens": 181},
+                "model_name": "gpt-4-turbo",
+                "system_fingerprint": "fp_76f018034d",
+                "finish_reason": "stop",
+                "logprobs": None,
+            },
+            RequestMetadata(input_tokens=17, output_tokens=164),
+        ),
+        (
+            {
+                "token_usage": {"completion_tokens": 10, "prompt_tokens": 0, "total_tokens": 10},
+                "model_name": "gpt-4-turbo",
+                "system_fingerprint": "fp_76f018034d",
+                "finish_reason": "stop",
+                "logprobs": None,
+            },
+            RequestMetadata(input_tokens=0, output_tokens=10),
+        ),
+        (
+            {
+                "model_id": "anthropic.claude-v2",
+                "usage": {"prompt_tokens": 0, "completion_tokens": 10, "total_tokens": 10},
+            },
+            RequestMetadata(input_tokens=0, output_tokens=10),
+        ),
+        (
+            {
+                "model_id": "anthropic.claude-v2",
+                "usage": {"prompt_tokens": 19, "completion_tokens": 371, "total_tokens": 390},
+            },
+            RequestMetadata(input_tokens=19, output_tokens=371),
+        ),
+    ],
+)
+def test_to_request_metadata(response_metadata, expected):
+    result = to_request_metadata(response_metadata)
+    assert result == expected, f"Expected: {expected} Result: {result}"

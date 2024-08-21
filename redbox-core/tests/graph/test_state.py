@@ -3,7 +3,7 @@ import pytest
 
 from langchain_core.documents import Document
 
-from redbox.models.chain import document_reducer
+from redbox.models.chain import RequestMetadata, document_reducer, metadata_reducer
 
 
 GROUP_IDS = [uuid4() for i in range(4)]
@@ -118,4 +118,39 @@ DOCUMENT_IDS = [uuid4() for i in range(10)]
 )
 def test_document_reducer(a, b, expected):
     result = document_reducer(a, b)
+    assert result == expected, f"Expected: {expected}. Result: {result}"
+
+
+@pytest.mark.parametrize(
+    "a,b,expected",
+    [
+        (
+            RequestMetadata(input_tokens=0, output_tokens=0),
+            RequestMetadata(input_tokens=10, output_tokens=10),
+            RequestMetadata(input_tokens=10, output_tokens=10),
+        ),
+        (
+            RequestMetadata(input_tokens=12, output_tokens=100),
+            RequestMetadata(input_tokens=10, output_tokens=10),
+            RequestMetadata(input_tokens=22, output_tokens=110),
+        ),
+        (
+            RequestMetadata(input_tokens=100, output_tokens=200),
+            RequestMetadata(input_tokens=0, output_tokens=10),
+            RequestMetadata(input_tokens=100, output_tokens=210),
+        ),
+        (
+            None,
+            RequestMetadata(input_tokens=10, output_tokens=100),
+            RequestMetadata(input_tokens=10, output_tokens=100),
+        ),
+        (
+            RequestMetadata(input_tokens=10, output_tokens=100),
+            None,
+            RequestMetadata(input_tokens=10, output_tokens=100),
+        ),
+    ],
+)
+def test_metadata_reducer(a, b, expected):
+    result = metadata_reducer(a, b)
     assert result == expected, f"Expected: {expected}. Result: {result}"

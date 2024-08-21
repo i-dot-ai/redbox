@@ -180,11 +180,29 @@ class RedboxQuery(BaseModel):
     ai_settings: AISettings = Field(description="User request AI settings", default_factory=AISettings)
 
 
+class RequestMetadata(TypedDict):
+    input_tokens: int
+    output_tokens: int
+
+
+def metadata_reducer(current: RequestMetadata | None, update: RequestMetadata | None):
+    if current is None:
+        return update
+    if update is None:
+        return current
+    if "input_tokens" in update:
+        input_tokens = current.get("input_tokens", 0) + update["input_tokens"]
+    if "output_tokens" in update:
+        output_tokens = current.get("output_tokens", 0) + update["output_tokens"]
+    return RequestMetadata(input_tokens=input_tokens, output_tokens=output_tokens)
+
+
 class RedboxState(TypedDict):
     request: Required[RedboxQuery]
     documents: Annotated[NotRequired[DocumentState], document_reducer]
     text: NotRequired[str | None]
     route_name: NotRequired[str | None]
+    metadata: Annotated[NotRequired[dict], metadata_reducer]
 
 
 class PromptSet(StrEnum):

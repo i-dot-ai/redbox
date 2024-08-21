@@ -1,18 +1,19 @@
 import logging
+from operator import attrgetter
 import re
 from typing import Any, Callable
 from uuid import uuid4
 from functools import reduce
 
 from langchain.schema import StrOutputParser
-from langchain_core.runnables import RunnableParallel, RunnablePassthrough
+from langchain_core.runnables import RunnableParallel, RunnablePassthrough, RunnableLambda
 from langchain_core.vectorstores import VectorStoreRetriever
 
 from redbox.chains.components import get_tokeniser, get_chat_llm
 from redbox.chains.runnables import build_chat_prompt_from_messages_runnable, CannedChatLLM
 from redbox.models import ChatRoute, Settings
 from redbox.models.chain import RedboxState
-from redbox.transform import combine_documents, structure_documents
+from redbox.transform import combine_documents, structure_documents, to_request_metadata
 from redbox.models.chain import PromptSet
 from redbox.transform import flatten_document_state
 
@@ -52,7 +53,14 @@ def build_chat_pattern(
     def _chat(state: RedboxState) -> dict[str, Any]:
         llm = get_chat_llm(Settings(), state["request"].ai_settings)
         _llm = llm.with_config(tags=["response_flag"]) if final_response_chain else llm
-        chat_chain = build_chat_prompt_from_messages_runnable(prompt_set) | _llm | {"text": StrOutputParser()}
+        chat_chain = (
+            build_chat_prompt_from_messages_runnable(prompt_set)
+            | _llm
+            | {
+                "text": StrOutputParser(),
+                "metadata": RunnableLambda(attrgetter("response_metadata")) | to_request_metadata,
+            }
+        )
 
         return chat_chain.invoke(state)
 
@@ -81,7 +89,14 @@ def build_merge_pattern(
 
         merged_document = reduce(lambda left, right: combine_documents(left, right), flattened_documents)
 
-        merge_chain = build_chat_prompt_from_messages_runnable(prompt_set) | _llm | StrOutputParser()
+        merge_chain = (
+            build_chat_prompt_from_messages_runnable(prompt_set)
+            | _llm
+            | {
+                "text": StrOutputParser(),
+                "metadata": RunnableLambda(attrgetter("response_metadata")) | to_request_metadata,
+            }
+        )
 
         merge_state = RedboxState(
             request=state["request"],
@@ -90,7 +105,9 @@ def build_merge_pattern(
             },
         )
 
-        merged_document.page_content = merge_chain.invoke(merge_state)
+        merge_response = merge_chain.invoke(merge_state)
+        merged_document.page_content = merge_response["text"]
+        request_metadata = merge_response["metadata"]
         merged_document.metadata["token_count"] = len(tokeniser.encode(merged_document.page_content))
 
         group_uuid = merged_document.metadata.get("parent_file_uuid", uuid4())
@@ -105,7 +122,7 @@ def build_merge_pattern(
 
         document_state[group_uuid][document_uuid] = merged_document
 
-        return {"documents": document_state}
+        return {"documents": document_state, "metadata": request_metadata}
 
     return _merge
 
@@ -119,8 +136,14 @@ def build_stuff_pattern(
     def _stuff(state: RedboxState) -> dict[str, Any]:
         llm = get_chat_llm(Settings(), state["request"].ai_settings)
         _llm = llm.with_config(tags=["response_flag"]) if final_response_chain else llm
-        stuff_chain = build_chat_prompt_from_messages_runnable(prompt_set) | _llm | StrOutputParser()
-        return {"text": stuff_chain.invoke(state)}
+        return (
+            build_chat_prompt_from_messages_runnable(prompt_set)
+            | _llm
+            | {
+                "text": StrOutputParser(),
+                "metadata": RunnableLambda(attrgetter("response_metadata")) | to_request_metadata,
+            }
+        ).invoke(state)
 
     return _stuff
 
