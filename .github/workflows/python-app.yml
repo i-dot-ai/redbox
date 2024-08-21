@@ -121,8 +121,8 @@ jobs:
         mkdir -p data/elastic/
         chmod -R 777 data/
         cp .env.test .env
-        sed -i -e "s/^POSTGRES_HOST=.*/POSTGRES_HOST=postgres/" .env
-        docker compose up -d --wait elasticsearch minio db
+        sed -i -e "s/^POSTGRES_HOST=.*/POSTGRES_HOST=localhost/" .env
+        docker compose up -d --wait elasticsearch minio
         docker ps
 
     - name: Inspect docker
