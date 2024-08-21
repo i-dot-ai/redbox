@@ -22,7 +22,7 @@ def s3_client():
 
     try:
         client.create_bucket(
-            Bucket="redbox-storage-dev",
+            Bucket=os.environ["BUCKET_NAME"],
             CreateBucketConfiguration={"LocationConstraint": "eu-west-2"},
         )
     except ClientError as e:
@@ -30,13 +30,6 @@ def s3_client():
             raise
 
     return client
-
-
-@pytest.fixture(autouse=True)
-def bucket(s3_client):
-    return s3_client.create_bucket(
-        Bucket=os.environ["BUCKET_NAME"],
-    )
 
 
 # store history of failures per test class name and per index in parametrize (if parametrize used)
