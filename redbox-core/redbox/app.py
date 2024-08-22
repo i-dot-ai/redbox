@@ -37,6 +37,7 @@ class Redbox:
         response_tokens_callback=_default_callback,
         route_name_callback=_default_callback,
         documents_callback=_default_callback,
+        metadata_available_callback=_default_callback,
     ) -> RedboxState:
         final_state = None
         async for event in self.graph.astream_events(input, version="v2"):
@@ -52,6 +53,7 @@ class Redbox:
                 await documents_callback(event["data"]["output"])
             elif kind == "on_chain_end" and event["name"] == "LangGraph":
                 final_state = RedboxState(**event["data"]["output"])
+                await metadata_available_callback(final_state.get("metadata"))
         return final_state
 
     def get_available_keywords(self) -> dict[ChatRoute, str]:

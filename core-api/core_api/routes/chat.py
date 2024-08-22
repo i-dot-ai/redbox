@@ -10,7 +10,7 @@ from fastapi.encoders import jsonable_encoder
 from openai import APIError, RateLimitError
 from langchain_core.documents import Document
 
-from redbox.models.chain import RedboxQuery, RedboxState, ChainChatMessage
+from redbox.models.chain import RedboxQuery, RedboxState, ChainChatMessage, RequestMetadata
 from redbox.models.chat import ChatRequest, ChatResponse, ClientResponse, ErrorDetail
 from redbox.transform import map_document_to_source_document
 
@@ -103,12 +103,16 @@ async def rag_chat_streamed(
             websocket,
         )
 
+    async def on_metadata_available(metadata: RequestMetadata):
+        print(f"Request Metadata: {metadata}")
+
     try:
         await redbox.run(
             state,
             response_tokens_callback=on_llm_response,
             route_name_callback=on_route_choice,
             documents_callback=on_documents_available,
+            metadata_available_callback=on_metadata_available,
         )
     except RateLimitError as e:
         log.exception("Rate limit error", exc_info=e)

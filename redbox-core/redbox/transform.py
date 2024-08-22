@@ -1,7 +1,7 @@
 from langchain_core.documents import Document
 
 from redbox.models.chat import SourceDocument
-from redbox.models.chain import DocumentState
+from redbox.models.chain import DocumentState, RequestMetadata
 
 
 def map_document_to_source_document(d: Document) -> SourceDocument:
@@ -59,3 +59,23 @@ def flatten_document_state(documents: DocumentState) -> list[Document]:
     if not documents:
         return []
     return [document for group in documents.values() for document in group.values()]
+
+
+def to_request_metadata(response_metadata: dict):
+    """
+    Convert a Langchain ChatLLM response metadata dictionary
+    """
+    # If ChatOpenAI
+    if "token_usage" in response_metadata:
+        tokens = response_metadata["token_usage"]
+        return RequestMetadata(
+            input_tokens=tokens.get("prompt_tokens", -1), output_tokens=tokens.get("completion_tokens", -1)
+        )
+    # If ChatBedrock (Anthropic)
+    elif "usage" in response_metadata:
+        tokens = response_metadata["usage"]
+        return RequestMetadata(
+            input_tokens=tokens.get("prompt_tokens", -1), output_tokens=tokens.get("completion_tokens", -1)
+        )
+    else:
+        return None
