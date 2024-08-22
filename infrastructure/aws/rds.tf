@@ -17,4 +17,7 @@ module "rds" {
   ]
   secret_tags         = { "platform:secret-purpose" = "general" }
   publicly_accessible = var.publicly_accessible
+  engine              = "postgres"
+  engine_version      = "16.3"
+  family              = "postgres16"
 }
