@@ -24,9 +24,9 @@ def ingest(file_id: UUID):
     )
     core_file.ingest_status = ProcessingStatusEnum.embedding
     if error := ingest_file(core_file):
-        core_file.ingest_status = ProcessingStatusEnum.failed
-    else:
-        file.ingest_error = error
         file.status = StatusEnum.errored
+        file.ingest_error = error
+    else:
+        file.status = StatusEnum.complete
 
     file.save()
