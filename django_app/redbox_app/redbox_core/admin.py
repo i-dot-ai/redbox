@@ -58,7 +58,7 @@ class FileAdmin(ExportMixin, admin.ModelAdmin):
     def reupload(self, _request, queryset):
         for file in queryset:
             logger.info("Re-uploading file to core-api: %s", file)
-            async_task(ingest, file)
+            async_task(ingest, file.id)
             logger.info("Successfully reuploaded file %s.", file)
 
     list_display = ["original_file_name", "user", "status", "created_at", "last_referenced"]

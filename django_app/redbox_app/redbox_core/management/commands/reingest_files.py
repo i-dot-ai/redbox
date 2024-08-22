@@ -24,4 +24,4 @@ class Command(BaseCommand):
 
         for file in File.objects.exclude(status__in=INACTIVE_STATUSES):
             logger.debug("Reingesting file object %s", file)
-            async_task(ingest, file, task_name=file.original_file_name, group="re-ingest", sync=kwargs["sync"])
+            async_task(ingest, file.id, task_name=file.original_file_name, group="re-ingest", sync=kwargs["sync"])
