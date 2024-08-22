@@ -9,7 +9,7 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
 from core_api.auth import get_user_uuid
-from redbox.models import APIError404, File, FileStatus, ProcessingStatusEnum, Settings
+from redbox.models import APIError404, File, ProcessingStatusEnum, Settings
 from redbox.storage import ElasticsearchStorageHandler
 
 # === Functions ===
@@ -189,35 +189,3 @@ def delete_file(file_uuid: UUID, user_uuid: Annotated[UUID, Depends(get_user_uui
 
     storage_handler.delete_user_items("chunk", user_uuid)
     return file
-
-
-@file_app.get(
-    "/{file_uuid}/status",
-    tags=["file"],
-    responses={404: {"model": APIError404, "description": "The file was not found"}},
-)
-def get_file_status(file_uuid: UUID, user_uuid: Annotated[UUID, Depends(get_user_uuid)]) -> FileStatus:
-    """Get the status of a file
-
-    Args:
-        file_uuid (UUID): The UUID of the file to get the status of
-        user_uuid (UUID): The UUID of the user
-
-    Returns:
-        File: The file with the updated status
-
-    Raises:
-        404: If the file isn't found, or the creator and requester don't match
-    """
-    try:
-        file: File = storage_handler.read_item(file_uuid, model_type="File")
-    except NotFoundError:
-        return file_not_found_response(file_uuid=file_uuid)
-
-    if file.creator_user_uuid != user_uuid:
-        return file_not_found_response(file_uuid=file_uuid)
-
-    return FileStatus(
-        file_uuid=file_uuid,
-        processing_status=file.ingest_status,
-    )

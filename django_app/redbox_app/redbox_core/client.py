@@ -106,12 +106,6 @@ class CoreApiClient:
 
         return response_data
 
-    def get_file_status(self, file_id: UUID, user: User) -> FileStatus:
-        url = self.url / "file" / str(file_id) / "status"
-        response = requests.get(url, headers={"Authorization": user.get_bearer_token()}, timeout=60)
-        response.raise_for_status()
-        return FileStatus.schema().loads(response.content)
-
     def delete_file(self, file_id: UUID, user: User) -> CoreFile:
         url = self.url / "file" / str(file_id)
         response = requests.delete(url, headers={"Authorization": user.get_bearer_token()}, timeout=60)

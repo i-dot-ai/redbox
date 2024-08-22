@@ -108,13 +108,3 @@ def test_get_missing_file_chunks(app_client, headers):
     """
     response = app_client.get("/file/ffffffff-ffff-ffff-ffff-ffffffffffff/chunks", headers=headers)
     assert response.status_code == HTTPStatus.NOT_FOUND
-
-
-def test_get_missing_file_status(app_client, headers):
-    """
-    Given a nonexistent file
-    When I GET it from /file/uuid/status
-    I Expect to receive a 404 error
-    """
-    response = app_client.get("/file/ffffffff-ffff-ffff-ffff-ffffffffffff/status", headers=headers)
-    assert response.status_code == HTTPStatus.NOT_FOUND

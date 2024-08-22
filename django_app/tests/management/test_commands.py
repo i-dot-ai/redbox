@@ -83,34 +83,6 @@ def test_check_file_status(deletion_mock: MagicMock, put_mock: MagicMock, alice:
     assert File.objects.get(id=file_core_api_error.id).status == StatusEnum.errored
 
 
-@patch("redbox_app.redbox_core.models.File.delete_from_s3")
-@pytest.mark.django_db()
-def test_check_file_status_s3_error(deletion_mock: MagicMock, uploaded_file: File, requests_mock: Mocker):
-    deletion_mock.side_effect = UnknownClientMethodError(method_name="")
-
-    # Given
-    mock_file = uploaded_file
-    matcher = re.compile(f"http://{settings.CORE_API_HOST}:{settings.CORE_API_PORT}/file/[0-9a-f]|\\-/status")
-
-    requests_mock.get(
-        matcher,
-        status_code=HTTPStatus.CREATED,
-        json={
-            "processing_status": StatusEnum.processing,
-        },
-    )
-    requests_mock.get(
-        f"http://{settings.CORE_API_HOST}:{settings.CORE_API_PORT}/file/{mock_file.core_file_uuid}/status",
-        status_code=HTTPStatus.NOT_FOUND,
-    )
-
-    # When
-    call_command("check_file_status")
-
-    # Then
-    assert File.objects.get(id=mock_file.id).status == StatusEnum.errored
-
-
 # === show_magiclink_url command tests ===
 
 
