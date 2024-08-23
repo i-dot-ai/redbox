@@ -44,11 +44,9 @@ test-ai: ## Test code with live LLM
 test-redbox: ## Test redbox
 	cd redbox-core && poetry install && poetry run pytest -m "not ai" --cov=redbox -v --cov-report=term-missing --cov-fail-under=60
 
-
 .PHONY: test-django
 test-django: ## Test django-app
 	cd django_app && poetry install && poetry run pytest --cov=redbox_app -v --cov-report=term-missing --cov-fail-under=60 --ds redbox_app.settings
-
 
 .PHONY: build-django-static
 build-django-static: ## Build django-app static files

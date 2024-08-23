@@ -9,7 +9,7 @@ from redbox import Redbox
 from redbox.models.chat import ChatRoute
 from redbox.models.settings import Settings
 from redbox.test.data import (
-    TestData,
+    RedboxTestData,
     RedboxChatTestCase,
     generate_test_cases,
     mock_all_chunks_retriever,
@@ -27,22 +27,22 @@ TEST_CASES = [
         generate_test_cases(
             query=RedboxQuery(question="What is AI?", file_uuids=[], user_uuid=uuid4(), chat_history=[]),
             test_data=[
-                TestData(0, 0, expected_llm_response=["Testing Response 1"], expected_route=ChatRoute.chat),
-                TestData(1, 100, expected_llm_response=["Testing Response 1"], expected_route=ChatRoute.chat),
-                TestData(10, 1200, expected_llm_response=["Testing Response 1"], expected_route=ChatRoute.chat),
+                RedboxTestData(0, 0, expected_llm_response=["Testing Response 1"], expected_route=ChatRoute.chat),
+                RedboxTestData(1, 100, expected_llm_response=["Testing Response 1"], expected_route=ChatRoute.chat),
+                RedboxTestData(10, 1200, expected_llm_response=["Testing Response 1"], expected_route=ChatRoute.chat),
             ],
             test_id="Basic Chat",
         ),
         generate_test_cases(
             query=RedboxQuery(question="What is AI?", file_uuids=[uuid4()], user_uuid=uuid4(), chat_history=[]),
             test_data=[
-                TestData(
+                RedboxTestData(
                     1, 1000, expected_llm_response=["Testing Response 1"], expected_route=ChatRoute.chat_with_docs
                 ),
-                TestData(
+                RedboxTestData(
                     1, 50_000, expected_llm_response=["Testing Response 1"], expected_route=ChatRoute.chat_with_docs
                 ),
-                TestData(
+                RedboxTestData(
                     1, 80_000, expected_llm_response=["Testing Response 1"], expected_route=ChatRoute.chat_with_docs
                 ),
             ],
@@ -53,19 +53,19 @@ TEST_CASES = [
                 question="What is AI?", file_uuids=[uuid4(), uuid4()], user_uuid=uuid4(), chat_history=[]
             ),
             test_data=[
-                TestData(
+                RedboxTestData(
                     2, 40_000, expected_llm_response=["Testing Response 1"], expected_route=ChatRoute.chat_with_docs
                 ),
-                TestData(
+                RedboxTestData(
                     2, 80_000, expected_llm_response=["Testing Response 1"], expected_route=ChatRoute.chat_with_docs
                 ),
-                TestData(
+                RedboxTestData(
                     2,
                     140_000,
                     expected_llm_response=["Map Step Response"] * 2 + ["Testing Response 1"],
                     expected_route=ChatRoute.chat_with_docs_map_reduce,
                 ),
-                TestData(
+                RedboxTestData(
                     4,
                     140_000,
                     expected_llm_response=["Map Step Response"] * 4
@@ -79,7 +79,7 @@ TEST_CASES = [
         generate_test_cases(
             query=RedboxQuery(question="What is AI?", file_uuids=[uuid4()], user_uuid=uuid4(), chat_history=[]),
             test_data=[
-                TestData(
+                RedboxTestData(
                     2,
                     200_000,
                     expected_llm_response=["Map Step Response"] * 2
@@ -91,15 +91,27 @@ TEST_CASES = [
             test_id="Chat with large doc",
         ),
         generate_test_cases(
+            query=RedboxQuery(question="What is AI?", file_uuids=[uuid4()], user_uuid=uuid4(), chat_history=[]),
+            test_data=[
+                RedboxTestData(
+                    10,
+                    2_000_000,
+                    expected_llm_response=["These documents are too large to work with."],
+                    expected_route=None,
+                ),
+            ],
+            test_id="Document too big for system",
+        ),
+        generate_test_cases(
             query=RedboxQuery(question="@search What is AI?", file_uuids=[uuid4()], user_uuid=uuid4(), chat_history=[]),
             test_data=[
-                TestData(
+                RedboxTestData(
                     1,
                     10000,
                     expected_llm_response=["Condense response", "The cake is a lie"],
                     expected_route=ChatRoute.search,
                 ),
-                TestData(
+                RedboxTestData(
                     5,
                     10000,
                     expected_llm_response=["Condense response", "The cake is a lie"],
@@ -113,7 +125,7 @@ TEST_CASES = [
                 question="@nosuchkeyword What is AI?", file_uuids=[uuid4()], user_uuid=uuid4(), chat_history=[]
             ),
             test_data=[
-                TestData(
+                RedboxTestData(
                     2,
                     200_000,
                     expected_llm_response=[test_env.response_no_such_keyword],
@@ -189,7 +201,7 @@ async def test_streaming(test: RedboxChatTestCase, env, mocker):
     final_state = RedboxState(response)
 
     # Bit of a bodge to retain the ability to check that the LLM streaming is working in most cases
-    if not final_state["route_name"].startswith("error"):
+    if not (final_state["route_name"] or "").startswith("error"):
         assert len(token_events) > 1, f"Expected tokens as a stream. Received: {token_events}"
 
     llm_response = "".join(token_events)

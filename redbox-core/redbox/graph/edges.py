@@ -36,6 +36,12 @@ def build_documents_bigger_than_context_conditional(prompt_set: PromptSet) -> Ru
     return _documents_bigger_than_context_conditional
 
 
+def documents_bigger_than_n_conditional(state: RedboxState) -> bool:
+    """Do the documents meet a hard limit of document token size set in AI Settings."""
+    token_counts = [d.metadata["token_count"] for d in flatten_document_state(state["documents"])]
+    return sum(token_counts) > state["request"].ai_settings.max_document_tokens
+
+
 def build_keyword_detection_conditional(*allowed_routes: ChatRoute) -> Runnable:
     """Given a set of permitted routes, will detect them in keywords."""
 

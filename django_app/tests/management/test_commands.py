@@ -3,6 +3,7 @@ import uuid
 from datetime import UTC, datetime, timedelta
 from http import HTTPStatus
 from io import StringIO
+from time import sleep
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -276,12 +277,19 @@ def test_reingest_files(uploaded_file: File, requests_mock: Mocker, mocker):
     )
 
     # When
-    with mocker.patch("redbox.chains.ingest.VectorStore.add_documents", return_value=[]):
+    with mocker.patch("redbox.chains.ingest.VectorStore.aadd_documents", return_value=[]):
         call_command("reingest_files", sync=True)
 
     # Then
-    uploaded_file.refresh_from_db()
-    assert uploaded_file.status == StatusEnum.complete
+    for _ in range(5):
+        uploaded_file.refresh_from_db()
+
+        # Handle race condition from async reingestion
+        if uploaded_file.status == StatusEnum.processing:
+            sleep(1)
+            continue
+
+        assert uploaded_file.status == StatusEnum.complete
 
 
 @pytest.mark.django_db(transaction=True)
@@ -295,10 +303,17 @@ def test_reingest_files_unstructured_fail(uploaded_file: File, requests_mock: Mo
     )
 
     # When
-    with mocker.patch("redbox.chains.ingest.VectorStore.add_documents", return_value=[]):
+    with mocker.patch("redbox.chains.ingest.VectorStore.aadd_documents", return_value=[]):
         call_command("reingest_files", sync=True)
 
     # Then
-    uploaded_file.refresh_from_db()
-    assert uploaded_file.status == StatusEnum.errored
-    assert uploaded_file.ingest_error == "Unstructured failed to extract text for this file"
+    for _ in range(5):
+        uploaded_file.refresh_from_db()
+
+        # Handle race condition from async reingestion
+        if uploaded_file.status == StatusEnum.processing:
+            sleep(1)
+            continue
+
+        assert uploaded_file.status == StatusEnum.errored
+        assert uploaded_file.ingest_error == "Unstructured failed to extract text for this file"

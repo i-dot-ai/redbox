@@ -1,16 +1,16 @@
 {
 	"folders": [
 		{
+			"name": "Django App",
+			"path": "../django_app"
+		},
+		{
 			"name": "Core API",
 			"path": "../core-api"
 		},
 		{
 			"name": "Redbox Core",
 			"path": "../redbox-core"
-		},
-		{
-			"name": "Worker",
-			"path": "../worker"
 		},
 		{
 			"name": "Integration Tests",

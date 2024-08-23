@@ -14,7 +14,7 @@ from starlette.websockets import WebSocketDisconnect
 
 from redbox.models.chain import RedboxQuery
 from redbox.models.chat import ChatResponse, ChatRoute
-from redbox.test.data import RedboxChatTestCase, generate_test_cases, TestData
+from redbox.test.data import RedboxChatTestCase, generate_test_cases, RedboxTestData
 
 if TYPE_CHECKING:
     pass
@@ -33,22 +33,22 @@ TEST_CASES = [
         generate_test_cases(
             query=RedboxQuery(question="What is AI?", file_uuids=[], user_uuid=uuid4(), chat_history=[]),
             test_data=[
-                TestData(0, 0, expected_llm_response=["Testing Response 1"], expected_route=ChatRoute.chat),
-                TestData(1, 100, expected_llm_response=["Testing Response 1"], expected_route=ChatRoute.chat),
-                TestData(10, 1200, expected_llm_response=["Testing Response 1"], expected_route=ChatRoute.chat),
+                RedboxTestData(0, 0, expected_llm_response=["Testing Response 1"], expected_route=ChatRoute.chat),
+                RedboxTestData(1, 100, expected_llm_response=["Testing Response 1"], expected_route=ChatRoute.chat),
+                RedboxTestData(10, 1200, expected_llm_response=["Testing Response 1"], expected_route=ChatRoute.chat),
             ],
             test_id="Basic Chat",
         ),
         generate_test_cases(
             query=RedboxQuery(question="What is AI?", file_uuids=[uuid4()], user_uuid=uuid4(), chat_history=[]),
             test_data=[
-                TestData(
+                RedboxTestData(
                     1, 1000, expected_llm_response=["Testing Response 1"], expected_route=ChatRoute.chat_with_docs
                 ),
-                TestData(
+                RedboxTestData(
                     1, 50_000, expected_llm_response=["Testing Response 1"], expected_route=ChatRoute.chat_with_docs
                 ),
-                TestData(
+                RedboxTestData(
                     1, 80_000, expected_llm_response=["Testing Response 1"], expected_route=ChatRoute.chat_with_docs
                 ),
             ],
@@ -59,19 +59,19 @@ TEST_CASES = [
                 question="What is AI?", file_uuids=[uuid4(), uuid4()], user_uuid=uuid4(), chat_history=[]
             ),
             test_data=[
-                TestData(
+                RedboxTestData(
                     2, 40_000, expected_llm_response=["Testing Response 1"], expected_route=ChatRoute.chat_with_docs
                 ),
-                TestData(
+                RedboxTestData(
                     2, 80_000, expected_llm_response=["Testing Response 1"], expected_route=ChatRoute.chat_with_docs
                 ),
-                TestData(
+                RedboxTestData(
                     2,
                     140_000,
                     expected_llm_response=["Map Step Response"] * 2 + ["Testing Response 1"],
                     expected_route=ChatRoute.chat_with_docs_map_reduce,
                 ),
-                TestData(
+                RedboxTestData(
                     4,
                     140_000,
                     expected_llm_response=["Map Step Response"] * 4
@@ -85,7 +85,7 @@ TEST_CASES = [
         generate_test_cases(
             query=RedboxQuery(question="What is AI?", file_uuids=[uuid4()], user_uuid=uuid4(), chat_history=[]),
             test_data=[
-                TestData(
+                RedboxTestData(
                     2,
                     200_000,
                     expected_llm_response=["Map Step Response"] * 2
@@ -99,13 +99,13 @@ TEST_CASES = [
         generate_test_cases(
             query=RedboxQuery(question="@search What is AI?", file_uuids=[uuid4()], user_uuid=uuid4(), chat_history=[]),
             test_data=[
-                TestData(
+                RedboxTestData(
                     1,
                     10000,
                     expected_llm_response=["Condense response", "The cake is a lie"],
                     expected_route=ChatRoute.search,
                 ),
-                TestData(
+                RedboxTestData(
                     5,
                     10000,
                     expected_llm_response=["Condense response", "The cake is a lie"],
@@ -119,7 +119,7 @@ TEST_CASES = [
                 question="@nosuchkeyword What is AI?", file_uuids=[uuid4()], user_uuid=uuid4(), chat_history=[]
             ),
             test_data=[
-                TestData(
+                RedboxTestData(
                     2,
                     200_000,
                     expected_llm_response=["That keyword isn't recognised"],

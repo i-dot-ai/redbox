@@ -19,7 +19,7 @@ from redbox.graph.nodes.processes import (
 )
 from redbox.chains.runnables import build_chat_prompt_from_messages_runnable, CannedChatLLM
 from redbox.test.data import (
-    TestData,
+    RedboxTestData,
     RedboxChatTestCase,
     generate_test_cases,
     generate_docs,
@@ -36,8 +36,10 @@ LANGGRAPH_DEBUG = True
 CHAT_PROMPT_TEST_CASES = generate_test_cases(
     query=RedboxQuery(question="What is AI?", file_uuids=[], user_uuid=uuid4(), chat_history=[]),
     test_data=[
-        TestData(0, 0, expected_llm_response=["Testing Response 1"], expected_route=ChatRoute.chat),
-        TestData(2, 40_000, expected_llm_response=["Testing Response 1"], expected_route=ChatRoute.chat_with_docs),
+        RedboxTestData(0, 0, expected_llm_response=["Testing Response 1"], expected_route=ChatRoute.chat),
+        RedboxTestData(
+            2, 40_000, expected_llm_response=["Testing Response 1"], expected_route=ChatRoute.chat_with_docs
+        ),
     ],
     test_id="Chat prompt runnable",
 )
@@ -58,7 +60,7 @@ def test_build_chat_prompt_from_messages_runnable(test_case: RedboxChatTestCase,
 
 CHAT_TEST_CASES = generate_test_cases(
     query=RedboxQuery(question="What is AI?", file_uuids=[], user_uuid=uuid4(), chat_history=[]),
-    test_data=[TestData(0, 0, expected_llm_response=["Testing Response 1"], expected_route=ChatRoute.chat)],
+    test_data=[RedboxTestData(0, 0, expected_llm_response=["Testing Response 1"], expected_route=ChatRoute.chat)],
     test_id="Chat pattern",
 )
 
@@ -85,8 +87,10 @@ def test_build_chat_pattern(test_case: RedboxChatTestCase, mocker):
 SET_ROUTE_TEST_CASES = generate_test_cases(
     query=RedboxQuery(question="What is AI?", file_uuids=[], user_uuid=uuid4(), chat_history=[]),
     test_data=[
-        TestData(0, 0, expected_llm_response=["Testing Response 1"], expected_route=ChatRoute.chat),
-        TestData(2, 40_000, expected_llm_response=["Testing Response 1"], expected_route=ChatRoute.chat_with_docs),
+        RedboxTestData(0, 0, expected_llm_response=["Testing Response 1"], expected_route=ChatRoute.chat),
+        RedboxTestData(
+            2, 40_000, expected_llm_response=["Testing Response 1"], expected_route=ChatRoute.chat_with_docs
+        ),
     ],
     test_id="Set route pattern",
 )
@@ -109,9 +113,13 @@ def test_build_set_route_pattern(test_case: RedboxChatTestCase):
 RETRIEVER_TEST_CASES = generate_test_cases(
     query=RedboxQuery(question="What is AI?", file_uuids=[uuid4(), uuid4()], user_uuid=uuid4(), chat_history=[]),
     test_data=[
-        TestData(2, 40_000, expected_llm_response=["Testing Response 1"], expected_route=ChatRoute.chat_with_docs),
-        TestData(2, 80_000, expected_llm_response=["Testing Response 1"], expected_route=ChatRoute.chat_with_docs),
-        TestData(
+        RedboxTestData(
+            2, 40_000, expected_llm_response=["Testing Response 1"], expected_route=ChatRoute.chat_with_docs
+        ),
+        RedboxTestData(
+            2, 80_000, expected_llm_response=["Testing Response 1"], expected_route=ChatRoute.chat_with_docs
+        ),
+        RedboxTestData(
             4,
             140_000,
             expected_llm_response=["Map Step Response"] * 4 + ["Testing Response 1"],
@@ -144,8 +152,12 @@ def test_build_retrieve_pattern(test_case: RedboxChatTestCase, mock_retriever: B
 MERGE_TEST_CASES = generate_test_cases(
     query=RedboxQuery(question="What is AI?", file_uuids=[uuid4(), uuid4()], user_uuid=uuid4(), chat_history=[]),
     test_data=[
-        TestData(2, 40_000, expected_llm_response=["Testing Response 1"], expected_route=ChatRoute.chat_with_docs),
-        TestData(4, 40_000, expected_llm_response=["Testing Response 2"], expected_route=ChatRoute.chat_with_docs),
+        RedboxTestData(
+            2, 40_000, expected_llm_response=["Testing Response 1"], expected_route=ChatRoute.chat_with_docs
+        ),
+        RedboxTestData(
+            4, 40_000, expected_llm_response=["Testing Response 2"], expected_route=ChatRoute.chat_with_docs
+        ),
     ],
     test_id="Merge pattern",
 )
@@ -178,8 +190,12 @@ def test_build_merge_pattern(test_case: RedboxChatTestCase, mocker):
 STUFF_TEST_CASES = generate_test_cases(
     query=RedboxQuery(question="What is AI?", file_uuids=[uuid4(), uuid4()], user_uuid=uuid4(), chat_history=[]),
     test_data=[
-        TestData(2, 40_000, expected_llm_response=["Testing Response 1"], expected_route=ChatRoute.chat_with_docs),
-        TestData(4, 40_000, expected_llm_response=["Testing Response 2"], expected_route=ChatRoute.chat_with_docs),
+        RedboxTestData(
+            2, 40_000, expected_llm_response=["Testing Response 1"], expected_route=ChatRoute.chat_with_docs
+        ),
+        RedboxTestData(
+            4, 40_000, expected_llm_response=["Testing Response 2"], expected_route=ChatRoute.chat_with_docs
+        ),
     ],
     test_id="Stuff pattern",
 )

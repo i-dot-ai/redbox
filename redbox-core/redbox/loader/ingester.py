@@ -42,7 +42,7 @@ def get_elasticsearch_storage_handler(es):
     return ElasticsearchStorageHandler(es, env.elastic_root_index)
 
 
-def ingest_file(core_file: File) -> str | None:
+async def ingest_file(core_file: File) -> str | None:
     logging.info("Ingesting file: %s", core_file)
 
     core_file.ingest_status = ProcessingStatusEnum.embedding
@@ -67,7 +67,7 @@ def ingest_file(core_file: File) -> str | None:
     )
 
     try:
-        new_ids = RunnableParallel({"normal": chunk_ingest_chain, "largest": large_chunk_ingest_chain}).invoke(
+        new_ids = await RunnableParallel({"normal": chunk_ingest_chain, "largest": large_chunk_ingest_chain}).ainvoke(
             core_file
         )
         core_file.ingest_status = ProcessingStatusEnum.complete
