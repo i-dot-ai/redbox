@@ -52,7 +52,7 @@ class AISettings(UUIDPrimaryKeyBase, TimeStampedModel):
         GPT_4_OMNI = "gpt-4o", _("gpt-4o")
 
     label = models.CharField(max_length=50, unique=True)
-    max_document_tokens = models.PositiveIntegerField(default=1_000_000)
+    max_document_tokens = models.PositiveIntegerField(default=1_000_000, null=True, blank=True)
     context_window_size = models.PositiveIntegerField(default=128_000)
     llm_max_tokens = models.PositiveIntegerField(default=1024)
     rag_k = models.PositiveIntegerField(default=30)

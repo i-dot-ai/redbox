@@ -200,7 +200,7 @@ async def test_streaming(test: RedboxChatTestCase, env, mocker):
 
     final_state = RedboxState(response)
 
-    # Bit of a bodge to retain the ability to check that the LLM streaming is working in most cas(es
+    # Bit of a bodge to retain the ability to check that the LLM streaming is working in most cases
     if not (final_state["route_name"] or "").startswith("error"):
         assert len(token_events) > 1, f"Expected tokens as a stream. Received: {token_events}"
 
