@@ -90,10 +90,6 @@ resource "aws_secretsmanager_secret_version" "django-app-json-secret" {
   secret_string = jsonencode(local.django_app_secrets)
 }
 
-resource "aws_secretsmanager_secret_version" "worker-json-secret" {
-  secret_id     = aws_secretsmanager_secret.worker-secret.id
-  secret_string = jsonencode(local.worker_secrets)
-}
 
 module "django-app" {
   memory                     = 4096
@@ -198,6 +194,7 @@ module "unstructured" {
 
 
 module "worker" {
+  command                      = ["venv/bin/django-admin", "qcluster"]
   memory                       = 6144
   cpu                          = 2048
   create_listener              = false
