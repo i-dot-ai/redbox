@@ -267,6 +267,9 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
     original_file_name = models.TextField(max_length=2048, blank=True, null=True)
     core_file_uuid = models.UUIDField(null=True)
     last_referenced = models.DateTimeField(blank=True, null=True)
+    ingest_error = models.TextField(
+        max_length=2048, blank=True, null=True, help_text="error, if any, encountered during ingest"
+    )
 
     def __str__(self) -> str:  # pragma: no cover
         return f"{self.original_file_name} {self.user}"

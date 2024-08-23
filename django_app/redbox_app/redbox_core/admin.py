@@ -5,10 +5,11 @@ from django.conf import settings
 from django.contrib import admin
 from django.db.models import QuerySet
 from django.http import HttpResponse
+from django_q.tasks import async_task
 from import_export.admin import ExportMixin, ImportExportMixin
-from requests.exceptions import RequestException
 
 from redbox_app.redbox_core.client import CoreApiClient
+from redbox_app.worker import ingest
 
 from . import models
 
@@ -54,20 +55,11 @@ class UserAdmin(ImportExportMixin, admin.ModelAdmin):
 
 
 class FileAdmin(ExportMixin, admin.ModelAdmin):
-    def reupload(self, request, queryset):  # noqa:ARG002
+    def reupload(self, _request, queryset):
         for file in queryset:
-            try:
-                logger.info("Re-uploading file to core-api: %s", file)
-                core_api.reingest_file(file.core_file_uuid, file.user)
-            except RequestException as e:
-                logger.exception("Error re-uploading File model object %s.", file, exc_info=e)
-                file.status = models.StatusEnum.errored
-                file.save()
-            else:
-                file.status = models.StatusEnum.processing
-                file.save()
-
-                logger.info("Successfully reuploaded file %s.", file)
+            logger.info("Re-uploading file to core-api: %s", file)
+            async_task(ingest, file.id)
+            logger.info("Successfully reuploaded file %s.", file)
 
     list_display = ["original_file_name", "user", "status", "created_at", "last_referenced"]
     list_filter = ["user", "status"]
@@ -79,7 +71,7 @@ class CitationInline(admin.StackedInline):
     model = models.Citation
     ordering = ("modified_at",)
 
-    extra = 1
+    extra = 0
 
 
 class ChatMessageAdmin(ExportMixin, admin.ModelAdmin):

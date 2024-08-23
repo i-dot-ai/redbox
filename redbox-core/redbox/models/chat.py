@@ -22,7 +22,7 @@ class ChatMessage(BaseModel):
 
 
 class SelectedDocument(BaseModel):
-    uuid: UUID | None = Field(description="uuid of selected file", default=None)
+    uuid: UUID = Field(description="uuid of selected file")
 
 
 class ChatRequest(BaseModel):

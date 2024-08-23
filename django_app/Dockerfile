@@ -21,7 +21,8 @@ RUN apt-get update && apt-get install --yes build-essential > /dev/null
 RUN pip install poetry poetry-plugin-bundle==1.3.0
 
 WORKDIR /src
-
+COPY README.md ../.
+COPY redbox-core/ ../redbox-core/
 COPY django_app/pyproject.toml .
 COPY django_app/poetry.lock .
 
@@ -38,6 +39,8 @@ RUN apt-get update && apt-get install --yes libpq-dev curl > /dev/null
 
 WORKDIR /usr/src/app
 
+COPY README.md .
+COPY redbox-core/ .
 COPY django_app/ .
 
 COPY --from=npm-packages /src/node_modules/ frontend/node_modules/
@@ -50,4 +53,5 @@ ENV PYTHONPATH "${PYTHONPATH}:/."
 EXPOSE 8090
 
 RUN chmod +x start.sh
+RUN chmod +x health.sh
 CMD ["./start.sh"]

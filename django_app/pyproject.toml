@@ -7,6 +7,7 @@ license = "MIT"
 
 [tool.poetry.dependencies]
 python = ">=3.12,<3.13"
+redbox = {path="../redbox-core", develop=true}
 django = "^5.1"
 django-libsass = "^0.9"
 django-magic-link = "^1.0.0"
@@ -37,6 +38,9 @@ django-gov-notify = "^0.5.0"
 websockets = "^12.0"
 django-import-export = "^4.0"
 dataclasses-json = ">=0.6.7"
+django-q2 = "^1.6.2"
+blessed = "^1.20.0"
+croniter = "^3.0.3"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3.2"
@@ -71,3 +75,6 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.pytest.ini_options]
 DJANGO_SETTINGS_MODULE = "redbox_app.settings"
+testpaths = "tests"
+norecursedirs = "tests/test_ai.py"
+

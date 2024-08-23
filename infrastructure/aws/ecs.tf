@@ -90,10 +90,6 @@ resource "aws_secretsmanager_secret_version" "django-app-json-secret" {
   secret_string = jsonencode(local.django_app_secrets)
 }
 
-resource "aws_secretsmanager_secret_version" "worker-json-secret" {
-  secret_id     = aws_secretsmanager_secret.worker-secret.id
-  secret_string = jsonencode(local.worker_secrets)
-}
 
 module "django-app" {
   memory                     = 4096
@@ -198,6 +194,7 @@ module "unstructured" {
 
 
 module "worker" {
+  command                      = ["venv/bin/django-admin", "qcluster"]
   memory                       = 6144
   cpu                          = 2048
   create_listener              = false
@@ -205,7 +202,7 @@ module "worker" {
   source                       = "../../../i-ai-core-infrastructure//modules/ecs"
   name                         = "${local.name}-worker"
   image_tag                    = var.image_tag
-  ecr_repository_uri           = "${var.ecr_repository_uri}/redbox-worker"
+  ecr_repository_uri           = "${var.ecr_repository_uri}/${var.project_name}-django-app"
   ecs_cluster_id               = module.cluster.ecs_cluster_id
   ecs_cluster_name             = module.cluster.ecs_cluster_name
   autoscaling_minimum_target   = 1
@@ -217,8 +214,8 @@ module "worker" {
   load_balancer_security_group = module.load_balancer.load_balancer_security_group_id
   aws_lb_arn                   = module.load_balancer.alb_arn
   ip_whitelist                 = var.external_ips
-  environment_variables        = local.worker_environment_variables
-  secrets                      = local.reconstructed_worker_secrets
+  environment_variables        = local.django_app_environment_variables
+  secrets                      = local.reconstructed_django_secrets
   http_healthcheck             = false
   ephemeral_storage            = 30
   auto_scale_off_peak_times    = true

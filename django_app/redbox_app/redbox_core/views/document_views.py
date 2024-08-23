@@ -13,10 +13,12 @@ from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.views import View
 from django.views.decorators.http import require_http_methods
+from django_q.tasks import async_task
 from requests.exceptions import RequestException
 
 from redbox_app.redbox_core.client import CoreApiClient
 from redbox_app.redbox_core.models import File, StatusEnum, User
+from redbox_app.worker import ingest
 
 logger = logging.getLogger(__name__)
 core_api = CoreApiClient(host=settings.CORE_API_HOST, port=settings.CORE_API_PORT)
@@ -133,6 +135,7 @@ class UploadView(View):
     def ingest_file(uploaded_file: UploadedFile, user: User) -> Sequence[str]:
         errors: MutableSequence[str] = []
         try:
+            logger.info("getting file from s3")
             file = File.objects.create(
                 status=StatusEnum.processing.value,
                 user=user,
@@ -145,6 +148,7 @@ class UploadView(View):
             errors.append(e.args[0])
         else:
             try:
+                logger.info("pushing file to core")
                 upload_file_response = core_api.upload_file(file.unique_name, user)
             except RequestException as e:
                 logger.exception("Error uploading file object %s.", file, exc_info=e)
@@ -153,6 +157,7 @@ class UploadView(View):
             else:
                 file.core_file_uuid = upload_file_response.uuid
                 file.save()
+                async_task(ingest, file.id, task_name=file.unique_name, group="ingest")
         return errors
 
 
@@ -194,12 +199,4 @@ def file_status_api_view(request: HttpRequest) -> JsonResponse:
     except File.DoesNotExist as ex:
         logger.exception("File object information not found in django - file does not exist %s.", file_id, exc_info=ex)
         return JsonResponse({"status": StatusEnum.errored.label})
-    try:
-        core_file_status_response = core_api.get_file_status(file_id=file.core_file_uuid, user=request.user)
-    except RequestException as ex:
-        logger.exception("File object information from core not found - for file %s.", file_id, exc_info=ex)
-        file.status = StatusEnum.errored
-        file.save()
-        return JsonResponse({"status": file.get_status_text()})
-    file.update_status_from_core(status_label=core_file_status_response.processing_status)
     return JsonResponse({"status": file.get_status_text()})

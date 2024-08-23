@@ -13,28 +13,68 @@ from redbox.retriever import AllElasticsearchRetriever, ParameterisedElasticsear
 
 
 def get_chat_llm(env: Settings, ai_settings: AISettings):
+    chat_model = None
     if ai_settings.chat_backend == "gpt-35-turbo-16k":
-        return AzureChatOpenAI(
+        chat_model = AzureChatOpenAI(
             api_key=convert_to_secret_str(env.azure_openai_api_key_35t),
             azure_endpoint=env.azure_openai_endpoint_35t,
             model=ai_settings.chat_backend,
             api_version=env.openai_api_version_35t,
         )
+        if env.azure_openai_fallback_endpoint_35t:
+            chat_model.max_retries = 0
+            chat_model = chat_model.with_fallbacks(
+                [
+                    AzureChatOpenAI(
+                        api_key=convert_to_secret_str(env.azure_openai_fallback_api_key_35t),
+                        azure_endpoint=env.azure_openai_fallback_endpoint_35t,
+                        model=ai_settings.chat_backend,
+                        api_version=env.openai_api_version_35t,
+                    )
+                ]
+            )
     elif ai_settings.chat_backend == "gpt-4-turbo-2024-04-09":
-        return AzureChatOpenAI(
+        chat_model = AzureChatOpenAI(
             api_key=convert_to_secret_str(env.azure_openai_api_key_4t),
             azure_endpoint=env.azure_openai_endpoint_4t,
             model=ai_settings.chat_backend,
             api_version=env.openai_api_version_4t,
         )
+        if env.azure_openai_fallback_endpoint_4t:
+            chat_model.max_retries = 0
+            chat_model = chat_model.with_fallbacks(
+                [
+                    AzureChatOpenAI(
+                        api_key=convert_to_secret_str(env.azure_openai_fallback_api_key_4t),
+                        azure_endpoint=env.azure_openai_fallback_endpoint_4t,
+                        model=ai_settings.chat_backend,
+                        api_version=env.openai_api_version_4t,
+                    )
+                ]
+            )
     elif ai_settings.chat_backend == "gpt-4o":
-        return AzureChatOpenAI(
+        chat_model = AzureChatOpenAI(
             api_key=convert_to_secret_str(env.azure_openai_api_key_4o),
             azure_endpoint=env.azure_openai_endpoint_4o,
             model=ai_settings.chat_backend,
             api_version=env.openai_api_version_4o,
         )
-    raise Exception("%s not recognised", ai_settings.chat_backend)
+        if env.azure_openai_fallback_endpoint_4o:
+            chat_model.max_retries = 0
+            chat_model = chat_model.with_fallbacks(
+                [
+                    AzureChatOpenAI(
+                        api_key=convert_to_secret_str(env.azure_openai_fallback_api_key_4o),
+                        azure_endpoint=env.azure_openai_fallback_endpoint_4o,
+                        model=ai_settings.chat_backend,
+                        api_version=env.openai_api_version_4o,
+                    )
+                ]
+            )
+    if chat_model is None:
+        raise Exception("%s not recognised", ai_settings.chat_backend)
+    else:
+        return chat_model
 
 
 @cache

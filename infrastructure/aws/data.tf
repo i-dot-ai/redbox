@@ -1,7 +1,8 @@
 locals {
-  record_prefix = terraform.workspace == "prod" ? var.project_name : "${var.project_name}-${terraform.workspace}"
-  django_host   = "${local.record_prefix}.${var.domain_name}"
-  name          = "${var.team_name}-${terraform.workspace}-${var.project_name}"
+  record_prefix     = terraform.workspace == "prod" ? var.project_name : "${var.project_name}-${terraform.workspace}"
+  django_host       = "${local.record_prefix}.${var.domain_name}"
+  unstructured_host = "${aws_service_discovery_service.unstructured_service_discovery_service.name}.${aws_service_discovery_private_dns_namespace.private_dns_namespace.name}"
+  name              = "${var.team_name}-${terraform.workspace}-${var.project_name}"
 
   core_api_environment_variables = merge(
     local.worker_environment_variables,
@@ -32,8 +33,11 @@ locals {
   )
 
   django_app_environment_variables = merge({
-    "AWS_REGION" : var.region
-  }, local.django_lambda_environment_variables)
+    "AWS_REGION" : var.region,
+    "UNSTRUCTURED_HOST" : local.unstructured_host
+    }, local.django_lambda_environment_variables
+    , local.worker_environment_variables,
+  )
 
   django_lambda_environment_variables = {
     "OBJECT_STORE" : "s3",
@@ -51,8 +55,9 @@ locals {
     "CONTACT_EMAIL" : var.contact_email,
     "FILE_EXPIRY_IN_DAYS" : 30,
     "MAX_SECURITY_CLASSIFICATION" : "OFFICIAL_SENSITIVE",
-    "SENTRY_ENVIRONMENT" : var.sentry_environment
-    "SENTRY_REPORT_TO_ENDPOINT" : var.sentry_report_to_endpoint
+    "SENTRY_ENVIRONMENT" : var.sentry_environment,
+    "SENTRY_REPORT_TO_ENDPOINT" : var.sentry_report_to_endpoint,
+    "UNSTRUCTURED_HOST" : local.unstructured_host
   }
 
   worker_environment_variables = {
@@ -73,7 +78,7 @@ locals {
     "AWS_REGION" : var.region,
     "worker_ingest_min_chunk_size" : var.worker_ingest_min_chunk_size,
     "worker_ingest_max_chunk_size" : var.worker_ingest_max_chunk_size,
-    "UNSTRUCTURED_HOST" : "${aws_service_discovery_service.unstructured_service_discovery_service.name}.${aws_service_discovery_private_dns_namespace.private_dns_namespace.name}",
+    "UNSTRUCTURED_HOST" : local.unstructured_host
   }
 
   core_secrets = {
@@ -81,15 +86,21 @@ locals {
     "ELASTIC__CLOUD_ID" : var.cloud_id,
 
     "AZURE_OPENAI_API_KEY_35T" : var.azure_openai_api_key_35t,
+    "AZURE_OPENAI_FALLBACK_API_KEY_35T" : var.azure_openai_fallback_api_key_35t,
     "AZURE_OPENAI_ENDPOINT_35T" : var.azure_openai_endpoint_35t,
+    "AZURE_OPENAI_FALLBACK_ENDPOINT_35T" : var.azure_openai_fallback_endpoint_35t,
     "OPENAI_API_VERSION_35T" : var.openai_api_version_35t,
 
     "AZURE_OPENAI_API_KEY_4T" : var.azure_openai_api_key_4t,
+    "AZURE_OPENAI_FALLBACK_API_KEY_4T" : var.azure_openai_fallback_api_key_4t,
     "AZURE_OPENAI_ENDPOINT_4T" : var.azure_openai_endpoint_4t,
+    "AZURE_OPENAI_FALLBACK_ENDPOINT_4T" : var.azure_openai_fallback_endpoint_4t,
     "OPENAI_API_VERSION_4T" : var.openai_api_version_4t,
 
     "AZURE_OPENAI_API_KEY_4O" : var.azure_openai_api_key_4o,
+    "AZURE_OPENAI_FALLBACK_API_KEY_4O" : var.azure_openai_fallback_api_key_4o,
     "AZURE_OPENAI_ENDPOINT_4O" : var.azure_openai_endpoint_4o,
+    "AZURE_OPENAI_FALLBACK_ENDPOINT_4O" : var.azure_openai_fallback_endpoint_4o,
     "OPENAI_API_VERSION_4O" : var.openai_api_version_4o,
 
     "EMBEDDING_OPENAI_API_KEY" : var.embedding_openai_api_key,
@@ -106,16 +117,12 @@ locals {
     "GOVUK_NOTIFY_API_KEY" : var.govuk_notify_api_key,
     "SENTRY_DSN" : var.sentry_dsn,
     "SLACK_NOTIFICATION_URL" : var.slack_url
-  }
-
-  worker_secrets = {
     "ELASTIC__API_KEY" : var.elastic_api_key,
     "ELASTIC__CLOUD_ID" : var.cloud_id,
     "EMBEDDING_OPENAI_API_KEY" : var.embedding_openai_api_key,
     "EMBEDDING_AZURE_OPENAI_ENDPOINT" : var.embedding_azure_openai_endpoint,
   }
 
-  reconstructed_worker_secrets = [for k, _ in local.worker_secrets : { name = k, valueFrom = "${aws_secretsmanager_secret.worker-secret.arn}:${k}::" }]
   reconstructed_core_secrets   = [for k, _ in local.core_secrets : { name = k, valueFrom = "${aws_secretsmanager_secret.core-api-secret.arn}:${k}::" }]
   reconstructed_django_secrets = [for k, _ in local.django_app_secrets : { name = k, valueFrom = "${aws_secretsmanager_secret.django-app-secret.arn}:${k}::" }]
 }
