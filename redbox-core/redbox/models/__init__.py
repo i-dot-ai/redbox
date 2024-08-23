@@ -11,6 +11,7 @@ from redbox.models.file import (
 )
 from redbox.models.persona import ChatPersona
 from redbox.models.settings import Settings
+from redbox.models.status import StatusResponse
 
 __all__ = [
     "APIError404",
@@ -25,4 +26,5 @@ __all__ = [
     "FileStatus",
     "ProcessingStatusEnum",
     "Settings",
+    "StatusResponse",
 ]
