@@ -96,9 +96,6 @@ class Settings(BaseSettings):
     aws_region: str = "eu-west-2"
     bucket_name: str = "redbox-storage-dev"
 
-    embed_queue_name: str = "redbox-embedder-queue"
-    ingest_queue_name: str = "redbox-ingester-queue"
-
     ## Chunks
     ### Normal
     worker_ingest_min_chunk_size: int = 600
@@ -110,9 +107,6 @@ class Settings(BaseSettings):
     response_no_doc_available: str = "No available data for selected files. They may need to be removed and added again"
     response_max_content_exceeded: str = "Max content exceeded. Try smaller or fewer documents"
     response_no_such_keyword: str = "That keyword isn't recognised"
-
-    redis_host: str = "redis"
-    redis_port: int = 6379
 
     object_store: str = "minio"
 
@@ -177,7 +171,3 @@ class Settings(BaseSettings):
             raise NotImplementedError
 
         return client
-
-    @property
-    def redis_url(self) -> str:
-        return f"redis://{self.redis_host}:{self.redis_port}/"

@@ -34,13 +34,6 @@ data "aws_iam_policy_document" "ecs_exec_role_policy" {
     ]
   }
 
-  statement {
-    effect = "Allow"
-    actions = [
-      "elasticache:*"
-    ]
-    resources = [module.elasticache.redis_arn]
-  }
 }
 
 resource "aws_iam_policy" "redbox_policy" {

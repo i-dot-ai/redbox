@@ -1,10 +1,4 @@
 from redbox.models.chat import ChatMessage, ChatRequest, ChatResponse, ChatRoute
-from redbox.models.embedding import (
-    EmbeddingModelInfo,
-    EmbeddingResponse,
-    EmbedQueueItem,
-    StatusResponse,
-)
 from redbox.models.errors import (
     APIError404,
     APIErrorDetail,
@@ -27,12 +21,8 @@ __all__ = [
     "ChatRequest",
     "ChatResponse",
     "ChatRoute",
-    "EmbedQueueItem",
-    "EmbeddingModelInfo",
-    "EmbeddingResponse",
     "File",
     "FileStatus",
     "ProcessingStatusEnum",
     "Settings",
-    "StatusResponse",
 ]

@@ -71,8 +71,6 @@ locals {
     "EMBEDDING_MODEL" : "all-mpnet-base-v2",
     "EMBED_QUEUE_NAME" : "redbox-embedder-queue",
     "INGEST_QUEUE_NAME" : "redbox-ingester-queue",
-    "REDIS_HOST" : module.elasticache.redis_address,
-    "REDIS_PORT" : module.elasticache.redis_port,
     "ENVIRONMENT" : upper(terraform.workspace),
     "DEBUG" : terraform.workspace == "dev",
     "AWS_REGION" : var.region,
