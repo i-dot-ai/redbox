@@ -40,7 +40,7 @@ def generate_docs(
 
 
 @dataclass
-class TestData:
+class RedboxTestData:
     number_of_docs: int
     tokens_in_all_docs: int
     chunk_resolution: ChunkResolution = ChunkResolution.largest
@@ -53,7 +53,7 @@ class RedboxChatTestCase:
         self,
         test_id: str,
         query: RedboxQuery,
-        test_data: TestData,
+        test_data: RedboxTestData,
         docs_user_uuid_override: UUID | None = None,
         docs_file_uuids_override: list[UUID] | None = None,
     ):
@@ -94,7 +94,7 @@ class RedboxChatTestCase:
         ]
 
 
-def generate_test_cases(query: RedboxQuery, test_data: list[TestData], test_id: str) -> list[RedboxChatTestCase]:
+def generate_test_cases(query: RedboxQuery, test_data: list[RedboxTestData], test_id: str) -> list[RedboxChatTestCase]:
     return [
         RedboxChatTestCase(test_id=f"{test_id}-{i}", query=query, test_data=data) for i, data in enumerate(test_data)
     ]

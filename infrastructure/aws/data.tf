@@ -8,7 +8,9 @@ locals {
     {
       "EMBEDDING_DOCUMENT_FIELD_NAME" : var.embedding_document_field_name,
       "AZURE_OPENAI_MODEL" : var.azure_openai_model,
+      "AI__MAX_DOCUMENT_TOKENS" : var.max_document_tokens,
       "AI__CONTEXT_WINDOW_SIZE" : var.context_window_size,
+      "AI__LLM_MAX_TOKENS" : var.llm_max_tokens,
       "AI__RAG_K" : var.rag_k,
       "AI__RAG_NUM_CANDIDATES" : var.rag_num_candidates,
       "AI__RAG_DESIRED_CHUNK_SIZE" : var.rag_desired_chunk_size,
@@ -69,8 +71,8 @@ locals {
     "ENVIRONMENT" : upper(terraform.workspace),
     "DEBUG" : terraform.workspace == "dev",
     "AWS_REGION" : var.region,
-    "worker_ingest_min_chunk_size": var.worker_ingest_min_chunk_size,
-    "worker_ingest_max_chunk_size": var.worker_ingest_max_chunk_size,
+    "worker_ingest_min_chunk_size" : var.worker_ingest_min_chunk_size,
+    "worker_ingest_max_chunk_size" : var.worker_ingest_max_chunk_size,
     "UNSTRUCTURED_HOST" : "${aws_service_discovery_service.unstructured_service_discovery_service.name}.${aws_service_discovery_private_dns_namespace.private_dns_namespace.name}",
   }
 
@@ -90,8 +92,8 @@ locals {
     "AZURE_OPENAI_ENDPOINT_4O" : var.azure_openai_endpoint_4o,
     "OPENAI_API_VERSION_4O" : var.openai_api_version_4o,
 
-    "EMBEDDING_OPENAI_API_KEY": var.embedding_openai_api_key,
-    "EMBEDDING_AZURE_OPENAI_ENDPOINT": var.embedding_azure_openai_endpoint,
+    "EMBEDDING_OPENAI_API_KEY" : var.embedding_openai_api_key,
+    "EMBEDDING_AZURE_OPENAI_ENDPOINT" : var.embedding_azure_openai_endpoint,
 
     "LLM_MAX_TOKENS" : var.llm_max_tokens,
   }
@@ -103,14 +105,14 @@ locals {
     "POSTGRES_USER" : module.rds.rds_instance_username,
     "GOVUK_NOTIFY_API_KEY" : var.govuk_notify_api_key,
     "SENTRY_DSN" : var.sentry_dsn,
-    "SLACK_NOTIFICATION_URL": var.slack_url
+    "SLACK_NOTIFICATION_URL" : var.slack_url
   }
 
   worker_secrets = {
     "ELASTIC__API_KEY" : var.elastic_api_key,
     "ELASTIC__CLOUD_ID" : var.cloud_id,
-    "EMBEDDING_OPENAI_API_KEY": var.embedding_openai_api_key,
-    "EMBEDDING_AZURE_OPENAI_ENDPOINT": var.embedding_azure_openai_endpoint,
+    "EMBEDDING_OPENAI_API_KEY" : var.embedding_openai_api_key,
+    "EMBEDDING_AZURE_OPENAI_ENDPOINT" : var.embedding_azure_openai_endpoint,
   }
 
   reconstructed_worker_secrets = [for k, _ in local.worker_secrets : { name = k, valueFrom = "${aws_secretsmanager_secret.worker-secret.arn}:${k}::" }]

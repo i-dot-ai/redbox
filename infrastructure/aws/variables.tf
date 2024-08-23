@@ -249,10 +249,22 @@ variable "publicly_accessible" {
   description = "Flag to determine if the database is publicly accessible"
 }
 
+variable "max_document_tokens" {
+  type        = number
+  default     = 1000000
+  description = "The maximum amount of document tokens the system will work with in a single request before it fails gracefully."
+}
+
 variable "context_window_size" {
   type        = number
-  default     = 8000
+  default     = 128000
   description = "The size of the AI's context window"
+}
+
+variable "llm_max_tokens" {
+  type        = number
+  default     = 1024
+  description = "LLM token length"
 }
 
 variable "rag_k" {
@@ -384,13 +396,6 @@ variable "summarisation_question_prompt" {
   type        = string
   default     = "Question: {question}. \n\n Documents: \n\n {documents} \n\n Answer: "
   description = "how to construct summarization"
-}
-
-
-variable "llm_max_tokens" {
-  type        = number
-  default     = 1024
-  description = "LLM token length"
 }
 
 variable "embedding_document_field_name" {
