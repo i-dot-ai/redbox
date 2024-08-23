@@ -1,5 +1,5 @@
 module "rds" {
-  source                  = "../../../i-ai-core-infrastructure//modules/rds"
+  source                  = "git::https://github.com/i-dot-ai/i-dot-ai-core-terraform-modules.git//modules/infrastructure/rds?ref=v1.0.0-rds"
   name                    = local.name
   db_name                 = var.project_name
   domain_name             = var.domain_name
@@ -17,7 +17,4 @@ module "rds" {
   ]
   secret_tags         = { "platform:secret-purpose" = "general" }
   publicly_accessible = var.publicly_accessible
-  engine              = "postgres"
-  engine_version      = "16.3"
-  family              = "postgres16"
 }
