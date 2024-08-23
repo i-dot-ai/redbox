@@ -58,6 +58,7 @@ INSTALLED_APPS = [
     "storages",
     "magic_link",
     "import_export",
+    "django_q",
 ]
 
 MIDDLEWARE = [
@@ -332,3 +333,13 @@ MAX_SECURITY_CLASSIFICATION = Classification[env.str("MAX_SECURITY_CLASSIFICATIO
 
 SECURITY_TXT_REDIRECT = URL("https://vdp.cabinetoffice.gov.uk/.well-known/security.txt")
 REDBOX_VERSION = os.environ.get("REDBOX_VERSION", "not set")
+
+Q_CLUSTER = {
+    "name": "redbox_django",
+    "timeout": 120,
+    "retry": 600,
+    "catch_up": False,
+    "orm": "default",
+}
+
+UNSTRUCTURED_HOST = env.str("UNSTRUCTURED_HOST")
