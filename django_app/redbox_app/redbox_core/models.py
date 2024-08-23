@@ -52,7 +52,9 @@ class AISettings(UUIDPrimaryKeyBase, TimeStampedModel):
         GPT_4_OMNI = "gpt-4o", _("gpt-4o")
 
     label = models.CharField(max_length=50, unique=True)
-    context_window_size = models.PositiveIntegerField(default=8_000)
+    max_document_tokens = models.PositiveIntegerField(default=1_000_000, null=True, blank=True)
+    context_window_size = models.PositiveIntegerField(default=128_000)
+    llm_max_tokens = models.PositiveIntegerField(default=1024)
     rag_k = models.PositiveIntegerField(default=30)
     rag_num_candidates = models.PositiveIntegerField(default=10)
     rag_desired_chunk_size = models.PositiveIntegerField(default=300)
@@ -71,7 +73,6 @@ class AISettings(UUIDPrimaryKeyBase, TimeStampedModel):
     chat_map_system_prompt = models.TextField(default=prompts.CHAT_MAP_SYSTEM_PROMPT)
     chat_map_question_prompt = models.TextField(default=prompts.CHAT_MAP_QUESTION_PROMPT)
     reduce_system_prompt = models.TextField(default=prompts.REDUCE_SYSTEM_PROMPT)
-    llm_max_tokens = models.PositiveIntegerField(default=1024)
     match_boost = models.PositiveIntegerField(default=1)
     knn_boost = models.PositiveIntegerField(default=1)
     similarity_threshold = models.PositiveIntegerField(default=0)

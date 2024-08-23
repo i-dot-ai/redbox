@@ -89,7 +89,10 @@ CONDENSE_QUESTION_PROMPT = "{question}\n=========\n Standalone question: "
 class AISettings(BaseModel):
     """prompts and other AI settings"""
 
+    max_document_tokens: int = 1_000_000
     context_window_size: int = 128_000
+    llm_max_tokens: int = 1024
+
     rag_k: int = 30
     rag_num_candidates: int = 10
     rag_desired_chunk_size: int = 300
@@ -108,7 +111,6 @@ class AISettings(BaseModel):
     chat_map_system_prompt: str = CHAT_MAP_SYSTEM_PROMPT
     chat_map_question_prompt: str = CHAT_MAP_QUESTION_PROMPT
     reduce_system_prompt: str = REDUCE_SYSTEM_PROMPT
-    llm_max_tokens: int = 1024
 
     match_boost: int = 1
     knn_boost: int = 1

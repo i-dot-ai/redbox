@@ -6,6 +6,7 @@ from redbox.graph.edges import (
     build_documents_bigger_than_context_conditional,
     multiple_docs_in_group_conditional,
     build_keyword_detection_conditional,
+    documents_bigger_than_n_conditional,
     documents_selected_conditional,
 )
 from redbox.graph.nodes.processes import (
@@ -114,6 +115,7 @@ def get_chat_with_documents_graph(
 
     # Decisions
     builder.add_node("d_all_docs_bigger_than_context", empty_process)
+    builder.add_node("d_all_docs_bigger_than_n", empty_process)
     builder.add_node("d_single_doc_summaries_bigger_than_context", empty_process)
     builder.add_node("d_doc_summaries_bigger_than_context", empty_process)
     builder.add_node("d_groups_have_multiple_docs", empty_process)
@@ -131,8 +133,16 @@ def get_chat_with_documents_graph(
         "d_all_docs_bigger_than_context",
         build_documents_bigger_than_context_conditional(PromptSet.ChatwithDocsMapReduce),
         {
-            True: "p_set_chat_docs_large_route",
+            True: "d_all_docs_bigger_than_n",
             False: "p_set_chat_docs_route",
+        },
+    )
+    builder.add_conditional_edges(
+        "d_all_docs_bigger_than_n",
+        documents_bigger_than_n_conditional,
+        {
+            True: "p_too_large_error",
+            False: "p_set_chat_docs_large_route",
         },
     )
     builder.add_edge("p_set_chat_docs_route", "p_summarise")
