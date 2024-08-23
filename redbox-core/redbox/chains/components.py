@@ -26,7 +26,7 @@ def get_chat_llm(env: Settings, ai_settings: AISettings):
             chat_model = chat_model.with_fallbacks(
                 [
                     AzureChatOpenAI(
-                        api_key=convert_to_secret_str(env.azure_openai_api_key_35t),
+                        api_key=convert_to_secret_str(env.azure_openai_fallback_api_key_35t),
                         azure_endpoint=env.azure_openai_fallback_endpoint_35t,
                         model=ai_settings.chat_backend,
                         api_version=env.openai_api_version_35t,
@@ -45,10 +45,10 @@ def get_chat_llm(env: Settings, ai_settings: AISettings):
             chat_model = chat_model.with_fallbacks(
                 [
                     AzureChatOpenAI(
-                        api_key=convert_to_secret_str(env.azure_openai_api_key_35t),
+                        api_key=convert_to_secret_str(env.azure_openai_fallback_api_key_4t),
                         azure_endpoint=env.azure_openai_fallback_endpoint_4t,
                         model=ai_settings.chat_backend,
-                        api_version=env.openai_api_version_35t,
+                        api_version=env.openai_api_version_4t,
                     )
                 ]
             )
@@ -64,10 +64,10 @@ def get_chat_llm(env: Settings, ai_settings: AISettings):
             chat_model = chat_model.with_fallbacks(
                 [
                     AzureChatOpenAI(
-                        api_key=convert_to_secret_str(env.azure_openai_api_key_35t),
+                        api_key=convert_to_secret_str(env.azure_openai_fallback_api_key_4o),
                         azure_endpoint=env.azure_openai_fallback_endpoint_4o,
                         model=ai_settings.chat_backend,
-                        api_version=env.openai_api_version_35t,
+                        api_version=env.openai_api_version_4o,
                     )
                 ]
             )

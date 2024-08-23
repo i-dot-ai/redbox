@@ -40,18 +40,21 @@ class Settings(BaseSettings):
     # azure/gpt-35-turbo-16k
     openai_api_version_35t: str = "2023-12-01-preview"
     azure_openai_api_key_35t: str = "not a key"
+    azure_openai_fallback_api_key_35t: str = "not a key"
     azure_openai_endpoint_35t: str = "not an endpoint"
     azure_openai_fallback_endpoint_35t: str | None = None
 
     # azure/gpt-4
     openai_api_version_4t: str = "2024-02-01"
     azure_openai_api_key_4t: str = "not a key"
+    azure_openai_fallback_api_key_4t: str = "not a key"
     azure_openai_endpoint_4t: str = "not an endpoint"
     azure_openai_fallback_endpoint_4t: str | None = None
 
     # azure/gpt-4o
     openai_api_version_4o: str = "2024-02-01"
     azure_openai_api_key_4o: str = "not a key"
+    azure_openai_fallback_api_key_4o: str = "not a key"
     azure_openai_endpoint_4o: str = "not an endpoint"
     azure_openai_fallback_endpoint_4o: str | None = None
 

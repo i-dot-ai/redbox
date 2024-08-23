@@ -133,6 +133,13 @@ variable "azure_openai_api_key_35t" {
   description = "The API key for your Azure OpenAI resource.  You can find this in the Azure portal under your Azure OpenAI resource."
 }
 
+variable "azure_openai_fallback_api_key_35t" {
+  type        = string
+  sensitive   = true
+  default     = null
+  description = "The API key for your Azure OpenAI resource.  You can find this in the Azure portal under your Azure OpenAI resource."
+}
+
 variable "azure_openai_endpoint_35t" {
   type        = string
   default     = null
@@ -158,6 +165,13 @@ variable "azure_openai_api_key_4t" {
   description = "The API key for your Azure OpenAI resource.  You can find this in the Azure portal under your Azure OpenAI resource."
 }
 
+variable "azure_openai_fallback_api_key_4t" {
+  type        = string
+  sensitive   = true
+  default     = null
+  description = "The API key for your Azure OpenAI resource.  You can find this in the Azure portal under your Azure OpenAI resource."
+}
+
 variable "azure_openai_endpoint_4t" {
   type        = string
   default     = null
@@ -177,6 +191,13 @@ variable "openai_api_version_4o" {
 }
 
 variable "azure_openai_api_key_4o" {
+  type        = string
+  sensitive   = true
+  default     = null
+  description = "The API key for your Azure OpenAI resource.  You can find this in the Azure portal under your Azure OpenAI resource."
+}
+
+variable "azure_openai_fallback_api_key_4o" {
   type        = string
   sensitive   = true
   default     = null
