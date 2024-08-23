@@ -53,4 +53,5 @@ ENV PYTHONPATH "${PYTHONPATH}:/."
 EXPOSE 8090
 
 RUN chmod +x start.sh
+RUN chmod +x health.sh
 CMD ["./start.sh"]
