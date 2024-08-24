@@ -32,7 +32,7 @@ def test_post_message_to_new_session(alice: User, client: Client, requests_mock:
     requests_mock.register_uri(
         "POST",
         rag_url,
-        json={"output_text": "Good afternoon, Mr. Amor.", "source_documents": []},
+        json={"output_text": "Good afternoon, Mr. Amor.", "source_documents": [], "route_name": "chat"},
     )
 
     # When
@@ -58,8 +58,12 @@ def test_post_message_to_existing_session(chat: Chat, client: Client, requests_m
         json={
             "output_text": "Good afternoon, Mr. Amor.",
             "source_documents": [
-                {"file_uuid": str(uploaded_file.core_file_uuid), "page_content": "Here is a source chunk"}
+                {
+                    "s3_key": str(uploaded_file.unique_name),
+                    "page_content": "Here is a source chunk",
+                }
             ],
+            "route_name": "chat",
         },
     )
     initial_file_expiry_date = File.objects.get(core_file_uuid=uploaded_file.core_file_uuid).expires_at
@@ -95,8 +99,9 @@ def test_post_message_with_files_selected(
         json={
             "output_text": "Only those, then.",
             "source_documents": [
-                {"file_uuid": str(f.core_file_uuid), "page_content": "Here is a source chunk"} for f in selected_files
+                {"s3_key": f.unique_name, "page_content": "Here is a source chunk"} for f in selected_files
             ],
+            "route_name": "chat",
         },
     )
 

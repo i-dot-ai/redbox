@@ -121,8 +121,8 @@ def post_message(request: HttpRequest) -> HttpResponse:
     llm_message = ChatMessage(chat=session, text=response_data.output_text, role=ChatRoleEnum.ai)
     llm_message.save()
 
-    doc_uuids: list[uuid.UUID] = [doc.file_uuid for doc in response_data.source_documents]
-    files: list[File] = File.objects.filter(core_file_uuid__in=doc_uuids, user=request.user)
+    s3_keys: list[str] = [doc.s3_key for doc in response_data.source_documents]
+    files: list[File] = File.objects.filter(original_file__in=s3_keys, user=request.user)
 
     for file in files:
         file.last_referenced = timezone.now()
@@ -130,7 +130,7 @@ def post_message(request: HttpRequest) -> HttpResponse:
 
     for doc in response_data.source_documents:
         new_citation = Citation(
-            file=File.objects.get(core_file_uuid=doc.file_uuid), chat_message=llm_message, text=doc.page_content
+            file=File.objects.get(original_file=doc.s3_key), chat_message=llm_message, text=doc.page_content
         )
         new_citation.save()
 

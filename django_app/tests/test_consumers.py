@@ -74,7 +74,7 @@ async def test_chat_consumer_staff_user(staff_user: User, mocked_connect: Connec
         connected, _ = await communicator.connect()
         assert connected
 
-        await communicator.send_json_to({"message": "Hello Hal."})
+        await communicator.send_json_to({"message": "Hello Hal.", "output_text": "hello"})
         response1 = await communicator.receive_json_from(timeout=5)
         response2 = await communicator.receive_json_from(timeout=5)
         response3 = await communicator.receive_json_from(timeout=5)
@@ -237,7 +237,7 @@ async def test_chat_consumer_with_selected_files(
         connected, _ = await communicator.connect()
         assert connected
 
-        selected_file_core_uuids: Sequence[str] = [str(f.core_file_uuid) for f in selected_files]
+        selected_file_core_uuids: Sequence[str] = [f.s3_key for f in selected_files]
         await communicator.send_json_to(
             {
                 "message": "Third question, with selected files?",
@@ -426,14 +426,19 @@ def mocked_connect(uploaded_file: File) -> Connect:
         json.dumps({"resource_type": "text", "data": "Good afternoon, "}),
         json.dumps({"resource_type": "text", "data": "Mr. Amor."}),
         json.dumps({"resource_type": "route_name", "data": "gratitude"}),
-        json.dumps({"resource_type": "documents", "data": [{"file_uuid": str(uploaded_file.core_file_uuid)}]}),
+        json.dumps(
+            {
+                "resource_type": "documents",
+                "data": [{"s3_key": uploaded_file.unique_name, "page_content": "Good afternoon Mr Amor"}],
+            }
+        ),
         json.dumps(
             {
                 "resource_type": "documents",
                 "data": [
-                    {"file_uuid": str(uploaded_file.core_file_uuid), "page_content": "Good afternoon Mr Amor"},
+                    {"s3_keys": uploaded_file.unique_name, "page_content": "Good afternoon Mr Amor"},
                     {
-                        "file_uuid": str(uploaded_file.core_file_uuid),
+                        "s3_key": uploaded_file.unique_name,
                         "page_content": "Good afternoon Mr Amor",
                         "page_numbers": [34, 35],
                     },
@@ -457,8 +462,8 @@ def mocked_connect_with_naughty_citation(uploaded_file: File) -> Connect:
             {
                 "resource_type": "documents",
                 "data": [
-                    {"file_uuid": str(uploaded_file.core_file_uuid), "page_content": "Good afternoon Mr Amor"},
-                    {"file_uuid": str(uploaded_file.core_file_uuid), "page_content": "I shouldn't send a \x00"},
+                    {"s3_key": uploaded_file.unique_name, "page_content": "Good afternoon Mr Amor"},
+                    {"s3_key": uploaded_file.unique_name, "page_content": "I shouldn't send a \x00"},
                 ],
             }
         ),
@@ -524,10 +529,7 @@ def mocked_connect_with_several_files(several_files: Sequence[File]) -> Connect:
         json.dumps(
             {
                 "resource_type": "documents",
-                "data": [
-                    {"file_uuid": str(f.core_file_uuid), "page_content": "a secret forth answer"}
-                    for f in several_files[2:]
-                ],
+                "data": [{"s3_key": f.s3_key, "page_content": "a secret forth answer"} for f in several_files[2:]],
             }
         ),
         json.dumps({"resource_type": "end"}),

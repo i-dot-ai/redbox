@@ -2,13 +2,11 @@ import json
 import logging
 from asyncio import CancelledError
 from collections.abc import Mapping, MutableSequence, Sequence
-from dataclasses import dataclass
-from typing import Any, Literal
+from typing import Any
 from uuid import UUID
 
 from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
-from dataclasses_json import Undefined, dataclass_json
 from django.conf import settings
 from django.forms.models import model_to_dict
 from django.utils import timezone
@@ -16,35 +14,13 @@ from websockets import ConnectionClosedError, WebSocketClientProtocol
 from websockets.client import connect
 from yarl import URL
 
+from redbox.models.chat import ClientResponse, SourceDocument
 from redbox_app.redbox_core import error_messages
 from redbox_app.redbox_core.models import AISettings, Chat, ChatMessage, ChatRoleEnum, Citation, File, User
 
 OptFileSeq = Sequence[File] | None
 logger = logging.getLogger(__name__)
 logger.info("WEBSOCKET_SCHEME is: %s", settings.WEBSOCKET_SCHEME)
-
-
-@dataclass_json(undefined=Undefined.EXCLUDE)
-@dataclass(frozen=True)
-class CoreChatResponseDoc:
-    file_uuid: UUID
-    page_content: str | None = None
-    page_numbers: list[int] | None = None
-
-
-@dataclass_json(undefined=Undefined.EXCLUDE)
-@dataclass(frozen=True)
-class ErrorDetail:
-    code: str
-    message: str
-
-
-@dataclass_json(undefined=Undefined.EXCLUDE)
-@dataclass(frozen=True)
-class CoreChatResponse:
-    # Needs to be a subset of ClientResponse in core_api/src/routes/chat.py
-    resource_type: Literal["text", "documents", "route_name", "end", "error"]
-    data: list[CoreChatResponseDoc] | str | ErrorDetail | None = None
 
 
 class ChatConsumer(AsyncWebsocketConsumer):
@@ -77,7 +53,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             async with connect(str(url), extra_headers={"Authorization": user.get_bearer_token()}) as core_websocket:
                 message = {
                     "message_history": message_history,
-                    "selected_files": [{"uuid": f.core_file_uuid} for f in selected_files],
+                    "selected_files": [{"s3_key": f.unique_name} for f in selected_files],
                     "ai_settings": await self.get_ai_settings(user),
                 }
                 await self.send_to_server(core_websocket, message)
@@ -98,13 +74,13 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
     async def receive_llm_responses(
         self, user: User, core_websocket: WebSocketClientProtocol
-    ) -> tuple[str, Sequence[tuple[File, CoreChatResponseDoc]], str]:
+    ) -> tuple[str, Sequence[tuple[File, SourceDocument]], str]:
         """Conduct websocket conversation with the core-api message endpoint."""
         full_reply: MutableSequence[str] = []
-        citations: MutableSequence[tuple[File, CoreChatResponseDoc]] = []
+        citations: MutableSequence[tuple[File, SourceDocument]] = []
         route: str | None = None
         async for raw_message in core_websocket:
-            response: CoreChatResponse = CoreChatResponse.schema().loads(raw_message)
+            response: ClientResponse = ClientResponse.parse_raw(raw_message)
             logger.debug("received %s from core-api", response)
             if response.resource_type == "text":
                 full_reply.append(await self.handle_text(response))
@@ -116,19 +92,17 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 full_reply.append(await self.handle_error(response))
         return "".join(full_reply), citations, route
 
-    async def handle_documents(
-        self, response: CoreChatResponse, user: User
-    ) -> Sequence[tuple[File, CoreChatResponseDoc]]:
+    async def handle_documents(self, response: ClientResponse, user: User) -> Sequence[tuple[File, SourceDocument]]:
         source_files, citations = await self.get_sources_with_files(response.data, user)
         for file in source_files:
             await self.send_to_client("source", {"url": str(file.url), "original_file_name": file.original_file_name})
         return citations
 
-    async def handle_text(self, response: CoreChatResponse) -> str:
+    async def handle_text(self, response: ClientResponse) -> str:
         await self.send_to_client("text", response.data)
         return response.data
 
-    async def handle_route(self, response: CoreChatResponse, show_route: bool) -> str:
+    async def handle_route(self, response: ClientResponse, show_route: bool) -> str:
         # TODO(@rachaelcodes): remove is_staff conditional and hidden-route with new route design
         # https://technologyprogramme.atlassian.net/browse/REDBOX-419
         if show_route:
@@ -137,7 +111,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             await self.send_to_client("hidden-route", response.data)
         return response.data
 
-    async def handle_error(self, response: CoreChatResponse) -> str:
+    async def handle_error(self, response: ClientResponse) -> str:
         match response.data.code:
             case "no-document-selected":
                 message = error_messages.SELECT_DOCUMENT
@@ -186,7 +160,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         session: Chat,
         user_message_text: str,
         role: ChatRoleEnum,
-        sources: Sequence[tuple[File, CoreChatResponseDoc]] | None = None,
+        sources: Sequence[tuple[File, SourceDocument]] | None = None,
         selected_files: Sequence[File] | None = None,
         route: str | None = None,
     ) -> ChatMessage:
@@ -213,12 +187,12 @@ class ChatConsumer(AsyncWebsocketConsumer):
     @staticmethod
     @database_sync_to_async
     def get_sources_with_files(
-        docs: Sequence[CoreChatResponseDoc], user: User
-    ) -> tuple[Sequence[File], Sequence[tuple[File, Sequence[CoreChatResponseDoc]]]]:
-        uuids = [doc.file_uuid for doc in docs]
-        files = File.objects.filter(core_file_uuid__in=uuids, user=user)
+        docs: Sequence[SourceDocument], user: User
+    ) -> tuple[Sequence[File], Sequence[tuple[File, Sequence[SourceDocument]]]]:
+        s3_keys = [doc.s3_key for doc in docs]
+        files = File.objects.filter(original_file__in=s3_keys, user=user)
 
-        return files, [(file, [doc for doc in docs if doc.file_uuid == file.core_file_uuid]) for file in files]
+        return files, [(file, [doc for doc in docs if doc.s3_key == file.unique_name]) for file in files]
 
     @staticmethod
     @database_sync_to_async
