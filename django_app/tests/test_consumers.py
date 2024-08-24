@@ -56,7 +56,7 @@ async def test_chat_consumer_with_new_session(alice: User, uploaded_file: File, 
     assert await get_chat_message_text(alice, ChatRoleEnum.ai) == ["Good afternoon, Mr. Amor."]
     assert await get_chat_message_route(alice, ChatRoleEnum.ai) == ["gratitude"]
 
-    expected_citations = {(None, ()), ("Good afternoon Mr Amor", ()), ("Good afternoon Mr Amor", (34, 35))}
+    expected_citations = {("Good afternoon Mr Amor", ()), ("Good afternoon Mr Amor", (34, 35))}
     assert await get_chat_message_citation_set(alice, ChatRoleEnum.ai) == expected_citations
     await refresh_from_db(uploaded_file)
     assert uploaded_file.last_referenced.date() == datetime.now(tz=UTC).date()
@@ -436,7 +436,7 @@ def mocked_connect(uploaded_file: File) -> Connect:
             {
                 "resource_type": "documents",
                 "data": [
-                    {"s3_keys": uploaded_file.unique_name, "page_content": "Good afternoon Mr Amor"},
+                    {"s3_key": uploaded_file.unique_name, "page_content": "Good afternoon Mr Amor"},
                     {
                         "s3_key": uploaded_file.unique_name,
                         "page_content": "Good afternoon Mr Amor",
