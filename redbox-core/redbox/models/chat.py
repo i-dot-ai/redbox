@@ -1,6 +1,5 @@
 from enum import StrEnum
 from typing import Literal
-from uuid import UUID
 
 from redbox.models.chain import AISettings
 from pydantic import BaseModel, Field
@@ -22,7 +21,7 @@ class ChatMessage(BaseModel):
 
 
 class SelectedDocument(BaseModel):
-    uuid: UUID = Field(description="uuid of selected file")
+    s3_key: str = Field(description="s3_key of selected file")
 
 
 class ChatRequest(BaseModel):
@@ -42,8 +41,8 @@ class ChatRequest(BaseModel):
                         {"text": "What is AI?", "role": "user"},
                     ],
                     "selected_files": [
-                        {"uuid": "9aa1aa15-dde0-471f-ab27-fd410612025b"},
-                        {"uuid": "219c2e94-9877-4f83-ad6a-a59426f90171"},
+                        {"s3_key": "s3_key_1"},
+                        {"s3_key": "s3_key_2"},
                     ],
                 }
             ]
