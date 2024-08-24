@@ -15,7 +15,7 @@ def map_document_to_source_document(d: Document) -> SourceDocument:
 
     return SourceDocument(
         page_content=d.page_content,
-        file_uuid=d.metadata["parent_file_uuid"],
+        file_uuid=d.metadata["file_name"],
         page_numbers=map_page_numbers(d.metadata.get("page_number")),
     )
 
@@ -50,8 +50,8 @@ def combine_documents(a: Document, b: Document):
 
 def structure_documents(docs: list[Document]) -> DocumentState:
     return {
-        g_id: {d.metadata["uuid"]: d for d in [d for d in docs if d.metadata["parent_file_uuid"] == g_id]}
-        for g_id in [d.metadata["parent_file_uuid"] for d in docs]
+        g_id: {d.metadata["uuid"]: d for d in [d for d in docs if d.metadata["file_name"] == g_id]}
+        for g_id in [d.metadata["file_name"] for d in docs]
     }
 
 

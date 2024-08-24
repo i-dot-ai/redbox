@@ -176,7 +176,7 @@ def document_reducer(left: DocumentState | None, right: DocumentState | list[Doc
 
 class RedboxQuery(BaseModel):
     question: str = Field(description="The last user chat message")
-    file_uuids: list[UUID] = Field(description="List of files to process")
+    s3_keys: list[str] = Field(description="List of files to process", default_factory=list)
     user_uuid: UUID = Field(description="User the chain in executing for")
     chat_history: list[ChainChatMessage] = Field(description="All previous messages in chat (excluding question)")
     ai_settings: AISettings = Field(description="User request AI settings", default_factory=AISettings)

@@ -53,7 +53,7 @@ class ChatRequest(BaseModel):
 
 class SourceDocument(BaseModel):
     page_content: str = Field(description="chunk text")
-    file_uuid: UUID | None = Field(description="uuid of original file", default=None)
+    s3_key: str | None = Field(description="s3_key of original file", default=None)
     page_numbers: list[int] | None = Field(
         description="page number of the file that this chunk came from", default=None
     )

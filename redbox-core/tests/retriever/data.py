@@ -9,7 +9,7 @@ ALL_CHUNKS_RETRIEVER_CASES = [
     test_case
     for generator in [
         generate_test_cases(
-            query=RedboxQuery(question="Irrelevant Question", file_uuids=[uuid4()], user_uuid=uuid4(), chat_history=[]),
+            query=RedboxQuery(question="Irrelevant Question", s3_keys=["s3_key"], user_uuid=uuid4(), chat_history=[]),
             test_data=[RedboxTestData(8, 8000)],
             test_id="Successful Path",
         )
@@ -21,7 +21,7 @@ PARAMETERISED_RETRIEVER_CASES = [
     test_case
     for generator in [
         generate_test_cases(
-            query=RedboxQuery(question="Irrelevant Question", file_uuids=[uuid4()], user_uuid=uuid4(), chat_history=[]),
+            query=RedboxQuery(question="Irrelevant Question", s3_keys=["s3_key"], user_uuid=uuid4(), chat_history=[]),
             test_data=[RedboxTestData(8, 8000, ChunkResolution.normal)],
             test_id="Successful Path",
         )

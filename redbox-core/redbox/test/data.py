@@ -15,7 +15,6 @@ log = logging.getLogger()
 
 
 def generate_docs(
-    parent_file_uuid: UUID,
     creator_user_uuid: UUID,
     file_name: str = "test_data.pdf",
     page_numbers: list[int] = [1, 2, 3, 4],
@@ -27,7 +26,6 @@ def generate_docs(
         yield Document(
             page_content=f"Document {i} text",
             metadata=ChunkMetadata(
-                parent_file_uuid=parent_file_uuid,
                 creator_user_uuid=creator_user_uuid,
                 index=i,
                 file_name=file_name,
@@ -58,7 +56,7 @@ class RedboxChatTestCase:
         docs_file_uuids_override: list[UUID] | None = None,
     ):
         # Use separate file_uuids if specified else match the query
-        all_file_uuids = docs_file_uuids_override if docs_file_uuids_override else [id for id in query.file_uuids]
+        all_file_uuids = docs_file_uuids_override if docs_file_uuids_override else [id for id in query.s3_keys]
         # Use separate user uuid if specific else match the query
         docs_user_uuid = docs_user_uuid_override if docs_user_uuid_override else query.user_uuid
 
@@ -72,7 +70,6 @@ class RedboxChatTestCase:
 
         file_generators = [
             generate_docs(
-                parent_file_uuid=file_uuid,
                 creator_user_uuid=docs_user_uuid,
                 total_tokens=int(test_data.tokens_in_all_docs / len(all_file_uuids)),
                 number_of_docs=int(test_data.number_of_docs / len(all_file_uuids)),
@@ -89,7 +86,7 @@ class RedboxChatTestCase:
         return [
             doc
             for doc in self.docs
-            if doc.metadata["parent_file_uuid"] in set(self.query.file_uuids)
+            if doc.metadata["file_name"] in set(self.query.s3_keys)
             and doc.metadata["creator_user_uuid"] == self.query.user_uuid
         ]
 

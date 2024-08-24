@@ -17,12 +17,12 @@ def hit_to_doc(hit: dict[str, Any]) -> Document:
     """
     Backwards compatibility for Chunks and Documents.
 
-    Chunks has two metadata fields in top-level: index and parent_file_uuid. This moves them.
+    Chunks has two metadata fields in top-level: index and file_name. This moves them.
     """
     source = hit["_source"]
     c_meta = {
         "index": source.get("index"),
-        "parent_file_uuid": source.get("parent_file_uuid"),
+        "file_name": source.get("file_name"),
         "score": hit["_score"],
         "uuid": hit["_id"],
     }
