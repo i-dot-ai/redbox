@@ -16,19 +16,19 @@ document_created = datetime.now(UTC)
         (
             Document(
                 page_content="some random text",
-                metadata={"file_name": "s3_url", "page_number": 1},
+                metadata={"file_name": "s3_key", "page_number": 1},
             )
         ),
         (
             Document(
                 page_content="some random text2",
-                metadata={"file_name": "s3_url", "page_number": [1, 2]},
+                metadata={"file_name": "s3_key", "page_number": [1, 2]},
             )
         ),
         (
             Document(
                 page_content="some random text3",
-                metadata={"file_name": "s3_url"},
+                metadata={"file_name": "s3_key"},
             )
         ),
     ],

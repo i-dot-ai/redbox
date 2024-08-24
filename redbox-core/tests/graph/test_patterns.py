@@ -250,7 +250,7 @@ def test_empty_process():
     """Tests the empty process doesn't touch the state whatsoever."""
     state = RedboxState(
         request=RedboxQuery(question="What is AI?", s3_keys=[], user_uuid=uuid4(), chat_history=[]),
-        documents=structure_documents([doc for doc in generate_docs(file_name="s3_key", creator_user_uuid=uuid4())]),
+        documents=structure_documents([doc for doc in generate_docs(s3_key="s3_key", creator_user_uuid=uuid4())]),
         text="Foo",
         route_name=ChatRoute.chat_with_docs_map_reduce,
     )
@@ -270,7 +270,7 @@ def test_empty_process():
 CLEAR_DOC_TEST_CASES = [
     RedboxState(
         request=RedboxQuery(question="What is AI?", file_uuids=[], user_uuid=uuid4(), chat_history=[]),
-        documents=structure_documents([doc for doc in generate_docs(file_name="s3_key", creator_user_uuid=uuid4())]),
+        documents=structure_documents([doc for doc in generate_docs(s3_key="s3_key", creator_user_uuid=uuid4())]),
         text="Foo",
         route_name=ChatRoute.chat_with_docs_map_reduce,
     ),

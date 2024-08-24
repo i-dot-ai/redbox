@@ -15,7 +15,7 @@ def map_document_to_source_document(d: Document) -> SourceDocument:
 
     return SourceDocument(
         page_content=d.page_content,
-        file_uuid=d.metadata["file_name"],
+        s3_key=d.metadata["file_name"],
         page_numbers=map_page_numbers(d.metadata.get("page_number")),
     )
 
