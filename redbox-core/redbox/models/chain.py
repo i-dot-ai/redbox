@@ -187,16 +187,21 @@ class RequestMetadata(TypedDict):
     output_tokens: int
 
 
-def metadata_reducer(current: RequestMetadata | None, update: RequestMetadata | None):
+def metadata_reducer(current: RequestMetadata | None, update: RequestMetadata | list[RequestMetadata] | None):
+    # If right is actually a list of state updates, run them one by one
+    if isinstance(update, list):
+        reduced = reduce(lambda current, update: metadata_reducer(current, update), update, current)
+        return reduced
+
     if current is None:
         return update
     if update is None:
         return current
-    if "input_tokens" in update:
-        input_tokens = current.get("input_tokens", 0) + update["input_tokens"]
-    if "output_tokens" in update:
-        output_tokens = current.get("output_tokens", 0) + update["output_tokens"]
-    return RequestMetadata(input_tokens=input_tokens, output_tokens=output_tokens)
+
+    return RequestMetadata(
+        input_tokens=current.get("input_tokens", 0) + update.get("input_tokens", 0),
+        output_tokens=current.get("output_tokens", 0) + update.get("output_tokens", 0),
+    )
 
 
 class RedboxState(TypedDict):

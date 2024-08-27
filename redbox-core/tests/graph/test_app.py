@@ -15,6 +15,7 @@ from redbox.test.data import (
     mock_all_chunks_retriever,
     mock_parameterised_retriever,
 )
+from redbox.models.chain import metadata_reducer
 
 
 LANGGRAPH_DEBUG = True
@@ -221,6 +222,7 @@ async def test_streaming(test: RedboxChatTestCase, env, mocker):
         assert len(token_events) > 1, f"Expected tokens as a stream. Received: {token_events}"
 
     llm_response = "".join(token_events)
+    metadata_response = metadata_reducer({"input_tokens": 0, "output_tokens": 0}, metadata_events)
 
     assert (
         final_state["text"] == llm_response
@@ -229,6 +231,9 @@ async def test_streaming(test: RedboxChatTestCase, env, mocker):
         final_state["route_name"] == test_case.test_data.expected_route
     ), f"Expected Route: '{ test_case.test_data.expected_route}'. Received '{final_state["route_name"]}'"
     assert len(metadata_events) == len(test_case.test_data.expected_llm_response) * 2
+    assert (
+        final_state["metadata"] == metadata_response
+    ), f"Expected metadata: '{metadata_response}'. Received '{final_state["metadata"]}'"
 
 
 def test_get_available_keywords(tokeniser):

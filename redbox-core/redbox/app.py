@@ -51,8 +51,10 @@ class Redbox:
                 await route_name_callback(event["data"]["output"])
             elif kind == "on_retriever_end" and SOURCE_DOCUMENTS_TAG in tags:
                 await documents_callback(event["data"]["output"])
-            elif kind == "on_metadata_generation":
+            elif kind == "on_custom_event" and event["name"] == "on_metadata_generation":
                 await metadata_tokens_callback(event["data"])
+            elif kind == "on_chain_end" and event["name"] == "LangGraph":
+                final_state = RedboxState(**event["data"]["output"])
         return final_state
 
     def get_available_keywords(self) -> dict[ChatRoute, str]:
