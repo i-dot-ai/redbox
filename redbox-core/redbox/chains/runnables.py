@@ -1,13 +1,15 @@
 import logging
 from typing import Any, Iterator
 import re
+from operator import itemgetter
 
 from langchain_core.callbacks.manager import CallbackManagerForLLMRun
 from langchain_core.language_models import BaseChatModel
 from langchain_core.messages import AIMessageChunk, BaseMessage, AIMessage
 from langchain_core.outputs import ChatGeneration, ChatGenerationChunk, ChatResult
+from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.runnables import Runnable, chain
+from langchain_core.runnables import Runnable, chain, RunnableLambda
 from tiktoken import Encoding
 
 from redbox.api.format import format_documents
@@ -15,14 +17,14 @@ from redbox.chains.components import get_tokeniser
 from redbox.models.chain import ChainChatMessage, RedboxState
 from redbox.models.errors import QuestionLengthError
 from redbox.models.chain import PromptSet, get_prompts
-from redbox.transform import flatten_document_state
+from redbox.transform import flatten_document_state, to_request_metadata
 
 
 log = logging.getLogger()
 re_string_pattern = re.compile(r"(\S+)")
 
 
-def build_chat_prompt_from_messages_runnable(prompt_set: PromptSet, tokeniser: Encoding = None):
+def build_chat_prompt_from_messages_runnable(prompt_set: PromptSet, tokeniser: Encoding = None) -> Runnable:
     @chain
     def _chat_prompt_from_messages(state: RedboxState) -> Runnable:
         """
@@ -63,6 +65,18 @@ def build_chat_prompt_from_messages_runnable(prompt_set: PromptSet, tokeniser: E
         ).invoke(prompt_template_context)
 
     return _chat_prompt_from_messages
+
+
+def build_llm_chain(prompt_set: PromptSet, llm: BaseChatModel) -> Runnable:
+    """Builds a chain that correctly a text and metadata state update.
+
+    Permits both invoke and astream_events.
+    """
+    return (
+        build_chat_prompt_from_messages_runnable(prompt_set)
+        | {"prompt": RunnableLambda(lambda prompt: prompt.to_string()), "response": llm | StrOutputParser()}
+        | {"text": itemgetter("response"), "metadata": to_request_metadata}
+    )
 
 
 class CannedChatLLM(BaseChatModel):

@@ -6,6 +6,7 @@ from typing import Generator
 
 from langchain_core.documents import Document
 from langchain_core.retrievers import BaseRetriever
+from langchain_core.messages import AIMessage
 
 from redbox.models.chain import RedboxQuery
 from redbox.models.chat import ChatRoute
@@ -116,3 +117,8 @@ def mock_all_chunks_retriever(docs: list[Document]) -> FakeRetriever:
 
 def mock_parameterised_retriever(docs: list[Document]) -> FakeRetriever:
     return FakeRetriever(docs=docs)
+
+
+def add_tokens(message: AIMessage):
+    message.response_metadata = {"token_usage": {"completion_tokens": 1, "prompt_tokens": 1, "total_tokens": 2}}
+    return message

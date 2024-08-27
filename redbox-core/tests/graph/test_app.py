@@ -158,18 +158,26 @@ async def test_chat(test: RedboxChatTestCase, env, mocker):
     )
 
     llm = GenericFakeChatModel(messages=iter(test_case.test_data.expected_llm_response))
+
     with (
         mocker.patch("redbox.graph.nodes.processes.get_chat_llm", return_value=llm),
     ):
         response = await app.run(input=RedboxState(request=test_case.query))
 
     final_state = RedboxState(response)
+
     assert (
         final_state["text"] == test_case.test_data.expected_llm_response[-1]
     ), f"Expected LLM response: '{test_case.test_data.expected_llm_response[-1]}'. Received '{final_state["text"]}'"
     assert (
         final_state["route_name"] == test_case.test_data.expected_route
     ), f"Expected Route: '{ test_case.test_data.expected_route}'. Received '{final_state["route_name"]}'"
+    assert (
+        final_state["metadata"]["input_tokens"] > 0
+    ), f"Expected model input tokens greater than 0, got {final_state["metadata"]["input_tokens"]}"
+    assert (
+        final_state["metadata"]["output_tokens"] > 0
+    ), f"Expected model output tokens greater than 0, got {final_state["metadata"]["output_tokens"]}"
 
 
 @pytest.mark.asyncio
@@ -185,17 +193,25 @@ async def test_streaming(test: RedboxChatTestCase, env, mocker):
         debug=LANGGRAPH_DEBUG,
     )
 
+    # Define callback functions
     token_events = []
+    metadata_events = []
 
     async def streaming_response_handler(tokens: str):
         token_events.append(tokens)
 
+    async def metadata_response_handler(metadata: dict):
+        metadata_events.append(metadata)
+
     llm = GenericFakeChatModel(messages=iter(test_case.test_data.expected_llm_response))
+
     with (
         mocker.patch("redbox.graph.nodes.processes.get_chat_llm", return_value=llm),
     ):
         response = await app.run(
-            input=RedboxState(request=test_case.query), response_tokens_callback=streaming_response_handler
+            input=RedboxState(request=test_case.query),
+            response_tokens_callback=streaming_response_handler,
+            metadata_tokens_callback=metadata_response_handler,
         )
 
     final_state = RedboxState(response)
@@ -212,6 +228,7 @@ async def test_streaming(test: RedboxChatTestCase, env, mocker):
     assert (
         final_state["route_name"] == test_case.test_data.expected_route
     ), f"Expected Route: '{ test_case.test_data.expected_route}'. Received '{final_state["route_name"]}'"
+    assert len(metadata_events) == len(test_case.test_data.expected_llm_response) * 2
 
 
 def test_get_available_keywords(tokeniser):
