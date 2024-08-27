@@ -10,6 +10,7 @@ from django.test import Client
 from django.urls import reverse
 from yarl import URL
 
+from redbox_app.redbox_core.admin import chat_serializer, message_serializer, user_serializer
 from redbox_app.redbox_core.models import ChatMessage, User
 
 logger = logging.getLogger(__name__)
@@ -84,3 +85,49 @@ def test_user_upload(superuser: User, client: Client):
     assert "3 new, 0 updated, 0 deleted and 0 skipped" in soup.find("li", {"class": "success"}).text
     users = User.objects.all()
     assert len(users) == 4
+
+
+@pytest.mark.django_db()
+def test_message_serializer(chat_message_with_citation: ChatMessage):
+    expected = {
+        "rating": 3,
+        "rating_chips": ["apple", "pear"],
+        "rating_text": "not bad",
+        "role": "ai",
+        "route": "chat",
+        "selected_files": [],
+        "text": "An answer.",
+    }
+
+    actual = message_serializer(chat_message_with_citation)
+    for k, v in expected.items():
+        assert actual[k] == v, k
+
+    assert actual["source_files"][0].startswith("original_file")
+
+
+@pytest.mark.django_db()
+def test_chat_serializer(chat_message_with_citation: ChatMessage):
+    expected = {"name": "A chat"}
+    actual = chat_serializer(chat_message_with_citation.chat)
+    for k, v in expected.items():
+        assert actual[k] == v, k
+
+    assert isinstance(actual["messages"], list)
+
+
+@pytest.mark.django_db()
+def test_user_serializer(chat_message_with_citation: ChatMessage):
+    expected = {
+        "ai_experience": "Experienced Navigator",
+        "business_unit": "Government Business Services",
+        "email": "alice@cabinetoffice.gov.uk",
+        "grade": "D",
+        "is_staff": False,
+        "profession": "IA",
+    }
+    actual = user_serializer(chat_message_with_citation.chat.user)
+    for k, v in expected.items():
+        assert actual[k] == v, k
+
+    assert isinstance(actual["chats"], list)

@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 core_api = CoreApiClient(host=settings.CORE_API_HOST, port=settings.CORE_API_PORT)
 
 
-def message_to_dict(message: models.ChatMessage):
+def message_serializer(message: models.ChatMessage):
     return {
         "id": message.id,
         "created_at": message.created_at.isoformat(),
@@ -26,32 +26,32 @@ def message_to_dict(message: models.ChatMessage):
         "role": message.role,
         "route": message.route,
         "selected_files": [f.unique_name for f in message.selected_files.all() if f],
-        "source_files": [f.unique_name for f in message.source_file.all() if f],
+        "source_files": [f.unique_name for f in message.source_files.all() if f],
         "rating": message.rating,
         "rating_text": message.rating_text,
         "rating_chips": message.rating_chips,
     }
 
 
-def chat_to_dict(chat: models.Chat):
-    return {"name": chat.name, "messages": [message_to_dict(message) for message in chat.chatmessage_set.all()]}
+def chat_serializer(chat: models.Chat):
+    return {"name": chat.name, "messages": [message_serializer(message) for message in chat.chatmessage_set.all()]}
 
 
-def user_to_dict(user: models.User):
+def user_serializer(user: models.User):
     return {
-        "is_staff": user.is_staff,
+        "is_staff": bool(user.is_staff),
         "business_unit": user.business_unit,
         "grade": user.grade,
         "email": user.email,
         "ai_experience": user.ai_experience,
         "profession": user.profession,
-        "chats": [chat_to_dict(chat) for chat in user.chat_set.all()],
+        "chats": [chat_serializer(chat) for chat in user.chat_set.all()],
     }
 
 
 class UserAdmin(ImportExportMixin, admin.ModelAdmin):
     def export_as_json(self, request, queryset: QuerySet):  # noqa:ARG002
-        user_data = [user_to_dict(user) for user in queryset]
+        user_data = [user_serializer(user) for user in queryset]
         response = HttpResponse(json.dumps(user_data), content_type="text/json")
         response["Content-Disposition"] = "attachment; filename=chat.csv"
 

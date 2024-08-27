@@ -34,16 +34,35 @@ def _collect_static():
 def create_user():
     AISettings.objects.get_or_create(label="default")
 
-    def _create_user(email, date_joined_iso, is_staff=False):
+    def _create_user(
+        email,
+        date_joined_iso,
+        is_staff=False,
+        grade=User.UserGrade.DIRECTOR,
+        business_unit=User.BusinessUnit.GOVERNMENT_BUSINESS_SERVICES,
+        profession=User.Profession.IA,
+        ai_experience=User.AIExperienceLevel.EXPERIENCED_NAVIGATOR,
+    ):
         date_joined = datetime.fromisoformat(date_joined_iso).astimezone(UTC)
-        return User.objects.create_user(email=email, date_joined=date_joined, is_staff=is_staff)
+        return User.objects.create_user(
+            email=email,
+            date_joined=date_joined,
+            is_staff=is_staff,
+            grade=grade,
+            business_unit=business_unit,
+            profession=profession,
+            ai_experience=ai_experience,
+        )
 
     return _create_user
 
 
 @pytest.fixture()
 def alice(create_user):
-    return create_user("alice@cabinetoffice.gov.uk", "2000-01-01")
+    return create_user(
+        "alice@cabinetoffice.gov.uk",
+        "2000-01-01",
+    )
 
 
 @pytest.fixture()
@@ -118,7 +137,15 @@ def chat_message(chat: Chat, uploaded_file: File) -> ChatMessage:
 
 @pytest.fixture()
 def chat_message_with_citation(chat: Chat, uploaded_file: File) -> ChatMessage:
-    chat_message = ChatMessage.objects.create(chat=chat, text="An answer.", role=ChatRoleEnum.ai)
+    chat_message = ChatMessage.objects.create(
+        chat=chat,
+        text="An answer.",
+        role=ChatRoleEnum.ai,
+        rating=3,
+        rating_chips=["apple", "pear"],
+        rating_text="not bad",
+        route="chat",
+    )
     Citation.objects.create(file=uploaded_file, chat_message=chat_message, text="Lorem ipsum.")
     return chat_message
 
