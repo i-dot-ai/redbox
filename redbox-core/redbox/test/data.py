@@ -6,7 +6,6 @@ from typing import Generator
 
 from langchain_core.documents import Document
 from langchain_core.retrievers import BaseRetriever
-from langchain_core.messages import AIMessage
 
 from redbox.models.chain import RedboxQuery
 from redbox.models.chat import ChatRoute
