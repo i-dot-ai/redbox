@@ -13,45 +13,15 @@ from redbox_app.redbox_core.client import CoreApiClient
 from redbox_app.worker import ingest
 
 from . import models
+from .serializers import UserSerializer
 
 logger = logging.getLogger(__name__)
 core_api = CoreApiClient(host=settings.CORE_API_HOST, port=settings.CORE_API_PORT)
 
 
-def message_serializer(message: models.ChatMessage):
-    return {
-        "id": message.id,
-        "created_at": message.created_at.isoformat(),
-        "text": message.text,
-        "role": message.role,
-        "route": message.route,
-        "selected_files": [f.unique_name for f in message.selected_files.all() if f],
-        "source_files": [f.unique_name for f in message.source_files.all() if f],
-        "rating": message.rating,
-        "rating_text": message.rating_text,
-        "rating_chips": message.rating_chips,
-    }
-
-
-def chat_serializer(chat: models.Chat):
-    return {"name": chat.name, "messages": [message_serializer(message) for message in chat.chatmessage_set.all()]}
-
-
-def user_serializer(user: models.User):
-    return {
-        "is_staff": bool(user.is_staff),
-        "business_unit": user.business_unit,
-        "grade": user.grade,
-        "email": user.email,
-        "ai_experience": user.ai_experience,
-        "profession": user.profession,
-        "chats": [chat_serializer(chat) for chat in user.chat_set.all()],
-    }
-
-
 class UserAdmin(ImportExportMixin, admin.ModelAdmin):
     def export_as_json(self, request, queryset: QuerySet):  # noqa:ARG002
-        user_data = [user_serializer(user) for user in queryset]
+        user_data = UserSerializer(many=True).to_representation(queryset)
         response = HttpResponse(json.dumps(user_data), content_type="text/json")
         response["Content-Disposition"] = "attachment; filename=chat.csv"
 

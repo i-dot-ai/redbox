@@ -59,6 +59,7 @@ INSTALLED_APPS = [
     "magic_link",
     "import_export",
     "django_q",
+    "rest_framework",
 ]
 
 MIDDLEWARE = [

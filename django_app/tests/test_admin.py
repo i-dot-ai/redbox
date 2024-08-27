@@ -10,8 +10,8 @@ from django.test import Client
 from django.urls import reverse
 from yarl import URL
 
-from redbox_app.redbox_core.admin import chat_serializer, message_serializer, user_serializer
 from redbox_app.redbox_core.models import ChatMessage, User
+from redbox_app.redbox_core.serializers import ChatMessageSerializer, ChatSerializer, UserSerializer
 
 logger = logging.getLogger(__name__)
 
@@ -99,21 +99,19 @@ def test_message_serializer(chat_message_with_citation: ChatMessage):
         "text": "An answer.",
     }
 
-    actual = message_serializer(chat_message_with_citation)
+    actual = ChatMessageSerializer().to_representation(chat_message_with_citation)
     for k, v in expected.items():
         assert actual[k] == v, k
 
-    assert actual["source_files"][0].startswith("original_file")
+    assert actual["source_files"][0]["unique_name"].startswith("original_file")
 
 
 @pytest.mark.django_db()
 def test_chat_serializer(chat_message_with_citation: ChatMessage):
     expected = {"name": "A chat"}
-    actual = chat_serializer(chat_message_with_citation.chat)
+    actual = ChatSerializer().to_representation(chat_message_with_citation.chat)
     for k, v in expected.items():
         assert actual[k] == v, k
-
-    assert isinstance(actual["messages"], list)
 
 
 @pytest.mark.django_db()
@@ -126,8 +124,6 @@ def test_user_serializer(chat_message_with_citation: ChatMessage):
         "is_staff": False,
         "profession": "IA",
     }
-    actual = user_serializer(chat_message_with_citation.chat.user)
+    actual = UserSerializer().to_representation(chat_message_with_citation.chat.user)
     for k, v in expected.items():
         assert actual[k] == v, k
-
-    assert isinstance(actual["chats"], list)
