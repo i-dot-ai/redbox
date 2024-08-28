@@ -1,18 +1,16 @@
 import logging
-from dataclasses import dataclass
-from uuid import UUID
 
 import boto3
-import requests
 from botocore.exceptions import ClientError
-from dataclasses_json import Undefined, dataclass_json
 from django.conf import settings
-from yarl import URL
 
-from redbox.models.file import File as CoreFile
-from redbox_app.redbox_core.models import User
+from redbox.models import Settings
 
 logger = logging.getLogger(__name__)
+
+env = Settings()
+
+es_client = env.elasticsearch_client()
 
 
 def s3_client():
@@ -42,48 +40,7 @@ def s3_client():
     return client
 
 
-@dataclass_json(undefined=Undefined.EXCLUDE)
-@dataclass(frozen=True)
-class CoreChatResponseDoc:
-    file_uuid: str
-    page_content: str
-
-
-@dataclass_json(undefined=Undefined.EXCLUDE)
-@dataclass(frozen=True)
-class CoreChatResponse:
-    output_text: str
-    source_documents: list[CoreChatResponseDoc]
-
-
-@dataclass_json(undefined=Undefined.EXCLUDE)
-@dataclass(frozen=True)
-class FileStatus:
-    processing_status: str
-
-
-class CoreApiClient:
-    def __init__(self, host: str, port: int):
-        self.host = host
-        self.port = port
-
-    @property
-    def url(self) -> URL:
-        return URL(f"http://{self.host}:{self.port}")
-
-    def upload_file(self, name: str, user: User) -> CoreFile:
-        response = requests.post(
-            self.url / "file", json={"key": name}, headers={"Authorization": user.get_bearer_token()}, timeout=30
-        )
-        response.raise_for_status()
-        core_file = response.json()
-        core_file["creator_user_uuid"] = user.id
-        return CoreFile(**core_file)
-
-    def delete_file(self, file_id: UUID, user: User) -> CoreFile:
-        url = self.url / "file" / str(file_id)
-        response = requests.delete(url, headers={"Authorization": user.get_bearer_token()}, timeout=60)
-        response.raise_for_status()
-        core_file = response.json()
-        core_file["creator_user_uuid"] = user.id
-        return CoreFile(**core_file)
+def delete_file(file_name: str):
+    es_client.delete_by_query(
+        index=f"{env.elastic_root_index}-chunk", body={"query": {"term": {"metadata.file_name.keyword": file_name}}}
+    )

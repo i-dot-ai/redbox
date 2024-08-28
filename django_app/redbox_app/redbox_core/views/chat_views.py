@@ -16,11 +16,9 @@ from django.utils.decorators import method_decorator
 from django.views import View
 from yarl import URL
 
-from redbox_app.redbox_core.client import CoreApiClient
 from redbox_app.redbox_core.models import Chat, ChatMessage, ChatRoleEnum, File
 
 logger = logging.getLogger(__name__)
-core_api = CoreApiClient(host=settings.CORE_API_HOST, port=settings.CORE_API_PORT)
 
 
 class ChatsView(View):
