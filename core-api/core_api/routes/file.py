@@ -187,5 +187,18 @@ def delete_file(file_uuid: UUID, user_uuid: Annotated[UUID, Depends(get_user_uui
 
     storage_handler.delete_item(file)
 
-    storage_handler.delete_user_items("chunk", user_uuid)
+    storage_handler.delete_user_items(
+        model_type="chunk",
+        user_uuid=user_uuid,
+        filters=[
+            {
+                "bool": {
+                    "should": [
+                        {"term": {"parent_file_uuid.keyword": str(file_uuid)}},
+                        {"term": {"metadata.parent_file_uuid.keyword": str(file_uuid)}},
+                    ]
+                }
+            }
+        ],
+    )
     return file

@@ -1,41 +1,68 @@
-from pathlib import Path
-from uuid import UUID, uuid4
 from datetime import UTC, datetime
+from pathlib import Path
+from typing import Generator
+from uuid import UUID, uuid4
 
 import pytest
 from elasticsearch import Elasticsearch
 from fastapi.testclient import TestClient
 from jose import jwt
 from langchain_core.documents.base import Document
-from langchain_elasticsearch.vectorstores import ElasticsearchStore
-from langchain_community.embeddings import SentenceTransformerEmbeddings
-from langchain_community.llms.fake import FakeListLLM
 from langchain_core.embeddings.fake import FakeEmbeddings
-
-from core_api.app import app as application
-from redbox.retriever import AllElasticsearchRetriever
+from langchain_elasticsearch.vectorstores import ElasticsearchStore
 from redbox.models import File, Settings
 from redbox.models.file import ChunkMetadata, ChunkResolution
 from redbox.storage import ElasticsearchStorageHandler
 
+from core_api import dependencies
+from core_api.app import app as application
+from core_api.routes.chat import chat_app
+
+# -------------------#
+# Clients and tools #
+# -------------------#
+
 
 @pytest.fixture(scope="session")
-def env():
+def env() -> Settings:
     return Settings()
 
 
 @pytest.fixture(scope="session")
-def es_client(env) -> Elasticsearch:
+def es_client(env: Settings) -> Elasticsearch:
     return env.elasticsearch_client()
 
 
+@pytest.fixture()
+def es_storage_handler(es_client: Elasticsearch, env: Settings) -> ElasticsearchStorageHandler:
+    return ElasticsearchStorageHandler(es_client=es_client, root_index=env.elastic_root_index)
+
+
 @pytest.fixture(scope="session")
-def es_index(env) -> str:
+def es_index(env: Settings) -> str:
     return f"{env.elastic_root_index}-chunk"
 
 
+@pytest.fixture(autouse=True, scope="session")
+def create_index(es_index: str, es_client: Elasticsearch):
+    if not es_client.indices.exists(index=es_index):
+        es_client.indices.create(index=es_index)
+    yield
+    es_client.indices.delete(index=es_index, ignore_unavailable=True)
+
+
 @pytest.fixture(scope="session")
-def elasticsearch_store(es_index, es_client, embedding_model, env: Settings) -> str:
+def embedding_model_dim() -> int:
+    return 3072  # 3-large default size
+
+
+@pytest.fixture(scope="session")
+def embedding_model(embedding_model_dim: int) -> FakeEmbeddings:
+    return FakeEmbeddings(size=embedding_model_dim)
+
+
+@pytest.fixture(scope="session")
+def es_store(es_index: str, es_client: Elasticsearch, embedding_model: FakeEmbeddings, env: Settings) -> str:
     return ElasticsearchStore(
         index_name=es_index,
         embedding=embedding_model,
@@ -44,84 +71,67 @@ def elasticsearch_store(es_index, es_client, embedding_model, env: Settings) -> 
     )
 
 
-@pytest.fixture(autouse=True, scope="session")
-def create_index(env, es_index):
-    es: Elasticsearch = env.elasticsearch_client()
-    if not es.indices.exists(index=es_index):
-        es.indices.create(index=es_index)
-    yield
-    es.indices.delete(index=es_index, ignore_unavailable=True)
-
-
 @pytest.fixture()
-def app_client() -> TestClient:
-    return TestClient(application)
+def app_client(embedding_model: FakeEmbeddings) -> Generator[TestClient, None, None]:
+    chat_app.dependency_overrides[dependencies.get_embedding_model] = lambda: embedding_model
+    yield TestClient(application)
+    chat_app.dependency_overrides = {}
+
+
+# ------#
+# Data #
+# ------#
+
+# These fixtures describe an elasticsearch instance containing files and
+# chunks for a single user, Alice.
+#
+# Alice has two files stored:
+#     * A PDF file
+#     * An HTML file
+#
+# For each of these files, the following should exist in Elastic:
+#     * A single entry in a "file" index
+#     * A set of chunks in the "chunk" index at the normal resolution
+#     * A set of chunks in the "chunk" index at the largest resolution
 
 
 @pytest.fixture(scope="session")
 def alice() -> UUID:
+    """Alice."""
     return uuid4()
 
 
 @pytest.fixture()
-def headers(alice):
+def headers(alice: UUID) -> dict[str, str]:
+    """Alice's headers."""
     bearer_token = jwt.encode({"user_uuid": str(alice)}, key="nvjkernd")
     return {"Authorization": f"Bearer {bearer_token}"}
 
 
 @pytest.fixture()
-def elasticsearch_storage_handler(es_client, env):
-    return ElasticsearchStorageHandler(es_client=es_client, root_index=env.elastic_root_index)
+def file_pdf_path() -> Path:
+    """The path of Alice's PDF."""
+    return Path(__file__).parents[2] / "tests" / "data" / "pdf" / "Cabinet Office - Wikipedia.pdf"
 
 
 @pytest.fixture()
-def file(file_pdf_path: Path, alice, env) -> File:
+def file_pdf_object(file_pdf_path: Path, alice: UUID, env: Settings) -> File:
+    """The unuploaded File object of Alice's PDF."""
     file_name = file_pdf_path.name
     return File(key=file_name, bucket=env.bucket_name, creator_user_uuid=alice)
 
 
 @pytest.fixture()
-def large_stored_file(elasticsearch_storage_handler, file) -> File:
-    elasticsearch_storage_handler.write_item(file)
-    elasticsearch_storage_handler.refresh()
-    return file
-
-
-@pytest.fixture()
-def stored_file_1(elasticsearch_storage_handler, file) -> File:
-    elasticsearch_storage_handler.write_item(file)
-    elasticsearch_storage_handler.refresh()
-    return file
-
-
-@pytest.fixture()
-def stored_user_files(elasticsearch_storage_handler) -> list[File]:
-    user = uuid4()
-    files = [
-        File(creator_user_uuid=user, key="testfile1.txt", bucket="local"),
-        File(creator_user_uuid=user, key="testfile2.txt", bucket="local"),
-    ]
-    for file in files:
-        elasticsearch_storage_handler.write_item(file)
-    elasticsearch_storage_handler.refresh()
-    return files
-
-
-@pytest.fixture(scope="session")
-def embedding_model_dim() -> int:
-    return 3072  # 3-large default size
-
-
-@pytest.fixture()
-def stored_file_chunks(stored_file_1) -> list[Document]:
+def file_pdf_chunks(file_pdf_object: File) -> list[Document]:
+    """The Document chunk objects of Alice's PDF."""
     normal_chunks = [
         Document(
             page_content="hello",
             metadata=ChunkMetadata(
-                parent_file_uuid=str(stored_file_1.uuid),
+                parent_file_uuid=str(file_pdf_object.uuid),
                 index=i,
-                file_name="test_file",
-                creator_user_uuid=stored_file_1.creator_user_uuid,
+                file_name=file_pdf_object.key,
+                creator_user_uuid=file_pdf_object.creator_user_uuid,
                 page_number=4,
                 created_datetime=datetime.now(UTC),
                 token_count=4,
@@ -135,10 +145,10 @@ def stored_file_chunks(stored_file_1) -> list[Document]:
         Document(
             page_content="hello" * 10,
             metadata=ChunkMetadata(
-                parent_file_uuid=str(stored_file_1.uuid),
+                parent_file_uuid=str(file_pdf_object.uuid),
                 index=i,
-                file_name="test_file",
-                creator_user_uuid=stored_file_1.creator_user_uuid,
+                file_name=file_pdf_object.key,
+                creator_user_uuid=file_pdf_object.creator_user_uuid,
                 page_number=4,
                 created_datetime=datetime.now(UTC),
                 token_count=20,
@@ -151,121 +161,80 @@ def stored_file_chunks(stored_file_1) -> list[Document]:
 
 
 @pytest.fixture()
-def stored_large_file_chunks(stored_file_1) -> list[Document]:
+def file_pdf(
+    es_store: ElasticsearchStore,
+    es_storage_handler: ElasticsearchStorageHandler,
+    file_pdf_object: File,
+    file_pdf_chunks: list[Document],
+) -> File:
+    """The File object of Alice's PDF, with all objects in the Elasticsearch index."""
+    es_storage_handler.write_item(file_pdf_object)
+    es_storage_handler.refresh()
+    es_store.add_documents(file_pdf_chunks)
+    return file_pdf_object
+
+
+@pytest.fixture()
+def file_html_path() -> Path:
+    """The path of Alice's HTML."""
+    return Path(__file__).parents[2] / "tests" / "data" / "pdf" / "example.html"
+
+
+@pytest.fixture()
+def file_html_object(file_html_path: Path, alice: UUID, env: Settings) -> File:
+    """The unuploaded File object of Alice's HTML."""
+    file_name = file_html_path.name
+    return File(key=file_name, bucket=env.bucket_name, creator_user_uuid=alice)
+
+
+@pytest.fixture()
+def file_html_chunks(file_html_object: File) -> list[Document]:
+    """The Document chunk objects of Alice's HTML."""
     normal_chunks = [
         Document(
             page_content="hello",
             metadata=ChunkMetadata(
-                parent_file_uuid=str(stored_file_1.uuid),
+                parent_file_uuid=str(file_html_object.uuid),
                 index=i,
-                file_name="test_file",
-                creator_user_uuid=stored_file_1.creator_user_uuid,
+                file_name=file_html_object.key,
+                creator_user_uuid=file_html_object.creator_user_uuid,
                 page_number=4,
                 created_datetime=datetime.now(UTC),
                 token_count=4,
                 chunk_resolution=ChunkResolution.normal,
             ).model_dump(),
         )
-        for i in range(25)
+        for i in range(10)
     ]
 
     large_chunks = [
         Document(
             page_content="hello" * 10,
             metadata=ChunkMetadata(
-                parent_file_uuid=str(stored_file_1.uuid),
+                parent_file_uuid=str(file_html_object.uuid),
                 index=i,
-                file_name="test_file",
-                creator_user_uuid=stored_file_1.creator_user_uuid,
+                file_name=file_html_object.key,
+                creator_user_uuid=file_html_object.creator_user_uuid,
                 page_number=4,
                 created_datetime=datetime.now(UTC),
                 token_count=20,
                 chunk_resolution=ChunkResolution.largest,
             ).model_dump(),
         )
-        for i in range(5)
+        for i in range(2)
     ]
     return normal_chunks + large_chunks
 
 
 @pytest.fixture()
-def stored_user_chunks(stored_user_files) -> list[list[Document]]:
-    chunks_by_file = []
-    for file in stored_user_files:
-        normal_chunks = [
-            Document(
-                page_content="hello",
-                metadata=ChunkMetadata(
-                    parent_file_uuid=str(file.uuid),
-                    index=i,
-                    file_name="test_file",
-                    creator_user_uuid=file.creator_user_uuid,
-                    page_number=4,
-                    created_datetime=datetime.now(UTC),
-                    token_count=4,
-                    chunk_resolution=ChunkResolution.normal,
-                ).model_dump(),
-            )
-            for i in range(25)
-        ]
-
-        large_chunks = [
-            Document(
-                page_content="hello" * 10,
-                metadata=ChunkMetadata(
-                    parent_file_uuid=str(file.uuid),
-                    index=i,
-                    file_name="test_file",
-                    creator_user_uuid=file.creator_user_uuid,
-                    page_number=4,
-                    created_datetime=datetime.now(UTC),
-                    token_count=20,
-                    chunk_resolution=ChunkResolution.largest,
-                ).model_dump(),
-            )
-            for i in range(5)
-        ]
-        chunks_by_file.append(normal_chunks + large_chunks)
-    return chunks_by_file
-
-
-@pytest.fixture()
-def chunked_file(elasticsearch_store: ElasticsearchStore, stored_file_chunks, stored_file_1) -> File:
-    elasticsearch_store.add_documents(stored_file_chunks)
-    return stored_file_1
-
-
-@pytest.fixture()
-def large_chunked_file(elasticsearch_store, stored_large_file_chunks, stored_file_1) -> File:
-    elasticsearch_store.add_documents(stored_large_file_chunks)
-    return stored_file_1
-
-
-@pytest.fixture()
-def chunked_user_files(elasticsearch_store, stored_user_chunks) -> File:
-    for chunks in stored_user_chunks:
-        elasticsearch_store.add_documents(chunks)
-    return stored_user_chunks
-
-
-@pytest.fixture()
-def file_pdf_path() -> Path:
-    return Path(__file__).parents[2] / "tests" / "data" / "pdf" / "Cabinet Office - Wikipedia.pdf"
-
-
-@pytest.fixture()
-def mock_llm():
-    return FakeListLLM(responses=["<<TESTING>>"] * 128)
-
-
-@pytest.fixture(scope="session")
-def embedding_model(embedding_model_dim) -> SentenceTransformerEmbeddings:
-    return FakeEmbeddings(size=embedding_model_dim)
-
-
-@pytest.fixture()
-def all_chunks_retriever(es_client, es_index) -> AllElasticsearchRetriever:
-    return AllElasticsearchRetriever(
-        es_client=es_client,
-        index_name=es_index,
-    )
+def file_html(
+    es_store: ElasticsearchStore,
+    es_storage_handler: ElasticsearchStorageHandler,
+    file_html_object: File,
+    file_html_chunks: list[Document],
+) -> File:
+    """The File object of Alice's HTML, with all objects in the Elasticsearch index."""
+    es_storage_handler.write_item(file_html_object)
+    es_storage_handler.refresh()
+    es_store.add_documents(file_html_chunks)
+    return file_html_object
