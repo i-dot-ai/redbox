@@ -1,6 +1,7 @@
 import tiktoken
-from langchain_core.documents import Document
+from uuid import uuid5, NAMESPACE_DNS
 
+from langchain_core.documents import Document
 from langchain_core.callbacks.manager import dispatch_custom_event
 from langchain_core.runnables import RunnableLambda
 
@@ -53,10 +54,29 @@ def combine_documents(a: Document, b: Document):
 
 
 def structure_documents(docs: list[Document]) -> DocumentState:
-    return {
-        g_id: {d.metadata["uuid"]: d for d in [d for d in docs if d.metadata["file_name"] == g_id]}
-        for g_id in [d.metadata["file_name"] for d in docs]
-    }
+    """Structures a list of documents by a group_uuid and document_uuid.
+
+    The group_uuid is generated deterministically based on the file_name.
+
+    The document_uuid is taken from the Document metadata directly.
+    """
+    result = {}
+
+    # Group file_name to UUID lookup
+    group_file_lookup = {}
+    for d in docs:
+        file_name = d.metadata["file_name"]
+        if file_name not in group_file_lookup:
+            group_file_lookup[file_name] = uuid5(NAMESPACE_DNS, file_name)
+
+    # Group documents by their file_name's UUID
+    for d in docs:
+        group_uuid = group_file_lookup.get(d.metadata["file_name"])
+        doc_dict = {d.metadata["uuid"]: d}
+
+        result[group_uuid] = (result.get(group_uuid) or doc_dict) | doc_dict
+
+    return result
 
 
 def flatten_document_state(documents: DocumentState) -> list[Document]:
