@@ -1,4 +1,3 @@
-
 from rest_framework import serializers
 
 from redbox_app.redbox_core.models import Chat, ChatMessage, File, User
