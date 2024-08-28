@@ -40,7 +40,10 @@ def s3_client():
     return client
 
 
-def delete_file(file_name: str):
-    es_client.delete_by_query(
-        index=f"{env.elastic_root_index}-chunk", body={"query": {"term": {"metadata.file_name.keyword": file_name}}}
-    )
+def delete_documents_for_file(file_name: str):
+    index = f"{env.elastic_root_index}-chunk"
+    if es_client.indices.exists(index=index):
+        es_client.delete_by_query(
+            index=index,
+            body={"query": {"term": {"metadata.file_name.keyword": file_name}}},
+        )

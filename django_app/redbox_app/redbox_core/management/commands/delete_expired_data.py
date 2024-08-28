@@ -11,7 +11,7 @@ from django.db.models import Max
 from django.utils import timezone
 from requests.exceptions import RequestException
 
-from redbox_app.redbox_core.client import delete_file
+from redbox_app.redbox_core.client import delete_documents_for_file
 from redbox_app.redbox_core.models import INACTIVE_STATUSES, Chat, File, StatusEnum
 
 logger = logging.getLogger(__name__)
@@ -57,7 +57,7 @@ class Command(BaseCommand):
                 )
 
                 try:
-                    delete_file(file.unique_name)
+                    delete_documents_for_file(file.unique_name)
                     file.delete_from_s3()
 
                 except RequestException as e:

@@ -15,7 +15,7 @@ from django.views.decorators.http import require_http_methods
 from django_q.tasks import async_task
 from requests.exceptions import RequestException
 
-from redbox_app.redbox_core.client import delete_file
+from redbox_app.redbox_core.client import delete_documents_for_file
 from redbox_app.redbox_core.models import File, StatusEnum, User
 from redbox_app.worker import ingest
 
@@ -153,7 +153,7 @@ def remove_doc_view(request, doc_id: uuid):
 
     if request.method == "POST":
         try:
-            delete_file(file.unique_name)
+            delete_documents_for_file(file.unique_name)
         except RequestException as e:
             logger.exception("Error deleting file object %s.", file, exc_info=e)
             errors.append("There was an error deleting this file")
