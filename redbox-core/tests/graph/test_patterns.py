@@ -1,6 +1,8 @@
 import pytest
 from contextlib import nullcontext as does_not_raise
 from uuid import uuid4
+from pytest_mock import MockerFixture
+from tiktoken.core import Encoding
 
 from langgraph.graph import START, END, StateGraph
 from langchain_core.language_models.fake_chat_models import GenericFakeChatModel
@@ -46,7 +48,7 @@ CHAT_PROMPT_TEST_CASES = generate_test_cases(
 
 
 @pytest.mark.parametrize(("test_case"), CHAT_PROMPT_TEST_CASES, ids=[t.test_id for t in CHAT_PROMPT_TEST_CASES])
-def test_build_chat_prompt_from_messages_runnable(test_case: RedboxChatTestCase, tokeniser):
+def test_build_chat_prompt_from_messages_runnable(test_case: RedboxChatTestCase, tokeniser: Encoding):
     """Tests a given state can be turned into a chat prompt."""
     chat_prompt = build_chat_prompt_from_messages_runnable(PromptSet.Chat, tokeniser)
     state = RedboxState(request=test_case.query, documents=test_case.docs)
@@ -70,7 +72,7 @@ BUILD_LLM_TEST_CASES = generate_test_cases(
 
 
 @pytest.mark.parametrize(("test_case"), BUILD_LLM_TEST_CASES, ids=[t.test_id for t in BUILD_LLM_TEST_CASES])
-def test_build_llm_chain(test_case):
+def test_build_llm_chain(test_case: RedboxChatTestCase):
     """Tests a given state can update the data and metadata correctly."""
     llm = GenericFakeChatModel(messages=iter(test_case.test_data.expected_llm_response))
     llm_chain = build_llm_chain(PromptSet.Chat, llm)
@@ -93,7 +95,7 @@ CHAT_TEST_CASES = generate_test_cases(
 
 
 @pytest.mark.parametrize(("test_case"), CHAT_TEST_CASES, ids=[t.test_id for t in CHAT_TEST_CASES])
-def test_build_chat_pattern(test_case: RedboxChatTestCase, mocker):
+def test_build_chat_pattern(test_case: RedboxChatTestCase, mocker: MockerFixture):
     """Tests a given state["request"] correctly changes state["text"]."""
     llm = GenericFakeChatModel(messages=iter(test_case.test_data.expected_llm_response))
     state = RedboxState(request=test_case.query, documents=[])
@@ -191,7 +193,7 @@ MERGE_TEST_CASES = generate_test_cases(
 
 
 @pytest.mark.parametrize(("test_case"), MERGE_TEST_CASES, ids=[t.test_id for t in MERGE_TEST_CASES])
-def test_build_merge_pattern(test_case: RedboxChatTestCase, mocker):
+def test_build_merge_pattern(test_case: RedboxChatTestCase, mocker: MockerFixture):
     """Tests a given state["request"] and state["documents"] correctly changes state["documents"]."""
     llm = GenericFakeChatModel(messages=iter(test_case.test_data.expected_llm_response))
     state = RedboxState(request=test_case.query, documents=structure_documents(test_case.docs))
@@ -229,7 +231,7 @@ STUFF_TEST_CASES = generate_test_cases(
 
 
 @pytest.mark.parametrize(("test_case"), STUFF_TEST_CASES, ids=[t.test_id for t in STUFF_TEST_CASES])
-def test_build_stuff_pattern(test_case: RedboxChatTestCase, mocker):
+def test_build_stuff_pattern(test_case: RedboxChatTestCase, mocker: MockerFixture):
     """Tests a given state["request"] and state["documents"] correctly changes state["text"]."""
     llm = GenericFakeChatModel(messages=iter(test_case.test_data.expected_llm_response))
     state = RedboxState(request=test_case.query, documents=structure_documents(test_case.docs))

@@ -13,10 +13,6 @@
 			"path": "../redbox-core"
 		},
 		{
-			"name": "Worker",
-			"path": "../worker"
-		},
-		{
 			"name": "Integration Tests",
 			"path": "../tests"
 		},

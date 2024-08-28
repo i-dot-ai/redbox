@@ -193,7 +193,7 @@ def test_elbow_filter(scores: list[float], target_len: int):
 
 
 @pytest.mark.parametrize(
-    ("output, expected"),
+    ("output", "expected"),
     [
         (
             {
@@ -221,6 +221,6 @@ def test_elbow_filter(scores: list[float], target_len: int):
         ),
     ],
 )
-def test_to_request_metadata(output, expected):
+def test_to_request_metadata(output: dict, expected: RequestMetadata):
     result = to_request_metadata.invoke(output)
     assert result == expected, f"Expected: {expected} Result: {result}"
