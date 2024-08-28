@@ -124,7 +124,7 @@ class DocumentState(TypedDict):
     group: dict[UUID, Document]
 
 
-def document_reducer(left: DocumentState | None, right: DocumentState | list[DocumentState]) -> DocumentState:
+def document_reducer(current: DocumentState | None, update: DocumentState | list[DocumentState]) -> DocumentState:
     """Merges two document states based on the following rules.
 
     * Groups are matched by the group key.
@@ -136,20 +136,20 @@ def document_reducer(left: DocumentState | None, right: DocumentState | list[Doc
     * If key(s) are matched and the key is None, the key is cleared
     * If key(s) aren't matched, group or Document is added
     """
-    # If right is actually a list of state updates, run them one by one
-    if isinstance(right, list):
-        reduced = reduce(lambda left, right: document_reducer(left, right), right, left)
+    # If update is actually a list of state updates, run them one by one
+    if isinstance(update, list):
+        reduced = reduce(lambda current, update: document_reducer(current, update), update, current)
         return reduced
 
-    # If state is empty, return right
-    if left is None:
-        return right
+    # If state is empty, return update
+    if current is None:
+        return update
 
-    # Copy left
-    reduced = {k: v.copy() for k, v in left.items()}
+    # Copy current
+    reduced = {k: v.copy() for k, v in current.items()}
 
-    # Update with right
-    for group_key, group in right.items():
+    # Update with update
+    for group_key, group in update.items():
         # If group is None, remove from output if a group key is matched
         if group is None:
             reduced.pop(group_key, None)
@@ -183,20 +183,38 @@ class RedboxQuery(BaseModel):
 
 
 class RequestMetadata(TypedDict):
-    input_tokens: int
-    output_tokens: int
+    input_tokens: dict[str, int]
+    output_tokens: dict[str, int]
 
 
-def metadata_reducer(current: RequestMetadata | None, update: RequestMetadata | None):
+def add_tokens_by_model(current: dict[str, int], update: dict[str, int]):
+    result = current.copy()
+
+    for key, value in update.items():
+        result[key] = (result.get(key) or 0) + value
+
+    return result
+
+
+def metadata_reducer(current: RequestMetadata | None, update: RequestMetadata | list[RequestMetadata] | None):
+    """Merges two metadata states."""
+    # If update is actually a list of state updates, run them one by one
+    if isinstance(update, list):
+        reduced = reduce(lambda current, update: metadata_reducer(current, update), update, current)
+        return reduced
+
     if current is None:
         return update
     if update is None:
         return current
-    if "input_tokens" in update:
-        input_tokens = current.get("input_tokens", 0) + update["input_tokens"]
-    if "output_tokens" in update:
-        output_tokens = current.get("output_tokens", 0) + update["output_tokens"]
-    return RequestMetadata(input_tokens=input_tokens, output_tokens=output_tokens)
+
+    input_tokens = add_tokens_by_model(current.get("input_tokens") or {}, update.get("input_tokens") or {})
+    output_tokens = add_tokens_by_model(current.get("output_tokens") or {}, update.get("output_tokens") or {})
+
+    return RequestMetadata(
+        input_tokens=input_tokens,
+        output_tokens=output_tokens,
+    )
 
 
 class RedboxState(TypedDict):

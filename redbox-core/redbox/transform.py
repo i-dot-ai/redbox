@@ -1,4 +1,8 @@
+import tiktoken
 from langchain_core.documents import Document
+
+from langchain_core.callbacks.manager import dispatch_custom_event
+from langchain_core.runnables import RunnableLambda
 
 from redbox.models.chat import SourceDocument
 from redbox.models.chain import DocumentState, RequestMetadata
@@ -61,21 +65,23 @@ def flatten_document_state(documents: DocumentState) -> list[Document]:
     return [document for group in documents.values() for document in group.values()]
 
 
-def to_request_metadata(response_metadata: dict):
+@RunnableLambda
+def to_request_metadata(prompt_response_model: dict):
+    """Takes a dictionary with keys 'prompt', 'response' and 'model' and creates metadata.
+
+    Will also emit events for metadata updates.
     """
-    Convert a Langchain ChatLLM response metadata dictionary
-    """
-    # If ChatOpenAI
-    if "token_usage" in response_metadata:
-        tokens = response_metadata["token_usage"]
-        return RequestMetadata(
-            input_tokens=tokens.get("prompt_tokens", -1), output_tokens=tokens.get("completion_tokens", -1)
-        )
-    # If ChatBedrock (Anthropic)
-    elif "usage" in response_metadata:
-        tokens = response_metadata["usage"]
-        return RequestMetadata(
-            input_tokens=tokens.get("prompt_tokens", -1), output_tokens=tokens.get("completion_tokens", -1)
-        )
-    else:
-        return None
+    model = prompt_response_model["model"]
+
+    try:
+        tokeniser = tiktoken.encoding_for_model(model)
+    except KeyError:
+        tokeniser = tiktoken.get_encoding("cl100k_base")
+
+    input_tokens = {model: len(tokeniser.encode(prompt_response_model["prompt"]))}
+    output_tokens = {model: len(tokeniser.encode(prompt_response_model["response"]))}
+
+    dispatch_custom_event("on_metadata_generation", {"input_tokens": input_tokens})
+    dispatch_custom_event("on_metadata_generation", {"output_tokens": output_tokens})
+
+    return RequestMetadata(input_tokens=input_tokens, output_tokens=output_tokens)
