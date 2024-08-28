@@ -67,17 +67,19 @@ def build_chat_prompt_from_messages_runnable(prompt_set: PromptSet, tokeniser: E
     return _chat_prompt_from_messages
 
 
-def build_llm_chain(prompt_set: PromptSet, llm: BaseChatModel) -> Runnable:
-    """Builds a chain that correctly a text and metadata state update.
+def build_llm_chain(prompt_set: PromptSet, llm: BaseChatModel, final_response_chain: bool = False) -> Runnable:
+    """Builds a chain that correctly forms a text and metadata state update.
 
     Permits both invoke and astream_events.
     """
     model_name = getattr(llm, "model_name", "unknown-model")
+    _llm = llm.with_config(tags=["response_flag"]) if final_response_chain else llm
+
     return (
         build_chat_prompt_from_messages_runnable(prompt_set)
         | {
             "prompt": RunnableLambda(lambda prompt: prompt.to_string()),
-            "response": llm | StrOutputParser(),
+            "response": _llm | StrOutputParser(),
             "model": lambda x: model_name,
         }
         | {"text": itemgetter("response"), "metadata": to_request_metadata}

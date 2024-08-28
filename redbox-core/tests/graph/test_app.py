@@ -173,9 +173,9 @@ async def test_chat(test: RedboxChatTestCase, env, mocker):
     assert (
         final_state["route_name"] == test_case.test_data.expected_route
     ), f"Expected Route: '{ test_case.test_data.expected_route}'. Received '{final_state["route_name"]}'"
-    if final_state.get("metadata"):
-        assert sum(final_state["metadata"].get("input_tokens", {}).values()) > 0
-        assert sum(final_state["metadata"].get("input_tokens", {}).values()) > 0
+    if metadata := final_state.get("metadata"):
+        assert sum(metadata.get("input_tokens", {}).values())
+        assert sum(metadata.get("output_tokens", {}).values())
 
 
 @pytest.mark.asyncio
@@ -227,11 +227,9 @@ async def test_streaming(test: RedboxChatTestCase, env, mocker):
     assert (
         final_state["route_name"] == test_case.test_data.expected_route
     ), f"Expected Route: '{ test_case.test_data.expected_route}'. Received '{final_state["route_name"]}'"
-    if final_state.get("metadata"):
+    if metadata := final_state.get("metadata"):
         assert len(metadata_events) == len(test_case.test_data.expected_llm_response) * 2
-        assert (
-            final_state["metadata"] == metadata_response
-        ), f"Expected metadata: '{metadata_response}'. Received '{final_state["metadata"]}'"
+        assert metadata == metadata_response, f"Expected metadata: '{metadata_response}'. Received '{metadata}'"
 
 
 def test_get_available_keywords(tokeniser):

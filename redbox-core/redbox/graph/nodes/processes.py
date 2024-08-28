@@ -51,10 +51,11 @@ def build_chat_pattern(
 
     def _chat(state: RedboxState) -> dict[str, Any]:
         llm = get_chat_llm(Settings(), state["request"].ai_settings)
-        _llm = llm.with_config(tags=["response_flag"]) if final_response_chain else llm
-        chat_chain = build_llm_chain(prompt_set=prompt_set, llm=_llm)
-
-        return chat_chain.invoke(state)
+        return build_llm_chain(
+            prompt_set=prompt_set,
+            llm=llm,
+            final_response_chain=final_response_chain,
+        ).invoke(state)
 
     return _chat
 
@@ -75,13 +76,10 @@ def build_merge_pattern(
 
     def _merge(state: RedboxState) -> dict[str, Any]:
         llm = get_chat_llm(Settings(), state["request"].ai_settings)
-        _llm = llm.with_config(tags=["response_flag"]) if final_response_chain else llm
 
         flattened_documents = flatten_document_state(state["documents"])
 
         merged_document = reduce(lambda left, right: combine_documents(left, right), flattened_documents)
-
-        merge_chain = build_llm_chain(prompt_set=prompt_set, llm=_llm)
 
         merge_state = RedboxState(
             request=state["request"],
@@ -90,7 +88,10 @@ def build_merge_pattern(
             },
         )
 
-        merge_response = merge_chain.invoke(merge_state)
+        merge_response = build_llm_chain(
+            prompt_set=prompt_set, llm=llm, final_response_chain=final_response_chain
+        ).invoke(merge_state)
+
         merged_document.page_content = merge_response["text"]
         request_metadata = merge_response["metadata"]
         merged_document.metadata["token_count"] = len(tokeniser.encode(merged_document.page_content))
@@ -120,10 +121,8 @@ def build_stuff_pattern(
 
     def _stuff(state: RedboxState) -> dict[str, Any]:
         llm = get_chat_llm(Settings(), state["request"].ai_settings)
-        _llm = llm.with_config(tags=["response_flag"]) if final_response_chain else llm
-        stuff_chain = build_llm_chain(prompt_set=prompt_set, llm=_llm)
 
-        return stuff_chain.invoke(state)
+        return build_llm_chain(prompt_set=prompt_set, llm=llm, final_response_chain=final_response_chain).invoke(state)
 
     return _stuff
 

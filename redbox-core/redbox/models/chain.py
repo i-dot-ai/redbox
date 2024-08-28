@@ -124,7 +124,7 @@ class DocumentState(TypedDict):
     group: dict[UUID, Document]
 
 
-def document_reducer(left: DocumentState | None, right: DocumentState | list[DocumentState]) -> DocumentState:
+def document_reducer(current: DocumentState | None, update: DocumentState | list[DocumentState]) -> DocumentState:
     """Merges two document states based on the following rules.
 
     * Groups are matched by the group key.
@@ -136,20 +136,20 @@ def document_reducer(left: DocumentState | None, right: DocumentState | list[Doc
     * If key(s) are matched and the key is None, the key is cleared
     * If key(s) aren't matched, group or Document is added
     """
-    # If right is actually a list of state updates, run them one by one
-    if isinstance(right, list):
-        reduced = reduce(lambda left, right: document_reducer(left, right), right, left)
+    # If update is actually a list of state updates, run them one by one
+    if isinstance(update, list):
+        reduced = reduce(lambda current, update: document_reducer(current, update), update, current)
         return reduced
 
-    # If state is empty, return right
-    if left is None:
-        return right
+    # If state is empty, return update
+    if current is None:
+        return update
 
-    # Copy left
-    reduced = {k: v.copy() for k, v in left.items()}
+    # Copy current
+    reduced = {k: v.copy() for k, v in current.items()}
 
-    # Update with right
-    for group_key, group in right.items():
+    # Update with update
+    for group_key, group in update.items():
         # If group is None, remove from output if a group key is matched
         if group is None:
             reduced.pop(group_key, None)
@@ -197,7 +197,8 @@ def add_tokens_by_model(current: dict[str, int], update: dict[str, int]):
 
 
 def metadata_reducer(current: RequestMetadata | None, update: RequestMetadata | list[RequestMetadata] | None):
-    # If right is actually a list of state updates, run them one by one
+    """Merges two metadata states."""
+    # If update is actually a list of state updates, run them one by one
     if isinstance(update, list):
         reduced = reduce(lambda current, update: metadata_reducer(current, update), update, current)
         return reduced
