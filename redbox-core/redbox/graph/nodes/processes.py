@@ -83,9 +83,7 @@ def build_merge_pattern(
 
         merge_state = RedboxState(
             request=state["request"],
-            documents={
-                merged_document.metadata["parent_file_uuid"]: {merged_document.metadata["uuid"]: merged_document}
-            },
+            documents={merged_document.metadata["file_name"]: {merged_document.metadata["uuid"]: merged_document}},
         )
 
         merge_response = build_llm_chain(
@@ -96,7 +94,7 @@ def build_merge_pattern(
         request_metadata = merge_response["metadata"]
         merged_document.metadata["token_count"] = len(tokeniser.encode(merged_document.page_content))
 
-        group_uuid = merged_document.metadata.get("parent_file_uuid", uuid4())
+        group_uuid = next(iter(state["documents"] or {}), uuid4())
         document_uuid = merged_document.metadata.get("uuid", uuid4())
 
         # Clear old documents, add new one

@@ -6,13 +6,8 @@ from redbox.transform import combine_documents
 def format_documents(documents: list[Document]) -> str:
     formatted: list[str] = []
     for d in documents:
-        parent_file_uuid = d.metadata.get("parent_file_uuid")  # New Style Ingest
-        if not parent_file_uuid:
-            parent_file_uuid = d.metadata.get("parent_doc_uuid")  # Old Style Ingest
-
         doc_xml = (
             f"<Document>\n"
-            f"\t<UUID>{parent_file_uuid}</UUID>\n"
             f"\t<Filename>{d.metadata.get("file_name", "")}</Filename>\n"
             "\t<Content>\n"
             f"{d.page_content}\n"

@@ -47,7 +47,7 @@ async def rag_chat(
     state = RedboxState(
         request=RedboxQuery(
             question=chat_request.message_history[-1].text,
-            file_uuids=[f.uuid for f in chat_request.selected_files],
+            s3_keys=[f.s3_key for f in chat_request.selected_files],
             user_uuid=user_uuid,
             chat_history=[
                 ChainChatMessage(role=message.role, text=message.text) for message in chat_request.message_history[:-1]
@@ -82,7 +82,7 @@ async def rag_chat_streamed(
     state = RedboxState(
         request=RedboxQuery(
             question=chat_request.message_history[-1].text,
-            file_uuids=[f.uuid for f in chat_request.selected_files],
+            s3_keys=[f.s3_key for f in chat_request.selected_files],
             user_uuid=user_uuid,
             chat_history=[
                 ChainChatMessage(role=message.role, text=message.text) for message in chat_request.message_history[:-1]

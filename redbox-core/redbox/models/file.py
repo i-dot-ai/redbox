@@ -77,7 +77,6 @@ class ChunkMetadata(BaseModel):
     """
 
     uuid: UUID = Field(default_factory=uuid4)
-    parent_file_uuid: UUID
     creator_user_uuid: UUID
     index: int
     file_name: str

@@ -23,7 +23,7 @@ TEST_CASES = [
     test_case
     for generated_cases in [
         generate_test_cases(
-            query=RedboxQuery(question="What is AI?", file_uuids=[], user_uuid=uuid4(), chat_history=[]),
+            query=RedboxQuery(question="What is AI?", s3_keys=[], user_uuid=uuid4(), chat_history=[]),
             test_data=[
                 RedboxTestData(0, 0, expected_llm_response=["Testing Response 1"], expected_route=ChatRoute.chat),
                 RedboxTestData(1, 100, expected_llm_response=["Testing Response 1"], expected_route=ChatRoute.chat),
@@ -32,7 +32,7 @@ TEST_CASES = [
             test_id="Basic Chat",
         ),
         generate_test_cases(
-            query=RedboxQuery(question="What is AI?", file_uuids=[uuid4()], user_uuid=uuid4(), chat_history=[]),
+            query=RedboxQuery(question="What is AI?", s3_keys=["s3_key"], user_uuid=uuid4(), chat_history=[]),
             test_data=[
                 RedboxTestData(
                     1, 1000, expected_llm_response=["Testing Response 1"], expected_route=ChatRoute.chat_with_docs
@@ -48,7 +48,7 @@ TEST_CASES = [
         ),
         generate_test_cases(
             query=RedboxQuery(
-                question="What is AI?", file_uuids=[uuid4(), uuid4()], user_uuid=uuid4(), chat_history=[]
+                question="What is AI?", s3_keys=["s3_key_1", "s3_key_2"], user_uuid=uuid4(), chat_history=[]
             ),
             test_data=[
                 RedboxTestData(
@@ -75,7 +75,7 @@ TEST_CASES = [
             test_id="Chat with multiple docs",
         ),
         generate_test_cases(
-            query=RedboxQuery(question="What is AI?", file_uuids=[uuid4()], user_uuid=uuid4(), chat_history=[]),
+            query=RedboxQuery(question="What is AI?", s3_keys=["s3_key"], user_uuid=uuid4(), chat_history=[]),
             test_data=[
                 RedboxTestData(
                     2,
@@ -89,7 +89,7 @@ TEST_CASES = [
             test_id="Chat with large doc",
         ),
         generate_test_cases(
-            query=RedboxQuery(question="@search What is AI?", file_uuids=[uuid4()], user_uuid=uuid4(), chat_history=[]),
+            query=RedboxQuery(question="@search What is AI?", s3_keys=["s3_key"], user_uuid=uuid4(), chat_history=[]),
             test_data=[
                 RedboxTestData(
                     1,
@@ -108,7 +108,7 @@ TEST_CASES = [
         ),
         generate_test_cases(
             query=RedboxQuery(
-                question="@nosuchkeyword What is AI?", file_uuids=[uuid4()], user_uuid=uuid4(), chat_history=[]
+                question="@nosuchkeyword What is AI?", s3_keys=["s3_key"], user_uuid=uuid4(), chat_history=[]
             ),
             test_data=[
                 RedboxTestData(
@@ -163,7 +163,7 @@ def test_rag(
                     {"role": message.role, "text": message.text} for message in test_case.query.chat_history
                 ]
                 + [{"role": "user", "text": test_case.query.question}],
-                "selected_files": [{"uuid": str(file_uuid)} for file_uuid in test_case.query.file_uuids],
+                "selected_files": [{"s3_key": s3_key} for s3_key in test_case.query.s3_keys],
             },
         )
     assert response.status_code == 200, response.text
@@ -206,7 +206,7 @@ def test_rag_chat_streamed(
                         {"role": message.role, "text": message.text} for message in test_case.query.chat_history
                     ]
                     + [{"role": "user", "text": test_case.query.question}],
-                    "selected_files": [{"uuid": str(file_uuid)} for file_uuid in test_case.query.file_uuids],
+                    "selected_files": [{"s3_key": s3_keys} for s3_keys in test_case.query.s3_keys],
                 }
             )
         )

@@ -194,8 +194,8 @@ def delete_file(file_uuid: UUID, user_uuid: Annotated[UUID, Depends(get_user_uui
             {
                 "bool": {
                     "should": [
-                        {"term": {"parent_file_uuid.keyword": str(file_uuid)}},
-                        {"term": {"metadata.parent_file_uuid.keyword": str(file_uuid)}},
+                        {"term": {"file_name.keyword": file.key}},
+                        {"term": {"metadata.file_name.keyword": file.key}},
                     ]
                 }
             }

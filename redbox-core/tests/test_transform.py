@@ -1,5 +1,4 @@
 from datetime import UTC, datetime
-from uuid import uuid4
 
 import pytest
 from langchain_core.documents.base import Document
@@ -17,19 +16,19 @@ document_created = datetime.now(UTC)
         (
             Document(
                 page_content="some random text",
-                metadata={"parent_file_uuid": uuid4(), "page_number": 1},
+                metadata={"file_name": "s3_key", "page_number": 1},
             )
         ),
         (
             Document(
                 page_content="some random text2",
-                metadata={"parent_file_uuid": uuid4(), "page_number": [1, 2]},
+                metadata={"file_name": "s3_key", "page_number": [1, 2]},
             )
         ),
         (
             Document(
                 page_content="some random text3",
-                metadata={"parent_file_uuid": uuid4()},
+                metadata={"file_name": "s3_key"},
             )
         ),
     ],
@@ -55,7 +54,7 @@ def test_map_document_to_source_document(document: Document):
         assert source_doc.page_numbers == []
 
     # Test UUID
-    assert source_doc.file_uuid == document.metadata["parent_file_uuid"]
+    assert source_doc.s3_key == document.metadata["file_name"]
 
 
 @pytest.mark.parametrize(
@@ -65,7 +64,7 @@ def test_map_document_to_source_document(document: Document):
             Document(
                 page_content="these are four tokens ",
                 metadata={
-                    "parent_file_uuid": "abcd",
+                    "file_name": "abcd",
                     "creator_user_uuid": "xabcd",
                     "index": 1,
                     "page_number": 1,
@@ -80,7 +79,7 @@ def test_map_document_to_source_document(document: Document):
             Document(
                 page_content="these are three",
                 metadata={
-                    "parent_file_uuid": "abcd",
+                    "file_name": "abcd",
                     "creator_user_uuid": "xabcd",
                     "index": 2,
                     "page_number": 2,
@@ -95,7 +94,7 @@ def test_map_document_to_source_document(document: Document):
             Document(
                 page_content="these are four tokens these are three",
                 metadata={
-                    "parent_file_uuid": "abcd",
+                    "file_name": "abcd",
                     "creator_user_uuid": "xabcd",
                     "index": 1,
                     "page_number": [1, 2],
@@ -112,7 +111,7 @@ def test_map_document_to_source_document(document: Document):
             Document(
                 page_content="there are six tokens right here ",
                 metadata={
-                    "parent_file_uuid": "asdf",
+                    "file_name": "asdf",
                     "creator_user_uuid": "xabcd",
                     "index": 10,
                     "page_number": [1, 2],
@@ -127,7 +126,7 @@ def test_map_document_to_source_document(document: Document):
             Document(
                 page_content="these are three",
                 metadata={
-                    "parent_file_uuid": "asdf",
+                    "file_name": "asdf",
                     "creator_user_uuid": "xabcd",
                     "index": 12,
                     "page_number": 3,
@@ -142,7 +141,7 @@ def test_map_document_to_source_document(document: Document):
             Document(
                 page_content="there are six tokens right here these are three",
                 metadata={
-                    "parent_file_uuid": "asdf",
+                    "file_name": "asdf",
                     "creator_user_uuid": "xabcd",
                     "index": 10,
                     "page_number": [1, 2, 3],
