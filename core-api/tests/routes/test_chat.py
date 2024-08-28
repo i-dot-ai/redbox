@@ -1,29 +1,21 @@
 import json
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Generator
 from uuid import uuid4
-from jose import jwt
 
-from langchain_elasticsearch import ElasticsearchStore
 import pytest
-from core_api import dependencies
-from core_api.app import app as application
-from core_api.routes.chat import chat_app
+from _pytest.fixtures import FixtureRequest
 from fastapi.testclient import TestClient
+from jose import jwt
 from langchain_core.language_models.fake_chat_models import GenericFakeChatModel
-from starlette.websockets import WebSocketDisconnect
-
+from langchain_elasticsearch import ElasticsearchStore
+from pytest_mock import MockerFixture
 from redbox.models.chain import RedboxQuery
 from redbox.models.chat import ChatResponse, ChatRoute
-from redbox.test.data import RedboxChatTestCase, generate_test_cases, RedboxTestData
+from redbox.test.data import RedboxChatTestCase, RedboxTestData, generate_test_cases
+from starlette.websockets import WebSocketDisconnect
 
 if TYPE_CHECKING:
     pass
-
-system_chat = {"text": "test", "role": "system"}
-user_chat = {"text": "test", "role": "user"}
-
-RAG_LLM_RESPONSE = "Based on your documents the answer to your question is 7"
-UPLOADED_FILE_UUID = "9aa1aa15-dde0-471f-ab27-fd410612025b"
 
 EXPECTED_AVAILABLE_ROUTES = {"search"}
 
@@ -134,39 +126,38 @@ TEST_CASES = [
 
 
 @pytest.fixture(params=TEST_CASES, ids=[t.test_id for t in TEST_CASES])
-def test_case(request):
+def test_case(request: FixtureRequest) -> RedboxChatTestCase:
     return request.param
 
 
 @pytest.fixture
-def client(test_case: RedboxChatTestCase, embedding_model):
-    chat_app.dependency_overrides[dependencies.get_embedding_model] = lambda: embedding_model
-    yield TestClient(application)
-    chat_app.dependency_overrides = {}
-
-
-@pytest.fixture
-def uploaded_docs(test_case: RedboxChatTestCase, elasticsearch_store: ElasticsearchStore):
-    docs_ids = elasticsearch_store.add_documents(test_case.docs)
+def test_case_uploaded_docs(test_case: RedboxChatTestCase, es_store: ElasticsearchStore) -> Generator[None, None, None]:
+    docs_ids = es_store.add_documents(test_case.docs)
     yield
     if docs_ids:
-        elasticsearch_store.delete(docs_ids)
+        es_store.delete(docs_ids)
 
 
 @pytest.fixture
-def query_headers(test_case: RedboxChatTestCase):
+def test_case_query_headers(test_case: RedboxChatTestCase) -> dict[str, str]:
     return {"Authorization": f"Bearer {jwt.encode({"user_uuid": str(test_case.query.user_uuid)}, key="nvjkernd")}"}
 
 
-def test_rag(test_case: RedboxChatTestCase, client, uploaded_docs, query_headers, mocker):
+def test_rag(
+    test_case: RedboxChatTestCase,
+    test_case_uploaded_docs: None,
+    test_case_query_headers: dict[str, str],
+    app_client: TestClient,
+    mocker: MockerFixture,
+):
     llm = GenericFakeChatModel(messages=iter(test_case.test_data.expected_llm_response))
 
     with (
         mocker.patch("redbox.graph.nodes.processes.get_chat_llm", return_value=llm),
     ):
-        response = client.post(
+        response = app_client.post(
             "/chat/rag",
-            headers=query_headers,
+            headers=test_case_query_headers,
             json={
                 "message_history": [
                     {"role": message.role, "text": message.text} for message in test_case.query.chat_history
@@ -195,10 +186,16 @@ def test_rag(test_case: RedboxChatTestCase, client, uploaded_docs, query_headers
     assert len(unexpected_returned_documents) == 0, f"Unexpected source docs in result {unexpected_returned_documents}"
 
 
-def test_rag_chat_streamed(test_case: RedboxChatTestCase, client, uploaded_docs, query_headers, mocker):
+def test_rag_chat_streamed(
+    test_case: RedboxChatTestCase,
+    test_case_uploaded_docs: None,
+    test_case_query_headers: dict[str, str],
+    app_client: TestClient,
+    mocker: MockerFixture,
+):
     llm = GenericFakeChatModel(messages=iter(test_case.test_data.expected_llm_response))
     with (
-        client.websocket_connect("/chat/rag", headers=query_headers) as websocket,
+        app_client.websocket_connect("/chat/rag", headers=test_case_query_headers) as websocket,
         mocker.patch("redbox.graph.nodes.processes.get_chat_llm", return_value=llm),
     ):
         # When
@@ -245,8 +242,8 @@ def test_rag_chat_streamed(test_case: RedboxChatTestCase, client, uploaded_docs,
         ), f"Unexpected source docs in result {unexpected_returned_documents}"
 
 
-def test_available_tools(client, query_headers):
-    response = client.get("/chat/tools", headers=query_headers)
+def test_available_tools(app_client: TestClient, test_case_query_headers: dict[str, str]):
+    response = app_client.get("/chat/tools", headers=test_case_query_headers)
     assert response.status_code == 200
     tool_definitions = response.json()
     assert len(tool_definitions) > 0

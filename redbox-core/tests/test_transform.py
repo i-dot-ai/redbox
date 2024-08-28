@@ -192,48 +192,35 @@ def test_elbow_filter(scores: list[float], target_len: int):
     ), f"Expected {target_len} documents to pass. Received: {len(documents_filtered)}"
 
 
-# Example call metadata structure https://python.langchain.com/v0.1/docs/modules/model_io/chat/response_metadata/#openai
-
-
 @pytest.mark.parametrize(
-    "response_metadata,expected",
+    ("output, expected"),
     [
         (
             {
-                "token_usage": {"completion_tokens": 164, "prompt_tokens": 17, "total_tokens": 181},
-                "model_name": "gpt-4-turbo",
-                "system_fingerprint": "fp_76f018034d",
-                "finish_reason": "stop",
-                "logprobs": None,
+                "prompt": "Lorem ipsum dolor sit amet.",
+                "response": (
+                    "Lorem ipsum dolor sit amet, consectetur adipiscing elit, "
+                    "sed do eiusmod tempor incididunt ut labore et dolore magna "
+                    "aliqua. "
+                ),
+                "model": "gpt-4o",
             },
-            RequestMetadata(input_tokens=17, output_tokens=164),
+            RequestMetadata(input_tokens={"gpt-4o": 6}, output_tokens={"gpt-4o": 23}),
         ),
         (
             {
-                "token_usage": {"completion_tokens": 10, "prompt_tokens": 0, "total_tokens": 10},
-                "model_name": "gpt-4-turbo",
-                "system_fingerprint": "fp_76f018034d",
-                "finish_reason": "stop",
-                "logprobs": None,
+                "prompt": "Lorem ipsum dolor sit amet.",
+                "response": (
+                    "Lorem ipsum dolor sit amet, consectetur adipiscing elit, "
+                    "sed do eiusmod tempor incididunt ut labore et dolore magna "
+                    "aliqua. "
+                ),
+                "model": "unknown-model",
             },
-            RequestMetadata(input_tokens=0, output_tokens=10),
-        ),
-        (
-            {
-                "model_id": "anthropic.claude-v2",
-                "usage": {"prompt_tokens": 0, "completion_tokens": 10, "total_tokens": 10},
-            },
-            RequestMetadata(input_tokens=0, output_tokens=10),
-        ),
-        (
-            {
-                "model_id": "anthropic.claude-v2",
-                "usage": {"prompt_tokens": 19, "completion_tokens": 371, "total_tokens": 390},
-            },
-            RequestMetadata(input_tokens=19, output_tokens=371),
+            RequestMetadata(input_tokens={"unknown-model": 6}, output_tokens={"unknown-model": 23}),
         ),
     ],
 )
-def test_to_request_metadata(response_metadata, expected):
-    result = to_request_metadata(response_metadata)
+def test_to_request_metadata(output, expected):
+    result = to_request_metadata.invoke(output)
     assert result == expected, f"Expected: {expected} Result: {result}"

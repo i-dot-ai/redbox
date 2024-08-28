@@ -1,7 +1,9 @@
 from uuid import uuid4
 
 import pytest
+from fastapi.testclient import TestClient
 from jose import jwt
+from redbox.models import File
 
 
 @pytest.mark.parametrize(
@@ -14,11 +16,11 @@ from jose import jwt
         ({"Authorization": "Bearer " + jwt.encode({"user_uuid": str(uuid4())}, key="super-secure-private-key")}, 404),
     ],
 )
-def test_get_file_fails_auth(app_client, stored_file_1, malformed_headers, status_code):
+def test_get_file_fails_auth(app_client: TestClient, file_pdf: File, malformed_headers: dict | None, status_code: int):
     """
     Given a previously saved file
     When I GET it from /file/uuid with a missing/broken/correct header
     I Expect get an appropriate status_code
     """
-    response = app_client.get(f"/file/{stored_file_1.uuid}", headers=malformed_headers)
+    response = app_client.get(f"/file/{file_pdf.uuid}", headers=malformed_headers)
     assert response.status_code == status_code

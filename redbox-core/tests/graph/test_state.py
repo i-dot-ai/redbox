@@ -122,32 +122,42 @@ def test_document_reducer(a, b, expected):
 
 
 @pytest.mark.parametrize(
-    "a,b,expected",
+    ("a", "b", "expected"),
     [
         (
-            RequestMetadata(input_tokens=0, output_tokens=0),
-            RequestMetadata(input_tokens=10, output_tokens=10),
-            RequestMetadata(input_tokens=10, output_tokens=10),
+            RequestMetadata(input_tokens={"gpt-4o": 0}, output_tokens={"gpt-4o": 0}),
+            RequestMetadata(input_tokens={"gpt-4o": 10}, output_tokens={"gpt-4o": 10}),
+            RequestMetadata(input_tokens={"gpt-4o": 10}, output_tokens={"gpt-4o": 10}),
         ),
         (
-            RequestMetadata(input_tokens=12, output_tokens=100),
-            RequestMetadata(input_tokens=10, output_tokens=10),
-            RequestMetadata(input_tokens=22, output_tokens=110),
+            RequestMetadata(input_tokens={"gpt-4o": 12}, output_tokens={"gpt-4o": 100}),
+            RequestMetadata(input_tokens={"gpt-4o": 10}, output_tokens={"gpt-4o": 10}),
+            RequestMetadata(input_tokens={"gpt-4o": 22}, output_tokens={"gpt-4o": 110}),
         ),
         (
-            RequestMetadata(input_tokens=100, output_tokens=200),
-            RequestMetadata(input_tokens=0, output_tokens=10),
-            RequestMetadata(input_tokens=100, output_tokens=210),
+            RequestMetadata(input_tokens={"gpt-4o": 100}, output_tokens={"gpt-4o": 200}),
+            RequestMetadata(input_tokens={"gpt-4o": 0}, output_tokens={"gpt-4o": 10}),
+            RequestMetadata(input_tokens={"gpt-4o": 100}, output_tokens={"gpt-4o": 210}),
         ),
         (
             None,
-            RequestMetadata(input_tokens=10, output_tokens=100),
-            RequestMetadata(input_tokens=10, output_tokens=100),
+            RequestMetadata(input_tokens={"gpt-4o": 10}, output_tokens={"gpt-4o": 100}),
+            RequestMetadata(input_tokens={"gpt-4o": 10}, output_tokens={"gpt-4o": 100}),
         ),
         (
-            RequestMetadata(input_tokens=10, output_tokens=100),
+            RequestMetadata(input_tokens={"gpt-4o": 10}, output_tokens={"gpt-4o": 100}),
             None,
-            RequestMetadata(input_tokens=10, output_tokens=100),
+            RequestMetadata(input_tokens={"gpt-4o": 10}, output_tokens={"gpt-4o": 100}),
+        ),
+        (
+            RequestMetadata(input_tokens={"gpt-4o": 0}, output_tokens={"gpt-4o": 0}),
+            RequestMetadata(input_tokens={"gpt-3.5": 10}, output_tokens={"gpt-3.5": 10}),
+            RequestMetadata(input_tokens={"gpt-4o": 0, "gpt-3.5": 10}, output_tokens={"gpt-4o": 0, "gpt-3.5": 10}),
+        ),
+        (
+            RequestMetadata(input_tokens={"gpt-4o": 0, "gpt-3.5": 10}, output_tokens={"gpt-4o": 0, "gpt-3.5": 10}),
+            RequestMetadata(input_tokens={"gpt-3.5": 10}, output_tokens={"gpt-3.5": 10}),
+            RequestMetadata(input_tokens={"gpt-4o": 0, "gpt-3.5": 20}, output_tokens={"gpt-4o": 0, "gpt-3.5": 20}),
         ),
     ],
 )

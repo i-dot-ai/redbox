@@ -1,7 +1,9 @@
 from http import HTTPStatus
 
+from fastapi.testclient import TestClient
 
-def test_get_health(app_client):
+
+def test_get_health(app_client: TestClient):
     """
     Given that the app is running
     When I call /health

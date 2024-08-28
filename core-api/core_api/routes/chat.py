@@ -103,7 +103,7 @@ async def rag_chat_streamed(
             websocket,
         )
 
-    async def on_metadata_available(metadata: RequestMetadata):
+    async def on_metadata_response(metadata: RequestMetadata):
         print(f"Request Metadata: {metadata}")
 
     try:
@@ -112,7 +112,7 @@ async def rag_chat_streamed(
             response_tokens_callback=on_llm_response,
             route_name_callback=on_route_choice,
             documents_callback=on_documents_available,
-            metadata_available_callback=on_metadata_available,
+            metadata_tokens_callback=on_metadata_response,
         )
     except RateLimitError as e:
         log.exception("Rate limit error", exc_info=e)

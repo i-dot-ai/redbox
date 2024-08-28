@@ -17,7 +17,7 @@ from redbox.graph.nodes.processes import (
     empty_process,
     clear_documents_process,
 )
-from redbox.chains.runnables import build_chat_prompt_from_messages_runnable, CannedChatLLM
+from redbox.chains.runnables import build_chat_prompt_from_messages_runnable, build_llm_chain, CannedChatLLM
 from redbox.test.data import (
     RedboxTestData,
     RedboxChatTestCase,
@@ -56,6 +56,33 @@ def test_build_chat_prompt_from_messages_runnable(test_case: RedboxChatTestCase,
         messages = response.to_messages()
         assert isinstance(messages, list)
         assert len(messages) > 0
+
+
+BUILD_LLM_TEST_CASES = generate_test_cases(
+    query=RedboxQuery(question="What is AI?", file_uuids=[], user_uuid=uuid4(), chat_history=[]),
+    test_data=[
+        RedboxTestData(
+            2, 40_000, expected_llm_response=["Testing Response 1"], expected_route=ChatRoute.chat_with_docs
+        ),
+    ],
+    test_id="Build LLM runnable",
+)
+
+
+@pytest.mark.parametrize(("test_case"), BUILD_LLM_TEST_CASES, ids=[t.test_id for t in BUILD_LLM_TEST_CASES])
+def test_build_llm_chain(test_case):
+    """Tests a given state can update the data and metadata correctly."""
+    llm = GenericFakeChatModel(messages=iter(test_case.test_data.expected_llm_response))
+    llm_chain = build_llm_chain(PromptSet.Chat, llm)
+    state = RedboxState(request=test_case.query, documents=test_case.docs)
+
+    final_state = llm_chain.invoke(state)
+
+    assert (
+        final_state["text"] == test_case.test_data.expected_llm_response[-1]
+    ), f"Expected LLM response: '{test_case.test_data.expected_llm_response[-1]}'. Received '{final_state["text"]}'"
+    assert sum(final_state["metadata"]["input_tokens"].values())
+    assert sum(final_state["metadata"]["output_tokens"].values())
 
 
 CHAT_TEST_CASES = generate_test_cases(
