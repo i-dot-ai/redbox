@@ -108,7 +108,7 @@ def build_merge_pattern(
         request_metadata = merge_response["metadata"]
         merged_document.metadata["token_count"] = len(tokeniser.encode(merged_document.page_content))
 
-        group_uuid = merged_document.metadata.get("file_name", str(uuid4()))
+        group_uuid = next(iter(state["documents"] or {}), uuid4())
         document_uuid = merged_document.metadata.get("uuid", uuid4())
 
         # Clear old documents, add new one
