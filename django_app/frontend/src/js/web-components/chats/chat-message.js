@@ -59,6 +59,7 @@ class ChatMessage extends HTMLElement {
    * Streams an LLM response
    * @param {string} message
    * @param {string[]} selectedDocuments
+   * @param {string} llm
    * @param {string | undefined} sessionId
    * @param {string} endPoint
    * @param {HTMLElement} chatControllerRef
@@ -66,6 +67,7 @@ class ChatMessage extends HTMLElement {
   stream = (
     message,
     selectedDocuments,
+    llm,
     sessionId,
     endPoint,
     chatControllerRef
@@ -112,6 +114,7 @@ class ChatMessage extends HTMLElement {
           message: message,
           sessionId: sessionId,
           selectedFiles: selectedDocuments,
+          llm: llm,
         })
       );
       this.dataset.status = "streaming";
