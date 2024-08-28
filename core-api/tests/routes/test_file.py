@@ -1,6 +1,7 @@
 import json
 from http import HTTPStatus
 from pathlib import Path
+from uuid import UUID
 
 import pytest
 from elasticsearch import NotFoundError
@@ -82,11 +83,28 @@ def test_delete_file(
     When I DELETE it to /file
     I Expect to see it removed from s3 and elastic-search, including the chunks
     """
+
+    def make_chunk_file_filter(file_uuid: UUID) -> list[dict]:
+        return [
+            {
+                "bool": {
+                    "should": [
+                        {"term": {"parent_file_uuid.keyword": str(file_uuid)}},
+                        {"term": {"metadata.parent_file_uuid.keyword": str(file_uuid)}},
+                    ]
+                }
+            }
+        ]
+
     # Check assets exist
     assert es_storage_handler.read_item(item_uuid=file_pdf.uuid, model_type="file")
-    assert es_storage_handler.list_all_items("chunk", file_pdf.creator_user_uuid)
+    assert es_storage_handler.list_all_items(
+        model_type="chunk", user_uuid=file_pdf.creator_user_uuid, filters=make_chunk_file_filter(file_pdf.uuid)
+    )
     assert es_storage_handler.read_item(item_uuid=file_html.uuid, model_type="file")
-    assert es_storage_handler.list_all_items("chunk", file_html.creator_user_uuid)
+    assert es_storage_handler.list_all_items(
+        model_type="chunk", user_uuid=file_html.creator_user_uuid, filters=make_chunk_file_filter(file_html.uuid)
+    )
 
     # Delete the PDF
     response = app_client.delete(f"/file/{file_pdf.uuid}", headers=headers)
@@ -99,12 +117,16 @@ def test_delete_file(
     with pytest.raises(NotFoundError):
         es_storage_handler.read_item(item_uuid=file_pdf.uuid, model_type="file")
 
-    assert not es_storage_handler.list_all_items("chunk", file_pdf.creator_user_uuid)
+    assert not es_storage_handler.list_all_items(
+        model_type="chunk", user_uuid=file_pdf.creator_user_uuid, filters=make_chunk_file_filter(file_pdf.uuid)
+    )
 
     # Check the HTML still exists
 
     assert es_storage_handler.read_item(item_uuid=file_html.uuid, model_type="file")
-    assert es_storage_handler.list_all_items("chunk", file_html.creator_user_uuid)
+    assert es_storage_handler.list_all_items(
+        model_type="chunk", user_uuid=file_html.creator_user_uuid, filters=make_chunk_file_filter(file_html.uuid)
+    )
 
 
 def test_delete_missing_file(app_client: TestClient, headers: dict[str, str]):
