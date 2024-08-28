@@ -53,11 +53,21 @@ class ChatConsumer(AsyncWebsocketConsumer):
         data = json.loads(text_data or bytes_data)
         logger.debug("received %s from browser", data)
         user_message_text: str = data.get("message", "")
-        session_id: str | None = data.get("sessionId", None)
+        chat_backend = data.get("llm")
+        chat_id = data.get("sessionId")
+
         selected_file_uuids: Sequence[UUID] = [UUID(u) for u in data.get("selectedFiles", [])]
         user: User = self.scope.get("user", None)
 
-        session: Chat = await self.get_session(session_id, user, user_message_text)
+        if chat_id:
+            session = Chat.objects.get(id=chat_id)
+            if chat_backend and chat_backend != session.chat_backend:
+                session.chat_backend = chat_backend
+                await session.save()
+        else:
+            session_name = user_message_text[0 : settings.CHAT_TITLE_LENGTH]
+            session = Chat(name=session_name, user=user, chat_backend=chat_backend)
+            await session.asave()
 
         # save user message
         selected_files = await self.get_files_by_id(selected_file_uuids, user)
@@ -163,17 +173,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
     async def send_to_server(websocket: WebSocketClientProtocol, data: Mapping[str, Any]) -> None:
         logger.debug("sending %s to core-api", data)
         return await websocket.send(json.dumps(data, default=str))
-
-    @staticmethod
-    @database_sync_to_async
-    def get_session(session_id: str, user: User, user_message_text: str) -> Chat:
-        if session_id:
-            session = Chat.objects.get(id=session_id)
-        else:
-            session_name = user_message_text[0 : settings.CHAT_TITLE_LENGTH]
-            session = Chat(name=session_name, user=user)
-            session.save()
-        return session
 
     @staticmethod
     @database_sync_to_async
