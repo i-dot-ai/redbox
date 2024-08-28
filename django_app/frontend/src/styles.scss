@@ -69,45 +69,6 @@ body {
   filter: brightness(0.9);
 }
 
-/* Documents page */
-.rb-doc-retention {
-  align-items: center;
-  display: flex;
-  gap: 0.5rem;
-}
-.rb-doclist-mobile__item {
-  border: 1px solid #b1b4b6;
-  border-radius: 0.25rem;
-  list-style-type: none;
-}
-.rb-doclist-desktop {
-  display: none;
-}
-@media (min-width: 448px) {
-  .rb-doclist-mobile {
-    display: none;
-  }
-  .rb-doclist-desktop {
-    display: block;
-  }
-}
-/* Use this if more than one button in Actions
-.rb-docs__actions .govuk-button {
-  width: 100%;
-}
-@media (min-width: 1024px) {
-  .rb-docs__actions {
-    width: 13.25rem;
-  }
-  .rb-docs__actions .govuk-button {
-    width: auto;
-  }
-}
-.rb-docs__status {
-  margin-top: 2px;
-}
-
-
 /* File upload */
 .rb-file-types {
   font-size: 0.875rem;
@@ -139,6 +100,28 @@ upload-button {
   --iai-background-colour-2: #f8f8f8;
 }
 @import "../node_modules/i.ai-design-system/dist/styles.scss";
+
+/* Documents page - to come after i.AI Design System */
+.rb-doc-retention {
+  align-items: center;
+  display: flex;
+  gap: 0.5rem;
+}
+.iai-doc-list {
+  display: none;
+}
+.iai-doc-list:has(.iai-doc-list__item) {
+  display: block;
+}
+.rb-docs__show-if-docs {
+  display: none;
+}
+.rb-docs:has(.iai-doc-list__item) .rb-docs__show-if-docs {
+  display: block;
+}
+.rb-docs:has(.iai-doc-list__item) .rb-docs__show-if-no-docs {
+  display: none;
+}
 
 /* Chats Page - to come after i.AI Design System */
 @import "./chat-styles.scss";

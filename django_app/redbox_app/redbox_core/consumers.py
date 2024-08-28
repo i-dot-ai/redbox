@@ -116,6 +116,9 @@ class ChatConsumer(AsyncWebsocketConsumer):
                     "session_id": chat_message.chat.id,
                 },
             )
+        except RateLimitError as e:
+            logger.exception("429 error from core.", exc_info=e)
+            await self.send_to_client("error", error_messages.RATE_LIMITED)
 
         except (TimeoutError, ConnectionClosedError, CancelledError, CoreError) as e:
             logger.exception("Error from core.", exc_info=e)
@@ -176,6 +179,9 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 message = error_messages.QUESTION_TOO_LONG
                 await self.send_to_client("text", message)
                 return message
+            case "rate-limit":
+                message = f"{response.data.code}: {response.data.message}"
+                raise RateLimitError(message)
             case _:
                 message = f"{response.data.code}: {response.data.message}"
                 raise CoreError(message)
@@ -201,3 +207,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
 class CoreError(Exception):
     message: str
+
+
+class RateLimitError(CoreError):
+    pass

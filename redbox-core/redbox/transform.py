@@ -1,6 +1,11 @@
-from langchain_core.documents.base import Document
+import tiktoken
+from langchain_core.documents import Document
+
+from langchain_core.callbacks.manager import dispatch_custom_event
+from langchain_core.runnables import RunnableLambda
 
 from redbox.models.chat import SourceDocument
+from redbox.models.chain import DocumentState, RequestMetadata
 
 
 def map_document_to_source_document(d: Document) -> SourceDocument:
@@ -45,3 +50,38 @@ def combine_documents(a: Document, b: Document):
     combined_metadata["links"] = combine_values("links")
 
     return Document(page_content=combined_content, metadata=combined_metadata)
+
+
+def structure_documents(docs: list[Document]) -> DocumentState:
+    return {
+        g_id: {d.metadata["uuid"]: d for d in [d for d in docs if d.metadata["parent_file_uuid"] == g_id]}
+        for g_id in [d.metadata["parent_file_uuid"] for d in docs]
+    }
+
+
+def flatten_document_state(documents: DocumentState) -> list[Document]:
+    if not documents:
+        return []
+    return [document for group in documents.values() for document in group.values()]
+
+
+@RunnableLambda
+def to_request_metadata(prompt_response_model: dict):
+    """Takes a dictionary with keys 'prompt', 'response' and 'model' and creates metadata.
+
+    Will also emit events for metadata updates.
+    """
+    model = prompt_response_model["model"]
+
+    try:
+        tokeniser = tiktoken.encoding_for_model(model)
+    except KeyError:
+        tokeniser = tiktoken.get_encoding("cl100k_base")
+
+    input_tokens = {model: len(tokeniser.encode(prompt_response_model["prompt"]))}
+    output_tokens = {model: len(tokeniser.encode(prompt_response_model["response"]))}
+
+    dispatch_custom_event("on_metadata_generation", {"input_tokens": input_tokens})
+    dispatch_custom_event("on_metadata_generation", {"output_tokens": output_tokens})
+
+    return RequestMetadata(input_tokens=input_tokens, output_tokens=output_tokens)

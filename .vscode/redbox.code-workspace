@@ -1,6 +1,10 @@
 {
 	"folders": [
 		{
+			"name": "Django App",
+			"path": "../django_app"
+		},
+		{
 			"name": "Core API",
 			"path": "../core-api"
 		},

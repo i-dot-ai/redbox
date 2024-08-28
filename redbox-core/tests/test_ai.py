@@ -6,25 +6,29 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 from uuid import UUID
 
-import jsonlines
-import pytest
-from deepeval import assert_test
-from deepeval.metrics import (
-    AnswerRelevancyMetric,
-    ContextualPrecisionMetric,
-    ContextualRecallMetric,
-    ContextualRelevancyMetric,
-    FaithfulnessMetric,
-    HallucinationMetric,
-)
-from deepeval.models.base_model import DeepEvalBaseLLM
-from deepeval.test_case import LLMTestCase
-from elasticsearch.helpers import bulk, scan
+try:
+    import jsonlines
+    import pytest
+    from deepeval import assert_test
+    from deepeval.metrics import (
+        AnswerRelevancyMetric,
+        ContextualPrecisionMetric,
+        ContextualRecallMetric,
+        ContextualRelevancyMetric,
+        FaithfulnessMetric,
+        HallucinationMetric,
+    )
+    from deepeval.models.base_model import DeepEvalBaseLLM
+    from deepeval.test_case import LLMTestCase
+    from elasticsearch.helpers import bulk, scan
+except ImportError:
+    pass
+
 from pydantic import BaseModel, Field
 
 from redbox.chains.components import get_chat_llm, get_parameterised_retriever, get_tokeniser
-from redbox.graph.search import get_search_graph
-from redbox.models.chain import ChainInput, ChainState
+from redbox.graph.root import get_search_graph
+from redbox.models.chain import RedboxQuery, RedboxState
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Generator
@@ -201,9 +205,9 @@ def make_test_case(
         for case in experiment.test_cases:
             if case.input == prompt:
                 return case
-        answer: ChainState = rag_chain.invoke(
-            input=ChainState(
-                query=ChainInput(
+        answer: RedboxState = rag_chain.invoke(
+            input=RedboxState(
+                query=RedboxQuery(
                     question=prompt,
                     file_uuids=[],
                     user_uuid=str(user_uuid),
@@ -214,7 +218,7 @@ def make_test_case(
 
         return LLMTestCase(
             input=prompt,
-            actual_output=answer["response"],
+            actual_output=answer["text"],
             expected_output=expected_output,
             context=context,
             retrieval_context=[doc.page_content for doc in answer["source_documents"]],

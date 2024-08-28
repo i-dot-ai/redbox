@@ -46,8 +46,15 @@ def sanitise_string(string: str | None) -> str | None:
 
 
 class AISettings(UUIDPrimaryKeyBase, TimeStampedModel):
+    class ChatBackend(models.TextChoices):
+        GPT_35_TURBO = "gpt-35-turbo-16k", _("gpt-35-turbo-16k")
+        GPT_4_TURBO = "gpt-4-turbo-2024-04-09", _("gpt-4-turbo-2024-04-09")
+        GPT_4_OMNI = "gpt-4o", _("gpt-4o")
+
     label = models.CharField(max_length=50, unique=True)
-    context_window_size = models.PositiveIntegerField(default=8_000)
+    max_document_tokens = models.PositiveIntegerField(default=1_000_000, null=True, blank=True)
+    context_window_size = models.PositiveIntegerField(default=128_000)
+    llm_max_tokens = models.PositiveIntegerField(default=1024)
     rag_k = models.PositiveIntegerField(default=30)
     rag_num_candidates = models.PositiveIntegerField(default=10)
     rag_desired_chunk_size = models.PositiveIntegerField(default=300)
@@ -66,10 +73,12 @@ class AISettings(UUIDPrimaryKeyBase, TimeStampedModel):
     chat_map_system_prompt = models.TextField(default=prompts.CHAT_MAP_SYSTEM_PROMPT)
     chat_map_question_prompt = models.TextField(default=prompts.CHAT_MAP_QUESTION_PROMPT)
     reduce_system_prompt = models.TextField(default=prompts.REDUCE_SYSTEM_PROMPT)
-    llm_max_tokens = models.PositiveIntegerField(default=1024)
     match_boost = models.PositiveIntegerField(default=1)
     knn_boost = models.PositiveIntegerField(default=1)
     similarity_threshold = models.PositiveIntegerField(default=0)
+    chat_backend = models.CharField(
+        max_length=64, choices=ChatBackend, help_text="LLM to use in chat", default=ChatBackend.GPT_4_OMNI
+    )
 
     def __str__(self) -> str:
         return str(self.label)
@@ -138,6 +147,7 @@ class User(BaseUser, UUIDPrimaryKeyBase):
         GOVERNMENT_DIGITAL_SERVICE = "Government Digital Service", _("Government Digital Service")
         CENTRAL_DIGITAL_AND_DATA_OFFICE = "Central Digital and Data Office", _("Central Digital and Data Office")
         GOVERNMENT_COMMUNICATION_SERVICE = "Government Communication Service", _("Government Communication Service")
+        GOVERNMENT_PEOPLE_GROUP = "Government People Group", _("Government People Group")
         GOVERNMENT_SECURITY_GROUP = "Government Security Group", _("Government Security Group")
         UKSV = "UKSV", _("UKSV")
         GOVERNMENT_COMMERCIAL_AND_GRANTS_FUNCTION = (
@@ -223,6 +233,7 @@ class User(BaseUser, UUIDPrimaryKeyBase):
     ai_experience = models.CharField(null=True, blank=True, max_length=25, choices=AIExperienceLevel)
     profession = models.CharField(null=True, blank=True, max_length=4, choices=Profession)
     ai_settings = models.ForeignKey(AISettings, on_delete=models.SET_DEFAULT, default="default", to_field="label")
+    is_developer = models.BooleanField(null=True, blank=True, default=False, help_text="is this user a developer?")
     objects = BaseUserManager()
 
     def __str__(self) -> str:  # pragma: no cover
@@ -256,6 +267,9 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
     original_file_name = models.TextField(max_length=2048, blank=True, null=True)
     core_file_uuid = models.UUIDField(null=True)
     last_referenced = models.DateTimeField(blank=True, null=True)
+    ingest_error = models.TextField(
+        max_length=2048, blank=True, null=True, help_text="error, if any, encountered during ingest"
+    )
 
     def __str__(self) -> str:  # pragma: no cover
         return f"{self.original_file_name} {self.user}"

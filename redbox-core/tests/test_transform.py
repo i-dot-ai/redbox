@@ -4,8 +4,9 @@ from uuid import uuid4
 import pytest
 from langchain_core.documents.base import Document
 
-from redbox.transform import combine_documents, map_document_to_source_document
-from redbox.api.runnables import filter_by_elbow
+from redbox.models.chain import RequestMetadata
+from redbox.transform import combine_documents, map_document_to_source_document, to_request_metadata
+from redbox.retriever.retrievers import filter_by_elbow
 
 document_created = datetime.now(UTC)
 
@@ -185,8 +186,42 @@ def test_elbow_filter(scores: list[float], target_len: int):
 
     documents = [Document(page_content="foo", metadata={"score": score}) for score in scores]
 
-    documents_filtered = elbow_filter.invoke(documents)
+    documents_filtered = elbow_filter(documents)
 
     assert (
         len(documents_filtered) == target_len
     ), f"Expected {target_len} documents to pass. Received: {len(documents_filtered)}"
+
+
+@pytest.mark.parametrize(
+    ("output, expected"),
+    [
+        (
+            {
+                "prompt": "Lorem ipsum dolor sit amet.",
+                "response": (
+                    "Lorem ipsum dolor sit amet, consectetur adipiscing elit, "
+                    "sed do eiusmod tempor incididunt ut labore et dolore magna "
+                    "aliqua. "
+                ),
+                "model": "gpt-4o",
+            },
+            RequestMetadata(input_tokens={"gpt-4o": 6}, output_tokens={"gpt-4o": 23}),
+        ),
+        (
+            {
+                "prompt": "Lorem ipsum dolor sit amet.",
+                "response": (
+                    "Lorem ipsum dolor sit amet, consectetur adipiscing elit, "
+                    "sed do eiusmod tempor incididunt ut labore et dolore magna "
+                    "aliqua. "
+                ),
+                "model": "unknown-model",
+            },
+            RequestMetadata(input_tokens={"unknown-model": 6}, output_tokens={"unknown-model": 23}),
+        ),
+    ],
+)
+def test_to_request_metadata(output, expected):
+    result = to_request_metadata.invoke(output)
+    assert result == expected, f"Expected: {expected} Result: {result}"

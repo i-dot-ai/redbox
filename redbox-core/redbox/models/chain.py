@@ -7,7 +7,8 @@ used in conjunction with langchain this is the tidiest boxing of pydantic v1 we 
 
 from typing import TypedDict, Literal, Annotated, Required, NotRequired
 from uuid import UUID
-from operator import add
+from functools import reduce
+from enum import StrEnum
 
 from pydantic import BaseModel, Field
 from langchain_core.documents import Document
@@ -88,7 +89,10 @@ CONDENSE_QUESTION_PROMPT = "{question}\n=========\n Standalone question: "
 class AISettings(BaseModel):
     """prompts and other AI settings"""
 
-    context_window_size: int = 8_000
+    max_document_tokens: int = 1_000_000
+    context_window_size: int = 128_000
+    llm_max_tokens: int = 1024
+
     rag_k: int = 30
     rag_num_candidates: int = 10
     rag_desired_chunk_size: int = 300
@@ -107,16 +111,70 @@ class AISettings(BaseModel):
     chat_map_system_prompt: str = CHAT_MAP_SYSTEM_PROMPT
     chat_map_question_prompt: str = CHAT_MAP_QUESTION_PROMPT
     reduce_system_prompt: str = REDUCE_SYSTEM_PROMPT
-    llm_max_tokens: int = 1024
 
-    # size: int = 19 rag_k
     match_boost: int = 1
-    # num_candidates: int = 13 rag_num_candidates
     knn_boost: int = 1
     similarity_threshold: int = 0
 
+    # this is also the azure_openai_model
+    chat_backend: Literal["gpt-35-turbo-16k", "gpt-4-turbo-2024-04-09", "gpt-4o"] = "gpt-4o"
 
-class ChainInput(BaseModel):
+
+class DocumentState(TypedDict):
+    group: dict[UUID, Document]
+
+
+def document_reducer(current: DocumentState | None, update: DocumentState | list[DocumentState]) -> DocumentState:
+    """Merges two document states based on the following rules.
+
+    * Groups are matched by the group key.
+    * Documents are matched by the group key and document key.
+
+    Then:
+
+    * If key(s) are matched, the group or Document is replaced
+    * If key(s) are matched and the key is None, the key is cleared
+    * If key(s) aren't matched, group or Document is added
+    """
+    # If update is actually a list of state updates, run them one by one
+    if isinstance(update, list):
+        reduced = reduce(lambda current, update: document_reducer(current, update), update, current)
+        return reduced
+
+    # If state is empty, return update
+    if current is None:
+        return update
+
+    # Copy current
+    reduced = {k: v.copy() for k, v in current.items()}
+
+    # Update with update
+    for group_key, group in update.items():
+        # If group is None, remove from output if a group key is matched
+        if group is None:
+            reduced.pop(group_key, None)
+            continue
+
+        # If group key isn't matched, add it
+        if group_key not in reduced:
+            reduced[group_key] = group
+
+        for document_key, document in group.items():
+            if document is None:
+                # If Document is None, remove from output if a group and document key is matched
+                reduced[group_key].pop(document_key, None)
+            else:
+                # Otherwise, update or add the value
+                reduced[group_key][document_key] = document
+
+        # Remove group_key from output if it becomes empty after updates
+        if not reduced[group_key]:
+            del reduced[group_key]
+
+    return reduced
+
+
+class RedboxQuery(BaseModel):
     question: str = Field(description="The last user chat message")
     file_uuids: list[UUID] = Field(description="List of files to process")
     user_uuid: UUID = Field(description="User the chain in executing for")
@@ -124,13 +182,71 @@ class ChainInput(BaseModel):
     ai_settings: AISettings = Field(description="User request AI settings", default_factory=AISettings)
 
 
-class ChainState(TypedDict):
-    query: Required[ChainInput]
-    documents: NotRequired[list[Document]]
-    response: NotRequired[str | None]
+class RequestMetadata(TypedDict):
+    input_tokens: dict[str, int]
+    output_tokens: dict[str, int]
+
+
+def add_tokens_by_model(current: dict[str, int], update: dict[str, int]):
+    result = current.copy()
+
+    for key, value in update.items():
+        result[key] = (result.get(key) or 0) + value
+
+    return result
+
+
+def metadata_reducer(current: RequestMetadata | None, update: RequestMetadata | list[RequestMetadata] | None):
+    """Merges two metadata states."""
+    # If update is actually a list of state updates, run them one by one
+    if isinstance(update, list):
+        reduced = reduce(lambda current, update: metadata_reducer(current, update), update, current)
+        return reduced
+
+    if current is None:
+        return update
+    if update is None:
+        return current
+
+    input_tokens = add_tokens_by_model(current.get("input_tokens") or {}, update.get("input_tokens") or {})
+    output_tokens = add_tokens_by_model(current.get("output_tokens") or {}, update.get("output_tokens") or {})
+
+    return RequestMetadata(
+        input_tokens=input_tokens,
+        output_tokens=output_tokens,
+    )
+
+
+class RedboxState(TypedDict):
+    request: Required[RedboxQuery]
+    documents: Annotated[NotRequired[DocumentState], document_reducer]
+    text: NotRequired[str | None]
     route_name: NotRequired[str | None]
-    prompt_args: NotRequired[dict[str, str]]
+    metadata: Annotated[NotRequired[dict], metadata_reducer]
 
 
-class ChatMapReduceState(ChainState):
-    intermediate_docs: Annotated[NotRequired[list[Document]], add]
+class PromptSet(StrEnum):
+    Chat = "chat"
+    ChatwithDocs = "chat_with_docs"
+    ChatwithDocsMapReduce = "chat_with_docs_map_reduce"
+    Search = "search"
+    CondenseQuestion = "condense_question"
+
+
+def get_prompts(state: RedboxState, prompt_set: PromptSet) -> tuple[str, str]:
+    if prompt_set == PromptSet.Chat:
+        system_prompt = state["request"].ai_settings.chat_system_prompt
+        question_prompt = state["request"].ai_settings.chat_question_prompt
+    elif prompt_set == PromptSet.ChatwithDocs:
+        system_prompt = state["request"].ai_settings.chat_with_docs_system_prompt
+        question_prompt = state["request"].ai_settings.chat_with_docs_question_prompt
+    elif prompt_set == PromptSet.ChatwithDocsMapReduce:
+        system_prompt = state["request"].ai_settings.chat_map_system_prompt
+        question_prompt = state["request"].ai_settings.chat_map_question_prompt
+    elif prompt_set == PromptSet.Search:
+        system_prompt = state["request"].ai_settings.retrieval_system_prompt
+        question_prompt = state["request"].ai_settings.retrieval_question_prompt
+    elif prompt_set == PromptSet.CondenseQuestion:
+        system_prompt = state["request"].ai_settings.condense_system_prompt
+        question_prompt = state["request"].ai_settings.condense_question_prompt
+    return (system_prompt, question_prompt)

@@ -37,15 +37,32 @@ class ElasticCloudSettings(BaseModel):
 class Settings(BaseSettings):
     """Settings for the redbox application."""
 
-    anthropic_api_key: str | None = None
-    openai_api_key: str = "NotAKey"
-    azure_openai_api_key: str = "NotAKey"
-    azure_openai_endpoint: str | None = None
+    # azure/gpt-35-turbo-16k
+    openai_api_version_35t: str = "2023-12-01-preview"
+    azure_openai_api_key_35t: str = "not a key"
+    azure_openai_fallback_api_key_35t: str = "not a key"
+    azure_openai_endpoint_35t: str = "not an endpoint"
+    azure_openai_fallback_endpoint_35t: str | None = None
 
-    openai_api_version: str = "2023-12-01-preview"
+    # azure/gpt-4
+    openai_api_version_4t: str = "2024-02-01"
+    azure_openai_api_key_4t: str = "not a key"
+    azure_openai_fallback_api_key_4t: str = "not a key"
+    azure_openai_endpoint_4t: str = "not an endpoint"
+    azure_openai_fallback_endpoint_4t: str | None = None
+
+    # azure/gpt-4o
+    openai_api_version_4o: str = "2024-02-01"
+    azure_openai_api_key_4o: str = "not a key"
+    azure_openai_fallback_api_key_4o: str = "not a key"
+    azure_openai_endpoint_4o: str = "not an endpoint"
+    azure_openai_fallback_endpoint_4o: str | None = None
+
+    embedding_openai_api_key: str = "NotAKey"
+    embedding_azure_openai_endpoint: str = "not an endpoint"
     azure_api_version_embeddings: str = "2024-02-01"
-    azure_openai_model: str = "azure/gpt-35-turbo-16k"
     azure_embedding_model: str = "text-embedding-3-large"
+
     llm_max_tokens: int = 1024
 
     embedding_backend: Literal["azure", "openai", "fake"] = "azure"
@@ -57,8 +74,6 @@ class Settings(BaseSettings):
 
     embedding_openai_base_url: str | None = None
     embedding_openai_model: str = "text-embedding-ada-002"
-
-    chat_backend: Literal["azure", "openai"] = "azure"
 
     partition_strategy: Literal["auto", "fast", "ocr_only", "hi_res"] = "fast"
     clustering_strategy: Literal["full"] | None = None
@@ -80,15 +95,11 @@ class Settings(BaseSettings):
 
     aws_region: str = "eu-west-2"
     bucket_name: str = "redbox-storage-dev"
-    embedding_model: str = "all-mpnet-base-v2"
-
-    embed_queue_name: str = "redbox-embedder-queue"
-    ingest_queue_name: str = "redbox-ingester-queue"
 
     ## Chunks
     ### Normal
-    worker_ingest_min_chunk_size: int = 120
-    worker_ingest_max_chunk_size: int = 300
+    worker_ingest_min_chunk_size: int = 600
+    worker_ingest_max_chunk_size: int = 800
     ### Largest
     worker_ingest_largest_chunk_size: int = 96000
     worker_ingest_largest_chunk_overlap: int = 0
@@ -96,9 +107,6 @@ class Settings(BaseSettings):
     response_no_doc_available: str = "No available data for selected files. They may need to be removed and added again"
     response_max_content_exceeded: str = "Max content exceeded. Try smaller or fewer documents"
     response_no_such_keyword: str = "That keyword isn't recognised"
-
-    redis_host: str = "redis"
-    redis_port: int = 6379
 
     object_store: str = "minio"
 
@@ -163,7 +171,3 @@ class Settings(BaseSettings):
             raise NotImplementedError
 
         return client
-
-    @property
-    def redis_url(self) -> str:
-        return f"redis://{self.redis_host}:{self.redis_port}/"

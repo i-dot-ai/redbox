@@ -49,27 +49,30 @@
       #}
 
       {# New Docs list #}
-      {% if completed_files or processing_files %}
-        <h2 class="govuk-heading-m">Ready to use</h2>
-        <p>These documents are ready to chat with. Documents are deleted after 30 days</p>
+      <h2 class="govuk-heading-m govuk-!-margin-top-7">Ready to use</h2>
+      <div class="rb-docs">
+        <p class="rb-docs__show-if-no-docs">Documents that are ready to chat with will be displayed here.</p>
+        <p class="rb-docs__show-if-docs">These documents are ready to chat with. Documents are deleted after 30 days.</p>
         <doc-list>
           {{ iaiDocList(
             docs = completed_files,
             type = "complete"
           ) }}
         </doc-list>
-      {% endif %}
+      </div>
 
-      {% if processing_files %}
-        <h2 class="govuk-heading-m govuk-!-margin-top-7">Processing</h2>
-        <p>These documents will not be included in chat responses</p>
+      <h2 class="govuk-heading-m govuk-!-margin-top-7">Processing</h2>
+      <div class="rb-docs">
+        <p class="rb-docs__show-if-no-docs">Uploaded files that are processing will be displayed here.</p>
+        <p class="rb-docs__show-if-docs">These documents will not be included in chat responses.</p>
         {{ iaiDocList(
           docs = processing_files,
           type = "processing"
         ) }}
-      {% endif %}
+      </div>
 
-      <div class="govuk-button-group govuk-!-margin-top-7">
+      <h2 class="govuk-visually-hidden">General actions</h2>
+      <div class="govuk-button-group govuk-!-margin-top-8">
         {% if completed_files or processing_files %}
           {{ govukButton(
             text="Start chat",

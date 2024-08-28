@@ -7,10 +7,10 @@ from redbox import Redbox
 from core_api.auth import get_user_uuid, get_ws_user_uuid
 from fastapi import Depends, FastAPI, WebSocket
 from fastapi.encoders import jsonable_encoder
-from openai import APIError
+from openai import APIError, RateLimitError
 from langchain_core.documents import Document
 
-from redbox.models.chain import ChainInput, ChainChatMessage, ChainState
+from redbox.models.chain import RedboxQuery, RedboxState, ChainChatMessage, RequestMetadata
 from redbox.models.chat import ChatRequest, ChatResponse, ClientResponse, ErrorDetail
 from redbox.transform import map_document_to_source_document
 
@@ -44,8 +44,8 @@ async def rag_chat(
     redbox: Annotated[Redbox, Depends(get_redbox)],
 ) -> ChatResponse:
     """REST endpoint. Get a LLM response to a question history and file."""
-    state = ChainState(
-        query=ChainInput(
+    state = RedboxState(
+        request=RedboxQuery(
             question=chat_request.message_history[-1].text,
             file_uuids=[f.uuid for f in chat_request.selected_files],
             user_uuid=user_uuid,
@@ -79,8 +79,8 @@ async def rag_chat_streamed(
     request = await websocket.receive_text()
     chat_request = ChatRequest.model_validate_json(request)
 
-    state = ChainState(
-        query=ChainInput(
+    state = RedboxState(
+        request=RedboxQuery(
             question=chat_request.message_history[-1].text,
             file_uuids=[f.uuid for f in chat_request.selected_files],
             user_uuid=user_uuid,
@@ -103,19 +103,31 @@ async def rag_chat_streamed(
             websocket,
         )
 
+    async def on_metadata_response(metadata: RequestMetadata):
+        print(f"Request Metadata: {metadata}")
+
     try:
         await redbox.run(
             state,
             response_tokens_callback=on_llm_response,
             route_name_callback=on_route_choice,
             documents_callback=on_documents_available,
+            metadata_tokens_callback=on_metadata_response,
         )
+    except RateLimitError as e:
+        log.exception("Rate limit error", exc_info=e)
+        await send_to_client(
+            ClientResponse(resource_type="error", data=ErrorDetail(code="rate-limit", message=type(e).__name__)),
+            websocket,
+        )
+        await websocket.close()
     except APIError as e:
         log.exception("Unhandled exception.", exc_info=e)
         await send_to_client(
             ClientResponse(resource_type="error", data=ErrorDetail(code="unexpected", message=type(e).__name__)),
             websocket,
         )
+        await websocket.close()
     finally:
         await send_to_client(ClientResponse(resource_type="end"), websocket)
         await websocket.close()
