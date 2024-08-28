@@ -81,8 +81,8 @@ def test_build_llm_chain(test_case):
     assert (
         final_state["text"] == test_case.test_data.expected_llm_response[-1]
     ), f"Expected LLM response: '{test_case.test_data.expected_llm_response[-1]}'. Received '{final_state["text"]}'"
-    assert final_state["metadata"]["input_tokens"] > 0
-    assert final_state["metadata"]["output_tokens"] > 0
+    assert sum(final_state["metadata"]["input_tokens"].values()) > 0
+    assert sum(final_state["metadata"]["output_tokens"].values()) > 0
 
 
 CHAT_TEST_CASES = generate_test_cases(

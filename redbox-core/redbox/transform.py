@@ -66,15 +66,16 @@ def flatten_document_state(documents: DocumentState) -> list[Document]:
 
 
 @RunnableLambda
-def to_request_metadata(output: dict):
-    """Takes a dictionary with keys 'prompt' and 'response' creates metadata.
+def to_request_metadata(prompt_response_model: dict):
+    """Takes a dictionary with keys 'prompt', 'response' and 'model' and creates metadata.
 
     Will also emit events for metadata updates.
     """
     tokeniser = tiktoken.get_encoding("cl100k_base")
 
-    input_tokens = len(tokeniser.encode(output["prompt"]))
-    output_tokens = len(tokeniser.encode(output["response"]))
+    model = prompt_response_model["model"]
+    input_tokens = {model: len(tokeniser.encode(prompt_response_model["prompt"]))}
+    output_tokens = {model: len(tokeniser.encode(prompt_response_model["response"]))}
 
     dispatch_custom_event("on_metadata_generation", {"input_tokens": input_tokens})
     dispatch_custom_event("on_metadata_generation", {"output_tokens": output_tokens})

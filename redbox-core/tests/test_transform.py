@@ -204,8 +204,9 @@ def test_elbow_filter(scores: list[float], target_len: int):
                     "sed do eiusmod tempor incididunt ut labore et dolore magna "
                     "aliqua. "
                 ),
+                "model": "gpt-4o",
             },
-            RequestMetadata(input_tokens=6, output_tokens=23),
+            RequestMetadata(input_tokens={"gpt-4o": 6}, output_tokens={"gpt-4o": 23}),
         ),
     ],
 )

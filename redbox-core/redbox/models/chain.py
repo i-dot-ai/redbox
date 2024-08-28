@@ -183,8 +183,17 @@ class RedboxQuery(BaseModel):
 
 
 class RequestMetadata(TypedDict):
-    input_tokens: int
-    output_tokens: int
+    input_tokens: dict[str, int]
+    output_tokens: dict[str, int]
+
+
+def add_tokens_by_model(current: dict[str, int], update: dict[str, int]):
+    result = current.copy()
+
+    for key, value in update.items():
+        result[key] = (result.get(key) or 0) + value
+
+    return result
 
 
 def metadata_reducer(current: RequestMetadata | None, update: RequestMetadata | list[RequestMetadata] | None):
@@ -198,9 +207,12 @@ def metadata_reducer(current: RequestMetadata | None, update: RequestMetadata | 
     if update is None:
         return current
 
+    input_tokens = add_tokens_by_model(current.get("input_tokens") or {}, update.get("input_tokens") or {})
+    output_tokens = add_tokens_by_model(current.get("output_tokens") or {}, update.get("output_tokens") or {})
+
     return RequestMetadata(
-        input_tokens=current.get("input_tokens", 0) + update.get("input_tokens", 0),
-        output_tokens=current.get("output_tokens", 0) + update.get("output_tokens", 0),
+        input_tokens=input_tokens,
+        output_tokens=output_tokens,
     )
 
 

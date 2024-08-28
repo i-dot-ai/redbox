@@ -174,8 +174,8 @@ async def test_chat(test: RedboxChatTestCase, env, mocker):
         final_state["route_name"] == test_case.test_data.expected_route
     ), f"Expected Route: '{ test_case.test_data.expected_route}'. Received '{final_state["route_name"]}'"
     if final_state.get("metadata"):
-        assert final_state["metadata"].get("input_tokens", 0) > 0
-        assert final_state["metadata"].get("output_tokens", 0) > 0
+        assert sum(final_state["metadata"].get("input_tokens", {}).values()) > 0
+        assert sum(final_state["metadata"].get("input_tokens", {}).values()) > 0
 
 
 @pytest.mark.asyncio
@@ -219,7 +219,7 @@ async def test_streaming(test: RedboxChatTestCase, env, mocker):
         assert len(token_events) > 1, f"Expected tokens as a stream. Received: {token_events}"
 
     llm_response = "".join(token_events)
-    metadata_response = metadata_reducer({"input_tokens": 0, "output_tokens": 0}, metadata_events)
+    metadata_response = metadata_reducer({"input_tokens": {}, "output_tokens": {}}, metadata_events)
 
     assert (
         final_state["text"] == llm_response

@@ -72,9 +72,14 @@ def build_llm_chain(prompt_set: PromptSet, llm: BaseChatModel) -> Runnable:
 
     Permits both invoke and astream_events.
     """
+    model_name = getattr(llm, "model_name", "unknown-model")
     return (
         build_chat_prompt_from_messages_runnable(prompt_set)
-        | {"prompt": RunnableLambda(lambda prompt: prompt.to_string()), "response": llm | StrOutputParser()}
+        | {
+            "prompt": RunnableLambda(lambda prompt: prompt.to_string()),
+            "response": llm | StrOutputParser(),
+            "model": lambda x: model_name,
+        }
         | {"text": itemgetter("response"), "metadata": to_request_metadata}
     )
 
