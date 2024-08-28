@@ -1,5 +1,5 @@
 from redbox_app.redbox_core.views.auth_views import sign_in_link_sent_view, sign_in_view, signed_out_view
-from redbox_app.redbox_core.views.chat_views import ChatsTitleView, ChatsView, post_message
+from redbox_app.redbox_core.views.chat_views import ChatsTitleView, ChatsView
 from redbox_app.redbox_core.views.citation_views import CitationsView
 from redbox_app.redbox_core.views.demographics_views import CheckDemographicsView, DemographicsView
 from redbox_app.redbox_core.views.document_views import (
@@ -25,7 +25,6 @@ __all__ = [
     "file_status_api_view",
     "health",
     "homepage_view",
-    "post_message",
     "remove_doc_view",
     "privacy_notice_view",
     "accessibility_statement_view",

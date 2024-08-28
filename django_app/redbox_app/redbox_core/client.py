@@ -7,11 +7,10 @@ import requests
 from botocore.exceptions import ClientError
 from dataclasses_json import Undefined, dataclass_json
 from django.conf import settings
-from django.forms.models import model_to_dict
 from yarl import URL
 
 from redbox.models.file import File as CoreFile
-from redbox_app.redbox_core.models import AISettings, User
+from redbox_app.redbox_core.models import User
 
 logger = logging.getLogger(__name__)
 
@@ -80,31 +79,6 @@ class CoreApiClient:
         core_file = response.json()
         core_file["creator_user_uuid"] = user.id
         return CoreFile(**core_file)
-
-    def get_ai_settings(self, user: User) -> AISettings:
-        return model_to_dict(
-            user.ai_settings,
-            fields=[field.name for field in user.ai_settings._meta.fields if field.name != "label"],  # noqa: SLF001
-        )
-
-    def rag_chat(
-        self, message_history: list[dict[str, str]], selected_files: list[dict[str, str]], user: User
-    ) -> CoreChatResponse:
-        response = requests.post(
-            self.url / "chat/rag",
-            json={
-                "message_history": message_history,
-                "selected_files": selected_files,
-                "ai_settings": self.get_ai_settings(user),
-            },
-            headers={"Authorization": user.get_bearer_token()},
-            timeout=60,
-        )
-        response.raise_for_status()
-        response_data = CoreChatResponse.schema().loads(response.content)
-        logger.debug("response_data: %s", response_data)
-
-        return response_data
 
     def delete_file(self, file_id: UUID, user: User) -> CoreFile:
         url = self.url / "file" / str(file_id)
