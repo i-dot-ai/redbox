@@ -83,6 +83,11 @@ class ChatResponse(BaseModel):
     route_name: ChatRoute = Field(description="the conversation route taken")
 
 
+class MetadataDetail(BaseModel):
+    input_tokens: dict[str, int] | None = None
+    output_tokens: dict[str, int] | None = None
+
+
 class ErrorDetail(BaseModel):
     code: str
     message: str
@@ -90,5 +95,5 @@ class ErrorDetail(BaseModel):
 
 class ClientResponse(BaseModel):
     # Needs to match CoreChatResponse in django_app/redbox_app/redbox_core/consumers.py
-    resource_type: Literal["text", "documents", "route_name", "end", "error"]
-    data: list[SourceDocument] | str | ErrorDetail | None = None
+    resource_type: str
+    data: list[SourceDocument] | str | MetadataDetail | ErrorDetail | None = None

@@ -104,7 +104,11 @@ async def rag_chat_streamed(
         )
 
     async def on_metadata_response(metadata: RequestMetadata):
-        print(f"Request Metadata: {metadata}")
+        log.info(metadata)
+        await send_to_client(
+            ClientResponse(resource_type="metadata", data=metadata),
+            websocket,
+        )
 
     try:
         await redbox.run(
