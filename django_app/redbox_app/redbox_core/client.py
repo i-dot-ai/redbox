@@ -1,11 +1,9 @@
 import logging
-from dataclasses import dataclass
 from uuid import UUID
 
 import boto3
 import requests
 from botocore.exceptions import ClientError
-from dataclasses_json import Undefined, dataclass_json
 from django.conf import settings
 from yarl import URL
 
@@ -40,26 +38,6 @@ def s3_client():
         if e.response["Error"]["Code"] != "BucketAlreadyOwnedByYou":
             raise
     return client
-
-
-@dataclass_json(undefined=Undefined.EXCLUDE)
-@dataclass(frozen=True)
-class CoreChatResponseDoc:
-    file_uuid: str
-    page_content: str
-
-
-@dataclass_json(undefined=Undefined.EXCLUDE)
-@dataclass(frozen=True)
-class CoreChatResponse:
-    output_text: str
-    source_documents: list[CoreChatResponseDoc]
-
-
-@dataclass_json(undefined=Undefined.EXCLUDE)
-@dataclass(frozen=True)
-class FileStatus:
-    processing_status: str
 
 
 class CoreApiClient:

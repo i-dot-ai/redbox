@@ -55,7 +55,6 @@ class UnstructuredTitleLoader(BaseRedboxFileLoader):
             yield Document(
                 page_content=raw_chunk["text"],
                 metadata=ChunkMetadata(
-                    parent_file_uuid=self.file.uuid,
                     creator_user_uuid=self.file.creator_user_uuid,
                     index=i,
                     file_name=raw_chunk["metadata"].get("filename"),

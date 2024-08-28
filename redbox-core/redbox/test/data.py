@@ -15,9 +15,8 @@ log = logging.getLogger()
 
 
 def generate_docs(
-    parent_file_uuid: UUID,
     creator_user_uuid: UUID,
-    file_name: str = "test_data.pdf",
+    s3_key: str = "test_data.pdf",
     page_numbers: list[int] = [1, 2, 3, 4],
     total_tokens=6000,
     number_of_docs: int = 10,
@@ -27,10 +26,9 @@ def generate_docs(
         yield Document(
             page_content=f"Document {i} text",
             metadata=ChunkMetadata(
-                parent_file_uuid=parent_file_uuid,
                 creator_user_uuid=creator_user_uuid,
                 index=i,
-                file_name=file_name,
+                file_name=s3_key,
                 page_number=page_numbers[int(i / number_of_docs) * len(page_numbers)],
                 created_datetime=datetime.datetime.now(datetime.UTC),
                 token_count=int(total_tokens / number_of_docs),
@@ -55,10 +53,10 @@ class RedboxChatTestCase:
         query: RedboxQuery,
         test_data: RedboxTestData,
         docs_user_uuid_override: UUID | None = None,
-        docs_file_uuids_override: list[UUID] | None = None,
+        s3_keys_override: list[str] | None = None,
     ):
         # Use separate file_uuids if specified else match the query
-        all_file_uuids = docs_file_uuids_override if docs_file_uuids_override else [id for id in query.file_uuids]
+        all_s3_keys = s3_keys_override if s3_keys_override else query.s3_keys
         # Use separate user uuid if specific else match the query
         docs_user_uuid = docs_user_uuid_override if docs_user_uuid_override else query.user_uuid
 
@@ -72,13 +70,13 @@ class RedboxChatTestCase:
 
         file_generators = [
             generate_docs(
-                parent_file_uuid=file_uuid,
+                s3_key=s3_key,
                 creator_user_uuid=docs_user_uuid,
-                total_tokens=int(test_data.tokens_in_all_docs / len(all_file_uuids)),
-                number_of_docs=int(test_data.number_of_docs / len(all_file_uuids)),
+                total_tokens=int(test_data.tokens_in_all_docs / len(all_s3_keys)),
+                number_of_docs=int(test_data.number_of_docs / len(all_s3_keys)),
                 chunk_resolution=test_data.chunk_resolution,
             )
-            for file_uuid in all_file_uuids
+            for s3_key in all_s3_keys
         ]
         self.query = query
         self.docs = [doc for generator in file_generators for doc in generator]
@@ -89,7 +87,7 @@ class RedboxChatTestCase:
         return [
             doc
             for doc in self.docs
-            if doc.metadata["parent_file_uuid"] in set(self.query.file_uuids)
+            if doc.metadata["file_name"] in set(self.query.s3_keys)
             and doc.metadata["creator_user_uuid"] == self.query.user_uuid
         ]
 

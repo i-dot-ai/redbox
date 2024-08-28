@@ -34,7 +34,7 @@ from redbox.transform import flatten_document_state, structure_documents
 LANGGRAPH_DEBUG = True
 
 CHAT_PROMPT_TEST_CASES = generate_test_cases(
-    query=RedboxQuery(question="What is AI?", file_uuids=[], user_uuid=uuid4(), chat_history=[]),
+    query=RedboxQuery(question="What is AI?", s3_keys=[], user_uuid=uuid4(), chat_history=[]),
     test_data=[
         RedboxTestData(0, 0, expected_llm_response=["Testing Response 1"], expected_route=ChatRoute.chat),
         RedboxTestData(
@@ -86,7 +86,7 @@ def test_build_llm_chain(test_case):
 
 
 CHAT_TEST_CASES = generate_test_cases(
-    query=RedboxQuery(question="What is AI?", file_uuids=[], user_uuid=uuid4(), chat_history=[]),
+    query=RedboxQuery(question="What is AI?", s3_keys=[], user_uuid=uuid4(), chat_history=[]),
     test_data=[RedboxTestData(0, 0, expected_llm_response=["Testing Response 1"], expected_route=ChatRoute.chat)],
     test_id="Chat pattern",
 )
@@ -112,7 +112,7 @@ def test_build_chat_pattern(test_case: RedboxChatTestCase, mocker):
 
 
 SET_ROUTE_TEST_CASES = generate_test_cases(
-    query=RedboxQuery(question="What is AI?", file_uuids=[], user_uuid=uuid4(), chat_history=[]),
+    query=RedboxQuery(question="What is AI?", s3_keys=[], user_uuid=uuid4(), chat_history=[]),
     test_data=[
         RedboxTestData(0, 0, expected_llm_response=["Testing Response 1"], expected_route=ChatRoute.chat),
         RedboxTestData(
@@ -138,7 +138,7 @@ def test_build_set_route_pattern(test_case: RedboxChatTestCase):
 
 
 RETRIEVER_TEST_CASES = generate_test_cases(
-    query=RedboxQuery(question="What is AI?", file_uuids=[uuid4(), uuid4()], user_uuid=uuid4(), chat_history=[]),
+    query=RedboxQuery(question="What is AI?", s3_keys=["s3_key_1", "s3_key_2"], user_uuid=uuid4(), chat_history=[]),
     test_data=[
         RedboxTestData(
             2, 40_000, expected_llm_response=["Testing Response 1"], expected_route=ChatRoute.chat_with_docs
@@ -177,7 +177,7 @@ def test_build_retrieve_pattern(test_case: RedboxChatTestCase, mock_retriever: B
 
 
 MERGE_TEST_CASES = generate_test_cases(
-    query=RedboxQuery(question="What is AI?", file_uuids=[uuid4(), uuid4()], user_uuid=uuid4(), chat_history=[]),
+    query=RedboxQuery(question="What is AI?", s3_keys=["s3_key_1", "s3_key_2"], user_uuid=uuid4(), chat_history=[]),
     test_data=[
         RedboxTestData(
             2, 40_000, expected_llm_response=["Testing Response 1"], expected_route=ChatRoute.chat_with_docs
@@ -215,7 +215,7 @@ def test_build_merge_pattern(test_case: RedboxChatTestCase, mocker):
 
 
 STUFF_TEST_CASES = generate_test_cases(
-    query=RedboxQuery(question="What is AI?", file_uuids=[uuid4(), uuid4()], user_uuid=uuid4(), chat_history=[]),
+    query=RedboxQuery(question="What is AI?", s3_keys=["s3_key_1", "s3_key_2"], user_uuid=uuid4(), chat_history=[]),
     test_data=[
         RedboxTestData(
             2, 40_000, expected_llm_response=["Testing Response 1"], expected_route=ChatRoute.chat_with_docs
@@ -251,7 +251,7 @@ def test_build_passthrough_pattern():
     """Tests a given state["request"] correctly changes state["text"]."""
     passthrough = build_passthrough_pattern()
     state = RedboxState(
-        request=RedboxQuery(question="What is AI?", file_uuids=[], user_uuid=uuid4(), chat_history=[]),
+        request=RedboxQuery(question="What is AI?", s3_keys=[], user_uuid=uuid4(), chat_history=[]),
     )
 
     response = passthrough(state)
@@ -264,7 +264,7 @@ def test_build_set_text_pattern():
     """Tests a given value correctly changes the state["text"]."""
     set_text = build_set_text_pattern(text="An hendy hap ychabbe ychent.")
     state = RedboxState(
-        request=RedboxQuery(question="What is AI?", file_uuids=[], user_uuid=uuid4(), chat_history=[]),
+        request=RedboxQuery(question="What is AI?", s3_keys=[], user_uuid=uuid4(), chat_history=[]),
     )
 
     response = set_text(state)
@@ -276,10 +276,8 @@ def test_build_set_text_pattern():
 def test_empty_process():
     """Tests the empty process doesn't touch the state whatsoever."""
     state = RedboxState(
-        request=RedboxQuery(question="What is AI?", file_uuids=[], user_uuid=uuid4(), chat_history=[]),
-        documents=structure_documents(
-            [doc for doc in generate_docs(parent_file_uuid=uuid4(), creator_user_uuid=uuid4())]
-        ),
+        request=RedboxQuery(question="What is AI?", s3_keys=[], user_uuid=uuid4(), chat_history=[]),
+        documents=structure_documents([doc for doc in generate_docs(s3_key="s3_key", creator_user_uuid=uuid4())]),
         text="Foo",
         route_name=ChatRoute.chat_with_docs_map_reduce,
     )
@@ -299,9 +297,7 @@ def test_empty_process():
 CLEAR_DOC_TEST_CASES = [
     RedboxState(
         request=RedboxQuery(question="What is AI?", file_uuids=[], user_uuid=uuid4(), chat_history=[]),
-        documents=structure_documents(
-            [doc for doc in generate_docs(parent_file_uuid=uuid4(), creator_user_uuid=uuid4())]
-        ),
+        documents=structure_documents([doc for doc in generate_docs(s3_key="s3_key", creator_user_uuid=uuid4())]),
         text="Foo",
         route_name=ChatRoute.chat_with_docs_map_reduce,
     ),

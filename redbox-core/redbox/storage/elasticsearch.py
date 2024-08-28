@@ -160,7 +160,7 @@ class ElasticsearchStorageHandler(BaseStorageHandler):
         return query
 
     @classmethod
-    def get_with_parent_file_filter(cls, parent_file_uuid: UUID | str):
+    def get_with_parent_file_filter(cls, file_name: str):
         return {
-            "term": {"metadata.parent_file_uuid.keyword": str(parent_file_uuid)},
+            "term": {"metadata.file_name.keyword": file_name},
         }
