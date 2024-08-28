@@ -13,7 +13,7 @@ from langchain_core.language_models.fake_chat_models import GenericFakeChatModel
 from starlette.websockets import WebSocketDisconnect
 
 from redbox.models.chain import RedboxQuery
-from redbox.models.chat import ChatResponse, ChatRoute
+from redbox.models.chat import ChatRoute
 from redbox.test.data import RedboxChatTestCase, generate_test_cases, RedboxTestData
 
 if TYPE_CHECKING:
@@ -156,43 +156,6 @@ def uploaded_docs(test_case: RedboxChatTestCase, elasticsearch_store: Elasticsea
 @pytest.fixture
 def query_headers(test_case: RedboxChatTestCase):
     return {"Authorization": f"Bearer {jwt.encode({"user_uuid": str(test_case.query.user_uuid)}, key="nvjkernd")}"}
-
-
-def test_rag(test_case: RedboxChatTestCase, client, uploaded_docs, query_headers, mocker):
-    llm = GenericFakeChatModel(messages=iter(test_case.test_data.expected_llm_response))
-
-    with (
-        mocker.patch("redbox.graph.nodes.processes.get_chat_llm", return_value=llm),
-    ):
-        response = client.post(
-            "/chat/rag",
-            headers=query_headers,
-            json={
-                "message_history": [
-                    {"role": message.role, "text": message.text} for message in test_case.query.chat_history
-                ]
-                + [{"role": "user", "text": test_case.query.question}],
-                "selected_files": [{"uuid": str(file_uuid)} for file_uuid in test_case.query.file_uuids],
-            },
-        )
-    assert response.status_code == 200, response.text
-    chat_response = ChatResponse.model_validate(response.json())
-
-    assert (
-        chat_response.output_text == test_case.test_data.expected_llm_response[-1]
-    ), f"Expected response [{test_case.test_data.expected_llm_response}] received [{chat_response.output_text}]"
-    assert (
-        chat_response.route_name == test_case.test_data.expected_route
-    ), f"Expected route [{test_case.test_data.expected_route}] received [{chat_response.route_name}]"
-    returned_document_texts = set([d.page_content for d in chat_response.source_documents])
-    test_query_matching_document_texts = set([d.page_content for d in test_case.get_docs_matching_query()])
-    unexpected_returned_documents = list(
-        filter(
-            lambda d: d.page_content in returned_document_texts - test_query_matching_document_texts,
-            chat_response.source_documents,
-        )
-    )
-    assert len(unexpected_returned_documents) == 0, f"Unexpected source docs in result {unexpected_returned_documents}"
 
 
 def test_rag_chat_streamed(test_case: RedboxChatTestCase, client, uploaded_docs, query_headers, mocker):

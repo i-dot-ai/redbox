@@ -17,7 +17,7 @@ from websockets.client import connect
 from yarl import URL
 
 from redbox_app.redbox_core import error_messages
-from redbox_app.redbox_core.models import AISettings, Chat, ChatMessage, ChatRoleEnum, Citation, File, User
+from redbox_app.redbox_core.models import Chat, ChatMessage, ChatRoleEnum, Citation, File, User
 
 OptFileSeq = Sequence[File] | None
 logger = logging.getLogger(__name__)
@@ -78,7 +78,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 message = {
                     "message_history": message_history,
                     "selected_files": [{"uuid": f.core_file_uuid} for f in selected_files],
-                    "ai_settings": await self.get_ai_settings(user),
+                    "ai_settings": await self.get_ai_settings(session),
                 }
                 await self.send_to_server(core_websocket, message)
                 await self.send_to_client("session-id", session.id)
@@ -227,11 +227,13 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
     @staticmethod
     @database_sync_to_async
-    def get_ai_settings(user: User) -> AISettings:
-        return model_to_dict(
-            user.ai_settings,
-            fields=[field.name for field in user.ai_settings._meta.fields if field.name != "label"],  # noqa: SLF001
+    def get_ai_settings(chat: Chat) -> dict:
+        model_dict = model_to_dict(
+            chat.user.ai_settings,
+            exclude=["label", "chat_backend"],
         )
+        model_dict["chat_backend"] = chat.chat_backend
+        return model_dict
 
 
 class CoreError(Exception):

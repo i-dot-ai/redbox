@@ -14,7 +14,7 @@ from websockets.legacy.client import Connect
 
 from redbox_app.redbox_core import error_messages
 from redbox_app.redbox_core.consumers import ChatConsumer
-from redbox_app.redbox_core.models import Chat, ChatMessage, ChatRoleEnum, File, User
+from redbox_app.redbox_core.models import Chat, ChatBackend, ChatMessage, ChatRoleEnum, File, User
 from redbox_app.redbox_core.prompts import CHAT_MAP_QUESTION_PROMPT
 
 logger = logging.getLogger(__name__)
@@ -271,7 +271,7 @@ async def test_chat_consumer_with_selected_files(
                 {"role": "user", "text": "Third question, with selected files?"},
             ],
             "selected_files": selected_file_core_uuids,
-            "ai_settings": await ChatConsumer.get_ai_settings(alice),
+            "ai_settings": await ChatConsumer.get_ai_settings(chat_with_files),
         }
     )
     mocked_websocket.send.assert_called_with(expected)
@@ -387,18 +387,22 @@ async def test_chat_consumer_with_explicit_no_document_selected_error(
 
 @pytest.mark.django_db()
 @pytest.mark.asyncio()
+@pytest.mark.parametrize("chat_backend", [ChatBackend.GPT_4_OMNI, ChatBackend.GPT_4_TURBO, ChatBackend.GPT_35_TURBO])
 async def test_chat_consumer_get_ai_settings(
-    alice: User, mocked_connect_with_explicit_no_document_selected_error: Connect
+    chat: Chat, mocked_connect_with_explicit_no_document_selected_error: Connect, chat_backend: ChatBackend
 ):
+    chat.chat_backend = chat_backend
+
     with patch("redbox_app.redbox_core.consumers.connect", new=mocked_connect_with_explicit_no_document_selected_error):
         communicator = WebsocketCommunicator(ChatConsumer.as_asgi(), "/ws/chat/")
-        communicator.scope["user"] = alice
+        communicator.scope["user"] = chat.user
         connected, _ = await communicator.connect()
         assert connected
 
-        ai_settings = await ChatConsumer.get_ai_settings(alice)
+        ai_settings = await ChatConsumer.get_ai_settings(chat)
 
         assert ai_settings["chat_map_question_prompt"] == CHAT_MAP_QUESTION_PROMPT
+        assert ai_settings["chat_backend"] == chat_backend
         with pytest.raises(KeyError):
             ai_settings["label"]
 

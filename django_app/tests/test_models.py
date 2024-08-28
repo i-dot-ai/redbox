@@ -3,7 +3,7 @@ from datetime import UTC, datetime, timedelta
 import pytest
 from django.core.files.uploadedfile import SimpleUploadedFile
 
-from redbox_app.redbox_core.models import File, StatusEnum
+from redbox_app.redbox_core.models import AISettings, Chat, ChatBackend, File, StatusEnum, User
 
 
 @pytest.mark.django_db()
@@ -29,3 +29,18 @@ def test_file_model_last_referenced(peter_rabbit, s3_client):  # noqa: ARG001
     new_file.last_referenced = new_date
     new_file.save()
     assert new_file.last_referenced == new_date
+
+
+@pytest.mark.django_db()
+@pytest.mark.parametrize("chat_backend", [ChatBackend.GPT_4_OMNI, ChatBackend.GPT_4_TURBO, ChatBackend.GPT_35_TURBO])
+def chat_backend_defaults(alice: User, chat_backend: ChatBackend):
+    """given that a user has a ai_settings with a specific backend
+    when we create a new chat for the user with no chat_backend set
+    I expect it to inherit the chat_backend from the user's ai_settings"""
+    ai_settings = AISettings(chat_backend=chat_backend, label=chat_backend.value)
+    alice.ai_settings = ai_settings
+    chat = Chat(user=alice)
+    chat.save()
+    chat.refresh_from_db()
+    assert chat.chat_backend == chat_backend
+    chat.delete()
