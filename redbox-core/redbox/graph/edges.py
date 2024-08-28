@@ -65,7 +65,7 @@ def build_keyword_detection_conditional(*allowed_routes: ChatRoute) -> Runnable:
 
 
 def documents_selected_conditional(state: RedboxState) -> bool:
-    return len(state["request"].file_uuids) > 0
+    return len(state["request"].s3_keys) > 0
 
 
 def multiple_docs_in_group_conditional(state: RedboxState) -> bool:

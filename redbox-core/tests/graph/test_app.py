@@ -26,7 +26,7 @@ TEST_CASES = [
     test_case
     for generated_cases in [
         generate_test_cases(
-            query=RedboxQuery(question="What is AI?", file_uuids=[], user_uuid=uuid4(), chat_history=[]),
+            query=RedboxQuery(question="What is AI?", s3_keys=[], user_uuid=uuid4(), chat_history=[]),
             test_data=[
                 RedboxTestData(0, 0, expected_llm_response=["Testing Response 1"], expected_route=ChatRoute.chat),
                 RedboxTestData(1, 100, expected_llm_response=["Testing Response 1"], expected_route=ChatRoute.chat),
@@ -35,7 +35,7 @@ TEST_CASES = [
             test_id="Basic Chat",
         ),
         generate_test_cases(
-            query=RedboxQuery(question="What is AI?", file_uuids=[uuid4()], user_uuid=uuid4(), chat_history=[]),
+            query=RedboxQuery(question="What is AI?", s3_keys=["s3_key"], user_uuid=uuid4(), chat_history=[]),
             test_data=[
                 RedboxTestData(
                     1, 1000, expected_llm_response=["Testing Response 1"], expected_route=ChatRoute.chat_with_docs
@@ -51,7 +51,7 @@ TEST_CASES = [
         ),
         generate_test_cases(
             query=RedboxQuery(
-                question="What is AI?", file_uuids=[uuid4(), uuid4()], user_uuid=uuid4(), chat_history=[]
+                question="What is AI?", s3_keys=["s3_key_1", "s3_key_2"], user_uuid=uuid4(), chat_history=[]
             ),
             test_data=[
                 RedboxTestData(
@@ -78,7 +78,7 @@ TEST_CASES = [
             test_id="Chat with multiple docs",
         ),
         generate_test_cases(
-            query=RedboxQuery(question="What is AI?", file_uuids=[uuid4()], user_uuid=uuid4(), chat_history=[]),
+            query=RedboxQuery(question="What is AI?", s3_keys=["s3_key"], user_uuid=uuid4(), chat_history=[]),
             test_data=[
                 RedboxTestData(
                     2,
@@ -92,7 +92,7 @@ TEST_CASES = [
             test_id="Chat with large doc",
         ),
         generate_test_cases(
-            query=RedboxQuery(question="What is AI?", file_uuids=[uuid4()], user_uuid=uuid4(), chat_history=[]),
+            query=RedboxQuery(question="What is AI?", s3_keys=["s3_key"], user_uuid=uuid4(), chat_history=[]),
             test_data=[
                 RedboxTestData(
                     10,
@@ -104,7 +104,7 @@ TEST_CASES = [
             test_id="Document too big for system",
         ),
         generate_test_cases(
-            query=RedboxQuery(question="@search What is AI?", file_uuids=[uuid4()], user_uuid=uuid4(), chat_history=[]),
+            query=RedboxQuery(question="@search What is AI?", s3_keys=["s3_key"], user_uuid=uuid4(), chat_history=[]),
             test_data=[
                 RedboxTestData(
                     1,
@@ -123,7 +123,7 @@ TEST_CASES = [
         ),
         generate_test_cases(
             query=RedboxQuery(
-                question="@nosuchkeyword What is AI?", file_uuids=[uuid4()], user_uuid=uuid4(), chat_history=[]
+                question="@nosuchkeyword What is AI?", s3_keys=["s3_key"], user_uuid=uuid4(), chat_history=[]
             ),
             test_data=[
                 RedboxTestData(

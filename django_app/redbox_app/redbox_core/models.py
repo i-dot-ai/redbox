@@ -262,7 +262,7 @@ INACTIVE_STATUSES = [StatusEnum.deleted, StatusEnum.errored]
 
 class File(UUIDPrimaryKeyBase, TimeStampedModel):
     status = models.CharField(choices=StatusEnum.choices, null=False, blank=False)
-    original_file = models.FileField(storage=settings.STORAGES["default"]["BACKEND"])
+    original_file = models.FileField(storage=settings.STORAGES["default"]["BACKEND"], unique=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     original_file_name = models.TextField(max_length=2048, blank=True, null=True)
     core_file_uuid = models.UUIDField(null=True)
