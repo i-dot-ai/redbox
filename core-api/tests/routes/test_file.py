@@ -4,12 +4,15 @@ from pathlib import Path
 
 import pytest
 from elasticsearch import NotFoundError
+from fastapi.testclient import TestClient
+from redbox.models import File
+from redbox.storage import ElasticsearchStorageHandler
 
 from core_api.routes.file import env
 
 
 @pytest.mark.asyncio()
-async def test_post_file_upload(app_client, file_pdf_path: Path, headers):
+async def test_post_file_upload(app_client: TestClient, file_pdf_path: Path, headers: dict[str, str]):
     """
     Given a new file
     When I POST it to /file
@@ -32,7 +35,7 @@ async def test_post_file_upload(app_client, file_pdf_path: Path, headers):
     assert file["ingest_status"] == "processing"
 
 
-def test_list_files(app_client, stored_file_1, headers):
+def test_list_files(app_client: TestClient, stored_file_1: File, headers: dict[str, str]):
     """
     Given a previously saved file
     When I GET all files from /file
@@ -47,7 +50,7 @@ def test_list_files(app_client, stored_file_1, headers):
     assert str(stored_file_1.uuid) in [file["uuid"] for file in file_list]
 
 
-def test_get_file(app_client, stored_file_1, headers):
+def test_get_file(app_client: TestClient, stored_file_1: File, headers: dict[str, str]):
     """
     Given a previously saved file
     When I GET it from /file/uuid
@@ -57,7 +60,7 @@ def test_get_file(app_client, stored_file_1, headers):
     assert response.status_code == HTTPStatus.OK
 
 
-def test_get_missing_file(app_client, headers):
+def test_get_missing_file(app_client: TestClient, headers: dict[str, str]):
     """
     Given a nonexistent file
     When I GET it from /file/uuid
@@ -67,30 +70,32 @@ def test_get_missing_file(app_client, headers):
     assert response.status_code == HTTPStatus.NOT_FOUND
 
 
-def test_delete_file(app_client, elasticsearch_storage_handler, chunked_file, headers):
+def test_delete_file(
+    app_client: TestClient, es_storage_handler: ElasticsearchStorageHandler, chunked_file: File, headers: dict[str, str]
+):
     """
     Given a previously saved file
     When I DELETE it to /file
     I Expect to see it removed from s3 and elastic-search, including the chunks
     """
     # check assets exist
-    assert elasticsearch_storage_handler.read_item(item_uuid=chunked_file.uuid, model_type="file")
-    assert elasticsearch_storage_handler.list_all_items("chunk", chunked_file.creator_user_uuid)
+    assert es_storage_handler.read_item(item_uuid=chunked_file.uuid, model_type="file")
+    assert es_storage_handler.list_all_items("chunk", chunked_file.creator_user_uuid)
 
     response = app_client.delete(f"/file/{chunked_file.uuid}", headers=headers)
     assert response.status_code == HTTPStatus.OK
 
-    elasticsearch_storage_handler.refresh()
+    es_storage_handler.refresh()
 
     # check assets dont exist
 
     with pytest.raises(NotFoundError):
-        elasticsearch_storage_handler.read_item(item_uuid=chunked_file.uuid, model_type="file")
+        es_storage_handler.read_item(item_uuid=chunked_file.uuid, model_type="file")
 
-    assert not elasticsearch_storage_handler.list_all_items("chunk", chunked_file.creator_user_uuid)
+    assert not es_storage_handler.list_all_items("chunk", chunked_file.creator_user_uuid)
 
 
-def test_delete_missing_file(app_client, headers):
+def test_delete_missing_file(app_client: TestClient, headers: dict[str, str]):
     """
     Given a nonexistent file
     When I DELETE it to /file
@@ -100,7 +105,7 @@ def test_delete_missing_file(app_client, headers):
     assert response.status_code == HTTPStatus.NOT_FOUND
 
 
-def test_get_missing_file_chunks(app_client, headers):
+def test_get_missing_file_chunks(app_client: TestClient, headers: dict[str, str]):
     """
     Given a nonexistent file
     When I GET it from /file/uuid/chunks
