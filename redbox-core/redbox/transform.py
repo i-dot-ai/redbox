@@ -71,9 +71,13 @@ def to_request_metadata(prompt_response_model: dict):
 
     Will also emit events for metadata updates.
     """
-    tokeniser = tiktoken.get_encoding("cl100k_base")
-
     model = prompt_response_model["model"]
+
+    try:
+        tokeniser = tiktoken.encoding_for_model(model)
+    except KeyError:
+        tokeniser = tiktoken.get_encoding("cl100k_base")
+
     input_tokens = {model: len(tokeniser.encode(prompt_response_model["prompt"]))}
     output_tokens = {model: len(tokeniser.encode(prompt_response_model["response"]))}
 

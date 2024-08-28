@@ -208,6 +208,18 @@ def test_elbow_filter(scores: list[float], target_len: int):
             },
             RequestMetadata(input_tokens={"gpt-4o": 6}, output_tokens={"gpt-4o": 23}),
         ),
+        (
+            {
+                "prompt": "Lorem ipsum dolor sit amet.",
+                "response": (
+                    "Lorem ipsum dolor sit amet, consectetur adipiscing elit, "
+                    "sed do eiusmod tempor incididunt ut labore et dolore magna "
+                    "aliqua. "
+                ),
+                "model": "unknown-model",
+            },
+            RequestMetadata(input_tokens={"unknown-model": 6}, output_tokens={"unknown-model": 23}),
+        ),
     ],
 )
 def test_to_request_metadata(output, expected):
