@@ -97,6 +97,15 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 chat=chat_message.chat, text=reply, role=ChatRoleEnum.ai, route=route
             )
 
+            await self.send_to_client(
+                "end",
+                {
+                    "message_id": chat_message.id,
+                    "title": chat_message.text,
+                    "session_id": chat_message.chat.id,
+                },
+            )
+
             for file, citations in files_and_citations:
                 file.last_referenced = timezone.now()
                 await file.asave()
@@ -108,14 +117,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
                         page_numbers=citation.page_numbers,
                     )
 
-            await self.send_to_client(
-                "end",
-                {
-                    "message_id": chat_message.id,
-                    "title": chat_message.text,
-                    "session_id": chat_message.chat.id,
-                },
-            )
         except RateLimitError as e:
             logger.exception("429 error from core.", exc_info=e)
             await self.send_to_client("error", error_messages.RATE_LIMITED)
