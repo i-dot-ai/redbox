@@ -123,14 +123,12 @@ async def rag_chat_streamed(
             ClientResponse(resource_type="error", data=ErrorDetail(code="rate-limit", message=type(e).__name__)),
             websocket,
         )
-        await websocket.close()
     except APIError as e:
         log.exception("Unhandled exception.", exc_info=e)
         await send_to_client(
             ClientResponse(resource_type="error", data=ErrorDetail(code="unexpected", message=type(e).__name__)),
             websocket,
         )
-        await websocket.close()
     finally:
         await send_to_client(ClientResponse(resource_type="end"), websocket)
         await websocket.close()
