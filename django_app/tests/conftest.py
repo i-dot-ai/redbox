@@ -15,6 +15,7 @@ from redbox_app.redbox_core.models import (
     AISettings,
     Chat,
     ChatMessage,
+    ChatMessageTokenUse,
     ChatRoleEnum,
     Citation,
     File,
@@ -147,6 +148,18 @@ def chat_message_with_citation(chat: Chat, uploaded_file: File) -> ChatMessage:
         route="chat",
     )
     Citation.objects.create(file=uploaded_file, chat_message=chat_message, text="Lorem ipsum.")
+    return chat_message
+
+
+@pytest.fixture()
+def chat_message_with_citation_and_tokens(chat_message_with_citation: ChatMessage) -> ChatMessage:
+    chat_message = chat_message_with_citation
+    ChatMessageTokenUse.objects.create(
+        chat_message=chat_message, use_type=ChatMessageTokenUse.UseTypeEnum.INPUT, model_name="gpt-4o", token_count=20
+    )
+    ChatMessageTokenUse.objects.create(
+        chat_message=chat_message, use_type=ChatMessageTokenUse.UseTypeEnum.OUTPUT, model_name="gpt-4o", token_count=200
+    )
     return chat_message
 
 
