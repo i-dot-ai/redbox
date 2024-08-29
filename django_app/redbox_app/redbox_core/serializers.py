@@ -6,7 +6,7 @@ from redbox_app.redbox_core.models import Chat, ChatMessage, ChatMessageTokenUse
 class FileSerializer(serializers.ModelSerializer):
     class Meta:
         model = File
-        fields = ("unique_name",)
+        fields = ("original_file_name",)
 
 
 class ChatMessageTokenUseSerializer(serializers.ModelSerializer):
