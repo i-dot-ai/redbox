@@ -484,3 +484,21 @@ variable "worker_ingest_largest_chunk_overlap" {
   default     = 0
   description = "Largest chunk resolution. Size of overlap between chunks produced by the worker"
 }
+
+variable "django_queue_timeout" {
+  type        = number
+  default     = 300
+  description = "How long to wait for unstructured to complete task"
+}
+
+variable "django_queue_retry" {
+  type        = number
+  default     = 300
+  description = "How long to wait between retrying unstructured task"
+}
+
+variable "django_queue_max_attempts" {
+  type        = number
+  default     = 3
+  description = "How many attempts to run unstructured task"
+}
