@@ -40,7 +40,7 @@ jobs:
         echo "infra-config-repo=${INFRA_CONFIG_REPO}" >> $GITHUB_OUTPUT
 
   start-runner:
-    uses: i-dot-ai/i-dot-ai-core-github-actions/.github/workflows/start-runner.yml@main
+    uses: i-dot-ai/i-dot-ai-core-github-actions/.github/workflows/start-runner.yml@noticket/fix_git_creds
     needs: set-vars
     with:
       EC2_INSTANCE_TYPE: ${{ needs.set-vars.outputs.ec2-instance-type }}
