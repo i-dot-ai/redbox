@@ -11,9 +11,4 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.AlterField(
-            model_name='file',
-            name='original_file',
-            field=models.FileField(storage=storages.backends.s3.S3Storage, unique=True, upload_to=''),
-        ),
     ]
