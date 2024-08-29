@@ -176,32 +176,15 @@ def test_delete_expired_files(
 
 
 @pytest.mark.django_db()
-def test_delete_expired_files_with_api_error(uploaded_file: File, requests_mock: Mocker):
+def test_delete_expired_files_with_api_error(uploaded_file: File, mocker):
     # Given
     mock_file = uploaded_file
     mock_file.last_referenced = EXPIRED_FILE_DATE
     mock_file.save()
 
-    matcher = re.compile(f"http://{settings.CORE_API_HOST}:{settings.CORE_API_PORT}/file/[0-9a-f]|\\-")
-
-    requests_mock.delete(
-        matcher,
-        status_code=HTTPStatus.CREATED,
-        json={
-            "key": mock_file.original_file_name,
-            "bucket": settings.BUCKET_NAME,
-            "uuid": str(uuid.uuid4()),
-        },
-    )
-    (
-        requests_mock.delete(
-            f"http://{settings.CORE_API_HOST}:{settings.CORE_API_PORT}/file/{mock_file.core_file_uuid}",
-            exc=requests.exceptions.HTTPError,
-        ),
-    )
-
     # When
-    call_command("delete_expired_data")
+    with mocker.patch("redbox_app.redbox_core.client.delete_documents_for_file", side_effect=Exception('an error')):
+        call_command("delete_expired_data")
 
     # Then
     assert File.objects.get(id=mock_file.id).status == StatusEnum.errored

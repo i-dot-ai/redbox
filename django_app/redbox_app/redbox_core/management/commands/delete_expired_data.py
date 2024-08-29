@@ -60,13 +60,13 @@ class Command(BaseCommand):
                     delete_documents_for_file(file.unique_name)
                     file.delete_from_s3()
 
-                except RequestException as e:
-                    logger.exception("Error deleting file object %s using core-api", file, exc_info=e)
+                except BotoCoreError as e:
+                    logger.exception("Error deleting file object %s from storage", file, exc_info=e)
                     file.status = StatusEnum.errored
                     file.save()
                     failure_counter += 1
-                except BotoCoreError as e:
-                    logger.exception("Error deleting file object %s from storage", file, exc_info=e)
+                except Exception as e:
+                    logger.exception("Error deleting file object %s", file, exc_info=e)
                     file.status = StatusEnum.errored
                     file.save()
                     failure_counter += 1
