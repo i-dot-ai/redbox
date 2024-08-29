@@ -493,7 +493,7 @@ class ChatMessageTokenUse(UUIDPrimaryKeyBase, TimeStampedModel):
         max_length=10, choices=UseTypeEnum, help_text="input or output tokens", default=UseTypeEnum.INPUT
     )
     model_name = models.CharField(max_length=50, null=True, blank=True)
-    tokens = models.PositiveIntegerField(null=True, blank=True)
+    token_count = models.PositiveIntegerField(null=True, blank=True)
 
     def __str__(self) -> str:
         return f"{self.chat_message} {self.model_name} {self.use_type}"

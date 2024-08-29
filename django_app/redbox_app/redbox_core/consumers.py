@@ -194,20 +194,20 @@ class ChatConsumer(AsyncWebsocketConsumer):
             chat_message.selected_files.set(selected_files)
         if metadata:
             if metadata.input_tokens:
-                for model, tokens in metadata.input_tokens.items():
+                for model, token_count in metadata.input_tokens.items():
                     ChatMessageTokenUse.objects.create(
                         chat_message=chat_message,
                         use_type=ChatMessageTokenUse.UseTypeEnum.INPUT,
                         model_name=model,
-                        tokens=tokens,
+                        token_count=token_count,
                     )
             if metadata.output_tokens:
-                for model, tokens in metadata.output_tokens.items():
+                for model, token_count in metadata.output_tokens.items():
                     ChatMessageTokenUse.objects.create(
                         chat_message=chat_message,
                         use_type=ChatMessageTokenUse.UseTypeEnum.OUTPUT,
                         model_name=model,
-                        tokens=tokens,
+                        token_count=token_count,
                     )
         return chat_message
 

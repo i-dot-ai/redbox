@@ -27,7 +27,7 @@ def get_token_use_model(use_type: str) -> str:
 
 @database_sync_to_async
 def get_token_use_count(use_type: str) -> int:
-    return ChatMessageTokenUse.objects.filter(use_type=use_type).latest("created_at").tokens
+    return ChatMessageTokenUse.objects.filter(use_type=use_type).latest("created_at").token_count
 
 
 @pytest.mark.django_db(transaction=True)
