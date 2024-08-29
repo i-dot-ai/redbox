@@ -20,7 +20,10 @@ services:
     networks:
       - redbox-app-network
     env_file:
-      - .env
+      - path: .env.integration
+        required: false
+      - path: .env
+        required: false
     volumes:
       - /app/django_app/frontend/node_modules
       - ./django_app:/app/django_app/
@@ -35,7 +38,10 @@ services:
   db:
     image: postgres:13
     env_file:
-      - .env
+      - path: .env.integration
+        required: false
+      - path: .env
+        required: false
     volumes:
       - local_postgres_data:/var/lib/postgresql/data:Z
     networks:
