@@ -499,6 +499,6 @@ variable "django_queue_retry" {
 
 variable "django_queue_max_attempts" {
   type        = number
-  default     = 300
+  default     = 3
   description = "How many attempts to run unstructured task"
 }
