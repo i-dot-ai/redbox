@@ -12,14 +12,12 @@ from django.contrib.auth.decorators import login_required
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
-from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.views import View
-from django.views.decorators.http import require_http_methods
 from yarl import URL
 
 from redbox_app.redbox_core.client import CoreApiClient
-from redbox_app.redbox_core.models import Chat, ChatMessage, ChatRoleEnum, Citation, File
+from redbox_app.redbox_core.models import Chat, ChatMessage, ChatRoleEnum, File
 
 logger = logging.getLogger(__name__)
 core_api = CoreApiClient(host=settings.CORE_API_HOST, port=settings.CORE_API_PORT)
@@ -89,49 +87,3 @@ class ChatsTitleView(View):
         chat.save(update_fields=["name"])
 
         return HttpResponse(status=HTTPStatus.NO_CONTENT)
-
-
-@require_http_methods(["POST"])
-def post_message(request: HttpRequest) -> HttpResponse:
-    message_text = request.POST.get("message", "New chat")
-    selected_file_uuids: Sequence[uuid.UUID] = [uuid.UUID(v) for k, v in request.POST.items() if k.startswith("file-")]
-
-    # get current session, or create a new one
-    if session_id := request.POST.get("session-id", None):
-        session = Chat.objects.get(id=session_id)
-    else:
-        session_name = message_text[0 : settings.CHAT_TITLE_LENGTH]
-        session = Chat(name=session_name, user=request.user)
-        session.save()
-
-    selected_files = File.objects.filter(id__in=selected_file_uuids, user=request.user)
-
-    # save user message
-    user_message = ChatMessage(chat=session, text=message_text, role=ChatRoleEnum.user)
-    user_message.save()
-    user_message.selected_files.set(selected_files)
-
-    # get LLM response
-    message_history = [
-        {"role": message.role, "text": message.text} for message in ChatMessage.objects.all().filter(chat=session)
-    ]
-    selected_files_message = [{"uuid": str(f.core_file_uuid)} for f in selected_files]
-    response_data = core_api.rag_chat(message_history, selected_files_message, request.user)
-
-    llm_message = ChatMessage(chat=session, text=response_data.output_text, role=ChatRoleEnum.ai)
-    llm_message.save()
-
-    s3_keys: list[str] = [doc.s3_key for doc in response_data.source_documents]
-    files: list[File] = File.objects.filter(original_file__in=s3_keys, user=request.user)
-
-    for file in files:
-        file.last_referenced = timezone.now()
-        file.save()
-
-    for doc in response_data.source_documents:
-        new_citation = Citation(
-            file=File.objects.get(original_file=doc.s3_key), chat_message=llm_message, text=doc.page_content
-        )
-        new_citation.save()
-
-    return redirect(reverse("chats", args=(session.id,)))
