@@ -74,11 +74,22 @@ class CitationInline(admin.StackedInline):
     extra = 0
 
 
+class ChatMessageTokenUseInline(admin.StackedInline):
+    model = models.ChatMessageTokenUse
+    ordering = ("modified_at",)
+
+    extra = 0
+
+
+class ChatMessageTokenUseAdmin(ExportMixin, admin.ModelAdmin):
+    pass
+
+
 class ChatMessageAdmin(ExportMixin, admin.ModelAdmin):
     list_display = ["short_text", "role", "get_user", "chat", "route", "created_at"]
     list_filter = ["role", "route", "chat__user"]
     date_hierarchy = "created_at"
-    inlines = [CitationInline]
+    inlines = [CitationInline, ChatMessageTokenUseInline]
     readonly_fields = ["selected_files", "source_files"]
 
     @admin.display(ordering="chat__user", description="User")
@@ -136,3 +147,4 @@ admin.site.register(models.File, FileAdmin)
 admin.site.register(models.Chat, ChatAdmin)
 admin.site.register(models.ChatMessage, ChatMessageAdmin)
 admin.site.register(models.AISettings)
+admin.site.register(models.ChatMessageTokenUse, ChatMessageTokenUseAdmin)

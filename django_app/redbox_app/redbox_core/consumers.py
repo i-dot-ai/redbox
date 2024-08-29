@@ -14,9 +14,18 @@ from websockets import ConnectionClosedError, WebSocketClientProtocol
 from websockets.client import connect
 from yarl import URL
 
-from redbox.models.chat import ClientResponse, SourceDocument
+from redbox.models.chat import ClientResponse, MetadataDetail, SourceDocument
 from redbox_app.redbox_core import error_messages
-from redbox_app.redbox_core.models import AISettings, Chat, ChatMessage, ChatRoleEnum, Citation, File, User
+from redbox_app.redbox_core.models import (
+    AISettings,
+    Chat,
+    ChatMessage,
+    ChatMessageTokenUse,
+    ChatRoleEnum,
+    Citation,
+    File,
+    User,
+)
 
 OptFileSeq = Sequence[File] | None
 logger = logging.getLogger(__name__)
@@ -58,8 +67,10 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 }
                 await self.send_to_server(core_websocket, message)
                 await self.send_to_client("session-id", session.id)
-                reply, citations, route = await self.receive_llm_responses(user, core_websocket)
-            message = await self.save_message(session, reply, ChatRoleEnum.ai, sources=citations, route=route)
+                reply, citations, route, metadata = await self.receive_llm_responses(user, core_websocket)
+            message = await self.save_message(
+                session, reply, ChatRoleEnum.ai, sources=citations, route=route, metadata=metadata
+            )
             await self.send_to_client("end", {"message_id": message.id, "title": title, "session_id": session.id})
 
             for file, _ in citations:
@@ -74,11 +85,12 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
     async def receive_llm_responses(
         self, user: User, core_websocket: WebSocketClientProtocol
-    ) -> tuple[str, Sequence[tuple[File, SourceDocument]], str]:
+    ) -> tuple[str, Sequence[tuple[File, SourceDocument]], str, MetadataDetail]:
         """Conduct websocket conversation with the core-api message endpoint."""
         full_reply: MutableSequence[str] = []
         citations: MutableSequence[tuple[File, SourceDocument]] = []
         route: str | None = None
+        metadata: MetadataDetail = None
         async for raw_message in core_websocket:
             response: ClientResponse = ClientResponse.parse_raw(raw_message)
             logger.debug("received %s from core-api", response)
@@ -88,9 +100,11 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 citations += await self.handle_documents(response, user)
             elif response.resource_type == "route_name":
                 route = await self.handle_route(response, user.is_staff)
+            elif response.resource_type == "metadata":
+                metadata = response.data
             elif response.resource_type == "error":
                 full_reply.append(await self.handle_error(response))
-        return "".join(full_reply), citations, route
+        return "".join(full_reply), citations, route, metadata
 
     async def handle_documents(self, response: ClientResponse, user: User) -> Sequence[tuple[File, SourceDocument]]:
         source_files, citations = await self.get_sources_with_files(response.data, user)
@@ -162,6 +176,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         role: ChatRoleEnum,
         sources: Sequence[tuple[File, SourceDocument]] | None = None,
         selected_files: Sequence[File] | None = None,
+        metadata: MetadataDetail | None = None,
         route: str | None = None,
     ) -> ChatMessage:
         chat_message = ChatMessage(chat=session, text=user_message_text, role=role, route=route)
@@ -177,6 +192,23 @@ class ChatConsumer(AsyncWebsocketConsumer):
                     )
         if selected_files:
             chat_message.selected_files.set(selected_files)
+        if metadata:
+            if metadata.input_tokens:
+                for model, token_count in metadata.input_tokens.items():
+                    ChatMessageTokenUse.objects.create(
+                        chat_message=chat_message,
+                        use_type=ChatMessageTokenUse.UseTypeEnum.INPUT,
+                        model_name=model,
+                        token_count=token_count,
+                    )
+            if metadata.output_tokens:
+                for model, token_count in metadata.output_tokens.items():
+                    ChatMessageTokenUse.objects.create(
+                        chat_message=chat_message,
+                        use_type=ChatMessageTokenUse.UseTypeEnum.OUTPUT,
+                        model_name=model,
+                        token_count=token_count,
+                    )
         return chat_message
 
     @staticmethod
