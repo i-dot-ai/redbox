@@ -1,9 +1,13 @@
+from typing import TYPE_CHECKING
 from pathlib import Path
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 import pytest
+from _pytest.fixtures import FixtureRequest
+from botocore.exceptions import ClientError
 from elasticsearch import Elasticsearch
 import tiktoken
+from tiktoken.core import Encoding
 
 from redbox.models import File, Settings
 from redbox.storage.elasticsearch import ElasticsearchStorageHandler
@@ -17,94 +21,87 @@ from redbox.retriever import AllElasticsearchRetriever, ParameterisedElasticsear
 from redbox.test.data import RedboxChatTestCase
 from tests.retriever.data import ALL_CHUNKS_RETRIEVER_CASES, PARAMETERISED_RETRIEVER_CASES
 
+if TYPE_CHECKING:
+    from mypy_boto3_s3.client import S3Client
+else:
+    S3Client = object
+
+
+# ------------------#
+# Clients and tools #
+# ------------------#
+
 
 @pytest.fixture(scope="session")
-def env():
+def env() -> Settings:
     return Settings(django_secret_key="", postgres_password="")
 
 
-@pytest.fixture()
-def alice():
-    return uuid4()
+@pytest.fixture(scope="session")
+def s3_client(env: Settings) -> S3Client:
+    _client = env.s3_client()
+    try:
+        _client.create_bucket(
+            Bucket=env.bucket_name,
+            CreateBucketConfiguration={"LocationConstraint": env.aws_region},
+        )
+    except ClientError as e:
+        if e.response["Error"]["Code"] != "BucketAlreadyOwnedByYou":
+            raise
 
-
-@pytest.fixture()
-def bob():
-    return uuid4()
-
-
-@pytest.fixture()
-def claire():
-    return uuid4()
-
-
-@pytest.fixture()
-def file_belonging_to_alice(
-    file_pdf_path, alice, env, elasticsearch_storage_handler: ElasticsearchStorageHandler
-) -> File:
-    f = File(
-        key=file_pdf_path.name,
-        bucket=env.bucket_name,
-        creator_user_uuid=alice,
-    )
-    elasticsearch_storage_handler.write_item(f)
-    elasticsearch_storage_handler.refresh()
-    return f
-
-
-@pytest.fixture()
-def file_belonging_to_bob(file_pdf_path, bob, env, elasticsearch_storage_handler: ElasticsearchStorageHandler) -> File:
-    f = File(
-        key=file_pdf_path.name,
-        bucket=env.bucket_name,
-        creator_user_uuid=bob,
-    )
-    elasticsearch_storage_handler.write_item(f)
-    elasticsearch_storage_handler.refresh()
-    return f
-
-
-@pytest.fixture()
-def file_belonging_to_claire(
-    file_pdf_path, claire, env, elasticsearch_storage_handler: ElasticsearchStorageHandler
-) -> File:
-    f = File(
-        key=file_pdf_path.name,
-        bucket=env.bucket_name,
-        creator_user_uuid=claire,
-    )
-    elasticsearch_storage_handler.write_item(f)
-    elasticsearch_storage_handler.refresh()
-    return f
-
-
-@pytest.fixture
-def file_pdf_path() -> Path:
-    return Path(__file__).parents[2] / "tests" / "data" / "pdf" / "Cabinet Office - Wikipedia.pdf"
-
-
-@pytest.fixture()
-def elasticsearch_client(env) -> Elasticsearch:
-    return env.elasticsearch_client()
-
-
-@pytest.fixture()
-def elasticsearch_storage_handler(elasticsearch_client, env) -> ElasticsearchStorageHandler:
-    return ElasticsearchStorageHandler(es_client=elasticsearch_client, root_index=env.elastic_root_index)
+    return _client
 
 
 @pytest.fixture(scope="session")
-def es_index(env) -> str:
+def tokeniser() -> Encoding:
+    return tiktoken.get_encoding("cl100k_base")
+
+
+@pytest.fixture(scope="session")
+def embedding_model_dim() -> int:
+    return 3072  # 3-large default size
+
+
+@pytest.fixture(scope="session")
+def embedding_model(embedding_model_dim: int) -> FakeEmbeddings:
+    return FakeEmbeddings(size=embedding_model_dim)
+
+
+@pytest.fixture(scope="session")
+def es_index(env: Settings) -> str:
     return f"{env.elastic_root_index}-chunk"
 
 
 @pytest.fixture(scope="session")
-def es_index_file(env) -> str:
+def es_index_file(env: Settings) -> str:
     return f"{env.elastic_root_index}-file"
 
 
+@pytest.fixture(scope="session")
+def es_client(env: Settings, es_index: str, es_index_file: str) -> Elasticsearch:
+    return env.elasticsearch_client()
+
+
+@pytest.fixture(scope="session")
+def es_storage_handler(es_client: Elasticsearch, env: Settings) -> ElasticsearchStorageHandler:
+    return ElasticsearchStorageHandler(es_client=es_client, root_index=env.elastic_root_index)
+
+
+@pytest.fixture(scope="session")
+def es_vector_store(
+    es_client: Elasticsearch, es_index: str, embedding_model: FakeEmbeddings, env: Settings
+) -> ElasticsearchStore:
+    return ElasticsearchStore(
+        index_name=es_index,
+        es_connection=es_client,
+        query_field="text",
+        vector_query_field=env.embedding_document_field_name,
+        embedding=embedding_model,
+    )
+
+
 @pytest.fixture(autouse=True, scope="session")
-def create_index(env, es_index, es_index_file):
+def create_index(env: Settings, es_index: str, es_index_file: str) -> Generator[None, None, None]:
     es = env.elasticsearch_client()
     if not es.indices.exists(index=es_index):
         es.indices.create(index=es_index)
@@ -115,8 +112,95 @@ def create_index(env, es_index, es_index_file):
     es.indices.delete(index=es_index_file)
 
 
+@pytest.fixture(scope="session")
+def all_chunks_retriever(es_client: Elasticsearch, es_index: str) -> AllElasticsearchRetriever:
+    return AllElasticsearchRetriever(
+        es_client=es_client,
+        index_name=es_index,
+    )
+
+
+@pytest.fixture(scope="session")
+def parameterised_retriever(
+    env: Settings, es_client: Elasticsearch, es_index: str, embedding_model: FakeEmbeddings
+) -> ParameterisedElasticsearchRetriever:
+    return ParameterisedElasticsearchRetriever(
+        es_client=es_client,
+        index_name=es_index,
+        embedding_model=embedding_model,
+        embedding_field_name=env.embedding_document_field_name,
+    )
+
+
+# -----#
+# Data #
+# -----#
+
+
 @pytest.fixture()
-def file(s3_client, file_pdf_path: Path, alice, env) -> File:
+def alice() -> UUID:
+    return uuid4()
+
+
+@pytest.fixture()
+def bob() -> UUID:
+    return uuid4()
+
+
+@pytest.fixture()
+def claire() -> UUID:
+    return uuid4()
+
+
+@pytest.fixture
+def file_pdf_path() -> Path:
+    return Path(__file__).parents[2] / "tests" / "data" / "pdf" / "Cabinet Office - Wikipedia.pdf"
+
+
+@pytest.fixture()
+def file_belonging_to_alice(
+    file_pdf_path: Path, alice: UUID, env: Settings, es_storage_handler: ElasticsearchStorageHandler
+) -> File:
+    f = File(
+        key=file_pdf_path.name,
+        bucket=env.bucket_name,
+        creator_user_uuid=alice,
+    )
+    es_storage_handler.write_item(f)
+    es_storage_handler.refresh()
+    return f
+
+
+@pytest.fixture()
+def file_belonging_to_bob(
+    file_pdf_path: Path, bob: UUID, env: Settings, es_storage_handler: ElasticsearchStorageHandler
+) -> File:
+    f = File(
+        key=file_pdf_path.name,
+        bucket=env.bucket_name,
+        creator_user_uuid=bob,
+    )
+    es_storage_handler.write_item(f)
+    es_storage_handler.refresh()
+    return f
+
+
+@pytest.fixture()
+def file_belonging_to_claire(
+    file_pdf_path: Path, claire: UUID, env: Settings, es_storage_handler: ElasticsearchStorageHandler
+) -> File:
+    f = File(
+        key=file_pdf_path.name,
+        bucket=env.bucket_name,
+        creator_user_uuid=claire,
+    )
+    es_storage_handler.write_item(f)
+    es_storage_handler.refresh()
+    return f
+
+
+@pytest.fixture()
+def file(s3_client: S3Client, file_pdf_path: Path, alice: UUID, env: Settings) -> File:
     file_name = file_pdf_path.name
     file_type = file_pdf_path.suffix
 
@@ -133,67 +217,19 @@ def file(s3_client, file_pdf_path: Path, alice, env) -> File:
 
 @pytest.fixture(params=ALL_CHUNKS_RETRIEVER_CASES)
 def stored_file_all_chunks(
-    request, elasticsearch_client, es_index, embedding_model_dim
+    request: FixtureRequest, es_vector_store: ElasticsearchStore
 ) -> Generator[RedboxChatTestCase, None, None]:
     test_case: RedboxChatTestCase = request.param
-    store = ElasticsearchStore(
-        index_name=es_index,
-        es_connection=elasticsearch_client,
-        query_field="text",
-        embedding=FakeEmbeddings(size=embedding_model_dim),
-    )
-    doc_ids = store.add_documents(test_case.docs)
+    doc_ids = es_vector_store.add_documents(test_case.docs)
     yield test_case
-    store.delete(doc_ids)
+    es_vector_store.delete(doc_ids)
 
 
 @pytest.fixture(params=PARAMETERISED_RETRIEVER_CASES)
 def stored_file_parameterised(
-    request, elasticsearch_client, es_index, embedding_model, env: Settings
+    request: FixtureRequest, es_vector_store: ElasticsearchStore
 ) -> Generator[RedboxChatTestCase, None, None]:
     test_case: RedboxChatTestCase = request.param
-    store = ElasticsearchStore(
-        index_name=es_index,
-        es_connection=elasticsearch_client,
-        query_field="text",
-        vector_query_field=env.embedding_document_field_name,
-        embedding=embedding_model,
-    )
-    doc_ids = store.add_documents(test_case.docs)
+    doc_ids = es_vector_store.add_documents(test_case.docs)
     yield test_case
-    store.delete(doc_ids)
-
-
-@pytest.fixture()
-def all_chunks_retriever(elasticsearch_client, es_index) -> AllElasticsearchRetriever:
-    return AllElasticsearchRetriever(
-        es_client=elasticsearch_client,
-        index_name=es_index,
-    )
-
-
-@pytest.fixture()
-def parameterised_retriever(
-    env, elasticsearch_client, es_index, embedding_model_dim
-) -> ParameterisedElasticsearchRetriever:
-    return ParameterisedElasticsearchRetriever(
-        es_client=elasticsearch_client,
-        index_name=es_index,
-        embedding_model=FakeEmbeddings(size=embedding_model_dim),
-        embedding_field_name=env.embedding_document_field_name,
-    )
-
-
-@pytest.fixture(scope="session")
-def embedding_model_dim() -> int:
-    return 3072  # 3-large default size
-
-
-@pytest.fixture(scope="session")
-def embedding_model(embedding_model_dim):
-    return FakeEmbeddings(size=embedding_model_dim)
-
-
-@pytest.fixture(scope="session")
-def tokeniser():
-    return tiktoken.get_encoding("cl100k_base")
+    es_vector_store.delete(doc_ids)
