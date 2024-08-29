@@ -35,6 +35,9 @@ locals {
   django_app_environment_variables = merge({
     "AWS_REGION" : var.region,
     "UNSTRUCTURED_HOST" : local.unstructured_host
+    "Q_TIMEOUT": var.django_queue_timeout,
+    "Q_RETRY": var.django_queue_retry,
+    "Q_MAX_ATTEMPTS": var.django_queue_max_attempts
     }, local.django_lambda_environment_variables
     , local.worker_environment_variables,
   )
