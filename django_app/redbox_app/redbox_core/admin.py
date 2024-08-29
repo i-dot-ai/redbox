@@ -23,12 +23,12 @@ class UserAdmin(ImportExportMixin, admin.ModelAdmin):
     def export_as_json(self, request, queryset: QuerySet):  # noqa:ARG002
         user_data = UserSerializer(many=True).to_representation(queryset)
         response = HttpResponse(json.dumps(user_data), content_type="text/json")
-        response["Content-Disposition"] = "attachment; filename=chat.csv"
+        response["Content-Disposition"] = "attachment; filename=data-export.json"
 
         return response
 
     export_as_json.short_description = "Export Selected"
-    actions = ["export_as_csv"]
+    actions = ["export_as_json"]
 
     fields = [
         "email",
