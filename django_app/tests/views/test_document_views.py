@@ -8,7 +8,6 @@ from botocore.exceptions import ClientError
 from django.conf import settings
 from django.test import Client
 from django.urls import reverse
-from requests_mock import Mocker
 
 from redbox_app.redbox_core.models import File, StatusEnum, User
 
@@ -146,7 +145,7 @@ def test_upload_view_no_file(alice, client):
 
 
 @pytest.mark.django_db()
-def test_remove_doc_view(client: Client, alice: User, file_pdf_path: Path, s3_client: Client, requests_mock: Mocker):
+def test_remove_doc_view(client: Client, alice: User, file_pdf_path: Path, s3_client: Client):
     file_name = file_pdf_path.name
 
     client.force_login(alice)
@@ -155,17 +154,6 @@ def test_remove_doc_view(client: Client, alice: User, file_pdf_path: Path, s3_cl
 
     previous_count = count_s3_objects(s3_client)
 
-    mocked_response = {
-        "key": file_name,
-        "bucket": settings.BUCKET_NAME,
-        "uuid": str(uuid.uuid4()),
-    }
-    requests_mock.post(
-        f"http://{settings.CORE_API_HOST}:{settings.CORE_API_PORT}/file",
-        status_code=201,
-        json=mocked_response,
-    )
-
     with file_pdf_path.open("rb") as f:
         # create file before testing deletion
         client.post("/upload/", {"uploadDocs": f})
@@ -173,16 +161,10 @@ def test_remove_doc_view(client: Client, alice: User, file_pdf_path: Path, s3_cl
         assert count_s3_objects(s3_client) == previous_count + 1
 
         new_file = File.objects.filter(user=alice).order_by("-created_at")[0]
-        requests_mock.delete(
-            f"http://{settings.CORE_API_HOST}:{settings.CORE_API_PORT}/file/{new_file.core_file_uuid}",
-            status_code=201,
-            json=mocked_response,
-        )
 
         client.post(f"/remove-doc/{new_file.id}", {"doc_id": new_file.id})
         assert not file_exists(s3_client, file_name)
         assert count_s3_objects(s3_client) == previous_count
-        assert requests_mock.request_history[-1].method == "DELETE"
         assert File.objects.get(id=new_file.id).status == StatusEnum.deleted
 
 
