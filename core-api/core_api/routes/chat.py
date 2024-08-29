@@ -104,7 +104,6 @@ async def rag_chat_streamed(
         )
 
     async def on_metadata_response(metadata: RequestMetadata):
-        log.info(metadata)
         await send_to_client(
             ClientResponse(resource_type="metadata", data=metadata),
             websocket,
