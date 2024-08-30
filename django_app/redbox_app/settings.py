@@ -342,6 +342,7 @@ Q_CLUSTER = {
     "max_attempts": env.int("Q_MAX_ATTEMPTS", 1),
     "catch_up": False,
     "orm": "default",
+    "workers": 1,
 }
 
 UNSTRUCTURED_HOST = env.str("UNSTRUCTURED_HOST")
