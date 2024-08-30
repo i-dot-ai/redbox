@@ -67,7 +67,7 @@ class Settings(BaseSettings):
 
     embedding_backend: Literal["azure", "openai", "fake"] = "azure"
     embedding_max_retries: int = 1
-    embedding_retry_min_seconds: int = 10
+    embedding_retry_min_seconds: int = 61
     embedding_retry_max_seconds: int = 120
     embedding_max_batch_size: int = 512
     embedding_document_field_name: str = "embedding"
@@ -98,8 +98,8 @@ class Settings(BaseSettings):
 
     ## Chunks
     ### Normal
-    worker_ingest_min_chunk_size: int = 600
-    worker_ingest_max_chunk_size: int = 800
+    worker_ingest_min_chunk_size: int = 1000
+    worker_ingest_max_chunk_size: int = 10000
     ### Largest
     worker_ingest_largest_chunk_size: int = 96000
     worker_ingest_largest_chunk_overlap: int = 0
