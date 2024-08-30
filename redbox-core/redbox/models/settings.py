@@ -123,8 +123,6 @@ class Settings(BaseSettings):
     @lru_cache(1)
     def elasticsearch_client(self) -> Elasticsearch:
         if isinstance(self.elastic, ElasticLocalSettings):
-            log.info("Connecting to self managed Elasticsearch")
-            log.info("Elasticsearch host = %s", self.elastic.host)
             return Elasticsearch(
                 hosts=[
                     {
@@ -135,11 +133,6 @@ class Settings(BaseSettings):
                 ],
                 basic_auth=(self.elastic.user, self.elastic.password),
             )
-
-        log.info("Connecting to Elastic Cloud Cluster")
-        log.info("Cloud ID = %s", self.elastic.cloud_id)
-        log.info("Elastic Cloud API Key = %s", self.elastic.api_key)
-
         return Elasticsearch(cloud_id=self.elastic.cloud_id, api_key=self.elastic.api_key)
 
     def s3_client(self):
