@@ -109,7 +109,7 @@ variable "embedding_openai_api_key" {
 
 variable "embedding_azure_openai_endpoint" {
   type        = string
-  default     = 1
+  default     = null
   description = "The base URL for your Azure OpenAI resource.  You can find this in the Azure portal under your Azure OpenAI resource."
 }
 
