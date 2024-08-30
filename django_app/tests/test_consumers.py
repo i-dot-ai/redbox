@@ -1,5 +1,6 @@
 import json
 import logging
+import os
 from asyncio import CancelledError
 from collections.abc import Sequence
 from datetime import UTC, datetime
@@ -17,6 +18,7 @@ from redbox_app.redbox_core.consumers import ChatConsumer
 from redbox_app.redbox_core.models import Chat, ChatMessage, ChatMessageTokenUse, ChatRoleEnum, File, User
 from redbox_app.redbox_core.prompts import CHAT_MAP_QUESTION_PROMPT
 
+logging.basicConfig(level=os.environ.get("LOG_LEVEL", "INFO"))
 logger = logging.getLogger(__name__)
 
 

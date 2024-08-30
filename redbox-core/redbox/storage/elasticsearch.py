@@ -1,4 +1,5 @@
 import logging
+import os
 from collections.abc import Sequence
 from uuid import UUID
 
@@ -10,7 +11,7 @@ from pydantic import ValidationError
 from redbox.models.base import PersistableModel
 from redbox.storage.storage_handler import BaseStorageHandler
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=os.environ.get("LOG_LEVEL", "INFO"))
 log = logging.getLogger()
 
 

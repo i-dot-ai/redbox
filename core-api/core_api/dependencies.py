@@ -1,4 +1,5 @@
 import logging
+import os
 from functools import lru_cache
 from typing import Annotated
 
@@ -11,7 +12,7 @@ from redbox.retriever import AllElasticsearchRetriever, ParameterisedElasticsear
 from redbox.models import Settings
 from redbox.chains.components import get_embeddings
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=os.environ.get("LOG_LEVEL", "INFO"))
 log = logging.getLogger()
 
 

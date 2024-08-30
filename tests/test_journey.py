@@ -1,4 +1,5 @@
 import logging
+import os
 import string
 import subprocess
 from pathlib import Path
@@ -13,8 +14,8 @@ from yarl import URL
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
+logging.basicConfig(level=os.environ.get("LOG_LEVEL", "INFO"))
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
 
 BASE_URL = URL("http://localhost:8090/")
 TEST_ROOT = Path(__file__).parent

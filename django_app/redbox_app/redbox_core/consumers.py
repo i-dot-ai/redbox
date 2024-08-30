@@ -127,12 +127,12 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
     async def handle_metadata(self, current_metadata: MetadataDetail, metadata_event: MetadataDetail):
         result = current_metadata.model_copy(deep=True)
-        for model,token_count in metadata_event.input_tokens.items():
-            result.input_tokens[model] = current_metadata.input_tokens.get(model, 0) + token_count 
-        for model,token_count in metadata_event.output_tokens.items():
+        for model, token_count in metadata_event.input_tokens.items():
+            result.input_tokens[model] = current_metadata.input_tokens.get(model, 0) + token_count
+        for model, token_count in metadata_event.output_tokens.items():
             result.output_tokens[model] = current_metadata.output_tokens.get(model, 0) + token_count
         return result
-    
+
     async def handle_error(self, response: ClientResponse) -> str:
         match response.data.code:
             case "no-document-selected":

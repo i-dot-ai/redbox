@@ -94,7 +94,8 @@ class ChatMessageTokenUseInline(admin.StackedInline):
 
 
 class ChatMessageTokenUseAdmin(ExportMixin, admin.ModelAdmin):
-    pass
+    list_display = ["chat_message", "use_type", "model_name", "token_count"]
+    list_filter = ["use_type", "model_name"]
 
 
 class ChatMessageAdmin(ExportMixin, admin.ModelAdmin):
