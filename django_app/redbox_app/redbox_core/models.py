@@ -498,4 +498,4 @@ class ChatMessageTokenUse(UUIDPrimaryKeyBase, TimeStampedModel):
     token_count = models.PositiveIntegerField(null=True, blank=True)
 
     def __str__(self) -> str:
-        return f"{self.chat_message} {self.model_name} {self.use_type}"
+        return f"{self.model_name} {self.use_type}"
