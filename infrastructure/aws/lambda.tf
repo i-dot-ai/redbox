@@ -8,7 +8,7 @@ module "django-lambda" {
     command = ["venv/bin/django-admin", each.value.command]
   }
   package_type                   = "Image"
-  image_uri                      = "${var.ecr_repository_uri}/${var.project_name}-django-app:${var.image_tag}"
+  image_uri                      = "${var.ecr_repository_uri}/${var.project_name}-django-app:cad2f9bedef191bb17b5b0d41785e9634f8616a6"
   function_name                  = "${local.name}-${each.value.task_name}-lambda"
   iam_role_name                  = "${local.name}-${each.value.task_name}-lambda-role"
   timeout                        = 600

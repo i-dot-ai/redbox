@@ -2,7 +2,7 @@ import logging
 from typing import TYPE_CHECKING
 
 from langchain_core.runnables import RunnableParallel
-from langchain_elasticsearch.vectorstores import BM25RetrievalStrategy, ElasticsearchStore
+from langchain_elasticsearch.vectorstores import BM25Strategy, ElasticsearchStore
 
 from redbox.chains.components import get_embeddings
 from redbox.chains.ingest import ingest_from_loader
@@ -33,9 +33,7 @@ def get_elasticsearch_store(es, es_index_name: str):
 
 
 def get_elasticsearch_store_without_embeddings(es, es_index_name: str):
-    return ElasticsearchStore(
-        index_name=es_index_name, es_connection=es, query_field="text", strategy=BM25RetrievalStrategy()
-    )
+    return ElasticsearchStore(index_name=es_index_name, es_connection=es, query_field="text", strategy=BM25Strategy())
 
 
 def get_elasticsearch_storage_handler(es):
