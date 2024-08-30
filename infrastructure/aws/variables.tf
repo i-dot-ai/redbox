@@ -451,13 +451,13 @@ variable "embedding_max_retries" {
 
 variable "embedding_retry_min_seconds" {
   type        = number
-  default     = 5
+  default     = 120
   description = "Number of seconds to wait before retry to external embedding services (rate limiting)"
 }
 
 variable "embedding_retry_max_seconds" {
   type        = number
-  default     = 120
+  default     = 300
   description = "Maximum number of seconds to wait before retry to external embedding services (rate limiting)"
 }
 

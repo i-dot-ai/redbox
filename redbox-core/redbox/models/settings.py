@@ -67,8 +67,8 @@ class Settings(BaseSettings):
 
     embedding_backend: Literal["azure", "openai", "fake"] = "azure"
     embedding_max_retries: int = 1
-    embedding_retry_min_seconds: int = 61
-    embedding_retry_max_seconds: int = 120
+    embedding_retry_min_seconds: int = 120  # Azure uses 60s
+    embedding_retry_max_seconds: int = 300
     embedding_max_batch_size: int = 512
     embedding_document_field_name: str = "embedding"
 

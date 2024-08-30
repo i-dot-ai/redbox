@@ -75,7 +75,7 @@ def ingest_file(core_file: File) -> str | None:
     except Exception as e:
         logging.exception("Error while processing file [%s]", core_file)
         core_file.ingest_status = ProcessingStatusEnum.failed
-        return str(e.args[0])
+        return f"{type(e)}: {e.args[0]}"
 
     finally:
         storage_handler.update_item(core_file)
