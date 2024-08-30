@@ -1,4 +1,5 @@
 import logging
+import os
 import uuid
 from collections.abc import Collection, Sequence
 from datetime import UTC, date, datetime, timedelta
@@ -20,6 +21,7 @@ from yarl import URL
 from redbox_app.redbox_core import prompts
 from redbox_app.redbox_core.utils import get_date_group
 
+logging.basicConfig(level=os.environ.get("LOG_LEVEL", "INFO"))
 logger = logging.getLogger(__name__)
 
 

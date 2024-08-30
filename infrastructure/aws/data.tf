@@ -34,7 +34,7 @@ locals {
     "FROM_EMAIL" : var.from_email,
     "GOVUK_NOTIFY_PLAIN_EMAIL_TEMPLATE_ID" : var.govuk_notify_plain_email_template_id,
     "EMAIL_BACKEND_TYPE" : "GOVUKNOTIFY",
-    "DJANGO_LOG_LEVEL" : "DEBUG",
+    "DJANGO_LOG_LEVEL" : "INFO",
     "CONTACT_EMAIL" : var.contact_email,
     "FILE_EXPIRY_IN_DAYS" : 30,
     "MAX_SECURITY_CLASSIFICATION" : "OFFICIAL_SENSITIVE",

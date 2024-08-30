@@ -1,4 +1,5 @@
 import logging
+import os
 from typing import Annotated
 from uuid import UUID
 
@@ -19,7 +20,7 @@ from core_api.runnables import map_to_chat_response
 
 # === Logging ===
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=os.environ.get("LOG_LEVEL", "INFO"))
 log = logging.getLogger()
 
 

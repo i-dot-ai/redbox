@@ -1,4 +1,5 @@
 import logging
+import os
 from functools import lru_cache
 from typing import Literal
 
@@ -7,6 +8,8 @@ from elasticsearch import Elasticsearch
 from pydantic import BaseModel
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+
+logging.basicConfig(level=os.environ.get("LOG_LEVEL", "INFO"))
 log = logging.getLogger()
 
 
