@@ -445,7 +445,7 @@ variable "embedding_document_field_name" {
 
 variable "embedding_max_retries" {
   type        = number
-  default     = 10
+  default     = 1
   description = "Number of retries to external embedding services (rate limiting)"
 }
 
