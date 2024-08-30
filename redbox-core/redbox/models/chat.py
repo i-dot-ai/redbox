@@ -84,8 +84,8 @@ class ChatResponse(BaseModel):
 
 
 class MetadataDetail(BaseModel):
-    input_tokens: dict[str, int] | None = None
-    output_tokens: dict[str, int] | None = None
+    input_tokens: dict[str, int] = Field(default_factory=dict)
+    output_tokens: dict[str, int] = Field(default_factory=dict)
 
 
 class ErrorDetail(BaseModel):

@@ -101,7 +101,7 @@ def to_request_metadata(prompt_response_model: dict):
     input_tokens = {model: len(tokeniser.encode(prompt_response_model["prompt"]))}
     output_tokens = {model: len(tokeniser.encode(prompt_response_model["response"]))}
 
-    dispatch_custom_event("on_metadata_generation", {"input_tokens": input_tokens})
-    dispatch_custom_event("on_metadata_generation", {"output_tokens": output_tokens})
+    dispatch_custom_event("on_metadata_generation", RequestMetadata(input_tokens=input_tokens, output_tokens=dict()))
+    dispatch_custom_event("on_metadata_generation", RequestMetadata(input_tokens=dict(), output_tokens=output_tokens))
 
     return RequestMetadata(input_tokens=input_tokens, output_tokens=output_tokens)

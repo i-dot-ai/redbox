@@ -90,9 +90,9 @@ class ChatConsumer(AsyncWebsocketConsumer):
         full_reply: MutableSequence[str] = []
         citations: MutableSequence[tuple[File, SourceDocument]] = []
         route: str | None = None
-        metadata: MetadataDetail = None
+        metadata: MetadataDetail = MetadataDetail()
         async for raw_message in core_websocket:
-            response: ClientResponse = ClientResponse.parse_raw(raw_message)
+            response: ClientResponse = ClientResponse.model_validate_json(raw_message)
             logger.debug("received %s from core-api", response)
             if response.resource_type == "text":
                 full_reply.append(await self.handle_text(response))
@@ -101,7 +101,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             elif response.resource_type == "route_name":
                 route = await self.handle_route(response, user.is_staff)
             elif response.resource_type == "metadata":
-                metadata = response.data
+                metadata = await self.handle_metadata(metadata, response.data)
             elif response.resource_type == "error":
                 full_reply.append(await self.handle_error(response))
         return "".join(full_reply), citations, route, metadata
@@ -125,6 +125,14 @@ class ChatConsumer(AsyncWebsocketConsumer):
             await self.send_to_client("hidden-route", response.data)
         return response.data
 
+    async def handle_metadata(self, current_metadata: MetadataDetail, metadata_event: MetadataDetail):
+        result = current_metadata.model_copy(deep=True)
+        for model,token_count in metadata_event.input_tokens.items():
+            result.input_tokens[model] = current_metadata.input_tokens.get(model, 0) + token_count 
+        for model,token_count in metadata_event.output_tokens.items():
+            result.output_tokens[model] = current_metadata.output_tokens.get(model, 0) + token_count
+        return result
+    
     async def handle_error(self, response: ClientResponse) -> str:
         match response.data.code:
             case "no-document-selected":
