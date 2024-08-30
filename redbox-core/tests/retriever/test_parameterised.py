@@ -26,7 +26,7 @@ test_chain_parameters = (
 
 @pytest.mark.parametrize("chain_params", test_chain_parameters)
 def test_parameterised_retriever(
-    chain_params,
+    chain_params: dict,
     parameterised_retriever: ParameterisedElasticsearchRetriever,
     stored_file_parameterised: RedboxChatTestCase,
 ):

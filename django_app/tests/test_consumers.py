@@ -1,5 +1,6 @@
 import json
 import logging
+import os
 from asyncio import CancelledError
 from collections.abc import Sequence
 from datetime import UTC, datetime
@@ -14,10 +15,21 @@ from websockets.legacy.client import Connect
 
 from redbox_app.redbox_core import error_messages
 from redbox_app.redbox_core.consumers import ChatConsumer
-from redbox_app.redbox_core.models import Chat, ChatMessage, ChatRoleEnum, File, User
+from redbox_app.redbox_core.models import Chat, ChatMessage, ChatMessageTokenUse, ChatRoleEnum, File, User
 from redbox_app.redbox_core.prompts import CHAT_MAP_QUESTION_PROMPT
 
+logging.basicConfig(level=os.environ.get("LOG_LEVEL", "INFO"))
 logger = logging.getLogger(__name__)
+
+
+@database_sync_to_async
+def get_token_use_model(use_type: str) -> str:
+    return ChatMessageTokenUse.objects.filter(use_type=use_type).latest("created_at").model_name
+
+
+@database_sync_to_async
+def get_token_use_count(use_type: str) -> int:
+    return ChatMessageTokenUse.objects.filter(use_type=use_type).latest("created_at").token_count
 
 
 @pytest.mark.django_db(transaction=True)
@@ -60,6 +72,11 @@ async def test_chat_consumer_with_new_session(alice: User, uploaded_file: File, 
     assert await get_chat_message_citation_set(alice, ChatRoleEnum.ai) == expected_citations
     await refresh_from_db(uploaded_file)
     assert uploaded_file.last_referenced.date() == datetime.now(tz=UTC).date()
+
+    assert await get_token_use_model(ChatMessageTokenUse.UseTypeEnum.INPUT) == "gpt-4o"
+    assert await get_token_use_model(ChatMessageTokenUse.UseTypeEnum.OUTPUT) == "gpt-4o"
+    assert await get_token_use_count(ChatMessageTokenUse.UseTypeEnum.INPUT) == 123
+    assert await get_token_use_count(ChatMessageTokenUse.UseTypeEnum.OUTPUT) == 1000
 
 
 @pytest.mark.django_db(transaction=True)
@@ -443,6 +460,12 @@ def mocked_connect(uploaded_file: File) -> Connect:
                         "page_numbers": [34, 35],
                     },
                 ],
+            }
+        ),
+        json.dumps(
+            {
+                "resource_type": "metadata",
+                "data": {"input_tokens": {"gpt-4o": 123}, "output_tokens": {"gpt-4o": 1000}},
             }
         ),
         json.dumps({"resource_type": "end"}),

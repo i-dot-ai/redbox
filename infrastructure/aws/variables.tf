@@ -445,19 +445,19 @@ variable "embedding_document_field_name" {
 
 variable "embedding_max_retries" {
   type        = number
-  default     = 10
+  default     = 1
   description = "Number of retries to external embedding services (rate limiting)"
 }
 
 variable "embedding_retry_min_seconds" {
   type        = number
-  default     = 5
+  default     = 120
   description = "Number of seconds to wait before retry to external embedding services (rate limiting)"
 }
 
 variable "embedding_retry_max_seconds" {
   type        = number
-  default     = 120
+  default     = 300
   description = "Maximum number of seconds to wait before retry to external embedding services (rate limiting)"
 }
 
@@ -483,4 +483,22 @@ variable "worker_ingest_largest_chunk_overlap" {
   type        = number
   default     = 0
   description = "Largest chunk resolution. Size of overlap between chunks produced by the worker"
+}
+
+variable "django_queue_timeout" {
+  type        = number
+  default     = 300
+  description = "How long to wait for unstructured to complete task"
+}
+
+variable "django_queue_retry" {
+  type        = number
+  default     = 300
+  description = "How long to wait between retrying unstructured task"
+}
+
+variable "django_queue_max_attempts" {
+  type        = number
+  default     = 1
+  description = "How many attempts to run unstructured task"
 }

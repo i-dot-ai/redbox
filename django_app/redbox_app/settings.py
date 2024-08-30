@@ -59,6 +59,7 @@ INSTALLED_APPS = [
     "magic_link",
     "import_export",
     "django_q",
+    "rest_framework",
 ]
 
 MIDDLEWARE = [
@@ -336,10 +337,12 @@ REDBOX_VERSION = os.environ.get("REDBOX_VERSION", "not set")
 
 Q_CLUSTER = {
     "name": "redbox_django",
-    "timeout": 120,
-    "retry": 600,
+    "timeout": env.int("Q_TIMEOUT", 300),
+    "retry": env.int("Q_RETRY", 900),
+    "max_attempts": env.int("Q_MAX_ATTEMPTS", 1),
     "catch_up": False,
     "orm": "default",
+    "workers": 1,
 }
 
 UNSTRUCTURED_HOST = env.str("UNSTRUCTURED_HOST")

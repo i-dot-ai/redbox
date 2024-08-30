@@ -1,4 +1,5 @@
 import logging
+import os
 import uuid
 from collections.abc import Collection, Sequence
 from datetime import UTC, date, datetime, timedelta
@@ -20,6 +21,7 @@ from yarl import URL
 from redbox_app.redbox_core import prompts
 from redbox_app.redbox_core.utils import get_date_group
 
+logging.basicConfig(level=os.environ.get("LOG_LEVEL", "INFO"))
 logger = logging.getLogger(__name__)
 
 
@@ -262,7 +264,7 @@ INACTIVE_STATUSES = [StatusEnum.deleted, StatusEnum.errored]
 
 class File(UUIDPrimaryKeyBase, TimeStampedModel):
     status = models.CharField(choices=StatusEnum.choices, null=False, blank=False)
-    original_file = models.FileField(storage=settings.STORAGES["default"]["BACKEND"], unique=True)
+    original_file = models.FileField(storage=settings.STORAGES["default"]["BACKEND"])
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     original_file_name = models.TextField(max_length=2048, blank=True, null=True)
     core_file_uuid = models.UUIDField(null=True)
@@ -481,3 +483,19 @@ class ChatMessage(UUIDPrimaryKeyBase, TimeStampedModel):
                 )
             )
         )
+
+
+class ChatMessageTokenUse(UUIDPrimaryKeyBase, TimeStampedModel):
+    class UseTypeEnum(models.TextChoices):
+        INPUT = "input", _("input")
+        OUTPUT = "output", _("output")
+
+    chat_message = models.ForeignKey(ChatMessage, on_delete=models.CASCADE)
+    use_type = models.CharField(
+        max_length=10, choices=UseTypeEnum, help_text="input or output tokens", default=UseTypeEnum.INPUT
+    )
+    model_name = models.CharField(max_length=50, null=True, blank=True)
+    token_count = models.PositiveIntegerField(null=True, blank=True)
+
+    def __str__(self) -> str:
+        return f"{self.model_name} {self.use_type}"

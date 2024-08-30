@@ -1,4 +1,5 @@
 import csv
+import json
 import logging
 
 from django.contrib import admin
@@ -10,11 +11,22 @@ from import_export.admin import ExportMixin, ImportExportMixin
 from redbox_app.worker import ingest
 
 from . import models
+from .serializers import UserSerializer
 
 logger = logging.getLogger(__name__)
 
 
 class UserAdmin(ImportExportMixin, admin.ModelAdmin):
+    def export_as_json(self, request, queryset: QuerySet):  # noqa:ARG002
+        user_data = UserSerializer(many=True).to_representation(queryset)
+        response = HttpResponse(json.dumps(user_data), content_type="text/json")
+        response["Content-Disposition"] = "attachment; filename=data-export.json"
+
+        return response
+
+    export_as_json.short_description = "Export Selected"
+    actions = ["export_as_json"]
+
     fields = [
         "email",
         "name",
@@ -71,11 +83,23 @@ class CitationInline(admin.StackedInline):
     extra = 0
 
 
+class ChatMessageTokenUseInline(admin.StackedInline):
+    model = models.ChatMessageTokenUse
+    ordering = ("modified_at",)
+
+    extra = 0
+
+
+class ChatMessageTokenUseAdmin(ExportMixin, admin.ModelAdmin):
+    list_display = ["chat_message", "use_type", "model_name", "token_count"]
+    list_filter = ["use_type", "model_name"]
+
+
 class ChatMessageAdmin(ExportMixin, admin.ModelAdmin):
     list_display = ["short_text", "role", "get_user", "chat", "route", "created_at"]
     list_filter = ["role", "route", "chat__user"]
     date_hierarchy = "created_at"
-    inlines = [CitationInline]
+    inlines = [CitationInline, ChatMessageTokenUseInline]
     readonly_fields = ["selected_files", "source_files"]
 
     @admin.display(ordering="chat__user", description="User")
@@ -133,3 +157,4 @@ admin.site.register(models.File, FileAdmin)
 admin.site.register(models.Chat, ChatAdmin)
 admin.site.register(models.ChatMessage, ChatMessageAdmin)
 admin.site.register(models.AISettings)
+admin.site.register(models.ChatMessageTokenUse, ChatMessageTokenUseAdmin)

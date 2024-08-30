@@ -1,6 +1,8 @@
-from uuid import uuid4
 import pytest
 import copy
+from tiktoken.core import Encoding
+from pytest_mock import MockerFixture
+from uuid import uuid4
 
 from langchain_core.language_models.fake_chat_models import GenericFakeChatModel
 
@@ -19,8 +21,6 @@ from redbox.models.chain import metadata_reducer
 
 
 LANGGRAPH_DEBUG = True
-
-test_env = Settings()
 
 TEST_CASES = [
     test_case
@@ -129,7 +129,7 @@ TEST_CASES = [
                 RedboxTestData(
                     2,
                     200_000,
-                    expected_llm_response=[test_env.response_no_such_keyword],
+                    expected_llm_response=[Settings().response_no_such_keyword],
                     expected_route=ChatRoute.error_no_keyword,
                 ),
             ],
@@ -140,14 +140,9 @@ TEST_CASES = [
 ]
 
 
-@pytest.fixture(scope="session")
-def env():
-    return Settings()
-
-
 @pytest.mark.asyncio
 @pytest.mark.parametrize(("test"), TEST_CASES, ids=[t.test_id for t in TEST_CASES])
-async def test_chat(test: RedboxChatTestCase, env, mocker):
+async def test_chat(test: RedboxChatTestCase, env: Settings, mocker: MockerFixture):
     # Current setup modifies test data as it's not a fixture. This is a hack
     test_case = copy.deepcopy(test)
 
@@ -180,7 +175,7 @@ async def test_chat(test: RedboxChatTestCase, env, mocker):
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(("test"), TEST_CASES, ids=[t.test_id for t in TEST_CASES])
-async def test_streaming(test: RedboxChatTestCase, env, mocker):
+async def test_streaming(test: RedboxChatTestCase, env: Settings, mocker: MockerFixture):
     # Current setup modifies test data as it's not a fixture. This is a hack
     test_case = copy.deepcopy(test)
 
@@ -232,7 +227,7 @@ async def test_streaming(test: RedboxChatTestCase, env, mocker):
         assert metadata == metadata_response, f"Expected metadata: '{metadata_response}'. Received '{metadata}'"
 
 
-def test_get_available_keywords(tokeniser):
+def test_get_available_keywords(tokeniser: Encoding, env: Settings):
     app = Redbox(
         all_chunks_retriever=mock_all_chunks_retriever([]),
         parameterised_retriever=mock_parameterised_retriever([]),

@@ -9,32 +9,15 @@ locals {
     {
       "EMBEDDING_DOCUMENT_FIELD_NAME" : var.embedding_document_field_name,
       "AZURE_OPENAI_MODEL" : var.azure_openai_model,
-      "AI__MAX_DOCUMENT_TOKENS" : var.max_document_tokens,
-      "AI__CONTEXT_WINDOW_SIZE" : var.context_window_size,
-      "AI__LLM_MAX_TOKENS" : var.llm_max_tokens,
-      "AI__RAG_K" : var.rag_k,
-      "AI__RAG_NUM_CANDIDATES" : var.rag_num_candidates,
-      "AI__RAG_DESIRED_CHUNK_SIZE" : var.rag_desired_chunk_size,
-      "AI__ELBOW_FILTER_ENABLED" : var.elbow_filter_enabled,
-      "AI__CHAT_SYSTEM_PROMPT" : var.chat_system_prompt,
-      "AI__CHAT_QUESTION_PROMPT" : var.chat_question_prompt,
-      "AI__STUFF_CHUNK_CONTEXT_RATIO" : var.stuff_chunk_context_ratio,
-      "AI__CHAT_WITH_DOCS_SYSTEM_PROMPT" : var.chat_with_docs_system_prompt,
-      "AI__CHAT_WITH_DOCS_QUESTION_PROMPT" : var.chat_with_docs_question_prompt,
-      "AI__CHAT_WITH_DOCS_REDUCE_SYSTEM_PROMPT" : var.chat_with_docs_reduce_system_prompt,
-      "AI__CHAT_WITH_DOCS_REDUCE_QUESTION_PROMPT" : var.chat_with_docs_reduce_question_prompt,
-      "AI__RETRIEVAL_SYSTEM_PROMPT" : var.retrieval_system_prompt,
-      "AI__RETRIEVAL_QUESTION_PROMPT" : var.retrieval_question_prompt,
-      "AI__CONDENSE_SYSTEM_PROMPT" : var.condense_system_prompt,
-      "AI__CONDENSE_QUESTION_PROMPT" : var.condense_question_prompt,
-      "AI__SUMMARISATION_SYSTEM_PROMPT" : var.summarisation_system_prompt,
-      "AI__SUMMARISATION_QUESTION_PROMPT" : var.summarisation_question_prompt,
     }
   )
 
   django_app_environment_variables = merge({
     "AWS_REGION" : var.region,
     "UNSTRUCTURED_HOST" : local.unstructured_host
+    "Q_TIMEOUT": var.django_queue_timeout,
+    "Q_RETRY": var.django_queue_retry,
+    "Q_MAX_ATTEMPTS": var.django_queue_max_attempts
     }, local.django_lambda_environment_variables
     , local.worker_environment_variables,
   )
@@ -51,7 +34,7 @@ locals {
     "FROM_EMAIL" : var.from_email,
     "GOVUK_NOTIFY_PLAIN_EMAIL_TEMPLATE_ID" : var.govuk_notify_plain_email_template_id,
     "EMAIL_BACKEND_TYPE" : "GOVUKNOTIFY",
-    "DJANGO_LOG_LEVEL" : "DEBUG",
+    "DJANGO_LOG_LEVEL" : "INFO",
     "CONTACT_EMAIL" : var.contact_email,
     "FILE_EXPIRY_IN_DAYS" : 30,
     "MAX_SECURITY_CLASSIFICATION" : "OFFICIAL_SENSITIVE",

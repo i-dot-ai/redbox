@@ -1,4 +1,5 @@
 import logging
+import os
 from typing import Annotated
 from uuid import UUID
 
@@ -19,7 +20,7 @@ from core_api.runnables import map_to_chat_response
 
 # === Logging ===
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=os.environ.get("LOG_LEVEL", "INFO"))
 log = logging.getLogger()
 
 
@@ -104,7 +105,10 @@ async def rag_chat_streamed(
         )
 
     async def on_metadata_response(metadata: RequestMetadata):
-        print(f"Request Metadata: {metadata}")
+        await send_to_client(
+            ClientResponse(resource_type="metadata", data=metadata),
+            websocket,
+        )
 
     try:
         await redbox.run(
@@ -120,14 +124,12 @@ async def rag_chat_streamed(
             ClientResponse(resource_type="error", data=ErrorDetail(code="rate-limit", message=type(e).__name__)),
             websocket,
         )
-        await websocket.close()
     except APIError as e:
         log.exception("Unhandled exception.", exc_info=e)
         await send_to_client(
             ClientResponse(resource_type="error", data=ErrorDetail(code="unexpected", message=type(e).__name__)),
             websocket,
         )
-        await websocket.close()
     finally:
         await send_to_client(ClientResponse(resource_type="end"), websocket)
         await websocket.close()

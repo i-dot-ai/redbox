@@ -18,9 +18,9 @@ from core_api import dependencies
 from core_api.app import app as application
 from core_api.routes.chat import chat_app
 
-# -------------------#
+# ------------------#
 # Clients and tools #
-# -------------------#
+# ------------------#
 
 
 @pytest.fixture(scope="session")
@@ -78,9 +78,9 @@ def app_client(embedding_model: FakeEmbeddings) -> Generator[TestClient, None, N
     chat_app.dependency_overrides = {}
 
 
-# ------#
+# -----#
 # Data #
-# ------#
+# -----#
 
 # These fixtures describe an elasticsearch instance containing files and
 # chunks for a single user, Alice.

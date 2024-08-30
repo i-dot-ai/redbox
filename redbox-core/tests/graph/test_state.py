@@ -3,7 +3,7 @@ import pytest
 
 from langchain_core.documents import Document
 
-from redbox.models.chain import RequestMetadata, document_reducer, metadata_reducer
+from redbox.models.chain import RequestMetadata, document_reducer, metadata_reducer, DocumentState
 
 
 GROUP_IDS = [uuid4() for i in range(4)]
@@ -11,7 +11,7 @@ DOCUMENT_IDS = [uuid4() for i in range(10)]
 
 
 @pytest.mark.parametrize(
-    argnames="a,b,expected",
+    argnames=("a", "b", "expected"),
     ids=[
         "Clear a document",
         "Clear a group",
@@ -116,7 +116,7 @@ DOCUMENT_IDS = [uuid4() for i in range(10)]
         ),
     ],
 )
-def test_document_reducer(a, b, expected):
+def test_document_reducer(a: DocumentState, b: DocumentState, expected: DocumentState):
     result = document_reducer(a, b)
     assert result == expected, f"Expected: {expected}. Result: {result}"
 
@@ -161,6 +161,6 @@ def test_document_reducer(a, b, expected):
         ),
     ],
 )
-def test_metadata_reducer(a, b, expected):
+def test_metadata_reducer(a: RequestMetadata, b: RequestMetadata, expected: RequestMetadata):
     result = metadata_reducer(a, b)
     assert result == expected, f"Expected: {expected}. Result: {result}"
