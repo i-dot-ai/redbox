@@ -109,7 +109,7 @@ variable "embedding_openai_api_key" {
 
 variable "embedding_azure_openai_endpoint" {
   type        = string
-  default     = null
+  default     = 1
   description = "The base URL for your Azure OpenAI resource.  You can find this in the Azure portal under your Azure OpenAI resource."
 }
 
@@ -499,6 +499,6 @@ variable "django_queue_retry" {
 
 variable "django_queue_max_attempts" {
   type        = number
-  default     = 3
+  default     = 1
   description = "How many attempts to run unstructured task"
 }

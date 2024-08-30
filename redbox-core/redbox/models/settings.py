@@ -66,7 +66,7 @@ class Settings(BaseSettings):
     llm_max_tokens: int = 1024
 
     embedding_backend: Literal["azure", "openai", "fake"] = "azure"
-    embedding_max_retries: int = 10
+    embedding_max_retries: int = 1
     embedding_retry_min_seconds: int = 10
     embedding_retry_max_seconds: int = 120
     embedding_max_batch_size: int = 512
