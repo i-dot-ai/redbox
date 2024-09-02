@@ -8,6 +8,7 @@ from redbox.graph.edges import (
     build_keyword_detection_conditional,
     documents_bigger_than_n_conditional,
     documents_selected_conditional,
+    question_was_answered_by_rag_conditional,
 )
 from redbox.graph.nodes.processes import (
     PromptSet,
@@ -60,6 +61,7 @@ def get_chat_graph(
 
 def get_search_graph(
     retriever: VectorStoreRetriever,
+    prompt_set: PromptSet = PromptSet.Search,
     debug: bool = False,
 ) -> CompiledGraph:
     """Creates a subgraph for retrieval augmented generation (RAG)."""
@@ -69,7 +71,7 @@ def get_search_graph(
     builder.add_node("p_set_search_route", build_set_route_pattern(route=ChatRoute.search))
     builder.add_node("p_condense_question", build_chat_pattern(prompt_set=PromptSet.CondenseQuestion))
     builder.add_node("p_retrieve_docs", build_retrieve_pattern(retriever=retriever, final_source_chain=True))
-    builder.add_node("p_stuff_docs", build_stuff_pattern(prompt_set=PromptSet.Search, final_response_chain=True))
+    builder.add_node("p_stuff_docs", build_stuff_pattern(prompt_set=prompt_set, final_response_chain=True))
 
     # Edges
     builder.add_edge(START, "p_set_search_route")
@@ -82,7 +84,8 @@ def get_search_graph(
 
 
 def get_chat_with_documents_graph(
-    retriever: VectorStoreRetriever,
+    all_chunks_retriever: VectorStoreRetriever,
+    parameterised_retriever: VectorStoreRetriever,
     debug: bool = False,
 ) -> CompiledGraph:
     """Creates a subgraph for chatting with documents."""
@@ -90,7 +93,7 @@ def get_chat_with_documents_graph(
 
     # Processes
     builder.add_node("p_pass_question_to_text", build_passthrough_pattern())
-    builder.add_node("p_retrieve_docs", build_retrieve_pattern(retriever=retriever))
+    builder.add_node("p_retrieve_docs", build_retrieve_pattern(retriever=all_chunks_retriever))
     builder.add_node("p_set_chat_docs_route", build_set_route_pattern(route=ChatRoute.chat_with_docs))
     builder.add_node("p_set_chat_docs_large_route", build_set_route_pattern(route=ChatRoute.chat_with_docs_map_reduce))
     builder.add_node("p_summarise_each_document", build_merge_pattern(prompt_set=PromptSet.ChatwithDocsMapReduce))
@@ -112,6 +115,8 @@ def get_chat_with_documents_graph(
             final_response_chain=True,
         ),
     )
+    builder.add_node("p_rag_and_route", get_search_graph(parameterised_retriever, PromptSet.SearchandRoute))
+
 
     # Decisions
     builder.add_node("d_all_docs_bigger_than_context", empty_process)
@@ -142,9 +147,13 @@ def get_chat_with_documents_graph(
         documents_bigger_than_n_conditional,
         {
             True: "p_too_large_error",
-            False: "p_set_chat_docs_large_route",
+            False: "p_rag_and_route",
         },
     )
+    builder.add_conditional_edges("p_rag_and_route", question_was_answered_by_rag_conditional, {
+        True: END,
+        False: "p_set_chat_docs_large_route"
+    })
     builder.add_edge("p_set_chat_docs_route", "p_summarise")
     builder.add_edge("p_set_chat_docs_large_route", "s_chunk")
     builder.add_conditional_edges(
@@ -207,7 +216,7 @@ def get_root_graph(
     # Subgraphs
     chat_subgraph = get_chat_graph(debug=debug)
     rag_subgraph = get_search_graph(retriever=parameterised_retriever, debug=debug)
-    cwd_subgraph = get_chat_with_documents_graph(retriever=all_chunks_retriever, debug=debug)
+    cwd_subgraph = get_chat_with_documents_graph(all_chunks_retriever=all_chunks_retriever, parameterised_retriever=parameterised_retriever, debug=debug)
 
     # Processes
     builder.add_node("p_search", rag_subgraph)

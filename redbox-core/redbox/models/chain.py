@@ -45,6 +45,16 @@ RETRIEVAL_SYSTEM_PROMPT = (
     "If dealing dealing with lots of data return it in markdown table format. "
 )
 
+RETRIEVAL_AND_ROUTE_SYSTEM_PROMPT = (
+    "Given the following conversation and extracted parts of a long document and a question, create a final answer. \n"
+    "If the question cannot be answered based on the information in the article, write “unanswerable”\n"
+    "If a user asks for a particular format to be returned, such as bullet points, then please use that format. "
+    "If a user asks for bullet points you MUST give bullet points. "
+    "If the user asks for a specific number or range of bullet points you MUST give that number of bullet points. \n"
+    "Use **bold** to highlight the most question relevant parts in your response. "
+    "If dealing dealing with lots of data return it in markdown table format. "
+)
+
 CHAT_MAP_SYSTEM_PROMPT = (
     "You are an AI assistant tasked with summarizing documents. "
     "Your goal is to extract the most important information and present it in "
@@ -89,7 +99,7 @@ CONDENSE_QUESTION_PROMPT = "{question}\n=========\n Standalone question: "
 class AISettings(BaseModel):
     """prompts and other AI settings"""
 
-    max_document_tokens: int = 1_000_000
+    max_document_tokens: int = 124_000
     context_window_size: int = 128_000
     llm_max_tokens: int = 1024
 
@@ -104,6 +114,7 @@ class AISettings(BaseModel):
     chat_with_docs_question_prompt: str = CHAT_WITH_DOCS_QUESTION_PROMPT
     chat_with_docs_reduce_system_prompt: str = CHAT_WITH_DOCS_REDUCE_SYSTEM_PROMPT
     retrieval_system_prompt: str = RETRIEVAL_SYSTEM_PROMPT
+    retrieval_and_route_system_prompt: str = RETRIEVAL_AND_ROUTE_SYSTEM_PROMPT
     retrieval_question_prompt: str = RETRIEVAL_QUESTION_PROMPT
     condense_system_prompt: str = CONDENSE_SYSTEM_PROMPT
     condense_question_prompt: str = CONDENSE_QUESTION_PROMPT
@@ -230,6 +241,7 @@ class PromptSet(StrEnum):
     ChatwithDocs = "chat_with_docs"
     ChatwithDocsMapReduce = "chat_with_docs_map_reduce"
     Search = "search"
+    SearchandRoute = "search_and_route"
     CondenseQuestion = "condense_question"
 
 
@@ -245,6 +257,9 @@ def get_prompts(state: RedboxState, prompt_set: PromptSet) -> tuple[str, str]:
         question_prompt = state["request"].ai_settings.chat_map_question_prompt
     elif prompt_set == PromptSet.Search:
         system_prompt = state["request"].ai_settings.retrieval_system_prompt
+        question_prompt = state["request"].ai_settings.retrieval_question_prompt
+    elif prompt_set == PromptSet.SearchandRoute:
+        system_prompt = state["request"].ai_settings.retrieval_and_route_system_prompt
         question_prompt = state["request"].ai_settings.retrieval_question_prompt
     elif prompt_set == PromptSet.CondenseQuestion:
         system_prompt = state["request"].ai_settings.condense_system_prompt
