@@ -183,7 +183,7 @@ def test_delete_expired_files_with_api_error(uploaded_file: File, mocker):
     mock_file.save()
 
     # When
-    with mocker.patch("redbox_app.redbox_core.client.delete_documents_for_file", side_effect=Exception('an error')):
+    with mocker.patch("redbox_app.redbox_core.client.delete_documents_for_file", side_effect=Exception("an error")):
         call_command("delete_expired_data")
 
     # Then
