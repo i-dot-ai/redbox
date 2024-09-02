@@ -240,9 +240,14 @@ def test_delete_expired_chats(chat: Chat, msg_1_date: datetime, msg_2_date: date
 
 
 @pytest.mark.django_db(transaction=True)
-def test_reingest_files(uploaded_file: File, mocker):
+def test_reingest_files(uploaded_file: File, requests_mock: Mocker, mocker):
     # Given
     assert uploaded_file.status == StatusEnum.processing
+
+    requests_mock.post(
+        f"http://{settings.UNSTRUCTURED_HOST}:8000/general/v0/general",
+        json=[{"text": "hello", "metadata": {"filename": "my-file.txt"}}],
+    )
 
     # When
     with mocker.patch("redbox.chains.ingest.VectorStore.add_documents", return_value=[]):
