@@ -4,13 +4,7 @@ import boto3
 from botocore.exceptions import ClientError
 from django.conf import settings
 
-from redbox.models import Settings
-
 logger = logging.getLogger(__name__)
-
-env = Settings()
-
-es_client = env.elasticsearch_client()
 
 
 def s3_client():
@@ -38,12 +32,3 @@ def s3_client():
         if e.response["Error"]["Code"] != "BucketAlreadyOwnedByYou":
             raise
     return client
-
-
-def delete_documents_for_file(file_name: str):
-    index = f"{env.elastic_root_index}-chunk"
-    if es_client.indices.exists(index=index):
-        es_client.delete_by_query(
-            index=index,
-            body={"query": {"term": {"metadata.file_name.keyword": file_name}}},
-        )
