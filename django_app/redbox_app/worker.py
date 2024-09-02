@@ -1,5 +1,5 @@
 import logging
-from uuid import UUID, uuid4
+from uuid import UUID
 
 from django.conf import settings
 
@@ -20,7 +20,6 @@ def ingest(file_id: UUID):
         key=file.unique_name,
         bucket=settings.BUCKET_NAME,
         creator_user_uuid=file.user.id,
-        uuid=uuid4(),
     )
     core_file.ingest_status = ProcessingStatusEnum.embedding
     if error := ingest_file(core_file):
