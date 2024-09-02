@@ -4,9 +4,9 @@ from langchain_core.vectorstores import VectorStoreRetriever
 
 from redbox.graph.edges import (
     build_documents_bigger_than_context_conditional,
+    build_total_tokens_request_handler_conditional,
     multiple_docs_in_group_conditional,
     build_keyword_detection_conditional,
-    documents_bigger_than_n_conditional,
     documents_selected_conditional,
 )
 from redbox.graph.nodes.processes import (
@@ -114,8 +114,7 @@ def get_chat_with_documents_graph(
     )
 
     # Decisions
-    builder.add_node("d_all_docs_bigger_than_context", empty_process)
-    builder.add_node("d_all_docs_bigger_than_n", empty_process)
+    builder.add_node("d_request_handler_from_total_tokens", empty_process)
     builder.add_node("d_single_doc_summaries_bigger_than_context", empty_process)
     builder.add_node("d_doc_summaries_bigger_than_context", empty_process)
     builder.add_node("d_groups_have_multiple_docs", empty_process)
@@ -128,21 +127,14 @@ def get_chat_with_documents_graph(
     # Edges
     builder.add_edge(START, "p_pass_question_to_text")
     builder.add_edge("p_pass_question_to_text", "p_retrieve_docs")
-    builder.add_edge("p_retrieve_docs", "d_all_docs_bigger_than_context")
+    builder.add_edge("p_retrieve_docs", "d_request_handler_from_total_tokens")
     builder.add_conditional_edges(
-        "d_all_docs_bigger_than_context",
-        build_documents_bigger_than_context_conditional(PromptSet.ChatwithDocsMapReduce),
+        "d_request_handler_from_total_tokens",
+        build_total_tokens_request_handler_conditional(PromptSet.ChatwithDocsMapReduce),
         {
-            True: "d_all_docs_bigger_than_n",
-            False: "p_set_chat_docs_route",
-        },
-    )
-    builder.add_conditional_edges(
-        "d_all_docs_bigger_than_n",
-        documents_bigger_than_n_conditional,
-        {
-            True: "p_too_large_error",
-            False: "p_set_chat_docs_large_route",
+            "max_exceeded": "p_too_large_error",
+            "context_exceeded": "p_set_chat_docs_large_route",
+            "pass": "p_set_chat_docs_route",
         },
     )
     builder.add_edge("p_set_chat_docs_route", "p_summarise")
