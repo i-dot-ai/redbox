@@ -38,16 +38,14 @@ class UserAdmin(ImportExportMixin, admin.ModelAdmin):
         "is_staff",
         "last_login",
         "ai_settings",
+        "is_developer",
     ]
     list_display = [
         "email",
-        "name",
-        "get_ai",
         "business_unit",
         "grade",
         "profession",
-        "is_superuser",
-        "is_staff",
+        "is_developer",
         "last_login",
     ]
     list_filter = ["business_unit", "grade", "profession"]
