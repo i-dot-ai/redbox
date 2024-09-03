@@ -68,7 +68,7 @@ class Settings(BaseSettings):
 
     llm_max_tokens: int = 1024
 
-    embedding_backend: Literal["azure", "openai", "fake"] = "azure"
+    embedding_backend: Literal["azure", "openai", "fake", "aws"] = "azure"
     embedding_max_retries: int = 1
     embedding_retry_min_seconds: int = 120  # Azure uses 60s
     embedding_retry_max_seconds: int = 300
@@ -76,7 +76,7 @@ class Settings(BaseSettings):
     embedding_document_field_name: str = "embedding"
 
     embedding_openai_base_url: str | None = None
-    embedding_openai_model: str = "text-embedding-ada-002"
+    embedding_model: Literal["text-embedding-ada-002", "amazon.titan-embed-text-v1"] = "text-embedding-ada-002"
 
     partition_strategy: Literal["auto", "fast", "ocr_only", "hi_res"] = "fast"
     clustering_strategy: Literal["full"] | None = None

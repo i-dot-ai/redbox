@@ -9,6 +9,8 @@ locals {
     {
       "EMBEDDING_DOCUMENT_FIELD_NAME" : var.embedding_document_field_name,
       "AZURE_OPENAI_MODEL" : var.azure_openai_model,
+      "EMBEDDING_MODEL": var.embedding_model,
+      "EMBEDDING_BACKEND": var.embedding_backend
     }
   )
 
