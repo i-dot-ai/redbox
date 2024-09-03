@@ -20,7 +20,6 @@ def ingest(file_id: UUID):
         key=file.unique_name,
         bucket=settings.BUCKET_NAME,
         creator_user_uuid=file.user.id,
-        uuid=file.core_file_uuid,
     )
     core_file.ingest_status = ProcessingStatusEnum.embedding
     if error := ingest_file(core_file):

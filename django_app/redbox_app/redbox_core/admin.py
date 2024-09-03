@@ -2,21 +2,18 @@ import csv
 import json
 import logging
 
-from django.conf import settings
 from django.contrib import admin
 from django.db.models import QuerySet
 from django.http import HttpResponse
 from django_q.tasks import async_task
 from import_export.admin import ExportMixin, ImportExportMixin
 
-from redbox_app.redbox_core.client import CoreApiClient
 from redbox_app.worker import ingest
 
 from . import models
 from .serializers import UserSerializer
 
 logger = logging.getLogger(__name__)
-core_api = CoreApiClient(host=settings.CORE_API_HOST, port=settings.CORE_API_PORT)
 
 
 class UserAdmin(ImportExportMixin, admin.ModelAdmin):

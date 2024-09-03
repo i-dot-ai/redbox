@@ -18,11 +18,16 @@ from django_use_email_as_username.models import BaseUser, BaseUserManager
 from jose import jwt
 from yarl import URL
 
+from redbox.models import Settings
 from redbox_app.redbox_core import prompts
 from redbox_app.redbox_core.utils import get_date_group
 
 logging.basicConfig(level=os.environ.get("LOG_LEVEL", "INFO"))
 logger = logging.getLogger(__name__)
+
+env = Settings()
+
+es_client = env.elasticsearch_client()
 
 
 class UUIDPrimaryKeyBase(models.Model):
@@ -294,6 +299,14 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
     def delete_from_s3(self):
         """Manually deletes the file from S3 storage."""
         self.original_file.delete(save=False)
+
+    def delete_from_elastic(self):
+        index = f"{env.elastic_root_index}-chunk"
+        if es_client.indices.exists(index=index):
+            es_client.delete_by_query(
+                index=index,
+                body={"query": {"term": {"metadata.file_name.keyword": self.unique_name}}},
+            )
 
     def update_status_from_core(self, status_label):
         match status_label:
