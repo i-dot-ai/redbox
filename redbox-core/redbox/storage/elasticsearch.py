@@ -58,7 +58,21 @@ class ElasticsearchStorageHandler(BaseStorageHandler):
         result = self.es_client.mget(index=target_index, body={"ids": list(map(str, item_uuids))})
 
         model = self.get_model_by_model_type(model_type)
-        return [model(**item["_source"]) for item in result.body["docs"]]
+
+        items = []
+        errors = []
+
+        for item in result.body["docs"]:
+            if item["found"]:
+                items.append(model(**item["_source"]))
+            else:
+                errors.append(item["_id"])
+
+        if len(errors) > 0:
+            msg = f"Not found: f{errors}"
+            raise NotFoundError(404, "Not found", msg)
+
+        return items
 
     def update_item(self, item: PersistableModel) -> ObjectApiResponse:
         target_index = f"{self.root_index}-{item.model_type.lower()}"
@@ -83,8 +97,10 @@ class ElasticsearchStorageHandler(BaseStorageHandler):
         if len({item.model_type for item in items}) > 1:
             message = "Items with differing model types: {item.model_type for item in items}"
             raise ValueError(message)
+
         model_type = items[0].model_type
         target_index = f"{self.root_index}-{model_type.lower()}"
+
         return self.es_client.delete_by_query(
             index=target_index,
             body={"query": {"terms": {"_id": [str(item.uuid) for item in items]}}},

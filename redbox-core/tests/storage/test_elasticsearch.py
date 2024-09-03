@@ -69,11 +69,16 @@ def test_elastic_write_read_delete_items(es_storage_handler: ElasticsearchStorag
     creator_user_uuid = uuid4()
     files = [File(creator_user_uuid=creator_user_uuid, key=f"somefile-{i}.txt", bucket="a-bucket") for i in range(10)]
 
+    with pytest.raises(NotFoundError):
+        es_storage_handler.read_items([file.uuid for file in files], "File")
+
     es_storage_handler.write_items(files)
 
     read_files = es_storage_handler.read_items([file.uuid for file in files], "File")
 
     assert read_files == files
+
+    es_storage_handler.refresh()
 
     # Delete the files
     es_storage_handler.delete_items(files)
@@ -83,7 +88,11 @@ def test_elastic_write_read_delete_items(es_storage_handler: ElasticsearchStorag
     # Check that the files are deleted
     items_left = es_storage_handler.list_all_items("File", creator_user_uuid)
 
-    assert all(file.uuid not in items_left for file in files)
+    not_deleted = {file.uuid for file in files}.intersection(items_left)
+
+    assert all(
+        file.uuid not in items_left for file in files
+    ), f"{len(not_deleted)} of {len(files)} files left in the system: {not_deleted}"
 
 
 def test_list_all_items(
