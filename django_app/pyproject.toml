@@ -41,7 +41,6 @@ django-q2 = "^1.6.2"
 blessed = "^1.20.0"
 croniter = "^3.0.3"
 djangorestframework = "^3.15.2"
-langchain-aws = "^0.1.17"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3.2"
