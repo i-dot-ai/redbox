@@ -171,7 +171,7 @@ def build_set_text_pattern(text: str, final_response_chain: bool = False):
 
 def clear_documents_process(state: RedboxState) -> dict[str, Any]:
     if documents := state.get("documents"):
-        return {"documents": {group_id: None for group_id in documents.keys()}}
+        return {"documents": {group_id: None for group_id in documents}}
 
 
 def empty_process(state: RedboxState) -> None:
