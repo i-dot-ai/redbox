@@ -109,7 +109,6 @@ class Settings(BaseSettings):
 
     response_no_doc_available: str = "No available data for selected files. They may need to be removed and added again"
     response_max_content_exceeded: str = "Max content exceeded. Try smaller or fewer documents"
-    response_no_such_keyword: str = "That keyword isn't recognised"
 
     object_store: str = "minio"
 

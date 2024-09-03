@@ -112,13 +112,13 @@ TEST_CASES = [
             ),
             test_data=[
                 RedboxTestData(
-                    2,
-                    200_000,
-                    expected_llm_response=["That keyword isn't recognised"],
-                    expected_route=ChatRoute.error_no_keyword,
+                    1,
+                    50_000,
+                    expected_llm_response=["Testing Response 1"],
+                    expected_route=ChatRoute.chat_with_docs,
                 ),
             ],
-            test_id="No Such Keyword",
+            test_id="No Such Keyword with file",
         ),
     ]
     for test_case in generated_cases
