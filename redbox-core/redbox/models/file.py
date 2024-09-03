@@ -7,12 +7,6 @@ import datetime
 from pydantic import BaseModel, Field
 
 
-class File(BaseModel):
-    """Reference to file stored on s3"""
-
-    key: str = Field(description="file key")
-
-
 class ChunkResolution(StrEnum):
     smallest = "smallest"
     small = "small"

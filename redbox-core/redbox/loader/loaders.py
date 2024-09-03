@@ -29,7 +29,7 @@ class UnstructuredLargeChunkLoader(BaseRedboxFileLoader):
 
         url = f"http://{self.env.unstructured_host}:8000/general/v0/general"
         files = {
-            "files": (self.file.key, self.file_bytes),
+            "files": (self.file_name, self.file_bytes),
         }
         response = requests.post(
             url,
@@ -77,7 +77,7 @@ class UnstructuredTitleLoader(BaseRedboxFileLoader):
         url = f"http://{self.env.unstructured_host}:8000/general/v0/general"
 
         files = {
-            "files": (self.file.key, self.file_bytes),
+            "files": (self.file_name, self.file_bytes),
         }
         response = requests.post(
             url,

@@ -9,7 +9,7 @@ from elasticsearch import Elasticsearch
 import tiktoken
 from tiktoken.core import Encoding
 
-from redbox.models import File, Settings
+from redbox.models import Settings
 
 from collections.abc import Generator
 
@@ -152,7 +152,7 @@ def file_pdf_path() -> Path:
 
 
 @pytest.fixture()
-def file(s3_client: S3Client, file_pdf_path: Path, alice: UUID, env: Settings) -> File:
+def file(s3_client: S3Client, file_pdf_path: Path, alice: UUID, env: Settings) -> str:
     file_name = file_pdf_path.name
     file_type = file_pdf_path.suffix
 
@@ -164,7 +164,7 @@ def file(s3_client: S3Client, file_pdf_path: Path, alice: UUID, env: Settings) -
             Tagging=f"file_type={file_type}",
         )
 
-    return File(key=file_name, bucket=env.bucket_name)
+    return file_name
 
 
 @pytest.fixture(params=ALL_CHUNKS_RETRIEVER_CASES)
