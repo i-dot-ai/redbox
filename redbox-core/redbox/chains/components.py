@@ -95,7 +95,7 @@ def get_azure_embeddings(env: Settings):
         api_key=convert_to_secret_str(env.embedding_openai_api_key),
         azure_endpoint=env.embedding_azure_openai_endpoint,
         api_version=env.azure_api_version_embeddings,
-        model=env.azure_embedding_model,
+        model=env.embedding_backend,
         max_retries=env.embedding_max_retries,
         retry_min_seconds=env.embedding_retry_min_seconds,
         retry_max_seconds=env.embedding_retry_max_seconds,
@@ -114,17 +114,17 @@ def get_openai_embeddings(env: Settings):
 
 
 def get_aws_embeddings(env: Settings):
-    return BedrockEmbeddings(region_name=env.aws_region, model_id=env.embedding_model)
+    return BedrockEmbeddings(region_name=env.aws_region, model_id=env.embedding_backend)
 
 
 def get_embeddings(env: Settings) -> Embeddings:
-    if env.embedding_backend == "azure":
+    if env.embedding_backend == "text-embedding-3-large":
         return get_azure_embeddings(env)
-    if env.embedding_backend == "openai":
+    if env.embedding_backend == "text-embedding-ada-002":
         return get_openai_embeddings(env)
     if env.embedding_backend == "fake":
         return FakeEmbeddings(size=3072)
-    if env.embedding_backend == "aws":
+    if env.embedding_backend == "amazon.titan-embed-text-v2:0":
         return get_aws_embeddings(env)
     raise Exception("No configured embedding model")
 
