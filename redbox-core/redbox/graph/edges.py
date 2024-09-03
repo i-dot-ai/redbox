@@ -82,7 +82,7 @@ def build_keyword_detection_conditional(*allowed_routes: ChatRoute) -> Runnable:
                 return route
         except KeyError:
             if route_name is not None:
-                return ChatRoute.error_no_keyword
+                return "DEFAULT"
 
         return "DEFAULT"
 
