@@ -78,6 +78,8 @@ def test_elastic_write_read_delete_items(es_storage_handler: ElasticsearchStorag
     # Delete the files
     es_storage_handler.delete_items(files)
 
+    es_storage_handler.refresh()
+
     # Check that the files are deleted
     items_left = es_storage_handler.list_all_items("File", creator_user_uuid)
 
