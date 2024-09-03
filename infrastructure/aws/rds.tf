@@ -1,6 +1,6 @@
 module "rds" {
   # checkov:skip=CKV_TF_1: We're using semantic versions instead of commit hash
-#  source = "../../../i-dot-ai-core-terraform-modules//modules/infrastructure/rds"  # For testing local changes
+  # source = "../../../i-dot-ai-core-terraform-modules//modules/infrastructure/rds"  # For testing local changes
   source                  = "git::https://github.com/i-dot-ai/i-dot-ai-core-terraform-modules.git//modules/infrastructure/rds?ref=v1.0.0-rds"
   name                    = local.name
   db_name                 = var.project_name
