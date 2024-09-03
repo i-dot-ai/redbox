@@ -29,7 +29,7 @@ class UnstructuredLargeChunkLoader(BaseRedboxFileLoader):
 
         url = f"http://{self.env.unstructured_host}:8000/general/v0/general"
         files = {
-            "files": (self.file.key, self.file_bytes),
+            "files": (self.file_name, self.file_bytes),
         }
         response = requests.post(
             url,
@@ -54,7 +54,6 @@ class UnstructuredLargeChunkLoader(BaseRedboxFileLoader):
             yield Document(
                 page_content=raw_chunk["text"],
                 metadata=ChunkMetadata(
-                    creator_user_uuid=self.file.creator_user_uuid,
                     index=i,
                     file_name=raw_chunk["metadata"].get("filename"),
                     page_number=raw_chunk["metadata"].get("page_number"),
@@ -78,7 +77,7 @@ class UnstructuredTitleLoader(BaseRedboxFileLoader):
         url = f"http://{self.env.unstructured_host}:8000/general/v0/general"
 
         files = {
-            "files": (self.file.key, self.file_bytes),
+            "files": (self.file_name, self.file_bytes),
         }
         response = requests.post(
             url,
@@ -103,7 +102,6 @@ class UnstructuredTitleLoader(BaseRedboxFileLoader):
             yield Document(
                 page_content=raw_chunk["text"],
                 metadata=ChunkMetadata(
-                    creator_user_uuid=self.file.creator_user_uuid,
                     index=i,
                     file_name=raw_chunk["metadata"].get("filename"),
                     page_number=raw_chunk["metadata"].get("page_number"),

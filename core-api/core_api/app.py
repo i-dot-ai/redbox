@@ -7,9 +7,10 @@ from fastapi import FastAPI, Response
 from fastapi.responses import RedirectResponse
 
 from core_api.routes.chat import chat_app
-from core_api.routes.file import file_app
 from redbox import __version__ as redbox_version
-from redbox.models import Settings, StatusResponse
+from redbox.models import Settings
+from pydantic import BaseModel
+
 
 # === Logging ===
 
@@ -52,6 +53,12 @@ def root():
     return RedirectResponse(url="/docs")
 
 
+class StatusResponse(BaseModel):
+    status: str
+    uptime_seconds: float
+    version: str
+
+
 @app.get("/health", status_code=HTTPStatus.OK, tags=["health"])
 def health(response: Response) -> StatusResponse:
     """Returns the health of the API
@@ -79,4 +86,3 @@ def health(response: Response) -> StatusResponse:
 
 
 app.mount("/chat", chat_app)
-app.mount("/file", file_app)
