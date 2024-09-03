@@ -7,6 +7,9 @@ from redbox.models.chain import RedboxState
 
 def build_document_group_send(target: str) -> Callable[[RedboxState], list[Send]]:
     def _group_send(state: RedboxState) -> list[Send]:
+        if state.get("documents") is None:
+            raise KeyError
+
         group_send_states: list[RedboxState] = [
             RedboxState(
                 request=state["request"],
@@ -23,6 +26,9 @@ def build_document_group_send(target: str) -> Callable[[RedboxState], list[Send]
 
 def build_document_chunk_send(target: str) -> Callable[[RedboxState], list[Send]]:
     def _chunk_send(state: RedboxState) -> list[Send]:
+        if state.get("documents") is None:
+            raise KeyError
+
         chunk_send_states: list[RedboxState] = [
             RedboxState(
                 request=state["request"],

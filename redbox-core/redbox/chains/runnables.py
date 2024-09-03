@@ -55,7 +55,7 @@ def build_chat_prompt_from_messages_runnable(prompt_set: PromptSet, tokeniser: E
                 truncated_history.insert(0, msg)
 
         prompt_template_context = state["request"].model_dump() | {
-            "formatted_documents": format_documents(flatten_document_state(state["documents"])),
+            "formatted_documents": format_documents(flatten_document_state(state.get("documents"))),
         }
 
         return ChatPromptTemplate.from_messages(
