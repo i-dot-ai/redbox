@@ -52,6 +52,8 @@ class AISettings(UUIDPrimaryKeyBase, TimeStampedModel):
         GPT_35_TURBO = "gpt-35-turbo-16k", _("gpt-35-turbo-16k")
         GPT_4_TURBO = "gpt-4-turbo-2024-04-09", _("gpt-4-turbo-2024-04-09")
         GPT_4_OMNI = "gpt-4o", _("gpt-4o")
+        CLAUDE_3_SONNET = "anthropic.claude-3-sonnet-20240229-v1:0", _("claude-3-sonnet")
+        CLAUDE_3_HAIKU = "anthropic.claude-3-haiku-20240307-v1:0", _("claude-3-haiku")
 
     label = models.CharField(max_length=50, unique=True)
     max_document_tokens = models.PositiveIntegerField(default=1_000_000, null=True, blank=True)

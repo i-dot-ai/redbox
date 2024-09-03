@@ -1,7 +1,7 @@
 import os
 from functools import cache
 from langchain_elasticsearch import ElasticsearchRetriever
-from langchain_core.embeddings import Embeddings
+from langchain_core.embeddings import Embeddings, FakeEmbeddings
 from langchain_openai import AzureChatOpenAI
 from langchain_openai.embeddings import AzureOpenAIEmbeddings, OpenAIEmbeddings
 from langchain_core.utils import convert_to_secret_str
@@ -118,12 +118,12 @@ def get_aws_embeddings(env: Settings):
 
 
 def get_embeddings(env: Settings) -> Embeddings:
-    # if env.embedding_backend == "azure":
-    #     return get_azure_embeddings(env)
-    # if env.embedding_backend == "openai":
-    #     return get_openai_embeddings(env)
-    # if env.embedding_backend == "fake":
-    #     return FakeEmbeddings(size=3072)  # TODO
+    if env.embedding_backend == "azure":
+        return get_azure_embeddings(env)
+    if env.embedding_backend == "openai":
+        return get_openai_embeddings(env)
+    if env.embedding_backend == "fake":
+        return FakeEmbeddings(size=3072)
     if env.embedding_backend == "aws":
         return get_aws_embeddings(env)
     raise Exception("No configured embedding model")
