@@ -1360,13 +1360,13 @@ langchain-core = ">=0.2.22,<0.3"
 
 [[package]]
 name = "langsmith"
-version = "0.1.108"
+version = "0.1.109"
 description = "Client library to connect to the LangSmith LLM Tracing and Evaluation Platform."
 optional = false
 python-versions = "<4.0,>=3.8.1"
 files = [
-    {file = "langsmith-0.1.108-py3-none-any.whl", hash = "sha256:407f318b0989e33f2cd30bc2fbd443e4ddfa7c2a93de7f795fb6b119b015583c"},
-    {file = "langsmith-0.1.108.tar.gz", hash = "sha256:42f603e2d5770ba36093951bdb29eaab22451cb12ab8c062340c722cf60d4cec"},
+    {file = "langsmith-0.1.109-py3-none-any.whl", hash = "sha256:49fd77eaba5173fadc7361d090722d8bcf6177dd9f27274cd4f47d8478a3ad48"},
+    {file = "langsmith-0.1.109.tar.gz", hash = "sha256:55c387ced8292345f582cc7714931b88130f81652697357306303d1d94cf0cfc"},
 ]
 
 [package.dependencies]
@@ -3307,4 +3307,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.12,<3.13"
-content-hash = "aaad6a84e6ce3b09afee94892560cef3df976c7613b0a77852722b3fda80d577"
+content-hash = "d6c069bbaa40416908418e4071923a050f255cd4acbe30e52cfe94ae1864deaf"
