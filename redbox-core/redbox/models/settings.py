@@ -65,7 +65,9 @@ class Settings(BaseSettings):
     embedding_azure_openai_endpoint: str = "not an endpoint"
     azure_api_version_embeddings: str = "2024-02-01"
 
-    embedding_backend: Literal["text-embedding-ada-002", "amazon.titan-embed-text-v2:0", "text-embedding-3-large", "fake"] = "text-embedding-3-large"
+    embedding_backend: Literal[
+        "text-embedding-ada-002", "amazon.titan-embed-text-v2:0", "text-embedding-3-large", "fake"
+    ] = "text-embedding-3-large"
 
     llm_max_tokens: int = 1024
 
