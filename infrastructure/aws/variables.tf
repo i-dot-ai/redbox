@@ -505,7 +505,7 @@ variable "django_queue_max_attempts" {
 
 variable "embedding_backend" {
   type        = string
-  default     = "text-embedding-ada-002"
+  default     = "text-embedding-3-large"
   description = "which provider to use to embed text, e.g. azure, aws, openai"
 }
 
