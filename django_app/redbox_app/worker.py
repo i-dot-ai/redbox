@@ -1,10 +1,7 @@
 import logging
 from uuid import UUID
 
-from django.conf import settings
-
 from redbox.loader.ingester import ingest_file
-from redbox.models import File as CoreFile
 
 
 def ingest(file_id: UUID):
@@ -15,12 +12,7 @@ def ingest(file_id: UUID):
 
     logging.info("Ingesting file: %s", file)
 
-    core_file = CoreFile(
-        key=file.unique_name,
-        bucket=settings.BUCKET_NAME,
-        creator_user_uuid=file.user.id,
-    )
-    if error := ingest_file(core_file):
+    if error := ingest_file(file.unique_name):
         file.status = StatusEnum.errored
         file.ingest_error = error
     else:
