@@ -9,8 +9,6 @@ locals {
     {
       "EMBEDDING_DOCUMENT_FIELD_NAME" : var.embedding_document_field_name,
       "AZURE_OPENAI_MODEL" : var.azure_openai_model,
-      "EMBEDDING_MODEL": var.embedding_model,
-      "EMBEDDING_BACKEND": var.embedding_backend
     }
   )
 
@@ -58,7 +56,9 @@ locals {
     "AWS_REGION" : var.region,
     "worker_ingest_min_chunk_size" : var.worker_ingest_min_chunk_size,
     "worker_ingest_max_chunk_size" : var.worker_ingest_max_chunk_size,
-    "UNSTRUCTURED_HOST" : local.unstructured_host
+    "UNSTRUCTURED_HOST" : local.unstructured_host,
+    "EMBEDDING_MODEL": var.embedding_model,
+    "EMBEDDING_BACKEND": var.embedding_backend
   }
 
   core_secrets = {

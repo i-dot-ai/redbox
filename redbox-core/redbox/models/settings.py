@@ -76,7 +76,7 @@ class Settings(BaseSettings):
     embedding_document_field_name: str = "embedding"
 
     embedding_openai_base_url: str | None = None
-    embedding_model: Literal["text-embedding-ada-002", "amazon.titan-embed-text-v1"] = "text-embedding-ada-002"
+    embedding_model: Literal["text-embedding-ada-002", "amazon.titan-embed-text-v2:0"] = "text-embedding-ada-002"
 
     partition_strategy: Literal["auto", "fast", "ocr_only", "hi_res"] = "fast"
     clustering_strategy: Literal["full"] | None = None

@@ -73,10 +73,12 @@ def get_chat_llm(env: Settings, ai_settings: AISettings):
                     )
                 ]
             )
-    elif ai_settings.chat_backend == "anthropic.claude-3-sonnet-20240229-v1:0":
-        chat_model = ChatBedrock(
-            model_id="anthropic.claude-3-sonnet-20240229-v1:0",
-        )
+    elif ai_settings.chat_backend in (
+        "anthropic.claude-3-sonnet-20240229-v1:0",
+        "anthropic.claude-3-haiku-20240307-v1:0",
+    ):
+        chat_model = ChatBedrock(model_id=ai_settings.chat_backend)
+
     if chat_model is None:
         raise Exception("%s not recognised", ai_settings.chat_backend)
     else:
