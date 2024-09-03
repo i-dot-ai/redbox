@@ -1,29 +1,10 @@
 from __future__ import annotations
 
-from enum import Enum, StrEnum
+from enum import StrEnum
 from uuid import UUID, uuid4
 import datetime
 
 from pydantic import BaseModel, Field
-
-
-class ProcessingStatusEnum(str, Enum):
-    """Current status of the file processing.
-
-    Note: The Django app interprets these as:
-    "processing" -> "processing"
-    "complete" -> "complete"
-    "failed" -> "errored"
-    anything else -> "processing"
-
-    If you add any other fail state options, the Django app will need to be updated.
-    django_app/redbox_app/redbox_core/models.py File.update_status_from_core
-    """
-
-    processing = "processing"
-    embedding = "embedding"  # Used for processing while we transition to new statuses
-    failed = "failed"
-    complete = "complete"
 
 
 class File(BaseModel):

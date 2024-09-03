@@ -1,8 +1,5 @@
 from redbox.models.chat import ChatMessage, ChatRequest, ChatResponse, ChatRoute
-from redbox.models.file import (
-    File,
-    ProcessingStatusEnum,
-)
+from redbox.models.file import File
 from redbox.models.settings import Settings
 
 __all__ = [
@@ -11,6 +8,5 @@ __all__ = [
     "ChatResponse",
     "ChatRoute",
     "File",
-    "ProcessingStatusEnum",
     "Settings",
 ]

@@ -11,7 +11,7 @@ from elasticsearch.helpers import scan
 from elasticsearch import Elasticsearch
 from unittest.mock import MagicMock, patch
 
-from redbox.models.file import File, ProcessingStatusEnum
+from redbox.models.file import File
 
 from redbox.loader import ingester
 from redbox.loader.ingester import ingest_file
@@ -157,11 +157,11 @@ def test_ingest_from_loader(
 
 @patch("redbox.loader.loaders.requests.post")
 @pytest.mark.parametrize(
-    ("filename", "status", "mock_json"),
+    ("filename", "is_complete", "mock_json"),
     [
         (
             "html/example.html",
-            ProcessingStatusEnum.complete,
+            True,
             [
                 {
                     "type": "CompositeElement",
@@ -176,7 +176,7 @@ def test_ingest_from_loader(
                 }
             ],
         ),
-        ("html/corrupt.html", ProcessingStatusEnum.failed, None),
+        ("html/corrupt.html", False, None),
     ],
 )
 def test_ingest_file(
@@ -186,7 +186,7 @@ def test_ingest_file(
     monkeypatch: MonkeyPatch,
     env: Settings,
     filename: str,
-    status: ProcessingStatusEnum,
+    is_complete: bool,
     mock_json: list | None,
 ):
     """
@@ -209,9 +209,9 @@ def test_ingest_file(
 
     res = ingest_file(file)
 
-    if status == ProcessingStatusEnum.failed:
+    if not is_complete:
         assert isinstance(res, str)
-    elif status == ProcessingStatusEnum.complete:
+    else:
         assert res is None
 
         # Test it's written to Elastic
