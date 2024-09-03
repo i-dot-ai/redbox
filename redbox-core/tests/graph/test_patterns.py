@@ -207,7 +207,7 @@ def test_build_merge_pattern(test_case: RedboxChatTestCase, mocker: MockerFixtur
     final_state = RedboxState(response)
 
     response_documents = [doc for doc in flatten_document_state(final_state.get("documents")) if doc is not None]
-    noned_documents = sum([1 for doc in final_state.get("documents", {}).values() for v in doc.values() if v is None])
+    noned_documents = sum(1 for doc in final_state.get("documents", {}).values() for v in doc.values() if v is None)
 
     assert len(response_documents) == 1
     assert noned_documents == len(test_case.docs) - 1
