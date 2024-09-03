@@ -77,6 +77,9 @@ def build_merge_pattern(
     def _merge(state: RedboxState) -> dict[str, Any]:
         llm = get_chat_llm(Settings(), state["request"].ai_settings)
 
+        if not state.get("documents"):
+            return {"documents": None}
+
         flattened_documents = flatten_document_state(state["documents"])
 
         merged_document = reduce(lambda left, right: combine_documents(left, right), flattened_documents)
@@ -167,7 +170,8 @@ def build_set_text_pattern(text: str, final_response_chain: bool = False):
 
 
 def clear_documents_process(state: RedboxState) -> dict[str, Any]:
-    return {"documents": {group_id: None for group_id in state["documents"].keys()}}
+    if documents := state.get("documents"):
+        return {"documents": {group_id: None for group_id in documents}}
 
 
 def empty_process(state: RedboxState) -> None:

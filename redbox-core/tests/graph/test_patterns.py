@@ -175,7 +175,7 @@ def test_build_retrieve_pattern(test_case: RedboxChatTestCase, mock_retriever: B
     response = retriever_function(state)
     final_state = RedboxState(response)
 
-    assert final_state["documents"] == structure_documents(test_case.docs)
+    assert final_state.get("documents") == structure_documents(test_case.docs)
 
 
 MERGE_TEST_CASES = generate_test_cases(
@@ -206,8 +206,8 @@ def test_build_merge_pattern(test_case: RedboxChatTestCase, mocker: MockerFixtur
         response = merge(state)
     final_state = RedboxState(response)
 
-    response_documents = [doc for doc in flatten_document_state(final_state["documents"]) if doc is not None]
-    noned_documents = sum([1 for doc in final_state["documents"].values() for v in doc.values() if v is None])
+    response_documents = [doc for doc in flatten_document_state(final_state.get("documents")) if doc is not None]
+    noned_documents = sum(1 for doc in final_state.get("documents", {}).values() for v in doc.values() if v is None)
 
     assert len(response_documents) == 1
     assert noned_documents == len(test_case.docs) - 1
@@ -324,7 +324,7 @@ def test_clear_documents(test_case: list[RedboxState]):
     response = graph.invoke(test_case)
     final_state = RedboxState(response)
 
-    assert final_state["documents"] == {}
+    assert final_state.get("documents") == {}
 
 
 def test_canned_llm():

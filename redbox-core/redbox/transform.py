@@ -79,10 +79,22 @@ def structure_documents(docs: list[Document]) -> DocumentState:
     return result
 
 
-def flatten_document_state(documents: DocumentState) -> list[Document]:
+def flatten_document_state(documents: DocumentState | None) -> list[Document]:
     if not documents:
         return []
     return [document for group in documents.values() for document in group.values()]
+
+
+def get_document_token_count(documents: DocumentState | None) -> int:
+    if documents is None:
+        return 0
+
+    document_list = flatten_document_state(documents=documents)
+
+    if len(document_list) == 0:
+        return 0
+
+    return sum(d.metadata["token_count"] for d in document_list)
 
 
 @RunnableLambda
