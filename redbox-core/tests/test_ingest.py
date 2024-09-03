@@ -1,6 +1,5 @@
 from typing import TYPE_CHECKING
 from pathlib import Path
-from uuid import uuid4, UUID
 from typing import Any
 
 import pytest
@@ -42,11 +41,11 @@ def file_to_s3(filename: str, s3_client: S3Client, env: Settings) -> File:
             Tagging=f"file_type={file_type}",
         )
 
-    return File(key=file_name, bucket=env.bucket_name, creator_user_uuid=uuid4())
+    return File(key=file_name, bucket=env.bucket_name)
 
 
-def make_file_query(user_uuid: UUID, file_name: str, resolution: ChunkResolution | None = None) -> dict[str, Any]:
-    query_filter = make_query_filter(user_uuid, [file_name], resolution)
+def make_file_query(file_name: str, resolution: ChunkResolution | None = None) -> dict[str, Any]:
+    query_filter = make_query_filter([file_name], resolution)
     return {"query": {"bool": {"must": [{"match_all": {}}], "filter": query_filter}}}
 
 
@@ -141,7 +140,7 @@ def test_ingest_from_loader(
     _ = ingest_chain.invoke(file)
 
     # Test it's written to Elastic
-    file_query = make_file_query(user_uuid=file.creator_user_uuid, file_name=file.key, resolution=resolution)
+    file_query = make_file_query(file_name=file.key, resolution=resolution)
 
     chunks = list(scan(client=es_client, index=f"{env.elastic_root_index}-chunk", query=file_query))
     assert len(chunks) > 0
@@ -215,10 +214,7 @@ def test_ingest_file(
         assert res is None
 
         # Test it's written to Elastic
-        file_query = make_file_query(
-            user_uuid=file.creator_user_uuid,
-            file_name=file.key,
-        )
+        file_query = make_file_query(file_name=file.key)
 
         chunks = list(scan(client=es_client, index=f"{env.elastic_root_index}-chunk", query=file_query))
         assert len(chunks) > 0

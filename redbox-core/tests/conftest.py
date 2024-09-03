@@ -164,7 +164,7 @@ def file(s3_client: S3Client, file_pdf_path: Path, alice: UUID, env: Settings) -
             Tagging=f"file_type={file_type}",
         )
 
-    return File(key=file_name, bucket=env.bucket_name, creator_user_uuid=alice)
+    return File(key=file_name, bucket=env.bucket_name)
 
 
 @pytest.fixture(params=ALL_CHUNKS_RETRIEVER_CASES)

@@ -11,8 +11,6 @@ class File(BaseModel):
     """Reference to file stored on s3"""
 
     key: str = Field(description="file key")
-    bucket: str = Field(description="s3 bucket")
-    creator_user_uuid: UUID
 
 
 class ChunkResolution(StrEnum):
@@ -30,7 +28,6 @@ class ChunkMetadata(BaseModel):
     """
 
     uuid: UUID = Field(default_factory=uuid4)
-    creator_user_uuid: UUID
     index: int
     file_name: str
     page_number: int | None = None
