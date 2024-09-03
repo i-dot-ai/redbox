@@ -1,5 +1,4 @@
 from typing import Any
-from uuid import UUID
 
 from langchain_core.embeddings.embeddings import Embeddings
 
@@ -7,29 +6,20 @@ from redbox.models.chain import RedboxState
 from redbox.models.file import ChunkResolution
 
 
-def make_query_filter(user_uuid: UUID, file_names: list[str], chunk_resolution: ChunkResolution | None) -> list[dict]:
-    query_filter: list[dict] = [
+def make_query_filter(file_names: list[str], chunk_resolution: ChunkResolution | None) -> list[dict]:
+    if not file_names:
+        return []
+
+    query_filter = [
         {
             "bool": {
                 "should": [
-                    {"term": {"creator_user_uuid.keyword": str(user_uuid)}},
-                    {"term": {"metadata.creator_user_uuid.keyword": str(user_uuid)}},
+                    {"terms": {"file_name.keyword": file_names}},
+                    {"terms": {"metadata.file_name.keyword": file_names}},
                 ]
             }
         }
     ]
-
-    if len(file_names) != 0:
-        query_filter.append(
-            {
-                "bool": {
-                    "should": [
-                        {"terms": {"file_name.keyword": file_names}},
-                        {"terms": {"metadata.file_name.keyword": file_names}},
-                    ]
-                }
-            }
-        )
 
     if chunk_resolution:
         query_filter.append(
@@ -54,7 +44,7 @@ def get_all(
     As it's used in summarisation, it excludes embeddings.
     """
 
-    query_filter = make_query_filter(state["request"].user_uuid, state["request"].s3_keys, chunk_resolution)
+    query_filter = make_query_filter(state["request"].s3_keys, chunk_resolution)
     return {
         "_source": {"excludes": ["*embedding"]},
         "query": {"bool": {"must": {"match_all": {}}, "filter": query_filter}},
@@ -69,7 +59,7 @@ def get_some(
 ) -> dict[str, Any]:
     vector = embedding_model.embed_query(state["request"].question)
 
-    query_filter = make_query_filter(state["request"].user_uuid, state["request"].s3_keys, chunk_resolution)
+    query_filter = make_query_filter(state["request"].s3_keys, chunk_resolution)
 
     return {
         "size": state["request"].ai_settings.rag_k,

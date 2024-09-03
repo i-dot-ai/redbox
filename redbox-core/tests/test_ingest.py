@@ -1,6 +1,5 @@
 from typing import TYPE_CHECKING
 from pathlib import Path
-from uuid import uuid4, UUID
 from typing import Any
 
 import pytest
@@ -11,7 +10,6 @@ from elasticsearch.helpers import scan
 from elasticsearch import Elasticsearch
 from unittest.mock import MagicMock, patch
 
-from redbox.models.file import File, ProcessingStatusEnum
 
 from redbox.loader import ingester
 from redbox.loader.ingester import ingest_file
@@ -29,7 +27,7 @@ else:
     S3Client = object
 
 
-def file_to_s3(filename: str, s3_client: S3Client, env: Settings) -> File:
+def file_to_s3(filename: str, s3_client: S3Client, env: Settings) -> str:
     file_path = Path(__file__).parents[2] / "tests" / "data" / filename
     file_name = file_path.name
     file_type = file_path.suffix
@@ -42,11 +40,11 @@ def file_to_s3(filename: str, s3_client: S3Client, env: Settings) -> File:
             Tagging=f"file_type={file_type}",
         )
 
-    return File(key=file_name, bucket=env.bucket_name, creator_user_uuid=uuid4())
+    return file_name
 
 
-def make_file_query(user_uuid: UUID, file_name: str, resolution: ChunkResolution | None = None) -> dict[str, Any]:
-    query_filter = make_query_filter(user_uuid, [file_name], resolution)
+def make_file_query(file_name: str, resolution: ChunkResolution | None = None) -> dict[str, Any]:
+    query_filter = make_query_filter([file_name], resolution)
     return {"query": {"bool": {"must": [{"match_all": {}}], "filter": query_filter}}}
 
 
@@ -133,15 +131,15 @@ def test_ingest_from_loader(
     monkeypatch.setattr(ingester, "get_embeddings", lambda _: FakeEmbeddings(size=3072))
 
     # Upload file and call
-    file = file_to_s3(filename="html/example.html", s3_client=s3_client, env=env)
+    file_name = file_to_s3(filename="html/example.html", s3_client=s3_client, env=env)
     ingest_chain = ingest_from_loader(
         document_loader_type=document_loader_type, s3_client=s3_client, vectorstore=es_vector_store, env=env
     )
 
-    _ = ingest_chain.invoke(file)
+    _ = ingest_chain.invoke(file_name)
 
     # Test it's written to Elastic
-    file_query = make_file_query(user_uuid=file.creator_user_uuid, file_name=file.key, resolution=resolution)
+    file_query = make_file_query(file_name=file_name, resolution=resolution)
 
     chunks = list(scan(client=es_client, index=f"{env.elastic_root_index}-chunk", query=file_query))
     assert len(chunks) > 0
@@ -157,11 +155,11 @@ def test_ingest_from_loader(
 
 @patch("redbox.loader.loaders.requests.post")
 @pytest.mark.parametrize(
-    ("filename", "status", "mock_json"),
+    ("filename", "is_complete", "mock_json"),
     [
         (
             "html/example.html",
-            ProcessingStatusEnum.complete,
+            True,
             [
                 {
                     "type": "CompositeElement",
@@ -176,7 +174,7 @@ def test_ingest_from_loader(
                 }
             ],
         ),
-        ("html/corrupt.html", ProcessingStatusEnum.failed, None),
+        ("html/corrupt.html", False, None),
     ],
 )
 def test_ingest_file(
@@ -186,7 +184,7 @@ def test_ingest_file(
     monkeypatch: MonkeyPatch,
     env: Settings,
     filename: str,
-    status: ProcessingStatusEnum,
+    is_complete: bool,
     mock_json: list | None,
 ):
     """
@@ -205,20 +203,17 @@ def test_ingest_file(
     monkeypatch.setattr(ingester, "get_embeddings", lambda _: FakeEmbeddings(size=3072))
 
     # Upload file and call
-    file = file_to_s3(filename=filename, s3_client=s3_client, env=env)
+    filename = file_to_s3(filename=filename, s3_client=s3_client, env=env)
 
-    res = ingest_file(file)
+    res = ingest_file(filename)
 
-    if status == ProcessingStatusEnum.failed:
+    if not is_complete:
         assert isinstance(res, str)
-    elif status == ProcessingStatusEnum.complete:
+    else:
         assert res is None
 
         # Test it's written to Elastic
-        file_query = make_file_query(
-            user_uuid=file.creator_user_uuid,
-            file_name=file.key,
-        )
+        file_query = make_file_query(file_name=filename)
 
         chunks = list(scan(client=es_client, index=f"{env.elastic_root_index}-chunk", query=file_query))
         assert len(chunks) > 0

@@ -3,7 +3,6 @@ import uuid
 from collections.abc import MutableSequence, Sequence
 from pathlib import Path
 
-from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import FieldError, ValidationError
 from django.core.files.uploadedfile import UploadedFile
@@ -16,12 +15,10 @@ from django.views.decorators.http import require_http_methods
 from django_q.tasks import async_task
 from requests.exceptions import RequestException
 
-from redbox_app.redbox_core.client import CoreApiClient
 from redbox_app.redbox_core.models import File, StatusEnum, User
 from redbox_app.worker import ingest
 
 logger = logging.getLogger(__name__)
-core_api = CoreApiClient(host=settings.CORE_API_HOST, port=settings.CORE_API_PORT)
 CHUNK_SIZE = 1024
 # move this somewhere
 APPROVED_FILE_EXTENSIONS = [
@@ -133,7 +130,6 @@ class UploadView(View):
 
     @staticmethod
     def ingest_file(uploaded_file: UploadedFile, user: User) -> Sequence[str]:
-        errors: MutableSequence[str] = []
         try:
             logger.info("getting file from s3")
             file = File.objects.create(
@@ -142,23 +138,11 @@ class UploadView(View):
                 original_file=uploaded_file,
                 original_file_name=uploaded_file.name,
             )
-            file.save()
         except (ValueError, FieldError, ValidationError) as e:
             logger.exception("Error creating File model object for %s.", uploaded_file, exc_info=e)
-            errors.append(e.args[0])
+            return e.args
         else:
-            try:
-                logger.info("pushing file to core")
-                upload_file_response = core_api.upload_file(file.unique_name, user)
-            except RequestException as e:
-                logger.exception("Error uploading file object %s.", file, exc_info=e)
-                file.delete()
-                errors.append("failed to connect to core-api")
-            else:
-                file.core_file_uuid = upload_file_response.uuid
-                file.save()
-                async_task(ingest, file.id, task_name=file.unique_name, group="ingest")
-        return errors
+            async_task(ingest, file.id, task_name=file.unique_name, group="ingest")
 
 
 @login_required
@@ -168,11 +152,10 @@ def remove_doc_view(request, doc_id: uuid):
 
     if request.method == "POST":
         try:
-            core_api.delete_file(file.core_file_uuid, request.user)
+            file.delete_from_elastic()
         except RequestException as e:
             logger.exception("Error deleting file object %s.", file, exc_info=e)
             errors.append("There was an error deleting this file")
-
         else:
             logger.info("Removing document: %s", request.POST["doc_id"])
             file.delete_from_s3()

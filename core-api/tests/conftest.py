@@ -10,9 +10,8 @@ from jose import jwt
 from langchain_core.documents.base import Document
 from langchain_core.embeddings.fake import FakeEmbeddings
 from langchain_elasticsearch.vectorstores import ElasticsearchStore
-from redbox.models import File, Settings
+from redbox.models import Settings
 from redbox.models.file import ChunkMetadata, ChunkResolution
-from redbox.storage import ElasticsearchStorageHandler
 
 from core_api import dependencies
 from core_api.app import app as application
@@ -31,11 +30,6 @@ def env() -> Settings:
 @pytest.fixture(scope="session")
 def es_client(env: Settings) -> Elasticsearch:
     return env.elasticsearch_client()
-
-
-@pytest.fixture()
-def es_storage_handler(es_client: Elasticsearch, env: Settings) -> ElasticsearchStorageHandler:
-    return ElasticsearchStorageHandler(es_client=es_client, root_index=env.elastic_root_index)
 
 
 @pytest.fixture(scope="session")
@@ -115,23 +109,21 @@ def file_pdf_path() -> Path:
 
 
 @pytest.fixture()
-def file_pdf_object(file_pdf_path: Path, alice: UUID, env: Settings) -> File:
+def file_pdf(file_pdf_path: Path, alice: UUID, env: Settings) -> str:
     """The unuploaded File object of Alice's PDF."""
     file_name = file_pdf_path.name
-    return File(key=file_name, bucket=env.bucket_name, creator_user_uuid=alice)
+    return file_name
 
 
 @pytest.fixture()
-def file_pdf_chunks(file_pdf_object: File) -> list[Document]:
+def file_pdf_chunks(file_pdf) -> list[Document]:
     """The Document chunk objects of Alice's PDF."""
     normal_chunks = [
         Document(
             page_content="hello",
             metadata=ChunkMetadata(
-                parent_file_uuid=str(file_pdf_object.uuid),
                 index=i,
-                file_name=file_pdf_object.key,
-                creator_user_uuid=file_pdf_object.creator_user_uuid,
+                file_name=file_pdf,
                 page_number=4,
                 created_datetime=datetime.now(UTC),
                 token_count=4,
@@ -145,10 +137,8 @@ def file_pdf_chunks(file_pdf_object: File) -> list[Document]:
         Document(
             page_content="hello" * 10,
             metadata=ChunkMetadata(
-                parent_file_uuid=str(file_pdf_object.uuid),
                 index=i,
-                file_name=file_pdf_object.key,
-                creator_user_uuid=file_pdf_object.creator_user_uuid,
+                file_name=file_pdf,
                 page_number=4,
                 created_datetime=datetime.now(UTC),
                 token_count=20,
@@ -158,20 +148,6 @@ def file_pdf_chunks(file_pdf_object: File) -> list[Document]:
         for i in range(2)
     ]
     return normal_chunks + large_chunks
-
-
-@pytest.fixture()
-def file_pdf(
-    es_store: ElasticsearchStore,
-    es_storage_handler: ElasticsearchStorageHandler,
-    file_pdf_object: File,
-    file_pdf_chunks: list[Document],
-) -> File:
-    """The File object of Alice's PDF, with all objects in the Elasticsearch index."""
-    es_storage_handler.write_item(file_pdf_object)
-    es_storage_handler.refresh()
-    es_store.add_documents(file_pdf_chunks)
-    return file_pdf_object
 
 
 @pytest.fixture()
@@ -181,23 +157,21 @@ def file_html_path() -> Path:
 
 
 @pytest.fixture()
-def file_html_object(file_html_path: Path, alice: UUID, env: Settings) -> File:
+def file_html(file_html_path: Path, alice: UUID, env: Settings) -> str:
     """The unuploaded File object of Alice's HTML."""
     file_name = file_html_path.name
-    return File(key=file_name, bucket=env.bucket_name, creator_user_uuid=alice)
+    return file_name
 
 
 @pytest.fixture()
-def file_html_chunks(file_html_object: File) -> list[Document]:
+def file_html_chunks(file_html: str) -> list[Document]:
     """The Document chunk objects of Alice's HTML."""
     normal_chunks = [
         Document(
             page_content="hello",
             metadata=ChunkMetadata(
-                parent_file_uuid=str(file_html_object.uuid),
                 index=i,
-                file_name=file_html_object.key,
-                creator_user_uuid=file_html_object.creator_user_uuid,
+                file_name=file_html,
                 page_number=4,
                 created_datetime=datetime.now(UTC),
                 token_count=4,
@@ -211,10 +185,8 @@ def file_html_chunks(file_html_object: File) -> list[Document]:
         Document(
             page_content="hello" * 10,
             metadata=ChunkMetadata(
-                parent_file_uuid=str(file_html_object.uuid),
                 index=i,
-                file_name=file_html_object.key,
-                creator_user_uuid=file_html_object.creator_user_uuid,
+                file_name=file_html,
                 page_number=4,
                 created_datetime=datetime.now(UTC),
                 token_count=20,
@@ -224,17 +196,3 @@ def file_html_chunks(file_html_object: File) -> list[Document]:
         for i in range(2)
     ]
     return normal_chunks + large_chunks
-
-
-@pytest.fixture()
-def file_html(
-    es_store: ElasticsearchStore,
-    es_storage_handler: ElasticsearchStorageHandler,
-    file_html_object: File,
-    file_html_chunks: list[Document],
-) -> File:
-    """The File object of Alice's HTML, with all objects in the Elasticsearch index."""
-    es_storage_handler.write_item(file_html_object)
-    es_storage_handler.refresh()
-    es_store.add_documents(file_html_chunks)
-    return file_html_object
