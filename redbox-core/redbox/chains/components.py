@@ -1,7 +1,7 @@
 import os
 from functools import cache
 from langchain_elasticsearch import ElasticsearchRetriever
-from langchain_core.embeddings import Embeddings, FakeEmbeddings
+from langchain_core.embeddings import Embeddings
 from langchain_openai import AzureChatOpenAI
 from langchain_openai.embeddings import AzureOpenAIEmbeddings, OpenAIEmbeddings
 from langchain_core.utils import convert_to_secret_str
