@@ -10,6 +10,7 @@ import tiktoken
 from redbox.models.chain import AISettings
 from redbox.models.settings import Settings
 from redbox.retriever import AllElasticsearchRetriever, ParameterisedElasticsearchRetriever
+from langchain_aws import ChatBedrock
 
 
 def get_chat_llm(env: Settings, ai_settings: AISettings):
@@ -71,6 +72,10 @@ def get_chat_llm(env: Settings, ai_settings: AISettings):
                     )
                 ]
             )
+    elif ai_settings.chat_backend == "anthropic.claude-3-sonnet-20240229-v1:0":
+        chat_model = ChatBedrock(
+            model_id="anthropic.claude-3-sonnet-20240229-v1:0",
+        )
     if chat_model is None:
         raise Exception("%s not recognised", ai_settings.chat_backend)
     else:
