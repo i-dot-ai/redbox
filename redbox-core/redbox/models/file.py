@@ -4,12 +4,7 @@ from enum import Enum, StrEnum
 from uuid import UUID, uuid4
 import datetime
 
-import tiktoken
 from pydantic import BaseModel, Field
-
-from redbox.models.base import PersistableModel
-
-encoding = tiktoken.get_encoding("cl100k_base")
 
 
 class ProcessingStatusEnum(str, Enum):
@@ -31,35 +26,12 @@ class ProcessingStatusEnum(str, Enum):
     complete = "complete"
 
 
-class File(PersistableModel):
+class File(BaseModel):
     """Reference to file stored on s3"""
 
     key: str = Field(description="file key")
     bucket: str = Field(description="s3 bucket")
-    ingest_status: ProcessingStatusEnum | None = Field(
-        description="Status of file ingest for files loaded by new worker", default=None
-    )
-
-
-class Link(BaseModel):
-    text: str | None
-    url: str
-    start_index: int
-
-    def __le__(self, other: Link):
-        """required for sorted"""
-        return self.start_index <= other.start_index
-
-    def __hash__(self):
-        return hash(self.text) ^ hash(self.url) ^ hash(self.start_index)
-
-
-class FileStatus(BaseModel):
-    """Status of a file."""
-
-    file_uuid: UUID
-    processing_status: ProcessingStatusEnum | None
-    chunk_statuses: None = Field(default=None, description="deprecated, see processing_status")
+    creator_user_uuid: UUID
 
 
 class ChunkResolution(StrEnum):
