@@ -5,7 +5,6 @@ from django.conf import settings
 
 from redbox.loader.ingester import ingest_file
 from redbox.models import File as CoreFile
-from redbox.models import ProcessingStatusEnum
 
 
 def ingest(file_id: UUID):
@@ -21,7 +20,6 @@ def ingest(file_id: UUID):
         bucket=settings.BUCKET_NAME,
         creator_user_uuid=file.user.id,
     )
-    core_file.ingest_status = ProcessingStatusEnum.embedding
     if error := ingest_file(core_file):
         file.status = StatusEnum.errored
         file.ingest_error = error
