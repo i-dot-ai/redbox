@@ -242,12 +242,10 @@ class ChatConsumer(AsyncWebsocketConsumer):
     @staticmethod
     @database_sync_to_async
     def get_ai_settings(user: User) -> AISettings:
-        ai_settings = model_to_dict(
+        return model_to_dict(
             user.ai_settings,
             fields=[field.name for field in user.ai_settings._meta.fields if field.name != "label"],  # noqa: SLF001
         )
-        ai_settings["chat_backend"] = "anthropic.claude-3-sonnet-20240229-v1:0"
-        return ai_settings
 
 
 class CoreError(Exception):
