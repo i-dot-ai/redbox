@@ -12,7 +12,6 @@ from langchain_core.embeddings.fake import FakeEmbeddings
 from langchain_elasticsearch.vectorstores import ElasticsearchStore
 from redbox.models import File, Settings
 from redbox.models.file import ChunkMetadata, ChunkResolution
-from redbox.storage import ElasticsearchStorageHandler
 
 from core_api import dependencies
 from core_api.app import app as application
@@ -31,11 +30,6 @@ def env() -> Settings:
 @pytest.fixture(scope="session")
 def es_client(env: Settings) -> Elasticsearch:
     return env.elasticsearch_client()
-
-
-@pytest.fixture()
-def es_storage_handler(es_client: Elasticsearch, env: Settings) -> ElasticsearchStorageHandler:
-    return ElasticsearchStorageHandler(es_client=es_client, root_index=env.elastic_root_index)
 
 
 @pytest.fixture(scope="session")
@@ -161,20 +155,6 @@ def file_pdf_chunks(file_pdf_object: File) -> list[Document]:
 
 
 @pytest.fixture()
-def file_pdf(
-    es_store: ElasticsearchStore,
-    es_storage_handler: ElasticsearchStorageHandler,
-    file_pdf_object: File,
-    file_pdf_chunks: list[Document],
-) -> File:
-    """The File object of Alice's PDF, with all objects in the Elasticsearch index."""
-    es_storage_handler.write_item(file_pdf_object)
-    es_storage_handler.refresh()
-    es_store.add_documents(file_pdf_chunks)
-    return file_pdf_object
-
-
-@pytest.fixture()
 def file_html_path() -> Path:
     """The path of Alice's HTML."""
     return Path(__file__).parents[2] / "tests" / "data" / "pdf" / "example.html"
@@ -224,17 +204,3 @@ def file_html_chunks(file_html_object: File) -> list[Document]:
         for i in range(2)
     ]
     return normal_chunks + large_chunks
-
-
-@pytest.fixture()
-def file_html(
-    es_store: ElasticsearchStore,
-    es_storage_handler: ElasticsearchStorageHandler,
-    file_html_object: File,
-    file_html_chunks: list[Document],
-) -> File:
-    """The File object of Alice's HTML, with all objects in the Elasticsearch index."""
-    es_storage_handler.write_item(file_html_object)
-    es_storage_handler.refresh()
-    es_store.add_documents(file_html_chunks)
-    return file_html_object

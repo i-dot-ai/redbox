@@ -10,7 +10,6 @@ import tiktoken
 from tiktoken.core import Encoding
 
 from redbox.models import File, Settings
-from redbox.storage.elasticsearch import ElasticsearchStorageHandler
 
 from collections.abc import Generator
 
@@ -83,11 +82,6 @@ def es_client(env: Settings, es_index: str, es_index_file: str) -> Elasticsearch
 
 
 @pytest.fixture(scope="session")
-def es_storage_handler(es_client: Elasticsearch, env: Settings) -> ElasticsearchStorageHandler:
-    return ElasticsearchStorageHandler(es_client=es_client, root_index=env.elastic_root_index)
-
-
-@pytest.fixture(scope="session")
 def es_vector_store(
     es_client: Elasticsearch, es_index: str, embedding_model: FakeEmbeddings, env: Settings
 ) -> ElasticsearchStore:
@@ -155,48 +149,6 @@ def claire() -> UUID:
 @pytest.fixture
 def file_pdf_path() -> Path:
     return Path(__file__).parents[2] / "tests" / "data" / "pdf" / "Cabinet Office - Wikipedia.pdf"
-
-
-@pytest.fixture()
-def file_belonging_to_alice(
-    file_pdf_path: Path, alice: UUID, env: Settings, es_storage_handler: ElasticsearchStorageHandler
-) -> File:
-    f = File(
-        key=file_pdf_path.name,
-        bucket=env.bucket_name,
-        creator_user_uuid=alice,
-    )
-    es_storage_handler.write_item(f)
-    es_storage_handler.refresh()
-    return f
-
-
-@pytest.fixture()
-def file_belonging_to_bob(
-    file_pdf_path: Path, bob: UUID, env: Settings, es_storage_handler: ElasticsearchStorageHandler
-) -> File:
-    f = File(
-        key=file_pdf_path.name,
-        bucket=env.bucket_name,
-        creator_user_uuid=bob,
-    )
-    es_storage_handler.write_item(f)
-    es_storage_handler.refresh()
-    return f
-
-
-@pytest.fixture()
-def file_belonging_to_claire(
-    file_pdf_path: Path, claire: UUID, env: Settings, es_storage_handler: ElasticsearchStorageHandler
-) -> File:
-    f = File(
-        key=file_pdf_path.name,
-        bucket=env.bucket_name,
-        creator_user_uuid=claire,
-    )
-    es_storage_handler.write_item(f)
-    es_storage_handler.refresh()
-    return f
 
 
 @pytest.fixture()
