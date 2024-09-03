@@ -10,6 +10,8 @@ import tiktoken
 from redbox.models.chain import AISettings
 from redbox.models.settings import Settings
 from redbox.retriever import AllElasticsearchRetriever, ParameterisedElasticsearchRetriever
+from langchain_aws import ChatBedrock
+from langchain_community.embeddings import BedrockEmbeddings
 
 
 def get_chat_llm(env: Settings, ai_settings: AISettings):
@@ -71,6 +73,12 @@ def get_chat_llm(env: Settings, ai_settings: AISettings):
                     )
                 ]
             )
+    elif ai_settings.chat_backend in (
+        "anthropic.claude-3-sonnet-20240229-v1:0",
+        "anthropic.claude-3-haiku-20240307-v1:0",
+    ):
+        chat_model = ChatBedrock(model_id=ai_settings.chat_backend)
+
     if chat_model is None:
         raise Exception("%s not recognised", ai_settings.chat_backend)
     else:
@@ -87,7 +95,7 @@ def get_azure_embeddings(env: Settings):
         api_key=convert_to_secret_str(env.embedding_openai_api_key),
         azure_endpoint=env.embedding_azure_openai_endpoint,
         api_version=env.azure_api_version_embeddings,
-        model=env.azure_embedding_model,
+        model=env.embedding_backend,
         max_retries=env.embedding_max_retries,
         retry_min_seconds=env.embedding_retry_min_seconds,
         retry_max_seconds=env.embedding_retry_max_seconds,
@@ -100,20 +108,25 @@ def get_openai_embeddings(env: Settings):
     return OpenAIEmbeddings(
         api_key=convert_to_secret_str(env.embedding_openai_api_key),
         base_url=env.embedding_openai_base_url,
-        model=env.embedding_openai_model,
+        model=env.embedding_model,
         chunk_size=env.embedding_max_batch_size,
     )
 
 
+def get_aws_embeddings(env: Settings):
+    return BedrockEmbeddings(region_name=env.aws_region, model_id=env.embedding_backend)
+
+
 def get_embeddings(env: Settings) -> Embeddings:
-    if env.embedding_backend == "azure":
+    if env.embedding_backend == "text-embedding-3-large":
         return get_azure_embeddings(env)
-    elif env.embedding_backend == "openai":
+    if env.embedding_backend == "text-embedding-ada-002":
         return get_openai_embeddings(env)
-    elif env.embedding_backend == "fake":
-        return FakeEmbeddings(size=3072)  # TODO
-    else:
-        raise Exception("No configured embedding model")
+    if env.embedding_backend == "fake":
+        return FakeEmbeddings(size=3072)
+    if env.embedding_backend == "amazon.titan-embed-text-v2:0":
+        return get_aws_embeddings(env)
+    raise Exception("No configured embedding model")
 
 
 def get_all_chunks_retriever(env: Settings) -> ElasticsearchRetriever:

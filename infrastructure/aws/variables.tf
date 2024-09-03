@@ -502,3 +502,10 @@ variable "django_queue_max_attempts" {
   default     = 1
   description = "How many attempts to run unstructured task"
 }
+
+variable "embedding_backend" {
+  type        = string
+  default     = "text-embedding-3-large"
+  description = "which provider to use to embed text, e.g. azure, aws, openai"
+}
+

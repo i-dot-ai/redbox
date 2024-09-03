@@ -199,17 +199,17 @@ tests-mypy = ["mypy (>=1.11.1)", "pytest-mypy-plugins"]
 
 [[package]]
 name = "boto3"
-version = "1.35.10"
+version = "1.34.162"
 description = "The AWS SDK for Python"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "boto3-1.35.10-py3-none-any.whl", hash = "sha256:add26dd58e076dfd387013da4704716d5cff215cf14f6d4347c4b9b7fc1f0b8e"},
-    {file = "boto3-1.35.10.tar.gz", hash = "sha256:189ab1e2b4cd86df56f82438d89b4040eb140c92683f1bda7cb2e62624f20ea5"},
+    {file = "boto3-1.34.162-py3-none-any.whl", hash = "sha256:d6f6096bdab35a0c0deff469563b87d184a28df7689790f7fe7be98502b7c590"},
+    {file = "boto3-1.34.162.tar.gz", hash = "sha256:873f8f5d2f6f85f1018cbb0535b03cceddc7b655b61f66a0a56995238804f41f"},
 ]
 
 [package.dependencies]
-botocore = ">=1.35.10,<1.36.0"
+botocore = ">=1.34.162,<1.35.0"
 jmespath = ">=0.7.1,<2.0.0"
 s3transfer = ">=0.10.0,<0.11.0"
 
@@ -218,13 +218,13 @@ crt = ["botocore[crt] (>=1.21.0,<2.0a0)"]
 
 [[package]]
 name = "botocore"
-version = "1.35.10"
+version = "1.34.162"
 description = "Low-level, data-driven core of boto 3."
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "botocore-1.35.10-py3-none-any.whl", hash = "sha256:0d96d023b9b0cea99a0a428a431d011329d3a958730aee6ed6a6fec5d9bfbc03"},
-    {file = "botocore-1.35.10.tar.gz", hash = "sha256:6c8a1377b6636a0d80218115e1cd41bcceba0a2f050b79c206f4cf8d002c54d7"},
+    {file = "botocore-1.34.162-py3-none-any.whl", hash = "sha256:2d918b02db88d27a75b48275e6fb2506e9adaaddbec1ffa6a8a0898b34e769be"},
+    {file = "botocore-1.34.162.tar.gz", hash = "sha256:adc23be4fb99ad31961236342b7cbf3c0bfc62532cd02852196032e8c0d682f3"},
 ]
 
 [package.dependencies]
@@ -1392,6 +1392,22 @@ SQLAlchemy = ">=1.4,<3"
 tenacity = ">=8.1.0,<8.4.0 || >8.4.0,<9.0.0"
 
 [[package]]
+name = "langchain-aws"
+version = "0.1.17"
+description = "An integration package connecting AWS and LangChain"
+optional = false
+python-versions = "<4.0,>=3.8.1"
+files = [
+    {file = "langchain_aws-0.1.17-py3-none-any.whl", hash = "sha256:192a94eb3fa510ed7850cb7ab599fef47776ca872545dd37a0d7dc6a2887ae46"},
+    {file = "langchain_aws-0.1.17.tar.gz", hash = "sha256:829cbcd8b3ffde6c2d7afd423da51c4bd03423db29b25ae7bc224979876d853e"},
+]
+
+[package.dependencies]
+boto3 = ">=1.34.131,<1.35.0"
+langchain-core = ">=0.2.33,<0.3"
+numpy = {version = ">=1.26.0,<2.0.0", markers = "python_version >= \"3.12\""}
+
+[[package]]
 name = "langchain-community"
 version = "0.2.15"
 description = "Community contributed LangChain integrations."
@@ -1513,13 +1529,13 @@ langchain-core = ">=0.2.22,<0.3"
 
 [[package]]
 name = "langsmith"
-version = "0.1.108"
+version = "0.1.109"
 description = "Client library to connect to the LangSmith LLM Tracing and Evaluation Platform."
 optional = false
 python-versions = "<4.0,>=3.8.1"
 files = [
-    {file = "langsmith-0.1.108-py3-none-any.whl", hash = "sha256:407f318b0989e33f2cd30bc2fbd443e4ddfa7c2a93de7f795fb6b119b015583c"},
-    {file = "langsmith-0.1.108.tar.gz", hash = "sha256:42f603e2d5770ba36093951bdb29eaab22451cb12ab8c062340c722cf60d4cec"},
+    {file = "langsmith-0.1.109-py3-none-any.whl", hash = "sha256:49fd77eaba5173fadc7361d090722d8bcf6177dd9f27274cd4f47d8478a3ad48"},
+    {file = "langsmith-0.1.109.tar.gz", hash = "sha256:55c387ced8292345f582cc7714931b88130f81652697357306303d1d94cf0cfc"},
 ]
 
 [package.dependencies]
@@ -3740,4 +3756,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.12,<3.13"
-content-hash = "f0c19792be78366896cb7df3adcbb95848b673ba05d11c99c1458e958f63d038"
+content-hash = "d8fdfb79e8b40a3ce3da3af526f1ac44a0ead63249282329a8b2fa3f209ca044"

@@ -56,7 +56,8 @@ locals {
     "AWS_REGION" : var.region,
     "worker_ingest_min_chunk_size" : var.worker_ingest_min_chunk_size,
     "worker_ingest_max_chunk_size" : var.worker_ingest_max_chunk_size,
-    "UNSTRUCTURED_HOST" : local.unstructured_host
+    "UNSTRUCTURED_HOST" : local.unstructured_host,
+    "EMBEDDING_BACKEND": var.embedding_backend
   }
 
   core_secrets = {
