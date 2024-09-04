@@ -57,7 +57,7 @@ async def test_chat_consumer_with_new_session(alice: User, uploaded_file: File, 
         assert response2["data"] == "Good afternoon, "
         assert response3["type"] == "text"
         assert response3["data"] == "Mr. Amor."
-        assert response4["type"] == "hidden-route"
+        assert response4["type"] == "route"
         assert response4["data"] == "gratitude"
         assert response5["type"] == "source"
         assert response5["data"]["original_file_name"] == uploaded_file.original_file_name
@@ -163,7 +163,7 @@ async def test_chat_consumer_with_naughty_question(alice: User, uploaded_file: F
         assert response2["data"] == "Good afternoon, "
         assert response3["type"] == "text"
         assert response3["data"] == "Mr. Amor."
-        assert response4["type"] == "hidden-route"
+        assert response4["type"] == "route"
         assert response4["data"] == "gratitude"
         assert response5["type"] == "source"
         assert response5["data"]["original_file_name"] == uploaded_file.original_file_name
@@ -201,7 +201,7 @@ async def test_chat_consumer_with_naughty_citation(
         assert response1["type"] == "session-id"
         assert response2["type"] == "text"
         assert response2["data"] == "Good afternoon, Mr. Amor."
-        assert response3["type"] == "hidden-route"
+        assert response3["type"] == "route"
         assert response3["data"] == "gratitude"
         assert response4["type"] == "source"
         assert response4["data"]["original_file_name"] == uploaded_file.original_file_name

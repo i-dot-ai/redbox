@@ -100,7 +100,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             elif response.resource_type == "documents":
                 citations += await self.handle_documents(response)
             elif response.resource_type == "route_name":
-                route = await self.handle_route(response, user.is_staff)
+                route = await self.handle_route(response)
             elif response.resource_type == "metadata":
                 metadata = await self.handle_metadata(metadata, response.data)
             elif response.resource_type == "error":
@@ -120,13 +120,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
         await self.send_to_client("text", response.data)
         return response.data
 
-    async def handle_route(self, response: ClientResponse, show_route: bool) -> str:
-        # TODO(@rachaelcodes): remove is_staff conditional and hidden-route with new route design
-        # https://technologyprogramme.atlassian.net/browse/REDBOX-419
-        if show_route:
-            await self.send_to_client("route", response.data)
-        else:
-            await self.send_to_client("hidden-route", response.data)
+    async def handle_route(self, response: ClientResponse) -> str:
+        await self.send_to_client("route", response.data)
         return response.data
 
     async def handle_metadata(self, current_metadata: MetadataDetail, metadata_event: MetadataDetail):
