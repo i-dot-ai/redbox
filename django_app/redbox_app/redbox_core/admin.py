@@ -2,7 +2,6 @@ import csv
 import json
 import logging
 
-from csp.decorators import csp_exempt
 from django.contrib import admin
 from django.db.models import QuerySet
 from django.http import HttpResponse
@@ -152,7 +151,6 @@ class ChatAdmin(ExportMixin, admin.ModelAdmin):
     actions = ["export_as_csv"]
 
 
-@csp_exempt
 def reporting_dashboard(request):
     return render(request, "report.html", {}, using="django")
 

@@ -72,6 +72,7 @@ MIDDLEWARE = [
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
+    "redbox_app.redbox_core.middleware.plotly_no_csp_no_xframe_middleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "django_permissions_policy.PermissionsPolicyMiddleware",
     "csp.middleware.CSPMiddleware",
@@ -351,5 +352,3 @@ Q_CLUSTER = {
 }
 
 UNSTRUCTURED_HOST = env.str("UNSTRUCTURED_HOST")
-
-X_FRAME_OPTIONS = "SAMEORIGIN"
