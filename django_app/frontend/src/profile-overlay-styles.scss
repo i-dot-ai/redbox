@@ -1,0 +1,58 @@
+.profile {
+  background-color: white;
+  border: 0;
+  height: 60%;
+  padding: 1rem 2rem;
+  transition: opacity 0.5s, scale 0.7s;
+  width: 60%;
+  z-index: 100;
+}
+.profile[open] {
+  opacity: 1;
+  scale: 1;
+}
+@starting-style {
+  .profile[open] {
+    opacity: 0;
+    scale: 0;
+  }
+}
+.profile::backdrop {
+  background-color: rgba(0, 0, 0, 0.8);
+}
+.profile--hidden {
+  display: none;
+}
+
+.profile-label {
+  display: block;
+  margin-bottom: 0.5rem;
+}
+.profile__radio-container-outer {
+  border: 0;
+  padding: 0;
+}
+.profile__radio-container-inner {
+  display: flex;
+  gap: 1rem;
+  padding-bottom: 1rem;
+  padding-top: 0.5rem;
+}
+.profile__radio {
+  opacity: 0;
+  position: absolute;
+}
+.profile__radio:focus + .profile__radio-card {
+  outline: 1px solid blue;
+}
+.profile__radio-card {
+  border: 1px solid;
+  border-radius: 0.25rem;
+  display: block;
+  padding: 0.5rem;
+}
+
+.profile-nav-button-container {
+  display: flex;
+  justify-content: space-between;
+}

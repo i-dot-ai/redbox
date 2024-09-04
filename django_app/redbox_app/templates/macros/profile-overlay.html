@@ -1,0 +1,89 @@
+{% macro profile_overlay(show_on_load=False) %}
+
+  <profile-overlay {% if show_on_load %}data-show="true"{% endif %}>
+    <dialog class="profile" aria-labelledby="profile-overlay-title">
+      <form>
+      
+        <div class="profile-page">
+          <h2 id="profile-overlay-title">Redbox can give better responses if you tell it about yourself.</h2>
+          <button class="profile__button-next" data-action="skip" type="button" autofocus>
+            <span>Start</span>
+            <span>1 of 3 Name</span>
+          </button>
+        </div>
+        
+        <div class="profile-page">
+          <label class="profile-label" for="profile-name">Full name</h2>
+          <input id="profile-name" name="profile-name" type="text" required />
+          <button class="profile__button-next" data-action="next" type="button">
+            <span>Next</span>
+            <span>2 of 3 Experience</span>
+          </button>
+          <div class="profile-nav-button-container">
+            <button class="profile__button-previous" data-action="previous" type="button">Previous</button>
+            <button class="profile__button-skip" data-action="skip" type="button">Skip</button>
+          </div>
+        </div>
+        
+        <div class="profile-page">
+          <fieldset class="profile__radio-container-outer">
+            <legend class="profile-label">Which level best describes your experience with Generative AI tools?</legend>
+            <div class="profile__radio-container-inner">
+              <div>
+                <input class="profile__radio" type="radio" id="profile-experience-1" name="profile-experience" value="1" required />
+                <label class="profile__radio-card" for="profile-experience-1">Curious Newcomer</label>
+              </div>
+              <div>
+                <input class="profile__radio" type="radio" id="profile-experience-2" name="profile-experience" value="2" required />
+                <label class="profile__radio-card" for="profile-experience-2">Cautious Explorer</label>
+              </div>
+              <div>
+                <input class="profile__radio" type="radio" id="profile-experience-3" name="profile-experience" value="3" required />
+                <label class="profile__radio-card" for="profile-experience-3">Enthusiastic Experimenter</label>
+              </div>
+              <div>
+                <input class="profile__radio" type="radio" id="profile-experience-4" name="profile-experience" value="4" required />
+                <label class="profile__radio-card" for="profile-experience-4">Experienced Navigator</label>
+              </div>
+              <div>
+                <input class="profile__radio" type="radio" id="profile-experience-5" name="profile-experience" value="5" required />
+                <label class="profile__radio-card" for="profile-experience-5">AI Alchemist</label>
+              </div>
+            </fieldset>
+            <button type="button" data-action="next">
+              <span>Next</span>
+              <span>3 of 3 Voice</span>
+            </button>
+            <div class="profile-nav-button-container">
+              <button class="profile__button-previous" data-action="previous" type="button">Previous</button>
+              <button class="profile__button-skip" data-action="skip" type="button">Skip</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="profile-page">
+          <label class="profile-label" for="profile-about-you" aria-describedby="profile-about-you-info">What do you want Redbox to know about you?</h2>
+          <span id="profile-about-you-info">(your job role, context it should allow for, etc.)</span>
+          <textarea id="profile-about-you" name="profile-about-you" required></textarea>
+          <label class="profile-label" for="profile-response-style">How do you want Redbox to respond?</h2>
+          <textarea id="profile-response-style" name="profile-response-style" required></textarea>
+          <button type="button" data-action="next">Finish</button>
+          <div class="profile-nav-button-container">
+            <button class="profile__button-previous" data-action="previous" type="button">Previous</button>
+            <button class="profile__button-skip" data-action="skip" type="button">Skip</button>
+          </div>
+        </div>
+
+        <div class="profile-page">
+          <button class="profile__button-close" data-action="close" type="button" aria-label="close">X</button>
+          <h2>Profile updated</h2>
+          <p>Redbox will now be able to give better responses based on what you've said.</p>
+          <p>View or update your profile at any time</p>
+          <button class="profile__button-finish" data-action="close" type="button">Continue to chat</button>
+        </div>
+
+      </form>
+    </dialog>
+  </profile-overlay>
+
+{% endmacro %}
