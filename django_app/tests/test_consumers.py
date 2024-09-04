@@ -343,7 +343,7 @@ async def test_chat_consumer_with_explicit_unhandled_error(
         assert response1["type"] == "session-id"
         assert response2["type"] == "text"
         assert response2["data"] == "Good afternoon, "
-        assert response3["type"] == "error"
+        assert response3["type"] == "text"
         assert response3["data"] == error_messages.CORE_ERROR_MESSAGE
         # Close
         await communicator.disconnect()
@@ -370,7 +370,7 @@ async def test_chat_consumer_with_rate_limited_error(alice: User, mocked_connect
         assert response1["type"] == "session-id"
         assert response2["type"] == "text"
         assert response2["data"] == "Good afternoon, "
-        assert response3["type"] == "error"
+        assert response3["type"] == "text"
         assert response3["data"] == error_messages.RATE_LIMITED
         # Close
         await communicator.disconnect()
