@@ -126,6 +126,8 @@ upload-button {
 /* Chats Page - to come after i.AI Design System */
 @import "./chat-styles.scss";
 
+@import "./profile-overlay-styles.scss";
+
 /* To be added to gov.uk design system */
 .govuk-textarea {
   border: 1px solid var(--iai-colour-text-secondary);
