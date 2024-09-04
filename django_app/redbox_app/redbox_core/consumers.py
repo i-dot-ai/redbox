@@ -67,7 +67,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 }
                 await self.send_to_server(core_websocket, message)
                 await self.send_to_client("session-id", session.id)
-                reply, citations, route, metadata = await self.receive_llm_responses(user, core_websocket)
+                reply, citations, route, metadata = await self.receive_llm_responses(core_websocket)
             message = await self.save_message(
                 session, reply, ChatRoleEnum.ai, sources=citations, route=route, metadata=metadata
             )
@@ -85,7 +85,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             await self.send_to_client("error", error_messages.CORE_ERROR_MESSAGE)
 
     async def receive_llm_responses(
-        self, user: User, core_websocket: WebSocketClientProtocol
+        self, core_websocket: WebSocketClientProtocol
     ) -> tuple[str, Sequence[tuple[File, SourceDocument]], str, MetadataDetail]:
         """Conduct websocket conversation with the core-api message endpoint."""
         full_reply: MutableSequence[str] = []
