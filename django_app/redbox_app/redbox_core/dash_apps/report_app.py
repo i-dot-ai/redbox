@@ -1,37 +1,40 @@
-import dash
+import plotly.express as px
 from dash import dcc, html
+from dash.dependencies import Input, Output
+from django.db.models import Count
+from django.db.models.functions import TruncDate
 from django_plotly_dash import DjangoDash
 
-app = DjangoDash("SimpleExample")
+from redbox_app.redbox_core import models
+
+app = DjangoDash("RedboxReport")
 
 app.layout = html.Div(
     [
-        dcc.RadioItems(
-            id="dropdown-color",
-            options=[{"label": c, "value": c.lower()} for c in ["Red", "Green", "Blue"]],
-            value="red",
+        dcc.Graph(id="line-chart"),
+        dcc.Dropdown(
+            id="dropdown",
+            options=[
+                {"label": "Daily count", "value": "Count"},
+            ],
+            value="Count",
         ),
-        html.Div(id="output-color"),
-        dcc.RadioItems(
-            id="dropdown-size",
-            options=[{"label": i, "value": j} for i, j in [("L", "large"), ("M", "medium"), ("S", "small")]],
-            value="medium",
-        ),
-        html.Div(id="output-size"),
     ]
 )
 
 
-@app.callback(
-    dash.dependencies.Output("output-color", "children"), [dash.dependencies.Input("dropdown-color", "value")]
-)
-def callback_color(dropdown_value):
-    return f"The selected color is {dropdown_value}."
+@app.callback(Output("line-chart", "figure"), [Input("dropdown", "value")])
+def update_graph(selected_metric):
+    queryset = (
+        models.ChatMessage.objects.annotate(day=TruncDate("created_at"))
+        .values("day")
+        .annotate(count=Count("id"))
+        .order_by("day")
+    )
 
+    data = {
+        "Date": [entry["day"].strftime("%Y-%m-%d") for entry in queryset],
+        "Count": [entry["count"] for entry in queryset],
+    }
 
-@app.callback(
-    dash.dependencies.Output("output-size", "children"),
-    [dash.dependencies.Input("dropdown-color", "value"), dash.dependencies.Input("dropdown-size", "value")],
-)
-def callback_size(dropdown_color, dropdown_size):
-    return f"The chosen T-shirt is a {dropdown_size} {dropdown_color} one."
+    return px.line(data, x="Date", y=selected_metric, title="Messages per day")
