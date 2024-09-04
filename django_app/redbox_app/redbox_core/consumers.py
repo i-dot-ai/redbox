@@ -97,7 +97,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             if response.resource_type == "text":
                 full_reply.append(await self.handle_text(response))
             elif response.resource_type == "documents":
-                citations += await self.handle_documents(response, user)
+                citations += await self.handle_documents(response)
             elif response.resource_type == "route_name":
                 route = await self.handle_route(response, user.is_staff)
             elif response.resource_type == "metadata":
@@ -106,11 +106,14 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 full_reply.append(await self.handle_error(response))
         return "".join(full_reply), citations, route, metadata
 
-    async def handle_documents(self, response: ClientResponse, user: User) -> Sequence[tuple[File, SourceDocument]]:
-        source_files, citations = await self.get_sources_with_files(response.data, user)
-        for file in source_files:
+    async def handle_documents(self, response: ClientResponse) -> Sequence[tuple[File, SourceDocument]]:
+        s3_keys = [doc.s3_key for doc in response.data]
+        files = File.objects.filter(original_file__in=s3_keys)
+
+        async for file in files:
             await self.send_to_client("source", {"url": str(file.url), "original_file_name": file.original_file_name})
-        return citations
+
+        return [(file, [doc for doc in response.data if doc.s3_key == file.unique_name]) for file in files]
 
     async def handle_text(self, response: ClientResponse) -> str:
         await self.send_to_client("text", response.data)
@@ -226,13 +229,11 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
     @staticmethod
     @database_sync_to_async
-    def get_sources_with_files(
-        docs: Sequence[SourceDocument], user: User
-    ) -> tuple[Sequence[File], Sequence[tuple[File, Sequence[SourceDocument]]]]:
+    def get_sources_with_files(docs: Sequence[SourceDocument]) -> Sequence[tuple[File, Sequence[SourceDocument]]]:
         s3_keys = [doc.s3_key for doc in docs]
-        files = File.objects.filter(original_file__in=s3_keys, user=user)
+        files = File.objects.filter(original_file__in=s3_keys)
 
-        return files, [(file, [doc for doc in docs if doc.s3_key == file.unique_name]) for file in files]
+        return [(file, [doc for doc in docs if doc.s3_key == file.unique_name]) for file in files]
 
     @staticmethod
     @database_sync_to_async
