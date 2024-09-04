@@ -73,14 +73,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             )
             await self.send_to_client("end", {"message_id": message.id, "title": title, "session_id": session.id})
 
-            for file, _ in citations:
-                file.last_referenced = timezone.now()
-                await file.asave()
-
-        except RateLimitError as e:
-            logger.exception("429 error from core.", exc_info=e)
-            await self.send_to_client("error", error_messages.RATE_LIMITED)
-        except (TimeoutError, ConnectionClosedError, CancelledError, CoreError) as e:
+        except (TimeoutError, ConnectionClosedError, CancelledError) as e:
             logger.exception("Error from core.", exc_info=e)
             await self.send_to_client("error", error_messages.CORE_ERROR_MESSAGE)
 
@@ -143,11 +136,13 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 await self.send_to_client("text", message)
                 return message
             case "rate-limit":
-                message = f"{response.data.code}: {response.data.message}"
-                raise RateLimitError(message)
+                message = error_messages.RATE_LIMITED
+                await self.send_to_client("text", message)
+                return message
             case _:
-                message = f"{response.data.code}: {response.data.message}"
-                raise CoreError(message)
+                message = error_messages.CORE_ERROR_MESSAGE
+                await self.send_to_client("text", message)
+                return message
 
     async def send_to_client(self, message_type: str, data: str | Mapping[str, Any] | None = None) -> None:
         message = {"type": message_type, "data": data}
@@ -223,11 +218,3 @@ class ChatConsumer(AsyncWebsocketConsumer):
             user.ai_settings,
             fields=[field.name for field in user.ai_settings._meta.fields if field.name != "label"],  # noqa: SLF001
         )
-
-
-class CoreError(Exception):
-    message: str
-
-
-class RateLimitError(CoreError):
-    pass
