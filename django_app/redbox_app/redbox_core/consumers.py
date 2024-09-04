@@ -1,7 +1,7 @@
 import json
 import logging
 from asyncio import CancelledError
-from collections.abc import Mapping, MutableSequence, Sequence
+from collections.abc import Mapping, Sequence
 from typing import Any
 from uuid import UUID
 
@@ -11,9 +11,10 @@ from django.conf import settings
 from django.forms.models import model_to_dict
 from django.utils import timezone
 from websockets import ConnectionClosedError, WebSocketClientProtocol
-from websockets.client import connect
-from yarl import URL
 
+from redbox import Redbox
+from redbox.models import Settings
+from redbox.models.chain import ChainChatMessage, RedboxQuery, RedboxState
 from redbox.models.chat import ClientResponse, MetadataDetail, SourceDocument
 from redbox_app.redbox_core import error_messages
 from redbox_app.redbox_core.models import (
@@ -55,77 +56,75 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
     async def llm_conversation(self, selected_files: Sequence[File], session: Chat, user: User, title: str) -> None:
         """Initiate & close websocket conversation with the core-api message endpoint."""
+        await self.send_to_client("session-id", session.id)
+
         session_messages = ChatMessage.objects.filter(chat=session).order_by("created_at")
         message_history: Sequence[Mapping[str, str]] = [
             {"role": message.role, "text": message.text} async for message in session_messages
         ]
-        url = URL.build(scheme="ws", host=settings.CORE_API_HOST, port=settings.CORE_API_PORT) / "chat/rag"
+
+        ai_settings = await self.get_ai_settings(user)
+        state = RedboxState(
+            request=RedboxQuery(
+                question=message_history[-2],
+                s3_keys=[{"s3_key": f.unique_name} for f in selected_files],
+                user_uuid=user.id,
+                chat_history=[
+                    ChainChatMessage(role=message.role, text=message.text) for message in message_history[:-1]
+                ],
+                ai_settings=ai_settings,
+            ),
+        )
+
+        redbox = Redbox(env=Settings(), debug=True)
+
+        full_reply = []
+        citations = []
+        routes = []
+        metadata: MetadataDetail = MetadataDetail()
+
+        async def handle_text(response: ClientResponse) -> str:
+            await self.send_to_client("text", response.data)
+            full_reply.append(response.data)
+
+        async def handle_route(response: ClientResponse) -> str:
+            await self.send_to_client("route", response.data)
+            routes.append(response.data)
+
+        async def handle_metadata(response: ClientResponse):
+            for model, token_count in response.data.input_tokens.items():
+                metadata.input_tokens[model] = metadata.input_tokens.get(model, 0) + token_count
+            for model, token_count in response.data.output_tokens.items():
+                metadata.output_tokens[model] = metadata.output_tokens.get(model, 0) + token_count
+
+        async def handle_documents(response: ClientResponse) -> Sequence[tuple[File, SourceDocument]]:
+            s3_keys = [doc.s3_key for doc in response.data]
+            files = File.objects.filter(original_file__in=s3_keys)
+
+            async for file in files:
+                await self.send_to_client(
+                    "source", {"url": str(file.url), "original_file_name": file.original_file_name}
+                )
+            for file in files:
+                citations.append((file, [doc for doc in response.data if doc.s3_key == file.unique_name]))
+
         try:
-            async with connect(str(url), extra_headers={"Authorization": user.get_bearer_token()}) as core_websocket:
-                message = {
-                    "message_history": message_history,
-                    "selected_files": [{"s3_key": f.unique_name} for f in selected_files],
-                    "ai_settings": await self.get_ai_settings(user),
-                }
-                await self.send_to_server(core_websocket, message)
-                await self.send_to_client("session-id", session.id)
-                reply, citations, route, metadata = await self.receive_llm_responses(core_websocket)
+            await redbox.run(
+                state,
+                response_tokens_callback=handle_text,
+                route_name_callback=handle_route,
+                documents_callback=handle_documents,
+                metadata_tokens_callback=handle_metadata,
+            )
+
             message = await self.save_message(
-                session, reply, ChatRoleEnum.ai, sources=citations, route=route, metadata=metadata
+                session, "".join(full_reply), ChatRoleEnum.ai, sources=citations, route=routes[0], metadata=metadata
             )
             await self.send_to_client("end", {"message_id": message.id, "title": title, "session_id": session.id})
 
         except (TimeoutError, ConnectionClosedError, CancelledError) as e:
             logger.exception("Error from core.", exc_info=e)
             await self.send_to_client("error", error_messages.CORE_ERROR_MESSAGE)
-
-    async def receive_llm_responses(
-        self, core_websocket: WebSocketClientProtocol
-    ) -> tuple[str, Sequence[tuple[File, SourceDocument]], str, MetadataDetail]:
-        """Conduct websocket conversation with the core-api message endpoint."""
-        full_reply: MutableSequence[str] = []
-        citations: MutableSequence[tuple[File, SourceDocument]] = []
-        route: str | None = None
-        metadata: MetadataDetail = MetadataDetail()
-        async for raw_message in core_websocket:
-            response: ClientResponse = ClientResponse.model_validate_json(raw_message)
-            logger.debug("received %s from core-api", response)
-            if response.resource_type == "text":
-                full_reply.append(await self.handle_text(response))
-            elif response.resource_type == "documents":
-                citations += await self.handle_documents(response)
-            elif response.resource_type == "route_name":
-                route = await self.handle_route(response)
-            elif response.resource_type == "metadata":
-                metadata = await self.handle_metadata(metadata, response.data)
-            elif response.resource_type == "error":
-                full_reply.append(await self.handle_error(response))
-        return "".join(full_reply), citations, route, metadata
-
-    async def handle_documents(self, response: ClientResponse) -> Sequence[tuple[File, SourceDocument]]:
-        s3_keys = [doc.s3_key for doc in response.data]
-        files = File.objects.filter(original_file__in=s3_keys)
-
-        async for file in files:
-            await self.send_to_client("source", {"url": str(file.url), "original_file_name": file.original_file_name})
-
-        return [(file, [doc for doc in response.data if doc.s3_key == file.unique_name]) for file in files]
-
-    async def handle_text(self, response: ClientResponse) -> str:
-        await self.send_to_client("text", response.data)
-        return response.data
-
-    async def handle_route(self, response: ClientResponse) -> str:
-        await self.send_to_client("route", response.data)
-        return response.data
-
-    async def handle_metadata(self, current_metadata: MetadataDetail, metadata_event: MetadataDetail):
-        result = current_metadata.model_copy(deep=True)
-        for model, token_count in metadata_event.input_tokens.items():
-            result.input_tokens[model] = current_metadata.input_tokens.get(model, 0) + token_count
-        for model, token_count in metadata_event.output_tokens.items():
-            result.output_tokens[model] = current_metadata.output_tokens.get(model, 0) + token_count
-        return result
 
     async def handle_error(self, response: ClientResponse) -> str:
         match response.data.code:

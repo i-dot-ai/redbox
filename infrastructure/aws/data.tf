@@ -26,8 +26,6 @@ locals {
     "OBJECT_STORE" : "s3",
     "BUCKET_NAME" : aws_s3_bucket.user_data.bucket,
     "POSTGRES_DB" : module.rds.db_instance_name,
-    "CORE_API_HOST" : "${aws_service_discovery_service.core_api_service_discovery_service.name}.${aws_service_discovery_private_dns_namespace.private_dns_namespace.name}",
-    "CORE_API_PORT" : 5002,
     "ENVIRONMENT" : upper(terraform.workspace),
     "DJANGO_SETTINGS_MODULE" : "redbox_app.settings",
     "DEBUG" : terraform.workspace == "dev",
@@ -102,7 +100,6 @@ locals {
     "EMBEDDING_AZURE_OPENAI_ENDPOINT" : var.embedding_azure_openai_endpoint,
   }
 
-  reconstructed_core_secrets   = [for k, _ in local.core_secrets : { name = k, valueFrom = "${aws_secretsmanager_secret.core-api-secret.arn}:${k}::" }]
   reconstructed_django_secrets = [for k, _ in local.django_app_secrets : { name = k, valueFrom = "${aws_secretsmanager_secret.django-app-secret.arn}:${k}::" }]
 }
 
