@@ -8,7 +8,6 @@ from langchain_core.documents.base import Document
 from langchain_core.runnables import RunnableLambda, chain, Runnable
 
 from redbox.models.settings import Settings
-from redbox.models.file import File
 from redbox.loader.base import BaseRedboxFileLoader
 
 
@@ -29,9 +28,9 @@ def log_chunks(chunks: list[Document]):
 
 def document_loader(document_loader_type: type[BaseRedboxFileLoader], s3_client: S3Client, env: Settings) -> Runnable:
     @chain
-    def wrapped(file: File):
-        file_bytes = s3_client.get_object(Bucket=file.bucket, Key=file.key)["Body"].read()
-        return document_loader_type(file=file, file_bytes=BytesIO(file_bytes), env=env).lazy_load()
+    def wrapped(file_name: str):
+        file_bytes = s3_client.get_object(Bucket=env.bucket_name, Key=file_name)["Body"].read()
+        return document_loader_type(file_name=file_name, file_bytes=BytesIO(file_bytes), env=env).lazy_load()
 
     return wrapped
 

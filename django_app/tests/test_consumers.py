@@ -1,5 +1,6 @@
 import json
 import logging
+import os
 from asyncio import CancelledError
 from collections.abc import Sequence
 from datetime import UTC, datetime
@@ -17,6 +18,7 @@ from redbox_app.redbox_core.consumers import ChatConsumer
 from redbox_app.redbox_core.models import Chat, ChatMessage, ChatMessageTokenUse, ChatRoleEnum, File, User
 from redbox_app.redbox_core.prompts import CHAT_MAP_QUESTION_PROMPT
 
+logging.basicConfig(level=os.environ.get("LOG_LEVEL", "INFO"))
 logger = logging.getLogger(__name__)
 
 
@@ -55,7 +57,7 @@ async def test_chat_consumer_with_new_session(alice: User, uploaded_file: File, 
         assert response2["data"] == "Good afternoon, "
         assert response3["type"] == "text"
         assert response3["data"] == "Mr. Amor."
-        assert response4["type"] == "hidden-route"
+        assert response4["type"] == "route"
         assert response4["data"] == "gratitude"
         assert response5["type"] == "source"
         assert response5["data"]["original_file_name"] == uploaded_file.original_file_name
@@ -161,7 +163,7 @@ async def test_chat_consumer_with_naughty_question(alice: User, uploaded_file: F
         assert response2["data"] == "Good afternoon, "
         assert response3["type"] == "text"
         assert response3["data"] == "Mr. Amor."
-        assert response4["type"] == "hidden-route"
+        assert response4["type"] == "route"
         assert response4["data"] == "gratitude"
         assert response5["type"] == "source"
         assert response5["data"]["original_file_name"] == uploaded_file.original_file_name
@@ -199,7 +201,7 @@ async def test_chat_consumer_with_naughty_citation(
         assert response1["type"] == "session-id"
         assert response2["type"] == "text"
         assert response2["data"] == "Good afternoon, Mr. Amor."
-        assert response3["type"] == "hidden-route"
+        assert response3["type"] == "route"
         assert response3["data"] == "gratitude"
         assert response4["type"] == "source"
         assert response4["data"]["original_file_name"] == uploaded_file.original_file_name
@@ -341,7 +343,7 @@ async def test_chat_consumer_with_explicit_unhandled_error(
         assert response1["type"] == "session-id"
         assert response2["type"] == "text"
         assert response2["data"] == "Good afternoon, "
-        assert response3["type"] == "error"
+        assert response3["type"] == "text"
         assert response3["data"] == error_messages.CORE_ERROR_MESSAGE
         # Close
         await communicator.disconnect()
@@ -368,7 +370,7 @@ async def test_chat_consumer_with_rate_limited_error(alice: User, mocked_connect
         assert response1["type"] == "session-id"
         assert response2["type"] == "text"
         assert response2["data"] == "Good afternoon, "
-        assert response3["type"] == "error"
+        assert response3["type"] == "text"
         assert response3["data"] == error_messages.RATE_LIMITED
         # Close
         await communicator.disconnect()

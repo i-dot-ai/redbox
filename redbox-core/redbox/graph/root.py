@@ -4,9 +4,9 @@ from langchain_core.vectorstores import VectorStoreRetriever
 
 from redbox.graph.edges import (
     build_documents_bigger_than_context_conditional,
+    build_total_tokens_request_handler_conditional,
     multiple_docs_in_group_conditional,
     build_keyword_detection_conditional,
-    documents_bigger_than_n_conditional,
     documents_selected_conditional,
     question_was_answered_by_rag_conditional,
 )
@@ -119,8 +119,7 @@ def get_chat_with_documents_graph(
 
 
     # Decisions
-    builder.add_node("d_all_docs_bigger_than_context", empty_process)
-    builder.add_node("d_all_docs_bigger_than_n", empty_process)
+    builder.add_node("d_request_handler_from_total_tokens", empty_process)
     builder.add_node("d_single_doc_summaries_bigger_than_context", empty_process)
     builder.add_node("d_doc_summaries_bigger_than_context", empty_process)
     builder.add_node("d_groups_have_multiple_docs", empty_process)
@@ -133,21 +132,14 @@ def get_chat_with_documents_graph(
     # Edges
     builder.add_edge(START, "p_pass_question_to_text")
     builder.add_edge("p_pass_question_to_text", "p_retrieve_docs")
-    builder.add_edge("p_retrieve_docs", "d_all_docs_bigger_than_context")
+    builder.add_edge("p_retrieve_docs", "d_request_handler_from_total_tokens")
     builder.add_conditional_edges(
-        "d_all_docs_bigger_than_context",
-        build_documents_bigger_than_context_conditional(PromptSet.ChatwithDocsMapReduce),
+        "d_request_handler_from_total_tokens",
+        build_total_tokens_request_handler_conditional(PromptSet.ChatwithDocsMapReduce),
         {
-            True: "d_all_docs_bigger_than_n",
-            False: "p_set_chat_docs_route",
-        },
-    )
-    builder.add_conditional_edges(
-        "d_all_docs_bigger_than_n",
-        documents_bigger_than_n_conditional,
-        {
-            True: "p_too_large_error",
-            False: "p_rag_and_route",
+            "max_exceeded": "p_too_large_error",
+            "context_exceeded": "p_set_chat_docs_large_route",
+            "pass": "p_set_chat_docs_route",
         },
     )
     builder.add_conditional_edges("p_rag_and_route", question_was_answered_by_rag_conditional, {
@@ -220,17 +212,6 @@ def get_root_graph(
 
     # Processes
     builder.add_node("p_search", rag_subgraph)
-    builder.add_node(
-        "p_no_keyword_error",
-        build_set_text_pattern(
-            text="That keyword isn't recognised",  # TODO: replace with env
-            final_response_chain=True,
-        ),
-    )
-    builder.add_node(
-        "p_no_keyword_route",
-        build_set_route_pattern(route=ChatRoute.error_no_keyword),
-    )
     builder.add_node("p_chat", chat_subgraph)
     builder.add_node("p_chat_with_documents", cwd_subgraph)
 
@@ -243,7 +224,7 @@ def get_root_graph(
     builder.add_conditional_edges(
         "d_keyword_exists",
         build_keyword_detection_conditional(*ROUTABLE_KEYWORDS.keys()),
-        {ChatRoute.search: "p_search", ChatRoute.error_no_keyword: "p_no_keyword_error", "DEFAULT": "d_docs_selected"},
+        {ChatRoute.search: "p_search", "DEFAULT": "d_docs_selected"},
     )
     builder.add_conditional_edges(
         "d_docs_selected",
@@ -254,8 +235,6 @@ def get_root_graph(
         },
     )
     builder.add_edge("p_search", END)
-    builder.add_edge("p_no_keyword_error", "p_no_keyword_route")
-    builder.add_edge("p_no_keyword_route", END)
     builder.add_edge("p_chat", END)
     builder.add_edge("p_chat_with_documents", END)
 

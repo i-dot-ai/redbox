@@ -27,6 +27,8 @@ langchain_openai = "^0.1.21"
 langchain-community = "^0.2.12"
 langchain-elasticsearch = "^0.2.2"
 litellm = "^1.43.9"
+langchain-aws = "^0.1.17"
+
 
 
 [tool.poetry.group.dev.dependencies]

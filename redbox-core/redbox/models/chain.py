@@ -105,7 +105,7 @@ class AISettings(BaseModel):
 
     rag_k: int = 30
     rag_num_candidates: int = 10
-    rag_desired_chunk_size: int = 300
+    rag_desired_chunk_size: int = 300  # this is superseded by worker_ingest_min_chunk_size
     elbow_filter_enabled: bool = False
     chat_system_prompt: str = CHAT_SYSTEM_PROMPT
     chat_question_prompt: str = CHAT_QUESTION_PROMPT
@@ -128,7 +128,13 @@ class AISettings(BaseModel):
     similarity_threshold: int = 0
 
     # this is also the azure_openai_model
-    chat_backend: Literal["gpt-35-turbo-16k", "gpt-4-turbo-2024-04-09", "gpt-4o"] = "gpt-4o"
+    chat_backend: Literal[
+        "gpt-35-turbo-16k",
+        "gpt-4-turbo-2024-04-09",
+        "gpt-4o",
+        "anthropic.claude-3-sonnet-20240229-v1:0",
+        "anthropic.claude-3-haiku-20240307-v1:0",
+    ] = "gpt-4o"
 
 
 class DocumentState(TypedDict):

@@ -2,21 +2,18 @@ import csv
 import json
 import logging
 
-from django.conf import settings
 from django.contrib import admin
 from django.db.models import QuerySet
 from django.http import HttpResponse
 from django_q.tasks import async_task
 from import_export.admin import ExportMixin, ImportExportMixin
 
-from redbox_app.redbox_core.client import CoreApiClient
 from redbox_app.worker import ingest
 
 from . import models
 from .serializers import UserSerializer
 
 logger = logging.getLogger(__name__)
-core_api = CoreApiClient(host=settings.CORE_API_HOST, port=settings.CORE_API_PORT)
 
 
 class UserAdmin(ImportExportMixin, admin.ModelAdmin):
@@ -41,16 +38,14 @@ class UserAdmin(ImportExportMixin, admin.ModelAdmin):
         "is_staff",
         "last_login",
         "ai_settings",
+        "is_developer",
     ]
     list_display = [
         "email",
-        "name",
-        "get_ai",
         "business_unit",
         "grade",
         "profession",
-        "is_superuser",
-        "is_staff",
+        "is_developer",
         "last_login",
     ]
     list_filter = ["business_unit", "grade", "profession"]
@@ -94,7 +89,8 @@ class ChatMessageTokenUseInline(admin.StackedInline):
 
 
 class ChatMessageTokenUseAdmin(ExportMixin, admin.ModelAdmin):
-    pass
+    list_display = ["chat_message", "use_type", "model_name", "token_count"]
+    list_filter = ["use_type", "model_name"]
 
 
 class ChatMessageAdmin(ExportMixin, admin.ModelAdmin):

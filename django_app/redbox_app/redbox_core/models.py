@@ -1,4 +1,5 @@
 import logging
+import os
 import uuid
 from collections.abc import Collection, Sequence
 from datetime import UTC, date, datetime, timedelta
@@ -17,10 +18,16 @@ from django_use_email_as_username.models import BaseUser, BaseUserManager
 from jose import jwt
 from yarl import URL
 
+from redbox.models import Settings
 from redbox_app.redbox_core import prompts
 from redbox_app.redbox_core.utils import get_date_group
 
+logging.basicConfig(level=os.environ.get("LOG_LEVEL", "INFO"))
 logger = logging.getLogger(__name__)
+
+env = Settings()
+
+es_client = env.elasticsearch_client()
 
 
 class UUIDPrimaryKeyBase(models.Model):
@@ -50,6 +57,8 @@ class AISettings(UUIDPrimaryKeyBase, TimeStampedModel):
         GPT_35_TURBO = "gpt-35-turbo-16k", _("gpt-35-turbo-16k")
         GPT_4_TURBO = "gpt-4-turbo-2024-04-09", _("gpt-4-turbo-2024-04-09")
         GPT_4_OMNI = "gpt-4o", _("gpt-4o")
+        CLAUDE_3_SONNET = "anthropic.claude-3-sonnet-20240229-v1:0", _("claude-3-sonnet")
+        CLAUDE_3_HAIKU = "anthropic.claude-3-haiku-20240307-v1:0", _("claude-3-haiku")
 
     label = models.CharField(max_length=50, unique=True)
     max_document_tokens = models.PositiveIntegerField(default=1_000_000, null=True, blank=True)
@@ -293,6 +302,14 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
         """Manually deletes the file from S3 storage."""
         self.original_file.delete(save=False)
 
+    def delete_from_elastic(self):
+        index = f"{env.elastic_root_index}-chunk"
+        if es_client.indices.exists(index=index):
+            es_client.delete_by_query(
+                index=index,
+                body={"query": {"term": {"metadata.file_name.keyword": self.unique_name}}},
+            )
+
     def update_status_from_core(self, status_label):
         match status_label:
             case "complete":
@@ -496,4 +513,4 @@ class ChatMessageTokenUse(UUIDPrimaryKeyBase, TimeStampedModel):
     token_count = models.PositiveIntegerField(null=True, blank=True)
 
     def __str__(self) -> str:
-        return f"{self.chat_message} {self.model_name} {self.use_type}"
+        return f"{self.model_name} {self.use_type}"

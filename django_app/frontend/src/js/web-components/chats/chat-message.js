@@ -168,15 +168,6 @@ class ChatMessage extends HTMLElement {
         if (typeof plausible !== "undefined") {
           plausible("Chat-message-route", { props: { route: response.data } });
         }
-      } else if (response.type === "hidden-route") {
-        // TODO(@rachaelcodes): remove hidden-route with new route design
-        // https://technologyprogramme.atlassian.net/browse/REDBOX-419
-
-        // send route to Plausible
-        let plausible = /** @type {any} */ (window).plausible;
-        if (typeof plausible !== "undefined") {
-          plausible("Chat-message-route", { props: { route: response.data } });
-        }
       } else if (response.type === "end") {
         sourcesContainer.showCitations(response.data.message_id);
         feedbackContainer.showFeedback(response.data.message_id);

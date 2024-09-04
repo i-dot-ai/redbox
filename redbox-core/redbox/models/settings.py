@@ -1,4 +1,5 @@
 import logging
+import os
 from functools import lru_cache
 from typing import Literal
 
@@ -7,6 +8,8 @@ from elasticsearch import Elasticsearch
 from pydantic import BaseModel
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+
+logging.basicConfig(level=os.environ.get("LOG_LEVEL", "INFO"))
 log = logging.getLogger()
 
 
@@ -61,19 +64,20 @@ class Settings(BaseSettings):
     embedding_openai_api_key: str = "NotAKey"
     embedding_azure_openai_endpoint: str = "not an endpoint"
     azure_api_version_embeddings: str = "2024-02-01"
-    azure_embedding_model: str = "text-embedding-3-large"
+
+    embedding_backend: Literal[
+        "text-embedding-ada-002", "amazon.titan-embed-text-v2:0", "text-embedding-3-large", "fake"
+    ] = "text-embedding-3-large"
 
     llm_max_tokens: int = 1024
 
-    embedding_backend: Literal["azure", "openai", "fake"] = "azure"
-    embedding_max_retries: int = 10
-    embedding_retry_min_seconds: int = 10
-    embedding_retry_max_seconds: int = 120
+    embedding_max_retries: int = 1
+    embedding_retry_min_seconds: int = 120  # Azure uses 60s
+    embedding_retry_max_seconds: int = 300
     embedding_max_batch_size: int = 512
     embedding_document_field_name: str = "embedding"
 
     embedding_openai_base_url: str | None = None
-    embedding_openai_model: str = "text-embedding-ada-002"
 
     partition_strategy: Literal["auto", "fast", "ocr_only", "hi_res"] = "fast"
     clustering_strategy: Literal["full"] | None = None
@@ -106,7 +110,6 @@ class Settings(BaseSettings):
 
     response_no_doc_available: str = "No available data for selected files. They may need to be removed and added again"
     response_max_content_exceeded: str = "Max content exceeded. Try smaller or fewer documents"
-    response_no_such_keyword: str = "That keyword isn't recognised"
 
     object_store: str = "minio"
 
@@ -120,8 +123,6 @@ class Settings(BaseSettings):
     @lru_cache(1)
     def elasticsearch_client(self) -> Elasticsearch:
         if isinstance(self.elastic, ElasticLocalSettings):
-            log.info("Connecting to self managed Elasticsearch")
-            log.info("Elasticsearch host = %s", self.elastic.host)
             return Elasticsearch(
                 hosts=[
                     {
@@ -132,11 +133,6 @@ class Settings(BaseSettings):
                 ],
                 basic_auth=(self.elastic.user, self.elastic.password),
             )
-
-        log.info("Connecting to Elastic Cloud Cluster")
-        log.info("Cloud ID = %s", self.elastic.cloud_id)
-        log.info("Elastic Cloud API Key = %s", self.elastic.api_key)
-
         return Elasticsearch(cloud_id=self.elastic.cloud_id, api_key=self.elastic.api_key)
 
     def s3_client(self):

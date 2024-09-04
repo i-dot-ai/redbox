@@ -5,6 +5,7 @@ from http import HTTPStatus
 from io import StringIO
 from unittest.mock import MagicMock, patch
 
+import elasticsearch
 import pytest
 import requests
 from botocore.exceptions import UnknownClientMethodError
@@ -175,30 +176,15 @@ def test_delete_expired_files(
     assert is_deleted == should_delete
 
 
+@patch("redbox_app.redbox_core.models.File.delete_from_elastic")
 @pytest.mark.django_db()
-def test_delete_expired_files_with_api_error(uploaded_file: File, requests_mock: Mocker):
+def test_delete_expired_files_with_elastic_error(deletion_mock: MagicMock, uploaded_file: File):
+    deletion_mock.side_effect = elasticsearch.BadRequestError(message="i am am error", meta=None, body=None)
+
     # Given
     mock_file = uploaded_file
     mock_file.last_referenced = EXPIRED_FILE_DATE
     mock_file.save()
-
-    matcher = re.compile(f"http://{settings.CORE_API_HOST}:{settings.CORE_API_PORT}/file/[0-9a-f]|\\-")
-
-    requests_mock.delete(
-        matcher,
-        status_code=HTTPStatus.CREATED,
-        json={
-            "key": mock_file.original_file_name,
-            "bucket": settings.BUCKET_NAME,
-            "uuid": str(uuid.uuid4()),
-        },
-    )
-    (
-        requests_mock.delete(
-            f"http://{settings.CORE_API_HOST}:{settings.CORE_API_PORT}/file/{mock_file.core_file_uuid}",
-            exc=requests.exceptions.HTTPError,
-        ),
-    )
 
     # When
     call_command("delete_expired_data")
@@ -209,25 +195,13 @@ def test_delete_expired_files_with_api_error(uploaded_file: File, requests_mock:
 
 @patch("redbox_app.redbox_core.models.File.delete_from_s3")
 @pytest.mark.django_db()
-def test_delete_expired_files_with_s3_error(deletion_mock: MagicMock, uploaded_file: File, requests_mock: Mocker):
+def test_delete_expired_files_with_s3_error(deletion_mock: MagicMock, uploaded_file: File):
     deletion_mock.side_effect = UnknownClientMethodError(method_name="")
 
     # Given
     mock_file = uploaded_file
     mock_file.last_referenced = EXPIRED_FILE_DATE
     mock_file.save()
-
-    matcher = re.compile(f"http://{settings.CORE_API_HOST}:{settings.CORE_API_PORT}/file/[0-9a-f]|\\-")
-
-    requests_mock.delete(
-        matcher,
-        status_code=HTTPStatus.CREATED,
-        json={
-            "key": mock_file.original_file_name,
-            "bucket": settings.BUCKET_NAME,
-            "uuid": str(uuid.uuid4()),
-        },
-    )
 
     # When
     call_command("delete_expired_data")
@@ -301,4 +275,4 @@ def test_reingest_files_unstructured_fail(uploaded_file: File, requests_mock: Mo
     # Then
     uploaded_file.refresh_from_db()
     assert uploaded_file.status == StatusEnum.errored
-    assert uploaded_file.ingest_error == "Unstructured failed to extract text for this file"
+    assert uploaded_file.ingest_error == "<class 'ValueError'>: Unstructured failed to extract text for this file"

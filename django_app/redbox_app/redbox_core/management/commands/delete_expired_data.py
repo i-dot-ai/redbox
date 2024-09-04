@@ -11,11 +11,9 @@ from django.db.models import Max
 from django.utils import timezone
 from requests.exceptions import RequestException
 
-from redbox_app.redbox_core.client import CoreApiClient
 from redbox_app.redbox_core.models import INACTIVE_STATUSES, Chat, File, StatusEnum
 
 logger = logging.getLogger(__name__)
-core_api = CoreApiClient(host=settings.CORE_API_HOST, port=settings.CORE_API_PORT)
 
 
 def post_summary_to_slack(message):
@@ -58,16 +56,16 @@ class Command(BaseCommand):
                 )
 
                 try:
-                    core_api.delete_file(file.core_file_uuid, file.user)
+                    file.delete_from_elastic()
                     file.delete_from_s3()
 
-                except RequestException as e:
-                    logger.exception("Error deleting file object %s using core-api", file, exc_info=e)
+                except BotoCoreError as e:
+                    logger.exception("Error deleting file object %s from storage", file, exc_info=e)
                     file.status = StatusEnum.errored
                     file.save()
                     failure_counter += 1
-                except BotoCoreError as e:
-                    logger.exception("Error deleting file object %s from storage", file, exc_info=e)
+                except Exception as e:
+                    logger.exception("Error deleting file object %s", file, exc_info=e)
                     file.status = StatusEnum.errored
                     file.save()
                     failure_counter += 1

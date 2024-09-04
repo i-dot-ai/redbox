@@ -122,18 +122,30 @@ TEST_CASES = [
             test_id="Search",
         ),
         generate_test_cases(
+            query=RedboxQuery(question="@nosuchkeyword What is AI?", s3_keys=[], user_uuid=uuid4(), chat_history=[]),
+            test_data=[
+                RedboxTestData(
+                    10,
+                    1000,
+                    expected_llm_response=["Testing Response 1"],
+                    expected_route=ChatRoute.chat,
+                ),
+            ],
+            test_id="No Such Keyword",
+        ),
+        generate_test_cases(
             query=RedboxQuery(
                 question="@nosuchkeyword What is AI?", s3_keys=["s3_key"], user_uuid=uuid4(), chat_history=[]
             ),
             test_data=[
                 RedboxTestData(
-                    2,
-                    200_000,
-                    expected_llm_response=[Settings().response_no_such_keyword],
-                    expected_route=ChatRoute.error_no_keyword,
+                    1,
+                    50_000,
+                    expected_llm_response=["Testing Response 1"],
+                    expected_route=ChatRoute.chat_with_docs,
                 ),
             ],
-            test_id="No Such Keyword",
+            test_id="No Such Keyword with docs",
         ),
     ]
     for test_case in generated_cases
@@ -166,7 +178,7 @@ async def test_chat(test: RedboxChatTestCase, env: Settings, mocker: MockerFixtu
         final_state["text"] == test_case.test_data.expected_llm_response[-1]
     ), f"Expected LLM response: '{test_case.test_data.expected_llm_response[-1]}'. Received '{final_state["text"]}'"
     assert (
-        final_state["route_name"] == test_case.test_data.expected_route
+        final_state.get("route_name") == test_case.test_data.expected_route
     ), f"Expected Route: '{ test_case.test_data.expected_route}'. Received '{final_state["route_name"]}'"
     if metadata := final_state.get("metadata"):
         assert sum(metadata.get("input_tokens", {}).values())
@@ -210,7 +222,7 @@ async def test_streaming(test: RedboxChatTestCase, env: Settings, mocker: Mocker
     final_state = RedboxState(response)
 
     # Bit of a bodge to retain the ability to check that the LLM streaming is working in most cases
-    if not (final_state["route_name"] or "").startswith("error"):
+    if not (final_state.get("route_name") or "").startswith("error"):
         assert len(token_events) > 1, f"Expected tokens as a stream. Received: {token_events}"
 
     llm_response = "".join(token_events)
@@ -220,7 +232,7 @@ async def test_streaming(test: RedboxChatTestCase, env: Settings, mocker: Mocker
         final_state["text"] == llm_response
     ), f"Expected LLM response: '{llm_response}'. Received '{final_state["text"]}'"
     assert (
-        final_state["route_name"] == test_case.test_data.expected_route
+        final_state.get("route_name") == test_case.test_data.expected_route
     ), f"Expected Route: '{ test_case.test_data.expected_route}'. Received '{final_state["route_name"]}'"
     if metadata := final_state.get("metadata"):
         assert len(metadata_events) == len(test_case.test_data.expected_llm_response) * 2

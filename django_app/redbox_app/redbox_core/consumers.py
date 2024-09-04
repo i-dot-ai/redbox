@@ -76,10 +76,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             for file, _ in citations:
                 file.last_referenced = timezone.now()
                 await self.file_save(file)
-        except RateLimitError as e:
-            logger.exception("429 error from core.", exc_info=e)
-            await self.send_to_client("error", error_messages.RATE_LIMITED)
-        except (TimeoutError, ConnectionClosedError, CancelledError, CoreError) as e:
+        except (TimeoutError, ConnectionClosedError, CancelledError) as e:
             logger.exception("Error from core.", exc_info=e)
             await self.send_to_client("error", error_messages.CORE_ERROR_MESSAGE)
 
@@ -99,7 +96,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             elif response.resource_type == "documents":
                 citations += await self.handle_documents(response, user)
             elif response.resource_type == "route_name":
-                route = await self.handle_route(response, user.is_staff)
+                route = await self.handle_route(response)
             elif response.resource_type == "metadata":
                 metadata = await self.handle_metadata(metadata, response.data)
             elif response.resource_type == "error":
@@ -116,23 +113,18 @@ class ChatConsumer(AsyncWebsocketConsumer):
         await self.send_to_client("text", response.data)
         return response.data
 
-    async def handle_route(self, response: ClientResponse, show_route: bool) -> str:
-        # TODO(@rachaelcodes): remove is_staff conditional and hidden-route with new route design
-        # https://technologyprogramme.atlassian.net/browse/REDBOX-419
-        if show_route:
-            await self.send_to_client("route", response.data)
-        else:
-            await self.send_to_client("hidden-route", response.data)
+    async def handle_route(self, response: ClientResponse) -> str:
+        await self.send_to_client("route", response.data)
         return response.data
 
     async def handle_metadata(self, current_metadata: MetadataDetail, metadata_event: MetadataDetail):
         result = current_metadata.model_copy(deep=True)
-        for model,token_count in metadata_event.input_tokens.items():
-            result.input_tokens[model] = current_metadata.input_tokens.get(model, 0) + token_count 
-        for model,token_count in metadata_event.output_tokens.items():
+        for model, token_count in metadata_event.input_tokens.items():
+            result.input_tokens[model] = current_metadata.input_tokens.get(model, 0) + token_count
+        for model, token_count in metadata_event.output_tokens.items():
             result.output_tokens[model] = current_metadata.output_tokens.get(model, 0) + token_count
         return result
-    
+
     async def handle_error(self, response: ClientResponse) -> str:
         match response.data.code:
             case "no-document-selected":
@@ -144,11 +136,13 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 await self.send_to_client("text", message)
                 return message
             case "rate-limit":
-                message = f"{response.data.code}: {response.data.message}"
-                raise RateLimitError(message)
+                message = error_messages.RATE_LIMITED
+                await self.send_to_client("text", message)
+                return message
             case _:
-                message = f"{response.data.code}: {response.data.message}"
-                raise CoreError(message)
+                message = error_messages.CORE_ERROR_MESSAGE
+                await self.send_to_client("text", message)
+                return message
 
     async def send_to_client(self, message_type: str, data: str | Mapping[str, Any] | None = None) -> None:
         message = {"type": message_type, "data": data}
@@ -246,11 +240,3 @@ class ChatConsumer(AsyncWebsocketConsumer):
             user.ai_settings,
             fields=[field.name for field in user.ai_settings._meta.fields if field.name != "label"],  # noqa: SLF001
         )
-
-
-class CoreError(Exception):
-    message: str
-
-
-class RateLimitError(CoreError):
-    pass

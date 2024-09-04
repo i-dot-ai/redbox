@@ -69,7 +69,6 @@ class ChatRoute(StrEnum):
     chat = "chat"
     chat_with_docs = "chat/documents"
     chat_with_docs_map_reduce = "chat/documents/large"
-    error_no_keyword = "error/no-keyword"
 
 
 class ChatResponse(BaseModel):

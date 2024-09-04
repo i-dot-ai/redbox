@@ -9,8 +9,7 @@ from elasticsearch import Elasticsearch
 import tiktoken
 from tiktoken.core import Encoding
 
-from redbox.models import File, Settings
-from redbox.storage.elasticsearch import ElasticsearchStorageHandler
+from redbox.models import Settings
 
 from collections.abc import Generator
 
@@ -80,11 +79,6 @@ def es_index_file(env: Settings) -> str:
 @pytest.fixture(scope="session")
 def es_client(env: Settings, es_index: str, es_index_file: str) -> Elasticsearch:
     return env.elasticsearch_client()
-
-
-@pytest.fixture(scope="session")
-def es_storage_handler(es_client: Elasticsearch, env: Settings) -> ElasticsearchStorageHandler:
-    return ElasticsearchStorageHandler(es_client=es_client, root_index=env.elastic_root_index)
 
 
 @pytest.fixture(scope="session")
@@ -158,49 +152,7 @@ def file_pdf_path() -> Path:
 
 
 @pytest.fixture()
-def file_belonging_to_alice(
-    file_pdf_path: Path, alice: UUID, env: Settings, es_storage_handler: ElasticsearchStorageHandler
-) -> File:
-    f = File(
-        key=file_pdf_path.name,
-        bucket=env.bucket_name,
-        creator_user_uuid=alice,
-    )
-    es_storage_handler.write_item(f)
-    es_storage_handler.refresh()
-    return f
-
-
-@pytest.fixture()
-def file_belonging_to_bob(
-    file_pdf_path: Path, bob: UUID, env: Settings, es_storage_handler: ElasticsearchStorageHandler
-) -> File:
-    f = File(
-        key=file_pdf_path.name,
-        bucket=env.bucket_name,
-        creator_user_uuid=bob,
-    )
-    es_storage_handler.write_item(f)
-    es_storage_handler.refresh()
-    return f
-
-
-@pytest.fixture()
-def file_belonging_to_claire(
-    file_pdf_path: Path, claire: UUID, env: Settings, es_storage_handler: ElasticsearchStorageHandler
-) -> File:
-    f = File(
-        key=file_pdf_path.name,
-        bucket=env.bucket_name,
-        creator_user_uuid=claire,
-    )
-    es_storage_handler.write_item(f)
-    es_storage_handler.refresh()
-    return f
-
-
-@pytest.fixture()
-def file(s3_client: S3Client, file_pdf_path: Path, alice: UUID, env: Settings) -> File:
+def file(s3_client: S3Client, file_pdf_path: Path, alice: UUID, env: Settings) -> str:
     file_name = file_pdf_path.name
     file_type = file_pdf_path.suffix
 
@@ -212,7 +164,7 @@ def file(s3_client: S3Client, file_pdf_path: Path, alice: UUID, env: Settings) -
             Tagging=f"file_type={file_type}",
         )
 
-    return File(key=file_name, bucket=env.bucket_name, creator_user_uuid=alice)
+    return file_name
 
 
 @pytest.fixture(params=ALL_CHUNKS_RETRIEVER_CASES)
