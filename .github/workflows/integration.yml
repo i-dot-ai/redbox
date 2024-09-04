@@ -67,7 +67,7 @@ jobs:
         echo AZURE_OPENAI_API_KEY_4O=${{ secrets.AZURE_OPENAI_API_KEY }} >> .env
         echo EMBEDDING_AZURE_OPENAI_ENDPOINT=${{ secrets.AZURE_OPENAI_ENDPOINT }} >> .env
         echo EMBEDDING_OPENAI_API_KEY=${{ secrets.AZURE_OPENAI_API_KEY }} >> .env
-        docker compose up -d --wait core-api django-app worker
+        docker compose up -d --wait django-app worker
         docker ps
 
     - name: Test integration with pytest
