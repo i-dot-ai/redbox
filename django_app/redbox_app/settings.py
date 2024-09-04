@@ -47,7 +47,7 @@ INSTALLED_APPS = [
     "allauth",
     "allauth.account",
     "allauth.socialaccount",
-    "django.contrib.admin",
+    "django.contrib.admin.apps.SimpleAdminConfig",
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
@@ -60,6 +60,8 @@ INSTALLED_APPS = [
     "import_export",
     "django_q",
     "rest_framework",
+    "django_plotly_dash.apps.DjangoPlotlyDashConfig",
+    "adminplus",
 ]
 
 MIDDLEWARE = [
@@ -76,6 +78,7 @@ MIDDLEWARE = [
     "allauth.account.middleware.AccountMiddleware",
     "redbox_app.redbox_core.middleware.nocache_middleware",
     "redbox_app.redbox_core.middleware.security_header_middleware",
+    "django_plotly_dash.middleware.BaseMiddleware",
 ]
 
 ROOT_URLCONF = "redbox_app.urls"
@@ -93,7 +96,9 @@ TEMPLATES = [
     },
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [Path(BASE_DIR) / "templates"],
+        "DIRS": [
+            BASE_DIR / "redbox_app" / "templates",
+        ],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -346,3 +351,5 @@ Q_CLUSTER = {
 }
 
 UNSTRUCTURED_HOST = env.str("UNSTRUCTURED_HOST")
+
+X_FRAME_OPTIONS = "SAMEORIGIN"

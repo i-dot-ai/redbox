@@ -1,3 +1,4 @@
+from adminplus.sites import AdminSitePlus
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
@@ -5,6 +6,9 @@ from django.urls import include, path
 from magic_link import urls as magic_link_urls
 
 from .redbox_core import views
+
+admin.site = AdminSitePlus()
+admin.autodiscover()
 
 auth_urlpatterns = [
     path("magic_link/", include(magic_link_urls)),
@@ -42,6 +46,7 @@ chat_urlpatterns = [
 ]
 
 admin_urlpatterns = [
+    path("admin/report/", include("django_plotly_dash.urls")),
     path("admin/", admin.site.urls),
 ]
 

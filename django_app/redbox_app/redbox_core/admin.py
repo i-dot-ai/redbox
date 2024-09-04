@@ -2,9 +2,11 @@ import csv
 import json
 import logging
 
+from csp.decorators import csp_exempt
 from django.contrib import admin
 from django.db.models import QuerySet
 from django.http import HttpResponse
+from django.shortcuts import render
 from django_q.tasks import async_task
 from import_export.admin import ExportMixin, ImportExportMixin
 
@@ -150,9 +152,15 @@ class ChatAdmin(ExportMixin, admin.ModelAdmin):
     actions = ["export_as_csv"]
 
 
+@csp_exempt
+def reporting_dashboard(request):
+    return render(request, "report.html", {}, using="django")
+
+
 admin.site.register(models.User, UserAdmin)
 admin.site.register(models.File, FileAdmin)
 admin.site.register(models.Chat, ChatAdmin)
 admin.site.register(models.ChatMessage, ChatMessageAdmin)
 admin.site.register(models.AISettings)
 admin.site.register(models.ChatMessageTokenUse, ChatMessageTokenUseAdmin)
+admin.site.register_view("report/", view=reporting_dashboard, name="Site report")
