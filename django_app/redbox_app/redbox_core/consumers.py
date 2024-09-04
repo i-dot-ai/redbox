@@ -45,7 +45,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         session: Chat = await self.get_session(session_id, user, user_message_text)
 
         # save user message
-        selected_files = await self.get_files_by_id(selected_file_uuids, user)
+        selected_files = File.objects.filter(id__in=selected_file_uuids, user=user)
         await self.save_message(session, user_message_text, ChatRoleEnum.user, selected_files=selected_files)
 
         await self.llm_conversation(selected_files, session, user, user_message_text)
@@ -53,9 +53,9 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
     async def llm_conversation(self, selected_files: Sequence[File], session: Chat, user: User, title: str) -> None:
         """Initiate & close websocket conversation with the core-api message endpoint."""
-        session_messages = await self.get_messages(session)
+        session_messages = ChatMessage.objects.filter(chat=session).order_by("created_at")
         message_history: Sequence[Mapping[str, str]] = [
-            {"role": message.role, "text": message.text} for message in session_messages
+            {"role": message.role, "text": message.text} async for message in session_messages
         ]
         url = URL.build(scheme="ws", host=settings.CORE_API_HOST, port=settings.CORE_API_PORT) / "chat/rag"
         try:
@@ -75,7 +75,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
             for file, _ in citations:
                 file.last_referenced = timezone.now()
-                await self.file_save(file)
+                await file.asave()
+
         except RateLimitError as e:
             logger.exception("429 error from core.", exc_info=e)
             await self.send_to_client("error", error_messages.RATE_LIMITED)
@@ -176,11 +177,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
     @staticmethod
     @database_sync_to_async
-    def get_messages(session: Chat) -> Sequence[ChatMessage]:
-        return list(ChatMessage.objects.filter(chat=session).order_by("created_at"))
-
-    @staticmethod
-    @database_sync_to_async
     def save_message(
         session: Chat,
         user_message_text: str,
@@ -194,6 +190,9 @@ class ChatConsumer(AsyncWebsocketConsumer):
         chat_message.save()
         if sources:
             for file, citations in sources:
+                file.last_referenced = timezone.now()
+                file.save()
+
                 for citation in citations:
                     Citation.objects.create(
                         chat_message=chat_message,
@@ -203,42 +202,24 @@ class ChatConsumer(AsyncWebsocketConsumer):
                     )
         if selected_files:
             chat_message.selected_files.set(selected_files)
-        if metadata:
-            if metadata.input_tokens:
-                for model, token_count in metadata.input_tokens.items():
-                    ChatMessageTokenUse.objects.create(
-                        chat_message=chat_message,
-                        use_type=ChatMessageTokenUse.UseTypeEnum.INPUT,
-                        model_name=model,
-                        token_count=token_count,
-                    )
-            if metadata.output_tokens:
-                for model, token_count in metadata.output_tokens.items():
-                    ChatMessageTokenUse.objects.create(
-                        chat_message=chat_message,
-                        use_type=ChatMessageTokenUse.UseTypeEnum.OUTPUT,
-                        model_name=model,
-                        token_count=token_count,
-                    )
+
+        if metadata and metadata.input_tokens:
+            for model, token_count in metadata.input_tokens.items():
+                ChatMessageTokenUse.objects.create(
+                    chat_message=chat_message,
+                    use_type=ChatMessageTokenUse.UseTypeEnum.INPUT,
+                    model_name=model,
+                    token_count=token_count,
+                )
+        if metadata and metadata.output_tokens:
+            for model, token_count in metadata.output_tokens.items():
+                ChatMessageTokenUse.objects.create(
+                    chat_message=chat_message,
+                    use_type=ChatMessageTokenUse.UseTypeEnum.OUTPUT,
+                    model_name=model,
+                    token_count=token_count,
+                )
         return chat_message
-
-    @staticmethod
-    @database_sync_to_async
-    def get_files_by_id(docs: Sequence[UUID], user: User) -> Sequence[File]:
-        return list(File.objects.filter(id__in=docs, user=user))
-
-    @staticmethod
-    @database_sync_to_async
-    def get_sources_with_files(docs: Sequence[SourceDocument]) -> Sequence[tuple[File, Sequence[SourceDocument]]]:
-        s3_keys = [doc.s3_key for doc in docs]
-        files = File.objects.filter(original_file__in=s3_keys)
-
-        return [(file, [doc for doc in docs if doc.s3_key == file.unique_name]) for file in files]
-
-    @staticmethod
-    @database_sync_to_async
-    def file_save(file):
-        return file.save()
 
     @staticmethod
     @database_sync_to_async
