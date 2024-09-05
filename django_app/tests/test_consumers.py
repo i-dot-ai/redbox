@@ -584,11 +584,6 @@ def mocked_connect_with_explicit_no_document_selected_error() -> CannedGraphLLM:
         {
             "event": "on_chat_model_stream",
             "tags": [FINAL_RESPONSE_TAG],
-            "data": {"chunk": Token(content="Good afternoon, ")},
-        },
-        {
-            "event": "on_chat_model_stream",
-            "tags": [FINAL_RESPONSE_TAG],
             "data": {"chunk": Token(content=error_messages.SELECT_DOCUMENT)},
         },
     ]
