@@ -33,9 +33,21 @@ logger = logging.getLogger(__name__)
 logger.info("WEBSOCKET_SCHEME is: %s", settings.WEBSOCKET_SCHEME)
 
 
+
 class ChatConsumer(AsyncWebsocketConsumer):
+    full_reply = []
+    citations = []
+    route = None
+    metadata: MetadataDetail = MetadataDetail()
+    redbox = Redbox(env=Settings(), debug=True)
+
     async def receive(self, text_data=None, bytes_data=None):
         """Receive & respond to message from browser websocket."""
+        self.full_reply = []
+        self.citations = []
+        self.route = None
+        self.metadata = MetadataDetail()
+
         data = json.loads(text_data or bytes_data)
         logger.debug("received %s from browser", data)
         user_message_text: str = data.get("message", "")
@@ -66,7 +78,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         ai_settings = await self.get_ai_settings(user)
         state = RedboxState(
             request=RedboxQuery(
-                question=message_history[-2],
+                question=message_history[-1]["text"],
                 s3_keys=[{"s3_key": f.unique_name} for f in selected_files],
                 user_uuid=user.id,
                 chat_history=[
@@ -76,49 +88,18 @@ class ChatConsumer(AsyncWebsocketConsumer):
             ),
         )
 
-        redbox = Redbox(env=Settings(), debug=True)
-
-        full_reply = []
-        citations = []
-        routes = []
-        metadata: MetadataDetail = MetadataDetail()
-
-        async def handle_text(response: ClientResponse) -> str:
-            await self.send_to_client("text", response.data)
-            full_reply.append(response.data)
-
-        async def handle_route(response: ClientResponse) -> str:
-            await self.send_to_client("route", response.data)
-            routes.append(response.data)
-
-        async def handle_metadata(response: ClientResponse):
-            for model, token_count in response.data.input_tokens.items():
-                metadata.input_tokens[model] = metadata.input_tokens.get(model, 0) + token_count
-            for model, token_count in response.data.output_tokens.items():
-                metadata.output_tokens[model] = metadata.output_tokens.get(model, 0) + token_count
-
-        async def handle_documents(response: ClientResponse) -> Sequence[tuple[File, SourceDocument]]:
-            s3_keys = [doc.s3_key for doc in response.data]
-            files = File.objects.filter(original_file__in=s3_keys)
-
-            async for file in files:
-                await self.send_to_client(
-                    "source", {"url": str(file.url), "original_file_name": file.original_file_name}
-                )
-            for file in files:
-                citations.append((file, [doc for doc in response.data if doc.s3_key == file.unique_name]))
+        await self.redbox.run(
+            state,
+            response_tokens_callback=self.handle_text,
+            route_name_callback=self.handle_route,
+            documents_callback=self.handle_documents,
+            metadata_tokens_callback=self.handle_metadata,
+        )
 
         try:
-            await redbox.run(
-                state,
-                response_tokens_callback=handle_text,
-                route_name_callback=handle_route,
-                documents_callback=handle_documents,
-                metadata_tokens_callback=handle_metadata,
-            )
 
             message = await self.save_message(
-                session, "".join(full_reply), ChatRoleEnum.ai, sources=citations, route=routes[0], metadata=metadata
+                session, "".join(self.full_reply), ChatRoleEnum.ai, sources=self.citations, route=self.route, metadata=self.metadata
             )
             await self.send_to_client("end", {"message_id": message.id, "title": title, "session_id": session.id})
 
@@ -208,3 +189,29 @@ class ChatConsumer(AsyncWebsocketConsumer):
             user.ai_settings,
             fields=[field.name for field in user.ai_settings._meta.fields if field.name != "label"],  # noqa: SLF001
         )
+
+    async def handle_text(self, response: ClientResponse) -> str:
+        await self.send_to_client("text", response.data)
+        self.full_reply.append(response.data)
+
+    async def handle_route(self, response: ClientResponse) -> str:
+        await self.send_to_client("route", response.data)
+        self.routes.append(response.data)
+
+    async def handle_metadata(self, response: ClientResponse):
+        for model, token_count in response.data.input_tokens.items():
+            self.metadata.input_tokens[model] = self.metadata.input_tokens.get(model, 0) + token_count
+        for model, token_count in response.data.output_tokens.items():
+            self.metadata.output_tokens[model] = self.metadata.output_tokens.get(model, 0) + token_count
+
+    async def handle_documents(self, response: ClientResponse) -> Sequence[tuple[File, SourceDocument]]:
+        s3_keys = [doc.s3_key for doc in response.data]
+        files = File.objects.filter(original_file__in=s3_keys)
+
+        async for file in files:
+            await self.send_to_client(
+                "source", {"url": str(file.url), "original_file_name": file.original_file_name}
+            )
+        for file in files:
+            self.citations.append((file, [doc for doc in response.data if doc.s3_key == file.unique_name]))
+
