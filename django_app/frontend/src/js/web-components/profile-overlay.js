@@ -78,16 +78,43 @@ class ProfileOverlay extends HTMLElement {
         this.currentPage = 0;
         this.querySelector("dialog")?.close();
 
-        // Send data to endpoint
+        /**
+         * Sends data to endpoint, retrying if necessary
+         * @param {string} data
+         * @param {number} retry
+         */
+        const sendData = async (data, retry = 0) => {
+          const MAX_RETRIES = 10;
+          const RETRY_INTERVAL_SECONDS = 10;
+          const csrfToken =
+            /** @type {HTMLInputElement | null} */ (
+              this.querySelector('[name="csrfmiddlewaretoken"]')
+            )?.value || "";
+          try {
+            await fetch(`/update-profile`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": csrfToken,
+              },
+              body: JSON.stringify(data),
+            });
+          } catch (err) {
+            if (retry < MAX_RETRIES) {
+              window.setTimeout(() => {
+                sendData(data, retry + 1);
+              }, RETRY_INTERVAL_SECONDS * 1000);
+            }
+          }
+        };
+
+        // Format and send data
         const formData = new FormData(this.querySelector("form") || undefined);
         let formDataJson = {};
         for (const pair of formData.entries()) {
           formDataJson[pair[0]] = pair[1];
         }
-        fetch("/update-profile", {
-          method: "POST",
-          body: formDataJson.toString(),
-        });
+        sendData(formDataJson.toString());
       });
     });
   }

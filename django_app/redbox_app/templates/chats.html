@@ -6,9 +6,7 @@
 
 {% block content %}
 
-{{ profile_overlay({
-  "show_on_load": True
-}) }}
+{{ profile_overlay(csrf_token, True) }}
 
 <div class="govuk-width-container">
 
