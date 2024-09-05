@@ -1,8 +1,10 @@
-{% macro profile_overlay(show_on_load=False) %}
+{% macro profile_overlay(csrf_token, show_on_load=False) %}
 
   <profile-overlay {% if show_on_load %}data-show="true"{% endif %}>
     <dialog class="profile" aria-labelledby="profile-overlay-title">
       <form>
+
+        <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}"/>
       
         <div class="profile-page">
           <h2 id="profile-overlay-title">Redbox can give better responses if you tell it about yourself.</h2>
