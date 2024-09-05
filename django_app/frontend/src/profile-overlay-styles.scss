@@ -1,10 +1,8 @@
 .profile {
   background-color: white;
   border: 0;
-  height: 60%;
   padding: 1rem 2rem;
   transition: opacity 0.5s, scale 0.7s;
-  width: 60%;
   z-index: 100;
 }
 .profile[open] {
@@ -34,6 +32,7 @@
 }
 .profile__radio-container-inner {
   display: flex;
+  flex-direction: column;
   gap: 1rem;
   padding-bottom: 1rem;
   padding-top: 0.5rem;
@@ -51,8 +50,21 @@
   display: block;
   padding: 0.5rem;
 }
+.profile__textarea {
+  display: block;
+}
 
 .profile-nav-button-container {
   display: flex;
   justify-content: space-between;
+}
+
+@media (min-width: 1020px) {
+  .profile {
+    height: 60%;
+    width: 60%;
+  }
+  .profile__radio-container-inner {
+    flex-direction: row;
+  }
 }

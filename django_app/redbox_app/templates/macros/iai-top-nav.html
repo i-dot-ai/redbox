@@ -20,9 +20,18 @@
             <nav aria-label="Menu" class="iai-top-nav__nav govuk-width-container">
                 <ul id="navigation" class="iai-top-nav__nav-list">
                     {% for menu_item in menu_items %}
-                        <li class="iai-top-nav__link-item {% if menu_item.active %}iai-top-nav__link-item--active{% endif %}">
-                            <a class="iai-top-nav__link" href="{{ menu_item.href }}" {% if menu_item.active %}aria-current="page"{% endif %}>{{ menu_item.text }}</a>
-                        </li>
+                        {% if menu_item.user_button %}
+                            <li class="iai-top-nav__link-item">
+                                <a class="iai-top-nav__link iai-top-nav__link--user" href="{{ menu_item.href }}">
+                                    {{ menu_item.user_button }}
+                                    <span class="govuk-visually-hidden">{{ menu_item.text }}</span>
+                                </a>
+                            </li>
+                        {% else %}
+                            <li class="iai-top-nav__link-item {% if menu_item.active %}iai-top-nav__link-item--active{% endif %}">
+                                <a class="iai-top-nav__link" href="{{ menu_item.href }}" {% if menu_item.active %}aria-current="page"{% endif %}>{{ menu_item.text }}</a>
+                            </li>
+                        {% endif %}
                     {% endfor %}
                 </ul>
             </nav>

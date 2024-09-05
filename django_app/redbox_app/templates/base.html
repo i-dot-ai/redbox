@@ -50,8 +50,8 @@
     {% set menu_items = [
       {"text": "Documents", "href": url('documents')},
       {"text": "Chats", "href": url('chats')},
-      {"text": "My details", "href": url('demographics')},
-      {"text": "Sign out", "href": url('signed-out')}
+      {"text": "Sign out", "href": url('signed-out')},
+      {"text": "My details", "href": url('demographics'), "user_button": "KE"}
     ] %}
   {% else %}
     {% set menu_items = [
