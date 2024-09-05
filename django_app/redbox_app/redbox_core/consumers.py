@@ -2,7 +2,7 @@ import json
 import logging
 from asyncio import CancelledError
 from collections.abc import Mapping, Sequence
-from typing import Any
+from typing import Any, ClassVar
 from uuid import UUID
 
 from channels.db import database_sync_to_async
@@ -33,10 +33,9 @@ logger = logging.getLogger(__name__)
 logger.info("WEBSOCKET_SCHEME is: %s", settings.WEBSOCKET_SCHEME)
 
 
-
 class ChatConsumer(AsyncWebsocketConsumer):
-    full_reply = []
-    citations = []
+    full_reply: ClassVar = []
+    citations: ClassVar = []
     route = None
     metadata: MetadataDetail = MetadataDetail()
     redbox = Redbox(env=Settings(), debug=True)
@@ -97,9 +96,13 @@ class ChatConsumer(AsyncWebsocketConsumer):
         )
 
         try:
-
             message = await self.save_message(
-                session, "".join(self.full_reply), ChatRoleEnum.ai, sources=self.citations, route=self.route, metadata=self.metadata
+                session,
+                "".join(self.full_reply),
+                ChatRoleEnum.ai,
+                sources=self.citations,
+                route=self.route,
+                metadata=self.metadata,
             )
             await self.send_to_client("end", {"message_id": message.id, "title": title, "session_id": session.id})
 
@@ -209,9 +212,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
         files = File.objects.filter(original_file__in=s3_keys)
 
         async for file in files:
-            await self.send_to_client(
-                "source", {"url": str(file.url), "original_file_name": file.original_file_name}
-            )
+            await self.send_to_client("source", {"url": str(file.url), "original_file_name": file.original_file_name})
         for file in files:
             self.citations.append((file, [doc for doc in response.data if doc.s3_key == file.unique_name]))
-
