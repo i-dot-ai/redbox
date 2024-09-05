@@ -6,6 +6,11 @@ from django.db.models import Count
 from django.db.models.functions import TruncDate
 from plotly.graph_objects import Figure
 
+# ----------------------------------#
+# App setup and conditional imports #
+# ----------------------------------#
+
+
 if __name__ == "__main__":
     # Enables standalone running for developers outside of full Django app
     import os
@@ -17,20 +22,18 @@ if __name__ == "__main__":
 
     # Django still needs some setup in order to access database
     django.setup()
+
+    app = Dash("RedboxReport")
 else:
     from django_plotly_dash import DjangoDash
 
-from redbox_app.redbox_core import models
-
-if __name__ == "__main__":  # noqa: SIM108
-    # Enables standalone running for developers outside of Django
-    app = Dash("RedboxReport")
-else:
     app = DjangoDash("RedboxReport")
 
-# ------------#
+from redbox_app.redbox_core import models  # Must be imported after django.setup()
+
+# -----------#
 # App layout #
-# ------------#
+# -----------#
 
 
 app.layout = html.Div(
@@ -46,9 +49,9 @@ app.layout = html.Div(
     ]
 )
 
-# -----------#
+# ----------#
 # Callbacks #
-# -----------#
+# ----------#
 
 
 @app.callback(Output("line-chart", "figure"), [Input("dropdown", "value")])
