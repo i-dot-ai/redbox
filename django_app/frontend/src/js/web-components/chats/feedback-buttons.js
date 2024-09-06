@@ -93,14 +93,19 @@ class FeedbackButtons extends HTMLElement {
         /** @type {HTMLInputElement | null} */ (
           document.querySelector('[name="csrfmiddlewaretoken"]')
         )?.value || "";
+      let formData = new FormData();
+      for (let item in collectedData) {
+        if (collectedData.hasOwnProperty(item)) {
+          formData.append(item, collectedData[item]);
+        }
+      }
       try {
         await fetch(`/ratings/${messageId}/`, {
           method: "POST",
           headers: {
-            "Content-Type": "application/json",
             "X-CSRFToken": csrfToken,
           },
-          body: JSON.stringify(collectedData),
+          body: formData,
         });
       } catch (err) {
         if (retry < MAX_RETRIES) {
