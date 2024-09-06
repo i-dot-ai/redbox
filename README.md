@@ -56,22 +56,10 @@ This means that our project is structured approximately like this:
 ```txt
 redbox/
 ├── django_app
-│  ├── app/
+│  ├── redbox_app/
 │  ├── static/
 │  ├── tests/
 │  ├── manage.py
-│  ├── pyproject.toml
-│  └── Dockerfile
-├── worker
-│  ├── src/
-│  │  └── app.py
-│  ├── tests/
-│  ├── pyproject.toml
-│  └── Dockerfile
-├── core-api
-│  ├── src/
-│  │  └── app.py
-│  ├── tests/
 │  ├── pyproject.toml
 │  └── Dockerfile
 ├── redbox-core/
@@ -104,33 +92,6 @@ We welcome contributions to this project. Please see the [CONTRIBUTING.md](./CON
 This project is licensed under the MIT License - see the [LICENSE](./LICENSE) file for details.
 
 # Security
-
-> [!IMPORTANT]
-> The core-api is the http-gateway to the backend. Currently, this is unsecured, you should only run this on
-> a private network.
-
-However:
-
-- We have taken care to ensure that the backend is as stateless as possible, i.e. it only stores text chunks and
-  embeddings. All data is associated with a user, and a user can access their own data.
-- The only user data stored is the user-uuid, and no chat history is stored.
-- We are considering making the core-api secure. To this end the user-uuid is passed to the core-api as a JWT.
-  Currently no attempt is made to verify the JWT, but in the future we may do so, e.g. via Cognito or similar
-
-You can generate your JWT using the following snippet. Note that you whilst you can use a more secure key than an
-empty string this is currently not verified.
-
-```python
-from jose import jwt
-import requests
-
-my_uuid = "a93a8f40-f261-4f12-869a-2cea3f3f0d71"
-token = jwt.encode({"user_uuid": my_uuid}, key="")
-
-requests.get(..., headers={"Authorization": f"Bearer {token}"})
-```
-
-You can find a link to a notebook on how to generate a JWT in the [here](./notebooks/token_generation.ipynb).
 
 If you discover a security vulnerability within this project, please follow our [Security Policy](./SECURITY.md).
 
@@ -204,6 +165,9 @@ Replace `var.image_tag` in:
 
 with the hash of the build you want deployed. Make sure that the hash corresponds to an image that exists in ECR, 
 if in doubt build it via the [build-action](./.github/workflows/build.yaml).
+
+Uncomment this line https://github.com/i-dot-ai/redbox/blob/bb3d5cf085bfc47b5b1280081d11862acfb16e0e/infrastructure/aws/rds.tf#L3,
+and comment out the one below it.
 
 Login to aws via `aws-vault exec admin-role` and run the commands below from the redbox repo root
 
