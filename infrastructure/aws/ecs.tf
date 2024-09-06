@@ -48,13 +48,6 @@ resource "aws_secretsmanager_secret" "django-app-secret" {
   }
 }
 
-resource "aws_secretsmanager_secret" "worker-secret" {
-  name = "${local.name}-worker-secret"
-  tags = {
-    "platform:secret-purpose" = "general"
-  }
-}
-
 
 resource "aws_secretsmanager_secret_version" "django-app-json-secret" {
   secret_id     = aws_secretsmanager_secret.django-app-secret.id
