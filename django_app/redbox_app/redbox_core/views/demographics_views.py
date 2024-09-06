@@ -1,4 +1,5 @@
 import logging
+import json
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
@@ -8,6 +9,7 @@ from django.shortcuts import redirect
 from django.utils.decorators import method_decorator
 from django.views import View
 from django.views.generic import UpdateView
+from http import HTTPStatus
 
 from redbox_app.redbox_core.forms import DemographicsForm
 
@@ -34,3 +36,17 @@ class DemographicsView(LoginRequiredMixin, UpdateView):
 
     def get_object(self, **kwargs):  # noqa: ARG002
         return self.request.user
+
+
+class UpdateDemographicsView(View):
+    @method_decorator(login_required)
+    def post(self, request: HttpRequest) -> HttpResponse:
+        user: User = request.user
+        data = json.loads(request.body.decode("utf-8"))
+
+        user.name = data["name"]
+        user.ai_experience = data["ai_experience"]
+        user.info_about_user = data["info_about_user"]
+        user.redbox_response_preferences = data["redbox_response_preferences"]
+
+        return HttpResponse(status=HTTPStatus.NO_CONTENT)

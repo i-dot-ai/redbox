@@ -91,7 +91,7 @@ class ProfileOverlay extends HTMLElement {
               this.querySelector('[name="csrfmiddlewaretoken"]')
             )?.value || "";
           try {
-            await fetch(`/update-profile`, {
+            await fetch(`/update-demographics`, {
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
@@ -114,7 +114,7 @@ class ProfileOverlay extends HTMLElement {
         for (const pair of formData.entries()) {
           formDataJson[pair[0]] = pair[1];
         }
-        sendData(formDataJson.toString());
+        sendData(JSON.stringify(formDataJson));
       });
     });
   }
