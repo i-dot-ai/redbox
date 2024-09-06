@@ -12,8 +12,3 @@ class ChatRoute(StrEnum):
 
 class ErrorRoute(StrEnum):
     files_too_large = "error/files_too_large"
-
-
-class MetadataDetail(BaseModel):
-    input_tokens: dict[str, int] = Field(default_factory=dict)
-    output_tokens: dict[str, int] = Field(default_factory=dict)

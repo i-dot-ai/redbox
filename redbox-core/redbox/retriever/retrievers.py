@@ -27,7 +27,7 @@ def hit_to_doc(hit: dict[str, Any]) -> Document:
         "uuid": hit["_id"],
     }
     return Document(
-        page_content=source.get("text"), metadata={k: v for k, v in c_meta.items() if v is not None} | source["metadata"]
+        page_content=source.get("text", ""), metadata={k: v for k, v in c_meta.items() if v is not None} | source["metadata"]
     )
 
 

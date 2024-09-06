@@ -17,7 +17,7 @@ from websockets import WebSocketClientProtocol
 from websockets.legacy.client import Connect
 
 from redbox.graph.root import FINAL_RESPONSE_TAG, ROUTE_NAME_TAG, SOURCE_DOCUMENTS_TAG
-from redbox.models.chat import MetadataDetail
+from redbox.models.chain import RequestMetadata, LLMCallMetadata
 from redbox_app.redbox_core import error_messages
 from redbox_app.redbox_core.consumers import ChatConsumer
 from redbox_app.redbox_core.models import Chat, ChatMessage, ChatMessageTokenUse, ChatRoleEnum, File, User
@@ -508,7 +508,11 @@ def mocked_connect(uploaded_file: File) -> Connect:
         {
             "event": "on_custom_event",
             "name": "on_metadata_generation",
-            "data": MetadataDetail(input_tokens={"gpt-4o": 123}, output_tokens={"gpt-4o": 1000}),
+            "data": RequestMetadata(
+                llm_calls=[LLMCallMetadata(model_name="gpt-4o", input_tokens=123, output_tokens=1000)],
+                selected_files_total_tokens=1000,
+                number_of_selected_files=1
+            ),
         },
     ]
 
