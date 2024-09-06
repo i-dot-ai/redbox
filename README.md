@@ -173,3 +173,13 @@ make tf_apply env=<ENVIRONMENT>
 ```
 
 where ENVIRONMENT is one of `dev`, `preprod` or `prod`
+
+## How to set up scheduled tasks
+
+The django-app uses django-q to schedule task, this includes management tasks. 
+Follow the instructions here https://django-q2.readthedocs.io/en/master/schedules.html#management-commands, i.e.
+1. navigate the admin / Scheduled Tasks / Add Scheduled Task
+2. name = `delete old files`
+3. func = `django.core.management.call_command`
+4. args = `"delete_expired_data"`
+5. save
