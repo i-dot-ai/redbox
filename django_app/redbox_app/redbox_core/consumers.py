@@ -19,7 +19,6 @@ from redbox.models.chain import ChainChatMessage, RedboxQuery, RedboxState
 from redbox.models.chat import MetadataDetail, SourceDocument
 from redbox_app.redbox_core import error_messages
 from redbox_app.redbox_core.models import (
-    AISettings,
     Chat,
     ChatMessage,
     ChatMessageTokenUse,
@@ -172,7 +171,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
     @staticmethod
     @database_sync_to_async
-    def get_ai_settings(user: User) -> AISettings:
+    def get_ai_settings(user: User) -> dict:
         return model_to_dict(user.ai_settings, exclude=["label"])
 
     async def handle_text(self, response: str) -> str:
@@ -183,10 +182,11 @@ class ChatConsumer(AsyncWebsocketConsumer):
         await self.send_to_client("route", response)
         self.route = response
 
-    async def handle_metadata(self, response: MetadataDetail):
-        for model, token_count in response.input_tokens.items():
+    async def handle_metadata(self, response: dict):
+        metadata_detail = MetadataDetail.parse_obj(response)
+        for model, token_count in metadata_detail.input_tokens.items():
             self.metadata.input_tokens[model] = self.metadata.input_tokens.get(model, 0) + token_count
-        for model, token_count in response.output_tokens.items():
+        for model, token_count in metadata_detail.output_tokens.items():
             self.metadata.output_tokens[model] = self.metadata.output_tokens.get(model, 0) + token_count
 
     async def handle_documents(self, response: list[SourceDocument]) -> Sequence[tuple[File, SourceDocument]]:
