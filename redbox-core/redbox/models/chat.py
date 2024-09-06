@@ -71,6 +71,9 @@ class ChatRoute(StrEnum):
     chat_with_docs_map_reduce = "chat/documents/large"
 
 
+class ErrorRoute(StrEnum):
+    files_too_large = "error/files_too_large"
+
 class ChatResponse(BaseModel):
     source_documents: list[SourceDocument] | None = Field(
         description="documents retrieved to form this response", default=None

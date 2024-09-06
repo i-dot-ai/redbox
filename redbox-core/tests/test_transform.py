@@ -3,7 +3,7 @@ from datetime import UTC, datetime
 import pytest
 from langchain_core.documents.base import Document
 
-from redbox.models.chain import RequestMetadata
+from redbox.models.chain import LLMCallMetadata, RequestMetadata
 from redbox.transform import combine_documents, map_document_to_source_document, to_request_metadata
 from redbox.retriever.retrievers import filter_by_elbow
 
@@ -205,7 +205,7 @@ def test_elbow_filter(scores: list[float], target_len: int):
                 ),
                 "model": "gpt-4o",
             },
-            RequestMetadata(input_tokens={"gpt-4o": 6}, output_tokens={"gpt-4o": 23}),
+            RequestMetadata(llm_calls=[LLMCallMetadata(model_name="gpt-4o", input_tokens=6, output_tokens=23)]),
         ),
         (
             {
@@ -217,7 +217,7 @@ def test_elbow_filter(scores: list[float], target_len: int):
                 ),
                 "model": "unknown-model",
             },
-            RequestMetadata(input_tokens={"unknown-model": 6}, output_tokens={"unknown-model": 23}),
+            RequestMetadata(llm_calls=[LLMCallMetadata(model_name="gpt-4o", input_tokens=6, output_tokens=23)]),
         ),
     ],
 )

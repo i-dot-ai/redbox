@@ -5,13 +5,13 @@ from uuid import uuid4
 from functools import reduce
 
 from langchain.schema import StrOutputParser
-from langchain_core.runnables import RunnableParallel, RunnablePassthrough
+from langchain_core.runnables import RunnableParallel, RunnablePassthrough, RunnableLambda
 from langchain_core.vectorstores import VectorStoreRetriever
 
 from redbox.chains.components import get_tokeniser, get_chat_llm
 from redbox.chains.runnables import build_llm_chain, CannedChatLLM
 from redbox.models import ChatRoute, Settings
-from redbox.models.chain import RedboxState
+from redbox.models.chain import RedboxState, RequestMetadata
 from redbox.transform import combine_documents, structure_documents
 from redbox.models.chain import PromptSet
 from redbox.transform import flatten_document_state
@@ -27,15 +27,16 @@ re_keyword_pattern = re.compile(r"@(\w+)")
 
 
 def build_retrieve_pattern(
-    retriever: VectorStoreRetriever, final_source_chain: bool = False
+    retriever: VectorStoreRetriever, 
+    final_source_chain: bool = False
 ) -> Callable[[RedboxState], dict[str, Any]]:
     """Returns a function that uses state["request"] and state["text"] to set state["documents"]."""
-    retriever = RunnableParallel({"documents": retriever | structure_documents})
+    retriever_chain = RunnableParallel({"documents": retriever | structure_documents})
 
     if final_source_chain:
-        _retriever = retriever.with_config(tags=["source_documents_flag"])
+        _retriever = retriever_chain.with_config(tags=["source_documents_flag"])
     else:
-        _retriever = retriever
+        _retriever = retriever_chain
 
     def _retrieve(state: RedboxState) -> dict[str, Any]:
         return _retriever.invoke(state)
@@ -142,6 +143,17 @@ def build_set_route_pattern(route: ChatRoute) -> Callable[[RedboxState], dict[st
     return _set_route
 
 
+def set_self_route_from_llm_answer(state: RedboxState):
+    llm_response = state["text"].lower()
+    if llm_response == "true":
+        route = ChatRoute.search
+    elif llm_response == "false":
+        route = ChatRoute.chat_with_docs_map_reduce
+    else:
+        route = ChatRoute.search
+    return {"route_name": route.value}
+
+
 def build_passthrough_pattern() -> Callable[[RedboxState], dict[str, Any]]:
     """Returns a function that uses state["request"] to set state["text"]."""
 
@@ -166,9 +178,28 @@ def build_set_text_pattern(text: str, final_response_chain: bool = False):
     return _set_text
 
 
+def build_set_metadata_pattern():
+
+    def _set_metadata_pattern(state: RedboxState):
+        flat_docs = flatten_document_state(state.get("documents", {}))
+        return {
+            "metadata": RequestMetadata(
+                selected_files_total_tokens=sum(map(lambda d: d.metadata.get("token_count", 0), flat_docs)),
+                number_of_selected_files=len(state["request"].s3_keys)
+            )
+        }
+    return _set_metadata_pattern
+
+
+def build_error_pattern(text: str, route_name: str | None):
+
+    def _error_pattern(state: RedboxState):
+        return  build_set_text_pattern(text, final_response_chain=True)(state) \
+                | build_set_route_pattern(route_name)(state)
+    return _error_pattern
+
+
 # Raw processes
-
-
 def clear_documents_process(state: RedboxState) -> dict[str, Any]:
     if documents := state.get("documents"):
         return {"documents": {group_id: None for group_id in documents}}

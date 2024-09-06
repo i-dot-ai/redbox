@@ -6,7 +6,7 @@ from langchain_core.callbacks.manager import dispatch_custom_event
 from langchain_core.runnables import RunnableLambda
 
 from redbox.models.chat import SourceDocument
-from redbox.models.chain import DocumentState, RequestMetadata
+from redbox.models.chain import DocumentState, LLMCallMetadata, RedboxState, RequestMetadata
 
 
 def map_document_to_source_document(d: Document) -> SourceDocument:
@@ -85,16 +85,8 @@ def flatten_document_state(documents: DocumentState | None) -> list[Document]:
     return [document for group in documents.values() for document in group.values()]
 
 
-def get_document_token_count(documents: DocumentState | None) -> int:
-    if documents is None:
-        return 0
-
-    document_list = flatten_document_state(documents=documents)
-
-    if len(document_list) == 0:
-        return 0
-
-    return sum(d.metadata["token_count"] for d in document_list)
+def get_document_token_count(state: RedboxState) -> int:
+    return sum(d.metadata["token_count"] for d in flatten_document_state(state.get("documents", [])))
 
 
 @RunnableLambda
@@ -110,10 +102,12 @@ def to_request_metadata(prompt_response_model: dict):
     except KeyError:
         tokeniser = tiktoken.get_encoding("cl100k_base")
 
-    input_tokens = {model: len(tokeniser.encode(prompt_response_model["prompt"]))}
-    output_tokens = {model: len(tokeniser.encode(prompt_response_model["response"]))}
+    input_tokens = len(tokeniser.encode(prompt_response_model["prompt"]))
+    output_tokens = len(tokeniser.encode(prompt_response_model["response"]))
 
-    dispatch_custom_event("on_metadata_generation", RequestMetadata(input_tokens=input_tokens, output_tokens=dict()))
-    dispatch_custom_event("on_metadata_generation", RequestMetadata(input_tokens=dict(), output_tokens=output_tokens))
+    metadata_event = RequestMetadata(
+        llm_calls=[LLMCallMetadata(model_name=model, input_tokens=input_tokens, output_tokens=output_tokens)]
+    )
 
-    return RequestMetadata(input_tokens=input_tokens, output_tokens=output_tokens)
+    dispatch_custom_event("on_metadata_generation", metadata_event)
+    return metadata_event

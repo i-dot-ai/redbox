@@ -102,3 +102,14 @@ def mock_all_chunks_retriever(docs: list[Document]) -> FakeRetriever:
 
 def mock_parameterised_retriever(docs: list[Document]) -> FakeRetriever:
     return FakeRetriever(docs=docs)
+
+
+def mock_metadata_retriever(docs: list[Document]) -> FakeRetriever:
+    metadata_only_docs = [
+        doc for doc in docs
+    ]
+    for doc in metadata_only_docs:
+        doc.page_content = None
+        doc.metadata.pop("embedding", None)
+    return FakeRetriever(docs=metadata_only_docs)
+

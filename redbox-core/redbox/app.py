@@ -4,7 +4,7 @@ from redbox.graph.root import get_root_graph
 from redbox.models.chain import RedboxState
 from redbox.models.chat import ChatRoute
 from redbox.models.settings import Settings
-from redbox.chains.components import get_all_chunks_retriever, get_parameterised_retriever
+from redbox.chains.components import get_all_chunks_retriever, get_metadata_retriever, get_parameterised_retriever
 from redbox.graph.root import (
     ROUTABLE_KEYWORDS,
     ROUTE_NAME_TAG,
@@ -22,14 +22,16 @@ class Redbox:
         self,
         all_chunks_retriever: VectorStoreRetriever | None = None,
         parameterised_retriever: VectorStoreRetriever | None = None,
+        metadata_retriever: VectorStoreRetriever | None = None,
         env: Settings | None = None,
         debug: bool = False,
     ):
         _env = env or Settings()
         _all_chunks_retriever = all_chunks_retriever or get_all_chunks_retriever(_env)
         _parameterised_retriever = parameterised_retriever or get_parameterised_retriever(_env)
+        _metadata_retriever = metadata_retriever or get_metadata_retriever(_env)
 
-        self.graph = get_root_graph(_all_chunks_retriever, _parameterised_retriever, debug)
+        self.graph = get_root_graph(_all_chunks_retriever, _parameterised_retriever, _metadata_retriever, debug)
 
     async def run(
         self,
@@ -63,3 +65,11 @@ class Redbox:
 
     def get_available_keywords(self) -> dict[ChatRoute, str]:
         return ROUTABLE_KEYWORDS
+    
+    def draw(self, output_path="RedboxAIArchitecture.png"):
+        from langchain_core.runnables.graph import MermaidDrawMethod
+        self.graph(xray=True).draw_mermaid_png(
+            draw_method=MermaidDrawMethod.API,
+            output_file_path=output_path
+        )
+
