@@ -51,7 +51,7 @@
       {"text": "Documents", "href": url('documents')},
       {"text": "Chats", "href": url('chats')},
       {"text": "Sign out", "href": url('signed-out')},
-      {"text": "My details", "href": url('demographics'), "user_button": "KE"}
+      {"text": "My details", "href": url('demographics'), "user_button": request.user.get_initials() }
     ] %}
   {% else %}
     {% set menu_items = [
