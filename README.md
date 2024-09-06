@@ -45,13 +45,11 @@ You will need to install `poppler` and `tesseract` to run the `worker`
 
 # Dependencies
 
-This project uses a microservice architecture.
+This project is in two parts:
+* A https://langchain-ai.github.io/langgraph/ based AI class library called redbox-core
+* A django app to expose redbox-core to users over the web
 
-Each microservice runs in its own container defined by a `Dockerfile`.
-
-For every microservice that we have written in python we define its dependencies using https://python-poetry.org/.
-
-This means that our project is structured approximately like this:
+The project is structured approximately like this:
 
 ```txt
 redbox/
