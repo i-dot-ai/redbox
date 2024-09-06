@@ -12,8 +12,7 @@ logger = logging.getLogger(__name__)
 class Command(BaseCommand):
     help = """This is an ad-hoc command when changes to the AI pipeline (e.g. a new embedding strategy)
     mean we need to regenerate chunks for all the current files.
-
-    It attempts to reupload file data to core-api for reingestion."""
+    """
 
     def add_arguments(self, parser):
         """sync only to be used for testing"""

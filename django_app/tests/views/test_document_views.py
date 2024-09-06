@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 
 @pytest.mark.django_db()
-def test_upload_view(alice, client, file_pdf_path: Path, s3_client, requests_mock):
+def test_upload_view(alice, client, file_pdf_path: Path, s3_client):
     """
     Given that the object store does not have a file with our test file in it
     When we POST our test file to /upload/
@@ -30,18 +30,6 @@ def test_upload_view(alice, client, file_pdf_path: Path, s3_client, requests_moc
 
     client.force_login(alice)
 
-    # we mock the response from the core-api
-    mocked_response = {
-        "key": file_name,
-        "bucket": settings.BUCKET_NAME,
-        "uuid": str(uuid.uuid4()),
-    }
-    requests_mock.post(
-        f"http://{settings.CORE_API_HOST}:{settings.CORE_API_PORT}/file",
-        status_code=201,
-        json=mocked_response,
-    )
-
     with file_pdf_path.open("rb") as f:
         response = client.post("/upload/", {"uploadDocs": f})
 
@@ -51,7 +39,7 @@ def test_upload_view(alice, client, file_pdf_path: Path, s3_client, requests_moc
 
 
 @pytest.mark.django_db()
-def test_document_upload_status(client, alice, file_pdf_path: Path, s3_client, requests_mock):
+def test_document_upload_status(client, alice, file_pdf_path: Path, s3_client):
     file_name = file_pdf_path.name
 
     # we begin by removing any file in minio that has this key
@@ -60,17 +48,6 @@ def test_document_upload_status(client, alice, file_pdf_path: Path, s3_client, r
     assert not file_exists(s3_client, file_name)
     client.force_login(alice)
     previous_count = count_s3_objects(s3_client)
-
-    mocked_response = {
-        "key": file_name,
-        "bucket": settings.BUCKET_NAME,
-        "uuid": str(uuid.uuid4()),
-    }
-    requests_mock.post(
-        f"http://{settings.CORE_API_HOST}:{settings.CORE_API_PORT}/file",
-        status_code=201,
-        json=mocked_response,
-    )
 
     with file_pdf_path.open("rb") as f:
         response = client.post("/upload/", {"uploadDocs": f})
@@ -83,19 +60,7 @@ def test_document_upload_status(client, alice, file_pdf_path: Path, s3_client, r
 
 
 @pytest.mark.django_db()
-def test_upload_view_duplicate_files(alice, bob, client, file_pdf_path: Path, s3_client, requests_mock):
-    # we mock the response from the core-api
-    mocked_response = {
-        "key": "file_key",
-        "bucket": settings.BUCKET_NAME,
-        "uuid": str(uuid.uuid4()),
-    }
-    requests_mock.post(
-        f"http://{settings.CORE_API_HOST}:{settings.CORE_API_PORT}/file",
-        status_code=201,
-        json=mocked_response,
-    )
-
+def test_upload_view_duplicate_files(alice, bob, client, file_pdf_path: Path, s3_client):
     previous_count = count_s3_objects(s3_client)
     client.force_login(alice)
 

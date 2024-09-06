@@ -32,10 +32,6 @@ build:
 rebuild: stop prune ## Rebuild all images
 	docker compose build --no-cache
 
-.PHONY: test-core-api
-test-core-api: ## Test core-api
-	cd core-api && poetry install --with dev && poetry run python -m pytest  --cov=core_api -v --cov-report=term-missing --cov-fail-under=75
-
 .PHONY: test-ai
 test-ai: ## Test code with live LLM
 	cd redbox-core && poetry install --with dev && poetry run python -m pytest -m "ai" --cov=redbox -v --cov-report=term-missing --cov-fail-under=80
@@ -131,7 +127,6 @@ AUTO_APPLY_RESOURCES = module.django-app.aws_ecs_task_definition.aws-ecs-task \
                        module.worker.data.aws_ecs_task_definition.main \
                        aws_secretsmanager_secret.django-app-secret \
                        aws_secretsmanager_secret.worker-secret \
-                       aws_secretsmanager_secret.core-api-secret \
                        module.django-lambda.aws_lambda_function.lambda_function
 
 target_modules = $(foreach resource,$(AUTO_APPLY_RESOURCES),-target $(resource))
@@ -147,17 +142,13 @@ docker_build: ## Build the docker container
 	@echo "Services to update: $(DOCKER_SERVICES)"
 	# Enabling Docker BuildKit for better build performance
 	export DOCKER_BUILDKIT=1
-	@for service in $(DOCKER_SERVICES); do \
-		if grep -A 2 "^\s*$$service:" docker-compose.yml | grep -q 'build:'; then \
-			echo "Building $$service..."; \
-			PREV_IMAGE="$(ECR_REPO_URL)-$$service:$(PREV_IMAGE_TAG)"; \
-			echo "Pulling previous image: $$PREV_IMAGE"; \
-			docker pull $$PREV_IMAGE; \
-			docker compose build $$service; \
-		else \
-			echo "Skipping $$service uses default image"; \
-		fi; \
-	done
+
+	echo "Building django-app..."; \
+	PREV_IMAGE="$(ECR_REPO_URL)-django-app:$(PREV_IMAGE_TAG)"; \
+	echo "Pulling previous image: $$PREV_IMAGE"; \
+	docker pull $$PREV_IMAGE; \
+	docker compose build django-app; \
+
 
 
 .PHONY: docker_push
@@ -178,7 +169,7 @@ docker_push:
 
 .PHONY: docker_update_tag
 docker_update_tag:
-	for service in django-app core-api worker; do \
+	for service in django-app worker; do \
 		MANIFEST=$$(aws ecr batch-get-image --repository-name $(ECR_REPO_NAME)-$$service --image-ids imageTag=$(IMAGE_TAG) --query 'images[].imageManifest' --output text) ; \
 		aws ecr put-image --repository-name $(ECR_REPO_NAME)-$$service --image-tag $(tag) --image-manifest "$$MANIFEST" ; \
 	done
@@ -259,7 +250,7 @@ release: ## Deploy app
 
 .PHONY: eval_backend
 eval_backend:  ## Runs the only the necessary backend for evaluation BUCKET_NAME
-	docker compose up -d --wait core-api --build
+	docker compose up -d --wait worker --build
 	docker exec -it $$(docker ps -q --filter "name=minio") mc mb data/${BUCKET_NAME}
 
 .PHONY: help
