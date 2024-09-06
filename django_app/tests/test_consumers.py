@@ -461,7 +461,7 @@ class CannedGraphLLM(BaseChatModel):
             yield
 
     def _llm_type(self):
-        return "go away"
+        return "canned"
 
     def _convert_input(self, prompt):
         if isinstance(prompt, dict):
