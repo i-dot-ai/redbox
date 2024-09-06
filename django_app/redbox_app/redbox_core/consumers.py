@@ -34,6 +34,18 @@ logger = logging.getLogger(__name__)
 logger.info("WEBSOCKET_SCHEME is: %s", settings.WEBSOCKET_SCHEME)
 
 
+def parse_page_number(obj: int | list[int] | None):
+    if isinstance(obj, int):
+        return [obj]
+    if isinstance(obj, list) and all(isinstance(item, int) for item in obj):
+        return obj
+    if obj is None:
+        return []
+
+    msg = "expected, int | list[int]| None got %s"
+    raise ValueError(msg, type(obj))
+
+
 class ChatConsumer(AsyncWebsocketConsumer):
     full_reply: ClassVar = []
     citations: ClassVar = []
@@ -145,7 +157,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
                         chat_message=chat_message,
                         file=file,
                         text=citation.page_content,
-                        page_numbers=citation.metadata.get("page_number"),
+                        page_numbers=parse_page_number(citation.metadata.get("page_number")),
                     )
         if selected_files:
             chat_message.selected_files.set(selected_files)
