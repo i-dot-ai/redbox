@@ -157,9 +157,7 @@ checkout the `main` branch of the following repos:
 and checkout the `v1.0.0-rds` tag of the following repo:
 * https://github.com/i-dot-ai/i-dot-ai-core-terraform-modules
 
-Replace `var.image_tag` in:
-* `infrastructure/aws/ecs.tf` 
-* `infrastructure/aws/lambda.tf` 
+Replace `var.image_tag` in `infrastructure/aws/ecs.tf` 
 
 with the hash of the build you want deployed. Make sure that the hash corresponds to an image that exists in ECR, 
 if in doubt build it via the [build-action](./.github/workflows/build.yaml).
