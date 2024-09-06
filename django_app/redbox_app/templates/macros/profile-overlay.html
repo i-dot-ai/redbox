@@ -31,26 +31,20 @@
           <fieldset class="profile__radio-container-outer">
             <legend class="profile-label">Which level best describes your experience with Generative AI tools?</legend>
             <div class="profile__radio-container-inner">
-              <div>
-                <input class="profile__radio" type="radio" id="profile-experience-1" name="ai_experience" value="1" required {% if user.ai_experience == "Curious Newcomer" or not user.ai_experience %}checked{% endif %} />
-                <label class="profile__radio-card" for="profile-experience-1">Curious Newcomer</label>
-              </div>
-              <div>
-                <input class="profile__radio" type="radio" id="profile-experience-2" name="ai_experience" value="2" required {% if user.ai_experience == "Cautious Explorer" %}checked{% endif %} />
-                <label class="profile__radio-card" for="profile-experience-2">Cautious Explorer</label>
-              </div>
-              <div>
-                <input class="profile__radio" type="radio" id="profile-experience-3" name="ai_experience" value="3" required {% if user.ai_experience == "Enthusiastic Experimenter" %}checked{% endif %} />
-                <label class="profile__radio-card" for="profile-experience-3">Enthusiastic Experimenter</label>
-              </div>
-              <div>
-                <input class="profile__radio" type="radio" id="profile-experience-4" name="ai_experience" value="4" required {% if user.ai_experience == "Experienced Navigator" %}checked{% endif %} />
-                <label class="profile__radio-card" for="profile-experience-4">Experienced Navigator</label>
-              </div>
-              <div>
-                <input class="profile__radio" type="radio" id="profile-experience-5" name="ai_experience" value="5" required {% if user.ai_experience == "AI Alchemist" %}checked{% endif %} />
-                <label class="profile__radio-card" for="profile-experience-5">AI Alchemist</label>
-              </div>
+
+              {# TO DO: Pull these in from the model #}
+              {% set experience_levels = ["Curious Newcomer", "Cautious Explorer", "Enthusiastic Experimenter", "Experienced Navigator", "AI Alchemist"] %}
+              {% set selected_level = user.ai_experience %}
+              {% if not selected_level %}
+                {% set selected_level = experience_levels[0] %}
+              {% endif %}
+
+              {% for level in experience_levels %}
+                <div>
+                  <input class="profile__radio" type="radio" id="profile-experience-1" name="ai_experience" value="{{ level }}" required {% if level == selected_level %}checked{% endif %} />
+                  <label class="profile__radio-card" for="profile-experience-1">{{ level }}</label>
+                </div>
+              {% endfor %}
             </fieldset>
             <button type="button" data-action="next">
               <span>Next</span>
