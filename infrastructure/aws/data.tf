@@ -4,25 +4,17 @@ locals {
   unstructured_host = "${aws_service_discovery_service.unstructured_service_discovery_service.name}.${aws_service_discovery_private_dns_namespace.private_dns_namespace.name}"
   name              = "${var.team_name}-${terraform.workspace}-${var.project_name}"
 
-  core_api_environment_variables = merge(
-    local.worker_environment_variables,
-    {
-      "EMBEDDING_DOCUMENT_FIELD_NAME" : var.embedding_document_field_name,
-      "AZURE_OPENAI_MODEL" : var.azure_openai_model,
-    }
-  )
 
-  django_app_environment_variables = merge({
+  django_app_environment_variables = {
+    "EMBEDDING_DOCUMENT_FIELD_NAME" : var.embedding_document_field_name,
+    "AZURE_OPENAI_MODEL" : var.azure_openai_model,
+
     "AWS_REGION" : var.region,
     "UNSTRUCTURED_HOST" : local.unstructured_host
     "Q_TIMEOUT": var.django_queue_timeout,
     "Q_RETRY": var.django_queue_retry,
-    "Q_MAX_ATTEMPTS": var.django_queue_max_attempts
-    }, local.django_lambda_environment_variables
-    , local.worker_environment_variables,
-  )
+    "Q_MAX_ATTEMPTS": var.django_queue_max_attempts,
 
-  django_lambda_environment_variables = {
     "OBJECT_STORE" : "s3",
     "BUCKET_NAME" : aws_s3_bucket.user_data.bucket,
     "POSTGRES_DB" : module.rds.db_instance_name,
@@ -38,10 +30,8 @@ locals {
     "MAX_SECURITY_CLASSIFICATION" : "OFFICIAL_SENSITIVE",
     "SENTRY_ENVIRONMENT" : var.sentry_environment,
     "SENTRY_REPORT_TO_ENDPOINT" : var.sentry_report_to_endpoint,
-    "UNSTRUCTURED_HOST" : local.unstructured_host
-  }
+    "UNSTRUCTURED_HOST" : local.unstructured_host,
 
-  worker_environment_variables = {
     "EMBEDDING_DOCUMENT_FIELD_NAME" : var.embedding_document_field_name,
     "EMBEDDING_MAX_RETRIES" : var.embedding_max_retries,
     "EMBEDDING_RETRY_MIN_SECONDS" : var.embedding_retry_min_seconds,
@@ -58,7 +48,7 @@ locals {
     "EMBEDDING_BACKEND": var.embedding_backend
   }
 
-  core_secrets = {
+  django_app_secrets = {
     "ELASTIC__API_KEY" : var.elastic_api_key,
     "ELASTIC__CLOUD_ID" : var.cloud_id,
 
@@ -84,9 +74,7 @@ locals {
     "EMBEDDING_AZURE_OPENAI_ENDPOINT" : var.embedding_azure_openai_endpoint,
 
     "LLM_MAX_TOKENS" : var.llm_max_tokens,
-  }
 
-  django_app_secrets = {
     "DJANGO_SECRET_KEY" : var.django_secret_key,
     "POSTGRES_PASSWORD" : module.rds.rds_instance_db_password,
     "POSTGRES_HOST" : module.rds.db_instance_address,

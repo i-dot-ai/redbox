@@ -16,7 +16,7 @@ from websockets import ConnectionClosedError, WebSocketClientProtocol
 from redbox import Redbox
 from redbox.models import Settings
 from redbox.models.chain import ChainChatMessage, RedboxQuery, RedboxState
-from redbox.models.chat import MetadataDetail, SourceDocument
+from redbox.models.chat import MetadataDetail, SourceDocument, SourceDocuments
 from redbox_app.redbox_core import error_messages
 from redbox_app.redbox_core.models import (
     Chat,
@@ -78,7 +78,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         state = RedboxState(
             request=RedboxQuery(
                 question=message_history[-1]["text"],
-                s3_keys=[{"s3_key": f.unique_name} for f in selected_files],
+                s3_keys=[f.unique_name for f in selected_files],
                 user_uuid=user.id,
                 chat_history=[
                     ChainChatMessage(role=message.role, text=message.text) for message in message_history[:-1]
@@ -189,8 +189,9 @@ class ChatConsumer(AsyncWebsocketConsumer):
         for model, token_count in metadata_detail.output_tokens.items():
             self.metadata.output_tokens[model] = self.metadata.output_tokens.get(model, 0) + token_count
 
-    async def handle_documents(self, response: list[SourceDocument]) -> Sequence[tuple[File, SourceDocument]]:
-        s3_keys = [doc.s3_key for doc in response]
+    async def handle_documents(self, response: list[dict]) -> Sequence[tuple[File, SourceDocument]]:
+        source_documents = SourceDocuments.parse_obj(response)
+        s3_keys = [doc.s3_key for doc in source_documents]
         files = File.objects.filter(original_file__in=s3_keys)
 
         async for file in files:

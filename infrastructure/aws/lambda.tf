@@ -13,7 +13,7 @@ module "django-lambda" {
   iam_role_name                  = "${local.name}-${each.value.task_name}-lambda-role"
   timeout                        = 600
   reserved_concurrent_executions = 1
-  environment_variables          = merge(local.django_app_secrets, local.django_lambda_environment_variables)
+  environment_variables          = merge(local.django_app_secrets, local.django_app_environment_variables)
   aws_security_group_ids         = [aws_security_group.django_lambda_security_group.id]
   subnet_ids                     = data.terraform_remote_state.vpc.outputs.private_subnets
   policies                       = [jsonencode(data.aws_iam_policy_document.lambda_policy.json)]
