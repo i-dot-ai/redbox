@@ -80,7 +80,7 @@ class ProfileOverlay extends HTMLElement {
 
         /**
          * Sends data to endpoint, retrying if necessary
-         * @param {string} data
+         * @param {FormData} data
          * @param {number} retry
          */
         const sendData = async (data, retry = 0) => {
@@ -94,10 +94,9 @@ class ProfileOverlay extends HTMLElement {
             await fetch(`/update-demographics`, {
               method: "POST",
               headers: {
-                "Content-Type": "application/json",
                 "X-CSRFToken": csrfToken,
               },
-              body: JSON.stringify(data),
+              body: data,
             });
           } catch (err) {
             if (retry < MAX_RETRIES) {
@@ -110,11 +109,7 @@ class ProfileOverlay extends HTMLElement {
 
         // Format and send data
         const formData = new FormData(this.querySelector("form") || undefined);
-        let formDataJson = {};
-        for (const pair of formData.entries()) {
-          formDataJson[pair[0]] = pair[1];
-        }
-        sendData(JSON.stringify(formDataJson));
+        sendData(formData);
       });
     });
   }

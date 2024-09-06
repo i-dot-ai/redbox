@@ -42,12 +42,10 @@ class UpdateDemographicsView(View):
     @method_decorator(login_required)
     def post(self, request: HttpRequest) -> HttpResponse:
         user: User = request.user
-        data = json.loads(request.body.decode("utf-8"))
-
-        print(data)
-        user.name = data["name"]
-        user.ai_experience = data["ai_experience"]
-        user.info_about_user = data["info_about_user"]
-        user.redbox_response_preferences = data["redbox_response_preferences"]
+        user.name = request.POST.get("name")
+        user.ai_experience = request.POST.get("ai_experience")
+        user.info_about_user = request.POST.get("info_about_user")
+        user.redbox_response_preferences = request.POST.get("redbox_response_preferences")
+        user.save()
 
         return HttpResponse(status=HTTPStatus.NO_CONTENT)
