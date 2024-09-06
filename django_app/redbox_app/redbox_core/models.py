@@ -251,6 +251,8 @@ class User(BaseUser, UUIDPrimaryKeyBase):
     name = models.CharField(null=True, blank=True)
     ai_experience = models.CharField(null=True, blank=True, max_length=25, choices=AIExperienceLevel)
     profession = models.CharField(null=True, blank=True, max_length=4, choices=Profession)
+    info_about_user = models.CharField(null=True, blank=True, help_text="user entered info from profile overlay")
+    redbox_response_preferences = models.CharField(null=True, blank=True, help_text="user entered info from profile overlay, to be used in custom prompt")
     ai_settings = models.ForeignKey(AISettings, on_delete=models.SET_DEFAULT, default="default", to_field="label")
     is_developer = models.BooleanField(null=True, blank=True, default=False, help_text="is this user a developer?")
     objects = BaseUserManager()
@@ -261,6 +263,28 @@ class User(BaseUser, UUIDPrimaryKeyBase):
     def save(self, *args, **kwargs):
         self.email = self.email.lower()
         super().save(*args, **kwargs)
+
+    def get_bearer_token(self) -> str:
+        """the bearer token expected by the core-api"""
+        user_uuid = str(self.id)
+        bearer_token = jwt.encode({"user_uuid": user_uuid}, key=settings.SECRET_KEY)
+        return f"Bearer {bearer_token}"
+    
+    def get_initials(self) -> str:
+        try:
+            if self.name:
+                if " " in self.name:
+                    first_name, last_name = self.name.split(" ")
+                else:
+                    first_name = self.name
+                    last_name = " "
+            else:
+                name_part = self.email.split("@")[0]
+                first_name, last_name = name_part.split(".")
+            initials = first_name[0].upper() + last_name[0].upper()
+            return initials
+        except (IndexError, AttributeError, ValueError):
+            return ""
 
 
 class StatusEnum(models.TextChoices):

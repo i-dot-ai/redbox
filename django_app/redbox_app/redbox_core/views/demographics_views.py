@@ -20,7 +20,7 @@ class CheckDemographicsView(View):
     @method_decorator(login_required)
     def get(self, request: HttpRequest) -> HttpResponse:
         user: User = request.user
-        if all([user.name, user.ai_experience, user.grade, user.business_unit, user.profession]):
+        if all([user.name, user.ai_experience]):
             return redirect("chats")
         else:
             return redirect("demographics")
