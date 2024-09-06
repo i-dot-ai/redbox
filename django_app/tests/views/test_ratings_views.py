@@ -18,7 +18,7 @@ def test_post_new_rating_only(alice: User, chat_message: ChatMessage, client: Cl
 
     # When
     url = reverse("ratings", kwargs={"message_id": chat_message.id})
-    response = client.post(url, json.dumps({"rating": 5}), content_type="application/json")
+    response = client.post(url, {"rating": 5}, content_type="application/json")
 
     # Then
     status = HTTPStatus(response.status_code)

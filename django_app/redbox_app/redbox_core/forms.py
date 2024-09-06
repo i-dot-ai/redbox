@@ -3,7 +3,7 @@ from typing import ClassVar
 
 from django import forms
 
-from redbox_app.redbox_core.models import User
+from redbox_app.redbox_core.models import ChatMessage, User
 
 
 class SignInForm(forms.Form):
@@ -28,3 +28,9 @@ class DemographicsForm(forms.ModelForm):
             "grade": forms.Select(attrs={"class": "govuk-select govuk-!-width-one-third"}),
             "profession": forms.Select(attrs={"class": "govuk-select govuk-!-width-one-third"}),
         }
+
+
+class RatingsForm(forms.ModelForm):
+    class Meta:
+        model = ChatMessage
+        fields: ClassVar = ["rating", "rating_text", "rating_chips"]
