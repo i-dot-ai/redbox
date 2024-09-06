@@ -41,8 +41,6 @@ data "aws_iam_policy_document" "ecs_exec_role_policy" {
       "secretsmanager:GetSecretValue",
     ]
     resources = [
-       aws_secretsmanager_secret.core-api-secret.arn,
-       "${aws_secretsmanager_secret.core-api-secret.arn}:*",
        aws_secretsmanager_secret.worker-secret.arn,
        "${aws_secretsmanager_secret.worker-secret.arn}:*",
        aws_secretsmanager_secret.django-app-secret.arn,
@@ -61,7 +59,6 @@ resource "aws_iam_policy" "redbox_policy" {
 resource "aws_iam_role_policy_attachment" "redbox_role_policy" {
   for_each = tomap(
     {
-      "core-api" = module.core_api.ecs_task_execution_exec_role_name,
       "worker"   = module.worker.ecs_task_execution_exec_role_name,
       "django"   = module.django-app.ecs_task_execution_exec_role_name,
     }

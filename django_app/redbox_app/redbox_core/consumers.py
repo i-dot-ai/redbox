@@ -1,8 +1,8 @@
 import json
 import logging
 from asyncio import CancelledError
-from collections.abc import Mapping, MutableSequence, Sequence
-from typing import Any
+from collections.abc import Mapping, Sequence
+from typing import Any, ClassVar
 from uuid import UUID
 
 from channels.db import database_sync_to_async
@@ -10,14 +10,16 @@ from channels.generic.websocket import AsyncWebsocketConsumer
 from django.conf import settings
 from django.forms.models import model_to_dict
 from django.utils import timezone
+from langchain_core.documents import Document
+from openai import RateLimitError
 from websockets import ConnectionClosedError, WebSocketClientProtocol
-from websockets.client import connect
-from yarl import URL
 
-from redbox.models.chat import ClientResponse, MetadataDetail, SourceDocument
+from redbox import Redbox
+from redbox.models import Settings
+from redbox.models.chain import ChainChatMessage, RedboxQuery, RedboxState
+from redbox.models.chat import MetadataDetail
 from redbox_app.redbox_core import error_messages
 from redbox_app.redbox_core.models import (
-    AISettings,
     Chat,
     ChatMessage,
     ChatMessageTokenUse,
@@ -32,9 +34,32 @@ logger = logging.getLogger(__name__)
 logger.info("WEBSOCKET_SCHEME is: %s", settings.WEBSOCKET_SCHEME)
 
 
+def parse_page_number(obj: int | list[int] | None) -> list[int]:
+    if isinstance(obj, int):
+        return [obj]
+    if isinstance(obj, list) and all(isinstance(item, int) for item in obj):
+        return obj
+    if obj is None:
+        return []
+
+    msg = "expected, int | list[int] | None got %s"
+    raise ValueError(msg, type(obj))
+
+
 class ChatConsumer(AsyncWebsocketConsumer):
+    full_reply: ClassVar = []
+    citations: ClassVar = []
+    route = None
+    metadata: MetadataDetail = MetadataDetail()
+    redbox = Redbox(env=Settings(), debug=True)
+
     async def receive(self, text_data=None, bytes_data=None):
         """Receive & respond to message from browser websocket."""
+        self.full_reply = []
+        self.citations = []
+        self.route = None
+        self.metadata = MetadataDetail()
+
         data = json.loads(text_data or bytes_data)
         logger.debug("received %s from browser", data)
         user_message_text: str = data.get("message", "")
@@ -44,7 +69,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         if session_id := data.get("sessionId"):
             session = await Chat.objects.aget(id=session_id)
         else:
-            session = await Chat.objects.acreate(name=user_message_text[0 : settings.CHAT_TITLE_LENGTH], user=user)
+            session = await Chat.objects.acreate(name=user_message_text[: settings.CHAT_TITLE_LENGTH], user=user)
 
         # save user message
         selected_files = File.objects.filter(id__in=selected_file_uuids, user=user)
@@ -55,96 +80,49 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
     async def llm_conversation(self, selected_files: Sequence[File], session: Chat, user: User, title: str) -> None:
         """Initiate & close websocket conversation with the core-api message endpoint."""
+        await self.send_to_client("session-id", session.id)
+
         session_messages = ChatMessage.objects.filter(chat=session).order_by("created_at")
-        message_history: Sequence[Mapping[str, str]] = [
-            {"role": message.role, "text": message.text} async for message in session_messages
-        ]
-        url = URL.build(scheme="ws", host=settings.CORE_API_HOST, port=settings.CORE_API_PORT) / "chat/rag"
+        message_history: Sequence[Mapping[str, str]] = [message async for message in session_messages]
+
+        ai_settings = await self.get_ai_settings(user)
+        state = RedboxState(
+            request=RedboxQuery(
+                question=message_history[-1].text,
+                s3_keys=[f.unique_name for f in selected_files],
+                user_uuid=user.id,
+                chat_history=[
+                    ChainChatMessage(role=message.role, text=message.text) for message in message_history[:-1]
+                ],
+                ai_settings=ai_settings,
+            ),
+        )
+
         try:
-            async with connect(str(url), extra_headers={"Authorization": user.get_bearer_token()}) as core_websocket:
-                message = {
-                    "message_history": message_history,
-                    "selected_files": [{"s3_key": f.unique_name} for f in selected_files],
-                    "ai_settings": await self.get_ai_settings(user),
-                }
-                await self.send_to_server(core_websocket, message)
-                await self.send_to_client("session-id", session.id)
-                reply, citations, route, metadata = await self.receive_llm_responses(core_websocket)
+            await self.redbox.run(
+                state,
+                response_tokens_callback=self.handle_text,
+                route_name_callback=self.handle_route,
+                documents_callback=self.handle_documents,
+                metadata_tokens_callback=self.handle_metadata,
+            )
+
             message = await self.save_message(
-                session, reply, ChatRoleEnum.ai, sources=citations, route=route, metadata=metadata
+                session,
+                "".join(self.full_reply),
+                ChatRoleEnum.ai,
+                sources=self.citations,
+                route=self.route,
+                metadata=self.metadata,
             )
             await self.send_to_client("end", {"message_id": message.id, "title": title, "session_id": session.id})
 
+        except RateLimitError as e:
+            logger.exception("Rate limit error", exc_info=e)
+            await self.send_to_client("error", error_messages.RATE_LIMITED)
         except (TimeoutError, ConnectionClosedError, CancelledError) as e:
             logger.exception("Error from core.", exc_info=e)
             await self.send_to_client("error", error_messages.CORE_ERROR_MESSAGE)
-
-    async def receive_llm_responses(
-        self, core_websocket: WebSocketClientProtocol
-    ) -> tuple[str, Sequence[tuple[File, SourceDocument]], str, MetadataDetail]:
-        """Conduct websocket conversation with the core-api message endpoint."""
-        full_reply: MutableSequence[str] = []
-        citations: MutableSequence[tuple[File, SourceDocument]] = []
-        route: str | None = None
-        metadata: MetadataDetail = MetadataDetail()
-        async for raw_message in core_websocket:
-            response: ClientResponse = ClientResponse.model_validate_json(raw_message)
-            logger.debug("received %s from core-api", response)
-            if response.resource_type == "text":
-                full_reply.append(await self.handle_text(response))
-            elif response.resource_type == "documents":
-                citations += await self.handle_documents(response)
-            elif response.resource_type == "route_name":
-                route = await self.handle_route(response)
-            elif response.resource_type == "metadata":
-                metadata = await self.handle_metadata(metadata, response.data)
-            elif response.resource_type == "error":
-                full_reply.append(await self.handle_error(response))
-        return "".join(full_reply), citations, route, metadata
-
-    async def handle_documents(self, response: ClientResponse) -> Sequence[tuple[File, SourceDocument]]:
-        s3_keys = [doc.s3_key for doc in response.data]
-        files = File.objects.filter(original_file__in=s3_keys)
-
-        async for file in files:
-            await self.send_to_client("source", {"url": str(file.url), "original_file_name": file.original_file_name})
-
-        return [(file, [doc for doc in response.data if doc.s3_key == file.unique_name]) for file in files]
-
-    async def handle_text(self, response: ClientResponse) -> str:
-        await self.send_to_client("text", response.data)
-        return response.data
-
-    async def handle_route(self, response: ClientResponse) -> str:
-        await self.send_to_client("route", response.data)
-        return response.data
-
-    async def handle_metadata(self, current_metadata: MetadataDetail, metadata_event: MetadataDetail):
-        result = current_metadata.model_copy(deep=True)
-        for model, token_count in metadata_event.input_tokens.items():
-            result.input_tokens[model] = current_metadata.input_tokens.get(model, 0) + token_count
-        for model, token_count in metadata_event.output_tokens.items():
-            result.output_tokens[model] = current_metadata.output_tokens.get(model, 0) + token_count
-        return result
-
-    async def handle_error(self, response: ClientResponse) -> str:
-        match response.data.code:
-            case "no-document-selected":
-                message = error_messages.SELECT_DOCUMENT
-                await self.send_to_client("text", message)
-                return message
-            case "question-too-long":
-                message = error_messages.QUESTION_TOO_LONG
-                await self.send_to_client("text", message)
-                return message
-            case "rate-limit":
-                message = error_messages.RATE_LIMITED
-                await self.send_to_client("text", message)
-                return message
-            case _:
-                message = error_messages.CORE_ERROR_MESSAGE
-                await self.send_to_client("text", message)
-                return message
 
     async def send_to_client(self, message_type: str, data: str | Mapping[str, Any] | None = None) -> None:
         message = {"type": message_type, "data": data}
@@ -162,7 +140,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         session: Chat,
         user_message_text: str,
         role: ChatRoleEnum,
-        sources: Sequence[tuple[File, SourceDocument]] | None = None,
+        sources: Sequence[tuple[File, Document]] | None = None,
         selected_files: Sequence[File] | None = None,
         metadata: MetadataDetail | None = None,
         route: str | None = None,
@@ -179,7 +157,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
                         chat_message=chat_message,
                         file=file,
                         text=citation.page_content,
-                        page_numbers=citation.page_numbers,
+                        page_numbers=parse_page_number(citation.metadata.get("page_number")),
                     )
         if selected_files:
             chat_message.selected_files.set(selected_files)
@@ -204,8 +182,29 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
     @staticmethod
     @database_sync_to_async
-    def get_ai_settings(user: User) -> AISettings:
-        return model_to_dict(
-            user.ai_settings,
-            fields=[field.name for field in user.ai_settings._meta.fields if field.name != "label"],  # noqa: SLF001
-        )
+    def get_ai_settings(user: User) -> dict:
+        return model_to_dict(user.ai_settings, exclude=["label"])
+
+    async def handle_text(self, response: str) -> str:
+        await self.send_to_client("text", response)
+        self.full_reply.append(response)
+
+    async def handle_route(self, response: str) -> str:
+        await self.send_to_client("route", response)
+        self.route = response
+
+    async def handle_metadata(self, response: dict):
+        metadata_detail = MetadataDetail.parse_obj(response)
+        for model, token_count in metadata_detail.input_tokens.items():
+            self.metadata.input_tokens[model] = self.metadata.input_tokens.get(model, 0) + token_count
+        for model, token_count in metadata_detail.output_tokens.items():
+            self.metadata.output_tokens[model] = self.metadata.output_tokens.get(model, 0) + token_count
+
+    async def handle_documents(self, response: list[Document]):
+        s3_keys = [doc.metadata["file_name"] for doc in response]
+        files = File.objects.filter(original_file__in=s3_keys)
+
+        async for file in files:
+            await self.send_to_client("source", {"url": str(file.url), "original_file_name": file.original_file_name})
+        for file in files:
+            self.citations.append((file, [doc for doc in response if doc.metadata["file_name"] == file.unique_name]))

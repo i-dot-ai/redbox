@@ -5,24 +5,7 @@ from langchain_core.documents import Document
 from langchain_core.callbacks.manager import dispatch_custom_event
 from langchain_core.runnables import RunnableLambda
 
-from redbox.models.chat import SourceDocument
 from redbox.models.chain import DocumentState, RequestMetadata
-
-
-def map_document_to_source_document(d: Document) -> SourceDocument:
-    def map_page_numbers(page_number: int | list[int] | None) -> list[int]:
-        if isinstance(page_number, list):
-            return page_number
-        elif isinstance(page_number, int):
-            return [page_number]
-        else:
-            return []
-
-    return SourceDocument(
-        page_content=d.page_content,
-        s3_key=d.metadata["file_name"],
-        page_numbers=map_page_numbers(d.metadata.get("page_number")),
-    )
 
 
 # This should be unnecessary and indicates we're not chunking correctly

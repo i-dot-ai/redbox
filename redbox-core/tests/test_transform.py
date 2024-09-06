@@ -4,57 +4,10 @@ import pytest
 from langchain_core.documents.base import Document
 
 from redbox.models.chain import RequestMetadata
-from redbox.transform import combine_documents, map_document_to_source_document, to_request_metadata
+from redbox.transform import combine_documents, to_request_metadata
 from redbox.retriever.retrievers import filter_by_elbow
 
 document_created = datetime.now(UTC)
-
-
-@pytest.mark.parametrize(
-    ("document"),
-    [
-        (
-            Document(
-                page_content="some random text",
-                metadata={"file_name": "s3_key", "page_number": 1},
-            )
-        ),
-        (
-            Document(
-                page_content="some random text2",
-                metadata={"file_name": "s3_key", "page_number": [1, 2]},
-            )
-        ),
-        (
-            Document(
-                page_content="some random text3",
-                metadata={"file_name": "s3_key"},
-            )
-        ),
-    ],
-)
-def test_map_document_to_source_document(document: Document):
-    """
-    Test that documents as pulled by the Elasticsearch retriever get properly mapped to source documents
-    """
-    source_doc = map_document_to_source_document(document)
-
-    # Test content
-    assert source_doc.page_content == document.page_content
-
-    # Test page numbers
-    document_page_number = document.metadata.get("page_number")
-    if isinstance(document_page_number, int):
-        assert document_page_number in source_doc.page_numbers  # type: ignore[operator]
-        assert len(source_doc.page_numbers) == 1  # type: ignore[arg-type]
-    elif isinstance(document_page_number, list):
-        assert isinstance(source_doc.page_numbers, list)
-        assert set(document_page_number) == set(source_doc.page_numbers)
-    else:
-        assert source_doc.page_numbers == []
-
-    # Test UUID
-    assert source_doc.s3_key == document.metadata["file_name"]
 
 
 @pytest.mark.parametrize(

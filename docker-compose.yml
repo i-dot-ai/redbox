@@ -15,8 +15,6 @@ services:
         condition: service_healthy
       minio:
         condition: service_healthy
-      core-api:
-        condition: service_healthy
     networks:
       - redbox-app-network
     env_file:
@@ -95,36 +93,6 @@ services:
     networks:
       - redbox-app-network
     restart: unless-stopped
-  core-api:
-    image: redbox-core-api:latest
-    build:
-      context: .
-      dockerfile: core-api/Dockerfile
-      args:
-        - EMBEDDING_MODEL=${EMBEDDING_MODEL:-}
-    ports:
-      - 5002:5002
-    environment:
-      - PORT=5002
-    env_file:
-      - path: .env.integration
-        required: false
-      - path: .env
-        required: false
-    networks:
-      - redbox-app-network
-    depends_on:
-      elasticsearch:
-        condition: service_healthy
-      minio:
-        condition: service_healthy
-    restart: unless-stopped
-    healthcheck:
-      test: curl --fail http://localhost:5002/health || exit 1
-      interval: 5s
-      timeout: 30s
-      retries: 24
-      start_period: 60s
   minio:
     image: minio/minio
     expose:
