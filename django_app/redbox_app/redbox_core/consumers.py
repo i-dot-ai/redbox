@@ -10,12 +10,13 @@ from channels.generic.websocket import AsyncWebsocketConsumer
 from django.conf import settings
 from django.forms.models import model_to_dict
 from django.utils import timezone
+from openai import RateLimitError
 from websockets import ConnectionClosedError, WebSocketClientProtocol
 
 from redbox import Redbox
 from redbox.models import Settings
 from redbox.models.chain import ChainChatMessage, RedboxQuery, RedboxState
-from redbox.models.chat import ClientResponse, MetadataDetail, SourceDocument
+from redbox.models.chat import MetadataDetail, SourceDocument
 from redbox_app.redbox_core import error_messages
 from redbox_app.redbox_core.models import (
     AISettings,
@@ -56,7 +57,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         if session_id := data.get("sessionId"):
             session = await Chat.objects.aget(id=session_id)
         else:
-            session = await Chat.objects.acreate(name=user_message_text[0 : settings.CHAT_TITLE_LENGTH], user=user)
+            session = await Chat.objects.acreate(name=user_message_text[: settings.CHAT_TITLE_LENGTH], user=user)
 
         # save user message
         selected_files = File.objects.filter(id__in=selected_file_uuids, user=user)
@@ -106,28 +107,12 @@ class ChatConsumer(AsyncWebsocketConsumer):
             )
             await self.send_to_client("end", {"message_id": message.id, "title": title, "session_id": session.id})
 
+        except RateLimitError as e:
+            logger.exception("Rate limit error", exc_info=e)
+            await self.send_to_client("error", error_messages.RATE_LIMITED)
         except (TimeoutError, ConnectionClosedError, CancelledError) as e:
             logger.exception("Error from core.", exc_info=e)
             await self.send_to_client("error", error_messages.CORE_ERROR_MESSAGE)
-
-    async def handle_error(self, response: ClientResponse) -> str:
-        match response.data.code:
-            case "no-document-selected":
-                message = error_messages.SELECT_DOCUMENT
-                await self.send_to_client("text", message)
-                return message
-            case "question-too-long":
-                message = error_messages.QUESTION_TOO_LONG
-                await self.send_to_client("text", message)
-                return message
-            case "rate-limit":
-                message = error_messages.RATE_LIMITED
-                await self.send_to_client("text", message)
-                return message
-            case _:
-                message = error_messages.CORE_ERROR_MESSAGE
-                await self.send_to_client("text", message)
-                return message
 
     async def send_to_client(self, message_type: str, data: str | Mapping[str, Any] | None = None) -> None:
         message = {"type": message_type, "data": data}
@@ -188,10 +173,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
     @staticmethod
     @database_sync_to_async
     def get_ai_settings(user: User) -> AISettings:
-        return model_to_dict(
-            user.ai_settings,
-            fields=[field.name for field in user.ai_settings._meta.fields if field.name != "label"],  # noqa: SLF001
-        )
+        return model_to_dict(user.ai_settings, exclude=["label"])
 
     async def handle_text(self, response: str) -> str:
         await self.send_to_client("text", response)
