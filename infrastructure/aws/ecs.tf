@@ -170,11 +170,3 @@ resource "aws_security_group_rule" "ecs_ingress_worker_to_unstructured" {
   security_group_id        = module.unstructured.ecs_sg_id
 }
 
-resource "aws_security_group_rule" "allow_lambdas_ingress_to_django" {
-  type              = "ingress"
-  from_port         = 0
-  to_port           = 0
-  protocol          = "-1"
-  source_security_group_id = aws_security_group.django_lambda_security_group.id
-  security_group_id = module.django-app.ecs_sg_id
-}
