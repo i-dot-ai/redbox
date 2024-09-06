@@ -23,7 +23,7 @@ class ProfileOverlay extends HTMLElement {
           page.classList.remove("profile--hidden");
           /** @type {HTMLInputElement | null} */
           const firstInteractiveElement = page.querySelector(
-            "input, textarea, .profile__button-finish"
+            `input[type="text"], input[checked], textarea, .profile__button-finish`
           );
           firstInteractiveElement?.focus();
         } else {
