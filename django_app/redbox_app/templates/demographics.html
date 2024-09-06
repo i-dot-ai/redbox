@@ -50,29 +50,22 @@
       </div>
 
       <div class="govuk-form-group">
-        <label class="govuk-label" for="{{ form.business_unit.id_for_label }}">
-          {{ form.business_unit.label }}
+        <label class="govuk-label" for="{{ form.info_about_user.id_for_label }}">
+          {{ form.info_about_user.label }}
         </label>
-        {{ form.business_unit }}
+        {{ form.info_about_user }}
       </div>
 
       <div class="govuk-form-group">
-        <label class="govuk-label" for="{{ form.grade.id_for_label }}">
-          {{ form.grade.label }}
+        <label class="govuk-label" for="{{ form.redbox_response_preferences.id_for_label }}">
+          {{ form.redbox_response_preferences.label }}
         </label>
-        {{ form.grade }}
+        {{ form.redbox_response_preferences }}
       </div>
 
-      <div class="govuk-form-group">
-        <label class="govuk-label" for="{{ form.profession.id_for_label }}">
-          {{ form.profession.label }}
-        </label>
-        {{ form.profession }}
-      </div>
-    
       <div class="govuk-button-group">
         {{ govukButton(text="Update") }}
-        {{ govukButton(text="Skip", href=url('chats'), classes="govuk-button--secondary") }}
+        {# {{ govukButton(text="Skip", href=url('chats'), classes="govuk-button--secondary") }} #}
       </div>
     </form>
 
