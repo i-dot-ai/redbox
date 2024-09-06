@@ -252,7 +252,9 @@ class User(BaseUser, UUIDPrimaryKeyBase):
     ai_experience = models.CharField(null=True, blank=True, max_length=25, choices=AIExperienceLevel)
     profession = models.CharField(null=True, blank=True, max_length=4, choices=Profession)
     info_about_user = models.CharField(null=True, blank=True, help_text="user entered info from profile overlay")
-    redbox_response_preferences = models.CharField(null=True, blank=True, help_text="user entered info from profile overlay, to be used in custom prompt")
+    redbox_response_preferences = models.CharField(
+        null=True, blank=True, help_text="user entered info from profile overlay, to be used in custom prompt"
+    )
     ai_settings = models.ForeignKey(AISettings, on_delete=models.SET_DEFAULT, default="default", to_field="label")
     is_developer = models.BooleanField(null=True, blank=True, default=False, help_text="is this user a developer?")
     objects = BaseUserManager()
@@ -269,7 +271,7 @@ class User(BaseUser, UUIDPrimaryKeyBase):
         user_uuid = str(self.id)
         bearer_token = jwt.encode({"user_uuid": user_uuid}, key=settings.SECRET_KEY)
         return f"Bearer {bearer_token}"
-    
+
     def get_initials(self) -> str:
         try:
             if self.name:
@@ -281,8 +283,7 @@ class User(BaseUser, UUIDPrimaryKeyBase):
             else:
                 name_part = self.email.split("@")[0]
                 first_name, last_name = name_part.split(".")
-            initials = first_name[0].upper() + last_name[0].upper()
-            return initials
+            return first_name[0].upper() + last_name[0].upper()
         except (IndexError, AttributeError, ValueError):
             return ""
 

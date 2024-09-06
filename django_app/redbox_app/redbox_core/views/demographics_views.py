@@ -1,15 +1,13 @@
 import logging
-import json
+from http import HTTPStatus
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import HttpRequest, HttpResponse
-from django.shortcuts import redirect
 from django.utils.decorators import method_decorator
 from django.views import View
 from django.views.generic import UpdateView
-from http import HTTPStatus
 
 from redbox_app.redbox_core.forms import DemographicsForm
 
