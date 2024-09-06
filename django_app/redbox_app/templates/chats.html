@@ -6,7 +6,9 @@
 
 {% block content %}
 
-{{ profile_overlay(csrf_token, True) }}
+{% if not request.user.name %}
+  {{ profile_overlay(csrf_token, request.user, True) }}
+{% endif %}
 
 <div class="govuk-width-container">
 

@@ -44,6 +44,7 @@ class UpdateDemographicsView(View):
         user: User = request.user
         data = json.loads(request.body.decode("utf-8"))
 
+        print(data)
         user.name = data["name"]
         user.ai_experience = data["ai_experience"]
         user.info_about_user = data["info_about_user"]
