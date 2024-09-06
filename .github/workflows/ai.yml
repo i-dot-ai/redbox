@@ -51,7 +51,6 @@ jobs:
 
     - name: Run DeepEval Unit Tests
       run: |
-        cp .env core-api/.env
         poetry install
         poetry run deepeval test run tests/test_ai.py --mark ai
 
