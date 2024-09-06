@@ -34,7 +34,7 @@ logger = logging.getLogger(__name__)
 logger.info("WEBSOCKET_SCHEME is: %s", settings.WEBSOCKET_SCHEME)
 
 
-def parse_page_number(obj: int | list[int] | None):
+def parse_page_number(obj: int | list[int] | None) -> list[int]:
     if isinstance(obj, int):
         return [obj]
     if isinstance(obj, list) and all(isinstance(item, int) for item in obj):
@@ -42,7 +42,7 @@ def parse_page_number(obj: int | list[int] | None):
     if obj is None:
         return []
 
-    msg = "expected, int | list[int]| None got %s"
+    msg = "expected, int | list[int] | None got %s"
     raise ValueError(msg, type(obj))
 
 

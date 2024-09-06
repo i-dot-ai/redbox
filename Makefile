@@ -142,17 +142,13 @@ docker_build: ## Build the docker container
 	@echo "Services to update: $(DOCKER_SERVICES)"
 	# Enabling Docker BuildKit for better build performance
 	export DOCKER_BUILDKIT=1
-	@for service in $(DOCKER_SERVICES); do \
-		if grep -A 2 "^\s*$$service:" docker-compose.yml | grep -q 'build:'; then \
-			echo "Building $$service..."; \
-			PREV_IMAGE="$(ECR_REPO_URL)-$$service:$(PREV_IMAGE_TAG)"; \
-			echo "Pulling previous image: $$PREV_IMAGE"; \
-			docker pull $$PREV_IMAGE; \
-			docker compose build $$service; \
-		else \
-			echo "Skipping $$service uses default image"; \
-		fi; \
-	done
+
+	echo "Building django-app..."; \
+	PREV_IMAGE="$(ECR_REPO_URL)-django-app:$(PREV_IMAGE_TAG)"; \
+	echo "Pulling previous image: $$PREV_IMAGE"; \
+	docker pull $$PREV_IMAGE; \
+	docker compose build django-app; \
+
 
 
 .PHONY: docker_push
