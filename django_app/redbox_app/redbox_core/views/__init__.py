@@ -1,3 +1,4 @@
+from redbox_app.redbox_core.dash_apps import report_app
 from redbox_app.redbox_core.views.auth_views import sign_in_link_sent_view, sign_in_view, signed_out_view
 from redbox_app.redbox_core.views.chat_views import ChatsTitleView, ChatsView
 from redbox_app.redbox_core.views.citation_views import CitationsView
@@ -32,4 +33,5 @@ __all__ = [
     "sign_in_view",
     "sign_in_link_sent_view",
     "signed_out_view",
+    "report_app",
 ]
