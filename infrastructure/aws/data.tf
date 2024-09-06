@@ -9,7 +9,6 @@ locals {
     "EMBEDDING_DOCUMENT_FIELD_NAME" : var.embedding_document_field_name,
     "AZURE_OPENAI_MODEL" : var.azure_openai_model,
 
-    "AWS_REGION" : var.region,
     "UNSTRUCTURED_HOST" : local.unstructured_host
     "Q_TIMEOUT": var.django_queue_timeout,
     "Q_RETRY": var.django_queue_retry,
@@ -41,7 +40,6 @@ locals {
     "OBJECT_STORE" : "s3",
     "ENVIRONMENT" : upper(terraform.workspace),
     "DEBUG" : terraform.workspace == "dev",
-    "AWS_REGION" : var.region,
     "worker_ingest_min_chunk_size" : var.worker_ingest_min_chunk_size,
     "worker_ingest_max_chunk_size" : var.worker_ingest_max_chunk_size,
     "UNSTRUCTURED_HOST" : local.unstructured_host,
