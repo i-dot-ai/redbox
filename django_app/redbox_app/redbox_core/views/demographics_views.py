@@ -18,16 +18,6 @@ User = get_user_model()
 logger = logging.getLogger(__name__)
 
 
-class CheckDemographicsView(View):
-    @method_decorator(login_required)
-    def get(self, request: HttpRequest) -> HttpResponse:
-        user: User = request.user
-        if all([user.name, user.ai_experience]):
-            return redirect("chats")
-        else:
-            return redirect("demographics")
-
-
 class DemographicsView(LoginRequiredMixin, UpdateView):
     model = User
     template_name = "demographics.html"
