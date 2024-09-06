@@ -10,13 +10,14 @@ import pytest
 from channels.db import database_sync_to_async
 from channels.testing import WebsocketCommunicator
 from django.db.models import Model
+from langchain_core.documents import Document
 from langchain_core.language_models import BaseChatModel
 from pydantic import BaseModel
 from websockets import WebSocketClientProtocol
 from websockets.legacy.client import Connect
 
 from redbox.graph.root import FINAL_RESPONSE_TAG, ROUTE_NAME_TAG, SOURCE_DOCUMENTS_TAG
-from redbox.models.chat import MetadataDetail, SourceDocument
+from redbox.models.chat import MetadataDetail
 from redbox_app.redbox_core import error_messages
 from redbox_app.redbox_core.consumers import ChatConsumer
 from redbox_app.redbox_core.models import Chat, ChatMessage, ChatMessageTokenUse, ChatRoleEnum, File, User
@@ -486,7 +487,9 @@ def mocked_connect(uploaded_file: File) -> Connect:
             "event": "on_retriever_end",
             "tags": [SOURCE_DOCUMENTS_TAG],
             "data": {
-                "output": [SourceDocument(s3_key=uploaded_file.unique_name, page_content="Good afternoon Mr Amor")]
+                "output": [
+                    Document(metadata={"file_name": uploaded_file.unique_name}, page_content="Good afternoon Mr Amor")
+                ]
             },
         },
         {
@@ -494,9 +497,10 @@ def mocked_connect(uploaded_file: File) -> Connect:
             "tags": [SOURCE_DOCUMENTS_TAG],
             "data": {
                 "output": [
-                    SourceDocument(s3_key=uploaded_file.unique_name, page_content="Good afternoon Mr Amor"),
-                    SourceDocument(
-                        s3_key=uploaded_file.unique_name, page_content="Good afternoon Mr Amor", page_numbers=[34, 35]
+                    Document(metadata={"file_name": uploaded_file.unique_name}, page_content="Good afternoon Mr Amor"),
+                    Document(
+                        metadata={"file_name": uploaded_file.unique_name, "page_number": [34, 35]},
+                        page_content="Good afternoon Mr Amor",
                     ),
                 ]
             },
@@ -525,8 +529,8 @@ def mocked_connect_with_naughty_citation(uploaded_file: File) -> CannedGraphLLM:
             "tags": [SOURCE_DOCUMENTS_TAG],
             "data": {
                 "output": [
-                    SourceDocument(s3_key=uploaded_file.unique_name, page_content="Good afternoon Mr Amor"),
-                    SourceDocument(s3_key=uploaded_file.unique_name, page_content="I shouldn't send a \x00"),
+                    Document(metadata={"file_name": uploaded_file.unique_name}, page_content="Good afternoon Mr Amor"),
+                    Document(metadata={"file_name": uploaded_file.unique_name}, page_content="I shouldn't send a \x00"),
                 ]
             },
         },

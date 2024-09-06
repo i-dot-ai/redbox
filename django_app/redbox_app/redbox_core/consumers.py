@@ -10,13 +10,14 @@ from channels.generic.websocket import AsyncWebsocketConsumer
 from django.conf import settings
 from django.forms.models import model_to_dict
 from django.utils import timezone
+from langchain_core.documents import Document
 from openai import RateLimitError
 from websockets import ConnectionClosedError, WebSocketClientProtocol
 
 from redbox import Redbox
 from redbox.models import Settings
 from redbox.models.chain import ChainChatMessage, RedboxQuery, RedboxState
-from redbox.models.chat import MetadataDetail, SourceDocument
+from redbox.models.chat import MetadataDetail
 from redbox_app.redbox_core import error_messages
 from redbox_app.redbox_core.models import (
     Chat,
@@ -70,14 +71,12 @@ class ChatConsumer(AsyncWebsocketConsumer):
         await self.send_to_client("session-id", session.id)
 
         session_messages = ChatMessage.objects.filter(chat=session).order_by("created_at")
-        message_history: Sequence[Mapping[str, str]] = [
-            {"role": message.role, "text": message.text} async for message in session_messages
-        ]
+        message_history: Sequence[Mapping[str, str]] = [message async for message in session_messages]
 
         ai_settings = await self.get_ai_settings(user)
         state = RedboxState(
             request=RedboxQuery(
-                question=message_history[-1]["text"],
+                question=message_history[-1].text,
                 s3_keys=[f.unique_name for f in selected_files],
                 user_uuid=user.id,
                 chat_history=[
@@ -129,7 +128,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         session: Chat,
         user_message_text: str,
         role: ChatRoleEnum,
-        sources: Sequence[tuple[File, SourceDocument]] | None = None,
+        sources: Sequence[tuple[File, Document]] | None = None,
         selected_files: Sequence[File] | None = None,
         metadata: MetadataDetail | None = None,
         route: str | None = None,
@@ -146,7 +145,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
                         chat_message=chat_message,
                         file=file,
                         text=citation.page_content,
-                        page_numbers=citation.page_numbers,
+                        page_numbers=citation.metadata.get("page_number"),
                     )
         if selected_files:
             chat_message.selected_files.set(selected_files)
@@ -189,11 +188,11 @@ class ChatConsumer(AsyncWebsocketConsumer):
         for model, token_count in metadata_detail.output_tokens.items():
             self.metadata.output_tokens[model] = self.metadata.output_tokens.get(model, 0) + token_count
 
-    async def handle_documents(self, response: list[dict]):
-        s3_keys = [SourceDocument.parse_obj(doc).s3_key for doc in response]
+    async def handle_documents(self, response: list[Document]):
+        s3_keys = [doc.metadata["file_name"] for doc in response]
         files = File.objects.filter(original_file__in=s3_keys)
 
         async for file in files:
             await self.send_to_client("source", {"url": str(file.url), "original_file_name": file.original_file_name})
         for file in files:
-            self.citations.append((file, [doc for doc in response if doc.s3_key == file.unique_name]))
+            self.citations.append((file, [doc for doc in response if doc.metadata["file_name"] == file.unique_name]))
