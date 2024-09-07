@@ -240,3 +240,56 @@ def test_0032_user_new_business_unit(migrator):
     NewUser = new_state.apps.get_model("redbox_core", "User")  # noqa: N806
     user = NewUser.objects.get(pk=user.pk)
     assert user.business_unit == "Prime Minister's Office"
+
+
+@pytest.mark.django_db()
+def test_0042_chat_chat_backend_chat_chat_map_question_prompt_and_more(migrator):
+    old_state = migrator.apply_initial_migration(("redbox_core", "0041_alter_aisettings_chat_backend"))
+
+    User = old_state.apps.get_model("redbox_core", "User")
+    user = User.objects.create(email="someone@example.com")
+
+    Chat = old_state.apps.get_model("redbox_core", "Chat")
+    chat = Chat.objects.create(name="my chat", user=user)
+
+    ai_settings_fields = [
+        "max_document_tokens",
+        "context_window_size",
+        "llm_max_tokens",
+        "rag_k",
+        "rag_num_candidates",
+        "rag_desired_chunk_size",
+        "elbow_filter_enabled",
+        "chat_system_prompt",
+        "chat_question_prompt",
+        "stuff_chunk_context_ratio",
+        "chat_with_docs_system_prompt",
+        "chat_with_docs_question_prompt",
+        "chat_with_docs_reduce_system_prompt",
+        "retrieval_system_prompt",
+        "retrieval_question_prompt",
+        "condense_system_prompt",
+        "condense_question_prompt",
+        "map_max_concurrency",
+        "chat_map_system_prompt",
+        "chat_map_question_prompt",
+        "reduce_system_prompt",
+        "match_boost",
+        "knn_boost",
+        "similarity_threshold",
+        "chat_backend",
+    ]
+
+    for field in ai_settings_fields:
+        assert not hasattr(chat, field)
+
+    new_state = migrator.apply_tested_migration(
+        ("redbox_core", "0042_chat_chat_backend_chat_chat_map_question_prompt_and_more"),
+    )
+
+    new_chat_model = new_state.apps.get_model("redbox_core", "Chat")
+    new_chat = new_chat_model.objects.get(id=chat.id)
+
+    for field in ai_settings_fields:
+        assert getattr(new_chat, field) == getattr(chat.user.ai_settings, field)
+        assert getattr(new_chat, field) is not None
