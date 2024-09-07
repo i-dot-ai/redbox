@@ -182,8 +182,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
     @staticmethod
     @database_sync_to_async
-    def get_ai_settings(user: User) -> dict:
-        return model_to_dict(user.ai_settings, exclude=["label"])
+    def get_ai_settings(chat: Chat) -> dict:
+        return model_to_dict(chat, exclude=["name", "user"])
 
     async def handle_text(self, response: str) -> str:
         await self.send_to_client("text", response)
