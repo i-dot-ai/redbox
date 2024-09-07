@@ -65,12 +65,6 @@
           </fieldset>
         </document-selector>
 
-        {# Temporary until this comes from the view data #}
-        {% set llm_options = [
-          {"name": "gpt-4o", "default": True, "selected": True},
-          {"name": "gpt-4-turbo-2024-04-09"},
-          {"name": "gpt-35-turbo-16k"}
-        ] %}
         <div class="iai-panel govuk-!-margin-top-5 govuk-!-padding-top-3">
           <label class="govuk-body-s govuk-!-font-weight-bold" for="llm-selector">Model</label>
           <select id="llm-selector" name="llm" class="govuk-select govuk-!-margin-top-1">

@@ -64,12 +64,18 @@ class ChatConsumer(AsyncWebsocketConsumer):
         logger.debug("received %s from browser", data)
         user_message_text: str = data.get("message", "")
         selected_file_uuids: Sequence[UUID] = [UUID(u) for u in data.get("selectedFiles", [])]
-        user: User = self.scope.get("user", None)
+        user: User = self.scope.get("user")
+        chat_backend = self.scope.get("llm")
 
         if session_id := data.get("sessionId"):
             session = await Chat.objects.aget(id=session_id)
+            if chat_backend and session.chat_backend != chat_backend:
+                session.chat_backend = chat_backend
+                await session.asave()
         else:
-            session = await Chat.objects.acreate(name=user_message_text[: settings.CHAT_TITLE_LENGTH], user=user)
+            session = await Chat.objects.acreate(
+                name=user_message_text[: settings.CHAT_TITLE_LENGTH], user=user, chat_backend=chat_backend
+            )
 
         # save user message
         selected_files = File.objects.filter(id__in=selected_file_uuids, user=user)
