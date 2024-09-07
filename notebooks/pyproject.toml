@@ -17,6 +17,9 @@ redbox = {path="../redbox-core", develop=true}
 core_api = {path="../core-api", develop=true}
 redbox_app = {path="../django_app", develop=true}
 backoff = "^2.2.1"
+pymediainfo = "^6.1.0"
+charset-normalizer = "^3.3.2"
+textract = "^1.6.5"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.2.2"
