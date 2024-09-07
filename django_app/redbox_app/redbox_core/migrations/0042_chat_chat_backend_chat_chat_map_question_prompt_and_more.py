@@ -2,35 +2,41 @@
 
 from django.db import migrations, models
 
+ai_settings_fields = [
+    "max_document_tokens",
+    "context_window_size",
+    "llm_max_tokens",
+    "rag_k",
+    "rag_num_candidates",
+    "rag_desired_chunk_size",
+    "elbow_filter_enabled",
+    "chat_system_prompt",
+    "chat_question_prompt",
+    "stuff_chunk_context_ratio",
+    "chat_with_docs_system_prompt",
+    "chat_with_docs_question_prompt",
+    "chat_with_docs_reduce_system_prompt",
+    "retrieval_system_prompt",
+    "retrieval_question_prompt",
+    "condense_system_prompt",
+    "condense_question_prompt",
+    "map_max_concurrency",
+    "chat_map_system_prompt",
+    "chat_map_question_prompt",
+    "reduce_system_prompt",
+    "match_boost",
+    "knn_boost",
+    "similarity_threshold",
+    "chat_backend",
+]
+
 
 def back_populate_ai_settings_on_chat(apps, schema_editor):
     Chat = apps.get_model("redbox_core", "Chat")
     for chat in Chat.objects.all():
-        chat.max_document_tokens = chat.user.ai_settings.max_document_tokens
-        chat.context_window_size = chat.user.ai_settings.context_window_size
-        chat.llm_max_tokens = chat.user.ai_settings.llm_max_tokens
-        chat.rag_k = chat.user.ai_settings.rag_k
-        chat.rag_num_candidates = chat.user.ai_settings.rag_num_candidates
-        chat.rag_desired_chunk_size = chat.user.ai_settings.rag_desired_chunk_size
-        chat.elbow_filter_enabled = chat.user.ai_settings.elbow_filter_enabled
-        chat.chat_system_prompt = chat.user.ai_settings.chat_system_prompt
-        chat.chat_question_prompt = chat.user.ai_settings.chat_question_prompt
-        chat.stuff_chunk_context_ratio = chat.user.ai_settings.stuff_chunk_context_ratio
-        chat.chat_with_docs_system_prompt = chat.user.ai_settings.chat_with_docs_system_prompt
-        chat.chat_with_docs_question_prompt = chat.user.ai_settings.chat_with_docs_question_prompt
-        chat.chat_with_docs_reduce_system_prompt = chat.user.ai_settings.chat_with_docs_reduce_system_prompt
-        chat.retrieval_system_prompt = chat.user.ai_settings.retrieval_system_prompt
-        chat.retrieval_question_prompt = chat.user.ai_settings.retrieval_question_prompt
-        chat.condense_system_prompt = chat.user.ai_settings.condense_system_prompt
-        chat.condense_question_prompt = chat.user.ai_settings.condense_question_prompt
-        chat.map_max_concurrency = chat.user.ai_settings.map_max_concurrency
-        chat.chat_map_system_prompt = chat.user.ai_settings.chat_map_system_prompt
-        chat.chat_map_question_prompt = chat.user.ai_settings.chat_map_question_prompt
-        chat.reduce_system_prompt = chat.user.ai_settings.reduce_system_prompt
-        chat.match_boost = chat.user.ai_settings.match_boost
-        chat.knn_boost = chat.user.ai_settings.knn_boost
-        chat.similarity_threshold = chat.user.ai_settings.similarity_threshold
-        chat.chat_backend = chat.user.ai_settings.chat_backend
+        for field in ai_settings_fields:
+            value = getattr(chat.user.ai_settings, field)
+            setattr(chat, field, value)
         chat.save()
 
 
