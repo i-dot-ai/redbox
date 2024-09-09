@@ -143,7 +143,7 @@ class ChatAdmin(ExportMixin, admin.ModelAdmin):
         return response
 
     export_as_csv.short_description = "Export Selected"
-    fields = ["name", "user"]
+    fields = ["name", "user", "chat_backend"]
     inlines = [ChatMessageInline]
     list_display = ["name", "user", "created_at"]
     list_filter = ["user"]

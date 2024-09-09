@@ -420,7 +420,14 @@ class Chat(UUIDPrimaryKeyBase, TimeStampedModel, AbstractAISettings):
     @override
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
         self.name = sanitise_string(self.name)
-        self.chat_backend = self.user.ai_settings.chat_backend
+
+        logger.info(
+            "saving chat with: chat_backend=%s, ai_settings=%s",
+            self.chat_backend,
+            self.user.ai_settings.chat_backend,
+        )
+        if self.chat_backend is None:
+            self.chat_backend = self.user.ai_settings.chat_backend
         super().save(force_insert, force_update, using, update_fields)
 
     @classmethod
