@@ -1,5 +1,6 @@
 import logging
 import re
+import json
 from typing import Any, Callable
 from uuid import uuid4
 from functools import reduce
@@ -207,3 +208,17 @@ def clear_documents_process(state: RedboxState) -> dict[str, Any]:
 
 def empty_process(state: RedboxState) -> None:
     return None
+
+
+def build_log_node(message: str):
+    def _log_node(state: RedboxState):
+        log.info(json.dumps({
+            "user_uuid": str(state["request"].user_uuid),
+            "document_metadata": {group_id:{doc_id: d.metadata for doc_id,d in group_documents.items()} 
+                                  for group_id, group_documents in state["documents"]},
+            "text": state["text"] if len(state["text"]) < 32 else f"{state['text'][:29]}...",
+            "route": state["route_name"],
+            "message": message
+        }))
+        return None
+    return _log_node

@@ -174,41 +174,6 @@ TEST_CASES = [
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(("test"), TEST_CASES, ids=[t.test_id for t in TEST_CASES])
-async def test_chat(test: RedboxChatTestCase, env: Settings, mocker: MockerFixture):
-    # Current setup modifies test data as it's not a fixture. This is a hack
-    test_case = copy.deepcopy(test)
-
-    app = Redbox(
-        all_chunks_retriever=mock_all_chunks_retriever(test_case.docs),
-        parameterised_retriever=mock_parameterised_retriever(test_case.docs),
-        metadata_retriever=mock_metadata_retriever(test_case.docs),
-        env=env,
-        debug=LANGGRAPH_DEBUG,
-    )
-
-    llm = GenericFakeChatModel(messages=iter(test_case.test_data.expected_llm_response))
-
-    with (
-        mocker.patch("redbox.graph.nodes.processes.get_chat_llm", return_value=llm),
-    ):
-        response = await app.run(input=RedboxState(request=test_case.query))
-
-    final_state = RedboxState(response)
-
-    assert (
-        final_state["text"] == test_case.test_data.expected_llm_response[-1]
-    ), f"Expected LLM response: '{test_case.test_data.expected_llm_response[-1]}'. Received '{final_state["text"]}'"
-    assert (
-        final_state.get("route_name") == test_case.test_data.expected_route
-    ), f"Expected Route: '{ test_case.test_data.expected_route}'. Received '{final_state["route_name"]}'"
-    if metadata := final_state.get("metadata"):
-        assert sum(metadata.input_tokens.values())
-        assert sum(metadata.output_tokens.values())
-
-
-
-@pytest.mark.asyncio
-@pytest.mark.parametrize(("test"), TEST_CASES, ids=[t.test_id for t in TEST_CASES])
 async def test_streaming(test: RedboxChatTestCase, env: Settings, mocker: MockerFixture):
     # Current setup modifies test data as it's not a fixture. This is a hack
     test_case = copy.deepcopy(test)

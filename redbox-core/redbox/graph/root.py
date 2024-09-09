@@ -12,6 +12,7 @@ from redbox.graph.edges import (
 from redbox.graph.nodes.processes import (
     PromptSet,
     build_error_pattern,
+    build_log_node,
     build_merge_pattern,
     build_set_metadata_pattern,
 )
@@ -55,13 +56,15 @@ def get_self_route_graph(
     builder.add_node("p_retrieve_docs", build_retrieve_pattern(retriever=retriever, final_source_chain=False))
     builder.add_node("p_stuff_docs", build_stuff_pattern(prompt_set=prompt_set, final_response_chain=False))
     builder.add_node("p_set_route_name_from_answer", set_self_route_from_llm_answer)
+    builder.add_node("p_clear_documents", clear_documents_process)
 
     # Edges
     builder.add_edge(START, "p_condense_question")
     builder.add_edge("p_condense_question", "p_retrieve_docs")
     builder.add_edge("p_retrieve_docs", "p_stuff_docs")
     builder.add_edge("p_stuff_docs", "p_set_route_name_from_answer")
-    builder.add_edge("p_set_route_name_from_answer", END)
+    builder.add_edge("p_set_route_name_from_answer", "p_clear_documents")
+    builder.add_edge("p_clear_documents", END)
 
     return builder.compile(debug=debug)
 
@@ -144,6 +147,9 @@ def get_chat_with_documents_graph(
     builder.add_node("p_search", get_search_graph(parameterised_retriever, PromptSet.Search))
     builder.add_node("p_retrieve_all_chunks", build_retrieve_pattern(retriever=all_chunks_retriever, final_source_chain=True))
 
+    # Log Processes
+    builder.add_node("p_log_self_route_search", build_log_node("Selected search from self route"))
+    builder.add_node("p_log_self_route_chat", build_log_node("Selected chat from self route"))
 
     # Decisions
     builder.add_node("d_request_handler_from_total_tokens", empty_process)
@@ -169,9 +175,11 @@ def get_chat_with_documents_graph(
         },
     )
     builder.add_conditional_edges("p_self_route", lambda state: state.get("route_name"), {
-        ChatRoute.search.value: "p_search",
-        ChatRoute.chat_with_docs_map_reduce.value: "p_set_chat_docs_large_route"
+        ChatRoute.search.value: "p_log_self_route_search",
+        ChatRoute.chat_with_docs_map_reduce.value: "p_log_self_route_chat"
     })
+    builder.add_edge("p_log_self_route_search", "p_search")
+    builder.add_edge("p_log_self_route_chat", "p_set_chat_docs_large_route")
     builder.add_edge("p_set_chat_docs_route", "p_summarise")
     builder.add_edge("p_set_chat_docs_large_route", "p_retrieve_all_chunks")
     builder.add_edge("p_retrieve_all_chunks", "s_chunk")
@@ -217,6 +225,7 @@ def get_chat_with_documents_graph(
     builder.add_edge("p_summarise", "p_clear_documents")
     builder.add_edge("p_clear_documents", END)
     builder.add_edge("p_too_large_error", END)
+    builder.add_edge("p_search", END)
 
     return builder.compile(debug=debug)
 
@@ -229,11 +238,12 @@ def get_retrieve_metadata_graph(
 
     builder.add_node("p_retrieve_metadata", build_retrieve_pattern(retriever=metadata_retriever))
     builder.add_node("p_set_metadata", build_set_metadata_pattern())
-    builder.add_node("p_clear_documents", clear_documents_process)
+    builder.add_node("p_clear_metadata_documents", clear_documents_process)
 
     builder.add_edge(START, "p_retrieve_metadata")
     builder.add_edge("p_retrieve_metadata", "p_set_metadata")
-    builder.add_edge("p_set_metadata", "p_clear_documents")
+    builder.add_edge("p_set_metadata", "p_clear_metadata_documents")
+    builder.add_edge("p_clear_metadata_documents", END)
 
     return builder.compile(debug=debug)
 

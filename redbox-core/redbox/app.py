@@ -25,6 +25,7 @@ class Redbox:
         metadata_retriever: VectorStoreRetriever | None = None,
         env: Settings | None = None,
         debug: bool = False,
+        interrupt_after: list[str] = []
     ):
         _env = env or Settings()
         _all_chunks_retriever = all_chunks_retriever or get_all_chunks_retriever(_env)
