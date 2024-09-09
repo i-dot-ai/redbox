@@ -20,6 +20,7 @@ backoff = "^2.2.1"
 pymediainfo = "^6.1.0"
 charset-normalizer = "^3.3.2"
 textract = "^1.6.5"
+langgraph-checkpoint-postgres = "^1.0.6"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.2.2"

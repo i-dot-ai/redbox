@@ -3230,6 +3230,23 @@ files = [
 langchain-core = ">=0.2.22,<0.3"
 
 [[package]]
+name = "langgraph-checkpoint-postgres"
+version = "1.0.6"
+description = "Library with a Postgres implementation of LangGraph checkpoint saver."
+optional = false
+python-versions = "<4.0.0,>=3.9.0"
+files = [
+    {file = "langgraph_checkpoint_postgres-1.0.6-py3-none-any.whl", hash = "sha256:1f47fa82b312356254b574385c1351cdd9d6c1a42959d292d08725a3437c1cb0"},
+    {file = "langgraph_checkpoint_postgres-1.0.6.tar.gz", hash = "sha256:64c5ca6b2a92bd61743d60c13533ea89107ff8d7a3622fd5eac24d2c58497a46"},
+]
+
+[package.dependencies]
+langgraph-checkpoint = ">=1.0.8,<2.0.0"
+orjson = ">=3.10.1"
+psycopg = ">=3.0.0,<4.0.0"
+psycopg-pool = ">=3.0.0,<4.0.0"
+
+[[package]]
 name = "langsmith"
 version = "0.1.114"
 description = "Client library to connect to the LangSmith LLM Tracing and Evaluation Platform."
@@ -4457,6 +4474,43 @@ files = [
 
 [package.extras]
 test = ["enum34", "ipaddress", "mock", "pywin32", "wmi"]
+
+[[package]]
+name = "psycopg"
+version = "3.2.1"
+description = "PostgreSQL database adapter for Python"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "psycopg-3.2.1-py3-none-any.whl", hash = "sha256:ece385fb413a37db332f97c49208b36cf030ff02b199d7635ed2fbd378724175"},
+    {file = "psycopg-3.2.1.tar.gz", hash = "sha256:dc8da6dc8729dacacda3cc2f17d2c9397a70a66cf0d2b69c91065d60d5f00cb7"},
+]
+
+[package.dependencies]
+typing-extensions = ">=4.4"
+tzdata = {version = "*", markers = "sys_platform == \"win32\""}
+
+[package.extras]
+binary = ["psycopg-binary (==3.2.1)"]
+c = ["psycopg-c (==3.2.1)"]
+dev = ["ast-comments (>=1.1.2)", "black (>=24.1.0)", "codespell (>=2.2)", "dnspython (>=2.1)", "flake8 (>=4.0)", "mypy (>=1.6)", "types-setuptools (>=57.4)", "wheel (>=0.37)"]
+docs = ["Sphinx (>=5.0)", "furo (==2022.6.21)", "sphinx-autobuild (>=2021.3.14)", "sphinx-autodoc-typehints (>=1.12)"]
+pool = ["psycopg-pool"]
+test = ["anyio (>=4.0)", "mypy (>=1.6)", "pproxy (>=2.7)", "pytest (>=6.2.5)", "pytest-cov (>=3.0)", "pytest-randomly (>=3.5)"]
+
+[[package]]
+name = "psycopg-pool"
+version = "3.2.2"
+description = "Connection Pool for Psycopg"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "psycopg_pool-3.2.2-py3-none-any.whl", hash = "sha256:273081d0fbfaced4f35e69200c89cb8fbddfe277c38cc86c235b90a2ec2c8153"},
+    {file = "psycopg_pool-3.2.2.tar.gz", hash = "sha256:9e22c370045f6d7f2666a5ad1b0caf345f9f1912195b0b25d0d3bcc4f3a7389c"},
+]
+
+[package.dependencies]
+typing-extensions = ">=4.4"
 
 [[package]]
 name = "psycopg2-binary"
@@ -7190,4 +7244,4 @@ testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.12,<3.13"
-content-hash = "aee7d42b696c6baee5c012fdc64511742987ef325b3f9b09f465970250499c3c"
+content-hash = "cf26df64dce4ad4972d9b58e6a2895de9bd7a25bc4de15800611d2c86b11f4c9"
