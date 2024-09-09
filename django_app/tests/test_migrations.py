@@ -240,3 +240,26 @@ def test_0032_user_new_business_unit(migrator):
     NewUser = new_state.apps.get_model("redbox_core", "User")  # noqa: N806
     user = NewUser.objects.get(pk=user.pk)
     assert user.business_unit == "Prime Minister's Office"
+
+
+@pytest.mark.django_db()
+def test_0042_chat_chat_backend_chat_chat_map_question_prompt_and_more(migrator):
+    old_state = migrator.apply_initial_migration(("redbox_core", "0041_alter_aisettings_chat_backend"))
+
+    User = old_state.apps.get_model("redbox_core", "User")
+    user = User.objects.create(email="someone@example.com")
+
+    Chat = old_state.apps.get_model("redbox_core", "Chat")
+    chat = Chat.objects.create(name="my chat", user=user)
+
+    assert not hasattr(chat, "chat_backend")
+
+    new_state = migrator.apply_tested_migration(
+        ("redbox_core", "0042_chat_chat_backend_chat_chat_map_question_prompt_and_more"),
+    )
+
+    new_chat_model = new_state.apps.get_model("redbox_core", "Chat")
+    new_chat = new_chat_model.objects.get(id=chat.id)
+
+    assert new_chat.chat_backend == chat.user.ai_settings.chat_backend
+    assert new_chat.chat_backend is not None

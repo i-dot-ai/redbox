@@ -52,7 +52,7 @@ def sanitise_string(string: str | None) -> str | None:
     return string.replace("\x00", "\ufffd") if string else string
 
 
-class AISettings(UUIDPrimaryKeyBase, TimeStampedModel):
+class AbstractAISettings(models.Model):
     class ChatBackend(models.TextChoices):
         GPT_35_TURBO = "gpt-35-turbo-16k", _("gpt-35-turbo-16k")
         GPT_4_TURBO = "gpt-4-turbo-2024-04-09", _("gpt-4-turbo-2024-04-09")
@@ -60,6 +60,16 @@ class AISettings(UUIDPrimaryKeyBase, TimeStampedModel):
         CLAUDE_3_SONNET = "anthropic.claude-3-sonnet-20240229-v1:0", _("claude-3-sonnet")
         CLAUDE_3_HAIKU = "anthropic.claude-3-haiku-20240307-v1:0", _("claude-3-haiku")
 
+    chat_backend = models.CharField(
+        max_length=64, choices=ChatBackend, help_text="LLM to use in chat", default=ChatBackend.GPT_4_OMNI
+    )
+    temperature = models.FloatField(default=0, help_text="temperature for LLM")
+
+    class Meta:
+        abstract = True
+
+
+class AISettings(UUIDPrimaryKeyBase, TimeStampedModel, AbstractAISettings):
     label = models.CharField(max_length=50, unique=True)
     max_document_tokens = models.PositiveIntegerField(default=1_000_000, null=True, blank=True)
     context_window_size = models.PositiveIntegerField(default=128_000)
@@ -85,9 +95,6 @@ class AISettings(UUIDPrimaryKeyBase, TimeStampedModel):
     match_boost = models.PositiveIntegerField(default=1)
     knn_boost = models.PositiveIntegerField(default=1)
     similarity_threshold = models.PositiveIntegerField(default=0)
-    chat_backend = models.CharField(
-        max_length=64, choices=ChatBackend, help_text="LLM to use in chat", default=ChatBackend.GPT_4_OMNI
-    )
 
     def __str__(self) -> str:
         return str(self.label)
@@ -404,7 +411,7 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
         )
 
 
-class Chat(UUIDPrimaryKeyBase, TimeStampedModel):
+class Chat(UUIDPrimaryKeyBase, TimeStampedModel, AbstractAISettings):
     name = models.TextField(max_length=1024, null=False, blank=False)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
 
@@ -414,6 +421,13 @@ class Chat(UUIDPrimaryKeyBase, TimeStampedModel):
     @override
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
         self.name = sanitise_string(self.name)
+
+        if self.chat_backend is None:
+            self.chat_backend = self.user.ai_settings.chat_backend
+
+        if self.temperature is None:
+            self.temperature = self.user.ai_settings.temperature
+
         super().save(force_insert, force_update, using, update_fields)
 
     @classmethod

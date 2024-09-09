@@ -64,12 +64,20 @@ class ChatConsumer(AsyncWebsocketConsumer):
         logger.debug("received %s from browser", data)
         user_message_text: str = data.get("message", "")
         selected_file_uuids: Sequence[UUID] = [UUID(u) for u in data.get("selectedFiles", [])]
-        user: User = self.scope.get("user", None)
+        user: User = self.scope.get("user")
+        chat_backend = data.get("llm")
+        temperature = data.get("temperature")
 
         if session_id := data.get("sessionId"):
             session = await Chat.objects.aget(id=session_id)
+            logger.info("updating: chat_backend=%s -> ai_settings=%s", session.chat_backend, chat_backend)
+            session.chat_backend = chat_backend
+            session.temperature = temperature
+            await session.asave()
         else:
-            session = await Chat.objects.acreate(name=user_message_text[: settings.CHAT_TITLE_LENGTH], user=user)
+            session = await Chat.objects.acreate(
+                name=user_message_text[: settings.CHAT_TITLE_LENGTH], user=user, chat_backend=chat_backend
+            )
 
         # save user message
         selected_files = File.objects.filter(id__in=selected_file_uuids, user=user)
@@ -85,7 +93,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         session_messages = ChatMessage.objects.filter(chat=session).order_by("created_at")
         message_history: Sequence[Mapping[str, str]] = [message async for message in session_messages]
 
-        ai_settings = await self.get_ai_settings(user)
+        ai_settings = await self.get_ai_settings(session)
         state = RedboxState(
             request=RedboxQuery(
                 question=message_history[-1].text,
@@ -182,8 +190,10 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
     @staticmethod
     @database_sync_to_async
-    def get_ai_settings(user: User) -> dict:
-        return model_to_dict(user.ai_settings, exclude=["label"])
+    def get_ai_settings(chat: Chat) -> dict:
+        ai_settings = model_to_dict(chat.user.ai_settings, exclude=["label"])
+        ai_settings["chat_backend"] = chat.chat_backend
+        return ai_settings
 
     async def handle_text(self, response: str) -> str:
         await self.send_to_client("text", response)
