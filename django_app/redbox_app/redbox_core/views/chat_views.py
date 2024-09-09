@@ -40,7 +40,7 @@ class ChatsView(View):
         self.decorate_selected_files(completed_files, messages)
         chat_grouped_by_date_group = groupby(chat, attrgetter("date_group"))
 
-        chat_backend = current_chat.chat_backend if current_chat else None
+        chat_backend = current_chat.chat_backend if current_chat else AbstractAISettings.ChatBackend.GPT_4_OMNI.value
 
         context = {
             "chat_id": chat_id,
@@ -53,7 +53,11 @@ class ChatsView(View):
             "processing_files": processing_files,
             "chat_title_length": settings.CHAT_TITLE_LENGTH,
             "llm_options": [
-                {"name": llm, "default": llm == chat_backend, "selected": llm == chat_backend}
+                {
+                    "name": llm,
+                    "default": llm == AbstractAISettings.ChatBackend.GPT_4_OMNI.value,
+                    "selected": llm == chat_backend,
+                }
                 for _, llm in AbstractAISettings.ChatBackend.choices
             ],
         }
