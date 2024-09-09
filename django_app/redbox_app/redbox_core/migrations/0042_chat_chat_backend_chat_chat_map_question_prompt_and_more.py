@@ -8,7 +8,13 @@ def back_populate_ai_settings_on_chat(apps, schema_editor):
     Chat = apps.get_model("redbox_core", "Chat")
     for chat in Chat.objects.all():
         chat.chat_backend = chat.user.ai_settings.chat_backend
+        chat.temperature = 0
         chat.save()
+
+    AISettings = apps.get_model("redbox_core", "AISettings")
+    for ai_settings in AISettings.objects.all():
+        ai_settings.temperature = 0
+        ai_settings.save()
 
 
 class Migration(migrations.Migration):
@@ -23,6 +29,16 @@ class Migration(migrations.Migration):
             name='chat_backend',
             field=models.CharField(blank=True, choices=[('gpt-35-turbo-16k', 'gpt-35-turbo-16k'), ('gpt-4-turbo-2024-04-09', 'gpt-4-turbo-2024-04-09'), ('gpt-4o', 'gpt-4o'), ('anthropic.claude-3-sonnet-20240229-v1:0', 'claude-3-sonnet'), ('anthropic.claude-3-haiku-20240307-v1:0', 'claude-3-haiku')], default='gpt-4o', help_text='LLM to use in chat', max_length=64, null=True),
         ),
+        migrations.AddField(
+            model_name='aisettings',
+            name='temperature',
+            field=models.FloatField(blank=True, default=0, help_text='temperature for LLM', null=True),
+        ),
+        migrations.AddField(
+            model_name='chat',
+            name='temperature',
+            field=models.FloatField(blank=True, default=0, help_text='temperature for LLM', null=True),
+        ),
         migrations.RunPython(back_populate_ai_settings_on_chat, migrations.RunPython.noop),
         migrations.AlterField(
             model_name='chat',
@@ -33,4 +49,15 @@ class Migration(migrations.Migration):
                          ('anthropic.claude-3-haiku-20240307-v1:0', 'claude-3-haiku')], default='gpt-4o',
                 help_text='LLM to use in chat', max_length=64),
         ),
+        migrations.AlterField(
+            model_name='aisettings',
+            name='temperature',
+            field=models.FloatField(default=0, help_text='temperature for LLM'),
+        ),
+        migrations.AlterField(
+            model_name='chat',
+            name='temperature',
+            field=models.FloatField(default=0, help_text='temperature for LLM'),
+        ),
+
     ]

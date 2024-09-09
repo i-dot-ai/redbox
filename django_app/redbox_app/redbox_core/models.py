@@ -63,6 +63,7 @@ class AbstractAISettings(models.Model):
     chat_backend = models.CharField(
         max_length=64, choices=ChatBackend, help_text="LLM to use in chat", default=ChatBackend.GPT_4_OMNI
     )
+    temperature = models.FloatField(default=0, help_text="temperature for LLM")
 
     class Meta:
         abstract = True
@@ -421,13 +422,12 @@ class Chat(UUIDPrimaryKeyBase, TimeStampedModel, AbstractAISettings):
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
         self.name = sanitise_string(self.name)
 
-        logger.info(
-            "saving chat with: chat_backend=%s, ai_settings=%s",
-            self.chat_backend,
-            self.user.ai_settings.chat_backend,
-        )
         if self.chat_backend is None:
             self.chat_backend = self.user.ai_settings.chat_backend
+
+        if self.temperature is None:
+            self.temperature = self.user.ai_settings.temperature
+
         super().save(force_insert, force_update, using, update_fields)
 
     @classmethod
