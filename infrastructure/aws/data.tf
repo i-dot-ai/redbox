@@ -71,8 +71,6 @@ locals {
     "EMBEDDING_OPENAI_API_KEY" : var.embedding_openai_api_key,
     "EMBEDDING_AZURE_OPENAI_ENDPOINT" : var.embedding_azure_openai_endpoint,
 
-    "LLM_MAX_TOKENS" : var.llm_max_tokens,
-
     "DJANGO_SECRET_KEY" : var.django_secret_key,
     "POSTGRES_PASSWORD" : module.rds.rds_instance_db_password,
     "POSTGRES_HOST" : module.rds.db_instance_address,
