@@ -16,7 +16,7 @@ from websockets import ConnectionClosedError, WebSocketClientProtocol
 
 from redbox import Redbox
 from redbox.models import Settings
-from redbox.models.chain import ChainChatMessage, RedboxQuery, RedboxState
+from redbox.models.chain import AISettings, ChainChatMessage, RedboxQuery, RedboxState
 from redbox.models.chat import MetadataDetail
 from redbox_app.redbox_core import error_messages
 from redbox_app.redbox_core.models import (
@@ -193,10 +193,10 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
     @staticmethod
     @database_sync_to_async
-    def get_ai_settings(chat: Chat) -> dict:
+    def get_ai_settings(chat: Chat) -> AISettings:
         ai_settings = model_to_dict(chat.user.ai_settings, exclude=["label"])
-        ai_settings["chat_backend"] = chat.chat_backend
-        return ai_settings
+        ai_settings["chat_backend"] = chat.chat_backend.value
+        return AISettings.parse_obj(ai_settings)
 
     async def handle_text(self, response: str) -> str:
         await self.send_to_client("text", response)
