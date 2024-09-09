@@ -428,7 +428,9 @@ async def test_chat_consumer_get_ai_settings(
         connected, _ = await communicator.connect()
         assert connected
 
-        ai_settings = await ChatConsumer.get_ai_settings(alice)
+        chat = Chat(name=" a chat", user=alice)
+
+        ai_settings = await ChatConsumer.get_ai_settings(chat)
 
         assert ai_settings["chat_map_question_prompt"] == CHAT_MAP_QUESTION_PROMPT
         with pytest.raises(KeyError):

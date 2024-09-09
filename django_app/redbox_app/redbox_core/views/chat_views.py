@@ -16,7 +16,7 @@ from django.utils.decorators import method_decorator
 from django.views import View
 from yarl import URL
 
-from redbox_app.redbox_core.models import Chat, ChatMessage, ChatRoleEnum, File
+from redbox_app.redbox_core.models import AbstractAISettings, Chat, ChatMessage, ChatRoleEnum, File
 
 logger = logging.getLogger(__name__)
 
@@ -40,6 +40,8 @@ class ChatsView(View):
         self.decorate_selected_files(completed_files, messages)
         chat_grouped_by_date_group = groupby(chat, attrgetter("date_group"))
 
+        chat_backend = current_chat.chat_backend if current_chat else None
+
         context = {
             "chat_id": chat_id,
             "messages": messages,
@@ -50,6 +52,10 @@ class ChatsView(View):
             "completed_files": completed_files,
             "processing_files": processing_files,
             "chat_title_length": settings.CHAT_TITLE_LENGTH,
+            "llm_options": [
+                {"name": llm, "default": llm == chat_backend, "selected": llm == chat_backend}
+                for _, llm in AbstractAISettings.ChatBackend.choices
+            ],
         }
 
         return render(
