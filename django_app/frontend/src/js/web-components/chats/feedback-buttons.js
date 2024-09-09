@@ -4,8 +4,8 @@ class FeedbackButtons extends HTMLElement {
   showFeedback(messageId) {
     let collectedData = {
       rating: 0,
-      text: "",
-      chips: /** @type {string[]}*/ ([]),
+      rating_text: "",
+      rating_chips: /** @type {string[]}*/ ([]),
     };
 
     const starIcon = `
@@ -182,11 +182,11 @@ class FeedbackButtons extends HTMLElement {
           if (chip.checked) {
             const text = this.querySelector(`[for="${chip.id}"]`)?.textContent;
             if (text) {
-              collectedData.chips.push(text);
+              collectedData.rating_chips.push(text);
             }
           }
         });
-        collectedData.text = textInput?.value || "";
+        collectedData.rating_text = textInput?.value || "";
         sendFeedback();
         showPanel(3);
       }
