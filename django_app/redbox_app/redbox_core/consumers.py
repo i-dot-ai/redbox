@@ -91,7 +91,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         session_messages = ChatMessage.objects.filter(chat=session).order_by("created_at")
         message_history: Sequence[Mapping[str, str]] = [message async for message in session_messages]
 
-        ai_settings = await self.get_ai_settings(user)
+        ai_settings = await self.get_ai_settings(session)
         state = RedboxState(
             request=RedboxQuery(
                 question=message_history[-1].text,
@@ -189,7 +189,9 @@ class ChatConsumer(AsyncWebsocketConsumer):
     @staticmethod
     @database_sync_to_async
     def get_ai_settings(chat: Chat) -> dict:
-        return model_to_dict(chat, exclude=["name", "user"])
+        ai_settings = model_to_dict(chat.user.ai_settings, exclude=["label"])
+        ai_settings["chat_backend"] = chat.chat_backend
+        return ai_settings
 
     async def handle_text(self, response: str) -> str:
         await self.send_to_client("text", response)

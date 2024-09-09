@@ -60,6 +60,16 @@ class AbstractAISettings(models.Model):
         CLAUDE_3_SONNET = "anthropic.claude-3-sonnet-20240229-v1:0", _("claude-3-sonnet")
         CLAUDE_3_HAIKU = "anthropic.claude-3-haiku-20240307-v1:0", _("claude-3-haiku")
 
+    chat_backend = models.CharField(
+        max_length=64, choices=ChatBackend, help_text="LLM to use in chat", default=ChatBackend.GPT_4_OMNI
+    )
+
+    class Meta:
+        abstract = True
+
+
+class AISettings(UUIDPrimaryKeyBase, TimeStampedModel, AbstractAISettings):
+    label = models.CharField(max_length=50, unique=True)
     max_document_tokens = models.PositiveIntegerField(default=1_000_000, null=True, blank=True)
     context_window_size = models.PositiveIntegerField(default=128_000)
     llm_max_tokens = models.PositiveIntegerField(default=1024)
@@ -84,16 +94,6 @@ class AbstractAISettings(models.Model):
     match_boost = models.PositiveIntegerField(default=1)
     knn_boost = models.PositiveIntegerField(default=1)
     similarity_threshold = models.PositiveIntegerField(default=0)
-    chat_backend = models.CharField(
-        max_length=64, choices=ChatBackend, help_text="LLM to use in chat", default=ChatBackend.GPT_4_OMNI
-    )
-
-    class Meta:
-        abstract = True
-
-
-class AISettings(UUIDPrimaryKeyBase, TimeStampedModel, AbstractAISettings):
-    label = models.CharField(max_length=50, unique=True)
 
     def __str__(self) -> str:
         return str(self.label)
@@ -420,10 +420,7 @@ class Chat(UUIDPrimaryKeyBase, TimeStampedModel, AbstractAISettings):
     @override
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
         self.name = sanitise_string(self.name)
-        for field in AbstractAISettings._meta.fields:  # noqa: SLF001
-            value = getattr(self.user.ai_settings, field.name)
-            setattr(self, field.name, value)
-
+        self.chat_backend = self.user.ai_settings.chat_backend
         super().save(force_insert, force_update, using, update_fields)
 
     @classmethod
