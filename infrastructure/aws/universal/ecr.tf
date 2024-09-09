@@ -1,7 +1,6 @@
 locals {
   repos = [
     "django-app",
-    "worker",
   ]
 }
 
