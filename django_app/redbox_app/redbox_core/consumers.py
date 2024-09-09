@@ -131,6 +131,9 @@ class ChatConsumer(AsyncWebsocketConsumer):
         except (TimeoutError, ConnectionClosedError, CancelledError) as e:
             logger.exception("Error from core.", exc_info=e)
             await self.send_to_client("error", error_messages.CORE_ERROR_MESSAGE)
+        except Exception as e:
+            logger.exception("General error.", exc_info=e)
+            await self.send_to_client("error", error_messages.CORE_ERROR_MESSAGE)
 
     async def send_to_client(self, message_type: str, data: str | Mapping[str, Any] | None = None) -> None:
         message = {"type": message_type, "data": data}
