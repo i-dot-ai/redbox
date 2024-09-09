@@ -66,11 +66,13 @@ class ChatConsumer(AsyncWebsocketConsumer):
         selected_file_uuids: Sequence[UUID] = [UUID(u) for u in data.get("selectedFiles", [])]
         user: User = self.scope.get("user")
         chat_backend = data.get("llm")
+        temperature = data.get("temperature")
 
         if session_id := data.get("sessionId"):
             session = await Chat.objects.aget(id=session_id)
             logger.info("updating: chat_backend=%s -> ai_settings=%s", session.chat_backend, chat_backend)
             session.chat_backend = chat_backend
+            session.temperature = temperature
             await session.asave()
         else:
             session = await Chat.objects.acreate(
