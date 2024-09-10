@@ -3,7 +3,6 @@ import logging
 from io import BytesIO
 from functools import partial
 
-from annotated_types import doc
 from langchain.vectorstores import VectorStore
 from langchain_core.documents.base import Document
 from langchain_core.runnables import RunnableLambda, chain, Runnable

@@ -47,9 +47,7 @@ def make_file_query(file_name: str, resolution: ChunkResolution | None = None) -
 
 
 @patch("redbox.loader.loaders.requests.post")
-def test_document_loader(
-    mock_post: MagicMock, s3_client: S3Client, env: Settings
-):
+def test_document_loader(mock_post: MagicMock, s3_client: S3Client, env: Settings):
     """
     Given that I have written a text File to s3
     When I call document_loader
@@ -75,7 +73,7 @@ def test_document_loader(
         chunk_resolution=ChunkResolution.normal,
         env=env,
         min_chunk_size=env.worker_ingest_min_chunk_size,
-        max_chunk_size=env.worker_ingest_max_chunk_size
+        max_chunk_size=env.worker_ingest_max_chunk_size,
     )
 
     # Upload file and and call
@@ -130,7 +128,7 @@ def test_ingest_from_loader(
         chunk_resolution=resolution,
         env=env,
         min_chunk_size=env.worker_ingest_min_chunk_size,
-        max_chunk_size=env.worker_ingest_max_chunk_size
+        max_chunk_size=env.worker_ingest_max_chunk_size,
     )
 
     # Mock embeddings
@@ -138,9 +136,7 @@ def test_ingest_from_loader(
 
     # Upload file and call
     file_name = file_to_s3(filename="html/example.html", s3_client=s3_client, env=env)
-    ingest_chain = ingest_from_loader(
-        loader=loader, s3_client=s3_client, vectorstore=es_vector_store, env=env
-    )
+    ingest_chain = ingest_from_loader(loader=loader, s3_client=s3_client, vectorstore=es_vector_store, env=env)
 
     _ = ingest_chain.invoke(file_name)
 
