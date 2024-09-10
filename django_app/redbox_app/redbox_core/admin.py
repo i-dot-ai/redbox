@@ -5,6 +5,7 @@ import logging
 from django.contrib import admin
 from django.db.models import QuerySet
 from django.http import HttpResponse
+from django.shortcuts import render
 from django_q.tasks import async_task
 from import_export.admin import ExportMixin, ImportExportMixin
 
@@ -142,12 +143,30 @@ class ChatAdmin(ExportMixin, admin.ModelAdmin):
         return response
 
     export_as_csv.short_description = "Export Selected"
-    fields = ["name", "user"]
+    fieldsets = [
+        (
+            None,
+            {
+                "fields": ["name", "user"],
+            },
+        ),
+        (
+            "AI Settings",
+            {
+                "classes": ["collapse"],
+                "fields": ["chat_backend", "temperature"],
+            },
+        ),
+    ]
     inlines = [ChatMessageInline]
     list_display = ["name", "user", "created_at"]
     list_filter = ["user"]
     date_hierarchy = "created_at"
     actions = ["export_as_csv"]
+
+
+def reporting_dashboard(request):
+    return render(request, "report.html", {}, using="django")
 
 
 admin.site.register(models.User, UserAdmin)
@@ -156,3 +175,4 @@ admin.site.register(models.Chat, ChatAdmin)
 admin.site.register(models.ChatMessage, ChatMessageAdmin)
 admin.site.register(models.AISettings)
 admin.site.register(models.ChatMessageTokenUse, ChatMessageTokenUseAdmin)
+admin.site.register_view("report/", view=reporting_dashboard, name="Site report")

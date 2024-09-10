@@ -16,7 +16,7 @@ from websockets import ConnectionClosedError, WebSocketClientProtocol
 
 from redbox import Redbox
 from redbox.models import Settings
-from redbox.models.chain import ChainChatMessage, RedboxQuery, RedboxState, RequestMetadata, metadata_reducer
+from redbox.models.chain import AISettings, ChainChatMessage, RedboxQuery, RedboxState, RequestMetadata, metadata_reducer
 from redbox_app.redbox_core import error_messages
 from redbox_app.redbox_core.models import (
     Chat,
@@ -62,12 +62,20 @@ class ChatConsumer(AsyncWebsocketConsumer):
         logger.debug("received %s from browser", data)
         user_message_text: str = data.get("message", "")
         selected_file_uuids: Sequence[UUID] = [UUID(u) for u in data.get("selectedFiles", [])]
-        user: User = self.scope.get("user", None)
+        user: User = self.scope.get("user")
+        chat_backend = data.get("llm")
+        temperature = data.get("temperature")
 
         if session_id := data.get("sessionId"):
             session = await Chat.objects.aget(id=session_id)
+            logger.info("updating: chat_backend=%s -> ai_settings=%s", session.chat_backend, chat_backend)
+            session.chat_backend = chat_backend
+            session.temperature = temperature
+            await session.asave()
         else:
-            session = await Chat.objects.acreate(name=user_message_text[: settings.CHAT_TITLE_LENGTH], user=user)
+            session = await Chat.objects.acreate(
+                name=user_message_text[: settings.CHAT_TITLE_LENGTH], user=user, chat_backend=chat_backend
+            )
 
         # save user message
         selected_files = File.objects.filter(id__in=selected_file_uuids, user=user)
@@ -83,7 +91,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         session_messages = ChatMessage.objects.filter(chat=session).order_by("created_at")
         message_history: Sequence[Mapping[str, str]] = [message async for message in session_messages]
 
-        ai_settings = await self.get_ai_settings(user)
+        ai_settings = await self.get_ai_settings(session)
         state = RedboxState(
             request=RedboxQuery(
                 question=message_history[-1].text,
@@ -120,6 +128,9 @@ class ChatConsumer(AsyncWebsocketConsumer):
             await self.send_to_client("error", error_messages.RATE_LIMITED)
         except (TimeoutError, ConnectionClosedError, CancelledError) as e:
             logger.exception("Error from core.", exc_info=e)
+            await self.send_to_client("error", error_messages.CORE_ERROR_MESSAGE)
+        except Exception as e:
+            logger.exception("General error.", exc_info=e)
             await self.send_to_client("error", error_messages.CORE_ERROR_MESSAGE)
 
     async def send_to_client(self, message_type: str, data: str | Mapping[str, Any] | None = None) -> None:
@@ -180,8 +191,19 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
     @staticmethod
     @database_sync_to_async
-    def get_ai_settings(user: User) -> dict:
-        return model_to_dict(user.ai_settings, exclude=["label"])
+    def get_ai_settings(chat: Chat) -> AISettings:
+        ai_settings = model_to_dict(chat.user.ai_settings, exclude=["label"])
+
+        match str(chat.chat_backend):
+            case "claude-3-sonnet":
+                chat_backend = "anthropic.claude-3-sonnet-20240229-v1:0"
+            case "claude-3-haiku":
+                chat_backend = "anthropic.claude-3-haiku-20240307-v1:0"
+            case _:
+                chat_backend = str(chat.chat_backend)
+
+        ai_settings["chat_backend"] = chat_backend
+        return AISettings.parse_obj(ai_settings)
 
     async def handle_text(self, response: str) -> str:
         await self.send_to_client("text", response)

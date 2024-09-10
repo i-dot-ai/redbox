@@ -14,9 +14,7 @@ from unittest.mock import MagicMock, patch
 from redbox.loader import ingester
 from redbox.loader.ingester import ingest_file
 from redbox.chains.ingest import document_loader, ingest_from_loader
-from redbox.loader.base import BaseRedboxFileLoader
-from redbox.loader.loaders import UnstructuredTitleLoader
-from redbox.loader.loaders import UnstructuredLargeChunkLoader
+from redbox.loader.loaders import UnstructuredChunkLoader
 from redbox.models.settings import Settings
 from redbox.retriever.queries import make_query_filter
 from redbox.models.file import ChunkResolution
@@ -49,12 +47,8 @@ def make_file_query(file_name: str, resolution: ChunkResolution | None = None) -
 
 
 @patch("redbox.loader.loaders.requests.post")
-@pytest.mark.parametrize(
-    "document_loader_type",
-    [UnstructuredTitleLoader, UnstructuredLargeChunkLoader],
-)
 def test_document_loader(
-    mock_post: MagicMock, document_loader_type: type[BaseRedboxFileLoader], s3_client: S3Client, env: Settings
+    mock_post: MagicMock, s3_client: S3Client, env: Settings
 ):
     """
     Given that I have written a text File to s3
@@ -77,10 +71,16 @@ def test_document_loader(
             },
         }
     ]
+    loader = UnstructuredChunkLoader(
+        chunk_resolution=ChunkResolution.normal,
+        env=env,
+        min_chunk_size=env.worker_ingest_min_chunk_size,
+        max_chunk_size=env.worker_ingest_max_chunk_size
+    )
 
     # Upload file and and call
     file = file_to_s3("html/example.html", s3_client, env)
-    loader = document_loader(document_loader_type, s3_client, env)
+    loader = document_loader(loader, s3_client, env)
     chunks = list(loader.invoke(file))
 
     assert len(chunks) > 0
@@ -88,15 +88,14 @@ def test_document_loader(
 
 @patch("redbox.loader.loaders.requests.post")
 @pytest.mark.parametrize(
-    "document_loader_type, resolution, has_embeddings",
+    "resolution, has_embeddings",
     [
-        (UnstructuredTitleLoader, ChunkResolution.normal, True),
-        (UnstructuredLargeChunkLoader, ChunkResolution.largest, False),
+        (ChunkResolution.normal, True),
+        (ChunkResolution.largest, False),
     ],
 )
 def test_ingest_from_loader(
     mock_post: MagicMock,
-    document_loader_type: type[BaseRedboxFileLoader],
     resolution: ChunkResolution,
     has_embeddings: bool,
     monkeypatch: MonkeyPatch,
@@ -127,13 +126,20 @@ def test_ingest_from_loader(
         }
     ]
 
+    loader = UnstructuredChunkLoader(
+        chunk_resolution=resolution,
+        env=env,
+        min_chunk_size=env.worker_ingest_min_chunk_size,
+        max_chunk_size=env.worker_ingest_max_chunk_size
+    )
+
     # Mock embeddings
     monkeypatch.setattr(ingester, "get_embeddings", lambda _: FakeEmbeddings(size=3072))
 
     # Upload file and call
     file_name = file_to_s3(filename="html/example.html", s3_client=s3_client, env=env)
     ingest_chain = ingest_from_loader(
-        document_loader_type=document_loader_type, s3_client=s3_client, vectorstore=es_vector_store, env=env
+        loader=loader, s3_client=s3_client, vectorstore=es_vector_store, env=env
     )
 
     _ = ingest_chain.invoke(file_name)
