@@ -75,7 +75,7 @@ def test_user_journey(page: Page, email_address: str):
     latest_chat_response = chats_page.wait_for_latest_message()
     assert latest_chat_response.text
     # Commented out until we make this visible
-    # assert chats_page.selected_llm == "gpt-4o"
+    assert chats_page.selected_llm == "gpt-4o"
 
     # Give user feedback
     chats_page.feedback_stars = 2
