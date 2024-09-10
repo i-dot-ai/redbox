@@ -34,23 +34,12 @@ from redbox_app.redbox_core.models import (
     Citation,
     File,
 )
+from redbox_app.redbox_core.utils import parse_page_number
 
 User = get_user_model()
 OptFileSeq = Sequence[File] | None
 logger = logging.getLogger(__name__)
 logger.info("WEBSOCKET_SCHEME is: %s", settings.WEBSOCKET_SCHEME)
-
-
-def parse_page_number(obj: int | list[int] | None) -> list[int]:
-    if isinstance(obj, int):
-        return [obj]
-    if isinstance(obj, list) and all(isinstance(item, int) for item in obj):
-        return obj
-    if obj is None:
-        return []
-
-    msg = "expected, int | list[int] | None got %s"
-    raise ValueError(msg, type(obj))
 
 
 def escape_curly_brackets(text: str):

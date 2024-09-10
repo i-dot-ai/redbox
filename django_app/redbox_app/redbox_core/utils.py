@@ -15,3 +15,15 @@ def get_date_group(on: date) -> str:
     if age > 0:
         return "Yesterday"
     return "Today"
+
+
+def parse_page_number(obj: int | list[int] | None) -> list[int]:
+    if isinstance(obj, int):
+        return [obj]
+    if isinstance(obj, list) and all(isinstance(item, int) for item in obj):
+        return obj
+    if obj is None:
+        return []
+
+    msg = "expected, int | list[int] | None got %s"
+    raise ValueError(msg, type(obj))

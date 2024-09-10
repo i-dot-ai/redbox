@@ -15,9 +15,11 @@ from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.views import View
 from django.views.decorators.csrf import csrf_protect
+from django_q.tasks import async_task
 from yarl import URL
 
 from redbox_app.redbox_core.models import AbstractAISettings, Chat, ChatMessage, ChatRoleEnum, File
+from redbox_app.redbox_core.services import retrieve_llm_response
 
 logger = logging.getLogger(__name__)
 
@@ -81,13 +83,15 @@ class ChatsView(View):
         form_data = getattr(
             request, "_post", None
         )  # request.POST doesn't work here; the channels docs are unclear about the ASGI response format
-        # TODO: use .loads and schema 👻 to get the form data
+        # TODO: use .loads and schema to get the form data
         if not form_data:
             return redirect(reverse("chats"))
         user_message = form_data.get("message")
 
         # Get or create Chat session
         if session_id := form_data.get("session-id"):
+            if session_id != chat_id:
+                return redirect(reverse("chats"))
             session = get_object_or_404(Chat, id=session_id)
             if session.user != user:
                 return redirect(reverse("chats"))
@@ -105,11 +109,18 @@ class ChatsView(View):
             chat_message.selected_files.set(selected_files)
 
         # Enqueue request to LLM
-        # (including existing messages)
+        session.awaiting_llm_response = True
+        session.save()
+
+        async_task(retrieve_llm_response, selected_files, session, user, task_name=session.name, group="chat_request")
 
         # Redirect to chat view
         # This is being slowed down to allow time for the LLM response
         # while making sure the user request doesn't time out
+
+        # TODO: check every 0.5 second for up to 10 seconds;
+        # if session.awaiting_llm_response has changed to False, then redirect
+        # after 10 seconds, redirect anyway
 
         return redirect("chats", chat_id=session.id)
 
