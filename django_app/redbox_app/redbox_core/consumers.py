@@ -47,7 +47,7 @@ def parse_page_number(obj: int | list[int] | None) -> list[int]:
 
 
 def escape_curly_brackets(text: str):
-    return text.replace("{", "{{").replace("{", "}}")
+    return text.replace("{", "{{").replace("}", "}}")
 
 
 class ChatConsumer(AsyncWebsocketConsumer):
