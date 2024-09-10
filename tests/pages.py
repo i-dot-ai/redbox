@@ -197,28 +197,20 @@ class MyDetailsPage(SignedInBasePage):
     ai_experience = property(fset=ai_experience)
 
     @property
-    def grade(self) -> str:
-        return self.page.get_by_label("Grade").get_by_role(role="option", selected=True).inner_text()
+    def info_about_user(self) -> str:
+        return self.page.get_by_label("What do you want Redbox to know about you?").get_by_role(role="option", selected=True).input_value()
 
-    @grade.setter
-    def grade(self, grade: str):
-        self.page.get_by_label("Grade").select_option(grade)
-
-    @property
-    def business_unit(self) -> str:
-        return self.page.get_by_label("Business unit").get_by_role(role="option", selected=True).inner_text()
-
-    @business_unit.setter
-    def business_unit(self, grade: str):
-        self.page.get_by_label("Business unit").select_option(grade)
+    @info_about_user.setter
+    def info_about_user(self, info: str):
+        self.page.get_by_label("What do you want Redbox to know about you?").fill(info)
 
     @property
-    def profession(self) -> str:
-        return self.page.get_by_label("Profession").get_by_role(role="option", selected=True).inner_text()
+    def redbox_response_preferences(self) -> str:
+        return self.page.get_by_label("How do you want Redbox to respond?").get_by_role(role="option", selected=True).input_value()
 
-    @profession.setter
-    def profession(self, grade: str):
-        self.page.get_by_label("Profession").select_option(grade)
+    @redbox_response_preferences.setter
+    def redbox_response_preferences(self, info: str):
+        self.page.get_by_label("How do you want Redbox to respond?").fill(info)
 
     def update(self) -> "ChatsPage":
         self.page.get_by_text("Update").click()

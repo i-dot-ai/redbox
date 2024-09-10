@@ -8,7 +8,7 @@
       
         <div class="profile-page">
           <h2 id="profile-overlay-title">Redbox can give better responses if you tell it about yourself.</h2>
-          <button class="profile__button-next" data-action="skip" type="button" autofocus>
+          <button class="profile__button-next govuk-button govuk-button--secondary" data-action="skip" type="button" autofocus>
             <span>Start</span>
             <span>1 of 3 Name</span>
           </button>
@@ -17,13 +17,13 @@
         <div class="profile-page">
           <label class="profile-label" for="profile-name">Full name</h2>
           <input id="profile-name" name="name" type="text" required value="{{ user.name if user.name }}" />
-          <button class="profile__button-next" data-action="next" type="button">
+          <button class="profile__button-next govuk-button govuk-button--secondary" data-action="next" type="button">
             <span>Next</span>
             <span>2 of 3 Experience</span>
           </button>
           <div class="profile-nav-button-container">
-            <button class="profile__button-previous" data-action="previous" type="button">Previous</button>
-            <button class="profile__button-skip" data-action="skip" type="button">Skip</button>
+            <button class="profile__button-previous govuk-button govuk-button--secondary" data-action="previous" type="button">Previous</button>
+            <button class="profile__button-skip  govuk-button govuk-button--secondary" data-action="skip" type="button">Skip</button>
           </div>
         </div>
         
@@ -35,18 +35,18 @@
               {% set selected_level = user.ai_experience %}
               {% for level in user.AIExperienceLevel %}
                 <div>
-                  <input class="profile__radio" type="radio" id="profile-experience-1" name="ai_experience" value="{{ level }}" required {% if level == selected_level %}checked{% endif %} />
-                  <label class="profile__radio-card" for="profile-experience-1">{{ level }}</label>
+                  <input class="profile__radio" type="radio" id="profile-experience-{{loop.index}}" name="ai_experience" value="{{ level }}" required {% if level == selected_level %}checked{% endif %} />
+                  <label class="profile__radio-card" for="profile-experience-{{loop.index}}">{{ level }}</label>
                 </div>
               {% endfor %}
             </fieldset>
-            <button type="button" data-action="next">
+            <button class="profile__button-next govuk-button govuk-button--secondary" type="button" data-action="next">
               <span>Next</span>
               <span>3 of 3 Voice</span>
             </button>
             <div class="profile-nav-button-container">
-              <button class="profile__button-previous" data-action="previous" type="button">Previous</button>
-              <button class="profile__button-skip" data-action="skip" type="button">Skip</button>
+              <button class="profile__button-previous govuk-button govuk-button--secondary" data-action="previous" type="button">Previous</button>
+              <button class="profile__button-skip govuk-button govuk-button--secondary" data-action="skip" type="button">Skip</button>
             </div>
           </div>
         </div>
@@ -59,8 +59,8 @@
           <textarea class="profile__textarea" id="profile-response-style" name="redbox_response_preferences" required>{{ user.redbox_response_preferences if user.redbox_response_preferences }}</textarea>
           <button type="button" data-action="next">Finish</button>
           <div class="profile-nav-button-container">
-            <button class="profile__button-previous" data-action="previous" type="button">Previous</button>
-            <button class="profile__button-skip" data-action="skip" type="button">Skip</button>
+            <button class="profile__button-previous govuk-button govuk-button--secondary" data-action="previous" type="button">Previous</button>
+            <button class="profile__button-skip  govuk-button govuk-button--secondary" data-action="skip" type="button">Skip</button>
           </div>
         </div>
 
