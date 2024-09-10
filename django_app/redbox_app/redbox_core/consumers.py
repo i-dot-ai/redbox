@@ -20,6 +20,7 @@ from redbox.models.chain import AISettings, ChainChatMessage, RedboxQuery, Redbo
 from redbox.models.chat import MetadataDetail
 from redbox_app.redbox_core import error_messages
 from redbox_app.redbox_core.models import (
+    AbstractAISettings,
     Chat,
     ChatMessage,
     ChatMessageTokenUse,
@@ -195,7 +196,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
     @database_sync_to_async
     def get_ai_settings(chat: Chat) -> AISettings:
         ai_settings = model_to_dict(chat.user.ai_settings, exclude=["label"])
-        ai_settings["chat_backend"] = chat.chat_backend.value
+        ai_settings["chat_backend"] = AbstractAISettings.ChatBackend(chat.chat_backend).value
         return AISettings.parse_obj(ai_settings)
 
     async def handle_text(self, response: str) -> str:
