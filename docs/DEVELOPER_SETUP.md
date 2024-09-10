@@ -2,26 +2,23 @@
 
 ## Requirements
 
-To run this project, you'll need the following installed:
-
--  [Docker](https://docs.docker.com/get-docker/) - For building and running containers
--  [Docker Compose](https://docs.docker.com/compose/install/) - For managing multiple containers
--  [Python 3.11](https://www.python.org/downloads/) - For intellisense and linting (not explicitly needed to run the project due to docker, but recommended for development)
--  [pip](https://pip.pypa.io/en/stable/installation/) - For installing poetry
--  [poetry](https://python-poetry.org/docs/) - For managing python packages
--  [Make](https://www.gnu.org/software/make/) - For running commands in the `Makefile`
-
-If you don't have this python version, we'd recommend using [pyenv](https://github.com/pyenv/pyenv) to manage your python versions.
 
 ## Installing packages
 
-Currently, we use [poetry](https://python-poetry.org/) to manage our python packages. The list of poetry groups and python packages we install can be found [here](https://github.com/i-dot-ai/redbox-copilot/blob/main/pyproject.toml) in `pyproject.toml`.
+Currently, we use [poetry](https://python-poetry.org/) to manage our python packages. The list of poetry groups and python packages we install can be found [here](https://github.com/i-dot-ai/redbox/blob/main/pyproject.toml) in `pyproject.toml`.
 
 Run the following to install the packages into a virtual environment poetry will create.
 
 ``` bash
 poetry install
 ```
+
+## VSCode
+To make use of the VSCode setup open the workspace file .vscode/redbox.code-workspace. This will open the relevant services as roots in a single workspace. The recommended way to use this is:
+* Create a venv in each of the main service directories (core-api, redbox-core, worker) this should be in a directory called _venv_
+* Configure each workspace directory to use it's own venv python interpreter. NB You may need to enter these manually when prompted as _./venv/bin/python_
+
+The tests should then all load separately and use their own env.
 
 ## Setting environment variables
 
@@ -36,6 +33,13 @@ Typically this involves setting the following variables:
 
 **`.env` is in `.gitignore` and should not be committed to git**
 
+### Backend Profiles
+Redbox can use different backends for chat and embeddings, which are used is controlled by env vars. The defaults are currently to use Azure for both chat and embeddings but OpenAI can be used (and pointed to an OpenAI compliant local service).
+The relevant env vars for overriding to use OpenAI embeddings are:
+
+EMBEDDING_OPENAI_BASE_URL=http://myembeddings:8080/v1
+EMBEDDING_BACKEND=openai
+
 ## Other dependencies (for Document Ingestion and OCR)
 
 You will need to install `poppler` and `tesseract` to run the `worker`
@@ -43,10 +47,9 @@ You will need to install `poppler` and `tesseract` to run the `worker`
 - `brew install tesseract`
 
 
-
 ## Building and running the project
 
-To view all the build commands, check the `Makefile` that can be found [here](https://github.com/i-dot-ai/redbox-copilot/blob/main/Makefile).
+To view all the build commands, check the `Makefile` that can be found [here](https://github.com/i-dot-ai/redbox/blob/main/Makefile).
 
 The project currently consists of multiple docker images needed to run the project in its entirety. If you only need a subsection of the project running, for example if you're only editing the django app, you can run a subset of the images. The images currently in the project are:
 
@@ -89,7 +92,7 @@ Some parts of the project can be run independently for development, for example 
 docker compose up django-app
 ```
 
-For any other commands available, check the `Makefile` [here](https://github.com/i-dot-ai/redbox-copilot/blob/main/Makefile).
+For any other commands available, check the `Makefile` [here](https://github.com/i-dot-ai/redbox/blob/main/Makefile).
 
 ## How to run tests
 
@@ -118,6 +121,19 @@ For integration tests:
 ``` bash
 make test-integration
 ```
+
+## Logging in to Redbox Locally
+
+We'll need to create a superuser to log in to the Django app, to do this run the following steps:
+
+1. Come up with an email to log in with. It doesn't need to be real.
+2. `docker compose run django-app venv/bin/django-admin createsuperuser`
+3. Use the email you came up with in step 1, and a password (the password isn't used as we use magic links).
+4. Now go to http://localhost:8090/sign-in/ enter the email you just created a super user for.
+5. Press "Continue"
+6. Now go to your terminal and run `docker compose logs django-app | grep 8090/magic_link`
+7. Click that link and you should be logged in.
+
 
 ## Pre-commit hooks
 

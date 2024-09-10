@@ -4,6 +4,7 @@
 {% from "macros/govuk-button.html" import govukButton %}
 
 {% block content %}
+<script src="{{ static('js/autosubmit.js') }}"></script>
 
 <div class="govuk-width-container">
   <div class="govuk-grid-row">
@@ -17,7 +18,7 @@
         {{ govukButton(text="Start") }}
 
       </form>
-    
+
     </div>
   </div>
 </div>

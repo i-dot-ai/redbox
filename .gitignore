@@ -1,5 +1,6 @@
 **/*.db
 .idea/
+redbox-core/models/
 
 # data files
 elk/elasticsearch/data
@@ -194,6 +195,7 @@ django_app/staticfiles/*
 django_app/node_modules
 django_app/frontend/CACHE
 django_app/frontend/govuk-assets
+django_app/frontend/.parcel-cache
 # Django app tests staticfiles
 django_app/tests/staticfiles
 
@@ -212,3 +214,8 @@ django_app/tests/staticfiles
 
 # pre commit files
 .pre-commit-trivy-cache
+
+# lambda files
+infrastructure/aws/cleanup_lambda/*.zip
+infrastructure/aws/cleanup_lambda/layer/*
+

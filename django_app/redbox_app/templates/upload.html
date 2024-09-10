@@ -2,7 +2,6 @@
 
 {% extends "base.html" %}
 {% from "macros/govuk-button.html" import govukButton %}
-{% from "macros/govuk-notification-banner.html" import govukNotificationBanner %}
 
 {% block content %}
 
@@ -22,14 +21,6 @@
           </label>
           
           <div id="upload-docs-notification">
-            {#
-            {{ govukNotificationBanner(
-              title="Important",
-              text_list=[
-                {"text": "The AI will use all documents you upload. You can use up to, and including, " ~ security ~ " documents. Do not upload any documents with personal data."}
-              ]
-            ) }}
-            #}
             <p class="govuk-body-l">The AI will use all documents you upload. You can use up to, and including, {{ security }} documents. Do not upload any documents with personal data.</p>
           </div>
 
@@ -42,12 +33,16 @@
           <input class="govuk-file-upload {% if errors.upload_doc %} govuk-file-upload--error{% endif %}" multiple id="upload-docs" name="uploadDocs" type="file" aria-describedby="upload-docs-notification upload-docs-filetypes {% if errors.upload_doc %} file-upload-docs-error{% endif %}">
         </div>
 
-        {{ govukButton(text="Upload") }}
+        <upload-button>
+          {{ govukButton(text="Upload", prevent_double_click=True, classes="govuk-!-display-inline-block") }}
+        </upload-button>
 
       </form>
 
     </div>
   </div>
 </div>
+
+<script src="{{ static('js/document-upload.js') }}" type="module"></script>
 
 {% endblock %}

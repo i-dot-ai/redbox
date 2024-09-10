@@ -1,0 +1,52 @@
+{% set pageTitle = "" %}
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="govuk-width-container">
+    <div class="govuk-grid-row">
+        <div class="govuk-grid-column-two-thirds">
+
+            <h1 class="govuk-heading-l">Sitemap</h1>
+
+            <h2 class="govuk-heading-m govuk-!-margin-top-5 govuk-!-padding-top-5">General pages</h2>
+            <ul class="govuk-list">
+                <li><a class="govuk-link" href="{{ url('accessibility-statement') }}">Accessibility</a></li>
+                <li><a class="govuk-link" href="{{ url('homepage') }}">Home page</a></li>
+                {% if request.user.is_authenticated %}
+                    <li><a class="govuk-link" href="{{ url('demographics') }}">My details</a></li>
+                {% endif %}
+                <li><a class="govuk-link" href="{{ url('privacy-notice') }}">Privacy</a></li>
+                {% if not request.user.is_authenticated %}
+                    <li><a class="govuk-link" href="{{ url('sign-in') }}">Sign in</a></li>
+                {% endif %}
+                <li><a class="govuk-link" href="{{ url('support') }}">Support</a></li>
+            </ul>
+
+            <h2 class="govuk-heading-m govuk-!-margin-top-5 govuk-!-padding-top-5">Documents</h2>
+            {% if request.user.is_authenticated %}
+                <ul class="govuk-list">
+                    <li><a class="govuk-link" href="{{ url('upload') }}">Add documents</a></li>
+                    <li><a class="govuk-link" href="{{ url('documents') }}">Documents</a></li>
+                </ul>
+            {% else %}
+                <p class="govuk-body">These pages are available once you have signed in.</p>
+            {% endif %}
+
+            <h2 class="govuk-heading-m govuk-!-margin-top-5 govuk-!-padding-top-5">Chats</h2>
+            {% if request.user.is_authenticated %}
+                <ul class="govuk-list">
+                    <li><a class="govuk-link" href="{{ url('chats') }}">New chat</a></li>
+                    {% for chat in chat_history %}
+                        <li><a class="govuk-link" href="{{ url('chats', chat.id) }}">Existing chat: {{ chat.name }}</a></li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p class="govuk-body">These pages are available once you have signed in.</p>
+            {% endif %}
+
+        </div>
+    </div>
+</div>
+
+{% endblock %}

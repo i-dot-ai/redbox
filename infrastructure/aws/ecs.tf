@@ -21,8 +21,9 @@ resource "aws_service_discovery_private_dns_namespace" "private_dns_namespace" {
   vpc         = data.terraform_remote_state.vpc.outputs.vpc_id
 }
 
-resource "aws_service_discovery_service" "service_discovery_service" {
-  name = "${local.name}-core-api"
+
+resource "aws_service_discovery_service" "unstructured_service_discovery_service" {
+  name = "${local.name}-unstructured"
 
   dns_config {
     namespace_id = aws_service_discovery_private_dns_namespace.private_dns_namespace.id
@@ -40,13 +41,6 @@ resource "aws_service_discovery_service" "service_discovery_service" {
   }
 }
 
-resource "aws_secretsmanager_secret" "core-api-secret" {
-  name = "${local.name}-core-api-secret"
-  tags = {
-    "platform:secret-purpose" = "general"
-  }
-}
-
 resource "aws_secretsmanager_secret" "django-app-secret" {
   name = "${local.name}-django-app-secret"
   tags = {
@@ -54,27 +48,12 @@ resource "aws_secretsmanager_secret" "django-app-secret" {
   }
 }
 
-resource "aws_secretsmanager_secret" "worker-secret" {
-  name = "${local.name}-worker-secret"
-  tags = {
-    "platform:secret-purpose" = "general"
-  }
-}
-
-resource "aws_secretsmanager_secret_version" "core-api-json-secret" {
-  secret_id     = aws_secretsmanager_secret.core-api-secret.id
-  secret_string = jsonencode(local.core_secrets)
-}
 
 resource "aws_secretsmanager_secret_version" "django-app-json-secret" {
   secret_id     = aws_secretsmanager_secret.django-app-secret.id
   secret_string = jsonencode(local.django_app_secrets)
 }
 
-resource "aws_secretsmanager_secret_version" "worker-json-secret" {
-  secret_id     = aws_secretsmanager_secret.worker-secret.id
-  secret_string = jsonencode(local.worker_secrets)
-}
 
 module "django-app" {
   memory                     = 4096
@@ -106,43 +85,46 @@ module "django-app" {
   ip_whitelist                 = var.external_ips
   environment_variables        = local.django_app_environment_variables
   secrets                      = local.reconstructed_django_secrets
+  auto_scale_off_peak_times    = true
+  wait_for_ready_state         = true
 }
 
 
-module "core_api" {
-  service_discovery_service_arn = aws_service_discovery_service.service_discovery_service.arn
+module "unstructured" {
+  service_discovery_service_arn = aws_service_discovery_service.unstructured_service_discovery_service.arn
   memory                        = 4096
   cpu                           = 2048
   create_listener               = false
   create_networking             = false
   source                        = "../../../i-ai-core-infrastructure//modules/ecs"
-  name                          = "${local.name}-core-api"
-  image_tag                     = var.image_tag
-  ecr_repository_uri            = "${var.ecr_repository_uri}/redbox-core-api"
+  name                          = "${local.name}-unstructured"
+  image_tag                     = "latest"
+  ecr_repository_uri            = "quay.io/unstructured-io/unstructured-api"
   ecs_cluster_id                = module.cluster.ecs_cluster_id
   ecs_cluster_name              = module.cluster.ecs_cluster_name
   autoscaling_minimum_target    = 1
-  autoscaling_maximum_target    = 10
+  autoscaling_maximum_target    = 1
   health_check                  = {
     healthy_threshold   = 3
     unhealthy_threshold = 3
     accepted_response   = "200"
-    path                = "/health"
+    path                = "/healthcheck"
     timeout             = 5
   }
   state_bucket                 = var.state_bucket
   vpc_id                       = data.terraform_remote_state.vpc.outputs.vpc_id
   private_subnets              = data.terraform_remote_state.vpc.outputs.private_subnets
-  container_port               = 5002
+  container_port               = 8000
   load_balancer_security_group = module.load_balancer.load_balancer_security_group_id
   aws_lb_arn                   = module.load_balancer.alb_arn
-  ip_whitelist                 = var.external_ips
-  environment_variables        = local.core_api_environment_variables
-  secrets                      = local.reconstructed_core_secrets
+  ephemeral_storage            = 30
+  auto_scale_off_peak_times    = true
+  wait_for_ready_state         = true
 }
 
 
 module "worker" {
+  command                      = ["venv/bin/django-admin", "qcluster"]
   memory                       = 6144
   cpu                          = 2048
   create_listener              = false
@@ -150,11 +132,11 @@ module "worker" {
   source                       = "../../../i-ai-core-infrastructure//modules/ecs"
   name                         = "${local.name}-worker"
   image_tag                    = var.image_tag
-  ecr_repository_uri           = "${var.ecr_repository_uri}/redbox-worker"
+  ecr_repository_uri           = "${var.ecr_repository_uri}/${var.project_name}-django-app"
   ecs_cluster_id               = module.cluster.ecs_cluster_id
   ecs_cluster_name             = module.cluster.ecs_cluster_name
   autoscaling_minimum_target   = 1
-  autoscaling_maximum_target   = 10
+  autoscaling_maximum_target   = 1
   state_bucket                 = var.state_bucket
   vpc_id                       = data.terraform_remote_state.vpc.outputs.vpc_id
   private_subnets              = data.terraform_remote_state.vpc.outputs.private_subnets
@@ -162,18 +144,22 @@ module "worker" {
   load_balancer_security_group = module.load_balancer.load_balancer_security_group_id
   aws_lb_arn                   = module.load_balancer.alb_arn
   ip_whitelist                 = var.external_ips
-  environment_variables        = local.worker_environment_variables
-  secrets                      = local.reconstructed_worker_secrets
+  environment_variables        = local.django_app_environment_variables
+  secrets                      = local.reconstructed_django_secrets
   http_healthcheck             = false
+  ephemeral_storage            = 30
+  auto_scale_off_peak_times    = true
+  wait_for_ready_state         = true
 }
 
 
-resource "aws_security_group_rule" "ecs_ingress_front_to_back" {
+resource "aws_security_group_rule" "ecs_ingress_worker_to_unstructured" {
   type                     = "ingress"
-  description              = "Allow all traffic from the django-app to the core-api"
+  description              = "Allow all traffic from the worker to unstructured"
   from_port                = 0
   to_port                  = 0
   protocol                 = "-1"
-  source_security_group_id = module.django-app.ecs_sg_id
-  security_group_id        = module.core_api.ecs_sg_id
+  source_security_group_id = module.worker.ecs_sg_id
+  security_group_id        = module.unstructured.ecs_sg_id
 }
+

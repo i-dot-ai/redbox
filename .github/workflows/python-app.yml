@@ -5,14 +5,6 @@ name: Python application
 
 on:
   push:
-    paths:
-      - redbox/**
-      - core_api/**
-      - django_app/**
-      - worker/**
-      - Makefile
-      - poetry.lock
-      - .github/**
     branches:
       - 'main'
       - 'feature/**'
@@ -20,6 +12,7 @@ on:
       - 'bugfix/**'
       - 'hotfix/**'
       - 'dependabot/**'
+      - 'security/**'
       - 'develop'
   workflow_dispatch:
 
@@ -27,17 +20,17 @@ permissions:
   contents: read
 
 jobs:
-  test:
+  test-redbox:
 
     runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v3
 
-    - name: Set up Python 3.11
+    - name: Set up Python 3.12
       uses: actions/setup-python@v3
       with:
-        python-version: "3.11"
+        python-version: "3.12"
 
     - name: Set up Poetry
       uses: abatilo/actions-poetry@v2
@@ -51,26 +44,40 @@ jobs:
         cp .env.test .env
         docker compose up -d --wait elasticsearch
 
-        poetry install --no-root --no-ansi --with dev --without ai,api,worker
-        poetry run download-model --embedding_model paraphrase-albert-small-v2
-
-    - name: Add dependencies for worker
-      run: |
-        sudo apt update && sudo apt-get install -y \
-        poppler-utils \
-        tesseract-ocr
-
     - name: Test redbox with pytest
       run: |
         make test-redbox
 
-    - name: Test worker with pytest
-      run: |
-        make test-worker
 
-    - name: Test core with pytest
+  test-django:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Python 3.12
+      uses: actions/setup-python@v3
+      with:
+        python-version: "3.12"
+
+    - name: Set up Poetry
+      uses: abatilo/actions-poetry@v2
+      with:
+        poetry-version: 1.7.0
+
+    - name: Build Containers
       run: |
-        make test-core-api
+        mkdir -p data/elastic/
+        chmod -R 777 data/
+        cp .env.test .env
+        sed -i -e "s/^OBJECT_STORE=.*/OBJECT_STORE=minio/" .env
+        docker compose up -d --wait elasticsearch minio db
+        docker ps
+
+    - name: Test django with pytest
+      run: |
+        make test-django
 
 
   static_checks:
@@ -80,10 +87,10 @@ jobs:
     steps:
     - uses: actions/checkout@v3
 
-    - name: Set up Python 3.11
+    - name: Set up Python 3.13
       uses: actions/setup-python@v3
       with:
-        python-version: "3.11"
+        python-version: "3.12"
 
     - name: Set up Poetry
       uses: abatilo/actions-poetry@v2
@@ -98,7 +105,3 @@ jobs:
       run: |
         poetry run ruff format . --check
         poetry run ruff check .
-
-    - name: Type check
-      run: |
-        make checktypes

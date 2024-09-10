@@ -1,0 +1,32 @@
+{
+	"folders": [
+		{
+			"name": "Django App",
+			"path": "../django_app"
+		},
+		{
+			"name": "Core API",
+			"path": "../core-api"
+		},
+		{
+			"name": "Redbox Core",
+			"path": "../redbox-core"
+		},
+		{
+			"name": "Integration Tests",
+			"path": "../tests"
+		},
+		{
+			"name": "Notebooks",
+			"path": "../notebooks"
+		},
+		{
+			"name": "VSCode",
+			"path": "."
+		},
+		{
+			"name": "Redbox root",
+			"path": ".."
+		}
+	],
+}

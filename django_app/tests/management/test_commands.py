@@ -1,18 +1,21 @@
-import uuid
 from datetime import UTC, datetime, timedelta
 from io import StringIO
-from unittest import mock
+from unittest.mock import MagicMock, patch
 
+import elasticsearch
 import pytest
-import requests
 from botocore.exceptions import UnknownClientMethodError
 from django.conf import settings
 from django.core.management import CommandError, call_command
 from django.utils import timezone
 from freezegun import freeze_time
 from magic_link.models import MagicLink
-from redbox_app.redbox_core.models import ChatHistory, ChatMessage, ChatRoleEnum, File, StatusEnum, User
 from requests_mock import Mocker
+
+from redbox_app.redbox_core.models import Chat, ChatMessage, ChatRoleEnum, File, StatusEnum, User
+
+# === check_file_status command tests ===
+
 
 # === show_magiclink_url command tests ===
 
@@ -79,23 +82,11 @@ EXPIRED_FILE_DATE = timezone.now() - timedelta(seconds=(settings.FILE_EXPIRY_IN_
     ],
 )
 @pytest.mark.django_db()
-def test_delete_expired_files(
-    uploaded_file: File, requests_mock: Mocker, last_referenced: datetime, should_delete: bool
-):
+def test_delete_expired_files(uploaded_file: File, last_referenced: datetime, should_delete: bool):
     # Given
     mock_file = uploaded_file
     mock_file.last_referenced = last_referenced
     mock_file.save()
-
-    requests_mock.delete(
-        f"http://{settings.CORE_API_HOST}:{settings.CORE_API_PORT}/file/{mock_file.core_file_uuid}",
-        status_code=201,
-        json={
-            "key": mock_file.original_file_name,
-            "bucket": settings.BUCKET_NAME,
-            "uuid": str(uuid.uuid4()),
-        },
-    )
 
     # When
     call_command("delete_expired_data")
@@ -105,19 +96,15 @@ def test_delete_expired_files(
     assert is_deleted == should_delete
 
 
+@patch("redbox_app.redbox_core.models.File.delete_from_elastic")
 @pytest.mark.django_db()
-def test_delete_expired_files_with_api_error(uploaded_file: File, requests_mock: Mocker):
+def test_delete_expired_files_with_elastic_error(deletion_mock: MagicMock, uploaded_file: File):
+    deletion_mock.side_effect = elasticsearch.BadRequestError(message="i am am error", meta=None, body=None)
+
     # Given
     mock_file = uploaded_file
     mock_file.last_referenced = EXPIRED_FILE_DATE
     mock_file.save()
-
-    (
-        requests_mock.delete(
-            f"http://{settings.CORE_API_HOST}:{settings.CORE_API_PORT}/file/{mock_file.core_file_uuid}",
-            exc=requests.exceptions.HTTPError,
-        ),
-    )
 
     # When
     call_command("delete_expired_data")
@@ -126,31 +113,21 @@ def test_delete_expired_files_with_api_error(uploaded_file: File, requests_mock:
     assert File.objects.get(id=mock_file.id).status == StatusEnum.errored
 
 
+@patch("redbox_app.redbox_core.models.File.delete_from_s3")
 @pytest.mark.django_db()
-def test_delete_expired_files_with_s3_error(uploaded_file: File, requests_mock: Mocker):
-    with mock.patch("redbox_app.redbox_core.models.File.delete_from_s3") as s3_mock:
-        s3_mock.side_effect = UnknownClientMethodError(method_name="")
+def test_delete_expired_files_with_s3_error(deletion_mock: MagicMock, uploaded_file: File):
+    deletion_mock.side_effect = UnknownClientMethodError(method_name="")
 
-        # Given
-        mock_file = uploaded_file
-        mock_file.last_referenced = EXPIRED_FILE_DATE
-        mock_file.save()
+    # Given
+    mock_file = uploaded_file
+    mock_file.last_referenced = EXPIRED_FILE_DATE
+    mock_file.save()
 
-        requests_mock.delete(
-            f"http://{settings.CORE_API_HOST}:{settings.CORE_API_PORT}/file/{mock_file.core_file_uuid}",
-            status_code=201,
-            json={
-                "key": mock_file.original_file_name,
-                "bucket": settings.BUCKET_NAME,
-                "uuid": str(uuid.uuid4()),
-            },
-        )
+    # When
+    call_command("delete_expired_data")
 
-        # When
-        call_command("delete_expired_data")
-
-        # Then
-        assert File.objects.get(id=mock_file.id).status == StatusEnum.errored
+    # Then
+    assert File.objects.get(id=mock_file.id).status == StatusEnum.errored
 
 
 @pytest.mark.parametrize(
@@ -162,24 +139,60 @@ def test_delete_expired_files_with_s3_error(uploaded_file: File, requests_mock: 
     ],
 )
 @pytest.mark.django_db()
-def test_delete_expired_chats(
-    chat_history: ChatHistory, msg_1_date: datetime, msg_2_date: datetime, should_delete: bool
-):
+def test_delete_expired_chats(chat: Chat, msg_1_date: datetime, msg_2_date: datetime, should_delete: bool):
     # Given
-    test_chat_history = chat_history
+    test_chat = chat
     with freeze_time(msg_1_date):
-        chat_message_1 = ChatMessage.objects.create(
-            chat_history=test_chat_history, text="A question?", role=ChatRoleEnum.user
-        )
+        chat_message_1 = ChatMessage.objects.create(chat=test_chat, text="A question?", role=ChatRoleEnum.user)
     with freeze_time(msg_2_date):
-        chat_message_2 = ChatMessage.objects.create(
-            chat_history=test_chat_history, text="A question?", role=ChatRoleEnum.user
-        )
+        chat_message_2 = ChatMessage.objects.create(chat=test_chat, text="A question?", role=ChatRoleEnum.user)
 
     # When
     call_command("delete_expired_data")
 
     # Then
-    assert ChatHistory.objects.filter(id=chat_history.id).exists() != should_delete
+    assert Chat.objects.filter(id=chat.id).exists() != should_delete
     assert ChatMessage.objects.filter(id=chat_message_1.id).exists() != should_delete
     assert ChatMessage.objects.filter(id=chat_message_2.id).exists() != should_delete
+
+
+# === reingest_files command tests ===
+
+
+@pytest.mark.django_db(transaction=True)
+def test_reingest_files(uploaded_file: File, requests_mock: Mocker, mocker):
+    # Given
+    assert uploaded_file.status == StatusEnum.processing
+
+    requests_mock.post(
+        f"http://{settings.UNSTRUCTURED_HOST}:8000/general/v0/general",
+        json=[{"text": "hello", "metadata": {"filename": "my-file.txt"}}],
+    )
+
+    # When
+    with mocker.patch("redbox.chains.ingest.VectorStore.add_documents", return_value=[]):
+        call_command("reingest_files", sync=True)
+
+    # Then
+    uploaded_file.refresh_from_db()
+    assert uploaded_file.status == StatusEnum.complete
+
+
+@pytest.mark.django_db(transaction=True)
+def test_reingest_files_unstructured_fail(uploaded_file: File, requests_mock: Mocker, mocker):
+    # Given
+    assert uploaded_file.status == StatusEnum.processing
+
+    requests_mock.post(
+        f"http://{settings.UNSTRUCTURED_HOST}:8000/general/v0/general",
+        json=[],
+    )
+
+    # When
+    with mocker.patch("redbox.chains.ingest.VectorStore.add_documents", return_value=[]):
+        call_command("reingest_files", sync=True)
+
+    # Then
+    uploaded_file.refresh_from_db()
+    assert uploaded_file.status == StatusEnum.errored
+    assert uploaded_file.ingest_error == "<class 'ValueError'>: Unstructured failed to extract text for this file"

@@ -17,6 +17,7 @@ on:
       - 'hotfix/**'
       - 'develop'
       - 'dependabot/**'
+      - 'security/**'
   workflow_dispatch:
 
 
@@ -38,20 +39,3 @@ jobs:
       - name: Run migrations
         run: |
           make check-migrations
-
-  run_tests:
-    name: Run tests
-
-    runs-on: ubuntu-latest
-    environment: release
-
-    steps:
-    - uses: actions/checkout@v3
-
-    - name: Copy env file
-      run: |
-        cp .env.django .env
-
-    - name: Run tests
-      run: |
-        make test-django

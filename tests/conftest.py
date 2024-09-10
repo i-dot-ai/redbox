@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 import boto3
@@ -10,7 +11,7 @@ def file_path() -> Path:
     return Path(__file__).parent / "data" / "html" / "example.html"
 
 
-@pytest.fixture()
+@pytest.fixture(autouse=True)
 def s3_client():
     client = boto3.client(
         "s3",
@@ -21,7 +22,7 @@ def s3_client():
 
     try:
         client.create_bucket(
-            Bucket="redbox-storage-dev",
+            Bucket=os.environ["BUCKET_NAME"],
             CreateBucketConfiguration={"LocationConstraint": "eu-west-2"},
         )
     except ClientError as e:

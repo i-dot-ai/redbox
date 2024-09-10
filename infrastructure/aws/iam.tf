@@ -1,5 +1,20 @@
-
 data "aws_iam_policy_document" "ecs_exec_role_policy" {
+  # checkov:skip=CKV_AWS_109:KMS policies can't be restricted
+  # checkov:skip=CKV_AWS_111:KMS policies can't be restricted
+  # checkov:skip=CKV_AWS_356:Allow for policies to not have resource limits
+
+  statement {
+    effect = "Allow"
+    actions = [
+      "bedrock:Invoke*",
+      "bedrock:Get*",
+      "bedrock:List*"
+    ]
+    resources = [
+      "*"
+    ]
+  }
+
   # checkov:skip=CKV_AWS_111:Allow for write access without constraints
   # checkov:skip=CKV_AWS_356:Allow for policies to not have resource limits
   statement {
@@ -26,22 +41,11 @@ data "aws_iam_policy_document" "ecs_exec_role_policy" {
       "secretsmanager:GetSecretValue",
     ]
     resources = [
-       aws_secretsmanager_secret.core-api-secret.arn,
-       "${aws_secretsmanager_secret.core-api-secret.arn}:*",
-       aws_secretsmanager_secret.worker-secret.arn,
-       "${aws_secretsmanager_secret.worker-secret.arn}:*",
        aws_secretsmanager_secret.django-app-secret.arn,
-       "${aws_secretsmanager_secret.django-app-secret.arn}:*",
+       "${aws_secretsmanager_secret.django-app-secret.arn}:*"
     ]
   }
 
-  statement {
-    effect = "Allow"
-    actions = [
-      "elasticache:*"
-    ]
-    resources = [module.elasticache.redis_arn]
-  }
 }
 
 resource "aws_iam_policy" "redbox_policy" {
@@ -53,7 +57,6 @@ resource "aws_iam_policy" "redbox_policy" {
 resource "aws_iam_role_policy_attachment" "redbox_role_policy" {
   for_each = tomap(
     {
-      "core-api" = module.core_api.ecs_task_execution_exec_role_name,
       "worker"   = module.worker.ecs_task_execution_exec_role_name,
       "django"   = module.django-app.ecs_task_execution_exec_role_name,
     }

@@ -1,9 +1,6 @@
 {% set pageTitle = "Chats" %}
 {% extends "base.html" %}
-{% from "macros/govuk-button.html" import govukButton %}
-{% from "macros/chat-macros.html" import message_box %}
-{% from "macros/govuk-notification-banner.html" import govukNotificationBanner %}
-{% from "macros/use-trusted-types.html" import use_trusted_types %}
+{% from "macros/chat-macros.html" import message_box, route_display %}
 
 
 {% block content %}
@@ -19,129 +16,140 @@
   <form class="govuk-grid-row js-message-input" action="/post-message/" method="post">
 
     <div class="govuk-grid-column-one-third">
+      <div class="rb-left-column-container govuk-!-margin-bottom-5">
 
-      <a class="iai-large-button" role="button" href="{{ url('chats') }}">
-        <svg width="22" height="22" fill="none" aria-hidden="true" focusable="false"><path d="M21 11c0-5.523-4.477-10-10-10S1 5.477 1 11s4.477 10 10 10 10-4.477 10-10z" stroke="currentColor" stroke-linejoin="round"/><g filter="url(#A)"><path d="M15.656 11.656h-4v4h-1.312v-4h-4v-1.312h4v-4h1.312v4h4v1.312z" fill="currentColor"/></g><defs><filter x="6" y="6" width="10" height="10" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB"><feFlood flood-opacity="0" result="A"/><feColorMatrix in="SourceAlpha" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0"/><feOffset dx="1" dy="1"/><feColorMatrix values="0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 1 0"/><feBlend in2="A"/><feBlend in="SourceGraphic"/></filter></defs></svg>
-        New chat
-      </a>
+        <a class="iai-large-button" role="button" href="{{ url('chats') }}">
+          <svg width="22" height="22" fill="none" aria-hidden="true" focusable="false"><path d="M21 11c0-5.523-4.477-10-10-10S1 5.477 1 11s4.477 10 10 10 10-4.477 10-10z" stroke="currentColor" stroke-linejoin="round"/><g filter="url(#A)"><path d="M15.656 11.656h-4v4h-1.312v-4h-4v-1.312h4v-4h1.312v4h4v1.312z" fill="currentColor"/></g><defs><filter x="6" y="6" width="10" height="10" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB"><feFlood flood-opacity="0" result="A"/><feColorMatrix in="SourceAlpha" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0"/><feOffset dx="1" dy="1"/><feColorMatrix values="0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 1 0"/><feBlend in2="A"/><feBlend in="SourceGraphic"/></filter></defs></svg>
+          New chat
+        </a>
 
-      <div class="iai-panel govuk-!-margin-top-6">
-        <h2 class="govuk-heading-s">Recent chats</h2>
-        <ul class="govuk-list govuk-list--spaced iai-panel__scrollable">
-          {% for chat in chat_history %}
-            <li class="govuk-!-margin-bottom-2">
-              <a class="govuk-link govuk-body-s" href="{{url('chats', chat.id)}}">{{ chat.name }}</a>
-            </li>
+      <div class="iai-panel govuk-!-margin-top-5 govuk-!-padding-top-3">
+        <h2 class="govuk-body govuk-!-font-weight-bold">Recent chats</h2>
+        <div class="iai-panel__scrollable">
+          {% for date_group, chats in chat_grouped_by_date_group %}
+          <h3 class="rb-chat-history__date_group govuk-body-xs govuk-!-font-weight-bold govuk-!-margin-bottom-1">{{ date_group }}</h3>
+          <ul class="govuk-list govuk-list--spaced">
+            {% for chat in chats %}
+              <li class="govuk-!-margin-bottom-1">
+                <a class="govuk-link govuk-body-s" href="{{url('chats', chat.id)}}">{{ chat.name }}</a>
+              </li>
+            {% endfor %}
+          </ul>
           {% endfor %}
-        </ul>
+        </div>
       </div>
 
-      <document-selector class="iai-panel">
-        <fieldset class="govuk-fieldset">
-          <legend class="govuk-fieldset__legend govuk-fieldset__legend--s">
-            <h3 class="govuk-fieldset__heading">Documents to use</h3>
-          </legend>
-          <div class="govuk-checkboxes govuk-checkboxes--small iai-panel__scrollable" data-module="govuk-checkboxes">
-            {% for file in files %}
-              <div class="govuk-checkboxes__item">
-                <input class="govuk-checkboxes__input" id="file-{{ file.id }}" name="file-{{ file.id }}" type="checkbox" value="{{ file.id }}" {% if file.selected %}checked{% endif %}>
-                <label class="{#govuk-label#}govuk-checkboxes__label govuk-body-s" for="file-{{ file.id }}">{{ file.original_file_name }}</label>
+        <document-selector class="iai-panel govuk-!-margin-top-5 govuk-!-padding-top-3">
+          <fieldset class="govuk-fieldset">
+            <legend class="govuk-fieldset__legend govuk-fieldset__legend--s">
+              <h3 class="govuk-fieldset__heading">Documents to use</h3>
+            </legend>
+            <div class="govuk-checkboxes govuk-checkboxes--small iai-panel__scrollable" data-module="govuk-checkboxes">
+              {% for file in completed_files %}
+                <div class="govuk-checkboxes__item">
+                  <input class="govuk-checkboxes__input" id="file-{{ file.id }}" name="file-{{ file.id }}" type="checkbox" value="{{ file.id }}" {% if file.selected %}checked{% endif %}>
+                  <label class="govuk-checkboxes__label govuk-body-s" for="file-{{ file.id }}">{{ file.original_file_name }}</label>
+                </div>
+              {% endfor %}
+              {# files not yet ready - stored here to be moved to main list once ready #}
+              <div hidden>
+                {% for file in processing_files %}
+                  <div class="govuk-checkboxes__item">
+                    <input class="govuk-checkboxes__input" id="file-{{ file.id }}" name="file-{{ file.id }}" type="checkbox" value="{{ file.id }}" {% if file.selected %}checked{% endif %}>
+                    <label class="govuk-checkboxes__label govuk-body-s" for="file-{{ file.id }}">{{ file.original_file_name }}</label>
+                    <file-status data-id="{{ file.id }}"></file-status>
+                  </div>
+                {% endfor %}
               </div>
-            {% endfor %}
-          </div>
-        </fieldset>
-      </document-selector>
+            </div>
+          </fieldset>
+        </document-selector>
 
+        <div class="iai-panel govuk-!-margin-top-5 govuk-!-padding-top-3">
+          <label class="govuk-body-s govuk-!-font-weight-bold" for="llm-selector">Model</label>
+          <select id="llm-selector" name="llm" class="govuk-select govuk-!-margin-top-1">
+            {% for option in llm_options %}
+              <option value="{{ option.name }}" {% if option.selected %}selected{% endif %}>{{ option.name }}{% if option.default %} (default){% endif %}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+      </div>
     </div>
 
     <div class="govuk-grid-column-two-thirds">
-      <chat-controller class="iai-chat-container" data-stream-url="{{ streaming.endpoint }}" data-session-id="{{ chat_id or '' }}">
+      <div class="rb-chats-section">
 
-        <h2 class="govuk-visually-hidden">Current chat</h2>
+        <chat-title class="chat-title" data-session-id="{{ chat_id or '' }}" data-title="{{ current_chat.name or '' }}", data-title-length="{{ chat_title_length }}">
+          {% if current_chat.name %}
+            <h2 class="chat-title__heading govuk-heading-m">{{ current_chat.name }}</h2>
+          {% else %}
+            <h2 class="chat-title__heading govuk-visually-hidden" hidden>Current chat</h2>
+          {% endif %}
+        </chat-title>
 
-        <div class="rb-chat-message__container js-message-container">
 
-          {# SSR messages #}
-          {% for message in messages %}
-            {{ message_box(
-              role = message.role,
-              text = message.text,
-              sources = message.source_files.all()
-            ) }}
-          {% endfor %}
+        <chat-controller class="iai-chat-container" data-stream-url="{{ streaming.endpoint }}" data-session-id="{{ chat_id or '' }}">
 
-          {# CSR messages are inserted here #}
+          <div class="rb-chat-message__container js-message-container">
 
-          <div class="rb-response-feedback js-response-feedback">
-            <feedback-buttons class="rb-response-feedback__buttons"></feedback-buttons>
-            {{ message_box(
-              role = "ai",
-              text = "Thank you for your feedback.",
-              classes = "rb-response-feedback__thumbs-up"
-            ) }}
-            {{ message_box(
-              role = "ai",
-              text = "<p>Thank you for your feedback. Can you let me know what wasn’t accurate? I can refine it again to make it more accurate.</p><p>Please <a href=\"mailto:" + contact_email + "?subject=%5BFEEDBACK%5D%20Redbox%20isn%E2%80%99t%20being%20helpful&body=Hi%20Redbox%20Support%2C%0D%0A%0D%0A%5BPlease%20include%20as%20many%20of%20the%20below%20as%20you%20can.%20The%20more%20details%20you%20provide%2C%20the%20more%20we%20can%20do%20to%20improve%20the%20response%20quality%5D%0D%0A%0D%0A1.%20Your%20query%20-%20the%20question%20you%20were%20asking%20(screenshot%20or%20copy%2Fpaste)%0D%0A%0D%0A2.%20Name%20of%20the%20document%20you%20were%20querying%0D%0A%0D%0A3.%20Your%20feedback%20-%20what%20wasn%E2%80%99t%20accurate%3F%20what%20could%E2%80%99ve%20been%20better%3F\"
-              class=\"govuk-link\">email us</a> with a few details on what wasn't accurate.</p>",
-              classes = "rb-response-feedback__thumbs-down"
-            ) }}
+            <template id="template-route-display">
+              {{ route_display() }}
+            </template>
+
+            {# SSR messages #}
+            {% for message in messages %}
+              {{ message_box(
+                id = message.id,
+                role = message.role,
+                route = message.route,
+                text = message.text,
+                source_files = message.source_files.all()
+              ) }}
+
+              {# If we want to collect feedback on SSR messages
+              {% if message.role == 'ai' %}
+                <feedback-buttons data-id="{{ message.id }}"></feedback-buttons>
+              {% endif %}
+              #}
+
+            {% endfor %}
+
+            {# CSR messages are inserted here #}
+
           </div>
-
-        </div>
-
-        <div>
 
           <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}"/>
           {% if chat_id %}<input type="hidden" name="session-id" value="{{ chat_id }}"/>{% endif %}
-          
-          {#
-          <div class="rb-new-message">
 
-            <div class="govuk-form-group">
-              <label class="govuk-label" for="message">
-                Write a message
-              </label>
-              <message-input>
-                <textarea class="govuk-textarea js-user-text" id="message" name="message" rows="5" required></textarea>
-              </message-input>
-            </div>
+        </chat-controller>
 
-            <button type="submit" class="govuk-button" {% if not streaming.in_use %}data-prevent-double-click="true"{% endif %} data-module="govuk-button">
+      </div>
+
+      {% if not messages %}
+        <canned-prompts class="chat-options"></canned-prompts>
+      {% endif %}
+
+      <div class="iai-chat-input">
+        <div class="iai-chat-input__container">
+          <div class="iai-chat-input__input-container">
+            <label class="iai-chat-input__label govuk-label" for="message">
+              Message Redbox
+            </label>
+            <message-input>
+              <textarea class="iai-chat-input__input js-user-text" id="message" name="message" rows="1" required></textarea>
+            </message-input>
+          </div>
+          <send-message>
+            <button class="iai-chat-input__button iai-icon-button rb-send-button" type="submit">
+              <svg width="28" height="28" viewBox="32 16 29 29" fill="none" focusable="false" aria-hidden="true"><g filter="url(#A)"><use xlink:href="#C" fill="#edeef2"/></g><g filter="url(#B)"><use xlink:href="#C" fill="#fff"/></g><path d="M47.331 36.205v-8.438l3.89 3.89.972-1.007-5.556-5.556-5.556 5.556.972.972 3.889-3.854v8.438h1.389z" fill="currentColor"/><defs><filter x="17" y="1" width="65" height="65" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB"><feFlood flood-opacity="0" result="A"/><feColorMatrix in="SourceAlpha" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0"/><feOffset dx="3" dy="3"/><feGaussianBlur stdDeviation="10"/><feColorMatrix values="0 0 0 0 0.141176 0 0 0 0 0.254902 0 0 0 0 0.364706 0 0 0 0.302 0"/><feBlend in2="A"/><feBlend in="SourceGraphic"/></filter><filter id="B" x="0" y="-16" width="85" height="85" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB"><feFlood flood-opacity="0" result="A"/><feColorMatrix in="SourceAlpha" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0"/><feOffset dx="-4" dy="-4"/><feGaussianBlur stdDeviation="15"/><feColorMatrix values="0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 1 0"/><feBlend in2="A"/><feBlend in="SourceGraphic"/></filter><path id="C" d="M59 30.5C59 23.596 53.404 18 46.5 18S34 23.596 34 30.5 39.596 43 46.5 43 59 37.404 59 30.5z"/></defs></svg>
               Send
             </button>
-
-          </div>
-          #}
-
-          <div class="iai-chat-input">
-            <div class="iai-chat-input__container">
-              <div class="iai-chat-input__input-container">
-                <label class="iai-chat-input__label govuk-label" for="message">
-                  Message Redbox
-                </label>
-                <message-input>
-                  <textarea class="iai-chat-input__input js-user-text" id="message" name="message" rows="1" required></textarea>
-                </message-input>
-              </div>
-              <div>
-                <button class="iai-chat-input__button iai-icon-button" type="submit">
-                  <svg width="32" height="32" viewBox="32 16 29 29" fill="none"><g filter="url(#A)"><use xlink:href="#C" fill="#edeef2"/></g><g filter="url(#B)"><use xlink:href="#C" fill="#fff"/></g><path d="M47.331 36.205v-8.438l3.89 3.89.972-1.007-5.556-5.556-5.556 5.556.972.972 3.889-3.854v8.438h1.389z" fill="currentColor"/><defs><filter x="17" y="1" width="65" height="65" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB"><feFlood flood-opacity="0" result="A"/><feColorMatrix in="SourceAlpha" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0"/><feOffset dx="3" dy="3"/><feGaussianBlur stdDeviation="10"/><feColorMatrix values="0 0 0 0 0.141176 0 0 0 0 0.254902 0 0 0 0 0.364706 0 0 0 0.302 0"/><feBlend in2="A"/><feBlend in="SourceGraphic"/></filter><filter id="B" x="0" y="-16" width="85" height="85" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB"><feFlood flood-opacity="0" result="A"/><feColorMatrix in="SourceAlpha" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0"/><feOffset dx="-4" dy="-4"/><feGaussianBlur stdDeviation="15"/><feColorMatrix values="0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 1 0"/><feBlend in2="A"/><feBlend in="SourceGraphic"/></filter><path id="C" d="M59 30.5C59 23.596 53.404 18 46.5 18S34 23.596 34 30.5 39.596 43 46.5 43 59 37.404 59 30.5z"/></defs></svg>
-                  Send
-                </button>
-              </div>
-            </div>
-            <p class="iai-chat-input__info-text">Redbox can make mistakes. You must check for accuracy before using the output.</p>
-            <p class="iai-chat-input__info-text">You can use up to, and including, official sensitive documents.</p>
-          </div>
-
+          </send-message>
         </div>
-
-        <div class="rb-response-loading js-response-loading govuk-!-margin-top-1" tabindex="-1">
-          <img class="rb-response-loading__spinner" src="{{ static('images/spinner.gif') }}" alt=""/>
-          <p class="rb-response-loading__text govuk-body govuk-!-margin-bottom-0 govuk-!-margin-left-1">Response loading...</p>
-        </div>
-
-      </chat-controller>
+        <p class="iai-chat-input__info-text">Redbox can make mistakes. You must check for accuracy before using the output.</p>
+        <p class="iai-chat-input__info-text">You can use up to, and including, official sensitive documents.</p>
+      </div>
 
     </div>
 
@@ -149,32 +157,7 @@
 
 </div>
 
-
-{{ use_trusted_types() }}
 <script src="{{ static('js/libs/showdown.min.js') }}"></script>
-{% if COMPRESSION_ENABLED %}
-  {% compress js %}
-    <script src="{{ static('js/chats/markdown.js') }}"></script>
-    <script src="{{ static('js/chats/feedback.js') }}"></script>
-    <script src="{{ static('js/chats/message-input.js') }}"></script>
-  {% endcompress %}
-{% else %}
-  <script src="{{ static('js/chats/markdown.js') }}"></script>
-  <script src="{{ static('js/chats/feedback.js') }}"></script>
-  <script src="{{ static('js/chats/message-input.js') }}"></script>
-{% endif %}
-
-
-{% if streaming.in_use %}
-  {% if COMPRESSION_ENABLED %}
-    {% compress js %}
-      <script src="{{ static('js/chats/streaming.js') }}"></script>
-    {% endcompress %}
-  {% else %}
-    <script src="{{ static('js/chats/streaming.js') }}"></script>
-  {% endif %}
-{% else %}
-  <script src="{{ static('js/chats/fallback.js') }}"></script>
-{% endif %}
+<script type="module" src="{{ static('js/chats.js') }}"></script>
 
 {% endblock %}

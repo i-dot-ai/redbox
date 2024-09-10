@@ -1,82 +1,178 @@
 import csv
+import json
+import logging
 
 from django.contrib import admin
+from django.db.models import QuerySet
 from django.http import HttpResponse
-from import_export.admin import ImportMixin
+from django.shortcuts import render
+from django_q.tasks import async_task
+from import_export.admin import ExportMixin, ImportExportMixin
+
+from redbox_app.worker import ingest
 
 from . import models
+from .serializers import UserSerializer
+
+logger = logging.getLogger(__name__)
 
 
-class UserAdmin(admin.ModelAdmin):
-    fields = ["email", "business_unit", "grade", "profession", "is_superuser", "is_staff", "last_login"]
-    list_display = ["email", "business_unit", "grade", "profession", "is_superuser", "is_staff", "last_login"]
+class UserAdmin(ImportExportMixin, admin.ModelAdmin):
+    def export_as_json(self, request, queryset: QuerySet):  # noqa:ARG002
+        user_data = UserSerializer(many=True).to_representation(queryset)
+        response = HttpResponse(json.dumps(user_data), content_type="text/json")
+        response["Content-Disposition"] = "attachment; filename=data-export.json"
+
+        return response
+
+    export_as_json.short_description = "Export Selected"
+    actions = ["export_as_json"]
+
+    fields = [
+        "email",
+        "name",
+        "ai_experience",
+        "business_unit",
+        "grade",
+        "profession",
+        "is_superuser",
+        "is_staff",
+        "last_login",
+        "ai_settings",
+        "is_developer",
+    ]
+    list_display = [
+        "email",
+        "business_unit",
+        "grade",
+        "profession",
+        "is_developer",
+        "last_login",
+    ]
     list_filter = ["business_unit", "grade", "profession"]
     date_hierarchy = "last_login"
 
-
-class BusinessUnitAdmin(ImportMixin, admin.ModelAdmin):
-    fields = ["name"]
-    list_display = ["name"]
+    @admin.display(ordering="ai_experience", description="AI Experience")
+    def get_ai(self, obj: models.User):
+        return obj.ai_experience
 
     class Meta:
-        model = models.BusinessUnit
-        fields = ["name"]
-        import_id_fields = ["name"]
+        model = models.User
+        fields = ["email"]
+        import_id_fields = ["email"]
 
 
-class FileAdmin(admin.ModelAdmin):
+class FileAdmin(ExportMixin, admin.ModelAdmin):
+    def reupload(self, _request, queryset):
+        for file in queryset:
+            logger.info("Re-uploading file to core-api: %s", file)
+            async_task(ingest, file.id)
+            logger.info("Successfully reuploaded file %s.", file)
+
     list_display = ["original_file_name", "user", "status", "created_at", "last_referenced"]
     list_filter = ["user", "status"]
     date_hierarchy = "created_at"
+    actions = ["reupload"]
 
 
-class ChatMessageAdmin(admin.ModelAdmin):
-    list_display = ["chat_history", "get_user", "text", "role", "created_at"]
-    list_filter = ["role", "chat_history__users"]
+class CitationInline(admin.StackedInline):
+    model = models.Citation
+    ordering = ("modified_at",)
+
+    extra = 0
+
+
+class ChatMessageTokenUseInline(admin.StackedInline):
+    model = models.ChatMessageTokenUse
+    ordering = ("modified_at",)
+
+    extra = 0
+
+
+class ChatMessageTokenUseAdmin(ExportMixin, admin.ModelAdmin):
+    list_display = ["chat_message", "use_type", "model_name", "token_count"]
+    list_filter = ["use_type", "model_name"]
+
+
+class ChatMessageAdmin(ExportMixin, admin.ModelAdmin):
+    list_display = ["short_text", "role", "get_user", "chat", "route", "created_at"]
+    list_filter = ["role", "route", "chat__user"]
     date_hierarchy = "created_at"
+    inlines = [CitationInline, ChatMessageTokenUseInline]
+    readonly_fields = ["selected_files", "source_files"]
 
-    @admin.display(ordering="chat_history__users", description="User")
+    @admin.display(ordering="chat__user", description="User")
     def get_user(self, obj):
-        return obj.chat_history.users
+        return obj.chat.user
+
+    @admin.display(description="text")
+    def short_text(self, obj):
+        max_length = 128
+        if len(obj.text) < max_length:
+            return obj.text
+        return obj.text[: max_length - 3] + "..."
 
 
 class ChatMessageInline(admin.StackedInline):
     model = models.ChatMessage
     ordering = ("modified_at",)
-    readonly_fields = ["modified_at", "source_files"]
+    fields = ["text", "role", "route", "rating"]
+    readonly_fields = ["text", "role", "route", "rating"]
     extra = 1
+    show_change_link = True  # allows users to click through to look at Citations
 
 
-class ChatHistoryAdmin(admin.ModelAdmin):
-    def export_as_csv(self, request, queryset):  # noqa:ARG002
-        history_field_names = [field.name for field in models.ChatHistory._meta.fields]  # noqa:SLF001
-        message_field_names = [field.name for field in models.ChatMessage._meta.fields]  # noqa:SLF001
+class ChatAdmin(ExportMixin, admin.ModelAdmin):
+    def export_as_csv(self, request, queryset: QuerySet):  # noqa:ARG002
+        history_field_names: list[str] = [field.name for field in models.Chat._meta.fields]  # noqa:SLF001
+        message_field_names: list[str] = [field.name for field in models.ChatMessage._meta.fields]  # noqa:SLF001
 
         response = HttpResponse(content_type="text/csv")
-        response["Content-Disposition"] = "attachment; filename=chathistory.csv"
+        response["Content-Disposition"] = "attachment; filename=chat.csv"
         writer = csv.writer(response)
 
-        writer.writerow(history_field_names + message_field_names)
-        for chat_history in queryset:
-            for chat_message in chat_history.chatmessage_set.all():
-                writer.writerow(
-                    [getattr(chat_history, field) for field in history_field_names]
-                    + [getattr(chat_message, field) for field in message_field_names]
-                )
+        writer.writerow(["history_" + n for n in history_field_names] + ["message_" + n for n in message_field_names])
+        chat_message: models.ChatMessage
+        for chat in queryset:
+            for chat_message in chat.chatmessage_set.all():
+                row = [getattr(chat, field) for field in history_field_names] + [
+                    getattr(chat_message, field) for field in message_field_names
+                ]
+                writer.writerow(row)
 
         return response
 
     export_as_csv.short_description = "Export Selected"
-    fields = ["name", "users"]
+    fieldsets = [
+        (
+            None,
+            {
+                "fields": ["name", "user"],
+            },
+        ),
+        (
+            "AI Settings",
+            {
+                "classes": ["collapse"],
+                "fields": ["chat_backend", "temperature"],
+            },
+        ),
+    ]
     inlines = [ChatMessageInline]
-    list_display = ["name", "users", "created_at"]
-    list_filter = ["users"]
+    list_display = ["name", "user", "created_at"]
+    list_filter = ["user"]
     date_hierarchy = "created_at"
     actions = ["export_as_csv"]
 
 
+def reporting_dashboard(request):
+    return render(request, "report.html", {}, using="django")
+
+
 admin.site.register(models.User, UserAdmin)
 admin.site.register(models.File, FileAdmin)
-admin.site.register(models.ChatHistory, ChatHistoryAdmin)
+admin.site.register(models.Chat, ChatAdmin)
 admin.site.register(models.ChatMessage, ChatMessageAdmin)
-admin.site.register(models.BusinessUnit, BusinessUnitAdmin)
+admin.site.register(models.AISettings)
+admin.site.register(models.ChatMessageTokenUse, ChatMessageTokenUseAdmin)
+admin.site.register_view("report/", view=reporting_dashboard, name="Site report")

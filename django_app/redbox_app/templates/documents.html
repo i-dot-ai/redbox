@@ -1,18 +1,11 @@
 {% set pageTitle = "Documents" %}
 {% extends "base.html" %}
 {% from "macros/govuk-button.html" import govukButton %}
-{% from "macros/govuk-notification-banner.html" import govukNotificationBanner %}
 {% from "macros/iai-doc-list.html" import iaiDocList %}
 
 {% block content %}
 
-{% if COMPRESSION_ENABLED %}
-  {% compress js %}
-    <script src="{{ static('js/documents.js') }}"></script>
-  {% endcompress %}
-{% else %}
-  <script src="{{ static('js/documents.js') }}"></script>
-{% endif %}
+<script src="{{ static('js/documents.js') }}"></script>
 
 <div class="govuk-width-container">
 
@@ -39,7 +32,14 @@
       <h1 class="govuk-heading-l govuk-!-margin-top-5">Your documents</h1>
 
       <p class="govuk-body-l">Manage documents to use with your Redbox.</p>
-      <p class="govuk-body">Redbox generates a response using only the documents you upload. This is different to other Large Language Models (LLM) such as ChatGPT and&nbsp;Claude.</p>
+
+      <p class="govuk-body">Redbox is a service that lets you securely use a Large Language Model (LLM) with or without documents up to OFFICIAL SENSITIVE.</p>
+      <p class="govuk-body govuk-!-margin-bottom-1">This means you can:</p>
+      <ul class="govuk-list govuk-list--bullet govuk-body">
+        <li>Chat directly with an LLM (currently GPT-4o)</li>
+        <li>Upload OFFICIAL and OFFICIAL SENSITIVE documents that do not include personal data.</li>
+        <li>Summarise or ask questions of these documents.</li>
+      </ul>
 
       {#
       <div class="rb-doc-retention govuk-!-margin-bottom-5">
@@ -49,27 +49,30 @@
       #}
 
       {# New Docs list #}
-      {% if completed_files or processing_files %}
-        <h2 class="govuk-heading-m">Ready to use</h2>
-        <p>These documents are ready to chat with. Documents are deleted after 30 days</p>
+      <h2 class="govuk-heading-m govuk-!-margin-top-7">Ready to use</h2>
+      <div class="rb-docs">
+        <p class="rb-docs__show-if-no-docs">Documents that are ready to chat with will be displayed here.</p>
+        <p class="rb-docs__show-if-docs">These documents are ready to chat with. Documents are deleted after 30 days.</p>
         <doc-list>
           {{ iaiDocList(
             docs = completed_files,
             type = "complete"
           ) }}
         </doc-list>
-      {% endif %}
+      </div>
 
-      {% if processing_files %}
-        <h2 class="govuk-heading-m govuk-!-margin-top-7">Processing</h2>
-        <p>These documents will not be included in chat responses</p>
+      <h2 class="govuk-heading-m govuk-!-margin-top-7">Processing</h2>
+      <div class="rb-docs">
+        <p class="rb-docs__show-if-no-docs">Uploaded files that are processing will be displayed here.</p>
+        <p class="rb-docs__show-if-docs">These documents will not be included in chat responses.</p>
         {{ iaiDocList(
           docs = processing_files,
           type = "processing"
         ) }}
-      {% endif %}
+      </div>
 
-      <div class="govuk-button-group govuk-!-margin-top-7">
+      <h2 class="govuk-visually-hidden">General actions</h2>
+      <div class="govuk-button-group govuk-!-margin-top-8">
         {% if completed_files or processing_files %}
           {{ govukButton(
             text="Start chat",

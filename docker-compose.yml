@@ -1,4 +1,10 @@
 services:
+  unstructured:
+    image: quay.io/unstructured-io/unstructured-api:latest
+    ports:
+    - 8000:8000
+    networks:
+      - redbox-app-network
   django-app:
     image: django-app:latest
     build:
@@ -9,12 +15,13 @@ services:
         condition: service_healthy
       minio:
         condition: service_healthy
-      core-api:
-        condition: service_healthy
     networks:
       - redbox-app-network
     env_file:
-      - .env
+      - path: .env.integration
+        required: false
+      - path: .env
+        required: false
     volumes:
       - /app/django_app/frontend/node_modules
       - ./django_app:/app/django_app/
@@ -29,7 +36,10 @@ services:
   db:
     image: postgres:13
     env_file:
-      - .env
+      - path: .env.integration
+        required: false
+      - path: .env
+        required: false
     volumes:
       - local_postgres_data:/var/lib/postgresql/data:Z
     networks:
@@ -37,13 +47,13 @@ services:
     ports:
       - "5432:5432"
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready", "-d", "db_prod" ]
+      test: [ "CMD-SHELL", "pg_isready", "-U", "redbox-core", "-d", "db_prod" ]
       interval: 5s
       timeout: 30s
       retries: 24
       start_period: 30s
   requirements:
-    image: python:3.11
+    image: python:3.12
     profiles:
       - utils
     volumes:
@@ -64,52 +74,25 @@ services:
     image: redbox-worker:latest
     build:
       context: .
-      dockerfile: worker/Dockerfile
-      args:
-        - EMBEDDING_MODEL=${EMBEDDING_MODEL:-}
+      dockerfile: django_app/Dockerfile
+    command: "venv/bin/django-admin qcluster"
     env_file:
-      - .env
+      - path: .env.integration
+        required: false
+      - path: .env
+        required: false
     depends_on:
-      elasticsearch:
-        condition: service_healthy
-      minio:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    networks:
-      - redbox-app-network
-    restart: unless-stopped
-  core-api:
-    image: redbox-core-api:latest
-    build:
-      context: .
-      dockerfile: core_api/Dockerfile
-      args:
-        - EMBEDDING_MODEL=${EMBEDDING_MODEL:-}
-    ports:
-      - 5002:5002
-    environment:
-      - PORT=5002
-    env_file:
-      - .env
-    networks:
-      - redbox-app-network
-    depends_on:
-      elasticsearch:
-        condition: service_healthy
-      minio:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      worker:
+      unstructured:
         condition: service_started
+      elasticsearch:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+      django-app:
+        condition: service_healthy
+    networks:
+      - redbox-app-network
     restart: unless-stopped
-    healthcheck:
-      test: curl --fail http://localhost:5002/health || exit 1
-      interval: 5s
-      timeout: 30s
-      retries: 24
-      start_period: 60s
   minio:
     image: minio/minio
     expose:
@@ -174,23 +157,27 @@ services:
       elasticsearch:
         condition: service_healthy
     restart: unless-stopped
-  redis:
-    image: redis:7-alpine
-    restart: always
+  embeddings:
+    image: localai/localai:v2.18.1-aio-cpu #localai/localai:v2.18.1 should allow use of sentencetransformers backend
+    expose:
+      - "8080"
     ports:
-      - "6379:6379"
-    volumes:
-      - redis:/data/redis
-    env_file:
-      - .env
+      - "8080:8080"
+    environment:
+      - MODELS=/aio/cpu/embeddings.yaml #Use defaults embedding model for aio image. Only aio images available in ARM architecture
+      - MINIO_SECRET_KEY=minioadmin
+      - DEBUG=true
     networks:
       - redbox-app-network
+    volumes:
+      - ./data/embeddings/models:/models:cached
+      - ./data/embeddings/config:/config
+    restart: unless-stopped
     healthcheck:
-      test: [ "CMD-SHELL", "redis-cli ping | grep PONG" ]
-      interval: 5s
-      timeout: 30s
-      retries: 24
-      start_period: 60s
+      test: ["CMD", "curl", "-f", "http://localhost:8080/readyz"]
+      interval: 1m
+      timeout: 20m
+      retries: 5
 
 networks:
   redbox-app-network:
@@ -201,6 +188,3 @@ volumes:
   redbox-app-data:
   local_postgres_data: {}
   mlflow-data:
-  redis:
-    driver: local
-  redis-insight:
