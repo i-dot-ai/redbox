@@ -46,6 +46,10 @@ def parse_page_number(obj: int | list[int] | None) -> list[int]:
     raise ValueError(msg, type(obj))
 
 
+def escape_curly_brackets(text: str):
+    return text.replace("{", "{{").replace("}", "}}")
+
+
 class ChatConsumer(AsyncWebsocketConsumer):
     full_reply: ClassVar = []
     citations: ClassVar = []
@@ -100,7 +104,11 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 s3_keys=[f.unique_name for f in selected_files],
                 user_uuid=user.id,
                 chat_history=[
-                    ChainChatMessage(role=message.role, text=message.text) for message in message_history[:-1]
+                    ChainChatMessage(
+                        role=message.role,
+                        text=escape_curly_brackets(message.text),
+                    )
+                    for message in message_history[:-1]
                 ],
                 ai_settings=ai_settings,
             ),
