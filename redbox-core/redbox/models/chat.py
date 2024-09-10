@@ -1,6 +1,5 @@
 from enum import StrEnum
 
-from pydantic import BaseModel, Field
 
 
 class ChatRoute(StrEnum):

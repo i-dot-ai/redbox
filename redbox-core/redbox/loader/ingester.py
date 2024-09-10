@@ -49,7 +49,7 @@ def ingest_file(file_name: str) -> str | None:
             env=env,
             min_chunk_size=env.worker_ingest_min_chunk_size,
             max_chunk_size=env.worker_ingest_max_chunk_size,
-            overlap_chars=0
+            overlap_chars=0,
         ),
         s3_client=env.s3_client(),
         vectorstore=get_elasticsearch_store(es, es_index_name),
@@ -62,7 +62,7 @@ def ingest_file(file_name: str) -> str | None:
             env=env,
             min_chunk_size=env.worker_ingest_largest_chunk_size,
             max_chunk_size=env.worker_ingest_largest_chunk_size,
-            overlap_chars=env.worker_ingest_largest_chunk_overlap
+            overlap_chars=env.worker_ingest_largest_chunk_overlap,
         ),
         s3_client=env.s3_client(),
         vectorstore=get_elasticsearch_store_without_embeddings(es, es_index_name),

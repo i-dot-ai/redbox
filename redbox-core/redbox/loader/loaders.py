@@ -21,7 +21,15 @@ else:
 class UnstructuredChunkLoader:
     """Load, partition and chunk a document using local unstructured library"""
 
-    def __init__(self, chunk_resolution: ChunkResolution, env: Settings, min_chunk_size: int, max_chunk_size: int, overlap_chars: int = 0, overlap_all_chunks: bool = True):
+    def __init__(
+        self,
+        chunk_resolution: ChunkResolution,
+        env: Settings,
+        min_chunk_size: int,
+        max_chunk_size: int,
+        overlap_chars: int = 0,
+        overlap_all_chunks: bool = True,
+    ):
         self.chunk_resolution = chunk_resolution
         self.env = env
         self._min_chunk_size = min_chunk_size
@@ -45,7 +53,6 @@ class UnstructuredChunkLoader:
             files=files,
             data={
                 "strategy": "fast",
-
                 "chunking_strategy": "by_title",
                 "max_characters": self._max_chunk_size,
                 "combine_under_n_chars": self._min_chunk_size,

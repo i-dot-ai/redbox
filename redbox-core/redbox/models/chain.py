@@ -50,8 +50,8 @@ SELF_ROUTE_SYSTEM_PROMPT = (
     "You are a helpful assistant to UK Civil Servants. \n"
     "Given the list of extracted parts of long documents and a question, decide if a good answer "
     "to this question can be given based on the documents \n"
-    "If the question cannot be answered respond \"False\" \n"
-    "If the question can be answered with an accurate and helpful response then respond \"True\" \n"
+    'If the question cannot be answered respond "False" \n'
+    'If the question can be answered with an accurate and helpful response then respond "True" \n'
 )
 
 CHAT_MAP_SYSTEM_PROMPT = (
@@ -205,8 +205,9 @@ class LLMCallMetadata(BaseModel):
     output_tokens: int
     timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
-    class Config():
+    class Config:
         frozen = True
+
 
 class RequestMetadata(BaseModel):
     llm_calls: set[LLMCallMetadata] = Field(default_factory=set)
@@ -217,15 +218,18 @@ class RequestMetadata(BaseModel):
     def input_tokens(self):
         tokens_by_model = dict()
         for call_metadata in self.llm_calls:
-            tokens_by_model[call_metadata.model_name] = tokens_by_model.get(call_metadata.model_name, 0) + call_metadata.input_tokens
+            tokens_by_model[call_metadata.model_name] = (
+                tokens_by_model.get(call_metadata.model_name, 0) + call_metadata.input_tokens
+            )
         return tokens_by_model
 
-    
     @property
     def output_tokens(self):
         tokens_by_model = dict()
         for call_metadata in self.llm_calls:
-            tokens_by_model[call_metadata.model_name] = tokens_by_model.get(call_metadata.model_name, 0) + call_metadata.output_tokens
+            tokens_by_model[call_metadata.model_name] = (
+                tokens_by_model.get(call_metadata.model_name, 0) + call_metadata.output_tokens
+            )
         return tokens_by_model
 
 
@@ -240,11 +244,11 @@ def metadata_reducer(current: RequestMetadata | None, update: RequestMetadata | 
         return update
     if update is None:
         return current
-    
+
     return RequestMetadata(
         llm_calls=current.llm_calls | update.llm_calls,
         selected_files_total_tokens=update.selected_files_total_tokens or current.selected_files_total_tokens,
-        number_of_selected_files=update.number_of_selected_files or current.number_of_selected_files
+        number_of_selected_files=update.number_of_selected_files or current.number_of_selected_files,
     )
 
 

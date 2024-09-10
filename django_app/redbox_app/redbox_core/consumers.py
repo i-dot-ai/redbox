@@ -16,7 +16,14 @@ from websockets import ConnectionClosedError, WebSocketClientProtocol
 
 from redbox import Redbox
 from redbox.models import Settings
-from redbox.models.chain import AISettings, ChainChatMessage, RedboxQuery, RedboxState, RequestMetadata, metadata_reducer
+from redbox.models.chain import (
+    AISettings,
+    ChainChatMessage,
+    RedboxQuery,
+    RedboxState,
+    RequestMetadata,
+    metadata_reducer,
+)
 from redbox_app.redbox_core import error_messages
 from redbox_app.redbox_core.models import (
     Chat,

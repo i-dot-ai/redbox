@@ -122,54 +122,55 @@ def test_document_reducer(a: DocumentState, b: DocumentState, expected: Document
 
 
 GPT_4o_multiple_calls_1 = [
-        LLMCallMetadata(model_name="gpt-4o", input_tokens=0, output_tokens=0),
-        LLMCallMetadata(model_name="gpt-4o", input_tokens=10, output_tokens=10),
-        LLMCallMetadata(model_name="gpt-4o", input_tokens=10, output_tokens=10)
-    ]
+    LLMCallMetadata(model_name="gpt-4o", input_tokens=0, output_tokens=0),
+    LLMCallMetadata(model_name="gpt-4o", input_tokens=10, output_tokens=10),
+    LLMCallMetadata(model_name="gpt-4o", input_tokens=10, output_tokens=10),
+]
 
 GPT_4o_multiple_calls_1a = GPT_4o_multiple_calls_1 + [
-        LLMCallMetadata(model_name="gpt-4o", input_tokens=50, output_tokens=50),
-        LLMCallMetadata(model_name="gpt-4o", input_tokens=60, output_tokens=60)
-    ]
+    LLMCallMetadata(model_name="gpt-4o", input_tokens=50, output_tokens=50),
+    LLMCallMetadata(model_name="gpt-4o", input_tokens=60, output_tokens=60),
+]
 
 GPT_4o_multiple_calls_2 = [
-        LLMCallMetadata(model_name="gpt-4o", input_tokens=100, output_tokens=200),
-        LLMCallMetadata(model_name="gpt-4o", input_tokens=0, output_tokens=10),
-        LLMCallMetadata(model_name="gpt-4o", input_tokens=100, output_tokens=210),
-    ]
+    LLMCallMetadata(model_name="gpt-4o", input_tokens=100, output_tokens=200),
+    LLMCallMetadata(model_name="gpt-4o", input_tokens=0, output_tokens=10),
+    LLMCallMetadata(model_name="gpt-4o", input_tokens=100, output_tokens=210),
+]
 
 multiple_models_multiple_calls_1 = [
-        LLMCallMetadata(model_name="gpt-4o", input_tokens=100, output_tokens=200),
-        LLMCallMetadata(model_name="gpt-3.5", input_tokens=20, output_tokens=20),
-        LLMCallMetadata(model_name="gpt-4o", input_tokens=100, output_tokens=210),
-    ]
+    LLMCallMetadata(model_name="gpt-4o", input_tokens=100, output_tokens=200),
+    LLMCallMetadata(model_name="gpt-3.5", input_tokens=20, output_tokens=20),
+    LLMCallMetadata(model_name="gpt-4o", input_tokens=100, output_tokens=210),
+]
 
 multiple_models_multiple_calls_1a = multiple_models_multiple_calls_1 + [
-        LLMCallMetadata(model_name="gpt-4o", input_tokens=300, output_tokens=310),
-    ]
+    LLMCallMetadata(model_name="gpt-4o", input_tokens=300, output_tokens=310),
+]
+
 
 @pytest.mark.parametrize(
     ("a", "b", "expected"),
     [
         (
-            RequestMetadata(llm_calls=GPT_4o_multiple_calls_1), 
-            RequestMetadata(llm_calls=GPT_4o_multiple_calls_2), 
-            RequestMetadata(llm_calls=GPT_4o_multiple_calls_1 + GPT_4o_multiple_calls_2)
+            RequestMetadata(llm_calls=GPT_4o_multiple_calls_1),
+            RequestMetadata(llm_calls=GPT_4o_multiple_calls_2),
+            RequestMetadata(llm_calls=GPT_4o_multiple_calls_1 + GPT_4o_multiple_calls_2),
         ),
         (
-            RequestMetadata(llm_calls=GPT_4o_multiple_calls_1), 
-            RequestMetadata(llm_calls=GPT_4o_multiple_calls_1a), 
-            RequestMetadata(llm_calls=GPT_4o_multiple_calls_1a)
+            RequestMetadata(llm_calls=GPT_4o_multiple_calls_1),
+            RequestMetadata(llm_calls=GPT_4o_multiple_calls_1a),
+            RequestMetadata(llm_calls=GPT_4o_multiple_calls_1a),
         ),
         (
-            RequestMetadata(llm_calls=multiple_models_multiple_calls_1), 
-            RequestMetadata(llm_calls=GPT_4o_multiple_calls_2), 
-            RequestMetadata(llm_calls=multiple_models_multiple_calls_1 + GPT_4o_multiple_calls_2)
+            RequestMetadata(llm_calls=multiple_models_multiple_calls_1),
+            RequestMetadata(llm_calls=GPT_4o_multiple_calls_2),
+            RequestMetadata(llm_calls=multiple_models_multiple_calls_1 + GPT_4o_multiple_calls_2),
         ),
         (
-            RequestMetadata(llm_calls=GPT_4o_multiple_calls_1), 
-            RequestMetadata(llm_calls=GPT_4o_multiple_calls_1a), 
-            RequestMetadata(llm_calls=GPT_4o_multiple_calls_1a)
+            RequestMetadata(llm_calls=GPT_4o_multiple_calls_1),
+            RequestMetadata(llm_calls=GPT_4o_multiple_calls_1a),
+            RequestMetadata(llm_calls=GPT_4o_multiple_calls_1a),
         ),
     ],
 )

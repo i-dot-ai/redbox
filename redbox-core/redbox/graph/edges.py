@@ -89,9 +89,6 @@ def build_keyword_detection_conditional(*allowed_routes: ChatRoute) -> Runnable:
     return _keyword_detection_conditional
 
 
-
-
-
 def documents_selected_conditional(state: RedboxState) -> bool:
     return len(state["request"].s3_keys) > 0
 

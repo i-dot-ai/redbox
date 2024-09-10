@@ -6,7 +6,7 @@ from uuid import uuid4
 from functools import reduce
 
 from langchain.schema import StrOutputParser
-from langchain_core.runnables import RunnableParallel, RunnablePassthrough, RunnableLambda
+from langchain_core.runnables import RunnableParallel, RunnablePassthrough
 from langchain_core.vectorstores import VectorStoreRetriever
 
 from redbox.chains.components import get_tokeniser, get_chat_llm
@@ -28,8 +28,7 @@ re_keyword_pattern = re.compile(r"@(\w+)")
 
 
 def build_retrieve_pattern(
-    retriever: VectorStoreRetriever, 
-    final_source_chain: bool = False
+    retriever: VectorStoreRetriever, final_source_chain: bool = False
 ) -> Callable[[RedboxState], dict[str, Any]]:
     """Returns a function that uses state["request"] and state["text"] to set state["documents"]."""
     retriever_chain = RunnableParallel({"documents": retriever | structure_documents})
@@ -180,23 +179,24 @@ def build_set_text_pattern(text: str, final_response_chain: bool = False):
 
 
 def build_set_metadata_pattern():
-
     def _set_metadata_pattern(state: RedboxState):
         flat_docs = flatten_document_state(state.get("documents", {}))
         return {
             "metadata": RequestMetadata(
                 selected_files_total_tokens=sum(map(lambda d: d.metadata.get("token_count", 0), flat_docs)),
-                number_of_selected_files=len(state["request"].s3_keys)
+                number_of_selected_files=len(state["request"].s3_keys),
             )
         }
+
     return _set_metadata_pattern
 
 
 def build_error_pattern(text: str, route_name: str | None):
-
     def _error_pattern(state: RedboxState):
-        return  build_set_text_pattern(text, final_response_chain=True)(state) \
-                | build_set_route_pattern(route_name)(state)
+        return build_set_text_pattern(text, final_response_chain=True)(state) | build_set_route_pattern(route_name)(
+            state
+        )
+
     return _error_pattern
 
 
@@ -212,13 +212,20 @@ def empty_process(state: RedboxState) -> None:
 
 def build_log_node(message: str):
     def _log_node(state: RedboxState):
-        log.info(json.dumps({
-            "user_uuid": str(state["request"].user_uuid),
-            "document_metadata": {group_id:{doc_id: d.metadata for doc_id,d in group_documents.items()} 
-                                  for group_id, group_documents in state["documents"]},
-            "text": state["text"] if len(state["text"]) < 32 else f"{state['text'][:29]}...",
-            "route": state["route_name"],
-            "message": message
-        }))
+        log.info(
+            json.dumps(
+                {
+                    "user_uuid": str(state["request"].user_uuid),
+                    "document_metadata": {
+                        group_id: {doc_id: d.metadata for doc_id, d in group_documents.items()}
+                        for group_id, group_documents in state["documents"]
+                    },
+                    "text": state["text"] if len(state["text"]) < 32 else f"{state['text'][:29]}...",
+                    "route": state["route_name"],
+                    "message": message,
+                }
+            )
+        )
         return None
+
     return _log_node

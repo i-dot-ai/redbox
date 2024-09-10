@@ -177,5 +177,9 @@ def test_elbow_filter(scores: list[float], target_len: int):
 def test_to_request_metadata(output: dict, expected: RequestMetadata):
     result = to_request_metadata.invoke(output)
     # We assert on token counts here as the id generation causes the LLMCallMetadata objects not to match
-    assert result.input_tokens == expected.input_tokens, f"Expected: {expected.input_tokens} Result: {result.input_tokens}"
-    assert result.output_tokens == expected.output_tokens, f"Expected: {expected.output_tokens} Result: {result.output_tokens}"
+    assert (
+        result.input_tokens == expected.input_tokens
+    ), f"Expected: {expected.input_tokens} Result: {result.input_tokens}"
+    assert (
+        result.output_tokens == expected.output_tokens
+    ), f"Expected: {expected.output_tokens} Result: {result.output_tokens}"

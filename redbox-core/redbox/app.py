@@ -25,7 +25,7 @@ class Redbox:
         metadata_retriever: VectorStoreRetriever | None = None,
         env: Settings | None = None,
         debug: bool = False,
-        interrupt_after: list[str] = []
+        interrupt_after: list[str] = [],
     ):
         _env = env or Settings()
         _all_chunks_retriever = all_chunks_retriever or get_all_chunks_retriever(_env)
@@ -66,11 +66,8 @@ class Redbox:
 
     def get_available_keywords(self) -> dict[ChatRoute, str]:
         return ROUTABLE_KEYWORDS
-    
+
     def draw(self, output_path="RedboxAIArchitecture.png"):
         from langchain_core.runnables.graph import MermaidDrawMethod
-        self.graph(xray=True).draw_mermaid_png(
-            draw_method=MermaidDrawMethod.API,
-            output_file_path=output_path
-        )
 
+        self.graph(xray=True).draw_mermaid_png(draw_method=MermaidDrawMethod.API, output_file_path=output_path)

@@ -16,7 +16,7 @@ from redbox.test.data import (
     generate_test_cases,
     mock_all_chunks_retriever,
     mock_parameterised_retriever,
-    mock_metadata_retriever
+    mock_metadata_retriever,
 )
 from redbox.models.chain import metadata_reducer
 
@@ -67,15 +67,13 @@ TEST_CASES = [
                 RedboxTestData(
                     2,
                     140_000,
-                    expected_llm_response= SELF_ROUTE_TO_CHAT 
-                    + ["Map Step Response"] * 2 
-                    + ["Testing Response 1"],
+                    expected_llm_response=SELF_ROUTE_TO_CHAT + ["Map Step Response"] * 2 + ["Testing Response 1"],
                     expected_route=ChatRoute.chat_with_docs_map_reduce,
                 ),
                 RedboxTestData(
                     4,
                     140_000,
-                    expected_llm_response= SELF_ROUTE_TO_CHAT
+                    expected_llm_response=SELF_ROUTE_TO_CHAT
                     + ["Map Step Response"] * 4
                     + ["Merge Per Document Response"] * 2
                     + ["Testing Response 1"],
@@ -90,7 +88,7 @@ TEST_CASES = [
                 RedboxTestData(
                     2,
                     200_000,
-                    expected_llm_response= SELF_ROUTE_TO_CHAT 
+                    expected_llm_response=SELF_ROUTE_TO_CHAT
                     + ["Map Step Response"] * 2
                     + ["Merge Per Document Response"]
                     + ["Testing Response 1"],
@@ -118,7 +116,7 @@ TEST_CASES = [
                     10,
                     2_000_000,
                     expected_llm_response=["These documents are too large to work with."],
-                    expected_route=ErrorRoute.files_too_large
+                    expected_route=ErrorRoute.files_too_large,
                 ),
             ],
             test_id="Document too big for system",
@@ -210,7 +208,7 @@ async def test_streaming(test: RedboxChatTestCase, env: Settings, mocker: Mocker
             input=RedboxState(request=test_case.query),
             response_tokens_callback=streaming_response_handler,
             metadata_tokens_callback=metadata_response_handler,
-            route_name_callback=streaming_route_name_handler
+            route_name_callback=streaming_route_name_handler,
         )
 
     final_state = RedboxState(response)
@@ -224,10 +222,13 @@ async def test_streaming(test: RedboxChatTestCase, env: Settings, mocker: Mocker
     number_of_selected_files = len(test_case.query.s3_keys)
     metadata_response = metadata_reducer(
         RequestMetadata(
-            selected_files_total_tokens= 0 if number_of_selected_files == 0 else (int(test_case.test_data.tokens_in_all_docs / number_of_selected_files) * number_of_selected_files),
-            number_of_selected_files=number_of_selected_files
-        ), 
-        metadata_events)
+            selected_files_total_tokens=0
+            if number_of_selected_files == 0
+            else (int(test_case.test_data.tokens_in_all_docs / number_of_selected_files) * number_of_selected_files),
+            number_of_selected_files=number_of_selected_files,
+        ),
+        metadata_events,
+    )
 
     assert (
         final_state["text"] == llm_response

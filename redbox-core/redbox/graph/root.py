@@ -24,7 +24,6 @@ from redbox.graph.nodes.processes import (
     build_retrieve_pattern,
     build_stuff_pattern,
     build_passthrough_pattern,
-    build_set_text_pattern,
     empty_process,
     clear_documents_process,
     set_self_route_from_llm_answer,
@@ -44,11 +43,7 @@ ROUTABLE_KEYWORDS = {ChatRoute.search: "Search for an answer to the question in 
 # Subgraphs
 
 
-def get_self_route_graph(
-    retriever: VectorStoreRetriever,
-    prompt_set: PromptSet,
-    debug: bool = False
-):
+def get_self_route_graph(retriever: VectorStoreRetriever, prompt_set: PromptSet, debug: bool = False):
     builder = StateGraph(RedboxState)
 
     # Processes
@@ -92,7 +87,7 @@ def get_search_graph(
     prompt_set: PromptSet = PromptSet.Search,
     debug: bool = False,
     final_sources: bool = True,
-    final_response: bool = True
+    final_response: bool = True,
 ) -> CompiledGraph:
     """Creates a subgraph for retrieval augmented generation (RAG)."""
     builder = StateGraph(RedboxState)
@@ -138,14 +133,13 @@ def get_chat_with_documents_graph(
     builder.add_node("p_clear_documents", clear_documents_process)
     builder.add_node(
         "p_too_large_error",
-        build_error_pattern(
-            text="These documents are too large to work with.",
-            route_name=ErrorRoute.files_too_large
-        ),
+        build_error_pattern(text="These documents are too large to work with.", route_name=ErrorRoute.files_too_large),
     )
     builder.add_node("p_self_route", get_self_route_graph(parameterised_retriever, PromptSet.SelfRoute))
     builder.add_node("p_search", get_search_graph(parameterised_retriever, PromptSet.Search))
-    builder.add_node("p_retrieve_all_chunks", build_retrieve_pattern(retriever=all_chunks_retriever, final_source_chain=True))
+    builder.add_node(
+        "p_retrieve_all_chunks", build_retrieve_pattern(retriever=all_chunks_retriever, final_source_chain=True)
+    )
 
     # Log Processes
     builder.add_node("p_log_self_route_search", build_log_node("Selected search from self route"))
@@ -174,10 +168,14 @@ def get_chat_with_documents_graph(
             "pass": "p_set_chat_docs_route",
         },
     )
-    builder.add_conditional_edges("p_self_route", lambda state: state.get("route_name"), {
-        ChatRoute.search.value: "p_log_self_route_search",
-        ChatRoute.chat_with_docs_map_reduce.value: "p_log_self_route_chat"
-    })
+    builder.add_conditional_edges(
+        "p_self_route",
+        lambda state: state.get("route_name"),
+        {
+            ChatRoute.search.value: "p_log_self_route_search",
+            ChatRoute.chat_with_docs_map_reduce.value: "p_log_self_route_chat",
+        },
+    )
     builder.add_edge("p_log_self_route_search", "p_search")
     builder.add_edge("p_log_self_route_chat", "p_set_chat_docs_large_route")
     builder.add_edge("p_set_chat_docs_route", "p_summarise")
@@ -230,10 +228,7 @@ def get_chat_with_documents_graph(
     return builder.compile(debug=debug)
 
 
-def get_retrieve_metadata_graph(
-        metadata_retriever: VectorStoreRetriever,
-        debug: bool = False
-):
+def get_retrieve_metadata_graph(metadata_retriever: VectorStoreRetriever, debug: bool = False):
     builder = StateGraph(RedboxState)
 
     builder.add_node("p_retrieve_metadata", build_retrieve_pattern(retriever=metadata_retriever))
@@ -261,7 +256,9 @@ def get_root_graph(
     # Subgraphs
     chat_subgraph = get_chat_graph(debug=debug)
     rag_subgraph = get_search_graph(retriever=parameterised_retriever, debug=debug)
-    cwd_subgraph = get_chat_with_documents_graph(all_chunks_retriever=all_chunks_retriever, parameterised_retriever=parameterised_retriever, debug=debug)
+    cwd_subgraph = get_chat_with_documents_graph(
+        all_chunks_retriever=all_chunks_retriever, parameterised_retriever=parameterised_retriever, debug=debug
+    )
     metadata_subgraph = get_retrieve_metadata_graph(metadata_retriever=metadata_retriever)
 
     # Processes
