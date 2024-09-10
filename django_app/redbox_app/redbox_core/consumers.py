@@ -137,7 +137,10 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 route=self.route,
                 metadata=self.metadata,
             )
-            await self.send_to_client("end", {"message_id": message.id, "title": title, "session_id": session.id})
+            await self.send_to_client(
+                "end",
+                {"message_id": message.id, "title": title, "session_id": session.id},
+            )
 
         except RateLimitError as e:
             logger.exception("Rate limit error", exc_info=e)
@@ -237,6 +240,14 @@ class ChatConsumer(AsyncWebsocketConsumer):
         files = File.objects.filter(original_file__in=s3_keys)
 
         async for file in files:
-            await self.send_to_client("source", {"url": str(file.url), "original_file_name": file.original_file_name})
+            await self.send_to_client(
+                "source",
+                {"url": str(file.url), "original_file_name": file.original_file_name},
+            )
         for file in files:
-            self.citations.append((file, [doc for doc in response if doc.metadata["file_name"] == file.unique_name]))
+            self.citations.append(
+                (
+                    file,
+                    [doc for doc in response if doc.metadata["file_name"] == file.unique_name],
+                )
+            )

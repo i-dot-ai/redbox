@@ -14,6 +14,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.views import View
+from django.views.decorators.csrf import csrf_protect
 from yarl import URL
 
 from redbox_app.redbox_core.models import AbstractAISettings, Chat, ChatMessage, ChatRoleEnum, File
@@ -67,6 +68,47 @@ class ChatsView(View):
             template_name="chats.html",
             context=context,
         )
+
+    @method_decorator(login_required)
+    @method_decorator(csrf_protect)
+    # IMPORTANT! This is required for progressive enhancement. Not all users may be using JS.
+    def post(self, request: HttpRequest, chat_id: uuid.UUID | None = None) -> HttpResponse:
+        # Get basic request data
+        user = request.user
+        form_data = getattr(
+            request, "_post", None
+        )  # request.POST doesn't work here; the channels docs are unclear about the ASGI response format
+        # TODO: use .loads and schema 👻 to get the form data
+        if not form_data:
+            return redirect(reverse("chats"))
+        user_message = form_data.get("message")
+
+        # Get or create Chat session
+        if session_id := form_data.get("session-id"):
+            session = get_object_or_404(Chat, id=session_id)
+            if session.user != user:
+                return redirect(reverse("chats"))
+        else:
+            session = Chat.objects.create(name=user_message[: settings.CHAT_TITLE_LENGTH], user=user)
+
+        # Create new ChatMessage
+        # TODO: update names in chats.html and change this to something more legible
+        selected_file_uuids = [v for k, v in form_data.items() if k[0:5] == "file-"]
+        selected_files = File.objects.filter(id__in=selected_file_uuids, user=user)
+
+        chat_message = ChatMessage.objects.create(chat=session, text=user_message, role=ChatRoleEnum.user)
+
+        if selected_files:
+            chat_message.selected_files.set(selected_files)
+
+        # Enqueue request to LLM
+        # (including existing messages)
+
+        # Redirect to chat view
+        # This is being slowed down to allow time for the LLM response
+        # while making sure the user request doesn't time out
+
+        return redirect("chats", chat_id=session.id)
 
     @staticmethod
     def decorate_selected_files(all_files: Sequence[File], messages: Sequence[ChatMessage]) -> None:
