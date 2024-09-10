@@ -29,11 +29,13 @@ class ChatsView(View):
 
         messages: Sequence[ChatMessage] = []
         current_chat = None
+        awaiting_llm_response = False
         if chat_id:
             current_chat = get_object_or_404(Chat, id=chat_id)
             if current_chat.user != request.user:
                 return redirect(reverse("chats"))
             messages = ChatMessage.get_messages_ordered_by_citation_priority(chat_id)
+            awaiting_llm_response = current_chat.awaiting_llm_response
         endpoint = URL.build(scheme=settings.WEBSOCKET_SCHEME, host=request.get_host(), path=r"/ws/chat/")
 
         completed_files, processing_files = File.get_completed_and_processing_files(request.user)
@@ -61,6 +63,7 @@ class ChatsView(View):
                 }
                 for _, llm in AbstractAISettings.ChatBackend.choices
             ],
+            "awaiting_llm_response": awaiting_llm_response,
         }
 
         return render(

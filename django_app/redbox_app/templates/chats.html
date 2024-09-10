@@ -117,6 +117,17 @@
 
             {# CSR messages are inserted here #}
 
+            {% if awaiting_llm_response %}
+              <div class="govuk-warning-text">
+                <span class="govuk-warning-text__icon" aria-hidden="true">!</span>
+                <strong class="govuk-warning-text__text">
+                  <span class="govuk-visually-hidden">Warning</span>
+                  Awaiting response from the LLM, please refresh the page.
+                  <br>If this continues, <a href="mailto:{{contact_email}}">contact support</a>.
+                </strong>
+              </div>
+            {% endif %}
+
           </div>
 
           <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}"/>

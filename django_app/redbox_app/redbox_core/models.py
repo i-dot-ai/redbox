@@ -407,6 +407,7 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
 class Chat(UUIDPrimaryKeyBase, TimeStampedModel, AbstractAISettings):
     name = models.TextField(max_length=1024, null=False, blank=False)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
+    awaiting_llm_response = models.BooleanField(default=False)
 
     def __str__(self) -> str:  # pragma: no cover
         return self.name or ""
