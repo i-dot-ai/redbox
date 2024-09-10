@@ -19,8 +19,8 @@ redbox_app = {path="../django_app", develop=true}
 backoff = "^2.2.1"
 pymediainfo = "^6.1.0"
 charset-normalizer = "^3.3.2"
-textract = "^1.6.5"
 langgraph-checkpoint-postgres = "^1.0.6"
+textract-py3 = "^2.0.1"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.2.2"
@@ -33,6 +33,7 @@ pandas = "^2.2.2"
 dj-notebook = "^0.7.0"
 django = "^5.0.7"
 jsonlines = "^4.0.0"
+icecream = "^2.1.3"
 
 [build-system]
 requires = ["poetry-core"]
