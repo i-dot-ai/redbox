@@ -72,44 +72,48 @@ class ProfileOverlay extends HTMLElement {
       });
     });
 
+    // Send data on dialog close
+    dialog.addEventListener("close", () => {
+      this.currentPage = 0;
+
+      /**
+       * Sends data to endpoint, retrying if necessary
+       * @param {FormData} data
+       * @param {number} retry
+       */
+      const sendData = async (data, retry = 0) => {
+        const MAX_RETRIES = 10;
+        const RETRY_INTERVAL_SECONDS = 10;
+        const csrfToken =
+          /** @type {HTMLInputElement | null} */ (
+            this.querySelector('[name="csrfmiddlewaretoken"]')
+          )?.value || "";
+        try {
+          await fetch(`/update-demographics`, {
+            method: "POST",
+            headers: {
+              "X-CSRFToken": csrfToken,
+            },
+            body: data,
+          });
+        } catch (err) {
+          if (retry < MAX_RETRIES) {
+            window.setTimeout(() => {
+              sendData(data, retry + 1);
+            }, RETRY_INTERVAL_SECONDS * 1000);
+          }
+        }
+      };
+
+      // Format and send data
+      const formData = new FormData(this.querySelector("form") || undefined);
+      sendData(formData);
+    });
+
     let closeButtons = this.querySelectorAll(`button[data-action="close"]`);
     closeButtons.forEach((closeButton) => {
       closeButton.addEventListener("click", () => {
-        this.currentPage = 0;
         this.querySelector("dialog")?.close();
-
-        /**
-         * Sends data to endpoint, retrying if necessary
-         * @param {FormData} data
-         * @param {number} retry
-         */
-        const sendData = async (data, retry = 0) => {
-          const MAX_RETRIES = 10;
-          const RETRY_INTERVAL_SECONDS = 10;
-          const csrfToken =
-            /** @type {HTMLInputElement | null} */ (
-              this.querySelector('[name="csrfmiddlewaretoken"]')
-            )?.value || "";
-          try {
-            await fetch(`/update-demographics`, {
-              method: "POST",
-              headers: {
-                "X-CSRFToken": csrfToken,
-              },
-              body: data,
-            });
-          } catch (err) {
-            if (retry < MAX_RETRIES) {
-              window.setTimeout(() => {
-                sendData(data, retry + 1);
-              }, RETRY_INTERVAL_SECONDS * 1000);
-            }
-          }
-        };
-
-        // Format and send data
-        const formData = new FormData(this.querySelector("form") || undefined);
-        sendData(formData);
       });
     });
   }
