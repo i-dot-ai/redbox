@@ -6,8 +6,9 @@ from langchain_elasticsearch.vectorstores import BM25Strategy, ElasticsearchStor
 
 from redbox.chains.components import get_embeddings
 from redbox.chains.ingest import ingest_from_loader
-from redbox.loader import UnstructuredLargeChunkLoader, UnstructuredTitleLoader
+from redbox.loader.loaders import UnstructuredChunkLoader
 from redbox.models import Settings
+from redbox.models.file import ChunkResolution
 
 if TYPE_CHECKING:
     from mypy_boto3_s3.client import S3Client
@@ -43,14 +44,26 @@ def ingest_file(file_name: str) -> str | None:
     es.indices.create(index=es_index_name, ignore=[400])
 
     chunk_ingest_chain = ingest_from_loader(
-        document_loader_type=UnstructuredTitleLoader,
+        loader=UnstructuredChunkLoader(
+            chunk_resolution=ChunkResolution.normal,
+            env=env,
+            min_chunk_size=env.worker_ingest_min_chunk_size,
+            max_chunk_size=env.worker_ingest_max_chunk_size,
+            overlap_chars=0
+        ),
         s3_client=env.s3_client(),
         vectorstore=get_elasticsearch_store(es, es_index_name),
         env=env,
     )
 
     large_chunk_ingest_chain = ingest_from_loader(
-        document_loader_type=UnstructuredLargeChunkLoader,
+        loader=UnstructuredChunkLoader(
+            chunk_resolution=ChunkResolution.largest,
+            env=env,
+            min_chunk_size=env.worker_ingest_largest_chunk_size,
+            max_chunk_size=env.worker_ingest_largest_chunk_size,
+            overlap_chars=env.worker_ingest_largest_chunk_overlap
+        ),
         s3_client=env.s3_client(),
         vectorstore=get_elasticsearch_store_without_embeddings(es, es_index_name),
         env=env,
