@@ -61,6 +61,9 @@ body:has(.iai-environment-warning) main:has(.iai-chat-input) {
     top: 6.5rem;
   }
   .iai-panel__scrollable {
+    max-height: calc(50vh - 12rem);
+  }
+  main:has(#llm-selector) .iai-panel__scrollable {
     max-height: calc(50vh - 15rem);
   }
 }
