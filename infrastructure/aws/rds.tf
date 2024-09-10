@@ -15,6 +15,6 @@ module "rds" {
   service_sg_ids          = [
     module.worker.ecs_sg_id,
   ]
-  secret_tags         = { "platform:secret-purpose" : "general" }
+  secret_tags         = { "platform:secret-purpose" = "general" }
   publicly_accessible = var.publicly_accessible
 }
