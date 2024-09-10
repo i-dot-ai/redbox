@@ -335,6 +335,10 @@ class ChatsPage(SignedInBasePage):
         return "Chats - Redbox"
 
     @property
+    def selected_llm(self) -> str:
+        return self.page.locator("#llm-selector").input_value()
+
+    @property
     def write_message(self) -> str:
         return self.page.locator("#message").input_value()
 
