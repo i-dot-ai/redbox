@@ -1,8 +1,7 @@
-import pandas as pd
 import plotly.express as px
 from dash import dcc, html
 from dash.dependencies import Input, Output
-from django.db.models import Count
+from django.db.models import Count, Sum
 from django.db.models.functions import TruncDate
 from plotly.graph_objects import Figure
 
@@ -39,12 +38,25 @@ from redbox_app.redbox_core import models  # Must be imported after django.setup
 app.layout = html.Div(
     [
         dcc.Graph(id="line-chart"),
+        html.P("Select metric"),
         dcc.Dropdown(
-            id="dropdown",
+            id="metric",
             options=[
-                {"label": "Daily count", "value": "Count"},
+                {"label": "message count", "value": "message_count"},
+                {"label": "unique users", "value": "unique_users"},
+                {"label": "tokens used", "value": "token_count"},
             ],
-            value="Count",
+            value="message_count",
+        ),
+        html.P("Select breakdown"),
+        dcc.Dropdown(
+            id="breakdown",
+            options=[
+                {"label": "route", "value": "route"},
+                {"label": "model", "value": "chat__chat_backend"},
+                {"label": "none", "value": None},
+            ],
+            value="route",
         ),
     ]
 )
@@ -54,29 +66,27 @@ app.layout = html.Div(
 # ----------#
 
 
-@app.callback(Output("line-chart", "figure"), [Input("dropdown", "value")])
-def update_graph(selected_metric: str, **kwargs) -> Figure:  # noqa: ARG001
+@app.callback(Output("line-chart", "figure"), [Input("metric", "value"), Input("breakdown", "value")])
+def update_graph(metric: str, breakdown: str | None, **kwargs) -> Figure:  # noqa: ARG001
     """A standard plotly callback.
 
     Note **kwargs must be used for compatibility across both Dash and DjangoDash.
     """
+    breakdown_args = [breakdown] if breakdown else []
     queryset = (
         models.ChatMessage.objects.annotate(day=TruncDate("created_at"))
-        .values("day")
-        .annotate(count=Count("id"))
+        .values("day", *breakdown_args)
+        .annotate(
+            message_count=Count("id", distinct=True),
+            unique_users=Count("chat__user", distinct=True),
+            token_count=Sum("chatmessagetokenuse__token_count"),
+        )
         .order_by("day")
+        .values("day", "message_count", "unique_users", "token_count", *breakdown_args)
     )
 
-    data = (
-        pd.DataFrame.from_records(queryset.values())
-        .filter(["created_at", "count"])
-        .assign(created_at=lambda x: pd.to_datetime(x["created_at"].dt.strftime("%Y-%m-%d")))
-        .rename(columns={"created_at": "Date", "count": "Count"})
-        .groupby(["Date"], as_index=False)
-        .sum()
-    )
-
-    return px.line(data, x="Date", y=selected_metric, title="Messages per day")
+    breakdown_colours = {"color": breakdown} if breakdown else {}
+    return px.bar(queryset, x="day", y=metric, title="use per day", **breakdown_colours)
 
 
 if __name__ == "__main__":
