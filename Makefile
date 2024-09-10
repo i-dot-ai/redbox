@@ -114,7 +114,7 @@ PREV_IMAGE_TAG=$$(git rev-parse HEAD~1)
 IMAGE_TAG=$$(git rev-parse HEAD)
 
 tf_build_args=-var "image_tag=$(IMAGE_TAG)"
-DOCKER_SERVICES=$$(docker compose config --services | grep -v mlflow)
+DOCKER_SERVICES=$$(docker compose config --services | grep -Ev 'mlflow|worker')
 
 AUTO_APPLY_RESOURCES = module.django-app.aws_ecs_task_definition.aws-ecs-task \
                        module.django-app.aws_ecs_service.aws-ecs-service \
