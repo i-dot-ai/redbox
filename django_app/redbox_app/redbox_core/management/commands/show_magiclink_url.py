@@ -1,11 +1,12 @@
 import logging
 from argparse import ArgumentParser
 
+from django.contrib.auth import get_user_model
 from django.core.management import BaseCommand, CommandError
 from django.db.models import Max
 from magic_link.models import MagicLink
 
-from redbox_app.redbox_core.models import User
+User = get_user_model()
 
 logger = logging.getLogger(__name__)
 
