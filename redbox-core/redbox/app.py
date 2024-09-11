@@ -1,15 +1,14 @@
 from langchain_core.vectorstores import VectorStoreRetriever
 
+from redbox.models.graph import FINAL_RESPONSE_TAG, ROUTE_NAME_TAG, SOURCE_DOCUMENTS_TAG
 from redbox.graph.root import get_root_graph
 from redbox.models.chain import RedboxState
 from redbox.models.chat import ChatRoute
+from redbox.models.graph import RedboxEventType
 from redbox.models.settings import Settings
 from redbox.chains.components import get_all_chunks_retriever, get_metadata_retriever, get_parameterised_retriever
-from redbox.graph.root import (
+from redbox.models.graph import (
     ROUTABLE_KEYWORDS,
-    ROUTE_NAME_TAG,
-    FINAL_RESPONSE_TAG,
-    SOURCE_DOCUMENTS_TAG,
 )
 
 
@@ -25,7 +24,6 @@ class Redbox:
         metadata_retriever: VectorStoreRetriever | None = None,
         env: Settings | None = None,
         debug: bool = False,
-        interrupt_after: list[str] = [],
     ):
         _env = env or Settings()
         _all_chunks_retriever = all_chunks_retriever or get_all_chunks_retriever(_env)
@@ -54,11 +52,13 @@ class Redbox:
                 content = event["data"]["output"]
                 if isinstance(content, str):
                     await response_tokens_callback(content)
+            elif kind == "on_custom_event" and event["name"] == RedboxEventType.response_tokens.value:
+                await response_tokens_callback(event["data"])
             elif kind == "on_chain_end" and ROUTE_NAME_TAG in tags:
-                await route_name_callback(event["data"]["output"])
+                await route_name_callback(event["data"]["output"]["route_name"])
             elif kind == "on_retriever_end" and SOURCE_DOCUMENTS_TAG in tags:
                 await documents_callback(event["data"]["output"])
-            elif kind == "on_custom_event" and event["name"] == "on_metadata_generation":
+            elif kind == "on_custom_event" and event["name"] == RedboxEventType.on_metadata_generation.value:
                 await metadata_tokens_callback(event["data"])
             elif kind == "on_chain_end" and event["name"] == "LangGraph":
                 final_state = RedboxState(**event["data"]["output"])

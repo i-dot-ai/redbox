@@ -23,8 +23,8 @@ from redbox.models.chain import metadata_reducer
 
 LANGGRAPH_DEBUG = True
 
-SELF_ROUTE_TO_SEARCH = ["Condense self route question", "True"]
-SELF_ROUTE_TO_CHAT = ["Condense self route question", "False"]
+SELF_ROUTE_TO_SEARCH = ["Condense self route question", "Testing Response - Search"]
+SELF_ROUTE_TO_CHAT = ["Condense self route question", "unanswerable"]
 
 TEST_CASES = [
     test_case
@@ -103,7 +103,7 @@ TEST_CASES = [
                 RedboxTestData(
                     2,
                     200_000,
-                    expected_llm_response=SELF_ROUTE_TO_SEARCH + ["Condense Question", "Testing Response 1"],
+                    expected_llm_response=SELF_ROUTE_TO_SEARCH,  # + ["Condense Question", "Testing Response 1"],
                     expected_route=ChatRoute.search,
                 ),
             ],
@@ -201,17 +201,17 @@ async def test_streaming(test: RedboxChatTestCase, env: Settings, mocker: Mocker
 
     llm = GenericFakeChatModel(messages=iter(test_case.test_data.expected_llm_response))
 
-    with (
-        mocker.patch("redbox.graph.nodes.processes.get_chat_llm", return_value=llm),
-    ):
-        response = await app.run(
-            input=RedboxState(request=test_case.query),
-            response_tokens_callback=streaming_response_handler,
-            metadata_tokens_callback=metadata_response_handler,
-            route_name_callback=streaming_route_name_handler,
-        )
+    (mocker.patch("redbox.graph.nodes.processes.get_chat_llm", return_value=llm),)
+    response = await app.run(
+        input=RedboxState(request=test_case.query),
+        response_tokens_callback=streaming_response_handler,
+        metadata_tokens_callback=metadata_response_handler,
+        route_name_callback=streaming_route_name_handler,
+    )
 
     final_state = RedboxState(response)
+
+    assert route_name is not None, f"No Route Name event fired! - Final State: {final_state}"
 
     # Bit of a bodge to retain the ability to check that the LLM streaming is working in most cases
     if not route_name.startswith("error"):

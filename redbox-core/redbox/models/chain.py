@@ -47,11 +47,10 @@ RETRIEVAL_SYSTEM_PROMPT = (
 )
 
 SELF_ROUTE_SYSTEM_PROMPT = (
-    "You are a helpful assistant to UK Civil Servants. \n"
-    "Given the list of extracted parts of long documents and a question, decide if a good answer "
-    "to this question can be given based on the documents \n"
-    'If the question cannot be answered respond "False" \n'
-    'If the question can be answered with an accurate and helpful response then respond "True" \n'
+    "You are a helpful assistant to UK Civil Servants. "
+    "Given the list of extracted parts of long documents and a question, answer the question if possible.\n"
+    "If the question cannot be answered respond with only the word 'unanswerable' \n"
+    "If the question can be answered accurately from the documents given then give that response \n"
 )
 
 CHAT_MAP_SYSTEM_PROMPT = (
@@ -205,8 +204,7 @@ class LLMCallMetadata(BaseModel):
     output_tokens: int
     timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
-    class Config:
-        frozen = True
+    model_config = {"frozen": True}
 
 
 class RequestMetadata(BaseModel):

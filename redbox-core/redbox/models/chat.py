@@ -1,7 +1,6 @@
 from enum import StrEnum
 
 
-
 class ChatRoute(StrEnum):
     search = "search"
     chat = "chat"

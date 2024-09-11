@@ -6,6 +6,7 @@ from langchain_core.callbacks.manager import dispatch_custom_event
 from langchain_core.runnables import RunnableLambda
 
 from redbox.models.chain import DocumentState, LLMCallMetadata, RedboxState, RequestMetadata
+from redbox.models.graph import RedboxEventType
 
 
 # This should be unnecessary and indicates we're not chunking correctly
@@ -92,5 +93,5 @@ def to_request_metadata(prompt_response_model: dict):
         llm_calls=[LLMCallMetadata(model_name=model, input_tokens=input_tokens, output_tokens=output_tokens)]
     )
 
-    dispatch_custom_event("on_metadata_generation", metadata_event)
+    dispatch_custom_event(RedboxEventType.on_metadata_generation.value, metadata_event)
     return metadata_event

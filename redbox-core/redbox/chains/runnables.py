@@ -1,5 +1,5 @@
 import logging
-from typing import Any, Iterator
+from typing import Any, Callable, Iterator, Iterable
 import re
 from operator import itemgetter
 
@@ -9,8 +9,12 @@ from langchain_core.messages import AIMessageChunk, BaseMessage, AIMessage
 from langchain_core.outputs import ChatGeneration, ChatGenerationChunk, ChatResult
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.runnables import Runnable, chain, RunnableLambda
+from langchain_core.runnables import Runnable, chain, RunnableLambda, RunnableGenerator
+from langchain_core.callbacks.manager import dispatch_custom_event
+
 from tiktoken import Encoding
+
+from redbox.models.graph import RedboxEventType
 
 from redbox.api.format import format_documents
 from redbox.chains.components import get_tokeniser
@@ -67,23 +71,52 @@ def build_chat_prompt_from_messages_runnable(prompt_set: PromptSet, tokeniser: E
     return _chat_prompt_from_messages
 
 
-def build_llm_chain(prompt_set: PromptSet, llm: BaseChatModel, final_response_chain: bool = False) -> Runnable:
+def build_llm_chain(
+    prompt_set: PromptSet,
+    llm: BaseChatModel,
+    output_parser: Runnable | Callable = None,
+    final_response_chain: bool = False,
+) -> Runnable:
     """Builds a chain that correctly forms a text and metadata state update.
 
     Permits both invoke and astream_events.
     """
     model_name = getattr(llm, "model_name", "unknown-model")
     _llm = llm.with_config(tags=["response_flag"]) if final_response_chain else llm
-
+    _output_parser = output_parser if output_parser else StrOutputParser()
     return (
         build_chat_prompt_from_messages_runnable(prompt_set)
         | {
             "prompt": RunnableLambda(lambda prompt: prompt.to_string()),
-            "response": _llm | StrOutputParser(),
+            "response": _llm | _output_parser,
             "model": lambda x: model_name,
         }
         | {"text": itemgetter("response"), "metadata": to_request_metadata}
     )
+
+
+def build_self_route_output_parser(final_response_chain: bool = False):
+    def _self_route_output_parser(chunks: Iterable[AIMessageChunk]) -> Iterable[str]:
+        current_content = ""
+        tokens_to_pass = 4
+        token_count = 0
+        for chunk in chunks:
+            current_content += chunk.content
+            token_count += 1
+            if "unanswerable" in current_content:
+                yield current_content
+                return
+            elif token_count > tokens_to_pass:
+                break
+        if final_response_chain:
+            dispatch_custom_event(RedboxEventType.response_tokens, current_content)
+        yield current_content
+        for chunk in chunks:
+            if final_response_chain:
+                dispatch_custom_event(RedboxEventType.response_tokens, chunk.content)
+            yield chunk.content
+
+    return RunnableGenerator(_self_route_output_parser)
 
 
 class CannedChatLLM(BaseChatModel):
