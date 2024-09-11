@@ -315,19 +315,19 @@ variable "embedding_retry_max_seconds" {
 
 variable "worker_ingest_min_chunk_size" {
   type        = number
-  default     = 600
+  default     = 1000
   description = "Normal chunk resolution. Minimum size of chunks to be produced by the worker"
 }
 
 variable "worker_ingest_max_chunk_size" {
   type        = number
-  default     = 800
+  default     = 10000
   description = "Normal chunk resolution. Maximum size of chunks to be produced by the worker"
 }
 
 variable "worker_ingest_largest_chunk_size" {
   type        = number
-  default     = 96000
+  default     = 300000
   description = "Largest chunk resolution. Maximum size of chunks to be produced by the worker"
 }
 
