@@ -102,10 +102,10 @@ class Settings(BaseSettings):
 
     ## Chunks
     ### Normal
-    worker_ingest_min_chunk_size: int = 600
-    worker_ingest_max_chunk_size: int = 800
+    worker_ingest_min_chunk_size: int = 1_000
+    worker_ingest_max_chunk_size: int = 10_000
     ### Largest
-    worker_ingest_largest_chunk_size: int = 96000
+    worker_ingest_largest_chunk_size: int = 300_000
     worker_ingest_largest_chunk_overlap: int = 0
 
     response_no_doc_available: str = "No available data for selected files. They may need to be removed and added again"
