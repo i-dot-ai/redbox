@@ -1,5 +1,7 @@
 module "cluster" {
-  source = "../../../i-ai-core-infrastructure//modules/ecs_cluster"
+  # checkov:skip=CKV_TF_1: We're using semantic versions instead of commit hash
+  # source = "../../../i-ai-core-infrastructure//modules/ecs_cluster"
+  source = "git::https://github.com/i-dot-ai/i-dot-ai-core-terraform-modules.git//modules/infrastructure/ecs-cluster?ref=v1.0.0-ecs-cluster"
   name   = local.name
 }
 
