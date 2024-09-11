@@ -15,7 +15,6 @@ from django.db.models import Max, Min, Prefetch
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django_use_email_as_username.models import BaseUser, BaseUserManager
-from jose import jwt
 from yarl import URL
 
 from redbox.models import Settings
@@ -258,12 +257,6 @@ class User(BaseUser, UUIDPrimaryKeyBase):
     def save(self, *args, **kwargs):
         self.email = self.email.lower()
         super().save(*args, **kwargs)
-
-    def get_bearer_token(self) -> str:
-        """the bearer token expected by the core-api"""
-        user_uuid = str(self.id)
-        bearer_token = jwt.encode({"user_uuid": user_uuid}, key=settings.SECRET_KEY)
-        return f"Bearer {bearer_token}"
 
 
 class StatusEnum(models.TextChoices):
