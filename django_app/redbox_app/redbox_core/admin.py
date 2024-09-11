@@ -3,6 +3,7 @@ import json
 import logging
 
 from django.contrib import admin
+from django.contrib.auth import get_user_model
 from django.db.models import QuerySet
 from django.http import HttpResponse
 from django.shortcuts import render
@@ -15,6 +16,7 @@ from . import models
 from .serializers import UserSerializer
 
 logger = logging.getLogger(__name__)
+User = get_user_model()
 
 
 class UserAdmin(ImportExportMixin, admin.ModelAdmin):
@@ -53,11 +55,11 @@ class UserAdmin(ImportExportMixin, admin.ModelAdmin):
     date_hierarchy = "last_login"
 
     @admin.display(ordering="ai_experience", description="AI Experience")
-    def get_ai(self, obj: models.User):
+    def get_ai(self, obj: User):
         return obj.ai_experience
 
     class Meta:
-        model = models.User
+        model = User
         fields = ["email"]
         import_id_fields = ["email"]
 
@@ -169,7 +171,7 @@ def reporting_dashboard(request):
     return render(request, "report.html", {}, using="django")
 
 
-admin.site.register(models.User, UserAdmin)
+admin.site.register(User, UserAdmin)
 admin.site.register(models.File, FileAdmin)
 admin.site.register(models.Chat, ChatAdmin)
 admin.site.register(models.ChatMessage, ChatMessageAdmin)
