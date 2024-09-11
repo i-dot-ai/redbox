@@ -8,13 +8,13 @@ from typing import override
 import boto3
 from botocore.config import Config
 from django.conf import settings
+from django.contrib.auth.models import AbstractUser, UserManager
 from django.contrib.postgres.fields import ArrayField
 from django.core import validators
 from django.db import models
 from django.db.models import Max, Min, Prefetch
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
-from django_use_email_as_username.models import BaseUser, BaseUserManager
 from jose import jwt
 from yarl import URL
 
@@ -100,7 +100,33 @@ class AISettings(UUIDPrimaryKeyBase, TimeStampedModel, AbstractAISettings):
         return str(self.label)
 
 
-class User(BaseUser, UUIDPrimaryKeyBase):
+class BaseUserManager(UserManager):
+    """Define a model manager for User model with no username field."""
+
+    def _create_user(self, email, password, **extra_fields):
+        """Create and save a User with the given email and password."""
+        if not email:
+            error_msg = "The given email must be set"
+            raise ValueError(error_msg)
+        email = self.normalize_email(email)
+        user = self.model(email=email, **extra_fields)
+        user.set_password(password)
+        user.save(using=self._db)
+        return user
+
+    def create_user(self, email, password=None, **extra_fields):
+        """Create and save a regular User with the given email and password."""
+        extra_fields.setdefault("is_staff", False)
+        extra_fields.setdefault("is_superuser", False)
+        return self._create_user(email, password, **extra_fields)
+
+    def create_superuser(self, email, password=None, **extra_fields):
+        extra_fields.setdefault("is_staff", True)
+        extra_fields.setdefault("is_superuser", True)
+        return self._create_user(email, password, **extra_fields)
+
+
+class User(AbstractUser, UUIDPrimaryKeyBase):
     class UserGrade(models.TextChoices):
         AA = "AA", _("AA")
         AO = "AO", _("AO")
@@ -237,7 +263,11 @@ class User(BaseUser, UUIDPrimaryKeyBase):
             ),
         )
 
+    USERNAME_FIELD = "email"
+    REQUIRED_FIELDS = []
     username = None
+    email = models.EmailField(_("email address"), blank=True, unique=True)
+
     verified = models.BooleanField(default=False, blank=True, null=True)
     invited_at = models.DateTimeField(default=None, blank=True, null=True)
     invite_accepted_at = models.DateTimeField(default=None, blank=True, null=True)
@@ -250,6 +280,7 @@ class User(BaseUser, UUIDPrimaryKeyBase):
     profession = models.CharField(null=True, blank=True, max_length=4, choices=Profession)
     ai_settings = models.ForeignKey(AISettings, on_delete=models.SET_DEFAULT, default="default", to_field="label")
     is_developer = models.BooleanField(null=True, blank=True, default=False, help_text="is this user a developer?")
+
     objects = BaseUserManager()
 
     def __str__(self) -> str:  # pragma: no cover
