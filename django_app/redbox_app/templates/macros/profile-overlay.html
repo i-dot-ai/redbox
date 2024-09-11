@@ -28,26 +28,34 @@
         </div>
         
         <div class="profile-page">
-          <fieldset class="profile__radio-container-outer">
-            <legend class="profile-label">Which level best describes your experience with Generative AI tools?</legend>
-            <div class="profile__radio-container-inner">
-
+          <fieldset class="govuk-fieldset">
+            <legend class="govuk-fieldset__legend">Which level best describes your experience with Generative AI tools?</legend>
+            <div class="govuk-radios experience-cards">
               {% set selected_level = user.ai_experience %}
               {% for level in user.AIExperienceLevel %}
-                <div>
-                  <input class="profile__radio" type="radio" id="profile-experience-{{loop.index}}" name="ai_experience" value="{{ level }}" required {% if level == selected_level %}checked{% endif %} />
-                  <label class="profile__radio-card" for="profile-experience-{{loop.index}}">{{ level }}</label>
+                <div class="govuk-radios__item">
+                  <input class="govuk-radios__input" type="radio"
+                        id="ai_experience_{{ loop.index0 }}"
+                        name="ai_experience"
+                        value="{{ level }}"
+                        required 
+                        {% if level == selected_level %}checked{% endif %}>
+                  <label class="govuk-label" for="ai_experience_{{ loop.index0 }}">
+                    {{ level }}
+                    <span class="govuk-hint govuk-radios__hint">{{ level.label }}</span>
+                  </label>         
                 </div>
               {% endfor %}
-            </fieldset>
-            <button class="profile__button-next govuk-button govuk-button--secondary" type="button" data-action="next">
-              <span>Next</span>
-              <span>3 of 3 Voice</span>
-            </button>
-            <div class="profile-nav-button-container">
-              <button class="profile__button-previous govuk-button govuk-button--secondary" data-action="previous" type="button">Previous</button>
-              <button class="profile__button-skip govuk-button govuk-button--secondary" data-action="skip" type="button">Skip</button>
             </div>
+          </fieldset>
+
+          <button class="profile__button-next govuk-button govuk-button--secondary" type="button" data-action="next">
+            <span>Next</span>
+            <span>3 of 3 Voice</span>
+          </button>
+          <div class="profile-nav-button-container">
+            <button class="profile__button-previous govuk-button govuk-button--secondary" data-action="previous" type="button">Previous</button>
+            <button class="profile__button-skip govuk-button govuk-button--secondary" data-action="skip" type="button">Skip</button>
           </div>
         </div>
 
