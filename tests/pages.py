@@ -99,6 +99,7 @@ class SignedInBasePage(BasePage, ABC):
         return ChatsPage(self.page)
 
     def navigate_my_details(self) -> "MyDetailsPage":
+        self.page.locator(".iai-top-nav__link--user").click()
         self.page.get_by_role("link", name="My details", exact=True).click()
         return MyDetailsPage(self.page)
 

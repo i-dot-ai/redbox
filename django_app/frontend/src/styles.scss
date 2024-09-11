@@ -128,40 +128,7 @@ upload-button {
 
 @import "./profile-overlay-styles.scss";
 
-/* To be moved into Design System */
-.iai-top-nav__link-item:has(.iai-top-nav__link--user):hover {
-  border-bottom: 0;
-}
-.iai-top-nav__link--user {
-  align-items: center;
-  background-color: var(--iai-product-colour);
-  border: 1px solid black;
-  border-radius: 100%;
-  color: white;
-  display: flex;
-  height: 2rem;
-  justify-content: center;
-  padding: 0.25rem;
-  width: 2rem;
-}
-.iai-top-nav__link--user:hover {
-  border-color: white;
-  top: -1.125rem;
-}
-@media (min-width: 1020px) {
-  .iai-top-nav__link-item {
-    border: 1px solid black;
-  }
-  .iai-top-nav__link-item:has(.iai-top-nav__link--user) {
-    position: relative;
-    width: 2rem;
-  }
-  .iai-top-nav__link--user {
-    position: absolute;
-    top: -1.125rem;
-  }
-}
-
+/* To be added to gov.uk design system */
 .govuk-textarea {
   border: 1px solid var(--iai-colour-text-secondary);
 }

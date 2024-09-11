@@ -47,23 +47,30 @@
 
 
   {% if request.user.is_authenticated %}
-    {% set menu_items = [
-      {"text": "Documents", "href": url('documents')},
-      {"text": "Chats", "href": url('chats')},
-      {"text": "Sign out", "href": url('signed-out')},
-      {"text": "My details", "href": url('demographics'), "user_button": request.user.get_initials() }
-    ] %}
+    {{ iaiTopNav(
+      product_name = "Redbox",
+      menu_items = [
+        {"text": "Documents", "href": url('documents')},
+        {"text": "Chats", "href": url('chats')}
+      ],
+      user_items = {
+          "initials": request.user.get_initials(),
+          "menu_items": [
+              {"text": "My details", "href": url('demographics')},
+              {"text": "Sign out", "href": url('signed-out')}
+          ]
+      },
+      phase = "Beta"
+    ) }}
   {% else %}
-    {% set menu_items = [
-      {"text": "Sign in", "href": "sign-in"}
-    ] %}
+    {{ iaiTopNav(
+      product_name = "Redbox",
+      menu_items = [
+        {"text": "Sign in", "href": url('sign-in')}
+      ],
+      phase = "Beta"
+    ) }}
   {% endif %}
-
-  {{ iaiTopNav(
-    product_name = "Redbox",
-    menu_items = menu_items,
-    phase = "Beta"
-  ) }}
 
 
   <main class="govuk-main-wrapper" id="main-content" role="main">
