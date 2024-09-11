@@ -46,6 +46,7 @@ APPROVED_FILE_EXTENSIONS = [
     ".bmp",
     ".jpeg",
     ".png",
+    ".jpeg",
 ]
 MAX_FILE_SIZE = 209715200  # 200 MB or 200 * 1024 * 1024
 
