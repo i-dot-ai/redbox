@@ -45,7 +45,7 @@
   "author": "",
   "dependencies": {
     "govuk-frontend": "^5.2.0",
-    "i.ai-design-system": "^0.4.3",
+    "i.ai-design-system": "^0.4.5",
     "posthog-js": "^1.143.0"
   },
   "devDependencies": {
