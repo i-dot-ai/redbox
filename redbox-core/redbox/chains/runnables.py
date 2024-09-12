@@ -1,5 +1,6 @@
 import logging
-from typing import Any, Callable, Iterator, Iterable
+from collections.abc import Callable
+from typing import Any, Iterator, Iterable
 import re
 from operator import itemgetter
 
@@ -95,18 +96,27 @@ def build_llm_chain(
     )
 
 
-def build_self_route_output_parser(final_response_chain: bool = False):
+def build_self_route_output_parser(
+    match_condition: Callable[[str], bool], max_tokens_to_check: int, final_response_chain: bool = False
+):
+    """
+    This Runnable reads the streamed responses from an LLM until the match condition is true for the response so far
+    it has read a number of tokens. If the match condition is true it breaks off and returns nothing to the client,
+    if not then it streams the response to the client as normal.
+
+    Used to handle responses from prompts like 'If this question can be answered answer it, else return False'
+    """
+
     def _self_route_output_parser(chunks: Iterable[AIMessageChunk]) -> Iterable[str]:
         current_content = ""
-        tokens_to_pass = 4
         token_count = 0
         for chunk in chunks:
             current_content += chunk.content
             token_count += 1
-            if "unanswerable" in current_content:
+            if match_condition(current_content):
                 yield current_content
                 return
-            elif token_count > tokens_to_pass:
+            elif token_count > max_tokens_to_check:
                 break
         if final_response_chain:
             dispatch_custom_event(RedboxEventType.response_tokens, current_content)

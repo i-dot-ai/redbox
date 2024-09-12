@@ -95,7 +95,3 @@ def documents_selected_conditional(state: RedboxState) -> bool:
 
 def multiple_docs_in_group_conditional(state: RedboxState) -> bool:
     return any(len(group) > 1 for group in state.get("documents", {}).values())
-
-
-def question_was_answered_by_rag_conditional(state: RedboxState) -> bool:
-    return state.get("text") is not None and "unanswerable" in state["text"].lower()

@@ -15,6 +15,7 @@ from redbox.graph.nodes.processes import (
     build_error_pattern,
     build_merge_pattern,
     build_set_metadata_pattern,
+    build_set_self_route_from_llm_answer,
 )
 from redbox.models.chain import RedboxState
 from redbox.models.chat import ChatRoute, ErrorRoute
@@ -26,10 +27,8 @@ from redbox.graph.nodes.processes import (
     build_passthrough_pattern,
     empty_process,
     clear_documents_process,
-    set_self_route_from_llm_answer,
 )
 from redbox.graph.nodes.sends import build_document_chunk_send, build_document_group_send
-from redbox.models.graph import ROUTE_NAME_TAG
 from redbox.models.graph import ROUTABLE_KEYWORDS
 
 
@@ -39,28 +38,37 @@ from redbox.models.graph import ROUTABLE_KEYWORDS
 def get_self_route_graph(retriever: VectorStoreRetriever, prompt_set: PromptSet, debug: bool = False):
     builder = StateGraph(RedboxState)
 
+    def self_route_question_is_unanswerable(llm_response: str):
+        return "unanswerable" in llm_response
+
     # Processes
     builder.add_node("p_condense_question", build_chat_pattern(prompt_set=PromptSet.CondenseQuestion))
     builder.add_node("p_retrieve_docs", build_retrieve_pattern(retriever=retriever, final_source_chain=False))
     builder.add_node(
-        "p_stuff_docs",
+        "p_answer_question_or_decide_unanswerable",
         build_stuff_pattern(
             prompt_set=prompt_set,
-            output_parser=build_self_route_output_parser(final_response_chain=True),
+            output_parser=build_self_route_output_parser(
+                self_route_question_is_unanswerable, 4, final_response_chain=True
+            ),
             final_response_chain=False,
         ),
     )
     builder.add_node(
         "p_set_route_name_from_answer",
-        set_self_route_from_llm_answer.with_config(tags=[ROUTE_NAME_TAG]),
+        build_set_self_route_from_llm_answer(
+            self_route_question_is_unanswerable,
+            true_condition_state_update={"route_name": ChatRoute.chat_with_docs_map_reduce},
+            false_condition_state_update={"route_name": ChatRoute.search},
+        ),
     )
     builder.add_node("p_clear_documents", clear_documents_process)
 
     # Edges
     builder.add_edge(START, "p_condense_question")
     builder.add_edge("p_condense_question", "p_retrieve_docs")
-    builder.add_edge("p_retrieve_docs", "p_stuff_docs")
-    builder.add_edge("p_stuff_docs", "p_set_route_name_from_answer")
+    builder.add_edge("p_retrieve_docs", "p_answer_question_or_decide_unanswerable")
+    builder.add_edge("p_answer_question_or_decide_unanswerable", "p_set_route_name_from_answer")
     builder.add_conditional_edges(
         "p_set_route_name_from_answer",
         lambda state: state["route_name"],
@@ -141,7 +149,7 @@ def get_chat_with_documents_graph(
         "p_too_large_error",
         build_error_pattern(text="These documents are too large to work with.", route_name=ErrorRoute.files_too_large),
     )
-    builder.add_node("p_self_route", get_self_route_graph(parameterised_retriever, PromptSet.SelfRoute))
+    builder.add_node("p_answer_or_decide_route", get_self_route_graph(parameterised_retriever, PromptSet.SelfRoute))
     builder.add_node(
         "p_retrieve_all_chunks", build_retrieve_pattern(retriever=all_chunks_retriever, final_source_chain=True)
     )
@@ -165,12 +173,12 @@ def get_chat_with_documents_graph(
         build_total_tokens_request_handler_conditional(PromptSet.ChatwithDocsMapReduce),
         {
             "max_exceeded": "p_too_large_error",
-            "context_exceeded": "p_self_route",
+            "context_exceeded": "p_answer_or_decide_route",
             "pass": "p_set_chat_docs_route",
         },
     )
     builder.add_conditional_edges(
-        "p_self_route",
+        "p_answer_or_decide_route",
         lambda state: state.get("route_name"),
         {
             ChatRoute.search: END,
@@ -232,10 +240,12 @@ def get_chat_with_documents_graph(
 def get_retrieve_metadata_graph(metadata_retriever: VectorStoreRetriever, debug: bool = False):
     builder = StateGraph(RedboxState)
 
+    # Processes
     builder.add_node("p_retrieve_metadata", build_retrieve_pattern(retriever=metadata_retriever))
     builder.add_node("p_set_metadata", build_set_metadata_pattern())
     builder.add_node("p_clear_metadata_documents", clear_documents_process)
 
+    # Edges
     builder.add_edge(START, "p_retrieve_metadata")
     builder.add_edge("p_retrieve_metadata", "p_set_metadata")
     builder.add_edge("p_set_metadata", "p_clear_metadata_documents")

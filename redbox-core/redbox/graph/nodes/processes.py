@@ -1,3 +1,4 @@
+from collections.abc import Callable
 import logging
 from operator import add
 import re
@@ -153,13 +154,24 @@ def build_set_route_pattern(route: ChatRoute) -> Runnable[RedboxState, dict[str,
     return RunnableLambda(_set_route).with_config(tags=[ROUTE_NAME_TAG])
 
 
-@RunnableLambda
-def set_self_route_from_llm_answer(state: RedboxState):
-    llm_response = state["text"]
-    if "unanswerable" in llm_response[: min(20, len(llm_response))]:
-        return {"route_name": ChatRoute.chat_with_docs_map_reduce}
-    else:
-        return {"route_name": ChatRoute.search}
+def build_set_self_route_from_llm_answer(
+    conditional: Callable[[str], bool],
+    true_condition_state_update: dict,
+    false_condition_state_update: dict,
+    final_route_response: bool = True,
+):
+    @RunnableLambda
+    def _set_self_route_from_llm_answer(state: RedboxState):
+        llm_response = state["text"]
+        if conditional(llm_response):
+            return true_condition_state_update
+        else:
+            return false_condition_state_update
+
+    runnable = _set_self_route_from_llm_answer
+    if final_route_response:
+        runnable = _set_self_route_from_llm_answer.with_config(tags=[ROUTE_NAME_TAG])
+    return runnable
 
 
 def build_passthrough_pattern() -> Runnable[RedboxState, dict[str, Any]]:
