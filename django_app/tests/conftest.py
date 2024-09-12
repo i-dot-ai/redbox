@@ -8,6 +8,7 @@ import boto3
 import pytest
 from botocore.exceptions import ClientError
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile, UploadedFile
 from django.core.management import call_command
 from django.utils import timezone
@@ -22,8 +23,9 @@ from redbox_app.redbox_core.models import (
     Citation,
     File,
     StatusEnum,
-    User,
 )
+
+User = get_user_model()
 
 logger = logging.getLogger(__name__)
 

@@ -3,6 +3,7 @@ import uuid
 from collections.abc import MutableSequence, Sequence
 from pathlib import Path
 
+from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import FieldError, ValidationError
 from django.core.files.uploadedfile import UploadedFile
@@ -15,9 +16,10 @@ from django.views.decorators.http import require_http_methods
 from django_q.tasks import async_task
 from requests.exceptions import RequestException
 
-from redbox_app.redbox_core.models import File, StatusEnum, User
+from redbox_app.redbox_core.models import File, StatusEnum
 from redbox_app.worker import ingest
 
+User = get_user_model()
 logger = logging.getLogger(__name__)
 CHUNK_SIZE = 1024
 # move this somewhere

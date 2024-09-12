@@ -1,6 +1,9 @@
+from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
-from redbox_app.redbox_core.models import Chat, ChatMessage, ChatMessageTokenUse, File, User
+from redbox_app.redbox_core.models import Chat, ChatMessage, ChatMessageTokenUse, File
+
+User = get_user_model()
 
 
 class FileSerializer(serializers.ModelSerializer):
