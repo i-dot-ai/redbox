@@ -1,12 +1,14 @@
 {% macro profile_overlay(csrf_token, user, show_on_load=False) %}
 
+  <script src="/static/js/libs/lottie.min.js"></script>
+
   <profile-overlay {% if show_on_load %}data-show="true"{% endif %}>
     <dialog class="profile" aria-labelledby="profile-overlay-title">
       <form>
 
         <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}"/>
       
-        <div class="profile-page">
+        <div class="profile__page">
           <h2 id="profile-overlay-title">Redbox can give better responses if you tell it about yourself.</h2>
           <button class="profile__button-next govuk-button govuk-button--secondary" data-action="skip" type="button" autofocus>
             <span>Start</span>
@@ -14,7 +16,7 @@
           </button>
         </div>
         
-        <div class="profile-page">
+        <div class="profile__page">
           <label class="profile-label" for="profile-name">Full name</h2>
           <input id="profile-name" name="name" type="text" required value="{{ user.name if user.name }}" />
           <button class="profile__button-next govuk-button govuk-button--secondary" data-action="next" type="button">
@@ -27,7 +29,7 @@
           </div>
         </div>
         
-        <div class="profile-page">
+        <div class="profile__page">
           <fieldset class="govuk-fieldset">
             <legend class="govuk-fieldset__legend">Which level best describes your experience with Generative AI tools?</legend>
             <div class="govuk-radios experience-cards">
@@ -59,7 +61,7 @@
           </div>
         </div>
 
-        <div class="profile-page">
+        <div class="profile__page">
           <label class="profile-label" for="profile-about-you" aria-describedby="profile-about-you-info">What do you want Redbox to know about you?</h2>
           <span id="profile-about-you-info">(your job role, context it should allow for, etc.)</span>
           <textarea class="profile__textarea" id="profile-about-you" name="info_about_user" required>{{ user.info_about_user if user.info_about_user }}</textarea>
@@ -72,9 +74,10 @@
           </div>
         </div>
 
-        <div class="profile-page">
+        <div class="profile__page">
           <button class="profile__button-close" data-action="close" type="button" aria-label="close">X</button>
           <h2>Profile updated</h2>
+          <div class="profile__success-animation"></div>
           <p>Redbox will now be able to give better responses based on what you've said.</p>
           <p>View or update your profile at any time</p>
           <button class="profile__button-finish" data-action="close" type="button">Continue to chat</button>

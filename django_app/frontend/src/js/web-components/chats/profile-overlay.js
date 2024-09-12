@@ -16,8 +16,17 @@ class ProfileOverlay extends HTMLElement {
       dialog.showModal();
     }
 
+    // Success animation
+    let animation = window["lottie"].loadAnimation({
+      container: document.querySelector(".profile__success-animation"),
+      path: "/static/animations/animation_1722611146876.json",
+      renderer: "svg",
+      loop: false,
+      autoplay: false,
+    });
+
     const changePage = (newPageIndex) => {
-      let pages = this.querySelectorAll(".profile-page");
+      let pages = this.querySelectorAll(".profile__page");
       pages.forEach((page, pageIndex) => {
         if (pageIndex === newPageIndex) {
           page.classList.remove("profile--hidden");
@@ -30,6 +39,18 @@ class ProfileOverlay extends HTMLElement {
           page.classList.add("profile--hidden");
         }
       });
+      // play animation if it's the final page
+      if (newPageIndex === pages.length - 1) {
+        console.log("Time to deal with animation");
+        const userPrefersReducedMotion = window.matchMedia(
+          "(prefers-reduced-motion: reduce)"
+        ).matches;
+        if (userPrefersReducedMotion) {
+          animation.goToAndStop(animation.totalFrames - 1, true);
+        } else {
+          animation.play();
+        }
+      }
     };
     changePage(this.currentPage);
 
