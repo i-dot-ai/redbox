@@ -6,12 +6,15 @@ from pathlib import Path
 
 import pytest
 from bs4 import BeautifulSoup
+from django.contrib.auth import get_user_model
 from django.test import Client
 from django.urls import reverse
 from yarl import URL
 
-from redbox_app.redbox_core.models import ChatMessage, User
+from redbox_app.redbox_core.models import ChatMessage
 from redbox_app.redbox_core.serializers import ChatMessageSerializer, ChatSerializer, UserSerializer
+
+User = get_user_model()
 
 logger = logging.getLogger(__name__)
 

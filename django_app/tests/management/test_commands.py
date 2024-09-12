@@ -6,13 +6,17 @@ import elasticsearch
 import pytest
 from botocore.exceptions import UnknownClientMethodError
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.core.management import CommandError, call_command
 from django.utils import timezone
 from freezegun import freeze_time
 from magic_link.models import MagicLink
 from requests_mock import Mocker
 
-from redbox_app.redbox_core.models import Chat, ChatMessage, ChatRoleEnum, File, StatusEnum, User
+from redbox_app.redbox_core.models import Chat, ChatMessage, ChatRoleEnum, File, StatusEnum
+
+User = get_user_model()
+
 
 # === check_file_status command tests ===
 

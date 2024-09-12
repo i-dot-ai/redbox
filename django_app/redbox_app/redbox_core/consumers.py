@@ -8,6 +8,7 @@ from uuid import UUID
 from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.forms.models import model_to_dict
 from django.utils import timezone
 from langchain_core.documents import Document
@@ -26,9 +27,9 @@ from redbox_app.redbox_core.models import (
     ChatRoleEnum,
     Citation,
     File,
-    User,
 )
 
+User = get_user_model()
 OptFileSeq = Sequence[File] | None
 logger = logging.getLogger(__name__)
 logger.info("WEBSOCKET_SCHEME is: %s", settings.WEBSOCKET_SCHEME)

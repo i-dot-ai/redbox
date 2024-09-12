@@ -5,14 +5,16 @@ from http import HTTPStatus
 
 import pytest
 from bs4 import BeautifulSoup
+from django.contrib.auth import get_user_model
 from django.test import Client
 from django.urls import reverse
 
 from redbox_app.redbox_core.models import (
     Chat,
     ChatMessage,
-    User,
 )
+
+User = get_user_model()
 
 logger = logging.getLogger(__name__)
 

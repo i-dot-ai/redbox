@@ -6,10 +6,13 @@ from pathlib import Path
 import pytest
 from botocore.exceptions import ClientError
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.test import Client
 from django.urls import reverse
 
-from redbox_app.redbox_core.models import File, StatusEnum, User
+from redbox_app.redbox_core.models import File, StatusEnum
+
+User = get_user_model()
 
 logger = logging.getLogger(__name__)
 
