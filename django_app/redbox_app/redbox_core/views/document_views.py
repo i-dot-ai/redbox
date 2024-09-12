@@ -48,7 +48,7 @@ APPROVED_FILE_EXTENSIONS = [
     ".bmp",
     ".jpeg",
     ".png",
-    ".jpeg",
+    ".jpg",
 ]
 MAX_FILE_SIZE = 209715200  # 200 MB or 200 * 1024 * 1024
 
@@ -123,7 +123,7 @@ class UploadView(View):
             errors.append("File has no name")
         else:
             file_extension = Path(uploaded_file.name).suffix
-            if file_extension not in APPROVED_FILE_EXTENSIONS:
+            if file_extension.lower() not in APPROVED_FILE_EXTENSIONS:
                 errors.append(f"Error with {uploaded_file.name}: File type {file_extension} not supported")
 
         if not uploaded_file.content_type:
