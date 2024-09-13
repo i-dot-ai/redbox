@@ -34,7 +34,7 @@ jobs:
 
       - name: Copy env file
         run: |
-          cp .env.django .env
+          cp .env.test .env
 
       - name: Run migrations
         run: |

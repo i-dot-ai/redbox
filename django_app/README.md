@@ -9,12 +9,12 @@
 5. test can be run .locally using `poetry run pytest`
 
 ## running admin commands in docker
-1. copy `.env.django` to `django_app/.env`
+1. copy `.env.test` to `.env`
 2. (re)start postgres and minio `docker-compose up -d db minio` 
 3. run `docker-compose run django-app venv/bin/django-admin <your-management-command>`
 
 ## running tests in docker
-1. copy `.env.django` to `django_app/.env`
+1. copy `.env.test` to `.env`
 2. (re)start postgres and minio `docker-compose up -d db minio` 
 3. `make test-django`
 
