@@ -420,3 +420,45 @@ main:has(.iai-chat-bubble) .chat-options {
 .rb-send-button:hover .rb-square-icon::before {
   background-color: $redbox-red;
 }
+
+.iai-chat-input {
+  max-width: 94%;
+}
+@media (min-width: 1020px) {
+  .iai-chat-input {
+    max-width: 100%;
+  }
+}
+.exit-feedback {
+  background-color: white;
+  border: 1px solid;
+  display: none;
+  position: fixed;
+  right: 0;
+  top: calc(50% - 4rem);
+}
+main:has(.iai-chat-bubble[data-role="ai"]) .exit-feedback {
+  display: flex;
+}
+.exit-feedback__panel {
+  display: none;
+  padding: 1rem;
+}
+.exit-feedback:has(.exit-feedback__toggle-button[aria-expanded="true"])
+  .exit-feedback__panel {
+  display: block;
+}
+.exit-feedback__toggle-button {
+  background-color: transparent;
+  border: 0;
+  cursor: pointer;
+  height: 8rem;
+  position: relative;
+  width: 2rem;
+}
+.exit-feedback__toggle-button-text {
+  display: block;
+  position: relative;
+  top: 2rem;
+  transform: rotate(-90deg);
+}
