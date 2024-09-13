@@ -78,10 +78,9 @@ safe:  ##
 
 .PHONY: check-migrations
 check-migrations: stop  ## Check types in redbox and worker
-	docker compose build django-app
 	docker compose up -d --wait db minio
-	docker compose run --no-deps django-app venv/bin/django-admin migrate
-	docker compose run --no-deps django-app venv/bin/django-admin makemigrations --check
+	cd django_app && poetry run python manage.py migrate
+	cd django_app && poetry run python manage.py makemigrations --check
 
 .PHONY: reset-db
 reset-db:  ## Reset Django database
