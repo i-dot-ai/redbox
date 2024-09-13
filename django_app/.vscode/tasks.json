@@ -1,0 +1,28 @@
+{
+    // npm must be on PATH
+    // on macOS the below worked for me when using zsh
+    // >> brew install node@20
+    // >> echo 'export PATH="/opt/homebrew/opt/node@20/bin:$PATH"' >> ~/.zprofile
+
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Build Frontend",
+            "type": "shell",
+            "command": "make build-django-static",
+            "options": {
+                "cwd": "../",
+                "env": {
+                    "MINIO_HOST": "localhost",
+                    "POSTGRES_HOST": "localhost",
+                    "UNSTRUCTURED_HOST": "localhost"
+                }
+            },
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            },
+            "problemMatcher": []
+        }
+    ]
+  }
