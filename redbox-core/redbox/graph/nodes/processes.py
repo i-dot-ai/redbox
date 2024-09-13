@@ -48,7 +48,7 @@ def build_chat_pattern(
     prompt_set: PromptSet,
     final_response_chain: bool = False,
 ) -> Runnable[RedboxState, dict[str, Any]]:
-    """Returns a function that uses state["request"] to set state["text"]."""
+    """Returns a Runnable that uses state["request"] to set state["text"]."""
 
     def _chat(state: RedboxState) -> dict[str, Any]:
         llm = get_chat_llm(Settings(), state["request"].ai_settings)
@@ -65,7 +65,7 @@ def build_merge_pattern(
     prompt_set: PromptSet,
     final_response_chain: bool = False,
 ) -> Runnable[RedboxState, dict[str, Any]]:
-    """Returns a function that uses state["request"] and state["documents"] to return one item in state["documents"].
+    """Returns a Runnable that uses state["request"] and state["documents"] to return one item in state["documents"].
 
     When combined with chunk send, will replace each Document with what's returned from the LLM.
 
@@ -121,7 +121,7 @@ def build_stuff_pattern(
     output_parser: Runnable = None,
     final_response_chain: bool = False,
 ) -> Runnable[RedboxState, dict[str, Any]]:
-    """Returns a function that uses state["request"] and state["documents"] to set state["text"]."""
+    """Returns a Runnable that uses state["request"] and state["documents"] to set state["text"]."""
 
     @RunnableLambda
     def _stuff(state: RedboxState) -> dict[str, Any]:
@@ -160,6 +160,7 @@ def build_set_self_route_from_llm_answer(
     false_condition_state_update: dict,
     final_route_response: bool = True,
 ):
+    """A Runnable which sets the route based on a conditional on state['text']"""
     @RunnableLambda
     def _set_self_route_from_llm_answer(state: RedboxState):
         llm_response = state["text"]
@@ -201,6 +202,7 @@ def build_set_text_pattern(text: str, final_response_chain: bool = False):
 
 
 def build_set_metadata_pattern():
+    """A Runnable which calculates the static request metadata from the state"""
     @RunnableLambda
     def _set_metadata_pattern(state: RedboxState):
         flat_docs = flatten_document_state(state.get("documents", {}))
@@ -215,6 +217,7 @@ def build_set_metadata_pattern():
 
 
 def build_error_pattern(text: str, route_name: str | None):
+    """A Runnable which sets text and route to record an error"""
     @RunnableLambda
     def _error_pattern(state: RedboxState):
         return build_set_text_pattern(text, final_response_chain=True).invoke(state) | build_set_route_pattern(
@@ -235,6 +238,9 @@ def empty_process(state: RedboxState) -> None:
 
 
 def build_log_node(message: str):
+    """A Runnable which logs the current state in a compact way"""
+
+    @RunnableLambda
     def _log_node(state: RedboxState):
         log.info(
             json.dumps(
