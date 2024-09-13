@@ -8,6 +8,7 @@ from uuid import UUID
 from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.forms.models import model_to_dict
 from django.utils import timezone
 from langchain_core.documents import Document
@@ -32,9 +33,9 @@ from redbox_app.redbox_core.models import (
     ChatRoleEnum,
     Citation,
     File,
-    User,
 )
 
+User = get_user_model()
 OptFileSeq = Sequence[File] | None
 logger = logging.getLogger(__name__)
 logger.info("WEBSOCKET_SCHEME is: %s", settings.WEBSOCKET_SCHEME)
@@ -50,6 +51,10 @@ def parse_page_number(obj: int | list[int] | None) -> list[int]:
 
     msg = "expected, int | list[int] | None got %s"
     raise ValueError(msg, type(obj))
+
+
+def escape_curly_brackets(text: str):
+    return text.replace("{", "{{").replace("}", "}}")
 
 
 class ChatConsumer(AsyncWebsocketConsumer):
@@ -105,7 +110,11 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 s3_keys=[f.unique_name for f in selected_files],
                 user_uuid=user.id,
                 chat_history=[
-                    ChainChatMessage(role=message.role, text=message.text) for message in message_history[:-1]
+                    ChainChatMessage(
+                        role=message.role,
+                        text=escape_curly_brackets(message.text),
+                    )
+                    for message in message_history[:-1]
                 ],
                 ai_settings=ai_settings,
             ),

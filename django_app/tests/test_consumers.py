@@ -9,6 +9,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 from channels.db import database_sync_to_async
 from channels.testing import WebsocketCommunicator
+from django.contrib.auth import get_user_model
 from django.db.models import Model
 from langchain_core.documents import Document
 from langchain_core.language_models import BaseChatModel
@@ -20,8 +21,10 @@ from redbox.models.chain import LLMCallMetadata, RequestMetadata
 from redbox.models.graph import FINAL_RESPONSE_TAG, ROUTE_NAME_TAG, SOURCE_DOCUMENTS_TAG
 from redbox_app.redbox_core import error_messages
 from redbox_app.redbox_core.consumers import ChatConsumer
-from redbox_app.redbox_core.models import Chat, ChatMessage, ChatMessageTokenUse, ChatRoleEnum, File, User
+from redbox_app.redbox_core.models import Chat, ChatMessage, ChatMessageTokenUse, ChatRoleEnum, File
 from redbox_app.redbox_core.prompts import CHAT_MAP_QUESTION_PROMPT
+
+User = get_user_model()
 
 logging.basicConfig(level=os.environ.get("LOG_LEVEL", "INFO"))
 logger = logging.getLogger(__name__)

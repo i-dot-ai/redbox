@@ -1,5 +1,6 @@
 import logging
 
+from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import HttpRequest, HttpResponse
@@ -9,7 +10,8 @@ from django.views import View
 from django.views.generic import UpdateView
 
 from redbox_app.redbox_core.forms import DemographicsForm
-from redbox_app.redbox_core.models import User
+
+User = get_user_model()
 
 logger = logging.getLogger(__name__)
 

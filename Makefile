@@ -78,10 +78,9 @@ safe:  ##
 
 .PHONY: check-migrations
 check-migrations: stop  ## Check types in redbox and worker
-	docker compose build django-app
 	docker compose up -d --wait db minio
-	docker compose run --no-deps django-app venv/bin/django-admin migrate
-	docker compose run --no-deps django-app venv/bin/django-admin makemigrations --check
+	cd django_app && poetry run python manage.py migrate
+	cd django_app && poetry run python manage.py makemigrations --check
 
 .PHONY: reset-db
 reset-db:  ## Reset Django database
@@ -114,7 +113,7 @@ PREV_IMAGE_TAG=$$(git rev-parse HEAD~1)
 IMAGE_TAG=$$(git rev-parse HEAD)
 
 tf_build_args=-var "image_tag=$(IMAGE_TAG)"
-DOCKER_SERVICES=$$(docker compose config --services | grep -v mlflow)
+DOCKER_SERVICES=$$(docker compose config --services | grep -Ev 'mlflow|worker')
 
 AUTO_APPLY_RESOURCES = module.django-app.aws_ecs_task_definition.aws-ecs-task \
                        module.django-app.aws_ecs_service.aws-ecs-service \
@@ -169,7 +168,7 @@ docker_push:
 
 .PHONY: docker_update_tag
 docker_update_tag:
-	for service in django-app worker; do \
+	for service in django-app; do \
 		MANIFEST=$$(aws ecr batch-get-image --repository-name $(ECR_REPO_NAME)-$$service --image-ids imageTag=$(IMAGE_TAG) --query 'images[].imageManifest' --output text) ; \
 		aws ecr put-image --repository-name $(ECR_REPO_NAME)-$$service --image-tag $(tag) --image-manifest "$$MANIFEST" ; \
 	done

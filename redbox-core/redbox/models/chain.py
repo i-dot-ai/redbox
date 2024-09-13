@@ -103,7 +103,6 @@ class AISettings(BaseModel):
 
     rag_k: int = 30
     rag_num_candidates: int = 10
-    rag_desired_chunk_size: int = 300  # this is superseded by worker_ingest_min_chunk_size
     elbow_filter_enabled: bool = False
     chat_system_prompt: str = CHAT_SYSTEM_PROMPT
     chat_question_prompt: str = CHAT_QUESTION_PROMPT

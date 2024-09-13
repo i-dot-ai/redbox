@@ -1,5 +1,7 @@
 module "cluster" {
-  source = "../../../i-ai-core-infrastructure//modules/ecs_cluster"
+  # checkov:skip=CKV_TF_1: We're using semantic versions instead of commit hash
+  # source = "../../../i-ai-core-infrastructure//modules/ecs_cluster"
+  source = "git::https://github.com/i-dot-ai/i-dot-ai-core-terraform-modules.git//modules/infrastructure/ecs-cluster?ref=v1.0.0-ecs-cluster"
   name   = local.name
 }
 
@@ -56,11 +58,13 @@ resource "aws_secretsmanager_secret_version" "django-app-json-secret" {
 
 
 module "django-app" {
+  # checkov:skip=CKV_TF_1: We're using semantic versions instead of commit hash
+  #source                    = "../../i-dot-ai-core-terraform-modules//modules/infrastructure/ecs" # For testing local changes
+  source                     = "git::https://github.com/i-dot-ai/i-dot-ai-core-terraform-modules.git//modules/infrastructure/ecs?ref=v1.0.0-ecs"
   memory                     = 4096
   cpu                        = 2048
   create_listener            = true
   create_networking          = true
-  source                     = "../../../i-ai-core-infrastructure//modules/ecs"
   name                       = "${local.name}-django-app"
   image_tag                  = var.image_tag
   ecr_repository_uri         = "${var.ecr_repository_uri}/${var.project_name}-django-app"
@@ -68,7 +72,7 @@ module "django-app" {
   ecs_cluster_name           = module.cluster.ecs_cluster_name
   autoscaling_minimum_target = 1
   autoscaling_maximum_target = 10
-  health_check               = {
+  health_check = {
     healthy_threshold   = 3
     unhealthy_threshold = 3
     accepted_response   = "200"
@@ -91,12 +95,14 @@ module "django-app" {
 
 
 module "unstructured" {
+  # checkov:skip=CKV_TF_1: We're using semantic versions instead of commit hash
+  #source                       = "../../i-dot-ai-core-terraform-modules//modules/infrastructure/ecs" # For testing local changes
+  source                        = "git::https://github.com/i-dot-ai/i-dot-ai-core-terraform-modules.git//modules/infrastructure/ecs?ref=v1.0.0-ecs"
   service_discovery_service_arn = aws_service_discovery_service.unstructured_service_discovery_service.arn
   memory                        = 4096
   cpu                           = 2048
   create_listener               = false
   create_networking             = false
-  source                        = "../../../i-ai-core-infrastructure//modules/ecs"
   name                          = "${local.name}-unstructured"
   image_tag                     = "latest"
   ecr_repository_uri            = "quay.io/unstructured-io/unstructured-api"
@@ -104,7 +110,7 @@ module "unstructured" {
   ecs_cluster_name              = module.cluster.ecs_cluster_name
   autoscaling_minimum_target    = 1
   autoscaling_maximum_target    = 1
-  health_check                  = {
+  health_check = {
     healthy_threshold   = 3
     unhealthy_threshold = 3
     accepted_response   = "200"
@@ -124,12 +130,14 @@ module "unstructured" {
 
 
 module "worker" {
+  # checkov:skip=CKV_TF_1: We're using semantic versions instead of commit hash
+  #source                      = "../../i-dot-ai-core-terraform-modules//modules/infrastructure/ecs" # For testing local changes
+  source                       = "git::https://github.com/i-dot-ai/i-dot-ai-core-terraform-modules.git//modules/infrastructure/ecs?ref=v1.0.0-ecs"
   command                      = ["venv/bin/django-admin", "qcluster"]
   memory                       = 6144
   cpu                          = 2048
   create_listener              = false
   create_networking            = false
-  source                       = "../../../i-ai-core-infrastructure//modules/ecs"
   name                         = "${local.name}-worker"
   image_tag                    = var.image_tag
   ecr_repository_uri           = "${var.ecr_repository_uri}/${var.project_name}-django-app"
