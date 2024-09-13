@@ -167,6 +167,7 @@ class ChatAdmin(ExportMixin, admin.ModelAdmin):
     list_filter = ["user"]
     date_hierarchy = "created_at"
     actions = ["export_as_csv"]
+    search_fields = ["chat__user__email"]
 
 
 def reporting_dashboard(request):
