@@ -159,8 +159,9 @@ def build_set_self_route_from_llm_answer(
     true_condition_state_update: dict,
     false_condition_state_update: dict,
     final_route_response: bool = True,
-):
+) -> Runnable[RedboxState, dict[str, Any]]:
     """A Runnable which sets the route based on a conditional on state['text']"""
+
     @RunnableLambda
     def _set_self_route_from_llm_answer(state: RedboxState):
         llm_response = state["text"]
@@ -187,7 +188,7 @@ def build_passthrough_pattern() -> Runnable[RedboxState, dict[str, Any]]:
     return _passthrough
 
 
-def build_set_text_pattern(text: str, final_response_chain: bool = False):
+def build_set_text_pattern(text: str, final_response_chain: bool = False) -> Runnable[RedboxState, dict[str, Any]]:
     """Returns a Runnable that can arbitrarily set state["text"] to a value."""
     llm = CannedChatLLM(text=text)
     _llm = llm.with_config(tags=["response_flag"]) if final_response_chain else llm
@@ -201,8 +202,9 @@ def build_set_text_pattern(text: str, final_response_chain: bool = False):
     return _set_text
 
 
-def build_set_metadata_pattern():
+def build_set_metadata_pattern() -> Runnable[RedboxState, dict[str, Any]]:
     """A Runnable which calculates the static request metadata from the state"""
+
     @RunnableLambda
     def _set_metadata_pattern(state: RedboxState):
         flat_docs = flatten_document_state(state.get("documents", {}))
@@ -216,8 +218,9 @@ def build_set_metadata_pattern():
     return _set_metadata_pattern
 
 
-def build_error_pattern(text: str, route_name: str | None):
+def build_error_pattern(text: str, route_name: str | None) -> Runnable[RedboxState, dict[str, Any]]:
     """A Runnable which sets text and route to record an error"""
+
     @RunnableLambda
     def _error_pattern(state: RedboxState):
         return build_set_text_pattern(text, final_response_chain=True).invoke(state) | build_set_route_pattern(
@@ -237,7 +240,7 @@ def empty_process(state: RedboxState) -> None:
     return None
 
 
-def build_log_node(message: str):
+def build_log_node(message: str) -> Runnable[RedboxState, dict[str, Any]]:
     """A Runnable which logs the current state in a compact way"""
 
     @RunnableLambda
