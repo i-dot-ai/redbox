@@ -75,6 +75,7 @@ class FileAdmin(ExportMixin, admin.ModelAdmin):
     list_filter = ["user", "status"]
     date_hierarchy = "created_at"
     actions = ["reupload"]
+    search_fields = ["user__email"]
 
 
 class CitationInline(admin.StackedInline):
@@ -102,6 +103,7 @@ class ChatMessageAdmin(ExportMixin, admin.ModelAdmin):
     date_hierarchy = "created_at"
     inlines = [CitationInline, ChatMessageTokenUseInline]
     readonly_fields = ["selected_files", "source_files"]
+    search_fields = ["chat__user__email"]
 
     @admin.display(ordering="chat__user", description="User")
     def get_user(self, obj):
