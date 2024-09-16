@@ -408,6 +408,16 @@ class Chat(UUIDPrimaryKeyBase, TimeStampedModel, AbstractAISettings):
     name = models.TextField(max_length=1024, null=False, blank=False)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
 
+    # Exit feedback - this is separate to the ratings for individual ChatMessages
+    feedback_achieved = models.BooleanField(
+        null=True, blank=True, help_text="Did Redbox do what you needed it to in this chat?"
+    )
+    feedback_saved_time = models.BooleanField(null=True, blank=True, help_text="Did Redbox help save you time?")
+    feedback_improved_work = models.BooleanField(
+        null=True, blank=True, help_text="Did Redbox help to improve your work?"
+    )
+    feedback_notes = models.TextField(null=True, blank=True, help_text="Do you want to tell us anything further?")
+
     def __str__(self) -> str:  # pragma: no cover
         return self.name or ""
 

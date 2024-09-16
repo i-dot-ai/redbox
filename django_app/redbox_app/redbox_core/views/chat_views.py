@@ -95,3 +95,19 @@ class ChatsTitleView(View):
         chat.save(update_fields=["name"])
 
         return HttpResponse(status=HTTPStatus.NO_CONTENT)
+
+
+class UpdateChatFeedback(View):
+    @method_decorator(login_required)
+    def post(self, request: HttpRequest, chat_id: uuid.UUID) -> HttpResponse:
+        def convert_to_boolean(value: str):
+            if value == "Yes":
+                return True
+            return False
+        chat: Chat = get_object_or_404(Chat, id=chat_id)
+        chat.feedback_achieved = convert_to_boolean(request.POST.get("achieved"))
+        chat.feedback_saved_time = convert_to_boolean(request.POST.get("saved_time"))
+        chat.feedback_improved_work = convert_to_boolean(request.POST.get("improved_work"))
+        chat.feedback_notes = request.POST.get("notes")
+        chat.save()
+        return HttpResponse(status=HTTPStatus.NO_CONTENT)

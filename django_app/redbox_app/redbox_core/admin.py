@@ -155,6 +155,13 @@ class ChatAdmin(ExportMixin, admin.ModelAdmin):
             },
         ),
         (
+            "Feedback",
+            {
+                "classes": ["collapse"],
+                "fields": ["feedback_achieved", "feedback_saved_time", "feedback_improved_work", "feedback_notes"],
+            },
+        ),
+        (
             "AI Settings",
             {
                 "classes": ["collapse"],
