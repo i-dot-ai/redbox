@@ -24,22 +24,22 @@ class ExitFeedback extends HTMLElement {
           <fieldset>
             <legend>Did Redbox help save you time?</legend>
             <div>
-              <input type="radio" id="exit-feedback__input-time-yes" name="save-time" value="Yes"/>
+              <input type="radio" id="exit-feedback__input-time-yes" name="saved_time" value="Yes"/>
               <label for="exit-feedback__input-time-yes">Yes</label>
             </div>
             <div>
-              <input type="radio" id="exit-feedback__input-time-no" name="save-time" value="No"/>
+              <input type="radio" id="exit-feedback__input-time-no" name="saved_time" value="No"/>
               <label for="exit-feedback__input-time-no">No</label>
             </div>
           </fieldset>
           <fieldset>
             <legend>Did Redbox help to improve your work?</legend>
             <div>
-              <input type="radio" id="exit-feedback__input-improve-work-yes" name="improve-work" value="Yes"/>
+              <input type="radio" id="exit-feedback__input-improve-work-yes" name="improved_work" value="Yes"/>
               <label for="exit-feedback__input-improve-work-yes">Yes</label>
             </div>
             <div>
-              <input type="radio" id="exit-feedback__input-improve-work-no" name="improve-work" value="No"/>
+              <input type="radio" id="exit-feedback__input-improve-work-no" name="improved_work" value="No"/>
               <label for="exit-feedback__input-improve-work-no">No</label>
             </div>
           </fieldset>
@@ -70,9 +70,19 @@ class ExitFeedback extends HTMLElement {
     });
 
     // close menu if focus moves out of it
+    let lastInteractionWasKeyboard = false;
+    document.addEventListener("keydown", () => {
+      lastInteractionWasKeyboard = true;
+    });
+    document.addEventListener("mousedown", () => {
+      lastInteractionWasKeyboard = false;
+    });
     this.addEventListener("focusout", () => {
       window.setTimeout(() => {
-        if (!this.contains(document.activeElement)) {
+        if (
+          !this.contains(document.activeElement) &&
+          lastInteractionWasKeyboard
+        ) {
           toggleButton?.setAttribute("aria-expanded", "false");
         }
       }, 100);
@@ -90,7 +100,7 @@ class ExitFeedback extends HTMLElement {
     this.querySelector(".exit-feedback__button-yes")?.addEventListener(
       "click",
       () => {
-        this.formData.set("success", "Yes");
+        this.formData.set("achieved", "Yes");
         this.#changePage(1);
         this.#sendFeedback();
       }
@@ -98,7 +108,7 @@ class ExitFeedback extends HTMLElement {
     this.querySelector(".exit-feedback__button-no")?.addEventListener(
       "click",
       () => {
-        this.formData.set("success", "No");
+        this.formData.set("achieved", "No");
         this.#changePage(1);
         this.#sendFeedback();
       }
@@ -151,10 +161,9 @@ class ExitFeedback extends HTMLElement {
 
   async #sendFeedback() {
     try {
-      await fetch(`/exit-feedback/${this.dataset.chatid}/`, {
+      await fetch(`/chats/${this.dataset.chatid}/update-chat-feedback`, {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
           "X-CSRFToken": this.dataset.csrf || "",
         },
         body: this.formData,
