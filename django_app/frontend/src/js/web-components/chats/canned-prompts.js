@@ -5,15 +5,15 @@ class CannedPrompts extends HTMLElement {
     this.innerHTML = `
         <h3 class="chat-options__heading govuk-heading-m">What would you like to ask your Redbox?</h3>
         <div class="chat-options__options">
-            <button class="chat-options__option chat-options__option_agenda" type="button">
+            <button class="chat-options__option chat-options__option_agenda plausible-event-name--canned+prompt+draft+meeting+agenda" type="button">
                 <img src="/static/icons/icon_square_doc.svg" alt=""/>
                 Draft an agenda for a team meeting
             </button>
-            <button class="chat-options__option chat-options__option_objectives" type="button">
+            <button class="chat-options__option chat-options__option_objectives plausible-event-name--canned+prompt+set+work+objectives" type="button">
                 <img src="/static/icons/archery.svg" alt=""/>
                 Help me set my work objectives
             </button>
-            <button class="chat-options__option chat-options__option_ps_role" type="button">
+            <button class="chat-options__option chat-options__option_ps_role plausible-event-name--canned+prompt+describe+role+permanent+secretary" type="button">
                 <img src="/static/icons/person.svg" alt=""/>
                 Describe the role of a Permanent Secretary
             </button>
