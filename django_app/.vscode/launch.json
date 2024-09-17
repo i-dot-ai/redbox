@@ -16,6 +16,7 @@
                 "POSTGRES_HOST": "localhost",
                 "UNSTRUCTURED_HOST": "localhost"
             }
+        }
         },
     ]
 }

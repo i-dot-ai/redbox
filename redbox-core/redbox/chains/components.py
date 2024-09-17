@@ -13,6 +13,8 @@ from redbox.retriever import AllElasticsearchRetriever, ParameterisedElasticsear
 from langchain_aws import ChatBedrock
 from langchain_community.embeddings import BedrockEmbeddings
 
+from redbox.retriever.retrievers import MetadataRetriever
+
 
 def get_chat_llm(env: Settings, ai_settings: AISettings):
     chat_model = None
@@ -148,4 +150,11 @@ def get_parameterised_retriever(env: Settings, embeddings: Embeddings | None = N
         index_name=f"{env.elastic_root_index}-chunk",
         embedding_model=embeddings or get_embeddings(env),
         embedding_field_name=env.embedding_document_field_name,
+    )
+
+
+def get_metadata_retriever(env: Settings):
+    return MetadataRetriever(
+        es_client=env.elasticsearch_client(),
+        index_name=f"{env.elastic_root_index}-chunk",
     )

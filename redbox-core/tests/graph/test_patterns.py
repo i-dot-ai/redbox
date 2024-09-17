@@ -83,8 +83,8 @@ def test_build_llm_chain(test_case: RedboxChatTestCase):
     assert (
         final_state["text"] == test_case.test_data.expected_llm_response[-1]
     ), f"Expected LLM response: '{test_case.test_data.expected_llm_response[-1]}'. Received '{final_state["text"]}'"
-    assert sum(final_state["metadata"]["input_tokens"].values())
-    assert sum(final_state["metadata"]["output_tokens"].values())
+    assert sum(final_state["metadata"].input_tokens.values())
+    assert sum(final_state["metadata"].output_tokens.values())
 
 
 CHAT_TEST_CASES = generate_test_cases(
@@ -131,7 +131,7 @@ def test_build_set_route_pattern(test_case: RedboxChatTestCase):
     set_route = build_set_route_pattern(route=test_case.test_data.expected_route)
     state = RedboxState(request=test_case.query, documents=[])
 
-    response = set_route(state)
+    response = set_route.invoke(state)
     final_state = RedboxState(response)
 
     assert (
@@ -172,7 +172,7 @@ def test_build_retrieve_pattern(test_case: RedboxChatTestCase, mock_retriever: B
     retriever_function = build_retrieve_pattern(retriever=retriever)
     state = RedboxState(request=test_case.query, documents=[])
 
-    response = retriever_function(state)
+    response = retriever_function.invoke(state)
     final_state = RedboxState(response)
 
     assert final_state.get("documents") == structure_documents(test_case.docs)
@@ -203,7 +203,7 @@ def test_build_merge_pattern(test_case: RedboxChatTestCase, mocker: MockerFixtur
     with (
         mocker.patch("redbox.graph.nodes.processes.get_chat_llm", return_value=llm),
     ):
-        response = merge(state)
+        response = merge.invoke(state)
     final_state = RedboxState(response)
 
     response_documents = [doc for doc in flatten_document_state(final_state.get("documents")) if doc is not None]
@@ -241,7 +241,7 @@ def test_build_stuff_pattern(test_case: RedboxChatTestCase, mocker: MockerFixtur
     with (
         mocker.patch("redbox.graph.nodes.processes.get_chat_llm", return_value=llm),
     ):
-        response = stuff(state)
+        response = stuff.invoke(state)
     final_state = RedboxState(response)
 
     assert (
@@ -256,7 +256,7 @@ def test_build_passthrough_pattern():
         request=RedboxQuery(question="What is AI?", s3_keys=[], user_uuid=uuid4(), chat_history=[]),
     )
 
-    response = passthrough(state)
+    response = passthrough.invoke(state)
     final_state = RedboxState(response)
 
     assert final_state["text"] == "What is AI?"
@@ -269,7 +269,7 @@ def test_build_set_text_pattern():
         request=RedboxQuery(question="What is AI?", s3_keys=[], user_uuid=uuid4(), chat_history=[]),
     )
 
-    response = set_text(state)
+    response = set_text.invoke(state)
     final_state = RedboxState(response)
 
     assert final_state["text"] == "An hendy hap ychabbe ychent."

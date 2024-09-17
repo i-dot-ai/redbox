@@ -17,8 +17,14 @@ from websockets import ConnectionClosedError, WebSocketClientProtocol
 
 from redbox import Redbox
 from redbox.models import Settings
-from redbox.models.chain import AISettings, ChainChatMessage, RedboxQuery, RedboxState
-from redbox.models.chat import MetadataDetail
+from redbox.models.chain import (
+    AISettings,
+    ChainChatMessage,
+    RedboxQuery,
+    RedboxState,
+    RequestMetadata,
+    metadata_reducer,
+)
 from redbox_app.redbox_core import error_messages
 from redbox_app.redbox_core.models import (
     Chat,
@@ -55,7 +61,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
     full_reply: ClassVar = []
     citations: ClassVar = []
     route = None
-    metadata: MetadataDetail = MetadataDetail()
+    metadata: RequestMetadata = RequestMetadata()
     redbox = Redbox(env=Settings(), debug=True)
 
     async def receive(self, text_data=None, bytes_data=None):
@@ -63,7 +69,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
         self.full_reply = []
         self.citations = []
         self.route = None
-        self.metadata = MetadataDetail()
 
         data = json.loads(text_data or bytes_data)
         logger.debug("received %s from browser", data)
@@ -162,7 +167,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         role: ChatRoleEnum,
         sources: Sequence[tuple[File, Document]] | None = None,
         selected_files: Sequence[File] | None = None,
-        metadata: MetadataDetail | None = None,
+        metadata: RequestMetadata | None = None,
         route: str | None = None,
     ) -> ChatMessage:
         chat_message = ChatMessage(chat=session, text=user_message_text, role=role, route=route)
@@ -225,11 +230,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         self.route = response
 
     async def handle_metadata(self, response: dict):
-        metadata_detail = MetadataDetail.parse_obj(response)
-        for model, token_count in metadata_detail.input_tokens.items():
-            self.metadata.input_tokens[model] = self.metadata.input_tokens.get(model, 0) + token_count
-        for model, token_count in metadata_detail.output_tokens.items():
-            self.metadata.output_tokens[model] = self.metadata.output_tokens.get(model, 0) + token_count
+        self.metadata = metadata_reducer(self.metadata, RequestMetadata.model_validate(response))
 
     async def handle_documents(self, response: list[Document]):
         s3_keys = [doc.metadata["file_name"] for doc in response]

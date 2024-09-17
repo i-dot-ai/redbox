@@ -3,7 +3,7 @@ from datetime import UTC, datetime
 import pytest
 from langchain_core.documents.base import Document
 
-from redbox.models.chain import RequestMetadata
+from redbox.models.chain import LLMCallMetadata, RequestMetadata
 from redbox.transform import combine_documents, to_request_metadata
 from redbox.retriever.retrievers import filter_by_elbow
 
@@ -158,7 +158,7 @@ def test_elbow_filter(scores: list[float], target_len: int):
                 ),
                 "model": "gpt-4o",
             },
-            RequestMetadata(input_tokens={"gpt-4o": 6}, output_tokens={"gpt-4o": 23}),
+            RequestMetadata(llm_calls={LLMCallMetadata(model_name="gpt-4o", input_tokens=6, output_tokens=23)}),
         ),
         (
             {
@@ -170,10 +170,16 @@ def test_elbow_filter(scores: list[float], target_len: int):
                 ),
                 "model": "unknown-model",
             },
-            RequestMetadata(input_tokens={"unknown-model": 6}, output_tokens={"unknown-model": 23}),
+            RequestMetadata(llm_calls={LLMCallMetadata(model_name="unknown-model", input_tokens=6, output_tokens=23)}),
         ),
     ],
 )
 def test_to_request_metadata(output: dict, expected: RequestMetadata):
     result = to_request_metadata.invoke(output)
-    assert result == expected, f"Expected: {expected} Result: {result}"
+    # We assert on token counts here as the id generation causes the LLMCallMetadata objects not to match
+    assert (
+        result.input_tokens == expected.input_tokens
+    ), f"Expected: {expected.input_tokens} Result: {result.input_tokens}"
+    assert (
+        result.output_tokens == expected.output_tokens
+    ), f"Expected: {expected.output_tokens} Result: {result.output_tokens}"

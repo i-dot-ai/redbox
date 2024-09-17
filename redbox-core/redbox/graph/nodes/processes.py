@@ -1,17 +1,21 @@
+from collections.abc import Callable
 import logging
+from operator import add
 import re
-from typing import Any, Callable
+import json
+from typing import Any
 from uuid import uuid4
 from functools import reduce
 
 from langchain.schema import StrOutputParser
-from langchain_core.runnables import RunnableParallel, RunnablePassthrough
+from langchain_core.runnables import Runnable, RunnableLambda, RunnableParallel
 from langchain_core.vectorstores import VectorStoreRetriever
 
 from redbox.chains.components import get_tokeniser, get_chat_llm
 from redbox.chains.runnables import build_llm_chain, CannedChatLLM
+from redbox.models.graph import ROUTE_NAME_TAG
 from redbox.models import ChatRoute, Settings
-from redbox.models.chain import RedboxState
+from redbox.models.chain import RedboxState, RequestMetadata
 from redbox.transform import combine_documents, structure_documents
 from redbox.models.chain import PromptSet
 from redbox.transform import flatten_document_state
@@ -28,26 +32,23 @@ re_keyword_pattern = re.compile(r"@(\w+)")
 
 def build_retrieve_pattern(
     retriever: VectorStoreRetriever, final_source_chain: bool = False
-) -> Callable[[RedboxState], dict[str, Any]]:
+) -> Runnable[RedboxState, dict[str, Any]]:
     """Returns a function that uses state["request"] and state["text"] to set state["documents"]."""
-    retriever = RunnableParallel({"documents": retriever | structure_documents})
+    retriever_chain = RunnableParallel({"documents": retriever | structure_documents})
 
     if final_source_chain:
-        _retriever = retriever.with_config(tags=["source_documents_flag"])
+        _retriever = retriever_chain.with_config(tags=["source_documents_flag"])
     else:
-        _retriever = retriever
+        _retriever = retriever_chain
 
-    def _retrieve(state: RedboxState) -> dict[str, Any]:
-        return _retriever.invoke(state)
-
-    return _retrieve
+    return _retriever
 
 
 def build_chat_pattern(
     prompt_set: PromptSet,
     final_response_chain: bool = False,
-) -> Callable[[RedboxState], dict[str, Any]]:
-    """Returns a function that uses state["request"] to set state["text"]."""
+) -> Runnable[RedboxState, dict[str, Any]]:
+    """Returns a Runnable that uses state["request"] to set state["text"]."""
 
     def _chat(state: RedboxState) -> dict[str, Any]:
         llm = get_chat_llm(Settings(), state["request"].ai_settings)
@@ -63,8 +64,8 @@ def build_chat_pattern(
 def build_merge_pattern(
     prompt_set: PromptSet,
     final_response_chain: bool = False,
-) -> Callable[[RedboxState], dict[str, Any]]:
-    """Returns a function that uses state["request"] and state["documents"] to return one item in state["documents"].
+) -> Runnable[RedboxState, dict[str, Any]]:
+    """Returns a Runnable that uses state["request"] and state["documents"] to return one item in state["documents"].
 
     When combined with chunk send, will replace each Document with what's returned from the LLM.
 
@@ -74,6 +75,7 @@ def build_merge_pattern(
     """
     tokeniser = get_tokeniser()
 
+    @RunnableLambda
     def _merge(state: RedboxState) -> dict[str, Any]:
         llm = get_chat_llm(Settings(), state["request"].ai_settings)
 
@@ -116,14 +118,26 @@ def build_merge_pattern(
 
 def build_stuff_pattern(
     prompt_set: PromptSet,
+    output_parser: Runnable = None,
     final_response_chain: bool = False,
-) -> Callable[[RedboxState], dict[str, Any]]:
-    """Returns a function that uses state["request"] and state["documents"] to set state["text"]."""
+) -> Runnable[RedboxState, dict[str, Any]]:
+    """Returns a Runnable that uses state["request"] and state["documents"] to set state["text"]."""
 
+    @RunnableLambda
     def _stuff(state: RedboxState) -> dict[str, Any]:
         llm = get_chat_llm(Settings(), state["request"].ai_settings)
 
-        return build_llm_chain(prompt_set=prompt_set, llm=llm, final_response_chain=final_response_chain).invoke(state)
+        events = []
+
+        for event in build_llm_chain(
+            prompt_set=prompt_set, llm=llm, output_parser=output_parser, final_response_chain=final_response_chain
+        ).stream(state):
+            events.append(event)
+
+        if len(events) == 0:
+            return None
+        else:
+            return reduce(add, events)
 
     return _stuff
 
@@ -131,20 +145,41 @@ def build_stuff_pattern(
 ## Utility patterns
 
 
-def build_set_route_pattern(route: ChatRoute) -> Callable[[RedboxState], dict[str, Any]]:
-    """Returns a function that sets state["route_name"]."""
+def build_set_route_pattern(route: ChatRoute) -> Runnable[RedboxState, dict[str, Any]]:
+    """Returns a Runnable that sets state["route_name"]."""
 
     def _set_route(state: RedboxState) -> dict[str, Any]:
-        set_route_chain = (RunnablePassthrough() | StrOutputParser()).with_config(tags=["route_flag"])
+        return {"route_name": route}
 
-        return {"route_name": set_route_chain.invoke(route.value)}
-
-    return _set_route
+    return RunnableLambda(_set_route).with_config(tags=[ROUTE_NAME_TAG])
 
 
-def build_passthrough_pattern() -> Callable[[RedboxState], dict[str, Any]]:
-    """Returns a function that uses state["request"] to set state["text"]."""
+def build_set_self_route_from_llm_answer(
+    conditional: Callable[[str], bool],
+    true_condition_state_update: dict,
+    false_condition_state_update: dict,
+    final_route_response: bool = True,
+) -> Runnable[RedboxState, dict[str, Any]]:
+    """A Runnable which sets the route based on a conditional on state['text']"""
 
+    @RunnableLambda
+    def _set_self_route_from_llm_answer(state: RedboxState):
+        llm_response = state["text"]
+        if conditional(llm_response):
+            return true_condition_state_update
+        else:
+            return false_condition_state_update
+
+    runnable = _set_self_route_from_llm_answer
+    if final_route_response:
+        runnable = _set_self_route_from_llm_answer.with_config(tags=[ROUTE_NAME_TAG])
+    return runnable
+
+
+def build_passthrough_pattern() -> Runnable[RedboxState, dict[str, Any]]:
+    """Returns a Runnable that uses state["request"] to set state["text"]."""
+
+    @RunnableLambda
     def _passthrough(state: RedboxState) -> dict[str, Any]:
         return {
             "text": state["request"].question,
@@ -153,11 +188,12 @@ def build_passthrough_pattern() -> Callable[[RedboxState], dict[str, Any]]:
     return _passthrough
 
 
-def build_set_text_pattern(text: str, final_response_chain: bool = False):
-    """Returns a function that can arbitrarily set state["text"] to a value."""
+def build_set_text_pattern(text: str, final_response_chain: bool = False) -> Runnable[RedboxState, dict[str, Any]]:
+    """Returns a Runnable that can arbitrarily set state["text"] to a value."""
     llm = CannedChatLLM(text=text)
     _llm = llm.with_config(tags=["response_flag"]) if final_response_chain else llm
 
+    @RunnableLambda
     def _set_text(state: RedboxState) -> dict[str, Any]:
         set_text_chain = _llm | StrOutputParser()
 
@@ -166,9 +202,35 @@ def build_set_text_pattern(text: str, final_response_chain: bool = False):
     return _set_text
 
 
+def build_set_metadata_pattern() -> Runnable[RedboxState, dict[str, Any]]:
+    """A Runnable which calculates the static request metadata from the state"""
+
+    @RunnableLambda
+    def _set_metadata_pattern(state: RedboxState):
+        flat_docs = flatten_document_state(state.get("documents", {}))
+        return {
+            "metadata": RequestMetadata(
+                selected_files_total_tokens=sum(map(lambda d: d.metadata.get("token_count", 0), flat_docs)),
+                number_of_selected_files=len(state["request"].s3_keys),
+            )
+        }
+
+    return _set_metadata_pattern
+
+
+def build_error_pattern(text: str, route_name: str | None) -> Runnable[RedboxState, dict[str, Any]]:
+    """A Runnable which sets text and route to record an error"""
+
+    @RunnableLambda
+    def _error_pattern(state: RedboxState):
+        return build_set_text_pattern(text, final_response_chain=True).invoke(state) | build_set_route_pattern(
+            route_name
+        ).invoke(state)
+
+    return _error_pattern
+
+
 # Raw processes
-
-
 def clear_documents_process(state: RedboxState) -> dict[str, Any]:
     if documents := state.get("documents"):
         return {"documents": {group_id: None for group_id in documents}}
@@ -176,3 +238,27 @@ def clear_documents_process(state: RedboxState) -> dict[str, Any]:
 
 def empty_process(state: RedboxState) -> None:
     return None
+
+
+def build_log_node(message: str) -> Runnable[RedboxState, dict[str, Any]]:
+    """A Runnable which logs the current state in a compact way"""
+
+    @RunnableLambda
+    def _log_node(state: RedboxState):
+        log.info(
+            json.dumps(
+                {
+                    "user_uuid": str(state["request"].user_uuid),
+                    "document_metadata": {
+                        group_id: {doc_id: d.metadata for doc_id, d in group_documents.items()}
+                        for group_id, group_documents in state["documents"]
+                    },
+                    "text": state["text"] if len(state["text"]) < 32 else f"{state['text'][:29]}...",
+                    "route": state["route_name"],
+                    "message": message,
+                }
+            )
+        )
+        return None
+
+    return _log_node

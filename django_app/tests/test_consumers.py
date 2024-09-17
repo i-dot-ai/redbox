@@ -17,8 +17,8 @@ from pydantic import BaseModel
 from websockets import WebSocketClientProtocol
 from websockets.legacy.client import Connect
 
-from redbox.graph.root import FINAL_RESPONSE_TAG, ROUTE_NAME_TAG, SOURCE_DOCUMENTS_TAG
-from redbox.models.chat import MetadataDetail
+from redbox.models.chain import LLMCallMetadata, RequestMetadata
+from redbox.models.graph import FINAL_RESPONSE_TAG, ROUTE_NAME_TAG, SOURCE_DOCUMENTS_TAG
 from redbox_app.redbox_core import error_messages
 from redbox_app.redbox_core.consumers import ChatConsumer
 from redbox_app.redbox_core.models import Chat, ChatMessage, ChatMessageTokenUse, ChatRoleEnum, File
@@ -487,7 +487,7 @@ def mocked_connect(uploaded_file: File) -> Connect:
             "data": {"chunk": Token(content="Good afternoon, ")},
         },
         {"event": "on_chat_model_stream", "tags": [FINAL_RESPONSE_TAG], "data": {"chunk": Token(content="Mr. Amor.")}},
-        {"event": "on_chain_end", "tags": [ROUTE_NAME_TAG], "data": {"output": "gratitude"}},
+        {"event": "on_chain_end", "tags": [ROUTE_NAME_TAG], "data": {"output": {"route_name": "gratitude"}}},
         {
             "event": "on_retriever_end",
             "tags": [SOURCE_DOCUMENTS_TAG],
@@ -513,7 +513,11 @@ def mocked_connect(uploaded_file: File) -> Connect:
         {
             "event": "on_custom_event",
             "name": "on_metadata_generation",
-            "data": MetadataDetail(input_tokens={"gpt-4o": 123}, output_tokens={"gpt-4o": 1000}),
+            "data": RequestMetadata(
+                llm_calls=[LLMCallMetadata(model_name="gpt-4o", input_tokens=123, output_tokens=1000)],
+                selected_files_total_tokens=1000,
+                number_of_selected_files=1,
+            ),
         },
     ]
 
@@ -528,7 +532,7 @@ def mocked_connect_with_naughty_citation(uploaded_file: File) -> CannedGraphLLM:
             "tags": [FINAL_RESPONSE_TAG],
             "data": {"chunk": Token(content="Good afternoon, Mr. Amor.")},
         },
-        {"event": "on_chain_end", "tags": [ROUTE_NAME_TAG], "data": {"output": "gratitude"}},
+        {"event": "on_chain_end", "tags": [ROUTE_NAME_TAG], "data": {"output": {"route_name": "gratitude"}}},
         {
             "event": "on_retriever_end",
             "tags": [SOURCE_DOCUMENTS_TAG],

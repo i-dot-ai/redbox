@@ -89,3 +89,14 @@ def get_some(
             }
         },
     }
+
+
+def get_metadata(
+    chunk_resolution: ChunkResolution | None,
+    state: RedboxState,
+) -> dict[str, Any]:
+    query_filter = make_query_filter(state["request"].s3_keys, chunk_resolution)
+    return {
+        "_source": {"excludes": ["*embedding", "text"]},
+        "query": {"bool": {"must": {"match_all": {}}, "filter": query_filter}},
+    }

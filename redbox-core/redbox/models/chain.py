@@ -6,9 +6,10 @@ used in conjunction with langchain this is the tidiest boxing of pydantic v1 we 
 """
 
 from typing import TypedDict, Literal, Annotated, Required, NotRequired
-from uuid import UUID
+from uuid import UUID, uuid4
 from functools import reduce
 from enum import StrEnum
+from datetime import datetime, UTC
 
 from pydantic import BaseModel, Field
 from langchain_core.documents import Document
@@ -43,6 +44,13 @@ RETRIEVAL_SYSTEM_PROMPT = (
     "If the user asks for a specific number or range of bullet points you MUST give that number of bullet points. \n"
     "Use **bold** to highlight the most question relevant parts in your response. "
     "If dealing dealing with lots of data return it in markdown table format. "
+)
+
+SELF_ROUTE_SYSTEM_PROMPT = (
+    "You are a helpful assistant to UK Civil Servants. "
+    "Given the list of extracted parts of long documents and a question, answer the question if possible.\n"
+    "If the question cannot be answered respond with only the word 'unanswerable' \n"
+    "If the question can be answered accurately from the documents given then give that response \n"
 )
 
 CHAT_MAP_SYSTEM_PROMPT = (
@@ -89,7 +97,7 @@ CONDENSE_QUESTION_PROMPT = "{question}\n=========\n Standalone question: "
 class AISettings(BaseModel):
     """prompts and other AI settings"""
 
-    max_document_tokens: int = 1_000_000
+    max_document_tokens: int = 256_000
     context_window_size: int = 128_000
     llm_max_tokens: int = 1024
 
@@ -103,6 +111,7 @@ class AISettings(BaseModel):
     chat_with_docs_question_prompt: str = CHAT_WITH_DOCS_QUESTION_PROMPT
     chat_with_docs_reduce_system_prompt: str = CHAT_WITH_DOCS_REDUCE_SYSTEM_PROMPT
     retrieval_system_prompt: str = RETRIEVAL_SYSTEM_PROMPT
+    self_route_system_prompt: str = SELF_ROUTE_SYSTEM_PROMPT
     retrieval_question_prompt: str = RETRIEVAL_QUESTION_PROMPT
     condense_system_prompt: str = CONDENSE_SYSTEM_PROMPT
     condense_question_prompt: str = CONDENSE_QUESTION_PROMPT
@@ -187,18 +196,38 @@ class RedboxQuery(BaseModel):
     ai_settings: AISettings = Field(description="User request AI settings", default_factory=AISettings)
 
 
-class RequestMetadata(TypedDict):
-    input_tokens: dict[str, int]
-    output_tokens: dict[str, int]
+class LLMCallMetadata(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid4()))
+    model_name: str
+    input_tokens: int
+    output_tokens: int
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
+
+    model_config = {"frozen": True}
 
 
-def add_tokens_by_model(current: dict[str, int], update: dict[str, int]):
-    result = current.copy()
+class RequestMetadata(BaseModel):
+    llm_calls: set[LLMCallMetadata] = Field(default_factory=set)
+    selected_files_total_tokens: int = 0
+    number_of_selected_files: int = 0
 
-    for key, value in update.items():
-        result[key] = (result.get(key) or 0) + value
+    @property
+    def input_tokens(self):
+        tokens_by_model = dict()
+        for call_metadata in self.llm_calls:
+            tokens_by_model[call_metadata.model_name] = (
+                tokens_by_model.get(call_metadata.model_name, 0) + call_metadata.input_tokens
+            )
+        return tokens_by_model
 
-    return result
+    @property
+    def output_tokens(self):
+        tokens_by_model = dict()
+        for call_metadata in self.llm_calls:
+            tokens_by_model[call_metadata.model_name] = (
+                tokens_by_model.get(call_metadata.model_name, 0) + call_metadata.output_tokens
+            )
+        return tokens_by_model
 
 
 def metadata_reducer(current: RequestMetadata | None, update: RequestMetadata | list[RequestMetadata] | None):
@@ -213,12 +242,10 @@ def metadata_reducer(current: RequestMetadata | None, update: RequestMetadata | 
     if update is None:
         return current
 
-    input_tokens = add_tokens_by_model(current.get("input_tokens") or {}, update.get("input_tokens") or {})
-    output_tokens = add_tokens_by_model(current.get("output_tokens") or {}, update.get("output_tokens") or {})
-
     return RequestMetadata(
-        input_tokens=input_tokens,
-        output_tokens=output_tokens,
+        llm_calls=current.llm_calls | update.llm_calls,
+        selected_files_total_tokens=update.selected_files_total_tokens or current.selected_files_total_tokens,
+        number_of_selected_files=update.number_of_selected_files or current.number_of_selected_files,
     )
 
 
@@ -227,7 +254,7 @@ class RedboxState(TypedDict):
     documents: Annotated[NotRequired[DocumentState], document_reducer]
     text: NotRequired[str | None]
     route_name: NotRequired[str | None]
-    metadata: Annotated[NotRequired[dict], metadata_reducer]
+    metadata: Annotated[NotRequired[RequestMetadata], metadata_reducer]
 
 
 class PromptSet(StrEnum):
@@ -235,6 +262,7 @@ class PromptSet(StrEnum):
     ChatwithDocs = "chat_with_docs"
     ChatwithDocsMapReduce = "chat_with_docs_map_reduce"
     Search = "search"
+    SelfRoute = "self_route"
     CondenseQuestion = "condense_question"
 
 
@@ -250,6 +278,9 @@ def get_prompts(state: RedboxState, prompt_set: PromptSet) -> tuple[str, str]:
         question_prompt = state["request"].ai_settings.chat_map_question_prompt
     elif prompt_set == PromptSet.Search:
         system_prompt = state["request"].ai_settings.retrieval_system_prompt
+        question_prompt = state["request"].ai_settings.retrieval_question_prompt
+    elif prompt_set == PromptSet.SelfRoute:
+        system_prompt = state["request"].ai_settings.self_route_system_prompt
         question_prompt = state["request"].ai_settings.retrieval_question_prompt
     elif prompt_set == PromptSet.CondenseQuestion:
         system_prompt = state["request"].ai_settings.condense_system_prompt
