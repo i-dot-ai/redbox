@@ -2,6 +2,31 @@
 
 import "../loading-message.js";
 
+// Send Plausible data on tool-tip hover
+/**
+ *
+ * @param {Event} evt
+ */
+const sendTooltipViewEvent = (evt) => {
+  let plausible = /** @type {any} */ (window).plausible;
+  if (typeof plausible !== "undefined") {
+    plausible("Route-tooltip-view");
+  }
+  // cancel event listener so events only get sent once
+  let targetElement = /** @type{HTMLElement | null | undefined} */ (evt.target);
+  if (targetElement?.nodeName !== "TOOL-TIP") {
+    targetElement = targetElement?.closest("tool-tip");
+  }
+  targetElement?.removeEventListener("mouseover", sendTooltipViewEvent);
+};
+// Do this for any SSR tool-tips on the page
+(() => {
+  const tooltips = document.querySelectorAll("tool-tip");
+  tooltips.forEach((tooltip) => {
+    tooltip.addEventListener("mouseover", sendTooltipViewEvent);
+  });
+})();
+
 class ChatMessage extends HTMLElement {
   constructor() {
     super();
@@ -52,7 +77,12 @@ class ChatMessage extends HTMLElement {
       document.querySelector("#template-route-display")
     );
     const routeClone = document.importNode(routeTemplate.content, true);
+
     this.querySelector(".iai-chat-bubble__header")?.appendChild(routeClone);
+    this.querySelector("tool-tip")?.addEventListener(
+      "mouseover",
+      sendTooltipViewEvent
+    );
   }
 
   /**
