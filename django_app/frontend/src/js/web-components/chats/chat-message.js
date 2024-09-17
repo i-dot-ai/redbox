@@ -31,6 +31,7 @@ class ChatMessage extends HTMLElement {
   constructor() {
     super();
     this.programmaticScroll = false;
+    this.plausibleRouteDataSent = false;
   }
 
   connectedCallback() {
@@ -198,8 +199,9 @@ class ChatMessage extends HTMLElement {
 
         // send route to Plausible
         let plausible = /** @type {any} */ (window).plausible;
-        if (typeof plausible !== "undefined") {
+        if (typeof plausible !== "undefined" && !this.plausibleRouteDataSent) {
           plausible("Chat-message-route", { props: { route: response.data } });
+          this.plausibleRouteDataSent = true;
         }
       } else if (response.type === "end") {
         sourcesContainer.showCitations(response.data.message_id);
