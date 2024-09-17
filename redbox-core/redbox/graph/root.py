@@ -198,11 +198,20 @@ def get_root_graph(
 
     # Subgraphs
     chat_subgraph = get_chat_graph(debug=debug)
-    rag_subgraph = get_search_graph(retriever=parameterised_retriever, debug=debug)
+    # rag_subgraph = get_search_graph(retriever=parameterised_retriever, debug=debug)
     cwd_subgraph = get_chat_with_documents_graph(retriever=all_chunks_retriever, debug=debug)
 
     # Processes
-    builder.add_node("p_search", rag_subgraph)
+    builder.add_node(
+        "p_search",
+        build_set_text_pattern(
+            text=(
+                "The @search route is temporarily down for maintainance. "
+                "We apologise for the inconvenience. "
+            ),
+            final_response_chain=True,
+        ),
+    )
     builder.add_node("p_chat", chat_subgraph)
     builder.add_node("p_chat_with_documents", cwd_subgraph)
 
