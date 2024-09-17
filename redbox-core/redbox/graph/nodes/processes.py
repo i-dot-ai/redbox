@@ -9,11 +9,12 @@ from functools import reduce
 
 from langchain.schema import StrOutputParser
 from langchain_core.runnables import Runnable, RunnableLambda, RunnableParallel
+from langchain_core.callbacks.manager import dispatch_custom_event
 from langchain_core.vectorstores import VectorStoreRetriever
 
 from redbox.chains.components import get_tokeniser, get_chat_llm
 from redbox.chains.runnables import build_llm_chain, CannedChatLLM
-from redbox.models.graph import ROUTE_NAME_TAG
+from redbox.models.graph import ROUTE_NAME_TAG, RedboxActivityEvent, RedboxEventType
 from redbox.models import ChatRoute, Settings
 from redbox.models.chain import RedboxState, RequestMetadata
 from redbox.transform import combine_documents, structure_documents
@@ -262,3 +263,12 @@ def build_log_node(message: str) -> Runnable[RedboxState, dict[str, Any]]:
         return None
 
     return _log_node
+
+
+def build_activity_log_node(log_message: RedboxActivityEvent | Callable[[RedboxState], RedboxActivityEvent]):
+    @RunnableLambda
+    def _activity_log_node(state: RedboxState):
+        _message = log_message if isinstance(log_message, RedboxActivityEvent) else log_message(state)
+        dispatch_custom_event(RedboxEventType.activity, _message)
+        return None
+    return _activity_log_node

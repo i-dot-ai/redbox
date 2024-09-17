@@ -39,6 +39,7 @@ class Redbox:
         route_name_callback=_default_callback,
         documents_callback=_default_callback,
         metadata_tokens_callback=_default_callback,
+        activity_event_callback=_default_callback,
     ) -> RedboxState:
         final_state = None
         async for event in self.graph.astream_events(input, version="v2"):
@@ -60,6 +61,8 @@ class Redbox:
                 await documents_callback(event["data"]["output"])
             elif kind == "on_custom_event" and event["name"] == RedboxEventType.on_metadata_generation.value:
                 await metadata_tokens_callback(event["data"])
+            elif kind == "on_custom_event" and event["name"] == RedboxEventType.activity.value:
+                await activity_event_callback(event["data"])
             elif kind == "on_chain_end" and event["name"] == "LangGraph":
                 final_state = RedboxState(**event["data"]["output"])
         return final_state
