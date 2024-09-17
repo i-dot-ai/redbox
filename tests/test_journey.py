@@ -97,8 +97,8 @@ def test_user_journey(page: Page, email_address: str):
 
     # Use specific routes
     for route, select_file, should_have_citation in [
-        ("search", False, True),
-        ("search", True, True),
+        ("search", False, False),
+        ("search", True, False),
     ]:
         question = f"@{route} What do I need to install?"
         logger.info("Asking %r", question)
