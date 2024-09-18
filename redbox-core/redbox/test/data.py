@@ -43,7 +43,9 @@ class RedboxTestData:
     chunk_resolution: ChunkResolution = ChunkResolution.largest
     expected_llm_response: list[str] = field(default_factory=list)
     expected_route: ChatRoute | None = None
-    expected_activity_events: Callable[[list[RedboxActivityEvent]], bool] = field(default=lambda _: True) #Function to check activity events are as expected
+    expected_activity_events: Callable[[list[RedboxActivityEvent]], bool] = field(
+        default=lambda _: True
+    )  # Function to check activity events are as expected
 
 
 class RedboxChatTestCase:

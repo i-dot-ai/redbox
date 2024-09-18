@@ -155,7 +155,10 @@ def get_chat_with_documents_graph(
         "p_retrieve_all_chunks", build_retrieve_pattern(retriever=all_chunks_retriever, final_source_chain=True)
     )
 
-    builder.add_node("p_activity_log_tool_decision", build_activity_log_node(lambda state: RedboxActivityEvent(message=f"Using _{state["route_name"]}_")))
+    builder.add_node(
+        "p_activity_log_tool_decision",
+        build_activity_log_node(lambda state: RedboxActivityEvent(message=f"Using _{state["route_name"]}_")),
+    )
 
     # Decisions
     builder.add_node("d_request_handler_from_total_tokens", empty_process)

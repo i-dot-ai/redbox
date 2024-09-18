@@ -271,4 +271,5 @@ def build_activity_log_node(log_message: RedboxActivityEvent | Callable[[RedboxS
         _message = log_message if isinstance(log_message, RedboxActivityEvent) else log_message(state)
         dispatch_custom_event(RedboxEventType.activity, _message)
         return None
+
     return _activity_log_node
