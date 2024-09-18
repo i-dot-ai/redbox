@@ -52,8 +52,9 @@ def test_user_journey(page: Page, email_address: str):
     my_details_page = chats_page.navigate_my_details()
     my_details_page.name = "Roland Hamilton-Jones"
     my_details_page.ai_experience = "Enthusiastic Experimenter"
-    my_details_page.info_about_user = "Information about user"
-    my_details_page.redbox_response_preferences = "Respond concisely"
+    # Add these in once profile overlay is added
+    # my_details_page.info_about_user = "Information about user"
+    # my_details_page.redbox_response_preferences = "Respond concisely"
     chats_page = my_details_page.update()
 
     # Documents page

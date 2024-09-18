@@ -6,6 +6,7 @@ from datetime import UTC, date, datetime, timedelta
 from typing import override
 
 import boto3
+import jwt
 from botocore.config import Config
 from django.conf import settings
 from django.contrib.postgres.fields import ArrayField
