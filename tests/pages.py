@@ -199,7 +199,11 @@ class MyDetailsPage(SignedInBasePage):
 
     @property
     def info_about_user(self) -> str:
-        return self.page.get_by_label("What do you want Redbox to know about you?").get_by_role(role="option", selected=True).input_value()
+        return (
+            self.page.get_by_label("What do you want Redbox to know about you?")
+            .get_by_role(role="option", selected=True)
+            .input_value()
+        )
 
     @info_about_user.setter
     def info_about_user(self, info: str):
@@ -207,7 +211,11 @@ class MyDetailsPage(SignedInBasePage):
 
     @property
     def redbox_response_preferences(self) -> str:
-        return self.page.get_by_label("How do you want Redbox to respond?").get_by_role(role="option", selected=True).input_value()
+        return (
+            self.page.get_by_label("How do you want Redbox to respond?")
+            .get_by_role(role="option", selected=True)
+            .input_value()
+        )
 
     @redbox_response_preferences.setter
     def redbox_response_preferences(self, info: str):

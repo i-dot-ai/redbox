@@ -25,5 +25,7 @@ class DemographicsForm(forms.ModelForm):
             "name": forms.TextInput(attrs={"class": "govuk-input govuk-!-width-one-half"}),
             "ai_experience": forms.RadioSelect(attrs={"class": "govuk-radios__item"}),
             "info_about_user": forms.Textarea(attrs={"class": "govuk-textarea govuk-!-width-one-half", "rows": "5"}),
-            "redbox_response_preferences": forms.Textarea(attrs={"class": "govuk-textarea govuk-!-width-one-half", "rows": "5"}),
+            "redbox_response_preferences": forms.Textarea(
+                attrs={"class": "govuk-textarea govuk-!-width-one-half", "rows": "5"}
+            ),
         }
