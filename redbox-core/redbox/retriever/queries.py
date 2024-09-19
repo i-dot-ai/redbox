@@ -19,14 +19,16 @@ def build_resolution_filter(chunk_resolution: ChunkResolution) -> dict[str, Any]
     return {"term": {"metadata.chunk_resolution.keyword": str(chunk_resolution)}}
 
 
-def build_query_filter(state: RedboxState, chunk_resolution: ChunkResolution | None) -> list[dict[str, Any]]:
+def build_query_filter(
+    selected_files: list[str], permitted_files: list[str], chunk_resolution: ChunkResolution | None
+) -> list[dict[str, Any]]:
     """Generic filter constructor for all queries.
 
     Raises:
         ValueError if the selected S3 keys aren't in the permitted S3 keys
     """
-    selected_files = set(state["request"].s3_keys)
-    permitted_files = set(state["request"].permitted_s3_keys)
+    selected_files = set(selected_files)
+    permitted_files = set(permitted_files)
 
     if not selected_files <= permitted_files:
         log.warning(
@@ -55,7 +57,11 @@ def get_all(
 
     As it's used in summarisation, it excludes embeddings.
     """
-    query_filter = build_query_filter(state=state, chunk_resolution=chunk_resolution)
+    query_filter = build_query_filter(
+        selected_files=state["request"].s3_keys,
+        permitted_files=state["request"].permitted_s3_keys,
+        chunk_resolution=chunk_resolution,
+    )
 
     return {
         "_source": {"excludes": ["*embedding"]},
@@ -71,7 +77,11 @@ def get_some(
 ) -> dict[str, Any]:
     vector = embedding_model.embed_query(state["request"].question)
 
-    query_filter = build_query_filter(state=state, chunk_resolution=chunk_resolution)
+    query_filter = build_query_filter(
+        selected_files=state["request"].s3_keys,
+        permitted_files=state["request"].permitted_s3_keys,
+        chunk_resolution=chunk_resolution,
+    )
 
     return {
         "size": state["request"].ai_settings.rag_k,
@@ -107,7 +117,11 @@ def get_metadata(
     chunk_resolution: ChunkResolution | None,
     state: RedboxState,
 ) -> dict[str, Any]:
-    query_filter = build_query_filter(state=state, chunk_resolution=chunk_resolution)
+    query_filter = build_query_filter(
+        selected_files=state["request"].s3_keys,
+        permitted_files=state["request"].permitted_s3_keys,
+        chunk_resolution=chunk_resolution,
+    )
 
     return {
         "_source": {"excludes": ["*embedding", "text"]},
