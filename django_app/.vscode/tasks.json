@@ -40,11 +40,28 @@
                 "panel": "new"
             },
             "problemMatcher": []
-        }
+        },
         {
             "label": "Get Signin Link",
             "type": "shell",
             "command": "poetry run python manage.py show_magiclink_url me@localhost",
+            "options": {
+                "env": {
+                    "MINIO_HOST": "localhost",
+                    "POSTGRES_HOST": "localhost",
+                    "UNSTRUCTURED_HOST": "localhost"
+                }
+            },
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Django Migrate",
+            "type": "shell",
+            "command": "poetry run python manage.py migrate",
             "options": {
                 "env": {
                     "MINIO_HOST": "localhost",

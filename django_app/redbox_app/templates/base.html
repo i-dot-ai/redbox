@@ -20,7 +20,6 @@
 
   {% if environment | lower in ["dev", "preprod"] %}
     <script defer
-    event-environment="{{environment}}"
     data-domain="redbox-dev.ai.cabinetoffice.gov.uk" src="https://plausible.io/js/script.pageview-props.tagged-events.outbound-links.file-downloads.local.js"></script>
   {% elif environment | lower == "prod" %}
     <script defer
