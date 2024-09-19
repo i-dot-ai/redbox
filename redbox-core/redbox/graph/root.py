@@ -133,7 +133,9 @@ def get_chat_with_documents_graph(
     # Processes
     builder.add_node("p_pass_question_to_text", build_passthrough_pattern())
     builder.add_node("p_set_chat_docs_route", build_set_route_pattern(route=ChatRoute.chat_with_docs))
-    builder.add_node("p_set_chat_docs_map_reduce_route", build_set_route_pattern(route=ChatRoute.chat_with_docs_map_reduce))
+    builder.add_node(
+        "p_set_chat_docs_map_reduce_route", build_set_route_pattern(route=ChatRoute.chat_with_docs_map_reduce)
+    )
     builder.add_node("p_summarise_each_document", build_merge_pattern(prompt_set=PromptSet.ChatwithDocsMapReduce))
     builder.add_node(
         "p_summarise_document_by_document", build_merge_pattern(prompt_set=PromptSet.ChatwithDocsMapReduce)
@@ -162,7 +164,6 @@ def get_chat_with_documents_graph(
     builder.add_node("d_groups_have_multiple_docs", empty_process)
     builder.add_node("d_self_route_is_enabled", empty_process)
 
-
     # Sends
     builder.add_node("s_chunk", empty_process)
     builder.add_node("s_group_1", empty_process)
@@ -182,11 +183,8 @@ def get_chat_with_documents_graph(
     )
     builder.add_conditional_edges(
         "d_self_route_is_enabled",
-        lambda s: s["request"].ai_settings.self_route_enabled, 
-        {
-            True: "p_answer_or_decide_route", 
-            False: "p_set_chat_docs_map_reduce_route"
-        }
+        lambda s: s["request"].ai_settings.self_route_enabled,
+        {True: "p_answer_or_decide_route", False: "p_set_chat_docs_map_reduce_route"},
     )
     builder.add_conditional_edges(
         "p_answer_or_decide_route",

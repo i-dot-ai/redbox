@@ -55,9 +55,11 @@ TEST_CASES = [
         ),
         generate_test_cases(
             query=RedboxQuery(
-                question="What is AI?", s3_keys=["s3_key_1", "s3_key_2"], user_uuid=uuid4(), chat_history=[], ai_settings=AISettings(
-                    self_route_enabled=True
-                )
+                question="What is AI?",
+                s3_keys=["s3_key_1", "s3_key_2"],
+                user_uuid=uuid4(),
+                chat_history=[],
+                ai_settings=AISettings(self_route_enabled=True),
             ),
             test_data=[
                 RedboxTestData(
@@ -127,9 +129,13 @@ TEST_CASES = [
             test_id="Chat with large doc",
         ),
         generate_test_cases(
-            query=RedboxQuery(question="What is AI?", s3_keys=["s3_key"], user_uuid=uuid4(), chat_history=[], ai_settings=AISettings(
-                self_route_enabled=True
-            )),
+            query=RedboxQuery(
+                question="What is AI?",
+                s3_keys=["s3_key"],
+                user_uuid=uuid4(),
+                chat_history=[],
+                ai_settings=AISettings(self_route_enabled=True),
+            ),
             test_data=[
                 RedboxTestData(
                     2,
@@ -144,9 +150,13 @@ TEST_CASES = [
             test_id="Chat with large doc - with self route",
         ),
         generate_test_cases(
-            query=RedboxQuery(question="What is AI?", s3_keys=["s3_key"], user_uuid=uuid4(), chat_history=[], ai_settings=AISettings(
-                self_route_enabled=True
-            )),
+            query=RedboxQuery(
+                question="What is AI?",
+                s3_keys=["s3_key"],
+                user_uuid=uuid4(),
+                chat_history=[],
+                ai_settings=AISettings(self_route_enabled=True),
+            ),
             test_data=[
                 RedboxTestData(
                     2,
@@ -264,7 +274,9 @@ async def test_streaming(test: RedboxChatTestCase, env: Settings, mocker: Mocker
     # Bit of a bodge to retain the ability to check that the LLM streaming is working in most cases
     if not route_name.startswith("error"):
         assert len(token_events) > 1, f"Expected tokens as a stream. Received: {token_events}"
-        assert len(metadata_events) == len(test_case.test_data.expected_llm_response), f"Expected {len(test_case.test_data.expected_llm_response)} metadata events. Received {len(metadata_events)}"
+        assert len(metadata_events) == len(
+            test_case.test_data.expected_llm_response
+        ), f"Expected {len(test_case.test_data.expected_llm_response)} metadata events. Received {len(metadata_events)}"
 
     llm_response = "".join(token_events)
     number_of_selected_files = len(test_case.query.s3_keys)
