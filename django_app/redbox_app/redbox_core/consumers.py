@@ -90,13 +90,16 @@ class ChatConsumer(AsyncWebsocketConsumer):
             )
 
         # save user message
-        selected_files = File.objects.filter(id__in=selected_file_uuids, user=user)
+        permitted_files = File.objects.filter(user=user)
+        selected_files = permitted_files.filter(id__in=selected_file_uuids)
         await self.save_message(session, user_message_text, ChatRoleEnum.user, selected_files=selected_files)
 
-        await self.llm_conversation(selected_files, session, user, user_message_text)
+        await self.llm_conversation(selected_files, session, user, user_message_text, permitted_files)
         await self.close()
 
-    async def llm_conversation(self, selected_files: Sequence[File], session: Chat, user: User, title: str) -> None:
+    async def llm_conversation(
+        self, selected_files: Sequence[File], session: Chat, user: User, title: str, permitted_files: Sequence[File]
+    ) -> None:
         """Initiate & close websocket conversation with the core-api message endpoint."""
         await self.send_to_client("session-id", session.id)
 
@@ -117,6 +120,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
                     for message in message_history[:-1]
                 ],
                 ai_settings=ai_settings,
+                permitted_s3_keys=[f.unique_name async for f in permitted_files],
             ),
         )
 
