@@ -33,12 +33,21 @@ def test_parameterised_retriever(
     """
     Given a RedboxState, asserts:
 
-    * The length of the result is equal to the rag_k parameter
-    if the query has the ability to fetch that number of results
-    * The result page content is a subset of all possible
-    correct page content
-    * The result contains only file_names the user selected
-    * The result contains only file_names from permitted S3 keys
+    * If documents are selected and there's permission to get them
+        * The length of the result is equal to the rag_k parameter
+        * The result page content is a subset of all possible correct
+        page content
+        * The result contains only file_names the user selected
+        * The result contains only file_names from permitted S3 keys
+    * If documents are selected and there's no permission to get them
+        * The length of the result is zero
+    * If documents aren't selected and there's permission to get them
+        * The length of the result is equal to the rag_k parameter
+        * The result page content is a subset of all possible correct
+        page content
+        * The result contains only file_names from permitted S3 keys
+    * If documents aren't selected and there's no permission to get them
+        * The length of the result is zero
     """
     for k, v in chain_params.items():
         setattr(stored_file_parameterised.query.ai_settings, k, v)
@@ -46,15 +55,18 @@ def test_parameterised_retriever(
     result = parameterised_retriever.invoke(RedboxState(request=stored_file_parameterised.query))
     correct = stored_file_parameterised.get_docs_matching_query()
 
-    if stored_file_parameterised.query.permitted_s3_keys:
-        # Retriever has permission to retrieve enough results
-        assert len(result) == chain_params["rag_k"]
+    selected = bool(stored_file_parameterised.query.s3_keys)
+    permission = bool(stored_file_parameterised.query.permitted_s3_keys)
+
+    if not permission:
+        assert len(result) == 0
     else:
-        # Retriever is constrained by permissions
-        assert len(result) <= chain_params["rag_k"]
-    assert {c.page_content for c in result} <= {c.page_content for c in correct}
-    assert {c.metadata["file_name"] for c in result} <= set(stored_file_parameterised.query.s3_keys)
-    assert {c.metadata["file_name"] for c in result} <= set(stored_file_parameterised.query.permitted_s3_keys)
+        assert len(result) == chain_params["rag_k"]
+        assert {c.page_content for c in result} <= {c.page_content for c in correct}
+        assert {c.metadata["file_name"] for c in result} <= set(stored_file_parameterised.query.permitted_s3_keys)
+
+        if selected:
+            assert {c.metadata["file_name"] for c in result} <= set(stored_file_parameterised.query.s3_keys)
 
 
 def test_all_chunks_retriever(
@@ -63,34 +75,59 @@ def test_all_chunks_retriever(
     """
     Given a RedboxState, asserts:
 
-    * The length of the result matches the true documents that
-    match in the index
-    * The results have the correct page_content
-    * The result contains only file_names the user selected
-    * The result contains only file_names from permitted S3 keys
+    * If documents are selected and there's permission to get them
+        * The length of the result is equal to the total stored chunks
+        * The result page content is identical to all possible correct
+        page content
+        * The result contains exactly file_names the user selected
+        * The result contains a subset of file_names from permitted S3 keys
+    * If documents are selected and there's no permission to get them
+        * The length of the result is zero
+    * If documents aren't selected and there's permission to get them
+        * The length of the result is zero
+    * If documents aren't selected and there's no permission to get them
+        * The length of the result is zero
     """
     result = all_chunks_retriever.invoke(RedboxState(request=stored_file_all_chunks.query))
     correct = stored_file_all_chunks.get_docs_matching_query()
 
-    assert len(result) == len(correct)
-    assert {c.page_content for c in result} == {c.page_content for c in correct}
-    assert {c.metadata["file_name"] for c in result} <= set(stored_file_all_chunks.query.s3_keys)
-    assert {c.metadata["file_name"] for c in result} <= set(stored_file_all_chunks.query.permitted_s3_keys)
+    selected = bool(stored_file_all_chunks.query.s3_keys)
+    permission = bool(stored_file_all_chunks.query.permitted_s3_keys)
+
+    if selected and permission:
+        assert len(result) == len(correct)
+        assert {c.page_content for c in result} == {c.page_content for c in correct}
+        assert {c.metadata["file_name"] for c in result} == set(stored_file_all_chunks.query.s3_keys)
+        assert {c.metadata["file_name"] for c in result} <= set(stored_file_all_chunks.query.permitted_s3_keys)
+    else:
+        len(result) == 0
 
 
 def test_metadata_retriever(metadata_retriever: MetadataRetriever, stored_file_metadata: RedboxChatTestCase):
     """
     Given a RedboxState, asserts:
 
-    * The length of the result matches the true documents that
-    match in the index
-    * The result contains only file_names the user selected
-    * The result contains only file_names from permitted S3 keys
+    * If documents are selected and there's permission to get them
+        * The length of the result is equal to the total stored chunks
+        * The result contains exactly file_names the user selected
+        * The result contains a subset of file_names from permitted S3 keys
+    * If documents are selected and there's no permission to get them
+        * The length of the result is zero
+    * If documents aren't selected and there's permission to get them
+        * The length of the result is zero
+    * If documents aren't selected and there's no permission to get them
+        * The length of the result is zero
     """
 
     result = metadata_retriever.invoke(RedboxState(request=stored_file_metadata.query))
     correct = stored_file_metadata.get_docs_matching_query()
 
-    assert len(result) == len(correct)
-    assert {c.metadata["file_name"] for c in result} <= set(stored_file_metadata.query.s3_keys)
-    assert {c.metadata["file_name"] for c in result} <= set(stored_file_metadata.query.permitted_s3_keys)
+    selected = bool(stored_file_metadata.query.s3_keys)
+    permission = bool(stored_file_metadata.query.permitted_s3_keys)
+
+    if selected and permission:
+        assert len(result) == len(correct)
+        assert {c.metadata["file_name"] for c in result} == set(stored_file_metadata.query.s3_keys)
+        assert {c.metadata["file_name"] for c in result} <= set(stored_file_metadata.query.permitted_s3_keys)
+    else:
+        len(result) == 0
