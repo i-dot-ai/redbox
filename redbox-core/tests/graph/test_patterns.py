@@ -1,5 +1,4 @@
 import pytest
-from contextlib import nullcontext as does_not_raise
 from uuid import uuid4
 from pytest_mock import MockerFixture
 from tiktoken.core import Encoding
@@ -36,7 +35,7 @@ from redbox.transform import flatten_document_state, structure_documents
 LANGGRAPH_DEBUG = True
 
 CHAT_PROMPT_TEST_CASES = generate_test_cases(
-    query=RedboxQuery(question="What is AI?", s3_keys=[], user_uuid=uuid4(), chat_history=[]),
+    query=RedboxQuery(question="What is AI?", s3_keys=[], user_uuid=uuid4(), chat_history=[], permitted_s3_keys=[]),
     test_data=[
         RedboxTestData(0, 0, expected_llm_response=["Testing Response 1"], expected_route=ChatRoute.chat),
         RedboxTestData(
@@ -53,15 +52,14 @@ def test_build_chat_prompt_from_messages_runnable(test_case: RedboxChatTestCase,
     chat_prompt = build_chat_prompt_from_messages_runnable(PromptSet.Chat, tokeniser)
     state = RedboxState(request=test_case.query, documents=test_case.docs)
 
-    with does_not_raise():
-        response = chat_prompt.invoke(state)
-        messages = response.to_messages()
-        assert isinstance(messages, list)
-        assert len(messages) > 0
+    response = chat_prompt.invoke(state)
+    messages = response.to_messages()
+    assert isinstance(messages, list)
+    assert len(messages) > 0
 
 
 BUILD_LLM_TEST_CASES = generate_test_cases(
-    query=RedboxQuery(question="What is AI?", file_uuids=[], user_uuid=uuid4(), chat_history=[]),
+    query=RedboxQuery(question="What is AI?", file_uuids=[], user_uuid=uuid4(), chat_history=[], permitted_s3_keys=[]),
     test_data=[
         RedboxTestData(
             2, 40_000, expected_llm_response=["Testing Response 1"], expected_route=ChatRoute.chat_with_docs
@@ -88,7 +86,7 @@ def test_build_llm_chain(test_case: RedboxChatTestCase):
 
 
 CHAT_TEST_CASES = generate_test_cases(
-    query=RedboxQuery(question="What is AI?", s3_keys=[], user_uuid=uuid4(), chat_history=[]),
+    query=RedboxQuery(question="What is AI?", s3_keys=[], user_uuid=uuid4(), chat_history=[], permitted_s3_keys=[]),
     test_data=[RedboxTestData(0, 0, expected_llm_response=["Testing Response 1"], expected_route=ChatRoute.chat)],
     test_id="Chat pattern",
 )
@@ -102,10 +100,8 @@ def test_build_chat_pattern(test_case: RedboxChatTestCase, mocker: MockerFixture
 
     chat = build_chat_pattern(prompt_set=PromptSet.Chat, final_response_chain=True)
 
-    with (
-        mocker.patch("redbox.graph.nodes.processes.get_chat_llm", return_value=llm),
-    ):
-        response = chat(state)
+    mocker.patch("redbox.graph.nodes.processes.get_chat_llm", return_value=llm)
+    response = chat(state)
     final_state = RedboxState(response)
 
     assert (
@@ -114,7 +110,7 @@ def test_build_chat_pattern(test_case: RedboxChatTestCase, mocker: MockerFixture
 
 
 SET_ROUTE_TEST_CASES = generate_test_cases(
-    query=RedboxQuery(question="What is AI?", s3_keys=[], user_uuid=uuid4(), chat_history=[]),
+    query=RedboxQuery(question="What is AI?", s3_keys=[], user_uuid=uuid4(), chat_history=[], permitted_s3_keys=[]),
     test_data=[
         RedboxTestData(0, 0, expected_llm_response=["Testing Response 1"], expected_route=ChatRoute.chat),
         RedboxTestData(
@@ -140,7 +136,13 @@ def test_build_set_route_pattern(test_case: RedboxChatTestCase):
 
 
 RETRIEVER_TEST_CASES = generate_test_cases(
-    query=RedboxQuery(question="What is AI?", s3_keys=["s3_key_1", "s3_key_2"], user_uuid=uuid4(), chat_history=[]),
+    query=RedboxQuery(
+        question="What is AI?",
+        s3_keys=["s3_key_1", "s3_key_2"],
+        user_uuid=uuid4(),
+        chat_history=[],
+        permitted_s3_keys=["s3_key_1", "s3_key_2"],
+    ),
     test_data=[
         RedboxTestData(
             2, 40_000, expected_llm_response=["Testing Response 1"], expected_route=ChatRoute.chat_with_docs
@@ -179,7 +181,13 @@ def test_build_retrieve_pattern(test_case: RedboxChatTestCase, mock_retriever: B
 
 
 MERGE_TEST_CASES = generate_test_cases(
-    query=RedboxQuery(question="What is AI?", s3_keys=["s3_key_1", "s3_key_2"], user_uuid=uuid4(), chat_history=[]),
+    query=RedboxQuery(
+        question="What is AI?",
+        s3_keys=["s3_key_1", "s3_key_2"],
+        user_uuid=uuid4(),
+        chat_history=[],
+        permitted_s3_keys=["s3_key_1", "s3_key_2"],
+    ),
     test_data=[
         RedboxTestData(
             2, 40_000, expected_llm_response=["Testing Response 1"], expected_route=ChatRoute.chat_with_docs
@@ -200,10 +208,8 @@ def test_build_merge_pattern(test_case: RedboxChatTestCase, mocker: MockerFixtur
 
     merge = build_merge_pattern(prompt_set=PromptSet.ChatwithDocsMapReduce, final_response_chain=True)
 
-    with (
-        mocker.patch("redbox.graph.nodes.processes.get_chat_llm", return_value=llm),
-    ):
-        response = merge.invoke(state)
+    mocker.patch("redbox.graph.nodes.processes.get_chat_llm", return_value=llm)
+    response = merge.invoke(state)
     final_state = RedboxState(response)
 
     response_documents = [doc for doc in flatten_document_state(final_state.get("documents")) if doc is not None]
@@ -217,7 +223,13 @@ def test_build_merge_pattern(test_case: RedboxChatTestCase, mocker: MockerFixtur
 
 
 STUFF_TEST_CASES = generate_test_cases(
-    query=RedboxQuery(question="What is AI?", s3_keys=["s3_key_1", "s3_key_2"], user_uuid=uuid4(), chat_history=[]),
+    query=RedboxQuery(
+        question="What is AI?",
+        s3_keys=["s3_key_1", "s3_key_2"],
+        user_uuid=uuid4(),
+        chat_history=[],
+        permitted_s3_keys=["s3_key_1", "s3_key_2"],
+    ),
     test_data=[
         RedboxTestData(
             2, 40_000, expected_llm_response=["Testing Response 1"], expected_route=ChatRoute.chat_with_docs
@@ -238,10 +250,8 @@ def test_build_stuff_pattern(test_case: RedboxChatTestCase, mocker: MockerFixtur
 
     stuff = build_stuff_pattern(prompt_set=PromptSet.ChatwithDocs, final_response_chain=True)
 
-    with (
-        mocker.patch("redbox.graph.nodes.processes.get_chat_llm", return_value=llm),
-    ):
-        response = stuff.invoke(state)
+    mocker.patch("redbox.graph.nodes.processes.get_chat_llm", return_value=llm)
+    response = stuff.invoke(state)
     final_state = RedboxState(response)
 
     assert (
@@ -253,7 +263,9 @@ def test_build_passthrough_pattern():
     """Tests a given state["request"] correctly changes state["text"]."""
     passthrough = build_passthrough_pattern()
     state = RedboxState(
-        request=RedboxQuery(question="What is AI?", s3_keys=[], user_uuid=uuid4(), chat_history=[]),
+        request=RedboxQuery(
+            question="What is AI?", s3_keys=[], user_uuid=uuid4(), chat_history=[], permitted_s3_keys=[]
+        ),
     )
 
     response = passthrough.invoke(state)
@@ -266,7 +278,9 @@ def test_build_set_text_pattern():
     """Tests a given value correctly changes the state["text"]."""
     set_text = build_set_text_pattern(text="An hendy hap ychabbe ychent.")
     state = RedboxState(
-        request=RedboxQuery(question="What is AI?", s3_keys=[], user_uuid=uuid4(), chat_history=[]),
+        request=RedboxQuery(
+            question="What is AI?", s3_keys=[], user_uuid=uuid4(), chat_history=[], permitted_s3_keys=[]
+        ),
     )
 
     response = set_text.invoke(state)
@@ -278,7 +292,9 @@ def test_build_set_text_pattern():
 def test_empty_process():
     """Tests the empty process doesn't touch the state whatsoever."""
     state = RedboxState(
-        request=RedboxQuery(question="What is AI?", s3_keys=[], user_uuid=uuid4(), chat_history=[]),
+        request=RedboxQuery(
+            question="What is AI?", s3_keys=[], user_uuid=uuid4(), chat_history=[], permitted_s3_keys=[]
+        ),
         documents=structure_documents([doc for doc in generate_docs(s3_key="s3_key")]),
         text="Foo",
         route_name=ChatRoute.chat_with_docs_map_reduce,
@@ -298,13 +314,17 @@ def test_empty_process():
 
 CLEAR_DOC_TEST_CASES = [
     RedboxState(
-        request=RedboxQuery(question="What is AI?", file_uuids=[], user_uuid=uuid4(), chat_history=[]),
+        request=RedboxQuery(
+            question="What is AI?", file_uuids=[], user_uuid=uuid4(), chat_history=[], permitted_s3_keys=[]
+        ),
         documents=structure_documents([doc for doc in generate_docs(s3_key="s3_key")]),
         text="Foo",
         route_name=ChatRoute.chat_with_docs_map_reduce,
     ),
     RedboxState(
-        request=RedboxQuery(question="What is AI?", file_uuids=[], user_uuid=uuid4(), chat_history=[]),
+        request=RedboxQuery(
+            question="What is AI?", file_uuids=[], user_uuid=uuid4(), chat_history=[], permitted_s3_keys=[]
+        ),
         documents={},
         text="Foo",
         route_name=ChatRoute.chat_with_docs_map_reduce,

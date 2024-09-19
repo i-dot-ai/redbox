@@ -123,7 +123,7 @@ class Settings(BaseSettings):
     @lru_cache(1)
     def elasticsearch_client(self) -> Elasticsearch:
         if isinstance(self.elastic, ElasticLocalSettings):
-            return Elasticsearch(
+            client = Elasticsearch(
                 hosts=[
                     {
                         "host": self.elastic.host,
@@ -133,7 +133,10 @@ class Settings(BaseSettings):
                 ],
                 basic_auth=(self.elastic.user, self.elastic.password),
             )
-        return Elasticsearch(cloud_id=self.elastic.cloud_id, api_key=self.elastic.api_key)
+        else:
+            client = Elasticsearch(cloud_id=self.elastic.cloud_id, api_key=self.elastic.api_key)
+
+        return client.options(request_timeout=30, retry_on_timeout=True, max_retries=3)
 
     def s3_client(self):
         if self.object_store == "minio":
