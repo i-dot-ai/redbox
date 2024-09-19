@@ -24,8 +24,7 @@ def build_query_filter(
 ) -> list[dict[str, Any]]:
     """Generic filter constructor for all queries.
 
-    Raises:
-        ValueError if the selected S3 keys aren't in the permitted S3 keys
+    Warns if the selected S3 keys aren't in the permitted S3 keys.
     """
     selected_files = set(selected_files)
     permitted_files = set(permitted_files)
