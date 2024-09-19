@@ -9,11 +9,9 @@ import tiktoken
 
 from redbox.models.chain import AISettings
 from redbox.models.settings import Settings
-from redbox.retriever import AllElasticsearchRetriever, ParameterisedElasticsearchRetriever
+from redbox.retriever import AllElasticsearchRetriever, ParameterisedElasticsearchRetriever, MetadataRetriever
 from langchain_aws import ChatBedrock
 from langchain_community.embeddings import BedrockEmbeddings
-
-from redbox.retriever.retrievers import MetadataRetriever
 
 
 def get_chat_llm(env: Settings, ai_settings: AISettings):

@@ -1,7 +1,7 @@
 import pytest
 
 from redbox.models.chain import RedboxState
-from redbox.retriever import ParameterisedElasticsearchRetriever, AllElasticsearchRetriever
+from redbox.retriever import ParameterisedElasticsearchRetriever, AllElasticsearchRetriever, MetadataRetriever
 from redbox.test.data import RedboxChatTestCase
 
 TEST_CHAIN_PARAMETERS = (
@@ -64,3 +64,20 @@ def test_all_chunks_retriever(
     assert {c.page_content for c in result} == {c.page_content for c in stored_file_all_chunks.docs}
     assert {c.metadata["file_name"] for c in result} == set(stored_file_all_chunks.query.s3_keys)
     assert {c.metadata["file_name"] for c in result} <= set(stored_file_all_chunks.query.permitted_s3_keys)
+
+
+def test_metadata_retriever(metadata_retriever: MetadataRetriever, stored_file_metadata: RedboxChatTestCase):
+    """
+    Given a RedboxState, asserts:
+
+    * The length of the result matches the true documents that
+    match in the index
+    * The result contains only file_names the user selected
+    * The result contains only file_names from permitted S3 keys
+    """
+
+    result = metadata_retriever.invoke(RedboxState(request=stored_file_metadata.query))
+
+    assert len(result) == len(stored_file_metadata.get_docs_matching_query())
+    assert {c.metadata["file_name"] for c in result} == set(stored_file_metadata.query.s3_keys)
+    assert {c.metadata["file_name"] for c in result} <= set(stored_file_metadata.query.permitted_s3_keys)
