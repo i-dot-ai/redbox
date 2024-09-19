@@ -17,7 +17,7 @@ from pydantic import BaseModel
 from websockets import WebSocketClientProtocol
 from websockets.legacy.client import Connect
 
-from redbox.models.chain import LLMCallMetadata, RequestMetadata
+from redbox.models.chain import LLMCallMetadata, RedboxQuery, RequestMetadata
 from redbox.models.graph import FINAL_RESPONSE_TAG, ROUTE_NAME_TAG, SOURCE_DOCUMENTS_TAG
 from redbox_app.redbox_core import error_messages
 from redbox_app.redbox_core.consumers import ChatConsumer
@@ -441,6 +441,64 @@ async def test_chat_consumer_get_ai_settings(
 
         # Close
         await communicator.disconnect()
+
+
+@pytest.mark.django_db(transaction=True)
+@pytest.mark.asyncio()
+async def test_chat_consumer_redbox_state(
+    alice: User,
+    several_files: Sequence[File],
+    chat_with_files: Chat,
+):
+    # Given
+    selected_files: Sequence[File] = several_files[2:]
+
+    # When
+    with patch("redbox_app.redbox_core.consumers.ChatConsumer.redbox.run") as mock_run:
+        ai_settings = await ChatConsumer.get_ai_settings(chat_with_files)
+        communicator = WebsocketCommunicator(ChatConsumer.as_asgi(), "/ws/chat/")
+        communicator.scope["user"] = alice
+        connected, _ = await communicator.connect()
+        assert connected
+
+        selected_file_uuids: Sequence[str] = [str(f.id) for f in selected_files]
+        selected_file_keys: Sequence[str] = [f.unique_name for f in selected_files]
+        permitted_file_keys: Sequence[str] = [f.unique_name async for f in File.objects.filter(user=alice)]
+        assert selected_file_keys != permitted_file_keys
+
+        await communicator.send_json_to(
+            {
+                "message": "Third question, with selected files?",
+                "sessionId": str(chat_with_files.id),
+                "selectedFiles": selected_file_uuids,
+            }
+        )
+        response1 = await communicator.receive_json_from(timeout=5)
+
+        # Then
+        assert response1["type"] == "session-id"
+        assert response1["data"] == str(chat_with_files.id)
+
+        # Close
+        await communicator.disconnect()
+
+        # Then
+        expected_request = RedboxQuery(
+            question="Third question, with selected files?",
+            s3_keys=selected_file_keys,
+            user_uuid=alice.id,
+            chat_history=[
+                {"role": "user", "text": "A question?"},
+                {"role": "ai", "text": "An answer."},
+                {"role": "user", "text": "A second question?"},
+                {"role": "ai", "text": "A second answer."},
+            ],
+            ai_settings=ai_settings,
+            permitted_s3_keys=permitted_file_keys,
+        )
+        redbox_state = mock_run.call_args.args[0]  # pulls out the args that redbox.run was called with
+
+        assert redbox_state["request"] == expected_request
 
 
 @database_sync_to_async
