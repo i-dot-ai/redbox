@@ -104,6 +104,7 @@ class AISettings(BaseModel):
     rag_k: int = 30
     rag_num_candidates: int = 10
     elbow_filter_enabled: bool = False
+    self_route_enabled: bool = False
     chat_system_prompt: str = CHAT_SYSTEM_PROMPT
     chat_question_prompt: str = CHAT_QUESTION_PROMPT
     stuff_chunk_context_ratio: float = 0.75
