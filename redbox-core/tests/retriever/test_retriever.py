@@ -33,7 +33,10 @@ def test_parameterised_retriever(
     """
     Given a RedboxState, asserts:
 
-    * The length of the result matches the rag_k parameter
+    * The length of the result is equal to the rag_k parameter
+    if the query has the ability to fetch that number of results
+    * The result page content is a subset of all possible
+    correct page content
     * The result contains only file_names the user selected
     * The result contains only file_names from permitted S3 keys
     """
@@ -41,7 +44,15 @@ def test_parameterised_retriever(
         setattr(stored_file_parameterised.query.ai_settings, k, v)
 
     result = parameterised_retriever.invoke(RedboxState(request=stored_file_parameterised.query))
-    assert len(result) == chain_params["rag_k"], result
+    correct = stored_file_parameterised.get_docs_matching_query()
+
+    if stored_file_parameterised.query.permitted_s3_keys:
+        # Retriever has permission to retrieve enough results
+        assert len(result) == chain_params["rag_k"]
+    else:
+        # Retriever is constrained by permissions
+        assert len(result) <= chain_params["rag_k"]
+    assert {c.page_content for c in result} <= {c.page_content for c in correct}
     assert {c.metadata["file_name"] for c in result} <= set(stored_file_parameterised.query.s3_keys)
     assert {c.metadata["file_name"] for c in result} <= set(stored_file_parameterised.query.permitted_s3_keys)
 
@@ -59,10 +70,11 @@ def test_all_chunks_retriever(
     * The result contains only file_names from permitted S3 keys
     """
     result = all_chunks_retriever.invoke(RedboxState(request=stored_file_all_chunks.query))
+    correct = stored_file_all_chunks.get_docs_matching_query()
 
-    assert len(result) == len(stored_file_all_chunks.get_docs_matching_query())
-    assert {c.page_content for c in result} == {c.page_content for c in stored_file_all_chunks.docs}
-    assert {c.metadata["file_name"] for c in result} == set(stored_file_all_chunks.query.s3_keys)
+    assert len(result) == len(correct)
+    assert {c.page_content for c in result} == {c.page_content for c in correct}
+    assert {c.metadata["file_name"] for c in result} <= set(stored_file_all_chunks.query.s3_keys)
     assert {c.metadata["file_name"] for c in result} <= set(stored_file_all_chunks.query.permitted_s3_keys)
 
 
@@ -77,7 +89,8 @@ def test_metadata_retriever(metadata_retriever: MetadataRetriever, stored_file_m
     """
 
     result = metadata_retriever.invoke(RedboxState(request=stored_file_metadata.query))
+    correct = stored_file_metadata.get_docs_matching_query()
 
-    assert len(result) == len(stored_file_metadata.get_docs_matching_query())
-    assert {c.metadata["file_name"] for c in result} == set(stored_file_metadata.query.s3_keys)
+    assert len(result) == len(correct)
+    assert {c.metadata["file_name"] for c in result} <= set(stored_file_metadata.query.s3_keys)
     assert {c.metadata["file_name"] for c in result} <= set(stored_file_metadata.query.permitted_s3_keys)
