@@ -133,6 +133,7 @@ def get_chat_with_documents_graph(
     # Processes
     builder.add_node("p_pass_question_to_text", build_passthrough_pattern())
     builder.add_node("p_set_chat_docs_route", build_set_route_pattern(route=ChatRoute.chat_with_docs))
+    builder.add_node("p_set_chat_docs_map_reduce_route", build_set_route_pattern(route=ChatRoute.chat_with_docs_map_reduce))
     builder.add_node("p_summarise_each_document", build_merge_pattern(prompt_set=PromptSet.ChatwithDocsMapReduce))
     builder.add_node(
         "p_summarise_document_by_document", build_merge_pattern(prompt_set=PromptSet.ChatwithDocsMapReduce)
@@ -159,6 +160,8 @@ def get_chat_with_documents_graph(
     builder.add_node("d_single_doc_summaries_bigger_than_context", empty_process)
     builder.add_node("d_doc_summaries_bigger_than_context", empty_process)
     builder.add_node("d_groups_have_multiple_docs", empty_process)
+    builder.add_node("d_self_route_is_enabled", empty_process)
+
 
     # Sends
     builder.add_node("s_chunk", empty_process)
@@ -173,9 +176,17 @@ def get_chat_with_documents_graph(
         build_total_tokens_request_handler_conditional(PromptSet.ChatwithDocsMapReduce),
         {
             "max_exceeded": "p_too_large_error",
-            "context_exceeded": "p_answer_or_decide_route",
+            "context_exceeded": "d_self_route_is_enabled",
             "pass": "p_set_chat_docs_route",
         },
+    )
+    builder.add_conditional_edges(
+        "d_self_route_is_enabled",
+        lambda s: s["request"].ai_settings.self_route_enabled, 
+        {
+            True: "p_answer_or_decide_route", 
+            False: "p_set_chat_docs_map_reduce_route"
+        }
     )
     builder.add_conditional_edges(
         "p_answer_or_decide_route",
@@ -186,6 +197,7 @@ def get_chat_with_documents_graph(
         },
     )
     builder.add_edge("p_set_chat_docs_route", "p_retrieve_all_chunks")
+    builder.add_edge("p_set_chat_docs_map_reduce_route", "p_retrieve_all_chunks")
     builder.add_conditional_edges(
         "p_retrieve_all_chunks",
         lambda s: s["route_name"],
