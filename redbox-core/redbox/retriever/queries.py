@@ -76,8 +76,14 @@ def get_some(
 ) -> dict[str, Any]:
     vector = embedding_model.embed_query(state["request"].question)
 
+    # If nothing is selected, consider all permitted files selected
+    if state["request"].s3_keys:
+        selected_files = state["request"].s3_keys
+    else:
+        selected_files = state["request"].permitted_s3_keys
+
     query_filter = build_query_filter(
-        selected_files=state["request"].s3_keys,
+        selected_files=selected_files,
         permitted_files=state["request"].permitted_s3_keys,
         chunk_resolution=chunk_resolution,
     )

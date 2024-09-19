@@ -53,7 +53,8 @@ def test_parameterised_retriever(
         setattr(stored_file_parameterised.query.ai_settings, k, v)
 
     result = parameterised_retriever.invoke(RedboxState(request=stored_file_parameterised.query))
-    correct = stored_file_parameterised.get_docs_matching_query()
+    selected_docs = stored_file_parameterised.get_docs_matching_query()
+    permitted_docs = stored_file_parameterised.get_all_permitted_docs()
 
     selected = bool(stored_file_parameterised.query.s3_keys)
     permission = bool(stored_file_parameterised.query.permitted_s3_keys)
@@ -62,10 +63,11 @@ def test_parameterised_retriever(
         assert len(result) == 0
     else:
         assert len(result) == chain_params["rag_k"]
-        assert {c.page_content for c in result} <= {c.page_content for c in correct}
+        assert {c.page_content for c in result} <= {c.page_content for c in permitted_docs}
         assert {c.metadata["file_name"] for c in result} <= set(stored_file_parameterised.query.permitted_s3_keys)
 
         if selected:
+            assert {c.page_content for c in result} <= {c.page_content for c in selected_docs}
             assert {c.metadata["file_name"] for c in result} <= set(stored_file_parameterised.query.s3_keys)
 
 

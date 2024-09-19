@@ -38,7 +38,14 @@ ALL_CHUNKS_RETRIEVER_CASES = [
                 chat_history=[],
                 permitted_s3_keys=["s3_key"],
             ),
-            test_data=[RedboxTestData(8, 8000, ChunkResolution.largest)],
+            test_data=[
+                RedboxTestData(
+                    number_of_docs=8,
+                    tokens_in_all_docs=8_000,
+                    chunk_resolution=ChunkResolution.largest,
+                    s3_keys=["s3_key"],
+                )
+            ],
             test_id="Empty keys but permitted",
         ),
     ]
@@ -78,7 +85,14 @@ PARAMETERISED_RETRIEVER_CASES = [
                 chat_history=[],
                 permitted_s3_keys=["s3_key"],
             ),
-            test_data=[RedboxTestData(8, 8000, ChunkResolution.normal)],
+            test_data=[
+                RedboxTestData(
+                    number_of_docs=8,
+                    tokens_in_all_docs=8_000,
+                    chunk_resolution=ChunkResolution.normal,
+                    s3_keys=["s3_key"],
+                )
+            ],
             test_id="Empty keys but permitted",
         ),
     ]
@@ -118,7 +132,14 @@ METADATA_RETRIEVER_CASES = [
                 chat_history=[],
                 permitted_s3_keys=["s3_key"],
             ),
-            test_data=[RedboxTestData(8, 8000, ChunkResolution.largest)],
+            test_data=[
+                RedboxTestData(
+                    number_of_docs=8,
+                    tokens_in_all_docs=8_000,
+                    chunk_resolution=ChunkResolution.largest,
+                    s3_keys=["s3_key"],
+                )
+            ],
             test_id="Empty keys but permitted",
         ),
     ]
