@@ -16,7 +16,7 @@ from redbox.loader.ingester import ingest_file
 from redbox.chains.ingest import document_loader, ingest_from_loader
 from redbox.loader.loaders import UnstructuredChunkLoader
 from redbox.models.settings import Settings
-from redbox.retriever.queries import make_query_filter
+from redbox.retriever.queries import build_query_filter
 from redbox.models.file import ChunkResolution
 
 if TYPE_CHECKING:
@@ -42,7 +42,9 @@ def file_to_s3(filename: str, s3_client: S3Client, env: Settings) -> str:
 
 
 def make_file_query(file_name: str, resolution: ChunkResolution | None = None) -> dict[str, Any]:
-    query_filter = make_query_filter([file_name], resolution)
+    query_filter = build_query_filter(
+        selected_files=[file_name], permitted_files=[file_name], chunk_resolution=resolution
+    )
     return {"query": {"bool": {"must": [{"match_all": {}}], "filter": query_filter}}}
 
 

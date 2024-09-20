@@ -16,9 +16,9 @@ from collections.abc import Generator
 from langchain_core.embeddings.fake import FakeEmbeddings
 from langchain_elasticsearch import ElasticsearchStore
 
-from redbox.retriever import AllElasticsearchRetriever, ParameterisedElasticsearchRetriever
+from redbox.retriever import AllElasticsearchRetriever, ParameterisedElasticsearchRetriever, MetadataRetriever
 from redbox.test.data import RedboxChatTestCase
-from tests.retriever.data import ALL_CHUNKS_RETRIEVER_CASES, PARAMETERISED_RETRIEVER_CASES
+from tests.retriever.data import ALL_CHUNKS_RETRIEVER_CASES, PARAMETERISED_RETRIEVER_CASES, METADATA_RETRIEVER_CASES
 
 if TYPE_CHECKING:
     from mypy_boto3_s3.client import S3Client
@@ -126,6 +126,11 @@ def parameterised_retriever(
     )
 
 
+@pytest.fixture(scope="session")
+def metadata_retriever(es_client: Elasticsearch, es_index: str) -> MetadataRetriever:
+    return MetadataRetriever(es_client=es_client, index_name=es_index)
+
+
 # -----#
 # Data #
 # -----#
@@ -179,6 +184,16 @@ def stored_file_all_chunks(
 
 @pytest.fixture(params=PARAMETERISED_RETRIEVER_CASES)
 def stored_file_parameterised(
+    request: FixtureRequest, es_vector_store: ElasticsearchStore
+) -> Generator[RedboxChatTestCase, None, None]:
+    test_case: RedboxChatTestCase = request.param
+    doc_ids = es_vector_store.add_documents(test_case.docs)
+    yield test_case
+    es_vector_store.delete(doc_ids)
+
+
+@pytest.fixture(params=METADATA_RETRIEVER_CASES)
+def stored_file_metadata(
     request: FixtureRequest, es_vector_store: ElasticsearchStore
 ) -> Generator[RedboxChatTestCase, None, None]:
     test_case: RedboxChatTestCase = request.param

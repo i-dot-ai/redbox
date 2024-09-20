@@ -41,7 +41,7 @@ def ingest_file(file_name: str) -> str | None:
     es = env.elasticsearch_client()
     es_index_name = f"{env.elastic_root_index}-chunk"
 
-    es.indices.create(index=es_index_name, ignore=[400])
+    es.options(ignore_status=[400]).indices.create(index=es_index_name)
 
     chunk_ingest_chain = ingest_from_loader(
         loader=UnstructuredChunkLoader(
