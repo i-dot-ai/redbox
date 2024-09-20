@@ -6,7 +6,7 @@ from uuid import uuid4
 
 from langchain_core.language_models.fake_chat_models import GenericFakeChatModel
 
-from redbox.models.chain import RedboxQuery, RedboxState, RequestMetadata
+from redbox.models.chain import AISettings, RedboxQuery, RedboxState, RequestMetadata
 from redbox import Redbox
 from redbox.models.chat import ChatRoute, ErrorRoute
 from redbox.models.graph import RedboxActivityEvent
@@ -36,7 +36,9 @@ TEST_CASES = [
     test_case
     for generated_cases in [
         generate_test_cases(
-            query=RedboxQuery(question="What is AI?", s3_keys=[], user_uuid=uuid4(), chat_history=[]),
+            query=RedboxQuery(
+                question="What is AI?", s3_keys=[], user_uuid=uuid4(), chat_history=[], permitted_s3_keys=[]
+            ),
             test_data=[
                 RedboxTestData(0, 0, expected_llm_response=["Testing Response 1"], expected_route=ChatRoute.chat),
                 RedboxTestData(1, 100, expected_llm_response=["Testing Response 1"], expected_route=ChatRoute.chat),
@@ -45,7 +47,9 @@ TEST_CASES = [
             test_id="Basic Chat",
         ),
         generate_test_cases(
-            query=RedboxQuery(question="What is AI?", s3_keys=["s3_key"], user_uuid=uuid4(), chat_history=[]),
+            query=RedboxQuery(
+                question="What is AI?", s3_keys=["s3_key"], user_uuid=uuid4(), chat_history=[], permitted_s3_keys=[]
+            ),
             test_data=[
                 RedboxTestData(
                     1, 1000, expected_llm_response=["Testing Response 1"], expected_route=ChatRoute.chat_with_docs
@@ -61,7 +65,12 @@ TEST_CASES = [
         ),
         generate_test_cases(
             query=RedboxQuery(
-                question="What is AI?", s3_keys=["s3_key_1", "s3_key_2"], user_uuid=uuid4(), chat_history=[]
+                question="What is AI?",
+                s3_keys=["s3_key_1", "s3_key_2"],
+                user_uuid=uuid4(),
+                chat_history=[],
+                permitted_s3_keys=["s3_key_1", "s3_key_2"],
+                ai_settings=AISettings(self_route_enabled=True),
             ),
             test_data=[
                 RedboxTestData(
@@ -88,10 +97,64 @@ TEST_CASES = [
                     expected_activity_events=assert_number_of_events(1),
                 ),
             ],
+            test_id="Chat with multiple docs - with self route",
+        ),
+        generate_test_cases(
+            query=RedboxQuery(
+                question="What is AI?", s3_keys=["s3_key_1", "s3_key_2"], user_uuid=uuid4(), chat_history=[]
+            ),
+            test_data=[
+                RedboxTestData(
+                    2, 40_000, expected_llm_response=["Testing Response 1"], expected_route=ChatRoute.chat_with_docs
+                ),
+                RedboxTestData(
+                    2, 80_000, expected_llm_response=["Testing Response 1"], expected_route=ChatRoute.chat_with_docs
+                ),
+                RedboxTestData(
+                    2,
+                    140_000,
+                    expected_llm_response=["Map Step Response"] * 2 + ["Testing Response 1"],
+                    expected_route=ChatRoute.chat_with_docs_map_reduce,
+                ),
+                RedboxTestData(
+                    4,
+                    140_000,
+                    expected_llm_response=["Map Step Response"] * 4
+                    + ["Merge Per Document Response"] * 2
+                    + ["Testing Response 1"],
+                    expected_route=ChatRoute.chat_with_docs_map_reduce,
+                ),
+            ],
             test_id="Chat with multiple docs",
         ),
         generate_test_cases(
-            query=RedboxQuery(question="What is AI?", s3_keys=["s3_key"], user_uuid=uuid4(), chat_history=[]),
+            query=RedboxQuery(
+                question="What is AI?",
+                s3_keys=["s3_key"],
+                user_uuid=uuid4(),
+                chat_history=[],
+                permitted_s3_keys=["s3_key"],
+            ),
+            test_data=[
+                RedboxTestData(
+                    2,
+                    200_000,
+                    expected_llm_response=["Map Step Response"] * 2
+                    + ["Merge Per Document Response"]
+                    + ["Testing Response 1"],
+                    expected_route=ChatRoute.chat_with_docs_map_reduce,
+                ),
+            ],
+            test_id="Chat with large doc",
+        ),
+        generate_test_cases(
+            query=RedboxQuery(
+                question="What is AI?",
+                s3_keys=["s3_key"],
+                user_uuid=uuid4(),
+                chat_history=[],
+                ai_settings=AISettings(self_route_enabled=True),
+            ),
             test_data=[
                 RedboxTestData(
                     2,
@@ -104,10 +167,17 @@ TEST_CASES = [
                     expected_activity_events=assert_number_of_events(1),
                 ),
             ],
-            test_id="Chat with large doc",
+            test_id="Chat with large doc - with self route",
         ),
         generate_test_cases(
-            query=RedboxQuery(question="What is AI?", s3_keys=["s3_key"], user_uuid=uuid4(), chat_history=[]),
+            query=RedboxQuery(
+                question="What is AI?",
+                s3_keys=["s3_key"],
+                user_uuid=uuid4(),
+                chat_history=[],
+                permitted_s3_keys=["s3_key"],
+                ai_settings=AISettings(self_route_enabled=True),
+            ),
             test_data=[
                 RedboxTestData(
                     2,
@@ -120,7 +190,13 @@ TEST_CASES = [
             test_id="Self Route Search large doc",
         ),
         generate_test_cases(
-            query=RedboxQuery(question="What is AI?", s3_keys=["s3_key"], user_uuid=uuid4(), chat_history=[]),
+            query=RedboxQuery(
+                question="What is AI?",
+                s3_keys=["s3_key"],
+                user_uuid=uuid4(),
+                chat_history=[],
+                permitted_s3_keys=["s3_key"],
+            ),
             test_data=[
                 RedboxTestData(
                     10,
@@ -132,7 +208,13 @@ TEST_CASES = [
             test_id="Document too big for system",
         ),
         generate_test_cases(
-            query=RedboxQuery(question="@search What is AI?", s3_keys=["s3_key"], user_uuid=uuid4(), chat_history=[]),
+            query=RedboxQuery(
+                question="@search What is AI?",
+                s3_keys=["s3_key"],
+                user_uuid=uuid4(),
+                chat_history=[],
+                permitted_s3_keys=["s3_key"],
+            ),
             test_data=[
                 RedboxTestData(
                     1,
@@ -150,7 +232,13 @@ TEST_CASES = [
             test_id="Search",
         ),
         generate_test_cases(
-            query=RedboxQuery(question="@nosuchkeyword What is AI?", s3_keys=[], user_uuid=uuid4(), chat_history=[]),
+            query=RedboxQuery(
+                question="@nosuchkeyword What is AI?",
+                s3_keys=[],
+                user_uuid=uuid4(),
+                chat_history=[],
+                permitted_s3_keys=[],
+            ),
             test_data=[
                 RedboxTestData(
                     10,
@@ -163,7 +251,11 @@ TEST_CASES = [
         ),
         generate_test_cases(
             query=RedboxQuery(
-                question="@nosuchkeyword What is AI?", s3_keys=["s3_key"], user_uuid=uuid4(), chat_history=[]
+                question="@nosuchkeyword What is AI?",
+                s3_keys=["s3_key"],
+                user_uuid=uuid4(),
+                chat_history=[],
+                permitted_s3_keys=["s3_key"],
             ),
             test_data=[
                 RedboxTestData(
@@ -231,7 +323,9 @@ async def test_streaming(test: RedboxChatTestCase, env: Settings, mocker: Mocker
     # Bit of a bodge to retain the ability to check that the LLM streaming is working in most cases
     if not route_name.startswith("error"):
         assert len(token_events) > 1, f"Expected tokens as a stream. Received: {token_events}"
-        assert len(metadata_events) == len(test_case.test_data.expected_llm_response)
+        assert len(metadata_events) == len(
+            test_case.test_data.expected_llm_response
+        ), f"Expected {len(test_case.test_data.expected_llm_response)} metadata events. Received {len(metadata_events)}"
 
     assert test_case.test_data.expected_activity_events(
         activity_events

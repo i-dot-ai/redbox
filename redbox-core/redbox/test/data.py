@@ -46,6 +46,7 @@ class RedboxTestData:
     expected_activity_events: Callable[[list[RedboxActivityEvent]], bool] = field(
         default=lambda _: True
     )  # Function to check activity events are as expected
+    s3_keys: str | None = None
 
 
 class RedboxChatTestCase:
@@ -54,10 +55,9 @@ class RedboxChatTestCase:
         test_id: str,
         query: RedboxQuery,
         test_data: RedboxTestData,
-        s3_keys_override: list[str] | None = None,
     ):
         # Use separate file_uuids if specified else match the query
-        all_s3_keys = s3_keys_override if s3_keys_override else query.s3_keys
+        all_s3_keys = test_data.s3_keys if test_data.s3_keys else query.s3_keys
 
         if (
             test_data.expected_llm_response is not None
@@ -81,8 +81,15 @@ class RedboxChatTestCase:
         self.test_data = test_data
         self.test_id = test_id
 
-    def get_docs_matching_query(self):
-        return [doc for doc in self.docs if doc.metadata["file_name"] in set(self.query.s3_keys)]
+    def get_docs_matching_query(self) -> list[Document]:
+        return [
+            doc
+            for doc in self.docs
+            if doc.metadata["file_name"] in set(self.query.s3_keys) & set(self.query.permitted_s3_keys)
+        ]
+
+    def get_all_permitted_docs(self) -> list[Document]:
+        return [doc for doc in self.docs if doc.metadata["file_name"] in set(self.query.permitted_s3_keys)]
 
 
 def generate_test_cases(query: RedboxQuery, test_data: list[RedboxTestData], test_id: str) -> list[RedboxChatTestCase]:

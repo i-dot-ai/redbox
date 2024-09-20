@@ -17,7 +17,6 @@
                 "UNSTRUCTURED_HOST": "localhost",
                 "ELASTIC__HOST": "localhost"
             }
-        }
         },
     ]
 }

@@ -87,7 +87,7 @@ def clear_index(index: str, es: Elasticsearch) -> None:
     if es.indices.exists(index=index):
         documents = scan(es, index=index, query={"query": {"match_all": {}}})
         bulk_data = [{"_op_type": "delete", "_index": doc["_index"], "_id": doc["_id"]} for doc in documents]
-        bulk(es, bulk_data, request_timeout=300)
+        bulk(es, bulk_data)
 
 
 @pytest.fixture(scope="session")
