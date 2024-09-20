@@ -39,7 +39,9 @@ class ChatMessage extends HTMLElement {
     this.innerHTML = `
             <div class="iai-chat-bubble iai-chat-bubble--${
               this.dataset.role === "user" ? "right" : "left"
-            } govuk-body {{ classes }}" data-role="{{ role }}" tabindex="-1">
+            } govuk-body {{ classes }}" data-role="${
+      this.dataset.role
+    }" tabindex="-1">
                 <div class="iai-chat-bubble__header">
                     <div class="iai-chat-bubble__role">${
                       this.dataset.role === "ai" ? "Redbox" : "You"
