@@ -271,6 +271,7 @@ def several_files(alice: User, number_to_create: int = 4) -> Sequence[File]:
                 original_file=SimpleUploadedFile(filename, b"Lorem Ipsum."),
                 original_file_name=filename,
                 core_file_uuid=uuid.uuid4(),
+                status=StatusEnum.complete,
             )
         )
     return files

@@ -33,6 +33,7 @@ from redbox_app.redbox_core.models import (
     ChatRoleEnum,
     Citation,
     File,
+    StatusEnum,
 )
 
 User = get_user_model()
@@ -90,7 +91,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             )
 
         # save user message
-        permitted_files = File.objects.filter(user=user)
+        permitted_files = File.objects.filter(user=user, status=StatusEnum.complete)
         selected_files = permitted_files.filter(id__in=selected_file_uuids)
         await self.save_message(session, user_message_text, ChatRoleEnum.user, selected_files=selected_files)
 
