@@ -364,7 +364,7 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
     @property
     def unique_name(self) -> str:
         # Name used by core-api
-        return self.original_file.file.name
+        return self.original_file.name
 
     def get_status_text(self) -> str:
         return next(
