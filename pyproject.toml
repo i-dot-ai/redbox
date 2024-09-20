@@ -51,6 +51,9 @@ mkdocs-git-revision-date-localized-plugin = "^1.2.5"
 mkdocs-glightbox = "^0.4.0"
 mkdocs-minify-plugin = "^0.8.0"
 
+[tool.poetry.group.ollama.dependencies]
+langchain-ollama = "^0.2.0"
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"

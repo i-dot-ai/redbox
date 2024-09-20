@@ -1,22 +1,47 @@
+import logging
 import os
 from functools import cache
-from langchain_elasticsearch import ElasticsearchRetriever
-from langchain_core.embeddings import Embeddings, FakeEmbeddings
-from langchain_openai import AzureChatOpenAI
-from langchain_openai.embeddings import AzureOpenAIEmbeddings, OpenAIEmbeddings
-from langchain_core.utils import convert_to_secret_str
-import tiktoken
 
+import tiktoken
+from langchain_aws import ChatBedrock
+from langchain_community.chat_models import ChatLiteLLM
+from langchain_community.embeddings import BedrockEmbeddings
+from langchain_core.embeddings import Embeddings, FakeEmbeddings
+from langchain_core.utils import convert_to_secret_str
+from langchain_elasticsearch import ElasticsearchRetriever
+from langchain_ollama.chat_models import ChatOllama
+from langchain_openai import AzureChatOpenAI, ChatOpenAI
+from langchain_openai.embeddings import AzureOpenAIEmbeddings, OpenAIEmbeddings
+from redbox.api.callbacks import LoggerCallbackHandler
 from redbox.models.chain import AISettings
 from redbox.models.settings import Settings
-from redbox.retriever import AllElasticsearchRetriever, ParameterisedElasticsearchRetriever
-from langchain_aws import ChatBedrock
-from langchain_community.embeddings import BedrockEmbeddings
+from redbox.retriever import (
+    AllElasticsearchRetriever,
+    ParameterisedElasticsearchRetriever,
+)
+
+logging.basicConfig(level=logging.INFO)
+log = logging.getLogger()
 
 
 def get_chat_llm(env: Settings, ai_settings: AISettings):
     chat_model = None
-    if ai_settings.chat_backend == "gpt-35-turbo-16k":
+    if ai_settings.chat_backend == "ollama":
+        chat_model = ChatLiteLLM(
+            model=env.ollama_model,
+            temperature=ai_settings.temperature,
+            api_base=env.ollama_api_base,
+        )
+    elif ai_settings.chat_backend == "openai":
+        logger_callback = LoggerCallbackHandler(logger=log)
+        chat_model = ChatOpenAI(
+            streaming=True,
+            callbacks=[logger_callback],
+            model=env.openai_model,
+            max_tokens=env.llm_max_tokens,
+        )
+
+    elif ai_settings.chat_backend == "gpt-35-turbo-16k":
         chat_model = AzureChatOpenAI(
             api_key=convert_to_secret_str(env.azure_openai_api_key_35t),
             azure_endpoint=env.azure_openai_endpoint_35t,
@@ -28,7 +53,9 @@ def get_chat_llm(env: Settings, ai_settings: AISettings):
             chat_model = chat_model.with_fallbacks(
                 [
                     AzureChatOpenAI(
-                        api_key=convert_to_secret_str(env.azure_openai_fallback_api_key_35t),
+                        api_key=convert_to_secret_str(
+                            env.azure_openai_fallback_api_key_35t
+                        ),
                         azure_endpoint=env.azure_openai_fallback_endpoint_35t,
                         model=ai_settings.chat_backend,
                         api_version=env.openai_api_version_35t,
@@ -47,7 +74,9 @@ def get_chat_llm(env: Settings, ai_settings: AISettings):
             chat_model = chat_model.with_fallbacks(
                 [
                     AzureChatOpenAI(
-                        api_key=convert_to_secret_str(env.azure_openai_fallback_api_key_4t),
+                        api_key=convert_to_secret_str(
+                            env.azure_openai_fallback_api_key_4t
+                        ),
                         azure_endpoint=env.azure_openai_fallback_endpoint_4t,
                         model=ai_settings.chat_backend,
                         api_version=env.openai_api_version_4t,
@@ -66,7 +95,9 @@ def get_chat_llm(env: Settings, ai_settings: AISettings):
             chat_model = chat_model.with_fallbacks(
                 [
                     AzureChatOpenAI(
-                        api_key=convert_to_secret_str(env.azure_openai_fallback_api_key_4o),
+                        api_key=convert_to_secret_str(
+                            env.azure_openai_fallback_api_key_4o
+                        ),
                         azure_endpoint=env.azure_openai_fallback_endpoint_4o,
                         model=ai_settings.chat_backend,
                         api_version=env.openai_api_version_4o,
@@ -103,12 +134,13 @@ def get_azure_embeddings(env: Settings):
 
 
 def get_openai_embeddings(env: Settings):
-    os.environ["OPENAI_API_KEY"] = env.embedding_openai_api_key
-    os.environ["OPENAI_ENDPOINT"] = env.embedding_openai_base_url
+    # os.environ["OPENAI_API_KEY"] = env.embedding_openai_api_key
+    # os.environ["OPENAI_ENDPOINT"] = env.embedding_openai_base_url
+    log.info("loading embeddings")
     return OpenAIEmbeddings(
         api_key=convert_to_secret_str(env.embedding_openai_api_key),
         base_url=env.embedding_openai_base_url,
-        model=env.embedding_model,
+        model=env.embedding_backend,
         chunk_size=env.embedding_max_batch_size,
     )
 

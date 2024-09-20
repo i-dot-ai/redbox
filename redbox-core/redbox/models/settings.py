@@ -8,7 +8,6 @@ from elasticsearch import Elasticsearch
 from pydantic import BaseModel
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-
 logging.basicConfig(level=os.environ.get("LOG_LEVEL", "INFO"))
 log = logging.getLogger()
 
@@ -40,6 +39,11 @@ class ElasticCloudSettings(BaseModel):
 class Settings(BaseSettings):
     """Settings for the redbox application."""
 
+    ollama_model: str = "ollama/llama3.1"
+    openai_model: str = "gpt-4o-mini"
+    ollama_api_base: str = "http://host.docker.internal:11434"
+    openai_api_key: str
+
     # azure/gpt-35-turbo-16k
     openai_api_version_35t: str = "2023-12-01-preview"
     azure_openai_api_key_35t: str = "not a key"
@@ -66,7 +70,10 @@ class Settings(BaseSettings):
     azure_api_version_embeddings: str = "2024-02-01"
 
     embedding_backend: Literal[
-        "text-embedding-ada-002", "amazon.titan-embed-text-v2:0", "text-embedding-3-large", "fake"
+        "text-embedding-ada-002",
+        "amazon.titan-embed-text-v2:0",
+        "text-embedding-3-large",
+        "fake",
     ] = "text-embedding-3-large"
 
     llm_max_tokens: int = 1024
@@ -108,8 +115,12 @@ class Settings(BaseSettings):
     worker_ingest_largest_chunk_size: int = 300_000
     worker_ingest_largest_chunk_overlap: int = 0
 
-    response_no_doc_available: str = "No available data for selected files. They may need to be removed and added again"
-    response_max_content_exceeded: str = "Max content exceeded. Try smaller or fewer documents"
+    response_no_doc_available: str = (
+        "No available data for selected files. They may need to be removed and added again"
+    )
+    response_max_content_exceeded: str = (
+        "Max content exceeded. Try smaller or fewer documents"
+    )
 
     object_store: str = "minio"
 
@@ -118,7 +129,9 @@ class Settings(BaseSettings):
 
     unstructured_host: str = "unstructured"
 
-    model_config = SettingsConfigDict(env_file=".env", env_nested_delimiter="__", extra="allow", frozen=True)
+    model_config = SettingsConfigDict(
+        env_file=".env", env_nested_delimiter="__", extra="allow", frozen=True
+    )
 
     @lru_cache(1)
     def elasticsearch_client(self) -> Elasticsearch:
@@ -133,7 +146,9 @@ class Settings(BaseSettings):
                 ],
                 basic_auth=(self.elastic.user, self.elastic.password),
             )
-        return Elasticsearch(cloud_id=self.elastic.cloud_id, api_key=self.elastic.api_key)
+        return Elasticsearch(
+            cloud_id=self.elastic.cloud_id, api_key=self.elastic.api_key
+        )
 
     def s3_client(self):
         if self.object_store == "minio":

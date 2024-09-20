@@ -5,13 +5,13 @@ to provide a pydantic v1 definition to work with these. As these models are most
 used in conjunction with langchain this is the tidiest boxing of pydantic v1 we can do
 """
 
-from typing import TypedDict, Literal, Annotated, Required, NotRequired
-from uuid import UUID
-from functools import reduce
 from enum import StrEnum
+from functools import reduce
+from typing import Annotated, Literal, NotRequired, Required, TypedDict
+from uuid import UUID
 
-from pydantic import BaseModel, Field
 from langchain_core.documents import Document
+from pydantic import BaseModel, Field
 
 
 class ChainChatMessage(TypedDict):
@@ -19,9 +19,7 @@ class ChainChatMessage(TypedDict):
     text: str
 
 
-CHAT_SYSTEM_PROMPT = (
-    "You are an AI assistant called Redbox tasked with answering questions and providing information objectively."
-)
+CHAT_SYSTEM_PROMPT = "You are an AI assistant called Redbox tasked with answering questions and providing information objectively."
 
 CHAT_WITH_DOCS_SYSTEM_PROMPT = "You are an AI assistant called Redbox tasked with answering questions on user provided documents and providing information objectively."
 
@@ -77,11 +75,17 @@ CONDENSE_SYSTEM_PROMPT = (
 
 CHAT_QUESTION_PROMPT = "{question}\n=========\n Response: "
 
-CHAT_WITH_DOCS_QUESTION_PROMPT = "Question: {question}. \n\n Documents: \n\n {formatted_documents} \n\n Answer: "
+CHAT_WITH_DOCS_QUESTION_PROMPT = (
+    "Question: {question}. \n\n Documents: \n\n {formatted_documents} \n\n Answer: "
+)
 
-RETRIEVAL_QUESTION_PROMPT = "{question} \n=========\n{formatted_documents}\n=========\nFINAL ANSWER: "
+RETRIEVAL_QUESTION_PROMPT = (
+    "{question} \n=========\n{formatted_documents}\n=========\nFINAL ANSWER: "
+)
 
-CHAT_MAP_QUESTION_PROMPT = "Question: {question}. \n Documents: \n {formatted_documents} \n\n Answer: "
+CHAT_MAP_QUESTION_PROMPT = (
+    "Question: {question}. \n Documents: \n {formatted_documents} \n\n Answer: "
+)
 
 CONDENSE_QUESTION_PROMPT = "{question}\n=========\n Standalone question: "
 
@@ -122,14 +126,25 @@ class AISettings(BaseModel):
         "gpt-4o",
         "anthropic.claude-3-sonnet-20240229-v1:0",
         "anthropic.claude-3-haiku-20240307-v1:0",
-    ] = "gpt-4o"
+        "ollama",
+        "openai",
+    ] = "ollama"
+
+    temperature: float = 0
+
+
+class LocalAISettings(AISettings):
+
+    ollama_model: str
 
 
 class DocumentState(TypedDict):
     group: dict[UUID, Document]
 
 
-def document_reducer(current: DocumentState | None, update: DocumentState | list[DocumentState]) -> DocumentState:
+def document_reducer(
+    current: DocumentState | None, update: DocumentState | list[DocumentState]
+) -> DocumentState:
     """Merges two document states based on the following rules.
 
     * Groups are matched by the group key.
@@ -143,7 +158,9 @@ def document_reducer(current: DocumentState | None, update: DocumentState | list
     """
     # If update is actually a list of state updates, run them one by one
     if isinstance(update, list):
-        reduced = reduce(lambda current, update: document_reducer(current, update), update, current)
+        reduced = reduce(
+            lambda current, update: document_reducer(current, update), update, current
+        )
         return reduced
 
     # If state is empty, return update
@@ -181,10 +198,16 @@ def document_reducer(current: DocumentState | None, update: DocumentState | list
 
 class RedboxQuery(BaseModel):
     question: str = Field(description="The last user chat message")
-    s3_keys: list[str] = Field(description="List of files to process", default_factory=list)
+    s3_keys: list[str] = Field(
+        description="List of files to process", default_factory=list
+    )
     user_uuid: UUID = Field(description="User the chain in executing for")
-    chat_history: list[ChainChatMessage] = Field(description="All previous messages in chat (excluding question)")
-    ai_settings: AISettings = Field(description="User request AI settings", default_factory=AISettings)
+    chat_history: list[ChainChatMessage] = Field(
+        description="All previous messages in chat (excluding question)"
+    )
+    ai_settings: AISettings = Field(
+        description="User request AI settings", default_factory=AISettings
+    )
 
 
 class RequestMetadata(TypedDict):
@@ -201,11 +224,16 @@ def add_tokens_by_model(current: dict[str, int], update: dict[str, int]):
     return result
 
 
-def metadata_reducer(current: RequestMetadata | None, update: RequestMetadata | list[RequestMetadata] | None):
+def metadata_reducer(
+    current: RequestMetadata | None,
+    update: RequestMetadata | list[RequestMetadata] | None,
+):
     """Merges two metadata states."""
     # If update is actually a list of state updates, run them one by one
     if isinstance(update, list):
-        reduced = reduce(lambda current, update: metadata_reducer(current, update), update, current)
+        reduced = reduce(
+            lambda current, update: metadata_reducer(current, update), update, current
+        )
         return reduced
 
     if current is None:
@@ -213,8 +241,12 @@ def metadata_reducer(current: RequestMetadata | None, update: RequestMetadata | 
     if update is None:
         return current
 
-    input_tokens = add_tokens_by_model(current.get("input_tokens") or {}, update.get("input_tokens") or {})
-    output_tokens = add_tokens_by_model(current.get("output_tokens") or {}, update.get("output_tokens") or {})
+    input_tokens = add_tokens_by_model(
+        current.get("input_tokens") or {}, update.get("input_tokens") or {}
+    )
+    output_tokens = add_tokens_by_model(
+        current.get("output_tokens") or {}, update.get("output_tokens") or {}
+    )
 
     return RequestMetadata(
         input_tokens=input_tokens,
