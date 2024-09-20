@@ -21,7 +21,7 @@ from redbox.models.chain import LLMCallMetadata, RedboxQuery, RequestMetadata
 from redbox.models.graph import FINAL_RESPONSE_TAG, ROUTE_NAME_TAG, SOURCE_DOCUMENTS_TAG
 from redbox_app.redbox_core import error_messages
 from redbox_app.redbox_core.consumers import ChatConsumer
-from redbox_app.redbox_core.models import Chat, ChatMessage, ChatMessageTokenUse, ChatRoleEnum, File
+from redbox_app.redbox_core.models import Chat, ChatMessage, ChatMessageTokenUse, ChatRoleEnum, File, StatusEnum
 from redbox_app.redbox_core.prompts import CHAT_MAP_QUESTION_PROMPT
 
 User = get_user_model()
@@ -463,7 +463,7 @@ async def test_chat_consumer_redbox_state(
 
         selected_file_uuids: Sequence[str] = [str(f.id) for f in selected_files]
         selected_file_keys: Sequence[str] = [f.unique_name for f in selected_files]
-        permitted_file_keys: Sequence[str] = [f.unique_name async for f in File.objects.filter(user=alice)]
+        permitted_file_keys: Sequence[str] = [f.unique_name async for f in File.objects.filter(user=alice, status=StatusEnum.complete)]
         assert selected_file_keys != permitted_file_keys
 
         await communicator.send_json_to(
@@ -498,7 +498,7 @@ async def test_chat_consumer_redbox_state(
         )
         redbox_state = mock_run.call_args.args[0]  # pulls out the args that redbox.run was called with
 
-        assert redbox_state["request"] == expected_request
+        assert redbox_state["request"] == expected_request, f"Expected {expected_request.model_dump_json(indent=2)}. Received: {redbox_state["request"].model_dump_json(indent=2)}"
 
 
 @database_sync_to_async
