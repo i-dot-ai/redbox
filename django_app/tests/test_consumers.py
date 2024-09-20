@@ -463,7 +463,9 @@ async def test_chat_consumer_redbox_state(
 
         selected_file_uuids: Sequence[str] = [str(f.id) for f in selected_files]
         selected_file_keys: Sequence[str] = [f.unique_name for f in selected_files]
-        permitted_file_keys: Sequence[str] = [f.unique_name async for f in File.objects.filter(user=alice, status=StatusEnum.complete)]
+        permitted_file_keys: Sequence[str] = [
+            f.unique_name async for f in File.objects.filter(user=alice, status=StatusEnum.complete)
+        ]
         assert selected_file_keys != permitted_file_keys
 
         await communicator.send_json_to(
@@ -498,7 +500,9 @@ async def test_chat_consumer_redbox_state(
         )
         redbox_state = mock_run.call_args.args[0]  # pulls out the args that redbox.run was called with
 
-        assert redbox_state["request"] == expected_request, f"Expected {expected_request.model_dump_json(indent=2)}. Received: {redbox_state["request"].model_dump_json(indent=2)}"
+        assert (
+            redbox_state["request"] == expected_request
+        ), f"Expected {expected_request}. Received: {redbox_state["request"]}"
 
 
 @database_sync_to_async
