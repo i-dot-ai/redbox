@@ -5,13 +5,11 @@
 
 ## Installing packages
 
-Currently, we use [poetry](https://python-poetry.org/) to manage our python packages. The list of poetry groups and python packages we install can be found [here](https://github.com/i-dot-ai/redbox/blob/main/pyproject.toml) in `pyproject.toml`.
+Currently, we use [poetry](https://python-poetry.org/) to manage our python packages. There are 3 `pyproject.toml`s 
+- [redbox-core](https://github.com/i-dot-ai/redbox/blob/main/redbox-core/pyproject.toml) - core AI package
+- [django-app](https://github.com/i-dot-ai/redbox/blob/main/django_app/pyproject.toml) - django webserver and background worker
+- [root](https://github.com/i-dot-ai/redbox/blob/main/pyproject.toml) - Integration tests, QA, and docs
 
-Run the following to install the packages into a virtual environment poetry will create.
-
-``` bash
-poetry install
-```
 
 ## VSCode
 To make use of the VSCode setup open the workspace file .vscode/redbox.code-workspace. This will open the relevant services as roots in a single workspace. The recommended way to use this is:
@@ -22,29 +20,29 @@ The tests should then all load separately and use their own env.
 
 ## Setting environment variables
 
-We use `.env` files to populate the environment variables for local development. When cloning the repository the files `.env.test`, `.env.django`, `.env.integration` and `.env.example` will be populated.
+We use `.env` files to populate the environment variables for local development. When cloning the repository the files `.env.test`, `.env.integration` and `.env.example` will be populated.
 
 To run the project, create a new file called `.env` and populate this file with the setting names from `.env.example` and the values these settings need.
 
 Typically this involves setting the following variables:
 
-- `OPENAI_API_KEY` - OpenAI API key
-- `ANTHROPIC_API_KEY` - Anthropic API key
+- `AZURE_OPENAI_API_KEY_XX` - Azure OpenAI API key
+- `AZURE_OPENAI_ENDPOINT_XX` - Azure OpenAI API key
+- `OPENAI_API_VESION_XX` - OpenAI API version
 
-**`.env` is in `.gitignore` and should not be committed to git**
+where `XX` can be any of `35T`, `4T`, `4O`. Exactly which LLM you use is decided at runtime from,
+so populate the settings that you need.
 
 ### Backend Profiles
 Redbox can use different backends for chat and embeddings, which are used is controlled by env vars. The defaults are currently to use Azure for both chat and embeddings but OpenAI can be used (and pointed to an OpenAI compliant local service).
 The relevant env vars for overriding to use OpenAI embeddings are:
+- `EMBEDDING_AZURE_OPENAI_ENDPOINT` - usually the same as one of your `AZURE_OPENAI_ENDPOINT_XX`
+- `EMBEDDING_OPENAI_KEY` - usually the same  as one of your `AZURE_OPENAI_API_KEY_XX`
 
-EMBEDDING_OPENAI_BASE_URL=http://myembeddings:8080/v1
-EMBEDDING_BACKEND=openai
 
-## Other dependencies (for Document Ingestion and OCR)
 
-You will need to install `poppler` and `tesseract` to run the `worker`
-- `brew install poppler`
-- `brew install tesseract`
+**`.env` is in `.gitignore` and should not be committed to git**
+
 
 
 ## Building and running the project
@@ -54,13 +52,10 @@ To view all the build commands, check the `Makefile` that can be found [here](ht
 The project currently consists of multiple docker images needed to run the project in its entirety. If you only need a subsection of the project running, for example if you're only editing the django app, you can run a subset of the images. The images currently in the project are:
 
 - `elasticsearch`
-- `kibana`
-- `worker`
 - `minio`
-- `redis`
-- `core-api`
 - `db`
 - `django-app`
+- `worker`
 
 To build the images needed to run the project, use this command:
 
@@ -104,16 +99,10 @@ For the django app:
 make test-django
 ```
 
-For the core API:
+For the core AI:
 
 ``` bash
-make test-core-api
-```
-
-For the worker:
-
-``` bash
-make test-worker
+make test-redbox-core
 ```
 
 For integration tests:
@@ -122,7 +111,7 @@ For integration tests:
 make test-integration
 ```
 
-## Logging in to Redbox Locally
+## Logging in to Redbox Locally
 
 We'll need to create a superuser to log in to the Django app, to do this run the following steps:
 
@@ -184,18 +173,11 @@ npm install elasticdump -g
 
 ### Dumping data from Elasticsearch
 
-The default indices we want are:
-
-* `redbox-data-file`
-* `redbox-data-chunk`
+The default indicex we want is `redbox-data-chunk`
 
 Dump these to [data/elastic-dumps/](../data/elastic-dumps/) for saving or sharing.
 
 ```console
-elasticdump \
-  --input=http://localhost:9200/redbox-data-file \
-  --output=./data/elastic-dumps/redbox-data-file.json \
-  --type=data
 elasticdump \
   --input=http://localhost:9200/redbox-data-chunk \
   --output=./data/elastic-dumps/redbox-data-chunk.json \
@@ -204,7 +186,7 @@ elasticdump \
 
 ### Loading data to Elasticsearch
 
-If you've been provided with a dump from the vector store, add it to [data/elastic-dumps/](../data/elastic-dumps/). The below assumes the existance of `redbox-data-file.json` and `redbox-data-chunk.json` in that directory.
+If you've been provided with a dump from the vector store, add it to [data/elastic-dumps/](../data/elastic-dumps/). The below assumes the existance of `redbox-data-chunk.json` in that directory.
 
 Consider dumping your existing indices if you don't want to have to reembed data you're working on.
 
@@ -217,10 +199,6 @@ docker compose up -d elasticsearch
 Load data from your JSONs, or your own file.
 
 ```console
-elasticdump \
-  --input=./data/elastic-dumps/redbox-data-file.json \
-  --output=http://localhost:9200/redbox-data-file \
-  --type=data
 elasticdump \
   --input=./data/elastic-dumps/redbox-data-chunk.json \
   --output=http://localhost:9200/redbox-data-chunk \

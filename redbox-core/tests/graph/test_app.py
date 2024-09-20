@@ -109,13 +109,19 @@ TEST_CASES = [
                 RedboxTestData(
                     1,
                     10000,
-                    expected_llm_response=["Condense response", "The cake is a lie"],
+                    expected_llm_response=[
+                        "Condense response",
+                        "The @search route is temporarily down for maintainance. We apologise for the inconvenience. ",
+                    ],
                     expected_route=ChatRoute.search,
                 ),
                 RedboxTestData(
                     5,
                     10000,
-                    expected_llm_response=["Condense response", "The cake is a lie"],
+                    expected_llm_response=[
+                        "Condense response",
+                        "The @search route is temporarily down for maintainance. We apologise for the inconvenience. ",
+                    ],
                     expected_route=ChatRoute.search,
                 ),
             ],

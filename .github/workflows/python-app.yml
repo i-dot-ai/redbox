@@ -79,6 +79,10 @@ jobs:
       run: |
         make test-django
 
+    - name: Test migrations
+      run: |
+        make check-migrations
+
 
   static_checks:
 
