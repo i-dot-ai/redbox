@@ -2,6 +2,7 @@
 import os
 import socket
 from pathlib import Path
+from urllib.parse import urlparse
 
 import environ
 import sentry_sdk
@@ -242,6 +243,14 @@ else:
     ALLOWED_HOSTS = [LOCALHOST, *ENVIRONMENT.hosts]
 
 if not ENVIRONMENT.is_local:
+
+    def filter_transactions(event):
+        url_string = event["request"]["url"]
+        parsed_url = urlparse(url_string)
+        if parsed_url.path.startswith("/admin"):
+            return None
+        return event
+
     SENTRY_DSN = env.str("SENTRY_DSN", None)
     SENTRY_ENVIRONMENT = env.str("SENTRY_ENVIRONMENT", None)
     if SENTRY_DSN and SENTRY_ENVIRONMENT:
@@ -254,6 +263,7 @@ if not ENVIRONMENT.is_local:
             send_default_pii=False,
             traces_sample_rate=1.0,
             profiles_sample_rate=0.0,
+            before_send_transaction=filter_transactions,
         )
 SENTRY_REPORT_TO_ENDPOINT = URL(env.str("SENTRY_REPORT_TO_ENDPOINT", "")) or None
 

@@ -198,11 +198,18 @@ def get_root_graph(
 
     # Subgraphs
     chat_subgraph = get_chat_graph(debug=debug)
-    rag_subgraph = get_search_graph(retriever=parameterised_retriever, debug=debug)
+    # rag_subgraph = get_search_graph(retriever=parameterised_retriever, debug=debug)
     cwd_subgraph = get_chat_with_documents_graph(retriever=all_chunks_retriever, debug=debug)
 
     # Processes
-    builder.add_node("p_search", rag_subgraph)
+    builder.add_node("p_set_search_route", build_set_route_pattern(route=ChatRoute.search))
+    builder.add_node(
+        "p_search",
+        build_set_text_pattern(
+            text=("The @search route is temporarily down for maintainance. " "We apologise for the inconvenience. "),
+            final_response_chain=True,
+        ),
+    )
     builder.add_node("p_chat", chat_subgraph)
     builder.add_node("p_chat_with_documents", cwd_subgraph)
 
@@ -215,7 +222,7 @@ def get_root_graph(
     builder.add_conditional_edges(
         "d_keyword_exists",
         build_keyword_detection_conditional(*ROUTABLE_KEYWORDS.keys()),
-        {ChatRoute.search: "p_search", "DEFAULT": "d_docs_selected"},
+        {ChatRoute.search: "p_set_search_route", "DEFAULT": "d_docs_selected"},
     )
     builder.add_conditional_edges(
         "d_docs_selected",
@@ -225,6 +232,7 @@ def get_root_graph(
             False: "p_chat",
         },
     )
+    builder.add_edge("p_set_search_route", "p_search")
     builder.add_edge("p_search", END)
     builder.add_edge("p_chat", END)
     builder.add_edge("p_chat_with_documents", END)

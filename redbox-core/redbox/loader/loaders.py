@@ -52,6 +52,7 @@ class UnstructuredChunkLoader:
             url,
             files=files,
             data={
+                "strategy": "fast",
                 "chunking_strategy": "by_title",
                 "max_characters": self._max_chunk_size,
                 "combine_under_n_chars": self._min_chunk_size,
