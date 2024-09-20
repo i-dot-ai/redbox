@@ -22,6 +22,10 @@
       "staticPath": "./node_modules/i.ai-design-system/dist/icons"
     },
     {
+      "distDir": "./dist/animations",
+      "staticPath": "./src/animations"
+    },
+    {
       "distDir": "./dist/icons",
       "staticPath": "./src/icons"
     },
