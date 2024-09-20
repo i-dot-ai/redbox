@@ -39,9 +39,7 @@ class ElasticCloudSettings(BaseModel):
 class Settings(BaseSettings):
     """Settings for the redbox application."""
 
-    ollama_model: str = "ollama/llama3.1"
     openai_model: str = "gpt-4o-mini"
-    ollama_api_base: str = "http://host.docker.internal:11434"
     openai_api_key: str
 
     # azure/gpt-35-turbo-16k

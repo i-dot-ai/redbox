@@ -126,16 +126,10 @@ class AISettings(BaseModel):
         "gpt-4o",
         "anthropic.claude-3-sonnet-20240229-v1:0",
         "anthropic.claude-3-haiku-20240307-v1:0",
-        "ollama",
         "openai",
-    ] = "ollama"
+    ] = "gpt-4o"
 
     temperature: float = 0
-
-
-class LocalAISettings(AISettings):
-
-    ollama_model: str
 
 
 class DocumentState(TypedDict):

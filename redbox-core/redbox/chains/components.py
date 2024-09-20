@@ -9,7 +9,6 @@ from langchain_community.embeddings import BedrockEmbeddings
 from langchain_core.embeddings import Embeddings, FakeEmbeddings
 from langchain_core.utils import convert_to_secret_str
 from langchain_elasticsearch import ElasticsearchRetriever
-from langchain_ollama.chat_models import ChatOllama
 from langchain_openai import AzureChatOpenAI, ChatOpenAI
 from langchain_openai.embeddings import AzureOpenAIEmbeddings, OpenAIEmbeddings
 from redbox.api.callbacks import LoggerCallbackHandler
@@ -26,13 +25,7 @@ log = logging.getLogger()
 
 def get_chat_llm(env: Settings, ai_settings: AISettings):
     chat_model = None
-    if ai_settings.chat_backend == "ollama":
-        chat_model = ChatLiteLLM(
-            model=env.ollama_model,
-            temperature=ai_settings.temperature,
-            api_base=env.ollama_api_base,
-        )
-    elif ai_settings.chat_backend == "openai":
+    if ai_settings.chat_backend == "openai":
         logger_callback = LoggerCallbackHandler(logger=log)
         chat_model = ChatOpenAI(
             streaming=True,
@@ -136,7 +129,6 @@ def get_azure_embeddings(env: Settings):
 def get_openai_embeddings(env: Settings):
     # os.environ["OPENAI_API_KEY"] = env.embedding_openai_api_key
     # os.environ["OPENAI_ENDPOINT"] = env.embedding_openai_base_url
-    log.info("loading embeddings")
     return OpenAIEmbeddings(
         api_key=convert_to_secret_str(env.embedding_openai_api_key),
         base_url=env.embedding_openai_base_url,

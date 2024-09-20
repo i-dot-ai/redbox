@@ -339,17 +339,17 @@ files = [
 
 [[package]]
 name = "boto3"
-version = "1.34.162"
+version = "1.35.23"
 description = "The AWS SDK for Python"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "boto3-1.34.162-py3-none-any.whl", hash = "sha256:d6f6096bdab35a0c0deff469563b87d184a28df7689790f7fe7be98502b7c590"},
-    {file = "boto3-1.34.162.tar.gz", hash = "sha256:873f8f5d2f6f85f1018cbb0535b03cceddc7b655b61f66a0a56995238804f41f"},
+    {file = "boto3-1.35.23-py3-none-any.whl", hash = "sha256:ecba4362f82e23ef775c72b3e6fdef3ef68443629b79e88886d5088302ffc050"},
+    {file = "boto3-1.35.23.tar.gz", hash = "sha256:3fbf1d5b749c92ed43aa190650979dff9f83790a42522e1e9eefa54c8e44bc4b"},
 ]
 
 [package.dependencies]
-botocore = ">=1.34.162,<1.35.0"
+botocore = ">=1.35.23,<1.36.0"
 jmespath = ">=0.7.1,<2.0.0"
 s3transfer = ">=0.10.0,<0.11.0"
 
@@ -358,13 +358,13 @@ crt = ["botocore[crt] (>=1.21.0,<2.0a0)"]
 
 [[package]]
 name = "boto3-stubs"
-version = "1.35.22"
-description = "Type annotations for boto3 1.35.22 generated with mypy-boto3-builder 8.1.1"
+version = "1.35.23"
+description = "Type annotations for boto3 1.35.23 generated with mypy-boto3-builder 8.1.1"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "boto3_stubs-1.35.22-py3-none-any.whl", hash = "sha256:13544147581fe1130c71727a2bbe3330fbab8db5c57a672c82baf0cbf99e8031"},
-    {file = "boto3_stubs-1.35.22.tar.gz", hash = "sha256:ae99e4e649155a0e0861aabe5935dc8d23dfaf4c5c569df68d3b8354bdbf73b6"},
+    {file = "boto3_stubs-1.35.23-py3-none-any.whl", hash = "sha256:15e0825f0338dfd6f8623ecce44bd2369aabae7aeea3f706772c9172b6f3cff6"},
+    {file = "boto3_stubs-1.35.23.tar.gz", hash = "sha256:78d96e7135e2ed2743211000b7a592c90ea1caf6c2a203f4778af527da7353c1"},
 ]
 
 [package.dependencies]
@@ -414,7 +414,7 @@ bedrock-agent = ["mypy-boto3-bedrock-agent (>=1.35.0,<1.36.0)"]
 bedrock-agent-runtime = ["mypy-boto3-bedrock-agent-runtime (>=1.35.0,<1.36.0)"]
 bedrock-runtime = ["mypy-boto3-bedrock-runtime (>=1.35.0,<1.36.0)"]
 billingconductor = ["mypy-boto3-billingconductor (>=1.35.0,<1.36.0)"]
-boto3 = ["boto3 (==1.35.22)", "botocore (==1.35.22)"]
+boto3 = ["boto3 (==1.35.23)", "botocore (==1.35.23)"]
 braket = ["mypy-boto3-braket (>=1.35.0,<1.36.0)"]
 budgets = ["mypy-boto3-budgets (>=1.35.0,<1.36.0)"]
 ce = ["mypy-boto3-ce (>=1.35.0,<1.36.0)"]
@@ -766,13 +766,13 @@ xray = ["mypy-boto3-xray (>=1.35.0,<1.36.0)"]
 
 [[package]]
 name = "botocore"
-version = "1.34.162"
+version = "1.35.23"
 description = "Low-level, data-driven core of boto 3."
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "botocore-1.34.162-py3-none-any.whl", hash = "sha256:2d918b02db88d27a75b48275e6fb2506e9adaaddbec1ffa6a8a0898b34e769be"},
-    {file = "botocore-1.34.162.tar.gz", hash = "sha256:adc23be4fb99ad31961236342b7cbf3c0bfc62532cd02852196032e8c0d682f3"},
+    {file = "botocore-1.35.23-py3-none-any.whl", hash = "sha256:cab9ec4e0367b9f33f0bc02c5a29f587b0119ecffd6d125bacee085dcbc8817d"},
+    {file = "botocore-1.35.23.tar.gz", hash = "sha256:25b17a9ccba6ad32bb5bf7ba4f52656aa03c1cb29f6b4e438050ee4ad1967a3b"},
 ]
 
 [package.dependencies]
@@ -781,17 +781,17 @@ python-dateutil = ">=2.1,<3.0.0"
 urllib3 = {version = ">=1.25.4,<2.2.0 || >2.2.0,<3", markers = "python_version >= \"3.10\""}
 
 [package.extras]
-crt = ["awscrt (==0.21.2)"]
+crt = ["awscrt (==0.21.5)"]
 
 [[package]]
 name = "botocore-stubs"
-version = "1.35.22"
+version = "1.35.23"
 description = "Type annotations and code completion for botocore"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "botocore_stubs-1.35.22-py3-none-any.whl", hash = "sha256:dae8cc433df3044ece464f4985e67a154bab51fd042757d0c59e4a9ea26d0376"},
-    {file = "botocore_stubs-1.35.22.tar.gz", hash = "sha256:14dec6b00d974dce4747d6917a791bcea0d8efd1c8959821d8ce6ca69ce40d70"},
+    {file = "botocore_stubs-1.35.23-py3-none-any.whl", hash = "sha256:8b9d554b5adcc070e30d9089d36cb82a4a2286df684274654ad74e5f354b8491"},
+    {file = "botocore_stubs-1.35.23.tar.gz", hash = "sha256:3a335e6898d7ca0dc79292f15693e2743ec394f9d08d36f94e7a61df3bb9a14e"},
 ]
 
 [package.dependencies]
@@ -2476,18 +2476,18 @@ tenacity = ">=8.1.0,<8.4.0 || >8.4.0,<9.0.0"
 
 [[package]]
 name = "langchain-aws"
-version = "0.2.0"
+version = "0.2.1"
 description = "An integration package connecting AWS and LangChain"
 optional = false
 python-versions = "<4.0,>=3.9"
 files = [
-    {file = "langchain_aws-0.2.0-py3-none-any.whl", hash = "sha256:c48ed18d95f161992806ff7dcc68a1da353135d18bbc345dacbb29969c122a74"},
-    {file = "langchain_aws-0.2.0.tar.gz", hash = "sha256:e357bd1e1b0be985a8b8fb1a001015d9d8930a26941f1184deb93a668154c83a"},
+    {file = "langchain_aws-0.2.1-py3-none-any.whl", hash = "sha256:a866ca91d11798b06925cd39b7297db97e1ab438b91cbe2feeca443ed59e5b7a"},
+    {file = "langchain_aws-0.2.1.tar.gz", hash = "sha256:e07ba5c16c7ef942072c3b3561cc517d34e01de8c05a9f9bc3d986e6b90f43b1"},
 ]
 
 [package.dependencies]
-boto3 = ">=1.34.131,<1.35.0"
-langchain-core = ">=0.3.0,<0.4"
+boto3 = ">=1.34.131"
+langchain-core = ">=0.3.2,<0.4"
 numpy = {version = ">=1.26.0,<2.0.0", markers = "python_version >= \"3.12\""}
 pydantic = ">=2,<3"
 
@@ -2517,13 +2517,13 @@ tenacity = ">=8.1.0,<8.4.0 || >8.4.0,<9.0.0"
 
 [[package]]
 name = "langchain-core"
-version = "0.3.1"
+version = "0.3.2"
 description = "Building applications with LLMs through composability"
 optional = false
 python-versions = "<4.0,>=3.9"
 files = [
-    {file = "langchain_core-0.3.1-py3-none-any.whl", hash = "sha256:52656baafd9f14163f112c2828b4c3099170a99861479cdbb8e8949f4153b5c5"},
-    {file = "langchain_core-0.3.1.tar.gz", hash = "sha256:c4609eba3969df633fb3e3f3378f51bac8b85cdea18f7cb09a1f44c6a1d07723"},
+    {file = "langchain_core-0.3.2-py3-none-any.whl", hash = "sha256:23616795c7667cfd2c915e2ddc42eebeb162352a749623c1b22721c01c040036"},
+    {file = "langchain_core-0.3.2.tar.gz", hash = "sha256:92bbf67c6e4104c132de1150a753a458bb46e81aae6a4bc2ead91a5d3ccdd528"},
 ]
 
 [package.dependencies]
@@ -2552,21 +2552,6 @@ files = [
 [package.dependencies]
 elasticsearch = {version = ">=8.13.1,<9.0.0", extras = ["vectorstore-mmr"]}
 langchain-core = ">=0.3.0,<0.4.0"
-
-[[package]]
-name = "langchain-ollama"
-version = "0.2.0"
-description = "An integration package connecting Ollama and LangChain"
-optional = false
-python-versions = "<4.0,>=3.9"
-files = [
-    {file = "langchain_ollama-0.2.0-py3-none-any.whl", hash = "sha256:aa5b794599652494a07fd27b22784854480cd4c793f0db5e81ebeccc2affd135"},
-    {file = "langchain_ollama-0.2.0.tar.gz", hash = "sha256:250ad9f3edce1a0ca16e4fad19f783ac728d7d76888ba952c462cd9f680353f7"},
-]
-
-[package.dependencies]
-langchain-core = ">=0.3.0,<0.4.0"
-ollama = ">=0.3.0,<1"
 
 [[package]]
 name = "langchain-openai"
@@ -2630,13 +2615,13 @@ msgpack = ">=1.1.0,<2.0.0"
 
 [[package]]
 name = "langsmith"
-version = "0.1.123"
+version = "0.1.125"
 description = "Client library to connect to the LangSmith LLM Tracing and Evaluation Platform."
 optional = false
 python-versions = "<4.0,>=3.8.1"
 files = [
-    {file = "langsmith-0.1.123-py3-none-any.whl", hash = "sha256:ee30c96e69038af92487c6229870b9ccc1fba43eb1b84fb4132a013af7212c6e"},
-    {file = "langsmith-0.1.123.tar.gz", hash = "sha256:5d4ad7bb57351f0fc492debf2d7d0b96f2eed41b5545cd36f3043c5f4d42aa6b"},
+    {file = "langsmith-0.1.125-py3-none-any.whl", hash = "sha256:74ce8eb2663e1ed20bfcfc88d41e0712879306956c9938d1cdbab7d60458bdca"},
+    {file = "langsmith-0.1.125.tar.gz", hash = "sha256:2c0eb0c3cbf22cff55bf519b8e889041f9a591bcf97af5152c8e130333c5940e"},
 ]
 
 [package.dependencies]
@@ -2665,13 +2650,13 @@ files = [
 
 [[package]]
 name = "litellm"
-version = "1.46.6"
+version = "1.46.8"
 description = "Library to easily interface with LLM API providers"
 optional = false
 python-versions = "!=2.7.*,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,!=3.5.*,!=3.6.*,!=3.7.*,>=3.8"
 files = [
-    {file = "litellm-1.46.6-py3-none-any.whl", hash = "sha256:e568933a408ccb6d954c8f48b5a481542e2efaa69f1aad61307c6c99719fdf72"},
-    {file = "litellm-1.46.6.tar.gz", hash = "sha256:1c3196567c85507d05350cdcb4948c551705c9a38c3687c4098a3a58175bdd5a"},
+    {file = "litellm-1.46.8-py3-none-any.whl", hash = "sha256:112acc854d67ced573dc5d60bbf8b493dea1e61244013685dace8c2d912aa1b3"},
+    {file = "litellm-1.46.8.tar.gz", hash = "sha256:443c67d33e1a264641b80bf170cad1ba42d6fa9816f86df5eaaaf10c1e21b551"},
 ]
 
 [package.dependencies]
@@ -3080,20 +3065,6 @@ files = [
     {file = "numpy-1.26.4-pp39-pypy39_pp73-win_amd64.whl", hash = "sha256:7e50d0a0cc3189f9cb0aeb3a6a6af18c16f59f004b866cd2be1c14b36134a4a0"},
     {file = "numpy-1.26.4.tar.gz", hash = "sha256:2a02aba9ed12e4ac4eb3ea9421c420301a0c6460d9830d74a9df87efa4912010"},
 ]
-
-[[package]]
-name = "ollama"
-version = "0.3.3"
-description = "The official Python client for Ollama."
-optional = false
-python-versions = "<4.0,>=3.8"
-files = [
-    {file = "ollama-0.3.3-py3-none-any.whl", hash = "sha256:ca6242ce78ab34758082b7392df3f9f6c2cb1d070a9dede1a4c545c929e16dba"},
-    {file = "ollama-0.3.3.tar.gz", hash = "sha256:f90a6d61803117f40b0e8ff17465cab5e1eb24758a473cfe8101aff38bc13b51"},
-]
-
-[package.dependencies]
-httpx = ">=0.27.0,<0.28.0"
 
 [[package]]
 name = "openai"
@@ -3968,7 +3939,6 @@ langchain = "^0.3.0"
 langchain-aws = "^0.2.0"
 langchain-community = "^0.3.0"
 langchain-elasticsearch = "^0.3.0"
-langchain-ollama = "^0.2.0"
 langchain_openai = "^0.2.0"
 langgraph = "^0.2.15"
 litellm = "^1.46.6"

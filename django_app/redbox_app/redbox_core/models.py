@@ -59,14 +59,13 @@ class AbstractAISettings(models.Model):
             "claude-3-sonnet"
         )
         CLAUDE_3_HAIKU = "anthropic.claude-3-haiku-20240307-v1:0", _("claude-3-haiku")
-        OLLAMA = "ollama", _("ollama")
         OPENAI = "openai", _("openai")
 
     chat_backend = models.CharField(
         max_length=64,
         choices=ChatBackend,
         help_text="LLM to use in chat",
-        default=ChatBackend.OLLAMA,
+        default=ChatBackend.GPT_4_OMNI,
     )
     temperature = models.FloatField(default=0, help_text="temperature for LLM")
 
