@@ -3,6 +3,7 @@ from dataclasses import dataclass, field
 import datetime
 import logging
 from typing import Generator
+from uuid import uuid4
 
 from langchain_core.documents import Document
 from langchain_core.retrievers import BaseRetriever
@@ -18,21 +19,33 @@ log = logging.getLogger()
 def generate_docs(
     s3_key: str = "test_data.pdf",
     page_numbers: list[int] = [1, 2, 3, 4],
-    total_tokens=6000,
+    total_tokens: int = 6000,
     number_of_docs: int = 10,
     chunk_resolution=ChunkResolution.normal,
 ) -> Generator[Document, None, None]:
+    """Generates a list of documents as if retrieved from a real retriever.
+
+    For this reason, adds extra data beyond ChunkMetadata, mimicing
+    redbox.retriever.retrievers.hit_to_doc().
+    """
     for i in range(number_of_docs):
+        core_metadata = ChunkMetadata(
+            index=i,
+            file_name=s3_key,
+            page_number=page_numbers[int(i / number_of_docs) * len(page_numbers)],
+            created_datetime=datetime.datetime.now(datetime.UTC),
+            token_count=int(total_tokens / number_of_docs),
+            chunk_resolution=chunk_resolution,
+        ).model_dump()
+
+        extra_metadata = {
+            "score": 1,
+            "uuid": uuid4(),
+        }
+
         yield Document(
             page_content=f"Document {i} text",
-            metadata=ChunkMetadata(
-                index=i,
-                file_name=s3_key,
-                page_number=page_numbers[int(i / number_of_docs) * len(page_numbers)],
-                created_datetime=datetime.datetime.now(datetime.UTC),
-                token_count=int(total_tokens / number_of_docs),
-                chunk_resolution=chunk_resolution,
-            ).model_dump(),
+            metadata=core_metadata | extra_metadata,
         )
 
 

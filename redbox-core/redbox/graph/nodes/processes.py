@@ -11,13 +11,14 @@ from langchain.schema import StrOutputParser
 from langchain_core.runnables import Runnable, RunnableLambda, RunnableParallel
 from langchain_core.callbacks.manager import dispatch_custom_event
 from langchain_core.vectorstores import VectorStoreRetriever
+from langchain_core.documents import Document
 
 from redbox.chains.components import get_tokeniser, get_chat_llm
 from redbox.chains.runnables import build_llm_chain, CannedChatLLM
 from redbox.models.graph import ROUTE_NAME_TAG, RedboxActivityEvent, RedboxEventType
 from redbox.models import ChatRoute, Settings
-from redbox.models.chain import RedboxState, RequestMetadata
-from redbox.transform import combine_documents, structure_documents
+from redbox.models.chain import DocumentState, RedboxState, RequestMetadata
+from redbox.transform import combine_documents
 from redbox.models.chain import PromptSet
 from redbox.transform import flatten_document_state
 
@@ -32,10 +33,15 @@ re_keyword_pattern = re.compile(r"@(\w+)")
 
 
 def build_retrieve_pattern(
-    retriever: VectorStoreRetriever, final_source_chain: bool = False
+    retriever: VectorStoreRetriever,
+    structure_func: Callable[[list[Document]], DocumentState],
+    final_source_chain: bool = False,
 ) -> Runnable[RedboxState, dict[str, Any]]:
-    """Returns a function that uses state["request"] and state["text"] to set state["documents"]."""
-    retriever_chain = RunnableParallel({"documents": retriever | structure_documents})
+    """Returns a function that uses state["request"] and state["text"] to set state["documents"].
+
+    Uses structure_func to order the retriever documents for the state.
+    """
+    retriever_chain = RunnableParallel({"documents": retriever | structure_func})
 
     if final_source_chain:
         _retriever = retriever_chain.with_config(tags=["source_documents_flag"])

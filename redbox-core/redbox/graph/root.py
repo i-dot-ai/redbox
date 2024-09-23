@@ -31,6 +31,7 @@ from redbox.graph.nodes.processes import (
 )
 from redbox.graph.nodes.sends import build_document_chunk_send, build_document_group_send
 from redbox.models.graph import ROUTABLE_KEYWORDS, RedboxActivityEvent
+from redbox.transform import structure_documents_by_file_name, structure_documents_by_group_and_indices
 
 
 # Subgraphs
@@ -44,7 +45,12 @@ def get_self_route_graph(retriever: VectorStoreRetriever, prompt_set: PromptSet,
 
     # Processes
     builder.add_node("p_condense_question", build_chat_pattern(prompt_set=PromptSet.CondenseQuestion))
-    builder.add_node("p_retrieve_docs", build_retrieve_pattern(retriever=retriever, final_source_chain=False))
+    builder.add_node(
+        "p_retrieve_docs",
+        build_retrieve_pattern(
+            retriever=retriever, structure_func=structure_documents_by_file_name, final_source_chain=False
+        ),
+    )
     builder.add_node(
         "p_answer_question_or_decide_unanswerable",
         build_stuff_pattern(
@@ -111,7 +117,14 @@ def get_search_graph(
     # Processes
     builder.add_node("p_set_search_route", build_set_route_pattern(route=ChatRoute.search))
     builder.add_node("p_condense_question", build_chat_pattern(prompt_set=PromptSet.CondenseQuestion))
-    builder.add_node("p_retrieve_docs", build_retrieve_pattern(retriever=retriever, final_source_chain=final_sources))
+    builder.add_node(
+        "p_retrieve_docs",
+        build_retrieve_pattern(
+            retriever=retriever,
+            structure_func=structure_documents_by_group_and_indices,
+            final_source_chain=final_sources,
+        ),
+    )
     builder.add_node("p_stuff_docs", build_stuff_pattern(prompt_set=prompt_set, final_response_chain=final_response))
     # Edges
     builder.add_edge(START, "p_set_search_route")
@@ -155,7 +168,10 @@ def get_chat_with_documents_graph(
     )
     builder.add_node("p_answer_or_decide_route", get_self_route_graph(parameterised_retriever, PromptSet.SelfRoute))
     builder.add_node(
-        "p_retrieve_all_chunks", build_retrieve_pattern(retriever=all_chunks_retriever, final_source_chain=True)
+        "p_retrieve_all_chunks",
+        build_retrieve_pattern(
+            retriever=all_chunks_retriever, structure_func=structure_documents_by_file_name, final_source_chain=True
+        ),
     )
 
     builder.add_node(
@@ -258,7 +274,10 @@ def get_retrieve_metadata_graph(metadata_retriever: VectorStoreRetriever, debug:
     builder = StateGraph(RedboxState)
 
     # Processes
-    builder.add_node("p_retrieve_metadata", build_retrieve_pattern(retriever=metadata_retriever))
+    builder.add_node(
+        "p_retrieve_metadata",
+        build_retrieve_pattern(retriever=metadata_retriever, structure_func=structure_documents_by_file_name),
+    )
     builder.add_node("p_set_metadata", build_set_metadata_pattern())
     builder.add_node("p_clear_metadata_documents", clear_documents_process)
 
