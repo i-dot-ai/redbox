@@ -364,10 +364,8 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
     @property
     def unique_name(self) -> str:
         # Name used when processing files that exist in S3
-        if self.status not in [StatusEnum.processing, StatusEnum.complete]:
-            logger.exception(
-                "Attempt to access unique_name for inaccessible file %s with status %s", self.pk, self.status
-            )
+        if self.status in INACTIVE_STATUSES:
+            logger.exception("Attempt to access unique_name for inactive file %s with status %s", self.pk, self.status)
             raise ValueError
         return self.original_file.name
 
