@@ -78,7 +78,7 @@ class ExitFeedback extends HTMLElement {
             </div>
           </fieldset>
           <label class="govuk-!-display-block govuk-!-margin-bottom-1 govuk-!-margin-top-2" for="exit-feedback__input-notes">Do you want to tell us anything more?</label>
-          <textarea class="govuk-textarea govuk-!-margin-bottom-3" id="exit-feedback__input-notes" name="notes" rows="1"></textarea>
+          <textarea class="exit-feedback__input-notes govuk-textarea govuk-!-margin-bottom-3" id="exit-feedback__input-notes" name="notes" rows="1"></textarea>
           <button type="button" class="exit-feedback__send-button govuk-button">Send</button>
         </div>
         <div class="exit-feedback__page">
