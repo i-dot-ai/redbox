@@ -191,7 +191,7 @@ def get_chat_with_documents_graph(
         "d_self_route_is_enabled",
         lambda s: s["request"].ai_settings.self_route_enabled,
         {True: "p_answer_or_decide_route", False: "p_set_chat_docs_map_reduce_route"},
-        then="p_activity_log_tool_decision"
+        then="p_activity_log_tool_decision",
     )
     builder.add_conditional_edges(
         "p_answer_or_decide_route",
