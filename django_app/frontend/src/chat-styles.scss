@@ -460,7 +460,7 @@ main:has(.iai-chat-bubble[data-role="ai"]) .exit-feedback {
   padding: 0.5rem 0;
 }
 .exit-feedback__question-container--small {
-  gap: 0.375rem;
+  gap: 1rem;
 }
 .exit-feedback__button {
   background-color: transparent;
@@ -470,7 +470,7 @@ main:has(.iai-chat-bubble[data-role="ai"]) .exit-feedback {
 .exit-feedback__thumb-icon {
   color: black;
   cursor: pointer;
-  width: 1rem;
+  width: 1.5rem;
 }
 .exit-feedback__thumb-icon--down {
   transform: rotate(180deg);
@@ -496,9 +496,6 @@ main:has(.iai-chat-bubble[data-role="ai"]) .exit-feedback {
   .exit-feedback__thumb-icon--down
   .exit-feedback__thumb-icon-fill {
   fill: #c08181;
-}
-.exit-feedback__button .exit-feedback__thumb-icon {
-  width: 1.5rem;
 }
 .exit-feedback__radio-container {
   height: 1.5rem;
