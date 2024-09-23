@@ -12,6 +12,7 @@ from redbox.graph.edges import (
 )
 from redbox.graph.nodes.processes import (
     PromptSet,
+    build_activity_log_node,
     build_error_pattern,
     build_merge_pattern,
     build_set_metadata_pattern,
@@ -29,7 +30,7 @@ from redbox.graph.nodes.processes import (
     clear_documents_process,
 )
 from redbox.graph.nodes.sends import build_document_chunk_send, build_document_group_send
-from redbox.models.graph import ROUTABLE_KEYWORDS
+from redbox.models.graph import ROUTABLE_KEYWORDS, RedboxActivityEvent
 
 
 # Subgraphs
@@ -157,6 +158,11 @@ def get_chat_with_documents_graph(
         "p_retrieve_all_chunks", build_retrieve_pattern(retriever=all_chunks_retriever, final_source_chain=True)
     )
 
+    builder.add_node(
+        "p_activity_log_tool_decision",
+        build_activity_log_node(lambda state: RedboxActivityEvent(message=f"Using _{state["route_name"]}_")),
+    )
+
     # Decisions
     builder.add_node("d_request_handler_from_total_tokens", empty_process)
     builder.add_node("d_single_doc_summaries_bigger_than_context", empty_process)
@@ -185,6 +191,7 @@ def get_chat_with_documents_graph(
         "d_self_route_is_enabled",
         lambda s: s["request"].ai_settings.self_route_enabled,
         {True: "p_answer_or_decide_route", False: "p_set_chat_docs_map_reduce_route"},
+        then="p_activity_log_tool_decision",
     )
     builder.add_conditional_edges(
         "p_answer_or_decide_route",

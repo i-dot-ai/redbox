@@ -1,3 +1,4 @@
+from collections.abc import Callable
 from dataclasses import dataclass, field
 import datetime
 import logging
@@ -9,6 +10,7 @@ from langchain_core.retrievers import BaseRetriever
 from redbox.models.chain import RedboxQuery
 from redbox.models.chat import ChatRoute
 from redbox.models.file import ChunkMetadata, ChunkResolution
+from redbox.models.graph import RedboxActivityEvent
 
 log = logging.getLogger()
 
@@ -41,6 +43,9 @@ class RedboxTestData:
     chunk_resolution: ChunkResolution = ChunkResolution.largest
     expected_llm_response: list[str] = field(default_factory=list)
     expected_route: ChatRoute | None = None
+    expected_activity_events: Callable[[list[RedboxActivityEvent]], bool] = field(
+        default=lambda _: True
+    )  # Function to check activity events are as expected
     s3_keys: str | None = None
 
 

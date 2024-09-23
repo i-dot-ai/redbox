@@ -9,6 +9,7 @@ from langchain_core.language_models.fake_chat_models import GenericFakeChatModel
 from redbox.models.chain import AISettings, RedboxQuery, RedboxState, RequestMetadata
 from redbox import Redbox
 from redbox.models.chat import ChatRoute, ErrorRoute
+from redbox.models.graph import RedboxActivityEvent
 from redbox.models.settings import Settings
 from redbox.test.data import (
     RedboxTestData,
@@ -25,6 +26,11 @@ LANGGRAPH_DEBUG = True
 
 SELF_ROUTE_TO_SEARCH = ["Condense self route question", "Testing Response - Search"]
 SELF_ROUTE_TO_CHAT = ["Condense self route question", "unanswerable"]
+
+
+def assert_number_of_events(num_of_events: int):
+    return lambda events_list: len(events_list) == num_of_events
+
 
 TEST_CASES = [
     test_case
@@ -78,6 +84,7 @@ TEST_CASES = [
                     140_000,
                     expected_llm_response=SELF_ROUTE_TO_CHAT + ["Map Step Response"] * 2 + ["Testing Response 1"],
                     expected_route=ChatRoute.chat_with_docs_map_reduce,
+                    expected_activity_events=assert_number_of_events(1),
                 ),
                 RedboxTestData(
                     4,
@@ -87,6 +94,7 @@ TEST_CASES = [
                     + ["Merge Per Document Response"] * 2
                     + ["Testing Response 1"],
                     expected_route=ChatRoute.chat_with_docs_map_reduce,
+                    expected_activity_events=assert_number_of_events(1),
                 ),
             ],
             test_id="Chat with multiple docs - with self route",
@@ -156,6 +164,7 @@ TEST_CASES = [
                     + ["Merge Per Document Response"]
                     + ["Testing Response 1"],
                     expected_route=ChatRoute.chat_with_docs_map_reduce,
+                    expected_activity_events=assert_number_of_events(1),
                 ),
             ],
             test_id="Chat with large doc - with self route",
@@ -175,6 +184,7 @@ TEST_CASES = [
                     200_000,
                     expected_llm_response=SELF_ROUTE_TO_SEARCH,  # + ["Condense Question", "Testing Response 1"],
                     expected_route=ChatRoute.search,
+                    expected_activity_events=assert_number_of_events(1),
                 ),
             ],
             test_id="Self Route Search large doc",
@@ -279,6 +289,7 @@ async def test_streaming(test: RedboxChatTestCase, env: Settings, mocker: Mocker
     # Define callback functions
     token_events = []
     metadata_events = []
+    activity_events = []
     route_name = None
 
     async def streaming_response_handler(tokens: str):
@@ -291,6 +302,9 @@ async def test_streaming(test: RedboxChatTestCase, env: Settings, mocker: Mocker
         nonlocal route_name
         route_name = route
 
+    async def streaming_activity_handler(activity_event: RedboxActivityEvent):
+        activity_events.append(activity_event)
+
     llm = GenericFakeChatModel(messages=iter(test_case.test_data.expected_llm_response))
 
     (mocker.patch("redbox.graph.nodes.processes.get_chat_llm", return_value=llm),)
@@ -299,6 +313,7 @@ async def test_streaming(test: RedboxChatTestCase, env: Settings, mocker: Mocker
         response_tokens_callback=streaming_response_handler,
         metadata_tokens_callback=metadata_response_handler,
         route_name_callback=streaming_route_name_handler,
+        activity_event_callback=streaming_activity_handler,
     )
 
     final_state = RedboxState(response)
@@ -311,6 +326,10 @@ async def test_streaming(test: RedboxChatTestCase, env: Settings, mocker: Mocker
         assert len(metadata_events) == len(
             test_case.test_data.expected_llm_response
         ), f"Expected {len(test_case.test_data.expected_llm_response)} metadata events. Received {len(metadata_events)}"
+
+    assert test_case.test_data.expected_activity_events(
+        activity_events
+    ), f"Activity events not as expected. Received: {activity_events}"
 
     llm_response = "".join(token_events)
     number_of_selected_files = len(test_case.query.s3_keys)
