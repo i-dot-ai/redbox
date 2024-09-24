@@ -1,7 +1,7 @@
 import pytest
 
 from redbox.models.chain import RedboxState
-from redbox.retriever import ParameterisedElasticsearchRetriever, AllElasticsearchRetriever, MetadataRetriever
+from redbox.retriever import AllElasticsearchRetriever, MetadataRetriever, ParameterisedElasticsearchRetriever
 from redbox.test.data import RedboxChatTestCase
 
 TEST_CHAIN_PARAMETERS = (
@@ -48,11 +48,16 @@ def test_parameterised_retriever(
         * The result contains only file_names from permitted S3 keys
     * If documents aren't selected and there's no permission to get them
         * The length of the result is zero
+
+    Recall that build_retriever_process pays attention to state["text"],
+    NOT to state["question"] when choosing what to search with.
     """
     for k, v in chain_params.items():
         setattr(stored_file_parameterised.query.ai_settings, k, v)
 
-    result = parameterised_retriever.invoke(RedboxState(request=stored_file_parameterised.query))
+    result = parameterised_retriever.invoke(
+        RedboxState(request=stored_file_parameterised.query, text=stored_file_parameterised.query.question)
+    )
     selected_docs = stored_file_parameterised.get_docs_matching_query()
     permitted_docs = stored_file_parameterised.get_all_permitted_docs()
 

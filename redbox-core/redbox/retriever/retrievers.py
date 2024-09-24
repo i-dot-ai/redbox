@@ -3,16 +3,16 @@ from typing import Any, Callable, Sequence
 
 from elasticsearch import Elasticsearch
 from elasticsearch.helpers import scan
+from kneed import KneeLocator
 from langchain_core.callbacks import CallbackManagerForRetrieverRun
 from langchain_core.documents import Document
 from langchain_core.embeddings.embeddings import Embeddings
-from langchain_elasticsearch.retrievers import ElasticsearchRetriever
 from langchain_core.retrievers import BaseRetriever
-from kneed import KneeLocator
+from langchain_elasticsearch.retrievers import ElasticsearchRetriever
 
-from redbox.models.file import ChunkResolution
-from redbox.retriever.queries import get_all, get_metadata, build_document_query
 from redbox.models.chain import RedboxState
+from redbox.models.file import ChunkResolution
+from redbox.retriever.queries import build_document_query, get_all, get_metadata
 from redbox.transform import merge_documents, sort_documents
 
 
@@ -87,7 +87,7 @@ class ParameterisedElasticsearchRetriever(BaseRetriever):
     def _get_relevant_documents(
         self, query: RedboxState, *, run_manager: CallbackManagerForRetrieverRun
     ) -> list[Document]:
-        query_text = query["request"].question
+        query_text = query["text"]
         query_vector = self.embedding_model.embed_query(query_text)
         selected_files = query["request"].s3_keys
         permitted_files = query["request"].permitted_s3_keys
