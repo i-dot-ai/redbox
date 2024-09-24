@@ -269,6 +269,11 @@ class StatusEnum(models.TextChoices):
 INACTIVE_STATUSES = [StatusEnum.deleted, StatusEnum.errored]
 
 
+class InactiveFileError(ValueError):
+    def __init__(self, file):
+        super().__init__(f"{file.pk} is inactive, status is {file.status}")
+
+
 class File(UUIDPrimaryKeyBase, TimeStampedModel):
     status = models.CharField(choices=StatusEnum.choices, null=False, blank=False)
     original_file = models.FileField(storage=settings.STORAGES["default"]["BACKEND"])
@@ -295,7 +300,7 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
     @override
     def delete(self, using=None, keep_parents=False):
         #  Needed to make sure no orphaned files remain in the storage
-        self.original_file.storage.delete(self.original_file.name)
+        self.delete_from_s3()
         super().delete()
 
     def delete_from_s3(self):
@@ -363,7 +368,10 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
 
     @property
     def unique_name(self) -> str:
-        # Name used by core-api
+        # Name used when processing files that exist in S3
+        if self.status in INACTIVE_STATUSES:
+            logger.exception("Attempt to access unique_name for inactive file %s with status %s", self.pk, self.status)
+            raise InactiveFileError(self)
         return self.original_file.name
 
     def get_status_text(self) -> str:
