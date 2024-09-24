@@ -12,7 +12,7 @@ from langchain_elasticsearch.retrievers import ElasticsearchRetriever
 
 from redbox.models.chain import RedboxState
 from redbox.models.file import ChunkResolution
-from redbox.retriever.queries import build_document_query, get_all, get_metadata
+from redbox.retriever.queries import add_document_filter_scores_to_query, build_document_query, get_all, get_metadata
 from redbox.transform import merge_documents, sort_documents
 
 
@@ -107,16 +107,15 @@ class ParameterisedElasticsearchRetriever(BaseRetriever):
             es_client=self.es_client, index_name=self.index_name, query=initial_query
         )
 
+        # Handle nothing found (as when no files are permitted)
+        if not initial_documents:
+            return []
+
         # Adjacent documents
-        with_adjacent_query = build_document_query(
-            query=query_text,
-            query_vector=query_vector,
-            selected_files=selected_files,
-            permitted_files=permitted_files,
-            embedding_field_name=self.embedding_field_name,
-            chunk_resolution=self.chunk_resolution,
+        with_adjacent_query = add_document_filter_scores_to_query(
+            elasticsearch_query=initial_query,
             ai_settings=ai_settings,
-            adjacent=initial_documents,
+            centres=initial_documents,
         )
         adjacent_boosted = query_to_documents(
             es_client=self.es_client, index_name=self.index_name, query=with_adjacent_query

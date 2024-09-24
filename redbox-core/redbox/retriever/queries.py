@@ -92,18 +92,11 @@ def build_document_query(
     permitted_files: list[str],
     selected_files: list[str] | None = None,
     chunk_resolution: ChunkResolution | None = None,
-    adjacent: list[Document] | None = None,
 ) -> dict[str, Any]:
     """Builds a an Elasticsearch query that will return documents when called.
 
     Searches the document:
         * Text, as a keyword and similarity
-        * Name
-        * Description
-        * Keywords
-
-    If given a list of documents in adjacent, will boost adjacent documents by
-    the score of the documents it's been given, scaled.
     """
     # If nothing is selected, consider all permitted files selected
     if not selected_files:
@@ -115,7 +108,7 @@ def build_document_query(
         chunk_resolution=chunk_resolution,
     )
 
-    query_elastic = {
+    return {
         "size": ai_settings.rag_k,
         "query": {
             "bool": {
@@ -144,64 +137,81 @@ def build_document_query(
         },
     }
 
-    def scale_score(score: float, old_min: float, old_max: float, new_min=1.1, new_max: float = 2.0):
-        """Rescales an Elasticsearch score.
 
-        Intended to turn the score into a multiplier to weight a Gauss function.
+def scale_score(score: float, old_min: float, old_max: float, new_min=1.1, new_max: float = 2.0):
+    """Rescales an Elasticsearch score.
 
-        If the old range is zero or undefined, returns new_min.
-        """
-        if old_max == old_min:
-            return new_min
+    Intended to turn the score into a multiplier to weight a Gauss function.
 
-        return new_min + (score - old_min) * (new_max - new_min) / (old_max - old_min)
+    If the old range is zero or undefined, returns new_min.
+    """
+    if old_max == old_min:
+        return new_min
 
-    if adjacent:
-        gauss_functions: list[dict[str, Any]] = []
-        gauss_scale = ai_settings.rag_gauss_scale_size
-        gauss_decay = ai_settings.rag_gauss_scale_decay
-        scores = [d.metadata["score"] for d in adjacent]
-        old_min = min(scores)
-        old_max = max(scores)
-        new_min = ai_settings.rag_gauss_scale_min
-        new_max = ai_settings.rag_gauss_scale_max
+    return new_min + (score - old_min) * (new_max - new_min) / (old_max - old_min)
 
-        for document in adjacent:
-            gauss_functions.append(
-                {
-                    "filter": {"term": {"metadata.file_name.keyword": document.metadata["file_name"]}},
-                    "gauss": {
-                        "metadata.index": {
-                            "origin": document.metadata["index"],
-                            "scale": gauss_scale,
-                            "offset": 0,
-                            "decay": gauss_decay,
-                        }
-                    },
-                    "weight": scale_score(
-                        score=document.metadata["score"],
-                        old_min=old_min,
-                        old_max=old_max,
-                        new_min=new_min,
-                        new_max=new_max,
-                    ),
-                }
-            )
 
-        # The size should minimally capture changes to documents either
-        # side of every Gauss function applied, including the document
-        # itself (double + 1). Of course, this is a ranking, so most of
-        # these results will be removed again later
-        return {
-            "size": query_elastic.get("size") * ((gauss_scale * 2) + 1),
-            "query": {
-                "function_score": {
-                    "query": query_elastic.get("query"),
-                    "functions": gauss_functions,
-                    "score_mode": "max",
-                    "boost_mode": "multiply",
-                }
-            },
-        }
+def add_document_filter_scores_to_query(
+    elasticsearch_query: dict[str, Any],
+    ai_settings: AISettings,
+    centres: list[Document],
+) -> dict[str, Any]:
+    """
+    Adds Gaussian function scores to a query centred on a list of documents.
 
-    return query_elastic
+    This function score will scale the centres' scores into a multiplier, and
+    boost the score of documents with an index close to them.
+
+    The result will be that documents with the same file name will have their
+    score boosted in proportion to how close their index is to a file in the
+    "centres" list.
+
+    For example, if foo.txt index 9 with score 7 was passed in the centres list,
+    if foo.txt index 10 would have scored 2, it will now be boosted to score 4.
+    """
+    gauss_functions: list[dict[str, Any]] = []
+    gauss_scale = ai_settings.rag_gauss_scale_size
+    gauss_decay = ai_settings.rag_gauss_scale_decay
+    scores = [d.metadata.get("score", 0) for d in centres]
+    old_min = min(scores)
+    old_max = max(scores)
+    new_min = ai_settings.rag_gauss_scale_min
+    new_max = ai_settings.rag_gauss_scale_max
+
+    for document in centres:
+        gauss_functions.append(
+            {
+                "filter": {"term": {"metadata.file_name.keyword": document.metadata["file_name"]}},
+                "gauss": {
+                    "metadata.index": {
+                        "origin": document.metadata["index"],
+                        "scale": gauss_scale,
+                        "offset": 0,
+                        "decay": gauss_decay,
+                    }
+                },
+                "weight": scale_score(
+                    score=document.metadata["score"],
+                    old_min=old_min,
+                    old_max=old_max,
+                    new_min=new_min,
+                    new_max=new_max,
+                ),
+            }
+        )
+
+    # The size should minimally capture changes to documents either
+    # side of every Gauss function applied, including the document
+    # itself (double + 1). Of course, this is a ranking, so most of
+    # these results will be removed again later
+    return {
+        "size": elasticsearch_query.get("size") * ((gauss_scale * 2) + 1),
+        "query": {
+            "function_score": {
+                "query": elasticsearch_query.get("query"),
+                "functions": gauss_functions,
+                "score_mode": "max",
+                "boost_mode": "multiply",
+            }
+        },
+    }
