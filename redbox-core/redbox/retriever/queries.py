@@ -3,7 +3,7 @@ from typing import Any
 
 from langchain_core.documents import Document
 
-from redbox.models.chain import RedboxState, AISettings
+from redbox.models.chain import AISettings, RedboxState
 from redbox.models.file import ChunkResolution
 
 log = logging.getLogger()
@@ -158,12 +158,13 @@ def build_document_query(
 
     if adjacent:
         gauss_functions: list[dict[str, Any]] = []
-        gauss_scale = 3
+        gauss_scale = ai_settings.rag_gauss_scale_size
+        gauss_decay = ai_settings.rag_gauss_scale_decay
         scores = [d.metadata["score"] for d in adjacent]
         old_min = min(scores)
         old_max = max(scores)
-        new_min = 1.1
-        new_max = 2.0
+        new_min = ai_settings.rag_gauss_scale_min
+        new_max = ai_settings.rag_gauss_scale_max
 
         for document in adjacent:
             gauss_functions.append(
@@ -174,7 +175,7 @@ def build_document_query(
                             "origin": document.metadata["index"],
                             "scale": gauss_scale,
                             "offset": 0,
-                            "decay": 0.5,
+                            "decay": gauss_decay,
                         }
                     },
                     "weight": scale_score(
