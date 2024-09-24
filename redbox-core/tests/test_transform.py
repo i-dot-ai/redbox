@@ -263,6 +263,14 @@ def test_structure_documents_by_group_and_indices(n_parent_files: int, n_groups:
 
 
 def test_merge_documents():
+    """Tests that merge documents will merge the two passes of Elastic correctly.
+
+    Asserts:
+
+    * That the initial list's scores are prioritised
+    * That higher scores in the adjacent will push out lower scores in the initial
+    * The the result truncates to the length of the initial list
+    """
     docs_1 = list(
         generate_docs(s3_key="test_key_1", total_tokens=1000, number_of_docs=3, chunk_resolution="normal", score=1)
     )
@@ -274,6 +282,7 @@ def test_merge_documents():
 
     merged_1 = merge_documents(initial=docs_1, adjacent=docs_2)
 
+    # Initial list score prioritised over adjacent
     assert merged_1 == docs_1
 
     docs_3 = list(
@@ -282,6 +291,7 @@ def test_merge_documents():
 
     merged_2 = merge_documents(initial=docs_1, adjacent=docs_3)
 
+    # Higher scores in adjacent prioritised, length is the same as initial
     assert merged_2 == docs_3[: len(docs_1)]
 
 
