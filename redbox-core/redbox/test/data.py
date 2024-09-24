@@ -1,7 +1,7 @@
-from collections.abc import Callable
-from dataclasses import dataclass, field
 import datetime
 import logging
+from collections.abc import Callable
+from dataclasses import dataclass, field
 from typing import Generator
 from uuid import uuid4
 
@@ -21,7 +21,9 @@ def generate_docs(
     page_numbers: list[int] = [1, 2, 3, 4],
     total_tokens: int = 6000,
     number_of_docs: int = 10,
-    chunk_resolution=ChunkResolution.normal,
+    chunk_resolution: ChunkResolution = ChunkResolution.normal,
+    score: int = 1,
+    index_start: int = 0,
 ) -> Generator[Document, None, None]:
     """Generates a list of documents as if retrieved from a real retriever.
 
@@ -30,7 +32,7 @@ def generate_docs(
     """
     for i in range(number_of_docs):
         core_metadata = ChunkMetadata(
-            index=i,
+            index=index_start + i,
             file_name=s3_key,
             page_number=page_numbers[int(i / number_of_docs) * len(page_numbers)],
             created_datetime=datetime.datetime.now(datetime.UTC),
@@ -39,7 +41,7 @@ def generate_docs(
         ).model_dump()
 
         extra_metadata = {
-            "score": 1,
+            "score": score,
             "uuid": uuid4(),
         }
 
