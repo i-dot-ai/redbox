@@ -29,7 +29,7 @@ from redbox.test.data import (
 )
 from redbox.models.chat import ChatRoute
 from redbox.models.chain import PromptSet, RedboxQuery, RedboxState
-from redbox.transform import flatten_document_state, structure_documents
+from redbox.transform import flatten_document_state, structure_documents_by_file_name
 
 
 LANGGRAPH_DEBUG = True
@@ -171,13 +171,13 @@ RETRIEVER_TEST_CASES = generate_test_cases(
 def test_build_retrieve_pattern(test_case: RedboxChatTestCase, mock_retriever: BaseRetriever):
     """Tests a given state["request"] correctly changes state["documents"]."""
     retriever = mock_retriever(test_case.docs)
-    retriever_function = build_retrieve_pattern(retriever=retriever)
+    retriever_function = build_retrieve_pattern(retriever=retriever, structure_func=structure_documents_by_file_name)
     state = RedboxState(request=test_case.query, documents=[])
 
     response = retriever_function.invoke(state)
     final_state = RedboxState(response)
 
-    assert final_state.get("documents") == structure_documents(test_case.docs)
+    assert final_state.get("documents") == structure_documents_by_file_name(test_case.docs)
 
 
 MERGE_TEST_CASES = generate_test_cases(
@@ -204,7 +204,7 @@ MERGE_TEST_CASES = generate_test_cases(
 def test_build_merge_pattern(test_case: RedboxChatTestCase, mocker: MockerFixture):
     """Tests a given state["request"] and state["documents"] correctly changes state["documents"]."""
     llm = GenericFakeChatModel(messages=iter(test_case.test_data.expected_llm_response))
-    state = RedboxState(request=test_case.query, documents=structure_documents(test_case.docs))
+    state = RedboxState(request=test_case.query, documents=structure_documents_by_file_name(test_case.docs))
 
     merge = build_merge_pattern(prompt_set=PromptSet.ChatwithDocsMapReduce, final_response_chain=True)
 
@@ -246,7 +246,7 @@ STUFF_TEST_CASES = generate_test_cases(
 def test_build_stuff_pattern(test_case: RedboxChatTestCase, mocker: MockerFixture):
     """Tests a given state["request"] and state["documents"] correctly changes state["text"]."""
     llm = GenericFakeChatModel(messages=iter(test_case.test_data.expected_llm_response))
-    state = RedboxState(request=test_case.query, documents=structure_documents(test_case.docs))
+    state = RedboxState(request=test_case.query, documents=structure_documents_by_file_name(test_case.docs))
 
     stuff = build_stuff_pattern(prompt_set=PromptSet.ChatwithDocs, final_response_chain=True)
 
@@ -295,7 +295,7 @@ def test_empty_process():
         request=RedboxQuery(
             question="What is AI?", s3_keys=[], user_uuid=uuid4(), chat_history=[], permitted_s3_keys=[]
         ),
-        documents=structure_documents([doc for doc in generate_docs(s3_key="s3_key")]),
+        documents=structure_documents_by_file_name([doc for doc in generate_docs(s3_key="s3_key")]),
         text="Foo",
         route_name=ChatRoute.chat_with_docs_map_reduce,
     )
@@ -317,7 +317,7 @@ CLEAR_DOC_TEST_CASES = [
         request=RedboxQuery(
             question="What is AI?", file_uuids=[], user_uuid=uuid4(), chat_history=[], permitted_s3_keys=[]
         ),
-        documents=structure_documents([doc for doc in generate_docs(s3_key="s3_key")]),
+        documents=structure_documents_by_file_name([doc for doc in generate_docs(s3_key="s3_key")]),
         text="Foo",
         route_name=ChatRoute.chat_with_docs_map_reduce,
     ),

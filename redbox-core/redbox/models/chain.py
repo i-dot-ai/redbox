@@ -5,14 +5,14 @@ to provide a pydantic v1 definition to work with these. As these models are most
 used in conjunction with langchain this is the tidiest boxing of pydantic v1 we can do
 """
 
-from typing import TypedDict, Literal, Annotated, Required, NotRequired
-from uuid import UUID, uuid4
-from functools import reduce
+from datetime import UTC, datetime
 from enum import StrEnum
-from datetime import datetime, UTC
+from functools import reduce
+from typing import Annotated, Literal, NotRequired, Required, TypedDict
+from uuid import UUID, uuid4
 
-from pydantic import BaseModel, Field
 from langchain_core.documents import Document
+from pydantic import BaseModel, Field
 
 
 class ChainChatMessage(TypedDict):
@@ -103,6 +103,10 @@ class AISettings(BaseModel):
 
     rag_k: int = 30
     rag_num_candidates: int = 10
+    rag_gauss_scale_size: int = 3
+    rag_gauss_scale_decay: float = 0.5
+    rag_gauss_scale_min: float = 1.1
+    rag_gauss_scale_max: float = 2.0
     elbow_filter_enabled: bool = False
     self_route_enabled: bool = False
     chat_system_prompt: str = CHAT_SYSTEM_PROMPT
