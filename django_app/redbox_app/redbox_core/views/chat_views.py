@@ -114,7 +114,7 @@ class UpdateChatFeedback(View):
 
 class DeleteChat(View):
     @method_decorator(login_required)
-    def post(self, request: HttpRequest, chat_id: uuid.UUID) -> HttpResponse:
+    def post(self, request: HttpRequest, chat_id: uuid.UUID) -> HttpResponse:  # noqa: ARG002
         chat: Chat = get_object_or_404(Chat, id=chat_id)
         chat.archived = True
         chat.save()
