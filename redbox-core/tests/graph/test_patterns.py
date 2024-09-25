@@ -1,36 +1,35 @@
-import pytest
 from uuid import uuid4
+
+import pytest
+from langchain_core.language_models.fake_chat_models import GenericFakeChatModel
+from langchain_core.retrievers import BaseRetriever
+from langgraph.graph import END, START, StateGraph
 from pytest_mock import MockerFixture
 from tiktoken.core import Encoding
 
-from langgraph.graph import START, END, StateGraph
-from langchain_core.language_models.fake_chat_models import GenericFakeChatModel
-from langchain_core.retrievers import BaseRetriever
-
+from redbox.chains.runnables import CannedChatLLM, build_chat_prompt_from_messages_runnable, build_llm_chain
 from redbox.graph.nodes.processes import (
     build_chat_pattern,
     build_merge_pattern,
-    build_set_route_pattern,
-    build_retrieve_pattern,
-    build_set_text_pattern,
     build_passthrough_pattern,
+    build_retrieve_pattern,
+    build_set_route_pattern,
+    build_set_text_pattern,
     build_stuff_pattern,
-    empty_process,
     clear_documents_process,
+    empty_process,
 )
-from redbox.chains.runnables import build_chat_prompt_from_messages_runnable, build_llm_chain, CannedChatLLM
+from redbox.models.chain import PromptSet, RedboxQuery, RedboxState
+from redbox.models.chat import ChatRoute
 from redbox.test.data import (
-    RedboxTestData,
     RedboxChatTestCase,
-    generate_test_cases,
+    RedboxTestData,
     generate_docs,
+    generate_test_cases,
     mock_all_chunks_retriever,
     mock_parameterised_retriever,
 )
-from redbox.models.chat import ChatRoute
-from redbox.models.chain import PromptSet, RedboxQuery, RedboxState
 from redbox.transform import flatten_document_state, structure_documents_by_file_name
-
 
 LANGGRAPH_DEBUG = True
 
