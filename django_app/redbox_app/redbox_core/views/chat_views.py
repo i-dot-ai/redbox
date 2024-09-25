@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 class ChatsView(View):
     @method_decorator(login_required)
     def get(self, request: HttpRequest, chat_id: uuid.UUID | None = None) -> HttpResponse:
-        chat = Chat.get_ordered_by_last_message_date(request.user, [chat_id])
+        chat = Chat.get_ordered_by_last_message_date(request.user)
 
         messages: Sequence[ChatMessage] = []
         current_chat = None
