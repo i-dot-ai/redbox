@@ -133,6 +133,7 @@ class ChatMessage extends HTMLElement {
     const stopStreaming = () => {
       this.dataset.status = "stopped";
       webSocket.close();
+      window["mermaid"]?.run();
     };
     this.addEventListener("keydown", (evt) => {
       if (evt.key === "Escape" && this.dataset.status === "streaming") {
