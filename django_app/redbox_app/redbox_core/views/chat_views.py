@@ -110,3 +110,12 @@ class UpdateChatFeedback(View):
         chat.feedback_notes = request.POST.get("notes")
         chat.save()
         return HttpResponse(status=HTTPStatus.NO_CONTENT)
+
+
+class DeleteChat(View):
+    @method_decorator(login_required)
+    def post(self, request: HttpRequest, chat_id: uuid.UUID) -> HttpResponse:
+        chat: Chat = get_object_or_404(Chat, id=chat_id)
+        chat.archived = True
+        chat.save()
+        return HttpResponse(status=HTTPStatus.NO_CONTENT)
