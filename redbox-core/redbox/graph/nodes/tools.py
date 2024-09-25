@@ -1,8 +1,9 @@
-from typing import Any
+from typing import Annotated, Any
 
 from elasticsearch import Elasticsearch
 from langchain_core.embeddings.embeddings import Embeddings
 from langchain_core.tools import Tool, tool
+from langgraph.prebuilt import InjectedState
 
 from redbox.models.file import ChunkResolution
 from redbox.retriever.queries import add_document_filter_scores_to_query, build_document_query
@@ -17,12 +18,10 @@ def build_search_documents_tool(
     embedding_field_name: str,
     chunk_resolution: ChunkResolution | None,
 ) -> Tool:
+    """Constructs a tool that searches the index and sets state["documents"]."""
+
     @tool
-    def _search_documents(
-        query: str,
-        # state: Annotated[RedboxState, InjectedState]
-        state,
-    ) -> dict[str, Any]:
+    def _search_documents(query: str, state: Annotated[dict, InjectedState]) -> dict[str, Any]:
         """
         Search for documents uploaded by the user based on a query string.
 
