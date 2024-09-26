@@ -1,24 +1,23 @@
+import logging
 from collections.abc import Iterator
 from datetime import UTC, datetime
 from io import BytesIO
-from pathlib import Path
-from tempfile import NamedTemporaryFile
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import requests
-
-# import textract
 import tiktoken
 from langchain_core.documents import Document
 from langchain_core.output_parsers import JsonOutputParser
 from langchain_core.prompts import ChatPromptTemplate
-from pymediainfo import MediaInfo
+from requests.exceptions import HTTPError
 
 from redbox.chains.components import get_chat_llm
-from redbox.loader.base import BaseRedboxFileLoader
 from redbox.models.chain import AISettings
 from redbox.models.file import ChunkMetadata, ChunkResolution
 from redbox.models.settings import Settings
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger()
 
 encoding = tiktoken.get_encoding("cl100k_base")
 
@@ -28,8 +27,68 @@ else:
     S3Client = object
 
 
-class UnstructuredChunkLoader(BaseRedboxFileLoader):
-    """Load, partition and chunk a document using local unstructured library"""
+def get_first_n_tokens(chunks: list[dict], n: int) -> str:
+    """From a list of chunks, returns the first n tokens."""
+    current_tokens = 0
+    tokens = ""
+    for chunk in chunks:
+        current_tokens += len(encoding.encode(chunk["text"]))
+        if current_tokens > n:
+            return tokens
+        tokens += chunk["text"]
+    return tokens
+
+
+def get_doc_metadata(chunks: list[dict], n: int) -> dict[str, Any]:
+    """From either a list of chunks or the file_bytes, get some metadata.
+
+    Either mediainfo or unstructured.
+
+    Use the first 3 chucks only
+
+    """
+    metadata = {}
+    for i, chunk in enumerate(chunks):
+        if i > n:
+            return metadata
+        metadata = merge_dict(metadata, chunk["metadata"])
+    return metadata
+
+
+def merge_dict(x: dict, y: dict) -> dict:
+    """
+    Combine 2 dicts without deleting any elements. If the key is present in both,
+    combine values into a list. If value is in list, extend  with unique values.
+    """
+    combined = {}
+
+    for key in set(x) | set(y):
+        if key in x and key in y:
+            if isinstance(x[key], list) or isinstance(y[key], list):
+                combined[key] = list(set(x[key] + (y[key] if isinstance(y[key], list) else [y[key]])))
+            else:
+                combined[key] = [x[key], y[key]]
+        elif key in x:
+            combined[key] = x[key]
+        else:
+            combined[key] = y[key]
+    return combined
+
+
+def coerce_to_string_list(input_data: str | list[Any]) -> list[str]:
+    if isinstance(input_data, str):
+        return [item.strip() for item in input_data.split(",")]
+    elif isinstance(input_data, list):
+        return [str(i) for i in input_data]
+    else:
+        raise ValueError("Input must be either a list or a string.")
+
+
+class UnstructuredChunkLoader:
+    """Load, partition and chunk a document using local unstructured library.
+
+    Uses a metadata chain to extract metadata from the document where possible.
+    """
 
     def __init__(
         self,
@@ -47,65 +106,7 @@ class UnstructuredChunkLoader(BaseRedboxFileLoader):
         self._overlap_chars = overlap_chars
         self._overlap_all_chunks = overlap_all_chunks
 
-    def detect_encoding_and_extract_text(
-        file_name: str, file_bytes: BytesIO, tokens: int
-    ) -> str:
-        """Detect encoding and extract first n tokens from any document type."""
-        encoding = tiktoken.encoding_for_model("gpt-4")
-        file_path = Path(file_name)
-
-        try:
-            with NamedTemporaryFile(
-                prefix=file_path.stem, suffix=file_path.suffix, delete=True, mode="wb"
-            ) as temp_file:
-                temp_file.write(file_bytes.getvalue())
-                temp_file.flush()
-            #     text = textract.process(temp_file.name).decode("utf-8")
-
-            # first_n = encoding.encode(text)[:tokens]
-
-            # return encoding.decode(first_n)
-            return True
-        except Exception as e:
-            raise ValueError(f"An error occurred while extracting text: {str(e)}")
-
-    def extract_hardcoded_metadata(
-        file_name: str, file_bytes: BytesIO
-    ) -> dict[str, str]:
-        file_path = Path(file_name)
-
-        try:
-            with NamedTemporaryFile(
-                prefix=file_path.stem, suffix=file_path.suffix, delete=True, mode="wb"
-            ) as temp_file:
-                temp_file.write(file_bytes.getvalue())
-                temp_file.flush()
-                media_info = MediaInfo.parse(temp_file.name)
-                metadata = {}
-
-                for track in media_info.tracks:
-                    if track.track_type == "General":
-                        metadata["title"] = (
-                            track.title if track.title else file_path.name
-                        )
-                        metadata["creator"] = (
-                            track.performer
-                            if track.performer
-                            else track.album_performer
-                        )
-                        metadata["subject"] = track.track_type
-                        metadata["description"] = track.comment
-                        metadata["publisher"] = track.publisher
-                        metadata["date"] = track.recorded_date
-                        metadata["language"] = track.language
-                        metadata["format"] = track.format
-
-                return metadata
-        except Exception as e:
-            raise ValueError(f"An error occurred while extracting text: {str(e)}")
-
-    def get_metadata(self) -> dict[str, Any]:
-        LLM = get_chat_llm(env=self.env, ai_settings=AISettings)
+    def get_metadata_chain(self, page_content: str, metadata: dict[str, Any]):
         metadata_chain = (
             ChatPromptTemplate.from_messages(
                 [
@@ -126,29 +127,14 @@ class UnstructuredChunkLoader(BaseRedboxFileLoader):
                     ),
                 ]
             )
-            | LLM
-            | JsonOutputParser()
+            | get_chat_llm(self.env, AISettings())
+            | JsonOutputParser().with_retry(stop_after_attempt=3)
         )
 
-        return metadata_chain.invoke(
-            {
-                "page_content": self.detect_encoding_and_extract_text(
-                    file_name=self.file_name, file_bytes=self.file_bytes, tokens=1_000
-                ),
-                "metadata": self.extract_hardcoded_metadata(
-                    file_name=self.file_name,
-                    file_bytes=self.file_bytes,
-                ),
-            }
-        )
-
-    def coerce_to_string_list(input_data: str | list[Any]) -> list[str]:
-        if isinstance(input_data, str):
-            return [item.strip() for item in input_data.split(",")]
-        elif isinstance(input_data, list):
-            return [str(i) for i in input_data]
-        else:
-            raise ValueError("Input must be either a list or a string.")
+        try:
+            return metadata_chain.invoke({"page_content": page_content, "metadata": metadata})
+        except HTTPError as e:
+            logger.warning(f"Retrying due to HTTPError {e.response.status_code}")
 
     def lazy_load(self, file_name: str, file_bytes: BytesIO) -> Iterator[Document]:
         """A lazy loader that reads a file line by line.
@@ -156,10 +142,7 @@ class UnstructuredChunkLoader(BaseRedboxFileLoader):
         When you're implementing lazy load methods, you should use a generator
         to yield documents one by one.
         """
-        metadata = self.get_metadata()
-
         url = f"http://{self.env.unstructured_host}:8000/general/v0/general"
-
         files = {
             "files": (file_name, file_bytes),
         }
@@ -184,6 +167,16 @@ class UnstructuredChunkLoader(BaseRedboxFileLoader):
         if not elements:
             raise ValueError("Unstructured failed to extract text for this file")
 
+        # Get first 1k tokens of processed document
+        first_n = get_first_n_tokens(elements, 1_000)
+
+        # Get whatever metadata we can from processed document
+        metadata = get_doc_metadata(elements, 3)
+
+        # Generate new metadata
+        metadata = self.get_metadata_chain(first_n, metadata)
+
+        # add metadata below
         for i, raw_chunk in enumerate(elements):
             yield Document(
                 page_content=raw_chunk["text"],
@@ -194,9 +187,8 @@ class UnstructuredChunkLoader(BaseRedboxFileLoader):
                     created_datetime=datetime.now(UTC),
                     token_count=len(encoding.encode(raw_chunk["text"])),
                     chunk_resolution=self.chunk_resolution,
-                    name=metadata.get("name", self.file_name),
+                    name=metadata.get("name", "None"),
                     description=metadata.get("description", "None"),
-                    keywords=self.coerce_to_string_list(metadata.get("keywords", [])),
-                    # prepositions=preposition_chain.invoke({"page_content": raw_chunk["text"]}),
+                    keywords=coerce_to_string_list(metadata.get("keywords", [])),
                 ).model_dump(),
             )

@@ -30,4 +30,4 @@ class ChunkMetadata(BaseModel):
     chunk_resolution: ChunkResolution = ChunkResolution.normal
     name: str
     description: str | None = None
-    keywords: list | None = None
+    keywords: list[str]
