@@ -6,6 +6,7 @@ from urllib.parse import urlparse
 
 import environ
 import sentry_sdk
+from django.urls import reverse_lazy
 from dotenv import load_dotenv
 from import_export.formats.base_formats import CSV
 from sentry_sdk.integrations.django import DjangoIntegration
@@ -21,6 +22,7 @@ env = environ.Env()
 SECRET_KEY = env.str("DJANGO_SECRET_KEY")
 ENVIRONMENT = Environment[env.str("ENVIRONMENT").upper()]
 WEBSOCKET_SCHEME = "ws" if ENVIRONMENT.is_test else "wss"
+LOGIN_METHOD = env.str("LOGIN_METHOD", None)
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env.bool("DEBUG")
@@ -61,6 +63,9 @@ INSTALLED_APPS = [
     "django_plotly_dash.apps.DjangoPlotlyDashConfig",
     "adminplus",
 ]
+
+if LOGIN_METHOD == "sso":
+    INSTALLED_APPS.append("authbroker_client")
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -116,6 +121,9 @@ AUTHENTICATION_BACKENDS = [
     "django.contrib.auth.backends.ModelBackend",
 ]
 
+if LOGIN_METHOD == "sso":
+    AUTHENTICATION_BACKENDS.append("authbroker_client.backends.AuthbrokerBackend")
+
 AUTH_PASSWORD_VALIDATORS = [
     {
         "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
@@ -143,8 +151,20 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 SITE_ID = 1
 AUTH_USER_MODEL = "redbox_core.User"
 ACCOUNT_EMAIL_VERIFICATION = "none"
-LOGIN_REDIRECT_URL = "homepage"
-LOGIN_URL = "sign-in"
+
+if LOGIN_METHOD == "sso":
+    AUTHBROKER_URL = env.str("AUTHBROKER_URL")
+    AUTHBROKER_CLIENT_ID = env.str("AUTHBROKER_CLIENT_ID")
+    AUTHBROKER_CLIENT_SECRET = env.str("AUTHBROKER_CLIENT_SECRET")
+    LOGIN_URL = reverse_lazy("authbroker_client:login")
+    LOGIN_REDIRECT_URL = reverse_lazy("homepage")
+elif LOGIN_METHOD == "magic_link":
+    SESSION_COOKIE_SAMESITE = "Strict"
+    LOGIN_REDIRECT_URL = "homepage"
+    LOGIN_URL = "sign-in"
+else:
+    LOGIN_REDIRECT_URL = "homepage"
+    LOGIN_URL = "sign-in"
 
 # CSP settings https://content-security-policy.com/
 # https://django-csp.readthedocs.io/
