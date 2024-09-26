@@ -2,6 +2,7 @@ import datetime
 import logging
 from collections.abc import Callable
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Generator
 from uuid import uuid4
 
@@ -38,6 +39,9 @@ def generate_docs(
             created_datetime=datetime.datetime.now(datetime.UTC),
             token_count=int(total_tokens / number_of_docs),
             chunk_resolution=chunk_resolution,
+            name=Path(s3_key).stem,
+            description="Lorem ipsum dolor sit amet",
+            keywords=["foo", "bar"],
         ).model_dump()
 
         extra_metadata = {
@@ -100,16 +104,24 @@ class RedboxChatTestCase:
         return [
             doc
             for doc in self.docs
-            if doc.metadata["file_name"] in set(self.query.s3_keys) & set(self.query.permitted_s3_keys)
+            if doc.metadata["file_name"]
+            in set(self.query.s3_keys) & set(self.query.permitted_s3_keys)
         ]
 
     def get_all_permitted_docs(self) -> list[Document]:
-        return [doc for doc in self.docs if doc.metadata["file_name"] in set(self.query.permitted_s3_keys)]
+        return [
+            doc
+            for doc in self.docs
+            if doc.metadata["file_name"] in set(self.query.permitted_s3_keys)
+        ]
 
 
-def generate_test_cases(query: RedboxQuery, test_data: list[RedboxTestData], test_id: str) -> list[RedboxChatTestCase]:
+def generate_test_cases(
+    query: RedboxQuery, test_data: list[RedboxTestData], test_id: str
+) -> list[RedboxChatTestCase]:
     return [
-        RedboxChatTestCase(test_id=f"{test_id}-{i}", query=query, test_data=data) for i, data in enumerate(test_data)
+        RedboxChatTestCase(test_id=f"{test_id}-{i}", query=query, test_data=data)
+        for i, data in enumerate(test_data)
     ]
 
 
@@ -132,5 +144,8 @@ def mock_parameterised_retriever(docs: list[Document]) -> FakeRetriever:
 
 
 def mock_metadata_retriever(docs: list[Document]) -> FakeRetriever:
-    metadata_only_docs = [Document(page_content="", metadata={**doc.metadata, "embedding": None}) for doc in docs]
+    metadata_only_docs = [
+        Document(page_content="", metadata={**doc.metadata, "embedding": None})
+        for doc in docs
+    ]
     return FakeRetriever(docs=metadata_only_docs)
