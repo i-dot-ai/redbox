@@ -3,6 +3,7 @@ import datetime
 import humanize
 import jinja2
 import pytz
+from compressor.contrib.jinja2ext import CompressorExtension
 from django.conf import settings
 from django.templatetags.static import static
 from django.urls import reverse
@@ -65,16 +66,17 @@ def to_user_timezone(value):
     user_tz = pytz.timezone("Europe/London")
     return value.astimezone(user_tz).strftime("%H:%M %d/%m/%Y")
 
-
 def environment(**options):
     extra_options = {}
     env = jinja2.Environment(  # nosec: B701 # noqa: S701
         **{
             "autoescape": True,
+            "extensions": [CompressorExtension],
             **options,
             **extra_options,
         },
     )
+
     env.filters.update(
         {
             "static": static,
@@ -84,6 +86,7 @@ def environment(**options):
             "to_user_timezone": to_user_timezone,
             "environment": settings.ENVIRONMENT.value,
             "security": settings.MAX_SECURITY_CLASSIFICATION.value,
+            "repo_owner": settings.REPO_OWNER,
         }
     )
     env.globals.update(
@@ -95,6 +98,10 @@ def environment(**options):
             "to_user_timezone": to_user_timezone,
             "environment": settings.ENVIRONMENT.value,
             "security": settings.MAX_SECURITY_CLASSIFICATION.value,
+            "repo_owner": settings.REPO_OWNER,
+            "analytics_tag": settings.ANALYTICS_TAG,
+            "analytics_link": settings.ANALYTICS_LINK,
+
         }
     )
     return env
