@@ -135,3 +135,32 @@ upload-button {
 .iai-panel:has(.iai-panel__scrollable) {
   padding-right: 0.75rem;
 }
+
+.iai-chat-bubble__role, .iai-chat-bubble__route .iai-tooltip__button {
+  font-size: 0.75rem;
+}
+@media (min-width: 1020px) {
+  .iai-chat-input {
+    padding-bottom: 0.5rem;
+  }
+  .iai-chat-input__container {
+    margin-bottom: 0.25rem;
+  }
+  .iai-chat-input__info-text {
+    font-size: 0.75rem;
+    margin: 0;
+    margin-top: 0.25rem;
+  }
+}
+.iai-chat-input__button {
+  font-size: 0.75rem;
+}
+.iai-footer__feedback-text {
+  font-size: .75rem;
+  line-height: 1.3;
+}
+.iai-footer__licence {
+  font-size: 0.75rem;
+  line-height: 1.2;
+  margin-top: 0.75rem;
+}
