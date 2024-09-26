@@ -143,6 +143,7 @@ def to_request_metadata(prompt_response_model: dict):
     )
 
     dispatch_custom_event(RedboxEventType.on_metadata_generation.value, metadata_event)
+
     return metadata_event
 
 
@@ -240,6 +241,9 @@ def sort_documents(documents: list[Document]) -> list[Document]:
     return list(itertools.chain.from_iterable(all_sorted_blocks_by_max_score))
 
 
-def tool_calls_to_toolstate(tool_calls: list[ToolCall]) -> ToolState:
-    """Takes a list of tool calls and shapes them into a valid ToolState."""
-    return {t["id"]: ToolCall(**t) for t in tool_calls}
+def tool_calls_to_toolstate(tool_calls: list[ToolCall], called: bool | None = False) -> ToolState:
+    """Takes a list of tool calls and shapes them into a valid ToolState.
+
+    Sets all tool calls to a called state. Assumes this state is False.
+    """
+    return {t["id"]: {"tool": ToolCall(**t), "called": called} for t in tool_calls}

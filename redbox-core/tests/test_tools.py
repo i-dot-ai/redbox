@@ -1,16 +1,33 @@
+from typing import Any
 from uuid import UUID
 
 import pytest
 from elasticsearch import Elasticsearch
 from langchain_core.embeddings.fake import FakeEmbeddings
+from langchain_core.tools import tool
 
-from redbox.graph.nodes.tools import build_search_documents_tool
+from redbox.graph.nodes.tools import build_search_documents_tool, is_valid_tool
 from redbox.models import Settings
 from redbox.models.chain import RedboxState
 from redbox.models.file import ChunkResolution
 from redbox.test.data import RedboxChatTestCase
 from redbox.transform import flatten_document_state
 from tests.retriever.test_retriever import TEST_CHAIN_PARAMETERS
+
+
+def test_is_valid_tool():
+    @tool
+    def tool_with_type_hinting() -> dict[str, Any]:
+        """Tool that returns a dictionary update."""
+        return {"key": "value"}
+
+    @tool
+    def tool_without_type_hinting():
+        """Tool that returns a dictionary update."""
+        return {"key": "value"}
+
+    assert is_valid_tool(tool_with_type_hinting)
+    assert not is_valid_tool(tool_without_type_hinting)
 
 
 @pytest.mark.parametrize("chain_params", TEST_CHAIN_PARAMETERS)

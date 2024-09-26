@@ -1,14 +1,34 @@
-from typing import Annotated, Any
+from typing import Annotated, Any, get_type_hints
 
 from elasticsearch import Elasticsearch
 from langchain_core.embeddings.embeddings import Embeddings
-from langchain_core.tools import Tool, tool
+from langchain_core.tools import StructuredTool, Tool, tool
 from langgraph.prebuilt import InjectedState
 
 from redbox.models.file import ChunkResolution
 from redbox.retriever.queries import add_document_filter_scores_to_query, build_document_query
 from redbox.retriever.retrievers import query_to_documents
 from redbox.transform import merge_documents, sort_documents, structure_documents_by_group_and_indices
+
+
+def is_valid_tool(tool: StructuredTool) -> bool:
+    """Checks whether the supplied tool will correctly update the state.
+
+    In Redbox, tools must return a valid state update. Here we enforce they're
+    at least typed to return a dictionary.
+    """
+    return_type = get_type_hints(tool.func).get("return", None)
+
+    if isinstance(return_type, type):
+        return issubclass(return_type, dict)
+
+    # Check for dict with generics (e.g., dict[str, list])
+    if hasattr(return_type, "__origin__") and return_type.__origin__ is dict:
+        key_type, value_type = return_type.__args__
+        if issubclass(key_type, str) and issubclass(value_type, Any):
+            return True
+
+    return False
 
 
 def build_search_documents_tool(
