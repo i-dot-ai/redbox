@@ -1,16 +1,19 @@
 # mypy: ignore-errors
-
+import os
 import socket
 from pathlib import Path
+from urllib.parse import urlparse
 
 import environ
 import sentry_sdk
 from django.urls import reverse_lazy
 from dotenv import load_dotenv
 from import_export.formats.base_formats import CSV
-from redbox_app.setting_enums import Classification, Environment
 from sentry_sdk.integrations.django import DjangoIntegration
 from storages.backends import s3boto3
+from yarl import URL
+
+from redbox_app.setting_enums import Classification, Environment
 
 load_dotenv()
 
@@ -20,12 +23,6 @@ SECRET_KEY = env.str("DJANGO_SECRET_KEY")
 ENVIRONMENT = Environment[env.str("ENVIRONMENT").upper()]
 WEBSOCKET_SCHEME = "ws" if ENVIRONMENT.is_test else "wss"
 LOGIN_METHOD = env.str("LOGIN_METHOD", "magic_link")
-
-# TODO remove and use, additional hosts variable
-if env.str("HOSTS", ""):
-    env_hosts = env.str("HOSTS", "").split(",")
-else:
-    env_hosts = ENVIRONMENT.hosts
 
 
 # SECURITY WARNING: don't run with debug turned on in production!
@@ -54,6 +51,7 @@ SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 INSTALLED_APPS = [
     "daphne",
     "redbox_app.redbox_core",
+    "django.contrib.admin.apps.SimpleAdminConfig",
     "allauth",
     "allauth.account",
     "allauth.socialaccount",
@@ -69,13 +67,11 @@ INSTALLED_APPS = [
     "compressor",
     "magic_link",
     "import_export",
+    "django_q",
+    "rest_framework",
+    "django_plotly_dash.apps.DjangoPlotlyDashConfig",
+    "adminplus",
 ]
-
-AUTH_USER_MODEL = "redbox_core.User"
-
-if LOGIN_METHOD == "sso":
-    INSTALLED_APPS.append("authbroker_client")
-    # AUTH_USER_MODEL = "redbox_core.SSOUser"
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -85,10 +81,13 @@ MIDDLEWARE = [
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
+    "redbox_app.redbox_core.middleware.plotly_no_csp_no_xframe_middleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "django_permissions_policy.PermissionsPolicyMiddleware",
     "csp.middleware.CSPMiddleware",
-    "allauth.account.middleware.AccountMiddleware",
+    "redbox_app.redbox_core.middleware.nocache_middleware",
+    "redbox_app.redbox_core.middleware.security_header_middleware",
+    "django_plotly_dash.middleware.BaseMiddleware",
 ]
 
 ROOT_URLCONF = "redbox_app.urls"
@@ -106,7 +105,9 @@ TEMPLATES = [
     },
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [Path(BASE_DIR) / "templates"],
+        "DIRS": [
+            BASE_DIR / "redbox_app" / "templates",
+        ],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -125,9 +126,6 @@ ASGI_APPLICATION = "redbox_app.asgi.application"
 AUTHENTICATION_BACKENDS = [
     "django.contrib.auth.backends.ModelBackend",
 ]
-
-if LOGIN_METHOD == "sso":
-    AUTHENTICATION_BACKENDS.append("authbroker_client.backends.AuthbrokerBackend")
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -154,6 +152,7 @@ USE_I18N = True
 USE_TZ = True
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 SITE_ID = 1
+AUTH_USER_MODEL = "redbox_core.User"
 ACCOUNT_EMAIL_VERIFICATION = "none"
 
 # CSP settings https://content-security-policy.com/
@@ -162,9 +161,6 @@ CSP_DEFAULT_SRC = (
     "'self'",
     "s3.amazonaws.com",
     "plausible.io",
-    "https://www.google-analytics.com/",
-    "https://region1.google-analytics.com/",
-    "https://www.googletagmanager.com/",
 )
 CSP_SCRIPT_SRC = (
     "'self'",
@@ -172,31 +168,23 @@ CSP_SCRIPT_SRC = (
     "plausible.io",
     "eu.i.posthog.com",
     "eu-assets.i.posthog.com",
-    "https://tagmanager.google.com/",
-    "https://www.googletagmanager.com/",
-    "ajax.googleapis.com/",
 )
 CSP_OBJECT_SRC = ("'none'",)
 CSP_REQUIRE_TRUSTED_TYPES_FOR = ("'script'",)
+CSP_TRUSTED_TYPES = ("dompurify", "default")
+CSP_REPORT_TO = "csp-endpoint"
 CSP_FONT_SRC = (
     "'self'",
     "s3.amazonaws.com",
 )
-CSP_INCLUDE_NONCE_IN = ("script-src",)
-CSP_STYLE_SRC = (
-    "'self'",
-    "https://tagmanager.google.com/",
-)
+CSP_STYLE_SRC = ("'self'",)
 CSP_FRAME_ANCESTORS = ("'none'",)
 CSP_CONNECT_SRC = [
     "'self'",
-    f"wss://{env_hosts[0]}/ws/chat/",
+    f"wss://{ENVIRONMENT.hosts[0]}/ws/chat/",
     "plausible.io",
     "eu.i.posthog.com",
     "eu-assets.i.posthog.com",
-    "https://www.google-analytics.com/",
-    "https://region1.google-analytics.com/",
-    "https://www.googletagmanager.com/",
 ]
 
 # https://pypi.org/project/django-permissions-policy/
@@ -258,15 +246,20 @@ else:
     SESSION_COOKIE_SECURE = True
 
 if ENVIRONMENT.is_test:
-    ALLOWED_HOSTS = env_hosts
+    ALLOWED_HOSTS = ENVIRONMENT.hosts
 else:
     LOCALHOST = socket.gethostbyname(socket.gethostname())
-    ALLOWED_HOSTS = [
-        LOCALHOST,
-        *env_hosts,
-    ]
+    ALLOWED_HOSTS = [LOCALHOST, *ENVIRONMENT.hosts]
 
 if not ENVIRONMENT.is_local:
+
+    def filter_transactions(event):
+        url_string = event["request"]["url"]
+        parsed_url = urlparse(url_string)
+        if parsed_url.path.startswith("/admin"):
+            return None
+        return event
+
     SENTRY_DSN = env.str("SENTRY_DSN", None)
     SENTRY_ENVIRONMENT = env.str("SENTRY_ENVIRONMENT", None)
     if SENTRY_DSN and SENTRY_ENVIRONMENT:
@@ -279,7 +272,10 @@ if not ENVIRONMENT.is_local:
             send_default_pii=False,
             traces_sample_rate=1.0,
             profiles_sample_rate=0.0,
+            before_send_transaction=filter_transactions,
         )
+
+SENTRY_REPORT_TO_ENDPOINT = URL(env.str("SENTRY_REPORT_TO_ENDPOINT", "")) or None
 
 DATABASES = {
     "default": {
@@ -296,16 +292,8 @@ LOG_LEVEL = env.str("DJANGO_LOG_LEVEL", "WARNING")
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
-    "formatters": {
-        "verbose": {"format": "%(asctime)s %(levelname)s %(module)s: %(message)s"}
-    },
+    "formatters": {"verbose": {"format": "%(asctime)s %(levelname)s %(module)s: %(message)s"}},
     "handlers": {
-        "file": {
-            "level": LOG_LEVEL,
-            "class": "logging.FileHandler",
-            "filename": Path(LOG_ROOT) / "application.log",
-            "formatter": "verbose",
-        },
         "console": {
             "level": LOG_LEVEL,
             "class": "logging.StreamHandler",
@@ -322,9 +310,6 @@ LOGGING = {
     },
 }
 
-# link to core_api app
-CORE_API_HOST = env.str("CORE_API_HOST")
-CORE_API_PORT = env.int("CORE_API_PORT")
 
 # Email
 EMAIL_BACKEND_TYPE = env.str("EMAIL_BACKEND_TYPE")
@@ -357,7 +342,7 @@ MAGIC_LINK = {
     # than one specified in the `settings.AUTHORIZATION_BACKENDS` setting.
     "AUTHENTICATION_BACKEND": "django.contrib.auth.backends.ModelBackend",
     # SESSION_COOKIE_AGE override for magic-link logins - in seconds (default is 1 week)
-    "SESSION_EXPIRY": 7 * 24 * 60 * 60,
+    "SESSION_EXPIRY": 21 * 60 * 60,
 }
 
 IMPORT_FORMATS = [CSV]
@@ -366,6 +351,19 @@ CHAT_TITLE_LENGTH = 30
 FILE_EXPIRY_IN_SECONDS = env.int("FILE_EXPIRY_IN_DAYS") * 24 * 60 * 60
 SUPERUSER_EMAIL = env.str("SUPERUSER_EMAIL", None)
 MAX_SECURITY_CLASSIFICATION = Classification[env.str("MAX_SECURITY_CLASSIFICATION")]
+
+SECURITY_TXT_REDIRECT = URL("https://vdp.cabinetoffice.gov.uk/.well-known/security.txt")
+REDBOX_VERSION = os.environ.get("REDBOX_VERSION", "not set")
+
+Q_CLUSTER = {
+    "name": "redbox_django",
+    "timeout": env.int("Q_TIMEOUT", 300),
+    "retry": env.int("Q_RETRY", 900),
+    "max_attempts": env.int("Q_MAX_ATTEMPTS", 1),
+    "catch_up": False,
+    "orm": "default",
+    "workers": 1,
+}
 
 if LOGIN_METHOD == "sso":
     AUTHBROKER_URL = env.str("AUTHBROKER_URL")
@@ -381,6 +379,7 @@ else:
     LOGIN_REDIRECT_URL = "homepage"
     LOGIN_URL = "sign-in"
 
+UNSTRUCTURED_HOST = env.str("UNSTRUCTURED_HOST")
 REPO_OWNER = env.str("REPO_OWNER", "i-dot-ai")
 ANALYTICS_TAG = env.str("ANALYTICS_TAG")
 ANALYTICS_LINK = env.str("ANALYTICS_LINK")
