@@ -1,6 +1,7 @@
 {% set pageTitle = "" %}
 {% extends "base.html" %}
 {% from "macros/govuk-button.html" import govukButton %}
+
 {% block content %}
 
 <div class="rb-banner">
@@ -21,6 +22,7 @@
                             href=url('sign-in'),
                             classes="govuk-button--secondary govuk-!-margin-bottom-0 rb-banner__button"
                         ) }}
+                        <span class="govuk-body govuk-!-margin-bottom-0">or <a class="govuk-link" href="https://docs.google.com/forms/d/e/1FAIpQLScNnl2vhazXDdZDpa9_11QYuaGPuNKGnelJC5uWJoEPtuW9zg/viewform">register your interest</a> to use Redbox</span>
                     {% endif %}
                 </div>
             </div>
