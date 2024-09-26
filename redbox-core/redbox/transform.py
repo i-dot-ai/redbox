@@ -136,7 +136,7 @@ def to_request_metadata(prompt_response_model: dict):
         tokeniser = tiktoken.get_encoding("cl100k_base")
 
     input_tokens = len(tokeniser.encode(prompt_response_model["prompt"]))
-    output_tokens = len(tokeniser.encode(prompt_response_model["response"]))
+    output_tokens = len(tokeniser.encode(prompt_response_model["response"].content))
 
     metadata_event = RequestMetadata(
         llm_calls=[LLMCallMetadata(model_name=model, input_tokens=input_tokens, output_tokens=output_tokens)]

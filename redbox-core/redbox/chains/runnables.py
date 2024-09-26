@@ -1,29 +1,24 @@
 import logging
-from collections.abc import Callable
-from typing import Any, Iterator, Iterable
 import re
+from collections.abc import Callable
 from operator import itemgetter
+from typing import Any, Iterable, Iterator
 
-from langchain_core.callbacks.manager import CallbackManagerForLLMRun
+from langchain_core.callbacks.manager import CallbackManagerForLLMRun, dispatch_custom_event
 from langchain_core.language_models import BaseChatModel
-from langchain_core.messages import AIMessageChunk, BaseMessage, AIMessage
-from langchain_core.outputs import ChatGeneration, ChatGenerationChunk, ChatResult
+from langchain_core.messages import AIMessage, AIMessageChunk, BaseMessage
 from langchain_core.output_parsers import StrOutputParser
+from langchain_core.outputs import ChatGeneration, ChatGenerationChunk, ChatResult
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.runnables import Runnable, chain, RunnableLambda, RunnableGenerator
-from langchain_core.callbacks.manager import dispatch_custom_event
-
+from langchain_core.runnables import Runnable, RunnableGenerator, RunnableLambda, chain
 from tiktoken import Encoding
-
-from redbox.models.graph import RedboxEventType
 
 from redbox.api.format import format_documents
 from redbox.chains.components import get_tokeniser
-from redbox.models.chain import ChainChatMessage, RedboxState
+from redbox.models.chain import ChainChatMessage, PromptSet, RedboxState, get_prompts
 from redbox.models.errors import QuestionLengthError
-from redbox.models.chain import PromptSet, get_prompts
-from redbox.transform import flatten_document_state, to_request_metadata
-
+from redbox.models.graph import RedboxEventType
+from redbox.transform import flatten_document_state, to_request_metadata, tool_calls_to_toolstate
 
 log = logging.getLogger()
 re_string_pattern = re.compile(r"(\S+)")
@@ -88,11 +83,15 @@ def build_llm_chain(
     return (
         build_chat_prompt_from_messages_runnable(prompt_set)
         | {
-            "prompt": RunnableLambda(lambda prompt: prompt.to_string()),
-            "response": _llm | _output_parser,
-            "model": lambda x: model_name,
+            "prompt": lambda prompt: prompt.to_string(),
+            "response": _llm,
+            "model": lambda _: model_name,
         }
-        | {"text": itemgetter("response"), "metadata": to_request_metadata}
+        | {
+            "text": itemgetter("response") | _output_parser,
+            "tool_calls": (itemgetter("response") | RunnableLambda(lambda r: r.tool_calls) | tool_calls_to_toolstate),
+            "metadata": to_request_metadata,
+        }
     )
 
 

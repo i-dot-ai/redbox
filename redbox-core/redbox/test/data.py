@@ -1,15 +1,16 @@
 import datetime
 import logging
 from collections.abc import Callable
-from dataclasses import dataclass, field
 from typing import Generator
 from uuid import uuid4
 
 from langchain_core.documents import Document
+from langchain_core.messages import AIMessage
 from langchain_core.retrievers import BaseRetriever
+from pydantic.v1 import BaseModel, Field, validator
 
 from redbox.models.chain import RedboxQuery
-from redbox.models.chat import ChatRoute
+from redbox.models.chat import ChatRoute, ErrorRoute
 from redbox.models.file import ChunkMetadata, ChunkResolution
 from redbox.models.graph import RedboxActivityEvent
 
@@ -51,17 +52,30 @@ def generate_docs(
         )
 
 
-@dataclass
-class RedboxTestData:
+class RedboxTestData(BaseModel):
+    class Config:
+        arbitrary_types_allowed = True
+
     number_of_docs: int
     tokens_in_all_docs: int
     chunk_resolution: ChunkResolution = ChunkResolution.largest
-    expected_llm_response: list[str] = field(default_factory=list)
-    expected_route: ChatRoute | None = None
-    expected_activity_events: Callable[[list[RedboxActivityEvent]], bool] = field(
+    expected_llm_response: list[str | AIMessage] = Field(default_factory=list)
+    expected_route: ChatRoute | ErrorRoute | None = None
+    expected_activity_events: Callable[[list[RedboxActivityEvent]], bool] = Field(
         default=lambda _: True
     )  # Function to check activity events are as expected
-    s3_keys: str | None = None
+    s3_keys: list[str] | None = None
+
+    @validator("expected_llm_response", pre=True)
+    @classmethod
+    def coerce_to_aimessage(cls, value: str | AIMessage):
+        coerced: list[AIMessage] = []
+        for i in value:
+            if isinstance(i, str):
+                coerced.append(AIMessage(content=i))
+            else:
+                coerced.append(i)
+        return coerced
 
 
 class RedboxChatTestCase:

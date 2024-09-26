@@ -3,6 +3,7 @@ from uuid import uuid4
 
 import pytest
 from langchain_core.language_models.fake_chat_models import GenericFakeChatModel
+from langchain_core.messages import AIMessage, ToolCall
 from langchain_core.retrievers import BaseRetriever
 from langchain_core.tools import StructuredTool, tool
 from langgraph.graph import END, START, StateGraph
@@ -39,9 +40,17 @@ LANGGRAPH_DEBUG = True
 CHAT_PROMPT_TEST_CASES = generate_test_cases(
     query=RedboxQuery(question="What is AI?", s3_keys=[], user_uuid=uuid4(), chat_history=[], permitted_s3_keys=[]),
     test_data=[
-        RedboxTestData(0, 0, expected_llm_response=["Testing Response 1"], expected_route=ChatRoute.chat),
         RedboxTestData(
-            2, 40_000, expected_llm_response=["Testing Response 1"], expected_route=ChatRoute.chat_with_docs
+            number_of_docs=0,
+            tokens_in_all_docs=0,
+            expected_llm_response=["Testing Response 1"],
+            expected_route=ChatRoute.chat,
+        ),
+        RedboxTestData(
+            number_of_docs=2,
+            tokens_in_all_docs=40_000,
+            expected_llm_response=["Testing Response 1"],
+            expected_route=ChatRoute.chat_with_docs,
         ),
     ],
     test_id="Chat prompt runnable",
@@ -64,7 +73,21 @@ BUILD_LLM_TEST_CASES = generate_test_cases(
     query=RedboxQuery(question="What is AI?", file_uuids=[], user_uuid=uuid4(), chat_history=[], permitted_s3_keys=[]),
     test_data=[
         RedboxTestData(
-            2, 40_000, expected_llm_response=["Testing Response 1"], expected_route=ChatRoute.chat_with_docs
+            number_of_docs=2,
+            tokens_in_all_docs=40_000,
+            expected_llm_response=[AIMessage(content="Testing Response 1")],
+            expected_route=ChatRoute.chat_with_docs,
+        ),
+        RedboxTestData(
+            number_of_docs=2,
+            tokens_in_all_docs=40_000,
+            expected_llm_response=[
+                AIMessage(
+                    content="Tool Response 1",
+                    tool_calls=[ToolCall(name="foo", args={"query": "bar"}, id="tool_1")],
+                )
+            ],
+            expected_route=ChatRoute.chat_with_docs,
         ),
     ],
     test_id="Build LLM runnable",
@@ -80,16 +103,27 @@ def test_build_llm_chain(test_case: RedboxChatTestCase):
 
     final_state = llm_chain.invoke(state)
 
+    test_case_content = test_case.test_data.expected_llm_response[-1].content
+    test_case_tool_calls = tool_calls_to_toolstate(test_case.test_data.expected_llm_response[-1].tool_calls)
+
     assert (
-        final_state["text"] == test_case.test_data.expected_llm_response[-1]
-    ), f"Expected LLM response: '{test_case.test_data.expected_llm_response[-1]}'. Received '{final_state["text"]}'"
+        final_state["text"] == test_case_content
+    ), f"Expected LLM response: '{test_case_content}'. Received '{final_state["text"]}'"
+    assert final_state["tool_calls"] == test_case_tool_calls
     assert sum(final_state["metadata"].input_tokens.values())
     assert sum(final_state["metadata"].output_tokens.values())
 
 
 CHAT_TEST_CASES = generate_test_cases(
     query=RedboxQuery(question="What is AI?", s3_keys=[], user_uuid=uuid4(), chat_history=[], permitted_s3_keys=[]),
-    test_data=[RedboxTestData(0, 0, expected_llm_response=["Testing Response 1"], expected_route=ChatRoute.chat)],
+    test_data=[
+        RedboxTestData(
+            number_of_docs=0,
+            tokens_in_all_docs=0,
+            expected_llm_response=["Testing Response 1"],
+            expected_route=ChatRoute.chat,
+        )
+    ],
     test_id="Chat pattern",
 )
 
@@ -106,17 +140,27 @@ def test_build_chat_pattern(test_case: RedboxChatTestCase, mocker: MockerFixture
     response = chat(state)
     final_state = RedboxState(response)
 
+    test_case_content = test_case.test_data.expected_llm_response[-1].content
+
     assert (
-        final_state["text"] == test_case.test_data.expected_llm_response[-1]
-    ), f"Expected LLM response: '{test_case.test_data.expected_llm_response[-1]}'. Received '{final_state["text"]}'"
+        final_state["text"] == test_case_content
+    ), f"Expected LLM response: '{test_case_content}'. Received '{final_state["text"]}'"
 
 
 SET_ROUTE_TEST_CASES = generate_test_cases(
     query=RedboxQuery(question="What is AI?", s3_keys=[], user_uuid=uuid4(), chat_history=[], permitted_s3_keys=[]),
     test_data=[
-        RedboxTestData(0, 0, expected_llm_response=["Testing Response 1"], expected_route=ChatRoute.chat),
         RedboxTestData(
-            2, 40_000, expected_llm_response=["Testing Response 1"], expected_route=ChatRoute.chat_with_docs
+            number_of_docs=0,
+            tokens_in_all_docs=0,
+            expected_llm_response=["Testing Response 1"],
+            expected_route=ChatRoute.chat,
+        ),
+        RedboxTestData(
+            number_of_docs=2,
+            tokens_in_all_docs=40_000,
+            expected_llm_response=["Testing Response 1"],
+            expected_route=ChatRoute.chat_with_docs,
         ),
     ],
     test_id="Set route pattern",
@@ -147,14 +191,20 @@ RETRIEVER_TEST_CASES = generate_test_cases(
     ),
     test_data=[
         RedboxTestData(
-            2, 40_000, expected_llm_response=["Testing Response 1"], expected_route=ChatRoute.chat_with_docs
+            number_of_docs=2,
+            tokens_in_all_docs=40_000,
+            expected_llm_response=["Testing Response 1"],
+            expected_route=ChatRoute.chat_with_docs,
         ),
         RedboxTestData(
-            2, 80_000, expected_llm_response=["Testing Response 1"], expected_route=ChatRoute.chat_with_docs
+            number_of_docs=2,
+            tokens_in_all_docs=80_000,
+            expected_llm_response=["Testing Response 1"],
+            expected_route=ChatRoute.chat_with_docs,
         ),
         RedboxTestData(
-            4,
-            140_000,
+            number_of_docs=4,
+            tokens_in_all_docs=140_000,
             expected_llm_response=["Map Step Response"] * 4 + ["Testing Response 1"],
             expected_route=ChatRoute.chat_with_docs,
         ),
@@ -192,10 +242,16 @@ MERGE_TEST_CASES = generate_test_cases(
     ),
     test_data=[
         RedboxTestData(
-            2, 40_000, expected_llm_response=["Testing Response 1"], expected_route=ChatRoute.chat_with_docs
+            number_of_docs=2,
+            tokens_in_all_docs=40_000,
+            expected_llm_response=["Testing Response 1"],
+            expected_route=ChatRoute.chat_with_docs,
         ),
         RedboxTestData(
-            4, 40_000, expected_llm_response=["Testing Response 2"], expected_route=ChatRoute.chat_with_docs
+            number_of_docs=4,
+            tokens_in_all_docs=40_000,
+            expected_llm_response=["Testing Response 2"],
+            expected_route=ChatRoute.chat_with_docs,
         ),
     ],
     test_id="Merge pattern",
@@ -217,11 +273,13 @@ def test_build_merge_pattern(test_case: RedboxChatTestCase, mocker: MockerFixtur
     response_documents = [doc for doc in flatten_document_state(final_state.get("documents")) if doc is not None]
     noned_documents = sum(1 for doc in final_state.get("documents", {}).values() for v in doc.values() if v is None)
 
+    test_case_content = test_case.test_data.expected_llm_response[-1].content
+
     assert len(response_documents) == 1
     assert noned_documents == len(test_case.docs) - 1
     assert (
-        response_documents[0].page_content == test_case.test_data.expected_llm_response[-1]
-    ), f"Expected document content: '{test_case.test_data.expected_llm_response[-1]}'. Received '{response_documents[0].page_content}'"
+        response_documents[0].page_content == test_case_content
+    ), f"Expected document content: '{test_case_content}'. Received '{response_documents[0].page_content}'"
 
 
 STUFF_TEST_CASES = generate_test_cases(
@@ -234,10 +292,16 @@ STUFF_TEST_CASES = generate_test_cases(
     ),
     test_data=[
         RedboxTestData(
-            2, 40_000, expected_llm_response=["Testing Response 1"], expected_route=ChatRoute.chat_with_docs
+            number_of_docs=2,
+            tokens_in_all_docs=40_000,
+            expected_llm_response=["Testing Response 1"],
+            expected_route=ChatRoute.chat_with_docs,
         ),
         RedboxTestData(
-            4, 40_000, expected_llm_response=["Testing Response 2"], expected_route=ChatRoute.chat_with_docs
+            number_of_docs=4,
+            tokens_in_all_docs=40_000,
+            expected_llm_response=["Testing Response 2"],
+            expected_route=ChatRoute.chat_with_docs,
         ),
     ],
     test_id="Stuff pattern",
@@ -256,9 +320,11 @@ def test_build_stuff_pattern(test_case: RedboxChatTestCase, mocker: MockerFixtur
     response = stuff.invoke(state)
     final_state = RedboxState(response)
 
+    test_case_content = test_case.test_data.expected_llm_response[-1].content
+
     assert (
-        final_state["text"] == test_case.test_data.expected_llm_response[-1]
-    ), f"Expected LLM response: '{test_case.test_data.expected_llm_response[-1]}'. Received '{final_state["text"]}'"
+        final_state["text"] == test_case_content
+    ), f"Expected LLM response: '{test_case_content}'. Received '{final_state["text"]}'"
 
 
 TOOL_TEST_CASES = generate_test_cases(
@@ -270,7 +336,12 @@ TOOL_TEST_CASES = generate_test_cases(
         permitted_s3_keys=["s3_key_1", "s3_key_2"],
     ),
     test_data=[
-        RedboxTestData(2, 2_000, expected_llm_response=["Testing Response 1"], expected_route=ChatRoute.chat_with_docs),
+        RedboxTestData(
+            number_of_docs=2,
+            tokens_in_all_docs=2_000,
+            expected_llm_response=["Testing Response 1"],
+            expected_route=ChatRoute.chat_with_docs,
+        ),
     ],
     test_id="Stuff pattern",
 )

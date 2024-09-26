@@ -5,6 +5,7 @@ from uuid import NAMESPACE_DNS, UUID, uuid5
 
 import pytest
 from langchain_core.documents.base import Document
+from langchain_core.messages import AIMessage
 
 from redbox.models.chain import LLMCallMetadata, RequestMetadata
 from redbox.retriever.retrievers import filter_by_elbow
@@ -162,10 +163,12 @@ def test_elbow_filter(scores: list[float], target_len: int):
         (
             {
                 "prompt": "Lorem ipsum dolor sit amet.",
-                "response": (
-                    "Lorem ipsum dolor sit amet, consectetur adipiscing elit, "
-                    "sed do eiusmod tempor incididunt ut labore et dolore magna "
-                    "aliqua. "
+                "response": AIMessage(
+                    content=(
+                        "Lorem ipsum dolor sit amet, consectetur adipiscing elit, "
+                        "sed do eiusmod tempor incididunt ut labore et dolore magna "
+                        "aliqua. "
+                    )
                 ),
                 "model": "gpt-4o",
             },
@@ -174,10 +177,12 @@ def test_elbow_filter(scores: list[float], target_len: int):
         (
             {
                 "prompt": "Lorem ipsum dolor sit amet.",
-                "response": (
-                    "Lorem ipsum dolor sit amet, consectetur adipiscing elit, "
-                    "sed do eiusmod tempor incididunt ut labore et dolore magna "
-                    "aliqua. "
+                "response": AIMessage(
+                    content=(
+                        "Lorem ipsum dolor sit amet, consectetur adipiscing elit, "
+                        "sed do eiusmod tempor incididunt ut labore et dolore magna "
+                        "aliqua. "
+                    )
                 ),
                 "model": "unknown-model",
             },
