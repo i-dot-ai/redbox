@@ -12,6 +12,7 @@ from typing import Annotated, Literal, NotRequired, Required, TypedDict
 from uuid import UUID, uuid4
 
 from langchain_core.documents import Document
+from langchain_core.messages import ToolCall
 from pydantic import BaseModel, Field
 
 
@@ -255,11 +256,49 @@ def metadata_reducer(current: RequestMetadata | None, update: RequestMetadata | 
     )
 
 
+class ToolStateEntry(TypedDict):
+    """Represents a single tool call in the ToolState."""
+
+    tool: ToolCall
+    called: bool
+
+
+class ToolState(dict[str, ToolStateEntry]):
+    """Represents the state of multiple tools."""
+
+
+def tool_calls_reducer(current: ToolState, update: ToolState | None) -> ToolState:
+    """Handles updates to the tool state.
+
+    * If a new key is added, adds it to the state.
+    * If an existing key is None'd, removes it
+    * If update is None, clears all tool calls
+    """
+    if not update:
+        return {}
+
+    # If update is actually a list of state updates, run them one by one
+    if isinstance(update, list):
+        reduced = reduce(lambda current, update: tool_calls_reducer(current, update), update, current)
+        return reduced
+
+    reduced = current.copy()
+
+    for key, value in update.items():
+        if value is None:
+            reduced.pop(key, None)
+        else:
+            reduced[key] = value
+
+    return reduced
+
+
 class RedboxState(TypedDict):
     request: Required[RedboxQuery]
     documents: Annotated[NotRequired[DocumentState], document_reducer]
     text: NotRequired[str | None]
     route_name: NotRequired[str | None]
+    tool_calls: Annotated[NotRequired[ToolState], tool_calls_reducer]
     metadata: Annotated[NotRequired[RequestMetadata], metadata_reducer]
 
 

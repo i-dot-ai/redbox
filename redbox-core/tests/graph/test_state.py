@@ -1,10 +1,18 @@
 from uuid import uuid4
+
 import pytest
-
 from langchain_core.documents import Document
+from langchain_core.messages import ToolCall
 
-from redbox.models.chain import LLMCallMetadata, RequestMetadata, document_reducer, metadata_reducer, DocumentState
-
+from redbox.models.chain import (
+    DocumentState,
+    LLMCallMetadata,
+    RequestMetadata,
+    ToolState,
+    document_reducer,
+    metadata_reducer,
+    tool_calls_reducer,
+)
 
 GROUP_IDS = [uuid4() for i in range(4)]
 DOCUMENT_IDS = [uuid4() for i in range(10)]
@@ -177,3 +185,83 @@ multiple_models_multiple_calls_1a = multiple_models_multiple_calls_1 + [
 def test_metadata_reducer(a: RequestMetadata, b: RequestMetadata, expected: RequestMetadata):
     result = metadata_reducer(a, b)
     assert result == expected, f"Expected: {expected}. Result: {result}"
+
+
+@pytest.mark.parametrize(
+    ("a", "b", "expected"),
+    [
+        (
+            ToolState(
+                {
+                    "foo": {"tool": ToolCall({"name": "foo", "args": {"a": 1, "b": 2}, "id": "123"}), "called": False},
+                    "bar": {
+                        "tool": ToolCall({"name": "bar", "args": {"x": 10, "y": 20}, "id": "456"}),
+                        "called": False,
+                    },
+                }
+            ),
+            ToolState(
+                {
+                    "baz": {
+                        "tool": ToolCall({"name": "baz", "args": {"param": "value"}, "id": "789", "type": "tool_call"}),
+                        "called": False,
+                    }
+                }
+            ),
+            ToolState(
+                {
+                    "foo": {"tool": ToolCall({"name": "foo", "args": {"a": 1, "b": 2}, "id": "123"}), "called": False},
+                    "bar": {
+                        "tool": ToolCall({"name": "bar", "args": {"x": 10, "y": 20}, "id": "456"}),
+                        "called": False,
+                    },
+                    "baz": {
+                        "tool": ToolCall({"name": "baz", "args": {"param": "value"}, "id": "789", "type": "tool_call"}),
+                        "called": False,
+                    },
+                }
+            ),
+        ),
+        (
+            ToolState(
+                {
+                    "foo": {"tool": ToolCall({"name": "foo", "args": {"a": 1, "b": 2}, "id": "123"}), "called": False},
+                    "bar": {
+                        "tool": ToolCall({"name": "bar", "args": {"x": 10, "y": 20}, "id": "456"}),
+                        "called": False,
+                    },
+                }
+            ),
+            ToolState({"bar": None}),
+            ToolState(
+                {"foo": {"tool": ToolCall({"name": "foo", "args": {"a": 1, "b": 2}, "id": "123"}), "called": False}}
+            ),
+        ),
+        (
+            ToolState(
+                {"foo": {"tool": ToolCall({"name": "foo", "args": {"a": 1, "b": 2}, "id": "123"}), "called": False}}
+            ),
+            None,
+            ToolState(),
+        ),
+        (
+            ToolState(
+                {"foo": {"tool": ToolCall({"name": "foo", "args": {"a": 1, "b": 2}, "id": "123"}), "called": False}}
+            ),
+            ToolState(
+                {"foo": {"tool": ToolCall({"name": "foo", "args": {"a": 1, "b": 2}, "id": "123"}), "called": True}}
+            ),
+            ToolState(
+                {"foo": {"tool": ToolCall({"name": "foo", "args": {"a": 1, "b": 2}, "id": "123"}), "called": True}}
+            ),
+        ),
+    ],
+)
+def test_tool_calls_reducer(a: ToolState, b: ToolState, expected: ToolState):
+    """Checks the key properties of the ToolState reducer.
+
+    * If a new key is added, adds it to the state.
+    * If an existing key is None'd, removes it
+    * If update is None, clears all tool calls
+    """
+    assert tool_calls_reducer(a, b) == expected
