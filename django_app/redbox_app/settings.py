@@ -30,7 +30,6 @@ DEBUG = env.bool("DEBUG")
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-COMPRESS_PRECOMPILERS = (("text/x-scss", "django_libsass.SassCompiler"),)
 
 STATIC_URL = "static/"
 STATIC_ROOT = "staticfiles/"
@@ -52,10 +51,6 @@ INSTALLED_APPS = [
     "daphne",
     "redbox_app.redbox_core",
     "django.contrib.admin.apps.SimpleAdminConfig",
-    "allauth",
-    "allauth.account",
-    "allauth.socialaccount",
-    "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
@@ -64,7 +59,6 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "single_session",
     "storages",
-    "compressor",
     "magic_link",
     "import_export",
     "django_q",
