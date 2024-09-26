@@ -7,7 +7,7 @@ import requests
 import tiktoken
 from langchain_core.documents import Document
 
-from redbox.models.file import ChunkResolution, ChunkMetadata
+from redbox.models.file import ChunkMetadata, ChunkResolution
 from redbox.models.settings import Settings
 
 encoding = tiktoken.get_encoding("cl100k_base")
@@ -18,8 +18,52 @@ else:
     S3Client = object
 
 
+def get_first_n_tokens(chunks: list[dict], n: int) -> str:
+    """From a list of chunks, returns the first n tokens."""
+    current_tokens = 0
+    tokens = ""
+    for chunk in chunks:
+        current_tokens += len(tiktoken.countit(chunk["text"]))
+        if current_tokens > n:
+            return tokens
+        tokens += chunk["text"]
+    return tokens
+
+
+def get_doc_metadata() -> dict[str, Any]:
+    """From either a list of chunks or the file_bytes, get some metadata.
+    
+    Either mediainfo or unstructured.
+    """
+    pass
+
+
+from langchain_core.runnables import Runnable
+
+
 class UnstructuredChunkLoader:
-    """Load, partition and chunk a document using local unstructured library"""
+    """Load, partition and chunk a document using local unstructured library.
+    
+    Uses a metadata chain to extract metadata from the document where possible.
+    """
+    _get_metadata = (
+        ChatPromptTemplate.from_messages([
+            ("system", "You are an SEO specialist that must optimise the metadata of a document to make it as discoverable as possible. You are about to be given the first 1_000 tokens of a document and any hard-coded file metadata that can be recovered from it. Create SEO-optimised metadata for this document in the structured data markup (JSON-LD) standard. You must include at least the 'name', 'description' and 'keywords' properties but otherwise use your expertise to make the document as easy to search for as possible. Return only the JSON-LD: \n\n"),
+            (
+                "user", 
+                (
+                    "<metadata>\n"
+                    "{metadata}\n"
+                    "</metadata>\n\n"
+                    "<document_sample>\n"
+                    "{page_content}"
+                    "</document_sample>"
+                )
+            ),
+        ])
+        | get_chat_llm()
+        | JsonOutputParser()
+    )
 
     def __init__(
         self,
@@ -68,7 +112,17 @@ class UnstructuredChunkLoader:
 
         if not elements:
             raise ValueError("Unstructured failed to extract text for this file")
+        
+        # Get first 1k tokens of processed document
+        first_n = get_first_n_tokens(elements, 1_000)
 
+        # Get whatever metadata we can from processed document
+        metadata = get_doc_metadata()
+
+        # Generate new metadata
+        metdata = self._get_metadata.invoke(first_n, metadata)
+
+        # add metadata below
         for i, raw_chunk in enumerate(elements):
             yield Document(
                 page_content=raw_chunk["text"],
