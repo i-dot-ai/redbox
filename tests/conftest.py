@@ -6,11 +6,6 @@ import pytest
 from botocore.exceptions import ClientError
 
 
-@pytest.fixture()
-def file_path() -> Path:
-    return Path(__file__).parent / "data" / "html" / "example.html"
-
-
 @pytest.fixture(autouse=True)
 def s3_client():
     client = boto3.client(
