@@ -1,8 +1,7 @@
 import logging
 import re
-from collections.abc import Callable
 from operator import itemgetter
-from typing import Any, Iterable, Iterator
+from typing import Any, Callable, Iterable, Iterator
 
 from langchain_core.callbacks.manager import CallbackManagerForLLMRun, dispatch_custom_event
 from langchain_core.language_models import BaseChatModel
@@ -22,6 +21,17 @@ from redbox.transform import flatten_document_state, to_request_metadata, tool_c
 
 log = logging.getLogger()
 re_string_pattern = re.compile(r"(\S+)")
+
+
+def combine_getters(*getters: Callable[[Any], Any]) -> Callable[[Any], Any]:
+    """Permits chaining of *getter functions in LangChain."""
+
+    def _combined(obj):
+        for getter in getters:
+            obj = getter(obj)
+        return obj
+
+    return _combined
 
 
 def build_chat_prompt_from_messages_runnable(prompt_set: PromptSet, tokeniser: Encoding = None) -> Runnable:
@@ -80,17 +90,30 @@ def build_llm_chain(
     model_name = getattr(llm, "model_name", "unknown-model")
     _llm = llm.with_config(tags=["response_flag"]) if final_response_chain else llm
     _output_parser = output_parser if output_parser else StrOutputParser()
+
     return (
         build_chat_prompt_from_messages_runnable(prompt_set)
         | {
-            "prompt": lambda prompt: prompt.to_string(),
-            "response": _llm,
-            "model": lambda _: model_name,
+            "text_and_tools": (
+                _llm
+                | {
+                    "text": _output_parser,
+                    "tool_calls": (RunnableLambda(lambda r: r.tool_calls) | tool_calls_to_toolstate),
+                }
+            ),
+            "prompt": RunnableLambda(lambda prompt: prompt.to_string()),
         }
         | {
-            "text": itemgetter("response") | _output_parser,
-            "tool_calls": (itemgetter("response") | RunnableLambda(lambda r: r.tool_calls) | tool_calls_to_toolstate),
-            "metadata": to_request_metadata,
+            "text": combine_getters(itemgetter("text_and_tools"), itemgetter("text")),
+            "tool_calls": combine_getters(itemgetter("text_and_tools"), itemgetter("tool_calls")),
+            "metadata": (
+                {
+                    "prompt": itemgetter("prompt"),
+                    "response": combine_getters(itemgetter("text_and_tools"), itemgetter("text")),
+                    "model": lambda _: model_name,
+                }
+                | to_request_metadata
+            ),
         }
     )
 
