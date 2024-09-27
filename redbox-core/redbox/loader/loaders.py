@@ -39,39 +39,50 @@ def get_first_n_tokens(chunks: list[dict], n: int) -> str:
     return tokens
 
 
-def get_doc_metadata(chunks: list[dict], n: int) -> dict[str, Any]:
-    """From either a list of chunks or the file_bytes, get some metadata.
-
-    Either mediainfo or unstructured.
-
-    Use the first 3 chucks only
-
+def get_doc_metadata(
+    chunks: list[dict], n: int, ignore: list[str] = None
+) -> dict[str, Any]:
+    """
+    Use the first n chunks to get metadata using unstructured.
+    Metadata keys in the ignore list will be excluded from the result.
     """
     metadata = {}
     for i, chunk in enumerate(chunks):
         if i > n:
             return metadata
-        metadata = merge_dict(metadata, chunk["metadata"])
+        metadata = merge_unstructured_metadata(metadata, chunk["metadata"], ignore)
     return metadata
 
 
-def merge_dict(x: dict, y: dict) -> dict:
+def merge_unstructured_metadata(x: dict, y: dict, ignore: list[str] = None) -> dict:
     """
     Combine 2 dicts without deleting any elements. If the key is present in both,
-    combine values into a list. If value is in list, extend  with unique values.
+    combine values into a list. If value is in a list, extend with unique values.
+    Keys in the ignore list will be excluded from the result.
     """
+    if ignore is None:
+        ignore = []
+
     combined = {}
 
+    ignore_set = set(ignore)
+
     for key in set(x) | set(y):
+        if key in ignore_set:
+            continue
+
         if key in x and key in y:
             if isinstance(x[key], list) or isinstance(y[key], list):
-                combined[key] = list(set(x[key] + (y[key] if isinstance(y[key], list) else [y[key]])))
+                combined[key] = list(
+                    set(x[key] + (y[key] if isinstance(y[key], list) else [y[key]]))
+                )
             else:
                 combined[key] = [x[key], y[key]]
         elif key in x:
             combined[key] = x[key]
         else:
             combined[key] = y[key]
+
     return combined
 
 
@@ -106,13 +117,23 @@ class UnstructuredChunkLoader:
         self._overlap_chars = overlap_chars
         self._overlap_all_chunks = overlap_all_chunks
 
-    def get_metadata_chain(self, page_content: str, metadata: dict[str, Any]):
+    def create_file_metadata(
+        self, page_content: str, metadata: dict[str, Any]
+    ) -> dict[str, Any]:
+        """Uses a sample of the document and any extracted metadata to generate further metadata."""
         metadata_chain = (
             ChatPromptTemplate.from_messages(
                 [
                     (
                         "system",
-                        "You are an SEO specialist that must optimise the metadata of a document to make it as discoverable as possible. You are about to be given the first 1_000 tokens of a document and any hard-coded file metadata that can be recovered from it. Create SEO-optimised metadata for this document in the structured data markup (JSON-LD) standard. You must include at least the 'name', 'description' and 'keywords' properties but otherwise use your expertise to make the document as easy to search for as possible. Return only the JSON-LD: \n\n",
+                        "You are an SEO specialist that must optimise the metadata of a document "
+                        "to make it as discoverable as possible. You are about to be given the first "
+                        "1_000 tokens of a document and any hard-coded file metadata that can be "
+                        "recovered from it. Create SEO-optimised metadata for this document in the "
+                        "structured data markup (JSON-LD) standard. You must include at least "
+                        "the 'name', 'description' and 'keywords' properties but otherwise use your "
+                        "expertise to make the document as easy to search for as possible. "
+                        "Return only the JSON-LD: \n\n",
                     ),
                     (
                         "user",
@@ -132,7 +153,9 @@ class UnstructuredChunkLoader:
         )
 
         try:
-            return metadata_chain.invoke({"page_content": page_content, "metadata": metadata})
+            return metadata_chain.invoke(
+                {"page_content": page_content, "metadata": metadata}
+            )
         except HTTPError as e:
             logger.warning(f"Retrying due to HTTPError {e.response.status_code}")
 
@@ -171,10 +194,10 @@ class UnstructuredChunkLoader:
         first_n = get_first_n_tokens(elements, 1_000)
 
         # Get whatever metadata we can from processed document
-        metadata = get_doc_metadata(elements, 3)
+        metadata = get_doc_metadata(chunks=elements, n=3, ignore=None)
 
         # Generate new metadata
-        metadata = self.get_metadata_chain(first_n, metadata)
+        metadata = self.create_file_metadata(first_n, metadata)
 
         # add metadata below
         for i, raw_chunk in enumerate(elements):
@@ -187,7 +210,7 @@ class UnstructuredChunkLoader:
                     created_datetime=datetime.now(UTC),
                     token_count=len(encoding.encode(raw_chunk["text"])),
                     chunk_resolution=self.chunk_resolution,
-                    name=metadata.get("name", "None"),
+                    name=metadata.get("name", file_name),
                     description=metadata.get("description", "None"),
                     keywords=coerce_to_string_list(metadata.get("keywords", [])),
                 ).model_dump(),

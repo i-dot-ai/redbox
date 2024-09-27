@@ -25,7 +25,6 @@ pytest-dotenv = "^0.5.2"
 kneed = "^0.8.5"
 langgraph = "^0.2.15"
 langchain-aws = "^0.1.17"
-mypy-boto3-s3 = "^1.35.22"
 
 
 [tool.poetry.group.dev.dependencies]
@@ -36,6 +35,7 @@ pytest-asyncio = "^0.23.6"
 jsonlines = "^4.0.0"
 deepeval = "^1.0.3"
 pytest-mock = "^3.14.0"
+boto3-stubs = {extras = ["essential"], version = "^1.35.28"}
 
 [build-system]
 requires = ["poetry-core"]
