@@ -1,12 +1,18 @@
+import datetime
 import logging
 
 from django.core.management import BaseCommand
 from django_q.tasks import async_task
 
+from redbox.models import Settings
 from redbox_app.redbox_core.models import INACTIVE_STATUSES, File
 from redbox_app.worker import ingest
 
 logger = logging.getLogger(__name__)
+
+env = Settings()
+
+es_client = env.elasticsearch_client()
 
 
 class Command(BaseCommand):
@@ -21,6 +27,11 @@ class Command(BaseCommand):
     def handle(self, *_args, **kwargs):
         self.stdout.write(self.style.NOTICE("Reingesting active files from Django"))
 
+        default_index = f"{env.elastic_root_index}-chunk"
+        new_index = f"{default_index}-{datetime.datetime.now(tz=datetime.UTC).strftime('%y%m%d%H%M')}"
+
         for file in File.objects.exclude(status__in=INACTIVE_STATUSES):
             logger.debug("Reingesting file object %s", file)
-            async_task(ingest, file.id, task_name=file.original_file_name, group="re-ingest", sync=kwargs["sync"])
+            async_task(
+                ingest, file.id, new_index, task_name=file.original_file.name, group="re-ingest", sync=kwargs["sync"]
+            )

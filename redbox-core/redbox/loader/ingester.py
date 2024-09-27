@@ -40,11 +40,10 @@ def get_elasticsearch_store_without_embeddings(es, es_index_name: str):
     )
 
 
-def ingest_file(file_name: str) -> str | None:
+def ingest_file(file_name: str, es_index_name: str) -> str | None:
     logging.info("Ingesting file: %s", file_name)
 
     es = env.elasticsearch_client()
-    es_index_name = f"{env.elastic_root_index}-chunk"
 
     es.options(ignore_status=[400]).indices.create(index=es_index_name)
 
