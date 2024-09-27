@@ -69,7 +69,11 @@ def test_chat_grouped_by_age(user_with_chats_with_messages_over_time: User, clie
     # Then
     assert response.status_code == HTTPStatus.OK
     soup = BeautifulSoup(response.content)
-    date_groups = soup.find_all("h3", {"class": "rb-chat-history__date_group"})
+    date_groups_all = soup.find_all("h3", {"class": "rb-chat-history__date_group"})
+
+    # Filter out the date_group that is within a <template> tag (this is just for CSR)
+    date_groups = [dg for dg in date_groups_all if not dg.find_parent("template")]
+
     assert len(date_groups) == 5
     for date_group, (header, chat_name) in zip(
         date_groups,

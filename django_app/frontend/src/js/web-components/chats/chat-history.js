@@ -2,6 +2,10 @@
 
 class ChatHistory extends HTMLElement {
 
+  connectedCallback() {
+    this.dataset.initialised = "true";
+  }
+
   /**
    * Creates a "Today" heading, if it doesn't already exist
    */
