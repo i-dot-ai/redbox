@@ -97,13 +97,15 @@ def build_llm_chain(
 
 def build_self_route_output_parser(
     match_condition: Callable[[str], bool], max_tokens_to_check: int, final_response_chain: bool = False
-):
+) -> Runnable[Iterable[AIMessageChunk], Iterable[str]]:
     """
-    This Runnable reads the streamed responses from an LLM until the match condition is true for the response so far
-    it has read a number of tokens. If the match condition is true it breaks off and returns nothing to the client,
-    if not then it streams the response to the client as normal.
+    This Runnable reads the streamed responses from an LLM until the match
+    condition is true for the response so far it has read a number of tokens.
+    If the match condition is true it breaks off and returns nothing to the
+    client, if not then it streams the response to the client as normal.
 
-    Used to handle responses from prompts like 'If this question can be answered answer it, else return False'
+    Used to handle responses from prompts like 'If this question can be
+    answered answer it, else return False'
     """
 
     def _self_route_output_parser(chunks: Iterable[AIMessageChunk]) -> Iterable[str]:

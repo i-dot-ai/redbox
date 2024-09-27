@@ -9,6 +9,7 @@ from tiktoken.core import Encoding
 from redbox import Redbox
 from redbox.models.chain import AISettings, RedboxQuery, RedboxState, RequestMetadata, metadata_reducer
 from redbox.models.chat import ChatRoute, ErrorRoute
+from redbox.models.file import ChunkResolution
 from redbox.models.graph import RedboxActivityEvent
 from redbox.models.settings import Settings
 from redbox.test.data import (
@@ -216,6 +217,7 @@ TEST_CASES = [
                 RedboxTestData(
                     number_of_docs=2,
                     tokens_in_all_docs=200_000,
+                    chunk_resolution=ChunkResolution.normal,
                     expected_llm_response=SELF_ROUTE_TO_SEARCH,  # + ["Condense Question", "Testing Response 1"],
                     expected_route=ChatRoute.search,
                     expected_activity_events=assert_number_of_events(1),
