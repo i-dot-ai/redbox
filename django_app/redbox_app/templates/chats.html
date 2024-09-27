@@ -1,5 +1,6 @@
 {% set pageTitle = "Chats" %}
 {% extends "base.html" %}
+{% from "macros/chat-history-macros.html" import chat_history_heading, chat_history_item %}
 {% from "macros/chat-macros.html" import message_box, route_display %}
 {% from "macros/profile-overlay.html" import profile_overlay %}
 
@@ -31,29 +32,16 @@
         </a>
 
       <div class="iai-panel govuk-!-margin-top-5 govuk-!-padding-top-3">
-        <h2 class="govuk-body govuk-!-font-weight-bold">Recent chats</h2>
-        <div class="iai-panel__scrollable">
+        <h2 class="govuk-body-s govuk-!-font-weight-bold govuk-!-margin-bottom-2">Recent chats</h2>
+        <div class="iai-panel__scrollable govuk-!-padding-right-3">
           
           <chat-history>
-            
-            {% macro chat_history_heading (text) %}
-                <h3 class="rb-chat-history__date_group govuk-body-xs govuk-!-font-weight-bold govuk-!-margin-bottom-1">{{ text }}</h3>
-            {% endmacro %}
 
-            {% macro chat_history_item (chat, link, active_chat_id) %}
-              <li class="govuk-!-margin-bottom-1">
-                <a class="govuk-link govuk-body-s" href="{{ link }}">
-                  {{ chat.name }}
-                  {% if chat.id == active_chat_id %}
-                    <span>(current)</span>
-                  {% endif %}
-                </a>
-                <delete-chat data-chatid="{{ chat.id }}" {% if chat.id == active_chat_id %}data-iscurrentchat="true"{% endif %}></delete-chat>
-              </li>
-            {% endmacro %}
-            
             <template id="template-chat_history_heading">
-              {{ chat_history_heading("-") }}
+              <div>
+                {% call chat_history_heading("-") %}
+                {% endcall %}
+              </div>
             </template>
             <template id="template-chat_history_item">
               {{ chat_history_item({
@@ -63,13 +51,13 @@
             </template>
 
             {% for date_group, chats in chat_grouped_by_date_group %}
-              {{ chat_history_heading(date_group) }}
-              <ul class="govuk-list govuk-list--spaced">
+              {% call chat_history_heading(date_group) %}
                 {% for chat in chats %}
                   {{ chat_history_item(chat, url('chats', chat.id), chat_id) }}
                 {% endfor %}
-              </ul>
+              {% endcall %}
             {% endfor %}
+
           </chat-history>
 
         </div>

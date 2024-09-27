@@ -132,3 +132,6 @@ upload-button {
 .govuk-textarea {
   border: 1px solid var(--iai-colour-text-secondary);
 }
+.iai-panel:has(.iai-panel__scrollable) {
+  padding-right: 0.75rem;
+}

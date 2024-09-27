@@ -1,8 +1,8 @@
 import "./web-components/chats/chat-controller.js";
 import "./web-components/chats/chat-history.js";
+import "./web-components/chats/chat-history-item.js";
 import "./web-components/chats/chat-message.js";
 import "./web-components/chats/chat-title.js";
-import "./web-components/chats/delete-chat.js";
 import "./web-components/chats/copy-text.js";
 import "./web-components/chats/document-selector.js";
 import "./web-components/chats/feedback-buttons.js";
