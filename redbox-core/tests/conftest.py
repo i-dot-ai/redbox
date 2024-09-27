@@ -1,7 +1,5 @@
 from collections.abc import Generator
-from pathlib import Path
 from typing import TYPE_CHECKING
-from uuid import UUID, uuid4
 
 import pytest
 import tiktoken
