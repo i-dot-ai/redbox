@@ -95,6 +95,9 @@ def environment(**options):
             "to_user_timezone": to_user_timezone,
             "environment": settings.ENVIRONMENT.value,
             "security": settings.MAX_SECURITY_CLASSIFICATION.value,
+            "repo_owner": settings.REPO_OWNER,
+            "analytics_tag": settings.ANALYTICS_TAG,
+            "analytics_link": settings.ANALYTICS_LINK,
         }
     )
     return env
