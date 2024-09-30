@@ -101,6 +101,8 @@ class UnstructuredChunkLoader:
     Uses a metadata chain to extract metadata from the document where possible.
     """
 
+    llm = None
+
     def __init__(
         self,
         chunk_resolution: ChunkResolution,
@@ -116,6 +118,7 @@ class UnstructuredChunkLoader:
         self._max_chunk_size = max_chunk_size
         self._overlap_chars = overlap_chars
         self._overlap_all_chunks = overlap_all_chunks
+        self.llm = get_chat_llm(self.env, AISettings())
 
     def create_file_metadata(
         self, page_content: str, metadata: dict[str, Any]
@@ -148,7 +151,7 @@ class UnstructuredChunkLoader:
                     ),
                 ]
             )
-            | get_chat_llm(self.env, AISettings())
+            | self.llm
             | JsonOutputParser().with_retry(stop_after_attempt=3)
         )
 
