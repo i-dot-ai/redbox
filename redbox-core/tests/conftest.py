@@ -1,7 +1,5 @@
 from collections.abc import Generator
-from pathlib import Path
 from typing import TYPE_CHECKING
-from uuid import UUID, uuid4
 
 import pytest
 import tiktoken
@@ -123,42 +121,6 @@ def metadata_retriever(es_client: Elasticsearch, es_index: str) -> MetadataRetri
 # -----#
 # Data #
 # -----#
-
-
-@pytest.fixture()
-def alice() -> UUID:
-    return uuid4()
-
-
-@pytest.fixture()
-def bob() -> UUID:
-    return uuid4()
-
-
-@pytest.fixture()
-def claire() -> UUID:
-    return uuid4()
-
-
-@pytest.fixture
-def file_pdf_path() -> Path:
-    return Path(__file__).parents[2] / "tests" / "data" / "pdf" / "Cabinet Office - Wikipedia.pdf"
-
-
-@pytest.fixture()
-def file(s3_client: S3Client, file_pdf_path: Path, alice: UUID, env: Settings) -> str:
-    file_name = file_pdf_path.name
-    file_type = file_pdf_path.suffix
-
-    with file_pdf_path.open("rb") as f:
-        s3_client.put_object(
-            Bucket=env.bucket_name,
-            Body=f.read(),
-            Key=file_name,
-            Tagging=f"file_type={file_type}",
-        )
-
-    return file_name
 
 
 @pytest.fixture(params=ALL_CHUNKS_RETRIEVER_CASES)
