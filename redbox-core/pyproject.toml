@@ -25,7 +25,6 @@ pytest-dotenv = "^0.5.2"
 kneed = "^0.8.5"
 langgraph = "^0.2.15"
 langchain-aws = "^0.2.0"
-litellm = "^1.46.6"
 
 
 [tool.poetry.group.dev.dependencies]
