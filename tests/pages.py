@@ -398,6 +398,16 @@ class ChatsPage(SignedInBasePage):
         self.page.get_by_role("button", name="New chat").click()
         return ChatsPage(self.page)
 
+    def delete_first_chat(self) -> "ChatsPage":
+        self.page.locator(".rb-chat-history__actions-button").first.click()
+        self.page.locator('[data-action="delete"]').first.click()
+        self.page.locator('[data-action="delete-confirm"]').first.click()
+        return ChatsPage(self.page)
+
+    def count_chats(self) -> "ChatsPage":
+        chat_links = self.page.locator(".rb-chat-history__link").all()
+        return len(chat_links)
+
     def send(self) -> "ChatsPage":
         self.page.locator('.rb-send-button[type="submit"]').click()
         return ChatsPage(self.page)

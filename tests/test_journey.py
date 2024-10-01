@@ -130,6 +130,12 @@ def test_user_journey(page: Page, email_address: str):
     documents_page = document_delete_page.confirm_deletion()
     assert documents_page.document_count() == pre_delete_doc_count - 1
 
+    # Delete a chat
+    chats_page = documents_page.navigate_to_chats()
+    pre_chats_count = chats_page.count_chats()
+    chats_page.delete_first_chat()
+    assert chats_page.count_chats() == pre_chats_count - 1
+
 
 def test_support_pages(page: Page):
     # Landing page
