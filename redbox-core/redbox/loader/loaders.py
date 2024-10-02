@@ -1,4 +1,5 @@
 import logging
+from ast import Pass
 from collections.abc import Iterator
 from datetime import UTC, datetime
 from io import BytesIO
@@ -27,98 +28,128 @@ else:
     S3Client = object
 
 
-def get_first_n_tokens(chunks: list[dict], n: int) -> str:
-    """From a list of chunks, returns the first n tokens."""
-    current_tokens = 0
-    tokens = ""
-    for chunk in chunks:
-        current_tokens += len(encoding.encode(chunk["text"]))
-        if current_tokens > n:
-            return tokens
-        tokens += chunk["text"]
-    return tokens
-
-
-def get_doc_metadata(
-    chunks: list[dict], n: int, ignore: list[str] = None
-) -> dict[str, Any]:
-    """
-    Use the first n chunks to get metadata using unstructured.
-    Metadata keys in the ignore list will be excluded from the result.
-    """
-    metadata = {}
-    for i, chunk in enumerate(chunks):
-        if i > n:
-            return metadata
-        metadata = merge_unstructured_metadata(metadata, chunk["metadata"], ignore)
-    return metadata
-
-
-def merge_unstructured_metadata(x: dict, y: dict, ignore: list[str] = None) -> dict:
-    """
-    Combine 2 dicts without deleting any elements. If the key is present in both,
-    combine values into a list. If value is in a list, extend with unique values.
-    Keys in the ignore list will be excluded from the result.
-    """
-    if ignore is None:
-        ignore = []
-
-    combined = {}
-
-    ignore_set = set(ignore)
-
-    for key in set(x) | set(y):
-        if key in ignore_set:
-            continue
-
-        if key in x and key in y:
-            if isinstance(x[key], list) or isinstance(y[key], list):
-                combined[key] = list(
-                    set(x[key] + (y[key] if isinstance(y[key], list) else [y[key]]))
-                )
-            else:
-                combined[key] = [x[key], y[key]]
-        elif key in x:
-            combined[key] = x[key]
-        else:
-            combined[key] = y[key]
-
-    return combined
-
-
-def coerce_to_string_list(input_data: str | list[Any]) -> list[str]:
-    if isinstance(input_data, str):
-        return [item.strip() for item in input_data.split(",")]
-    elif isinstance(input_data, list):
-        return [str(i) for i in input_data]
-    else:
-        raise ValueError("Input must be either a list or a string.")
-
-
-class UnstructuredChunkLoader:
-    """Load, partition and chunk a document using local unstructured library.
-
-    Uses a metadata chain to extract metadata from the document where possible.
-    """
-
-    llm = None
-
+class Metadata:
     def __init__(
         self,
-        chunk_resolution: ChunkResolution,
         env: Settings,
-        min_chunk_size: int,
-        max_chunk_size: int,
-        overlap_chars: int = 0,
-        overlap_all_chunks: bool = True,
+        s3_client: S3Client,
+        file_name: str,
     ):
-        self.chunk_resolution = chunk_resolution
         self.env = env
-        self._min_chunk_size = min_chunk_size
-        self._max_chunk_size = max_chunk_size
-        self._overlap_chars = overlap_chars
-        self._overlap_all_chunks = overlap_all_chunks
+        self.s3_client = s3_client
+        self.metadata = None
         self.llm = get_chat_llm(self.env, AISettings())
+        self.file_name = file_name
+
+    def get_first_n_tokens(self, chunks: list[dict], n: int) -> str:
+        """From a list of chunks, returns the first n tokens."""
+        current_tokens = 0
+        tokens = ""
+        for chunk in chunks:
+            current_tokens += len(encoding.encode(chunk["text"]))
+            if current_tokens > n:
+                return tokens
+            tokens += chunk["text"]
+        return tokens
+
+    def get_doc_metadata(
+        self, chunks: list[dict], n: int, ignore: list[str] = None
+    ) -> dict[str, Any]:
+        """
+        Use the first n chunks to get metadata using unstructured.
+        Metadata keys in the ignore list will be excluded from the result.
+        """
+        metadata = {}
+        for i, chunk in enumerate(chunks):
+            if i > n:
+                return metadata
+            metadata = self.merge_unstructured_metadata(
+                metadata, chunk["metadata"], ignore
+            )
+        return metadata
+
+    def merge_unstructured_metadata(
+        self, x: dict, y: dict, ignore: list[str] = None
+    ) -> dict:
+        """
+        Combine 2 dicts without deleting any elements. If the key is present in both,
+        combine values into a list. If value is in a list, extend with unique values.
+        Keys in the ignore list will be excluded from the result.
+        """
+        if ignore is None:
+            ignore = []
+
+        combined = {}
+
+        ignore_set = set(ignore)
+
+        for key in set(x) | set(y):
+            if key in ignore_set:
+                continue
+
+            if key in x and key in y:
+                if isinstance(x[key], list) or isinstance(y[key], list):
+                    combined[key] = list(
+                        set(x[key] + (y[key] if isinstance(y[key], list) else [y[key]]))
+                    )
+                else:
+                    combined[key] = [x[key], y[key]]
+            elif key in x:
+                combined[key] = x[key]
+            else:
+                combined[key] = y[key]
+
+        return combined
+
+    def _get_file_bytes(self, s3_client: S3Client, file_name: str) -> BytesIO:
+        return s3_client.get_object(Bucket=self.env.bucket_name, Key=file_name)[
+            "Body"
+        ].read()
+
+    def extract_metadata(self):
+        """
+        Extract metadata from first 1_000 chunks
+        """
+        file_bytes = self._get_file_bytes(
+            s3_client=self.s3_client, file_name=self.file_name
+        )
+        url = f"http://{self.env.unstructured_host}:8000/general/v0/general"
+        files = {
+            "files": (self.file_name, file_bytes),
+        }
+        response = requests.post(
+            url,
+            files=files,
+            data={
+                "strategy": "fast",
+                "chunking_strategy": "by_title",
+                "max_characters": self.env.worker_ingest_max_chunk_size,
+                "combine_under_n_chars": self.env.worker_ingest_min_chunk_size,
+                "overlap": 0,
+                "overlap_all": True,
+            },
+        )
+
+        if response.status_code != 200:
+            raise ValueError(response.text)
+
+        elements = response.json()
+
+        if not elements:
+            # if we can't extract metadata, return empty metadata
+            return {"name": "", "description": "", "keywords": [""]}
+
+        else:
+            # Get first 1k tokens of processed document
+            first_n = self.get_first_n_tokens(elements, 1_000)
+
+            # Get whatever metadata we can from processed document
+            doc_metadata = self.get_doc_metadata(chunks=elements, n=3, ignore=None)
+
+            # Generate new metadata
+            self.metadata = self.create_file_metadata(first_n, doc_metadata)
+            if not self.metadata:
+                raise ValueError("LLM failed to extract metadata for this file")
 
     def create_file_metadata(
         self, page_content: str, metadata: dict[str, Any]
@@ -159,8 +190,46 @@ class UnstructuredChunkLoader:
             return metadata_chain.invoke(
                 {"page_content": page_content, "metadata": metadata}
             )
-        except HTTPError as e:
+        except ConnectionError as e:
             logger.warning(f"Retrying due to HTTPError {e.response.status_code}")
+        except Exception as e:
+            raise Exception(
+                f"Some error happened in metadata extraction. {e.response.status_code}"
+            )
+
+
+def coerce_to_string_list(input_data: str | list[Any]) -> list[str]:
+    if isinstance(input_data, str):
+        return [item.strip() for item in input_data.split(",")]
+    elif isinstance(input_data, list):
+        return [str(i) for i in input_data]
+    else:
+        raise ValueError("Input must be either a list or a string.")
+
+
+class UnstructuredChunkLoader:
+    """Load, partition and chunk a document using local unstructured library.
+
+    Uses a metadata chain to extract metadata from the document where possible.
+    """
+
+    def __init__(
+        self,
+        chunk_resolution: ChunkResolution,
+        env: Settings,
+        min_chunk_size: int,
+        max_chunk_size: int,
+        metadata: list,
+        overlap_chars: int = 0,
+        overlap_all_chunks: bool = True,
+    ):
+        self.chunk_resolution = chunk_resolution
+        self.env = env
+        self._min_chunk_size = min_chunk_size
+        self._max_chunk_size = max_chunk_size
+        self._overlap_chars = overlap_chars
+        self._overlap_all_chunks = overlap_all_chunks
+        self.metadata = metadata
 
     def lazy_load(self, file_name: str, file_bytes: BytesIO) -> Iterator[Document]:
         """A lazy loader that reads a file line by line.
@@ -193,15 +262,6 @@ class UnstructuredChunkLoader:
         if not elements:
             raise ValueError("Unstructured failed to extract text for this file")
 
-        # Get first 1k tokens of processed document
-        first_n = get_first_n_tokens(elements, 1_000)
-
-        # Get whatever metadata we can from processed document
-        metadata = get_doc_metadata(chunks=elements, n=3, ignore=None)
-
-        # Generate new metadata
-        metadata = self.create_file_metadata(first_n, metadata)
-
         # add metadata below
         for i, raw_chunk in enumerate(elements):
             yield Document(
@@ -213,8 +273,8 @@ class UnstructuredChunkLoader:
                     created_datetime=datetime.now(UTC),
                     token_count=len(encoding.encode(raw_chunk["text"])),
                     chunk_resolution=self.chunk_resolution,
-                    name=metadata.get("name", file_name),
-                    description=metadata.get("description", "None"),
-                    keywords=coerce_to_string_list(metadata.get("keywords", [])),
+                    name=self.metadata.get("name", file_name),
+                    description=self.metadata.get("description", "None"),
+                    keywords=coerce_to_string_list(self.metadata.get("keywords", [])),
                 ).model_dump(),
             )
