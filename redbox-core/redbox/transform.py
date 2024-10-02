@@ -1,12 +1,13 @@
-import tiktoken
-from uuid import uuid5, NAMESPACE_DNS, UUID
 import itertools
+from uuid import NAMESPACE_DNS, UUID, uuid5
 
-from langchain_core.documents import Document
+import tiktoken
 from langchain_core.callbacks.manager import dispatch_custom_event
+from langchain_core.documents import Document
+from langchain_core.messages import ToolCall
 from langchain_core.runnables import RunnableLambda
 
-from redbox.models.chain import DocumentState, LLMCallMetadata, RedboxState, RequestMetadata
+from redbox.models.chain import DocumentState, LLMCallMetadata, RedboxState, RequestMetadata, ToolState
 from redbox.models.graph import RedboxEventType
 
 
@@ -142,6 +143,7 @@ def to_request_metadata(prompt_response_model: dict):
     )
 
     dispatch_custom_event(RedboxEventType.on_metadata_generation.value, metadata_event)
+
     return metadata_event
 
 
@@ -237,3 +239,11 @@ def sort_documents(documents: list[Document]) -> list[Document]:
 
     # Step 4: Flatten the list of blocks back into a single list
     return list(itertools.chain.from_iterable(all_sorted_blocks_by_max_score))
+
+
+def tool_calls_to_toolstate(tool_calls: list[ToolCall], called: bool | None = False) -> ToolState:
+    """Takes a list of tool calls and shapes them into a valid ToolState.
+
+    Sets all tool calls to a called state. Assumes this state is False.
+    """
+    return {t["id"]: {"tool": ToolCall(**t), "called": called} for t in tool_calls}
