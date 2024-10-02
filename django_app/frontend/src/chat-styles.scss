@@ -3,8 +3,16 @@ body:has(.iai-environment-warning) main:has(.iai-chat-input) {
   min-height: 0;
 }
 
+.rb-chat-history__title {
+  background-color: white;
+  position: relative;
+}
+.iai-panel__scrollable--chat-history {
+  margin-top: -0.75rem;
+}
 .rb-chat-history__date_group {
   font-size: 0.75rem;
+  margin-top: 2rem;
   padding-left: 0.75rem;
 }
 .rb-chat-history__container {
