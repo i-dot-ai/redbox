@@ -20,12 +20,12 @@ logger = logging.getLogger(__name__)
 
 
 @pytest.mark.django_db()
-def test_user_can_see_their_own_chats(chat_with_messages_over_time: Chat, alice: User, client: Client):
+def test_user_can_see_their_own_chats(chat_with_message: Chat, alice: User, client: Client):
     # Given
     client.force_login(alice)
 
     # When
-    response = client.get(f"/chats/{chat_with_messages_over_time.id}/")
+    response = client.get(f"/chats/{chat_with_message.id}/")
 
     # Then
     assert response.status_code == HTTPStatus.OK

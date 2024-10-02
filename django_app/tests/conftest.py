@@ -147,6 +147,12 @@ def chat(alice: User) -> Chat:
 
 
 @pytest.fixture()
+def chat_with_message(chat: Chat) -> Chat:
+    ChatMessage.objects.create(chat=chat, text="today", role=ChatRoleEnum.user)
+    return chat
+
+
+@pytest.fixture()
 def chat_message(chat: Chat, uploaded_file: File) -> ChatMessage:
     chat_message = ChatMessage.objects.create(chat=chat, text="A question?", role=ChatRoleEnum.user, route="A route")
     chat_message.source_files.set([uploaded_file])
