@@ -52,12 +52,19 @@ def build_retrieve_pattern(
 
 def build_chat_pattern(
     prompt_set: PromptSet,
+    tools: list[StructuredTool] | None = None,
     final_response_chain: bool = False,
 ) -> Runnable[RedboxState, dict[str, Any]]:
-    """Returns a Runnable that uses state["request"] to set state["text"]."""
+    """Returns a Runnable that uses state["request"] to set state["text"].
+
+    If tools are supplied, can also set state["tool_calls"].
+    """
 
     def _chat(state: RedboxState) -> dict[str, Any]:
         llm = get_chat_llm(Settings(), state["request"].ai_settings)
+        if tools:
+            llm = llm.bind_tools(tools)
+
         return build_llm_chain(
             prompt_set=prompt_set,
             llm=llm,
@@ -69,6 +76,7 @@ def build_chat_pattern(
 
 def build_merge_pattern(
     prompt_set: PromptSet,
+    tools: list[StructuredTool] | None = None,
     final_response_chain: bool = False,
 ) -> Runnable[RedboxState, dict[str, Any]]:
     """Returns a Runnable that uses state["request"] and state["documents"] to return one item in state["documents"].
@@ -78,12 +86,16 @@ def build_merge_pattern(
     When combined with group send, with combine all Documents and use the metadata of the first.
 
     When used without a send, the first Document receieved defines the metadata.
+
+    If tools are supplied, can also set state["tool_calls"].
     """
     tokeniser = get_tokeniser()
 
     @RunnableLambda
     def _merge(state: RedboxState) -> dict[str, Any]:
         llm = get_chat_llm(Settings(), state["request"].ai_settings)
+        if tools:
+            llm = llm.bind_tools(tools)
 
         if not state.get("documents"):
             return {"documents": None}
@@ -125,13 +137,19 @@ def build_merge_pattern(
 def build_stuff_pattern(
     prompt_set: PromptSet,
     output_parser: Runnable = None,
+    tools: list[StructuredTool] | None = None,
     final_response_chain: bool = False,
 ) -> Runnable[RedboxState, dict[str, Any]]:
-    """Returns a Runnable that uses state["request"] and state["documents"] to set state["text"]."""
+    """Returns a Runnable that uses state["request"] and state["documents"] to set state["text"].
+
+    If tools are supplied, can also set state["tool_calls"].
+    """
 
     @RunnableLambda
     def _stuff(state: RedboxState) -> dict[str, Any]:
         llm = get_chat_llm(Settings(), state["request"].ai_settings)
+        if tools:
+            llm = llm.bind_tools(tools)
 
         events = []
 

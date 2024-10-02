@@ -18,8 +18,7 @@ from django.utils.translation import gettext_lazy as _
 from django_use_email_as_username.models import BaseUser, BaseUserManager
 from yarl import URL
 
-from redbox.models import Settings
-from redbox_app.redbox_core import prompts
+from redbox.models import Settings, prompts
 from redbox_app.redbox_core.utils import get_date_group
 
 logging.basicConfig(level=os.environ.get("LOG_LEVEL", "INFO"))
@@ -90,6 +89,8 @@ class AISettings(UUIDPrimaryKeyBase, TimeStampedModel, AbstractAISettings):
     chat_with_docs_reduce_system_prompt = models.TextField(default=prompts.CHAT_WITH_DOCS_REDUCE_SYSTEM_PROMPT)
     retrieval_system_prompt = models.TextField(default=prompts.RETRIEVAL_SYSTEM_PROMPT)
     retrieval_question_prompt = models.TextField(default=prompts.RETRIEVAL_QUESTION_PROMPT)
+    agentic_retrieval_system_prompt = models.TextField(default=prompts.AGENTIC_RETRIEVAL_SYSTEM_PROMPT)
+    agentic_retrieval_question_prompt = models.TextField(default=prompts.AGENTIC_RETRIEVAL_QUESTION_PROMPT)
     condense_system_prompt = models.TextField(default=prompts.CONDENSE_SYSTEM_PROMPT)
     condense_question_prompt = models.TextField(default=prompts.CONDENSE_QUESTION_PROMPT)
     map_max_concurrency = models.PositiveIntegerField(default=128)

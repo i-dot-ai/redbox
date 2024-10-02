@@ -4,11 +4,10 @@ from typing import Literal
 
 from langchain_core.runnables import Runnable
 
-from redbox.models.chain import get_prompts
 from redbox.chains.components import get_tokeniser
 from redbox.graph.nodes.processes import PromptSet
 from redbox.models import ChatRoute
-from redbox.models.chain import RedboxState
+from redbox.models.chain import RedboxState, get_prompts
 from redbox.transform import get_document_token_count
 
 log = logging.getLogger()
@@ -95,3 +94,15 @@ def documents_selected_conditional(state: RedboxState) -> bool:
 
 def multiple_docs_in_group_conditional(state: RedboxState) -> bool:
     return any(len(group) > 1 for group in state.get("documents", {}).values())
+
+
+def build_tools_selected_conditional(tools: list[str]) -> Runnable:
+    """Given a list of tools, returns True if any tool is in the state and uncalled."""
+
+    def _tools_selected_conditional(state: RedboxState) -> bool:
+        for tool in tools:
+            if tool in state["tool_calls"]:
+                if not state["tool_calls"][tool].called:
+                    return True
+
+    return _tools_selected_conditional

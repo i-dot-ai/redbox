@@ -3,6 +3,7 @@ from uuid import uuid4
 
 import pytest
 from langchain_core.language_models.fake_chat_models import GenericFakeChatModel
+from langchain_core.messages import AIMessage
 from pytest_mock import MockerFixture
 from tiktoken.core import Encoding
 
@@ -269,6 +270,38 @@ TEST_CASES = [
         ),
         generate_test_cases(
             query=RedboxQuery(
+                question="@gadget What is AI?",
+                s3_keys=["s3_key"],
+                user_uuid=uuid4(),
+                chat_history=[],
+                permitted_s3_keys=["s3_key"],
+            ),
+            test_data=[
+                RedboxTestData(
+                    number_of_docs=1,
+                    tokens_in_all_docs=10000,
+                    expected_llm_response=[
+                        AIMessage(
+                            content="",
+                            additional_kwargs={
+                                "tool_calls": [
+                                    {
+                                        "id": "call_e4003b",
+                                        "function": {"arguments": '{\n  "query": "ai"\n}', "name": "search"},
+                                        "type": "function",
+                                    }
+                                ]
+                            },
+                        ),
+                        "AI is a lie",
+                    ],
+                    expected_route=ChatRoute.search_agentic,
+                ),
+            ],
+            test_id="Agentic search",
+        ),
+        generate_test_cases(
+            query=RedboxQuery(
                 question="@nosuchkeyword What is AI?",
                 s3_keys=[],
                 user_uuid=uuid4(),
@@ -397,6 +430,6 @@ def test_get_available_keywords(tokeniser: Encoding, env: Settings):
         env=env,
         debug=LANGGRAPH_DEBUG,
     )
-    keywords = {ChatRoute.search}
+    keywords = {ChatRoute.search, ChatRoute.search_agentic}
 
     assert keywords == set(app.get_available_keywords().keys())

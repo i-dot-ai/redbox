@@ -9,6 +9,7 @@ description = "RAG application that uses GenAI to chat with and summarise civil 
 authors = ["i.AI <i-dot-ai-enquiries@cabinetoffice.gov.uk>"]
 license = "MIT"
 readme = "README.md"
+package-mode = false
 
 [tool.poetry.dependencies]
 python = ">=3.12,<3.13"
@@ -108,7 +109,7 @@ select = [
     "YTT",
 ]
 exclude = ["django_app/redbox_app/redbox_core/migrations/*.py", "out/*"]
-ignore = ["COM812", "DJ001", "RET505", "RET508", "PLR0913"]
+ignore = ["COM812", "DJ001", "RET505", "RET508", "PLR0913", "ISC001"]
 
 [tool.ruff.lint.isort]
 known-first-party = ["redbox_app", "redbox", "core_api"]
