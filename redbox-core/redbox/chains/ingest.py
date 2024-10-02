@@ -1,7 +1,7 @@
 import logging
 from functools import partial
 from io import BytesIO
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Iterator
 
 from langchain.vectorstores import VectorStore
 from langchain_core.documents.base import Document
@@ -29,7 +29,7 @@ def document_loader(
     document_loader: UnstructuredChunkLoader, s3_client: S3Client, env: Settings
 ) -> Runnable:
     @chain
-    def wrapped(file_name: str):
+    def wrapped(file_name: str) -> Iterator[Document]:
         file_bytes = s3_client.get_object(Bucket=env.bucket_name, Key=file_name)[
             "Body"
         ].read()

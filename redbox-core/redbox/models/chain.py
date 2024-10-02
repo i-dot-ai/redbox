@@ -8,10 +8,11 @@ used in conjunction with langchain this is the tidiest boxing of pydantic v1 we 
 from datetime import UTC, datetime
 from enum import StrEnum
 from functools import reduce
-from typing import Annotated, Literal, NotRequired, Required, TypedDict
+from typing import Annotated, Literal, NotRequired, Required, TypedDict, get_args, get_origin
 from uuid import UUID, uuid4
 
 from langchain_core.documents import Document
+from langchain_core.messages import ToolCall
 from pydantic import BaseModel, Field
 
 
@@ -255,11 +256,49 @@ def metadata_reducer(current: RequestMetadata | None, update: RequestMetadata | 
     )
 
 
+class ToolStateEntry(TypedDict):
+    """Represents a single tool call in the ToolState."""
+
+    tool: ToolCall
+    called: bool
+
+
+class ToolState(dict[str, ToolStateEntry]):
+    """Represents the state of multiple tools."""
+
+
+def tool_calls_reducer(current: ToolState, update: ToolState | None) -> ToolState:
+    """Handles updates to the tool state.
+
+    * If a new key is added, adds it to the state.
+    * If an existing key is None'd, removes it
+    * If update is None, clears all tool calls
+    """
+    if not update:
+        return {}
+
+    # If update is actually a list of state updates, run them one by one
+    if isinstance(update, list):
+        reduced = reduce(lambda current, update: tool_calls_reducer(current, update), update, current)
+        return reduced
+
+    reduced = current.copy()
+
+    for key, value in update.items():
+        if value is None:
+            reduced.pop(key, None)
+        else:
+            reduced[key] = value
+
+    return reduced
+
+
 class RedboxState(TypedDict):
     request: Required[RedboxQuery]
     documents: Annotated[NotRequired[DocumentState], document_reducer]
     text: NotRequired[str | None]
     route_name: NotRequired[str | None]
+    tool_calls: Annotated[NotRequired[ToolState], tool_calls_reducer]
     metadata: Annotated[NotRequired[RequestMetadata], metadata_reducer]
 
 
@@ -292,3 +331,73 @@ def get_prompts(state: RedboxState, prompt_set: PromptSet) -> tuple[str, str]:
         system_prompt = state["request"].ai_settings.condense_system_prompt
         question_prompt = state["request"].ai_settings.condense_question_prompt
     return (system_prompt, question_prompt)
+
+
+def is_dict_type[T](annotated_type: T) -> bool:
+    """Unwraps an annotated type to work out if it's a subclass of dict."""
+    if get_origin(annotated_type) is Annotated:
+        base_type = get_args(annotated_type)[0]
+    else:
+        base_type = annotated_type
+
+    if get_origin(base_type) in {Required, NotRequired}:
+        base_type = get_args(base_type)[0]
+
+    return issubclass(base_type, dict)
+
+
+def dict_reducer(current: dict, update: dict) -> dict:
+    """
+    Recursively merge two dictionaries:
+
+    * If update has None for a key, current's key will be replaced with None.
+    * If both values are dictionaries, they will be merged recursively.
+    * Otherwise, the value in update will replace the value in current.
+    """
+    merged = current.copy()
+
+    for key, new_value in update.items():
+        if new_value is None:
+            merged[key] = None
+        elif isinstance(new_value, dict) and isinstance(merged.get(key), dict):
+            merged[key] = dict_reducer(merged[key], new_value)
+        else:
+            merged[key] = new_value
+
+    return merged
+
+
+def merge_redbox_state_updates(current: RedboxState, update: RedboxState) -> RedboxState:
+    """
+    Merge RedboxStates to the following rules, intended for use on state updates.
+
+    * Unannotated items are overwritten but never with None
+    * Annotated items apply their reducer function
+    * UNLESS they're a dictionary, in which case we use dict_reducer to preserve Nones
+    """
+    merged_state = current.copy()
+
+    all_keys = set(current.keys()).union(set(update.keys()))
+
+    for update_key in all_keys:
+        current_value = current.get(update_key, None)
+        update_value = update.get(update_key, None)
+
+        annotation = RedboxState.__annotations__.get(update_key, None)
+
+        if get_origin(annotation) is Annotated:
+            if is_dict_type(annotation):
+                # If it's annotated and a subclass of dict, apply a custom reducer function
+                merged_state[update_key] = dict_reducer(current=current_value or {}, update=update_value or {})
+            else:
+                # If it's annotated and not a dict, apply its reducer function
+                _, reducer_func = get_args(annotation)
+                merged_state[update_key] = reducer_func(current_value, update_value)
+        else:
+            # If not annotated, replace but don't overwrite an existing value with None
+            if update_value is not None:
+                merged_state[update_key] = update_value
+            else:
+                merged_state[update_key] = current_value
+
+    return merged_state

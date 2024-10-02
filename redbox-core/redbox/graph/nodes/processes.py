@@ -1,27 +1,26 @@
-from collections.abc import Callable
-import logging
-from operator import add
-import re
 import json
+import logging
+import re
+from collections.abc import Callable
+from functools import reduce
+from operator import add
 from typing import Any
 from uuid import uuid4
-from functools import reduce
 
 from langchain.schema import StrOutputParser
-from langchain_core.runnables import Runnable, RunnableLambda, RunnableParallel
 from langchain_core.callbacks.manager import dispatch_custom_event
-from langchain_core.vectorstores import VectorStoreRetriever
 from langchain_core.documents import Document
+from langchain_core.runnables import Runnable, RunnableLambda, RunnableParallel
+from langchain_core.tools import StructuredTool
+from langchain_core.vectorstores import VectorStoreRetriever
 
-from redbox.chains.components import get_tokeniser, get_chat_llm
-from redbox.chains.runnables import build_llm_chain, CannedChatLLM
-from redbox.models.graph import ROUTE_NAME_TAG, RedboxActivityEvent, RedboxEventType
+from redbox.chains.components import get_chat_llm, get_tokeniser
+from redbox.chains.runnables import CannedChatLLM, build_llm_chain
+from redbox.graph.nodes.tools import is_valid_tool
 from redbox.models import ChatRoute, Settings
-from redbox.models.chain import DocumentState, RedboxState, RequestMetadata
-from redbox.transform import combine_documents
-from redbox.models.chain import PromptSet
-from redbox.transform import flatten_document_state
-
+from redbox.models.chain import DocumentState, PromptSet, RedboxState, RequestMetadata, merge_redbox_state_updates
+from redbox.models.graph import ROUTE_NAME_TAG, RedboxActivityEvent, RedboxEventType
+from redbox.transform import combine_documents, flatten_document_state
 
 log = logging.getLogger()
 re_keyword_pattern = re.compile(r"@(\w+)")
@@ -237,7 +236,42 @@ def build_error_pattern(text: str, route_name: str | None) -> Runnable[RedboxSta
     return _error_pattern
 
 
-# Raw processes
+def build_tool_pattern(tools=list[StructuredTool]) -> Callable[[RedboxState], dict[str, Any]]:
+    """Builds a process that takes state["tool_calls"] and returns state updates.
+
+    The state attributes affected are defined in the tool.
+    """
+    tools_by_name: dict[str, StructuredTool] = {}
+
+    for tool in tools:
+        if not is_valid_tool(tool):
+            msg = f"{tool.name} must use a function that returns a correctly-formatted RedboxState update"
+            raise ValueError(msg)
+        tools_by_name[tool.name] = tool
+
+    def _tool(state: RedboxState) -> dict[str, Any]:
+        state_updates: list[dict] = []
+
+        for tool_id, tool_call_dict in state.get("tool_calls", {}).items():
+            tool_call = tool_call_dict["tool"]
+
+            if not tool_call_dict["called"]:
+                tool = tools_by_name[tool_call["name"]]
+
+                result_state_update = tool.invoke(tool_call["args"])
+                tool_called_state_update = {"tool_calls": {tool_id: {"called": True}}}
+
+                state_updates.append(result_state_update | tool_called_state_update)
+
+        if state_updates:
+            return reduce(merge_redbox_state_updates, state_updates)
+
+    return _tool
+
+
+# Raw processes: functions that need no building
+
+
 def clear_documents_process(state: RedboxState) -> dict[str, Any]:
     if documents := state.get("documents"):
         return {"documents": {group_id: None for group_id in documents}}

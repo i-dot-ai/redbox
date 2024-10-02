@@ -12,6 +12,10 @@ TEST_CHAIN_PARAMETERS = (
         "knn_boost": 2,
         "similarity_threshold": 0,
         "elbow_filter_enabled": True,
+        "rag_gauss_scale_size": 3,
+        "rag_gauss_scale_decay": 0.5,
+        "rag_gauss_scale_min": 1.1,
+        "rag_gauss_scale_max": 2.0,
     },
     {
         "rag_k": 2,
@@ -20,6 +24,10 @@ TEST_CHAIN_PARAMETERS = (
         "knn_boost": 2,
         "similarity_threshold": 0,
         "elbow_filter_enabled": False,
+        "rag_gauss_scale_size": 1,
+        "rag_gauss_scale_decay": 0.1,
+        "rag_gauss_scale_min": 1.0,
+        "rag_gauss_scale_max": 1.0,
     },
 )
 

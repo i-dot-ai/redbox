@@ -1,4 +1,5 @@
 import logging
+from http import HTTPStatus
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
@@ -16,11 +17,12 @@ User = get_user_model()
 logger = logging.getLogger(__name__)
 
 
+# This can be removed once profile overlay added to /chats
 class CheckDemographicsView(View):
     @method_decorator(login_required)
     def get(self, request: HttpRequest) -> HttpResponse:
         user: User = request.user
-        if all([user.name, user.ai_experience, user.grade, user.business_unit, user.profession]):
+        if all([user.name, user.ai_experience]):
             return redirect("chats")
         else:
             return redirect("demographics")
@@ -34,3 +36,16 @@ class DemographicsView(LoginRequiredMixin, UpdateView):
 
     def get_object(self, **kwargs):  # noqa: ARG002
         return self.request.user
+
+
+class UpdateDemographicsView(View):
+    @method_decorator(login_required)
+    def post(self, request: HttpRequest) -> HttpResponse:
+        user: User = request.user
+        user.name = request.POST.get("name")
+        user.ai_experience = request.POST.get("ai_experience")
+        user.info_about_user = request.POST.get("info_about_user")
+        user.redbox_response_preferences = request.POST.get("redbox_response_preferences")
+        user.save()
+
+        return HttpResponse(status=HTTPStatus.NO_CONTENT)

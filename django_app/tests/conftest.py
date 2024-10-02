@@ -104,18 +104,8 @@ def bob(create_user):
 
 
 @pytest.fixture()
-def chris(create_user):
-    return create_user("chris@example.com", "2000-01-02")
-
-
-@pytest.fixture()
 def peter_rabbit():
     return User.objects.create_user(email="peter.rabbit@example.com", password="P455W0rd")
-
-
-@pytest.fixture()
-def jemima_puddleduck():
-    return User.objects.create_user(email="jemima.puddleduck@example.com", password="P455W0rd")
 
 
 @pytest.fixture()
@@ -219,21 +209,6 @@ def chat_with_files(chat: Chat, several_files: Sequence[File]) -> Chat:
     chat_message.selected_files.set(several_files[0:2])
     chat_message = ChatMessage.objects.create(chat=chat, text="A second answer.", role=ChatRoleEnum.ai, route="search")
     chat_message.source_files.set([several_files[2]])
-    return chat
-
-
-@pytest.fixture()
-def chat_with_messages_over_time(chat: Chat) -> Chat:
-    now = timezone.now()
-    with freeze_time(now - timedelta(days=40)):
-        ChatMessage.objects.create(chat=chat, text="40 days old", role=ChatRoleEnum.user)
-    with freeze_time(now - timedelta(days=20)):
-        ChatMessage.objects.create(chat=chat, text="20 days old", role=ChatRoleEnum.user)
-    with freeze_time(now - timedelta(days=5)):
-        ChatMessage.objects.create(chat=chat, text="5 days old", role=ChatRoleEnum.user)
-    with freeze_time(now - timedelta(days=1)):
-        ChatMessage.objects.create(chat=chat, text="yesterday", role=ChatRoleEnum.user)
-    ChatMessage.objects.create(chat=chat, text="today", role=ChatRoleEnum.user)
     return chat
 
 

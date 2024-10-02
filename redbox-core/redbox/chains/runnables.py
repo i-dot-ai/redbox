@@ -1,32 +1,37 @@
 import logging
-from collections.abc import Callable
-from typing import Any, Iterator, Iterable
 import re
 from operator import itemgetter
+from typing import Any, Callable, Iterable, Iterator
 
-from langchain_core.callbacks.manager import CallbackManagerForLLMRun
+from langchain_core.callbacks.manager import CallbackManagerForLLMRun, dispatch_custom_event
 from langchain_core.language_models import BaseChatModel
-from langchain_core.messages import AIMessageChunk, BaseMessage, AIMessage
-from langchain_core.outputs import ChatGeneration, ChatGenerationChunk, ChatResult
+from langchain_core.messages import AIMessage, AIMessageChunk, BaseMessage
 from langchain_core.output_parsers import StrOutputParser
+from langchain_core.outputs import ChatGeneration, ChatGenerationChunk, ChatResult
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.runnables import Runnable, chain, RunnableLambda, RunnableGenerator
-from langchain_core.callbacks.manager import dispatch_custom_event
-
+from langchain_core.runnables import Runnable, RunnableGenerator, RunnableLambda, chain
 from tiktoken import Encoding
-
-from redbox.models.graph import RedboxEventType
 
 from redbox.api.format import format_documents
 from redbox.chains.components import get_tokeniser
-from redbox.models.chain import ChainChatMessage, RedboxState
+from redbox.models.chain import ChainChatMessage, PromptSet, RedboxState, get_prompts
 from redbox.models.errors import QuestionLengthError
-from redbox.models.chain import PromptSet, get_prompts
-from redbox.transform import flatten_document_state, to_request_metadata
-
+from redbox.models.graph import RedboxEventType
+from redbox.transform import flatten_document_state, to_request_metadata, tool_calls_to_toolstate
 
 log = logging.getLogger()
 re_string_pattern = re.compile(r"(\S+)")
+
+
+def combine_getters(*getters: Callable[[Any], Any]) -> Callable[[Any], Any]:
+    """Permits chaining of *getter functions in LangChain."""
+
+    def _combined(obj):
+        for getter in getters:
+            obj = getter(obj)
+        return obj
+
+    return _combined
 
 
 def build_chat_prompt_from_messages_runnable(prompt_set: PromptSet, tokeniser: Encoding = None) -> Runnable:
@@ -85,26 +90,45 @@ def build_llm_chain(
     model_name = getattr(llm, "model_name", "unknown-model")
     _llm = llm.with_config(tags=["response_flag"]) if final_response_chain else llm
     _output_parser = output_parser if output_parser else StrOutputParser()
+
     return (
         build_chat_prompt_from_messages_runnable(prompt_set)
         | {
+            "text_and_tools": (
+                _llm
+                | {
+                    "text": _output_parser,
+                    "tool_calls": (RunnableLambda(lambda r: r.tool_calls) | tool_calls_to_toolstate),
+                }
+            ),
             "prompt": RunnableLambda(lambda prompt: prompt.to_string()),
-            "response": _llm | _output_parser,
-            "model": lambda x: model_name,
         }
-        | {"text": itemgetter("response"), "metadata": to_request_metadata}
+        | {
+            "text": combine_getters(itemgetter("text_and_tools"), itemgetter("text")),
+            "tool_calls": combine_getters(itemgetter("text_and_tools"), itemgetter("tool_calls")),
+            "metadata": (
+                {
+                    "prompt": itemgetter("prompt"),
+                    "response": combine_getters(itemgetter("text_and_tools"), itemgetter("text")),
+                    "model": lambda _: model_name,
+                }
+                | to_request_metadata
+            ),
+        }
     )
 
 
 def build_self_route_output_parser(
     match_condition: Callable[[str], bool], max_tokens_to_check: int, final_response_chain: bool = False
-):
+) -> Runnable[Iterable[AIMessageChunk], Iterable[str]]:
     """
-    This Runnable reads the streamed responses from an LLM until the match condition is true for the response so far
-    it has read a number of tokens. If the match condition is true it breaks off and returns nothing to the client,
-    if not then it streams the response to the client as normal.
+    This Runnable reads the streamed responses from an LLM until the match
+    condition is true for the response so far it has read a number of tokens.
+    If the match condition is true it breaks off and returns nothing to the
+    client, if not then it streams the response to the client as normal.
 
-    Used to handle responses from prompts like 'If this question can be answered answer it, else return False'
+    Used to handle responses from prompts like 'If this question can be
+    answered answer it, else return False'
     """
 
     def _self_route_output_parser(chunks: Iterable[AIMessageChunk]) -> Iterable[str]:

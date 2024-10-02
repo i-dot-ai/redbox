@@ -1,26 +1,25 @@
-import pytest
 import copy
-from tiktoken.core import Encoding
-from pytest_mock import MockerFixture
 from uuid import uuid4
 
+import pytest
 from langchain_core.language_models.fake_chat_models import GenericFakeChatModel
+from pytest_mock import MockerFixture
+from tiktoken.core import Encoding
 
-from redbox.models.chain import AISettings, RedboxQuery, RedboxState, RequestMetadata
 from redbox import Redbox
+from redbox.models.chain import AISettings, RedboxQuery, RedboxState, RequestMetadata, metadata_reducer
 from redbox.models.chat import ChatRoute, ErrorRoute
+from redbox.models.file import ChunkResolution
 from redbox.models.graph import RedboxActivityEvent
 from redbox.models.settings import Settings
 from redbox.test.data import (
-    RedboxTestData,
     RedboxChatTestCase,
+    RedboxTestData,
     generate_test_cases,
     mock_all_chunks_retriever,
-    mock_parameterised_retriever,
     mock_metadata_retriever,
+    mock_parameterised_retriever,
 )
-from redbox.models.chain import metadata_reducer
-
 
 LANGGRAPH_DEBUG = True
 
@@ -40,9 +39,24 @@ TEST_CASES = [
                 question="What is AI?", s3_keys=[], user_uuid=uuid4(), chat_history=[], permitted_s3_keys=[]
             ),
             test_data=[
-                RedboxTestData(0, 0, expected_llm_response=["Testing Response 1"], expected_route=ChatRoute.chat),
-                RedboxTestData(1, 100, expected_llm_response=["Testing Response 1"], expected_route=ChatRoute.chat),
-                RedboxTestData(10, 1200, expected_llm_response=["Testing Response 1"], expected_route=ChatRoute.chat),
+                RedboxTestData(
+                    number_of_docs=0,
+                    tokens_in_all_docs=0,
+                    expected_llm_response=["Testing Response 1"],
+                    expected_route=ChatRoute.chat,
+                ),
+                RedboxTestData(
+                    number_of_docs=1,
+                    tokens_in_all_docs=100,
+                    expected_llm_response=["Testing Response 1"],
+                    expected_route=ChatRoute.chat,
+                ),
+                RedboxTestData(
+                    number_of_docs=10,
+                    tokens_in_all_docs=1200,
+                    expected_llm_response=["Testing Response 1"],
+                    expected_route=ChatRoute.chat,
+                ),
             ],
             test_id="Basic Chat",
         ),
@@ -52,13 +66,22 @@ TEST_CASES = [
             ),
             test_data=[
                 RedboxTestData(
-                    1, 1000, expected_llm_response=["Testing Response 1"], expected_route=ChatRoute.chat_with_docs
+                    number_of_docs=1,
+                    tokens_in_all_docs=1_000,
+                    expected_llm_response=["Testing Response 1"],
+                    expected_route=ChatRoute.chat_with_docs,
                 ),
                 RedboxTestData(
-                    1, 50_000, expected_llm_response=["Testing Response 1"], expected_route=ChatRoute.chat_with_docs
+                    number_of_docs=1,
+                    tokens_in_all_docs=50_000,
+                    expected_llm_response=["Testing Response 1"],
+                    expected_route=ChatRoute.chat_with_docs,
                 ),
                 RedboxTestData(
-                    1, 80_000, expected_llm_response=["Testing Response 1"], expected_route=ChatRoute.chat_with_docs
+                    number_of_docs=1,
+                    tokens_in_all_docs=80_000,
+                    expected_llm_response=["Testing Response 1"],
+                    expected_route=ChatRoute.chat_with_docs,
                 ),
             ],
             test_id="Chat with single doc",
@@ -74,21 +97,27 @@ TEST_CASES = [
             ),
             test_data=[
                 RedboxTestData(
-                    2, 40_000, expected_llm_response=["Testing Response 1"], expected_route=ChatRoute.chat_with_docs
+                    number_of_docs=2,
+                    tokens_in_all_docs=40_000,
+                    expected_llm_response=["Testing Response 1"],
+                    expected_route=ChatRoute.chat_with_docs,
                 ),
                 RedboxTestData(
-                    2, 80_000, expected_llm_response=["Testing Response 1"], expected_route=ChatRoute.chat_with_docs
+                    number_of_docs=2,
+                    tokens_in_all_docs=80_000,
+                    expected_llm_response=["Testing Response 1"],
+                    expected_route=ChatRoute.chat_with_docs,
                 ),
                 RedboxTestData(
-                    2,
-                    140_000,
+                    number_of_docs=2,
+                    tokens_in_all_docs=140_000,
                     expected_llm_response=SELF_ROUTE_TO_CHAT + ["Map Step Response"] * 2 + ["Testing Response 1"],
                     expected_route=ChatRoute.chat_with_docs_map_reduce,
                     expected_activity_events=assert_number_of_events(1),
                 ),
                 RedboxTestData(
-                    4,
-                    140_000,
+                    number_of_docs=4,
+                    tokens_in_all_docs=140_000,
                     expected_llm_response=SELF_ROUTE_TO_CHAT
                     + ["Map Step Response"] * 4
                     + ["Merge Per Document Response"] * 2
@@ -105,20 +134,26 @@ TEST_CASES = [
             ),
             test_data=[
                 RedboxTestData(
-                    2, 40_000, expected_llm_response=["Testing Response 1"], expected_route=ChatRoute.chat_with_docs
+                    number_of_docs=2,
+                    tokens_in_all_docs=40_000,
+                    expected_llm_response=["Testing Response 1"],
+                    expected_route=ChatRoute.chat_with_docs,
                 ),
                 RedboxTestData(
-                    2, 80_000, expected_llm_response=["Testing Response 1"], expected_route=ChatRoute.chat_with_docs
+                    number_of_docs=2,
+                    tokens_in_all_docs=80_000,
+                    expected_llm_response=["Testing Response 1"],
+                    expected_route=ChatRoute.chat_with_docs,
                 ),
                 RedboxTestData(
-                    2,
-                    140_000,
+                    number_of_docs=2,
+                    tokens_in_all_docs=140_000,
                     expected_llm_response=["Map Step Response"] * 2 + ["Testing Response 1"],
                     expected_route=ChatRoute.chat_with_docs_map_reduce,
                 ),
                 RedboxTestData(
-                    4,
-                    140_000,
+                    number_of_docs=4,
+                    tokens_in_all_docs=140_000,
                     expected_llm_response=["Map Step Response"] * 4
                     + ["Merge Per Document Response"] * 2
                     + ["Testing Response 1"],
@@ -137,8 +172,8 @@ TEST_CASES = [
             ),
             test_data=[
                 RedboxTestData(
-                    2,
-                    200_000,
+                    number_of_docs=2,
+                    tokens_in_all_docs=200_000,
                     expected_llm_response=["Map Step Response"] * 2
                     + ["Merge Per Document Response"]
                     + ["Testing Response 1"],
@@ -157,8 +192,8 @@ TEST_CASES = [
             ),
             test_data=[
                 RedboxTestData(
-                    2,
-                    200_000,
+                    number_of_docs=2,
+                    tokens_in_all_docs=200_000,
                     expected_llm_response=SELF_ROUTE_TO_CHAT
                     + ["Map Step Response"] * 2
                     + ["Merge Per Document Response"]
@@ -180,8 +215,9 @@ TEST_CASES = [
             ),
             test_data=[
                 RedboxTestData(
-                    2,
-                    200_000,
+                    number_of_docs=2,
+                    tokens_in_all_docs=200_000,
+                    chunk_resolution=ChunkResolution.normal,
                     expected_llm_response=SELF_ROUTE_TO_SEARCH,  # + ["Condense Question", "Testing Response 1"],
                     expected_route=ChatRoute.search,
                     expected_activity_events=assert_number_of_events(1),
@@ -199,8 +235,8 @@ TEST_CASES = [
             ),
             test_data=[
                 RedboxTestData(
-                    10,
-                    2_000_000,
+                    number_of_docs=10,
+                    tokens_in_all_docs=2_000_000,
                     expected_llm_response=["These documents are too large to work with."],
                     expected_route=ErrorRoute.files_too_large,
                 ),
@@ -217,14 +253,14 @@ TEST_CASES = [
             ),
             test_data=[
                 RedboxTestData(
-                    1,
-                    10000,
+                    number_of_docs=1,
+                    tokens_in_all_docs=10000,
                     expected_llm_response=["Condense response", "The cake is a lie"],
                     expected_route=ChatRoute.search,
                 ),
                 RedboxTestData(
-                    5,
-                    10000,
+                    number_of_docs=5,
+                    tokens_in_all_docs=10000,
                     expected_llm_response=["Condense response", "The cake is a lie"],
                     expected_route=ChatRoute.search,
                 ),
@@ -241,8 +277,8 @@ TEST_CASES = [
             ),
             test_data=[
                 RedboxTestData(
-                    10,
-                    1000,
+                    number_of_docs=10,
+                    tokens_in_all_docs=1000,
                     expected_llm_response=["Testing Response 1"],
                     expected_route=ChatRoute.chat,
                 ),
@@ -259,8 +295,8 @@ TEST_CASES = [
             ),
             test_data=[
                 RedboxTestData(
-                    1,
-                    50_000,
+                    number_of_docs=1,
+                    tokens_in_all_docs=50_000,
                     expected_llm_response=["Testing Response 1"],
                     expected_route=ChatRoute.chat_with_docs,
                 ),

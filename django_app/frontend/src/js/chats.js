@@ -9,7 +9,9 @@ import "./web-components/chats/message-input.js";
 import "./web-components/chats/sources-list.js";
 import "./web-components/chats/canned-prompts";
 import "./web-components/chats/send-message.js";
+import "./web-components/chats/profile-overlay.js";
 import "./web-components/documents/file-status.js";
+import "./web-components/chats/profile-overlay.js";
 import "./web-components/chats/exit-feedback.js";
 
 // Update URL when a new chat is created

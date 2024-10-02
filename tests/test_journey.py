@@ -44,14 +44,17 @@ def test_user_journey(page: Page, email_address: str):
     # Use magic link
     magic_link = get_magic_link(email_address)
     logger.debug("magic_link: %s", magic_link)
-    my_details_page = SignInConfirmationPage.autosubmit(page, magic_link)
+    chats_page = SignInConfirmationPage.autosubmit(page, magic_link)
+    # Dismiss profile overlay
+    page.press("body", "Escape")
 
     # My details page
+    my_details_page = chats_page.navigate_my_details()
     my_details_page.name = "Roland Hamilton-Jones"
     my_details_page.ai_experience = "Enthusiastic Experimenter"
-    my_details_page.grade = "AA"
-    my_details_page.business_unit = "Delivery Group"
-    my_details_page.profession = "Digital, data and technology"
+    # Add these in once profile overlay is added
+    # my_details_page.info_about_user = "Information about user"
+    # my_details_page.redbox_response_preferences = "Respond concisely"
     chats_page = my_details_page.update()
 
     # Documents page
