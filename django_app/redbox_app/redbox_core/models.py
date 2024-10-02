@@ -445,7 +445,7 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
 class Chat(UUIDPrimaryKeyBase, TimeStampedModel, AbstractAISettings):
     name = models.TextField(max_length=1024, null=False, blank=False)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    archived = models.BooleanField(default=False)
+    archived = models.BooleanField(default=False, null=True, blank=True)
 
     # Exit feedback - this is separate to the ratings for individual ChatMessages
     feedback_achieved = models.BooleanField(
