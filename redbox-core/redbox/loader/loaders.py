@@ -108,7 +108,7 @@ class Metadata:
 
     def extract_metadata(self):
         """
-        Extract metadata from first 1_000 chunks
+        Extract metadata from first 1_000 tokens
         """
         file_bytes = self._get_file_bytes(
             s3_client=self.s3_client, file_name=self.file_name
