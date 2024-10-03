@@ -3,12 +3,12 @@ import datetime
 import humanize
 import jinja2
 import pytz
-from compressor.contrib.jinja2ext import CompressorExtension
 from django.conf import settings
 from django.templatetags.static import static
 from django.urls import reverse
 from django.utils.timezone import template_localtime
 from markdown_it import MarkdownIt
+import waffle
 
 # `js-default` setting required to sanitize inputs
 # https://markdown-it-py.readthedocs.io/en/latest/security.html
@@ -72,7 +72,6 @@ def environment(**options):
     env = jinja2.Environment(  # nosec: B701 # noqa: S701
         **{
             "autoescape": True,
-            "extensions": [CompressorExtension],
             **options,
             **extra_options,
         },
@@ -86,7 +85,7 @@ def environment(**options):
             "to_user_timezone": to_user_timezone,
             "environment": settings.ENVIRONMENT.value,
             "security": settings.MAX_SECURITY_CLASSIFICATION.value,
-            "repo_owner": settings.REPO_OWNER,
+            "waffle_flag": waffle.flag_is_active,
         }
     )
     env.globals.update(
@@ -98,7 +97,7 @@ def environment(**options):
             "to_user_timezone": to_user_timezone,
             "environment": settings.ENVIRONMENT.value,
             "security": settings.MAX_SECURITY_CLASSIFICATION.value,
-            "repo_owner": settings.REPO_OWNER,
+            "waffle_flag": waffle.flag_is_active,
 
         }
     )

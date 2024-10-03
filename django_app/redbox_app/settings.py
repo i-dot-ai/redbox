@@ -6,7 +6,6 @@ from urllib.parse import urlparse
 
 import environ
 import sentry_sdk
-from django.urls import reverse_lazy
 from dotenv import load_dotenv
 from import_export.formats.base_formats import CSV
 from sentry_sdk.integrations.django import DjangoIntegration
@@ -22,14 +21,11 @@ env = environ.Env()
 SECRET_KEY = env.str("DJANGO_SECRET_KEY")
 ENVIRONMENT = Environment[env.str("ENVIRONMENT").upper()]
 WEBSOCKET_SCHEME = "ws" if ENVIRONMENT.is_test else "wss"
-LOGIN_METHOD = env.str("LOGIN_METHOD", "magic_link")
-
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env.bool("DEBUG")
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-
 
 STATIC_URL = "static/"
 STATIC_ROOT = "staticfiles/"
@@ -38,7 +34,6 @@ STATICFILES_DIRS = [
     Path(BASE_DIR) / "frontend/dist/",
 ]
 STATICFILES_FINDERS = [
-    "compressor.finders.CompressorFinder",
     "django.contrib.staticfiles.finders.FileSystemFinder",
     "django.contrib.staticfiles.finders.AppDirectoriesFinder",
 ]
@@ -148,6 +143,8 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 SITE_ID = 1
 AUTH_USER_MODEL = "redbox_core.User"
 ACCOUNT_EMAIL_VERIFICATION = "none"
+LOGIN_REDIRECT_URL = "homepage"
+LOGIN_URL = "sign-in"
 
 # CSP settings https://content-security-policy.com/
 # https://django-csp.readthedocs.io/
@@ -202,6 +199,7 @@ CSRF_COOKIE_HTTPONLY = True
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_AGE = 60 * 60 * 24
+SESSION_COOKIE_SAMESITE = "Strict"
 SESSION_ENGINE = "django.contrib.sessions.backends.db"
 
 LOG_ROOT = "."
@@ -268,7 +266,6 @@ if not ENVIRONMENT.is_local:
             profiles_sample_rate=0.0,
             before_send_transaction=filter_transactions,
         )
-
 SENTRY_REPORT_TO_ENDPOINT = URL(env.str("SENTRY_REPORT_TO_ENDPOINT", "")) or None
 
 DATABASES = {
@@ -318,9 +315,7 @@ elif EMAIL_BACKEND_TYPE == "CONSOLE":
 elif EMAIL_BACKEND_TYPE == "GOVUKNOTIFY":
     EMAIL_BACKEND = "django_gov_notify.backends.NotifyEmailBackend"
     GOVUK_NOTIFY_API_KEY = env.str("GOVUK_NOTIFY_API_KEY")
-    GOVUK_NOTIFY_PLAIN_EMAIL_TEMPLATE_ID = env.str(
-        "GOVUK_NOTIFY_PLAIN_EMAIL_TEMPLATE_ID"
-    )
+    GOVUK_NOTIFY_PLAIN_EMAIL_TEMPLATE_ID = env.str("GOVUK_NOTIFY_PLAIN_EMAIL_TEMPLATE_ID")
 else:
     message = f"Unknown EMAIL_BACKEND_TYPE of {EMAIL_BACKEND_TYPE}"
     raise ValueError(message)
@@ -359,19 +354,4 @@ Q_CLUSTER = {
     "workers": 1,
 }
 
-if LOGIN_METHOD == "sso":
-    AUTHBROKER_URL = env.str("AUTHBROKER_URL")
-    AUTHBROKER_CLIENT_ID = env.str("AUTHBROKER_CLIENT_ID")
-    AUTHBROKER_CLIENT_SECRET = env.str("AUTHBROKER_CLIENT_SECRET")
-    LOGIN_URL = reverse_lazy("authbroker_client:login")
-    LOGIN_REDIRECT_URL = reverse_lazy("homepage")
-elif LOGIN_METHOD == "magic_link":
-    SESSION_COOKIE_SAMESITE = "Strict"
-    LOGIN_REDIRECT_URL = "homepage"
-    LOGIN_URL = "sign-in"
-else:
-    LOGIN_REDIRECT_URL = "homepage"
-    LOGIN_URL = "sign-in"
-
 UNSTRUCTURED_HOST = env.str("UNSTRUCTURED_HOST")
-REPO_OWNER = env.str("REPO_OWNER", "i-dot-ai")
