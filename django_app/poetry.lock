@@ -1703,6 +1703,20 @@ django = ">=1.11"
 testing = ["codecov", "coverage"]
 
 [[package]]
+name = "django-waffle"
+version = "4.1.0"
+description = "A feature flipper for Django."
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "django-waffle-4.1.0.tar.gz", hash = "sha256:e49d7d461d89f3bd8e53f20efe39310acca8f275c9888495e68e195345bf18b1"},
+    {file = "django_waffle-4.1.0-py3-none-any.whl", hash = "sha256:5979a2f3dd674ef7086480525b39651fc2045427f6d8e6a614192656d3402c5b"},
+]
+
+[package.dependencies]
+django = ">=3.2"
+
+[[package]]
 name = "djangorestframework"
 version = "3.15.2"
 description = "Web APIs for Django, made easy."
@@ -5011,4 +5025,4 @@ testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.12,<3.13"
-content-hash = "22a249b24e8c0219e85ddc1721616599a218600f0085dbb6fefcede7dff42e64"
+content-hash = "5c6965592ad4d0852ce5fc7ad76372e6575e46773caec572d34e103a58ba528e"
