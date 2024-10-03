@@ -113,8 +113,7 @@ class SSOUserManager(BaseSSOUserManager):
     def _create_user(self, username, password, **extra_fields):
         """Create and save a User with the given email and password."""
         if not username:
-            raise ValueError("The given email must be set")
-        # email = self.normalize_email(email)
+            raise ValueError("The given email must be set.")
         User = self.model(email=username, **extra_fields)
         User.set_password(password)
         User.save(using=self._db)
