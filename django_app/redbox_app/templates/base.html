@@ -26,7 +26,7 @@
     data-domain="redbox.ai.cabinetoffice.gov.uk" src="https://plausible.io/js/script.pageview-props.tagged-events.outbound-links.file-downloads.js"></script>
   {% endif %}
 
-  {% if environment | lower == "prod" and repo_owner | lower == "uktrade" %}
+  {% if environment | lower == "prod" and waffle_flag(request, 'uktrade') %}
     <!-- Google tag (gtag.js) -->
   <script async src="{{ analytics_link }}"></script>
   <script> 

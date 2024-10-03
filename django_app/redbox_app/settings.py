@@ -60,6 +60,7 @@ INSTALLED_APPS = [
     "rest_framework",
     "django_plotly_dash.apps.DjangoPlotlyDashConfig",
     "adminplus",
+    "waffle",
 ]
 
 MIDDLEWARE = [
@@ -356,6 +357,5 @@ Q_CLUSTER = {
 
 UNSTRUCTURED_HOST = env.str("UNSTRUCTURED_HOST")
 
-REPO_OWNER = env.str("REPO_OWNER", "i-dot-ai")
 ANALYTICS_TAG = env.str("ANALYTICS_TAG", " ")
 ANALYTICS_LINK = env.str("ANALYTICS_LINK", " ")
