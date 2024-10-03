@@ -19,6 +19,7 @@ logging.basicConfig(level=logging.INFO)
 log = logging.getLogger()
 
 env = Settings()
+alias = f"{env.elastic_root_index}-chunk-current"
 
 
 def get_elasticsearch_store(es, es_index_name: str):
@@ -40,12 +41,28 @@ def get_elasticsearch_store_without_embeddings(es, es_index_name: str):
     )
 
 
-def ingest_file(file_name: str, es_index_name: str) -> str | None:
+def create_alias(alias: str):
+    es = env.elasticsearch_client()
+
+    chunk_index_name = alias[:-8]  # removes -current
+
+    es.options(ignore_status=[400]).indices.create(index=chunk_index_name)
+    es.indices.put_alias(index=chunk_index_name, name=alias)
+
+
+def ingest_file(file_name: str, es_index_name: str = alias) -> str | None:
     logging.info("Ingesting file: %s", file_name)
 
     es = env.elasticsearch_client()
 
-    es.options(ignore_status=[400]).indices.create(index=es_index_name)
+    if es_index_name == alias:
+        if not es.indices.exists_alias(name=alias):
+            print("The alias does not exist")
+            print(alias)
+            print(es.indices.exists_alias(name=alias))
+            create_alias(alias)
+    else:
+        es.options(ignore_status=[400]).indices.create(index=es_index_name)
 
     # Extract metadata
     metadata = MetadataLoader(env=env, s3_client=env.s3_client(), file_name=file_name)

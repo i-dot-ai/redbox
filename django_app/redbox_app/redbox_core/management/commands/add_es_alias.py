@@ -10,7 +10,7 @@ es_client = env.elasticsearch_client()
 class Command(BaseCommand):
     help = """This is a one-off command to add an ElasticSearch alias to the existing chunks index."""
 
-    def handle(self, *args, **options):
+    def handle(self, *args, **kwargs):  # noqa:ARG002
         existing_index = f"{env.elastic_root_index}-chunk"
         self.stdout.write(self.style.NOTICE(f"Creating the alias {existing_index}-current"))
 

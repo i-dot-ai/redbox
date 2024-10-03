@@ -1,7 +1,6 @@
 import logging
 
 from django.core.management import BaseCommand
-from elasticsearch.exceptions import ElasticsearchException
 
 from redbox.models import Settings
 
@@ -31,7 +30,7 @@ class Command(BaseCommand):
         try:
             response = es_client.indices.get_alias(name=kwargs["alias"])
             indices_to_remove = list(response.keys())
-        except ElasticsearchException as e:
+        except Exception as e:
             logger.exception("Error fetching alias", exc_info=e)
 
         actions = [{"remove": {"index": index, "alias": kwargs["alias"]}} for index in indices_to_remove]

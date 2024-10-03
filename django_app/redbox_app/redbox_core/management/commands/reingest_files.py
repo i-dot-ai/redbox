@@ -1,5 +1,5 @@
-import datetime
 import logging
+import time
 
 from django.core.management import BaseCommand
 from django_q.tasks import async_task
@@ -27,8 +27,7 @@ class Command(BaseCommand):
     def handle(self, *_args, **kwargs):
         self.stdout.write(self.style.NOTICE("Reingesting active files from Django"))
 
-        default_index = f"{env.elastic_root_index}-chunk"
-        new_index = f"{default_index}-{datetime.datetime.now(tz=datetime.UTC).strftime('%y%m%d%H%M')}"
+        new_index = f"{env.elastic_root_index}-chunk-{int(time.time())}"
 
         for file in File.objects.exclude(status__in=INACTIVE_STATUSES):
             logger.debug("Reingesting file object %s", file)

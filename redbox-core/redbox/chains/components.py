@@ -132,7 +132,7 @@ def get_embeddings(env: Settings) -> Embeddings:
 def get_all_chunks_retriever(env: Settings) -> ElasticsearchRetriever:
     return AllElasticsearchRetriever(
         es_client=env.elasticsearch_client(),
-        index_name=f"{env.elastic_root_index}-chunk",
+        index_name=f"{env.elastic_root_index}-chunk-current",
     )
 
 
@@ -145,7 +145,7 @@ def get_parameterised_retriever(env: Settings, embeddings: Embeddings | None = N
     """
     return ParameterisedElasticsearchRetriever(
         es_client=env.elasticsearch_client(),
-        index_name=f"{env.elastic_root_index}-chunk",
+        index_name=f"{env.elastic_root_index}-chunk-current",
         embedding_model=embeddings or get_embeddings(env),
         embedding_field_name=env.embedding_document_field_name,
     )
@@ -154,5 +154,5 @@ def get_parameterised_retriever(env: Settings, embeddings: Embeddings | None = N
 def get_metadata_retriever(env: Settings):
     return MetadataRetriever(
         es_client=env.elasticsearch_client(),
-        index_name=f"{env.elastic_root_index}-chunk",
+        index_name=f"{env.elastic_root_index}-chunk-current",
     )
