@@ -5,10 +5,8 @@ from typing import Literal
 
 import boto3
 from elasticsearch import Elasticsearch
-from openai import models
 from pydantic import BaseModel
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from pygments.lexer import default
 
 logging.basicConfig(level=os.environ.get("LOG_LEVEL", "INFO"))
 log = logging.getLogger()
@@ -156,7 +154,7 @@ class AzureOpenaiSettings(BaseModel):
     id: str
     api_version: str = "2024-02-01"
     api_key: str = "not a key"
-    fallback_api_key: str|None = "not a key"
+    fallback_api_key: str | None = "not a key"
     endpoint: str = "not an endpoint"
     fallback_endpoint: str | None = None
 
@@ -164,6 +162,7 @@ class AzureOpenaiSettings(BaseModel):
 class GPTModels:
     def __init__(self):
         from dotenv import load_dotenv
+
         load_dotenv()
 
         values = {}
