@@ -1,8 +1,8 @@
 from __future__ import annotations
 
+import datetime
 from enum import StrEnum
 from uuid import UUID, uuid4
-import datetime
 
 from pydantic import BaseModel, Field
 
@@ -28,3 +28,6 @@ class ChunkMetadata(BaseModel):
     created_datetime: datetime.datetime = datetime.datetime.now(datetime.UTC)
     token_count: int
     chunk_resolution: ChunkResolution = ChunkResolution.normal
+    name: str
+    description: str
+    keywords: list[str]

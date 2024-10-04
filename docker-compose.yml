@@ -18,7 +18,7 @@ services:
     networks:
       - redbox-app-network
     env_file:
-      - path: .env.integration
+      - path: tests/.env.integration
         required: false
       - path: .env
         required: false
@@ -36,7 +36,7 @@ services:
   db:
     image: postgres:13
     env_file:
-      - path: .env.integration
+      - path: tests/.env.integration
         required: false
       - path: .env
         required: false
@@ -65,7 +65,7 @@ services:
       dockerfile: django_app/Dockerfile
     command: "venv/bin/django-admin qcluster"
     env_file:
-      - path: .env.integration
+      - path: tests/.env.integration
         required: false
       - path: .env
         required: false
