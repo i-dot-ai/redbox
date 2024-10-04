@@ -20,7 +20,7 @@ The tests should then all load separately and use their own env.
 
 ## Setting environment variables
 
-We use `.env` files to populate the environment variables for local development. When cloning the repository the files `.env.test`, `.env.integration` and `.env.example` will be populated.
+We use `.env` files to populate the environment variables for local development. When cloning the repository the file `.env.example` will be populated.
 
 To run the project, create a new file called `.env` and populate this file with the setting names from `.env.example` and the values these settings need.
 
