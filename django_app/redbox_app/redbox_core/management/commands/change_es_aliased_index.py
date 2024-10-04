@@ -29,7 +29,7 @@ class Command(BaseCommand):
     def handle(self, *_args, **kwargs):
         try:
             response = es_client.indices.get_alias(name=kwargs["alias"])
-            indices_to_remove = list(response.keys())
+            indices_to_remove = list(response)
         except Exception as e:
             logger.exception("Error fetching alias", exc_info=e)
 
