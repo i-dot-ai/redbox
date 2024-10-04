@@ -1,5 +1,6 @@
 import logging
 import os
+import re
 from functools import lru_cache
 from typing import Literal
 
@@ -167,8 +168,8 @@ class GPTModels:
 
         values = {}
         for key, value in os.environ.items():
-            gpt_model, index, stub = key.split("__", 3)
-            if gpt_model.upper() == "AZURE_OPENAI":
+            if match := re.match(r"^AZURE_OPENAI__(\d)__([\w-]+)$", key.upper()):
+                index, stub = match.groups()
                 if index not in values:
                     values[index] = {}
                 values[index][stub] = value
