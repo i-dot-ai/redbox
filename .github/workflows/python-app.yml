@@ -41,7 +41,7 @@ jobs:
       run: |
         mkdir -p data/elastic/
         chmod 777 data/elastic/
-        cp .env.test .env
+        cp tests/.env.test .env
         docker compose up -d --wait elasticsearch
 
     - name: Test redbox with pytest
@@ -70,7 +70,7 @@ jobs:
       run: |
         mkdir -p data/elastic/
         chmod -R 777 data/
-        cp .env.test .env
+        cp tests/.env.test .env
         sed -i -e "s/^OBJECT_STORE=.*/OBJECT_STORE=minio/" .env
         docker compose up -d --wait elasticsearch minio db
         docker ps
