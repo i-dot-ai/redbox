@@ -11,9 +11,6 @@ from langchain_core.embeddings.fake import FakeEmbeddings
 from langchain_core.language_models.fake_chat_models import GenericFakeChatModel
 from langchain_elasticsearch import ElasticsearchStore
 
-import redbox
-import redbox.loader
-import redbox.loader.loaders
 from redbox.chains.ingest import document_loader, ingest_from_loader
 from redbox.loader import ingester
 from redbox.loader.ingester import ingest_file
@@ -48,9 +45,7 @@ def file_to_s3(filename: str, s3_client: S3Client, env: Settings) -> str:
     return file_name
 
 
-def make_file_query(
-    file_name: str, resolution: ChunkResolution | None = None
-) -> dict[str, Any]:
+def make_file_query(file_name: str, resolution: ChunkResolution | None = None) -> dict[str, Any]:
     query_filter = build_query_filter(
         selected_files=[file_name],
         permitted_files=[file_name],
@@ -109,12 +104,11 @@ def test_extract_metadata(
     metadata.extract_metadata()
 
     if test_case in ["missing_key"]:
-
         assert metadata.metadata.get("name") == ""
         assert metadata.metadata.get("description") == ""
         assert metadata.metadata.get("keywords") == ""
     else:
-        assert not metadata.metadata is None
+        assert metadata.metadata is not None
         llm_json = json.loads(llm_response[0])
         assert metadata.metadata.get("name") == llm_json.get("name")
         assert metadata.metadata.get("description") == llm_json.get("description")
@@ -153,9 +147,7 @@ def test_document_loader(
 
     mock_llm_response = mock_llm.return_value
     mock_llm_response.status_code = 200
-    mock_llm_response.return_value = GenericFakeChatModel(
-        messages=iter([json.dumps(fake_llm_response())])
-    )
+    mock_llm_response.return_value = GenericFakeChatModel(messages=iter([json.dumps(fake_llm_response())]))
 
     # Upload file
     file = file_to_s3("html/example.html", s3_client, env)
@@ -182,9 +174,7 @@ def test_document_loader(
         llm_response = fake_llm_response()
         assert chuck.metadata["name"] == llm_response["name"]
         assert chuck.metadata["description"] == llm_response["description"]
-        assert chuck.metadata["keywords"] == coerce_to_string_list(
-            llm_response["keywords"]
-        )
+        assert chuck.metadata["keywords"] == coerce_to_string_list(llm_response["keywords"])
 
 
 @patch("redbox.loader.loaders.get_chat_llm")
@@ -231,9 +221,7 @@ def test_ingest_from_loader(
 
     mock_llm_response = mock_llm.return_value
     mock_llm_response.status_code = 200
-    mock_llm_response.return_value = GenericFakeChatModel(
-        messages=iter([json.dumps(fake_llm_response())])
-    )
+    mock_llm_response.return_value = GenericFakeChatModel(messages=iter([json.dumps(fake_llm_response())]))
 
     # Upload file and call
     file_name = file_to_s3(filename="html/example.html", s3_client=s3_client, env=env)
@@ -253,20 +241,14 @@ def test_ingest_from_loader(
     # Mock embeddings
     monkeypatch.setattr(ingester, "get_embeddings", lambda _: FakeEmbeddings(size=3072))
 
-    ingest_chain = ingest_from_loader(
-        loader=loader, s3_client=s3_client, vectorstore=es_vector_store, env=env
-    )
+    ingest_chain = ingest_from_loader(loader=loader, s3_client=s3_client, vectorstore=es_vector_store, env=env)
 
     _ = ingest_chain.invoke(file_name)
 
     # Test it's written to Elastic
     file_query = make_file_query(file_name=file_name, resolution=resolution)
 
-    chunks = list(
-        scan(
-            client=es_client, index=f"{env.elastic_root_index}-chunk", query=file_query
-        )
-    )
+    chunks = list(scan(client=es_client, index=f"{env.elastic_root_index}-chunk", query=file_query))
     assert len(chunks) > 0
 
     def get_metadata(chunk: dict) -> dict:
@@ -278,9 +260,7 @@ def test_ingest_from_loader(
             metadata = get_metadata(chunk)
             assert metadata["name"] == fake_llm_response()["name"]
             assert metadata["description"] == fake_llm_response()["description"]
-            assert metadata["keywords"] == coerce_to_string_list(
-                fake_llm_response()["keywords"]
-            )
+            assert metadata["keywords"] == coerce_to_string_list(fake_llm_response()["keywords"])
 
     if has_embeddings:
         embeddings = chunks[0]["_source"].get("embedding")
@@ -348,9 +328,7 @@ def test_ingest_file(
     # Mock llm
     mock_llm_response = mock_llm.return_value
     mock_llm_response.status_code = 200
-    mock_llm_response.return_value = GenericFakeChatModel(
-        messages=iter([json.dumps(fake_llm_response())])
-    )
+    mock_llm_response.return_value = GenericFakeChatModel(messages=iter([json.dumps(fake_llm_response())]))
 
     res = ingest_file(filename)
 
@@ -380,24 +358,16 @@ def test_ingest_file(
             llm_response = fake_llm_response()
             assert metadata["name"] == llm_response["name"]
             assert metadata["description"] == llm_response["description"]
-            assert metadata["keywords"] == coerce_to_string_list(
-                llm_response["keywords"]
-            )
+            assert metadata["keywords"] == coerce_to_string_list(llm_response["keywords"])
 
         def get_chunk_resolution(chunk: dict) -> str:
             return chunk["_source"]["metadata"]["chunk_resolution"]
 
-        normal_resolution = [
-            chunk for chunk in chunks if get_chunk_resolution(chunk) == "normal"
-        ]
-        largest_resolution = [
-            chunk for chunk in chunks if get_chunk_resolution(chunk) == "largest"
-        ]
+        normal_resolution = [chunk for chunk in chunks if get_chunk_resolution(chunk) == "normal"]
+        largest_resolution = [chunk for chunk in chunks if get_chunk_resolution(chunk) == "largest"]
 
         assert len(normal_resolution) > 0
         assert len(largest_resolution) > 0
 
         # Teardown
-        es_client.delete_by_query(
-            index=f"{env.elastic_root_index}-chunk", body=file_query
-        )
+        es_client.delete_by_query(index=f"{env.elastic_root_index}-chunk", body=file_query)
