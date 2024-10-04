@@ -99,13 +99,13 @@ def test_user_journey(page: Page, email_address: str):
     assert latest_chat_response.text
 
     # Use specific routes
-    for route, select_file, should_have_citation in [
-        ("search", False, True),
-        ("search", True, True),
-        ("gadget", False, True),
-        ("gadget", True, True),
+    for keyword, route, select_file, should_have_citation in [
+        ("search", "search", False, True),
+        ("search", "search", True, True),
+        ("gadget", "search", False, True),
+        ("gadget", "search", True, True),
     ]:
-        question = f"@{route} What do I need to install?"
+        question = f"@{keyword} What do I need to install?"
         logger.info("Asking %r", question)
         chats_page.write_message = question
         if select_file:
