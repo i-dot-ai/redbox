@@ -8,81 +8,44 @@ from langchain_core.utils import convert_to_secret_str
 import tiktoken
 
 from redbox.models.chain import AISettings
-from redbox.models.settings import Settings
+from redbox.models.settings import Settings, GPTModels
 from redbox.retriever import AllElasticsearchRetriever, ParameterisedElasticsearchRetriever, MetadataRetriever
 from langchain_aws import ChatBedrock
 from langchain_community.embeddings import BedrockEmbeddings
 
 
-def get_chat_llm(env: Settings, ai_settings: AISettings):
-    chat_model = None
-    if ai_settings.chat_backend == "gpt-35-turbo-16k":
+def get_chat_llm(ai_settings: AISettings):
+    if ai_settings.chat_backend in ("gpt-35-turbo-16k", "gpt-4-turbo-2024-04-09", "gpt-4o"):
+        openai_api_models = GPTModels()
+        azure_openai_api = openai_api_models[ai_settings.chat_backend]
+
         chat_model = AzureChatOpenAI(
-            api_key=convert_to_secret_str(env.azure_openai_api_key_35t),
-            azure_endpoint=env.azure_openai_endpoint_35t,
-            model=ai_settings.chat_backend,
-            api_version=env.openai_api_version_35t,
+            api_key=convert_to_secret_str(azure_openai_api.api_key),
+            azure_endpoint=azure_openai_api.endpoint,
+            model=azure_openai_api.id,
+            api_version=azure_openai_api.api_version,
         )
-        if env.azure_openai_fallback_endpoint_35t:
+        if azure_openai_api.fallback_endpoint:
             chat_model.max_retries = 0
             chat_model = chat_model.with_fallbacks(
                 [
                     AzureChatOpenAI(
-                        api_key=convert_to_secret_str(env.azure_openai_fallback_api_key_35t),
-                        azure_endpoint=env.azure_openai_fallback_endpoint_35t,
-                        model=ai_settings.chat_backend,
-                        api_version=env.openai_api_version_35t,
+                        api_key=convert_to_secret_str(azure_openai_api.fallback_api_key),
+                        azure_endpoint=azure_openai_api.fallback_endpoint,
+                        model=azure_openai_api.id,
+                        api_version=azure_openai_api.version,
                     )
                 ]
             )
-    elif ai_settings.chat_backend == "gpt-4-turbo-2024-04-09":
-        chat_model = AzureChatOpenAI(
-            api_key=convert_to_secret_str(env.azure_openai_api_key_4t),
-            azure_endpoint=env.azure_openai_endpoint_4t,
-            model=ai_settings.chat_backend,
-            api_version=env.openai_api_version_4t,
-        )
-        if env.azure_openai_fallback_endpoint_4t:
-            chat_model.max_retries = 0
-            chat_model = chat_model.with_fallbacks(
-                [
-                    AzureChatOpenAI(
-                        api_key=convert_to_secret_str(env.azure_openai_fallback_api_key_4t),
-                        azure_endpoint=env.azure_openai_fallback_endpoint_4t,
-                        model=ai_settings.chat_backend,
-                        api_version=env.openai_api_version_4t,
-                    )
-                ]
-            )
-    elif ai_settings.chat_backend == "gpt-4o":
-        chat_model = AzureChatOpenAI(
-            api_key=convert_to_secret_str(env.azure_openai_api_key_4o),
-            azure_endpoint=env.azure_openai_endpoint_4o,
-            model=ai_settings.chat_backend,
-            api_version=env.openai_api_version_4o,
-        )
-        if env.azure_openai_fallback_endpoint_4o:
-            chat_model.max_retries = 0
-            chat_model = chat_model.with_fallbacks(
-                [
-                    AzureChatOpenAI(
-                        api_key=convert_to_secret_str(env.azure_openai_fallback_api_key_4o),
-                        azure_endpoint=env.azure_openai_fallback_endpoint_4o,
-                        model=ai_settings.chat_backend,
-                        api_version=env.openai_api_version_4o,
-                    )
-                ]
-            )
+        return chat_model
+
     elif ai_settings.chat_backend in (
         "anthropic.claude-3-sonnet-20240229-v1:0",
         "anthropic.claude-3-haiku-20240307-v1:0",
     ):
-        chat_model = ChatBedrock(model_id=ai_settings.chat_backend)
+        return ChatBedrock(model_id=ai_settings.chat_backend)
 
-    if chat_model is None:
-        raise Exception("%s not recognised", ai_settings.chat_backend)
-    else:
-        return chat_model
+    raise Exception("%s not recognised", ai_settings.chat_backend)
 
 
 @cache

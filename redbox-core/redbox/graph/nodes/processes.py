@@ -17,7 +17,7 @@ from langchain_core.vectorstores import VectorStoreRetriever
 from redbox.chains.components import get_chat_llm, get_tokeniser
 from redbox.chains.runnables import CannedChatLLM, build_llm_chain
 from redbox.graph.nodes.tools import is_valid_tool
-from redbox.models import ChatRoute, Settings
+from redbox.models import ChatRoute
 from redbox.models.chain import DocumentState, PromptSet, RedboxState, RequestMetadata, merge_redbox_state_updates
 from redbox.models.graph import ROUTE_NAME_TAG, RedboxActivityEvent, RedboxEventType
 from redbox.transform import combine_documents, flatten_document_state
@@ -57,7 +57,7 @@ def build_chat_pattern(
     """Returns a Runnable that uses state["request"] to set state["text"]."""
 
     def _chat(state: RedboxState) -> dict[str, Any]:
-        llm = get_chat_llm(Settings(), state["request"].ai_settings)
+        llm = get_chat_llm(state["request"].ai_settings)
         return build_llm_chain(
             prompt_set=prompt_set,
             llm=llm,
@@ -83,7 +83,7 @@ def build_merge_pattern(
 
     @RunnableLambda
     def _merge(state: RedboxState) -> dict[str, Any]:
-        llm = get_chat_llm(Settings(), state["request"].ai_settings)
+        llm = get_chat_llm(state["request"].ai_settings)
 
         if not state.get("documents"):
             return {"documents": None}
@@ -131,7 +131,7 @@ def build_stuff_pattern(
 
     @RunnableLambda
     def _stuff(state: RedboxState) -> dict[str, Any]:
-        llm = get_chat_llm(Settings(), state["request"].ai_settings)
+        llm = get_chat_llm(state["request"].ai_settings)
 
         events = []
 

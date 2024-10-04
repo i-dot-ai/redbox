@@ -5,9 +5,10 @@ from typing import Literal
 
 import boto3
 from elasticsearch import Elasticsearch
+from openai import models
 from pydantic import BaseModel
 from pydantic_settings import BaseSettings, SettingsConfigDict
-
+from pygments.lexer import default
 
 logging.basicConfig(level=os.environ.get("LOG_LEVEL", "INFO"))
 log = logging.getLogger()
@@ -39,27 +40,6 @@ class ElasticCloudSettings(BaseModel):
 
 class Settings(BaseSettings):
     """Settings for the redbox application."""
-
-    # azure/gpt-35-turbo-16k
-    openai_api_version_35t: str = "2023-12-01-preview"
-    azure_openai_api_key_35t: str = "not a key"
-    azure_openai_fallback_api_key_35t: str = "not a key"
-    azure_openai_endpoint_35t: str = "not an endpoint"
-    azure_openai_fallback_endpoint_35t: str | None = None
-
-    # azure/gpt-4
-    openai_api_version_4t: str = "2024-02-01"
-    azure_openai_api_key_4t: str = "not a key"
-    azure_openai_fallback_api_key_4t: str = "not a key"
-    azure_openai_endpoint_4t: str = "not an endpoint"
-    azure_openai_fallback_endpoint_4t: str | None = None
-
-    # azure/gpt-4o
-    openai_api_version_4o: str = "2024-02-01"
-    azure_openai_api_key_4o: str = "not a key"
-    azure_openai_fallback_api_key_4o: str = "not a key"
-    azure_openai_endpoint_4o: str = "not an endpoint"
-    azure_openai_fallback_endpoint_4o: str | None = None
 
     embedding_openai_api_key: str = "NotAKey"
     embedding_azure_openai_endpoint: str = "not an endpoint"
@@ -170,3 +150,37 @@ class Settings(BaseSettings):
             raise NotImplementedError
 
         return client
+
+
+class AzureOpenaiSettings(BaseModel):
+    id: str
+    api_version: str = "2024-02-01"
+    api_key: str = "not a key"
+    fallback_api_key: str|None = "not a key"
+    endpoint: str = "not an endpoint"
+    fallback_endpoint: str | None = None
+
+
+class GPTModels:
+    def __init__(self):
+        from dotenv import load_dotenv
+        load_dotenv()
+
+        values = {}
+        for key, value in os.environ.items():
+            gpt_model, index, stub = key.split("__", 3)
+            if gpt_model.upper() == "AZURE_OPENAI":
+                if index not in values:
+                    values[index] = {}
+                values[index][stub] = value
+
+        if not all(x.isdigit() for x in values):
+            raise ValueError("azure_openai indices must be an integers")
+
+        if sorted(map(int, values)) != list(range(len(values))):
+            raise ValueError("azure_openai indices must be contiguous")
+
+        self.models = [AzureOpenaiSettings(**kwargs) for kwargs in values]
+
+    def __getitem__(self, key: str) -> AzureOpenaiSettings:
+        return next(m for m in self.models if m.id == key)

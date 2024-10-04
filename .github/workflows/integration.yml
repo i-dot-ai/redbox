@@ -48,8 +48,9 @@ jobs:
         mkdir -p data/elastic/
         chmod -R 777 data/
         cp tests/.env.integration .env
-        echo AZURE_OPENAI_ENDPOINT_4O=${{ secrets.AZURE_OPENAI_ENDPOINT }} >> .env
-        echo AZURE_OPENAI_API_KEY_4O=${{ secrets.AZURE_OPENAI_API_KEY }} >> .env
+        echo AZURE_OPENAI__0__ID=azure/gpt-4o >> .env
+        echo AZURE_OPENAI__0__ENDPOINT=${{ secrets.AZURE_OPENAI_ENDPOINT }} >> .env
+        echo AZURE_OPENAI__0__API_KEY=${{ secrets.AZURE_OPENAI_API_KEY }} >> .env
         echo EMBEDDING_AZURE_OPENAI_ENDPOINT=${{ secrets.AZURE_OPENAI_ENDPOINT }} >> .env
         echo EMBEDDING_OPENAI_API_KEY=${{ secrets.AZURE_OPENAI_API_KEY }} >> .env
         docker compose up -d --wait django-app worker
