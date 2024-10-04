@@ -3,6 +3,7 @@ from typing import Any
 from uuid import uuid4
 
 import pytest
+from langchain_core.documents import Document
 from langchain_core.messages import AIMessage
 from langchain_core.tools import tool
 from pytest_mock import MockerFixture
@@ -417,7 +418,9 @@ async def test_streaming(test: RedboxChatTestCase, env: Settings, mocker: Mocker
     app = Redbox(
         all_chunks_retriever=mock_all_chunks_retriever(test_case.docs),
         parameterised_retriever=mock_parameterised_retriever(test_case.docs),
-        metadata_retriever=mock_metadata_retriever(test_case.docs),
+        metadata_retriever=mock_metadata_retriever(
+            [d for d in test_case.docs if d.metadata["file_name"] in test_case.query.s3_keys]
+        ),
         env=env,
         debug=LANGGRAPH_DEBUG,
     )
@@ -426,6 +429,7 @@ async def test_streaming(test: RedboxChatTestCase, env: Settings, mocker: Mocker
     token_events = []
     metadata_events = []
     activity_events = []
+    document_events = []
     route_name = None
 
     async def streaming_response_handler(tokens: str):
@@ -441,6 +445,9 @@ async def test_streaming(test: RedboxChatTestCase, env: Settings, mocker: Mocker
     async def streaming_activity_handler(activity_event: RedboxActivityEvent):
         activity_events.append(activity_event)
 
+    async def documents_response_handler(documents: list[Document]):
+        document_events.append(documents)
+
     # Run the app
     response = await app.run(
         input=RedboxState(request=test_case.query),
@@ -448,6 +455,7 @@ async def test_streaming(test: RedboxChatTestCase, env: Settings, mocker: Mocker
         metadata_tokens_callback=metadata_response_handler,
         route_name_callback=streaming_route_name_handler,
         activity_event_callback=streaming_activity_handler,
+        documents_callback=documents_response_handler,
     )
 
     final_state = RedboxState(response)
@@ -485,11 +493,10 @@ async def test_streaming(test: RedboxChatTestCase, env: Settings, mocker: Mocker
         final_state.get("route_name") == test_case.test_data.expected_route
     ), f"Expected Route: '{ test_case.test_data.expected_route}'. Received '{final_state["route_name"]}'"
     if metadata := final_state.get("metadata"):
-        if test_case.test_data.expected_route in {ChatRoute.search, ChatRoute.gadget}:
-            # These routes will search unselected files
-            # We amend total tokens to match the tokens in all docs
-            metadata.selected_files_total_tokens = metadata_response.selected_files_total_tokens
         assert metadata == metadata_response, f"Expected metadata: '{metadata_response}'. Received '{metadata}'"
+    for document_list in document_events:
+        for document in document_list:
+            assert document in test_case.docs, f"Document not in test case docs: {document}"
 
 
 def test_get_available_keywords(tokeniser: Encoding, env: Settings):

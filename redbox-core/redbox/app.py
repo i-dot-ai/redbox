@@ -21,6 +21,7 @@ from redbox.models.graph import (
     RedboxEventType,
 )
 from redbox.models.settings import Settings
+from redbox.transform import flatten_document_state
 
 
 async def _default_callback(*args, **kwargs):
@@ -95,6 +96,9 @@ class Redbox:
                 await route_name_callback(event["data"]["output"]["route_name"])
             elif kind == "on_retriever_end" and SOURCE_DOCUMENTS_TAG in tags:
                 await documents_callback(event["data"]["output"])
+            elif kind == "on_tool_end" and SOURCE_DOCUMENTS_TAG in tags:
+                documents = flatten_document_state(event["data"]["output"].get("documents", {}))
+                await documents_callback(documents)
             elif kind == "on_custom_event" and event["name"] == RedboxEventType.on_metadata_generation.value:
                 await metadata_tokens_callback(event["data"])
             elif kind == "on_custom_event" and event["name"] == RedboxEventType.activity.value:

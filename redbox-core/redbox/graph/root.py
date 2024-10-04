@@ -151,7 +151,7 @@ def get_agentic_search_graph(tools: dict[str, StructuredTool], debug: bool = Fal
         "p_stuff_docs_agent",
         build_stuff_pattern(prompt_set=PromptSet.SearchAgentic, tools=agent_tools, final_response_chain=True),
     )
-    builder.add_node("p_retrieval_tools", build_tool_pattern(tools=agent_tools))
+    builder.add_node("p_retrieval_tools", build_tool_pattern(tools=agent_tools, final_source_chain=True))
 
     # Decisions
     builder.add_node("d_tools_selected", empty_process)

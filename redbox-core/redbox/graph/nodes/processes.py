@@ -19,7 +19,7 @@ from redbox.chains.runnables import CannedChatLLM, build_llm_chain
 from redbox.graph.nodes.tools import has_injected_state, is_valid_tool
 from redbox.models import ChatRoute, Settings
 from redbox.models.chain import DocumentState, PromptSet, RedboxState, RequestMetadata, merge_redbox_state_updates
-from redbox.models.graph import ROUTE_NAME_TAG, RedboxActivityEvent, RedboxEventType
+from redbox.models.graph import ROUTE_NAME_TAG, SOURCE_DOCUMENTS_TAG, RedboxActivityEvent, RedboxEventType
 from redbox.transform import combine_documents, flatten_document_state
 
 log = logging.getLogger()
@@ -43,7 +43,7 @@ def build_retrieve_pattern(
     retriever_chain = RunnableParallel({"documents": retriever | structure_func})
 
     if final_source_chain:
-        _retriever = retriever_chain.with_config(tags=["source_documents_flag"])
+        _retriever = retriever_chain.with_config(tags=[SOURCE_DOCUMENTS_TAG])
     else:
         _retriever = retriever_chain
 
@@ -254,7 +254,9 @@ def build_error_pattern(text: str, route_name: str | None) -> Runnable[RedboxSta
     return _error_pattern
 
 
-def build_tool_pattern(tools=list[StructuredTool]) -> Callable[[RedboxState], dict[str, Any]]:
+def build_tool_pattern(
+    tools=list[StructuredTool], final_source_chain: bool = False
+) -> Callable[[RedboxState], dict[str, Any]]:
     """Builds a process that takes state["tool_calls"] and returns state updates.
 
     The state attributes affected are defined in the tool.
@@ -305,6 +307,9 @@ def build_tool_pattern(tools=list[StructuredTool]) -> Callable[[RedboxState], di
 
         if state_updates:
             return reduce(merge_redbox_state_updates, state_updates)
+
+    if final_source_chain:
+        return RunnableLambda(_tool).with_config(tags=[SOURCE_DOCUMENTS_TAG])
 
     return _tool
 

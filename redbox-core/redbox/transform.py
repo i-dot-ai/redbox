@@ -1,4 +1,5 @@
 import itertools
+import json
 from uuid import NAMESPACE_DNS, UUID, uuid5
 
 import tiktoken
@@ -113,12 +114,14 @@ def structure_documents_by_group_and_indices(docs: list[Document]) -> DocumentSt
 
 
 def flatten_document_state(documents: DocumentState | None) -> list[Document]:
+    """Flattens a DocumentState into a list of Documents."""
     if not documents:
         return []
     return [document for group in documents.values() for document in group.values()]
 
 
 def get_document_token_count(state: RedboxState) -> int:
+    """Calculates the total token count of all documents in a state."""
     return sum(d.metadata["token_count"] for d in flatten_document_state(state.get("documents", [])))
 
 
@@ -247,3 +250,26 @@ def tool_calls_to_toolstate(tool_calls: list[ToolCall], called: bool | None = Fa
     Sets all tool calls to a called state. Assumes this state is False.
     """
     return {t["id"]: {"tool": ToolCall(**t), "called": called} for t in tool_calls}
+
+
+def toolstate_to_tool_calls(toolstate: ToolState | None) -> str:
+    """Takes a toolstate and transforms it into a structure familiar to an LLM."""
+    if not toolstate:
+        return ""
+
+    tool_calls = {"tool_calls": []}
+
+    for call_id, call_info in toolstate.items():
+        tool_call = {
+            "id": call_id,
+            "called": call_info["called"],
+            "tool": {
+                "name": call_info["tool"]["name"],
+                "type": call_info["tool"]["type"],
+                "args": call_info["tool"]["args"],
+            },
+        }
+
+        tool_calls["tool_calls"].append(tool_call)
+
+    return json.dumps(tool_calls, indent=4)

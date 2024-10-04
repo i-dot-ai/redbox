@@ -80,7 +80,9 @@ CHAT_WITH_DOCS_QUESTION_PROMPT = "Question: {question}. \n\n Documents: \n\n {fo
 
 RETRIEVAL_QUESTION_PROMPT = "{question} \n=========\n{formatted_documents}\n=========\nFINAL ANSWER: "
 
-AGENTIC_RETRIEVAL_QUESTION_PROMPT = "Question: {question}. \n\n Documents: \n\n {formatted_documents} \n\n Answer: "
+AGENTIC_RETRIEVAL_QUESTION_PROMPT = (
+    "Previous tool calls: \n\n  {tool_calls} \n\n " "Document snippets: \n\n {formatted_documents} \n\n " "{question}"
+)
 
 CHAT_MAP_QUESTION_PROMPT = "Question: {question}. \n Documents: \n {formatted_documents} \n\n Answer: "
 

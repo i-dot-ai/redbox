@@ -17,7 +17,12 @@ from redbox.chains.components import get_tokeniser
 from redbox.models.chain import ChainChatMessage, PromptSet, RedboxState, get_prompts
 from redbox.models.errors import QuestionLengthError
 from redbox.models.graph import RedboxEventType
-from redbox.transform import flatten_document_state, to_request_metadata, tool_calls_to_toolstate
+from redbox.transform import (
+    flatten_document_state,
+    to_request_metadata,
+    tool_calls_to_toolstate,
+    toolstate_to_tool_calls,
+)
 
 log = logging.getLogger()
 re_string_pattern = re.compile(r"(\S+)")
@@ -64,9 +69,13 @@ def build_chat_prompt_from_messages_runnable(prompt_set: PromptSet, tokeniser: E
             else:
                 truncated_history.insert(0, msg)
 
-        prompt_template_context = state["request"].model_dump() | {
-            "formatted_documents": format_documents(flatten_document_state(state.get("documents"))),
-        }
+        prompt_template_context = (
+            state["request"].model_dump()
+            | {
+                "formatted_documents": format_documents(flatten_document_state(state.get("documents"))),
+            }
+            | {"tool_calls": toolstate_to_tool_calls(state.get("tool_calls"))}
+        )
 
         return ChatPromptTemplate.from_messages(
             system_prompt_message
