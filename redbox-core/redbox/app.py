@@ -84,11 +84,11 @@ class Redbox:
             tags = event.get("tags", [])
             if kind == "on_chat_model_stream" and FINAL_RESPONSE_TAG in tags:
                 content = event["data"]["chunk"].content
-                if isinstance(content, str):
+                if isinstance(content, str) and content != "":
                     await response_tokens_callback(content)
             elif kind == "on_chain_end" and FINAL_RESPONSE_TAG in tags:
                 content = event["data"]["output"]
-                if isinstance(content, str):
+                if isinstance(content, str) and content != "":
                     await response_tokens_callback(content)
             elif kind == "on_custom_event" and event["name"] == RedboxEventType.response_tokens.value:
                 await response_tokens_callback(event["data"])
