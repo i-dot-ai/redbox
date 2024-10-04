@@ -80,7 +80,7 @@ def fake_llm_response():
         (
             "extra_key",
             [
-                '{"name": "foo","description":"test", "keywords": "abc"}',
+                '{"name": "foo","description":"test", "keywords": "abc", "extra": "foo"}',
             ],
         ),
     ],
@@ -97,9 +97,7 @@ def test_extract_metadata(
     mock_llm_response.return_value = GenericFakeChatModel(messages=iter(llm_response))
 
     """
-    Test 4 fail cases:
-    LLM replies with an invalid JSON three times
-    LLM replies with an invalid JSON once, then valid
+    Test 2 fail cases:
     LLM replies but without one of the keys
     LLM replies with an extra key
     """
