@@ -63,6 +63,7 @@ def fake_llm_response():
 
 
 @patch("redbox.loader.loaders.get_chat_llm")
+@patch("redbox.loader.loaders.requests.post")
 @pytest.mark.parametrize(
     ("test_case", "llm_response"),
     [
@@ -81,21 +82,39 @@ def fake_llm_response():
     ],
 )
 def test_extract_metadata(
+    mock_post: MagicMock,
     mock_llm: MagicMock,
     test_case: str,
     llm_response: dict,
     env: Settings,
     s3_client: S3Client,
 ):
-    mock_llm_response = mock_llm.return_value
-    mock_llm_response.status_code = 200
-    mock_llm_response.return_value = GenericFakeChatModel(messages=iter(llm_response))
-
     """
     Test 2 fail cases:
     LLM replies but without one of the keys
     LLM replies with an extra key
     """
+    # Mock call to Unstructured
+    mock_response = mock_post.return_value
+    mock_response.status_code = 200
+    mock_response.json.return_value = [
+        {
+            "type": "CompositeElement",
+            "element_id": "1c493e1166a6e59ebe9e054c9c6c03db",
+            "text": "Routing enables us to create bespoke responses according to user intent. Examples include:\n\n* RAG\n* Summarization\n* Plain chat",
+            "metadata": {
+                "languages": ["eng"],
+                "orig_elements": "eJwVjsFOwzAQRH9l5SMiCEVtSXrjxI0D4lZVaGNPgtV4HdlrVKj679iXXe3szOidbgYrAkS/vDNHMnY89NPezd2Be9ft+mHfjfM4dOwwvDg4O++ezSOZAGXHyjVzMyvLUnhBrtfJQBZzvleP4qqtM8WiXhaC8LQiU8mkkWwCK2hC3uIFlNqWXN9sbUyuBaqrZCTyopXwiXDlsLUGL3YtDkd6oI/XtzpzCYET+z9WH6UK28peyH6zNlr93dBI3jml6vjBZ0O7n/8BhxNVfA==",
+                "filename": "example.html",
+                "filetype": "text/html",
+            },
+        }
+    ]
+
+    # Mock LLM return value
+    mock_llm_response = mock_llm.return_value
+    mock_llm_response.status_code = 200
+    mock_llm_response.return_value = GenericFakeChatModel(messages=iter(llm_response))
 
     # Upload file
     file_name = file_to_s3("html/example.html", s3_client, env)
@@ -145,6 +164,7 @@ def test_document_loader(
         }
     ]
 
+    # Mock LLM return value
     mock_llm_response = mock_llm.return_value
     mock_llm_response.status_code = 200
     mock_llm_response.return_value = GenericFakeChatModel(messages=iter([json.dumps(fake_llm_response())]))
@@ -219,6 +239,7 @@ def test_ingest_from_loader(
         }
     ]
 
+    # Mock LLM return value
     mock_llm_response = mock_llm.return_value
     mock_llm_response.status_code = 200
     mock_llm_response.return_value = GenericFakeChatModel(messages=iter([json.dumps(fake_llm_response())]))
@@ -319,16 +340,16 @@ def test_ingest_file(
     mock_response.status_code = 200
     mock_response.json.return_value = mock_json
 
+    # Mock LLM return value
+    mock_llm_response = mock_llm.return_value
+    mock_llm_response.status_code = 200
+    mock_llm_response.return_value = GenericFakeChatModel(messages=iter([json.dumps(fake_llm_response())]))
+
     # Mock embeddings
     monkeypatch.setattr(ingester, "get_embeddings", lambda _: FakeEmbeddings(size=3072))
 
     # Upload file and call
     filename = file_to_s3(filename=filename, s3_client=s3_client, env=env)
-
-    # Mock llm
-    mock_llm_response = mock_llm.return_value
-    mock_llm_response.status_code = 200
-    mock_llm_response.return_value = GenericFakeChatModel(messages=iter([json.dumps(fake_llm_response())]))
 
     res = ingest_file(filename)
 
