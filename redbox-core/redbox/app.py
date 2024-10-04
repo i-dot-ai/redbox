@@ -57,7 +57,7 @@ class Redbox:
         )
 
         tools: dict[str, StructuredTool] = {
-            "search_documents": search_documents,
+            "_search_documents": search_documents,
         }
 
         self.graph = get_root_graph(

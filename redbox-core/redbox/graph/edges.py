@@ -100,9 +100,9 @@ def build_tools_selected_conditional(tools: list[str]) -> Runnable:
     """Given a list of tools, returns True if any tool is in the state and uncalled."""
 
     def _tools_selected_conditional(state: RedboxState) -> bool:
-        for tool in tools:
-            if tool in state["tool_calls"]:
-                if not state["tool_calls"][tool].called:
-                    return True
+        for tool_call in state["tool_calls"].values():
+            if tool_call["tool"]["name"] in tools and not tool_call["called"]:
+                return True
+        return False
 
     return _tools_selected_conditional

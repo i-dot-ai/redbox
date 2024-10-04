@@ -1,4 +1,3 @@
-
 from langchain_core.tools import StructuredTool
 from langchain_core.vectorstores import VectorStoreRetriever
 from langgraph.graph import END, START, StateGraph
@@ -143,12 +142,15 @@ def get_agentic_search_graph(tools: dict[str, StructuredTool], debug: bool = Fal
     builder = StateGraph(RedboxState)
 
     # Tools
-    agent_tool_names = ["search_documents"]
+    agent_tool_names = ["_search_documents"]
     agent_tools: list[StructuredTool] = [tools.get(tool_name) for tool_name in agent_tool_names]
 
     # Processes
-    builder.add_node("p_set_agentic_search_route", build_set_route_pattern(route=ChatRoute.search_agentic))
-    builder.add_node("p_stuff_docs_agent", build_stuff_pattern(prompt_set=PromptSet.SearchAgentic, tools=agent_tools))
+    builder.add_node("p_set_agentic_search_route", build_set_route_pattern(route=ChatRoute.gadget))
+    builder.add_node(
+        "p_stuff_docs_agent",
+        build_stuff_pattern(prompt_set=PromptSet.SearchAgentic, tools=agent_tools, final_response_chain=True),
+    )
     builder.add_node("p_retrieval_tools", build_tool_pattern(tools=agent_tools))
 
     # Decisions
@@ -361,7 +363,7 @@ def get_root_graph(
     builder.add_conditional_edges(
         "d_keyword_exists",
         build_keyword_detection_conditional(*ROUTABLE_KEYWORDS.keys()),
-        {ChatRoute.search: "p_search", ChatRoute.search_agentic: "p_search_agentic", "DEFAULT": "d_docs_selected"},
+        {ChatRoute.search: "p_search", ChatRoute.gadget: "p_search_agentic", "DEFAULT": "d_docs_selected"},
     )
     builder.add_conditional_edges(
         "d_docs_selected",

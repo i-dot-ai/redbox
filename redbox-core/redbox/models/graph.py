@@ -20,5 +20,5 @@ SOURCE_DOCUMENTS_TAG = "source_documents_flag"
 ROUTE_NAME_TAG = "route_flag"
 ROUTABLE_KEYWORDS = {
     ChatRoute.search: "Search for an answer to the question in the document",
-    ChatRoute.search_agentic: "Let Redbox go-go-gadget to answer to the question using the documents",
+    ChatRoute.gadget: "Let Redbox go-go-gadget to answer to the question using the documents",
 }

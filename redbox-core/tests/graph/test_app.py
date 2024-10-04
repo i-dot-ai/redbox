@@ -1,9 +1,10 @@
 import copy
+from typing import Any
 from uuid import uuid4
 
 import pytest
-from langchain_core.language_models.fake_chat_models import GenericFakeChatModel
 from langchain_core.messages import AIMessage
+from langchain_core.tools import tool
 from pytest_mock import MockerFixture
 from tiktoken.core import Encoding
 
@@ -14,6 +15,7 @@ from redbox.models.file import ChunkResolution
 from redbox.models.graph import RedboxActivityEvent
 from redbox.models.settings import Settings
 from redbox.test.data import (
+    GenericFakeChatModelWithTools,
     RedboxChatTestCase,
     RedboxTestData,
     generate_test_cases,
@@ -21,6 +23,7 @@ from redbox.test.data import (
     mock_metadata_retriever,
     mock_parameterised_retriever,
 )
+from redbox.transform import structure_documents_by_group_and_indices
 
 LANGGRAPH_DEBUG = True
 
@@ -287,7 +290,7 @@ TEST_CASES = [
                                 "tool_calls": [
                                     {
                                         "id": "call_e4003b",
-                                        "function": {"arguments": '{\n  "query": "ai"\n}', "name": "search"},
+                                        "function": {"arguments": '{\n  "query": "ai"\n}', "name": "_search_documents"},
                                         "type": "function",
                                     }
                                 ]
@@ -295,7 +298,7 @@ TEST_CASES = [
                         ),
                         "AI is a lie",
                     ],
-                    expected_route=ChatRoute.search_agentic,
+                    expected_route=ChatRoute.gadget,
                 ),
             ],
             test_id="Agentic search",
@@ -347,6 +350,18 @@ async def test_streaming(test: RedboxChatTestCase, env: Settings, mocker: Mocker
     # Current setup modifies test data as it's not a fixture. This is a hack
     test_case = copy.deepcopy(test)
 
+    # Mock the LLM and relevant tools
+    llm = GenericFakeChatModelWithTools(messages=iter(test_case.test_data.expected_llm_response))
+
+    @tool
+    def _search_documents(query: str) -> dict[str, Any]:
+        """Tool to search documents."""
+        return {"documents": structure_documents_by_group_and_indices(test_case.docs)}
+
+    mocker.patch("redbox.app.build_search_documents_tool", return_value=_search_documents)
+    mocker.patch("redbox.graph.nodes.processes.get_chat_llm", return_value=llm)
+
+    # Instantiate app
     app = Redbox(
         all_chunks_retriever=mock_all_chunks_retriever(test_case.docs),
         parameterised_retriever=mock_parameterised_retriever(test_case.docs),
@@ -374,9 +389,7 @@ async def test_streaming(test: RedboxChatTestCase, env: Settings, mocker: Mocker
     async def streaming_activity_handler(activity_event: RedboxActivityEvent):
         activity_events.append(activity_event)
 
-    llm = GenericFakeChatModel(messages=iter(test_case.test_data.expected_llm_response))
-
-    (mocker.patch("redbox.graph.nodes.processes.get_chat_llm", return_value=llm),)
+    # Run the app
     response = await app.run(
         input=RedboxState(request=test_case.query),
         response_tokens_callback=streaming_response_handler,
@@ -387,6 +400,7 @@ async def test_streaming(test: RedboxChatTestCase, env: Settings, mocker: Mocker
 
     final_state = RedboxState(response)
 
+    # Assertions
     assert route_name is not None, f"No Route Name event fired! - Final State: {final_state}"
 
     # Bit of a bodge to retain the ability to check that the LLM streaming is working in most cases
@@ -430,6 +444,6 @@ def test_get_available_keywords(tokeniser: Encoding, env: Settings):
         env=env,
         debug=LANGGRAPH_DEBUG,
     )
-    keywords = {ChatRoute.search, ChatRoute.search_agentic}
+    keywords = {ChatRoute.search, ChatRoute.gadget}
 
     assert keywords == set(app.get_available_keywords().keys())

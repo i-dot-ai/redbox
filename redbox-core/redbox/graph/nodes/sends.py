@@ -15,7 +15,9 @@ def build_document_group_send(target: str) -> Callable[[RedboxState], list[Send]
                 request=state["request"],
                 text=state.get("text"),
                 documents={group_key: state["documents"][group_key]},
-                route=state.get("route"),
+                tool_calls=state.get("tool_calls"),
+                route_name=state.get("route_name"),
+                metadata=state.get("metadata"),
             )
             for group_key in state["documents"]
         ]
@@ -34,7 +36,9 @@ def build_document_chunk_send(target: str) -> Callable[[RedboxState], list[Send]
                 request=state["request"],
                 text=state.get("text"),
                 documents={group_key: {document_key: state["documents"][group_key][document_key]}},
-                route=state.get("route"),
+                tool_calls=state.get("tool_calls"),
+                route_name=state.get("route_name"),
+                metadata=state.get("metadata"),
             )
             for group_key in state["documents"]
             for document_key in state["documents"][group_key]
@@ -55,7 +59,8 @@ def build_tool_send(target: str) -> Callable[[RedboxState], list[Send]]:
                 text=state.get("text"),
                 documents=state.get("documents"),
                 tool_calls={tool_id: tool_call},
-                route=state.get("route"),
+                route_name=state.get("route_name"),
+                metadata=state.get("metadata"),
             )
             for tool_id, tool_call in state["tool_calls"].items()
         ]
