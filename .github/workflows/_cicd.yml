@@ -19,6 +19,7 @@ on:
         default: refs/heads/main
 
 permissions:
+  id-token: write
   contents: read
 
 jobs:
