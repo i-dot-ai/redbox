@@ -273,6 +273,25 @@ TEST_CASES = [
         ),
         generate_test_cases(
             query=RedboxQuery(
+                question="@search What is AI?",
+                s3_keys=[],
+                user_uuid=uuid4(),
+                chat_history=[],
+                permitted_s3_keys=["s3_key"],
+            ),
+            test_data=[
+                RedboxTestData(
+                    number_of_docs=1,
+                    tokens_in_all_docs=10000,
+                    expected_llm_response=["Condense response", "The cake is a lie"],
+                    expected_route=ChatRoute.search,
+                    s3_keys=["s3_key"],
+                ),
+            ],
+            test_id="Search, nothing selected",
+        ),
+        generate_test_cases(
+            query=RedboxQuery(
                 question="@gadget What is AI?",
                 s3_keys=["s3_key"],
                 user_uuid=uuid4(),
@@ -302,6 +321,39 @@ TEST_CASES = [
                 ),
             ],
             test_id="Agentic search",
+        ),
+        generate_test_cases(
+            query=RedboxQuery(
+                question="@gadget What is AI?",
+                s3_keys=[],
+                user_uuid=uuid4(),
+                chat_history=[],
+                permitted_s3_keys=["s3_key"],
+            ),
+            test_data=[
+                RedboxTestData(
+                    number_of_docs=1,
+                    tokens_in_all_docs=10000,
+                    expected_llm_response=[
+                        AIMessage(
+                            content="",
+                            additional_kwargs={
+                                "tool_calls": [
+                                    {
+                                        "id": "call_e4003b",
+                                        "function": {"arguments": '{\n  "query": "ai"\n}', "name": "_search_documents"},
+                                        "type": "function",
+                                    }
+                                ]
+                            },
+                        ),
+                        "AI is a lie",
+                    ],
+                    expected_route=ChatRoute.gadget,
+                    s3_keys=["s3_key"],
+                ),
+            ],
+            test_id="Agentic search, nothing selected",
         ),
         generate_test_cases(
             query=RedboxQuery(
@@ -433,6 +485,10 @@ async def test_streaming(test: RedboxChatTestCase, env: Settings, mocker: Mocker
         final_state.get("route_name") == test_case.test_data.expected_route
     ), f"Expected Route: '{ test_case.test_data.expected_route}'. Received '{final_state["route_name"]}'"
     if metadata := final_state.get("metadata"):
+        if test_case.test_data.expected_route in {ChatRoute.search, ChatRoute.gadget}:
+            # These routes will search unselected files
+            # We amend total tokens to match the tokens in all docs
+            metadata.selected_files_total_tokens = metadata_response.selected_files_total_tokens
         assert metadata == metadata_response, f"Expected metadata: '{metadata_response}'. Received '{metadata}'"
 
 
