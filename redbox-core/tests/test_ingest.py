@@ -18,7 +18,7 @@ from redbox.chains.ingest import document_loader, ingest_from_loader
 from redbox.loader import ingester
 from redbox.loader.ingester import ingest_file
 from redbox.loader.loaders import (
-    Metadata,
+    MetadataLoader,
     UnstructuredChunkLoader,
     coerce_to_string_list,
 )
@@ -59,67 +59,77 @@ def make_file_query(
     return {"query": {"bool": {"must": [{"match_all": {}}], "filter": query_filter}}}
 
 
-def make_fake_llm() -> GenericFakeChatModel:
-    fake_llm_response = {
+def fake_llm_response():
+    return {
         "name": "foo",
         "description": "more test",
         "keywords": "hello, world",
     }
-    return GenericFakeChatModel(messages=iter([json.dumps(fake_llm_response)]))
 
 
 @patch("redbox.loader.loaders.get_chat_llm")
 @pytest.mark.parametrize(
-    "fake_llm_response",
+    ("test_case", "llm_response"),
     [
-        {
-            "name": "foo",
-            "description": "more test",
-            "keywords": "hello, world",
-        }
+        (
+            "missing_key",
+            [
+                '{"name": "foo","description":"test"}',
+            ],
+        ),
+        (
+            "extra_key",
+            [
+                '{"name": "foo","description":"test", "keywords": "abc"}',
+            ],
+        ),
     ],
 )
 def test_extract_metadata(
     mock_llm: MagicMock,
-    fake_llm_response: dict,
+    test_case: str,
+    llm_response: dict,
     env: Settings,
     s3_client: S3Client,
 ):
     mock_llm_response = mock_llm.return_value
     mock_llm_response.status_code = 200
-    mock_llm_response.return_value = GenericFakeChatModel(
-        messages=iter([json.dumps(fake_llm_response)])
-    )
+    mock_llm_response.return_value = GenericFakeChatModel(messages=iter(llm_response))
+
+    """
+    Test 4 fail cases:
+    LLM replies with an invalid JSON three times
+    LLM replies with an invalid JSON once, then valid
+    LLM replies but without one of the keys
+    LLM replies with an extra key
+    """
 
     # Upload file
     file_name = file_to_s3("html/example.html", s3_client, env)
 
-    metadata = Metadata(env=env, s3_client=s3_client, file_name=file_name)
+    metadata = MetadataLoader(env=env, s3_client=s3_client, file_name=file_name)
     metadata.extract_metadata()
-    assert not metadata.metadata is None
-    assert metadata.metadata.get("name") == fake_llm_response.get("name")
-    assert metadata.metadata.get("description") == fake_llm_response.get("description")
-    assert metadata.metadata.get("keywords") == fake_llm_response.get("keywords")
+
+    if test_case in ["missing_key"]:
+
+        assert metadata.metadata.get("name") == ""
+        assert metadata.metadata.get("description") == ""
+        assert metadata.metadata.get("keywords") == ""
+    else:
+        assert not metadata.metadata is None
+        llm_json = json.loads(llm_response[0])
+        assert metadata.metadata.get("name") == llm_json.get("name")
+        assert metadata.metadata.get("description") == llm_json.get("description")
+        assert metadata.metadata.get("keywords") == llm_json.get("keywords")
 
 
 @patch("redbox.loader.loaders.get_chat_llm")
-@pytest.mark.parametrize(
-    "fake_llm_response",
-    [
-        {
-            "name": "foo",
-            "description": "more test",
-            "keywords": "hello, world",
-        }
-    ],
-)
 @patch("redbox.loader.loaders.requests.post")
 def test_document_loader(
     mock_post: MagicMock,
     mock_llm: MagicMock,
     s3_client: S3Client,
     env: Settings,
-    fake_llm_response: dict,
 ):
     """
     Given that I have written a text File to s3
@@ -146,13 +156,13 @@ def test_document_loader(
     mock_llm_response = mock_llm.return_value
     mock_llm_response.status_code = 200
     mock_llm_response.return_value = GenericFakeChatModel(
-        messages=iter([json.dumps(fake_llm_response)])
+        messages=iter([json.dumps(fake_llm_response())])
     )
 
     # Upload file
     file = file_to_s3("html/example.html", s3_client, env)
 
-    metadata = Metadata(env=env, s3_client=s3_client, file_name=file)
+    metadata = MetadataLoader(env=env, s3_client=s3_client, file_name=file)
     metadata.extract_metadata()
 
     loader = UnstructuredChunkLoader(
@@ -171,30 +181,21 @@ def test_document_loader(
 
     # Verify that metadata has been attached to object
     for chuck in chunks:
-        assert chuck.metadata["name"] == fake_llm_response["name"]
-        assert chuck.metadata["description"] == fake_llm_response["description"]
+        llm_response = fake_llm_response()
+        assert chuck.metadata["name"] == llm_response["name"]
+        assert chuck.metadata["description"] == llm_response["description"]
         assert chuck.metadata["keywords"] == coerce_to_string_list(
-            fake_llm_response["keywords"]
+            llm_response["keywords"]
         )
 
 
 @patch("redbox.loader.loaders.get_chat_llm")
-@pytest.mark.parametrize(
-    "fake_llm_response",
-    [
-        {
-            "name": "foo",
-            "description": "more test",
-            "keywords": "hello, world",
-        }
-    ],
-)
 @patch("redbox.loader.loaders.requests.post")
 @pytest.mark.parametrize(
     "resolution, has_embeddings",
     [
-        (ChunkResolution.normal, True),
         (ChunkResolution.largest, False),
+        (ChunkResolution.normal, True),
     ],
 )
 def test_ingest_from_loader(
@@ -207,7 +208,6 @@ def test_ingest_from_loader(
     es_vector_store: ElasticsearchStore,
     s3_client: S3Client,
     env: Settings,
-    fake_llm_response: dict,
 ):
     """
     Given that I have written a text File to s3
@@ -234,14 +234,14 @@ def test_ingest_from_loader(
     mock_llm_response = mock_llm.return_value
     mock_llm_response.status_code = 200
     mock_llm_response.return_value = GenericFakeChatModel(
-        messages=iter([json.dumps(fake_llm_response)])
+        messages=iter([json.dumps(fake_llm_response())])
     )
 
     # Upload file and call
     file_name = file_to_s3(filename="html/example.html", s3_client=s3_client, env=env)
 
     # Extract metadata
-    metadata = Metadata(env=env, s3_client=s3_client, file_name=file_name)
+    metadata = MetadataLoader(env=env, s3_client=s3_client, file_name=file_name)
     metadata.extract_metadata()
 
     loader = UnstructuredChunkLoader(
@@ -275,13 +275,14 @@ def test_ingest_from_loader(
         return chunk["_source"]["metadata"]
 
     # Verify that metadata has been attached to object
-    for chunk in chunks:
-        metadata = get_metadata(chunk)
-        assert metadata["name"] == fake_llm_response["name"]
-        assert metadata["description"] == fake_llm_response["description"]
-        assert metadata["keywords"] == coerce_to_string_list(
-            fake_llm_response["keywords"]
-        )
+    if has_embeddings:
+        for chunk in chunks:
+            metadata = get_metadata(chunk)
+            assert metadata["name"] == fake_llm_response()["name"]
+            assert metadata["description"] == fake_llm_response()["description"]
+            assert metadata["keywords"] == coerce_to_string_list(
+                fake_llm_response()["keywords"]
+            )
 
     if has_embeddings:
         embeddings = chunks[0]["_source"].get("embedding")
@@ -293,18 +294,6 @@ def test_ingest_from_loader(
 
 
 @patch("redbox.loader.loaders.get_chat_llm")
-@pytest.mark.parametrize(
-    "fake_llm_response",
-    [
-        (
-            {
-                "name": "foo",
-                "description": "more test",
-                "keywords": "hello, world",
-            }
-        ),
-    ],
-)
 @patch("redbox.loader.loaders.requests.post")
 @pytest.mark.parametrize(
     ("filename", "is_complete", "mock_json"),
@@ -339,7 +328,6 @@ def test_ingest_file(
     filename: str,
     is_complete: bool,
     mock_json: list | None,
-    fake_llm_response: dict,
 ):
     """
     Given that I have written a text File to s3
@@ -363,7 +351,7 @@ def test_ingest_file(
     mock_llm_response = mock_llm.return_value
     mock_llm_response.status_code = 200
     mock_llm_response.return_value = GenericFakeChatModel(
-        messages=iter([json.dumps(fake_llm_response)])
+        messages=iter([json.dumps(fake_llm_response())])
     )
 
     res = ingest_file(filename)
@@ -371,9 +359,6 @@ def test_ingest_file(
     if not is_complete:
         assert isinstance(res, str)
     else:
-        print(
-            f"In the complete path. Is complete: {is_complete}. type: {isinstance(res, str)} Res is {res} trying to ingest {filename}"
-        )
         assert res is None
 
         # Test it's written to Elastic
@@ -394,10 +379,11 @@ def test_ingest_file(
         # Verify that metadata has been attached to document.
         for chunk in chunks:
             metadata = get_metadata(chunk)
-            assert metadata["name"] == fake_llm_response["name"]
-            assert metadata["description"] == fake_llm_response["description"]
+            llm_response = fake_llm_response()
+            assert metadata["name"] == llm_response["name"]
+            assert metadata["description"] == llm_response["description"]
             assert metadata["keywords"] == coerce_to_string_list(
-                fake_llm_response["keywords"]
+                llm_response["keywords"]
             )
 
         def get_chunk_resolution(chunk: dict) -> str:

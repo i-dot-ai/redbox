@@ -1,3 +1,4 @@
+import json
 import logging
 from ast import Pass
 from collections.abc import Iterator
@@ -8,6 +9,7 @@ from typing import TYPE_CHECKING, Any
 import requests
 import tiktoken
 from langchain_core.documents import Document
+from langchain_core.exceptions import OutputParserException
 from langchain_core.output_parsers import JsonOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 from requests.exceptions import HTTPError
@@ -28,18 +30,17 @@ else:
     S3Client = object
 
 
-class Metadata:
+class MetadataLoader:
     def __init__(
-        self,
-        env: Settings,
-        s3_client: S3Client,
-        file_name: str,
+        self, env: Settings, s3_client: S3Client, file_name: str, metadata: dict = None
     ):
         self.env = env
         self.s3_client = s3_client
-        self.metadata = None
         self.llm = get_chat_llm(self.env, AISettings())
         self.file_name = file_name
+        self.metadata = metadata
+        self.required_keys = ["name", "description", "keywords"]
+        self.default_metadata = {"name": "", "description": "", "keywords": ""}
 
     def get_first_n_tokens(self, chunks: list[dict], n: int) -> str:
         """From a list of chunks, returns the first n tokens."""
@@ -68,9 +69,8 @@ class Metadata:
             )
         return metadata
 
-    def merge_unstructured_metadata(
-        self, x: dict, y: dict, ignore: list[str] = None
-    ) -> dict:
+    @staticmethod
+    def merge_unstructured_metadata(x: dict, y: dict, ignore: set[str] = None) -> dict:
         """
         Combine 2 dicts without deleting any elements. If the key is present in both,
         combine values into a list. If value is in a list, extend with unique values.
@@ -81,10 +81,8 @@ class Metadata:
 
         combined = {}
 
-        ignore_set = set(ignore)
-
         for key in set(x) | set(y):
-            if key in ignore_set:
+            if key in ignore:
                 continue
 
             if key in x and key in y:
@@ -106,9 +104,9 @@ class Metadata:
             "Body"
         ].read()
 
-    def extract_metadata(self):
+    def _chunking(self) -> Any:
         """
-        Extract metadata from first 1_000 chunks
+        Chunking data using local unstructured
         """
         file_bytes = self._get_file_bytes(
             s3_client=self.s3_client, file_name=self.file_name
@@ -133,11 +131,16 @@ class Metadata:
         if response.status_code != 200:
             raise ValueError(response.text)
 
-        elements = response.json()
+        return response.json()
 
+    def extract_metadata(self):
+        """
+        Extract metadata from first 1_000 chunks
+        """
+
+        elements = self._chunking()
         if not elements:
-            # if we can't extract metadata, return empty metadata
-            return {"name": "", "description": "", "keywords": [""]}
+            self.metadata = self.default_metadata
 
         else:
             # Get first 1k tokens of processed document
@@ -147,9 +150,16 @@ class Metadata:
             doc_metadata = self.get_doc_metadata(chunks=elements, n=3, ignore=None)
 
             # Generate new metadata
-            self.metadata = self.create_file_metadata(first_n, doc_metadata)
-            if not self.metadata:
-                raise ValueError("LLM failed to extract metadata for this file")
+            res = self.create_file_metadata(first_n, doc_metadata)
+            if not res:
+                self.metadata = self.default_metadata
+                logger.warning("LLM failed to extract metadata for this file")
+            else:
+                if all(key in res.keys() for key in self.required_keys):
+                    self.metadata = res
+                else:
+                    # missing keys
+                    self.metadata = self.default_metadata
 
     def create_file_metadata(
         self, page_content: str, metadata: dict[str, Any]
@@ -158,17 +168,7 @@ class Metadata:
         metadata_chain = (
             ChatPromptTemplate.from_messages(
                 [
-                    (
-                        "system",
-                        "You are an SEO specialist that must optimise the metadata of a document "
-                        "to make it as discoverable as possible. You are about to be given the first "
-                        "1_000 tokens of a document and any hard-coded file metadata that can be "
-                        "recovered from it. Create SEO-optimised metadata for this document in the "
-                        "structured data markup (JSON-LD) standard. You must include at least "
-                        "the 'name', 'description' and 'keywords' properties but otherwise use your "
-                        "expertise to make the document as easy to search for as possible. "
-                        "Return only the JSON-LD: \n\n",
-                    ),
+                    self.env.metadata_prompt,
                     (
                         "user",
                         (
@@ -183,7 +183,7 @@ class Metadata:
                 ]
             )
             | self.llm
-            | JsonOutputParser().with_retry(stop_after_attempt=3)
+            | JsonOutputParser()
         )
 
         try:
@@ -191,11 +191,12 @@ class Metadata:
                 {"page_content": page_content, "metadata": metadata}
             )
         except ConnectionError as e:
-            logger.warning(f"Retrying due to HTTPError {e.response.status_code}")
+            logger.warning(f"Retrying due to HTTPError {e}")
+        except json.JSONDecodeError as e:
+            # replace with fail safe metadata
+            return None
         except Exception as e:
-            raise Exception(
-                f"Some error happened in metadata extraction. {e.response.status_code}"
-            )
+            raise Exception(f"Some error happened in metadata extraction. {e}")
 
 
 def coerce_to_string_list(input_data: str | list[Any]) -> list[str]:
@@ -208,9 +209,8 @@ def coerce_to_string_list(input_data: str | list[Any]) -> list[str]:
 
 
 class UnstructuredChunkLoader:
-    """Load, partition and chunk a document using local unstructured library.
-
-    Uses a metadata chain to extract metadata from the document where possible.
+    """
+    Load, partition and chunk a document using local unstructured library.
     """
 
     def __init__(
@@ -219,7 +219,7 @@ class UnstructuredChunkLoader:
         env: Settings,
         min_chunk_size: int,
         max_chunk_size: int,
-        metadata: list,
+        metadata: dict,
         overlap_chars: int = 0,
         overlap_all_chunks: bool = True,
     ):

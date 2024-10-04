@@ -8,7 +8,6 @@ from elasticsearch import Elasticsearch
 from pydantic import BaseModel
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-
 logging.basicConfig(level=os.environ.get("LOG_LEVEL", "INFO"))
 log = logging.getLogger()
 
@@ -66,7 +65,10 @@ class Settings(BaseSettings):
     azure_api_version_embeddings: str = "2024-02-01"
 
     embedding_backend: Literal[
-        "text-embedding-ada-002", "amazon.titan-embed-text-v2:0", "text-embedding-3-large", "fake"
+        "text-embedding-ada-002",
+        "amazon.titan-embed-text-v2:0",
+        "text-embedding-3-large",
+        "fake",
     ] = "text-embedding-3-large"
 
     llm_max_tokens: int = 1024
@@ -108,8 +110,12 @@ class Settings(BaseSettings):
     worker_ingest_largest_chunk_size: int = 300_000
     worker_ingest_largest_chunk_overlap: int = 0
 
-    response_no_doc_available: str = "No available data for selected files. They may need to be removed and added again"
-    response_max_content_exceeded: str = "Max content exceeded. Try smaller or fewer documents"
+    response_no_doc_available: str = (
+        "No available data for selected files. They may need to be removed and added again"
+    )
+    response_max_content_exceeded: str = (
+        "Max content exceeded. Try smaller or fewer documents"
+    )
 
     object_store: str = "minio"
 
@@ -118,7 +124,22 @@ class Settings(BaseSettings):
 
     unstructured_host: str = "unstructured"
 
-    model_config = SettingsConfigDict(env_file=".env", env_nested_delimiter="__", extra="allow", frozen=True)
+    model_config = SettingsConfigDict(
+        env_file=".env", env_nested_delimiter="__", extra="allow", frozen=True
+    )
+
+    ## Prompts
+    metadata_prompt: tuple = (
+        "system",
+        "You are an SEO specialist that must optimise the metadata of a document "
+        "to make it as discoverable as possible. You are about to be given the first "
+        "1_000 tokens of a document and any hard-coded file metadata that can be "
+        "recovered from it. Create SEO-optimised metadata for this document in the "
+        "structured data markup (JSON-LD) standard. You must include at least "
+        "the 'name', 'description' and 'keywords' properties but otherwise use your "
+        "expertise to make the document as easy to search for as possible. "
+        "Return only the JSON-LD: \n\n",
+    )
 
     @lru_cache(1)
     def elasticsearch_client(self) -> Elasticsearch:
@@ -134,7 +155,9 @@ class Settings(BaseSettings):
                 basic_auth=(self.elastic.user, self.elastic.password),
             )
         else:
-            client = Elasticsearch(cloud_id=self.elastic.cloud_id, api_key=self.elastic.api_key)
+            client = Elasticsearch(
+                cloud_id=self.elastic.cloud_id, api_key=self.elastic.api_key
+            )
 
         return client.options(request_timeout=30, retry_on_timeout=True, max_retries=3)
 
