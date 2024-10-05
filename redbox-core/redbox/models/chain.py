@@ -13,6 +13,7 @@ from uuid import UUID, uuid4
 
 from langchain_core.documents import Document
 from langchain_core.messages import ToolCall
+from langgraph.managed.base import ManagedValue
 from pydantic import BaseModel, Field
 
 from redbox.models import prompts
@@ -49,6 +50,8 @@ class AISettings(BaseModel):
     retrieval_question_prompt: str = prompts.RETRIEVAL_QUESTION_PROMPT
     agentic_retrieval_system_prompt: str = prompts.AGENTIC_RETRIEVAL_SYSTEM_PROMPT
     agentic_retrieval_question_prompt: str = prompts.AGENTIC_RETRIEVAL_QUESTION_PROMPT
+    agentic_give_up_system_prompt: str = prompts.AGENTIC_GIVE_UP_SYSTEM_PROMPT
+    agentic_give_up_question_prompt: str = prompts.AGENTIC_GIVE_UP_QUESTION_PROMPT
     condense_system_prompt: str = prompts.CONDENSE_SYSTEM_PROMPT
     condense_question_prompt: str = prompts.CONDENSE_QUESTION_PROMPT
     map_max_concurrency: int = 128
@@ -223,6 +226,14 @@ def tool_calls_reducer(current: ToolState, update: ToolState | None) -> ToolStat
     return reduced
 
 
+class StepsLeft(ManagedValue[bool]):
+    """A managed value that counts down from the recursion limit."""
+
+    def __call__(self, step: int) -> int:
+        limit = self.config.get("recursion_limit", 0)
+        return limit - step
+
+
 class RedboxState(TypedDict):
     request: Required[RedboxQuery]
     documents: Annotated[NotRequired[DocumentState], document_reducer]
@@ -230,6 +241,7 @@ class RedboxState(TypedDict):
     route_name: NotRequired[str | None]
     tool_calls: Annotated[NotRequired[ToolState], tool_calls_reducer]
     metadata: Annotated[NotRequired[RequestMetadata], metadata_reducer]
+    steps_left: Annotated[int, StepsLeft]
 
 
 class PromptSet(StrEnum):
@@ -238,6 +250,7 @@ class PromptSet(StrEnum):
     ChatwithDocsMapReduce = "chat_with_docs_map_reduce"
     Search = "search"
     SearchAgentic = "search_agentic"
+    GiveUpAgentic = "give_up_agentic"
     SelfRoute = "self_route"
     CondenseQuestion = "condense_question"
 
@@ -258,6 +271,9 @@ def get_prompts(state: RedboxState, prompt_set: PromptSet) -> tuple[str, str]:
     elif prompt_set == PromptSet.SearchAgentic:
         system_prompt = state["request"].ai_settings.agentic_retrieval_system_prompt
         question_prompt = state["request"].ai_settings.agentic_retrieval_question_prompt
+    elif prompt_set == PromptSet.GiveUpAgentic:
+        system_prompt = state["request"].ai_settings.agentic_give_up_system_prompt
+        question_prompt = state["request"].ai_settings.agentic_give_up_question_prompt
     elif prompt_set == PromptSet.SelfRoute:
         system_prompt = state["request"].ai_settings.self_route_system_prompt
         question_prompt = state["request"].ai_settings.retrieval_question_prompt

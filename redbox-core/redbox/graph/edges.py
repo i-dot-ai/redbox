@@ -106,3 +106,15 @@ def build_tools_selected_conditional(tools: list[str]) -> Runnable:
         return False
 
     return _tools_selected_conditional
+
+
+def build_strings_in_text_conditional(*strings: str) -> Runnable:
+    """Given a list of strings, returns the string if state["text"] begins with it."""
+
+    def _strings_in_text_conditional(state: RedboxState) -> str:
+        for string in strings:
+            if state["text"].lower().startswith(string.lower()):
+                return string
+        return "DEFAULT"
+
+    return _strings_in_text_conditional

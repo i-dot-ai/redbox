@@ -316,6 +316,28 @@ TEST_CASES = [
                                 ]
                             },
                         ),
+                        "answer",
+                        "AI is a lie",
+                    ],
+                    expected_route=ChatRoute.gadget,
+                ),
+                RedboxTestData(
+                    number_of_docs=1,
+                    tokens_in_all_docs=10000,
+                    expected_llm_response=[
+                        AIMessage(
+                            content="",
+                            additional_kwargs={
+                                "tool_calls": [
+                                    {
+                                        "id": "call_e4003b",
+                                        "function": {"arguments": '{\n  "query": "ai"\n}', "name": "_search_documents"},
+                                        "type": "function",
+                                    }
+                                ]
+                            },
+                        ),
+                        "give_up",
                         "AI is a lie",
                     ],
                     expected_route=ChatRoute.gadget,
@@ -348,6 +370,7 @@ TEST_CASES = [
                                 ]
                             },
                         ),
+                        "answer",
                         "AI is a lie",
                     ],
                     expected_route=ChatRoute.gadget,
