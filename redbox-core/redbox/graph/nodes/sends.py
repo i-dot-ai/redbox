@@ -6,18 +6,17 @@ from redbox.models.chain import RedboxState
 
 
 def build_document_group_send(target: str) -> Callable[[RedboxState], list[Send]]:
-    def _group_send(state: RedboxState) -> list[Send]:
-        if state.get("documents") is None:
-            raise KeyError
+    """builds Sends per document-groups"""
 
+    def _group_send(state: RedboxState) -> list[Send]:
         group_send_states: list[RedboxState] = [
             RedboxState(
                 request=state["request"],
                 text=state.get("text"),
-                documents={group_key: state["documents"][group_key]},
-                route=state.get("route"),
+                documents={document_group_key: document_group},
+                route_name=state.get("route_name"),
             )
-            for group_key in state["documents"]
+            for document_group_key, document_group in state["documents"].items()
         ]
         return [Send(node=target, arg=state) for state in group_send_states]
 
@@ -25,19 +24,18 @@ def build_document_group_send(target: str) -> Callable[[RedboxState], list[Send]
 
 
 def build_document_chunk_send(target: str) -> Callable[[RedboxState], list[Send]]:
-    def _chunk_send(state: RedboxState) -> list[Send]:
-        if state.get("documents") is None:
-            raise KeyError
+    """builds Sends per individual document"""
 
+    def _chunk_send(state: RedboxState) -> list[Send]:
         chunk_send_states: list[RedboxState] = [
             RedboxState(
                 request=state["request"],
                 text=state.get("text"),
-                documents={group_key: {document_key: state["documents"][group_key][document_key]}},
-                route=state.get("route"),
+                documents={document_group_key: {document_key: document}},
+                route_name=state.get("route_name"),
             )
-            for group_key in state["documents"]
-            for document_key in state["documents"][group_key]
+            for document_group_key, document_group in state["documents"].items()
+            for document_key, document in document_group.items()
         ]
         return [Send(node=target, arg=state) for state in chunk_send_states]
 
