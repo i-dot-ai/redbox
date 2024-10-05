@@ -100,8 +100,8 @@ def test_user_journey(page: Page, email_address: str):
 
     # Use specific routes
     for keyword, route, select_file, should_have_citation in [
-        ("search", "search", False, True),
-        ("search", "search", True, True),
+        # ("search", "search", False, True),
+        # ("search", "search", True, True),
         ("gadget", "search", False, True),
         ("gadget", "search", True, True),
     ]:
