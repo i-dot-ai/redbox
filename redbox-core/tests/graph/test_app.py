@@ -316,6 +316,7 @@ TEST_CASES = [
                                 ]
                             },
                         ),
+                        "Time to answer",
                         "answer",
                         "AI is a lie",
                     ],
@@ -337,6 +338,7 @@ TEST_CASES = [
                                 ]
                             },
                         ),
+                        "Time to answer",
                         "give_up",
                         "AI is a lie",
                     ],
@@ -370,6 +372,7 @@ TEST_CASES = [
                                 ]
                             },
                         ),
+                        "Time to answer",
                         "answer",
                         "AI is a lie",
                     ],

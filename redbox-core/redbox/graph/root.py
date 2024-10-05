@@ -194,7 +194,7 @@ def get_agentic_search_graph(tools: dict[str, StructuredTool], debug: bool = Fal
     builder.add_edge("p_reflection_agent", "d_ready_to_answer")
     builder.add_conditional_edges(
         "d_ready_to_answer",
-        build_strings_in_text_conditional("answer"),
+        build_strings_in_text_conditional("answer", "give_up"),
         {"answer": "p_stuff_docs_agent", "give_up": "p_give_up_agent", "DEFAULT": "p_build_tool_calls_agents"},
     )
     builder.add_conditional_edges("s_tool", build_tool_send("p_retrieval_tools"), path_map=["p_retrieval_tools"])
