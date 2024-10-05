@@ -149,13 +149,17 @@ def get_agentic_search_graph(tools: dict[str, StructuredTool], debug: bool = Fal
     # Processes
     builder.add_node("p_set_agentic_search_route", build_set_route_pattern(route=ChatRoute.gadget))
     builder.add_node(
-        "p_choose_tool_or_answer_agent",
+        "p_build_tool_calls_agents",
         build_stuff_pattern(prompt_set=PromptSet.SearchAgentic, tools=agent_tools),
     )
     builder.add_node("p_retrieval_tools", build_tool_pattern(tools=agent_tools, final_source_chain=True))
     builder.add_node(
         "p_stuff_docs_agent",
         build_stuff_pattern(prompt_set=PromptSet.Search, final_response_chain=True),
+    )
+    builder.add_node(
+        "p_reflection_agent",
+        build_stuff_pattern(prompt_set=PromptSet.ReflectAgentic),
     )
     builder.add_node(
         "p_give_up_agent",
@@ -172,28 +176,29 @@ def get_agentic_search_graph(tools: dict[str, StructuredTool], debug: bool = Fal
 
     # Edges
     builder.add_edge(START, "p_set_agentic_search_route")
-    builder.add_edge("p_set_agentic_search_route", "p_choose_tool_or_answer_agent")
-    builder.add_edge("p_choose_tool_or_answer_agent", "d_x_steps_left_or_less")
+    builder.add_edge("p_set_agentic_search_route", "p_build_tool_calls_agents")
+    builder.add_edge("p_build_tool_calls_agents", "d_x_steps_left_or_less")
     builder.add_conditional_edges(
         "d_x_steps_left_or_less",
-        lambda state: state["steps_left"] <= 6,
+        lambda state: state["steps_left"] <= 8,
         {
             True: "p_give_up_agent",
-            False: "d_ready_to_answer",
+            False: "d_tools_selected",
         },
-    )
-    builder.add_conditional_edges(
-        "d_ready_to_answer",
-        build_strings_in_text_conditional("answer"),
-        {"answer": "p_stuff_docs_agent", "give_up": "p_give_up_agent", "DEFAULT": "d_tools_selected"},
     )
     builder.add_conditional_edges(
         "d_tools_selected",
         build_tools_selected_conditional(tools=agent_tool_names),
-        {True: "s_tool", False: "p_stuff_docs_agent"},
+        {True: "s_tool", False: "p_reflection_agent"},
+    )
+    builder.add_edge("p_reflection_agent", "d_ready_to_answer")
+    builder.add_conditional_edges(
+        "d_ready_to_answer",
+        build_strings_in_text_conditional("answer"),
+        {"answer": "p_stuff_docs_agent", "give_up": "p_give_up_agent", "DEFAULT": "p_build_tool_calls_agents"},
     )
     builder.add_conditional_edges("s_tool", build_tool_send("p_retrieval_tools"), path_map=["p_retrieval_tools"])
-    builder.add_edge("p_retrieval_tools", "p_choose_tool_or_answer_agent")
+    builder.add_edge("p_retrieval_tools", "p_build_tool_calls_agents")
     builder.add_edge("p_stuff_docs_agent", END)
     builder.add_edge("p_give_up_agent", END)
 

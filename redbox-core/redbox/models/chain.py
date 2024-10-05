@@ -50,6 +50,8 @@ class AISettings(BaseModel):
     retrieval_question_prompt: str = prompts.RETRIEVAL_QUESTION_PROMPT
     agentic_retrieval_system_prompt: str = prompts.AGENTIC_RETRIEVAL_SYSTEM_PROMPT
     agentic_retrieval_question_prompt: str = prompts.AGENTIC_RETRIEVAL_QUESTION_PROMPT
+    agentic_reflection_system_prompt: str = prompts.AGENTIC_REFLECTION_SYSTEM_PROMPT
+    agentic_reflection_question_prompt: str = prompts.AGENTIC_REFLECTION_QUESTION_PROMPT
     agentic_give_up_system_prompt: str = prompts.AGENTIC_GIVE_UP_SYSTEM_PROMPT
     agentic_give_up_question_prompt: str = prompts.AGENTIC_GIVE_UP_QUESTION_PROMPT
     condense_system_prompt: str = prompts.CONDENSE_SYSTEM_PROMPT
@@ -250,6 +252,7 @@ class PromptSet(StrEnum):
     ChatwithDocsMapReduce = "chat_with_docs_map_reduce"
     Search = "search"
     SearchAgentic = "search_agentic"
+    ReflectAgentic = "reflect_agentic"
     GiveUpAgentic = "give_up_agentic"
     SelfRoute = "self_route"
     CondenseQuestion = "condense_question"
@@ -271,6 +274,9 @@ def get_prompts(state: RedboxState, prompt_set: PromptSet) -> tuple[str, str]:
     elif prompt_set == PromptSet.SearchAgentic:
         system_prompt = state["request"].ai_settings.agentic_retrieval_system_prompt
         question_prompt = state["request"].ai_settings.agentic_retrieval_question_prompt
+    elif prompt_set == PromptSet.ReflectAgentic:
+        system_prompt = state["request"].ai_settings.agentic_reflection_system_prompt
+        question_prompt = state["request"].ai_settings.agentic_reflection_question_prompt
     elif prompt_set == PromptSet.GiveUpAgentic:
         system_prompt = state["request"].ai_settings.agentic_give_up_system_prompt
         question_prompt = state["request"].ai_settings.agentic_give_up_question_prompt
