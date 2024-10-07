@@ -1,6 +1,5 @@
 import json
 import logging
-from ast import Pass
 from collections.abc import Iterator
 from datetime import UTC, datetime
 from io import BytesIO
@@ -9,10 +8,8 @@ from typing import TYPE_CHECKING, Any
 import requests
 import tiktoken
 from langchain_core.documents import Document
-from langchain_core.exceptions import OutputParserException
 from langchain_core.output_parsers import JsonOutputParser
 from langchain_core.prompts import ChatPromptTemplate
-from requests.exceptions import HTTPError
 
 from redbox.chains.components import get_chat_llm
 from redbox.models.chain import AISettings
@@ -31,9 +28,7 @@ else:
 
 
 class MetadataLoader:
-    def __init__(
-        self, env: Settings, s3_client: S3Client, file_name: str, metadata: dict = None
-    ):
+    def __init__(self, env: Settings, s3_client: S3Client, file_name: str, metadata: dict = None):
         self.env = env
         self.s3_client = s3_client
         self.llm = get_chat_llm(self.env, AISettings())
@@ -53,9 +48,7 @@ class MetadataLoader:
             tokens += chunk["text"]
         return tokens
 
-    def get_doc_metadata(
-        self, chunks: list[dict], n: int, ignore: list[str] = None
-    ) -> dict[str, Any]:
+    def get_doc_metadata(self, chunks: list[dict], n: int, ignore: list[str] = None) -> dict[str, Any]:
         """
         Use the first n chunks to get metadata using unstructured.
         Metadata keys in the ignore list will be excluded from the result.
@@ -64,9 +57,7 @@ class MetadataLoader:
         for i, chunk in enumerate(chunks):
             if i > n:
                 return metadata
-            metadata = self.merge_unstructured_metadata(
-                metadata, chunk["metadata"], ignore
-            )
+            metadata = self.merge_unstructured_metadata(metadata, chunk["metadata"], ignore)
         return metadata
 
     @staticmethod
@@ -87,9 +78,7 @@ class MetadataLoader:
 
             if key in x and key in y:
                 if isinstance(x[key], list) or isinstance(y[key], list):
-                    combined[key] = list(
-                        set(x[key] + (y[key] if isinstance(y[key], list) else [y[key]]))
-                    )
+                    combined[key] = list(set(x[key] + (y[key] if isinstance(y[key], list) else [y[key]])))
                 else:
                     combined[key] = [x[key], y[key]]
             elif key in x:
@@ -100,17 +89,13 @@ class MetadataLoader:
         return combined
 
     def _get_file_bytes(self, s3_client: S3Client, file_name: str) -> BytesIO:
-        return s3_client.get_object(Bucket=self.env.bucket_name, Key=file_name)[
-            "Body"
-        ].read()
+        return s3_client.get_object(Bucket=self.env.bucket_name, Key=file_name)["Body"].read()
 
     def _chunking(self) -> Any:
         """
         Chunking data using local unstructured
         """
-        file_bytes = self._get_file_bytes(
-            s3_client=self.s3_client, file_name=self.file_name
-        )
+        file_bytes = self._get_file_bytes(s3_client=self.s3_client, file_name=self.file_name)
         url = f"http://{self.env.unstructured_host}:8000/general/v0/general"
         files = {
             "files": (self.file_name, file_bytes),
@@ -161,9 +146,7 @@ class MetadataLoader:
                     # missing keys
                     self.metadata = self.default_metadata
 
-    def create_file_metadata(
-        self, page_content: str, metadata: dict[str, Any]
-    ) -> dict[str, Any]:
+    def create_file_metadata(self, page_content: str, metadata: dict[str, Any]) -> dict[str, Any]:
         """Uses a sample of the document and any extracted metadata to generate further metadata."""
         metadata_chain = (
             ChatPromptTemplate.from_messages(
@@ -187,12 +170,10 @@ class MetadataLoader:
         )
 
         try:
-            return metadata_chain.invoke(
-                {"page_content": page_content, "metadata": metadata}
-            )
+            return metadata_chain.invoke({"page_content": page_content, "metadata": metadata})
         except ConnectionError as e:
             logger.warning(f"Retrying due to HTTPError {e}")
-        except json.JSONDecodeError as e:
+        except json.JSONDecodeError:
             # replace with fail safe metadata
             return None
         except Exception as e:
