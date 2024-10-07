@@ -63,37 +63,55 @@ def fake_llm_response():
 
 
 @patch("redbox.loader.loaders.get_chat_llm")
-@pytest.mark.parametrize(
-    ("test_case", "llm_response"),
-    [
-        (
-            "missing_key",
-            [
-                '{"name": "foo","description":"test"}',
-            ],
-        ),
-        (
-            "extra_key",
-            [
-                '{"name": "foo","description":"test", "keywords": "abc", "extra": "foo"}',
-            ],
-        ),
-    ],
-)
-def test_extract_metadata(
+def test_extract_metadata_missing_key(
     mock_llm: MagicMock,
-    test_case: str,
-    llm_response: dict,
     env: Settings,
     s3_client: S3Client,
+    requests_mock,
 ):
     mock_llm_response = mock_llm.return_value
     mock_llm_response.status_code = 200
-    mock_llm_response.return_value = GenericFakeChatModel(messages=iter(llm_response))
+    mock_llm_response.return_value = GenericFakeChatModel(messages=iter(['{"missing_key":""}']))
+
+    requests_mock.post(
+        "http://unstructured:8000/general/v0/general",
+        json=[{"text": "hello", "metadata": {}}],
+    )
 
     """
-    Test 2 fail cases:
     LLM replies but without one of the keys
+    """
+
+    # Upload file
+    file_name = file_to_s3("html/example.html", s3_client, env)
+
+    metadata = MetadataLoader(env=env, s3_client=s3_client, file_name=file_name)
+    metadata.extract_metadata()
+
+    assert metadata.metadata.get("name") == ""
+    assert metadata.metadata.get("description") == ""
+    assert metadata.metadata.get("keywords") == ""
+
+
+@patch("redbox.loader.loaders.get_chat_llm")
+def test_extract_metadata_extra_key(
+    mock_llm: MagicMock,
+    env: Settings,
+    s3_client: S3Client,
+    requests_mock,
+):
+    mock_llm_response = mock_llm.return_value
+    mock_llm_response.status_code = 200
+    mock_llm_response.return_value = GenericFakeChatModel(
+        messages=iter(['{"extra_key": "", "name": "foo", "description": "test", "keywords": "abc"}'])
+    )
+
+    requests_mock.post(
+        "http://unstructured:8000/general/v0/general",
+        json=[{"text": "hello", "metadata": {}}],
+    )
+
+    """
     LLM replies with an extra key
     """
 
@@ -103,16 +121,10 @@ def test_extract_metadata(
     metadata = MetadataLoader(env=env, s3_client=s3_client, file_name=file_name)
     metadata.extract_metadata()
 
-    if test_case in ["missing_key"]:
-        assert metadata.metadata.get("name") == ""
-        assert metadata.metadata.get("description") == ""
-        assert metadata.metadata.get("keywords") == ""
-    else:
-        assert metadata.metadata is not None
-        llm_json = json.loads(llm_response[0])
-        assert metadata.metadata.get("name") == llm_json.get("name")
-        assert metadata.metadata.get("description") == llm_json.get("description")
-        assert metadata.metadata.get("keywords") == llm_json.get("keywords")
+    assert metadata.metadata is not None
+    assert metadata.metadata.get("name") == "foo"
+    assert metadata.metadata.get("description") == "test"
+    assert metadata.metadata.get("keywords") == "abc"
 
 
 @patch("redbox.loader.loaders.get_chat_llm")
@@ -263,7 +275,7 @@ def test_ingest_from_loader(
             assert metadata["keywords"] == coerce_to_string_list(fake_llm_response()["keywords"])
 
     if has_embeddings:
-        embeddings = chunks[0]["_source"].get("embedding")
+        embeddings = chunks[0]["_source"]["azure_embedding"]
         assert embeddings is not None
         assert len(embeddings) > 0
 
