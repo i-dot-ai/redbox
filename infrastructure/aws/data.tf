@@ -36,6 +36,7 @@ locals {
     "EMBEDDING_RETRY_MIN_SECONDS" : var.embedding_retry_min_seconds,
     "EMBEDDING_RETRY_MAX_SECONDS" : var.embedding_retry_max_seconds,
     "ELASTIC_ROOT_INDEX" : "redbox-data-${terraform.workspace}",
+    "ELASTIC_CHUNK_ALIAS" : "redbox-data-${terraform.workspace}-chunk-current",
     "BUCKET_NAME" : aws_s3_bucket.user_data.bucket,
     "OBJECT_STORE" : "s3",
     "ENVIRONMENT" : upper(terraform.workspace),
