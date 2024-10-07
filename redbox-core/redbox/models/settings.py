@@ -86,6 +86,7 @@ class Settings(BaseSettings):
 
     elastic: ElasticCloudSettings | ElasticLocalSettings = ElasticLocalSettings()
     elastic_root_index: str = "redbox-data"
+    elastic_chunk_alias: str = "redbox-data-chunk-current"
 
     kibana_system_password: str = "redboxpass"
     metricbeat_internal_password: str = "redboxpass"

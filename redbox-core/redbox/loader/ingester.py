@@ -19,7 +19,7 @@ logging.basicConfig(level=logging.INFO)
 log = logging.getLogger()
 
 env = Settings()
-alias = f"{env.elastic_root_index}-chunk-current"
+alias = env.elastic_chunk_alias
 
 
 def get_elasticsearch_store(es, es_index_name: str):

@@ -5,7 +5,7 @@ from redbox.loader.ingester import ingest_file
 from redbox.models import Settings
 
 env = Settings()
-alias = f"{env.elastic_root_index}-chunk-current"
+alias = env.elastic_chunk_alias
 
 
 def ingest(file_id: UUID, es_index: str = alias):

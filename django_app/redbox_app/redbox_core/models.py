@@ -338,7 +338,7 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
         self.original_file.delete(save=False)
 
     def delete_from_elastic(self):
-        index = f"{env.elastic_root_index}-chunk-current"
+        index = env.elastic_chunk_alias
         if es_client.indices.exists(index=index):
             es_client.delete_by_query(
                 index=index,

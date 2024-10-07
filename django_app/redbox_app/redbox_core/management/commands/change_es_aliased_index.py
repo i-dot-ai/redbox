@@ -21,7 +21,7 @@ class Command(BaseCommand):
     """
 
     def add_arguments(self, parser):
-        default_alias = f"{env.elastic_root_index}-chunk-current"
+        default_alias = env.elastic_chunk_alias
 
         parser.add_argument("new_index", nargs="?", type=str)
         parser.add_argument("alias", nargs="?", type=str, default=default_alias)
