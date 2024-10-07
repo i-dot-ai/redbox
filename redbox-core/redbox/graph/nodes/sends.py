@@ -5,16 +5,18 @@ from langgraph.constants import Send
 from redbox.models.chain import RedboxState
 
 
+def _copy_state(state: RedboxState, **updates) -> RedboxState:
+    kwargs = {k: v for k, v in state.items()} | updates
+    return RedboxState(**kwargs)
+
+
 def build_document_group_send(target: str) -> Callable[[RedboxState], list[Send]]:
     """builds Sends per document-groups"""
 
     def _group_send(state: RedboxState) -> list[Send]:
         group_send_states: list[RedboxState] = [
-            RedboxState(
-                request=state["request"],
-                text=state.get("text"),
+            _copy_state(state,
                 documents={document_group_key: document_group},
-                route_name=state.get("route_name"),
             )
             for document_group_key, document_group in state["documents"].items()
         ]
@@ -28,11 +30,8 @@ def build_document_chunk_send(target: str) -> Callable[[RedboxState], list[Send]
 
     def _chunk_send(state: RedboxState) -> list[Send]:
         chunk_send_states: list[RedboxState] = [
-            RedboxState(
-                request=state["request"],
-                text=state.get("text"),
+            _copy_state(state,
                 documents={document_group_key: {document_key: document}},
-                route_name=state.get("route_name"),
             )
             for document_group_key, document_group in state["documents"].items()
             for document_key, document in document_group.items()
