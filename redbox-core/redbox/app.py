@@ -99,6 +99,8 @@ class Redbox:
             elif kind == "on_tool_end" and SOURCE_DOCUMENTS_TAG in tags:
                 documents = flatten_document_state(event["data"]["output"].get("documents", {}))
                 await documents_callback(documents)
+            elif kind == "on_custom_event" and event["name"] == RedboxEventType.on_source_report.value:
+                await documents_callback(event["data"])
             elif kind == "on_custom_event" and event["name"] == RedboxEventType.on_metadata_generation.value:
                 await metadata_tokens_callback(event["data"])
             elif kind == "on_custom_event" and event["name"] == RedboxEventType.activity.value:

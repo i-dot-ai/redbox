@@ -28,6 +28,7 @@ from redbox.graph.nodes.processes import (
     build_tool_pattern,
     clear_documents_process,
     empty_process,
+    report_sources_process,
 )
 from redbox.graph.nodes.sends import build_document_chunk_send, build_document_group_send, build_tool_send
 from redbox.models.chain import RedboxState
@@ -161,6 +162,7 @@ def get_agentic_search_graph(tools: dict[str, StructuredTool], debug: bool = Fal
         "p_give_up_agent",
         build_stuff_pattern(prompt_set=PromptSet.GiveUpAgentic, final_response_chain=True),
     )
+    builder.add_node("p_report_sources", report_sources_process)
 
     # Decisions
     builder.add_node("d_x_steps_left_or_less", empty_process)
@@ -194,6 +196,8 @@ def get_agentic_search_graph(tools: dict[str, StructuredTool], debug: bool = Fal
         build_strings_end_text_conditional("answer", "give_up"),
         {"answer": "p_stuff_docs_agent", "give_up": "p_give_up_agent", "DEFAULT": "d_x_steps_left_or_less"},
     )
+    builder.add_edge("p_stuff_docs_agent", "p_report_sources")
+    builder.add_edge("p_give_up_agent", "p_report_sources")
     builder.add_edge("p_stuff_docs_agent", END)
     builder.add_edge("p_give_up_agent", END)
 

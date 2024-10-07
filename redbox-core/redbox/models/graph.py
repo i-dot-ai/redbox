@@ -9,6 +9,7 @@ class RedboxEventType(StrEnum):
     on_metadata_generation = "on_metadata_generation"
     response_tokens = "response_tokens"
     activity = "activity"
+    on_source_report = "on_source_report"
 
 
 class RedboxActivityEvent(BaseModel):

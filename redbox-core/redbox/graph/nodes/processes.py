@@ -320,6 +320,13 @@ def clear_documents_process(state: RedboxState) -> dict[str, Any]:
         return {"documents": {group_id: None for group_id in documents}}
 
 
+def report_sources_process(state: RedboxState) -> None:
+    """A Runnable which reports the documents in the state as sources."""
+    if document_state := state.get("documents"):
+        dispatch_custom_event(RedboxEventType.on_source_report, flatten_document_state(document_state))
+    return None
+
+
 def empty_process(state: RedboxState) -> None:
     return None
 
