@@ -75,12 +75,12 @@ def test_build_tool_send():
         "foo": {"tool": ToolCall({"name": "foo", "args": {"a": 1, "b": 2}, "id": "123"}), "called": False},
     }
     tool_call_2 = {
-            "bar": {
-                "tool": ToolCall({"name": "bar", "args": {"x": 10, "y": 20}, "id": "456"}),
-                "called": False,
-            },
-        }
-    
+        "bar": {
+            "tool": ToolCall({"name": "bar", "args": {"x": 10, "y": 20}, "id": "456"}),
+            "called": False,
+        },
+    }
+
     tool_send = build_tool_send("my-target")
     actual = tool_send(
         RedboxState(
