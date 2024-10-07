@@ -81,9 +81,9 @@ def ingest_file(file_name: str) -> str | None:
     )
 
     try:
-        new_ids = RunnableParallel(
-            {"normal": chunk_ingest_chain, "largest": large_chunk_ingest_chain}
-        ).invoke(file_name)
+        new_ids = RunnableParallel({"normal": chunk_ingest_chain, "largest": large_chunk_ingest_chain}).invoke(
+            file_name
+        )
         logging.info(
             "File: %s %s chunks ingested",
             file_name,

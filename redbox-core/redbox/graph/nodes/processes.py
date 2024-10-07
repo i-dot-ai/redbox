@@ -3,7 +3,6 @@ import logging
 import re
 from collections.abc import Callable
 from functools import reduce
-from operator import add
 from typing import Any
 from uuid import uuid4
 
@@ -133,17 +132,16 @@ def build_stuff_pattern(
     def _stuff(state: RedboxState) -> dict[str, Any]:
         llm = get_chat_llm(Settings(), state["request"].ai_settings)
 
-        events = []
-
-        for event in build_llm_chain(
-            prompt_set=prompt_set, llm=llm, output_parser=output_parser, final_response_chain=final_response_chain
-        ).stream(state):
-            events.append(event)
-
-        if len(events) == 0:
-            return None
-        else:
-            return reduce(add, events)
+        events = [
+            event
+            for event in build_llm_chain(
+                prompt_set=prompt_set,
+                llm=llm,
+                output_parser=output_parser,
+                final_response_chain=final_response_chain,
+            ).stream(state)
+        ]
+        return sum(events, {})
 
     return _stuff
 
