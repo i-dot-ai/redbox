@@ -275,7 +275,7 @@ def test_ingest_from_loader(
             assert metadata["keywords"] == coerce_to_string_list(fake_llm_response()["keywords"])
 
     if has_embeddings:
-        embeddings = chunks[0]["_source"]["azure_embedding"]
+        embeddings = chunks[0]["_source"].get("embedding")
         assert embeddings is not None
         assert len(embeddings) > 0
 
