@@ -25,17 +25,11 @@ def log_chunks(chunks: list[Document]):
     return chunks
 
 
-def document_loader(
-    document_loader: UnstructuredChunkLoader, s3_client: S3Client, env: Settings
-) -> Runnable:
+def document_loader(document_loader: UnstructuredChunkLoader, s3_client: S3Client, env: Settings) -> Runnable:
     @chain
     def wrapped(file_name: str) -> Iterator[Document]:
-        file_bytes = s3_client.get_object(Bucket=env.bucket_name, Key=file_name)[
-            "Body"
-        ].read()
-        return document_loader.lazy_load(
-            file_name=file_name, file_bytes=BytesIO(file_bytes)
-        )
+        file_bytes = s3_client.get_object(Bucket=env.bucket_name, Key=file_name)["Body"].read()
+        return document_loader.lazy_load(file_name=file_name, file_bytes=BytesIO(file_bytes))
 
     return wrapped
 
