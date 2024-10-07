@@ -12,7 +12,7 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import Runnable, RunnableGenerator, RunnableLambda, chain
 from tiktoken import Encoding
 
-from redbox.api.format import format_documents
+from redbox.api.format import format_documents, format_toolstate
 from redbox.chains.components import get_tokeniser
 from redbox.models.chain import ChainChatMessage, PromptSet, RedboxState, get_prompts
 from redbox.models.errors import QuestionLengthError
@@ -21,7 +21,6 @@ from redbox.transform import (
     flatten_document_state,
     to_request_metadata,
     tool_calls_to_toolstate,
-    toolstate_to_tool_calls,
 )
 
 log = logging.getLogger()
@@ -71,10 +70,11 @@ def build_chat_prompt_from_messages_runnable(prompt_set: PromptSet, tokeniser: E
 
         prompt_template_context = (
             state["request"].model_dump()
+            | {"text": state.get("text")}
             | {
                 "formatted_documents": format_documents(flatten_document_state(state.get("documents"))),
             }
-            | {"tool_calls": toolstate_to_tool_calls(state.get("tool_calls"))}
+            | {"tool_calls": format_toolstate(state.get("tool_calls"))}
         )
 
         return ChatPromptTemplate.from_messages(

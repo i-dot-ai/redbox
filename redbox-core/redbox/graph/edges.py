@@ -108,13 +108,15 @@ def build_tools_selected_conditional(tools: list[str]) -> Runnable:
     return _tools_selected_conditional
 
 
-def build_strings_in_text_conditional(*strings: str) -> Runnable:
-    """Given a list of strings, returns the string if state["text"] begins with it."""
+def build_strings_end_text_conditional(*strings: str) -> Runnable:
+    """Given a list of strings, returns the string if state["text"] ends with it."""
+    pattern = "|".join(re.escape(s) for s in strings)
+    regex = re.compile(pattern, re.IGNORECASE)
 
-    def _strings_in_text_conditional(state: RedboxState) -> str:
-        for string in strings:
-            if state["text"].lower().startswith(string.lower()):
-                return string
+    def _strings_end_text_conditional(state: RedboxState) -> str:
+        match = regex.search(state["text"][-100:])  # padding for waffle
+        if match:
+            return match.group(0)
         return "DEFAULT"
 
-    return _strings_in_text_conditional
+    return _strings_end_text_conditional

@@ -50,8 +50,6 @@ class AISettings(BaseModel):
     retrieval_question_prompt: str = prompts.RETRIEVAL_QUESTION_PROMPT
     agentic_retrieval_system_prompt: str = prompts.AGENTIC_RETRIEVAL_SYSTEM_PROMPT
     agentic_retrieval_question_prompt: str = prompts.AGENTIC_RETRIEVAL_QUESTION_PROMPT
-    agentic_reflection_system_prompt: str = prompts.AGENTIC_REFLECTION_SYSTEM_PROMPT
-    agentic_reflection_question_prompt: str = prompts.AGENTIC_REFLECTION_QUESTION_PROMPT
     agentic_give_up_system_prompt: str = prompts.AGENTIC_GIVE_UP_SYSTEM_PROMPT
     agentic_give_up_question_prompt: str = prompts.AGENTIC_GIVE_UP_QUESTION_PROMPT
     condense_system_prompt: str = prompts.CONDENSE_SYSTEM_PROMPT

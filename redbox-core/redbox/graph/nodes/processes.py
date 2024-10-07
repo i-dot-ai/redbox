@@ -55,7 +55,7 @@ def build_chat_pattern(
     tools: list[StructuredTool] | None = None,
     final_response_chain: bool = False,
 ) -> Runnable[RedboxState, dict[str, Any]]:
-    """Returns a Runnable that uses state["request"] to set state["text"].
+    """Returns a Runnable that uses the state to set state["text"].
 
     If tools are supplied, can also set state["tool_calls"].
     """
