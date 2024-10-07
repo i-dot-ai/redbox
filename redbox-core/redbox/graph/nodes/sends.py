@@ -6,7 +6,7 @@ from redbox.models.chain import RedboxState
 
 
 def _copy_state(state: RedboxState, **updates) -> RedboxState:
-    kwargs = dict(state, **updates)
+    kwargs = dict(state) | updates
     return RedboxState(**kwargs)
 
 
