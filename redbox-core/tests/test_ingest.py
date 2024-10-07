@@ -74,7 +74,7 @@ def test_extract_metadata_missing_key(
     mock_llm_response.return_value = GenericFakeChatModel(messages=iter(['{"missing_key":""}']))
 
     requests_mock.post(
-        "http://unstructured:8000/general/v0/general",
+        f"http://{env.unstructured_host}:8000/general/v0/general",
         json=[{"text": "hello", "metadata": {}}],
     )
 
@@ -107,7 +107,7 @@ def test_extract_metadata_extra_key(
     )
 
     requests_mock.post(
-        "http://unstructured:8000/general/v0/general",
+        f"http://{env.unstructured_host}:8000/general/v0/general",
         json=[{"text": "hello", "metadata": {}}],
     )
 
