@@ -79,7 +79,9 @@ class Redbox:
         activity_event_callback=_default_callback,
     ) -> RedboxState:
         final_state = None
-        async for event in self.graph.astream_events(input=input, version="v2", config={"recursion_limit": 50}):
+        async for event in self.graph.astream_events(
+            input=input, version="v2", config={"recursion_limit": input["request"].ai_settings.recursion_limit}
+        ):
             kind = event["event"]
             tags = event.get("tags", [])
             if kind == "on_chat_model_stream" and FINAL_RESPONSE_TAG in tags:

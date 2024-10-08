@@ -74,6 +74,23 @@
                 "panel": "new"
             },
             "problemMatcher": []
-        }
+        },
+        {
+            "label": "Reingest Files",
+            "type": "shell",
+            "command": "poetry run python manage.py reingest_files",
+            "options": {
+                "env": {
+                    "MINIO_HOST": "localhost",
+                    "POSTGRES_HOST": "localhost",
+                    "UNSTRUCTURED_HOST": "localhost"
+                }
+            },
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            },
+            "problemMatcher": []
+        },
     ]
   }
