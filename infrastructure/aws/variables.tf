@@ -120,100 +120,23 @@ variable "azure_openai_model" {
 }
 
 
-variable "openai_api_version_35t" {
+variable "openai_api_version" {
   type        = string
   default     = "2023-12-01-preview"
   description = "OPENAI API version"
 }
 
-variable "azure_openai_api_key_35t" {
+variable "azure_openai_api_key" {
   type        = string
   sensitive   = true
   default     = null
   description = "The API key for your Azure OpenAI resource.  You can find this in the Azure portal under your Azure OpenAI resource."
 }
 
-variable "azure_openai_fallback_api_key_35t" {
-  type        = string
-  sensitive   = true
-  default     = null
-  description = "The API key for your Azure OpenAI resource.  You can find this in the Azure portal under your Azure OpenAI resource."
-}
-
-variable "azure_openai_endpoint_35t" {
+variable "azure_openai_endpoint" {
   type        = string
   default     = null
   description = "The base URL for your Azure OpenAI resource.  You can find this in the Azure portal under your Azure OpenAI resource."
-}
-
-variable "azure_openai_fallback_endpoint_35t" {
-  type        = string
-  default     = null
-  description = "The base URL for your fallback Azure OpenAI resource.  You can find this in the Azure portal under your Azure OpenAI resource."
-}
-
-variable "openai_api_version_4t" {
-  type        = string
-  default     = "2023-12-01-preview"
-  description = "OPENAI API version"
-}
-
-variable "azure_openai_api_key_4t" {
-  type        = string
-  sensitive   = true
-  default     = null
-  description = "The API key for your Azure OpenAI resource.  You can find this in the Azure portal under your Azure OpenAI resource."
-}
-
-variable "azure_openai_fallback_api_key_4t" {
-  type        = string
-  sensitive   = true
-  default     = null
-  description = "The API key for your Azure OpenAI resource.  You can find this in the Azure portal under your Azure OpenAI resource."
-}
-
-variable "azure_openai_endpoint_4t" {
-  type        = string
-  default     = null
-  description = "The base URL for your Azure OpenAI resource.  You can find this in the Azure portal under your Azure OpenAI resource."
-}
-
-variable "azure_openai_fallback_endpoint_4t" {
-  type        = string
-  default     = null
-  description = "The base URL for your fallback Azure OpenAI resource.  You can find this in the Azure portal under your Azure OpenAI resource."
-}
-
-variable "openai_api_version_4o" {
-  type        = string
-  default     = "2023-12-01-preview"
-  description = "OPENAI API version"
-}
-
-variable "azure_openai_api_key_4o" {
-  type        = string
-  sensitive   = true
-  default     = null
-  description = "The API key for your Azure OpenAI resource.  You can find this in the Azure portal under your Azure OpenAI resource."
-}
-
-variable "azure_openai_fallback_api_key_4o" {
-  type        = string
-  sensitive   = true
-  default     = null
-  description = "The API key for your Azure OpenAI resource.  You can find this in the Azure portal under your Azure OpenAI resource."
-}
-
-variable "azure_openai_endpoint_4o" {
-  type        = string
-  default     = null
-  description = "The base URL for your Azure OpenAI resource.  You can find this in the Azure portal under your Azure OpenAI resource."
-}
-
-variable "azure_openai_fallback_endpoint_4o" {
-  type        = string
-  default     = null
-  description = "The base URL for your fallback Azure OpenAI resource.  You can find this in the Azure portal under your Azure OpenAI resource."
 }
 
 variable "project_name" {
