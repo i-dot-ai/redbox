@@ -78,7 +78,7 @@
         {
             "label": "Reingest Files",
             "type": "shell",
-            "command": "poetry run python manage.py reingest_files",
+            "command": "poetry run python manage.py reingest_files True",
             "options": {
                 "env": {
                     "MINIO_HOST": "localhost",
