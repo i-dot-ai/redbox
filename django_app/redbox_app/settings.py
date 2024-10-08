@@ -60,6 +60,7 @@ INSTALLED_APPS = [
     "rest_framework",
     "django_plotly_dash.apps.DjangoPlotlyDashConfig",
     "adminplus",
+    "waffle",
 ]
 
 MIDDLEWARE = [
@@ -77,6 +78,7 @@ MIDDLEWARE = [
     "redbox_app.redbox_core.middleware.nocache_middleware",
     "redbox_app.redbox_core.middleware.security_header_middleware",
     "django_plotly_dash.middleware.BaseMiddleware",
+    "waffle.middleware.WaffleMiddleware",
 ]
 
 ROOT_URLCONF = "redbox_app.urls"
@@ -353,5 +355,3 @@ Q_CLUSTER = {
     "orm": "default",
     "workers": 1,
 }
-
-UNSTRUCTURED_HOST = env.str("UNSTRUCTURED_HOST")

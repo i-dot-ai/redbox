@@ -2,6 +2,15 @@
 
 {% set pageTitle = "Privacy notice" %}
 
+{% if waffle_flag(request, "uktrade") %}
+{% set departmental_owner = "Department for Business and Trade" %}
+{% set department_address = "Department for Business and Trade, Old Admiralty Building, Admiralty Place, London, SW1A 2DY" %}
+{% set last_updated = "21st June 2024" %}
+{% else %}
+{% set departmental_owner = "Cabinet Office" %}
+{% set department_address = "Cabinet Office, 70 Whitehall, London, SW1A 2AS, or 0207 276 1234, or <a href='mailto:publiccorrespondence@cabinetoffice.gov.uk' class='govuk-link'>publiccorrespondence@cabinetoffice.gov.uk</a>" %}
+{% set last_updated = "16th April 2024" %}
+{% endif %}
 
 {% block content %}
 
@@ -26,7 +35,6 @@
         <li>organisational email address</li>
       </ul>
 
-
       <h3 class="govuk-heading-s">Legal basis of processing</h3>
       <p class="govuk-body">The legal basis for processing your personal data is:</p>
       <ul class="govuk-list govuk-list--bullet">
@@ -34,8 +42,8 @@
       </ul>
 
       <h3 class="govuk-heading-s">Recipients</h3>
-      <p class="govuk-body">Your personal data will be shared by us with analysts/researchers within the Cabinet Office if you have consented to be contacted further about Redbox.</p>
-      <p class="govuk-body">As your personal data will be stored on our IT infrastructure it will also be shared with our data processors who provide email, and document management and storage services.</p>
+      <p class="govuk-body">Your personal data will be shared by us with analysts/researchers within the {{ departmental_owner }} if you have consented to be contacted further about Redbox.</p>
+      <p class="govuk-body">As your personal data will be stored on our IT infrastructure it will also be shared with our data processors who provide email and document management and storage services.</p>
 
       <h3 class="govuk-heading-s">Retention</h3>
       <p class="govuk-body">Your personal data will be retained for 12 months after account inactivity. At that point we will delete your email address, depersonalising the data we hold. If you have provided us consent to contact you, we will retain your email until <DATE> and continue sharing it with evaluators so they can conduct research on the long term impact of Redbox.</p>
@@ -53,17 +61,18 @@
       <p class="govuk-body">As your personal data is stored on our IT infrastructure, and shared with our data processors, it may be transferred and stored securely outside the UK. Where that is the case it will be subject to equivalent legal protection through an adequacy decision or reliance on Standard Contractual Clauses.</p>
 
       <h3 class="govuk-heading-s">Complaints</h3>
-      <p class="govuk-body">If you consider that your personal data has been misused or mishandled, you may make a complaint to the Information Commissioner, who is an independent regulator.  The Information Commissioner can be contacted at:  Information Commissioner's Office, Wycliffe House, Water Lane, Wilmslow, Cheshire, SK9 5AF, or 0303 123 1113, or <a href="mailto:icocasework@ico.org.uk" class="govuk-link">icocasework@ico.org.uk</a>.  Any complaint to the Information Commissioner is without prejudice to your right to seek redress through the courts.</p>
+      <p class="govuk-body">If you consider that your personal data has been misused or mishandled, you may make a complaint to the Information Commissioner, who is an independent regulator. The Information Commissioner can be contacted at: Information Commissioner's Office, Wycliffe House, Water Lane, Wilmslow, Cheshire, SK9 5AF, or 0303 123 1113, or <a href="mailto:icocasework@ico.org.uk" class="govuk-link">icocasework@ico.org.uk</a>. Any complaint to the Information Commissioner is without prejudice to your right to seek redress through the courts.</p>
 
       <h3 class="govuk-heading-s">Contact details</h3>
-      <p class="govuk-body">The data controller for your personal data is the Cabinet Office. The contact details for the data controller are: Cabinet Office, 70 Whitehall, London, SW1A 2AS, or 0207 276 1234, or <a href="mailto:publiccorrespondence@cabinetoffice.gov.uk" class="govuk-link">publiccorrespondence@cabinetoffice.gov.uk</a>.</p>
+      <p class="govuk-body">The data controller for your personal data is the {{ departmental_owner }}. The contact details for the data controller are: {{ department_address | safe }}.</p>
       <p class="govuk-body">The contact details for the data controller's Data Protection Officer are: <a href="mailto:dpo@cabinetoffice.gov.uk" class="govuk-link">dpo@cabinetoffice.gov.uk</a>.</p>
-      <p class="govuk-body">The Data Protection Officer provides independent advice and monitoring of Cabinet Office's use of personal information.</p>
+      <p class="govuk-body">The Data Protection Officer provides independent advice and monitoring of {{ departmental_owner }}'s use of personal information.</p>
 
       <h2 class="govuk-heading-m">Changes to this notice</h2>
-      <p class="govuk-body">We may change this privacy notice. When we make changes to this notice, the "last updated" date at the bottom of this page will also change. Any changes to this privacy notice will apply to you and your data immediately. If these changes affect how your personal data is processed, Cabinet Office will take reasonable steps to make sure you know.</p>
-      <p class="govuk-body">Last updated: 16th April 2024</p>
+      <p class="govuk-body">We may change this privacy notice. When we make changes to this notice, the "last updated" date at the bottom of this page will also change. Any changes to this privacy notice will apply to you and your data immediately. If these changes affect how your personal data is processed, {{ departmental_owner }} will take reasonable steps to make sure you know.</p>
+      <p class="govuk-body">Last updated: {{ last_updated }}</p>
 
+    </div>
   </div>
 </div>
 
