@@ -31,7 +31,7 @@ class MetadataLoader:
     def __init__(self, env: Settings, s3_client: S3Client, file_name: str, metadata: dict = None):
         self.env = env
         self.s3_client = s3_client
-        self.llm = get_chat_llm(self.env, AISettings())
+        self.llm = get_chat_llm(AISettings())
         self.file_name = file_name
         self.metadata = metadata
         self.required_keys = ["name", "description", "keywords"]

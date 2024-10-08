@@ -28,7 +28,7 @@ from pydantic import BaseModel, Field
 
 from redbox.chains.components import get_chat_llm, get_parameterised_retriever, get_tokeniser
 from redbox.graph.root import get_search_graph
-from redbox.models.chain import RedboxQuery, RedboxState
+from redbox.models.chain import RedboxQuery, RedboxState, AISettings
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Generator
@@ -97,7 +97,7 @@ def ai_experiment_data() -> ExperimentData:
 
 @pytest.fixture(scope="session")
 def llm(env: Settings) -> ChatLiteLLM:
-    return get_chat_llm(env)
+    return get_chat_llm(AISettings())
 
 
 @pytest.fixture(scope="session")
@@ -128,7 +128,7 @@ def eval_llm(env: Settings) -> DeepEvalBaseLLM:
         def get_model_name(self):
             return "Custom LiteLLM Model"
 
-    return ChatLiteLLMDeepEval(model=get_chat_llm(env))
+    return ChatLiteLLMDeepEval(model=get_chat_llm(AISettings()))
 
 
 @pytest.fixture(scope="session")
