@@ -51,17 +51,37 @@ def sanitise_string(string: str | None) -> str | None:
     return string.replace("\x00", "\ufffd") if string else string
 
 
-class AbstractAISettings(models.Model):
-    class ChatBackend(models.TextChoices):
-        GPT_35_TURBO = "gpt-35-turbo-16k", _("gpt-35-turbo-16k")
-        GPT_4_TURBO = "gpt-4-turbo-2024-04-09", _("gpt-4-turbo-2024-04-09")
-        GPT_4_OMNI = "gpt-4o", _("gpt-4o")
-        CLAUDE_3_SONNET = "anthropic.claude-3-sonnet-20240229-v1:0", _("claude-3-sonnet")
-        CLAUDE_3_HAIKU = "anthropic.claude-3-haiku-20240307-v1:0", _("claude-3-haiku")
+class ChatLLMBackend(models.Model):
+    """https://python.langchain.com/docs/how_to/chat_models_universal_init/"""
 
-    chat_backend = models.CharField(
-        max_length=64, choices=ChatBackend, help_text="LLM to use in chat", default=ChatBackend.GPT_4_OMNI
+    class Providers(models.TextChoices):
+        OPENAI = "openai"
+        ANTHROPIC = "anthropic"
+        AZURE_OPENAI = "azure_openai"
+        GOOGLE_VERTEXAI = "google_vertexai"
+        GOOGLE_GENAI = "google_genai"
+        BEDROCK = "bedrock"
+        BEDROCK_CONVERSE = "bedrock_converse"
+        COHERE = "cohere"
+        FIREWORKS = "fireworks"
+        TOGETHER = "together"
+        MISTRALAI = "mistralai"
+        HUGGINGFACE = "huggingface"
+        GROQ = "groq"
+        OLLAMA = "ollama"
+
+    name = models.CharField(
+        primary_key=True, max_length=128, help_text="The name of the model, e.g. “gpt-4o”, “claude-3-opus-20240229”."
     )
+    provider = models.CharField(max_length=128, choices=Providers, help_text="The model provider")
+    description = models.TextField(null=True, blank=True, help_text="brief description of the model")
+
+    def __str__(self):
+        return self.name
+
+
+class AbstractAISettings(models.Model):
+    chat_backend = models.ForeignKey(ChatLLMBackend, on_delete=models.CASCADE, help_text="LLM to use in chat")
     temperature = models.FloatField(default=0, help_text="temperature for LLM")
 
     class Meta:

@@ -24,6 +24,12 @@ class ChainChatMessage(TypedDict):
     text: str
 
 
+class ChatBackend(BaseModel):
+    model: str = "gpt-4o"
+    model_provider: str = "azure_openai"
+    description: str | None = None
+
+
 class AISettings(BaseModel):
     """prompts and other AI settings"""
 
@@ -64,7 +70,7 @@ class AISettings(BaseModel):
     similarity_threshold: int = 0
 
     # this is also the azure_openai_model
-    chat_backend: str = "gpt-4o"
+    chat_backend: ChatBackend = ChatBackend()
 
 
 class DocumentState(TypedDict):

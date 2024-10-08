@@ -213,18 +213,10 @@ class ChatConsumer(AsyncWebsocketConsumer):
     @staticmethod
     @database_sync_to_async
     def get_ai_settings(chat: Chat) -> AISettings:
-        ai_settings = model_to_dict(chat.user.ai_settings, exclude=["label"])
-
-        match str(chat.chat_backend):
-            case "claude-3-sonnet":
-                chat_backend = "anthropic.claude-3-sonnet-20240229-v1:0"
-            case "claude-3-haiku":
-                chat_backend = "anthropic.claude-3-haiku-20240307-v1:0"
-            case _:
-                chat_backend = str(chat.chat_backend)
-
+        ai_settings = model_to_dict(chat.user.ai_settings, exclude=["label", "chat_backend"])
+        chat_backend = model_to_dict(chat.user.ai_settings.chat_backend)
         ai_settings["chat_backend"] = chat_backend
-        return AISettings.parse_obj(ai_settings)
+        return AISettings.model_validate(ai_settings)
 
     async def handle_text(self, response: str) -> str:
         await self.send_to_client("text", response)
