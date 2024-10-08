@@ -355,3 +355,5 @@ Q_CLUSTER = {
     "orm": "default",
     "workers": 1,
 }
+
+UNSTRUCTURED_HOST = env.str("UNSTRUCTURED_HOST")
