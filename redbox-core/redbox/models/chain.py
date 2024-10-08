@@ -13,86 +13,15 @@ from uuid import UUID, uuid4
 
 from langchain_core.documents import Document
 from langchain_core.messages import ToolCall
+from langgraph.managed.base import ManagedValue
 from pydantic import BaseModel, Field
+
+from redbox.models import prompts
 
 
 class ChainChatMessage(TypedDict):
     role: Literal["user", "ai", "system"]
     text: str
-
-
-CHAT_SYSTEM_PROMPT = (
-    "You are an AI assistant called Redbox tasked with answering questions and providing information objectively."
-)
-
-CHAT_WITH_DOCS_SYSTEM_PROMPT = "You are an AI assistant called Redbox tasked with answering questions on user provided documents and providing information objectively."
-
-CHAT_WITH_DOCS_REDUCE_SYSTEM_PROMPT = (
-    "You are an AI assistant tasked with answering questions on user provided documents. "
-    "Your goal is to answer the user question based on list of summaries in a coherent manner."
-    "Please follow these guidelines while answering the question: \n"
-    "1) Identify and highlight key points,\n"
-    "2) Avoid repetition,\n"
-    "3) Ensure the answer is easy to understand,\n"
-    "4) Maintain the original context and meaning.\n"
-)
-
-RETRIEVAL_SYSTEM_PROMPT = (
-    "Given the following conversation and extracted parts of a long document and a question, create a final answer. \n"
-    "If you don't know the answer, just say that you don't know. Don't try to make up an answer. "
-    "If a user asks for a particular format to be returned, such as bullet points, then please use that format. "
-    "If a user asks for bullet points you MUST give bullet points. "
-    "If the user asks for a specific number or range of bullet points you MUST give that number of bullet points. \n"
-    "Use **bold** to highlight the most question relevant parts in your response. "
-    "If dealing dealing with lots of data return it in markdown table format. "
-)
-
-SELF_ROUTE_SYSTEM_PROMPT = (
-    "You are a helpful assistant to UK Civil Servants. "
-    "Given the list of extracted parts of long documents and a question, answer the question if possible.\n"
-    "If the question cannot be answered respond with only the word 'unanswerable' \n"
-    "If the question can be answered accurately from the documents given then give that response \n"
-)
-
-CHAT_MAP_SYSTEM_PROMPT = (
-    "You are an AI assistant tasked with summarizing documents. "
-    "Your goal is to extract the most important information and present it in "
-    "a concise and coherent manner. Please follow these guidelines while summarizing: \n"
-    "1) Identify and highlight key points,\n"
-    "2) Avoid repetition,\n"
-    "3) Ensure the summary is easy to understand,\n"
-    "4) Maintain the original context and meaning.\n"
-)
-
-REDUCE_SYSTEM_PROMPT = (
-    "You are an AI assistant tasked with summarizing documents. "
-    "Your goal is to write a concise summary of list of summaries from a list of summaries in "
-    "a concise and coherent manner. Please follow these guidelines while summarizing: \n"
-    "1) Identify and highlight key points,\n"
-    "2) Avoid repetition,\n"
-    "3) Ensure the summary is easy to understand,\n"
-    "4) Maintain the original context and meaning.\n"
-)
-
-CONDENSE_SYSTEM_PROMPT = (
-    "Given the following conversation and a follow up question, generate a follow "
-    "up question to be a standalone question. "
-    "You are only allowed to generate one question in response. "
-    "Include sources from the chat history in the standalone question created, "
-    "when they are available. "
-    "If you don't know the answer, just say that you don't know, "
-    "don't try to make up an answer. \n"
-)
-
-CHAT_QUESTION_PROMPT = "{question}\n=========\n Response: "
-
-CHAT_WITH_DOCS_QUESTION_PROMPT = "Question: {question}. \n\n Documents: \n\n {formatted_documents} \n\n Answer: "
-
-RETRIEVAL_QUESTION_PROMPT = "{question} \n=========\n{formatted_documents}\n=========\nFINAL ANSWER: "
-
-CHAT_MAP_QUESTION_PROMPT = "Question: {question}. \n Documents: \n {formatted_documents} \n\n Answer: "
-
-CONDENSE_QUESTION_PROMPT = "{question}\n=========\n Standalone question: "
 
 
 class AISettings(BaseModel):
@@ -110,21 +39,25 @@ class AISettings(BaseModel):
     rag_gauss_scale_max: float = 2.0
     elbow_filter_enabled: bool = False
     self_route_enabled: bool = False
-    chat_system_prompt: str = CHAT_SYSTEM_PROMPT
-    chat_question_prompt: str = CHAT_QUESTION_PROMPT
+    chat_system_prompt: str = prompts.CHAT_SYSTEM_PROMPT
+    chat_question_prompt: str = prompts.CHAT_QUESTION_PROMPT
     stuff_chunk_context_ratio: float = 0.75
-    chat_with_docs_system_prompt: str = CHAT_WITH_DOCS_SYSTEM_PROMPT
-    chat_with_docs_question_prompt: str = CHAT_WITH_DOCS_QUESTION_PROMPT
-    chat_with_docs_reduce_system_prompt: str = CHAT_WITH_DOCS_REDUCE_SYSTEM_PROMPT
-    retrieval_system_prompt: str = RETRIEVAL_SYSTEM_PROMPT
-    self_route_system_prompt: str = SELF_ROUTE_SYSTEM_PROMPT
-    retrieval_question_prompt: str = RETRIEVAL_QUESTION_PROMPT
-    condense_system_prompt: str = CONDENSE_SYSTEM_PROMPT
-    condense_question_prompt: str = CONDENSE_QUESTION_PROMPT
+    chat_with_docs_system_prompt: str = prompts.CHAT_WITH_DOCS_SYSTEM_PROMPT
+    chat_with_docs_question_prompt: str = prompts.CHAT_WITH_DOCS_QUESTION_PROMPT
+    chat_with_docs_reduce_system_prompt: str = prompts.CHAT_WITH_DOCS_REDUCE_SYSTEM_PROMPT
+    self_route_system_prompt: str = prompts.SELF_ROUTE_SYSTEM_PROMPT
+    retrieval_system_prompt: str = prompts.RETRIEVAL_SYSTEM_PROMPT
+    retrieval_question_prompt: str = prompts.RETRIEVAL_QUESTION_PROMPT
+    agentic_retrieval_system_prompt: str = prompts.AGENTIC_RETRIEVAL_SYSTEM_PROMPT
+    agentic_retrieval_question_prompt: str = prompts.AGENTIC_RETRIEVAL_QUESTION_PROMPT
+    agentic_give_up_system_prompt: str = prompts.AGENTIC_GIVE_UP_SYSTEM_PROMPT
+    agentic_give_up_question_prompt: str = prompts.AGENTIC_GIVE_UP_QUESTION_PROMPT
+    condense_system_prompt: str = prompts.CONDENSE_SYSTEM_PROMPT
+    condense_question_prompt: str = prompts.CONDENSE_QUESTION_PROMPT
     map_max_concurrency: int = 128
-    chat_map_system_prompt: str = CHAT_MAP_SYSTEM_PROMPT
-    chat_map_question_prompt: str = CHAT_MAP_QUESTION_PROMPT
-    reduce_system_prompt: str = REDUCE_SYSTEM_PROMPT
+    chat_map_system_prompt: str = prompts.CHAT_MAP_SYSTEM_PROMPT
+    chat_map_question_prompt: str = prompts.CHAT_MAP_QUESTION_PROMPT
+    reduce_system_prompt: str = prompts.REDUCE_SYSTEM_PROMPT
 
     match_boost: int = 1
     knn_boost: int = 1
@@ -293,6 +226,14 @@ def tool_calls_reducer(current: ToolState, update: ToolState | None) -> ToolStat
     return reduced
 
 
+class StepsLeft(ManagedValue[bool]):
+    """A managed value that counts down from the recursion limit."""
+
+    def __call__(self, step: int) -> int:
+        limit = self.config.get("recursion_limit", 0)
+        return limit - step
+
+
 class RedboxState(TypedDict):
     request: Required[RedboxQuery]
     documents: Annotated[NotRequired[DocumentState], document_reducer]
@@ -300,6 +241,7 @@ class RedboxState(TypedDict):
     route_name: NotRequired[str | None]
     tool_calls: Annotated[NotRequired[ToolState], tool_calls_reducer]
     metadata: Annotated[NotRequired[RequestMetadata], metadata_reducer]
+    steps_left: Annotated[int, StepsLeft]
 
 
 class PromptSet(StrEnum):
@@ -307,6 +249,8 @@ class PromptSet(StrEnum):
     ChatwithDocs = "chat_with_docs"
     ChatwithDocsMapReduce = "chat_with_docs_map_reduce"
     Search = "search"
+    SearchAgentic = "search_agentic"
+    GiveUpAgentic = "give_up_agentic"
     SelfRoute = "self_route"
     CondenseQuestion = "condense_question"
 
@@ -324,6 +268,12 @@ def get_prompts(state: RedboxState, prompt_set: PromptSet) -> tuple[str, str]:
     elif prompt_set == PromptSet.Search:
         system_prompt = state["request"].ai_settings.retrieval_system_prompt
         question_prompt = state["request"].ai_settings.retrieval_question_prompt
+    elif prompt_set == PromptSet.SearchAgentic:
+        system_prompt = state["request"].ai_settings.agentic_retrieval_system_prompt
+        question_prompt = state["request"].ai_settings.agentic_retrieval_question_prompt
+    elif prompt_set == PromptSet.GiveUpAgentic:
+        system_prompt = state["request"].ai_settings.agentic_give_up_system_prompt
+        question_prompt = state["request"].ai_settings.agentic_give_up_question_prompt
     elif prompt_set == PromptSet.SelfRoute:
         system_prompt = state["request"].ai_settings.self_route_system_prompt
         question_prompt = state["request"].ai_settings.retrieval_question_prompt
