@@ -17,15 +17,15 @@ from langchain.chat_models import init_chat_model
 load_dotenv()
 
 
-def get_chat_llm(ai_settings: AISettings):
-    if ai_settings.chat_backend.startswith("gpt-"):
+def get_chat_llm(model: str):
+    if model.startswith("gpt-"):
         model_provider = "azure_openai"
-    elif ai_settings.chat_backend.startswith("anthropic."):
+    elif model.startswith("anthropic."):
         model_provider = "bedrock"
     else:
-        raise ValueError("%s not recognised", ai_settings.chat_backend)
+        raise ValueError("%s not recognised", model)
 
-    return init_chat_model(model=ai_settings.chat_backend, model_provider=model_provider)
+    return init_chat_model(model=model, model_provider=model_provider)
 
 
 @cache

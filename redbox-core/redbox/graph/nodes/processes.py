@@ -56,7 +56,7 @@ def build_chat_pattern(
     """Returns a Runnable that uses state["request"] to set state["text"]."""
 
     def _chat(state: RedboxState) -> dict[str, Any]:
-        llm = get_chat_llm(state["request"].ai_settings)
+        llm = get_chat_llm(state["request"].ai_settings.chat_backend)
         return build_llm_chain(
             prompt_set=prompt_set,
             llm=llm,
@@ -82,7 +82,7 @@ def build_merge_pattern(
 
     @RunnableLambda
     def _merge(state: RedboxState) -> dict[str, Any]:
-        llm = get_chat_llm(state["request"].ai_settings)
+        llm = get_chat_llm(state["request"].ai_settings.chat_backend)
 
         if not state.get("documents"):
             return {"documents": None}
@@ -130,7 +130,7 @@ def build_stuff_pattern(
 
     @RunnableLambda
     def _stuff(state: RedboxState) -> dict[str, Any]:
-        llm = get_chat_llm(state["request"].ai_settings)
+        llm = get_chat_llm(state["request"].ai_settings.chat_backend)
 
         events = [
             event
