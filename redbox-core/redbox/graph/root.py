@@ -198,8 +198,7 @@ def get_agentic_search_graph(tools: dict[str, StructuredTool], debug: bool = Fal
     )
     builder.add_edge("p_stuff_docs_agent", "p_report_sources")
     builder.add_edge("p_give_up_agent", "p_report_sources")
-    builder.add_edge("p_stuff_docs_agent", END)
-    builder.add_edge("p_give_up_agent", END)
+    builder.add_edge("p_report_sources", END)
 
     builder.add_edge("p_search_agent", "d_tools_selected")
 
