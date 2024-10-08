@@ -97,7 +97,7 @@ def ai_experiment_data() -> ExperimentData:
 
 @pytest.fixture(scope="session")
 def llm() -> ChatLiteLLM:
-    return get_chat_llm("my-model")
+    return get_chat_llm("gpt-my-model")
 
 
 @pytest.fixture(scope="session")
