@@ -113,12 +113,14 @@ def structure_documents_by_group_and_indices(docs: list[Document]) -> DocumentSt
 
 
 def flatten_document_state(documents: DocumentState | None) -> list[Document]:
+    """Flattens a DocumentState into a list of Documents."""
     if not documents:
         return []
     return [document for group in documents.values() for document in group.values()]
 
 
 def get_document_token_count(state: RedboxState) -> int:
+    """Calculates the total token count of all documents in a state."""
     return sum(d.metadata["token_count"] for d in flatten_document_state(state.get("documents", [])))
 
 

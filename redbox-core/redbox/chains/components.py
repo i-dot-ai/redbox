@@ -1,12 +1,14 @@
 import os
 from functools import cache
 
-from dotenv import load_dotenv
-from langchain_elasticsearch import ElasticsearchRetriever
-from langchain_core.embeddings import Embeddings, FakeEmbeddings
-from langchain_openai.embeddings import AzureOpenAIEmbeddings, OpenAIEmbeddings
-from langchain_core.utils import convert_to_secret_str
 import tiktoken
+
+from dotenv import load_dotenv
+from langchain_core.embeddings import Embeddings, FakeEmbeddings
+from langchain_core.tools import StructuredTool
+from langchain_core.utils import convert_to_secret_str
+from langchain_elasticsearch import ElasticsearchRetriever
+from langchain_openai.embeddings import AzureOpenAIEmbeddings, OpenAIEmbeddings
 
 from redbox.models.settings import Settings
 from redbox.retriever import AllElasticsearchRetriever, ParameterisedElasticsearchRetriever, MetadataRetriever
@@ -16,7 +18,7 @@ from langchain.chat_models import init_chat_model
 load_dotenv()
 
 
-def get_chat_llm(model: str):
+def get_chat_llm(model: str, tools: list[StructuredTool]):
     if model.startswith("gpt-"):
         model_provider = "azure_openai"
     elif model.startswith("anthropic."):
@@ -24,7 +26,10 @@ def get_chat_llm(model: str):
     else:
         raise ValueError("%s not recognised", model)
 
-    return init_chat_model(model=model, model_provider=model_provider)
+    chat_model = init_chat_model(model=model, model_provider=model_provider)
+    if tools:
+        chat_model = chat_model.bind_tools(tools)
+    return chat_model
 
 
 @cache

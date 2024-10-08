@@ -1,12 +1,13 @@
-from typing import Any
+from typing import Annotated, Any
 from uuid import UUID
 
 import pytest
 from elasticsearch import Elasticsearch
 from langchain_core.embeddings.fake import FakeEmbeddings
 from langchain_core.tools import tool
+from langgraph.prebuilt import InjectedState
 
-from redbox.graph.nodes.tools import build_search_documents_tool, is_valid_tool
+from redbox.graph.nodes.tools import build_search_documents_tool, has_injected_state, is_valid_tool
 from redbox.models import Settings
 from redbox.models.chain import RedboxState
 from redbox.models.file import ChunkResolution
@@ -28,6 +29,21 @@ def test_is_valid_tool():
 
     assert is_valid_tool(tool_with_type_hinting)
     assert not is_valid_tool(tool_without_type_hinting)
+
+
+def test_has_injected_state():
+    @tool
+    def tool_with_injected_state(query: str, state: Annotated[dict, InjectedState]) -> dict[str, Any]:
+        """Tool that returns a dictionary update."""
+        return {"key": "value"}
+
+    @tool
+    def tool_without_injected_state(query: str) -> dict[str, Any]:
+        """Tool that returns a dictionary update."""
+        return {"key": "value"}
+
+    assert has_injected_state(tool_with_injected_state)
+    assert not has_injected_state(tool_without_injected_state)
 
 
 @pytest.mark.parametrize("chain_params", TEST_CHAIN_PARAMETERS)
