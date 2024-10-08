@@ -60,9 +60,7 @@ def build_chat_pattern(
     """
 
     def _chat(state: RedboxState) -> dict[str, Any]:
-        llm = get_chat_llm(Settings(), state["request"].ai_settings)
-        if tools:
-            llm = llm.bind_tools(tools)
+        llm = get_chat_llm(env=Settings(), ai_settings=state["request"].ai_settings, tools=tools)
 
         return build_llm_chain(
             prompt_set=prompt_set,
@@ -92,9 +90,7 @@ def build_merge_pattern(
 
     @RunnableLambda
     def _merge(state: RedboxState) -> dict[str, Any]:
-        llm = get_chat_llm(Settings(), state["request"].ai_settings)
-        if tools:
-            llm = llm.bind_tools(tools)
+        llm = get_chat_llm(env=Settings(), ai_settings=state["request"].ai_settings, tools=tools)
 
         if not state.get("documents"):
             return {"documents": None}
@@ -146,9 +142,7 @@ def build_stuff_pattern(
 
     @RunnableLambda
     def _stuff(state: RedboxState) -> dict[str, Any]:
-        llm = get_chat_llm(Settings(), state["request"].ai_settings)
-        if tools:
-            llm = llm.bind_tools(tools)
+        llm = get_chat_llm(env=Settings(), ai_settings=state["request"].ai_settings, tools=tools)
 
         events = [
             event
@@ -273,7 +267,7 @@ def build_tool_pattern(
         tool_calls = state.get("tool_calls", {})
         if not tool_calls:
             log.warning("No tool calls found in state")
-            return None
+            return {}
 
         for tool_id, tool_call_dict in tool_calls.items():
             tool_call = tool_call_dict["tool"]
@@ -285,23 +279,22 @@ def build_tool_pattern(
                     log.warning(f"Tool {tool_call['name']} not found")
                     continue
 
+                # Deal with InjectedState
+                args = tool_call["args"].copy()
+                if has_injected_state(tool):
+                    args["state"] = state
+
+                log.info(f"Invoking tool {tool_call['name']} with args {args}")
+
+                # Invoke the tool
                 try:
-                    # Deal with InjectedState
-                    args = tool_call["args"].copy()
-                    if has_injected_state(tool):
-                        args["state"] = state
-
-                    log.info(f"Invoking tool {tool_call['name']} with args {args}")
-
-                    # Invoke the tool
                     result_state_update = tool.invoke(args) or {}
                     tool_called_state_update = {"tool_calls": {tool_id: {"called": True, "tool": tool_call}}}
                     state_updates.append(result_state_update | tool_called_state_update)
-
                 except Exception as e:
                     state_updates.append({"tool_calls": {tool_id: {"called": True, "tool": tool_call}}})
                     log.warning(f"Error invoking tool {tool_call['name']}: {e} \n")
-                    return None
+                    return {}
 
         if state_updates:
             return reduce(merge_redbox_state_updates, state_updates)
@@ -324,7 +317,6 @@ def report_sources_process(state: RedboxState) -> None:
     """A Runnable which reports the documents in the state as sources."""
     if document_state := state.get("documents"):
         dispatch_custom_event(RedboxEventType.on_source_report, flatten_document_state(document_state))
-    return None
 
 
 def empty_process(state: RedboxState) -> None:

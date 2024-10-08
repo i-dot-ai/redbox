@@ -109,14 +109,16 @@ def build_tools_selected_conditional(tools: list[str]) -> Runnable:
 
 
 def build_strings_end_text_conditional(*strings: str) -> Runnable:
-    """Given a list of strings, returns the string if state["text"] ends with it."""
+    """Given a list of strings, returns the string if the end of state["text"] contains it."""
     pattern = "|".join(re.escape(s) for s in strings)
     regex = re.compile(pattern, re.IGNORECASE)
 
     def _strings_end_text_conditional(state: RedboxState) -> str:
-        match = regex.search(state["text"][-100:])  # padding for waffle
-        if match:
-            return match.group(0)
+        matches = regex.findall(state["text"][-100:])  # padding for waffle
+        unique_matches = set(matches)
+
+        if len(unique_matches) == 1:
+            return unique_matches.pop()
         return "DEFAULT"
 
     return _strings_end_text_conditional
