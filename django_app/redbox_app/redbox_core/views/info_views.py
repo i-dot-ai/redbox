@@ -11,15 +11,11 @@ import waffle
 
 @require_http_methods(["GET"])
 def privacy_notice_view(request):
-    if waffle.flag_is_active(request, 'uktrade'):
-        return render(request, "privacy-notice-uktrade.html", {})
-    return render(request, "privacy-notice.html", {})
+    return render(request, "privacy-notice.html", {"waffle_flag": waffle.flag_is_active,})
 
 
 @require_http_methods(["GET"])
 def support_view(request):
-    if waffle.flag_is_active(request, 'uktrade'):
-        return render(request, "support-uktrade.html", {"contact_email": settings.CONTACT_EMAIL})
     return render(
         request, "support.html", {"contact_email": settings.CONTACT_EMAIL, "version": settings.REDBOX_VERSION}
     )
@@ -27,6 +23,4 @@ def support_view(request):
 
 @require_http_methods(["GET"])
 def accessibility_statement_view(request):
-    if waffle.flag_is_active(request, 'uktrade'):
-        return render(request, "accessibility-statement-uktrade.html", {"contact_email": settings.CONTACT_EMAIL})
-    return render(request, "accessibility-statement.html", {"contact_email": settings.CONTACT_EMAIL})
+    return render(request, "accessibility-statement.html", {"contact_email": settings.CONTACT_EMAIL, "waffle_flag": waffle.flag_is_active,})

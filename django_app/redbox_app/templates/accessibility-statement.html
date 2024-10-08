@@ -2,6 +2,18 @@
 
 {% set pageTitle = "Accessibility statement" %}
 
+{% if waffle_flag(request, "uktrade") %}
+{% set departmental_owner = "Department for Business and Trade" %}
+{% set zoom_level = "300%" %}
+{% set review_date_last = "21st June 2024" %}
+{% set compliance_status = 'This website is fully compliant with the <a href="https://www.w3.org/TR/WCAG22/" class="govuk-link">Web Content Accessibility Guidelines version 2.2</a> AA standard.' %}
+
+{% else %}
+{% set departmental_owner = "Cabinet Office" %}
+{% set zoom_level = "400%" %}
+{% set review_date_last = "12th August 2024" %}
+{% set compliance_status = 'The website has been tested against the Web Content Accessibility Guidelines (WCAG) 2.2 AA standard. This website is fully compliant with the <a href="https://www.w3.org/TR/WCAG22/" class="govuk-link">Web Content Accessibility Guidelines version 2.2</a> AA standard.' %}
+{% endif %}
 {% block content %}
 
 <div class="govuk-width-container iai-grid">
@@ -10,10 +22,10 @@
     <h1 class="govuk-heading-l">Accessibility statement for Redbox</h1>
 
     <p class="govuk-body">This accessibility statement applies to Redbox.</p>
-    <p class="govuk-body">This website is run by the Cabinet Office. We want as many people as possible to be able to use this website. For example, that means you should be able to:</p>
+    <p class="govuk-body">This website is run by the {{ departmental_owner }}. We want as many people as possible to be able to use this website. For example, that means you should be able to:</p>
     <ul class="govuk-list govuk-list--bullet govuk-body">
       <li>change colours, contrast levels and fonts</li>
-      <li>zoom in up to 400% without the text spilling off the screen</li>
+      <li>zoom in up to {{ zoom_level }} without the text spilling off the screen</li>
       <li>navigate most of the website using a keyboard or speech recognition software</li>
       <li>listen to most of the website using a screen reader (including the most recent versions of JAWS, NVDA and VoiceOver)</li>
     </ul>
@@ -31,14 +43,14 @@
     <p class="govuk-body">The Equality and Human Rights Commission (EHRC) is responsible for enforcing the Public Sector Bodies (Websites and Mobile Applications) (No. 2) Accessibility Regulations 2018 (the "accessibility regulations"). If you're not happy with how we respond to your complaint, <a href="https://www.equalityadvisoryservice.com/" class="govuk-link">contact the Equality Advisory and Support Service (EASS)</a>.</p>
 
     <h2 class="govuk-heading-m">Technical information about this website's accessibility</h2>
-    <p class="govuk-body">Cabinet Office is committed to making its website accessible, in accordance with the Public Sector Bodies (Websites and Mobile Applications) (No. 2) Accessibility Regulations 2018.</p>
+    <p class="govuk-body">{{ departmental_owner }} is committed to making its website accessible, in accordance with the Public Sector Bodies (Websites and Mobile Applications) (No. 2) Accessibility Regulations 2018.</p>
 
     <h2 class="govuk-heading-m">Compliance status</h2>
-    <p class="govuk-body">The website has been tested against the Web Content Accessibility Guidelines (WCAG) 2.2 AA standard. This website is fully compliant with the <a href="https://www.w3.org/TR/WCAG22/" class="govuk-link">Web Content Accessibility Guidelines version 2.2</a> AA standard.</p>
+    <p class="govuk-body">{{ compliance_status | safe }}</p>
 
     <h2 class="govuk-heading-m">Preparation of this accessibility statement</h2>
-    <p class="govuk-body">This statement was prepared on 27th February 2024. It was last reviewed on 12th August 2024.</p>
-    <p class="govuk-body">This website was last tested on 12th August 2024 against the WCAG 2.2 AA standard. The test was carried out by the Incubator for Artificial Intelligence (i.AI) manually using the WCAG Evaluation Methodology tool.</p>
+    <p class="govuk-body">This statement was prepared on 27th February 2024. It was last reviewed on {{ review_date_last }}.</p>
+    <p class="govuk-body">This website was last tested on {{ review_date_last }} against the WCAG 2.2 AA standard. The test was carried out by the Incubator for Artificial Intelligence (i.AI) manually using the WCAG Evaluation Methodology tool.</p>
 
   </div>
 </div>
