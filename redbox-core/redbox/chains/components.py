@@ -8,7 +8,6 @@ from langchain_openai.embeddings import AzureOpenAIEmbeddings, OpenAIEmbeddings
 from langchain_core.utils import convert_to_secret_str
 import tiktoken
 
-from redbox.models.chain import AISettings
 from redbox.models.settings import Settings
 from redbox.retriever import AllElasticsearchRetriever, ParameterisedElasticsearchRetriever, MetadataRetriever
 from langchain_community.embeddings import BedrockEmbeddings

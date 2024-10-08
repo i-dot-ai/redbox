@@ -16,7 +16,7 @@ from langchain_core.vectorstores import VectorStoreRetriever
 from redbox.chains.components import get_chat_llm, get_tokeniser
 from redbox.chains.runnables import CannedChatLLM, build_llm_chain
 from redbox.graph.nodes.tools import is_valid_tool
-from redbox.models import ChatRoute, Settings
+from redbox.models import ChatRoute
 from redbox.models.chain import DocumentState, PromptSet, RedboxState, RequestMetadata, merge_redbox_state_updates
 from redbox.models.graph import ROUTE_NAME_TAG, RedboxActivityEvent, RedboxEventType
 from redbox.transform import combine_documents, flatten_document_state
