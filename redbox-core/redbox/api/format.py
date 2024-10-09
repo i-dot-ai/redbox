@@ -44,7 +44,7 @@ def format_toolstate(toolstate: ToolState | None) -> str:
 
     formatted_calls: list[str] = []
 
-    for _, call_info in toolstate.items():
+    for call_info in toolstate.values():
         tool_call = (
             "<ToolCall>\n"
             f"\t<Name>{call_info['tool']['name']}</Name>\n"

@@ -1,6 +1,10 @@
 from typing import Annotated, Any
+<<<<<<< HEAD
 from uuid import UUID, uuid4
 from urllib.parse import urlparse
+=======
+from uuid import UUID
+>>>>>>> main
 
 import pytest
 from elasticsearch import Elasticsearch

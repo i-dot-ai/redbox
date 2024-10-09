@@ -11,7 +11,7 @@ def _copy_state(state: RedboxState, **updates) -> RedboxState:
 
 
 def build_document_group_send(target: str) -> Callable[[RedboxState], list[Send]]:
-    """builds Sends per document-groups"""
+    """Builds Sends per document group."""
 
     def _group_send(state: RedboxState) -> list[Send]:
         group_send_states: list[RedboxState] = [
@@ -27,7 +27,7 @@ def build_document_group_send(target: str) -> Callable[[RedboxState], list[Send]
 
 
 def build_document_chunk_send(target: str) -> Callable[[RedboxState], list[Send]]:
-    """builds Sends per individual document"""
+    """Builds Sends per individual document"""
 
     def _chunk_send(state: RedboxState) -> list[Send]:
         chunk_send_states: list[RedboxState] = [
@@ -44,10 +44,9 @@ def build_document_chunk_send(target: str) -> Callable[[RedboxState], list[Send]
 
 
 def build_tool_send(target: str) -> Callable[[RedboxState], list[Send]]:
-    def _tool_send(state: RedboxState) -> list[Send]:
-        if state.get("tool_calls") is None:
-            raise KeyError("No tools in state")
+    """Builds Sends per tool call."""
 
+    def _tool_send(state: RedboxState) -> list[Send]:
         tool_send_states: list[RedboxState] = [
             _copy_state(
                 state,

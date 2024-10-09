@@ -190,7 +190,7 @@ def get_agentic_search_graph(tools: dict[str, StructuredTool], debug: bool = Fal
         {True: "s_tool", False: "d_answer_or_give_up"},
     )
     builder.add_conditional_edges("s_tool", build_tool_send("p_retrieval_tools"), path_map=["p_retrieval_tools"])
-    builder.add_edge("p_retrieval_tools", "p_search_agent")
+    builder.add_edge("p_retrieval_tools", "d_x_steps_left_or_less")
     builder.add_conditional_edges(
         "d_answer_or_give_up",
         build_strings_end_text_conditional("answer", "give_up"),
@@ -200,8 +200,7 @@ def get_agentic_search_graph(tools: dict[str, StructuredTool], debug: bool = Fal
     builder.add_edge("p_give_up_agent", "p_report_sources")
     builder.add_edge("p_stuff_docs_agent", END)
     builder.add_edge("p_give_up_agent", END)
-
-    builder.add_edge("p_search_agent", "d_tools_selected")
+    builder.add_edge("p_report_sources", END)
 
     return builder.compile(debug=debug)
 

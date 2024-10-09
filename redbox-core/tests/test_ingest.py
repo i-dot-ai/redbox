@@ -13,13 +13,13 @@ from langchain_elasticsearch import ElasticsearchStore
 
 from redbox.chains.ingest import document_loader, ingest_from_loader
 from redbox.loader import ingester
-from redbox.loader.ingester import ingest_file
 from redbox.loader.loaders import (
     MetadataLoader,
     UnstructuredChunkLoader,
     coerce_to_string_list,
 )
 from redbox.models.file import ChunkResolution
+from redbox.loader.ingester import ingest_file, create_alias
 from redbox.models.settings import Settings
 from redbox.retriever.queries import build_query_filter
 
@@ -206,6 +206,7 @@ def test_ingest_from_loader(
     monkeypatch: MonkeyPatch,
     es_client: Elasticsearch,
     es_vector_store: ElasticsearchStore,
+    es_index: str,
     s3_client: S3Client,
     env: Settings,
 ):
@@ -214,6 +215,8 @@ def test_ingest_from_loader(
     When I call ingest_from_loader
     I Expect to see this file chunked and embedded if appropriate
     """
+    create_alias(f"{es_index}-current")
+
     # Mock call to Unstructured
     mock_response = mock_post.return_value
     mock_response.status_code = 200
@@ -260,7 +263,7 @@ def test_ingest_from_loader(
     # Test it's written to Elastic
     file_query = make_file_query(file_name=file_name, resolution=resolution)
 
-    chunks = list(scan(client=es_client, index=f"{env.elastic_root_index}-chunk", query=file_query))
+    chunks = list(scan(client=es_client, index=f"{es_index}-current", query=file_query))
     assert len(chunks) > 0
 
     def get_metadata(chunk: dict) -> dict:
@@ -280,7 +283,7 @@ def test_ingest_from_loader(
         assert len(embeddings) > 0
 
     # Teardown
-    es_client.delete_by_query(index=f"{env.elastic_root_index}-chunk", body=file_query)
+    es_client.delete_by_query(index=es_index, body=file_query)
 
 
 @patch("redbox.loader.loaders.get_chat_llm")
@@ -315,6 +318,7 @@ def test_ingest_file(
     s3_client: S3Client,
     monkeypatch: MonkeyPatch,
     env: Settings,
+    es_index: str,
     filename: str,
     is_complete: bool,
     mock_json: list | None,
@@ -352,13 +356,7 @@ def test_ingest_file(
         # Test it's written to Elastic
         file_query = make_file_query(file_name=filename)
 
-        chunks = list(
-            scan(
-                client=es_client,
-                index=f"{env.elastic_root_index}-chunk",
-                query=file_query,
-            )
-        )
+        chunks = list(scan(client=es_client, index=f"{es_index}-current", query=file_query))
         assert len(chunks) > 0
 
         def get_metadata(chunk: dict) -> dict:
@@ -382,4 +380,4 @@ def test_ingest_file(
         assert len(largest_resolution) > 0
 
         # Teardown
-        es_client.delete_by_query(index=f"{env.elastic_root_index}-chunk", body=file_query)
+        es_client.delete_by_query(index=es_index, body=file_query)
