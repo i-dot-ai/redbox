@@ -53,6 +53,7 @@ locals {
 
     "AZURE_OPENAI_API_KEY": var.azure_openai_api_key,
     "AZURE_OPENAI_ENDPOINT" : var.azure_openai_endpoint,
+    "OPENAI_API_VERSION": var.openai_api_version,
 
     "EMBEDDING_OPENAI_API_KEY" : var.embedding_openai_api_key,
     "EMBEDDING_AZURE_OPENAI_ENDPOINT" : var.embedding_azure_openai_endpoint,
