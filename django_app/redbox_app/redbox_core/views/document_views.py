@@ -14,7 +14,6 @@ from django.utils.decorators import method_decorator
 from django.views import View
 from django.views.decorators.http import require_http_methods
 from django_q.tasks import async_task
-from requests.exceptions import RequestException
 
 from redbox_app.redbox_core.models import File, StatusEnum
 from redbox_app.worker import ingest
@@ -155,9 +154,11 @@ def remove_doc_view(request, doc_id: uuid):
     if request.method == "POST":
         try:
             file.delete_from_elastic()
-        except RequestException as e:
+        except Exception as e:
             logger.exception("Error deleting file object %s.", file, exc_info=e)
             errors.append("There was an error deleting this file")
+            file.status = StatusEnum.errored
+            file.save()
         else:
             logger.info("Removing document: %s", request.POST["doc_id"])
             file.delete_from_s3()

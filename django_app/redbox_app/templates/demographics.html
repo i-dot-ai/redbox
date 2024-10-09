@@ -27,7 +27,7 @@
           <legend class="govuk-fieldset__legend">
             {{ form.ai_experience.label }}
           </legend>
-          <div class="govuk-radios">
+          <div class="govuk-radios experience-cards">
             {% for value, label in form.ai_experience.field.choices %}
               {% if value %}
                 <div class="govuk-radios__item">
@@ -36,12 +36,11 @@
                         name="{{ form.ai_experience.name }}"
                         value="{{ value }}"
                         {% if value|string == form.ai_experience.value()|string %}checked{% endif %}
-                        data-testid="{{ value }}" aria-describedby="ai_experience_{{ loop.index0 }}-hint">
-                  <label class="govuk-label govuk-radios__label"
-                        for="ai_experience_{{ loop.index0 }}">
+                        data-testid="{{ value }}">
+                  <label class="govuk-label" for="ai_experience_{{ loop.index0 }}">
                     {{ value }}
-                  </label>
-                  <div id="ai_experience_{{ loop.index0 }}-hint" class="govuk-hint govuk-radios__hint">{{ label }}</div>         
+                    <span class="govuk-hint govuk-radios__hint">{{ label }}</span>
+                  </label>         
                 </div>
               {% endif %}
             {% endfor %}
@@ -49,30 +48,25 @@
         </fieldset>
       </div>
 
+      {# To be added in when profile overlay ready to go live
       <div class="govuk-form-group">
-        <label class="govuk-label" for="{{ form.business_unit.id_for_label }}">
-          {{ form.business_unit.label }}
+        <label class="govuk-label" for="{{ form.info_about_user.id_for_label }}">
+          {{ form.info_about_user.label }}
         </label>
-        {{ form.business_unit }}
+        {{ form.info_about_user }}
       </div>
 
       <div class="govuk-form-group">
-        <label class="govuk-label" for="{{ form.grade.id_for_label }}">
-          {{ form.grade.label }}
+        <label class="govuk-label" for="{{ form.redbox_response_preferences.id_for_label }}">
+          {{ form.redbox_response_preferences.label }}
         </label>
-        {{ form.grade }}
+        {{ form.redbox_response_preferences }}
       </div>
+      #}
 
-      <div class="govuk-form-group">
-        <label class="govuk-label" for="{{ form.profession.id_for_label }}">
-          {{ form.profession.label }}
-        </label>
-        {{ form.profession }}
-      </div>
-    
       <div class="govuk-button-group">
         {{ govukButton(text="Update") }}
-        {{ govukButton(text="Skip", href=url('chats'), classes="govuk-button--secondary") }}
+        {# {{ govukButton(text="Skip", href=url('chats'), classes="govuk-button--secondary") }} #}
       </div>
     </form>
 

@@ -6,6 +6,7 @@ from datetime import UTC, date, datetime, timedelta
 from typing import override
 
 import boto3
+import jwt
 from botocore.config import Config
 from django.conf import settings
 from django.contrib.postgres.fields import ArrayField
@@ -15,10 +16,11 @@ from django.db.models import Max, Min, Prefetch
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django_use_email_as_username.models import BaseUser, BaseUserManager
-from redbox.models import Settings
 from redbox_app.redbox_core import prompts
 from redbox_app.redbox_core.utils import get_date_group
 from yarl import URL
+
+from redbox.models import Settings
 
 logging.basicConfig(level=os.environ.get("LOG_LEVEL", "INFO"))
 logger = logging.getLogger(__name__)
@@ -82,6 +84,10 @@ class AISettings(UUIDPrimaryKeyBase, TimeStampedModel, AbstractAISettings):
     llm_max_tokens = models.PositiveIntegerField(default=1024)
     rag_k = models.PositiveIntegerField(default=30)
     rag_num_candidates = models.PositiveIntegerField(default=10)
+    rag_gauss_scale_size = models.PositiveIntegerField(default=3)
+    rag_gauss_scale_decay = models.FloatField(default=0.5)
+    rag_gauss_scale_min = models.FloatField(default=1.1)
+    rag_gauss_scale_max = models.FloatField(default=2.0)
     rag_desired_chunk_size = models.PositiveIntegerField(default=300)
     elbow_filter_enabled = models.BooleanField(default=False)
     chat_system_prompt = models.TextField(default=prompts.CHAT_SYSTEM_PROMPT)
@@ -318,18 +324,14 @@ class User(BaseUser, UUIDPrimaryKeyBase):
     )
     grade = models.CharField(null=True, blank=True, max_length=3, choices=UserGrade)
     name = models.CharField(null=True, blank=True)
-    ai_experience = models.CharField(
-        null=True, blank=True, max_length=25, choices=AIExperienceLevel
+    ai_experience = models.CharField(null=True, blank=True, max_length=25, choices=AIExperienceLevel)
+    profession = models.CharField(null=True, blank=True, max_length=4, choices=Profession)
+    info_about_user = models.CharField(null=True, blank=True, help_text="user entered info from profile overlay")
+    redbox_response_preferences = models.CharField(
+        null=True, blank=True, help_text="user entered info from profile overlay, to be used in custom prompt"
     )
-    profession = models.CharField(
-        null=True, blank=True, max_length=4, choices=Profession
-    )
-    ai_settings = models.ForeignKey(
-        AISettings, on_delete=models.SET_DEFAULT, default="default", to_field="label"
-    )
-    is_developer = models.BooleanField(
-        null=True, blank=True, default=False, help_text="is this user a developer?"
-    )
+    ai_settings = models.ForeignKey(AISettings, on_delete=models.SET_DEFAULT, default="default", to_field="label")
+    is_developer = models.BooleanField(null=True, blank=True, default=False, help_text="is this user a developer?")
     objects = BaseUserManager()
 
     def __str__(self) -> str:  # pragma: no cover
@@ -338,6 +340,27 @@ class User(BaseUser, UUIDPrimaryKeyBase):
     def save(self, *args, **kwargs):
         self.email = self.email.lower()
         super().save(*args, **kwargs)
+
+    def get_bearer_token(self) -> str:
+        """the bearer token expected by the core-api"""
+        user_uuid = str(self.id)
+        bearer_token = jwt.encode({"user_uuid": user_uuid}, key=settings.SECRET_KEY)
+        return f"Bearer {bearer_token}"
+
+    def get_initials(self) -> str:
+        try:
+            if self.name:
+                if " " in self.name:
+                    first_name, last_name = self.name.split(" ")
+                else:
+                    first_name = self.name
+                    last_name = " "
+            else:
+                name_part = self.email.split("@")[0]
+                first_name, last_name = name_part.split(".")
+            return first_name[0].upper() + last_name[0].upper()
+        except (IndexError, AttributeError, ValueError):
+            return ""
 
 
 class StatusEnum(models.TextChoices):
@@ -348,6 +371,11 @@ class StatusEnum(models.TextChoices):
 
 
 INACTIVE_STATUSES = [StatusEnum.deleted, StatusEnum.errored]
+
+
+class InactiveFileError(ValueError):
+    def __init__(self, file):
+        super().__init__(f"{file.pk} is inactive, status is {file.status}")
 
 
 class File(UUIDPrimaryKeyBase, TimeStampedModel):
@@ -379,7 +407,7 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
     @override
     def delete(self, using=None, keep_parents=False):
         #  Needed to make sure no orphaned files remain in the storage
-        self.original_file.storage.delete(self.original_file.name)
+        self.delete_from_s3()
         super().delete()
 
     def delete_from_s3(self):
@@ -387,7 +415,7 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
         self.original_file.delete(save=False)
 
     def delete_from_elastic(self):
-        index = f"{env.elastic_root_index}-chunk"
+        index = env.elastic_chunk_alias
         if es_client.indices.exists(index=index):
             es_client.delete_by_query(
                 index=index,
@@ -453,8 +481,11 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
 
     @property
     def unique_name(self) -> str:
-        # Name used by core-api
-        return self.original_file.file.name
+        # Name used when processing files that exist in S3
+        if self.status in INACTIVE_STATUSES:
+            logger.exception("Attempt to access unique_name for inactive file %s with status %s", self.pk, self.status)
+            raise InactiveFileError(self)
+        return self.original_file.name
 
     def get_status_text(self) -> str:
         return next(
@@ -508,6 +539,17 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
 class Chat(UUIDPrimaryKeyBase, TimeStampedModel, AbstractAISettings):
     name = models.TextField(max_length=1024, null=False, blank=False)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
+    archived = models.BooleanField(default=False, null=True, blank=True)
+
+    # Exit feedback - this is separate to the ratings for individual ChatMessages
+    feedback_achieved = models.BooleanField(
+        null=True, blank=True, help_text="Did Redbox do what you needed it to in this chat?"
+    )
+    feedback_saved_time = models.BooleanField(null=True, blank=True, help_text="Did Redbox help save you time?")
+    feedback_improved_work = models.BooleanField(
+        null=True, blank=True, help_text="Did Redbox help to improve your work?"
+    )
+    feedback_notes = models.TextField(null=True, blank=True, help_text="Do you want to tell us anything further?")
 
     def __str__(self) -> str:  # pragma: no cover
         return self.name or ""
@@ -533,7 +575,7 @@ class Chat(UUIDPrimaryKeyBase, TimeStampedModel, AbstractAISettings):
         """Returns all chat histories for a given user, ordered by the date of the latest message."""
         exclude_chat_ids = exclude_chat_ids or []
         return (
-            cls.objects.filter(user=user)
+            cls.objects.filter(user=user, archived=False)
             .exclude(id__in=exclude_chat_ids)
             .annotate(latest_message_date=Max("chatmessage__created_at"))
             .order_by("-latest_message_date")

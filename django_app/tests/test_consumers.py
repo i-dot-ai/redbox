@@ -17,11 +17,11 @@ from pydantic import BaseModel
 from websockets import WebSocketClientProtocol
 from websockets.legacy.client import Connect
 
-from redbox.graph.root import FINAL_RESPONSE_TAG, ROUTE_NAME_TAG, SOURCE_DOCUMENTS_TAG
-from redbox.models.chat import MetadataDetail
+from redbox.models.chain import LLMCallMetadata, RedboxQuery, RequestMetadata
+from redbox.models.graph import FINAL_RESPONSE_TAG, ROUTE_NAME_TAG, SOURCE_DOCUMENTS_TAG
 from redbox_app.redbox_core import error_messages
 from redbox_app.redbox_core.consumers import ChatConsumer
-from redbox_app.redbox_core.models import Chat, ChatMessage, ChatMessageTokenUse, ChatRoleEnum, File
+from redbox_app.redbox_core.models import Chat, ChatMessage, ChatMessageTokenUse, ChatRoleEnum, File, StatusEnum
 from redbox_app.redbox_core.prompts import CHAT_MAP_QUESTION_PROMPT
 
 User = get_user_model()
@@ -443,6 +443,68 @@ async def test_chat_consumer_get_ai_settings(
         await communicator.disconnect()
 
 
+@pytest.mark.django_db(transaction=True)
+@pytest.mark.asyncio()
+async def test_chat_consumer_redbox_state(
+    alice: User,
+    several_files: Sequence[File],
+    chat_with_files: Chat,
+):
+    # Given
+    selected_files: Sequence[File] = several_files[2:]
+
+    # When
+    with patch("redbox_app.redbox_core.consumers.ChatConsumer.redbox.run") as mock_run:
+        ai_settings = await ChatConsumer.get_ai_settings(chat_with_files)
+        communicator = WebsocketCommunicator(ChatConsumer.as_asgi(), "/ws/chat/")
+        communicator.scope["user"] = alice
+        connected, _ = await communicator.connect()
+        assert connected
+
+        selected_file_uuids: Sequence[str] = [str(f.id) for f in selected_files]
+        selected_file_keys: Sequence[str] = [f.unique_name for f in selected_files]
+        permitted_file_keys: Sequence[str] = [
+            f.unique_name async for f in File.objects.filter(user=alice, status=StatusEnum.complete)
+        ]
+        assert selected_file_keys != permitted_file_keys
+
+        await communicator.send_json_to(
+            {
+                "message": "Third question, with selected files?",
+                "sessionId": str(chat_with_files.id),
+                "selectedFiles": selected_file_uuids,
+            }
+        )
+        response1 = await communicator.receive_json_from(timeout=5)
+
+        # Then
+        assert response1["type"] == "session-id"
+        assert response1["data"] == str(chat_with_files.id)
+
+        # Close
+        await communicator.disconnect()
+
+        # Then
+        expected_request = RedboxQuery(
+            question="Third question, with selected files?",
+            s3_keys=selected_file_keys,
+            user_uuid=alice.id,
+            chat_history=[
+                {"role": "user", "text": "A question?"},
+                {"role": "ai", "text": "An answer."},
+                {"role": "user", "text": "A second question?"},
+                {"role": "ai", "text": "A second answer."},
+            ],
+            ai_settings=ai_settings,
+            permitted_s3_keys=permitted_file_keys,
+        )
+        redbox_state = mock_run.call_args.args[0]  # pulls out the args that redbox.run was called with
+
+        assert (
+            redbox_state["request"] == expected_request
+        ), f"Expected {expected_request}. Received: {redbox_state["request"]}"
+
+
 @database_sync_to_async
 def get_chat_messages(user: User) -> Sequence[ChatMessage]:
     return list(
@@ -487,7 +549,7 @@ def mocked_connect(uploaded_file: File) -> Connect:
             "data": {"chunk": Token(content="Good afternoon, ")},
         },
         {"event": "on_chat_model_stream", "tags": [FINAL_RESPONSE_TAG], "data": {"chunk": Token(content="Mr. Amor.")}},
-        {"event": "on_chain_end", "tags": [ROUTE_NAME_TAG], "data": {"output": "gratitude"}},
+        {"event": "on_chain_end", "tags": [ROUTE_NAME_TAG], "data": {"output": {"route_name": "gratitude"}}},
         {
             "event": "on_retriever_end",
             "tags": [SOURCE_DOCUMENTS_TAG],
@@ -513,7 +575,11 @@ def mocked_connect(uploaded_file: File) -> Connect:
         {
             "event": "on_custom_event",
             "name": "on_metadata_generation",
-            "data": MetadataDetail(input_tokens={"gpt-4o": 123}, output_tokens={"gpt-4o": 1000}),
+            "data": RequestMetadata(
+                llm_calls=[LLMCallMetadata(model_name="gpt-4o", input_tokens=123, output_tokens=1000)],
+                selected_files_total_tokens=1000,
+                number_of_selected_files=1,
+            ),
         },
     ]
 
@@ -528,7 +594,7 @@ def mocked_connect_with_naughty_citation(uploaded_file: File) -> CannedGraphLLM:
             "tags": [FINAL_RESPONSE_TAG],
             "data": {"chunk": Token(content="Good afternoon, Mr. Amor.")},
         },
-        {"event": "on_chain_end", "tags": [ROUTE_NAME_TAG], "data": {"output": "gratitude"}},
+        {"event": "on_chain_end", "tags": [ROUTE_NAME_TAG], "data": {"output": {"route_name": "gratitude"}}},
         {
             "event": "on_retriever_end",
             "tags": [SOURCE_DOCUMENTS_TAG],

@@ -43,6 +43,8 @@ chat_urlpatterns = [
     path("chat/<uuid:chat_id>/title/", views.ChatsTitleView.as_view(), name="chat-titles"),
     path("citations/<uuid:message_id>/", views.CitationsView.as_view(), name="citations"),
     path("ratings/<uuid:message_id>/", views.RatingsView.as_view(), name="ratings"),
+    path("chats/<uuid:chat_id>/update-chat-feedback", views.UpdateChatFeedback.as_view(), name="chat-feedback"),
+    path("chats/<uuid:chat_id>/delete-chat", views.DeleteChat.as_view(), name="chat-delete"),
 ]
 
 admin_urlpatterns = [
@@ -54,8 +56,11 @@ other_urlpatterns = [
     path("", views.homepage_view, name="homepage"),
     path("health/", views.health, name="health"),
     path("file-status/", views.file_status_api_view, name="file-status"),
-    path("check-demographics/", views.CheckDemographicsView.as_view(), name="check-demographics"),
+    path(
+        "check-demographics/", views.CheckDemographicsView.as_view(), name="check-demographics"
+    ),  # Can be removed once profile overlay is enabled
     path("demographics/", views.DemographicsView.as_view(), name="demographics"),
+    path("update-demographics", views.UpdateDemographicsView.as_view(), name="update-demographics"),
     path(".well-known/security.txt", views.SecurityTxtRedirectView.as_view(), name="security.txt"),
     path("security", views.SecurityTxtRedirectView.as_view(), name="security"),
     path("sitemap", views.misc_views.sitemap_view, name="sitemap"),

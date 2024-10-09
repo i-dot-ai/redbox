@@ -22,6 +22,10 @@
       "staticPath": "./node_modules/i.ai-design-system/dist/icons"
     },
     {
+      "distDir": "./dist/animations",
+      "staticPath": "./src/animations"
+    },
+    {
       "distDir": "./dist/icons",
       "staticPath": "./src/icons"
     },
@@ -41,7 +45,7 @@
   "author": "",
   "dependencies": {
     "govuk-frontend": "^5.2.0",
-    "i.ai-design-system": "^0.4.3",
+    "i.ai-design-system": "^0.4.8",
     "posthog-js": "^1.143.0"
   },
   "devDependencies": {

@@ -99,6 +99,7 @@ class SignedInBasePage(BasePage, ABC):
         return ChatsPage(self.page)
 
     def navigate_my_details(self) -> "MyDetailsPage":
+        self.page.locator(".iai-top-nav__link--user").click()
         self.page.get_by_role("link", name="My details", exact=True).click()
         return MyDetailsPage(self.page)
 
@@ -197,28 +198,28 @@ class MyDetailsPage(SignedInBasePage):
     ai_experience = property(fset=ai_experience)
 
     @property
-    def grade(self) -> str:
-        return self.page.get_by_label("Grade").get_by_role(role="option", selected=True).inner_text()
+    def info_about_user(self) -> str:
+        return (
+            self.page.get_by_label("What do you want Redbox to know about you?")
+            .get_by_role(role="option", selected=True)
+            .input_value()
+        )
 
-    @grade.setter
-    def grade(self, grade: str):
-        self.page.get_by_label("Grade").select_option(grade)
-
-    @property
-    def business_unit(self) -> str:
-        return self.page.get_by_label("Business unit").get_by_role(role="option", selected=True).inner_text()
-
-    @business_unit.setter
-    def business_unit(self, grade: str):
-        self.page.get_by_label("Business unit").select_option(grade)
+    @info_about_user.setter
+    def info_about_user(self, info: str):
+        self.page.get_by_label("What do you want Redbox to know about you?").fill(info)
 
     @property
-    def profession(self) -> str:
-        return self.page.get_by_label("Profession").get_by_role(role="option", selected=True).inner_text()
+    def redbox_response_preferences(self) -> str:
+        return (
+            self.page.get_by_label("How do you want Redbox to respond?")
+            .get_by_role(role="option", selected=True)
+            .input_value()
+        )
 
-    @profession.setter
-    def profession(self, grade: str):
-        self.page.get_by_label("Profession").select_option(grade)
+    @redbox_response_preferences.setter
+    def redbox_response_preferences(self, info: str):
+        self.page.get_by_label("How do you want Redbox to respond?").fill(info)
 
     def update(self) -> "ChatsPage":
         self.page.get_by_text("Update").click()
@@ -397,8 +398,18 @@ class ChatsPage(SignedInBasePage):
         self.page.get_by_role("button", name="New chat").click()
         return ChatsPage(self.page)
 
+    def delete_first_chat(self) -> "ChatsPage":
+        self.page.locator(".rb-chat-history__actions-button").first.click()
+        self.page.locator('[data-action="delete"]').first.click()
+        self.page.locator('[data-action="delete-confirm"]').first.click()
+        return ChatsPage(self.page)
+
+    def count_chats(self) -> "ChatsPage":
+        chat_links = self.page.locator(".rb-chat-history__link").all()
+        return len(chat_links)
+
     def send(self) -> "ChatsPage":
-        self.page.get_by_text("Send").click()
+        self.page.locator('.rb-send-button[type="submit"]').click()
         return ChatsPage(self.page)
 
     def improve(self):

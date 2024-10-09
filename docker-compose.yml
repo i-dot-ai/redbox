@@ -2,7 +2,7 @@ services:
   unstructured:
     image: quay.io/unstructured-io/unstructured-api:latest
     ports:
-    - 8000:8000
+      - 8000:8000
     networks:
       - redbox-app-network
   django-app:
@@ -18,7 +18,7 @@ services:
     networks:
       - redbox-app-network
     env_file:
-      - path: .env.integration
+      - path: tests/.env.integration
         required: false
       - path: .env
         required: false
@@ -36,7 +36,7 @@ services:
   db:
     image: postgres:13
     env_file:
-      - path: .env.integration
+      - path: tests/.env.integration
         required: false
       - path: .env
         required: false
@@ -58,18 +58,6 @@ services:
       - utils
     volumes:
       - ./:/app/:z
-  # mlflow:
-  #   image: mlflow_server
-  #   build:
-  #     context: .
-  #     dockerfile: ./mlflow/Dockerfile
-  #     args:
-  #     - OPENAI_API_KEY=${OPENAI_API_KEY:-}
-  #   env_file:
-  #     - .env
-  #   ports:
-  #     - 5010:5010
-  #     - 5020:5020
   worker:
     image: redbox-worker:latest
     build:
@@ -77,7 +65,7 @@ services:
       dockerfile: django_app/Dockerfile
     command: "venv/bin/django-admin qcluster"
     env_file:
-      - path: .env.integration
+      - path: tests/.env.integration
         required: false
       - path: .env
         required: false
@@ -174,7 +162,7 @@ services:
       - ./data/embeddings/config:/config
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/readyz"]
+      test: [ "CMD", "curl", "-f", "http://localhost:8080/readyz" ]
       interval: 1m
       timeout: 20m
       retries: 5
@@ -187,4 +175,3 @@ volumes:
   elasticsearch:
   redbox-app-data:
   local_postgres_data: {}
-  mlflow-data:

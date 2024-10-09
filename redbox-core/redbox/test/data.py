@@ -1,14 +1,19 @@
-from dataclasses import dataclass, field
 import datetime
 import logging
+from collections.abc import Callable
+from pathlib import Path
 from typing import Generator
+from uuid import uuid4
 
 from langchain_core.documents import Document
+from langchain_core.messages import AIMessage
 from langchain_core.retrievers import BaseRetriever
+from pydantic.v1 import BaseModel, Field, validator
 
 from redbox.models.chain import RedboxQuery
-from redbox.models.chat import ChatRoute
+from redbox.models.chat import ChatRoute, ErrorRoute
 from redbox.models.file import ChunkMetadata, ChunkResolution
+from redbox.models.graph import RedboxActivityEvent
 
 log = logging.getLogger()
 
@@ -16,31 +21,65 @@ log = logging.getLogger()
 def generate_docs(
     s3_key: str = "test_data.pdf",
     page_numbers: list[int] = [1, 2, 3, 4],
-    total_tokens=6000,
+    total_tokens: int = 6000,
     number_of_docs: int = 10,
-    chunk_resolution=ChunkResolution.normal,
+    chunk_resolution: ChunkResolution = ChunkResolution.normal,
+    score: int = 1,
+    index_start: int = 0,
 ) -> Generator[Document, None, None]:
+    """Generates a list of documents as if retrieved from a real retriever.
+
+    For this reason, adds extra data beyond ChunkMetadata, mimicing
+    redbox.retriever.retrievers.hit_to_doc().
+    """
     for i in range(number_of_docs):
+        core_metadata = ChunkMetadata(
+            index=index_start + i,
+            file_name=s3_key,
+            page_number=page_numbers[int(i / number_of_docs) * len(page_numbers)],
+            created_datetime=datetime.datetime.now(datetime.UTC),
+            token_count=int(total_tokens / number_of_docs),
+            chunk_resolution=chunk_resolution,
+            name=Path(s3_key).stem,
+            description="Lorem ipsum dolor sit amet",
+            keywords=["foo", "bar"],
+        ).model_dump()
+
+        extra_metadata = {
+            "score": score,
+            "uuid": uuid4(),
+        }
+
         yield Document(
             page_content=f"Document {i} text",
-            metadata=ChunkMetadata(
-                index=i,
-                file_name=s3_key,
-                page_number=page_numbers[int(i / number_of_docs) * len(page_numbers)],
-                created_datetime=datetime.datetime.now(datetime.UTC),
-                token_count=int(total_tokens / number_of_docs),
-                chunk_resolution=chunk_resolution,
-            ).model_dump(),
+            metadata=core_metadata | extra_metadata,
         )
 
 
-@dataclass
-class RedboxTestData:
+class RedboxTestData(BaseModel):
+    class Config:
+        arbitrary_types_allowed = True
+
     number_of_docs: int
     tokens_in_all_docs: int
     chunk_resolution: ChunkResolution = ChunkResolution.largest
-    expected_llm_response: list[str] = field(default_factory=list)
-    expected_route: ChatRoute | None = None
+    expected_llm_response: list[str | AIMessage] = Field(default_factory=list)
+    expected_route: ChatRoute | ErrorRoute | None = None
+    expected_activity_events: Callable[[list[RedboxActivityEvent]], bool] = Field(
+        default=lambda _: True
+    )  # Function to check activity events are as expected
+    s3_keys: list[str] | None = None
+
+    @validator("expected_llm_response", pre=True)
+    @classmethod
+    def coerce_to_aimessage(cls, value: str | AIMessage):
+        coerced: list[AIMessage] = []
+        for i in value:
+            if isinstance(i, str):
+                coerced.append(AIMessage(content=i))
+            else:
+                coerced.append(i)
+        return coerced
 
 
 class RedboxChatTestCase:
@@ -49,10 +88,9 @@ class RedboxChatTestCase:
         test_id: str,
         query: RedboxQuery,
         test_data: RedboxTestData,
-        s3_keys_override: list[str] | None = None,
     ):
         # Use separate file_uuids if specified else match the query
-        all_s3_keys = s3_keys_override if s3_keys_override else query.s3_keys
+        all_s3_keys = test_data.s3_keys if test_data.s3_keys else query.s3_keys
 
         if (
             test_data.expected_llm_response is not None
@@ -76,8 +114,15 @@ class RedboxChatTestCase:
         self.test_data = test_data
         self.test_id = test_id
 
-    def get_docs_matching_query(self):
-        return [doc for doc in self.docs if doc.metadata["file_name"] in set(self.query.s3_keys)]
+    def get_docs_matching_query(self) -> list[Document]:
+        return [
+            doc
+            for doc in self.docs
+            if doc.metadata["file_name"] in set(self.query.s3_keys) & set(self.query.permitted_s3_keys)
+        ]
+
+    def get_all_permitted_docs(self) -> list[Document]:
+        return [doc for doc in self.docs if doc.metadata["file_name"] in set(self.query.permitted_s3_keys)]
 
 
 def generate_test_cases(query: RedboxQuery, test_data: list[RedboxTestData], test_id: str) -> list[RedboxChatTestCase]:
@@ -102,3 +147,8 @@ def mock_all_chunks_retriever(docs: list[Document]) -> FakeRetriever:
 
 def mock_parameterised_retriever(docs: list[Document]) -> FakeRetriever:
     return FakeRetriever(docs=docs)
+
+
+def mock_metadata_retriever(docs: list[Document]) -> FakeRetriever:
+    metadata_only_docs = [Document(page_content="", metadata={**doc.metadata, "embedding": None}) for doc in docs]
+    return FakeRetriever(docs=metadata_only_docs)
