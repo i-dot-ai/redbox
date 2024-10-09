@@ -284,6 +284,7 @@ class User(BaseUser, UUIDPrimaryKeyBase):
     last_token_sent_at = models.DateTimeField(editable=False, blank=True, null=True)
     password = models.CharField("password", max_length=128, blank=True, null=True)
     business_unit = models.CharField(null=True, blank=True, max_length=64, choices=BusinessUnit)
+    # role = models.CharField(null=True, blank=True, max_length=128)
     grade = models.CharField(null=True, blank=True, max_length=3, choices=UserGrade)
     name = models.CharField(null=True, blank=True)
     ai_experience = models.CharField(null=True, blank=True, max_length=25, choices=AIExperienceLevel)
@@ -294,6 +295,10 @@ class User(BaseUser, UUIDPrimaryKeyBase):
     )
     ai_settings = models.ForeignKey(AISettings, on_delete=models.SET_DEFAULT, default="default", to_field="label")
     is_developer = models.BooleanField(null=True, blank=True, default=False, help_text="is this user a developer?")
+
+    # Additional fields for sign-up form
+    research_consent = models.BooleanField(null=True, blank=True, default=False)
+
     objects = BaseUserManager()
 
     def __str__(self) -> str:  # pragma: no cover
