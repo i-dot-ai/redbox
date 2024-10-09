@@ -64,13 +64,7 @@ class AISettings(BaseModel):
     similarity_threshold: int = 0
 
     # this is also the azure_openai_model
-    chat_backend: Literal[
-        "gpt-35-turbo-16k",
-        "gpt-4-turbo-2024-04-09",
-        "gpt-4o",
-        "anthropic.claude-3-sonnet-20240229-v1:0",
-        "anthropic.claude-3-haiku-20240307-v1:0",
-    ] = "gpt-4o"
+    chat_backend: str = "gpt-4o"
 
 
 class DocumentState(TypedDict):
