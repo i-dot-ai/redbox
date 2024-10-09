@@ -1,3 +1,5 @@
+import logging
+
 import os
 from functools import cache
 
@@ -15,8 +17,8 @@ from redbox.retriever import AllElasticsearchRetriever, ParameterisedElasticsear
 from langchain_community.embeddings import BedrockEmbeddings
 from langchain.chat_models import init_chat_model
 
-from django_app.redbox_app.redbox_core.views.auth_views import logger
 
+logger = logging.getLogger(__name__)
 load_dotenv()
 
 
