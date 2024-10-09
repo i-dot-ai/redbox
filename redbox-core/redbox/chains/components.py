@@ -15,6 +15,8 @@ from redbox.retriever import AllElasticsearchRetriever, ParameterisedElasticsear
 from langchain_community.embeddings import BedrockEmbeddings
 from langchain.chat_models import init_chat_model
 
+from django_app.redbox_app.redbox_core.views.auth_views import logger
+
 load_dotenv()
 
 
@@ -26,6 +28,7 @@ def get_chat_llm(model: str, tools: list[StructuredTool] | None = None):
     else:
         raise ValueError("%s not recognised", model)
 
+    logger.info("initialising model=%s model_provider=%s", model, model_provider)
     chat_model = init_chat_model(model=model, model_provider=model_provider)
     if tools:
         chat_model = chat_model.bind_tools(tools)
