@@ -1,3 +1,5 @@
+import logging
+
 import os
 from functools import cache
 
@@ -10,17 +12,26 @@ from langchain_core.utils import convert_to_secret_str
 from langchain_elasticsearch import ElasticsearchRetriever
 from langchain_openai.embeddings import AzureOpenAIEmbeddings, OpenAIEmbeddings
 
-from redbox.models.chain import ChatBackend
 from redbox.models.settings import Settings
 from redbox.retriever import AllElasticsearchRetriever, ParameterisedElasticsearchRetriever, MetadataRetriever
 from langchain_community.embeddings import BedrockEmbeddings
 from langchain.chat_models import init_chat_model
 
+
+logger = logging.getLogger(__name__)
 load_dotenv()
 
 
-def get_chat_llm(chat_backend: ChatBackend, tools: list[StructuredTool]):
-    chat_model = init_chat_model(model=chat_backend.model, model_provider=chat_backend.model_provider)
+def get_chat_llm(model: str, tools: list[StructuredTool] | None = None):
+    if model.startswith("gpt-"):
+        model_provider = "azure_openai"
+    elif model.startswith("anthropic."):
+        model_provider = "bedrock"
+    else:
+        raise ValueError("%s not recognised", model)
+
+    logger.info("initialising model=%s model_provider=%s tools=%s", model, model_provider, tools)
+    chat_model = init_chat_model(model=model, model_provider=model_provider)
     if tools:
         chat_model = chat_model.bind_tools(tools)
     return chat_model
