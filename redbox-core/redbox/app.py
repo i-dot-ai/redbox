@@ -8,11 +8,8 @@ from redbox.chains.components import (
     get_metadata_retriever,
     get_parameterised_retriever,
 )
-<<<<<<< HEAD
 from redbox.graph.nodes.tools import build_search_documents_tool, build_search_wikipedia_tool
-=======
 from redbox.graph.nodes.tools import build_search_documents_tool
->>>>>>> main
 from redbox.graph.root import get_root_graph
 from redbox.models.chain import RedboxState
 from redbox.models.chat import ChatRoute
