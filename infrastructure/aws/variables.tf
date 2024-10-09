@@ -122,7 +122,7 @@ variable "azure_openai_model" {
 
 variable "openai_api_version" {
   type        = string
-  default     = "2023-12-01-preview"
+  default     = "2024-02-01"
   description = "OPENAI API version"
 }
 

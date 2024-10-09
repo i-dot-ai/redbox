@@ -36,7 +36,7 @@ def get_chat_llm(model: str, tools: list[StructuredTool] | None = None):
         chat_model = chat_model.bind_tools(tools)
 
     check = chat_model.invoke("hello")
-    logger.info("check-result=%s", check)
+    logger.info("check=%s", check)
     return chat_model
 
 
