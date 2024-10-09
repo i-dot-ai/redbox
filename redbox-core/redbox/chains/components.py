@@ -18,7 +18,7 @@ from langchain.chat_models import init_chat_model
 load_dotenv()
 
 
-def get_chat_llm(model: str, tools: list[StructuredTool]):
+def get_chat_llm(model: str, tools: list[StructuredTool] | None = None):
     if model.startswith("gpt-"):
         model_provider = "azure_openai"
     elif model.startswith("anthropic."):
