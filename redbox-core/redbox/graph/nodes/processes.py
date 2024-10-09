@@ -21,7 +21,7 @@ from redbox.models.chain import DocumentState, PromptSet, RedboxState, RequestMe
 from redbox.models.graph import ROUTE_NAME_TAG, SOURCE_DOCUMENTS_TAG, RedboxActivityEvent, RedboxEventType
 from redbox.transform import combine_documents, flatten_document_state
 
-log = logging.getLogger()
+log = logging.getLogger(__name__)
 re_keyword_pattern = re.compile(r"@(\w+)")
 
 
@@ -286,12 +286,16 @@ def build_tool_pattern(
                     continue
 
                 try:
-                    # Deal with InjectedState
                     args = tool_call["args"].copy()
+                    log.info(f"Invoking tool {tool_call['name']} with args {args}")
+                    dispatch_custom_event(
+                        name=RedboxEventType.activity.value, 
+                        data=RedboxActivityEvent(message=(f"Running {tool_call['name']} tool: {args}"))
+                    )
+
+                    # Deal with InjectedState
                     if has_injected_state(tool):
                         args["state"] = state
-
-                    log.info(f"Invoking tool {tool_call['name']} with args {args}")
 
                     # Invoke the tool
                     result_state_update = tool.invoke(args) or {}

@@ -25,6 +25,7 @@ from redbox.models.chain import (
     RequestMetadata,
     metadata_reducer,
 )
+from redbox.models.graph import RedboxActivityEvent
 from redbox_app.redbox_core import error_messages
 from redbox_app.redbox_core.models import (
     Chat,
@@ -69,6 +70,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         """Receive & respond to message from browser websocket."""
         self.full_reply = []
         self.citations = []
+        self.external_citations = []
         self.route = None
 
         data = json.loads(text_data or bytes_data)
@@ -132,6 +134,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 route_name_callback=self.handle_route,
                 documents_callback=self.handle_documents,
                 metadata_tokens_callback=self.handle_metadata,
+                activity_event_callback=self.handle_activity_event,
             )
 
             message = await self.save_message(
@@ -238,10 +241,24 @@ class ChatConsumer(AsyncWebsocketConsumer):
         self.metadata = metadata_reducer(self.metadata, RequestMetadata.model_validate(response))
 
     async def handle_documents(self, response: list[Document]):
-        s3_keys = [doc.metadata["file_name"] for doc in response]
-        files = File.objects.filter(original_file__in=s3_keys)
-
+        sources = set(doc.metadata["file_name"] for doc in response)
+        files = File.objects.filter(original_file__in=sources)
+        handled_sources = set()
         async for file in files:
             await self.send_to_client("source", {"url": str(file.url), "original_file_name": file.original_file_name})
-        for file in files:
             self.citations.append((file, [doc for doc in response if doc.metadata["file_name"] == file.unique_name]))
+            handled_sources.add(file.original_file_name)
+
+        additional_sources = [doc for doc in response if doc.metadata["file_name"] not in handled_sources]
+
+        for additional_source in additional_sources:
+            file_name = additional_source.metadata["file_name"]
+            source = additional_source.metadata.get("source", "Unknown")
+            await self.send_to_client("source", { 
+                "url": file_name, 
+                "original_file_name": f"{source} - {file_name.split("/")[-1]}"
+            })
+            self.external_citations.append((file, [doc for doc in response if doc.metadata["file_name"] == file.unique_name]))
+
+    async def handle_activity_event(self, event: RedboxActivityEvent):
+        logger.info(f"ACTIVITY: {event.message}")

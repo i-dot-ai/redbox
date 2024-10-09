@@ -3,6 +3,7 @@ from langchain_core.vectorstores import VectorStoreRetriever
 from langgraph.graph import END, START, StateGraph
 from langgraph.graph.graph import CompiledGraph
 
+
 from redbox.chains.runnables import build_self_route_output_parser
 from redbox.graph.edges import (
     build_documents_bigger_than_context_conditional,
@@ -142,10 +143,10 @@ def get_search_graph(
 def get_agentic_search_graph(tools: dict[str, StructuredTool], debug: bool = False) -> CompiledGraph:
     """Creates a subgraph for agentic RAG."""
     builder = StateGraph(RedboxState)
-
     # Tools
-    agent_tool_names = ["_search_documents"]
+    agent_tool_names = ["_search_documents", "_search_wikipedia"]
     agent_tools: list[StructuredTool] = [tools.get(tool_name) for tool_name in agent_tool_names]
+
 
     # Processes
     builder.add_node("p_set_agentic_search_route", build_set_route_pattern(route=ChatRoute.gadget))
