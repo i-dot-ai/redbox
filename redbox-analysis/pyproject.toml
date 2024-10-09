@@ -1,0 +1,25 @@
+[tool.poetry]
+name = "redbox-user-research"
+version = "0.1.0"
+description = ""
+authors = ["Your Name <you@example.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.9"
+pandas = "^2.2.2"
+scikit-learn = "^1.5.1"
+nltk = "^3.9.1"
+sentence-transformers = "^3.0.1"
+torch = "^2.4.0"
+gensim = "^4.3.3"
+pyldavis = "^3.4.1"
+matplotlib = "^3.9.2"
+seaborn = "^0.13.2"
+wordcloud = "^1.9.3"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+

@@ -1,3 +1,5 @@
+**/*.csv
+
 **/*.db
 .idea/
 redbox-core/models/
