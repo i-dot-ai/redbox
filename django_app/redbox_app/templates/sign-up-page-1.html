@@ -1,4 +1,4 @@
-{% set pageTitle = "My details" %}
+{% set pageTitle = "Sign up" %}
 {% extends "base.html" %}
 {% from "macros/govuk-button.html" import govukButton %}
 
@@ -18,7 +18,7 @@
           <div class="govuk-error-summary__body">
             <ul class="govuk-list govuk-error-summary__list">
               {% for field, error in form.errors.items() %}
-                <li>{{ error }}</li>
+                <li>{{ field }} : {{ error }}</li>
               {% endfor %}
             </ul>
           </div>
@@ -29,13 +29,6 @@
     <form method='post'>
 
       <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
-
-      <div class="govuk-form-group">
-        <label class="govuk-label" for="{{ form.name.id_for_label }}">
-          {{ form.name.label }}
-        </label>
-        {{ form.name }}
-      </div>
 
       <div class="govuk-form-group">
         <label class="govuk-label" for="{{ form.email.id_for_label }}">
@@ -49,6 +42,13 @@
           {{ form.business_unit.label }}
         </label>
         {{ form.business_unit }}
+      </div>
+
+      <div class="govuk-form-group">
+        <label class="govuk-label" for="{{ form.role.id_for_label }}">
+          {{ form.role.label }}
+        </label>
+        {{ form.role }}
       </div>
 
       <div class="govuk-form-group">

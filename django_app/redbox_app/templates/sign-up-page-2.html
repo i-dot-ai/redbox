@@ -1,4 +1,4 @@
-{% set pageTitle = "My details" %}
+{% set pageTitle = "Accessibility" %}
 {% extends "base.html" %}
 {% from "macros/govuk-button.html" import govukButton %}
 
@@ -7,8 +7,8 @@
   <div class="govuk-width-container">
 
     <div class="govuk-grid-row">
-      <div class="govuk-grid-column-two-thirds">
-        <h1 class="govuk-heading-l">Research consent</h1>
+      <div class="govuk-grid-column-one-third">
+        <h1 class="govuk-heading-l">Accessibility</h1>
       </div>
     </div>
 
@@ -18,7 +18,7 @@
           <div class="govuk-error-summary__body">
             <ul class="govuk-list govuk-error-summary__list">
               {% for field, error in form.errors.items() %}
-                <li>{{ error }}</li>
+                <li>{{ field }} : {{ error }}</li>
               {% endfor %}
             </ul>
           </div>
@@ -26,67 +26,71 @@
       </div>
     {% endif %}
 
-    <div class="govuk-grid-row">
-      <div class="govuk-grid-column-two-thirds">
-        <p class="govuk-body">This information page tells you about who we are, the research we’re doing, and how we use the information you give us. Please read this information carefully before agreeing to take part. If you have questions about taking part that aren’t answered here, you can contact i-dot-ai-enquiries@cabinetoffice.gov.uk. If you’d like this information in a different format, please let us know.</p>
-        <h2 class="govuk-heading-m">Who are we, and what are we doing?</h2>
-        <p class="govuk-body">You are being invited to take part in research carried out by the Incubator for Artificial Intelligence (i.AI) in the Cabinet Office. Together we are carrying out research to learn what our users need from Redbox. By taking part, you’ll help us to understand how Redbox works well for people like you.</p>
-        <h2 class="govuk-heading-m">What is involved in taking part?</h2>
-        <p class="govuk-body">You may</p>
-        <ul class="govuk-body govuk-list govuk-list--bullet">
-          <li>get to use the Redbox product</li>
-          <li>be asked to attend interviews and group sessions to capture your feedback on the product</li>
-          <li>complete surveys to capture your feedback and thoughts on the product</li>
-          <li>your usage monitored for analysis, research and moderation purposes</li>
-        </ul>
-        <p class="govuk-body">You don't have to provide any information you don't want to, and can stop taking part at any time by telling i.AI by emailing redbox-copilot@cabinetoffice.gov.uk. You have the right to withdraw at any time during beta phase.</p>
-        <h2 class="govuk-heading-m">How do we use your information?</h2>
-        <p class="govuk-body">During research we gather information from different people. We’ll ask your permission to record your feedback and carry out analysis. We'll also ask your permission to share your feedback with people we work with, including other government organisations we work alongside. Sometimes this will be in the form of a presentation. We'll never share what you have said to us in your feedback without your consent and we’ll never use your real name.</p>
-        <p class="govuk-body">We always keep your contact information secure within the Cabinet Office. Your information is archived and then destroyed after two years, in line with our retention policy.</p>
-        <h2 class="govuk-heading-m">Feedback or withdrawing from research
-        <p class="govuk-body">If you have any questions about this research, please contact <a class="govuk-link" href="mailto:redbox-copilot@cabinetoffice.gov.uk">redbox-copilot@cabinetoffice.gov.uk</a></p>
-        <h2 class="govuk-heading-m">Your rights</h2>
-        <p class="govuk-body">A list of your rights under the General Data Protection Regulation, the Data Protection Act 2018 (DPA 2018), can be seen on the information commissioner’s website.</p>
-        <h2 class="govuk-heading-m">Right to withdraw</h2>
-        <p class="govuk-body">If you decide to withdraw from the process, any personal data relating to the withdrawn person will be removed from all documentation and records in accordance with data protection laws. If you wish to withdraw, please contact <a class="govuk-link" href="mailto:redbox-copilot@cabinetoffice.gov.uk">redbox-copilot@cabinetoffice.gov.uk</a></p>
-        <h2 class="govuk-heading-m">To complain to Cabinet Office</h2>
-        <p class="govuk-body">Please email <a class="govuk-link" href="mailto:subject.access@cabinetoffice.gov.uk">subject.access@cabinetoffice.gov.uk</a> with your complaint.</p>
-        <h2 class="govuk-heading-m">To complain to the regulator</h2>
-        <p class="govuk-body">You have the right to lodge a complaint with the Information Commissioner’s Office  (supervisory authority) at any time. Should you wish to exercise that right full details are available on their website.</p>
-        <ul class="govuk-body govuk-list govuk-list--bullet">
-          <li>Telephone: <a class="govuk-link" href="tel:03031231113">0303 123 1113</a></li>
-          <li>Textphone: <a class="govuk-link" href="tel:01625545860">01625 545860</a></li>
-        </ul>
-        <p class="govuk-body">Monday to Friday, 9am to 4:30pm</p>
-        <address class="govuk-body">
-          Information Commissioner's Office<br/>
-          Wycliffe House<br/>
-          Water Lane<br/>
-          Wilmslow<br/>
-          Cheshire SK9 5AF
-        </address>
-          <p class="govuk-body">Email: <a class="govuk-link" href="mailto:casework@ico.org.uk">casework@ico.org.uk</a></p>
-        </p>
-        <h2 class="govuk-heading-m">Data controller</h2>
-        <p class="govuk-body">Cabinet Office is the data controller for the personal data you give.</p>
-      </div>
-    </div>
-
     <form method='post'>
 
       <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
 
-      <div class="govuk-checkboxes govuk-!-margin-top-5" data-module="govuk-checkboxes">
-        <div class="govuk-checkboxes__item">
-          {{ form.research_consent }}
-          <label class="govuk-label govuk-checkboxes__label" for="{{ form.research_consent.id_for_label }}">
-            {{ form.research_consent.label }}
-          </label>
-        </div>
+      <div class="govuk-form-group">
+        <fieldset class="govuk-fieldset">
+          <legend class="govuk-fieldset__legend">
+            {{ form.accessibility_options.label }}
+          </legend>
+          <div class="govuk-radios">
+            {% for value, label in form.accessibility_options.field.choices %}
+              {% if value %}
+                <div class="govuk-radios__item">
+                  <input class="govuk-radios__input" type="radio"
+                        id="accessibility_options_{{ loop.index0 }}"
+                        name="{{ form.accessibility_options.name }}"
+                        value="{{ value }}"
+                        {% if value|string == form.accessibility_options.value()|string %}checked{% endif %}
+                        aria-describedby="accessibility_options_{{ loop.index0 }}-hint">
+                  <label class="govuk-label govuk-radios__label"
+                        for="accessibility_options_{{ loop.index0 }}">
+                    {{ value }}
+                  </label>
+                </div>
+              {% endif %}
+            {% endfor %}
+          </div>
+        </fieldset>
       </div>
 
-      <div class="govuk-button-group govuk-!-margin-top-5">
-        {{ govukButton(text="Sign up") }}
+      <div class="govuk-form-group">
+        <fieldset class="govuk-fieldset">
+          <legend class="govuk-fieldset__legend">
+            {{ form.accessibility_categories.label }}
+          </legend>
+          <div class="govuk-checkboxes">
+            {% for value, label in form.accessibility_categories.field.choices %}
+              {% if value %}
+                <div class="govuk-radios__item">
+                  <input class="govuk-checkboxes__input" type="checkbox"
+                        id="accessibility_categories_{{ loop.index0 }}"
+                        name="{{ form.accessibility_categories.name }}"
+                        value="{{ value }}"
+                        {% if value|string == form.accessibility_categories.value()|string %}checked{% endif %}
+                        aria-describedby="accessibility_categories_{{ loop.index0 }}-hint">
+                  <label class="govuk-label govuk-checkboxes__label"
+                        for="accessibility_categories_{{ loop.index0 }}">
+                    {{ value }}
+                  </label>
+                </div>
+              {% endif %}
+            {% endfor %}
+          </div>
+        </fieldset>
+      </div>
+
+      <div class="govuk-form-group">
+        <label class="govuk-label" for="{{ form.accessibility_description.id_for_label }}">
+          {{ form.accessibility_description.label }}
+        </label>
+        {{ form.accessibility_description }}
+      </div>
+
+      <div class="govuk-button-group">
+        {{ govukButton(text="Continue") }}
       </div>
 
     </form>

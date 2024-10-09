@@ -277,6 +277,86 @@ class User(BaseUser, UUIDPrimaryKeyBase):
             ),
         )
 
+    class AccessibilityOptions(models.TextChoices):
+        YES = "Yes", _("Yes")
+        NO = "No", _("No")
+        PREFER_NOT_TO_SAY = "Prefer not to say", _("Prefer not to say")
+
+    class AccessibilityCategories(models.TextChoices):
+        SIGHT = "Sight", _("I'm blind, partially sighted or colour blind")
+        HEARING = "Hearing", _("I'm deaf or hard of hearing")
+        MOBILITY = "Mobility", _("I have difficulty using a mouse or keyboard")
+        THINKING_AND_UNDERSTANDING = (
+            "Thinking and understanding",
+            _("I have autism, dyslexia, ADHD, a mental health condition"),
+        )
+        TEMPORARY = "Temporary", _("I have an injury")
+        INVISIBLE_CONDITION = "Invisible condition", _("This could be menopause, a mental health condition")
+
+    class DigitalConfidence(models.TextChoices):
+        CONFIDENT = (
+            "I feel confident using new technologies and digital products",
+            _("I feel confident using new technologies and digital products"),
+        )
+        NEED_HELP = (
+            "When using new technologies and digital products I tend to need some help",
+            _("When using new technologies and digital products I tend to need some help"),
+        )
+        DONT_WANT = (
+            "I don't use new technologies and I don't want to learn how to use them",
+            _("I don't use new technologies and I don't want to learn how to use them"),
+        )
+
+    class RegularityAI(models.TextChoices):
+        NOT_USED = "I have not used GenAI", _("I have not used GenAI")
+        EVERYDAY = "Everyday", _("Everyday")
+        WEEKLY = "Weekly - a few times per week", _("Weekly - a few times per week")
+        MONTHLY = "Monthly - a few times per month", _("Monthly - a few times per month")
+        NOT_MUCH = "Not much at all - tried once or twice", _("Not much at all - tried once or twice")
+
+    class Usefulness(models.TextChoices):
+        NOT_USED = "I have not used GenAI", _("I have not used GenAI")
+        NOT_ENOUGH = (
+            "I have not used GenAI enough to say its useful or not",
+            _("I have not used GenAI enough to say its useful or not"),
+        )
+        NOT_FIGURED_OUT = (
+            "I have not figured out how to best use GenAI",
+            _("I have not figured out how to best use GenAI"),
+        )
+        FEW_THINGS = (
+            "I have found a few things GenAI really helps me with",
+            _("I have found a few things GenAI really helps me with"),
+        )
+        MANY_THINGS = (
+            "GenAI has proved useful for many different tasks",
+            _("GenAI has proved useful for many different tasks"),
+        )
+
+    class ConsiderUsingAI(models.TextChoices):
+        NO = "No", _("No")
+        MAYBE = "Maybe (or unsure)", _("Maybe (or unsure)")
+        YES = "Yes", _("Yes")
+        ALREADY_DO = "Yes! I already use GenAI for this", _("Yes! I already use GenAI for this")
+
+    class RegularityTasks(models.TextChoices):
+        DONT_DO = "I do not do this task", _("I do not do this task")
+        EVERYDAY = "Everyday", _("Everyday")
+        WEEKLY = "Weekly", _("Weekly")
+        MONTHLY = "Monthly", _("Monthly")
+        QUARTERLY = "Quarterly", _("Quarterly")
+        YEARLY = "Yearly", _("Yearly")
+
+    class DurationTasks(models.TextChoices):
+        DONT_DO = "I do not do this task", _("I do not do this task")
+        UP_TO_15_MINS = "1 to 15 minutes", _("1 to 15 minutes")
+        UP_TO_60_MINS = "15 to 60 minutes", _("15 to 60 minutes")
+        UP_TO_4_HOURS = "1 to 4 hours", _("1 to 4 hours")
+        UP_TO_8_HOURS = "4 to 8 hours", _("4 to 8 hours")
+        UP_TO_2_DAYS = "1 to 2 days", _("1 to 2 days")
+        MORE_THAN_2_DAYS = "More than 2 days", _("More than 2 days")
+        MORE_THAN_1_WEEK = "More than a week", _("More than a week")
+
     username = None
     verified = models.BooleanField(default=False, blank=True, null=True)
     invited_at = models.DateTimeField(default=None, blank=True, null=True)
@@ -284,7 +364,6 @@ class User(BaseUser, UUIDPrimaryKeyBase):
     last_token_sent_at = models.DateTimeField(editable=False, blank=True, null=True)
     password = models.CharField("password", max_length=128, blank=True, null=True)
     business_unit = models.CharField(null=True, blank=True, max_length=64, choices=BusinessUnit)
-    # role = models.CharField(null=True, blank=True, max_length=128)
     grade = models.CharField(null=True, blank=True, max_length=3, choices=UserGrade)
     name = models.CharField(null=True, blank=True)
     ai_experience = models.CharField(null=True, blank=True, max_length=25, choices=AIExperienceLevel)
@@ -297,7 +376,58 @@ class User(BaseUser, UUIDPrimaryKeyBase):
     is_developer = models.BooleanField(null=True, blank=True, default=False, help_text="is this user a developer?")
 
     # Additional fields for sign-up form
-    research_consent = models.BooleanField(null=True, blank=True, default=False)
+    # Page 1
+    role = models.CharField(null=True, blank=True, max_length=128)
+    # Page 2
+    accessibility_options = models.CharField(null=True, blank=True, max_length=64, choices=AccessibilityOptions)
+    accessibility_categories = models.CharField(null=True, blank=True, max_length=64, choices=AccessibilityCategories)
+    accessibility_description = models.CharField(null=True, blank=True, max_length=128)
+    # Page 3
+    digital_confidence = models.CharField(null=True, blank=True, max_length=128, choices=DigitalConfidence)
+    usage_at_work = models.CharField(null=True, blank=True, max_length=64, choices=RegularityAI)
+    usage_outside_work = models.CharField(null=True, blank=True, max_length=64, choices=RegularityAI)
+    how_useful = models.CharField(null=True, blank=True, max_length=64, choices=Usefulness)
+    # Page 4
+    task_1_description = models.CharField(null=True, blank=True, max_length=128)
+    task_1_regularity = models.CharField(null=True, blank=True, max_length=128)
+    task_1_duration = models.CharField(null=True, blank=True, max_length=128)
+    task_1_consider_using_ai = models.CharField(null=True, blank=True, max_length=64, choices=ConsiderUsingAI)
+    task_2_description = models.CharField(null=True, blank=True, max_length=128)
+    task_2_regularity = models.CharField(null=True, blank=True, max_length=128)
+    task_2_duration = models.CharField(null=True, blank=True, max_length=128)
+    task_2_consider_using_ai = models.CharField(null=True, blank=True, max_length=64, choices=ConsiderUsingAI)
+    task_3_description = models.CharField(null=True, blank=True, max_length=128)
+    task_3_regularity = models.CharField(null=True, blank=True, max_length=128)
+    task_3_duration = models.CharField(null=True, blank=True, max_length=128)
+    task_3_consider_using_ai = models.CharField(null=True, blank=True, max_length=64, choices=ConsiderUsingAI)
+    # Page 5
+    role_regularity_summarise_large_docs = models.CharField(
+        null=True, blank=True, max_length=32, choices=RegularityTasks
+    )
+    role_regularity_condense_multiple_docs = models.CharField(
+        null=True, blank=True, max_length=32, choices=RegularityTasks
+    )
+    role_regularity_search_across_docs = models.CharField(null=True, blank=True, max_length=32, choices=RegularityTasks)
+    role_regularity_compare_multiple_docs = models.CharField(
+        null=True, blank=True, max_length=32, choices=RegularityTasks
+    )
+    role_regularity_specific_template = models.CharField(null=True, blank=True, max_length=32, choices=RegularityTasks)
+    role_regularity_shorten_docs = models.CharField(null=True, blank=True, max_length=32, choices=RegularityTasks)
+    role_regularity_write_docs = models.CharField(null=True, blank=True, max_length=32, choices=RegularityTasks)
+    role_duration_summarise_large_docs = models.CharField(null=True, blank=True, max_length=32, choices=DurationTasks)
+    role_duration_condense_multiple_docs = models.CharField(null=True, blank=True, max_length=32, choices=DurationTasks)
+    role_duration_search_across_docs = models.CharField(null=True, blank=True, max_length=32, choices=DurationTasks)
+    role_duration_compare_multiple_docs = models.CharField(null=True, blank=True, max_length=32, choices=DurationTasks)
+    role_duration_specific_template = models.CharField(null=True, blank=True, max_length=32, choices=DurationTasks)
+    role_duration_shorten_docs = models.CharField(null=True, blank=True, max_length=32, choices=DurationTasks)
+    role_duration_write_docs = models.CharField(null=True, blank=True, max_length=32, choices=DurationTasks)
+    # Page 6
+    consent_research = models.BooleanField(null=True, blank=True, default=False)
+    consent_interviews = models.BooleanField(null=True, blank=True, default=False)
+    consent_feedback = models.BooleanField(null=True, blank=True, default=False)
+    consent_condfidentiality = models.BooleanField(null=True, blank=True, default=False)
+    consent_understand = models.BooleanField(null=True, blank=True, default=False)
+    consent_agreement = models.BooleanField(null=True, blank=True, default=False)
 
     objects = BaseUserManager()
 

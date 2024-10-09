@@ -1,0 +1,188 @@
+{% set pageTitle = "Common tasks" %}
+{% extends "base.html" %}
+{% from "macros/govuk-button.html" import govukButton %}
+
+{% block content %}
+
+  <div class="govuk-width-container">
+
+    <div class="govuk-grid-row">
+      <div class="govuk-grid-column-two-thirds">
+        <h1 class="govuk-heading-l">Common tasks across the <span class="govuk-!-display-inline-block">Cabinet Office</span></h1>
+      </div>
+    </div>
+
+    {% if form.errors %}
+      <div class="govuk-error-summary" data-module="govuk-error-summary">
+        <div role="alert">
+          <div class="govuk-error-summary__body">
+            <ul class="govuk-list govuk-error-summary__list">
+              {% for field, error in form.errors.items() %}
+                <li>{{ field }} : {{ error }}</li>
+              {% endfor %}
+            </ul>
+          </div>
+        </div>
+      </div>
+    {% endif %}
+
+    <form method='post'>
+
+      <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+      
+      <h2 class="govuk-heading-m">Task 1</h2>
+
+      <div class="govuk-form-group">
+        <label class="govuk-label" for="{{ form.task_1_description.id_for_label }}">
+          {{ form.task_1_description.label }}
+        </label>
+        {{ form.task_1_description }}
+      </div>
+
+      <div class="govuk-form-group">
+        <label class="govuk-label" for="{{ form.task_1_regularity.id_for_label }}">
+          {{ form.task_1_regularity.label }}
+        </label>
+        {{ form.task_1_regularity }}
+      </div>
+
+      <div class="govuk-form-group">
+        <label class="govuk-label" for="{{ form.task_1_duration.id_for_label }}">
+          {{ form.task_1_duration.label }}
+        </label>
+        {{ form.task_1_duration }}
+      </div>
+
+      <div class="govuk-form-group">
+        <fieldset class="govuk-fieldset">
+          <legend class="govuk-fieldset__legend">
+            {{ form.task_1_consider_using_ai.label }}
+          </legend>
+          <div class="govuk-radios">
+            {% for value, label in form.task_1_consider_using_ai.field.choices %}
+              {% if value %}
+                <div class="govuk-radios__item">
+                  <input class="govuk-radios__input" type="radio"
+                        id="task_1_consider_using_ai_{{ loop.index0 }}"
+                        name="{{ form.task_1_consider_using_ai.name }}"
+                        value="{{ value }}"
+                        {% if value|string == form.task_1_consider_using_ai.value()|string %}checked{% endif %}
+                        aria-describedby="task_1_consider_using_ai_{{ loop.index0 }}-hint">
+                  <label class="govuk-label govuk-radios__label"
+                        for="task_1_consider_using_ai_{{ loop.index0 }}">
+                    {{ value }}
+                  </label>
+                </div>
+              {% endif %}
+            {% endfor %}
+          </div>
+        </fieldset>
+      </div>
+
+      <h2 class="govuk-heading-m">Task 2</h2>
+
+      <div class="govuk-form-group">
+        <label class="govuk-label" for="{{ form.task_2_description.id_for_label }}">
+          {{ form.task_2_description.label }}
+        </label>
+        {{ form.task_2_description }}
+      </div>
+
+      <div class="govuk-form-group">
+        <label class="govuk-label" for="{{ form.task_2_regularity.id_for_label }}">
+          {{ form.task_2_regularity.label }}
+        </label>
+        {{ form.task_2_regularity }}
+      </div>
+
+      <div class="govuk-form-group">
+        <label class="govuk-label" for="{{ form.task_2_duration.id_for_label }}">
+          {{ form.task_2_duration.label }}
+        </label>
+        {{ form.task_2_duration }}
+      </div>
+
+      <div class="govuk-form-group">
+        <fieldset class="govuk-fieldset">
+          <legend class="govuk-fieldset__legend">
+            {{ form.task_2_consider_using_ai.label }}
+          </legend>
+          <div class="govuk-radios">
+            {% for value, label in form.task_2_consider_using_ai.field.choices %}
+              {% if value %}
+                <div class="govuk-radios__item">
+                  <input class="govuk-radios__input" type="radio"
+                        id="task_2_consider_using_ai_{{ loop.index0 }}"
+                        name="{{ form.task_2_consider_using_ai.name }}"
+                        value="{{ value }}"
+                        {% if value|string == form.task_2_consider_using_ai.value()|string %}checked{% endif %}
+                        aria-describedby="task_2_consider_using_ai_{{ loop.index0 }}-hint">
+                  <label class="govuk-label govuk-radios__label"
+                        for="task_2_consider_using_ai_{{ loop.index0 }}">
+                    {{ value }}
+                  </label>
+                </div>
+              {% endif %}
+            {% endfor %}
+          </div>
+        </fieldset>
+      </div>
+
+      <h2 class="govuk-heading-m">Task 3</h2>
+
+      <div class="govuk-form-group">
+        <label class="govuk-label" for="{{ form.task_3_description.id_for_label }}">
+          {{ form.task_3_description.label }}
+        </label>
+        {{ form.task_3_description }}
+      </div>
+
+      <div class="govuk-form-group">
+        <label class="govuk-label" for="{{ form.task_3_regularity.id_for_label }}">
+          {{ form.task_3_regularity.label }}
+        </label>
+        {{ form.task_3_regularity }}
+      </div>
+
+      <div class="govuk-form-group">
+        <label class="govuk-label" for="{{ form.task_3_duration.id_for_label }}">
+          {{ form.task_3_duration.label }}
+        </label>
+        {{ form.task_3_duration }}
+      </div>
+
+      <div class="govuk-form-group">
+        <fieldset class="govuk-fieldset">
+          <legend class="govuk-fieldset__legend">
+            {{ form.task_3_consider_using_ai.label }}
+          </legend>
+          <div class="govuk-radios">
+            {% for value, label in form.task_3_consider_using_ai.field.choices %}
+              {% if value %}
+                <div class="govuk-radios__item">
+                  <input class="govuk-radios__input" type="radio"
+                        id="task_3_consider_using_ai_{{ loop.index0 }}"
+                        name="{{ form.task_3_consider_using_ai.name }}"
+                        value="{{ value }}"
+                        {% if value|string == form.task_3_consider_using_ai.value()|string %}checked{% endif %}
+                        aria-describedby="task_3_consider_using_ai_{{ loop.index0 }}-hint">
+                  <label class="govuk-label govuk-radios__label"
+                        for="task_3_consider_using_ai_{{ loop.index0 }}">
+                    {{ value }}
+                  </label>
+                </div>
+              {% endif %}
+            {% endfor %}
+          </div>
+        </fieldset>
+      </div>
+
+      <div class="govuk-button-group">
+        {{ govukButton(text="Continue") }}
+      </div>
+
+    </form>
+
+  </div>
+
+{% endblock %}
