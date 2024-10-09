@@ -12,7 +12,7 @@ from django.conf import settings
 from django.contrib.postgres.fields import ArrayField
 from django.core import validators
 from django.db import models
-from django.db.models import Max, Min, Prefetch
+from django.db.models import Max, Min, Prefetch, UniqueConstraint
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django_use_email_as_username.models import BaseUser, BaseUserManager
@@ -70,14 +70,21 @@ class ChatLLMBackend(models.Model):
         GROQ = "groq"
         OLLAMA = "ollama"
 
-    name = models.CharField(
-        primary_key=True, max_length=128, help_text="The name of the model, e.g. “gpt-4o”, “claude-3-opus-20240229”."
-    )
+    name = models.CharField(max_length=128, help_text="The name of the model, e.g. “gpt-4o”, “claude-3-opus-20240229”.")
     provider = models.CharField(max_length=128, choices=Providers, help_text="The model provider")
     description = models.TextField(null=True, blank=True, help_text="brief description of the model")
+    is_default = models.BooleanField(default=False, help_text="is this the default llm to use.")
+
+    class Meta:
+        constraints = [UniqueConstraint(fields=["name", "provider"], name="unique_name_provider")]
 
     def __str__(self):
         return self.name
+
+    def save(self, *args, **kwargs):
+        if self.is_default:
+            ChatLLMBackend.objects.filter(is_default=True).update(is_default=False)
+        super().save(*args, **kwargs)
 
 
 class AbstractAISettings(models.Model):
@@ -86,6 +93,11 @@ class AbstractAISettings(models.Model):
 
     class Meta:
         abstract = True
+
+    def save(self, *args, **kwargs):
+        if not self.chat_backend_id:
+            self.chat_backend_id = ChatLLMBackend.objects.get(is_default=True).id
+        return super().save(*args, **kwargs)
 
 
 class AISettings(UUIDPrimaryKeyBase, TimeStampedModel, AbstractAISettings):
@@ -487,8 +499,8 @@ class Chat(UUIDPrimaryKeyBase, TimeStampedModel, AbstractAISettings):
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
         self.name = sanitise_string(self.name)
 
-        if self.chat_backend is None:
-            self.chat_backend = self.user.ai_settings.chat_backend
+        if self.chat_backend_id is None:
+            self.chat_backend_id = self.user.ai_settings.chat_backend_id
 
         if self.temperature is None:
             self.temperature = self.user.ai_settings.temperature

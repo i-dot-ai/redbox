@@ -7,9 +7,9 @@ from django.db import migrations, models
 def back_populate_chat_llm_backend(apps, schema_editor):
     ChatLLMBackend = apps.get_model("redbox_core", "ChatLLMBackend")
 
+    ChatLLMBackend.objects.create(name="gpt-4o", provider="azure_openai", is_default=True)
     ChatLLMBackend.objects.create(name="gpt-35-turbo-16k", provider="azure_openai")
     ChatLLMBackend.objects.create(name="gpt-4-turbo-2024-04-09", provider="azure_openai")
-    ChatLLMBackend.objects.create(name="gpt-4o", provider="azure_openai")
     ChatLLMBackend.objects.create(name="anthropic.claude-3-sonnet-20240229-v1:0", provider="bedrock")
     ChatLLMBackend.objects.create(name="anthropic.claude-3-haiku-20240307-v1:0", provider="bedrock")
 
@@ -31,10 +31,15 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='ChatLLMBackend',
             fields=[
-                ('name', models.CharField(help_text='The name of the model, e.g. “gpt-4o”, “claude-3-opus-20240229”.', max_length=128, primary_key=True, serialize=False)),
+                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('name', models.CharField(help_text='The name of the model, e.g. “gpt-4o”, “claude-3-opus-20240229”.', max_length=128)),
                 ('provider', models.CharField(choices=[('openai', 'Openai'), ('anthropic', 'Anthropic'), ('azure_openai', 'Azure Openai'), ('google_vertexai', 'Google Vertexai'), ('google_genai', 'Google Genai'), ('bedrock', 'Bedrock'), ('bedrock_converse', 'Bedrock Converse'), ('cohere', 'Cohere'), ('fireworks', 'Fireworks'), ('together', 'Together'), ('mistralai', 'Mistralai'), ('huggingface', 'Huggingface'), ('groq', 'Groq'), ('ollama', 'Ollama')], help_text='The model provider', max_length=128)),
                 ('description', models.TextField(blank=True, help_text='brief description of the model', null=True)),
+                ('is_default', models.BooleanField(default=False, help_text='is this the default llm to use.')),
             ],
+            options={
+                'constraints': [models.UniqueConstraint(fields=('name', 'provider'), name='unique_name_provider')],
+            },
         ),
         migrations.AddField(
             model_name='aisettings',

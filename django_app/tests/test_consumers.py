@@ -431,12 +431,14 @@ async def test_chat_consumer_get_ai_settings(
         connected, _ = await communicator.connect()
         assert connected
 
-        chat = Chat(name=" a chat", user=alice, chat_backend=Chat.ChatBackend.CLAUDE_3_HAIKU)
+        chat = Chat(name="a chat", user=alice)
+
+        await chat.asave()
 
         ai_settings = await ChatConsumer.get_ai_settings(chat)
 
         assert ai_settings.chat_map_question_prompt == CHAT_MAP_QUESTION_PROMPT
-        assert ai_settings.chat_backend == "anthropic.claude-3-haiku-20240307-v1:0"
+        assert ai_settings.chat_backend.name == chat.chat_backend_id
         assert not hasattr(ai_settings, "label")
 
         # Close
