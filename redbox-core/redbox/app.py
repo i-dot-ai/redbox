@@ -9,7 +9,6 @@ from redbox.chains.components import (
     get_parameterised_retriever,
 )
 from redbox.graph.nodes.tools import build_search_documents_tool, build_search_wikipedia_tool
-from redbox.graph.nodes.tools import build_search_documents_tool
 from redbox.graph.root import get_root_graph
 from redbox.models.chain import RedboxState
 from redbox.models.chat import ChatRoute
