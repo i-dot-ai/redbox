@@ -9,7 +9,7 @@ import tiktoken
 
 from redbox.models.chain import AISettings
 from redbox.models.settings import Settings
-from redbox.retriever import AllElasticsearchRetriever, ParameterisedElasticsearchRetriever
+from redbox.retriever import AllElasticsearchRetriever, ParameterisedElasticsearchRetriever, MetadataRetriever
 from langchain_aws import ChatBedrock
 from langchain_community.embeddings import BedrockEmbeddings
 
@@ -132,7 +132,7 @@ def get_embeddings(env: Settings) -> Embeddings:
 def get_all_chunks_retriever(env: Settings) -> ElasticsearchRetriever:
     return AllElasticsearchRetriever(
         es_client=env.elasticsearch_client(),
-        index_name=f"{env.elastic_root_index}-chunk",
+        index_name=env.elastic_chunk_alias,
     )
 
 
@@ -145,7 +145,14 @@ def get_parameterised_retriever(env: Settings, embeddings: Embeddings | None = N
     """
     return ParameterisedElasticsearchRetriever(
         es_client=env.elasticsearch_client(),
-        index_name=f"{env.elastic_root_index}-chunk",
+        index_name=env.elastic_chunk_alias,
         embedding_model=embeddings or get_embeddings(env),
         embedding_field_name=env.embedding_document_field_name,
+    )
+
+
+def get_metadata_retriever(env: Settings):
+    return MetadataRetriever(
+        es_client=env.elasticsearch_client(),
+        index_name=env.elastic_chunk_alias,
     )

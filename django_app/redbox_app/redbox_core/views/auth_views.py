@@ -25,7 +25,9 @@ def sign_in_view(request: HttpRequest):
 
             try:
                 user = User.objects.get(email=email)
-                link = MagicLink.objects.create(user=user, redirect_to="/check-demographics")
+                link = MagicLink.objects.create(
+                    user=user, redirect_to="/check-demographics"
+                )  # Switch this to "/chats" once profile overlay is added to Chats page
                 full_link = request.build_absolute_uri(link.get_absolute_url())
                 body = render_to_string("email/verification.txt", {"url": full_link})
                 send_mail(

@@ -1,16 +1,19 @@
 from functools import partial
-from typing import Any, Callable
+from typing import Any, Callable, Sequence
 
+from elasticsearch import Elasticsearch
 from elasticsearch.helpers import scan
+from kneed import KneeLocator
 from langchain_core.callbacks import CallbackManagerForRetrieverRun
 from langchain_core.documents import Document
 from langchain_core.embeddings.embeddings import Embeddings
+from langchain_core.retrievers import BaseRetriever
 from langchain_elasticsearch.retrievers import ElasticsearchRetriever
-from kneed import KneeLocator
 
-from redbox.models.file import ChunkResolution
-from redbox.retriever.queries import get_all, get_some
 from redbox.models.chain import RedboxState
+from redbox.models.file import ChunkResolution
+from redbox.retriever.queries import add_document_filter_scores_to_query, build_document_query, get_all, get_metadata
+from redbox.transform import merge_documents, sort_documents
 
 
 def hit_to_doc(hit: dict[str, Any]) -> Document:
@@ -27,8 +30,15 @@ def hit_to_doc(hit: dict[str, Any]) -> Document:
         "uuid": hit["_id"],
     }
     return Document(
-        page_content=source["text"], metadata={k: v for k, v in c_meta.items() if v is not None} | source["metadata"]
+        page_content=source.get("text", ""),
+        metadata={k: v for k, v in c_meta.items() if v is not None} | source["metadata"],
     )
+
+
+def query_to_documents(es_client: Elasticsearch, index_name: str, query: dict[str, Any]) -> list[Document]:
+    """Runs an Elasticsearch query and returns Documents."""
+    response = es_client.search(index=index_name, body=query)
+    return [hit_to_doc(hit) for hit in response["hits"]["hits"]]
 
 
 def filter_by_elbow(
@@ -65,36 +75,55 @@ def filter_by_elbow(
     return _filter_by_elbow
 
 
-class ParameterisedElasticsearchRetriever(ElasticsearchRetriever):
-    """A modified ElasticsearchRetriever that allows configuration from AISettings."""
+class ParameterisedElasticsearchRetriever(BaseRetriever):
+    """A modified ElasticsearchRetriever that allows configuration from RedboxState."""
 
+    es_client: Elasticsearch
+    index_name: str | Sequence[str]
     embedding_model: Embeddings
     embedding_field_name: str = "embedding"
     chunk_resolution: ChunkResolution = ChunkResolution.normal
 
-    def __init__(self, **kwargs: Any) -> None:
-        # Hack to pass validation before overwrite
-        # Partly necessary due to how .with_config() interacts with a retriever
-        kwargs["body_func"] = get_some
-        kwargs["document_mapper"] = hit_to_doc
-        super().__init__(**kwargs)
-        self.body_func = partial(get_some, self.embedding_model, self.embedding_field_name, self.chunk_resolution)
-
     def _get_relevant_documents(
         self, query: RedboxState, *, run_manager: CallbackManagerForRetrieverRun
     ) -> list[Document]:
-        if not self.es_client or not self.document_mapper:
-            raise ValueError("faulty configuration")  # should not happen
+        query_text = query["text"]
+        query_vector = self.embedding_model.embed_query(query_text)
+        selected_files = query["request"].s3_keys
+        permitted_files = query["request"].permitted_s3_keys
+        ai_settings = query["request"].ai_settings
 
-        body = self.body_func(query)
-        results = self.es_client.search(index=self.index_name, body=body)
-        documents = [self.document_mapper(hit) for hit in results["hits"]["hits"]]
+        # Initial pass
+        initial_query = build_document_query(
+            query=query_text,
+            query_vector=query_vector,
+            selected_files=selected_files,
+            permitted_files=permitted_files,
+            embedding_field_name=self.embedding_field_name,
+            chunk_resolution=self.chunk_resolution,
+            ai_settings=ai_settings,
+        )
+        initial_documents = query_to_documents(
+            es_client=self.es_client, index_name=self.index_name, query=initial_query
+        )
 
-        if query["request"].ai_settings.elbow_filter_enabled:
-            elbow_filter = filter_by_elbow(query["request"].ai_settings.elbow_filter_enabled)
-            return elbow_filter(documents)
+        # Handle nothing found (as when no files are permitted)
+        if not initial_documents:
+            return []
 
-        return documents
+        # Adjacent documents
+        with_adjacent_query = add_document_filter_scores_to_query(
+            elasticsearch_query=initial_query,
+            ai_settings=ai_settings,
+            centres=initial_documents,
+        )
+        adjacent_boosted = query_to_documents(
+            es_client=self.es_client, index_name=self.index_name, query=with_adjacent_query
+        )
+
+        # Merge, sort, return
+        merged_documents = merge_documents(initial=initial_documents, adjacent=adjacent_boosted)
+        return sort_documents(documents=merged_documents)
 
 
 class AllElasticsearchRetriever(ElasticsearchRetriever):
@@ -109,6 +138,36 @@ class AllElasticsearchRetriever(ElasticsearchRetriever):
         kwargs["document_mapper"] = hit_to_doc
         super().__init__(**kwargs)
         self.body_func = partial(get_all, self.chunk_resolution)
+
+    def _get_relevant_documents(
+        self, query: RedboxState, *, run_manager: CallbackManagerForRetrieverRun
+    ) -> list[Document]:  # noqa:ARG002
+        if not self.es_client or not self.document_mapper:
+            msg = "faulty configuration"
+            raise ValueError(msg)  # should not happen
+
+        body = self.body_func(query)  # type: ignore
+
+        results = [
+            self.document_mapper(hit)
+            for hit in scan(client=self.es_client, index=self.index_name, query=body, source=True)
+        ]
+
+        return sorted(results, key=lambda result: result.metadata["index"])
+
+
+class MetadataRetriever(ElasticsearchRetriever):
+    """A modified ElasticsearchRetriever that retrieves query metadata without any content"""
+
+    chunk_resolution: ChunkResolution = ChunkResolution.largest
+
+    def __init__(self, **kwargs: Any) -> None:
+        # Hack to pass validation before overwrite
+        # Partly necessary due to how .with_config() interacts with a retriever
+        kwargs["body_func"] = get_metadata
+        kwargs["document_mapper"] = hit_to_doc
+        super().__init__(**kwargs)
+        self.body_func = partial(get_metadata, self.chunk_resolution)
 
     def _get_relevant_documents(
         self, query: RedboxState, *, run_manager: CallbackManagerForRetrieverRun

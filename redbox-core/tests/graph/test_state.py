@@ -1,13 +1,26 @@
+from datetime import datetime, timezone
 from uuid import uuid4
+
 import pytest
-
 from langchain_core.documents import Document
+from langchain_core.messages import ToolCall
 
-from redbox.models.chain import RequestMetadata, document_reducer, metadata_reducer, DocumentState
+from redbox.models.chain import (
+    AISettings,
+    DocumentState,
+    LLMCallMetadata,
+    RedboxQuery,
+    RedboxState,
+    RequestMetadata,
+    ToolState,
+    document_reducer,
+    merge_redbox_state_updates,
+    metadata_reducer,
+    tool_calls_reducer,
+)
 
-
-GROUP_IDS = [uuid4() for i in range(4)]
-DOCUMENT_IDS = [uuid4() for i in range(10)]
+GROUP_IDS = [uuid4() for _ in range(4)]
+DOCUMENT_IDS = [uuid4() for _ in range(10)]
 
 
 @pytest.mark.parametrize(
@@ -121,46 +134,284 @@ def test_document_reducer(a: DocumentState, b: DocumentState, expected: Document
     assert result == expected, f"Expected: {expected}. Result: {result}"
 
 
+GPT_4o_multiple_calls_1 = [
+    LLMCallMetadata(model_name="gpt-4o", input_tokens=0, output_tokens=0),
+    LLMCallMetadata(model_name="gpt-4o", input_tokens=10, output_tokens=10),
+    LLMCallMetadata(model_name="gpt-4o", input_tokens=10, output_tokens=10),
+]
+
+GPT_4o_multiple_calls_1a = GPT_4o_multiple_calls_1 + [
+    LLMCallMetadata(model_name="gpt-4o", input_tokens=50, output_tokens=50),
+    LLMCallMetadata(model_name="gpt-4o", input_tokens=60, output_tokens=60),
+]
+
+GPT_4o_multiple_calls_2 = [
+    LLMCallMetadata(model_name="gpt-4o", input_tokens=100, output_tokens=200),
+    LLMCallMetadata(model_name="gpt-4o", input_tokens=0, output_tokens=10),
+    LLMCallMetadata(model_name="gpt-4o", input_tokens=100, output_tokens=210),
+]
+
+multiple_models_multiple_calls_1 = [
+    LLMCallMetadata(model_name="gpt-4o", input_tokens=100, output_tokens=200),
+    LLMCallMetadata(model_name="gpt-3.5", input_tokens=20, output_tokens=20),
+    LLMCallMetadata(model_name="gpt-4o", input_tokens=100, output_tokens=210),
+]
+
+multiple_models_multiple_calls_1a = multiple_models_multiple_calls_1 + [
+    LLMCallMetadata(model_name="gpt-4o", input_tokens=300, output_tokens=310),
+]
+
+
 @pytest.mark.parametrize(
     ("a", "b", "expected"),
     [
         (
-            RequestMetadata(input_tokens={"gpt-4o": 0}, output_tokens={"gpt-4o": 0}),
-            RequestMetadata(input_tokens={"gpt-4o": 10}, output_tokens={"gpt-4o": 10}),
-            RequestMetadata(input_tokens={"gpt-4o": 10}, output_tokens={"gpt-4o": 10}),
+            RequestMetadata(llm_calls=GPT_4o_multiple_calls_1),
+            RequestMetadata(llm_calls=GPT_4o_multiple_calls_2),
+            RequestMetadata(llm_calls=GPT_4o_multiple_calls_1 + GPT_4o_multiple_calls_2),
         ),
         (
-            RequestMetadata(input_tokens={"gpt-4o": 12}, output_tokens={"gpt-4o": 100}),
-            RequestMetadata(input_tokens={"gpt-4o": 10}, output_tokens={"gpt-4o": 10}),
-            RequestMetadata(input_tokens={"gpt-4o": 22}, output_tokens={"gpt-4o": 110}),
+            RequestMetadata(llm_calls=GPT_4o_multiple_calls_1),
+            RequestMetadata(llm_calls=GPT_4o_multiple_calls_1a),
+            RequestMetadata(llm_calls=GPT_4o_multiple_calls_1a),
         ),
         (
-            RequestMetadata(input_tokens={"gpt-4o": 100}, output_tokens={"gpt-4o": 200}),
-            RequestMetadata(input_tokens={"gpt-4o": 0}, output_tokens={"gpt-4o": 10}),
-            RequestMetadata(input_tokens={"gpt-4o": 100}, output_tokens={"gpt-4o": 210}),
+            RequestMetadata(llm_calls=multiple_models_multiple_calls_1),
+            RequestMetadata(llm_calls=GPT_4o_multiple_calls_2),
+            RequestMetadata(llm_calls=multiple_models_multiple_calls_1 + GPT_4o_multiple_calls_2),
         ),
         (
-            None,
-            RequestMetadata(input_tokens={"gpt-4o": 10}, output_tokens={"gpt-4o": 100}),
-            RequestMetadata(input_tokens={"gpt-4o": 10}, output_tokens={"gpt-4o": 100}),
-        ),
-        (
-            RequestMetadata(input_tokens={"gpt-4o": 10}, output_tokens={"gpt-4o": 100}),
-            None,
-            RequestMetadata(input_tokens={"gpt-4o": 10}, output_tokens={"gpt-4o": 100}),
-        ),
-        (
-            RequestMetadata(input_tokens={"gpt-4o": 0}, output_tokens={"gpt-4o": 0}),
-            RequestMetadata(input_tokens={"gpt-3.5": 10}, output_tokens={"gpt-3.5": 10}),
-            RequestMetadata(input_tokens={"gpt-4o": 0, "gpt-3.5": 10}, output_tokens={"gpt-4o": 0, "gpt-3.5": 10}),
-        ),
-        (
-            RequestMetadata(input_tokens={"gpt-4o": 0, "gpt-3.5": 10}, output_tokens={"gpt-4o": 0, "gpt-3.5": 10}),
-            RequestMetadata(input_tokens={"gpt-3.5": 10}, output_tokens={"gpt-3.5": 10}),
-            RequestMetadata(input_tokens={"gpt-4o": 0, "gpt-3.5": 20}, output_tokens={"gpt-4o": 0, "gpt-3.5": 20}),
+            RequestMetadata(llm_calls=GPT_4o_multiple_calls_1),
+            RequestMetadata(llm_calls=GPT_4o_multiple_calls_1a),
+            RequestMetadata(llm_calls=GPT_4o_multiple_calls_1a),
         ),
     ],
 )
 def test_metadata_reducer(a: RequestMetadata, b: RequestMetadata, expected: RequestMetadata):
     result = metadata_reducer(a, b)
+    assert result == expected, f"Expected: {expected}. Result: {result}"
+
+
+@pytest.mark.parametrize(
+    ("a", "b", "expected"),
+    [
+        (
+            ToolState(
+                {
+                    "foo": {"tool": ToolCall({"name": "foo", "args": {"a": 1, "b": 2}, "id": "123"}), "called": False},
+                    "bar": {
+                        "tool": ToolCall({"name": "bar", "args": {"x": 10, "y": 20}, "id": "456"}),
+                        "called": False,
+                    },
+                }
+            ),
+            ToolState(
+                {
+                    "baz": {
+                        "tool": ToolCall({"name": "baz", "args": {"param": "value"}, "id": "789", "type": "tool_call"}),
+                        "called": False,
+                    }
+                }
+            ),
+            ToolState(
+                {
+                    "foo": {"tool": ToolCall({"name": "foo", "args": {"a": 1, "b": 2}, "id": "123"}), "called": False},
+                    "bar": {
+                        "tool": ToolCall({"name": "bar", "args": {"x": 10, "y": 20}, "id": "456"}),
+                        "called": False,
+                    },
+                    "baz": {
+                        "tool": ToolCall({"name": "baz", "args": {"param": "value"}, "id": "789", "type": "tool_call"}),
+                        "called": False,
+                    },
+                }
+            ),
+        ),
+        (
+            ToolState(
+                {
+                    "foo": {"tool": ToolCall({"name": "foo", "args": {"a": 1, "b": 2}, "id": "123"}), "called": False},
+                    "bar": {
+                        "tool": ToolCall({"name": "bar", "args": {"x": 10, "y": 20}, "id": "456"}),
+                        "called": False,
+                    },
+                }
+            ),
+            ToolState({"bar": None}),
+            ToolState(
+                {"foo": {"tool": ToolCall({"name": "foo", "args": {"a": 1, "b": 2}, "id": "123"}), "called": False}}
+            ),
+        ),
+        (
+            ToolState(
+                {"foo": {"tool": ToolCall({"name": "foo", "args": {"a": 1, "b": 2}, "id": "123"}), "called": False}}
+            ),
+            None,
+            ToolState(),
+        ),
+        (
+            ToolState(
+                {"foo": {"tool": ToolCall({"name": "foo", "args": {"a": 1, "b": 2}, "id": "123"}), "called": False}}
+            ),
+            ToolState(
+                {"foo": {"tool": ToolCall({"name": "foo", "args": {"a": 1, "b": 2}, "id": "123"}), "called": True}}
+            ),
+            ToolState(
+                {"foo": {"tool": ToolCall({"name": "foo", "args": {"a": 1, "b": 2}, "id": "123"}), "called": True}}
+            ),
+        ),
+    ],
+)
+def test_tool_calls_reducer(a: ToolState, b: ToolState, expected: ToolState):
+    """Checks the key properties of the ToolState reducer.
+
+    * If a new key is added, adds it to the state.
+    * If an existing key is None'd, removes it
+    * If update is None, clears all tool calls
+    """
+    result = tool_calls_reducer(a, b)
+    assert result == expected, f"Expected: {expected}. Result: {result}"
+
+
+TEST_QUERY = RedboxQuery(
+    question="Lorem ipsum?",
+    s3_keys=["s3_key.txt"],
+    user_uuid=uuid4(),
+    chat_history=[],
+    ai_settings=AISettings(rag_k=3),
+)
+
+
+@pytest.mark.parametrize(
+    ("a", "b", "expected"),
+    [
+        (
+            RedboxState(
+                request=TEST_QUERY,
+                documents={
+                    "group_1": {
+                        "chunk_1": {"page_content": "foo", "metadata": {"index": 1, "file_name": "foo"}},
+                        "chunk_2": {"page_content": "foo", "metadata": {"index": 1, "file_name": "foo"}},
+                    },
+                    "group_2": {"chunk_1": {"page_content": "foo", "metadata": {"index": 1, "file_name": "foo"}}},
+                },
+                text="Some old text",
+                route_name="my_route",
+                tool_calls={
+                    "tool_1": {"tool": {"name": "foo", "args": {"a": 1, "b": 2}}, "called": False},
+                    "tool_2": {"tool": {"name": "bar", "args": {"a": 1, "b": 2}}, "called": True},
+                },
+                metadata=RequestMetadata(
+                    llm_calls=[
+                        {
+                            "id": "e7b9c8e4-8c6d-4f9b-8b8e-2f8e8e8e8e8e",
+                            "model_name": "gpt-4o",
+                            "input_tokens": 80,
+                            "output_tokens": 160,
+                            "timestamp": datetime(2023, 10, 1, 12, 0, 0, tzinfo=timezone.utc).timestamp(),
+                        },
+                        {
+                            "id": "d3b9c8e4-8c6d-4f9b-8b8e-2f8e8e8e8e8e",
+                            "model_name": "gpt-3.5",
+                            "input_tokens": 60,
+                            "output_tokens": 120,
+                            "timestamp": datetime(2023, 10, 2, 14, 30, 0, tzinfo=timezone.utc).timestamp(),
+                        },
+                    ]
+                ),
+            ),
+            RedboxState(
+                request=TEST_QUERY,
+                documents={
+                    "group_1": {
+                        "chunk_2": None,
+                    },
+                    "group_2": None,
+                    "group_3": {
+                        "chunk_1": {"page_content": "foo", "metadata": {"index": 1, "file_name": "foo"}},
+                    },
+                },
+                text="Some new text",
+                tool_calls={
+                    "tool_1": {"called": True},
+                    "tool_2": None,
+                    "tool_3": {"tool": {"name": "foo", "args": {"a": 1, "b": 2}}, "called": False},
+                },
+                metadata=RequestMetadata(
+                    llm_calls=[
+                        {
+                            "id": "c1b9c8e4-8c6d-4f9b-8b8e-2f8e8e8e8e8e",
+                            "model_name": "gpt-4o",
+                            "input_tokens": 10,
+                            "output_tokens": 10,
+                            "timestamp": datetime(2023, 10, 3, 16, 45, 0, tzinfo=timezone.utc).timestamp(),
+                        },
+                    ]
+                ),
+            ),
+            RedboxState(
+                request=TEST_QUERY,
+                documents={
+                    "group_1": {
+                        "chunk_1": {"page_content": "foo", "metadata": {"index": 1, "file_name": "foo"}},
+                        "chunk_2": None,
+                    },
+                    "group_2": None,
+                    "group_3": {
+                        "chunk_1": {"page_content": "foo", "metadata": {"index": 1, "file_name": "foo"}},
+                    },
+                },
+                text="Some new text",
+                route_name="my_route",
+                tool_calls={
+                    "tool_1": {"tool": {"name": "foo", "args": {"a": 1, "b": 2}}, "called": True},
+                    "tool_2": None,
+                    "tool_3": {"tool": {"name": "foo", "args": {"a": 1, "b": 2}}, "called": False},
+                },
+                metadata=RequestMetadata(
+                    llm_calls=[
+                        {
+                            "id": "e7b9c8e4-8c6d-4f9b-8b8e-2f8e8e8e8e8e",
+                            "model_name": "gpt-4o",
+                            "input_tokens": 80,
+                            "output_tokens": 160,
+                            "timestamp": datetime(2023, 10, 1, 12, 0, 0, tzinfo=timezone.utc).timestamp(),
+                        },
+                        {
+                            "id": "d3b9c8e4-8c6d-4f9b-8b8e-2f8e8e8e8e8e",
+                            "model_name": "gpt-3.5",
+                            "input_tokens": 60,
+                            "output_tokens": 120,
+                            "timestamp": datetime(2023, 10, 2, 14, 30, 0, tzinfo=timezone.utc).timestamp(),
+                        },
+                        {
+                            "id": "c1b9c8e4-8c6d-4f9b-8b8e-2f8e8e8e8e8e",
+                            "model_name": "gpt-4o",
+                            "input_tokens": 10,
+                            "output_tokens": 10,
+                            "timestamp": datetime(2023, 10, 3, 16, 45, 0, tzinfo=timezone.utc).timestamp(),
+                        },
+                    ]
+                ),
+            ),
+        ),
+    ],
+)
+def test_merge_redbox_state_updates(a: RedboxState, b: RedboxState, expected: RedboxState):
+    """
+    Checks that state updates will be merged correctly.
+
+    In the above data, a second update contradicts the first in the following ways:
+
+    * A document group is None'd
+    * A documment group is added
+    * A documment group chunk is None'd
+    * A static field (text) is set with something different
+    * A static field (route) isn't included in the update
+    * A tool call is modified to show as called
+    * A tool call is None'd
+    * A tool call is added
+    * A new llm_call is added to the metadata
+    """
+    result = merge_redbox_state_updates(a, b)
     assert result == expected, f"Expected: {expected}. Result: {result}"

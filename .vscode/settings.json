@@ -1,11 +1,14 @@
 {
-    "editor.formatOnSave": true,
     "[python]": {
+        "editor.formatOnSave": true,
         "editor.codeActionsOnSave": {
+            "source.fixAll": "explicit",
             "source.organizeImports": "explicit"
         },
-        "editor.defaultFormatter": "ms-python.black-formatter"
+        "editor.defaultFormatter": "charliermarsh.ruff"
     },
     "python.analysis.autoImportCompletions": true,
-    "python.experiments.optOutFrom": ["pythonTerminalEnvVarActivation"]
+    "python.experiments.optOutFrom": [
+        "pythonTerminalEnvVarActivation"
+    ]
 }

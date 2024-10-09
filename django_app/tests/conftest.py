@@ -104,18 +104,8 @@ def bob(create_user):
 
 
 @pytest.fixture()
-def chris(create_user):
-    return create_user("chris@example.com", "2000-01-02")
-
-
-@pytest.fixture()
 def peter_rabbit():
     return User.objects.create_user(email="peter.rabbit@example.com", password="P455W0rd")
-
-
-@pytest.fixture()
-def jemima_puddleduck():
-    return User.objects.create_user(email="jemima.puddleduck@example.com", password="P455W0rd")
 
 
 @pytest.fixture()
@@ -154,6 +144,12 @@ def file_py_path() -> Path:
 def chat(alice: User) -> Chat:
     session_id = uuid.uuid4()
     return Chat.objects.create(id=session_id, user=alice, name="A chat")
+
+
+@pytest.fixture()
+def chat_with_message(chat: Chat) -> Chat:
+    ChatMessage.objects.create(chat=chat, text="today", role=ChatRoleEnum.user)
+    return chat
 
 
 @pytest.fixture()
@@ -223,21 +219,6 @@ def chat_with_files(chat: Chat, several_files: Sequence[File]) -> Chat:
 
 
 @pytest.fixture()
-def chat_with_messages_over_time(chat: Chat) -> Chat:
-    now = timezone.now()
-    with freeze_time(now - timedelta(days=40)):
-        ChatMessage.objects.create(chat=chat, text="40 days old", role=ChatRoleEnum.user)
-    with freeze_time(now - timedelta(days=20)):
-        ChatMessage.objects.create(chat=chat, text="20 days old", role=ChatRoleEnum.user)
-    with freeze_time(now - timedelta(days=5)):
-        ChatMessage.objects.create(chat=chat, text="5 days old", role=ChatRoleEnum.user)
-    with freeze_time(now - timedelta(days=1)):
-        ChatMessage.objects.create(chat=chat, text="yesterday", role=ChatRoleEnum.user)
-    ChatMessage.objects.create(chat=chat, text="today", role=ChatRoleEnum.user)
-    return chat
-
-
-@pytest.fixture()
 def user_with_chats_with_messages_over_time(alice: User) -> User:
     now = timezone.now()
     with freeze_time(now - timedelta(days=40)):
@@ -271,6 +252,7 @@ def several_files(alice: User, number_to_create: int = 4) -> Sequence[File]:
                 original_file=SimpleUploadedFile(filename, b"Lorem Ipsum."),
                 original_file_name=filename,
                 core_file_uuid=uuid.uuid4(),
+                status=StatusEnum.complete,
             )
         )
     return files

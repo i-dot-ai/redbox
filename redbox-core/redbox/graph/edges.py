@@ -37,7 +37,7 @@ def build_total_tokens_request_handler_conditional(prompt_set: PromptSet) -> Run
         token_budget_remaining_in_context = calculate_token_budget(state, system_prompt, question_prompt)
         max_tokens_allowed = state["request"].ai_settings.max_document_tokens
 
-        total_tokens = get_document_token_count(state.get("documents"))
+        total_tokens = state["metadata"].selected_files_total_tokens
 
         if total_tokens > max_tokens_allowed:
             return "max_exceeded"
@@ -56,14 +56,14 @@ def build_documents_bigger_than_context_conditional(prompt_set: PromptSet) -> Ru
         system_prompt, question_prompt = get_prompts(state, prompt_set)
         token_budget = calculate_token_budget(state, system_prompt, question_prompt)
 
-        return get_document_token_count(state.get("documents")) > token_budget
+        return get_document_token_count(state) > token_budget
 
     return _documents_bigger_than_context_conditional
 
 
 def documents_bigger_than_n_conditional(state: RedboxState) -> bool:
     """Do the documents meet a hard limit of document token size set in AI Settings."""
-    token_counts = get_document_token_count(state.get("documents"))
+    token_counts = get_document_token_count(state)
     return sum(token_counts) > state["request"].ai_settings.max_document_tokens
 
 

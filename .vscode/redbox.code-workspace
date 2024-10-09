@@ -5,10 +5,6 @@
 			"path": "../django_app"
 		},
 		{
-			"name": "Core API",
-			"path": "../core-api"
-		},
-		{
 			"name": "Redbox Core",
 			"path": "../redbox-core"
 		},
