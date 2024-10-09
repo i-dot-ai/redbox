@@ -40,7 +40,7 @@ class ChatsView(View):
         self.decorate_selected_files(completed_files, messages)
         chat_grouped_by_date_group = groupby(chat, attrgetter("date_group"))
 
-        chat_backend = current_chat.chat_backend if current_chat else ChatLLMBackend.objects.get(name="gpt-4o")
+        chat_backend = current_chat.chat_backend if current_chat else ChatLLMBackend.objects.get(is_default=True)
 
         context = {
             "chat_id": chat_id,
@@ -55,7 +55,7 @@ class ChatsView(View):
             "llm_options": [
                 {
                     "name": llm.name,
-                    "default": llm.name == "gpt-4o",
+                    "default": llm.is_deafult,
                     "selected": llm == chat_backend,
                 }
                 for llm in ChatLLMBackend.objects.all()
