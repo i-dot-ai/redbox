@@ -33,7 +33,7 @@ class ChatsView(View):
             if current_chat.user != request.user:
                 return redirect(reverse("chats"))
             messages = ChatMessage.get_messages_ordered_by_citation_priority(chat_id)
-        split_host = request.get_host().split(':')
+        split_host = request.get_host().split(":")
         host = split_host[0]
         port = int(split_host[1]) if len(split_host) > 1 else None
         endpoint = URL.build(scheme=settings.WEBSOCKET_SCHEME, host=host, port=port, path=r"/ws/chat/")

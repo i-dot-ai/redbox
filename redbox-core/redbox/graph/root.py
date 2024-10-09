@@ -147,7 +147,6 @@ def get_agentic_search_graph(tools: dict[str, StructuredTool], debug: bool = Fal
     agent_tool_names = ["_search_documents", "_search_wikipedia"]
     agent_tools: list[StructuredTool] = [tools.get(tool_name) for tool_name in agent_tool_names]
 
-
     # Processes
     builder.add_node("p_set_agentic_search_route", build_set_route_pattern(route=ChatRoute.gadget))
     builder.add_node(

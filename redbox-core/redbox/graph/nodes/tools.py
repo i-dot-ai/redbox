@@ -6,12 +6,10 @@ from langchain_core.embeddings.embeddings import Embeddings
 from langchain_core.tools import StructuredTool, Tool, tool
 from langchain_core.documents import Document
 from langgraph.prebuilt import InjectedState
-from langchain_community.tools import WikipediaQueryRun
 from langchain_community.utilities import WikipediaAPIWrapper
 import tiktoken
 
-from redbox.models import file
-from redbox.models.file import ChunkMetadata, ChunkResolution
+from redbox.models.file import ChunkResolution
 from redbox.retriever.queries import add_document_filter_scores_to_query, build_document_query
 from redbox.retriever.retrievers import query_to_documents
 from redbox.transform import merge_documents, sort_documents, structure_documents_by_group_and_indices
@@ -128,14 +126,10 @@ def build_search_documents_tool(
     return _search_documents
 
 
-def build_search_wikipedia_tool(
-    number_wikipedia_results=1,
-    max_chars_per_wiki_page=12000
-) -> Tool:
+def build_search_wikipedia_tool(number_wikipedia_results=1, max_chars_per_wiki_page=12000) -> Tool:
     """Constructs a tool that searches Wikipedia"""
     _wikipedia_wrapper = WikipediaAPIWrapper(
-        top_k_results=number_wikipedia_results,
-        doc_content_chars_max=max_chars_per_wiki_page
+        top_k_results=number_wikipedia_results, doc_content_chars_max=max_chars_per_wiki_page
     )
     tokeniser = tiktoken.encoding_for_model("gpt-4o")
 
@@ -143,7 +137,7 @@ def build_search_wikipedia_tool(
     def _search_wikipedia(query: str, state: Annotated[dict, InjectedState]) -> dict[str, Any]:
         """
         Search Wikipedia for information about the queried entity.
-        Useful for when you need to answer general questions about people, places, objects, companies, facts, historical events, or other subjects. 
+        Useful for when you need to answer general questions about people, places, objects, companies, facts, historical events, or other subjects.
         Input should be a search query.
 
         Args:
@@ -160,13 +154,13 @@ def build_search_wikipedia_tool(
                 metadata={
                     "uuid": uuid4(),
                     "index": i,
-                    "file_name": doc.metadata['source'],
+                    "file_name": doc.metadata["source"],
                     "token_count": len(tokeniser.encode(doc.page_content)),
-                    "source": "Wikipedia"
-                }
+                    "source": "Wikipedia",
+                },
             )
             for i, doc in enumerate(response)
         ]
-        return {"documents": structure_documents_by_group_and_indices(mapped_documents)
-        }
+        return {"documents": structure_documents_by_group_and_indices(mapped_documents)}
+
     return _search_wikipedia

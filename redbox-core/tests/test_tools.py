@@ -1,6 +1,6 @@
 from typing import Annotated, Any
 from uuid import UUID, uuid4
-from urllib.parse import urlparse 
+from urllib.parse import urlparse
 
 import pytest
 from elasticsearch import Elasticsearch
@@ -8,7 +8,12 @@ from langchain_core.embeddings.fake import FakeEmbeddings
 from langchain_core.tools import tool
 from langgraph.prebuilt import InjectedState
 
-from redbox.graph.nodes.tools import build_search_documents_tool, has_injected_state, is_valid_tool, build_search_wikipedia_tool
+from redbox.graph.nodes.tools import (
+    build_search_documents_tool,
+    has_injected_state,
+    is_valid_tool,
+    build_search_wikipedia_tool,
+)
 from redbox.models import Settings
 from redbox.models.chain import AISettings, RedboxQuery, RedboxState
 from redbox.models.file import ChunkResolution
@@ -149,20 +154,22 @@ def test_search_documents_tool(
 
 def test_wikipedia_tool():
     tool = build_search_wikipedia_tool()
-    state_update = tool.invoke({
-        "query": "Gordon Brown",
-        "state": RedboxState(
+    state_update = tool.invoke(
+        {
+            "query": "Gordon Brown",
+            "state": RedboxState(
                 request=RedboxQuery(
                     question="What was the highest office held by Gordon Brown",
                     s3_keys=[],
                     user_uuid=uuid4(),
                     chat_history=[],
                     ai_settings=AISettings(),
-                    permitted_s3_keys=[]
+                    permitted_s3_keys=[],
                 )
             ),
-    })
-    for document in flatten_document_state(state_update['documents']):
+        }
+    )
+    for document in flatten_document_state(state_update["documents"]):
         assert document.page_content != ""
-        assert urlparse(document.metadata['file_name']).hostname == "en.wikipedia.org"
+        assert urlparse(document.metadata["file_name"]).hostname == "en.wikipedia.org"
         assert document.metadata["source"] == "Wikipedia"

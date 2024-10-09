@@ -29,5 +29,5 @@ class ChunkMetadata(BaseModel):
     token_count: int
     chunk_resolution: ChunkResolution = ChunkResolution.normal
     name: str
-    description: str 
+    description: str
     keywords: list[str]

@@ -289,8 +289,8 @@ def build_tool_pattern(
                     args = tool_call["args"].copy()
                     log.info(f"Invoking tool {tool_call['name']} with args {args}")
                     dispatch_custom_event(
-                        name=RedboxEventType.activity.value, 
-                        data=RedboxActivityEvent(message=(f"Running {tool_call['name']} tool: {args}"))
+                        name=RedboxEventType.activity.value,
+                        data=RedboxActivityEvent(message=(f"Running {tool_call['name']} tool: {args}")),
                     )
 
                     # Deal with InjectedState

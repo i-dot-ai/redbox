@@ -241,7 +241,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         self.metadata = metadata_reducer(self.metadata, RequestMetadata.model_validate(response))
 
     async def handle_documents(self, response: list[Document]):
-        sources = set(doc.metadata["file_name"] for doc in response)
+        sources = {doc.metadata["file_name"] for doc in response}
         files = File.objects.filter(original_file__in=sources)
         handled_sources = set()
         async for file in files:
@@ -254,11 +254,12 @@ class ChatConsumer(AsyncWebsocketConsumer):
         for additional_source in additional_sources:
             file_name = additional_source.metadata["file_name"]
             source = additional_source.metadata.get("source", "Unknown")
-            await self.send_to_client("source", { 
-                "url": file_name, 
-                "original_file_name": f"{source} - {file_name.split("/")[-1]}"
-            })
-            self.external_citations.append((file, [doc for doc in response if doc.metadata["file_name"] == file.unique_name]))
+            await self.send_to_client(
+                "source", {"url": file_name, "original_file_name": f"{source} - {file_name.split("/")[-1]}"}
+            )
+            self.external_citations.append(
+                (file, [doc for doc in response if doc.metadata["file_name"] == file.unique_name])
+            )
 
     async def handle_activity_event(self, event: RedboxActivityEvent):
-        logger.info(f"ACTIVITY: {event.message}")
+        logger.info("ACTIVITY: %s", event.message)
