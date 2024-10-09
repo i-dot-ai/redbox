@@ -134,6 +134,11 @@ class Settings(BaseSettings):
         else:
             client = Elasticsearch(cloud_id=self.elastic.cloud_id, api_key=self.elastic.api_key)
 
+        if not client.indices.exists_alias(name=f"{self.elastic_root_index}-chunk-current"):
+            chunk_index = f"{self.elastic_root_index}-chunk"
+            client.options(ignore_status=[400]).indices.create(index=chunk_index)
+            client.indices.put_alias(index=chunk_index, name=f"{self.elastic_root_index}-chunk-current")
+
         return client.options(request_timeout=30, retry_on_timeout=True, max_retries=3)
 
     def s3_client(self):
