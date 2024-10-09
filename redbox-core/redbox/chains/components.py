@@ -30,10 +30,13 @@ def get_chat_llm(model: str, tools: list[StructuredTool] | None = None):
     else:
         raise ValueError("%s not recognised", model)
 
-    logger.info("initialising model=%s model_provider=%s", model, model_provider)
+    logger.info("initialising model=%s model_provider=%s tools=%s", model, model_provider, tools)
     chat_model = init_chat_model(model=model, model_provider=model_provider)
     if tools:
         chat_model = chat_model.bind_tools(tools)
+
+    check = chat_model.invoke("hello")
+    logger.info("check-result=%s", check)
     return chat_model
 
 
