@@ -1,11 +1,15 @@
 import logging
+import os
 
 from django.contrib.auth import get_user_model
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import redirect, render
 from django.views import View
+from dotenv import load_dotenv
 
 from redbox_app.redbox_core.forms import SignUpForm
+
+load_dotenv()
 
 User = get_user_model()
 
@@ -14,10 +18,14 @@ logger = logging.getLogger(__name__)
 
 class Signup1(View):
     def get(self, request: HttpRequest) -> HttpResponse:
+        if os.getenv("ALLOW_SIGN_UPS") != "True":
+            return redirect("homepage")
         form = SignUpForm()
         return render(request, "sign-up-page-1.html", {"form": form})
 
     def post(self, request: HttpRequest) -> HttpResponse:
+        if os.getenv("ALLOW_SIGN_UPS") != "True":
+            return redirect("homepage")
         form = SignUpForm(request.POST)
 
         # Only allow .gov.uk email accounts
@@ -34,10 +42,14 @@ class Signup1(View):
 
 class Signup2(View):
     def get(self, request: HttpRequest) -> HttpResponse:
+        if os.getenv("ALLOW_SIGN_UPS") != "True":
+            return redirect("homepage")
         form = SignUpForm()
         return render(request, "sign-up-page-2.html", {"form": form})
 
     def post(self, request: HttpRequest) -> HttpResponse:
+        if os.getenv("ALLOW_SIGN_UPS") != "True":
+            return redirect("homepage")
         form = SignUpForm({**request.session["sign_up_data"], **request.POST})
         research_consent = request.POST.get("research_consent") == "on"
         if not research_consent:
