@@ -35,8 +35,16 @@ def get_chat_llm(model: str, tools: list[StructuredTool] | None = None):
     if tools:
         chat_model = chat_model.bind_tools(tools)
 
-    check = chat_model.invoke("hello")
-    logger.info("check=%s", check)
+    try:
+        check = chat_model.invoke("hello")
+        logger.info("check=%s", check)
+    except Exception:
+        logger.exception(
+            "failed to initialise model. AZURE_OPENAI_API_KEY=%s AZURE_OPENAI_ENDPOINT=%s OPENAI_API_VERSION=%s",
+            os.environ["AZURE_OPENAI_API_KEY"],
+            os.environ["AZURE_OPENAI_ENDPOINT"],
+            os.environ["OPENAI_API_VERSION"],
+        )
     return chat_model
 
 
