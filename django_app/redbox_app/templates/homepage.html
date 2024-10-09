@@ -22,9 +22,14 @@
                             href=url('sign-in'),
                             classes="govuk-button--secondary govuk-!-margin-bottom-0 rb-banner__button"
                         ) }}
-                        <span class="govuk-body govuk-!-margin-bottom-0">or <a class="govuk-link" href="{{ url('sign-up-page-1') }}">sign up</a> to use Redbox</span>
+                        {% if allow_sign_ups %}
+                            <span class="govuk-body govuk-!-margin-bottom-0">or <a class="govuk-link" href="{{ url('sign-up-page-1') }}">sign up</a> to use Redbox</span>
+                        {% endif %}
                     {% endif %}
                 </div>
+                {% if not allow_sign_ups %}
+                    <p class="govuk-body govuk-!-margin-bottom-0 govuk-!-margin-top-5">We are not currently allowing new users to sign up. Please check back soon.</p>
+                {% endif %}
             </div>
         </div>
     </div>
