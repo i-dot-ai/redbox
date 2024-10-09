@@ -1,0 +1,141 @@
+{% set pageTitle = "Research consent" %}
+{% extends "base.html" %}
+{% from "macros/govuk-button.html" import govukButton %}
+
+{% block content %}
+
+  <div class="govuk-width-container">
+
+    <div class="govuk-grid-row">
+      <div class="govuk-grid-column-two-thirds">
+        <h1 class="govuk-heading-l">Research consent</h1>
+      </div>
+    </div>
+
+    {% if form.errors %}
+      <div class="govuk-error-summary" data-module="govuk-error-summary">
+        <div role="alert">
+          <div class="govuk-error-summary__body">
+            <ul class="govuk-list govuk-error-summary__list">
+              {% for field, error in form.errors.items() %}
+                <li>{{ field }} : {{ error }}</li>
+              {% endfor %}
+            </ul>
+          </div>
+        </div>
+      </div>
+    {% endif %}
+
+    <div class="govuk-grid-row">
+      <div class="govuk-grid-column-two-thirds">
+        <p class="govuk-body">This information page tells you about who we are, the research we’re doing, and how we use the information you give us. Please read this information carefully before agreeing to take part. If you have questions about taking part that aren’t answered here, you can contact i-dot-ai-enquiries@cabinetoffice.gov.uk. If you’d like this information in a different format, please let us know.</p>
+        <h2 class="govuk-heading-m">Who are we, and what are we doing?</h2>
+        <p class="govuk-body">You are being invited to take part in research carried out by the Incubator for Artificial Intelligence (i.AI) in the Cabinet Office. Together we are carrying out research to learn what our users need from Redbox. By taking part, you’ll help us to understand how Redbox works well for people like you.</p>
+        <h2 class="govuk-heading-m">What is involved in taking part?</h2>
+        <p class="govuk-body">You may</p>
+        <ul class="govuk-body govuk-list govuk-list--bullet">
+          <li>get to use the Redbox product</li>
+          <li>be asked to attend interviews and group sessions to capture your feedback on the product</li>
+          <li>complete surveys to capture your feedback and thoughts on the product</li>
+          <li>your usage monitored for analysis, research and moderation purposes</li>
+        </ul>
+        <p class="govuk-body">You don't have to provide any information you don't want to, and can stop taking part at any time by telling i.AI by emailing redbox-copilot@cabinetoffice.gov.uk. You have the right to withdraw at any time during beta phase.</p>
+        <h2 class="govuk-heading-m">How do we use your information?</h2>
+        <p class="govuk-body">During research we gather information from different people. We’ll ask your permission to record your feedback and carry out analysis. We'll also ask your permission to share your feedback with people we work with, including other government organisations we work alongside. Sometimes this will be in the form of a presentation. We'll never share what you have said to us in your feedback without your consent and we’ll never use your real name.</p>
+        <p class="govuk-body">We always keep your contact information secure within the Cabinet Office. Your information is archived and then destroyed after two years, in line with our retention policy.</p>
+        <h2 class="govuk-heading-m">Feedback or withdrawing from research
+        <p class="govuk-body">If you have any questions about this research, please contact <a class="govuk-link" href="mailto:redbox-copilot@cabinetoffice.gov.uk">redbox-copilot@cabinetoffice.gov.uk</a></p>
+        <h2 class="govuk-heading-m">Your rights</h2>
+        <p class="govuk-body">A list of your rights under the General Data Protection Regulation, the Data Protection Act 2018 (DPA 2018), can be seen on the information commissioner’s website.</p>
+        <h2 class="govuk-heading-m">Right to withdraw</h2>
+        <p class="govuk-body">If you decide to withdraw from the process, any personal data relating to the withdrawn person will be removed from all documentation and records in accordance with data protection laws. If you wish to withdraw, please contact <a class="govuk-link" href="mailto:redbox-copilot@cabinetoffice.gov.uk">redbox-copilot@cabinetoffice.gov.uk</a></p>
+        <h2 class="govuk-heading-m">To complain to Cabinet Office</h2>
+        <p class="govuk-body">Please email <a class="govuk-link" href="mailto:subject.access@cabinetoffice.gov.uk">subject.access@cabinetoffice.gov.uk</a> with your complaint.</p>
+        <h2 class="govuk-heading-m">To complain to the regulator</h2>
+        <p class="govuk-body">You have the right to lodge a complaint with the Information Commissioner’s Office  (supervisory authority) at any time. Should you wish to exercise that right full details are available on their website.</p>
+        <ul class="govuk-body govuk-list govuk-list--bullet">
+          <li>Telephone: <a class="govuk-link" href="tel:03031231113">0303 123 1113</a></li>
+          <li>Textphone: <a class="govuk-link" href="tel:01625545860">01625 545860</a></li>
+        </ul>
+        <p class="govuk-body">Monday to Friday, 9am to 4:30pm</p>
+        <address class="govuk-body">
+          Information Commissioner's Office<br/>
+          Wycliffe House<br/>
+          Water Lane<br/>
+          Wilmslow<br/>
+          Cheshire SK9 5AF
+        </address>
+          <p class="govuk-body">Email: <a class="govuk-link" href="mailto:casework@ico.org.uk">casework@ico.org.uk</a></p>
+        </p>
+        <h2 class="govuk-heading-m">Data controller</h2>
+        <p class="govuk-body">Cabinet Office is the data controller for the personal data you give.</p>
+      </div>
+    </div>
+
+    <form method='post'>
+
+      <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+
+      <div class="govuk-checkboxes govuk-!-margin-top-5" data-module="govuk-checkboxes">
+        <div class="govuk-checkboxes__item">
+          {{ form.consent_research }}
+          <label class="govuk-label govuk-checkboxes__label" for="{{ form.consent_research.id_for_label }}">
+            {{ form.consent_research.label }}
+          </label>
+        </div>
+      </div>
+
+      <div class="govuk-checkboxes govuk-!-margin-top-5" data-module="govuk-checkboxes">
+        <div class="govuk-checkboxes__item">
+          {{ form.consent_interviews }}
+          <label class="govuk-label govuk-checkboxes__label" for="{{ form.consent_interviews.id_for_label }}">
+            {{ form.consent_interviews.label }}
+          </label>
+        </div>
+      </div>
+
+      <div class="govuk-checkboxes govuk-!-margin-top-5" data-module="govuk-checkboxes">
+        <div class="govuk-checkboxes__item">
+          {{ form.consent_feedback }}
+          <label class="govuk-label govuk-checkboxes__label" for="{{ form.consent_feedback.id_for_label }}">
+            {{ form.consent_feedback.label }}
+          </label>
+        </div>
+      </div>
+
+      <div class="govuk-checkboxes govuk-!-margin-top-5" data-module="govuk-checkboxes">
+        <div class="govuk-checkboxes__item">
+          {{ form.consent_condfidentiality }}
+          <label class="govuk-label govuk-checkboxes__label" for="{{ form.consent_condfidentiality.id_for_label }}">
+            {{ form.consent_condfidentiality.label }}
+          </label>
+        </div>
+      </div>
+
+      <div class="govuk-checkboxes govuk-!-margin-top-5" data-module="govuk-checkboxes">
+        <div class="govuk-checkboxes__item">
+          {{ form.consent_understand }}
+          <label class="govuk-label govuk-checkboxes__label" for="{{ form.consent_understand.id_for_label }}">
+            {{ form.consent_understand.label }}
+          </label>
+        </div>
+      </div>
+
+      <div class="govuk-checkboxes govuk-!-margin-top-5" data-module="govuk-checkboxes">
+        <div class="govuk-checkboxes__item">
+          {{ form.consent_agreement }}
+          <label class="govuk-label govuk-checkboxes__label" for="{{ form.consent_agreement.id_for_label }}">
+            {{ form.consent_agreement.label }}
+          </label>
+        </div>
+      </div>
+
+      <div class="govuk-button-group govuk-!-margin-top-5">
+        {{ govukButton(text="Sign up") }}
+      </div>
+
+    </form>
+
+  </div>
+
+{% endblock %}

@@ -1,0 +1,172 @@
+{% set pageTitle = "Digital Confidence" %}
+{% extends "base.html" %}
+{% from "macros/govuk-button.html" import govukButton %}
+
+{% block content %}
+
+  <div class="govuk-width-container">
+
+    <div class="govuk-grid-row">
+      <div class="govuk-grid-column-one-third">
+        <h1 class="govuk-heading-l">Digital Confidence</h1>
+      </div>
+    </div>
+
+    {% if form.errors %}
+      <div class="govuk-error-summary" data-module="govuk-error-summary">
+        <div role="alert">
+          <div class="govuk-error-summary__body">
+            <ul class="govuk-list govuk-error-summary__list">
+              {% for field, error in form.errors.items() %}
+                <li>{{ field }} : {{ error }}</li>
+              {% endfor %}
+            </ul>
+          </div>
+        </div>
+      </div>
+    {% endif %}
+
+    <form method='post'>
+
+      <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+
+      <div class="govuk-form-group">
+        <fieldset class="govuk-fieldset">
+          <legend class="govuk-fieldset__legend">
+            {{ form.digital_confidence.label }}
+          </legend>
+          <div class="govuk-radios">
+            {% for value, label in form.digital_confidence.field.choices %}
+              {% if value %}
+                <div class="govuk-radios__item">
+                  <input class="govuk-radios__input" type="radio"
+                        id="digital_confidence_{{ loop.index0 }}"
+                        name="{{ form.digital_confidence.name }}"
+                        value="{{ value }}"
+                        {% if value|string == form.digital_confidence.value()|string %}checked{% endif %}
+                        aria-describedby="digital_confidence_{{ loop.index0 }}-hint">
+                  <label class="govuk-label govuk-radios__label"
+                        for="digital_confidence_{{ loop.index0 }}">
+                    {{ value }}
+                  </label>
+                </div>
+              {% endif %}
+            {% endfor %}
+          </div>
+        </fieldset>
+      </div>
+
+      <div class="govuk-form-group">
+        <fieldset class="govuk-fieldset">
+          <legend class="govuk-fieldset__legend">
+            {{ form.ai_experience.label }}
+          </legend>
+          <div class="govuk-radios">
+            {% for value, label in form.ai_experience.field.choices %}
+              {% if value %}
+                <div class="govuk-radios__item">
+                  <input class="govuk-radios__input" type="radio"
+                        id="ai_experience_{{ loop.index0 }}"
+                        name="{{ form.ai_experience.name }}"
+                        value="{{ value }}"
+                        {% if value|string == form.ai_experience.value()|string %}checked{% endif %}
+                        aria-describedby="ai_experience_{{ loop.index0 }}-hint">
+                  <label class="govuk-label govuk-radios__label"
+                        for="ai_experience_{{ loop.index0 }}">
+                    {{ value }}
+                  </label>
+                  <div id="ai_experience_{{ loop.index0 }}-hint" class="govuk-hint govuk-radios__hint">{{ label }}</div>
+                </div>
+              {% endif %}
+            {% endfor %}
+          </div>
+        </fieldset>
+      </div>
+
+      <div class="govuk-form-group">
+        <fieldset class="govuk-fieldset">
+          <legend class="govuk-fieldset__legend">
+            {{ form.usage_at_work.label }}
+          </legend>
+          <div class="govuk-radios">
+            {% for value, label in form.usage_at_work.field.choices %}
+              {% if value %}
+                <div class="govuk-radios__item">
+                  <input class="govuk-radios__input" type="radio"
+                        id="usage_at_work_{{ loop.index0 }}"
+                        name="{{ form.usage_at_work.name }}"
+                        value="{{ value }}"
+                        {% if value|string == form.usage_at_work.value()|string %}checked{% endif %}
+                        aria-describedby="usage_at_work_{{ loop.index0 }}-hint">
+                  <label class="govuk-label govuk-radios__label"
+                        for="usage_at_work_{{ loop.index0 }}">
+                    {{ value }}
+                  </label>
+                </div>
+              {% endif %}
+            {% endfor %}
+          </div>
+        </fieldset>
+      </div>
+
+      <div class="govuk-form-group">
+        <fieldset class="govuk-fieldset">
+          <legend class="govuk-fieldset__legend">
+            {{ form.usage_outside_work.label }}
+          </legend>
+          <div class="govuk-radios">
+            {% for value, label in form.usage_outside_work.field.choices %}
+              {% if value %}
+                <div class="govuk-radios__item">
+                  <input class="govuk-radios__input" type="radio"
+                        id="usage_outside_work_{{ loop.index0 }}"
+                        name="{{ form.usage_outside_work.name }}"
+                        value="{{ value }}"
+                        {% if value|string == form.usage_outside_work.value()|string %}checked{% endif %}
+                        aria-describedby="usage_outside_work_{{ loop.index0 }}-hint">
+                  <label class="govuk-label govuk-radios__label"
+                        for="usage_outside_work_{{ loop.index0 }}">
+                    {{ value }}
+                  </label>
+                </div>
+              {% endif %}
+            {% endfor %}
+          </div>
+        </fieldset>
+      </div>
+
+      <div class="govuk-form-group">
+        <fieldset class="govuk-fieldset">
+          <legend class="govuk-fieldset__legend">
+            {{ form.how_useful.label }}
+          </legend>
+          <div class="govuk-radios">
+            {% for value, label in form.how_useful.field.choices %}
+              {% if value %}
+                <div class="govuk-radios__item">
+                  <input class="govuk-radios__input" type="radio"
+                        id="how_useful_{{ loop.index0 }}"
+                        name="{{ form.how_useful.name }}"
+                        value="{{ value }}"
+                        {% if value|string == form.how_useful.value()|string %}checked{% endif %}
+                        aria-describedby="how_useful_{{ loop.index0 }}-hint">
+                  <label class="govuk-label govuk-radios__label"
+                        for="how_useful_{{ loop.index0 }}">
+                    {{ value }}
+                  </label>
+                </div>
+              {% endif %}
+            {% endfor %}
+          </div>
+        </fieldset>
+      </div>
+
+      <div class="govuk-button-group">
+        {{ govukButton(text="Continue") }}
+      </div>
+
+    </form>
+
+  </div>
+
+{% endblock %}
