@@ -96,7 +96,7 @@ class AbstractAISettings(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.chat_backend_id:
-            self.chat_backend_id = ChatLLMBackend.objects.get(is_default=True).id
+            self.chat_backend = ChatLLMBackend.objects.get(is_default=True)
         return super().save(*args, **kwargs)
 
 

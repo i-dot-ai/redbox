@@ -55,7 +55,7 @@ class ChatsView(View):
             "llm_options": [
                 {
                     "name": llm.name,
-                    "default": llm.is_deafult,
+                    "default": llm.is_default,
                     "selected": llm == chat_backend,
                 }
                 for llm in ChatLLMBackend.objects.all()
