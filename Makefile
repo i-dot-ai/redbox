@@ -78,7 +78,7 @@ safe:  ##
 
 .PHONY: check-migrations
 check-migrations: stop  ## Check types in redbox and worker
-	docker compose up -d --wait db minio
+	docker compose up -d --wait db minio elasticsearch
 	cd django_app && poetry run python manage.py migrate
 	cd django_app && poetry run python manage.py makemigrations --check
 
