@@ -1,9 +1,11 @@
 import copy
+from typing import Any
 from uuid import uuid4
 
 import pytest
-from langchain_core.language_models.fake_chat_models import \
-    GenericFakeChatModel
+from langchain_core.documents import Document
+from langchain_core.messages import AIMessage
+from langchain_core.tools import tool
 from pytest_mock import MockerFixture
 from tiktoken.core import Encoding
 
@@ -14,10 +16,12 @@ from redbox.models.chat import ChatRoute, ErrorRoute
 from redbox.models.file import ChunkResolution
 from redbox.models.graph import RedboxActivityEvent
 from redbox.models.settings import Settings
-from redbox.test.data import (RedboxChatTestCase, RedboxTestData,
+from redbox.test.data import (GenericFakeChatModelWithTools,
+                              RedboxChatTestCase, RedboxTestData,
                               generate_test_cases, mock_all_chunks_retriever,
                               mock_metadata_retriever,
                               mock_parameterised_retriever)
+from redbox.transform import structure_documents_by_group_and_indices
 
 LANGGRAPH_DEBUG = True
 
@@ -267,6 +271,113 @@ TEST_CASES = [
         ),
         generate_test_cases(
             query=RedboxQuery(
+                question="@search What is AI?",
+                s3_keys=[],
+                user_uuid=uuid4(),
+                chat_history=[],
+                permitted_s3_keys=["s3_key"],
+            ),
+            test_data=[
+                RedboxTestData(
+                    number_of_docs=1,
+                    tokens_in_all_docs=10000,
+                    expected_llm_response=["Condense response", "The cake is a lie"],
+                    expected_route=ChatRoute.search,
+                    s3_keys=["s3_key"],
+                ),
+            ],
+            test_id="Search, nothing selected",
+        ),
+        generate_test_cases(
+            query=RedboxQuery(
+                question="@gadget What is AI?",
+                s3_keys=["s3_key"],
+                user_uuid=uuid4(),
+                chat_history=[],
+                permitted_s3_keys=["s3_key"],
+            ),
+            test_data=[
+                RedboxTestData(
+                    number_of_docs=1,
+                    tokens_in_all_docs=10000,
+                    expected_llm_response=[
+                        AIMessage(
+                            content="",
+                            additional_kwargs={
+                                "tool_calls": [
+                                    {
+                                        "id": "call_e4003b",
+                                        "function": {"arguments": '{\n  "query": "ai"\n}', "name": "_search_documents"},
+                                        "type": "function",
+                                    }
+                                ]
+                            },
+                        ),
+                        "answer",
+                        "AI is a lie",
+                    ],
+                    expected_route=ChatRoute.gadget,
+                ),
+                RedboxTestData(
+                    number_of_docs=1,
+                    tokens_in_all_docs=10000,
+                    expected_llm_response=[
+                        AIMessage(
+                            content="",
+                            additional_kwargs={
+                                "tool_calls": [
+                                    {
+                                        "id": "call_e4003b",
+                                        "function": {"arguments": '{\n  "query": "ai"\n}', "name": "_search_documents"},
+                                        "type": "function",
+                                    }
+                                ]
+                            },
+                        ),
+                        "give_up",
+                        "AI is a lie",
+                    ],
+                    expected_route=ChatRoute.gadget,
+                ),
+            ],
+            test_id="Agentic search",
+        ),
+        generate_test_cases(
+            query=RedboxQuery(
+                question="@gadget What is AI?",
+                s3_keys=[],
+                user_uuid=uuid4(),
+                chat_history=[],
+                permitted_s3_keys=["s3_key"],
+            ),
+            test_data=[
+                RedboxTestData(
+                    number_of_docs=1,
+                    tokens_in_all_docs=10000,
+                    expected_llm_response=[
+                        AIMessage(
+                            content="",
+                            additional_kwargs={
+                                "tool_calls": [
+                                    {
+                                        "id": "call_e4003b",
+                                        "function": {"arguments": '{\n  "query": "ai"\n}', "name": "_search_documents"},
+                                        "type": "function",
+                                    }
+                                ]
+                            },
+                        ),
+                        "answer",
+                        "AI is a lie",
+                    ],
+                    expected_route=ChatRoute.gadget,
+                    s3_keys=["s3_key"],
+                ),
+            ],
+            test_id="Agentic search, nothing selected",
+        ),
+        generate_test_cases(
+            query=RedboxQuery(
                 question="@nosuchkeyword What is AI?",
                 s3_keys=[],
                 user_uuid=uuid4(),
@@ -312,10 +423,24 @@ async def test_streaming(test: RedboxChatTestCase, env: Settings, mocker: Mocker
     # Current setup modifies test data as it's not a fixture. This is a hack
     test_case = copy.deepcopy(test)
 
+    # Mock the LLM and relevant tools
+    llm = GenericFakeChatModelWithTools(messages=iter(test_case.test_data.expected_llm_response))
+
+    @tool
+    def _search_documents(query: str) -> dict[str, Any]:
+        """Tool to search documents."""
+        return {"documents": structure_documents_by_group_and_indices(test_case.docs)}
+
+    mocker.patch("redbox.app.build_search_documents_tool", return_value=_search_documents)
+    mocker.patch("redbox.graph.nodes.processes.get_chat_llm", return_value=llm)
+
+    # Instantiate app
     app = Redbox(
         all_chunks_retriever=mock_all_chunks_retriever(test_case.docs),
         parameterised_retriever=mock_parameterised_retriever(test_case.docs),
-        metadata_retriever=mock_metadata_retriever(test_case.docs),
+        metadata_retriever=mock_metadata_retriever(
+            [d for d in test_case.docs if d.metadata["file_name"] in test_case.query.s3_keys]
+        ),
         env=env,
         debug=LANGGRAPH_DEBUG,
     )
@@ -324,6 +449,7 @@ async def test_streaming(test: RedboxChatTestCase, env: Settings, mocker: Mocker
     token_events = []
     metadata_events = []
     activity_events = []
+    document_events = []
     route_name = None
 
     async def streaming_response_handler(tokens: str):
@@ -339,19 +465,22 @@ async def test_streaming(test: RedboxChatTestCase, env: Settings, mocker: Mocker
     async def streaming_activity_handler(activity_event: RedboxActivityEvent):
         activity_events.append(activity_event)
 
-    llm = GenericFakeChatModel(messages=iter(test_case.test_data.expected_llm_response))
+    async def documents_response_handler(documents: list[Document]):
+        document_events.append(documents)
 
-    (mocker.patch("redbox.graph.nodes.processes.get_chat_llm", return_value=llm),)
+    # Run the app
     response = await app.run(
         input=RedboxState(request=test_case.query),
         response_tokens_callback=streaming_response_handler,
         metadata_tokens_callback=metadata_response_handler,
         route_name_callback=streaming_route_name_handler,
         activity_event_callback=streaming_activity_handler,
+        documents_callback=documents_response_handler,
     )
 
     final_state = RedboxState(response)
 
+    # Assertions
     assert route_name is not None, f"No Route Name event fired! - Final State: {final_state}"
 
     # Bit of a bodge to retain the ability to check that the LLM streaming is working in most cases
@@ -385,6 +514,9 @@ async def test_streaming(test: RedboxChatTestCase, env: Settings, mocker: Mocker
     ), f"Expected Route: '{ test_case.test_data.expected_route}'. Received '{final_state["route_name"]}'"
     if metadata := final_state.get("metadata"):
         assert metadata == metadata_response, f"Expected metadata: '{metadata_response}'. Received '{metadata}'"
+    for document_list in document_events:
+        for document in document_list:
+            assert document in test_case.docs, f"Document not in test case docs: {document}"
 
 
 def test_get_available_keywords(tokeniser: Encoding, env: Settings):
@@ -395,6 +527,6 @@ def test_get_available_keywords(tokeniser: Encoding, env: Settings):
         env=env,
         debug=LANGGRAPH_DEBUG,
     )
-    keywords = {ChatRoute.search}
+    keywords = {ChatRoute.search, ChatRoute.gadget}
 
     assert keywords == set(app.get_available_keywords().keys())

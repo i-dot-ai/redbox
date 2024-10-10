@@ -16,11 +16,10 @@ from django.db.models import Max, Min, Prefetch
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django_use_email_as_username.models import BaseUser, BaseUserManager
-from redbox_app.redbox_core import prompts
 from redbox_app.redbox_core.utils import get_date_group
 from yarl import URL
 
-from redbox.models import Settings
+from redbox.models import Settings, prompts
 
 logging.basicConfig(level=os.environ.get("LOG_LEVEL", "INFO"))
 logger = logging.getLogger(__name__)
@@ -111,7 +110,7 @@ class MLModel(UUIDPrimaryKeyBase, TimeStampedModel):
         AZURE = "azure", _("azure")
         BEDROCK = "bedrock", _("bedrock")
         OLLAMA = "ollama", _("ollama")
-        OPEN_AI = "open-ai", _("open-ai")
+        OPEN_AI = "openai", _("open-ai")
         LOCAL_AI = "local-ai", _("local-ai")
 
     class Availability(
@@ -184,9 +183,11 @@ class AISettings(UUIDPrimaryKeyBase, TimeStampedModel, AbstractAISettings):
         default=prompts.CHAT_WITH_DOCS_REDUCE_SYSTEM_PROMPT
     )
     retrieval_system_prompt = models.TextField(default=prompts.RETRIEVAL_SYSTEM_PROMPT)
-    retrieval_question_prompt = models.TextField(
-        default=prompts.RETRIEVAL_QUESTION_PROMPT
-    )
+    retrieval_question_prompt = models.TextField(default=prompts.RETRIEVAL_QUESTION_PROMPT)
+    agentic_retrieval_system_prompt = models.TextField(default=prompts.AGENTIC_RETRIEVAL_SYSTEM_PROMPT)
+    agentic_retrieval_question_prompt = models.TextField(default=prompts.AGENTIC_RETRIEVAL_QUESTION_PROMPT)
+    agentic_give_up_system_prompt = models.TextField(default=prompts.AGENTIC_GIVE_UP_SYSTEM_PROMPT)
+    agentic_give_up_question_prompt = models.TextField(default=prompts.AGENTIC_GIVE_UP_QUESTION_PROMPT)
     condense_system_prompt = models.TextField(default=prompts.CONDENSE_SYSTEM_PROMPT)
     condense_question_prompt = models.TextField(
         default=prompts.CONDENSE_QUESTION_PROMPT

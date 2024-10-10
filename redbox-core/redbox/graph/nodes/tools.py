@@ -1,4 +1,4 @@
-from typing import Annotated, Any, get_type_hints
+from typing import Annotated, Any, get_args, get_origin, get_type_hints
 
 from elasticsearch import Elasticsearch
 from langchain_core.embeddings.embeddings import Embeddings
@@ -26,6 +26,32 @@ def is_valid_tool(tool: StructuredTool) -> bool:
     if hasattr(return_type, "__origin__") and return_type.__origin__ is dict:
         key_type, value_type = return_type.__args__
         if issubclass(key_type, str) and issubclass(value_type, Any):
+            return True
+
+    return False
+
+
+def has_injected_state(tool: StructuredTool) -> bool:
+    """Detects whether the tool has an argument typed with InjectedState.
+
+    Adapted from functions in langgraph.prebuilt.tool_node
+    """
+
+    def _is_injection(type_arg: Any, injection_type: type[InjectedState]) -> bool:
+        """Recursively checks for injection types."""
+        if isinstance(type_arg, injection_type) or (
+            isinstance(type_arg, type) and issubclass(type_arg, injection_type)
+        ):
+            return True
+        origin_ = get_origin(type_arg)
+        if origin_ is Annotated:
+            return any(_is_injection(ta, injection_type) for ta in get_args(type_arg))
+        return False
+
+    full_schema = tool.get_input_schema()
+
+    for type_ in full_schema.__annotations__.values():
+        if _is_injection(type_, InjectedState):
             return True
 
     return False

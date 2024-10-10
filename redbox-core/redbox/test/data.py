@@ -2,12 +2,14 @@ import datetime
 import logging
 from collections.abc import Callable
 from pathlib import Path
-from typing import Generator
+from typing import Any, Generator, Sequence
 from uuid import uuid4
 
 from langchain_core.documents import Document
+from langchain_core.language_models.fake_chat_models import GenericFakeChatModel
 from langchain_core.messages import AIMessage
 from langchain_core.retrievers import BaseRetriever
+from langchain_core.tools import BaseTool
 from pydantic.v1 import BaseModel, Field, validator
 
 from redbox.models.chain import RedboxQuery
@@ -152,3 +154,22 @@ def mock_parameterised_retriever(docs: list[Document]) -> FakeRetriever:
 def mock_metadata_retriever(docs: list[Document]) -> FakeRetriever:
     metadata_only_docs = [Document(page_content="", metadata={**doc.metadata, "embedding": None}) for doc in docs]
     return FakeRetriever(docs=metadata_only_docs)
+
+
+class GenericFakeChatModelWithTools(GenericFakeChatModel):
+    """A thin wrapper to GenericFakeChatModel that allows tool binding."""
+
+    tools: Sequence[dict[str, Any] | type | Callable | BaseTool] | None = None
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def bind_tools(
+        self,
+        tools: Sequence[dict[str, Any] | type | Callable | BaseTool],
+        *args: Any,
+        **kwargs: Any,
+    ) -> "GenericFakeChatModelWithTools":
+        """Bind tool-like objects to this chat model."""
+        self.tools = tools
+        return self
