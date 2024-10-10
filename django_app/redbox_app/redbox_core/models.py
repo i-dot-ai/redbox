@@ -500,7 +500,7 @@ class Chat(UUIDPrimaryKeyBase, TimeStampedModel, AbstractAISettings):
         self.name = sanitise_string(self.name)
 
         if self.chat_backend_id is None:
-            self.chat_backend_id = self.user.ai_settings.chat_backend_id
+            self.chat_backend = self.user.ai_settings.chat_backend
 
         if self.temperature is None:
             self.temperature = self.user.ai_settings.temperature
