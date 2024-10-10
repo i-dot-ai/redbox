@@ -1,15 +1,12 @@
 import logging
-import os
 
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.http import HttpRequest, HttpResponse, QueryDict
 from django.shortcuts import redirect, render
 from django.views import View
-from dotenv import load_dotenv
 
 from redbox_app.redbox_core.forms import SignUpForm
-
-load_dotenv()
 
 User = get_user_model()
 
@@ -18,13 +15,13 @@ logger = logging.getLogger(__name__)
 
 class Signup1(View):
     def get(self, request: HttpRequest) -> HttpResponse:
-        if os.getenv("ALLOW_SIGN_UPS") != "True":
+        if settings.ALLOW_SIGN_UPS:
             return redirect("homepage")
         form = SignUpForm()
         return render(request, "sign-up-page-1.html", {"form": form})
 
     def post(self, request: HttpRequest) -> HttpResponse:
-        if os.getenv("ALLOW_SIGN_UPS") != "True":
+        if settings.ALLOW_SIGN_UPS:
             return redirect("homepage")
         form = SignUpForm(request.POST)
 
@@ -42,13 +39,13 @@ class Signup1(View):
 
 class Signup2(View):
     def get(self, request: HttpRequest) -> HttpResponse:
-        if os.getenv("ALLOW_SIGN_UPS") != "True":
+        if settings.ALLOW_SIGN_UPS:
             return redirect("homepage")
         form = SignUpForm()
         return render(request, "sign-up-page-2.html", {"form": form})
 
     def post(self, request: HttpRequest) -> HttpResponse:
-        if os.getenv("ALLOW_SIGN_UPS") != "True":
+        if settings.ALLOW_SIGN_UPS:
             return redirect("homepage")
         combined_data = {**request.session.get("sign_up_data", {}), **request.POST.dict()}
         query_dict = QueryDict("", mutable=True)
@@ -64,13 +61,13 @@ class Signup2(View):
 
 class Signup3(View):
     def get(self, request: HttpRequest) -> HttpResponse:
-        if os.getenv("ALLOW_SIGN_UPS") != "True":
+        if settings.ALLOW_SIGN_UPS:
             return redirect("homepage")
         form = SignUpForm()
         return render(request, "sign-up-page-3.html", {"form": form})
 
     def post(self, request: HttpRequest) -> HttpResponse:
-        if os.getenv("ALLOW_SIGN_UPS") != "True":
+        if settings.ALLOW_SIGN_UPS:
             return redirect("homepage")
         combined_data = {**request.session.get("sign_up_data", {}), **request.POST.dict()}
         query_dict = QueryDict("", mutable=True)
@@ -86,13 +83,13 @@ class Signup3(View):
 
 class Signup4(View):
     def get(self, request: HttpRequest) -> HttpResponse:
-        if os.getenv("ALLOW_SIGN_UPS") != "True":
+        if settings.ALLOW_SIGN_UPS:
             return redirect("homepage")
         form = SignUpForm()
         return render(request, "sign-up-page-4.html", {"form": form})
 
     def post(self, request: HttpRequest) -> HttpResponse:
-        if os.getenv("ALLOW_SIGN_UPS") != "True":
+        if settings.ALLOW_SIGN_UPS:
             return redirect("homepage")
         combined_data = {**request.session.get("sign_up_data", {}), **request.POST.dict()}
         query_dict = QueryDict("", mutable=True)
@@ -108,13 +105,13 @@ class Signup4(View):
 
 class Signup5(View):
     def get(self, request: HttpRequest) -> HttpResponse:
-        if os.getenv("ALLOW_SIGN_UPS") != "True":
+        if settings.ALLOW_SIGN_UPS:
             return redirect("homepage")
         form = SignUpForm()
         return render(request, "sign-up-page-5.html", {"form": form})
 
     def post(self, request: HttpRequest) -> HttpResponse:
-        if os.getenv("ALLOW_SIGN_UPS") != "True":
+        if settings.ALLOW_SIGN_UPS:
             return redirect("homepage")
         combined_data = {**request.session.get("sign_up_data", {}), **request.POST.dict()}
         query_dict = QueryDict("", mutable=True)
@@ -130,13 +127,13 @@ class Signup5(View):
 
 class Signup6(View):
     def get(self, request: HttpRequest) -> HttpResponse:
-        if os.getenv("ALLOW_SIGN_UPS") != "True":
+        if settings.ALLOW_SIGN_UPS:
             return redirect("homepage")
         form = SignUpForm()
         return render(request, "sign-up-page-6.html", {"form": form})
 
     def post(self, request: HttpRequest) -> HttpResponse:
-        if os.getenv("ALLOW_SIGN_UPS") != "True":
+        if settings.ALLOW_SIGN_UPS:
             return redirect("homepage")
         combined_data = {**request.session.get("sign_up_data", {}), **request.POST.dict()}
         query_dict = QueryDict("", mutable=True)
@@ -167,6 +164,6 @@ class Signup6(View):
 
 class Signup7(View):
     def get(self, request: HttpRequest) -> HttpResponse:
-        if os.getenv("ALLOW_SIGN_UPS") != "True":
+        if settings.ALLOW_SIGN_UPS:
             return redirect("homepage")
         return render(request, "sign-up-page-7.html")

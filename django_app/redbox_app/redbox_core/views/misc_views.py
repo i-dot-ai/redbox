@@ -1,5 +1,4 @@
 import logging
-import os
 from http import HTTPStatus
 
 from django.conf import settings
@@ -7,11 +6,8 @@ from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render
 from django.views.decorators.http import require_http_methods
 from django.views.generic.base import RedirectView
-from dotenv import load_dotenv
 
 from redbox_app.redbox_core.models import Chat
-
-load_dotenv()
 
 logger = logging.getLogger(__name__)
 
@@ -21,7 +17,7 @@ def homepage_view(request):
     return render(
         request,
         template_name="homepage.html",
-        context={"request": request, "allow_sign_ups": os.getenv("ALLOW_SIGN_UPS") == "True"},
+        context={"request": request, "allow_sign_ups": settings.ALLOW_SIGN_UPS},
     )
 
 
