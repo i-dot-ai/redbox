@@ -64,9 +64,8 @@ def _collect_static():
     call_command("collectstatic", "--no-input")
 
 
-@pytest.mark.django_db()
 @pytest.fixture(autouse=True)
-def default_ai_settings():
+def default_ai_settings(db):  # noqa: ARG001
     gpt_4o, _ = ChatLLMBackend.objects.get_or_create(name="gpt-4o", provider="azure_openai", is_default=True)
     ai_settings, _ = AISettings.objects.get_or_create(label="default", chat_backend=gpt_4o)
     return ai_settings
@@ -103,6 +102,11 @@ def alice(create_user):
         "alice@cabinetoffice.gov.uk",
         "2000-01-01",
     )
+
+
+@pytest.fixture()
+def chat_with_alice(alice):
+    return Chat.objects.create(name="a chat", user=alice)
 
 
 @pytest.fixture()

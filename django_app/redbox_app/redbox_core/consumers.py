@@ -81,7 +81,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
         if session_id := data.get("sessionId"):
             session = await Chat.objects.aget(id=session_id)
-            logger.info("updating: chat_backend=%s -> ai_settings=%s", session.chat_backend, chat_backend)
             session.chat_backend = chat_backend
             session.temperature = temperature
             await session.asave()
