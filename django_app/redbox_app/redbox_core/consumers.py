@@ -81,11 +81,15 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
         if session_id := data.get("sessionId"):
             session = await Chat.objects.aget(id=session_id)
+
             if llm := data.get("llm"):
-                session.chat_backend = await ChatLLMBackend.objects.aget(name=llm)
+                chat_backend = await ChatLLMBackend.objects.aget(name=llm)
+                logger.debug("updating: chat_backend=%s -> ai_settings=%s", session.chat_backend, chat_backend)
+                session.chat_backend = chat_backend
             session.temperature = temperature
             await session.asave()
         else:
+            logger.debug("creating new Chat session")
             session = await Chat.objects.acreate(name=user_message_text[: settings.CHAT_TITLE_LENGTH], user=user)
 
         # save user message
