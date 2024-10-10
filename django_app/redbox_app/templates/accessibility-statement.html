@@ -3,17 +3,18 @@
 {% set pageTitle = "Accessibility statement" %}
 
 {% if waffle_flag(request, "uktrade") %}
-{% set departmental_owner = "Department for Business and Trade" %}
-{% set zoom_level = "300%" %}
-{% set review_date_last = "21st June 2024" %}
-{% set compliance_status = 'This website is fully compliant with the <a href="https://www.w3.org/TR/WCAG22/" class="govuk-link">Web Content Accessibility Guidelines version 2.2</a> AA standard.' %}
+  {% set departmental_owner = "Department for Business and Trade" %}
+  {% set zoom_level = "300%" %}
+  {% set review_date_last = "21st June 2024" %}
+  {% set compliance_status = 'This website is fully compliant with the <a href="https://www.w3.org/TR/WCAG22/" class="govuk-link">Web Content Accessibility Guidelines version 2.2</a> AA standard.' %}
 
 {% else %}
-{% set departmental_owner = "Cabinet Office" %}
-{% set zoom_level = "400%" %}
-{% set review_date_last = "12th August 2024" %}
-{% set compliance_status = 'The website has been tested against the Web Content Accessibility Guidelines (WCAG) 2.2 AA standard. This website is fully compliant with the <a href="https://www.w3.org/TR/WCAG22/" class="govuk-link">Web Content Accessibility Guidelines version 2.2</a> AA standard.' %}
+  {% set departmental_owner = "Cabinet Office" %}
+  {% set zoom_level = "400%" %}
+  {% set review_date_last = "12th August 2024" %}
+  {% set compliance_status = 'The website has been tested against the Web Content Accessibility Guidelines (WCAG) 2.2 AA standard. This website is fully compliant with the <a href="https://www.w3.org/TR/WCAG22/" class="govuk-link">Web Content Accessibility Guidelines version 2.2</a> AA standard.' %}
 {% endif %}
+
 {% block content %}
 
 <div class="govuk-width-container iai-grid">
