@@ -13,10 +13,10 @@ from langchain_elasticsearch import ElasticsearchRetriever
 from langchain_openai.embeddings import AzureOpenAIEmbeddings, OpenAIEmbeddings
 
 from redbox.models.settings import Settings
-from redbox.models.chain import ChatLLMBackend
 from redbox.retriever import AllElasticsearchRetriever, ParameterisedElasticsearchRetriever, MetadataRetriever
 from langchain_community.embeddings import BedrockEmbeddings
 from langchain.chat_models import init_chat_model
+from redbox.models.chain import ChatLLMBackend
 
 
 logger = logging.getLogger(__name__)
