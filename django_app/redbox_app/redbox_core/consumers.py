@@ -84,7 +84,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
             if llm := data.get("llm"):
                 chat_backend = await ChatLLMBackend.objects.aget(name=llm)
-                logger.debug("updating: chat_backend=%s -> ai_settings=%s", session.chat_backend, chat_backend)
+                logger.debug("updating: chat_backend=%s", chat_backend)
                 session.chat_backend = chat_backend
             session.temperature = temperature
             await session.asave()
