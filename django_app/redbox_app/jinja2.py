@@ -3,12 +3,12 @@ import datetime
 import humanize
 import jinja2
 import pytz
+import waffle
 from django.conf import settings
 from django.templatetags.static import static
 from django.urls import reverse
 from django.utils.timezone import template_localtime
 from markdown_it import MarkdownIt
-import waffle
 
 # `js-default` setting required to sanitize inputs
 # https://markdown-it-py.readthedocs.io/en/latest/security.html
@@ -98,7 +98,6 @@ def environment(**options):
             "environment": settings.ENVIRONMENT.value,
             "security": settings.MAX_SECURITY_CLASSIFICATION.value,
             "waffle_flag": waffle.flag_is_active,
-
         }
     )
     return env
