@@ -28,6 +28,7 @@ from redbox.models.chain import (
 from redbox_app.redbox_core import error_messages
 from redbox_app.redbox_core.models import (
     Chat,
+    ChatLLMBackend,
     ChatMessage,
     ChatMessageTokenUse,
     ChatRoleEnum,
@@ -76,7 +77,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         user_message_text: str = data.get("message", "")
         selected_file_uuids: Sequence[UUID] = [UUID(u) for u in data.get("selectedFiles", [])]
         user: User = self.scope.get("user")
-        chat_backend = data.get("llm")
+        chat_backend = ChatLLMBackend.objects.get(name=data.get("llm"))
         temperature = data.get("temperature")
 
         if session_id := data.get("sessionId"):

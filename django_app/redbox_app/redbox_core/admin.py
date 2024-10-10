@@ -19,6 +19,17 @@ logger = logging.getLogger(__name__)
 User = get_user_model()
 
 
+class ChatLLMBackendAdmin(admin.ModelAdmin):
+    list_display = [
+        "name",
+        "provider",
+        "is_default",
+    ]
+
+    class Meta:
+        model = models.ChatLLMBackend
+
+
 class UserAdmin(ImportExportMixin, admin.ModelAdmin):
     def export_as_json(self, request, queryset: QuerySet):  # noqa:ARG002
         user_data = UserSerializer(many=True).to_representation(queryset)
@@ -187,4 +198,5 @@ admin.site.register(models.Chat, ChatAdmin)
 admin.site.register(models.ChatMessage, ChatMessageAdmin)
 admin.site.register(models.AISettings)
 admin.site.register(models.ChatMessageTokenUse, ChatMessageTokenUseAdmin)
+admin.site.register(models.ChatLLMBackend, ChatLLMBackendAdmin)
 admin.site.register_view("report/", view=reporting_dashboard, name="Site report")
