@@ -74,6 +74,7 @@ class ChatLLMBackend(models.Model):
     provider = models.CharField(max_length=128, choices=Providers, help_text="The model provider")
     description = models.TextField(null=True, blank=True, help_text="brief description of the model")
     is_default = models.BooleanField(default=False, help_text="is this the default llm to use.")
+    enabled = models.BooleanField(default=True, help_text="is this model enabled.")
 
     class Meta:
         constraints = [UniqueConstraint(fields=["name", "provider"], name="unique_name_provider")]

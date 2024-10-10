@@ -40,6 +40,7 @@ class Migration(migrations.Migration):
                 ('provider', models.CharField(choices=[('openai', 'Openai'), ('anthropic', 'Anthropic'), ('azure_openai', 'Azure Openai'), ('google_vertexai', 'Google Vertexai'), ('google_genai', 'Google Genai'), ('bedrock', 'Bedrock'), ('bedrock_converse', 'Bedrock Converse'), ('cohere', 'Cohere'), ('fireworks', 'Fireworks'), ('together', 'Together'), ('mistralai', 'Mistralai'), ('huggingface', 'Huggingface'), ('groq', 'Groq'), ('ollama', 'Ollama')], help_text='The model provider', max_length=128)),
                 ('description', models.TextField(blank=True, help_text='brief description of the model', null=True)),
                 ('is_default', models.BooleanField(default=False, help_text='is this the default llm to use.')),
+                ('enabled', models.BooleanField(default=True, help_text='is this model enabled.')),
             ],
             options={
                 'constraints': [models.UniqueConstraint(fields=('name', 'provider'), name='unique_name_provider')],
