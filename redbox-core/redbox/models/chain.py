@@ -24,6 +24,13 @@ class ChainChatMessage(TypedDict):
     text: str
 
 
+class ChatLLMBackend(BaseModel):
+    name: str = "gpt-4o"
+    provider: str = "azure_openai"
+    description: str | None = None
+    model_config = {"frozen": True}
+
+
 class AISettings(BaseModel):
     """prompts and other AI settings"""
 
@@ -64,7 +71,7 @@ class AISettings(BaseModel):
     similarity_threshold: int = 0
 
     # this is also the azure_openai_model
-    chat_backend: str = "gpt-4o"
+    chat_backend: ChatLLMBackend = ChatLLMBackend()
 
 
 class DocumentState(TypedDict):

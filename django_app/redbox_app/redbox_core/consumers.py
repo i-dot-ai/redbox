@@ -28,6 +28,7 @@ from redbox.models.chain import (
 from redbox_app.redbox_core import error_messages
 from redbox_app.redbox_core.models import (
     Chat,
+    ChatLLMBackend,
     ChatMessage,
     ChatMessageTokenUse,
     ChatRoleEnum,
@@ -76,19 +77,20 @@ class ChatConsumer(AsyncWebsocketConsumer):
         user_message_text: str = data.get("message", "")
         selected_file_uuids: Sequence[UUID] = [UUID(u) for u in data.get("selectedFiles", [])]
         user: User = self.scope.get("user")
-        chat_backend = data.get("llm")
         temperature = data.get("temperature")
 
         if session_id := data.get("sessionId"):
             session = await Chat.objects.aget(id=session_id)
-            logger.info("updating: chat_backend=%s -> ai_settings=%s", session.chat_backend, chat_backend)
-            session.chat_backend = chat_backend
+
+            if llm := data.get("llm"):
+                chat_backend = await ChatLLMBackend.objects.aget(name=llm)
+                logger.debug("updating: chat_backend=%s -> ai_settings=%s", session.chat_backend, chat_backend)
+                session.chat_backend = chat_backend
             session.temperature = temperature
             await session.asave()
         else:
-            session = await Chat.objects.acreate(
-                name=user_message_text[: settings.CHAT_TITLE_LENGTH], user=user, chat_backend=chat_backend
-            )
+            logger.debug("creating new Chat session")
+            session = await Chat.objects.acreate(name=user_message_text[: settings.CHAT_TITLE_LENGTH], user=user)
 
         # save user message
         permitted_files = File.objects.filter(user=user, status=StatusEnum.complete)
@@ -213,18 +215,10 @@ class ChatConsumer(AsyncWebsocketConsumer):
     @staticmethod
     @database_sync_to_async
     def get_ai_settings(chat: Chat) -> AISettings:
-        ai_settings = model_to_dict(chat.user.ai_settings, exclude=["label"])
-
-        match str(chat.chat_backend):
-            case "claude-3-sonnet":
-                chat_backend = "anthropic.claude-3-sonnet-20240229-v1:0"
-            case "claude-3-haiku":
-                chat_backend = "anthropic.claude-3-haiku-20240307-v1:0"
-            case _:
-                chat_backend = str(chat.chat_backend)
-
+        ai_settings = model_to_dict(chat.user.ai_settings, exclude=["label", "chat_backend"])
+        chat_backend = model_to_dict(chat.user.ai_settings.chat_backend)
         ai_settings["chat_backend"] = chat_backend
-        return AISettings.parse_obj(ai_settings)
+        return AISettings.model_validate(ai_settings)
 
     async def handle_text(self, response: str) -> str:
         await self.send_to_client("text", response)
