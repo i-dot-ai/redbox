@@ -18,6 +18,8 @@ load_dotenv()
 
 env = environ.Env()
 
+ALLOW_SIGN_UPS = env.bool("ALLOW_SIGN_UPS")
+
 SECRET_KEY = env.str("DJANGO_SECRET_KEY")
 ENVIRONMENT = Environment[env.str("ENVIRONMENT").upper()]
 WEBSOCKET_SCHEME = "ws" if ENVIRONMENT.is_test else "wss"
