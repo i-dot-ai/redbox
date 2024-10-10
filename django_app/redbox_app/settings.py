@@ -158,19 +158,20 @@ CSP_DEFAULT_SRC = (
 CSP_SCRIPT_SRC = (
     "'self'",
     "'sha256-GUQ5ad8JK5KmEWmROf3LZd9ge94daqNvd8xy9YS1iDw='",
+    "'sha256-TnW3b3osC+i1wd8tjlnl6QJOeYc4oc7edkmhziTLEfk='", # Mermaid
     "plausible.io",
     "eu.i.posthog.com",
     "eu-assets.i.posthog.com",
 )
 CSP_OBJECT_SRC = ("'none'",)
 CSP_REQUIRE_TRUSTED_TYPES_FOR = ("'script'",)
-CSP_TRUSTED_TYPES = ("dompurify", "default")
+CSP_TRUSTED_TYPES = ("dompurify", "default", "'allow-duplicates'")
 CSP_REPORT_TO = "csp-endpoint"
 CSP_FONT_SRC = (
     "'self'",
     "s3.amazonaws.com",
 )
-CSP_STYLE_SRC = ("'self'",)
+CSP_STYLE_SRC = ("'self'", "'unsafe-inline'") # TO DO: Not happy about this change - look at workarounds (KE)
 CSP_FRAME_ANCESTORS = ("'none'",)
 CSP_CONNECT_SRC = [
     "'self'",
