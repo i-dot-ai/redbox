@@ -8,7 +8,8 @@ used in conjunction with langchain this is the tidiest boxing of pydantic v1 we 
 from datetime import UTC, datetime
 from enum import StrEnum
 from functools import reduce
-from typing import Annotated, Literal, NotRequired, Required, TypedDict, get_args, get_origin
+from typing import (Annotated, Literal, NotRequired, Required, TypedDict,
+                    get_args, get_origin)
 from uuid import UUID, uuid4
 
 from langchain_core.documents import Document
@@ -23,7 +24,10 @@ class ChainChatMessage(TypedDict):
     role: Literal["user", "ai", "system"]
     text: str
 
-
+class ChatBackend(BaseModel):
+    name: str = "gpt-4o"
+    provider: str = "openai"
+    
 class AISettings(BaseModel):
     """prompts and other AI settings"""
 
@@ -64,14 +68,16 @@ class AISettings(BaseModel):
     similarity_threshold: int = 0
 
     # this is also the azure_openai_model
-    chat_backend: str = "gpt-4o"
+    chat_backend: ChatBackend = ChatBackend()
 
 
 class DocumentState(TypedDict):
     group: dict[UUID, Document]
 
 
-def document_reducer(current: DocumentState | None, update: DocumentState | list[DocumentState]) -> DocumentState:
+def document_reducer(
+    current: DocumentState | None, update: DocumentState | list[DocumentState]
+) -> DocumentState:
     """Merges two document states based on the following rules.
 
     * Groups are matched by the group key.
@@ -85,7 +91,9 @@ def document_reducer(current: DocumentState | None, update: DocumentState | list
     """
     # If update is actually a list of state updates, run them one by one
     if isinstance(update, list):
-        reduced = reduce(lambda current, update: document_reducer(current, update), update, current)
+        reduced = reduce(
+            lambda current, update: document_reducer(current, update), update, current
+        )
         return reduced
 
     # If state is empty, return update
@@ -123,7 +131,9 @@ def document_reducer(current: DocumentState | None, update: DocumentState | list
 
 class RedboxQuery(BaseModel):
     question: str = Field(description="The last user chat message")
-    s3_keys: list[str] = Field(description="List of files to process", default_factory=list)
+    s3_keys: list[str] = Field(
+        description="List of files to process", default_factory=list
+    )
     user_uuid: UUID = Field(description="User the chain in executing for")
     chat_history: list[ChainChatMessage] = Field(description="All previous messages in chat (excluding question)")
     ai_settings: AISettings = Field(description="User request AI settings", default_factory=AISettings)
@@ -164,11 +174,16 @@ class RequestMetadata(BaseModel):
         return tokens_by_model
 
 
-def metadata_reducer(current: RequestMetadata | None, update: RequestMetadata | list[RequestMetadata] | None):
+def metadata_reducer(
+    current: RequestMetadata | None,
+    update: RequestMetadata | list[RequestMetadata] | None,
+):
     """Merges two metadata states."""
     # If update is actually a list of state updates, run them one by one
     if isinstance(update, list):
-        reduced = reduce(lambda current, update: metadata_reducer(current, update), update, current)
+        reduced = reduce(
+            lambda current, update: metadata_reducer(current, update), update, current
+        )
         return reduced
 
     if current is None:

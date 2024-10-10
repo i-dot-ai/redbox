@@ -1,11 +1,11 @@
 import logging
-
 import os
 from functools import cache
 
 import tiktoken
-
 from dotenv import load_dotenv
+from langchain.chat_models import init_chat_model
+from langchain_community.embeddings import BedrockEmbeddings
 from langchain_core.embeddings import Embeddings, FakeEmbeddings
 from langchain_core.tools import StructuredTool
 from langchain_core.utils import convert_to_secret_str
@@ -13,25 +13,18 @@ from langchain_elasticsearch import ElasticsearchRetriever
 from langchain_openai.embeddings import AzureOpenAIEmbeddings, OpenAIEmbeddings
 
 from redbox.models.settings import Settings
-from redbox.retriever import AllElasticsearchRetriever, ParameterisedElasticsearchRetriever, MetadataRetriever
-from langchain_community.embeddings import BedrockEmbeddings
-from langchain.chat_models import init_chat_model
-
+from redbox.retriever import (AllElasticsearchRetriever, MetadataRetriever,
+                              ParameterisedElasticsearchRetriever)
 
 logger = logging.getLogger(__name__)
 load_dotenv()
 
 
-def get_chat_llm(model: str, tools: list[StructuredTool] | None = None):
-    if model.startswith("gpt-"):
-        model_provider = "azure_openai"
-    elif model.startswith("anthropic."):
-        model_provider = "bedrock"
-    else:
-        raise ValueError("%s not recognised", model)
 
-    logger.info("initialising model=%s model_provider=%s tools=%s", model, model_provider, tools)
-    chat_model = init_chat_model(model=model, model_provider=model_provider)
+
+def get_chat_llm(model: object, tools: list[StructuredTool] | None = None):
+    logger.info("initialising model=%s model_provider=%s tools=%s", model, model.provider, tools)
+    chat_model = init_chat_model(model=model.name, model_provider=model.provider)
     if tools:
         chat_model = chat_model.bind_tools(tools)
     return chat_model
@@ -55,12 +48,10 @@ def get_azure_embeddings(env: Settings):
 
 
 def get_openai_embeddings(env: Settings):
-    os.environ["OPENAI_API_KEY"] = env.embedding_openai_api_key
-    os.environ["OPENAI_ENDPOINT"] = env.embedding_openai_base_url
     return OpenAIEmbeddings(
         api_key=convert_to_secret_str(env.embedding_openai_api_key),
         base_url=env.embedding_openai_base_url,
-        model=env.embedding_model,
+        model=env.embedding_backend,
         chunk_size=env.embedding_max_batch_size,
     )
 

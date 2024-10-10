@@ -39,6 +39,9 @@ class ElasticCloudSettings(BaseModel):
 class Settings(BaseSettings):
     """Settings for the redbox application."""
 
+    openai_model: str = "gpt-4o-mini"
+    openai_api_key: str
+
     embedding_openai_api_key: str = "NotAKey"
     embedding_azure_openai_endpoint: str = "not an endpoint"
     azure_api_version_embeddings: str = "2024-02-01"
@@ -91,8 +94,12 @@ class Settings(BaseSettings):
     worker_ingest_largest_chunk_size: int = 300_000
     worker_ingest_largest_chunk_overlap: int = 0
 
-    response_no_doc_available: str = "No available data for selected files. They may need to be removed and added again"
-    response_max_content_exceeded: str = "Max content exceeded. Try smaller or fewer documents"
+    response_no_doc_available: str = (
+        "No available data for selected files. They may need to be removed and added again"
+    )
+    response_max_content_exceeded: str = (
+        "Max content exceeded. Try smaller or fewer documents"
+    )
 
     object_store: str = "minio"
 

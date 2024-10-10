@@ -13,28 +13,17 @@ from django.forms.models import model_to_dict
 from django.utils import timezone
 from langchain_core.documents import Document
 from openai import RateLimitError
+from redbox_app.redbox_core import error_messages
+from redbox_app.redbox_core.models import (Chat, ChatMessage,
+                                           ChatMessageTokenUse, ChatRoleEnum,
+                                           Citation, File, StatusEnum)
 from websockets import ConnectionClosedError, WebSocketClientProtocol
 
 from redbox import Redbox
 from redbox.models import Settings
-from redbox.models.chain import (
-    AISettings,
-    ChainChatMessage,
-    RedboxQuery,
-    RedboxState,
-    RequestMetadata,
-    metadata_reducer,
-)
-from redbox_app.redbox_core import error_messages
-from redbox_app.redbox_core.models import (
-    Chat,
-    ChatMessage,
-    ChatMessageTokenUse,
-    ChatRoleEnum,
-    Citation,
-    File,
-    StatusEnum,
-)
+from redbox.models.chain import (AISettings, ChainChatMessage, RedboxQuery,
+                                 RedboxState, RequestMetadata,
+                                 metadata_reducer)
 
 User = get_user_model()
 OptFileSeq = Sequence[File] | None
@@ -70,7 +59,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
         self.full_reply = []
         self.citations = []
         self.route = None
-
         data = json.loads(text_data or bytes_data)
         logger.debug("received %s from browser", data)
         user_message_text: str = data.get("message", "")
@@ -79,6 +67,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         chat_backend = data.get("llm")
         temperature = data.get("temperature")
 
+        logger.info("selected chat from front end %s", chat_backend)
         if session_id := data.get("sessionId"):
             session = await Chat.objects.aget(id=session_id)
             logger.info("updating: chat_backend=%s -> ai_settings=%s", session.chat_backend, chat_backend)
@@ -213,18 +202,9 @@ class ChatConsumer(AsyncWebsocketConsumer):
     @staticmethod
     @database_sync_to_async
     def get_ai_settings(chat: Chat) -> AISettings:
-        ai_settings = model_to_dict(chat.user.ai_settings, exclude=["label"])
-
-        match str(chat.chat_backend):
-            case "claude-3-sonnet":
-                chat_backend = "anthropic.claude-3-sonnet-20240229-v1:0"
-            case "claude-3-haiku":
-                chat_backend = "anthropic.claude-3-haiku-20240307-v1:0"
-            case _:
-                chat_backend = str(chat.chat_backend)
-
-        ai_settings["chat_backend"] = chat_backend
-        return AISettings.parse_obj(ai_settings)
+        ai_settings = model_to_dict(chat.user.ai_settings, exclude=["label", "chat_backend"])
+        ai_settings["chat_backend"] = model_to_dict(chat.user.ai_settings.registered_models.get(model__name=chat.chat_backend).model , exclude=["model_type","availability"])
+        return AISettings.model_validate(ai_settings)
 
     async def handle_text(self, response: str) -> str:
         await self.send_to_client("text", response)

@@ -9,7 +9,6 @@ from django.http import HttpResponse
 from django.shortcuts import render
 from django_q.tasks import async_task
 from import_export.admin import ExportMixin, ImportExportMixin
-
 from redbox_app.worker import ingest
 
 from . import models
@@ -71,7 +70,13 @@ class FileAdmin(ExportMixin, admin.ModelAdmin):
             async_task(ingest, file.id)
             logger.info("Successfully reuploaded file %s.", file)
 
-    list_display = ["original_file_name", "user", "status", "created_at", "last_referenced"]
+    list_display = [
+        "original_file_name",
+        "user",
+        "status",
+        "created_at",
+        "last_referenced",
+    ]
     list_filter = ["user", "status"]
     date_hierarchy = "created_at"
     actions = ["reupload"]
@@ -128,14 +133,21 @@ class ChatMessageInline(admin.StackedInline):
 
 class ChatAdmin(ExportMixin, admin.ModelAdmin):
     def export_as_csv(self, request, queryset: QuerySet):  # noqa:ARG002
-        history_field_names: list[str] = [field.name for field in models.Chat._meta.fields]  # noqa:SLF001
-        message_field_names: list[str] = [field.name for field in models.ChatMessage._meta.fields]  # noqa:SLF001
+        history_field_names: list[str] = [
+            field.name for field in models.Chat._meta.fields
+        ]  # noqa:SLF001
+        message_field_names: list[str] = [
+            field.name for field in models.ChatMessage._meta.fields
+        ]  # noqa:SLF001
 
         response = HttpResponse(content_type="text/csv")
         response["Content-Disposition"] = "attachment; filename=chat.csv"
         writer = csv.writer(response)
 
-        writer.writerow(["history_" + n for n in history_field_names] + ["message_" + n for n in message_field_names])
+        writer.writerow(
+            ["history_" + n for n in history_field_names]
+            + ["message_" + n for n in message_field_names]
+        )
         chat_message: models.ChatMessage
         for chat in queryset:
             for chat_message in chat.chatmessage_set.all():
@@ -181,10 +193,22 @@ def reporting_dashboard(request):
     return render(request, "report.html", {}, using="django")
 
 
+class RegisteredModelInline(admin.TabularInline):
+    model = models.RegisteredModels
+    extra = 1
+
+
+@admin.register(models.MLModel)
+class MLModelAdmin(admin.ModelAdmin):
+    inlines = [RegisteredModelInline]
+
+
 admin.site.register(User, UserAdmin)
 admin.site.register(models.File, FileAdmin)
 admin.site.register(models.Chat, ChatAdmin)
 admin.site.register(models.ChatMessage, ChatMessageAdmin)
 admin.site.register(models.AISettings)
+admin.site.register(models.MLModel)
+admin.site.register(models.RegisteredModels)
 admin.site.register(models.ChatMessageTokenUse, ChatMessageTokenUseAdmin)
 admin.site.register_view("report/", view=reporting_dashboard, name="Site report")
