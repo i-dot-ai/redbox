@@ -7,17 +7,21 @@ from django.db import migrations, models
 def back_populate_chat_llm_backend(apps, schema_editor):
     ChatLLMBackend = apps.get_model("redbox_core", "ChatLLMBackend")
 
-    ChatLLMBackend.objects.create(name="gpt-4o", provider="azure_openai", is_default=True)
-    ChatLLMBackend.objects.create(name="gpt-35-turbo-16k", provider="azure_openai")
-    ChatLLMBackend.objects.create(name="gpt-4-turbo-2024-04-09", provider="azure_openai")
-    ChatLLMBackend.objects.create(name="anthropic.claude-3-sonnet-20240229-v1:0", provider="bedrock")
-    ChatLLMBackend.objects.create(name="anthropic.claude-3-haiku-20240307-v1:0", provider="bedrock")
-
-
+    is_default = True
     for model in "AISettings", "Chat":
         Model = apps.get_model("redbox_core", model)
         for ai_settings in Model.objects.all():
-            ai_settings.new_chat_backend = ChatLLMBackend.objects.get(name=ai_settings.chat_backend)
+            try:
+                ai_settings.new_chat_backend = ChatLLMBackend.objects.get(name=ai_settings.chat_backend)
+            except ChatLLMBackend.DoesNotExist:
+                if ai_settings.chat_backend.startswith("gpt-"):
+                    provider = "azure_openai"
+                elif ai_settings.chat_backend.startswith("anthropic."):
+                    provider = "bedrock"
+                else:
+                    provider = "openai"
+                ai_settings.new_chat_backend = ChatLLMBackend.objects.create(name=ai_settings.chat_backend, provider=provider, is_default=is_default)
+                is_default = False
             ai_settings.save()
 
 
