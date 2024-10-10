@@ -52,28 +52,109 @@ def sanitise_string(string: str | None) -> str | None:
     return string.replace("\x00", "\ufffd") if string else string
 
 
-class AbstractAISettings(models.Model):
-    class ChatBackend(models.TextChoices):
-        GPT_35_TURBO = "gpt-35-turbo-16k", _("gpt-35-turbo-16k")
-        GPT_4_TURBO = "gpt-4-turbo-2024-04-09", _("gpt-4-turbo-2024-04-09")
-        GPT_4_OMNI = "gpt-4o", _("gpt-4o")
-        CLAUDE_3_SONNET = "anthropic.claude-3-sonnet-20240229-v1:0", _(
-            "claude-3-sonnet"
-        )
-        CLAUDE_3_HAIKU = "anthropic.claude-3-haiku-20240307-v1:0", _("claude-3-haiku")
-        OPENAI = "openai", _("openai")
+class ModelName(models.TextChoices):
+    GPT_35_TURBO = "gpt-35-turbo-16k", _("gpt-35-turbo-16k")
+    GPT_4_TURBO = "gpt-4-turbo-2024-04-09", _("gpt-4-turbo-2024-04-09")
+    GPT_4_OMNI = "gpt-4o", _("gpt-4o")
+    GPT_4_OMNI_MINI = "gpt-4o-mini", _("gpt-4o-mini")
+    CLAUDE_3_SONNET = "anthropic.claude-3-sonnet-20240229-v1:0", _(
+        "claude-3-sonnet"
+    )
+    CLAUDE_3_HAIKU = "anthropic.claude-3-haiku-20240307-v1:0", _("claude-3-haiku")
+    LLAMA_31 = "llama3.1", _("llama3.1")
+    MIXTRAL = "mixtral", _("mixtral")
+    ADA_002 = "text-embedding-ada-002", _("text-embedding-ada-002")
 
+class AbstractAISettings(models.Model):
     chat_backend = models.CharField(
         max_length=64,
-        choices=ChatBackend,
+        choices=ModelName,
         help_text="LLM to use in chat",
-        default=ChatBackend.GPT_4_OMNI,
+        default=ModelName.GPT_4_OMNI_MINI,
     )
     temperature = models.FloatField(default=0, help_text="temperature for LLM")
 
     class Meta:
         abstract = True
 
+
+class RegisteredModels(UUIDPrimaryKeyBase, TimeStampedModel):
+    ai_settings = models.ForeignKey(
+        "AISettings",
+        on_delete=models.SET_DEFAULT,
+        default="default",
+        related_name="registered_models",
+    )
+
+    model = models.ForeignKey(
+        "MLModel",
+        on_delete=models.SET_DEFAULT,
+        default="default",
+        related_name="registered_aisettings",
+    )
+
+    default = models.BooleanField(
+        default=False,
+    )
+
+    def save(self, *args, **kwargs):
+        if self.default:
+            RegisteredModels.objects.filter(
+                ai_settings=self.ai_settings, default=True
+            ).update(default=False)
+        super().save(*args, **kwargs)
+
+
+class MLModel(UUIDPrimaryKeyBase, TimeStampedModel):
+
+    class Provider(models.TextChoices):
+        AZURE = "azure", _("azure")
+        BEDROCK = "bedrock", _("bedrock")
+        OLLAMA = "ollama", _("ollama")
+        OPEN_AI = "open-ai", _("open-ai")
+        LOCAL_AI = "local-ai", _("local-ai")
+
+    class Availability(
+        models.TextChoices
+    ):
+        GENERAL = "general", _("general")
+        PRIVATE = "private", _("private")
+        DISABLED = "disabled", _("disabled")
+
+    class ModelType(models.TextChoices):
+        EMBEDDING = "embedding", _("embedding")
+        CHAT = "chat", _("chat")
+
+    name = models.CharField(
+        max_length=64,
+        choices=ModelName,
+        help_text="LLM to use in chat",
+        default=ModelName.GPT_4_OMNI_MINI,
+    )
+
+    provider = models.CharField(
+        max_length=64,
+        choices=Provider,
+        help_text="Backend to use in chat",
+        default=Provider.OPEN_AI,
+    )
+
+    availability = models.CharField(
+        max_length=64,
+        choices=Availability,
+        help_text="Availability of Model",
+        default=Availability.GENERAL,
+    )
+
+    model_type = models.CharField(
+        max_length=64,
+        choices=ModelType,
+        help_text="The model type",
+        default=ModelType.CHAT,
+    )
+
+    def __str__(self) -> str:
+        return str(self.name) + str(self.provider)
 
 class AISettings(UUIDPrimaryKeyBase, TimeStampedModel, AbstractAISettings):
     label = models.CharField(max_length=50, unique=True)
@@ -122,6 +203,13 @@ class AISettings(UUIDPrimaryKeyBase, TimeStampedModel, AbstractAISettings):
 
     def __str__(self) -> str:
         return str(self.label)
+
+    registered_models: models.QuerySet["RegisteredModels"]
+
+    def get_default_model(self) -> MLModel:
+        """Gets the model registered to the config"""
+        default_model_setting = self.registered_models.filter(default=True).first()
+        return default_model_setting.model if default_model_setting else None
 
 
 class User(BaseUser, UUIDPrimaryKeyBase):

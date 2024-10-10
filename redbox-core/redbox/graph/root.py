@@ -305,11 +305,7 @@ def get_root_graph(
     # Processes
     builder.add_node("p_set_search_route", build_set_route_pattern(route=ChatRoute.search))
     builder.add_node(
-        "p_search",
-        build_set_text_pattern(
-            text=("The @search route is temporarily down for maintainance. " "We apologise for the inconvenience. "),
-            final_response_chain=True,
-        ),
+        "p_search", rag_subgraph,
     )
     builder.add_node("p_chat", chat_subgraph)
     builder.add_node("p_chat_with_documents", cwd_subgraph)
