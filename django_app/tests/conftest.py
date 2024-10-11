@@ -17,6 +17,7 @@ from freezegun import freeze_time
 from redbox_app.redbox_core.models import (
     AISettings,
     Chat,
+    ChatLLMBackend,
     ChatMessage,
     ChatMessageTokenUse,
     ChatRoleEnum,
@@ -63,10 +64,15 @@ def _collect_static():
     call_command("collectstatic", "--no-input")
 
 
+@pytest.fixture(autouse=True)
+def default_ai_settings(db):  # noqa: ARG001
+    gpt_4o, _ = ChatLLMBackend.objects.get_or_create(name="gpt-4o", provider="azure_openai", is_default=True)
+    ai_settings, _ = AISettings.objects.get_or_create(label="default", chat_backend=gpt_4o)
+    return ai_settings
+
+
 @pytest.fixture()
 def create_user():
-    AISettings.objects.get_or_create(label="default")
-
     def _create_user(
         email,
         date_joined_iso,
@@ -96,6 +102,11 @@ def alice(create_user):
         "alice@cabinetoffice.gov.uk",
         "2000-01-01",
     )
+
+
+@pytest.fixture()
+def chat_with_alice(alice):
+    return Chat.objects.create(name="a chat", user=alice)
 
 
 @pytest.fixture()
@@ -144,6 +155,12 @@ def file_py_path() -> Path:
 def chat(alice: User) -> Chat:
     session_id = uuid.uuid4()
     return Chat.objects.create(id=session_id, user=alice, name="A chat")
+
+
+@pytest.fixture()
+def chat_with_message(chat: Chat) -> Chat:
+    ChatMessage.objects.create(chat=chat, text="today", role=ChatRoleEnum.user)
+    return chat
 
 
 @pytest.fixture()

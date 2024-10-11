@@ -78,6 +78,7 @@ MIDDLEWARE = [
     "redbox_app.redbox_core.middleware.nocache_middleware",
     "redbox_app.redbox_core.middleware.security_header_middleware",
     "django_plotly_dash.middleware.BaseMiddleware",
+    "waffle.middleware.WaffleMiddleware",
 ]
 
 ROOT_URLCONF = "redbox_app.urls"

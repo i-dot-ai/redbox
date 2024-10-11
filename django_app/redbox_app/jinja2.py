@@ -3,6 +3,7 @@ import datetime
 import humanize
 import jinja2
 import pytz
+import waffle
 from django.conf import settings
 from django.templatetags.static import static
 from django.urls import reverse
@@ -86,6 +87,7 @@ def environment(**options):
             "to_user_timezone": to_user_timezone,
             "environment": settings.ENVIRONMENT.value,
             "security": settings.MAX_SECURITY_CLASSIFICATION.value,
+            "waffle_flag": waffle.flag_is_active,
         }
     )
     env.globals.update(

@@ -1,15 +1,19 @@
 import datetime
 import logging
 from collections.abc import Callable
-from dataclasses import dataclass, field
-from typing import Generator
+from pathlib import Path
+from typing import Any, Generator, Sequence
 from uuid import uuid4
 
 from langchain_core.documents import Document
+from langchain_core.language_models.fake_chat_models import GenericFakeChatModel
+from langchain_core.messages import AIMessage
 from langchain_core.retrievers import BaseRetriever
+from langchain_core.tools import BaseTool
+from pydantic.v1 import BaseModel, Field, validator
 
 from redbox.models.chain import RedboxQuery
-from redbox.models.chat import ChatRoute
+from redbox.models.chat import ChatRoute, ErrorRoute
 from redbox.models.file import ChunkMetadata, ChunkResolution
 from redbox.models.graph import RedboxActivityEvent
 
@@ -38,6 +42,9 @@ def generate_docs(
             created_datetime=datetime.datetime.now(datetime.UTC),
             token_count=int(total_tokens / number_of_docs),
             chunk_resolution=chunk_resolution,
+            name=Path(s3_key).stem,
+            description="Lorem ipsum dolor sit amet",
+            keywords=["foo", "bar"],
         ).model_dump()
 
         extra_metadata = {
@@ -51,17 +58,30 @@ def generate_docs(
         )
 
 
-@dataclass
-class RedboxTestData:
+class RedboxTestData(BaseModel):
+    class Config:
+        arbitrary_types_allowed = True
+
     number_of_docs: int
     tokens_in_all_docs: int
     chunk_resolution: ChunkResolution = ChunkResolution.largest
-    expected_llm_response: list[str] = field(default_factory=list)
-    expected_route: ChatRoute | None = None
-    expected_activity_events: Callable[[list[RedboxActivityEvent]], bool] = field(
+    expected_llm_response: list[str | AIMessage] = Field(default_factory=list)
+    expected_route: ChatRoute | ErrorRoute | None = None
+    expected_activity_events: Callable[[list[RedboxActivityEvent]], bool] = Field(
         default=lambda _: True
     )  # Function to check activity events are as expected
-    s3_keys: str | None = None
+    s3_keys: list[str] | None = None
+
+    @validator("expected_llm_response", pre=True)
+    @classmethod
+    def coerce_to_aimessage(cls, value: str | AIMessage):
+        coerced: list[AIMessage] = []
+        for i in value:
+            if isinstance(i, str):
+                coerced.append(AIMessage(content=i))
+            else:
+                coerced.append(i)
+        return coerced
 
 
 class RedboxChatTestCase:
@@ -134,3 +154,22 @@ def mock_parameterised_retriever(docs: list[Document]) -> FakeRetriever:
 def mock_metadata_retriever(docs: list[Document]) -> FakeRetriever:
     metadata_only_docs = [Document(page_content="", metadata={**doc.metadata, "embedding": None}) for doc in docs]
     return FakeRetriever(docs=metadata_only_docs)
+
+
+class GenericFakeChatModelWithTools(GenericFakeChatModel):
+    """A thin wrapper to GenericFakeChatModel that allows tool binding."""
+
+    tools: Sequence[dict[str, Any] | type | Callable | BaseTool] | None = None
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def bind_tools(
+        self,
+        tools: Sequence[dict[str, Any] | type | Callable | BaseTool],
+        *args: Any,
+        **kwargs: Any,
+    ) -> "GenericFakeChatModelWithTools":
+        """Bind tool-like objects to this chat model."""
+        self.tools = tools
+        return self

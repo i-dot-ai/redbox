@@ -77,6 +77,6 @@ testpaths = "tests"
 norecursedirs = "tests/test_ai.py"
 env_override_existing_values = 1
 env_files = [
-    ".env.test",
+    "tests/.env.test",
     ".env"
 ]

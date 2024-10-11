@@ -8,11 +8,15 @@ used in conjunction with langchain this is the tidiest boxing of pydantic v1 we 
 from datetime import UTC, datetime
 from enum import StrEnum
 from functools import reduce
-from typing import Annotated, Literal, NotRequired, Required, TypedDict
+from typing import Annotated, Literal, NotRequired, Required, TypedDict, get_args, get_origin
 from uuid import UUID, uuid4
 
 from langchain_core.documents import Document
+from langchain_core.messages import ToolCall
+from langgraph.managed.base import ManagedValue
 from pydantic import BaseModel, Field
+
+from redbox.models import prompts
 
 
 class ChainChatMessage(TypedDict):
@@ -20,78 +24,11 @@ class ChainChatMessage(TypedDict):
     text: str
 
 
-CHAT_SYSTEM_PROMPT = (
-    "You are an AI assistant called Redbox tasked with answering questions and providing information objectively."
-)
-
-CHAT_WITH_DOCS_SYSTEM_PROMPT = "You are an AI assistant called Redbox tasked with answering questions on user provided documents and providing information objectively."
-
-CHAT_WITH_DOCS_REDUCE_SYSTEM_PROMPT = (
-    "You are an AI assistant tasked with answering questions on user provided documents. "
-    "Your goal is to answer the user question based on list of summaries in a coherent manner."
-    "Please follow these guidelines while answering the question: \n"
-    "1) Identify and highlight key points,\n"
-    "2) Avoid repetition,\n"
-    "3) Ensure the answer is easy to understand,\n"
-    "4) Maintain the original context and meaning.\n"
-)
-
-RETRIEVAL_SYSTEM_PROMPT = (
-    "Given the following conversation and extracted parts of a long document and a question, create a final answer. \n"
-    "If you don't know the answer, just say that you don't know. Don't try to make up an answer. "
-    "If a user asks for a particular format to be returned, such as bullet points, then please use that format. "
-    "If a user asks for bullet points you MUST give bullet points. "
-    "If the user asks for a specific number or range of bullet points you MUST give that number of bullet points. \n"
-    "Use **bold** to highlight the most question relevant parts in your response. "
-    "If dealing dealing with lots of data return it in markdown table format. "
-)
-
-SELF_ROUTE_SYSTEM_PROMPT = (
-    "You are a helpful assistant to UK Civil Servants. "
-    "Given the list of extracted parts of long documents and a question, answer the question if possible.\n"
-    "If the question cannot be answered respond with only the word 'unanswerable' \n"
-    "If the question can be answered accurately from the documents given then give that response \n"
-)
-
-CHAT_MAP_SYSTEM_PROMPT = (
-    "You are an AI assistant tasked with summarizing documents. "
-    "Your goal is to extract the most important information and present it in "
-    "a concise and coherent manner. Please follow these guidelines while summarizing: \n"
-    "1) Identify and highlight key points,\n"
-    "2) Avoid repetition,\n"
-    "3) Ensure the summary is easy to understand,\n"
-    "4) Maintain the original context and meaning.\n"
-)
-
-REDUCE_SYSTEM_PROMPT = (
-    "You are an AI assistant tasked with summarizing documents. "
-    "Your goal is to write a concise summary of list of summaries from a list of summaries in "
-    "a concise and coherent manner. Please follow these guidelines while summarizing: \n"
-    "1) Identify and highlight key points,\n"
-    "2) Avoid repetition,\n"
-    "3) Ensure the summary is easy to understand,\n"
-    "4) Maintain the original context and meaning.\n"
-)
-
-CONDENSE_SYSTEM_PROMPT = (
-    "Given the following conversation and a follow up question, generate a follow "
-    "up question to be a standalone question. "
-    "You are only allowed to generate one question in response. "
-    "Include sources from the chat history in the standalone question created, "
-    "when they are available. "
-    "If you don't know the answer, just say that you don't know, "
-    "don't try to make up an answer. \n"
-)
-
-CHAT_QUESTION_PROMPT = "{question}\n=========\n Response: "
-
-CHAT_WITH_DOCS_QUESTION_PROMPT = "Question: {question}. \n\n Documents: \n\n {formatted_documents} \n\n Answer: "
-
-RETRIEVAL_QUESTION_PROMPT = "{question} \n=========\n{formatted_documents}\n=========\nFINAL ANSWER: "
-
-CHAT_MAP_QUESTION_PROMPT = "Question: {question}. \n Documents: \n {formatted_documents} \n\n Answer: "
-
-CONDENSE_QUESTION_PROMPT = "{question}\n=========\n Standalone question: "
+class ChatLLMBackend(BaseModel):
+    name: str = "gpt-4o"
+    provider: str = "azure_openai"
+    description: str | None = None
+    model_config = {"frozen": True}
 
 
 class AISettings(BaseModel):
@@ -109,34 +46,32 @@ class AISettings(BaseModel):
     rag_gauss_scale_max: float = 2.0
     elbow_filter_enabled: bool = False
     self_route_enabled: bool = False
-    chat_system_prompt: str = CHAT_SYSTEM_PROMPT
-    chat_question_prompt: str = CHAT_QUESTION_PROMPT
+    chat_system_prompt: str = prompts.CHAT_SYSTEM_PROMPT
+    chat_question_prompt: str = prompts.CHAT_QUESTION_PROMPT
     stuff_chunk_context_ratio: float = 0.75
-    chat_with_docs_system_prompt: str = CHAT_WITH_DOCS_SYSTEM_PROMPT
-    chat_with_docs_question_prompt: str = CHAT_WITH_DOCS_QUESTION_PROMPT
-    chat_with_docs_reduce_system_prompt: str = CHAT_WITH_DOCS_REDUCE_SYSTEM_PROMPT
-    retrieval_system_prompt: str = RETRIEVAL_SYSTEM_PROMPT
-    self_route_system_prompt: str = SELF_ROUTE_SYSTEM_PROMPT
-    retrieval_question_prompt: str = RETRIEVAL_QUESTION_PROMPT
-    condense_system_prompt: str = CONDENSE_SYSTEM_PROMPT
-    condense_question_prompt: str = CONDENSE_QUESTION_PROMPT
+    chat_with_docs_system_prompt: str = prompts.CHAT_WITH_DOCS_SYSTEM_PROMPT
+    chat_with_docs_question_prompt: str = prompts.CHAT_WITH_DOCS_QUESTION_PROMPT
+    chat_with_docs_reduce_system_prompt: str = prompts.CHAT_WITH_DOCS_REDUCE_SYSTEM_PROMPT
+    self_route_system_prompt: str = prompts.SELF_ROUTE_SYSTEM_PROMPT
+    retrieval_system_prompt: str = prompts.RETRIEVAL_SYSTEM_PROMPT
+    retrieval_question_prompt: str = prompts.RETRIEVAL_QUESTION_PROMPT
+    agentic_retrieval_system_prompt: str = prompts.AGENTIC_RETRIEVAL_SYSTEM_PROMPT
+    agentic_retrieval_question_prompt: str = prompts.AGENTIC_RETRIEVAL_QUESTION_PROMPT
+    agentic_give_up_system_prompt: str = prompts.AGENTIC_GIVE_UP_SYSTEM_PROMPT
+    agentic_give_up_question_prompt: str = prompts.AGENTIC_GIVE_UP_QUESTION_PROMPT
+    condense_system_prompt: str = prompts.CONDENSE_SYSTEM_PROMPT
+    condense_question_prompt: str = prompts.CONDENSE_QUESTION_PROMPT
     map_max_concurrency: int = 128
-    chat_map_system_prompt: str = CHAT_MAP_SYSTEM_PROMPT
-    chat_map_question_prompt: str = CHAT_MAP_QUESTION_PROMPT
-    reduce_system_prompt: str = REDUCE_SYSTEM_PROMPT
+    chat_map_system_prompt: str = prompts.CHAT_MAP_SYSTEM_PROMPT
+    chat_map_question_prompt: str = prompts.CHAT_MAP_QUESTION_PROMPT
+    reduce_system_prompt: str = prompts.REDUCE_SYSTEM_PROMPT
 
     match_boost: int = 1
     knn_boost: int = 1
     similarity_threshold: int = 0
 
     # this is also the azure_openai_model
-    chat_backend: Literal[
-        "gpt-35-turbo-16k",
-        "gpt-4-turbo-2024-04-09",
-        "gpt-4o",
-        "anthropic.claude-3-sonnet-20240229-v1:0",
-        "anthropic.claude-3-haiku-20240307-v1:0",
-    ] = "gpt-4o"
+    chat_backend: ChatLLMBackend = ChatLLMBackend()
 
 
 class DocumentState(TypedDict):
@@ -255,12 +190,59 @@ def metadata_reducer(current: RequestMetadata | None, update: RequestMetadata | 
     )
 
 
+class ToolStateEntry(TypedDict):
+    """Represents a single tool call in the ToolState."""
+
+    tool: ToolCall
+    called: bool
+
+
+class ToolState(dict[str, ToolStateEntry]):
+    """Represents the state of multiple tools."""
+
+
+def tool_calls_reducer(current: ToolState, update: ToolState | None) -> ToolState:
+    """Handles updates to the tool state.
+
+    * If a new key is added, adds it to the state.
+    * If an existing key is None'd, removes it
+    * If update is None, clears all tool calls
+    """
+    if not update:
+        return {}
+
+    # If update is actually a list of state updates, run them one by one
+    if isinstance(update, list):
+        reduced = reduce(lambda current, update: tool_calls_reducer(current, update), update, current)
+        return reduced
+
+    reduced = current.copy()
+
+    for key, value in update.items():
+        if value is None:
+            reduced.pop(key, None)
+        else:
+            reduced[key] = value
+
+    return reduced
+
+
+class StepsLeft(ManagedValue[bool]):
+    """A managed value that counts down from the recursion limit."""
+
+    def __call__(self, step: int) -> int:
+        limit = self.config.get("recursion_limit", 0)
+        return limit - step
+
+
 class RedboxState(TypedDict):
     request: Required[RedboxQuery]
     documents: Annotated[NotRequired[DocumentState], document_reducer]
     text: NotRequired[str | None]
     route_name: NotRequired[str | None]
+    tool_calls: Annotated[NotRequired[ToolState], tool_calls_reducer]
     metadata: Annotated[NotRequired[RequestMetadata], metadata_reducer]
+    steps_left: Annotated[int, StepsLeft]
 
 
 class PromptSet(StrEnum):
@@ -268,6 +250,8 @@ class PromptSet(StrEnum):
     ChatwithDocs = "chat_with_docs"
     ChatwithDocsMapReduce = "chat_with_docs_map_reduce"
     Search = "search"
+    SearchAgentic = "search_agentic"
+    GiveUpAgentic = "give_up_agentic"
     SelfRoute = "self_route"
     CondenseQuestion = "condense_question"
 
@@ -285,6 +269,12 @@ def get_prompts(state: RedboxState, prompt_set: PromptSet) -> tuple[str, str]:
     elif prompt_set == PromptSet.Search:
         system_prompt = state["request"].ai_settings.retrieval_system_prompt
         question_prompt = state["request"].ai_settings.retrieval_question_prompt
+    elif prompt_set == PromptSet.SearchAgentic:
+        system_prompt = state["request"].ai_settings.agentic_retrieval_system_prompt
+        question_prompt = state["request"].ai_settings.agentic_retrieval_question_prompt
+    elif prompt_set == PromptSet.GiveUpAgentic:
+        system_prompt = state["request"].ai_settings.agentic_give_up_system_prompt
+        question_prompt = state["request"].ai_settings.agentic_give_up_question_prompt
     elif prompt_set == PromptSet.SelfRoute:
         system_prompt = state["request"].ai_settings.self_route_system_prompt
         question_prompt = state["request"].ai_settings.retrieval_question_prompt
@@ -292,3 +282,73 @@ def get_prompts(state: RedboxState, prompt_set: PromptSet) -> tuple[str, str]:
         system_prompt = state["request"].ai_settings.condense_system_prompt
         question_prompt = state["request"].ai_settings.condense_question_prompt
     return (system_prompt, question_prompt)
+
+
+def is_dict_type[T](annotated_type: T) -> bool:
+    """Unwraps an annotated type to work out if it's a subclass of dict."""
+    if get_origin(annotated_type) is Annotated:
+        base_type = get_args(annotated_type)[0]
+    else:
+        base_type = annotated_type
+
+    if get_origin(base_type) in {Required, NotRequired}:
+        base_type = get_args(base_type)[0]
+
+    return issubclass(base_type, dict)
+
+
+def dict_reducer(current: dict, update: dict) -> dict:
+    """
+    Recursively merge two dictionaries:
+
+    * If update has None for a key, current's key will be replaced with None.
+    * If both values are dictionaries, they will be merged recursively.
+    * Otherwise, the value in update will replace the value in current.
+    """
+    merged = current.copy()
+
+    for key, new_value in update.items():
+        if new_value is None:
+            merged[key] = None
+        elif isinstance(new_value, dict) and isinstance(merged.get(key), dict):
+            merged[key] = dict_reducer(merged[key], new_value)
+        else:
+            merged[key] = new_value
+
+    return merged
+
+
+def merge_redbox_state_updates(current: RedboxState, update: RedboxState) -> RedboxState:
+    """
+    Merge RedboxStates to the following rules, intended for use on state updates.
+
+    * Unannotated items are overwritten but never with None
+    * Annotated items apply their reducer function
+    * UNLESS they're a dictionary, in which case we use dict_reducer to preserve Nones
+    """
+    merged_state = current.copy()
+
+    all_keys = set(current.keys()).union(set(update.keys()))
+
+    for update_key in all_keys:
+        current_value = current.get(update_key, None)
+        update_value = update.get(update_key, None)
+
+        annotation = RedboxState.__annotations__.get(update_key, None)
+
+        if get_origin(annotation) is Annotated:
+            if is_dict_type(annotation):
+                # If it's annotated and a subclass of dict, apply a custom reducer function
+                merged_state[update_key] = dict_reducer(current=current_value or {}, update=update_value or {})
+            else:
+                # If it's annotated and not a dict, apply its reducer function
+                _, reducer_func = get_args(annotation)
+                merged_state[update_key] = reducer_func(current_value, update_value)
+        else:
+            # If not annotated, replace but don't overwrite an existing value with None
+            if update_value is not None:
+                merged_state[update_key] = update_value
+            else:
+                merged_state[update_key] = current_value
+
+    return merged_state

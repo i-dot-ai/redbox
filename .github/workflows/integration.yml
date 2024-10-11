@@ -18,6 +18,7 @@ on:
       - 'main'
 
 permissions:
+  id-token: write
   contents: read
 
 jobs:
@@ -46,9 +47,9 @@ jobs:
         cd integration
         mkdir -p data/elastic/
         chmod -R 777 data/
-        cp .env.integration .env
-        echo AZURE_OPENAI_ENDPOINT_4O=${{ secrets.AZURE_OPENAI_ENDPOINT }} >> .env
-        echo AZURE_OPENAI_API_KEY_4O=${{ secrets.AZURE_OPENAI_API_KEY }} >> .env
+        cp tests/.env.integration .env
+        echo AZURE_OPENAI_ENDPOINT=${{ secrets.AZURE_OPENAI_ENDPOINT }} >> .env
+        echo AZURE_OPENAI_API_KEY=${{ secrets.AZURE_OPENAI_API_KEY }} >> .env
         echo EMBEDDING_AZURE_OPENAI_ENDPOINT=${{ secrets.AZURE_OPENAI_ENDPOINT }} >> .env
         echo EMBEDDING_OPENAI_API_KEY=${{ secrets.AZURE_OPENAI_API_KEY }} >> .env
         docker compose up -d --wait django-app worker

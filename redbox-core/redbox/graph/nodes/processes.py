@@ -1,27 +1,25 @@
-from collections.abc import Callable
-import logging
-from operator import add
-import re
 import json
+import logging
+import re
+from collections.abc import Callable
+from functools import reduce
 from typing import Any
 from uuid import uuid4
-from functools import reduce
 
 from langchain.schema import StrOutputParser
-from langchain_core.runnables import Runnable, RunnableLambda, RunnableParallel
 from langchain_core.callbacks.manager import dispatch_custom_event
-from langchain_core.vectorstores import VectorStoreRetriever
 from langchain_core.documents import Document
+from langchain_core.runnables import Runnable, RunnableLambda, RunnableParallel
+from langchain_core.tools import StructuredTool
+from langchain_core.vectorstores import VectorStoreRetriever
 
-from redbox.chains.components import get_tokeniser, get_chat_llm
-from redbox.chains.runnables import build_llm_chain, CannedChatLLM
-from redbox.models.graph import ROUTE_NAME_TAG, RedboxActivityEvent, RedboxEventType
-from redbox.models import ChatRoute, Settings
-from redbox.models.chain import DocumentState, RedboxState, RequestMetadata
-from redbox.transform import combine_documents
-from redbox.models.chain import PromptSet
-from redbox.transform import flatten_document_state
-
+from redbox.chains.components import get_chat_llm, get_tokeniser
+from redbox.chains.runnables import CannedChatLLM, build_llm_chain
+from redbox.graph.nodes.tools import has_injected_state, is_valid_tool
+from redbox.models import ChatRoute
+from redbox.models.chain import DocumentState, PromptSet, RedboxState, RequestMetadata, merge_redbox_state_updates
+from redbox.models.graph import ROUTE_NAME_TAG, SOURCE_DOCUMENTS_TAG, RedboxActivityEvent, RedboxEventType
+from redbox.transform import combine_documents, flatten_document_state
 
 log = logging.getLogger()
 re_keyword_pattern = re.compile(r"@(\w+)")
@@ -44,7 +42,7 @@ def build_retrieve_pattern(
     retriever_chain = RunnableParallel({"documents": retriever | structure_func})
 
     if final_source_chain:
-        _retriever = retriever_chain.with_config(tags=["source_documents_flag"])
+        _retriever = retriever_chain.with_config(tags=[SOURCE_DOCUMENTS_TAG])
     else:
         _retriever = retriever_chain
 
@@ -53,12 +51,16 @@ def build_retrieve_pattern(
 
 def build_chat_pattern(
     prompt_set: PromptSet,
+    tools: list[StructuredTool] | None = None,
     final_response_chain: bool = False,
 ) -> Runnable[RedboxState, dict[str, Any]]:
-    """Returns a Runnable that uses state["request"] to set state["text"]."""
+    """Returns a Runnable that uses the state to set state["text"].
+
+    If tools are supplied, can also set state["tool_calls"].
+    """
 
     def _chat(state: RedboxState) -> dict[str, Any]:
-        llm = get_chat_llm(Settings(), state["request"].ai_settings)
+        llm = get_chat_llm(state["request"].ai_settings.chat_backend, tools=tools)
         return build_llm_chain(
             prompt_set=prompt_set,
             llm=llm,
@@ -70,6 +72,7 @@ def build_chat_pattern(
 
 def build_merge_pattern(
     prompt_set: PromptSet,
+    tools: list[StructuredTool] | None = None,
     final_response_chain: bool = False,
 ) -> Runnable[RedboxState, dict[str, Any]]:
     """Returns a Runnable that uses state["request"] and state["documents"] to return one item in state["documents"].
@@ -79,12 +82,14 @@ def build_merge_pattern(
     When combined with group send, with combine all Documents and use the metadata of the first.
 
     When used without a send, the first Document receieved defines the metadata.
+
+    If tools are supplied, can also set state["tool_calls"].
     """
     tokeniser = get_tokeniser()
 
     @RunnableLambda
     def _merge(state: RedboxState) -> dict[str, Any]:
-        llm = get_chat_llm(Settings(), state["request"].ai_settings)
+        llm = get_chat_llm(state["request"].ai_settings.chat_backend, tools=tools)
 
         if not state.get("documents"):
             return {"documents": None}
@@ -126,25 +131,28 @@ def build_merge_pattern(
 def build_stuff_pattern(
     prompt_set: PromptSet,
     output_parser: Runnable = None,
+    tools: list[StructuredTool] | None = None,
     final_response_chain: bool = False,
 ) -> Runnable[RedboxState, dict[str, Any]]:
-    """Returns a Runnable that uses state["request"] and state["documents"] to set state["text"]."""
+    """Returns a Runnable that uses state["request"] and state["documents"] to set state["text"].
+
+    If tools are supplied, can also set state["tool_calls"].
+    """
 
     @RunnableLambda
     def _stuff(state: RedboxState) -> dict[str, Any]:
-        llm = get_chat_llm(Settings(), state["request"].ai_settings)
+        llm = get_chat_llm(state["request"].ai_settings.chat_backend, tools=tools)
 
-        events = []
-
-        for event in build_llm_chain(
-            prompt_set=prompt_set, llm=llm, output_parser=output_parser, final_response_chain=final_response_chain
-        ).stream(state):
-            events.append(event)
-
-        if len(events) == 0:
-            return None
-        else:
-            return reduce(add, events)
+        events = [
+            event
+            for event in build_llm_chain(
+                prompt_set=prompt_set,
+                llm=llm,
+                output_parser=output_parser,
+                final_response_chain=final_response_chain,
+            ).stream(state)
+        ]
+        return sum(events, {})
 
     return _stuff
 
@@ -237,10 +245,77 @@ def build_error_pattern(text: str, route_name: str | None) -> Runnable[RedboxSta
     return _error_pattern
 
 
-# Raw processes
+def build_tool_pattern(
+    tools=list[StructuredTool], final_source_chain: bool = False
+) -> Callable[[RedboxState], dict[str, Any]]:
+    """Builds a process that takes state["tool_calls"] and returns state updates.
+
+    The state attributes affected are defined in the tool.
+    """
+    tools_by_name: dict[str, StructuredTool] = {}
+
+    for tool in tools:
+        if not is_valid_tool(tool):
+            msg = f"{tool.name} must use a function that returns a correctly-formatted RedboxState update"
+            raise ValueError(msg)
+        tools_by_name[tool.name] = tool
+
+    def _tool(state: RedboxState) -> dict[str, Any]:
+        state_updates: list[dict] = []
+
+        tool_calls = state.get("tool_calls", {})
+        if not tool_calls:
+            log.warning("No tool calls found in state")
+            return {}
+
+        for tool_id, tool_call_dict in tool_calls.items():
+            tool_call = tool_call_dict["tool"]
+
+            if not tool_call_dict["called"]:
+                tool = tools_by_name[tool_call["name"]]
+
+                if tool is None:
+                    log.warning(f"Tool {tool_call['name']} not found")
+                    continue
+
+                # Deal with InjectedState
+                args = tool_call["args"].copy()
+                if has_injected_state(tool):
+                    args["state"] = state
+
+                log.info(f"Invoking tool {tool_call['name']} with args {args}")
+
+                # Invoke the tool
+                try:
+                    result_state_update = tool.invoke(args) or {}
+                    tool_called_state_update = {"tool_calls": {tool_id: {"called": True, "tool": tool_call}}}
+                    state_updates.append(result_state_update | tool_called_state_update)
+                except Exception as e:
+                    state_updates.append({"tool_calls": {tool_id: {"called": True, "tool": tool_call}}})
+                    log.warning(f"Error invoking tool {tool_call['name']}: {e} \n")
+                    return {}
+
+        if state_updates:
+            return reduce(merge_redbox_state_updates, state_updates)
+
+    if final_source_chain:
+        return RunnableLambda(_tool).with_config(tags=[SOURCE_DOCUMENTS_TAG])
+
+    return _tool
+
+
+# Raw processes: functions that need no building
+
+
 def clear_documents_process(state: RedboxState) -> dict[str, Any]:
     if documents := state.get("documents"):
         return {"documents": {group_id: None for group_id in documents}}
+
+
+def report_sources_process(state: RedboxState) -> None:
+    """A Runnable which reports the documents in the state as sources."""
+    if document_state := state.get("documents"):
+        dispatch_custom_event(RedboxEventType.on_source_report, flatten_document_state(document_state))
 
 
 def empty_process(state: RedboxState) -> None:

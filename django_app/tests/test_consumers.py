@@ -19,10 +19,10 @@ from websockets.legacy.client import Connect
 
 from redbox.models.chain import LLMCallMetadata, RedboxQuery, RequestMetadata
 from redbox.models.graph import FINAL_RESPONSE_TAG, ROUTE_NAME_TAG, SOURCE_DOCUMENTS_TAG
+from redbox.models.prompts import CHAT_MAP_QUESTION_PROMPT
 from redbox_app.redbox_core import error_messages
 from redbox_app.redbox_core.consumers import ChatConsumer
 from redbox_app.redbox_core.models import Chat, ChatMessage, ChatMessageTokenUse, ChatRoleEnum, File, StatusEnum
-from redbox_app.redbox_core.prompts import CHAT_MAP_QUESTION_PROMPT
 
 User = get_user_model()
 
@@ -420,23 +420,22 @@ async def test_chat_consumer_with_explicit_no_document_selected_error(
 @pytest.mark.django_db()
 @pytest.mark.asyncio()
 async def test_chat_consumer_get_ai_settings(
-    alice: User, mocked_connect_with_explicit_no_document_selected_error: Connect
+    chat_with_alice: Chat, mocked_connect_with_explicit_no_document_selected_error: Connect
 ):
     with patch(
         "redbox_app.redbox_core.consumers.ChatConsumer.redbox.graph",
         new=mocked_connect_with_explicit_no_document_selected_error,
     ):
         communicator = WebsocketCommunicator(ChatConsumer.as_asgi(), "/ws/chat/")
-        communicator.scope["user"] = alice
+        communicator.scope["user"] = chat_with_alice.user
         connected, _ = await communicator.connect()
         assert connected
 
-        chat = Chat(name=" a chat", user=alice, chat_backend=Chat.ChatBackend.CLAUDE_3_HAIKU)
-
-        ai_settings = await ChatConsumer.get_ai_settings(chat)
+        ai_settings = await ChatConsumer.get_ai_settings(chat_with_alice)
 
         assert ai_settings.chat_map_question_prompt == CHAT_MAP_QUESTION_PROMPT
-        assert ai_settings.chat_backend == "anthropic.claude-3-haiku-20240307-v1:0"
+        assert ai_settings.chat_backend.name == chat_with_alice.chat_backend.name
+        assert ai_settings.chat_backend.provider == chat_with_alice.chat_backend.provider
         assert not hasattr(ai_settings, "label")
 
         # Close

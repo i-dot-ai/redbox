@@ -8,6 +8,7 @@ from elasticsearch import Elasticsearch
 from pydantic import BaseModel
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+from redbox.models.chain import ChatLLMBackend
 
 logging.basicConfig(level=os.environ.get("LOG_LEVEL", "INFO"))
 log = logging.getLogger()
@@ -40,33 +41,16 @@ class ElasticCloudSettings(BaseModel):
 class Settings(BaseSettings):
     """Settings for the redbox application."""
 
-    # azure/gpt-35-turbo-16k
-    openai_api_version_35t: str = "2023-12-01-preview"
-    azure_openai_api_key_35t: str = "not a key"
-    azure_openai_fallback_api_key_35t: str = "not a key"
-    azure_openai_endpoint_35t: str = "not an endpoint"
-    azure_openai_fallback_endpoint_35t: str | None = None
-
-    # azure/gpt-4
-    openai_api_version_4t: str = "2024-02-01"
-    azure_openai_api_key_4t: str = "not a key"
-    azure_openai_fallback_api_key_4t: str = "not a key"
-    azure_openai_endpoint_4t: str = "not an endpoint"
-    azure_openai_fallback_endpoint_4t: str | None = None
-
-    # azure/gpt-4o
-    openai_api_version_4o: str = "2024-02-01"
-    azure_openai_api_key_4o: str = "not a key"
-    azure_openai_fallback_api_key_4o: str = "not a key"
-    azure_openai_endpoint_4o: str = "not an endpoint"
-    azure_openai_fallback_endpoint_4o: str | None = None
-
     embedding_openai_api_key: str = "NotAKey"
     embedding_azure_openai_endpoint: str = "not an endpoint"
     azure_api_version_embeddings: str = "2024-02-01"
+    metadata_extraction_llm: ChatLLMBackend = ChatLLMBackend(name="gpt-4o", provider="azure_openai")
 
     embedding_backend: Literal[
-        "text-embedding-ada-002", "amazon.titan-embed-text-v2:0", "text-embedding-3-large", "fake"
+        "text-embedding-ada-002",
+        "amazon.titan-embed-text-v2:0",
+        "text-embedding-3-large",
+        "fake",
     ] = "text-embedding-3-large"
 
     llm_max_tokens: int = 1024
@@ -84,6 +68,7 @@ class Settings(BaseSettings):
 
     elastic: ElasticCloudSettings | ElasticLocalSettings = ElasticLocalSettings()
     elastic_root_index: str = "redbox-data"
+    elastic_chunk_alias: str = "redbox-data-chunk-current"
 
     kibana_system_password: str = "redboxpass"
     metricbeat_internal_password: str = "redboxpass"
@@ -119,6 +104,19 @@ class Settings(BaseSettings):
     unstructured_host: str = "unstructured"
 
     model_config = SettingsConfigDict(env_file=".env", env_nested_delimiter="__", extra="allow", frozen=True)
+
+    ## Prompts
+    metadata_prompt: tuple = (
+        "system",
+        "You are an SEO specialist that must optimise the metadata of a document "
+        "to make it as discoverable as possible. You are about to be given the first "
+        "1_000 tokens of a document and any hard-coded file metadata that can be "
+        "recovered from it. Create SEO-optimised metadata for this document in the "
+        "structured data markup (JSON-LD) standard. You must include at least "
+        "the 'name', 'description' and 'keywords' properties but otherwise use your "
+        "expertise to make the document as easy to search for as possible. "
+        "Return only the JSON-LD: \n\n",
+    )
 
     @lru_cache(1)
     def elasticsearch_client(self) -> Elasticsearch:
