@@ -1,0 +1,77 @@
+{% set pageTitle = "Sign up" %}
+{% extends "base.html" %}
+{% from "macros/govuk-button.html" import govukButton %}
+
+{% block content %}
+
+  <div class="govuk-width-container">
+
+    <div class="govuk-grid-row">
+      <div class="govuk-grid-column-two-thirds">
+        <h1 class="govuk-heading-l govuk-!-margin-bottom-3">Sign up to Redbox</h1>
+        <p class="govuk-body-l">Step 1 of 6</p>
+      </div>
+    </div>
+
+    {% if form.errors %}
+      <div class="govuk-error-summary" data-module="govuk-error-summary">
+        <div role="alert">
+          <div class="govuk-error-summary__body">
+            <ul class="govuk-list govuk-error-summary__list">
+              {% for field, error in form.errors.items() %}
+                <li>{{ field }} : {{ error }}</li>
+              {% endfor %}
+            </ul>
+          </div>
+        </div>
+      </div>
+    {% endif %}
+
+    <form method='post'>
+
+      <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+
+      <div class="govuk-form-group">
+        <label class="govuk-label" for="{{ form.email.id_for_label }}">
+          {{ form.email.label }}
+        </label>
+        {{ form.email }}
+      </div>
+
+      <div class="govuk-form-group">
+        <label class="govuk-label" for="{{ form.business_unit.id_for_label }}">
+          {{ form.business_unit.label }}
+        </label>
+        {{ form.business_unit }}
+      </div>
+
+      <div class="govuk-form-group">
+        <label class="govuk-label" for="{{ form.role.id_for_label }}">
+          {{ form.role.label }}
+        </label>
+        {{ form.role }}
+      </div>
+
+      <div class="govuk-form-group">
+        <label class="govuk-label" for="{{ form.grade.id_for_label }}">
+          {{ form.grade.label }}
+        </label>
+        {{ form.grade }}
+      </div>
+
+      <div class="govuk-form-group">
+        <label class="govuk-label" for="{{ form.profession.id_for_label }}">
+          {{ form.profession.label }}
+        </label>
+        {{ form.profession }}
+      </div>
+
+      <div class="govuk-button-group">
+        {{ govukButton(text="Continue") }}
+      </div>
+
+    </form>
+
+  </div>
+
+{% endblock %}

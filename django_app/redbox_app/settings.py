@@ -18,6 +18,8 @@ load_dotenv()
 
 env = environ.Env()
 
+ALLOW_SIGN_UPS = env.bool("ALLOW_SIGN_UPS")
+
 SECRET_KEY = env.str("DJANGO_SECRET_KEY")
 ENVIRONMENT = Environment[env.str("ENVIRONMENT").upper()]
 WEBSOCKET_SCHEME = "ws" if ENVIRONMENT.is_test else "wss"
@@ -60,6 +62,7 @@ INSTALLED_APPS = [
     "rest_framework",
     "django_plotly_dash.apps.DjangoPlotlyDashConfig",
     "adminplus",
+    "waffle",
 ]
 
 MIDDLEWARE = [
@@ -77,6 +80,7 @@ MIDDLEWARE = [
     "redbox_app.redbox_core.middleware.nocache_middleware",
     "redbox_app.redbox_core.middleware.security_header_middleware",
     "django_plotly_dash.middleware.BaseMiddleware",
+    "waffle.middleware.WaffleMiddleware",
 ]
 
 ROOT_URLCONF = "redbox_app.urls"

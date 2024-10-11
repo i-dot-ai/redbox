@@ -19,6 +19,13 @@ auth_urlpatterns = [
         name="sign-in-link-sent",
     ),
     path("signed-out/", views.signed_out_view, name="signed-out"),
+    path("sign-up-page-1", views.Signup1.as_view(), name="sign-up-page-1"),
+    path("sign-up-page-2", views.Signup2.as_view(), name="sign-up-page-2"),
+    path("sign-up-page-3", views.Signup3.as_view(), name="sign-up-page-3"),
+    path("sign-up-page-4", views.Signup4.as_view(), name="sign-up-page-4"),
+    path("sign-up-page-5", views.Signup5.as_view(), name="sign-up-page-5"),
+    path("sign-up-page-6", views.Signup6.as_view(), name="sign-up-page-6"),
+    path("sign-up-page-7", views.Signup7.as_view(), name="sign-up-page-7"),
 ]
 
 info_urlpatterns = [
