@@ -1,3 +1,4 @@
+from decimal import Decimal
 from uuid import uuid4
 
 import pytest
@@ -298,3 +299,24 @@ def test_0048_chatllmbackend_aisettings_new_chat_backend_and_more(migrator):
 
     assert new_other_chat.chat_backend.name == "some-cool-model-no-one-has-heard-of"
     assert new_other_chat.chat_backend.provider == "openai"
+
+
+def test_0050_aisettings_match_description_boost_and_more(migrator):
+    old_state = migrator.apply_initial_migration(("redbox_core", "0049_user_accessibility_categories_and_more"))
+
+    AISettings = old_state.apps.get_model("redbox_core", "AISettings")
+    ChatLLMBackend = old_state.apps.get_model("redbox_core", "ChatLLMBackend")
+    ai_settings = AISettings.objects.create(chat_backend=ChatLLMBackend.objects.first())
+    assert not hasattr(ai_settings, "match_description_boost")
+    assert ai_settings.similarity_threshold == Decimal("0.00")
+    assert not hasattr(ai_settings, "match_keywords_boost")
+
+    new_state = migrator.apply_tested_migration(
+        ("redbox_core", "0050_aisettings_match_description_boost_and_more"),
+    )
+
+    NEWAISettings = new_state.apps.get_model("redbox_core", "AISettings")  # noqa: N806
+    new_ai_settings = NEWAISettings.objects.get(label=ai_settings.label)
+    assert new_ai_settings.match_description_boost == Decimal("0.50")
+    assert new_ai_settings.similarity_threshold == Decimal("0.00")
+    assert new_ai_settings.match_keywords_boost == Decimal("0.50")

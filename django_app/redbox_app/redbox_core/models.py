@@ -103,20 +103,20 @@ class AbstractAISettings(models.Model):
 
 class AISettings(UUIDPrimaryKeyBase, TimeStampedModel, AbstractAISettings):
     label = models.CharField(max_length=50, unique=True)
-    max_document_tokens = models.PositiveIntegerField(default=1_000_000, null=True, blank=True)
+
+    # LLM settings
     context_window_size = models.PositiveIntegerField(default=128_000)
     llm_max_tokens = models.PositiveIntegerField(default=1024)
-    rag_k = models.PositiveIntegerField(default=30)
-    rag_num_candidates = models.PositiveIntegerField(default=10)
-    rag_gauss_scale_size = models.PositiveIntegerField(default=3)
-    rag_gauss_scale_decay = models.FloatField(default=0.5)
-    rag_gauss_scale_min = models.FloatField(default=1.1)
-    rag_gauss_scale_max = models.FloatField(default=2.0)
-    rag_desired_chunk_size = models.PositiveIntegerField(default=300)
-    elbow_filter_enabled = models.BooleanField(default=False)
+
+    # Prompts and LangGraph settings
+    max_document_tokens = models.PositiveIntegerField(default=1_000_000, null=True, blank=True)
+    self_route_enabled = models.BooleanField(default=False)
+    map_max_concurrency = models.PositiveIntegerField(default=128)
+    stuff_chunk_context_ratio = models.FloatField(default=0.75)
+    recursion_limit = models.PositiveIntegerField(default=50)
+
     chat_system_prompt = models.TextField(default=prompts.CHAT_SYSTEM_PROMPT)
     chat_question_prompt = models.TextField(default=prompts.CHAT_QUESTION_PROMPT)
-    stuff_chunk_context_ratio = models.FloatField(default=0.75)
     chat_with_docs_system_prompt = models.TextField(default=prompts.CHAT_WITH_DOCS_SYSTEM_PROMPT)
     chat_with_docs_question_prompt = models.TextField(default=prompts.CHAT_WITH_DOCS_QUESTION_PROMPT)
     chat_with_docs_reduce_system_prompt = models.TextField(default=prompts.CHAT_WITH_DOCS_REDUCE_SYSTEM_PROMPT)
@@ -128,13 +128,36 @@ class AISettings(UUIDPrimaryKeyBase, TimeStampedModel, AbstractAISettings):
     agentic_give_up_question_prompt = models.TextField(default=prompts.AGENTIC_GIVE_UP_QUESTION_PROMPT)
     condense_system_prompt = models.TextField(default=prompts.CONDENSE_SYSTEM_PROMPT)
     condense_question_prompt = models.TextField(default=prompts.CONDENSE_QUESTION_PROMPT)
-    map_max_concurrency = models.PositiveIntegerField(default=128)
     chat_map_system_prompt = models.TextField(default=prompts.CHAT_MAP_SYSTEM_PROMPT)
     chat_map_question_prompt = models.TextField(default=prompts.CHAT_MAP_QUESTION_PROMPT)
     reduce_system_prompt = models.TextField(default=prompts.REDUCE_SYSTEM_PROMPT)
-    match_boost = models.PositiveIntegerField(default=1)
-    knn_boost = models.PositiveIntegerField(default=1)
-    similarity_threshold = models.PositiveIntegerField(default=0)
+
+    # Elsticsearch RAG and boost values
+    rag_k = models.PositiveIntegerField(default=30)
+    rag_num_candidates = models.PositiveIntegerField(default=10)
+    rag_gauss_scale_size = models.PositiveIntegerField(default=3)
+    rag_gauss_scale_decay = models.DecimalField(
+        max_digits=5, decimal_places=2, default=0.5, validators=[validators.MinValueValidator(0.0)]
+    )
+    rag_gauss_scale_min = models.DecimalField(
+        max_digits=5, decimal_places=2, default=1.1, validators=[validators.MinValueValidator(1.0)]
+    )
+    rag_gauss_scale_max = models.DecimalField(
+        max_digits=5, decimal_places=2, default=2.0, validators=[validators.MinValueValidator(1.0)]
+    )
+    rag_desired_chunk_size = models.PositiveIntegerField(default=300)
+    elbow_filter_enabled = models.BooleanField(default=False)
+    match_boost = models.DecimalField(max_digits=5, decimal_places=2, default=1.0)
+    match_name_boost = models.DecimalField(max_digits=5, decimal_places=2, default=2.0)
+    match_description_boost = models.DecimalField(max_digits=5, decimal_places=2, default=0.5)
+    match_keywords_boost = models.DecimalField(max_digits=5, decimal_places=2, default=0.5)
+    knn_boost = models.DecimalField(max_digits=5, decimal_places=2, default=2.0)
+    similarity_threshold = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        default=0.7,
+        validators=[validators.MinValueValidator(0.0), validators.MaxValueValidator(1.0)],
+    )
 
     def __str__(self) -> str:
         return str(self.label)
