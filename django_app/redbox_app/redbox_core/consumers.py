@@ -83,11 +83,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
         user_ai_settings = await AISettingsModel.objects.aget(label=user.ai_settings_id)
 
-        if "llm" in data:
-            chat_backend = await ChatLLMBackend.objects.aget(name=data.get("llm"))
-        else:
-            chat_backend = await ChatLLMBackend.objects.aget(id=user_ai_settings.chat_backend_id)
-
+        chat_backend = await ChatLLMBackend.objects.aget(id=data.get("llm", user_ai_settings.chat_backend_id))
         temperature = data.get("temperature", user_ai_settings.temperature)
 
         if session_id := data.get("sessionId"):
