@@ -6,6 +6,7 @@ locals {
 
 
   django_app_environment_variables = {
+    "ALLOW_SIGN_UPS": true,
     "EMBEDDING_DOCUMENT_FIELD_NAME" : var.embedding_document_field_name,
     "AZURE_OPENAI_MODEL" : var.azure_openai_model,
 
