@@ -12,7 +12,7 @@ from django.conf import settings
 from django.contrib.postgres.fields import ArrayField
 from django.core import validators
 from django.db import models
-from django.db.models import Max, Min, Prefetch
+from django.db.models import Max, Min, Prefetch, UniqueConstraint
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django.contrib.auth.base_user import BaseUserManager as BaseSSOUserManager
@@ -20,8 +20,7 @@ from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
 from django_use_email_as_username.models import BaseUser, BaseUserManager
 from yarl import URL
 
-from redbox.models import Settings
-from redbox_app.redbox_core import prompts
+from redbox.models import Settings, prompts
 from redbox_app.redbox_core.utils import get_date_group
 
 logging.basicConfig(level=os.environ.get("LOG_LEVEL", "INFO"))
@@ -54,53 +53,113 @@ def sanitise_string(string: str | None) -> str | None:
     return string.replace("\x00", "\ufffd") if string else string
 
 
-class AbstractAISettings(models.Model):
-    class ChatBackend(models.TextChoices):
-        GPT_35_TURBO = "gpt-35-turbo-16k", _("gpt-35-turbo-16k")
-        GPT_4_TURBO = "gpt-4-turbo-2024-04-09", _("gpt-4-turbo-2024-04-09")
-        GPT_4_OMNI = "gpt-4o", _("gpt-4o")
-        CLAUDE_3_SONNET = "anthropic.claude-3-sonnet-20240229-v1:0", _("claude-3-sonnet")
-        CLAUDE_3_HAIKU = "anthropic.claude-3-haiku-20240307-v1:0", _("claude-3-haiku")
+class ChatLLMBackend(models.Model):
+    """https://python.langchain.com/docs/how_to/chat_models_universal_init/"""
 
-    chat_backend = models.CharField(
-        max_length=64, choices=ChatBackend, help_text="LLM to use in chat", default=ChatBackend.GPT_4_OMNI
-    )
+    class Providers(models.TextChoices):
+        OPENAI = "openai"
+        ANTHROPIC = "anthropic"
+        AZURE_OPENAI = "azure_openai"
+        GOOGLE_VERTEXAI = "google_vertexai"
+        GOOGLE_GENAI = "google_genai"
+        BEDROCK = "bedrock"
+        BEDROCK_CONVERSE = "bedrock_converse"
+        COHERE = "cohere"
+        FIREWORKS = "fireworks"
+        TOGETHER = "together"
+        MISTRALAI = "mistralai"
+        HUGGINGFACE = "huggingface"
+        GROQ = "groq"
+        OLLAMA = "ollama"
+
+    name = models.CharField(max_length=128, help_text="The name of the model, e.g. “gpt-4o”, “claude-3-opus-20240229”.")
+    provider = models.CharField(max_length=128, choices=Providers, help_text="The model provider")
+    description = models.TextField(null=True, blank=True, help_text="brief description of the model")
+    is_default = models.BooleanField(default=False, help_text="is this the default llm to use.")
+    enabled = models.BooleanField(default=True, help_text="is this model enabled.")
+
+    class Meta:
+        constraints = [UniqueConstraint(fields=["name", "provider"], name="unique_name_provider")]
+
+    def __str__(self):
+        return self.name
+
+    def save(self, *args, **kwargs):
+        if self.is_default:
+            ChatLLMBackend.objects.filter(is_default=True).update(is_default=False)
+        super().save(*args, **kwargs)
+
+
+class AbstractAISettings(models.Model):
+    chat_backend = models.ForeignKey(ChatLLMBackend, on_delete=models.CASCADE, help_text="LLM to use in chat")
     temperature = models.FloatField(default=0, help_text="temperature for LLM")
 
     class Meta:
         abstract = True
 
+    def save(self, *args, **kwargs):
+        if not self.chat_backend_id:
+            self.chat_backend = ChatLLMBackend.objects.get(is_default=True)
+        return super().save(*args, **kwargs)
+
 
 class AISettings(UUIDPrimaryKeyBase, TimeStampedModel, AbstractAISettings):
     label = models.CharField(max_length=50, unique=True)
-    max_document_tokens = models.PositiveIntegerField(default=1_000_000, null=True, blank=True)
+
+    # LLM settings
     context_window_size = models.PositiveIntegerField(default=128_000)
     llm_max_tokens = models.PositiveIntegerField(default=1024)
-    rag_k = models.PositiveIntegerField(default=30)
-    rag_num_candidates = models.PositiveIntegerField(default=10)
-    rag_gauss_scale_size = models.PositiveIntegerField(default=3)
-    rag_gauss_scale_decay = models.FloatField(default=0.5)
-    rag_gauss_scale_min = models.FloatField(default=1.1)
-    rag_gauss_scale_max = models.FloatField(default=2.0)
-    rag_desired_chunk_size = models.PositiveIntegerField(default=300)
-    elbow_filter_enabled = models.BooleanField(default=False)
+
+    # Prompts and LangGraph settings
+    max_document_tokens = models.PositiveIntegerField(default=1_000_000, null=True, blank=True)
+    self_route_enabled = models.BooleanField(default=False)
+    map_max_concurrency = models.PositiveIntegerField(default=128)
+    stuff_chunk_context_ratio = models.FloatField(default=0.75)
+    recursion_limit = models.PositiveIntegerField(default=50)
+
     chat_system_prompt = models.TextField(default=prompts.CHAT_SYSTEM_PROMPT)
     chat_question_prompt = models.TextField(default=prompts.CHAT_QUESTION_PROMPT)
-    stuff_chunk_context_ratio = models.FloatField(default=0.75)
     chat_with_docs_system_prompt = models.TextField(default=prompts.CHAT_WITH_DOCS_SYSTEM_PROMPT)
     chat_with_docs_question_prompt = models.TextField(default=prompts.CHAT_WITH_DOCS_QUESTION_PROMPT)
     chat_with_docs_reduce_system_prompt = models.TextField(default=prompts.CHAT_WITH_DOCS_REDUCE_SYSTEM_PROMPT)
     retrieval_system_prompt = models.TextField(default=prompts.RETRIEVAL_SYSTEM_PROMPT)
     retrieval_question_prompt = models.TextField(default=prompts.RETRIEVAL_QUESTION_PROMPT)
+    agentic_retrieval_system_prompt = models.TextField(default=prompts.AGENTIC_RETRIEVAL_SYSTEM_PROMPT)
+    agentic_retrieval_question_prompt = models.TextField(default=prompts.AGENTIC_RETRIEVAL_QUESTION_PROMPT)
+    agentic_give_up_system_prompt = models.TextField(default=prompts.AGENTIC_GIVE_UP_SYSTEM_PROMPT)
+    agentic_give_up_question_prompt = models.TextField(default=prompts.AGENTIC_GIVE_UP_QUESTION_PROMPT)
     condense_system_prompt = models.TextField(default=prompts.CONDENSE_SYSTEM_PROMPT)
     condense_question_prompt = models.TextField(default=prompts.CONDENSE_QUESTION_PROMPT)
-    map_max_concurrency = models.PositiveIntegerField(default=128)
     chat_map_system_prompt = models.TextField(default=prompts.CHAT_MAP_SYSTEM_PROMPT)
     chat_map_question_prompt = models.TextField(default=prompts.CHAT_MAP_QUESTION_PROMPT)
     reduce_system_prompt = models.TextField(default=prompts.REDUCE_SYSTEM_PROMPT)
-    match_boost = models.PositiveIntegerField(default=1)
-    knn_boost = models.PositiveIntegerField(default=1)
-    similarity_threshold = models.PositiveIntegerField(default=0)
+
+    # Elsticsearch RAG and boost values
+    rag_k = models.PositiveIntegerField(default=30)
+    rag_num_candidates = models.PositiveIntegerField(default=10)
+    rag_gauss_scale_size = models.PositiveIntegerField(default=3)
+    rag_gauss_scale_decay = models.DecimalField(
+        max_digits=5, decimal_places=2, default=0.5, validators=[validators.MinValueValidator(0.0)]
+    )
+    rag_gauss_scale_min = models.DecimalField(
+        max_digits=5, decimal_places=2, default=1.1, validators=[validators.MinValueValidator(1.0)]
+    )
+    rag_gauss_scale_max = models.DecimalField(
+        max_digits=5, decimal_places=2, default=2.0, validators=[validators.MinValueValidator(1.0)]
+    )
+    rag_desired_chunk_size = models.PositiveIntegerField(default=300)
+    elbow_filter_enabled = models.BooleanField(default=False)
+    match_boost = models.DecimalField(max_digits=5, decimal_places=2, default=1.0)
+    match_name_boost = models.DecimalField(max_digits=5, decimal_places=2, default=2.0)
+    match_description_boost = models.DecimalField(max_digits=5, decimal_places=2, default=0.5)
+    match_keywords_boost = models.DecimalField(max_digits=5, decimal_places=2, default=0.5)
+    knn_boost = models.DecimalField(max_digits=5, decimal_places=2, default=2.0)
+    similarity_threshold = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        default=0.7,
+        validators=[validators.MinValueValidator(0.0), validators.MaxValueValidator(1.0)],
+    )
 
     def __str__(self) -> str:
         return str(self.label)
@@ -274,6 +333,86 @@ class User(BaseUser, UUIDPrimaryKeyBase):
             ),
         )
 
+    class AccessibilityOptions(models.TextChoices):
+        YES = "Yes", _("Yes")
+        NO = "No", _("No")
+        PREFER_NOT_TO_SAY = "Prefer not to say", _("Prefer not to say")
+
+    class AccessibilityCategories(models.TextChoices):
+        SIGHT = "Sight", _("I'm blind, partially sighted or colour blind")
+        HEARING = "Hearing", _("I'm deaf or hard of hearing")
+        MOBILITY = "Mobility", _("I have difficulty using a mouse or keyboard")
+        THINKING_AND_UNDERSTANDING = (
+            "Thinking and understanding",
+            _("I have autism, dyslexia, ADHD, a mental health condition"),
+        )
+        TEMPORARY = "Temporary", _("I have an injury")
+        INVISIBLE_CONDITION = "Invisible condition", _("This could be menopause, a mental health condition")
+
+    class DigitalConfidence(models.TextChoices):
+        CONFIDENT = (
+            "I feel confident using new technologies and digital products",
+            _("I feel confident using new technologies and digital products"),
+        )
+        NEED_HELP = (
+            "When using new technologies and digital products I tend to need some help",
+            _("When using new technologies and digital products I tend to need some help"),
+        )
+        DONT_WANT = (
+            "I don't use new technologies and I don't want to learn how to use them",
+            _("I don't use new technologies and I don't want to learn how to use them"),
+        )
+
+    class RegularityAI(models.TextChoices):
+        NOT_USED = "I have not used GenAI", _("I have not used GenAI")
+        EVERYDAY = "Everyday", _("Everyday")
+        WEEKLY = "Weekly - a few times per week", _("Weekly - a few times per week")
+        MONTHLY = "Monthly - a few times per month", _("Monthly - a few times per month")
+        NOT_MUCH = "Not much at all - tried once or twice", _("Not much at all - tried once or twice")
+
+    class Usefulness(models.TextChoices):
+        NOT_USED = "I have not used GenAI", _("I have not used GenAI")
+        NOT_ENOUGH = (
+            "I have not used GenAI enough to say its useful or not",
+            _("I have not used GenAI enough to say its useful or not"),
+        )
+        NOT_FIGURED_OUT = (
+            "I have not figured out how to best use GenAI",
+            _("I have not figured out how to best use GenAI"),
+        )
+        FEW_THINGS = (
+            "I have found a few things GenAI really helps me with",
+            _("I have found a few things GenAI really helps me with"),
+        )
+        MANY_THINGS = (
+            "GenAI has proved useful for many different tasks",
+            _("GenAI has proved useful for many different tasks"),
+        )
+
+    class ConsiderUsingAI(models.TextChoices):
+        NO = "No", _("No")
+        MAYBE = "Maybe (or unsure)", _("Maybe (or unsure)")
+        YES = "Yes", _("Yes")
+        ALREADY_DO = "Yes! I already use GenAI for this", _("Yes! I already use GenAI for this")
+
+    class RegularityTasks(models.TextChoices):
+        DONT_DO = "I do not do this task", _("I do not do this task")
+        EVERYDAY = "Everyday", _("Everyday")
+        WEEKLY = "Weekly", _("Weekly")
+        MONTHLY = "Monthly", _("Monthly")
+        QUARTERLY = "Quarterly", _("Quarterly")
+        YEARLY = "Yearly", _("Yearly")
+
+    class DurationTasks(models.TextChoices):
+        DONT_DO = "I do not do this task", _("I do not do this task")
+        UP_TO_15_MINS = "1 to 15 minutes", _("1 to 15 minutes")
+        UP_TO_60_MINS = "15 to 60 minutes", _("15 to 60 minutes")
+        UP_TO_4_HOURS = "1 to 4 hours", _("1 to 4 hours")
+        UP_TO_8_HOURS = "4 to 8 hours", _("4 to 8 hours")
+        UP_TO_2_DAYS = "1 to 2 days", _("1 to 2 days")
+        MORE_THAN_2_DAYS = "More than 2 days", _("More than 2 days")
+        MORE_THAN_1_WEEK = "More than a week", _("More than a week")
+
     username = None
     verified = models.BooleanField(default=False, blank=True, null=True)
     invited_at = models.DateTimeField(default=None, blank=True, null=True)
@@ -291,7 +430,62 @@ class User(BaseUser, UUIDPrimaryKeyBase):
     )
     ai_settings = models.ForeignKey(AISettings, on_delete=models.SET_DEFAULT, default="default", to_field="label")
     is_developer = models.BooleanField(null=True, blank=True, default=False, help_text="is this user a developer?")
-    objects = BaseUserManager() if settings.LOGIN_METHOD != "sso" else SSOUserManager()
+
+    # Additional fields for sign-up form
+    # Page 1
+    role = models.CharField(null=True, blank=True, max_length=128)
+    # Page 2
+    accessibility_options = models.CharField(null=True, blank=True, max_length=64, choices=AccessibilityOptions)
+    accessibility_categories = models.CharField(null=True, blank=True, max_length=64, choices=AccessibilityCategories)
+    accessibility_description = models.CharField(null=True, blank=True, max_length=128)
+    # Page 3
+    digital_confidence = models.CharField(null=True, blank=True, max_length=128, choices=DigitalConfidence)
+    usage_at_work = models.CharField(null=True, blank=True, max_length=64, choices=RegularityAI)
+    usage_outside_work = models.CharField(null=True, blank=True, max_length=64, choices=RegularityAI)
+    how_useful = models.CharField(null=True, blank=True, max_length=64, choices=Usefulness)
+    # Page 4
+    task_1_description = models.CharField(null=True, blank=True, max_length=128)
+    task_1_regularity = models.CharField(null=True, blank=True, max_length=128)
+    task_1_duration = models.CharField(null=True, blank=True, max_length=128)
+    task_1_consider_using_ai = models.CharField(null=True, blank=True, max_length=64, choices=ConsiderUsingAI)
+    task_2_description = models.CharField(null=True, blank=True, max_length=128)
+    task_2_regularity = models.CharField(null=True, blank=True, max_length=128)
+    task_2_duration = models.CharField(null=True, blank=True, max_length=128)
+    task_2_consider_using_ai = models.CharField(null=True, blank=True, max_length=64, choices=ConsiderUsingAI)
+    task_3_description = models.CharField(null=True, blank=True, max_length=128)
+    task_3_regularity = models.CharField(null=True, blank=True, max_length=128)
+    task_3_duration = models.CharField(null=True, blank=True, max_length=128)
+    task_3_consider_using_ai = models.CharField(null=True, blank=True, max_length=64, choices=ConsiderUsingAI)
+    # Page 5
+    role_regularity_summarise_large_docs = models.CharField(
+        null=True, blank=True, max_length=32, choices=RegularityTasks
+    )
+    role_regularity_condense_multiple_docs = models.CharField(
+        null=True, blank=True, max_length=32, choices=RegularityTasks
+    )
+    role_regularity_search_across_docs = models.CharField(null=True, blank=True, max_length=32, choices=RegularityTasks)
+    role_regularity_compare_multiple_docs = models.CharField(
+        null=True, blank=True, max_length=32, choices=RegularityTasks
+    )
+    role_regularity_specific_template = models.CharField(null=True, blank=True, max_length=32, choices=RegularityTasks)
+    role_regularity_shorten_docs = models.CharField(null=True, blank=True, max_length=32, choices=RegularityTasks)
+    role_regularity_write_docs = models.CharField(null=True, blank=True, max_length=32, choices=RegularityTasks)
+    role_duration_summarise_large_docs = models.CharField(null=True, blank=True, max_length=32, choices=DurationTasks)
+    role_duration_condense_multiple_docs = models.CharField(null=True, blank=True, max_length=32, choices=DurationTasks)
+    role_duration_search_across_docs = models.CharField(null=True, blank=True, max_length=32, choices=DurationTasks)
+    role_duration_compare_multiple_docs = models.CharField(null=True, blank=True, max_length=32, choices=DurationTasks)
+    role_duration_specific_template = models.CharField(null=True, blank=True, max_length=32, choices=DurationTasks)
+    role_duration_shorten_docs = models.CharField(null=True, blank=True, max_length=32, choices=DurationTasks)
+    role_duration_write_docs = models.CharField(null=True, blank=True, max_length=32, choices=DurationTasks)
+    # Page 6
+    consent_research = models.BooleanField(null=True, blank=True, default=False)
+    consent_interviews = models.BooleanField(null=True, blank=True, default=False)
+    consent_feedback = models.BooleanField(null=True, blank=True, default=False)
+    consent_condfidentiality = models.BooleanField(null=True, blank=True, default=False)
+    consent_understand = models.BooleanField(null=True, blank=True, default=False)
+    consent_agreement = models.BooleanField(null=True, blank=True, default=False)
+
+    objects = BaseUserManager()
 
     def __str__(self) -> str:  # pragma: no cover
         return f"{self.email}"
@@ -371,7 +565,7 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
         self.original_file.delete(save=False)
 
     def delete_from_elastic(self):
-        index = f"{env.elastic_root_index}-chunk"
+        index = env.elastic_chunk_alias
         if es_client.indices.exists(index=index):
             es_client.delete_by_query(
                 index=index,
@@ -478,6 +672,7 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
 class Chat(UUIDPrimaryKeyBase, TimeStampedModel, AbstractAISettings):
     name = models.TextField(max_length=1024, null=False, blank=False)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
+    archived = models.BooleanField(default=False, null=True, blank=True)
 
     # Exit feedback - this is separate to the ratings for individual ChatMessages
     feedback_achieved = models.BooleanField(
@@ -496,7 +691,7 @@ class Chat(UUIDPrimaryKeyBase, TimeStampedModel, AbstractAISettings):
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
         self.name = sanitise_string(self.name)
 
-        if self.chat_backend is None:
+        if self.chat_backend_id is None:
             self.chat_backend = self.user.ai_settings.chat_backend
 
         if self.temperature is None:
@@ -511,7 +706,7 @@ class Chat(UUIDPrimaryKeyBase, TimeStampedModel, AbstractAISettings):
         """Returns all chat histories for a given user, ordered by the date of the latest message."""
         exclude_chat_ids = exclude_chat_ids or []
         return (
-            cls.objects.filter(user=user)
+            cls.objects.filter(user=user, archived=False)
             .exclude(id__in=exclude_chat_ids)
             .annotate(latest_message_date=Max("chatmessage__created_at"))
             .order_by("-latest_message_date")

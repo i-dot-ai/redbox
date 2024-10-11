@@ -1,3 +1,4 @@
+from decimal import Decimal
 from uuid import uuid4
 
 import pytest
@@ -263,3 +264,59 @@ def test_0042_chat_chat_backend_chat_chat_map_question_prompt_and_more(migrator)
 
     assert new_chat.chat_backend == chat.user.ai_settings.chat_backend
     assert new_chat.chat_backend is not None
+
+
+@pytest.mark.django_db()
+def test_0048_chatllmbackend_aisettings_new_chat_backend_and_more(migrator):
+    old_state = migrator.apply_initial_migration(
+        ("redbox_core", "0047_aisettings_agentic_give_up_question_prompt_and_more")
+    )
+
+    User = old_state.apps.get_model("redbox_core", "User")
+    user = User.objects.create(email="someone@example.com")
+
+    Chat = old_state.apps.get_model("redbox_core", "Chat")
+    gpt_chat = Chat.objects.create(name="my chat", user=user)
+    anthropic_chat = Chat.objects.create(
+        name="another chat", user=user, chat_backend="anthropic.claude-3-sonnet-20240229-v1:0"
+    )
+    other_chat = Chat.objects.create(name="another chat", user=user, chat_backend="some-cool-model-no-one-has-heard-of")
+
+    new_state = migrator.apply_tested_migration(
+        ("redbox_core", "0048_chatllmbackend_aisettings_new_chat_backend_and_more"),
+    )
+
+    new_chat_model = new_state.apps.get_model("redbox_core", "Chat")
+    new_gpt_chat = new_chat_model.objects.get(id=gpt_chat.id)
+    new_anthropic_chat = new_chat_model.objects.get(id=anthropic_chat.id)
+    new_other_chat = new_chat_model.objects.get(id=other_chat.id)
+
+    assert new_gpt_chat.chat_backend.name == "gpt-4o"
+    assert new_gpt_chat.chat_backend.provider == "azure_openai"
+
+    assert new_anthropic_chat.chat_backend.name == "anthropic.claude-3-sonnet-20240229-v1:0"
+    assert new_anthropic_chat.chat_backend.provider == "bedrock"
+
+    assert new_other_chat.chat_backend.name == "some-cool-model-no-one-has-heard-of"
+    assert new_other_chat.chat_backend.provider == "openai"
+
+
+def test_0050_aisettings_match_description_boost_and_more(migrator):
+    old_state = migrator.apply_initial_migration(("redbox_core", "0049_user_accessibility_categories_and_more"))
+
+    AISettings = old_state.apps.get_model("redbox_core", "AISettings")
+    ChatLLMBackend = old_state.apps.get_model("redbox_core", "ChatLLMBackend")
+    ai_settings = AISettings.objects.create(chat_backend=ChatLLMBackend.objects.first())
+    assert not hasattr(ai_settings, "match_description_boost")
+    assert ai_settings.similarity_threshold == Decimal("0.00")
+    assert not hasattr(ai_settings, "match_keywords_boost")
+
+    new_state = migrator.apply_tested_migration(
+        ("redbox_core", "0050_aisettings_match_description_boost_and_more"),
+    )
+
+    NEWAISettings = new_state.apps.get_model("redbox_core", "AISettings")  # noqa: N806
+    new_ai_settings = NEWAISettings.objects.get(label=ai_settings.label)
+    assert new_ai_settings.match_description_boost == Decimal("0.50")
+    assert new_ai_settings.similarity_threshold == Decimal("0.00")
+    assert new_ai_settings.match_keywords_boost == Decimal("0.50")

@@ -122,6 +122,30 @@ def build_document_query(
                         },
                     },
                     {
+                        "match": {
+                            "metadata.name": {
+                                "query": query,
+                                "boost": ai_settings.match_name_boost,
+                            }
+                        }
+                    },
+                    {
+                        "match": {
+                            "metadata.description": {
+                                "query": query,
+                                "boost": ai_settings.match_description_boost,
+                            }
+                        }
+                    },
+                    {
+                        "match": {
+                            "metadata.keywords": {
+                                "query": query,
+                                "boost": ai_settings.match_keywords_boost,
+                            }
+                        }
+                    },
+                    {
                         "knn": {
                             "field": embedding_field_name,
                             "query_vector": query_vector,
@@ -172,7 +196,7 @@ def add_document_filter_scores_to_query(
     gauss_functions: list[dict[str, Any]] = []
     gauss_scale = ai_settings.rag_gauss_scale_size
     gauss_decay = ai_settings.rag_gauss_scale_decay
-    scores = [d.metadata.get("score", 0) for d in centres]
+    scores = [d.metadata["score"] for d in centres]
     old_min = min(scores)
     old_max = max(scores)
     new_min = ai_settings.rag_gauss_scale_min

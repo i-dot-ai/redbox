@@ -36,6 +36,7 @@ locals {
     "EMBEDDING_RETRY_MIN_SECONDS" : var.embedding_retry_min_seconds,
     "EMBEDDING_RETRY_MAX_SECONDS" : var.embedding_retry_max_seconds,
     "ELASTIC_ROOT_INDEX" : "redbox-data-${terraform.workspace}",
+    "ELASTIC_CHUNK_ALIAS" : "redbox-data-${terraform.workspace}-chunk-current",
     "BUCKET_NAME" : aws_s3_bucket.user_data.bucket,
     "OBJECT_STORE" : "s3",
     "ENVIRONMENT" : upper(terraform.workspace),
@@ -50,23 +51,9 @@ locals {
     "ELASTIC__API_KEY" : var.elastic_api_key,
     "ELASTIC__CLOUD_ID" : var.cloud_id,
 
-    "AZURE_OPENAI_API_KEY_35T" : var.azure_openai_api_key_35t,
-    "AZURE_OPENAI_FALLBACK_API_KEY_35T" : var.azure_openai_fallback_api_key_35t,
-    "AZURE_OPENAI_ENDPOINT_35T" : var.azure_openai_endpoint_35t,
-    "AZURE_OPENAI_FALLBACK_ENDPOINT_35T" : var.azure_openai_fallback_endpoint_35t,
-    "OPENAI_API_VERSION_35T" : var.openai_api_version_35t,
-
-    "AZURE_OPENAI_API_KEY_4T" : var.azure_openai_api_key_4t,
-    "AZURE_OPENAI_FALLBACK_API_KEY_4T" : var.azure_openai_fallback_api_key_4t,
-    "AZURE_OPENAI_ENDPOINT_4T" : var.azure_openai_endpoint_4t,
-    "AZURE_OPENAI_FALLBACK_ENDPOINT_4T" : var.azure_openai_fallback_endpoint_4t,
-    "OPENAI_API_VERSION_4T" : var.openai_api_version_4t,
-
-    "AZURE_OPENAI_API_KEY_4O" : var.azure_openai_api_key_4o,
-    "AZURE_OPENAI_FALLBACK_API_KEY_4O" : var.azure_openai_fallback_api_key_4o,
-    "AZURE_OPENAI_ENDPOINT_4O" : var.azure_openai_endpoint_4o,
-    "AZURE_OPENAI_FALLBACK_ENDPOINT_4O" : var.azure_openai_fallback_endpoint_4o,
-    "OPENAI_API_VERSION_4O" : var.openai_api_version_4o,
+    "AZURE_OPENAI_API_KEY": var.azure_openai_api_key,
+    "AZURE_OPENAI_ENDPOINT" : var.azure_openai_endpoint,
+    "OPENAI_API_VERSION": var.openai_api_version,
 
     "EMBEDDING_OPENAI_API_KEY" : var.embedding_openai_api_key,
     "EMBEDDING_AZURE_OPENAI_ENDPOINT" : var.embedding_azure_openai_endpoint,
@@ -116,3 +103,4 @@ data "terraform_remote_state" "universal" {
     region = var.region
   }
 }
+

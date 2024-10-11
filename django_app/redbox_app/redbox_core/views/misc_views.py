@@ -17,7 +17,7 @@ def homepage_view(request):
     return render(
         request,
         template_name="homepage.html",
-        context={"request": request},
+        context={"request": request, "allow_sign_ups": settings.ALLOW_SIGN_UPS},
     )
 
 

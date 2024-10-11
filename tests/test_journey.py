@@ -78,7 +78,7 @@ def test_user_journey(page: Page, email_address: str):
     latest_chat_response = chats_page.wait_for_latest_message()
     assert latest_chat_response.text
     # Commented out until we make this visible
-    assert chats_page.selected_llm == "gpt-4o"
+    assert chats_page.selected_llm == "gpt-4o (default)"
 
     # Give user feedback
     chats_page.feedback_stars = 2
@@ -99,17 +99,19 @@ def test_user_journey(page: Page, email_address: str):
     assert latest_chat_response.text
 
     # Use specific routes
-    for route, select_file, should_have_citation in [
-        ("search", False, True),
-        ("search", True, True),
+    for keyword, route, select_file, should_have_citation in [
+        ("search", "search", False, True),
+        ("search", "search", True, True),
+        ("gadget", "search", False, True),
+        ("gadget", "search", True, True),
     ]:
-        question = f"@{route} What do I need to install?"
+        question = f"@{keyword} What do I need to install?"
         logger.info("Asking %r", question)
         chats_page.write_message = question
         if select_file:
-            files_to_select = {f.name for f in upload_files if "README" in f.name}
-            chats_page.selected_file_names = files_to_select
-            logger.info("selected %s", files_to_select)
+            current_files = files_to_select.copy()
+            chats_page.selected_file_names = current_files
+            logger.info("selected %s", current_files)
         else:
             chats_page.selected_file_names = []
         chats_page = chats_page.send()
@@ -119,7 +121,7 @@ def test_user_journey(page: Page, email_address: str):
         if should_have_citation:
             citations_page = latest_chat_response.navigate_to_citations()
             chats_page = citations_page.back_to_chat()
-            assert files_to_select.pop() in latest_chat_response.sources
+            assert any(file in latest_chat_response.sources for file in files_to_select)
         else:
             assert len(latest_chat_response.sources) == 0
 
@@ -129,6 +131,12 @@ def test_user_journey(page: Page, email_address: str):
     document_delete_page = documents_page.delete_latest_document()
     documents_page = document_delete_page.confirm_deletion()
     assert documents_page.document_count() == pre_delete_doc_count - 1
+
+    # Delete a chat
+    chats_page = documents_page.navigate_to_chats()
+    pre_chats_count = chats_page.count_chats()
+    chats_page.delete_first_chat()
+    assert chats_page.count_chats() == pre_chats_count - 1
 
 
 def test_support_pages(page: Page):

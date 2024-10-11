@@ -1,24 +1,19 @@
+from collections.abc import Generator
 from typing import TYPE_CHECKING
-from pathlib import Path
-from uuid import UUID, uuid4
 
 import pytest
+import tiktoken
 from _pytest.fixtures import FixtureRequest
 from botocore.exceptions import ClientError
 from elasticsearch import Elasticsearch
-import tiktoken
+from langchain_core.embeddings.fake import FakeEmbeddings
+from langchain_elasticsearch import ElasticsearchStore
 from tiktoken.core import Encoding
 
 from redbox.models import Settings
-
-from collections.abc import Generator
-
-from langchain_core.embeddings.fake import FakeEmbeddings
-from langchain_elasticsearch import ElasticsearchStore
-
-from redbox.retriever import AllElasticsearchRetriever, ParameterisedElasticsearchRetriever, MetadataRetriever
+from redbox.retriever import AllElasticsearchRetriever, MetadataRetriever, ParameterisedElasticsearchRetriever
 from redbox.test.data import RedboxChatTestCase
-from tests.retriever.data import ALL_CHUNKS_RETRIEVER_CASES, PARAMETERISED_RETRIEVER_CASES, METADATA_RETRIEVER_CASES
+from tests.retriever.data import ALL_CHUNKS_RETRIEVER_CASES, METADATA_RETRIEVER_CASES, PARAMETERISED_RETRIEVER_CASES
 
 if TYPE_CHECKING:
     from mypy_boto3_s3.client import S3Client
@@ -72,12 +67,7 @@ def es_index(env: Settings) -> str:
 
 
 @pytest.fixture(scope="session")
-def es_index_file(env: Settings) -> str:
-    return f"{env.elastic_root_index}-file"
-
-
-@pytest.fixture(scope="session")
-def es_client(env: Settings, es_index: str, es_index_file: str) -> Elasticsearch:
+def es_client(env: Settings) -> Elasticsearch:
     return env.elasticsearch_client()
 
 
@@ -95,15 +85,12 @@ def es_vector_store(
 
 
 @pytest.fixture(autouse=True, scope="session")
-def create_index(env: Settings, es_index: str, es_index_file: str) -> Generator[None, None, None]:
+def create_index(env: Settings, es_index: str) -> Generator[None, None, None]:
     es = env.elasticsearch_client()
     if not es.indices.exists(index=es_index):
         es.indices.create(index=es_index)
-    if not es.indices.exists(index=es_index_file):
-        es.indices.create(index=es_index_file)
     yield
     es.indices.delete(index=es_index)
-    es.indices.delete(index=es_index_file)
 
 
 @pytest.fixture(scope="session")
@@ -134,42 +121,6 @@ def metadata_retriever(es_client: Elasticsearch, es_index: str) -> MetadataRetri
 # -----#
 # Data #
 # -----#
-
-
-@pytest.fixture()
-def alice() -> UUID:
-    return uuid4()
-
-
-@pytest.fixture()
-def bob() -> UUID:
-    return uuid4()
-
-
-@pytest.fixture()
-def claire() -> UUID:
-    return uuid4()
-
-
-@pytest.fixture
-def file_pdf_path() -> Path:
-    return Path(__file__).parents[2] / "tests" / "data" / "pdf" / "Cabinet Office - Wikipedia.pdf"
-
-
-@pytest.fixture()
-def file(s3_client: S3Client, file_pdf_path: Path, alice: UUID, env: Settings) -> str:
-    file_name = file_pdf_path.name
-    file_type = file_pdf_path.suffix
-
-    with file_pdf_path.open("rb") as f:
-        s3_client.put_object(
-            Bucket=env.bucket_name,
-            Body=f.read(),
-            Key=file_name,
-            Tagging=f"file_type={file_type}",
-        )
-
-    return file_name
 
 
 @pytest.fixture(params=ALL_CHUNKS_RETRIEVER_CASES)

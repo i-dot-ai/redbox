@@ -1,14 +1,8 @@
 import os
-from pathlib import Path
 
 import boto3
 import pytest
 from botocore.exceptions import ClientError
-
-
-@pytest.fixture()
-def file_path() -> Path:
-    return Path(__file__).parent / "data" / "html" / "example.html"
 
 
 @pytest.fixture(autouse=True)

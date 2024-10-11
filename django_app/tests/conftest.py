@@ -17,6 +17,7 @@ from freezegun import freeze_time
 from redbox_app.redbox_core.models import (
     AISettings,
     Chat,
+    ChatLLMBackend,
     ChatMessage,
     ChatMessageTokenUse,
     ChatRoleEnum,
@@ -63,10 +64,15 @@ def _collect_static():
     call_command("collectstatic", "--no-input")
 
 
+@pytest.fixture(autouse=True)
+def default_ai_settings(db):  # noqa: ARG001
+    gpt_4o, _ = ChatLLMBackend.objects.get_or_create(name="gpt-4o", provider="azure_openai", is_default=True)
+    ai_settings, _ = AISettings.objects.get_or_create(label="default", chat_backend=gpt_4o)
+    return ai_settings
+
+
 @pytest.fixture()
 def create_user():
-    AISettings.objects.get_or_create(label="default")
-
     def _create_user(
         email,
         date_joined_iso,
@@ -99,23 +105,18 @@ def alice(create_user):
 
 
 @pytest.fixture()
+def chat_with_alice(alice):
+    return Chat.objects.create(name="a chat", user=alice)
+
+
+@pytest.fixture()
 def bob(create_user):
     return create_user("bob@example.com", "2000-01-01")
 
 
 @pytest.fixture()
-def chris(create_user):
-    return create_user("chris@example.com", "2000-01-02")
-
-
-@pytest.fixture()
 def peter_rabbit():
     return User.objects.create_user(email="peter.rabbit@example.com", password="P455W0rd")
-
-
-@pytest.fixture()
-def jemima_puddleduck():
-    return User.objects.create_user(email="jemima.puddleduck@example.com", password="P455W0rd")
 
 
 @pytest.fixture()
@@ -154,6 +155,12 @@ def file_py_path() -> Path:
 def chat(alice: User) -> Chat:
     session_id = uuid.uuid4()
     return Chat.objects.create(id=session_id, user=alice, name="A chat")
+
+
+@pytest.fixture()
+def chat_with_message(chat: Chat) -> Chat:
+    ChatMessage.objects.create(chat=chat, text="today", role=ChatRoleEnum.user)
+    return chat
 
 
 @pytest.fixture()
@@ -219,21 +226,6 @@ def chat_with_files(chat: Chat, several_files: Sequence[File]) -> Chat:
     chat_message.selected_files.set(several_files[0:2])
     chat_message = ChatMessage.objects.create(chat=chat, text="A second answer.", role=ChatRoleEnum.ai, route="search")
     chat_message.source_files.set([several_files[2]])
-    return chat
-
-
-@pytest.fixture()
-def chat_with_messages_over_time(chat: Chat) -> Chat:
-    now = timezone.now()
-    with freeze_time(now - timedelta(days=40)):
-        ChatMessage.objects.create(chat=chat, text="40 days old", role=ChatRoleEnum.user)
-    with freeze_time(now - timedelta(days=20)):
-        ChatMessage.objects.create(chat=chat, text="20 days old", role=ChatRoleEnum.user)
-    with freeze_time(now - timedelta(days=5)):
-        ChatMessage.objects.create(chat=chat, text="5 days old", role=ChatRoleEnum.user)
-    with freeze_time(now - timedelta(days=1)):
-        ChatMessage.objects.create(chat=chat, text="yesterday", role=ChatRoleEnum.user)
-    ChatMessage.objects.create(chat=chat, text="today", role=ChatRoleEnum.user)
     return chat
 
 

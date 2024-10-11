@@ -96,8 +96,8 @@ def ai_experiment_data() -> ExperimentData:
 
 
 @pytest.fixture(scope="session")
-def llm(env: Settings) -> ChatLiteLLM:
-    return get_chat_llm(env)
+def llm() -> ChatLiteLLM:
+    return get_chat_llm("gpt-my-model")
 
 
 @pytest.fixture(scope="session")
@@ -128,7 +128,7 @@ def eval_llm(env: Settings) -> DeepEvalBaseLLM:
         def get_model_name(self):
             return "Custom LiteLLM Model"
 
-    return ChatLiteLLMDeepEval(model=get_chat_llm(env))
+    return ChatLiteLLMDeepEval(model=get_chat_llm("my-model"))
 
 
 @pytest.fixture(scope="session")

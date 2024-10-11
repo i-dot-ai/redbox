@@ -1,0 +1,101 @@
+{% set pageTitle = "Accessibility" %}
+{% extends "base.html" %}
+{% from "macros/govuk-button.html" import govukButton %}
+
+{% block content %}
+
+  <div class="govuk-width-container">
+
+    <div class="govuk-grid-row">
+      <div class="govuk-grid-column-two-thirds">
+        <h1 class="govuk-heading-l govuk-!-margin-bottom-3">Accessibility</h1>
+        <p class="govuk-body-l">Step 2 of 6</p>
+      </div>
+    </div>
+
+    {% if form.errors %}
+      <div class="govuk-error-summary" data-module="govuk-error-summary">
+        <div role="alert">
+          <div class="govuk-error-summary__body">
+            <ul class="govuk-list govuk-error-summary__list">
+              {% for field, error in form.errors.items() %}
+                <li>{{ field }} : {{ error }}</li>
+              {% endfor %}
+            </ul>
+          </div>
+        </div>
+      </div>
+    {% endif %}
+
+    <form method='post'>
+
+      <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+
+      <div class="govuk-form-group">
+        <fieldset class="govuk-fieldset">
+          <legend class="govuk-fieldset__legend">
+            {{ form.accessibility_options.label }}
+          </legend>
+          <div class="govuk-radios">
+            {% for value, label in form.accessibility_options.field.choices %}
+              {% if value %}
+                <div class="govuk-radios__item">
+                  <input class="govuk-radios__input" type="radio"
+                        id="accessibility_options_{{ loop.index0 }}"
+                        name="{{ form.accessibility_options.name }}"
+                        value="{{ value }}"
+                        {% if value|string == form.accessibility_options.value()|string %}checked{% endif %}
+                        aria-describedby="accessibility_options_{{ loop.index0 }}-hint">
+                  <label class="govuk-label govuk-radios__label"
+                        for="accessibility_options_{{ loop.index0 }}">
+                    {{ value }}
+                  </label>
+                </div>
+              {% endif %}
+            {% endfor %}
+          </div>
+        </fieldset>
+      </div>
+
+      <div class="govuk-form-group">
+        <fieldset class="govuk-fieldset">
+          <legend class="govuk-fieldset__legend">
+            {{ form.accessibility_categories.label }}
+          </legend>
+          <div class="govuk-checkboxes">
+            {% for value, label in form.accessibility_categories.field.choices %}
+              {% if value %}
+                <div class="govuk-radios__item">
+                  <input class="govuk-checkboxes__input" type="checkbox"
+                        id="accessibility_categories_{{ loop.index0 }}"
+                        name="{{ form.accessibility_categories.name }}"
+                        value="{{ value }}"
+                        {% if value|string == form.accessibility_categories.value()|string %}checked{% endif %}
+                        aria-describedby="accessibility_categories_{{ loop.index0 }}-hint">
+                  <label class="govuk-label govuk-checkboxes__label"
+                        for="accessibility_categories_{{ loop.index0 }}">
+                    {{ value }}
+                  </label>
+                </div>
+              {% endif %}
+            {% endfor %}
+          </div>
+        </fieldset>
+      </div>
+
+      <div class="govuk-form-group">
+        <label class="govuk-label" for="{{ form.accessibility_description.id_for_label }}">
+          {{ form.accessibility_description.label }}
+        </label>
+        {{ form.accessibility_description }}
+      </div>
+
+      <div class="govuk-button-group">
+        {{ govukButton(text="Continue") }}
+      </div>
+
+    </form>
+
+  </div>
+
+{% endblock %}

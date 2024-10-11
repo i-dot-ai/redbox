@@ -337,7 +337,7 @@ class ChatsPage(SignedInBasePage):
 
     @property
     def selected_llm(self) -> str:
-        return self.page.locator("#llm-selector").input_value()
+        return self.page.locator("#llm-selector").inner_text()
 
     @property
     def write_message(self) -> str:
@@ -397,6 +397,16 @@ class ChatsPage(SignedInBasePage):
     def start_new_chat(self) -> "ChatsPage":
         self.page.get_by_role("button", name="New chat").click()
         return ChatsPage(self.page)
+
+    def delete_first_chat(self) -> "ChatsPage":
+        self.page.locator(".rb-chat-history__actions-button").first.click()
+        self.page.locator('[data-action="delete"]').first.click()
+        self.page.locator('[data-action="delete-confirm"]').first.click()
+        return ChatsPage(self.page)
+
+    def count_chats(self) -> "ChatsPage":
+        chat_links = self.page.locator(".rb-chat-history__link").all()
+        return len(chat_links)
 
     def send(self) -> "ChatsPage":
         self.page.locator('.rb-send-button[type="submit"]').click()

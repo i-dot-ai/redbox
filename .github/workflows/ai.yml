@@ -15,6 +15,7 @@ on:
   #     - "main"
 
 permissions:
+  id-token: write
   contents: read
 
 jobs:
@@ -41,7 +42,7 @@ jobs:
         mkdir -p data/elastic/
         chmod 777 data/elastic/
 
-        cp .env.test .env
+        cp tests/.env.test .env
         echo AZURE_OPENAI_ENDPOINT=${{ secrets.AZURE_OPENAI_ENDPOINT }} >> .env
         echo AZURE_OPENAI_API_KEY=${{ secrets.AZURE_OPENAI_API_KEY }} >> .env
         echo AZURE_OPENAI_MODEL=azure/gpt-4 >> .env

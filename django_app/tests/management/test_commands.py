@@ -1,3 +1,4 @@
+import json
 from datetime import UTC, datetime, timedelta
 from io import StringIO
 from unittest.mock import MagicMock, patch
@@ -10,7 +11,9 @@ from django.contrib.auth import get_user_model
 from django.core.management import CommandError, call_command
 from django.utils import timezone
 from freezegun import freeze_time
+from langchain_core.language_models.fake_chat_models import GenericFakeChatModel
 from magic_link.models import MagicLink
+from pytest_mock import MockerFixture
 from requests_mock import Mocker
 
 from redbox_app.redbox_core.models import Chat, ChatMessage, ChatRoleEnum, File, StatusEnum
@@ -164,7 +167,7 @@ def test_delete_expired_chats(chat: Chat, msg_1_date: datetime, msg_2_date: date
 
 
 @pytest.mark.django_db(transaction=True)
-def test_reingest_files(uploaded_file: File, requests_mock: Mocker, mocker):
+def test_reingest_files(uploaded_file: File, requests_mock: Mocker, mocker: MockerFixture):
     # Given
     assert uploaded_file.status == StatusEnum.processing
 
@@ -174,8 +177,25 @@ def test_reingest_files(uploaded_file: File, requests_mock: Mocker, mocker):
     )
 
     # When
-    with mocker.patch("redbox.chains.ingest.VectorStore.add_documents", return_value=[]):
-        call_command("reingest_files", sync=True)
+    mocker.patch("redbox.chains.ingest.VectorStore.add_documents", return_value=[])
+    mocker.patch(
+        "redbox.loader.loaders.get_chat_llm",
+        return_value=GenericFakeChatModel(
+            messages=iter(
+                [
+                    json.dumps(
+                        {
+                            "name": "foo",
+                            "description": "more test",
+                            "keywords": "hello, world",
+                        }
+                    )
+                ]
+            )
+        ),
+    )
+
+    call_command("reingest_files", sync=True)
 
     # Then
     uploaded_file.refresh_from_db()
@@ -190,6 +210,23 @@ def test_reingest_files_unstructured_fail(uploaded_file: File, requests_mock: Mo
     requests_mock.post(
         f"http://{settings.UNSTRUCTURED_HOST}:8000/general/v0/general",
         json=[],
+    )
+
+    mocker.patch(
+        "redbox.loader.loaders.get_chat_llm",
+        return_value=GenericFakeChatModel(
+            messages=iter(
+                [
+                    json.dumps(
+                        {
+                            "name": "foo",
+                            "description": "more test",
+                            "keywords": "hello, world",
+                        }
+                    )
+                ]
+            )
+        ),
     )
 
     # When
