@@ -18,5 +18,23 @@
                 "ELASTIC__HOST": "localhost"
             }
         },
+        
+        {
+            "name": "Worker",
+            "type": "debugpy",
+            "request": "launch",
+            "gevent": true,
+            "program": "venv/bin/django-admin",
+            "args": [
+                "qcluster",
+            ],
+            "envFile": "${workspaceFolder}/../.env",
+            "env": {
+                "MINIO_HOST": "localhost",
+                "POSTGRES_HOST": "localhost",
+                "UNSTRUCTURED_HOST": "localhost",
+                "ELASTIC__HOST": "localhost"
+            }
+        },
     ]
 }
