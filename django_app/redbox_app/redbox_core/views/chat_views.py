@@ -54,9 +54,10 @@ class ChatsView(View):
             "chat_title_length": settings.CHAT_TITLE_LENGTH,
             "llm_options": [
                 {
-                    "name": chat_llm_backend.name,
+                    "name": str(chat_llm_backend),
                     "default": chat_llm_backend.is_default,
                     "selected": chat_llm_backend == chat_backend,
+                    "disabled": not chat_llm_backend.enabled,
                     "id": chat_llm_backend.id,
                 }
                 for chat_llm_backend in ChatLLMBackend.objects.filter(enabled=True)
