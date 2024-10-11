@@ -225,8 +225,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
     @database_sync_to_async
     def get_ai_settings(chat: Chat) -> AISettings:
         ai_settings = model_to_dict(chat.user.ai_settings, exclude=["label", "chat_backend"])
-        chat_backend = model_to_dict(chat.user.ai_settings.chat_backend)
-        ai_settings["chat_backend"] = chat_backend
+        ai_settings["chat_backend"] = model_to_dict(chat.chat_backend)
         return AISettings.model_validate(ai_settings)
 
     async def handle_text(self, response: str) -> str:
