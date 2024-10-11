@@ -337,7 +337,7 @@ class ChatsPage(SignedInBasePage):
 
     @property
     def selected_llm(self) -> str:
-        return self.page.locator("#llm-selector").input_value()
+        return self.page.locator("#llm-selector").inner_text()
 
     @property
     def write_message(self) -> str:

@@ -27,6 +27,9 @@ from redbox.models.chain import (
 )
 from redbox_app.redbox_core import error_messages
 from redbox_app.redbox_core.models import (
+    AISettings as AISettingsModel,
+)
+from redbox_app.redbox_core.models import (
     Chat,
     ChatLLMBackend,
     ChatMessage,
@@ -77,20 +80,26 @@ class ChatConsumer(AsyncWebsocketConsumer):
         user_message_text: str = data.get("message", "")
         selected_file_uuids: Sequence[UUID] = [UUID(u) for u in data.get("selectedFiles", [])]
         user: User = self.scope.get("user")
-        temperature = data.get("temperature")
+
+        user_ai_settings = await AISettingsModel.objects.aget(label=user.ai_settings_id)
+
+        chat_backend = await ChatLLMBackend.objects.aget(id=data.get("llm", user_ai_settings.chat_backend_id))
+        temperature = data.get("temperature", user_ai_settings.temperature)
 
         if session_id := data.get("sessionId"):
             session = await Chat.objects.aget(id=session_id)
-
-            if llm := data.get("llm"):
-                chat_backend = await ChatLLMBackend.objects.aget(name=llm)
-                logger.debug("updating: chat_backend=%s -> ai_settings=%s", session.chat_backend, chat_backend)
-                session.chat_backend = chat_backend
+            session.chat_backend = chat_backend
             session.temperature = temperature
+            logger.info("updating session: chat_backend=%s temperature=%s", chat_backend, temperature)
             await session.asave()
         else:
-            logger.debug("creating new Chat session")
-            session = await Chat.objects.acreate(name=user_message_text[: settings.CHAT_TITLE_LENGTH], user=user)
+            logger.info("creating session: chat_backend=%s temperature=%s", chat_backend, temperature)
+            session = await Chat.objects.acreate(
+                name=user_message_text[: settings.CHAT_TITLE_LENGTH],
+                user=user,
+                chat_backend=chat_backend,
+                temperature=temperature,
+            )
 
         # save user message
         permitted_files = File.objects.filter(user=user, status=StatusEnum.complete)
@@ -216,8 +225,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
     @database_sync_to_async
     def get_ai_settings(chat: Chat) -> AISettings:
         ai_settings = model_to_dict(chat.user.ai_settings, exclude=["label", "chat_backend"])
-        chat_backend = model_to_dict(chat.user.ai_settings.chat_backend)
-        ai_settings["chat_backend"] = chat_backend
+        ai_settings["chat_backend"] = model_to_dict(chat.chat_backend)
         return AISettings.model_validate(ai_settings)
 
     async def handle_text(self, response: str) -> str:
