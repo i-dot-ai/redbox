@@ -14,16 +14,29 @@ class Command(BaseCommand):
     help = """This should be used to bulk update user data."""
 
     def add_arguments(self, parser):
-        """sync only to be used for testing"""
-        parser.add_argument("file-id", nargs="1", type=str)
+        """id of file to use for update"""
+        parser.add_argument("file_id", nargs=None, type=str)
 
     def handle(self, *_args, **kwargs):
-        obj = File.objects.get(id=kwargs["file-id"])
-        rows = obj.file.open("r").readlines()
+        obj = File.objects.get(id=kwargs["file_id"])
 
-        for row in rows:
-            json_row = json.loads(row)
+        for line in obj.original_file.open("r"):
+            json_row = json.loads(line)
+
+            def f(value):
+                if isinstance(value, str) and " - " in value:
+                    return value.split("-")[0][:-1]
+                return value
+
+            json_row = {k: f(v) for k, v in json_row.items()}
+
             try:
-                USER.objects.update_or_create(**json_row)
-            except Exception as e:  # noqa: BLE001
-                logger.error("failed to update_or_create %s because %s", json_row["email"], e)  # noqa: TRY400
+                user = USER.objects.get(email=json_row["email"])
+                for k, v in json_row.items():
+                    setattr(user, k, v)
+                user.save()
+            except USER.DoesNotExist:
+                try:
+                    USER.objects.create(**json_row)
+                except Exception as e:  # noqa: BLE001
+                    logger.error("failed to set %s because %s", json_row, e)  # noqa: TRY400

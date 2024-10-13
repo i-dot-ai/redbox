@@ -9,14 +9,13 @@ import boto3
 import jwt
 from botocore.config import Config
 from django.conf import settings
+from django.contrib.auth.base_user import BaseUserManager as BaseSSOUserManager
 from django.contrib.postgres.fields import ArrayField
 from django.core import validators
 from django.db import models
 from django.db.models import Max, Min, Prefetch, UniqueConstraint
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
-from django.contrib.auth.base_user import BaseUserManager as BaseSSOUserManager
-from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
 from django_use_email_as_username.models import BaseUser, BaseUserManager
 from yarl import URL
 
@@ -166,7 +165,6 @@ class AISettings(UUIDPrimaryKeyBase, TimeStampedModel, AbstractAISettings):
 
 
 class SSOUserManager(BaseSSOUserManager):
-
     use_in_migrations = True
 
     def _create_user(self, username, password, **extra_fields):
@@ -195,6 +193,7 @@ class SSOUserManager(BaseSSOUserManager):
             raise ValueError("Superuser must have is_superuser=True.")
 
         return self._create_user(username, password, **extra_fields)
+
 
 class User(BaseUser, UUIDPrimaryKeyBase):
     class UserGrade(models.TextChoices):
@@ -433,28 +432,28 @@ class User(BaseUser, UUIDPrimaryKeyBase):
 
     # Additional fields for sign-up form
     # Page 1
-    role = models.CharField(null=True, blank=True, max_length=128)
+    role = models.TextField(null=True, blank=True)
     # Page 2
     accessibility_options = models.CharField(null=True, blank=True, max_length=64, choices=AccessibilityOptions)
     accessibility_categories = models.CharField(null=True, blank=True, max_length=64, choices=AccessibilityCategories)
-    accessibility_description = models.CharField(null=True, blank=True, max_length=128)
+    accessibility_description = models.TextField(null=True, blank=True)
     # Page 3
     digital_confidence = models.CharField(null=True, blank=True, max_length=128, choices=DigitalConfidence)
     usage_at_work = models.CharField(null=True, blank=True, max_length=64, choices=RegularityAI)
     usage_outside_work = models.CharField(null=True, blank=True, max_length=64, choices=RegularityAI)
     how_useful = models.CharField(null=True, blank=True, max_length=64, choices=Usefulness)
     # Page 4
-    task_1_description = models.CharField(null=True, blank=True, max_length=128)
-    task_1_regularity = models.CharField(null=True, blank=True, max_length=128)
-    task_1_duration = models.CharField(null=True, blank=True, max_length=128)
+    task_1_description = models.TextField(null=True, blank=True)
+    task_1_regularity = models.TextField(null=True, blank=True)
+    task_1_duration = models.TextField(null=True, blank=True)
     task_1_consider_using_ai = models.CharField(null=True, blank=True, max_length=64, choices=ConsiderUsingAI)
-    task_2_description = models.CharField(null=True, blank=True, max_length=128)
-    task_2_regularity = models.CharField(null=True, blank=True, max_length=128)
-    task_2_duration = models.CharField(null=True, blank=True, max_length=128)
+    task_2_description = models.TextField(null=True, blank=True)
+    task_2_regularity = models.TextField(null=True, blank=True)
+    task_2_duration = models.TextField(null=True, blank=True)
     task_2_consider_using_ai = models.CharField(null=True, blank=True, max_length=64, choices=ConsiderUsingAI)
-    task_3_description = models.CharField(null=True, blank=True, max_length=128)
-    task_3_regularity = models.CharField(null=True, blank=True, max_length=128)
-    task_3_duration = models.CharField(null=True, blank=True, max_length=128)
+    task_3_description = models.TextField(null=True, blank=True)
+    task_3_regularity = models.TextField(null=True, blank=True)
+    task_3_duration = models.TextField(null=True, blank=True)
     task_3_consider_using_ai = models.CharField(null=True, blank=True, max_length=64, choices=ConsiderUsingAI)
     # Page 5
     role_regularity_summarise_large_docs = models.CharField(

@@ -93,12 +93,8 @@ class Settings(BaseSettings):
     worker_ingest_largest_chunk_size: int = 300_000
     worker_ingest_largest_chunk_overlap: int = 0
 
-    response_no_doc_available: str = (
-        "No available data for selected files. They may need to be removed and added again"
-    )
-    response_max_content_exceeded: str = (
-        "Max content exceeded. Try smaller or fewer documents"
-    )
+    response_no_doc_available: str = "No available data for selected files. They may need to be removed and added again"
+    response_max_content_exceeded: str = "Max content exceeded. Try smaller or fewer documents"
 
     object_store: str = "minio"
 
@@ -107,9 +103,7 @@ class Settings(BaseSettings):
 
     unstructured_host: str = "unstructured"
 
-    model_config = SettingsConfigDict(
-        env_file=".env", env_nested_delimiter="__", extra="allow", frozen=True
-    )
+    model_config = SettingsConfigDict(env_file=".env", env_nested_delimiter="__", extra="allow", frozen=True)
 
     ## Prompts
     metadata_prompt: tuple = (
@@ -138,9 +132,7 @@ class Settings(BaseSettings):
                 basic_auth=(self.elastic.user, self.elastic.password),
             )
         else:
-            client = Elasticsearch(
-                cloud_id=self.elastic.cloud_id, api_key=self.elastic.api_key
-            )
+            client = Elasticsearch(cloud_id=self.elastic.cloud_id, api_key=self.elastic.api_key)
 
         return client.options(request_timeout=30, retry_on_timeout=True, max_retries=3)
 
