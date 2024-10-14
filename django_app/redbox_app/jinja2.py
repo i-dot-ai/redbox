@@ -100,8 +100,8 @@ def environment(**options):
             "environment": settings.ENVIRONMENT.value,
             "security": settings.MAX_SECURITY_CLASSIFICATION.value,
             "waffle_flag": waffle.flag_is_active,
-            "analytics_tag": settings.ANALYTICS_TAG,
-            "analytics_link": settings.ANALYTICS_LINK,
+            "google_analytics_tag": settings.GOOGLE_ANALYTICS_TAG,
+            "google_analytics_link": settings.GOOGLE_ANALYTICS_LINK,
         }
     )
     return env

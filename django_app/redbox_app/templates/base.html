@@ -28,13 +28,13 @@
 
   {% if environment | lower == "prod" and waffle_flag(request, 'uktrade') %}
     <!-- Google tag (gtag.js) -->
-  <script async src="{{ analytics_link }}"></script>
+  <script async src="{{ google_analytics_link }}"></script>
   <script> 
   window.dataLayer = window.dataLayer || []; 
   function gtag(){dataLayer.push(arguments);} 
   gtag('js', new Date()); 
 
-  gtag('config', '{{ analytics_tag }}'); 
+  gtag('config', '{{ google_analytics_tag }}'); 
   </script>
   {% endif %}
 
