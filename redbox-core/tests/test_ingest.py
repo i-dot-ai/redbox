@@ -19,7 +19,7 @@ from redbox.loader.loaders import (
     coerce_to_string_list,
 )
 from redbox.models.file import ChunkResolution
-from redbox.loader.ingester import ingest_file, create_alias
+from redbox.loader.ingester import ingest_file
 from redbox.models.settings import Settings
 from redbox.retriever.queries import build_query_filter
 
@@ -215,7 +215,6 @@ def test_ingest_from_loader(
     When I call ingest_from_loader
     I Expect to see this file chunked and embedded if appropriate
     """
-    create_alias(f"{es_index}-current")
 
     # Mock call to Unstructured
     mock_response = mock_post.return_value
