@@ -9,14 +9,13 @@ import boto3
 import jwt
 from botocore.config import Config
 from django.conf import settings
+from django.contrib.auth.base_user import BaseUserManager as BaseSSOUserManager
 from django.contrib.postgres.fields import ArrayField
 from django.core import validators
 from django.db import models
 from django.db.models import Max, Min, Prefetch, UniqueConstraint
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
-from django.contrib.auth.base_user import BaseUserManager as BaseSSOUserManager
-from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
 from django_use_email_as_username.models import BaseUser, BaseUserManager
 from yarl import URL
 
@@ -166,14 +165,14 @@ class AISettings(UUIDPrimaryKeyBase, TimeStampedModel, AbstractAISettings):
 
 
 class SSOUserManager(BaseSSOUserManager):
-
     use_in_migrations = True
 
     def _create_user(self, username, password, **extra_fields):
         """Create and save a User with the given email and password."""
+        email_err_msg = "The given email must be set."
         if not username:
-            raise ValueError("The given email must be set.")
-        User = self.model(email=username, **extra_fields)
+            raise ValueError(email_err_msg)
+        User = self.model(email=username, **extra_fields)  # noqa: N806
         User.set_password(password)
         User.save(using=self._db)
         return User
@@ -186,15 +185,18 @@ class SSOUserManager(BaseSSOUserManager):
 
     def create_superuser(self, username, password=None, **extra_fields):
         """Create and save a SuperUser with the given email and password."""
+        staff_err_msg = "Superuser must have is_staff=True."
+        superuser_err_msg = "Superuser must have is_superuser=True."
         extra_fields.setdefault("is_staff", True)
         extra_fields.setdefault("is_superuser", True)
 
         if extra_fields.get("is_staff") is not True:
-            raise ValueError("Superuser must have is_staff=True.")
+            raise ValueError(staff_err_msg)
         if extra_fields.get("is_superuser") is not True:
-            raise ValueError("Superuser must have is_superuser=True.")
+            raise ValueError(superuser_err_msg)
 
         return self._create_user(username, password, **extra_fields)
+
 
 class User(BaseUser, UUIDPrimaryKeyBase):
     class UserGrade(models.TextChoices):
