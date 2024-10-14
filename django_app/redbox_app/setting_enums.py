@@ -3,7 +3,6 @@ from enum import StrEnum
 
 ADDITIONAL_HOSTS = os.environ.get("ADDITIONAL_HOSTS", "").split(";")
 LOCAL_HOSTS = ["localhost", "127.0.0.1", "0.0.0.0"]  # noqa: S104: Not in prod
-LOCAL_HOSTS = ["localhost", "127.0.0.1", "0.0.0.0"]
 
 
 class Environment(StrEnum):
