@@ -9,7 +9,6 @@ from django.templatetags.static import static
 from django.urls import reverse
 from django.utils.timezone import template_localtime
 from markdown_it import MarkdownIt
-import waffle
 
 # `js-default` setting required to sanitize inputs
 # https://markdown-it-py.readthedocs.io/en/latest/security.html
