@@ -170,10 +170,11 @@ class SSOUserManager(BaseSSOUserManager):
     def _create_user(self, username, password, **extra_fields):
         """Create and save a User with the given email and password."""
         if not username:
-            raise ValueError("The given email must be set.")
-        User = self.model(email=username, **extra_fields)
-        User.set_password(password)
-        User.save(using=self._db)
+            msg = "The given email must be set."
+            raise ValueError(msg)
+        user = self.model(email=username, **extra_fields)
+        user.set_password(password)
+        user.save(using=self._db)
         return User
 
     def create_user(self, username, password=None, **extra_fields):
@@ -188,9 +189,11 @@ class SSOUserManager(BaseSSOUserManager):
         extra_fields.setdefault("is_superuser", True)
 
         if extra_fields.get("is_staff") is not True:
-            raise ValueError("Superuser must have is_staff=True.")
+            msg = "Superuser must have is_staff=True."
+            raise ValueError(msg)
         if extra_fields.get("is_superuser") is not True:
-            raise ValueError("Superuser must have is_superuser=True.")
+            msg = "Superuser must have is_superuser=True."
+            raise ValueError(msg)
 
         return self._create_user(username, password, **extra_fields)
 

@@ -41,19 +41,110 @@ class UserAdmin(ImportExportMixin, admin.ModelAdmin):
     export_as_json.short_description = "Export Selected"
     actions = ["export_as_json"]
 
-    fields = [
-        "email",
-        "name",
-        "ai_experience",
-        "business_unit",
-        "grade",
-        "profession",
-        "is_superuser",
-        "is_staff",
-        "last_login",
-        "ai_settings",
-        "is_developer",
+    search_fields = ["email"]
+
+    fieldsets = [
+        (
+            None,
+            {
+                "fields": [
+                    "email",
+                    "name",
+                    "ai_experience",
+                    "business_unit",
+                    "grade",
+                    "profession",
+                    "is_superuser",
+                    "is_staff",
+                    "last_login",
+                    "ai_settings",
+                    "is_developer",
+                ]
+            },
+        ),
+        # Additional fields for sign-up form
+        ("Page 1 - role", {"fields": ["role"]}),
+        (
+            "Page 2 - accessibility",
+            {
+                "classes": ["collapse"],
+                "fields": [
+                    "accessibility_options",
+                    "accessibility_categories",
+                    "accessibility_description",
+                ],
+            },
+        ),
+        (
+            "Page 3 - use",
+            {
+                "classes": ["collapse"],
+                "fields": [
+                    "digital_confidence",
+                    "usage_at_work",
+                    "usage_outside_work",
+                    "how_useful",
+                ],
+            },
+        ),
+        (
+            "Page 4 - task",
+            {
+                "classes": ["collapse"],
+                "fields": [
+                    "task_1_description",
+                    "task_1_regularity",
+                    "task_1_duration",
+                    "task_1_consider_using_ai",
+                    "task_2_description",
+                    "task_2_regularity",
+                    "task_2_duration",
+                    "task_2_consider_using_ai",
+                    "task_3_description",
+                    "task_3_regularity",
+                    "task_3_duration",
+                    "task_3_consider_using_ai",
+                ],
+            },
+        ),
+        (
+            "Page 5 - role details",
+            {
+                "classes": ["collapse"],
+                "fields": [
+                    "role_regularity_summarise_large_docs",
+                    "role_regularity_condense_multiple_docs",
+                    "role_regularity_search_across_docs",
+                    "role_regularity_compare_multiple_docs",
+                    "role_regularity_specific_template",
+                    "role_regularity_shorten_docs",
+                    "role_regularity_write_docs",
+                    "role_duration_summarise_large_docs",
+                    "role_duration_condense_multiple_docs",
+                    "role_duration_search_across_docs",
+                    "role_duration_compare_multiple_docs",
+                    "role_duration_specific_template",
+                    "role_duration_shorten_docs",
+                    "role_duration_write_docs",
+                ],
+            },
+        ),
+        (
+            "Page 6 - consent",
+            {
+                "classes": ["collapse"],
+                "fields": [
+                    "consent_research",
+                    "consent_interviews",
+                    "consent_feedback",
+                    "consent_condfidentiality",
+                    "consent_understand",
+                    "consent_agreement",
+                ],
+            },
+        ),
     ]
+
     list_display = [
         "email",
         "business_unit",
