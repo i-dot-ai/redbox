@@ -33,7 +33,12 @@ class ChatsView(View):
             if current_chat.user != request.user:
                 return redirect(reverse("chats"))
             messages = ChatMessage.get_messages_ordered_by_citation_priority(chat_id)
-        endpoint = URL.build(scheme=settings.WEBSOCKET_SCHEME, host=request.get_host(), path=r"/ws/chat/")
+        endpoint = URL.build(
+            scheme=settings.WEBSOCKET_SCHEME,
+            host="localhost" if settings.ENVIRONMENT.is_test else request.META["SERVER_NAME"],
+            port=int(request.META["SERVER_PORT"]),
+            path=r"/ws/chat/",
+        )
 
         completed_files, processing_files = File.get_completed_and_processing_files(request.user)
 
