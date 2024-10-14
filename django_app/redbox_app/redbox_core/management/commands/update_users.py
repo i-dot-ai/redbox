@@ -16,6 +16,7 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         """id of file to use for update"""
         parser.add_argument("file_id", nargs=None, type=str)
+        parser.add_argument("create", nargs=None, type=bool, default=True)
 
     def handle(self, *_args, **kwargs):
         obj = File.objects.get(id=kwargs["file_id"])
@@ -23,20 +24,15 @@ class Command(BaseCommand):
         for line in obj.original_file.open("r"):
             json_row = json.loads(line)
 
-            def f(value):
+            def extract_value(value):
+                """hack to get around values like "Monthly - a few times per month" """
                 if isinstance(value, str) and " - " in value:
                     return value.split("-")[0][:-1]
                 return value
 
-            json_row = {k: f(v) for k, v in json_row.items()}
+            json_row = {k: extract_value(v) for k, v in json_row.items()}
 
-            try:
-                user = USER.objects.get(email=json_row["email"])
-                for k, v in json_row.items():
-                    setattr(user, k, v)
-                user.save()
-            except USER.DoesNotExist:
-                try:
-                    USER.objects.create(**json_row)
-                except Exception as e:  # noqa: BLE001
-                    logger.error("failed to set %s because %s", json_row, e)  # noqa: TRY400
+            if USER.objects.filter(email=json_row["email"]).exists():
+                USER.objects.filter(email=json_row["email"]).update(**json_row)
+            elif kwargs["create"]:
+                USER.objects.create(**json_row)
