@@ -538,7 +538,6 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
     original_file = models.FileField(storage=settings.STORAGES["default"]["BACKEND"])
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     original_file_name = models.TextField(max_length=2048, blank=True, null=True)
-    core_file_uuid = models.UUIDField(null=True)
     last_referenced = models.DateTimeField(blank=True, null=True)
     ingest_error = models.TextField(
         max_length=2048, blank=True, null=True, help_text="error, if any, encountered during ingest"

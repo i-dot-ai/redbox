@@ -18,8 +18,8 @@ class Command(BaseCommand):
         parser.add_argument("file_id", nargs=None, type=str)
         parser.add_argument("create", nargs="*", type=bool, default=True)
 
-    def handle(self, *_args, **kwargs):
-        obj = File.objects.get(id=kwargs["file_id"])
+    def handle(self, *_args, **options):
+        obj = File.objects.get(id=options["file_id"])
 
         for line in obj.original_file.open("r"):
             json_row = json.loads(line)
@@ -34,5 +34,5 @@ class Command(BaseCommand):
 
             if USER.objects.filter(email=json_row["email"]).exists():
                 USER.objects.filter(email=json_row["email"]).update(**json_row)
-            elif kwargs["create"]:
+            elif options["create"]:
                 USER.objects.create(**json_row)

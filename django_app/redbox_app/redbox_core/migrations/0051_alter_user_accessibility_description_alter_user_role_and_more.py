@@ -65,4 +65,8 @@ class Migration(migrations.Migration):
             name='task_3_regularity',
             field=models.TextField(blank=True, null=True),
         ),
+        migrations.RemoveField(
+            model_name='file',
+            name='core_file_uuid',
+        ),
     ]
