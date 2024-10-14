@@ -13,7 +13,7 @@ from sentry_sdk.integrations.django import DjangoIntegration
 from storages.backends import s3boto3
 from yarl import URL
 
-from redbox_app.setting_enums import Classification, Environment
+from redbox_app.setting_enums import Classification, Environment, LOCAL_HOSTS
 
 load_dotenv()
 
@@ -196,11 +196,16 @@ CSP_STYLE_SRC = ("'self'",)
 CSP_FRAME_ANCESTORS = ("'none'",)
 CSP_CONNECT_SRC = [
     "'self'",
-    f"wss://{ENVIRONMENT.hosts[0]}/ws/chat/",
+    f"{WEBSOCKET_SCHEME}://{ENVIRONMENT.hosts[0]}/ws/chat/",
     "plausible.io",
     "eu.i.posthog.com",
     "eu-assets.i.posthog.com",
 ]
+
+if ENVIRONMENT.is_test:
+    for host in LOCAL_HOSTS:
+        CSP_CONNECT_SRC.append(f"{WEBSOCKET_SCHEME}://{host}:*/ws/chat/")
+
 
 # https://pypi.org/project/django-permissions-policy/
 PERMISSIONS_POLICY: dict[str, list] = {
