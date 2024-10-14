@@ -2,7 +2,7 @@ import os
 from enum import StrEnum
 
 ADDITIONAL_HOSTS = os.environ.get("ADDITIONAL_HOSTS", "").split(";")
-LOCAL_HOSTS = ["localhost", "127.0.0.1", "0.0.0.0"]
+LOCAL_HOSTS = ["localhost", "127.0.0.1", "0.0.0.0"]  # noqa: S104: Not in prod
 
 
 class Environment(StrEnum):
@@ -21,8 +21,8 @@ class Environment(StrEnum):
     def uses_minio(self) -> bool:
         return self.is_test
 
-    LOCAL = ("LOCAL", True, [*LOCAL_HOSTS, *ADDITIONAL_HOSTS])  # noqa: S104 nosec: B104: Not in prod
-    INTEGRATION = ("INTEGRATION", True, [*LOCAL_HOSTS, *ADDITIONAL_HOSTS])  # noqa: S104 nosec: B104: Not in prod
+    LOCAL = ("LOCAL", True, [*LOCAL_HOSTS, *ADDITIONAL_HOSTS])  # nosec: B104: Not in prod
+    INTEGRATION = ("INTEGRATION", True, [*LOCAL_HOSTS, *ADDITIONAL_HOSTS])  # nosec: B104: Not in prod
     DEV = ("DEV", False, ["redbox-dev.ai.cabinetoffice.gov.uk", *ADDITIONAL_HOSTS])
     PREPROD = ("PREPROD", False, ["redbox-preprod.ai.cabinetoffice.gov.uk", *ADDITIONAL_HOSTS])
     PROD = ("PROD", False, ["redbox.ai.cabinetoffice.gov.uk", *ADDITIONAL_HOSTS])
