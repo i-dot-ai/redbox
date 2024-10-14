@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('redbox_core', '0050_aisettings_match_description_boost_and_more'),
+        ('redbox_core', '0051_alter_user_accessibility_description_alter_user_role_and_more'),
     ]
 
     operations = [
