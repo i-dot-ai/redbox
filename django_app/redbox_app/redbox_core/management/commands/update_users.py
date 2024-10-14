@@ -16,7 +16,7 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         """id of file to use for update"""
         parser.add_argument("file_id", nargs=None, type=str)
-        parser.add_argument("create", nargs=None, type=bool, default=True)
+        parser.add_argument("create", nargs="*", type=bool, default=True)
 
     def handle(self, *_args, **kwargs):
         obj = File.objects.get(id=kwargs["file_id"])
