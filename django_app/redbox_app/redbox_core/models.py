@@ -169,12 +169,12 @@ class SSOUserManager(BaseSSOUserManager):
 
     def _create_user(self, username, password, **extra_fields):
         """Create and save a User with the given email and password."""
-        email_err_msg = "The given email must be set."
         if not username:
-            raise ValueError(email_err_msg)
-        User = self.model(email=username, **extra_fields)  # noqa: N806
-        User.set_password(password)
-        User.save(using=self._db)
+            msg = "The given email must be set."
+            raise ValueError(msg)
+        user = self.model(email=username, **extra_fields)
+        user.set_password(password)
+        user.save(using=self._db)
         return User
 
     def create_user(self, username, password=None, **extra_fields):
@@ -185,15 +185,15 @@ class SSOUserManager(BaseSSOUserManager):
 
     def create_superuser(self, username, password=None, **extra_fields):
         """Create and save a SuperUser with the given email and password."""
-        staff_err_msg = "Superuser must have is_staff=True."
-        superuser_err_msg = "Superuser must have is_superuser=True."
         extra_fields.setdefault("is_staff", True)
         extra_fields.setdefault("is_superuser", True)
 
         if extra_fields.get("is_staff") is not True:
-            raise ValueError(staff_err_msg)
+            msg = "Superuser must have is_staff=True."
+            raise ValueError(msg)
         if extra_fields.get("is_superuser") is not True:
-            raise ValueError(superuser_err_msg)
+            msg = "Superuser must have is_superuser=True."
+            raise ValueError(msg)
 
         return self._create_user(username, password, **extra_fields)
 
@@ -435,28 +435,28 @@ class User(BaseUser, UUIDPrimaryKeyBase):
 
     # Additional fields for sign-up form
     # Page 1
-    role = models.CharField(null=True, blank=True, max_length=128)
+    role = models.TextField(null=True, blank=True)
     # Page 2
     accessibility_options = models.CharField(null=True, blank=True, max_length=64, choices=AccessibilityOptions)
     accessibility_categories = models.CharField(null=True, blank=True, max_length=64, choices=AccessibilityCategories)
-    accessibility_description = models.CharField(null=True, blank=True, max_length=128)
+    accessibility_description = models.TextField(null=True, blank=True)
     # Page 3
     digital_confidence = models.CharField(null=True, blank=True, max_length=128, choices=DigitalConfidence)
     usage_at_work = models.CharField(null=True, blank=True, max_length=64, choices=RegularityAI)
     usage_outside_work = models.CharField(null=True, blank=True, max_length=64, choices=RegularityAI)
     how_useful = models.CharField(null=True, blank=True, max_length=64, choices=Usefulness)
     # Page 4
-    task_1_description = models.CharField(null=True, blank=True, max_length=128)
-    task_1_regularity = models.CharField(null=True, blank=True, max_length=128)
-    task_1_duration = models.CharField(null=True, blank=True, max_length=128)
+    task_1_description = models.TextField(null=True, blank=True)
+    task_1_regularity = models.TextField(null=True, blank=True)
+    task_1_duration = models.TextField(null=True, blank=True)
     task_1_consider_using_ai = models.CharField(null=True, blank=True, max_length=64, choices=ConsiderUsingAI)
-    task_2_description = models.CharField(null=True, blank=True, max_length=128)
-    task_2_regularity = models.CharField(null=True, blank=True, max_length=128)
-    task_2_duration = models.CharField(null=True, blank=True, max_length=128)
+    task_2_description = models.TextField(null=True, blank=True)
+    task_2_regularity = models.TextField(null=True, blank=True)
+    task_2_duration = models.TextField(null=True, blank=True)
     task_2_consider_using_ai = models.CharField(null=True, blank=True, max_length=64, choices=ConsiderUsingAI)
-    task_3_description = models.CharField(null=True, blank=True, max_length=128)
-    task_3_regularity = models.CharField(null=True, blank=True, max_length=128)
-    task_3_duration = models.CharField(null=True, blank=True, max_length=128)
+    task_3_description = models.TextField(null=True, blank=True)
+    task_3_regularity = models.TextField(null=True, blank=True)
+    task_3_duration = models.TextField(null=True, blank=True)
     task_3_consider_using_ai = models.CharField(null=True, blank=True, max_length=64, choices=ConsiderUsingAI)
     # Page 5
     role_regularity_summarise_large_docs = models.CharField(
@@ -538,7 +538,6 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
     original_file = models.FileField(storage=settings.STORAGES["default"]["BACKEND"])
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     original_file_name = models.TextField(max_length=2048, blank=True, null=True)
-    core_file_uuid = models.UUIDField(null=True)
     last_referenced = models.DateTimeField(blank=True, null=True)
     ingest_error = models.TextField(
         max_length=2048, blank=True, null=True, help_text="error, if any, encountered during ingest"

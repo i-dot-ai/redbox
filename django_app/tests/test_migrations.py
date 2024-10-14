@@ -1,5 +1,4 @@
 from decimal import Decimal
-from uuid import uuid4
 
 import pytest
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -21,7 +20,9 @@ def test_0012_alter_file_status(migrator):
     chat_message = ChatMessage.objects.create(chat_history=chat_history, text="hello", role="user")
 
     file = File.objects.create(
-        user=user, original_file=original_file, original_file_name=original_file.name, core_file_uuid=uuid4()
+        user=user,
+        original_file=original_file,
+        original_file_name=original_file.name,
     )
     chat_message.source_files.set([file])
     chat_message.save()
@@ -55,7 +56,9 @@ def test_0020_remove_chatmessage_source_files_textchunk_and_more(migrator):
     chat_message = ChatMessage.objects.create(chat_history=chat_history, text="hello", role="user")
 
     file = File.objects.create(
-        user=user, original_file=original_file, original_file_name=original_file.name, core_file_uuid=uuid4()
+        user=user,
+        original_file=original_file,
+        original_file_name=original_file.name,
     )
     chat_message.source_files.set([file])
     chat_message.save()
@@ -113,7 +116,6 @@ def test_0027_alter_file_status(migrator):
                 user=user,
                 original_file=original_file,
                 original_file_name=original_file.name,
-                core_file_uuid=uuid4(),
                 status=status_option[0],
             )
         )
