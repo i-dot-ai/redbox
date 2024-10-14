@@ -1,6 +1,5 @@
 import json
 import os
-import uuid
 from datetime import UTC, datetime, timedelta
 from io import StringIO
 from pathlib import Path
@@ -259,7 +258,6 @@ def test_update_users(alice: User):
         user=alice,
         original_file=original_file,
         original_file_name=original_file.name,
-        core_file_uuid=uuid.uuid4(),
         last_referenced=datetime.now(tz=UTC) - timedelta(days=14),
         status=StatusEnum.processing,
     )
