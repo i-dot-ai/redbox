@@ -24,6 +24,13 @@ variable "developer_ips" {
   description = "List of developer IPs"
 }
 
+
+variable "allow_sign_ups" {
+  type        = bool
+  default     = true
+  description = "allow users to sign up"
+}
+
 variable "django_command" {
   type = list(object({
     command : string,

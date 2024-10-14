@@ -112,10 +112,10 @@ class Settings(BaseSettings):
         "to make it as discoverable as possible. You are about to be given the first "
         "1_000 tokens of a document and any hard-coded file metadata that can be "
         "recovered from it. Create SEO-optimised metadata for this document in the "
-        "structured data markup (JSON-LD) standard. You must include at least "
-        "the 'name', 'description' and 'keywords' properties but otherwise use your "
-        "expertise to make the document as easy to search for as possible. "
-        "Return only the JSON-LD: \n\n",
+        "structured data markup (JSON-LD) standard. You must include  "
+        "the 'name', 'description' and 'keywords' properties to make the document as easy to search for as possible. "
+        "Description must be less than 100 words. and no more than 5 keywords ."
+        "Return only the JSON-LD:\n\n",
     )
 
     @lru_cache(1)
@@ -133,6 +133,11 @@ class Settings(BaseSettings):
             )
         else:
             client = Elasticsearch(cloud_id=self.elastic.cloud_id, api_key=self.elastic.api_key)
+
+        if not client.indices.exists_alias(name=f"{self.elastic_root_index}-chunk-current"):
+            chunk_index = f"{self.elastic_root_index}-chunk"
+            client.options(ignore_status=[400]).indices.create(index=chunk_index)
+            client.indices.put_alias(index=chunk_index, name=f"{self.elastic_root_index}-chunk-current")
 
         return client.options(request_timeout=30, retry_on_timeout=True, max_retries=3)
 

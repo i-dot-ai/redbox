@@ -18,6 +18,8 @@ User = get_user_model()
 def sign_in_view(request: HttpRequest):
     if request.user.is_authenticated:
         return redirect("homepage")
+    if settings.LOGIN_METHOD == "sso":
+        return redirect("/auth/login/")
     if request.method == "POST":
         form = SignInForm(request.POST)
         if form.is_valid():

@@ -52,6 +52,7 @@ jobs:
         echo AZURE_OPENAI_API_KEY=${{ secrets.AZURE_OPENAI_API_KEY }} >> .env
         echo EMBEDDING_AZURE_OPENAI_ENDPOINT=${{ secrets.AZURE_OPENAI_ENDPOINT }} >> .env
         echo EMBEDDING_OPENAI_API_KEY=${{ secrets.AZURE_OPENAI_API_KEY }} >> .env
+        docker compose up -d --wait elasticsearch minio db
         docker compose up -d --wait django-app worker
         docker ps
 

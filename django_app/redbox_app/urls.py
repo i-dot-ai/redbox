@@ -28,6 +28,9 @@ auth_urlpatterns = [
     path("sign-up-page-7", views.Signup7.as_view(), name="sign-up-page-7"),
 ]
 
+if settings.LOGIN_METHOD == "sso":
+    auth_urlpatterns.append(path("auth/", include("authbroker_client.urls")))
+
 info_urlpatterns = [
     path("privacy-notice/", views.info_views.privacy_notice_view, name="privacy-notice"),
     path(

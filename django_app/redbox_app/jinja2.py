@@ -69,6 +69,7 @@ def to_user_timezone(value):
 
 def environment(**options):
     extra_options = {}
+
     env = jinja2.Environment(  # nosec: B701 # noqa: S701
         **{
             "autoescape": True,
@@ -98,6 +99,8 @@ def environment(**options):
             "environment": settings.ENVIRONMENT.value,
             "security": settings.MAX_SECURITY_CLASSIFICATION.value,
             "waffle_flag": waffle.flag_is_active,
+            "google_analytics_tag": settings.GOOGLE_ANALYTICS_TAG,
+            "google_analytics_link": settings.GOOGLE_ANALYTICS_LINK,
         }
     )
     return env

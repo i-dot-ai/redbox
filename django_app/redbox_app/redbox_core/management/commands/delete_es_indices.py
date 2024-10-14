@@ -1,6 +1,6 @@
 import logging
 
-from django.core.management import BaseCommand
+from django.core.management import BaseCommand, CommandError
 
 from redbox.models import Settings
 
@@ -33,6 +33,10 @@ class Command(BaseCommand):
             logger.exception("Error fetching indices", exc_info=e)
 
     def handle(self, *_args, **kwargs):
+        if not kwargs["new_index"]:
+            msg = "No new index given for alias"
+            raise CommandError(msg)
+
         chunk_indices = self.list_chunk_indices()
 
         for index in chunk_indices:
