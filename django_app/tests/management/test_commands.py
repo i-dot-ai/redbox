@@ -242,6 +242,17 @@ def test_reingest_files_unstructured_fail(uploaded_file: File, requests_mock: Mo
     assert uploaded_file.ingest_error == "<class 'ValueError'>: Unstructured failed to extract text for this file"
 
 
+def test_delete_es_indices_no_new_index():
+    # Given
+
+    # When
+    with pytest.raises(CommandError) as exception:
+        call_command("delete_es_indices")
+
+    # Then
+    assert str(exception.value) == "No new index given for alias"
+
+
 @pytest.mark.django_db(transaction=True)
 def test_update_users(alice: User):
     original_file_path = os.path.join(  # noqa: PTH118
