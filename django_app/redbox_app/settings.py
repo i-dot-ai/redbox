@@ -1,4 +1,5 @@
 # mypy: ignore-errors
+import logging
 import os
 import socket
 from pathlib import Path
@@ -13,8 +14,10 @@ from sentry_sdk.integrations.django import DjangoIntegration
 from storages.backends import s3boto3
 from yarl import URL
 
-from redbox_app.redbox_core.views.auth_views import logger
 from redbox_app.setting_enums import Classification, Environment
+
+logger = logging.getLogger(__name__)
+
 
 load_dotenv()
 
