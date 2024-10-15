@@ -210,7 +210,7 @@ CSP_CONNECT_SRC = [
 
 
 for csp in CSP_CONNECT_SRC:
-    logger.info("CSP=%", csp)
+    logger.info("CSP=%s", csp)
 
 
 # https://pypi.org/project/django-permissions-policy/
