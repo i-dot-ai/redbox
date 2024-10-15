@@ -1,4 +1,5 @@
 # mypy: ignore-errors
+import logging
 import os
 import socket
 from pathlib import Path
@@ -13,7 +14,10 @@ from sentry_sdk.integrations.django import DjangoIntegration
 from storages.backends import s3boto3
 from yarl import URL
 
-from redbox_app.setting_enums import LOCAL_HOSTS, Classification, Environment
+from redbox_app.setting_enums import Classification, Environment
+
+logger = logging.getLogger(__name__)
+
 
 load_dotenv()
 
@@ -194,6 +198,8 @@ CSP_FONT_SRC = (
 )
 CSP_STYLE_SRC = ("'self'",)
 CSP_FRAME_ANCESTORS = ("'none'",)
+
+
 CSP_CONNECT_SRC = [
     "'self'",
     f"{WEBSOCKET_SCHEME}://{ENVIRONMENT.hosts[0]}/ws/chat/",
@@ -202,9 +208,9 @@ CSP_CONNECT_SRC = [
     "eu-assets.i.posthog.com",
 ]
 
-if ENVIRONMENT.is_test:
-    for host in LOCAL_HOSTS:
-        CSP_CONNECT_SRC.append(f"{WEBSOCKET_SCHEME}://{host}:*/ws/chat/")
+
+for csp in CSP_CONNECT_SRC:
+    logger.info("CSP=%s", csp)
 
 
 # https://pypi.org/project/django-permissions-policy/
