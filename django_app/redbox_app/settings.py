@@ -209,12 +209,6 @@ another_host = "localhost" if ENVIRONMENT.is_test else get_public_ip
 CSP_CONNECT_SRC = [
     "'self'",
     f"{WEBSOCKET_SCHEME}://{ENVIRONMENT.hosts[0]}:8090/ws/chat/",
-    f"{WEBSOCKET_SCHEME}://{ENVIRONMENT.hosts[0]}/ws/chat/",
-    f"{WEBSOCKET_SCHEME}://{ENVIRONMENT.hosts[0]}:8090",
-    f"{WEBSOCKET_SCHEME}://{ENVIRONMENT.hosts[0]}",
-    f"{WEBSOCKET_SCHEME}://{another_host}:8909/ws/chat/",
-    f"{WEBSOCKET_SCHEME}://{another_host}:8909",
-    f"{WEBSOCKET_SCHEME}://{another_host}",
     "plausible.io",
     "eu.i.posthog.com",
     "eu-assets.i.posthog.com",
