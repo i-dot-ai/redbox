@@ -5,6 +5,7 @@ from pathlib import Path
 from urllib.parse import urlparse
 
 import environ
+import requests
 import sentry_sdk
 from django.urls import reverse_lazy
 from dotenv import load_dotenv
@@ -13,7 +14,7 @@ from sentry_sdk.integrations.django import DjangoIntegration
 from storages.backends import s3boto3
 from yarl import URL
 
-from redbox_app.setting_enums import LOCAL_HOSTS, Classification, Environment
+from redbox_app.setting_enums import Classification, Environment
 
 load_dotenv()
 
@@ -202,9 +203,17 @@ CSP_CONNECT_SRC = [
     "eu-assets.i.posthog.com",
 ]
 
-if ENVIRONMENT.is_test:
-    for host in LOCAL_HOSTS:
-        CSP_CONNECT_SRC.append(f"{WEBSOCKET_SCHEME}://{host}:*/ws/chat/")
+
+def get_public_ip():
+    response = requests.get("http://checkip.amazonaws.com", timeout=5)
+    response.raise_for_status()
+    return response.text.strip()
+
+
+another_host = "localhost" if ENVIRONMENT.is_test else get_public_ip
+
+CSP_CONNECT_SRC.append(f"{WEBSOCKET_SCHEME}://{another_host}/ws/chat/")
+CSP_CONNECT_SRC.append(f"{WEBSOCKET_SCHEME}://{another_host}")
 
 
 # https://pypi.org/project/django-permissions-policy/
