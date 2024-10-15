@@ -202,7 +202,7 @@ CSP_FRAME_ANCESTORS = ("'none'",)
 
 CSP_CONNECT_SRC = [
     "'self'",
-    f"{WEBSOCKET_SCHEME}://{ENVIRONMENT.hosts[0]}:8090/ws/chat/",
+    f"{WEBSOCKET_SCHEME}://{ENVIRONMENT.hosts[0]}/ws/chat/",
     "plausible.io",
     "eu.i.posthog.com",
     "eu-assets.i.posthog.com",
