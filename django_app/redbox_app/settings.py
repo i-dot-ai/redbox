@@ -196,13 +196,6 @@ CSP_FONT_SRC = (
 )
 CSP_STYLE_SRC = ("'self'",)
 CSP_FRAME_ANCESTORS = ("'none'",)
-CSP_CONNECT_SRC = [
-    "'self'",
-    f"{WEBSOCKET_SCHEME}://{ENVIRONMENT.hosts[0]}/ws/chat/",
-    "plausible.io",
-    "eu.i.posthog.com",
-    "eu-assets.i.posthog.com",
-]
 
 
 def get_public_ip():
@@ -213,8 +206,19 @@ def get_public_ip():
 
 another_host = "localhost" if ENVIRONMENT.is_test else get_public_ip
 
-CSP_CONNECT_SRC.append(f"{WEBSOCKET_SCHEME}://{another_host}/ws/chat/")
-CSP_CONNECT_SRC.append(f"{WEBSOCKET_SCHEME}://{another_host}")
+CSP_CONNECT_SRC = [
+    "'self'",
+    f"{WEBSOCKET_SCHEME}://{ENVIRONMENT.hosts[0]}:8090/ws/chat/",
+    f"{WEBSOCKET_SCHEME}://{ENVIRONMENT.hosts[0]}/ws/chat/",
+    f"{WEBSOCKET_SCHEME}://{ENVIRONMENT.hosts[0]}:8090",
+    f"{WEBSOCKET_SCHEME}://{ENVIRONMENT.hosts[0]}",
+    f"{WEBSOCKET_SCHEME}://{another_host}:8909/ws/chat/",
+    f"{WEBSOCKET_SCHEME}://{another_host}:8909",
+    f"{WEBSOCKET_SCHEME}://{another_host}",
+    "plausible.io",
+    "eu.i.posthog.com",
+    "eu-assets.i.posthog.com",
+]
 
 
 for csp in CSP_CONNECT_SRC:
