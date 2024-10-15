@@ -37,7 +37,6 @@ class ChatsView(View):
         endpoint = URL.build(
             scheme=settings.WEBSOCKET_SCHEME,
             host="localhost" if settings.ENVIRONMENT.is_test else settings.ENVIRONMENT.hosts[0],
-            port=int(request.META["SERVER_PORT"]),
             path=r"/ws/chat/",
         )
 
