@@ -16,7 +16,7 @@ from django.utils.decorators import method_decorator
 from django.views import View
 from yarl import URL
 
-from redbox_app.redbox_core.models import AbstractAISettings, Chat, ChatMessage, ChatRoleEnum, File
+from redbox_app.redbox_core.models import Chat, ChatLLMBackend, ChatMessage, ChatRoleEnum, File
 
 logger = logging.getLogger(__name__)
 
@@ -33,17 +33,19 @@ class ChatsView(View):
             if current_chat.user != request.user:
                 return redirect(reverse("chats"))
             messages = ChatMessage.get_messages_ordered_by_citation_priority(chat_id)
-        split_host = request.get_host().split(":")
-        host = split_host[0]
-        port = int(split_host[1]) if len(split_host) > 1 else None
-        endpoint = URL.build(scheme=settings.WEBSOCKET_SCHEME, host=host, port=port, path=r"/ws/chat/")
+        endpoint = URL.build(
+            scheme=settings.WEBSOCKET_SCHEME,
+            host="localhost" if settings.ENVIRONMENT.is_test else request.META["SERVER_NAME"],
+            port=int(request.META["SERVER_PORT"]),
+            path=r"/ws/chat/",
+        )
 
         completed_files, processing_files = File.get_completed_and_processing_files(request.user)
 
         self.decorate_selected_files(completed_files, messages)
         chat_grouped_by_date_group = groupby(chat, attrgetter("date_group"))
 
-        chat_backend = current_chat.chat_backend if current_chat else AbstractAISettings.ChatBackend.GPT_4_OMNI.value
+        chat_backend = current_chat.chat_backend if current_chat else ChatLLMBackend.objects.get(is_default=True)
 
         context = {
             "chat_id": chat_id,
@@ -57,11 +59,12 @@ class ChatsView(View):
             "chat_title_length": settings.CHAT_TITLE_LENGTH,
             "llm_options": [
                 {
-                    "name": llm,
-                    "default": llm == AbstractAISettings.ChatBackend.GPT_4_OMNI.value,
-                    "selected": llm == chat_backend,
+                    "name": str(chat_llm_backend),
+                    "default": chat_llm_backend.is_default,
+                    "selected": chat_llm_backend == chat_backend,
+                    "id": chat_llm_backend.id,
                 }
-                for _, llm in AbstractAISettings.ChatBackend.choices
+                for chat_llm_backend in ChatLLMBackend.objects.filter(enabled=True)
             ],
         }
 

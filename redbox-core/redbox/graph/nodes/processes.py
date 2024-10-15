@@ -16,7 +16,7 @@ from langchain_core.vectorstores import VectorStoreRetriever
 from redbox.chains.components import get_chat_llm, get_tokeniser
 from redbox.chains.runnables import CannedChatLLM, build_llm_chain
 from redbox.graph.nodes.tools import has_injected_state, is_valid_tool
-from redbox.models import ChatRoute, Settings
+from redbox.models import ChatRoute
 from redbox.models.chain import DocumentState, PromptSet, RedboxState, RequestMetadata, merge_redbox_state_updates
 from redbox.models.graph import ROUTE_NAME_TAG, SOURCE_DOCUMENTS_TAG, RedboxActivityEvent, RedboxEventType
 from redbox.transform import combine_documents, flatten_document_state
@@ -60,8 +60,7 @@ def build_chat_pattern(
     """
 
     def _chat(state: RedboxState) -> dict[str, Any]:
-        llm = get_chat_llm(env=Settings(), ai_settings=state["request"].ai_settings, tools=tools)
-
+        llm = get_chat_llm(state["request"].ai_settings.chat_backend, tools=tools)
         return build_llm_chain(
             prompt_set=prompt_set,
             llm=llm,
@@ -90,7 +89,7 @@ def build_merge_pattern(
 
     @RunnableLambda
     def _merge(state: RedboxState) -> dict[str, Any]:
-        llm = get_chat_llm(env=Settings(), ai_settings=state["request"].ai_settings, tools=tools)
+        llm = get_chat_llm(state["request"].ai_settings.chat_backend, tools=tools)
 
         if not state.get("documents"):
             return {"documents": None}
@@ -142,7 +141,7 @@ def build_stuff_pattern(
 
     @RunnableLambda
     def _stuff(state: RedboxState) -> dict[str, Any]:
-        llm = get_chat_llm(env=Settings(), ai_settings=state["request"].ai_settings, tools=tools)
+        llm = get_chat_llm(state["request"].ai_settings.chat_backend, tools=tools)
 
         events = [
             event

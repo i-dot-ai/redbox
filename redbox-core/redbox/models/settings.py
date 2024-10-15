@@ -8,6 +8,8 @@ from elasticsearch import Elasticsearch
 from pydantic import BaseModel
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+from redbox.models.chain import ChatLLMBackend
+
 logging.basicConfig(level=os.environ.get("LOG_LEVEL", "INFO"))
 log = logging.getLogger()
 
@@ -39,30 +41,10 @@ class ElasticCloudSettings(BaseModel):
 class Settings(BaseSettings):
     """Settings for the redbox application."""
 
-    # azure/gpt-35-turbo-16k
-    openai_api_version_35t: str = "2023-12-01-preview"
-    azure_openai_api_key_35t: str = "not a key"
-    azure_openai_fallback_api_key_35t: str = "not a key"
-    azure_openai_endpoint_35t: str = "not an endpoint"
-    azure_openai_fallback_endpoint_35t: str | None = None
-
-    # azure/gpt-4
-    openai_api_version_4t: str = "2024-02-01"
-    azure_openai_api_key_4t: str = "not a key"
-    azure_openai_fallback_api_key_4t: str = "not a key"
-    azure_openai_endpoint_4t: str = "not an endpoint"
-    azure_openai_fallback_endpoint_4t: str | None = None
-
-    # azure/gpt-4o
-    openai_api_version_4o: str = "2024-02-01"
-    azure_openai_api_key_4o: str = "not a key"
-    azure_openai_fallback_api_key_4o: str = "not a key"
-    azure_openai_endpoint_4o: str = "not an endpoint"
-    azure_openai_fallback_endpoint_4o: str | None = None
-
     embedding_openai_api_key: str = "NotAKey"
     embedding_azure_openai_endpoint: str = "not an endpoint"
     azure_api_version_embeddings: str = "2024-02-01"
+    metadata_extraction_llm: ChatLLMBackend = ChatLLMBackend(name="gpt-4o", provider="azure_openai")
 
     embedding_backend: Literal[
         "text-embedding-ada-002",
@@ -130,10 +112,10 @@ class Settings(BaseSettings):
         "to make it as discoverable as possible. You are about to be given the first "
         "1_000 tokens of a document and any hard-coded file metadata that can be "
         "recovered from it. Create SEO-optimised metadata for this document in the "
-        "structured data markup (JSON-LD) standard. You must include at least "
-        "the 'name', 'description' and 'keywords' properties but otherwise use your "
-        "expertise to make the document as easy to search for as possible. "
-        "Return only the JSON-LD: \n\n",
+        "structured data markup (JSON-LD) standard. You must include  "
+        "the 'name', 'description' and 'keywords' properties to make the document as easy to search for as possible. "
+        "Description must be less than 100 words. and no more than 5 keywords ."
+        "Return only the JSON-LD:\n\n",
     )
 
     @lru_cache(1)
@@ -151,6 +133,11 @@ class Settings(BaseSettings):
             )
         else:
             client = Elasticsearch(cloud_id=self.elastic.cloud_id, api_key=self.elastic.api_key)
+
+        if not client.indices.exists_alias(name=f"{self.elastic_root_index}-chunk-current"):
+            chunk_index = f"{self.elastic_root_index}-chunk"
+            client.options(ignore_status=[400]).indices.create(index=chunk_index)
+            client.indices.put_alias(index=chunk_index, name=f"{self.elastic_root_index}-chunk-current")
 
         return client.options(request_timeout=30, retry_on_timeout=True, max_retries=3)
 

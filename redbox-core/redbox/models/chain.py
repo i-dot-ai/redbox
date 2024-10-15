@@ -24,24 +24,29 @@ class ChainChatMessage(TypedDict):
     text: str
 
 
-class AISettings(BaseModel):
-    """prompts and other AI settings"""
+class ChatLLMBackend(BaseModel):
+    name: str = "gpt-4o"
+    provider: str = "azure_openai"
+    description: str | None = None
+    model_config = {"frozen": True}
 
-    max_document_tokens: int = 256_000
+
+class AISettings(BaseModel):
+    """Prompts and other AI settings"""
+
+    # LLM settings
     context_window_size: int = 128_000
     llm_max_tokens: int = 1024
 
-    rag_k: int = 30
-    rag_num_candidates: int = 10
-    rag_gauss_scale_size: int = 3
-    rag_gauss_scale_decay: float = 0.5
-    rag_gauss_scale_min: float = 1.1
-    rag_gauss_scale_max: float = 2.0
-    elbow_filter_enabled: bool = False
+    # Prompts and LangGraph settings
+    max_document_tokens: int = 1_000_000
     self_route_enabled: bool = False
+    map_max_concurrency: int = 128
+    stuff_chunk_context_ratio: float = 0.75
+    recursion_limit: int = 50
+
     chat_system_prompt: str = prompts.CHAT_SYSTEM_PROMPT
     chat_question_prompt: str = prompts.CHAT_QUESTION_PROMPT
-    stuff_chunk_context_ratio: float = 0.75
     chat_with_docs_system_prompt: str = prompts.CHAT_WITH_DOCS_SYSTEM_PROMPT
     chat_with_docs_question_prompt: str = prompts.CHAT_WITH_DOCS_QUESTION_PROMPT
     chat_with_docs_reduce_system_prompt: str = prompts.CHAT_WITH_DOCS_REDUCE_SYSTEM_PROMPT
@@ -54,23 +59,27 @@ class AISettings(BaseModel):
     agentic_give_up_question_prompt: str = prompts.AGENTIC_GIVE_UP_QUESTION_PROMPT
     condense_system_prompt: str = prompts.CONDENSE_SYSTEM_PROMPT
     condense_question_prompt: str = prompts.CONDENSE_QUESTION_PROMPT
-    map_max_concurrency: int = 128
     chat_map_system_prompt: str = prompts.CHAT_MAP_SYSTEM_PROMPT
     chat_map_question_prompt: str = prompts.CHAT_MAP_QUESTION_PROMPT
     reduce_system_prompt: str = prompts.REDUCE_SYSTEM_PROMPT
 
-    match_boost: int = 1
-    knn_boost: int = 1
-    similarity_threshold: int = 0
+    # Elasticsearch RAG and boost values
+    rag_k: int = 30
+    rag_num_candidates: int = 10
+    rag_gauss_scale_size: int = 3
+    rag_gauss_scale_decay: float = 0.5
+    rag_gauss_scale_min: float = 1.1
+    rag_gauss_scale_max: float = 2.0
+    elbow_filter_enabled: bool = False
+    match_boost: float = 1.0
+    match_name_boost: float = 2.0
+    match_description_boost: float = 0.5
+    match_keywords_boost: float = 0.5
+    knn_boost: float = 2.0
+    similarity_threshold: float = 0.7
 
     # this is also the azure_openai_model
-    chat_backend: Literal[
-        "gpt-35-turbo-16k",
-        "gpt-4-turbo-2024-04-09",
-        "gpt-4o",
-        "anthropic.claude-3-sonnet-20240229-v1:0",
-        "anthropic.claude-3-haiku-20240307-v1:0",
-    ] = "gpt-4o"
+    chat_backend: ChatLLMBackend = ChatLLMBackend()
 
 
 class DocumentState(TypedDict):

@@ -122,6 +122,30 @@ def build_document_query(
                         },
                     },
                     {
+                        "match": {
+                            "metadata.name": {
+                                "query": query,
+                                "boost": ai_settings.match_name_boost,
+                            }
+                        }
+                    },
+                    {
+                        "match": {
+                            "metadata.description": {
+                                "query": query,
+                                "boost": ai_settings.match_description_boost,
+                            }
+                        }
+                    },
+                    {
+                        "match": {
+                            "metadata.keywords": {
+                                "query": query,
+                                "boost": ai_settings.match_keywords_boost,
+                            }
+                        }
+                    },
+                    {
                         "knn": {
                             "field": embedding_field_name,
                             "query_vector": query_vector,
