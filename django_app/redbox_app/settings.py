@@ -5,7 +5,6 @@ from pathlib import Path
 from urllib.parse import urlparse
 
 import environ
-import requests
 import sentry_sdk
 from django.urls import reverse_lazy
 from dotenv import load_dotenv
@@ -197,14 +196,6 @@ CSP_FONT_SRC = (
 CSP_STYLE_SRC = ("'self'",)
 CSP_FRAME_ANCESTORS = ("'none'",)
 
-
-def get_public_ip():
-    response = requests.get("http://checkip.amazonaws.com", timeout=5)
-    response.raise_for_status()
-    return response.text.strip()
-
-
-another_host = "localhost" if ENVIRONMENT.is_test else get_public_ip
 
 CSP_CONNECT_SRC = [
     "'self'",
