@@ -76,12 +76,13 @@ class ChatLLMBackend(models.Model):
     description = models.TextField(null=True, blank=True, help_text="brief description of the model")
     is_default = models.BooleanField(default=False, help_text="is this the default llm to use.")
     enabled = models.BooleanField(default=True, help_text="is this model enabled.")
+    display = models.CharField(max_length=128, null=True, blank=True, help_text="name to display in UI.")
 
     class Meta:
         constraints = [UniqueConstraint(fields=["name", "provider"], name="unique_name_provider")]
 
     def __str__(self):
-        return self.name
+        return self.display or self.name
 
     def save(self, *args, **kwargs):
         if self.is_default:
