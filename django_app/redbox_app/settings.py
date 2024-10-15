@@ -14,6 +14,7 @@ from sentry_sdk.integrations.django import DjangoIntegration
 from storages.backends import s3boto3
 from yarl import URL
 
+from redbox_app.redbox_core.views.auth_views import logger
 from redbox_app.setting_enums import Classification, Environment
 
 load_dotenv()
@@ -214,6 +215,10 @@ another_host = "localhost" if ENVIRONMENT.is_test else get_public_ip
 
 CSP_CONNECT_SRC.append(f"{WEBSOCKET_SCHEME}://{another_host}/ws/chat/")
 CSP_CONNECT_SRC.append(f"{WEBSOCKET_SCHEME}://{another_host}")
+
+
+for csp in CSP_CONNECT_SRC:
+    logger.info("CSP=%", csp)
 
 
 # https://pypi.org/project/django-permissions-policy/
