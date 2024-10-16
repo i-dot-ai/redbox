@@ -181,7 +181,9 @@ def test_elbow_filter(scores: list[float], target_len: int):
                 ),
                 "model": "unknown-model",
             },
-            RequestMetadata(llm_calls={LLMCallMetadata(llm_model_name="unknown-model", input_tokens=6, output_tokens=23)}),
+            RequestMetadata(
+                llm_calls={LLMCallMetadata(llm_model_name="unknown-model", input_tokens=6, output_tokens=23)}
+            ),
         ),
     ],
 )
