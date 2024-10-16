@@ -147,7 +147,7 @@ class RedboxQuery(BaseModel):
 
 class LLMCallMetadata(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid4()))
-    model_name: str
+    llm_model_name: str
     input_tokens: int
     output_tokens: int
     timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
@@ -164,8 +164,8 @@ class RequestMetadata(BaseModel):
     def input_tokens(self):
         tokens_by_model = dict()
         for call_metadata in self.llm_calls:
-            tokens_by_model[call_metadata.model_name] = (
-                tokens_by_model.get(call_metadata.model_name, 0) + call_metadata.input_tokens
+            tokens_by_model[call_metadata.llm_model_name] = (
+                tokens_by_model.get(call_metadata.llm_model_name, 0) + call_metadata.input_tokens
             )
         return tokens_by_model
 
@@ -173,8 +173,8 @@ class RequestMetadata(BaseModel):
     def output_tokens(self):
         tokens_by_model = dict()
         for call_metadata in self.llm_calls:
-            tokens_by_model[call_metadata.model_name] = (
-                tokens_by_model.get(call_metadata.model_name, 0) + call_metadata.output_tokens
+            tokens_by_model[call_metadata.llm_model_name] = (
+                tokens_by_model.get(call_metadata.llm_model_name, 0) + call_metadata.output_tokens
             )
         return tokens_by_model
 
