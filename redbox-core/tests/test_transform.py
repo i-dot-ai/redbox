@@ -169,7 +169,7 @@ def test_elbow_filter(scores: list[float], target_len: int):
                 ),
                 "model": "gpt-4o",
             },
-            RequestMetadata(llm_calls={LLMCallMetadata(model_name="gpt-4o", input_tokens=6, output_tokens=23)}),
+            RequestMetadata(llm_calls={LLMCallMetadata(llm_model_name="gpt-4o", input_tokens=6, output_tokens=23)}),
         ),
         (
             {
@@ -181,7 +181,9 @@ def test_elbow_filter(scores: list[float], target_len: int):
                 ),
                 "model": "unknown-model",
             },
-            RequestMetadata(llm_calls={LLMCallMetadata(model_name="unknown-model", input_tokens=6, output_tokens=23)}),
+            RequestMetadata(
+                llm_calls={LLMCallMetadata(llm_model_name="unknown-model", input_tokens=6, output_tokens=23)}
+            ),
         ),
     ],
 )
