@@ -223,6 +223,51 @@ async def test_chat_consumer_with_naughty_citation(
     assert uploaded_file.last_referenced.date() == datetime.now(tz=UTC).date()
 
 
+@pytest.mark.django_db(transaction=True)
+@pytest.mark.asyncio()
+async def test_chat_consumer_agentic(alice: User, uploaded_file: File, mocked_connect_agentic_search: Connect):
+    # Given
+
+    # When
+    with patch("redbox_app.redbox_core.consumers.ChatConsumer.redbox.graph", new=mocked_connect_agentic_search):
+        communicator = WebsocketCommunicator(ChatConsumer.as_asgi(), "/ws/chat/")
+        communicator.scope["user"] = alice
+        connected, _ = await communicator.connect()
+        assert connected
+
+        await communicator.send_json_to({"message": "Hello Hal."})
+        response1 = await communicator.receive_json_from(timeout=5)
+        response2 = await communicator.receive_json_from(timeout=5)
+        response3 = await communicator.receive_json_from(timeout=5)
+        response4 = await communicator.receive_json_from(timeout=5)
+        response5 = await communicator.receive_json_from(timeout=5)
+
+        # Then
+        assert response1["type"] == "session-id"
+        assert response2["type"] == "text"
+        assert response2["data"] == "Good afternoon, "
+        assert response3["type"] == "text"
+        assert response3["data"] == "Mr. Amor."
+        assert response4["type"] == "route"
+        assert response4["data"] == "search/agentic"
+        assert response5["type"] == "source"
+        assert response5["data"]["original_file_name"] == uploaded_file.original_file_name
+        # Close
+        await communicator.disconnect()
+
+    assert await get_chat_message_text(alice, ChatRoleEnum.user) == ["Hello Hal."]
+    assert await get_chat_message_text(alice, ChatRoleEnum.ai) == ["Good afternoon, Mr. Amor."]
+
+    expected_citations = {("Good afternoon Mr Amor", ()), ("Good afternoon Mr Amor", (34, 35))}
+    assert await get_chat_message_citation_set(alice, ChatRoleEnum.ai) == expected_citations
+    await refresh_from_db(uploaded_file)
+    assert uploaded_file.last_referenced.date() == datetime.now(tz=UTC).date()
+
+    assert await get_token_use_model(ChatMessageTokenUse.UseTypeEnum.INPUT) == "gpt-4o"
+    assert await get_token_use_model(ChatMessageTokenUse.UseTypeEnum.OUTPUT) == "gpt-4o"
+    assert await get_token_use_count(ChatMessageTokenUse.UseTypeEnum.INPUT) == 123
+    assert await get_token_use_count(ChatMessageTokenUse.UseTypeEnum.OUTPUT) == 1000
+
 @database_sync_to_async
 def get_chat_message_text(user: User, role: ChatRoleEnum) -> Sequence[str]:
     return [m.text for m in ChatMessage.objects.filter(chat__user=user, role=role)]
@@ -664,6 +709,51 @@ def mocked_connect_with_explicit_no_document_selected_error() -> CannedGraphLLM:
 
     return CannedGraphLLM(responses=responses)
 
+
+@pytest.fixture()
+def mocked_connect_agentic_search(uploaded_file: File) -> Connect:
+    responses = [
+        {
+            "event": "on_custom_event", 
+            "name": "response_tokens",
+            "data": "Good afternoon, ",
+        },
+        {   
+            "event": "on_custom_event", 
+            "name": "response_tokens", 
+            "data": "Mr. Amor.",
+        },
+        {
+            "event": "on_chain_end", 
+            "tags": [ROUTE_NAME_TAG], 
+            "data": {"output": {"route_name": "search/agentic"}}},
+        {
+            "event": "on_custom_event",
+            "name": "on_source_report",
+            "data": [
+                Document(metadata={"file_name": uploaded_file.unique_name}, page_content="Good afternoon Mr Amor"),
+                Document(metadata={"file_name": uploaded_file.unique_name}, page_content="Good afternoon Mr Amor"),
+                Document(
+                    metadata={
+                        "file_name": uploaded_file.unique_name, 
+                        "page_number": [34, 35]
+                    },
+                    page_content="Good afternoon Mr Amor",
+                ),
+            ]
+        },
+        {
+            "event": "on_custom_event",
+            "name": "on_metadata_generation",
+            "data": RequestMetadata(
+                llm_calls=[LLMCallMetadata(model_name="gpt-4o", input_tokens=123, output_tokens=1000)],
+                selected_files_total_tokens=1000,
+                number_of_selected_files=1,
+            ),
+        },
+    ]
+
+    return CannedGraphLLM(responses=responses)
 
 @pytest.fixture()
 def mocked_connect_with_several_files(several_files: Sequence[File]) -> Connect:
