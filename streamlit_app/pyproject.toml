@@ -1,0 +1,36 @@
+[tool.ruff]
+line-length = 120
+target-version = 'py312'
+
+[tool.poetry]
+name = "redbox-streamlit"
+version = "0.1.0"
+description = "Use Redbox easily as an AI Engineer"
+authors = ["i.AI <i-dot-ai-enquiries@cabinetoffice.gov.uk>"]
+license = "MIT"
+readme = "../README.md"
+
+[tool.poetry.dependencies]
+redbox = {path="../redbox-core", develop=true}
+python = ">=3.12,<3.13"
+streamlit = "^1.39.0"
+
+
+[tool.poetry.group.dev.dependencies]
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.pytest.ini_options]
+addopts = "--import-mode=importlib"
+env_override_existing_values = 1
+env_files = [
+    ".env.test",
+    ".env"
+]
+markers = [
+    "ai: marks tests as using a live LLM (deselect with '-m \"not ai\"')"
+]
+
