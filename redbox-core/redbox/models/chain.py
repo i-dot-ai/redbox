@@ -147,7 +147,7 @@ class RedboxQuery(BaseModel):
 
 class LLMCallMetadata(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid4()))
-    model_name: str
+    llm_model_name: str
     input_tokens: int
     output_tokens: int
     timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))

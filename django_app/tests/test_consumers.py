@@ -32,7 +32,7 @@ logger = logging.getLogger(__name__)
 
 @database_sync_to_async
 def get_token_use_model(use_type: str) -> str:
-    return ChatMessageTokenUse.objects.filter(use_type=use_type).latest("created_at").model_name
+    return ChatMessageTokenUse.objects.filter(use_type=use_type).latest("created_at").llm_model_name
 
 
 @database_sync_to_async
