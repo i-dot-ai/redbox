@@ -25,6 +25,7 @@ from redbox.models.chain import (
     RequestMetadata,
     metadata_reducer,
 )
+from redbox.models.graph import RedboxActivityEvent
 from redbox_app.redbox_core import error_messages
 from redbox_app.redbox_core.models import (
     ActivityEvent,
@@ -251,7 +252,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         self.metadata = metadata_reducer(self.metadata, RequestMetadata.model_validate(response))
 
     async def handle_activity(self, response: dict):
-        self.activities.append(response)
+        self.activities.append(RedboxActivityEvent.model_validate(response))
 
     async def handle_documents(self, response: list[Document]):
         s3_keys = [doc.metadata["file_name"] for doc in response]
