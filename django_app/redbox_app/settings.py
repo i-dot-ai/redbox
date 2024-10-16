@@ -13,8 +13,7 @@ from sentry_sdk.integrations.django import DjangoIntegration
 from storages.backends import s3boto3
 from yarl import URL
 
-from django_app.redbox_app.setting_enums import LOCAL_HOSTS
-from redbox_app.setting_enums import Classification, Environment
+from redbox_app.setting_enums import LOCAL_HOSTS, Classification, Environment
 
 load_dotenv()
 
