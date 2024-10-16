@@ -162,6 +162,13 @@
         </fieldset>
       </div>
 
+      <div class="govuk-form-group">
+        <label class="govuk-label" for="{{ form.redbox_tasks.id_for_label }}">
+          {{ form.redbox_tasks.label }}
+        </label>
+        {{ form.redbox_tasks }}
+      </div>
+
       <div class="govuk-button-group">
         {{ govukButton(text="Continue") }}
       </div>
