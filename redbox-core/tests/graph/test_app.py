@@ -442,7 +442,7 @@ async def test_streaming(test: RedboxChatTestCase, env: Settings, mocker: Mocker
         all_chunks_retriever=mock_all_chunks_retriever(test_case.docs),
         parameterised_retriever=mock_parameterised_retriever(test_case.docs),
         metadata_retriever=mock_metadata_retriever(
-            [d for d in test_case.docs if d.metadata["file_name"] in test_case.query.s3_keys]
+            [d for d in test_case.docs if d.metadata["original_resource_ref"] in test_case.query.s3_keys]
         ),
         env=env,
         debug=LANGGRAPH_DEBUG,

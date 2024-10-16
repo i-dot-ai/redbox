@@ -205,7 +205,7 @@ def add_document_filter_scores_to_query(
     for document in centres:
         gauss_functions.append(
             {
-                "filter": {"term": {"metadata.file_name.keyword": document.metadata["file_name"]}},
+                "filter": {"term": {"metadata.file_name.keyword": document.metadata["original_resource_ref"]}},
                 "gauss": {
                     "metadata.index": {
                         "origin": document.metadata["index"],

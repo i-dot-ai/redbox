@@ -136,11 +136,11 @@ def test_search_documents_tool(
         # Check flattened documents match expected, similar to retriever
         assert len(result_flat) == chain_params["rag_k"]
         assert {c.page_content for c in result_flat} <= {c.page_content for c in permitted_docs}
-        assert {c.metadata["file_name"] for c in result_flat} <= set(stored_file_parameterised.query.permitted_s3_keys)
+        assert {c.metadata["original_resource_ref"] for c in result_flat} <= set(stored_file_parameterised.query.permitted_s3_keys)
 
         if selected:
             assert {c.page_content for c in result_flat} <= {c.page_content for c in selected_docs}
-            assert {c.metadata["file_name"] for c in result_flat} <= set(stored_file_parameterised.query.s3_keys)
+            assert {c.metadata["original_resource_ref"] for c in result_flat} <= set(stored_file_parameterised.query.s3_keys)
 
         # Check docstate is formed as expected, similar to transform tests
         for group_uuid, group_docs in result_docstate.items():
@@ -171,5 +171,5 @@ def test_wikipedia_tool():
     )
     for document in flatten_document_state(state_update["documents"]):
         assert document.page_content != ""
-        assert urlparse(document.metadata["file_name"]).hostname == "en.wikipedia.org"
+        assert urlparse(document.metadata["original_resource_ref"]).hostname == "en.wikipedia.org"
         assert document.metadata["source"] == "Wikipedia"

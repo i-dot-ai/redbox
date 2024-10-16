@@ -100,7 +100,7 @@ def build_merge_pattern(
 
         merge_state = RedboxState(
             request=state["request"],
-            documents={merged_document.metadata["file_name"]: {merged_document.metadata["uuid"]: merged_document}},
+            documents={merged_document.metadata["original_resource_ref"]: {merged_document.metadata["uuid"]: merged_document}},
         )
 
         merge_response = build_llm_chain(
