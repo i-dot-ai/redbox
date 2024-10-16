@@ -8,7 +8,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('redbox_core', '0052_chatllmbackend_display'),
+        ('redbox_core', '0053_user_redbox_tasks_alter_user_business_unit'),
     ]
 
     operations = [
