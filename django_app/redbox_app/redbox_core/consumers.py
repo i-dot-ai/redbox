@@ -243,24 +243,24 @@ class ChatConsumer(AsyncWebsocketConsumer):
         self.metadata = metadata_reducer(self.metadata, RequestMetadata.model_validate(response))
 
     async def handle_documents(self, response: list[Document]):
-        sources = {doc.metadata["file_name"] for doc in response}
+        sources = {doc.metadata["original_resource_ref"] for doc in response}
         files = File.objects.filter(original_file__in=sources)
         handled_sources = set()
         async for file in files:
             await self.send_to_client("source", {"url": str(file.url), "original_file_name": file.original_file_name})
-            self.citations.append((file, [doc for doc in response if doc.metadata["file_name"] == file.unique_name]))
+            self.citations.append((file, [doc for doc in response if doc.metadata["original_resource_ref"] == file.unique_name]))
             handled_sources.add(file.original_file_name)
 
-        additional_sources = [doc for doc in response if doc.metadata["file_name"] not in handled_sources]
+        additional_sources = [doc for doc in response if doc.metadata["original_resource_ref"] not in handled_sources]
 
         for additional_source in additional_sources:
-            file_name = additional_source.metadata["file_name"]
-            source = additional_source.metadata.get("source", "Unknown")
+            url = additional_source.metadata["original_resource_ref"]
+            source = additional_source.metadata.get("creator_type", "Unknown")
             await self.send_to_client(
-                "source", {"url": file_name, "original_file_name": f"{source} - {file_name.split("/")[-1]}"}
+                "source", {"url": url, "original_file_name": f"{source} - {url.split("/")[-1]}"}
             )
             self.external_citations.append(
-                (file, [doc for doc in response if doc.metadata["file_name"] == file.unique_name])
+                (file, [doc for doc in response if doc.metadata["original_resource_ref"] == file.unique_name])
             )
 
     async def handle_activity_event(self, event: RedboxActivityEvent):

@@ -14,7 +14,7 @@ from pydantic.v1 import BaseModel, Field, validator
 
 from redbox.models.chain import RedboxQuery
 from redbox.models.chat import ChatRoute, ErrorRoute
-from redbox.models.file import ChunkMetadata, ChunkResolution
+from redbox.models.file import ChunkMetadata, ChunkResolution, UploadedFileMetadata
 from redbox.models.graph import RedboxActivityEvent
 
 log = logging.getLogger()
@@ -35,9 +35,9 @@ def generate_docs(
     redbox.retriever.retrievers.hit_to_doc().
     """
     for i in range(number_of_docs):
-        core_metadata = ChunkMetadata(
+        core_metadata = UploadedFileMetadata(
             index=index_start + i,
-            file_name=s3_key,
+            original_resource_ref=s3_key,
             page_number=page_numbers[int(i / number_of_docs) * len(page_numbers)],
             created_datetime=datetime.datetime.now(datetime.UTC),
             token_count=int(total_tokens / number_of_docs),

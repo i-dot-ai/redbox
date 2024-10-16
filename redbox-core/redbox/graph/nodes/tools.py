@@ -9,7 +9,7 @@ from langgraph.prebuilt import InjectedState
 from langchain_community.utilities import WikipediaAPIWrapper
 import tiktoken
 
-from redbox.models.file import ChunkResolution
+from redbox.models.file import ChunkMetadata, ChunkResolution
 from redbox.retriever.queries import add_document_filter_scores_to_query, build_document_query
 from redbox.retriever.retrievers import query_to_documents
 from redbox.transform import merge_documents, sort_documents, structure_documents_by_group_and_indices
@@ -151,13 +151,12 @@ def build_search_wikipedia_tool(number_wikipedia_results=1, max_chars_per_wiki_p
         mapped_documents = [
             Document(
                 page_content=doc.page_content,
-                metadata={
-                    "uuid": uuid4(),
-                    "index": i,
-                    "file_name": doc.metadata["source"],
-                    "token_count": len(tokeniser.encode(doc.page_content)),
-                    "source": "Wikipedia",
-                },
+                metadata=ChunkMetadata(
+                    index=i,
+                    original_resource_ref=doc.metadata["source"],
+                    token_count=len(tokeniser.encode(doc.page_content)),
+                    creator_type="wikipedia"
+                ).model_dump()
             )
             for i, doc in enumerate(response)
         ]
