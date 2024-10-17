@@ -13,7 +13,7 @@ from django.contrib.auth.base_user import BaseUserManager as BaseSSOUserManager
 from django.contrib.postgres.fields import ArrayField
 from django.core import validators
 from django.db import models
-from django.db.models import Max, Min, Prefetch, UniqueConstraint
+from django.db.models import Max, Min, Prefetch, Sum, UniqueConstraint
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django_use_email_as_username.models import BaseUser, BaseUserManager
@@ -785,6 +785,23 @@ class ChatMessage(UUIDPrimaryKeyBase, TimeStampedModel):
                 )
             )
         )
+
+    def log(self):
+        token_count = self.chatmessagetokenuse_set.annotate(token_count=Sum("token_count"))
+        elastic_log_msg = {
+            "@timestamp": self.created_at.isotime(),
+            "id": self.id,
+            "chat_id": self.chat.id,
+            "user_id": self.chat.user.id,
+            "text": self.text,
+            "route": self.route,
+            "role": "ai",
+            "token_count": token_count["token_count"],
+            "rating": self.rating,
+            "rating_text": self.rating_text,
+            "rating_chips": self.rating_chips,
+        }
+        es_client.create(env.elastic_chat_mesage_index, uuid.uuid4(), elastic_log_msg)
 
 
 class ChatMessageTokenUse(UUIDPrimaryKeyBase, TimeStampedModel):

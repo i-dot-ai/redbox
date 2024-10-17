@@ -3,7 +3,7 @@ import logging
 from asyncio import CancelledError
 from collections.abc import Mapping, Sequence
 from typing import Any, ClassVar
-from uuid import UUID, uuid4
+from uuid import UUID
 
 from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
@@ -222,25 +222,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
                     model_name=model,
                     token_count=token_count,
                 )
-            token_count = sum(metadata.output_tokens.values())
-        else:
-            token_count = 0
 
-        elastic_log_msg = {
-            "@timestamp": chat_message.created_at.isotime(),
-            "id": chat_message.id,
-            "chat_id": chat_message.chat.id,
-            "user_id": chat_message.chat.user.id,
-            "text": chat_message.text,
-            "route": chat_message.route,
-            "role": "ai",
-            "token_count": token_count,
-            "rating": chat_message.rating,
-            "rating_text": chat_message.rating_text,
-            "rating_chips": chat_message.rating_chips,
-        }
-        elasticsearch_client.create(env.elastic_chat_mesage_index, uuid4(), elastic_log_msg)
-
+        chat_message.log()
         return chat_message
 
     @staticmethod
