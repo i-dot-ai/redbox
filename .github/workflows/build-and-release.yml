@@ -59,7 +59,7 @@ jobs:
     needs:
       - set-vars
       - start-runner
-    uses: i-dot-ai/i-dot-ai-core-github-actions/.github/workflows/build-docker.yml@main
+    uses: i-dot-ai/i-dot-ai-core-github-actions/.github/workflows/build-docker.yml@danny/oidc-roles
     permissions: write-all
     with:
       APP_NAME: ${{ needs.set-vars.outputs.app-name }}
@@ -78,7 +78,7 @@ jobs:
       - set-vars
       - start-runner
       - build-image
-    uses: i-dot-ai/i-dot-ai-core-github-actions/.github/workflows/apply-terraform.yml@main
+    uses: i-dot-ai/i-dot-ai-core-github-actions/.github/workflows/apply-terraform.yml@danny/oidc-roles
     permissions: write-all
     with:
       APP_NAME: ${{ needs.set-vars.outputs.app-name }}
@@ -158,7 +158,7 @@ jobs:
     secrets: inherit
 
   stop-runner:
-    uses: i-dot-ai/i-dot-ai-core-github-actions/.github/workflows/stop-runner.yml@main
+    uses: i-dot-ai/i-dot-ai-core-github-actions/.github/workflows/stop-runner.yml@danny/oidc-roles
     if: needs.start-runner.outputs.use-persisted == 0 && always()
     permissions: write-all
     needs:
