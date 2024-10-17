@@ -787,7 +787,14 @@ class ChatMessage(UUIDPrimaryKeyBase, TimeStampedModel):
         )
 
     def log(self):
-        token_sum = self.chatmessagetokenuse_set.annotate(token_sum=Sum("token_count"))
+        token_sum = list(self.chatmessagetokenuse_set.annotate(token_sum=Sum("token_count")))
+        if not token_sum:
+            t = 0
+        elif len(token_sum) > 1:
+            msg = "too many items: token_sum=%s".format()
+            raise ValueError(msg)
+        else:
+            t = token_sum[0]
         elastic_log_msg = {
             "@timestamp": self.created_at.isoformat(),
             "id": str(self.id),
@@ -796,12 +803,16 @@ class ChatMessage(UUIDPrimaryKeyBase, TimeStampedModel):
             "text": str(self.text),
             "route": str(self.route),
             "role": "ai",
-            "token_count": int(token_sum["token_sum"]),
-            "rating": int(self.rating),
+            "token_count": t,
+            "rating": int(self.rating) if self.rating else None,
             "rating_text": str(self.rating_text),
-            "rating_chips": list(map(str, self.rating_chips)),
+            "rating_chips": list(map(str, self.rating_chips)) if self.rating_chips else None,
         }
-        es_client.create(env.elastic_chat_mesage_index, uuid.uuid4(), elastic_log_msg)
+        es_client.create(
+            index=env.elastic_chat_mesage_index,
+            id=uuid.uuid4(),
+            document=elastic_log_msg,
+        )
 
 
 class ChatMessageTokenUse(UUIDPrimaryKeyBase, TimeStampedModel):
