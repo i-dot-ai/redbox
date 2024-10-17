@@ -789,17 +789,17 @@ class ChatMessage(UUIDPrimaryKeyBase, TimeStampedModel):
     def log(self):
         token_count = self.chatmessagetokenuse_set.annotate(token_count=Sum("token_count"))
         elastic_log_msg = {
-            "@timestamp": self.created_at.isotime(),
-            "id": self.id,
-            "chat_id": self.chat.id,
-            "user_id": self.chat.user.id,
-            "text": self.text,
-            "route": self.route,
+            "@timestamp": self.created_at.isoformat(),
+            "id": str(self.id),
+            "chat_id": str(self.chat.id),
+            "user_id": str(self.chat.user.id),
+            "text": str(self.text),
+            "route": str(self.route),
             "role": "ai",
-            "token_count": token_count["token_count"],
-            "rating": self.rating,
-            "rating_text": self.rating_text,
-            "rating_chips": self.rating_chips,
+            "token_count": int(token_count["token_count"]),
+            "rating": int(self.rating),
+            "rating_text": str(self.rating_text),
+            "rating_chips": list(map(str, self.rating_chips)),
         }
         es_client.create(env.elastic_chat_mesage_index, uuid.uuid4(), elastic_log_msg)
 
