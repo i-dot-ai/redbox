@@ -118,6 +118,14 @@ class Settings(BaseSettings):
         "Return only the JSON-LD:\n\n",
     )
 
+    @property
+    def elastic_chat_mesage_index(self):
+        return self.elastic_root_index + "-chat-mesage-log"
+
+    @property
+    def elastic_alias(self):
+        return self.elastic_root_index + "-chunk-current"
+
     @lru_cache(1)
     def elasticsearch_client(self) -> Elasticsearch:
         if isinstance(self.elastic, ElasticLocalSettings):
@@ -134,10 +142,13 @@ class Settings(BaseSettings):
         else:
             client = Elasticsearch(cloud_id=self.elastic.cloud_id, api_key=self.elastic.api_key)
 
-        if not client.indices.exists_alias(name=f"{self.elastic_root_index}-chunk-current"):
+        if not client.indices.exists_alias(name=self.elastic_alias):
             chunk_index = f"{self.elastic_root_index}-chunk"
             client.options(ignore_status=[400]).indices.create(index=chunk_index)
-            client.indices.put_alias(index=chunk_index, name=f"{self.elastic_root_index}-chunk-current")
+            client.indices.put_alias(index=chunk_index, name=self.elastic_alias)
+
+        if not client.indices.exists(index=self.elastic_chat_mesage_index):
+            client.indices.create(index=self.elastic_chat_mesage_index)
 
         return client.options(request_timeout=30, retry_on_timeout=True, max_retries=3)
 
