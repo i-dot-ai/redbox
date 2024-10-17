@@ -45,9 +45,6 @@ OptFileSeq = Sequence[File] | None
 logger = logging.getLogger(__name__)
 logger.info("WEBSOCKET_SCHEME is: %s", settings.WEBSOCKET_SCHEME)
 
-env = Settings()
-elasticsearch_client = env.elasticsearch_client()
-
 
 def parse_page_number(obj: int | list[int] | None) -> list[int]:
     if isinstance(obj, int):
@@ -70,7 +67,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
     citations: ClassVar = []
     route = None
     metadata: RequestMetadata = RequestMetadata()
-    redbox = Redbox(env=env, debug=True)
+    redbox = Redbox(env=Settings(), debug=True)
 
     async def receive(self, text_data=None, bytes_data=None):
         """Receive & respond to message from browser websocket."""
