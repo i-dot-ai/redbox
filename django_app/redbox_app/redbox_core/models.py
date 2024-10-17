@@ -790,11 +790,8 @@ class ChatMessage(UUIDPrimaryKeyBase, TimeStampedModel):
         token_sum = list(self.chatmessagetokenuse_set.annotate(token_sum=Sum("token_count")))
         if not token_sum:
             t = 0
-        elif len(token_sum) > 1:
-            msg = "too many items: token_sum=%s".format()
-            raise ValueError(msg)
         else:
-            t = token_sum[0]
+            t= sum(x["token_count"] for x in token_sum)
         elastic_log_msg = {
             "@timestamp": self.created_at.isoformat(),
             "id": str(self.id),
