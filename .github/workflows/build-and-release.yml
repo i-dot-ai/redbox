@@ -41,9 +41,13 @@ jobs:
 
   start-runner:
     uses: i-dot-ai/i-dot-ai-core-github-actions/.github/workflows/start-runner.yml@main
+<<<<<<< HEAD
     permissions:
       id-token: write
       contents: read
+=======
+    permissions: write-all
+>>>>>>> 74d33924 (Alters workflows to use OIDC auth)
     needs: set-vars
     with:
       EC2_INSTANCE_TYPE: ${{ needs.set-vars.outputs.ec2-instance-type }}
@@ -62,9 +66,13 @@ jobs:
       - set-vars
       - start-runner
     uses: i-dot-ai/i-dot-ai-core-github-actions/.github/workflows/build-docker.yml@main
+<<<<<<< HEAD
     permissions:
       id-token: write
       contents: read
+=======
+    permissions: write-all
+>>>>>>> 74d33924 (Alters workflows to use OIDC auth)
     with:
       APP_NAME: ${{ needs.set-vars.outputs.app-name }}
       RUNNER_LABEL: ${{ needs.start-runner.outputs.label }}
@@ -83,9 +91,13 @@ jobs:
       - start-runner
       - build-image
     uses: i-dot-ai/i-dot-ai-core-github-actions/.github/workflows/apply-terraform.yml@main
+<<<<<<< HEAD
     permissions:
       id-token: write
       contents: read
+=======
+    permissions: write-all
+>>>>>>> 74d33924 (Alters workflows to use OIDC auth)
     with:
       APP_NAME: ${{ needs.set-vars.outputs.app-name }}
       RUNNER_LABEL: ${{ needs.start-runner.outputs.label }}
@@ -166,9 +178,13 @@ jobs:
   stop-runner:
     uses: i-dot-ai/i-dot-ai-core-github-actions/.github/workflows/stop-runner.yml@main
     if: needs.start-runner.outputs.use-persisted == 0 && always()
+<<<<<<< HEAD
     permissions:
       id-token: write
       contents: read
+=======
+    permissions: write-all
+>>>>>>> 74d33924 (Alters workflows to use OIDC auth)
     needs:
       - set-vars
       - start-runner
