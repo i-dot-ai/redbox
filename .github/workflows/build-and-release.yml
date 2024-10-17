@@ -41,11 +41,15 @@ jobs:
 
   start-runner:
     uses: i-dot-ai/i-dot-ai-core-github-actions/.github/workflows/start-runner.yml@main
+    permissions:
+      id-token: write
+      contents: read
     needs: set-vars
     with:
       EC2_INSTANCE_TYPE: ${{ needs.set-vars.outputs.ec2-instance-type }}
       RUNNER_SIZE: ${{ needs.set-vars.outputs.runner-size }}
       ENVIRONMENT: ${{ inputs.environment }}
+      USE_OIDC: true
     secrets:
       AWS_GITHUBRUNNER_USER_ACCESS_KEY: ${{ secrets.AWS_GITHUBRUNNER_USER_ACCESS_KEY }}
       AWS_GITHUBRUNNER_USER_SECRET_ID: ${{ secrets.AWS_GITHUBRUNNER_USER_SECRET_ID }}
@@ -58,11 +62,15 @@ jobs:
       - set-vars
       - start-runner
     uses: i-dot-ai/i-dot-ai-core-github-actions/.github/workflows/build-docker.yml@main
+    permissions:
+      id-token: write
+      contents: read
     with:
       APP_NAME: ${{ needs.set-vars.outputs.app-name }}
       RUNNER_LABEL: ${{ needs.start-runner.outputs.label }}
       INFRASTRUCTURE_FOLDER: "infrastructure/aws"
       COMMIT_HASH: ${{ github.sha }}
+      USE_OIDC: true
     secrets:
       AWS_GITHUBRUNNER_PAT: ${{ secrets.AWS_GITHUBRUNNER_PAT}}
       AWS_GITHUBRUNNER_PAT_USER: ${{ secrets.AWS_GITHUBRUNNER_PAT_USER }}
@@ -75,6 +83,9 @@ jobs:
       - start-runner
       - build-image
     uses: i-dot-ai/i-dot-ai-core-github-actions/.github/workflows/apply-terraform.yml@main
+    permissions:
+      id-token: write
+      contents: read
     with:
       APP_NAME: ${{ needs.set-vars.outputs.app-name }}
       RUNNER_LABEL: ${{ needs.start-runner.outputs.label }}
@@ -85,6 +96,7 @@ jobs:
       CORE_INFRA_REF: ${{ inputs.core_infra_repo_reference }}
       INFRA_CONFIG_REF: ${{ inputs.config_repo_reference }}
       IMAGE_TAG: ${{ github.sha }}
+      USE_OIDC: true
     secrets:
       AWS_GITHUBRUNNER_PAT: ${{ secrets.AWS_GITHUBRUNNER_PAT}}
       AWS_GITHUBRUNNER_PAT_USER: ${{ secrets.AWS_GITHUBRUNNER_PAT_USER }}
@@ -154,6 +166,9 @@ jobs:
   stop-runner:
     uses: i-dot-ai/i-dot-ai-core-github-actions/.github/workflows/stop-runner.yml@main
     if: needs.start-runner.outputs.use-persisted == 0 && always()
+    permissions:
+      id-token: write
+      contents: read
     needs:
       - set-vars
       - start-runner
@@ -163,6 +178,7 @@ jobs:
     with:
       RUNNER_LABEL: ${{ needs.start-runner.outputs.label }}
       EC2_INSTANCE_ID: ${{ needs.start-runner.outputs.ec2-instance-id }}
+      USE_OIDC: true
     secrets:
       AWS_GITHUBRUNNER_USER_ACCESS_KEY: ${{ secrets.AWS_GITHUBRUNNER_USER_ACCESS_KEY }}
       AWS_GITHUBRUNNER_USER_SECRET_ID: ${{ secrets.AWS_GITHUBRUNNER_USER_SECRET_ID }}
