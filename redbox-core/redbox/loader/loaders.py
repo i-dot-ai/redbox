@@ -173,10 +173,12 @@ class MetadataLoader:
         except ConnectionError as e:
             logger.warning(f"Retrying due to HTTPError {e}")
         except json.JSONDecodeError:
+            logger.error("failed to encode metadata into json")
             # replace with fail safe metadata
-            return None
+            return {}
         except Exception as e:
-            raise Exception(f"Some error happened in metadata extraction. {e}")
+            logger.error(f"Unhandled error happened in metadata extraction. {e}")
+            return {}
 
 
 def coerce_to_string_list(input_data: str | list[Any]) -> list[str]:
