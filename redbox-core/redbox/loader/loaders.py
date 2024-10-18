@@ -175,10 +175,10 @@ class MetadataLoader:
         except json.JSONDecodeError:
             logger.error("failed to encode metadata into json")
             # replace with fail safe metadata
-            return {}
+            return metadata
         except Exception as e:
             logger.error(f"Unhandled error happened in metadata extraction. {e}")
-            return {}
+            return metadata
 
 
 def coerce_to_string_list(input_data: str | list[Any]) -> list[str]:
