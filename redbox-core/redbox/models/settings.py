@@ -22,9 +22,9 @@ class ElasticLocalSettings(BaseModel):
     host: str = "elasticsearch"
     port: int = 9200
     scheme: str = "http"
-    user: str = "elastic"
+    user: str | None = None
     version: str = "8.11.0"
-    password: str = "redboxpass"
+    password: str | None = None
     subscription_level: str = "basic"
 
 
@@ -121,6 +121,8 @@ class Settings(BaseSettings):
     @lru_cache(1)
     def elasticsearch_client(self) -> Elasticsearch:
         if isinstance(self.elastic, ElasticLocalSettings):
+            basic_auth = (self.elastic.user, self.elastic.password) if self.elastic.user else None
+
             client = Elasticsearch(
                 hosts=[
                     {
@@ -129,8 +131,9 @@ class Settings(BaseSettings):
                         "scheme": self.elastic.scheme,
                     }
                 ],
-                basic_auth=(self.elastic.user, self.elastic.password),
+                basic_auth=basic_auth,
             )
+
         else:
             client = Elasticsearch(cloud_id=self.elastic.cloud_id, api_key=self.elastic.api_key)
 
