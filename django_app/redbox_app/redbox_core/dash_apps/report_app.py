@@ -2,7 +2,7 @@ import plotly.express as px
 from dash import dcc, html
 from dash.dependencies import Input, Output
 from django.db.models import Count, Sum
-from django.db.models.functions import TruncDate
+from django.db.models.functions import TruncDay, TruncHour, TruncWeek
 from plotly.graph_objects import Figure
 
 # ----------------------------------#
@@ -38,6 +38,16 @@ from redbox_app.redbox_core import models  # Must be imported after django.setup
 app.layout = html.Div(
     [
         dcc.Graph(id="line-chart"),
+        html.P("Select time-scale"),
+        dcc.Dropdown(
+            id="time-scale",
+            options=[
+                {"label": "weekly", "value": "week"},
+                {"label": "daily", "value": "day"},
+                {"label": "hourly", "value": "hour"},
+            ],
+            value="message_count",
+        ),
         html.P("Select metric"),
         dcc.Dropdown(
             id="metric",
@@ -66,15 +76,24 @@ app.layout = html.Div(
 # ----------#
 
 
-@app.callback(Output("line-chart", "figure"), [Input("metric", "value"), Input("breakdown", "value")])
-def update_graph(metric: str, breakdown: str | None, **kwargs) -> Figure:  # noqa: ARG001
+@app.callback(
+    Output("line-chart", "figure"),
+    [
+        Input("time-scale", "value"),
+        Input("metric", "value"),
+        Input("breakdown", "value"),
+    ],
+)
+def update_graph(scale: str, metric: str, breakdown: str | None, **kwargs) -> Figure:  # noqa: ARG001
     """A standard plotly callback.
 
     Note **kwargs must be used for compatibility across both Dash and DjangoDash.
     """
     breakdown_args = [breakdown] if breakdown else []
+    scale_func = {"week": TruncWeek, "day": TruncDay, "hour": TruncHour}[scale]
+
     queryset = (
-        models.ChatMessage.objects.annotate(day=TruncDate("created_at"))
+        models.ChatMessage.objects.annotate(day=scale_func("created_at"))
         .values("day", *breakdown_args)
         .annotate(
             message_count=Count("id", distinct=True),
