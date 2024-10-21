@@ -93,19 +93,19 @@ def update_graph(scale: str, metric: str, breakdown: str | None, **kwargs) -> Fi
     scale_func = {"week": TruncWeek, "day": TruncDay, "hour": TruncHour}[scale]
 
     queryset = (
-        models.ChatMessage.objects.annotate(day=scale_func("created_at"))
-        .values("day", *breakdown_args)
+        models.ChatMessage.objects.annotate(time=scale_func("created_at"))
+        .values("time", *breakdown_args)
         .annotate(
             message_count=Count("id", distinct=True),
             unique_users=Count("chat__user", distinct=True),
             token_count=Sum("chatmessagetokenuse__token_count"),
         )
-        .order_by("day")
-        .values("day", "message_count", "unique_users", "token_count", *breakdown_args)
+        .order_by("time")
+        .values("time", "message_count", "unique_users", "token_count", *breakdown_args)
     )
 
     breakdown_colours = {"color": breakdown} if breakdown else {}
-    return px.bar(queryset, x="day", y=metric, title="use per day", **breakdown_colours)
+    return px.bar(queryset, x="time", y=metric, title="use per day", **breakdown_colours)
 
 
 if __name__ == "__main__":
