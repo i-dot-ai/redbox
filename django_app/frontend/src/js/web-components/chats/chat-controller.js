@@ -12,11 +12,11 @@ class ChatController extends HTMLElement {
 
     messageForm?.addEventListener("submit", (evt) => {
       evt.preventDefault();
-      const textArea = /** @type {HTMLInputElement | null} */ (
-        document.querySelector(".js-user-text")
+      const messageInput = /** @type {MessageInput | null} */ (
+        document.querySelector("message-input")
       );
-      const userText = textArea?.value.trim();
-      if (!textArea || !userText) {
+      const userText = messageInput?.getValue();
+      if (!messageInput || !userText) {
         return;
       }
 
@@ -25,7 +25,7 @@ class ChatController extends HTMLElement {
       userMessage.setAttribute("data-role", "user");
       messageContainer?.insertBefore(userMessage, insertPosition);
 
-      let aiMessage = /** @type {ChatMessage} */ (
+      let aiMessage = /** @type {import("./chat-message").ChatMessage} */ (
         document.createElement("chat-message")
       );
       aiMessage.setAttribute("data-role", "ai");
@@ -33,7 +33,7 @@ class ChatController extends HTMLElement {
 
       const llm = /** @type {HTMLInputElement | null}*/ (
         document.querySelector("#llm-selector")
-      )?.value;
+      )?.value || "";
 
       aiMessage.stream(
         userText,
@@ -51,7 +51,7 @@ class ChatController extends HTMLElement {
       if (feedbackButtons) {
         feedbackButtons.dataset.status = "";
       }
-      textArea.value = "";
+      messageInput.reset();
 
       // if a route has been intentionally specified by a user, send an event to Plausible
       (() => {

@@ -3,7 +3,7 @@
 /** @type {import ('showdown')} */
 let showdown = window["showdown"];
 
-class MarkdownConverter extends HTMLElement {
+export class MarkdownConverter extends HTMLElement {
   /**
    * Takes markdown and inserts as HTML
    * @param {string} markdown
