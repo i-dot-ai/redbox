@@ -1,5 +1,6 @@
 from typing import Annotated, Any
-from uuid import UUID
+from urllib.parse import urlparse
+from uuid import UUID, uuid4
 
 import pytest
 from elasticsearch import Elasticsearch
@@ -7,10 +8,15 @@ from langchain_core.embeddings.fake import FakeEmbeddings
 from langchain_core.tools import tool
 from langgraph.prebuilt import InjectedState
 
-from redbox.graph.nodes.tools import build_search_documents_tool, has_injected_state, is_valid_tool
+from redbox.graph.nodes.tools import (
+    build_gov_uk_search_tool,
+    build_search_documents_tool,
+    has_injected_state,
+    is_valid_tool,
+)
 from redbox.models import Settings
-from redbox.models.chain import RedboxState
-from redbox.models.file import ChunkResolution
+from redbox.models.chain import AISettings, RedboxQuery, RedboxState
+from redbox.models.file import ChunkMetadata, ChunkResolution
 from redbox.test.data import RedboxChatTestCase
 from redbox.transform import flatten_document_state
 from tests.retriever.test_retriever import TEST_CHAIN_PARAMETERS
@@ -144,3 +150,33 @@ def test_search_documents_tool(
             for doc in group_docs.values():
                 assert doc.metadata["uuid"] in group_docs
                 assert group_docs[doc.metadata["uuid"]] == doc
+
+
+def test_gov_uk_search_tool():
+    tool = build_gov_uk_search_tool()
+
+    state_update = tool.invoke(
+        {
+            "query": "Cuba Travel Advice",
+            "state": RedboxState(
+                request=RedboxQuery(
+                    question="Tell me about travel advice to cuba",
+                    s3_keys=[],
+                    user_uuid=uuid4(),
+                    chat_history=[],
+                    ai_settings=AISettings(),
+                    permitted_s3_keys=[],
+                )
+            ),
+        }
+    )
+
+    documents = flatten_document_state(state_update["documents"])
+
+    # assert at least one document is travel advice
+    assert any(document.metadata["description"].startswith("FCDO travel advice for Cuba.") for document in documents)
+
+    for document in documents:
+        assert document.page_content != ""
+        metadata = ChunkMetadata.model_validate(document.metadata)
+        assert urlparse(metadata.file_name).hostname == "www.gov.uk"

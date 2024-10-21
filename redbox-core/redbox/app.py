@@ -8,7 +8,7 @@ from redbox.chains.components import (
     get_metadata_retriever,
     get_parameterised_retriever,
 )
-from redbox.graph.nodes.tools import build_search_documents_tool
+from redbox.graph.nodes.tools import build_gov_uk_search_tool, build_search_documents_tool
 from redbox.graph.root import get_root_graph
 from redbox.models.chain import RedboxState
 from redbox.models.chat import ChatRoute
@@ -57,14 +57,11 @@ class Redbox:
             chunk_resolution=ChunkResolution.normal,
         )
 
-        # search_gov_uk = build_search_gov_uk_tool()
-
-        # expand_terms = build_expand_terms_tool()
-        # fetch_pages = build_fetch_pages_tool()
-        # rerank_results = build_rerank_results_tool()
+        search_gov_uk = build_gov_uk_search_tool()
 
         tools: dict[str, StructuredTool] = {
             "_search_documents": search_documents,
+            "_search_gov_uk": search_gov_uk,
         }
 
         self.graph = get_root_graph(
