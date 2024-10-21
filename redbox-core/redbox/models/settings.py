@@ -10,6 +10,8 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from redbox.models.chain import ChatLLMBackend
 
+from django_app.tests.views.test_citation_views import logger
+
 logging.basicConfig(level=os.environ.get("LOG_LEVEL", "INFO"))
 log = logging.getLogger()
 
@@ -123,10 +125,15 @@ class Settings(BaseSettings):
         if isinstance(self.elastic, ElasticLocalSettings):
             basic_auth = (self.elastic.user, self.elastic.password) if self.elastic.user else None
 
+            elastic_host = self.elastic.host.strip("[]")
+            if elastic_host.startswith("https://"):
+                elastic_host = elastic_host[8:]
+                logger.info("elastic_host=%s", elastic_host)
+
             client = Elasticsearch(
                 hosts=[
                     {
-                        "host": self.elastic.host,
+                        "host": elastic_host,
                         "port": self.elastic.port,
                         "scheme": self.elastic.scheme,
                     }
