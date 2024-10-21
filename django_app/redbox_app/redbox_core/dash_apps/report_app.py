@@ -63,7 +63,7 @@ app.layout = html.Div(
             id="breakdown",
             options=[
                 {"label": "route", "value": "route"},
-                {"label": "model", "value": "chat__chat_backend"},
+                {"label": "model", "value": "chat__chat_backend__name"},
                 {"label": "none", "value": None},
             ],
             value="route",
