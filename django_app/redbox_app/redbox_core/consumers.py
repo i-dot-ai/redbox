@@ -29,6 +29,7 @@ from redbox.models.graph import RedboxActivityEvent
 from redbox_app.redbox_core import error_messages
 from redbox_app.redbox_core.models import (
     AISettings as AISettingsModel,
+    ExternalCitation,
 )
 from redbox_app.redbox_core.models import (
     Chat,
@@ -185,6 +186,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         user_message_text: str,
         role: ChatRoleEnum,
         sources: Sequence[tuple[File, Document]] | None = None,
+        external_sources: list[Document] | None = None,
         selected_files: Sequence[File] | None = None,
         metadata: RequestMetadata | None = None,
         route: str | None = None,
@@ -203,6 +205,15 @@ class ChatConsumer(AsyncWebsocketConsumer):
                         text=citation.page_content,
                         page_numbers=parse_page_number(citation.metadata.get("page_number")),
                     )
+        if external_sources:
+            for document in external_sources:
+                ExternalCitation.objects.create(
+                    chat_message=chat_message,
+                    text=document.page_content,
+                    creator=document.metadata.get("creator_type", ""),
+                    url=document.metadata.get("original_resource_ref", "/")
+                )
+
         if selected_files:
             chat_message.selected_files.set(selected_files)
 

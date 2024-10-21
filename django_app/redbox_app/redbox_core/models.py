@@ -745,6 +745,17 @@ class Citation(UUIDPrimaryKeyBase, TimeStampedModel):
         super().save(force_insert, force_update, using, update_fields)
 
 
+class ExternalCitation(UUIDPrimaryKeyBase, TimeStampedModel):
+    chat_message = models.ForeignKey("ChatMessage", on_delete=models.CASCADE)
+    text = models.TextField(null=True, blank=True)
+    creator = models.TextField()
+    url = models.URLField()
+
+    def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
+        self.text = sanitise_string(self.text)
+        super().save(force_insert, force_update, using, update_fields)
+
+
 class ChatMessage(UUIDPrimaryKeyBase, TimeStampedModel):
     chat = models.ForeignKey(Chat, on_delete=models.CASCADE)
     text = models.TextField(max_length=32768, null=False, blank=False)
