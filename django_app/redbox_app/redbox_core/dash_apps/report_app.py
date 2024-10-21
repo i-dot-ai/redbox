@@ -46,7 +46,7 @@ app.layout = html.Div(
                 {"label": "daily", "value": "day"},
                 {"label": "hourly", "value": "hour"},
             ],
-            value="message_count",
+            value="day",
         ),
         html.P("Select metric"),
         dcc.Dropdown(
