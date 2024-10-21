@@ -120,3 +120,33 @@ def build_search_documents_tool(
         return {"documents": structure_documents_by_group_and_indices(sorted_documents)}
 
     return _search_documents
+
+
+def build_expand_terms_tool() -> Tool:
+    @tool
+    def _expand_terms(query: str, state: Annotated[dict, InjectedState]) -> dict[str, Any]:
+        # Implement term expansion logic here
+        expanded_terms = expand_query_terms(query)
+        return {"expanded_terms": expanded_terms}
+
+    return _expand_terms
+
+
+def build_fetch_pages_tool() -> Tool:
+    @tool
+    def _fetch_pages(expanded_terms: list[str], state: Annotated[dict, InjectedState]) -> dict[str, Any]:
+        # Implement fetching pages from /search endpoint
+        pages = fetch_pages_from_search(expanded_terms)
+        return {"pages": pages}
+
+    return _fetch_pages
+
+
+def build_rerank_results_tool() -> Tool:
+    @tool
+    def _rerank_results(pages: list[dict], state: Annotated[dict, InjectedState]) -> dict[str, Any]:
+        # Implement reranking logic here
+        reranked_pages = rerank_pages(pages)
+        return {"reranked_pages": reranked_pages}
+
+    return _rerank_results

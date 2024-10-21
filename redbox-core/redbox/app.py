@@ -57,6 +57,12 @@ class Redbox:
             chunk_resolution=ChunkResolution.normal,
         )
 
+        # search_gov_uk = build_search_gov_uk_tool()
+
+        # expand_terms = build_expand_terms_tool()
+        # fetch_pages = build_fetch_pages_tool()
+        # rerank_results = build_rerank_results_tool()
+
         tools: dict[str, StructuredTool] = {
             "_search_documents": search_documents,
         }
