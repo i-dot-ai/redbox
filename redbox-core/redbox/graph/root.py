@@ -205,57 +205,6 @@ def get_agentic_search_graph(tools: dict[str, StructuredTool], debug: bool = Fal
     return builder.compile(debug=debug)
 
 
-def get_custom_agentic_search_graph(tools: dict[str, StructuredTool], debug: bool = False) -> CompiledGraph:
-    """Creates a subgraph for custom agentic RAG."""
-    builder = StateGraph(RedboxState)
-
-    # Tools
-    agent_tool_names = ["_expand_terms", "_fetch_pages", "_rerank_results"]
-    agent_tools: list[StructuredTool] = [tools.get(tool_name) for tool_name in agent_tool_names]
-
-    # Processes
-    builder.add_node("p_set_custom_agentic_search_route", build_set_route_pattern(route=ChatRoute.custom_gadget))
-    builder.add_node(
-        "p_expand_terms",
-        build_tool_pattern(tools=[tools["_expand_terms"]], final_source_chain=False),
-    )
-    builder.add_node(
-        "p_fetch_pages",
-        build_tool_pattern(tools=[tools["_fetch_pages"]], final_source_chain=False),
-    )
-    builder.add_node(
-        "p_rerank_results",
-        build_tool_pattern(tools=[tools["_rerank_results"]], final_source_chain=True),
-    )
-    builder.add_node("p_report_sources", report_sources_process)
-
-    # Decisions
-    builder.add_node("d_x_steps_left_or_less", empty_process)
-    builder.add_node("d_tools_selected", empty_process)
-    builder.add_node("d_answer_or_give_up", empty_process)
-
-    # Sends
-    builder.add_node("s_tool", empty_process)
-
-    # Edges
-    builder.add_edge(START, "p_set_custom_agentic_search_route")
-    builder.add_edge("p_set_custom_agentic_search_route", "d_x_steps_left_or_less")
-    builder.add_conditional_edges(
-        "d_x_steps_left_or_less",
-        lambda state: state["steps_left"] <= 8,
-        {
-            True: "p_give_up_agent",
-            False: "p_expand_terms",
-        },
-    )
-    builder.add_edge("p_expand_terms", "p_fetch_pages")
-    builder.add_edge("p_fetch_pages", "p_rerank_results")
-    builder.add_edge("p_rerank_results", "p_report_sources")
-    builder.add_edge("p_report_sources", END)
-
-    return builder.compile(debug=debug)
-
-
 def get_chat_with_documents_graph(
     all_chunks_retriever: VectorStoreRetriever,
     parameterised_retriever: VectorStoreRetriever,
