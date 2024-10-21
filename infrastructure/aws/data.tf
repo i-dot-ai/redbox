@@ -49,8 +49,9 @@ locals {
   }
 
   django_app_secrets = {
-    "ELASTIC__API_KEY" : var.elastic_api_key,
-    "ELASTIC__CLOUD_ID" : var.cloud_id,
+    "ELASTIC__HOST": module.opensearch.collection_enpdoint,
+    "ELASTIC__PORT": "443",
+    "ELASTIC__VERSION": "7.10",
 
     "AZURE_OPENAI_API_KEY": var.azure_openai_api_key,
     "AZURE_OPENAI_ENDPOINT" : var.azure_openai_endpoint,
