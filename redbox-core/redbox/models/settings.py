@@ -10,10 +10,9 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from redbox.models.chain import ChatLLMBackend
 
-from django_app.tests.views.test_citation_views import logger
 
 logging.basicConfig(level=os.environ.get("LOG_LEVEL", "INFO"))
-log = logging.getLogger()
+logger = logging.getLogger()
 
 
 class ElasticLocalSettings(BaseModel):
