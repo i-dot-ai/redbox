@@ -30,12 +30,7 @@ class ChunkMetadata(BaseModel):
     token_count: int
 
 
-
-    @property
-    def original_resource(self):
-        return self.original_resource_ref
-
-class UploadedFileMetadata(BaseModel):
+class UploadedFileMetadata(ChunkMetadata):
     """
     Model for uploaded document chunk metadata.
     """
@@ -45,7 +40,3 @@ class UploadedFileMetadata(BaseModel):
     description: str
     keywords: list[str]
     creator_type: str = "uploaded_file"
-
-    @property
-    def source_resource(self):
-        return self.file_name

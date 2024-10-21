@@ -16,7 +16,7 @@ from redbox.graph.nodes.tools import (
 )
 from redbox.models import Settings
 from redbox.models.chain import AISettings, RedboxQuery, RedboxState
-from redbox.models.file import ChunkResolution
+from redbox.models.file import ChunkMetadata, ChunkResolution
 from redbox.test.data import RedboxChatTestCase
 from redbox.transform import flatten_document_state
 from tests.retriever.test_retriever import TEST_CHAIN_PARAMETERS
@@ -171,5 +171,6 @@ def test_wikipedia_tool():
     )
     for document in flatten_document_state(state_update["documents"]):
         assert document.page_content != ""
-        assert urlparse(document.metadata["original_resource_ref"]).hostname == "en.wikipedia.org"
-        assert document.metadata["source"] == "Wikipedia"
+        metadata = ChunkMetadata.model_validate(document.metadata)
+        assert urlparse(metadata.original_resource_ref).hostname == "en.wikipedia.org"
+        assert metadata.creator_type == "wikipedia"
