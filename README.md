@@ -173,3 +173,11 @@ Follow the instructions here https://django-q2.readthedocs.io/en/master/schedule
 3. func = `django.core.management.call_command`
 4. args = `"delete_expired_data"`
 5. save
+
+
+## Vector databases
+
+We are currently using ElasticSearch as our vector database. 
+
+We have also successfully deployed Redbox to OpenSearch Serverless but this support should be considered experimental 
+at this stage.
