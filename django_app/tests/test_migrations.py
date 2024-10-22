@@ -322,3 +322,41 @@ def test_0050_aisettings_match_description_boost_and_more(migrator):
     assert new_ai_settings.match_description_boost == Decimal("0.50")
     assert new_ai_settings.similarity_threshold == Decimal("0.00")
     assert new_ai_settings.match_keywords_boost == Decimal("0.50")
+
+
+def test_0055_citation_source_citation_url_alter_citation_file(original_file, migrator):
+    old_state = migrator.apply_initial_migration(("redbox_core", "0054_activityevent"))
+
+    User = old_state.apps.get_model("redbox_core", "User")
+    user = User.objects.create(email="someone@example.com")
+
+    ChatLLMBackend = old_state.apps.get_model("redbox_core", "ChatLLMBackend")
+    chat_backend = ChatLLMBackend.objects.first()
+
+    Chat = old_state.apps.get_model("redbox_core", "Chat")
+    chat = Chat.objects.create(name="my-chat", user=user, chat_backend=chat_backend)
+
+    ChatMessage = old_state.apps.get_model("redbox_core", "ChatMessage")
+    chat_message = ChatMessage.objects.create(chat=chat)
+
+    File = old_state.apps.get_model("redbox_core", "File")
+    file = File.objects.create(
+        user=user,
+        original_file=original_file,
+        original_file_name=original_file.name,
+    )
+
+    Citation = old_state.apps.get_model("redbox_core", "Citation")
+    citation = Citation.objects.create(chat_message=chat_message, file=file, page_numbers=[3, 4], text="hello!")
+
+    new_state = migrator.apply_tested_migration(
+        ("redbox_core", "0055_citation_source_citation_url_alter_citation_file"),
+    )
+
+    Citation = new_state.apps.get_model("redbox_core", "Citation")
+    new_citation = Citation.objects.get(id=citation.id)
+    assert new_citation.text == "hello!"
+    assert new_citation.page_numbers == [3, 4]
+    assert new_citation.chat_message.id == chat_message.id
+    assert new_citation.url is None
+    assert new_citation.source == "UPLOADED"
