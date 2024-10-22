@@ -1,3 +1,5 @@
+# rename this file to opensearch.tf to use opensearch
+
 module "opensearch" {
   # checkov:skip=CKV_TF_1: We're using semantic versions instead of commit hash
   # source = "../../../i-ai-core-infrastructure//modules/opensearch"  # For testing local changes
