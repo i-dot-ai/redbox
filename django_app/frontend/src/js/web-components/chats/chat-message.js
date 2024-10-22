@@ -27,7 +27,8 @@ const sendTooltipViewEvent = (evt) => {
   });
 })();
 
-class ChatMessage extends HTMLElement {
+
+export class ChatMessage extends HTMLElement {
   constructor() {
     super();
     this.programmaticScroll = false;
@@ -106,21 +107,22 @@ class ChatMessage extends HTMLElement {
     chatControllerRef
   ) => {
     // Scroll behaviour - depending on whether user has overridden this or not
-    let userScrollOverride = false;
+    let scrollOverride = false;
     window.addEventListener("scroll", (evt) => {
       if (this.programmaticScroll) {
         this.programmaticScroll = false;
         return;
       }
-      userScrollOverride = true;
+      scrollOverride = true;
     });
 
-    let responseContainer = /** @type MarkdownConverter */ (
+    let responseContainer = /** @type {import("../markdown-converter").MarkdownConverter} */ (
       this.querySelector("markdown-converter")
     );
     let sourcesContainer = /** @type SourcesList */ (
       this.querySelector("sources-list")
     );
+    /** @type {FeedbackButtons | null} */
     let feedbackContainer = this.querySelector("feedback-buttons");
     let responseLoading = /** @type HTMLElement */ (
       this.querySelector(".rb-loading-ellipsis")
@@ -207,7 +209,7 @@ class ChatMessage extends HTMLElement {
         }
       } else if (response.type === "end") {
         sourcesContainer.showCitations(response.data.message_id);
-        feedbackContainer.showFeedback(response.data.message_id);
+        feedbackContainer?.showFeedback(response.data.message_id);
         const chatResponseEndEvent = new CustomEvent("chat-response-end", {
           detail: {
             title: response.data.title,
@@ -219,14 +221,28 @@ class ChatMessage extends HTMLElement {
         this.querySelector(".govuk-notification-banner")?.removeAttribute(
           "hidden"
         );
-        this.querySelector(".govuk-notification-banner__heading").innerHTML =
-          response.data;
+        let errorContentContainer = this.querySelector(".govuk-notification-banner__heading");
+        if (errorContentContainer) {
+          errorContentContainer.innerHTML = response.data;
+        }
       }
 
       // ensure new content isn't hidden behind the chat-input
-      if (!userScrollOverride) {
-        this.programmaticScroll = true;
-        this.scrollIntoView({ block: "end" });
+      // but stop scrolling if message is at the top of the screen
+      if (!scrollOverride) {
+        const TOP_POSITION = 88;
+        const boxInfo = this.getBoundingClientRect()
+        const newTopPosition = boxInfo.top - ( boxInfo.height - ( this.previousHeight || boxInfo.height ) );
+        this.previousHeight = boxInfo.height;
+        if (newTopPosition > TOP_POSITION) {
+          this.programmaticScroll = true;
+          this.scrollIntoView({ block: "end" });
+        } else {
+          scrollOverride = true;
+          this.scrollIntoView();
+          window.scrollBy(0, -TOP_POSITION);
+        }
+        
       }
     };
   };

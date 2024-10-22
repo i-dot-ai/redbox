@@ -28,9 +28,7 @@ from redbox.models.chain import (
 from redbox.models.graph import RedboxActivityEvent
 from redbox_app.redbox_core import error_messages
 from redbox_app.redbox_core.models import (
-    AISettings as AISettingsModel,
-)
-from redbox_app.redbox_core.models import (
+    ActivityEvent,
     Chat,
     ChatLLMBackend,
     ChatMessage,
@@ -40,6 +38,9 @@ from redbox_app.redbox_core.models import (
     ExternalCitation,
     File,
     StatusEnum,
+)
+from redbox_app.redbox_core.models import (
+    AISettings as AISettingsModel,
 )
 
 User = get_user_model()
@@ -67,6 +68,8 @@ def escape_curly_brackets(text: str):
 class ChatConsumer(AsyncWebsocketConsumer):
     full_reply: ClassVar = []
     citations: ClassVar = []
+    external_citations: ClassVar = []
+    activities: ClassVar = []
     route = None
     metadata: RequestMetadata = RequestMetadata()
     redbox = Redbox(env=Settings(), debug=True)
@@ -107,7 +110,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         # save user message
         permitted_files = File.objects.filter(user=user, status=StatusEnum.complete)
         selected_files = permitted_files.filter(id__in=selected_file_uuids)
-        await self.save_message(session, user_message_text, ChatRoleEnum.user, selected_files=selected_files)
+        await self.save_user_message(session, user_message_text, selected_files=selected_files)
 
         await self.llm_conversation(selected_files, session, user, user_message_text, permitted_files)
         await self.close()
@@ -146,16 +149,12 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 route_name_callback=self.handle_route,
                 documents_callback=self.handle_documents,
                 metadata_tokens_callback=self.handle_metadata,
-                activity_event_callback=self.handle_activity_event,
+                activity_event_callback=self.handle_activity,
             )
 
-            message = await self.save_message(
+            message = await self.save_ai_message(
                 session,
                 "".join(self.full_reply),
-                ChatRoleEnum.ai,
-                sources=self.citations,
-                route=self.route,
-                metadata=self.metadata,
             )
             await self.send_to_client("end", {"message_id": message.id, "title": title, "session_id": session.id})
 
@@ -179,21 +178,28 @@ class ChatConsumer(AsyncWebsocketConsumer):
         logger.debug("sending %s to core-api", data)
         return await websocket.send(json.dumps(data, default=str))
 
-    @staticmethod
     @database_sync_to_async
-    def save_message(
+    def save_user_message(
+        self,
         session: Chat,
         user_message_text: str,
-        role: ChatRoleEnum,
-        sources: Sequence[tuple[File, Document]] = (),
-        external_sources: Sequence[Document] = (),
-        selected_files: Sequence[File] = (),
-        metadata: RequestMetadata | None = None,
-        route: str | None = None,
+        selected_files: Sequence[File] | None = None,
     ) -> ChatMessage:
-        chat_message = ChatMessage(chat=session, text=user_message_text, role=role, route=route)
+        chat_message = ChatMessage(chat=session, text=user_message_text, role=ChatRoleEnum.user, route=self.route)
         chat_message.save()
-        for file, citations in sources:
+        if selected_files:
+            chat_message.selected_files.set(selected_files)
+        return chat_message
+
+    @database_sync_to_async
+    def save_ai_message(
+        self,
+        session: Chat,
+        user_message_text: str,
+    ) -> ChatMessage:
+        chat_message = ChatMessage(chat=session, text=user_message_text, role=ChatRoleEnum.ai, route=self.route)
+        chat_message.save()
+        for file, citations in self.citations:
             file.last_referenced = timezone.now()
             file.save()
 
@@ -204,32 +210,37 @@ class ChatConsumer(AsyncWebsocketConsumer):
                     text=citation.page_content,
                     page_numbers=parse_page_number(citation.metadata.get("page_number")),
                 )
-        for document in external_sources:
+
+        for document in self.external_citations:
             ExternalCitation.objects.create(
                 chat_message=chat_message,
                 text=document.page_content,
-                creator=document.metadata.get("creator_type", ""),
-                url=document.metadata.get("original_resource_ref", "/"),
+                creator=document.metadata.get("creator_type", "Unknown"),
+                url=document.metadata.get("original_resource_ref", "Unknown")
             )
 
-        chat_message.selected_files.set(selected_files)
-
-        if metadata and metadata.input_tokens:
-            for model, token_count in metadata.input_tokens.items():
+        if self.metadata and self.metadata.input_tokens:
+            for model, token_count in self.metadata.input_tokens.items():
                 ChatMessageTokenUse.objects.create(
                     chat_message=chat_message,
                     use_type=ChatMessageTokenUse.UseTypeEnum.INPUT,
                     model_name=model,
                     token_count=token_count,
                 )
-        if metadata and metadata.output_tokens:
-            for model, token_count in metadata.output_tokens.items():
+
+        if self.metadata and self.metadata.output_tokens:
+            for model, token_count in self.metadata.output_tokens.items():
                 ChatMessageTokenUse.objects.create(
                     chat_message=chat_message,
                     use_type=ChatMessageTokenUse.UseTypeEnum.OUTPUT,
                     model_name=model,
                     token_count=token_count,
                 )
+
+        if self.activities:
+            for activity in self.activities:
+                ActivityEvent.objects.create(chat_message=chat_message, message=activity.message)
+
         return chat_message
 
     @staticmethod
@@ -249,6 +260,9 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
     async def handle_metadata(self, response: dict):
         self.metadata = metadata_reducer(self.metadata, RequestMetadata.model_validate(response))
+
+    async def handle_activity(self, response: dict):
+        self.activities.append(RedboxActivityEvent.model_validate(response))
 
     async def handle_documents(self, response: list[Document]):
         sources = {doc.metadata["original_resource_ref"] for doc in response}

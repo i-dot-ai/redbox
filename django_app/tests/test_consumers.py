@@ -18,11 +18,19 @@ from websockets import WebSocketClientProtocol
 from websockets.legacy.client import Connect
 
 from redbox.models.chain import LLMCallMetadata, RedboxQuery, RequestMetadata
-from redbox.models.graph import FINAL_RESPONSE_TAG, ROUTE_NAME_TAG, SOURCE_DOCUMENTS_TAG
+from redbox.models.graph import FINAL_RESPONSE_TAG, ROUTE_NAME_TAG, SOURCE_DOCUMENTS_TAG, RedboxActivityEvent
 from redbox.models.prompts import CHAT_MAP_QUESTION_PROMPT
 from redbox_app.redbox_core import error_messages
 from redbox_app.redbox_core.consumers import ChatConsumer
-from redbox_app.redbox_core.models import Chat, ChatMessage, ChatMessageTokenUse, ChatRoleEnum, File, StatusEnum
+from redbox_app.redbox_core.models import (
+    ActivityEvent,
+    Chat,
+    ChatMessage,
+    ChatMessageTokenUse,
+    ChatRoleEnum,
+    File,
+    StatusEnum,
+)
 
 User = get_user_model()
 
@@ -33,6 +41,11 @@ logger = logging.getLogger(__name__)
 @database_sync_to_async
 def get_token_use_model(use_type: str) -> str:
     return ChatMessageTokenUse.objects.filter(use_type=use_type).latest("created_at").model_name
+
+
+@database_sync_to_async
+def get_activity_model() -> str:
+    return ActivityEvent.objects.latest("created_at").message
 
 
 @database_sync_to_async
@@ -85,6 +98,7 @@ async def test_chat_consumer_with_new_session(alice: User, uploaded_file: File, 
     assert await get_token_use_model(ChatMessageTokenUse.UseTypeEnum.OUTPUT) == "gpt-4o"
     assert await get_token_use_count(ChatMessageTokenUse.UseTypeEnum.INPUT) == 123
     assert await get_token_use_count(ChatMessageTokenUse.UseTypeEnum.OUTPUT) == 1000
+    assert await get_activity_model() == "fish and chips"
 
 
 @pytest.mark.django_db(transaction=True)
@@ -627,9 +641,16 @@ def mocked_connect(uploaded_file: File) -> Connect:
             "event": "on_custom_event",
             "name": "on_metadata_generation",
             "data": RequestMetadata(
-                llm_calls=[LLMCallMetadata(model_name="gpt-4o", input_tokens=123, output_tokens=1000)],
+                llm_calls=[LLMCallMetadata(llm_model_name="gpt-4o", input_tokens=123, output_tokens=1000)],
                 selected_files_total_tokens=1000,
                 number_of_selected_files=1,
+            ),
+        },
+        {
+            "event": "on_custom_event",
+            "name": "activity",
+            "data": RedboxActivityEvent(
+                message="fish and chips",
             ),
         },
     ]
