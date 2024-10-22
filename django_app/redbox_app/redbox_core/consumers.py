@@ -216,7 +216,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 chat_message=chat_message,
                 text=document.page_content,
                 creator=document.metadata.get("creator_type", "Unknown"),
-                url=document.metadata.get("original_resource_ref", "Unknown")
+                url=document.metadata.get("original_resource_ref", "Unknown"),
             )
 
         if self.metadata and self.metadata.input_tokens:
