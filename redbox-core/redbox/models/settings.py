@@ -7,11 +7,20 @@ import boto3
 from elasticsearch import Elasticsearch
 from pydantic import BaseModel
 from pydantic_settings import BaseSettings, SettingsConfigDict
-
+from opensearchpy import OpenSearch, RequestsHttpConnection
 from redbox.models.chain import ChatLLMBackend
 
+
 logging.basicConfig(level=os.environ.get("LOG_LEVEL", "INFO"))
-log = logging.getLogger()
+logger = logging.getLogger()
+
+
+class OpenSearchSettings(BaseModel):
+    """settings required for a aws/opensearch"""
+
+    model_config = SettingsConfigDict(frozen=True)
+
+    collection_enpdoint: str
 
 
 class ElasticLocalSettings(BaseModel):
@@ -66,7 +75,7 @@ class Settings(BaseSettings):
     partition_strategy: Literal["auto", "fast", "ocr_only", "hi_res"] = "fast"
     clustering_strategy: Literal["full"] | None = None
 
-    elastic: ElasticCloudSettings | ElasticLocalSettings = ElasticLocalSettings()
+    elastic: ElasticCloudSettings | ElasticLocalSettings | OpenSearchSettings = ElasticLocalSettings()
     elastic_root_index: str = "redbox-data"
     elastic_chunk_alias: str = "redbox-data-chunk-current"
 
@@ -131,6 +140,16 @@ class Settings(BaseSettings):
                 ],
                 basic_auth=(self.elastic.user, self.elastic.password),
             )
+
+        elif isinstance(self.elastic, OpenSearchSettings):
+            client = OpenSearch(
+                hosts=[{"host": self.collection_enpdoint, "port": 443}],
+                use_ssl=True,
+                verify_certs=True,
+                connection_class=RequestsHttpConnection,
+                pool_maxsize=100,
+            )
+
         else:
             client = Elasticsearch(cloud_id=self.elastic.cloud_id, api_key=self.elastic.api_key)
 
