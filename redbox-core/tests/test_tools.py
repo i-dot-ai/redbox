@@ -39,9 +39,7 @@ def test_is_valid_tool():
 
 def test_has_injected_state():
     @tool
-    def tool_with_injected_state(
-        query: str, state: Annotated[dict, InjectedState]
-    ) -> dict[str, Any]:
+    def tool_with_injected_state(query: str, state: Annotated[dict, InjectedState]) -> dict[str, Any]:
         """Tool that returns a dictionary update."""
         return {"key": "value"}
 

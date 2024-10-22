@@ -732,33 +732,54 @@ class ChatRoleEnum(models.TextChoices):
 
 
 class Citation(UUIDPrimaryKeyBase, TimeStampedModel):
-    file = models.ForeignKey(File, on_delete=models.CASCADE)
+    class Origin(models.TextChoices):
+        WIKIPEDIA = "Wikipedia", _("wikipedia")
+        USER_UPLOADED_DOCUMENT = "USER UPLOADED DOCUMENT", _("user uploaded document")
+        GOV_UK = "GOV.UK", _("gov.uk")
+
+    file = models.ForeignKey(
+        File, on_delete=models.CASCADE, null=True, blank=True, help_text="file for internal citation"
+    )
+    url = models.URLField(null=True, blank=True, help_text="url for external")
     chat_message = models.ForeignKey("ChatMessage", on_delete=models.CASCADE)
     text = models.TextField(null=True, blank=True)
     page_numbers = ArrayField(
         models.PositiveIntegerField(), null=True, blank=True, help_text="location of citation in document"
     )
+    source = models.CharField(
+        max_length=32, choices=Origin, help_text="source of citation", default=Origin.USER_UPLOADED_DOCUMENT
+    )
 
     def __str__(self):
-        return f"{self.file}: {self.text or ''}"
+        return self.uri
 
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
+        if self.source == self.Origin.USER_UPLOADED_DOCUMENT:
+            if self.file is None:
+                msg = "file must be specified for a user-uploaded-document"
+                raise ValueError(msg)
+
+            if self.url is not None:
+                msg = "url should not be specified for a user-uploaded-document"
+                raise ValueError(msg)
+
+        if self.source != self.Origin.USER_UPLOADED_DOCUMENT:
+            if self.url is None:
+                msg = "url must be specified for an external citation"
+                raise ValueError(msg)
+
+            if self.file is not None:
+                msg = "file should not be specified for an external citation"
+                raise ValueError(msg)
+
         self.text = sanitise_string(self.text)
+
         super().save(force_insert, force_update, using, update_fields)
 
-
-class ExternalCitation(UUIDPrimaryKeyBase, TimeStampedModel):
-    chat_message = models.ForeignKey("ChatMessage", on_delete=models.CASCADE)
-    text = models.TextField(null=True, blank=True)
-    creator = models.TextField()
-    url = models.URLField()
-
-    def __str__(self):
-        return f"{self.creator}: [{self.url}] {self.text or ''}"
-
-    def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
-        self.text = sanitise_string(self.text)
-        super().save(force_insert, force_update, using, update_fields)
+    @property
+    def uri(self) -> str:
+        """returns either the url of an external citation or the file uri of a user-uploaded document"""
+        return self.url or f"file://{self.file.original_file_name}"
 
 
 class ChatMessage(UUIDPrimaryKeyBase, TimeStampedModel):

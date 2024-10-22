@@ -107,9 +107,7 @@ def build_merge_pattern(
 
         flattened_documents = flatten_document_state(state["documents"])
 
-        merged_document = reduce(
-            lambda left, right: combine_documents(left, right), flattened_documents
-        )
+        merged_document = reduce(lambda left, right: combine_documents(left, right), flattened_documents)
 
         merge_state = RedboxState(
             request=state["request"],
@@ -124,9 +122,7 @@ def build_merge_pattern(
 
         merged_document.page_content = merge_response["text"]
         request_metadata = merge_response["metadata"]
-        merged_document.metadata["token_count"] = len(
-            tokeniser.encode(merged_document.page_content)
-        )
+        merged_document.metadata["token_count"] = len(tokeniser.encode(merged_document.page_content))
 
         group_uuid = next(iter(state["documents"] or {}), uuid4())
         document_uuid = merged_document.metadata.get("uuid", uuid4())
@@ -148,6 +144,7 @@ def build_merge_pattern(
 def build_stuff_pattern(
     prompt_set: PromptSet,
     output_parser: Runnable = None,
+    format_instructions: str | None = None,
     tools: list[StructuredTool] | None = None,
     final_response_chain: bool = False,
 ) -> Runnable[RedboxState, dict[str, Any]]:
@@ -166,6 +163,7 @@ def build_stuff_pattern(
                 prompt_set=prompt_set,
                 llm=llm,
                 output_parser=output_parser,
+                format_instructions=format_instructions,
                 final_response_chain=final_response_chain,
             ).stream(state)
         ]
@@ -220,9 +218,7 @@ def build_passthrough_pattern() -> Runnable[RedboxState, dict[str, Any]]:
     return _passthrough
 
 
-def build_set_text_pattern(
-    text: str, final_response_chain: bool = False
-) -> Runnable[RedboxState, dict[str, Any]]:
+def build_set_text_pattern(text: str, final_response_chain: bool = False) -> Runnable[RedboxState, dict[str, Any]]:
     """Returns a Runnable that can arbitrarily set state["text"] to a value."""
     llm = CannedChatLLM(text=text)
     _llm = llm.with_config(tags=["response_flag"]) if final_response_chain else llm
@@ -244,9 +240,7 @@ def build_set_metadata_pattern() -> Runnable[RedboxState, dict[str, Any]]:
         flat_docs = flatten_document_state(state.get("documents", {}))
         return {
             "metadata": RequestMetadata(
-                selected_files_total_tokens=sum(
-                    map(lambda d: d.metadata.get("token_count", 0), flat_docs)
-                ),
+                selected_files_total_tokens=sum(map(lambda d: d.metadata.get("token_count", 0), flat_docs)),
                 number_of_selected_files=len(state["request"].s3_keys),
             )
         }
@@ -254,16 +248,14 @@ def build_set_metadata_pattern() -> Runnable[RedboxState, dict[str, Any]]:
     return _set_metadata_pattern
 
 
-def build_error_pattern(
-    text: str, route_name: str | None
-) -> Runnable[RedboxState, dict[str, Any]]:
+def build_error_pattern(text: str, route_name: str | None) -> Runnable[RedboxState, dict[str, Any]]:
     """A Runnable which sets text and route to record an error"""
 
     @RunnableLambda
     def _error_pattern(state: RedboxState):
-        return build_set_text_pattern(text, final_response_chain=True).invoke(
-            state
-        ) | build_set_route_pattern(route_name).invoke(state)
+        return build_set_text_pattern(text, final_response_chain=True).invoke(state) | build_set_route_pattern(
+            route_name
+        ).invoke(state)
 
     return _error_pattern
 
@@ -311,15 +303,11 @@ def build_tool_pattern(
                 # Invoke the tool
                 try:
                     result_state_update = tool.invoke(args) or {}
-                    tool_called_state_update = {
-                        "tool_calls": {tool_id: {"called": True, "tool": tool_call}}
-                    }
+                    tool_called_state_update = {"tool_calls": {tool_id: {"called": True, "tool": tool_call}}}
                     state_updates.append(result_state_update | tool_called_state_update)
                 except Exception as e:
                     raise e
-                    state_updates.append(
-                        {"tool_calls": {tool_id: {"called": True, "tool": tool_call}}}
-                    )
+                    state_updates.append({"tool_calls": {tool_id: {"called": True, "tool": tool_call}}})
                     log.warning(f"Error invoking tool {tool_call['name']}: {e} \n")
                     return {}
 
@@ -343,9 +331,7 @@ def clear_documents_process(state: RedboxState) -> dict[str, Any]:
 def report_sources_process(state: RedboxState) -> None:
     """A Runnable which reports the documents in the state as sources."""
     if document_state := state.get("documents"):
-        dispatch_custom_event(
-            RedboxEventType.on_source_report, flatten_document_state(document_state)
-        )
+        dispatch_custom_event(RedboxEventType.on_source_report, flatten_document_state(document_state))
 
 
 def empty_process(state: RedboxState) -> None:
@@ -362,16 +348,10 @@ def build_log_node(message: str) -> Runnable[RedboxState, dict[str, Any]]:
                 {
                     "user_uuid": str(state["request"].user_uuid),
                     "document_metadata": {
-                        group_id: {
-                            doc_id: d.metadata for doc_id, d in group_documents.items()
-                        }
+                        group_id: {doc_id: d.metadata for doc_id, d in group_documents.items()}
                         for group_id, group_documents in state["documents"]
                     },
-                    "text": (
-                        state["text"]
-                        if len(state["text"]) < 32
-                        else f"{state['text'][:29]}..."
-                    ),
+                    "text": (state["text"] if len(state["text"]) < 32 else f"{state['text'][:29]}..."),
                     "route": state["route_name"],
                     "message": message,
                 }
@@ -382,16 +362,10 @@ def build_log_node(message: str) -> Runnable[RedboxState, dict[str, Any]]:
     return _log_node
 
 
-def build_activity_log_node(
-    log_message: RedboxActivityEvent | Callable[[RedboxState], RedboxActivityEvent]
-):
+def build_activity_log_node(log_message: RedboxActivityEvent | Callable[[RedboxState], RedboxActivityEvent]):
     @RunnableLambda
     def _activity_log_node(state: RedboxState):
-        _message = (
-            log_message
-            if isinstance(log_message, RedboxActivityEvent)
-            else log_message(state)
-        )
+        _message = log_message if isinstance(log_message, RedboxActivityEvent) else log_message(state)
         dispatch_custom_event(RedboxEventType.activity, _message)
         return None
 

@@ -10,7 +10,7 @@ from pytest_mock import MockerFixture
 from tiktoken.core import Encoding
 
 from redbox import Redbox
-from redbox.models.chain import AISettings, RedboxQuery, RedboxState, RequestMetadata, metadata_reducer
+from redbox.models.chain import AISettings, LLM_Response, RedboxQuery, RedboxState, RequestMetadata, metadata_reducer
 from redbox.models.chat import ChatRoute, ErrorRoute
 from redbox.models.file import ChunkResolution
 from redbox.models.graph import RedboxActivityEvent
@@ -47,19 +47,19 @@ TEST_CASES = [
                 RedboxTestData(
                     number_of_docs=0,
                     tokens_in_all_docs=0,
-                    expected_llm_response=["Testing Response 1"],
+                    llm_responses=["Testing Response 1"],
                     expected_route=ChatRoute.chat,
                 ),
                 RedboxTestData(
                     number_of_docs=1,
                     tokens_in_all_docs=100,
-                    expected_llm_response=["Testing Response 1"],
+                    llm_responses=["Testing Response 1"],
                     expected_route=ChatRoute.chat,
                 ),
                 RedboxTestData(
                     number_of_docs=10,
                     tokens_in_all_docs=1200,
-                    expected_llm_response=["Testing Response 1"],
+                    llm_responses=["Testing Response 1"],
                     expected_route=ChatRoute.chat,
                 ),
             ],
@@ -73,19 +73,19 @@ TEST_CASES = [
                 RedboxTestData(
                     number_of_docs=1,
                     tokens_in_all_docs=1_000,
-                    expected_llm_response=["Testing Response 1"],
+                    llm_responses=["Testing Response 1"],
                     expected_route=ChatRoute.chat_with_docs,
                 ),
                 RedboxTestData(
                     number_of_docs=1,
                     tokens_in_all_docs=50_000,
-                    expected_llm_response=["Testing Response 1"],
+                    llm_responses=["Testing Response 1"],
                     expected_route=ChatRoute.chat_with_docs,
                 ),
                 RedboxTestData(
                     number_of_docs=1,
                     tokens_in_all_docs=80_000,
-                    expected_llm_response=["Testing Response 1"],
+                    llm_responses=["Testing Response 1"],
                     expected_route=ChatRoute.chat_with_docs,
                 ),
             ],
@@ -104,26 +104,26 @@ TEST_CASES = [
                 RedboxTestData(
                     number_of_docs=2,
                     tokens_in_all_docs=40_000,
-                    expected_llm_response=["Testing Response 1"],
+                    llm_responses=["Testing Response 1"],
                     expected_route=ChatRoute.chat_with_docs,
                 ),
                 RedboxTestData(
                     number_of_docs=2,
                     tokens_in_all_docs=80_000,
-                    expected_llm_response=["Testing Response 1"],
+                    llm_responses=["Testing Response 1"],
                     expected_route=ChatRoute.chat_with_docs,
                 ),
                 RedboxTestData(
                     number_of_docs=2,
                     tokens_in_all_docs=140_000,
-                    expected_llm_response=SELF_ROUTE_TO_CHAT + ["Map Step Response"] * 2 + ["Testing Response 1"],
+                    llm_responses=SELF_ROUTE_TO_CHAT + ["Map Step Response"] * 2 + ["Testing Response 1"],
                     expected_route=ChatRoute.chat_with_docs_map_reduce,
                     expected_activity_events=assert_number_of_events(1),
                 ),
                 RedboxTestData(
                     number_of_docs=4,
                     tokens_in_all_docs=140_000,
-                    expected_llm_response=SELF_ROUTE_TO_CHAT
+                    llm_responses=SELF_ROUTE_TO_CHAT
                     + ["Map Step Response"] * 4
                     + ["Merge Per Document Response"] * 2
                     + ["Testing Response 1"],
@@ -141,25 +141,25 @@ TEST_CASES = [
                 RedboxTestData(
                     number_of_docs=2,
                     tokens_in_all_docs=40_000,
-                    expected_llm_response=["Testing Response 1"],
+                    llm_responses=["Testing Response 1"],
                     expected_route=ChatRoute.chat_with_docs,
                 ),
                 RedboxTestData(
                     number_of_docs=2,
                     tokens_in_all_docs=80_000,
-                    expected_llm_response=["Testing Response 1"],
+                    llm_responses=["Testing Response 1"],
                     expected_route=ChatRoute.chat_with_docs,
                 ),
                 RedboxTestData(
                     number_of_docs=2,
                     tokens_in_all_docs=140_000,
-                    expected_llm_response=["Map Step Response"] * 2 + ["Testing Response 1"],
+                    llm_responses=["Map Step Response"] * 2 + ["Testing Response 1"],
                     expected_route=ChatRoute.chat_with_docs_map_reduce,
                 ),
                 RedboxTestData(
                     number_of_docs=4,
                     tokens_in_all_docs=140_000,
-                    expected_llm_response=["Map Step Response"] * 4
+                    llm_responses=["Map Step Response"] * 4
                     + ["Merge Per Document Response"] * 2
                     + ["Testing Response 1"],
                     expected_route=ChatRoute.chat_with_docs_map_reduce,
@@ -179,7 +179,7 @@ TEST_CASES = [
                 RedboxTestData(
                     number_of_docs=2,
                     tokens_in_all_docs=200_000,
-                    expected_llm_response=["Map Step Response"] * 2
+                    llm_responses=["Map Step Response"] * 2
                     + ["Merge Per Document Response"]
                     + ["Testing Response 1"],
                     expected_route=ChatRoute.chat_with_docs_map_reduce,
@@ -199,7 +199,7 @@ TEST_CASES = [
                 RedboxTestData(
                     number_of_docs=2,
                     tokens_in_all_docs=200_000,
-                    expected_llm_response=SELF_ROUTE_TO_CHAT
+                    llm_responses=SELF_ROUTE_TO_CHAT
                     + ["Map Step Response"] * 2
                     + ["Merge Per Document Response"]
                     + ["Testing Response 1"],
@@ -223,7 +223,7 @@ TEST_CASES = [
                     number_of_docs=2,
                     tokens_in_all_docs=200_000,
                     chunk_resolution=ChunkResolution.normal,
-                    expected_llm_response=SELF_ROUTE_TO_SEARCH,  # + ["Condense Question", "Testing Response 1"],
+                    llm_responses=SELF_ROUTE_TO_SEARCH,  # + ["Condense Question", "Testing Response 1"],
                     expected_route=ChatRoute.search,
                     expected_activity_events=assert_number_of_events(1),
                 ),
@@ -242,7 +242,7 @@ TEST_CASES = [
                 RedboxTestData(
                     number_of_docs=10,
                     tokens_in_all_docs=2_000_000,
-                    expected_llm_response=["These documents are too large to work with."],
+                    llm_responses=["These documents are too large to work with."],
                     expected_route=ErrorRoute.files_too_large,
                 ),
             ],
@@ -260,13 +260,13 @@ TEST_CASES = [
                 RedboxTestData(
                     number_of_docs=1,
                     tokens_in_all_docs=10000,
-                    expected_llm_response=["Condense response", "The cake is a lie"],
+                    llm_responses=["Condense response", "The cake is a lie"],
                     expected_route=ChatRoute.search,
                 ),
                 RedboxTestData(
                     number_of_docs=5,
                     tokens_in_all_docs=10000,
-                    expected_llm_response=["Condense response", "The cake is a lie"],
+                    llm_responses=["Condense response", "The cake is a lie"],
                     expected_route=ChatRoute.search,
                 ),
             ],
@@ -284,7 +284,7 @@ TEST_CASES = [
                 RedboxTestData(
                     number_of_docs=1,
                     tokens_in_all_docs=10000,
-                    expected_llm_response=["Condense response", "The cake is a lie"],
+                    llm_responses=["Condense response", "The cake is a lie"],
                     expected_route=ChatRoute.search,
                     s3_keys=["s3_key"],
                 ),
@@ -303,7 +303,7 @@ TEST_CASES = [
                 RedboxTestData(
                     number_of_docs=1,
                     tokens_in_all_docs=10000,
-                    expected_llm_response=[
+                    llm_responses=[
                         AIMessage(
                             content="",
                             additional_kwargs={
@@ -317,14 +317,15 @@ TEST_CASES = [
                             },
                         ),
                         "answer",
-                        "AI is a lie",
+                        LLM_Response(markdown_answer="AI is a lie", citations=[]).model_dump_json(),
                     ],
+                    expected_text="AI is a lie",
                     expected_route=ChatRoute.gadget,
                 ),
                 RedboxTestData(
                     number_of_docs=1,
                     tokens_in_all_docs=10000,
-                    expected_llm_response=[
+                    llm_responses=[
                         AIMessage(
                             content="",
                             additional_kwargs={
@@ -357,7 +358,7 @@ TEST_CASES = [
                 RedboxTestData(
                     number_of_docs=1,
                     tokens_in_all_docs=10000,
-                    expected_llm_response=[
+                    llm_responses=[
                         AIMessage(
                             content="",
                             additional_kwargs={
@@ -371,8 +372,9 @@ TEST_CASES = [
                             },
                         ),
                         "answer",
-                        "AI is a lie",
+                        LLM_Response(markdown_answer="AI is a lie", citations=[]).model_dump_json(),
                     ],
+                    expected_text="AI is a lie",
                     expected_route=ChatRoute.gadget,
                     s3_keys=["s3_key"],
                 ),
@@ -391,7 +393,7 @@ TEST_CASES = [
                 RedboxTestData(
                     number_of_docs=10,
                     tokens_in_all_docs=1000,
-                    expected_llm_response=["Testing Response 1"],
+                    llm_responses=["Testing Response 1"],
                     expected_route=ChatRoute.chat,
                 ),
             ],
@@ -409,7 +411,7 @@ TEST_CASES = [
                 RedboxTestData(
                     number_of_docs=1,
                     tokens_in_all_docs=50_000,
-                    expected_llm_response=["Testing Response 1"],
+                    llm_responses=["Testing Response 1"],
                     expected_route=ChatRoute.chat_with_docs,
                 ),
             ],
@@ -427,7 +429,7 @@ async def test_streaming(test: RedboxChatTestCase, env: Settings, mocker: Mocker
     test_case = copy.deepcopy(test)
 
     # Mock the LLM and relevant tools
-    llm = GenericFakeChatModelWithTools(messages=iter(test_case.test_data.expected_llm_response))
+    llm = GenericFakeChatModelWithTools(messages=iter(test_case.test_data.llm_responses))
 
     @tool
     def _search_documents(query: str) -> dict[str, Any]:
@@ -490,8 +492,8 @@ async def test_streaming(test: RedboxChatTestCase, env: Settings, mocker: Mocker
     if not route_name.startswith("error"):
         assert len(token_events) > 1, f"Expected tokens as a stream. Received: {token_events}"
         assert len(metadata_events) == len(
-            test_case.test_data.expected_llm_response
-        ), f"Expected {len(test_case.test_data.expected_llm_response)} metadata events. Received {len(metadata_events)}"
+            test_case.test_data.llm_responses
+        ), f"Expected {len(test_case.test_data.llm_responses)} metadata events. Received {len(metadata_events)}"
 
     assert test_case.test_data.expected_activity_events(
         activity_events
@@ -510,7 +512,7 @@ async def test_streaming(test: RedboxChatTestCase, env: Settings, mocker: Mocker
     )
 
     assert (
-        final_state["text"] == llm_response
+        final_state["text"] == test.test_data.expected_text if test.test_data.expected_text else llm_response
     ), f"Expected LLM response: '{llm_response}'. Received '{final_state["text"]}'"
     assert (
         final_state.get("route_name") == test_case.test_data.expected_route

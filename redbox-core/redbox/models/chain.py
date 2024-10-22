@@ -1,9 +1,3 @@
-"""
-There is some repeated definition and non-pydantic style code in here.
-These classes are pydantic v1 which is compatible with langchain tools classes, we need
-to provide a pydantic v1 definition to work with these. As these models are mostly
-used in conjunction with langchain this is the tidiest boxing of pydantic v1 we can do
-"""
 
 from datetime import UTC, datetime
 from enum import StrEnum
@@ -21,7 +15,7 @@ from uuid import UUID, uuid4
 
 from langchain_core.documents import Document
 from langchain_core.messages import ToolCall
-from langgraph.managed.base import ManagedValue
+from langgraph.managed.is_last_step import RemainingStepsManager
 from pydantic import BaseModel, Field
 
 from redbox.models import prompts
@@ -57,9 +51,7 @@ class AISettings(BaseModel):
     chat_question_prompt: str = prompts.CHAT_QUESTION_PROMPT
     chat_with_docs_system_prompt: str = prompts.CHAT_WITH_DOCS_SYSTEM_PROMPT
     chat_with_docs_question_prompt: str = prompts.CHAT_WITH_DOCS_QUESTION_PROMPT
-    chat_with_docs_reduce_system_prompt: str = (
-        prompts.CHAT_WITH_DOCS_REDUCE_SYSTEM_PROMPT
-    )
+    chat_with_docs_reduce_system_prompt: str = prompts.CHAT_WITH_DOCS_REDUCE_SYSTEM_PROMPT
     self_route_system_prompt: str = prompts.SELF_ROUTE_SYSTEM_PROMPT
     retrieval_system_prompt: str = prompts.RETRIEVAL_SYSTEM_PROMPT
     retrieval_question_prompt: str = prompts.RETRIEVAL_QUESTION_PROMPT
@@ -134,9 +126,7 @@ class DocumentState(TypedDict):
     group: dict[UUID, Document]
 
 
-def document_reducer(
-    current: DocumentState | None, update: DocumentState | list[DocumentState]
-) -> DocumentState:
+def document_reducer(current: DocumentState | None, update: DocumentState | list[DocumentState]) -> DocumentState:
     """Merges two document states based on the following rules.
 
     * Groups are matched by the group key.
@@ -150,9 +140,7 @@ def document_reducer(
     """
     # If update is actually a list of state updates, run them one by one
     if isinstance(update, list):
-        reduced = reduce(
-            lambda current, update: document_reducer(current, update), update, current
-        )
+        reduced = reduce(lambda current, update: document_reducer(current, update), update, current)
         return reduced
 
     # If state is empty, return update
@@ -190,19 +178,11 @@ def document_reducer(
 
 class RedboxQuery(BaseModel):
     question: str = Field(description="The last user chat message")
-    s3_keys: list[str] = Field(
-        description="List of files to process", default_factory=list
-    )
+    s3_keys: list[str] = Field(description="List of files to process", default_factory=list)
     user_uuid: UUID = Field(description="User the chain in executing for")
-    chat_history: list[ChainChatMessage] = Field(
-        description="All previous messages in chat (excluding question)"
-    )
-    ai_settings: AISettings = Field(
-        description="User request AI settings", default_factory=AISettings
-    )
-    permitted_s3_keys: list[str] = Field(
-        description="List of permitted files for response", default_factory=list
-    )
+    chat_history: list[ChainChatMessage] = Field(description="All previous messages in chat (excluding question)")
+    ai_settings: AISettings = Field(description="User request AI settings", default_factory=AISettings)
+    permitted_s3_keys: list[str] = Field(description="List of permitted files for response", default_factory=list)
 
 
 class LLMCallMetadata(BaseModel):
@@ -216,7 +196,7 @@ class LLMCallMetadata(BaseModel):
 
 
 class RequestMetadata(BaseModel):
-    llm_calls: list[LLMCallMetadata] = Field(default_factory=set)
+    llm_calls: list[LLMCallMetadata] = Field(default_factory=list)
     selected_files_total_tokens: int = 0
     number_of_selected_files: int = 0
 
@@ -246,9 +226,7 @@ def metadata_reducer(
     """Merges two metadata states."""
     # If update is actually a list of state updates, run them one by one
     if isinstance(update, list):
-        reduced = reduce(
-            lambda current, update: metadata_reducer(current, update), update, current
-        )
+        reduced = reduce(lambda current, update: metadata_reducer(current, update), update, current)
         return reduced
 
     if current is None:
@@ -257,11 +235,9 @@ def metadata_reducer(
         return current
 
     return RequestMetadata(
-        llm_calls=list(set(current.llm_calls) | set(update.llm_calls)),
-        selected_files_total_tokens=update.selected_files_total_tokens
-        or current.selected_files_total_tokens,
-        number_of_selected_files=update.number_of_selected_files
-        or current.number_of_selected_files,
+        llm_calls=sorted(list(set(current.llm_calls) | set(update.llm_calls)), key=lambda c: c.timestamp),
+        selected_files_total_tokens=update.selected_files_total_tokens or current.selected_files_total_tokens,
+        number_of_selected_files=update.number_of_selected_files or current.number_of_selected_files,
     )
 
 
@@ -288,9 +264,7 @@ def tool_calls_reducer(current: ToolState, update: ToolState | None) -> ToolStat
 
     # If update is actually a list of state updates, run them one by one
     if isinstance(update, list):
-        reduced = reduce(
-            lambda current, update: tool_calls_reducer(current, update), update, current
-        )
+        reduced = reduce(lambda current, update: tool_calls_reducer(current, update), update, current)
         return reduced
 
     reduced = current.copy()
@@ -304,14 +278,6 @@ def tool_calls_reducer(current: ToolState, update: ToolState | None) -> ToolStat
     return reduced
 
 
-class StepsLeft(ManagedValue[bool]):
-    """A managed value that counts down from the recursion limit."""
-
-    def __call__(self, step: int) -> int:
-        limit = self.config.get("recursion_limit", 0)
-        return limit - step
-
-
 class RedboxState(TypedDict):
     request: Required[RedboxQuery]
     documents: Annotated[NotRequired[DocumentState], document_reducer]
@@ -319,8 +285,8 @@ class RedboxState(TypedDict):
     route_name: NotRequired[str | None]
     tool_calls: Annotated[NotRequired[ToolState], tool_calls_reducer]
     metadata: Annotated[NotRequired[RequestMetadata], metadata_reducer]
-    steps_left: Annotated[int, StepsLeft]
     citations: NotRequired[list[Citation] | None]
+    steps_left: Annotated[NotRequired[int], RemainingStepsManager]
 
 
 class PromptSet(StrEnum):
@@ -396,9 +362,7 @@ def dict_reducer(current: dict, update: dict) -> dict:
     return merged
 
 
-def merge_redbox_state_updates(
-    current: RedboxState, update: RedboxState
-) -> RedboxState:
+def merge_redbox_state_updates(current: RedboxState, update: RedboxState) -> RedboxState:
     """
     Merge RedboxStates to the following rules, intended for use on state updates.
 
@@ -419,9 +383,7 @@ def merge_redbox_state_updates(
         if get_origin(annotation) is Annotated:
             if is_dict_type(annotation):
                 # If it's annotated and a subclass of dict, apply a custom reducer function
-                merged_state[update_key] = dict_reducer(
-                    current=current_value or {}, update=update_value or {}
-                )
+                merged_state[update_key] = dict_reducer(current=current_value or {}, update=update_value or {})
             else:
                 # If it's annotated and not a dict, apply its reducer function
                 _, reducer_func = get_args(annotation)

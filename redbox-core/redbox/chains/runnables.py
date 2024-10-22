@@ -1,13 +1,8 @@
-import json
 import logging
 import re
-from ast import Lambda
-from importlib.metadata import metadata
-from inspect import CO_ITERABLE_COROUTINE
-from operator import attrgetter, itemgetter
+from operator import itemgetter
 from typing import Any, Callable, Iterable, Iterator
 
-from langchain.output_parsers import PydanticOutputParser
 from langchain_core.callbacks.manager import (
     CallbackManagerForLLMRun,
     dispatch_custom_event,
@@ -53,7 +48,7 @@ def combine_getters(*getters: Callable[[Any], Any]) -> Callable[[Any], Any]:
 
 
 def build_chat_prompt_from_messages_runnable(
-    prompt_set: PromptSet, partial_variables: dict, tokeniser: Encoding = None
+    prompt_set: PromptSet, tokeniser: Encoding = None, partial_variables: dict = None, 
 ) -> Runnable:
     @chain
     def _chat_prompt_from_messages(state: RedboxState) -> Runnable:
@@ -62,13 +57,12 @@ def build_chat_prompt_from_messages_runnable(
         Returns the PromptValue using values in the input_dict
         """
         _tokeniser = tokeniser or get_tokeniser()
+        _partial_variables = partial_variables or dict()
         system_prompt, question_prompt = get_prompts(state, prompt_set)
 
         log.debug("Setting chat prompt")
         system_prompt_message = [("system", system_prompt)]
-        prompts_budget = len(_tokeniser.encode(system_prompt)) + len(
-            _tokeniser.encode(question_prompt)
-        )
+        prompts_budget = len(_tokeniser.encode(system_prompt)) + len(_tokeniser.encode(question_prompt))
         chat_history_budget = (
             state["request"].ai_settings.context_window_size
             - state["request"].ai_settings.llm_max_tokens
@@ -90,9 +84,7 @@ def build_chat_prompt_from_messages_runnable(
             state["request"].model_dump()
             | {"text": state.get("text")}
             | {
-                "formatted_documents": format_documents(
-                    flatten_document_state(state.get("documents"))
-                ),
+                "formatted_documents": format_documents(flatten_document_state(state.get("documents"))),
             }
             | {"tool_calls": format_toolstate(state.get("tool_calls"))}
         )
@@ -103,7 +95,7 @@ def build_chat_prompt_from_messages_runnable(
                 + [(msg["role"], msg["text"]) for msg in truncated_history]
                 + [("user", question_prompt)]
             ),
-            partial_variables=partial_variables,
+            partial_variables=_partial_variables,
         ).invoke(prompt_template_context)
 
     return _chat_prompt_from_messages
@@ -113,6 +105,7 @@ def build_llm_chain(
     prompt_set: PromptSet,
     llm: BaseChatModel,
     output_parser: Runnable | Callable = None,
+    format_instructions: str | None = None,
     final_response_chain: bool = False,
 ) -> Runnable:
     """Builds a chain that correctly forms a text and metadata state update.
@@ -122,32 +115,23 @@ def build_llm_chain(
     model_name = getattr(llm, "model_name", "unknown-model")
     _llm = llm.with_config(tags=["response_flag"]) if final_response_chain else llm
     _output_parser = output_parser if output_parser else StrOutputParser()
-    format_arg = _output_parser.get_format_instructions() if output_parser else ""
     return (
-        build_chat_prompt_from_messages_runnable(prompt_set, {"format_arg": format_arg})
+        build_chat_prompt_from_messages_runnable(prompt_set, partial_variables={"format_arg": format_instructions})
         | {
             "text_and_tools": (
                 _llm
                 | {
                     "responses": _output_parser,
-                    "tool_calls": (
-                        RunnableLambda(lambda r: r.tool_calls) | tool_calls_to_toolstate
-                    ),
+                    "tool_calls": (RunnableLambda(lambda r: r.tool_calls) | tool_calls_to_toolstate),
                 }
             ),
             "prompt": RunnableLambda(lambda prompt: prompt.to_string()),
         }
         | {
-            "text": RunnableLambda(
-                combine_getters(itemgetter("text_and_tools"), itemgetter("responses"))
-            )
+            "text": RunnableLambda(combine_getters(itemgetter("text_and_tools"), itemgetter("responses")))
             | (lambda r: r if isinstance(r, str) else r.markdown_answer),
-            "tool_calls": combine_getters(
-                itemgetter("text_and_tools"), itemgetter("tool_calls")
-            ),
-            "citations": RunnableLambda(
-                combine_getters(itemgetter("text_and_tools"), itemgetter("responses"))
-            )
+            "tool_calls": combine_getters(itemgetter("text_and_tools"), itemgetter("tool_calls")),
+            "citations": RunnableLambda(combine_getters(itemgetter("text_and_tools"), itemgetter("responses")))
             | (lambda r: [] if isinstance(r, str) else r.citations),
             "prompt": itemgetter("prompt"),
         }

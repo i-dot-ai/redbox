@@ -47,18 +47,14 @@ from redbox.transform import (
 # Subgraphs
 
 
-def get_self_route_graph(
-    retriever: VectorStoreRetriever, prompt_set: PromptSet, debug: bool = False
-):
+def get_self_route_graph(retriever: VectorStoreRetriever, prompt_set: PromptSet, debug: bool = False):
     builder = StateGraph(RedboxState)
 
     def self_route_question_is_unanswerable(llm_response: str):
         return "unanswerable" in llm_response
 
     # Processes
-    builder.add_node(
-        "p_condense_question", build_chat_pattern(prompt_set=PromptSet.CondenseQuestion)
-    )
+    builder.add_node("p_condense_question", build_chat_pattern(prompt_set=PromptSet.CondenseQuestion))
     builder.add_node(
         "p_retrieve_docs",
         build_retrieve_pattern(
@@ -83,9 +79,7 @@ def get_self_route_graph(
         "p_set_route_name_from_answer",
         build_set_self_route_from_llm_answer(
             self_route_question_is_unanswerable,
-            true_condition_state_update={
-                "route_name": ChatRoute.chat_with_docs_map_reduce
-            },
+            true_condition_state_update={"route_name": ChatRoute.chat_with_docs_map_reduce},
             false_condition_state_update={"route_name": ChatRoute.search},
         ),
     )
@@ -95,9 +89,7 @@ def get_self_route_graph(
     builder.add_edge(START, "p_condense_question")
     builder.add_edge("p_condense_question", "p_retrieve_docs")
     builder.add_edge("p_retrieve_docs", "p_answer_question_or_decide_unanswerable")
-    builder.add_edge(
-        "p_answer_question_or_decide_unanswerable", "p_set_route_name_from_answer"
-    )
+    builder.add_edge("p_answer_question_or_decide_unanswerable", "p_set_route_name_from_answer")
     builder.add_conditional_edges(
         "p_set_route_name_from_answer",
         lambda state: state["route_name"],
@@ -143,12 +135,8 @@ def get_search_graph(
     builder = StateGraph(RedboxState)
 
     # Processes
-    builder.add_node(
-        "p_set_search_route", build_set_route_pattern(route=ChatRoute.search)
-    )
-    builder.add_node(
-        "p_condense_question", build_chat_pattern(prompt_set=PromptSet.CondenseQuestion)
-    )
+    builder.add_node("p_set_search_route", build_set_route_pattern(route=ChatRoute.search))
+    builder.add_node("p_condense_question", build_chat_pattern(prompt_set=PromptSet.CondenseQuestion))
     builder.add_node(
         "p_retrieve_docs",
         build_retrieve_pattern(
@@ -172,21 +160,17 @@ def get_search_graph(
     return builder.compile(debug=debug)
 
 
-def get_agentic_search_graph(
-    tools: dict[str, StructuredTool], debug: bool = False
-) -> CompiledGraph:
+def get_agentic_search_graph(tools: dict[str, StructuredTool], debug: bool = False) -> CompiledGraph:
     """Creates a subgraph for agentic RAG."""
+
+    citations_output_parser = PydanticOutputParser(pydantic_object=LLM_Response)
     builder = StateGraph(RedboxState)
     # Tools
     agent_tool_names = ["_search_documents", "_search_wikipedia"]
-    agent_tools: list[StructuredTool] = [
-        tools.get(tool_name) for tool_name in agent_tool_names
-    ]
+    agent_tools: list[StructuredTool] = [tools.get(tool_name) for tool_name in agent_tool_names]
 
     # Processes
-    builder.add_node(
-        "p_set_agentic_search_route", build_set_route_pattern(route=ChatRoute.gadget)
-    )
+    builder.add_node("p_set_agentic_search_route", build_set_route_pattern(route=ChatRoute.gadget))
     builder.add_node(
         "p_search_agent",
         build_stuff_pattern(prompt_set=PromptSet.SearchAgentic, tools=agent_tools),
@@ -200,14 +184,13 @@ def get_agentic_search_graph(
         build_stuff_pattern(
             prompt_set=PromptSet.Search,
             final_response_chain=True,
-            output_parser=PydanticOutputParser(pydantic_object=LLM_Response),
+            output_parser=citations_output_parser,
+            format_instructions=citations_output_parser.get_format_instructions(),
         ),
     )
     builder.add_node(
         "p_give_up_agent",
-        build_stuff_pattern(
-            prompt_set=PromptSet.GiveUpAgentic, final_response_chain=True
-        ),
+        build_stuff_pattern(prompt_set=PromptSet.GiveUpAgentic, final_response_chain=True),
     )
     builder.add_node("p_report_sources", report_sources_process)
 
@@ -236,9 +219,7 @@ def get_agentic_search_graph(
         build_tools_selected_conditional(tools=agent_tool_names),
         {True: "s_tool", False: "d_answer_or_give_up"},
     )
-    builder.add_conditional_edges(
-        "s_tool", build_tool_send("p_retrieval_tools"), path_map=["p_retrieval_tools"]
-    )
+    builder.add_conditional_edges("s_tool", build_tool_send("p_retrieval_tools"), path_map=["p_retrieval_tools"])
     builder.add_edge("p_retrieval_tools", "d_x_steps_left_or_less")
     builder.add_conditional_edges(
         "d_answer_or_give_up",
@@ -268,9 +249,7 @@ def get_chat_with_documents_graph(
 
     # Processes
     builder.add_node("p_pass_question_to_text", build_passthrough_pattern())
-    builder.add_node(
-        "p_set_chat_docs_route", build_set_route_pattern(route=ChatRoute.chat_with_docs)
-    )
+    builder.add_node("p_set_chat_docs_route", build_set_route_pattern(route=ChatRoute.chat_with_docs))
     builder.add_node(
         "p_set_chat_docs_map_reduce_route",
         build_set_route_pattern(route=ChatRoute.chat_with_docs_map_reduce),
@@ -313,9 +292,7 @@ def get_chat_with_documents_graph(
 
     builder.add_node(
         "p_activity_log_tool_decision",
-        build_activity_log_node(
-            lambda state: RedboxActivityEvent(message=f"Using _{state["route_name"]}_")
-        ),
+        build_activity_log_node(lambda state: RedboxActivityEvent(message=f"Using _{state["route_name"]}_")),
     )
 
     # Decisions
@@ -387,9 +364,7 @@ def get_chat_with_documents_graph(
     )
     builder.add_conditional_edges(
         "d_single_doc_summaries_bigger_than_context",
-        build_documents_bigger_than_context_conditional(
-            PromptSet.ChatwithDocsMapReduce
-        ),
+        build_documents_bigger_than_context_conditional(PromptSet.ChatwithDocsMapReduce),
         {
             True: "p_too_large_error",
             False: "s_group_2",
@@ -400,9 +375,7 @@ def get_chat_with_documents_graph(
         build_document_group_send("p_summarise_document_by_document"),
         path_map=["p_summarise_document_by_document"],
     )
-    builder.add_edge(
-        "p_summarise_document_by_document", "d_doc_summaries_bigger_than_context"
-    )
+    builder.add_edge("p_summarise_document_by_document", "d_doc_summaries_bigger_than_context")
     builder.add_conditional_edges(
         "d_doc_summaries_bigger_than_context",
         build_documents_bigger_than_context_conditional(PromptSet.ChatwithDocs),
@@ -418,9 +391,7 @@ def get_chat_with_documents_graph(
     return builder.compile(debug=debug)
 
 
-def get_retrieve_metadata_graph(
-    metadata_retriever: VectorStoreRetriever, debug: bool = False
-):
+def get_retrieve_metadata_graph(metadata_retriever: VectorStoreRetriever, debug: bool = False):
     builder = StateGraph(RedboxState)
 
     # Processes
@@ -463,9 +434,7 @@ def get_root_graph(
         parameterised_retriever=parameterised_retriever,
         debug=debug,
     )
-    metadata_subgraph = get_retrieve_metadata_graph(
-        metadata_retriever=metadata_retriever, debug=debug
-    )
+    metadata_subgraph = get_retrieve_metadata_graph(metadata_retriever=metadata_retriever, debug=debug)
 
     # Processes
     builder.add_node("p_search", rag_subgraph)

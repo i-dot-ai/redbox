@@ -3,7 +3,14 @@ from datetime import UTC, datetime, timedelta
 import pytest
 from django.core.files.uploadedfile import SimpleUploadedFile
 
-from redbox_app.redbox_core.models import File, InactiveFileError, StatusEnum, User
+from redbox_app.redbox_core.models import (
+    ChatMessage,
+    Citation,
+    File,
+    InactiveFileError,
+    StatusEnum,
+    User,
+)
 
 
 @pytest.mark.django_db()
@@ -72,3 +79,63 @@ def test_file_model_unique_name_error_states(status: str, peter_rabbit: User, s3
 
     with pytest.raises(InactiveFileError, match="is inactive, status is"):
         assert new_file.unique_name
+
+
+@pytest.mark.django_db()
+@pytest.mark.parametrize(
+    ("source", "error_msg"),
+    [
+        (Citation.Origin.USER_UPLOADED_DOCUMENT, "file must be specified for a user-uploaded-document"),
+        (Citation.Origin.WIKIPEDIA, "url must be specified for an external citation"),
+    ],
+)
+def test_citation_save_fail_file_url_not_set(chat_message: ChatMessage, source, error_msg):
+    citation = Citation(chat_message=chat_message, text="hello", source=source)
+
+    with pytest.raises(ValueError, match=error_msg):
+        citation.save()
+
+
+@pytest.mark.django_db()
+@pytest.mark.parametrize(
+    ("source", "error_msg"),
+    [
+        (Citation.Origin.USER_UPLOADED_DOCUMENT, "url should not be specified for a user-uploaded-document"),
+        (Citation.Origin.WIKIPEDIA, "file should not be specified for an external citation"),
+    ],
+)
+def test_citation_save_fail_file_and_url_set(chat_message: ChatMessage, uploaded_file: File, source, error_msg):
+    citation = Citation(
+        chat_message=chat_message,
+        text="hello",
+        source=source,
+        url="http://example.com",
+        file=uploaded_file,
+    )
+
+    with pytest.raises(ValueError, match=error_msg):
+        citation.save()
+
+
+def test_internal_citation_uri(chat_message: ChatMessage, uploaded_file: File):
+    citation = Citation(
+        chat_message=chat_message,
+        text="hello",
+        source=Citation.Origin.USER_UPLOADED_DOCUMENT,
+        file=uploaded_file,
+    )
+    citation.save()
+    assert citation.uri == "file://original_file.txt"
+
+
+def test_external_citation_uri(
+    chat_message: ChatMessage,
+):
+    citation = Citation(
+        chat_message=chat_message,
+        text="hello",
+        source=Citation.Origin.WIKIPEDIA,
+        url="http://example.com",
+    )
+    citation.save()
+    assert citation.uri == "http://example.com"
