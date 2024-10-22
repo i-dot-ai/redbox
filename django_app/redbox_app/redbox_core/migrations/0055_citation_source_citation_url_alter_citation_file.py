@@ -6,7 +6,9 @@ from django.db import migrations, models
 
 def back_populate_citations(apps, schema_editor):
     Citation = apps.get_model("redbox_core", "Citation")
-    Citation.objects.update(source = "UPLOADED")
+    for citation in Citation.objects.all():
+        citation.source = "USER UPLOADED DOCUMENT"
+        citation.save()
 
 
 class Migration(migrations.Migration):
