@@ -10,11 +10,5 @@
     "python.analysis.autoImportCompletions": true,
     "python.experiments.optOutFrom": [
         "pythonTerminalEnvVarActivation"
-    ],
-    "python.testing.pytestArgs": [
-        "redbox-core/tests"
-    ],
-    "python.pythonPath": "redbox-core/.venv/bin/python",
-    "python.testing.unittestEnabled": false,
-    "python.testing.pytestEnabled": true,
+    ]
 }

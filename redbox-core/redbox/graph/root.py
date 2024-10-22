@@ -396,11 +396,7 @@ def get_root_graph(
     builder.add_conditional_edges(
         "d_keyword_exists",
         build_keyword_detection_conditional(*ROUTABLE_KEYWORDS.keys()),
-        {
-            ChatRoute.search: "p_search",
-            ChatRoute.gadget: "p_search_agentic",
-            "DEFAULT": "d_docs_selected",
-        },
+        {ChatRoute.search: "p_search", ChatRoute.gadget: "p_search_agentic", "DEFAULT": "d_docs_selected"},
     )
     builder.add_conditional_edges(
         "d_docs_selected",
