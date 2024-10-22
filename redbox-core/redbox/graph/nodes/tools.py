@@ -125,13 +125,13 @@ def build_search_documents_tool(
     return _search_documents
 
 
-def build_gov_uk_search_tool(num_results: int = 10) -> Tool:
+def build_govuk_search_tool(num_results: int = 10) -> Tool:
     """Constructs a tool that searches gov.uk and sets state["documents"]."""
 
     tokeniser = tiktoken.encoding_for_model("gpt-4o")
 
     @tool
-    def _search_gov_uk(query: str, state: Annotated[dict, InjectedState]) -> dict[str, Any]:
+    def _search_govuk(query: str, state: Annotated[dict, InjectedState]) -> dict[str, Any]:
         """
         Search for documents on gov.uk based on a query string.
         This endpoint is used to search for documents on gov.uk. There are many types of documents on gov.uk.
@@ -183,4 +183,4 @@ def build_gov_uk_search_tool(num_results: int = 10) -> Tool:
 
         return {"documents": structure_documents_by_group_and_indices(mapped_documents)}
 
-    return _search_gov_uk
+    return _search_govuk

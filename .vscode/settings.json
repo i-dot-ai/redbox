@@ -12,8 +12,9 @@
         "pythonTerminalEnvVarActivation"
     ],
     "python.testing.pytestArgs": [
-        "redbox-core"
+        "redbox-core/tests"
     ],
+    "python.pythonPath": "redbox-core/.venv/bin/python",
     "python.testing.unittestEnabled": false,
-    "python.testing.pytestEnabled": true
+    "python.testing.pytestEnabled": true,
 }

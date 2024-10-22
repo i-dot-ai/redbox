@@ -144,7 +144,7 @@ def get_agentic_search_graph(tools: dict[str, StructuredTool], debug: bool = Fal
     builder = StateGraph(RedboxState)
 
     # Tools
-    agent_tool_names = ["_search_documents", "_search_gov_uk"]
+    agent_tool_names = ["_search_documents", "_search_govuk"]
     agent_tools: list[StructuredTool] = [tools.get(tool_name) for tool_name in agent_tool_names]
 
     # Processes

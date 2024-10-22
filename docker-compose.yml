@@ -17,7 +17,6 @@ services:
         condition: service_healthy
       elasticsearch:
         condition: service_healthy
-
     networks:
       - redbox-app-network
     env_file:

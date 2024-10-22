@@ -415,6 +415,43 @@ TEST_CASES = [
             ],
             test_id="No Such Keyword with docs",
         ),
+        generate_test_cases(
+            query=RedboxQuery(
+                question="@gadget Tell me about travel advice to cuba",
+                s3_keys=[],
+                user_uuid=uuid4(),
+                chat_history=[],
+                permitted_s3_keys=["s3_key"],
+            ),
+            test_data=[
+                RedboxTestData(
+                    number_of_docs=1,
+                    tokens_in_all_docs=10000,
+                    expected_llm_response=[
+                        AIMessage(
+                            content="",
+                            additional_kwargs={
+                                "tool_calls": [
+                                    {
+                                        "id": "call_e4003b",
+                                        "function": {
+                                            "arguments": '{\n  "query": "travel advice to cuba"\n}',
+                                            "name": "_search_govuk",
+                                        },
+                                        "type": "function",
+                                    }
+                                ]
+                            },
+                        ),
+                        "answer",
+                        "AI is a lie",
+                    ],
+                    expected_route=ChatRoute.gadget,
+                    s3_keys=["s3_key"],
+                ),
+            ],
+            test_id="Agentic govuk search",
+        ),
     ]
     for test_case in generated_cases
 ]
@@ -434,7 +471,13 @@ async def test_streaming(test: RedboxChatTestCase, env: Settings, mocker: Mocker
         """Tool to search documents."""
         return {"documents": structure_documents_by_group_and_indices(test_case.docs)}
 
+    @tool
+    def _search_govuk(query: str) -> dict[str, Any]:
+        """Tool to search gov.uk for travel advice and other government information."""
+        return {"documents": structure_documents_by_group_and_indices(test_case.docs)}
+
     mocker.patch("redbox.app.build_search_documents_tool", return_value=_search_documents)
+    mocker.patch("redbox.app.build_govuk_search_tool", return_value=_search_govuk)
     mocker.patch("redbox.graph.nodes.processes.get_chat_llm", return_value=llm)
 
     # Instantiate app

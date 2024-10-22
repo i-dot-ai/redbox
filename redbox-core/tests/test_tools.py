@@ -9,7 +9,7 @@ from langchain_core.tools import tool
 from langgraph.prebuilt import InjectedState
 
 from redbox.graph.nodes.tools import (
-    build_gov_uk_search_tool,
+    build_govuk_search_tool,
     build_search_documents_tool,
     has_injected_state,
     is_valid_tool,
@@ -152,8 +152,8 @@ def test_search_documents_tool(
                 assert group_docs[doc.metadata["uuid"]] == doc
 
 
-def test_gov_uk_search_tool():
-    tool = build_gov_uk_search_tool()
+def test_govuk_search_tool():
+    tool = build_govuk_search_tool()
 
     state_update = tool.invoke(
         {
