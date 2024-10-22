@@ -4,6 +4,7 @@ from asyncio import CancelledError
 from collections.abc import Mapping, Sequence
 from typing import Any, ClassVar
 from uuid import UUID
+from itertools import groupby
 
 from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
@@ -35,7 +36,6 @@ from redbox_app.redbox_core.models import (
     ChatMessageTokenUse,
     ChatRoleEnum,
     Citation,
-    ExternalCitation,
     File,
     StatusEnum,
 )
@@ -204,20 +204,21 @@ class ChatConsumer(AsyncWebsocketConsumer):
             file.save()
 
             for citation in citations:
-                Citation.objects.create(
-                    chat_message=chat_message,
-                    file=file,
-                    text=citation.page_content,
-                    page_numbers=parse_page_number(citation.metadata.get("page_number")),
-                )
-
-        for document in self.external_citations:
-            ExternalCitation.objects.create(
-                chat_message=chat_message,
-                text=document.page_content,
-                creator=document.metadata.get("creator_type", "Unknown"),
-                url=document.metadata.get("original_resource_ref", "Unknown"),
-            )
+                if file:
+                    Citation.objects.create(
+                        chat_message=chat_message,
+                        file=file,
+                        text=citation.page_content,
+                        page_numbers=parse_page_number(citation.metadata.get("page_number")),
+                        source=Citation.Origin.USER_UPLOADED_DOCUMENT
+                    )
+                else:
+                    Citation.objects.create(
+                        chat_message=chat_message,
+                        url=citation.metadata.get("original_resource_ref"),
+                        text=citation.page_content,
+                        source=Citation.Origin(citation.metadata.get("creator_type"))
+                    )
 
         if self.metadata:
             for model, token_count in self.metadata.input_tokens.items():
@@ -264,15 +265,20 @@ class ChatConsumer(AsyncWebsocketConsumer):
         self.activities.append(RedboxActivityEvent.model_validate(response))
 
     async def handle_documents(self, response: list[Document]):
-        sources = {doc.metadata["original_resource_ref"] for doc in response}
-        files = File.objects.filter(original_file__in=sources)
+        sources_by_resource_ref = {}
+        for document in response:
+            ref = document.metadata.get("original_resource_ref")
+            docs_from_source = sources_by_resource_ref.get(ref, [])
+            docs_from_source.append(document)
+            sources_by_resource_ref[ref] = docs_from_source
         handled_sources = set()
+        files = File.objects.filter(original_file__in=sources_by_resource_ref.keys())
         async for file in files:
             await self.send_to_client("source", {"url": str(file.url), "original_file_name": file.original_file_name})
             self.citations.append(
-                (file, [doc for doc in response if doc.metadata["original_resource_ref"] == file.unique_name])
+                (file, sources_by_resource_ref[file.unique_name])
             )
-            handled_sources.add(file.original_file_name)
+            handled_sources.add(file.unique_name)
 
         additional_sources = [doc for doc in response if doc.metadata["original_resource_ref"] not in handled_sources]
 
@@ -280,8 +286,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
             url = additional_source.metadata["original_resource_ref"]
             source = additional_source.metadata.get("creator_type", "Unknown")
             await self.send_to_client("source", {"url": url, "original_file_name": f"{source} - {url.split("/")[-1]}"})
-            self.external_citations.extend(
-                [doc for doc in response if doc.metadata["original_resource_ref"] == file.unique_name]
+            self.citations.extend(
+                [(None, doc) for doc in response if doc.metadata["original_resource_ref"] == file.unique_name]
             )
 
     async def handle_activity_event(self, event: RedboxActivityEvent):
