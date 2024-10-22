@@ -219,7 +219,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 url=document.metadata.get("original_resource_ref", "Unknown"),
             )
 
-        if self.metadata and self.metadata.input_tokens:
+        if self.metadata:
             for model, token_count in self.metadata.input_tokens.items():
                 ChatMessageTokenUse.objects.create(
                     chat_message=chat_message,
@@ -228,7 +228,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
                     token_count=token_count,
                 )
 
-        if self.metadata and self.metadata.output_tokens:
             for model, token_count in self.metadata.output_tokens.items():
                 ChatMessageTokenUse.objects.create(
                     chat_message=chat_message,
@@ -281,8 +280,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
             url = additional_source.metadata["original_resource_ref"]
             source = additional_source.metadata.get("creator_type", "Unknown")
             await self.send_to_client("source", {"url": url, "original_file_name": f"{source} - {url.split("/")[-1]}"})
-            self.external_citations.append(
-                (file, [doc for doc in response if doc.metadata["original_resource_ref"] == file.unique_name])
+            self.external_citations.extend(
+                [doc for doc in response if doc.metadata["original_resource_ref"] == file.unique_name]
             )
 
     async def handle_activity_event(self, event: RedboxActivityEvent):
