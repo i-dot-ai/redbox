@@ -12,7 +12,7 @@ from langchain_core.output_parsers import JsonOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 
 from redbox.chains.components import get_chat_llm
-from redbox.models.file import ChunkMetadata, ChunkResolution, UploadedFileMetadata
+from redbox.models.file import ChunkResolution, UploadedFileMetadata
 from redbox.models.settings import Settings
 
 logging.basicConfig(level=logging.INFO)

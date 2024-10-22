@@ -268,6 +268,7 @@ async def test_chat_consumer_agentic(alice: User, uploaded_file: File, mocked_co
     assert await get_token_use_count(ChatMessageTokenUse.UseTypeEnum.INPUT) == 123
     assert await get_token_use_count(ChatMessageTokenUse.UseTypeEnum.OUTPUT) == 1000
 
+
 @database_sync_to_async
 def get_chat_message_text(user: User, role: ChatRoleEnum) -> Sequence[str]:
     return [m.text for m in ChatMessage.objects.filter(chat__user=user, role=role)]
@@ -599,7 +600,10 @@ def mocked_connect(uploaded_file: File) -> Connect:
             "tags": [SOURCE_DOCUMENTS_TAG],
             "data": {
                 "output": [
-                    Document(metadata={"original_resource_ref": uploaded_file.unique_name}, page_content="Good afternoon Mr Amor")
+                    Document(
+                        metadata={"original_resource_ref": uploaded_file.unique_name},
+                        page_content="Good afternoon Mr Amor",
+                    )
                 ]
             },
         },
@@ -608,7 +612,10 @@ def mocked_connect(uploaded_file: File) -> Connect:
             "tags": [SOURCE_DOCUMENTS_TAG],
             "data": {
                 "output": [
-                    Document(metadata={"original_resource_ref": uploaded_file.unique_name}, page_content="Good afternoon Mr Amor"),
+                    Document(
+                        metadata={"original_resource_ref": uploaded_file.unique_name},
+                        page_content="Good afternoon Mr Amor",
+                    ),
                     Document(
                         metadata={"original_resource_ref": uploaded_file.unique_name, "page_number": [34, 35]},
                         page_content="Good afternoon Mr Amor",
@@ -644,8 +651,14 @@ def mocked_connect_with_naughty_citation(uploaded_file: File) -> CannedGraphLLM:
             "tags": [SOURCE_DOCUMENTS_TAG],
             "data": {
                 "output": [
-                    Document(metadata={"original_resource_ref": uploaded_file.unique_name}, page_content="Good afternoon Mr Amor"),
-                    Document(metadata={"original_resource_ref": uploaded_file.unique_name}, page_content="I shouldn't send a \x00"),
+                    Document(
+                        metadata={"original_resource_ref": uploaded_file.unique_name},
+                        page_content="Good afternoon Mr Amor",
+                    ),
+                    Document(
+                        metadata={"original_resource_ref": uploaded_file.unique_name},
+                        page_content="I shouldn't send a \x00",
+                    ),
                 ]
             },
         },
@@ -714,33 +727,31 @@ def mocked_connect_with_explicit_no_document_selected_error() -> CannedGraphLLM:
 def mocked_connect_agentic_search(uploaded_file: File) -> Connect:
     responses = [
         {
-            "event": "on_custom_event", 
+            "event": "on_custom_event",
             "name": "response_tokens",
             "data": "Good afternoon, ",
         },
-        {   
-            "event": "on_custom_event", 
-            "name": "response_tokens", 
+        {
+            "event": "on_custom_event",
+            "name": "response_tokens",
             "data": "Mr. Amor.",
         },
-        {
-            "event": "on_chain_end", 
-            "tags": [ROUTE_NAME_TAG], 
-            "data": {"output": {"route_name": "search/agentic"}}},
+        {"event": "on_chain_end", "tags": [ROUTE_NAME_TAG], "data": {"output": {"route_name": "search/agentic"}}},
         {
             "event": "on_custom_event",
             "name": "on_source_report",
             "data": [
-                Document(metadata={"original_resource_ref": uploaded_file.unique_name}, page_content="Good afternoon Mr Amor"),
-                Document(metadata={"original_resource_ref": uploaded_file.unique_name}, page_content="Good afternoon Mr Amor"),
                 Document(
-                    metadata={
-                        "original_resource_ref": uploaded_file.unique_name, 
-                        "page_number": [34, 35]
-                    },
+                    metadata={"original_resource_ref": uploaded_file.unique_name}, page_content="Good afternoon Mr Amor"
+                ),
+                Document(
+                    metadata={"original_resource_ref": uploaded_file.unique_name}, page_content="Good afternoon Mr Amor"
+                ),
+                Document(
+                    metadata={"original_resource_ref": uploaded_file.unique_name, "page_number": [34, 35]},
                     page_content="Good afternoon Mr Amor",
                 ),
-            ]
+            ],
         },
         {
             "event": "on_custom_event",
@@ -754,6 +765,7 @@ def mocked_connect_agentic_search(uploaded_file: File) -> Connect:
     ]
 
     return CannedGraphLLM(responses=responses)
+
 
 @pytest.fixture()
 def mocked_connect_with_several_files(several_files: Sequence[File]) -> Connect:

@@ -1,5 +1,4 @@
 from typing import Annotated, Any, get_args, get_origin, get_type_hints
-from uuid import uuid4
 
 from elasticsearch import Elasticsearch
 from langchain_core.embeddings.embeddings import Embeddings
@@ -155,8 +154,8 @@ def build_search_wikipedia_tool(number_wikipedia_results=1, max_chars_per_wiki_p
                     index=i,
                     original_resource_ref=doc.metadata["source"],
                     token_count=len(tokeniser.encode(doc.page_content)),
-                    creator_type="wikipedia"
-                ).model_dump()
+                    creator_type="wikipedia",
+                ).model_dump(),
             )
             for i, doc in enumerate(response)
         ]

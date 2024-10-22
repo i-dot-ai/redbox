@@ -751,6 +751,9 @@ class ExternalCitation(UUIDPrimaryKeyBase, TimeStampedModel):
     creator = models.TextField()
     url = models.URLField()
 
+    def __str__(self):
+        return f"{self.creator}: [{self.url}] {self.text or ''}"
+
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
         self.text = sanitise_string(self.text)
         super().save(force_insert, force_update, using, update_fields)

@@ -29,7 +29,6 @@ from redbox.models.graph import RedboxActivityEvent
 from redbox_app.redbox_core import error_messages
 from redbox_app.redbox_core.models import (
     AISettings as AISettingsModel,
-    ExternalCitation,
 )
 from redbox_app.redbox_core.models import (
     Chat,
@@ -38,6 +37,7 @@ from redbox_app.redbox_core.models import (
     ChatMessageTokenUse,
     ChatRoleEnum,
     Citation,
+    ExternalCitation,
     File,
     StatusEnum,
 )
@@ -185,37 +185,34 @@ class ChatConsumer(AsyncWebsocketConsumer):
         session: Chat,
         user_message_text: str,
         role: ChatRoleEnum,
-        sources: Sequence[tuple[File, Document]] | None = None,
-        external_sources: list[Document] | None = None,
-        selected_files: Sequence[File] | None = None,
+        sources: Sequence[tuple[File, Document]] = (),
+        external_sources: Sequence[Document] = (),
+        selected_files: Sequence[File] = (),
         metadata: RequestMetadata | None = None,
         route: str | None = None,
     ) -> ChatMessage:
         chat_message = ChatMessage(chat=session, text=user_message_text, role=role, route=route)
         chat_message.save()
-        if sources:
-            for file, citations in sources:
-                file.last_referenced = timezone.now()
-                file.save()
+        for file, citations in sources:
+            file.last_referenced = timezone.now()
+            file.save()
 
-                for citation in citations:
-                    Citation.objects.create(
-                        chat_message=chat_message,
-                        file=file,
-                        text=citation.page_content,
-                        page_numbers=parse_page_number(citation.metadata.get("page_number")),
-                    )
-        if external_sources:
-            for document in external_sources:
-                ExternalCitation.objects.create(
+            for citation in citations:
+                Citation.objects.create(
                     chat_message=chat_message,
-                    text=document.page_content,
-                    creator=document.metadata.get("creator_type", ""),
-                    url=document.metadata.get("original_resource_ref", "/")
+                    file=file,
+                    text=citation.page_content,
+                    page_numbers=parse_page_number(citation.metadata.get("page_number")),
                 )
+        for document in external_sources:
+            ExternalCitation.objects.create(
+                chat_message=chat_message,
+                text=document.page_content,
+                creator=document.metadata.get("creator_type", ""),
+                url=document.metadata.get("original_resource_ref", "/"),
+            )
 
-        if selected_files:
-            chat_message.selected_files.set(selected_files)
+        chat_message.selected_files.set(selected_files)
 
         if metadata and metadata.input_tokens:
             for model, token_count in metadata.input_tokens.items():
@@ -259,7 +256,9 @@ class ChatConsumer(AsyncWebsocketConsumer):
         handled_sources = set()
         async for file in files:
             await self.send_to_client("source", {"url": str(file.url), "original_file_name": file.original_file_name})
-            self.citations.append((file, [doc for doc in response if doc.metadata["original_resource_ref"] == file.unique_name]))
+            self.citations.append(
+                (file, [doc for doc in response if doc.metadata["original_resource_ref"] == file.unique_name])
+            )
             handled_sources.add(file.original_file_name)
 
         additional_sources = [doc for doc in response if doc.metadata["original_resource_ref"] not in handled_sources]
@@ -267,9 +266,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         for additional_source in additional_sources:
             url = additional_source.metadata["original_resource_ref"]
             source = additional_source.metadata.get("creator_type", "Unknown")
-            await self.send_to_client(
-                "source", {"url": url, "original_file_name": f"{source} - {url.split("/")[-1]}"}
-            )
+            await self.send_to_client("source", {"url": url, "original_file_name": f"{source} - {url.split("/")[-1]}"})
             self.external_citations.append(
                 (file, [doc for doc in response if doc.metadata["original_resource_ref"] == file.unique_name])
             )

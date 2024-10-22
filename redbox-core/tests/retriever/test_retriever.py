@@ -77,7 +77,9 @@ def test_parameterised_retriever(
     else:
         assert len(result) == chain_params["rag_k"]
         assert {c.page_content for c in result} <= {c.page_content for c in permitted_docs}
-        assert {c.metadata["original_resource_ref"] for c in result} <= set(stored_file_parameterised.query.permitted_s3_keys)
+        assert {c.metadata["original_resource_ref"] for c in result} <= set(
+            stored_file_parameterised.query.permitted_s3_keys
+        )
 
         if selected:
             assert {c.page_content for c in result} <= {c.page_content for c in selected_docs}
@@ -113,7 +115,9 @@ def test_all_chunks_retriever(
         assert len(result) == len(correct)
         assert {c.page_content for c in result} == {c.page_content for c in correct}
         assert {c.metadata["original_resource_ref"] for c in result} == set(stored_file_all_chunks.query.s3_keys)
-        assert {c.metadata["original_resource_ref"] for c in result} <= set(stored_file_all_chunks.query.permitted_s3_keys)
+        assert {c.metadata["original_resource_ref"] for c in result} <= set(
+            stored_file_all_chunks.query.permitted_s3_keys
+        )
     else:
         len(result) == 0
 
@@ -143,6 +147,8 @@ def test_metadata_retriever(metadata_retriever: MetadataRetriever, stored_file_m
     if selected and permission:
         assert len(result) == len(correct)
         assert {c.metadata["original_resource_ref"] for c in result} == set(stored_file_metadata.query.s3_keys)
-        assert {c.metadata["original_resource_ref"] for c in result} <= set(stored_file_metadata.query.permitted_s3_keys)
+        assert {c.metadata["original_resource_ref"] for c in result} <= set(
+            stored_file_metadata.query.permitted_s3_keys
+        )
     else:
         len(result) == 0

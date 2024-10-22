@@ -25,7 +25,9 @@ def hit_to_doc(hit: dict[str, Any]) -> Document:
     source = hit["_source"]
     c_meta = {
         "index": source.get("index"),
-        "original_resource_ref": source["metadata"].get("original_resource_ref", source["metadata"].get("file_name")), # Handle mapping previously ingested documents
+        "original_resource_ref": source["metadata"].get(
+            "original_resource_ref", source["metadata"].get("file_name")
+        ),  # Handle mapping previously ingested documents
         "score": hit["_score"],
         "uuid": hit["_id"],
     }

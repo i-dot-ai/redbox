@@ -22,11 +22,11 @@ class ChunkMetadata(BaseModel):
     """
 
     uuid: UUID = Field(default_factory=uuid4)
-    index: int = 0 # The order of this chunk in the original resource
+    index: int = 0  # The order of this chunk in the original resource
     created_datetime: datetime.datetime = datetime.datetime.now(datetime.UTC)
     chunk_resolution: ChunkResolution = ChunkResolution.normal
     creator_type: str
-    original_resource_ref: str # URL or file name
+    original_resource_ref: str  # URL or file name
     token_count: int
 
 
