@@ -1,4 +1,5 @@
 import itertools
+import json
 from uuid import NAMESPACE_DNS, UUID, uuid5
 
 import tiktoken
@@ -7,7 +8,13 @@ from langchain_core.documents import Document
 from langchain_core.messages import ToolCall
 from langchain_core.runnables import RunnableLambda
 
-from redbox.models.chain import DocumentState, LLMCallMetadata, RedboxState, RequestMetadata, ToolState
+from redbox.models.chain import (
+    DocumentState,
+    LLMCallMetadata,
+    RedboxState,
+    RequestMetadata,
+    ToolState,
+)
 from redbox.models.graph import RedboxEventType
 
 
@@ -25,11 +32,15 @@ def combine_documents(a: Document, b: Document):
         return sorted(set(obj)) or None
 
     def combine_values(field_name: str):
-        return sorted_list_or_none(listify(a.metadata, field_name) + listify(b.metadata, field_name))
+        return sorted_list_or_none(
+            listify(a.metadata, field_name) + listify(b.metadata, field_name)
+        )
 
     combined_content = a.page_content + b.page_content
     combined_metadata = a.metadata.copy()
-    combined_metadata["token_count"] = a.metadata["token_count"] + b.metadata["token_count"]
+    combined_metadata["token_count"] = (
+        a.metadata["token_count"] + b.metadata["token_count"]
+    )
     combined_metadata["page_number"] = combine_values("page_number")
     combined_metadata["languages"] = combine_values("languages")
     combined_metadata["link_texts"] = combine_values("link_texts")
@@ -92,7 +103,9 @@ def structure_documents_by_group_and_indices(docs: list[Document]) -> DocumentSt
         is_not_consecutive = d.metadata["index"] - 1 != (
             current_group_indices[-1] if current_group_indices else d.metadata["index"]
         )
-        if (is_not_same_filename and is_not_none_filename) or (is_not_consecutive and is_not_none_filename):
+        if (is_not_same_filename and is_not_none_filename) or (
+            is_not_consecutive and is_not_none_filename
+        ):
             # Generate a deterministic hash for the previous document and its indices
             group_id = create_group_uuid(current_filename, current_group_indices)
             result[group_id] = current_group
@@ -121,7 +134,10 @@ def flatten_document_state(documents: DocumentState | None) -> list[Document]:
 
 def get_document_token_count(state: RedboxState) -> int:
     """Calculates the total token count of all documents in a state."""
-    return sum(d.metadata["token_count"] for d in flatten_document_state(state.get("documents", [])))
+    return sum(
+        d.metadata["token_count"]
+        for d in flatten_document_state(state.get("documents", []))
+    )
 
 
 @RunnableLambda
@@ -141,7 +157,11 @@ def to_request_metadata(prompt_response_model: dict):
     output_tokens = len(tokeniser.encode(prompt_response_model["response"]))
 
     metadata_event = RequestMetadata(
-        llm_calls=[LLMCallMetadata(model_name=model, input_tokens=input_tokens, output_tokens=output_tokens)]
+        llm_calls=[
+            LLMCallMetadata(
+                model_name=model, input_tokens=input_tokens, output_tokens=output_tokens
+            )
+        ]
     )
 
     dispatch_custom_event(RedboxEventType.on_metadata_generation.value, metadata_event)
@@ -149,7 +169,9 @@ def to_request_metadata(prompt_response_model: dict):
     return metadata_event
 
 
-def merge_documents(initial: list[Document], adjacent: list[Document]) -> list[Document]:
+def merge_documents(
+    initial: list[Document], adjacent: list[Document]
+) -> list[Document]:
     """Merges a list of adjacent documents with an initial list.
 
     Privileges the initial score.
@@ -161,7 +183,9 @@ def merge_documents(initial: list[Document], adjacent: list[Document]) -> list[D
         if d.metadata["uuid"] not in merged_dict:
             merged_dict[d.metadata["uuid"]] = d
 
-    return sorted(list(merged_dict.values()), key=lambda d: -d.metadata["score"])[: len(initial)]
+    return sorted(list(merged_dict.values()), key=lambda d: -d.metadata["score"])[
+        : len(initial)
+    ]
 
 
 def sort_documents(documents: list[Document]) -> list[Document]:
@@ -192,7 +216,10 @@ def sort_documents(documents: list[Document]) -> list[Document]:
     def is_consecutive(a: Document, b: Document) -> bool:
         """True if two documents have consecutive indices."""
         within_one = abs(a.metadata["index"] - b.metadata["index"]) <= 1
-        return a.metadata["original_resource_ref"] == b.metadata["original_resource_ref"] and within_one
+        return (
+            a.metadata["original_resource_ref"] == b.metadata["original_resource_ref"]
+            and within_one
+        )
 
     def max_score(group: list[Document]) -> float:
         """Returns the maximum score in a group of documents."""
@@ -219,15 +246,23 @@ def sort_documents(documents: list[Document]) -> list[Document]:
         consecutive_blocks.append(temp_block)
 
         # Sort each block by index
-        sorted_blocks = [sorted(block, key=lambda d: d.metadata["index"]) for block in consecutive_blocks]
+        sorted_blocks = [
+            sorted(block, key=lambda d: d.metadata["index"])
+            for block in consecutive_blocks
+        ]
 
         return sorted_blocks
 
     # Step 1: Sort by file_name and then index to prepare for grouping consecutive documents
-    documents_sorted = sorted(documents, key=lambda d: (d.metadata["original_resource_ref"], d.metadata["index"]))
+    documents_sorted = sorted(
+        documents,
+        key=lambda d: (d.metadata["original_resource_ref"], d.metadata["index"]),
+    )
 
     # Step 2: Group by file_name and handle consecutive indices
-    grouped_by_file = itertools.groupby(documents_sorted, key=lambda d: d.metadata["original_resource_ref"])
+    grouped_by_file = itertools.groupby(
+        documents_sorted, key=lambda d: d.metadata["original_resource_ref"]
+    )
 
     # Process each group
     all_sorted_blocks = []
@@ -237,13 +272,17 @@ def sort_documents(documents: list[Document]) -> list[Document]:
         all_sorted_blocks.extend(sorted_blocks)
 
     # Step 3: Sort the blocks by the maximum score within each block
-    all_sorted_blocks_by_max_score = sorted(all_sorted_blocks, key=lambda block: -max_score(block))
+    all_sorted_blocks_by_max_score = sorted(
+        all_sorted_blocks, key=lambda block: -max_score(block)
+    )
 
     # Step 4: Flatten the list of blocks back into a single list
     return list(itertools.chain.from_iterable(all_sorted_blocks_by_max_score))
 
 
-def tool_calls_to_toolstate(tool_calls: list[ToolCall], called: bool | None = False) -> ToolState:
+def tool_calls_to_toolstate(
+    tool_calls: list[ToolCall], called: bool | None = False
+) -> ToolState:
     """Takes a list of tool calls and shapes them into a valid ToolState.
 
     Sets all tool calls to a called state. Assumes this state is False.

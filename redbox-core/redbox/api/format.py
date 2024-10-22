@@ -22,7 +22,9 @@ def format_documents(documents: list[Document]) -> str:
     return "\n\n".join(formatted)
 
 
-def reduce_chunks_by_tokens(chunks: list[Document] | None, chunk: Document, max_tokens: int) -> list[Document]:
+def reduce_chunks_by_tokens(
+    chunks: list[Document] | None, chunk: Document, max_tokens: int
+) -> list[Document]:
     if not chunks:
         return [chunk]
 

@@ -1,8 +1,8 @@
+from langchain.output_parsers import PydanticOutputParser
 from langchain_core.tools import StructuredTool
 from langchain_core.vectorstores import VectorStoreRetriever
 from langgraph.graph import END, START, StateGraph
 from langgraph.graph.graph import CompiledGraph
-
 
 from redbox.chains.runnables import build_self_route_output_parser
 from redbox.graph.edges import (
@@ -31,27 +31,40 @@ from redbox.graph.nodes.processes import (
     empty_process,
     report_sources_process,
 )
-from redbox.graph.nodes.sends import build_document_chunk_send, build_document_group_send, build_tool_send
-from redbox.models.chain import RedboxState
+from redbox.graph.nodes.sends import (
+    build_document_chunk_send,
+    build_document_group_send,
+    build_tool_send,
+)
+from redbox.models.chain import LLM_Response, RedboxState
 from redbox.models.chat import ChatRoute, ErrorRoute
 from redbox.models.graph import ROUTABLE_KEYWORDS, RedboxActivityEvent
-from redbox.transform import structure_documents_by_file_name, structure_documents_by_group_and_indices
+from redbox.transform import (
+    structure_documents_by_file_name,
+    structure_documents_by_group_and_indices,
+)
 
 # Subgraphs
 
 
-def get_self_route_graph(retriever: VectorStoreRetriever, prompt_set: PromptSet, debug: bool = False):
+def get_self_route_graph(
+    retriever: VectorStoreRetriever, prompt_set: PromptSet, debug: bool = False
+):
     builder = StateGraph(RedboxState)
 
     def self_route_question_is_unanswerable(llm_response: str):
         return "unanswerable" in llm_response
 
     # Processes
-    builder.add_node("p_condense_question", build_chat_pattern(prompt_set=PromptSet.CondenseQuestion))
+    builder.add_node(
+        "p_condense_question", build_chat_pattern(prompt_set=PromptSet.CondenseQuestion)
+    )
     builder.add_node(
         "p_retrieve_docs",
         build_retrieve_pattern(
-            retriever=retriever, structure_func=structure_documents_by_file_name, final_source_chain=False
+            retriever=retriever,
+            structure_func=structure_documents_by_file_name,
+            final_source_chain=False,
         ),
     )
     builder.add_node(
@@ -59,7 +72,9 @@ def get_self_route_graph(retriever: VectorStoreRetriever, prompt_set: PromptSet,
         build_stuff_pattern(
             prompt_set=prompt_set,
             output_parser=build_self_route_output_parser(
-                match_condition=self_route_question_is_unanswerable, max_tokens_to_check=4, final_response_chain=True
+                match_condition=self_route_question_is_unanswerable,
+                max_tokens_to_check=4,
+                final_response_chain=True,
             ),
             final_response_chain=False,
         ),
@@ -68,7 +83,9 @@ def get_self_route_graph(retriever: VectorStoreRetriever, prompt_set: PromptSet,
         "p_set_route_name_from_answer",
         build_set_self_route_from_llm_answer(
             self_route_question_is_unanswerable,
-            true_condition_state_update={"route_name": ChatRoute.chat_with_docs_map_reduce},
+            true_condition_state_update={
+                "route_name": ChatRoute.chat_with_docs_map_reduce
+            },
             false_condition_state_update={"route_name": ChatRoute.search},
         ),
     )
@@ -78,11 +95,16 @@ def get_self_route_graph(retriever: VectorStoreRetriever, prompt_set: PromptSet,
     builder.add_edge(START, "p_condense_question")
     builder.add_edge("p_condense_question", "p_retrieve_docs")
     builder.add_edge("p_retrieve_docs", "p_answer_question_or_decide_unanswerable")
-    builder.add_edge("p_answer_question_or_decide_unanswerable", "p_set_route_name_from_answer")
+    builder.add_edge(
+        "p_answer_question_or_decide_unanswerable", "p_set_route_name_from_answer"
+    )
     builder.add_conditional_edges(
         "p_set_route_name_from_answer",
         lambda state: state["route_name"],
-        {ChatRoute.chat_with_docs_map_reduce: "p_clear_documents", ChatRoute.search: END},
+        {
+            ChatRoute.chat_with_docs_map_reduce: "p_clear_documents",
+            ChatRoute.search: END,
+        },
     )
     builder.add_edge("p_clear_documents", END)
 
@@ -97,7 +119,10 @@ def get_chat_graph(
 
     # Processes
     builder.add_node("p_set_chat_route", build_set_route_pattern(route=ChatRoute.chat))
-    builder.add_node("p_chat", build_chat_pattern(prompt_set=PromptSet.Chat, final_response_chain=True))
+    builder.add_node(
+        "p_chat",
+        build_chat_pattern(prompt_set=PromptSet.Chat, final_response_chain=True),
+    )
 
     # Edges
     builder.add_edge(START, "p_set_chat_route")
@@ -118,8 +143,12 @@ def get_search_graph(
     builder = StateGraph(RedboxState)
 
     # Processes
-    builder.add_node("p_set_search_route", build_set_route_pattern(route=ChatRoute.search))
-    builder.add_node("p_condense_question", build_chat_pattern(prompt_set=PromptSet.CondenseQuestion))
+    builder.add_node(
+        "p_set_search_route", build_set_route_pattern(route=ChatRoute.search)
+    )
+    builder.add_node(
+        "p_condense_question", build_chat_pattern(prompt_set=PromptSet.CondenseQuestion)
+    )
     builder.add_node(
         "p_retrieve_docs",
         build_retrieve_pattern(
@@ -128,7 +157,10 @@ def get_search_graph(
             final_source_chain=final_sources,
         ),
     )
-    builder.add_node("p_stuff_docs", build_stuff_pattern(prompt_set=prompt_set, final_response_chain=final_response))
+    builder.add_node(
+        "p_stuff_docs",
+        build_stuff_pattern(prompt_set=prompt_set, final_response_chain=final_response),
+    )
 
     # Edges
     builder.add_edge(START, "p_set_search_route")
@@ -140,27 +172,42 @@ def get_search_graph(
     return builder.compile(debug=debug)
 
 
-def get_agentic_search_graph(tools: dict[str, StructuredTool], debug: bool = False) -> CompiledGraph:
+def get_agentic_search_graph(
+    tools: dict[str, StructuredTool], debug: bool = False
+) -> CompiledGraph:
     """Creates a subgraph for agentic RAG."""
     builder = StateGraph(RedboxState)
     # Tools
     agent_tool_names = ["_search_documents", "_search_wikipedia"]
-    agent_tools: list[StructuredTool] = [tools.get(tool_name) for tool_name in agent_tool_names]
+    agent_tools: list[StructuredTool] = [
+        tools.get(tool_name) for tool_name in agent_tool_names
+    ]
 
     # Processes
-    builder.add_node("p_set_agentic_search_route", build_set_route_pattern(route=ChatRoute.gadget))
+    builder.add_node(
+        "p_set_agentic_search_route", build_set_route_pattern(route=ChatRoute.gadget)
+    )
     builder.add_node(
         "p_search_agent",
         build_stuff_pattern(prompt_set=PromptSet.SearchAgentic, tools=agent_tools),
     )
-    builder.add_node("p_retrieval_tools", build_tool_pattern(tools=agent_tools, final_source_chain=False))
+    builder.add_node(
+        "p_retrieval_tools",
+        build_tool_pattern(tools=agent_tools, final_source_chain=False),
+    )
     builder.add_node(
         "p_stuff_docs_agent",
-        build_stuff_pattern(prompt_set=PromptSet.Search, final_response_chain=True),
+        build_stuff_pattern(
+            prompt_set=PromptSet.Search,
+            final_response_chain=True,
+            output_parser=PydanticOutputParser(pydantic_object=LLM_Response),
+        ),
     )
     builder.add_node(
         "p_give_up_agent",
-        build_stuff_pattern(prompt_set=PromptSet.GiveUpAgentic, final_response_chain=True),
+        build_stuff_pattern(
+            prompt_set=PromptSet.GiveUpAgentic, final_response_chain=True
+        ),
     )
     builder.add_node("p_report_sources", report_sources_process)
 
@@ -189,12 +236,18 @@ def get_agentic_search_graph(tools: dict[str, StructuredTool], debug: bool = Fal
         build_tools_selected_conditional(tools=agent_tool_names),
         {True: "s_tool", False: "d_answer_or_give_up"},
     )
-    builder.add_conditional_edges("s_tool", build_tool_send("p_retrieval_tools"), path_map=["p_retrieval_tools"])
+    builder.add_conditional_edges(
+        "s_tool", build_tool_send("p_retrieval_tools"), path_map=["p_retrieval_tools"]
+    )
     builder.add_edge("p_retrieval_tools", "d_x_steps_left_or_less")
     builder.add_conditional_edges(
         "d_answer_or_give_up",
         build_strings_end_text_conditional("answer", "give_up"),
-        {"answer": "p_stuff_docs_agent", "give_up": "p_give_up_agent", "DEFAULT": "d_x_steps_left_or_less"},
+        {
+            "answer": "p_stuff_docs_agent",
+            "give_up": "p_give_up_agent",
+            "DEFAULT": "d_x_steps_left_or_less",
+        },
     )
     builder.add_edge("p_stuff_docs_agent", "p_report_sources")
     builder.add_edge("p_give_up_agent", "p_report_sources")
@@ -215,13 +268,20 @@ def get_chat_with_documents_graph(
 
     # Processes
     builder.add_node("p_pass_question_to_text", build_passthrough_pattern())
-    builder.add_node("p_set_chat_docs_route", build_set_route_pattern(route=ChatRoute.chat_with_docs))
     builder.add_node(
-        "p_set_chat_docs_map_reduce_route", build_set_route_pattern(route=ChatRoute.chat_with_docs_map_reduce)
+        "p_set_chat_docs_route", build_set_route_pattern(route=ChatRoute.chat_with_docs)
     )
-    builder.add_node("p_summarise_each_document", build_merge_pattern(prompt_set=PromptSet.ChatwithDocsMapReduce))
     builder.add_node(
-        "p_summarise_document_by_document", build_merge_pattern(prompt_set=PromptSet.ChatwithDocsMapReduce)
+        "p_set_chat_docs_map_reduce_route",
+        build_set_route_pattern(route=ChatRoute.chat_with_docs_map_reduce),
+    )
+    builder.add_node(
+        "p_summarise_each_document",
+        build_merge_pattern(prompt_set=PromptSet.ChatwithDocsMapReduce),
+    )
+    builder.add_node(
+        "p_summarise_document_by_document",
+        build_merge_pattern(prompt_set=PromptSet.ChatwithDocsMapReduce),
     )
     builder.add_node(
         "p_summarise",
@@ -233,19 +293,29 @@ def get_chat_with_documents_graph(
     builder.add_node("p_clear_documents", clear_documents_process)
     builder.add_node(
         "p_too_large_error",
-        build_error_pattern(text="These documents are too large to work with.", route_name=ErrorRoute.files_too_large),
+        build_error_pattern(
+            text="These documents are too large to work with.",
+            route_name=ErrorRoute.files_too_large,
+        ),
     )
-    builder.add_node("p_answer_or_decide_route", get_self_route_graph(parameterised_retriever, PromptSet.SelfRoute))
+    builder.add_node(
+        "p_answer_or_decide_route",
+        get_self_route_graph(parameterised_retriever, PromptSet.SelfRoute),
+    )
     builder.add_node(
         "p_retrieve_all_chunks",
         build_retrieve_pattern(
-            retriever=all_chunks_retriever, structure_func=structure_documents_by_file_name, final_source_chain=True
+            retriever=all_chunks_retriever,
+            structure_func=structure_documents_by_file_name,
+            final_source_chain=True,
         ),
     )
 
     builder.add_node(
         "p_activity_log_tool_decision",
-        build_activity_log_node(lambda state: RedboxActivityEvent(message=f"Using _{state["route_name"]}_")),
+        build_activity_log_node(
+            lambda state: RedboxActivityEvent(message=f"Using _{state["route_name"]}_")
+        ),
     )
 
     # Decisions
@@ -291,10 +361,15 @@ def get_chat_with_documents_graph(
     builder.add_conditional_edges(
         "p_retrieve_all_chunks",
         lambda s: s["route_name"],
-        {ChatRoute.chat_with_docs: "p_summarise", ChatRoute.chat_with_docs_map_reduce: "s_chunk"},
+        {
+            ChatRoute.chat_with_docs: "p_summarise",
+            ChatRoute.chat_with_docs_map_reduce: "s_chunk",
+        },
     )
     builder.add_conditional_edges(
-        "s_chunk", build_document_chunk_send("p_summarise_each_document"), path_map=["p_summarise_each_document"]
+        "s_chunk",
+        build_document_chunk_send("p_summarise_each_document"),
+        path_map=["p_summarise_each_document"],
     )
     builder.add_edge("p_summarise_each_document", "d_groups_have_multiple_docs")
     builder.add_conditional_edges(
@@ -312,7 +387,9 @@ def get_chat_with_documents_graph(
     )
     builder.add_conditional_edges(
         "d_single_doc_summaries_bigger_than_context",
-        build_documents_bigger_than_context_conditional(PromptSet.ChatwithDocsMapReduce),
+        build_documents_bigger_than_context_conditional(
+            PromptSet.ChatwithDocsMapReduce
+        ),
         {
             True: "p_too_large_error",
             False: "s_group_2",
@@ -323,7 +400,9 @@ def get_chat_with_documents_graph(
         build_document_group_send("p_summarise_document_by_document"),
         path_map=["p_summarise_document_by_document"],
     )
-    builder.add_edge("p_summarise_document_by_document", "d_doc_summaries_bigger_than_context")
+    builder.add_edge(
+        "p_summarise_document_by_document", "d_doc_summaries_bigger_than_context"
+    )
     builder.add_conditional_edges(
         "d_doc_summaries_bigger_than_context",
         build_documents_bigger_than_context_conditional(PromptSet.ChatwithDocs),
@@ -339,13 +418,18 @@ def get_chat_with_documents_graph(
     return builder.compile(debug=debug)
 
 
-def get_retrieve_metadata_graph(metadata_retriever: VectorStoreRetriever, debug: bool = False):
+def get_retrieve_metadata_graph(
+    metadata_retriever: VectorStoreRetriever, debug: bool = False
+):
     builder = StateGraph(RedboxState)
 
     # Processes
     builder.add_node(
         "p_retrieve_metadata",
-        build_retrieve_pattern(retriever=metadata_retriever, structure_func=structure_documents_by_file_name),
+        build_retrieve_pattern(
+            retriever=metadata_retriever,
+            structure_func=structure_documents_by_file_name,
+        ),
     )
     builder.add_node("p_set_metadata", build_set_metadata_pattern())
     builder.add_node("p_clear_metadata_documents", clear_documents_process)
@@ -375,9 +459,13 @@ def get_root_graph(
     rag_subgraph = get_search_graph(retriever=parameterised_retriever, debug=debug)
     agent_subgraph = get_agentic_search_graph(tools=tools, debug=debug)
     cwd_subgraph = get_chat_with_documents_graph(
-        all_chunks_retriever=all_chunks_retriever, parameterised_retriever=parameterised_retriever, debug=debug
+        all_chunks_retriever=all_chunks_retriever,
+        parameterised_retriever=parameterised_retriever,
+        debug=debug,
     )
-    metadata_subgraph = get_retrieve_metadata_graph(metadata_retriever=metadata_retriever, debug=debug)
+    metadata_subgraph = get_retrieve_metadata_graph(
+        metadata_retriever=metadata_retriever, debug=debug
+    )
 
     # Processes
     builder.add_node("p_search", rag_subgraph)
@@ -396,7 +484,11 @@ def get_root_graph(
     builder.add_conditional_edges(
         "d_keyword_exists",
         build_keyword_detection_conditional(*ROUTABLE_KEYWORDS.keys()),
-        {ChatRoute.search: "p_search", ChatRoute.gadget: "p_search_agentic", "DEFAULT": "d_docs_selected"},
+        {
+            ChatRoute.search: "p_search",
+            ChatRoute.gadget: "p_search_agentic",
+            "DEFAULT": "d_docs_selected",
+        },
     )
     builder.add_conditional_edges(
         "d_docs_selected",

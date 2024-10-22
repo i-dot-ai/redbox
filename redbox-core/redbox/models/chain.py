@@ -8,7 +8,15 @@ used in conjunction with langchain this is the tidiest boxing of pydantic v1 we 
 from datetime import UTC, datetime
 from enum import StrEnum
 from functools import reduce
-from typing import Annotated, Literal, NotRequired, Required, TypedDict, get_args, get_origin
+from typing import (
+    Annotated,
+    Literal,
+    NotRequired,
+    Required,
+    TypedDict,
+    get_args,
+    get_origin,
+)
 from uuid import UUID, uuid4
 
 from langchain_core.documents import Document
@@ -49,7 +57,9 @@ class AISettings(BaseModel):
     chat_question_prompt: str = prompts.CHAT_QUESTION_PROMPT
     chat_with_docs_system_prompt: str = prompts.CHAT_WITH_DOCS_SYSTEM_PROMPT
     chat_with_docs_question_prompt: str = prompts.CHAT_WITH_DOCS_QUESTION_PROMPT
-    chat_with_docs_reduce_system_prompt: str = prompts.CHAT_WITH_DOCS_REDUCE_SYSTEM_PROMPT
+    chat_with_docs_reduce_system_prompt: str = (
+        prompts.CHAT_WITH_DOCS_REDUCE_SYSTEM_PROMPT
+    )
     self_route_system_prompt: str = prompts.SELF_ROUTE_SYSTEM_PROMPT
     retrieval_system_prompt: str = prompts.RETRIEVAL_SYSTEM_PROMPT
     retrieval_question_prompt: str = prompts.RETRIEVAL_QUESTION_PROMPT
@@ -82,11 +92,51 @@ class AISettings(BaseModel):
     chat_backend: ChatLLMBackend = ChatLLMBackend()
 
 
+class Source(BaseModel):
+    source: str = Field(description="URL or reference to the source")
+    last_edited: str = ""
+    document_name: str = ""
+    highlighted_text: str = ""
+    page_no: str = Field(description="")
+
+
+class Citation(BaseModel):
+    text: str
+    sources: list[Source]
+
+
+class LLM_Response(BaseModel):
+    markdown_answer: str
+    citations: list[Citation]
+
+    @classmethod
+    def model_json_schema(self):
+        return {
+            "markdown_answer": "Hello Kitty is a fictional character from Japan.",
+            "citations": [
+                {
+                    "text": "Hello Kitty is a fictional character from Japan.",
+                    "sources": [
+                        {
+                            "source": "https://en.wikipedia.org/wiki/Hello_Kitty",
+                            "last_edited": "4 October 2024",
+                            "document_name": "Hello Kitty",
+                            "highlighted_text": "Hello Kitty (Japanese: ハロー・キティ, Hepburn: Harō Kiti),[6] also known by her real name Kitty White (キティ・ホワイト, Kiti Howaito),[5] is a fictional character created by Yuko Shimizu",
+                            "page_no": "1",
+                        }
+                    ],
+                }
+            ],
+        }
+
+
 class DocumentState(TypedDict):
     group: dict[UUID, Document]
 
 
-def document_reducer(current: DocumentState | None, update: DocumentState | list[DocumentState]) -> DocumentState:
+def document_reducer(
+    current: DocumentState | None, update: DocumentState | list[DocumentState]
+) -> DocumentState:
     """Merges two document states based on the following rules.
 
     * Groups are matched by the group key.
@@ -100,7 +150,9 @@ def document_reducer(current: DocumentState | None, update: DocumentState | list
     """
     # If update is actually a list of state updates, run them one by one
     if isinstance(update, list):
-        reduced = reduce(lambda current, update: document_reducer(current, update), update, current)
+        reduced = reduce(
+            lambda current, update: document_reducer(current, update), update, current
+        )
         return reduced
 
     # If state is empty, return update
@@ -138,11 +190,19 @@ def document_reducer(current: DocumentState | None, update: DocumentState | list
 
 class RedboxQuery(BaseModel):
     question: str = Field(description="The last user chat message")
-    s3_keys: list[str] = Field(description="List of files to process", default_factory=list)
+    s3_keys: list[str] = Field(
+        description="List of files to process", default_factory=list
+    )
     user_uuid: UUID = Field(description="User the chain in executing for")
-    chat_history: list[ChainChatMessage] = Field(description="All previous messages in chat (excluding question)")
-    ai_settings: AISettings = Field(description="User request AI settings", default_factory=AISettings)
-    permitted_s3_keys: list[str] = Field(description="List of permitted files for response", default_factory=list)
+    chat_history: list[ChainChatMessage] = Field(
+        description="All previous messages in chat (excluding question)"
+    )
+    ai_settings: AISettings = Field(
+        description="User request AI settings", default_factory=AISettings
+    )
+    permitted_s3_keys: list[str] = Field(
+        description="List of permitted files for response", default_factory=list
+    )
 
 
 class LLMCallMetadata(BaseModel):
@@ -156,7 +216,7 @@ class LLMCallMetadata(BaseModel):
 
 
 class RequestMetadata(BaseModel):
-    llm_calls: set[LLMCallMetadata] = Field(default_factory=set)
+    llm_calls: list[LLMCallMetadata] = Field(default_factory=set)
     selected_files_total_tokens: int = 0
     number_of_selected_files: int = 0
 
@@ -165,7 +225,8 @@ class RequestMetadata(BaseModel):
         tokens_by_model = dict()
         for call_metadata in self.llm_calls:
             tokens_by_model[call_metadata.model_name] = (
-                tokens_by_model.get(call_metadata.model_name, 0) + call_metadata.input_tokens
+                tokens_by_model.get(call_metadata.model_name, 0)
+                + call_metadata.input_tokens
             )
         return tokens_by_model
 
@@ -174,16 +235,22 @@ class RequestMetadata(BaseModel):
         tokens_by_model = dict()
         for call_metadata in self.llm_calls:
             tokens_by_model[call_metadata.model_name] = (
-                tokens_by_model.get(call_metadata.model_name, 0) + call_metadata.output_tokens
+                tokens_by_model.get(call_metadata.model_name, 0)
+                + call_metadata.output_tokens
             )
         return tokens_by_model
 
 
-def metadata_reducer(current: RequestMetadata | None, update: RequestMetadata | list[RequestMetadata] | None):
+def metadata_reducer(
+    current: RequestMetadata | None,
+    update: RequestMetadata | list[RequestMetadata] | None,
+):
     """Merges two metadata states."""
     # If update is actually a list of state updates, run them one by one
     if isinstance(update, list):
-        reduced = reduce(lambda current, update: metadata_reducer(current, update), update, current)
+        reduced = reduce(
+            lambda current, update: metadata_reducer(current, update), update, current
+        )
         return reduced
 
     if current is None:
@@ -192,9 +259,11 @@ def metadata_reducer(current: RequestMetadata | None, update: RequestMetadata | 
         return current
 
     return RequestMetadata(
-        llm_calls=current.llm_calls | update.llm_calls,
-        selected_files_total_tokens=update.selected_files_total_tokens or current.selected_files_total_tokens,
-        number_of_selected_files=update.number_of_selected_files or current.number_of_selected_files,
+        llm_calls=list(set(current.llm_calls) | set(update.llm_calls)),
+        selected_files_total_tokens=update.selected_files_total_tokens
+        or current.selected_files_total_tokens,
+        number_of_selected_files=update.number_of_selected_files
+        or current.number_of_selected_files,
     )
 
 
@@ -221,7 +290,9 @@ def tool_calls_reducer(current: ToolState, update: ToolState | None) -> ToolStat
 
     # If update is actually a list of state updates, run them one by one
     if isinstance(update, list):
-        reduced = reduce(lambda current, update: tool_calls_reducer(current, update), update, current)
+        reduced = reduce(
+            lambda current, update: tool_calls_reducer(current, update), update, current
+        )
         return reduced
 
     reduced = current.copy()
@@ -251,6 +322,7 @@ class RedboxState(TypedDict):
     tool_calls: Annotated[NotRequired[ToolState], tool_calls_reducer]
     metadata: Annotated[NotRequired[RequestMetadata], metadata_reducer]
     steps_left: Annotated[int, StepsLeft]
+    citations: NotRequired[list[Citation] | None]
 
 
 class PromptSet(StrEnum):
@@ -326,7 +398,9 @@ def dict_reducer(current: dict, update: dict) -> dict:
     return merged
 
 
-def merge_redbox_state_updates(current: RedboxState, update: RedboxState) -> RedboxState:
+def merge_redbox_state_updates(
+    current: RedboxState, update: RedboxState
+) -> RedboxState:
     """
     Merge RedboxStates to the following rules, intended for use on state updates.
 
@@ -347,7 +421,9 @@ def merge_redbox_state_updates(current: RedboxState, update: RedboxState) -> Red
         if get_origin(annotation) is Annotated:
             if is_dict_type(annotation):
                 # If it's annotated and a subclass of dict, apply a custom reducer function
-                merged_state[update_key] = dict_reducer(current=current_value or {}, update=update_value or {})
+                merged_state[update_key] = dict_reducer(
+                    current=current_value or {}, update=update_value or {}
+                )
             else:
                 # If it's annotated and not a dict, apply its reducer function
                 _, reducer_func = get_args(annotation)
