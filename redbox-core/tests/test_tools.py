@@ -16,7 +16,7 @@ from redbox.graph.nodes.tools import (
 )
 from redbox.models import Settings
 from redbox.models.chain import AISettings, RedboxQuery, RedboxState
-from redbox.models.file import ChunkResolution
+from redbox.models.file import ChunkMetadata, ChunkResolution
 from redbox.test.data import RedboxChatTestCase
 from redbox.transform import flatten_document_state
 from tests.retriever.test_retriever import TEST_CHAIN_PARAMETERS
@@ -138,17 +138,13 @@ def test_search_documents_tool(
 
         # Check flattened documents match expected, similar to retriever
         assert len(result_flat) == chain_params["rag_k"]
-        assert {c.page_content for c in result_flat} <= {
-            c.page_content for c in permitted_docs
-        }
+        assert {c.page_content for c in result_flat} <= {c.page_content for c in permitted_docs}
         assert {c.metadata["original_resource_ref"] for c in result_flat} <= set(
             stored_file_parameterised.query.permitted_s3_keys
         )
 
         if selected:
-            assert {c.page_content for c in result_flat} <= {
-                c.page_content for c in selected_docs
-            }
+            assert {c.page_content for c in result_flat} <= {c.page_content for c in selected_docs}
             assert {c.metadata["original_resource_ref"] for c in result_flat} <= set(
                 stored_file_parameterised.query.s3_keys
             )
@@ -182,9 +178,6 @@ def test_wikipedia_tool():
     )
     for document in flatten_document_state(state_update["documents"]):
         assert document.page_content != ""
-        assert (
-            urlparse(document.metadata["original_resource_ref"]).hostname
-            == "en.wikipedia.org"
-        )
-        assert document.metadata["creator_type"] == "wikipedia"
-        # assert document.metadata["source"] == "Wikipedia"
+        metadata = ChunkMetadata.model_validate(document.metadata)
+        assert urlparse(metadata.original_resource_ref).hostname == "en.wikipedia.org"
+        assert metadata.creator_type == "wikipedia"

@@ -14,7 +14,7 @@ from pydantic.v1 import BaseModel, Field, validator
 
 from redbox.models.chain import RedboxQuery
 from redbox.models.chat import ChatRoute, ErrorRoute
-from redbox.models.file import ChunkMetadata, ChunkResolution, UploadedFileMetadata
+from redbox.models.file import ChunkResolution, UploadedFileMetadata
 from redbox.models.graph import RedboxActivityEvent
 
 log = logging.getLogger()

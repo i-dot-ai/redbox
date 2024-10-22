@@ -35,6 +35,7 @@ from redbox_app.redbox_core.models import (
     ChatMessageTokenUse,
     ChatRoleEnum,
     Citation,
+    ExternalCitation,
     File,
     StatusEnum,
 )
@@ -67,6 +68,7 @@ def escape_curly_brackets(text: str):
 class ChatConsumer(AsyncWebsocketConsumer):
     full_reply: ClassVar = []
     citations: ClassVar = []
+    external_citations: ClassVar = []
     activities: ClassVar = []
     route = None
     metadata: RequestMetadata = RequestMetadata()
@@ -197,20 +199,27 @@ class ChatConsumer(AsyncWebsocketConsumer):
     ) -> ChatMessage:
         chat_message = ChatMessage(chat=session, text=user_message_text, role=ChatRoleEnum.ai, route=self.route)
         chat_message.save()
-        if self.citations:
-            for file, citations in self.citations:
-                file.last_referenced = timezone.now()
-                file.save()
+        for file, citations in self.citations:
+            file.last_referenced = timezone.now()
+            file.save()
 
-                for citation in citations:
-                    Citation.objects.create(
-                        chat_message=chat_message,
-                        file=file,
-                        text=citation.page_content,
-                        page_numbers=parse_page_number(citation.metadata.get("page_number")),
-                    )
+            for citation in citations:
+                Citation.objects.create(
+                    chat_message=chat_message,
+                    file=file,
+                    text=citation.page_content,
+                    page_numbers=parse_page_number(citation.metadata.get("page_number")),
+                )
 
-        if self.metadata and self.metadata.input_tokens:
+        for document in self.external_citations:
+            ExternalCitation.objects.create(
+                chat_message=chat_message,
+                text=document.page_content,
+                creator=document.metadata.get("creator_type", "Unknown"),
+                url=document.metadata.get("original_resource_ref", "Unknown"),
+            )
+
+        if self.metadata:
             for model, token_count in self.metadata.input_tokens.items():
                 ChatMessageTokenUse.objects.create(
                     chat_message=chat_message,
@@ -218,8 +227,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
                     model_name=model,
                     token_count=token_count,
                 )
-
-        if self.metadata and self.metadata.output_tokens:
             for model, token_count in self.metadata.output_tokens.items():
                 ChatMessageTokenUse.objects.create(
                     chat_message=chat_message,
@@ -261,7 +268,9 @@ class ChatConsumer(AsyncWebsocketConsumer):
         handled_sources = set()
         async for file in files:
             await self.send_to_client("source", {"url": str(file.url), "original_file_name": file.original_file_name})
-            self.citations.append((file, [doc for doc in response if doc.metadata["original_resource_ref"] == file.unique_name]))
+            self.citations.append(
+                (file, [doc for doc in response if doc.metadata["original_resource_ref"] == file.unique_name])
+            )
             handled_sources.add(file.original_file_name)
 
         additional_sources = [doc for doc in response if doc.metadata["original_resource_ref"] not in handled_sources]
@@ -269,11 +278,9 @@ class ChatConsumer(AsyncWebsocketConsumer):
         for additional_source in additional_sources:
             url = additional_source.metadata["original_resource_ref"]
             source = additional_source.metadata.get("creator_type", "Unknown")
-            await self.send_to_client(
-                "source", {"url": url, "original_file_name": f"{source} - {url.split("/")[-1]}"}
-            )
-            self.external_citations.append(
-                (file, [doc for doc in response if doc.metadata["original_resource_ref"] == file.unique_name])
+            await self.send_to_client("source", {"url": url, "original_file_name": f"{source} - {url.split("/")[-1]}"})
+            self.external_citations.extend(
+                [doc for doc in response if doc.metadata["original_resource_ref"] == file.unique_name]
             )
 
     async def handle_activity_event(self, event: RedboxActivityEvent):

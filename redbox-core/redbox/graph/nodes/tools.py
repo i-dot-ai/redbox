@@ -1,5 +1,4 @@
 from typing import Annotated, Any, get_args, get_origin, get_type_hints
-from uuid import uuid4
 
 import tiktoken
 from elasticsearch import Elasticsearch

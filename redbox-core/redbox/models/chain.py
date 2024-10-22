@@ -225,8 +225,7 @@ class RequestMetadata(BaseModel):
         tokens_by_model = dict()
         for call_metadata in self.llm_calls:
             tokens_by_model[call_metadata.llm_model_name] = (
-                tokens_by_model.get(call_metadata.llm_model_name, 0)
-                + call_metadata.input_tokens
+                tokens_by_model.get(call_metadata.llm_model_name, 0) + call_metadata.input_tokens
             )
         return tokens_by_model
 
@@ -235,8 +234,7 @@ class RequestMetadata(BaseModel):
         tokens_by_model = dict()
         for call_metadata in self.llm_calls:
             tokens_by_model[call_metadata.llm_model_name] = (
-                tokens_by_model.get(call_metadata.llm_model_name, 0)
-                + call_metadata.output_tokens
+                tokens_by_model.get(call_metadata.llm_model_name, 0) + call_metadata.output_tokens
             )
         return tokens_by_model
 
