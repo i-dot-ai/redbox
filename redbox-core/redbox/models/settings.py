@@ -142,17 +142,8 @@ class Settings(BaseSettings):
             )
 
         elif isinstance(self.elastic, OpenSearchSettings):
-            # credentials = boto3.Session().get_credentials()
-            # auth = AWS4Auth(
-            #     credentials.access_key,
-            #     credentials.secret_key,
-            #     self.aws_region,
-            #     "aoss",
-            #     session_token=credentials.token,
-            # )
             client = OpenSearch(
                 hosts=[{"host": self.collection_enpdoint, "port": 443}],
-                # http_auth=auth,
                 use_ssl=True,
                 verify_certs=True,
                 connection_class=RequestsHttpConnection,

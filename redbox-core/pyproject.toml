@@ -26,7 +26,6 @@ kneed = "^0.8.5"
 langgraph = "^0.2.15"
 langchain-aws = "^0.1.17"
 opensearch-py = "^2.7.1"
-requests-aws4auth = "^1.3.1"
 
 
 [tool.poetry.group.dev.dependencies]
