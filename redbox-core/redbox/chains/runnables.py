@@ -48,7 +48,9 @@ def combine_getters(*getters: Callable[[Any], Any]) -> Callable[[Any], Any]:
 
 
 def build_chat_prompt_from_messages_runnable(
-    prompt_set: PromptSet, tokeniser: Encoding = None, partial_variables: dict = None, 
+    prompt_set: PromptSet,
+    tokeniser: Encoding = None,
+    partial_variables: dict = None,
 ) -> Runnable:
     @chain
     def _chat_prompt_from_messages(state: RedboxState) -> Runnable:
@@ -121,17 +123,17 @@ def build_llm_chain(
             "text_and_tools": (
                 _llm
                 | {
-                    "responses": _output_parser,
+                    "parsed_response": _output_parser,
                     "tool_calls": (RunnableLambda(lambda r: r.tool_calls) | tool_calls_to_toolstate),
                 }
             ),
             "prompt": RunnableLambda(lambda prompt: prompt.to_string()),
         }
         | {
-            "text": RunnableLambda(combine_getters(itemgetter("text_and_tools"), itemgetter("responses")))
+            "text": RunnableLambda(combine_getters(itemgetter("text_and_tools"), itemgetter("parsed_response")))
             | (lambda r: r if isinstance(r, str) else r.markdown_answer),
             "tool_calls": combine_getters(itemgetter("text_and_tools"), itemgetter("tool_calls")),
-            "citations": RunnableLambda(combine_getters(itemgetter("text_and_tools"), itemgetter("responses")))
+            "citations": RunnableLambda(combine_getters(itemgetter("text_and_tools"), itemgetter("parsed_response")))
             | (lambda r: [] if isinstance(r, str) else r.citations),
             "prompt": itemgetter("prompt"),
         }

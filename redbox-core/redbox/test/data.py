@@ -95,10 +95,7 @@ class RedboxChatTestCase:
         # Use separate file_uuids if specified else match the query
         all_s3_keys = test_data.s3_keys if test_data.s3_keys else query.s3_keys
 
-        if (
-            test_data.llm_responses is not None
-            and len(test_data.llm_responses) < test_data.number_of_docs
-        ):
+        if test_data.llm_responses is not None and len(test_data.llm_responses) < test_data.number_of_docs:
             log.warning(
                 "Number of configured LLM responses might be less than number of docs. For Map-Reduce actions this will give a Generator Error!"
             )

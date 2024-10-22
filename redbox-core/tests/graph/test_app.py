@@ -179,9 +179,7 @@ TEST_CASES = [
                 RedboxTestData(
                     number_of_docs=2,
                     tokens_in_all_docs=200_000,
-                    llm_responses=["Map Step Response"] * 2
-                    + ["Merge Per Document Response"]
-                    + ["Testing Response 1"],
+                    llm_responses=["Map Step Response"] * 2 + ["Merge Per Document Response"] + ["Testing Response 1"],
                     expected_route=ChatRoute.chat_with_docs_map_reduce,
                 ),
             ],
