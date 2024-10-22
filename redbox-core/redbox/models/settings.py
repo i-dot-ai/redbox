@@ -7,12 +7,21 @@ import boto3
 from elasticsearch import Elasticsearch
 from pydantic import BaseModel
 from pydantic_settings import BaseSettings, SettingsConfigDict
-
+from opensearchpy import OpenSearch, RequestsHttpConnection
+from requests_aws4auth import AWS4Auth
 from redbox.models.chain import ChatLLMBackend
 
 
 logging.basicConfig(level=os.environ.get("LOG_LEVEL", "INFO"))
 logger = logging.getLogger()
+
+
+class OpenSearchSettings(BaseModel):
+    """settings required for a aws/opensearch"""
+
+    model_config = SettingsConfigDict(frozen=True)
+
+    collection_enpdoint: str
 
 
 class ElasticLocalSettings(BaseModel):
@@ -23,9 +32,9 @@ class ElasticLocalSettings(BaseModel):
     host: str = "elasticsearch"
     port: int = 9200
     scheme: str = "http"
-    user: str | None = None
+    user: str = "elastic"
     version: str = "8.11.0"
-    password: str | None = None
+    password: str = "redboxpass"
     subscription_level: str = "basic"
 
 
@@ -67,7 +76,7 @@ class Settings(BaseSettings):
     partition_strategy: Literal["auto", "fast", "ocr_only", "hi_res"] = "fast"
     clustering_strategy: Literal["full"] | None = None
 
-    elastic: ElasticCloudSettings | ElasticLocalSettings = ElasticLocalSettings()
+    elastic: ElasticCloudSettings | ElasticLocalSettings | OpenSearchSettings = ElasticLocalSettings()
     elastic_root_index: str = "redbox-data"
     elastic_chunk_alias: str = "redbox-data-chunk-current"
 
@@ -122,22 +131,33 @@ class Settings(BaseSettings):
     @lru_cache(1)
     def elasticsearch_client(self) -> Elasticsearch:
         if isinstance(self.elastic, ElasticLocalSettings):
-            basic_auth = (self.elastic.user, self.elastic.password) if self.elastic.user else None
-
-            elastic_host = self.elastic.host.strip("[]")
-            if elastic_host.startswith("https://"):
-                elastic_host = elastic_host[8:]
-                logger.info("elastic_host=%s", elastic_host)
-
             client = Elasticsearch(
                 hosts=[
                     {
-                        "host": elastic_host,
+                        "host": self.elastic.host,
                         "port": self.elastic.port,
                         "scheme": self.elastic.scheme,
                     }
                 ],
-                basic_auth=basic_auth,
+                basic_auth=(self.elastic.user, self.elastic.password),
+            )
+
+        elif isinstance(self.elastic, OpenSearchSettings):
+            credentials = boto3.Session().get_credentials()
+            auth = AWS4Auth(
+                credentials.access_key,
+                credentials.secret_key,
+                self.aws_region,
+                "aoss",
+                session_token=credentials.token,
+            )
+            client = OpenSearch(
+                hosts=[{"host": self.collection_enpdoint, "port": 443}],
+                http_auth=auth,
+                use_ssl=True,
+                verify_certs=True,
+                connection_class=RequestsHttpConnection,
+                pool_maxsize=100,
             )
 
         else:
