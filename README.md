@@ -179,5 +179,5 @@ Follow the instructions here https://django-q2.readthedocs.io/en/master/schedule
 
 We are currently using ElasticSearch as our vector database. 
 
-We have also successfully deployed Redbox to OpenSearch Serverless but this support shouldbe considered experimental 
+We have also successfully deployed Redbox to OpenSearch Serverless but this support should be considered experimental 
 at this stage.
