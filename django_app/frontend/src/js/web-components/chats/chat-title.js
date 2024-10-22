@@ -69,7 +69,7 @@ export class ChatTitle extends HTMLElement {
         });
 
         if (!this.dataset.sessionId) {
-            document.addEventListener("chat-response-end", this.onFirstResponse);
+            document.addEventListener("chat-response-end", this.#onFirstResponse);
         }
 
         document.addEventListener("chat-title-change", (evt) => {
@@ -96,14 +96,15 @@ export class ChatTitle extends HTMLElement {
         this.editButton?.focus();
     };
 
-    onFirstResponse = (e) => {
+    #onFirstResponse = (e) => {
         this.dataset.title = e.detail.title;
         this.dataset.sessionId = e.detail.session_id;
-        document.removeEventListener("chat-response-end", this.onFirstResponse);
+        document.removeEventListener("chat-response-end", this.#onFirstResponse);
         if (this.input && this.heading) {
             this.input.value = e.detail.title;
             this.heading.textContent = `${e.detail.title}`;
             this.heading.classList.remove("govuk-visually-hidden");
+            window.scrollBy(0, this.heading.getBoundingClientRect().height); // to prevent message jumping when this is made visible
         }
     };
 

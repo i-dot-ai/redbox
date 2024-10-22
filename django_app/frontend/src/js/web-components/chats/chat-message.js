@@ -106,13 +106,13 @@ class ChatMessage extends HTMLElement {
     chatControllerRef
   ) => {
     // Scroll behaviour - depending on whether user has overridden this or not
-    let userScrollOverride = false;
+    let scrollOverride = false;
     window.addEventListener("scroll", (evt) => {
       if (this.programmaticScroll) {
         this.programmaticScroll = false;
         return;
       }
-      userScrollOverride = true;
+      scrollOverride = true;
     });
 
     let responseContainer = /** @type MarkdownConverter */ (
@@ -224,9 +224,21 @@ class ChatMessage extends HTMLElement {
       }
 
       // ensure new content isn't hidden behind the chat-input
-      if (!userScrollOverride) {
-        this.programmaticScroll = true;
-        this.scrollIntoView({ block: "end" });
+      // but stop scrolling if message is at the top of the screen
+      if (!scrollOverride) {
+        const TOP_POSITION = 88;
+        const boxInfo = this.getBoundingClientRect()
+        const newTopPosition = boxInfo.top - ( boxInfo.height - ( this.previousHeight || boxInfo.height ) );
+        this.previousHeight = boxInfo.height;
+        if (newTopPosition > TOP_POSITION) {
+          this.programmaticScroll = true;
+          this.scrollIntoView({ block: "end" });
+        } else {
+          scrollOverride = true;
+          this.scrollIntoView();
+          window.scrollBy(0, -TOP_POSITION);
+        }
+        
       }
     };
   };

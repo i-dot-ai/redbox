@@ -135,30 +135,30 @@ def test_document_reducer(a: DocumentState, b: DocumentState, expected: Document
 
 
 GPT_4o_multiple_calls_1 = [
-    LLMCallMetadata(model_name="gpt-4o", input_tokens=0, output_tokens=0),
-    LLMCallMetadata(model_name="gpt-4o", input_tokens=10, output_tokens=10),
-    LLMCallMetadata(model_name="gpt-4o", input_tokens=10, output_tokens=10),
+    LLMCallMetadata(llm_model_name="gpt-4o", input_tokens=0, output_tokens=0),
+    LLMCallMetadata(llm_model_name="gpt-4o", input_tokens=10, output_tokens=10),
+    LLMCallMetadata(llm_model_name="gpt-4o", input_tokens=10, output_tokens=10),
 ]
 
 GPT_4o_multiple_calls_1a = GPT_4o_multiple_calls_1 + [
-    LLMCallMetadata(model_name="gpt-4o", input_tokens=50, output_tokens=50),
-    LLMCallMetadata(model_name="gpt-4o", input_tokens=60, output_tokens=60),
+    LLMCallMetadata(llm_model_name="gpt-4o", input_tokens=50, output_tokens=50),
+    LLMCallMetadata(llm_model_name="gpt-4o", input_tokens=60, output_tokens=60),
 ]
 
 GPT_4o_multiple_calls_2 = [
-    LLMCallMetadata(model_name="gpt-4o", input_tokens=100, output_tokens=200),
-    LLMCallMetadata(model_name="gpt-4o", input_tokens=0, output_tokens=10),
-    LLMCallMetadata(model_name="gpt-4o", input_tokens=100, output_tokens=210),
+    LLMCallMetadata(llm_model_name="gpt-4o", input_tokens=100, output_tokens=200),
+    LLMCallMetadata(llm_model_name="gpt-4o", input_tokens=0, output_tokens=10),
+    LLMCallMetadata(llm_model_name="gpt-4o", input_tokens=100, output_tokens=210),
 ]
 
 multiple_models_multiple_calls_1 = [
-    LLMCallMetadata(model_name="gpt-4o", input_tokens=100, output_tokens=200),
-    LLMCallMetadata(model_name="gpt-3.5", input_tokens=20, output_tokens=20),
-    LLMCallMetadata(model_name="gpt-4o", input_tokens=100, output_tokens=210),
+    LLMCallMetadata(llm_model_name="gpt-4o", input_tokens=100, output_tokens=200),
+    LLMCallMetadata(llm_model_name="gpt-3.5", input_tokens=20, output_tokens=20),
+    LLMCallMetadata(llm_model_name="gpt-4o", input_tokens=100, output_tokens=210),
 ]
 
 multiple_models_multiple_calls_1a = multiple_models_multiple_calls_1 + [
-    LLMCallMetadata(model_name="gpt-4o", input_tokens=300, output_tokens=310),
+    LLMCallMetadata(llm_model_name="gpt-4o", input_tokens=300, output_tokens=310),
 ]
 
 
@@ -305,14 +305,14 @@ TEST_QUERY = RedboxQuery(
                     llm_calls=[
                         {
                             "id": "e7b9c8e4-8c6d-4f9b-8b8e-2f8e8e8e8e8e",
-                            "model_name": "gpt-4o",
+                            "llm_model_name": "gpt-4o",
                             "input_tokens": 80,
                             "output_tokens": 160,
                             "timestamp": datetime(2023, 10, 1, 12, 0, 0, tzinfo=timezone.utc).timestamp(),
                         },
                         {
                             "id": "d3b9c8e4-8c6d-4f9b-8b8e-2f8e8e8e8e8e",
-                            "model_name": "gpt-3.5",
+                            "llm_model_name": "gpt-3.5",
                             "input_tokens": 60,
                             "output_tokens": 120,
                             "timestamp": datetime(2023, 10, 2, 14, 30, 0, tzinfo=timezone.utc).timestamp(),
@@ -341,7 +341,7 @@ TEST_QUERY = RedboxQuery(
                     llm_calls=[
                         {
                             "id": "c1b9c8e4-8c6d-4f9b-8b8e-2f8e8e8e8e8e",
-                            "model_name": "gpt-4o",
+                            "llm_model_name": "gpt-4o",
                             "input_tokens": 10,
                             "output_tokens": 10,
                             "timestamp": datetime(2023, 10, 3, 16, 45, 0, tzinfo=timezone.utc).timestamp(),
@@ -372,21 +372,21 @@ TEST_QUERY = RedboxQuery(
                     llm_calls=[
                         {
                             "id": "e7b9c8e4-8c6d-4f9b-8b8e-2f8e8e8e8e8e",
-                            "model_name": "gpt-4o",
+                            "llm_model_name": "gpt-4o",
                             "input_tokens": 80,
                             "output_tokens": 160,
                             "timestamp": datetime(2023, 10, 1, 12, 0, 0, tzinfo=timezone.utc).timestamp(),
                         },
                         {
                             "id": "d3b9c8e4-8c6d-4f9b-8b8e-2f8e8e8e8e8e",
-                            "model_name": "gpt-3.5",
+                            "llm_model_name": "gpt-3.5",
                             "input_tokens": 60,
                             "output_tokens": 120,
                             "timestamp": datetime(2023, 10, 2, 14, 30, 0, tzinfo=timezone.utc).timestamp(),
                         },
                         {
                             "id": "c1b9c8e4-8c6d-4f9b-8b8e-2f8e8e8e8e8e",
-                            "model_name": "gpt-4o",
+                            "llm_model_name": "gpt-4o",
                             "input_tokens": 10,
                             "output_tokens": 10,
                             "timestamp": datetime(2023, 10, 3, 16, 45, 0, tzinfo=timezone.utc).timestamp(),

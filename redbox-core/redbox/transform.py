@@ -159,7 +159,9 @@ def to_request_metadata(prompt_response_model: dict):
     metadata_event = RequestMetadata(
         llm_calls=[
             LLMCallMetadata(
-                model_name=model, input_tokens=input_tokens, output_tokens=output_tokens
+                llm_model_name=model,
+                input_tokens=input_tokens,
+                output_tokens=output_tokens,
             )
         ]
     )
