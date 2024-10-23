@@ -333,5 +333,5 @@ def test_sort_documents():
 
     for doc, (expected_score, expected_file_name, expected_index) in zip(sorted_docs, expected_order):
         assert doc.metadata["score"] == expected_score
-        assert doc.metadata["uri"] == expected_file_name
+        assert doc.metadata["original_resource_ref"] == expected_file_name
         assert doc.metadata["index"] == expected_index

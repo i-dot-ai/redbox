@@ -43,13 +43,13 @@ CHAT_PROMPT_TEST_CASES = generate_test_cases(
         RedboxTestData(
             number_of_docs=0,
             tokens_in_all_docs=0,
-            expected_llm_response=["Testing Response 1"],
+            llm_responses=["Testing Response 1"],
             expected_route=ChatRoute.chat,
         ),
         RedboxTestData(
             number_of_docs=2,
             tokens_in_all_docs=40_000,
-            expected_llm_response=["Testing Response 1"],
+            llm_responses=["Testing Response 1"],
             expected_route=ChatRoute.chat_with_docs,
         ),
     ],
@@ -60,7 +60,7 @@ CHAT_PROMPT_TEST_CASES = generate_test_cases(
 @pytest.mark.parametrize(("test_case"), CHAT_PROMPT_TEST_CASES, ids=[t.test_id for t in CHAT_PROMPT_TEST_CASES])
 def test_build_chat_prompt_from_messages_runnable(test_case: RedboxChatTestCase, tokeniser: Encoding):
     """Tests a given state can be turned into a chat prompt."""
-    chat_prompt = build_chat_prompt_from_messages_runnable(PromptSet.Chat, tokeniser)
+    chat_prompt = build_chat_prompt_from_messages_runnable(PromptSet.Chat, tokeniser=tokeniser)
     state = RedboxState(request=test_case.query, documents=test_case.docs)
 
     response = chat_prompt.invoke(state)
@@ -75,13 +75,13 @@ BUILD_LLM_TEST_CASES = generate_test_cases(
         RedboxTestData(
             number_of_docs=2,
             tokens_in_all_docs=40_000,
-            expected_llm_response=[AIMessage(content="Testing Response 1")],
+            llm_responses=[AIMessage(content="Testing Response 1")],
             expected_route=ChatRoute.chat_with_docs,
         ),
         RedboxTestData(
             number_of_docs=2,
             tokens_in_all_docs=40_000,
-            expected_llm_response=[
+            llm_responses=[
                 AIMessage(
                     content="Tool Response 1",
                     tool_calls=[ToolCall(name="foo", args={"query": "bar"}, id="tool_1")],
@@ -97,14 +97,14 @@ BUILD_LLM_TEST_CASES = generate_test_cases(
 @pytest.mark.parametrize(("test_case"), BUILD_LLM_TEST_CASES, ids=[t.test_id for t in BUILD_LLM_TEST_CASES])
 def test_build_llm_chain(test_case: RedboxChatTestCase):
     """Tests a given state can update the data and metadata correctly."""
-    llm = GenericFakeChatModel(messages=iter(test_case.test_data.expected_llm_response))
+    llm = GenericFakeChatModel(messages=iter(test_case.test_data.llm_responses))
     llm_chain = build_llm_chain(PromptSet.Chat, llm)
     state = RedboxState(request=test_case.query, documents=test_case.docs)
 
     final_state = llm_chain.invoke(state)
 
-    test_case_content = test_case.test_data.expected_llm_response[-1].content
-    test_case_tool_calls = tool_calls_to_toolstate(test_case.test_data.expected_llm_response[-1].tool_calls)
+    test_case_content = test_case.test_data.llm_responses[-1].content
+    test_case_tool_calls = tool_calls_to_toolstate(test_case.test_data.llm_responses[-1].tool_calls)
 
     assert (
         final_state["text"] == test_case_content
@@ -120,7 +120,7 @@ CHAT_TEST_CASES = generate_test_cases(
         RedboxTestData(
             number_of_docs=0,
             tokens_in_all_docs=0,
-            expected_llm_response=["Testing Response 1"],
+            llm_responses=["Testing Response 1"],
             expected_route=ChatRoute.chat,
         )
     ],
@@ -131,7 +131,7 @@ CHAT_TEST_CASES = generate_test_cases(
 @pytest.mark.parametrize(("test_case"), CHAT_TEST_CASES, ids=[t.test_id for t in CHAT_TEST_CASES])
 def test_build_chat_pattern(test_case: RedboxChatTestCase, mocker: MockerFixture):
     """Tests a given state["request"] correctly changes state["text"]."""
-    llm = GenericFakeChatModel(messages=iter(test_case.test_data.expected_llm_response))
+    llm = GenericFakeChatModel(messages=iter(test_case.test_data.llm_responses))
     state = RedboxState(request=test_case.query, documents=[])
 
     chat = build_chat_pattern(prompt_set=PromptSet.Chat, final_response_chain=True)
@@ -140,7 +140,7 @@ def test_build_chat_pattern(test_case: RedboxChatTestCase, mocker: MockerFixture
     response = chat(state)
     final_state = RedboxState(response)
 
-    test_case_content = test_case.test_data.expected_llm_response[-1].content
+    test_case_content = test_case.test_data.llm_responses[-1].content
 
     assert (
         final_state["text"] == test_case_content
@@ -153,13 +153,13 @@ SET_ROUTE_TEST_CASES = generate_test_cases(
         RedboxTestData(
             number_of_docs=0,
             tokens_in_all_docs=0,
-            expected_llm_response=["Testing Response 1"],
+            llm_responses=["Testing Response 1"],
             expected_route=ChatRoute.chat,
         ),
         RedboxTestData(
             number_of_docs=2,
             tokens_in_all_docs=40_000,
-            expected_llm_response=["Testing Response 1"],
+            llm_responses=["Testing Response 1"],
             expected_route=ChatRoute.chat_with_docs,
         ),
     ],
@@ -193,19 +193,19 @@ RETRIEVER_TEST_CASES = generate_test_cases(
         RedboxTestData(
             number_of_docs=2,
             tokens_in_all_docs=40_000,
-            expected_llm_response=["Testing Response 1"],
+            llm_responses=["Testing Response 1"],
             expected_route=ChatRoute.chat_with_docs,
         ),
         RedboxTestData(
             number_of_docs=2,
             tokens_in_all_docs=80_000,
-            expected_llm_response=["Testing Response 1"],
+            llm_responses=["Testing Response 1"],
             expected_route=ChatRoute.chat_with_docs,
         ),
         RedboxTestData(
             number_of_docs=4,
             tokens_in_all_docs=140_000,
-            expected_llm_response=["Map Step Response"] * 4 + ["Testing Response 1"],
+            llm_responses=["Map Step Response"] * 4 + ["Testing Response 1"],
             expected_route=ChatRoute.chat_with_docs,
         ),
     ],
@@ -244,13 +244,13 @@ MERGE_TEST_CASES = generate_test_cases(
         RedboxTestData(
             number_of_docs=2,
             tokens_in_all_docs=40_000,
-            expected_llm_response=["Testing Response 1"],
+            llm_responses=["Testing Response 1"],
             expected_route=ChatRoute.chat_with_docs,
         ),
         RedboxTestData(
             number_of_docs=4,
             tokens_in_all_docs=40_000,
-            expected_llm_response=["Testing Response 2"],
+            llm_responses=["Testing Response 2"],
             expected_route=ChatRoute.chat_with_docs,
         ),
     ],
@@ -261,7 +261,7 @@ MERGE_TEST_CASES = generate_test_cases(
 @pytest.mark.parametrize(("test_case"), MERGE_TEST_CASES, ids=[t.test_id for t in MERGE_TEST_CASES])
 def test_build_merge_pattern(test_case: RedboxChatTestCase, mocker: MockerFixture):
     """Tests a given state["request"] and state["documents"] correctly changes state["documents"]."""
-    llm = GenericFakeChatModel(messages=iter(test_case.test_data.expected_llm_response))
+    llm = GenericFakeChatModel(messages=iter(test_case.test_data.llm_responses))
     state = RedboxState(request=test_case.query, documents=structure_documents_by_file_name(test_case.docs))
 
     merge = build_merge_pattern(prompt_set=PromptSet.ChatwithDocsMapReduce, final_response_chain=True)
@@ -273,7 +273,7 @@ def test_build_merge_pattern(test_case: RedboxChatTestCase, mocker: MockerFixtur
     response_documents = [doc for doc in flatten_document_state(final_state.get("documents")) if doc is not None]
     noned_documents = sum(1 for doc in final_state.get("documents", {}).values() for v in doc.values() if v is None)
 
-    test_case_content = test_case.test_data.expected_llm_response[-1].content
+    test_case_content = test_case.test_data.llm_responses[-1].content
 
     assert len(response_documents) == 1
     assert noned_documents == len(test_case.docs) - 1
@@ -294,13 +294,13 @@ STUFF_TEST_CASES = generate_test_cases(
         RedboxTestData(
             number_of_docs=2,
             tokens_in_all_docs=40_000,
-            expected_llm_response=["Testing Response 1"],
+            llm_responses=["Testing Response 1"],
             expected_route=ChatRoute.chat_with_docs,
         ),
         RedboxTestData(
             number_of_docs=4,
             tokens_in_all_docs=40_000,
-            expected_llm_response=["Testing Response 2"],
+            llm_responses=["Testing Response 2"],
             expected_route=ChatRoute.chat_with_docs,
         ),
     ],
@@ -311,7 +311,7 @@ STUFF_TEST_CASES = generate_test_cases(
 @pytest.mark.parametrize(("test_case"), STUFF_TEST_CASES, ids=[t.test_id for t in STUFF_TEST_CASES])
 def test_build_stuff_pattern(test_case: RedboxChatTestCase, mocker: MockerFixture):
     """Tests a given state["request"] and state["documents"] correctly changes state["text"]."""
-    llm = GenericFakeChatModel(messages=iter(test_case.test_data.expected_llm_response))
+    llm = GenericFakeChatModel(messages=iter(test_case.test_data.llm_responses))
     state = RedboxState(request=test_case.query, documents=structure_documents_by_file_name(test_case.docs))
 
     stuff = build_stuff_pattern(prompt_set=PromptSet.ChatwithDocs, final_response_chain=True)
@@ -320,7 +320,7 @@ def test_build_stuff_pattern(test_case: RedboxChatTestCase, mocker: MockerFixtur
     response = stuff.invoke(state)
     final_state = RedboxState(response)
 
-    test_case_content = test_case.test_data.expected_llm_response[-1].content
+    test_case_content = test_case.test_data.llm_responses[-1].content
 
     assert (
         final_state["text"] == test_case_content
@@ -339,7 +339,7 @@ TOOL_TEST_CASES = generate_test_cases(
         RedboxTestData(
             number_of_docs=2,
             tokens_in_all_docs=2_000,
-            expected_llm_response=["Testing Response 1"],
+            llm_responses=["Testing Response 1"],
             expected_route=ChatRoute.chat_with_docs,
         ),
     ],

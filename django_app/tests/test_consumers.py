@@ -615,7 +615,7 @@ def mocked_connect(uploaded_file: File) -> Connect:
             "data": {
                 "output": [
                     Document(
-                        metadata={"uri": uploaded_file.unique_name},
+                        metadata={"original_resource_ref": uploaded_file.unique_name},
                         page_content="Good afternoon Mr Amor",
                     )
                 ]
@@ -627,11 +627,11 @@ def mocked_connect(uploaded_file: File) -> Connect:
             "data": {
                 "output": [
                     Document(
-                        metadata={"uri": uploaded_file.unique_name},
+                        metadata={"original_resource_ref": uploaded_file.unique_name},
                         page_content="Good afternoon Mr Amor",
                     ),
                     Document(
-                        metadata={"uri": uploaded_file.unique_name, "page_number": [34, 35]},
+                        metadata={"original_resource_ref": uploaded_file.unique_name, "page_number": [34, 35]},
                         page_content="Good afternoon Mr Amor",
                     ),
                 ]
@@ -673,11 +673,11 @@ def mocked_connect_with_naughty_citation(uploaded_file: File) -> CannedGraphLLM:
             "data": {
                 "output": [
                     Document(
-                        metadata={"uri": uploaded_file.unique_name},
+                        metadata={"original_resource_ref": uploaded_file.unique_name},
                         page_content="Good afternoon Mr Amor",
                     ),
                     Document(
-                        metadata={"uri": uploaded_file.unique_name},
+                        metadata={"original_resource_ref": uploaded_file.unique_name},
                         page_content="I shouldn't send a \x00",
                     ),
                 ]
@@ -762,10 +762,14 @@ def mocked_connect_agentic_search(uploaded_file: File) -> Connect:
             "event": "on_custom_event",
             "name": "on_source_report",
             "data": [
-                Document(metadata={"uri": uploaded_file.unique_name}, page_content="Good afternoon Mr Amor"),
-                Document(metadata={"uri": uploaded_file.unique_name}, page_content="Good afternoon Mr Amor"),
                 Document(
-                    metadata={"uri": uploaded_file.unique_name, "page_number": [34, 35]},
+                    metadata={"original_resource_ref": uploaded_file.unique_name}, page_content="Good afternoon Mr Amor"
+                ),
+                Document(
+                    metadata={"original_resource_ref": uploaded_file.unique_name}, page_content="Good afternoon Mr Amor"
+                ),
+                Document(
+                    metadata={"original_resource_ref": uploaded_file.unique_name, "page_number": [34, 35]},
                     page_content="Good afternoon Mr Amor",
                 ),
             ],

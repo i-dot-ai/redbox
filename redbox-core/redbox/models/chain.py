@@ -1,19 +1,20 @@
-"""
-There is some repeated definition and non-pydantic style code in here.
-These classes are pydantic v1 which is compatible with langchain tools classes, we need
-to provide a pydantic v1 definition to work with these. As these models are mostly
-used in conjunction with langchain this is the tidiest boxing of pydantic v1 we can do
-"""
-
 from datetime import UTC, datetime
 from enum import StrEnum
 from functools import reduce
-from typing import Annotated, Literal, NotRequired, Required, TypedDict, get_args, get_origin
+from typing import (
+    Annotated,
+    Literal,
+    NotRequired,
+    Required,
+    TypedDict,
+    get_args,
+    get_origin,
+)
 from uuid import UUID, uuid4
 
 from langchain_core.documents import Document
 from langchain_core.messages import ToolCall
-from langgraph.managed.is_last_step import RemainingSteps
+from langgraph.managed.is_last_step import RemainingStepsManager
 from pydantic import BaseModel, Field
 
 from redbox.models import prompts
@@ -80,6 +81,44 @@ class AISettings(BaseModel):
 
     # this is also the azure_openai_model
     chat_backend: ChatLLMBackend = ChatLLMBackend()
+
+
+class Source(BaseModel):
+    source: str = Field(description="URL or reference to the source")
+    last_edited: str = ""
+    document_name: str = ""
+    highlighted_text: str = ""
+    page_no: str = Field(description="")
+
+
+class Citation(BaseModel):
+    text: str
+    sources: list[Source]
+
+
+class LLM_Response(BaseModel):
+    markdown_answer: str
+    citations: list[Citation]
+
+    @classmethod
+    def model_json_schema(self):
+        return {
+            "markdown_answer": "Hello Kitty is a fictional character from Japan.",
+            "citations": [
+                {
+                    "text": "Hello Kitty is a fictional character from Japan.",
+                    "sources": [
+                        {
+                            "source": "https://en.wikipedia.org/wiki/Hello_Kitty",
+                            "last_edited": "4 October 2024",
+                            "document_name": "Hello Kitty",
+                            "highlighted_text": "Hello Kitty (Japanese: ハロー・キティ, Hepburn: Harō Kiti),[6] also known by her real name Kitty White (キティ・ホワイト, Kiti Howaito),[5] is a fictional character created by Yuko Shimizu",
+                            "page_no": "1",
+                        }
+                    ],
+                }
+            ],
+        }
 
 
 class DocumentState(TypedDict):
@@ -156,7 +195,7 @@ class LLMCallMetadata(BaseModel):
 
 
 class RequestMetadata(BaseModel):
-    llm_calls: set[LLMCallMetadata] = Field(default_factory=set)
+    llm_calls: list[LLMCallMetadata] = Field(default_factory=list)
     selected_files_total_tokens: int = 0
     number_of_selected_files: int = 0
 
@@ -179,7 +218,10 @@ class RequestMetadata(BaseModel):
         return tokens_by_model
 
 
-def metadata_reducer(current: RequestMetadata | None, update: RequestMetadata | list[RequestMetadata] | None):
+def metadata_reducer(
+    current: RequestMetadata | None,
+    update: RequestMetadata | list[RequestMetadata] | None,
+):
     """Merges two metadata states."""
     # If update is actually a list of state updates, run them one by one
     if isinstance(update, list):
@@ -192,7 +234,7 @@ def metadata_reducer(current: RequestMetadata | None, update: RequestMetadata | 
         return current
 
     return RequestMetadata(
-        llm_calls=current.llm_calls | update.llm_calls,
+        llm_calls=sorted(list(set(current.llm_calls) | set(update.llm_calls)), key=lambda c: c.timestamp),
         selected_files_total_tokens=update.selected_files_total_tokens or current.selected_files_total_tokens,
         number_of_selected_files=update.number_of_selected_files or current.number_of_selected_files,
     )
@@ -242,7 +284,8 @@ class RedboxState(TypedDict):
     route_name: NotRequired[str | None]
     tool_calls: Annotated[NotRequired[ToolState], tool_calls_reducer]
     metadata: Annotated[NotRequired[RequestMetadata], metadata_reducer]
-    steps_left: RemainingSteps
+    citations: NotRequired[list[Citation] | None]
+    steps_left: Annotated[NotRequired[int], RemainingStepsManager]
 
 
 class PromptSet(StrEnum):

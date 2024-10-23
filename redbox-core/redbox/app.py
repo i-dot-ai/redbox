@@ -8,7 +8,10 @@ from redbox.chains.components import (
     get_metadata_retriever,
     get_parameterised_retriever,
 )
-from redbox.graph.nodes.tools import build_search_documents_tool, build_search_wikipedia_tool
+from redbox.graph.nodes.tools import (
+    build_search_documents_tool,
+    build_search_wikipedia_tool,
+)
 from redbox.graph.root import get_root_graph
 from redbox.models.chain import RedboxState
 from redbox.models.chat import ChatRoute
@@ -82,7 +85,9 @@ class Redbox:
     ) -> RedboxState:
         final_state = None
         async for event in self.graph.astream_events(
-            input=input, version="v2", config={"recursion_limit": input["request"].ai_settings.recursion_limit}
+            input=input,
+            version="v2",
+            config={"recursion_limit": input["request"].ai_settings.recursion_limit},
         ):
             kind = event["event"]
             tags = event.get("tags", [])

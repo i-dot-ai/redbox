@@ -11,6 +11,7 @@
     "python.testing.pytestEnabled": true,
     "python.testing.pytestArgs": [
         ".",
+        "-v",
         "-m not ( ai )"
     ],
     "python.testing.pytestPath": "venv/bin/python -m pytest"

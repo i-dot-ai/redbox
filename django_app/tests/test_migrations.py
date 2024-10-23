@@ -359,4 +359,4 @@ def test_0055_citation_source_citation_url_alter_citation_file(original_file, mi
     assert new_citation.page_numbers == [3, 4]
     assert new_citation.chat_message.id == chat_message.id
     assert new_citation.url is None
-    assert new_citation.source == "USER UPLOADED DOCUMENT"
+    assert new_citation.source == "UPLOADED"
