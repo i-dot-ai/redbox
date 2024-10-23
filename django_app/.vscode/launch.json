@@ -7,9 +7,8 @@
             "module": "daphne",
             "args": [
                 "redbox_app.asgi:application",
-                "--port", "8080"
+                "--port", "8080",
             ],
-            "django": true,
             "envFile": "${workspaceFolder}/../.env",
             "env": {
                 "MINIO_HOST": "localhost",

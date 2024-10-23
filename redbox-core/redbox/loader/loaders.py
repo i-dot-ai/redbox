@@ -12,7 +12,7 @@ from langchain_core.output_parsers import JsonOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 
 from redbox.chains.components import get_chat_llm
-from redbox.models.file import ChunkMetadata, ChunkResolution
+from redbox.models.file import ChunkResolution, UploadedFileMetadata
 from redbox.models.settings import Settings
 
 logging.basicConfig(level=logging.INFO)
@@ -246,9 +246,9 @@ class UnstructuredChunkLoader:
         for i, raw_chunk in enumerate(elements):
             yield Document(
                 page_content=raw_chunk["text"],
-                metadata=ChunkMetadata(
+                metadata=UploadedFileMetadata(
                     index=i,
-                    file_name=raw_chunk["metadata"].get("filename"),
+                    uri=raw_chunk["metadata"].get("filename"),
                     page_number=raw_chunk["metadata"].get("page_number"),
                     created_datetime=datetime.now(UTC),
                     token_count=len(encoding.encode(raw_chunk["text"])),

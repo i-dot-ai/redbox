@@ -21,7 +21,7 @@ from redbox.models.chain import DocumentState, PromptSet, RedboxState, RequestMe
 from redbox.models.graph import ROUTE_NAME_TAG, SOURCE_DOCUMENTS_TAG, RedboxActivityEvent, RedboxEventType
 from redbox.transform import combine_documents, flatten_document_state
 
-log = logging.getLogger()
+log = logging.getLogger(__name__)
 re_keyword_pattern = re.compile(r"@(\w+)")
 
 
@@ -100,7 +100,7 @@ def build_merge_pattern(
 
         merge_state = RedboxState(
             request=state["request"],
-            documents={merged_document.metadata["file_name"]: {merged_document.metadata["uuid"]: merged_document}},
+            documents={merged_document.metadata["uri"]: {merged_document.metadata["uuid"]: merged_document}},
         )
 
         merge_response = build_llm_chain(

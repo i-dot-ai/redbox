@@ -1,6 +1,7 @@
 import json
 import logging
 from asyncio import CancelledError
+from collections import defaultdict
 from collections.abc import Mapping, Sequence
 from typing import Any, ClassVar
 from uuid import UUID
@@ -67,6 +68,7 @@ def escape_curly_brackets(text: str):
 class ChatConsumer(AsyncWebsocketConsumer):
     full_reply: ClassVar = []
     citations: ClassVar = []
+    external_citations: ClassVar = []
     activities: ClassVar = []
     route = None
     metadata: RequestMetadata = RequestMetadata()
@@ -76,6 +78,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         """Receive & respond to message from browser websocket."""
         self.full_reply = []
         self.citations = []
+        self.external_citations = []
         self.route = None
 
         data = json.loads(text_data or bytes_data)
@@ -196,20 +199,29 @@ class ChatConsumer(AsyncWebsocketConsumer):
     ) -> ChatMessage:
         chat_message = ChatMessage(chat=session, text=user_message_text, role=ChatRoleEnum.ai, route=self.route)
         chat_message.save()
-        if self.citations:
-            for file, citations in self.citations:
+        for file, citations in self.citations:
+            if file:
                 file.last_referenced = timezone.now()
                 file.save()
 
-                for citation in citations:
+            for citation in citations:
+                if file:
                     Citation.objects.create(
                         chat_message=chat_message,
-                        file=file,
                         text=citation.page_content,
+                        source=Citation.Origin.USER_UPLOADED_DOCUMENT,
+                        file=file,
                         page_numbers=parse_page_number(citation.metadata.get("page_number")),
                     )
+                else:
+                    Citation.objects.create(
+                        chat_message=chat_message,
+                        text=citation.page_content,
+                        source=Citation.Origin.WIKIPEDIA,
+                        url=citation.metadata.get("uri"),
+                    )
 
-        if self.metadata and self.metadata.input_tokens:
+        if self.metadata:
             for model, token_count in self.metadata.input_tokens.items():
                 ChatMessageTokenUse.objects.create(
                     chat_message=chat_message,
@@ -218,7 +230,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
                     token_count=token_count,
                 )
 
-        if self.metadata and self.metadata.output_tokens:
             for model, token_count in self.metadata.output_tokens.items():
                 ChatMessageTokenUse.objects.create(
                     chat_message=chat_message,
@@ -255,10 +266,21 @@ class ChatConsumer(AsyncWebsocketConsumer):
         self.activities.append(RedboxActivityEvent.model_validate(response))
 
     async def handle_documents(self, response: list[Document]):
-        s3_keys = [doc.metadata["file_name"] for doc in response]
-        files = File.objects.filter(original_file__in=s3_keys)
+        sources_by_resource_ref = defaultdict(list)
+        for document in response:
+            ref = document.metadata.get("uri")
+            sources_by_resource_ref[ref].append(document)
 
-        async for file in files:
-            await self.send_to_client("source", {"url": str(file.url), "original_file_name": file.original_file_name})
-        for file in files:
-            self.citations.append((file, [doc for doc in response if doc.metadata["file_name"] == file.unique_name]))
+        for ref, sources in sources_by_resource_ref.items():
+            try:
+                file = await File.objects.aget(original_file=ref)
+                payload = {"url": str(file.url), "original_file_name": file.original_file_name}
+            except File.DoesNotExist:
+                file = None
+                payload = {"url": ref, "original_file_name": None}
+
+            await self.send_to_client("source", payload)
+            self.citations.append((file, sources))
+
+    async def handle_activity_event(self, event: RedboxActivityEvent):
+        logger.info("ACTIVITY: %s", event.message)

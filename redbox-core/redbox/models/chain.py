@@ -13,7 +13,7 @@ from uuid import UUID, uuid4
 
 from langchain_core.documents import Document
 from langchain_core.messages import ToolCall
-from langgraph.managed.base import ManagedValue
+from langgraph.managed.is_last_step import RemainingSteps
 from pydantic import BaseModel, Field
 
 from redbox.models import prompts
@@ -235,14 +235,6 @@ def tool_calls_reducer(current: ToolState, update: ToolState | None) -> ToolStat
     return reduced
 
 
-class StepsLeft(ManagedValue[bool]):
-    """A managed value that counts down from the recursion limit."""
-
-    def __call__(self, step: int) -> int:
-        limit = self.config.get("recursion_limit", 0)
-        return limit - step
-
-
 class RedboxState(TypedDict):
     request: Required[RedboxQuery]
     documents: Annotated[NotRequired[DocumentState], document_reducer]
@@ -250,7 +242,7 @@ class RedboxState(TypedDict):
     route_name: NotRequired[str | None]
     tool_calls: Annotated[NotRequired[ToolState], tool_calls_reducer]
     metadata: Annotated[NotRequired[RequestMetadata], metadata_reducer]
-    steps_left: Annotated[int, StepsLeft]
+    steps_left: RemainingSteps
 
 
 class PromptSet(StrEnum):
