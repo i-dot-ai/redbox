@@ -14,7 +14,7 @@ from uuid import UUID, uuid4
 
 from langchain_core.documents import Document
 from langchain_core.messages import ToolCall
-from langgraph.managed.is_last_step import RemainingStepsManager
+from langgraph.managed.is_last_step import RemainingSteps
 from pydantic import BaseModel, Field
 
 from redbox.models import prompts
@@ -284,8 +284,9 @@ class RedboxState(TypedDict):
     route_name: NotRequired[str | None]
     tool_calls: Annotated[NotRequired[ToolState], tool_calls_reducer]
     metadata: Annotated[NotRequired[RequestMetadata], metadata_reducer]
+    steps_left: RemainingSteps
     citations: NotRequired[list[Citation] | None]
-    steps_left: Annotated[NotRequired[int], RemainingStepsManager]
+    # steps_left: Annotated[NotRequired[int], RemainingStepsManager]
 
 
 class PromptSet(StrEnum):

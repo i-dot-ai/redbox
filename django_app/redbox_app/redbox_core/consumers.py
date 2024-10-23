@@ -229,6 +229,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
                     model_name=model,
                     token_count=token_count,
                 )
+
             for model, token_count in self.metadata.output_tokens.items():
                 ChatMessageTokenUse.objects.create(
                     chat_message=chat_message,

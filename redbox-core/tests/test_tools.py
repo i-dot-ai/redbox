@@ -1,6 +1,6 @@
 from typing import Annotated, Any
-from urllib.parse import urlparse
 from uuid import UUID, uuid4
+from urllib.parse import urlparse
 
 import pytest
 from elasticsearch import Elasticsearch
@@ -10,9 +10,9 @@ from langgraph.prebuilt import InjectedState
 
 from redbox.graph.nodes.tools import (
     build_search_documents_tool,
-    build_search_wikipedia_tool,
     has_injected_state,
     is_valid_tool,
+    build_search_wikipedia_tool,
 )
 from redbox.models import Settings
 from redbox.models.chain import AISettings, RedboxQuery, RedboxState
