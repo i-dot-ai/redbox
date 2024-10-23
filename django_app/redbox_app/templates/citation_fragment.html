@@ -22,7 +22,7 @@
             <h3 class="govuk-heading-s govuk-!-margin-bottom-0">
               {% if source_file.get_status_text() == "Complete" %}
                 <a class="iai-chat-bubbles__sources-link govuk-link"
-                  href="{{ source_file.url }}">{{ source_file.uri }}</a>
+                  href="{{ source_file.url }}">{{ source_file.original_file_name }}</a>
               {% else %}
                 <span class="iai-chat-bubbles__sources-link">{{ source_file.original_file_name }}</span>
               {% endif %}
