@@ -118,7 +118,7 @@ def build_strings_end_text_conditional(*strings: str) -> Runnable:
         unique_matches = set(matches)
 
         if len(unique_matches) == 1:
-            return unique_matches.pop()
+            return unique_matches.pop().lower()
         return "DEFAULT"
 
     return _strings_end_text_conditional

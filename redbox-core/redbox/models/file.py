@@ -39,4 +39,4 @@ class UploadedFileMetadata(ChunkMetadata):
     name: str
     description: str
     keywords: list[str]
-    creator_type: str = "uploaded_file"
+    creator_type: str = "UserUploadedDocument"

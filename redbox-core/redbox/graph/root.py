@@ -36,7 +36,7 @@ from redbox.graph.nodes.sends import (
     build_document_group_send,
     build_tool_send,
 )
-from redbox.models.chain import LLM_Response, RedboxState
+from redbox.models.chain import StructuredResponseWithCitations, RedboxState
 from redbox.models.chat import ChatRoute, ErrorRoute
 from redbox.models.graph import ROUTABLE_KEYWORDS, RedboxActivityEvent
 from redbox.transform import (
@@ -163,11 +163,11 @@ def get_search_graph(
 def get_agentic_search_graph(tools: dict[str, StructuredTool], debug: bool = False) -> CompiledGraph:
     """Creates a subgraph for agentic RAG."""
 
-    citations_output_parser = PydanticOutputParser(pydantic_object=LLM_Response)
+    citations_output_parser = PydanticOutputParser(pydantic_object=StructuredResponseWithCitations)
     builder = StateGraph(RedboxState)
     # Tools
     agent_tool_names = ["_search_documents", "_search_wikipedia"]
-    agent_tools: list[StructuredTool] = [tools.get(tool_name) for tool_name in agent_tool_names]
+    agent_tools: list[StructuredTool] = tuple([tools.get(tool_name) for tool_name in agent_tool_names])
 
     # Processes
     builder.add_node("p_set_agentic_search_route", build_set_route_pattern(route=ChatRoute.gadget))

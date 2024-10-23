@@ -163,7 +163,7 @@ def build_search_wikipedia_tool(number_wikipedia_results=1, max_chars_per_wiki_p
                     index=i,
                     original_resource_ref=doc.metadata["source"],
                     token_count=len(tokeniser.encode(doc.page_content)),
-                    creator_type="wikipedia",
+                    creator_type="Wikipedia",
                 ).model_dump(),
             )
             for i, doc in enumerate(response)

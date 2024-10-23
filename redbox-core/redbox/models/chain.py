@@ -16,6 +16,7 @@ from langchain_core.documents import Document
 from langchain_core.messages import ToolCall
 from langgraph.managed.is_last_step import RemainingStepsManager
 from pydantic import BaseModel, Field
+import pydantic
 
 from redbox.models import prompts
 
@@ -85,40 +86,21 @@ class AISettings(BaseModel):
 
 class Source(BaseModel):
     source: str = Field(description="URL or reference to the source")
-    last_edited: str = ""
+    source_type: str = Field(description="CreatorType of tool", default="Unknown")
     document_name: str = ""
-    highlighted_text: str = ""
-    page_no: str = Field(description="")
+    highlighted_text_in_source: str = ""
+    page_numbers: list[int] = Field(description="Page Number in document the highlighted text is on", default=1)
 
 
 class Citation(BaseModel):
-    text: str
+    text_in_answer: str
     sources: list[Source]
 
 
-class LLM_Response(BaseModel):
-    markdown_answer: str
+class StructuredResponseWithCitations(BaseModel):
+    answer: str = Field(description="Markdown structured answer to the query")
     citations: list[Citation]
 
-    @classmethod
-    def model_json_schema(self):
-        return {
-            "markdown_answer": "Hello Kitty is a fictional character from Japan.",
-            "citations": [
-                {
-                    "text": "Hello Kitty is a fictional character from Japan.",
-                    "sources": [
-                        {
-                            "source": "https://en.wikipedia.org/wiki/Hello_Kitty",
-                            "last_edited": "4 October 2024",
-                            "document_name": "Hello Kitty",
-                            "highlighted_text": "Hello Kitty (Japanese: ハロー・キティ, Hepburn: Harō Kiti),[6] also known by her real name Kitty White (キティ・ホワイト, Kiti Howaito),[5] is a fictional character created by Yuko Shimizu",
-                            "page_no": "1",
-                        }
-                    ],
-                }
-            ],
-        }
 
 
 class DocumentState(TypedDict):

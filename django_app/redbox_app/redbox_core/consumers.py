@@ -2,7 +2,7 @@ import json
 import logging
 from asyncio import CancelledError
 from collections.abc import Mapping, Sequence
-from typing import Any, ClassVar
+from typing import Any, ClassVar, Tuple
 from uuid import UUID
 
 from channels.db import database_sync_to_async
@@ -24,7 +24,9 @@ from redbox.models.chain import (
     RedboxState,
     RequestMetadata,
     metadata_reducer,
+    Source
 )
+from redbox.models.chain import Citation as AICitation
 from redbox.models.graph import RedboxActivityEvent
 from redbox_app.redbox_core import error_messages
 from redbox_app.redbox_core.models import (
@@ -41,6 +43,7 @@ from redbox_app.redbox_core.models import (
 from redbox_app.redbox_core.models import (
     AISettings as AISettingsModel,
 )
+from tests.conftest import original_file
 
 User = get_user_model()
 OptFileSeq = Sequence[File] | None
@@ -51,9 +54,9 @@ logger.info("WEBSOCKET_SCHEME is: %s", settings.WEBSOCKET_SCHEME)
 def parse_page_number(obj: int | list[int] | None) -> list[int]:
     if isinstance(obj, int):
         return [obj]
-    if isinstance(obj, list) and all(isinstance(item, int) for item in obj):
+    elif isinstance(obj, list) and len(obj) > 0 and all(isinstance(item, int) for item in obj):
         return obj
-    if obj is None:
+    elif obj is None:
         return []
 
     msg = "expected, int | list[int] | None got %s"
@@ -66,8 +69,7 @@ def escape_curly_brackets(text: str):
 
 class ChatConsumer(AsyncWebsocketConsumer):
     full_reply: ClassVar = []
-    citations: ClassVar = []
-    external_citations: ClassVar = []
+    citations: ClassVar[list[tuple[File, Source]]] = []
     activities: ClassVar = []
     route = None
     metadata: RequestMetadata = RequestMetadata()
@@ -77,7 +79,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
         """Receive & respond to message from browser websocket."""
         self.full_reply = []
         self.citations = []
-        self.external_citations = []
         self.route = None
 
         data = json.loads(text_data or bytes_data)
@@ -142,14 +143,17 @@ class ChatConsumer(AsyncWebsocketConsumer):
         )
 
         try:
-            await self.redbox.run(
+            response = await self.redbox.run(
                 state,
                 response_tokens_callback=self.handle_text,
                 route_name_callback=self.handle_route,
                 documents_callback=self.handle_documents,
+                citations_callback=self.handle_citations,
                 metadata_tokens_callback=self.handle_metadata,
                 activity_event_callback=self.handle_activity,
             )
+
+            logger.info(f"Completed Request: {response}")
 
             message = await self.save_ai_message(
                 session,
@@ -198,26 +202,25 @@ class ChatConsumer(AsyncWebsocketConsumer):
     ) -> ChatMessage:
         chat_message = ChatMessage(chat=session, text=user_message_text, role=ChatRoleEnum.ai, route=self.route)
         chat_message.save()
-        for file, citations in self.citations:
-            file.last_referenced = timezone.now()
-            file.save()
-
-            for citation in citations:
-                if file:
-                    Citation.objects.create(
-                        chat_message=chat_message,
-                        file=file,
-                        text=citation.page_content,
-                        page_numbers=parse_page_number(citation.metadata.get("page_number")),
-                        source=Citation.Origin.USER_UPLOADED_DOCUMENT,
-                    )
-                else:
-                    Citation.objects.create(
-                        chat_message=chat_message,
-                        url=citation.metadata.get("original_resource_ref"),
-                        text=citation.page_content,
-                        source=Citation.Origin(citation.metadata.get("creator_type")),
-                    )
+        for file, citation_source in self.citations:
+            if file:
+                file.last_referenced = timezone.now()
+                file.save()
+                Citation.objects.create(
+                    chat_message=chat_message,
+                    file=file,
+                    text=citation_source.highlighted_text_in_source,
+                    page_numbers=citation_source.page_numbers,
+                    source=Citation.Origin.USER_UPLOADED_DOCUMENT,
+                )
+            else:
+                Citation.objects.create(
+                    chat_message=chat_message,
+                    url=citation_source.source,
+                    text=citation_source.highlighted_text_in_source,
+                    page_numbers=citation_source.page_numbers,
+                    source=Citation.Origin(citation_source.source_type.title()),
+                )
 
         if self.metadata:
             for model, token_count in self.metadata.input_tokens.items():
@@ -270,21 +273,49 @@ class ChatConsumer(AsyncWebsocketConsumer):
             docs_from_source.append(document)
             sources_by_resource_ref[ref] = docs_from_source
         handled_sources = set()
-        files = File.objects.filter(original_file__in=sources_by_resource_ref.keys())
+        files = File.objects.filter(original_file__in=set(sources_by_resource_ref.keys()))
         async for file in files:
             await self.send_to_client("source", {"url": str(file.url), "original_file_name": file.original_file_name})
-            self.citations.append((file, sources_by_resource_ref[file.unique_name]))
+            citation_docs = sources_by_resource_ref[file.original_file]
+            for cited_chunk in citation_docs:
+                self.citations.append((file, Source(
+                        source=str(file.url),
+                        source_type=Citation.Origin.USER_UPLOADED_DOCUMENT,
+                        document_name=file.original_file_name,
+                        highlighted_text_in_source=cited_chunk.page_content,
+                        page_numbers=parse_page_number(cited_chunk.metadata.get("page_number"))
+                    ))
+                )
             handled_sources.add(file.unique_name)
 
-        additional_sources = [doc for doc in response if doc.metadata["original_resource_ref"] not in handled_sources]
-
+        additional_sources = {
+            doc.metadata["original_resource_ref"]:doc 
+            for doc in response if doc.metadata["original_resource_ref"] not in handled_sources
+        }.values()
         for additional_source in additional_sources:
             url = additional_source.metadata["original_resource_ref"]
-            source = additional_source.metadata.get("creator_type", "Unknown")
-            await self.send_to_client("source", {"url": url, "original_file_name": f"{source} - {url.split("/")[-1]}"})
-            self.citations.extend(
-                [(None, doc) for doc in response if doc.metadata["original_resource_ref"] == file.unique_name]
+            source_type = additional_source.metadata.get("creator_type", "Unknown")
+            await self.send_to_client("source", {"url": url, "original_file_name": f"{source_type} - {url.split("/")[-1]}"})
+            self.citations.append((None, Source(
+                    source=url,
+                    source_type=source_type,
+                    document_name=url.split("/")[-1],
+                    highlighted_text_in_source=additional_source.page_content,
+                    page_numbers=parse_page_number(additional_source.metadata.get("page_number", 1))
+                ))
             )
+
+    async def handle_citations(self, citations: list[AICitation]):
+        for c in citations:
+            for s in c.sources:
+                try:
+                    file = await File.objects.aget(original_file=s.source)
+                    payload = {"url": str(file.url), "original_file_name": file.original_file_name}
+                except File.DoesNotExist:
+                    file = None
+                    payload = {"url": s.source, "original_file_name": s.document_name}
+                await self.send_to_client("source", payload)
+                self.citations.append((file, s))
 
     async def handle_activity_event(self, event: RedboxActivityEvent):
         logger.info("ACTIVITY: %s", event.message)

@@ -295,10 +295,9 @@ def build_tool_pattern(
 
                 # Deal with InjectedState
                 args = tool_call["args"].copy()
+                log.info(f"Invoking tool {tool_call['name']} with args {args}")
                 if has_injected_state(tool):
                     args["state"] = state
-
-                log.info(f"Invoking tool {tool_call['name']} with args {args}")
 
                 # Invoke the tool
                 try:
@@ -330,7 +329,9 @@ def clear_documents_process(state: RedboxState) -> dict[str, Any]:
 
 def report_sources_process(state: RedboxState) -> None:
     """A Runnable which reports the documents in the state as sources."""
-    if document_state := state.get("documents"):
+    if citations_state := state.get("citations"):
+        dispatch_custom_event(RedboxEventType.on_citations_report, citations_state)
+    elif document_state := state.get("documents"):
         dispatch_custom_event(RedboxEventType.on_source_report, flatten_document_state(document_state))
 
 

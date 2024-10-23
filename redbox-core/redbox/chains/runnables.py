@@ -115,7 +115,7 @@ def build_llm_chain(
     Permits both invoke and astream_events.
     """
     model_name = getattr(llm, "model_name", "unknown-model")
-    _llm = llm.with_config(tags=["response_flag"]) if final_response_chain else llm
+    _llm = llm
     _output_parser = output_parser if output_parser else StrOutputParser()
     return (
         build_chat_prompt_from_messages_runnable(prompt_set, partial_variables={"format_arg": format_instructions})
@@ -123,7 +123,7 @@ def build_llm_chain(
             "text_and_tools": (
                 _llm
                 | {
-                    "parsed_response": _output_parser,
+                    "parsed_response": _output_parser | (lambda s: "" if s is None else s),
                     "tool_calls": (RunnableLambda(lambda r: r.tool_calls) | tool_calls_to_toolstate),
                 }
             ),
@@ -131,19 +131,22 @@ def build_llm_chain(
         }
         | {
             "text": RunnableLambda(combine_getters(itemgetter("text_and_tools"), itemgetter("parsed_response")))
-            | (lambda r: r if isinstance(r, str) else r.markdown_answer),
+            | (lambda r: r if isinstance(r, str) else r.answer),
             "tool_calls": combine_getters(itemgetter("text_and_tools"), itemgetter("tool_calls")),
             "citations": RunnableLambda(combine_getters(itemgetter("text_and_tools"), itemgetter("parsed_response")))
             | (lambda r: [] if isinstance(r, str) else r.citations),
             "prompt": itemgetter("prompt"),
         }
         | RunnablePassthrough.assign(
-            metadata={
+            metadata=({
                 "prompt": itemgetter("prompt"),
                 "response": itemgetter("text"),
                 "model": lambda _: model_name,
             }
-            | to_request_metadata
+            | to_request_metadata),
+            send_tokens=(
+                itemgetter("text") | (send_token_events if final_response_chain else RunnablePassthrough())
+            )
         )
     )
 
@@ -184,6 +187,10 @@ def build_self_route_output_parser(
 
     return RunnableGenerator(_self_route_output_parser)
 
+
+@RunnableLambda
+def send_token_events(tokens: str):
+    dispatch_custom_event(RedboxEventType.response_tokens, data=tokens)
 
 class CannedChatLLM(BaseChatModel):
     """A custom chat model that returns its text as if an LLM returned it.
