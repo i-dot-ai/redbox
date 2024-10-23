@@ -25,7 +25,7 @@ class SourcesList extends HTMLElement {
     this.sources.forEach((source) => {
       html += `
                 <li class="govuk-!-margin-bottom-0">
-                    <a class="iai-chat-bubbles__sources-link govuk-link" href="${source.url}">${source.fileName}</a>
+                    <a class="iai-chat-bubbles__sources-link govuk-link" href="${source.url}">${source.fileName || source.url}</a>
                 </li>
             `;
     });
