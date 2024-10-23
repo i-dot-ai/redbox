@@ -218,7 +218,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
                         chat_message=chat_message,
                         text=citation.page_content,
                         source=Citation.Origin.WIKIPEDIA,
-                        url=citation.metadata.get("original_resource_ref"),
+                        url=citation.metadata.get("uri"),
                     )
 
         if self.metadata:
@@ -268,7 +268,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
     async def handle_documents(self, response: list[Document]):
         sources_by_resource_ref = defaultdict(list)
         for document in response:
-            ref = document.metadata.get("original_resource_ref")
+            ref = document.metadata.get("uri")
             sources_by_resource_ref[ref].append(document)
 
         for ref, sources in sources_by_resource_ref.items():
