@@ -161,7 +161,7 @@ def build_search_wikipedia_tool(number_wikipedia_results=1, max_chars_per_wiki_p
                 page_content=doc.page_content,
                 metadata=ChunkMetadata(
                     index=i,
-                    original_resource_ref=doc.metadata["source"],
+                    uri=doc.metadata["source"],
                     token_count=len(tokeniser.encode(doc.page_content)),
                     creator_type="wikipedia",
                 ).model_dump(),

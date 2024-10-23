@@ -37,7 +37,7 @@ def generate_docs(
     for i in range(number_of_docs):
         core_metadata = UploadedFileMetadata(
             index=index_start + i,
-            original_resource_ref=s3_key,
+            uri=s3_key,
             page_number=page_numbers[int(i / number_of_docs) * len(page_numbers)],
             created_datetime=datetime.datetime.now(datetime.UTC),
             token_count=int(total_tokens / number_of_docs),
@@ -118,11 +118,11 @@ class RedboxChatTestCase:
         return [
             doc
             for doc in self.docs
-            if doc.metadata["original_resource_ref"] in set(self.query.s3_keys) & set(self.query.permitted_s3_keys)
+            if doc.metadata["uri"] in set(self.query.s3_keys) & set(self.query.permitted_s3_keys)
         ]
 
     def get_all_permitted_docs(self) -> list[Document]:
-        return [doc for doc in self.docs if doc.metadata["original_resource_ref"] in set(self.query.permitted_s3_keys)]
+        return [doc for doc in self.docs if doc.metadata["uri"] in set(self.query.permitted_s3_keys)]
 
 
 def generate_test_cases(query: RedboxQuery, test_data: list[RedboxTestData], test_id: str) -> list[RedboxChatTestCase]:
