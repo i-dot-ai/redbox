@@ -4,7 +4,6 @@ from asyncio import CancelledError
 from collections.abc import Mapping, Sequence
 from typing import Any, ClassVar
 from uuid import UUID
-from itertools import groupby
 
 from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
@@ -210,14 +209,14 @@ class ChatConsumer(AsyncWebsocketConsumer):
                         file=file,
                         text=citation.page_content,
                         page_numbers=parse_page_number(citation.metadata.get("page_number")),
-                        source=Citation.Origin.USER_UPLOADED_DOCUMENT
+                        source=Citation.Origin.USER_UPLOADED_DOCUMENT,
                     )
                 else:
                     Citation.objects.create(
                         chat_message=chat_message,
                         url=citation.metadata.get("original_resource_ref"),
                         text=citation.page_content,
-                        source=Citation.Origin(citation.metadata.get("creator_type"))
+                        source=Citation.Origin(citation.metadata.get("creator_type")),
                     )
 
         if self.metadata:
@@ -275,9 +274,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         files = File.objects.filter(original_file__in=sources_by_resource_ref.keys())
         async for file in files:
             await self.send_to_client("source", {"url": str(file.url), "original_file_name": file.original_file_name})
-            self.citations.append(
-                (file, sources_by_resource_ref[file.unique_name])
-            )
+            self.citations.append((file, sources_by_resource_ref[file.unique_name]))
             handled_sources.add(file.unique_name)
 
         additional_sources = [doc for doc in response if doc.metadata["original_resource_ref"] not in handled_sources]
