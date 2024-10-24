@@ -67,7 +67,7 @@ class MetadataLoader:
 
     @staticmethod
     def merge_unstructured_metadata(
-        x: dict, y: dict, ignore: set[str] = None, max_size: int = None
+        x: dict, y: dict, ignore: set[str] | None = None, max_size: int | None = None
     ) -> dict:
         """
         Combine 2 dicts without deleting any elements. If the key is present in both,
