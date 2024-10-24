@@ -214,7 +214,7 @@ def metadata_reducer(
         return current
 
     return RequestMetadata(
-        llm_calls=sorted(list(set(current.llm_calls) | set(update.llm_calls)), key=lambda c: c.timestamp),
+        llm_calls=sorted(set(current.llm_calls) | set(update.llm_calls), key=lambda c: c.timestamp),
         selected_files_total_tokens=update.selected_files_total_tokens or current.selected_files_total_tokens,
         number_of_selected_files=update.number_of_selected_files or current.number_of_selected_files,
     )
