@@ -274,7 +274,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         for ref, sources in sources_by_resource_ref.items():
             try:
                 file = await File.objects.aget(original_file=ref)
-                payload = {"url": str(file.url), "original_file_name": file.original_file_name}
+                payload = {"url": str(file.url), "original_file_name": file.old_file_name}
             except File.DoesNotExist:
                 file = None
                 payload = {"url": ref, "original_file_name": None}

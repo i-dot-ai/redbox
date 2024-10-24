@@ -544,14 +544,14 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
     status = models.CharField(choices=StatusEnum.choices, null=False, blank=False)
     original_file = models.FileField(storage=settings.STORAGES["default"]["BACKEND"], upload_to=user_directory_path)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    original_file_name = models.TextField(max_length=2048, blank=True, null=True)
+    old_file_name = models.TextField(max_length=2048, blank=True, null=True)
     last_referenced = models.DateTimeField(blank=True, null=True)
     ingest_error = models.TextField(
         max_length=2048, blank=True, null=True, help_text="error, if any, encountered during ingest"
     )
 
     def __str__(self) -> str:  # pragma: no cover
-        return f"{self.original_file_name} {self.user}"
+        return f"{self.old_file_name} {self.user}"
 
     def save(self, *args, **kwargs):
         if not self.last_referenced:
@@ -612,7 +612,7 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
                 ClientMethod="get_object",
                 Params={
                     "Bucket": settings.AWS_STORAGE_BUCKET_NAME,
-                    "Key": self.name,
+                    "Key": self.original_file_name,
                 },
             )
             return URL(url)
@@ -624,12 +624,11 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
         return URL(self.original_file.url)
 
     @property
-    def name(self) -> str:
+    def original_file_name(self) -> str:
         # User-facing name
-        try:
-            return self.original_file_name or self.original_file.name
-        except ValueError as e:
-            logger.exception("attempt to access non-existent file %s", self.pk, exc_info=e)
+        if "/" in self.original_file.name:
+            return self.original_file.name.split("/")[1]
+        return self.old_file_name
 
     @property
     def unique_name(self) -> str:

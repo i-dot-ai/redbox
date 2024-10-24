@@ -43,7 +43,7 @@ def test_upload_view(alice, client, file_pdf_path: Path, s3_client):
 
 @pytest.mark.django_db()
 def test_document_upload_status(client, alice, file_pdf_path: Path, s3_client):
-    file_name = file_pdf_path.name
+    file_name = f"{alice}/{file_pdf_path.name}"
 
     # we begin by removing any file in minio that has this key
     s3_client.delete_object(Bucket=settings.BUCKET_NAME, Key=file_name.replace(" ", "_"))
@@ -67,6 +67,9 @@ def test_upload_view_duplicate_files(alice, bob, client, file_pdf_path: Path, s3
     previous_count = count_s3_objects(s3_client)
     client.force_login(alice)
 
+    keys = s3_client.list_objects(Bucket=settings.BUCKET_NAME, Prefix=alice.email)
+    x = s3_client.delete_keys([key.name for key in keys])
+
     with file_pdf_path.open("rb") as f:
         client.post("/upload/", {"uploadDocs": f})
         response = client.post("/upload/", {"uploadDocs": f})
@@ -74,7 +77,8 @@ def test_upload_view_duplicate_files(alice, bob, client, file_pdf_path: Path, s3
         assert response.status_code == HTTPStatus.FOUND
         assert response.url == "/documents/"
 
-        assert count_s3_objects(s3_client) == previous_count + 2
+        assert count_s3_objects(s3_client) == previous_count # no change
+        assert File.objects.order_by("-created_at")[0].unique_name.startswith(alice.email)
 
         client.force_login(bob)
         response = client.post("/upload/", {"uploadDocs": f})
@@ -82,11 +86,9 @@ def test_upload_view_duplicate_files(alice, bob, client, file_pdf_path: Path, s3
         assert response.status_code == HTTPStatus.FOUND
         assert response.url == "/documents/"
 
-        assert count_s3_objects(s3_client) == previous_count + 3
+        assert count_s3_objects(s3_client) == previous_count + 1 # no change
+        assert File.objects.order_by("-created_at")[0].unique_name.startswith(bob.email)
 
-        assert (
-            File.objects.order_by("-created_at")[0].unique_name != File.objects.order_by("-created_at")[1].unique_name
-        )
 
 
 @pytest.mark.django_db()
