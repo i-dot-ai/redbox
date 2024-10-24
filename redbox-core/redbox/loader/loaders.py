@@ -81,28 +81,25 @@ class MetadataLoader:
         :param max_size: Maximum allowed size for combined metadata (sum of lengths of values' string representation)
         :return: Merged metadata dictionary
         """
+
+        def to_list(obj):
+            if obj is None:
+                return []
+            if not isinstance(obj, list):
+                return [obj]
+            return obj
+
         if ignore is None:
             ignore = set()
 
         combined = {}
-        total_size = 0  # Track the total size of combined values
+        total_size = 0
 
+        combined_value = {}
         for key in set(x) | set(y):
-            if key in ignore:
-                continue
-
-            # Determine the value to combine
-            if key in x and key in y:
-                if isinstance(x[key], list) or isinstance(y[key], list):
-                    combined_value = list(
-                        set(x[key] + (y[key] if isinstance(y[key], list) else [y[key]]))
-                    )
-                else:
-                    combined_value = [x[key], y[key]]
-            elif key in x:
-                combined_value = x[key]
-            else:
-                combined_value = y[key]
+            x_value = to_list(x.get(key, []))
+            y_value = to_list(y.get(key, []))
+            combined_value = x_value + y_value
 
             # Calculate the size of the new value and check if it exceeds the threshold
             combined_value_size = len(str(combined_value))
@@ -110,7 +107,7 @@ class MetadataLoader:
                 break
 
             combined[key] = combined_value
-            total_size += combined_value_size  # Update the total size with the size of the new value
+            total_size += combined_value_size
 
         return combined
 
@@ -183,8 +180,6 @@ class MetadataLoader:
         Reduce the page + metadata length so it doesn't exceed maximum length 1048576.
         """
         total_length = sum(map(len, metadata))
-        for m in metadata:
-            total_length += len(m)
 
     def create_file_metadata(
         self, page_content: str, metadata: dict[str, Any]
