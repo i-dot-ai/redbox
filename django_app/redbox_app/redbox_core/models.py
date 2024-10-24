@@ -536,9 +536,13 @@ class InactiveFileError(ValueError):
         super().__init__(f"{file.pk} is inactive, status is {file.status}")
 
 
+def user_directory_path(instance, filename: str) -> str:
+    return f'{instance.user.email}/{filename}'
+
+
 class File(UUIDPrimaryKeyBase, TimeStampedModel):
     status = models.CharField(choices=StatusEnum.choices, null=False, blank=False)
-    original_file = models.FileField(storage=settings.STORAGES["default"]["BACKEND"])
+    original_file = models.FileField(storage=settings.STORAGES["default"]["BACKEND"], upload_to=user_directory_path)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     original_file_name = models.TextField(max_length=2048, blank=True, null=True)
     last_referenced = models.DateTimeField(blank=True, null=True)
