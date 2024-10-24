@@ -24,7 +24,7 @@ load_dotenv()
 
 
 def get_chat_llm(model: ChatLLMBackend, tools: list[StructuredTool] | None = None):
-    logger.info("initialising model=%s model_provider=%s tools=%s", model.name, model.provider, tools)
+    logger.debug("initialising model=%s model_provider=%s tools=%s", model.name, model.provider, tools)
     chat_model = init_chat_model(
         model=model.name,
         model_provider=model.provider,

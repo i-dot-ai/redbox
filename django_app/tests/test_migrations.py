@@ -356,3 +356,40 @@ def test_0055_citation_source_citation_url_alter_citation_file(original_file, mi
     assert new_citation.chat_message.id == chat_message.id
     assert new_citation.url is None
     assert new_citation.source == "USER UPLOADED DOCUMENT"
+
+
+def test_0056_alter_aisettings_retrieval_system_prompt_and_more(original_file, migrator):
+    old_state = migrator.apply_initial_migration(
+        ("redbox_core", "0055_citation_source_citation_url_alter_citation_file")
+    )
+
+    User = old_state.apps.get_model("redbox_core", "User")
+    user = User.objects.create(email="someone@example.com")
+
+    ChatLLMBackend = old_state.apps.get_model("redbox_core", "ChatLLMBackend")
+    chat_backend = ChatLLMBackend.objects.first()
+
+    Chat = old_state.apps.get_model("redbox_core", "Chat")
+    chat = Chat.objects.create(name="my-chat", user=user, chat_backend=chat_backend)
+
+    ChatMessage = old_state.apps.get_model("redbox_core", "ChatMessage")
+    chat_message = ChatMessage.objects.create(chat=chat)
+
+    File = old_state.apps.get_model("redbox_core", "File")
+    file = File.objects.create(
+        user=user,
+        original_file=original_file,
+        original_file_name=original_file.name,
+    )
+
+    Citation = old_state.apps.get_model("redbox_core", "Citation")
+    citation = Citation(chat_message=chat_message, file=file, source="USER UPLOADED DOCUMENT", text="hello!")
+    citation.save()
+
+    new_state = migrator.apply_tested_migration(
+        ("redbox_core", "0056_alter_aisettings_retrieval_system_prompt_and_more"),
+    )
+
+    NewCitation = new_state.apps.get_model("redbox_core", "Citation")  # noqa: N806
+    new_citation = NewCitation.objects.get(id=citation.id)
+    assert new_citation.source == "UserUploadedDocument"

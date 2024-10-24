@@ -625,16 +625,18 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
 
     @property
     def original_file_name(self) -> str:
-        if self.old_file_name:  # TODO: delete me
+        if self.old_file_name:  # delete me?
             return self.old_file_name
 
         # could have a stronger (regex?) way of stripping the users email address?
-        assert "/" in self.original_file.name
+        if "/" not in self.original_file.name:
+            msg = "expected filename to start with the user's email address"
+            raise ValueError(msg)
         return self.original_file.name.split("/")[1]
 
     @property
     def unique_name(self) -> str:
-        # TODO: merge with original_file_name above?
+        # merge with original_file_name above?
         # Name used when processing files that exist in S3
         if self.status in INACTIVE_STATUSES:
             logger.exception("Attempt to access unique_name for inactive file %s with status %s", self.pk, self.status)
@@ -740,7 +742,7 @@ class ChatRoleEnum(models.TextChoices):
 class Citation(UUIDPrimaryKeyBase, TimeStampedModel):
     class Origin(models.TextChoices):
         WIKIPEDIA = "Wikipedia", _("wikipedia")
-        USER_UPLOADED_DOCUMENT = "USER UPLOADED DOCUMENT", _("user uploaded document")
+        USER_UPLOADED_DOCUMENT = "UserUploadedDocument", _("user uploaded document")
         GOV_UK = "GOV.UK", _("gov.uk")
 
     file = models.ForeignKey(

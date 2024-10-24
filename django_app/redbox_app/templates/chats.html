@@ -128,7 +128,7 @@
                 role = message.role,
                 route = message.route,
                 text = message.text,
-                source_files = message.source_files.all()
+                citations = message.citation_set.all()
               ) }}
 
               {# If we want to collect feedback on SSR messages

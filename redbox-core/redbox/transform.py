@@ -7,7 +7,13 @@ from langchain_core.documents import Document
 from langchain_core.messages import ToolCall
 from langchain_core.runnables import RunnableLambda
 
-from redbox.models.chain import DocumentState, LLMCallMetadata, RedboxState, RequestMetadata, ToolState
+from redbox.models.chain import (
+    DocumentState,
+    LLMCallMetadata,
+    RedboxState,
+    RequestMetadata,
+    ToolState,
+)
 from redbox.models.graph import RedboxEventType
 
 

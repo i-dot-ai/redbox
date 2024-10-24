@@ -10,6 +10,7 @@
                 "--port", "8080",
             ],
             "envFile": "${workspaceFolder}/../.env",
+            "django": true,
             "env": {
                 "MINIO_HOST": "localhost",
                 "POSTGRES_HOST": "localhost",
