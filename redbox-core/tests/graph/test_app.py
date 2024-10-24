@@ -2,6 +2,7 @@ import copy
 from typing import Any
 from uuid import uuid4
 
+from cv2 import exp
 import pytest
 from langchain_core.documents import Document
 from langchain_core.messages import AIMessage
@@ -347,7 +348,7 @@ TEST_CASES = [
                         ),
                         "answer",
                         StructuredResponseWithCitations(
-                            answer="AI is a lie",
+                            answer="AI is a lie, here is some more blurb about why. It's hard to believe but we're mostly making this up",
                             citations=[
                                 Citation(
                                     text_in_answer="AI is a lie I made up",
@@ -356,13 +357,14 @@ TEST_CASES = [
                                             source="SomeAIGuy",
                                             document_name="http://localhost/someaiguy.html",
                                             highlighted_text_in_source="I lied about AI",
+                                            page_numbers=[1]
                                         )
                                     ],
                                 )
                             ],
                         ).model_dump_json(),
                     ],
-                    expected_text="AI is a lie",
+                    expected_text="AI is a lie, here is some more blurb about why. It's hard to believe but we're mostly making this up",
                     expected_citations=[],
                     expected_route=ChatRoute.gadget,
                 ),
@@ -534,7 +536,7 @@ async def test_streaming(test: RedboxChatTestCase, env: Settings, mocker: Mocker
 
     # Bit of a bodge to retain the ability to check that the LLM streaming is working in most cases
     if not route_name.startswith("error"):
-        # assert len(token_events) > 1, f"Expected tokens as a stream. Received: {token_events}" #Temporarily turning off streaming check
+        assert len(token_events) > 1, f"Expected tokens as a stream. Received: {token_events}" #Temporarily turning off streaming check
         assert len(metadata_events) == len(
             test_case.test_data.llm_responses
         ), f"Expected {len(test_case.test_data.llm_responses)} metadata events. Received {len(metadata_events)}"
@@ -555,9 +557,16 @@ async def test_streaming(test: RedboxChatTestCase, env: Settings, mocker: Mocker
         metadata_events,
     )
 
+    expected_text = test.test_data.expected_text if test.test_data.expected_text is not None else test.test_data.llm_responses[-1]
+    expected_text = expected_text.content if isinstance(expected_text, AIMessage) else expected_text
+
     assert (
-        final_state["text"] == test.test_data.expected_text if test.test_data.expected_text else llm_response
-    ), f"Expected LLM response: '{llm_response}'. Received '{final_state["text"]}'"
+        final_state["text"] == llm_response
+    ), f"Text response from streaming: '{llm_response}' did not match final state text '{final_state["text"]}'"
+    assert (
+        final_state["text"] == expected_text
+    ), f"Expected text: '{expected_text}' did not match received text '{final_state["text"]}'"
+    
     assert (
         final_state.get("route_name") == test_case.test_data.expected_route
     ), f"Expected Route: '{ test_case.test_data.expected_route}'. Received '{final_state["route_name"]}'"

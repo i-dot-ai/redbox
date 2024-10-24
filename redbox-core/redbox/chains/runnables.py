@@ -115,15 +115,16 @@ def build_llm_chain(
     Permits both invoke and astream_events.
     """
     model_name = getattr(llm, "model_name", "unknown-model")
-    _llm = llm
+    _llm = llm.with_config(tags=["response_flag"]) if final_response_chain else llm
     _output_parser = output_parser if output_parser else StrOutputParser()
+
     return (
         build_chat_prompt_from_messages_runnable(prompt_set, partial_variables={"format_arg": format_instructions})
         | {
             "text_and_tools": (
                 _llm
                 | {
-                    "parsed_response": _output_parser | (lambda s: "" if s is None else s),
+                    "parsed_response": _output_parser,
                     "tool_calls": (RunnableLambda(lambda r: r.tool_calls) | tool_calls_to_toolstate),
                 }
             ),
@@ -146,7 +147,6 @@ def build_llm_chain(
                 }
                 | to_request_metadata
             ),
-            send_tokens=(itemgetter("text") | (send_token_events if final_response_chain else RunnablePassthrough())),
         )
     )
 
