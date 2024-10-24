@@ -8,7 +8,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('redbox_core', '0055_citation_source_citation_url_alter_citation_file'),
+        ('redbox_core', '0056_alter_aisettings_retrieval_system_prompt_and_more'),
     ]
 
     operations = [

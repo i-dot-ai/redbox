@@ -12,7 +12,7 @@ def change_citation_source(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('redbox_core', '0056_alter_file_original_file'),
+        ('redbox_core', '0055_citation_source_citation_url_alter_citation_file'),
     ]
 
     operations = [
