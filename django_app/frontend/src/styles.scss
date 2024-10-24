@@ -78,14 +78,12 @@ upload-button {
 }
 
 /* Citations page */
-.rb-citations {
-  list-style-type: none;
-  margin: 0;
-  padding: 0;
+.rb-citations__list {
+  padding-left: 1rem;
 }
 .rb-citations__item {
   border-top: 1px solid #e5e7eb;
-  padding: 1rem 0;
+  padding: 2rem 0 1.5rem 0;
 }
 .rb-citations__item:first-child {
   border-top: none;
@@ -127,3 +125,9 @@ upload-button {
 @import "./chat-styles.scss";
 
 @import "./profile-overlay-styles.scss";
+
+
+/* To move to i.AI design system */
+.iai-chat-bubbles__sources-link:visited {
+  color: var(--iai-product-colour, var(--iai-colour-brand));
+}
