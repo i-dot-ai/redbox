@@ -182,7 +182,7 @@ class MetadataLoader:
         """
         Reduce the page + metadata length so it doesn't exceed maximum length 1048576.
         """
-        total_length = 0
+        total_length = sum(map(len, metadata))
         for m in metadata:
             total_length += len(m)
 
