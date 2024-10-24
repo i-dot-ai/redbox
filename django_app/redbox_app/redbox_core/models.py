@@ -625,13 +625,16 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
 
     @property
     def original_file_name(self) -> str:
-        # User-facing name
-        if "/" in self.original_file.name:
-            return self.original_file.name.split("/")[1]
-        return self.old_file_name
+        if self.old_file_name:  # TODO: delete me
+            return self.old_file_name
+
+        # could have a stronger (regex?) way of stripping the users email address?
+        assert "/" in self.original_file.name
+        return self.original_file.name.split("/")[1]
 
     @property
     def unique_name(self) -> str:
+        # TODO: merge with original_file_name above?
         # Name used when processing files that exist in S3
         if self.status in INACTIVE_STATUSES:
             logger.exception("Attempt to access unique_name for inactive file %s with status %s", self.pk, self.status)
