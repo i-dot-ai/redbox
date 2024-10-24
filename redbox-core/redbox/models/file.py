@@ -26,7 +26,7 @@ class ChunkMetadata(BaseModel):
     index: int = 0  # The order of this chunk in the original resource
     created_datetime: datetime.datetime = datetime.datetime.now(datetime.UTC)
     chunk_resolution: ChunkResolution = ChunkResolution.normal
-    creator_type: Literal["wikipedia", "uploaded_file"]
+    creator_type: Literal["Wikipedia", "UserUploadedDocument"]
     uri: str = Field(validation_alias=AliasChoices("uri", "file_name"))  # URL or file name
     token_count: int
 
@@ -40,4 +40,4 @@ class UploadedFileMetadata(ChunkMetadata):
     name: str
     description: str
     keywords: list[str]
-    creator_type: Literal["uploaded_file"] = "uploaded_file"
+    creator_type: Literal["Wikipedia", "UserUploadedDocument"] = "UserUploadedDocument"

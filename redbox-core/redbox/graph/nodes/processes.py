@@ -17,8 +17,19 @@ from redbox.chains.components import get_chat_llm, get_tokeniser
 from redbox.chains.runnables import CannedChatLLM, build_llm_chain
 from redbox.graph.nodes.tools import has_injected_state, is_valid_tool
 from redbox.models import ChatRoute
-from redbox.models.chain import DocumentState, PromptSet, RedboxState, RequestMetadata, merge_redbox_state_updates
-from redbox.models.graph import ROUTE_NAME_TAG, SOURCE_DOCUMENTS_TAG, RedboxActivityEvent, RedboxEventType
+from redbox.models.chain import (
+    DocumentState,
+    PromptSet,
+    RedboxState,
+    RequestMetadata,
+    merge_redbox_state_updates,
+)
+from redbox.models.graph import (
+    ROUTE_NAME_TAG,
+    SOURCE_DOCUMENTS_TAG,
+    RedboxActivityEvent,
+    RedboxEventType,
+)
 from redbox.transform import combine_documents, flatten_document_state
 
 log = logging.getLogger(__name__)
@@ -131,6 +142,7 @@ def build_merge_pattern(
 def build_stuff_pattern(
     prompt_set: PromptSet,
     output_parser: Runnable = None,
+    format_instructions: str | None = None,
     tools: list[StructuredTool] | None = None,
     final_response_chain: bool = False,
 ) -> Runnable[RedboxState, dict[str, Any]]:
@@ -149,6 +161,7 @@ def build_stuff_pattern(
                 prompt_set=prompt_set,
                 llm=llm,
                 output_parser=output_parser,
+                format_instructions=format_instructions,
                 final_response_chain=final_response_chain,
             ).stream(state)
         ]
@@ -280,10 +293,9 @@ def build_tool_pattern(
 
                 # Deal with InjectedState
                 args = tool_call["args"].copy()
+                log.info(f"Invoking tool {tool_call['name']} with args {args}")
                 if has_injected_state(tool):
                     args["state"] = state
-
-                log.info(f"Invoking tool {tool_call['name']} with args {args}")
 
                 # Invoke the tool
                 try:
@@ -291,6 +303,7 @@ def build_tool_pattern(
                     tool_called_state_update = {"tool_calls": {tool_id: {"called": True, "tool": tool_call}}}
                     state_updates.append(result_state_update | tool_called_state_update)
                 except Exception as e:
+                    raise e
                     state_updates.append({"tool_calls": {tool_id: {"called": True, "tool": tool_call}}})
                     log.warning(f"Error invoking tool {tool_call['name']}: {e} \n")
                     return {}
@@ -314,7 +327,9 @@ def clear_documents_process(state: RedboxState) -> dict[str, Any]:
 
 def report_sources_process(state: RedboxState) -> None:
     """A Runnable which reports the documents in the state as sources."""
-    if document_state := state.get("documents"):
+    if citations_state := state.get("citations"):
+        dispatch_custom_event(RedboxEventType.on_citations_report, citations_state)
+    elif document_state := state.get("documents"):
         dispatch_custom_event(RedboxEventType.on_source_report, flatten_document_state(document_state))
 
 
@@ -335,7 +350,7 @@ def build_log_node(message: str) -> Runnable[RedboxState, dict[str, Any]]:
                         group_id: {doc_id: d.metadata for doc_id, d in group_documents.items()}
                         for group_id, group_documents in state["documents"]
                     },
-                    "text": state["text"] if len(state["text"]) < 32 else f"{state['text'][:29]}...",
+                    "text": (state["text"] if len(state["text"]) < 32 else f"{state['text'][:29]}..."),
                     "route": state["route_name"],
                     "message": message,
                 }

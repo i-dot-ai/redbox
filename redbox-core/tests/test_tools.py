@@ -10,9 +10,9 @@ from langgraph.prebuilt import InjectedState
 
 from redbox.graph.nodes.tools import (
     build_search_documents_tool,
+    build_search_wikipedia_tool,
     has_injected_state,
     is_valid_tool,
-    build_search_wikipedia_tool,
 )
 from redbox.models import Settings
 from redbox.models.chain import AISettings, RedboxQuery, RedboxState
@@ -116,7 +116,8 @@ def test_search_documents_tool(
         {
             "query": stored_file_parameterised.query.question,
             "state": RedboxState(
-                request=stored_file_parameterised.query, text=stored_file_parameterised.query.question
+                request=stored_file_parameterised.query,
+                text=stored_file_parameterised.query.question,
             ),
         }
     )
@@ -173,4 +174,4 @@ def test_wikipedia_tool():
         assert document.page_content != ""
         metadata = ChunkMetadata.model_validate(document.metadata)
         assert urlparse(metadata.uri).hostname == "en.wikipedia.org"
-        assert metadata.creator_type == "wikipedia"
+        assert metadata.creator_type == "Wikipedia"

@@ -9,7 +9,8 @@ class RedboxEventType(StrEnum):
     on_metadata_generation = "on_metadata_generation"
     response_tokens = "response_tokens"
     activity = "activity"
-    on_source_report = "on_source_report"
+    on_source_report = "on_source_report"  # Previous 'documents used' sources
+    on_citations_report = "on_citations_report"  # New footnote level citations
 
 
 class RedboxActivityEvent(BaseModel):
