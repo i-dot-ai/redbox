@@ -3,7 +3,6 @@ import logging
 import os
 from functools import cache
 
-import pydantic
 import tiktoken
 
 from dotenv import load_dotenv
@@ -13,7 +12,6 @@ from langchain_core.runnables import Runnable
 from langchain_core.utils import convert_to_secret_str
 from langchain_elasticsearch import ElasticsearchRetriever
 from langchain_openai.embeddings import AzureOpenAIEmbeddings, OpenAIEmbeddings
-from langchain_core.output_parsers import PydanticOutputParser
 
 
 from redbox.chains.parser import StreamingJsonOutputParser
@@ -119,9 +117,8 @@ def get_structured_response_with_citations_parser() -> tuple[Runnable, str]:
     while streaming the answer tokens
     Also returns the format instructions for this structure for use in the prompt
     """
-    #pydantic_parser = PydanticOutputParser(pydantic_object=StructuredResponseWithCitations)
+    # pydantic_parser = PydanticOutputParser(pydantic_object=StructuredResponseWithCitations)
     parser = StreamingJsonOutputParser(
-        name_of_streamed_field="answer",
-        pydantic_schema_object=StructuredResponseWithCitations
+        name_of_streamed_field="answer", pydantic_schema_object=StructuredResponseWithCitations
     )
     return (parser, parser.get_format_instructions())
