@@ -397,4 +397,3 @@ def test_0056_alter_aisettings_retrieval_system_prompt_and_more(original_file, m
     NewCitation = new_state.apps.get_model("redbox_core", "Citation")  # noqa: N806
     new_citation = NewCitation.objects.get(id=citation.id)
     assert new_citation.source == "UserUploadedDocument"
-    assert new_citation.save()
