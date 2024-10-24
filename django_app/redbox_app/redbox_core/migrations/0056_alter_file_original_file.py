@@ -17,4 +17,9 @@ class Migration(migrations.Migration):
             name='original_file',
             field=models.FileField(storage=storages.backends.s3.S3Storage, upload_to=redbox_app.redbox_core.models.user_directory_path),
         ),
+        migrations.RenameField(
+            model_name='file',
+            old_name='original_file_name',
+            new_name='old_file_name',
+        ),
     ]

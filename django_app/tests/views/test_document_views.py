@@ -64,31 +64,42 @@ def test_document_upload_status(client, alice, file_pdf_path: Path, s3_client):
 
 @pytest.mark.django_db()
 def test_upload_view_duplicate_files(alice, bob, client, file_pdf_path: Path, s3_client):
+    # delete all alice's files
+    for key in s3_client.list_objects(Bucket=settings.BUCKET_NAME, Prefix=alice.email).get("Contents", []):
+        s3_client.delete_object(Bucket=settings.BUCKET_NAME, Key=key["Key"])
+
+    # delete all bob's files
+    for key in s3_client.list_objects(Bucket=settings.BUCKET_NAME, Prefix=bob.email).get("Contents", []):
+        s3_client.delete_object(Bucket=settings.BUCKET_NAME, Key=key["Key"])
+
     previous_count = count_s3_objects(s3_client)
+
+    def upload_file():
+        with file_pdf_path.open("rb") as f:
+            client.post("/upload/", {"uploadDocs": f})
+            response = client.post("/upload/", {"uploadDocs": f})
+
+            assert response.status_code == HTTPStatus.FOUND
+            assert response.url == "/documents/"
+
+            return File.objects.order_by("-created_at")[0]
+
     client.force_login(alice)
+    alices_file = upload_file()
 
-    keys = s3_client.list_objects(Bucket=settings.BUCKET_NAME, Prefix=alice.email)
-    x = s3_client.delete_keys([key.name for key in keys])
+    assert count_s3_objects(s3_client) == previous_count + 1  # new file added
+    assert alices_file.unique_name.startswith(alice.email)
 
-    with file_pdf_path.open("rb") as f:
-        client.post("/upload/", {"uploadDocs": f})
-        response = client.post("/upload/", {"uploadDocs": f})
+    client.force_login(bob)
+    bobs_file = upload_file()
 
-        assert response.status_code == HTTPStatus.FOUND
-        assert response.url == "/documents/"
+    assert count_s3_objects(s3_client) == previous_count + 2  # new file added
+    assert bobs_file.unique_name.startswith(bob.email)
 
-        assert count_s3_objects(s3_client) == previous_count # no change
-        assert File.objects.order_by("-created_at")[0].unique_name.startswith(alice.email)
+    bobs_new_file = upload_file()
 
-        client.force_login(bob)
-        response = client.post("/upload/", {"uploadDocs": f})
-
-        assert response.status_code == HTTPStatus.FOUND
-        assert response.url == "/documents/"
-
-        assert count_s3_objects(s3_client) == previous_count + 1 # no change
-        assert File.objects.order_by("-created_at")[0].unique_name.startswith(bob.email)
-
+    assert count_s3_objects(s3_client) == previous_count + 2  # no change, duplicate file
+    assert bobs_new_file.unique_name == bobs_file.unique_name
 
 
 @pytest.mark.django_db()

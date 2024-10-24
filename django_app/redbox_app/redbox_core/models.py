@@ -537,7 +537,7 @@ class InactiveFileError(ValueError):
 
 
 def user_directory_path(instance, filename: str) -> str:
-    return f'{instance.user.email}/{filename}'
+    return f"{instance.user.email}/{filename}"
 
 
 class File(UUIDPrimaryKeyBase, TimeStampedModel):
