@@ -29,7 +29,7 @@
                   {% endif %}
                 </h3>
                 {% if citation.page_numbers %}
-                  <div class="govuk-body-s govuk-!-margin-top-3">Page number(s): {{ citation.page_numbers | join(", ") }}</div>
+                  <div class="govuk-body-s govuk-!-margin-top-3"><strong>Page number(s):</strong> {{ citation.page_numbers | join(", ") }}</div>
                 {% endif %}
                 <markdown-converter class="iai-chat-bubble__text">{{ citation.text }}</markdown-converter>
               </li>
