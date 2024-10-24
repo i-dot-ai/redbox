@@ -4,6 +4,7 @@ from langchain_core.vectorstores import VectorStoreRetriever
 from langgraph.graph import END, START, StateGraph
 from langgraph.graph.graph import CompiledGraph
 
+
 from redbox.chains.runnables import build_self_route_output_parser
 from redbox.graph.edges import (
     build_documents_bigger_than_context_conditional,

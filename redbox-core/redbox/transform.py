@@ -57,13 +57,13 @@ def structure_documents_by_file_name(docs: list[Document]) -> DocumentState:
     # Group file_name to UUID lookup
     group_file_lookup = {}
     for d in docs:
-        file_name = d.metadata["original_resource_ref"]
+        file_name = d.metadata["uri"]
         if file_name not in group_file_lookup:
             group_file_lookup[file_name] = uuid5(NAMESPACE_DNS, file_name)
 
     # Group documents by their file_name's UUID
     for d in docs:
-        group_uuid = group_file_lookup.get(d.metadata["original_resource_ref"])
+        group_uuid = group_file_lookup.get(d.metadata["uri"])
         doc_dict = {d.metadata["uuid"]: d}
 
         result[group_uuid] = (result.get(group_uuid) or doc_dict) | doc_dict
@@ -93,7 +93,7 @@ def structure_documents_by_group_and_indices(docs: list[Document]) -> DocumentSt
     current_filename: str | None = None
 
     for d in docs:
-        is_not_same_filename = d.metadata["original_resource_ref"] != current_filename
+        is_not_same_filename = d.metadata["uri"] != current_filename
         is_not_none_filename = current_filename is not None
         is_not_consecutive = d.metadata["index"] - 1 != (
             current_group_indices[-1] if current_group_indices else d.metadata["index"]
@@ -108,7 +108,7 @@ def structure_documents_by_group_and_indices(docs: list[Document]) -> DocumentSt
 
         current_group[d.metadata["uuid"]] = d
         current_group_indices.append(d.metadata["index"])
-        current_filename = d.metadata["original_resource_ref"]
+        current_filename = d.metadata["uri"]
 
     # Handle the last group
     if current_group:
@@ -198,7 +198,7 @@ def sort_documents(documents: list[Document]) -> list[Document]:
     def is_consecutive(a: Document, b: Document) -> bool:
         """True if two documents have consecutive indices."""
         within_one = abs(a.metadata["index"] - b.metadata["index"]) <= 1
-        return a.metadata["original_resource_ref"] == b.metadata["original_resource_ref"] and within_one
+        return a.metadata["uri"] == b.metadata["uri"] and within_one
 
     def max_score(group: list[Document]) -> float:
         """Returns the maximum score in a group of documents."""
@@ -230,13 +230,10 @@ def sort_documents(documents: list[Document]) -> list[Document]:
         return sorted_blocks
 
     # Step 1: Sort by file_name and then index to prepare for grouping consecutive documents
-    documents_sorted = sorted(
-        documents,
-        key=lambda d: (d.metadata["original_resource_ref"], d.metadata["index"]),
-    )
+    documents_sorted = sorted(documents, key=lambda d: (d.metadata["uri"], d.metadata["index"]))
 
     # Step 2: Group by file_name and handle consecutive indices
-    grouped_by_file = itertools.groupby(documents_sorted, key=lambda d: d.metadata["original_resource_ref"])
+    grouped_by_file = itertools.groupby(documents_sorted, key=lambda d: d.metadata["uri"])
 
     # Process each group
     all_sorted_blocks = []

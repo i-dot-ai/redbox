@@ -24,7 +24,7 @@ langchain-elasticsearch = ">0.2.2"
 pytest-dotenv = "^0.5.2"
 kneed = "^0.8.5"
 langgraph = "^0.2.39"
-langchain-aws = ">0.1.17"
+langchain-aws = "^0.2.3"
 wikipedia = "^1.4.0"
 opensearch-py = "^2.7.1"
 

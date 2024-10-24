@@ -1,6 +1,7 @@
 import json
 import logging
 from asyncio import CancelledError
+from collections import defaultdict
 from collections.abc import Mapping, Sequence
 from typing import Any, ClassVar, Tuple
 from uuid import UUID
@@ -79,6 +80,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         """Receive & respond to message from browser websocket."""
         self.full_reply = []
         self.citations = []
+        self.external_citations = []
         self.route = None
 
         data = json.loads(text_data or bytes_data)
@@ -266,44 +268,40 @@ class ChatConsumer(AsyncWebsocketConsumer):
         self.activities.append(RedboxActivityEvent.model_validate(response))
 
     async def handle_documents(self, response: list[Document]):
-        sources_by_resource_ref = {}
+        sources_by_resource_ref: dict[str, Document] = defaultdict(list)
         for document in response:
-            ref = document.metadata.get("original_resource_ref")
-            docs_from_source = sources_by_resource_ref.get(ref, [])
-            docs_from_source.append(document)
-            sources_by_resource_ref[ref] = docs_from_source
-        handled_sources = set()
-        files = File.objects.filter(original_file__in=set(sources_by_resource_ref.keys()))
-        async for file in files:
-            await self.send_to_client("source", {"url": str(file.url), "original_file_name": file.original_file_name})
-            citation_docs = sources_by_resource_ref[file.original_file]
-            for cited_chunk in citation_docs:
-                self.citations.append((file, Source(
+            ref = document.metadata.get("uri")
+            sources_by_resource_ref[ref].append(document)
+
+        for ref, sources in sources_by_resource_ref.items():
+            try:
+                file = await File.objects.aget(original_file=ref)
+                citation_docs = sources_by_resource_ref[file.original_file]
+                payload = {"url": str(file.url), "original_file_name": file.original_file_name}
+                sources = [
+                    Source(
                         source=str(file.url),
                         source_type=Citation.Origin.USER_UPLOADED_DOCUMENT,
                         document_name=file.original_file_name,
                         highlighted_text_in_source=cited_chunk.page_content,
                         page_numbers=parse_page_number(cited_chunk.metadata.get("page_number"))
-                    ))
-                )
-            handled_sources.add(file.unique_name)
+                    )
+                    for cited_chunk in citation_docs
+                ]
+            except File.DoesNotExist:
+                file = None
+                payload = {"url": ref, "original_file_name": None}
+                sources = [Source(
+                    source=ref.metadata["uri"],
+                    source_type=ref.metadata["creator_type"],
+                    document_name=ref.metadata["uri"].split("/")[-1],
+                    highlighted_text_in_source=ref.page_content,
+                    page_numbers=parse_page_number(ref.metadata.get("page_number"))
+                )]
 
-        additional_sources = {
-            doc.metadata["original_resource_ref"]:doc 
-            for doc in response if doc.metadata["original_resource_ref"] not in handled_sources
-        }.values()
-        for additional_source in additional_sources:
-            url = additional_source.metadata["original_resource_ref"]
-            source_type = additional_source.metadata.get("creator_type", "Unknown")
-            await self.send_to_client("source", {"url": url, "original_file_name": f"{source_type} - {url.split("/")[-1]}"})
-            self.citations.append((None, Source(
-                    source=url,
-                    source_type=source_type,
-                    document_name=url.split("/")[-1],
-                    highlighted_text_in_source=additional_source.page_content,
-                    page_numbers=parse_page_number(additional_source.metadata.get("page_number", 1))
-                ))
-            )
+            await self.send_to_client("source", payload)
+            for s in sources:
+                self.citations.append((file, s))
 
     async def handle_citations(self, citations: list[AICitation]):
         for c in citations:

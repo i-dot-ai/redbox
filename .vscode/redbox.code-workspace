@@ -5,13 +5,10 @@
 			"path": "../django_app"
 		},
 		{
-<<<<<<< Updated upstream
-=======
 			"name": "streamlit_app",
 			"path": "../streamlit_app"
 		},
 		{
->>>>>>> Stashed changes
 			"name": "Redbox Core",
 			"path": "../redbox-core"
 		},
