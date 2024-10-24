@@ -84,21 +84,21 @@ class AISettings(BaseModel):
 
 
 class Source(BaseModel):
-    source: str = Field(description="URL or reference to the source")
+    source: str = Field(description="URL or reference to the source", default="")
     source_type: str = Field(description="CreatorType of tool", default="Unknown")
     document_name: str = ""
     highlighted_text_in_source: str = ""
-    page_numbers: list[int] = Field(description="Page Number in document the highlighted text is on", default=1)
+    page_numbers: list[int] = Field(description="Page Number in document the highlighted text is on", default=[1])
 
 
 class Citation(BaseModel):
-    text_in_answer: str
-    sources: list[Source]
+    text_in_answer: str = ""
+    sources: list[Source] = Field(default_factory=list)
 
 
 class StructuredResponseWithCitations(BaseModel):
-    answer: str = Field(description="Markdown structured answer to the query")
-    citations: list[Citation]
+    answer: str = Field(description="Markdown structured answer to the query", default="")
+    citations: list[Citation] = Field(default_factory=list)
 
 
 class DocumentState(TypedDict):
@@ -214,7 +214,7 @@ def metadata_reducer(
         return current
 
     return RequestMetadata(
-        llm_calls=sorted(list(set(current.llm_calls) | set(update.llm_calls)), key=lambda c: c.timestamp),
+        llm_calls=sorted(set(current.llm_calls) | set(update.llm_calls), key=lambda c: c.timestamp),
         selected_files_total_tokens=update.selected_files_total_tokens or current.selected_files_total_tokens,
         number_of_selected_files=update.number_of_selected_files or current.number_of_selected_files,
     )

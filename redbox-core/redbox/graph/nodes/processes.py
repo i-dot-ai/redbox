@@ -303,7 +303,6 @@ def build_tool_pattern(
                     tool_called_state_update = {"tool_calls": {tool_id: {"called": True, "tool": tool_call}}}
                     state_updates.append(result_state_update | tool_called_state_update)
                 except Exception as e:
-                    raise e
                     state_updates.append({"tool_calls": {tool_id: {"called": True, "tool": tool_call}}})
                     log.warning(f"Error invoking tool {tool_call['name']}: {e} \n")
                     return {}

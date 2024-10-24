@@ -8,15 +8,18 @@ import tiktoken
 from dotenv import load_dotenv
 from langchain_core.embeddings import Embeddings, FakeEmbeddings
 from langchain_core.tools import StructuredTool
+from langchain_core.runnables import Runnable
 from langchain_core.utils import convert_to_secret_str
 from langchain_elasticsearch import ElasticsearchRetriever
 from langchain_openai.embeddings import AzureOpenAIEmbeddings, OpenAIEmbeddings
 
+
+from redbox.chains.parser import StreamingJsonOutputParser
 from redbox.models.settings import Settings
 from redbox.retriever import AllElasticsearchRetriever, ParameterisedElasticsearchRetriever, MetadataRetriever
 from langchain_community.embeddings import BedrockEmbeddings
 from langchain.chat_models import init_chat_model
-from redbox.models.chain import ChatLLMBackend
+from redbox.models.chain import ChatLLMBackend, StructuredResponseWithCitations
 
 
 logger = logging.getLogger(__name__)
@@ -106,3 +109,16 @@ def get_metadata_retriever(env: Settings):
         es_client=env.elasticsearch_client(),
         index_name=env.elastic_chunk_alias,
     )
+
+
+def get_structured_response_with_citations_parser() -> tuple[Runnable, str]:
+    """
+    Returns the output parser (as a runnable) for creating the StructuredResponseWithCitations object
+    while streaming the answer tokens
+    Also returns the format instructions for this structure for use in the prompt
+    """
+    # pydantic_parser = PydanticOutputParser(pydantic_object=StructuredResponseWithCitations)
+    parser = StreamingJsonOutputParser(
+        name_of_streamed_field="answer", pydantic_schema_object=StructuredResponseWithCitations
+    )
+    return (parser, parser.get_format_instructions())
