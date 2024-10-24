@@ -160,7 +160,7 @@ class MetadataLoader:
 
             # Get whatever metadata we can from processed document
             doc_metadata = self.get_doc_metadata(
-                chunks=elements, n=3, ignore=None, max_size=1048576 - len(first_n)
+                chunks=elements, n=3, ignore=None, max_size=524288 - len(first_n)
             )
 
             # Generate new metadata
@@ -174,12 +174,6 @@ class MetadataLoader:
                 else:
                     # missing keys
                     self.metadata = self.default_metadata
-
-    def reduce_metadata(page_content: str, metadata: dict[str, Any]):
-        """
-        Reduce the page + metadata length so it doesn't exceed maximum length 1048576.
-        """
-        total_length = sum(map(len, metadata))
 
     def create_file_metadata(
         self, page_content: str, metadata: dict[str, Any]
