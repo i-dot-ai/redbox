@@ -10,7 +10,16 @@ from pytest_mock import MockerFixture
 from tiktoken.core import Encoding
 
 from redbox import Redbox
-from redbox.models.chain import AISettings, Citation, StructuredResponseWithCitations, RedboxQuery, RedboxState, RequestMetadata, Source, metadata_reducer
+from redbox.models.chain import (
+    AISettings,
+    Citation,
+    StructuredResponseWithCitations,
+    RedboxQuery,
+    RedboxState,
+    RequestMetadata,
+    Source,
+    metadata_reducer,
+)
 from redbox.models.chat import ChatRoute, ErrorRoute
 from redbox.models.file import ChunkResolution
 from redbox.models.graph import RedboxActivityEvent
@@ -338,18 +347,19 @@ TEST_CASES = [
                         ),
                         "answer",
                         StructuredResponseWithCitations(
-                            answer="AI is a lie", 
+                            answer="AI is a lie",
                             citations=[
                                 Citation(
-                                    text_in_answer="AI is a lie I made up", 
+                                    text_in_answer="AI is a lie I made up",
                                     sources=[
                                         Source(
-                                            source="SomeAIGuy", 
+                                            source="SomeAIGuy",
                                             document_name="http://localhost/someaiguy.html",
-                                            highlighted_text_in_source="I lied about AI"
-                                        )]
+                                            highlighted_text_in_source="I lied about AI",
+                                        )
+                                    ],
                                 )
-                            ]
+                            ],
                         ).model_dump_json(),
                     ],
                     expected_text="AI is a lie",
@@ -524,7 +534,7 @@ async def test_streaming(test: RedboxChatTestCase, env: Settings, mocker: Mocker
 
     # Bit of a bodge to retain the ability to check that the LLM streaming is working in most cases
     if not route_name.startswith("error"):
-        #assert len(token_events) > 1, f"Expected tokens as a stream. Received: {token_events}" #Temporarily turning off streaming check
+        # assert len(token_events) > 1, f"Expected tokens as a stream. Received: {token_events}" #Temporarily turning off streaming check
         assert len(metadata_events) == len(
             test_case.test_data.llm_responses
         ), f"Expected {len(test_case.test_data.llm_responses)} metadata events. Received {len(metadata_events)}"

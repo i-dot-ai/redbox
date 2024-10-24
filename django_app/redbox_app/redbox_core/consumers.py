@@ -3,7 +3,7 @@ import logging
 from asyncio import CancelledError
 from collections import defaultdict
 from collections.abc import Mapping, Sequence
-from typing import Any, ClassVar, Tuple
+from typing import Any, ClassVar
 from uuid import UUID
 
 from channels.db import database_sync_to_async
@@ -24,8 +24,8 @@ from redbox.models.chain import (
     RedboxQuery,
     RedboxState,
     RequestMetadata,
+    Source,
     metadata_reducer,
-    Source
 )
 from redbox.models.chain import Citation as AICitation
 from redbox.models.graph import RedboxActivityEvent
@@ -44,7 +44,6 @@ from redbox_app.redbox_core.models import (
 from redbox_app.redbox_core.models import (
     AISettings as AISettingsModel,
 )
-from tests.conftest import original_file
 
 User = get_user_model()
 OptFileSeq = Sequence[File] | None
@@ -145,7 +144,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         )
 
         try:
-            response = await self.redbox.run(
+            await self.redbox.run(
                 state,
                 response_tokens_callback=self.handle_text,
                 route_name_callback=self.handle_route,
@@ -154,8 +153,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 metadata_tokens_callback=self.handle_metadata,
                 activity_event_callback=self.handle_activity,
             )
-
-            logger.info(f"Completed Request: {response}")
 
             message = await self.save_ai_message(
                 session,
@@ -276,31 +273,32 @@ class ChatConsumer(AsyncWebsocketConsumer):
         for ref, sources in sources_by_resource_ref.items():
             try:
                 file = await File.objects.aget(original_file=ref)
-                citation_docs = sources_by_resource_ref[file.original_file]
                 payload = {"url": str(file.url), "original_file_name": file.original_file_name}
-                sources = [
+                response_sources = [
                     Source(
                         source=str(file.url),
                         source_type=Citation.Origin.USER_UPLOADED_DOCUMENT,
                         document_name=file.original_file_name,
                         highlighted_text_in_source=cited_chunk.page_content,
-                        page_numbers=parse_page_number(cited_chunk.metadata.get("page_number"))
+                        page_numbers=parse_page_number(cited_chunk.metadata.get("page_number")),
                     )
-                    for cited_chunk in citation_docs
+                    for cited_chunk in sources
                 ]
             except File.DoesNotExist:
                 file = None
                 payload = {"url": ref, "original_file_name": None}
-                sources = [Source(
-                    source=ref.metadata["uri"],
-                    source_type=ref.metadata["creator_type"],
-                    document_name=ref.metadata["uri"].split("/")[-1],
-                    highlighted_text_in_source=ref.page_content,
-                    page_numbers=parse_page_number(ref.metadata.get("page_number"))
-                )]
+                response_sources = [
+                    Source(
+                        source=ref.metadata["uri"],
+                        source_type=ref.metadata["creator_type"],
+                        document_name=ref.metadata["uri"].split("/")[-1],
+                        highlighted_text_in_source=ref.page_content,
+                        page_numbers=parse_page_number(ref.metadata.get("page_number")),
+                    )
+                ]
 
             await self.send_to_client("source", payload)
-            for s in sources:
+            for s in response_sources:
                 self.citations.append((file, s))
 
     async def handle_citations(self, citations: list[AICitation]):

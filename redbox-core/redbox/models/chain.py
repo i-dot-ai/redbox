@@ -16,7 +16,6 @@ from langchain_core.documents import Document
 from langchain_core.messages import ToolCall
 from langgraph.managed.is_last_step import RemainingStepsManager
 from pydantic import BaseModel, Field
-import pydantic
 
 from redbox.models import prompts
 
@@ -100,7 +99,6 @@ class Citation(BaseModel):
 class StructuredResponseWithCitations(BaseModel):
     answer: str = Field(description="Markdown structured answer to the query")
     citations: list[Citation]
-
 
 
 class DocumentState(TypedDict):

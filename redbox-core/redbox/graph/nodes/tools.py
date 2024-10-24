@@ -6,13 +6,10 @@ from langchain_community.utilities import WikipediaAPIWrapper
 from langchain_core.documents import Document
 from langchain_core.embeddings.embeddings import Embeddings
 from langchain_core.tools import StructuredTool, Tool, tool
-from langchain_core.documents import Document
 from langgraph.prebuilt import InjectedState
-from langchain_community.utilities import WikipediaAPIWrapper
-import tiktoken
 
 from redbox.models.chain import RedboxState
-from redbox.models.file import ChunkMetadata, ChunkMetadata, ChunkResolution
+from redbox.models.file import ChunkMetadata, ChunkResolution
 from redbox.retriever.queries import (
     add_document_filter_scores_to_query,
     build_document_query,

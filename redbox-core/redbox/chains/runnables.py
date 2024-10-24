@@ -138,15 +138,15 @@ def build_llm_chain(
             "prompt": itemgetter("prompt"),
         }
         | RunnablePassthrough.assign(
-            metadata=({
-                "prompt": itemgetter("prompt"),
-                "response": itemgetter("text"),
-                "model": lambda _: model_name,
-            }
-            | to_request_metadata),
-            send_tokens=(
-                itemgetter("text") | (send_token_events if final_response_chain else RunnablePassthrough())
-            )
+            metadata=(
+                {
+                    "prompt": itemgetter("prompt"),
+                    "response": itemgetter("text"),
+                    "model": lambda _: model_name,
+                }
+                | to_request_metadata
+            ),
+            send_tokens=(itemgetter("text") | (send_token_events if final_response_chain else RunnablePassthrough())),
         )
     )
 
@@ -191,6 +191,7 @@ def build_self_route_output_parser(
 @RunnableLambda
 def send_token_events(tokens: str):
     dispatch_custom_event(RedboxEventType.response_tokens, data=tokens)
+
 
 class CannedChatLLM(BaseChatModel):
     """A custom chat model that returns its text as if an LLM returned it.
