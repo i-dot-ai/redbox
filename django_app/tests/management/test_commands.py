@@ -268,7 +268,6 @@ def test_update_users(alice: User):
     file = File.objects.create(
         user=alice,
         original_file=original_file,
-        original_file_name=original_file.name,
         last_referenced=datetime.now(tz=UTC) - timedelta(days=14),
         status=StatusEnum.processing,
     )

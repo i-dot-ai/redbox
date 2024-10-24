@@ -202,7 +202,6 @@ def uploaded_file(alice: User, original_file: UploadedFile, s3_client) -> File: 
     file = File.objects.create(
         user=alice,
         original_file=original_file,
-        original_file_name=original_file.name,
         last_referenced=datetime.now(tz=UTC) - timedelta(days=14),
         status=StatusEnum.processing,
     )
@@ -260,7 +259,6 @@ def several_files(alice: User, number_to_create: int = 4) -> Sequence[File]:
             File.objects.create(
                 user=alice,
                 original_file=SimpleUploadedFile(filename, b"Lorem Ipsum."),
-                original_file_name=filename,
                 status=StatusEnum.complete,
             )
         )

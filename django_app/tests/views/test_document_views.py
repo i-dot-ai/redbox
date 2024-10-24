@@ -24,7 +24,7 @@ def test_upload_view(alice, client, file_pdf_path: Path, s3_client):
     When we POST our test file to /upload/
     We Expect to see this file in the object store
     """
-    file_name = file_pdf_path.name
+    file_name = f"{alice.email}/{file_pdf_path.name}"
 
     # we begin by removing any file in minio that has this key
     s3_client.delete_object(Bucket=settings.BUCKET_NAME, Key=file_name.replace(" ", "_"))
@@ -43,7 +43,7 @@ def test_upload_view(alice, client, file_pdf_path: Path, s3_client):
 
 @pytest.mark.django_db()
 def test_document_upload_status(client, alice, file_pdf_path: Path, s3_client):
-    file_name = file_pdf_path.name
+    file_name = f"{alice}/{file_pdf_path.name}"
 
     # we begin by removing any file in minio that has this key
     s3_client.delete_object(Bucket=settings.BUCKET_NAME, Key=file_name.replace(" ", "_"))
@@ -64,29 +64,42 @@ def test_document_upload_status(client, alice, file_pdf_path: Path, s3_client):
 
 @pytest.mark.django_db()
 def test_upload_view_duplicate_files(alice, bob, client, file_pdf_path: Path, s3_client):
+    # delete all alice's files
+    for key in s3_client.list_objects(Bucket=settings.BUCKET_NAME, Prefix=alice.email).get("Contents", []):
+        s3_client.delete_object(Bucket=settings.BUCKET_NAME, Key=key["Key"])
+
+    # delete all bob's files
+    for key in s3_client.list_objects(Bucket=settings.BUCKET_NAME, Prefix=bob.email).get("Contents", []):
+        s3_client.delete_object(Bucket=settings.BUCKET_NAME, Key=key["Key"])
+
     previous_count = count_s3_objects(s3_client)
+
+    def upload_file():
+        with file_pdf_path.open("rb") as f:
+            client.post("/upload/", {"uploadDocs": f})
+            response = client.post("/upload/", {"uploadDocs": f})
+
+            assert response.status_code == HTTPStatus.FOUND
+            assert response.url == "/documents/"
+
+            return File.objects.order_by("-created_at")[0]
+
     client.force_login(alice)
+    alices_file = upload_file()
 
-    with file_pdf_path.open("rb") as f:
-        client.post("/upload/", {"uploadDocs": f})
-        response = client.post("/upload/", {"uploadDocs": f})
+    assert count_s3_objects(s3_client) == previous_count + 1  # new file added
+    assert alices_file.unique_name.startswith(alice.email)
 
-        assert response.status_code == HTTPStatus.FOUND
-        assert response.url == "/documents/"
+    client.force_login(bob)
+    bobs_file = upload_file()
 
-        assert count_s3_objects(s3_client) == previous_count + 2
+    assert count_s3_objects(s3_client) == previous_count + 2  # new file added
+    assert bobs_file.unique_name.startswith(bob.email)
 
-        client.force_login(bob)
-        response = client.post("/upload/", {"uploadDocs": f})
+    bobs_new_file = upload_file()
 
-        assert response.status_code == HTTPStatus.FOUND
-        assert response.url == "/documents/"
-
-        assert count_s3_objects(s3_client) == previous_count + 3
-
-        assert (
-            File.objects.order_by("-created_at")[0].unique_name != File.objects.order_by("-created_at")[1].unique_name
-        )
+    assert count_s3_objects(s3_client) == previous_count + 2  # no change, duplicate file
+    assert bobs_new_file.unique_name == bobs_file.unique_name
 
 
 @pytest.mark.django_db()
@@ -114,7 +127,7 @@ def test_upload_view_no_file(alice, client):
 
 @pytest.mark.django_db()
 def test_remove_doc_view(client: Client, alice: User, file_pdf_path: Path, s3_client: Client):
-    file_name = file_pdf_path.name
+    file_name = f"{alice.email}/{file_pdf_path.name}"
 
     client.force_login(alice)
     # we begin by removing any file in minio that has this key

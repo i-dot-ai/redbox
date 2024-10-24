@@ -22,7 +22,6 @@ def test_0012_alter_file_status(migrator):
     file = File.objects.create(
         user=user,
         original_file=original_file,
-        original_file_name=original_file.name,
     )
     chat_message.source_files.set([file])
     chat_message.save()
@@ -58,7 +57,6 @@ def test_0020_remove_chatmessage_source_files_textchunk_and_more(migrator):
     file = File.objects.create(
         user=user,
         original_file=original_file,
-        original_file_name=original_file.name,
     )
     chat_message.source_files.set([file])
     chat_message.save()
@@ -115,7 +113,6 @@ def test_0027_alter_file_status(migrator):
             File.objects.create(
                 user=user,
                 original_file=original_file,
-                original_file_name=original_file.name,
                 status=status_option[0],
             )
         )
@@ -343,7 +340,6 @@ def test_0055_citation_source_citation_url_alter_citation_file(original_file, mi
     file = File.objects.create(
         user=user,
         original_file=original_file,
-        original_file_name=original_file.name,
     )
 
     Citation = old_state.apps.get_model("redbox_core", "Citation")

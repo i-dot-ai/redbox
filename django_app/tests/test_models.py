@@ -21,7 +21,6 @@ def test_file_model_last_referenced(peter_rabbit, s3_client):  # noqa: ARG001
         status=StatusEnum.processing,
         original_file=mock_file,
         user=peter_rabbit,
-        original_file_name="test.txt",
     )
 
     # Tests the initial value of the last_referenced
@@ -53,7 +52,6 @@ def test_file_model_unique_name(status: str, peter_rabbit: User, s3_client):  # 
         status=status,
         original_file=mock_file,
         user=peter_rabbit,
-        original_file_name="test.txt",
     )
 
     assert new_file.unique_name  # Check new name can be retrieved without error
@@ -74,7 +72,6 @@ def test_file_model_unique_name_error_states(status: str, peter_rabbit: User, s3
         status=status,
         original_file=mock_file,
         user=peter_rabbit,
-        original_file_name="test.txt",
     )
 
     with pytest.raises(InactiveFileError, match="is inactive, status is"):
