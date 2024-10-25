@@ -27,9 +27,7 @@ else:
 
 
 class MetadataLoader:
-    def __init__(
-        self, env: Settings, s3_client: S3Client, file_name: str, metadata: dict = None
-    ):
+    def __init__(self, env: Settings, s3_client: S3Client, file_name: str, metadata: dict = None):
         self.env = env
         self.s3_client = s3_client
         self.llm = get_chat_llm(env.metadata_extraction_llm)
@@ -60,9 +58,7 @@ class MetadataLoader:
         for i, chunk in enumerate(chunks):
             if i > n:
                 return metadata
-            metadata = self.merge_unstructured_metadata(
-                metadata, chunk["metadata"], ignore, max_size
-            )
+            metadata = self.merge_unstructured_metadata(metadata, chunk["metadata"], ignore, max_size)
         return metadata
 
     @staticmethod
@@ -112,17 +108,13 @@ class MetadataLoader:
         return combined
 
     def _get_file_bytes(self, s3_client: S3Client, file_name: str) -> BytesIO:
-        return s3_client.get_object(Bucket=self.env.bucket_name, Key=file_name)[
-            "Body"
-        ].read()
+        return s3_client.get_object(Bucket=self.env.bucket_name, Key=file_name)["Body"].read()
 
     def _chunking(self) -> Any:
         """
         Chunking data using local unstructured
         """
-        file_bytes = self._get_file_bytes(
-            s3_client=self.s3_client, file_name=self.file_name
-        )
+        file_bytes = self._get_file_bytes(s3_client=self.s3_client, file_name=self.file_name)
         url = f"http://{self.env.unstructured_host}:8000/general/v0/general"
         files = {
             "files": (self.file_name, file_bytes),
@@ -159,9 +151,7 @@ class MetadataLoader:
             first_n = self.get_first_n_tokens(elements, 1_000)
 
             # Get whatever metadata we can from processed document
-            doc_metadata = self.get_doc_metadata(
-                chunks=elements, n=3, ignore=None, max_size=524288 - len(first_n)
-            )
+            doc_metadata = self.get_doc_metadata(chunks=elements, n=3, ignore=None, max_size=524288 - len(first_n))
 
             # Generate new metadata
             res = self.create_file_metadata(first_n, doc_metadata)
@@ -175,9 +165,7 @@ class MetadataLoader:
                     # missing keys
                     self.metadata = self.default_metadata
 
-    def create_file_metadata(
-        self, page_content: str, metadata: dict[str, Any]
-    ) -> dict[str, Any]:
+    def create_file_metadata(self, page_content: str, metadata: dict[str, Any]) -> dict[str, Any]:
         """Uses a sample of the document and any extracted metadata to generate further metadata."""
         metadata_chain = (
             ChatPromptTemplate.from_messages(
@@ -201,9 +189,7 @@ class MetadataLoader:
         )
 
         try:
-            return metadata_chain.invoke(
-                {"page_content": page_content, "metadata": metadata}
-            )
+            return metadata_chain.invoke({"page_content": page_content, "metadata": metadata})
         except ConnectionError as e:
             logger.warning(f"Retrying due to HTTPError {e}")
         except json.JSONDecodeError:
