@@ -207,6 +207,7 @@ def uploaded_file(alice: User, original_file: UploadedFile, s3_client) -> File: 
     )
     file.save()
     yield file
+    file.citation_set().delete()
     file.delete()
 
 
