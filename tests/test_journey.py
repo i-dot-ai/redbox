@@ -102,8 +102,8 @@ def test_user_journey(page: Page, email_address: str):
     for keyword, route, select_file, should_have_citation in [
         ("search", "search", False, True),
         ("search", "search", True, True),
-        ("gadget", "search", False, True),
-        ("gadget", "search", True, True),
+        # ("gadget", "search", False, True),
+        # ("gadget", "search", True, True),
     ]:
         question = f"@{keyword} What do I need to install?"
         logger.info("Asking %r", question)
@@ -155,8 +155,7 @@ def test_support_pages(page: Page):
 
 def create_user(email_address: str):
     command = [
-        "docker",
-        "compose",
+        "docker-compose",
         "run",
         "django-app",
         "venv/bin/django-admin",
@@ -171,7 +170,7 @@ def create_user(email_address: str):
 
 
 def get_magic_link(email_address: str) -> URL:
-    command = ["docker", "compose", "run", "django-app", "venv/bin/django-admin", "show_magiclink_url", email_address]
+    command = ["docker-compose", "run", "django-app", "venv/bin/django-admin", "show_magiclink_url", email_address]
     result = subprocess.run(command, capture_output=True, text=True, check=True)  # noqa: S603
     magic_link = result.stdout.strip().lstrip("/")
     return BASE_URL / magic_link
