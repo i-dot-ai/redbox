@@ -162,33 +162,33 @@ class Settings(BaseSettings):
 
     def s3_client(self):
         if self.object_store == "minio":
-            client = boto3.client(
+            return boto3.client(
                 "s3",
                 aws_access_key_id=self.aws_access_key or "",
                 aws_secret_access_key=self.aws_secret_key or "",
                 endpoint_url=f"http://{self.minio_host}:{self.minio_port}",
             )
 
-        elif self.object_store == "s3":
-            client = boto3.client(
+        if self.object_store == "s3":
+            return boto3.client(
                 "s3",
                 aws_access_key_id=self.aws_access_key,
                 aws_secret_access_key=self.aws_secret_key,
                 region_name=self.aws_region,
             )
-        elif self.object_store == "moto":
+
+        if self.object_store == "moto":
             from moto import mock_aws
 
             mock = mock_aws()
             mock.start()
 
-            client = boto3.client(
+            return boto3.client(
                 "s3",
                 aws_access_key_id=self.aws_access_key,
                 aws_secret_access_key=self.aws_secret_key,
                 region_name=self.aws_region,
             )
-        else:
-            raise NotImplementedError
 
-        return client
+        msg = f"unkown object_store={self.object_store}"
+        raise NotImplementedError(msg)

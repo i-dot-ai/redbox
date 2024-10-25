@@ -1,10 +1,10 @@
-from langchain.output_parsers import PydanticOutputParser
 from langchain_core.tools import StructuredTool
 from langchain_core.vectorstores import VectorStoreRetriever
 from langgraph.graph import END, START, StateGraph
 from langgraph.graph.graph import CompiledGraph
 
 
+from redbox.chains.components import get_structured_response_with_citations_parser
 from redbox.chains.runnables import build_self_route_output_parser
 from redbox.graph.edges import (
     build_documents_bigger_than_context_conditional,
@@ -37,7 +37,7 @@ from redbox.graph.nodes.sends import (
     build_document_group_send,
     build_tool_send,
 )
-from redbox.models.chain import StructuredResponseWithCitations, RedboxState
+from redbox.models.chain import RedboxState
 from redbox.models.chat import ChatRoute, ErrorRoute
 from redbox.models.graph import ROUTABLE_KEYWORDS, RedboxActivityEvent
 from redbox.transform import (
@@ -164,7 +164,7 @@ def get_search_graph(
 def get_agentic_search_graph(tools: dict[str, StructuredTool], debug: bool = False) -> CompiledGraph:
     """Creates a subgraph for agentic RAG."""
 
-    citations_output_parser = PydanticOutputParser(pydantic_object=StructuredResponseWithCitations)
+    citations_output_parser, format_instructions = get_structured_response_with_citations_parser()
     builder = StateGraph(RedboxState)
     # Tools
     agent_tool_names = ["_search_documents", "_search_wikipedia"]
@@ -184,9 +184,9 @@ def get_agentic_search_graph(tools: dict[str, StructuredTool], debug: bool = Fal
         "p_stuff_docs_agent",
         build_stuff_pattern(
             prompt_set=PromptSet.Search,
-            final_response_chain=True,
+            final_response_chain=False,  # Output Parser handles token streaming
             output_parser=citations_output_parser,
-            format_instructions=citations_output_parser.get_format_instructions(),
+            format_instructions=format_instructions,
         ),
     )
     builder.add_node(

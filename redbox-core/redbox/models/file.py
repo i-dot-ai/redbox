@@ -40,4 +40,4 @@ class UploadedFileMetadata(ChunkMetadata):
     name: str
     description: str
     keywords: list[str]
-    creator_type: Literal["Wikipedia", "UserUploadedDocument"] = "UserUploadedDocument"
+    creator_type: Literal["UserUploadedDocument"] = "UserUploadedDocument"

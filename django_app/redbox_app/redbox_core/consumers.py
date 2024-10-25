@@ -289,12 +289,13 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 payload = {"url": ref, "original_file_name": None}
                 response_sources = [
                     Source(
-                        source=ref.metadata["uri"],
-                        source_type=ref.metadata["creator_type"],
-                        document_name=ref.metadata["uri"].split("/")[-1],
-                        highlighted_text_in_source=ref.page_content,
-                        page_numbers=parse_page_number(ref.metadata.get("page_number")),
+                        source=cited_chunk.metadata["uri"],
+                        source_type=cited_chunk.metadata["creator_type"],
+                        document_name=cited_chunk.metadata["uri"].split("/")[-1],
+                        highlighted_text_in_source=cited_chunk.page_content,
+                        page_numbers=parse_page_number(cited_chunk.metadata.get("page_number")),
                     )
+                    for cited_chunk in sources
                 ]
 
             await self.send_to_client("source", payload)
