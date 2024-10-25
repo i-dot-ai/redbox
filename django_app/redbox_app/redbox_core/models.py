@@ -749,6 +749,7 @@ class Citation(UUIDPrimaryKeyBase, TimeStampedModel):
     source = models.CharField(
         max_length=32, choices=Origin, help_text="source of citation", default=Origin.USER_UPLOADED_DOCUMENT
     )
+    text_in_answer = models.TextField(null=True, blank=True)
 
     def __str__(self):
         return self.uri
