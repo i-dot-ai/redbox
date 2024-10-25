@@ -48,7 +48,7 @@ class Command(BaseCommand):
                 ingest,
                 file.id,
                 new_index,
-                task_name=file.original_file.original_file_name,
+                task_name=file.original_file_name,
                 group="re-ingest",
                 sync=kwargs["sync"],
             )
