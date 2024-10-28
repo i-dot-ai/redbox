@@ -1,19 +1,20 @@
-"""
-There is some repeated definition and non-pydantic style code in here.
-These classes are pydantic v1 which is compatible with langchain tools classes, we need
-to provide a pydantic v1 definition to work with these. As these models are mostly
-used in conjunction with langchain this is the tidiest boxing of pydantic v1 we can do
-"""
-
 from datetime import UTC, datetime
 from enum import StrEnum
 from functools import reduce
-from typing import Annotated, Literal, NotRequired, Required, TypedDict, get_args, get_origin
+from typing import (
+    Annotated,
+    Literal,
+    NotRequired,
+    Required,
+    TypedDict,
+    get_args,
+    get_origin,
+)
 from uuid import UUID, uuid4
 
 from langchain_core.documents import Document
 from langchain_core.messages import ToolCall
-from langgraph.managed.base import ManagedValue
+from langgraph.managed.is_last_step import RemainingStepsManager
 from pydantic import BaseModel, Field
 
 from redbox.models import prompts
@@ -80,6 +81,24 @@ class AISettings(BaseModel):
 
     # this is also the azure_openai_model
     chat_backend: ChatLLMBackend = ChatLLMBackend()
+
+
+class Source(BaseModel):
+    source: str = Field(description="URL or reference to the source", default="")
+    source_type: str = Field(description="CreatorType of tool", default="Unknown")
+    document_name: str = ""
+    highlighted_text_in_source: str = ""
+    page_numbers: list[int] = Field(description="Page Number in document the highlighted text is on", default=[1])
+
+
+class Citation(BaseModel):
+    text_in_answer: str = ""
+    sources: list[Source] = Field(default_factory=list)
+
+
+class StructuredResponseWithCitations(BaseModel):
+    answer: str = Field(description="Markdown structured answer to the query", default="")
+    citations: list[Citation] = Field(default_factory=list)
 
 
 class DocumentState(TypedDict):
@@ -156,7 +175,7 @@ class LLMCallMetadata(BaseModel):
 
 
 class RequestMetadata(BaseModel):
-    llm_calls: set[LLMCallMetadata] = Field(default_factory=set)
+    llm_calls: list[LLMCallMetadata] = Field(default_factory=list)
     selected_files_total_tokens: int = 0
     number_of_selected_files: int = 0
 
@@ -179,7 +198,10 @@ class RequestMetadata(BaseModel):
         return tokens_by_model
 
 
-def metadata_reducer(current: RequestMetadata | None, update: RequestMetadata | list[RequestMetadata] | None):
+def metadata_reducer(
+    current: RequestMetadata | None,
+    update: RequestMetadata | list[RequestMetadata] | None,
+):
     """Merges two metadata states."""
     # If update is actually a list of state updates, run them one by one
     if isinstance(update, list):
@@ -192,7 +214,7 @@ def metadata_reducer(current: RequestMetadata | None, update: RequestMetadata | 
         return current
 
     return RequestMetadata(
-        llm_calls=current.llm_calls | update.llm_calls,
+        llm_calls=sorted(set(current.llm_calls) | set(update.llm_calls), key=lambda c: c.timestamp),
         selected_files_total_tokens=update.selected_files_total_tokens or current.selected_files_total_tokens,
         number_of_selected_files=update.number_of_selected_files or current.number_of_selected_files,
     )
@@ -235,14 +257,6 @@ def tool_calls_reducer(current: ToolState, update: ToolState | None) -> ToolStat
     return reduced
 
 
-class StepsLeft(ManagedValue[bool]):
-    """A managed value that counts down from the recursion limit."""
-
-    def __call__(self, step: int) -> int:
-        limit = self.config.get("recursion_limit", 0)
-        return limit - step
-
-
 class RedboxState(TypedDict):
     request: Required[RedboxQuery]
     documents: Annotated[NotRequired[DocumentState], document_reducer]
@@ -250,7 +264,8 @@ class RedboxState(TypedDict):
     route_name: NotRequired[str | None]
     tool_calls: Annotated[NotRequired[ToolState], tool_calls_reducer]
     metadata: Annotated[NotRequired[RequestMetadata], metadata_reducer]
-    steps_left: Annotated[int, StepsLeft]
+    citations: NotRequired[list[Citation] | None]
+    steps_left: Annotated[NotRequired[int], RemainingStepsManager]
 
 
 class PromptSet(StrEnum):

@@ -4,7 +4,8 @@ import datetime
 from enum import StrEnum
 from uuid import UUID, uuid4
 
-from pydantic import BaseModel, Field
+from typing import Literal
+from pydantic import BaseModel, Field, AliasChoices
 
 
 class ChunkResolution(StrEnum):
@@ -22,12 +23,21 @@ class ChunkMetadata(BaseModel):
     """
 
     uuid: UUID = Field(default_factory=uuid4)
-    index: int
-    file_name: str
-    page_number: int | None = None
+    index: int = 0  # The order of this chunk in the original resource
     created_datetime: datetime.datetime = datetime.datetime.now(datetime.UTC)
-    token_count: int
     chunk_resolution: ChunkResolution = ChunkResolution.normal
+    creator_type: Literal["Wikipedia", "UserUploadedDocument"]
+    uri: str = Field(validation_alias=AliasChoices("uri", "file_name"))  # URL or file name
+    token_count: int
+
+
+class UploadedFileMetadata(ChunkMetadata):
+    """
+    Model for uploaded document chunk metadata.
+    """
+
+    page_number: int | None = None
     name: str
     description: str
     keywords: list[str]
+    creator_type: Literal["UserUploadedDocument"] = "UserUploadedDocument"

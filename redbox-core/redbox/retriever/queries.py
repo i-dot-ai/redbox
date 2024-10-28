@@ -11,7 +11,14 @@ log = logging.getLogger()
 
 def build_file_filter(file_names: list[str]) -> dict[str, Any]:
     """Creates an Elasticsearch filter for file names."""
-    return {"terms": {"metadata.file_name.keyword": file_names}}
+    return {
+        "bool": {
+            "should": [
+                {"terms": {"metadata.file_name.keyword": file_names}},
+                {"terms": {"metadata.uri.keyword": file_names}},
+            ]
+        }
+    }
 
 
 def build_resolution_filter(chunk_resolution: ChunkResolution) -> dict[str, Any]:
@@ -205,7 +212,7 @@ def add_document_filter_scores_to_query(
     for document in centres:
         gauss_functions.append(
             {
-                "filter": {"term": {"metadata.file_name.keyword": document.metadata["file_name"]}},
+                "filter": {"term": {"metadata.file_name.keyword": document.metadata["uri"]}},
                 "gauss": {
                     "metadata.index": {
                         "origin": document.metadata["index"],

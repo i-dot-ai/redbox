@@ -2,24 +2,19 @@ from langchain_core.embeddings import Embeddings
 from langchain_core.tools import StructuredTool
 from langchain_core.vectorstores import VectorStoreRetriever
 
-from redbox.chains.components import (
-    get_all_chunks_retriever,
-    get_embeddings,
-    get_metadata_retriever,
-    get_parameterised_retriever,
-)
-from redbox.graph.nodes.tools import build_govuk_search_tool, build_search_documents_tool
+from redbox.chains.components import (get_all_chunks_retriever, get_embeddings,
+                                      get_metadata_retriever,
+                                      get_parameterised_retriever)
+from redbox.graph.nodes.tools import (build_govuk_search_tool,
+                                      build_search_documents_tool,
+                                      build_search_wikipedia_tool)
 from redbox.graph.root import get_root_graph
 from redbox.models.chain import RedboxState
 from redbox.models.chat import ChatRoute
 from redbox.models.file import ChunkResolution
-from redbox.models.graph import (
-    FINAL_RESPONSE_TAG,
-    ROUTABLE_KEYWORDS,
-    ROUTE_NAME_TAG,
-    SOURCE_DOCUMENTS_TAG,
-    RedboxEventType,
-)
+from redbox.models.graph import (FINAL_RESPONSE_TAG, ROUTABLE_KEYWORDS,
+                                 ROUTE_NAME_TAG, SOURCE_DOCUMENTS_TAG,
+                                 RedboxEventType)
 from redbox.models.settings import Settings
 from redbox.transform import flatten_document_state
 
@@ -56,12 +51,14 @@ class Redbox:
             embedding_field_name=_env.embedding_document_field_name,
             chunk_resolution=ChunkResolution.normal,
         )
+        search_wikipedia = build_search_wikipedia_tool()
 
         search_govuk = build_govuk_search_tool()
 
         tools: dict[str, StructuredTool] = {
             "_search_documents": search_documents,
             "_search_govuk": search_govuk,
+            "_search_wikipedia": search_wikipedia,
         }
 
         self.graph = get_root_graph(
@@ -78,12 +75,15 @@ class Redbox:
         response_tokens_callback=_default_callback,
         route_name_callback=_default_callback,
         documents_callback=_default_callback,
+        citations_callback=_default_callback,
         metadata_tokens_callback=_default_callback,
         activity_event_callback=_default_callback,
     ) -> RedboxState:
         final_state = None
         async for event in self.graph.astream_events(
-            input=input, version="v2", config={"recursion_limit": input["request"].ai_settings.recursion_limit}
+            input=input,
+            version="v2",
+            config={"recursion_limit": input["request"].ai_settings.recursion_limit},
         ):
             kind = event["event"]
             tags = event.get("tags", [])
@@ -106,6 +106,8 @@ class Redbox:
                 await documents_callback(documents)
             elif kind == "on_custom_event" and event["name"] == RedboxEventType.on_source_report.value:
                 await documents_callback(event["data"])
+            elif kind == "on_custom_event" and event["name"] == RedboxEventType.on_citations_report.value:
+                await citations_callback(event["data"])
             elif kind == "on_custom_event" and event["name"] == RedboxEventType.on_metadata_generation.value:
                 await metadata_tokens_callback(event["data"])
             elif kind == "on_custom_event" and event["name"] == RedboxEventType.activity.value:
@@ -120,4 +122,6 @@ class Redbox:
     def draw(self, output_path="RedboxAIArchitecture.png"):
         from langchain_core.runnables.graph import MermaidDrawMethod
 
-        self.graph(xray=True).draw_mermaid_png(draw_method=MermaidDrawMethod.API, output_file_path=output_path)
+        self.graph.get_graph(xray=True).draw_mermaid_png(
+            draw_method=MermaidDrawMethod.API, output_file_path=output_path
+        )

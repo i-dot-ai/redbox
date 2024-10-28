@@ -80,6 +80,8 @@ services:
         condition: service_healthy
       django-app:
         condition: service_healthy
+      db:
+        condition: service_healthy
     networks:
       - redbox-app-network
     restart: unless-stopped

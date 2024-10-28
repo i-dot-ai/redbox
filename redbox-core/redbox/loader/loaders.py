@@ -12,7 +12,7 @@ from langchain_core.output_parsers import JsonOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 
 from redbox.chains.components import get_chat_llm
-from redbox.models.file import ChunkMetadata, ChunkResolution
+from redbox.models.file import ChunkResolution, UploadedFileMetadata
 from redbox.models.settings import Settings
 
 logging.basicConfig(level=logging.INFO)
@@ -47,7 +47,9 @@ class MetadataLoader:
             tokens += chunk["text"]
         return tokens
 
-    def get_doc_metadata(self, chunks: list[dict], n: int, ignore: list[str] = None) -> dict[str, Any]:
+    def get_doc_metadata(
+        self, chunks: list[dict], n: int, ignore: list[str] = None, max_size: int = None
+    ) -> dict[str, Any]:
         """
         Use the first n chunks to get metadata using unstructured.
         Metadata keys in the ignore list will be excluded from the result.
@@ -56,34 +58,52 @@ class MetadataLoader:
         for i, chunk in enumerate(chunks):
             if i > n:
                 return metadata
-            metadata = self.merge_unstructured_metadata(metadata, chunk["metadata"], ignore)
+            metadata = self.merge_unstructured_metadata(metadata, chunk["metadata"], ignore, max_size)
         return metadata
 
     @staticmethod
-    def merge_unstructured_metadata(x: dict, y: dict, ignore: set[str] = None) -> dict:
+    def merge_unstructured_metadata(
+        x: dict, y: dict, ignore: set[str] | None = None, max_size: int | None = None
+    ) -> dict:
         """
         Combine 2 dicts without deleting any elements. If the key is present in both,
         combine values into a list. If value is in a list, extend with unique values.
-        Keys in the ignore list will be excluded from the result.
+        Keys in the ignore list will be excluded from the result. Stop combining if
+        the total size of metadata exceeds a given threshold.
+
+        :param x: First metadata dictionary
+        :param y: Second metadata dictionary
+        :param ignore: Set of keys to ignore while merging
+        :param max_size: Maximum allowed size for combined metadata (sum of lengths of values' string representation)
+        :return: Merged metadata dictionary
         """
+
+        def to_list(obj):
+            if obj is None:
+                return []
+            if not isinstance(obj, list):
+                return [obj]
+            return obj
+
         if ignore is None:
-            ignore = []
+            ignore = set()
 
         combined = {}
+        total_size = 0
 
+        combined_value = {}
         for key in set(x) | set(y):
-            if key in ignore:
-                continue
+            x_value = to_list(x.get(key, []))
+            y_value = to_list(y.get(key, []))
+            combined_value = x_value + y_value
 
-            if key in x and key in y:
-                if isinstance(x[key], list) or isinstance(y[key], list):
-                    combined[key] = list(set(x[key] + (y[key] if isinstance(y[key], list) else [y[key]])))
-                else:
-                    combined[key] = [x[key], y[key]]
-            elif key in x:
-                combined[key] = x[key]
-            else:
-                combined[key] = y[key]
+            # Calculate the size of the new value and check if it exceeds the threshold
+            combined_value_size = len(str(combined_value))
+            if max_size is not None and total_size + combined_value_size > max_size:
+                break
+
+            combined[key] = combined_value
+            total_size += combined_value_size
 
         return combined
 
@@ -131,7 +151,7 @@ class MetadataLoader:
             first_n = self.get_first_n_tokens(elements, 1_000)
 
             # Get whatever metadata we can from processed document
-            doc_metadata = self.get_doc_metadata(chunks=elements, n=3, ignore=None)
+            doc_metadata = self.get_doc_metadata(chunks=elements, n=3, ignore=None, max_size=524288 - len(first_n))
 
             # Generate new metadata
             res = self.create_file_metadata(first_n, doc_metadata)
@@ -246,9 +266,9 @@ class UnstructuredChunkLoader:
         for i, raw_chunk in enumerate(elements):
             yield Document(
                 page_content=raw_chunk["text"],
-                metadata=ChunkMetadata(
+                metadata=UploadedFileMetadata(
                     index=i,
-                    file_name=raw_chunk["metadata"].get("filename"),
+                    uri=raw_chunk["metadata"].get("filename"),
                     page_number=raw_chunk["metadata"].get("page_number"),
                     created_datetime=datetime.now(UTC),
                     token_count=len(encoding.encode(raw_chunk["text"])),
