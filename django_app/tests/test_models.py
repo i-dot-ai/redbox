@@ -54,7 +54,7 @@ def test_file_model_s3_key(status: str, peter_rabbit: User, s3_client):  # noqa:
         user=peter_rabbit,
     )
 
-    assert new_file.s3_key  # Check new name can be retrieved without error
+    assert new_file.unique_name  # Check new name can be retrieved without error
 
 
 @pytest.mark.parametrize(
@@ -75,7 +75,7 @@ def test_file_model_s3_key_error_states(status: str, peter_rabbit: User, s3_clie
     )
 
     with pytest.raises(InactiveFileError, match="is inactive, status is"):
-        assert new_file.s3_key
+        assert new_file.unique_name
 
 
 @pytest.mark.django_db()

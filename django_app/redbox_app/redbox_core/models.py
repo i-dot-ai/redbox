@@ -585,7 +585,7 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
         if es_client.indices.exists(index=index):
             es_client.delete_by_query(
                 index=index,
-                body={"query": {"term": {"metadata.file_name.keyword": self.s3_key}}},
+                body={"query": {"term": {"metadata.file_name.keyword": self.unique_name}}},
             )
 
     @property
@@ -633,7 +633,7 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
         return self.original_file.name.split("/")[1]
 
     @property
-    def s3_key(self) -> str:
+    def unique_name(self) -> str:
         """primary key for accessing file in s3"""
         if self.status in INACTIVE_STATUSES:
             logger.exception("Attempt to access s3-key for inactive file %s with status %s", self.pk, self.status)
