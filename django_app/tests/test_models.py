@@ -45,7 +45,7 @@ def test_file_model_last_referenced(peter_rabbit, s3_client):  # noqa: ARG001
     ],
 )
 @pytest.mark.django_db()
-def test_file_model_s3_key(status: str, peter_rabbit: User, s3_client):  # noqa: ARG001
+def test_file_model_unique_name(status: str, peter_rabbit: User, s3_client):  # noqa: ARG001
     mock_file = SimpleUploadedFile("test.txt", b"these are the file contents")
 
     new_file = File.objects.create(
@@ -65,7 +65,7 @@ def test_file_model_s3_key(status: str, peter_rabbit: User, s3_client):  # noqa:
     ],
 )
 @pytest.mark.django_db()
-def test_file_model_s3_key_error_states(status: str, peter_rabbit: User, s3_client):  # noqa: ARG001
+def test_file_model_unique_name_error_states(status: str, peter_rabbit: User, s3_client):  # noqa: ARG001
     mock_file = SimpleUploadedFile("test.txt", b"these are the file contents")
 
     new_file = File.objects.create(
