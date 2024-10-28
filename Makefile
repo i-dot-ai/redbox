@@ -203,19 +203,21 @@ tf_set_or_create_workspace:
 
 .PHONY: tf_init
 tf_init: ## Initialise terraform
+	make tf_set_workspace && \
 	terraform -chdir=./infrastructure/aws/$(instance) init  \
 	-backend-config="dynamodb_table=i-dot-ai-$(env)-dynamo-lock" \
 	-backend-config=$(TF_BACKEND_CONFIG) \
+	-reconfigure \
 	${args}
 
 .PHONY: tf_plan
 tf_plan: ## Plan terraform
-	make tf_set_workspace && \
+	make tf_init && \
 	terraform -chdir=./infrastructure/aws/$(instance) plan -var-file=$(CONFIG_DIR)/${env}-input-params.tfvars ${tf_build_args}
 
 .PHONY: tf_apply
 tf_apply: ## Apply terraform
-	make tf_set_workspace && \
+	make tf_init && \
 	terraform -chdir=./infrastructure/aws/$(instance) apply -var-file=$(CONFIG_DIR)/${env}-input-params.tfvars ${tf_build_args} ${args}
 
 .PHONY: tf_init_universal
@@ -229,17 +231,17 @@ tf_apply_universal: ## Apply terraform
 
 .PHONY: tf_auto_apply
 tf_auto_apply: ## Auto apply terraform
-	make tf_set_workspace && \
+	make tf_init && \
 	terraform -chdir=./infrastructure/aws apply -auto-approve -var-file=$(CONFIG_DIR)/${env}-input-params.tfvars ${tf_build_args} $(target_modules)
 
 .PHONY: tf_destroy
 tf_destroy: ## Destroy terraform
-	make tf_set_workspace && \
+	make tf_init && \
 	terraform -chdir=./infrastructure/aws destroy -var-file=$(CONFIG_DIR)/${env}-input-params.tfvars ${tf_build_args}
 
 .PHONY: tf_import
 tf_import:
-	make tf_set_workspace && \
+	make tf_init && \
 	terraform -chdir=./infrastructure/aws/$(instance) import ${tf_build_args} -var-file=$(CONFIG_DIR)/${env}-input-params.tfvars ${name} ${id}
 
 # Release commands to deploy your app to AWS
