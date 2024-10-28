@@ -580,16 +580,6 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
                 body={"query": {"term": {"metadata.file_name.keyword": self.unique_name}}},
             )
 
-    def update_status_from_core(self, status_label):
-        match status_label:
-            case "complete":
-                self.status = StatusEnum.complete
-            case "failed":
-                self.status = StatusEnum.errored
-            case _:
-                self.status = StatusEnum.processing
-        self.save()
-
     @property
     def file_type(self) -> str:
         name = self.original_file.name
@@ -612,7 +602,7 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
                 ClientMethod="get_object",
                 Params={
                     "Bucket": settings.AWS_STORAGE_BUCKET_NAME,
-                    "Key": self.original_file_name,
+                    "Key": self.file_name,
                 },
             )
             return URL(url)
@@ -624,7 +614,7 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
         return URL(self.original_file.url)
 
     @property
-    def original_file_name(self) -> str:
+    def file_name(self) -> str:
         if self.old_file_name:  # delete me?
             return self.old_file_name
 
@@ -636,7 +626,7 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
 
     @property
     def unique_name(self) -> str:
-        # merge with original_file_name above?
+        # merge with file_name above?
         # Name used when processing files that exist in S3
         if self.status in INACTIVE_STATUSES:
             logger.exception("Attempt to access unique_name for inactive file %s with status %s", self.pk, self.status)
@@ -787,7 +777,7 @@ class Citation(UUIDPrimaryKeyBase, TimeStampedModel):
     @property
     def uri(self) -> str:
         """returns either the url of an external citation or the file uri of a user-uploaded document"""
-        return self.url or f"file://{self.file.original_file_name}"
+        return self.url or f"file://{self.file.file_name}"
 
 
 class ChatMessage(UUIDPrimaryKeyBase, TimeStampedModel):

@@ -81,7 +81,7 @@ async def test_chat_consumer_with_new_session(alice: User, uploaded_file: File, 
         assert response4["type"] == "route"
         assert response4["data"] == "gratitude"
         assert response5["type"] == "source"
-        assert response5["data"]["original_file_name"] == uploaded_file.original_file_name
+        assert response5["data"]["file_name"] == uploaded_file.file_name
         # Close
         await communicator.disconnect()
 
@@ -188,7 +188,7 @@ async def test_chat_consumer_with_naughty_question(alice: User, uploaded_file: F
         assert response4["type"] == "route"
         assert response4["data"] == "gratitude"
         assert response5["type"] == "source"
-        assert response5["data"]["original_file_name"] == uploaded_file.original_file_name
+        assert response5["data"]["file_name"] == uploaded_file.file_name
         # Close
         await communicator.disconnect()
 
@@ -226,7 +226,7 @@ async def test_chat_consumer_with_naughty_citation(
         assert response3["type"] == "route"
         assert response3["data"] == "gratitude"
         assert response4["type"] == "source"
-        assert response4["data"]["original_file_name"] == uploaded_file.original_file_name
+        assert response4["data"]["file_name"] == uploaded_file.file_name
         # Close
         await communicator.disconnect()
 
@@ -265,7 +265,7 @@ async def test_chat_consumer_agentic(alice: User, uploaded_file: File, mocked_co
         assert response4["type"] == "route"
         assert response4["data"] == "search/agentic"
         assert response5["type"] == "source"
-        assert response5["data"]["original_file_name"] == uploaded_file.original_file_name
+        assert response5["data"]["file_name"] == uploaded_file.file_name
         # Close
         await communicator.disconnect()
 

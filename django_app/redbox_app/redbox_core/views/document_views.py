@@ -91,7 +91,7 @@ class UploadView(View):
                 # ingest errors are handled differently, as the other documents have started uploading by this point
                 ingest_error = self.ingest_file(uploaded_file, request.user)
                 if ingest_error:
-                    ingest_errors.append(f"{uploaded_file.original_file_name}: {ingest_error[0]}")
+                    ingest_errors.append(f"{uploaded_file.file_name}: {ingest_error[0]}")
 
             request.session["ingest_errors"] = ingest_errors
             return redirect(reverse("documents"))
@@ -168,7 +168,7 @@ def remove_doc_view(request, doc_id: uuid):
     return render(
         request,
         template_name="remove-doc.html",
-        context={"request": request, "doc_id": doc_id, "doc_name": file.original_file_name, "errors": errors},
+        context={"request": request, "doc_id": doc_id, "doc_name": file.file_name, "errors": errors},
     )
 
 
