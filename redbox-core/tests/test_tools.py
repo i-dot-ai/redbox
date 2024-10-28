@@ -17,7 +17,7 @@ from redbox.graph.nodes.tools import (
 )
 from redbox.models import Settings
 from redbox.models.chain import AISettings, RedboxQuery, RedboxState
-from redbox.models.file import ChunkMetadata, ChunkResolution
+from redbox.models.file import ChunkCreatorType, ChunkMetadata, ChunkResolution
 from redbox.test.data import RedboxChatTestCase
 from redbox.transform import flatten_document_state
 from tests.retriever.test_retriever import TEST_CHAIN_PARAMETERS
@@ -40,7 +40,9 @@ def test_is_valid_tool():
 
 def test_has_injected_state():
     @tool
-    def tool_with_injected_state(query: str, state: Annotated[dict, InjectedState]) -> dict[str, Any]:
+    def tool_with_injected_state(
+        query: str, state: Annotated[dict, InjectedState]
+    ) -> dict[str, Any]:
         """Tool that returns a dictionary update."""
         return {"key": "value"}
 
@@ -137,12 +139,20 @@ def test_search_documents_tool(
 
         # Check flattened documents match expected, similar to retriever
         assert len(result_flat) == chain_params["rag_k"]
-        assert {c.page_content for c in result_flat} <= {c.page_content for c in permitted_docs}
-        assert {c.metadata["uri"] for c in result_flat} <= set(stored_file_parameterised.query.permitted_s3_keys)
+        assert {c.page_content for c in result_flat} <= {
+            c.page_content for c in permitted_docs
+        }
+        assert {c.metadata["uri"] for c in result_flat} <= set(
+            stored_file_parameterised.query.permitted_s3_keys
+        )
 
         if selected:
-            assert {c.page_content for c in result_flat} <= {c.page_content for c in selected_docs}
-            assert {c.metadata["uri"] for c in result_flat} <= set(stored_file_parameterised.query.s3_keys)
+            assert {c.page_content for c in result_flat} <= {
+                c.page_content for c in selected_docs
+            }
+            assert {c.metadata["uri"] for c in result_flat} <= set(
+                stored_file_parameterised.query.s3_keys
+            )
 
         # Check docstate is formed as expected, similar to transform tests
         for group_uuid, group_docs in result_docstate.items():
@@ -162,7 +172,7 @@ def test_govuk_search_tool():
             "query": "Cuba Travel Advice",
             "state": RedboxState(
                 request=RedboxQuery(
-                    question="Tell me about travel advice to cuba",
+                    question="Search gov.uk for travel advice to cuba",
                     s3_keys=[],
                     user_uuid=uuid4(),
                     chat_history=[],
@@ -176,12 +186,16 @@ def test_govuk_search_tool():
     documents = flatten_document_state(state_update["documents"])
 
     # assert at least one document is travel advice
-    assert any(document.metadata["description"].startswith("FCDO travel advice for Cuba.") for document in documents)
+    assert any(
+        "/foreign-travel-advice/cuba" in document.metadata["uri"]
+        for document in documents
+    )
 
     for document in documents:
         assert document.page_content != ""
         metadata = ChunkMetadata.model_validate(document.metadata)
-        assert urlparse(metadata.file_name).hostname == "www.gov.uk"
+        assert urlparse(metadata.uri).hostname == "www.gov.uk"
+        assert metadata.creator_type == ChunkCreatorType.gov_uk
 
 
 def test_wikipedia_tool():
@@ -206,4 +220,4 @@ def test_wikipedia_tool():
         assert document.page_content != ""
         metadata = ChunkMetadata.model_validate(document.metadata)
         assert urlparse(metadata.uri).hostname == "en.wikipedia.org"
-        assert metadata.creator_type == "Wikipedia"
+        assert metadata.creator_type == ChunkCreatorType.wikipedia

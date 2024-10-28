@@ -71,15 +71,28 @@ class ChatLLMBackend(models.Model):
         GROQ = "groq"
         OLLAMA = "ollama"
 
-    name = models.CharField(max_length=128, help_text="The name of the model, e.g. “gpt-4o”, “claude-3-opus-20240229”.")
-    provider = models.CharField(max_length=128, choices=Providers, help_text="The model provider")
-    description = models.TextField(null=True, blank=True, help_text="brief description of the model")
-    is_default = models.BooleanField(default=False, help_text="is this the default llm to use.")
+    name = models.CharField(
+        max_length=128,
+        help_text="The name of the model, e.g. “gpt-4o”, “claude-3-opus-20240229”.",
+    )
+    provider = models.CharField(
+        max_length=128, choices=Providers, help_text="The model provider"
+    )
+    description = models.TextField(
+        null=True, blank=True, help_text="brief description of the model"
+    )
+    is_default = models.BooleanField(
+        default=False, help_text="is this the default llm to use."
+    )
     enabled = models.BooleanField(default=True, help_text="is this model enabled.")
-    display = models.CharField(max_length=128, null=True, blank=True, help_text="name to display in UI.")
+    display = models.CharField(
+        max_length=128, null=True, blank=True, help_text="name to display in UI."
+    )
 
     class Meta:
-        constraints = [UniqueConstraint(fields=["name", "provider"], name="unique_name_provider")]
+        constraints = [
+            UniqueConstraint(fields=["name", "provider"], name="unique_name_provider")
+        ]
 
     def __str__(self):
         return self.display or self.name
@@ -91,7 +104,9 @@ class ChatLLMBackend(models.Model):
 
 
 class AbstractAISettings(models.Model):
-    chat_backend = models.ForeignKey(ChatLLMBackend, on_delete=models.CASCADE, help_text="LLM to use in chat")
+    chat_backend = models.ForeignKey(
+        ChatLLMBackend, on_delete=models.CASCADE, help_text="LLM to use in chat"
+    )
     temperature = models.FloatField(default=0, help_text="temperature for LLM")
 
     class Meta:
@@ -111,7 +126,9 @@ class AISettings(UUIDPrimaryKeyBase, TimeStampedModel, AbstractAISettings):
     llm_max_tokens = models.PositiveIntegerField(default=1024)
 
     # Prompts and LangGraph settings
-    max_document_tokens = models.PositiveIntegerField(default=1_000_000, null=True, blank=True)
+    max_document_tokens = models.PositiveIntegerField(
+        default=1_000_000, null=True, blank=True
+    )
     self_route_enabled = models.BooleanField(default=False)
     map_max_concurrency = models.PositiveIntegerField(default=128)
     stuff_chunk_context_ratio = models.FloatField(default=0.75)
@@ -119,19 +136,39 @@ class AISettings(UUIDPrimaryKeyBase, TimeStampedModel, AbstractAISettings):
 
     chat_system_prompt = models.TextField(default=prompts.CHAT_SYSTEM_PROMPT)
     chat_question_prompt = models.TextField(default=prompts.CHAT_QUESTION_PROMPT)
-    chat_with_docs_system_prompt = models.TextField(default=prompts.CHAT_WITH_DOCS_SYSTEM_PROMPT)
-    chat_with_docs_question_prompt = models.TextField(default=prompts.CHAT_WITH_DOCS_QUESTION_PROMPT)
-    chat_with_docs_reduce_system_prompt = models.TextField(default=prompts.CHAT_WITH_DOCS_REDUCE_SYSTEM_PROMPT)
+    chat_with_docs_system_prompt = models.TextField(
+        default=prompts.CHAT_WITH_DOCS_SYSTEM_PROMPT
+    )
+    chat_with_docs_question_prompt = models.TextField(
+        default=prompts.CHAT_WITH_DOCS_QUESTION_PROMPT
+    )
+    chat_with_docs_reduce_system_prompt = models.TextField(
+        default=prompts.CHAT_WITH_DOCS_REDUCE_SYSTEM_PROMPT
+    )
     retrieval_system_prompt = models.TextField(default=prompts.RETRIEVAL_SYSTEM_PROMPT)
-    retrieval_question_prompt = models.TextField(default=prompts.RETRIEVAL_QUESTION_PROMPT)
-    agentic_retrieval_system_prompt = models.TextField(default=prompts.AGENTIC_RETRIEVAL_SYSTEM_PROMPT)
-    agentic_retrieval_question_prompt = models.TextField(default=prompts.AGENTIC_RETRIEVAL_QUESTION_PROMPT)
-    agentic_give_up_system_prompt = models.TextField(default=prompts.AGENTIC_GIVE_UP_SYSTEM_PROMPT)
-    agentic_give_up_question_prompt = models.TextField(default=prompts.AGENTIC_GIVE_UP_QUESTION_PROMPT)
+    retrieval_question_prompt = models.TextField(
+        default=prompts.RETRIEVAL_QUESTION_PROMPT
+    )
+    agentic_retrieval_system_prompt = models.TextField(
+        default=prompts.AGENTIC_RETRIEVAL_SYSTEM_PROMPT
+    )
+    agentic_retrieval_question_prompt = models.TextField(
+        default=prompts.AGENTIC_RETRIEVAL_QUESTION_PROMPT
+    )
+    agentic_give_up_system_prompt = models.TextField(
+        default=prompts.AGENTIC_GIVE_UP_SYSTEM_PROMPT
+    )
+    agentic_give_up_question_prompt = models.TextField(
+        default=prompts.AGENTIC_GIVE_UP_QUESTION_PROMPT
+    )
     condense_system_prompt = models.TextField(default=prompts.CONDENSE_SYSTEM_PROMPT)
-    condense_question_prompt = models.TextField(default=prompts.CONDENSE_QUESTION_PROMPT)
+    condense_question_prompt = models.TextField(
+        default=prompts.CONDENSE_QUESTION_PROMPT
+    )
     chat_map_system_prompt = models.TextField(default=prompts.CHAT_MAP_SYSTEM_PROMPT)
-    chat_map_question_prompt = models.TextField(default=prompts.CHAT_MAP_QUESTION_PROMPT)
+    chat_map_question_prompt = models.TextField(
+        default=prompts.CHAT_MAP_QUESTION_PROMPT
+    )
     reduce_system_prompt = models.TextField(default=prompts.REDUCE_SYSTEM_PROMPT)
 
     # Elsticsearch RAG and boost values
@@ -139,26 +176,42 @@ class AISettings(UUIDPrimaryKeyBase, TimeStampedModel, AbstractAISettings):
     rag_num_candidates = models.PositiveIntegerField(default=10)
     rag_gauss_scale_size = models.PositiveIntegerField(default=3)
     rag_gauss_scale_decay = models.DecimalField(
-        max_digits=5, decimal_places=2, default=0.5, validators=[validators.MinValueValidator(0.0)]
+        max_digits=5,
+        decimal_places=2,
+        default=0.5,
+        validators=[validators.MinValueValidator(0.0)],
     )
     rag_gauss_scale_min = models.DecimalField(
-        max_digits=5, decimal_places=2, default=1.1, validators=[validators.MinValueValidator(1.0)]
+        max_digits=5,
+        decimal_places=2,
+        default=1.1,
+        validators=[validators.MinValueValidator(1.0)],
     )
     rag_gauss_scale_max = models.DecimalField(
-        max_digits=5, decimal_places=2, default=2.0, validators=[validators.MinValueValidator(1.0)]
+        max_digits=5,
+        decimal_places=2,
+        default=2.0,
+        validators=[validators.MinValueValidator(1.0)],
     )
     rag_desired_chunk_size = models.PositiveIntegerField(default=300)
     elbow_filter_enabled = models.BooleanField(default=False)
     match_boost = models.DecimalField(max_digits=5, decimal_places=2, default=1.0)
     match_name_boost = models.DecimalField(max_digits=5, decimal_places=2, default=2.0)
-    match_description_boost = models.DecimalField(max_digits=5, decimal_places=2, default=0.5)
-    match_keywords_boost = models.DecimalField(max_digits=5, decimal_places=2, default=0.5)
+    match_description_boost = models.DecimalField(
+        max_digits=5, decimal_places=2, default=0.5
+    )
+    match_keywords_boost = models.DecimalField(
+        max_digits=5, decimal_places=2, default=0.5
+    )
     knn_boost = models.DecimalField(max_digits=5, decimal_places=2, default=2.0)
     similarity_threshold = models.DecimalField(
         max_digits=5,
         decimal_places=2,
         default=0.7,
-        validators=[validators.MinValueValidator(0.0), validators.MaxValueValidator(1.0)],
+        validators=[
+            validators.MinValueValidator(0.0),
+            validators.MaxValueValidator(1.0),
+        ],
     )
 
     def __str__(self) -> str:
@@ -250,10 +303,18 @@ class User(BaseUser, UUIDPrimaryKeyBase):
     class BusinessUnit(models.TextChoices):
         BORDERS_UNIT = "Borders Unit", _("Borders Unit")
         CENTRAL_COSTS = "Central Costs", _("Central Costs")
-        CENTRAL_DIGITAL_AND_DATA_OFFICE = "Central Digital and Data Office", _("Central Digital and Data Office")
-        CIVIL_SERVICE_COMMISSION = "Civil Service Commission", _("Civil Service Commission")
-        CIVIL_SERVICE_HUMAN_RESOURCES = "Civil Service Human Resources", _("Civil Service Human Resources")
-        CO_CHIEF_OPERATING_OFFICER = "CO Chief Operating Officer", _("CO Chief Operating Officer")
+        CENTRAL_DIGITAL_AND_DATA_OFFICE = "Central Digital and Data Office", _(
+            "Central Digital and Data Office"
+        )
+        CIVIL_SERVICE_COMMISSION = "Civil Service Commission", _(
+            "Civil Service Commission"
+        )
+        CIVIL_SERVICE_HUMAN_RESOURCES = "Civil Service Human Resources", _(
+            "Civil Service Human Resources"
+        )
+        CO_CHIEF_OPERATING_OFFICER = "CO Chief Operating Officer", _(
+            "CO Chief Operating Officer"
+        )
         CO_DIGITAL = "CO Digital", _("CO Digital")
         CO_HMT_COMMERCIAL = "CO HMT Commercial", _("CO HMT Commercial")
         CO_PEOPLE_AND_PLACES = "CO People and Places", _("CO People and Places")
@@ -264,10 +325,16 @@ class User(BaseUser, UUIDPrimaryKeyBase):
         COMMERCIAL_MODELS = "Commercial Models", _("Commercial Models")
         COP_PRESIDENCY = "COP Presidency", _("COP Presidency")
         COVID_INQUIRY = "Covid Inquiry", _("Covid Inquiry")
-        CROWN_COMMERCIAL_SERVICE = "Crown Commercial Service", _("Crown Commercial Service")
-        CS_MODERNISATION_AND_REFORM_UNIT = "CS Modernisation and Reform Unit", _("CS Modernisation and Reform Unit")
+        CROWN_COMMERCIAL_SERVICE = "Crown Commercial Service", _(
+            "Crown Commercial Service"
+        )
+        CS_MODERNISATION_AND_REFORM_UNIT = "CS Modernisation and Reform Unit", _(
+            "CS Modernisation and Reform Unit"
+        )
         DELIVERY_GROUP = "Delivery Group", _("Delivery Group")
-        ECONOMIC_AND_DOMESTIC_SECRETARIAT = "Economic and Domestic Secretariat", _("Economic and Domestic Secretariat")
+        ECONOMIC_AND_DOMESTIC_SECRETARIAT = "Economic and Domestic Secretariat", _(
+            "Economic and Domestic Secretariat"
+        )
         EQUALITY_AND_HUMAN_RIGHTS_COMMISSION = (
             "Equality and Human Rights Commission",
             _("Equality and Human Rights Commission"),
@@ -275,59 +342,99 @@ class User(BaseUser, UUIDPrimaryKeyBase):
         EQUALITY_HUB = "Equality Hub", _("Equality Hub")
         FLEXIBLE_CS_POOL = "Flexible CS Pool", _("Flexible CS Pool")
         GEOSPATIAL_COMMISSION = "Geospatial Commission", _("Geospatial Commission")
-        GOVERNMENT_BUSINESS_SERVICES = "Government Business Services", _("Government Business Services")
+        GOVERNMENT_BUSINESS_SERVICES = "Government Business Services", _(
+            "Government Business Services"
+        )
         GOVERNMENT_COMMERCIAL_AND_GRANTS_FUNCTION = (
             "Government Commercial and Grants Function",
             _("Government Commercial and Grants Function"),
         )
-        GOVERNMENT_COMMUNICATION_SERVICE = "Government Communication Service", _("Government Communication Service")
-        GOVERNMENT_DIGITAL_SERVICE = "Government Digital Service", _("Government Digital Service")
-        GOVERNMENT_IN_PARLIAMENT = "Government in Parliament", _("Government in Parliament")
-        GOVERNMENT_LEGAL_DEPARTMENT = "Government Legal Department", _("Government Legal Department")
-        GOVERNMENT_PEOPLE_GROUP = "Government People Group", _("Government People Group")
-        GOVERNMENT_PROPERTY_AGENCY = "Government Property Agency", _("Government Property Agency")
-        GOVERNMENT_SECURITY_GROUP = "Government Security Group", _("Government Security Group")
+        GOVERNMENT_COMMUNICATION_SERVICE = "Government Communication Service", _(
+            "Government Communication Service"
+        )
+        GOVERNMENT_DIGITAL_SERVICE = "Government Digital Service", _(
+            "Government Digital Service"
+        )
+        GOVERNMENT_IN_PARLIAMENT = "Government in Parliament", _(
+            "Government in Parliament"
+        )
+        GOVERNMENT_LEGAL_DEPARTMENT = "Government Legal Department", _(
+            "Government Legal Department"
+        )
+        GOVERNMENT_PEOPLE_GROUP = "Government People Group", _(
+            "Government People Group"
+        )
+        GOVERNMENT_PROPERTY_AGENCY = "Government Property Agency", _(
+            "Government Property Agency"
+        )
+        GOVERNMENT_SECURITY_GROUP = "Government Security Group", _(
+            "Government Security Group"
+        )
         GRENFELL_INQUIRY = "Grenfell Inquiry", _("Grenfell Inquiry")
         INFECTED_BLOOD_INQUIRY = "Infected Blood Inquiry", _("Infected Blood Inquiry")
         INFRASTRUCTURE_AND_PROJECTS_AUTHORITY = (
             "Infrastructure and Projects Authority",
             _("Infrastructure and Projects Authority"),
         )
-        INQUIRIES_SPONSORSHIP_TEAM = "Inquiries Sponsorship Team", _("Inquiries Sponsorship Team")
+        INQUIRIES_SPONSORSHIP_TEAM = "Inquiries Sponsorship Team", _(
+            "Inquiries Sponsorship Team"
+        )
         INTELLIGENCE_AND_SECURITY_COMMITTEE = (
             "Intelligence and Security Committee",
             _("Intelligence and Security Committee"),
         )
-        JOINT_INTELLIGENCE_ORGANISATION = "Joint Intelligence Organisation", _("Joint Intelligence Organisation")
-        NATIONAL_SECURITY_SECRETARIAT = "National Security Secretariat", _("National Security Secretariat")
-        OFFICE_FOR_VETERANS_AFFAIRS = "Office for Veterans' Affairs", _("Office for Veterans' Affairs")
-        OFFICE_OF_GOVERNMENT_PROPERTY = "Office of Government Property", _("Office of Government Property")
+        JOINT_INTELLIGENCE_ORGANISATION = "Joint Intelligence Organisation", _(
+            "Joint Intelligence Organisation"
+        )
+        NATIONAL_SECURITY_SECRETARIAT = "National Security Secretariat", _(
+            "National Security Secretariat"
+        )
+        OFFICE_FOR_VETERANS_AFFAIRS = "Office for Veterans' Affairs", _(
+            "Office for Veterans' Affairs"
+        )
+        OFFICE_OF_GOVERNMENT_PROPERTY = "Office of Government Property", _(
+            "Office of Government Property"
+        )
         OFFICE_OF_THE_REGISTRAR_OF_CONSULTANT_LOBBYISTS = (
             "Office of the Registrar of Consultant Lobbyists",
             _("Office of the Registrar of Consultant Lobbyists"),
         )
         PRIME_MINISTERS_OFFICE = "Prime Minister's Office", _("Prime Minister's Office")
-        PROPRIETY_AND_CONSTITUTION_GROUP = "Propriety and Constitution Group", _("Propriety and Constitution Group")
+        PROPRIETY_AND_CONSTITUTION_GROUP = "Propriety and Constitution Group", _(
+            "Propriety and Constitution Group"
+        )
         PUBLIC_BODIES_AND_PRIORITY_PROJECTS_UNIT = (
             "Public Bodies and Priority Projects Unit",
             _("Public Bodies and Priority Projects Unit"),
         )
-        PUBLIC_INQUIRY_RESPONSE_UNIT = "Public Inquiry Response Unit", _("Public Inquiry Response Unit")
-        PUBLIC_SECTOR_FRAUD_AUTHORITY = "Public Sector Fraud Authority", _("Public Sector Fraud Authority")
+        PUBLIC_INQUIRY_RESPONSE_UNIT = "Public Inquiry Response Unit", _(
+            "Public Inquiry Response Unit"
+        )
+        PUBLIC_SECTOR_FRAUD_AUTHORITY = "Public Sector Fraud Authority", _(
+            "Public Sector Fraud Authority"
+        )
         UKSV = "UKSV", _("UKSV")
-        UNION_AND_CONSTITUTION_GROUP = "Union and Constitution Group", _("Union and Constitution Group")
+        UNION_AND_CONSTITUTION_GROUP = "Union and Constitution Group", _(
+            "Union and Constitution Group"
+        )
         OTHER = "Other", _("Other")
 
     class AIExperienceLevel(models.TextChoices):
         CURIOUS_NEWCOMER = "Curious Newcomer", _("I haven't used Generative AI tools")
-        CAUTIOUS_EXPLORER = "Cautious Explorer", _("I have a little experience using Generative AI tools")
+        CAUTIOUS_EXPLORER = "Cautious Explorer", _(
+            "I have a little experience using Generative AI tools"
+        )
         ENTHUSIASTIC_EXPERIMENTER = (
             "Enthusiastic Experimenter",
-            _("I occasionally use Generative AI tools but am still experimenting with their capabilities"),
+            _(
+                "I occasionally use Generative AI tools but am still experimenting with their capabilities"
+            ),
         )
         EXPERIENCED_NAVIGATOR = (
             "Experienced Navigator",
-            _("I use Generative AI tools regularly and have a good understanding of their strengths and limitations"),
+            _(
+                "I use Generative AI tools regularly and have a good understanding of their strengths and limitations"
+            ),
         )
         AI_ALCHEMIST = (
             "AI Alchemist",
@@ -351,7 +458,9 @@ class User(BaseUser, UUIDPrimaryKeyBase):
             _("I have autism, dyslexia, ADHD, a mental health condition"),
         )
         TEMPORARY = "Temporary", _("I have an injury")
-        INVISIBLE_CONDITION = "Invisible condition", _("This could be menopause, a mental health condition")
+        INVISIBLE_CONDITION = "Invisible condition", _(
+            "This could be menopause, a mental health condition"
+        )
 
     class DigitalConfidence(models.TextChoices):
         CONFIDENT = (
@@ -360,7 +469,9 @@ class User(BaseUser, UUIDPrimaryKeyBase):
         )
         NEED_HELP = (
             "When using new technologies and digital products I tend to need some help",
-            _("When using new technologies and digital products I tend to need some help"),
+            _(
+                "When using new technologies and digital products I tend to need some help"
+            ),
         )
         DONT_WANT = (
             "I don't use new technologies and I don't want to learn how to use them",
@@ -371,8 +482,12 @@ class User(BaseUser, UUIDPrimaryKeyBase):
         NOT_USED = "I have not used GenAI", _("I have not used GenAI")
         EVERYDAY = "Everyday", _("Everyday")
         WEEKLY = "Weekly - a few times per week", _("Weekly - a few times per week")
-        MONTHLY = "Monthly - a few times per month", _("Monthly - a few times per month")
-        NOT_MUCH = "Not much at all - tried once or twice", _("Not much at all - tried once or twice")
+        MONTHLY = "Monthly - a few times per month", _(
+            "Monthly - a few times per month"
+        )
+        NOT_MUCH = "Not much at all - tried once or twice", _(
+            "Not much at all - tried once or twice"
+        )
 
     class Usefulness(models.TextChoices):
         NOT_USED = "I have not used GenAI", _("I have not used GenAI")
@@ -397,7 +512,9 @@ class User(BaseUser, UUIDPrimaryKeyBase):
         NO = "No", _("No")
         MAYBE = "Maybe (or unsure)", _("Maybe (or unsure)")
         YES = "Yes", _("Yes")
-        ALREADY_DO = "Yes! I already use GenAI for this", _("Yes! I already use GenAI for this")
+        ALREADY_DO = "Yes! I already use GenAI for this", _(
+            "Yes! I already use GenAI for this"
+        )
 
     class RegularityTasks(models.TextChoices):
         DONT_DO = "I do not do this task", _("I do not do this task")
@@ -423,44 +540,76 @@ class User(BaseUser, UUIDPrimaryKeyBase):
     invite_accepted_at = models.DateTimeField(default=None, blank=True, null=True)
     last_token_sent_at = models.DateTimeField(editable=False, blank=True, null=True)
     password = models.CharField("password", max_length=128, blank=True, null=True)
-    business_unit = models.CharField(null=True, blank=True, max_length=64, choices=BusinessUnit)
+    business_unit = models.CharField(
+        null=True, blank=True, max_length=64, choices=BusinessUnit
+    )
     grade = models.CharField(null=True, blank=True, max_length=3, choices=UserGrade)
     name = models.CharField(null=True, blank=True)
-    ai_experience = models.CharField(null=True, blank=True, max_length=25, choices=AIExperienceLevel)
-    profession = models.CharField(null=True, blank=True, max_length=4, choices=Profession)
-    info_about_user = models.CharField(null=True, blank=True, help_text="user entered info from profile overlay")
-    redbox_response_preferences = models.CharField(
-        null=True, blank=True, help_text="user entered info from profile overlay, to be used in custom prompt"
+    ai_experience = models.CharField(
+        null=True, blank=True, max_length=25, choices=AIExperienceLevel
     )
-    ai_settings = models.ForeignKey(AISettings, on_delete=models.SET_DEFAULT, default="default", to_field="label")
-    is_developer = models.BooleanField(null=True, blank=True, default=False, help_text="is this user a developer?")
+    profession = models.CharField(
+        null=True, blank=True, max_length=4, choices=Profession
+    )
+    info_about_user = models.CharField(
+        null=True, blank=True, help_text="user entered info from profile overlay"
+    )
+    redbox_response_preferences = models.CharField(
+        null=True,
+        blank=True,
+        help_text="user entered info from profile overlay, to be used in custom prompt",
+    )
+    ai_settings = models.ForeignKey(
+        AISettings, on_delete=models.SET_DEFAULT, default="default", to_field="label"
+    )
+    is_developer = models.BooleanField(
+        null=True, blank=True, default=False, help_text="is this user a developer?"
+    )
 
     # Additional fields for sign-up form
     # Page 1
     role = models.TextField(null=True, blank=True)
     # Page 2
-    accessibility_options = models.CharField(null=True, blank=True, max_length=64, choices=AccessibilityOptions)
-    accessibility_categories = models.CharField(null=True, blank=True, max_length=64, choices=AccessibilityCategories)
+    accessibility_options = models.CharField(
+        null=True, blank=True, max_length=64, choices=AccessibilityOptions
+    )
+    accessibility_categories = models.CharField(
+        null=True, blank=True, max_length=64, choices=AccessibilityCategories
+    )
     accessibility_description = models.TextField(null=True, blank=True)
     # Page 3
-    digital_confidence = models.CharField(null=True, blank=True, max_length=128, choices=DigitalConfidence)
-    usage_at_work = models.CharField(null=True, blank=True, max_length=64, choices=RegularityAI)
-    usage_outside_work = models.CharField(null=True, blank=True, max_length=64, choices=RegularityAI)
-    how_useful = models.CharField(null=True, blank=True, max_length=64, choices=Usefulness)
+    digital_confidence = models.CharField(
+        null=True, blank=True, max_length=128, choices=DigitalConfidence
+    )
+    usage_at_work = models.CharField(
+        null=True, blank=True, max_length=64, choices=RegularityAI
+    )
+    usage_outside_work = models.CharField(
+        null=True, blank=True, max_length=64, choices=RegularityAI
+    )
+    how_useful = models.CharField(
+        null=True, blank=True, max_length=64, choices=Usefulness
+    )
     redbox_tasks = models.TextField(null=True, blank=True)
     # Page 4
     task_1_description = models.TextField(null=True, blank=True)
     task_1_regularity = models.TextField(null=True, blank=True)
     task_1_duration = models.TextField(null=True, blank=True)
-    task_1_consider_using_ai = models.CharField(null=True, blank=True, max_length=64, choices=ConsiderUsingAI)
+    task_1_consider_using_ai = models.CharField(
+        null=True, blank=True, max_length=64, choices=ConsiderUsingAI
+    )
     task_2_description = models.TextField(null=True, blank=True)
     task_2_regularity = models.TextField(null=True, blank=True)
     task_2_duration = models.TextField(null=True, blank=True)
-    task_2_consider_using_ai = models.CharField(null=True, blank=True, max_length=64, choices=ConsiderUsingAI)
+    task_2_consider_using_ai = models.CharField(
+        null=True, blank=True, max_length=64, choices=ConsiderUsingAI
+    )
     task_3_description = models.TextField(null=True, blank=True)
     task_3_regularity = models.TextField(null=True, blank=True)
     task_3_duration = models.TextField(null=True, blank=True)
-    task_3_consider_using_ai = models.CharField(null=True, blank=True, max_length=64, choices=ConsiderUsingAI)
+    task_3_consider_using_ai = models.CharField(
+        null=True, blank=True, max_length=64, choices=ConsiderUsingAI
+    )
     # Page 5
     role_regularity_summarise_large_docs = models.CharField(
         null=True, blank=True, max_length=32, choices=RegularityTasks
@@ -468,20 +617,42 @@ class User(BaseUser, UUIDPrimaryKeyBase):
     role_regularity_condense_multiple_docs = models.CharField(
         null=True, blank=True, max_length=32, choices=RegularityTasks
     )
-    role_regularity_search_across_docs = models.CharField(null=True, blank=True, max_length=32, choices=RegularityTasks)
+    role_regularity_search_across_docs = models.CharField(
+        null=True, blank=True, max_length=32, choices=RegularityTasks
+    )
     role_regularity_compare_multiple_docs = models.CharField(
         null=True, blank=True, max_length=32, choices=RegularityTasks
     )
-    role_regularity_specific_template = models.CharField(null=True, blank=True, max_length=32, choices=RegularityTasks)
-    role_regularity_shorten_docs = models.CharField(null=True, blank=True, max_length=32, choices=RegularityTasks)
-    role_regularity_write_docs = models.CharField(null=True, blank=True, max_length=32, choices=RegularityTasks)
-    role_duration_summarise_large_docs = models.CharField(null=True, blank=True, max_length=32, choices=DurationTasks)
-    role_duration_condense_multiple_docs = models.CharField(null=True, blank=True, max_length=32, choices=DurationTasks)
-    role_duration_search_across_docs = models.CharField(null=True, blank=True, max_length=32, choices=DurationTasks)
-    role_duration_compare_multiple_docs = models.CharField(null=True, blank=True, max_length=32, choices=DurationTasks)
-    role_duration_specific_template = models.CharField(null=True, blank=True, max_length=32, choices=DurationTasks)
-    role_duration_shorten_docs = models.CharField(null=True, blank=True, max_length=32, choices=DurationTasks)
-    role_duration_write_docs = models.CharField(null=True, blank=True, max_length=32, choices=DurationTasks)
+    role_regularity_specific_template = models.CharField(
+        null=True, blank=True, max_length=32, choices=RegularityTasks
+    )
+    role_regularity_shorten_docs = models.CharField(
+        null=True, blank=True, max_length=32, choices=RegularityTasks
+    )
+    role_regularity_write_docs = models.CharField(
+        null=True, blank=True, max_length=32, choices=RegularityTasks
+    )
+    role_duration_summarise_large_docs = models.CharField(
+        null=True, blank=True, max_length=32, choices=DurationTasks
+    )
+    role_duration_condense_multiple_docs = models.CharField(
+        null=True, blank=True, max_length=32, choices=DurationTasks
+    )
+    role_duration_search_across_docs = models.CharField(
+        null=True, blank=True, max_length=32, choices=DurationTasks
+    )
+    role_duration_compare_multiple_docs = models.CharField(
+        null=True, blank=True, max_length=32, choices=DurationTasks
+    )
+    role_duration_specific_template = models.CharField(
+        null=True, blank=True, max_length=32, choices=DurationTasks
+    )
+    role_duration_shorten_docs = models.CharField(
+        null=True, blank=True, max_length=32, choices=DurationTasks
+    )
+    role_duration_write_docs = models.CharField(
+        null=True, blank=True, max_length=32, choices=DurationTasks
+    )
     # Page 6
     consent_research = models.BooleanField(null=True, blank=True, default=False)
     consent_interviews = models.BooleanField(null=True, blank=True, default=False)
@@ -543,7 +714,10 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
     original_file_name = models.TextField(max_length=2048, blank=True, null=True)
     last_referenced = models.DateTimeField(blank=True, null=True)
     ingest_error = models.TextField(
-        max_length=2048, blank=True, null=True, help_text="error, if any, encountered during ingest"
+        max_length=2048,
+        blank=True,
+        null=True,
+        help_text="error, if any, encountered during ingest",
     )
 
     def __str__(self) -> str:  # pragma: no cover
@@ -573,7 +747,9 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
         if es_client.indices.exists(index=index):
             es_client.delete_by_query(
                 index=index,
-                body={"query": {"term": {"metadata.file_name.keyword": self.unique_name}}},
+                body={
+                    "query": {"term": {"metadata.file_name.keyword": self.unique_name}}
+                },
             )
 
     def update_status_from_core(self, status_label):
@@ -614,7 +790,9 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
             return URL(url)
 
         if not self.original_file:
-            logger.error("attempt to access non-existent file %s", self.pk, stack_info=True)
+            logger.error(
+                "attempt to access non-existent file %s", self.pk, stack_info=True
+            )
             return None
 
         return URL(self.original_file.url)
@@ -625,13 +803,19 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
         try:
             return self.original_file_name or self.original_file.name
         except ValueError as e:
-            logger.exception("attempt to access non-existent file %s", self.pk, exc_info=e)
+            logger.exception(
+                "attempt to access non-existent file %s", self.pk, exc_info=e
+            )
 
     @property
     def unique_name(self) -> str:
         # Name used when processing files that exist in S3
         if self.status in INACTIVE_STATUSES:
-            logger.exception("Attempt to access unique_name for inactive file %s with status %s", self.pk, self.status)
+            logger.exception(
+                "Attempt to access unique_name for inactive file %s with status %s",
+                self.pk,
+                self.status,
+            )
             raise InactiveFileError(self)
         return self.original_file.name
 
@@ -653,22 +837,33 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
         return self.id < other.id
 
     @classmethod
-    def get_completed_and_processing_files(cls, user: User) -> tuple[Sequence["File"], Sequence["File"]]:
+    def get_completed_and_processing_files(
+        cls, user: User
+    ) -> tuple[Sequence["File"], Sequence["File"]]:
         """Returns all files that are completed and processing for a given user."""
 
-        completed_files = cls.objects.filter(user=user, status=StatusEnum.complete).order_by("-created_at")
-        processing_files = cls.objects.filter(user=user, status=StatusEnum.processing).order_by("-created_at")
+        completed_files = cls.objects.filter(
+            user=user, status=StatusEnum.complete
+        ).order_by("-created_at")
+        processing_files = cls.objects.filter(
+            user=user, status=StatusEnum.processing
+        ).order_by("-created_at")
         return completed_files, processing_files
 
     @classmethod
-    def get_ordered_by_citation_priority(cls, chat_message_id: uuid.UUID) -> Sequence["File"]:
+    def get_ordered_by_citation_priority(
+        cls, chat_message_id: uuid.UUID
+    ) -> Sequence["File"]:
         """Returns all files that are cited in a given chat message, ordered by citation priority."""
         return (
             cls.objects.filter(citation__chat_message_id=chat_message_id)
             .annotate(min_created_at=Min("citation__created_at"))
             .order_by("min_created_at")
             .prefetch_related(
-                Prefetch("citation_set", queryset=Citation.objects.filter(chat_message_id=chat_message_id))
+                Prefetch(
+                    "citation_set",
+                    queryset=Citation.objects.filter(chat_message_id=chat_message_id),
+                )
             )
         )
 
@@ -680,19 +875,27 @@ class Chat(UUIDPrimaryKeyBase, TimeStampedModel, AbstractAISettings):
 
     # Exit feedback - this is separate to the ratings for individual ChatMessages
     feedback_achieved = models.BooleanField(
-        null=True, blank=True, help_text="Did Redbox do what you needed it to in this chat?"
+        null=True,
+        blank=True,
+        help_text="Did Redbox do what you needed it to in this chat?",
     )
-    feedback_saved_time = models.BooleanField(null=True, blank=True, help_text="Did Redbox help save you time?")
+    feedback_saved_time = models.BooleanField(
+        null=True, blank=True, help_text="Did Redbox help save you time?"
+    )
     feedback_improved_work = models.BooleanField(
         null=True, blank=True, help_text="Did Redbox help to improve your work?"
     )
-    feedback_notes = models.TextField(null=True, blank=True, help_text="Do you want to tell us anything further?")
+    feedback_notes = models.TextField(
+        null=True, blank=True, help_text="Do you want to tell us anything further?"
+    )
 
     def __str__(self) -> str:  # pragma: no cover
         return self.name or ""
 
     @override
-    def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
+    def save(
+        self, force_insert=False, force_update=False, using=None, update_fields=None
+    ):
         self.name = sanitise_string(self.name)
 
         if self.chat_backend_id is None:
@@ -718,7 +921,9 @@ class Chat(UUIDPrimaryKeyBase, TimeStampedModel, AbstractAISettings):
 
     @property
     def newest_message_date(self) -> date:
-        return self.chatmessage_set.aggregate(newest_date=Max("created_at"))["newest_date"].date()
+        return self.chatmessage_set.aggregate(newest_date=Max("created_at"))[
+            "newest_date"
+        ].date()
 
     @property
     def date_group(self):
@@ -735,26 +940,38 @@ class Citation(UUIDPrimaryKeyBase, TimeStampedModel):
     class Origin(models.TextChoices):
         WIKIPEDIA = "Wikipedia", _("wikipedia")
         USER_UPLOADED_DOCUMENT = "UserUploadedDocument", _("user uploaded document")
-        GOV_UK = "GOV.UK", _("gov.uk")
+        GOV_UK = "Gov.Uk", _("gov.uk")
 
     file = models.ForeignKey(
-        File, on_delete=models.CASCADE, null=True, blank=True, help_text="file for internal citation"
+        File,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        help_text="file for internal citation",
     )
     url = models.URLField(null=True, blank=True, help_text="url for external")
     chat_message = models.ForeignKey("ChatMessage", on_delete=models.CASCADE)
     text = models.TextField(null=True, blank=True)
     page_numbers = ArrayField(
-        models.PositiveIntegerField(), null=True, blank=True, help_text="location of citation in document"
+        models.PositiveIntegerField(),
+        null=True,
+        blank=True,
+        help_text="location of citation in document",
     )
     source = models.CharField(
-        max_length=32, choices=Origin, help_text="source of citation", default=Origin.USER_UPLOADED_DOCUMENT
+        max_length=32,
+        choices=Origin,
+        help_text="source of citation",
+        default=Origin.USER_UPLOADED_DOCUMENT,
     )
     text_in_answer = models.TextField(null=True, blank=True)
 
     def __str__(self):
         return self.uri
 
-    def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
+    def save(
+        self, force_insert=False, force_update=False, using=None, update_fields=None
+    ):
         if self.source == self.Origin.USER_UPLOADED_DOCUMENT:
             if self.file is None:
                 msg = "file must be specified for a user-uploaded-document"
@@ -788,11 +1005,15 @@ class ChatMessage(UUIDPrimaryKeyBase, TimeStampedModel):
     text = models.TextField(max_length=32768, null=False, blank=False)
     role = models.CharField(choices=ChatRoleEnum.choices, null=False, blank=False)
     route = models.CharField(max_length=25, null=True, blank=True)
-    selected_files = models.ManyToManyField(File, related_name="+", symmetrical=False, blank=True)
+    selected_files = models.ManyToManyField(
+        File, related_name="+", symmetrical=False, blank=True
+    )
     source_files = models.ManyToManyField(File, through=Citation)
 
     rating = models.PositiveIntegerField(
-        blank=True, null=True, validators=[validators.MinValueValidator(1), validators.MaxValueValidator(5)]
+        blank=True,
+        null=True,
+        validators=[validators.MinValueValidator(1), validators.MaxValueValidator(5)],
     )
     rating_text = models.TextField(blank=True, null=True)
     rating_chips = ArrayField(models.CharField(max_length=32), null=True, blank=True)
@@ -800,14 +1021,18 @@ class ChatMessage(UUIDPrimaryKeyBase, TimeStampedModel):
     def __str__(self) -> str:  # pragma: no cover
         return self.text[:20] + "..."
 
-    def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
+    def save(
+        self, force_insert=False, force_update=False, using=None, update_fields=None
+    ):
         self.text = sanitise_string(self.text)
         self.rating_text = sanitise_string(self.rating_text)
 
         super().save(force_insert, force_update, using, update_fields)
 
     @classmethod
-    def get_messages_ordered_by_citation_priority(cls, chat_id: uuid.UUID) -> Sequence["ChatMessage"]:
+    def get_messages_ordered_by_citation_priority(
+        cls, chat_id: uuid.UUID
+    ) -> Sequence["ChatMessage"]:
         """Returns all chat messages for a given chat history, ordered by citation priority."""
         return (
             cls.objects.filter(chat_id=chat_id)
@@ -830,7 +1055,10 @@ class ChatMessageTokenUse(UUIDPrimaryKeyBase, TimeStampedModel):
 
     chat_message = models.ForeignKey(ChatMessage, on_delete=models.CASCADE)
     use_type = models.CharField(
-        max_length=10, choices=UseTypeEnum, help_text="input or output tokens", default=UseTypeEnum.INPUT
+        max_length=10,
+        choices=UseTypeEnum,
+        help_text="input or output tokens",
+        default=UseTypeEnum.INPUT,
     )
     model_name = models.CharField(max_length=50, null=True, blank=True)
     token_count = models.PositiveIntegerField(null=True, blank=True)

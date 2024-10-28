@@ -10,10 +10,17 @@ from langchain_core.tools import StructuredTool, Tool, tool
 from langgraph.prebuilt import InjectedState
 
 from redbox.models.chain import RedboxState
-from redbox.models.file import ChunkMetadata, ChunkResolution
-from redbox.retriever.queries import add_document_filter_scores_to_query, build_document_query
+from redbox.models.file import ChunkCreatorType, ChunkMetadata, ChunkResolution
+from redbox.retriever.queries import (
+    add_document_filter_scores_to_query,
+    build_document_query,
+)
 from redbox.retriever.retrievers import query_to_documents
-from redbox.transform import merge_documents, sort_documents, structure_documents_by_group_and_indices
+from redbox.transform import (
+    merge_documents,
+    sort_documents,
+    structure_documents_by_group_and_indices,
+)
 
 
 def is_valid_tool(tool: StructuredTool) -> bool:
@@ -72,7 +79,9 @@ def build_search_documents_tool(
     """Constructs a tool that searches the index and sets state["documents"]."""
 
     @tool
-    def _search_documents(query: str, state: Annotated[RedboxState, InjectedState]) -> dict[str, Any]:
+    def _search_documents(
+        query: str, state: Annotated[RedboxState, InjectedState]
+    ) -> dict[str, Any]:
         """
         Search for documents uploaded by the user based on a query string.
 
@@ -103,7 +112,9 @@ def build_search_documents_tool(
             chunk_resolution=chunk_resolution,
             ai_settings=ai_settings,
         )
-        initial_documents = query_to_documents(es_client=es_client, index_name=index_name, query=initial_query)
+        initial_documents = query_to_documents(
+            es_client=es_client, index_name=index_name, query=initial_query
+        )
 
         # Handle nothing found (as when no files are permitted)
         if not initial_documents:
@@ -115,10 +126,14 @@ def build_search_documents_tool(
             ai_settings=ai_settings,
             centres=initial_documents,
         )
-        adjacent_boosted = query_to_documents(es_client=es_client, index_name=index_name, query=with_adjacent_query)
+        adjacent_boosted = query_to_documents(
+            es_client=es_client, index_name=index_name, query=with_adjacent_query
+        )
 
         # Merge and sort
-        merged_documents = merge_documents(initial=initial_documents, adjacent=adjacent_boosted)
+        merged_documents = merge_documents(
+            initial=initial_documents, adjacent=adjacent_boosted
+        )
         sorted_documents = sort_documents(documents=merged_documents)
 
         # Return as state update
@@ -127,13 +142,15 @@ def build_search_documents_tool(
     return _search_documents
 
 
-def build_govuk_search_tool(num_results: int = 10) -> Tool:
+def build_govuk_search_tool(num_results: int = 1) -> Tool:
     """Constructs a tool that searches gov.uk and sets state["documents"]."""
 
     tokeniser = tiktoken.encoding_for_model("gpt-4o")
 
     @tool
-    def _search_govuk(query: str, state: Annotated[dict, InjectedState]) -> dict[str, Any]:
+    def _search_govuk(
+        query: str, state: Annotated[dict, InjectedState]
+    ) -> dict[str, Any]:
         """
         Search for documents on gov.uk based on a query string.
         This endpoint is used to search for documents on gov.uk. There are many types of documents on gov.uk.
@@ -150,7 +167,13 @@ def build_govuk_search_tool(num_results: int = 10) -> Tool:
         """
 
         url_base = "https://www.gov.uk"
-        required_fields = ["format", "title", "description", "indexable_content", "link"]
+        required_fields = [
+            "format",
+            "title",
+            "description",
+            "indexable_content",
+            "link",
+        ]
 
         response = requests.get(
             f"{url_base}/api/search.json",
@@ -174,12 +197,10 @@ def build_govuk_search_tool(num_results: int = 10) -> Tool:
                     page_content=doc["indexable_content"],
                     metadata=ChunkMetadata(
                         index=i,
-                        uri=f"{url_base}/{doc['link']}",
+                        uri=f"{url_base}{doc['link']}",
                         token_count=len(tokeniser.encode(doc["indexable_content"])),
-                        name=doc["title"],
-                        description=doc["description"],
-                        creator_type="gov.uk",
-                    ),
+                        creator_type=ChunkCreatorType.gov_uk,
+                    ).model_dump(),
                 )
             )
 
@@ -188,7 +209,9 @@ def build_govuk_search_tool(num_results: int = 10) -> Tool:
     return _search_govuk
 
 
-def build_search_wikipedia_tool(number_wikipedia_results=1, max_chars_per_wiki_page=12000) -> Tool:
+def build_search_wikipedia_tool(
+    number_wikipedia_results=1, max_chars_per_wiki_page=12000
+) -> Tool:
     """Constructs a tool that searches Wikipedia"""
     _wikipedia_wrapper = WikipediaAPIWrapper(
         top_k_results=number_wikipedia_results,
@@ -197,7 +220,9 @@ def build_search_wikipedia_tool(number_wikipedia_results=1, max_chars_per_wiki_p
     tokeniser = tiktoken.encoding_for_model("gpt-4o")
 
     @tool
-    def _search_wikipedia(query: str, state: Annotated[RedboxState, InjectedState]) -> dict[str, Any]:
+    def _search_wikipedia(
+        query: str, state: Annotated[RedboxState, InjectedState]
+    ) -> dict[str, Any]:
         """
         Search Wikipedia for information about the queried entity.
         Useful for when you need to answer general questions about people, places, objects, companies, facts, historical events, or other subjects.
@@ -218,7 +243,7 @@ def build_search_wikipedia_tool(number_wikipedia_results=1, max_chars_per_wiki_p
                     index=i,
                     uri=doc.metadata["source"],
                     token_count=len(tokeniser.encode(doc.page_content)),
-                    creator_type="Wikipedia",
+                    creator_type=ChunkCreatorType.wikipedia,
                 ).model_dump(),
             )
             for i, doc in enumerate(response)
