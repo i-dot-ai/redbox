@@ -1,36 +1,19 @@
 from typing import Annotated, Any, get_args, get_origin, get_type_hints
 
-<<<<<<< HEAD
 import requests
 import tiktoken
 from elasticsearch import Elasticsearch
-=======
-import tiktoken
-from elasticsearch import Elasticsearch
 from langchain_community.utilities import WikipediaAPIWrapper
->>>>>>> main
 from langchain_core.documents import Document
 from langchain_core.embeddings.embeddings import Embeddings
 from langchain_core.tools import StructuredTool, Tool, tool
 from langgraph.prebuilt import InjectedState
 
-<<<<<<< HEAD
-from redbox.models.file import ChunkMetadata, ChunkResolution
-from redbox.retriever.queries import add_document_filter_scores_to_query, build_document_query
-=======
 from redbox.models.chain import RedboxState
 from redbox.models.file import ChunkMetadata, ChunkResolution
-from redbox.retriever.queries import (
-    add_document_filter_scores_to_query,
-    build_document_query,
-)
->>>>>>> main
+from redbox.retriever.queries import add_document_filter_scores_to_query, build_document_query
 from redbox.retriever.retrievers import query_to_documents
-from redbox.transform import (
-    merge_documents,
-    sort_documents,
-    structure_documents_by_group_and_indices,
-)
+from redbox.transform import merge_documents, sort_documents, structure_documents_by_group_and_indices
 
 
 def is_valid_tool(tool: StructuredTool) -> bool:
@@ -191,11 +174,11 @@ def build_govuk_search_tool(num_results: int = 10) -> Tool:
                     page_content=doc["indexable_content"],
                     metadata=ChunkMetadata(
                         index=i,
-                        file_name=f"{url_base}/{doc['link']}",
+                        uri=f"{url_base}/{doc['link']}",
                         token_count=len(tokeniser.encode(doc["indexable_content"])),
                         name=doc["title"],
                         description=doc["description"],
-                        keywords=[],
+                        creator_type="gov.uk",
                     ),
                 )
             )
@@ -203,6 +186,7 @@ def build_govuk_search_tool(num_results: int = 10) -> Tool:
         return {"documents": structure_documents_by_group_and_indices(mapped_documents)}
 
     return _search_govuk
+
 
 def build_search_wikipedia_tool(number_wikipedia_results=1, max_chars_per_wiki_page=12000) -> Tool:
     """Constructs a tool that searches Wikipedia"""
