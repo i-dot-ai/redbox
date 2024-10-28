@@ -142,7 +142,7 @@ class UploadView(View):
             logger.exception("Error creating File model object for %s.", uploaded_file, exc_info=e)
             return e.args
         else:
-            async_task(ingest, file.id, task_name=file.unique_name, group="ingest")
+            async_task(ingest, file.id, task_name=file.s3_key, group="ingest")
 
 
 @login_required

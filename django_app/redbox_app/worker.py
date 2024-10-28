@@ -18,7 +18,7 @@ def ingest(file_id: UUID, es_index: str | None = None) -> None:
 
     logging.info("Ingesting file: %s", file)
 
-    if error := ingest_file(file.unique_name, es_index):
+    if error := ingest_file(file.s3_key, es_index):
         file.status = StatusEnum.errored
         file.ingest_error = error
     else:

@@ -521,9 +521,9 @@ async def test_chat_consumer_redbox_state(
         assert connected
 
         selected_file_uuids: Sequence[str] = [str(f.id) for f in selected_files]
-        selected_file_keys: Sequence[str] = [f.unique_name for f in selected_files]
+        selected_file_keys: Sequence[str] = [f.s3_key for f in selected_files]
         permitted_file_keys: Sequence[str] = [
-            f.unique_name async for f in File.objects.filter(user=alice, status=StatusEnum.complete)
+            f.s3_key async for f in File.objects.filter(user=alice, status=StatusEnum.complete)
         ]
         assert selected_file_keys != permitted_file_keys
 
@@ -615,7 +615,7 @@ def mocked_connect(uploaded_file: File) -> Connect:
             "data": {
                 "output": [
                     Document(
-                        metadata={"uri": uploaded_file.unique_name},
+                        metadata={"uri": uploaded_file.s3_key},
                         page_content="Good afternoon Mr Amor",
                     )
                 ]
@@ -627,11 +627,11 @@ def mocked_connect(uploaded_file: File) -> Connect:
             "data": {
                 "output": [
                     Document(
-                        metadata={"uri": uploaded_file.unique_name},
+                        metadata={"uri": uploaded_file.s3_key},
                         page_content="Good afternoon Mr Amor",
                     ),
                     Document(
-                        metadata={"uri": uploaded_file.unique_name, "page_number": [34, 35]},
+                        metadata={"uri": uploaded_file.s3_key, "page_number": [34, 35]},
                         page_content="Good afternoon Mr Amor",
                     ),
                 ]
@@ -673,11 +673,11 @@ def mocked_connect_with_naughty_citation(uploaded_file: File) -> CannedGraphLLM:
             "data": {
                 "output": [
                     Document(
-                        metadata={"uri": uploaded_file.unique_name},
+                        metadata={"uri": uploaded_file.s3_key},
                         page_content="Good afternoon Mr Amor",
                     ),
                     Document(
-                        metadata={"uri": uploaded_file.unique_name},
+                        metadata={"uri": uploaded_file.s3_key},
                         page_content="I shouldn't send a \x00",
                     ),
                 ]
@@ -762,10 +762,10 @@ def mocked_connect_agentic_search(uploaded_file: File) -> Connect:
             "event": "on_custom_event",
             "name": "on_source_report",
             "data": [
-                Document(metadata={"uri": uploaded_file.unique_name}, page_content="Good afternoon Mr Amor"),
-                Document(metadata={"uri": uploaded_file.unique_name}, page_content="Good afternoon Mr Amor"),
+                Document(metadata={"uri": uploaded_file.s3_key}, page_content="Good afternoon Mr Amor"),
+                Document(metadata={"uri": uploaded_file.s3_key}, page_content="Good afternoon Mr Amor"),
                 Document(
-                    metadata={"uri": uploaded_file.unique_name, "page_number": [34, 35]},
+                    metadata={"uri": uploaded_file.s3_key, "page_number": [34, 35]},
                     page_content="Good afternoon Mr Amor",
                 ),
             ],
