@@ -536,22 +536,30 @@ class InactiveFileError(ValueError):
         super().__init__(f"{file.pk} is inactive, status is {file.status}")
 
 
-def user_directory_path(instance, filename: str) -> str:
+def build_s3_key(instance, filename: str) -> str:
+    """the s3-key is the primary key for a file,
+    this needs to be unique so that if a user uploads a file with the same name as
+    1. an existing file that they own, then it is overwritten
+    2. an existing file that another user owns then a new file is created
+    """
     return f"{instance.user.email}/{filename}"
 
 
 class File(UUIDPrimaryKeyBase, TimeStampedModel):
     status = models.CharField(choices=StatusEnum.choices, null=False, blank=False)
-    original_file = models.FileField(storage=settings.STORAGES["default"]["BACKEND"], upload_to=user_directory_path)
+    original_file = models.FileField(
+        storage=settings.STORAGES["default"]["BACKEND"],
+        upload_to=build_s3_key,
+    )
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    old_file_name = models.TextField(max_length=2048, blank=True, null=True)
+    original_file_name = models.TextField(max_length=2048, blank=True, null=True)
     last_referenced = models.DateTimeField(blank=True, null=True)
     ingest_error = models.TextField(
         max_length=2048, blank=True, null=True, help_text="error, if any, encountered during ingest"
     )
 
     def __str__(self) -> str:  # pragma: no cover
-        return f"{self.old_file_name} {self.user}"
+        return self.file_name
 
     def save(self, *args, **kwargs):
         if not self.last_referenced:
@@ -582,7 +590,7 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
 
     @property
     def file_type(self) -> str:
-        name = self.original_file.name
+        name = self.file_name
         return name.split(".")[-1]
 
     @property
@@ -615,8 +623,8 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
 
     @property
     def file_name(self) -> str:
-        if self.old_file_name:  # delete me?
-            return self.old_file_name
+        if self.original_file_name:  # delete me?
+            return self.original_file_name
 
         # could have a stronger (regex?) way of stripping the users email address?
         if "/" not in self.original_file.name:
@@ -626,7 +634,6 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
 
     @property
     def unique_name(self) -> str:
-        # merge with file_name above?
         # Name used when processing files that exist in S3
         if self.status in INACTIVE_STATUSES:
             logger.exception("Attempt to access unique_name for inactive file %s with status %s", self.pk, self.status)
