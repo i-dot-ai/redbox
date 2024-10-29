@@ -71,7 +71,10 @@ class ChatLLMBackend(models.Model):
         GROQ = "groq"
         OLLAMA = "ollama"
 
-    name = models.CharField(max_length=128, help_text="The name of the model, e.g. “gpt-4o”, “claude-3-opus-20240229”.")
+    name = models.CharField(
+        max_length=128,
+        help_text="The name of the model, e.g. “gpt-4o”, “claude-3-opus-20240229”.",
+    )
     provider = models.CharField(max_length=128, choices=Providers, help_text="The model provider")
     description = models.TextField(null=True, blank=True, help_text="brief description of the model")
     is_default = models.BooleanField(default=False, help_text="is this the default llm to use.")
@@ -139,13 +142,22 @@ class AISettings(UUIDPrimaryKeyBase, TimeStampedModel, AbstractAISettings):
     rag_num_candidates = models.PositiveIntegerField(default=10)
     rag_gauss_scale_size = models.PositiveIntegerField(default=3)
     rag_gauss_scale_decay = models.DecimalField(
-        max_digits=5, decimal_places=2, default=0.5, validators=[validators.MinValueValidator(0.0)]
+        max_digits=5,
+        decimal_places=2,
+        default=0.5,
+        validators=[validators.MinValueValidator(0.0)],
     )
     rag_gauss_scale_min = models.DecimalField(
-        max_digits=5, decimal_places=2, default=1.1, validators=[validators.MinValueValidator(1.0)]
+        max_digits=5,
+        decimal_places=2,
+        default=1.1,
+        validators=[validators.MinValueValidator(1.0)],
     )
     rag_gauss_scale_max = models.DecimalField(
-        max_digits=5, decimal_places=2, default=2.0, validators=[validators.MinValueValidator(1.0)]
+        max_digits=5,
+        decimal_places=2,
+        default=2.0,
+        validators=[validators.MinValueValidator(1.0)],
     )
     rag_desired_chunk_size = models.PositiveIntegerField(default=300)
     elbow_filter_enabled = models.BooleanField(default=False)
@@ -158,7 +170,10 @@ class AISettings(UUIDPrimaryKeyBase, TimeStampedModel, AbstractAISettings):
         max_digits=5,
         decimal_places=2,
         default=0.7,
-        validators=[validators.MinValueValidator(0.0), validators.MaxValueValidator(1.0)],
+        validators=[
+            validators.MinValueValidator(0.0),
+            validators.MaxValueValidator(1.0),
+        ],
     )
 
     def __str__(self) -> str:
@@ -430,7 +445,9 @@ class User(BaseUser, UUIDPrimaryKeyBase):
     profession = models.CharField(null=True, blank=True, max_length=4, choices=Profession)
     info_about_user = models.CharField(null=True, blank=True, help_text="user entered info from profile overlay")
     redbox_response_preferences = models.CharField(
-        null=True, blank=True, help_text="user entered info from profile overlay, to be used in custom prompt"
+        null=True,
+        blank=True,
+        help_text="user entered info from profile overlay, to be used in custom prompt",
     )
     ai_settings = models.ForeignKey(AISettings, on_delete=models.SET_DEFAULT, default="default", to_field="label")
     is_developer = models.BooleanField(null=True, blank=True, default=False, help_text="is this user a developer?")
@@ -555,7 +572,10 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
     original_file_name = models.TextField(max_length=2048, blank=True, null=True)  # delete me
     last_referenced = models.DateTimeField(blank=True, null=True)
     ingest_error = models.TextField(
-        max_length=2048, blank=True, null=True, help_text="error, if any, encountered during ingest"
+        max_length=2048,
+        blank=True,
+        null=True,
+        help_text="error, if any, encountered during ingest",
     )
 
     def __str__(self) -> str:  # pragma: no cover
@@ -673,7 +693,10 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
             .annotate(min_created_at=Min("citation__created_at"))
             .order_by("min_created_at")
             .prefetch_related(
-                Prefetch("citation_set", queryset=Citation.objects.filter(chat_message_id=chat_message_id))
+                Prefetch(
+                    "citation_set",
+                    queryset=Citation.objects.filter(chat_message_id=chat_message_id),
+                )
             )
         )
 
@@ -685,7 +708,9 @@ class Chat(UUIDPrimaryKeyBase, TimeStampedModel, AbstractAISettings):
 
     # Exit feedback - this is separate to the ratings for individual ChatMessages
     feedback_achieved = models.BooleanField(
-        null=True, blank=True, help_text="Did Redbox do what you needed it to in this chat?"
+        null=True,
+        blank=True,
+        help_text="Did Redbox do what you needed it to in this chat?",
     )
     feedback_saved_time = models.BooleanField(null=True, blank=True, help_text="Did Redbox help save you time?")
     feedback_improved_work = models.BooleanField(
@@ -743,16 +768,26 @@ class Citation(UUIDPrimaryKeyBase, TimeStampedModel):
         GOV_UK = "GOV.UK", _("gov.uk")
 
     file = models.ForeignKey(
-        File, on_delete=models.CASCADE, null=True, blank=True, help_text="file for internal citation"
+        File,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        help_text="file for internal citation",
     )
     url = models.URLField(null=True, blank=True, help_text="url for external")
     chat_message = models.ForeignKey("ChatMessage", on_delete=models.CASCADE)
     text = models.TextField(null=True, blank=True)
     page_numbers = ArrayField(
-        models.PositiveIntegerField(), null=True, blank=True, help_text="location of citation in document"
+        models.PositiveIntegerField(),
+        null=True,
+        blank=True,
+        help_text="location of citation in document",
     )
     source = models.CharField(
-        max_length=32, choices=Origin, help_text="source of citation", default=Origin.USER_UPLOADED_DOCUMENT
+        max_length=32,
+        choices=Origin,
+        help_text="source of citation",
+        default=Origin.USER_UPLOADED_DOCUMENT,
     )
     text_in_answer = models.TextField(null=True, blank=True)
 
@@ -797,7 +832,9 @@ class ChatMessage(UUIDPrimaryKeyBase, TimeStampedModel):
     source_files = models.ManyToManyField(File, through=Citation)
 
     rating = models.PositiveIntegerField(
-        blank=True, null=True, validators=[validators.MinValueValidator(1), validators.MaxValueValidator(5)]
+        blank=True,
+        null=True,
+        validators=[validators.MinValueValidator(1), validators.MaxValueValidator(5)],
     )
     rating_text = models.TextField(blank=True, null=True)
     rating_chips = ArrayField(models.CharField(max_length=32), null=True, blank=True)
@@ -835,7 +872,10 @@ class ChatMessageTokenUse(UUIDPrimaryKeyBase, TimeStampedModel):
 
     chat_message = models.ForeignKey(ChatMessage, on_delete=models.CASCADE)
     use_type = models.CharField(
-        max_length=10, choices=UseTypeEnum, help_text="input or output tokens", default=UseTypeEnum.INPUT
+        max_length=10,
+        choices=UseTypeEnum,
+        help_text="input or output tokens",
+        default=UseTypeEnum.INPUT,
     )
     model_name = models.CharField(max_length=50, null=True, blank=True)
     token_count = models.PositiveIntegerField(null=True, blank=True)
