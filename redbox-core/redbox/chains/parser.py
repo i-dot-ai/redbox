@@ -74,7 +74,7 @@ class StreamingJsonOutputParser(BaseCumulativeTransformOutputParser[Any]):
                         field_length_at_last_run = len(field_content)
                         yield self.pydantic_schema_object.model_validate(parsed)
         yield self.pydantic_schema_object.model_validate(parsed)
-    
+
     @property
     def _type(self) -> str:
         return "streaming_json_output_parser"

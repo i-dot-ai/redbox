@@ -4,7 +4,6 @@ from asyncio import CancelledError
 from collections import defaultdict
 from collections.abc import Mapping, Sequence
 from typing import Any, ClassVar
-from urllib.parse import quote
 from uuid import UUID
 
 from channels.db import database_sync_to_async
