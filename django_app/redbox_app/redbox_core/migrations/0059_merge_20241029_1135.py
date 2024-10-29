@@ -9,6 +9,3 @@ class Migration(migrations.Migration):
         ('redbox_core', '0058_alter_citation_source'),
         ('redbox_core', '0058_alter_file_original_file'),
     ]
-
-    operations = [
-    ]
