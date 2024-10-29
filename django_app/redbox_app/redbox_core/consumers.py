@@ -310,7 +310,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
                     payload = {"url": str(file.url), "file_name": file.file_name}
                 except File.DoesNotExist:
                     file = None
-                    payload = {"url": s.source, "file_name": s.document_name}
+                    payload = {"url": s.source, "file_name": s.source}
                 await self.send_to_client("source", payload)
                 self.citations.append((file, s))
 
