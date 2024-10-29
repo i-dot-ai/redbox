@@ -190,7 +190,7 @@ export class ChatMessage extends HTMLElement {
         chatControllerRef.dataset.sessionId = response.data;
       } else if (response.type === "source") {
         sourcesContainer.add(
-          response.data.original_file_name,
+          response.data.file_name,
           response.data.url
         );
       } else if (response.type === "route") {
