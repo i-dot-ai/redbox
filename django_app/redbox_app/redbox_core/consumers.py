@@ -4,6 +4,7 @@ from asyncio import CancelledError
 from collections import defaultdict
 from collections.abc import Mapping, Sequence
 from typing import Any, ClassVar
+from urllib.parse import quote
 from uuid import UUID
 
 from channels.db import database_sync_to_async
@@ -310,7 +311,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
                     payload = {"url": str(file.url), "original_file_name": file.original_file_name}
                 except File.DoesNotExist:
                     file = None
-                    payload = {"url": s.source, "original_file_name": s.document_name}
+                    payload = {"url": s.source, "original_file_name": s.source}
                 await self.send_to_client("source", payload)
                 self.citations.append((file, s))
 

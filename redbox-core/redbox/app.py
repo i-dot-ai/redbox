@@ -74,6 +74,15 @@ class Redbox:
             debug=debug,
         )
 
+    def run_sync(
+        self,
+        input: RedboxState
+    ):
+        """
+        Run Redbox without streaming events. This simpler, synchronous execution enables use of the graph debug logging
+        """
+        return self.graph.invoke(input=input)
+
     async def run(
         self,
         input: RedboxState,
