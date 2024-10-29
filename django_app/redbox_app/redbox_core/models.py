@@ -552,7 +552,7 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
         upload_to=build_s3_key,
     )
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    original_file_name = models.TextField(max_length=2048, blank=True, null=True)
+    original_file_name = models.TextField(max_length=2048, blank=True, null=True)  # delete me
     last_referenced = models.DateTimeField(blank=True, null=True)
     ingest_error = models.TextField(
         max_length=2048, blank=True, null=True, help_text="error, if any, encountered during ingest"
