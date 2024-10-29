@@ -67,7 +67,7 @@ def escape_curly_brackets(text: str):
 
 class ChatConsumer(AsyncWebsocketConsumer):
     full_reply: ClassVar = []
-    citations: ClassVar[list[tuple[File, Source]]] = []
+    citations: ClassVar[list[tuple[File, AICitation]]] = []
     activities: ClassVar = []
     route = None
     metadata: RequestMetadata = RequestMetadata()
@@ -199,25 +199,28 @@ class ChatConsumer(AsyncWebsocketConsumer):
     ) -> ChatMessage:
         chat_message = ChatMessage(chat=session, text=user_message_text, role=ChatRoleEnum.ai, route=self.route)
         chat_message.save()
-        for file, citation_source in self.citations:
-            if file:
-                file.last_referenced = timezone.now()
-                file.save()
-                Citation.objects.create(
-                    chat_message=chat_message,
-                    file=file,
-                    text=citation_source.highlighted_text_in_source,
-                    page_numbers=citation_source.page_numbers,
-                    source=Citation.Origin.USER_UPLOADED_DOCUMENT,
-                )
-            else:
-                Citation.objects.create(
-                    chat_message=chat_message,
-                    url=citation_source.source,
-                    text=citation_source.highlighted_text_in_source,
-                    page_numbers=citation_source.page_numbers,
-                    source=Citation.Origin(citation_source.source_type),
-                )
+        for file, ai_citation in self.citations:
+            for citation_source in ai_citation.sources:
+                if file:
+                    file.last_referenced = timezone.now()
+                    file.save()
+                    Citation.objects.create(
+                        chat_message=chat_message,
+                        text_in_answer=ai_citation.text_in_answer,
+                        file=file,
+                        text=citation_source.highlighted_text_in_source,
+                        page_numbers=citation_source.page_numbers,
+                        source=Citation.Origin.USER_UPLOADED_DOCUMENT,
+                    )
+                else:
+                    Citation.objects.create(
+                        chat_message=chat_message,
+                        text_in_answer=ai_citation.text_in_answer,
+                        url=citation_source.source,
+                        text=citation_source.highlighted_text_in_source,
+                        page_numbers=citation_source.page_numbers,
+                        source=Citation.Origin(citation_source.source_type),
+                    )
 
         if self.metadata:
             for model, token_count in self.metadata.input_tokens.items():
@@ -263,6 +266,9 @@ class ChatConsumer(AsyncWebsocketConsumer):
         self.activities.append(RedboxActivityEvent.model_validate(response))
 
     async def handle_documents(self, response: list[Document]):
+        """
+        Map documents used to create answer to AICitations for storing as citations
+        """
         sources_by_resource_ref: dict[str, Document] = defaultdict(list)
         for document in response:
             ref = document.metadata.get("uri")
@@ -297,10 +303,13 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 ]
 
             await self.send_to_client("source", payload)
-            for s in response_sources:
-                self.citations.append((file, s))
+            self.citations.append((file, AICitation(text_in_answer="", sources=response_sources)))
 
     async def handle_citations(self, citations: list[AICitation]):
+        """
+        Map AICitations used to create answer to AICitations for storing as citations. The link to user files
+        must be populated
+        """
         for c in citations:
             for s in c.sources:
                 try:
@@ -310,7 +319,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
                     file = None
                     payload = {"url": s.source, "file_name": s.source}
                 await self.send_to_client("source", payload)
-                self.citations.append((file, s))
+                self.citations.append((file, AICitation(text_in_answer=c.text_in_answer, sources=[s])))
 
     async def handle_activity_event(self, event: RedboxActivityEvent):
         logger.info("ACTIVITY: %s", event.message)
