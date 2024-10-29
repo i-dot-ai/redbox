@@ -173,7 +173,7 @@ class FileAdmin(ExportMixin, admin.ModelAdmin):
             async_task(ingest, file.id)
             logger.info("Successfully reuploaded file %s.", file)
 
-    list_display = ["original_file_name", "user", "status", "created_at", "last_referenced"]
+    list_display = ["file_name", "user", "status", "created_at", "last_referenced"]
     list_filter = ["user", "status"]
     date_hierarchy = "created_at"
     actions = ["reupload"]

@@ -45,6 +45,11 @@ class Command(BaseCommand):
         for file in File.objects.exclude(status__in=INACTIVE_STATUSES):
             logger.debug("Reingesting file object %s", file)
             async_task(
-                ingest, file.id, new_index, task_name=file.original_file.name, group="re-ingest", sync=kwargs["sync"]
+                ingest,
+                file.id,
+                new_index,
+                task_name=file.file_name,
+                group="re-ingest",
+                sync=kwargs["sync"],
             )
         async_task(switch_aliases, env.elastic_chunk_alias, new_index, task_name="switch_aliases")

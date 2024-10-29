@@ -48,6 +48,7 @@ class StreamingJsonOutputParser(BaseCumulativeTransformOutputParser[Any]):
     def _transform(self, input: Iterator[Union[str, BaseMessage]]) -> Iterator[Any]:
         acc_gen: Union[GenerationChunk, ChatGenerationChunk, None] = None
         field_length_at_last_run: int = 0
+        parsed = None
         for chunk in input:
             chunk_gen = self._to_generation_chunk(chunk)
             acc_gen = chunk_gen if acc_gen is None else acc_gen + chunk_gen  # type: ignore[operator]
@@ -58,10 +59,13 @@ class StreamingJsonOutputParser(BaseCumulativeTransformOutputParser[Any]):
                         dispatch_custom_event(RedboxEventType.response_tokens, data=new_tokens)
                         field_length_at_last_run = len(field_content)
                         yield self.pydantic_schema_object.model_validate(parsed)
+        if parsed:
+            yield self.pydantic_schema_object.model_validate(parsed)
 
     async def _atransform(self, input: AsyncIterator[Union[str, BaseMessage]]) -> AsyncIterator[Any]:
         acc_gen: Union[GenerationChunk, ChatGenerationChunk, None] = None
         field_length_at_last_run: int = 0
+        parsed = None
         async for chunk in input:
             chunk_gen = self._to_generation_chunk(chunk)
             acc_gen = chunk_gen if acc_gen is None else acc_gen + chunk_gen  # type: ignore[operator]
@@ -72,6 +76,8 @@ class StreamingJsonOutputParser(BaseCumulativeTransformOutputParser[Any]):
                         dispatch_custom_event(RedboxEventType.response_tokens, data=new_tokens)
                         field_length_at_last_run = len(field_content)
                         yield self.pydantic_schema_object.model_validate(parsed)
+        if parsed:
+            yield self.pydantic_schema_object.model_validate(parsed)
 
     @property
     def _type(self) -> str:

@@ -247,7 +247,6 @@ APPEND_SLASH = True
 AWS_S3_OBJECT_PARAMETERS = {"ContentDisposition": "attachment"}
 AWS_STORAGE_BUCKET_NAME = BUCKET_NAME  # this duplication is required for django-storage
 OBJECT_STORE = env.str("OBJECT_STORE")
-AWS_S3_FILE_OVERWRITE = False  # allows users to have duplicate file names
 
 STORAGES = {
     "default": {
