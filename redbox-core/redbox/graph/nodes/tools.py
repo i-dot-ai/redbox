@@ -1,5 +1,6 @@
 from typing import Annotated, Any, get_args, get_origin, get_type_hints
 
+import requests
 import tiktoken
 from elasticsearch import Elasticsearch
 from langchain_community.utilities import WikipediaAPIWrapper
@@ -9,7 +10,7 @@ from langchain_core.tools import StructuredTool, Tool, tool
 from langgraph.prebuilt import InjectedState
 
 from redbox.models.chain import RedboxState
-from redbox.models.file import ChunkMetadata, ChunkResolution
+from redbox.models.file import ChunkCreatorType, ChunkMetadata, ChunkResolution
 from redbox.retriever.queries import (
     add_document_filter_scores_to_query,
     build_document_query,
@@ -133,6 +134,71 @@ def build_search_documents_tool(
     return _search_documents
 
 
+def build_govuk_search_tool(num_results: int = 1) -> Tool:
+    """Constructs a tool that searches gov.uk and sets state["documents"]."""
+
+    tokeniser = tiktoken.encoding_for_model("gpt-4o")
+
+    @tool
+    def _search_govuk(query: str, state: Annotated[dict, InjectedState]) -> dict[str, Any]:
+        """
+        Search for documents on gov.uk based on a query string.
+        This endpoint is used to search for documents on gov.uk. There are many types of documents on gov.uk.
+        Types include:
+        - guidance
+        - policy
+        - legislation
+        - news
+        - travel advice
+        - departmental reports
+        - statistics
+        - consultations
+        - appeals
+        """
+
+        url_base = "https://www.gov.uk"
+        required_fields = [
+            "format",
+            "title",
+            "description",
+            "indexable_content",
+            "link",
+        ]
+
+        response = requests.get(
+            f"{url_base}/api/search.json",
+            params={
+                "q": query,
+                "count": num_results,
+                "fields": required_fields,
+            },
+            headers={"Accept": "application/json"},
+        )
+        response.raise_for_status()
+        response = response.json()
+
+        mapped_documents = []
+        for i, doc in enumerate(response["results"]):
+            if any(field not in doc for field in required_fields):
+                continue
+
+            mapped_documents.append(
+                Document(
+                    page_content=doc["indexable_content"],
+                    metadata=ChunkMetadata(
+                        index=i,
+                        uri=f"{url_base}{doc['link']}",
+                        token_count=len(tokeniser.encode(doc["indexable_content"])),
+                        creator_type=ChunkCreatorType.gov_uk,
+                    ).model_dump(),
+                )
+            )
+
+        return {"documents": structure_documents_by_group_and_indices(mapped_documents)}
+
+    return _search_govuk
+
+
 def build_search_wikipedia_tool(number_wikipedia_results=1, max_chars_per_wiki_page=12000) -> Tool:
     """Constructs a tool that searches Wikipedia"""
     _wikipedia_wrapper = WikipediaAPIWrapper(
@@ -163,7 +229,7 @@ def build_search_wikipedia_tool(number_wikipedia_results=1, max_chars_per_wiki_p
                     index=i,
                     uri=doc.metadata["source"],
                     token_count=len(tokeniser.encode(doc.page_content)),
-                    creator_type="Wikipedia",
+                    creator_type=ChunkCreatorType.wikipedia,
                 ).model_dump(),
             )
             for i, doc in enumerate(response)

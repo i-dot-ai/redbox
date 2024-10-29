@@ -41,9 +41,7 @@ from redbox_app.redbox_core.models import (
     File,
     StatusEnum,
 )
-from redbox_app.redbox_core.models import (
-    AISettings as AISettingsModel,
-)
+from redbox_app.redbox_core.models import AISettings as AISettingsModel
 
 User = get_user_model()
 OptFileSeq = Sequence[File] | None
@@ -221,7 +219,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
                         url=citation_source.source,
                         text=citation_source.highlighted_text_in_source,
                         page_numbers=citation_source.page_numbers,
-                        source=Citation.Origin(citation_source.source_type.title()),
+                        source=Citation.Origin(citation_source.source_type),
                     )
 
         if self.metadata:

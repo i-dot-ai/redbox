@@ -4,8 +4,7 @@ import datetime
 from enum import StrEnum
 from uuid import UUID, uuid4
 
-from typing import Literal
-from pydantic import BaseModel, Field, AliasChoices
+from pydantic import AliasChoices, BaseModel, Field
 
 
 class ChunkResolution(StrEnum):
@@ -14,6 +13,12 @@ class ChunkResolution(StrEnum):
     normal = "normal"
     large = "large"
     largest = "largest"
+
+
+class ChunkCreatorType(StrEnum):
+    wikipedia = "Wikipedia"
+    user_uploaded_document = "UserUploadedDocument"
+    gov_uk = "GOV.UK"
 
 
 class ChunkMetadata(BaseModel):
@@ -26,7 +31,7 @@ class ChunkMetadata(BaseModel):
     index: int = 0  # The order of this chunk in the original resource
     created_datetime: datetime.datetime = datetime.datetime.now(datetime.UTC)
     chunk_resolution: ChunkResolution = ChunkResolution.normal
-    creator_type: Literal["Wikipedia", "UserUploadedDocument"]
+    creator_type: ChunkCreatorType
     uri: str = Field(validation_alias=AliasChoices("uri", "file_name"))  # URL or file name
     token_count: int
 
@@ -40,4 +45,4 @@ class UploadedFileMetadata(ChunkMetadata):
     name: str
     description: str
     keywords: list[str]
-    creator_type: Literal["UserUploadedDocument"] = "UserUploadedDocument"
+    creator_type: ChunkCreatorType = ChunkCreatorType.user_uploaded_document

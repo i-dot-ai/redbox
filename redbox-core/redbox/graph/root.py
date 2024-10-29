@@ -3,7 +3,6 @@ from langchain_core.vectorstores import VectorStoreRetriever
 from langgraph.graph import END, START, StateGraph
 from langgraph.graph.graph import CompiledGraph
 
-
 from redbox.chains.components import get_structured_response_with_citations_parser
 from redbox.chains.runnables import build_self_route_output_parser
 from redbox.graph.edges import (
@@ -32,18 +31,11 @@ from redbox.graph.nodes.processes import (
     empty_process,
     report_sources_process,
 )
-from redbox.graph.nodes.sends import (
-    build_document_chunk_send,
-    build_document_group_send,
-    build_tool_send,
-)
+from redbox.graph.nodes.sends import build_document_chunk_send, build_document_group_send, build_tool_send
 from redbox.models.chain import RedboxState
 from redbox.models.chat import ChatRoute, ErrorRoute
 from redbox.models.graph import ROUTABLE_KEYWORDS, RedboxActivityEvent
-from redbox.transform import (
-    structure_documents_by_file_name,
-    structure_documents_by_group_and_indices,
-)
+from redbox.transform import structure_documents_by_file_name, structure_documents_by_group_and_indices
 
 # Subgraphs
 
@@ -167,7 +159,7 @@ def get_agentic_search_graph(tools: dict[str, StructuredTool], debug: bool = Fal
     citations_output_parser, format_instructions = get_structured_response_with_citations_parser()
     builder = StateGraph(RedboxState)
     # Tools
-    agent_tool_names = ["_search_documents", "_search_wikipedia"]
+    agent_tool_names = ["_search_documents", "_search_wikipedia", "_search_govuk"]
     agent_tools: list[StructuredTool] = tuple([tools.get(tool_name) for tool_name in agent_tool_names])
 
     # Processes

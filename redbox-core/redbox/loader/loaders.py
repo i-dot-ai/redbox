@@ -268,7 +268,7 @@ class UnstructuredChunkLoader:
                 page_content=raw_chunk["text"],
                 metadata=UploadedFileMetadata(
                     index=i,
-                    uri=raw_chunk["metadata"].get("filename"),
+                    uri=file_name,
                     page_number=raw_chunk["metadata"].get("page_number"),
                     created_datetime=datetime.now(UTC),
                     token_count=len(encoding.encode(raw_chunk["text"])),
