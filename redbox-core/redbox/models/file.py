@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import datetime
 from enum import StrEnum
-from typing import Literal
 from uuid import UUID, uuid4
 
 from pydantic import AliasChoices, BaseModel, Field
@@ -15,10 +14,12 @@ class ChunkResolution(StrEnum):
     large = "large"
     largest = "largest"
 
+
 class ChunkCreatorType(StrEnum):
     wikipedia = "Wikipedia"
     user_uploaded_document = "UserUploadedDocument"
     gov_uk = "gov.uk"
+
 
 class ChunkMetadata(BaseModel):
     """

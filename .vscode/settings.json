@@ -5,20 +5,10 @@
             "source.fixAll": "explicit",
             "source.organizeImports": "explicit"
         },
-        "editor.defaultFormatter": "ms-python.black-formatter"
+        "editor.defaultFormatter": "charliermarsh.ruff"
     },
     "python.analysis.autoImportCompletions": true,
     "python.experiments.optOutFrom": [
         "pythonTerminalEnvVarActivation"
-    ],
-    "python.testing.pytestArgs": [
-        "tests"
-    ],
-    "python.testing.unittestEnabled": false,
-    "python.testing.pytestEnabled": true,
-    "workbench.colorCustomizations": {
-        "activityBar.background": "#0B342A",
-        "titleBar.activeBackground": "#0F483B",
-        "titleBar.activeForeground": "#F2FCFA"
-    }
+    ]
 }

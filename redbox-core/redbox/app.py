@@ -2,19 +2,24 @@ from langchain_core.embeddings import Embeddings
 from langchain_core.tools import StructuredTool
 from langchain_core.vectorstores import VectorStoreRetriever
 
-from redbox.chains.components import (get_all_chunks_retriever, get_embeddings,
-                                      get_metadata_retriever,
-                                      get_parameterised_retriever)
-from redbox.graph.nodes.tools import (build_govuk_search_tool,
-                                      build_search_documents_tool,
-                                      build_search_wikipedia_tool)
+from redbox.chains.components import (
+    get_all_chunks_retriever,
+    get_embeddings,
+    get_metadata_retriever,
+    get_parameterised_retriever,
+)
+from redbox.graph.nodes.tools import build_govuk_search_tool, build_search_documents_tool, build_search_wikipedia_tool
 from redbox.graph.root import get_root_graph
 from redbox.models.chain import RedboxState
 from redbox.models.chat import ChatRoute
 from redbox.models.file import ChunkResolution
-from redbox.models.graph import (FINAL_RESPONSE_TAG, ROUTABLE_KEYWORDS,
-                                 ROUTE_NAME_TAG, SOURCE_DOCUMENTS_TAG,
-                                 RedboxEventType)
+from redbox.models.graph import (
+    FINAL_RESPONSE_TAG,
+    ROUTABLE_KEYWORDS,
+    ROUTE_NAME_TAG,
+    SOURCE_DOCUMENTS_TAG,
+    RedboxEventType,
+)
 from redbox.models.settings import Settings
 from redbox.transform import flatten_document_state
 
@@ -52,7 +57,6 @@ class Redbox:
             chunk_resolution=ChunkResolution.normal,
         )
         search_wikipedia = build_search_wikipedia_tool()
-
         search_govuk = build_govuk_search_tool()
 
         tools: dict[str, StructuredTool] = {
