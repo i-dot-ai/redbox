@@ -216,7 +216,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
                     url=citation_source.source,
                     text=citation_source.highlighted_text_in_source,
                     page_numbers=citation_source.page_numbers,
-                    source=Citation.Origin(citation_source.source_type.title()),
+                    source=Citation.Origin(citation_source.source_type),
                 )
 
         if self.metadata:

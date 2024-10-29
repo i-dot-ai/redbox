@@ -18,7 +18,7 @@ class ChunkResolution(StrEnum):
 class ChunkCreatorType(StrEnum):
     wikipedia = "Wikipedia"
     user_uploaded_document = "UserUploadedDocument"
-    gov_uk = "Gov.Uk"
+    gov_uk = "GOV.UK"
 
 
 class ChunkMetadata(BaseModel):

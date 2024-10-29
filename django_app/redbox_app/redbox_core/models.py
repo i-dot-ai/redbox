@@ -765,7 +765,7 @@ class Citation(UUIDPrimaryKeyBase, TimeStampedModel):
     class Origin(models.TextChoices):
         WIKIPEDIA = "Wikipedia", _("wikipedia")
         USER_UPLOADED_DOCUMENT = "UserUploadedDocument", _("user uploaded document")
-        GOV_UK = "Gov.Uk", _("gov.uk")
+        GOV_UK = "GOV.UK", _("gov.uk")
 
     file = models.ForeignKey(
         File,
