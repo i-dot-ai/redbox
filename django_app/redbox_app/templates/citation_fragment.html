@@ -25,7 +25,7 @@
                   {% if citation.url %} {# an external reference #}
                     <a class="iai-chat-bubbles__sources-link govuk-link" href="{{ citation.url }}">{{ citation.url }}</a>
                   {% else %} {# a user doc #}
-                    <a class="iai-chat-bubbles__sources-link govuk-link" href="{{ citation.file.url }}">{{ citation.file.original_file_name }}</a>
+                    <a class="iai-chat-bubbles__sources-link govuk-link" href="{{ citation.file.url }}">{{ citation.file.file_name }}</a>
                   {% endif %}
                 </h3>
                 {% if citation.page_numbers %}

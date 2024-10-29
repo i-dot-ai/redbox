@@ -81,7 +81,7 @@ async def test_chat_consumer_with_new_session(alice: User, uploaded_file: File, 
         assert response4["type"] == "route"
         assert response4["data"] == "gratitude"
         assert response5["type"] == "source"
-        assert response5["data"]["original_file_name"] == uploaded_file.original_file_name
+        assert response5["data"]["file_name"] == uploaded_file.file_name
         # Close
         await communicator.disconnect()
 
@@ -188,7 +188,7 @@ async def test_chat_consumer_with_naughty_question(alice: User, uploaded_file: F
         assert response4["type"] == "route"
         assert response4["data"] == "gratitude"
         assert response5["type"] == "source"
-        assert response5["data"]["original_file_name"] == uploaded_file.original_file_name
+        assert response5["data"]["file_name"] == uploaded_file.file_name
         # Close
         await communicator.disconnect()
 
@@ -226,7 +226,7 @@ async def test_chat_consumer_with_naughty_citation(
         assert response3["type"] == "route"
         assert response3["data"] == "gratitude"
         assert response4["type"] == "source"
-        assert response4["data"]["original_file_name"] == uploaded_file.original_file_name
+        assert response4["data"]["file_name"] == uploaded_file.file_name
         # Close
         await communicator.disconnect()
 
@@ -265,7 +265,7 @@ async def test_chat_consumer_agentic(alice: User, uploaded_file: File, mocked_co
         assert response4["type"] == "route"
         assert response4["data"] == "search/agentic"
         assert response5["type"] == "source"
-        assert response5["data"]["original_file_name"] == uploaded_file.original_file_name
+        assert response5["data"]["file_name"] == uploaded_file.file_name
         # Close
         await communicator.disconnect()
 
@@ -322,7 +322,7 @@ async def test_chat_consumer_with_selected_files(
         connected, _ = await communicator.connect()
         assert connected
 
-        selected_file_core_uuids: Sequence[str] = [f.s3_key for f in selected_files]
+        selected_file_core_uuids: Sequence[str] = [f.unique_name for f in selected_files]
         await communicator.send_json_to(
             {
                 "message": "Third question, with selected files?",
@@ -795,7 +795,7 @@ def mocked_connect_with_several_files(several_files: Sequence[File]) -> Connect:
         json.dumps(
             {
                 "resource_type": "documents",
-                "data": [{"s3_key": f.s3_key, "page_content": "a secret forth answer"} for f in several_files[2:]],
+                "data": [{"s3_key": f.unique_name, "page_content": "a secret forth answer"} for f in several_files[2:]],
             }
         ),
         json.dumps({"resource_type": "end"}),
