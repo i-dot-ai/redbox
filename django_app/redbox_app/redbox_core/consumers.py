@@ -273,12 +273,12 @@ class ChatConsumer(AsyncWebsocketConsumer):
         for ref, sources in sources_by_resource_ref.items():
             try:
                 file = await File.objects.aget(original_file=ref)
-                payload = {"url": str(file.url), "original_file_name": file.original_file_name}
+                payload = {"url": str(file.url), "file_name": file.file_name}
                 response_sources = [
                     Source(
                         source=str(file.url),
                         source_type=Citation.Origin.USER_UPLOADED_DOCUMENT,
-                        document_name=file.original_file_name,
+                        document_name=file.file_name,
                         highlighted_text_in_source=cited_chunk.page_content,
                         page_numbers=parse_page_number(cited_chunk.metadata.get("page_number")),
                     )
@@ -286,7 +286,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 ]
             except File.DoesNotExist:
                 file = None
-                payload = {"url": ref, "original_file_name": None}
+                payload = {"url": ref, "file_name": None}
                 response_sources = [
                     Source(
                         source=cited_chunk.metadata["uri"],
@@ -307,10 +307,10 @@ class ChatConsumer(AsyncWebsocketConsumer):
             for s in c.sources:
                 try:
                     file = await File.objects.aget(original_file=s.source)
-                    payload = {"url": str(file.url), "original_file_name": file.original_file_name}
+                    payload = {"url": str(file.url), "file_name": file.file_name}
                 except File.DoesNotExist:
                     file = None
-                    payload = {"url": s.source, "original_file_name": s.source}
+                    payload = {"url": s.source, "file_name": s.source}
                 await self.send_to_client("source", payload)
                 self.citations.append((file, s))
 

@@ -536,9 +536,21 @@ class InactiveFileError(ValueError):
         super().__init__(f"{file.pk} is inactive, status is {file.status}")
 
 
+def build_s3_key(instance, filename: str) -> str:
+    """the s3-key is the primary key for a file,
+    this needs to be unique so that if a user uploads a file with the same name as
+    1. an existing file that they own, then it is overwritten
+    2. an existing file that another user owns then a new file is created
+    """
+    return f"{instance.user.email}/{filename}"
+
+
 class File(UUIDPrimaryKeyBase, TimeStampedModel):
     status = models.CharField(choices=StatusEnum.choices, null=False, blank=False)
-    original_file = models.FileField(storage=settings.STORAGES["default"]["BACKEND"])
+    original_file = models.FileField(
+        storage=settings.STORAGES["default"]["BACKEND"],
+        upload_to=build_s3_key,
+    )
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     original_file_name = models.TextField(max_length=2048, blank=True, null=True)
     last_referenced = models.DateTimeField(blank=True, null=True)
@@ -547,7 +559,7 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
     )
 
     def __str__(self) -> str:  # pragma: no cover
-        return f"{self.original_file_name} {self.user}"
+        return self.file_name
 
     def save(self, *args, **kwargs):
         if not self.last_referenced:
@@ -576,19 +588,9 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
                 body={"query": {"term": {"metadata.file_name.keyword": self.unique_name}}},
             )
 
-    def update_status_from_core(self, status_label):
-        match status_label:
-            case "complete":
-                self.status = StatusEnum.complete
-            case "failed":
-                self.status = StatusEnum.errored
-            case _:
-                self.status = StatusEnum.processing
-        self.save()
-
     @property
     def file_type(self) -> str:
-        name = self.original_file.name
+        name = self.file_name
         return name.split(".")[-1]
 
     @property
@@ -608,7 +610,7 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
                 ClientMethod="get_object",
                 Params={
                     "Bucket": settings.AWS_STORAGE_BUCKET_NAME,
-                    "Key": self.name,
+                    "Key": self.file_name,
                 },
             )
             return URL(url)
@@ -620,18 +622,21 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
         return URL(self.original_file.url)
 
     @property
-    def name(self) -> str:
-        # User-facing name
-        try:
-            return self.original_file_name or self.original_file.name
-        except ValueError as e:
-            logger.exception("attempt to access non-existent file %s", self.pk, exc_info=e)
+    def file_name(self) -> str:
+        if self.original_file_name:  # delete me?
+            return self.original_file_name
+
+        # could have a stronger (regex?) way of stripping the users email address?
+        if "/" not in self.original_file.name:
+            msg = "expected filename to start with the user's email address"
+            raise ValueError(msg)
+        return self.original_file.name.split("/")[1]
 
     @property
     def unique_name(self) -> str:
-        # Name used when processing files that exist in S3
+        """primary key for accessing file in s3"""
         if self.status in INACTIVE_STATUSES:
-            logger.exception("Attempt to access unique_name for inactive file %s with status %s", self.pk, self.status)
+            logger.exception("Attempt to access s3-key for inactive file %s with status %s", self.pk, self.status)
             raise InactiveFileError(self)
         return self.original_file.name
 
@@ -780,7 +785,7 @@ class Citation(UUIDPrimaryKeyBase, TimeStampedModel):
     @property
     def uri(self) -> str:
         """returns either the url of an external citation or the file uri of a user-uploaded document"""
-        return self.url or f"file://{self.file.original_file_name}"
+        return self.url or f"file://{self.file.file_name}"
 
 
 class ChatMessage(UUIDPrimaryKeyBase, TimeStampedModel):
