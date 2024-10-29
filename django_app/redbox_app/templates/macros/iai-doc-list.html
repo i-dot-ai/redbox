@@ -15,7 +15,7 @@
         <tbody class="iai-doc-list__tbody">
             {% for doc in docs %}
                 <tr class="iai-doc-list__item">
-                    <td class="iai-doc-list__cell--file-name">{{ doc.name }}</td>
+                    <td class="iai-doc-list__cell--file-name">{{ doc.file_name }}</td>
                     <td class="iai-doc-list__cell--expiry">{{ doc.expires | humanise_expiry }}</td>
                     <td class="iai-doc-list__cell--status">
                         {% if type == "complete" %}
