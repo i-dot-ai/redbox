@@ -12,7 +12,6 @@ from django.urls import reverse
 from redbox_app.redbox_core.models import (
     Chat,
     ChatMessage,
-    ChatRoleEnum,
     Citation,
     File,
 )
@@ -26,7 +25,7 @@ logger = logging.getLogger(__name__)
 def test_citations_shown(client: Client, alice: User, chat: Chat, several_files: Sequence[File]):
     # Given
     client.force_login(alice)
-    chat_message = ChatMessage.objects.create(chat=chat, text="Some answer.", role=ChatRoleEnum.ai)
+    chat_message = ChatMessage.objects.create(chat=chat, text="Some answer.", role=ChatMessage.ChatRoleEnum.ai)
 
     Citation.objects.create(file=several_files[0], chat_message=chat_message, text="Citation 1")
     Citation.objects.create(file=several_files[1], chat_message=chat_message, text="Citation 2")

@@ -36,10 +36,8 @@ from redbox_app.redbox_core.models import (
     ChatLLMBackend,
     ChatMessage,
     ChatMessageTokenUse,
-    ChatRoleEnum,
     Citation,
     File,
-    StatusEnum,
 )
 from redbox_app.redbox_core.models import AISettings as AISettingsModel
 
@@ -107,7 +105,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             )
 
         # save user message
-        permitted_files = File.objects.filter(user=user, status=StatusEnum.complete)
+        permitted_files = File.objects.filter(user=user, status=File.StatusEnum.complete)
         selected_files = permitted_files.filter(id__in=selected_file_uuids)
         await self.save_user_message(session, user_message_text, selected_files=selected_files)
 
@@ -185,7 +183,12 @@ class ChatConsumer(AsyncWebsocketConsumer):
         user_message_text: str,
         selected_files: Sequence[File] | None = None,
     ) -> ChatMessage:
-        chat_message = ChatMessage(chat=session, text=user_message_text, role=ChatRoleEnum.user, route=self.route)
+        chat_message = ChatMessage(
+            chat=session,
+            text=user_message_text,
+            role=ChatMessage.ChatRoleEnum.user,
+            route=self.route,
+        )
         chat_message.save()
         if selected_files:
             chat_message.selected_files.set(selected_files)
@@ -197,7 +200,12 @@ class ChatConsumer(AsyncWebsocketConsumer):
         session: Chat,
         user_message_text: str,
     ) -> ChatMessage:
-        chat_message = ChatMessage(chat=session, text=user_message_text, role=ChatRoleEnum.ai, route=self.route)
+        chat_message = ChatMessage(
+            chat=session,
+            text=user_message_text,
+            role=ChatMessage.ChatRoleEnum.ai,
+            route=self.route,
+        )
         chat_message.save()
         for file, ai_citation in self.citations:
             for citation_source in ai_citation.sources:

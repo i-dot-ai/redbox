@@ -20,10 +20,8 @@ from redbox_app.redbox_core.models import (
     ChatLLMBackend,
     ChatMessage,
     ChatMessageTokenUse,
-    ChatRoleEnum,
     Citation,
     File,
-    StatusEnum,
 )
 
 User = get_user_model()
@@ -159,13 +157,15 @@ def chat(alice: User) -> Chat:
 
 @pytest.fixture()
 def chat_with_message(chat: Chat) -> Chat:
-    ChatMessage.objects.create(chat=chat, text="today", role=ChatRoleEnum.user)
+    ChatMessage.objects.create(chat=chat, text="today", role=ChatMessage.ChatRoleEnum.user)
     return chat
 
 
 @pytest.fixture()
 def chat_message(chat: Chat, uploaded_file: File) -> ChatMessage:
-    chat_message = ChatMessage.objects.create(chat=chat, text="A question?", role=ChatRoleEnum.user, route="A route")
+    chat_message = ChatMessage.objects.create(
+        chat=chat, text="A question?", role=ChatMessage.ChatRoleEnum.user, route="A route"
+    )
     chat_message.source_files.set([uploaded_file])
     return chat_message
 
@@ -175,7 +175,7 @@ def chat_message_with_citation(chat: Chat, uploaded_file: File) -> ChatMessage:
     chat_message = ChatMessage.objects.create(
         chat=chat,
         text="An answer.",
-        role=ChatRoleEnum.ai,
+        role=ChatMessage.ChatRoleEnum.ai,
         rating=3,
         rating_chips=["apple", "pear"],
         rating_text="not bad",
@@ -203,7 +203,7 @@ def uploaded_file(alice: User, original_file: UploadedFile, s3_client) -> File: 
         user=alice,
         original_file=original_file,
         last_referenced=datetime.now(tz=UTC) - timedelta(days=14),
-        status=StatusEnum.processing,
+        status=File.StatusEnum.processing,
     )
     file.save()
     yield file
@@ -218,12 +218,30 @@ def original_file() -> UploadedFile:
 
 @pytest.fixture()
 def chat_with_files(chat: Chat, several_files: Sequence[File]) -> Chat:
-    ChatMessage.objects.create(chat=chat, text="A question?", role=ChatRoleEnum.user)
-    chat_message = ChatMessage.objects.create(chat=chat, text="An answer.", role=ChatRoleEnum.ai, route="search")
+    ChatMessage.objects.create(
+        chat=chat,
+        text="A question?",
+        role=ChatMessage.ChatRoleEnum.user,
+    )
+    chat_message = ChatMessage.objects.create(
+        chat=chat,
+        text="An answer.",
+        role=ChatMessage.ChatRoleEnum.ai,
+        route="search",
+    )
     chat_message.source_files.set(several_files[0::2])
-    chat_message = ChatMessage.objects.create(chat=chat, text="A second question?", role=ChatRoleEnum.user)
+    chat_message = ChatMessage.objects.create(
+        chat=chat,
+        text="A second question?",
+        role=ChatMessage.ChatRoleEnum.user,
+    )
     chat_message.selected_files.set(several_files[0:2])
-    chat_message = ChatMessage.objects.create(chat=chat, text="A second answer.", role=ChatRoleEnum.ai, route="search")
+    chat_message = ChatMessage.objects.create(
+        chat=chat,
+        text="A second answer.",
+        role=ChatMessage.ChatRoleEnum.ai,
+        route="search",
+    )
     chat_message.source_files.set([several_files[2]])
     return chat
 
@@ -239,14 +257,30 @@ def user_with_chats_with_messages_over_time(alice: User) -> User:
             Chat.objects.create(id=uuid.uuid4(), user=alice, name="yesterday"),
             Chat.objects.create(id=uuid.uuid4(), user=alice, name="today"),
         ]
-        ChatMessage.objects.create(chat=chats[0], text="40 days old", role=ChatRoleEnum.user)
+        ChatMessage.objects.create(
+            chat=chats[0],
+            text="40 days old",
+            role=ChatMessage.ChatRoleEnum.user,
+        )
     with freeze_time(now - timedelta(days=20)):
-        ChatMessage.objects.create(chat=chats[1], text="20 days old", role=ChatRoleEnum.user)
+        ChatMessage.objects.create(
+            chat=chats[1],
+            text="20 days old",
+            role=ChatMessage.ChatRoleEnum.user,
+        )
     with freeze_time(now - timedelta(days=5)):
-        ChatMessage.objects.create(chat=chats[2], text="5 days old", role=ChatRoleEnum.user)
+        ChatMessage.objects.create(
+            chat=chats[2],
+            text="5 days old",
+            role=ChatMessage.ChatRoleEnum.user,
+        )
     with freeze_time(now - timedelta(days=1)):
-        ChatMessage.objects.create(chat=chats[3], text="yesterday", role=ChatRoleEnum.user)
-    ChatMessage.objects.create(chat=chats[4], text="today", role=ChatRoleEnum.user)
+        ChatMessage.objects.create(
+            chat=chats[3],
+            text="yesterday",
+            role=ChatMessage.ChatRoleEnum.user,
+        )
+    ChatMessage.objects.create(chat=chats[4], text="today", role=ChatMessage.ChatRoleEnum.user)
 
     return alice
 
@@ -260,7 +294,7 @@ def several_files(alice: User, number_to_create: int = 4) -> Sequence[File]:
             File.objects.create(
                 user=alice,
                 original_file=SimpleUploadedFile(filename, b"Lorem Ipsum."),
-                status=StatusEnum.complete,
+                status=File.StatusEnum.complete,
             )
         )
     return files
