@@ -140,11 +140,13 @@ def build_llm_chain(
             "metadata": (
                 {
                     "prompt": itemgetter("prompt"),
-                    "response": combine_getters(itemgetter("text_and_tools"), itemgetter("raw_response"), attrgetter("content")),
+                    "response": combine_getters(
+                        itemgetter("text_and_tools"), itemgetter("raw_response"), attrgetter("content")
+                    ),
                     "model": lambda _: model_name,
                 }
                 | to_request_metadata
-            )
+            ),
         }
     )
 
