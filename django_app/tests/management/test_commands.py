@@ -102,7 +102,7 @@ def test_delete_expired_files(uploaded_file: File, last_referenced: datetime, sh
     call_command("delete_expired_data")
 
     # Then
-    is_deleted = File.objects.get(id=mock_file.id).status == File.StatusEnum.deleted
+    is_deleted = File.objects.get(id=mock_file.id).status == File.Status.deleted
     assert is_deleted == should_delete
 
 
@@ -120,7 +120,7 @@ def test_delete_expired_files_with_elastic_error(deletion_mock: MagicMock, uploa
     call_command("delete_expired_data")
 
     # Then
-    assert File.objects.get(id=mock_file.id).status == File.StatusEnum.errored
+    assert File.objects.get(id=mock_file.id).status == File.Status.errored
 
 
 @patch("redbox_app.redbox_core.models.File.delete_from_s3")
@@ -137,7 +137,7 @@ def test_delete_expired_files_with_s3_error(deletion_mock: MagicMock, uploaded_f
     call_command("delete_expired_data")
 
     # Then
-    assert File.objects.get(id=mock_file.id).status == File.StatusEnum.errored
+    assert File.objects.get(id=mock_file.id).status == File.Status.errored
 
 
 @pytest.mark.parametrize(
@@ -156,13 +156,13 @@ def test_delete_expired_chats(chat: Chat, msg_1_date: datetime, msg_2_date: date
         chat_message_1 = ChatMessage.objects.create(
             chat=test_chat,
             text="A question?",
-            role=ChatMessage.ChatRoleEnum.user,
+            role=ChatMessage.Role.user,
         )
     with freeze_time(msg_2_date):
         chat_message_2 = ChatMessage.objects.create(
             chat=test_chat,
             text="A question?",
-            role=ChatMessage.ChatRoleEnum.user,
+            role=ChatMessage.Role.user,
         )
 
     # When
@@ -180,7 +180,7 @@ def test_delete_expired_chats(chat: Chat, msg_1_date: datetime, msg_2_date: date
 @pytest.mark.django_db(transaction=True)
 def test_reingest_files(uploaded_file: File, requests_mock: Mocker, mocker: MockerFixture):
     # Given
-    assert uploaded_file.status == File.StatusEnum.processing
+    assert uploaded_file.status == File.Status.processing
 
     requests_mock.post(
         f"http://{settings.UNSTRUCTURED_HOST}:8000/general/v0/general",
@@ -210,13 +210,13 @@ def test_reingest_files(uploaded_file: File, requests_mock: Mocker, mocker: Mock
 
     # Then
     uploaded_file.refresh_from_db()
-    assert uploaded_file.status == File.StatusEnum.complete
+    assert uploaded_file.status == File.Status.complete
 
 
 @pytest.mark.django_db(transaction=True)
 def test_reingest_files_unstructured_fail(uploaded_file: File, requests_mock: Mocker, mocker):
     # Given
-    assert uploaded_file.status == File.StatusEnum.StatusEnum.processing
+    assert uploaded_file.status == File.Status.StatusEnum.processing
 
     requests_mock.post(
         f"http://{settings.UNSTRUCTURED_HOST}:8000/general/v0/general",
@@ -246,7 +246,7 @@ def test_reingest_files_unstructured_fail(uploaded_file: File, requests_mock: Mo
 
     # Then
     uploaded_file.refresh_from_db()
-    assert uploaded_file.status == File.StatusEnum.StatusEnum.errored
+    assert uploaded_file.status == File.Status.StatusEnum.errored
     assert uploaded_file.ingest_error == "<class 'ValueError'>: Unstructured failed to extract text for this file"
 
 
@@ -277,7 +277,7 @@ def test_update_users(alice: User):
         user=alice,
         original_file=original_file,
         last_referenced=datetime.now(tz=UTC) - timedelta(days=14),
-        status=File.StatusEnum.processing,
+        status=File.Status.processing,
     )
     file.save()
 

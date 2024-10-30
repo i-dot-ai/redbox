@@ -61,16 +61,16 @@ class Command(BaseCommand):
 
                 except BotoCoreError as e:
                     logger.exception("Error deleting file object %s from storage", file, exc_info=e)
-                    file.status = File.StatusEnum.errored
+                    file.status = File.Status.errored
                     file.save()
                     failure_counter += 1
                 except Exception as e:
                     logger.exception("Error deleting file object %s", file, exc_info=e)
-                    file.status = File.StatusEnum.errored
+                    file.status = File.Status.errored
                     file.save()
                     failure_counter += 1
                 else:
-                    file.status = File.StatusEnum.deleted
+                    file.status = File.Status.deleted
                     file.save()
                     logger.debug("File object %s deleted", file)
 

@@ -134,7 +134,7 @@ class UploadView(View):
         try:
             logger.info("getting file from s3")
             file = File.objects.create(
-                status=File.StatusEnum.processing.value,
+                status=File.Status.processing.value,
                 user=user,
                 original_file=uploaded_file,
             )
@@ -156,12 +156,12 @@ def remove_doc_view(request, doc_id: uuid):
         except Exception as e:
             logger.exception("Error deleting file object %s.", file, exc_info=e)
             errors.append("There was an error deleting this file")
-            file.status = File.StatusEnum.errored
+            file.status = File.Status.errored
             file.save()
         else:
             logger.info("Removing document: %s", request.POST["doc_id"])
             file.delete_from_s3()
-            file.status = File.StatusEnum.deleted
+            file.status = File.Status.deleted
             file.save()
             return redirect("documents")
 
@@ -178,10 +178,10 @@ def file_status_api_view(request: HttpRequest) -> JsonResponse:
     file_id = request.GET.get("id", None)
     if not file_id:
         logger.error("Error getting file object information - no file ID provided %s.")
-        return JsonResponse({"status": File.StatusEnum.errored.label})
+        return JsonResponse({"status": File.Status.errored.label})
     try:
         file: File = get_object_or_404(File, id=file_id)
     except File.DoesNotExist as ex:
         logger.exception("File object information not found in django - file does not exist %s.", file_id, exc_info=ex)
-        return JsonResponse({"status": File.StatusEnum.errored.label})
+        return JsonResponse({"status": File.Status.errored.label})
     return JsonResponse({"status": file.get_status_text()})

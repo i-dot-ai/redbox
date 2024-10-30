@@ -105,7 +105,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             )
 
         # save user message
-        permitted_files = File.objects.filter(user=user, status=File.StatusEnum.complete)
+        permitted_files = File.objects.filter(user=user, status=File.Status.complete)
         selected_files = permitted_files.filter(id__in=selected_file_uuids)
         await self.save_user_message(session, user_message_text, selected_files=selected_files)
 
@@ -186,7 +186,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         chat_message = ChatMessage(
             chat=session,
             text=user_message_text,
-            role=ChatMessage.ChatRoleEnum.user,
+            role=ChatMessage.Role.user,
             route=self.route,
         )
         chat_message.save()
@@ -203,7 +203,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         chat_message = ChatMessage(
             chat=session,
             text=user_message_text,
-            role=ChatMessage.ChatRoleEnum.ai,
+            role=ChatMessage.Role.ai,
             route=self.route,
         )
         chat_message.save()
@@ -234,14 +234,14 @@ class ChatConsumer(AsyncWebsocketConsumer):
             for model, token_count in self.metadata.input_tokens.items():
                 ChatMessageTokenUse.objects.create(
                     chat_message=chat_message,
-                    use_type=ChatMessageTokenUse.UseTypeEnum.INPUT,
+                    use_type=ChatMessageTokenUse.UseType.INPUT,
                     model_name=model,
                     token_count=token_count,
                 )
             for model, token_count in self.metadata.output_tokens.items():
                 ChatMessageTokenUse.objects.create(
                     chat_message=chat_message,
-                    use_type=ChatMessageTokenUse.UseTypeEnum.OUTPUT,
+                    use_type=ChatMessageTokenUse.UseType.OUTPUT,
                     model_name=model,
                     token_count=token_count,
                 )

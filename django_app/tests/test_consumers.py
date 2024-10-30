@@ -83,19 +83,19 @@ async def test_chat_consumer_with_new_session(alice: User, uploaded_file: File, 
         # Close
         await communicator.disconnect()
 
-    assert await get_chat_message_text(alice, ChatMessage.ChatRoleEnum.user) == ["Hello Hal."]
-    assert await get_chat_message_text(alice, ChatMessage.ChatRoleEnum.ai) == ["Good afternoon, Mr. Amor."]
-    assert await get_chat_message_route(alice, ChatMessage.ChatRoleEnum.ai) == ["gratitude"]
+    assert await get_chat_message_text(alice, ChatMessage.Role.user) == ["Hello Hal."]
+    assert await get_chat_message_text(alice, ChatMessage.Role.ai) == ["Good afternoon, Mr. Amor."]
+    assert await get_chat_message_route(alice, ChatMessage.Role.ai) == ["gratitude"]
 
     expected_citations = {("Good afternoon Mr Amor", ()), ("Good afternoon Mr Amor", (34, 35))}
-    assert await get_chat_message_citation_set(alice, ChatMessage.ChatRoleEnum.ai) == expected_citations
+    assert await get_chat_message_citation_set(alice, ChatMessage.Role.ai) == expected_citations
     await refresh_from_db(uploaded_file)
     assert uploaded_file.last_referenced.date() == datetime.now(tz=UTC).date()
 
-    assert await get_token_use_model(ChatMessageTokenUse.UseTypeEnum.INPUT) == "gpt-4o"
-    assert await get_token_use_model(ChatMessageTokenUse.UseTypeEnum.OUTPUT) == "gpt-4o"
-    assert await get_token_use_count(ChatMessageTokenUse.UseTypeEnum.INPUT) == 123
-    assert await get_token_use_count(ChatMessageTokenUse.UseTypeEnum.OUTPUT) == 1000
+    assert await get_token_use_model(ChatMessageTokenUse.UseType.INPUT) == "gpt-4o"
+    assert await get_token_use_model(ChatMessageTokenUse.UseType.OUTPUT) == "gpt-4o"
+    assert await get_token_use_count(ChatMessageTokenUse.UseType.INPUT) == 123
+    assert await get_token_use_count(ChatMessageTokenUse.UseType.OUTPUT) == 1000
     assert await get_activity_model() == "fish and chips"
 
 
@@ -129,7 +129,7 @@ async def test_chat_consumer_staff_user(staff_user: User, mocked_connect: Connec
         # Close
         await communicator.disconnect()
 
-    assert await get_chat_message_route(staff_user, ChatMessage.ChatRoleEnum.ai) == ["gratitude"]
+    assert await get_chat_message_route(staff_user, ChatMessage.Role.ai) == ["gratitude"]
 
 
 @pytest.mark.django_db(transaction=True)
@@ -154,8 +154,8 @@ async def test_chat_consumer_with_existing_session(alice: User, chat: Chat, mock
         # Close
         await communicator.disconnect()
 
-    assert await get_chat_message_text(alice, ChatMessage.ChatRoleEnum.user) == ["Hello Hal."]
-    assert await get_chat_message_text(alice, ChatMessage.ChatRoleEnum.ai) == ["Good afternoon, Mr. Amor."]
+    assert await get_chat_message_text(alice, ChatMessage.Role.user) == ["Hello Hal."]
+    assert await get_chat_message_text(alice, ChatMessage.Role.ai) == ["Good afternoon, Mr. Amor."]
 
 
 @pytest.mark.django_db(transaction=True)
@@ -190,9 +190,9 @@ async def test_chat_consumer_with_naughty_question(alice: User, uploaded_file: F
         # Close
         await communicator.disconnect()
 
-    assert await get_chat_message_text(alice, ChatMessage.ChatRoleEnum.user) == ["Hello Hal. \ufffd"]
-    assert await get_chat_message_text(alice, ChatMessage.ChatRoleEnum.ai) == ["Good afternoon, Mr. Amor."]
-    assert await get_chat_message_route(alice, ChatMessage.ChatRoleEnum.ai) == ["gratitude"]
+    assert await get_chat_message_text(alice, ChatMessage.Role.user) == ["Hello Hal. \ufffd"]
+    assert await get_chat_message_text(alice, ChatMessage.Role.ai) == ["Good afternoon, Mr. Amor."]
+    assert await get_chat_message_route(alice, ChatMessage.Role.ai) == ["gratitude"]
     await refresh_from_db(uploaded_file)
     assert uploaded_file.last_referenced.date() == datetime.now(tz=UTC).date()
 
@@ -228,9 +228,9 @@ async def test_chat_consumer_with_naughty_citation(
         # Close
         await communicator.disconnect()
 
-    assert await get_chat_message_text(alice, ChatMessage.ChatRoleEnum.user) == ["Hello Hal."]
-    assert await get_chat_message_text(alice, ChatMessage.ChatRoleEnum.ai) == ["Good afternoon, Mr. Amor."]
-    assert await get_chat_message_route(alice, ChatMessage.ChatRoleEnum.ai) == ["gratitude"]
+    assert await get_chat_message_text(alice, ChatMessage.Role.user) == ["Hello Hal."]
+    assert await get_chat_message_text(alice, ChatMessage.Role.ai) == ["Good afternoon, Mr. Amor."]
+    assert await get_chat_message_route(alice, ChatMessage.Role.ai) == ["gratitude"]
     await refresh_from_db(uploaded_file)
     assert uploaded_file.last_referenced.date() == datetime.now(tz=UTC).date()
 
@@ -267,27 +267,27 @@ async def test_chat_consumer_agentic(alice: User, uploaded_file: File, mocked_co
         # Close
         await communicator.disconnect()
 
-    assert await get_chat_message_text(alice, ChatMessage.ChatRoleEnum.user) == ["Hello Hal."]
-    assert await get_chat_message_text(alice, ChatMessage.ChatRoleEnum.ai) == ["Good afternoon, Mr. Amor."]
+    assert await get_chat_message_text(alice, ChatMessage.Role.user) == ["Hello Hal."]
+    assert await get_chat_message_text(alice, ChatMessage.Role.ai) == ["Good afternoon, Mr. Amor."]
 
     expected_citations = {("Good afternoon Mr Amor", ()), ("Good afternoon Mr Amor", (34, 35))}
-    assert await get_chat_message_citation_set(alice, ChatMessage.ChatRoleEnum.ai) == expected_citations
+    assert await get_chat_message_citation_set(alice, ChatMessage.Role.ai) == expected_citations
     await refresh_from_db(uploaded_file)
     assert uploaded_file.last_referenced.date() == datetime.now(tz=UTC).date()
 
-    assert await get_token_use_model(ChatMessageTokenUse.UseTypeEnum.INPUT) == "gpt-4o"
-    assert await get_token_use_model(ChatMessageTokenUse.UseTypeEnum.OUTPUT) == "gpt-4o"
-    assert await get_token_use_count(ChatMessageTokenUse.UseTypeEnum.INPUT) == 123
-    assert await get_token_use_count(ChatMessageTokenUse.UseTypeEnum.OUTPUT) == 1000
+    assert await get_token_use_model(ChatMessageTokenUse.UseType.INPUT) == "gpt-4o"
+    assert await get_token_use_model(ChatMessageTokenUse.UseType.OUTPUT) == "gpt-4o"
+    assert await get_token_use_count(ChatMessageTokenUse.UseType.INPUT) == 123
+    assert await get_token_use_count(ChatMessageTokenUse.UseType.OUTPUT) == 1000
 
 
 @database_sync_to_async
-def get_chat_message_text(user: User, role: ChatMessage.ChatRoleEnum) -> Sequence[str]:
+def get_chat_message_text(user: User, role: ChatMessage.Role) -> Sequence[str]:
     return [m.text for m in ChatMessage.objects.filter(chat__user=user, role=role)]
 
 
 @database_sync_to_async
-def get_chat_message_citation_set(user: User, role: ChatMessage.ChatRoleEnum) -> Sequence[tuple[str, tuple[int]]]:
+def get_chat_message_citation_set(user: User, role: ChatMessage.Role) -> Sequence[tuple[str, tuple[int]]]:
     return {
         (citation.text, tuple(citation.page_numbers or []))
         for message in ChatMessage.objects.filter(chat__user=user, role=role)
@@ -297,7 +297,7 @@ def get_chat_message_citation_set(user: User, role: ChatMessage.ChatRoleEnum) ->
 
 
 @database_sync_to_async
-def get_chat_message_route(user: User, role: ChatMessage.ChatRoleEnum) -> Sequence[str]:
+def get_chat_message_route(user: User, role: ChatMessage.Role) -> Sequence[str]:
     return [m.route for m in ChatMessage.objects.filter(chat__user=user, role=role)]
 
 
@@ -362,7 +362,7 @@ async def test_chat_consumer_with_selected_files(
     # TODO (@brunns): Assert selected files saved to model.
     # Requires fix for https://github.com/django/channels/issues/1091
     all_messages = get_chat_messages(alice)
-    last_user_message = [m for m in all_messages if m.rule == ChatMessage.ChatRoleEnum.user][-1]
+    last_user_message = [m for m in all_messages if m.rule == ChatMessage.Role.user][-1]
     assert last_user_message.selected_files == selected_files
 
 
@@ -521,7 +521,7 @@ async def test_chat_consumer_redbox_state(
         selected_file_uuids: Sequence[str] = [str(f.id) for f in selected_files]
         selected_file_keys: Sequence[str] = [f.unique_name for f in selected_files]
         permitted_file_keys: Sequence[str] = [
-            f.unique_name async for f in File.objects.filter(user=alice, status=File.StatusEnum.complete)
+            f.unique_name async for f in File.objects.filter(user=alice, status=File.Status.complete)
         ]
         assert selected_file_keys != permitted_file_keys
 
