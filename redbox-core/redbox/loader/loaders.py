@@ -27,12 +27,11 @@ else:
 
 
 class MetadataLoader:
-    def __init__(self, env: Settings, s3_client: S3Client, file_name: str, metadata: dict = None):
+    def __init__(self, env: Settings, s3_client: S3Client, file_name: str):
         self.env = env
         self.s3_client = s3_client
         self.llm = get_chat_llm(env.metadata_extraction_llm)
         self.file_name = file_name
-        self.metadata = metadata
         self.required_keys = ["name", "description", "keywords"]
         self.default_metadata = {"name": "", "description": "", "keywords": ""}
 
@@ -137,33 +136,30 @@ class MetadataLoader:
 
         return response.json()
 
-    def extract_metadata(self):
+    def extract_metadata(self) -> dict:
         """
         Extract metadata from first 1_000 chunks
         """
 
         elements = self._chunking()
         if not elements:
-            self.metadata = self.default_metadata
+            return self.default_metadata
 
-        else:
-            # Get first 1k tokens of processed document
-            first_n = self.get_first_n_tokens(elements, 1_000)
+        # Get first 1k tokens of processed document
+        first_n = self.get_first_n_tokens(elements, 1_000)
 
-            # Get whatever metadata we can from processed document
-            doc_metadata = self.get_doc_metadata(chunks=elements, n=3, ignore=None, max_size=524288 - len(first_n))
+        # Get whatever metadata we can from processed document
+        doc_metadata = self.get_doc_metadata(chunks=elements, n=3, ignore=None, max_size=524288 - len(first_n))
 
-            # Generate new metadata
-            res = self.create_file_metadata(first_n, doc_metadata)
-            if not res:
-                self.metadata = self.default_metadata
-                logger.warning("LLM failed to extract metadata for this file")
-            else:
-                if all(key in res.keys() for key in self.required_keys):
-                    self.metadata = res
-                else:
-                    # missing keys
-                    self.metadata = self.default_metadata
+        # Generate new metadata
+        res = self.create_file_metadata(first_n, doc_metadata)
+        if not res:
+            logger.warning("LLM failed to extract metadata for this file")
+            return self.default_metadata
+        if all(key in res.keys() for key in self.required_keys):
+            return res
+        # missing keys
+        return self.default_metadata
 
     def create_file_metadata(self, page_content: str, metadata: dict[str, Any]) -> dict[str, Any]:
         """Uses a sample of the document and any extracted metadata to generate further metadata."""

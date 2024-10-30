@@ -85,12 +85,12 @@ def test_extract_metadata_missing_key(
     # Upload file
     file_name = file_to_s3("html/example.html", s3_client, env)
 
-    metadata = MetadataLoader(env=env, s3_client=s3_client, file_name=file_name)
-    metadata.extract_metadata()
+    metadata_loader = MetadataLoader(env=env, s3_client=s3_client, file_name=file_name)
+    metadata = metadata_loader.extract_metadata()
 
-    assert metadata.metadata.get("name") == ""
-    assert metadata.metadata.get("description") == ""
-    assert metadata.metadata.get("keywords") == ""
+    assert metadata.get("name") == ""
+    assert metadata.get("description") == ""
+    assert metadata.get("keywords") == ""
 
 
 @patch("redbox.loader.loaders.get_chat_llm")
@@ -118,13 +118,13 @@ def test_extract_metadata_extra_key(
     # Upload file
     file_name = file_to_s3("html/example.html", s3_client, env)
 
-    metadata = MetadataLoader(env=env, s3_client=s3_client, file_name=file_name)
-    metadata.extract_metadata()
+    metadata_loader = MetadataLoader(env=env, s3_client=s3_client, file_name=file_name)
+    metadata = metadata_loader.extract_metadata()
 
-    assert metadata.metadata is not None
-    assert metadata.metadata.get("name") == "foo"
-    assert metadata.metadata.get("description") == "test"
-    assert metadata.metadata.get("keywords") == "abc"
+    assert metadata is not None
+    assert metadata.get("name") == "foo"
+    assert metadata.get("description") == "test"
+    assert metadata.get("keywords") == "abc"
 
 
 @patch("redbox.loader.loaders.get_chat_llm")
@@ -164,15 +164,15 @@ def test_document_loader(
     # Upload file
     file = file_to_s3("html/example.html", s3_client, env)
 
-    metadata = MetadataLoader(env=env, s3_client=s3_client, file_name=file)
-    metadata.extract_metadata()
+    metadata_loader = MetadataLoader(env=env, s3_client=s3_client, file_name=file)
+    metadata = metadata_loader.extract_metadata()
 
     loader = UnstructuredChunkLoader(
         chunk_resolution=ChunkResolution.normal,
         env=env,
         min_chunk_size=env.worker_ingest_min_chunk_size,
         max_chunk_size=env.worker_ingest_max_chunk_size,
-        metadata=metadata.metadata,
+        metadata=metadata,
     )
 
     # Call loader
@@ -241,15 +241,15 @@ def test_ingest_from_loader(
     file_name = file_to_s3(filename="html/example.html", s3_client=s3_client, env=env)
 
     # Extract metadata
-    metadata = MetadataLoader(env=env, s3_client=s3_client, file_name=file_name)
-    metadata.extract_metadata()
+    metadata_loader = MetadataLoader(env=env, s3_client=s3_client, file_name=file_name)
+    metadata = metadata_loader.extract_metadata()
 
     loader = UnstructuredChunkLoader(
         chunk_resolution=resolution,
         env=env,
         min_chunk_size=env.worker_ingest_min_chunk_size,
         max_chunk_size=env.worker_ingest_max_chunk_size,
-        metadata=metadata.metadata,
+        metadata=metadata,
     )
 
     # Mock embeddings
