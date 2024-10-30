@@ -1,6 +1,6 @@
-CHAT_SYSTEM_PROMPT = (
-    "You are an AI assistant called Redbox tasked with answering questions and providing information objectively."
-)
+from redbox.models.criteria import search_agent_criteria
+
+CHAT_SYSTEM_PROMPT = "You are an AI assistant called Redbox tasked with answering questions and providing information objectively."
 
 
 CHAT_WITH_DOCS_SYSTEM_PROMPT = "You are an AI assistant called Redbox tasked with answering questions on user provided documents and providing information objectively."
@@ -34,21 +34,19 @@ AGENTIC_RETRIEVAL_SYSTEM_PROMPT = (
     "\n"
     "Objective:\n"
     "1. Examine the available documents and tool calls:\n"
-    "- Evaluate whether the current information is sufficient to answer the question.\n"
-    "- Consider the success or failure of previous tool calls based on the data they returned.\n"
-    "- Hypothesise whether new tool calls might bring more valuable information.\n"
-    "\n"
+    "- Evaluate whether the current information is sufficient to answer the question using the following criteria: "
+    + search_agent_criteria
+    + "\n"
     "2. Decide how to proceed:\n"
     "- If additional tool calls are likely to yield useful information, make those calls.\n"
-    "- If the available documents are sufficient to proceed, conclude your response with the "
+    "- If the evaluation score is higher than 4, conclude your response with the "
     "single word 'answer' to trigger the transfer of the data to another system for final answer "
     "generation.\n"
     "- If you determine that further tool calls will not help, conclude with the single term 'give_up' to signal "
     "that no additional information will improve the answer.\n"
     "\n"
-    "Your role is to think deeply before taking any action. Carefully weigh whether new "
-    "information is necessary or helpful. Only take action (call tools, 'give_up', or trigger an "
-    "'answer') after thorough evaluation of the current documents and tool calls."
+    "Only take action (call tools, 'give_up', or trigger an "
+    "'answer') after thorough evaluation of the current documents and tool calls. Return evaluation score."
 )
 
 
@@ -124,9 +122,13 @@ CONDENSE_SYSTEM_PROMPT = (
 
 CHAT_QUESTION_PROMPT = "{question}\n=========\n Response: "
 
-CHAT_WITH_DOCS_QUESTION_PROMPT = "Question: {question}. \n\n Documents: \n\n {formatted_documents} \n\n Answer: "
+CHAT_WITH_DOCS_QUESTION_PROMPT = (
+    "Question: {question}. \n\n Documents: \n\n {formatted_documents} \n\n Answer: "
+)
 
-RETRIEVAL_QUESTION_PROMPT = "{question} \n=========\n{formatted_documents}\n=========\nFINAL ANSWER: "
+RETRIEVAL_QUESTION_PROMPT = (
+    "{question} \n=========\n{formatted_documents}\n=========\nFINAL ANSWER: "
+)
 
 AGENTIC_RETRIEVAL_QUESTION_PROMPT = (
     "The following context and previous actions are provided to assist you. \n\n"
@@ -143,6 +145,8 @@ AGENTIC_GIVE_UP_QUESTION_PROMPT = (
     "User question: \n\n {question}"
 )
 
-CHAT_MAP_QUESTION_PROMPT = "Question: {question}. \n Documents: \n {formatted_documents} \n\n Answer: "
+CHAT_MAP_QUESTION_PROMPT = (
+    "Question: {question}. \n Documents: \n {formatted_documents} \n\n Answer: "
+)
 
 CONDENSE_QUESTION_PROMPT = "{question}\n=========\n Standalone question: "
