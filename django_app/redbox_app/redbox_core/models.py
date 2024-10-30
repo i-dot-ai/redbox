@@ -864,6 +864,10 @@ class ChatMessage(UUIDPrimaryKeyBase, TimeStampedModel):
             )
         )
 
+    def unique_citation_uris(self) -> list[str]:
+        """a unique set of URIs for all citations"""
+        return sorted({citation.uri for citation in self.citation_set.all()})
+
 
 class ChatMessageTokenUse(UUIDPrimaryKeyBase, TimeStampedModel):
     class UseTypeEnum(models.TextChoices):

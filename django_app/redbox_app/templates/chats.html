@@ -123,13 +123,7 @@
 
             {# SSR messages #}
             {% for message in messages %}
-              {{ message_box(
-                id = message.id,
-                role = message.role,
-                route = message.route,
-                text = message.text,
-                citations = message.citation_set.all()
-              ) }}
+              {{ message_box(message=message) }}
 
               {# If we want to collect feedback on SSR messages
               {% if message.role == 'ai' %}
