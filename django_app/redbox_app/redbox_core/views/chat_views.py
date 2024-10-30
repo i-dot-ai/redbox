@@ -16,7 +16,7 @@ from django.utils.decorators import method_decorator
 from django.views import View
 from yarl import URL
 
-from redbox_app.redbox_core.models import Chat, ChatLLMBackend, ChatMessage, ChatRoleEnum, File
+from redbox_app.redbox_core.models import Chat, ChatLLMBackend, ChatMessage, File
 
 logger = logging.getLogger(__name__)
 
@@ -78,7 +78,7 @@ class ChatsView(View):
     @staticmethod
     def decorate_selected_files(all_files: Sequence[File], messages: Sequence[ChatMessage]) -> None:
         if messages:
-            last_user_message = [m for m in messages if m.role == ChatRoleEnum.user][-1]
+            last_user_message = [m for m in messages if m.role == ChatMessage.ChatRoleEnum.user][-1]
             selected_files: Sequence[File] = last_user_message.selected_files.all() or []
         else:
             selected_files = []
