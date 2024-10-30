@@ -136,3 +136,25 @@ def test_external_citation_uri(
     )
     citation.save()
     assert citation.uri == "http://example.com"
+
+
+def test_unique_citation_uris(chat_message: ChatMessage, uploaded_file: File):
+    external_citation = Citation(
+        chat_message=chat_message,
+        text="hello",
+        source=Citation.Origin.WIKIPEDIA,
+        url="http://example.com",
+    )
+    external_citation.save()
+
+    internal_citation = Citation(
+        chat_message=chat_message,
+        text="hello",
+        source=Citation.Origin.USER_UPLOADED_DOCUMENT,
+        file=uploaded_file,
+    )
+    internal_citation.save()
+
+    chat_message.refresh_from_db()
+
+    assert chat_message.unique_citation_uris() == ["file://original_file.txt", "http://example.com"]
