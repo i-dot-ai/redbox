@@ -1,6 +1,6 @@
 import logging
 import re
-from operator import itemgetter
+from operator import attrgetter, itemgetter
 from typing import Any, Callable, Iterable, Iterator
 
 from langchain_core.callbacks.manager import (
@@ -124,6 +124,7 @@ def build_llm_chain(
             "text_and_tools": (
                 _llm
                 | {
+                    "raw_response": RunnablePassthrough(),
                     "parsed_response": _output_parser,
                     "tool_calls": (RunnableLambda(lambda r: r.tool_calls) | tool_calls_to_toolstate),
                 }
@@ -136,18 +137,15 @@ def build_llm_chain(
             "tool_calls": combine_getters(itemgetter("text_and_tools"), itemgetter("tool_calls")),
             "citations": RunnableLambda(combine_getters(itemgetter("text_and_tools"), itemgetter("parsed_response")))
             | (lambda r: [] if isinstance(r, str) else r.citations),
-            "prompt": itemgetter("prompt"),
-        }
-        | RunnablePassthrough.assign(
-            metadata=(
+            "metadata": (
                 {
                     "prompt": itemgetter("prompt"),
-                    "response": itemgetter("text"),
+                    "response": combine_getters(itemgetter("text_and_tools"), itemgetter("raw_response"), attrgetter("content")),
                     "model": lambda _: model_name,
                 }
                 | to_request_metadata
-            ),
-        )
+            )
+        }
     )
 
 

@@ -180,7 +180,10 @@ class RequestMetadata(BaseModel):
     number_of_selected_files: int = 0
 
     @property
-    def input_tokens(self):
+    def input_tokens(self) -> dict[str, int]:
+        """
+        Creates a dictionary of model names to number of input tokens used
+        """
         tokens_by_model = dict()
         for call_metadata in self.llm_calls:
             tokens_by_model[call_metadata.llm_model_name] = (
@@ -190,6 +193,9 @@ class RequestMetadata(BaseModel):
 
     @property
     def output_tokens(self):
+        """
+        Creates a dictionary of model names to number of output tokens used
+        """
         tokens_by_model = dict()
         for call_metadata in self.llm_calls:
             tokens_by_model[call_metadata.llm_model_name] = (
