@@ -5,7 +5,6 @@ from collections.abc import Collection, Sequence
 from datetime import UTC, date, datetime, timedelta
 from typing import override
 
-import jwt
 from django.conf import settings
 from django.contrib.auth.base_user import BaseUserManager as BaseSSOUserManager
 from django.contrib.postgres.fields import ArrayField
@@ -514,12 +513,6 @@ class User(BaseUser, UUIDPrimaryKeyBase):
         self.email = self.email.lower()
         super().save(*args, **kwargs)
 
-    def get_bearer_token(self) -> str:
-        """the bearer token expected by the core-api"""
-        user_uuid = str(self.id)
-        bearer_token = jwt.encode({"user_uuid": user_uuid}, key=settings.SECRET_KEY)
-        return f"Bearer {bearer_token}"
-
     def get_initials(self) -> str:
         try:
             if self.name:
@@ -534,16 +527,6 @@ class User(BaseUser, UUIDPrimaryKeyBase):
             return first_name[0].upper() + last_name[0].upper()
         except (IndexError, AttributeError, ValueError):
             return ""
-
-
-class StatusEnum(models.TextChoices):
-    complete = "complete"
-    deleted = "deleted"
-    errored = "errored"
-    processing = "processing"
-
-
-INACTIVE_STATUSES = [StatusEnum.deleted, StatusEnum.errored]
 
 
 class InactiveFileError(ValueError):
@@ -561,6 +544,14 @@ def build_s3_key(instance, filename: str) -> str:
 
 
 class File(UUIDPrimaryKeyBase, TimeStampedModel):
+    class StatusEnum(models.TextChoices):
+        complete = "complete"
+        deleted = "deleted"
+        errored = "errored"
+        processing = "processing"
+
+    INACTIVE_STATUSES = [StatusEnum.deleted, StatusEnum.errored]
+
     status = models.CharField(choices=StatusEnum.choices, null=False, blank=False)
     original_file = models.FileField(
         storage=settings.STORAGES["default"]["BACKEND"],
@@ -629,14 +620,14 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
     @property
     def unique_name(self) -> str:
         """primary key for accessing file in s3"""
-        if self.status in INACTIVE_STATUSES:
+        if self.status in self.INACTIVE_STATUSES:
             logger.exception("Attempt to access s3-key for inactive file %s with status %s", self.pk, self.status)
             raise InactiveFileError(self)
         return self.original_file.name
 
     def get_status_text(self) -> str:
         return next(
-            (status[1] for status in StatusEnum.choices if self.status == status[0]),
+            (status[1] for status in self.StatusEnum.choices if self.status == status[0]),
             "Unknown",
         )
 
@@ -655,8 +646,8 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
     def get_completed_and_processing_files(cls, user: User) -> tuple[Sequence["File"], Sequence["File"]]:
         """Returns all files that are completed and processing for a given user."""
 
-        completed_files = cls.objects.filter(user=user, status=StatusEnum.complete).order_by("-created_at")
-        processing_files = cls.objects.filter(user=user, status=StatusEnum.processing).order_by("-created_at")
+        completed_files = cls.objects.filter(user=user, status=cls.StatusEnum.complete).order_by("-created_at")
+        processing_files = cls.objects.filter(user=user, status=cls.StatusEnum.processing).order_by("-created_at")
         return completed_files, processing_files
 
     @classmethod
@@ -729,12 +720,6 @@ class Chat(UUIDPrimaryKeyBase, TimeStampedModel, AbstractAISettings):
         return get_date_group(self.newest_message_date)
 
 
-class ChatRoleEnum(models.TextChoices):
-    ai = "ai"
-    user = "user"
-    system = "system"
-
-
 class Citation(UUIDPrimaryKeyBase, TimeStampedModel):
     class Origin(models.TextChoices):
         WIKIPEDIA = "Wikipedia", _("wikipedia")
@@ -798,6 +783,11 @@ class Citation(UUIDPrimaryKeyBase, TimeStampedModel):
 
 
 class ChatMessage(UUIDPrimaryKeyBase, TimeStampedModel):
+    class ChatRoleEnum(models.TextChoices):
+        ai = "ai"
+        user = "user"
+        system = "system"
+
     chat = models.ForeignKey(Chat, on_delete=models.CASCADE)
     text = models.TextField(max_length=32768, null=False, blank=False)
     role = models.CharField(choices=ChatRoleEnum.choices, null=False, blank=False)
