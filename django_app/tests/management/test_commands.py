@@ -246,7 +246,7 @@ def test_reingest_files_unstructured_fail(uploaded_file: File, requests_mock: Mo
 
     # Then
     uploaded_file.refresh_from_db()
-    assert uploaded_file.status == File.Status.StatusEnum.errored
+    assert uploaded_file.status == File.Status.errored
     assert uploaded_file.ingest_error == "<class 'ValueError'>: Unstructured failed to extract text for this file"
 
 
