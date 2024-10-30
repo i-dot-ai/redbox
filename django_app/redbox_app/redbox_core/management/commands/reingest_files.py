@@ -5,7 +5,7 @@ from django.core.management import BaseCommand
 from django_q.tasks import async_task
 
 from redbox.models import Settings
-from redbox_app.redbox_core.models import INACTIVE_STATUSES, File
+from redbox_app.redbox_core.models import File
 from redbox_app.worker import ingest
 
 logger = logging.getLogger(__name__)
@@ -42,7 +42,7 @@ class Command(BaseCommand):
 
         new_index = f"{env.elastic_root_index}-chunk-{int(time.time())}"
 
-        for file in File.objects.exclude(status__in=INACTIVE_STATUSES):
+        for file in File.objects.exclude(status__in=File.INACTIVE_STATUSES):
             logger.debug("Reingesting file object %s", file)
             async_task(
                 ingest,

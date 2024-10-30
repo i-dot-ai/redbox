@@ -216,7 +216,7 @@ def test_reingest_files(uploaded_file: File, requests_mock: Mocker, mocker: Mock
 @pytest.mark.django_db(transaction=True)
 def test_reingest_files_unstructured_fail(uploaded_file: File, requests_mock: Mocker, mocker):
     # Given
-    assert uploaded_file.status == File.Status.StatusEnum.processing
+    assert uploaded_file.status == File.Status.processing
 
     requests_mock.post(
         f"http://{settings.UNSTRUCTURED_HOST}:8000/general/v0/general",
