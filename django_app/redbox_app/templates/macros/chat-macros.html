@@ -51,9 +51,9 @@
   <h3 class="iai-chat-bubble__sources-heading govuk-heading-s govuk-!-margin-bottom-1">Sources</h3>
   <div class="iai-display-flex-from-desktop">
     <ul class="govuk-list govuk-list--bullet govuk-!-margin-bottom-0">
-      {% for uri in message.unique_citation_uris() %}
+      {% for display, href in message.unique_citation_uris() %}
       <li class="govuk-!-margin-bottom-0">
-        <a class="iai-chat-bubbles__sources-link govuk-link" href="{{ uri }}">{{ uri }}</a>
+        <a class="iai-chat-bubbles__sources-link govuk-link" href="{{ href }}">{{ display }}</a>
       </li>
       {% endfor %}
     </ul>
