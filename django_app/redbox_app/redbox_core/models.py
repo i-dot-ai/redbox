@@ -5,9 +5,7 @@ from collections.abc import Collection, Sequence
 from datetime import UTC, date, datetime, timedelta
 from typing import override
 
-import boto3
 import jwt
-from botocore.config import Config
 from django.conf import settings
 from django.contrib.auth.base_user import BaseUserManager as BaseSSOUserManager
 from django.contrib.postgres.fields import ArrayField
@@ -614,32 +612,8 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
         return name.split(".")[-1]
 
     @property
-    def url(self) -> URL | None:
-        #  In dev environment, get pre-signed url from minio
-        if settings.ENVIRONMENT.uses_minio:
-            s3 = boto3.client(
-                "s3",
-                endpoint_url="http://localhost:9000",
-                aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
-                aws_secret_access_key=settings.AWS_S3_SECRET_ACCESS_KEY,
-                config=Config(signature_version="s3v4"),
-                region_name=settings.AWS_S3_REGION_NAME,
-            )
-
-            url = s3.generate_presigned_url(
-                ClientMethod="get_object",
-                Params={
-                    "Bucket": settings.AWS_STORAGE_BUCKET_NAME,
-                    "Key": self.file_name,
-                },
-            )
-            return URL(url)
-
-        if not self.original_file:
-            logger.error("attempt to access non-existent file %s", self.pk, stack_info=True)
-            return None
-
-        return URL(self.original_file.url)
+    def url(self) -> str:
+        return self.original_file.url
 
     @property
     def file_name(self) -> str:
@@ -818,9 +792,9 @@ class Citation(UUIDPrimaryKeyBase, TimeStampedModel):
         super().save(force_insert, force_update, using, update_fields)
 
     @property
-    def uri(self) -> str:
-        """returns either the url of an external citation or the file uri of a user-uploaded document"""
-        return self.url or f"file://{self.file.file_name}"
+    def uri(self) -> URL:
+        """returns the url of either the external citation or the user-uploaded document"""
+        return URL(self.url or self.file.url)
 
 
 class ChatMessage(UUIDPrimaryKeyBase, TimeStampedModel):

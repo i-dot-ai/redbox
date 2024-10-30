@@ -2,6 +2,7 @@ from datetime import UTC, datetime, timedelta
 
 import pytest
 from django.core.files.uploadedfile import SimpleUploadedFile
+from yarl import URL
 
 from redbox_app.redbox_core.models import (
     ChatMessage,
@@ -122,7 +123,7 @@ def test_internal_citation_uri(chat_message: ChatMessage, uploaded_file: File):
         file=uploaded_file,
     )
     citation.save()
-    assert citation.uri == "file://original_file.txt"
+    assert citation.uri.parts[-1] == "original_file.txt"
 
 
 def test_external_citation_uri(
@@ -135,7 +136,7 @@ def test_external_citation_uri(
         url="http://example.com",
     )
     citation.save()
-    assert citation.uri == "http://example.com"
+    assert citation.uri == URL("http://example.com")
 
 
 def test_unique_citation_uris(chat_message: ChatMessage, uploaded_file: File):
@@ -157,4 +158,7 @@ def test_unique_citation_uris(chat_message: ChatMessage, uploaded_file: File):
 
     chat_message.refresh_from_db()
 
-    assert chat_message.unique_citation_uris() == ["file://original_file.txt", "http://example.com"]
+    urls = chat_message.unique_citation_uris()
+
+    assert str(urls[0]) == "http://example.com"
+    assert urls[1].parts == ("/", "redbox-storage-dev", "alice@cabinetoffice.gov.uk", "original_file.txt")
