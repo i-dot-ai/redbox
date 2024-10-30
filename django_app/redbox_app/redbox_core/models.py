@@ -838,9 +838,15 @@ class ChatMessage(UUIDPrimaryKeyBase, TimeStampedModel):
             )
         )
 
-    def unique_citation_uris(self) -> list[str]:
-        """a unique set of URIs for all citations"""
-        return sorted({citation.uri for citation in self.citation_set.all()})
+    def unique_citation_uris(self) -> list[tuple[str, str]]:
+        """a unique set of names and hrefs for all citations"""
+
+        def get_display(citation):
+            if not citation.file:
+                return str(citation.uri)
+            return citation.file.file_name
+
+        return sorted({(get_display(citation), citation.uri) for citation in self.citation_set.all()})
 
 
 class ChatMessageTokenUse(UUIDPrimaryKeyBase, TimeStampedModel):

@@ -160,5 +160,7 @@ def test_unique_citation_uris(chat_message: ChatMessage, uploaded_file: File):
 
     urls = chat_message.unique_citation_uris()
 
-    assert str(urls[0]) == "http://example.com"
-    assert urls[1].parts == ("/", "redbox-storage-dev", "alice@cabinetoffice.gov.uk", "original_file.txt")
+    assert urls[0][0] == "http://example.com"
+    assert urls[0][1] == URL("http://example.com")
+    assert urls[1][0] == "original_file.txt"
+    assert urls[1][1].parts[-1] == "original_file.txt"
