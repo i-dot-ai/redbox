@@ -27,7 +27,7 @@ class SourcesList extends HTMLElement {
     let html = `
             <h3 class="iai-chat-bubble__sources-heading govuk-heading-s govuk-!-margin-bottom-1">Sources</h3>
             <div class="iai-display-flex-from-desktop">
-            <ol class="govuk-list govuk-list--number govuk-!-margin-bottom-0">
+            <ol class="rb-footnote-list govuk-!-margin-bottom-0">
         `;
     this.sources.forEach((source) => {
       html += `
@@ -36,7 +36,7 @@ class SourcesList extends HTMLElement {
                 </li>
             `;
     });
-    html += `</div></ul>`;
+    html += `</div></ol>`;
 
     this.innerHTML = html;
   };

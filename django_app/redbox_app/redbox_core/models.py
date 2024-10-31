@@ -843,7 +843,7 @@ class ChatMessage(UUIDPrimaryKeyBase, TimeStampedModel):
                 return str(citation.uri)
             return citation.file.file_name
 
-        return sorted({(get_display(citation), citation.uri) for citation in self.citation_set.all()})
+        return sorted({(get_display(citation), citation.uri, citation.text_in_answer) for citation in self.citation_set.all()})
 
 
 class ChatMessageTokenUse(UUIDPrimaryKeyBase, TimeStampedModel):

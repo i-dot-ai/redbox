@@ -102,7 +102,7 @@ export class ChatMessage extends HTMLElement {
         content.replace(matchingText, `${matchingText}<a href="#${footnote.id}" aria-label="Footnote ${footnoteIndex + 1}">[${footnoteIndex + 1}]</a>`)
       );
       */
-      this.responseContainer.innerHTML = this.responseContainer.innerHTML.replace(matchingText, `${matchingText}<a href="#${footnote.id}" aria-label="Footnote ${footnoteIndex + 1}">[${footnoteIndex + 1}]</a>`);
+      this.responseContainer.innerHTML = this.responseContainer.innerHTML.replace(matchingText, `${matchingText}<a class="rb-footnote-link" href="#${footnote.id}" aria-label="Footnote ${footnoteIndex + 1}">${footnoteIndex + 1}</a>`);
     });
   };
 

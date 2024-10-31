@@ -326,6 +326,19 @@ chat-message {
   width: 1.5rem;
 }
 
+/* Footnotes */
+.rb-footnote-link {
+  background-color: var(--iai-colour-secondary-teal);
+  color: white;
+  padding: 1px 2px;
+  text-decoration: none;
+  border-radius: 2px;
+  margin: 1px;
+}
+.rb-footnote-list {
+  padding-left: 1rem;
+}
+
 /* Response feedback - differing content for negative and positive responses */
 .feedback__container--negative .feedback__negative,
 .feedback__container--positive .feedback__positive {
