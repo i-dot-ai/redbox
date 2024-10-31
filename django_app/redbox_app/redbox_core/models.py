@@ -536,16 +536,6 @@ class User(BaseUser, UUIDPrimaryKeyBase):
             return ""
 
 
-class StatusEnum(models.TextChoices):
-    complete = "complete"
-    deleted = "deleted"
-    errored = "errored"
-    processing = "processing"
-
-
-INACTIVE_STATUSES = [StatusEnum.deleted, StatusEnum.errored]
-
-
 class InactiveFileError(ValueError):
     def __init__(self, file):
         super().__init__(f"{file.pk} is inactive, status is {file.status}")
@@ -561,7 +551,15 @@ def build_s3_key(instance, filename: str) -> str:
 
 
 class File(UUIDPrimaryKeyBase, TimeStampedModel):
-    status = models.CharField(choices=StatusEnum.choices, null=False, blank=False)
+    class Status(models.TextChoices):
+        complete = "complete"
+        deleted = "deleted"
+        errored = "errored"
+        processing = "processing"
+
+    INACTIVE_STATUSES = [Status.deleted, Status.errored]
+
+    status = models.CharField(choices=Status.choices, null=False, blank=False)
     original_file = models.FileField(
         storage=settings.STORAGES["default"]["BACKEND"],
         upload_to=build_s3_key,
@@ -629,14 +627,14 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
     @property
     def unique_name(self) -> str:
         """primary key for accessing file in s3"""
-        if self.status in INACTIVE_STATUSES:
+        if self.status in File.INACTIVE_STATUSES:
             logger.exception("Attempt to access s3-key for inactive file %s with status %s", self.pk, self.status)
             raise InactiveFileError(self)
         return self.original_file.name
 
     def get_status_text(self) -> str:
         return next(
-            (status[1] for status in StatusEnum.choices if self.status == status[0]),
+            (status[1] for status in File.Status.choices if self.status == status[0]),
             "Unknown",
         )
 
@@ -655,8 +653,8 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
     def get_completed_and_processing_files(cls, user: User) -> tuple[Sequence["File"], Sequence["File"]]:
         """Returns all files that are completed and processing for a given user."""
 
-        completed_files = cls.objects.filter(user=user, status=StatusEnum.complete).order_by("-created_at")
-        processing_files = cls.objects.filter(user=user, status=StatusEnum.processing).order_by("-created_at")
+        completed_files = cls.objects.filter(user=user, status=File.Status.complete).order_by("-created_at")
+        processing_files = cls.objects.filter(user=user, status=File.Status.processing).order_by("-created_at")
         return completed_files, processing_files
 
     @classmethod
@@ -729,12 +727,6 @@ class Chat(UUIDPrimaryKeyBase, TimeStampedModel, AbstractAISettings):
         return get_date_group(self.newest_message_date)
 
 
-class ChatRoleEnum(models.TextChoices):
-    ai = "ai"
-    user = "user"
-    system = "system"
-
-
 class Citation(UUIDPrimaryKeyBase, TimeStampedModel):
     class Origin(models.TextChoices):
         WIKIPEDIA = "Wikipedia", _("wikipedia")
@@ -798,9 +790,14 @@ class Citation(UUIDPrimaryKeyBase, TimeStampedModel):
 
 
 class ChatMessage(UUIDPrimaryKeyBase, TimeStampedModel):
+    class Role(models.TextChoices):
+        ai = "ai"
+        user = "user"
+        system = "system"
+
     chat = models.ForeignKey(Chat, on_delete=models.CASCADE)
     text = models.TextField(max_length=32768, null=False, blank=False)
-    role = models.CharField(choices=ChatRoleEnum.choices, null=False, blank=False)
+    role = models.CharField(choices=Role.choices, null=False, blank=False)
     route = models.CharField(max_length=25, null=True, blank=True)
     selected_files = models.ManyToManyField(File, related_name="+", symmetrical=False, blank=True)
     source_files = models.ManyToManyField(File, through=Citation)
@@ -850,16 +847,16 @@ class ChatMessage(UUIDPrimaryKeyBase, TimeStampedModel):
 
 
 class ChatMessageTokenUse(UUIDPrimaryKeyBase, TimeStampedModel):
-    class UseTypeEnum(models.TextChoices):
+    class UseType(models.TextChoices):
         INPUT = "input", _("input")
         OUTPUT = "output", _("output")
 
     chat_message = models.ForeignKey(ChatMessage, on_delete=models.CASCADE)
     use_type = models.CharField(
         max_length=10,
-        choices=UseTypeEnum,
+        choices=UseType,
         help_text="input or output tokens",
-        default=UseTypeEnum.INPUT,
+        default=UseType.INPUT,
     )
     model_name = models.CharField(max_length=50, null=True, blank=True)
     token_count = models.PositiveIntegerField(null=True, blank=True)

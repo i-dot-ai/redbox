@@ -10,7 +10,7 @@ from django.contrib.auth import get_user_model
 from django.test import Client
 from django.urls import reverse
 
-from redbox_app.redbox_core.models import File, StatusEnum
+from redbox_app.redbox_core.models import File
 
 User = get_user_model()
 
@@ -59,7 +59,7 @@ def test_document_upload_status(client, alice, file_pdf_path: Path, s3_client):
         assert response.url == "/documents/"
         assert count_s3_objects(s3_client) == previous_count + 1
         uploaded_file = File.objects.filter(user=alice).order_by("-created_at")[0]
-        assert uploaded_file.status == StatusEnum.processing
+        assert uploaded_file.status == File.Status.processing
 
 
 @pytest.mark.django_db()
@@ -146,7 +146,7 @@ def test_remove_doc_view(client: Client, alice: User, file_pdf_path: Path, s3_cl
         client.post(f"/remove-doc/{new_file.id}", {"doc_id": new_file.id})
         assert not file_exists(s3_client, file_name)
         assert count_s3_objects(s3_client) == previous_count
-        assert File.objects.get(id=new_file.id).status == StatusEnum.deleted
+        assert File.objects.get(id=new_file.id).status == File.Status.deleted
 
 
 @pytest.mark.django_db()

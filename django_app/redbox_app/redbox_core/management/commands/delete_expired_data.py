@@ -11,7 +11,7 @@ from django.db.models import Max
 from django.utils import timezone
 from requests.exceptions import RequestException
 
-from redbox_app.redbox_core.models import INACTIVE_STATUSES, Chat, File, StatusEnum
+from redbox_app.redbox_core.models import Chat, File
 
 logger = logging.getLogger(__name__)
 
@@ -48,7 +48,7 @@ class Command(BaseCommand):
             counter = 0
             failure_counter = 0
 
-            for file in File.objects.filter(last_referenced__lt=cutoff_date).exclude(status__in=INACTIVE_STATUSES):
+            for file in File.objects.filter(last_referenced__lt=cutoff_date).exclude(status__in=File.INACTIVE_STATUSES):
                 logger.debug(
                     "Deleting file object %s, last_referenced %s",
                     file,
@@ -61,16 +61,16 @@ class Command(BaseCommand):
 
                 except BotoCoreError as e:
                     logger.exception("Error deleting file object %s from storage", file, exc_info=e)
-                    file.status = StatusEnum.errored
+                    file.status = File.Status.errored
                     file.save()
                     failure_counter += 1
                 except Exception as e:
                     logger.exception("Error deleting file object %s", file, exc_info=e)
-                    file.status = StatusEnum.errored
+                    file.status = File.Status.errored
                     file.save()
                     failure_counter += 1
                 else:
-                    file.status = StatusEnum.deleted
+                    file.status = File.Status.deleted
                     file.save()
                     logger.debug("File object %s deleted", file)
 
