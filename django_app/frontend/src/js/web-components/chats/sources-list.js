@@ -12,6 +12,12 @@ class SourcesList extends HTMLElement {
    * @param {string} url
    */
   add = (fileName, url) => {
+
+    // prevent duplicate sources
+    if (this.sources.some((source) => source.fileName === fileName)) {
+      return;
+    }
+
     this.sources.push({
       fileName: fileName,
       url: url,
