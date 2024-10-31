@@ -26,11 +26,14 @@ else:
     S3Client = object
 
 
-def get_first_n_tokens(chunks: list[dict], n: int) -> str:
+def get_first_n_tokens(chunks: list[dict] | None, n: int) -> str:
     """From a list of chunks, returns the first n tokens."""
 
     current_tokens = 0
     tokens = ""
+    if not chunks:
+        return tokens
+
     for chunk in chunks:
         current_tokens += len(encoding.encode(chunk["text"]))
         if current_tokens > n:
