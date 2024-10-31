@@ -388,4 +388,4 @@ class GeneratedMetadata(BaseModel):
 
     name: str | None = Field(description="document name", default=None)
     description: str | None = Field(description="document description", default=None)
-    keywords: list[str] = Field(description="document keywords", default_factory=list)
+    keywords: list[str] = Field(description="document keywords", max_length=5, default_factory=list)
