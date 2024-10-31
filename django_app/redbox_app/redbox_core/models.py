@@ -619,10 +619,11 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
             return self.original_file_name
 
         # could have a stronger (regex?) way of stripping the users email address?
-        if "/" not in self.original_file.name:
-            msg = "expected filename to start with the user's email address"
-            raise ValueError(msg)
-        return self.original_file.name.split("/")[1]
+        if "/" in self.original_file.name:
+            return self.original_file.name.split("/")[1]
+
+        logger.error("expected filename=%s to start with the user's email address", self.original_file.name)
+        return self.original_file.name
 
     @property
     def unique_name(self) -> str:
