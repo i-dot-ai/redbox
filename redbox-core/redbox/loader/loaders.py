@@ -72,7 +72,6 @@ class MetadataLoader:
         chunks = self._chunking()
         first_thousand_words = "".join(chunk["text"] for chunk in chunks)[:1_000]
         metadata = self.create_file_metadata(first_thousand_words)
-
         return GeneratedMetadata.model_validate(metadata).model_dump()
 
     def create_file_metadata(self, page_content: str) -> GeneratedMetadata:
