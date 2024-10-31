@@ -32,6 +32,7 @@ from redbox.graph.nodes.processes import (
     report_sources_process,
 )
 from redbox.graph.nodes.sends import build_document_chunk_send, build_document_group_send, build_tool_send
+from redbox.graph.nodes.tools import get_log_formatter_for_retrieval_tool
 from redbox.models.chain import RedboxState
 from redbox.models.chat import ChatRoute, ErrorRoute
 from redbox.models.graph import ROUTABLE_KEYWORDS, RedboxActivityEvent
@@ -187,6 +188,14 @@ def get_agentic_search_graph(tools: dict[str, StructuredTool], debug: bool = Fal
     )
     builder.add_node("p_report_sources", report_sources_process)
 
+    # Log
+    builder.add_node("p_activity_log_retrieval_tool_calls", build_activity_log_node(
+        lambda s: [
+            RedboxActivityEvent(message=get_log_formatter_for_retrieval_tool(tool_state_entry["tool"]).log_call())
+            for tool_state_entry in s["tool_calls"].values()
+        ]
+    ))
+
     # Decisions
     builder.add_node("d_x_steps_left_or_less", empty_process)
     builder.add_node("d_tools_selected", empty_process)
@@ -212,6 +221,7 @@ def get_agentic_search_graph(tools: dict[str, StructuredTool], debug: bool = Fal
         build_tools_selected_conditional(tools=agent_tool_names),
         {True: "s_tool", False: "d_answer_or_give_up"},
     )
+    builder.add_edge("d_tools_selected", "p_activity_log_retrieval_tool_calls")
     builder.add_conditional_edges("s_tool", build_tool_send("p_retrieval_tools"), path_map=["p_retrieval_tools"])
     builder.add_edge("p_retrieval_tools", "d_x_steps_left_or_less")
     builder.add_conditional_edges(

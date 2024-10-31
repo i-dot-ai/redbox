@@ -1,4 +1,4 @@
-from typing import Annotated, Any, get_args, get_origin, get_type_hints
+from typing import Annotated, Any, Iterable, get_args, get_origin, get_type_hints
 
 import requests
 import tiktoken
@@ -7,6 +7,7 @@ from langchain_community.utilities import WikipediaAPIWrapper
 from langchain_core.documents import Document
 from langchain_core.embeddings.embeddings import Embeddings
 from langchain_core.tools import StructuredTool, Tool, tool
+from langchain_core.messages import ToolCall
 from langgraph.prebuilt import InjectedState
 
 from redbox.models.chain import RedboxState
@@ -237,3 +238,50 @@ def build_search_wikipedia_tool(number_wikipedia_results=1, max_chars_per_wiki_p
         return {"documents": structure_documents_by_group_and_indices(mapped_documents)}
 
     return _search_wikipedia
+
+
+class BaseRetrievalToolLogFormatter:
+
+    def __init__(self, t: ToolCall) -> None:
+        self.tool_call = t
+
+    def log_call(self, tool_call: ToolCall):
+        return f"Used {tool_call["name"]} to get more information"
+    
+    def log_result(self, documents: Iterable[Document]):
+        return f"Found {len(documents)} results"
+
+
+class SearchWikipediaLogFormatter(BaseRetrievalToolLogFormatter):
+
+    def log_call(self):
+        return f"Searching Wikipedia for '{self.tool_call["args"]["query"]}'"
+    
+    def log_result(self, documents: Iterable[Document]):
+        return f"Reading {','.join(d.metadata["uri"].split("/")[-1] for d in documents)}"
+    
+
+class SearchDocumentsLogFormatter(BaseRetrievalToolLogFormatter):
+    def log_call(self):
+        return f"Searching you documents for '{self.tool_call["args"]["query"]}'"
+    
+    def log_result(self, documents: Iterable[Document]):
+        return f"Reading {len(documents)} snippets from documents {','.join(d.metadata["name"] for d in documents)}"
+    
+
+class SearchGovUKLogFormatter(BaseRetrievalToolLogFormatter):
+    def log_call(self):
+        return f"Searching .gov.uk pages for '{self.tool_call["args"]["query"]}'"
+    
+    def log_result(self, documents: Iterable[Document]):
+        return f"Reading {','.join(d.metadata["uri"].split("/")[-1] for d in documents)}"
+
+
+__RETRIEVEAL_TOOL_MESSAGE_FORMATTERS = {
+    "_search_wikipedia": SearchWikipediaLogFormatter,
+    "_search_documents": SearchDocumentsLogFormatter,
+    "_search_govuk": SearchGovUKLogFormatter
+}
+
+def get_log_formatter_for_retrieval_tool(t: ToolCall) -> BaseRetrievalToolLogFormatter:
+    return __RETRIEVEAL_TOOL_MESSAGE_FORMATTERS.get(t["name"], BaseRetrievalToolLogFormatter)(t)

@@ -3,7 +3,7 @@ import logging
 import re
 from collections.abc import Callable
 from functools import reduce
-from typing import Any
+from typing import Any, Iterable
 from uuid import uuid4
 
 from langchain.schema import StrOutputParser
@@ -15,7 +15,7 @@ from langchain_core.vectorstores import VectorStoreRetriever
 
 from redbox.chains.components import get_chat_llm, get_tokeniser
 from redbox.chains.runnables import CannedChatLLM, build_llm_chain
-from redbox.graph.nodes.tools import has_injected_state, is_valid_tool
+from redbox.graph.nodes.tools import get_log_formatter_for_retrieval_tool, has_injected_state, is_valid_tool
 from redbox.models import ChatRoute
 from redbox.models.chain import (
     DocumentState,
@@ -300,6 +300,10 @@ def build_tool_pattern(
                 # Invoke the tool
                 try:
                     result_state_update = tool.invoke(args) or {}
+                    dispatch_custom_event(
+                        name=RedboxEventType.activity, 
+                        data=RedboxActivityEvent(message=get_log_formatter_for_retrieval_tool(tool_call).log_result(result_state_update.get("documents", [])))
+                    )
                     tool_called_state_update = {"tool_calls": {tool_id: {"called": True, "tool": tool_call}}}
                     state_updates.append(result_state_update | tool_called_state_update)
                 except Exception as e:
@@ -360,11 +364,21 @@ def build_log_node(message: str) -> Runnable[RedboxState, dict[str, Any]]:
     return _log_node
 
 
-def build_activity_log_node(log_message: RedboxActivityEvent | Callable[[RedboxState], RedboxActivityEvent]):
+def build_activity_log_node(log_message: RedboxActivityEvent | Callable[[RedboxState], Iterable[RedboxActivityEvent]] | Callable[[RedboxState], Iterable[RedboxActivityEvent]]):
+    """
+    A Runnable which emits activity events based on the state. The message should either be a static message to log, or a function which returns an activity event or an iterator of them
+    """
     @RunnableLambda
     def _activity_log_node(state: RedboxState):
-        _message = log_message if isinstance(log_message, RedboxActivityEvent) else log_message(state)
-        dispatch_custom_event(RedboxEventType.activity, _message)
+        if isinstance(log_message, RedboxActivityEvent):
+            dispatch_custom_event(RedboxEventType.activity, log_message)
+        else:
+            response = log_message(state)
+            if isinstance(response, RedboxActivityEvent):
+                dispatch_custom_event(RedboxEventType.activity, response)
+            else:
+                for message in response:
+                    dispatch_custom_event(RedboxEventType.activity, message)
         return None
 
     return _activity_log_node
