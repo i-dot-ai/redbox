@@ -393,3 +393,31 @@ def test_0056_alter_aisettings_retrieval_system_prompt_and_more(original_file, m
     NewCitation = new_state.apps.get_model("redbox_core", "Citation")  # noqa: N806
     new_citation = NewCitation.objects.get(id=citation.id)
     assert new_citation.source == "UserUploadedDocument"
+
+
+
+def test_0059_alter_file_original_file(original_file, migrator):
+    old_state = migrator.apply_initial_migration(
+        ("redbox_core", "0058_alter_file_original_file")
+    )
+
+    User = old_state.apps.get_model("redbox_core", "User")
+    user = User.objects.create(email="someone@example.com")
+
+    File = old_state.apps.get_model("redbox_core", "File")
+
+    for _ in range(3):
+        File.objects.create(
+            user=user,
+            original_file=original_file,
+            original_file_name=original_file.name,
+        )
+
+    assert File.objects.count() == 3
+
+    new_state = migrator.apply_tested_migration(
+        ("redbox_core", "0059_alter_file_original_file"),
+    )
+
+    NewFile = new_state.apps.get_model("redbox_core", "File")  # noqa: N806
+    assert NewFile.objects.count() == 1

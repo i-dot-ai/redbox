@@ -64,6 +64,8 @@ def test_document_upload_status(client, alice, file_pdf_path: Path, s3_client):
 
 @pytest.mark.django_db()
 def test_upload_view_duplicate_files(alice, bob, client, file_pdf_path: Path, s3_client):
+    File.objects.all().delete()
+
     # delete all alice's files
     for key in s3_client.list_objects(Bucket=settings.BUCKET_NAME, Prefix=alice.email).get("Contents", []):
         s3_client.delete_object(Bucket=settings.BUCKET_NAME, Key=key["Key"])

@@ -133,7 +133,7 @@ class UploadView(View):
     def ingest_file(uploaded_file: UploadedFile, user: User) -> Sequence[str]:
         try:
             logger.info("getting file from s3")
-            file = File.objects.create(
+            file, _ = File.objects.update_or_create(
                 status=File.Status.processing.value,
                 user=user,
                 original_file=uploaded_file,
