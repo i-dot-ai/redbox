@@ -302,7 +302,11 @@ def build_tool_pattern(
                 # Invoke the tool
                 try:
                     result_state_update = tool.invoke(args) or {}
-                    log_activity(get_log_formatter_for_retrieval_tool(tool_call).log_result(flatten_document_state(result_state_update.get("documents"))))
+                    log_activity(
+                        get_log_formatter_for_retrieval_tool(tool_call).log_result(
+                            flatten_document_state(result_state_update.get("documents"))
+                        )
+                    )
                     tool_called_state_update = {"tool_calls": {tool_id: {"called": True, "tool": tool_call}}}
                     state_updates.append(result_state_update | tool_called_state_update)
                 except Exception as e:
@@ -363,10 +367,15 @@ def build_log_node(message: str) -> Runnable[RedboxState, dict[str, Any]]:
     return _log_node
 
 
-def build_activity_log_node(log_message: RedboxActivityEvent | Callable[[RedboxState], Iterable[RedboxActivityEvent]] | Callable[[RedboxState], Iterable[RedboxActivityEvent]]):
+def build_activity_log_node(
+    log_message: RedboxActivityEvent
+    | Callable[[RedboxState], Iterable[RedboxActivityEvent]]
+    | Callable[[RedboxState], Iterable[RedboxActivityEvent]],
+):
     """
     A Runnable which emits activity events based on the state. The message should either be a static message to log, or a function which returns an activity event or an iterator of them
     """
+
     @RunnableLambda
     def _activity_log_node(state: RedboxState):
         if isinstance(log_message, RedboxActivityEvent):

@@ -241,13 +241,12 @@ def build_search_wikipedia_tool(number_wikipedia_results=1, max_chars_per_wiki_p
 
 
 class BaseRetrievalToolLogFormatter:
-
     def __init__(self, t: ToolCall) -> None:
         self.tool_call = t
 
     def log_call(self, tool_call: ToolCall):
         return f"Used {tool_call["name"]} to get more information"
-    
+
     def log_result(self, documents: Iterable[Document]):
         if len(documents) == 0:
             return f"{self.tool_call["name"]} returned no documents"
@@ -255,26 +254,25 @@ class BaseRetrievalToolLogFormatter:
 
 
 class SearchWikipediaLogFormatter(BaseRetrievalToolLogFormatter):
-
     def log_call(self):
         return f"Searching Wikipedia for '{self.tool_call["args"]["query"]}'"
-    
+
     def log_result(self, documents: Iterable[Document]):
         return f"Reading Wikipedia page{"s" if len(documents)>1 else ""} {','.join(set([d.metadata["uri"].split("/")[-1] for d in documents]))}"
-    
+
 
 class SearchDocumentsLogFormatter(BaseRetrievalToolLogFormatter):
     def log_call(self):
         return f"Searching your documents for '{self.tool_call["args"]["query"]}'"
-    
+
     def log_result(self, documents: Iterable[Document]):
         return f"Reading {len(documents)} snippets from your documents {','.join(set([d.metadata["name"] for d in documents]))}"
-    
+
 
 class SearchGovUKLogFormatter(BaseRetrievalToolLogFormatter):
     def log_call(self):
         return f"Searching .gov.uk pages for '{self.tool_call["args"]["query"]}'"
-    
+
     def log_result(self, documents: Iterable[Document]):
         return f"Reading pages from .gov.uk, {','.join(set([d.metadata["uri"].split("/")[-1] for d in documents]))}"
 
@@ -282,8 +280,9 @@ class SearchGovUKLogFormatter(BaseRetrievalToolLogFormatter):
 __RETRIEVEAL_TOOL_MESSAGE_FORMATTERS = {
     "_search_wikipedia": SearchWikipediaLogFormatter,
     "_search_documents": SearchDocumentsLogFormatter,
-    "_search_govuk": SearchGovUKLogFormatter
+    "_search_govuk": SearchGovUKLogFormatter,
 }
+
 
 def get_log_formatter_for_retrieval_tool(t: ToolCall) -> BaseRetrievalToolLogFormatter:
     return __RETRIEVEAL_TOOL_MESSAGE_FORMATTERS.get(t["name"], BaseRetrievalToolLogFormatter)(t)

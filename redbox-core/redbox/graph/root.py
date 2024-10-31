@@ -1,4 +1,3 @@
-from json import tool
 from langchain_core.tools import StructuredTool
 from langchain_core.vectorstores import VectorStoreRetriever
 from langgraph.graph import END, START, StateGraph
@@ -190,12 +189,16 @@ def get_agentic_search_graph(tools: dict[str, StructuredTool], debug: bool = Fal
     builder.add_node("p_report_sources", report_sources_process)
 
     # Log
-    builder.add_node("p_activity_log_retrieval_tool_calls", build_activity_log_node(
-        lambda s: [
-            RedboxActivityEvent(message=get_log_formatter_for_retrieval_tool(tool_state_entry["tool"]).log_call())
-            for tool_state_entry in s["tool_calls"].values() if not tool_state_entry["called"]
-        ]
-    ))
+    builder.add_node(
+        "p_activity_log_retrieval_tool_calls",
+        build_activity_log_node(
+            lambda s: [
+                RedboxActivityEvent(message=get_log_formatter_for_retrieval_tool(tool_state_entry["tool"]).log_call())
+                for tool_state_entry in s["tool_calls"].values()
+                if not tool_state_entry["called"]
+            ]
+        ),
+    )
 
     # Decisions
     builder.add_node("d_x_steps_left_or_less", empty_process)
@@ -448,12 +451,18 @@ def get_root_graph(
     builder.add_node("p_retrieve_metadata", metadata_subgraph)
 
     # Log
-    builder.add_node("p_activity_log_user_request", build_activity_log_node(
-        lambda s: [
-            RedboxActivityEvent(message=f"You selected {len(s["request"].s3_keys)} file{"s" if len(s["request"].s3_keys)>1 else ""} - {",".join(s["request"].s3_keys)}")
-            if len(s["request"].s3_keys)>0 else "You selected no files",
-        ]
-    ))
+    builder.add_node(
+        "p_activity_log_user_request",
+        build_activity_log_node(
+            lambda s: [
+                RedboxActivityEvent(
+                    message=f"You selected {len(s["request"].s3_keys)} file{"s" if len(s["request"].s3_keys)>1 else ""} - {",".join(s["request"].s3_keys)}"
+                )
+                if len(s["request"].s3_keys) > 0
+                else "You selected no files",
+            ]
+        ),
+    )
 
     # Decisions
     builder.add_node("d_keyword_exists", empty_process)

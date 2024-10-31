@@ -15,7 +15,4 @@ def log_activity(activity_event: str | RedboxActivityEvent):
 
 
 def _log_activity(event: RedboxActivityEvent):
-    dispatch_custom_event(
-        name=RedboxEventType.activity,
-        data=event
-    )
+    dispatch_custom_event(name=RedboxEventType.activity, data=event)

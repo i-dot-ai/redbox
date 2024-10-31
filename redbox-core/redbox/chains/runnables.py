@@ -50,11 +50,13 @@ def combine_getters(*getters: Callable[[Any], Any]) -> Callable[[Any], Any]:
 
 def itemgetter_with_default(field: str, default_getter: Callable[[Any], Any]):
     getter = itemgetter(field)
+
     def _impl(obj):
         try:
             return getter(obj)
-        except:
+        except Exception:
             return default_getter(obj)
+
     return _impl
 
 
@@ -143,16 +145,22 @@ def build_llm_chain(
             "prompt": RunnableLambda(lambda prompt: prompt.to_string()),
         }
         | {
-            "text": RunnableLambda(combine_getters(itemgetter("text_and_tools"), itemgetter_with_default("parsed_response", combine_getters(itemgetter("raw_response"), attrgetter("content")))))
+            "text": RunnableLambda(
+                combine_getters(
+                    itemgetter("text_and_tools"),
+                    itemgetter_with_default(
+                        "parsed_response", combine_getters(itemgetter("raw_response"), attrgetter("content"))
+                    ),
+                )
+            )
             | (lambda r: r if isinstance(r, str) else r.answer),
             "tool_calls": combine_getters(itemgetter("text_and_tools"), itemgetter("tool_calls")),
             "citations": RunnableLambda(
                 combine_getters(
-                    itemgetter("text_and_tools"), 
+                    itemgetter("text_and_tools"),
                     itemgetter_with_default(
-                        "parsed_response", 
-                        combine_getters(itemgetter("raw_response"), attrgetter("content"))
-                    )
+                        "parsed_response", combine_getters(itemgetter("raw_response"), attrgetter("content"))
+                    ),
                 )
             )
             | (lambda r: [] if isinstance(r, str) else r.citations),
@@ -168,7 +176,9 @@ def build_llm_chain(
             ),
         }
         | RunnablePassthrough.assign(
-            _log=RunnableLambda(lambda _: log_activity(f"Generating response with {model_name}...") if final_response_chain else None)
+            _log=RunnableLambda(
+                lambda _: log_activity(f"Generating response with {model_name}...") if final_response_chain else None
+            )
         )
     )
 
