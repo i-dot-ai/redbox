@@ -224,7 +224,7 @@ def test_reingest_files_unstructured_fail(uploaded_file: File, requests_mock: Mo
                         {
                             "name": "foo",
                             "description": "more test",
-                            "keywords": "hello, world",
+                            "keywords": ["hello","world"],
                         }
                     )
                 ]
