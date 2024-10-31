@@ -10,8 +10,9 @@ class SourcesList extends HTMLElement {
    * Adds a source to the current message
    * @param {string} fileName
    * @param {string} url
+   * @param {string} matchingText
    */
-  add = (fileName, url) => {
+  add = (fileName, url, matchingText) => {
 
     // prevent duplicate sources
     if (this.sources.some((source) => source.fileName === fileName)) {
@@ -26,12 +27,12 @@ class SourcesList extends HTMLElement {
     let html = `
             <h3 class="iai-chat-bubble__sources-heading govuk-heading-s govuk-!-margin-bottom-1">Sources</h3>
             <div class="iai-display-flex-from-desktop">
-            <ul class="govuk-list govuk-list--bullet govuk-!-margin-bottom-0">
+            <ol class="govuk-list govuk-list--number govuk-!-margin-bottom-0">
         `;
     this.sources.forEach((source) => {
       html += `
                 <li class="govuk-!-margin-bottom-0">
-                    <a class="iai-chat-bubbles__sources-link govuk-link" href="${source.url}">${source.fileName || source.url}</a>
+                    <a class="iai-chat-bubbles__sources-link govuk-link" href="${source.url}" id="${this.getAttribute('data-id')}-footnote-${this.sources.length}" data-text="${matchingText}">${source.fileName || source.url}</a>
                 </li>
             `;
     });
