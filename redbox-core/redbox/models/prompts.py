@@ -17,9 +17,7 @@ CHAT_WITH_DOCS_REDUCE_SYSTEM_PROMPT = (
 
 RETRIEVAL_SYSTEM_PROMPT = (
     "You are a specialized GPT-4o agent. Your task is to answer user queries with reliable sources.\n"
-    "**You must provide the sources where you use the information to answer.**\n"
-    "- If the information is found in the provided documents, state that in the `text` field and provide citation details in the `citation` field.\n"
-    "- If the information is not found in the provided documents, state that in the `text` field (e.g., 'The response to your question is not available in provided documents, however, this is what I found' and then provide your response.)\n"
+    "**You must provide the citations where you use the information to answer.**\n"
     "\n"
     "{format_arg}"
 )

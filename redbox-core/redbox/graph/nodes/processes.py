@@ -13,6 +13,7 @@ from langchain_core.runnables import Runnable, RunnableLambda, RunnableParallel
 from langchain_core.tools import StructuredTool
 from langchain_core.vectorstores import VectorStoreRetriever
 
+from redbox.chains.activity import log_activity
 from redbox.chains.components import get_chat_llm, get_tokeniser
 from redbox.chains.runnables import CannedChatLLM, build_llm_chain
 from redbox.graph.nodes.tools import get_log_formatter_for_retrieval_tool, has_injected_state, is_valid_tool
@@ -300,10 +301,7 @@ def build_tool_pattern(
                 # Invoke the tool
                 try:
                     result_state_update = tool.invoke(args) or {}
-                    dispatch_custom_event(
-                        name=RedboxEventType.activity, 
-                        data=RedboxActivityEvent(message=get_log_formatter_for_retrieval_tool(tool_call).log_result(result_state_update.get("documents", [])))
-                    )
+                    log_activity(get_log_formatter_for_retrieval_tool(tool_call).log_result(flatten_document_state(result_state_update.get("documents"))))
                     tool_called_state_update = {"tool_calls": {tool_id: {"called": True, "tool": tool_call}}}
                     state_updates.append(result_state_update | tool_called_state_update)
                 except Exception as e:
@@ -371,14 +369,14 @@ def build_activity_log_node(log_message: RedboxActivityEvent | Callable[[RedboxS
     @RunnableLambda
     def _activity_log_node(state: RedboxState):
         if isinstance(log_message, RedboxActivityEvent):
-            dispatch_custom_event(RedboxEventType.activity, log_message)
+            log_activity(log_message)
         else:
             response = log_message(state)
             if isinstance(response, RedboxActivityEvent):
-                dispatch_custom_event(RedboxEventType.activity, response)
+                log_activity(response)
             else:
                 for message in response:
-                    dispatch_custom_event(RedboxEventType.activity, message)
+                    log_activity(message)
         return None
 
     return _activity_log_node

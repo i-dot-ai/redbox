@@ -258,15 +258,15 @@ class SearchWikipediaLogFormatter(BaseRetrievalToolLogFormatter):
         return f"Searching Wikipedia for '{self.tool_call["args"]["query"]}'"
     
     def log_result(self, documents: Iterable[Document]):
-        return f"Reading {','.join(d.metadata["uri"].split("/")[-1] for d in documents)}"
+        return f"Reading Wikipedia page{"s" if len(documents)>1 else ""} {','.join(d.metadata["uri"].split("/")[-1] for d in documents)}"
     
 
 class SearchDocumentsLogFormatter(BaseRetrievalToolLogFormatter):
     def log_call(self):
-        return f"Searching you documents for '{self.tool_call["args"]["query"]}'"
+        return f"Searching your documents for '{self.tool_call["args"]["query"]}'"
     
     def log_result(self, documents: Iterable[Document]):
-        return f"Reading {len(documents)} snippets from documents {','.join(d.metadata["name"] for d in documents)}"
+        return f"Reading {len(documents)} snippets from your documents {','.join(d.metadata["name"] for d in documents)}"
     
 
 class SearchGovUKLogFormatter(BaseRetrievalToolLogFormatter):
@@ -274,7 +274,7 @@ class SearchGovUKLogFormatter(BaseRetrievalToolLogFormatter):
         return f"Searching .gov.uk pages for '{self.tool_call["args"]["query"]}'"
     
     def log_result(self, documents: Iterable[Document]):
-        return f"Reading {','.join(d.metadata["uri"].split("/")[-1] for d in documents)}"
+        return f"Reading pages from .gov.uk, {','.join(d.metadata["uri"].split("/")[-1] for d in documents)}"
 
 
 __RETRIEVEAL_TOOL_MESSAGE_FORMATTERS = {
