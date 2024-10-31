@@ -249,7 +249,9 @@ class BaseRetrievalToolLogFormatter:
         return f"Used {tool_call["name"]} to get more information"
     
     def log_result(self, documents: Iterable[Document]):
-        return f"Found {len(documents)} results"
+        if len(documents) == 0:
+            return f"{self.tool_call["name"]} returned no documents"
+        return f"Reading {documents[1].get("creator_type")} document{"s" if len(documents)>1 else ""} {','.join(set([d.metadata["uri"].split("/")[-1] for d in documents]))}"
 
 
 class SearchWikipediaLogFormatter(BaseRetrievalToolLogFormatter):
@@ -258,7 +260,7 @@ class SearchWikipediaLogFormatter(BaseRetrievalToolLogFormatter):
         return f"Searching Wikipedia for '{self.tool_call["args"]["query"]}'"
     
     def log_result(self, documents: Iterable[Document]):
-        return f"Reading Wikipedia page{"s" if len(documents)>1 else ""} {','.join(d.metadata["uri"].split("/")[-1] for d in documents)}"
+        return f"Reading Wikipedia page{"s" if len(documents)>1 else ""} {','.join(set([d.metadata["uri"].split("/")[-1] for d in documents]))}"
     
 
 class SearchDocumentsLogFormatter(BaseRetrievalToolLogFormatter):
@@ -266,7 +268,7 @@ class SearchDocumentsLogFormatter(BaseRetrievalToolLogFormatter):
         return f"Searching your documents for '{self.tool_call["args"]["query"]}'"
     
     def log_result(self, documents: Iterable[Document]):
-        return f"Reading {len(documents)} snippets from your documents {','.join(d.metadata["name"] for d in documents)}"
+        return f"Reading {len(documents)} snippets from your documents {','.join(set([d.metadata["name"] for d in documents]))}"
     
 
 class SearchGovUKLogFormatter(BaseRetrievalToolLogFormatter):
@@ -274,7 +276,7 @@ class SearchGovUKLogFormatter(BaseRetrievalToolLogFormatter):
         return f"Searching .gov.uk pages for '{self.tool_call["args"]["query"]}'"
     
     def log_result(self, documents: Iterable[Document]):
-        return f"Reading pages from .gov.uk, {','.join(d.metadata["uri"].split("/")[-1] for d in documents)}"
+        return f"Reading pages from .gov.uk, {','.join(set([d.metadata["uri"].split("/")[-1] for d in documents]))}"
 
 
 __RETRIEVEAL_TOOL_MESSAGE_FORMATTERS = {
