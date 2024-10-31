@@ -16,7 +16,6 @@ from redbox.loader import ingester
 from redbox.loader.loaders import (
     MetadataLoader,
     UnstructuredChunkLoader,
-    coerce_to_string_list,
 )
 from redbox.models.file import ChunkResolution
 from redbox.loader.ingester import ingest_file
@@ -58,7 +57,7 @@ def fake_llm_response():
     return {
         "name": "foo",
         "description": "more test",
-        "keywords": "hello, world",
+        "keywords": ["hello", "world"],
     }
 
 
@@ -184,7 +183,7 @@ def test_document_loader(
         llm_response = fake_llm_response()
         assert chuck.metadata["name"] == llm_response["name"]
         assert chuck.metadata["description"] == llm_response["description"]
-        assert chuck.metadata["keywords"] == coerce_to_string_list(llm_response["keywords"])
+        assert chuck.metadata["keywords"] == llm_response["keywords"]
 
 
 @patch("redbox.loader.loaders.get_chat_llm")
@@ -272,7 +271,7 @@ def test_ingest_from_loader(
             metadata = get_metadata(chunk)
             assert metadata["name"] == fake_llm_response()["name"]
             assert metadata["description"] == fake_llm_response()["description"]
-            assert metadata["keywords"] == coerce_to_string_list(fake_llm_response()["keywords"])
+            assert metadata["keywords"] == fake_llm_response()["keywords"]
 
     if has_embeddings:
         embeddings = chunks[0]["_source"].get(env.embedding_document_field_name)
@@ -365,7 +364,7 @@ def test_ingest_file(
             llm_response = fake_llm_response()
             assert metadata["name"] == llm_response["name"]
             assert metadata["description"] == llm_response["description"]
-            assert metadata["keywords"] == coerce_to_string_list(llm_response["keywords"])
+            assert metadata["keywords"] == llm_response["keywords"]
 
         def get_chunk_resolution(chunk: dict) -> str:
             return chunk["_source"]["metadata"]["chunk_resolution"]

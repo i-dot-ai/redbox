@@ -1,19 +1,20 @@
-import json
 import logging
 from collections.abc import Iterator
 from datetime import UTC, datetime
 from io import BytesIO
 from typing import TYPE_CHECKING, Any
-
+from langchain_core.output_parsers import PydanticOutputParser
+from langchain_core.prompts import PromptTemplate
 import requests
 import tiktoken
 from langchain_core.documents import Document
 from langchain_core.output_parsers import JsonOutputParser
-from langchain_core.prompts import ChatPromptTemplate
+
 
 from redbox.chains.components import get_chat_llm
 from redbox.models.file import ChunkResolution, UploadedFileMetadata
 from redbox.models.settings import Settings
+from redbox.models.chain import GeneratedMetadata
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger()
@@ -43,8 +44,6 @@ def get_first_n_tokens(chunks: list[dict] | None, n: int) -> str:
 
 
 class MetadataLoader:
-    required_keys = {"name", "description", "keywords"}
-
     def __init__(self, env: Settings, s3_client: S3Client, file_name: str):
         self.env = env
         self.s3_client = s3_client
@@ -90,45 +89,20 @@ class MetadataLoader:
 
         # Get first 1k tokens of processed document
         first_n = get_first_n_tokens(elements, 1_000)
+        return self.create_file_metadata(first_n)
 
-        # Generate new metadata
-        res = self.create_file_metadata(first_n)
-        return {key: res.get(key) for key in self.required_keys}
-
-    def create_file_metadata(self, page_content: str) -> dict[str, Any]:
+    def create_file_metadata(self, page_content: str) -> GeneratedMetadata:
         """Uses a sample of the document and any extracted metadata to generate further metadata."""
-        metadata_chain = (
-            ChatPromptTemplate.from_messages(
-                [
-                    self.env.metadata_prompt,
-                    (
-                        "user",
-                        ("<document_sample>\n" "{page_content}" "</document_sample>"),
-                    ),
-                ]
-            )
-            | self.llm
-            | JsonOutputParser()
+
+        parser = PydanticOutputParser(pydantic_object=GeneratedMetadata)
+        metadata_prompt = PromptTemplate(
+            template="".join(self.env.metadata_prompt) + "\n\n{format_instructions}\n\n{page_content}\n",
+            input_variables=["page_content"],
+            partial_variables={"format_instructions": parser.get_format_instructions()},
         )
+        metadata_chain = metadata_prompt | self.llm | JsonOutputParser()
 
-        try:
-            return metadata_chain.invoke({"page_content": page_content})
-        except ConnectionError as e:
-            logger.warning(f"Retrying due to HTTPError {e}")
-        except json.JSONDecodeError:
-            # replace with fail safe metadata
-            return None
-        except Exception as e:
-            raise Exception(f"Some error happened in metadata extraction. {e}")
-
-
-def coerce_to_string_list(input_data: str | list[Any]) -> list[str]:
-    if isinstance(input_data, str):
-        return [item.strip() for item in input_data.split(",")]
-    elif isinstance(input_data, list):
-        return [str(i) for i in input_data]
-    else:
-        raise ValueError("Input must be either a list or a string.")
+        return metadata_chain.invoke({"page_content": page_content})
 
 
 class UnstructuredChunkLoader:
@@ -198,6 +172,6 @@ class UnstructuredChunkLoader:
                     chunk_resolution=self.chunk_resolution,
                     name=self.metadata.get("name", file_name),
                     description=self.metadata.get("description"),
-                    keywords=coerce_to_string_list(self.metadata.get("keywords", [])),
+                    keywords=self.metadata.get("keywords", []),
                 ).model_dump(),
             )
