@@ -261,7 +261,7 @@ def build_error_pattern(text: str, route_name: str | None) -> Runnable[RedboxSta
 
 def build_tool_pattern(
     tools=list[StructuredTool], final_source_chain: bool = False
-) -> Callable[[RedboxState], dict[str, Any]]:
+) -> Runnable[RedboxState, dict[str, Any]]:
     """Builds a process that takes state["tool_calls"] and returns state updates.
 
     The state attributes affected are defined in the tool.
@@ -274,6 +274,7 @@ def build_tool_pattern(
             raise ValueError(msg)
         tools_by_name[tool.name] = tool
 
+    @RunnableLambda
     def _tool(state: RedboxState) -> dict[str, Any]:
         state_updates: list[dict] = []
 
