@@ -121,7 +121,7 @@ def test_extract_metadata_extra_key(
     assert metadata is not None
     assert metadata.get("name") == "foo"
     assert metadata.get("description") == "test"
-    assert metadata.get("keywords") == "abc"
+    assert metadata.get("keywords") == ["abc"]
 
 
 @patch("redbox.loader.loaders.get_chat_llm")
