@@ -395,11 +395,8 @@ def test_0056_alter_aisettings_retrieval_system_prompt_and_more(original_file, m
     assert new_citation.source == "UserUploadedDocument"
 
 
-
 def test_0059_alter_file_original_file(original_file, migrator):
-    old_state = migrator.apply_initial_migration(
-        ("redbox_core", "0058_alter_file_original_file")
-    )
+    old_state = migrator.apply_initial_migration(("redbox_core", "0058_alter_file_original_file"))
 
     User = old_state.apps.get_model("redbox_core", "User")
     user = User.objects.create(email="someone@example.com")

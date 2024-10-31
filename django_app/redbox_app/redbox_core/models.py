@@ -561,9 +561,7 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
 
     status = models.CharField(choices=Status.choices, null=False, blank=False)
     original_file = models.FileField(
-        storage=settings.STORAGES["default"]["BACKEND"],
-        upload_to=build_s3_key,
-        unique=True
+        storage=settings.STORAGES["default"]["BACKEND"], upload_to=build_s3_key, unique=True
     )
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     original_file_name = models.TextField(max_length=2048, blank=True, null=True)  # delete me
