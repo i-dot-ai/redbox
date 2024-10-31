@@ -8,6 +8,7 @@ from langchain_core.prompts import PromptTemplate
 import requests
 import tiktoken
 from langchain_core.documents import Document
+from langchain_core.output_parsers import JsonOutputParser
 
 
 from redbox.chains.components import get_chat_llm
