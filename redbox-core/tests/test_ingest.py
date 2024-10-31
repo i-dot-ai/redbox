@@ -100,7 +100,7 @@ def test_extract_metadata_extra_key(
     mock_llm_response = mock_llm.return_value
     mock_llm_response.status_code = 200
     mock_llm_response.return_value = GenericFakeChatModel(
-        messages=iter(['{"extra_key": "", "name": "foo", "description": "test", "keywords": "abc"}'])
+        messages=iter(['{"extra_key": "", "name": "foo", "description": "test", "keywords": ["abc"]}'])
     )
 
     requests_mock.post(

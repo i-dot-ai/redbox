@@ -190,7 +190,7 @@ def test_reingest_files(uploaded_file: File, requests_mock: Mocker, mocker: Mock
                         {
                             "name": "foo",
                             "description": "more test",
-                            "keywords": "hello, world",
+                            "keywords": ["hello", "world"],
                         }
                     )
                 ]
