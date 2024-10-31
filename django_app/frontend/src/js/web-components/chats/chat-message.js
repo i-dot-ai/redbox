@@ -93,7 +93,6 @@ export class ChatMessage extends HTMLElement {
     let footnotes = this.querySelectorAll("sources-list a[data-text]");
     footnotes.forEach((footnote, footnoteIndex) => {
       const matchingText = footnote.getAttribute("data-text");
-      console.log(footnoteIndex, matchingText);
       if (!matchingText || !this.responseContainer) {
         return;
       }

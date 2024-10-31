@@ -22,6 +22,7 @@ class SourcesList extends HTMLElement {
     this.sources.push({
       fileName: fileName,
       url: url,
+      matchingText: matchingText
     });
 
     let html = `
@@ -32,7 +33,7 @@ class SourcesList extends HTMLElement {
     this.sources.forEach((source) => {
       html += `
                 <li class="govuk-!-margin-bottom-0">
-                    <a class="iai-chat-bubbles__sources-link govuk-link" href="${source.url}" id="${this.getAttribute('data-id')}-footnote-${this.sources.length}" data-text="${matchingText}">${source.fileName || source.url}</a>
+                    <a class="iai-chat-bubbles__sources-link govuk-link" href="${source.url}" id="${this.getAttribute('data-id')}-footnote-${this.sources.length}" data-text="${source.matchingText}">${source.fileName || source.url}</a>
                 </li>
             `;
     });
