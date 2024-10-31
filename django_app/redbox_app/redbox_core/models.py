@@ -755,7 +755,11 @@ class Citation(UUIDPrimaryKeyBase, TimeStampedModel):
         help_text="source of citation",
         default=Origin.USER_UPLOADED_DOCUMENT,
     )
-    text_in_answer = models.TextField(null=True, blank=True, help_text="the part of the answer the citation refers too - useful for adding in footnotes")
+    text_in_answer = models.TextField(
+        null=True,
+        blank=True,
+        help_text="the part of the answer the citation refers too - useful for adding in footnotes",
+    )
 
     def __str__(self):
         return self.uri
@@ -843,7 +847,9 @@ class ChatMessage(UUIDPrimaryKeyBase, TimeStampedModel):
                 return str(citation.uri)
             return citation.file.file_name
 
-        return sorted({(get_display(citation), citation.uri, citation.text_in_answer) for citation in self.citation_set.all()})
+        return sorted(
+            {(get_display(citation), citation.uri, citation.text_in_answer) for citation in self.citation_set.all()}
+        )
 
 
 class ChatMessageTokenUse(UUIDPrimaryKeyBase, TimeStampedModel):
