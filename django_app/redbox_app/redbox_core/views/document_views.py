@@ -133,11 +133,18 @@ class UploadView(View):
     def ingest_file(uploaded_file: UploadedFile, user: User) -> Sequence[str]:
         try:
             logger.info("getting file from s3")
-            file, _ = File.objects.update_or_create(
-                status=File.Status.processing.value,
-                user=user,
-                original_file=uploaded_file,
-            )
+            if File.objects.filter(user=user, original_file=uploaded_file).exists():
+                file = File.objects.get(user=user, original_file=uploaded_file)
+                file.status = File.Status.processing.value
+                file.original_file = (uploaded_file,)
+                file.save()
+            else:
+                file = File(
+                    status=File.Status.processing.value,
+                    user=user,
+                    original_file=uploaded_file,
+                )
+                file.save()
         except (ValueError, FieldError, ValidationError) as e:
             logger.exception("Error creating File model object for %s.", uploaded_file, exc_info=e)
             return e.args
