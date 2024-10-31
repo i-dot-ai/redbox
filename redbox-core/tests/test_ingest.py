@@ -88,9 +88,7 @@ def test_extract_metadata_missing_key(
     metadata_loader = MetadataLoader(env=env, s3_client=s3_client, file_name=file_name)
     metadata = metadata_loader.extract_metadata()
 
-    assert metadata.get("name") == ""
-    assert metadata.get("description") == ""
-    assert metadata.get("keywords") == ""
+    assert metadata == {"description": None, "keywords": None, "name": None}
 
 
 @patch("redbox.loader.loaders.get_chat_llm")
