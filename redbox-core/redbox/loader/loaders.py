@@ -69,18 +69,26 @@ class MetadataLoader:
         """
 
         chunks = self._chunking()
+        original_metadata = chunks[0]["metadata"] if chunks else {}
         first_thousand_words = "".join(chunk["text"] for chunk in chunks)[:10_000]
-        metadata = self.create_file_metadata(first_thousand_words)
+
+        metadata = self.create_file_metadata(first_thousand_words, original_metadata=original_metadata)
         return metadata
 
-    def create_file_metadata(self, page_content: str) -> GeneratedMetadata:
+    def create_file_metadata(self, page_content: str, original_metadata: dict | None = None) -> GeneratedMetadata:
         """Uses a sample of the document and any extracted metadata to generate further metadata."""
+        if not original_metadata:
+            original_metadata = {}
 
         parser = PydanticOutputParser(pydantic_object=GeneratedMetadata)
         metadata_prompt = PromptTemplate(
-            template="".join(self.env.metadata_prompt) + "\n\n{format_instructions}\n\n{page_content}\n",
+            template="".join(self.env.metadata_prompt)
+            + "\n\n{format_instructions}\n\n{page_content}\n\n{original_metadata}",
             input_variables=["page_content"],
-            partial_variables={"format_instructions": parser.get_format_instructions()},
+            partial_variables={
+                "format_instructions": parser.get_format_instructions(),
+                "original_metadata": original_metadata,
+            },
         )
         metadata_chain = metadata_prompt | self.llm
 
