@@ -69,7 +69,7 @@ class MetadataLoader:
         """
 
         chunks = self._chunking()
-        first_thousand_words = "".join(chunk["text"] for chunk in chunks)[:1_000]
+        first_thousand_words = "".join(chunk["text"] for chunk in chunks)[:10_000]
         metadata = self.create_file_metadata(first_thousand_words)
         return metadata
 
