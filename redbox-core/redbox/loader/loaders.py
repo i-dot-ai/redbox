@@ -2,7 +2,7 @@ import logging
 from collections.abc import Iterator
 from datetime import UTC, datetime
 from io import BytesIO
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 from langchain_core.output_parsers import PydanticOutputParser
 from langchain_core.prompts import PromptTemplate
 import requests
@@ -27,22 +27,6 @@ else:
     S3Client = object
 
 
-def get_first_n_tokens(chunks: list[dict] | None, n: int) -> str:
-    """From a list of chunks, returns the first n tokens."""
-
-    current_tokens = 0
-    tokens = ""
-    if not chunks:
-        return tokens
-
-    for chunk in chunks:
-        current_tokens += len(encoding.encode(chunk["text"]))
-        if current_tokens > n:
-            return tokens
-        tokens += chunk["text"]
-    return tokens
-
-
 class MetadataLoader:
     def __init__(self, env: Settings, s3_client: S3Client, file_name: str):
         self.env = env
@@ -53,7 +37,7 @@ class MetadataLoader:
     def _get_file_bytes(self, s3_client: S3Client, file_name: str) -> BytesIO:
         return s3_client.get_object(Bucket=self.env.bucket_name, Key=file_name)["Body"].read()
 
-    def _chunking(self) -> Any:
+    def _chunking(self) -> list[dict]:
         """
         Chunking data using local unstructured
         """
@@ -78,18 +62,18 @@ class MetadataLoader:
         if response.status_code != 200:
             raise ValueError(response.text)
 
-        return response.json()
+        return response.json() or []
 
     def extract_metadata(self) -> dict:
         """
         Extract metadata from first 1_000 chunks
         """
 
-        elements = self._chunking()
+        chunks = self._chunking()
+        first_thousand_words = "".join(chunk["text"] for chunk in chunks)[:1_000]
+        metadata = self.create_file_metadata(first_thousand_words)
 
-        # Get first 1k tokens of processed document
-        first_n = get_first_n_tokens(elements, 1_000)
-        return self.create_file_metadata(first_n)
+        return GeneratedMetadata.model_validate(metadata).model_dump()
 
     def create_file_metadata(self, page_content: str) -> GeneratedMetadata:
         """Uses a sample of the document and any extracted metadata to generate further metadata."""
