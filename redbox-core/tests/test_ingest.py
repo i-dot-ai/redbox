@@ -11,6 +11,8 @@ from langchain_core.embeddings.fake import FakeEmbeddings
 from langchain_core.language_models.fake_chat_models import GenericFakeChatModel
 from langchain_elasticsearch import ElasticsearchStore
 
+
+from redbox.models.chain import GeneratedMetadata
 from redbox.chains.ingest import document_loader, ingest_from_loader
 from redbox.loader import ingester
 from redbox.loader.loaders import (
@@ -87,7 +89,7 @@ def test_extract_metadata_missing_key(
     metadata_loader = MetadataLoader(env=env, s3_client=s3_client, file_name=file_name)
     metadata = metadata_loader.extract_metadata()
 
-    assert metadata == {"description": None, "keywords": [], "name": None}
+    assert metadata == GeneratedMetadata()
 
 
 @patch("redbox.loader.loaders.get_chat_llm")
@@ -119,9 +121,9 @@ def test_extract_metadata_extra_key(
     metadata = metadata_loader.extract_metadata()
 
     assert metadata is not None
-    assert metadata.get("name") == "foo"
-    assert metadata.get("description") == "test"
-    assert metadata.get("keywords") == ["abc"]
+    assert metadata.name == "foo"
+    assert metadata.description == "test"
+    assert metadata.keywords == ["abc"]
 
 
 @patch("redbox.loader.loaders.get_chat_llm")

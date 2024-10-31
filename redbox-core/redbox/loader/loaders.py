@@ -8,7 +8,6 @@ from langchain_core.prompts import PromptTemplate
 import requests
 import tiktoken
 from langchain_core.documents import Document
-from langchain_core.output_parsers import JsonOutputParser
 
 
 from redbox.chains.components import get_chat_llm
@@ -72,7 +71,7 @@ class MetadataLoader:
         chunks = self._chunking()
         first_thousand_words = "".join(chunk["text"] for chunk in chunks)[:1_000]
         metadata = self.create_file_metadata(first_thousand_words)
-        return GeneratedMetadata.model_validate(metadata).model_dump()
+        return metadata
 
     def create_file_metadata(self, page_content: str) -> GeneratedMetadata:
         """Uses a sample of the document and any extracted metadata to generate further metadata."""
@@ -83,9 +82,11 @@ class MetadataLoader:
             input_variables=["page_content"],
             partial_variables={"format_instructions": parser.get_format_instructions()},
         )
-        metadata_chain = metadata_prompt | self.llm | JsonOutputParser()
+        metadata_chain = metadata_prompt | self.llm
 
-        return metadata_chain.invoke({"page_content": page_content})
+        output = metadata_chain.invoke({"page_content": page_content})
+
+        return parser.invoke(output)
 
 
 class UnstructuredChunkLoader:
@@ -153,8 +154,8 @@ class UnstructuredChunkLoader:
                     created_datetime=datetime.now(UTC),
                     token_count=len(encoding.encode(raw_chunk["text"])),
                     chunk_resolution=self.chunk_resolution,
-                    name=self.metadata.get("name", file_name),
-                    description=self.metadata.get("description"),
-                    keywords=self.metadata.get("keywords", []),
+                    name=self.metadata.name,
+                    description=self.metadata.description,
+                    keywords=self.metadata.keywords,
                 ).model_dump(),
             )
