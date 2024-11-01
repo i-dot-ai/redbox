@@ -80,6 +80,18 @@ class MetadataLoader:
         if not original_metadata:
             original_metadata = {}
 
+        def trim(obj, max_length=1000):
+            """original_metadata can be very long as it includes the original text"""
+            if isinstance(obj, dict):
+                return {k: trim(v, max_length) for k, v in obj.items()}
+            if isinstance(obj, list):
+                return [trim(v, max_length) for v in obj]
+            if isinstance(obj, str):
+                return obj[:max_length]
+            return obj
+
+        original_metadata = trim(original_metadata)
+
         parser = PydanticOutputParser(pydantic_object=GeneratedMetadata)
         metadata_prompt = PromptTemplate(
             template="".join(self.env.metadata_prompt)
