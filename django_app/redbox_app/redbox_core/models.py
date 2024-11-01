@@ -431,10 +431,6 @@ class User(BaseUser, UUIDPrimaryKeyBase):
         MORE_THAN_1_WEEK = "More than a week", _("More than a week")
 
     username = None
-    verified = models.BooleanField(default=False, blank=True, null=True)
-    invited_at = models.DateTimeField(default=None, blank=True, null=True)
-    invite_accepted_at = models.DateTimeField(default=None, blank=True, null=True)
-    last_token_sent_at = models.DateTimeField(editable=False, blank=True, null=True)
     password = models.CharField("password", max_length=128, blank=True, null=True)
     business_unit = models.CharField(null=True, blank=True, max_length=64, choices=BusinessUnit)
     grade = models.CharField(null=True, blank=True, max_length=3, choices=UserGrade)
