@@ -1,6 +1,7 @@
 import logging
 from collections.abc import Iterator
 from datetime import UTC, datetime
+from importlib.metadata import metadata
 from io import BytesIO
 from typing import TYPE_CHECKING
 from langchain_core.output_parsers import PydanticOutputParser
@@ -79,6 +80,17 @@ class MetadataLoader:
         """Uses a sample of the document and any extracted metadata to generate further metadata."""
         if not original_metadata:
             original_metadata = {}
+
+        def trim(obj, max_length=1000):
+            if isinstance(obj, dict):
+                return {k: trim(v, max_length) for k, v in obj.items()}
+            if isinstance(obj, dict):
+                return [trim(v, max_length) for v in obj]
+            if isinstance(obj, str):
+                return obj[:max_length]
+            return obj
+
+        original_metadata = trim(original_metadata)
 
         parser = PydanticOutputParser(pydantic_object=GeneratedMetadata)
         metadata_prompt = PromptTemplate(
