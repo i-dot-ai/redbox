@@ -560,7 +560,9 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
     INACTIVE_STATUSES = [Status.deleted, Status.errored]
 
     status = models.CharField(choices=Status.choices, null=False, blank=False)
-    original_file = models.FileField(storage=settings.STORAGES["default"]["BACKEND"], upload_to=build_s3_key)
+    original_file = models.FileField(
+        storage=settings.STORAGES["default"]["BACKEND"], upload_to=build_s3_key, unique=True
+    )
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     original_file_name = models.TextField(max_length=2048, blank=True, null=True)  # delete me
     last_referenced = models.DateTimeField(blank=True, null=True)
@@ -571,13 +573,13 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
         help_text="error, if any, encountered during ingest",
     )
 
-    class Meta:
-        constraints = [
-            models.UniqueConstraint(
-                fields=["original_file", "user"],
-                name="unique user-file",
-            )
-        ]
+    # class Meta:
+    #     constraints = [
+    #         models.UniqueConstraint(
+    #             fields=["original_file", "user"],
+    #             name="unique user-file",
+    #         )
+    #     ]
 
     def __str__(self) -> str:  # pragma: no cover
         return self.file_name
@@ -763,7 +765,7 @@ class Citation(UUIDPrimaryKeyBase, TimeStampedModel):
     text_in_answer = models.TextField(null=True, blank=True)
 
     def __str__(self):
-        return self.uri
+        return str(self.uri)
 
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
         if self.source == self.Origin.USER_UPLOADED_DOCUMENT:

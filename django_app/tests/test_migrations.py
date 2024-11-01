@@ -127,6 +127,7 @@ def test_0027_alter_file_status(migrator):
         assert new_file.status == status_options[idx][1]
 
     # Cleanup:
+    NewFile.objects.all().delete()
     migrator.reset()
 
 
@@ -144,6 +145,9 @@ def test_0028_aisettings(migrator):
 
     for user in NewUser.objects.all():
         assert user.ai_settings.label == "default"
+
+    # Cleanup:
+    migrator.reset()
 
 
 @pytest.mark.django_db()
@@ -166,6 +170,9 @@ def test_0029_rename_chathistory_chat_alter_chat_options(migrator):
     chat = Chat.objects.get(pk=chat_history.pk)
 
     assert chat.chatmessage_set.count() == 1
+
+    # Cleanup:
+    migrator.reset()
 
 
 @pytest.mark.django_db()
@@ -195,6 +202,9 @@ def test_0030_chatmessagerating_chips(migrator):
     new_chat_message_rating = NewChatMessageRating.objects.get(pk=chat_message_rating.pk)
     assert new_chat_message_rating.chips == ["apple", "pear"]
 
+    # Cleanup:
+    migrator.reset()
+
 
 @pytest.mark.django_db()
 def test_0031_chatmessage_rating_chatmessage_rating_chips_and_more(migrator):
@@ -221,6 +231,9 @@ def test_0031_chatmessage_rating_chatmessage_rating_chips_and_more(migrator):
     assert new_chat_message.rating == 3
     assert new_chat_message.rating_text == "very average"
 
+    # Cleanup:
+    migrator.reset()
+
 
 @pytest.mark.django_db()
 def test_0032_user_new_business_unit(migrator):
@@ -240,6 +253,9 @@ def test_0032_user_new_business_unit(migrator):
     NewUser = new_state.apps.get_model("redbox_core", "User")  # noqa: N806
     user = NewUser.objects.get(pk=user.pk)
     assert user.business_unit == "Prime Minister's Office"
+
+    # Cleanup:
+    migrator.reset()
 
 
 @pytest.mark.django_db()
@@ -263,6 +279,9 @@ def test_0042_chat_chat_backend_chat_chat_map_question_prompt_and_more(migrator)
 
     assert new_chat.chat_backend == chat.user.ai_settings.chat_backend
     assert new_chat.chat_backend is not None
+
+    # Cleanup:
+    migrator.reset()
 
 
 @pytest.mark.django_db()
@@ -299,6 +318,9 @@ def test_0048_chatllmbackend_aisettings_new_chat_backend_and_more(migrator):
     assert new_other_chat.chat_backend.name == "some-cool-model-no-one-has-heard-of"
     assert new_other_chat.chat_backend.provider == "openai"
 
+    # Cleanup:
+    migrator.reset()
+
 
 def test_0050_aisettings_match_description_boost_and_more(migrator):
     old_state = migrator.apply_initial_migration(("redbox_core", "0049_user_accessibility_categories_and_more"))
@@ -319,6 +341,9 @@ def test_0050_aisettings_match_description_boost_and_more(migrator):
     assert new_ai_settings.match_description_boost == Decimal("0.50")
     assert new_ai_settings.similarity_threshold == Decimal("0.00")
     assert new_ai_settings.match_keywords_boost == Decimal("0.50")
+
+    # Cleanup:
+    migrator.reset()
 
 
 def test_0055_citation_source_citation_url_alter_citation_file(original_file, migrator):
@@ -357,6 +382,9 @@ def test_0055_citation_source_citation_url_alter_citation_file(original_file, mi
     assert new_citation.url is None
     assert new_citation.source == "USER UPLOADED DOCUMENT"
 
+    # Cleanup:
+    migrator.reset()
+
 
 def test_0056_alter_aisettings_retrieval_system_prompt_and_more(original_file, migrator):
     old_state = migrator.apply_initial_migration(
@@ -394,8 +422,11 @@ def test_0056_alter_aisettings_retrieval_system_prompt_and_more(original_file, m
     new_citation = NewCitation.objects.get(id=citation.id)
     assert new_citation.source == "UserUploadedDocument"
 
+    # Cleanup:
+    migrator.reset()
 
-def test_0059_alter_file_original_file(original_file, migrator):
+
+def test_0059_delete_duplicate_files(original_file, migrator):
     old_state = migrator.apply_initial_migration(("redbox_core", "0058_alter_file_original_file"))
 
     User = old_state.apps.get_model("redbox_core", "User")
@@ -413,8 +444,13 @@ def test_0059_alter_file_original_file(original_file, migrator):
     assert File.objects.count() == 3
 
     new_state = migrator.apply_tested_migration(
-        ("redbox_core", "0059_alter_file_original_file"),
+        ("redbox_core", "0059_delete_duplicate_files"),
     )
 
     NewFile = new_state.apps.get_model("redbox_core", "File")  # noqa: N806
     assert NewFile.objects.count() == 1
+
+    # Cleanup:
+    File.objects.all().delete()
+    NewFile.objects.all().delete()
+    migrator.reset()

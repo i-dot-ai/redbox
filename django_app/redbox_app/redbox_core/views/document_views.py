@@ -132,24 +132,19 @@ class UploadView(View):
     @staticmethod
     def ingest_file(uploaded_file: UploadedFile, user: User) -> Sequence[str]:
         try:
-            logger.info("getting file from s3")
-            if File.objects.filter(user=user, original_file=uploaded_file).exists():
-                file = File.objects.get(user=user, original_file=uploaded_file)
-                file.status = File.Status.processing.value
-                file.original_file = (uploaded_file,)
-                file.save()
-            else:
-                file = File(
-                    status=File.Status.processing.value,
-                    user=user,
-                    original_file=uploaded_file,
-                )
-                file.save()
+            # alice@cabinetoffice.gov.uk/Cabinet_Office_-_Wikipedia.pdf
+            file_name = f"{user.email}/{uploaded_file.name}".replace(" ", "_")
+            file = File.objects.get(original_file=file_name)
+            file.original_file = uploaded_file
+            file.status = File.Status.processing.value
+            file.save()
+            async_task(ingest, file.id, task_name=file.unique_name, group="ingest")
+        except File.DoesNotExist:
+            file = File.objects.create(original_file=uploaded_file, user=user, status=File.Status.processing.value)
+            async_task(ingest, file.id, task_name=file.unique_name, group="ingest")
         except (ValueError, FieldError, ValidationError) as e:
             logger.exception("Error creating File model object for %s.", uploaded_file, exc_info=e)
             return e.args
-        else:
-            async_task(ingest, file.id, task_name=file.unique_name, group="ingest")
 
 
 @login_required
