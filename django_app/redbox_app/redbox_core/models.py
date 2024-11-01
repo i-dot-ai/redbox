@@ -759,9 +759,11 @@ class Citation(UUIDPrimaryKeyBase, TimeStampedModel):
     text_in_answer = models.TextField(null=True, blank=True)
 
     def __str__(self):
-        return self.uri
+        text = self.text or "..."
+        max_length = 128
+        return text[:max_length] + "..." if len(text) > max_length else text
 
-    def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
+    def save(self, *args, force_insert=False, force_update=False, using=None, update_fields=None):
         if self.source == self.Origin.USER_UPLOADED_DOCUMENT:
             if self.file is None:
                 msg = "file must be specified for a user-uploaded-document"
@@ -782,7 +784,7 @@ class Citation(UUIDPrimaryKeyBase, TimeStampedModel):
 
         self.text = sanitise_string(self.text)
 
-        super().save(force_insert, force_update, using, update_fields)
+        super().save(*args, force_insert, force_update, using, update_fields)
 
     @property
     def uri(self) -> URL:
