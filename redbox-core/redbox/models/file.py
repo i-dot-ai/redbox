@@ -42,7 +42,7 @@ class UploadedFileMetadata(ChunkMetadata):
     """
 
     page_number: int | None = None
-    name: str
-    description: str
-    keywords: list[str]
+    name: str | None = None
+    description: str | None = None
+    keywords: list[str] | None = None
     creator_type: ChunkCreatorType = ChunkCreatorType.user_uploaded_document
