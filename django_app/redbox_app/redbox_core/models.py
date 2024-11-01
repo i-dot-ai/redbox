@@ -755,11 +755,7 @@ class Citation(UUIDPrimaryKeyBase, TimeStampedModel):
         help_text="source of citation",
         default=Origin.USER_UPLOADED_DOCUMENT,
     )
-    text_in_answer = models.TextField(
-        null=True,
-        blank=True,
-        help_text="the part of the answer the citation refers too - useful for adding in footnotes",
-    )
+    text_in_answer = models.TextField(null=True, blank=True)
 
     def __str__(self):
         return self.uri
