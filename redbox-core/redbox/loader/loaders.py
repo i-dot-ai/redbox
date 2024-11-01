@@ -1,7 +1,6 @@
 import logging
 from collections.abc import Iterator
 from datetime import UTC, datetime
-from importlib.metadata import metadata
 from io import BytesIO
 from typing import TYPE_CHECKING
 from langchain_core.output_parsers import PydanticOutputParser
@@ -82,9 +81,10 @@ class MetadataLoader:
             original_metadata = {}
 
         def trim(obj, max_length=1000):
+            """original_metadata can be very long as it includes the original text"""
             if isinstance(obj, dict):
                 return {k: trim(v, max_length) for k, v in obj.items()}
-            if isinstance(obj, dict):
+            if isinstance(obj, list):
                 return [trim(v, max_length) for v in obj]
             if isinstance(obj, str):
                 return obj[:max_length]
