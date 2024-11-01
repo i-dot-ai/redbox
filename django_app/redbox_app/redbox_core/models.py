@@ -1,5 +1,6 @@
 import logging
 import os
+import textwrap
 import uuid
 from collections.abc import Collection, Sequence
 from datetime import UTC, date, datetime, timedelta
@@ -760,8 +761,7 @@ class Citation(UUIDPrimaryKeyBase, TimeStampedModel):
 
     def __str__(self):
         text = self.text or "..."
-        max_length = 128
-        return text[:max_length] + "..." if len(text) > max_length else text
+        return textwrap.shorten(text, width=128, placeholder="...")
 
     def save(self, *args, force_insert=False, force_update=False, using=None, update_fields=None):
         if self.source == self.Origin.USER_UPLOADED_DOCUMENT:
@@ -814,13 +814,13 @@ class ChatMessage(UUIDPrimaryKeyBase, TimeStampedModel):
     rating_chips = ArrayField(models.CharField(max_length=32), null=True, blank=True)
 
     def __str__(self) -> str:  # pragma: no cover
-        return self.text[:20] + "..."
+        return textwrap.shorten(self.text, width=20, placeholder="...")
 
-    def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
+    def save(self, *args, force_insert=False, force_update=False, using=None, update_fields=None):
         self.text = sanitise_string(self.text)
         self.rating_text = sanitise_string(self.rating_text)
 
-        super().save(force_insert, force_update, using, update_fields)
+        super().save(*args, force_insert, force_update, using, update_fields)
 
     @classmethod
     def get_messages_ordered_by_citation_priority(cls, chat_id: uuid.UUID) -> Sequence["ChatMessage"]:
