@@ -379,7 +379,7 @@ def test_build_tool_pattern(tools: list[StructuredTool], expected: dict[str, str
         tool_calls=tool_calls_to_toolstate(tool_calls=tool_calls, called=False),
     )
 
-    response = tool(state)
+    response = tool.invoke(state)
 
     for k, v in expected.items():
         assert response[k] == v
