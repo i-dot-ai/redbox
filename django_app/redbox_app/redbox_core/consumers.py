@@ -77,6 +77,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         self.citations = []
         self.external_citations = []
         self.route = None
+        self.activities = []
 
         data = json.loads(text_data or bytes_data)
         logger.debug("received %s from browser", data)
