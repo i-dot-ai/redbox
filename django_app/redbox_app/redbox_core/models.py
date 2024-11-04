@@ -1,5 +1,6 @@
 import logging
 import os
+import textwrap
 import uuid
 from collections.abc import Collection, Sequence
 from datetime import UTC, date, datetime, timedelta
@@ -431,10 +432,6 @@ class User(BaseUser, UUIDPrimaryKeyBase):
         MORE_THAN_1_WEEK = "More than a week", _("More than a week")
 
     username = None
-    verified = models.BooleanField(default=False, blank=True, null=True)
-    invited_at = models.DateTimeField(default=None, blank=True, null=True)
-    invite_accepted_at = models.DateTimeField(default=None, blank=True, null=True)
-    last_token_sent_at = models.DateTimeField(editable=False, blank=True, null=True)
     password = models.CharField("password", max_length=128, blank=True, null=True)
     business_unit = models.CharField(null=True, blank=True, max_length=64, choices=BusinessUnit)
     grade = models.CharField(null=True, blank=True, max_length=3, choices=UserGrade)
@@ -619,10 +616,11 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
             return self.original_file_name
 
         # could have a stronger (regex?) way of stripping the users email address?
-        if "/" not in self.original_file.name:
-            msg = "expected filename to start with the user's email address"
-            raise ValueError(msg)
-        return self.original_file.name.split("/")[1]
+        if "/" in self.original_file.name:
+            return self.original_file.name.split("/")[1]
+
+        logger.error("expected filename=%s to start with the user's email address", self.original_file.name)
+        return self.original_file.name
 
     @property
     def unique_name(self) -> str:
@@ -762,9 +760,10 @@ class Citation(UUIDPrimaryKeyBase, TimeStampedModel):
     )
 
     def __str__(self):
-        return self.uri
+        text = self.text or "..."
+        return textwrap.shorten(text, width=128, placeholder="...")
 
-    def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
+    def save(self, *args, force_insert=False, force_update=False, using=None, update_fields=None):
         if self.source == self.Origin.USER_UPLOADED_DOCUMENT:
             if self.file is None:
                 msg = "file must be specified for a user-uploaded-document"
@@ -785,7 +784,7 @@ class Citation(UUIDPrimaryKeyBase, TimeStampedModel):
 
         self.text = sanitise_string(self.text)
 
-        super().save(force_insert, force_update, using, update_fields)
+        super().save(*args, force_insert, force_update, using, update_fields)
 
     @property
     def uri(self) -> URL:
@@ -815,13 +814,13 @@ class ChatMessage(UUIDPrimaryKeyBase, TimeStampedModel):
     rating_chips = ArrayField(models.CharField(max_length=32), null=True, blank=True)
 
     def __str__(self) -> str:  # pragma: no cover
-        return self.text[:20] + "..."
+        return textwrap.shorten(self.text, width=20, placeholder="...")
 
-    def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
+    def save(self, *args, force_insert=False, force_update=False, using=None, update_fields=None):
         self.text = sanitise_string(self.text)
         self.rating_text = sanitise_string(self.rating_text)
 
-        super().save(force_insert, force_update, using, update_fields)
+        super().save(*args, force_insert, force_update, using, update_fields)
 
     @classmethod
     def get_messages_ordered_by_citation_priority(cls, chat_id: uuid.UUID) -> Sequence["ChatMessage"]:

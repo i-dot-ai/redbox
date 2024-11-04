@@ -22,6 +22,7 @@ from langchain_core.runnables import (
 from tiktoken import Encoding
 
 from redbox.api.format import format_documents, format_toolstate
+from redbox.chains.activity import log_activity
 from redbox.chains.components import get_tokeniser
 from redbox.models.chain import ChainChatMessage, PromptSet, RedboxState, get_prompts
 from redbox.models.errors import QuestionLengthError
@@ -45,6 +46,18 @@ def combine_getters(*getters: Callable[[Any], Any]) -> Callable[[Any], Any]:
         return obj
 
     return _combined
+
+
+def itemgetter_with_default(field: str, default_getter: Callable[[Any], Any]):
+    getter = itemgetter(field)
+
+    def _impl(obj):
+        try:
+            return getter(obj)
+        except Exception:
+            return default_getter(obj)
+
+    return _impl
 
 
 def build_chat_prompt_from_messages_runnable(
@@ -132,10 +145,24 @@ def build_llm_chain(
             "prompt": RunnableLambda(lambda prompt: prompt.to_string()),
         }
         | {
-            "text": RunnableLambda(combine_getters(itemgetter("text_and_tools"), itemgetter("parsed_response")))
+            "text": RunnableLambda(
+                combine_getters(
+                    itemgetter("text_and_tools"),
+                    itemgetter_with_default(
+                        "parsed_response", combine_getters(itemgetter("raw_response"), attrgetter("content"))
+                    ),
+                )
+            )
             | (lambda r: r if isinstance(r, str) else r.answer),
             "tool_calls": combine_getters(itemgetter("text_and_tools"), itemgetter("tool_calls")),
-            "citations": RunnableLambda(combine_getters(itemgetter("text_and_tools"), itemgetter("parsed_response")))
+            "citations": RunnableLambda(
+                combine_getters(
+                    itemgetter("text_and_tools"),
+                    itemgetter_with_default(
+                        "parsed_response", combine_getters(itemgetter("raw_response"), attrgetter("content"))
+                    ),
+                )
+            )
             | (lambda r: [] if isinstance(r, str) else r.citations),
             "metadata": (
                 {
@@ -148,6 +175,11 @@ def build_llm_chain(
                 | to_request_metadata
             ),
         }
+        | RunnablePassthrough.assign(
+            _log=RunnableLambda(
+                lambda _: log_activity(f"Generating response with {model_name}...") if final_response_chain else None
+            )
+        )
     )
 
 

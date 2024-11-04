@@ -66,7 +66,7 @@ def escape_curly_brackets(text: str):
 class ChatConsumer(AsyncWebsocketConsumer):
     full_reply: ClassVar = []
     citations: ClassVar[list[tuple[File, AICitation]]] = []
-    activities: ClassVar = []
+    activities: ClassVar[list[RedboxActivityEvent]] = []
     route = None
     metadata: RequestMetadata = RequestMetadata()
     redbox = Redbox(env=Settings(), debug=True)
