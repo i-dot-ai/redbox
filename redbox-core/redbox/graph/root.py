@@ -1,7 +1,10 @@
+from langchain.chat_models import init_chat_model
+from langchain_core.runnables import RunnableLambda
 from langchain_core.tools import StructuredTool
 from langchain_core.vectorstores import VectorStoreRetriever
 from langgraph.graph import END, START, StateGraph
 from langgraph.graph.graph import CompiledGraph
+from langgraph.prebuilt import create_react_agent
 
 from redbox.chains.components import get_structured_response_with_citations_parser
 from redbox.chains.runnables import build_self_route_output_parser
@@ -33,9 +36,10 @@ from redbox.graph.nodes.processes import (
 )
 from redbox.graph.nodes.sends import build_document_chunk_send, build_document_group_send, build_tool_send
 from redbox.graph.nodes.tools import get_log_formatter_for_retrieval_tool
+from redbox.graph.react import wiki_tool, govuk_tool, file_reader, taking_clock
 from redbox.models.chain import RedboxState
 from redbox.models.chat import ChatRoute, ErrorRoute
-from redbox.models.graph import ROUTABLE_KEYWORDS, RedboxActivityEvent
+from redbox.models.graph import ROUTABLE_KEYWORDS, RedboxActivityEvent, ROUTE_NAME_TAG
 from redbox.transform import structure_documents_by_file_name, structure_documents_by_group_and_indices
 
 # Subgraphs
@@ -95,6 +99,39 @@ def get_self_route_graph(retriever: VectorStoreRetriever, prompt_set: PromptSet,
     builder.add_edge("p_clear_documents", END)
 
     return builder.compile(debug=debug)
+
+
+def get_react_graph(debug: bool = False):
+    llm = init_chat_model(
+        model="gpt-4o",
+        model_provider="azure_openai",
+    )
+
+    react_agent = create_react_agent(
+        llm,
+        tools=[
+            wiki_tool,
+            govuk_tool,
+            taking_clock,
+        ],
+        debug=debug,
+    )
+
+    def messages(state: RedboxState):
+        question = state["request"].question
+        history = [(msg["role"], msg["text"]) for msg in state["request"].chat_history]
+        return history + [("user", question)]
+
+    def route_name(_: RedboxState):
+        return {"route_name": ChatRoute.chat}
+
+    graph = (
+        {"messages": RunnableLambda(messages)}
+        | react_agent
+        | {"route_name": RunnableLambda(route_name).with_config(tags=[ROUTE_NAME_TAG])}
+    )
+
+    return graph
 
 
 def get_chat_graph(
@@ -442,6 +479,7 @@ def get_root_graph(
         debug=debug,
     )
     metadata_subgraph = get_retrieve_metadata_graph(metadata_retriever=metadata_retriever, debug=debug)
+    react_subgraph = get_react_graph(debug=debug)
 
     # Processes
     builder.add_node("p_search", rag_subgraph)
@@ -449,6 +487,7 @@ def get_root_graph(
     builder.add_node("p_chat", chat_subgraph)
     builder.add_node("p_chat_with_documents", cwd_subgraph)
     builder.add_node("p_retrieve_metadata", metadata_subgraph)
+    builder.add_node("p_react", react_subgraph)
 
     # Log
     builder.add_node(
@@ -478,6 +517,7 @@ def get_root_graph(
         {
             ChatRoute.search: "p_search",
             ChatRoute.gadget: "p_search_agentic",
+            ChatRoute.react: "p_react",
             "DEFAULT": "d_docs_selected",
         },
     )
@@ -493,5 +533,6 @@ def get_root_graph(
     builder.add_edge("p_search_agentic", END)
     builder.add_edge("p_chat", END)
     builder.add_edge("p_chat_with_documents", END)
+    builder.add_edge("p_react", END)
 
     return builder.compile(debug=debug)
