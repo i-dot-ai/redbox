@@ -322,10 +322,10 @@ class ChatConsumer(AsyncWebsocketConsumer):
             for s in c.sources:
                 try:
                     file = await File.objects.aget(original_file=s.source)
-                    payload = {"url": str(file.url), "file_name": file.file_name}
+                    payload = {"url": str(file.url), "file_name": file.file_name, "text_in_answer": c.text_in_answer}
                 except File.DoesNotExist:
                     file = None
-                    payload = {"url": s.source, "file_name": s.source}
+                    payload = {"url": s.source, "file_name": s.source, "text_in_answer": c.text_in_answer}
                 await self.send_to_client("source", payload)
                 self.citations.append((file, AICitation(text_in_answer=c.text_in_answer, sources=[s])))
 

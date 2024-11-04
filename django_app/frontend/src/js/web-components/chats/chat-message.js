@@ -59,7 +59,7 @@ export class ChatMessage extends HTMLElement {
                     `
                     : ""
                 }
-                <sources-list></sources-list>
+                <sources-list data-id="${uuid}"></sources-list>
                 <div class="govuk-notification-banner govuk-notification-banner--error govuk-!-margin-bottom-3 govuk-!-margin-top-3" role="alert" aria-labelledby="notification-title-${uuid}" data-module="govuk-notification-banner" hidden>
                     <div class="govuk-notification-banner__header">
                         <h3 class="govuk-notification-banner__title" id="notification-title-${uuid}">Error</h3>
@@ -89,6 +89,22 @@ export class ChatMessage extends HTMLElement {
     );
   }
 
+  #addFootnotes = (content) => {
+    let footnotes = this.querySelectorAll("sources-list a[data-text]");
+    footnotes.forEach((footnote, footnoteIndex) => {
+      const matchingText = footnote.getAttribute("data-text");
+      if (!matchingText || !this.responseContainer) {
+        return;
+      }
+      /*
+      this.responseContainer?.update(
+        content.replace(matchingText, `${matchingText}<a href="#${footnote.id}" aria-label="Footnote ${footnoteIndex + 1}">[${footnoteIndex + 1}]</a>`)
+      );
+      */
+      this.responseContainer.innerHTML = this.responseContainer.innerHTML.replace(matchingText, `${matchingText}<a class="rb-footnote-link" href="#${footnote.id}" aria-label="Footnote ${footnoteIndex + 1}">${footnoteIndex + 1}</a>`);
+    });
+  };
+
   /**
    * Streams an LLM response
    * @param {string} message
@@ -116,7 +132,7 @@ export class ChatMessage extends HTMLElement {
       scrollOverride = true;
     });
 
-    let responseContainer = /** @type {import("../markdown-converter").MarkdownConverter} */ (
+    this.responseContainer = /** @type {import("../markdown-converter").MarkdownConverter} */ (
       this.querySelector("markdown-converter")
     );
     let sourcesContainer = /** @type SourcesList */ (
@@ -158,7 +174,10 @@ export class ChatMessage extends HTMLElement {
     };
 
     webSocket.onerror = (event) => {
-      responseContainer.innerHTML =
+      if (!this.responseContainer) {
+        return;
+      }
+      this.responseContainer.innerHTML =
         "There was a problem. Please try sending this message again.";
       this.dataset.status = "error";
     };
@@ -185,13 +204,14 @@ export class ChatMessage extends HTMLElement {
 
       if (response.type === "text") {
         streamedContent += response.data;
-        responseContainer.update(streamedContent);
+        this.responseContainer?.update(streamedContent);
       } else if (response.type === "session-id") {
         chatControllerRef.dataset.sessionId = response.data;
       } else if (response.type === "source") {
         sourcesContainer.add(
           response.data.file_name,
-          response.data.url
+          response.data.url,
+          response.data.text_in_answer
         );
       } else if (response.type === "route") {
         let route = this.querySelector(".iai-chat-bubble__route");
@@ -210,6 +230,7 @@ export class ChatMessage extends HTMLElement {
       } else if (response.type === "end") {
         sourcesContainer.showCitations(response.data.message_id);
         feedbackContainer?.showFeedback(response.data.message_id);
+        this.#addFootnotes(streamedContent);
         const chatResponseEndEvent = new CustomEvent("chat-response-end", {
           detail: {
             title: response.data.title,
