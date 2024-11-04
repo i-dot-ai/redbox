@@ -36,8 +36,13 @@
 {% set role_text = "You" %}
 {% endif %}
 
+{# Examples:
+<p class="rb-activity rb-activity--user">You selected 1 document</p>
+<p class="rb-activity rb-activity--user">You sent this prompt</p>
+<p class="rb-activity rb-activity--redbox">Redbox is searching gov.uk</p>
+#}
 <div
-  class="iai-chat-bubble iai-chat-bubble--{% if message.role == 'user' %}right{% else %}left{% endif %} govuk-body {{ classes }}"
+  class="iai-chat-bubble iai-chat-bubble--left govuk-body {{ classes }}"
   data-role="{{ message.role }}" tabindex="-1">
   <div class="iai-chat-bubble__header">
     <div class="iai-chat-bubble__role">{% if message.role == "ai" %}Redbox{% else %}You{% endif %}</div>
