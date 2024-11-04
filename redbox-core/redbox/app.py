@@ -150,5 +150,3 @@ class Redbox:
         self.graph.get_graph(xray=True).draw_mermaid_png(
             draw_method=MermaidDrawMethod.API, output_file_path=output_path
         )
-
-
