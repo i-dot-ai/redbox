@@ -124,7 +124,7 @@ def get_react_graph(debug: bool = False):
         return history + [("user", question)]
 
     def route_name(_: RedboxState):
-        return {"route_name": ChatRoute.chat}
+        return {"route_name": ChatRoute.react}
 
     graph = (
         {"messages": RunnableLambda(messages)}
