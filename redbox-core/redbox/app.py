@@ -1,7 +1,6 @@
 import logging
 
 from langchain_core.embeddings import Embeddings
-from langchain_core.messages import ToolMessage
 from langchain_core.tools import StructuredTool
 from langchain_core.vectorstores import VectorStoreRetriever
 
@@ -133,11 +132,6 @@ class Redbox:
                 await activity_event_callback(event["data"])
             elif kind == "on_chain_end" and event["name"] == "LangGraph":
                 final_state = RedboxState(**event["data"]["output"])
-
-            elif kind == "on_chain_end":
-                for message in event.get("data", {}).get("input", {}).get("messages", []):
-                    if isinstance(message, ToolMessage):
-                        logger.info("message=%s", message)
 
         return final_state
 

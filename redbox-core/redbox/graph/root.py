@@ -36,7 +36,7 @@ from redbox.graph.nodes.processes import (
 )
 from redbox.graph.nodes.sends import build_document_chunk_send, build_document_group_send, build_tool_send
 from redbox.graph.nodes.tools import get_log_formatter_for_retrieval_tool
-from redbox.graph.react import wiki_tool, govuk_tool, taking_clock
+from redbox.graph.react import wiki_tool, govuk_tool, taking_clock, arxiv_tool
 from redbox.models.chain import RedboxState
 from redbox.models.chat import ChatRoute, ErrorRoute
 from redbox.models.graph import ROUTABLE_KEYWORDS, RedboxActivityEvent, ROUTE_NAME_TAG
@@ -112,6 +112,7 @@ def get_react_graph(debug: bool = False):
         tools=[
             wiki_tool,
             govuk_tool,
+            arxiv_tool,
             taking_clock,
         ],
         debug=debug,
