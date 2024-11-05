@@ -266,7 +266,7 @@ def tool_calls_reducer(current: ToolState, update: ToolState | None) -> ToolStat
 class RedboxState(TypedDict):
     request: Required[RedboxQuery]
     documents: Annotated[NotRequired[DocumentState], document_reducer]
-    messages: NotRequired[str | None]
+    messages: Required[str]
     route_name: NotRequired[str | None]
     tool_calls: Annotated[NotRequired[ToolState], tool_calls_reducer]
     metadata: Annotated[NotRequired[RequestMetadata], metadata_reducer]
