@@ -64,7 +64,7 @@ def test_parameterised_retriever(
         setattr(stored_file_parameterised.query.ai_settings, k, v)
 
     result = parameterised_retriever.invoke(
-        RedboxState(request=stored_file_parameterised.query, text=stored_file_parameterised.query.question)
+        RedboxState(request=stored_file_parameterised.query, messages=stored_file_parameterised.query.question)
     )
     selected_docs = stored_file_parameterised.get_docs_matching_query()
     permitted_docs = stored_file_parameterised.get_all_permitted_docs()

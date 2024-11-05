@@ -97,7 +97,7 @@ def build_chat_prompt_from_messages_runnable(
 
         prompt_template_context = (
             state["request"].model_dump()
-            | {"text": state.get("text")}
+            | {"messages": state.get("messages")}
             | {
                 "formatted_documents": format_documents(flatten_document_state(state.get("documents"))),
             }
@@ -145,7 +145,7 @@ def build_llm_chain(
             "prompt": RunnableLambda(lambda prompt: prompt.to_string()),
         }
         | {
-            "text": RunnableLambda(
+            "messages": RunnableLambda(
                 combine_getters(
                     itemgetter("text_and_tools"),
                     itemgetter_with_default(
@@ -231,7 +231,7 @@ class CannedChatLLM(BaseChatModel):
     Based on https://python.langchain.com/v0.2/docs/how_to/custom_chat_model/
     """
 
-    text: str
+    messages: str
 
     def _generate(
         self,
@@ -252,7 +252,7 @@ class CannedChatLLM(BaseChatModel):
                   downstream and understand why generation stopped.
             run_manager: A run manager with callbacks for the LLM.
         """
-        message = AIMessage(content=self.text)
+        message = AIMessage(content=self.messages)
 
         generation = ChatGeneration(message=message)
         return ChatResult(generations=[generation])
@@ -276,7 +276,7 @@ class CannedChatLLM(BaseChatModel):
                   downstream and understand why generation stopped.
             run_manager: A run manager with callbacks for the LLM.
         """
-        for token in re_string_pattern.split(self.text):
+        for token in re_string_pattern.split(self.messages):
             chunk = ChatGenerationChunk(message=AIMessageChunk(content=token))
 
             if run_manager:

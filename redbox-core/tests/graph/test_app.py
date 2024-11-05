@@ -607,11 +607,11 @@ async def test_streaming(test: RedboxChatTestCase, env: Settings, mocker: Mocker
     expected_text = expected_text.content if isinstance(expected_text, AIMessage) else expected_text
 
     assert (
-        final_state["text"] == llm_response
-    ), f"Text response from streaming: '{llm_response}' did not match final state text '{final_state["text"]}'"
+        final_state["messages"] == llm_response
+    ), f"Text response from streaming: '{llm_response}' did not match final state text '{final_state["messages"]}'"
     assert (
-        final_state["text"] == expected_text
-    ), f"Expected text: '{expected_text}' did not match received text '{final_state["text"]}'"
+        final_state["messages"] == expected_text
+    ), f"Expected text: '{expected_text}' did not match received text '{final_state["messages"]}'"
 
     assert (
         final_state.get("route_name") == test_case.test_data.expected_route
