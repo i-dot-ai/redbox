@@ -480,7 +480,7 @@ def test_clear_documents(test_case: list[RedboxState]):
 def test_canned_llm():
     """Tests that the CannedLLM works in a normal call."""
     text = "Lorem ipsum dolor sit amet."
-    canned = CannedChatLLM(messages=[HumanMessage(content=text)])
+    canned = CannedChatLLM(messages=[AIMessage(content=text)])
     response = canned.invoke("Foo")
     assert text == response.content
 
@@ -489,7 +489,7 @@ def test_canned_llm():
 async def test_canned_llm_async():
     """Tests that the CannedLLM works asynchronously."""
     text = "Lorem ipsum dolor sit amet."
-    canned = CannedChatLLM(messages=[HumanMessage(content=text)])
+    canned = CannedChatLLM(messages=[AIMessage(content=text)])
 
     events: list[dict] = []
     async for e in canned.astream_events("Foo", version="v2"):

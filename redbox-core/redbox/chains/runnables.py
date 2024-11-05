@@ -8,7 +8,7 @@ from langchain_core.callbacks.manager import (
     dispatch_custom_event,
 )
 from langchain_core.language_models import BaseChatModel
-from langchain_core.messages import AIMessage, AIMessageChunk, BaseMessage, AnyMessage
+from langchain_core.messages import AIMessage, AIMessageChunk, BaseMessage
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.outputs import ChatGeneration, ChatGenerationChunk, ChatResult
 from langchain_core.prompts import ChatPromptTemplate
@@ -131,8 +131,7 @@ def build_llm_chain(
     _llm = llm.with_config(tags=["response_flag"]) if final_response_chain else llm
     _output_parser = output_parser if output_parser else StrOutputParser()
 
-    def f(state: dict):
-        # (lambda r: [r.answer] if hasattr(r, "answer") else [r]
+    def get_messages(state: dict):
         text_and_tools = state["text_and_tools"]
         if parsed_response := state["text_and_tools"].get("parsed_response"):
             if hasattr(parsed_response, "answer"):
@@ -154,7 +153,7 @@ def build_llm_chain(
             "prompt": RunnableLambda(lambda prompt: prompt.to_string()),
         }
         | {
-            "messages": RunnableLambda(f),
+            "messages": RunnableLambda(get_messages),
             "tool_calls": combine_getters(itemgetter("text_and_tools"), itemgetter("tool_calls")),
             "citations": RunnableLambda(
                 combine_getters(
@@ -232,7 +231,7 @@ class CannedChatLLM(BaseChatModel):
     Based on https://python.langchain.com/v0.2/docs/how_to/custom_chat_model/
     """
 
-    messages: list[AnyMessage]
+    messages: list[AIMessage]
 
     def _generate(
         self,
