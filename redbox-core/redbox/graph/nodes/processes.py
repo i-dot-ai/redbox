@@ -119,7 +119,7 @@ def build_merge_pattern(
             prompt_set=prompt_set, llm=llm, final_response_chain=final_response_chain
         ).invoke(merge_state)
 
-        merged_document.page_content = merge_response["messages"]
+        merged_document.page_content = merge_response["messages"][-1]
         request_metadata = merge_response["metadata"]
         merged_document.metadata["token_count"] = len(tokeniser.encode(merged_document.page_content))
 
@@ -193,7 +193,7 @@ def build_set_self_route_from_llm_answer(
 
     @RunnableLambda
     def _set_self_route_from_llm_answer(state: RedboxState):
-        llm_response = state["messages"]
+        llm_response = state["messages"][-1]
         if conditional(llm_response):
             return true_condition_state_update
         else:
@@ -211,7 +211,7 @@ def build_passthrough_pattern() -> Runnable[RedboxState, dict[str, Any]]:
     @RunnableLambda
     def _passthrough(state: RedboxState) -> dict[str, Any]:
         return {
-            "messages": state["request"].question,
+            "messages": [state["request"].question],
         }
 
     return _passthrough
@@ -219,14 +219,14 @@ def build_passthrough_pattern() -> Runnable[RedboxState, dict[str, Any]]:
 
 def build_set_text_pattern(text: str, final_response_chain: bool = False) -> Runnable[RedboxState, dict[str, Any]]:
     """Returns a Runnable that can arbitrarily set state["text"] to a value."""
-    llm = CannedChatLLM(messages=text)
+    llm = CannedChatLLM(messages=[text])
     _llm = llm.with_config(tags=["response_flag"]) if final_response_chain else llm
 
     @RunnableLambda
     def _set_text(state: RedboxState) -> dict[str, Any]:
         set_text_chain = _llm | StrOutputParser()
 
-        return {"messages": set_text_chain.invoke(text)}
+        return {"messages": state.get("messages", []) + [set_text_chain.invoke(text)]}
 
     return _set_text
 
@@ -356,7 +356,9 @@ def build_log_node(message: str) -> Runnable[RedboxState, dict[str, Any]]:
                         group_id: {doc_id: d.metadata for doc_id, d in group_documents.items()}
                         for group_id, group_documents in state["documents"]
                     },
-                    "messages": (state["messages"] if len(state["messages"]) < 32 else f"{state['messages'][:29]}..."),
+                    "messages": (
+                        state["messages"][-1] if len(state["messages"][-1]) < 32 else f"{state['messages'][-1][:29]}..."
+                    ),
                     "route": state["route_name"],
                     "message": message,
                 }

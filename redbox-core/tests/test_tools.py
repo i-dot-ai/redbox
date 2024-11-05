@@ -118,7 +118,7 @@ def test_search_documents_tool(
             "query": stored_file_parameterised.query.question,
             "state": RedboxState(
                 request=stored_file_parameterised.query,
-                messages=stored_file_parameterised.query.question,
+                messages=[stored_file_parameterised.query.question],
             ),
         }
     )
@@ -199,7 +199,7 @@ def test_wikipedia_tool():
                     ai_settings=AISettings(),
                     permitted_s3_keys=[],
                 ),
-                messages="a message should go here",
+                messages=["a message should go here"],
             ),
         }
     )

@@ -99,7 +99,7 @@ def test_build_llm_chain(test_case: RedboxChatTestCase):
     """Tests a given state can update the data and metadata correctly."""
     llm = GenericFakeChatModel(messages=iter(test_case.test_data.llm_responses))
     llm_chain = build_llm_chain(PromptSet.Chat, llm)
-    state = RedboxState(request=test_case.query, documents=test_case.docs)
+    state = RedboxState(request=test_case.query, documents=test_case.docs, messages=[])
 
     final_state = llm_chain.invoke(state)
 
@@ -107,8 +107,8 @@ def test_build_llm_chain(test_case: RedboxChatTestCase):
     test_case_tool_calls = tool_calls_to_toolstate(test_case.test_data.llm_responses[-1].tool_calls)
 
     assert (
-        final_state["messages"] == test_case_content
-    ), f"Expected LLM response: '{test_case_content}'. Received '{final_state["messages"]}'"
+        final_state["messages"][-1] == test_case_content
+    ), f"Expected LLM response: '{test_case_content}'. Received '{final_state["messages"][-1]}'"
     assert final_state["tool_calls"] == test_case_tool_calls
     assert sum(final_state["metadata"].input_tokens.values())
     assert sum(final_state["metadata"].output_tokens.values())
@@ -143,8 +143,8 @@ def test_build_chat_pattern(test_case: RedboxChatTestCase, mocker: MockerFixture
     test_case_content = test_case.test_data.llm_responses[-1].content
 
     assert (
-        final_state["messages"] == test_case_content
-    ), f"Expected LLM response: '{test_case_content}'. Received '{final_state["messages"]}'"
+        final_state["messages"][-1] == test_case_content
+    ), f"Expected LLM response: '{test_case_content}'. Received '{final_state["messages"][-1]}'"
 
 
 SET_ROUTE_TEST_CASES = generate_test_cases(
@@ -323,8 +323,8 @@ def test_build_stuff_pattern(test_case: RedboxChatTestCase, mocker: MockerFixtur
     test_case_content = test_case.test_data.llm_responses[-1].content
 
     assert (
-        final_state["messages"] == test_case_content
-    ), f"Expected LLM response: '{test_case_content}'. Received '{final_state["messages"]}'"
+        final_state["messages"][-1] == test_case_content
+    ), f"Expected LLM response: '{test_case_content}'. Received '{final_state["messages"][-1]}'"
 
 
 TOOL_TEST_CASES = generate_test_cases(
@@ -400,7 +400,7 @@ def test_build_passthrough_pattern():
     response = passthrough.invoke(state)
     final_state = RedboxState(response)
 
-    assert final_state["messages"] == "What is AI?"
+    assert final_state["messages"][-1] == "What is AI?"
 
 
 def test_build_set_text_pattern():
@@ -415,7 +415,7 @@ def test_build_set_text_pattern():
     response = set_text.invoke(state)
     final_state = RedboxState(response)
 
-    assert final_state["messages"] == "An hendy hap ychabbe ychent."
+    assert final_state["messages"][-1] == "An hendy hap ychabbe ychent."
 
 
 def test_empty_process():
@@ -425,7 +425,7 @@ def test_empty_process():
             question="What is AI?", s3_keys=[], user_uuid=uuid4(), chat_history=[], permitted_s3_keys=[]
         ),
         documents=structure_documents_by_file_name([doc for doc in generate_docs(s3_key="s3_key")]),
-        messages="Foo",
+        messages=["Foo"],
         route_name=ChatRoute.chat_with_docs_map_reduce,
     )
 
@@ -447,7 +447,7 @@ CLEAR_DOC_TEST_CASES = [
             question="What is AI?", file_uuids=[], user_uuid=uuid4(), chat_history=[], permitted_s3_keys=[]
         ),
         documents=structure_documents_by_file_name([doc for doc in generate_docs(s3_key="s3_key")]),
-        messages="Foo",
+        messages=["Foo"],
         route_name=ChatRoute.chat_with_docs_map_reduce,
     ),
     RedboxState(
@@ -455,7 +455,7 @@ CLEAR_DOC_TEST_CASES = [
             question="What is AI?", file_uuids=[], user_uuid=uuid4(), chat_history=[], permitted_s3_keys=[]
         ),
         documents={},
-        messages="Foo",
+        messages=["Foo"],
         route_name=ChatRoute.chat_with_docs_map_reduce,
     ),
 ]
@@ -479,7 +479,7 @@ def test_clear_documents(test_case: list[RedboxState]):
 def test_canned_llm():
     """Tests that the CannedLLM works in a normal call."""
     text = "Lorem ipsum dolor sit amet."
-    canned = CannedChatLLM(messages=text)
+    canned = CannedChatLLM(messages=[text])
     response = canned.invoke("Foo")
     assert text == response.content
 
@@ -488,7 +488,7 @@ def test_canned_llm():
 async def test_canned_llm_async():
     """Tests that the CannedLLM works asynchronously."""
     text = "Lorem ipsum dolor sit amet."
-    canned = CannedChatLLM(messages=text)
+    canned = CannedChatLLM(messages=[text])
 
     events: list[dict] = []
     async for e in canned.astream_events("Foo", version="v2"):
