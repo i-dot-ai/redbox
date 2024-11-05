@@ -15,10 +15,5 @@
         "redbox-core"
     ],
     "python.testing.unittestEnabled": false,
-    "python.testing.pytestEnabled": true,
-    "workbench.colorCustomizations": {
-        "activityBar.background": "#941c36",
-        "titleBar.activeBackground": "#96265c",
-        "titleBar.activeForeground": "#F2FCFA"
-    }
+    "python.testing.pytestEnabled": true
 }
