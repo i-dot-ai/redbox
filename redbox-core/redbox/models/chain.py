@@ -13,7 +13,7 @@ from typing import (
 from uuid import UUID, uuid4
 
 from langchain_core.documents import Document
-from langchain_core.messages import ToolCall
+from langchain_core.messages import ToolCall, AnyMessage
 from langgraph.managed.is_last_step import RemainingStepsManager
 from pydantic import BaseModel, Field
 
@@ -266,7 +266,7 @@ def tool_calls_reducer(current: ToolState, update: ToolState | None) -> ToolStat
 class RedboxState(TypedDict):
     request: Required[RedboxQuery]
     documents: Annotated[NotRequired[DocumentState], document_reducer]
-    messages: Required[list[str]]
+    messages: Required[list[AnyMessage]]
     route_name: NotRequired[str | None]
     tool_calls: Annotated[NotRequired[ToolState], tool_calls_reducer]
     metadata: Annotated[NotRequired[RequestMetadata], metadata_reducer]

@@ -5,6 +5,7 @@ from uuid import UUID, uuid4
 import pytest
 from elasticsearch import Elasticsearch
 from langchain_core.embeddings.fake import FakeEmbeddings
+from langchain_core.messages import HumanMessage
 from langchain_core.tools import tool
 from langgraph.prebuilt import InjectedState
 
@@ -118,7 +119,7 @@ def test_search_documents_tool(
             "query": stored_file_parameterised.query.question,
             "state": RedboxState(
                 request=stored_file_parameterised.query,
-                messages=[stored_file_parameterised.query.question],
+                messages=[HumanMessage(content=stored_file_parameterised.query.question)],
             ),
         }
     )
@@ -199,7 +200,7 @@ def test_wikipedia_tool():
                     ai_settings=AISettings(),
                     permitted_s3_keys=[],
                 ),
-                messages=["a message should go here"],
+                messages=[HumanMessage(content="a message should go here")],
             ),
         }
     )

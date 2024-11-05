@@ -8,7 +8,7 @@ from langchain_core.callbacks.manager import (
     dispatch_custom_event,
 )
 from langchain_core.language_models import BaseChatModel
-from langchain_core.messages import AIMessage, AIMessageChunk, BaseMessage
+from langchain_core.messages import AIMessage, AIMessageChunk, BaseMessage, AnyMessage
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.outputs import ChatGeneration, ChatGenerationChunk, ChatResult
 from langchain_core.prompts import ChatPromptTemplate
@@ -132,10 +132,13 @@ def build_llm_chain(
     _output_parser = output_parser if output_parser else StrOutputParser()
 
     def f(state: dict):
+        # (lambda r: [r.answer] if hasattr(r, "answer") else [r]
         text_and_tools = state["text_and_tools"]
         if parsed_response := state["text_and_tools"].get("parsed_response"):
-            return parsed_response
-        return text_and_tools["raw_response"].content
+            if hasattr(parsed_response, "answer"):
+                return [AIMessage(content=parsed_response.answer)]
+            return [AIMessage(content=parsed_response)]
+        return [text_and_tools["raw_response"]]
 
     return (
         build_chat_prompt_from_messages_runnable(prompt_set, partial_variables={"format_arg": format_instructions})
@@ -151,7 +154,7 @@ def build_llm_chain(
             "prompt": RunnableLambda(lambda prompt: prompt.to_string()),
         }
         | {
-            "messages": RunnableLambda(f) | (lambda r: [r] if isinstance(r, str) else [r.answer]),
+            "messages": RunnableLambda(f),
             "tool_calls": combine_getters(itemgetter("text_and_tools"), itemgetter("tool_calls")),
             "citations": RunnableLambda(
                 combine_getters(
@@ -229,7 +232,7 @@ class CannedChatLLM(BaseChatModel):
     Based on https://python.langchain.com/v0.2/docs/how_to/custom_chat_model/
     """
 
-    messages: list[str]
+    messages: list[AnyMessage]
 
     def _generate(
         self,
@@ -250,7 +253,7 @@ class CannedChatLLM(BaseChatModel):
                   downstream and understand why generation stopped.
             run_manager: A run manager with callbacks for the LLM.
         """
-        message = AIMessage(content=self.messages[-1])
+        message = AIMessage(content=self.messages[-1].content)
 
         generation = ChatGeneration(message=message)
         return ChatResult(generations=[generation])
@@ -274,7 +277,7 @@ class CannedChatLLM(BaseChatModel):
                   downstream and understand why generation stopped.
             run_manager: A run manager with callbacks for the LLM.
         """
-        for token in re_string_pattern.split(self.messages[-1]):
+        for token in re_string_pattern.split(self.messages[-1].content):
             chunk = ChatGenerationChunk(message=AIMessageChunk(content=token))
 
             if run_manager:
