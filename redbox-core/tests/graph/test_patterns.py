@@ -377,6 +377,7 @@ def test_build_tool_pattern(tools: list[StructuredTool], expected: dict[str, str
             question="What is AI?", s3_keys=[], user_uuid=uuid4(), chat_history=[], permitted_s3_keys=[]
         ),
         tool_calls=tool_calls_to_toolstate(tool_calls=tool_calls, called=False),
+        messages=[],
     )
 
     response = tool.invoke(state)
