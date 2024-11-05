@@ -17,6 +17,7 @@ RETRIEVAL_SYSTEM_PROMPT = (
     "You are a specialized GPT-4o agent. Your task is to answer user queries with reliable sources.\n"
     "**You must provide the citations where you use the information to answer.**\n"
     "Use UK English spelling in response.\n"
+    "Use the document `creator_type` as `source_type` if available.\n"
     "\n"
     "{format_arg}"
 )
