@@ -144,7 +144,7 @@ def test_build_chat_pattern(test_case: RedboxChatTestCase, mocker: MockerFixture
 
     assert (
         final_state["messages"][-1].content == test_case_content
-    ), f"Expected LLM response: '{test_case_content}'. Received '{final_state["messages"][-1]}'"
+    ), f"Expected LLM response: '{test_case_content}'. Received '{final_state["messages"][-1].content}'"
 
 
 SET_ROUTE_TEST_CASES = generate_test_cases(
@@ -324,7 +324,7 @@ def test_build_stuff_pattern(test_case: RedboxChatTestCase, mocker: MockerFixtur
 
     assert (
         final_state["messages"][-1].content == test_case_content
-    ), f"Expected LLM response: '{test_case_content}'. Received '{final_state["messages"][-1]}'"
+    ), f"Expected LLM response: '{test_case_content}'. Received '{final_state["messages"][-1].content}'"
 
 
 TOOL_TEST_CASES = generate_test_cases(
@@ -400,7 +400,7 @@ def test_build_passthrough_pattern():
     response = passthrough.invoke(state)
     final_state = RedboxState(response)
 
-    assert final_state["messages"][-1] == "What is AI?"
+    assert final_state["messages"][-1].content == "What is AI?"
 
 
 def test_build_set_text_pattern():

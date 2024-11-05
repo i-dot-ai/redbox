@@ -1,6 +1,7 @@
 import json
 import logging
 import re
+import textwrap
 from collections.abc import Callable
 from functools import reduce
 from typing import Any, Iterable
@@ -13,6 +14,7 @@ from langchain_core.messages import HumanMessage
 from langchain_core.runnables import Runnable, RunnableLambda, RunnableParallel
 from langchain_core.tools import StructuredTool
 from langchain_core.vectorstores import VectorStoreRetriever
+
 
 from redbox.chains.activity import log_activity
 from redbox.chains.components import get_chat_llm, get_tokeniser
@@ -194,7 +196,7 @@ def build_set_self_route_from_llm_answer(
 
     @RunnableLambda
     def _set_self_route_from_llm_answer(state: RedboxState):
-        llm_response = state["messages"][-1]
+        llm_response = state["messages"][-1].content
         if conditional(llm_response):
             return true_condition_state_update
         else:
@@ -212,7 +214,7 @@ def build_passthrough_pattern() -> Runnable[RedboxState, dict[str, Any]]:
     @RunnableLambda
     def _passthrough(state: RedboxState) -> dict[str, Any]:
         return {
-            "messages": [state["request"].question],
+            "messages": [HumanMessage(content=state["request"].question)],
         }
 
     return _passthrough
@@ -357,9 +359,7 @@ def build_log_node(message: str) -> Runnable[RedboxState, dict[str, Any]]:
                         group_id: {doc_id: d.metadata for doc_id, d in group_documents.items()}
                         for group_id, group_documents in state["documents"]
                     },
-                    "messages": (
-                        state["messages"][-1] if len(state["messages"][-1]) < 32 else f"{state['messages'][-1][:29]}..."
-                    ),
+                    "messages": (textwrap.shorten(state["messages"][-1].content, width=32, placeholder="...")),
                     "route": state["route_name"],
                     "message": message,
                 }
