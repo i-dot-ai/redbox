@@ -1,6 +1,4 @@
-CHAT_SYSTEM_PROMPT = (
-    "You are an AI assistant called Redbox tasked with answering questions and providing information objectively."
-)
+CHAT_SYSTEM_PROMPT = "You are an AI assistant called Redbox tasked with answering questions and providing information objectively."
 
 
 CHAT_WITH_DOCS_SYSTEM_PROMPT = "You are an AI assistant called Redbox tasked with answering questions on user provided documents and providing information objectively."
@@ -18,7 +16,7 @@ CHAT_WITH_DOCS_REDUCE_SYSTEM_PROMPT = (
 RETRIEVAL_SYSTEM_PROMPT = (
     "You are a specialized GPT-4o agent. Your task is to answer user queries with reliable sources.\n"
     "**You must provide the citations where you use the information to answer.**\n"
-    "Use the `creator_type` as `source_type` if available.\n"
+    "Use UK English spelling in response.\n"
     "\n"
     "{format_arg}"
 )
@@ -123,9 +121,13 @@ CONDENSE_SYSTEM_PROMPT = (
 
 CHAT_QUESTION_PROMPT = "{question}\n=========\n Response: "
 
-CHAT_WITH_DOCS_QUESTION_PROMPT = "Question: {question}. \n\n Documents: \n\n {formatted_documents} \n\n Answer: "
+CHAT_WITH_DOCS_QUESTION_PROMPT = (
+    "Question: {question}. \n\n Documents: \n\n {formatted_documents} \n\n Answer: "
+)
 
-RETRIEVAL_QUESTION_PROMPT = "{question} \n=========\n{formatted_documents}\n=========\nFINAL ANSWER: "
+RETRIEVAL_QUESTION_PROMPT = (
+    "{question} \n=========\n{formatted_documents}\n=========\nFINAL ANSWER: "
+)
 
 AGENTIC_RETRIEVAL_QUESTION_PROMPT = (
     "The following context and previous actions are provided to assist you. \n\n"
@@ -142,6 +144,8 @@ AGENTIC_GIVE_UP_QUESTION_PROMPT = (
     "User question: \n\n {question}"
 )
 
-CHAT_MAP_QUESTION_PROMPT = "Question: {question}. \n Documents: \n {formatted_documents} \n\n Answer: "
+CHAT_MAP_QUESTION_PROMPT = (
+    "Question: {question}. \n Documents: \n {formatted_documents} \n\n Answer: "
+)
 
 CONDENSE_QUESTION_PROMPT = "{question}\n=========\n Standalone question: "
