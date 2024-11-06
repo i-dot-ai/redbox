@@ -28,8 +28,8 @@ from redbox.models.errors import QuestionLengthError
 from redbox.models.graph import RedboxEventType
 from redbox.transform import (
     flatten_document_state,
-    to_request_metadata,
     tool_calls_to_toolstate,
+    get_all_metadata,
 )
 
 log = logging.getLogger()
@@ -92,28 +92,6 @@ def build_chat_prompt_from_messages_runnable(
     return _chat_prompt_from_messages
 
 
-def get_text(state: dict):
-    text_and_tools = state["text_and_tools"]
-    if parsed_response := text_and_tools.get("parsed_response"):
-        return getattr(parsed_response, "answer", parsed_response)
-    return text_and_tools["raw_response"].content
-
-
-def get_citations(state: dict):
-    text_and_tools = state["text_and_tools"]
-    if parsed_response := text_and_tools.get("parsed_response"):
-        return parsed_response
-    return text_and_tools["raw_response"].content
-
-
-def get_tool_calls(state: dict):
-    return state["text_and_tools"]["tool_calls"]
-
-
-def get_metadata_response(state: dict):
-    return state["text_and_tools"]["raw_response"].content
-
-
 def build_llm_chain(
     prompt_set: PromptSet,
     llm: BaseChatModel,
@@ -141,20 +119,9 @@ def build_llm_chain(
                 }
             ),
             "prompt": RunnableLambda(lambda prompt: prompt.to_string()),
+            "model": lambda _: model_name,
         }
-        | {
-            "text": RunnableLambda(get_text),
-            "tool_calls": get_tool_calls,
-            "citations": RunnableLambda(get_citations),
-            "metadata": (
-                {
-                    "prompt": lambda s: s["prompt"],
-                    "response": get_metadata_response,
-                    "model": lambda _: model_name,
-                }
-                | to_request_metadata
-            ),
-        }
+        | get_all_metadata
         | RunnablePassthrough.assign(
             _log=RunnableLambda(
                 lambda _: log_activity(f"Generating response with {model_name}...") if final_response_chain else None

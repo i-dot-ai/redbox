@@ -130,21 +130,23 @@ def get_document_token_count(state: RedboxState) -> int:
     return sum(d.metadata["token_count"] for d in flatten_document_state(state.get("documents", [])))
 
 
-@RunnableLambda
-def to_request_metadata(prompt_response_model: dict):
+def to_request_metadata(obj: dict):
     """Takes a dictionary with keys 'prompt', 'response' and 'model' and creates metadata.
 
     Will also emit events for metadata updates.
     """
-    model = prompt_response_model["model"]
+
+    prompt = obj["prompt"]
+    response = obj["text_and_tools"]["raw_response"].content
+    model = obj["model"]
 
     try:
         tokeniser = tiktoken.encoding_for_model(model)
     except KeyError:
         tokeniser = tiktoken.get_encoding("cl100k_base")
 
-    input_tokens = len(tokeniser.encode(prompt_response_model["prompt"]))
-    output_tokens = len(tokeniser.encode(prompt_response_model["response"]))
+    input_tokens = len(tokeniser.encode(prompt))
+    output_tokens = len(tokeniser.encode(response))
 
     metadata_event = RequestMetadata(
         llm_calls=[LLMCallMetadata(llm_model_name=model, input_tokens=input_tokens, output_tokens=output_tokens)]
@@ -153,6 +155,26 @@ def to_request_metadata(prompt_response_model: dict):
     dispatch_custom_event(RedboxEventType.on_metadata_generation.value, metadata_event)
 
     return metadata_event
+
+
+@RunnableLambda
+def get_all_metadata(obj: dict):
+    text_and_tools = obj["text_and_tools"]
+
+    if parsed_response := text_and_tools.get("parsed_response"):
+        text = getattr(parsed_response, "answer", parsed_response)
+        citations = parsed_response
+    else:
+        text = text_and_tools["raw_response"].content
+        citations = text_and_tools["raw_response"].content
+
+    out = {
+        "tool_calls": text_and_tools["tool_calls"],
+        "metadata": to_request_metadata(obj),
+        "text": text,
+        "citations": citations,
+    }
+    return out
 
 
 def merge_documents(initial: list[Document], adjacent: list[Document]) -> list[Document]:
