@@ -20,10 +20,14 @@ class ChatController extends HTMLElement {
         return;
       }
 
-      let userMessage = document.createElement("chat-message");
+      let userMessage = /** @type {import("./chat-message").ChatMessage} */ (
+        document.createElement("chat-message")
+      );
       userMessage.setAttribute("data-text", userText);
       userMessage.setAttribute("data-role", "user");
       messageContainer?.insertBefore(userMessage, insertPosition);
+      userMessage.addActivity(`You selected ${selectedDocuments.length || "no"} document${selectedDocuments.length === 1 ? "" : "s"}`, "user");
+      userMessage.addActivity("You sent this prompt", "user");
 
       let aiMessage = /** @type {import("./chat-message").ChatMessage} */ (
         document.createElement("chat-message")
