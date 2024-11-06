@@ -252,23 +252,27 @@ chat-history[data-initialised] .rb-chat-history__actions-button {
   padding-bottom: 0.75rem;
 }
 .rb-activity::before {
+  align-items: center;
   border-radius: 100%;
   content: '';
-  display: inline-block;
+  display: flex;
   height: 1rem;
+  justify-content: center;
   left: -0.5rem;
   position: relative;
   top: -1px;
   width: 1rem;
 }
 .rb-activity--user::before {
-  background-color: #0779c4;
+  background-color: #0b8478;
+  content: url("/static/icons/activity-user.svg")
 }
 .rb-activity--info::before {
-  background-color: #0b8478;
+  background-color: #0779c4;
 }
 .rb-activity--ai::before {
   background-color: #9c0000;
+  content: url("/static/icons/activity-redbox.svg")
 }
 
 chat-message {

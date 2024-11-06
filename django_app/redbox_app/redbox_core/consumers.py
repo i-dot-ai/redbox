@@ -193,6 +193,20 @@ class ChatConsumer(AsyncWebsocketConsumer):
         chat_message.save()
         if selected_files:
             chat_message.selected_files.set(selected_files)
+
+        # Save user activities
+        selected_docs_count = len(selected_files)
+        activity_event_docs = ActivityEvent.objects.create(
+            chat_message=chat_message,
+            message=f"You selected {selected_docs_count if selected_docs_count else 'no'} document{'s' if selected_docs_count != 1 else ''}"
+        )
+        activity_event_docs.save()
+        activity_event_prompt = ActivityEvent.objects.create(
+            chat_message=chat_message,
+            message="You sent this prompt"
+        )
+        activity_event_prompt.save()
+
         return chat_message
 
     @database_sync_to_async
