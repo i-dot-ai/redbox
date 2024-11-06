@@ -192,9 +192,7 @@ def build_document_query(
     }
 
 
-def scale_score(
-    score: float, old_min: float, old_max: float, new_min=1.1, new_max: float = 2.0
-):
+def scale_score(score: float, old_min: float, old_max: float, new_min=1.1, new_max: float = 2.0):
     """Rescales an Elasticsearch score.
 
     Intended to turn the score into a multiplier to weight a Gauss function.
@@ -237,9 +235,7 @@ def add_document_filter_scores_to_query(
     for document in centres:
         gauss_functions.append(
             {
-                "filter": {
-                    "term": {"metadata.file_name.keyword": document.metadata["uri"]}
-                },
+                "filter": {"term": {"metadata.file_name.keyword": document.metadata["uri"]}},
                 "gauss": {
                     "metadata.index": {
                         "origin": document.metadata["index"],
