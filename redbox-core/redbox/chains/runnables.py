@@ -97,11 +97,11 @@ def build_chat_prompt_from_messages_runnable(
 
         prompt_template_context = (
             state["request"].model_dump()
-            | {"text": state.get("text")}
-            | {
-                "formatted_documents": format_documents(flatten_document_state(state.get("documents"))),
-            }
-            | {"tool_calls": format_toolstate(state.get("tool_calls"))}
+            | RunnablePassthrough.assign(
+                text=state.get("text"),
+                formatted_documents=format_documents(flatten_document_state(state.get("documents"))),
+                tool_calls=format_toolstate(state.get("tool_calls"))
+            )
         )
 
         return ChatPromptTemplate(

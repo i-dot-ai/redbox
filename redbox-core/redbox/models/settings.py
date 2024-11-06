@@ -1,6 +1,6 @@
 import logging
 import os
-from functools import lru_cache
+from functools import cache, lru_cache
 from typing import Literal
 
 import boto3
@@ -192,3 +192,8 @@ class Settings(BaseSettings):
 
         msg = f"unkown object_store={self.object_store}"
         raise NotImplementedError(msg)
+
+
+@cache
+def get_settings() -> Settings:
+    return Settings()

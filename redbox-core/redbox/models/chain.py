@@ -13,11 +13,13 @@ from typing import (
 from uuid import UUID, uuid4
 
 from langchain_core.documents import Document
+from langchain_core.prompts import PromptTemplate
 from langchain_core.messages import ToolCall
 from langgraph.managed.is_last_step import RemainingStepsManager
 from pydantic import BaseModel, Field
 
 from redbox.models import prompts
+from redbox.models.settings import get_settings
 
 
 class ChainChatMessage(TypedDict):
@@ -285,9 +287,28 @@ class PromptSet(StrEnum):
     CondenseQuestion = "condense_question"
 
 
+def create_system_prompt(
+        task_system_prompt: str,
+        ai_settings: AISettings
+):
+    return PromptTemplate(
+        """
+        {system_info}
+        {persona_info}
+        {caller_info}
+        {task_prompt}
+        """
+    ).invoke({
+        "system_info": ai_settings.system_info_prompt,
+        "persona_info": ai_settings.persona_info_prompt,
+        "caller_info": ai_settings.caller_info_prompt,
+        "task_prompt": ai_settings.task_system_prompt
+    })
+
+
 def get_prompts(state: RedboxState, prompt_set: PromptSet) -> tuple[str, str]:
     if prompt_set == PromptSet.Chat:
-        system_prompt = state["request"].ai_settings.chat_system_prompt
+        system_prompt = create_system_prompt(state["request"].ai_settings.chat_system_prompt, 
         question_prompt = state["request"].ai_settings.chat_question_prompt
     elif prompt_set == PromptSet.ChatwithDocs:
         system_prompt = state["request"].ai_settings.chat_with_docs_system_prompt
