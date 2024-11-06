@@ -27,7 +27,9 @@ def build_resolution_filter(chunk_resolution: ChunkResolution) -> dict[str, Any]
 
 
 def build_query_filter(
-    selected_files: list[str], permitted_files: list[str], chunk_resolution: ChunkResolution | None
+    selected_files: list[str],
+    permitted_files: list[str],
+    chunk_resolution: ChunkResolution | None,
 ) -> list[dict[str, Any]]:
     """Generic filter constructor for all queries.
 
@@ -129,27 +131,48 @@ def build_document_query(
                         },
                     },
                     {
-                        "match": {
-                            "metadata.name": {
-                                "query": query,
-                                "boost": ai_settings.match_name_boost,
-                            }
+                        "bool": {
+                            "must": [{"exists": {"field": "metadata.name"}}],
+                            "should": [
+                                {
+                                    "match": {
+                                        "metadata.name": {
+                                            "query": query,
+                                            "boost": ai_settings.match_name_boost,
+                                        }
+                                    }
+                                }
+                            ],
                         }
                     },
                     {
-                        "match": {
-                            "metadata.description": {
-                                "query": query,
-                                "boost": ai_settings.match_description_boost,
-                            }
+                        "bool": {
+                            "must": [{"exists": {"field": "metadata.description"}}],
+                            "should": [
+                                {
+                                    "match": {
+                                        "metadata.description": {
+                                            "query": query,
+                                            "boost": ai_settings.match_description_boost,
+                                        }
+                                    }
+                                }
+                            ],
                         }
                     },
                     {
-                        "match": {
-                            "metadata.keywords": {
-                                "query": query,
-                                "boost": ai_settings.match_keywords_boost,
-                            }
+                        "bool": {
+                            "must": [{"exists": {"field": "metadata.keywords"}}],
+                            "should": [
+                                {
+                                    "match": {
+                                        "metadata.keywords": {
+                                            "query": query,
+                                            "boost": ai_settings.match_keywords_boost,
+                                        }
+                                    }
+                                }
+                            ],
                         }
                     },
                     {
@@ -169,7 +192,9 @@ def build_document_query(
     }
 
 
-def scale_score(score: float, old_min: float, old_max: float, new_min=1.1, new_max: float = 2.0):
+def scale_score(
+    score: float, old_min: float, old_max: float, new_min=1.1, new_max: float = 2.0
+):
     """Rescales an Elasticsearch score.
 
     Intended to turn the score into a multiplier to weight a Gauss function.
@@ -212,7 +237,9 @@ def add_document_filter_scores_to_query(
     for document in centres:
         gauss_functions.append(
             {
-                "filter": {"term": {"metadata.file_name.keyword": document.metadata["uri"]}},
+                "filter": {
+                    "term": {"metadata.file_name.keyword": document.metadata["uri"]}
+                },
                 "gauss": {
                     "metadata.index": {
                         "origin": document.metadata["index"],
