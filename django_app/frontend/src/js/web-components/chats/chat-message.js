@@ -119,6 +119,7 @@ export class ChatMessage extends HTMLElement {
    * Streams an LLM response
    * @param {string} message
    * @param {string[]} selectedDocuments
+   * @param {string[]} activities
    * @param {string} llm
    * @param {string | undefined} sessionId
    * @param {string} endPoint
@@ -127,6 +128,7 @@ export class ChatMessage extends HTMLElement {
   stream = (
     message,
     selectedDocuments,
+    activities,
     llm,
     sessionId,
     endPoint,
@@ -175,6 +177,7 @@ export class ChatMessage extends HTMLElement {
           message: message,
           sessionId: sessionId,
           selectedFiles: selectedDocuments,
+          activities: activities,
           llm: llm,
         })
       );
