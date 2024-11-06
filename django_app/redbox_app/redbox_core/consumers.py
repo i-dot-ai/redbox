@@ -272,6 +272,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         self.metadata = metadata_reducer(self.metadata, RequestMetadata.model_validate(response))
 
     async def handle_activity(self, response: dict):
+        await self.send_to_client("activity", response.message)
         self.activities.append(RedboxActivityEvent.model_validate(response))
 
     async def handle_documents(self, response: list[Document]):
