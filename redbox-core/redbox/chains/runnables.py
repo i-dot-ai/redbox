@@ -92,7 +92,14 @@ def build_chat_prompt_from_messages_runnable(
     return _chat_prompt_from_messages
 
 
-def get_text_or_citations(state: dict):
+def get_text(state: dict):
+    text_and_tools = state["text_and_tools"]
+    if parsed_response := text_and_tools.get("parsed_response"):
+        return getattr(parsed_response, "answer", parsed_response)
+    return text_and_tools["raw_response"].content
+
+
+def get_citations(state: dict):
     text_and_tools = state["text_and_tools"]
     if parsed_response := text_and_tools.get("parsed_response"):
         return parsed_response
@@ -136,9 +143,9 @@ def build_llm_chain(
             "prompt": RunnableLambda(lambda prompt: prompt.to_string()),
         }
         | {
-            "text": RunnableLambda(get_text_or_citations) | (lambda r: r if isinstance(r, str) else r.answer),
+            "text": RunnableLambda(get_text),
             "tool_calls": get_tool_calls,
-            "citations": RunnableLambda(get_text_or_citations) | (lambda r: [] if isinstance(r, str) else r.citations),
+            "citations": RunnableLambda(get_citations),
             "metadata": (
                 {
                     "prompt": lambda s: s["prompt"],
