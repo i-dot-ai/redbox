@@ -36,11 +36,10 @@
 {% set role_text = "You" %}
 {% endif %}
 
-{# Examples:
-<p class="rb-activity rb-activity--user">You selected 1 document</p>
-<p class="rb-activity rb-activity--user">You sent this prompt</p>
-<p class="rb-activity rb-activity--redbox">Redbox is searching gov.uk</p>
-#}
+{% for activity in message.activityevent_set.all() %}
+  <p class="rb-activity rb-activity--{{ message.role }}">{{ activity }}</p>
+{% endfor %}
+
 <div
   class="iai-chat-bubble iai-chat-bubble--left govuk-body {{ classes }}"
   data-role="{{ message.role }}" tabindex="-1">
