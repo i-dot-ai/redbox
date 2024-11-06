@@ -83,6 +83,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         logger.debug("received %s from browser", data)
         user_message_text: str = data.get("message", "")
         selected_file_uuids: Sequence[UUID] = [UUID(u) for u in data.get("selectedFiles", [])]
+        activities: Sequence[str] = data.get("activities", [])
         user: User = self.scope.get("user")
 
         user_ai_settings = await AISettingsModel.objects.aget(label=user.ai_settings_id)
@@ -108,7 +109,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         # save user message
         permitted_files = File.objects.filter(user=user, status=File.Status.complete)
         selected_files = permitted_files.filter(id__in=selected_file_uuids)
-        await self.save_user_message(session, user_message_text, selected_files=selected_files)
+        await self.save_user_message(session, user_message_text, selected_files=selected_files, activities=activities)
 
         await self.llm_conversation(selected_files, session, user, user_message_text, permitted_files)
         await self.close()
@@ -183,6 +184,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         session: Chat,
         user_message_text: str,
         selected_files: Sequence[File] | None = None,
+        activities: Sequence[str] | None = None,
     ) -> ChatMessage:
         chat_message = ChatMessage(
             chat=session,
@@ -195,17 +197,9 @@ class ChatConsumer(AsyncWebsocketConsumer):
             chat_message.selected_files.set(selected_files)
 
         # Save user activities
-        selected_docs_count = len(selected_files)
-        activity_event_docs = ActivityEvent.objects.create(
-            chat_message=chat_message,
-            message=f"You selected {selected_docs_count if selected_docs_count else 'no'} document{'s' if selected_docs_count != 1 else ''}"
-        )
-        activity_event_docs.save()
-        activity_event_prompt = ActivityEvent.objects.create(
-            chat_message=chat_message,
-            message="You sent this prompt"
-        )
-        activity_event_prompt.save()
+        for message in activities:
+            activity = ActivityEvent.objects.create(chat_message=chat_message, message=message)
+            activity.save()
 
         return chat_message
 
