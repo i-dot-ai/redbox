@@ -85,14 +85,17 @@ class AISettings(BaseModel):
 
 class Source(BaseModel):
     source: str = Field(description="URL or reference to the source", default="")
-    source_type: str = Field(description="CreatorType of tool", default="Unknown")
+    source_type: str = Field(description="creator_type of tool", default="Unknown")
     document_name: str = ""
     highlighted_text_in_source: str = ""
     page_numbers: list[int] = Field(description="Page Number in document the highlighted text is on", default=[1])
 
 
 class Citation(BaseModel):
-    text_in_answer: str = ""
+    text_in_answer: str = Field(
+        description="Part of text from `answer` that references sources and matches exactly with the `answer`, without rephrasing or altering the meaning. Partial matches are acceptable as long as they are exact excerpts from the `answer`",
+        default="",
+    )
     sources: list[Source] = Field(default_factory=list)
 
 
