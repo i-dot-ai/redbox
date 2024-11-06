@@ -1,6 +1,5 @@
 import logging
 import re
-from operator import attrgetter, itemgetter
 from typing import Any, Callable, Iterable, Iterator
 
 from langchain_core.callbacks.manager import (
@@ -35,29 +34,6 @@ from redbox.transform import (
 
 log = logging.getLogger()
 re_string_pattern = re.compile(r"(\S+)")
-
-
-def combine_getters(*getters: Callable[[Any], Any]) -> Callable[[Any], Any]:
-    """Permits chaining of *getter functions in LangChain."""
-
-    def _combined(obj):
-        for getter in getters:
-            obj = getter(obj)
-        return obj
-
-    return _combined
-
-
-def itemgetter_with_default(field: str, default_getter: Callable[[Any], Any]):
-    getter = itemgetter(field)
-
-    def _impl(obj):
-        try:
-            return getter(obj)
-        except Exception:
-            return default_getter(obj)
-
-    return _impl
 
 
 def build_chat_prompt_from_messages_runnable(
@@ -116,6 +92,21 @@ def build_chat_prompt_from_messages_runnable(
     return _chat_prompt_from_messages
 
 
+def get_text_or_citations(state: dict):
+    text_and_tools = state["text_and_tools"]
+    if parsed_response := text_and_tools.get("parsed_response"):
+        return parsed_response
+    return text_and_tools["raw_response"].content
+
+
+def get_tool_calls(state: dict):
+    return state["text_and_tools"]["tool_calls"]
+
+
+def get_metadata_response(state: dict):
+    return state["text_and_tools"]["raw_response"].content
+
+
 def build_llm_chain(
     prompt_set: PromptSet,
     llm: BaseChatModel,
@@ -145,31 +136,13 @@ def build_llm_chain(
             "prompt": RunnableLambda(lambda prompt: prompt.to_string()),
         }
         | {
-            "text": RunnableLambda(
-                combine_getters(
-                    itemgetter("text_and_tools"),
-                    itemgetter_with_default(
-                        "parsed_response", combine_getters(itemgetter("raw_response"), attrgetter("content"))
-                    ),
-                )
-            )
-            | (lambda r: r if isinstance(r, str) else r.answer),
-            "tool_calls": combine_getters(itemgetter("text_and_tools"), itemgetter("tool_calls")),
-            "citations": RunnableLambda(
-                combine_getters(
-                    itemgetter("text_and_tools"),
-                    itemgetter_with_default(
-                        "parsed_response", combine_getters(itemgetter("raw_response"), attrgetter("content"))
-                    ),
-                )
-            )
-            | (lambda r: [] if isinstance(r, str) else r.citations),
+            "text": RunnableLambda(get_text_or_citations) | (lambda r: r if isinstance(r, str) else r.answer),
+            "tool_calls": get_tool_calls,
+            "citations": RunnableLambda(get_text_or_citations) | (lambda r: [] if isinstance(r, str) else r.citations),
             "metadata": (
                 {
-                    "prompt": itemgetter("prompt"),
-                    "response": combine_getters(
-                        itemgetter("text_and_tools"), itemgetter("raw_response"), attrgetter("content")
-                    ),
+                    "prompt": lambda s: s["prompt"],
+                    "response": get_metadata_response,
                     "model": lambda _: model_name,
                 }
                 | to_request_metadata
