@@ -1,7 +1,9 @@
+from langchain.chat_models import init_chat_model
 from langchain_core.tools import StructuredTool
 from langchain_core.vectorstores import VectorStoreRetriever
 from langgraph.graph import END, START, StateGraph
 from langgraph.graph.graph import CompiledGraph
+from langgraph.prebuilt import ToolNode
 
 from redbox.chains.components import get_structured_response_with_citations_parser
 from redbox.chains.runnables import build_self_route_output_parser
@@ -246,6 +248,53 @@ def get_agentic_search_graph(tools: dict[str, StructuredTool], debug: bool = Fal
     return builder.compile(debug=debug)
 
 
+def get_react_graph(tools: dict[str, StructuredTool], debug: bool = False) -> CompiledGraph:
+    """Creates a subgraph for ReAct."""
+
+    tool_node = ToolNode(tools.values())
+
+    model_with_tools = (
+        init_chat_model(
+            model="gpt-4o",
+            model_provider="azure_openai",
+        )
+        .bind_tools(tools.values())
+        .with_config(tags=["response_flag"])
+    )
+
+    def should_continue(state: RedboxState):
+        messages = state["messages"]
+        last_message = messages[-1]
+        if last_message.tool_calls:
+            return "tools"
+        return END
+
+    def call_model(state: RedboxState):
+        messages = state["messages"]
+        response = model_with_tools.invoke(messages)
+        return {"messages": [response]}
+
+    workflow = StateGraph(RedboxState)
+
+    workflow.add_node("p_pass_question_to_text", build_passthrough_pattern())
+    workflow.add_node("p_set_chat_docs_route", build_set_route_pattern(route=ChatRoute.react))
+    workflow.add_node("p_report_sources", report_sources_process)
+
+    # Define the two nodes we will cycle between
+    workflow.add_node("agent", call_model)
+    workflow.add_node("tools", tool_node)
+
+    workflow.add_edge(START, "p_pass_question_to_text")
+    workflow.add_edge("p_pass_question_to_text", "p_set_chat_docs_route")
+    workflow.add_edge("p_set_chat_docs_route", "agent")
+
+    workflow.add_conditional_edges("agent", should_continue, ["tools", END])
+    workflow.add_edge("tools", "agent")
+
+    app = workflow.compile(debug=True)
+    return app
+
+
 def get_chat_with_documents_graph(
     all_chunks_retriever: VectorStoreRetriever,
     parameterised_retriever: VectorStoreRetriever,
@@ -442,6 +491,7 @@ def get_root_graph(
         debug=debug,
     )
     metadata_subgraph = get_retrieve_metadata_graph(metadata_retriever=metadata_retriever, debug=debug)
+    react_graph = get_react_graph(tools=tools, debug=debug)
 
     # Processes
     builder.add_node("p_search", rag_subgraph)
@@ -449,6 +499,7 @@ def get_root_graph(
     builder.add_node("p_chat", chat_subgraph)
     builder.add_node("p_chat_with_documents", cwd_subgraph)
     builder.add_node("p_retrieve_metadata", metadata_subgraph)
+    builder.add_node("p_react", react_graph)
 
     # Log
     builder.add_node(
@@ -478,6 +529,7 @@ def get_root_graph(
         {
             ChatRoute.search: "p_search",
             ChatRoute.gadget: "p_search_agentic",
+            ChatRoute.react: "p_react",
             "DEFAULT": "d_docs_selected",
         },
     )
@@ -493,5 +545,6 @@ def get_root_graph(
     builder.add_edge("p_search_agentic", END)
     builder.add_edge("p_chat", END)
     builder.add_edge("p_chat_with_documents", END)
+    builder.add_edge("p_react", END)
 
     return builder.compile(debug=debug)
