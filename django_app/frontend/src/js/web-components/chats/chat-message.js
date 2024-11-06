@@ -106,6 +106,18 @@ export class ChatMessage extends HTMLElement {
   };
 
   /**
+   * Displays an activity above the message
+   * @param {string} message 
+   * @param { "ai" | "user"} type
+   */
+  addActivity = (message, type) => {
+    let activityElement = document.createElement("p");
+    activityElement.classList.add("rb-activity", `rb-activity--${type}`);
+    activityElement.textContent = message;
+    this.insertBefore(activityElement, this.querySelector(".iai-chat-bubble"));
+  };
+
+  /**
    * Streams an LLM response
    * @param {string} message
    * @param {string[]} selectedDocuments
@@ -227,6 +239,8 @@ export class ChatMessage extends HTMLElement {
           plausible("Chat-message-route", { props: { route: response.data } });
           this.plausibleRouteDataSent = true;
         }
+      } else if (response.type === "activity") {
+        this.addActivity(response.data, "ai");
       } else if (response.type === "end") {
         sourcesContainer.showCitations(response.data.message_id);
         feedbackContainer?.showFeedback(response.data.message_id);
