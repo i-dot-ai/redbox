@@ -44,6 +44,9 @@ APPROVED_FILE_EXTENSIONS = [
     ".tsv",
     ".xlsx",
     ".htm",
+    ".jpg",
+    ".png",
+    ".bmp",
 ]
 MAX_FILE_SIZE = 209715200  # 200 MB or 200 * 1024 * 1024
 
