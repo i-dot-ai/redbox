@@ -40,7 +40,7 @@ def build_chat_prompt_from_messages_runnable(
     prompt_set: PromptSet,
     tokeniser: Encoding = None,
     format_instructions: str = "",
-    additional_variables: dict|None = None,
+    additional_variables: dict | None = None,
 ) -> Runnable:
     @chain
     def _chat_prompt_from_messages(state: RedboxState) -> Runnable:
