@@ -3,7 +3,7 @@ import logging
 import re
 from collections.abc import Callable
 from functools import reduce
-from typing import Any
+from typing import Any, Iterable
 from uuid import uuid4
 
 from langchain.schema import StrOutputParser
@@ -13,15 +13,27 @@ from langchain_core.runnables import Runnable, RunnableLambda, RunnableParallel
 from langchain_core.tools import StructuredTool
 from langchain_core.vectorstores import VectorStoreRetriever
 
+from redbox.chains.activity import log_activity
 from redbox.chains.components import get_chat_llm, get_tokeniser
 from redbox.chains.runnables import CannedChatLLM, build_llm_chain
-from redbox.graph.nodes.tools import has_injected_state, is_valid_tool
+from redbox.graph.nodes.tools import get_log_formatter_for_retrieval_tool, has_injected_state, is_valid_tool
 from redbox.models import ChatRoute
-from redbox.models.chain import DocumentState, PromptSet, RedboxState, RequestMetadata, merge_redbox_state_updates
-from redbox.models.graph import ROUTE_NAME_TAG, SOURCE_DOCUMENTS_TAG, RedboxActivityEvent, RedboxEventType
+from redbox.models.chain import (
+    DocumentState,
+    PromptSet,
+    RedboxState,
+    RequestMetadata,
+    merge_redbox_state_updates,
+)
+from redbox.models.graph import (
+    ROUTE_NAME_TAG,
+    SOURCE_DOCUMENTS_TAG,
+    RedboxActivityEvent,
+    RedboxEventType,
+)
 from redbox.transform import combine_documents, flatten_document_state
 
-log = logging.getLogger()
+log = logging.getLogger(__name__)
 re_keyword_pattern = re.compile(r"@(\w+)")
 
 
@@ -100,7 +112,7 @@ def build_merge_pattern(
 
         merge_state = RedboxState(
             request=state["request"],
-            documents={merged_document.metadata["file_name"]: {merged_document.metadata["uuid"]: merged_document}},
+            documents={merged_document.metadata["uri"]: {merged_document.metadata["uuid"]: merged_document}},
         )
 
         merge_response = build_llm_chain(
@@ -131,6 +143,7 @@ def build_merge_pattern(
 def build_stuff_pattern(
     prompt_set: PromptSet,
     output_parser: Runnable = None,
+    format_instructions: str | None = None,
     tools: list[StructuredTool] | None = None,
     final_response_chain: bool = False,
 ) -> Runnable[RedboxState, dict[str, Any]]:
@@ -149,6 +162,7 @@ def build_stuff_pattern(
                 prompt_set=prompt_set,
                 llm=llm,
                 output_parser=output_parser,
+                format_instructions=format_instructions,
                 final_response_chain=final_response_chain,
             ).stream(state)
         ]
@@ -247,7 +261,7 @@ def build_error_pattern(text: str, route_name: str | None) -> Runnable[RedboxSta
 
 def build_tool_pattern(
     tools=list[StructuredTool], final_source_chain: bool = False
-) -> Callable[[RedboxState], dict[str, Any]]:
+) -> Runnable[RedboxState, dict[str, Any]]:
     """Builds a process that takes state["tool_calls"] and returns state updates.
 
     The state attributes affected are defined in the tool.
@@ -260,6 +274,7 @@ def build_tool_pattern(
             raise ValueError(msg)
         tools_by_name[tool.name] = tool
 
+    @RunnableLambda
     def _tool(state: RedboxState) -> dict[str, Any]:
         state_updates: list[dict] = []
 
@@ -280,14 +295,18 @@ def build_tool_pattern(
 
                 # Deal with InjectedState
                 args = tool_call["args"].copy()
+                log.info(f"Invoking tool {tool_call['name']} with args {args}")
                 if has_injected_state(tool):
                     args["state"] = state
-
-                log.info(f"Invoking tool {tool_call['name']} with args {args}")
 
                 # Invoke the tool
                 try:
                     result_state_update = tool.invoke(args) or {}
+                    log_activity(
+                        get_log_formatter_for_retrieval_tool(tool_call).log_result(
+                            flatten_document_state(result_state_update.get("documents"))
+                        )
+                    )
                     tool_called_state_update = {"tool_calls": {tool_id: {"called": True, "tool": tool_call}}}
                     state_updates.append(result_state_update | tool_called_state_update)
                 except Exception as e:
@@ -314,7 +333,9 @@ def clear_documents_process(state: RedboxState) -> dict[str, Any]:
 
 def report_sources_process(state: RedboxState) -> None:
     """A Runnable which reports the documents in the state as sources."""
-    if document_state := state.get("documents"):
+    if citations_state := state.get("citations"):
+        dispatch_custom_event(RedboxEventType.on_citations_report, citations_state)
+    elif document_state := state.get("documents"):
         dispatch_custom_event(RedboxEventType.on_source_report, flatten_document_state(document_state))
 
 
@@ -335,7 +356,7 @@ def build_log_node(message: str) -> Runnable[RedboxState, dict[str, Any]]:
                         group_id: {doc_id: d.metadata for doc_id, d in group_documents.items()}
                         for group_id, group_documents in state["documents"]
                     },
-                    "text": state["text"] if len(state["text"]) < 32 else f"{state['text'][:29]}...",
+                    "text": (state["text"] if len(state["text"]) < 32 else f"{state['text'][:29]}..."),
                     "route": state["route_name"],
                     "message": message,
                 }
@@ -346,11 +367,26 @@ def build_log_node(message: str) -> Runnable[RedboxState, dict[str, Any]]:
     return _log_node
 
 
-def build_activity_log_node(log_message: RedboxActivityEvent | Callable[[RedboxState], RedboxActivityEvent]):
+def build_activity_log_node(
+    log_message: RedboxActivityEvent
+    | Callable[[RedboxState], Iterable[RedboxActivityEvent]]
+    | Callable[[RedboxState], Iterable[RedboxActivityEvent]],
+):
+    """
+    A Runnable which emits activity events based on the state. The message should either be a static message to log, or a function which returns an activity event or an iterator of them
+    """
+
     @RunnableLambda
     def _activity_log_node(state: RedboxState):
-        _message = log_message if isinstance(log_message, RedboxActivityEvent) else log_message(state)
-        dispatch_custom_event(RedboxEventType.activity, _message)
+        if isinstance(log_message, RedboxActivityEvent):
+            log_activity(log_message)
+        else:
+            response = log_message(state)
+            if isinstance(response, RedboxActivityEvent):
+                log_activity(response)
+            else:
+                for message in response:
+                    log_activity(message)
         return None
 
     return _activity_log_node

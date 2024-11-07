@@ -9,7 +9,7 @@ env = Settings()
 
 def ingest(file_id: UUID, es_index: str | None = None) -> None:
     # These models need to be loaded at runtime otherwise they can be loaded before they exist
-    from redbox_app.redbox_core.models import File, StatusEnum
+    from redbox_app.redbox_core.models import File
 
     if not es_index:
         es_index = env.elastic_chunk_alias
@@ -19,9 +19,9 @@ def ingest(file_id: UUID, es_index: str | None = None) -> None:
     logging.info("Ingesting file: %s", file)
 
     if error := ingest_file(file.unique_name, es_index):
-        file.status = StatusEnum.errored
+        file.status = File.Status.errored
         file.ingest_error = error
     else:
-        file.status = StatusEnum.complete
+        file.status = File.Status.complete
 
     file.save()

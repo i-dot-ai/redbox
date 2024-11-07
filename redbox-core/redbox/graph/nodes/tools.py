@@ -1,14 +1,27 @@
-from typing import Annotated, Any, get_args, get_origin, get_type_hints
+from typing import Annotated, Any, Iterable, get_args, get_origin, get_type_hints
 
+import requests
+import tiktoken
 from elasticsearch import Elasticsearch
+from langchain_community.utilities import WikipediaAPIWrapper
+from langchain_core.documents import Document
 from langchain_core.embeddings.embeddings import Embeddings
 from langchain_core.tools import StructuredTool, Tool, tool
+from langchain_core.messages import ToolCall
 from langgraph.prebuilt import InjectedState
 
-from redbox.models.file import ChunkResolution
-from redbox.retriever.queries import add_document_filter_scores_to_query, build_document_query
+from redbox.models.chain import RedboxState
+from redbox.models.file import ChunkCreatorType, ChunkMetadata, ChunkResolution
+from redbox.retriever.queries import (
+    add_document_filter_scores_to_query,
+    build_document_query,
+)
 from redbox.retriever.retrievers import query_to_documents
-from redbox.transform import merge_documents, sort_documents, structure_documents_by_group_and_indices
+from redbox.transform import (
+    merge_documents,
+    sort_documents,
+    structure_documents_by_group_and_indices,
+)
 
 
 def is_valid_tool(tool: StructuredTool) -> bool:
@@ -67,7 +80,7 @@ def build_search_documents_tool(
     """Constructs a tool that searches the index and sets state["documents"]."""
 
     @tool
-    def _search_documents(query: str, state: Annotated[dict, InjectedState]) -> dict[str, Any]:
+    def _search_documents(query: str, state: Annotated[RedboxState, InjectedState]) -> dict[str, Any]:
         """
         Search for documents uploaded by the user based on a query string.
 
@@ -120,3 +133,156 @@ def build_search_documents_tool(
         return {"documents": structure_documents_by_group_and_indices(sorted_documents)}
 
     return _search_documents
+
+
+def build_govuk_search_tool(num_results: int = 1) -> Tool:
+    """Constructs a tool that searches gov.uk and sets state["documents"]."""
+
+    tokeniser = tiktoken.encoding_for_model("gpt-4o")
+
+    @tool
+    def _search_govuk(query: str, state: Annotated[dict, InjectedState]) -> dict[str, Any]:
+        """
+        Search for documents on gov.uk based on a query string.
+        This endpoint is used to search for documents on gov.uk. There are many types of documents on gov.uk.
+        Types include:
+        - guidance
+        - policy
+        - legislation
+        - news
+        - travel advice
+        - departmental reports
+        - statistics
+        - consultations
+        - appeals
+        """
+
+        url_base = "https://www.gov.uk"
+        required_fields = [
+            "format",
+            "title",
+            "description",
+            "indexable_content",
+            "link",
+        ]
+
+        response = requests.get(
+            f"{url_base}/api/search.json",
+            params={
+                "q": query,
+                "count": num_results,
+                "fields": required_fields,
+            },
+            headers={"Accept": "application/json"},
+        )
+        response.raise_for_status()
+        response = response.json()
+
+        mapped_documents = []
+        for i, doc in enumerate(response["results"]):
+            if any(field not in doc for field in required_fields):
+                continue
+
+            mapped_documents.append(
+                Document(
+                    page_content=doc["indexable_content"],
+                    metadata=ChunkMetadata(
+                        index=i,
+                        uri=f"{url_base}{doc['link']}",
+                        token_count=len(tokeniser.encode(doc["indexable_content"])),
+                        creator_type=ChunkCreatorType.gov_uk,
+                    ).model_dump(),
+                )
+            )
+
+        return {"documents": structure_documents_by_group_and_indices(mapped_documents)}
+
+    return _search_govuk
+
+
+def build_search_wikipedia_tool(number_wikipedia_results=1, max_chars_per_wiki_page=12000) -> Tool:
+    """Constructs a tool that searches Wikipedia"""
+    _wikipedia_wrapper = WikipediaAPIWrapper(
+        top_k_results=number_wikipedia_results,
+        doc_content_chars_max=max_chars_per_wiki_page,
+    )
+    tokeniser = tiktoken.encoding_for_model("gpt-4o")
+
+    @tool
+    def _search_wikipedia(query: str, state: Annotated[RedboxState, InjectedState]) -> dict[str, Any]:
+        """
+        Search Wikipedia for information about the queried entity.
+        Useful for when you need to answer general questions about people, places, objects, companies, facts, historical events, or other subjects.
+        Input should be a search query.
+
+        Args:
+            query (str): The search query string used to find pages.
+                This could be a keyword, phrase, or name
+
+        Returns:
+            response (str): The content of the relevant Wikipedia page
+        """
+        response = _wikipedia_wrapper.load(query)
+        mapped_documents = [
+            Document(
+                page_content=doc.page_content,
+                metadata=ChunkMetadata(
+                    index=i,
+                    uri=doc.metadata["source"],
+                    token_count=len(tokeniser.encode(doc.page_content)),
+                    creator_type=ChunkCreatorType.wikipedia,
+                ).model_dump(),
+            )
+            for i, doc in enumerate(response)
+        ]
+        return {"documents": structure_documents_by_group_and_indices(mapped_documents)}
+
+    return _search_wikipedia
+
+
+class BaseRetrievalToolLogFormatter:
+    def __init__(self, t: ToolCall) -> None:
+        self.tool_call = t
+
+    def log_call(self, tool_call: ToolCall):
+        return f"Used {tool_call["name"]} to get more information"
+
+    def log_result(self, documents: Iterable[Document]):
+        if len(documents) == 0:
+            return f"{self.tool_call["name"]} returned no documents"
+        return f"Reading {documents[1].get("creator_type")} document{"s" if len(documents)>1 else ""} {','.join(set([d.metadata["uri"].split("/")[-1] for d in documents]))}"
+
+
+class SearchWikipediaLogFormatter(BaseRetrievalToolLogFormatter):
+    def log_call(self):
+        return f"Searching Wikipedia for '{self.tool_call["args"]["query"]}'"
+
+    def log_result(self, documents: Iterable[Document]):
+        return f"Reading Wikipedia page{"s" if len(documents)>1 else ""} {','.join(set([d.metadata["uri"].split("/")[-1] for d in documents]))}"
+
+
+class SearchDocumentsLogFormatter(BaseRetrievalToolLogFormatter):
+    def log_call(self):
+        return f"Searching your documents for '{self.tool_call["args"]["query"]}'"
+
+    def log_result(self, documents: Iterable[Document]):
+        return f"Reading {len(documents)} snippets from your documents {','.join(set([d.metadata["name"] for d in documents]))}"
+
+
+class SearchGovUKLogFormatter(BaseRetrievalToolLogFormatter):
+    def log_call(self):
+        return f"Searching .gov.uk pages for '{self.tool_call["args"]["query"]}'"
+
+    def log_result(self, documents: Iterable[Document]):
+        return f"Reading pages from .gov.uk, {','.join(set([d.metadata["uri"].split("/")[-1] for d in documents]))}"
+
+
+__RETRIEVEAL_TOOL_MESSAGE_FORMATTERS = {
+    "_search_wikipedia": SearchWikipediaLogFormatter,
+    "_search_documents": SearchDocumentsLogFormatter,
+    "_search_govuk": SearchGovUKLogFormatter,
+}
+
+
+def get_log_formatter_for_retrieval_tool(t: ToolCall) -> BaseRetrievalToolLogFormatter:
+    return __RETRIEVEAL_TOOL_MESSAGE_FORMATTERS.get(t["name"], BaseRetrievalToolLogFormatter)(t)

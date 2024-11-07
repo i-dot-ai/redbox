@@ -1,19 +1,19 @@
-import json
 import logging
 from collections.abc import Iterator
 from datetime import UTC, datetime
 from io import BytesIO
-from typing import TYPE_CHECKING, Any
-
+from typing import TYPE_CHECKING
+from langchain_core.output_parsers import PydanticOutputParser
+from langchain_core.prompts import PromptTemplate
 import requests
 import tiktoken
 from langchain_core.documents import Document
-from langchain_core.output_parsers import JsonOutputParser
-from langchain_core.prompts import ChatPromptTemplate
+
 
 from redbox.chains.components import get_chat_llm
-from redbox.models.file import ChunkMetadata, ChunkResolution
+from redbox.models.file import ChunkResolution, UploadedFileMetadata
 from redbox.models.settings import Settings
+from redbox.models.chain import GeneratedMetadata
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger()
@@ -27,70 +27,16 @@ else:
 
 
 class MetadataLoader:
-    def __init__(self, env: Settings, s3_client: S3Client, file_name: str, metadata: dict = None):
+    def __init__(self, env: Settings, s3_client: S3Client, file_name: str):
         self.env = env
         self.s3_client = s3_client
         self.llm = get_chat_llm(env.metadata_extraction_llm)
         self.file_name = file_name
-        self.metadata = metadata
-        self.required_keys = ["name", "description", "keywords"]
-        self.default_metadata = {"name": "", "description": "", "keywords": ""}
-
-    def get_first_n_tokens(self, chunks: list[dict], n: int) -> str:
-        """From a list of chunks, returns the first n tokens."""
-        current_tokens = 0
-        tokens = ""
-        for chunk in chunks:
-            current_tokens += len(encoding.encode(chunk["text"]))
-            if current_tokens > n:
-                return tokens
-            tokens += chunk["text"]
-        return tokens
-
-    def get_doc_metadata(self, chunks: list[dict], n: int, ignore: list[str] = None) -> dict[str, Any]:
-        """
-        Use the first n chunks to get metadata using unstructured.
-        Metadata keys in the ignore list will be excluded from the result.
-        """
-        metadata = {}
-        for i, chunk in enumerate(chunks):
-            if i > n:
-                return metadata
-            metadata = self.merge_unstructured_metadata(metadata, chunk["metadata"], ignore)
-        return metadata
-
-    @staticmethod
-    def merge_unstructured_metadata(x: dict, y: dict, ignore: set[str] = None) -> dict:
-        """
-        Combine 2 dicts without deleting any elements. If the key is present in both,
-        combine values into a list. If value is in a list, extend with unique values.
-        Keys in the ignore list will be excluded from the result.
-        """
-        if ignore is None:
-            ignore = []
-
-        combined = {}
-
-        for key in set(x) | set(y):
-            if key in ignore:
-                continue
-
-            if key in x and key in y:
-                if isinstance(x[key], list) or isinstance(y[key], list):
-                    combined[key] = list(set(x[key] + (y[key] if isinstance(y[key], list) else [y[key]])))
-                else:
-                    combined[key] = [x[key], y[key]]
-            elif key in x:
-                combined[key] = x[key]
-            else:
-                combined[key] = y[key]
-
-        return combined
 
     def _get_file_bytes(self, s3_client: S3Client, file_name: str) -> BytesIO:
         return s3_client.get_object(Bucket=self.env.bucket_name, Key=file_name)["Body"].read()
 
-    def _chunking(self) -> Any:
+    def _chunking(self) -> list[dict]:
         """
         Chunking data using local unstructured
         """
@@ -115,77 +61,52 @@ class MetadataLoader:
         if response.status_code != 200:
             raise ValueError(response.text)
 
-        return response.json()
+        return response.json() or []
 
-    def extract_metadata(self):
+    def extract_metadata(self) -> dict:
         """
         Extract metadata from first 1_000 chunks
         """
 
-        elements = self._chunking()
-        if not elements:
-            self.metadata = self.default_metadata
+        chunks = self._chunking()
+        original_metadata = chunks[0]["metadata"] if chunks else {}
+        first_thousand_words = "".join(chunk["text"] for chunk in chunks)[:10_000]
 
-        else:
-            # Get first 1k tokens of processed document
-            first_n = self.get_first_n_tokens(elements, 1_000)
+        metadata = self.create_file_metadata(first_thousand_words, original_metadata=original_metadata)
+        return metadata
 
-            # Get whatever metadata we can from processed document
-            doc_metadata = self.get_doc_metadata(chunks=elements, n=3, ignore=None)
-
-            # Generate new metadata
-            res = self.create_file_metadata(first_n, doc_metadata)
-            if not res:
-                self.metadata = self.default_metadata
-                logger.warning("LLM failed to extract metadata for this file")
-            else:
-                if all(key in res.keys() for key in self.required_keys):
-                    self.metadata = res
-                else:
-                    # missing keys
-                    self.metadata = self.default_metadata
-
-    def create_file_metadata(self, page_content: str, metadata: dict[str, Any]) -> dict[str, Any]:
+    def create_file_metadata(self, page_content: str, original_metadata: dict | None = None) -> GeneratedMetadata:
         """Uses a sample of the document and any extracted metadata to generate further metadata."""
-        metadata_chain = (
-            ChatPromptTemplate.from_messages(
-                [
-                    self.env.metadata_prompt,
-                    (
-                        "user",
-                        (
-                            "<metadata>\n"
-                            "{metadata}\n"
-                            "</metadata>\n\n"
-                            "<document_sample>\n"
-                            "{page_content}"
-                            "</document_sample>"
-                        ),
-                    ),
-                ]
-            )
-            | self.llm
-            | JsonOutputParser()
+        if not original_metadata:
+            original_metadata = {}
+
+        def trim(obj, max_length=1000):
+            """original_metadata can be very long as it includes the original text"""
+            if isinstance(obj, dict):
+                return {k: trim(v, max_length) for k, v in obj.items()}
+            if isinstance(obj, list):
+                return [trim(v, max_length) for v in obj]
+            if isinstance(obj, str):
+                return obj[:max_length]
+            return obj
+
+        original_metadata = trim(original_metadata)
+
+        parser = PydanticOutputParser(pydantic_object=GeneratedMetadata)
+        metadata_prompt = PromptTemplate(
+            template="".join(self.env.metadata_prompt)
+            + "\n\n{format_instructions}\n\n{page_content}\n\n{original_metadata}",
+            input_variables=["page_content"],
+            partial_variables={
+                "format_instructions": parser.get_format_instructions(),
+                "original_metadata": original_metadata,
+            },
         )
+        metadata_chain = metadata_prompt | self.llm
 
-        try:
-            return metadata_chain.invoke({"page_content": page_content, "metadata": metadata})
-        except ConnectionError as e:
-            logger.warning(f"Retrying due to HTTPError {e}")
-        except json.JSONDecodeError:
-            # replace with fail safe metadata
-            return None
-        except Exception as e:
-            raise Exception(f"Some error happened in metadata extraction. {e}")
+        output = metadata_chain.invoke({"page_content": page_content})
 
-
-def coerce_to_string_list(input_data: str | list[Any]) -> list[str]:
-    if isinstance(input_data, str):
-        return [item.strip() for item in input_data.split(",")]
-    elif isinstance(input_data, list):
-        return [str(i) for i in input_data]
-    else:
-        raise ValueError("Input must be either a list or a string.")
+        return parser.invoke(output)
 
 
 class UnstructuredChunkLoader:
@@ -246,15 +167,15 @@ class UnstructuredChunkLoader:
         for i, raw_chunk in enumerate(elements):
             yield Document(
                 page_content=raw_chunk["text"],
-                metadata=ChunkMetadata(
+                metadata=UploadedFileMetadata(
                     index=i,
-                    file_name=raw_chunk["metadata"].get("filename"),
+                    uri=file_name,
                     page_number=raw_chunk["metadata"].get("page_number"),
                     created_datetime=datetime.now(UTC),
                     token_count=len(encoding.encode(raw_chunk["text"])),
                     chunk_resolution=self.chunk_resolution,
-                    name=self.metadata.get("name", file_name),
-                    description=self.metadata.get("description", "None"),
-                    keywords=coerce_to_string_list(self.metadata.get("keywords", [])),
+                    name=self.metadata.name,
+                    description=self.metadata.description,
+                    keywords=self.metadata.keywords,
                 ).model_dump(),
             )

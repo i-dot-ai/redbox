@@ -12,7 +12,6 @@ from django.urls import reverse
 from redbox_app.redbox_core.models import (
     Chat,
     ChatMessage,
-    ChatRoleEnum,
     Citation,
     File,
 )
@@ -23,33 +22,31 @@ logger = logging.getLogger(__name__)
 
 
 @pytest.mark.django_db()
-def test_citations_shown_in_correct_order(client: Client, alice: User, chat: Chat, several_files: Sequence[File]):
+def test_citations_shown(client: Client, alice: User, chat: Chat, several_files: Sequence[File]):
     # Given
     client.force_login(alice)
-    chat_message = ChatMessage.objects.create(chat=chat, text="Some answer.", role=ChatRoleEnum.ai)
+    chat_message = ChatMessage.objects.create(chat=chat, text="Some answer.", role=ChatMessage.Role.ai)
 
-    Citation.objects.create(file=several_files[1], chat_message=chat_message, text="Citation 1")
-    Citation.objects.create(file=several_files[0], chat_message=chat_message, text="Citation 2")
-    Citation.objects.create(file=several_files[1], chat_message=chat_message, text="Citation 3")
-    Citation.objects.create(file=several_files[2], chat_message=chat_message, text="Citation 4")
-    Citation.objects.create(file=several_files[0], chat_message=chat_message, text="Citation 5")
+    Citation.objects.create(file=several_files[0], chat_message=chat_message, text="Citation 1")
+    Citation.objects.create(file=several_files[1], chat_message=chat_message, text="Citation 2")
+    Citation.objects.create(
+        source=Citation.Origin.WIKIPEDIA, url="https://wikipedia-test", chat_message=chat_message, text="Citation 3"
+    )
 
     # When
     response = client.get(f"/citations/{chat_message.id}/")
 
     # Then
     assert response.status_code == HTTPStatus.OK
-    soup = BeautifulSoup(response.content)
-    sources_panel = soup.select("div.iai-panel")[1]
+    soup = BeautifulSoup(response.content, features="html.parser")
+    sources_panel = soup.select("ul.rb-citations__list")[0]
     files = sources_panel.find_all("h3")
+    citation_items = sources_panel.find_all("markdown-converter")
     filenames = [h3.get_text().strip() for h3 in files]
-    citations = [
-        [li.get_text().strip() for li in citations.find_all(class_="rb-citations__item")]
-        for citations in [h3.next_sibling.next_sibling for h3 in files]
-    ]
+    citations = [element.get_text().strip() for element in citation_items]
 
-    assert filenames == ["original_file_1.txt", "original_file_0.txt", "original_file_2.txt"]
-    assert citations == [["Citation 1", "Citation 3"], ["Citation 2", "Citation 5"], ["Citation 4"]]
+    assert filenames == ["original_file_0.txt", "original_file_1.txt", "https://wikipedia-test"]
+    assert citations == ["Citation 1", "Citation 2", "Citation 3"]
 
 
 @pytest.mark.django_db()

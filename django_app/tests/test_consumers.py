@@ -27,9 +27,7 @@ from redbox_app.redbox_core.models import (
     Chat,
     ChatMessage,
     ChatMessageTokenUse,
-    ChatRoleEnum,
     File,
-    StatusEnum,
 )
 
 User = get_user_model()
@@ -81,23 +79,23 @@ async def test_chat_consumer_with_new_session(alice: User, uploaded_file: File, 
         assert response4["type"] == "route"
         assert response4["data"] == "gratitude"
         assert response5["type"] == "source"
-        assert response5["data"]["original_file_name"] == uploaded_file.original_file_name
+        assert response5["data"]["file_name"] == uploaded_file.file_name
         # Close
         await communicator.disconnect()
 
-    assert await get_chat_message_text(alice, ChatRoleEnum.user) == ["Hello Hal."]
-    assert await get_chat_message_text(alice, ChatRoleEnum.ai) == ["Good afternoon, Mr. Amor."]
-    assert await get_chat_message_route(alice, ChatRoleEnum.ai) == ["gratitude"]
+    assert await get_chat_message_text(alice, ChatMessage.Role.user) == ["Hello Hal."]
+    assert await get_chat_message_text(alice, ChatMessage.Role.ai) == ["Good afternoon, Mr. Amor."]
+    assert await get_chat_message_route(alice, ChatMessage.Role.ai) == ["gratitude"]
 
     expected_citations = {("Good afternoon Mr Amor", ()), ("Good afternoon Mr Amor", (34, 35))}
-    assert await get_chat_message_citation_set(alice, ChatRoleEnum.ai) == expected_citations
+    assert await get_chat_message_citation_set(alice, ChatMessage.Role.ai) == expected_citations
     await refresh_from_db(uploaded_file)
     assert uploaded_file.last_referenced.date() == datetime.now(tz=UTC).date()
 
-    assert await get_token_use_model(ChatMessageTokenUse.UseTypeEnum.INPUT) == "gpt-4o"
-    assert await get_token_use_model(ChatMessageTokenUse.UseTypeEnum.OUTPUT) == "gpt-4o"
-    assert await get_token_use_count(ChatMessageTokenUse.UseTypeEnum.INPUT) == 123
-    assert await get_token_use_count(ChatMessageTokenUse.UseTypeEnum.OUTPUT) == 1000
+    assert await get_token_use_model(ChatMessageTokenUse.UseType.INPUT) == "gpt-4o"
+    assert await get_token_use_model(ChatMessageTokenUse.UseType.OUTPUT) == "gpt-4o"
+    assert await get_token_use_count(ChatMessageTokenUse.UseType.INPUT) == 123
+    assert await get_token_use_count(ChatMessageTokenUse.UseType.OUTPUT) == 1000
     assert await get_activity_model() == "fish and chips"
 
 
@@ -131,7 +129,7 @@ async def test_chat_consumer_staff_user(staff_user: User, mocked_connect: Connec
         # Close
         await communicator.disconnect()
 
-    assert await get_chat_message_route(staff_user, ChatRoleEnum.ai) == ["gratitude"]
+    assert await get_chat_message_route(staff_user, ChatMessage.Role.ai) == ["gratitude"]
 
 
 @pytest.mark.django_db(transaction=True)
@@ -156,8 +154,8 @@ async def test_chat_consumer_with_existing_session(alice: User, chat: Chat, mock
         # Close
         await communicator.disconnect()
 
-    assert await get_chat_message_text(alice, ChatRoleEnum.user) == ["Hello Hal."]
-    assert await get_chat_message_text(alice, ChatRoleEnum.ai) == ["Good afternoon, Mr. Amor."]
+    assert await get_chat_message_text(alice, ChatMessage.Role.user) == ["Hello Hal."]
+    assert await get_chat_message_text(alice, ChatMessage.Role.ai) == ["Good afternoon, Mr. Amor."]
 
 
 @pytest.mark.django_db(transaction=True)
@@ -188,13 +186,13 @@ async def test_chat_consumer_with_naughty_question(alice: User, uploaded_file: F
         assert response4["type"] == "route"
         assert response4["data"] == "gratitude"
         assert response5["type"] == "source"
-        assert response5["data"]["original_file_name"] == uploaded_file.original_file_name
+        assert response5["data"]["file_name"] == uploaded_file.file_name
         # Close
         await communicator.disconnect()
 
-    assert await get_chat_message_text(alice, ChatRoleEnum.user) == ["Hello Hal. \ufffd"]
-    assert await get_chat_message_text(alice, ChatRoleEnum.ai) == ["Good afternoon, Mr. Amor."]
-    assert await get_chat_message_route(alice, ChatRoleEnum.ai) == ["gratitude"]
+    assert await get_chat_message_text(alice, ChatMessage.Role.user) == ["Hello Hal. \ufffd"]
+    assert await get_chat_message_text(alice, ChatMessage.Role.ai) == ["Good afternoon, Mr. Amor."]
+    assert await get_chat_message_route(alice, ChatMessage.Role.ai) == ["gratitude"]
     await refresh_from_db(uploaded_file)
     assert uploaded_file.last_referenced.date() == datetime.now(tz=UTC).date()
 
@@ -226,24 +224,70 @@ async def test_chat_consumer_with_naughty_citation(
         assert response3["type"] == "route"
         assert response3["data"] == "gratitude"
         assert response4["type"] == "source"
-        assert response4["data"]["original_file_name"] == uploaded_file.original_file_name
+        assert response4["data"]["file_name"] == uploaded_file.file_name
         # Close
         await communicator.disconnect()
 
-    assert await get_chat_message_text(alice, ChatRoleEnum.user) == ["Hello Hal."]
-    assert await get_chat_message_text(alice, ChatRoleEnum.ai) == ["Good afternoon, Mr. Amor."]
-    assert await get_chat_message_route(alice, ChatRoleEnum.ai) == ["gratitude"]
+    assert await get_chat_message_text(alice, ChatMessage.Role.user) == ["Hello Hal."]
+    assert await get_chat_message_text(alice, ChatMessage.Role.ai) == ["Good afternoon, Mr. Amor."]
+    assert await get_chat_message_route(alice, ChatMessage.Role.ai) == ["gratitude"]
     await refresh_from_db(uploaded_file)
     assert uploaded_file.last_referenced.date() == datetime.now(tz=UTC).date()
 
 
+@pytest.mark.django_db(transaction=True)
+@pytest.mark.asyncio()
+async def test_chat_consumer_agentic(alice: User, uploaded_file: File, mocked_connect_agentic_search: Connect):
+    # Given
+
+    # When
+    with patch("redbox_app.redbox_core.consumers.ChatConsumer.redbox.graph", new=mocked_connect_agentic_search):
+        communicator = WebsocketCommunicator(ChatConsumer.as_asgi(), "/ws/chat/")
+        communicator.scope["user"] = alice
+        connected, _ = await communicator.connect()
+        assert connected
+
+        await communicator.send_json_to({"message": "Hello Hal."})
+        response1 = await communicator.receive_json_from(timeout=5)
+        response2 = await communicator.receive_json_from(timeout=5)
+        response3 = await communicator.receive_json_from(timeout=5)
+        response4 = await communicator.receive_json_from(timeout=5)
+        response5 = await communicator.receive_json_from(timeout=5)
+
+        # Then
+        assert response1["type"] == "session-id"
+        assert response2["type"] == "text"
+        assert response2["data"] == "Good afternoon, "
+        assert response3["type"] == "text"
+        assert response3["data"] == "Mr. Amor."
+        assert response4["type"] == "route"
+        assert response4["data"] == "search/agentic"
+        assert response5["type"] == "source"
+        assert response5["data"]["file_name"] == uploaded_file.file_name
+        # Close
+        await communicator.disconnect()
+
+    assert await get_chat_message_text(alice, ChatMessage.Role.user) == ["Hello Hal."]
+    assert await get_chat_message_text(alice, ChatMessage.Role.ai) == ["Good afternoon, Mr. Amor."]
+
+    expected_citations = {("Good afternoon Mr Amor", ()), ("Good afternoon Mr Amor", (34, 35))}
+    assert await get_chat_message_citation_set(alice, ChatMessage.Role.ai) == expected_citations
+    await refresh_from_db(uploaded_file)
+    assert uploaded_file.last_referenced.date() == datetime.now(tz=UTC).date()
+
+    assert await get_token_use_model(ChatMessageTokenUse.UseType.INPUT) == "gpt-4o"
+    assert await get_token_use_model(ChatMessageTokenUse.UseType.OUTPUT) == "gpt-4o"
+    assert await get_token_use_count(ChatMessageTokenUse.UseType.INPUT) == 123
+    assert await get_token_use_count(ChatMessageTokenUse.UseType.OUTPUT) == 1000
+
+
 @database_sync_to_async
-def get_chat_message_text(user: User, role: ChatRoleEnum) -> Sequence[str]:
+def get_chat_message_text(user: User, role: ChatMessage.Role) -> Sequence[str]:
     return [m.text for m in ChatMessage.objects.filter(chat__user=user, role=role)]
 
 
 @database_sync_to_async
-def get_chat_message_citation_set(user: User, role: ChatRoleEnum) -> Sequence[tuple[str, tuple[int]]]:
+def get_chat_message_citation_set(user: User, role: ChatMessage.Role) -> Sequence[tuple[str, tuple[int]]]:
     return {
         (citation.text, tuple(citation.page_numbers or []))
         for message in ChatMessage.objects.filter(chat__user=user, role=role)
@@ -253,7 +297,7 @@ def get_chat_message_citation_set(user: User, role: ChatRoleEnum) -> Sequence[tu
 
 
 @database_sync_to_async
-def get_chat_message_route(user: User, role: ChatRoleEnum) -> Sequence[str]:
+def get_chat_message_route(user: User, role: ChatMessage.Role) -> Sequence[str]:
     return [m.route for m in ChatMessage.objects.filter(chat__user=user, role=role)]
 
 
@@ -276,7 +320,7 @@ async def test_chat_consumer_with_selected_files(
         connected, _ = await communicator.connect()
         assert connected
 
-        selected_file_core_uuids: Sequence[str] = [f.s3_key for f in selected_files]
+        selected_file_core_uuids: Sequence[str] = [f.unique_name for f in selected_files]
         await communicator.send_json_to(
             {
                 "message": "Third question, with selected files?",
@@ -318,7 +362,7 @@ async def test_chat_consumer_with_selected_files(
     # TODO (@brunns): Assert selected files saved to model.
     # Requires fix for https://github.com/django/channels/issues/1091
     all_messages = get_chat_messages(alice)
-    last_user_message = [m for m in all_messages if m.rule == ChatRoleEnum.user][-1]
+    last_user_message = [m for m in all_messages if m.rule == ChatMessage.Role.user][-1]
     assert last_user_message.selected_files == selected_files
 
 
@@ -477,7 +521,7 @@ async def test_chat_consumer_redbox_state(
         selected_file_uuids: Sequence[str] = [str(f.id) for f in selected_files]
         selected_file_keys: Sequence[str] = [f.unique_name for f in selected_files]
         permitted_file_keys: Sequence[str] = [
-            f.unique_name async for f in File.objects.filter(user=alice, status=StatusEnum.complete)
+            f.unique_name async for f in File.objects.filter(user=alice, status=File.Status.complete)
         ]
         assert selected_file_keys != permitted_file_keys
 
@@ -568,7 +612,10 @@ def mocked_connect(uploaded_file: File) -> Connect:
             "tags": [SOURCE_DOCUMENTS_TAG],
             "data": {
                 "output": [
-                    Document(metadata={"file_name": uploaded_file.unique_name}, page_content="Good afternoon Mr Amor")
+                    Document(
+                        metadata={"uri": uploaded_file.unique_name},
+                        page_content="Good afternoon Mr Amor",
+                    )
                 ]
             },
         },
@@ -577,9 +624,12 @@ def mocked_connect(uploaded_file: File) -> Connect:
             "tags": [SOURCE_DOCUMENTS_TAG],
             "data": {
                 "output": [
-                    Document(metadata={"file_name": uploaded_file.unique_name}, page_content="Good afternoon Mr Amor"),
                     Document(
-                        metadata={"file_name": uploaded_file.unique_name, "page_number": [34, 35]},
+                        metadata={"uri": uploaded_file.unique_name},
+                        page_content="Good afternoon Mr Amor",
+                    ),
+                    Document(
+                        metadata={"uri": uploaded_file.unique_name, "page_number": [34, 35]},
                         page_content="Good afternoon Mr Amor",
                     ),
                 ]
@@ -620,8 +670,14 @@ def mocked_connect_with_naughty_citation(uploaded_file: File) -> CannedGraphLLM:
             "tags": [SOURCE_DOCUMENTS_TAG],
             "data": {
                 "output": [
-                    Document(metadata={"file_name": uploaded_file.unique_name}, page_content="Good afternoon Mr Amor"),
-                    Document(metadata={"file_name": uploaded_file.unique_name}, page_content="I shouldn't send a \x00"),
+                    Document(
+                        metadata={"uri": uploaded_file.unique_name},
+                        page_content="Good afternoon Mr Amor",
+                    ),
+                    Document(
+                        metadata={"uri": uploaded_file.unique_name},
+                        page_content="I shouldn't send a \x00",
+                    ),
                 ]
             },
         },
@@ -687,6 +743,46 @@ def mocked_connect_with_explicit_no_document_selected_error() -> CannedGraphLLM:
 
 
 @pytest.fixture()
+def mocked_connect_agentic_search(uploaded_file: File) -> Connect:
+    responses = [
+        {
+            "event": "on_custom_event",
+            "name": "response_tokens",
+            "data": "Good afternoon, ",
+        },
+        {
+            "event": "on_custom_event",
+            "name": "response_tokens",
+            "data": "Mr. Amor.",
+        },
+        {"event": "on_chain_end", "tags": [ROUTE_NAME_TAG], "data": {"output": {"route_name": "search/agentic"}}},
+        {
+            "event": "on_custom_event",
+            "name": "on_source_report",
+            "data": [
+                Document(metadata={"uri": uploaded_file.unique_name}, page_content="Good afternoon Mr Amor"),
+                Document(metadata={"uri": uploaded_file.unique_name}, page_content="Good afternoon Mr Amor"),
+                Document(
+                    metadata={"uri": uploaded_file.unique_name, "page_number": [34, 35]},
+                    page_content="Good afternoon Mr Amor",
+                ),
+            ],
+        },
+        {
+            "event": "on_custom_event",
+            "name": "on_metadata_generation",
+            "data": RequestMetadata(
+                llm_calls=[LLMCallMetadata(llm_model_name="gpt-4o", input_tokens=123, output_tokens=1000)],
+                selected_files_total_tokens=1000,
+                number_of_selected_files=1,
+            ),
+        },
+    ]
+
+    return CannedGraphLLM(responses=responses)
+
+
+@pytest.fixture()
 def mocked_connect_with_several_files(several_files: Sequence[File]) -> Connect:
     mocked_websocket = AsyncMock(spec=WebSocketClientProtocol, name="mocked_websocket")
     mocked_connect = MagicMock(spec=Connect, name="mocked_connect")
@@ -697,7 +793,7 @@ def mocked_connect_with_several_files(several_files: Sequence[File]) -> Connect:
         json.dumps(
             {
                 "resource_type": "documents",
-                "data": [{"s3_key": f.s3_key, "page_content": "a secret forth answer"} for f in several_files[2:]],
+                "data": [{"s3_key": f.unique_name, "page_content": "a secret forth answer"} for f in several_files[2:]],
             }
         ),
         json.dumps({"resource_type": "end"}),

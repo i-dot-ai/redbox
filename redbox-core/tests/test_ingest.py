@@ -11,12 +11,13 @@ from langchain_core.embeddings.fake import FakeEmbeddings
 from langchain_core.language_models.fake_chat_models import GenericFakeChatModel
 from langchain_elasticsearch import ElasticsearchStore
 
+
+from redbox.models.chain import GeneratedMetadata
 from redbox.chains.ingest import document_loader, ingest_from_loader
 from redbox.loader import ingester
 from redbox.loader.loaders import (
     MetadataLoader,
     UnstructuredChunkLoader,
-    coerce_to_string_list,
 )
 from redbox.models.file import ChunkResolution
 from redbox.loader.ingester import ingest_file
@@ -58,7 +59,7 @@ def fake_llm_response():
     return {
         "name": "foo",
         "description": "more test",
-        "keywords": "hello, world",
+        "keywords": ["hello", "world"],
     }
 
 
@@ -85,12 +86,10 @@ def test_extract_metadata_missing_key(
     # Upload file
     file_name = file_to_s3("html/example.html", s3_client, env)
 
-    metadata = MetadataLoader(env=env, s3_client=s3_client, file_name=file_name)
-    metadata.extract_metadata()
+    metadata_loader = MetadataLoader(env=env, s3_client=s3_client, file_name=file_name)
+    metadata = metadata_loader.extract_metadata()
 
-    assert metadata.metadata.get("name") == ""
-    assert metadata.metadata.get("description") == ""
-    assert metadata.metadata.get("keywords") == ""
+    assert metadata == GeneratedMetadata()
 
 
 @patch("redbox.loader.loaders.get_chat_llm")
@@ -103,7 +102,7 @@ def test_extract_metadata_extra_key(
     mock_llm_response = mock_llm.return_value
     mock_llm_response.status_code = 200
     mock_llm_response.return_value = GenericFakeChatModel(
-        messages=iter(['{"extra_key": "", "name": "foo", "description": "test", "keywords": "abc"}'])
+        messages=iter(['{"extra_key": "", "name": "foo", "description": "test", "keywords": ["abc"]}'])
     )
 
     requests_mock.post(
@@ -118,13 +117,13 @@ def test_extract_metadata_extra_key(
     # Upload file
     file_name = file_to_s3("html/example.html", s3_client, env)
 
-    metadata = MetadataLoader(env=env, s3_client=s3_client, file_name=file_name)
-    metadata.extract_metadata()
+    metadata_loader = MetadataLoader(env=env, s3_client=s3_client, file_name=file_name)
+    metadata = metadata_loader.extract_metadata()
 
-    assert metadata.metadata is not None
-    assert metadata.metadata.get("name") == "foo"
-    assert metadata.metadata.get("description") == "test"
-    assert metadata.metadata.get("keywords") == "abc"
+    assert metadata is not None
+    assert metadata.name == "foo"
+    assert metadata.description == "test"
+    assert metadata.keywords == ["abc"]
 
 
 @patch("redbox.loader.loaders.get_chat_llm")
@@ -164,15 +163,15 @@ def test_document_loader(
     # Upload file
     file = file_to_s3("html/example.html", s3_client, env)
 
-    metadata = MetadataLoader(env=env, s3_client=s3_client, file_name=file)
-    metadata.extract_metadata()
+    metadata_loader = MetadataLoader(env=env, s3_client=s3_client, file_name=file)
+    metadata = metadata_loader.extract_metadata()
 
     loader = UnstructuredChunkLoader(
         chunk_resolution=ChunkResolution.normal,
         env=env,
         min_chunk_size=env.worker_ingest_min_chunk_size,
         max_chunk_size=env.worker_ingest_max_chunk_size,
-        metadata=metadata.metadata,
+        metadata=metadata,
     )
 
     # Call loader
@@ -186,7 +185,7 @@ def test_document_loader(
         llm_response = fake_llm_response()
         assert chuck.metadata["name"] == llm_response["name"]
         assert chuck.metadata["description"] == llm_response["description"]
-        assert chuck.metadata["keywords"] == coerce_to_string_list(llm_response["keywords"])
+        assert chuck.metadata["keywords"] == llm_response["keywords"]
 
 
 @patch("redbox.loader.loaders.get_chat_llm")
@@ -241,15 +240,15 @@ def test_ingest_from_loader(
     file_name = file_to_s3(filename="html/example.html", s3_client=s3_client, env=env)
 
     # Extract metadata
-    metadata = MetadataLoader(env=env, s3_client=s3_client, file_name=file_name)
-    metadata.extract_metadata()
+    metadata_loader = MetadataLoader(env=env, s3_client=s3_client, file_name=file_name)
+    metadata = metadata_loader.extract_metadata()
 
     loader = UnstructuredChunkLoader(
         chunk_resolution=resolution,
         env=env,
         min_chunk_size=env.worker_ingest_min_chunk_size,
         max_chunk_size=env.worker_ingest_max_chunk_size,
-        metadata=metadata.metadata,
+        metadata=metadata,
     )
 
     # Mock embeddings
@@ -274,10 +273,10 @@ def test_ingest_from_loader(
             metadata = get_metadata(chunk)
             assert metadata["name"] == fake_llm_response()["name"]
             assert metadata["description"] == fake_llm_response()["description"]
-            assert metadata["keywords"] == coerce_to_string_list(fake_llm_response()["keywords"])
+            assert metadata["keywords"] == fake_llm_response()["keywords"]
 
     if has_embeddings:
-        embeddings = chunks[0]["_source"].get("embedding")
+        embeddings = chunks[0]["_source"].get(env.embedding_document_field_name)
         assert embeddings is not None
         assert len(embeddings) > 0
 
@@ -367,7 +366,7 @@ def test_ingest_file(
             llm_response = fake_llm_response()
             assert metadata["name"] == llm_response["name"]
             assert metadata["description"] == llm_response["description"]
-            assert metadata["keywords"] == coerce_to_string_list(llm_response["keywords"])
+            assert metadata["keywords"] == llm_response["keywords"]
 
         def get_chunk_resolution(chunk: dict) -> str:
             return chunk["_source"]["metadata"]["chunk_resolution"]

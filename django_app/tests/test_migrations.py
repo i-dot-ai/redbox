@@ -22,7 +22,6 @@ def test_0012_alter_file_status(migrator):
     file = File.objects.create(
         user=user,
         original_file=original_file,
-        original_file_name=original_file.name,
     )
     chat_message.source_files.set([file])
     chat_message.save()
@@ -58,7 +57,6 @@ def test_0020_remove_chatmessage_source_files_textchunk_and_more(migrator):
     file = File.objects.create(
         user=user,
         original_file=original_file,
-        original_file_name=original_file.name,
     )
     chat_message.source_files.set([file])
     chat_message.save()
@@ -115,7 +113,6 @@ def test_0027_alter_file_status(migrator):
             File.objects.create(
                 user=user,
                 original_file=original_file,
-                original_file_name=original_file.name,
                 status=status_option[0],
             )
         )
@@ -322,3 +319,77 @@ def test_0050_aisettings_match_description_boost_and_more(migrator):
     assert new_ai_settings.match_description_boost == Decimal("0.50")
     assert new_ai_settings.similarity_threshold == Decimal("0.00")
     assert new_ai_settings.match_keywords_boost == Decimal("0.50")
+
+
+def test_0055_citation_source_citation_url_alter_citation_file(original_file, migrator):
+    old_state = migrator.apply_initial_migration(("redbox_core", "0054_activityevent"))
+
+    User = old_state.apps.get_model("redbox_core", "User")
+    user = User.objects.create(email="someone@example.com")
+
+    ChatLLMBackend = old_state.apps.get_model("redbox_core", "ChatLLMBackend")
+    chat_backend = ChatLLMBackend.objects.first()
+
+    Chat = old_state.apps.get_model("redbox_core", "Chat")
+    chat = Chat.objects.create(name="my-chat", user=user, chat_backend=chat_backend)
+
+    ChatMessage = old_state.apps.get_model("redbox_core", "ChatMessage")
+    chat_message = ChatMessage.objects.create(chat=chat)
+
+    File = old_state.apps.get_model("redbox_core", "File")
+    file = File.objects.create(
+        user=user,
+        original_file=original_file,
+    )
+
+    Citation = old_state.apps.get_model("redbox_core", "Citation")
+    citation = Citation.objects.create(chat_message=chat_message, file=file, page_numbers=[3, 4], text="hello!")
+
+    new_state = migrator.apply_tested_migration(
+        ("redbox_core", "0055_citation_source_citation_url_alter_citation_file"),
+    )
+
+    Citation = new_state.apps.get_model("redbox_core", "Citation")
+    new_citation = Citation.objects.get(id=citation.id)
+    assert new_citation.text == "hello!"
+    assert new_citation.page_numbers == [3, 4]
+    assert new_citation.chat_message.id == chat_message.id
+    assert new_citation.url is None
+    assert new_citation.source == "USER UPLOADED DOCUMENT"
+
+
+def test_0056_alter_aisettings_retrieval_system_prompt_and_more(original_file, migrator):
+    old_state = migrator.apply_initial_migration(
+        ("redbox_core", "0055_citation_source_citation_url_alter_citation_file")
+    )
+
+    User = old_state.apps.get_model("redbox_core", "User")
+    user = User.objects.create(email="someone@example.com")
+
+    ChatLLMBackend = old_state.apps.get_model("redbox_core", "ChatLLMBackend")
+    chat_backend = ChatLLMBackend.objects.first()
+
+    Chat = old_state.apps.get_model("redbox_core", "Chat")
+    chat = Chat.objects.create(name="my-chat", user=user, chat_backend=chat_backend)
+
+    ChatMessage = old_state.apps.get_model("redbox_core", "ChatMessage")
+    chat_message = ChatMessage.objects.create(chat=chat)
+
+    File = old_state.apps.get_model("redbox_core", "File")
+    file = File.objects.create(
+        user=user,
+        original_file=original_file,
+        original_file_name=original_file.name,
+    )
+
+    Citation = old_state.apps.get_model("redbox_core", "Citation")
+    citation = Citation(chat_message=chat_message, file=file, source="USER UPLOADED DOCUMENT", text="hello!")
+    citation.save()
+
+    new_state = migrator.apply_tested_migration(
+        ("redbox_core", "0056_alter_aisettings_retrieval_system_prompt_and_more"),
+    )
+
+    NewCitation = new_state.apps.get_model("redbox_core", "Citation")  # noqa: N806
+    new_citation = NewCitation.objects.get(id=citation.id)
+    assert new_citation.source == "UserUploadedDocument"

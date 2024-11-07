@@ -27,7 +27,8 @@ const sendTooltipViewEvent = (evt) => {
   });
 })();
 
-class ChatMessage extends HTMLElement {
+
+export class ChatMessage extends HTMLElement {
   constructor() {
     super();
     this.programmaticScroll = false;
@@ -37,11 +38,9 @@ class ChatMessage extends HTMLElement {
   connectedCallback() {
     const uuid = crypto.randomUUID();
     this.innerHTML = `
-            <div class="iai-chat-bubble iai-chat-bubble--${
-              this.dataset.role === "user" ? "right" : "left"
-            } govuk-body {{ classes }}" data-role="${
-      this.dataset.role
-    }" tabindex="-1">
+            <div class="iai-chat-bubble govuk-body {{ classes }}" data-role="${
+              this.dataset.role
+            }" tabindex="-1">
                 <div class="iai-chat-bubble__header">
                     <div class="iai-chat-bubble__role">${
                       this.dataset.role === "ai" ? "Redbox" : "You"
@@ -58,7 +57,7 @@ class ChatMessage extends HTMLElement {
                     `
                     : ""
                 }
-                <sources-list></sources-list>
+                <sources-list data-id="${uuid}"></sources-list>
                 <div class="govuk-notification-banner govuk-notification-banner--error govuk-!-margin-bottom-3 govuk-!-margin-top-3" role="alert" aria-labelledby="notification-title-${uuid}" data-module="govuk-notification-banner" hidden>
                     <div class="govuk-notification-banner__header">
                         <h3 class="govuk-notification-banner__title" id="notification-title-${uuid}">Error</h3>
@@ -88,10 +87,39 @@ class ChatMessage extends HTMLElement {
     );
   }
 
+  #addFootnotes = (content) => {
+    let footnotes = this.querySelectorAll("sources-list a[data-text]");
+    footnotes.forEach((footnote, footnoteIndex) => {
+      const matchingText = footnote.getAttribute("data-text");
+      if (!matchingText || !this.responseContainer) {
+        return;
+      }
+      /*
+      this.responseContainer?.update(
+        content.replace(matchingText, `${matchingText}<a href="#${footnote.id}" aria-label="Footnote ${footnoteIndex + 1}">[${footnoteIndex + 1}]</a>`)
+      );
+      */
+      this.responseContainer.innerHTML = this.responseContainer.innerHTML.replace(matchingText, `${matchingText}<a class="rb-footnote-link" href="#${footnote.id}" aria-label="Footnote ${footnoteIndex + 1}">${footnoteIndex + 1}</a>`);
+    });
+  };
+
+  /**
+   * Displays an activity above the message
+   * @param {string} message 
+   * @param { "ai" | "user"} type
+   */
+  addActivity = (message, type) => {
+    let activityElement = document.createElement("p");
+    activityElement.classList.add("rb-activity", `rb-activity--${type}`);
+    activityElement.textContent = message;
+    this.insertBefore(activityElement, this.querySelector(".iai-chat-bubble"));
+  };
+
   /**
    * Streams an LLM response
    * @param {string} message
    * @param {string[]} selectedDocuments
+   * @param {string[]} activities
    * @param {string} llm
    * @param {string | undefined} sessionId
    * @param {string} endPoint
@@ -100,27 +128,29 @@ class ChatMessage extends HTMLElement {
   stream = (
     message,
     selectedDocuments,
+    activities,
     llm,
     sessionId,
     endPoint,
     chatControllerRef
   ) => {
     // Scroll behaviour - depending on whether user has overridden this or not
-    let userScrollOverride = false;
+    let scrollOverride = false;
     window.addEventListener("scroll", (evt) => {
       if (this.programmaticScroll) {
         this.programmaticScroll = false;
         return;
       }
-      userScrollOverride = true;
+      scrollOverride = true;
     });
 
-    let responseContainer = /** @type MarkdownConverter */ (
+    this.responseContainer = /** @type {import("../markdown-converter").MarkdownConverter} */ (
       this.querySelector("markdown-converter")
     );
     let sourcesContainer = /** @type SourcesList */ (
       this.querySelector("sources-list")
     );
+    /** @type {FeedbackButtons | null} */
     let feedbackContainer = this.querySelector("feedback-buttons");
     let responseLoading = /** @type HTMLElement */ (
       this.querySelector(".rb-loading-ellipsis")
@@ -147,6 +177,7 @@ class ChatMessage extends HTMLElement {
           message: message,
           sessionId: sessionId,
           selectedFiles: selectedDocuments,
+          activities: activities,
           llm: llm,
         })
       );
@@ -156,7 +187,10 @@ class ChatMessage extends HTMLElement {
     };
 
     webSocket.onerror = (event) => {
-      responseContainer.innerHTML =
+      if (!this.responseContainer) {
+        return;
+      }
+      this.responseContainer.innerHTML =
         "There was a problem. Please try sending this message again.";
       this.dataset.status = "error";
     };
@@ -183,13 +217,14 @@ class ChatMessage extends HTMLElement {
 
       if (response.type === "text") {
         streamedContent += response.data;
-        responseContainer.update(streamedContent);
+        this.responseContainer?.update(streamedContent);
       } else if (response.type === "session-id") {
         chatControllerRef.dataset.sessionId = response.data;
       } else if (response.type === "source") {
         sourcesContainer.add(
-          response.data.original_file_name,
-          response.data.url
+          response.data.file_name,
+          response.data.url,
+          response.data.text_in_answer
         );
       } else if (response.type === "route") {
         let route = this.querySelector(".iai-chat-bubble__route");
@@ -205,9 +240,12 @@ class ChatMessage extends HTMLElement {
           plausible("Chat-message-route", { props: { route: response.data } });
           this.plausibleRouteDataSent = true;
         }
+      } else if (response.type === "activity") {
+        this.addActivity(response.data, "ai");
       } else if (response.type === "end") {
         sourcesContainer.showCitations(response.data.message_id);
-        feedbackContainer.showFeedback(response.data.message_id);
+        feedbackContainer?.showFeedback(response.data.message_id);
+        this.#addFootnotes(streamedContent);
         const chatResponseEndEvent = new CustomEvent("chat-response-end", {
           detail: {
             title: response.data.title,
@@ -219,14 +257,28 @@ class ChatMessage extends HTMLElement {
         this.querySelector(".govuk-notification-banner")?.removeAttribute(
           "hidden"
         );
-        this.querySelector(".govuk-notification-banner__heading").innerHTML =
-          response.data;
+        let errorContentContainer = this.querySelector(".govuk-notification-banner__heading");
+        if (errorContentContainer) {
+          errorContentContainer.innerHTML = response.data;
+        }
       }
 
       // ensure new content isn't hidden behind the chat-input
-      if (!userScrollOverride) {
-        this.programmaticScroll = true;
-        this.scrollIntoView({ block: "end" });
+      // but stop scrolling if message is at the top of the screen
+      if (!scrollOverride) {
+        const TOP_POSITION = 88;
+        const boxInfo = this.getBoundingClientRect()
+        const newTopPosition = boxInfo.top - ( boxInfo.height - ( this.previousHeight || boxInfo.height ) );
+        this.previousHeight = boxInfo.height;
+        if (newTopPosition > TOP_POSITION) {
+          this.programmaticScroll = true;
+          this.scrollIntoView({ block: "end" });
+        } else {
+          scrollOverride = true;
+          this.scrollIntoView();
+          window.scrollBy(0, -TOP_POSITION);
+        }
+        
       }
     };
   };

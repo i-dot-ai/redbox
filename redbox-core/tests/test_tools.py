@@ -1,5 +1,6 @@
 from typing import Annotated, Any
-from uuid import UUID
+from urllib.parse import urlparse
+from uuid import UUID, uuid4
 
 import pytest
 from elasticsearch import Elasticsearch
@@ -7,10 +8,16 @@ from langchain_core.embeddings.fake import FakeEmbeddings
 from langchain_core.tools import tool
 from langgraph.prebuilt import InjectedState
 
-from redbox.graph.nodes.tools import build_search_documents_tool, has_injected_state, is_valid_tool
+from redbox.graph.nodes.tools import (
+    build_govuk_search_tool,
+    build_search_documents_tool,
+    build_search_wikipedia_tool,
+    has_injected_state,
+    is_valid_tool,
+)
 from redbox.models import Settings
-from redbox.models.chain import RedboxState
-from redbox.models.file import ChunkResolution
+from redbox.models.chain import AISettings, RedboxQuery, RedboxState
+from redbox.models.file import ChunkCreatorType, ChunkMetadata, ChunkResolution
 from redbox.test.data import RedboxChatTestCase
 from redbox.transform import flatten_document_state
 from tests.retriever.test_retriever import TEST_CHAIN_PARAMETERS
@@ -110,7 +117,8 @@ def test_search_documents_tool(
         {
             "query": stored_file_parameterised.query.question,
             "state": RedboxState(
-                request=stored_file_parameterised.query, text=stored_file_parameterised.query.question
+                request=stored_file_parameterised.query,
+                text=stored_file_parameterised.query.question,
             ),
         }
     )
@@ -130,11 +138,11 @@ def test_search_documents_tool(
         # Check flattened documents match expected, similar to retriever
         assert len(result_flat) == chain_params["rag_k"]
         assert {c.page_content for c in result_flat} <= {c.page_content for c in permitted_docs}
-        assert {c.metadata["file_name"] for c in result_flat} <= set(stored_file_parameterised.query.permitted_s3_keys)
+        assert {c.metadata["uri"] for c in result_flat} <= set(stored_file_parameterised.query.permitted_s3_keys)
 
         if selected:
             assert {c.page_content for c in result_flat} <= {c.page_content for c in selected_docs}
-            assert {c.metadata["file_name"] for c in result_flat} <= set(stored_file_parameterised.query.s3_keys)
+            assert {c.metadata["uri"] for c in result_flat} <= set(stored_file_parameterised.query.s3_keys)
 
         # Check docstate is formed as expected, similar to transform tests
         for group_uuid, group_docs in result_docstate.items():
@@ -144,3 +152,59 @@ def test_search_documents_tool(
             for doc in group_docs.values():
                 assert doc.metadata["uuid"] in group_docs
                 assert group_docs[doc.metadata["uuid"]] == doc
+
+
+def test_govuk_search_tool():
+    tool = build_govuk_search_tool()
+
+    state_update = tool.invoke(
+        {
+            "query": "Cuba Travel Advice",
+            "state": RedboxState(
+                request=RedboxQuery(
+                    question="Search gov.uk for travel advice to cuba",
+                    s3_keys=[],
+                    user_uuid=uuid4(),
+                    chat_history=[],
+                    ai_settings=AISettings(),
+                    permitted_s3_keys=[],
+                )
+            ),
+        }
+    )
+
+    documents = flatten_document_state(state_update["documents"])
+
+    # assert at least one document is travel advice
+    assert any("/foreign-travel-advice/cuba" in document.metadata["uri"] for document in documents)
+
+    for document in documents:
+        assert document.page_content != ""
+        metadata = ChunkMetadata.model_validate(document.metadata)
+        assert urlparse(metadata.uri).hostname == "www.gov.uk"
+        assert metadata.creator_type == ChunkCreatorType.gov_uk
+
+
+def test_wikipedia_tool():
+    tool = build_search_wikipedia_tool()
+    state_update = tool.invoke(
+        {
+            "query": "Gordon Brown",
+            "state": RedboxState(
+                request=RedboxQuery(
+                    question="What was the highest office held by Gordon Brown",
+                    s3_keys=[],
+                    user_uuid=uuid4(),
+                    chat_history=[],
+                    ai_settings=AISettings(),
+                    permitted_s3_keys=[],
+                )
+            ),
+        }
+    )
+
+    for document in flatten_document_state(state_update["documents"]):
+        assert document.page_content != ""
+        metadata = ChunkMetadata.model_validate(document.metadata)
+        assert urlparse(metadata.uri).hostname == "en.wikipedia.org"
+        assert metadata.creator_type == ChunkCreatorType.wikipedia

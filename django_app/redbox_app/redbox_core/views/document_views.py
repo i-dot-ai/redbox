@@ -15,7 +15,7 @@ from django.views import View
 from django.views.decorators.http import require_http_methods
 from django_q.tasks import async_task
 
-from redbox_app.redbox_core.models import File, StatusEnum
+from redbox_app.redbox_core.models import File
 from redbox_app.worker import ingest
 
 User = get_user_model()
@@ -91,7 +91,7 @@ class UploadView(View):
                 # ingest errors are handled differently, as the other documents have started uploading by this point
                 ingest_error = self.ingest_file(uploaded_file, request.user)
                 if ingest_error:
-                    ingest_errors.append(f"{uploaded_file.name}: {ingest_error[0]}")
+                    ingest_errors.append(f"{uploaded_file.file_name}: {ingest_error[0]}")
 
             request.session["ingest_errors"] = ingest_errors
             return redirect(reverse("documents"))
@@ -134,10 +134,9 @@ class UploadView(View):
         try:
             logger.info("getting file from s3")
             file = File.objects.create(
-                status=StatusEnum.processing.value,
+                status=File.Status.processing.value,
                 user=user,
                 original_file=uploaded_file,
-                original_file_name=uploaded_file.name,
             )
         except (ValueError, FieldError, ValidationError) as e:
             logger.exception("Error creating File model object for %s.", uploaded_file, exc_info=e)
@@ -157,19 +156,19 @@ def remove_doc_view(request, doc_id: uuid):
         except Exception as e:
             logger.exception("Error deleting file object %s.", file, exc_info=e)
             errors.append("There was an error deleting this file")
-            file.status = StatusEnum.errored
+            file.status = File.Status.errored
             file.save()
         else:
             logger.info("Removing document: %s", request.POST["doc_id"])
             file.delete_from_s3()
-            file.status = StatusEnum.deleted
+            file.status = File.Status.deleted
             file.save()
             return redirect("documents")
 
     return render(
         request,
         template_name="remove-doc.html",
-        context={"request": request, "doc_id": doc_id, "doc_name": file.name, "errors": errors},
+        context={"request": request, "doc_id": doc_id, "doc_name": file.file_name, "errors": errors},
     )
 
 
@@ -179,10 +178,10 @@ def file_status_api_view(request: HttpRequest) -> JsonResponse:
     file_id = request.GET.get("id", None)
     if not file_id:
         logger.error("Error getting file object information - no file ID provided %s.")
-        return JsonResponse({"status": StatusEnum.errored.label})
+        return JsonResponse({"status": File.Status.errored.label})
     try:
         file: File = get_object_or_404(File, id=file_id)
     except File.DoesNotExist as ex:
         logger.exception("File object information not found in django - file does not exist %s.", file_id, exc_info=ex)
-        return JsonResponse({"status": StatusEnum.errored.label})
+        return JsonResponse({"status": File.Status.errored.label})
     return JsonResponse({"status": file.get_status_text()})

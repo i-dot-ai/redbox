@@ -12,20 +12,30 @@ class ChatController extends HTMLElement {
 
     messageForm?.addEventListener("submit", (evt) => {
       evt.preventDefault();
-      const textArea = /** @type {HTMLInputElement | null} */ (
-        document.querySelector(".js-user-text")
+      const messageInput = /** @type {MessageInput | null} */ (
+        document.querySelector("message-input")
       );
-      const userText = textArea?.value.trim();
-      if (!textArea || !userText) {
+      const userText = messageInput?.getValue();
+      if (!messageInput || !userText) {
         return;
       }
 
-      let userMessage = document.createElement("chat-message");
+      let userMessage = /** @type {import("./chat-message").ChatMessage} */ (
+        document.createElement("chat-message")
+      );
       userMessage.setAttribute("data-text", userText);
       userMessage.setAttribute("data-role", "user");
       messageContainer?.insertBefore(userMessage, insertPosition);
 
-      let aiMessage = /** @type {ChatMessage} */ (
+      const activites = [
+        `You selected ${selectedDocuments.length || "no"} document${selectedDocuments.length === 1 ? "" : "s"}`,
+        "You sent this prompt"
+      ];
+      activites.forEach((activity) => {
+        userMessage.addActivity(activity, "user");
+      });
+
+      let aiMessage = /** @type {import("./chat-message").ChatMessage} */ (
         document.createElement("chat-message")
       );
       aiMessage.setAttribute("data-role", "ai");
@@ -33,11 +43,12 @@ class ChatController extends HTMLElement {
 
       const llm = /** @type {HTMLInputElement | null}*/ (
         document.querySelector("#llm-selector")
-      )?.value;
+      )?.value || "";
 
       aiMessage.stream(
         userText,
         selectedDocuments,
+        activites,
         llm,
         this.dataset.sessionId,
         this.dataset.streamUrl || "",
@@ -51,7 +62,7 @@ class ChatController extends HTMLElement {
       if (feedbackButtons) {
         feedbackButtons.dataset.status = "";
       }
-      textArea.value = "";
+      messageInput.reset();
 
       // if a route has been intentionally specified by a user, send an event to Plausible
       (() => {

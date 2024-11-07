@@ -72,7 +72,7 @@
               {% for file in completed_files %}
                 <div class="govuk-checkboxes__item">
                   <input class="govuk-checkboxes__input" id="file-{{ file.id }}" name="file-{{ file.id }}" type="checkbox" value="{{ file.id }}" {% if file.selected %}checked{% endif %}>
-                  <label class="rb-doc-selector__label govuk-checkboxes__label" for="file-{{ file.id }}">{{ file.original_file_name }}</label>
+                  <label class="rb-doc-selector__label govuk-checkboxes__label" for="file-{{ file.id }}">{{ file.file_name }}</label>
                 </div>
               {% endfor %}
               {# files not yet ready - stored here to be moved to main list once ready #}
@@ -80,7 +80,7 @@
                 {% for file in processing_files %}
                   <div class="govuk-checkboxes__item">
                     <input class="govuk-checkboxes__input" id="file-{{ file.id }}" name="file-{{ file.id }}" type="checkbox" value="{{ file.id }}" {% if file.selected %}checked{% endif %}>
-                    <label class="rb-doc-selector__label govuk-checkboxes__label" for="file-{{ file.id }}">{{ file.original_file_name }}</label>
+                    <label class="rb-doc-selector__label govuk-checkboxes__label" for="file-{{ file.id }}">{{ file.file_name }}</label>
                     <file-status data-id="{{ file.id }}"></file-status>
                   </div>
                 {% endfor %}
@@ -123,13 +123,7 @@
 
             {# SSR messages #}
             {% for message in messages %}
-              {{ message_box(
-                id = message.id,
-                role = message.role,
-                route = message.route,
-                text = message.text,
-                source_files = message.source_files.all()
-              ) }}
+              {{ message_box(message=message) }}
 
               {# If we want to collect feedback on SSR messages
               {% if message.role == 'ai' %}

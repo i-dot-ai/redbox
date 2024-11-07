@@ -19,7 +19,7 @@ from magic_link.models import MagicLink
 from pytest_mock import MockerFixture
 from requests_mock import Mocker
 
-from redbox_app.redbox_core.models import Chat, ChatMessage, ChatRoleEnum, File, StatusEnum
+from redbox_app.redbox_core.models import Chat, ChatMessage, File
 
 User = get_user_model()
 
@@ -102,7 +102,7 @@ def test_delete_expired_files(uploaded_file: File, last_referenced: datetime, sh
     call_command("delete_expired_data")
 
     # Then
-    is_deleted = File.objects.get(id=mock_file.id).status == StatusEnum.deleted
+    is_deleted = File.objects.get(id=mock_file.id).status == File.Status.deleted
     assert is_deleted == should_delete
 
 
@@ -120,7 +120,7 @@ def test_delete_expired_files_with_elastic_error(deletion_mock: MagicMock, uploa
     call_command("delete_expired_data")
 
     # Then
-    assert File.objects.get(id=mock_file.id).status == StatusEnum.errored
+    assert File.objects.get(id=mock_file.id).status == File.Status.errored
 
 
 @patch("redbox_app.redbox_core.models.File.delete_from_s3")
@@ -137,7 +137,7 @@ def test_delete_expired_files_with_s3_error(deletion_mock: MagicMock, uploaded_f
     call_command("delete_expired_data")
 
     # Then
-    assert File.objects.get(id=mock_file.id).status == StatusEnum.errored
+    assert File.objects.get(id=mock_file.id).status == File.Status.errored
 
 
 @pytest.mark.parametrize(
@@ -153,9 +153,17 @@ def test_delete_expired_chats(chat: Chat, msg_1_date: datetime, msg_2_date: date
     # Given
     test_chat = chat
     with freeze_time(msg_1_date):
-        chat_message_1 = ChatMessage.objects.create(chat=test_chat, text="A question?", role=ChatRoleEnum.user)
+        chat_message_1 = ChatMessage.objects.create(
+            chat=test_chat,
+            text="A question?",
+            role=ChatMessage.Role.user,
+        )
     with freeze_time(msg_2_date):
-        chat_message_2 = ChatMessage.objects.create(chat=test_chat, text="A question?", role=ChatRoleEnum.user)
+        chat_message_2 = ChatMessage.objects.create(
+            chat=test_chat,
+            text="A question?",
+            role=ChatMessage.Role.user,
+        )
 
     # When
     call_command("delete_expired_data")
@@ -172,7 +180,7 @@ def test_delete_expired_chats(chat: Chat, msg_1_date: datetime, msg_2_date: date
 @pytest.mark.django_db(transaction=True)
 def test_reingest_files(uploaded_file: File, requests_mock: Mocker, mocker: MockerFixture):
     # Given
-    assert uploaded_file.status == StatusEnum.processing
+    assert uploaded_file.status == File.Status.processing
 
     requests_mock.post(
         f"http://{settings.UNSTRUCTURED_HOST}:8000/general/v0/general",
@@ -190,7 +198,7 @@ def test_reingest_files(uploaded_file: File, requests_mock: Mocker, mocker: Mock
                         {
                             "name": "foo",
                             "description": "more test",
-                            "keywords": "hello, world",
+                            "keywords": ["hello", "world"],
                         }
                     )
                 ]
@@ -202,13 +210,13 @@ def test_reingest_files(uploaded_file: File, requests_mock: Mocker, mocker: Mock
 
     # Then
     uploaded_file.refresh_from_db()
-    assert uploaded_file.status == StatusEnum.complete
+    assert uploaded_file.status == File.Status.complete
 
 
 @pytest.mark.django_db(transaction=True)
 def test_reingest_files_unstructured_fail(uploaded_file: File, requests_mock: Mocker, mocker):
     # Given
-    assert uploaded_file.status == StatusEnum.processing
+    assert uploaded_file.status == File.Status.processing
 
     requests_mock.post(
         f"http://{settings.UNSTRUCTURED_HOST}:8000/general/v0/general",
@@ -224,7 +232,7 @@ def test_reingest_files_unstructured_fail(uploaded_file: File, requests_mock: Mo
                         {
                             "name": "foo",
                             "description": "more test",
-                            "keywords": "hello, world",
+                            "keywords": ["hello", "world"],
                         }
                     )
                 ]
@@ -238,7 +246,7 @@ def test_reingest_files_unstructured_fail(uploaded_file: File, requests_mock: Mo
 
     # Then
     uploaded_file.refresh_from_db()
-    assert uploaded_file.status == StatusEnum.errored
+    assert uploaded_file.status == File.Status.errored
     assert uploaded_file.ingest_error == "<class 'ValueError'>: Unstructured failed to extract text for this file"
 
 
@@ -268,9 +276,8 @@ def test_update_users(alice: User):
     file = File.objects.create(
         user=alice,
         original_file=original_file,
-        original_file_name=original_file.name,
         last_referenced=datetime.now(tz=UTC) - timedelta(days=14),
-        status=StatusEnum.processing,
+        status=File.Status.processing,
     )
     file.save()
 

@@ -16,7 +16,7 @@ from django.utils.decorators import method_decorator
 from django.views import View
 from yarl import URL
 
-from redbox_app.redbox_core.models import Chat, ChatLLMBackend, ChatMessage, ChatRoleEnum, File
+from redbox_app.redbox_core.models import Chat, ChatLLMBackend, ChatMessage, File
 
 logger = logging.getLogger(__name__)
 
@@ -48,6 +48,17 @@ class ChatsView(View):
 
         chat_backend = current_chat.chat_backend if current_chat else ChatLLMBackend.objects.get(is_default=True)
 
+        # Add footnotes to messages
+        for message in messages:
+            footnote_counter = 1
+            for display, href, text_in_answer in message.unique_citation_uris():  # noqa: B007
+                if text_in_answer:
+                    message.text = message.text.replace(
+                        text_in_answer,
+                        f'{text_in_answer}<a class="rb-footnote-link" href="#footnote-{message.id}-{footnote_counter}">{footnote_counter}</a>',  # noqa: E501
+                    )
+                    footnote_counter = footnote_counter + 1
+
         context = {
             "chat_id": chat_id,
             "messages": messages,
@@ -78,7 +89,7 @@ class ChatsView(View):
     @staticmethod
     def decorate_selected_files(all_files: Sequence[File], messages: Sequence[ChatMessage]) -> None:
         if messages:
-            last_user_message = [m for m in messages if m.role == ChatRoleEnum.user][-1]
+            last_user_message = [m for m in messages if m.role == ChatMessage.Role.user][-1]
             selected_files: Sequence[File] = last_user_message.selected_files.all() or []
         else:
             selected_files = []

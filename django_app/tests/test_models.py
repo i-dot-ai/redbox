@@ -2,8 +2,15 @@ from datetime import UTC, datetime, timedelta
 
 import pytest
 from django.core.files.uploadedfile import SimpleUploadedFile
+from yarl import URL
 
-from redbox_app.redbox_core.models import File, InactiveFileError, StatusEnum, User
+from redbox_app.redbox_core.models import (
+    ChatMessage,
+    Citation,
+    File,
+    InactiveFileError,
+    User,
+)
 
 
 @pytest.mark.django_db()
@@ -11,10 +18,9 @@ def test_file_model_last_referenced(peter_rabbit, s3_client):  # noqa: ARG001
     mock_file = SimpleUploadedFile("test.txt", b"these are the file contents")
 
     new_file = File.objects.create(
-        status=StatusEnum.processing,
+        status=File.Status.processing,
         original_file=mock_file,
         user=peter_rabbit,
-        original_file_name="test.txt",
     )
 
     # Tests the initial value of the last_referenced
@@ -34,8 +40,8 @@ def test_file_model_last_referenced(peter_rabbit, s3_client):  # noqa: ARG001
 @pytest.mark.parametrize(
     ("status"),
     [
-        StatusEnum.complete,
-        StatusEnum.processing,
+        File.Status.complete,
+        File.Status.processing,
     ],
 )
 @pytest.mark.django_db()
@@ -46,7 +52,6 @@ def test_file_model_unique_name(status: str, peter_rabbit: User, s3_client):  # 
         status=status,
         original_file=mock_file,
         user=peter_rabbit,
-        original_file_name="test.txt",
     )
 
     assert new_file.unique_name  # Check new name can be retrieved without error
@@ -55,8 +60,8 @@ def test_file_model_unique_name(status: str, peter_rabbit: User, s3_client):  # 
 @pytest.mark.parametrize(
     ("status"),
     [
-        StatusEnum.deleted,
-        StatusEnum.errored,
+        File.Status.deleted,
+        File.Status.errored,
     ],
 )
 @pytest.mark.django_db()
@@ -67,8 +72,94 @@ def test_file_model_unique_name_error_states(status: str, peter_rabbit: User, s3
         status=status,
         original_file=mock_file,
         user=peter_rabbit,
-        original_file_name="test.txt",
     )
 
     with pytest.raises(InactiveFileError, match="is inactive, status is"):
         assert new_file.unique_name
+
+
+@pytest.mark.django_db()
+@pytest.mark.parametrize(
+    ("source", "error_msg"),
+    [
+        (Citation.Origin.USER_UPLOADED_DOCUMENT, "file must be specified for a user-uploaded-document"),
+        (Citation.Origin.WIKIPEDIA, "url must be specified for an external citation"),
+    ],
+)
+def test_citation_save_fail_file_url_not_set(chat_message: ChatMessage, source, error_msg):
+    citation = Citation(chat_message=chat_message, text="hello", source=source)
+
+    with pytest.raises(ValueError, match=error_msg):
+        citation.save()
+
+
+@pytest.mark.django_db()
+@pytest.mark.parametrize(
+    ("source", "error_msg"),
+    [
+        (Citation.Origin.USER_UPLOADED_DOCUMENT, "url should not be specified for a user-uploaded-document"),
+        (Citation.Origin.WIKIPEDIA, "file should not be specified for an external citation"),
+    ],
+)
+def test_citation_save_fail_file_and_url_set(chat_message: ChatMessage, uploaded_file: File, source, error_msg):
+    citation = Citation(
+        chat_message=chat_message,
+        text="hello",
+        source=source,
+        url="http://example.com",
+        file=uploaded_file,
+    )
+
+    with pytest.raises(ValueError, match=error_msg):
+        citation.save()
+
+
+def test_internal_citation_uri(chat_message: ChatMessage, uploaded_file: File):
+    citation = Citation(
+        chat_message=chat_message,
+        text="hello",
+        source=Citation.Origin.USER_UPLOADED_DOCUMENT,
+        file=uploaded_file,
+    )
+    citation.save()
+    assert citation.uri.parts[-1] == "original_file.txt"
+
+
+def test_external_citation_uri(
+    chat_message: ChatMessage,
+):
+    citation = Citation(
+        chat_message=chat_message,
+        text="hello",
+        source=Citation.Origin.WIKIPEDIA,
+        url="http://example.com",
+    )
+    citation.save()
+    assert citation.uri == URL("http://example.com")
+
+
+def test_unique_citation_uris(chat_message: ChatMessage, uploaded_file: File):
+    external_citation = Citation(
+        chat_message=chat_message,
+        text="hello",
+        source=Citation.Origin.WIKIPEDIA,
+        url="http://example.com",
+    )
+    external_citation.save()
+
+    internal_citation = Citation(
+        chat_message=chat_message,
+        text="hello",
+        source=Citation.Origin.USER_UPLOADED_DOCUMENT,
+        file=uploaded_file,
+    )
+    internal_citation.save()
+
+    chat_message.refresh_from_db()
+
+    urls = chat_message.unique_citation_uris()
+
+    assert urls[0][0] == "http://example.com"
+    assert urls[0][1] == URL("http://example.com")
+    assert urls[1][0] == "original_file.txt"
+    assert urls[1][1].parts[-1] == "original_file.txt"

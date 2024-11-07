@@ -4,7 +4,7 @@ import datetime
 from enum import StrEnum
 from uuid import UUID, uuid4
 
-from pydantic import BaseModel, Field
+from pydantic import AliasChoices, BaseModel, Field
 
 
 class ChunkResolution(StrEnum):
@@ -15,6 +15,12 @@ class ChunkResolution(StrEnum):
     largest = "largest"
 
 
+class ChunkCreatorType(StrEnum):
+    wikipedia = "Wikipedia"
+    user_uploaded_document = "UserUploadedDocument"
+    gov_uk = "GOV.UK"
+
+
 class ChunkMetadata(BaseModel):
     """
     Worker model for document metadata for new style chunks.
@@ -22,12 +28,21 @@ class ChunkMetadata(BaseModel):
     """
 
     uuid: UUID = Field(default_factory=uuid4)
-    index: int
-    file_name: str
-    page_number: int | None = None
+    index: int = 0  # The order of this chunk in the original resource
     created_datetime: datetime.datetime = datetime.datetime.now(datetime.UTC)
-    token_count: int
     chunk_resolution: ChunkResolution = ChunkResolution.normal
-    name: str
-    description: str
-    keywords: list[str]
+    creator_type: ChunkCreatorType
+    uri: str = Field(validation_alias=AliasChoices("uri", "file_name"))  # URL or file name
+    token_count: int
+
+
+class UploadedFileMetadata(ChunkMetadata):
+    """
+    Model for uploaded document chunk metadata.
+    """
+
+    page_number: int | None = None
+    name: str | None = None
+    description: str | None = None
+    keywords: list[str] | None = None
+    creator_type: ChunkCreatorType = ChunkCreatorType.user_uploaded_document

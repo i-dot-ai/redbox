@@ -26,44 +26,44 @@
 
 
 
-{% macro message_box(id, role, route, text, source_files, classes=None) %}
+{% macro message_box(message) %}
 
-{% set role_text = role %}
-{% if role == "ai" %}
+
+{% set role_text = message.role %}
+{% if message.role == "ai" %}
 {% set role_text = "Redbox" %}
-{% elif role == "user" %}
+{% elif message.role == "user" %}
 {% set role_text = "You" %}
 {% endif %}
 
+{% for activity in message.activityevent_set.all() %}
+  <p class="rb-activity rb-activity--{{ message.role }}">{{ activity }}</p>
+{% endfor %}
+
 <div
-  class="iai-chat-bubble iai-chat-bubble--{% if role == 'user' %}right{% else %}left{% endif %} govuk-body {{ classes }}"
-  data-role="{{ role }}" tabindex="-1">
+  class="iai-chat-bubble govuk-body {{ classes }}"
+  data-role="{{ message.role }}" tabindex="-1">
   <div class="iai-chat-bubble__header">
-    <div class="iai-chat-bubble__role">{% if role == "ai" %}Redbox{% else %}You{% endif %}</div>
-    {% if route %}
-    {{ route_display(route) }}
+    <div class="iai-chat-bubble__role">{% if message.role == "ai" %}Redbox{% else %}You{% endif %}</div>
+    {% if message.route %}
+    {{ route_display(message.route) }}
     {% endif %}
   </div>
 
-  <markdown-converter class="iai-chat-bubble__text">{{ text }}</markdown-converter>
-  {% if source_files %}
+  <markdown-converter class="iai-chat-bubble__text">{{ message.text }}</markdown-converter>
+  {% if message.unique_citation_uris() %}
   <h3 class="iai-chat-bubble__sources-heading govuk-heading-s govuk-!-margin-bottom-1">Sources</h3>
   <div class="iai-display-flex-from-desktop">
-    <ul class="govuk-list govuk-list--bullet govuk-!-margin-bottom-0">
-      {% for source_file in source_files %}
-      <li class="govuk-!-margin-bottom-0">
-        {% if source_file.get_status_text() == "Complete" %}
-        <a class="iai-chat-bubbles__sources-link govuk-link" href="{{ source_file.url }}">{{
-          source_file.original_file_name }}</a>
-        {% else %}
-        <span class="iai-chat-bubbles__sources-link">{{ source_file.original_file_name }}</span>
-        {% endif %}
-      </li>
+    <ol class="rb-footnote-list govuk-!-margin-bottom-0">
+      {% for display, href, text_in_answer in message.unique_citation_uris() %}
+        <li class="govuk-!-margin-bottom-0">
+          <a class="iai-chat-bubbles__sources-link govuk-link" id="footnote-{{ message.id }}-{{ loop.index }}" href="{{ href }}">{{ display }}</a>
+        </li>
       {% endfor %}
-    </ul>
+    </ol>
     <div class="iai-chat-bubble__citations-button-container">
       <copy-text></copy-text>
-      <a class="iai-chat-bubble__button" href="{{url('citations', id)}}">
+      <a class="iai-chat-bubble__button" href="{{url('citations', message.id)}}">
         <svg width="20" height="19" viewBox="0 0 20 19" fill="none" focusable="false" aria-hidden="true">
             <path d="M1.5 9.62502C1.5 9.62502 4.59036 3.55359 10 3.55359C15.4084 3.55359 18.5 9.62502 18.5 9.62502C18.5 9.62502 15.4084 15.6964 10 15.6964C4.59036 15.6964 1.5 9.62502 1.5 9.62502Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
             <path d="M9.99993 10.8392C10.322 10.8392 10.6308 10.7113 10.8586 10.4836C11.0863 10.2558 11.2142 9.94698 11.2142 9.62493C11.2142 9.30288 11.0863 8.99402 10.8586 8.7663C10.6308 8.53858 10.322 8.41064 9.99993 8.41064C9.67788 8.41064 9.36902 8.53858 9.1413 8.7663C8.91358 8.99402 8.78564 9.30288 8.78564 9.62493C8.78564 9.94698 8.91358 10.2558 9.1413 10.4836C9.36902 10.7113 9.67788 10.8392 9.99993 10.8392Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -73,7 +73,7 @@
     </div>
   </div>
   <br />
-  {% elif role == "ai" %}
+  {% elif message.role == "ai" %}
     <copy-text></copy-text>
   {% endif %}
 </div>

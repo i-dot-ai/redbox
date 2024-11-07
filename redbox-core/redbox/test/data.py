@@ -14,7 +14,7 @@ from pydantic.v1 import BaseModel, Field, validator
 
 from redbox.models.chain import RedboxQuery
 from redbox.models.chat import ChatRoute, ErrorRoute
-from redbox.models.file import ChunkMetadata, ChunkResolution
+from redbox.models.file import ChunkResolution, UploadedFileMetadata
 from redbox.models.graph import RedboxActivityEvent
 
 log = logging.getLogger()
@@ -35,9 +35,9 @@ def generate_docs(
     redbox.retriever.retrievers.hit_to_doc().
     """
     for i in range(number_of_docs):
-        core_metadata = ChunkMetadata(
+        core_metadata = UploadedFileMetadata(
             index=index_start + i,
-            file_name=s3_key,
+            uri=s3_key,
             page_number=page_numbers[int(i / number_of_docs) * len(page_numbers)],
             created_datetime=datetime.datetime.now(datetime.UTC),
             token_count=int(total_tokens / number_of_docs),
@@ -65,14 +65,15 @@ class RedboxTestData(BaseModel):
     number_of_docs: int
     tokens_in_all_docs: int
     chunk_resolution: ChunkResolution = ChunkResolution.largest
-    expected_llm_response: list[str | AIMessage] = Field(default_factory=list)
+    llm_responses: list[str | AIMessage] = Field(default_factory=list)
+    expected_text: str | None = None
     expected_route: ChatRoute | ErrorRoute | None = None
     expected_activity_events: Callable[[list[RedboxActivityEvent]], bool] = Field(
         default=lambda _: True
     )  # Function to check activity events are as expected
     s3_keys: list[str] | None = None
 
-    @validator("expected_llm_response", pre=True)
+    @validator("llm_responses", pre=True)
     @classmethod
     def coerce_to_aimessage(cls, value: str | AIMessage):
         coerced: list[AIMessage] = []
@@ -94,10 +95,7 @@ class RedboxChatTestCase:
         # Use separate file_uuids if specified else match the query
         all_s3_keys = test_data.s3_keys if test_data.s3_keys else query.s3_keys
 
-        if (
-            test_data.expected_llm_response is not None
-            and len(test_data.expected_llm_response) < test_data.number_of_docs
-        ):
+        if test_data.llm_responses is not None and len(test_data.llm_responses) < test_data.number_of_docs:
             log.warning(
                 "Number of configured LLM responses might be less than number of docs. For Map-Reduce actions this will give a Generator Error!"
             )
@@ -120,11 +118,11 @@ class RedboxChatTestCase:
         return [
             doc
             for doc in self.docs
-            if doc.metadata["file_name"] in set(self.query.s3_keys) & set(self.query.permitted_s3_keys)
+            if doc.metadata["uri"] in set(self.query.s3_keys) & set(self.query.permitted_s3_keys)
         ]
 
     def get_all_permitted_docs(self) -> list[Document]:
-        return [doc for doc in self.docs if doc.metadata["file_name"] in set(self.query.permitted_s3_keys)]
+        return [doc for doc in self.docs if doc.metadata["uri"] in set(self.query.permitted_s3_keys)]
 
 
 def generate_test_cases(query: RedboxQuery, test_data: list[RedboxTestData], test_id: str) -> list[RedboxChatTestCase]:

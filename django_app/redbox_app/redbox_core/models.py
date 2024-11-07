@@ -1,13 +1,12 @@
 import logging
 import os
+import textwrap
 import uuid
 from collections.abc import Collection, Sequence
 from datetime import UTC, date, datetime, timedelta
 from typing import override
 
-import boto3
 import jwt
-from botocore.config import Config
 from django.conf import settings
 from django.contrib.auth.base_user import BaseUserManager as BaseSSOUserManager
 from django.contrib.postgres.fields import ArrayField
@@ -71,7 +70,10 @@ class ChatLLMBackend(models.Model):
         GROQ = "groq"
         OLLAMA = "ollama"
 
-    name = models.CharField(max_length=128, help_text="The name of the model, e.g. “gpt-4o”, “claude-3-opus-20240229”.")
+    name = models.CharField(
+        max_length=128,
+        help_text="The name of the model, e.g. “gpt-4o”, “claude-3-opus-20240229”.",
+    )
     provider = models.CharField(max_length=128, choices=Providers, help_text="The model provider")
     description = models.TextField(null=True, blank=True, help_text="brief description of the model")
     is_default = models.BooleanField(default=False, help_text="is this the default llm to use.")
@@ -139,13 +141,22 @@ class AISettings(UUIDPrimaryKeyBase, TimeStampedModel, AbstractAISettings):
     rag_num_candidates = models.PositiveIntegerField(default=10)
     rag_gauss_scale_size = models.PositiveIntegerField(default=3)
     rag_gauss_scale_decay = models.DecimalField(
-        max_digits=5, decimal_places=2, default=0.5, validators=[validators.MinValueValidator(0.0)]
+        max_digits=5,
+        decimal_places=2,
+        default=0.5,
+        validators=[validators.MinValueValidator(0.0)],
     )
     rag_gauss_scale_min = models.DecimalField(
-        max_digits=5, decimal_places=2, default=1.1, validators=[validators.MinValueValidator(1.0)]
+        max_digits=5,
+        decimal_places=2,
+        default=1.1,
+        validators=[validators.MinValueValidator(1.0)],
     )
     rag_gauss_scale_max = models.DecimalField(
-        max_digits=5, decimal_places=2, default=2.0, validators=[validators.MinValueValidator(1.0)]
+        max_digits=5,
+        decimal_places=2,
+        default=2.0,
+        validators=[validators.MinValueValidator(1.0)],
     )
     rag_desired_chunk_size = models.PositiveIntegerField(default=300)
     elbow_filter_enabled = models.BooleanField(default=False)
@@ -158,7 +169,10 @@ class AISettings(UUIDPrimaryKeyBase, TimeStampedModel, AbstractAISettings):
         max_digits=5,
         decimal_places=2,
         default=0.7,
-        validators=[validators.MinValueValidator(0.0), validators.MaxValueValidator(1.0)],
+        validators=[
+            validators.MinValueValidator(0.0),
+            validators.MaxValueValidator(1.0),
+        ],
     )
 
     def __str__(self) -> str:
@@ -418,10 +432,6 @@ class User(BaseUser, UUIDPrimaryKeyBase):
         MORE_THAN_1_WEEK = "More than a week", _("More than a week")
 
     username = None
-    verified = models.BooleanField(default=False, blank=True, null=True)
-    invited_at = models.DateTimeField(default=None, blank=True, null=True)
-    invite_accepted_at = models.DateTimeField(default=None, blank=True, null=True)
-    last_token_sent_at = models.DateTimeField(editable=False, blank=True, null=True)
     password = models.CharField("password", max_length=128, blank=True, null=True)
     business_unit = models.CharField(null=True, blank=True, max_length=64, choices=BusinessUnit)
     grade = models.CharField(null=True, blank=True, max_length=3, choices=UserGrade)
@@ -430,7 +440,9 @@ class User(BaseUser, UUIDPrimaryKeyBase):
     profession = models.CharField(null=True, blank=True, max_length=4, choices=Profession)
     info_about_user = models.CharField(null=True, blank=True, help_text="user entered info from profile overlay")
     redbox_response_preferences = models.CharField(
-        null=True, blank=True, help_text="user entered info from profile overlay, to be used in custom prompt"
+        null=True,
+        blank=True,
+        help_text="user entered info from profile overlay, to be used in custom prompt",
     )
     ai_settings = models.ForeignKey(AISettings, on_delete=models.SET_DEFAULT, default="default", to_field="label")
     is_developer = models.BooleanField(null=True, blank=True, default=False, help_text="is this user a developer?")
@@ -521,33 +533,46 @@ class User(BaseUser, UUIDPrimaryKeyBase):
             return ""
 
 
-class StatusEnum(models.TextChoices):
-    complete = "complete"
-    deleted = "deleted"
-    errored = "errored"
-    processing = "processing"
-
-
-INACTIVE_STATUSES = [StatusEnum.deleted, StatusEnum.errored]
-
-
 class InactiveFileError(ValueError):
     def __init__(self, file):
         super().__init__(f"{file.pk} is inactive, status is {file.status}")
 
 
+def build_s3_key(instance, filename: str) -> str:
+    """the s3-key is the primary key for a file,
+    this needs to be unique so that if a user uploads a file with the same name as
+    1. an existing file that they own, then it is overwritten
+    2. an existing file that another user owns then a new file is created
+    """
+    return f"{instance.user.email}/{filename}"
+
+
 class File(UUIDPrimaryKeyBase, TimeStampedModel):
-    status = models.CharField(choices=StatusEnum.choices, null=False, blank=False)
-    original_file = models.FileField(storage=settings.STORAGES["default"]["BACKEND"])
+    class Status(models.TextChoices):
+        complete = "complete"
+        deleted = "deleted"
+        errored = "errored"
+        processing = "processing"
+
+    INACTIVE_STATUSES = [Status.deleted, Status.errored]
+
+    status = models.CharField(choices=Status.choices, null=False, blank=False)
+    original_file = models.FileField(
+        storage=settings.STORAGES["default"]["BACKEND"],
+        upload_to=build_s3_key,
+    )
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    original_file_name = models.TextField(max_length=2048, blank=True, null=True)
+    original_file_name = models.TextField(max_length=2048, blank=True, null=True)  # delete me
     last_referenced = models.DateTimeField(blank=True, null=True)
     ingest_error = models.TextField(
-        max_length=2048, blank=True, null=True, help_text="error, if any, encountered during ingest"
+        max_length=2048,
+        blank=True,
+        null=True,
+        help_text="error, if any, encountered during ingest",
     )
 
     def __str__(self) -> str:  # pragma: no cover
-        return f"{self.original_file_name} {self.user}"
+        return self.file_name
 
     def save(self, *args, **kwargs):
         if not self.last_referenced:
@@ -576,68 +601,38 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
                 body={"query": {"term": {"metadata.file_name.keyword": self.unique_name}}},
             )
 
-    def update_status_from_core(self, status_label):
-        match status_label:
-            case "complete":
-                self.status = StatusEnum.complete
-            case "failed":
-                self.status = StatusEnum.errored
-            case _:
-                self.status = StatusEnum.processing
-        self.save()
-
     @property
     def file_type(self) -> str:
-        name = self.original_file.name
+        name = self.file_name
         return name.split(".")[-1]
 
     @property
-    def url(self) -> URL | None:
-        #  In dev environment, get pre-signed url from minio
-        if settings.ENVIRONMENT.uses_minio:
-            s3 = boto3.client(
-                "s3",
-                endpoint_url="http://localhost:9000",
-                aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
-                aws_secret_access_key=settings.AWS_S3_SECRET_ACCESS_KEY,
-                config=Config(signature_version="s3v4"),
-                region_name=settings.AWS_S3_REGION_NAME,
-            )
-
-            url = s3.generate_presigned_url(
-                ClientMethod="get_object",
-                Params={
-                    "Bucket": settings.AWS_STORAGE_BUCKET_NAME,
-                    "Key": self.name,
-                },
-            )
-            return URL(url)
-
-        if not self.original_file:
-            logger.error("attempt to access non-existent file %s", self.pk, stack_info=True)
-            return None
-
-        return URL(self.original_file.url)
+    def url(self) -> str:
+        return self.original_file.url
 
     @property
-    def name(self) -> str:
-        # User-facing name
-        try:
-            return self.original_file_name or self.original_file.name
-        except ValueError as e:
-            logger.exception("attempt to access non-existent file %s", self.pk, exc_info=e)
+    def file_name(self) -> str:
+        if self.original_file_name:  # delete me?
+            return self.original_file_name
+
+        # could have a stronger (regex?) way of stripping the users email address?
+        if "/" in self.original_file.name:
+            return self.original_file.name.split("/")[1]
+
+        logger.error("expected filename=%s to start with the user's email address", self.original_file.name)
+        return self.original_file.name
 
     @property
     def unique_name(self) -> str:
-        # Name used when processing files that exist in S3
-        if self.status in INACTIVE_STATUSES:
-            logger.exception("Attempt to access unique_name for inactive file %s with status %s", self.pk, self.status)
+        """primary key for accessing file in s3"""
+        if self.status in File.INACTIVE_STATUSES:
+            logger.exception("Attempt to access s3-key for inactive file %s with status %s", self.pk, self.status)
             raise InactiveFileError(self)
         return self.original_file.name
 
     def get_status_text(self) -> str:
         return next(
-            (status[1] for status in StatusEnum.choices if self.status == status[0]),
+            (status[1] for status in File.Status.choices if self.status == status[0]),
             "Unknown",
         )
 
@@ -656,8 +651,8 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
     def get_completed_and_processing_files(cls, user: User) -> tuple[Sequence["File"], Sequence["File"]]:
         """Returns all files that are completed and processing for a given user."""
 
-        completed_files = cls.objects.filter(user=user, status=StatusEnum.complete).order_by("-created_at")
-        processing_files = cls.objects.filter(user=user, status=StatusEnum.processing).order_by("-created_at")
+        completed_files = cls.objects.filter(user=user, status=File.Status.complete).order_by("-created_at")
+        processing_files = cls.objects.filter(user=user, status=File.Status.processing).order_by("-created_at")
         return completed_files, processing_files
 
     @classmethod
@@ -668,7 +663,10 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
             .annotate(min_created_at=Min("citation__created_at"))
             .order_by("min_created_at")
             .prefetch_related(
-                Prefetch("citation_set", queryset=Citation.objects.filter(chat_message_id=chat_message_id))
+                Prefetch(
+                    "citation_set",
+                    queryset=Citation.objects.filter(chat_message_id=chat_message_id),
+                )
             )
         )
 
@@ -680,7 +678,9 @@ class Chat(UUIDPrimaryKeyBase, TimeStampedModel, AbstractAISettings):
 
     # Exit feedback - this is separate to the ratings for individual ChatMessages
     feedback_achieved = models.BooleanField(
-        null=True, blank=True, help_text="Did Redbox do what you needed it to in this chat?"
+        null=True,
+        blank=True,
+        help_text="Did Redbox do what you needed it to in this chat?",
     )
     feedback_saved_time = models.BooleanField(null=True, blank=True, help_text="Did Redbox help save you time?")
     feedback_improved_work = models.BooleanField(
@@ -725,50 +725,102 @@ class Chat(UUIDPrimaryKeyBase, TimeStampedModel, AbstractAISettings):
         return get_date_group(self.newest_message_date)
 
 
-class ChatRoleEnum(models.TextChoices):
-    ai = "ai"
-    user = "user"
-    system = "system"
-
-
 class Citation(UUIDPrimaryKeyBase, TimeStampedModel):
-    file = models.ForeignKey(File, on_delete=models.CASCADE)
+    class Origin(models.TextChoices):
+        WIKIPEDIA = "Wikipedia", _("wikipedia")
+        USER_UPLOADED_DOCUMENT = "UserUploadedDocument", _("user uploaded document")
+        GOV_UK = "GOV.UK", _("gov.uk")
+
+    file = models.ForeignKey(
+        File,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        help_text="file for internal citation",
+    )
+    url = models.URLField(null=True, blank=True, help_text="url for external")
     chat_message = models.ForeignKey("ChatMessage", on_delete=models.CASCADE)
     text = models.TextField(null=True, blank=True)
     page_numbers = ArrayField(
-        models.PositiveIntegerField(), null=True, blank=True, help_text="location of citation in document"
+        models.PositiveIntegerField(),
+        null=True,
+        blank=True,
+        help_text="location of citation in document",
+    )
+    source = models.CharField(
+        max_length=32,
+        choices=Origin,
+        help_text="source of citation",
+        default=Origin.USER_UPLOADED_DOCUMENT,
+    )
+    text_in_answer = models.TextField(
+        null=True,
+        blank=True,
+        help_text="the part of the answer the citation refers too - useful for adding in footnotes",
     )
 
     def __str__(self):
-        return f"{self.file}: {self.text or ''}"
+        text = self.text or "..."
+        return textwrap.shorten(text, width=128, placeholder="...")
 
-    def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
+    def save(self, *args, force_insert=False, force_update=False, using=None, update_fields=None):
+        if self.source == self.Origin.USER_UPLOADED_DOCUMENT:
+            if self.file is None:
+                msg = "file must be specified for a user-uploaded-document"
+                raise ValueError(msg)
+
+            if self.url is not None:
+                msg = "url should not be specified for a user-uploaded-document"
+                raise ValueError(msg)
+
+        if self.source != self.Origin.USER_UPLOADED_DOCUMENT:
+            if self.url is None:
+                msg = "url must be specified for an external citation"
+                raise ValueError(msg)
+
+            if self.file is not None:
+                msg = "file should not be specified for an external citation"
+                raise ValueError(msg)
+
         self.text = sanitise_string(self.text)
-        super().save(force_insert, force_update, using, update_fields)
+
+        super().save(*args, force_insert, force_update, using, update_fields)
+
+    @property
+    def uri(self) -> URL:
+        """returns the url of either the external citation or the user-uploaded document"""
+        return URL(self.url or self.file.url)
 
 
 class ChatMessage(UUIDPrimaryKeyBase, TimeStampedModel):
+    class Role(models.TextChoices):
+        ai = "ai"
+        user = "user"
+        system = "system"
+
     chat = models.ForeignKey(Chat, on_delete=models.CASCADE)
     text = models.TextField(max_length=32768, null=False, blank=False)
-    role = models.CharField(choices=ChatRoleEnum.choices, null=False, blank=False)
+    role = models.CharField(choices=Role.choices, null=False, blank=False)
     route = models.CharField(max_length=25, null=True, blank=True)
     selected_files = models.ManyToManyField(File, related_name="+", symmetrical=False, blank=True)
     source_files = models.ManyToManyField(File, through=Citation)
 
     rating = models.PositiveIntegerField(
-        blank=True, null=True, validators=[validators.MinValueValidator(1), validators.MaxValueValidator(5)]
+        blank=True,
+        null=True,
+        validators=[validators.MinValueValidator(1), validators.MaxValueValidator(5)],
     )
     rating_text = models.TextField(blank=True, null=True)
     rating_chips = ArrayField(models.CharField(max_length=32), null=True, blank=True)
 
     def __str__(self) -> str:  # pragma: no cover
-        return self.text[:20] + "..."
+        return textwrap.shorten(self.text, width=20, placeholder="...")
 
-    def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
+    def save(self, *args, force_insert=False, force_update=False, using=None, update_fields=None):
         self.text = sanitise_string(self.text)
         self.rating_text = sanitise_string(self.rating_text)
 
-        super().save(force_insert, force_update, using, update_fields)
+        super().save(*args, force_insert, force_update, using, update_fields)
 
     @classmethod
     def get_messages_ordered_by_citation_priority(cls, chat_id: uuid.UUID) -> Sequence["ChatMessage"]:
@@ -807,15 +859,30 @@ class ChatMessage(UUIDPrimaryKeyBase, TimeStampedModel):
             document=elastic_log_msg,
         )
 
+    def unique_citation_uris(self) -> list[tuple[str, str]]:
+        """a unique set of names and hrefs for all citations"""
+
+        def get_display(citation):
+            if not citation.file:
+                return str(citation.uri)
+            return citation.file.file_name
+
+        return sorted(
+            {(get_display(citation), citation.uri, citation.text_in_answer) for citation in self.citation_set.all()}
+        )
+
 
 class ChatMessageTokenUse(UUIDPrimaryKeyBase, TimeStampedModel):
-    class UseTypeEnum(models.TextChoices):
+    class UseType(models.TextChoices):
         INPUT = "input", _("input")
         OUTPUT = "output", _("output")
 
     chat_message = models.ForeignKey(ChatMessage, on_delete=models.CASCADE)
     use_type = models.CharField(
-        max_length=10, choices=UseTypeEnum, help_text="input or output tokens", default=UseTypeEnum.INPUT
+        max_length=10,
+        choices=UseType,
+        help_text="input or output tokens",
+        default=UseType.INPUT,
     )
     model_name = models.CharField(max_length=50, null=True, blank=True)
     token_count = models.PositiveIntegerField(null=True, blank=True)
@@ -826,7 +893,7 @@ class ChatMessageTokenUse(UUIDPrimaryKeyBase, TimeStampedModel):
 
 class ActivityEvent(UUIDPrimaryKeyBase, TimeStampedModel):
     chat_message = models.ForeignKey(ChatMessage, on_delete=models.CASCADE)
-    message = models.CharField(max_length=128)
+    message = models.TextField()
 
     def __str__(self) -> str:
         return self.message

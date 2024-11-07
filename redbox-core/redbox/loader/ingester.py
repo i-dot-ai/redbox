@@ -65,8 +65,8 @@ def ingest_file(file_name: str, es_index_name: str = alias) -> str | None:
         es.options(ignore_status=[400]).indices.create(index=es_index_name)
 
     # Extract metadata
-    metadata = MetadataLoader(env=env, s3_client=env.s3_client(), file_name=file_name)
-    metadata.extract_metadata()
+    metadata_loader = MetadataLoader(env=env, s3_client=env.s3_client(), file_name=file_name)
+    metadata = metadata_loader.extract_metadata()
 
     chunk_ingest_chain = ingest_from_loader(
         loader=UnstructuredChunkLoader(
@@ -75,7 +75,7 @@ def ingest_file(file_name: str, es_index_name: str = alias) -> str | None:
             min_chunk_size=env.worker_ingest_min_chunk_size,
             max_chunk_size=env.worker_ingest_max_chunk_size,
             overlap_chars=0,
-            metadata=metadata.metadata,
+            metadata=metadata,
         ),
         s3_client=env.s3_client(),
         vectorstore=get_elasticsearch_store(es, es_index_name),
@@ -89,7 +89,7 @@ def ingest_file(file_name: str, es_index_name: str = alias) -> str | None:
             min_chunk_size=env.worker_ingest_largest_chunk_size,
             max_chunk_size=env.worker_ingest_largest_chunk_size,
             overlap_chars=env.worker_ingest_largest_chunk_overlap,
-            metadata=metadata.metadata,
+            metadata=metadata,
         ),
         s3_client=env.s3_client(),
         vectorstore=get_elasticsearch_store_without_embeddings(es, es_index_name),
