@@ -107,20 +107,21 @@ def build_llm_chain(
     _llm = llm.with_config(tags=["response_flag"]) if final_response_chain else llm
     _output_parser = output_parser if output_parser else StrOutputParser()
 
+    _llm_text_and_tools = _llm | {
+        "raw_response": RunnablePassthrough(),
+        "parsed_response": _output_parser,
+        "tool_calls": tool_calls_to_toolstate,
+    }
+
+    text_and_tools = {
+        "text_and_tools": _llm_text_and_tools,
+        "prompt": RunnableLambda(lambda prompt: prompt.to_string()),
+        "model": lambda _: model_name,
+    }
+
     return (
         build_chat_prompt_from_messages_runnable(prompt_set, partial_variables={"format_arg": format_instructions})
-        | {
-            "text_and_tools": (
-                _llm
-                | {
-                    "raw_response": RunnablePassthrough(),
-                    "parsed_response": _output_parser,
-                    "tool_calls": (RunnableLambda(lambda r: r.tool_calls) | tool_calls_to_toolstate),
-                }
-            ),
-            "prompt": RunnableLambda(lambda prompt: prompt.to_string()),
-            "model": lambda _: model_name,
-        }
+        | text_and_tools
         | get_all_metadata
         | RunnablePassthrough.assign(
             _log=RunnableLambda(
