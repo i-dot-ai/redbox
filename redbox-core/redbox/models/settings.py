@@ -11,8 +11,6 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 from opensearchpy import OpenSearch, RequestsHttpConnection
 from langchain.globals import set_debug
 
-from redbox.models.chain import ChatLLMBackend
-
 logging.basicConfig(level=os.environ.get("LOG_LEVEL", "INFO"))
 logger = logging.getLogger()
 
@@ -129,9 +127,7 @@ class Settings(BaseSettings):
         "You are an SEO specialist that must optimise the metadata of a document "
         "to make it as discoverable as possible. You are about to be given the first "
         "1_000 tokens of a document and any hard-coded file metadata that can be "
-        "recovered from it. Create SEO-optimised metadata for this document in the "
-        "structured data markup (JSON-LD) standard. You must include  "
-        "the 'name', 'description' and 'keywords' properties to make the document as easy to search for as possible. "
+        "recovered from it. Create SEO-optimised metadata for this document."
         "Description must be less than 100 words. and no more than 5 keywords .",
     )
 

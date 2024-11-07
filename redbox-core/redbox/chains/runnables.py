@@ -64,7 +64,8 @@ def itemgetter_with_default(field: str, default_getter: Callable[[Any], Any]):
 def build_chat_prompt_from_messages_runnable(
     prompt_set: PromptSet,
     tokeniser: Encoding = None,
-    partial_variables: dict = None,
+    format_instructions: str = "",
+    additional_variables: dict = None,
 ) -> Runnable:
     @chain
     def _chat_prompt_from_messages(state: RedboxState) -> Runnable:
@@ -74,18 +75,19 @@ def build_chat_prompt_from_messages_runnable(
         """
         ai_settings = state["request"].ai_settings
         _tokeniser = tokeniser or get_tokeniser()
-        _partial_variables = partial_variables or dict()
+        _additional_variables = additional_variables or dict()
         task_system_prompt, task_question_prompt = get_prompts(state, prompt_set)
 
         log.debug("Setting chat prompt")
-        system_prompt_message = [("system", 
+        # Set the system prompt to be our composed structure
+        # We preserve the format instructions
+        system_prompt_message = f"""
+            {ai_settings.system_info_prompt}
+            {task_system_prompt}
+            {ai_settings.persona_info_prompt}
+            {ai_settings.caller_info_prompt}
+            {{format_instructions}}
             """
-            {system_info}
-            {task_prompt}
-            {persona_info}
-            {caller_info}
-            """)
-        ]
         prompts_budget = len(_tokeniser.encode(task_system_prompt)) + len(_tokeniser.encode(task_question_prompt))
         chat_history_budget = (
             ai_settings.context_window_size
@@ -113,17 +115,20 @@ def build_chat_prompt_from_messages_runnable(
                 "system_info": ai_settings.system_info_prompt,
                 "persona_info": ai_settings.persona_info_prompt,
                 "caller_info": ai_settings.caller_info_prompt,
-                "task_prompt": task_system_prompt
+                "task_prompt": task_system_prompt,
             }
+            | _additional_variables
         )
         
         return ChatPromptTemplate(
             messages=(
-                system_prompt_message
+                [("system", system_prompt_message)]
                 + [(msg["role"], msg["text"]) for msg in truncated_history]
                 + [("user", task_question_prompt)]
             ),
-            partial_variables=_partial_variables,
+            partial_variables={
+                "format_instructions": format_instructions
+            }
         ).invoke(prompt_template_context)
 
     return _chat_prompt_from_messages
@@ -145,7 +150,7 @@ def build_llm_chain(
     _output_parser = output_parser if output_parser else StrOutputParser()
 
     return (
-        build_chat_prompt_from_messages_runnable(prompt_set, partial_variables={"format_arg": format_instructions})
+        build_chat_prompt_from_messages_runnable(prompt_set, format_instructions=format_instructions)
         | {
             "text_and_tools": (
                 _llm
