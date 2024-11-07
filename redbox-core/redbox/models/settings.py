@@ -8,7 +8,7 @@ from elasticsearch import Elasticsearch
 from pydantic import BaseModel
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from opensearchpy import OpenSearch, RequestsHttpConnection
-from redbox.models.chain import ChatLLMBackend
+from langchain.globals import set_debug
 
 
 logging.basicConfig(level=os.environ.get("LOG_LEVEL", "INFO"))
@@ -45,6 +45,13 @@ class ElasticCloudSettings(BaseModel):
     api_key: str
     cloud_id: str
     subscription_level: str = "basic"
+
+
+class ChatLLMBackend(BaseModel):
+    name: str = "gpt-4o"
+    provider: str = "azure_openai"
+    description: str | None = None
+    model_config = {"frozen": True}
 
 
 class Settings(BaseSettings):
@@ -196,4 +203,6 @@ class Settings(BaseSettings):
 
 @cache
 def get_settings() -> Settings:
-    return Settings()
+    s =  Settings()
+    set_debug(s.dev_mode)
+    return s

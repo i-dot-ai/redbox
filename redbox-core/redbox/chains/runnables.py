@@ -1,3 +1,4 @@
+from email import message
 import logging
 import re
 from operator import attrgetter, itemgetter
@@ -71,16 +72,24 @@ def build_chat_prompt_from_messages_runnable(
         Create a ChatPromptTemplate as part of a chain using 'chat_history'.
         Returns the PromptValue using values in the input_dict
         """
+        ai_settings = state["request"].ai_settings
         _tokeniser = tokeniser or get_tokeniser()
         _partial_variables = partial_variables or dict()
-        system_prompt, question_prompt = get_prompts(state, prompt_set)
+        task_system_prompt, task_question_prompt = get_prompts(state, prompt_set)
 
         log.debug("Setting chat prompt")
-        system_prompt_message = [("system", system_prompt)]
-        prompts_budget = len(_tokeniser.encode(system_prompt)) + len(_tokeniser.encode(question_prompt))
+        system_prompt_message = [("system", 
+            """
+            {system_info}
+            {task_prompt}
+            {persona_info}
+            {caller_info}
+            """)
+        ]
+        prompts_budget = len(_tokeniser.encode(task_system_prompt)) + len(_tokeniser.encode(task_question_prompt))
         chat_history_budget = (
-            state["request"].ai_settings.context_window_size
-            - state["request"].ai_settings.llm_max_tokens
+            ai_settings.context_window_size
+            - ai_settings.llm_max_tokens
             - prompts_budget
         )
 
@@ -95,20 +104,24 @@ def build_chat_prompt_from_messages_runnable(
             else:
                 truncated_history.insert(0, msg)
 
-        prompt_template_context = (
+        prompt_template_context = ( 
             state["request"].model_dump()
-            | RunnablePassthrough.assign(
-                text=state.get("text"),
-                formatted_documents=format_documents(flatten_document_state(state.get("documents"))),
-                tool_calls=format_toolstate(state.get("tool_calls"))
-            )
+            | {                
+                "text": state.get("text"),
+                "formatted_documents": format_documents(flatten_document_state(state.get("documents"))),
+                "tool_calls": format_toolstate(state.get("tool_calls")),
+                "system_info": ai_settings.system_info_prompt,
+                "persona_info": ai_settings.persona_info_prompt,
+                "caller_info": ai_settings.caller_info_prompt,
+                "task_prompt": task_system_prompt
+            }
         )
-
+        
         return ChatPromptTemplate(
             messages=(
                 system_prompt_message
                 + [(msg["role"], msg["text"]) for msg in truncated_history]
-                + [("user", question_prompt)]
+                + [("user", task_question_prompt)]
             ),
             partial_variables=_partial_variables,
         ).invoke(prompt_template_context)

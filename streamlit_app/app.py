@@ -23,7 +23,7 @@ def run_streamlit():
         st.session_state.ai_settings = AISettings()
     # Create an instance of Redbox, if one does not already exist
     if "redbox" not in st.session_state:
-        st.session_state.redbox = Redbox(env=Settings(), debug=True)
+        st.session_state.redbox = Redbox(env=get_settings(), debug=True)
 
     with chat_tab:
         # Iterate over the messages list, display each message in the chat window with the role and corresponding text

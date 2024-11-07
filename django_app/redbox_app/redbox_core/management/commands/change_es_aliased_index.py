@@ -2,11 +2,11 @@ import logging
 
 from django.core.management import BaseCommand
 
-from redbox.models import Settings
+from redbox.models.settings import get_settings
 
 logger = logging.getLogger(__name__)
 
-env = Settings()
+env = get_settings()
 
 es_client = env.elasticsearch_client()
 

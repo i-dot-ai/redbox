@@ -38,7 +38,7 @@ class Redbox:
         env: Settings | None = None,
         debug: bool = False,
     ):
-        _env = env or Settings()
+        _env = env or get_settings()
 
         # Retrievers
 

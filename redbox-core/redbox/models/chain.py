@@ -19,19 +19,12 @@ from langgraph.managed.is_last_step import RemainingStepsManager
 from pydantic import BaseModel, Field
 
 from redbox.models import prompts
-from redbox.models.settings import get_settings
+from redbox.models.settings import ChatLLMBackend, get_settings
 
 
 class ChainChatMessage(TypedDict):
     role: Literal["user", "ai", "system"]
     text: str
-
-
-class ChatLLMBackend(BaseModel):
-    name: str = "gpt-4o"
-    provider: str = "azure_openai"
-    description: str | None = None
-    model_config = {"frozen": True}
 
 
 class AISettings(BaseModel):
@@ -47,6 +40,14 @@ class AISettings(BaseModel):
     map_max_concurrency: int = 128
     stuff_chunk_context_ratio: float = 0.75
     recursion_limit: int = 50
+
+    # Common Prompt Fragments
+
+    system_info_prompt: str = prompts.SYSTEM_INFO
+    persona_info_prompt: str = prompts.PERSONA_INFO
+    caller_info_prompt: str = prompts.CALLER_INFO
+
+    # Task Prompt Fragments
 
     chat_system_prompt: str = prompts.CHAT_SYSTEM_PROMPT
     chat_question_prompt: str = prompts.CHAT_QUESTION_PROMPT
@@ -287,28 +288,12 @@ class PromptSet(StrEnum):
     CondenseQuestion = "condense_question"
 
 
-def create_system_prompt(
-        task_system_prompt: str,
-        ai_settings: AISettings
-):
-    return PromptTemplate(
-        """
-        {system_info}
-        {persona_info}
-        {caller_info}
-        {task_prompt}
-        """
-    ).invoke({
-        "system_info": ai_settings.system_info_prompt,
-        "persona_info": ai_settings.persona_info_prompt,
-        "caller_info": ai_settings.caller_info_prompt,
-        "task_prompt": ai_settings.task_system_prompt
-    })
+
 
 
 def get_prompts(state: RedboxState, prompt_set: PromptSet) -> tuple[str, str]:
     if prompt_set == PromptSet.Chat:
-        system_prompt = create_system_prompt(state["request"].ai_settings.chat_system_prompt, 
+        system_prompt = state["request"].ai_settings.chat_system_prompt
         question_prompt = state["request"].ai_settings.chat_question_prompt
     elif prompt_set == PromptSet.ChatwithDocs:
         system_prompt = state["request"].ai_settings.chat_with_docs_system_prompt
