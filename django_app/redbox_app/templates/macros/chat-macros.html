@@ -36,8 +36,12 @@
 {% set role_text = "You" %}
 {% endif %}
 
+{% for activity in message.activityevent_set.all() %}
+  <p class="rb-activity rb-activity--{{ message.role }}">{{ activity }}</p>
+{% endfor %}
+
 <div
-  class="iai-chat-bubble iai-chat-bubble--{% if message.role == 'user' %}right{% else %}left{% endif %} govuk-body {{ classes }}"
+  class="iai-chat-bubble govuk-body {{ classes }}"
   data-role="{{ message.role }}" tabindex="-1">
   <div class="iai-chat-bubble__header">
     <div class="iai-chat-bubble__role">{% if message.role == "ai" %}Redbox{% else %}You{% endif %}</div>

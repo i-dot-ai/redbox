@@ -6,8 +6,8 @@ from elasticsearch import Elasticsearch
 from langchain_community.utilities import WikipediaAPIWrapper
 from langchain_core.documents import Document
 from langchain_core.embeddings.embeddings import Embeddings
-from langchain_core.tools import StructuredTool, Tool, tool
 from langchain_core.messages import ToolCall
+from langchain_core.tools import StructuredTool, Tool, tool
 from langgraph.prebuilt import InjectedState
 
 from redbox.models.chain import RedboxState
@@ -266,7 +266,7 @@ class SearchDocumentsLogFormatter(BaseRetrievalToolLogFormatter):
         return f"Searching your documents for '{self.tool_call["args"]["query"]}'"
 
     def log_result(self, documents: Iterable[Document]):
-        return f"Reading {len(documents)} snippets from your documents {','.join(set([d.metadata["name"] for d in documents]))}"
+        return f"Reading {len(documents)} snippets from your documents {','.join(set([d.metadata.get("name", "") for d in documents]))}"
 
 
 class SearchGovUKLogFormatter(BaseRetrievalToolLogFormatter):

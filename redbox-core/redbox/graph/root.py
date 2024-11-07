@@ -262,7 +262,7 @@ def get_react_graph(tools: dict[str, StructuredTool], debug: bool = False) -> Co
             .bind_tools(tools.values())
             .with_config(tags=["response_flag"])
         )
-    except:
+    except:  # noqa: E722
         model_with_tools = None
 
     def should_continue(state: RedboxState):

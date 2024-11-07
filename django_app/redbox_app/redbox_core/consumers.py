@@ -83,6 +83,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         logger.debug("received %s from browser", data)
         user_message_text: str = data.get("message", "")
         selected_file_uuids: Sequence[UUID] = [UUID(u) for u in data.get("selectedFiles", [])]
+        activities: Sequence[str] = data.get("activities", [])
         user: User = self.scope.get("user")
 
         user_ai_settings = await AISettingsModel.objects.aget(label=user.ai_settings_id)
@@ -108,7 +109,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         # save user message
         permitted_files = File.objects.filter(user=user, status=File.Status.complete)
         selected_files = permitted_files.filter(id__in=selected_file_uuids)
-        await self.save_user_message(session, user_message_text, selected_files=selected_files)
+        await self.save_user_message(session, user_message_text, selected_files=selected_files, activities=activities)
 
         await self.llm_conversation(selected_files, session, user, user_message_text, permitted_files)
         await self.close()
@@ -183,6 +184,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         session: Chat,
         user_message_text: str,
         selected_files: Sequence[File] | None = None,
+        activities: Sequence[str] | None = None,
     ) -> ChatMessage:
         chat_message = ChatMessage(
             chat=session,
@@ -193,6 +195,12 @@ class ChatConsumer(AsyncWebsocketConsumer):
         chat_message.save()
         if selected_files:
             chat_message.selected_files.set(selected_files)
+
+        # Save user activities
+        for message in activities:
+            activity = ActivityEvent.objects.create(chat_message=chat_message, message=message)
+            activity.save()
+
         return chat_message
 
     @database_sync_to_async
@@ -251,6 +259,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
             for activity in self.activities:
                 ActivityEvent.objects.create(chat_message=chat_message, message=activity.message)
 
+        chat_message.log()
+
         return chat_message
 
     @staticmethod
@@ -272,6 +282,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         self.metadata = metadata_reducer(self.metadata, RequestMetadata.model_validate(response))
 
     async def handle_activity(self, response: dict):
+        await self.send_to_client("activity", response.message)
         self.activities.append(RedboxActivityEvent.model_validate(response))
 
     async def handle_documents(self, response: list[Document]):
