@@ -5,18 +5,34 @@ services:
       - 8000:8000
     networks:
       - redbox-app-network
+
+  mitmproxy:
+    image: mitmproxy/mitmproxy
+    command: mitmweb --web-host 0.0.0.0 --mode regular --showhost --listen-host 0.0.0.0
+    environment:
+      - MITMPROXY_PATH=/home/mitmproxy/.mitmproxy
+    ports:
+      - "8080:8080"  # proxy interface
+      - "8081:8081"  # mitmweb interface
+    volumes:
+      - mitmproxy-data:/home/mitmproxy/.mitmproxy
+    networks:
+      - redbox-app-network
   django-app:
     image: django-app:latest
     build:
       context: .
       dockerfile: ./django_app/Dockerfile
     depends_on:
+      mitmproxy:
+        condition: service_started
       db:
         condition: service_healthy
       minio:
         condition: service_healthy
       elasticsearch:
         condition: service_healthy
+      
     networks:
       - redbox-app-network
     env_file:
@@ -24,9 +40,20 @@ services:
         required: false
       - path: .env
         required: false
+    environment:
+      - HTTP_PROXY=http://mitmproxy:8080
+      - HTTPS_PROXY=http://mitmproxy:8080
+      - http_proxy=http://mitmproxy:8080
+      - https_proxy=http://mitmproxy:8080
+      - NO_PROXY=localhost,127.0.0.1,minio,elasticsearch,db,kibana,embeddings
+      - no_proxy=localhost,127.0.0.1,minio,elasticsearch,db,kibana,embeddings
+      - SSL_CERT_FILE=/etc/mitmproxy/mitmproxy-ca-cert.pem
+      - REQUESTS_CA_BUNDLE=/etc/mitmproxy/mitmproxy-ca-cert.pem
+      - CURL_CA_BUNDLE=/etc/mitmproxy/mitmproxy-ca-cert.pem
     volumes:
       - /app/django_app/frontend/node_modules
       - ./django_app:/app/django_app/
+      - mitmproxy-data:/etc/mitmproxy:ro
     ports:
       - "8090:8090"
     healthcheck:
@@ -179,3 +206,4 @@ volumes:
   elasticsearch:
   redbox-app-data:
   local_postgres_data: {}
+  mitmproxy-data: {}

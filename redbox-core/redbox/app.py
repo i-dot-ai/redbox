@@ -1,3 +1,5 @@
+import logging
+
 from langchain_core.embeddings import Embeddings
 from langchain_core.tools import StructuredTool
 from langchain_core.vectorstores import VectorStoreRetriever
@@ -22,6 +24,9 @@ from redbox.models.graph import (
 )
 from redbox.models.settings import Settings
 from redbox.transform import flatten_document_state
+
+
+logger = logging.getLogger(__name__)
 
 
 async def _default_callback(*args, **kwargs):
@@ -101,6 +106,9 @@ class Redbox:
                 content = event["data"]["chunk"].content
                 if isinstance(content, str):
                     await response_tokens_callback(content)
+            elif kind == "on_chat_model_stream":  # react agent - cant get the tags to work
+                if content := getattr(event.get("data", {}).get("chunk", {}), "content", None):
+                    await response_tokens_callback(content)
             elif kind == "on_chain_end" and FINAL_RESPONSE_TAG in tags:
                 content = event["data"]["output"]
                 if isinstance(content, str):
@@ -124,6 +132,7 @@ class Redbox:
                 await activity_event_callback(event["data"])
             elif kind == "on_chain_end" and event["name"] == "LangGraph":
                 final_state = RedboxState(**event["data"]["output"])
+
         return final_state
 
     def get_available_keywords(self) -> dict[ChatRoute, str]:
