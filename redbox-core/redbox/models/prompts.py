@@ -38,7 +38,6 @@ RETRIEVAL_SYSTEM_PROMPT = (
     "Use UK English spelling in response.\n"
     "Use the document `creator_type` as `source_type` if available.\n"
     "\n"
-    "{format_arg}"
 )
 
 AGENTIC_RETRIEVAL_SYSTEM_PROMPT = (

@@ -138,7 +138,7 @@ def build_llm_chain(
     }
 
     return (
-        build_chat_prompt_from_messages_runnable(prompt_set, partial_variables={"format_arg": format_instructions})
+        build_chat_prompt_from_messages_runnable(prompt_set, format_instructions=format_instructions)
         | text_and_tools
         | get_all_metadata
         | RunnablePassthrough.assign(
