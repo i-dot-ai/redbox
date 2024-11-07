@@ -15,7 +15,7 @@ from redbox.graph.nodes.tools import (
     has_injected_state,
     is_valid_tool,
 )
-from redbox.models import Settings
+from redbox.models.settings import Settings
 from redbox.models.chain import AISettings, RedboxQuery, RedboxState
 from redbox.models.file import ChunkCreatorType, ChunkMetadata, ChunkResolution
 from redbox.test.data import RedboxChatTestCase

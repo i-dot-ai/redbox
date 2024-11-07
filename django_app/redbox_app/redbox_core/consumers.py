@@ -17,7 +17,6 @@ from openai import RateLimitError
 from websockets import ConnectionClosedError, WebSocketClientProtocol
 
 from redbox import Redbox
-from redbox.models import Settings
 from redbox.models.chain import (
     AISettings,
     ChainChatMessage,
@@ -29,6 +28,7 @@ from redbox.models.chain import (
 )
 from redbox.models.chain import Citation as AICitation
 from redbox.models.graph import RedboxActivityEvent
+from redbox.models.settings import get_settings
 from redbox_app.redbox_core import error_messages
 from redbox_app.redbox_core.models import (
     ActivityEvent,
@@ -69,7 +69,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
     activities: ClassVar[list[RedboxActivityEvent]] = []
     route = None
     metadata: RequestMetadata = RequestMetadata()
-    redbox = Redbox(env=Settings(), debug=True)
+    redbox = Redbox(env=get_settings(), debug=True)
 
     async def receive(self, text_data=None, bytes_data=None):
         """Receive & respond to message from browser websocket."""

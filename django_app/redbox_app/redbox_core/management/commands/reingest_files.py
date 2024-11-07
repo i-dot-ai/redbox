@@ -4,13 +4,13 @@ import time
 from django.core.management import BaseCommand
 from django_q.tasks import async_task
 
-from redbox.models import Settings
+from redbox.models.settings import get_settings
 from redbox_app.redbox_core.models import File
 from redbox_app.worker import ingest
 
 logger = logging.getLogger(__name__)
 
-env = Settings()
+env = get_settings()
 
 es_client = env.elasticsearch_client()
 

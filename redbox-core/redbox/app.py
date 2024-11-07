@@ -20,7 +20,7 @@ from redbox.models.graph import (
     SOURCE_DOCUMENTS_TAG,
     RedboxEventType,
 )
-from redbox.models.settings import Settings
+from redbox.models.settings import Settings, get_settings
 from redbox.transform import flatten_document_state
 
 
@@ -38,7 +38,7 @@ class Redbox:
         env: Settings | None = None,
         debug: bool = False,
     ):
-        _env = env or Settings()
+        _env = env or get_settings()
 
         # Retrievers
 

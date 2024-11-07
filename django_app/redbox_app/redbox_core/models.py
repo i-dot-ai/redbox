@@ -18,13 +18,14 @@ from django.utils.translation import gettext_lazy as _
 from django_use_email_as_username.models import BaseUser, BaseUserManager
 from yarl import URL
 
-from redbox.models import Settings, prompts
+from redbox.models import prompts
+from redbox.models.settings import get_settings
 from redbox_app.redbox_core.utils import get_date_group
 
 logging.basicConfig(level=os.environ.get("LOG_LEVEL", "INFO"))
 logger = logging.getLogger(__name__)
 
-env = Settings()
+env = get_settings()
 
 es_client = env.elasticsearch_client()
 
