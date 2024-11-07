@@ -38,6 +38,6 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='aisettings',
             name='retrieval_system_prompt',
-            field=models.TextField(default='Your task is to answer user queries with reliable sources.\n**You must provide the citations where you use the information to answer.**\nUse UK English spelling in response.\nUse the document `creator_type` as `source_type` if available.\n\n{format_arg}'),
+            field=models.TextField(default='Your task is to answer user queries with reliable sources.\n**You must provide the citations where you use the information to answer.**\nUse UK English spelling in response.\nUse the document `creator_type` as `source_type` if available.\n\n'),
         ),
     ]
