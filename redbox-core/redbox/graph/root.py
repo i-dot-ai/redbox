@@ -253,14 +253,17 @@ def get_react_graph(tools: dict[str, StructuredTool], debug: bool = False) -> Co
 
     tool_node = ToolNode(tools.values())
 
-    model_with_tools = (
-        init_chat_model(
-            model="gpt-4o",
-            model_provider="azure_openai",
+    try:
+        model_with_tools = (
+            init_chat_model(
+                model="gpt-4o",
+                model_provider="azure_openai",
+            )
+            .bind_tools(tools.values())
+            .with_config(tags=["response_flag"])
         )
-        .bind_tools(tools.values())
-        .with_config(tags=["response_flag"])
-    )
+    except:
+        model_with_tools = None
 
     def should_continue(state: RedboxState):
         messages = state["messages"]
@@ -278,7 +281,6 @@ def get_react_graph(tools: dict[str, StructuredTool], debug: bool = False) -> Co
 
     workflow.add_node("p_pass_question_to_text", build_passthrough_pattern())
     workflow.add_node("p_set_chat_docs_route", build_set_route_pattern(route=ChatRoute.react))
-    workflow.add_node("p_report_sources", report_sources_process)
 
     # Define the two nodes we will cycle between
     workflow.add_node("agent", call_model)
