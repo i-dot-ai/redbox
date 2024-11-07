@@ -2,8 +2,8 @@
 import streamlit as st
 from redbox.app import Redbox
 from redbox.models.chain import RedboxQuery, RedboxState, AISettings
+from redbox.models.settings import get_settings
 from uuid import uuid4
-from redbox.models.settings import Settings
 from dotenv import load_dotenv
 import asyncio
 

@@ -8,7 +8,6 @@ from elasticsearch import Elasticsearch
 from opensearchpy import OpenSearch, RequestsHttpConnection
 from pydantic import BaseModel
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from opensearchpy import OpenSearch, RequestsHttpConnection
 from langchain.globals import set_debug
 
 logging.basicConfig(level=os.environ.get("LOG_LEVEL", "INFO"))
@@ -211,6 +210,6 @@ class Settings(BaseSettings):
 
 @cache
 def get_settings() -> Settings:
-    s =  Settings()
+    s = Settings()
     set_debug(s.dev_mode)
     return s

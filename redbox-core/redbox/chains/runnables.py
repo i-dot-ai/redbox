@@ -1,4 +1,3 @@
-from email import message
 import logging
 import re
 from typing import Any, Callable, Iterable, Iterator
@@ -65,11 +64,7 @@ def build_chat_prompt_from_messages_runnable(
             {{format_instructions}}
             """
         prompts_budget = len(_tokeniser.encode(task_system_prompt)) + len(_tokeniser.encode(task_question_prompt))
-        chat_history_budget = (
-            ai_settings.context_window_size
-            - ai_settings.llm_max_tokens
-            - prompts_budget
-        )
+        chat_history_budget = ai_settings.context_window_size - ai_settings.llm_max_tokens - prompts_budget
 
         if chat_history_budget <= 0:
             raise QuestionLengthError
@@ -82,9 +77,9 @@ def build_chat_prompt_from_messages_runnable(
             else:
                 truncated_history.insert(0, msg)
 
-        prompt_template_context = ( 
+        prompt_template_context = (
             state["request"].model_dump()
-            | {                
+            | {
                 "text": state.get("text"),
                 "formatted_documents": format_documents(flatten_document_state(state.get("documents"))),
                 "tool_calls": format_toolstate(state.get("tool_calls")),
@@ -95,16 +90,14 @@ def build_chat_prompt_from_messages_runnable(
             }
             | _additional_variables
         )
-        
+
         return ChatPromptTemplate(
             messages=(
                 [("system", system_prompt_message)]
                 + [(msg["role"], msg["text"]) for msg in truncated_history]
                 + [("user", task_question_prompt)]
             ),
-            partial_variables={
-                "format_instructions": format_instructions
-            }
+            partial_variables={"format_instructions": format_instructions},
         ).invoke(prompt_template_context)
 
     return _chat_prompt_from_messages

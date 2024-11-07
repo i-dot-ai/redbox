@@ -17,7 +17,6 @@ from openai import RateLimitError
 from websockets import ConnectionClosedError, WebSocketClientProtocol
 
 from redbox import Redbox
-from redbox.models.settings import get_settings
 from redbox.models.chain import (
     AISettings,
     ChainChatMessage,
@@ -29,6 +28,7 @@ from redbox.models.chain import (
 )
 from redbox.models.chain import Citation as AICitation
 from redbox.models.graph import RedboxActivityEvent
+from redbox.models.settings import get_settings
 from redbox_app.redbox_core import error_messages
 from redbox_app.redbox_core.models import (
     ActivityEvent,

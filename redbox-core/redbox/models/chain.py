@@ -13,13 +13,12 @@ from typing import (
 from uuid import UUID, uuid4
 
 from langchain_core.documents import Document
-from langchain_core.prompts import PromptTemplate
 from langchain_core.messages import ToolCall
 from langgraph.managed.is_last_step import RemainingStepsManager
 from pydantic import BaseModel, Field
 
 from redbox.models import prompts
-from redbox.models.settings import ChatLLMBackend, get_settings
+from redbox.models.settings import ChatLLMBackend
 
 
 class ChainChatMessage(TypedDict):
@@ -289,9 +288,6 @@ class PromptSet(StrEnum):
     GiveUpAgentic = "give_up_agentic"
     SelfRoute = "self_route"
     CondenseQuestion = "condense_question"
-
-
-
 
 
 def get_prompts(state: RedboxState, prompt_set: PromptSet) -> tuple[str, str]:

@@ -7,7 +7,7 @@ from langchain_elasticsearch.vectorstores import BM25Strategy, ElasticsearchStor
 from redbox.chains.components import get_embeddings
 from redbox.chains.ingest import ingest_from_loader
 from redbox.loader.loaders import MetadataLoader, UnstructuredChunkLoader
-from redbox.models.settings import Settings, get_settings
+from redbox.models.settings import get_settings
 from redbox.models.file import ChunkResolution
 
 if TYPE_CHECKING:
