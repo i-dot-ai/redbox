@@ -166,7 +166,7 @@ def get_all_metadata(obj: dict):
         citations = getattr(parsed_response, "citations", [])
     else:
         text = text_and_tools["raw_response"].content
-        citations = text_and_tools["raw_response"].content
+        citations = []
 
     out = {
         "tool_calls": text_and_tools["tool_calls"],
