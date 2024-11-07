@@ -5,6 +5,8 @@ from uuid import NAMESPACE_DNS, UUID, uuid5
 
 import pytest
 from langchain_core.documents.base import Document
+from langchain_core.messages import AIMessage
+from langchain_core.runnables import RunnableLambda
 
 from redbox.models.chain import LLMCallMetadata, RequestMetadata
 from redbox.retriever.retrievers import filter_by_elbow
@@ -162,24 +164,32 @@ def test_elbow_filter(scores: list[float], target_len: int):
         (
             {
                 "prompt": "Lorem ipsum dolor sit amet.",
-                "response": (
-                    "Lorem ipsum dolor sit amet, consectetur adipiscing elit, "
-                    "sed do eiusmod tempor incididunt ut labore et dolore magna "
-                    "aliqua. "
-                ),
                 "model": "gpt-4o",
+                "text_and_tools": {
+                    "raw_response": AIMessage(
+                        content=(
+                            "Lorem ipsum dolor sit amet, consectetur adipiscing elit, "
+                            "sed do eiusmod tempor incididunt ut labore et dolore magna "
+                            "aliqua. "
+                        )
+                    )
+                },
             },
             RequestMetadata(llm_calls={LLMCallMetadata(llm_model_name="gpt-4o", input_tokens=6, output_tokens=23)}),
         ),
         (
             {
                 "prompt": "Lorem ipsum dolor sit amet.",
-                "response": (
-                    "Lorem ipsum dolor sit amet, consectetur adipiscing elit, "
-                    "sed do eiusmod tempor incididunt ut labore et dolore magna "
-                    "aliqua. "
-                ),
                 "model": "unknown-model",
+                "text_and_tools": {
+                    "raw_response": AIMessage(
+                        content=(
+                            "Lorem ipsum dolor sit amet, consectetur adipiscing elit, "
+                            "sed do eiusmod tempor incididunt ut labore et dolore magna "
+                            "aliqua. "
+                        )
+                    )
+                },
             },
             RequestMetadata(
                 llm_calls={LLMCallMetadata(llm_model_name="unknown-model", input_tokens=6, output_tokens=23)}
@@ -188,7 +198,7 @@ def test_elbow_filter(scores: list[float], target_len: int):
     ],
 )
 def test_to_request_metadata(output: dict, expected: RequestMetadata):
-    result = to_request_metadata.invoke(output)
+    result = RunnableLambda(to_request_metadata).invoke(output)
     # We assert on token counts here as the id generation causes the LLMCallMetadata objects not to match
     assert (
         result.input_tokens == expected.input_tokens

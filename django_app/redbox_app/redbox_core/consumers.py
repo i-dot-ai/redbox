@@ -259,6 +259,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
             for activity in self.activities:
                 ActivityEvent.objects.create(chat_message=chat_message, message=activity.message)
 
+        chat_message.log()
+
         return chat_message
 
     @staticmethod
