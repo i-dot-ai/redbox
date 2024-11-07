@@ -838,6 +838,27 @@ class ChatMessage(UUIDPrimaryKeyBase, TimeStampedModel):
             )
         )
 
+    def log(self):
+        token_sum = sum(token_use.token_count for token_use in self.chatmessagetokenuse_set.all())
+        elastic_log_msg = {
+            "@timestamp": self.created_at.isoformat(),
+            "id": str(self.id),
+            "chat_id": str(self.chat.id),
+            "user_id": str(self.chat.user.id),
+            "text": str(self.text),
+            "route": str(self.route),
+            "role": "ai",
+            "token_count": token_sum,
+            "rating": int(self.rating) if self.rating else None,
+            "rating_text": str(self.rating_text),
+            "rating_chips": list(map(str, self.rating_chips)) if self.rating_chips else None,
+        }
+        es_client.create(
+            index=env.elastic_chat_mesage_index,
+            id=uuid.uuid4(),
+            document=elastic_log_msg,
+        )
+
     def unique_citation_uris(self) -> list[tuple[str, str]]:
         """a unique set of names and hrefs for all citations"""
 
