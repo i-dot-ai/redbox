@@ -6,8 +6,8 @@ from elasticsearch import Elasticsearch
 from langchain_community.utilities import WikipediaAPIWrapper
 from langchain_core.documents import Document
 from langchain_core.embeddings.embeddings import Embeddings
-from langchain_core.tools import StructuredTool, Tool, tool
 from langchain_core.messages import ToolCall
+from langchain_core.tools import StructuredTool, Tool, tool
 from langgraph.prebuilt import InjectedState
 
 from redbox.models.chain import RedboxState

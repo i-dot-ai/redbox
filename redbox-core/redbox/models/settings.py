@@ -5,11 +5,13 @@ from typing import Literal
 
 import boto3
 from elasticsearch import Elasticsearch
+from opensearchpy import OpenSearch, RequestsHttpConnection
 from pydantic import BaseModel
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from opensearchpy import OpenSearch, RequestsHttpConnection
 from langchain.globals import set_debug
 
+from redbox.models.chain import ChatLLMBackend
 
 logging.basicConfig(level=os.environ.get("LOG_LEVEL", "INFO"))
 logger = logging.getLogger()
@@ -130,8 +132,7 @@ class Settings(BaseSettings):
         "recovered from it. Create SEO-optimised metadata for this document in the "
         "structured data markup (JSON-LD) standard. You must include  "
         "the 'name', 'description' and 'keywords' properties to make the document as easy to search for as possible. "
-        "Description must be less than 100 words. and no more than 5 keywords ."
-        "Return only the JSON-LD:\n\n",
+        "Description must be less than 100 words. and no more than 5 keywords .",
     )
 
     @lru_cache(1)

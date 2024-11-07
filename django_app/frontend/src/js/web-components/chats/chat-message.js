@@ -38,11 +38,9 @@ export class ChatMessage extends HTMLElement {
   connectedCallback() {
     const uuid = crypto.randomUUID();
     this.innerHTML = `
-            <div class="iai-chat-bubble iai-chat-bubble--${
-              this.dataset.role === "user" ? "right" : "left"
-            } govuk-body {{ classes }}" data-role="${
-      this.dataset.role
-    }" tabindex="-1">
+            <div class="iai-chat-bubble govuk-body {{ classes }}" data-role="${
+              this.dataset.role
+            }" tabindex="-1">
                 <div class="iai-chat-bubble__header">
                     <div class="iai-chat-bubble__role">${
                       this.dataset.role === "ai" ? "Redbox" : "You"
@@ -106,9 +104,22 @@ export class ChatMessage extends HTMLElement {
   };
 
   /**
+   * Displays an activity above the message
+   * @param {string} message 
+   * @param { "ai" | "user"} type
+   */
+  addActivity = (message, type) => {
+    let activityElement = document.createElement("p");
+    activityElement.classList.add("rb-activity", `rb-activity--${type}`);
+    activityElement.textContent = message;
+    this.insertBefore(activityElement, this.querySelector(".iai-chat-bubble"));
+  };
+
+  /**
    * Streams an LLM response
    * @param {string} message
    * @param {string[]} selectedDocuments
+   * @param {string[]} activities
    * @param {string} llm
    * @param {string | undefined} sessionId
    * @param {string} endPoint
@@ -117,6 +128,7 @@ export class ChatMessage extends HTMLElement {
   stream = (
     message,
     selectedDocuments,
+    activities,
     llm,
     sessionId,
     endPoint,
@@ -165,6 +177,7 @@ export class ChatMessage extends HTMLElement {
           message: message,
           sessionId: sessionId,
           selectedFiles: selectedDocuments,
+          activities: activities,
           llm: llm,
         })
       );
@@ -227,6 +240,8 @@ export class ChatMessage extends HTMLElement {
           plausible("Chat-message-route", { props: { route: response.data } });
           this.plausibleRouteDataSent = true;
         }
+      } else if (response.type === "activity") {
+        this.addActivity(response.data, "ai");
       } else if (response.type === "end") {
         sourcesContainer.showCitations(response.data.message_id);
         feedbackContainer?.showFeedback(response.data.message_id);
