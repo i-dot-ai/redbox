@@ -1,4 +1,5 @@
 from email import message
+from functools import partial
 
 from langchain.chat_models import init_chat_model
 from langchain_core.messages import HumanMessage
@@ -40,8 +41,6 @@ from redbox.models.chat import ChatRoute, ErrorRoute
 from redbox.models.graph import ROUTABLE_KEYWORDS, RedboxActivityEvent
 from redbox.transform import (structure_documents_by_file_name,
                               structure_documents_by_group_and_indices)
-
-# Subgraphs
 
 
 def get_self_route_graph(retriever: VectorStoreRetriever, prompt_set: PromptSet, debug: bool = False):
@@ -278,25 +277,18 @@ def get_react_graph(tools: dict[str, StructuredTool], debug: bool = False) -> Co
         )
         return {"messages": [result.answer], "citations": result.citations}
 
-    workflow = StateGraph(RedboxState)
-    from functools import partial
-
-    def determine_user_flow_agent(state: RedboxState):
-        last_message = state["messages"][-1]
-        return {"messages": [last_message]}
+    workflow = StateGraph(RedboxState)    
 
     # Nodes
     workflow.add_node("initialise_state", initialise_state)
-    workflow.add_node("determine_user_flow", determine_user_flow_agent)
     workflow.add_node("agent", partial(invoke_model, model_with_tools))
     workflow.add_node("tools", tool_node)
     workflow.add_node("output_formatter", partial(invoke_structured_output_model, model))
 
     # Edges
     workflow.add_edge(START, "initialise_state")
-    workflow.add_edge("initialise_state", "determine_user_flow")
-    workflow.add_conditional_edges("determine_user_flow", id)
-    # workflow.add_conditional_edges("determine_user_flow", determine_user_flow, {True: "agent", False: "output_formatter"})
+    workflow.add_edge("initialise_state", "agent")
+    workflow.add_conditional_edges("agent", is_tool_call, {True: "tools", False: "output_formatter"})
     workflow.add_edge("agent", "tools")
     workflow.add_edge("output_formatter", END)
 
