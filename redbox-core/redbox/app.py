@@ -1,3 +1,5 @@
+from logging import getLogger
+
 from langchain_core.embeddings import Embeddings
 from langchain_core.tools import StructuredTool
 from langchain_core.vectorstores import VectorStoreRetriever
@@ -27,6 +29,7 @@ from redbox.transform import flatten_document_state
 async def _default_callback(*args, **kwargs):
     return None
 
+logger = getLogger(__name__)
 
 class Redbox:
     def __init__(
@@ -90,6 +93,7 @@ class Redbox:
         activity_event_callback=_default_callback,
     ) -> RedboxState:
         final_state = None
+        logger.info("Request: %s", input["request"])
         async for event in self.graph.astream_events(
             input=input,
             version="v2",
