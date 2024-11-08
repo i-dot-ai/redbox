@@ -1,15 +1,8 @@
 from datetime import UTC, datetime
 from enum import StrEnum
 from functools import reduce
-from typing import (
-    Annotated,
-    Literal,
-    NotRequired,
-    Required,
-    TypedDict,
-    get_args,
-    get_origin,
-)
+from typing import (Annotated, Literal, NotRequired, Required, TypedDict,
+                    get_args, get_origin)
 from uuid import UUID, uuid4
 
 from langchain_core.documents import Document

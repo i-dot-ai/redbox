@@ -288,8 +288,8 @@ def get_react_graph(tools: dict[str, StructuredTool], debug: bool = False) -> Co
     # Edges
     workflow.add_edge(START, "initialise_state")
     workflow.add_edge("initialise_state", "agent")
-    workflow.add_conditional_edges("agent", is_tool_call, {True: "tools", False: "output_formatter"})
-    workflow.add_edge("agent", "tools")
+    workflow.add_conditional_edges("agent", is_tool_call, {True: "tools", False: "output_formatter"})    
+    workflow.add_edge("tools", "agent")
     workflow.add_edge("output_formatter", END)
 
     return workflow.compile(debug=True)
