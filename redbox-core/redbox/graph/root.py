@@ -1,44 +1,45 @@
+from email import message
+
 from langchain.chat_models import init_chat_model
+from langchain_core.messages import HumanMessage
 from langchain_core.tools import StructuredTool
 from langchain_core.vectorstores import VectorStoreRetriever
 from langgraph.graph import END, START, StateGraph
 from langgraph.graph.graph import CompiledGraph
 from langgraph.prebuilt import ToolNode
 
-from redbox.chains.components import get_structured_response_with_citations_parser
+from redbox.chains.components import \
+    get_structured_response_with_citations_parser
 from redbox.chains.runnables import build_self_route_output_parser
 from redbox.graph.edges import (
     build_documents_bigger_than_context_conditional,
-    build_keyword_detection_conditional,
-    build_strings_end_text_conditional,
+    build_keyword_detection_conditional, build_strings_end_text_conditional,
     build_tools_selected_conditional,
     build_total_tokens_request_handler_conditional,
-    documents_selected_conditional,
-    multiple_docs_in_group_conditional,
-)
-from redbox.graph.nodes.processes import (
-    PromptSet,
-    build_activity_log_node,
-    build_chat_pattern,
-    build_error_pattern,
-    build_merge_pattern,
-    build_passthrough_pattern,
-    build_retrieve_pattern,
-    build_set_metadata_pattern,
-    build_set_route_pattern,
-    build_set_self_route_from_llm_answer,
-    build_stuff_pattern,
-    build_tool_pattern,
-    clear_documents_process,
-    empty_process,
-    report_sources_process,
-)
-from redbox.graph.nodes.sends import build_document_chunk_send, build_document_group_send, build_tool_send
+    documents_selected_conditional, multiple_docs_in_group_conditional)
+from redbox.graph.nodes.processes import (PromptSet, build_activity_log_node,
+                                          build_chat_pattern,
+                                          build_error_pattern,
+                                          build_merge_pattern,
+                                          build_passthrough_pattern,
+                                          build_retrieve_pattern,
+                                          build_set_metadata_pattern,
+                                          build_set_route_pattern,
+                                          build_set_self_route_from_llm_answer,
+                                          build_stuff_pattern,
+                                          build_tool_pattern,
+                                          clear_documents_process,
+                                          empty_process,
+                                          report_sources_process)
+from redbox.graph.nodes.sends import (build_document_chunk_send,
+                                      build_document_group_send,
+                                      build_tool_send)
 from redbox.graph.nodes.tools import get_log_formatter_for_retrieval_tool
-from redbox.models.chain import RedboxState
+from redbox.models.chain import RedboxState, StructuredResponseWithCitations
 from redbox.models.chat import ChatRoute, ErrorRoute
 from redbox.models.graph import ROUTABLE_KEYWORDS, RedboxActivityEvent
-from redbox.transform import structure_documents_by_file_name, structure_documents_by_group_and_indices
+from redbox.transform import (structure_documents_by_file_name,
+                              structure_documents_by_group_and_indices)
 
 # Subgraphs
 
@@ -253,48 +254,53 @@ def get_react_graph(tools: dict[str, StructuredTool], debug: bool = False) -> Co
 
     tool_node = ToolNode(tools.values())
 
-    try:
-        model_with_tools = (
-            init_chat_model(
-                model="gpt-4o",
-                model_provider="azure_openai",
-            )
-            .bind_tools(tools.values())
-            .with_config(tags=["response_flag"])
+    model = init_chat_model(
+        model="gpt-4o",
+        model_provider="azure_openai",
+    )    
+    model_with_tools = model.bind_tools(tools.values()).with_config(tags=["lag"])
+    structured_output_model = model.with_structured_output(StructuredResponseWithCitations)
+
+    def initialise_state(state: RedboxState):
+        return {"messages": [HumanMessage(content=state["request"].question)], "route_name": ChatRoute.react}
+
+    def is_tool_call(state: RedboxState) -> bool:
+        print(state["messages"][-1].tool_calls)
+        return bool(state["messages"][-1].tool_calls)
+
+    def invoke_model(model, state: RedboxState):
+        result = model.invoke(state["messages"])
+        return {"messages": [result]}
+
+    def invoke_structured_output_model(model, state: RedboxState):
+        result: StructuredResponseWithCitations = structured_output_model.invoke(
+            state["messages"]
         )
-    except:  # noqa: E722
-        model_with_tools = None
-
-    def should_continue(state: RedboxState):
-        messages = state["messages"]
-        last_message = messages[-1]
-        if last_message.tool_calls:
-            return "tools"
-        return END
-
-    def call_model(state: RedboxState):
-        messages = state["messages"]
-        response = model_with_tools.invoke(messages)
-        return {"messages": [response]}
+        return {"messages": [result.answer], "citations": result.citations}
 
     workflow = StateGraph(RedboxState)
+    from functools import partial
 
-    workflow.add_node("p_pass_question_to_text", build_passthrough_pattern())
-    workflow.add_node("p_set_chat_docs_route", build_set_route_pattern(route=ChatRoute.react))
+    def determine_user_flow_agent(state: RedboxState):
+        last_message = state["messages"][-1]
+        return {"messages": [last_message]}
 
-    # Define the two nodes we will cycle between
-    workflow.add_node("agent", call_model)
+    # Nodes
+    workflow.add_node("initialise_state", initialise_state)
+    workflow.add_node("determine_user_flow", determine_user_flow_agent)
+    workflow.add_node("agent", partial(invoke_model, model_with_tools))
     workflow.add_node("tools", tool_node)
+    workflow.add_node("output_formatter", partial(invoke_structured_output_model, model))
 
-    workflow.add_edge(START, "p_pass_question_to_text")
-    workflow.add_edge("p_pass_question_to_text", "p_set_chat_docs_route")
-    workflow.add_edge("p_set_chat_docs_route", "agent")
+    # Edges
+    workflow.add_edge(START, "initialise_state")
+    workflow.add_edge("initialise_state", "determine_user_flow")
+    workflow.add_conditional_edges("determine_user_flow", id)
+    # workflow.add_conditional_edges("determine_user_flow", determine_user_flow, {True: "agent", False: "output_formatter"})
+    workflow.add_edge("agent", "tools")
+    workflow.add_edge("output_formatter", END)
 
-    workflow.add_conditional_edges("agent", should_continue, ["tools", END])
-    workflow.add_edge("tools", "agent")
-
-    app = workflow.compile(debug=True)
-    return app
+    return workflow.compile(debug=True)
 
 
 def get_chat_with_documents_graph(
