@@ -167,11 +167,11 @@ def get_agentic_search_graph(tools: dict[str, StructuredTool], debug: bool = Fal
     builder.add_node(
         "p_search_agent",
         build_stuff_pattern(
-            prompt_set=PromptSet.SearchAgentic, 
-            tools=agent_tools, 
-            output_parser=citations_output_parser, 
+            prompt_set=PromptSet.SearchAgentic,
+            tools=agent_tools,
+            output_parser=citations_output_parser,
             format_instructions=format_instructions,
-        )
+        ),
     )
     builder.add_node(
         "p_retrieval_tools",
