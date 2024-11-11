@@ -31,6 +31,10 @@ class ChatController extends HTMLElement {
         `You selected ${selectedDocuments.length || "no"} document${selectedDocuments.length === 1 ? "" : "s"}`,
         "You sent this prompt"
       ];
+      // add filename to activity if only one file
+      if (selectedDocuments.length === 1) {
+        activites[0] += ` (${selectedDocuments[0].name})`;
+      }
       activites.forEach((activity) => {
         userMessage.addActivity(activity, "user");
       });
@@ -47,7 +51,7 @@ class ChatController extends HTMLElement {
 
       aiMessage.stream(
         userText,
-        selectedDocuments,
+        selectedDocuments.map(doc => doc.id),
         activites,
         llm,
         this.dataset.sessionId,
