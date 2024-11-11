@@ -29,7 +29,9 @@ from redbox.transform import flatten_document_state
 async def _default_callback(*args, **kwargs):
     return None
 
+
 logger = getLogger(__name__)
+
 
 class Redbox:
     def __init__(
@@ -94,7 +96,7 @@ class Redbox:
     ) -> RedboxState:
         final_state = None
         request_dict = input["request"].model_dump()
-        logger.info("Request: %s", {k:request_dict[k] for k in request_dict.keys()-{"ai_settings"}})
+        logger.info("Request: %s", {k: request_dict[k] for k in request_dict.keys() - {"ai_settings"}})
         async for event in self.graph.astream_events(
             input=input,
             version="v2",
