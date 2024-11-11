@@ -243,6 +243,38 @@ chat-history[data-initialised] .rb-chat-history__actions-button {
   width: 100%;
 }
 
+.rb-activity {
+  border-left: 1px solid black;
+  display: flex;
+  font-size: 0.75rem;
+  margin: 0;
+  margin-left: 0.5rem;
+  padding-bottom: 0.75rem;
+}
+.rb-activity::before {
+  align-items: center;
+  border-radius: 100%;
+  content: '';
+  display: flex;
+  height: 1rem;
+  justify-content: center;
+  left: -0.5rem;
+  position: relative;
+  top: -1px;
+  width: 1rem;
+}
+.rb-activity--user::before {
+  background-color: #0b8478;
+  content: url("/static/icons/activity-user.svg")
+}
+.rb-activity--info::before {
+  background-color: #0779c4;
+}
+.rb-activity--ai::before {
+  background-color: #9c0000;
+  content: url("/static/icons/activity-redbox.svg")
+}
+
 chat-message {
   scroll-margin-bottom: 10rem;
 }
@@ -324,6 +356,19 @@ chat-message {
 .rb-response-loading__spinner,
 .rb-streaming-response-loading__spinner {
   width: 1.5rem;
+}
+
+/* Footnotes */
+.rb-footnote-link {
+  background-color: var(--iai-colour-secondary-teal);
+  color: white;
+  padding: 1px 4px;
+  text-decoration: none;
+  border-radius: 2px;
+  margin: 2px;
+}
+.rb-footnote-list {
+  padding-left: 1rem;
 }
 
 /* Response feedback - differing content for negative and positive responses */

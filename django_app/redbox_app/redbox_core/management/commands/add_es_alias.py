@@ -1,8 +1,8 @@
 from django.core.management import BaseCommand
 
-from redbox.models import Settings
+from redbox.models.settings import get_settings
 
-env = Settings()
+env = get_settings()
 
 es_client = env.elasticsearch_client()
 

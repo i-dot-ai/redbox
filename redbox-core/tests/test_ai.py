@@ -36,7 +36,7 @@ if TYPE_CHECKING:
     from elasticsearch import Elasticsearch
     from langchain_community.chat_models import ChatLiteLLM
 
-    from redbox.models import Settings
+    from redbox.models.settings import Settings
 
 
 logging.getLogger().setLevel(logging.CRITICAL)

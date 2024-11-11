@@ -7,7 +7,7 @@ from langchain_elasticsearch.vectorstores import BM25Strategy, ElasticsearchStor
 from redbox.chains.components import get_embeddings
 from redbox.chains.ingest import ingest_from_loader
 from redbox.loader.loaders import MetadataLoader, UnstructuredChunkLoader
-from redbox.models import Settings
+from redbox.models.settings import get_settings
 from redbox.models.file import ChunkResolution
 
 if TYPE_CHECKING:
@@ -18,7 +18,7 @@ else:
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger()
 
-env = Settings()
+env = get_settings()
 alias = env.elastic_chunk_alias
 
 

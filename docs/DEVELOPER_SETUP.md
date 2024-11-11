@@ -13,7 +13,7 @@ Currently, we use [poetry](https://python-poetry.org/) to manage our python pack
 
 ## VSCode
 To make use of the VSCode setup open the workspace file .vscode/redbox.code-workspace. This will open the relevant services as roots in a single workspace. The recommended way to use this is:
-* Create a venv in each of the main service directories (core-api, redbox-core, worker) this should be in a directory called _venv_
+* Create a venv in each of the main service directories (redbox-core, django-app) this should be in a directory called _venv_
 * Configure each workspace directory to use it's own venv python interpreter. NB You may need to enter these manually when prompted as _./venv/bin/python_
 
 The tests should then all load separately and use their own env.
@@ -26,12 +26,11 @@ To run the project, create a new file called `.env` and populate this file with 
 
 Typically this involves setting the following variables:
 
-- `AZURE_OPENAI_API_KEY_XX` - Azure OpenAI API key
-- `AZURE_OPENAI_ENDPOINT_XX` - Azure OpenAI API key
-- `OPENAI_API_VESION_XX` - OpenAI API version
+- `AZURE_OPENAI_API_KEY` - Azure OpenAI API key
+- `AZURE_OPENAI_ENDPOINT` - Azure OpenAI API key
+- `OPENAI_API_VESION` - OpenAI API version
 
-where `XX` can be any of `35T`, `4T`, `4O`. Exactly which LLM you use is decided at runtime from,
-so populate the settings that you need.
+It is best to leave hostnames out of the .env file. These are then set manually by vscode tasks or pulled from a deployment .env like .env.test/.env.integration
 
 ### Backend Profiles
 Redbox can use different backends for chat and embeddings, which are used is controlled by env vars. The defaults are currently to use Azure for both chat and embeddings but OpenAI can be used (and pointed to an OpenAI compliant local service).

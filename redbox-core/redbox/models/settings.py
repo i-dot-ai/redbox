@@ -1,15 +1,14 @@
 import logging
 import os
-from functools import lru_cache
+from functools import cache, lru_cache
 from typing import Literal
 
 import boto3
 from elasticsearch import Elasticsearch
+from opensearchpy import OpenSearch, RequestsHttpConnection
 from pydantic import BaseModel
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from opensearchpy import OpenSearch, RequestsHttpConnection
-from redbox.models.chain import ChatLLMBackend
-
+from langchain.globals import set_debug
 
 logging.basicConfig(level=os.environ.get("LOG_LEVEL", "INFO"))
 logger = logging.getLogger()
@@ -45,6 +44,13 @@ class ElasticCloudSettings(BaseModel):
     api_key: str
     cloud_id: str
     subscription_level: str = "basic"
+
+
+class ChatLLMBackend(BaseModel):
+    name: str = "gpt-4o"
+    provider: str = "azure_openai"
+    description: str | None = None
+    model_config = {"frozen": True}
 
 
 class Settings(BaseSettings):
@@ -120,12 +126,17 @@ class Settings(BaseSettings):
         "You are an SEO specialist that must optimise the metadata of a document "
         "to make it as discoverable as possible. You are about to be given the first "
         "1_000 tokens of a document and any hard-coded file metadata that can be "
-        "recovered from it. Create SEO-optimised metadata for this document in the "
-        "structured data markup (JSON-LD) standard. You must include  "
-        "the 'name', 'description' and 'keywords' properties to make the document as easy to search for as possible. "
-        "Description must be less than 100 words. and no more than 5 keywords ."
-        "Return only the JSON-LD:\n\n",
+        "recovered from it. Create SEO-optimised metadata for this document."
+        "Description must be less than 100 words. and no more than 5 keywords .",
     )
+
+    @property
+    def elastic_chat_mesage_index(self):
+        return self.elastic_root_index + "-chat-mesage-log"
+
+    @property
+    def elastic_alias(self):
+        return self.elastic_root_index + "-chunk-current"
 
     @lru_cache(1)
     def elasticsearch_client(self) -> Elasticsearch:
@@ -153,10 +164,13 @@ class Settings(BaseSettings):
         else:
             client = Elasticsearch(cloud_id=self.elastic.cloud_id, api_key=self.elastic.api_key)
 
-        if not client.indices.exists_alias(name=f"{self.elastic_root_index}-chunk-current"):
+        if not client.indices.exists_alias(name=self.elastic_alias):
             chunk_index = f"{self.elastic_root_index}-chunk"
             client.options(ignore_status=[400]).indices.create(index=chunk_index)
-            client.indices.put_alias(index=chunk_index, name=f"{self.elastic_root_index}-chunk-current")
+            client.indices.put_alias(index=chunk_index, name=self.elastic_alias)
+
+        if not client.indices.exists(index=self.elastic_chat_mesage_index):
+            client.indices.create(index=self.elastic_chat_mesage_index)
 
         return client.options(request_timeout=30, retry_on_timeout=True, max_retries=3)
 
@@ -192,3 +206,10 @@ class Settings(BaseSettings):
 
         msg = f"unkown object_store={self.object_store}"
         raise NotImplementedError(msg)
+
+
+@cache
+def get_settings() -> Settings:
+    s = Settings()
+    set_debug(s.dev_mode)
+    return s

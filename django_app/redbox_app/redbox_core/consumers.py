@@ -17,7 +17,6 @@ from openai import RateLimitError
 from websockets import ConnectionClosedError, WebSocketClientProtocol
 
 from redbox import Redbox
-from redbox.models import Settings
 from redbox.models.chain import (
     AISettings,
     ChainChatMessage,
@@ -29,6 +28,7 @@ from redbox.models.chain import (
 )
 from redbox.models.chain import Citation as AICitation
 from redbox.models.graph import RedboxActivityEvent
+from redbox.models.settings import get_settings
 from redbox_app.redbox_core import error_messages
 from redbox_app.redbox_core.models import (
     ActivityEvent,
@@ -69,7 +69,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
     activities: ClassVar[list[RedboxActivityEvent]] = []
     route = None
     metadata: RequestMetadata = RequestMetadata()
-    redbox = Redbox(env=Settings(), debug=True)
+    redbox = Redbox(env=get_settings(), debug=True)
 
     async def receive(self, text_data=None, bytes_data=None):
         """Receive & respond to message from browser websocket."""
@@ -77,11 +77,13 @@ class ChatConsumer(AsyncWebsocketConsumer):
         self.citations = []
         self.external_citations = []
         self.route = None
+        self.activities = []
 
         data = json.loads(text_data or bytes_data)
         logger.debug("received %s from browser", data)
         user_message_text: str = data.get("message", "")
         selected_file_uuids: Sequence[UUID] = [UUID(u) for u in data.get("selectedFiles", [])]
+        activities: Sequence[str] = data.get("activities", [])
         user: User = self.scope.get("user")
 
         user_ai_settings = await AISettingsModel.objects.aget(label=user.ai_settings_id)
@@ -107,7 +109,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         # save user message
         permitted_files = File.objects.filter(user=user, status=File.Status.complete)
         selected_files = permitted_files.filter(id__in=selected_file_uuids)
-        await self.save_user_message(session, user_message_text, selected_files=selected_files)
+        await self.save_user_message(session, user_message_text, selected_files=selected_files, activities=activities)
 
         await self.llm_conversation(selected_files, session, user, user_message_text, permitted_files)
         await self.close()
@@ -182,6 +184,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         session: Chat,
         user_message_text: str,
         selected_files: Sequence[File] | None = None,
+        activities: Sequence[str] | None = None,
     ) -> ChatMessage:
         chat_message = ChatMessage(
             chat=session,
@@ -192,6 +195,12 @@ class ChatConsumer(AsyncWebsocketConsumer):
         chat_message.save()
         if selected_files:
             chat_message.selected_files.set(selected_files)
+
+        # Save user activities
+        for message in activities:
+            activity = ActivityEvent.objects.create(chat_message=chat_message, message=message)
+            activity.save()
+
         return chat_message
 
     @database_sync_to_async
@@ -250,6 +259,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
             for activity in self.activities:
                 ActivityEvent.objects.create(chat_message=chat_message, message=activity.message)
 
+        chat_message.log()
+
         return chat_message
 
     @staticmethod
@@ -271,6 +282,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         self.metadata = metadata_reducer(self.metadata, RequestMetadata.model_validate(response))
 
     async def handle_activity(self, response: dict):
+        await self.send_to_client("activity", response.message)
         self.activities.append(RedboxActivityEvent.model_validate(response))
 
     async def handle_documents(self, response: list[Document]):
@@ -322,10 +334,10 @@ class ChatConsumer(AsyncWebsocketConsumer):
             for s in c.sources:
                 try:
                     file = await File.objects.aget(original_file=s.source)
-                    payload = {"url": str(file.url), "file_name": file.file_name}
+                    payload = {"url": str(file.url), "file_name": file.file_name, "text_in_answer": c.text_in_answer}
                 except File.DoesNotExist:
                     file = None
-                    payload = {"url": s.source, "file_name": s.source}
+                    payload = {"url": s.source, "file_name": s.source, "text_in_answer": c.text_in_answer}
                 await self.send_to_client("source", payload)
                 self.citations.append((file, AICitation(text_in_answer=c.text_in_answer, sources=[s])))
 

@@ -1,5 +1,6 @@
 import logging
 import os
+import textwrap
 import uuid
 from collections.abc import Collection, Sequence
 from datetime import UTC, date, datetime, timedelta
@@ -17,13 +18,14 @@ from django.utils.translation import gettext_lazy as _
 from django_use_email_as_username.models import BaseUser, BaseUserManager
 from yarl import URL
 
-from redbox.models import Settings, prompts
+from redbox.models import prompts
+from redbox.models.settings import get_settings
 from redbox_app.redbox_core.utils import get_date_group
 
 logging.basicConfig(level=os.environ.get("LOG_LEVEL", "INFO"))
 logger = logging.getLogger(__name__)
 
-env = Settings()
+env = get_settings()
 
 es_client = env.elasticsearch_client()
 
@@ -752,12 +754,17 @@ class Citation(UUIDPrimaryKeyBase, TimeStampedModel):
         help_text="source of citation",
         default=Origin.USER_UPLOADED_DOCUMENT,
     )
-    text_in_answer = models.TextField(null=True, blank=True)
+    text_in_answer = models.TextField(
+        null=True,
+        blank=True,
+        help_text="the part of the answer the citation refers too - useful for adding in footnotes",
+    )
 
     def __str__(self):
-        return self.uri
+        text = self.text or "..."
+        return textwrap.shorten(text, width=128, placeholder="...")
 
-    def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
+    def save(self, *args, force_insert=False, force_update=False, using=None, update_fields=None):
         if self.source == self.Origin.USER_UPLOADED_DOCUMENT:
             if self.file is None:
                 msg = "file must be specified for a user-uploaded-document"
@@ -778,7 +785,7 @@ class Citation(UUIDPrimaryKeyBase, TimeStampedModel):
 
         self.text = sanitise_string(self.text)
 
-        super().save(force_insert, force_update, using, update_fields)
+        super().save(*args, force_insert, force_update, using, update_fields)
 
     @property
     def uri(self) -> URL:
@@ -808,13 +815,13 @@ class ChatMessage(UUIDPrimaryKeyBase, TimeStampedModel):
     rating_chips = ArrayField(models.CharField(max_length=32), null=True, blank=True)
 
     def __str__(self) -> str:  # pragma: no cover
-        return self.text[:20] + "..."
+        return textwrap.shorten(self.text, width=20, placeholder="...")
 
-    def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
+    def save(self, *args, force_insert=False, force_update=False, using=None, update_fields=None):
         self.text = sanitise_string(self.text)
         self.rating_text = sanitise_string(self.rating_text)
 
-        super().save(force_insert, force_update, using, update_fields)
+        super().save(*args, force_insert, force_update, using, update_fields)
 
     @classmethod
     def get_messages_ordered_by_citation_priority(cls, chat_id: uuid.UUID) -> Sequence["ChatMessage"]:
@@ -832,6 +839,27 @@ class ChatMessage(UUIDPrimaryKeyBase, TimeStampedModel):
             )
         )
 
+    def log(self):
+        token_sum = sum(token_use.token_count for token_use in self.chatmessagetokenuse_set.all())
+        elastic_log_msg = {
+            "@timestamp": self.created_at.isoformat(),
+            "id": str(self.id),
+            "chat_id": str(self.chat.id),
+            "user_id": str(self.chat.user.id),
+            "text": str(self.text),
+            "route": str(self.route),
+            "role": "ai",
+            "token_count": token_sum,
+            "rating": int(self.rating) if self.rating else None,
+            "rating_text": str(self.rating_text),
+            "rating_chips": list(map(str, self.rating_chips)) if self.rating_chips else None,
+        }
+        es_client.create(
+            index=env.elastic_chat_mesage_index,
+            id=uuid.uuid4(),
+            document=elastic_log_msg,
+        )
+
     def unique_citation_uris(self) -> list[tuple[str, str]]:
         """a unique set of names and hrefs for all citations"""
 
@@ -840,7 +868,9 @@ class ChatMessage(UUIDPrimaryKeyBase, TimeStampedModel):
                 return str(citation.uri)
             return citation.file.file_name
 
-        return sorted({(get_display(citation), citation.uri) for citation in self.citation_set.all()})
+        return sorted(
+            {(get_display(citation), citation.uri, citation.text_in_answer) for citation in self.citation_set.all()}
+        )
 
 
 class ChatMessageTokenUse(UUIDPrimaryKeyBase, TimeStampedModel):
@@ -864,7 +894,7 @@ class ChatMessageTokenUse(UUIDPrimaryKeyBase, TimeStampedModel):
 
 class ActivityEvent(UUIDPrimaryKeyBase, TimeStampedModel):
     chat_message = models.ForeignKey(ChatMessage, on_delete=models.CASCADE)
-    message = models.CharField(max_length=128)
+    message = models.TextField()
 
     def __str__(self) -> str:
         return self.message

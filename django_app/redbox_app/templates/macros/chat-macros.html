@@ -36,8 +36,12 @@
 {% set role_text = "You" %}
 {% endif %}
 
+{% for activity in message.activityevent_set.all() %}
+  <p class="rb-activity rb-activity--{{ message.role }}">{{ activity }}</p>
+{% endfor %}
+
 <div
-  class="iai-chat-bubble iai-chat-bubble--{% if message.role == 'user' %}right{% else %}left{% endif %} govuk-body {{ classes }}"
+  class="iai-chat-bubble govuk-body {{ classes }}"
   data-role="{{ message.role }}" tabindex="-1">
   <div class="iai-chat-bubble__header">
     <div class="iai-chat-bubble__role">{% if message.role == "ai" %}Redbox{% else %}You{% endif %}</div>
@@ -50,13 +54,13 @@
   {% if message.unique_citation_uris() %}
   <h3 class="iai-chat-bubble__sources-heading govuk-heading-s govuk-!-margin-bottom-1">Sources</h3>
   <div class="iai-display-flex-from-desktop">
-    <ul class="govuk-list govuk-list--bullet govuk-!-margin-bottom-0">
-      {% for display, href in message.unique_citation_uris() %}
-      <li class="govuk-!-margin-bottom-0">
-        <a class="iai-chat-bubbles__sources-link govuk-link" href="{{ href }}">{{ display }}</a>
-      </li>
+    <ol class="rb-footnote-list govuk-!-margin-bottom-0">
+      {% for display, href, text_in_answer in message.unique_citation_uris() %}
+        <li class="govuk-!-margin-bottom-0">
+          <a class="iai-chat-bubbles__sources-link govuk-link" id="footnote-{{ message.id }}-{{ loop.index }}" href="{{ href }}">{{ display }}</a>
+        </li>
       {% endfor %}
-    </ul>
+    </ol>
     <div class="iai-chat-bubble__citations-button-container">
       <copy-text></copy-text>
       <a class="iai-chat-bubble__button" href="{{url('citations', message.id)}}">

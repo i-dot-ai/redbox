@@ -48,6 +48,17 @@ class ChatsView(View):
 
         chat_backend = current_chat.chat_backend if current_chat else ChatLLMBackend.objects.get(is_default=True)
 
+        # Add footnotes to messages
+        for message in messages:
+            footnote_counter = 1
+            for display, href, text_in_answer in message.unique_citation_uris():  # noqa: B007
+                if text_in_answer:
+                    message.text = message.text.replace(
+                        text_in_answer,
+                        f'{text_in_answer}<a class="rb-footnote-link" href="#footnote-{message.id}-{footnote_counter}">{footnote_counter}</a>',  # noqa: E501
+                    )
+                    footnote_counter = footnote_counter + 1
+
         context = {
             "chat_id": chat_id,
             "messages": messages,

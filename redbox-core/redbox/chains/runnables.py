@@ -1,6 +1,5 @@
 import logging
 import re
-from operator import attrgetter, itemgetter
 from typing import Any, Callable, Iterable, Iterator
 
 from langchain_core.callbacks.manager import (
@@ -29,41 +28,19 @@ from redbox.models.errors import QuestionLengthError
 from redbox.models.graph import RedboxEventType
 from redbox.transform import (
     flatten_document_state,
-    to_request_metadata,
     tool_calls_to_toolstate,
+    get_all_metadata,
 )
 
 log = logging.getLogger()
 re_string_pattern = re.compile(r"(\S+)")
 
 
-def combine_getters(*getters: Callable[[Any], Any]) -> Callable[[Any], Any]:
-    """Permits chaining of *getter functions in LangChain."""
-
-    def _combined(obj):
-        for getter in getters:
-            obj = getter(obj)
-        return obj
-
-    return _combined
-
-
-def itemgetter_with_default(field: str, default_getter: Callable[[Any], Any]):
-    getter = itemgetter(field)
-
-    def _impl(obj):
-        try:
-            return getter(obj)
-        except Exception:
-            return default_getter(obj)
-
-    return _impl
-
-
 def build_chat_prompt_from_messages_runnable(
     prompt_set: PromptSet,
     tokeniser: Encoding = None,
-    partial_variables: dict = None,
+    format_instructions: str = "",
+    additional_variables: dict | None = None,
 ) -> Runnable:
     @chain
     def _chat_prompt_from_messages(state: RedboxState) -> Runnable:
@@ -71,18 +48,23 @@ def build_chat_prompt_from_messages_runnable(
         Create a ChatPromptTemplate as part of a chain using 'chat_history'.
         Returns the PromptValue using values in the input_dict
         """
+        ai_settings = state["request"].ai_settings
         _tokeniser = tokeniser or get_tokeniser()
-        _partial_variables = partial_variables or dict()
-        system_prompt, question_prompt = get_prompts(state, prompt_set)
+        _additional_variables = additional_variables or dict()
+        task_system_prompt, task_question_prompt = get_prompts(state, prompt_set)
 
         log.debug("Setting chat prompt")
-        system_prompt_message = [("system", system_prompt)]
-        prompts_budget = len(_tokeniser.encode(system_prompt)) + len(_tokeniser.encode(question_prompt))
-        chat_history_budget = (
-            state["request"].ai_settings.context_window_size
-            - state["request"].ai_settings.llm_max_tokens
-            - prompts_budget
-        )
+        # Set the system prompt to be our composed structure
+        # We preserve the format instructions
+        system_prompt_message = f"""
+            {ai_settings.system_info_prompt}
+            {task_system_prompt}
+            {ai_settings.persona_info_prompt}
+            {ai_settings.caller_info_prompt}
+            {{format_instructions}}
+            """
+        prompts_budget = len(_tokeniser.encode(task_system_prompt)) + len(_tokeniser.encode(task_question_prompt))
+        chat_history_budget = ai_settings.context_window_size - ai_settings.llm_max_tokens - prompts_budget
 
         if chat_history_budget <= 0:
             raise QuestionLengthError
@@ -97,20 +79,25 @@ def build_chat_prompt_from_messages_runnable(
 
         prompt_template_context = (
             state["request"].model_dump()
-            | {"text": state.get("text")}
             | {
+                "text": state.get("text"),
                 "formatted_documents": format_documents(flatten_document_state(state.get("documents"))),
+                "tool_calls": format_toolstate(state.get("tool_calls")),
+                "system_info": ai_settings.system_info_prompt,
+                "persona_info": ai_settings.persona_info_prompt,
+                "caller_info": ai_settings.caller_info_prompt,
+                "task_prompt": task_system_prompt,
             }
-            | {"tool_calls": format_toolstate(state.get("tool_calls"))}
+            | _additional_variables
         )
 
         return ChatPromptTemplate(
             messages=(
-                system_prompt_message
+                [("system", system_prompt_message)]
                 + [(msg["role"], msg["text"]) for msg in truncated_history]
-                + [("user", question_prompt)]
+                + [("user", task_question_prompt)]
             ),
-            partial_variables=_partial_variables,
+            partial_variables={"format_instructions": format_instructions},
         ).invoke(prompt_template_context)
 
     return _chat_prompt_from_messages
@@ -131,50 +118,22 @@ def build_llm_chain(
     _llm = llm.with_config(tags=["response_flag"]) if final_response_chain else llm
     _output_parser = output_parser if output_parser else StrOutputParser()
 
+    _llm_text_and_tools = _llm | {
+        "raw_response": RunnablePassthrough(),
+        "parsed_response": _output_parser,
+        "tool_calls": tool_calls_to_toolstate,
+    }
+
+    text_and_tools = {
+        "text_and_tools": _llm_text_and_tools,
+        "prompt": RunnableLambda(lambda prompt: prompt.to_string()),
+        "model": lambda _: model_name,
+    }
+
     return (
-        build_chat_prompt_from_messages_runnable(prompt_set, partial_variables={"format_arg": format_instructions})
-        | {
-            "text_and_tools": (
-                _llm
-                | {
-                    "raw_response": RunnablePassthrough(),
-                    "parsed_response": _output_parser,
-                    "tool_calls": (RunnableLambda(lambda r: r.tool_calls) | tool_calls_to_toolstate),
-                }
-            ),
-            "prompt": RunnableLambda(lambda prompt: prompt.to_string()),
-        }
-        | {
-            "text": RunnableLambda(
-                combine_getters(
-                    itemgetter("text_and_tools"),
-                    itemgetter_with_default(
-                        "parsed_response", combine_getters(itemgetter("raw_response"), attrgetter("content"))
-                    ),
-                )
-            )
-            | (lambda r: r if isinstance(r, str) else r.answer),
-            "tool_calls": combine_getters(itemgetter("text_and_tools"), itemgetter("tool_calls")),
-            "citations": RunnableLambda(
-                combine_getters(
-                    itemgetter("text_and_tools"),
-                    itemgetter_with_default(
-                        "parsed_response", combine_getters(itemgetter("raw_response"), attrgetter("content"))
-                    ),
-                )
-            )
-            | (lambda r: [] if isinstance(r, str) else r.citations),
-            "metadata": (
-                {
-                    "prompt": itemgetter("prompt"),
-                    "response": combine_getters(
-                        itemgetter("text_and_tools"), itemgetter("raw_response"), attrgetter("content")
-                    ),
-                    "model": lambda _: model_name,
-                }
-                | to_request_metadata
-            ),
-        }
+        build_chat_prompt_from_messages_runnable(prompt_set, format_instructions=format_instructions)
+        | text_and_tools
+        | get_all_metadata
         | RunnablePassthrough.assign(
             _log=RunnableLambda(
                 lambda _: log_activity(f"Generating response with {model_name}...") if final_response_chain else None

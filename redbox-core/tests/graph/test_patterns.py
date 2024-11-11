@@ -60,7 +60,7 @@ CHAT_PROMPT_TEST_CASES = generate_test_cases(
 @pytest.mark.parametrize(("test_case"), CHAT_PROMPT_TEST_CASES, ids=[t.test_id for t in CHAT_PROMPT_TEST_CASES])
 def test_build_chat_prompt_from_messages_runnable(test_case: RedboxChatTestCase, tokeniser: Encoding):
     """Tests a given state can be turned into a chat prompt."""
-    chat_prompt = build_chat_prompt_from_messages_runnable(PromptSet.Chat, tokeniser=tokeniser)
+    chat_prompt = build_chat_prompt_from_messages_runnable(prompt_set=PromptSet.Chat, tokeniser=tokeniser)
     state = RedboxState(request=test_case.query, documents=test_case.docs)
 
     response = chat_prompt.invoke(state)
@@ -104,7 +104,7 @@ def test_build_llm_chain(test_case: RedboxChatTestCase):
     final_state = llm_chain.invoke(state)
 
     test_case_content = test_case.test_data.llm_responses[-1].content
-    test_case_tool_calls = tool_calls_to_toolstate(test_case.test_data.llm_responses[-1].tool_calls)
+    test_case_tool_calls = tool_calls_to_toolstate(test_case.test_data.llm_responses[-1])
 
     assert (
         final_state["text"] == test_case_content
@@ -371,12 +371,13 @@ def test_build_tool_pattern(tools: list[StructuredTool], expected: dict[str, str
     """Tests some basic tools update the state correctly."""
     tool = build_tool_pattern(tools=tools)
     tool_calls = [{"name": tool.name, "args": {}, "id": tool.name} for tool in tools]
+    message = AIMessage(content="hello", tool_calls=tool_calls)
 
     state = RedboxState(
         request=RedboxQuery(
             question="What is AI?", s3_keys=[], user_uuid=uuid4(), chat_history=[], permitted_s3_keys=[]
         ),
-        tool_calls=tool_calls_to_toolstate(tool_calls=tool_calls, called=False),
+        tool_calls=tool_calls_to_toolstate(message=message, called=False),
     )
 
     response = tool.invoke(state)
