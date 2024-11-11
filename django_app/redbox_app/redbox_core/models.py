@@ -864,9 +864,11 @@ class ChatMessage(UUIDPrimaryKeyBase, TimeStampedModel):
         """a unique set of names and hrefs for all citations"""
 
         def get_display(citation):
-            if not citation.file:
+            if citation.file:
+                return citation.file.file_name
+            if citation.uri:
                 return str(citation.uri)
-            return citation.file.file_name
+            return None
 
         return sorted(
             {(get_display(citation), citation.uri, citation.text_in_answer) for citation in self.citation_set.all()}

@@ -1,4 +1,5 @@
 from langchain.chat_models import init_chat_model
+from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import RunnableLambda
 from langchain_core.tools import StructuredTool
 from langchain_core.vectorstores import VectorStoreRetriever
@@ -6,7 +7,8 @@ from langgraph.graph import END, START, StateGraph
 from langgraph.graph.graph import CompiledGraph
 from langgraph.prebuilt import create_react_agent
 
-from redbox.chains.components import get_structured_response_with_citations_parser
+from redbox.chains.activity import log_activity
+from redbox.chains.components import get_structured_response_with_citations_parser, logger
 from redbox.chains.runnables import build_self_route_output_parser
 from redbox.graph.edges import (
     build_documents_bigger_than_context_conditional,
@@ -37,9 +39,9 @@ from redbox.graph.nodes.processes import (
 from redbox.graph.nodes.sends import build_document_chunk_send, build_document_group_send, build_tool_send
 from redbox.graph.nodes.tools import get_log_formatter_for_retrieval_tool
 from redbox.graph.react import wiki_tool, govuk_tool, taking_clock, arxiv_tool
-from redbox.models.chain import RedboxState
+from redbox.models.chain import RedboxState, StructuredResponseWithCitations
 from redbox.models.chat import ChatRoute, ErrorRoute
-from redbox.models.graph import ROUTABLE_KEYWORDS, RedboxActivityEvent, ROUTE_NAME_TAG
+from redbox.models.graph import ROUTABLE_KEYWORDS, RedboxActivityEvent
 from redbox.transform import structure_documents_by_file_name, structure_documents_by_group_and_indices
 
 # Subgraphs
@@ -118,19 +120,44 @@ def get_react_graph(debug: bool = False):
         debug=debug,
     )
 
+    @RunnableLambda
     def messages(state: RedboxState):
         question = state["request"].question
         history = [(msg["role"], msg["text"]) for msg in state["request"].chat_history]
         return history + [("user", question)]
 
+    @RunnableLambda
     def route_name(_: RedboxState):
         return {"route_name": ChatRoute.react}
 
-    graph = (
-        {"messages": RunnableLambda(messages)}
-        | react_agent
-        | {"route_name": RunnableLambda(route_name).with_config(tags=[ROUTE_NAME_TAG])}
-    )
+    @RunnableLambda
+    def citations(state: RedboxState):
+        system_prompt = (
+            "You're a helpful AI assistant. Given a user question "
+            "and some Wikipedia article snippets, answer the user "
+            "question. If none of the articles answer the question, "
+            "just say you don't know."
+            "\n\nHere are the supporting documents: "
+            "{context}"
+        )
+
+        prompt = ChatPromptTemplate.from_messages([("system", system_prompt)])
+
+        subgraph = prompt | llm.with_structured_output(StructuredResponseWithCitations)
+
+        _citations = subgraph.invoke({"context": state["messages"]})
+
+        logger.info("citations=%s", _citations.citations)
+
+        report_sources_process({"citations": _citations.citations})
+
+        for message in state["messages"]:
+            for tool_call in getattr(message, "tool_calls", []):
+                log_activity(f"Searching {tool_call["name"]} for '{tool_call["args"]["query"]}'")
+
+        return _citations
+
+    graph = {"messages": messages} | react_agent | {"citations": citations, "route_name": route_name}
 
     return graph
 
