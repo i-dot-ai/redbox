@@ -171,7 +171,7 @@ def get_agentic_search_graph(tools: dict[str, StructuredTool], debug: bool = Fal
             tools=agent_tools,
             output_parser=citations_output_parser,
             format_instructions=format_instructions,
-            final_response_chain=False #Output parser handles streaming
+            final_response_chain=False,  # Output parser handles streaming
         ),
     )
     builder.add_node(
