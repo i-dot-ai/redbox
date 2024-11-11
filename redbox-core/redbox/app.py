@@ -1,4 +1,6 @@
+from logging import getLogger
 from typing import Literal
+
 from langchain_core.embeddings import Embeddings
 from langchain_core.tools import StructuredTool
 from langchain_core.vectorstores import VectorStoreRetriever
@@ -27,6 +29,9 @@ from redbox.transform import flatten_document_state
 
 async def _default_callback(*args, **kwargs):
     return None
+
+
+logger = getLogger(__name__)
 
 
 class Redbox:
@@ -91,6 +96,8 @@ class Redbox:
         activity_event_callback=_default_callback,
     ) -> RedboxState:
         final_state = None
+        request_dict = input["request"].model_dump()
+        logger.info("Request: %s", {k: request_dict[k] for k in request_dict.keys() - {"ai_settings"}})
         async for event in self.graph.astream_events(
             input=input,
             version="v2",
