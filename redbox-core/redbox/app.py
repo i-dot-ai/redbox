@@ -141,7 +141,5 @@ class Redbox:
             graph = get_chat_with_documents_graph(self.all_chunks_retriever, self.parameterised_retriever).get_graph()
         else:
             raise Exception("Invalid graph_to_draw")
-        
-        return graph.draw_mermaid_png(
-            draw_method=MermaidDrawMethod.API, output_file_path=output_path
-        )
+
+        return graph.draw_mermaid_png(draw_method=MermaidDrawMethod.API, output_file_path=output_path)
