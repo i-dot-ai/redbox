@@ -93,7 +93,8 @@ class Redbox:
         activity_event_callback=_default_callback,
     ) -> RedboxState:
         final_state = None
-        logger.info("Request: %s", input["request"])
+        request_dict = input["request"].model_dump()
+        logger.info("Request: %s", {k:request_dict[k] for k in request_dict.keys()-{"ai_settings"}})
         async for event in self.graph.astream_events(
             input=input,
             version="v2",
