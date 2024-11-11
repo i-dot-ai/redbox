@@ -8,7 +8,6 @@ from redbox.chains.runnables import build_self_route_output_parser
 from redbox.graph.edges import (
     build_documents_bigger_than_context_conditional,
     build_keyword_detection_conditional,
-    build_strings_end_text_conditional,
     build_tools_selected_conditional,
     build_total_tokens_request_handler_conditional,
     documents_selected_conditional,
@@ -167,20 +166,16 @@ def get_agentic_search_graph(tools: dict[str, StructuredTool], debug: bool = Fal
     builder.add_node("p_set_agentic_search_route", build_set_route_pattern(route=ChatRoute.gadget))
     builder.add_node(
         "p_search_agent",
-        build_stuff_pattern(prompt_set=PromptSet.SearchAgentic, tools=agent_tools),
+        build_stuff_pattern(
+            prompt_set=PromptSet.SearchAgentic, 
+            tools=agent_tools, 
+            output_parser=citations_output_parser, 
+            format_instructions=format_instructions,
+        )
     )
     builder.add_node(
         "p_retrieval_tools",
         build_tool_pattern(tools=agent_tools, final_source_chain=False),
-    )
-    builder.add_node(
-        "p_stuff_docs_agent",
-        build_stuff_pattern(
-            prompt_set=PromptSet.Search,
-            final_response_chain=False,  # Output Parser handles token streaming
-            output_parser=citations_output_parser,
-            format_instructions=format_instructions,
-        ),
     )
     builder.add_node(
         "p_give_up_agent",
@@ -202,8 +197,6 @@ def get_agentic_search_graph(tools: dict[str, StructuredTool], debug: bool = Fal
 
     # Decisions
     builder.add_node("d_x_steps_left_or_less", empty_process)
-    builder.add_node("d_tools_selected", empty_process)
-    builder.add_node("d_answer_or_give_up", empty_process)
 
     # Sends
     builder.add_node("s_tool", empty_process)
@@ -219,28 +212,14 @@ def get_agentic_search_graph(tools: dict[str, StructuredTool], debug: bool = Fal
             False: "p_search_agent",
         },
     )
-    builder.add_edge("p_search_agent", "d_tools_selected")
     builder.add_conditional_edges(
-        "d_tools_selected",
+        "p_search_agent",
         build_tools_selected_conditional(tools=agent_tool_names),
-        {True: "s_tool", False: "d_answer_or_give_up"},
+        {True: "s_tool", False: "p_report_sources"},
     )
-    builder.add_edge("d_tools_selected", "p_activity_log_retrieval_tool_calls")
+    builder.add_edge("p_search_agent", "p_activity_log_retrieval_tool_calls")
     builder.add_conditional_edges("s_tool", build_tool_send("p_retrieval_tools"), path_map=["p_retrieval_tools"])
     builder.add_edge("p_retrieval_tools", "d_x_steps_left_or_less")
-    builder.add_conditional_edges(
-        "d_answer_or_give_up",
-        build_strings_end_text_conditional("answer", "give_up"),
-        {
-            "answer": "p_stuff_docs_agent",
-            "give_up": "p_give_up_agent",
-            "DEFAULT": "d_x_steps_left_or_less",
-        },
-    )
-    builder.add_edge("p_stuff_docs_agent", "p_report_sources")
-    builder.add_edge("p_give_up_agent", "p_report_sources")
-    builder.add_edge("p_stuff_docs_agent", END)
-    builder.add_edge("p_give_up_agent", END)
     builder.add_edge("p_report_sources", END)
 
     return builder.compile(debug=debug)
