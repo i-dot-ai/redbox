@@ -323,7 +323,6 @@ TEST_CASES = [
                                 ]
                             },
                         ),
-                        "answer",
                         StructuredResponseWithCitations(answer="AI is a lie", citations=[]).model_dump_json(),
                     ],
                     expected_text="AI is a lie",
@@ -345,7 +344,6 @@ TEST_CASES = [
                                 ]
                             },
                         ),
-                        "answer",
                         StructuredResponseWithCitations(
                             answer="AI is a lie, here is some more blurb about why. It's hard to believe but we're mostly making this up",
                             citations=[
@@ -365,27 +363,6 @@ TEST_CASES = [
                     ],
                     expected_text="AI is a lie, here is some more blurb about why. It's hard to believe but we're mostly making this up",
                     expected_citations=[],
-                    expected_route=ChatRoute.gadget,
-                ),
-                RedboxTestData(
-                    number_of_docs=1,
-                    tokens_in_all_docs=10000,
-                    llm_responses=[
-                        AIMessage(
-                            content="",
-                            additional_kwargs={
-                                "tool_calls": [
-                                    {
-                                        "id": "call_e4003b",
-                                        "function": {"arguments": '{\n  "query": "ai"\n}', "name": "_search_documents"},
-                                        "type": "function",
-                                    }
-                                ]
-                            },
-                        ),
-                        "give_up",
-                        "AI is a lie",
-                    ],
                     expected_route=ChatRoute.gadget,
                 ),
             ],
@@ -416,7 +393,6 @@ TEST_CASES = [
                                 ]
                             },
                         ),
-                        "answer",
                         StructuredResponseWithCitations(answer="AI is a lie", citations=[]).model_dump_json(),
                     ],
                     expected_text="AI is a lie",
@@ -490,7 +466,6 @@ TEST_CASES = [
                                 ]
                             },
                         ),
-                        "answer",
                         StructuredResponseWithCitations(answer="AI is a lie", citations=[]).model_dump_json(),
                     ],
                     expected_text="AI is a lie",

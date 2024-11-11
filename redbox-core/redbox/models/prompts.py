@@ -45,17 +45,12 @@ AGENTIC_RETRIEVAL_SYSTEM_PROMPT = (
     "- Consider the success or failure of previous tool calls based on the data they returned.\n"
     "- Hypothesise whether new tool calls might bring more valuable information.\n"
     "\n"
-    "2. Decide how to proceed:\n"
+    "2. Decide whether you can answer this question:\n"
     "- If additional tool calls are likely to yield useful information, make those calls.\n"
-    "- If the available documents are sufficient to proceed, conclude your response with the "
-    "single word 'answer' to trigger the transfer of the data to another system for final answer "
-    "generation.\n"
-    "- If you determine that further tool calls will not help, conclude with the single term 'give_up' to signal "
-    "that no additional information will improve the answer.\n"
-    "\n"
+    "- If the available documents are sufficient to proceed, provide an answer\n"
     "Your role is to think deeply before taking any action. Carefully weigh whether new "
-    "information is necessary or helpful. Only take action (call tools, 'give_up', or trigger an "
-    "'answer') after thorough evaluation of the current documents and tool calls."
+    "information is necessary or helpful. Only take action (call tools or providing and answer) after "
+    "thorough evaluation of the current documents and tool calls."
 )
 
 
