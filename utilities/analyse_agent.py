@@ -341,7 +341,7 @@ def run_usecases(prompts_file, documents_file, save_path, selected_case=[], extr
                 ) as file:
                     file.write(verbose_output)
 
-                write_response(prompts_file, user, prompt, response)
+                # print(f'here is response {response}')
 
                 if extract:
                     extract_save(
@@ -421,9 +421,13 @@ if __name__ == "__main__":
 
 
 """ Example code 
+A strucutured csv files are required to run. These include: 
+- prompt.csv containing User which are user id, and Prompts which are prompt query.
+- documents.csv containing User which are user id, and Documents which are document file path.
+
 To run use cases from csv file
 
-python /redbox/utilities/analyse_agent.py run_usecases -f '/Documents/use_cases.csv' -d '/Documents/documents.csv' -id 7 -s '/Documents/test_log_7.txt'
+python /Users/saisakulchernbumroong/Documents/vsprojects/redbox/utilities/analyse_agent.py run_usecases -f '/Users/saisakulchernbumroong/Documents/use_cases.csv' -d '/Users/saisakulchernbumroong/Documents/documents.csv' -id 7 -s '/Users/saisakulchernbumroong/Documents/test_log_7.txt'
 
 To extract data from log
 
