@@ -18,7 +18,6 @@ from django.utils.translation import gettext_lazy as _
 from django_use_email_as_username.models import BaseUser, BaseUserManager
 from yarl import URL
 
-from redbox.models import prompts
 from redbox.models.settings import get_settings
 from redbox_app.redbox_core.utils import get_date_group
 
@@ -120,22 +119,22 @@ class AISettings(UUIDPrimaryKeyBase, TimeStampedModel, AbstractAISettings):
     stuff_chunk_context_ratio = models.FloatField(default=0.75)
     recursion_limit = models.PositiveIntegerField(default=50)
 
-    chat_system_prompt = models.TextField(default=prompts.CHAT_SYSTEM_PROMPT)
-    chat_question_prompt = models.TextField(default=prompts.CHAT_QUESTION_PROMPT)
-    chat_with_docs_system_prompt = models.TextField(default=prompts.CHAT_WITH_DOCS_SYSTEM_PROMPT)
-    chat_with_docs_question_prompt = models.TextField(default=prompts.CHAT_WITH_DOCS_QUESTION_PROMPT)
-    chat_with_docs_reduce_system_prompt = models.TextField(default=prompts.CHAT_WITH_DOCS_REDUCE_SYSTEM_PROMPT)
-    retrieval_system_prompt = models.TextField(default=prompts.RETRIEVAL_SYSTEM_PROMPT)
-    retrieval_question_prompt = models.TextField(default=prompts.RETRIEVAL_QUESTION_PROMPT)
-    agentic_retrieval_system_prompt = models.TextField(default=prompts.AGENTIC_RETRIEVAL_SYSTEM_PROMPT)
-    agentic_retrieval_question_prompt = models.TextField(default=prompts.AGENTIC_RETRIEVAL_QUESTION_PROMPT)
-    agentic_give_up_system_prompt = models.TextField(default=prompts.AGENTIC_GIVE_UP_SYSTEM_PROMPT)
-    agentic_give_up_question_prompt = models.TextField(default=prompts.AGENTIC_GIVE_UP_QUESTION_PROMPT)
-    condense_system_prompt = models.TextField(default=prompts.CONDENSE_SYSTEM_PROMPT)
-    condense_question_prompt = models.TextField(default=prompts.CONDENSE_QUESTION_PROMPT)
-    chat_map_system_prompt = models.TextField(default=prompts.CHAT_MAP_SYSTEM_PROMPT)
-    chat_map_question_prompt = models.TextField(default=prompts.CHAT_MAP_QUESTION_PROMPT)
-    reduce_system_prompt = models.TextField(default=prompts.REDUCE_SYSTEM_PROMPT)
+    chat_system_prompt = models.TextField(null=True, blank=True)
+    chat_question_prompt = models.TextField(null=True, blank=True)
+    chat_with_docs_system_prompt = models.TextField(null=True, blank=True)
+    chat_with_docs_question_prompt = models.TextField(null=True, blank=True)
+    chat_with_docs_reduce_system_prompt = models.TextField(null=True, blank=True)
+    retrieval_system_prompt = models.TextField(null=True, blank=True)
+    retrieval_question_prompt = models.TextField(null=True, blank=True)
+    agentic_retrieval_system_prompt = models.TextField(null=True, blank=True)
+    agentic_retrieval_question_prompt = models.TextField(null=True, blank=True)
+    agentic_give_up_system_prompt = models.TextField(null=True, blank=True)
+    agentic_give_up_question_prompt = models.TextField(null=True, blank=True)
+    condense_system_prompt = models.TextField(null=True, blank=True)
+    condense_question_prompt = models.TextField(null=True, blank=True)
+    chat_map_system_prompt = models.TextField(null=True, blank=True)
+    chat_map_question_prompt = models.TextField(null=True, blank=True)
+    reduce_system_prompt = models.TextField(null=True, blank=True)
 
     # Elsticsearch RAG and boost values
     rag_k = models.PositiveIntegerField(default=30)
