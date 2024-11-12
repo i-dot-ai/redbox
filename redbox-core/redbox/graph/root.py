@@ -1,4 +1,3 @@
-from email import message
 from functools import partial
 
 from langchain.chat_models import init_chat_model
@@ -9,38 +8,40 @@ from langgraph.graph import END, START, StateGraph
 from langgraph.graph.graph import CompiledGraph
 from langgraph.prebuilt import ToolNode
 
-from redbox.chains.components import \
-    get_structured_response_with_citations_parser
+from redbox.chains.components import get_structured_response_with_citations_parser
 from redbox.chains.runnables import build_self_route_output_parser
 from redbox.graph.edges import (
     build_documents_bigger_than_context_conditional,
-    build_keyword_detection_conditional, build_strings_end_text_conditional,
+    build_keyword_detection_conditional,
+    build_strings_end_text_conditional,
     build_tools_selected_conditional,
     build_total_tokens_request_handler_conditional,
-    documents_selected_conditional, multiple_docs_in_group_conditional)
-from redbox.graph.nodes.processes import (PromptSet, build_activity_log_node,
-                                          build_chat_pattern,
-                                          build_error_pattern,
-                                          build_merge_pattern,
-                                          build_passthrough_pattern,
-                                          build_retrieve_pattern,
-                                          build_set_metadata_pattern,
-                                          build_set_route_pattern,
-                                          build_set_self_route_from_llm_answer,
-                                          build_stuff_pattern,
-                                          build_tool_pattern,
-                                          clear_documents_process,
-                                          empty_process,
-                                          report_sources_process)
-from redbox.graph.nodes.sends import (build_document_chunk_send,
-                                      build_document_group_send,
-                                      build_tool_send)
+    documents_selected_conditional,
+    multiple_docs_in_group_conditional,
+)
+from redbox.graph.nodes.processes import (
+    PromptSet,
+    build_activity_log_node,
+    build_chat_pattern,
+    build_error_pattern,
+    build_merge_pattern,
+    build_passthrough_pattern,
+    build_retrieve_pattern,
+    build_set_metadata_pattern,
+    build_set_route_pattern,
+    build_set_self_route_from_llm_answer,
+    build_stuff_pattern,
+    build_tool_pattern,
+    clear_documents_process,
+    empty_process,
+    report_sources_process,
+)
+from redbox.graph.nodes.sends import build_document_chunk_send, build_document_group_send, build_tool_send
 from redbox.graph.nodes.tools import get_log_formatter_for_retrieval_tool
 from redbox.models.chain import RedboxState, StructuredResponseWithCitations
 from redbox.models.chat import ChatRoute, ErrorRoute
 from redbox.models.graph import ROUTABLE_KEYWORDS, RedboxActivityEvent
-from redbox.transform import (structure_documents_by_file_name,
-                              structure_documents_by_group_and_indices)
+from redbox.transform import structure_documents_by_file_name, structure_documents_by_group_and_indices
 
 
 def get_self_route_graph(retriever: VectorStoreRetriever, prompt_set: PromptSet, debug: bool = False):
@@ -256,7 +257,7 @@ def get_react_graph(tools: dict[str, StructuredTool], debug: bool = False) -> Co
     model = init_chat_model(
         model="gpt-4o",
         model_provider="azure_openai",
-    )    
+    )
     model_with_tools = model.bind_tools(tools.values()).with_config(tags=["lag"])
     structured_output_model = model.with_structured_output(StructuredResponseWithCitations)
 
@@ -272,12 +273,10 @@ def get_react_graph(tools: dict[str, StructuredTool], debug: bool = False) -> Co
         return {"messages": [result]}
 
     def invoke_structured_output_model(model, state: RedboxState):
-        result: StructuredResponseWithCitations = structured_output_model.invoke(
-            state["messages"]
-        )
+        result: StructuredResponseWithCitations = structured_output_model.invoke(state["messages"])
         return {"messages": [result.answer], "citations": result.citations}
 
-    workflow = StateGraph(RedboxState)    
+    workflow = StateGraph(RedboxState)
 
     # Nodes
     workflow.add_node("initialise_state", initialise_state)
@@ -288,7 +287,7 @@ def get_react_graph(tools: dict[str, StructuredTool], debug: bool = False) -> Co
     # Edges
     workflow.add_edge(START, "initialise_state")
     workflow.add_edge("initialise_state", "agent")
-    workflow.add_conditional_edges("agent", is_tool_call, {True: "tools", False: "output_formatter"})    
+    workflow.add_conditional_edges("agent", is_tool_call, {True: "tools", False: "output_formatter"})
     workflow.add_edge("tools", "agent")
     workflow.add_edge("output_formatter", END)
 

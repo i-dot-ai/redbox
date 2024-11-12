@@ -10,30 +10,18 @@ from uuid import uuid4
 from langchain.schema import StrOutputParser
 from langchain_core.callbacks.manager import dispatch_custom_event
 from langchain_core.documents import Document
-from langchain_core.messages import HumanMessage, AIMessage
+from langchain_core.messages import AIMessage, HumanMessage
 from langchain_core.runnables import Runnable, RunnableLambda, RunnableParallel
 from langchain_core.tools import StructuredTool
 from langchain_core.vectorstores import VectorStoreRetriever
-
 
 from redbox.chains.activity import log_activity
 from redbox.chains.components import get_chat_llm, get_tokeniser
 from redbox.chains.runnables import CannedChatLLM, build_llm_chain
 from redbox.graph.nodes.tools import get_log_formatter_for_retrieval_tool, has_injected_state, is_valid_tool
 from redbox.models import ChatRoute
-from redbox.models.chain import (
-    DocumentState,
-    PromptSet,
-    RedboxState,
-    RequestMetadata,
-    merge_redbox_state_updates,
-)
-from redbox.models.graph import (
-    ROUTE_NAME_TAG,
-    SOURCE_DOCUMENTS_TAG,
-    RedboxActivityEvent,
-    RedboxEventType,
-)
+from redbox.models.chain import DocumentState, PromptSet, RedboxState, RequestMetadata, merge_redbox_state_updates
+from redbox.models.graph import ROUTE_NAME_TAG, SOURCE_DOCUMENTS_TAG, RedboxActivityEvent, RedboxEventType
 from redbox.transform import combine_documents, flatten_document_state
 
 log = logging.getLogger(__name__)
@@ -221,7 +209,7 @@ def build_passthrough_pattern() -> Runnable[RedboxState, dict[str, Any]]:
 
 
 def build_set_text_pattern(text: str, final_response_chain: bool = False) -> Runnable[RedboxState, dict[str, Any]]:
-    """Returns a Runnable that can arbitrarily set state["text"] to a value."""
+    """Returns a Runnable that can arbitrarily set state["messages"] to a value."""
     llm = CannedChatLLM(messages=[AIMessage(content=text)])
     _llm = llm.with_config(tags=["response_flag"]) if final_response_chain else llm
 
