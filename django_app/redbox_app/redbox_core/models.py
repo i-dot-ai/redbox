@@ -109,15 +109,15 @@ class AISettings(UUIDPrimaryKeyBase, TimeStampedModel, AbstractAISettings):
     label = models.CharField(max_length=50, unique=True)
 
     # LLM settings
-    context_window_size = models.PositiveIntegerField(default=128_000)
-    llm_max_tokens = models.PositiveIntegerField(default=1024)
+    context_window_size = models.PositiveIntegerField(null=True, blank=True)
+    llm_max_tokens = models.PositiveIntegerField(null=True, blank=True)
 
     # Prompts and LangGraph settings
-    max_document_tokens = models.PositiveIntegerField(default=1_000_000, null=True, blank=True)
-    self_route_enabled = models.BooleanField(default=False)
-    map_max_concurrency = models.PositiveIntegerField(default=128)
-    stuff_chunk_context_ratio = models.FloatField(default=0.75)
-    recursion_limit = models.PositiveIntegerField(default=50)
+    max_document_tokens = models.PositiveIntegerField(null=True, blank=True)
+    self_route_enabled = models.BooleanField(null=True, blank=True)
+    map_max_concurrency = models.PositiveIntegerField(null=True, blank=True)
+    stuff_chunk_context_ratio = models.FloatField(null=True, blank=True)
+    recursion_limit = models.PositiveIntegerField(null=True, blank=True)
 
     chat_system_prompt = models.TextField(null=True, blank=True)
     chat_question_prompt = models.TextField(null=True, blank=True)
@@ -137,38 +137,42 @@ class AISettings(UUIDPrimaryKeyBase, TimeStampedModel, AbstractAISettings):
     reduce_system_prompt = models.TextField(null=True, blank=True)
 
     # Elsticsearch RAG and boost values
-    rag_k = models.PositiveIntegerField(default=30)
-    rag_num_candidates = models.PositiveIntegerField(default=10)
-    rag_gauss_scale_size = models.PositiveIntegerField(default=3)
+    rag_k = models.PositiveIntegerField(null=True, blank=True)
+    rag_num_candidates = models.PositiveIntegerField(null=True, blank=True)
+    rag_gauss_scale_size = models.PositiveIntegerField(null=True, blank=True)
     rag_gauss_scale_decay = models.DecimalField(
         max_digits=5,
         decimal_places=2,
-        default=0.5,
+        null=True,
+        blank=True,
         validators=[validators.MinValueValidator(0.0)],
     )
     rag_gauss_scale_min = models.DecimalField(
         max_digits=5,
         decimal_places=2,
-        default=1.1,
+        null=True,
+        blank=True,
         validators=[validators.MinValueValidator(1.0)],
     )
     rag_gauss_scale_max = models.DecimalField(
         max_digits=5,
         decimal_places=2,
-        default=2.0,
+        null=True,
+        blank=True,
         validators=[validators.MinValueValidator(1.0)],
     )
-    rag_desired_chunk_size = models.PositiveIntegerField(default=300)
-    elbow_filter_enabled = models.BooleanField(default=False)
-    match_boost = models.DecimalField(max_digits=5, decimal_places=2, default=1.0)
-    match_name_boost = models.DecimalField(max_digits=5, decimal_places=2, default=2.0)
-    match_description_boost = models.DecimalField(max_digits=5, decimal_places=2, default=0.5)
-    match_keywords_boost = models.DecimalField(max_digits=5, decimal_places=2, default=0.5)
-    knn_boost = models.DecimalField(max_digits=5, decimal_places=2, default=2.0)
+    rag_desired_chunk_size = models.PositiveIntegerField(null=True, blank=True)
+    elbow_filter_enabled = models.BooleanField(null=True, blank=True)
+    match_boost = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
+    match_name_boost = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
+    match_description_boost = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
+    match_keywords_boost = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
+    knn_boost = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
     similarity_threshold = models.DecimalField(
         max_digits=5,
         decimal_places=2,
-        default=0.7,
+        null=True,
+        blank=True,
         validators=[
             validators.MinValueValidator(0.0),
             validators.MaxValueValidator(1.0),
