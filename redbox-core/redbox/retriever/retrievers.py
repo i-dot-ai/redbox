@@ -1,6 +1,8 @@
 from functools import partial
-from typing import Any, Callable, Sequence
+from typing import (Any, Callable, Dict, List, Mapping, Optional, Sequence,
+                    Union, cast)
 
+from opensearchpy import OpenSearch
 from elasticsearch import Elasticsearch
 from elasticsearch.helpers import scan
 from kneed import KneeLocator
@@ -37,7 +39,7 @@ def hit_to_doc(hit: dict[str, Any]) -> Document:
     )
 
 
-def query_to_documents(es_client: Elasticsearch, index_name: str, query: dict[str, Any]) -> list[Document]:
+def query_to_documents(es_client: Union[Elasticsearch, OpenSearch], index_name: str, query: dict[str, Any]) -> list[Document]:
     """Runs an Elasticsearch query and returns Documents."""
     response = es_client.search(index=index_name, body=query)
     return [hit_to_doc(hit) for hit in response["hits"]["hits"]]
@@ -77,10 +79,64 @@ def filter_by_elbow(
     return _filter_by_elbow
 
 
+class OpenSearchRetriever(BaseRetriever):
+    """OpenSearch Retriever."""
+
+    es_client: OpenSearch
+    index_name: Union[str, Sequence[str]]
+    body_func: Callable[[str], Dict]
+    content_field: Optional[Union[str, Mapping[str,str]]] = None
+    document_mapper : Optional[Callable[[Mapping], Document]] = None
+
+    def __init__(self, **kwargs: Any):
+        super().__init__(**kwargs)
+        self.content_field = str(self.content_field)
+
+        if not self.document_mapper:
+            self.document_mapper = self._single_field_mapper
+        elif isinstance(self.content_field, Mapping):
+            self.document_mapper = self._multi_field_mapper
+
+    @staticmethod
+    def from_os_params(
+        self,
+        index_name: Union[str, Sequence[str]],
+        body_func: Callable[[str], Dict],
+        content_field: Optional[Union[str, Mapping[str,str]]] = None,
+        document_mapper: Optional[Callable[[Mapping], Document]] = None,
+        opensearch_url : Optional[str] = None,
+        cloud_id : Optional[str] = None,
+        api_key : Optional[str] = None,
+        username : Optional[str] = None,
+        password : Optional[str] = None,
+        params: Optional[Dict[str, Any]] = None,
+        ) -> "OpenSearchRetriever":
+
+        es_client = self.es_client
+        return OpenSearchRetriever(es_client=es_client, index_name=index_name, body_func=body_func, content_field=content_field, document_mapper=document_mapper)
+
+    def _get_relevant_documents(self, query: str, *, run_manager: CallbackManagerForRetrieverRun) -> List[Document]:
+        if not self.es_client or not self.document_mapper:
+            raise ValueError("OpenSearch client or document mapper is not initialized")
+
+        body = self.body_func(query)
+        response = self.es_client.search(index=self.index_name, body=body)
+        return [self.document_mapper(hit) for hit in response["hits"]["hits"]]
+
+    def _single_field_mapper(self, hit: Mapping[str, Any]) -> Document:
+        content = hit["_source"].pop(self.content_field)
+        return Document(page_content=content, metadata=hit)
+
+    def _multi_field_mapper(self, hit: Mapping[str, Any]) -> Document:
+        self.content_field = cast(Mapping, self.content_field)
+        field = self.content_field[hit["_index"]]
+        content = hit["_source"].pop(field)
+        return Document(page_content=content, metadata=hit)
+
 class ParameterisedElasticsearchRetriever(BaseRetriever):
     """A modified ElasticsearchRetriever that allows configuration from RedboxState."""
 
-    es_client: Elasticsearch
+    es_client: Union[Elasticsearch, OpenSearch]
     index_name: str | Sequence[str]
     embedding_model: Embeddings
     embedding_field_name: str = "embedding"
@@ -128,7 +184,7 @@ class ParameterisedElasticsearchRetriever(BaseRetriever):
         return sort_documents(documents=merged_documents)
 
 
-class AllElasticsearchRetriever(ElasticsearchRetriever):
+class AllElasticsearchRetriever(OpenSearchRetriever):
     """A modified ElasticsearchRetriever that allows retrieving whole documents."""
 
     chunk_resolution: ChunkResolution = ChunkResolution.largest
@@ -158,7 +214,7 @@ class AllElasticsearchRetriever(ElasticsearchRetriever):
         return sorted(results, key=lambda result: result.metadata["index"])
 
 
-class MetadataRetriever(ElasticsearchRetriever):
+class MetadataRetriever(OpenSearchRetriever):
     """A modified ElasticsearchRetriever that retrieves query metadata without any content"""
 
     chunk_resolution: ChunkResolution = ChunkResolution.largest

@@ -3,6 +3,7 @@ from typing import TYPE_CHECKING
 
 from langchain_core.runnables import RunnableParallel
 from langchain_elasticsearch.vectorstores import BM25Strategy, ElasticsearchStore
+from langchain_community.vectorstores import OpenSearchVectorSearch
 
 from redbox.chains.components import get_embeddings
 from redbox.chains.ingest import ingest_from_loader
@@ -23,21 +24,35 @@ alias = env.elastic_chunk_alias
 
 
 def get_elasticsearch_store(es, es_index_name: str):
-    return ElasticsearchStore(
+    # return ElasticsearchStore(
+    #     index_name=es_index_name,
+    #     embedding=get_embeddings(env),
+    #     es_connection=es,
+    #     query_field="text",
+    #     vector_query_field=env.embedding_document_field_name,
+    # )
+    return OpenSearchVectorSearch(
         index_name=es_index_name,
-        embedding=get_embeddings(env),
-        es_connection=es,
+        opensearch_url="https://localhost:9200",
+        embedding_function=get_embeddings(env),
         query_field="text",
         vector_query_field=env.embedding_document_field_name,
     )
 
 
+
 def get_elasticsearch_store_without_embeddings(es, es_index_name: str):
-    return ElasticsearchStore(
+    # return ElasticsearchStore(
+    #     index_name=es_index_name,
+    #     es_connection=es,
+    #     query_field="text",
+    #     strategy=BM25Strategy(),
+    # )
+
+    return OpenSearchVectorSearch(
         index_name=es_index_name,
-        es_connection=es,
-        query_field="text",
-        strategy=BM25Strategy(),
+        opensearch_url="https://localhost:9200",
+        embedding_function=get_embeddings(env),
     )
 
 
@@ -46,7 +61,8 @@ def create_alias(alias: str):
 
     chunk_index_name = alias[:-8]  # removes -current
 
-    es.options(ignore_status=[400]).indices.create(index=chunk_index_name)
+    # es.options(ignore_status=[400]).indices.create(index=chunk_index_name)
+    es.indices.create(index=chunk_index_name, ignore=400)  # ignore 400 error if index already exists
     es.indices.put_alias(index=chunk_index_name, name=alias)
 
 
@@ -62,7 +78,8 @@ def ingest_file(file_name: str, es_index_name: str = alias) -> str | None:
             print(es.indices.exists_alias(name=alias))
             create_alias(alias)
     else:
-        es.options(ignore_status=[400]).indices.create(index=es_index_name)
+        # es.options(ignore_status=[400]).indices.create(index=es_index_name)
+        es.indices.create(index=es_index_name, ignore=400)
 
     # Extract metadata
     metadata_loader = MetadataLoader(env=env, s3_client=env.s3_client(), file_name=file_name)

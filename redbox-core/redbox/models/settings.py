@@ -1,7 +1,7 @@
 import logging
 import os
 from functools import cache, lru_cache
-from typing import Literal
+from typing import Literal, Union
 
 import boto3
 from elasticsearch import Elasticsearch
@@ -19,7 +19,7 @@ class OpenSearchSettings(BaseModel):
 
     model_config = SettingsConfigDict(frozen=True)
 
-    collection_enpdoint: str
+    collection_endpoint: str
 
 
 class ElasticLocalSettings(BaseModel):
@@ -139,40 +139,52 @@ class Settings(BaseSettings):
         return self.elastic_root_index + "-chunk-current"
 
     @lru_cache(1)
-    def elasticsearch_client(self) -> Elasticsearch:
-        if isinstance(self.elastic, ElasticLocalSettings):
-            client = Elasticsearch(
-                hosts=[
-                    {
-                        "host": self.elastic.host,
-                        "port": self.elastic.port,
-                        "scheme": self.elastic.scheme,
-                    }
-                ],
-                basic_auth=(self.elastic.user, self.elastic.password),
-            )
+    def elasticsearch_client(self) -> Union[Elasticsearch, OpenSearch]:
+        # if isinstance(self.elastic, ElasticLocalSettings):
+        #     client = Elasticsearch(
+        #         hosts=[
+        #             {
+        #                 "host": self.elastic.host,
+        #                 "port": self.elastic.port,
+        #                 "scheme": self.elastic.scheme,
+        #             }
+        #         ],
+        #         basic_auth=(self.elastic.user, self.elastic.password),
+        #     )
 
-        elif isinstance(self.elastic, OpenSearchSettings):
-            client = OpenSearch(
-                hosts=[{"host": self.elastic.collection_enpdoint, "port": 443}],
-                use_ssl=True,
-                verify_certs=True,
-                connection_class=RequestsHttpConnection,
-                pool_maxsize=100,
-            )
+        # elif isinstance(self.elastic, OpenSearchSettings):
+        client = OpenSearch(
+            hosts=[{"host": "localhost", "port": 9200}],
+            http_auth=("admin", "YourPassword1"),
+            use_ssl=False,
+            connection_class=RequestsHttpConnection,
+            retry_on_timeout=True
+        )
 
-        else:
-            client = Elasticsearch(cloud_id=self.elastic.cloud_id, api_key=self.elastic.api_key)
+        # else:
+        #     client = Elasticsearch(cloud_id=self.elastic.cloud_id, api_key=self.elastic.api_key)
 
         if not client.indices.exists_alias(name=self.elastic_alias):
             chunk_index = f"{self.elastic_root_index}-chunk"
-            client.options(ignore_status=[400]).indices.create(index=chunk_index)
-            client.indices.put_alias(index=chunk_index, name=self.elastic_alias)
+            # client.options(ignore_status=[400]).indices.create(index=chunk_index)
+            # client.indices.put_alias(index=chunk_index, name=self.elastic_alias)
+            # Ensure index creation does not raise an error if it already exists.
+            try:
+                client.indices.create(index=chunk_index, ignore=400)  # 400 is ignored to avoid index-already-exists errors
+            except Exception as e:
+                logger.error(f"Failed to create index {chunk_index}: {e}")
 
-        if not client.indices.exists(index=self.elastic_chat_mesage_index):
-            client.indices.create(index=self.elastic_chat_mesage_index)
+            try:
+                client.indices.put_alias(index=chunk_index, name=f"{self.elastic_root_index}-chunk-current")
+            except Exception as e:
+                logger.error(f"Failed to set alias {self.elastic_root_index}-chunk-current: {e}")
 
-        return client.options(request_timeout=30, retry_on_timeout=True, max_retries=3)
+        return client
+
+        # if not client.indices.exists(index=self.elastic_chat_mesage_index):
+        #     client.indices.create(index=self.elastic_chat_mesage_index)
+
+        # return client.options(request_timeout=30, retry_on_timeout=True, max_retries=3)
 
     def s3_client(self):
         if self.object_store == "minio":
