@@ -1,4 +1,5 @@
-from typing import Annotated, Any, Iterable, get_args, get_origin, get_type_hints
+from typing import (Annotated, Any, Iterable, get_args, get_origin,
+                    get_type_hints)
 
 import requests
 import tiktoken
@@ -12,16 +13,11 @@ from langgraph.prebuilt import InjectedState
 
 from redbox.models.chain import RedboxState
 from redbox.models.file import ChunkCreatorType, ChunkMetadata, ChunkResolution
-from redbox.retriever.queries import (
-    add_document_filter_scores_to_query,
-    build_document_query,
-)
+from redbox.retriever.queries import (add_document_filter_scores_to_query,
+                                      build_document_query)
 from redbox.retriever.retrievers import query_to_documents
-from redbox.transform import (
-    merge_documents,
-    sort_documents,
-    structure_documents_by_group_and_indices,
-)
+from redbox.transform import (merge_documents, sort_documents,
+                              structure_documents_by_group_and_indices)
 
 
 def is_valid_tool(tool: StructuredTool) -> bool:
@@ -77,7 +73,7 @@ def build_search_documents_tool(
     embedding_field_name: str,
     chunk_resolution: ChunkResolution | None,
 ) -> Tool:
-    """Constructs a tool that searches the index and sets state["documents"]."""
+    """Constructs a tool that searches the index and sets state.documents."""
 
     @tool
     def _search_documents(query: str, state: Annotated[RedboxState, InjectedState]) -> dict[str, Any]:
@@ -97,9 +93,9 @@ def build_search_documents_tool(
             dict[str, Any]: A collection of document objects that match the query.
         """
         query_vector = embedding_model.embed_query(query)
-        selected_files = state["request"].s3_keys
-        permitted_files = state["request"].permitted_s3_keys
-        ai_settings = state["request"].ai_settings
+        selected_files = state.request.s3_keys
+        permitted_files = state.request.permitted_s3_keys
+        ai_settings = state.request.ai_settings
 
         # Initial pass
         initial_query = build_document_query(
@@ -141,7 +137,7 @@ def build_govuk_search_tool(num_results: int = 1) -> Tool:
     tokeniser = tiktoken.encoding_for_model("gpt-4o")
 
     @tool
-    def _search_govuk(query: str, state: Annotated[dict, InjectedState]) -> dict[str, Any]:
+    def _search_govuk(query: str, state: Annotated[RedboxState, InjectedState]) -> dict[str, Any]:
         """
         Search for documents on gov.uk based on a query string.
         This endpoint is used to search for documents on gov.uk. There are many types of documents on gov.uk.

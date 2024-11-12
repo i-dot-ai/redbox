@@ -10,30 +10,21 @@ from uuid import uuid4
 from langchain.schema import StrOutputParser
 from langchain_core.callbacks.manager import dispatch_custom_event
 from langchain_core.documents import Document
-from langchain_core.messages import HumanMessage, AIMessage
+from langchain_core.messages import AIMessage, HumanMessage
 from langchain_core.runnables import Runnable, RunnableLambda, RunnableParallel
 from langchain_core.tools import StructuredTool
 from langchain_core.vectorstores import VectorStoreRetriever
 
-
 from redbox.chains.activity import log_activity
 from redbox.chains.components import get_chat_llm, get_tokeniser
 from redbox.chains.runnables import CannedChatLLM, build_llm_chain
-from redbox.graph.nodes.tools import get_log_formatter_for_retrieval_tool, has_injected_state, is_valid_tool
+from redbox.graph.nodes.tools import (get_log_formatter_for_retrieval_tool,
+                                      has_injected_state, is_valid_tool)
 from redbox.models import ChatRoute
-from redbox.models.chain import (
-    DocumentState,
-    PromptSet,
-    RedboxState,
-    RequestMetadata,
-    merge_redbox_state_updates,
-)
-from redbox.models.graph import (
-    ROUTE_NAME_TAG,
-    SOURCE_DOCUMENTS_TAG,
-    RedboxActivityEvent,
-    RedboxEventType,
-)
+from redbox.models.chain import (DocumentState, PromptSet, RedboxState,
+                                 RequestMetadata, merge_redbox_state_updates)
+from redbox.models.graph import (ROUTE_NAME_TAG, SOURCE_DOCUMENTS_TAG,
+                                 RedboxActivityEvent, RedboxEventType)
 from redbox.transform import combine_documents, flatten_document_state
 
 log = logging.getLogger(__name__)
@@ -106,15 +97,15 @@ def build_merge_pattern(
     def _merge(state: RedboxState) -> dict[str, Any]:
         llm = get_chat_llm(state["request"].ai_settings.chat_backend, tools=tools)
 
-        if not state.get("documents"):
+        if not state.documents.group:
             return {"documents": None}
 
-        flattened_documents = flatten_document_state(state["documents"])
+        flattened_documents = flatten_document_state(state.documents)
 
         merged_document = reduce(lambda left, right: combine_documents(left, right), flattened_documents)
 
         merge_state = RedboxState(
-            request=state["request"],
+            request=state.request,
             documents={merged_document.metadata["uri"]: {merged_document.metadata["uuid"]: merged_document}},
         )
 
@@ -122,15 +113,15 @@ def build_merge_pattern(
             prompt_set=prompt_set, llm=llm, final_response_chain=final_response_chain
         ).invoke(merge_state)
 
-        merged_document.page_content = merge_response["messages"][-1].content
-        request_metadata = merge_response["metadata"]
+        merged_document.page_content = merge_response.last_message.content
+        request_metadata = merge_response.metadata
         merged_document.metadata["token_count"] = len(tokeniser.encode(merged_document.page_content))
 
         group_uuid = next(iter(state["documents"] or {}), uuid4())
         document_uuid = merged_document.metadata.get("uuid", uuid4())
 
         # Clear old documents, add new one
-        document_state = state["documents"].copy()
+        document_state = state.documents.group.copy()
 
         for group in document_state:
             for document in document_state[group]:
@@ -157,7 +148,7 @@ def build_stuff_pattern(
 
     @RunnableLambda
     def _stuff(state: RedboxState) -> dict[str, Any]:
-        llm = get_chat_llm(state["request"].ai_settings.chat_backend, tools=tools)
+        llm = get_chat_llm(state.request.ai_settings.chat_backend, tools=tools)
 
         events = [
             event
@@ -196,7 +187,7 @@ def build_set_self_route_from_llm_answer(
 
     @RunnableLambda
     def _set_self_route_from_llm_answer(state: RedboxState):
-        llm_response = state["messages"][-1].content
+        llm_response = state.last_message.content
         if conditional(llm_response):
             return true_condition_state_update
         else:
@@ -214,7 +205,7 @@ def build_passthrough_pattern() -> Runnable[RedboxState, dict[str, Any]]:
     @RunnableLambda
     def _passthrough(state: RedboxState) -> dict[str, Any]:
         return {
-            "messages": [HumanMessage(content=state["request"].question)],
+            "messages": [HumanMessage(content=state.request.question)],
         }
 
     return _passthrough
@@ -229,7 +220,7 @@ def build_set_text_pattern(text: str, final_response_chain: bool = False) -> Run
     def _set_text(state: RedboxState) -> dict[str, Any]:
         set_text_chain = _llm | StrOutputParser()
 
-        return {"messages": state.get("messages", []) + [HumanMessage(content=set_text_chain.invoke(text))]}
+        return {"messages": [HumanMessage(content=set_text_chain.invoke(text))]}
 
     return _set_text
 
@@ -239,11 +230,11 @@ def build_set_metadata_pattern() -> Runnable[RedboxState, dict[str, Any]]:
 
     @RunnableLambda
     def _set_metadata_pattern(state: RedboxState):
-        flat_docs = flatten_document_state(state.get("documents", {}))
+        flat_docs = flatten_document_state(state.documents)
         return {
             "metadata": RequestMetadata(
                 selected_files_total_tokens=sum(map(lambda d: d.metadata.get("token_count", 0), flat_docs)),
-                number_of_selected_files=len(state["request"].s3_keys),
+                number_of_selected_files=len(state.request.s3_keys),
             )
         }
 
@@ -281,7 +272,7 @@ def build_tool_pattern(
     def _tool(state: RedboxState) -> dict[str, Any]:
         state_updates: list[dict] = []
 
-        tool_calls = state.get("tool_calls", {})
+        tool_calls = state.tool_calls or {}
         if not tool_calls:
             log.warning("No tool calls found in state")
             return {}
@@ -330,15 +321,15 @@ def build_tool_pattern(
 
 
 def clear_documents_process(state: RedboxState) -> dict[str, Any]:
-    if documents := state.get("documents"):
-        return {"documents": {group_id: None for group_id in documents}}
+    if documents := state.documents:
+        return {"documents": DocumentState(groups={group_id: None for group_id in documents.groups})}
 
 
 def report_sources_process(state: RedboxState) -> None:
     """A Runnable which reports the documents in the state as sources."""
-    if citations_state := state.get("citations"):
+    if citations_state := state.citations:
         dispatch_custom_event(RedboxEventType.on_citations_report, citations_state)
-    elif document_state := state.get("documents"):
+    elif document_state := state.documents:
         dispatch_custom_event(RedboxEventType.on_source_report, flatten_document_state(document_state))
 
 
@@ -354,13 +345,13 @@ def build_log_node(message: str) -> Runnable[RedboxState, dict[str, Any]]:
         log.info(
             json.dumps(
                 {
-                    "user_uuid": str(state["request"].user_uuid),
+                    "user_uuid": str(state.request.user_uuid),
                     "document_metadata": {
                         group_id: {doc_id: d.metadata for doc_id, d in group_documents.items()}
-                        for group_id, group_documents in state["documents"]
+                        for group_id, group_documents in state.documents.group
                     },
-                    "messages": (textwrap.shorten(state["messages"][-1].content, width=32, placeholder="...")),
-                    "route": state["route_name"],
+                    "messages": (textwrap.shorten(state.last_message.content, width=32, placeholder="...")),
+                    "route": state.route_name,
                     "message": message,
                 }
             )

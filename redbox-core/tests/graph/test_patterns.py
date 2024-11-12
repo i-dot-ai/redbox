@@ -2,38 +2,37 @@ from typing import Any
 from uuid import uuid4
 
 import pytest
-from langchain_core.language_models.fake_chat_models import GenericFakeChatModel
-from langchain_core.messages import AIMessage, ToolCall, HumanMessage
+from langchain_core.language_models.fake_chat_models import \
+    GenericFakeChatModel
+from langchain_core.messages import AIMessage, HumanMessage, ToolCall
 from langchain_core.retrievers import BaseRetriever
 from langchain_core.tools import StructuredTool, tool
 from langgraph.graph import END, START, StateGraph
 from pytest_mock import MockerFixture
 from tiktoken.core import Encoding
 
-from redbox.chains.runnables import CannedChatLLM, build_chat_prompt_from_messages_runnable, build_llm_chain
-from redbox.graph.nodes.processes import (
-    build_chat_pattern,
-    build_merge_pattern,
-    build_passthrough_pattern,
-    build_retrieve_pattern,
-    build_set_route_pattern,
-    build_set_text_pattern,
-    build_stuff_pattern,
-    build_tool_pattern,
-    clear_documents_process,
-    empty_process,
-)
+from redbox.chains.runnables import (CannedChatLLM,
+                                     build_chat_prompt_from_messages_runnable,
+                                     build_llm_chain)
+from redbox.graph.nodes.processes import (build_chat_pattern,
+                                          build_merge_pattern,
+                                          build_passthrough_pattern,
+                                          build_retrieve_pattern,
+                                          build_set_route_pattern,
+                                          build_set_text_pattern,
+                                          build_stuff_pattern,
+                                          build_tool_pattern,
+                                          clear_documents_process,
+                                          empty_process)
 from redbox.models.chain import PromptSet, RedboxQuery, RedboxState
 from redbox.models.chat import ChatRoute
-from redbox.test.data import (
-    RedboxChatTestCase,
-    RedboxTestData,
-    generate_docs,
-    generate_test_cases,
-    mock_all_chunks_retriever,
-    mock_parameterised_retriever,
-)
-from redbox.transform import flatten_document_state, structure_documents_by_file_name, tool_calls_to_toolstate
+from redbox.test.data import (RedboxChatTestCase, RedboxTestData,
+                              generate_docs, generate_test_cases,
+                              mock_all_chunks_retriever,
+                              mock_parameterised_retriever)
+from redbox.transform import (flatten_document_state,
+                              structure_documents_by_file_name,
+                              tool_calls_to_toolstate)
 
 LANGGRAPH_DEBUG = True
 
@@ -229,7 +228,7 @@ def test_build_retrieve_pattern(test_case: RedboxChatTestCase, mock_retriever: B
     response = retriever_function.invoke(state)
     final_state = RedboxState(response)
 
-    assert final_state.get("documents") == structure_documents_by_file_name(test_case.docs)
+    assert final_state.documents == structure_documents_by_file_name(test_case.docs)
 
 
 MERGE_TEST_CASES = generate_test_cases(
@@ -475,7 +474,7 @@ def test_clear_documents(test_case: list[RedboxState]):
     response = graph.invoke(test_case)
     final_state = RedboxState(response)
 
-    assert final_state.get("documents") == {}
+    assert final_state.documents == {}
 
 
 def test_canned_llm():

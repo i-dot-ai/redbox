@@ -2,35 +2,28 @@ import logging
 import re
 from typing import Any, Callable, Iterable, Iterator
 
-from langchain_core.callbacks.manager import (
-    CallbackManagerForLLMRun,
-    dispatch_custom_event,
-)
+from langchain_core.callbacks.manager import (CallbackManagerForLLMRun,
+                                              dispatch_custom_event)
 from langchain_core.language_models import BaseChatModel
 from langchain_core.messages import AIMessage, AIMessageChunk, BaseMessage
 from langchain_core.output_parsers import StrOutputParser
-from langchain_core.outputs import ChatGeneration, ChatGenerationChunk, ChatResult
+from langchain_core.outputs import (ChatGeneration, ChatGenerationChunk,
+                                    ChatResult)
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.runnables import (
-    Runnable,
-    RunnableGenerator,
-    RunnableLambda,
-    RunnablePassthrough,
-    chain,
-)
+from langchain_core.runnables import (Runnable, RunnableGenerator,
+                                      RunnableLambda, RunnablePassthrough,
+                                      chain)
 from tiktoken import Encoding
 
 from redbox.api.format import format_documents, format_toolstate
 from redbox.chains.activity import log_activity
 from redbox.chains.components import get_tokeniser
-from redbox.models.chain import ChainChatMessage, PromptSet, RedboxState, get_prompts
+from redbox.models.chain import (ChainChatMessage, PromptSet, RedboxState,
+                                 get_prompts)
 from redbox.models.errors import QuestionLengthError
 from redbox.models.graph import RedboxEventType
-from redbox.transform import (
-    flatten_document_state,
-    tool_calls_to_toolstate,
-    get_all_metadata,
-)
+from redbox.transform import (flatten_document_state, get_all_metadata,
+                              tool_calls_to_toolstate)
 
 log = logging.getLogger()
 re_string_pattern = re.compile(r"(\S+)")
@@ -55,8 +48,8 @@ def build_chat_prompt_from_messages_runnable(
         system_prompt_message = [("system", system_prompt)]
         prompts_budget = len(_tokeniser.encode(system_prompt)) + len(_tokeniser.encode(question_prompt))
         chat_history_budget = (
-            state["request"].ai_settings.context_window_size
-            - state["request"].ai_settings.llm_max_tokens
+            state.request.ai_settings.context_window_size
+            - state.request.ai_settings.llm_max_tokens
             - prompts_budget
         )
 
@@ -64,7 +57,7 @@ def build_chat_prompt_from_messages_runnable(
             raise QuestionLengthError
 
         truncated_history: list[ChainChatMessage] = []
-        for msg in state["request"].chat_history[::-1]:
+        for msg in state.request.chat_history[::-1]:
             chat_history_budget -= len(_tokeniser.encode(msg["text"]))
             if chat_history_budget <= 0:
                 break
@@ -72,12 +65,12 @@ def build_chat_prompt_from_messages_runnable(
                 truncated_history.insert(0, msg)
 
         prompt_template_context = (
-            state["request"].model_dump()
-            | {"messages": state.get("messages")}
+            state.request.model_dump()
+            | {"messages": state.messages}
             | {
-                "formatted_documents": format_documents(flatten_document_state(state.get("documents"))),
+                "formatted_documents": format_documents(flatten_document_state(state.documents)),
             }
-            | {"tool_calls": format_toolstate(state.get("tool_calls"))}
+            | {"tool_calls": format_toolstate(state.tool_calls)}
         )
 
         return ChatPromptTemplate(

@@ -10,29 +10,19 @@ from pytest_mock import MockerFixture
 from tiktoken.core import Encoding
 
 from redbox import Redbox
-from redbox.models.chain import (
-    AISettings,
-    Citation,
-    RedboxQuery,
-    RedboxState,
-    RequestMetadata,
-    Source,
-    StructuredResponseWithCitations,
-    metadata_reducer,
-)
+from redbox.models.chain import (AISettings, Citation, RedboxQuery,
+                                 RedboxState, RequestMetadata, Source,
+                                 StructuredResponseWithCitations,
+                                 metadata_reducer)
 from redbox.models.chat import ChatRoute, ErrorRoute
 from redbox.models.file import ChunkResolution
 from redbox.models.graph import RedboxActivityEvent
 from redbox.models.settings import Settings
-from redbox.test.data import (
-    GenericFakeChatModelWithTools,
-    RedboxChatTestCase,
-    RedboxTestData,
-    generate_test_cases,
-    mock_all_chunks_retriever,
-    mock_metadata_retriever,
-    mock_parameterised_retriever,
-)
+from redbox.test.data import (GenericFakeChatModelWithTools,
+                              RedboxChatTestCase, RedboxTestData,
+                              generate_test_cases, mock_all_chunks_retriever,
+                              mock_metadata_retriever,
+                              mock_parameterised_retriever)
 from redbox.transform import structure_documents_by_group_and_indices
 
 LANGGRAPH_DEBUG = True
@@ -614,9 +604,9 @@ async def test_streaming(test: RedboxChatTestCase, env: Settings, mocker: Mocker
     ), f"Expected text: '{expected_text}' did not match received text '{final_state["messages"]}'"
 
     assert (
-        final_state.get("route_name") == test_case.test_data.expected_route
-    ), f"Expected Route: '{ test_case.test_data.expected_route}'. Received '{final_state["route_name"]}'"
-    if metadata := final_state.get("metadata"):
+        final_state.route_name == test_case.test_data.expected_route
+    ), f"Expected Route: '{ test_case.test_data.expected_route}'. Received '{final_state.route_name}'"
+    if metadata := final_state.metadata:
         assert metadata == metadata_response, f"Expected metadata: '{metadata_response}'. Received '{metadata}'"
     for document_list in document_events:
         for document in document_list:

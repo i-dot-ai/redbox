@@ -2,18 +2,14 @@ import itertools
 from uuid import NAMESPACE_DNS, UUID, uuid5
 
 import tiktoken
+from click import group
 from langchain_core.callbacks.manager import dispatch_custom_event
 from langchain_core.documents import Document
-from langchain_core.messages import ToolCall, AnyMessage, AIMessage
+from langchain_core.messages import AIMessage, AnyMessage, ToolCall
 from langchain_core.runnables import RunnableLambda
 
-from redbox.models.chain import (
-    DocumentState,
-    LLMCallMetadata,
-    RedboxState,
-    RequestMetadata,
-    ToolState,
-)
+from redbox.models.chain import (DocumentGroup, DocumentState, LLMCallMetadata,
+                                 RedboxState, RequestMetadata, ToolState)
 from redbox.models.graph import RedboxEventType
 
 
@@ -52,7 +48,7 @@ def structure_documents_by_file_name(docs: list[Document]) -> DocumentState:
 
     The document_uuid is taken from the Document metadata directly.
     """
-    result = {}
+    result = DocumentState()
 
     # Group file_name to UUID lookup
     group_file_lookup = {}
@@ -66,7 +62,7 @@ def structure_documents_by_file_name(docs: list[Document]) -> DocumentState:
         group_uuid = group_file_lookup.get(d.metadata["uri"])
         doc_dict = {d.metadata["uuid"]: d}
 
-        result[group_uuid] = (result.get(group_uuid) or doc_dict) | doc_dict
+        result.groups[group_uuid] = (result.groups.get(group_uuid) or doc_dict) | doc_dict
 
     return result
 
@@ -87,8 +83,8 @@ def structure_documents_by_group_and_indices(docs: list[Document]) -> DocumentSt
 
     The document_uuid is taken from the Document metadata directly.
     """
-    result: DocumentState = {}
-    current_group: dict[UUID, Document] = {}
+    result = DocumentState()
+    current_group = DocumentGroup()
     current_group_indices: list[int] = []
     current_filename: str | None = None
 
@@ -101,9 +97,9 @@ def structure_documents_by_group_and_indices(docs: list[Document]) -> DocumentSt
         if (is_not_same_filename and is_not_none_filename) or (is_not_consecutive and is_not_none_filename):
             # Generate a deterministic hash for the previous document and its indices
             group_id = create_group_uuid(current_filename, current_group_indices)
-            result[group_id] = current_group
+            result.groups[group_id] = current_group
 
-            current_group: dict[UUID:Document] = {}
+            current_group = DocumentGroup()
             current_group_indices: list[int] = []
 
         current_group[d.metadata["uuid"]] = d
@@ -113,7 +109,7 @@ def structure_documents_by_group_and_indices(docs: list[Document]) -> DocumentSt
     # Handle the last group
     if current_group:
         group_id = create_group_uuid(current_filename, current_group_indices)
-        result[group_id] = current_group
+        result.groups[group_id] = current_group
 
     return result
 
@@ -122,12 +118,16 @@ def flatten_document_state(documents: DocumentState | None) -> list[Document]:
     """Flattens a DocumentState into a list of Documents."""
     if not documents:
         return []
-    return [document for group in documents.values() for document in group.values()]
+    result = []
+    for group in documents.groups.values():
+        for document in group.values():
+            result.append(document)
+    return result
 
 
 def get_document_token_count(state: RedboxState) -> int:
     """Calculates the total token count of all documents in a state."""
-    return sum(d.metadata["token_count"] for d in flatten_document_state(state.get("documents", [])))
+    return sum(d.metadata["token_count"] for d in flatten_document_state(state.documents))
 
 
 def to_request_metadata(obj: dict):

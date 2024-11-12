@@ -6,10 +6,11 @@ from typing import (Annotated, Literal, NotRequired, Required, TypedDict,
 from uuid import UUID, uuid4
 
 from langchain_core.documents import Document
-from langchain_core.messages import ToolCall
+from langchain_core.messages import AnyMessage, ToolCall
 from langgraph.graph import MessagesState
+from langgraph.graph.message import add_messages
 from langgraph.managed.is_last_step import RemainingStepsManager
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 from redbox.models import prompts
 
@@ -98,9 +99,25 @@ class StructuredResponseWithCitations(BaseModel):
     citations: list[Citation] = Field(default_factory=list)
 
 
-class DocumentState(TypedDict):
-    group: dict[UUID, Document]
 
+DocumentMapping = dict[UUID, Document]
+DocumentGroup = dict[UUID, DocumentMapping]
+
+class DocumentState(BaseModel):
+    """A document state containing groups of documents."""
+    groups: DocumentGroup = Field(default_factory=DocumentGroup)
+
+    # @field_validator("groups", mode="before")
+    # @classmethod
+    # def convert_uuid_keys(cls, v: DocumentGroup) -> DocumentGroup:
+    #     if not v:
+    #         return DocumentGroup()
+        
+    #     converted_groups = {
+    #         str(group_id): group
+    #         for group_id, group in v.items()
+    #     }
+    #     return DocumentGroup(converted_groups)
 
 def document_reducer(current: DocumentState | None, update: DocumentState | list[DocumentState]) -> DocumentState:
     """Merges two document states based on the following rules.
@@ -122,12 +139,12 @@ def document_reducer(current: DocumentState | None, update: DocumentState | list
     # If state is empty, return update
     if current is None:
         return update
-
-    # Copy current
-    reduced = {k: v.copy() for k, v in current.items()}
+    
+    reduced = {k: v.copy() for k, v in current.groups.items()}
+    
 
     # Update with update
-    for group_key, group in update.items():
+    for group_key, group in update.groups.items():
         # If group is None, remove from output if a group key is matched
         if group is None:
             reduced.pop(group_key, None)
@@ -149,7 +166,31 @@ def document_reducer(current: DocumentState | None, update: DocumentState | list
         if not reduced[group_key]:
             del reduced[group_key]
 
-    return reduced
+    return DocumentState(groups=reduced)
+
+# def document_reducer(current: DocumentState | None, update: DocumentState | list[DocumentState]) -> DocumentState:
+#     """Merges document states, where:
+#     - Newer values override older ones
+#     - None values and empty groups are removed
+#     - List updates are processed sequentially
+#     """
+#     # Handle sequential updates
+#     if isinstance(update, list):
+#         return reduce(document_reducer, update, current)
+
+#     # Handle initial state
+#     if current is None:
+#         return update
+
+#     # Merge states with update taking precedence
+#     merged_state = current | update
+    
+#     # Filter out None groups and empty document collections
+#     return DocumentState(groups={
+#         group_key: group 
+#         for group_key, group in merged_state.groups.items() 
+#         if group and group.documents
+#     })
 
 
 class RedboxQuery(BaseModel):
@@ -230,8 +271,9 @@ class ToolStateEntry(TypedDict):
     called: bool
 
 
-class ToolState(dict[str, ToolStateEntry]):
-    """Represents the state of multiple tools."""
+ToolState = dict[str, ToolStateEntry]
+# class ToolState(dict[str, ToolStateEntry]):
+#     """Represents the state of multiple tools."""
 
 
 def tool_calls_reducer(current: ToolState, update: ToolState | None) -> ToolState:
@@ -260,15 +302,23 @@ def tool_calls_reducer(current: ToolState, update: ToolState | None) -> ToolStat
     return reduced
 
 
-class RedboxState(MessagesState):
-    request: Required[RedboxQuery]
-    documents: Annotated[NotRequired[DocumentState], document_reducer]
-    route_name: NotRequired[str | None]
-    tool_calls: Annotated[NotRequired[ToolState], tool_calls_reducer]
-    metadata: Annotated[NotRequired[RequestMetadata], metadata_reducer]
-    citations: NotRequired[list[Citation] | None]
-    steps_left: Annotated[NotRequired[int], RemainingStepsManager]
+class RedboxState(BaseModel):
+    request: RedboxQuery
+    documents: Annotated[DocumentState, document_reducer] = DocumentState()
+    route_name: str | None = None
+    tool_calls: Annotated[ToolState | None, tool_calls_reducer] = None
+    metadata: Annotated[RequestMetadata | None, metadata_reducer] = None
+    citations: list[Citation] | None = None
+    steps_left: Annotated[int | None, RemainingStepsManager] = None    
+    messages: Annotated[list[AnyMessage], add_messages] = Field(default_factory=list)
 
+    model_config = {
+        "arbitrary_types_allowed": True
+    }
+
+    @property
+    def last_message(self) -> AnyMessage:
+        return self.messages[-1]
 
 class PromptSet(StrEnum):
     Chat = "chat"
@@ -283,29 +333,29 @@ class PromptSet(StrEnum):
 
 def get_prompts(state: RedboxState, prompt_set: PromptSet) -> tuple[str, str]:
     if prompt_set == PromptSet.Chat:
-        system_prompt = state["request"].ai_settings.chat_system_prompt
-        question_prompt = state["request"].ai_settings.chat_question_prompt
+        system_prompt = state.request.ai_settings.chat_system_prompt
+        question_prompt = state.request.ai_settings.chat_question_prompt
     elif prompt_set == PromptSet.ChatwithDocs:
-        system_prompt = state["request"].ai_settings.chat_with_docs_system_prompt
-        question_prompt = state["request"].ai_settings.chat_with_docs_question_prompt
+        system_prompt = state.request.ai_settings.chat_with_docs_system_prompt
+        question_prompt = state.request.ai_settings.chat_with_docs_question_prompt
     elif prompt_set == PromptSet.ChatwithDocsMapReduce:
-        system_prompt = state["request"].ai_settings.chat_map_system_prompt
-        question_prompt = state["request"].ai_settings.chat_map_question_prompt
+        system_prompt = state.request.ai_settings.chat_map_system_prompt
+        question_prompt = state.request.ai_settings.chat_map_question_prompt
     elif prompt_set == PromptSet.Search:
-        system_prompt = state["request"].ai_settings.retrieval_system_prompt
-        question_prompt = state["request"].ai_settings.retrieval_question_prompt
+        system_prompt = state.request.ai_settings.retrieval_system_prompt
+        question_prompt = state.request.ai_settings.retrieval_question_prompt
     elif prompt_set == PromptSet.SearchAgentic:
-        system_prompt = state["request"].ai_settings.agentic_retrieval_system_prompt
-        question_prompt = state["request"].ai_settings.agentic_retrieval_question_prompt
+        system_prompt = state.request.ai_settings.agentic_retrieval_system_prompt
+        question_prompt = state.request.ai_settings.agentic_retrieval_question_prompt
     elif prompt_set == PromptSet.GiveUpAgentic:
-        system_prompt = state["request"].ai_settings.agentic_give_up_system_prompt
-        question_prompt = state["request"].ai_settings.agentic_give_up_question_prompt
+        system_prompt = state.request.ai_settings.agentic_give_up_system_prompt
+        question_prompt = state.request.ai_settings.agentic_give_up_question_prompt
     elif prompt_set == PromptSet.SelfRoute:
-        system_prompt = state["request"].ai_settings.self_route_system_prompt
-        question_prompt = state["request"].ai_settings.retrieval_question_prompt
+        system_prompt = state.request.ai_settings.self_route_system_prompt
+        question_prompt = state.request.ai_settings.retrieval_question_prompt
     elif prompt_set == PromptSet.CondenseQuestion:
-        system_prompt = state["request"].ai_settings.condense_system_prompt
-        question_prompt = state["request"].ai_settings.condense_question_prompt
+        system_prompt = state.request.ai_settings.condense_system_prompt
+        question_prompt = state.request.ai_settings.condense_question_prompt
     return (system_prompt, question_prompt)
 
 
