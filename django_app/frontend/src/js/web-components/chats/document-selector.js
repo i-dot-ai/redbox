@@ -10,7 +10,10 @@ class DocumentSelector extends HTMLElement {
       let selectedDocuments = [];
       documents.forEach((document) => {
         if (document.checked) {
-          selectedDocuments.push(document.value);
+          selectedDocuments.push({
+            id: document.value,
+            name: this.querySelector(`[for="${document.id}"]`)?.textContent
+          });
         }
       });
       const evt = new CustomEvent("selected-docs-change", {

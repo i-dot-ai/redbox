@@ -2,9 +2,9 @@ import logging
 from uuid import UUID
 
 from redbox.loader.ingester import ingest_file
-from redbox.models import Settings
+from redbox.models.settings import get_settings
 
-env = Settings()
+env = get_settings()
 
 
 def ingest(file_id: UUID, es_index: str | None = None) -> None:

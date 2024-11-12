@@ -13,7 +13,6 @@ Redbox is a retrieval augmented generation (RAG) app that uses GenAI to chat wit
 - **Better retrieval**. Redbox increases organisational memory by indexing documents
 - **Faster, accurate summarisation**. Redbox can summarise reports read months ago, supplement them with current work, and produce a first draft that lets civil servants focus on what they do best
 
-
 https://github.com/i-dot-ai/redbox-copilot/assets/8233643/e7984242-1403-4c93-9e68-03b3f065b38d
 
 # Setup
@@ -29,8 +28,9 @@ For a quick start, you can use GitHub Codespaces to run the project in a cloud-b
 # Development
 
 Download and install [pre-commit](https://pre-commit.com) to benefit from pre-commit hooks
-  - `pip install pre-commit`
-  - `pre-commit install`
+
+- `pip install pre-commit`
+- `pre-commit install`
 
 # Testing
 
@@ -41,8 +41,9 @@ Download and install [pre-commit](https://pre-commit.com) to benefit from pre-co
 # Dependencies
 
 This project is in two parts:
-* A https://langchain-ai.github.io/langgraph/ based AI class library called redbox-core
-* A django app to expose redbox-core to users over the web
+
+- A https://langchain-ai.github.io/langgraph/ based AI class library called redbox-core
+- A django app to expose redbox-core to users over the web
 
 The project is structured approximately like this:
 
@@ -145,14 +146,22 @@ npx parcel watch
 
 On initial app setup you will need to run `poetry run python manage.py collectstatic` to copy them to the `frontend` folder from where `runserver` can serve them. Or you can run `make build-django-static` which combines the parcel build and collectstatic commands.
 
+#### Testing
+
+To run the web-component tests, from the frontend folder run:
+
+```
+npm run test
+```
+
 ## How to deploy
 
 checkout the `main` branch of the following repos:
 
-* https://github.com/i-dot-ai/redbox
-* https://github.com/i-dot-ai/redbox-copilot-infra-config
+- https://github.com/i-dot-ai/redbox
+- https://github.com/i-dot-ai/redbox-copilot-infra-config
 
-Replace `var.image_tag` in `infrastructure/aws/ecs.tf` with the hash of the build you want deployed. Make sure that the hash corresponds to an image that exists in ECR, 
+Replace `var.image_tag` in `infrastructure/aws/ecs.tf` with the hash of the build you want deployed. Make sure that the hash corresponds to an image that exists in ECR,
 if in doubt build it via the [build-action](./.github/workflows/build.yaml).
 
 Login to aws via `aws-vault exec admin-role` and run the commands below from the redbox repo root
@@ -166,18 +175,18 @@ where ENVIRONMENT is one of `dev`, `preprod` or `prod`
 
 ## How to set up scheduled tasks
 
-The django-app uses django-q to schedule task, this includes management tasks. 
+The django-app uses django-q to schedule task, this includes management tasks.
 Follow the instructions here https://django-q2.readthedocs.io/en/master/schedules.html#management-commands, i.e.
+
 1. navigate the admin / Scheduled Tasks / Add Scheduled Task
 2. name = `delete old files`
 3. func = `django.core.management.call_command`
 4. args = `"delete_expired_data"`
 5. save
 
-
 ## Vector databases
 
-We are currently using ElasticSearch as our vector database. 
+We are currently using ElasticSearch as our vector database.
 
-We have also successfully deployed Redbox to OpenSearch Serverless but this support should be considered experimental 
+We have also successfully deployed Redbox to OpenSearch Serverless but this support should be considered experimental
 at this stage.

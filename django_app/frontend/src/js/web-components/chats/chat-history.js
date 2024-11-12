@@ -1,7 +1,6 @@
 // @ts-check
 
 class ChatHistory extends HTMLElement {
-
   connectedCallback() {
     this.dataset.initialised = "true";
   }
@@ -19,7 +18,9 @@ class ChatHistory extends HTMLElement {
       }
     });
     if (!todayHeadingExists) {
-      let newHeading = /** @type {HTMLTemplateElement} */ (this.querySelector("#template-chat_history_heading")).content.querySelector("div");
+      let newHeading = /** @type {HTMLTemplateElement} */ (
+        this.querySelector("#template-chat_history_heading")
+      ).content.querySelector("div");
       let newHeadingText = newHeading?.querySelector("h3");
       if (!newHeading || !newHeadingText) {
         return;
@@ -31,17 +32,23 @@ class ChatHistory extends HTMLElement {
 
   /**
    * Internal method for adding the list-item to the chat history
-   * @param {string} chatId 
-   * @param {string} title 
+   * @param {string} chatId
+   * @param {string} title
    * @returns {HTMLLIElement}
    */
   #createItem(chatId, title) {
-    const newItem = /** @type {HTMLTemplateElement} */ (this.querySelector("#template-chat_history_item")).content.querySelector("li")?.cloneNode(true);
+    const newItem = /** @type {HTMLTemplateElement} */ (
+      this.querySelector("#template-chat_history_item")
+    ).content
+      .querySelector("li")
+      ?.cloneNode(true);
     let link = /** @type {HTMLElement} */ (newItem).querySelector("a");
-    let chatHistoryItem = /** @type {HTMLElement} */ (newItem).querySelector("chat-history-item");
+    let chatHistoryItem = /** @type {HTMLElement} */ (newItem).querySelector(
+      "chat-history-item"
+    );
     if (link) {
       link.textContent = title;
-      link.setAttribute("href", "/chats/${chatId");
+      link.setAttribute("href", `/chats/${chatId}`);
     }
     /** @type {HTMLElement} */ (newItem).dataset.chatid = chatId;
     chatHistoryItem?.setAttribute("data-chatid", chatId);
@@ -50,8 +57,8 @@ class ChatHistory extends HTMLElement {
 
   /**
    * Adds an item to the chat history
-   * @param {string} chatId 
-   * @param {string} title 
+   * @param {string} chatId
+   * @param {string} title
    */
   addChat(chatId, title) {
     this.#createTodayHeading();
@@ -61,7 +68,6 @@ class ChatHistory extends HTMLElement {
     }
     this.querySelector("ul")?.prepend(item);
   }
-
 }
 
 customElements.define("chat-history", ChatHistory);

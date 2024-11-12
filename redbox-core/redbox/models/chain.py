@@ -11,18 +11,12 @@ from langgraph.managed.is_last_step import RemainingStepsManager
 from pydantic import BaseModel, Field
 
 from redbox.models import prompts
+from redbox.models.settings import ChatLLMBackend
 
 
 class ChainChatMessage(TypedDict):
     role: Literal["user", "ai", "system"]
     text: str
-
-
-class ChatLLMBackend(BaseModel):
-    name: str = "gpt-4o"
-    provider: str = "azure_openai"
-    description: str | None = None
-    model_config = {"frozen": True}
 
 
 class AISettings(BaseModel):
@@ -38,6 +32,14 @@ class AISettings(BaseModel):
     map_max_concurrency: int = 128
     stuff_chunk_context_ratio: float = 0.75
     recursion_limit: int = 50
+
+    # Common Prompt Fragments
+
+    system_info_prompt: str = prompts.SYSTEM_INFO
+    persona_info_prompt: str = prompts.PERSONA_INFO
+    caller_info_prompt: str = prompts.CALLER_INFO
+
+    # Task Prompt Fragments
 
     chat_system_prompt: str = prompts.CHAT_SYSTEM_PROMPT
     chat_question_prompt: str = prompts.CHAT_QUESTION_PROMPT

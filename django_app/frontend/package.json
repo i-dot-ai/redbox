@@ -44,7 +44,8 @@
   ],
   "scripts": {
     "build": "npx parcel build --no-cache",
-    "watch": "npx parcel watch"
+    "watch": "npx parcel watch",
+    "test": "cd tests-web-components && npx playwright test"
   },
   "author": "",
   "dependencies": {
@@ -54,6 +55,7 @@
   },
   "devDependencies": {
     "@parcel/transformer-sass": "^2.12.0",
+    "@playwright/test": "^1.48.2",
     "@types/dompurify": "^3.0.5",
     "@types/showdown": "^2.0.6",
     "parcel": "^2.12.0",

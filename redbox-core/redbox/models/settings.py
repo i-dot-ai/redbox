@@ -1,6 +1,6 @@
 import logging
 import os
-from functools import lru_cache
+from functools import cache, lru_cache
 from typing import Literal
 
 import boto3
@@ -8,8 +8,7 @@ from elasticsearch import Elasticsearch
 from opensearchpy import OpenSearch, RequestsHttpConnection
 from pydantic import BaseModel
 from pydantic_settings import BaseSettings, SettingsConfigDict
-
-from redbox.models.chain import ChatLLMBackend
+from langchain.globals import set_debug
 
 logging.basicConfig(level=os.environ.get("LOG_LEVEL", "INFO"))
 logger = logging.getLogger()
@@ -45,6 +44,13 @@ class ElasticCloudSettings(BaseModel):
     api_key: str
     cloud_id: str
     subscription_level: str = "basic"
+
+
+class ChatLLMBackend(BaseModel):
+    name: str = "gpt-4o"
+    provider: str = "azure_openai"
+    description: str | None = None
+    model_config = {"frozen": True}
 
 
 class Settings(BaseSettings):
@@ -120,9 +126,7 @@ class Settings(BaseSettings):
         "You are an SEO specialist that must optimise the metadata of a document "
         "to make it as discoverable as possible. You are about to be given the first "
         "1_000 tokens of a document and any hard-coded file metadata that can be "
-        "recovered from it. Create SEO-optimised metadata for this document in the "
-        "structured data markup (JSON-LD) standard. You must include  "
-        "the 'name', 'description' and 'keywords' properties to make the document as easy to search for as possible. "
+        "recovered from it. Create SEO-optimised metadata for this document."
         "Description must be less than 100 words. and no more than 5 keywords .",
     )
 
@@ -202,3 +206,10 @@ class Settings(BaseSettings):
 
         msg = f"unkown object_store={self.object_store}"
         raise NotImplementedError(msg)
+
+
+@cache
+def get_settings() -> Settings:
+    s = Settings()
+    set_debug(s.dev_mode)
+    return s
