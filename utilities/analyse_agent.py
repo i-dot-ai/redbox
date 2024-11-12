@@ -13,6 +13,7 @@ from dotenv import load_dotenv
 from elasticsearch.helpers import scan
 from langchain_core.documents import Document
 from langchain_core.runnables import RunnableParallel
+from langfuse.decorators import observe
 from langgraph.managed.is_last_step import RemainingStepsManager
 from pandas import DataFrame, read_csv
 
@@ -21,20 +22,11 @@ from redbox.chains.ingest import ingest_from_loader
 from redbox.loader.ingester import get_elasticsearch_store, ingest_file
 from redbox.loader.loaders import MetadataLoader, UnstructuredChunkLoader
 from redbox.models import Settings
-from redbox.models.chain import (
-    AISettings,
-    Citation,
-    DocumentState,
-    LLMCallMetadata,
-    RedboxQuery,
-    RedboxState,
-    RequestMetadata,
-    Source,
-    ToolState,
-    document_reducer,
-    metadata_reducer,
-    tool_calls_reducer,
-)
+from redbox.models.chain import (AISettings, Citation, DocumentState,
+                                 LLMCallMetadata, RedboxQuery, RedboxState,
+                                 RequestMetadata, Source, ToolState,
+                                 document_reducer, metadata_reducer,
+                                 tool_calls_reducer)
 from redbox.models.file import ChunkResolution
 from redbox.models.settings import ChatLLMBackend, Settings
 from redbox.retriever.queries import build_query_filter
@@ -302,7 +294,6 @@ def convert_to_dict(text):
         print(f"Error parsing state: {e}")
         return {}
 
-
 def run_usecases(prompts_file, documents_file, save_path, selected_case=[], extract=False):
     print(f"Running search on {prompts_file}")
     prompts, documents = read_use_cases(prompts_file, documents_file)
@@ -424,7 +415,7 @@ if __name__ == "__main__":
 
 
 """ Example code 
-A strucutured csv files are required to run. These include: 
+A structured csv files are required to run. These include: 
 - prompt.csv containing User which are user id, and Prompts which are prompt query.
 - documents.csv containing User which are user id, and Documents which are document file path.
 

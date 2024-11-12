@@ -18,7 +18,9 @@ from langchain_core.runnables import (
     RunnablePassthrough,
     chain,
 )
+from langfuse.decorators import observe
 from tiktoken import Encoding
+from traitlets import observe
 
 from redbox.api.format import format_documents, format_toolstate
 from redbox.chains.activity import log_activity
@@ -28,14 +30,15 @@ from redbox.models.errors import QuestionLengthError
 from redbox.models.graph import RedboxEventType
 from redbox.transform import (
     flatten_document_state,
-    tool_calls_to_toolstate,
     get_all_metadata,
+    tool_calls_to_toolstate,
 )
 
 log = logging.getLogger()
 re_string_pattern = re.compile(r"(\S+)")
 
 
+@observe("saisakul")
 def build_chat_prompt_from_messages_runnable(
     prompt_set: PromptSet,
     tokeniser: Encoding = None,
@@ -63,8 +66,14 @@ def build_chat_prompt_from_messages_runnable(
             {ai_settings.caller_info_prompt}
             {{format_instructions}}
             """
-        prompts_budget = len(_tokeniser.encode(task_system_prompt)) + len(_tokeniser.encode(task_question_prompt))
-        chat_history_budget = ai_settings.context_window_size - ai_settings.llm_max_tokens - prompts_budget
+        prompts_budget = len(_tokeniser.encode(task_system_prompt)) + len(
+            _tokeniser.encode(task_question_prompt)
+        )
+        chat_history_budget = (
+            ai_settings.context_window_size
+            - ai_settings.llm_max_tokens
+            - prompts_budget
+        )
 
         if chat_history_budget <= 0:
             raise QuestionLengthError
@@ -81,7 +90,9 @@ def build_chat_prompt_from_messages_runnable(
             state["request"].model_dump()
             | {
                 "text": state.get("text"),
-                "formatted_documents": format_documents(flatten_document_state(state.get("documents"))),
+                "formatted_documents": format_documents(
+                    flatten_document_state(state.get("documents"))
+                ),
                 "tool_calls": format_toolstate(state.get("tool_calls")),
                 "system_info": ai_settings.system_info_prompt,
                 "persona_info": ai_settings.persona_info_prompt,
@@ -131,12 +142,18 @@ def build_llm_chain(
     }
 
     return (
-        build_chat_prompt_from_messages_runnable(prompt_set, format_instructions=format_instructions)
+        build_chat_prompt_from_messages_runnable(
+            prompt_set, format_instructions=format_instructions
+        )
         | text_and_tools
         | get_all_metadata
         | RunnablePassthrough.assign(
             _log=RunnableLambda(
-                lambda _: log_activity(f"Generating response with {model_name}...") if final_response_chain else None
+                lambda _: (
+                    log_activity(f"Generating response with {model_name}...")
+                    if final_response_chain
+                    else None
+                )
             )
         )
     )
