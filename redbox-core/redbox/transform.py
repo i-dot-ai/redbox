@@ -4,7 +4,7 @@ from uuid import NAMESPACE_DNS, UUID, uuid5
 import tiktoken
 from langchain_core.callbacks.manager import dispatch_custom_event
 from langchain_core.documents import Document
-from langchain_core.messages import ToolCall, AnyMessage
+from langchain_core.messages import ToolCall, AnyMessage, AIMessage
 from langchain_core.runnables import RunnableLambda
 
 from redbox.models.chain import (
@@ -169,9 +169,9 @@ def get_all_metadata(obj: dict):
         citations = []
 
     out = {
+        "messages": [AIMessage(content=text)],
         "tool_calls": text_and_tools["tool_calls"],
         "metadata": to_request_metadata(obj),
-        "text": text,
         "citations": citations,
     }
     return out

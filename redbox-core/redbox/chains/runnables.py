@@ -2,22 +2,13 @@ import logging
 import re
 from typing import Any, Callable, Iterable, Iterator
 
-from langchain_core.callbacks.manager import (
-    CallbackManagerForLLMRun,
-    dispatch_custom_event,
-)
+from langchain_core.callbacks.manager import CallbackManagerForLLMRun, dispatch_custom_event
 from langchain_core.language_models import BaseChatModel
 from langchain_core.messages import AIMessage, AIMessageChunk, BaseMessage
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.outputs import ChatGeneration, ChatGenerationChunk, ChatResult
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.runnables import (
-    Runnable,
-    RunnableGenerator,
-    RunnableLambda,
-    RunnablePassthrough,
-    chain,
-)
+from langchain_core.runnables import Runnable, RunnableGenerator, RunnableLambda, RunnablePassthrough, chain
 from tiktoken import Encoding
 
 from redbox.api.format import format_documents, format_toolstate
@@ -26,11 +17,7 @@ from redbox.chains.components import get_tokeniser
 from redbox.models.chain import ChainChatMessage, PromptSet, RedboxState, get_prompts
 from redbox.models.errors import QuestionLengthError
 from redbox.models.graph import RedboxEventType
-from redbox.transform import (
-    flatten_document_state,
-    tool_calls_to_toolstate,
-    get_all_metadata,
-)
+from redbox.transform import flatten_document_state, get_all_metadata, tool_calls_to_toolstate
 
 log = logging.getLogger()
 re_string_pattern = re.compile(r"(\S+)")
@@ -79,6 +66,7 @@ def build_chat_prompt_from_messages_runnable(
 
         prompt_template_context = (
             state["request"].model_dump()
+            | {"messages": state.get("messages")}
             | {
                 "text": state.get("text"),
                 "formatted_documents": format_documents(flatten_document_state(state.get("documents"))),
@@ -190,7 +178,7 @@ class CannedChatLLM(BaseChatModel):
     Based on https://python.langchain.com/v0.2/docs/how_to/custom_chat_model/
     """
 
-    text: str
+    messages: list[AIMessage]
 
     def _generate(
         self,
@@ -211,7 +199,7 @@ class CannedChatLLM(BaseChatModel):
                   downstream and understand why generation stopped.
             run_manager: A run manager with callbacks for the LLM.
         """
-        message = AIMessage(content=self.text)
+        message = AIMessage(content=self.messages[-1].content)
 
         generation = ChatGeneration(message=message)
         return ChatResult(generations=[generation])
@@ -235,7 +223,7 @@ class CannedChatLLM(BaseChatModel):
                   downstream and understand why generation stopped.
             run_manager: A run manager with callbacks for the LLM.
         """
-        for token in re_string_pattern.split(self.text):
+        for token in re_string_pattern.split(self.messages[-1].content):
             chunk = ChatGenerationChunk(message=AIMessageChunk(content=token))
 
             if run_manager:
