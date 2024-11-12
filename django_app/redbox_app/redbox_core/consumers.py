@@ -201,6 +201,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
             activity = ActivityEvent.objects.create(chat_message=chat_message, message=message)
             activity.save()
 
+        chat_message.log()
+
         return chat_message
 
     @database_sync_to_async

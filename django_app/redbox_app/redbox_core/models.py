@@ -851,7 +851,7 @@ class ChatMessage(UUIDPrimaryKeyBase, TimeStampedModel):
             "user_id": str(self.chat.user.id),
             "text": str(self.text),
             "route": str(self.route),
-            "role": "ai",
+            "role": str(self.role),
             "token_count": token_sum,
             "rating": int(self.rating) if self.rating else None,
             "rating_text": str(self.rating_text),
