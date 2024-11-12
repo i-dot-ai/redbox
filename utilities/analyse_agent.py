@@ -29,6 +29,7 @@ from redbox.models.chain import (
     RedboxQuery,
     RedboxState,
     RequestMetadata,
+    Source,
     ToolState,
     document_reducer,
     metadata_reducer,
@@ -287,6 +288,8 @@ def convert_to_dict(text):
             "citations": NotRequired[list[Citation] | None],
             "steps_left": Annotated[NotRequired[int], RemainingStepsManager],
             "chunk_resolution": ChunkResolution,
+            "Citation": Citation,
+            "Source": Source,
         }
 
         # Clean up the string and evaluate it
@@ -297,7 +300,7 @@ def convert_to_dict(text):
         print("-----------------------------")
         print(cleaned_content)
         print(f"Error parsing state: {e}")
-        return None
+        return {}
 
 
 def run_usecases(prompts_file, documents_file, save_path, selected_case=[], extract=False):
