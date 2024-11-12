@@ -268,6 +268,9 @@ class ChatConsumer(AsyncWebsocketConsumer):
     def get_ai_settings(chat: Chat) -> AISettings:
         ai_settings = model_to_dict(chat.user.ai_settings, exclude=["label", "chat_backend"])
         ai_settings["chat_backend"] = model_to_dict(chat.chat_backend)
+
+        # we remove null values so that AISettings can populate them with defaults
+        ai_settings = {k: v for k, v in ai_settings.items() if v is not None}
         return AISettings.model_validate(ai_settings)
 
     async def handle_text(self, response: str) -> str:
