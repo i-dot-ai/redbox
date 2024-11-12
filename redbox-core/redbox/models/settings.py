@@ -151,6 +151,11 @@ class Settings(BaseSettings):
                 ],
                 basic_auth=(self.elastic.user, self.elastic.password),
             )
+            client = client.options(request_timeout=30, retry_on_timeout=True, max_retries=3)
+
+        elif isinstance(self, ElasticCloudSettings):
+            client = Elasticsearch(cloud_id=self.elastic.cloud_id, api_key=self.elastic.api_key)
+            client = client.options(request_timeout=30, retry_on_timeout=True, max_retries=3)
 
         elif isinstance(self.elastic, OpenSearchSettings):
             client = OpenSearch(
@@ -162,7 +167,8 @@ class Settings(BaseSettings):
             )
 
         else:
-            client = Elasticsearch(cloud_id=self.elastic.cloud_id, api_key=self.elastic.api_key)
+            msg = f"type {self.elastic} not implemented"
+            raise NotImplementedError(msg)
 
         if not client.indices.exists_alias(name=self.elastic_alias):
             chunk_index = f"{self.elastic_root_index}-chunk"
@@ -172,7 +178,7 @@ class Settings(BaseSettings):
         if not client.indices.exists(index=self.elastic_chat_mesage_index):
             client.indices.create(index=self.elastic_chat_mesage_index)
 
-        return client.options(request_timeout=30, retry_on_timeout=True, max_retries=3)
+        return client
 
     def s3_client(self):
         if self.object_store == "minio":
