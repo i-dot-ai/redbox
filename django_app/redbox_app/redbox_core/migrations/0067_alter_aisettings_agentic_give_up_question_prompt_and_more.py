@@ -110,6 +110,6 @@ class Migration(migrations.Migration):
             name='retrieval_system_prompt',
             field=models.TextField(blank=True, null=True),
         ),
-        migrations.RunPython(back_populate_ai_settings_chat_backend, migrations.RunPython.noop),
+        migrations.RunPython(set_ai_settings_prompt_value_to_null, migrations.RunPython.noop),
 
     ]
