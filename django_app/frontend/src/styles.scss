@@ -2,7 +2,7 @@ $govuk-assets-path: "govuk-assets/";
 $govuk-font-family: sans-serif;
 $redbox-red: #9c0000; /*old:#A50202*/
 
-@import "./node_modules/govuk-frontend/dist/govuk/all";
+@import "../node_modules/govuk-frontend/dist/govuk/all";
 
 body {
   background-color: white;
