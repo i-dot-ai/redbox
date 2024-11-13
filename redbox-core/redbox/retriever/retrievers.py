@@ -197,19 +197,52 @@ class AllElasticsearchRetriever(OpenSearchRetriever):
         super().__init__(**kwargs)
         self.body_func = partial(get_all, self.chunk_resolution)
 
+    # def _get_relevant_documents(
+    #     self, query: RedboxState, *, run_manager: CallbackManagerForRetrieverRun
+    # ) -> list[Document]:  # noqa:ARG002
+    #     if not self.es_client or not self.document_mapper:
+    #         msg = "faulty configuration"
+    #         raise ValueError(msg)  # should not happen
+
+    #     body = self.body_func(query)  # type: ignore
+
+    #     results = [
+    #         self.document_mapper(hit)
+    #         for hit in scan(client=self.es_client, index=self.index_name, query=body, source=True)
+    #     ]
+
+    #     return sorted(results, key=lambda result: result.metadata["index"])
+
     def _get_relevant_documents(
         self, query: RedboxState, *, run_manager: CallbackManagerForRetrieverRun
     ) -> list[Document]:  # noqa:ARG002
-        if not self.es_client or not self.document_mapper:
-            msg = "faulty configuration"
-            raise ValueError(msg)  # should not happen
 
         body = self.body_func(query)  # type: ignore
 
-        results = [
-            self.document_mapper(hit)
-            for hit in scan(client=self.es_client, index=self.index_name, query=body, source=True)
-        ]
+        results = []
+
+        response = self.es_client.search(
+            index=self.index_name,
+            body=body,
+            scroll="2m",
+            size=1000,
+            _source=True
+        )
+
+        scroll_id = response["_scroll_id"]
+
+        while True:
+            response = self.es_client.scroll(scroll_id=scroll_id, scroll="2m")
+            hits = response["hits"]["hits"]
+            
+            if not hits:
+                break
+
+            results.extend([self.document_mapper(hit) for hit in hits])
+
+            scroll_id = response["_scroll_id"]
+
+        self.es_client.clear_scroll(scroll_id=scroll_id)
 
         return sorted(results, key=lambda result: result.metadata["index"])
 
@@ -227,18 +260,51 @@ class MetadataRetriever(OpenSearchRetriever):
         super().__init__(**kwargs)
         self.body_func = partial(get_metadata, self.chunk_resolution)
 
+    # def _get_relevant_documents(
+    #     self, query: RedboxState, *, run_manager: CallbackManagerForRetrieverRun
+    # ) -> list[Document]:  # noqa:ARG002
+    #     if not self.es_client or not self.document_mapper:
+    #         msg = "faulty configuration"
+    #         raise ValueError(msg)  # should not happen
+
+    #     body = self.body_func(query)  # type: ignore
+
+    #     results = [
+    #         self.document_mapper(hit)
+    #         for hit in scan(client=self.es_client, index=self.index_name, query=body, source=True)
+    #     ]
+
+    #     return sorted(results, key=lambda result: result.metadata["index"])
+
     def _get_relevant_documents(
         self, query: RedboxState, *, run_manager: CallbackManagerForRetrieverRun
     ) -> list[Document]:  # noqa:ARG002
-        if not self.es_client or not self.document_mapper:
-            msg = "faulty configuration"
-            raise ValueError(msg)  # should not happen
 
         body = self.body_func(query)  # type: ignore
 
-        results = [
-            self.document_mapper(hit)
-            for hit in scan(client=self.es_client, index=self.index_name, query=body, source=True)
-        ]
+        results = []
+
+        response = self.es_client.search(
+            index=self.index_name,
+            body=body,
+            scroll="2m",
+            size=1000,
+            _source=True
+        )
+
+        scroll_id = response["_scroll_id"]
+
+        while True:
+            response = self.es_client.scroll(scroll_id=scroll_id, scroll="2m")
+            hits = response["hits"]["hits"]
+            
+            if not hits:
+                break
+
+            results.extend([self.document_mapper(hit) for hit in hits])
+
+            scroll_id = response["_scroll_id"]
+
+        self.es_client.clear_scroll(scroll_id=scroll_id)
 
         return sorted(results, key=lambda result: result.metadata["index"])
