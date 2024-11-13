@@ -24,9 +24,9 @@ test(`Chat history functionality works as expected`, async ({ page }) => {
   expect(count2).toEqual(count1 + 1);
 
   // A "Today" heading has been created
-  await expect(page.locator(".rb-chat-history__date_group")).toContainText(
-    "Today"
-  );
+  await expect(
+    page.locator(".rb-chat-history__date_group").first()
+  ).toContainText("Today");
 
   // A chat can be renamed
   await page.locator(".rb-chat-history__actions-button").first().click();

@@ -10,29 +10,37 @@ class SendMessage extends HTMLElement {
     `;
     this.innerHTML += stopButtonHtml;
 
-    let buttonSend = /** @type {HTMLButtonElement} */ (
+    this.buttonSend = /** @type {HTMLButtonElement} */ (
       this.querySelector("button:nth-child(1)")
     );
-    let buttonStop = /** @type {HTMLButtonElement} */ (
+    this.buttonStop = /** @type {HTMLButtonElement} */ (
       this.querySelector("button:nth-child(2)")
     );
 
-    buttonStop.style.display = "none";
-    buttonStop.addEventListener("click", () => {
+    this.buttonStop.style.display = "none";
+    this.buttonStop.addEventListener("click", () => {
       const stopStreamingEvent = new CustomEvent("stop-streaming");
       document.dispatchEvent(stopStreamingEvent);
     });
 
     document.addEventListener("chat-response-start", () => {
-      buttonSend.style.display = "none";
-      buttonStop.style.display = "flex";
+      if (!this.buttonSend || !this.buttonStop) {
+        return;
+      }
+      this.buttonSend.style.display = "none";
+      this.buttonStop.style.display = "flex";
     });
-    const showSendButton = () => {
-      buttonSend.style.display = "flex";
-      buttonStop.style.display = "none";
-    };
-    document.addEventListener("chat-response-end", showSendButton);
-    document.addEventListener("stop-streaming", showSendButton);
+
+    document.addEventListener("chat-response-end", this.#showSendButton);
+    document.addEventListener("stop-streaming", this.#showSendButton);
   }
+
+  #showSendButton = () => {
+    if (!this.buttonSend || !this.buttonStop) {
+      return;
+    }
+    this.buttonSend.style.display = "flex";
+    this.buttonStop.style.display = "none";
+  };
 }
 customElements.define("send-message", SendMessage);
