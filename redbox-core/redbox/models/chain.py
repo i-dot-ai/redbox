@@ -1,19 +1,12 @@
 from datetime import UTC, datetime
 from enum import StrEnum
 from functools import reduce
-from typing import (
-    Annotated,
-    Literal,
-    NotRequired,
-    Required,
-    TypedDict,
-    get_args,
-    get_origin,
-)
+from typing import Annotated, Literal, NotRequired, Required, TypedDict, get_args, get_origin
 from uuid import UUID, uuid4
 
 from langchain_core.documents import Document
 from langchain_core.messages import ToolCall
+from langgraph.graph import MessagesState
 from langgraph.managed.is_last_step import RemainingStepsManager
 from pydantic import BaseModel, Field
 
@@ -268,10 +261,9 @@ def tool_calls_reducer(current: ToolState, update: ToolState | None) -> ToolStat
     return reduced
 
 
-class RedboxState(TypedDict):
+class RedboxState(MessagesState):
     request: Required[RedboxQuery]
     documents: Annotated[NotRequired[DocumentState], document_reducer]
-    text: NotRequired[str | None]
     route_name: NotRequired[str | None]
     tool_calls: Annotated[NotRequired[ToolState], tool_calls_reducer]
     metadata: Annotated[NotRequired[RequestMetadata], metadata_reducer]
@@ -374,6 +366,8 @@ def merge_redbox_state_updates(current: RedboxState, update: RedboxState) -> Red
             if is_dict_type(annotation):
                 # If it's annotated and a subclass of dict, apply a custom reducer function
                 merged_state[update_key] = dict_reducer(current=current_value or {}, update=update_value or {})
+            elif current_value is None:
+                merged_state[update_key] = update_value
             else:
                 # If it's annotated and not a dict, apply its reducer function
                 _, reducer_func = get_args(annotation)

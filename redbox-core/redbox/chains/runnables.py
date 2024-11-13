@@ -18,7 +18,6 @@ from langchain_core.runnables import (
     RunnablePassthrough,
     chain,
 )
-from langfuse.decorators import observe
 from tiktoken import Encoding
 from traitlets import observe
 
@@ -88,6 +87,7 @@ def build_chat_prompt_from_messages_runnable(
 
         prompt_template_context = (
             state["request"].model_dump()
+            | {"messages": state.get("messages")}
             | {
                 "text": state.get("text"),
                 "formatted_documents": format_documents(
@@ -207,7 +207,7 @@ class CannedChatLLM(BaseChatModel):
     Based on https://python.langchain.com/v0.2/docs/how_to/custom_chat_model/
     """
 
-    text: str
+    messages: list[AIMessage]
 
     def _generate(
         self,
@@ -228,7 +228,7 @@ class CannedChatLLM(BaseChatModel):
                   downstream and understand why generation stopped.
             run_manager: A run manager with callbacks for the LLM.
         """
-        message = AIMessage(content=self.text)
+        message = AIMessage(content=self.messages[-1].content)
 
         generation = ChatGeneration(message=message)
         return ChatResult(generations=[generation])
@@ -252,7 +252,7 @@ class CannedChatLLM(BaseChatModel):
                   downstream and understand why generation stopped.
             run_manager: A run manager with callbacks for the LLM.
         """
-        for token in re_string_pattern.split(self.text):
+        for token in re_string_pattern.split(self.messages[-1].content):
             chunk = ChatGenerationChunk(message=AIMessageChunk(content=token))
 
             if run_manager:

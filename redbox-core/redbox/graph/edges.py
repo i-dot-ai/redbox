@@ -114,7 +114,7 @@ def build_strings_end_text_conditional(*strings: str) -> Runnable:
     regex = re.compile(pattern, re.IGNORECASE)
 
     def _strings_end_text_conditional(state: RedboxState) -> str:
-        matches = regex.findall(state["text"][-100:])  # padding for waffle
+        matches = regex.findall(state["messages"][-1].content[-100:])  # padding for waffle
         unique_matches = set(matches)
 
         if len(unique_matches) == 1:
