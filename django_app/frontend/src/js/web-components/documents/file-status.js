@@ -12,6 +12,7 @@ class FileStatus extends HTMLElement {
       );
       const responseObj = await response.json();
       this.textContent = responseObj.status;
+      this.dataset.status = responseObj.status.toLowerCase();
 
       if (responseObj.status.toLowerCase() === "complete") {
         const evt = new CustomEvent("doc-complete", {

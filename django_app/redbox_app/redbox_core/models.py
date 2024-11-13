@@ -635,8 +635,8 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
         return self.original_file.name
 
     def get_status_text(self) -> str:
-        permanent_error = f"Failed to extract text, pls contact {settings.CONTACT_EMAIL}"
-        temporary_error = "Failed to extract text, please try later"
+        permanent_error = "Error"
+        temporary_error = "Error, please try again"
         if self.ingest_error:
             temporary_error_substrings = [
                 "ConnectionError",
