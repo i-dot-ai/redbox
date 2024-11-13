@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-const signIn = require("./_sign-in.js");
+const { signIn } = require("./utils.js");
 
 test(`Chat history functionality works as expected`, async ({ page }) => {
   await signIn(page);
@@ -40,7 +40,7 @@ test(`Chat history functionality works as expected`, async ({ page }) => {
   await page.locator(".rb-chat-history__actions-button").first().click();
   await page.locator('button[data-action="delete"]').first().click();
   await page.locator('button[data-action="delete-confirm"]').first().click();
-  await page.waitForTimeout(100);
+  await page.waitForTimeout(200);
   const count3 = await page.evaluate(
     () => document.querySelectorAll(".rb-chat-history__link").length
   );
