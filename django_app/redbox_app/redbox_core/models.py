@@ -635,10 +635,20 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
         return self.original_file.name
 
     def get_status_text(self) -> str:
-        return next(
-            (status[1] for status in File.Status.choices if self.status == status[0]),
-            "Unknown",
-        )
+        permanent_error = f"Failed to extract text, pls contact {settings.CONTACT_EMAIL}"
+        temporary_error = "Failed to extract text, please try later"
+        if self.ingest_error:
+            temporary_error_substrings = [
+                "ConnectionError",
+                "RateLimitError",
+                "ConnectTimeout",
+                "openai.InternalServerError",
+            ]
+            for substring in temporary_error_substrings:
+                if substring in self.ingest_error:
+                    return temporary_error
+            return permanent_error
+        return dict(File.Status.choices).get(self.status, permanent_error)
 
     @property
     def expires_at(self) -> datetime:
