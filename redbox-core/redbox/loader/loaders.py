@@ -63,7 +63,7 @@ class MetadataLoader:
 
         return response.json() or []
 
-    def extract_metadata(self) -> dict:
+    def extract_metadata(self) -> GeneratedMetadata:
         """
         Extract metadata from first 1_000 chunks
         """
@@ -72,7 +72,10 @@ class MetadataLoader:
         original_metadata = chunks[0]["metadata"] if chunks else {}
         first_thousand_words = "".join(chunk["text"] for chunk in chunks)[:10_000]
 
-        metadata = self.create_file_metadata(first_thousand_words, original_metadata=original_metadata)
+        try:
+            metadata = self.create_file_metadata(first_thousand_words, original_metadata=original_metadata)
+        except TypeError:
+            metadata = GeneratedMetadata(name=original_metadata.get("filename"))
         return metadata
 
     def create_file_metadata(self, page_content: str, original_metadata: dict | None = None) -> GeneratedMetadata:
