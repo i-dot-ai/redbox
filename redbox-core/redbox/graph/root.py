@@ -1,3 +1,4 @@
+from langchain_core.runnables import RunnableLambda
 from langchain_core.tools import StructuredTool
 from langchain_core.vectorstores import VectorStoreRetriever
 from langgraph.graph import END, START, StateGraph
@@ -32,7 +33,7 @@ from redbox.graph.nodes.processes import (
 )
 from redbox.graph.nodes.sends import build_document_chunk_send, build_document_group_send, build_tool_send
 from redbox.graph.nodes.tools import get_log_formatter_for_retrieval_tool
-from redbox.models.chain import RedboxState
+from redbox.models.chain import RedboxState, ToolStateEntry
 from redbox.models.chat import ChatRoute, ErrorRoute
 from redbox.models.graph import ROUTABLE_KEYWORDS, RedboxActivityEvent
 from redbox.transform import structure_documents_by_file_name, structure_documents_by_group_and_indices
@@ -151,6 +152,15 @@ def get_search_graph(
     return builder.compile(debug=debug)
 
 
+@RunnableLambda
+def p_update_tool_state(state: RedboxState):
+    tool_calls = state.get("tool_calls", {})
+    for tool_id, tool_call_dict in tool_calls.items():
+        tool_state = ToolStateEntry(called=True, tool=tool_call_dict["tool"])
+        state["tool_calls"][tool_id] = tool_state
+    return state
+
+
 def get_agentic_search_graph(tools: dict[str, StructuredTool], debug: bool = False) -> CompiledGraph:
     """Creates a subgraph for agentic RAG."""
 
@@ -175,6 +185,10 @@ def get_agentic_search_graph(tools: dict[str, StructuredTool], debug: bool = Fal
     builder.add_node(
         "p_retrieval_tools",
         ToolNode(tools=agent_tools),
+    )
+    builder.add_node(
+        "p_update_tool_state",
+        p_update_tool_state,
     )
     builder.add_node(
         "p_give_up_agent",
@@ -218,7 +232,8 @@ def get_agentic_search_graph(tools: dict[str, StructuredTool], debug: bool = Fal
     )
     builder.add_edge("p_search_agent", "p_activity_log_retrieval_tool_calls")
     builder.add_conditional_edges("s_tool", build_tool_send("p_retrieval_tools"), path_map=["p_retrieval_tools"])
-    builder.add_edge("p_retrieval_tools", "d_x_steps_left_or_less")
+    builder.add_edge("p_retrieval_tools", "p_update_tool_state")
+    builder.add_edge("p_update_tool_state", "d_x_steps_left_or_less")
     builder.add_edge("p_report_sources", END)
 
     return builder.compile(debug=debug)
