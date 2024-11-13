@@ -123,6 +123,21 @@ We'll need to create a superuser to log in to the Django app, to do this run the
 7. Click that link and you should be logged in.
 
 
+## Running Redbox in a notebook
+
+There are a number of notebooks available, in various states of working! The Redbox core app is able to be created in a notebook and run to allow easy experiementation without the django side.
+agent_experiments.ipynb shows this best currently.
+
+#### Langfuse
+
+When running in a notebook (and again shows in agent_experiments.ipynb) we use a local Langfuse server to record traces. To do this the env vars for Langfuse should be copied out of .env.example into .env:
+``` bash
+LANGFUSE_SECRET_KEY=...
+LANGFUSE_PUBLIC_KEY=...
+LANGFUSE_HOST=...
+```
+The server can be started using docker-compose
+
 ## Pre-commit hooks
 
 - Download and install [pre-commit](https://pre-commit.com) to benefit from pre-commit hooks

@@ -1,30 +1,22 @@
 from datetime import UTC, datetime
 from enum import StrEnum
 from functools import reduce
-from typing import (Annotated, Literal, NotRequired, Required, TypedDict,
-                    get_args, get_origin)
+from typing import Annotated, Literal, NotRequired, Required, TypedDict, get_args, get_origin
 from uuid import UUID, uuid4
 
 from langchain_core.documents import Document
 from langchain_core.messages import AnyMessage, ToolCall
-from langgraph.graph import MessagesState
 from langgraph.graph.message import add_messages
 from langgraph.managed.is_last_step import RemainingStepsManager
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field
 
 from redbox.models import prompts
+from redbox.models.settings import ChatLLMBackend
 
 
 class ChainChatMessage(TypedDict):
     role: Literal["user", "ai", "system"]
     text: str
-
-
-class ChatLLMBackend(BaseModel):
-    name: str = "gpt-4o"
-    provider: str = "azure_openai"
-    description: str | None = None
-    model_config = {"frozen": True}
 
 
 class AISettings(BaseModel):
@@ -40,6 +32,14 @@ class AISettings(BaseModel):
     map_max_concurrency: int = 128
     stuff_chunk_context_ratio: float = 0.75
     recursion_limit: int = 50
+
+    # Common Prompt Fragments
+
+    system_info_prompt: str = prompts.SYSTEM_INFO
+    persona_info_prompt: str = prompts.PERSONA_INFO
+    caller_info_prompt: str = prompts.CALLER_INFO
+
+    # Task Prompt Fragments
 
     chat_system_prompt: str = prompts.CHAT_SYSTEM_PROMPT
     chat_question_prompt: str = prompts.CHAT_QUESTION_PROMPT
@@ -99,12 +99,13 @@ class StructuredResponseWithCitations(BaseModel):
     citations: list[Citation] = Field(default_factory=list)
 
 
-
 DocumentMapping = dict[UUID, Document]
 DocumentGroup = dict[UUID, DocumentMapping]
 
+
 class DocumentState(BaseModel):
     """A document state containing groups of documents."""
+
     groups: DocumentGroup = Field(default_factory=DocumentGroup)
 
     # @field_validator("groups", mode="before")
@@ -112,12 +113,13 @@ class DocumentState(BaseModel):
     # def convert_uuid_keys(cls, v: DocumentGroup) -> DocumentGroup:
     #     if not v:
     #         return DocumentGroup()
-        
+
     #     converted_groups = {
     #         str(group_id): group
     #         for group_id, group in v.items()
     #     }
     #     return DocumentGroup(converted_groups)
+
 
 def document_reducer(current: DocumentState | None, update: DocumentState | list[DocumentState]) -> DocumentState:
     """Merges two document states based on the following rules.
@@ -139,9 +141,8 @@ def document_reducer(current: DocumentState | None, update: DocumentState | list
     # If state is empty, return update
     if current is None:
         return update
-    
+
     reduced = {k: v.copy() for k, v in current.groups.items()}
-    
 
     # Update with update
     for group_key, group in update.groups.items():
@@ -168,6 +169,7 @@ def document_reducer(current: DocumentState | None, update: DocumentState | list
 
     return DocumentState(groups=reduced)
 
+
 # def document_reducer(current: DocumentState | None, update: DocumentState | list[DocumentState]) -> DocumentState:
 #     """Merges document states, where:
 #     - Newer values override older ones
@@ -184,11 +186,11 @@ def document_reducer(current: DocumentState | None, update: DocumentState | list
 
 #     # Merge states with update taking precedence
 #     merged_state = current | update
-    
+
 #     # Filter out None groups and empty document collections
 #     return DocumentState(groups={
-#         group_key: group 
-#         for group_key, group in merged_state.groups.items() 
+#         group_key: group
+#         for group_key, group in merged_state.groups.items()
 #         if group and group.documents
 #     })
 
@@ -309,16 +311,15 @@ class RedboxState(BaseModel):
     tool_calls: Annotated[ToolState | None, tool_calls_reducer] = None
     metadata: Annotated[RequestMetadata | None, metadata_reducer] = None
     citations: list[Citation] | None = None
-    steps_left: Annotated[int | None, RemainingStepsManager] = None    
+    steps_left: Annotated[int | None, RemainingStepsManager] = None
     messages: Annotated[list[AnyMessage], add_messages] = Field(default_factory=list)
 
-    model_config = {
-        "arbitrary_types_allowed": True
-    }
+    model_config = {"arbitrary_types_allowed": True}
 
     @property
     def last_message(self) -> AnyMessage:
         return self.messages[-1]
+
 
 class PromptSet(StrEnum):
     Chat = "chat"

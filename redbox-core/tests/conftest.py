@@ -10,7 +10,7 @@ from langchain_core.embeddings.fake import FakeEmbeddings
 from langchain_elasticsearch import ElasticsearchStore
 from tiktoken.core import Encoding
 
-from redbox.models import Settings
+from redbox.models.settings import Settings
 from redbox.retriever import AllElasticsearchRetriever, MetadataRetriever, ParameterisedElasticsearchRetriever
 from redbox.test.data import RedboxChatTestCase
 from tests.retriever.data import ALL_CHUNKS_RETRIEVER_CASES, METADATA_RETRIEVER_CASES, PARAMETERISED_RETRIEVER_CASES

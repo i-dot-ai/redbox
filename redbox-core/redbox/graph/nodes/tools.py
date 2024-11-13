@@ -1,5 +1,4 @@
-from typing import (Annotated, Any, Iterable, get_args, get_origin,
-                    get_type_hints)
+from typing import Annotated, Any, Iterable, get_args, get_origin, get_type_hints
 
 import requests
 import tiktoken
@@ -13,11 +12,9 @@ from langgraph.prebuilt import InjectedState
 
 from redbox.models.chain import RedboxState
 from redbox.models.file import ChunkCreatorType, ChunkMetadata, ChunkResolution
-from redbox.retriever.queries import (add_document_filter_scores_to_query,
-                                      build_document_query)
+from redbox.retriever.queries import add_document_filter_scores_to_query, build_document_query
 from redbox.retriever.retrievers import query_to_documents
-from redbox.transform import (merge_documents, sort_documents,
-                              structure_documents_by_group_and_indices)
+from redbox.transform import merge_documents, sort_documents, structure_documents_by_group_and_indices
 
 
 def is_valid_tool(tool: StructuredTool) -> bool:

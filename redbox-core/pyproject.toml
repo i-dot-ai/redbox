@@ -40,6 +40,7 @@ deepeval = "^1.0.3"
 pytest-mock = "^3.14.0"
 boto3-stubs = {extras = ["essential"], version = "^1.35.28"}
 requests-mock = "^1.12.1"
+langfuse = "^2.53.9"
 
 [build-system]
 requires = ["poetry-core"]
