@@ -1,11 +1,11 @@
 <script>
 	import Button from '$lib/components/button.svelte';
 
+	let { data } = $props();
+
 	// TO DO: These need to be moved from here
-	const department = 'co';
+	const department = 'co'; // this is set via Waffle - would an .env be better?
 	const userIsAuthenticated = false;
-	const security = 'OFFICIAL SENSITIVE';
-	const allowSignUps = true;
 </script>
 
 <div class="rb-banner">
@@ -14,8 +14,8 @@
 			<div class="govuk-grid-column-two-thirds">
 				{#if department === 'uktrade'}
 					<h1 class="govuk-heading-xl govuk-!-margin-bottom-7">
-						Use Artificial Intelligence (AI) to interact with {security} level documents from your own
-						document set
+						Use Artificial Intelligence (AI) to interact with {data.security} level documents from your
+						own document set
 					</h1>
 					<p class="govuk-body-l govuk-!-margin-bottom-7">
 						You may summarise documents, ask questions related to one or more documents, and chat
@@ -37,7 +37,7 @@
 				</h1>
 				<p class="govuk-body-l govuk-!-margin-bottom-7">
 					Use Artificial Intelligence (AI) to get insights from your personal document set. You can
-					use up to, and including, {security} documents.
+					use up to, and including, {data.security} documents.
 				</p>
 				<div class="rb-banner__links">
 					{#if !userIsAuthenticated}
@@ -47,13 +47,13 @@
 							classes="govuk-button--secondary govuk-!-margin-bottom-0 rb-banner__button"
 						/>
 					{/if}
-					{#if allowSignUps}
+					{#if data.allowSignUps}
 						<span class="govuk-body govuk-!-margin-bottom-0"
 							>or <a class="govuk-link" href="/sign-up-1">sign up</a> to use Redbox</span
 						>
 					{/if}
 				</div>
-				{#if !userIsAuthenticated && !allowSignUps}
+				{#if !userIsAuthenticated && !data.allowSignUps}
 					<p class="govuk-body govuk-!-margin-bottom-0 govuk-!-margin-top-5">
 						We have paused new users signing up to Redbox. Please add your email to the <a
 							href="https://docs.google.com/forms/d/e/1FAIpQLSev6KZ6ASgz54GKINfk18k_Ygo_hZxcuQrS3v5XzWc4DE1gaw/viewform?usp=sharing"
@@ -82,7 +82,7 @@
 			<h2 class="govuk-heading-m govuk-!-margin-top-5 govuk-!-padding-top-5">Secure</h2>
 			<p class="govuk-body">
 				Redbox is built in our secure and private cloud which enables you to upload, up to, and
-				including, {security} documents in your Redbox.
+				including, {data.security} documents in your Redbox.
 			</p>
 		</div>
 	</div>
