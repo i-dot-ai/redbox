@@ -2,7 +2,7 @@ from typing import Callable
 
 from langgraph.constants import Send
 
-from redbox.models.chain import RedboxState
+from redbox.models.chain import DocumentState, RedboxState
 
 
 def _copy_state(state: RedboxState, **updates) -> RedboxState:
@@ -17,9 +17,9 @@ def build_document_group_send(target: str) -> Callable[[RedboxState], list[Send]
         group_send_states: list[RedboxState] = [
             _copy_state(
                 state,
-                documents={document_group_key: document_group},
+                documents=DocumentState(groups={document_group_key: document_group}),
             )
-            for document_group_key, document_group in state.documents.items()
+            for document_group_key, document_group in state.documents.groups.items()
         ]
         return [Send(node=target, arg=state) for state in group_send_states]
 
@@ -33,9 +33,9 @@ def build_document_chunk_send(target: str) -> Callable[[RedboxState], list[Send]
         chunk_send_states: list[RedboxState] = [
             _copy_state(
                 state,
-                documents={document_group_key: {document_key: document}},
+                documents=DocumentState(groups={document_group_key: {document_key: document}}),
             )
-            for document_group_key, document_group in state.documents.items()
+            for document_group_key, document_group in state.documents.groups.items()
             for document_key, document in document_group.items()
         ]
         return [Send(node=target, arg=state) for state in chunk_send_states]

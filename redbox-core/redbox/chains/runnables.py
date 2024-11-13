@@ -2,22 +2,28 @@ import logging
 import re
 from typing import Any, Callable, Iterable, Iterator
 
-from langchain_core.callbacks.manager import CallbackManagerForLLMRun, dispatch_custom_event
+from langchain_core.callbacks.manager import (CallbackManagerForLLMRun,
+                                              dispatch_custom_event)
 from langchain_core.language_models import BaseChatModel
 from langchain_core.messages import AIMessage, AIMessageChunk, BaseMessage
 from langchain_core.output_parsers import StrOutputParser
-from langchain_core.outputs import ChatGeneration, ChatGenerationChunk, ChatResult
+from langchain_core.outputs import (ChatGeneration, ChatGenerationChunk,
+                                    ChatResult)
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.runnables import Runnable, RunnableGenerator, RunnableLambda, RunnablePassthrough, chain
+from langchain_core.runnables import (Runnable, RunnableGenerator,
+                                      RunnableLambda, RunnablePassthrough,
+                                      chain)
 from tiktoken import Encoding
 
 from redbox.api.format import format_documents, format_toolstate
 from redbox.chains.activity import log_activity
 from redbox.chains.components import get_tokeniser
-from redbox.models.chain import ChainChatMessage, PromptSet, RedboxState, get_prompts
+from redbox.models.chain import (ChainChatMessage, PromptSet, RedboxState,
+                                 get_prompts)
 from redbox.models.errors import QuestionLengthError
 from redbox.models.graph import RedboxEventType
-from redbox.transform import flatten_document_state, get_all_metadata, tool_calls_to_toolstate
+from redbox.transform import (flatten_document_state, get_all_metadata,
+                              tool_calls_to_toolstate)
 
 log = logging.getLogger()
 re_string_pattern = re.compile(r"(\S+)")
@@ -35,7 +41,7 @@ def build_chat_prompt_from_messages_runnable(
         Create a ChatPromptTemplate as part of a chain using 'chat_history'.
         Returns the PromptValue using values in the input_dict
         """
-        ai_settings = state["request"].ai_settings
+        ai_settings = state.request.ai_settings
         _tokeniser = tokeniser or get_tokeniser()
         _additional_variables = additional_variables or dict()
         task_system_prompt, task_question_prompt = get_prompts(state, prompt_set)
@@ -66,11 +72,10 @@ def build_chat_prompt_from_messages_runnable(
 
         prompt_template_context = (
             state.request.model_dump()
-            | {"messages": state.messages}
             | {
-                "text": state.get("text"),
-                "formatted_documents": format_documents(flatten_document_state(state.get("documents"))),
-                "tool_calls": format_toolstate(state.get("tool_calls")),
+                "messages": state.messages,
+                "formatted_documents": format_documents(flatten_document_state(state.documents)),
+                "tool_calls": format_toolstate(state.tool_calls),
                 "system_info": ai_settings.system_info_prompt,
                 "persona_info": ai_settings.persona_info_prompt,
                 "caller_info": ai_settings.caller_info_prompt,
