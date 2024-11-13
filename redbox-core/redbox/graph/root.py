@@ -2,6 +2,7 @@ from langchain_core.tools import StructuredTool
 from langchain_core.vectorstores import VectorStoreRetriever
 from langgraph.graph import END, START, StateGraph
 from langgraph.graph.graph import CompiledGraph
+from langgraph.prebuilt import ToolNode
 
 from redbox.chains.components import get_structured_response_with_citations_parser
 from redbox.chains.runnables import build_self_route_output_parser
@@ -25,7 +26,6 @@ from redbox.graph.nodes.processes import (
     build_set_route_pattern,
     build_set_self_route_from_llm_answer,
     build_stuff_pattern,
-    build_tool_pattern,
     clear_documents_process,
     empty_process,
     report_sources_process,
@@ -158,7 +158,7 @@ def get_agentic_search_graph(tools: dict[str, StructuredTool], debug: bool = Fal
     builder = StateGraph(RedboxState)
     # Tools
     agent_tool_names = ["_search_documents", "_search_wikipedia", "_search_govuk"]
-    agent_tools: list[StructuredTool] = tuple([tools.get(tool_name) for tool_name in agent_tool_names])
+    agent_tools: list[StructuredTool] = [tools[tool_name] for tool_name in agent_tool_names]
 
     # Processes
     builder.add_node("p_set_agentic_search_route", build_set_route_pattern(route=ChatRoute.gadget))
@@ -174,7 +174,7 @@ def get_agentic_search_graph(tools: dict[str, StructuredTool], debug: bool = Fal
     )
     builder.add_node(
         "p_retrieval_tools",
-        build_tool_pattern(tools=agent_tools, final_source_chain=False),
+        ToolNode(tools=agent_tools),
     )
     builder.add_node(
         "p_give_up_agent",

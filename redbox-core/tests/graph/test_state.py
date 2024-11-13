@@ -1,4 +1,4 @@
-from datetime import UTC, datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from uuid import uuid4
 
 import pytest
@@ -6,15 +6,11 @@ from langchain_core.documents import Document
 from langchain_core.messages import ToolCall
 
 from redbox.models.chain import (
-    AISettings,
     DocumentState,
     LLMCallMetadata,
-    RedboxQuery,
-    RedboxState,
     RequestMetadata,
     ToolState,
     document_reducer,
-    merge_redbox_state_updates,
     metadata_reducer,
     tool_calls_reducer,
 )
@@ -275,148 +271,4 @@ def test_tool_calls_reducer(a: ToolState, b: ToolState, expected: ToolState):
     * If update is None, clears all tool calls
     """
     result = tool_calls_reducer(a, b)
-    assert result == expected, f"Expected: {expected}. Result: {result}"
-
-
-TEST_QUERY = RedboxQuery(
-    question="Lorem ipsum?",
-    s3_keys=["s3_key.txt"],
-    user_uuid=uuid4(),
-    chat_history=[],
-    ai_settings=AISettings(rag_k=3),
-)
-
-
-@pytest.mark.parametrize(
-    ("a", "b", "expected"),
-    [
-        (
-            RedboxState(
-                request=TEST_QUERY,
-                documents={
-                    "group_1": {
-                        "chunk_1": {"page_content": "foo", "metadata": {"index": 1, "file_name": "foo"}},
-                        "chunk_2": {"page_content": "foo", "metadata": {"index": 1, "file_name": "foo"}},
-                    },
-                    "group_2": {"chunk_1": {"page_content": "foo", "metadata": {"index": 1, "file_name": "foo"}}},
-                },
-                text="Some old text",
-                route_name="my_route",
-                tool_calls={
-                    "tool_1": {"tool": {"name": "foo", "args": {"a": 1, "b": 2}}, "called": False},
-                    "tool_2": {"tool": {"name": "bar", "args": {"a": 1, "b": 2}}, "called": True},
-                },
-                metadata=RequestMetadata(
-                    llm_calls=[
-                        {
-                            "id": "e7b9c8e4-8c6d-4f9b-8b8e-2f8e8e8e8e8e",
-                            "llm_model_name": "gpt-4o",
-                            "input_tokens": 80,
-                            "output_tokens": 160,
-                            "timestamp": datetime(2023, 10, 1, 12, 0, 0, tzinfo=timezone.utc).timestamp(),
-                        },
-                        {
-                            "id": "d3b9c8e4-8c6d-4f9b-8b8e-2f8e8e8e8e8e",
-                            "llm_model_name": "gpt-3.5",
-                            "input_tokens": 60,
-                            "output_tokens": 120,
-                            "timestamp": datetime(2023, 10, 2, 14, 30, 0, tzinfo=timezone.utc).timestamp(),
-                        },
-                    ]
-                ),
-            ),
-            RedboxState(
-                request=TEST_QUERY,
-                documents={
-                    "group_1": {
-                        "chunk_2": None,
-                    },
-                    "group_2": None,
-                    "group_3": {
-                        "chunk_1": {"page_content": "foo", "metadata": {"index": 1, "file_name": "foo"}},
-                    },
-                },
-                text="Some new text",
-                tool_calls={
-                    "tool_1": {"called": True},
-                    "tool_2": None,
-                    "tool_3": {"tool": {"name": "foo", "args": {"a": 1, "b": 2}}, "called": False},
-                },
-                metadata=RequestMetadata(
-                    llm_calls=[
-                        {
-                            "id": "c1b9c8e4-8c6d-4f9b-8b8e-2f8e8e8e8e8e",
-                            "llm_model_name": "gpt-4o",
-                            "input_tokens": 10,
-                            "output_tokens": 10,
-                            "timestamp": datetime(2023, 10, 3, 16, 45, 0, tzinfo=timezone.utc).timestamp(),
-                        },
-                    ]
-                ),
-            ),
-            RedboxState(
-                request=TEST_QUERY,
-                documents={
-                    "group_1": {
-                        "chunk_1": {"page_content": "foo", "metadata": {"index": 1, "file_name": "foo"}},
-                        "chunk_2": None,
-                    },
-                    "group_2": None,
-                    "group_3": {
-                        "chunk_1": {"page_content": "foo", "metadata": {"index": 1, "file_name": "foo"}},
-                    },
-                },
-                text="Some new text",
-                route_name="my_route",
-                tool_calls={
-                    "tool_1": {"tool": {"name": "foo", "args": {"a": 1, "b": 2}}, "called": True},
-                    "tool_2": None,
-                    "tool_3": {"tool": {"name": "foo", "args": {"a": 1, "b": 2}}, "called": False},
-                },
-                metadata=RequestMetadata(
-                    llm_calls=[
-                        {
-                            "id": "e7b9c8e4-8c6d-4f9b-8b8e-2f8e8e8e8e8e",
-                            "llm_model_name": "gpt-4o",
-                            "input_tokens": 80,
-                            "output_tokens": 160,
-                            "timestamp": datetime(2023, 10, 1, 12, 0, 0, tzinfo=timezone.utc).timestamp(),
-                        },
-                        {
-                            "id": "d3b9c8e4-8c6d-4f9b-8b8e-2f8e8e8e8e8e",
-                            "llm_model_name": "gpt-3.5",
-                            "input_tokens": 60,
-                            "output_tokens": 120,
-                            "timestamp": datetime(2023, 10, 2, 14, 30, 0, tzinfo=timezone.utc).timestamp(),
-                        },
-                        {
-                            "id": "c1b9c8e4-8c6d-4f9b-8b8e-2f8e8e8e8e8e",
-                            "llm_model_name": "gpt-4o",
-                            "input_tokens": 10,
-                            "output_tokens": 10,
-                            "timestamp": datetime(2023, 10, 3, 16, 45, 0, tzinfo=timezone.utc).timestamp(),
-                        },
-                    ]
-                ),
-            ),
-        ),
-    ],
-)
-def test_merge_redbox_state_updates(a: RedboxState, b: RedboxState, expected: RedboxState):
-    """
-    Checks that state updates will be merged correctly.
-
-    In the above data, a second update contradicts the first in the following ways:
-
-    * A document group is None'd
-    * A documment group is added
-    * A documment group chunk is None'd
-    * A static field (text) is set with something different
-    * A static field (route) isn't included in the update
-    * A tool call is modified to show as called
-    * A tool call is None'd
-    * A tool call is added
-    * A new llm_call is added to the metadata
-    """
-    result = merge_redbox_state_updates(a, b)
     assert result == expected, f"Expected: {expected}. Result: {result}"
