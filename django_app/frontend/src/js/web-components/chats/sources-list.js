@@ -1,6 +1,6 @@
 // @ts-check
 
-class SourcesList extends HTMLElement {
+export class SourcesList extends HTMLElement {
   constructor() {
     super();
     this.sources = [];
@@ -13,7 +13,6 @@ class SourcesList extends HTMLElement {
    * @param {string} matchingText
    */
   add = (fileName, url, matchingText) => {
-
     // prevent duplicate sources
     if (this.sources.some((source) => source.fileName === fileName)) {
       return;
@@ -22,7 +21,7 @@ class SourcesList extends HTMLElement {
     this.sources.push({
       fileName: fileName,
       url: url,
-      matchingText: matchingText
+      matchingText: matchingText,
     });
 
     let html = `
@@ -33,7 +32,11 @@ class SourcesList extends HTMLElement {
     this.sources.forEach((source) => {
       html += `
                 <li class="govuk-!-margin-bottom-0">
-                    <a class="iai-chat-bubbles__sources-link govuk-link" href="${source.url}" id="footnote-${this.getAttribute('data-id')}-${this.sources.length}" data-text="${source.matchingText}">${source.fileName || source.url}</a>
+                    <a class="iai-chat-bubbles__sources-link govuk-link" href="${
+                      source.url
+                    }" id="footnote-${this.getAttribute("data-id")}-${
+        this.sources.length
+      }" data-text="${source.matchingText}">${source.fileName || source.url}</a>
                 </li>
             `;
     });

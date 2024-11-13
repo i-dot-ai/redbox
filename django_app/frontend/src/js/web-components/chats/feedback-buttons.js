@@ -1,6 +1,6 @@
 // @ts-check
 
-class FeedbackButtons extends HTMLElement {
+export class FeedbackButtons extends HTMLElement {
   showFeedback(messageId) {
     let collectedData = {
       rating: 0,
