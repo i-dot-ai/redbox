@@ -2,9 +2,8 @@
 
 import "../loading-message.js";
 
-// Send Plausible data on tool-tip hover
 /**
- *
+ * Send Plausible data on tool-tip hover
  * @param {Event} evt
  */
 const sendTooltipViewEvent = (evt) => {
@@ -26,7 +25,6 @@ const sendTooltipViewEvent = (evt) => {
     tooltip.addEventListener("mouseover", sendTooltipViewEvent);
   });
 })();
-
 
 export class ChatMessage extends HTMLElement {
   constructor() {
@@ -99,13 +97,21 @@ export class ChatMessage extends HTMLElement {
         content.replace(matchingText, `${matchingText}<a href="#${footnote.id}" aria-label="Footnote ${footnoteIndex + 1}">[${footnoteIndex + 1}]</a>`)
       );
       */
-      this.responseContainer.innerHTML = this.responseContainer.innerHTML.replace(matchingText, `${matchingText}<a class="rb-footnote-link" href="#${footnote.id}" aria-label="Footnote ${footnoteIndex + 1}">${footnoteIndex + 1}</a>`);
+      this.responseContainer.innerHTML =
+        this.responseContainer.innerHTML.replace(
+          matchingText,
+          `${matchingText}<a class="rb-footnote-link" href="#${
+            footnote.id
+          }" aria-label="Footnote ${footnoteIndex + 1}">${
+            footnoteIndex + 1
+          }</a>`
+        );
     });
   };
 
   /**
    * Displays an activity above the message
-   * @param {string} message 
+   * @param {string} message
    * @param { "ai" | "user"} type
    */
   addActivity = (message, type) => {
@@ -118,7 +124,7 @@ export class ChatMessage extends HTMLElement {
   /**
    * Streams an LLM response
    * @param {string} message
-   * @param {string[]} selectedDocuments
+   * @param {string[]} selectedDocuments An array of IDs
    * @param {string[]} activities
    * @param {string} llm
    * @param {string | undefined} sessionId
@@ -144,13 +150,14 @@ export class ChatMessage extends HTMLElement {
       scrollOverride = true;
     });
 
-    this.responseContainer = /** @type {import("../markdown-converter").MarkdownConverter} */ (
-      this.querySelector("markdown-converter")
-    );
-    let sourcesContainer = /** @type SourcesList */ (
+    this.responseContainer =
+      /** @type {import("../markdown-converter").MarkdownConverter} */ (
+        this.querySelector("markdown-converter")
+      );
+    let sourcesContainer = /** @type {import("./sources-list").SourcesList} */ (
       this.querySelector("sources-list")
     );
-    /** @type {FeedbackButtons | null} */
+    /** @type {import("./feedback-buttons").FeedbackButtons | null} */
     let feedbackContainer = this.querySelector("feedback-buttons");
     let responseLoading = /** @type HTMLElement */ (
       this.querySelector(".rb-loading-ellipsis")
@@ -257,7 +264,9 @@ export class ChatMessage extends HTMLElement {
         this.querySelector(".govuk-notification-banner")?.removeAttribute(
           "hidden"
         );
-        let errorContentContainer = this.querySelector(".govuk-notification-banner__heading");
+        let errorContentContainer = this.querySelector(
+          ".govuk-notification-banner__heading"
+        );
         if (errorContentContainer) {
           errorContentContainer.innerHTML = response.data;
         }
@@ -267,8 +276,10 @@ export class ChatMessage extends HTMLElement {
       // but stop scrolling if message is at the top of the screen
       if (!scrollOverride) {
         const TOP_POSITION = 88;
-        const boxInfo = this.getBoundingClientRect()
-        const newTopPosition = boxInfo.top - ( boxInfo.height - ( this.previousHeight || boxInfo.height ) );
+        const boxInfo = this.getBoundingClientRect();
+        const newTopPosition =
+          boxInfo.top -
+          (boxInfo.height - (this.previousHeight || boxInfo.height));
         this.previousHeight = boxInfo.height;
         if (newTopPosition > TOP_POSITION) {
           this.programmaticScroll = true;
@@ -278,7 +289,6 @@ export class ChatMessage extends HTMLElement {
           this.scrollIntoView();
           window.scrollBy(0, -TOP_POSITION);
         }
-        
       }
     };
   };
