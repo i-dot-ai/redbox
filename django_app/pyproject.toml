@@ -44,7 +44,6 @@ django-adminplus = "^0.6"
 pandas = "^2.2.2"
 django-waffle = "^4.1.0"
 opensearch-py = "^2.7.1"
-langfuse = "^2.53.9"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3.2"

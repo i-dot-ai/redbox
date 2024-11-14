@@ -104,16 +104,11 @@ class Redbox:
             config={"recursion_limit": input.request.ai_settings.recursion_limit},
         ):
             kind = event["event"]
-            if kind == "on_chain_end":
-                print(kind, event["name"])
             tags = event.get("tags", [])
             if kind == "on_chat_model_stream" and FINAL_RESPONSE_TAG in tags:
                 content = event["data"]["chunk"].content
                 if isinstance(content, str):
                     await response_tokens_callback(content)
-            # elif kind == "on_chat_model_stream":  # react agent - cant get the tags to work
-            #     if content := getattr(event.get("data", {}).get("chunk", {}), "content", None):
-            #         await response_tokens_callback(content)
             elif kind == "on_chain_end" and FINAL_RESPONSE_TAG in tags:
                 content = event["data"]["output"]
                 if isinstance(content, str):

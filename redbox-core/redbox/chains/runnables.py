@@ -123,7 +123,7 @@ def build_llm_chain(
         | get_all_metadata
         | RunnablePassthrough.assign(
             _log=RunnableLambda(
-                lambda _: (log_activity(f"Generating response with {model_name}...") if final_response_chain else None)
+                lambda _: log_activity(f"Generating response with {model_name}...") if final_response_chain else None
             )
         )
     )

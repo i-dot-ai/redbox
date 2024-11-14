@@ -1,12 +1,7 @@
-from functools import partial
-
-from langchain.chat_models import init_chat_model
-from langchain_core.messages import HumanMessage
 from langchain_core.tools import StructuredTool
 from langchain_core.vectorstores import VectorStoreRetriever
 from langgraph.graph import END, START, StateGraph
 from langgraph.graph.graph import CompiledGraph
-from langgraph.prebuilt import ToolNode
 
 from redbox.chains.components import get_structured_response_with_citations_parser
 from redbox.chains.runnables import build_self_route_output_parser
@@ -37,7 +32,7 @@ from redbox.graph.nodes.processes import (
 )
 from redbox.graph.nodes.sends import build_document_chunk_send, build_document_group_send, build_tool_send
 from redbox.graph.nodes.tools import get_log_formatter_for_retrieval_tool
-from redbox.models.chain import RedboxState, StructuredResponseWithCitations
+from redbox.models.chain import RedboxState
 from redbox.models.chat import ChatRoute, ErrorRoute
 from redbox.models.graph import ROUTABLE_KEYWORDS, RedboxActivityEvent
 from redbox.transform import structure_documents_by_file_name, structure_documents_by_group_and_indices
@@ -227,53 +222,6 @@ def get_agentic_search_graph(tools: dict[str, StructuredTool], debug: bool = Fal
     builder.add_edge("p_report_sources", END)
 
     return builder.compile(debug=debug)
-
-
-def get_react_graph(tools: dict[str, StructuredTool], debug: bool = False) -> CompiledGraph:
-    """Creates a subgraph for ReAct."""
-
-    tool_node = ToolNode(tools.values())
-
-    model = init_chat_model(
-        model="gpt-4o",
-        model_provider="azure_openai",
-    )
-    model_with_tools = model.bind_tools(tools.values()).with_config(tags=["lag"])
-    structured_output_model = model.with_structured_output(StructuredResponseWithCitations)
-
-    def initialise_state(state: RedboxState):
-        return {"messages": [HumanMessage(content=state.request.question)], "route_name": ChatRoute.react}
-
-    def is_tool_call(state: RedboxState) -> bool:
-        print(state.last_message.tool_calls)
-        return bool(state.last_message.tool_calls)
-
-    def invoke_model(model, state: RedboxState):
-        result = model.invoke(state.messages)
-        return {"messages": [result]}
-
-    def invoke_structured_output_model(model, state: RedboxState):
-        result: StructuredResponseWithCitations = structured_output_model.with_config(tags=["response_flag"]).invoke(
-            state.messages
-        )
-        return {"messages": [result.answer], "citations": result.citations}
-
-    workflow = StateGraph(RedboxState)
-
-    # Nodes
-    workflow.add_node("initialise_state", initialise_state)
-    workflow.add_node("agent", partial(invoke_model, model_with_tools))
-    workflow.add_node("tools", tool_node)
-    workflow.add_node("output_formatter", partial(invoke_structured_output_model, model))
-
-    # Edges
-    workflow.add_edge(START, "initialise_state")
-    workflow.add_edge("initialise_state", "agent")
-    workflow.add_conditional_edges("agent", is_tool_call, {True: "tools", False: "output_formatter"})
-    workflow.add_edge("tools", "agent")
-    workflow.add_edge("output_formatter", END)
-
-    return workflow.compile(debug=True)
 
 
 def get_chat_with_documents_graph(
@@ -472,7 +420,6 @@ def get_root_graph(
         debug=debug,
     )
     metadata_subgraph = get_retrieve_metadata_graph(metadata_retriever=metadata_retriever, debug=debug)
-    react_graph = get_react_graph(tools=tools, debug=debug)
 
     # Processes
     builder.add_node("p_search", rag_subgraph)
@@ -480,7 +427,6 @@ def get_root_graph(
     builder.add_node("p_chat", chat_subgraph)
     builder.add_node("p_chat_with_documents", cwd_subgraph)
     builder.add_node("p_retrieve_metadata", metadata_subgraph)
-    builder.add_node("p_react", react_graph)
 
     # Log
     builder.add_node(
@@ -510,7 +456,6 @@ def get_root_graph(
         {
             ChatRoute.search: "p_search",
             ChatRoute.gadget: "p_search_agentic",
-            ChatRoute.react: "p_react",
             "DEFAULT": "d_docs_selected",
         },
     )
@@ -526,6 +471,5 @@ def get_root_graph(
     builder.add_edge("p_search_agentic", END)
     builder.add_edge("p_chat", END)
     builder.add_edge("p_chat_with_documents", END)
-    builder.add_edge("p_react", END)
 
     return builder.compile(debug=debug)

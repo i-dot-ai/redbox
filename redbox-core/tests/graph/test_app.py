@@ -491,13 +491,11 @@ async def test_streaming(test: RedboxChatTestCase, env: Settings, mocker: Mocker
     @tool
     def _search_documents(query: str) -> dict[str, Any]:
         """Tool to search documents."""
-        print("hit")
         return {"documents": structure_documents_by_group_and_indices(test_case.docs)}
 
     @tool
     def _search_govuk(query: str) -> dict[str, Any]:
         """Tool to search gov.uk for travel advice and other government information."""
-        print("hit")
         return {"documents": structure_documents_by_group_and_indices(test_case.docs)}
 
     mocker.patch("redbox.app.build_search_documents_tool", return_value=_search_documents)
@@ -512,7 +510,7 @@ async def test_streaming(test: RedboxChatTestCase, env: Settings, mocker: Mocker
             [d for d in test_case.docs if d.metadata["uri"] in test_case.query.s3_keys]
         ),
         env=env,
-        debug=True,
+        debug=LANGGRAPH_DEBUG,
     )
 
     # Define callback functions
@@ -606,6 +604,6 @@ def test_get_available_keywords(tokeniser: Encoding, env: Settings):
         env=env,
         debug=LANGGRAPH_DEBUG,
     )
-    keywords = {ChatRoute.search, ChatRoute.gadget, ChatRoute.react}
+    keywords = {ChatRoute.search, ChatRoute.gadget}
 
     assert keywords == set(app.get_available_keywords().keys())
