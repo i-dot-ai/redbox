@@ -120,12 +120,24 @@ upload-button {
 .rb-docs:has(.iai-doc-list__item) .rb-docs__show-if-no-docs {
   display: none;
 }
+.rb-docs__upload-error {
+  align-items: center;
+  display: none;
+  font-size: 0.875rem;
+  gap: 0.75rem;
+  line-height: 1.4;
+}
+.rb-docs__upload-error svg {
+  color: var(--iai-product-colour);
+}
+.rb-docs:has(file-status[data-status*="error"]) .rb-docs__upload-error {
+  display: flex;
+}
 
 /* Chats Page - to come after i.AI Design System */
 @import "./chat-styles.scss";
 
 @import "./profile-overlay-styles.scss";
-
 
 /* To move to i.AI design system */
 .iai-chat-bubbles__sources-link:visited {

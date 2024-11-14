@@ -38,8 +38,8 @@ def sign_in_view(request: HttpRequest):
                     from_email=settings.FROM_EMAIL,
                     recipient_list=[email],
                 )
-            except User.DoesNotExist as e:
-                logger.debug("User with email %s not found", email, exc_info=e)
+            except User.DoesNotExist:
+                return redirect("sign-up-page-1")
             except HTTPError as e:
                 logger.exception("failed to send link to %s", email, exc_info=e)
 

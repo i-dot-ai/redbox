@@ -76,7 +76,6 @@ class UploadView(View):
     @method_decorator(login_required)
     def post(self, request: HttpRequest) -> HttpResponse:
         errors: MutableSequence[str] = []
-        ingest_errors: MutableSequence[str] = []
 
         uploaded_files: MutableSequence[UploadedFile] = request.FILES.getlist("uploadDocs")
 
@@ -89,11 +88,7 @@ class UploadView(View):
         if not errors:
             for uploaded_file in uploaded_files:
                 # ingest errors are handled differently, as the other documents have started uploading by this point
-                ingest_error = self.ingest_file(uploaded_file, request.user)
-                if ingest_error:
-                    ingest_errors.append(f"{uploaded_file.file_name}: {ingest_error[0]}")
-
-            request.session["ingest_errors"] = ingest_errors
+                request.session["ingest_errors"] = self.ingest_file(uploaded_file, request.user)
             return redirect(reverse("documents"))
 
         return self.build_response(request, errors)
