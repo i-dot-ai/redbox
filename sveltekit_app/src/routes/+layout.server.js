@@ -4,12 +4,19 @@ export async function load({ request, cookies }) {
 
   const API_URL = "http://localhost:8091/api/v0?format=json";
 
-  const userRequest = await fetch(API_URL, {
-    headers: {
-      cookie: `sessionid=${cookies.get("sessionid")}`,
-    },
-  });
-  const userData = userRequest.ok ? await userRequest.json() : {};
+  let userData = {};
+
+  try {
+    const userRequest = await fetch(API_URL, {
+      headers: {
+        cookie: `sessionid=${cookies.get("sessionid")}`,
+      },
+    });
+    userData = userRequest.ok ? await userRequest.json() : {};
+  } catch (err) {
+    console.log("Error connecting to Django", err);
+  }
+  
 
   const publicRoutes = [
     "/",
