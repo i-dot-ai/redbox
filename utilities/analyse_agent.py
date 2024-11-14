@@ -13,7 +13,7 @@ from dotenv import load_dotenv
 from elasticsearch.helpers import scan
 from langchain_core.documents import Document
 from langchain_core.runnables import RunnableParallel
-from langfuse.decorators import observe
+from langfuse.callback import CallbackHandler
 from langgraph.managed.is_last_step import RemainingStepsManager
 from pandas import DataFrame, read_csv
 
@@ -173,11 +173,11 @@ class User:
                 temp_ingest_file(filename)
 
 
-def get_state(user_id, prompt, documents):
+def get_state(user_uuid, prompt, documents):
     q = RedboxQuery(
         question=f"@gadget {prompt}",
         s3_keys=documents,
-        user_uuid=user_id,
+        user_uuid=user_uuid,
         chat_history=[],
         ai_settings=AISettings(rag_k=3),
         permitted_s3_keys=documents,
@@ -294,7 +294,12 @@ def convert_to_dict(text):
         print(f"Error parsing state: {e}")
         return {}
 
-def run_usecases(prompts_file, documents_file, save_path, selected_case=[], extract=False):
+
+def run_app(app, state):
+    langfuse_handler = CallbackHandler()
+    return app.graph.invoke(state, config={"callbacks": [langfuse_handler]})
+
+def run_usecases(prompts_file, documents_file, save_path = None, selected_case=[], extract=False):
     print(f"Running search on {prompts_file}")
     prompts, documents = read_use_cases(prompts_file, documents_file)
 
@@ -311,31 +316,27 @@ def run_usecases(prompts_file, documents_file, save_path, selected_case=[], extr
         # upload files
         user.upload_file()
 
-        # start Redbox
-        buffer = io.StringIO()
-        sys.stdout = buffer
         app = Redbox(debug=True, env=env)
 
+        # start Redbox
+        if save_path:
+            buffer = io.StringIO()
+            sys.stdout = buffer
+        
         # call agent
         for prompt in user.prompts:
             try:
                 x = get_state(user.user_uuid, prompt, user.documents)
-                # response = await app.run(x)
-
-                response = app.graph.invoke(x)
-                # print(f'Tuck {response["output"]}')
-                sys.stdout = sys.__stdout__
-
-                # Retrieve the verbose output from the buffer
-                verbose_output = buffer.getvalue()
-                # Save full verbose output to a separate file
-                with open(
-                    save_path,
-                    "w",
-                ) as file:
-                    file.write(verbose_output)
-
-                # print(f'here is response {response}')
+                response = run_app(app, x)
+                
+                if save_path:
+                    sys.stdout = sys.__stdout__
+                    verbose_output = buffer.getvalue()
+                    with open(
+                        save_path,
+                        "w",
+                    ) as file:
+                        file.write(verbose_output)
 
                 if extract:
                     extract_save(
