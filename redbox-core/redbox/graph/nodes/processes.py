@@ -221,7 +221,7 @@ def build_set_text_pattern(text: str, final_response_chain: bool = False) -> Run
     def _set_text(state: RedboxState) -> dict[str, Any]:
         set_text_chain = _llm | StrOutputParser()
 
-        return {"messages": state.get("messages", []) + [HumanMessage(content=set_text_chain.invoke(text))]}
+        return {"messages": state.messages + [HumanMessage(content=set_text_chain.invoke(text))]}
 
     return _set_text
 

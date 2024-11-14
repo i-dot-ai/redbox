@@ -2,6 +2,7 @@ from typing import Any
 from uuid import uuid4
 
 import pytest
+from httpcore import Response
 from langchain_core.language_models.fake_chat_models import \
     GenericFakeChatModel
 from langchain_core.messages import AIMessage, HumanMessage, ToolCall
@@ -176,8 +177,8 @@ def test_build_set_route_pattern(test_case: RedboxChatTestCase):
     final_state = RedboxState(**response, request=test_case.query)
 
     assert (
-        final_state["route_name"] == test_case.test_data.expected_route.value
-    ), f"Expected Route: '{ test_case.test_data.expected_route.value}'. Received '{final_state["route_name"]}'"
+        final_state.route_name == test_case.test_data.expected_route.value
+    ), f"Expected Route: '{ test_case.test_data.expected_route.value}'. Received '{final_state.route_name}'"
 
 
 RETRIEVER_TEST_CASES = generate_test_cases(
@@ -437,7 +438,7 @@ def test_empty_process():
     graph = builder.compile()
 
     response = graph.invoke(state)
-    final_state = RedboxState(**response, request=state.request)
+    final_state = RedboxState(**response)
 
     assert final_state == state
 
@@ -472,7 +473,7 @@ def test_clear_documents(test_case: list[RedboxState]):
     graph = builder.compile()
 
     response = graph.invoke(test_case)
-    final_state = RedboxState(**response, request=test_case.request)
+    final_state = RedboxState(**response)
 
     assert final_state.documents == DocumentState(groups={})
 
