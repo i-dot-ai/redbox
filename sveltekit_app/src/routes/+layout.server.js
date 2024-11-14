@@ -1,8 +1,10 @@
-import { redirect } from "@sveltejs/kit";
+//import { redirect } from "@sveltejs/kit";
+import { config } from 'dotenv';
+config();
 
 export async function load({ request, cookies }) {
 
-  const API_URL = "http://localhost:8091/api/v0?format=json";
+  const API_URL = `${process.env.DJANGO_API_HOST}/api/v0?format=json`;
 
   let userData = {};
 
