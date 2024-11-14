@@ -14,11 +14,11 @@ from langchain_core.messages import AIMessage, HumanMessage
 from langchain_core.runnables import Runnable, RunnableLambda, RunnableParallel
 from langchain_core.tools import StructuredTool
 from langchain_core.vectorstores import VectorStoreRetriever
+from langgraph.prebuilt import ToolNode
 
 from redbox.chains.activity import log_activity
 from redbox.chains.components import get_chat_llm, get_tokeniser
 from redbox.chains.runnables import CannedChatLLM, build_llm_chain
-from redbox.graph.nodes.tools import get_log_formatter_for_retrieval_tool, has_injected_state, is_valid_tool
 from redbox.models import ChatRoute
 from redbox.models.chain import DocumentState, PromptSet, RedboxState, RequestMetadata, merge_redbox_state_updates
 from redbox.models.graph import ROUTE_NAME_TAG, SOURCE_DOCUMENTS_TAG, RedboxActivityEvent, RedboxEventType
@@ -257,56 +257,27 @@ def build_tool_pattern(
 
     The state attributes affected are defined in the tool.
     """
-    tools_by_name: dict[str, StructuredTool] = {}
 
-    for tool in tools:
-        if not is_valid_tool(tool):
-            msg = f"{tool.name} must use a function that returns a correctly-formatted RedboxState update"
-            raise ValueError(msg)
-        tools_by_name[tool.name] = tool
+    tool_node = ToolNode(tools=tools)
 
     @RunnableLambda
     def _tool(state: RedboxState) -> dict[str, Any]:
-        state_updates: list[dict] = []
+        messages = [
+            AIMessage(
+                content="",
+                tool_calls=[tool_call_dict["tool"]],
+            )
+            for tool_call_dict in state.get("tool_calls", {}).values()
+        ]
 
-        tool_calls = state.get("tool_calls", {})
-        if not tool_calls:
-            log.warning("No tool calls found in state")
-            return {}
+        # Invoke the tool
+        state_update = tool_node.invoke({"messages": messages})
 
-        for tool_id, tool_call_dict in tool_calls.items():
-            tool_call = tool_call_dict["tool"]
+        tool_calls = {
+            tool_id: dict(tool_call, called=True) for tool_id, tool_call in state.get("tool_calls", {}).items()
+        }
 
-            if not tool_call_dict["called"]:
-                tool = tools_by_name[tool_call["name"]]
-
-                if tool is None:
-                    log.warning(f"Tool {tool_call['name']} not found")
-                    continue
-
-                # Deal with InjectedState
-                args = tool_call["args"].copy()
-                log.info(f"Invoking tool {tool_call['name']} with args {args}")
-                if has_injected_state(tool):
-                    args["state"] = state
-
-                # Invoke the tool
-                try:
-                    result_state_update = tool.invoke(args) or {}
-                    log_activity(
-                        get_log_formatter_for_retrieval_tool(tool_call).log_result(
-                            flatten_document_state(result_state_update.get("documents"))
-                        )
-                    )
-                    tool_called_state_update = {"tool_calls": {tool_id: {"called": True, "tool": tool_call}}}
-                    state_updates.append(result_state_update | tool_called_state_update)
-                except Exception as e:
-                    state_updates.append({"tool_calls": {tool_id: {"called": True, "tool": tool_call}}})
-                    log.warning(f"Error invoking tool {tool_call['name']}: {e} \n")
-                    return {}
-
-        if state_updates:
-            return reduce(merge_redbox_state_updates, state_updates)
+        return reduce(merge_redbox_state_updates, [state_update, {"tool_calls": tool_calls}])
 
     if final_source_chain:
         return RunnableLambda(_tool).with_config(tags=[SOURCE_DOCUMENTS_TAG])

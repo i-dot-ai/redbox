@@ -368,6 +368,8 @@ def merge_redbox_state_updates(current: RedboxState, update: RedboxState) -> Red
                 merged_state[update_key] = dict_reducer(current=current_value or {}, update=update_value or {})
             elif current_value is None:
                 merged_state[update_key] = update_value
+            elif update_value is None:
+                merged_state[update_key] = current_value
             else:
                 # If it's annotated and not a dict, apply its reducer function
                 _, reducer_func = get_args(annotation)
