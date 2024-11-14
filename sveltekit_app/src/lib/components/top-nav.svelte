@@ -1,20 +1,25 @@
 <script>
-  /*
-  {% if request.user.is_authenticated %}
-      menu_items = [
-        {"text": "Documents", "href": url('documents')},
-        {"text": "Chats", "href": url('chats')}
-      ],
-      user_items = {
-          "initials": request.user.get_initials(),
-          "menu_items": [
-              {"text": "My details", "href": url('demographics')},
-              {"text": "Sign out", "href": url('signed-out')}
-          ]
-      }
-  */
 
   export let data;
+
+  /**
+   * Get the initials of a user from their name or email
+   * @param {string | undefined} name
+   * @param {string | undefined} email
+   */
+  const getUserInitials = (name, email) => {
+    if (name) {
+      const nameSections = name.split(" ");
+      if (nameSections.length > 1) {
+        return nameSections[0][0] + nameSections[nameSections.length - 1][0];
+      } else {
+        return nameSections[0][0];
+      }
+    } else if (email) {
+      const emailSections = email.split(".");
+      return emailSections[0][0] + emailSections[1][0];
+    }
+  };
 
   const menuItems = data.userIsAuthenticated
     ? [
@@ -27,17 +32,15 @@
   const productName = "Redbox";
   const phase = "Beta";
 
-  // TO DO: Move these from here
   const userItems = data.userIsAuthenticated
     ? {
-        initials: "AB",
+        initials: getUserInitials(data.user.name, data.user.email)?.toUpperCase(),
         menuItems: [
           { text: "My details", href: "/demographics" },
           { text: "Sign out", href: "/signed-out" },
         ],
       }
     : {};
-  // TO DO: Get user initials from user data
 
   const homePath = "/";
 </script>
