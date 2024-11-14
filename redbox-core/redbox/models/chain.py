@@ -100,25 +100,13 @@ class StructuredResponseWithCitations(BaseModel):
 
 
 DocumentMapping = dict[UUID, Document]
-DocumentGroup = dict[UUID, DocumentMapping]
+DocumentGroup = dict[UUID, DocumentMapping | None]
 
 
 class DocumentState(BaseModel):
     """A document state containing groups of documents."""
 
     groups: DocumentGroup = Field(default_factory=DocumentGroup)
-
-    # @field_validator("groups", mode="before")
-    # @classmethod
-    # def convert_uuid_keys(cls, v: DocumentGroup) -> DocumentGroup:
-    #     if not v:
-    #         return DocumentGroup()
-
-    #     converted_groups = {
-    #         str(group_id): group
-    #         for group_id, group in v.items()
-    #     }
-    #     return DocumentGroup(converted_groups)
 
 
 def document_reducer(current: DocumentState | None, update: DocumentState | list[DocumentState]) -> DocumentState:

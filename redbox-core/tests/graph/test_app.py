@@ -491,11 +491,13 @@ async def test_streaming(test: RedboxChatTestCase, env: Settings, mocker: Mocker
     @tool
     def _search_documents(query: str) -> dict[str, Any]:
         """Tool to search documents."""
+        print("hit")
         return {"documents": structure_documents_by_group_and_indices(test_case.docs)}
 
     @tool
     def _search_govuk(query: str) -> dict[str, Any]:
         """Tool to search gov.uk for travel advice and other government information."""
+        print("hit")
         return {"documents": structure_documents_by_group_and_indices(test_case.docs)}
 
     mocker.patch("redbox.app.build_search_documents_tool", return_value=_search_documents)
@@ -510,7 +512,7 @@ async def test_streaming(test: RedboxChatTestCase, env: Settings, mocker: Mocker
             [d for d in test_case.docs if d.metadata["uri"] in test_case.query.s3_keys]
         ),
         env=env,
-        debug=LANGGRAPH_DEBUG,
+        debug=True,
     )
 
     # Define callback functions
@@ -537,7 +539,7 @@ async def test_streaming(test: RedboxChatTestCase, env: Settings, mocker: Mocker
         document_events.append(documents)
 
     # Run the app
-    response = await app.run(
+    final_state = await app.run(
         input=RedboxState(request=test_case.query),
         response_tokens_callback=streaming_response_handler,
         metadata_tokens_callback=metadata_response_handler,
@@ -545,8 +547,6 @@ async def test_streaming(test: RedboxChatTestCase, env: Settings, mocker: Mocker
         activity_event_callback=streaming_activity_handler,
         documents_callback=documents_response_handler,
     )
-
-    final_state = RedboxState(response)
 
     # Assertions
     assert route_name is not None, f"No Route Name event fired! - Final State: {final_state}"
@@ -582,11 +582,11 @@ async def test_streaming(test: RedboxChatTestCase, env: Settings, mocker: Mocker
     expected_text = expected_text.content if isinstance(expected_text, AIMessage) else expected_text
 
     assert (
-        final_state["messages"][-1].content == llm_response
-    ), f"Text response from streaming: '{llm_response}' did not match final state text '{final_state["messages"]}'"
+        final_state.last_message.content == llm_response
+    ), f"Text response from streaming: '{llm_response}' did not match final state text '{final_state.last_message.content}'"
     assert (
-        final_state["messages"][-1].content == expected_text
-    ), f"Expected text: '{expected_text}' did not match received text '{final_state["messages"]}'"
+        final_state.last_message.content == expected_text
+    ), f"Expected text: '{expected_text}' did not match received text '{final_state.last_message.content}'"
 
     assert (
         final_state.route_name == test_case.test_data.expected_route

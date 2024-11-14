@@ -358,7 +358,7 @@ def get_chat_with_documents_graph(
     )
     builder.add_conditional_edges(
         "d_self_route_is_enabled",
-        lambda s: s["request"].ai_settings.self_route_enabled,
+        lambda s: s.request.ai_settings.self_route_enabled,
         {True: "p_answer_or_decide_route", False: "p_set_chat_docs_map_reduce_route"},
         then="p_activity_log_tool_decision",
     )
@@ -374,7 +374,7 @@ def get_chat_with_documents_graph(
     builder.add_edge("p_set_chat_docs_map_reduce_route", "p_retrieve_all_chunks")
     builder.add_conditional_edges(
         "p_retrieve_all_chunks",
-        lambda s: s["route_name"],
+        lambda s: s.route_name,
         {
             ChatRoute.chat_with_docs: "p_summarise",
             ChatRoute.chat_with_docs_map_reduce: "s_chunk",

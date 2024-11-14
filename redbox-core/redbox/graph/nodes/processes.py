@@ -63,7 +63,7 @@ def build_chat_pattern(
     """
 
     def _chat(state: RedboxState) -> dict[str, Any]:
-        llm = get_chat_llm(state["request"].ai_settings.chat_backend, tools=tools)
+        llm = get_chat_llm(state.request.ai_settings.chat_backend, tools=tools)
         return build_llm_chain(
             prompt_set=prompt_set,
             llm=llm,
@@ -78,7 +78,7 @@ def build_merge_pattern(
     tools: list[StructuredTool] | None = None,
     final_response_chain: bool = False,
 ) -> Runnable[RedboxState, dict[str, Any]]:
-    """Returns a Runnable that uses state["request"] and state["documents"] to return one item in state["documents"].
+    """Returns a Runnable that uses state.request and state.documents to return one item in state.documents.
 
     When combined with chunk send, will replace each Document with what's returned from the LLM.
 
@@ -92,9 +92,9 @@ def build_merge_pattern(
 
     @RunnableLambda
     def _merge(state: RedboxState) -> dict[str, Any]:
-        llm = get_chat_llm(state["request"].ai_settings.chat_backend, tools=tools)
+        llm = get_chat_llm(state.request.ai_settings.chat_backend, tools=tools)
 
-        if not state.documents.group:
+        if not state.documents.groups:
             return {"documents": None}
 
         flattened_documents = flatten_document_state(state.documents)
@@ -103,22 +103,24 @@ def build_merge_pattern(
 
         merge_state = RedboxState(
             request=state.request,
-            documents={merged_document.metadata["uri"]: {merged_document.metadata["uuid"]: merged_document}},
+            documents=DocumentState(
+                groups={merged_document.metadata["uuid"]: {merged_document.metadata["uuid"]: merged_document}}
+            ),
         )
 
         merge_response = build_llm_chain(
             prompt_set=prompt_set, llm=llm, final_response_chain=final_response_chain
         ).invoke(merge_state)
 
-        merged_document.page_content = merge_response.last_message.content
-        request_metadata = merge_response.metadata
+        merged_document.page_content = merge_response["messages"][-1].content
+        request_metadata = merge_response["metadata"]
         merged_document.metadata["token_count"] = len(tokeniser.encode(merged_document.page_content))
 
-        group_uuid = next(iter(state["documents"] or {}), uuid4())
+        group_uuid = next(iter(state.documents.groups or {}), uuid4())
         document_uuid = merged_document.metadata.get("uuid", uuid4())
 
         # Clear old documents, add new one
-        document_state = state.documents.group.copy()
+        document_state = state.documents.groups.copy()
 
         for group in document_state:
             for document in document_state[group]:
@@ -138,9 +140,9 @@ def build_stuff_pattern(
     tools: list[StructuredTool] | None = None,
     final_response_chain: bool = False,
 ) -> Runnable[RedboxState, dict[str, Any]]:
-    """Returns a Runnable that uses state["request"] and state["documents"] to set state["text"].
+    """Returns a Runnable that uses state.request and state.documents to set state.messages.
 
-    If tools are supplied, can also set state["tool_calls"].
+    If tools are supplied, can also set state.tool_calls.
     """
 
     @RunnableLambda
