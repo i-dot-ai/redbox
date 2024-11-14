@@ -76,8 +76,19 @@ other_urlpatterns = [
     path("sitemap", views.misc_views.sitemap_view, name="sitemap"),
 ]
 
+
+api_url_patterns = [
+    path("api/v1/", views.user_view, name="user-view"),
+]
+
 urlpatterns = (
-    info_urlpatterns + other_urlpatterns + auth_urlpatterns + chat_urlpatterns + file_urlpatterns + admin_urlpatterns
+    info_urlpatterns
+    + other_urlpatterns
+    + auth_urlpatterns
+    + chat_urlpatterns
+    + file_urlpatterns
+    + admin_urlpatterns
+    + api_url_patterns
 )
 
 if settings.DEBUG:
