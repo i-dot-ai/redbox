@@ -37,4 +37,4 @@ def test_sign_in_view_redirect_sign_up(client: Client):
 
     # Then
     assert response.status_code == HTTPStatus.FOUND
-    assert response.url == "/sign-up-page-1/"
+    assert response.url == "/sign-up-page-1"
