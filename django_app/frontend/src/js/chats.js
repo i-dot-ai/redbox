@@ -1,3 +1,4 @@
+import "./web-components/chats/activity-button.js";
 import "./web-components/chats/chat-controller.js";
 import "./web-components/chats/chat-history.js";
 import "./web-components/chats/chat-history-item.js";
