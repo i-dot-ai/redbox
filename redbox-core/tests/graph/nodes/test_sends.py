@@ -4,18 +4,20 @@ from langchain_core.documents import Document
 from langchain_core.messages import ToolCall
 from langgraph.constants import Send
 
-from redbox.graph.nodes.sends import (build_document_chunk_send,
-                                      build_document_group_send,
-                                      build_tool_send)
-from redbox.models.chain import (DocumentState, RedboxQuery, RedboxState,
-                                 ToolState)
+from redbox.graph.nodes.sends import build_document_chunk_send, build_document_group_send, build_tool_send
+from redbox.models.chain import DocumentState, RedboxQuery, RedboxState, ToolState
 
 
 def test_build_document_group_send():
     target = "my-target"
     request = RedboxQuery(question="what colour is the sky?", user_uuid=uuid4(), chat_history=[])
     documents = DocumentState(
-        groups={uuid4(): {uuid4(): Document(page_content="Hello, world!"), uuid4(): Document(page_content="Goodbye, world!")}}
+        groups={
+            uuid4(): {
+                uuid4(): Document(page_content="Hello, world!"),
+                uuid4(): Document(page_content="Goodbye, world!"),
+            }
+        }
     )
 
     document_group_send = build_document_group_send("my-target")

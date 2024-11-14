@@ -60,7 +60,7 @@ def structure_documents_by_file_name(docs: list[Document]) -> DocumentState:
         group_uuid = group_file_lookup.get(d.metadata["uri"])
         doc_dict = {d.metadata["uuid"]: d}
 
-        result[group_uuid] = (result.get(group_uuid) or doc_dict) | doc_dict
+        result.groups[group_uuid] = (result.groups.get(group_uuid) or doc_dict) | doc_dict
 
     return result
 
