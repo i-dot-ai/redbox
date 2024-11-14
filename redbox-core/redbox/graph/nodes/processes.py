@@ -18,10 +18,13 @@ from langchain_core.vectorstores import VectorStoreRetriever
 from redbox.chains.activity import log_activity
 from redbox.chains.components import get_chat_llm, get_tokeniser
 from redbox.chains.runnables import CannedChatLLM, build_llm_chain
-from redbox.graph.nodes.tools import get_log_formatter_for_retrieval_tool, has_injected_state, is_valid_tool
+from redbox.graph.nodes.tools import (get_log_formatter_for_retrieval_tool,
+                                      has_injected_state, is_valid_tool)
 from redbox.models import ChatRoute
-from redbox.models.chain import DocumentState, PromptSet, RedboxState, RequestMetadata, merge_redbox_state_updates
-from redbox.models.graph import ROUTE_NAME_TAG, SOURCE_DOCUMENTS_TAG, RedboxActivityEvent, RedboxEventType
+from redbox.models.chain import (DocumentState, PromptSet, RedboxState,
+                                 RequestMetadata, merge_redbox_state_updates)
+from redbox.models.graph import (ROUTE_NAME_TAG, SOURCE_DOCUMENTS_TAG,
+                                 RedboxActivityEvent, RedboxEventType)
 from redbox.transform import combine_documents, flatten_document_state
 
 log = logging.getLogger(__name__)
@@ -98,7 +101,6 @@ def build_merge_pattern(
             return {"documents": None}
 
         flattened_documents = flatten_document_state(state.documents)
-
         merged_document = reduce(lambda left, right: combine_documents(left, right), flattened_documents)
 
         merge_state = RedboxState(
@@ -128,7 +130,7 @@ def build_merge_pattern(
 
         document_state[group_uuid][document_uuid] = merged_document
 
-        return {"documents": document_state, "metadata": request_metadata}
+        return {"documents": DocumentState(groups=document_state), "metadata": request_metadata}
 
     return _merge
 

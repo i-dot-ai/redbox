@@ -2,7 +2,8 @@ from typing import Any
 from uuid import uuid4
 
 import pytest
-from langchain_core.language_models.fake_chat_models import GenericFakeChatModel
+from langchain_core.language_models.fake_chat_models import \
+    GenericFakeChatModel
 from langchain_core.messages import AIMessage, HumanMessage, ToolCall
 from langchain_core.retrievers import BaseRetriever
 from langchain_core.tools import StructuredTool, tool
@@ -10,30 +11,29 @@ from langgraph.graph import END, START, StateGraph
 from pytest_mock import MockerFixture
 from tiktoken.core import Encoding
 
-from redbox.chains.runnables import CannedChatLLM, build_chat_prompt_from_messages_runnable, build_llm_chain
-from redbox.graph.nodes.processes import (
-    build_chat_pattern,
-    build_merge_pattern,
-    build_passthrough_pattern,
-    build_retrieve_pattern,
-    build_set_route_pattern,
-    build_set_text_pattern,
-    build_stuff_pattern,
-    build_tool_pattern,
-    clear_documents_process,
-    empty_process,
-)
-from redbox.models.chain import PromptSet, RedboxQuery, RedboxState
+from redbox.chains.runnables import (CannedChatLLM,
+                                     build_chat_prompt_from_messages_runnable,
+                                     build_llm_chain)
+from redbox.graph.nodes.processes import (build_chat_pattern,
+                                          build_merge_pattern,
+                                          build_passthrough_pattern,
+                                          build_retrieve_pattern,
+                                          build_set_route_pattern,
+                                          build_set_text_pattern,
+                                          build_stuff_pattern,
+                                          build_tool_pattern,
+                                          clear_documents_process,
+                                          empty_process)
+from redbox.models.chain import (DocumentState, PromptSet, RedboxQuery,
+                                 RedboxState)
 from redbox.models.chat import ChatRoute
-from redbox.test.data import (
-    RedboxChatTestCase,
-    RedboxTestData,
-    generate_docs,
-    generate_test_cases,
-    mock_all_chunks_retriever,
-    mock_parameterised_retriever,
-)
-from redbox.transform import flatten_document_state, structure_documents_by_file_name, tool_calls_to_toolstate
+from redbox.test.data import (RedboxChatTestCase, RedboxTestData,
+                              generate_docs, generate_test_cases,
+                              mock_all_chunks_retriever,
+                              mock_parameterised_retriever)
+from redbox.transform import (flatten_document_state,
+                              structure_documents_by_file_name,
+                              tool_calls_to_toolstate)
 
 LANGGRAPH_DEBUG = True
 
@@ -61,7 +61,7 @@ CHAT_PROMPT_TEST_CASES = generate_test_cases(
 def test_build_chat_prompt_from_messages_runnable(test_case: RedboxChatTestCase, tokeniser: Encoding):
     """Tests a given state can be turned into a chat prompt."""
     chat_prompt = build_chat_prompt_from_messages_runnable(prompt_set=PromptSet.Chat, tokeniser=tokeniser)
-    state = RedboxState(request=test_case.query, documents=test_case.docs)
+    state = RedboxState(request=test_case.query)
 
     response = chat_prompt.invoke(state)
     messages = response.to_messages()
@@ -99,7 +99,7 @@ def test_build_llm_chain(test_case: RedboxChatTestCase):
     """Tests a given state can update the data and metadata correctly."""
     llm = GenericFakeChatModel(messages=iter(test_case.test_data.llm_responses))
     llm_chain = build_llm_chain(PromptSet.Chat, llm)
-    state = RedboxState(request=test_case.query, documents=test_case.docs, messages=[])
+    state = RedboxState(request=test_case.query)
 
     final_state = llm_chain.invoke(state)
 
@@ -132,19 +132,18 @@ CHAT_TEST_CASES = generate_test_cases(
 def test_build_chat_pattern(test_case: RedboxChatTestCase, mocker: MockerFixture):
     """Tests a given state["request"] correctly changes state["text"]."""
     llm = GenericFakeChatModel(messages=iter(test_case.test_data.llm_responses))
-    state = RedboxState(request=test_case.query, documents=[])
+    state = RedboxState(request=test_case.query)
 
     chat = build_chat_pattern(prompt_set=PromptSet.Chat, final_response_chain=True)
 
     mocker.patch("redbox.graph.nodes.processes.get_chat_llm", return_value=llm)
-    response = chat(state)
-    final_state = RedboxState(response)
+    final_state = chat(state)
 
     test_case_content = test_case.test_data.llm_responses[-1].content
 
     assert (
         final_state["messages"][-1].content == test_case_content
-    ), f"Expected LLM response: '{test_case_content}'. Received '{final_state["messages"][-1].content}'"
+    ), f"Expected LLM response: '{test_case_content}'. Received '{final_state['messages'][-1].content}'"
 
 
 SET_ROUTE_TEST_CASES = generate_test_cases(
@@ -171,10 +170,10 @@ SET_ROUTE_TEST_CASES = generate_test_cases(
 def test_build_set_route_pattern(test_case: RedboxChatTestCase):
     """Tests a given value correctly changes state["route"]."""
     set_route = build_set_route_pattern(route=test_case.test_data.expected_route)
-    state = RedboxState(request=test_case.query, documents=[])
+    state = RedboxState(request=test_case.query)
 
     response = set_route.invoke(state)
-    final_state = RedboxState(response)
+    final_state = RedboxState(**response, request=test_case.query)
 
     assert (
         final_state["route_name"] == test_case.test_data.expected_route.value
@@ -224,10 +223,10 @@ def test_build_retrieve_pattern(test_case: RedboxChatTestCase, mock_retriever: B
     """Tests a given state["request"] correctly changes state["documents"]."""
     retriever = mock_retriever(test_case.docs)
     retriever_function = build_retrieve_pattern(retriever=retriever, structure_func=structure_documents_by_file_name)
-    state = RedboxState(request=test_case.query, documents=[])
+    state = RedboxState(request=test_case.query)
 
     response = retriever_function.invoke(state)
-    final_state = RedboxState(response)
+    final_state = RedboxState(**response, request=test_case.query)
 
     assert final_state.documents == structure_documents_by_file_name(test_case.docs)
 
@@ -268,10 +267,10 @@ def test_build_merge_pattern(test_case: RedboxChatTestCase, mocker: MockerFixtur
 
     mocker.patch("redbox.graph.nodes.processes.get_chat_llm", return_value=llm)
     response = merge.invoke(state)
-    final_state = RedboxState(response)
+    final_state = RedboxState(**response, request=test_case.query)
 
-    response_documents = [doc for doc in flatten_document_state(final_state.get("documents")) if doc is not None]
-    noned_documents = sum(1 for doc in final_state.get("documents", {}).values() for v in doc.values() if v is None)
+    response_documents = [doc for doc in flatten_document_state(final_state.documents) if doc is not None]
+    noned_documents = sum(1 for doc in final_state.documents.groups.values() for v in doc.values() if v is None)
 
     test_case_content = test_case.test_data.llm_responses[-1].content
 
@@ -318,13 +317,13 @@ def test_build_stuff_pattern(test_case: RedboxChatTestCase, mocker: MockerFixtur
 
     mocker.patch("redbox.graph.nodes.processes.get_chat_llm", return_value=llm)
     response = stuff.invoke(state)
-    final_state = RedboxState(response)
+    final_state = RedboxState(**response, request=test_case.query)
 
     test_case_content = test_case.test_data.llm_responses[-1].content
 
     assert (
-        final_state["messages"][-1].content == test_case_content
-    ), f"Expected LLM response: '{test_case_content}'. Received '{final_state["messages"][-1].content}'"
+        final_state.last_message.content == test_case_content
+    ), f"Expected LLM response: '{test_case_content}'. Received '{final_state.last_message.content}'"
 
 
 TOOL_TEST_CASES = generate_test_cases(
@@ -400,9 +399,9 @@ def test_build_passthrough_pattern():
     )
 
     response = passthrough.invoke(state)
-    final_state = RedboxState(response)
+    final_state = RedboxState(**response, request=state.request)
 
-    assert final_state["messages"][-1].content == "What is AI?"
+    assert final_state.last_message.content == "What is AI?"
 
 
 def test_build_set_text_pattern():
@@ -415,9 +414,9 @@ def test_build_set_text_pattern():
     )
 
     response = set_text.invoke(state)
-    final_state = RedboxState(response)
+    final_state = RedboxState(**response, request=state.request)
 
-    assert final_state["messages"][-1].content == "An hendy hap ychabbe ychent."
+    assert final_state.last_message.content == "An hendy hap ychabbe ychent."
 
 
 def test_empty_process():
@@ -438,7 +437,7 @@ def test_empty_process():
     graph = builder.compile()
 
     response = graph.invoke(state)
-    final_state = RedboxState(response)
+    final_state = RedboxState(**response, request=state.request)
 
     assert final_state == state
 
@@ -473,9 +472,9 @@ def test_clear_documents(test_case: list[RedboxState]):
     graph = builder.compile()
 
     response = graph.invoke(test_case)
-    final_state = RedboxState(response)
+    final_state = RedboxState(**response, request=test_case.request)
 
-    assert final_state.documents == {}
+    assert final_state.documents == DocumentState(groups={})
 
 
 def test_canned_llm():

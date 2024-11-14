@@ -1,7 +1,9 @@
 from datetime import UTC, datetime
 from enum import StrEnum
 from functools import reduce
-from typing import Annotated, Literal, NotRequired, Required, TypedDict, get_args, get_origin
+from types import UnionType
+from typing import (Annotated, Literal, NotRequired, Required, TypedDict,
+                    Union, get_args, get_origin)
 from uuid import UUID, uuid4
 
 from langchain_core.documents import Document
@@ -99,7 +101,7 @@ class StructuredResponseWithCitations(BaseModel):
     citations: list[Citation] = Field(default_factory=list)
 
 
-DocumentMapping = dict[UUID, Document]
+DocumentMapping = dict[UUID, Document | None]
 DocumentGroup = dict[UUID, DocumentMapping | None]
 
 
@@ -355,10 +357,16 @@ def is_dict_type[T](annotated_type: T) -> bool:
     else:
         base_type = annotated_type
 
-    if get_origin(base_type) in {Required, NotRequired}:
+    origin = get_origin(base_type)
+    if origin in {Required, NotRequired}:
         base_type = get_args(base_type)[0]
 
-    return issubclass(base_type, dict)
+    if origin is UnionType:
+        for type in get_args(base_type):
+            if is_dict_type(type):
+                return True
+            
+    return origin is dict or issubclass(base_type, dict)
 
 
 def dict_reducer(current: dict, update: dict) -> dict:

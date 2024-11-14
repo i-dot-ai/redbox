@@ -5,24 +5,20 @@ from langchain_core.embeddings import Embeddings
 from langchain_core.tools import StructuredTool
 from langchain_core.vectorstores import VectorStoreRetriever
 
-from redbox.chains.components import (
-    get_all_chunks_retriever,
-    get_embeddings,
-    get_metadata_retriever,
-    get_parameterised_retriever,
-)
-from redbox.graph.nodes.tools import build_govuk_search_tool, build_search_documents_tool, build_search_wikipedia_tool
-from redbox.graph.root import get_agentic_search_graph, get_chat_with_documents_graph, get_root_graph
+from redbox.chains.components import (get_all_chunks_retriever, get_embeddings,
+                                      get_metadata_retriever,
+                                      get_parameterised_retriever)
+from redbox.graph.nodes.tools import (build_govuk_search_tool,
+                                      build_search_documents_tool,
+                                      build_search_wikipedia_tool)
+from redbox.graph.root import (get_agentic_search_graph,
+                               get_chat_with_documents_graph, get_root_graph)
 from redbox.models.chain import RedboxState
 from redbox.models.chat import ChatRoute
 from redbox.models.file import ChunkResolution
-from redbox.models.graph import (
-    FINAL_RESPONSE_TAG,
-    ROUTABLE_KEYWORDS,
-    ROUTE_NAME_TAG,
-    SOURCE_DOCUMENTS_TAG,
-    RedboxEventType,
-)
+from redbox.models.graph import (FINAL_RESPONSE_TAG, ROUTABLE_KEYWORDS,
+                                 ROUTE_NAME_TAG, SOURCE_DOCUMENTS_TAG,
+                                 RedboxEventType)
 from redbox.models.settings import Settings, get_settings
 from redbox.transform import flatten_document_state
 
@@ -111,9 +107,9 @@ class Redbox:
                 content = event["data"]["chunk"].content
                 if isinstance(content, str):
                     await response_tokens_callback(content)
-            elif kind == "on_chat_model_stream":  # react agent - cant get the tags to work
-                if content := getattr(event.get("data", {}).get("chunk", {}), "content", None):
-                    await response_tokens_callback(content)
+            # elif kind == "on_chat_model_stream":  # react agent - cant get the tags to work
+            #     if content := getattr(event.get("data", {}).get("chunk", {}), "content", None):
+            #         await response_tokens_callback(content)
             elif kind == "on_chain_end" and FINAL_RESPONSE_TAG in tags:
                 content = event["data"]["output"]
                 if isinstance(content, str):
