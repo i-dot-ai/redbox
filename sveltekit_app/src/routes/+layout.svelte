@@ -1,12 +1,14 @@
 <script>
-	import Footer from '$lib/components/footer.svelte';
-	import Header from '$lib/components/top-nav.svelte';
+  import Footer from "$lib/components/footer.svelte";
+  import Header from "$lib/components/top-nav.svelte";
+
+  let { data } = $props();
 </script>
 
-<Header />
+<Header {data} />
 
 <main>
-	<slot></slot>
+  <slot></slot>
 </main>
 
 <Footer />
