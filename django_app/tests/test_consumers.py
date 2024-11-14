@@ -558,8 +558,8 @@ async def test_chat_consumer_redbox_state(
         redbox_state = mock_run.call_args.args[0]  # pulls out the args that redbox.run was called with
 
         assert (
-            redbox_state["request"] == expected_request
-        ), f"Expected {expected_request}. Received: {redbox_state["request"]}"
+            redbox_state.request == expected_request
+        ), f"Expected {expected_request}. Received: {redbox_state.request}"
 
 
 @database_sync_to_async
