@@ -142,7 +142,7 @@ def document_reducer(current: DocumentState | None, update: DocumentState | list
 
         # If group key isn't matched, add it
         if group_key not in reduced:
-            reduced[group_key] = group
+            reduced[group_key] = group.copy()
 
         for document_key, document in group.items():
             if document is None:
@@ -238,7 +238,7 @@ class ToolStateEntry(TypedDict):
 
 
 # Represents the state of multiple tools.
-ToolState = dict[str, ToolStateEntry]
+ToolState = dict[str, ToolStateEntry | None]
 
 
 def tool_calls_reducer(current: ToolState, update: ToolState | None) -> ToolState:
@@ -333,9 +333,7 @@ def is_dict_type[T](annotated_type: T) -> bool:
         base_type = get_args(base_type)[0]
 
     if origin is UnionType:
-        for type in get_args(base_type):
-            if is_dict_type(type):
-                return True
+        return any(map(is_dict_type, get_args(base_type)))
 
     return origin is dict or issubclass(base_type, dict)
 
