@@ -159,31 +159,6 @@ def document_reducer(current: DocumentState | None, update: DocumentState | list
     return DocumentState(groups=reduced)
 
 
-# def document_reducer(current: DocumentState | None, update: DocumentState | list[DocumentState]) -> DocumentState:
-#     """Merges document states, where:
-#     - Newer values override older ones
-#     - None values and empty groups are removed
-#     - List updates are processed sequentially
-#     """
-#     # Handle sequential updates
-#     if isinstance(update, list):
-#         return reduce(document_reducer, update, current)
-
-#     # Handle initial state
-#     if current is None:
-#         return update
-
-#     # Merge states with update taking precedence
-#     merged_state = current | update
-
-#     # Filter out None groups and empty document collections
-#     return DocumentState(groups={
-#         group_key: group
-#         for group_key, group in merged_state.groups.items()
-#         if group and group.documents
-#     })
-
-
 class RedboxQuery(BaseModel):
     question: str = Field(description="The last user chat message")
     s3_keys: list[str] = Field(description="List of files to process", default_factory=list)
@@ -262,9 +237,8 @@ class ToolStateEntry(TypedDict):
     called: bool
 
 
+# Represents the state of multiple tools.
 ToolState = dict[str, ToolStateEntry]
-# class ToolState(dict[str, ToolStateEntry]):
-#     """Represents the state of multiple tools."""
 
 
 def tool_calls_reducer(current: ToolState, update: ToolState | None) -> ToolState:
@@ -302,8 +276,6 @@ class RedboxState(BaseModel):
     citations: list[Citation] | None = None
     steps_left: Annotated[int | None, RemainingStepsManager] = None
     messages: Annotated[list[AnyMessage], add_messages] = Field(default_factory=list)
-
-    model_config = {"arbitrary_types_allowed": True}
 
     @property
     def last_message(self) -> AnyMessage:
