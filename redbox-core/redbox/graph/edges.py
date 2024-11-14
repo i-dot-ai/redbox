@@ -93,7 +93,7 @@ def documents_selected_conditional(state: RedboxState) -> bool:
 
 
 def multiple_docs_in_group_conditional(state: RedboxState) -> bool:
-    return any(len(group) > 1 for group in state.documents.values())
+    return any(len(group) > 1 for group in state.documents.groups.values())
 
 
 def build_tools_selected_conditional(tools: list[str]) -> Runnable:

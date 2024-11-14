@@ -125,7 +125,7 @@ def flatten_document_state(documents: DocumentState | None) -> list[Document]:
 
 def get_document_token_count(state: RedboxState) -> int:
     """Calculates the total token count of all documents in a state."""
-    return sum(d.metadata["token_count"] for d in flatten_document_state(state.get("documents", [])))
+    return sum(d.metadata["token_count"] for d in flatten_document_state(state.documents))
 
 
 def to_request_metadata(obj: dict):

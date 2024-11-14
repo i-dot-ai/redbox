@@ -2,8 +2,7 @@ from datetime import UTC, datetime
 from enum import StrEnum
 from functools import reduce
 from types import UnionType
-from typing import (Annotated, Literal, NotRequired, Required, TypedDict,
-                    Union, get_args, get_origin)
+from typing import Annotated, Literal, NotRequired, Required, TypedDict, get_args, get_origin
 from uuid import UUID, uuid4
 
 from langchain_core.documents import Document
@@ -365,7 +364,7 @@ def is_dict_type[T](annotated_type: T) -> bool:
         for type in get_args(base_type):
             if is_dict_type(type):
                 return True
-            
+
     return origin is dict or issubclass(base_type, dict)
 
 
