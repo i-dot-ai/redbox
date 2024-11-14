@@ -10,6 +10,9 @@ User = get_user_model()
 
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
-def user_view(request):
+def user_view_pre_alpha(request):
+    """this is for testing and evaluation only
+    this *will* change so that not all data is returned!
+    """
     serializer = UserSerializer(request.user)
     return Response(serializer.data)

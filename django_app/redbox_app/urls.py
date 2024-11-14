@@ -78,7 +78,7 @@ other_urlpatterns = [
 
 
 api_url_patterns = [
-    path("api/v1/", views.user_view, name="user-view"),
+    path("api/v0/", views.user_view_pre_alpha, name="user-view"),
 ]
 
 urlpatterns = (
