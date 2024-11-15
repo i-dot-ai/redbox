@@ -54,7 +54,6 @@ def test_has_injected_state():
     assert not has_injected_state(tool_without_injected_state)
 
 
-@pytest.mark.vcr()
 @pytest.mark.parametrize("chain_params", TEST_CHAIN_PARAMETERS)
 def test_search_documents_tool(
     chain_params: dict,
@@ -213,6 +212,7 @@ def test_wikipedia_tool():
         assert metadata.creator_type == ChunkCreatorType.wikipedia
 
 
+@pytest.mark.vcr()
 @pytest.mark.parametrize(
     "is_filter, relevant_return, query, keyword",
     [
