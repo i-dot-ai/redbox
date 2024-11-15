@@ -54,5 +54,6 @@ env_files = [
     ".env"
 ]
 markers = [
-    "ai: marks tests as using a live LLM (deselect with '-m \"not ai\"')"
+    "ai: marks tests as using a live LLM (deselect with '-m \"not ai\"')",
+    "vcr",
 ]

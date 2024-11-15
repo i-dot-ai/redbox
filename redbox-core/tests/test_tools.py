@@ -3,6 +3,7 @@ from urllib.parse import urlparse
 from uuid import UUID, uuid4
 
 import pytest
+import requests
 from elasticsearch import Elasticsearch
 from langchain_core.embeddings.fake import FakeEmbeddings
 from langchain_core.messages import HumanMessage
@@ -212,7 +213,6 @@ def test_wikipedia_tool():
         assert metadata.creator_type == ChunkCreatorType.wikipedia
 
 
-@pytest.mark.vcr()
 @pytest.mark.parametrize(
     "is_filter, relevant_return, query, keyword",
     [
@@ -220,6 +220,7 @@ def test_wikipedia_tool():
         (True, True, "UK government use of AI", "artificial intelligence"),
     ],
 )
+@pytest.mark.vcr()
 def test_gov_filter_AI(is_filter, relevant_return, query, keyword):
     def run_tool(is_filter):
         tool = build_govuk_search_tool(num_results=1, filter=is_filter)
