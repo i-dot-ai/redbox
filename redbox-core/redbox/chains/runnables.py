@@ -18,7 +18,6 @@ from langchain_core.runnables import (
     RunnablePassthrough,
     chain,
 )
-from langfuse.decorators import observe
 from tiktoken import Encoding
 
 from redbox.api.format import format_documents, format_toolstate
@@ -64,14 +63,8 @@ def build_chat_prompt_from_messages_runnable(
             {ai_settings.caller_info_prompt}
             {{format_instructions}}
             """
-        prompts_budget = len(_tokeniser.encode(task_system_prompt)) + len(
-            _tokeniser.encode(task_question_prompt)
-        )
-        chat_history_budget = (
-            ai_settings.context_window_size
-            - ai_settings.llm_max_tokens
-            - prompts_budget
-        )
+        prompts_budget = len(_tokeniser.encode(task_system_prompt)) + len(_tokeniser.encode(task_question_prompt))
+        chat_history_budget = ai_settings.context_window_size - ai_settings.llm_max_tokens - prompts_budget
 
         if chat_history_budget <= 0:
             raise QuestionLengthError
@@ -89,9 +82,7 @@ def build_chat_prompt_from_messages_runnable(
             | {"messages": state.get("messages")}
             | {
                 "text": state.get("text"),
-                "formatted_documents": format_documents(
-                    flatten_document_state(state.get("documents"))
-                ),
+                "formatted_documents": format_documents(flatten_document_state(state.get("documents"))),
                 "tool_calls": format_toolstate(state.get("tool_calls")),
                 "system_info": ai_settings.system_info_prompt,
                 "persona_info": ai_settings.persona_info_prompt,
@@ -111,6 +102,7 @@ def build_chat_prompt_from_messages_runnable(
         ).invoke(prompt_template_context)
 
     return _chat_prompt_from_messages
+
 
 def build_llm_chain(
     prompt_set: PromptSet,
@@ -140,18 +132,12 @@ def build_llm_chain(
     }
 
     return (
-        build_chat_prompt_from_messages_runnable(
-            prompt_set, format_instructions=format_instructions
-        )
+        build_chat_prompt_from_messages_runnable(prompt_set, format_instructions=format_instructions)
         | text_and_tools
         | get_all_metadata
         | RunnablePassthrough.assign(
             _log=RunnableLambda(
-                lambda _: (
-                    log_activity(f"Generating response with {model_name}...")
-                    if final_response_chain
-                    else None
-                )
+                lambda _: (log_activity(f"Generating response with {model_name}...") if final_response_chain else None)
             )
         )
     )
