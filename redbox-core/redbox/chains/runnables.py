@@ -18,8 +18,8 @@ from langchain_core.runnables import (
     RunnablePassthrough,
     chain,
 )
+from langfuse.decorators import observe
 from tiktoken import Encoding
-from traitlets import observe
 
 from redbox.api.format import format_documents, format_toolstate
 from redbox.chains.activity import log_activity
@@ -37,7 +37,6 @@ log = logging.getLogger()
 re_string_pattern = re.compile(r"(\S+)")
 
 
-@observe("saisakul")
 def build_chat_prompt_from_messages_runnable(
     prompt_set: PromptSet,
     tokeniser: Encoding = None,
@@ -112,7 +111,6 @@ def build_chat_prompt_from_messages_runnable(
         ).invoke(prompt_template_context)
 
     return _chat_prompt_from_messages
-
 
 def build_llm_chain(
     prompt_set: PromptSet,
