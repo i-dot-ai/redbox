@@ -139,7 +139,7 @@ def build_search_documents_tool(
     return _search_documents
 
 
-def build_govuk_search_tool(num_results: int = 1, filter=False) -> Tool:
+def build_govuk_search_tool(num_results: int = 1) -> Tool:
     """Constructs a tool that searches gov.uk and sets state["documents"]."""
 
     tokeniser = tiktoken.encoding_for_model("gpt-4o")
@@ -157,7 +157,7 @@ def build_govuk_search_tool(num_results: int = 1, filter=False) -> Tool:
         return response
 
     @tool
-    def _search_govuk(query: str, state: Annotated[dict, InjectedState], filter=filter) -> dict[str, Any]:
+    def _search_govuk(query: str, state: Annotated[dict, InjectedState]) -> dict[str, Any]:
         """
         Search for documents on gov.uk based on a query string.
         This endpoint is used to search for documents on gov.uk. There are many types of documents on gov.uk.
@@ -186,7 +186,7 @@ def build_govuk_search_tool(num_results: int = 1, filter=False) -> Tool:
             f"{url_base}/api/search.json",
             params={
                 "q": query,
-                "count": 10 if filter else num_results,
+                "count": 10,
                 "fields": required_fields,
             },
             headers={"Accept": "application/json"},
@@ -194,9 +194,7 @@ def build_govuk_search_tool(num_results: int = 1, filter=False) -> Tool:
         response.raise_for_status()
         response = response.json()
 
-        if filter:
-            response = recalculate_similarity(response, query, num_results)
-
+        response = recalculate_similarity(response, query, num_results)
         mapped_documents = []
         for i, doc in enumerate(response["results"]):
             if any(field not in doc for field in required_fields):

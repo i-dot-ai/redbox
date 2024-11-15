@@ -42,7 +42,9 @@ def test_is_valid_tool():
 
 def test_has_injected_state():
     @tool
-    def tool_with_injected_state(query: str, state: Annotated[dict, InjectedState]) -> dict[str, Any]:
+    def tool_with_injected_state(
+        query: str, state: Annotated[dict, InjectedState]
+    ) -> dict[str, Any]:
         """Tool that returns a dictionary update."""
         return {"key": "value"}
 
@@ -120,7 +122,9 @@ def test_search_documents_tool(
             "query": stored_file_parameterised.query.question,
             "state": RedboxState(
                 request=stored_file_parameterised.query,
-                messages=[HumanMessage(content=stored_file_parameterised.query.question)],
+                messages=[
+                    HumanMessage(content=stored_file_parameterised.query.question)
+                ],
             ),
         }
     )
@@ -139,12 +143,20 @@ def test_search_documents_tool(
 
         # Check flattened documents match expected, similar to retriever
         assert len(result_flat) == chain_params["rag_k"]
-        assert {c.page_content for c in result_flat} <= {c.page_content for c in permitted_docs}
-        assert {c.metadata["uri"] for c in result_flat} <= set(stored_file_parameterised.query.permitted_s3_keys)
+        assert {c.page_content for c in result_flat} <= {
+            c.page_content for c in permitted_docs
+        }
+        assert {c.metadata["uri"] for c in result_flat} <= set(
+            stored_file_parameterised.query.permitted_s3_keys
+        )
 
         if selected:
-            assert {c.page_content for c in result_flat} <= {c.page_content for c in selected_docs}
-            assert {c.metadata["uri"] for c in result_flat} <= set(stored_file_parameterised.query.s3_keys)
+            assert {c.page_content for c in result_flat} <= {
+                c.page_content for c in selected_docs
+            }
+            assert {c.metadata["uri"] for c in result_flat} <= set(
+                stored_file_parameterised.query.s3_keys
+            )
 
         # Check docstate is formed as expected, similar to transform tests
         for group_uuid, group_docs in result_docstate.items():
@@ -178,7 +190,10 @@ def test_govuk_search_tool():
     documents = flatten_document_state(state_update["documents"])
 
     # assert at least one document is travel advice
-    assert any("/foreign-travel-advice/cuba" in document.metadata["uri"] for document in documents)
+    assert any(
+        "/foreign-travel-advice/cuba" in document.metadata["uri"]
+        for document in documents
+    )
 
     for document in documents:
         assert document.page_content != ""
@@ -220,7 +235,7 @@ def test_wikipedia_tool():
         (True, True, "UK government use of AI", "artificial intelligence"),
     ],
 )
-@pytest.mark.vcr()
+@pytest.mark.vcr
 def test_gov_filter_AI(is_filter, relevant_return, query, keyword):
     def run_tool(is_filter):
         tool = build_govuk_search_tool(num_results=1, filter=is_filter)
@@ -244,4 +259,7 @@ def test_gov_filter_AI(is_filter, relevant_return, query, keyword):
 
     # call gov tool without additional filter
     documents = run_tool(is_filter)
-    assert any(keyword in document.page_content for document in documents) == relevant_return
+    assert (
+        any(keyword in document.page_content for document in documents)
+        == relevant_return
+    )
