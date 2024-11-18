@@ -77,13 +77,10 @@ def test_build_tool_send():
     request = RedboxQuery(question="what colour is the sky?", user_uuid=uuid4(), chat_history=[])
 
     tool_call_1 = {
-        "foo": {"tool": ToolCall({"name": "foo", "args": {"a": 1, "b": 2}, "id": "123"}), "called": False},
+        "foo": ToolCall(name="foo", args={"a": 1, "b": 2}, id="123"),
     }
     tool_call_2 = {
-        "bar": {
-            "tool": ToolCall({"name": "bar", "args": {"x": 10, "y": 20}, "id": "456"}),
-            "called": False,
-        },
+        "bar": ToolCall(name="bar", args={"x": 10, "y": 20}, id="456"),
     }
 
     tool_send = build_tool_send("my-target")

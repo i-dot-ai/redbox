@@ -230,14 +230,8 @@ def metadata_reducer(
     )
 
 
-class ToolStateEntry(TypedDict):
-    """Represents a single tool call in the ToolState."""
-
-    tool: ToolCall
-
-
 # Represents the state of multiple tools.
-ToolState = dict[str, ToolStateEntry | None]
+ToolState = dict[str, ToolCall | None]
 
 
 def tool_calls_reducer(current: ToolState, update: ToolState | None) -> ToolState:

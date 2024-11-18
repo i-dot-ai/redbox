@@ -48,10 +48,10 @@ def format_toolstate(toolstate: ToolState | None) -> str:
     for call_info in toolstate.values():
         tool_call = (
             "<ToolCall>\n"
-            f"\t<Name>{call_info['tool']['name']}</Name>\n"
-            f"\t<Type>{call_info['tool']['type']}</Type>\n"
+            f"\t<Name>{call_info['name']}</Name>\n"
+            f"\t<Type>{call_info['type']}</Type>\n"
             "\t<Arguments>\n"
-            f"{json.dumps(call_info['tool']['args'], indent=2).replace('{', '').replace('}', '').replace('"', '')}\n"
+            f"{json.dumps(call_info['args'], indent=2).replace('{', '').replace('}', '').replace('"', '')}\n"
             "\t</Arguments>\n"
             "</ToolCall>"
         )

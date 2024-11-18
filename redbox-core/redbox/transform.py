@@ -4,7 +4,7 @@ from uuid import NAMESPACE_DNS, UUID, uuid5
 import tiktoken
 from langchain_core.callbacks.manager import dispatch_custom_event
 from langchain_core.documents import Document
-from langchain_core.messages import AIMessage, AnyMessage, ToolCall
+from langchain_core.messages import AIMessage, AnyMessage
 from langchain_core.runnables import RunnableLambda
 
 from redbox.models.chain import DocumentGroup, DocumentState, LLMCallMetadata, RedboxState, RequestMetadata, ToolState
@@ -276,4 +276,4 @@ def tool_calls_to_toolstate(message: AnyMessage, called: bool | None = False) ->
 
     Sets all tool calls to a called state. Assumes this state is False.
     """
-    return ToolState({t["id"]: {"tool": ToolCall(**t), "called": called} for t in message.tool_calls})
+    return ToolState({t["id"]: t for t in message.tool_calls})
