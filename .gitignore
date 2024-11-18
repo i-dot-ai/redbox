@@ -2,6 +2,10 @@
 .idea/
 redbox-core/models/
 
+# AI Test Data
+
+ai-tests/data/
+
 # data files
 elk/elasticsearch/data
 data/
