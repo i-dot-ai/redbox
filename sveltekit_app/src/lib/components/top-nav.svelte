@@ -114,4 +114,12 @@
       </nav>
     </mobile-drop-down>
   </div>
+
+  <script>
+    // TO DO: work out why this isn't happening in JS bundle
+    window.addEventListener("resize", () => {
+      document.querySelector(".iai-top-nav__mobile-button").classList.add("js-init");
+    });
+  </script>
+
 </header>
