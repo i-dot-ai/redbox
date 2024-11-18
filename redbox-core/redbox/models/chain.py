@@ -279,6 +279,8 @@ class RedboxState(BaseModel):
 
     @property
     def last_message(self) -> AnyMessage:
+        if not self.messages:
+            raise ValueError("No messages in the state")
         return self.messages[-1]
 
 

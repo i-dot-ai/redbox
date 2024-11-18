@@ -116,11 +116,7 @@ def flatten_document_state(documents: DocumentState | None) -> list[Document]:
     """Flattens a DocumentState into a list of Documents."""
     if not documents:
         return []
-    result = []
-    for group in documents.groups.values():
-        for document in group.values():
-            result.append(document)
-    return result
+    return [document for group in documents.groups.values() for document in group.values()]
 
 
 def get_document_token_count(state: RedboxState) -> int:
