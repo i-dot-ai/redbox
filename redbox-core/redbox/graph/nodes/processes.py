@@ -266,9 +266,8 @@ def build_tool_pattern(
         messages = [
             AIMessage(
                 content="",
-                tool_calls=[tool_call_dict["tool"]],
+                tool_calls=[tool_call_dict["tool"] for tool_call_dict in state.tool_calls.values() or []],
             )
-            for tool_call_dict in state.tool_calls.values() or []
         ]
 
         # Invoke the tool

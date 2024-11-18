@@ -8,7 +8,6 @@ from redbox.chains.runnables import build_self_route_output_parser
 from redbox.graph.edges import (
     build_documents_bigger_than_context_conditional,
     build_keyword_detection_conditional,
-    build_tools_selected_conditional,
     build_total_tokens_request_handler_conditional,
     documents_selected_conditional,
     multiple_docs_in_group_conditional,
@@ -189,7 +188,6 @@ def get_agentic_search_graph(tools: dict[str, StructuredTool], debug: bool = Fal
             lambda s: [
                 RedboxActivityEvent(message=get_log_formatter_for_retrieval_tool(tool_state_entry["tool"]).log_call())
                 for tool_state_entry in s.tool_calls.values()
-                if not tool_state_entry["called"]
             ]
         ),
     )
@@ -211,11 +209,8 @@ def get_agentic_search_graph(tools: dict[str, StructuredTool], debug: bool = Fal
             False: "p_search_agent",
         },
     )
-    builder.add_conditional_edges(
-        "p_search_agent",
-        build_tools_selected_conditional(tools=agent_tool_names),
-        {True: "s_tool", False: "p_report_sources"},
-    )
+    builder.add_edge("p_search_agent", "s_tool")
+    builder.add_edge("s_tool", "p_report_sources")
     builder.add_edge("p_search_agent", "p_activity_log_retrieval_tool_calls")
     builder.add_conditional_edges("s_tool", build_tool_send("p_retrieval_tools"), path_map=["p_retrieval_tools"])
     builder.add_edge("p_retrieval_tools", "d_x_steps_left_or_less")

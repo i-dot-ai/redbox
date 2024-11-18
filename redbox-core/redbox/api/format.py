@@ -50,7 +50,6 @@ def format_toolstate(toolstate: ToolState | None) -> str:
             "<ToolCall>\n"
             f"\t<Name>{call_info['tool']['name']}</Name>\n"
             f"\t<Type>{call_info['tool']['type']}</Type>\n"
-            f"\t<Called>{str(call_info['called']).lower()}</Called>\n"
             "\t<Arguments>\n"
             f"{json.dumps(call_info['tool']['args'], indent=2).replace('{', '').replace('}', '').replace('"', '')}\n"
             "\t</Arguments>\n"

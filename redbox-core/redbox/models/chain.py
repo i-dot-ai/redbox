@@ -234,7 +234,6 @@ class ToolStateEntry(TypedDict):
     """Represents a single tool call in the ToolState."""
 
     tool: ToolCall
-    called: bool
 
 
 # Represents the state of multiple tools.
