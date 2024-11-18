@@ -80,8 +80,6 @@ def test_usecases(test_case: AITestCase, loaded_docs: set[str], output_dir: Path
     env = get_settings()
     app = Redbox(debug=True, env=env)
 
-    buffer = io.StringIO()
-    sys.stdout = buffer
     save_path = output_dir / test_case.id
     # call agent
     try:
