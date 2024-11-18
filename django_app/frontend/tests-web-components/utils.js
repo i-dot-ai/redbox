@@ -15,7 +15,9 @@ const signIn = async (page) => {
         `poetry run python ../../manage.py show_magiclink_url ${process.env.FROM_EMAIL}`,
         async (error, stdout, stderr) => {
           if (error) {
-            console.error(error);
+            throw new Error(
+              `There was a problem getting the magic-link. Please ensure you have set FROM_EMAIL in your env file and created a user for ${process.env.FROM_EMAIL}`
+            );
           }
           resolve(stdout);
         }
