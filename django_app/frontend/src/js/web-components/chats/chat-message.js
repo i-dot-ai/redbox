@@ -65,8 +65,13 @@ export class ChatMessage extends HTMLElement {
                     </div>
                 </div>
             </div>
-            <feedback-buttons></feedback-buttons>
         `;
+
+    // Add feedback buttons
+    if (this.dataset.role === "ai") {
+      this.feedbackButtons = /** @type {import("./feedback-buttons").FeedbackButtons} */(document.createElement("feedback-buttons"));
+      this.parentElement?.appendChild(this.feedbackButtons);
+    }
 
     // ensure new chat-messages aren't hidden behind the chat-input
     this.programmaticScroll = true;
@@ -158,7 +163,6 @@ export class ChatMessage extends HTMLElement {
       this.querySelector("sources-list")
     );
     /** @type {import("./feedback-buttons").FeedbackButtons | null} */
-    let feedbackContainer = this.querySelector("feedback-buttons");
     let responseLoading = /** @type HTMLElement */ (
       this.querySelector(".rb-loading-ellipsis")
     );
@@ -251,7 +255,7 @@ export class ChatMessage extends HTMLElement {
         this.addActivity(response.data, "ai");
       } else if (response.type === "end") {
         sourcesContainer.showCitations(response.data.message_id);
-        feedbackContainer?.showFeedback(response.data.message_id);
+        this.feedbackButtons?.showFeedback(response.data.message_id);
         this.#addFootnotes(streamedContent);
         const chatResponseEndEvent = new CustomEvent("chat-response-end", {
           detail: {
