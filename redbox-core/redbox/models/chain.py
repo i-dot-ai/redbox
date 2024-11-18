@@ -1,12 +1,13 @@
 from datetime import UTC, datetime
 from enum import StrEnum
 from functools import reduce
+from types import UnionType
 from typing import Annotated, Literal, NotRequired, Required, TypedDict, get_args, get_origin
 from uuid import UUID, uuid4
 
 from langchain_core.documents import Document
-from langchain_core.messages import ToolCall
-from langgraph.graph import MessagesState
+from langchain_core.messages import AnyMessage, ToolCall
+from langgraph.graph.message import add_messages
 from langgraph.managed.is_last_step import RemainingStepsManager
 from pydantic import BaseModel, Field
 
@@ -99,8 +100,14 @@ class StructuredResponseWithCitations(BaseModel):
     citations: list[Citation] = Field(default_factory=list)
 
 
-class DocumentState(TypedDict):
-    group: dict[UUID, Document]
+DocumentMapping = dict[UUID, Document | None]
+DocumentGroup = dict[UUID, DocumentMapping | None]
+
+
+class DocumentState(BaseModel):
+    """A document state containing groups of documents."""
+
+    groups: DocumentGroup = Field(default_factory=DocumentGroup)
 
 
 def document_reducer(current: DocumentState | None, update: DocumentState | list[DocumentState]) -> DocumentState:
@@ -124,11 +131,10 @@ def document_reducer(current: DocumentState | None, update: DocumentState | list
     if current is None:
         return update
 
-    # Copy current
-    reduced = {k: v.copy() for k, v in current.items()}
+    reduced = {k: v.copy() for k, v in current.groups.items()}
 
     # Update with update
-    for group_key, group in update.items():
+    for group_key, group in update.groups.items():
         # If group is None, remove from output if a group key is matched
         if group is None:
             reduced.pop(group_key, None)
@@ -136,7 +142,7 @@ def document_reducer(current: DocumentState | None, update: DocumentState | list
 
         # If group key isn't matched, add it
         if group_key not in reduced:
-            reduced[group_key] = group
+            reduced[group_key] = group.copy()
 
         for document_key, document in group.items():
             if document is None:
@@ -150,7 +156,7 @@ def document_reducer(current: DocumentState | None, update: DocumentState | list
         if not reduced[group_key]:
             del reduced[group_key]
 
-    return reduced
+    return DocumentState(groups=reduced)
 
 
 class RedboxQuery(BaseModel):
@@ -231,8 +237,8 @@ class ToolStateEntry(TypedDict):
     called: bool
 
 
-class ToolState(dict[str, ToolStateEntry]):
-    """Represents the state of multiple tools."""
+# Represents the state of multiple tools.
+ToolState = dict[str, ToolStateEntry | None]
 
 
 def tool_calls_reducer(current: ToolState, update: ToolState | None) -> ToolState:
@@ -261,14 +267,21 @@ def tool_calls_reducer(current: ToolState, update: ToolState | None) -> ToolStat
     return reduced
 
 
-class RedboxState(MessagesState):
-    request: Required[RedboxQuery]
-    documents: Annotated[NotRequired[DocumentState], document_reducer]
-    route_name: NotRequired[str | None]
-    tool_calls: Annotated[NotRequired[ToolState], tool_calls_reducer]
-    metadata: Annotated[NotRequired[RequestMetadata], metadata_reducer]
-    citations: NotRequired[list[Citation] | None]
-    steps_left: Annotated[NotRequired[int], RemainingStepsManager]
+class RedboxState(BaseModel):
+    request: RedboxQuery
+    documents: Annotated[DocumentState, document_reducer] = DocumentState()
+    route_name: str | None = None
+    tool_calls: Annotated[ToolState | None, tool_calls_reducer] = None
+    metadata: Annotated[RequestMetadata | None, metadata_reducer] = None
+    citations: list[Citation] | None = None
+    steps_left: Annotated[int | None, RemainingStepsManager] = None
+    messages: Annotated[list[AnyMessage], add_messages] = Field(default_factory=list)
+
+    @property
+    def last_message(self) -> AnyMessage:
+        if not self.messages:
+            raise ValueError("No messages in the state")
+        return self.messages[-1]
 
 
 class PromptSet(StrEnum):
@@ -284,29 +297,29 @@ class PromptSet(StrEnum):
 
 def get_prompts(state: RedboxState, prompt_set: PromptSet) -> tuple[str, str]:
     if prompt_set == PromptSet.Chat:
-        system_prompt = state["request"].ai_settings.chat_system_prompt
-        question_prompt = state["request"].ai_settings.chat_question_prompt
+        system_prompt = state.request.ai_settings.chat_system_prompt
+        question_prompt = state.request.ai_settings.chat_question_prompt
     elif prompt_set == PromptSet.ChatwithDocs:
-        system_prompt = state["request"].ai_settings.chat_with_docs_system_prompt
-        question_prompt = state["request"].ai_settings.chat_with_docs_question_prompt
+        system_prompt = state.request.ai_settings.chat_with_docs_system_prompt
+        question_prompt = state.request.ai_settings.chat_with_docs_question_prompt
     elif prompt_set == PromptSet.ChatwithDocsMapReduce:
-        system_prompt = state["request"].ai_settings.chat_map_system_prompt
-        question_prompt = state["request"].ai_settings.chat_map_question_prompt
+        system_prompt = state.request.ai_settings.chat_map_system_prompt
+        question_prompt = state.request.ai_settings.chat_map_question_prompt
     elif prompt_set == PromptSet.Search:
-        system_prompt = state["request"].ai_settings.retrieval_system_prompt
-        question_prompt = state["request"].ai_settings.retrieval_question_prompt
+        system_prompt = state.request.ai_settings.retrieval_system_prompt
+        question_prompt = state.request.ai_settings.retrieval_question_prompt
     elif prompt_set == PromptSet.SearchAgentic:
-        system_prompt = state["request"].ai_settings.agentic_retrieval_system_prompt
-        question_prompt = state["request"].ai_settings.agentic_retrieval_question_prompt
+        system_prompt = state.request.ai_settings.agentic_retrieval_system_prompt
+        question_prompt = state.request.ai_settings.agentic_retrieval_question_prompt
     elif prompt_set == PromptSet.GiveUpAgentic:
-        system_prompt = state["request"].ai_settings.agentic_give_up_system_prompt
-        question_prompt = state["request"].ai_settings.agentic_give_up_question_prompt
+        system_prompt = state.request.ai_settings.agentic_give_up_system_prompt
+        question_prompt = state.request.ai_settings.agentic_give_up_question_prompt
     elif prompt_set == PromptSet.SelfRoute:
-        system_prompt = state["request"].ai_settings.self_route_system_prompt
-        question_prompt = state["request"].ai_settings.retrieval_question_prompt
+        system_prompt = state.request.ai_settings.self_route_system_prompt
+        question_prompt = state.request.ai_settings.retrieval_question_prompt
     elif prompt_set == PromptSet.CondenseQuestion:
-        system_prompt = state["request"].ai_settings.condense_system_prompt
-        question_prompt = state["request"].ai_settings.condense_question_prompt
+        system_prompt = state.request.ai_settings.condense_system_prompt
+        question_prompt = state.request.ai_settings.condense_question_prompt
     return (system_prompt, question_prompt)
 
 
@@ -317,10 +330,14 @@ def is_dict_type[T](annotated_type: T) -> bool:
     else:
         base_type = annotated_type
 
-    if get_origin(base_type) in {Required, NotRequired}:
+    origin = get_origin(base_type)
+    if origin in {Required, NotRequired}:
         base_type = get_args(base_type)[0]
 
-    return issubclass(base_type, dict)
+    if origin is UnionType:
+        return any(map(is_dict_type, get_args(base_type)))
+
+    return origin is dict or issubclass(base_type, dict)
 
 
 def dict_reducer(current: dict, update: dict) -> dict:

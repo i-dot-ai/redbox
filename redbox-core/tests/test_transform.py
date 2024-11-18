@@ -8,7 +8,7 @@ from langchain_core.documents.base import Document
 from langchain_core.messages import AIMessage
 from langchain_core.runnables import RunnableLambda
 
-from redbox.models.chain import LLMCallMetadata, RequestMetadata
+from redbox.models.chain import DocumentState, LLMCallMetadata, RequestMetadata
 from redbox.retriever.retrievers import filter_by_elbow
 from redbox.test.data import generate_docs
 from redbox.transform import (
@@ -210,7 +210,7 @@ def test_to_request_metadata(output: dict, expected: RequestMetadata):
 
 def test_structure_documents_by_file_name():
     docs = list(generate_docs(s3_key="s3_key", total_tokens=1000, number_of_docs=3, chunk_resolution="normal"))
-    expected = {uuid5(NAMESPACE_DNS, "s3_key"): {doc.metadata["uuid"]: doc for doc in docs}}
+    expected = DocumentState(groups={uuid5(NAMESPACE_DNS, "s3_key"): {doc.metadata["uuid"]: doc for doc in docs}})
     result = structure_documents_by_file_name(docs=docs)
 
     assert result == expected
@@ -261,10 +261,10 @@ def test_structure_documents_by_group_and_indices(n_parent_files: int, n_groups:
     docs = generate_test_groups(n_parent_files=n_parent_files, n_groups=n_groups, n_per_group=n_per_group)
     structured_docs = structure_documents_by_group_and_indices(docs)
 
-    assert isinstance(structured_docs, dict)
-    assert len(structured_docs) == n_parent_files * n_groups
+    assert isinstance(structured_docs, DocumentState)
+    assert len(structured_docs.groups) == n_parent_files * n_groups
 
-    for group_uuid, group_docs in structured_docs.items():
+    for group_uuid, group_docs in structured_docs.groups.items():
         assert isinstance(group_uuid, UUID)
         assert isinstance(group_docs, dict)
         assert len(group_docs) == n_per_group

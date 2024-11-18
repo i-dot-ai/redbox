@@ -96,12 +96,12 @@ class Redbox:
         activity_event_callback=_default_callback,
     ) -> RedboxState:
         final_state = None
-        request_dict = input["request"].model_dump()
+        request_dict = input.request.model_dump()
         logger.info("Request: %s", {k: request_dict[k] for k in request_dict.keys() - {"ai_settings"}})
         async for event in self.graph.astream_events(
             input=input,
             version="v2",
-            config={"recursion_limit": input["request"].ai_settings.recursion_limit},
+            config={"recursion_limit": input.request.ai_settings.recursion_limit},
         ):
             kind = event["event"]
             tags = event.get("tags", [])
