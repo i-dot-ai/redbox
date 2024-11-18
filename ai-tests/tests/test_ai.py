@@ -1,5 +1,4 @@
 from pathlib import Path
-import io
 import sys
 from uuid import uuid4
 
