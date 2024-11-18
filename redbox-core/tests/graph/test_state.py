@@ -10,7 +10,6 @@ from redbox.models.chain import (
     DocumentState,
     LLMCallMetadata,
     RedboxQuery,
-    RedboxState,
     RequestMetadata,
     ToolState,
     document_reducer,
@@ -130,6 +129,9 @@ DOCUMENT_IDS = [uuid4() for _ in range(10)]
     ],
 )
 def test_document_reducer(a: DocumentState, b: DocumentState, expected: DocumentState):
+    a = DocumentState(groups=a)
+    b = DocumentState(groups=b)
+    expected = DocumentState(groups=expected)
     result = document_reducer(a, b)
     assert result == expected, f"Expected: {expected}. Result: {result}"
 
@@ -291,20 +293,24 @@ TEST_QUERY = RedboxQuery(
     ("a", "b", "expected"),
     [
         (
-            RedboxState(
+            dict(
                 request=TEST_QUERY,
-                documents={
-                    "group_1": {
-                        "chunk_1": {"page_content": "foo", "metadata": {"index": 1, "file_name": "foo"}},
-                        "chunk_2": {"page_content": "foo", "metadata": {"index": 1, "file_name": "foo"}},
-                    },
-                    "group_2": {"chunk_1": {"page_content": "foo", "metadata": {"index": 1, "file_name": "foo"}}},
-                },
+                documents=DocumentState(
+                    groups={
+                        GROUP_IDS[0]: {
+                            DOCUMENT_IDS[0]: {"page_content": "foo", "metadata": {"index": 1, "file_name": "foo"}},
+                            DOCUMENT_IDS[1]: {"page_content": "foo", "metadata": {"index": 1, "file_name": "foo"}},
+                        },
+                        GROUP_IDS[1]: {
+                            DOCUMENT_IDS[0]: {"page_content": "foo", "metadata": {"index": 1, "file_name": "foo"}}
+                        },
+                    }
+                ),
                 text="Some old text",
                 route_name="my_route",
                 tool_calls={
-                    "tool_1": {"tool": {"name": "foo", "args": {"a": 1, "b": 2}}, "called": False},
-                    "tool_2": {"tool": {"name": "bar", "args": {"a": 1, "b": 2}}, "called": True},
+                    "tool_1": {"tool": {"name": "foo", "args": {"a": 1, "b": 2}, "id": "123"}, "called": False},
+                    "tool_2": {"tool": {"name": "bar", "args": {"a": 1, "b": 2}, "id": "123"}, "called": True},
                 },
                 metadata=RequestMetadata(
                     llm_calls=[
@@ -325,22 +331,24 @@ TEST_QUERY = RedboxQuery(
                     ]
                 ),
             ),
-            RedboxState(
+            dict(
                 request=TEST_QUERY,
-                documents={
-                    "group_1": {
-                        "chunk_2": None,
-                    },
-                    "group_2": None,
-                    "group_3": {
-                        "chunk_1": {"page_content": "foo", "metadata": {"index": 1, "file_name": "foo"}},
-                    },
-                },
+                documents=DocumentState(
+                    groups={
+                        GROUP_IDS[0]: {
+                            DOCUMENT_IDS[1]: None,
+                        },
+                        GROUP_IDS[1]: None,
+                        GROUP_IDS[2]: {
+                            DOCUMENT_IDS[0]: {"page_content": "foo", "metadata": {"index": 1, "file_name": "foo"}},
+                        },
+                    }
+                ),
                 text="Some new text",
                 tool_calls={
-                    "tool_1": {"called": True},
+                    "tool_1": {"tool": {"name": "foo", "args": {"a": 1, "b": 2}, "id": "123"}, "called": True},
                     "tool_2": None,
-                    "tool_3": {"tool": {"name": "foo", "args": {"a": 1, "b": 2}}, "called": False},
+                    "tool_3": {"tool": {"name": "foo", "args": {"a": 1, "b": 2}, "id": "123"}, "called": False},
                 },
                 metadata=RequestMetadata(
                     llm_calls=[
@@ -354,24 +362,24 @@ TEST_QUERY = RedboxQuery(
                     ]
                 ),
             ),
-            RedboxState(
+            dict(
                 request=TEST_QUERY,
-                documents={
-                    "group_1": {
-                        "chunk_1": {"page_content": "foo", "metadata": {"index": 1, "file_name": "foo"}},
-                        "chunk_2": None,
-                    },
-                    "group_2": None,
-                    "group_3": {
-                        "chunk_1": {"page_content": "foo", "metadata": {"index": 1, "file_name": "foo"}},
-                    },
-                },
+                documents=DocumentState(
+                    groups={
+                        GROUP_IDS[0]: {
+                            DOCUMENT_IDS[0]: {"page_content": "foo", "metadata": {"index": 1, "file_name": "foo"}},
+                        },
+                        GROUP_IDS[2]: {
+                            DOCUMENT_IDS[0]: {"page_content": "foo", "metadata": {"index": 1, "file_name": "foo"}},
+                        },
+                    }
+                ),
                 text="Some new text",
                 route_name="my_route",
                 tool_calls={
-                    "tool_1": {"tool": {"name": "foo", "args": {"a": 1, "b": 2}}, "called": True},
+                    "tool_1": {"tool": {"name": "foo", "args": {"a": 1, "b": 2}, "id": "123"}, "called": True},
                     "tool_2": None,
-                    "tool_3": {"tool": {"name": "foo", "args": {"a": 1, "b": 2}}, "called": False},
+                    "tool_3": {"tool": {"name": "foo", "args": {"a": 1, "b": 2}, "id": "123"}, "called": False},
                 },
                 metadata=RequestMetadata(
                     llm_calls=[
@@ -402,7 +410,7 @@ TEST_QUERY = RedboxQuery(
         ),
     ],
 )
-def test_merge_redbox_state_updates(a: RedboxState, b: RedboxState, expected: RedboxState):
+def test_merge_redbox_state_updates(a: dict, b: dict, expected: dict):
     """
     Checks that state updates will be merged correctly.
 
