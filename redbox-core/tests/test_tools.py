@@ -11,9 +11,9 @@ from redbox.graph.nodes.tools import (
     build_search_documents_tool,
     build_search_wikipedia_tool,
 )
-from redbox.models.settings import Settings
 from redbox.models.chain import AISettings, RedboxQuery, RedboxState
 from redbox.models.file import ChunkCreatorType, ChunkMetadata, ChunkResolution
+from redbox.models.settings import Settings
 from redbox.test.data import RedboxChatTestCase
 from redbox.transform import flatten_document_state
 from tests.retriever.test_retriever import TEST_CHAIN_PARAMETERS
@@ -111,7 +111,7 @@ def test_search_documents_tool(
             assert {c.metadata["uri"] for c in result_flat} <= set(stored_file_parameterised.query.s3_keys)
 
         # Check docstate is formed as expected, similar to transform tests
-        for group_uuid, group_docs in result_docstate.items():
+        for group_uuid, group_docs in result_docstate.groups.items():
             assert isinstance(group_uuid, UUID)
             assert isinstance(group_docs, dict)
 
