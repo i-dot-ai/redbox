@@ -96,15 +96,6 @@ def multiple_docs_in_group_conditional(state: RedboxState) -> bool:
     return any(len(group) > 1 for group in state.documents.groups.values())
 
 
-def build_tools_selected_conditional(_tools: list[str]) -> Runnable:
-    """Given a list of tools, returns True if any tool is in the state and uncalled."""
-
-    def _tools_selected_conditional(_state: RedboxState) -> bool:
-        return False
-
-    return _tools_selected_conditional
-
-
 def build_strings_end_text_conditional(*strings: str) -> Runnable:
     """Given a list of strings, returns the string if the end of state.last_message.content contains it."""
     pattern = "|".join(re.escape(s) for s in strings)
