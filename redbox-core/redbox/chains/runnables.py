@@ -17,7 +17,7 @@ from redbox.chains.components import get_tokeniser
 from redbox.models.chain import ChainChatMessage, PromptSet, RedboxState, get_prompts
 from redbox.models.errors import QuestionLengthError
 from redbox.models.graph import RedboxEventType
-from redbox.transform import flatten_document_state, get_all_metadata, format_agent_messages
+from redbox.transform import flatten_document_state, get_all_metadata
 
 log = logging.getLogger()
 re_string_pattern = re.compile(r"(\S+)")
