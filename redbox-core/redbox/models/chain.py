@@ -230,11 +230,7 @@ def metadata_reducer(
     )
 
 
-# Represents the state of multiple tools.
-ToolState = dict[str, ToolCall | None]
-
-
-def tool_calls_reducer(current: ToolState, update: ToolState | None) -> ToolState:
+def tool_calls_reducer(current: list[ToolCall], update: ToolCall | list[ToolCall] | None) -> list[ToolCall]:
     """Handles updates to the tool state.
 
     * If a new key is added, adds it to the state.
@@ -242,29 +238,33 @@ def tool_calls_reducer(current: ToolState, update: ToolState | None) -> ToolStat
     * If update is None, clears all tool calls
     """
     if not update:
-        return {}
-
-    # If update is actually a list of state updates, run them one by one
-    if isinstance(update, list):
-        reduced = reduce(lambda current, update: tool_calls_reducer(current, update), update, current)
-        return reduced
+        return []
 
     reduced = current.copy()
 
-    for key, value in update.items():
-        if value is None:
-            reduced.pop(key, None)
-        else:
-            reduced[key] = value
+    _reduced = {v["id"]: ToolCall(**v) for v in reduced}
 
-    return reduced
+    if isinstance(update, dict):
+        _update = {update["id"]: ToolCall(**update)}
+    elif isinstance(update, list):
+        _update = {v["id"]: ToolCall(**v) for v in update}
+    else:
+        raise ValueError
+
+    for key, value in _update.items():
+        if value is None:
+            _reduced.pop(key, None)
+        else:
+            _reduced[key] = value
+
+    return list(_reduced.values())
 
 
 class RedboxState(BaseModel):
     request: RedboxQuery
     documents: Annotated[DocumentState, document_reducer] = DocumentState()
     route_name: str | None = None
-    tool_calls: Annotated[ToolState | None, tool_calls_reducer] = None
+    tool_calls: Annotated[list[ToolCall] | None, tool_calls_reducer] = None
     metadata: Annotated[RequestMetadata | None, metadata_reducer] = None
     citations: list[Citation] | None = None
     steps_left: Annotated[int | None, RemainingStepsManager] = None

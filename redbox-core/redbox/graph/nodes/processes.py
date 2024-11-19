@@ -266,14 +266,14 @@ def build_tool_pattern(
         messages = [
             AIMessage(
                 content="",
-                tool_calls=[tool_call for tool_call in state.tool_calls.values() or []],
+                tool_calls=state.tool_calls,
             )
         ]
 
         # Invoke the tool
         state_update = tool_node.invoke({"messages": messages})
 
-        tool_calls = {tool_id: dict(tool_call, called=True) for tool_id, tool_call in state.tool_calls.items()}
+        tool_calls = state.tool_calls
 
         return reduce(merge_redbox_state_updates, [state_update, {"tool_calls": tool_calls}])
 

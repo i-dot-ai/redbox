@@ -187,7 +187,7 @@ def get_agentic_search_graph(tools: dict[str, StructuredTool], debug: bool = Fal
         build_activity_log_node(
             lambda s: [
                 RedboxActivityEvent(message=get_log_formatter_for_retrieval_tool(tool_state_entry).log_call())
-                for tool_state_entry in s.tool_calls.values()
+                for tool_state_entry in s.tool_calls
             ]
         ),
     )

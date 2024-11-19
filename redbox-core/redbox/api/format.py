@@ -1,8 +1,8 @@
 import json
 
 from langchain_core.documents.base import Document
+from langchain_core.messages import ToolCall
 
-from redbox.models.chain import ToolState
 from redbox.transform import combine_documents
 
 
@@ -38,14 +38,14 @@ def reduce_chunks_by_tokens(chunks: list[Document] | None, chunk: Document, max_
     return chunks
 
 
-def format_toolstate(toolstate: ToolState | None) -> str:
+def format_toolstate(toolstate: list[ToolCall] | None) -> str:
     """Takes a toolstate and transforms it into a structure familiar to an LLM."""
     if not toolstate:
         return ""
 
     formatted_calls: list[str] = []
 
-    for call_info in toolstate.values():
+    for call_info in toolstate:
         tool_call = (
             "<ToolCall>\n"
             f"\t<Name>{call_info['name']}</Name>\n"

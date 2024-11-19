@@ -50,9 +50,9 @@ def build_tool_send(target: str) -> Callable[[RedboxState], list[Send]]:
         tool_send_states: list[RedboxState] = [
             _copy_state(
                 state,
-                tool_calls={tool_id: tool_call},
+                tool_calls=[tool_call],
             )
-            for tool_id, tool_call in state.tool_calls.items()
+            for tool_call in state.tool_calls
         ]
         return [Send(node=target, arg=state) for state in tool_send_states]
 
