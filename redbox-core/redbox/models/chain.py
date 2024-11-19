@@ -242,12 +242,15 @@ def tool_calls_reducer(current: list[ToolCall], update: ToolCall | list[ToolCall
 
     reduced = current.copy()
 
-    _reduced = {v["id"]: ToolCall(**v) for v in reduced}
+    try:
+        _reduced = {v["id"]: ToolCall(**v) for v in reduced}
+    except Exception:
+        raise
 
     if isinstance(update, dict):
         _update = {update["id"]: ToolCall(**update)}
     elif isinstance(update, list):
-        _update = {v["id"]: ToolCall(**v) for v in update}
+        _update = {v["id"]: ToolCall(**v) for v in update if v}
     else:
         raise ValueError
 

@@ -3,6 +3,7 @@ from uuid import uuid4
 
 import pytest
 from langchain_core.documents import Document
+from langchain_core.messages import ToolCall
 
 from redbox.models.chain import (
     AISettings,
@@ -13,6 +14,7 @@ from redbox.models.chain import (
     document_reducer,
     merge_redbox_state_updates,
     metadata_reducer,
+    tool_calls_reducer,
 )
 
 GROUP_IDS = [uuid4() for _ in range(4)]
@@ -196,73 +198,50 @@ def test_metadata_reducer(a: RequestMetadata, b: RequestMetadata, expected: Requ
     assert result == expected, f"Expected: {expected}. Result: {result}"
 
 
-# @pytest.mark.parametrize(
-#     ("a", "b", "expected"),
-#     [
-#         (
-#             ToolState(
-#                 {
-#                     "foo": [ToolCall({"name": "foo", "args": {"a": 1, "b": 2}, "id": "123"})],
-#                     "bar": [ToolCall({"name": "bar", "args": {"x": 10, "y": 20}, "id": "456"})],
-#                 }
-#             ),
-#             ToolState(
-#                 {
-#                     "baz": [ToolCall({"name": "baz", "args": {"param": "value"}, "id": "789", "type": "tool_call"})]
-#                 }
-#             ),
-#             ToolState(
-#                 {
-#                     "foo": [ToolCall({"name": "foo", "args": {"a": 1, "b": 2}, "id": "123"})],
-#                     "bar": [ToolCall({"name": "bar", "args": {"x": 10, "y": 20}, "id": "456"})],
-#                     "baz": [ToolCall({"name": "baz", "args": {"param": "value"}, "id": "789", "type": "tool_call"})]
-#                 }
-#             ),
-#         ),
-#         (
-#             ToolState(
-#                 {
-#                     "foo": {"tool": ToolCall({"name": "foo", "args": {"a": 1, "b": 2}, "id": "123"}), "called": False},
-#                     "bar": {
-#                         "tool": ToolCall({"name": "bar", "args": {"x": 10, "y": 20}, "id": "456"}),
-#                         "called": False,
-#                     },
-#                 }
-#             ),
-#             ToolState({"bar": None}),
-#             ToolState(
-#                 {"foo": {"tool": ToolCall({"name": "foo", "args": {"a": 1, "b": 2}, "id": "123"}), "called": False}}
-#             ),
-#         ),
-#         (
-#             ToolState(
-#                 {"foo": {"tool": ToolCall({"name": "foo", "args": {"a": 1, "b": 2}, "id": "123"}), "called": False}}
-#             ),
-#             None,
-#             ToolState(),
-#         ),
-#         (
-#             ToolState(
-#                 {"foo": {"tool": ToolCall({"name": "foo", "args": {"a": 1, "b": 2}, "id": "123"}), "called": False}}
-#             ),
-#             ToolState(
-#                 {"foo": {"tool": ToolCall({"name": "foo", "args": {"a": 1, "b": 2}, "id": "123"}), "called": True}}
-#             ),
-#             ToolState(
-#                 {"foo": {"tool": ToolCall({"name": "foo", "args": {"a": 1, "b": 2}, "id": "123"}), "called": True}}
-#             ),
-#         ),
-#     ],
-# )
-# def test_tool_calls_reducer(a: list[ToolCall], b: list[ToolCall], expected: list[ToolCall]):
-#     """Checks the key properties of the ToolState reducer.
-#
-#     * If a new key is added, adds it to the state.
-#     * If an existing key is None'd, removes it
-#     * If update is None, clears all tool calls
-#     """
-#     result = tool_calls_reducer(a, b)
-#     assert result == expected, f"Expected: {expected}. Result: {result}"
+@pytest.mark.parametrize(
+    ("a", "b", "expected"),
+    [
+        (
+            [
+                ToolCall(name="foo", args={"a": 1, "b": 2}, id="123"),
+                ToolCall(name="bar", args={"x": 10, "y": 20}, id="456"),
+            ],
+            [ToolCall(name="baz", args={"param": "value"}, id="789", type="tool_call")],
+            [
+                ToolCall(name="foo", args={"a": 1, "b": 2}, id="123"),
+                ToolCall(name="bar", args={"x": 10, "y": 20}, id="456"),
+                ToolCall(name="baz", args={"param": "value"}, id="789", type="tool_call"),
+            ],
+        ),
+        (
+            [
+                ToolCall(name="foo", args={"a": 1, "b": 2}, id="123"),
+                ToolCall(name="bar", args={"x": 10, "y": 20}, id="456"),
+            ],
+            [ToolCall(name="baz", args={"param": "value"}, id="456", type="tool_call")],
+            [
+                ToolCall(name="foo", args={"a": 1, "b": 2}, id="123"),
+                ToolCall(name="baz", args={"param": "value"}, id="456", type="tool_call"),
+            ],
+        ),
+        (
+            [
+                ToolCall(name="foo", args={"a": 1, "b": 2}, id="123"),
+            ],
+            [],
+            [],
+        ),
+    ],
+)
+def test_tool_calls_reducer(a: list[ToolCall], b: list[ToolCall], expected: list[ToolCall]):
+    """Checks the key properties of the ToolState reducer.
+
+    * If a new key is added, adds it to the state.
+    * If an existing key is None'd, removes it
+    * If update is None, clears all tool calls
+    """
+    result = tool_calls_reducer(a, b)
+    assert result == expected, f"Expected: {expected}. Result: {result}"
 
 
 TEST_QUERY = RedboxQuery(
@@ -293,10 +272,10 @@ TEST_QUERY = RedboxQuery(
                 ),
                 text="Some old text",
                 route_name="my_route",
-                tool_calls={
-                    "tool_1": {"tool": {"name": "foo", "args": {"a": 1, "b": 2}, "id": "123"}, "called": False},
-                    "tool_2": {"tool": {"name": "bar", "args": {"a": 1, "b": 2}, "id": "123"}, "called": True},
-                },
+                tool_calls=[
+                    {"name": "foo", "args": {"a": 1, "b": 2}, "id": "123"},
+                    {"name": "bar", "args": {"a": 1, "b": 2}, "id": "123"},
+                ],
                 metadata=RequestMetadata(
                     llm_calls=[
                         {
@@ -330,11 +309,11 @@ TEST_QUERY = RedboxQuery(
                     }
                 ),
                 text="Some new text",
-                tool_calls={
-                    "tool_1": {"tool": {"name": "foo", "args": {"a": 1, "b": 2}, "id": "123"}, "called": True},
-                    "tool_2": None,
-                    "tool_3": {"tool": {"name": "foo", "args": {"a": 1, "b": 2}, "id": "123"}, "called": False},
-                },
+                tool_calls=[
+                    {"name": "foo", "args": {"a": 1, "b": 2}, "id": "123"},
+                    None,
+                    {"name": "foo", "args": {"a": 1, "b": 2}, "id": "123"},
+                ],
                 metadata=RequestMetadata(
                     llm_calls=[
                         {
@@ -361,11 +340,9 @@ TEST_QUERY = RedboxQuery(
                 ),
                 text="Some new text",
                 route_name="my_route",
-                tool_calls={
-                    "tool_1": {"tool": {"name": "foo", "args": {"a": 1, "b": 2}, "id": "123"}, "called": True},
-                    "tool_2": None,
-                    "tool_3": {"tool": {"name": "foo", "args": {"a": 1, "b": 2}, "id": "123"}, "called": False},
-                },
+                tool_calls=[
+                    {"name": "foo", "args": {"a": 1, "b": 2}, "id": "123"},
+                ],
                 metadata=RequestMetadata(
                     llm_calls=[
                         {
