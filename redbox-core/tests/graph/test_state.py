@@ -3,7 +3,6 @@ from uuid import uuid4
 
 import pytest
 from langchain_core.documents import Document
-from langchain_core.messages import ToolCall
 
 from redbox.models.chain import (
     AISettings,
@@ -11,11 +10,9 @@ from redbox.models.chain import (
     LLMCallMetadata,
     RedboxQuery,
     RequestMetadata,
-    ToolState,
     document_reducer,
     merge_redbox_state_updates,
     metadata_reducer,
-    tool_calls_reducer,
 )
 
 GROUP_IDS = [uuid4() for _ in range(4)]
@@ -199,87 +196,6 @@ def test_metadata_reducer(a: RequestMetadata, b: RequestMetadata, expected: Requ
     assert result == expected, f"Expected: {expected}. Result: {result}"
 
 
-@pytest.mark.parametrize(
-    ("a", "b", "expected"),
-    [
-        (
-            ToolState(
-                {
-                    "foo": {"tool": ToolCall({"name": "foo", "args": {"a": 1, "b": 2}, "id": "123"}), "called": False},
-                    "bar": {
-                        "tool": ToolCall({"name": "bar", "args": {"x": 10, "y": 20}, "id": "456"}),
-                        "called": False,
-                    },
-                }
-            ),
-            ToolState(
-                {
-                    "baz": {
-                        "tool": ToolCall({"name": "baz", "args": {"param": "value"}, "id": "789", "type": "tool_call"}),
-                        "called": False,
-                    }
-                }
-            ),
-            ToolState(
-                {
-                    "foo": {"tool": ToolCall({"name": "foo", "args": {"a": 1, "b": 2}, "id": "123"}), "called": False},
-                    "bar": {
-                        "tool": ToolCall({"name": "bar", "args": {"x": 10, "y": 20}, "id": "456"}),
-                        "called": False,
-                    },
-                    "baz": {
-                        "tool": ToolCall({"name": "baz", "args": {"param": "value"}, "id": "789", "type": "tool_call"}),
-                        "called": False,
-                    },
-                }
-            ),
-        ),
-        (
-            ToolState(
-                {
-                    "foo": {"tool": ToolCall({"name": "foo", "args": {"a": 1, "b": 2}, "id": "123"}), "called": False},
-                    "bar": {
-                        "tool": ToolCall({"name": "bar", "args": {"x": 10, "y": 20}, "id": "456"}),
-                        "called": False,
-                    },
-                }
-            ),
-            ToolState({"bar": None}),
-            ToolState(
-                {"foo": {"tool": ToolCall({"name": "foo", "args": {"a": 1, "b": 2}, "id": "123"}), "called": False}}
-            ),
-        ),
-        (
-            ToolState(
-                {"foo": {"tool": ToolCall({"name": "foo", "args": {"a": 1, "b": 2}, "id": "123"}), "called": False}}
-            ),
-            None,
-            ToolState(),
-        ),
-        (
-            ToolState(
-                {"foo": {"tool": ToolCall({"name": "foo", "args": {"a": 1, "b": 2}, "id": "123"}), "called": False}}
-            ),
-            ToolState(
-                {"foo": {"tool": ToolCall({"name": "foo", "args": {"a": 1, "b": 2}, "id": "123"}), "called": True}}
-            ),
-            ToolState(
-                {"foo": {"tool": ToolCall({"name": "foo", "args": {"a": 1, "b": 2}, "id": "123"}), "called": True}}
-            ),
-        ),
-    ],
-)
-def test_tool_calls_reducer(a: ToolState, b: ToolState, expected: ToolState):
-    """Checks the key properties of the ToolState reducer.
-
-    * If a new key is added, adds it to the state.
-    * If an existing key is None'd, removes it
-    * If update is None, clears all tool calls
-    """
-    result = tool_calls_reducer(a, b)
-    assert result == expected, f"Expected: {expected}. Result: {result}"
-
-
 TEST_QUERY = RedboxQuery(
     question="Lorem ipsum?",
     s3_keys=["s3_key.txt"],
@@ -308,10 +224,6 @@ TEST_QUERY = RedboxQuery(
                 ),
                 text="Some old text",
                 route_name="my_route",
-                tool_calls={
-                    "tool_1": {"tool": {"name": "foo", "args": {"a": 1, "b": 2}, "id": "123"}, "called": False},
-                    "tool_2": {"tool": {"name": "bar", "args": {"a": 1, "b": 2}, "id": "123"}, "called": True},
-                },
                 metadata=RequestMetadata(
                     llm_calls=[
                         {
@@ -345,11 +257,6 @@ TEST_QUERY = RedboxQuery(
                     }
                 ),
                 text="Some new text",
-                tool_calls={
-                    "tool_1": {"tool": {"name": "foo", "args": {"a": 1, "b": 2}, "id": "123"}, "called": True},
-                    "tool_2": None,
-                    "tool_3": {"tool": {"name": "foo", "args": {"a": 1, "b": 2}, "id": "123"}, "called": False},
-                },
                 metadata=RequestMetadata(
                     llm_calls=[
                         {
@@ -376,11 +283,6 @@ TEST_QUERY = RedboxQuery(
                 ),
                 text="Some new text",
                 route_name="my_route",
-                tool_calls={
-                    "tool_1": {"tool": {"name": "foo", "args": {"a": 1, "b": 2}, "id": "123"}, "called": True},
-                    "tool_2": None,
-                    "tool_3": {"tool": {"name": "foo", "args": {"a": 1, "b": 2}, "id": "123"}, "called": False},
-                },
                 metadata=RequestMetadata(
                     llm_calls=[
                         {
