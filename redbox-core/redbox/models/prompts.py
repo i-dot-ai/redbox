@@ -129,6 +129,7 @@ RETRIEVAL_QUESTION_PROMPT = "{question} \n=========\n{formatted_documents}\n====
 
 AGENTIC_RETRIEVAL_QUESTION_PROMPT = (
     "The following context and previous actions are provided to assist you. \n\n"
+    "Previous tool calls: \n\n <ToolCalls> \n\n  {tool_calls} </ToolCalls> \n\n "
     "Document snippets: \n\n <Documents> \n\n {formatted_documents} </Documents> \n\n "
     "User question: \n\n {question}"
 )
