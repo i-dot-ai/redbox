@@ -15,11 +15,17 @@ from sklearn.metrics.pairwise import cosine_similarity
 from redbox.chains.components import get_embeddings
 from redbox.models.chain import RedboxState
 from redbox.models.file import ChunkCreatorType, ChunkMetadata, ChunkResolution
-
 from redbox.models.settings import get_settings
-from redbox.retriever.queries import add_document_filter_scores_to_query, build_document_query
+from redbox.retriever.queries import (
+    add_document_filter_scores_to_query,
+    build_document_query,
+)
 from redbox.retriever.retrievers import query_to_documents
-from redbox.transform import merge_documents, sort_documents, structure_documents_by_group_and_indices
+from redbox.transform import (
+    merge_documents,
+    sort_documents,
+    structure_documents_by_group_and_indices,
+)
 
 
 def is_valid_tool(tool: StructuredTool) -> bool:
@@ -133,7 +139,7 @@ def build_search_documents_tool(
     return _search_documents
 
 
-def build_govuk_search_tool(num_results: int = 1, filter=False) -> Tool:
+def build_govuk_search_tool(num_results: int = 1, filter=True) -> Tool:
     """Constructs a tool that searches gov.uk and sets state["documents"]."""
 
     tokeniser = tiktoken.encoding_for_model("gpt-4o")
