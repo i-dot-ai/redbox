@@ -3,7 +3,6 @@ from uuid import uuid4
 
 import pytest
 from langchain_core.documents import Document
-from langchain_core.messages import ToolCall
 
 from redbox.models.chain import (
     AISettings,
@@ -14,7 +13,6 @@ from redbox.models.chain import (
     document_reducer,
     merge_redbox_state_updates,
     metadata_reducer,
-    tool_calls_reducer,
 )
 
 GROUP_IDS = [uuid4() for _ in range(4)]
@@ -195,52 +193,6 @@ multiple_models_multiple_calls_1a = multiple_models_multiple_calls_1 + [
 )
 def test_metadata_reducer(a: RequestMetadata, b: RequestMetadata, expected: RequestMetadata):
     result = metadata_reducer(a, b)
-    assert result == expected, f"Expected: {expected}. Result: {result}"
-
-
-@pytest.mark.parametrize(
-    ("a", "b", "expected"),
-    [
-        (
-            [
-                ToolCall(name="foo", args={"a": 1, "b": 2}, id="123"),
-                ToolCall(name="bar", args={"x": 10, "y": 20}, id="456"),
-            ],
-            [ToolCall(name="baz", args={"param": "value"}, id="789", type="tool_call")],
-            [
-                ToolCall(name="foo", args={"a": 1, "b": 2}, id="123"),
-                ToolCall(name="bar", args={"x": 10, "y": 20}, id="456"),
-                ToolCall(name="baz", args={"param": "value"}, id="789", type="tool_call"),
-            ],
-        ),
-        (
-            [
-                ToolCall(name="foo", args={"a": 1, "b": 2}, id="123"),
-                ToolCall(name="bar", args={"x": 10, "y": 20}, id="456"),
-            ],
-            [ToolCall(name="baz", args={"param": "value"}, id="456", type="tool_call")],
-            [
-                ToolCall(name="foo", args={"a": 1, "b": 2}, id="123"),
-                ToolCall(name="baz", args={"param": "value"}, id="456", type="tool_call"),
-            ],
-        ),
-        (
-            [
-                ToolCall(name="foo", args={"a": 1, "b": 2}, id="123"),
-            ],
-            [],
-            [],
-        ),
-    ],
-)
-def test_tool_calls_reducer(a: list[ToolCall], b: list[ToolCall], expected: list[ToolCall]):
-    """Checks the key properties of the ToolState reducer.
-
-    * If a new key is added, adds it to the state.
-    * If an existing key is None'd, removes it
-    * If update is None, clears all tool calls
-    """
-    result = tool_calls_reducer(a, b)
     assert result == expected, f"Expected: {expected}. Result: {result}"
 
 

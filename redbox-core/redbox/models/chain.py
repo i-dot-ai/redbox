@@ -6,7 +6,7 @@ from typing import Annotated, Literal, NotRequired, Required, TypedDict, get_arg
 from uuid import UUID, uuid4
 
 from langchain_core.documents import Document
-from langchain_core.messages import AnyMessage, ToolCall
+from langchain_core.messages import AnyMessage
 from langgraph.graph.message import add_messages
 from langgraph.managed.is_last_step import RemainingStepsManager
 from pydantic import BaseModel, Field
@@ -228,39 +228,6 @@ def metadata_reducer(
         selected_files_total_tokens=update.selected_files_total_tokens or current.selected_files_total_tokens,
         number_of_selected_files=update.number_of_selected_files or current.number_of_selected_files,
     )
-
-
-def tool_calls_reducer(current: list[ToolCall], update: ToolCall | list[ToolCall] | None) -> list[ToolCall]:
-    """Handles updates to the tool state.
-
-    * If a new key is added, adds it to the state.
-    * If an existing key is None'd, removes it
-    * If update is None, clears all tool calls
-    """
-    if not update:
-        return []
-
-    reduced = current.copy()
-
-    try:
-        _reduced = {v["id"]: ToolCall(**v) for v in reduced}
-    except Exception:
-        raise
-
-    if isinstance(update, dict):
-        _update = {update["id"]: ToolCall(**update)}
-    elif isinstance(update, list):
-        _update = {v["id"]: ToolCall(**v) for v in update if v}
-    else:
-        raise ValueError
-
-    for key, value in _update.items():
-        if value is None:
-            _reduced.pop(key, None)
-        else:
-            _reduced[key] = value
-
-    return list(_reduced.values())
 
 
 class RedboxState(BaseModel):
