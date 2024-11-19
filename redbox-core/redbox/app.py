@@ -57,7 +57,7 @@ class Redbox:
 
         search_documents = build_search_documents_tool(
             es_client=_env.elasticsearch_client(),
-            index_name=f"{_env.elastic_root_index}-chunk",
+            index_name=_env.elastic_chunk_alias,
             embedding_model=self.embedding_model,
             embedding_field_name=_env.embedding_document_field_name,
             chunk_resolution=ChunkResolution.normal,
