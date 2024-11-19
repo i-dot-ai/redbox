@@ -40,7 +40,7 @@ def reduce_chunks_by_tokens(chunks: list[Document] | None, chunk: Document, max_
 
 
 def format_tool_calls(state: RedboxState) -> str:
-    """Takes a state's last message tool_calls and transforms it into a structure familiar to an LLM."""
+    """Takes all tool_calls in previous messages and transforms it into a structure familiar to an LLM."""
     if not state.messages:
         return ""
 
@@ -49,16 +49,18 @@ def format_tool_calls(state: RedboxState) -> str:
 
     formatted_calls: list[str] = []
 
-    for call_info in state.last_message.tool_calls:
-        tool_call = (
-            "<ToolCall>\n"
-            f"\t<Name>{call_info['name']}</Name>\n"
-            f"\t<Type>{call_info['type']}</Type>\n"
-            "\t<Arguments>\n"
-            f"{json.dumps(call_info['args'], indent=2).replace('{', '').replace('}', '').replace('"', '')}\n"
-            "\t</Arguments>\n"
-            "</ToolCall>"
-        )
-        formatted_calls.append(tool_call)
+    for message in state.messages:
+        if message.type == "ai":
+            for id, call_info in enumerate(message.tool_calls):
+                tool_call = (
+                    "<ToolCall>\n"
+                    f"\t<Name>{call_info['name']}</Name>\n"
+                    f"\t<Type>{call_info['type']}</Type>\n"
+                    "\t<Arguments>\n"
+                    f"{json.dumps(call_info['args'], indent=2).replace('{', '').replace('}', '').replace('"', '')}\n"
+                    "\t</Arguments>\n"
+                    "</ToolCall>"
+                )
+                formatted_calls.append(tool_call)
 
     return "\n\n".join(formatted_calls)
