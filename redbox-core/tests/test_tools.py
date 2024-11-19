@@ -210,3 +210,37 @@ def test_wikipedia_tool():
         metadata = ChunkMetadata.model_validate(document.metadata)
         assert urlparse(metadata.uri).hostname == "en.wikipedia.org"
         assert metadata.creator_type == ChunkCreatorType.wikipedia
+
+
+@pytest.mark.parametrize(
+    "is_filter, relevant_return, query, keyword",
+    [
+        (False, False, "UK government use of AI", "artificial intelligence"),
+        (True, True, "UK government use of AI", "artificial intelligence"),
+    ],
+)
+@pytest.mark.vcr
+def test_gov_filter_AI(is_filter, relevant_return, query, keyword):
+    def run_tool(is_filter):
+        tool = build_govuk_search_tool(num_results=1, filter=is_filter)
+        state_update = tool.invoke(
+            {
+                "query": query,
+                "state": RedboxState(
+                    request=RedboxQuery(
+                        question=query,
+                        s3_keys=[],
+                        user_uuid=uuid4(),
+                        chat_history=[],
+                        ai_settings=AISettings(),
+                        permitted_s3_keys=[],
+                    )
+                ),
+            }
+        )
+
+        return flatten_document_state(state_update["documents"])
+
+    # call gov tool without additional filter
+    documents = run_tool(is_filter)
+    assert any(keyword in document.page_content for document in documents) == relevant_return
