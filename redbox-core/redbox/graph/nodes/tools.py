@@ -1,5 +1,6 @@
 from typing import Annotated, Any, Iterable, get_args, get_origin, get_type_hints
 
+import numpy as np
 import requests
 import tiktoken
 from elasticsearch import Elasticsearch
@@ -9,12 +10,22 @@ from langchain_core.embeddings.embeddings import Embeddings
 from langchain_core.messages import ToolCall
 from langchain_core.tools import StructuredTool, Tool, tool
 from langgraph.prebuilt import InjectedState
+from sklearn.metrics.pairwise import cosine_similarity
 
+from redbox.chains.components import get_embeddings
 from redbox.models.chain import RedboxState
 from redbox.models.file import ChunkCreatorType, ChunkMetadata, ChunkResolution
-from redbox.retriever.queries import add_document_filter_scores_to_query, build_document_query
+from redbox.models.settings import get_settings
+from redbox.retriever.queries import (
+    add_document_filter_scores_to_query,
+    build_document_query,
+)
 from redbox.retriever.retrievers import query_to_documents
-from redbox.transform import merge_documents, sort_documents, structure_documents_by_group_and_indices
+from redbox.transform import (
+    merge_documents,
+    sort_documents,
+    structure_documents_by_group_and_indices,
+)
 
 
 def is_valid_tool(tool: StructuredTool) -> bool:
@@ -128,10 +139,22 @@ def build_search_documents_tool(
     return _search_documents
 
 
-def build_govuk_search_tool(num_results: int = 1) -> Tool:
+def build_govuk_search_tool(num_results: int = 1, filter=True) -> Tool:
     """Constructs a tool that searches gov.uk and sets state["documents"]."""
 
     tokeniser = tiktoken.encoding_for_model("gpt-4o")
+
+    def recalculate_similarity(response, query, num_results):
+        embedding_model = get_embeddings(get_settings())
+        em_query = embedding_model.embed_query(query)
+        for r in response.get("results"):
+            description = r.get("description")
+            em_des = embedding_model.embed_query(description)
+            r["similarity"] = cosine_similarity(np.array(em_query).reshape(1, -1), np.array(em_des).reshape(1, -1))[0][
+                0
+            ]
+        response["results"] = sorted(response.get("results"), key=lambda x: x["similarity"], reverse=True)[:num_results]
+        return response
 
     @tool
     def _search_govuk(query: str, state: Annotated[RedboxState, InjectedState]) -> dict[str, Any]:
@@ -163,13 +186,16 @@ def build_govuk_search_tool(num_results: int = 1) -> Tool:
             f"{url_base}/api/search.json",
             params={
                 "q": query,
-                "count": num_results,
+                "count": 10 if filter else num_results,
                 "fields": required_fields,
             },
             headers={"Accept": "application/json"},
         )
         response.raise_for_status()
         response = response.json()
+
+        if filter:
+            response = recalculate_similarity(response, query, num_results)
 
         mapped_documents = []
         for i, doc in enumerate(response["results"]):
