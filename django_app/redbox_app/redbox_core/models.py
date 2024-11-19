@@ -395,8 +395,8 @@ class User(BaseUser, UUIDPrimaryKeyBase):
     class Usefulness(models.TextChoices):
         NOT_USED = "I have not used GenAI", _("I have not used GenAI")
         NOT_ENOUGH = (
-            "I have not used GenAI enough to say its useful or not",
-            _("I have not used GenAI enough to say its useful or not"),
+            "I have not used GenAI enough to say if it's useful or not",
+            _("I have not used GenAI enough to say if it's useful or not"),
         )
         NOT_FIGURED_OUT = (
             "I have not figured out how to best use GenAI",
