@@ -6,7 +6,7 @@ from typing import Annotated, Literal, NotRequired, Required, TypedDict, get_arg
 from uuid import UUID, uuid4
 
 from langchain_core.documents import Document
-from langchain_core.messages import AnyMessage, ToolCall
+from langchain_core.messages import AnyMessage
 from langgraph.graph.message import add_messages
 from langgraph.managed.is_last_step import RemainingStepsManager
 from pydantic import BaseModel, Field
@@ -230,48 +230,10 @@ def metadata_reducer(
     )
 
 
-class ToolStateEntry(TypedDict):
-    """Represents a single tool call in the ToolState."""
-
-    tool: ToolCall
-    called: bool
-
-
-# Represents the state of multiple tools.
-ToolState = dict[str, ToolStateEntry | None]
-
-
-def tool_calls_reducer(current: ToolState, update: ToolState | None) -> ToolState:
-    """Handles updates to the tool state.
-
-    * If a new key is added, adds it to the state.
-    * If an existing key is None'd, removes it
-    * If update is None, clears all tool calls
-    """
-    if not update:
-        return {}
-
-    # If update is actually a list of state updates, run them one by one
-    if isinstance(update, list):
-        reduced = reduce(lambda current, update: tool_calls_reducer(current, update), update, current)
-        return reduced
-
-    reduced = current.copy()
-
-    for key, value in update.items():
-        if value is None:
-            reduced.pop(key, None)
-        else:
-            reduced[key] = value
-
-    return reduced
-
-
 class RedboxState(BaseModel):
     request: RedboxQuery
     documents: Annotated[DocumentState, document_reducer] = DocumentState()
     route_name: str | None = None
-    tool_calls: Annotated[ToolState | None, tool_calls_reducer] = None
     metadata: Annotated[RequestMetadata | None, metadata_reducer] = None
     citations: list[Citation] | None = None
     steps_left: Annotated[int | None, RemainingStepsManager] = None
@@ -385,6 +347,8 @@ def merge_redbox_state_updates(current: RedboxState, update: RedboxState) -> Red
                 merged_state[update_key] = dict_reducer(current=current_value or {}, update=update_value or {})
             elif current_value is None:
                 merged_state[update_key] = update_value
+            elif update_value is None:
+                merged_state[update_key] = current_value
             else:
                 # If it's annotated and not a dict, apply its reducer function
                 _, reducer_func = get_args(annotation)
