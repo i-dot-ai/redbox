@@ -342,6 +342,8 @@ TEST_QUERY = RedboxQuery(
                 route_name="my_route",
                 tool_calls=[
                     {"name": "foo", "args": {"a": 1, "b": 2}, "id": "123"},
+                    None,
+                    {"args": {"a": 1, "b": 2}, "id": "123", "name": "foo"},
                 ],
                 metadata=RequestMetadata(
                     llm_calls=[

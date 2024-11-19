@@ -267,7 +267,6 @@ class RedboxState(BaseModel):
     request: RedboxQuery
     documents: Annotated[DocumentState, document_reducer] = DocumentState()
     route_name: str | None = None
-    tool_calls: Annotated[list[ToolCall] | None, tool_calls_reducer] = None
     metadata: Annotated[RequestMetadata | None, metadata_reducer] = None
     citations: list[Citation] | None = None
     steps_left: Annotated[int | None, RemainingStepsManager] = None

@@ -1,7 +1,7 @@
 from uuid import uuid4
 
 from langchain_core.documents import Document
-from langchain_core.messages import ToolCall
+from langchain_core.messages import ToolCall, AIMessage
 from langgraph.constants import Send
 
 from redbox.graph.nodes.sends import build_document_chunk_send, build_document_group_send, build_tool_send
@@ -83,8 +83,7 @@ def test_build_tool_send():
     actual = tool_send(
         RedboxState(
             request=request,
-            tool_calls=tool_call_1 + tool_call_2,
-            text=None,
+            messages=[AIMessage(content="", tool_calls=tool_call_1 + tool_call_2)],
             route_name=None,
         ),
     )
@@ -93,8 +92,7 @@ def test_build_tool_send():
             node=target,
             arg=RedboxState(
                 request=request,
-                tool_calls=tool_call_1,
-                text=None,
+                messages=[AIMessage(content="", tool_calls=tool_call_1)],
                 route_name=None,
             ),
         ),
@@ -102,8 +100,7 @@ def test_build_tool_send():
             node=target,
             arg=RedboxState(
                 request=request,
-                tool_calls=tool_call_2,
-                text=None,
+                messages=[AIMessage(content="", tool_calls=tool_call_2)],
                 route_name=None,
             ),
         ),
