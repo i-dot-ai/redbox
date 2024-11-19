@@ -35,7 +35,7 @@ def build_chat_prompt_from_messages_runnable(
         Create a ChatPromptTemplate as part of a chain using 'chat_history'.
         Returns the PromptValue using values in the input_dict
         """
-        ai_settings = state["request"].ai_settings
+        ai_settings = state.request.ai_settings
         _tokeniser = tokeniser or get_tokeniser()
         _additional_variables = additional_variables or dict()
         task_system_prompt, task_question_prompt = get_prompts(state, prompt_set)
@@ -57,7 +57,7 @@ def build_chat_prompt_from_messages_runnable(
             raise QuestionLengthError
 
         truncated_history: list[ChainChatMessage] = []
-        for msg in state["request"].chat_history[::-1]:
+        for msg in state.request.chat_history[::-1]:
             chat_history_budget -= len(_tokeniser.encode(msg["text"]))
             if chat_history_budget <= 0:
                 break
@@ -65,12 +65,11 @@ def build_chat_prompt_from_messages_runnable(
                 truncated_history.insert(0, msg)
 
         prompt_template_context = (
-            state["request"].model_dump()
-            | {"messages": state.get("messages")}
+            state.request.model_dump()
             | {
-                "text": state.get("text"),
-                "formatted_documents": format_documents(flatten_document_state(state.get("documents"))),
-                "tool_calls": format_toolstate(state.get("tool_calls")),
+                "messages": state.messages,
+                "formatted_documents": format_documents(flatten_document_state(state.documents)),
+                "tool_calls": format_toolstate(state.tool_calls),
                 "system_info": ai_settings.system_info_prompt,
                 "persona_info": ai_settings.persona_info_prompt,
                 "caller_info": ai_settings.caller_info_prompt,

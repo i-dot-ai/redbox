@@ -83,7 +83,7 @@ def get_self_route_graph(retriever: VectorStoreRetriever, prompt_set: PromptSet,
     builder.add_edge("p_answer_question_or_decide_unanswerable", "p_set_route_name_from_answer")
     builder.add_conditional_edges(
         "p_set_route_name_from_answer",
-        lambda state: state["route_name"],
+        lambda state: state.route_name,
         {
             ChatRoute.chat_with_docs_map_reduce: "p_clear_documents",
             ChatRoute.search: END,
@@ -188,7 +188,7 @@ def get_agentic_search_graph(tools: dict[str, StructuredTool], debug: bool = Fal
         build_activity_log_node(
             lambda s: [
                 RedboxActivityEvent(message=get_log_formatter_for_retrieval_tool(tool_state_entry["tool"]).log_call())
-                for tool_state_entry in s["tool_calls"].values()
+                for tool_state_entry in s.tool_calls.values()
                 if not tool_state_entry["called"]
             ]
         ),
@@ -205,7 +205,7 @@ def get_agentic_search_graph(tools: dict[str, StructuredTool], debug: bool = Fal
     builder.add_edge("p_set_agentic_search_route", "d_x_steps_left_or_less")
     builder.add_conditional_edges(
         "d_x_steps_left_or_less",
-        lambda state: state["steps_left"] <= 8,
+        lambda state: state.steps_left <= 8,
         {
             True: "p_give_up_agent",
             False: "p_search_agent",
@@ -277,7 +277,7 @@ def get_chat_with_documents_graph(
 
     builder.add_node(
         "p_activity_log_tool_decision",
-        build_activity_log_node(lambda state: RedboxActivityEvent(message=f"Using _{state["route_name"]}_")),
+        build_activity_log_node(lambda state: RedboxActivityEvent(message=f"Using _{state.route_name}_")),
     )
 
     # Decisions
@@ -306,13 +306,13 @@ def get_chat_with_documents_graph(
     )
     builder.add_conditional_edges(
         "d_self_route_is_enabled",
-        lambda s: s["request"].ai_settings.self_route_enabled,
+        lambda s: s.request.ai_settings.self_route_enabled,
         {True: "p_answer_or_decide_route", False: "p_set_chat_docs_map_reduce_route"},
         then="p_activity_log_tool_decision",
     )
     builder.add_conditional_edges(
         "p_answer_or_decide_route",
-        lambda state: state.get("route_name"),
+        lambda state: state.route_name,
         {
             ChatRoute.search: END,
             ChatRoute.chat_with_docs_map_reduce: "p_retrieve_all_chunks",
@@ -322,7 +322,7 @@ def get_chat_with_documents_graph(
     builder.add_edge("p_set_chat_docs_map_reduce_route", "p_retrieve_all_chunks")
     builder.add_conditional_edges(
         "p_retrieve_all_chunks",
-        lambda s: s["route_name"],
+        lambda s: s.route_name,
         {
             ChatRoute.chat_with_docs: "p_summarise",
             ChatRoute.chat_with_docs_map_reduce: "s_chunk",
@@ -434,9 +434,9 @@ def get_root_graph(
         build_activity_log_node(
             lambda s: [
                 RedboxActivityEvent(
-                    message=f"You selected {len(s["request"].s3_keys)} file{"s" if len(s["request"].s3_keys)>1 else ""} - {",".join(s["request"].s3_keys)}"
+                    message=f"You selected {len(s.request.s3_keys)} file{"s" if len(s.request.s3_keys)>1 else ""} - {",".join(s.request.s3_keys)}"
                 )
-                if len(s["request"].s3_keys) > 0
+                if len(s.request.s3_keys) > 0
                 else "You selected no files",
             ]
         ),

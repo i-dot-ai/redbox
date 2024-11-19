@@ -146,7 +146,7 @@ def test_search_documents_tool(
             assert {c.metadata["uri"] for c in result_flat} <= set(stored_file_parameterised.query.s3_keys)
 
         # Check docstate is formed as expected, similar to transform tests
-        for group_uuid, group_docs in result_docstate.items():
+        for group_uuid, group_docs in result_docstate.groups.items():
             assert isinstance(group_uuid, UUID)
             assert isinstance(group_docs, dict)
 

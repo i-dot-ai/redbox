@@ -537,7 +537,7 @@ async def test_streaming(test: RedboxChatTestCase, env: Settings, mocker: Mocker
         document_events.append(documents)
 
     # Run the app
-    response = await app.run(
+    final_state = await app.run(
         input=RedboxState(request=test_case.query),
         response_tokens_callback=streaming_response_handler,
         metadata_tokens_callback=metadata_response_handler,
@@ -545,8 +545,6 @@ async def test_streaming(test: RedboxChatTestCase, env: Settings, mocker: Mocker
         activity_event_callback=streaming_activity_handler,
         documents_callback=documents_response_handler,
     )
-
-    final_state = RedboxState(response)
 
     # Assertions
     assert route_name is not None, f"No Route Name event fired! - Final State: {final_state}"
@@ -582,16 +580,16 @@ async def test_streaming(test: RedboxChatTestCase, env: Settings, mocker: Mocker
     expected_text = expected_text.content if isinstance(expected_text, AIMessage) else expected_text
 
     assert (
-        final_state["messages"][-1].content == llm_response
-    ), f"Text response from streaming: '{llm_response}' did not match final state text '{final_state["messages"]}'"
+        final_state.last_message.content == llm_response
+    ), f"Text response from streaming: '{llm_response}' did not match final state text '{final_state.last_message.content}'"
     assert (
-        final_state["messages"][-1].content == expected_text
-    ), f"Expected text: '{expected_text}' did not match received text '{final_state["messages"]}'"
+        final_state.last_message.content == expected_text
+    ), f"Expected text: '{expected_text}' did not match received text '{final_state.last_message.content}'"
 
     assert (
-        final_state.get("route_name") == test_case.test_data.expected_route
-    ), f"Expected Route: '{ test_case.test_data.expected_route}'. Received '{final_state["route_name"]}'"
-    if metadata := final_state.get("metadata"):
+        final_state.route_name == test_case.test_data.expected_route
+    ), f"Expected Route: '{ test_case.test_data.expected_route}'. Received '{final_state.route_name}'"
+    if metadata := final_state.metadata:
         assert metadata == metadata_response, f"Expected metadata: '{metadata_response}'. Received '{metadata}'"
     for document_list in document_events:
         for document in document_list:
