@@ -11,13 +11,13 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import Runnable, RunnableGenerator, RunnableLambda, RunnablePassthrough, chain
 from tiktoken import Encoding
 
-from redbox.api.format import format_documents, format_tool_calls
+from redbox.api.format import format_documents, format_toolstate
 from redbox.chains.activity import log_activity
 from redbox.chains.components import get_tokeniser
 from redbox.models.chain import ChainChatMessage, PromptSet, RedboxState, get_prompts
 from redbox.models.errors import QuestionLengthError
 from redbox.models.graph import RedboxEventType
-from redbox.transform import flatten_document_state, get_all_metadata
+from redbox.transform import flatten_document_state, get_all_metadata, tool_calls_to_toolstate
 
 log = logging.getLogger()
 re_string_pattern = re.compile(r"(\S+)")
@@ -69,7 +69,7 @@ def build_chat_prompt_from_messages_runnable(
             | {
                 "messages": state.messages,
                 "formatted_documents": format_documents(flatten_document_state(state.documents)),
-                "tool_calls": format_tool_calls(state),
+                "tool_calls": format_toolstate(state.tool_calls),
                 "system_info": ai_settings.system_info_prompt,
                 "persona_info": ai_settings.persona_info_prompt,
                 "caller_info": ai_settings.caller_info_prompt,
@@ -108,6 +108,7 @@ def build_llm_chain(
     _llm_text_and_tools = _llm | {
         "raw_response": RunnablePassthrough(),
         "parsed_response": _output_parser,
+        "tool_calls": tool_calls_to_toolstate,
     }
 
     text_and_tools = {

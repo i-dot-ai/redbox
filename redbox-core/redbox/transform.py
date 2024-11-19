@@ -4,10 +4,10 @@ from uuid import NAMESPACE_DNS, UUID, uuid5
 import tiktoken
 from langchain_core.callbacks.manager import dispatch_custom_event
 from langchain_core.documents import Document
-from langchain_core.messages import AIMessage
+from langchain_core.messages import AIMessage, AnyMessage, ToolCall
 from langchain_core.runnables import RunnableLambda
 
-from redbox.models.chain import DocumentGroup, DocumentState, LLMCallMetadata, RedboxState, RequestMetadata
+from redbox.models.chain import DocumentGroup, DocumentState, LLMCallMetadata, RedboxState, RequestMetadata, ToolState
 from redbox.models.graph import RedboxEventType
 
 
@@ -124,7 +124,7 @@ def get_document_token_count(state: RedboxState) -> int:
     return sum(d.metadata["token_count"] for d in flatten_document_state(state.documents))
 
 
-def to_request_metadata(obj: dict) -> RequestMetadata:
+def to_request_metadata(obj: dict):
     """Takes a dictionary with keys 'prompt', 'response' and 'model' and creates metadata.
 
     Will also emit events for metadata updates.
@@ -169,7 +169,8 @@ def get_all_metadata(obj: dict):
         citations = []
 
     out = {
-        "messages": [AIMessage(content=text, tool_calls=text_and_tools["raw_response"].tool_calls)],
+        "messages": [AIMessage(content=text)],
+        "tool_calls": text_and_tools["tool_calls"],
         "metadata": to_request_metadata(obj),
         "citations": citations,
     }
@@ -268,3 +269,11 @@ def sort_documents(documents: list[Document]) -> list[Document]:
 
     # Step 4: Flatten the list of blocks back into a single list
     return list(itertools.chain.from_iterable(all_sorted_blocks_by_max_score))
+
+
+def tool_calls_to_toolstate(message: AnyMessage, called: bool | None = False) -> ToolState:
+    """Takes a list of tool calls and shapes them into a valid ToolState.
+
+    Sets all tool calls to a called state. Assumes this state is False.
+    """
+    return ToolState({t["id"]: {"tool": ToolCall(**t), "called": called} for t in message.tool_calls})

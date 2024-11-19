@@ -2,13 +2,13 @@ from langchain_core.tools import StructuredTool
 from langchain_core.vectorstores import VectorStoreRetriever
 from langgraph.graph import END, START, StateGraph
 from langgraph.graph.graph import CompiledGraph
-from langgraph.prebuilt import ToolNode
 
 from redbox.chains.components import get_structured_response_with_citations_parser
 from redbox.chains.runnables import build_self_route_output_parser
 from redbox.graph.edges import (
     build_documents_bigger_than_context_conditional,
     build_keyword_detection_conditional,
+    build_tools_selected_conditional,
     build_total_tokens_request_handler_conditional,
     documents_selected_conditional,
     multiple_docs_in_group_conditional,
@@ -25,6 +25,7 @@ from redbox.graph.nodes.processes import (
     build_set_route_pattern,
     build_set_self_route_from_llm_answer,
     build_stuff_pattern,
+    build_tool_pattern,
     clear_documents_process,
     empty_process,
     report_sources_process,
@@ -173,7 +174,7 @@ def get_agentic_search_graph(tools: dict[str, StructuredTool], debug: bool = Fal
     )
     builder.add_node(
         "p_retrieval_tools",
-        ToolNode(tools=agent_tools),
+        build_tool_pattern(tools=agent_tools, final_source_chain=False),
     )
     builder.add_node(
         "p_give_up_agent",
@@ -186,8 +187,9 @@ def get_agentic_search_graph(tools: dict[str, StructuredTool], debug: bool = Fal
         "p_activity_log_retrieval_tool_calls",
         build_activity_log_node(
             lambda s: [
-                RedboxActivityEvent(message=get_log_formatter_for_retrieval_tool(tool_state_entry).log_call())
-                for tool_state_entry in s.last_message.tool_calls
+                RedboxActivityEvent(message=get_log_formatter_for_retrieval_tool(tool_state_entry["tool"]).log_call())
+                for tool_state_entry in s.tool_calls.values()
+                if not tool_state_entry["called"]
             ]
         ),
     )
@@ -209,8 +211,11 @@ def get_agentic_search_graph(tools: dict[str, StructuredTool], debug: bool = Fal
             False: "p_search_agent",
         },
     )
-    builder.add_edge("p_search_agent", "s_tool")
-    builder.add_edge("s_tool", "p_report_sources")
+    builder.add_conditional_edges(
+        "p_search_agent",
+        build_tools_selected_conditional(tools=agent_tool_names),
+        {True: "s_tool", False: "p_report_sources"},
+    )
     builder.add_edge("p_search_agent", "p_activity_log_retrieval_tool_calls")
     builder.add_conditional_edges("s_tool", build_tool_send("p_retrieval_tools"), path_map=["p_retrieval_tools"])
     builder.add_edge("p_retrieval_tools", "d_x_steps_left_or_less")

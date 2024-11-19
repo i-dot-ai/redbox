@@ -1,3 +1,4 @@
+from typing import Annotated, Any
 from urllib.parse import urlparse
 from uuid import UUID, uuid4
 
@@ -5,11 +6,15 @@ import pytest
 from elasticsearch import Elasticsearch
 from langchain_core.embeddings.fake import FakeEmbeddings
 from langchain_core.messages import HumanMessage
+from langchain_core.tools import tool
+from langgraph.prebuilt import InjectedState
 
 from redbox.graph.nodes.tools import (
     build_govuk_search_tool,
     build_search_documents_tool,
     build_search_wikipedia_tool,
+    has_injected_state,
+    is_valid_tool,
 )
 from redbox.models.chain import AISettings, RedboxQuery, RedboxState
 from redbox.models.file import ChunkCreatorType, ChunkMetadata, ChunkResolution
@@ -17,6 +22,36 @@ from redbox.models.settings import Settings
 from redbox.test.data import RedboxChatTestCase
 from redbox.transform import flatten_document_state
 from tests.retriever.test_retriever import TEST_CHAIN_PARAMETERS
+
+
+def test_is_valid_tool():
+    @tool
+    def tool_with_type_hinting() -> dict[str, Any]:
+        """Tool that returns a dictionary update."""
+        return {"key": "value"}
+
+    @tool
+    def tool_without_type_hinting():
+        """Tool that returns a dictionary update."""
+        return {"key": "value"}
+
+    assert is_valid_tool(tool_with_type_hinting)
+    assert not is_valid_tool(tool_without_type_hinting)
+
+
+def test_has_injected_state():
+    @tool
+    def tool_with_injected_state(query: str, state: Annotated[dict, InjectedState]) -> dict[str, Any]:
+        """Tool that returns a dictionary update."""
+        return {"key": "value"}
+
+    @tool
+    def tool_without_injected_state(query: str) -> dict[str, Any]:
+        """Tool that returns a dictionary update."""
+        return {"key": "value"}
+
+    assert has_injected_state(tool_with_injected_state)
+    assert not has_injected_state(tool_without_injected_state)
 
 
 @pytest.mark.parametrize("chain_params", TEST_CHAIN_PARAMETERS)
