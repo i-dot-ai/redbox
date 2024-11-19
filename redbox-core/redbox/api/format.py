@@ -1,4 +1,3 @@
-
 from langchain_core.documents.base import Document
 
 from redbox.transform import combine_documents
