@@ -29,7 +29,6 @@ from redbox.models.graph import RedboxEventType
 from redbox.transform import (
     flatten_document_state,
     get_all_metadata,
-    tool_calls_to_toolstate,
 )
 
 log = logging.getLogger()
