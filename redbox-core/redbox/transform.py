@@ -124,7 +124,7 @@ def get_document_token_count(state: RedboxState) -> int:
     return sum(d.metadata["token_count"] for d in flatten_document_state(state.documents))
 
 
-def to_request_metadata(obj: dict):
+def to_request_metadata(obj: dict) -> RequestMetadata:
     """Takes a dictionary with keys 'prompt', 'response' and 'model' and creates metadata.
 
     Will also emit events for metadata updates.
