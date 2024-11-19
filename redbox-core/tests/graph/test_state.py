@@ -224,10 +224,6 @@ TEST_QUERY = RedboxQuery(
                 ),
                 text="Some old text",
                 route_name="my_route",
-                tool_calls=[
-                    {"name": "foo", "args": {"a": 1, "b": 2}, "id": "123"},
-                    {"name": "bar", "args": {"a": 1, "b": 2}, "id": "123"},
-                ],
                 metadata=RequestMetadata(
                     llm_calls=[
                         {
@@ -261,11 +257,6 @@ TEST_QUERY = RedboxQuery(
                     }
                 ),
                 text="Some new text",
-                tool_calls=[
-                    {"name": "foo", "args": {"a": 1, "b": 2}, "id": "123"},
-                    None,
-                    {"name": "foo", "args": {"a": 1, "b": 2}, "id": "123"},
-                ],
                 metadata=RequestMetadata(
                     llm_calls=[
                         {
@@ -292,11 +283,6 @@ TEST_QUERY = RedboxQuery(
                 ),
                 text="Some new text",
                 route_name="my_route",
-                tool_calls=[
-                    {"name": "foo", "args": {"a": 1, "b": 2}, "id": "123"},
-                    None,
-                    {"args": {"a": 1, "b": 2}, "id": "123", "name": "foo"},
-                ],
                 metadata=RequestMetadata(
                     llm_calls=[
                         {
