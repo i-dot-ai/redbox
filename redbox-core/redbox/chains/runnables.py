@@ -17,7 +17,7 @@ from redbox.chains.components import get_tokeniser
 from redbox.models.chain import ChainChatMessage, PromptSet, RedboxState, get_prompts
 from redbox.models.errors import QuestionLengthError
 from redbox.models.graph import RedboxEventType
-from redbox.transform import flatten_document_state, get_all_metadata, tool_calls_to_toolstate
+from redbox.transform import flatten_document_state, get_all_metadata
 
 log = logging.getLogger()
 re_string_pattern = re.compile(r"(\S+)")
@@ -108,7 +108,6 @@ def build_llm_chain(
     _llm_text_and_tools = _llm | {
         "raw_response": RunnablePassthrough(),
         "parsed_response": _output_parser,
-        "tool_calls": tool_calls_to_toolstate,
     }
 
     text_and_tools = {

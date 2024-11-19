@@ -4,7 +4,7 @@ from uuid import NAMESPACE_DNS, UUID, uuid5
 import tiktoken
 from langchain_core.callbacks.manager import dispatch_custom_event
 from langchain_core.documents import Document
-from langchain_core.messages import AIMessage, AnyMessage, ToolCall
+from langchain_core.messages import AIMessage
 from langchain_core.runnables import RunnableLambda
 
 from redbox.models.chain import DocumentGroup, DocumentState, LLMCallMetadata, RedboxState, RequestMetadata
@@ -169,8 +169,8 @@ def get_all_metadata(obj: dict):
         citations = []
 
     out = {
-        "messages": [AIMessage(content=text)],
-        "tool_calls": text_and_tools["tool_calls"],
+        "messages": [AIMessage(content=text, tool_calls=text_and_tools["raw_response"].tool_calls)],
+        "tool_calls": text_and_tools["raw_response"].tool_calls,
         "metadata": to_request_metadata(obj),
         "citations": citations,
     }
@@ -269,11 +269,3 @@ def sort_documents(documents: list[Document]) -> list[Document]:
 
     # Step 4: Flatten the list of blocks back into a single list
     return list(itertools.chain.from_iterable(all_sorted_blocks_by_max_score))
-
-
-def tool_calls_to_toolstate(message: AnyMessage, called: bool | None = False) -> list[ToolCall]:
-    """Takes a list of tool calls and shapes them into a valid ToolState.
-
-    Sets all tool calls to a called state. Assumes this state is False.
-    """
-    return message.tool_calls

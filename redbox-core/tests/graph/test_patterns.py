@@ -30,7 +30,7 @@ from redbox.test.data import (
     mock_all_chunks_retriever,
     mock_parameterised_retriever,
 )
-from redbox.transform import flatten_document_state, structure_documents_by_file_name, tool_calls_to_toolstate
+from redbox.transform import flatten_document_state, structure_documents_by_file_name
 
 LANGGRAPH_DEBUG = True
 
@@ -101,12 +101,12 @@ def test_build_llm_chain(test_case: RedboxChatTestCase):
     final_state = llm_chain.invoke(state)
 
     test_case_content = test_case.test_data.llm_responses[-1].content
-    test_case_tool_calls = tool_calls_to_toolstate(test_case.test_data.llm_responses[-1])
+    test_case_tool_calls = test_case.test_data.llm_responses[-1].tool_calls
 
     assert (
         final_state["messages"][-1].content == test_case_content
     ), f"Expected LLM response: '{test_case_content}'. Received '{final_state["messages"][-1].content}'"
-    assert final_state["tool_calls"] == test_case_tool_calls
+    assert final_state["messages"][-1].tool_calls == test_case_tool_calls
     assert sum(final_state["metadata"].input_tokens.values())
     assert sum(final_state["metadata"].output_tokens.values())
 
