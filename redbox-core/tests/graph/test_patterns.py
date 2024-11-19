@@ -1,11 +1,9 @@
-from typing import Any
 from uuid import uuid4
 
 import pytest
 from langchain_core.language_models.fake_chat_models import GenericFakeChatModel
 from langchain_core.messages import AIMessage, HumanMessage, ToolCall
 from langchain_core.retrievers import BaseRetriever
-from langchain_core.tools import StructuredTool, tool
 from langgraph.graph import END, START, StateGraph
 from pytest_mock import MockerFixture
 from tiktoken.core import Encoding
@@ -19,7 +17,6 @@ from redbox.graph.nodes.processes import (
     build_set_route_pattern,
     build_set_text_pattern,
     build_stuff_pattern,
-    build_tool_pattern,
     clear_documents_process,
     empty_process,
 )
@@ -344,49 +341,6 @@ TOOL_TEST_CASES = generate_test_cases(
     ],
     test_id="Stuff pattern",
 )
-
-
-@tool
-def route_namer() -> dict[str, Any]:
-    """Tool that names the route."""
-    return {"route": "foo"}
-
-
-@tool
-def text_setter() -> dict[str, Any]:
-    """Tool that sets the text."""
-    return {"messages": [HumanMessage(content="bar")]}
-
-
-TOOL_TEST_CASES = {
-    "route_tool": ([route_namer], {"route": "foo"}),
-    "text_tool": ([text_setter], {"messages": [HumanMessage(content="bar")]}),
-    "compound_tools": ([route_namer, text_setter], {"route": "foo", "messages": [HumanMessage(content="bar")]}),
-}
-
-
-@pytest.mark.parametrize(("tools", "expected"), TOOL_TEST_CASES.values(), ids=TOOL_TEST_CASES.keys())
-def test_build_tool_pattern(tools: list[StructuredTool], expected: dict[str, str]):
-    """Tests some basic tools update the state correctly."""
-    tool = build_tool_pattern(tools=tools)
-    tool_calls = [{"name": tool.name, "args": {}, "id": tool.name} for tool in tools]
-    message = AIMessage(content="hello", tool_calls=tool_calls)
-
-    state = RedboxState(
-        request=RedboxQuery(
-            question="What is AI?", s3_keys=[], user_uuid=uuid4(), chat_history=[], permitted_s3_keys=[]
-        ),
-        tool_calls=tool_calls_to_toolstate(message=message, called=False),
-        messages=[],
-    )
-
-    response = tool.invoke(state)
-
-    for k, v in expected.items():
-        assert response[k] == v
-
-    for tool_entry in response["tool_calls"].values():
-        assert tool_entry["called"]
 
 
 def test_build_passthrough_pattern():

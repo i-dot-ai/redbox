@@ -2,6 +2,7 @@ from langchain_core.tools import StructuredTool
 from langchain_core.vectorstores import VectorStoreRetriever
 from langgraph.graph import END, START, StateGraph
 from langgraph.graph.graph import CompiledGraph
+from langgraph.prebuilt import ToolNode
 
 from redbox.chains.components import get_structured_response_with_citations_parser
 from redbox.chains.runnables import build_self_route_output_parser
@@ -24,7 +25,6 @@ from redbox.graph.nodes.processes import (
     build_set_route_pattern,
     build_set_self_route_from_llm_answer,
     build_stuff_pattern,
-    build_tool_pattern,
     clear_documents_process,
     empty_process,
     report_sources_process,
@@ -173,7 +173,7 @@ def get_agentic_search_graph(tools: dict[str, StructuredTool], debug: bool = Fal
     )
     builder.add_node(
         "p_retrieval_tools",
-        build_tool_pattern(tools=agent_tools, final_source_chain=False),
+        ToolNode(tools=agent_tools),
     )
     builder.add_node(
         "p_give_up_agent",

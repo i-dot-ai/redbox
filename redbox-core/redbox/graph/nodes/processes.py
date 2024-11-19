@@ -14,13 +14,12 @@ from langchain_core.messages import AIMessage, HumanMessage
 from langchain_core.runnables import Runnable, RunnableLambda, RunnableParallel
 from langchain_core.tools import StructuredTool
 from langchain_core.vectorstores import VectorStoreRetriever
-from langgraph.prebuilt import ToolNode
 
 from redbox.chains.activity import log_activity
 from redbox.chains.components import get_chat_llm, get_tokeniser
 from redbox.chains.runnables import CannedChatLLM, build_llm_chain
 from redbox.models import ChatRoute
-from redbox.models.chain import DocumentState, PromptSet, RedboxState, RequestMetadata, merge_redbox_state_updates
+from redbox.models.chain import DocumentState, PromptSet, RedboxState, RequestMetadata
 from redbox.models.graph import ROUTE_NAME_TAG, SOURCE_DOCUMENTS_TAG, RedboxActivityEvent, RedboxEventType
 from redbox.transform import combine_documents, flatten_document_state
 
@@ -249,38 +248,6 @@ def build_error_pattern(text: str, route_name: str | None) -> Runnable[RedboxSta
         ).invoke(state)
 
     return _error_pattern
-
-
-def build_tool_pattern(
-    tools=list[StructuredTool], final_source_chain: bool = False
-) -> Runnable[RedboxState, dict[str, Any]]:
-    """Builds a process that takes state["tool_calls"] and returns state updates.
-
-    The state attributes affected are defined in the tool.
-    """
-
-    tool_node = ToolNode(tools=tools)
-
-    @RunnableLambda
-    def _tool(state: RedboxState) -> dict[str, Any]:
-        messages = [
-            AIMessage(
-                content="",
-                tool_calls=state.tool_calls,
-            )
-        ]
-
-        # Invoke the tool
-        state_update = tool_node.invoke({"messages": messages})
-
-        tool_calls = state.tool_calls
-
-        return reduce(merge_redbox_state_updates, [state_update, {"tool_calls": tool_calls}])
-
-    if final_source_chain:
-        return RunnableLambda(_tool).with_config(tags=[SOURCE_DOCUMENTS_TAG])
-
-    return _tool
 
 
 # Raw processes: functions that need no building
