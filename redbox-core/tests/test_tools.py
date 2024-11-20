@@ -125,28 +125,31 @@ def test_search_documents_tool(
 def test_govuk_search_tool():
     tool = build_govuk_search_tool()
 
-    state_update = tool.invoke(
+    tool_node = ToolNode(tools=[tool])
+    response = tool_node.invoke(
         {
-            "query": "Cuba Travel Advice",
-            "state": RedboxState(
-                request=RedboxQuery(
-                    question="Search gov.uk for travel advice to cuba",
-                    s3_keys=[],
-                    user_uuid=uuid4(),
-                    chat_history=[],
-                    ai_settings=AISettings(),
-                    permitted_s3_keys=[],
+            "messages": [
+                AIMessage(
+                    content="",
+                    tool_calls=[
+                        {
+                            "name": "_search_govuk",
+                            "args": {"query": "Cuba Travel Advice"},
+                            "id": "1",
+                        }
+                    ],
                 )
-            ),
+            ]
         }
     )
-
-    documents = flatten_document_state(state_update["documents"])
+    assert response["messages"][0].content != ""
 
     # assert at least one document is travel advice
-    assert any("/foreign-travel-advice/cuba" in document.metadata["uri"] for document in documents)
+    assert any(
+        "/foreign-travel-advice/cuba" in document.metadata["uri"] for document in response["messages"][0].artifact
+    )
 
-    for document in documents:
+    for document in response["messages"][0].artifact:
         assert document.page_content != ""
         metadata = ChunkMetadata.model_validate(document.metadata)
         assert urlparse(metadata.uri).hostname == "www.gov.uk"

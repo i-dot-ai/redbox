@@ -110,8 +110,8 @@ def build_govuk_search_tool(num_results: int = 1, filter=True) -> Tool:
         response["results"] = sorted(response.get("results"), key=lambda x: x["similarity"], reverse=True)[:num_results]
         return response
 
-    @tool
-    def _search_govuk(query: str, state: Annotated[RedboxState, InjectedState]) -> dict[str, Any]:
+    @tool(response_format="content_and_artifact")
+    def _search_govuk(query: str) -> tuple[str, list[Document]]:
         """
         Search for documents on gov.uk based on a query string.
         This endpoint is used to search for documents on gov.uk. There are many types of documents on gov.uk.
@@ -168,7 +168,7 @@ def build_govuk_search_tool(num_results: int = 1, filter=True) -> Tool:
                 )
             )
 
-        return {"documents": structure_documents_by_group_and_indices(mapped_documents)}
+        return "\n\n".join(map(str, mapped_documents)), mapped_documents
 
     return _search_govuk
 
