@@ -120,6 +120,7 @@ def test_search_documents_tool(
                 assert group_docs[doc.metadata["uuid"]] == doc
 
 
+@pytest.xfail(reason="calls openai")
 def test_govuk_search_tool():
     tool = build_govuk_search_tool()
 
@@ -185,6 +186,7 @@ def test_wikipedia_tool():
     ],
 )
 @pytest.mark.vcr
+@pytest.xfail(reason="calls openai")
 def test_gov_filter_AI(is_filter, relevant_return, query, keyword):
     def run_tool(is_filter):
         tool = build_govuk_search_tool(num_results=1, filter=is_filter)
