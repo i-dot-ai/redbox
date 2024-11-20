@@ -2,7 +2,15 @@ from datetime import UTC, datetime
 from enum import StrEnum
 from functools import reduce
 from types import UnionType
-from typing import Annotated, Literal, NotRequired, Required, TypedDict, get_args, get_origin
+from typing import (
+    Annotated,
+    Literal,
+    NotRequired,
+    Required,
+    TypedDict,
+    get_args,
+    get_origin,
+)
 from uuid import UUID, uuid4
 
 from langchain_core.documents import Document
@@ -77,6 +85,10 @@ class AISettings(BaseModel):
 
     # this is also the azure_openai_model
     chat_backend: ChatLLMBackend = ChatLLMBackend()
+
+    # settings for tool call
+    num_retrieve_results: int = 100
+    num_tool_results: int = 5
 
 
 class Source(BaseModel):

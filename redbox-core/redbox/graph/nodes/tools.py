@@ -93,7 +93,7 @@ def build_search_documents_tool(
     return _search_documents
 
 
-def build_govuk_search_tool(num_results: int = 5, filter=True) -> Tool:
+def build_govuk_search_tool(filter=True) -> Tool:
     """Constructs a tool that searches gov.uk and sets state["documents"]."""
 
     tokeniser = tiktoken.encoding_for_model("gpt-4o")
@@ -135,12 +135,12 @@ def build_govuk_search_tool(num_results: int = 5, filter=True) -> Tool:
             "indexable_content",
             "link",
         ]
-
+        ai_settings = state.request.ai_settings
         response = requests.get(
             f"{url_base}/api/search.json",
             params={
                 "q": query,
-                "count": 100 if filter else num_results,
+                "count": (ai_settings.num_retrieve_results if filter else ai_settings.num_tool_results),
                 "fields": required_fields,
             },
             headers={"Accept": "application/json"},
@@ -149,7 +149,7 @@ def build_govuk_search_tool(num_results: int = 5, filter=True) -> Tool:
         response = response.json()
 
         if filter:
-            response = recalculate_similarity(response, query, num_results)
+            response = recalculate_similarity(response, query, ai_settings.num_tool_results)
 
         mapped_documents = []
         for i, doc in enumerate(response["results"]):
