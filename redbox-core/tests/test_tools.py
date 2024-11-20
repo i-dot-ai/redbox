@@ -100,11 +100,11 @@ def test_search_documents_tool(
     )
 
     if not permission:
-        # No state update emitted
-        assert result_state is None
+        # No new messages update emitted
+        assert result_state["messages"][0].content is ""
+        assert result_state["messages"][0].artifact == []
     else:
         result_flat = result_state["messages"][0].artifact
-        # result_flat = flatten_document_state(result_state["messages"][0].artifact)
 
         # Check state update is formed as expected
         assert isinstance(result_state, dict)
