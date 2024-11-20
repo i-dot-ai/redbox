@@ -19,7 +19,7 @@ class OpenSearchSettings(BaseModel):
 
     model_config = SettingsConfigDict(frozen=True)
 
-    collection_enpdoint: str
+    collection_endpoint: str
 
 
 class ElasticLocalSettings(BaseModel):
@@ -154,7 +154,7 @@ class Settings(BaseSettings):
 
         elif isinstance(self.elastic, OpenSearchSettings):
             client = OpenSearch(
-                hosts=[{"host": self.elastic.collection_enpdoint, "port": 443}],
+                hosts=[{"host": self.elastic.collection_endpoint, "port": 443}],
                 use_ssl=True,
                 verify_certs=True,
                 connection_class=RequestsHttpConnection,
