@@ -78,14 +78,15 @@ def create_group_uuid_for_group(document_group: DocumentGroup) -> UUID:
     return create_group_uuid(file_name, group_indices)
 
 
-def should_split(a: Document, b: Document) -> bool:
+def documents_are_consecutive(a: Document, b: Document) -> bool:
+    """are the two documents consecutive, i.e. do they appear next to each other in the original text?"""
     if a.metadata["uri"] is None:
-        return False
-
-    if a.metadata["uri"] != b.metadata["uri"]:
         return True
 
-    return a.metadata["index"] + 1 != b.metadata["index"]
+    if a.metadata["uri"] != b.metadata["uri"]:
+        return False
+
+    return a.metadata["index"] + 1 == b.metadata["index"]
 
 
 def structure_documents_by_group_and_indices(docs: list[Document]) -> DocumentState:
@@ -100,11 +101,11 @@ def structure_documents_by_group_and_indices(docs: list[Document]) -> DocumentSt
     """
     current_group = DocumentGroup()
 
-    should_splits = [False] + [should_split(a, b) for a, b in zip(docs[:-1], docs[1:])]
+    consecutive_documents = [True] + [documents_are_consecutive(a, b) for a, b in zip(docs[:-1], docs[1:])]
 
     groups = []
-    for split, d in zip(should_splits, docs):
-        if split:
+    for consecutive, d in zip(consecutive_documents, docs):
+        if not consecutive:
             # Generate a deterministic hash for the previous document and its indices
             groups.append(current_group)
             current_group = DocumentGroup()
