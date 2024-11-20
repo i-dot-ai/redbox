@@ -1,4 +1,4 @@
-from typing import Annotated, Any, Iterable
+from typing import Annotated, Iterable
 
 import numpy as np
 import requests
@@ -24,7 +24,6 @@ from redbox.retriever.retrievers import query_to_documents
 from redbox.transform import (
     merge_documents,
     sort_documents,
-    structure_documents_by_group_and_indices,
 )
 
 
@@ -37,8 +36,8 @@ def build_search_documents_tool(
 ) -> Tool:
     """Constructs a tool that searches the index and sets state.documents."""
 
-    @tool
-    def _search_documents(query: str, state: Annotated[RedboxState, InjectedState]) -> dict[str, Any]:
+    @tool(response_format="content_and_artifact")
+    def _search_documents(query: str, state: Annotated[RedboxState, InjectedState]) -> tuple[str, list[Document]]:
         """
         Search for documents uploaded by the user based on a query string.
 
@@ -73,7 +72,7 @@ def build_search_documents_tool(
 
         # Handle nothing found (as when no files are permitted)
         if not initial_documents:
-            return None
+            return "", []
 
         # Adjacent documents
         with_adjacent_query = add_document_filter_scores_to_query(
@@ -88,7 +87,7 @@ def build_search_documents_tool(
         sorted_documents = sort_documents(documents=merged_documents)
 
         # Return as state update
-        return {"documents": structure_documents_by_group_and_indices(sorted_documents)}
+        return "\n\n".join(map(str, sorted_documents)), sorted_documents
 
     return _search_documents
 
