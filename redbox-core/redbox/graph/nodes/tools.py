@@ -38,7 +38,9 @@ def build_search_documents_tool(
     """Constructs a tool that searches the index and sets state.documents."""
 
     @tool
-    def _search_documents(query: str, state: Annotated[RedboxState, InjectedState]) -> dict[str, Any]:
+    def _search_documents(
+        query: str, state: Annotated[RedboxState, InjectedState]
+    ) -> dict[str, Any]:
         """
         Search for documents uploaded by the user based on a query string.
 
@@ -69,7 +71,9 @@ def build_search_documents_tool(
             chunk_resolution=chunk_resolution,
             ai_settings=ai_settings,
         )
-        initial_documents = query_to_documents(es_client=es_client, index_name=index_name, query=initial_query)
+        initial_documents = query_to_documents(
+            es_client=es_client, index_name=index_name, query=initial_query
+        )
 
         # Handle nothing found (as when no files are permitted)
         if not initial_documents:
@@ -81,10 +85,14 @@ def build_search_documents_tool(
             ai_settings=ai_settings,
             centres=initial_documents,
         )
-        adjacent_boosted = query_to_documents(es_client=es_client, index_name=index_name, query=with_adjacent_query)
+        adjacent_boosted = query_to_documents(
+            es_client=es_client, index_name=index_name, query=with_adjacent_query
+        )
 
         # Merge and sort
-        merged_documents = merge_documents(initial=initial_documents, adjacent=adjacent_boosted)
+        merged_documents = merge_documents(
+            initial=initial_documents, adjacent=adjacent_boosted
+        )
         sorted_documents = sort_documents(documents=merged_documents)
 
         # Return as state update
@@ -93,7 +101,7 @@ def build_search_documents_tool(
     return _search_documents
 
 
-def build_govuk_search_tool(num_results: int = 1, filter=True) -> Tool:
+def build_govuk_search_tool(num_results: int = 5, filter=True) -> Tool:
     """Constructs a tool that searches gov.uk and sets state["documents"]."""
 
     tokeniser = tiktoken.encoding_for_model("gpt-4o")
@@ -104,14 +112,18 @@ def build_govuk_search_tool(num_results: int = 1, filter=True) -> Tool:
         for r in response.get("results"):
             description = r.get("description")
             em_des = embedding_model.embed_query(description)
-            r["similarity"] = cosine_similarity(np.array(em_query).reshape(1, -1), np.array(em_des).reshape(1, -1))[0][
-                0
-            ]
-        response["results"] = sorted(response.get("results"), key=lambda x: x["similarity"], reverse=True)[:num_results]
+            r["similarity"] = cosine_similarity(
+                np.array(em_query).reshape(1, -1), np.array(em_des).reshape(1, -1)
+            )[0][0]
+        response["results"] = sorted(
+            response.get("results"), key=lambda x: x["similarity"], reverse=True
+        )[:num_results]
         return response
 
     @tool
-    def _search_govuk(query: str, state: Annotated[RedboxState, InjectedState]) -> dict[str, Any]:
+    def _search_govuk(
+        query: str, state: Annotated[RedboxState, InjectedState]
+    ) -> dict[str, Any]:
         """
         Search for documents on gov.uk based on a query string.
         This endpoint is used to search for documents on gov.uk. There are many types of documents on gov.uk.
@@ -140,7 +152,7 @@ def build_govuk_search_tool(num_results: int = 1, filter=True) -> Tool:
             f"{url_base}/api/search.json",
             params={
                 "q": query,
-                "count": 10 if filter else num_results,
+                "count": 100 if filter else num_results,
                 "fields": required_fields,
             },
             headers={"Accept": "application/json"},
@@ -173,7 +185,9 @@ def build_govuk_search_tool(num_results: int = 1, filter=True) -> Tool:
     return _search_govuk
 
 
-def build_search_wikipedia_tool(number_wikipedia_results=1, max_chars_per_wiki_page=12000) -> Tool:
+def build_search_wikipedia_tool(
+    number_wikipedia_results=1, max_chars_per_wiki_page=12000
+) -> Tool:
     """Constructs a tool that searches Wikipedia"""
     _wikipedia_wrapper = WikipediaAPIWrapper(
         top_k_results=number_wikipedia_results,
@@ -182,7 +196,9 @@ def build_search_wikipedia_tool(number_wikipedia_results=1, max_chars_per_wiki_p
     tokeniser = tiktoken.encoding_for_model("gpt-4o")
 
     @tool
-    def _search_wikipedia(query: str, state: Annotated[RedboxState, InjectedState]) -> dict[str, Any]:
+    def _search_wikipedia(
+        query: str, state: Annotated[RedboxState, InjectedState]
+    ) -> dict[str, Any]:
         """
         Search Wikipedia for information about the queried entity.
         Useful for when you need to answer general questions about people, places, objects, companies, facts, historical events, or other subjects.
@@ -258,4 +274,6 @@ __RETRIEVEAL_TOOL_MESSAGE_FORMATTERS = {
 
 
 def get_log_formatter_for_retrieval_tool(t: ToolCall) -> BaseRetrievalToolLogFormatter:
-    return __RETRIEVEAL_TOOL_MESSAGE_FORMATTERS.get(t["name"], BaseRetrievalToolLogFormatter)(t)
+    return __RETRIEVEAL_TOOL_MESSAGE_FORMATTERS.get(
+        t["name"], BaseRetrievalToolLogFormatter
+    )(t)
