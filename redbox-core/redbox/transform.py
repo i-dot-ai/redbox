@@ -7,7 +7,7 @@ from langchain_core.documents import Document
 from langchain_core.messages import BaseMessage, AIMessage
 from langchain_core.runnables import RunnableLambda
 
-from redbox.models.chain import DocumentGroup, DocumentState, LLMCallMetadata, RedboxState, RequestMetadata
+from redbox.models.chain import DocumentState, LLMCallMetadata, RedboxState, RequestMetadata
 from redbox.models.graph import RedboxEventType
 
 
@@ -75,10 +75,10 @@ def create_group_uuid(file_name: str, indices: list[int]) -> UUID:
     return uuid5(NAMESPACE_DNS, unique_str)
 
 
-def create_group_uuid_for_group(document_group: DocumentGroup) -> UUID:
+def create_group_uuid_for_group(document_group: list[Document]) -> UUID:
     """create a uuid for a DocumentGroup"""
-    file_name = next(iter(document_group.values())).metadata["uri"]
-    group_indices = [d.metadata["index"] for d in document_group.values()]
+    file_name = document_group[0].metadata["uri"]
+    group_indices = [d.metadata["index"] for d in document_group]
     return create_group_uuid(file_name, group_indices)
 
 
@@ -103,23 +103,26 @@ def structure_documents_by_group_and_indices(docs: list[Document]) -> DocumentSt
 
     The document_uuid is taken from the Document metadata directly.
     """
-    current_group = DocumentGroup()
 
     consecutive_documents = [True] + [documents_are_consecutive(a, b) for a, b in zip(docs[:-1], docs[1:])]
 
     groups = []
+    current_group = []
     for consecutive, d in zip(consecutive_documents, docs):
         if not consecutive:
             # Generate a deterministic hash for the previous document and its indices
             groups.append(current_group)
-            current_group = DocumentGroup()
-        current_group[d.metadata["uuid"]] = d
+            current_group = [d]
+        else:
+            current_group.append(d)
 
     # Handle the last group
     groups.append(current_group)
 
     result = DocumentState()
-    result.groups = {create_group_uuid_for_group(group): group for group in groups}
+    result.groups = {
+        create_group_uuid_for_group(group): {doc.metadata["uuid"]: doc for doc in group} for group in groups
+    }
 
     return result
 
