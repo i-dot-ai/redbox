@@ -78,15 +78,15 @@ def create_group_uuid_for_group(document_group: DocumentGroup) -> UUID:
     return create_group_uuid(file_name, group_indices)
 
 
-def documents_are_consecutive(a: Document, b: Document) -> bool:
+def documents_are_consecutive(first: Document, second: Document) -> bool:
     """are the two documents consecutive, i.e. do they appear next to each other in the original text?"""
-    if a.metadata["uri"] is None:
+    if first.metadata["uri"] is None:
         return True
 
-    if a.metadata["uri"] != b.metadata["uri"]:
+    if first.metadata["uri"] != second.metadata["uri"]:
         return False
 
-    return a.metadata["index"] + 1 == b.metadata["index"]
+    return first.metadata["index"] + 1 == second.metadata["index"]
 
 
 def structure_documents_by_group_and_indices(docs: list[Document]) -> DocumentState:
