@@ -87,8 +87,8 @@ class AISettings(BaseModel):
     chat_backend: ChatLLMBackend = ChatLLMBackend()
 
     # settings for tool call
-    num_retrieve_results: int = 100
-    num_tool_results: int = 5
+    tool_govuk_retrieved_results: int = 100
+    tool_govuk_returned_results: int = 5
 
 
 class Source(BaseModel):

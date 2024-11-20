@@ -140,7 +140,9 @@ def build_govuk_search_tool(filter=True) -> Tool:
             f"{url_base}/api/search.json",
             params={
                 "q": query,
-                "count": (ai_settings.num_retrieve_results if filter else ai_settings.num_tool_results),
+                "count": (
+                    ai_settings.tool_govuk_retrieved_results if filter else ai_settings.tool_govuk_returned_results
+                ),
                 "fields": required_fields,
             },
             headers={"Accept": "application/json"},
@@ -149,7 +151,7 @@ def build_govuk_search_tool(filter=True) -> Tool:
         response = response.json()
 
         if filter:
-            response = recalculate_similarity(response, query, ai_settings.num_tool_results)
+            response = recalculate_similarity(response, query, ai_settings.tool_govuk_returned_results)
 
         mapped_documents = []
         for i, doc in enumerate(response["results"]):
