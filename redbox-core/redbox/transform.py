@@ -75,10 +75,10 @@ def create_group_uuid(file_name: str, indices: list[int]) -> UUID:
     return uuid5(NAMESPACE_DNS, unique_str)
 
 
-def create_group_uuid_for_group(document_group: list[Document]) -> UUID:
+def create_group_uuid_for_group(documents: list[Document]) -> UUID:
     """create a uuid for a DocumentGroup"""
-    file_name = document_group[0].metadata["uri"]
-    group_indices = [d.metadata["index"] for d in document_group]
+    file_name = documents[0].metadata["uri"]
+    group_indices = [d.metadata["index"] for d in documents]
     return create_group_uuid(file_name, group_indices)
 
 
@@ -104,17 +104,14 @@ def structure_documents_by_group_and_indices(docs: list[Document]) -> DocumentSt
     The document_uuid is taken from the Document metadata directly.
     """
 
-    consecutive_documents = [True] + [documents_are_consecutive(a, b) for a, b in zip(docs[:-1], docs[1:])]
-
     groups = []
-    current_group = []
-    for consecutive, d in zip(consecutive_documents, docs):
-        if not consecutive:
-            # Generate a deterministic hash for the previous document and its indices
-            groups.append(current_group)
-            current_group = [d]
+    current_group = [docs[0]]
+    for last_doc, this_doc in zip(docs[:-1], docs[1:]):
+        if documents_are_consecutive(last_doc, this_doc):
+            current_group.append(this_doc)
         else:
-            current_group.append(d)
+            groups.append(current_group)
+            current_group = [this_doc]
 
     # Handle the last group
     groups.append(current_group)
