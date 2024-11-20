@@ -12,6 +12,7 @@ from langchain_core.tools import Tool, tool
 from langgraph.prebuilt import InjectedState
 from sklearn.metrics.pairwise import cosine_similarity
 
+from redbox.api.format import format_documents
 from redbox.chains.components import get_embeddings
 from redbox.models.chain import RedboxState
 from redbox.models.file import ChunkCreatorType, ChunkMetadata, ChunkResolution
@@ -87,7 +88,7 @@ def build_search_documents_tool(
         sorted_documents = sort_documents(documents=merged_documents)
 
         # Return as state update
-        return "\n\n".join(map(str, sorted_documents)), sorted_documents
+        return format_documents(sorted_documents), sorted_documents
 
     return _search_documents
 
@@ -167,7 +168,7 @@ def build_govuk_search_tool(num_results: int = 1, filter=True) -> Tool:
                 )
             )
 
-        return "\n\n".join(map(str, mapped_documents)), mapped_documents
+        return format_documents(mapped_documents), mapped_documents
 
     return _search_govuk
 
@@ -208,7 +209,7 @@ def build_search_wikipedia_tool(number_wikipedia_results=1, max_chars_per_wiki_p
             for i, doc in enumerate(response)
         ]
         docs = mapped_documents
-        return "\n\n".join(map(str, docs)), docs
+        return format_documents(docs), docs
 
     return _search_wikipedia
 
