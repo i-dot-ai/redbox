@@ -101,7 +101,7 @@ def test_search_documents_tool(
 
     if not permission:
         # No new messages update emitted
-        assert result_state["messages"][0].content is ""
+        assert result_state["messages"][0].content == ""
         assert result_state["messages"][0].artifact == []
     else:
         result_flat = result_state["messages"][0].artifact
