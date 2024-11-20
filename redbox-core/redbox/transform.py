@@ -71,6 +71,23 @@ def create_group_uuid(file_name: str, indices: list[int]) -> UUID:
     return uuid5(NAMESPACE_DNS, unique_str)
 
 
+def create_group_uuid_for_group(document_group: DocumentGroup) -> UUID:
+    """create a uuid for a DocumentGroup"""
+    file_name = next(iter(document_group.values())).metadata["uri"]
+    group_indices = [d.metadata["index"] for d in document_group.values()]
+    return create_group_uuid(file_name, group_indices)
+
+
+def should_split(a: Document, b: Document) -> bool:
+    if a.metadata["uri"] is None:
+        return False
+
+    if a.metadata["uri"] != b.metadata["uri"]:
+        return True
+
+    return a.metadata["index"] + 1 != b.metadata["index"]
+
+
 def structure_documents_by_group_and_indices(docs: list[Document]) -> DocumentState:
     """Structures a list of documents by blocks of consecutive indices in group_uuids.
 
@@ -81,33 +98,23 @@ def structure_documents_by_group_and_indices(docs: list[Document]) -> DocumentSt
 
     The document_uuid is taken from the Document metadata directly.
     """
-    result = DocumentState()
     current_group = DocumentGroup()
-    current_group_indices: list[int] = []
-    current_filename: str | None = None
 
-    for d in docs:
-        is_not_same_filename = d.metadata["uri"] != current_filename
-        is_not_none_filename = current_filename is not None
-        is_not_consecutive = d.metadata["index"] - 1 != (
-            current_group_indices[-1] if current_group_indices else d.metadata["index"]
-        )
-        if (is_not_same_filename and is_not_none_filename) or (is_not_consecutive and is_not_none_filename):
+    should_splits = [False] + [should_split(a, b) for a, b in zip(docs[:-1], docs[1:])]
+
+    groups = []
+    for split, d in zip(should_splits, docs):
+        if split:
             # Generate a deterministic hash for the previous document and its indices
-            group_id = create_group_uuid(current_filename, current_group_indices)
-            result.groups[group_id] = current_group
-
+            groups.append(current_group)
             current_group = DocumentGroup()
-            current_group_indices: list[int] = []
-
         current_group[d.metadata["uuid"]] = d
-        current_group_indices.append(d.metadata["index"])
-        current_filename = d.metadata["uri"]
 
     # Handle the last group
-    if current_group:
-        group_id = create_group_uuid(current_filename, current_group_indices)
-        result.groups[group_id] = current_group
+    groups.append(current_group)
+
+    result = DocumentState()
+    result.groups = {create_group_uuid_for_group(group): group for group in groups}
 
     return result
 
