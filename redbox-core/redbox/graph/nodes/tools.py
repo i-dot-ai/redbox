@@ -181,8 +181,8 @@ def build_search_wikipedia_tool(number_wikipedia_results=1, max_chars_per_wiki_p
     )
     tokeniser = tiktoken.encoding_for_model("gpt-4o")
 
-    @tool
-    def _search_wikipedia(query: str, state: Annotated[RedboxState, InjectedState]) -> dict[str, Any]:
+    @tool(response_format="content_and_artifact")
+    def _search_wikipedia(query: str) -> tuple[str, list[Document]]:
         """
         Search Wikipedia for information about the queried entity.
         Useful for when you need to answer general questions about people, places, objects, companies, facts, historical events, or other subjects.
@@ -208,7 +208,8 @@ def build_search_wikipedia_tool(number_wikipedia_results=1, max_chars_per_wiki_p
             )
             for i, doc in enumerate(response)
         ]
-        return {"documents": structure_documents_by_group_and_indices(mapped_documents)}
+        docs = mapped_documents
+        return "\n\n".join(map(str, docs)), docs
 
     return _search_wikipedia
 

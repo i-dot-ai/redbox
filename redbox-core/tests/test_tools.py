@@ -4,7 +4,8 @@ from uuid import UUID, uuid4
 import pytest
 from elasticsearch import Elasticsearch
 from langchain_core.embeddings.fake import FakeEmbeddings
-from langchain_core.messages import HumanMessage
+from langchain_core.messages import HumanMessage, AIMessage
+from langgraph.prebuilt import ToolNode
 
 from redbox.graph.nodes.tools import (
     build_govuk_search_tool,
@@ -154,24 +155,26 @@ def test_govuk_search_tool():
 
 def test_wikipedia_tool():
     tool = build_search_wikipedia_tool()
-    state_update = tool.invoke(
+    tool_node = ToolNode(tools=[tool])
+    response = tool_node.invoke(
         {
-            "query": "Gordon Brown",
-            "state": RedboxState(
-                request=RedboxQuery(
-                    question="What was the highest office held by Gordon Brown",
-                    s3_keys=[],
-                    user_uuid=uuid4(),
-                    chat_history=[],
-                    ai_settings=AISettings(),
-                    permitted_s3_keys=[],
-                ),
-                messages=[HumanMessage(content="a message should go here")],
-            ),
+            "messages": [
+                AIMessage(
+                    content="",
+                    tool_calls=[
+                        {
+                            "name": "_search_wikipedia",
+                            "args": {"query": "What was the highest office held by Gordon Brown"},
+                            "id": "1",
+                        }
+                    ],
+                )
+            ]
         }
     )
+    assert response["messages"][0].content != ""
 
-    for document in flatten_document_state(state_update["documents"]):
+    for document in response["messages"][0].artifact:
         assert document.page_content != ""
         metadata = ChunkMetadata.model_validate(document.metadata)
         assert urlparse(metadata.uri).hostname == "en.wikipedia.org"
