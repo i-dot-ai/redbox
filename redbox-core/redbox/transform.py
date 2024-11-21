@@ -44,11 +44,12 @@ def to_document_mapping(docs: list[Document]) -> DocumentMapping:
     return {doc.metadata["uuid"]: doc for doc in docs}
 
 
-def group_documents(docs: Iterable[Document]):
+def group_documents(docs: Iterable[Document]) -> dict[str, list[Document]]:
     def get_uri(d):
         return d.metadata["uri"]
 
-    return itertools.groupby(sorted(docs, key=get_uri), key=get_uri)
+    grouped_docs = itertools.groupby(sorted(docs, key=get_uri), key=get_uri)
+    return {key: list(values) for key, values in grouped_docs}
 
 
 def structure_documents_by_file_name(docs: list[Document]) -> DocumentState:
@@ -251,11 +252,14 @@ def sort_documents(documents: list[Document]) -> list[Document]:
     # Group and sort docs by file_name and handle consecutive indices
     grouped_by_file = group_documents(documents)
 
-    # Step 1: Process each group
-    all_sorted_blocks = sum((group_and_sort_documents(list(group)) for _, group in grouped_by_file), [])
+    # Step 1: group & sort each group
+    document_blocks = [group_and_sort_documents(docs) for docs in grouped_by_file.values()]
 
-    # Step 2: Sort the blocks by the maximum score within each block
+    # Step 2: flatten blocks into a single list of docs
+    all_sorted_blocks = itertools.chain(*document_blocks)
+
+    # Step 3: Sort the blocks by the maximum score within each block
     all_sorted_blocks_by_max_score = sorted(all_sorted_blocks, key=max_score, reverse=True)
 
-    # Step 3: Flatten the list of blocks back into a single list
+    # Step 4: Flatten the list of blocks back into a single list
     return list(itertools.chain.from_iterable(all_sorted_blocks_by_max_score))
