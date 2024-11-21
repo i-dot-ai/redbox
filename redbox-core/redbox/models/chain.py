@@ -81,9 +81,9 @@ class AISettings(BaseModel):
 
 class Source(BaseModel):
     source: str = Field(description="URL or reference to the source", default="")
-    source_type: str = Field(description="creator_type of tool")
-    document_name: str = Field(description="name of document")
-    highlighted_text_in_source: str = Field(description="text from document that supports the claim")
+    source_type: str = Field(description="creator_type of tool", default="Unknown")
+    document_name: str = ""
+    highlighted_text_in_source: str = ""
     page_numbers: list[int] = Field(description="Page Number in document the highlighted text is on", default=[1])
 
 
