@@ -77,6 +77,9 @@ def create_group_uuid(file_name: str, indices: list[int]) -> UUID:
 
 def create_group_uuid_for_group(documents: list[Document]) -> UUID:
     """create a uuid for a DocumentGroup"""
+    if not documents:
+        raise ValueError("at least one document is required")
+
     file_name = documents[0].metadata["uri"]
     group_indices = [d.metadata["index"] for d in documents]
     return create_group_uuid(file_name, group_indices)
@@ -103,6 +106,9 @@ def structure_documents_by_group_and_indices(docs: list[Document]) -> DocumentSt
 
     The document_uuid is taken from the Document metadata directly.
     """
+    result = DocumentState()
+    if not docs:
+        return result
 
     groups = []
     current_group = [docs[0]]
@@ -116,7 +122,6 @@ def structure_documents_by_group_and_indices(docs: list[Document]) -> DocumentSt
     # Handle the last group
     groups.append(current_group)
 
-    result = DocumentState()
     result.groups = {
         create_group_uuid_for_group(group): {doc.metadata["uuid"]: doc for doc in group} for group in groups
     }
