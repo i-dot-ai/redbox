@@ -63,7 +63,7 @@ def structure_documents_by_file_name(docs: list[Document]) -> DocumentState:
 
     grouped_docs = group_documents(docs)
 
-    result.groups = {uuid5(NAMESPACE_DNS, uri): to_document_mapping(d) for uri, d in grouped_docs}
+    result.groups = {uuid5(NAMESPACE_DNS, uri): to_document_mapping(d) for uri, d in grouped_docs.items()}
 
     return result
 
