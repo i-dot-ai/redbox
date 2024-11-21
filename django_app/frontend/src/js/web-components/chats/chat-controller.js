@@ -28,12 +28,14 @@ class ChatController extends HTMLElement {
       userMessage.setAttribute("data-role", "user");
       messageContainer?.insertBefore(userMessage, insertPosition);
 
-      const activites = [
-        `You selected ${selectedDocuments.length || "no"} document${
+      let activites = [];
+      if (selectedDocuments.length) {
+        activites.push(`You selected ${selectedDocuments.length} document${
           selectedDocuments.length === 1 ? "" : "s"
-        }`,
-        "You sent this prompt",
-      ];
+        }`);
+      }
+      activites.push("You sent this prompt");
+
       // add filename to activity if only one file
       if (selectedDocuments.length === 1) {
         activites[0] += ` (${selectedDocuments[0].name})`;
