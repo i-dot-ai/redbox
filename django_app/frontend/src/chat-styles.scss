@@ -246,6 +246,13 @@ chat-history[data-initialised] .rb-chat-history__actions-button {
 .rb-activity {
   position: relative;
 }
+.rb-activity__btn {
+  display: none;
+}
+/* Only show the expand/collapse button when there is more than one activity */
+.rb-activity:has(.rb-activity__item:nth-of-type(2)) .rb-activity__btn {
+  display: block;
+}
 .rb-activity__btn button {
   background-color: transparent;
   border: 0;
