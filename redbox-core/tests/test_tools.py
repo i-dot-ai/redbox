@@ -219,6 +219,7 @@ def test_gov_filter_AI(is_filter, relevant_return, query, keyword):
 
 
 @pytest.mark.vcr
+@pytest.mark.xfail(reason="calls openai")
 def test_gov_tool_params():
     query = "driving in the UK"
     tool = build_govuk_search_tool(filter=True)
