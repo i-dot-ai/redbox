@@ -169,6 +169,7 @@ def to_request_metadata(obj: dict) -> RequestMetadata:
 
     try:
         tokeniser = tiktoken.encoding_for_model(model)
+
     except KeyError:
         tokeniser = tiktoken.get_encoding("cl100k_base")
 

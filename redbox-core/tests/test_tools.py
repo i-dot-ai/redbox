@@ -223,23 +223,34 @@ def test_gov_tool_params():
     query = "driving in the UK"
     tool = build_govuk_search_tool(filter=True)
     ai_setting = AISettings()
-    state_update = tool.invoke(
+
+    tool_node = ToolNode(tools=[tool])
+    response = tool_node.invoke(
         {
-            "query": query,
-            "state": RedboxState(
-                request=RedboxQuery(
-                    question=query,
-                    s3_keys=[],
-                    user_uuid=uuid4(),
-                    chat_history=[],
-                    ai_settings=ai_setting,
-                    permitted_s3_keys=[],
-                )
+            "request": RedboxQuery(
+                question=query,
+                s3_keys=[],
+                user_uuid=uuid4(),
+                chat_history=[],
+                ai_settings=ai_setting,
+                permitted_s3_keys=[],
             ),
+            "messages": [
+                AIMessage(
+                    content="",
+                    tool_calls=[
+                        {
+                            "name": "_search_govuk",
+                            "args": {"query": query},
+                            "id": "1",
+                        }
+                    ],
+                )
+            ],
         }
     )
 
-    documents = flatten_document_state(state_update["documents"])
+    documents = response["messages"][-1].artifact
 
     # call gov tool without additional filter
     assert len(documents) == ai_setting.tool_govuk_returned_results
