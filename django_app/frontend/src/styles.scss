@@ -134,6 +134,13 @@ upload-button {
   display: flex;
 }
 
+/* Citations Page */
+.rb-back-link {
+  color: var(--iai-colour-text-primary);
+  text-decoration: none;
+}
+
+
 /* Chats Page - to come after i.AI Design System */
 @import "./chat-styles.scss";
 
