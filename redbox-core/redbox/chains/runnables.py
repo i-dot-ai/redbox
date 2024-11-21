@@ -10,7 +10,6 @@ from langchain_core.language_models import BaseChatModel
 from langchain_core.messages import AIMessage, AIMessageChunk, BaseMessage
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.outputs import ChatGeneration, ChatGenerationChunk, ChatResult
-from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import (
     Runnable,
     RunnableGenerator,
@@ -18,9 +17,10 @@ from langchain_core.runnables import (
     RunnablePassthrough,
     chain,
 )
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from tiktoken import Encoding
 
-from redbox.api.format import format_documents, format_tool_calls
+from redbox.api.format import format_documents
 from redbox.chains.activity import log_activity
 from redbox.chains.components import get_tokeniser
 from redbox.models.chain import ChainChatMessage, PromptSet, RedboxState, get_prompts
@@ -60,7 +60,6 @@ def build_chat_prompt_from_messages_runnable(
             {task_system_prompt}
             {ai_settings.persona_info_prompt}
             {ai_settings.caller_info_prompt}
-            {{format_instructions}}
             """
         prompts_budget = len(_tokeniser.encode(task_system_prompt)) + len(_tokeniser.encode(task_question_prompt))
         chat_history_budget = ai_settings.context_window_size - ai_settings.llm_max_tokens - prompts_budget
@@ -81,11 +80,6 @@ def build_chat_prompt_from_messages_runnable(
             | {
                 "messages": state.messages,
                 "formatted_documents": format_documents(flatten_document_state(state.documents)),
-                "tool_calls": format_tool_calls(state),
-                "system_info": ai_settings.system_info_prompt,
-                "persona_info": ai_settings.persona_info_prompt,
-                "caller_info": ai_settings.caller_info_prompt,
-                "task_prompt": task_system_prompt,
             }
             | _additional_variables
         )
@@ -94,7 +88,8 @@ def build_chat_prompt_from_messages_runnable(
             messages=(
                 [("system", system_prompt_message)]
                 + [(msg["role"], msg["text"]) for msg in truncated_history]
-                + [("user", task_question_prompt)]
+                + [MessagesPlaceholder("messages")]
+                + [task_question_prompt + "\n\n{format_instructions}"]
             ),
             partial_variables={"format_instructions": format_instructions},
         ).invoke(prompt_template_context)

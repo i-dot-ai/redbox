@@ -1,10 +1,11 @@
 from urllib.parse import urlparse
-from uuid import UUID, uuid4
+from uuid import uuid4
 
 import pytest
 from elasticsearch import Elasticsearch
 from langchain_core.embeddings.fake import FakeEmbeddings
-from langchain_core.messages import HumanMessage
+from langchain_core.messages import AIMessage
+from langgraph.prebuilt import ToolNode
 
 from redbox.graph.nodes.tools import (
     build_govuk_search_tool,
@@ -79,27 +80,35 @@ def test_search_documents_tool(
         chunk_resolution=ChunkResolution.normal,
     )
 
-    result_state = search.invoke(
-        {
-            "query": stored_file_parameterised.query.question,
-            "state": RedboxState(
-                request=stored_file_parameterised.query,
-                messages=[HumanMessage(content=stored_file_parameterised.query.question)],
-            ),
-        }
+    tool_node = ToolNode(tools=[search])
+    result_state = tool_node.invoke(
+        RedboxState(
+            request=stored_file_parameterised.query,
+            messages=[
+                AIMessage(
+                    content="",
+                    tool_calls=[
+                        {
+                            "name": "_search_documents",
+                            "args": {"query": stored_file_parameterised.query.question},
+                            "id": "1",
+                        }
+                    ],
+                )
+            ],
+        )
     )
 
     if not permission:
-        # No state update emitted
-        assert result_state is None
+        # No new messages update emitted
+        assert result_state["messages"][0].content == ""
+        assert result_state["messages"][0].artifact == []
     else:
-        result_docstate = result_state["documents"]
-        result_flat = flatten_document_state(result_state["documents"])
+        result_flat = result_state["messages"][0].artifact
 
         # Check state update is formed as expected
         assert isinstance(result_state, dict)
         assert len(result_state) == 1
-        assert "documents" in result_state
 
         # Check flattened documents match expected, similar to retriever
         assert len(result_flat) == chain_params["rag_k"]
@@ -110,41 +119,36 @@ def test_search_documents_tool(
             assert {c.page_content for c in result_flat} <= {c.page_content for c in selected_docs}
             assert {c.metadata["uri"] for c in result_flat} <= set(stored_file_parameterised.query.s3_keys)
 
-        # Check docstate is formed as expected, similar to transform tests
-        for group_uuid, group_docs in result_docstate.groups.items():
-            assert isinstance(group_uuid, UUID)
-            assert isinstance(group_docs, dict)
 
-            for doc in group_docs.values():
-                assert doc.metadata["uuid"] in group_docs
-                assert group_docs[doc.metadata["uuid"]] == doc
-
-
+@pytest.mark.xfail(reason="calls openai")
 def test_govuk_search_tool():
     tool = build_govuk_search_tool()
 
-    state_update = tool.invoke(
+    tool_node = ToolNode(tools=[tool])
+    response = tool_node.invoke(
         {
-            "query": "Cuba Travel Advice",
-            "state": RedboxState(
-                request=RedboxQuery(
-                    question="Search gov.uk for travel advice to cuba",
-                    s3_keys=[],
-                    user_uuid=uuid4(),
-                    chat_history=[],
-                    ai_settings=AISettings(),
-                    permitted_s3_keys=[],
+            "messages": [
+                AIMessage(
+                    content="",
+                    tool_calls=[
+                        {
+                            "name": "_search_govuk",
+                            "args": {"query": "Cuba Travel Advice"},
+                            "id": "1",
+                        }
+                    ],
                 )
-            ),
+            ]
         }
     )
-
-    documents = flatten_document_state(state_update["documents"])
+    assert response["messages"][0].content != ""
 
     # assert at least one document is travel advice
-    assert any("/foreign-travel-advice/cuba" in document.metadata["uri"] for document in documents)
+    assert any(
+        "/foreign-travel-advice/cuba" in document.metadata["uri"] for document in response["messages"][0].artifact
+    )
 
-    for document in documents:
+    for document in response["messages"][0].artifact:
         assert document.page_content != ""
         metadata = ChunkMetadata.model_validate(document.metadata)
         assert urlparse(metadata.uri).hostname == "www.gov.uk"
@@ -153,24 +157,26 @@ def test_govuk_search_tool():
 
 def test_wikipedia_tool():
     tool = build_search_wikipedia_tool()
-    state_update = tool.invoke(
+    tool_node = ToolNode(tools=[tool])
+    response = tool_node.invoke(
         {
-            "query": "Gordon Brown",
-            "state": RedboxState(
-                request=RedboxQuery(
-                    question="What was the highest office held by Gordon Brown",
-                    s3_keys=[],
-                    user_uuid=uuid4(),
-                    chat_history=[],
-                    ai_settings=AISettings(),
-                    permitted_s3_keys=[],
-                ),
-                messages=[HumanMessage(content="a message should go here")],
-            ),
+            "messages": [
+                AIMessage(
+                    content="",
+                    tool_calls=[
+                        {
+                            "name": "_search_wikipedia",
+                            "args": {"query": "What was the highest office held by Gordon Brown"},
+                            "id": "1",
+                        }
+                    ],
+                )
+            ]
         }
     )
+    assert response["messages"][0].content != ""
 
-    for document in flatten_document_state(state_update["documents"]):
+    for document in response["messages"][0].artifact:
         assert document.page_content != ""
         metadata = ChunkMetadata.model_validate(document.metadata)
         assert urlparse(metadata.uri).hostname == "en.wikipedia.org"
@@ -185,6 +191,7 @@ def test_wikipedia_tool():
     ],
 )
 @pytest.mark.vcr
+@pytest.mark.xfail(reason="calls openai")
 def test_gov_filter_AI(is_filter, relevant_return, query, keyword):
     def run_tool(is_filter):
         tool = build_govuk_search_tool(num_results=1, filter=is_filter)

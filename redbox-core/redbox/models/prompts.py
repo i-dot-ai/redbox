@@ -127,20 +127,9 @@ CHAT_WITH_DOCS_QUESTION_PROMPT = "Question: {question}. \n\n Documents: \n\n {fo
 
 RETRIEVAL_QUESTION_PROMPT = "{question} \n=========\n{formatted_documents}\n=========\nFINAL ANSWER: "
 
-AGENTIC_RETRIEVAL_QUESTION_PROMPT = (
-    "The following context and previous actions are provided to assist you. \n\n"
-    "Previous tool calls: \n\n <ToolCalls> \n\n  {tool_calls} </ToolCalls> \n\n "
-    "Document snippets: \n\n <Documents> \n\n {formatted_documents} </Documents> \n\n "
-    "User question: \n\n {question}"
-)
+AGENTIC_RETRIEVAL_QUESTION_PROMPT = "{question}"
 
-AGENTIC_GIVE_UP_QUESTION_PROMPT = (
-    "The following context and previous actions are provided to assist you. \n\n"
-    "Previous tool calls: \n\n <ToolCalls> \n\n  {tool_calls} </ToolCalls> \n\n "
-    "Document snippets: \n\n <Documents> \n\n {formatted_documents} </Documents> \n\n "
-    "Previous agent's response: \n\n <AIResponse> \n\n {messages} \n\n </AIResponse> \n\n "
-    "User question: \n\n {question}"
-)
+AGENTIC_GIVE_UP_QUESTION_PROMPT = "{question}"
 
 CHAT_MAP_QUESTION_PROMPT = "Question: {question}. \n Documents: \n {formatted_documents} \n\n Answer: "
 

@@ -1,0 +1,125 @@
+<script>
+
+  export let data;
+
+  /**
+   * Get the initials of a user from their name or email
+   * @param {string | undefined} name
+   * @param {string | undefined} email
+   */
+  const getUserInitials = (name, email) => {
+    if (name) {
+      const nameSections = name.split(" ");
+      if (nameSections.length > 1) {
+        return nameSections[0][0] + nameSections[nameSections.length - 1][0];
+      } else {
+        return nameSections[0][0];
+      }
+    } else if (email) {
+      const emailSections = email.split(".");
+      return emailSections[0][0] + emailSections[1][0];
+    }
+  };
+
+  const menuItems = data.userIsAuthenticated
+    ? [
+        { text: "Documents", href: "/documents" },
+        { text: "Chats", href: "/chats" },
+      ]
+    : [{ text: "Sign in", href: "/sign-in" }];
+  // TO DO: Set which menuItem is active
+
+  const productName = "Redbox";
+  const phase = "Beta";
+
+  const userItems = data.userIsAuthenticated
+    ? {
+        initials: getUserInitials(data.user.name, data.user.email)?.toUpperCase(),
+        menuItems: [
+          { text: "My details", href: "/demographics" },
+          { text: "Sign out", href: "/signed-out" },
+        ],
+      }
+    : {};
+
+  const homePath = "/";
+</script>
+
+<header class="iai-top-nav">
+  <div class="iai-top-nav__container govuk-width-container">
+    <div class="iai-top-nav__top-container">
+      <div class="iai-top-nav__product">
+        <svg
+          aria-hidden="true"
+          class="iai-top-nav__crown"
+          height="30"
+          width="32"
+          focusable="false"
+          viewBox="0 0 32 30"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M22.6 10.4c-1 .4-2-.1-2.4-1-.4-.9.1-2 1-2.4.9-.4 2 .1 2.4 1s-.1 2-1 2.4m-5.9 6.7c-.9.4-2-.1-2.4-1-.4-.9.1-2 1-2.4.9-.4 2 .1 2.4 1s-.1 2-1 2.4m10.8-3.7c-1 .4-2-.1-2.4-1-.4-.9.1-2 1-2.4.9-.4 2 .1 2.4 1s0 2-1 2.4m3.3 4.8c-1 .4-2-.1-2.4-1-.4-.9.1-2 1-2.4.9-.4 2 .1 2.4 1s-.1 2-1 2.4M17 4.7l2.3 1.2V2.5l-2.3.7-.2-.2.9-3h-3.4l.9 3-.2.2c-.1.1-2.3-.7-2.3-.7v3.4L15 4.7c.1.1.1.2.2.2l-1.3 4c-.1.2-.1.4-.1.6 0 1.1.8 2 1.9 2.2h.7c1-.2 1.9-1.1 1.9-2.1 0-.2 0-.4-.1-.6l-1.3-4c-.1-.2 0-.2.1-.3m-7.6 5.7c.9.4 2-.1 2.4-1 .4-.9-.1-2-1-2.4-.9-.4-2 .1-2.4 1s0 2 1 2.4m-5 3c.9.4 2-.1 2.4-1 .4-.9-.1-2-1-2.4-.9-.4-2 .1-2.4 1s.1 2 1 2.4m-3.2 4.8c.9.4 2-.1 2.4-1 .4-.9-.1-2-1-2.4-.9-.4-2 .1-2.4 1s0 2 1 2.4m14.8 11c4.4 0 8.6.3 12.3.8 1.1-4.5 2.4-7 3.7-8.8l-2.5-.9c.2 1.3.3 1.9 0 2.7-.4-.4-.8-1.1-1.1-2.3l-1.2 4c.7-.5 1.3-.8 2-.9-1.1 2.5-2.6 3.1-3.5 3-1.1-.2-1.7-1.2-1.5-2.1.3-1.2 1.5-1.5 2.1-.1 1.1-2.3-.8-3-2-2.3 1.9-1.9 2.1-3.5.6-5.6-2.1 1.6-2.1 3.2-1.2 5.5-1.2-1.4-3.2-.6-2.5 1.6.9-1.4 2.1-.5 1.9.8-.2 1.1-1.7 2.1-3.5 1.9-2.7-.2-2.9-2.1-2.9-3.6.7-.1 1.9.5 2.9 1.9l.4-4.3c-1.1 1.1-2.1 1.4-3.2 1.4.4-1.2 2.1-3 2.1-3h-5.4s1.7 1.9 2.1 3c-1.1 0-2.1-.2-3.2-1.4l.4 4.3c1-1.4 2.2-2 2.9-1.9-.1 1.5-.2 3.4-2.9 3.6-1.9.2-3.4-.8-3.5-1.9-.2-1.3 1-2.2 1.9-.8.7-2.3-1.2-3-2.5-1.6.9-2.2.9-3.9-1.2-5.5-1.5 2-1.3 3.7.6 5.6-1.2-.7-3.1 0-2 2.3.6-1.4 1.8-1.1 2.1.1.2.9-.3 1.9-1.5 2.1-.9.2-2.4-.5-3.5-3 .6 0 1.2.3 2 .9l-1.2-4c-.3 1.1-.7 1.9-1.1 2.3-.3-.8-.2-1.4 0-2.7l-2.9.9C1.3 23 2.6 25.5 3.7 30c3.7-.5 7.9-.8 12.3-.8"
+            fill="currentColor"
+            fill-rule="evenodd"
+          ></path>
+        </svg>
+        <div class="iai-top-nav__product-name">
+          <a class="iai-top-nav__product-link" href={homePath}>{productName}</a>
+        </div>
+        {#if phase}
+          <div class="iai-top-nav__phase">{phase}</div>
+        {/if}
+      </div>
+      <hamburger-button class="iai-top-nav__mobile-button"></hamburger-button>
+    </div>
+    <mobile-drop-down>
+      <nav aria-label="Menu" class="iai-top-nav__nav govuk-width-container">
+        <ul id="navigation" class="iai-top-nav__nav-list">
+          {#each menuItems as menuItem}
+            <li
+              class="iai-top-nav__link-item"
+              class:iai-top-nav__link-item--active={menuItem.active}
+            >
+              <a
+                class="iai-top-nav__link"
+                href={menuItem.href}
+                aria-current={menuItem.active ? "page" : undefined}
+                >{menuItem.text}</a
+              >
+            </li>
+          {/each}
+        </ul>
+        {#if userItems.initials}
+          <button
+            class="iai-top-nav__link iai-top-nav__link--user"
+            aria-expanded="false"
+          >
+            {userItems.initials}
+            <span class="govuk-visually-hidden">user</span>
+          </button>
+          <ul class="iai-top-nav__user-drop-down">
+            {#each userItems.menuItems as menuItem}
+              <li class="iai-top-nav__link-item iai-top-nav__user-link-item">
+                <a
+                  class="iai-top-nav__link iai-top-nav__user-link"
+                  href={menuItem.href}
+                  aria-current={menuItem.active ? "page" : undefined}
+                  data-sveltekit-reload>{menuItem.text}</a
+                >
+              </li>
+            {/each}
+          </ul>
+        {/if}
+      </nav>
+    </mobile-drop-down>
+  </div>
+
+  <script>
+    // TO DO: work out why this isn't happening in JS bundle
+    window.addEventListener("resize", () => {
+      document.querySelector(".iai-top-nav__mobile-button").classList.add("js-init");
+    });
+  </script>
+
+</header>
