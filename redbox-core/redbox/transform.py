@@ -5,15 +5,11 @@ from uuid import NAMESPACE_DNS, UUID, uuid5
 import tiktoken
 from langchain_core.callbacks.manager import dispatch_custom_event
 from langchain_core.documents import Document
-from langchain_core.messages import BaseMessage, AIMessage
+from langchain_core.messages import AIMessage
 from langchain_core.runnables import RunnableLambda
 
 from redbox.models.chain import DocumentState, LLMCallMetadata, RedboxState, RequestMetadata, DocumentMapping
 from redbox.models.graph import RedboxEventType
-
-
-def format_agent_messages(messages: list[BaseMessage]):
-    return "\n".join()
 
 
 # This should be unnecessary and indicates we're not chunking correctly

@@ -1,4 +1,4 @@
-from typing import Annotated, Any, Iterable
+from typing import Annotated, Iterable
 
 import numpy as np
 import requests
@@ -12,6 +12,7 @@ from langchain_core.tools import Tool, tool
 from langgraph.prebuilt import InjectedState
 from sklearn.metrics.pairwise import cosine_similarity
 
+from redbox.api.format import format_documents
 from redbox.chains.components import get_embeddings
 from redbox.models.chain import RedboxState
 from redbox.models.file import ChunkCreatorType, ChunkMetadata, ChunkResolution
@@ -24,7 +25,6 @@ from redbox.retriever.retrievers import query_to_documents
 from redbox.transform import (
     merge_documents,
     sort_documents,
-    structure_documents_by_group_and_indices,
 )
 
 
@@ -37,8 +37,8 @@ def build_search_documents_tool(
 ) -> Tool:
     """Constructs a tool that searches the index and sets state.documents."""
 
-    @tool
-    def _search_documents(query: str, state: Annotated[RedboxState, InjectedState]) -> dict[str, Any]:
+    @tool(response_format="content_and_artifact")
+    def _search_documents(query: str, state: Annotated[RedboxState, InjectedState]) -> tuple[str, list[Document]]:
         """
         Search for documents uploaded by the user based on a query string.
 
@@ -73,7 +73,7 @@ def build_search_documents_tool(
 
         # Handle nothing found (as when no files are permitted)
         if not initial_documents:
-            return None
+            return "", []
 
         # Adjacent documents
         with_adjacent_query = add_document_filter_scores_to_query(
@@ -88,7 +88,7 @@ def build_search_documents_tool(
         sorted_documents = sort_documents(documents=merged_documents)
 
         # Return as state update
-        return {"documents": structure_documents_by_group_and_indices(sorted_documents)}
+        return format_documents(sorted_documents), sorted_documents
 
     return _search_documents
 
@@ -110,8 +110,8 @@ def build_govuk_search_tool(num_results: int = 1, filter=True) -> Tool:
         response["results"] = sorted(response.get("results"), key=lambda x: x["similarity"], reverse=True)[:num_results]
         return response
 
-    @tool
-    def _search_govuk(query: str, state: Annotated[RedboxState, InjectedState]) -> dict[str, Any]:
+    @tool(response_format="content_and_artifact")
+    def _search_govuk(query: str) -> tuple[str, list[Document]]:
         """
         Search for documents on gov.uk based on a query string.
         This endpoint is used to search for documents on gov.uk. There are many types of documents on gov.uk.
@@ -168,7 +168,7 @@ def build_govuk_search_tool(num_results: int = 1, filter=True) -> Tool:
                 )
             )
 
-        return {"documents": structure_documents_by_group_and_indices(mapped_documents)}
+        return format_documents(mapped_documents), mapped_documents
 
     return _search_govuk
 
@@ -181,8 +181,8 @@ def build_search_wikipedia_tool(number_wikipedia_results=1, max_chars_per_wiki_p
     )
     tokeniser = tiktoken.encoding_for_model("gpt-4o")
 
-    @tool
-    def _search_wikipedia(query: str, state: Annotated[RedboxState, InjectedState]) -> dict[str, Any]:
+    @tool(response_format="content_and_artifact")
+    def _search_wikipedia(query: str) -> tuple[str, list[Document]]:
         """
         Search Wikipedia for information about the queried entity.
         Useful for when you need to answer general questions about people, places, objects, companies, facts, historical events, or other subjects.
@@ -208,7 +208,8 @@ def build_search_wikipedia_tool(number_wikipedia_results=1, max_chars_per_wiki_p
             )
             for i, doc in enumerate(response)
         ]
-        return {"documents": structure_documents_by_group_and_indices(mapped_documents)}
+        docs = mapped_documents
+        return format_documents(docs), docs
 
     return _search_wikipedia
 
