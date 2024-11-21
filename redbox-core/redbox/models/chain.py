@@ -1,3 +1,4 @@
+import enum
 from datetime import UTC, datetime
 from enum import StrEnum
 from functools import reduce
@@ -79,11 +80,17 @@ class AISettings(BaseModel):
     chat_backend: ChatLLMBackend = ChatLLMBackend()
 
 
+class SourceType(enum.Enum):
+    WIKIPEDIA = "Wikipedia"
+    USER_UPLOADED_DOCUMENT = "UserUploadedDocument"
+    GOV_UK = "GOV.UK"
+
+
 class Source(BaseModel):
     source: str = Field(description="URL or reference to the source", default="")
-    source_type: str = Field(description="creator_type of tool", default="Unknown")
-    document_name: str = ""
-    highlighted_text_in_source: str = ""
+    source_type: SourceType = Field(description="creator_type of tool")
+    document_name: str = Field(description="name of document")
+    highlighted_text_in_source: str = Field(description="text from document that supports the claim")
     page_numbers: list[int] = Field(description="Page Number in document the highlighted text is on", default=[1])
 
 
