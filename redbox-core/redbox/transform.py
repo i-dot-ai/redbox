@@ -7,7 +7,7 @@ from langchain_core.documents import Document
 from langchain_core.messages import BaseMessage, AIMessage
 from langchain_core.runnables import RunnableLambda
 
-from redbox.models.chain import DocumentGroup, DocumentState, LLMCallMetadata, RedboxState, RequestMetadata
+from redbox.models.chain import DocumentState, LLMCallMetadata, RedboxState, RequestMetadata
 from redbox.models.graph import RedboxEventType
 
 
@@ -75,6 +75,27 @@ def create_group_uuid(file_name: str, indices: list[int]) -> UUID:
     return uuid5(NAMESPACE_DNS, unique_str)
 
 
+def create_group_uuid_for_group(documents: list[Document]) -> UUID:
+    """create a uuid for a DocumentGroup"""
+    if not documents:
+        raise ValueError("at least one document is required")
+
+    file_name = documents[0].metadata["uri"]
+    group_indices = [d.metadata["index"] for d in documents]
+    return create_group_uuid(file_name, group_indices)
+
+
+def documents_are_consecutive(first: Document, second: Document) -> bool:
+    """are the two documents consecutive, i.e. do they appear next to each other in the original text?"""
+    if first.metadata["uri"] is None:
+        return True
+
+    if first.metadata["uri"] != second.metadata["uri"]:
+        return False
+
+    return first.metadata["index"] + 1 == second.metadata["index"]
+
+
 def structure_documents_by_group_and_indices(docs: list[Document]) -> DocumentState:
     """Structures a list of documents by blocks of consecutive indices in group_uuids.
 
@@ -86,32 +107,24 @@ def structure_documents_by_group_and_indices(docs: list[Document]) -> DocumentSt
     The document_uuid is taken from the Document metadata directly.
     """
     result = DocumentState()
-    current_group = DocumentGroup()
-    current_group_indices: list[int] = []
-    current_filename: str | None = None
+    if not docs:
+        return result
 
-    for d in docs:
-        is_not_same_filename = d.metadata["uri"] != current_filename
-        is_not_none_filename = current_filename is not None
-        is_not_consecutive = d.metadata["index"] - 1 != (
-            current_group_indices[-1] if current_group_indices else d.metadata["index"]
-        )
-        if (is_not_same_filename and is_not_none_filename) or (is_not_consecutive and is_not_none_filename):
-            # Generate a deterministic hash for the previous document and its indices
-            group_id = create_group_uuid(current_filename, current_group_indices)
-            result.groups[group_id] = current_group
-
-            current_group = DocumentGroup()
-            current_group_indices: list[int] = []
-
-        current_group[d.metadata["uuid"]] = d
-        current_group_indices.append(d.metadata["index"])
-        current_filename = d.metadata["uri"]
+    groups = []
+    current_group = [docs[0]]
+    for last_doc, this_doc in zip(docs[:-1], docs[1:]):
+        if documents_are_consecutive(last_doc, this_doc):
+            current_group.append(this_doc)
+        else:
+            groups.append(current_group)
+            current_group = [this_doc]
 
     # Handle the last group
-    if current_group:
-        group_id = create_group_uuid(current_filename, current_group_indices)
-        result.groups[group_id] = current_group
+    groups.append(current_group)
+
+    result.groups = {
+        create_group_uuid_for_group(group): {doc.metadata["uuid"]: doc for doc in group} for group in groups
+    }
 
     return result
 
