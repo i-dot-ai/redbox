@@ -36,6 +36,7 @@ addopts = "--import-mode=importlib"
 env_override_existing_values = 1
 env_files = [
     "tests/.env.test",
+    ".env.aws",
     ".env"
 ]
 markers = [

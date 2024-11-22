@@ -1,5 +1,6 @@
 import json
 import logging
+from operator import attrgetter
 import re
 import textwrap
 from collections.abc import Callable
@@ -19,7 +20,7 @@ from redbox.chains.activity import log_activity
 from redbox.chains.components import get_chat_llm, get_tokeniser
 from redbox.chains.runnables import CannedChatLLM, build_llm_chain
 from redbox.models import ChatRoute
-from redbox.models.chain import DocumentState, PromptSet, RedboxState, RequestMetadata
+from redbox.models.chain import Citation, DocumentState, PromptSet, RedboxState, RequestMetadata
 from redbox.models.graph import ROUTE_NAME_TAG, SOURCE_DOCUMENTS_TAG, RedboxActivityEvent, RedboxEventType
 from redbox.transform import combine_documents, flatten_document_state
 
@@ -136,6 +137,7 @@ def build_stuff_pattern(
     output_parser: Runnable = None,
     format_instructions: str | None = None,
     tools: list[StructuredTool] | None = None,
+    tool_choice: str | None = None,
     final_response_chain: bool = False,
 ) -> Runnable[RedboxState, dict[str, Any]]:
     """Returns a Runnable that uses state.request and state.documents to set state.messages.
@@ -145,7 +147,7 @@ def build_stuff_pattern(
 
     @RunnableLambda
     def _stuff(state: RedboxState) -> dict[str, Any]:
-        llm = get_chat_llm(state.request.ai_settings.chat_backend, tools=tools)
+        llm = get_chat_llm(state.request.ai_settings.chat_backend, tools=tools, tool_choice=tool_choice)
 
         events = [
             event
@@ -260,9 +262,9 @@ def clear_documents_process(state: RedboxState) -> dict[str, Any]:
 
 def report_sources_process(state: RedboxState) -> None:
     """A Runnable which reports the documents in the state as sources."""
-    if citations_state := state.citations:
+    if (citations_state := state.citations):
         dispatch_custom_event(RedboxEventType.on_citations_report, citations_state)
-    elif document_state := state.documents:
+    elif (document_state := state.documents):
         dispatch_custom_event(RedboxEventType.on_source_report, flatten_document_state(document_state))
 
 

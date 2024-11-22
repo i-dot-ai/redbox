@@ -55,12 +55,12 @@ def build_chat_prompt_from_messages_runnable(
         log.debug("Setting chat prompt")
         # Set the system prompt to be our composed structure
         # We preserve the format instructions
-        system_prompt_message = f"""
-            {ai_settings.system_info_prompt}
-            {task_system_prompt}
-            {ai_settings.persona_info_prompt}
-            {ai_settings.caller_info_prompt}
-            """
+        system_prompt_message = (
+        f"{ai_settings.system_info_prompt}"
+        f"{task_system_prompt}"
+        f"{ai_settings.persona_info_prompt}"
+        f"{ai_settings.caller_info_prompt}"
+        )
         prompts_budget = len(_tokeniser.encode(task_system_prompt)) + len(_tokeniser.encode(task_question_prompt))
         chat_history_budget = ai_settings.context_window_size - ai_settings.llm_max_tokens - prompts_budget
 
@@ -88,8 +88,8 @@ def build_chat_prompt_from_messages_runnable(
             messages=(
                 [("system", system_prompt_message)]
                 + [(msg["role"], msg["text"]) for msg in truncated_history]
-                + [MessagesPlaceholder("messages")]
                 + [task_question_prompt + "\n\n{format_instructions}"]
+                + [MessagesPlaceholder("messages")]
             ),
             partial_variables={"format_instructions": format_instructions},
         ).invoke(prompt_template_context)

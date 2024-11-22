@@ -1,6 +1,7 @@
-from typing import Annotated, Iterable
+from typing import Annotated, Callable, Iterable
 
 import numpy as np
+from pydantic import BaseModel
 import requests
 import tiktoken
 from elasticsearch import Elasticsearch
@@ -8,7 +9,7 @@ from langchain_community.utilities import WikipediaAPIWrapper
 from langchain_core.documents import Document
 from langchain_core.embeddings.embeddings import Embeddings
 from langchain_core.messages import ToolCall
-from langchain_core.tools import Tool, tool
+from langchain_core.tools import Tool, tool, StructuredTool
 from langgraph.prebuilt import InjectedState
 from sklearn.metrics.pairwise import cosine_similarity
 
@@ -26,6 +27,22 @@ from redbox.transform import (
     merge_documents,
     sort_documents,
 )
+
+
+def create_structured_output_tool(schema_model: BaseModel, content_extractor: Callable):
+
+    def _create_output(*args, **kwargs):
+        obj = schema_model(*args, **kwargs)
+        return content_extractor(obj), obj
+
+    structured_answer_tool = StructuredTool(
+        name="AnswerProvider",
+        args_schema=schema_model,
+        response_format="content_and_artifact",
+        description="Answers the users query in the format they requested",
+        func=_create_output
+    )
+    return structured_answer_tool
 
 
 def build_search_documents_tool(
@@ -218,8 +235,8 @@ class BaseRetrievalToolLogFormatter:
     def __init__(self, t: ToolCall) -> None:
         self.tool_call = t
 
-    def log_call(self, tool_call: ToolCall):
-        return f"Used {tool_call["name"]} to get more information"
+    def log_call(self):
+        return f"Used {self.tool_call["name"]} to get more information"
 
     def log_result(self, documents: Iterable[Document]):
         if len(documents) == 0:
@@ -260,3 +277,5 @@ __RETRIEVEAL_TOOL_MESSAGE_FORMATTERS = {
 
 def get_log_formatter_for_retrieval_tool(t: ToolCall) -> BaseRetrievalToolLogFormatter:
     return __RETRIEVEAL_TOOL_MESSAGE_FORMATTERS.get(t["name"], BaseRetrievalToolLogFormatter)(t)
+
+

@@ -1,6 +1,7 @@
 import itertools
 from uuid import NAMESPACE_DNS, UUID, uuid5
 
+from numpy import isin
 import tiktoken
 from langchain_core.callbacks.manager import dispatch_custom_event
 from langchain_core.documents import Document
@@ -149,6 +150,7 @@ def to_request_metadata(obj: dict) -> RequestMetadata:
 
     prompt = obj["prompt"]
     response = obj["text_and_tools"]["raw_response"].content
+    response = response if isinstance(response, str) else ""
     model = obj["model"]
 
     try:

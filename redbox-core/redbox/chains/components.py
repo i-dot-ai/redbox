@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 load_dotenv()
 
 
-def get_chat_llm(model: ChatLLMBackend, tools: list[StructuredTool] | None = None):
+def get_chat_llm(model: ChatLLMBackend, tools: list[StructuredTool] | None = None, tool_choice: str | None = None):
     logger.debug("initialising model=%s model_provider=%s tools=%s", model.name, model.provider, tools)
     chat_model = init_chat_model(
         model=model.name,
@@ -34,7 +34,7 @@ def get_chat_llm(model: ChatLLMBackend, tools: list[StructuredTool] | None = Non
         configurable_fields=["base_url"],
     )
     if tools:
-        chat_model = chat_model.bind_tools(tools)
+        chat_model = chat_model.bind_tools(tools, tool_choice=tool_choice)
     return chat_model
 
 
