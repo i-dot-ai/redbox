@@ -156,8 +156,9 @@ class Settings(BaseSettings):
             client = client.options(request_timeout=30, retry_on_timeout=True, max_retries=3)
 
         elif isinstance(self.elastic, OpenSearchSettings):
+            collection_endpoint = self.elastic.collection_endpoint.removeprefix("https://")
             client = OpenSearch(
-                hosts=[{"host": self.elastic.collection_endpoint, "port": 443}],
+                hosts=[{"host": collection_endpoint, "port": 443}],
                 use_ssl=True,
                 verify_certs=True,
                 connection_class=RequestsHttpConnection,
