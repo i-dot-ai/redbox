@@ -181,7 +181,7 @@ class Settings(BaseSettings):
         client.create(
             index=self.elastic_chat_mesage_index,
             id=uuid.uuid4(),
-            document=Document(page_content="i am here"),
+            document=Document(page_content="i am here").model_dump(),
         )
 
         return client
