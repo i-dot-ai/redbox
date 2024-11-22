@@ -7,7 +7,7 @@ from typing import Literal
 import boto3
 from elasticsearch import Elasticsearch
 from langchain_core.documents import Document
-from opensearchpy import OpenSearch, RequestsHttpConnection
+from opensearchpy import OpenSearch, RequestsHttpConnection, AWSV4SignerAuth
 from pydantic import BaseModel
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from langchain.globals import set_debug
@@ -156,9 +156,13 @@ class Settings(BaseSettings):
             client = client.options(request_timeout=30, retry_on_timeout=True, max_retries=3)
 
         elif isinstance(self.elastic, OpenSearchSettings):
+            credentials = boto3.Session().get_credentials()
+            auth = AWSV4SignerAuth(credentials, self.aws_region, "aoss")
+
             collection_endpoint = self.elastic.collection_endpoint.removeprefix("https://")
             client = OpenSearch(
                 hosts=[{"host": collection_endpoint, "port": 443}],
+                http_auth=auth,
                 use_ssl=True,
                 verify_certs=True,
                 connection_class=RequestsHttpConnection,
@@ -217,7 +221,7 @@ class Settings(BaseSettings):
                 region_name=self.aws_region,
             )
 
-        msg = f"unkown object_store={self.object_store}"
+        msg = f"unknown object_store={self.object_store}"
         raise NotImplementedError(msg)
 
 
