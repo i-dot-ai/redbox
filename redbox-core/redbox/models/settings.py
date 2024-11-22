@@ -1,10 +1,12 @@
 import logging
 import os
+import uuid
 from functools import cache, lru_cache
 from typing import Literal
 
 import boto3
 from elasticsearch import Elasticsearch
+from langchain_core.documents import Document
 from opensearchpy import OpenSearch, RequestsHttpConnection
 from pydantic import BaseModel
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -151,6 +153,7 @@ class Settings(BaseSettings):
                 ],
                 basic_auth=(self.elastic.user, self.elastic.password),
             )
+            client = client.options(request_timeout=30, retry_on_timeout=True, max_retries=3)
 
         elif isinstance(self.elastic, OpenSearchSettings):
             client = OpenSearch(
@@ -161,8 +164,11 @@ class Settings(BaseSettings):
                 pool_maxsize=100,
             )
 
-        else:
+        elif isinstance(self.elastic, ElasticCloudSettings):
             client = Elasticsearch(cloud_id=self.elastic.cloud_id, api_key=self.elastic.api_key)
+            client = client.options(request_timeout=30, retry_on_timeout=True, max_retries=3)
+        else:
+            raise NotImplementedError
 
         if not client.indices.exists_alias(name=self.elastic_alias):
             chunk_index = f"{self.elastic_root_index}-chunk"
@@ -172,7 +178,13 @@ class Settings(BaseSettings):
         if not client.indices.exists(index=self.elastic_chat_mesage_index):
             client.indices.create(index=self.elastic_chat_mesage_index)
 
-        return client.options(request_timeout=30, retry_on_timeout=True, max_retries=3)
+        client.create(
+            index=self.elastic_chat_mesage_index,
+            id=uuid.uuid4(),
+            document=Document(page_content="i am here"),
+        )
+
+        return client
 
     def s3_client(self):
         if self.object_store == "minio":
