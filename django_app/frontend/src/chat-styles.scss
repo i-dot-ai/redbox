@@ -270,6 +270,8 @@ chat-history[data-initialised] .rb-chat-history__actions-button {
   margin: 0;
   margin-left: 0.5rem;
   padding-bottom: 0.75rem;
+  padding-right: 8rem;
+  word-break: break-word;
 }
 .rb-activity__item:last-child, .rb-activity:has([expanded="true"]) .rb-activity__item {
   display: flex;
