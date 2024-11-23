@@ -7,18 +7,15 @@ from langgraph.prebuilt import ToolNode
 from redbox.chains.components import get_structured_response_with_citations_parser
 from redbox.chains.runnables import build_self_route_output_parser
 from redbox.graph.edges import (
-    build_documents_bigger_than_context_conditional,
     build_keyword_detection_conditional,
     build_total_tokens_request_handler_conditional,
     documents_selected_conditional,
-    multiple_docs_in_group_conditional,
 )
 from redbox.graph.nodes.processes import (
     PromptSet,
     build_activity_log_node,
     build_chat_pattern,
     build_error_pattern,
-    build_merge_pattern,
     build_passthrough_pattern,
     build_retrieve_pattern,
     build_set_metadata_pattern,
@@ -29,7 +26,7 @@ from redbox.graph.nodes.processes import (
     empty_process,
     report_sources_process,
 )
-from redbox.graph.nodes.sends import build_document_chunk_send, build_document_group_send, build_tool_send
+from redbox.graph.nodes.sends import build_tool_send
 from redbox.graph.nodes.tools import get_log_formatter_for_retrieval_tool
 from redbox.models.chain import RedboxState
 from redbox.models.chat import ChatRoute, ErrorRoute
@@ -157,7 +154,7 @@ def get_agentic_search_graph(tools: dict[str, StructuredTool], debug: bool = Fal
     builder = StateGraph(RedboxState)
     # Tools
     agent_tool_names = ["_search_documents", "_search_wikipedia", "_search_govuk"]
-    agent_tools: list[StructuredTool] = [tools[tool_name] for tool_name in agent_tool_names]
+    agent_tools: list[StructuredTool] = [tools[tool_name] for tool_name in agent_tool_names if tool_name in tools]
 
     # Processes
     builder.add_node("p_set_agentic_search_route", build_set_route_pattern(route=ChatRoute.gadget))
@@ -219,37 +216,18 @@ def get_agentic_search_graph(tools: dict[str, StructuredTool], debug: bool = Fal
     return builder.compile(debug=debug)
 
 
-def get_chat_with_docs_large():
-    builder = StateGraph(RedboxState)
-    builder.add_node("s_chunk", empty_process)
-    builder.add_node(
-        "p_summarise_each_document",
-        build_merge_pattern(prompt_set=PromptSet.ChatwithDocsMapReduce),
-    )
-
-
-    builder.add_edge(START, "s_chunk")
-    builder.add_conditional_edges(
-        "s_chunk",
-        build_document_chunk_send("p_summarise_each_document"),
-        path_map=["p_summarise_each_document"],
-    )
-
-    builder.add_edge("p_summarise_each_document", END)
-
-
-    return builder.compile()
-
-
 def get_chat_with_documents_graph(
     all_chunks_retriever: VectorStoreRetriever,
     parameterised_retriever: VectorStoreRetriever,
+    tools: dict[str, StructuredTool] | None = None,
     debug: bool = False,
 ) -> CompiledGraph:
     """Creates a subgraph for chatting with documents."""
     builder = StateGraph(RedboxState)
 
-    builder.add_node("large_docs_graph", get_chat_with_docs_large())
+    if tools is None:
+        tools = {}
+    builder.add_node("agent_subgraph", get_agentic_search_graph(tools=tools))
 
     # Processes
     builder.add_node("p_pass_question_to_text", build_passthrough_pattern())
@@ -257,10 +235,6 @@ def get_chat_with_documents_graph(
     builder.add_node(
         "p_set_chat_docs_map_reduce_route",
         build_set_route_pattern(route=ChatRoute.chat_with_docs_map_reduce),
-    )
-    builder.add_node(
-        "p_summarise_document_by_document",
-        build_merge_pattern(prompt_set=PromptSet.ChatwithDocsMapReduce),
     )
     builder.add_node(
         "p_summarise",
@@ -297,14 +271,7 @@ def get_chat_with_documents_graph(
 
     # Decisions
     builder.add_node("d_request_handler_from_total_tokens", empty_process)
-    builder.add_node("d_single_doc_summaries_bigger_than_context", empty_process)
-    builder.add_node("d_doc_summaries_bigger_than_context", empty_process)
-    builder.add_node("d_groups_have_multiple_docs", empty_process)
     builder.add_node("d_self_route_is_enabled", empty_process)
-
-    # Sends
-    builder.add_node("s_group_1", empty_process)
-    builder.add_node("s_group_2", empty_process)
 
     # Edges
     builder.add_edge(START, "p_pass_question_to_text")
@@ -339,48 +306,13 @@ def get_chat_with_documents_graph(
         lambda s: s.route_name,
         {
             ChatRoute.chat_with_docs: "p_summarise",
-            ChatRoute.chat_with_docs_map_reduce: "large_docs_graph",
-        },
-    )
-    builder.add_edge("large_docs_graph", "d_groups_have_multiple_docs")
-    builder.add_conditional_edges(
-        "d_groups_have_multiple_docs",
-        multiple_docs_in_group_conditional,
-        {
-            True: "s_group_1",
-            False: "d_doc_summaries_bigger_than_context",
-        },
-    )
-    builder.add_conditional_edges(
-        "s_group_1",
-        build_document_group_send("d_single_doc_summaries_bigger_than_context"),
-        path_map=["d_single_doc_summaries_bigger_than_context"],
-    )
-    builder.add_conditional_edges(
-        "d_single_doc_summaries_bigger_than_context",
-        build_documents_bigger_than_context_conditional(PromptSet.ChatwithDocsMapReduce),
-        {
-            True: "p_too_large_error",
-            False: "s_group_2",
-        },
-    )
-    builder.add_conditional_edges(
-        "s_group_2",
-        build_document_group_send("p_summarise_document_by_document"),
-        path_map=["p_summarise_document_by_document"],
-    )
-    builder.add_edge("p_summarise_document_by_document", "d_doc_summaries_bigger_than_context")
-    builder.add_conditional_edges(
-        "d_doc_summaries_bigger_than_context",
-        build_documents_bigger_than_context_conditional(PromptSet.ChatwithDocs),
-        {
-            True: "p_too_large_error",
-            False: "p_summarise",
+            ChatRoute.chat_with_docs_map_reduce: "agent_subgraph",
         },
     )
     builder.add_edge("p_summarise", "p_clear_documents")
     builder.add_edge("p_clear_documents", END)
     builder.add_edge("p_too_large_error", END)
+    builder.add_edge("agent_subgraph", END)
 
     return builder.compile(debug=debug)
 
@@ -426,6 +358,7 @@ def get_root_graph(
     cwd_subgraph = get_chat_with_documents_graph(
         all_chunks_retriever=all_chunks_retriever,
         parameterised_retriever=parameterised_retriever,
+        tools=tools,
         debug=debug,
     )
     metadata_subgraph = get_retrieve_metadata_graph(metadata_retriever=metadata_retriever, debug=debug)
