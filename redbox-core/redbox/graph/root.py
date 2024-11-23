@@ -219,6 +219,28 @@ def get_agentic_search_graph(tools: dict[str, StructuredTool], debug: bool = Fal
     return builder.compile(debug=debug)
 
 
+def get_chat_with_docs_large():
+    builder = StateGraph(RedboxState)
+    builder.add_node("s_chunk", empty_process)
+    builder.add_node(
+        "p_summarise_each_document",
+        build_merge_pattern(prompt_set=PromptSet.ChatwithDocsMapReduce),
+    )
+
+
+    builder.add_edge(START, "s_chunk")
+    builder.add_conditional_edges(
+        "s_chunk",
+        build_document_chunk_send("p_summarise_each_document"),
+        path_map=["p_summarise_each_document"],
+    )
+
+    builder.add_edge("p_summarise_each_document", END)
+
+
+    return builder.compile()
+
+
 def get_chat_with_documents_graph(
     all_chunks_retriever: VectorStoreRetriever,
     parameterised_retriever: VectorStoreRetriever,
@@ -227,16 +249,14 @@ def get_chat_with_documents_graph(
     """Creates a subgraph for chatting with documents."""
     builder = StateGraph(RedboxState)
 
+    builder.add_node("large_docs_graph", get_chat_with_docs_large())
+
     # Processes
     builder.add_node("p_pass_question_to_text", build_passthrough_pattern())
     builder.add_node("p_set_chat_docs_route", build_set_route_pattern(route=ChatRoute.chat_with_docs))
     builder.add_node(
         "p_set_chat_docs_map_reduce_route",
         build_set_route_pattern(route=ChatRoute.chat_with_docs_map_reduce),
-    )
-    builder.add_node(
-        "p_summarise_each_document",
-        build_merge_pattern(prompt_set=PromptSet.ChatwithDocsMapReduce),
     )
     builder.add_node(
         "p_summarise_document_by_document",
@@ -283,7 +303,6 @@ def get_chat_with_documents_graph(
     builder.add_node("d_self_route_is_enabled", empty_process)
 
     # Sends
-    builder.add_node("s_chunk", empty_process)
     builder.add_node("s_group_1", empty_process)
     builder.add_node("s_group_2", empty_process)
 
@@ -320,15 +339,10 @@ def get_chat_with_documents_graph(
         lambda s: s.route_name,
         {
             ChatRoute.chat_with_docs: "p_summarise",
-            ChatRoute.chat_with_docs_map_reduce: "s_chunk",
+            ChatRoute.chat_with_docs_map_reduce: "large_docs_graph",
         },
     )
-    builder.add_conditional_edges(
-        "s_chunk",
-        build_document_chunk_send("p_summarise_each_document"),
-        path_map=["p_summarise_each_document"],
-    )
-    builder.add_edge("p_summarise_each_document", "d_groups_have_multiple_docs")
+    builder.add_edge("large_docs_graph", "d_groups_have_multiple_docs")
     builder.add_conditional_edges(
         "d_groups_have_multiple_docs",
         multiple_docs_in_group_conditional,
