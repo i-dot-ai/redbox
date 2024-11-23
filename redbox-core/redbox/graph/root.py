@@ -233,10 +233,6 @@ def get_chat_with_documents_graph(
     builder.add_node("p_pass_question_to_text", build_passthrough_pattern())
     builder.add_node("p_set_chat_docs_route", build_set_route_pattern(route=ChatRoute.chat_with_docs))
     builder.add_node(
-        "p_set_chat_docs_map_reduce_route",
-        build_set_route_pattern(route=ChatRoute.chat_with_docs_map_reduce),
-    )
-    builder.add_node(
         "p_summarise",
         build_stuff_pattern(
             prompt_set=PromptSet.ChatwithDocs,
@@ -252,10 +248,6 @@ def get_chat_with_documents_graph(
         ),
     )
     builder.add_node(
-        "p_answer_or_decide_route",
-        get_self_route_graph(parameterised_retriever, PromptSet.SelfRoute),
-    )
-    builder.add_node(
         "p_retrieve_all_chunks",
         build_retrieve_pattern(
             retriever=all_chunks_retriever,
@@ -264,14 +256,8 @@ def get_chat_with_documents_graph(
         ),
     )
 
-    builder.add_node(
-        "p_activity_log_tool_decision",
-        build_activity_log_node(lambda state: RedboxActivityEvent(message=f"Using _{state.route_name}_")),
-    )
-
     # Decisions
     builder.add_node("d_request_handler_from_total_tokens", empty_process)
-    builder.add_node("d_self_route_is_enabled", empty_process)
 
     # Edges
     builder.add_edge(START, "p_pass_question_to_text")
@@ -281,26 +267,10 @@ def get_chat_with_documents_graph(
         build_total_tokens_request_handler_conditional(PromptSet.ChatwithDocsMapReduce),
         {
             "max_exceeded": "p_too_large_error",
-            "context_exceeded": "d_self_route_is_enabled",
             "pass": "p_set_chat_docs_route",
         },
     )
-    builder.add_conditional_edges(
-        "d_self_route_is_enabled",
-        lambda s: s.request.ai_settings.self_route_enabled,
-        {True: "p_answer_or_decide_route", False: "p_set_chat_docs_map_reduce_route"},
-        then="p_activity_log_tool_decision",
-    )
-    builder.add_conditional_edges(
-        "p_answer_or_decide_route",
-        lambda state: state.route_name,
-        {
-            ChatRoute.search: END,
-            ChatRoute.chat_with_docs_map_reduce: "p_retrieve_all_chunks",
-        },
-    )
     builder.add_edge("p_set_chat_docs_route", "p_retrieve_all_chunks")
-    builder.add_edge("p_set_chat_docs_map_reduce_route", "p_retrieve_all_chunks")
     builder.add_conditional_edges(
         "p_retrieve_all_chunks",
         lambda s: s.route_name,

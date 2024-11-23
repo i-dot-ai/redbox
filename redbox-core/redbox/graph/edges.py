@@ -31,17 +31,13 @@ def build_total_tokens_request_handler_conditional(prompt_set: PromptSet) -> Run
 
     def _total_tokens_request_handler_conditional(
         state: RedboxState,
-    ) -> Literal["max_exceeded", "context_exceeded", "pass"]:
-        system_prompt, question_prompt = get_prompts(state, prompt_set)
-        token_budget_remaining_in_context = calculate_token_budget(state, system_prompt, question_prompt)
+    ) -> Literal["max_exceeded", "pass"]:
         max_tokens_allowed = state.request.ai_settings.max_document_tokens
 
         total_tokens = state.metadata.selected_files_total_tokens
 
         if total_tokens > max_tokens_allowed:
             return "max_exceeded"
-        elif total_tokens > token_budget_remaining_in_context:
-            return "context_exceeded"
         else:
             return "pass"
 
