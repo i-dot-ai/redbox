@@ -231,6 +231,8 @@ def get_chat_with_documents_large_graph():
         build_merge_pattern(prompt_set=PromptSet.ChatwithDocsMapReduce),
     )
 
+    builder.add_node("d_groups_have_multiple_docs", empty_process)
+
     # Edges
     builder.add_edge(START, "s_chunk")
     builder.add_conditional_edges(
@@ -238,7 +240,8 @@ def get_chat_with_documents_large_graph():
         build_document_chunk_send("p_summarise_each_document"),
         path_map=["p_summarise_each_document"],
     )
-    builder.add_edge("p_summarise_each_document", END)
+    builder.add_edge("p_summarise_each_document", "d_groups_have_multiple_docs")
+    builder.add_edge("d_groups_have_multiple_docs", END)
 
     return builder.compile()
 
@@ -301,7 +304,6 @@ def get_chat_with_documents_graph(
     builder.add_node("d_request_handler_from_total_tokens", empty_process)
     builder.add_node("d_single_doc_summaries_bigger_than_context", empty_process)
     builder.add_node("d_doc_summaries_bigger_than_context", empty_process)
-    builder.add_node("d_groups_have_multiple_docs", empty_process)
     builder.add_node("d_self_route_is_enabled", empty_process)
 
     builder.add_node("s_group_1", empty_process)
@@ -343,9 +345,8 @@ def get_chat_with_documents_graph(
             ChatRoute.chat_with_docs_map_reduce: "chat_with_documents_large",
         },
     )
-    builder.add_edge("chat_with_documents_large", "d_groups_have_multiple_docs")
     builder.add_conditional_edges(
-        "d_groups_have_multiple_docs",
+        "chat_with_documents_large",
         multiple_docs_in_group_conditional,
         {
             True: "s_group_1",
