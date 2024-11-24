@@ -219,6 +219,30 @@ def get_agentic_search_graph(tools: dict[str, StructuredTool], debug: bool = Fal
     return builder.compile(debug=debug)
 
 
+def get_chat_with_documents_large_graph():
+    """a subgraph for get_chat_with_documents_graph"""
+    builder = StateGraph(RedboxState)
+
+    # Sends
+    builder.add_node("s_chunk", empty_process)
+
+    builder.add_node(
+        "p_summarise_each_document",
+        build_merge_pattern(prompt_set=PromptSet.ChatwithDocsMapReduce),
+    )
+
+    # Edges
+    builder.add_edge(START, "s_chunk")
+    builder.add_conditional_edges(
+        "s_chunk",
+        build_document_chunk_send("p_summarise_each_document"),
+        path_map=["p_summarise_each_document"],
+    )
+    builder.add_edge("p_summarise_each_document", END)
+
+    return builder.compile()
+
+
 def get_chat_with_documents_graph(
     all_chunks_retriever: VectorStoreRetriever,
     parameterised_retriever: VectorStoreRetriever,
@@ -233,10 +257,6 @@ def get_chat_with_documents_graph(
     builder.add_node(
         "p_set_chat_docs_map_reduce_route",
         build_set_route_pattern(route=ChatRoute.chat_with_docs_map_reduce),
-    )
-    builder.add_node(
-        "p_summarise_each_document",
-        build_merge_pattern(prompt_set=PromptSet.ChatwithDocsMapReduce),
     )
     builder.add_node(
         "p_summarise_document_by_document",
@@ -275,6 +295,8 @@ def get_chat_with_documents_graph(
         build_activity_log_node(lambda state: RedboxActivityEvent(message=f"Using _{state.route_name}_")),
     )
 
+    builder.add_node("chat_with_documents_large", get_chat_with_documents_large_graph())
+
     # Decisions
     builder.add_node("d_request_handler_from_total_tokens", empty_process)
     builder.add_node("d_single_doc_summaries_bigger_than_context", empty_process)
@@ -282,8 +304,6 @@ def get_chat_with_documents_graph(
     builder.add_node("d_groups_have_multiple_docs", empty_process)
     builder.add_node("d_self_route_is_enabled", empty_process)
 
-    # Sends
-    builder.add_node("s_chunk", empty_process)
     builder.add_node("s_group_1", empty_process)
     builder.add_node("s_group_2", empty_process)
 
@@ -320,15 +340,10 @@ def get_chat_with_documents_graph(
         lambda s: s.route_name,
         {
             ChatRoute.chat_with_docs: "p_summarise",
-            ChatRoute.chat_with_docs_map_reduce: "s_chunk",
+            ChatRoute.chat_with_docs_map_reduce: "chat_with_documents_large",
         },
     )
-    builder.add_conditional_edges(
-        "s_chunk",
-        build_document_chunk_send("p_summarise_each_document"),
-        path_map=["p_summarise_each_document"],
-    )
-    builder.add_edge("p_summarise_each_document", "d_groups_have_multiple_docs")
+    builder.add_edge("chat_with_documents_large", "d_groups_have_multiple_docs")
     builder.add_conditional_edges(
         "d_groups_have_multiple_docs",
         multiple_docs_in_group_conditional,
