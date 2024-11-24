@@ -237,6 +237,14 @@ def get_chat_with_documents_large_graph():
         "p_summarise_document_by_document",
         build_merge_pattern(prompt_set=PromptSet.ChatwithDocsMapReduce),
     )
+    builder.add_node(
+        "p_summarise",
+        build_stuff_pattern(
+            prompt_set=PromptSet.ChatwithDocs,
+            final_response_chain=True,
+        ),
+    )
+    builder.add_node("p_clear_documents", clear_documents_process)
 
     builder.add_node("d_groups_have_multiple_docs", empty_process)
     builder.add_node("d_doc_summaries_bigger_than_context", empty_process)
@@ -285,11 +293,13 @@ def get_chat_with_documents_large_graph():
         build_documents_bigger_than_context_conditional(PromptSet.ChatwithDocs),
         {
             True: "p_too_large_error",
-            False: END,
+            False: "p_summarise",
         },
     )
+    builder.add_edge("p_summarise", "p_clear_documents")
 
     builder.add_edge("p_too_large_error", END)
+    builder.add_edge("p_clear_documents", END)
 
     return builder.compile()
 
@@ -384,10 +394,10 @@ def get_chat_with_documents_graph(
             ChatRoute.chat_with_docs_map_reduce: "chat_with_documents_large",
         },
     )
-    builder.add_edge("chat_with_documents_large", "p_summarise")
     builder.add_edge("p_summarise", "p_clear_documents")
     builder.add_edge("p_clear_documents", END)
     builder.add_edge("p_too_large_error", END)
+    builder.add_edge("chat_with_documents_large", END)
 
     return builder.compile(debug=debug)
 
