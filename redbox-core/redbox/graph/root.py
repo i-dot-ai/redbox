@@ -225,13 +225,22 @@ def get_chat_with_documents_large_graph():
 
     # Sends
     builder.add_node("s_chunk", empty_process)
+    builder.add_node("s_group_1", empty_process)
+    builder.add_node("s_group_2", empty_process)
+    builder.add_node("p_too_large_error", empty_process)
 
     builder.add_node(
         "p_summarise_each_document",
         build_merge_pattern(prompt_set=PromptSet.ChatwithDocsMapReduce),
     )
+    builder.add_node(
+        "p_summarise_document_by_document",
+        build_merge_pattern(prompt_set=PromptSet.ChatwithDocsMapReduce),
+    )
 
     builder.add_node("d_groups_have_multiple_docs", empty_process)
+    builder.add_node("d_doc_summaries_bigger_than_context", empty_process)
+    builder.add_node("d_single_doc_summaries_bigger_than_context", empty_process)
 
     # Edges
     builder.add_edge(START, "s_chunk")
@@ -241,7 +250,46 @@ def get_chat_with_documents_large_graph():
         path_map=["p_summarise_each_document"],
     )
     builder.add_edge("p_summarise_each_document", "d_groups_have_multiple_docs")
-    builder.add_edge("d_groups_have_multiple_docs", END)
+
+    builder.add_conditional_edges(
+        "d_groups_have_multiple_docs",
+        multiple_docs_in_group_conditional,
+        {
+            True: "s_group_1",
+            False: "d_doc_summaries_bigger_than_context",
+        },
+    )
+
+    builder.add_conditional_edges(
+        "s_group_1",
+        build_document_group_send("d_single_doc_summaries_bigger_than_context"),
+        path_map=["d_single_doc_summaries_bigger_than_context"],
+    )
+    builder.add_conditional_edges(
+        "d_single_doc_summaries_bigger_than_context",
+        build_documents_bigger_than_context_conditional(PromptSet.ChatwithDocsMapReduce),
+        {
+            True: "p_too_large_error",
+            False: "s_group_2",
+        },
+    )
+    builder.add_conditional_edges(
+        "s_group_2",
+        build_document_group_send("p_summarise_document_by_document"),
+        path_map=["p_summarise_document_by_document"],
+    )
+    builder.add_edge("p_summarise_document_by_document", "d_doc_summaries_bigger_than_context")
+
+    builder.add_conditional_edges(
+        "d_doc_summaries_bigger_than_context",
+        build_documents_bigger_than_context_conditional(PromptSet.ChatwithDocs),
+        {
+            True: "p_too_large_error",
+            False: END,
+        },
+    )
+
+    builder.add_edge("p_too_large_error", END)
 
     return builder.compile()
 
@@ -260,10 +308,6 @@ def get_chat_with_documents_graph(
     builder.add_node(
         "p_set_chat_docs_map_reduce_route",
         build_set_route_pattern(route=ChatRoute.chat_with_docs_map_reduce),
-    )
-    builder.add_node(
-        "p_summarise_document_by_document",
-        build_merge_pattern(prompt_set=PromptSet.ChatwithDocsMapReduce),
     )
     builder.add_node(
         "p_summarise",
@@ -302,12 +346,7 @@ def get_chat_with_documents_graph(
 
     # Decisions
     builder.add_node("d_request_handler_from_total_tokens", empty_process)
-    builder.add_node("d_single_doc_summaries_bigger_than_context", empty_process)
-    builder.add_node("d_doc_summaries_bigger_than_context", empty_process)
     builder.add_node("d_self_route_is_enabled", empty_process)
-
-    builder.add_node("s_group_1", empty_process)
-    builder.add_node("s_group_2", empty_process)
 
     # Edges
     builder.add_edge(START, "p_pass_question_to_text")
@@ -345,41 +384,7 @@ def get_chat_with_documents_graph(
             ChatRoute.chat_with_docs_map_reduce: "chat_with_documents_large",
         },
     )
-    builder.add_conditional_edges(
-        "chat_with_documents_large",
-        multiple_docs_in_group_conditional,
-        {
-            True: "s_group_1",
-            False: "d_doc_summaries_bigger_than_context",
-        },
-    )
-    builder.add_conditional_edges(
-        "s_group_1",
-        build_document_group_send("d_single_doc_summaries_bigger_than_context"),
-        path_map=["d_single_doc_summaries_bigger_than_context"],
-    )
-    builder.add_conditional_edges(
-        "d_single_doc_summaries_bigger_than_context",
-        build_documents_bigger_than_context_conditional(PromptSet.ChatwithDocsMapReduce),
-        {
-            True: "p_too_large_error",
-            False: "s_group_2",
-        },
-    )
-    builder.add_conditional_edges(
-        "s_group_2",
-        build_document_group_send("p_summarise_document_by_document"),
-        path_map=["p_summarise_document_by_document"],
-    )
-    builder.add_edge("p_summarise_document_by_document", "d_doc_summaries_bigger_than_context")
-    builder.add_conditional_edges(
-        "d_doc_summaries_bigger_than_context",
-        build_documents_bigger_than_context_conditional(PromptSet.ChatwithDocs),
-        {
-            True: "p_too_large_error",
-            False: "p_summarise",
-        },
-    )
+    builder.add_edge("chat_with_documents_large", "p_summarise")
     builder.add_edge("p_summarise", "p_clear_documents")
     builder.add_edge("p_clear_documents", END)
     builder.add_edge("p_too_large_error", END)
