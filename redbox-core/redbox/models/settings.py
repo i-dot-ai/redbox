@@ -177,7 +177,7 @@ class Settings(BaseSettings):
 
         if not client.indices.exists_alias(name=self.elastic_alias):
             chunk_index = f"{self.elastic_root_index}-chunk"
-            client.options(ignore_status=[400]).indices.create(index=chunk_index)
+            client.indices.create(index=chunk_index)
             client.indices.put_alias(index=chunk_index, name=self.elastic_alias)
 
         if not client.indices.exists(index=self.elastic_chat_mesage_index):
