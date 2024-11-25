@@ -7,7 +7,7 @@ from typing import Literal
 import boto3
 from elasticsearch import Elasticsearch
 from langchain_core.documents import Document
-from opensearchpy import OpenSearch, RequestsHttpConnection, AWSV4SignerAuth
+from opensearchpy import OpenSearch, RequestsHttpConnection, AWSV4SignerAuth, RequestError
 from pydantic import BaseModel
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from langchain.globals import set_debug
@@ -177,8 +177,12 @@ class Settings(BaseSettings):
 
         if not client.indices.exists_alias(name=self.elastic_alias):
             chunk_index = f"{self.elastic_root_index}-chunk"
-            client.options(ignore_status=[400]).indices.create(index=chunk_index)
-            client.indices.put_alias(index=chunk_index, name=self.elastic_alias)
+            client.indices.create(index=chunk_index, ignore=400)
+            try:
+                client.indices.put_alias(index=chunk_index, name=self.elastic_alias)
+            except RequestError as e:
+                if e.status_code != 400:
+                    raise e
 
         if not client.indices.exists(index=self.elastic_chat_mesage_index):
             client.indices.create(index=self.elastic_chat_mesage_index)

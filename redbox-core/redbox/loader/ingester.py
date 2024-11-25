@@ -46,7 +46,7 @@ def create_alias(alias: str):
 
     chunk_index_name = alias[:-8]  # removes -current
 
-    es.options(ignore_status=[400]).indices.create(index=chunk_index_name)
+    es.indices.create(index=chunk_index_name, ignore=400)
     es.indices.put_alias(index=chunk_index_name, name=alias)
 
 
@@ -62,7 +62,7 @@ def _ingest_file(file_name: str, es_index_name: str = alias):
             print(es.indices.exists_alias(name=alias))
             create_alias(alias)
     else:
-        es.options(ignore_status=[400]).indices.create(index=es_index_name)
+        es.indices.create(index=es_index_name, ignore=400)
 
     # Extract metadata
     metadata_loader = MetadataLoader(env=env, s3_client=env.s3_client(), file_name=file_name)
