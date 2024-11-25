@@ -1,7 +1,6 @@
 import logging
 from typing import TYPE_CHECKING
 
-from elasticsearch import RequestError
 from langchain_core.runnables import RunnableParallel
 from langchain_elasticsearch.vectorstores import BM25Strategy, ElasticsearchStore
 
@@ -10,6 +9,8 @@ from redbox.chains.ingest import ingest_from_loader
 from redbox.loader.loaders import MetadataLoader, UnstructuredChunkLoader
 from redbox.models.settings import get_settings
 from redbox.models.file import ChunkResolution
+
+from redbox.models.settings import create_alias as settings_create_alias
 
 if TYPE_CHECKING:
     from mypy_boto3_s3.client import S3Client
@@ -48,11 +49,7 @@ def create_alias(alias: str):
     chunk_index_name = alias[:-8]  # removes -current
 
     es.indices.create(index=chunk_index_name, ignore=400)
-    try:
-        es.indices.put_alias(index=chunk_index_name, name=alias)
-    except RequestError as e:
-        if e.status_code != 400:
-            raise e
+    settings_create_alias(es, chunk_index_name, alias)
 
 
 def _ingest_file(file_name: str, es_index_name: str = alias):

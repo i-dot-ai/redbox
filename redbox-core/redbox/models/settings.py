@@ -4,8 +4,8 @@ from functools import cache, lru_cache
 from typing import Literal
 
 import boto3
-from elasticsearch import Elasticsearch
-from opensearchpy import OpenSearch, RequestsHttpConnection, AWSV4SignerAuth, RequestError
+from elasticsearch import Elasticsearch, RequestError as ElasticSearchRequestError
+from opensearchpy import OpenSearch, RequestsHttpConnection, AWSV4SignerAuth, RequestError as OpenSearchRequestError
 from pydantic import BaseModel
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from langchain.globals import set_debug
@@ -51,6 +51,16 @@ class ChatLLMBackend(BaseModel):
     provider: str = "azure_openai"
     description: str | None = None
     model_config = {"frozen": True}
+
+
+def create_alias(client, index: str, alias: str):
+    client.indices.create(index=index, ignore=400)
+
+    try:
+        client.indices.put_alias(index=index, name=alias)
+    except (OpenSearchRequestError, ElasticSearchRequestError) as e:
+        if e.status_code != 400:
+            raise e
 
 
 class Settings(BaseSettings):
@@ -175,12 +185,7 @@ class Settings(BaseSettings):
 
         if not client.indices.exists_alias(name=self.elastic_alias):
             chunk_index = f"{self.elastic_root_index}-chunk"
-            client.indices.create(index=chunk_index, ignore=400)
-            try:
-                client.indices.put_alias(index=chunk_index, name=self.elastic_alias)
-            except RequestError as e:
-                if e.status_code != 400:
-                    raise e
+            create_alias(client, chunk_index, self.elastic_alias)
 
         if not client.indices.exists(index=self.elastic_chat_mesage_index):
             client.indices.create(index=self.elastic_chat_mesage_index)
