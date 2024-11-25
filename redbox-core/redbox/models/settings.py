@@ -5,7 +5,7 @@ from typing import Literal, Union
 
 import boto3
 from elasticsearch import Elasticsearch
-from opensearchpy import OpenSearch, RequestsHttpConnection
+from opensearchpy import OpenSearch, RequestsHttpConnection, AWSV4SignerAuth
 from pydantic import BaseModel
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from langchain.globals import set_debug
@@ -19,7 +19,11 @@ class OpenSearchSettings(BaseModel):
 
     model_config = SettingsConfigDict(frozen=True)
 
-    collection_endpoint: str
+    host: str
+    port: int
+    user: str | None = None
+    password: str | None = None
+    engine: Literal["opensearch"]
 
 
 class ElasticLocalSettings(BaseModel):
@@ -44,6 +48,7 @@ class ElasticCloudSettings(BaseModel):
     api_key: str
     cloud_id: str
     subscription_level: str = "basic"
+    engine: Literal["elasticsearch"]
 
 
 class ChatLLMBackend(BaseModel):
@@ -140,34 +145,44 @@ class Settings(BaseSettings):
 
     @lru_cache(1)
     def elasticsearch_client(self) -> Union[Elasticsearch, OpenSearch]:
-        # if isinstance(self.elastic, ElasticLocalSettings):
-        #     client = Elasticsearch(
-        #         hosts=[
-        #             {
-        #                 "host": self.elastic.host,
-        #                 "port": self.elastic.port,
-        #                 "scheme": self.elastic.scheme,
-        #             }
-        #         ],
-        #         basic_auth=(self.elastic.user, self.elastic.password),
-        #     )
+        if isinstance(self.elastic, ElasticLocalSettings):
+            client = Elasticsearch(
+                hosts=[
+                    {
+                        "host": self.elastic.host,
+                        "port": self.elastic.port,
+                        "scheme": self.elastic.scheme,
+                    }
+                ],
+                basic_auth=(self.elastic.user, self.elastic.password),
+            )
+            client = client.options(request_timeout=30, retry_on_timeout=True, max_retries=3)
 
-        # elif isinstance(self.elastic, OpenSearchSettings):
-        client = OpenSearch(
-            hosts=[{"host": "localhost", "port": 9200}],
-            http_auth=("admin", "YourPassword1"),
-            use_ssl=False,
-            connection_class=RequestsHttpConnection,
-            retry_on_timeout=True,
-        )
+        elif isinstance(self.elastic, OpenSearchSettings):
+            client = Elasticsearch(cloud_id=self.elastic.cloud_id, api_key=self.elastic.api_key)
+            client = client.options(request_timeout=30, retry_on_timeout=True, max_retries=3)
 
-        # else:
-        #     client = Elasticsearch(cloud_id=self.elastic.cloud_id, api_key=self.elastic.api_key)
+        elif isinstance(self.elastic, OpenSearchSettings):
+            if self.elastic.user or self.elastic.password:
+                auth = (self.elastic.user, self.elastic.password)
+            else:
+                credentials = boto3.Session().get_credentials()
+                auth = AWSV4SignerAuth(credentials, self.aws_region, "aoss")
+
+            host = self.elastic.host.removeprefix("https://")
+            client = OpenSearch(
+                hosts=[{"host": host, "port": self.elastic.port}],
+                http_auth=auth,
+                use_ssl=False,
+                connection_class=RequestsHttpConnection,
+                retry_on_timeout=True,
+            )
+
+        else:
+            raise NotImplementedError
 
         if not client.indices.exists_alias(name=self.elastic_alias):
             chunk_index = f"{self.elastic_root_index}-chunk"
-            # client.options(ignore_status=[400]).indices.create(index=chunk_index)
-            # client.indices.put_alias(index=chunk_index, name=self.elastic_alias)
             # Ensure index creation does not raise an error if it already exists.
             try:
                 client.indices.create(
@@ -182,11 +197,6 @@ class Settings(BaseSettings):
                 logger.error(f"Failed to set alias {self.elastic_root_index}-chunk-current: {e}")
 
         return client
-
-        # if not client.indices.exists(index=self.elastic_chat_mesage_index):
-        #     client.indices.create(index=self.elastic_chat_mesage_index)
-
-        # return client.options(request_timeout=30, retry_on_timeout=True, max_retries=3)
 
     def s3_client(self):
         if self.object_store == "minio":
