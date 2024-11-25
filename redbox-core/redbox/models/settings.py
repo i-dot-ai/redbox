@@ -2,6 +2,7 @@ import logging
 import os
 from functools import cache, lru_cache
 from typing import Literal, Union
+from urllib.parse import urlparse
 
 import boto3
 from elasticsearch import Elasticsearch
@@ -9,7 +10,7 @@ from elasticsearch.helpers.vectorstore import BM25Strategy
 from langchain_community.vectorstores import OpenSearchVectorSearch
 from langchain_elasticsearch import ElasticsearchStore
 from opensearchpy import OpenSearch, RequestsHttpConnection, AWSV4SignerAuth
-from pydantic import BaseModel
+from pydantic import BaseModel, computed_field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from langchain.globals import set_debug
 
@@ -23,12 +24,27 @@ class OpenSearchSettings(BaseModel):
     """settings required for a aws/opensearch"""
 
     model_config = SettingsConfigDict(frozen=True)
+    collection_endpoint: str
 
-    host: str
-    port: int
-    user: str | None = None
-    password: str | None = None
-    engine: Literal["opensearch"]
+    @computed_field
+    @property
+    def user(self) -> str:
+        return urlparse(self.collection_endpoint).username
+
+    @computed_field
+    @property
+    def password(self) -> str:
+        return urlparse(self.collection_endpoint).password
+
+    @computed_field
+    @property
+    def host(self) -> str:
+        return urlparse(self.collection_endpoint).hostname
+
+    @computed_field
+    @property
+    def port(self) -> int:
+        return urlparse(self.collection_endpoint).port
 
 
 class ElasticLocalSettings(BaseModel):
@@ -53,7 +69,6 @@ class ElasticCloudSettings(BaseModel):
     api_key: str
     cloud_id: str
     subscription_level: str = "basic"
-    engine: Literal["elasticsearch"]
 
 
 class ChatLLMBackend(BaseModel):
@@ -163,7 +178,7 @@ class Settings(BaseSettings):
             )
             client = client.options(request_timeout=30, retry_on_timeout=True, max_retries=3)
 
-        elif isinstance(self.elastic, OpenSearchSettings):
+        elif isinstance(self.elastic, ElasticCloudSettings):
             client = Elasticsearch(cloud_id=self.elastic.cloud_id, api_key=self.elastic.api_key)
             client = client.options(request_timeout=30, retry_on_timeout=True, max_retries=3)
 

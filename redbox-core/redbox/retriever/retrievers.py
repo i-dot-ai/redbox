@@ -1,6 +1,7 @@
 from functools import partial
 from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Union, cast
 
+from langchain_elasticsearch import ElasticsearchRetriever
 from opensearchpy import OpenSearch
 from elasticsearch import Elasticsearch
 from kneed import KneeLocator
@@ -189,7 +190,7 @@ class ParameterisedElasticsearchRetriever(BaseRetriever):
         return sort_documents(documents=merged_documents)
 
 
-class AllElasticsearchRetriever(OpenSearchRetriever):
+class AllElasticsearchRetriever(OpenSearchRetriever, ElasticsearchRetriever):
     """A modified ElasticsearchRetriever that allows retrieving whole documents."""
 
     chunk_resolution: ChunkResolution = ChunkResolution.largest
