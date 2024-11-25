@@ -13,6 +13,10 @@
 			"path": "../redbox-core"
 		},
 		{
+			"name": "AI Tests",
+			"path": "../ai-tests"
+		},
+		{
 			"name": "Integration Tests",
 			"path": "../tests"
 		},
@@ -29,4 +33,12 @@
 			"path": ".."
 		}
 	],
+	"settings": {
+		"workbench.colorCustomizations": {
+			"activityBar.background": "#911212",
+			"activityBar.foreground": "#fbfbec",
+			"titleBar.activeBackground": "#911212",
+			"titleBar.activeForeground": "#fbfbec",
+		}
+	},
 }

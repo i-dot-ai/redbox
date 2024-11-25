@@ -162,11 +162,11 @@ class ParameterisedElasticsearchRetriever(BaseRetriever):
     def _get_relevant_documents(
         self, query: RedboxState, *, run_manager: CallbackManagerForRetrieverRun
     ) -> list[Document]:
-        query_text = query["messages"][-1].content
+        query_text = query.last_message.content
         query_vector = self.embedding_model.embed_query(query_text)
-        selected_files = query["request"].s3_keys
-        permitted_files = query["request"].permitted_s3_keys
-        ai_settings = query["request"].ai_settings
+        selected_files = query.request.s3_keys
+        permitted_files = query.request.permitted_s3_keys
+        ai_settings = query.request.ai_settings
 
         # Initial pass
         initial_query = build_document_query(

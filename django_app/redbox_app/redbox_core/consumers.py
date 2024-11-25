@@ -238,7 +238,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
                         url=citation_source.source,
                         text=citation_source.highlighted_text_in_source,
                         page_numbers=citation_source.page_numbers,
-                        source=Citation.Origin(citation_source.source_type),
+                        source=Citation.Origin.try_parse(citation_source.source_type),
                     )
 
         if self.metadata:
@@ -272,7 +272,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         ai_settings["chat_backend"] = model_to_dict(chat.chat_backend)
 
         # we remove null values so that AISettings can populate them with defaults
-        ai_settings = {k: v for k, v in ai_settings.items() if v is not None}
+        ai_settings = {k: v for k, v in ai_settings.items() if v not in (None, "")}
         return AISettings.model_validate(ai_settings)
 
     async def handle_text(self, response: str) -> str:

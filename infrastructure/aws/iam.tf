@@ -46,12 +46,11 @@ data "aws_iam_policy_document" "ecs_exec_role_policy" {
     ]
   }
 
-  # Add this for OpenSearchServerless access
-  # statement {
-  #  effect = "Allow"
-  #  actions = ["aoss:*"]
-  #  resources = ["*"] restrict this
-  # }
+  statement {
+   effect = "Allow"
+   actions = ["aoss:*"]
+   resources = ["*"]
+  }
 
 }
 

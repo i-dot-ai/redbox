@@ -2,22 +2,34 @@ import logging
 import re
 from typing import Any, Callable, Iterable, Iterator
 
-from langchain_core.callbacks.manager import CallbackManagerForLLMRun, dispatch_custom_event
+from langchain_core.callbacks.manager import (
+    CallbackManagerForLLMRun,
+    dispatch_custom_event,
+)
 from langchain_core.language_models import BaseChatModel
 from langchain_core.messages import AIMessage, AIMessageChunk, BaseMessage
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.outputs import ChatGeneration, ChatGenerationChunk, ChatResult
-from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.runnables import Runnable, RunnableGenerator, RunnableLambda, RunnablePassthrough, chain
+from langchain_core.runnables import (
+    Runnable,
+    RunnableGenerator,
+    RunnableLambda,
+    RunnablePassthrough,
+    chain,
+)
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from tiktoken import Encoding
 
-from redbox.api.format import format_documents, format_toolstate
+from redbox.api.format import format_documents
 from redbox.chains.activity import log_activity
 from redbox.chains.components import get_tokeniser
 from redbox.models.chain import ChainChatMessage, PromptSet, RedboxState, get_prompts
 from redbox.models.errors import QuestionLengthError
 from redbox.models.graph import RedboxEventType
-from redbox.transform import flatten_document_state, get_all_metadata, tool_calls_to_toolstate
+from redbox.transform import (
+    flatten_document_state,
+    get_all_metadata,
+)
 
 log = logging.getLogger()
 re_string_pattern = re.compile(r"(\S+)")
@@ -35,7 +47,7 @@ def build_chat_prompt_from_messages_runnable(
         Create a ChatPromptTemplate as part of a chain using 'chat_history'.
         Returns the PromptValue using values in the input_dict
         """
-        ai_settings = state["request"].ai_settings
+        ai_settings = state.request.ai_settings
         _tokeniser = tokeniser or get_tokeniser()
         _additional_variables = additional_variables or dict()
         task_system_prompt, task_question_prompt = get_prompts(state, prompt_set)
@@ -48,7 +60,6 @@ def build_chat_prompt_from_messages_runnable(
             {task_system_prompt}
             {ai_settings.persona_info_prompt}
             {ai_settings.caller_info_prompt}
-            {{format_instructions}}
             """
         prompts_budget = len(_tokeniser.encode(task_system_prompt)) + len(_tokeniser.encode(task_question_prompt))
         chat_history_budget = ai_settings.context_window_size - ai_settings.llm_max_tokens - prompts_budget
@@ -57,7 +68,7 @@ def build_chat_prompt_from_messages_runnable(
             raise QuestionLengthError
 
         truncated_history: list[ChainChatMessage] = []
-        for msg in state["request"].chat_history[::-1]:
+        for msg in state.request.chat_history[::-1]:
             chat_history_budget -= len(_tokeniser.encode(msg["text"]))
             if chat_history_budget <= 0:
                 break
@@ -65,16 +76,10 @@ def build_chat_prompt_from_messages_runnable(
                 truncated_history.insert(0, msg)
 
         prompt_template_context = (
-            state["request"].model_dump()
-            | {"messages": state.get("messages")}
+            state.request.model_dump()
             | {
-                "text": state.get("text"),
-                "formatted_documents": format_documents(flatten_document_state(state.get("documents"))),
-                "tool_calls": format_toolstate(state.get("tool_calls")),
-                "system_info": ai_settings.system_info_prompt,
-                "persona_info": ai_settings.persona_info_prompt,
-                "caller_info": ai_settings.caller_info_prompt,
-                "task_prompt": task_system_prompt,
+                "messages": state.messages,
+                "formatted_documents": format_documents(flatten_document_state(state.documents)),
             }
             | _additional_variables
         )
@@ -83,7 +88,8 @@ def build_chat_prompt_from_messages_runnable(
             messages=(
                 [("system", system_prompt_message)]
                 + [(msg["role"], msg["text"]) for msg in truncated_history]
-                + [("user", task_question_prompt)]
+                + [MessagesPlaceholder("messages")]
+                + [task_question_prompt + "\n\n{format_instructions}"]
             ),
             partial_variables={"format_instructions": format_instructions},
         ).invoke(prompt_template_context)
@@ -109,7 +115,6 @@ def build_llm_chain(
     _llm_text_and_tools = _llm | {
         "raw_response": RunnablePassthrough(),
         "parsed_response": _output_parser,
-        "tool_calls": tool_calls_to_toolstate,
     }
 
     text_and_tools = {
@@ -124,7 +129,7 @@ def build_llm_chain(
         | get_all_metadata
         | RunnablePassthrough.assign(
             _log=RunnableLambda(
-                lambda _: log_activity(f"Generating response with {model_name}...") if final_response_chain else None
+                lambda _: (log_activity(f"Generating response with {model_name}...") if final_response_chain else None)
             )
         )
     )

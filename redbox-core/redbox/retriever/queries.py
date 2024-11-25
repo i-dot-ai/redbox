@@ -64,8 +64,8 @@ def get_all(
     As it's used in summarisation, it excludes embeddings.
     """
     query_filter = build_query_filter(
-        selected_files=state["request"].s3_keys,
-        permitted_files=state["request"].permitted_s3_keys,
+        selected_files=state.request.s3_keys,
+        permitted_files=state.request.permitted_s3_keys,
         chunk_resolution=chunk_resolution,
     )
 
@@ -80,8 +80,8 @@ def get_metadata(
     state: RedboxState,
 ) -> dict[str, Any]:
     query_filter = build_query_filter(
-        selected_files=state["request"].s3_keys,
-        permitted_files=state["request"].permitted_s3_keys,
+        selected_files=state.request.s3_keys,
+        permitted_files=state.request.permitted_s3_keys,
         chunk_resolution=chunk_resolution,
     )
 

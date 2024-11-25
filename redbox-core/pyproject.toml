@@ -27,6 +27,8 @@ langgraph = "^0.2.39"
 langchain-aws = "^0.2.3"
 wikipedia = "^1.4.0"
 opensearch-py = "^2.7.1"
+scikit-learn = "^1.5.2"
+langfuse = "^2.53.9"
 
 
 [tool.poetry.group.dev.dependencies]
@@ -39,7 +41,6 @@ deepeval = "^1.0.3"
 pytest-mock = "^3.14.0"
 boto3-stubs = {extras = ["essential"], version = "^1.35.28"}
 requests-mock = "^1.12.1"
-langfuse = "^2.53.9"
 
 [build-system]
 requires = ["poetry-core"]
@@ -53,5 +54,6 @@ env_files = [
     ".env"
 ]
 markers = [
-    "ai: marks tests as using a live LLM (deselect with '-m \"not ai\"')"
+    "ai: marks tests as using a live LLM (deselect with '-m \"not ai\"')",
+    "vcr",
 ]
