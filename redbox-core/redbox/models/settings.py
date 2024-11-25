@@ -5,10 +5,15 @@ from typing import Literal, Union
 
 import boto3
 from elasticsearch import Elasticsearch
+from elasticsearch.helpers.vectorstore import BM25Strategy
+from langchain_community.vectorstores import OpenSearchVectorSearch
+from langchain_elasticsearch import ElasticsearchStore
 from opensearchpy import OpenSearch, RequestsHttpConnection, AWSV4SignerAuth
 from pydantic import BaseModel
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from langchain.globals import set_debug
+
+from redbox.chains.components import get_embeddings
 
 logging.basicConfig(level=os.environ.get("LOG_LEVEL", "INFO"))
 logger = logging.getLogger()
@@ -197,6 +202,38 @@ class Settings(BaseSettings):
                 logger.error(f"Failed to set alias {self.elastic_root_index}-chunk-current: {e}")
 
         return client
+
+    def get_elasticsearch_store(self, es_index_name: str):
+        if isinstance(self.elastic, (ElasticLocalSettings, ElasticCloudSettings)):
+            return ElasticsearchStore(
+                index_name=es_index_name,
+                embedding=get_embeddings(self),
+                es_connection=self.elasticsearch_client(),
+                query_field="text",
+                vector_query_field=self.embedding_document_field_name,
+            )
+        return OpenSearchVectorSearch(
+            index_name=es_index_name,
+            opensearch_url="https://localhost:9200",
+            embedding_function=get_embeddings(self),
+            query_field="text",
+            vector_query_field=self.embedding_document_field_name,
+        )
+
+    def get_elasticsearch_store_without_embeddings(self, es_index_name: str):
+        if isinstance(self.elastic, (ElasticLocalSettings, ElasticCloudSettings)):
+            return ElasticsearchStore(
+                index_name=es_index_name,
+                es_connection=self.elasticsearch_client(),
+                query_field="text",
+                strategy=BM25Strategy(),
+            )
+
+        return OpenSearchVectorSearch(
+            index_name=es_index_name,
+            opensearch_url="https://localhost:9200",
+            embedding_function=get_embeddings(self),
+        )
 
     def s3_client(self):
         if self.object_store == "minio":

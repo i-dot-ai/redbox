@@ -2,9 +2,7 @@ import logging
 from typing import TYPE_CHECKING
 
 from langchain_core.runnables import RunnableParallel
-from langchain_community.vectorstores import OpenSearchVectorSearch
 
-from redbox.chains.components import get_embeddings
 from redbox.chains.ingest import ingest_from_loader
 from redbox.loader.loaders import MetadataLoader, UnstructuredChunkLoader
 from redbox.models.settings import get_settings
@@ -20,38 +18,6 @@ log = logging.getLogger()
 
 env = get_settings()
 alias = env.elastic_chunk_alias
-
-
-def get_elasticsearch_store(es, es_index_name: str):
-    # return ElasticsearchStore(
-    #     index_name=es_index_name,
-    #     embedding=get_embeddings(env),
-    #     es_connection=es,
-    #     query_field="text",
-    #     vector_query_field=env.embedding_document_field_name,
-    # )
-    return OpenSearchVectorSearch(
-        index_name=es_index_name,
-        opensearch_url="https://localhost:9200",
-        embedding_function=get_embeddings(env),
-        query_field="text",
-        vector_query_field=env.embedding_document_field_name,
-    )
-
-
-def get_elasticsearch_store_without_embeddings(es, es_index_name: str):
-    # return ElasticsearchStore(
-    #     index_name=es_index_name,
-    #     es_connection=es,
-    #     query_field="text",
-    #     strategy=BM25Strategy(),
-    # )
-
-    return OpenSearchVectorSearch(
-        index_name=es_index_name,
-        opensearch_url="https://localhost:9200",
-        embedding_function=get_embeddings(env),
-    )
 
 
 def create_alias(alias: str):
@@ -93,7 +59,7 @@ def _ingest_file(file_name: str, es_index_name: str = alias):
             metadata=metadata,
         ),
         s3_client=env.s3_client(),
-        vectorstore=get_elasticsearch_store(es, es_index_name),
+        vectorstore=env.get_elasticsearch_store(es_index_name),
         env=env,
     )
 
@@ -107,7 +73,7 @@ def _ingest_file(file_name: str, es_index_name: str = alias):
             metadata=metadata,
         ),
         s3_client=env.s3_client(),
-        vectorstore=get_elasticsearch_store_without_embeddings(es, es_index_name),
+        vectorstore=env.get_elasticsearch_store_without_embeddings(es_index_name),
         env=env,
     )
 
