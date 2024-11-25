@@ -49,9 +49,11 @@ locals {
   }
 
   django_app_secrets = {
-    "ELASTIC__API_KEY" : var.elastic_api_key,
-    "ELASTIC__CLOUD_ID" : var.cloud_id,
-    # "ELASTIC__COLLECTION_ENDPOINT": module.opensearch.collection_endpoint,
+    # "ELASTIC__API_KEY" : var.elastic_api_key,
+    # "ELASTIC__CLOUD_ID" : var.cloud_id,
+    "ELASTIC__HOST": module.opensearch.collection_endpoint,
+    "ELASTIC__PORT": 443,
+    "ELASTIC__PROVIDER": "opensearch",
 
     "AZURE_OPENAI_API_KEY": var.azure_openai_api_key,
     "AZURE_OPENAI_ENDPOINT" : var.azure_openai_endpoint,
@@ -67,8 +69,6 @@ locals {
     "GOVUK_NOTIFY_API_KEY" : var.govuk_notify_api_key,
     "SENTRY_DSN" : var.sentry_dsn,
     "SLACK_NOTIFICATION_URL" : var.slack_url
-    "ELASTIC__API_KEY" : var.elastic_api_key,
-    "ELASTIC__CLOUD_ID" : var.cloud_id,
     "EMBEDDING_OPENAI_API_KEY" : var.embedding_openai_api_key,
     "EMBEDDING_AZURE_OPENAI_ENDPOINT" : var.embedding_azure_openai_endpoint,
   }
