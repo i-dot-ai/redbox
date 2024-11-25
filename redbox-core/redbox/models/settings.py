@@ -1,25 +1,38 @@
+import environ
 import logging
 import os
 from functools import cache, lru_cache
-from typing import Literal
+from typing import Literal, Optional, Union
 
 import boto3
+from dotenv import load_dotenv
 from elasticsearch import Elasticsearch
+from openai import max_retries
 from opensearchpy import OpenSearch, RequestsHttpConnection
-from pydantic import BaseModel
+from pydantic import AnyUrl, BaseModel
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from langchain.globals import set_debug
+from urllib.parse import urlparse
 
 logging.basicConfig(level=os.environ.get("LOG_LEVEL", "INFO"))
 logger = logging.getLogger()
 
+load_dotenv()
+
+env = environ.Env()
 
 class OpenSearchSettings(BaseModel):
     """settings required for a aws/opensearch"""
 
     model_config = SettingsConfigDict(frozen=True)
 
-    collection_enpdoint: str
+    collection_endpoint: str = env.str("COLLECTION_ENDPOINT")
+    parsed_url: AnyUrl = urlparse(collection_endpoint)
+
+    collection_endpoint__username: Optional[str] = parsed_url.username
+    collection_endpoint__password: Optional[str] = parsed_url.password
+    collection_endpoint__host: Optional[str] = parsed_url.hostname
+    collection_endpoint__port: Optional[str] = parsed_url.port
 
 
 class ElasticLocalSettings(BaseModel):
@@ -59,14 +72,9 @@ class Settings(BaseSettings):
     embedding_openai_api_key: str = "NotAKey"
     embedding_azure_openai_endpoint: str = "not an endpoint"
     azure_api_version_embeddings: str = "2024-02-01"
-    metadata_extraction_llm: ChatLLMBackend = ChatLLMBackend(name="gpt-4o", provider="azure_openai")
+    metadata_extraction_llm: ChatLLMBackend = ChatLLMBackend(name="gpt-4o-mini", provider="openai")
 
-    embedding_backend: Literal[
-        "text-embedding-ada-002",
-        "amazon.titan-embed-text-v2:0",
-        "text-embedding-3-large",
-        "fake",
-    ] = "text-embedding-3-large"
+    embedding_backend: str = "amazon.titan-embed-text-v2:0"
 
     llm_max_tokens: int = 1024
 
@@ -81,7 +89,7 @@ class Settings(BaseSettings):
     partition_strategy: Literal["auto", "fast", "ocr_only", "hi_res"] = "fast"
     clustering_strategy: Literal["full"] | None = None
 
-    elastic: ElasticCloudSettings | ElasticLocalSettings | OpenSearchSettings = ElasticLocalSettings()
+    elastic: OpenSearchSettings = OpenSearchSettings()
     elastic_root_index: str = "redbox-data"
     elastic_chunk_alias: str = "redbox-data-chunk-current"
 
@@ -139,40 +147,39 @@ class Settings(BaseSettings):
         return self.elastic_root_index + "-chunk-current"
 
     @lru_cache(1)
-    def elasticsearch_client(self) -> Elasticsearch:
-        if isinstance(self.elastic, ElasticLocalSettings):
-            client = Elasticsearch(
-                hosts=[
-                    {
-                        "host": self.elastic.host,
-                        "port": self.elastic.port,
-                        "scheme": self.elastic.scheme,
-                    }
-                ],
-                basic_auth=(self.elastic.user, self.elastic.password),
-            )
+    def elasticsearch_client(self) -> Union[Elasticsearch, OpenSearch]:
+        logger.info('Testing OpenSearch is definitely being used')
 
-        elif isinstance(self.elastic, OpenSearchSettings):
-            client = OpenSearch(
-                hosts=[{"host": self.elastic.collection_enpdoint, "port": 443}],
-                use_ssl=True,
-                verify_certs=True,
-                connection_class=RequestsHttpConnection,
-                pool_maxsize=100,
-            )
-
-        else:
-            client = Elasticsearch(cloud_id=self.elastic.cloud_id, api_key=self.elastic.api_key)
+        client = OpenSearch(
+            hosts=[{"host": self.elastic.collection_endpoint__host, "port": self.elastic.collection_endpoint__port}],
+            http_auth=(self.elastic.collection_endpoint__username, self.elastic.collection_endpoint__password),
+            use_ssl=False,
+            connection_class=RequestsHttpConnection,
+            retry_on_timeout=True
+        )
 
         if not client.indices.exists_alias(name=self.elastic_alias):
             chunk_index = f"{self.elastic_root_index}-chunk"
-            client.options(ignore_status=[400]).indices.create(index=chunk_index)
-            client.indices.put_alias(index=chunk_index, name=self.elastic_alias)
+            # client.options(ignore_status=[400]).indices.create(index=chunk_index)
+            # client.indices.put_alias(index=chunk_index, name=self.elastic_alias)
+            try:
+                client.indices.create(index=chunk_index, ignore=400)  # 400 is ignored to avoid index-already-exists errors
+            except Exception as e:
+                logger.error(f"Failed to create index {chunk_index}: {e}")
+
+            try:
+                client.indices.put_alias(index=chunk_index, name=f"{self.elastic_root_index}-chunk-current")
+            except Exception as e:
+                logger.error(f"Failed to set alias {self.elastic_root_index}-chunk-current: {e}")
 
         if not client.indices.exists(index=self.elastic_chat_mesage_index):
-            client.indices.create(index=self.elastic_chat_mesage_index)
+            try:
+                client.indices.create(index=self.elastic_chat_mesage_index, ignore=400)  # 400 is ignored to avoid index-already-exists errors
+            except Exception as e:
+                logger.error(f"Failed to create index {self.elastic_chat_mesage_index}: {e}")
+            # client.indices.create(index=self.elastic_chat_mesage_index)
 
-        return client.options(request_timeout=30, retry_on_timeout=True, max_retries=3)
+        return client
 
     def s3_client(self):
         if self.object_store == "minio":

@@ -870,7 +870,7 @@ class ChatMessage(UUIDPrimaryKeyBase, TimeStampedModel):
         es_client.create(
             index=env.elastic_chat_mesage_index,
             id=uuid.uuid4(),
-            document=elastic_log_msg,
+            body=elastic_log_msg,
         )
 
     def unique_citation_uris(self) -> list[tuple[str, str]]:

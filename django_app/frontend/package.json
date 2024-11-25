@@ -49,6 +49,8 @@
   },
   "author": "",
   "dependencies": {
+    "@parcel/config-default": "^2.13.1",
+    "@parcel/transformer-typescript-tsc": "^2.13.1",
     "govuk-frontend": "^5.2.0",
     "i.ai-design-system": "^0.4.8",
     "posthog-js": "^1.143.0"

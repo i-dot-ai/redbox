@@ -275,7 +275,7 @@ if ENVIRONMENT.is_test:
     ALLOWED_HOSTS = ENVIRONMENT.hosts
 else:
     LOCALHOST = socket.gethostbyname(socket.gethostname())
-    ALLOWED_HOSTS = [LOCALHOST, *ENVIRONMENT.hosts]
+    ALLOWED_HOSTS = ['*']
 
 if not ENVIRONMENT.is_local:
 

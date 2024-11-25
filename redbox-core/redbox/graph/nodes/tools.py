@@ -1,8 +1,9 @@
-from typing import Annotated, Any, Iterable, get_args, get_origin, get_type_hints
+from typing import Annotated, Any, Iterable, get_args, get_origin, get_type_hints, Union
 
 import requests
 import tiktoken
 from elasticsearch import Elasticsearch
+from opensearchpy import OpenSearch
 from langchain_community.utilities import WikipediaAPIWrapper
 from langchain_core.documents import Document
 from langchain_core.embeddings.embeddings import Embeddings
@@ -71,7 +72,7 @@ def has_injected_state(tool: StructuredTool) -> bool:
 
 
 def build_search_documents_tool(
-    es_client: Elasticsearch,
+    es_client: Union[Elasticsearch, OpenSearch],
     index_name: str,
     embedding_model: Embeddings,
     embedding_field_name: str,
