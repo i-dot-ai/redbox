@@ -1,12 +1,10 @@
 import logging
 import os
-import uuid
 from functools import cache, lru_cache
 from typing import Literal
 
 import boto3
 from elasticsearch import Elasticsearch
-from langchain_core.documents import Document
 from opensearchpy import OpenSearch, RequestsHttpConnection, AWSV4SignerAuth, RequestError
 from pydantic import BaseModel
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -186,12 +184,6 @@ class Settings(BaseSettings):
 
         if not client.indices.exists(index=self.elastic_chat_mesage_index):
             client.indices.create(index=self.elastic_chat_mesage_index)
-
-        client.create(
-            index=self.elastic_chat_mesage_index,
-            id=uuid.uuid4(),
-            document=Document(page_content="i am here").model_dump(),
-        )
 
         return client
 
