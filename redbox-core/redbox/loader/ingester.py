@@ -1,6 +1,7 @@
 import logging
 from typing import TYPE_CHECKING
 
+from elasticsearch import RequestError
 from langchain_core.runnables import RunnableParallel
 from langchain_elasticsearch.vectorstores import BM25Strategy, ElasticsearchStore
 
@@ -47,7 +48,11 @@ def create_alias(alias: str):
     chunk_index_name = alias[:-8]  # removes -current
 
     es.indices.create(index=chunk_index_name, ignore=400)
-    es.indices.put_alias(index=chunk_index_name, name=alias)
+    try:
+        es.indices.put_alias(index=chunk_index_name, name=alias)
+    except RequestError as e:
+        if e.status_code != 400:
+            raise e
 
 
 def _ingest_file(file_name: str, es_index_name: str = alias):
