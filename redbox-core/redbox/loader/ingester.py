@@ -2,7 +2,6 @@ import logging
 from typing import TYPE_CHECKING
 
 from langchain_core.runnables import RunnableParallel
-from langchain_elasticsearch.vectorstores import BM25Strategy, ElasticsearchStore
 from langchain_community.vectorstores import OpenSearchVectorSearch
 
 from redbox.chains.components import get_embeddings
@@ -40,7 +39,6 @@ def get_elasticsearch_store(es, es_index_name: str):
     )
 
 
-
 def get_elasticsearch_store_without_embeddings(es, es_index_name: str):
     # return ElasticsearchStore(
     #     index_name=es_index_name,
@@ -66,7 +64,7 @@ def create_alias(alias: str):
     es.indices.put_alias(index=chunk_index_name, name=alias)
 
 
-def ingest_file(file_name: str, es_index_name: str = alias) -> str | None:
+def _ingest_file(file_name: str, es_index_name: str = alias):
     logging.info("Ingesting file: %s", file_name)
 
     es = env.elasticsearch_client()
@@ -113,15 +111,17 @@ def ingest_file(file_name: str, es_index_name: str = alias) -> str | None:
         env=env,
     )
 
+    new_ids = RunnableParallel({"normal": chunk_ingest_chain, "largest": large_chunk_ingest_chain}).invoke(file_name)
+    logging.info(
+        "File: %s %s chunks ingested",
+        file_name,
+        {k: len(v) for k, v in new_ids.items()},
+    )
+
+
+def ingest_file(file_name: str, es_index_name: str = alias) -> str | None:
     try:
-        new_ids = RunnableParallel({"normal": chunk_ingest_chain, "largest": large_chunk_ingest_chain}).invoke(
-            file_name
-        )
-        logging.info(
-            "File: %s %s chunks ingested",
-            file_name,
-            {k: len(v) for k, v in new_ids.items()},
-        )
+        _ingest_file(file_name, es_index_name)
     except Exception as e:
         logging.exception("Error while processing file [%s]", file_name)
         return f"{type(e)}: {e.args[0]}"

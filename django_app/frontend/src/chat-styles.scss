@@ -244,14 +244,39 @@ chat-history[data-initialised] .rb-chat-history__actions-button {
 }
 
 .rb-activity {
+  position: relative;
+}
+.rb-activity__btn {
+  display: none;
+}
+/* Only show the expand/collapse button when there is more than one activity */
+.rb-activity:has(.rb-activity__item:nth-of-type(2)) .rb-activity__btn {
+  display: block;
+}
+.rb-activity__btn button {
+  background-color: transparent;
+  border: 0;
+  color: var(--iai-product-colour);
+  cursor: pointer;
+  font-size: 0.75rem;
+  position: absolute;
+  right: 0;
+  top: 0;
+}
+.rb-activity__item {
   border-left: 1px solid black;
-  display: flex;
+  display: none;
   font-size: 0.75rem;
   margin: 0;
   margin-left: 0.5rem;
   padding-bottom: 0.75rem;
+  padding-right: 8rem;
+  word-break: break-word;
 }
-.rb-activity::before {
+.rb-activity__item:last-child, .rb-activity:has([expanded="true"]) .rb-activity__item {
+  display: flex;
+}
+.rb-activity__item::before {
   align-items: center;
   border-radius: 100%;
   content: '';
@@ -263,14 +288,14 @@ chat-history[data-initialised] .rb-chat-history__actions-button {
   top: -1px;
   width: 1rem;
 }
-.rb-activity--user::before {
+.rb-activity__item--user::before {
   background-color: #0b8478;
   content: url("/static/icons/activity-user.svg")
 }
-.rb-activity--info::before {
+.rb-activity__item--info::before {
   background-color: #0779c4;
 }
-.rb-activity--ai::before {
+.rb-activity__item--ai::before {
   background-color: #9c0000;
   content: url("/static/icons/activity-redbox.svg")
 }

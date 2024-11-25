@@ -1,10 +1,10 @@
 <div class="govuk-grid-row">
 
-  <div class="govuk-grid-column-one-third govuk-!-margin-top-7">
+  <div class="govuk-grid-column-one-third govuk-!-margin-top-3">
 
     <div class="iai-panel">
       <div class="govuk-!-padding-left-1 govuk-!-padding-right-1">
-        <h2 class="govuk-heading-m">Message</h2>
+        <h2 class="govuk-heading-m">Response</h2>
         <div class="iai-chat-bubble">
           <markdown-converter class="iai-chat-bubble__text">{{ message.text }}</markdown-converter>
         </div>
@@ -13,7 +13,7 @@
 
   </div>
 
-  <div class="govuk-grid-column-two-thirds govuk-!-margin-top-7">
+  <div class="govuk-grid-column-two-thirds govuk-!-margin-top-3">
     {% if message.citation_set.all() %}
       <div class="iai-panel">
         <div class="govuk-!-padding-left-1 govuk-!-padding-right-1">

@@ -457,7 +457,7 @@ class CitationsPage(SignedInBasePage):
         return "Citations - Redbox"
 
     def back_to_chat(self) -> ChatsPage:
-        self.page.get_by_role("link", name="Back to chat", exact=True).click()
+        self.page.get_by_role("link", name="Back to chat").click()
         return ChatsPage(self.page)
 
 

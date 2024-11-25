@@ -12,8 +12,8 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = ">=3.12,<3.13"
-
 django-staff-sso-client = "^4.3.0"
+
 [tool.poetry.group.dev.dependencies]
 bumpversion = "^0.6.0"
 pytest = "^8.3.2"

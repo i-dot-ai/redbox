@@ -10,13 +10,17 @@ from langchain_core.embeddings import Embeddings, FakeEmbeddings
 from langchain_core.tools import StructuredTool
 from langchain_core.runnables import Runnable
 from langchain_core.utils import convert_to_secret_str
-from langchain_elasticsearch import ElasticsearchRetriever
 from langchain_openai.embeddings import AzureOpenAIEmbeddings, OpenAIEmbeddings
 
 
 from redbox.chains.parser import StreamingJsonOutputParser
 from redbox.models.settings import ChatLLMBackend, Settings
-from redbox.retriever import AllElasticsearchRetriever, ParameterisedElasticsearchRetriever, MetadataRetriever, OpenSearchRetriever
+from redbox.retriever import (
+    AllElasticsearchRetriever,
+    ParameterisedElasticsearchRetriever,
+    MetadataRetriever,
+    OpenSearchRetriever,
+)
 from langchain_community.embeddings import BedrockEmbeddings
 from langchain.chat_models import init_chat_model
 from redbox.models.chain import StructuredResponseWithCitations

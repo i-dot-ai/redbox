@@ -1,16 +1,13 @@
 from functools import partial
-from typing import (Any, Callable, Dict, List, Mapping, Optional, Sequence,
-                    Union, cast)
+from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Union, cast
 
 from opensearchpy import OpenSearch
 from elasticsearch import Elasticsearch
-from elasticsearch.helpers import scan
 from kneed import KneeLocator
 from langchain_core.callbacks import CallbackManagerForRetrieverRun
 from langchain_core.documents import Document
 from langchain_core.embeddings.embeddings import Embeddings
 from langchain_core.retrievers import BaseRetriever
-from langchain_elasticsearch.retrievers import ElasticsearchRetriever
 
 from redbox.models.chain import RedboxState
 from redbox.models.file import ChunkResolution
@@ -39,7 +36,9 @@ def hit_to_doc(hit: dict[str, Any]) -> Document:
     )
 
 
-def query_to_documents(es_client: Union[Elasticsearch, OpenSearch], index_name: str, query: dict[str, Any]) -> list[Document]:
+def query_to_documents(
+    es_client: Union[Elasticsearch, OpenSearch], index_name: str, query: dict[str, Any]
+) -> list[Document]:
     """Runs an Elasticsearch query and returns Documents."""
     response = es_client.search(index=index_name, body=query)
     return [hit_to_doc(hit) for hit in response["hits"]["hits"]]
@@ -85,8 +84,8 @@ class OpenSearchRetriever(BaseRetriever):
     es_client: OpenSearch
     index_name: Union[str, Sequence[str]]
     body_func: Callable[[str], Dict]
-    content_field: Optional[Union[str, Mapping[str,str]]] = None
-    document_mapper : Optional[Callable[[Mapping], Document]] = None
+    content_field: Optional[Union[str, Mapping[str, str]]] = None
+    document_mapper: Optional[Callable[[Mapping], Document]] = None
 
     def __init__(self, **kwargs: Any):
         super().__init__(**kwargs)
@@ -102,18 +101,23 @@ class OpenSearchRetriever(BaseRetriever):
         self,
         index_name: Union[str, Sequence[str]],
         body_func: Callable[[str], Dict],
-        content_field: Optional[Union[str, Mapping[str,str]]] = None,
+        content_field: Optional[Union[str, Mapping[str, str]]] = None,
         document_mapper: Optional[Callable[[Mapping], Document]] = None,
-        opensearch_url : Optional[str] = None,
-        cloud_id : Optional[str] = None,
-        api_key : Optional[str] = None,
-        username : Optional[str] = None,
-        password : Optional[str] = None,
+        opensearch_url: Optional[str] = None,
+        cloud_id: Optional[str] = None,
+        api_key: Optional[str] = None,
+        username: Optional[str] = None,
+        password: Optional[str] = None,
         params: Optional[Dict[str, Any]] = None,
-        ) -> "OpenSearchRetriever":
-
+    ) -> "OpenSearchRetriever":
         es_client = self.es_client
-        return OpenSearchRetriever(es_client=es_client, index_name=index_name, body_func=body_func, content_field=content_field, document_mapper=document_mapper)
+        return OpenSearchRetriever(
+            es_client=es_client,
+            index_name=index_name,
+            body_func=body_func,
+            content_field=content_field,
+            document_mapper=document_mapper,
+        )
 
     def _get_relevant_documents(self, query: str, *, run_manager: CallbackManagerForRetrieverRun) -> List[Document]:
         if not self.es_client or not self.document_mapper:
@@ -133,6 +137,7 @@ class OpenSearchRetriever(BaseRetriever):
         content = hit["_source"].pop(field)
         return Document(page_content=content, metadata=hit)
 
+
 class ParameterisedElasticsearchRetriever(BaseRetriever):
     """A modified ElasticsearchRetriever that allows configuration from RedboxState."""
 
@@ -145,11 +150,11 @@ class ParameterisedElasticsearchRetriever(BaseRetriever):
     def _get_relevant_documents(
         self, query: RedboxState, *, run_manager: CallbackManagerForRetrieverRun
     ) -> list[Document]:
-        query_text = query["text"]
+        query_text = query.last_message.content
         query_vector = self.embedding_model.embed_query(query_text)
-        selected_files = query["request"].s3_keys
-        permitted_files = query["request"].permitted_s3_keys
-        ai_settings = query["request"].ai_settings
+        selected_files = query.request.s3_keys
+        permitted_files = query.request.permitted_s3_keys
+        ai_settings = query.request.ai_settings
 
         # Initial pass
         initial_query = build_document_query(
@@ -216,25 +221,18 @@ class AllElasticsearchRetriever(OpenSearchRetriever):
     def _get_relevant_documents(
         self, query: RedboxState, *, run_manager: CallbackManagerForRetrieverRun
     ) -> list[Document]:  # noqa:ARG002
-
         body = self.body_func(query)  # type: ignore
 
         results = []
 
-        response = self.es_client.search(
-            index=self.index_name,
-            body=body,
-            scroll="2m",
-            size=1000,
-            _source=True
-        )
+        response = self.es_client.search(index=self.index_name, body=body, scroll="2m", size=1000, _source=True)
 
         scroll_id = response["_scroll_id"]
 
         while True:
             response = self.es_client.scroll(scroll_id=scroll_id, scroll="2m")
             hits = response["hits"]["hits"]
-            
+
             if not hits:
                 break
 
@@ -279,25 +277,18 @@ class MetadataRetriever(OpenSearchRetriever):
     def _get_relevant_documents(
         self, query: RedboxState, *, run_manager: CallbackManagerForRetrieverRun
     ) -> list[Document]:  # noqa:ARG002
-
         body = self.body_func(query)  # type: ignore
 
         results = []
 
-        response = self.es_client.search(
-            index=self.index_name,
-            body=body,
-            scroll="2m",
-            size=1000,
-            _source=True
-        )
+        response = self.es_client.search(index=self.index_name, body=body, scroll="2m", size=1000, _source=True)
 
         scroll_id = response["_scroll_id"]
 
         while True:
             response = self.es_client.scroll(scroll_id=scroll_id, scroll="2m")
             hits = response["hits"]["hits"]
-            
+
             if not hits:
                 break
 

@@ -1,5 +1,5 @@
 # npm
-FROM node:18 AS npm-packages
+FROM node:20 AS npm-packages
 
 WORKDIR /src
 

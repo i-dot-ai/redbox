@@ -1,0 +1,42 @@
+[tool.ruff]
+line-length = 120
+target-version = 'py312'
+
+[tool.poetry]
+name = "redbox-ai-tests"
+version = "0.1.0"
+description = "AI Tests for Redbox"
+authors = ["i.AI <i-dot-ai-enquiries@cabinetoffice.gov.uk>"]
+license = "MIT"
+readme = "../README.md"
+
+[tool.poetry.dependencies]
+redbox = {path="../redbox-core", develop=true}
+python = ">=3.12,<3.13"
+
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.3.2"
+moto = "^5.0.12"
+pytest-cov = "^5.0.0"
+pytest-asyncio = "^0.23.6"
+jsonlines = "^4.0.0"
+deepeval = "^1.0.3"
+pytest-mock = "^3.14.0"
+boto3-stubs = {extras = ["essential"], version = "^1.35.28"}
+requests-mock = "^1.12.1"
+langfuse = "^2.53.9"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.pytest.ini_options]
+addopts = "--import-mode=importlib"
+env_override_existing_values = 1
+env_files = [
+    "tests/.env.test",
+    ".env"
+]
+markers = [
+]

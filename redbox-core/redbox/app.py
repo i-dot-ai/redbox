@@ -12,7 +12,12 @@ from redbox.chains.components import (
     get_parameterised_retriever,
 )
 from redbox.graph.nodes.tools import build_govuk_search_tool, build_search_documents_tool, build_search_wikipedia_tool
-from redbox.graph.root import get_agentic_search_graph, get_chat_with_documents_graph, get_root_graph
+from redbox.graph.root import (
+    get_agentic_search_graph,
+    get_chat_with_documents_graph,
+    get_root_graph,
+    get_chat_with_documents_large_graph,
+)
 from redbox.models.chain import RedboxState
 from redbox.models.chat import ChatRoute
 from redbox.models.file import ChunkResolution
@@ -57,7 +62,7 @@ class Redbox:
 
         search_documents = build_search_documents_tool(
             es_client=_env.elasticsearch_client(),
-            index_name=f"{_env.elastic_root_index}-chunk",
+            index_name=_env.elastic_chunk_alias,
             embedding_model=self.embedding_model,
             embedding_field_name=_env.embedding_document_field_name,
             chunk_resolution=ChunkResolution.normal,
@@ -96,12 +101,12 @@ class Redbox:
         activity_event_callback=_default_callback,
     ) -> RedboxState:
         final_state = None
-        request_dict = input["request"].model_dump()
+        request_dict = input.request.model_dump()
         logger.info("Request: %s", {k: request_dict[k] for k in request_dict.keys() - {"ai_settings"}})
         async for event in self.graph.astream_events(
             input=input,
             version="v2",
-            config={"recursion_limit": input["request"].ai_settings.recursion_limit},
+            config={"recursion_limit": input.request.ai_settings.recursion_limit},
         ):
             kind = event["event"]
             tags = event.get("tags", [])
@@ -146,6 +151,8 @@ class Redbox:
             graph = get_agentic_search_graph(self.tools).get_graph()
         elif graph_to_draw == "chat/documents":
             graph = get_chat_with_documents_graph(self.all_chunks_retriever, self.parameterised_retriever).get_graph()
+        elif graph_to_draw == "chat/documents/large":
+            graph = get_chat_with_documents_large_graph().get_graph()
         else:
             raise Exception("Invalid graph_to_draw")
 

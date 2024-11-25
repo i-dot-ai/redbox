@@ -163,3 +163,8 @@ def test_unique_citation_uris(chat_message: ChatMessage, uploaded_file: File):
     assert urls[0][1] == URL("http://example.com")
     assert urls[1][0] == "original_file.txt"
     assert urls[1][1].parts[-1] == "original_file.txt"
+
+
+@pytest.mark.parametrize(("value", "expected"), [("invalid origin", None), ("Wikipedia", "Wikipedia")])
+def test_try_parse_origin(value, expected):
+    assert Citation.Origin.try_parse(value) == expected

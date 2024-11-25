@@ -395,8 +395,8 @@ class User(BaseUser, UUIDPrimaryKeyBase):
     class Usefulness(models.TextChoices):
         NOT_USED = "I have not used GenAI", _("I have not used GenAI")
         NOT_ENOUGH = (
-            "I have not used GenAI enough to say its useful or not",
-            _("I have not used GenAI enough to say its useful or not"),
+            "I have not used GenAI enough to say if it's useful or not",
+            _("I have not used GenAI enough to say if it's useful or not"),
         )
         NOT_FIGURED_OUT = (
             "I have not figured out how to best use GenAI",
@@ -635,10 +635,20 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
         return self.original_file.name
 
     def get_status_text(self) -> str:
-        return next(
-            (status[1] for status in File.Status.choices if self.status == status[0]),
-            "Unknown",
-        )
+        permanent_error = "Error"
+        temporary_error = "Error, please try again"
+        if self.ingest_error:
+            temporary_error_substrings = [
+                "ConnectionError",
+                "RateLimitError",
+                "ConnectTimeout",
+                "openai.InternalServerError",
+            ]
+            for substring in temporary_error_substrings:
+                if substring in self.ingest_error:
+                    return temporary_error
+            return permanent_error
+        return dict(File.Status.choices).get(self.status, permanent_error)
 
     @property
     def expires_at(self) -> datetime:
@@ -735,6 +745,14 @@ class Citation(UUIDPrimaryKeyBase, TimeStampedModel):
         USER_UPLOADED_DOCUMENT = "UserUploadedDocument", _("user uploaded document")
         GOV_UK = "GOV.UK", _("gov.uk")
 
+        @classmethod
+        def try_parse(cls, value):
+            try:
+                return cls(value)
+            except ValueError:
+                logger.warning("failed to parse %s to Origin", value)
+                return None
+
     file = models.ForeignKey(
         File,
         on_delete=models.CASCADE,
@@ -756,6 +774,8 @@ class Citation(UUIDPrimaryKeyBase, TimeStampedModel):
         choices=Origin,
         help_text="source of citation",
         default=Origin.USER_UPLOADED_DOCUMENT,
+        null=True,
+        blank=True,
     )
     text_in_answer = models.TextField(
         null=True,
@@ -851,7 +871,7 @@ class ChatMessage(UUIDPrimaryKeyBase, TimeStampedModel):
             "user_id": str(self.chat.user.id),
             "text": str(self.text),
             "route": str(self.route),
-            "role": "ai",
+            "role": str(self.role),
             "token_count": token_sum,
             "rating": int(self.rating) if self.rating else None,
             "rating_text": str(self.rating_text),

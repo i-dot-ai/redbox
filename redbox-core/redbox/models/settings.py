@@ -158,7 +158,7 @@ class Settings(BaseSettings):
             http_auth=("admin", "YourPassword1"),
             use_ssl=False,
             connection_class=RequestsHttpConnection,
-            retry_on_timeout=True
+            retry_on_timeout=True,
         )
 
         # else:
@@ -170,7 +170,9 @@ class Settings(BaseSettings):
             # client.indices.put_alias(index=chunk_index, name=self.elastic_alias)
             # Ensure index creation does not raise an error if it already exists.
             try:
-                client.indices.create(index=chunk_index, ignore=400)  # 400 is ignored to avoid index-already-exists errors
+                client.indices.create(
+                    index=chunk_index, ignore=400
+                )  # 400 is ignored to avoid index-already-exists errors
             except Exception as e:
                 logger.error(f"Failed to create index {chunk_index}: {e}")
 
