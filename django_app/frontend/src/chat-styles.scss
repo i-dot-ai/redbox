@@ -273,7 +273,7 @@ chat-history[data-initialised] .rb-chat-history__actions-button {
   padding-right: 8rem;
   word-break: break-word;
 }
-.rb-activity__item:last-child, .rb-activity:has([expanded="true"]) .rb-activity__item {
+.rb-activity__item:last-child, .rb-activity:has([expanded]) .rb-activity__item {
   display: flex;
 }
 .rb-activity__item::before {
