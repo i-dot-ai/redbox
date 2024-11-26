@@ -55,7 +55,7 @@ def build_search_documents_tool(
     """Constructs a tool that searches the index and sets state.documents."""
 
     @tool(response_format="content_and_artifact")
-    def _search_documents(query: str, state: Annotated[RedboxState, InjectedState]) -> tuple[str, list[Document]]:
+    def search_documents(query: str, state: Annotated[RedboxState, InjectedState]) -> tuple[str, list[Document]]:
         """
         Search for documents uploaded by the user based on a query string.
 
@@ -107,7 +107,7 @@ def build_search_documents_tool(
         # Return as state update
         return format_documents(sorted_documents), sorted_documents
 
-    return _search_documents
+    return search_documents
 
 
 def build_govuk_search_tool(num_results: int = 1, filter=True) -> Tool:
@@ -128,7 +128,7 @@ def build_govuk_search_tool(num_results: int = 1, filter=True) -> Tool:
         return response
 
     @tool(response_format="content_and_artifact")
-    def _search_govuk(query: str) -> tuple[str, list[Document]]:
+    def search_govuk(query: str) -> tuple[str, list[Document]]:
         """
         Search for documents on gov.uk based on a query string.
         This endpoint is used to search for documents on gov.uk. There are many types of documents on gov.uk.
@@ -187,7 +187,7 @@ def build_govuk_search_tool(num_results: int = 1, filter=True) -> Tool:
 
         return format_documents(mapped_documents), mapped_documents
 
-    return _search_govuk
+    return search_govuk
 
 
 def build_search_wikipedia_tool(number_wikipedia_results=1, max_chars_per_wiki_page=12000) -> Tool:
@@ -199,7 +199,7 @@ def build_search_wikipedia_tool(number_wikipedia_results=1, max_chars_per_wiki_p
     tokeniser = tiktoken.encoding_for_model("gpt-4o")
 
     @tool(response_format="content_and_artifact")
-    def _search_wikipedia(query: str) -> tuple[str, list[Document]]:
+    def search_wikipedia(query: str) -> tuple[str, list[Document]]:
         """
         Search Wikipedia for information about the queried entity.
         Useful for when you need to answer general questions about people, places, objects, companies, facts, historical events, or other subjects.
@@ -228,7 +228,7 @@ def build_search_wikipedia_tool(number_wikipedia_results=1, max_chars_per_wiki_p
         docs = mapped_documents
         return format_documents(docs), docs
 
-    return _search_wikipedia
+    return search_wikipedia
 
 
 class BaseRetrievalToolLogFormatter:
@@ -269,9 +269,9 @@ class SearchGovUKLogFormatter(BaseRetrievalToolLogFormatter):
 
 
 __RETRIEVEAL_TOOL_MESSAGE_FORMATTERS = {
-    "_search_wikipedia": SearchWikipediaLogFormatter,
-    "_search_documents": SearchDocumentsLogFormatter,
-    "_search_govuk": SearchGovUKLogFormatter,
+    "search_wikipedia": SearchWikipediaLogFormatter,
+    "search_documents": SearchDocumentsLogFormatter,
+    "search_govuk": SearchGovUKLogFormatter,
 }
 
 

@@ -1,7 +1,8 @@
 from pathlib import Path
-import sys
+import sys, os
 from uuid import uuid4
 import json
+import re
 
 from langfuse.callback import CallbackHandler
 import pytest
@@ -30,7 +31,7 @@ def file_to_s3(file_path: Path, s3_client, env: Settings) -> str:
     return file_name
 
 @pytest.fixture(params=[
-    AISettings().chat_backend,
+    ChatLLMBackend(name="gpt-4o-2024-08-06", provider="azure-openai"),
     ChatLLMBackend(name="anthropic.claude-3-sonnet-20240229-v1:0", provider="bedrock")
 ],
 ids=[
@@ -68,6 +69,10 @@ def settings():
     return get_settings()
 
 
+@pytest.fixture(scope="function")
+def test_name():
+    return re.search(r"\[(.+)\]", os.environ["PYTEST_CURRENT_TEST"]).group(1)
+
 @pytest.fixture
 def all_loaded_doc_uris(settings: Settings):
     es = settings.elasticsearch_client()
@@ -103,13 +108,14 @@ def responses_dir():
     return p
 
 
-def test_usecases(test_case: AITestCase, loaded_docs: set[str], ai_settings, logs_dir, responses_dir):
+def test_usecases(test_name, test_case: AITestCase, loaded_docs: set[str], ai_settings, logs_dir, responses_dir):
     env = get_settings()
     app = Redbox(debug=True, env=env)
 
+
     logs_path = logs_dir / test_case.id
-    response_path = responses_dir / test_case.id
-    citations_path = responses_dir / (test_case.id + "_citations.json")
+    response_path = responses_dir / (test_name + ".md")
+    citations_path = responses_dir / (test_name + "_citations.json")
 
     redbox_state = get_state(
         user_uuid=uuid4(), 

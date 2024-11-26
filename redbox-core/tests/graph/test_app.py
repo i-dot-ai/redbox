@@ -12,17 +12,15 @@ from tiktoken.core import Encoding
 from redbox import Redbox
 from redbox.models.chain import (
     AISettings,
-    Citation,
     RedboxQuery,
     RedboxState,
     RequestMetadata,
-    Source,
-    StructuredResponseWithCitations,
     metadata_reducer,
 )
 from redbox.models.chat import ChatRoute, ErrorRoute
 from redbox.models.file import ChunkResolution
 from redbox.models.graph import RedboxActivityEvent
+from redbox.models.responses import Citation, Source, StructuredResponseWithCitations
 from redbox.models.settings import Settings
 from redbox.test.data import (
     GenericFakeChatModelWithTools,
@@ -352,6 +350,7 @@ TEST_CASES = [
                                     sources=[
                                         Source(
                                             source="SomeAIGuy",
+                                            source_type="UserUploadedDocument",
                                             document_name="http://localhost/someaiguy.html",
                                             highlighted_text_in_source="I lied about AI",
                                             page_numbers=[1],
@@ -459,7 +458,7 @@ TEST_CASES = [
                                         "id": "call_e4003b",
                                         "function": {
                                             "arguments": '{\n  "query": "travel advice to cuba"\n}',
-                                            "name": "_search_govuk",
+                                            "name": "search_govuk",
                                         },
                                         "type": "function",
                                     }

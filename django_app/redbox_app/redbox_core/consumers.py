@@ -23,9 +23,9 @@ from redbox.models.chain import (
     RedboxQuery,
     RedboxState,
     RequestMetadata,
-    Source,
     metadata_reducer,
 )
+from redbox.models.responses import Source
 from redbox.models.chain import Citation as AICitation
 from redbox.models.graph import RedboxActivityEvent
 from redbox.models.settings import get_settings

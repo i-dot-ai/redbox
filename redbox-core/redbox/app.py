@@ -65,14 +65,11 @@ class Redbox:
         search_wikipedia = build_search_wikipedia_tool()
         search_govuk = build_govuk_search_tool()
 
-        # self.tools: dict[str, StructuredTool] = {
-        #     "_search_documents": search_documents,
-        #     "_search_govuk": search_govuk,
-        #     "_search_wikipedia": search_wikipedia,
-        # }
-        self.tools: dict[str, StructuredTool] = {
-            "_search_documents": search_documents,
-        }
+        self.tools = [
+            search_documents,
+            search_govuk,
+            search_wikipedia
+        ]
 
         self.graph = get_root_graph(
             all_chunks_retriever=self.all_chunks_retriever,

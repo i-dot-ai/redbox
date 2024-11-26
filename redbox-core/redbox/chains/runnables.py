@@ -7,7 +7,7 @@ from langchain_core.callbacks.manager import (
     dispatch_custom_event,
 )
 from langchain_core.language_models import BaseChatModel
-from langchain_core.messages import AIMessage, AIMessageChunk, BaseMessage
+from langchain_core.messages import AIMessage, AIMessageChunk, BaseMessage, ToolMessage
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.outputs import ChatGeneration, ChatGenerationChunk, ChatResult
 from langchain_core.runnables import (
@@ -88,7 +88,7 @@ def build_chat_prompt_from_messages_runnable(
             messages=(
                 [("system", system_prompt_message)]
                 + [(msg["role"], msg["text"]) for msg in truncated_history]
-                + [task_question_prompt + "\n\n{format_instructions}"]
+                + [("user", task_question_prompt + "\n\n{format_instructions}")]
                 + [MessagesPlaceholder("messages")]
             ),
             partial_variables={"format_instructions": format_instructions},

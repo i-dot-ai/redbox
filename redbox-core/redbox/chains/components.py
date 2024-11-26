@@ -19,7 +19,7 @@ from redbox.models.settings import ChatLLMBackend, Settings
 from redbox.retriever import AllElasticsearchRetriever, ParameterisedElasticsearchRetriever, MetadataRetriever
 from langchain_community.embeddings import BedrockEmbeddings
 from langchain.chat_models import init_chat_model
-from redbox.models.chain import StructuredResponseWithCitations
+from redbox.models.responses import StructuredResponseWithCitations
 
 
 logger = logging.getLogger(__name__)

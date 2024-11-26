@@ -15,13 +15,15 @@ from langchain_core.messages import AIMessage, HumanMessage
 from langchain_core.runnables import Runnable, RunnableLambda, RunnableParallel
 from langchain_core.tools import StructuredTool
 from langchain_core.vectorstores import VectorStoreRetriever
+from openai import BaseModel
 
 from redbox.chains.activity import log_activity
 from redbox.chains.components import get_chat_llm, get_tokeniser
 from redbox.chains.runnables import CannedChatLLM, build_llm_chain
 from redbox.models import ChatRoute
-from redbox.models.chain import Citation, DocumentState, PromptSet, RedboxState, RequestMetadata
+from redbox.models.chain import DocumentState, PromptSet, RedboxState, RequestMetadata
 from redbox.models.graph import ROUTE_NAME_TAG, SOURCE_DOCUMENTS_TAG, RedboxActivityEvent, RedboxEventType
+from redbox.models.responses import Citation
 from redbox.transform import combine_documents, flatten_document_state
 
 log = logging.getLogger(__name__)
@@ -138,6 +140,7 @@ def build_stuff_pattern(
     format_instructions: str | None = None,
     tools: list[StructuredTool] | None = None,
     tool_choice: str | None = None,
+    structured_output: BaseModel|None = None,
     final_response_chain: bool = False,
 ) -> Runnable[RedboxState, dict[str, Any]]:
     """Returns a Runnable that uses state.request and state.documents to set state.messages.
@@ -148,6 +151,8 @@ def build_stuff_pattern(
     @RunnableLambda
     def _stuff(state: RedboxState) -> dict[str, Any]:
         llm = get_chat_llm(state.request.ai_settings.chat_backend, tools=tools, tool_choice=tool_choice)
+        if structured_output:
+            llm = llm.with_structured_output(structured_output)
 
         events = [
             event

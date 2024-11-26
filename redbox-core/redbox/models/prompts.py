@@ -43,7 +43,7 @@ AGENTIC_RETRIEVAL_SYSTEM_PROMPT = (
     "\n"
     "2. Decide whether you can answer this question:\n"
     "- If additional search tool calls are likely to yield useful information, make those calls.\n"
-    "- If the available documents are sufficient to proceed, you must call the AnswerProvider tool to respond\n"
+    "- If the available documents are sufficient to proceed, give no response and do not call tools\n"
 )
 
 

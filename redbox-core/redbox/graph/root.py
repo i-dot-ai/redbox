@@ -33,9 +33,10 @@ from redbox.graph.nodes.processes import (
 )
 from redbox.graph.nodes.sends import build_document_chunk_send, build_document_group_send, build_tool_send
 from redbox.graph.nodes.tools import create_structured_output_tool, get_log_formatter_for_retrieval_tool
-from redbox.models.chain import Citation, RedboxState, StructuredResponseWithCitations
+from redbox.models.chain import RedboxState
 from redbox.models.chat import ChatRoute, ErrorRoute
 from redbox.models.graph import ROUTABLE_KEYWORDS, RedboxActivityEvent
+from redbox.models.responses import Citation, StructuredResponseWithCitations
 from redbox.transform import structure_documents_by_file_name, structure_documents_by_group_and_indices
 
 
@@ -156,14 +157,12 @@ def get_search_graph(
     
 
 
-def get_agentic_search_graph(tools: dict[str, StructuredTool], debug: bool = False) -> CompiledGraph:
+def get_agentic_search_graph(tools: list[StructuredTool], debug: bool = False) -> CompiledGraph:
     """Creates a subgraph for agentic RAG."""
 
     structured_output_tool = create_structured_output_tool(StructuredResponseWithCitations, content_extractor=lambda r: r.answer)
     builder = StateGraph(RedboxState)
     # Tools
-    agent_tools: list[StructuredTool] = list(tools.values())
-    agent_tools.append(structured_output_tool)
 
     # Processes
     builder.add_node("p_set_agentic_search_route", build_set_route_pattern(route=ChatRoute.gadget))
@@ -171,7 +170,7 @@ def get_agentic_search_graph(tools: dict[str, StructuredTool], debug: bool = Fal
         "p_search_agent",
         build_stuff_pattern(
             prompt_set=PromptSet.SearchAgentic,
-            tools=agent_tools,
+            tools=tools + [structured_output_tool],
             tool_choice="any",
             format_instructions=f"The answer must be provided using the {structured_output_tool.name} tool to use the correct format",
             final_response_chain=False
@@ -179,7 +178,7 @@ def get_agentic_search_graph(tools: dict[str, StructuredTool], debug: bool = Fal
     )
     builder.add_node(
         "p_retrieval_tools",
-        ToolNode(tools=agent_tools),
+        ToolNode(tools=tools),
     )
     builder.add_node(
         "p_give_up_agent",
@@ -188,7 +187,7 @@ def get_agentic_search_graph(tools: dict[str, StructuredTool], debug: bool = Fal
     builder.add_node("p_report_sources", report_sources_process)
     builder.add_node("p_create_answer", (
         ToolNode(tools=[structured_output_tool]) 
-        | RunnablePassthrough.assign(citations=RunnableLambda(lambda d: d.get("messages")[-1].artifact.citations))
+        | RunnablePassthrough.assign(citations=RunnableLambda(lambda d: d.get("messages")[-1].artifact.citations if d.get("messages")[-1].artifact else []))
     ))
 
     # Log
@@ -221,15 +220,13 @@ def get_agentic_search_graph(tools: dict[str, StructuredTool], debug: bool = Fal
     )
     builder.add_conditional_edges(
         "p_search_agent",
-        build_agentic_loop_decision({structured_output_tool.name: "create_answer"}, "call_tools", "cannot_generate_answer"),
+        build_agentic_loop_decision({structured_output_tool.name: "create_answer"}, "call_tools", "cannot_create_answer"),
         {
             "call_tools": "s_tool", 
             "create_answer": "p_create_answer",
-            "cannot_generate_answer": END
+            "cannot_create_answer": END
         }
     )
-    #builder.add_edge("p_search_agent", "s_tool")
-    #builder.add_edge("s_tool", "p_report_sources")
     builder.add_edge("p_search_agent", "p_activity_log_retrieval_tool_calls")
     builder.add_conditional_edges("s_tool", build_tool_send("p_retrieval_tools"), path_map=["p_retrieval_tools"])
     builder.add_edge("p_create_answer", "p_report_sources")
@@ -419,7 +416,7 @@ def get_root_graph(
     all_chunks_retriever: VectorStoreRetriever,
     parameterised_retriever: VectorStoreRetriever,
     metadata_retriever: VectorStoreRetriever,
-    tools: dict[str, StructuredTool],
+    tools: list[StructuredTool],
     debug: bool = False,
 ) -> CompiledGraph:
     """Creates the core Redbox graph."""
