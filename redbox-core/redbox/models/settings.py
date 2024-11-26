@@ -182,16 +182,21 @@ class Settings(BaseSettings):
 
         elif isinstance(self.elastic, OpenSearchSettings):
             if self.elastic.user or self.elastic.password:
-                logger.info("initiating OpenSearch with password: host=%s, port=%s", self.elastic.host, self.elastic.port)
+                logger.info(
+                    "initiating OpenSearch with password: host=%s, port=%s", self.elastic.host, self.elastic.port
+                )
                 client = OpenSearch(
                     hosts=[{"host": self.elastic.host, "port": self.elastic.port}],
                     http_auth=(self.elastic.user, self.elastic.password),
                     use_ssl=False,
                     connection_class=RequestsHttpConnection,
                     retry_on_timeout=True,
+                    timeout=120,
                 )
             else:
-                logger.info("initiating passwordless OpenSearch: host=%s, port=%s", self.elastic.host, self.elastic.port)
+                logger.info(
+                    "initiating passwordless OpenSearch: host=%s, port=%s", self.elastic.host, self.elastic.port
+                )
                 credentials = boto3.Session().get_credentials()
                 client = OpenSearch(
                     hosts=[{"host": self.elastic.host, "port": self.elastic.port}],
@@ -201,6 +206,7 @@ class Settings(BaseSettings):
                     connection_class=RequestsHttpConnection,
                     retry_on_timeout=True,
                     pool_maxsize=100,
+                    timeout=120,
                 )
 
         else:
