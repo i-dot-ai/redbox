@@ -33,6 +33,8 @@ def get_elasticsearch_store(es_index_name: str):
             query_field="text",
             vector_query_field=env.embedding_document_field_name,
         )
+
+    log.info("using opensearch_url=%s", f"{env.elastic.host}:{env.elastic.port}")
     return OpenSearchVectorSearch(
         index_name=es_index_name,
         opensearch_url=f"{env.elastic.host}:{env.elastic.port}",
@@ -51,6 +53,7 @@ def get_elasticsearch_store_without_embeddings(es_index_name: str):
             strategy=BM25Strategy(),
         )
 
+    log.info("using opensearch_url=%s", f"{env.elastic.host}:{env.elastic.port}")
     return OpenSearchVectorSearch(
         index_name=es_index_name,
         opensearch_url=f"{env.elastic.host}:{env.elastic.port}",
