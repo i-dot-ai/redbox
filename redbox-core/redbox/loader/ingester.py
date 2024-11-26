@@ -35,7 +35,7 @@ def get_elasticsearch_store(es_index_name: str):
         )
     return OpenSearchVectorSearch(
         index_name=es_index_name,
-        opensearch_url="https://localhost:9200",
+        opensearch_url=f"{env.elastic.host}:{env.elastic.port}",
         embedding_function=get_embeddings(env),
         query_field="text",
         vector_query_field=env.embedding_document_field_name,

@@ -14,7 +14,13 @@ from langchain_openai.embeddings import AzureOpenAIEmbeddings, OpenAIEmbeddings
 
 
 from redbox.chains.parser import StreamingJsonOutputParser
-from redbox.models.settings import ChatLLMBackend, Settings, ElasticCloudSettings, OpenSearchSettings
+from redbox.models.settings import (
+    ChatLLMBackend,
+    Settings,
+    ElasticCloudSettings,
+    OpenSearchSettings,
+    ElasticLocalSettings,
+)
 from redbox.retriever import (
     AllElasticsearchRetriever,
     ParameterisedElasticsearchRetriever,
@@ -86,7 +92,7 @@ def get_embeddings(env: Settings) -> Embeddings:
 
 
 def get_all_chunks_retriever(env: Settings) -> AllElasticsearchRetriever | AllOpensearchRetriever:
-    if isinstance(env.elastic, (ElasticCloudSettings, ElasticCloudSettings)):
+    if isinstance(env.elastic, (ElasticCloudSettings, ElasticLocalSettings)):
         return AllElasticsearchRetriever(
             es_client=env.elasticsearch_client(),
             index_name=env.elastic_chunk_alias,
