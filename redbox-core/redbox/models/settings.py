@@ -179,19 +179,20 @@ class Settings(BaseSettings):
             client = client.options(request_timeout=30, retry_on_timeout=True, max_retries=3)
 
         elif isinstance(self.elastic, OpenSearchSettings):
-            host = self.elastic.host.removeprefix("https://")
             if self.elastic.user or self.elastic.password:
+                logger.info("password: host=%s, port=%s", self.elastic.host, self.elastic.port)
                 client = OpenSearch(
-                    hosts=[{"host": host, "port": self.elastic.port}],
+                    hosts=[{"host": self.elastic.host, "port": self.elastic.port}],
                     http_auth=(self.elastic.user, self.elastic.password),
                     use_ssl=False,
                     connection_class=RequestsHttpConnection,
                     retry_on_timeout=True,
                 )
             else:
+                logger.info("passwordless: host=%s, port=%s", self.elastic.host, self.elastic.port)
                 credentials = boto3.Session().get_credentials()
                 client = OpenSearch(
-                    hosts=[{"host": host, "port": self.elastic.port}],
+                    hosts=[{"host": self.elastic.host, "port": self.elastic.port}],
                     http_auth=AWSV4SignerAuth(credentials, self.aws_region, "aoss"),
                     use_ssl=True,
                     verify_certs=True,
