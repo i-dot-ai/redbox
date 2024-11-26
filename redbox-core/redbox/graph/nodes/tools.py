@@ -242,7 +242,7 @@ class SearchDocumentsLogFormatter(BaseRetrievalToolLogFormatter):
         return f"Searching your documents for '{self.tool_call["args"]["query"]}'"
 
     def log_result(self, documents: Iterable[Document]):
-        return f"Reading {len(documents)} snippets from your documents {','.join(set([d.metadata.get("name", "") for d in documents]))}"
+        return f"Reading {len(documents)} snippets from {len(set([d.metadata.get("name", "") for d in documents]))} of your documents"
 
 
 class SearchGovUKLogFormatter(BaseRetrievalToolLogFormatter):

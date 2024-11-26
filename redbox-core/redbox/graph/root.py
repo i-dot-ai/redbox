@@ -455,25 +455,12 @@ def get_root_graph(
     builder.add_node("p_retrieve_metadata", metadata_subgraph)
 
     # Log
-    builder.add_node(
-        "p_activity_log_user_request",
-        build_activity_log_node(
-            lambda s: [
-                RedboxActivityEvent(
-                    message=f"You selected {len(s.request.s3_keys)} file{"s" if len(s.request.s3_keys)>1 else ""} - {",".join(s.request.s3_keys)}"
-                )
-                if len(s.request.s3_keys) > 0
-                else "You selected no files",
-            ]
-        ),
-    )
 
     # Decisions
     builder.add_node("d_keyword_exists", empty_process)
     builder.add_node("d_docs_selected", empty_process)
 
     # Edges
-    builder.add_edge(START, "p_activity_log_user_request")
     builder.add_edge(START, "p_retrieve_metadata")
     builder.add_edge("p_retrieve_metadata", "d_keyword_exists")
     builder.add_conditional_edges(
