@@ -162,6 +162,7 @@ class Settings(BaseSettings):
     @lru_cache(1)
     def elasticsearch_client(self) -> Union[Elasticsearch, OpenSearch]:
         if isinstance(self.elastic, ElasticLocalSettings):
+            logger.info("initiating ElasticLocal: host=%s, port=%s", self.elastic.host, self.elastic.port)
             client = Elasticsearch(
                 hosts=[
                     {
@@ -175,12 +176,13 @@ class Settings(BaseSettings):
             client = client.options(request_timeout=30, retry_on_timeout=True, max_retries=3)
 
         elif isinstance(self.elastic, ElasticCloudSettings):
+            logger.info("initiating ElasticCloud")
             client = Elasticsearch(cloud_id=self.elastic.cloud_id, api_key=self.elastic.api_key)
             client = client.options(request_timeout=30, retry_on_timeout=True, max_retries=3)
 
         elif isinstance(self.elastic, OpenSearchSettings):
             if self.elastic.user or self.elastic.password:
-                logger.info("password: host=%s, port=%s", self.elastic.host, self.elastic.port)
+                logger.info("initiating OpenSearch with password: host=%s, port=%s", self.elastic.host, self.elastic.port)
                 client = OpenSearch(
                     hosts=[{"host": self.elastic.host, "port": self.elastic.port}],
                     http_auth=(self.elastic.user, self.elastic.password),
@@ -189,7 +191,7 @@ class Settings(BaseSettings):
                     retry_on_timeout=True,
                 )
             else:
-                logger.info("passwordless: host=%s, port=%s", self.elastic.host, self.elastic.port)
+                logger.info("initiating passwordless OpenSearch: host=%s, port=%s", self.elastic.host, self.elastic.port)
                 credentials = boto3.Session().get_credentials()
                 client = OpenSearch(
                     hosts=[{"host": self.elastic.host, "port": self.elastic.port}],
