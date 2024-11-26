@@ -121,7 +121,7 @@ def get_parameterised_retriever(env: Settings, embeddings: Embeddings | None = N
 
 
 def get_metadata_retriever(env: Settings) -> MetadataRetriever | OpensearchMetadataRetriever:
-    if isinstance(env.elastic, (ElasticCloudSettings, ElasticCloudSettings)):
+    if isinstance(env.elastic, (ElasticCloudSettings, ElasticLocalSettings)):
         return MetadataRetriever(
             es_client=env.elasticsearch_client(),
             index_name=env.elastic_chunk_alias,
