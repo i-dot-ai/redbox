@@ -295,4 +295,3 @@ class OpensearchMetadataRetriever(OpenSearchRetriever):
         kwargs["document_mapper"] = hit_to_doc
         super().__init__(**kwargs)
         self.body_func = partial(get_metadata, self.chunk_resolution)
-
