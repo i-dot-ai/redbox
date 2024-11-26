@@ -1,4 +1,5 @@
 import logging
+import re
 import uuid
 from collections.abc import Sequence
 from dataclasses import dataclass
@@ -53,9 +54,11 @@ class ChatsView(View):
             footnote_counter = 1
             for display, href, text_in_answer in message.unique_citation_uris():  # noqa: B007
                 if text_in_answer:
-                    message.text = message.text.replace(
-                        text_in_answer,
+                    message.text = re.sub(
+                        re.escape(text_in_answer),
                         f'{text_in_answer}<a class="rb-footnote-link" href="#footnote-{message.id}-{footnote_counter}">{footnote_counter}</a>',  # noqa: E501
+                        message.text,
+                        flags=re.IGNORECASE,
                     )
                     footnote_counter = footnote_counter + 1
 

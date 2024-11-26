@@ -72,8 +72,11 @@ export class ChatMessage extends HTMLElement {
 
     // Add feedback buttons
     if (this.dataset.role === "ai") {
-      this.feedbackButtons = /** @type {import("./feedback-buttons").FeedbackButtons} */(document.createElement("feedback-buttons"));
-  this.parentElement?.appendChild(this.feedbackButtons);
+      this.feedbackButtons =
+        /** @type {import("./feedback-buttons").FeedbackButtons} */ (
+          document.createElement("feedback-buttons")
+        );
+      this.parentElement?.appendChild(this.feedbackButtons);
     }
 
     // ensure new chat-messages aren't hidden behind the chat-input
@@ -91,7 +94,6 @@ export class ChatMessage extends HTMLElement {
       "mouseover",
       sendTooltipViewEvent
     );
-
   }
 
   #addFootnotes = (content) => {
@@ -101,14 +103,10 @@ export class ChatMessage extends HTMLElement {
       if (!matchingText || !this.responseContainer) {
         return;
       }
-      /*
-      this.responseContainer?.update(
-        content.replace(matchingText, `${matchingText}<a href="#${footnote.id}" aria-label="Footnote ${footnoteIndex + 1}">[${footnoteIndex + 1}]</a>`)
-      );
-      */
+
       this.responseContainer.innerHTML =
         this.responseContainer.innerHTML.replace(
-          matchingText,
+          new RegExp(matchingText, "i"),
           `${matchingText}<a class="rb-footnote-link" href="#${
             footnote.id
           }" aria-label="Footnote ${footnoteIndex + 1}">${
@@ -125,7 +123,10 @@ export class ChatMessage extends HTMLElement {
    */
   addActivity = (message, type) => {
     let activityElement = document.createElement("p");
-    activityElement.classList.add("rb-activity__item", `rb-activity__item--${type}`);
+    activityElement.classList.add(
+      "rb-activity__item",
+      `rb-activity__item--${type}`
+    );
     activityElement.textContent = message;
     this.querySelector(".rb-activity")?.appendChild(activityElement);
   };
