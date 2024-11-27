@@ -106,7 +106,7 @@ class SignUpForm(forms.ModelForm):
             "consent_research": "I agree to take part in research (required)",
             "consent_interviews": "I agree to take part in interviews and group sessions (required)",
             "consent_feedback": "I agree for the i.AI to share my anonymised feedback with others (required)",
-            "consent_condfidentiality": "Confidential - I understand that the ideas, designs and services I see are confidential as part of the user testing of Ask AI. I will not tell anyone else about the ideas, designs or services until they are made public. I will not take away copies of any materials I use in the session. (required)",  # noqa: E501
+            "consent_condfidentiality": "Confidential - I understand that the ideas, designs and services I see are confidential as part of the user testing of Redbox. I will not tell anyone else about the ideas, designs or services until they are made public. I will not take away copies of any materials I use in the session. (required)",  # noqa: E501
             "consent_understand": "I understand my participation in this research (required)",
             "consent_agreement": "I give my informed, voluntary consent to take part in this research as per my selections above (required)",  # noqa: E501
         }
