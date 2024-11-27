@@ -1,7 +1,7 @@
 // @ts-check
 import { LitElement, html } from "lit";
 
-class ActivityButton extends LitElement {
+export class ActivityButton extends LitElement {
   static properties = {
     expanded: { type: Boolean, reflect: true },
   };
