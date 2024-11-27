@@ -5,7 +5,6 @@ from elasticsearch.helpers.vectorstore import BM25Strategy
 from langchain_community.vectorstores import OpenSearchVectorSearch
 from langchain_core.runnables import RunnableParallel
 from langchain_elasticsearch import ElasticsearchStore
-from opensearchpy import RequestError
 
 from redbox.chains.components import get_embeddings
 from redbox.chains.ingest import ingest_from_loader
@@ -69,11 +68,8 @@ def create_alias(alias: str):
 
     # es.options(ignore_status=[400]).indices.create(index=chunk_index_name)
     es.indices.create(index=chunk_index_name, ignore=400)  # ignore 400 error if index already exists
-    try:
+    if not es.indices.exists_alias(name=alias):
         es.indices.put_alias(index=chunk_index_name, name=alias)
-    except RequestError as e:
-        if e.status_code != 400:
-            raise e
 
 
 def _ingest_file(file_name: str, es_index_name: str = alias):

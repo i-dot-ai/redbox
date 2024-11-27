@@ -230,10 +230,9 @@ class Settings(BaseSettings):
             except Exception as e:
                 logger.error(f"Failed to create index {chunk_index}: {e}")
 
-            try:
-                client.indices.put_alias(index=chunk_index, name=f"{self.elastic_root_index}-chunk-current")
-            except Exception as e:
-                logger.error(f"Failed to set alias {self.elastic_root_index}-chunk-current: {e}")
+            alias = f"{self.elastic_root_index}-chunk-current"
+            if not client.indices.exists_alias(name=alias):
+                client.indices.put_alias(index=chunk_index, name=alias)
 
         return client
 
