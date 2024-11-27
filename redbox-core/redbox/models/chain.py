@@ -2,7 +2,15 @@ from datetime import UTC, datetime
 from enum import StrEnum
 from functools import reduce
 from types import UnionType
-from typing import Annotated, Literal, NotRequired, Required, TypedDict, get_args, get_origin
+from typing import (
+    Annotated,
+    Literal,
+    NotRequired,
+    Required,
+    TypedDict,
+    get_args,
+    get_origin,
+)
 from uuid import UUID, uuid4
 
 from langchain_core.documents import Document
@@ -78,6 +86,10 @@ class AISettings(BaseModel):
 
     # this is also the azure_openai_model
     chat_backend: ChatLLMBackend = ChatLLMBackend()
+
+    # settings for tool call
+    tool_govuk_retrieved_results: int = 100
+    tool_govuk_returned_results: int = 5
 
 
 DocumentMapping = dict[UUID, Document | None]

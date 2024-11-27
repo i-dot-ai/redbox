@@ -36,7 +36,14 @@ const sendMessage = async (page) => {
   await page.getByRole("button", { name: "Send" }).click();
 };
 
+const uploadDocument = async (page) => {
+  await page.goto("/upload");
+  await page.setInputFiles('input[type="file"]', "./test-upload.html");
+  await page.click('button[type="submit"]');
+};
+
 module.exports = {
   signIn,
   sendMessage,
+  uploadDocument,
 };

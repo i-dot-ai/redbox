@@ -125,7 +125,7 @@ TEST_CASES = [
                     tokens_in_all_docs=140_000,
                     llm_responses=SELF_ROUTE_TO_CHAT + ["Map Step Response"] * 2 + ["Testing Response 1"],
                     expected_route=ChatRoute.chat_with_docs_map_reduce,
-                    expected_activity_events=assert_number_of_events(3),
+                    expected_activity_events=assert_number_of_events(2),
                 ),
                 RedboxTestData(
                     number_of_docs=4,
@@ -135,7 +135,7 @@ TEST_CASES = [
                     + ["Merge Per Document Response"] * 2
                     + ["Testing Response 1"],
                     expected_route=ChatRoute.chat_with_docs_map_reduce,
-                    expected_activity_events=assert_number_of_events(3),
+                    expected_activity_events=assert_number_of_events(2),
                 ),
             ],
             test_id="Chat with multiple docs - with self route",
@@ -209,7 +209,7 @@ TEST_CASES = [
                     + ["Merge Per Document Response"]
                     + ["Testing Response 1"],
                     expected_route=ChatRoute.chat_with_docs_map_reduce,
-                    expected_activity_events=assert_number_of_events(3),
+                    expected_activity_events=assert_number_of_events(2),
                 ),
             ],
             test_id="Chat with large doc - with self route",
@@ -230,7 +230,7 @@ TEST_CASES = [
                     chunk_resolution=ChunkResolution.normal,
                     llm_responses=SELF_ROUTE_TO_SEARCH,  # + ["Condense Question", "Testing Response 1"],
                     expected_route=ChatRoute.search,
-                    expected_activity_events=assert_number_of_events(2),
+                    expected_activity_events=assert_number_of_events(1),
                 ),
             ],
             test_id="Self Route Search large doc",

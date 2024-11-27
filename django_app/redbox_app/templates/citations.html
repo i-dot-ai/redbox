@@ -7,9 +7,12 @@
 <div class="govuk-width-container">
 
   <div class="govuk-grid-row">
-    <div class="govuk-grid-column-one-third">
-      <h1 class="govuk-heading-l govuk-!-margin-bottom-0">Citations</h1>
-      <a class="govuk-breadcrumbs__link govuk-!-display-block govuk-!-margin-top-3" href="{{url('chats', message.chat.id)}}">Back to chat</a>
+    <div class="govuk-grid-column-two-thirds">
+      <a class="rb-back-link govuk-!-display-block" href="{{url('chats', message.chat.id)}}">	
+        &lt; <span class="govuk-breadcrumbs__link">Back to chat</span>
+      </a>
+      <h1 class="govuk-heading-l govuk-!-margin-bottom-0 govuk-!-margin-top-5">Citing the response</h1>
+      <p class="govuk-body govuk-!-margin-top-3">Shows the response along with relevant sections from the original source</p>
     </div>
   </div>
 

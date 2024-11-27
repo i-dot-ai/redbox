@@ -36,40 +36,46 @@ export class ChatMessage extends HTMLElement {
   connectedCallback() {
     const uuid = crypto.randomUUID();
     this.innerHTML = `
-            <div class="iai-chat-bubble govuk-body {{ classes }}" data-role="${
-              this.dataset.role
-            }" tabindex="-1">
-                <div class="iai-chat-bubble__header">
-                    <div class="iai-chat-bubble__role">${
-                      this.dataset.role === "ai" ? "Redbox" : "You"
-                    }</div>
-                </div>
-                <markdown-converter class="iai-chat-bubble__text">${
-                  this.dataset.text || ""
-                }</markdown-converter>
-                ${
-                  !this.dataset.text
-                    ? `
-                      <loading-message data-aria-label="Loading message"></loading-message>
-                      <div class="rb-loading-complete govuk-visually-hidden" aria-live="assertive"></div>
-                    `
-                    : ""
-                }
-                <sources-list data-id="${uuid}"></sources-list>
-                <div class="govuk-notification-banner govuk-notification-banner--error govuk-!-margin-bottom-3 govuk-!-margin-top-3" role="alert" aria-labelledby="notification-title-${uuid}" data-module="govuk-notification-banner" hidden>
-                    <div class="govuk-notification-banner__header">
-                        <h3 class="govuk-notification-banner__title" id="notification-title-${uuid}">Error</h3>
-                    </div>
-                    <div class="govuk-notification-banner__content">
-                        <p class="govuk-notification-banner__heading"></p>
-                    </div>
-                </div>
-            </div>
-        `;
+      <div class="rb-activity">
+        <activity-button class="rb-activity__btn"></activity-button>
+      </div>
+      <div class="iai-chat-bubble govuk-body {{ classes }}" data-role="${
+        this.dataset.role
+      }" tabindex="-1">
+          <div class="iai-chat-bubble__header">
+              <div class="iai-chat-bubble__role">${
+                this.dataset.role === "ai" ? "Redbox" : "You"
+              }</div>
+          </div>
+          <markdown-converter class="iai-chat-bubble__text">${
+            this.dataset.text || ""
+          }</markdown-converter>
+          ${
+            !this.dataset.text
+              ? `
+                <loading-message data-aria-label="Loading message"></loading-message>
+                <div class="rb-loading-complete govuk-visually-hidden" aria-live="assertive"></div>
+              `
+              : ""
+          }
+          <sources-list data-id="${uuid}"></sources-list>
+          <div class="govuk-notification-banner govuk-notification-banner--error govuk-!-margin-bottom-3 govuk-!-margin-top-3" role="alert" aria-labelledby="notification-title-${uuid}" data-module="govuk-notification-banner" hidden>
+              <div class="govuk-notification-banner__header">
+                  <h3 class="govuk-notification-banner__title" id="notification-title-${uuid}">Error</h3>
+              </div>
+              <div class="govuk-notification-banner__content">
+                  <p class="govuk-notification-banner__heading"></p>
+              </div>
+          </div>
+      </div>
+  `;
 
     // Add feedback buttons
     if (this.dataset.role === "ai") {
-      this.feedbackButtons = /** @type {import("./feedback-buttons").FeedbackButtons} */(document.createElement("feedback-buttons"));
+      this.feedbackButtons =
+        /** @type {import("./feedback-buttons").FeedbackButtons} */ (
+          document.createElement("feedback-buttons")
+        );
       this.parentElement?.appendChild(this.feedbackButtons);
     }
 
@@ -97,14 +103,10 @@ export class ChatMessage extends HTMLElement {
       if (!matchingText || !this.responseContainer) {
         return;
       }
-      /*
-      this.responseContainer?.update(
-        content.replace(matchingText, `${matchingText}<a href="#${footnote.id}" aria-label="Footnote ${footnoteIndex + 1}">[${footnoteIndex + 1}]</a>`)
-      );
-      */
+
       this.responseContainer.innerHTML =
         this.responseContainer.innerHTML.replace(
-          matchingText,
+          new RegExp(matchingText, "i"),
           `${matchingText}<a class="rb-footnote-link" href="#${
             footnote.id
           }" aria-label="Footnote ${footnoteIndex + 1}">${
@@ -121,9 +123,12 @@ export class ChatMessage extends HTMLElement {
    */
   addActivity = (message, type) => {
     let activityElement = document.createElement("p");
-    activityElement.classList.add("rb-activity", `rb-activity--${type}`);
+    activityElement.classList.add(
+      "rb-activity__item",
+      `rb-activity__item--${type}`
+    );
     activityElement.textContent = message;
-    this.insertBefore(activityElement, this.querySelector(".iai-chat-bubble"));
+    this.querySelector(".rb-activity")?.appendChild(activityElement);
   };
 
   /**

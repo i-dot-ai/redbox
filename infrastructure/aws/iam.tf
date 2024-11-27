@@ -15,6 +15,20 @@ data "aws_iam_policy_document" "ecs_exec_role_policy" {
     ]
   }
 
+  statement {
+    effect = "Allow"
+    actions = [
+      "aoss:List*",
+      "aoss:Get*",
+      "aoss:Create*",
+      "aoss:APIAccessAll",
+      "aoss:Batch*"
+    ]
+    resources = [
+      "*"
+    ]
+  }
+
   # checkov:skip=CKV_AWS_111:Allow for write access without constraints
   # checkov:skip=CKV_AWS_356:Allow for policies to not have resource limits
   statement {

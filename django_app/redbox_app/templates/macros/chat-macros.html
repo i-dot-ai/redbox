@@ -36,9 +36,12 @@
 {% set role_text = "You" %}
 {% endif %}
 
-{% for activity in message.activityevent_set.all() %}
-  <p class="rb-activity rb-activity--{{ message.role }}">{{ activity }}</p>
-{% endfor %}
+<div class="rb-activity">
+  <activity-button class="rb-activity__btn"></activity-button>
+  {% for activity in message.activityevent_set.all() %}
+    <p class="rb-activity__item rb-activity__item--{{ message.role }}">{{ activity }}</p>
+  {% endfor %}
+</div>
 
 <div
   class="iai-chat-bubble govuk-body {{ classes }}"

@@ -194,7 +194,7 @@ def test_wikipedia_tool():
 @pytest.mark.xfail(reason="calls openai")
 def test_gov_filter_AI(is_filter, relevant_return, query, keyword):
     def run_tool(is_filter):
-        tool = build_govuk_search_tool(num_results=1, filter=is_filter)
+        tool = build_govuk_search_tool(filter=is_filter)
         state_update = tool.invoke(
             {
                 "query": query,
@@ -216,3 +216,42 @@ def test_gov_filter_AI(is_filter, relevant_return, query, keyword):
     # call gov tool without additional filter
     documents = run_tool(is_filter)
     assert any(keyword in document.page_content for document in documents) == relevant_return
+
+
+@pytest.mark.vcr
+@pytest.mark.xfail(reason="calls openai")
+def test_gov_tool_params():
+    query = "driving in the UK"
+    tool = build_govuk_search_tool(filter=True)
+    ai_setting = AISettings()
+
+    tool_node = ToolNode(tools=[tool])
+    response = tool_node.invoke(
+        {
+            "request": RedboxQuery(
+                question=query,
+                s3_keys=[],
+                user_uuid=uuid4(),
+                chat_history=[],
+                ai_settings=ai_setting,
+                permitted_s3_keys=[],
+            ),
+            "messages": [
+                AIMessage(
+                    content="",
+                    tool_calls=[
+                        {
+                            "name": "_search_govuk",
+                            "args": {"query": query},
+                            "id": "1",
+                        }
+                    ],
+                )
+            ],
+        }
+    )
+
+    documents = response["messages"][-1].artifact
+
+    # call gov tool without additional filter
+    assert len(documents) == ai_setting.tool_govuk_returned_results

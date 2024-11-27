@@ -1,19 +1,16 @@
 import itertools
+from typing import Iterable
 from uuid import NAMESPACE_DNS, UUID, uuid5
 
 from numpy import isin
 import tiktoken
 from langchain_core.callbacks.manager import dispatch_custom_event
 from langchain_core.documents import Document
-from langchain_core.messages import BaseMessage, AIMessage
+from langchain_core.messages import AIMessage
 from langchain_core.runnables import RunnableLambda
 
-from redbox.models.chain import DocumentState, LLMCallMetadata, RedboxState, RequestMetadata
+from redbox.models.chain import DocumentState, LLMCallMetadata, RedboxState, RequestMetadata, DocumentMapping
 from redbox.models.graph import RedboxEventType
-
-
-def format_agent_messages(messages: list[BaseMessage]):
-    return "\n".join()
 
 
 # This should be unnecessary and indicates we're not chunking correctly
@@ -44,6 +41,18 @@ def combine_documents(a: Document, b: Document):
     return Document(page_content=combined_content, metadata=combined_metadata)
 
 
+def to_document_mapping(docs: list[Document]) -> DocumentMapping:
+    return {doc.metadata["uuid"]: doc for doc in docs}
+
+
+def group_documents(docs: Iterable[Document]) -> dict[str, list[Document]]:
+    def get_uri(d):
+        return d.metadata["uri"]
+
+    grouped_docs = itertools.groupby(sorted(docs, key=get_uri), key=get_uri)
+    return {key: list(values) for key, values in grouped_docs}
+
+
 def structure_documents_by_file_name(docs: list[Document]) -> DocumentState:
     """Structures a list of documents by a group_uuid and document_uuid.
 
@@ -53,19 +62,9 @@ def structure_documents_by_file_name(docs: list[Document]) -> DocumentState:
     """
     result = DocumentState()
 
-    # Group file_name to UUID lookup
-    group_file_lookup = {}
-    for d in docs:
-        file_name = d.metadata["uri"]
-        if file_name not in group_file_lookup:
-            group_file_lookup[file_name] = uuid5(NAMESPACE_DNS, file_name)
+    grouped_docs = group_documents(docs)
 
-    # Group documents by their file_name's UUID
-    for d in docs:
-        group_uuid = group_file_lookup.get(d.metadata["uri"])
-        doc_dict = {d.metadata["uuid"]: d}
-
-        result.groups[group_uuid] = (result.groups.get(group_uuid) or doc_dict) | doc_dict
+    result.groups = {uuid5(NAMESPACE_DNS, uri): to_document_mapping(d) for uri, d in grouped_docs.items()}
 
     return result
 
@@ -94,7 +93,36 @@ def documents_are_consecutive(first: Document, second: Document) -> bool:
     if first.metadata["uri"] != second.metadata["uri"]:
         return False
 
-    return first.metadata["index"] + 1 == second.metadata["index"]
+    return abs(first.metadata["index"] - second.metadata["index"]) <= 1
+
+
+def group_and_sort_documents(group: list[Document]) -> list[list[Document]]:
+    """Breaks a group into blocks of ordered consecutive indices.
+
+    The group is intended to be a single file_name.
+    """
+    if not group:
+        return []
+
+    # Process consecutive blocks and sort them by index
+    consecutive_blocks = []
+    temp_block = [group[0]]
+
+    for doc in group[1:]:
+        if documents_are_consecutive(temp_block[-1], doc):
+            temp_block.append(doc)
+        else:
+            # Append the current block
+            consecutive_blocks.append(temp_block)
+            temp_block = [doc]
+
+    # Append the last block
+    consecutive_blocks.append(temp_block)
+
+    # Sort each block by index
+    sorted_blocks = [sorted(block, key=lambda d: d.metadata["index"]) for block in consecutive_blocks]
+
+    return sorted_blocks
 
 
 def structure_documents_by_group_and_indices(docs: list[Document]) -> DocumentState:
@@ -108,20 +136,8 @@ def structure_documents_by_group_and_indices(docs: list[Document]) -> DocumentSt
     The document_uuid is taken from the Document metadata directly.
     """
     result = DocumentState()
-    if not docs:
-        return result
 
-    groups = []
-    current_group = [docs[0]]
-    for last_doc, this_doc in zip(docs[:-1], docs[1:]):
-        if documents_are_consecutive(last_doc, this_doc):
-            current_group.append(this_doc)
-        else:
-            groups.append(current_group)
-            current_group = [this_doc]
-
-    # Handle the last group
-    groups.append(current_group)
+    groups = group_and_sort_documents(docs)
 
     result.groups = {
         create_group_uuid_for_group(group): {doc.metadata["uuid"]: doc for doc in group} for group in groups
@@ -200,12 +216,8 @@ def merge_documents(initial: list[Document], adjacent: list[Document]) -> list[D
 
     Privileges the initial score.
     """
-    merged_dict = {d.metadata["uuid"]: d for d in initial}
-
     # Keep initial scores
-    for d in adjacent:
-        if d.metadata["uuid"] not in merged_dict:
-            merged_dict[d.metadata["uuid"]] = d
+    merged_dict = to_document_mapping(adjacent) | to_document_mapping(initial)
 
     return sorted(list(merged_dict.values()), key=lambda d: -d.metadata["score"])[: len(initial)]
 
@@ -235,55 +247,21 @@ def sort_documents(documents: list[Document]) -> list[Document]:
     3.8, foo.txt, 24
     """
 
-    def is_consecutive(a: Document, b: Document) -> bool:
-        """True if two documents have consecutive indices."""
-        within_one = abs(a.metadata["index"] - b.metadata["index"]) <= 1
-        return a.metadata["uri"] == b.metadata["uri"] and within_one
-
     def max_score(group: list[Document]) -> float:
         """Returns the maximum score in a group of documents."""
         return max(d.metadata["score"] for d in group)
 
-    def process_group(group: list[Document]) -> list[list[Document]]:
-        """Breaks a group into blocks of ordered consecutive indices.
+    # Group and sort docs by file_name and handle consecutive indices
+    grouped_by_file = group_documents(documents)
 
-        The group is intended to be a single file_name.
-        """
-        # Process consecutive blocks and sort them by index
-        consecutive_blocks = []
-        temp_block = [group[0]]
+    # Step 1: group & sort each group
+    document_blocks = [group_and_sort_documents(docs) for docs in grouped_by_file.values()]
 
-        for doc in group[1:]:
-            if is_consecutive(temp_block[-1], doc):
-                temp_block.append(doc)
-            else:
-                # Append the current block
-                consecutive_blocks.append(temp_block)
-                temp_block = [doc]
-
-        # Append the last block
-        consecutive_blocks.append(temp_block)
-
-        # Sort each block by index
-        sorted_blocks = [sorted(block, key=lambda d: d.metadata["index"]) for block in consecutive_blocks]
-
-        return sorted_blocks
-
-    # Step 1: Sort by file_name and then index to prepare for grouping consecutive documents
-    documents_sorted = sorted(documents, key=lambda d: (d.metadata["uri"], d.metadata["index"]))
-
-    # Step 2: Group by file_name and handle consecutive indices
-    grouped_by_file = itertools.groupby(documents_sorted, key=lambda d: d.metadata["uri"])
-
-    # Process each group
-    all_sorted_blocks = []
-    for _, group in grouped_by_file:
-        group = list(group)  # Convert the iterator to a list
-        sorted_blocks = process_group(group)
-        all_sorted_blocks.extend(sorted_blocks)
+    # Step 2: flatten blocks into a single list of docs
+    all_sorted_blocks = itertools.chain(*document_blocks)
 
     # Step 3: Sort the blocks by the maximum score within each block
-    all_sorted_blocks_by_max_score = sorted(all_sorted_blocks, key=lambda block: -max_score(block))
+    all_sorted_blocks_by_max_score = sorted(all_sorted_blocks, key=max_score, reverse=True)
 
     # Step 4: Flatten the list of blocks back into a single list
     return list(itertools.chain.from_iterable(all_sorted_blocks_by_max_score))

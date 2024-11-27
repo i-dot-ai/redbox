@@ -12,7 +12,12 @@ from redbox.chains.components import (
     get_parameterised_retriever,
 )
 from redbox.graph.nodes.tools import build_govuk_search_tool, build_search_documents_tool, build_search_wikipedia_tool
-from redbox.graph.root import get_agentic_search_graph, get_chat_with_documents_graph, get_root_graph
+from redbox.graph.root import (
+    get_agentic_search_graph,
+    get_chat_with_documents_graph,
+    get_root_graph,
+    get_chat_with_documents_large_graph,
+)
 from redbox.models.chain import RedboxState
 from redbox.models.chat import ChatRoute
 from redbox.models.file import ChunkResolution
@@ -146,6 +151,8 @@ class Redbox:
             graph = get_agentic_search_graph(self.tools).get_graph()
         elif graph_to_draw == "chat/documents":
             graph = get_chat_with_documents_graph(self.all_chunks_retriever, self.parameterised_retriever).get_graph()
+        elif graph_to_draw == "chat/documents/large":
+            graph = get_chat_with_documents_large_graph().get_graph()
         else:
             raise Exception("Invalid graph_to_draw")
 

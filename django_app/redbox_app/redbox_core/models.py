@@ -745,6 +745,14 @@ class Citation(UUIDPrimaryKeyBase, TimeStampedModel):
         USER_UPLOADED_DOCUMENT = "UserUploadedDocument", _("user uploaded document")
         GOV_UK = "GOV.UK", _("gov.uk")
 
+        @classmethod
+        def try_parse(cls, value):
+            try:
+                return cls(value)
+            except ValueError:
+                logger.warning("failed to parse %s to Origin", value)
+                return None
+
     file = models.ForeignKey(
         File,
         on_delete=models.CASCADE,
@@ -766,6 +774,8 @@ class Citation(UUIDPrimaryKeyBase, TimeStampedModel):
         choices=Origin,
         help_text="source of citation",
         default=Origin.USER_UPLOADED_DOCUMENT,
+        null=True,
+        blank=True,
     )
     text_in_answer = models.TextField(
         null=True,
