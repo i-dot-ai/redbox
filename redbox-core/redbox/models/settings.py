@@ -40,7 +40,15 @@ class OpenSearchSettings(BaseModel):
     @computed_field
     @property
     def port(self) -> int:
-        return urlparse(self.collection_endpoint).port or 443
+        return urlparse(self.collection_endpoint).port
+
+    @computed_field
+    @property
+    def opensearch_url(self) -> str:
+        url = urlparse(self.collection_endpoint)
+        if url.port is not None:
+            return f"{self.host}:{self.port}"
+        return self.host
 
 
 class ElasticLocalSettings(BaseModel):
