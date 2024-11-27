@@ -7,6 +7,7 @@ export class ActivityButton extends LitElement {
   };
 
   createRenderRoot() {
+    this.innerHTML = ""; // clear the SSR content
     return this;
   }
 
