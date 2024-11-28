@@ -15,7 +15,8 @@ from django.db import models
 from django.db.models import Max, Min, Prefetch, UniqueConstraint
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
-from django_use_email_as_username.models import BaseUser, BaseUserManager
+# from django_use_email_as_username.models import BaseUser, BaseUserManager
+from django.contrib.auth.models import AbstractBaseUser, Group, PermissionsMixin
 from yarl import URL
 
 from redbox.models.settings import get_settings
@@ -185,17 +186,16 @@ class AISettings(UUIDPrimaryKeyBase, TimeStampedModel, AbstractAISettings):
 
 class SSOUserManager(BaseSSOUserManager):
     use_in_migrations = True
-
     def _create_user(self, username, password, **extra_fields):
         """Create and save a User with the given email and password."""
         if not username:
-            msg = "The given email must be set."
-            raise ValueError(msg)
-        user = self.model(email=username, **extra_fields)
-        user.set_password(password)
-        user.save(using=self._db)
+            raise ValueError("The given email must be set")
+        # email = self.normalize_email(email)
+        User = self.model(email=username, **extra_fields)
+        User.set_password(password)
+        User.save(using=self._db)
         return User
-
+    
     def create_user(self, username, password=None, **extra_fields):
         """Create and save a regular User with the given email and password."""
         extra_fields.setdefault("is_staff", False)
@@ -208,16 +208,14 @@ class SSOUserManager(BaseSSOUserManager):
         extra_fields.setdefault("is_superuser", True)
 
         if extra_fields.get("is_staff") is not True:
-            msg = "Superuser must have is_staff=True."
-            raise ValueError(msg)
+            raise ValueError("Superuser must have is_staff=True.")
         if extra_fields.get("is_superuser") is not True:
-            msg = "Superuser must have is_superuser=True."
-            raise ValueError(msg)
+            raise ValueError("Superuser must have is_superuser=True.")
 
         return self._create_user(username, password, **extra_fields)
 
 
-class User(BaseUser, UUIDPrimaryKeyBase):
+class User(AbstractBaseUser, PermissionsMixin, UUIDPrimaryKeyBase):
     class UserGrade(models.TextChoices):
         AA = "AA", _("AA")
         AO = "AO", _("AO")
@@ -435,11 +433,17 @@ class User(BaseUser, UUIDPrimaryKeyBase):
         MORE_THAN_2_DAYS = "More than 2 days", _("More than 2 days")
         MORE_THAN_1_WEEK = "More than a week", _("More than a week")
 
-    username = None
+    username = models.EmailField(unique=True, default="default@default.com")
+    email = models.EmailField(unique=True)
     password = models.CharField("password", max_length=128, blank=True, null=True)
+    first_name = models.CharField(max_length=48)
+    last_name = models.CharField(max_length=48)
     business_unit = models.CharField(null=True, blank=True, max_length=64, choices=BusinessUnit)
     grade = models.CharField(null=True, blank=True, max_length=3, choices=UserGrade)
     name = models.CharField(null=True, blank=True)
+    is_staff = models.BooleanField(default=False)
+    is_active = models.BooleanField(default=True)
+    is_superuser = models.BooleanField(default=False)
     ai_experience = models.CharField(null=True, blank=True, max_length=25, choices=AIExperienceLevel)
     profession = models.CharField(null=True, blank=True, max_length=4, choices=Profession)
     info_about_user = models.CharField(null=True, blank=True, help_text="user entered info from profile overlay")
@@ -506,7 +510,21 @@ class User(BaseUser, UUIDPrimaryKeyBase):
     consent_understand = models.BooleanField(null=True, blank=True, default=False)
     consent_agreement = models.BooleanField(null=True, blank=True, default=False)
 
-    objects = BaseUserManager()
+    user_permissions = models.ManyToManyField(
+        "auth.Permission",
+        verbose_name="user permissions",
+        blank=True,
+        related_name="sso_user_set",
+    )
+    groups = models.ManyToManyField(
+        Group, verbose_name="groups", blank=True, related_name="sso_user_set"
+    )
+
+    USERNAME_FIELD = 'username'
+
+    REQUIRED_FIELDS = []
+
+    objects = SSOUserManager()
 
     def __str__(self) -> str:  # pragma: no cover
         return f"{self.email}"

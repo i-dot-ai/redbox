@@ -45,6 +45,7 @@ pandas = "^2.2.2"
 django-waffle = "^4.1.0"
 opensearch-py = "^2.7.1"
 scikit-learn = "^1.5.2"
+django-staff-sso-client = "^4.3.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3.2"

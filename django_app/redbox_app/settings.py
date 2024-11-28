@@ -1,6 +1,7 @@
 # mypy: ignore-errors
 import logging
 import os
+import json
 import socket
 from pathlib import Path
 from urllib.parse import urlparse
@@ -161,6 +162,7 @@ AUTH_USER_MODEL = "redbox_core.User"
 ACCOUNT_EMAIL_VERIFICATION = "none"
 
 if LOGIN_METHOD == "sso":
+    # os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1' #TO REMOVE
     AUTHBROKER_URL = env.str("AUTHBROKER_URL")
     AUTHBROKER_CLIENT_ID = env.str("AUTHBROKER_CLIENT_ID")
     AUTHBROKER_CLIENT_SECRET = env.str("AUTHBROKER_CLIENT_SECRET")
@@ -302,16 +304,31 @@ if not ENVIRONMENT.is_local:
         )
 SENTRY_REPORT_TO_ENDPOINT = URL(env.str("SENTRY_REPORT_TO_ENDPOINT", "")) or None
 
-DATABASES = {
+database_credentials = os.getenv('DATABASE_CREDENTIALS')
+if database_credentials:
+    credentials_dict = json.loads(database_credentials)
+    DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
         "NAME": env.str("POSTGRES_DB"),
-        "USER": env.str("POSTGRES_USER"),
-        "PASSWORD": env.str("POSTGRES_PASSWORD"),
-        "HOST": env.str("POSTGRES_HOST"),
+        "USER": credentials_dict.get("username"),
+        "PASSWORD": credentials_dict.get("password"),
+        "HOST": credentials_dict.get("host"),
         "PORT": "5432",
+        }
     }
-}
+
+else:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": env.str("POSTGRES_DB"),
+            "USER": env.str("POSTGRES_USER"),
+            "PASSWORD": env.str("POSTGRES_PASSWORD"),
+            "HOST": env.str("POSTGRES_HOST"),
+            "PORT": "5432",
+        }
+    }
 
 LOG_LEVEL = env.str("DJANGO_LOG_LEVEL", "WARNING")
 LOGGING = {
@@ -392,3 +409,4 @@ UNSTRUCTURED_HOST = env.str("UNSTRUCTURED_HOST")
 
 GOOGLE_ANALYTICS_TAG = env.str("GOOGLE_ANALYTICS_TAG", " ")
 GOOGLE_ANALYTICS_LINK = env.str("GOOGLE_ANALYTICS_LINK", " ")
+# TEST_SSO_PROVIDER_SET_RETURNED_ACCESS_TOKEN = 'someCode'

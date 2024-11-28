@@ -10,9 +10,9 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.AlterField(
-            model_name='citation',
-            name='text_in_answer',
-            field=models.TextField(blank=True, help_text='the part of the answer the citation refers too - useful for adding in footnotes', null=True),
-        ),
+        # migrations.AlterField(
+        #     model_name='citation',
+        #     name='text_in_answer',
+        #     field=models.TextField(blank=True, help_text='the part of the answer the citation refers too - useful for adding in footnotes', null=True),
+        # ),
     ]
