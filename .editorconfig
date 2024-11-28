@@ -18,6 +18,9 @@ end_of_line = lf
 insert_final_newline = true
 trim_trailing_whitespace = true
 
+[*.mjs]
+max_line_length = 999
+
 [*.py]
 indent_size = 4
 indent_style = space

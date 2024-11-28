@@ -5,6 +5,7 @@ import { unsafeHTML } from 'lit-html/directives/unsafe-html.js';
 // import components
 // TO DO: How can we import these automatically?
 import { ActivityButton } from '../django_app/frontend/src/js/web-components/chats/activity-button-lit.mjs';
+import { ActionButtons } from '../django_app/frontend/src/js/web-components/chats/action-buttons.mjs';
 
 const app = express();
 
