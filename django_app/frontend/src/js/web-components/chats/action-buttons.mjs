@@ -11,6 +11,7 @@ class BaseElement extends LitElement {
 
 export class ActionButtons extends BaseElement {
   static properties = {
+    messageId: { type: String, attribute: 'data-id' },
     showRating: { type: Boolean, state: true },
   };
 
@@ -32,14 +33,14 @@ export class ActionButtons extends BaseElement {
           </svg>
           <span>Copy</span>
         </button>
-        <button class="rb-action-buttons__button rb-action-buttons__button--rate" @click=${this.#rateResponse} type="button" aria-expanded=${this.showRating} aria-controls="rating-${this.dataset.id}">
+        <button class="rb-action-buttons__button rb-action-buttons__button--rate" @click=${this.#rateResponse} type="button" aria-expanded=${this.showRating} aria-controls="rating-${this.messageId}">
           <svg width="22" height="22" viewBox="0 0 25 25" fill="none" focusable="false" aria-hidden="true">
             <path d="M12.0172 1.68381C12.1639 1.21711 12.8244 1.21711 12.9711 1.68381L15.1648 8.66018C15.3613 9.28511 15.9406 9.71024 16.5957 9.71024H23.7624C24.2428 9.71024 24.4468 10.3217 24.0626 10.6101L18.2088 15.0049C17.7002 15.3867 17.4877 16.0477 17.6784 16.6544L19.901 23.7227C20.0468 24.1863 19.5124 24.5643 19.1238 24.2726L13.3947 19.9714C12.8612 19.5708 12.1271 19.5708 11.5936 19.9714L5.86446 24.2726C5.47585 24.5643 4.94152 24.1863 5.08728 23.7227L7.30983 16.6544C7.50059 16.0477 7.28806 15.3867 6.77949 15.0049L0.925668 10.6101C0.5415 10.3217 0.745481 9.71024 1.22586 9.71024H8.3926C9.0477 9.71024 9.62702 9.28511 9.82353 8.66017L12.0172 1.68381Z" fill="none" stroke="currentColor" />
           </svg>
           <span>Rate</span>
         </button>
       </div>
-      ${this.showRating ? html` <feedback-buttons data-id=${this.dataset.id}></feedback-buttons> ` : ""}
+      ${this.showRating ? html` <feedback-buttons data-id=${this.messageId}></feedback-buttons> ` : ""}
     `;
   }
 
