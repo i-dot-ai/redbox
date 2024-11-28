@@ -8,7 +8,7 @@ test(`Content can be copied to clipboard`, async ({ page }) => {
 
   await sendMessage(page);
 
-  await page.getByText("Copy to clipboard").click();
+  await page.locator(".rb-action-buttons__button--copy").click();
   const response = page.locator(".iai-chat-bubble__text").nth(1);
 
   const messageInput = page.locator(".iai-chat-input__input");

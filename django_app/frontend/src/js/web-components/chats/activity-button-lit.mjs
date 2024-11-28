@@ -1,15 +1,20 @@
 // @ts-check
 import { LitElement, html } from "lit";
 
-export class ActivityButton extends LitElement {
+
+class BaseElement extends LitElement {
+  // clear the SSR content and prevents Shadow DOM by default
+  createRenderRoot() {
+    this.innerHTML = "";
+    return this;
+  }
+}
+
+
+export class ActivityButton extends BaseElement {
   static properties = {
     expanded: { type: Boolean, reflect: true },
   };
-
-  createRenderRoot() {
-    this.innerHTML = ""; // clear the SSR content
-    return this;
-  }
 
   constructor() {
     super();

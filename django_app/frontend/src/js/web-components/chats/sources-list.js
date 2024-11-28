@@ -56,7 +56,6 @@ export class SourcesList extends HTMLElement {
     if (this.sources.length) {
       const html = `
         <div class="iai-chat-bubble__citations-button-container">
-          <copy-text></copy-text>
           <a class="iai-chat-bubble__button" href="/citations/${chatId}">
             <svg width="20" height="19" viewBox="0 0 20 19" fill="none" focusable="false" aria-hidden="true">
                 <path d="M1.5 9.62502C1.5 9.62502 4.59036 3.55359 10 3.55359C15.4084 3.55359 18.5 9.62502 18.5 9.62502C18.5 9.62502 15.4084 15.6964 10 15.6964C4.59036 15.6964 1.5 9.62502 1.5 9.62502Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -69,8 +68,6 @@ export class SourcesList extends HTMLElement {
       /** @type {HTMLElement} */ (
         this.querySelector(".iai-display-flex-from-desktop")
       ).innerHTML += html;
-    } else {
-      this.innerHTML = `<copy-text></copy-text>`;
     }
   };
 }
