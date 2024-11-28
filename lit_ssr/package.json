@@ -11,7 +11,9 @@
   "description": "",
   "dependencies": {
     "@lit-labs/ssr": "^3.2.2",
+    "dompurify": "^3.2.1",
     "express": "^4.21.1",
+    "jsdom": "^25.0.1",
     "lit-html": "^3.2.1"
   },
   "type": "module"

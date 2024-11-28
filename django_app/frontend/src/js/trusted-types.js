@@ -12,7 +12,6 @@ if (typeof window.trustedTypes !== "undefined") {
         CUSTOM_ELEMENT_HANDLING: {
           tagNameCheck: (tagName) =>
             tagName === "activity-button" ||
-            tagName === "copy-text" ||
             tagName === "feedback-buttons" ||
             tagName === "loading-message" ||
             tagName === "markdown-converter" ||
