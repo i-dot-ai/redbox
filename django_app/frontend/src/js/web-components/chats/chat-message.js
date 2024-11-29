@@ -68,7 +68,16 @@ export class ChatMessage extends HTMLElement {
               </div>
           </div>
       </div>
-  `;
+    `;
+
+    // Add feedback buttons
+    if (this.dataset.role === "ai") {
+      this.feedbackButtons =
+        /** @type {import("./feedback-buttons").FeedbackButtons} */ (
+          document.createElement("feedback-buttons")
+        );
+      this.parentElement?.appendChild(this.feedbackButtons);
+    }
 
     // ensure new chat-messages aren't hidden behind the chat-input
     this.programmaticScroll = true;
@@ -250,12 +259,15 @@ export class ChatMessage extends HTMLElement {
         this.addActivity(response.data, "ai");
       } else if (response.type === "end") {
         sourcesContainer.showCitations(response.data.message_id);
+        this.feedbackButtons?.showFeedback(response.data.message_id);
         this.#addFootnotes(streamedContent);
 
-        // Add action-buttons
+        // Add action-buttons - work stopped on this
+        /*
         let actionButtons = document.createElement("action-buttons");
         actionButtons.dataset.id = this.uuid;
         this.parentElement?.appendChild(actionButtons);
+        */
 
         const chatResponseEndEvent = new CustomEvent("chat-response-end", {
           detail: {
