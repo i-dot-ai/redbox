@@ -8,6 +8,7 @@ from urllib.parse import urlparse
 
 import environ
 import sentry_sdk
+from dbt_copilot_python.database import database_from_env
 from django.urls import reverse_lazy
 from dotenv import load_dotenv
 from import_export.formats.base_formats import CSV
@@ -306,17 +307,8 @@ SENTRY_REPORT_TO_ENDPOINT = URL(env.str("SENTRY_REPORT_TO_ENDPOINT", "")) or Non
 
 database_credentials = os.getenv('DATABASE_CREDENTIALS')
 if database_credentials:
-    credentials_dict = json.loads(database_credentials)
-    DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": env.str("POSTGRES_DB"),
-        "USER": credentials_dict.get("username"),
-        "PASSWORD": credentials_dict.get("password"),
-        "HOST": credentials_dict.get("host"),
-        "PORT": "5432",
-        }
-    }
+    DATABASES = database_from_env("DATABASE_CREDENTIALS")
+    DATABASES["default"]["ENGINE"] = "django.db.backends.postgresql"
 
 else:
     DATABASES = {
