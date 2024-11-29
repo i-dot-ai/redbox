@@ -123,7 +123,7 @@ class UnstructuredChunkLoader:
         env: Settings,
         min_chunk_size: int,
         max_chunk_size: int,
-        metadata: dict,
+        metadata: GeneratedMetadata,
         overlap_chars: int = 0,
         overlap_all_chunks: bool = True,
     ):
