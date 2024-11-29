@@ -48,7 +48,11 @@
 
 <body class="govuk-template__body">
   <script hash="sha256-GUQ5ad8JK5KmEWmROf3LZd9ge94daqNvd8xy9YS1iDw=">document.body.className += ' js-enabled' + ('noModule' in HTMLScriptElement.prototype ? ' govuk-frontend-supported' : '');</script>
-
+  <script type="module" src="{{static('js/libs/govuk-frontend.min.js')}}" nonce="{{ request.csp_nonce }}"></script> 
+  <script hash="sha256-qmCu1kQifDfCnUd+L49nusp7+PeRl23639pzN5QF2WA=" type="module" nonce="{{ request.csp_nonce }}">
+    import { initAll } from '../static/js/libs/govuk-frontend.min.js'
+    initAll()
+  </script>
   <a href="#main-content" class="govuk-skip-link" data-module="govuk-skip-link">Skip to main content</a>
 
   {% if environment | lower != "prod" %}

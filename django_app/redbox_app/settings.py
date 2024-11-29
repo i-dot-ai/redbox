@@ -190,6 +190,7 @@ CSP_SCRIPT_SRC = (
     "plausible.io",
     "eu.i.posthog.com",
     "eu-assets.i.posthog.com",
+    "'sha256-qmCu1kQifDfCnUd+L49nusp7+PeRl23639pzN5QF2WA='",
 )
 CSP_OBJECT_SRC = ("'none'",)
 CSP_REQUIRE_TRUSTED_TYPES_FOR = ("'script'",)
