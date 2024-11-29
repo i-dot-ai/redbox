@@ -1,3 +1,5 @@
+from collections import OrderedDict
+import decimal
 import logging
 import re
 from typing import Literal
@@ -94,6 +96,22 @@ def documents_selected_conditional(state: RedboxState) -> bool:
 
 def multiple_docs_in_group_conditional(state: RedboxState) -> bool:
     return any(len(group) > 1 for group in state.documents.groups.values())
+
+
+def build_agentic_loop_decision(tool_to_node_path_map: OrderedDict[str, str], default_tools_path: str, no_tools_path: str):
+
+    def _decision(state: RedboxState):
+        all_called_tools = set(t.get("name") for t in state.last_message.tool_calls)
+        if len(all_called_tools) == 0:
+            return no_tools_path
+        for tool_name, path in tool_to_node_path_map.items():
+            if tool_name in all_called_tools:
+                return path
+        else:
+            return default_tools_path
+    return _decision
+
+
 
 
 def build_strings_end_text_conditional(*strings: str) -> Runnable:

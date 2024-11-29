@@ -3,10 +3,12 @@ from langchain_core.vectorstores import VectorStoreRetriever
 from langgraph.graph import END, START, StateGraph
 from langgraph.graph.graph import CompiledGraph
 from langgraph.prebuilt import ToolNode
+from langchain_core.runnables import RunnableLambda, RunnablePassthrough
 
 from redbox.chains.components import get_structured_response_with_citations_parser
 from redbox.chains.runnables import build_self_route_output_parser
 from redbox.graph.edges import (
+    build_agentic_loop_decision,
     build_documents_bigger_than_context_conditional,
     build_keyword_detection_conditional,
     build_total_tokens_request_handler_conditional,
@@ -30,10 +32,11 @@ from redbox.graph.nodes.processes import (
     report_sources_process,
 )
 from redbox.graph.nodes.sends import build_document_chunk_send, build_document_group_send, build_tool_send
-from redbox.graph.nodes.tools import get_log_formatter_for_retrieval_tool
+from redbox.graph.nodes.tools import create_structured_output_tool, get_log_formatter_for_retrieval_tool
 from redbox.models.chain import RedboxState
 from redbox.models.chat import ChatRoute, ErrorRoute
 from redbox.models.graph import ROUTABLE_KEYWORDS, RedboxActivityEvent
+from redbox.models.responses import Citation, StructuredResponseWithCitations
 from redbox.transform import structure_documents_by_file_name, structure_documents_by_group_and_indices
 
 
@@ -150,14 +153,16 @@ def get_search_graph(
     return builder.compile(debug=debug)
 
 
-def get_agentic_search_graph(tools: dict[str, StructuredTool], debug: bool = False) -> CompiledGraph:
+
+    
+
+
+def get_agentic_search_graph(tools: list[StructuredTool], debug: bool = False) -> CompiledGraph:
     """Creates a subgraph for agentic RAG."""
 
-    citations_output_parser, format_instructions = get_structured_response_with_citations_parser()
+    structured_output_tool = create_structured_output_tool(StructuredResponseWithCitations, content_extractor=lambda r: r.answer)
     builder = StateGraph(RedboxState)
     # Tools
-    agent_tool_names = ["_search_documents", "_search_wikipedia", "_search_govuk"]
-    agent_tools: list[StructuredTool] = [tools[tool_name] for tool_name in agent_tool_names]
 
     # Processes
     builder.add_node("p_set_agentic_search_route", build_set_route_pattern(route=ChatRoute.gadget))
@@ -165,21 +170,25 @@ def get_agentic_search_graph(tools: dict[str, StructuredTool], debug: bool = Fal
         "p_search_agent",
         build_stuff_pattern(
             prompt_set=PromptSet.SearchAgentic,
-            tools=agent_tools,
-            output_parser=citations_output_parser,
-            format_instructions=format_instructions,
-            final_response_chain=False,  # Output parser handles streaming
+            tools=tools + [structured_output_tool],
+            tool_choice="any",
+            format_instructions=f"The answer must be provided using the {structured_output_tool.name} tool to use the correct format",
+            final_response_chain=False
         ),
     )
     builder.add_node(
         "p_retrieval_tools",
-        ToolNode(tools=agent_tools),
+        ToolNode(tools=tools),
     )
     builder.add_node(
         "p_give_up_agent",
         build_stuff_pattern(prompt_set=PromptSet.GiveUpAgentic, final_response_chain=True),
     )
     builder.add_node("p_report_sources", report_sources_process)
+    builder.add_node("p_create_answer", (
+        ToolNode(tools=[structured_output_tool]) 
+        | RunnablePassthrough.assign(citations=RunnableLambda(lambda d: d.get("messages")[-1].artifact.citations if d.get("messages")[-1].artifact else []))
+    ))
 
     # Log
     builder.add_node(
@@ -209,10 +218,18 @@ def get_agentic_search_graph(tools: dict[str, StructuredTool], debug: bool = Fal
             False: "p_search_agent",
         },
     )
-    builder.add_edge("p_search_agent", "s_tool")
-    builder.add_edge("s_tool", "p_report_sources")
+    builder.add_conditional_edges(
+        "p_search_agent",
+        build_agentic_loop_decision({structured_output_tool.name: "create_answer"}, "call_tools", "cannot_create_answer"),
+        {
+            "call_tools": "s_tool", 
+            "create_answer": "p_create_answer",
+            "cannot_create_answer": END
+        }
+    )
     builder.add_edge("p_search_agent", "p_activity_log_retrieval_tool_calls")
     builder.add_conditional_edges("s_tool", build_tool_send("p_retrieval_tools"), path_map=["p_retrieval_tools"])
+    builder.add_edge("p_create_answer", "p_report_sources")
     builder.add_edge("p_retrieval_tools", "d_x_steps_left_or_less")
     builder.add_edge("p_report_sources", END)
 
@@ -430,7 +447,7 @@ def get_root_graph(
     all_chunks_retriever: VectorStoreRetriever,
     parameterised_retriever: VectorStoreRetriever,
     metadata_retriever: VectorStoreRetriever,
-    tools: dict[str, StructuredTool],
+    tools: list[StructuredTool],
     debug: bool = False,
 ) -> CompiledGraph:
     """Creates the core Redbox graph."""

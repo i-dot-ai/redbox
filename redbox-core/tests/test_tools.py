@@ -89,7 +89,7 @@ def test_search_documents_tool(
                     content="",
                     tool_calls=[
                         {
-                            "name": "_search_documents",
+                            "name": "search_documents",
                             "args": {"query": stored_file_parameterised.query.question},
                             "id": "1",
                         }
@@ -132,7 +132,7 @@ def test_govuk_search_tool():
                     content="",
                     tool_calls=[
                         {
-                            "name": "_search_govuk",
+                            "name": "search_govuk",
                             "args": {"query": "Cuba Travel Advice"},
                             "id": "1",
                         }
@@ -165,7 +165,7 @@ def test_wikipedia_tool():
                     content="",
                     tool_calls=[
                         {
-                            "name": "_search_wikipedia",
+                            "name": "search_wikipedia",
                             "args": {"query": "What was the highest office held by Gordon Brown"},
                             "id": "1",
                         }

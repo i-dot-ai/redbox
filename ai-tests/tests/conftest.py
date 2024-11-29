@@ -7,6 +7,7 @@ from .cases import AITestCase
 
 TEST_CASES_FILE = Path("data/cases.csv")
 DOCUMENTS_DIR = Path("data/documents")
+OUTPUTS_DIR = Path("data/output")
 DOCUMENT_UPLOAD_USER = "ai_tests"
 
 logger = getLogger()

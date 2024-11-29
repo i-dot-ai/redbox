@@ -20,6 +20,7 @@ from langgraph.managed.is_last_step import RemainingStepsManager
 from pydantic import BaseModel, Field
 
 from redbox.models import prompts
+from redbox.models.responses import Citation
 from redbox.models.settings import ChatLLMBackend
 
 
@@ -89,27 +90,6 @@ class AISettings(BaseModel):
     # settings for tool call
     tool_govuk_retrieved_results: int = 100
     tool_govuk_returned_results: int = 5
-
-
-class Source(BaseModel):
-    source: str = Field(description="URL or reference to the source", default="")
-    source_type: str = Field(description="creator_type of tool", default="Unknown")
-    document_name: str = ""
-    highlighted_text_in_source: str = ""
-    page_numbers: list[int] = Field(description="Page Number in document the highlighted text is on", default=[1])
-
-
-class Citation(BaseModel):
-    text_in_answer: str = Field(
-        description="Part of text from `answer` that references sources and matches exactly with the `answer`, without rephrasing or altering the meaning. Partial matches are acceptable as long as they are exact excerpts from the `answer`",
-        default="",
-    )
-    sources: list[Source] = Field(default_factory=list)
-
-
-class StructuredResponseWithCitations(BaseModel):
-    answer: str = Field(description="Markdown structured answer to the query", default="")
-    citations: list[Citation] = Field(default_factory=list)
 
 
 DocumentMapping = dict[UUID, Document | None]

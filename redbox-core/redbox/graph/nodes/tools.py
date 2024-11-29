@@ -1,6 +1,7 @@
-from typing import Annotated, Iterable
+from typing import Annotated, Callable, Iterable
 
 import numpy as np
+from pydantic import BaseModel
 import requests
 import tiktoken
 from elasticsearch import Elasticsearch
@@ -8,7 +9,7 @@ from langchain_community.utilities import WikipediaAPIWrapper
 from langchain_core.documents import Document
 from langchain_core.embeddings.embeddings import Embeddings
 from langchain_core.messages import ToolCall
-from langchain_core.tools import Tool, tool
+from langchain_core.tools import Tool, tool, StructuredTool
 from langgraph.prebuilt import InjectedState
 from sklearn.metrics.pairwise import cosine_similarity
 
@@ -28,6 +29,22 @@ from redbox.transform import (
 )
 
 
+def create_structured_output_tool(schema_model: BaseModel, content_extractor: Callable):
+
+    def _create_output(*args, **kwargs):
+        obj = schema_model(*args, **kwargs)
+        return content_extractor(obj), obj
+
+    structured_answer_tool = StructuredTool(
+        name="AnswerProvider",
+        args_schema=schema_model,
+        response_format="content_and_artifact",
+        description="Answers the users query in the format they requested",
+        func=_create_output
+    )
+    return structured_answer_tool
+
+
 def build_search_documents_tool(
     es_client: Elasticsearch,
     index_name: str,
@@ -38,7 +55,7 @@ def build_search_documents_tool(
     """Constructs a tool that searches the index and sets state.documents."""
 
     @tool(response_format="content_and_artifact")
-    def _search_documents(query: str, state: Annotated[RedboxState, InjectedState]) -> tuple[str, list[Document]]:
+    def search_documents(query: str, state: Annotated[RedboxState, InjectedState]) -> tuple[str, list[Document]]:
         """
         Search for documents uploaded by the user based on a query string.
 
@@ -90,7 +107,7 @@ def build_search_documents_tool(
         # Return as state update
         return format_documents(sorted_documents), sorted_documents
 
-    return _search_documents
+    return search_documents
 
 
 def build_govuk_search_tool(filter=True) -> Tool:
@@ -111,7 +128,7 @@ def build_govuk_search_tool(filter=True) -> Tool:
         return response
 
     @tool(response_format="content_and_artifact")
-    def _search_govuk(query: str, state: Annotated[RedboxState, InjectedState]) -> tuple[str, list[Document]]:
+    def search_govuk(query: str, state: Annotated[RedboxState, InjectedState]) -> tuple[str, list[Document]]:
         """
         Search for documents on gov.uk based on a query string.
         This endpoint is used to search for documents on gov.uk. There are many types of documents on gov.uk.
@@ -172,7 +189,7 @@ def build_govuk_search_tool(filter=True) -> Tool:
 
         return format_documents(mapped_documents), mapped_documents
 
-    return _search_govuk
+    return search_govuk
 
 
 def build_search_wikipedia_tool(number_wikipedia_results=1, max_chars_per_wiki_page=12000) -> Tool:
@@ -184,7 +201,7 @@ def build_search_wikipedia_tool(number_wikipedia_results=1, max_chars_per_wiki_p
     tokeniser = tiktoken.encoding_for_model("gpt-4o")
 
     @tool(response_format="content_and_artifact")
-    def _search_wikipedia(query: str) -> tuple[str, list[Document]]:
+    def search_wikipedia(query: str) -> tuple[str, list[Document]]:
         """
         Search Wikipedia for information about the queried entity.
         Useful for when you need to answer general questions about people, places, objects, companies, facts, historical events, or other subjects.
@@ -213,15 +230,15 @@ def build_search_wikipedia_tool(number_wikipedia_results=1, max_chars_per_wiki_p
         docs = mapped_documents
         return format_documents(docs), docs
 
-    return _search_wikipedia
+    return search_wikipedia
 
 
 class BaseRetrievalToolLogFormatter:
     def __init__(self, t: ToolCall) -> None:
         self.tool_call = t
 
-    def log_call(self, tool_call: ToolCall):
-        return f"Used {tool_call["name"]} to get more information"
+    def log_call(self):
+        return f"Used {self.tool_call["name"]} to get more information"
 
     def log_result(self, documents: Iterable[Document]):
         if len(documents) == 0:
@@ -254,11 +271,13 @@ class SearchGovUKLogFormatter(BaseRetrievalToolLogFormatter):
 
 
 __RETRIEVEAL_TOOL_MESSAGE_FORMATTERS = {
-    "_search_wikipedia": SearchWikipediaLogFormatter,
-    "_search_documents": SearchDocumentsLogFormatter,
-    "_search_govuk": SearchGovUKLogFormatter,
+    "search_wikipedia": SearchWikipediaLogFormatter,
+    "search_documents": SearchDocumentsLogFormatter,
+    "search_govuk": SearchGovUKLogFormatter,
 }
 
 
 def get_log_formatter_for_retrieval_tool(t: ToolCall) -> BaseRetrievalToolLogFormatter:
     return __RETRIEVEAL_TOOL_MESSAGE_FORMATTERS.get(t["name"], BaseRetrievalToolLogFormatter)(t)
+
+

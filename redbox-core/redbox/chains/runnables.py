@@ -7,7 +7,7 @@ from langchain_core.callbacks.manager import (
     dispatch_custom_event,
 )
 from langchain_core.language_models import BaseChatModel
-from langchain_core.messages import AIMessage, AIMessageChunk, BaseMessage
+from langchain_core.messages import AIMessage, AIMessageChunk, BaseMessage, ToolMessage
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.outputs import ChatGeneration, ChatGenerationChunk, ChatResult
 from langchain_core.runnables import (
@@ -55,12 +55,12 @@ def build_chat_prompt_from_messages_runnable(
         log.debug("Setting chat prompt")
         # Set the system prompt to be our composed structure
         # We preserve the format instructions
-        system_prompt_message = f"""
-            {ai_settings.system_info_prompt}
-            {task_system_prompt}
-            {ai_settings.persona_info_prompt}
-            {ai_settings.caller_info_prompt}
-            """
+        system_prompt_message = (
+        f"{ai_settings.system_info_prompt}"
+        f"{task_system_prompt}"
+        f"{ai_settings.persona_info_prompt}"
+        f"{ai_settings.caller_info_prompt}"
+        )
         prompts_budget = len(_tokeniser.encode(task_system_prompt)) + len(_tokeniser.encode(task_question_prompt))
         chat_history_budget = ai_settings.context_window_size - ai_settings.llm_max_tokens - prompts_budget
 
@@ -88,8 +88,8 @@ def build_chat_prompt_from_messages_runnable(
             messages=(
                 [("system", system_prompt_message)]
                 + [(msg["role"], msg["text"]) for msg in truncated_history]
+                + [("user", task_question_prompt + "\n\n{format_instructions}")]
                 + [MessagesPlaceholder("messages")]
-                + [task_question_prompt + "\n\n{format_instructions}"]
             ),
             partial_variables={"format_instructions": format_instructions},
         ).invoke(prompt_template_context)
