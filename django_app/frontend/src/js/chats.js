@@ -1,5 +1,5 @@
 import "./web-components/chats/action-buttons.mjs";
-import "./web-components/chats/activity-button-lit.mjs";
+import "./web-components/chats/activity-button.mjs";
 import "./web-components/chats/chat-controller.js";
 import "./web-components/chats/chat-history.js";
 import "./web-components/chats/chat-history-item.js";
