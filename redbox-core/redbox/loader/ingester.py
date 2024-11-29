@@ -6,7 +6,8 @@ from langchain_elasticsearch.vectorstores import BM25Strategy, ElasticsearchStor
 
 from redbox.chains.components import get_embeddings
 from redbox.chains.ingest import ingest_from_loader
-from redbox.loader.loaders import MetadataLoader, UnstructuredChunkLoader
+from redbox.loader.loaders import UnstructuredChunkLoader
+from redbox.models.chain import GeneratedMetadata
 from redbox.models.settings import get_settings
 from redbox.models.file import ChunkResolution
 
@@ -65,8 +66,10 @@ def _ingest_file(file_name: str, es_index_name: str = alias):
         es.options(ignore_status=[400]).indices.create(index=es_index_name)
 
     # Extract metadata
-    metadata_loader = MetadataLoader(env=env, s3_client=env.s3_client(), file_name=file_name)
-    metadata = metadata_loader.extract_metadata()
+    # metadata_loader = MetadataLoader(env=env, s3_client=env.s3_client(), file_name=file_name)
+    # metadata = metadata_loader.extract_metadata()
+
+    metadata = GeneratedMetadata(name=file_name)
 
     chunk_ingest_chain = ingest_from_loader(
         loader=UnstructuredChunkLoader(
