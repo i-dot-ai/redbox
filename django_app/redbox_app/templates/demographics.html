@@ -64,6 +64,16 @@
       </div>
       #}
 
+      <div class="govuk-form-group">
+          <label class="govuk-label" for="llm-selector">Model</label>
+          <p>There is currently no clear definition on model differences. It is personal preference for the style of output of each model.</p>
+          <select id="llm-selector" name="llm" class="govuk-select govuk-!-margin-top-1">
+            {% for option in llm_options %}
+              <option value="{{ option.id }}" {% if option.selected %}selected{% endif %}>{{ option.name }}{% if option.default %} (default){% endif %}</option>
+            {% endfor %}
+          </select>
+        </div>
+
       <div class="govuk-button-group">
         {{ govukButton(text="Update") }}
         {# {{ govukButton(text="Skip", href=url('chats'), classes="govuk-button--secondary") }} #}

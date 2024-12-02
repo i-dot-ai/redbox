@@ -217,7 +217,7 @@ class SSOUserManager(BaseSSOUserManager):
         return self._create_user(username, password, **extra_fields)
 
 
-class User(BaseUser, UUIDPrimaryKeyBase):
+class User(BaseUser, UUIDPrimaryKeyBase, AbstractAISettings):
     class UserGrade(models.TextChoices):
         AA = "AA", _("AA")
         AO = "AO", _("AO")
@@ -506,6 +506,8 @@ class User(BaseUser, UUIDPrimaryKeyBase):
     consent_understand = models.BooleanField(null=True, blank=True, default=False)
     consent_agreement = models.BooleanField(null=True, blank=True, default=False)
 
+    model = models.CharField(null=True, blank=True, default="default", max_length=32, choices=ChatLLMBackend.Providers)
+
     objects = BaseUserManager()
 
     def __str__(self) -> str:  # pragma: no cover
@@ -513,6 +515,8 @@ class User(BaseUser, UUIDPrimaryKeyBase):
 
     def save(self, *args, **kwargs):
         self.email = self.email.lower()
+        if self.model is None:
+            self.model = self.user.ai_settings.chat_backend
         super().save(*args, **kwargs)
 
     def get_bearer_token(self) -> str:
@@ -685,7 +689,7 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
         )
 
 
-class Chat(UUIDPrimaryKeyBase, TimeStampedModel, AbstractAISettings):
+class Chat(UUIDPrimaryKeyBase, TimeStampedModel):
     name = models.TextField(max_length=1024, null=False, blank=False)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     archived = models.BooleanField(default=False, null=True, blank=True)
@@ -708,10 +712,6 @@ class Chat(UUIDPrimaryKeyBase, TimeStampedModel, AbstractAISettings):
     @override
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
         self.name = sanitise_string(self.name)
-
-        if self.chat_backend_id is None:
-            self.chat_backend = self.user.ai_settings.chat_backend
-
         if self.temperature is None:
             self.temperature = self.user.ai_settings.temperature
 

@@ -186,6 +186,9 @@ chat-history[data-initialised] .rb-chat-history__actions-button {
     padding-top: 6.5rem;
   }
   .rb-left-column-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
     left: 0;
     position: sticky;
     top: 4.5rem;
@@ -194,11 +197,12 @@ chat-history[data-initialised] .rb-chat-history__actions-button {
   body:has(.iai-environment-warning) .rb-left-column-container {
     top: 6.5rem;
   }
+  .rb-left-column-container .iai-panel {
+    flex-grow: 1;
+    height: 100% !important;
+  }
   .iai-panel__scrollable {
     max-height: calc(50vh - 12rem);
-  }
-  main:has(#llm-selector) .iai-panel__scrollable {
-    max-height: calc(50vh - 15rem);
   }
 }
 
