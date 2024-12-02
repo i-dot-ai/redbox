@@ -10,6 +10,7 @@ import environ
 import sentry_sdk
 from dbt_copilot_python.database import database_from_env
 from django.urls import reverse_lazy
+from django_log_formatter_asim import ASIMFormatter
 from dotenv import load_dotenv
 from import_export.formats.base_formats import CSV
 from sentry_sdk.integrations.django import DjangoIntegration
@@ -279,7 +280,7 @@ if ENVIRONMENT.is_test:
     ALLOWED_HOSTS = ENVIRONMENT.hosts
 else:
     LOCALHOST = socket.gethostbyname(socket.gethostname())
-    ALLOWED_HOSTS = ['*']
+    ALLOWED_HOSTS = ["*"]
 
 if not ENVIRONMENT.is_local:
 
@@ -306,7 +307,7 @@ if not ENVIRONMENT.is_local:
         )
 SENTRY_REPORT_TO_ENDPOINT = URL(env.str("SENTRY_REPORT_TO_ENDPOINT", "")) or None
 
-database_credentials = os.getenv('DATABASE_CREDENTIALS')
+database_credentials = os.getenv("DATABASE_CREDENTIALS")
 if database_credentials:
     DATABASES = database_from_env("DATABASE_CREDENTIALS")
     DATABASES["default"]["ENGINE"] = "django.db.backends.postgresql"
@@ -324,16 +325,22 @@ else:
     }
 
 LOG_LEVEL = env.str("DJANGO_LOG_LEVEL", "WARNING")
+LOG_FORMAT = env.str("DJANGO_LOG_FORMAT", "verbose")
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
-    "formatters": {"verbose": {"format": "%(asctime)s %(levelname)s %(module)s: %(message)s"}},
+    "formatters": {
+        "verbose": {"format": "%(asctime)s %(levelname)s %(module)s: %(message)s"},
+        "asim_formatter": {
+            "()": ASIMFormatter,
+        },
+    },
     "handlers": {
         "console": {
             "level": LOG_LEVEL,
             "class": "logging.StreamHandler",
-            "formatter": "verbose",
-        },
+            "formatter": LOG_FORMAT,
+        }
     },
     "root": {"handlers": ["console"], "level": LOG_LEVEL},
     "loggers": {
