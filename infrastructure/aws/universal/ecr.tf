@@ -1,6 +1,7 @@
 locals {
   repos = [
     "django-app",
+    "lit-ssr",
   ]
 }
 

@@ -161,6 +161,35 @@ module "worker" {
 }
 
 
+module "lit-ssr" {
+  # checkov:skip=CKV_TF_1: We're using semantic versions instead of commit hash
+  #source                      = "../../i-dot-ai-core-terraform-modules//modules/infrastructure/ecs" # For testing local changes
+  source                       = "git::https://github.com/i-dot-ai/i-dot-ai-core-terraform-modules.git//modules/infrastructure/ecs?ref=v1.0.0-ecs"
+  memory                       = 6144
+  cpu                          = 2048
+  create_listener              = false
+  create_networking            = false
+  name                         = "${local.name}-lit-ssr"
+  image_tag                    = var.image_tag
+  ecr_repository_uri           = "${var.ecr_repository_uri}/${var.project_name}-lit-ssr"
+  ecs_cluster_id               = module.cluster.ecs_cluster_id
+  ecs_cluster_name             = module.cluster.ecs_cluster_name
+  autoscaling_minimum_target   = 1
+  autoscaling_maximum_target   = 1
+  state_bucket                 = var.state_bucket
+  vpc_id                       = data.terraform_remote_state.vpc.outputs.vpc_id
+  private_subnets              = data.terraform_remote_state.vpc.outputs.private_subnets
+  container_port               = 3002
+  load_balancer_security_group = module.load_balancer.load_balancer_security_group_id
+  aws_lb_arn                   = module.load_balancer.alb_arn
+  ip_whitelist                 = var.external_ips
+  http_healthcheck             = false
+  ephemeral_storage            = 0
+  auto_scale_off_peak_times    = true
+  wait_for_ready_state         = true
+}
+
+
 resource "aws_security_group_rule" "ecs_ingress_worker_to_unstructured" {
   type                     = "ingress"
   description              = "Allow all traffic from the worker to unstructured"
@@ -169,5 +198,16 @@ resource "aws_security_group_rule" "ecs_ingress_worker_to_unstructured" {
   protocol                 = "-1"
   source_security_group_id = module.worker.ecs_sg_id
   security_group_id        = module.unstructured.ecs_sg_id
+}
+
+
+resource "aws_security_group_rule" "ecs_ingress_django_to_lit_ssr" {
+  type                     = "ingress"
+  description              = "Allow all traffic from the django-app to lit-ssr"
+  from_port                = 0
+  to_port                  = 0
+  protocol                 = "-1"
+  source_security_group_id = module.django-app.ecs_sg_id
+  security_group_id        = module.lit-ssr.ecs_sg_id
 }
 
