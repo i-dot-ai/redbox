@@ -203,7 +203,13 @@ module "lit-ssr" {
   load_balancer_security_group = module.load_balancer.load_balancer_security_group_id
   aws_lb_arn                   = module.load_balancer.alb_arn
   ip_whitelist                 = var.external_ips
-  http_healthcheck             = false
+  health_check = {
+    healthy_threshold   = 3
+    unhealthy_threshold = 3
+    accepted_response   = "200"
+    path                = "/health"
+    timeout             = 5
+  }
   ephemeral_storage            = 21
   auto_scale_off_peak_times    = true
   wait_for_ready_state         = true
