@@ -63,7 +63,7 @@ def humanize_short_timedelta(minutes=0, hours_limit=200, too_large_msg=""):
 
 def render_lit(html):
     try:
-        response = requests.get("http://localhost:3002/", timeout=1, params={"data": html})
+        response = requests.get(f"http://{settings.LIT_SSR_URL}/", timeout=1, params={"data": html})
         response.raise_for_status()
         return response.text  # noqa: TRY300
     except requests.RequestException:

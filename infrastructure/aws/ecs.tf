@@ -43,6 +43,25 @@ resource "aws_service_discovery_service" "unstructured_service_discovery_service
   }
 }
 
+resource "aws_service_discovery_service" "lit_ssr_service_discovery_service" {
+  name = "${local.name}-lit-ssr"
+
+  dns_config {
+    namespace_id = aws_service_discovery_private_dns_namespace.private_dns_namespace.id
+
+    dns_records {
+      ttl  = 10
+      type = "A"
+    }
+
+    routing_policy = "MULTIVALUE"
+  }
+
+  health_check_custom_config {
+    failure_threshold = 1
+  }
+}
+
 resource "aws_secretsmanager_secret" "django-app-secret" {
   name = "${local.name}-django-app-secret"
   tags = {
@@ -165,6 +184,7 @@ module "lit-ssr" {
   # checkov:skip=CKV_TF_1: We're using semantic versions instead of commit hash
   #source                      = "../../i-dot-ai-core-terraform-modules//modules/infrastructure/ecs" # For testing local changes
   source                       = "git::https://github.com/i-dot-ai/i-dot-ai-core-terraform-modules.git//modules/infrastructure/ecs?ref=v1.0.0-ecs"
+  service_discovery_service_arn = aws_service_discovery_service.lit_ssr_service_discovery_service.arn
   memory                       = 6144
   cpu                          = 2048
   create_listener              = false
