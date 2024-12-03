@@ -538,7 +538,7 @@ class User(BaseUser, UUIDPrimaryKeyBase, TimeStampedModel):
 
     def log(self):
         elastic_log_msg = {
-            # "@timestamp": self.created_at.isoformat(),
+            "@timestamp": self.created_at.isoformat(),
             "id": str(self.id),
             "last_login": str(self.last_login),
             "is_superuser": str(self.is_superuser),
