@@ -48,6 +48,7 @@ scikit-learn = "^1.5.2"
 django-staff-sso-client = "^4.3.0"
 dj-database-url = "^2.3.0"
 dbt-copilot-python = "^0.2.2"
+django-log-formatter-asim = "^0.0.6"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3.2"
