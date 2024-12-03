@@ -181,10 +181,6 @@ docker_echo:
 ifeq ($(instance),postgres)
  CONFIG_DIR=../../../../redbox-copilot-infra-config
  tf_build_args=
-else ifeq ($(instance),universal)
- CONFIG_DIR=../../../../redbox-copilot-infra-config
- env=prod
- tf_build_args=
 else
  CONFIG_DIR=../../../redbox-copilot-infra-config
  tf_build_args=-var "image_tag=$(IMAGE_TAG)"
@@ -220,15 +216,6 @@ tf_plan: ## Plan terraform
 tf_apply: ## Apply terraform
 	make tf_init_and_set_workspace && \
 	terraform -chdir=./infrastructure/aws/$(instance) apply -var-file=$(CONFIG_DIR)/${env}-input-params.tfvars ${tf_build_args} ${args}
-
-.PHONY: tf_init_universal
-tf_init_universal: ## Initialise terraform
-	terraform -chdir=./infrastructure/aws/universal init -backend-config=../$(TF_BACKEND_CONFIG)
-
-.PHONY: tf_apply_universal
-tf_apply_universal: ## Apply terraform
-	terraform -chdir=./infrastructure/aws workspace select prod && \
-	terraform -chdir=./infrastructure/aws/universal apply -var-file=../$(CONFIG_DIR)/prod-input-params.tfvars
 
 .PHONY: tf_auto_apply
 tf_auto_apply: ## Auto apply terraform
