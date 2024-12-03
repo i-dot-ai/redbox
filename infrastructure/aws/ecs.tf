@@ -169,7 +169,7 @@ module "lit-ssr" {
   cpu                          = 2048
   create_listener              = false
   create_networking            = false
-  name                         = "${local.name}-lit-ssr"
+  name                         = "${local.name}-lit-ssr-repository"
   image_tag                    = var.image_tag
   ecr_repository_uri           = "${var.ecr_repository_uri}/${var.project_name}-lit-ssr"
   ecs_cluster_id               = module.cluster.ecs_cluster_id
