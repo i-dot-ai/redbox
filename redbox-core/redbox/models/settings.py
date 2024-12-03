@@ -131,8 +131,12 @@ class Settings(BaseSettings):
     )
 
     @property
-    def elastic_chat_mesage_index(self):
+    def elastic_chat_message_index(self):
         return self.elastic_root_index + "-chat-mesage-log"
+
+    @property
+    def elastic_user_index(self):
+        return self.elastic_root_index + "-user-log"
 
     @property
     def elastic_alias(self):
@@ -169,8 +173,9 @@ class Settings(BaseSettings):
             client.options(ignore_status=[400]).indices.create(index=chunk_index)
             client.indices.put_alias(index=chunk_index, name=self.elastic_alias)
 
-        if not client.indices.exists(index=self.elastic_chat_mesage_index):
-            client.indices.create(index=self.elastic_chat_mesage_index)
+        for index in self.elastic_chat_message_index, self.elastic_user_index:
+            if not client.indices.exists(index=index):
+                client.indices.create(index=index)
 
         return client.options(request_timeout=30, retry_on_timeout=True, max_retries=3)
 

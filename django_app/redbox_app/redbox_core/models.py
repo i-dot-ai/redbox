@@ -217,7 +217,7 @@ class SSOUserManager(BaseSSOUserManager):
         return self._create_user(username, password, **extra_fields)
 
 
-class User(BaseUser, UUIDPrimaryKeyBase):
+class User(BaseUser, UUIDPrimaryKeyBase, TimeStampedModel):
     class UserGrade(models.TextChoices):
         AA = "AA", _("AA")
         AO = "AO", _("AO")
@@ -535,6 +535,74 @@ class User(BaseUser, UUIDPrimaryKeyBase):
             return first_name[0].upper() + last_name[0].upper()
         except (IndexError, AttributeError, ValueError):
             return ""
+
+    def log(self):
+        elastic_log_msg = {
+            # "@timestamp": self.created_at.isoformat(),
+            "id": str(self.id),
+            "last_login": str(self.last_login),
+            "is_superuser": str(self.is_superuser),
+            "first_name": str(self.first_name),
+            "last_name": str(self.last_name),
+            "is_staff": str(self.is_staff),
+            "date_joined": str(self.date_joined),
+            "email": str(self.email),
+            "business_unit": str(self.business_unit),
+            "grade": str(self.grade),
+            "name": str(self.name),
+            "ai_experience": str(self.ai_experience),
+            "profession": str(self.profession),
+            "info_about_user": str(self.info_about_user),
+            "redbox_response_preferences": str(self.redbox_response_preferences),
+            "is_developer": str(self.is_developer),
+            "role": str(self.role),
+            "accessibility_options": str(self.accessibility_options),
+            "accessibility_categories": str(self.accessibility_categories),
+            "accessibility_description": str(self.accessibility_description),
+            "digital_confidence": str(self.digital_confidence),
+            "usage_at_work": str(self.usage_at_work),
+            "usage_outside_work": str(self.usage_outside_work),
+            "how_useful": str(self.how_useful),
+            "redbox_tasks": str(self.redbox_tasks),
+            "task_1_description": str(self.task_1_description),
+            "task_1_regularity": str(self.task_1_regularity),
+            "task_1_duration": str(self.task_1_duration),
+            "task_1_consider_using_ai": str(self.task_1_consider_using_ai),
+            "task_2_description": str(self.task_2_description),
+            "task_2_regularity": str(self.task_2_regularity),
+            "task_2_duration": str(self.task_2_duration),
+            "task_2_consider_using_ai": str(self.task_2_consider_using_ai),
+            "task_3_description": str(self.task_3_description),
+            "task_3_regularity": str(self.task_3_regularity),
+            "task_3_duration": str(self.task_3_duration),
+            "task_3_consider_using_ai": str(self.task_3_consider_using_ai),
+            "role_regularity_summarise_large_docs": str(self.role_regularity_summarise_large_docs),
+            "role_regularity_condense_multiple_docs": str(self.role_regularity_condense_multiple_docs),
+            "role_regularity_search_across_docs": str(self.role_regularity_search_across_docs),
+            "role_regularity_compare_multiple_docs": str(self.role_regularity_compare_multiple_docs),
+            "role_regularity_specific_template": str(self.role_regularity_specific_template),
+            "role_regularity_shorten_docs": str(self.role_regularity_shorten_docs),
+            "role_regularity_write_docs": str(self.role_regularity_write_docs),
+            "role_duration_summarise_large_docs": str(self.role_duration_summarise_large_docs),
+            "role_duration_condense_multiple_docs": str(self.role_duration_condense_multiple_docs),
+            "role_duration_search_across_docs": str(self.role_duration_search_across_docs),
+            "role_duration_compare_multiple_docs": str(self.role_duration_compare_multiple_docs),
+            "role_duration_specific_template": str(self.role_duration_specific_template),
+            "role_duration_shorten_docs": str(self.role_duration_shorten_docs),
+            "role_duration_write_docs": str(self.role_duration_write_docs),
+            "consent_research": str(self.consent_research),
+            "consent_interviews": str(self.consent_interviews),
+            "consent_feedback": str(self.consent_feedback),
+            "consent_condfidentiality": str(self.consent_condfidentiality),
+            "consent_understand": str(self.consent_understand),
+            "consent_agreement": str(self.consent_agreement),
+        }
+
+        es_client.create(
+            index=env.elastic_user_index,
+            id=uuid.uuid4(),
+            document=elastic_log_msg,
+        )
 
 
 class InactiveFileError(ValueError):
@@ -878,7 +946,7 @@ class ChatMessage(UUIDPrimaryKeyBase, TimeStampedModel):
             "rating_chips": list(map(str, self.rating_chips)) if self.rating_chips else None,
         }
         es_client.create(
-            index=env.elastic_chat_mesage_index,
+            index=env.elastic_chat_message_index,
             id=uuid.uuid4(),
             document=elastic_log_msg,
         )
