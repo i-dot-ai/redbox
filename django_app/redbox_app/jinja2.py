@@ -1,4 +1,5 @@
 import datetime
+import logging
 
 import humanize
 import jinja2
@@ -10,6 +11,8 @@ from django.templatetags.static import static
 from django.urls import reverse
 from django.utils.timezone import template_localtime
 from markdown_it import MarkdownIt
+
+logger = logging.getLogger(__name__)
 
 # `js-default` setting required to sanitize inputs
 # https://markdown-it-py.readthedocs.io/en/latest/security.html
@@ -63,7 +66,10 @@ def humanize_short_timedelta(minutes=0, hours_limit=200, too_large_msg=""):
 
 def render_lit(html):
     try:
-        response = requests.get(f"http://{settings.LIT_SSR_URL}/", timeout=1, params={"data": html})
+        lit_ssr_url = f"http://{settings.LIT_SSR_URL}:3002/"
+        logger.info("using LIT_SSR_URL=%s", lit_ssr_url)
+        response = requests.get(lit_ssr_url, timeout=1, params={"data": html})
+        logger.info("status_code=%s", response.status_code)
         response.raise_for_status()
         return response.text  # noqa: TRY300
     except requests.RequestException:
