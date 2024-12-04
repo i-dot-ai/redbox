@@ -41,15 +41,16 @@ data "aws_iam_policy_document" "ecs_exec_role_policy" {
       "secretsmanager:GetSecretValue",
     ]
     resources = [
-       aws_secretsmanager_secret.django-app-secret.arn,
-       "${aws_secretsmanager_secret.django-app-secret.arn}:*"
+      aws_secretsmanager_secret.django-app-secret.arn,
+      "${aws_secretsmanager_secret.django-app-secret.arn}:*"
     ]
   }
 
   statement {
-   effect = "AllowOpenSearch"
-   actions = ["es:ESHttp*"]
-   resources = ["*"]
+    sid       = "AllowOpenSearch"
+    effect    = "Allow"
+    actions   = ["es:ESHttp*"]
+    resources = ["*"]
   }
 }
 
@@ -62,8 +63,8 @@ resource "aws_iam_policy" "redbox_policy" {
 resource "aws_iam_role_policy_attachment" "redbox_role_policy" {
   for_each = tomap(
     {
-      "worker"   = module.worker.ecs_task_execution_exec_role_name,
-      "django"   = module.django-app.ecs_task_execution_exec_role_name,
+      "worker" = module.worker.ecs_task_execution_exec_role_name,
+      "django" = module.django-app.ecs_task_execution_exec_role_name,
     }
   )
   role       = each.value
