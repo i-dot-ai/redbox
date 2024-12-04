@@ -273,7 +273,7 @@ chat-history[data-initialised] .rb-chat-history__actions-button {
   padding-right: 8rem;
   word-break: break-word;
 }
-.rb-activity__item:last-child, .rb-activity:has([expanded="true"]) .rb-activity__item {
+.rb-activity__item:last-child, .rb-activity:has([expanded]) .rb-activity__item {
   display: flex;
 }
 .rb-activity__item::before {
@@ -298,6 +298,44 @@ chat-history[data-initialised] .rb-chat-history__actions-button {
 .rb-activity__item--ai::before {
   background-color: #9c0000;
   content: url("/static/icons/activity-redbox.svg")
+}
+
+.rb-action-buttons {
+  align-items: center;
+  display: flex;
+  margin-bottom: 0.5rem;
+}
+.rb-action-buttons__button {
+  align-items: center;
+  background-color: transparent;
+  border: 0;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  padding: 0;
+}
+.rb-action-buttons__button span {
+  background-color: black;
+  border-radius: 0.25rem;
+  color: white;
+  font-size: 0.625rem;
+  font-weight: bold;
+  padding: 0.25rem 0.375rem;
+  visibility: hidden;
+}
+.rb-action-buttons__button:hover span, .rb-action-button:focus span {
+  visibility: visible;
+}
+.rb-action-buttons__button--copy span {
+  background-color: #124581;
+}
+.rb-action-buttons__button--rate {
+  gap: 5px;
+}
+.rb-action-buttons__button--rate span {
+  background-color: #EFDB5D;
+  color: #000;
 }
 
 chat-message {
@@ -407,14 +445,6 @@ chat-message {
 }
 .feedback__container--2.feedback__container--negative img {
   transform: scaleY(-1);
-}
-
-/* Only show feedback buttons on last message, for now */
-feedback-buttons {
-  display: none;
-}
-feedback-buttons:last-of-type {
-  display: block;
 }
 
 /* Response feedback - general styles */

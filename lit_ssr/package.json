@@ -1,0 +1,21 @@
+{
+  "name": "lit_ssr",
+  "version": "1.0.0",
+  "main": "lit-ssr.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@lit-labs/ssr": "^3.2.2",
+    "dompurify": "^3.2.1",
+    "express": "^4.21.1",
+    "jsdom": "^25.0.1",
+    "lit": "^3.2.1",
+    "lit-html": "^3.2.1"
+  },
+  "type": "module"
+}

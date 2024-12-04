@@ -49,6 +49,20 @@ services:
     env_file:
       - path: .env
         required: false
+  lit-ssr:
+    image: lit-ssr:latest
+    build:
+      context: .
+      dockerfile: ./lit_ssr/Dockerfile
+    user: "node"
+    networks:
+      - redbox-app-network
+    ports:
+      - "3002:3002"
+    restart: unless-stopped
+    env_file:
+      - path: .env
+        required: false
   db:
     image: postgres:13
     env_file:

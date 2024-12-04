@@ -3,6 +3,7 @@ import datetime
 import humanize
 import jinja2
 import pytz
+import requests
 import waffle
 from django.conf import settings
 from django.templatetags.static import static
@@ -60,6 +61,15 @@ def humanize_short_timedelta(minutes=0, hours_limit=200, too_large_msg=""):
         return humanize.precisedelta(delta, minimum_unit="minutes")
 
 
+def render_lit(html):
+    try:
+        response = requests.get("http://localhost:3002/", timeout=1, params={"data": html})
+        response.raise_for_status()
+        return response.text  # noqa: TRY300
+    except requests.RequestException:
+        return html
+
+
 def to_user_timezone(value):
     # Assuming the user's timezone is stored in a variable called 'user_timezone'
     # Replace 'Europe/London' with the actual timezone string for the user
@@ -87,6 +97,7 @@ def environment(**options):
             "environment": settings.ENVIRONMENT.value,
             "security": settings.MAX_SECURITY_CLASSIFICATION.value,
             "waffle_flag": waffle.flag_is_active,
+            "render_lit": render_lit,
         }
     )
     env.globals.update(

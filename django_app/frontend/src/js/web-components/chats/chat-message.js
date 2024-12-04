@@ -34,7 +34,7 @@ export class ChatMessage extends HTMLElement {
   }
 
   connectedCallback() {
-    const uuid = crypto.randomUUID();
+    this.uuid = crypto.randomUUID();
     this.innerHTML = `
       <div class="rb-activity">
         <activity-button class="rb-activity__btn"></activity-button>
@@ -58,22 +58,25 @@ export class ChatMessage extends HTMLElement {
               `
               : ""
           }
-          <sources-list data-id="${uuid}"></sources-list>
-          <div class="govuk-notification-banner govuk-notification-banner--error govuk-!-margin-bottom-3 govuk-!-margin-top-3" role="alert" aria-labelledby="notification-title-${uuid}" data-module="govuk-notification-banner" hidden>
+          <sources-list data-id="${this.uuid}"></sources-list>
+          <div class="govuk-notification-banner govuk-notification-banner--error govuk-!-margin-bottom-3 govuk-!-margin-top-3" role="alert" aria-labelledby="notification-title-${this.uuid}" data-module="govuk-notification-banner" hidden>
               <div class="govuk-notification-banner__header">
-                  <h3 class="govuk-notification-banner__title" id="notification-title-${uuid}">Error</h3>
+                  <h3 class="govuk-notification-banner__title" id="notification-title-${this.uuid}">Error</h3>
               </div>
               <div class="govuk-notification-banner__content">
                   <p class="govuk-notification-banner__heading"></p>
               </div>
           </div>
       </div>
-  `;
+    `;
 
     // Add feedback buttons
     if (this.dataset.role === "ai") {
-      this.feedbackButtons = /** @type {import("./feedback-buttons").FeedbackButtons} */(document.createElement("feedback-buttons"));
-  this.parentElement?.appendChild(this.feedbackButtons);
+      this.feedbackButtons =
+        /** @type {import("./feedback-buttons").FeedbackButtons} */ (
+          document.createElement("feedback-buttons")
+        );
+      this.parentElement?.appendChild(this.feedbackButtons);
     }
 
     // ensure new chat-messages aren't hidden behind the chat-input
@@ -91,7 +94,6 @@ export class ChatMessage extends HTMLElement {
       "mouseover",
       sendTooltipViewEvent
     );
-
   }
 
   #addFootnotes = (content) => {
@@ -101,14 +103,10 @@ export class ChatMessage extends HTMLElement {
       if (!matchingText || !this.responseContainer) {
         return;
       }
-      /*
-      this.responseContainer?.update(
-        content.replace(matchingText, `${matchingText}<a href="#${footnote.id}" aria-label="Footnote ${footnoteIndex + 1}">[${footnoteIndex + 1}]</a>`)
-      );
-      */
+
       this.responseContainer.innerHTML =
         this.responseContainer.innerHTML.replace(
-          matchingText,
+          new RegExp(matchingText, "i"),
           `${matchingText}<a class="rb-footnote-link" href="#${
             footnote.id
           }" aria-label="Footnote ${footnoteIndex + 1}">${
@@ -125,7 +123,10 @@ export class ChatMessage extends HTMLElement {
    */
   addActivity = (message, type) => {
     let activityElement = document.createElement("p");
-    activityElement.classList.add("rb-activity__item", `rb-activity__item--${type}`);
+    activityElement.classList.add(
+      "rb-activity__item",
+      `rb-activity__item--${type}`
+    );
     activityElement.textContent = message;
     this.querySelector(".rb-activity")?.appendChild(activityElement);
   };
@@ -166,7 +167,6 @@ export class ChatMessage extends HTMLElement {
     let sourcesContainer = /** @type {import("./sources-list").SourcesList} */ (
       this.querySelector("sources-list")
     );
-    /** @type {import("./feedback-buttons").FeedbackButtons | null} */
     let responseLoading = /** @type HTMLElement */ (
       this.querySelector(".rb-loading-ellipsis")
     );
@@ -261,6 +261,14 @@ export class ChatMessage extends HTMLElement {
         sourcesContainer.showCitations(response.data.message_id);
         this.feedbackButtons?.showFeedback(response.data.message_id);
         this.#addFootnotes(streamedContent);
+
+        // Add action-buttons - work stopped on this
+        /*
+        let actionButtons = document.createElement("action-buttons");
+        actionButtons.dataset.id = this.uuid;
+        this.parentElement?.appendChild(actionButtons);
+        */
+
         const chatResponseEndEvent = new CustomEvent("chat-response-end", {
           detail: {
             title: response.data.title,

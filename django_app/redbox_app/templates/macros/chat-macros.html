@@ -37,7 +37,7 @@
 {% endif %}
 
 <div class="rb-activity">
-  <activity-button class="rb-activity__btn"></activity-button>
+  {{ '<activity-button class="rb-activity__btn"></activity-button>' | render_lit | safe }}
   {% for activity in message.activityevent_set.all() %}
     <p class="rb-activity__item rb-activity__item--{{ message.role }}">{{ activity }}</p>
   {% endfor %}
@@ -80,5 +80,14 @@
     <copy-text></copy-text>
   {% endif %}
 </div>
+
+{#
+{% if message.role == "ai" %}
+  {% set html %}
+    <action-buttons message-id="{{ message.id }}"></action-buttons>
+  {% endset %}
+  {{ html | render_lit | safe }}
+{% endif %}
+#}
 
 {% endmacro %}

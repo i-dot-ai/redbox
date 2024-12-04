@@ -57,9 +57,9 @@ def make_file_query(file_name: str, resolution: ChunkResolution | None = None) -
 
 def fake_llm_response():
     return {
-        "name": "foo",
-        "description": "more test",
-        "keywords": ["hello", "world"],
+        "name": "example.html",
+        "description": None,
+        "keywords": [],
     }
 
 
