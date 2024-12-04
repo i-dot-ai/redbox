@@ -1,9 +1,10 @@
-from typing import Annotated, Iterable
+from typing import Annotated, Iterable, Union
 
 import numpy as np
 import requests
 import tiktoken
 from elasticsearch import Elasticsearch
+from opensearchpy import OpenSearch
 from langchain_community.utilities import WikipediaAPIWrapper
 from langchain_core.documents import Document
 from langchain_core.embeddings.embeddings import Embeddings
@@ -29,7 +30,7 @@ from redbox.transform import (
 
 
 def build_search_documents_tool(
-    es_client: Elasticsearch,
+    es_client: Union[Elasticsearch, OpenSearch],
     index_name: str,
     embedding_model: Embeddings,
     embedding_field_name: str,

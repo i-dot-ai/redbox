@@ -10,17 +10,26 @@ from langchain_core.embeddings import Embeddings, FakeEmbeddings
 from langchain_core.tools import StructuredTool
 from langchain_core.runnables import Runnable
 from langchain_core.utils import convert_to_secret_str
-from langchain_elasticsearch import ElasticsearchRetriever
 from langchain_openai.embeddings import AzureOpenAIEmbeddings, OpenAIEmbeddings
 
 
 from redbox.chains.parser import StreamingJsonOutputParser
-from redbox.models.settings import ChatLLMBackend, Settings
-from redbox.retriever import AllElasticsearchRetriever, ParameterisedElasticsearchRetriever, MetadataRetriever
+from redbox.models.settings import (
+    ChatLLMBackend,
+    Settings,
+    ElasticCloudSettings,
+    OpenSearchSettings,
+    ElasticLocalSettings,
+)
+from redbox.retriever import (
+    AllElasticsearchRetriever,
+    ParameterisedElasticsearchRetriever,
+    MetadataRetriever,
+)
 from langchain_community.embeddings import BedrockEmbeddings
 from langchain.chat_models import init_chat_model
 from redbox.models.chain import StructuredResponseWithCitations
-
+from redbox.retriever.retrievers import AllOpensearchRetriever, OpensearchMetadataRetriever
 
 logger = logging.getLogger(__name__)
 load_dotenv()
@@ -82,11 +91,18 @@ def get_embeddings(env: Settings) -> Embeddings:
     raise Exception("No configured embedding model")
 
 
-def get_all_chunks_retriever(env: Settings) -> ElasticsearchRetriever:
-    return AllElasticsearchRetriever(
-        es_client=env.elasticsearch_client(),
-        index_name=env.elastic_chunk_alias,
-    )
+def get_all_chunks_retriever(env: Settings) -> AllElasticsearchRetriever | AllOpensearchRetriever:
+    if isinstance(env.elastic, (ElasticCloudSettings, ElasticLocalSettings)):
+        return AllElasticsearchRetriever(
+            es_client=env.elasticsearch_client(),
+            index_name=env.elastic_chunk_alias,
+        )
+    if isinstance(env.elastic, OpenSearchSettings):
+        return AllOpensearchRetriever(
+            es_client=env.elasticsearch_client(),
+            index_name=env.elastic_chunk_alias,
+        )
+    raise NotImplementedError
 
 
 def get_parameterised_retriever(env: Settings, embeddings: Embeddings | None = None):
@@ -104,11 +120,18 @@ def get_parameterised_retriever(env: Settings, embeddings: Embeddings | None = N
     )
 
 
-def get_metadata_retriever(env: Settings):
-    return MetadataRetriever(
-        es_client=env.elasticsearch_client(),
-        index_name=env.elastic_chunk_alias,
-    )
+def get_metadata_retriever(env: Settings) -> MetadataRetriever | OpensearchMetadataRetriever:
+    if isinstance(env.elastic, (ElasticCloudSettings, ElasticLocalSettings)):
+        return MetadataRetriever(
+            es_client=env.elasticsearch_client(),
+            index_name=env.elastic_chunk_alias,
+        )
+    if isinstance(env.elastic, OpenSearchSettings):
+        return OpensearchMetadataRetriever(
+            es_client=env.elasticsearch_client(),
+            index_name=env.elastic_chunk_alias,
+        )
+    raise NotImplementedError
 
 
 def get_structured_response_with_citations_parser() -> tuple[Runnable, str]:

@@ -1,3 +1,18 @@
-from .retrievers import AllElasticsearchRetriever, ParameterisedElasticsearchRetriever, MetadataRetriever
+from .retrievers import (
+    AllElasticsearchRetriever,
+    ParameterisedElasticsearchRetriever,
+    MetadataRetriever,
+    OpensearchMetadataRetriever,
+    AllOpensearchRetriever,
+    OpenSearchRetriever,
+)
 
-__all__ = ["ParameterisedElasticsearchRetriever", "AllElasticsearchRetriever", "MetadataRetriever"]
+__all__ = [
+    "ParameterisedElasticsearchRetriever",
+    "AllOpensearchRetriever",
+    "AllElasticsearchRetriever",
+    "OpensearchMetadataRetriever",
+    "AllElasticsearchRetriever",
+    "MetadataRetriever",
+    "OpenSearchRetriever",
+]
