@@ -48,7 +48,9 @@ class OpenSearchSettings(BaseModel):
         url = urlparse(self.collection_endpoint)
         if url.port is not None:
             return f"{self.host}:{self.port}"
-        return self.host
+        if url.host is not None:
+            return self.host
+        return self.collection_endpoint
 
 
 class ElasticLocalSettings(BaseModel):
