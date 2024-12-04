@@ -211,7 +211,7 @@ class Settings(BaseSettings):
                 credentials = boto3.Session().get_credentials()
                 client = OpenSearch(
                     hosts=[{"host": self.elastic.host, "port": self.elastic.port}],
-                    http_auth=AWSV4SignerAuth(credentials, self.aws_region, "aoss"),
+                    http_auth=AWSV4SignerAuth(credentials, self.aws_region, "es"),
                     use_ssl=True,
                     verify_certs=True,
                     connection_class=RequestsHttpConnection,
