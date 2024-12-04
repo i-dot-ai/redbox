@@ -10,6 +10,6 @@ RUN npm run build
 
 USER node:node
 
-EXPOSE 3000
+EXPOSE 3001
 
 CMD ["node", "build/index.js"]

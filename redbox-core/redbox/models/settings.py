@@ -153,7 +153,7 @@ class Settings(BaseSettings):
         client = OpenSearch(
             hosts=[{"host": self.elastic.collection_endpoint__host, "port": self.elastic.collection_endpoint__port}],
             http_auth=(self.elastic.collection_endpoint__username, self.elastic.collection_endpoint__password),
-            use_ssl=True,
+            use_ssl=False, #change from true to false to run locally
             connection_class=RequestsHttpConnection,
             retry_on_timeout=True
         )
