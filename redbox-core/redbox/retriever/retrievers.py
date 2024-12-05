@@ -15,13 +15,17 @@ from langchain_core.documents import Document
 from langchain_core.embeddings.embeddings import Embeddings
 from langchain_core.retrievers import BaseRetriever
 from langchain_elasticsearch.retrievers import ElasticsearchRetriever
+import os
 
 from redbox.models.chain import RedboxState
 from redbox.models.file import ChunkResolution
 from redbox.retriever.queries import add_document_filter_scores_to_query, build_document_query, get_all, get_metadata
 from redbox.transform import merge_documents, sort_documents
 
-logger = logging.getLogger(__name__)
+
+logging.basicConfig(level=os.environ.get("LOG_LEVEL", "INFO"))
+logger = logging.getLogger()
+
 
 class OpenSearchRetriever(BaseRetriever):
     """OpenSearch Retriever."""
@@ -75,8 +79,11 @@ class OpenSearchRetriever(BaseRetriever):
             raise ValueError("OpenSearch client or document mapper is not initialized")
 
         body = self.body_func(query)
-        logger.info(body)
+        logger.info("query to opensearch: from get_relevant_documents")
+        logger.info(str(body))
         response = self.es_client.search(index=self.index_name, body=body)
+        logger.info("response from opensearch: from get_relevant_documents")
+        logger.info(str([self.document_mapper(hit) for hit in response["hits"]["hits"]]))
         return [self.document_mapper(hit) for hit in response["hits"]["hits"]]
 
     def _single_field_mapper(self, hit: Mapping[str, Any]) -> Document:
@@ -112,7 +119,11 @@ def hit_to_doc(hit: dict[str, Any]) -> Document:
 
 def query_to_documents(es_client: Union[Elasticsearch, OpenSearch], index_name: str, query: dict[str, Any]) -> list[Document]:
     """Runs an Elasticsearch query and returns Documents."""
+    logger.info("query to opensearch: from query_to_documents")
+    logger.info(str(query))
     response = es_client.search(index=index_name, body=query)
+    logger.info("response from opensearch: from query_to_documents")
+    logger.info(str([hit_to_doc(hit) for hit in response["hits"]["hits"]]))
     return [hit_to_doc(hit) for hit in response["hits"]["hits"]]
 
 
