@@ -76,6 +76,10 @@ app.get("/", async (req, res) => {
   res.send(sanitisedHtml);
 });
 
+app.get("/health", async (req, res) => {
+  res.status(200).send();
+});
+
 app.listen(3002, () => {
   console.log("Server is running on port 3002");
 });

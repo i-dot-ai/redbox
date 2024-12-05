@@ -3,6 +3,7 @@ locals {
   django_host       = "${local.record_prefix}.${var.domain_name}"
   unstructured_host = "${aws_service_discovery_service.unstructured_service_discovery_service.name}.${aws_service_discovery_private_dns_namespace.private_dns_namespace.name}"
   name              = "${var.team_name}-${terraform.workspace}-${var.project_name}"
+  ssr_url = "${aws_service_discovery_service.lit_ssr_service_discovery_service.name}.${aws_service_discovery_private_dns_namespace.private_dns_namespace.name}"
 
 
   django_app_environment_variables = {
@@ -10,6 +11,7 @@ locals {
     "EMBEDDING_DOCUMENT_FIELD_NAME" : var.embedding_document_field_name,
     "AZURE_OPENAI_MODEL" : var.azure_openai_model,
 
+    "LIT_SSR_URL": local.ssr_url,
     "UNSTRUCTURED_HOST" : local.unstructured_host
     "Q_TIMEOUT": var.django_queue_timeout,
     "Q_RETRY": var.django_queue_retry,

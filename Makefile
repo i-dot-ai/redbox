@@ -146,7 +146,15 @@ docker_build: ## Build the docker container
 	PREV_IMAGE="$(ECR_REPO_URL)-django-app:$(PREV_IMAGE_TAG)"; \
 	echo "Pulling previous image: $$PREV_IMAGE"; \
 	docker pull $$PREV_IMAGE; \
-	docker compose build django-app; \
+	docker compose build django-app;
+
+	echo "Building lit-ssr..."; \
+	PREV_IMAGE="$(ECR_REPO_URL)-lit-ssr:$(PREV_IMAGE_TAG)"; \
+	echo "Pulling previous image: $$PREV_IMAGE"; \
+	docker pull $$PREV_IMAGE; \
+	docker compose build lit-ssr;
+
+
 
 
 
