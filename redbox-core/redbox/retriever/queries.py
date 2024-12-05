@@ -15,7 +15,7 @@ def build_file_filter(file_names: list[str]) -> dict[str, Any]:
         "bool": {
             "should": [
                 {"terms": {"metadata.file_name.keyword": file_names}},
-                {"terms": {"metadata.uri.keyword": file_names}},
+                {"terms": {"metadata.uri.keyword": file_names}}
             ]
         }
     }
