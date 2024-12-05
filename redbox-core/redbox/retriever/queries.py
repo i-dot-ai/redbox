@@ -15,7 +15,7 @@ def build_file_filter(file_names: list[str]) -> dict[str, Any]:
         "bool": {
             "should": [
                 {"terms": {"metadata.file_name.keyword": file_names}},
-                {"terms": {"metadata.uri.keyword": file_names}},
+                {"terms": {"metadata.uri.keyword": file_names}}
             ]
         }
     }
@@ -23,7 +23,7 @@ def build_file_filter(file_names: list[str]) -> dict[str, Any]:
 
 def build_resolution_filter(chunk_resolution: ChunkResolution) -> dict[str, Any]:
     """Creates an Elasticsearch filter for chunk resolutions."""
-    return {"term": {"metadata.chunk_resolution.keyword": str(chunk_resolution)}}
+    return {"term": {"metadata.chunk_resolution.keyword": str(chunk_resolution.normal)}} #add normal to fix error
 
 
 def build_query_filter(
