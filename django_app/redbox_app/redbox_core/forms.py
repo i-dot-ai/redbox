@@ -163,16 +163,24 @@ class SignUpForm(forms.ModelForm):
 class DemographicsForm(forms.ModelForm):
     class Meta:
         model = User
-        fields = ("name", "ai_experience", "info_about_user", "redbox_response_preferences")
+        fields = ("name", "ai_experience", "business_unit", "role", "grade", "profession", "info_about_user", "redbox_response_preferences")
         labels: ClassVar[Mapping[str, str]] = {
             "name": "Full Name",
             "ai_experience": "How would you describe your level of experience with Generative AI tools?",
+            "business_unit": "Business Unit",
+            "role": "Role",
+            "grade": "Grade",
+            "profession": "Profession",
             "info_about_user": "What do you want Redbox to know about you?",
             "redbox_response_preferences": "How do you want Redbox to respond?",
         }
         widgets: ClassVar[Mapping[str, forms.Widget]] = {
             "name": forms.TextInput(attrs={"class": "govuk-input govuk-!-width-one-half"}),
             "ai_experience": forms.RadioSelect(attrs={"class": "govuk-radios__item"}),
+            "business_unit": forms.Select(attrs={"class": "govuk-select"}),
+            "role": forms.TextInput(attrs={"class": "govuk-input govuk-!-width-one-half"}),
+            "grade": forms.Select(attrs={"class": "govuk-select"}),
+            "profession": forms.Select(attrs={"class": "govuk-select"}),
             "info_about_user": forms.Textarea(attrs={"class": "govuk-textarea govuk-!-width-one-half", "rows": "5"}),
             "redbox_response_preferences": forms.Textarea(
                 attrs={"class": "govuk-textarea govuk-!-width-one-half", "rows": "5"}

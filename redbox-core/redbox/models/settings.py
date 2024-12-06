@@ -154,8 +154,11 @@ class Settings(BaseSettings):
             hosts=[{"host": self.elastic.collection_endpoint__host, "port": self.elastic.collection_endpoint__port}],
             http_auth=(self.elastic.collection_endpoint__username, self.elastic.collection_endpoint__password),
             use_ssl=True,
+            verify_certs=True,
             connection_class=RequestsHttpConnection,
-            retry_on_timeout=True
+            retry_on_timeout=True,
+            pool_maxsize=100,
+            timeout=120,
         )
 
         if not client.indices.exists_alias(name=self.elastic_alias):

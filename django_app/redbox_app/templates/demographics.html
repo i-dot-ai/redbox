@@ -48,6 +48,33 @@
         </fieldset>
       </div>
 
+      <div class="govuk-form-group">
+        <label class="govuk-label" for="{{ form.business_unit.id_for_label }}">
+          {{ form.business_unit.label }}
+        </label>
+        {{ form.business_unit }}
+      </div>
+
+      <div class="govuk-form-group">
+        <label class="govuk-label" for="{{ form.role.id_for_label }}">
+          {{ form.role.label }}
+        </label>
+        {{ form.role }}
+      </div>
+
+      <div class="govuk-form-group">
+        <label class="govuk-label" for="{{ form.grade.id_for_label }}">
+          {{ form.grade.label }}
+        </label>
+        {{ form.grade }}
+      </div>
+
+      <div class="govuk-form-group">
+        <label class="govuk-label" for="{{ form.profession.id_for_label }}">
+          {{ form.profession.label }}
+        </label>
+        {{ form.profession }}
+      </div>
       {# To be added in when profile overlay ready to go live
       <div class="govuk-form-group">
         <label class="govuk-label" for="{{ form.info_about_user.id_for_label }}">
@@ -63,6 +90,7 @@
         {{ form.redbox_response_preferences }}
       </div>
       #}
+      
 
       <div class="govuk-button-group">
         {{ govukButton(text="Update") }}
