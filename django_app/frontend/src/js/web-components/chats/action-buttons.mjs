@@ -1,15 +1,8 @@
 // @ts-check
 import { LitElement, html } from "lit";
+import { RedboxElement } from "../redbox-element.mjs";
 
-class BaseElement extends LitElement {
-  // clear the SSR content and prevents Shadow DOM by default
-  createRenderRoot() {
-    this.innerHTML = "";
-    return this;
-  }
-}
-
-export class ActionButtons extends BaseElement {
+export class ActionButtons extends RedboxElement {
   static properties = {
     messageId: { type: String, attribute: 'data-id' },
     showRating: { type: Boolean, state: true },

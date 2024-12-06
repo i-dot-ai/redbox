@@ -37,7 +37,7 @@
 {% endif %}
 
 <div class="rb-activity">
-  {{ '<activity-button class="rb-activity__btn"></activity-button>' | render_lit | safe }}
+  <activity-button class="rb-activity__btn"></activity-button>
   {% for activity in message.activityevent_set.all() %}
     <p class="rb-activity__item rb-activity__item--{{ message.role }}">{{ activity }}</p>
   {% endfor %}
