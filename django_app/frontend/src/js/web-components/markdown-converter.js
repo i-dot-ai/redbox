@@ -14,6 +14,13 @@ export class MarkdownConverter extends HTMLElement {
       headerLevelStart: 3,
       tables: true,
     });
+    // escape any user-submitted HTML
+    if (this.dataset.role === "user") {
+      // escape the HTML tags
+      markdown = markdown.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      // mark them as code - flaky (because sometimes the HTML will be incomplete) so commented out for now
+      //markdown = markdown.replace(/&lt;([\w-]+)&gt;/g, '<span class="code">&lt;$1&gt;</span>');
+    }
     this.innerHTML = converter.makeHtml(markdown);
   }
 

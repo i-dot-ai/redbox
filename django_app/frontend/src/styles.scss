@@ -150,3 +150,8 @@ upload-button {
 .iai-chat-bubbles__sources-link:visited {
   color: var(--iai-product-colour, var(--iai-colour-brand));
 }
+.iai-chat-bubble__text code {
+  background-color: #f5ebeb;
+  display: inline;
+  padding: 0.125rem;
+}
