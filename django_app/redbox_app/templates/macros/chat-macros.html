@@ -53,7 +53,7 @@
     {% endif %}
   </div>
 
-  <markdown-converter class="iai-chat-bubble__text">{{ message.text }}</markdown-converter>
+  <markdown-converter class="iai-chat-bubble__text" data-role="{{ message.role }}">{{ message.text }}</markdown-converter>
   {% if message.unique_citation_uris() %}
   <h3 class="iai-chat-bubble__sources-heading govuk-heading-s govuk-!-margin-bottom-1">Sources</h3>
   <div class="iai-display-flex-from-desktop">

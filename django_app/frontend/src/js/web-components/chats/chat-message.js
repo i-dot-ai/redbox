@@ -47,9 +47,7 @@ export class ChatMessage extends HTMLElement {
                 this.dataset.role === "ai" ? "Redbox" : "You"
               }</div>
           </div>
-          <markdown-converter class="iai-chat-bubble__text">${
-            this.dataset.text || ""
-          }</markdown-converter>
+          <markdown-converter class="iai-chat-bubble__text" data-role="${this.dataset.role}"></markdown-converter>
           ${
             !this.dataset.text
               ? `
@@ -69,6 +67,9 @@ export class ChatMessage extends HTMLElement {
           </div>
       </div>
     `;
+
+    // Add any existing markdown content - can't update directly to the above HTML string as user HTML may be removed
+    /** @type {import("../markdown-converter").MarkdownConverter} */(this.querySelector("markdown-converter")).update(this.dataset.text || "");
 
     // Add feedback buttons
     if (this.dataset.role === "ai") {
