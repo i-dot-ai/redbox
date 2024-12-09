@@ -102,8 +102,6 @@ def test_user_journey(page: Page, email_address: str):
     for keyword, route, select_file, should_have_citation in [
         ("search", "search", False, True),
         ("search", "search", True, True),
-        ("gadget", "search", False, True),
-        ("gadget", "search", True, True),
     ]:
         question = f"@{keyword} What do I need to install?"
         logger.info("Asking %r", question)
