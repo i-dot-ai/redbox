@@ -1,11 +1,9 @@
 import copy
-from typing import Any
 from uuid import uuid4
 
 import pytest
 from langchain_core.documents import Document
 from langchain_core.messages import AIMessage
-from langchain_core.tools import tool
 from pytest_mock import MockerFixture
 from tiktoken.core import Encoding
 
@@ -30,7 +28,6 @@ from redbox.test.data import (
     mock_metadata_retriever,
     mock_parameterised_retriever,
 )
-from redbox.transform import structure_documents_by_group_and_indices
 
 LANGGRAPH_DEBUG = True
 
