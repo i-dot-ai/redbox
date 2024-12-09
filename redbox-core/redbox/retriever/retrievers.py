@@ -1,14 +1,15 @@
 from functools import partial
-from typing import Any, Callable, Sequence
+from typing import Any, Callable, Dict, Mapping, Optional, Sequence, Union, cast
 
-from elasticsearch import Elasticsearch
 from elasticsearch.helpers import scan
+from langchain_elasticsearch import ElasticsearchRetriever
+from opensearchpy import OpenSearch
+from elasticsearch import Elasticsearch
 from kneed import KneeLocator
 from langchain_core.callbacks import CallbackManagerForRetrieverRun
 from langchain_core.documents import Document
 from langchain_core.embeddings.embeddings import Embeddings
 from langchain_core.retrievers import BaseRetriever
-from langchain_elasticsearch.retrievers import ElasticsearchRetriever
 
 from redbox.models.chain import RedboxState
 from redbox.models.file import ChunkResolution
@@ -37,7 +38,9 @@ def hit_to_doc(hit: dict[str, Any]) -> Document:
     )
 
 
-def query_to_documents(es_client: Elasticsearch, index_name: str, query: dict[str, Any]) -> list[Document]:
+def query_to_documents(
+    es_client: Union[Elasticsearch, OpenSearch], index_name: str, query: dict[str, Any]
+) -> list[Document]:
     """Runs an Elasticsearch query and returns Documents."""
     response = es_client.search(index=index_name, body=query)
     return [hit_to_doc(hit) for hit in response["hits"]["hits"]]
@@ -77,10 +80,88 @@ def filter_by_elbow(
     return _filter_by_elbow
 
 
+class OpenSearchRetriever(BaseRetriever):
+    """OpenSearch Retriever."""
+
+    es_client: OpenSearch
+    index_name: Union[str, Sequence[str]]
+    body_func: Callable[[str], Dict]
+    content_field: Optional[Union[str, Mapping[str, str]]] = None
+    document_mapper: Optional[Callable[[Mapping], Document]] = None
+
+    def __init__(self, **kwargs: Any):
+        super().__init__(**kwargs)
+        self.content_field = str(self.content_field)
+
+        if not self.document_mapper:
+            self.document_mapper = self._single_field_mapper
+        elif isinstance(self.content_field, Mapping):
+            self.document_mapper = self._multi_field_mapper
+
+    @staticmethod
+    def from_os_params(
+        self,
+        index_name: Union[str, Sequence[str]],
+        body_func: Callable[[str], Dict],
+        content_field: Optional[Union[str, Mapping[str, str]]] = None,
+        document_mapper: Optional[Callable[[Mapping], Document]] = None,
+        opensearch_url: Optional[str] = None,
+        cloud_id: Optional[str] = None,
+        api_key: Optional[str] = None,
+        username: Optional[str] = None,
+        password: Optional[str] = None,
+        params: Optional[Dict[str, Any]] = None,
+    ) -> "OpenSearchRetriever":
+        es_client = self.es_client
+        return OpenSearchRetriever(
+            es_client=es_client,
+            index_name=index_name,
+            body_func=body_func,
+            content_field=content_field,
+            document_mapper=document_mapper,
+        )
+
+    def _get_relevant_documents(
+        self, query: RedboxState, *, run_manager: CallbackManagerForRetrieverRun
+    ) -> list[Document]:  # noqa:ARG002
+        body = self.body_func(query)  # type: ignore
+
+        results = []
+
+        response = self.es_client.search(index=self.index_name, body=body, scroll="2m", size=1000, _source=True)
+
+        scroll_id = response["_scroll_id"]
+
+        while True:
+            response = self.es_client.scroll(scroll_id=scroll_id, scroll="2m")
+            hits = response["hits"]["hits"]
+
+            if not hits:
+                break
+
+            results.extend([self.document_mapper(hit) for hit in hits])
+
+            scroll_id = response["_scroll_id"]
+
+        self.es_client.clear_scroll(scroll_id=scroll_id)
+
+        return sorted(results, key=lambda result: result.metadata["index"])
+
+    def _single_field_mapper(self, hit: Mapping[str, Any]) -> Document:
+        content = hit["_source"].pop(self.content_field)
+        return Document(page_content=content, metadata=hit)
+
+    def _multi_field_mapper(self, hit: Mapping[str, Any]) -> Document:
+        self.content_field = cast(Mapping, self.content_field)
+        field = self.content_field[hit["_index"]]
+        content = hit["_source"].pop(field)
+        return Document(page_content=content, metadata=hit)
+
+
 class ParameterisedElasticsearchRetriever(BaseRetriever):
     """A modified ElasticsearchRetriever that allows configuration from RedboxState."""
 
-    es_client: Elasticsearch
+    es_client: Union[Elasticsearch, OpenSearch]
     index_name: str | Sequence[str]
     embedding_model: Embeddings
     embedding_field_name: str = "embedding"
@@ -158,6 +239,20 @@ class AllElasticsearchRetriever(ElasticsearchRetriever):
         return sorted(results, key=lambda result: result.metadata["index"])
 
 
+class AllOpensearchRetriever(OpenSearchRetriever):
+    """A modified ElasticsearchRetriever that allows retrieving whole documents."""
+
+    chunk_resolution: ChunkResolution = ChunkResolution.largest
+
+    def __init__(self, **kwargs: Any) -> None:
+        # Hack to pass validation before overwrite
+        # Partly necessary due to how .with_config() interacts with a retriever
+        kwargs["body_func"] = get_all
+        kwargs["document_mapper"] = hit_to_doc
+        super().__init__(**kwargs)
+        self.body_func = partial(get_all, self.chunk_resolution)
+
+
 class MetadataRetriever(ElasticsearchRetriever):
     """A modified ElasticsearchRetriever that retrieves query metadata without any content"""
 
@@ -186,3 +281,17 @@ class MetadataRetriever(ElasticsearchRetriever):
         ]
 
         return sorted(results, key=lambda result: result.metadata["index"])
+
+
+class OpensearchMetadataRetriever(OpenSearchRetriever):
+    """A modified ElasticsearchRetriever that retrieves query metadata without any content"""
+
+    chunk_resolution: ChunkResolution = ChunkResolution.largest
+
+    def __init__(self, **kwargs: Any) -> None:
+        # Hack to pass validation before overwrite
+        # Partly necessary due to how .with_config() interacts with a retriever
+        kwargs["body_func"] = get_metadata
+        kwargs["document_mapper"] = hit_to_doc
+        super().__init__(**kwargs)
+        self.body_func = partial(get_metadata, self.chunk_resolution)

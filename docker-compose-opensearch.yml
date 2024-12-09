@@ -1,0 +1,177 @@
+services:
+  unstructured:
+    image: quay.io/unstructured-io/unstructured-api:latest
+    ports:
+      - 8000:8000
+    networks:
+      - redbox-app-network
+  django-app:
+    image: django-app:latest
+    build:
+      context: .
+      dockerfile: ./django_app/Dockerfile
+    depends_on:
+      db:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+      opensearch:
+        condition: service_healthy
+    networks:
+      - redbox-app-network
+    env_file:
+      - path: tests/.env.integration
+        required: false
+      - path: .env
+        required: false
+    volumes:
+      - /app/django_app/frontend/node_modules
+      - ./django_app:/app/django_app/
+    ports:
+      - "8090:8090"
+    healthcheck:
+      test: curl --fail http://localhost:8090/health/ || exit 1
+      interval: 5s
+      timeout: 30s
+      retries: 24
+      start_period: 60s
+  db:
+    image: postgres:13
+    env_file:
+      - path: tests/.env.integration
+        required: false
+      - path: .env
+        required: false
+    volumes:
+      - local_postgres_data:/var/lib/postgresql/data:Z
+    networks:
+      - redbox-app-network
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready", "-U", "redbox-core", "-d", "db_prod" ]
+      interval: 5s
+      timeout: 30s
+      retries: 24
+      start_period: 30s
+  requirements:
+    image: python:3.12
+    profiles:
+      - utils
+    volumes:
+      - ./:/app/:z
+  worker:
+    image: redbox-worker:latest
+    build:
+      context: .
+      dockerfile: django_app/Dockerfile
+    command: "venv/bin/django-admin qcluster"
+    env_file:
+      - path: tests/.env.integration
+        required: false
+      - path: .env
+        required: false
+    depends_on:
+      unstructured:
+        condition: service_started
+      opensearch:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+      django-app:
+        condition: service_healthy
+      db:
+        condition: service_healthy
+    networks:
+      - redbox-app-network
+    restart: unless-stopped
+  minio:
+    image: minio/minio
+    expose:
+      - "9000"
+      - "9001"
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      - MINIO_ACCESS_KEY=minioadmin
+      - MINIO_SECRET_KEY=minioadmin
+    command: server --console-address ":9001" /data
+    networks:
+      - redbox-app-network
+    volumes:
+      - ./data/objectstore:/data
+    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD", "mc", "ready", "local" ]
+      interval: 5s
+      timeout: 30s
+      retries: 24
+      start_period: 30s
+
+  opensearch:
+    image: opensearchproject/opensearch:2.9.0
+    environment:
+      - discovery.type=single-node
+      - OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m
+      - plugins.security.disabled=true  # Disable security plugin for simplicity
+    volumes:
+      - opensearch-data:/usr/share/opensearch/data
+    ports:
+      - "9200:9200"
+    networks:
+      - redbox-app-network
+    restart: unless-stopped
+    healthcheck:
+      test: curl --fail http://localhost:9200/_cluster/health || exit 1
+      interval: 5s
+      timeout: 30s
+      retries: 24
+      start_period: 60s
+  kibana:
+    image: kibana:8.12.0
+    ports:
+      - 5601:5601
+
+  opensearch-dashboards:
+    image: opensearchproject/opensearch-dashboards:2.9.0
+    environment:
+      - OPENSEARCH_HOSTS=https://opensearch:9200
+    ports:
+      - "5601:5601"
+    networks:
+      - redbox-app-network
+    depends_on:
+      opensearch:
+        condition: service_healthy
+    restart: unless-stopped
+
+  embeddings:
+    image: localai/localai:v2.18.1-aio-cpu #localai/localai:v2.18.1 should allow use of sentencetransformers backend
+    expose:
+      - "8080"
+    ports:
+      - "8080:8080"
+    environment:
+      - MODELS=/aio/cpu/embeddings.yaml #Use defaults embedding model for aio image. Only aio images available in ARM architecture
+      - MINIO_SECRET_KEY=minioadmin
+      - DEBUG=true
+    networks:
+      - redbox-app-network
+    volumes:
+      - ./data/embeddings/models:/models:cached
+      - ./data/embeddings/config:/config
+    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8080/readyz" ]
+      interval: 1m
+      timeout: 20m
+      retries: 5
+
+networks:
+  redbox-app-network:
+    driver: bridge
+
+volumes:
+  opensearch-data:
+  local_postgres_data: {}

@@ -1,14 +1,17 @@
 import logging
 import os
 from functools import cache, lru_cache
-from typing import Literal
+from typing import Literal, Union
+from urllib.parse import urlparse
 
 import boto3
 from elasticsearch import Elasticsearch
 from opensearchpy import OpenSearch, RequestsHttpConnection
-from pydantic import BaseModel
+from pydantic import BaseModel, computed_field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from langchain.globals import set_debug
+
+from requests_aws4auth import AWS4Auth
 
 logging.basicConfig(level=os.environ.get("LOG_LEVEL", "INFO"))
 logger = logging.getLogger()
@@ -18,8 +21,38 @@ class OpenSearchSettings(BaseModel):
     """settings required for a aws/opensearch"""
 
     model_config = SettingsConfigDict(frozen=True)
-
     collection_endpoint: str
+
+    @computed_field
+    @property
+    def user(self) -> str:
+        return urlparse(self.collection_endpoint).username
+
+    @computed_field
+    @property
+    def password(self) -> str:
+        return urlparse(self.collection_endpoint).password
+
+    @computed_field
+    @property
+    def host(self) -> str:
+        hostname = urlparse(self.collection_endpoint).hostname
+        if hostname:
+            return hostname
+        return self.collection_endpoint
+
+    @computed_field
+    @property
+    def port(self) -> int:
+        return urlparse(self.collection_endpoint).port or "443"
+
+    @computed_field
+    @property
+    def opensearch_url(self) -> str:
+        url = urlparse(self.collection_endpoint)
+        if url.port is not None:
+            return f"{self.host}:{self.port}"
+        return self.host
 
 
 class ElasticLocalSettings(BaseModel):
@@ -139,8 +172,9 @@ class Settings(BaseSettings):
         return self.elastic_root_index + "-chunk-current"
 
     @lru_cache(1)
-    def elasticsearch_client(self) -> Elasticsearch:
+    def elasticsearch_client(self) -> Union[Elasticsearch, OpenSearch]:
         if isinstance(self.elastic, ElasticLocalSettings):
+            logger.info("initiating ElasticLocal: host=%s, port=%s", self.elastic.host, self.elastic.port)
             client = Elasticsearch(
                 hosts=[
                     {
@@ -151,28 +185,69 @@ class Settings(BaseSettings):
                 ],
                 basic_auth=(self.elastic.user, self.elastic.password),
             )
+            client = client.options(request_timeout=30, retry_on_timeout=True, max_retries=3)
+
+        elif isinstance(self.elastic, ElasticCloudSettings):
+            logger.info("initiating ElasticCloud")
+            client = Elasticsearch(cloud_id=self.elastic.cloud_id, api_key=self.elastic.api_key)
+            client = client.options(request_timeout=30, retry_on_timeout=True, max_retries=3)
 
         elif isinstance(self.elastic, OpenSearchSettings):
-            client = OpenSearch(
-                hosts=[{"host": self.elastic.collection_endpoint, "port": 443}],
-                use_ssl=True,
-                verify_certs=True,
-                connection_class=RequestsHttpConnection,
-                pool_maxsize=100,
-            )
+            if self.elastic.user or self.elastic.password:
+                logger.info(
+                    "initiating OpenSearch with password: host=%s, port=%s", self.elastic.host, self.elastic.port
+                )
+                client = OpenSearch(
+                    hosts=[{"host": self.elastic.host, "port": self.elastic.port}],
+                    http_auth=(self.elastic.user, self.elastic.password),
+                    use_ssl=False,
+                    connection_class=RequestsHttpConnection,
+                    retry_on_timeout=True,
+                    timeout=120,
+                )
+            else:
+                logger.info(
+                    "initiating passwordless OpenSearch: host=%s, port=%s", self.elastic.host, self.elastic.port
+                )
+                credentials = boto3.Session().get_credentials()
+                awsauth = AWS4Auth(
+                    credentials.access_key,
+                    credentials.secret_key,
+                    self.aws_region,
+                    "es",
+                    session_token=credentials.token,
+                )
+
+                client = OpenSearch(
+                    hosts=[{"host": self.elastic.host, "port": self.elastic.port}],
+                    http_auth=awsauth,
+                    use_ssl=True,
+                    verify_certs=True,
+                    http_compress=True,  # enables gzip compression for request bodies
+                    connection_class=RequestsHttpConnection,
+                    retry_on_timeout=True,
+                    pool_maxsize=100,
+                    timeout=120,
+                )
 
         else:
-            client = Elasticsearch(cloud_id=self.elastic.cloud_id, api_key=self.elastic.api_key)
+            raise NotImplementedError
 
         if not client.indices.exists_alias(name=self.elastic_alias):
             chunk_index = f"{self.elastic_root_index}-chunk"
-            client.options(ignore_status=[400]).indices.create(index=chunk_index)
-            client.indices.put_alias(index=chunk_index, name=self.elastic_alias)
+            # Ensure index creation does not raise an error if it already exists.
+            try:
+                client.indices.create(
+                    index=chunk_index, ignore=400
+                )  # 400 is ignored to avoid index-already-exists errors
+            except Exception as e:
+                logger.error(f"Failed to create index {chunk_index}: {e}")
 
-        if not client.indices.exists(index=self.elastic_chat_mesage_index):
-            client.indices.create(index=self.elastic_chat_mesage_index)
+            alias = f"{self.elastic_root_index}-chunk-current"
+            if not client.indices.exists_alias(name=alias):
+                client.indices.put_alias(index=chunk_index, name=alias)
 
-        return client.options(request_timeout=30, retry_on_timeout=True, max_retries=3)
+        return client
 
     def s3_client(self):
         if self.object_store == "minio":
