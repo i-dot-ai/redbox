@@ -68,46 +68,6 @@ def structure_documents_by_file_name(docs: list[Document]) -> DocumentState:
     return result
 
 
-def documents_are_consecutive(first: Document, second: Document) -> bool:
-    """are the two documents consecutive, i.e. do they appear next to each other in the original text?"""
-    if first.metadata["uri"] is None:
-        return True
-
-    if first.metadata["uri"] != second.metadata["uri"]:
-        return False
-
-    return abs(first.metadata["index"] - second.metadata["index"]) <= 1
-
-
-def group_and_sort_documents(group: list[Document]) -> list[list[Document]]:
-    """Breaks a group into blocks of ordered consecutive indices.
-
-    The group is intended to be a single file_name.
-    """
-    if not group:
-        return []
-
-    # Process consecutive blocks and sort them by index
-    consecutive_blocks = []
-    temp_block = [group[0]]
-
-    for doc in group[1:]:
-        if documents_are_consecutive(temp_block[-1], doc):
-            temp_block.append(doc)
-        else:
-            # Append the current block
-            consecutive_blocks.append(temp_block)
-            temp_block = [doc]
-
-    # Append the last block
-    consecutive_blocks.append(temp_block)
-
-    # Sort each block by index
-    sorted_blocks = [sorted(block, key=lambda d: d.metadata["index"]) for block in consecutive_blocks]
-
-    return sorted_blocks
-
-
 def flatten_document_state(documents: DocumentState | None) -> list[Document]:
     """Flattens a DocumentState into a list of Documents."""
     if not documents:

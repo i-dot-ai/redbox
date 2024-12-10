@@ -3,7 +3,6 @@ from enum import StrEnum
 from pydantic import BaseModel
 
 
-
 class RedboxEventType(StrEnum):
     on_metadata_generation = "on_metadata_generation"
     response_tokens = "response_tokens"
