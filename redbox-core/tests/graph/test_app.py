@@ -251,49 +251,6 @@ TEST_CASES = [
         ),
         generate_test_cases(
             query=RedboxQuery(
-                question="@search What is AI?",
-                s3_keys=["s3_key"],
-                user_uuid=uuid4(),
-                chat_history=[],
-                permitted_s3_keys=["s3_key"],
-            ),
-            test_data=[
-                RedboxTestData(
-                    number_of_docs=1,
-                    tokens_in_all_docs=10000,
-                    llm_responses=["Condense response", "The cake is a lie"],
-                    expected_route=ChatRoute.search,
-                ),
-                RedboxTestData(
-                    number_of_docs=5,
-                    tokens_in_all_docs=10000,
-                    llm_responses=["Condense response", "The cake is a lie"],
-                    expected_route=ChatRoute.search,
-                ),
-            ],
-            test_id="Search",
-        ),
-        generate_test_cases(
-            query=RedboxQuery(
-                question="@search What is AI?",
-                s3_keys=[],
-                user_uuid=uuid4(),
-                chat_history=[],
-                permitted_s3_keys=["s3_key"],
-            ),
-            test_data=[
-                RedboxTestData(
-                    number_of_docs=1,
-                    tokens_in_all_docs=10000,
-                    llm_responses=["Condense response", "The cake is a lie"],
-                    expected_route=ChatRoute.search,
-                    s3_keys=["s3_key"],
-                ),
-            ],
-            test_id="Search, nothing selected",
-        ),
-        generate_test_cases(
-            query=RedboxQuery(
                 question="@nosuchkeyword What is AI?",
                 s3_keys=[],
                 user_uuid=uuid4(),

@@ -29,7 +29,7 @@ from redbox.graph.nodes.sends import build_document_chunk_send, build_document_g
 from redbox.models.chain import RedboxState
 from redbox.models.chat import ChatRoute, ErrorRoute
 from redbox.models.graph import ROUTABLE_KEYWORDS, RedboxActivityEvent
-from redbox.transform import structure_documents_by_file_name, structure_documents_by_group_and_indices
+from redbox.transform import structure_documents_by_file_name
 
 
 def get_self_route_graph(retriever: VectorStoreRetriever, prompt_set: PromptSet, debug: bool = False):
@@ -105,42 +105,6 @@ def get_chat_graph(
     builder.add_edge(START, "p_set_chat_route")
     builder.add_edge("p_set_chat_route", "p_chat")
     builder.add_edge("p_chat", END)
-
-    return builder.compile(debug=debug)
-
-
-def get_search_graph(
-    retriever: VectorStoreRetriever,
-    prompt_set: PromptSet = PromptSet.Search,
-    debug: bool = False,
-    final_sources: bool = True,
-    final_response: bool = True,
-) -> CompiledGraph:
-    """Creates a subgraph for retrieval augmented generation (RAG)."""
-    builder = StateGraph(RedboxState)
-
-    # Processes
-    builder.add_node("p_set_search_route", build_set_route_pattern(route=ChatRoute.search))
-    builder.add_node("p_condense_question", build_chat_pattern(prompt_set=PromptSet.CondenseQuestion))
-    builder.add_node(
-        "p_retrieve_docs",
-        build_retrieve_pattern(
-            retriever=retriever,
-            structure_func=structure_documents_by_group_and_indices,
-            final_source_chain=final_sources,
-        ),
-    )
-    builder.add_node(
-        "p_stuff_docs",
-        build_stuff_pattern(prompt_set=prompt_set, final_response_chain=final_response),
-    )
-
-    # Edges
-    builder.add_edge(START, "p_set_search_route")
-    builder.add_edge("p_set_search_route", "p_condense_question")
-    builder.add_edge("p_condense_question", "p_retrieve_docs")
-    builder.add_edge("p_retrieve_docs", "p_stuff_docs")
-    builder.add_edge("p_stuff_docs", END)
 
     return builder.compile(debug=debug)
 
@@ -363,7 +327,6 @@ def get_root_graph(
 
     # Subgraphs
     chat_subgraph = get_chat_graph(debug=debug)
-    rag_subgraph = get_search_graph(retriever=parameterised_retriever, debug=debug)
     cwd_subgraph = get_chat_with_documents_graph(
         all_chunks_retriever=all_chunks_retriever,
         parameterised_retriever=parameterised_retriever,
@@ -372,7 +335,6 @@ def get_root_graph(
     metadata_subgraph = get_retrieve_metadata_graph(metadata_retriever=metadata_retriever, debug=debug)
 
     # Processes
-    builder.add_node("p_search", rag_subgraph)
     builder.add_node("p_chat", chat_subgraph)
     builder.add_node("p_chat_with_documents", cwd_subgraph)
     builder.add_node("p_retrieve_metadata", metadata_subgraph)
@@ -390,7 +352,6 @@ def get_root_graph(
         "d_keyword_exists",
         build_keyword_detection_conditional(*ROUTABLE_KEYWORDS.keys()),
         {
-            ChatRoute.search: "p_search",
             "DEFAULT": "d_docs_selected",
         },
     )
@@ -402,7 +363,6 @@ def get_root_graph(
             False: "p_chat",
         },
     )
-    builder.add_edge("p_search", END)
     builder.add_edge("p_chat", END)
     builder.add_edge("p_chat_with_documents", END)
 

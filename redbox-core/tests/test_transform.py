@@ -1,7 +1,6 @@
 import copy
-import itertools
 from datetime import UTC, datetime
-from uuid import NAMESPACE_DNS, UUID, uuid5
+from uuid import NAMESPACE_DNS, uuid5
 
 import pytest
 from langchain_core.documents.base import Document
@@ -16,7 +15,6 @@ from redbox.transform import (
     merge_documents,
     sort_documents,
     structure_documents_by_file_name,
-    structure_documents_by_group_and_indices,
     to_request_metadata,
 )
 
@@ -214,64 +212,6 @@ def test_structure_documents_by_file_name():
     result = structure_documents_by_file_name(docs=docs)
 
     assert result == expected
-
-
-@pytest.mark.parametrize(
-    ("n_parent_files", "n_groups", "n_per_group"),
-    [
-        (1, 1, 1),
-        (2, 2, 2),
-        (3, 3, 3),
-    ],
-)
-def test_structure_documents_by_group_and_indices(n_parent_files: int, n_groups: int, n_per_group: int):
-    def generate_test_groups(n_parent_files: int, n_groups: int, n_per_group: int) -> list[Document]:
-        """Creates interleaved groups to similate sorted documents.
-
-        For example, two parent files in two groups with two docs per group
-        will produce:
-
-        [
-            Document(s3_key="1", index=1),
-            Document(s3_key="1", index=2),
-            Document(s3_key="2", index=1),
-            Document(s3_key="2", index=2),
-            Document(s3_key="1", index=3),
-            Document(s3_key="1", index=4),
-            Document(s3_key="2", index=3),
-            Document(s3_key="2", index=4)
-        ]
-        """
-        all_docs = []
-        index_counters = {f"s3_key_{file_i + 1}": 1 for file_i in range(n_parent_files)}
-
-        for _, file_i in itertools.product(range(n_groups), range(n_parent_files)):
-            s3_key = f"s3_key_{file_i + 1}"
-            generated_docs = list(
-                generate_docs(s3_key=s3_key, total_tokens=1000, number_of_docs=n_per_group, chunk_resolution="normal")
-            )
-
-            for doc in generated_docs:
-                doc.metadata["index"] = index_counters[s3_key]
-                index_counters[s3_key] += 1
-                all_docs.append(doc)
-
-        return all_docs
-
-    docs = generate_test_groups(n_parent_files=n_parent_files, n_groups=n_groups, n_per_group=n_per_group)
-    structured_docs = structure_documents_by_group_and_indices(docs)
-
-    assert isinstance(structured_docs, DocumentState)
-    assert len(structured_docs.groups) == n_parent_files * n_groups
-
-    for group_uuid, group_docs in structured_docs.groups.items():
-        assert isinstance(group_uuid, UUID)
-        assert isinstance(group_docs, dict)
-        assert len(group_docs) == n_per_group
-
-        for doc in group_docs.values():
-            assert doc.metadata["uuid"] in group_docs
-            assert group_docs[doc.metadata["uuid"]] == doc
 
 
 def test_merge_documents():
