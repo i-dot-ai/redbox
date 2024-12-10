@@ -1,6 +1,5 @@
 from typing import Callable
 
-from langchain_core.messages import AIMessage
 from langgraph.constants import Send
 
 from redbox.models.chain import DocumentState, RedboxState
@@ -42,19 +41,3 @@ def build_document_chunk_send(target: str) -> Callable[[RedboxState], list[Send]
         return [Send(node=target, arg=state) for state in chunk_send_states]
 
     return _chunk_send
-
-
-def build_tool_send(target: str) -> Callable[[RedboxState], list[Send]]:
-    """Builds Sends per tool call."""
-
-    def _tool_send(state: RedboxState) -> list[Send]:
-        tool_send_states: list[RedboxState] = [
-            _copy_state(
-                state,
-                messages=[AIMessage(content=state.last_message.content, tool_calls=[tool_call])],
-            )
-            for tool_call in state.last_message.tool_calls
-        ]
-        return [Send(node=target, arg=state) for state in tool_send_states]
-
-    return _tool_send

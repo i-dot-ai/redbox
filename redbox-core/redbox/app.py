@@ -2,7 +2,6 @@ from logging import getLogger
 from typing import Literal
 
 from langchain_core.embeddings import Embeddings
-from langchain_core.tools import StructuredTool
 from langchain_core.vectorstores import VectorStoreRetriever
 
 from redbox.chains.components import (
@@ -11,16 +10,13 @@ from redbox.chains.components import (
     get_metadata_retriever,
     get_parameterised_retriever,
 )
-from redbox.graph.nodes.tools import build_govuk_search_tool, build_search_documents_tool, build_search_wikipedia_tool
 from redbox.graph.root import (
-    get_agentic_search_graph,
     get_chat_with_documents_graph,
     get_root_graph,
     get_chat_with_documents_large_graph,
 )
 from redbox.models.chain import RedboxState
 from redbox.models.chat import ChatRoute
-from redbox.models.file import ChunkResolution
 from redbox.models.graph import (
     FINAL_RESPONSE_TAG,
     ROUTABLE_KEYWORDS,
@@ -58,29 +54,10 @@ class Redbox:
         self.metadata_retriever = metadata_retriever or get_metadata_retriever(_env)
         self.embedding_model = embedding_model or get_embeddings(_env)
 
-        # Tools
-
-        search_documents = build_search_documents_tool(
-            es_client=_env.elasticsearch_client(),
-            index_name=_env.elastic_chunk_alias,
-            embedding_model=self.embedding_model,
-            embedding_field_name=_env.embedding_document_field_name,
-            chunk_resolution=ChunkResolution.normal,
-        )
-        search_wikipedia = build_search_wikipedia_tool()
-        search_govuk = build_govuk_search_tool()
-
-        self.tools: dict[str, StructuredTool] = {
-            "_search_documents": search_documents,
-            "_search_govuk": search_govuk,
-            "_search_wikipedia": search_wikipedia,
-        }
-
         self.graph = get_root_graph(
             all_chunks_retriever=self.all_chunks_retriever,
             parameterised_retriever=self.parameterised_retriever,
             metadata_retriever=self.metadata_retriever,
-            tools=self.tools,
             debug=debug,
         )
 
@@ -142,13 +119,11 @@ class Redbox:
     def get_available_keywords(self) -> dict[ChatRoute, str]:
         return ROUTABLE_KEYWORDS
 
-    def draw(self, output_path=None, graph_to_draw: Literal["root", "search/agentic", "chat_with_documents"] = "root"):
+    def draw(self, output_path=None, graph_to_draw: Literal["root", "chat_with_documents"] = "root"):
         from langchain_core.runnables.graph import MermaidDrawMethod
 
         if graph_to_draw == "root":
             graph = self.graph.get_graph()
-        elif graph_to_draw == "search/agentic":
-            graph = get_agentic_search_graph(self.tools).get_graph()
         elif graph_to_draw == "chat/documents":
             graph = get_chat_with_documents_graph(self.all_chunks_retriever, self.parameterised_retriever).get_graph()
         elif graph_to_draw == "chat/documents/large":

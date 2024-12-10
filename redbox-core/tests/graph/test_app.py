@@ -1,23 +1,18 @@
 import copy
-from typing import Any
 from uuid import uuid4
 
 import pytest
 from langchain_core.documents import Document
 from langchain_core.messages import AIMessage
-from langchain_core.tools import tool
 from pytest_mock import MockerFixture
 from tiktoken.core import Encoding
 
 from redbox import Redbox
 from redbox.models.chain import (
     AISettings,
-    Citation,
     RedboxQuery,
     RedboxState,
     RequestMetadata,
-    Source,
-    StructuredResponseWithCitations,
     metadata_reducer,
 )
 from redbox.models.chat import ChatRoute, ErrorRoute
@@ -33,7 +28,6 @@ from redbox.test.data import (
     mock_metadata_retriever,
     mock_parameterised_retriever,
 )
-from redbox.transform import structure_documents_by_group_and_indices
 
 LANGGRAPH_DEBUG = True
 
@@ -300,110 +294,6 @@ TEST_CASES = [
         ),
         generate_test_cases(
             query=RedboxQuery(
-                question="@gadget What is AI?",
-                s3_keys=["s3_key"],
-                user_uuid=uuid4(),
-                chat_history=[],
-                permitted_s3_keys=["s3_key"],
-            ),
-            test_data=[
-                RedboxTestData(
-                    number_of_docs=1,
-                    tokens_in_all_docs=10000,
-                    llm_responses=[
-                        AIMessage(
-                            content="",
-                            additional_kwargs={
-                                "tool_calls": [
-                                    {
-                                        "id": "call_e4003b",
-                                        "function": {"arguments": '{\n  "query": "ai"\n}', "name": "_search_documents"},
-                                        "type": "function",
-                                    }
-                                ]
-                            },
-                        ),
-                        StructuredResponseWithCitations(answer="AI is a lie", citations=[]).model_dump_json(),
-                    ],
-                    expected_text="AI is a lie",
-                    expected_route=ChatRoute.gadget,
-                ),
-                RedboxTestData(
-                    number_of_docs=1,
-                    tokens_in_all_docs=10000,
-                    llm_responses=[
-                        AIMessage(
-                            content="",
-                            additional_kwargs={
-                                "tool_calls": [
-                                    {
-                                        "id": "call_e4003b",
-                                        "function": {"arguments": '{\n  "query": "ai"\n}', "name": "_search_documents"},
-                                        "type": "function",
-                                    }
-                                ]
-                            },
-                        ),
-                        StructuredResponseWithCitations(
-                            answer="AI is a lie, here is some more blurb about why. It's hard to believe but we're mostly making this up",
-                            citations=[
-                                Citation(
-                                    text_in_answer="AI is a lie I made up",
-                                    sources=[
-                                        Source(
-                                            source="SomeAIGuy",
-                                            document_name="http://localhost/someaiguy.html",
-                                            highlighted_text_in_source="I lied about AI",
-                                            page_numbers=[1],
-                                        )
-                                    ],
-                                )
-                            ],
-                        ).model_dump_json(),
-                    ],
-                    expected_text="AI is a lie, here is some more blurb about why. It's hard to believe but we're mostly making this up",
-                    expected_citations=[],
-                    expected_route=ChatRoute.gadget,
-                ),
-            ],
-            test_id="Agentic search",
-        ),
-        generate_test_cases(
-            query=RedboxQuery(
-                question="@gadget What is AI?",
-                s3_keys=[],
-                user_uuid=uuid4(),
-                chat_history=[],
-                permitted_s3_keys=["s3_key"],
-            ),
-            test_data=[
-                RedboxTestData(
-                    number_of_docs=1,
-                    tokens_in_all_docs=10000,
-                    llm_responses=[
-                        AIMessage(
-                            content="",
-                            additional_kwargs={
-                                "tool_calls": [
-                                    {
-                                        "id": "call_e4003b",
-                                        "function": {"arguments": '{\n  "query": "ai"\n}', "name": "_search_documents"},
-                                        "type": "function",
-                                    }
-                                ]
-                            },
-                        ),
-                        StructuredResponseWithCitations(answer="AI is a lie", citations=[]).model_dump_json(),
-                    ],
-                    expected_text="AI is a lie",
-                    expected_route=ChatRoute.gadget,
-                    s3_keys=["s3_key"],
-                ),
-            ],
-            test_id="Agentic search, nothing selected",
-        ),
-        generate_test_cases(
-            query=RedboxQuery(
                 question="@nosuchkeyword What is AI?",
                 s3_keys=[],
                 user_uuid=uuid4(),
@@ -438,42 +328,6 @@ TEST_CASES = [
             ],
             test_id="No Such Keyword with docs",
         ),
-        generate_test_cases(
-            query=RedboxQuery(
-                question="@gadget Tell me about travel advice to cuba",
-                s3_keys=[],
-                user_uuid=uuid4(),
-                chat_history=[],
-                permitted_s3_keys=["s3_key"],
-            ),
-            test_data=[
-                RedboxTestData(
-                    number_of_docs=1,
-                    tokens_in_all_docs=10000,
-                    llm_responses=[
-                        AIMessage(
-                            content="",
-                            additional_kwargs={
-                                "tool_calls": [
-                                    {
-                                        "id": "call_e4003b",
-                                        "function": {
-                                            "arguments": '{\n  "query": "travel advice to cuba"\n}',
-                                            "name": "_search_govuk",
-                                        },
-                                        "type": "function",
-                                    }
-                                ]
-                            },
-                        ),
-                        StructuredResponseWithCitations(answer="AI is a lie", citations=[]).model_dump_json(),
-                    ],
-                    expected_text="AI is a lie",
-                    expected_route=ChatRoute.gadget,
-                ),
-            ],
-            test_id="Agentic govuk search",
-        ),
     ]
     for test_case in generated_cases
 ]
@@ -487,19 +341,6 @@ async def test_streaming(test: RedboxChatTestCase, env: Settings, mocker: Mocker
 
     # Mock the LLM and relevant tools
     llm = GenericFakeChatModelWithTools(messages=iter(test_case.test_data.llm_responses))
-
-    @tool
-    def _search_documents(query: str) -> dict[str, Any]:
-        """Tool to search documents."""
-        return {"documents": structure_documents_by_group_and_indices(test_case.docs)}
-
-    @tool
-    def _search_govuk(query: str) -> dict[str, Any]:
-        """Tool to search gov.uk for travel advice and other government information."""
-        return {"documents": structure_documents_by_group_and_indices(test_case.docs)}
-
-    mocker.patch("redbox.app.build_search_documents_tool", return_value=_search_documents)
-    mocker.patch("redbox.app.build_govuk_search_tool", return_value=_search_govuk)
     mocker.patch("redbox.graph.nodes.processes.get_chat_llm", return_value=llm)
 
     # Instantiate app
@@ -604,6 +445,6 @@ def test_get_available_keywords(tokeniser: Encoding, env: Settings):
         env=env,
         debug=LANGGRAPH_DEBUG,
     )
-    keywords = {ChatRoute.search, ChatRoute.gadget}
+    keywords = {ChatRoute.search}
 
     assert keywords == set(app.get_available_keywords().keys())
