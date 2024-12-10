@@ -1,6 +1,6 @@
 import itertools
 from typing import Iterable
-from uuid import NAMESPACE_DNS, UUID, uuid5
+from uuid import NAMESPACE_DNS, uuid5
 
 import tiktoken
 from langchain_core.callbacks.manager import dispatch_custom_event
@@ -68,22 +68,6 @@ def structure_documents_by_file_name(docs: list[Document]) -> DocumentState:
     return result
 
 
-def create_group_uuid(file_name: str, indices: list[int]) -> UUID:
-    """Uses a file name and list of indices to generate a deterministic UUID."""
-    unique_str = file_name + "-" + ",".join(map(str, sorted(indices)))
-    return uuid5(NAMESPACE_DNS, unique_str)
-
-
-def create_group_uuid_for_group(documents: list[Document]) -> UUID:
-    """create a uuid for a DocumentGroup"""
-    if not documents:
-        raise ValueError("at least one document is required")
-
-    file_name = documents[0].metadata["uri"]
-    group_indices = [d.metadata["index"] for d in documents]
-    return create_group_uuid(file_name, group_indices)
-
-
 def documents_are_consecutive(first: Document, second: Document) -> bool:
     """are the two documents consecutive, i.e. do they appear next to each other in the original text?"""
     if first.metadata["uri"] is None:
@@ -122,27 +106,6 @@ def group_and_sort_documents(group: list[Document]) -> list[list[Document]]:
     sorted_blocks = [sorted(block, key=lambda d: d.metadata["index"]) for block in consecutive_blocks]
 
     return sorted_blocks
-
-
-def structure_documents_by_group_and_indices(docs: list[Document]) -> DocumentState:
-    """Structures a list of documents by blocks of consecutive indices in group_uuids.
-
-    Assumes a sorted list was passed where blocks of group_uuids with consecutive
-    indices are already together, as per redbox.transform.sort_documents().
-
-    The group_uuid is generated deterministically based on the file_name and group indices.
-
-    The document_uuid is taken from the Document metadata directly.
-    """
-    result = DocumentState()
-
-    groups = group_and_sort_documents(docs)
-
-    result.groups = {
-        create_group_uuid_for_group(group): {doc.metadata["uuid"]: doc for doc in group} for group in groups
-    }
-
-    return result
 
 
 def flatten_document_state(documents: DocumentState | None) -> list[Document]:
