@@ -249,7 +249,6 @@ class PromptSet(StrEnum):
     Chat = "chat"
     ChatwithDocs = "chat_with_docs"
     ChatwithDocsMapReduce = "chat_with_docs_map_reduce"
-    Search = "search"
     SelfRoute = "self_route"
     CondenseQuestion = "condense_question"
 
@@ -264,9 +263,6 @@ def get_prompts(state: RedboxState, prompt_set: PromptSet) -> tuple[str, str]:
     elif prompt_set == PromptSet.ChatwithDocsMapReduce:
         system_prompt = state.request.ai_settings.chat_map_system_prompt
         question_prompt = state.request.ai_settings.chat_map_question_prompt
-    elif prompt_set == PromptSet.Search:
-        system_prompt = state.request.ai_settings.retrieval_system_prompt
-        question_prompt = state.request.ai_settings.retrieval_question_prompt
     elif prompt_set == PromptSet.SelfRoute:
         system_prompt = state.request.ai_settings.self_route_system_prompt
         question_prompt = state.request.ai_settings.retrieval_question_prompt
