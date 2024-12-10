@@ -16,7 +16,7 @@ from langchain_openai.embeddings import AzureOpenAIEmbeddings, OpenAIEmbeddings
 
 from redbox.chains.parser import StreamingJsonOutputParser
 from redbox.models.settings import ChatLLMBackend, Settings
-from redbox.retriever import AllElasticsearchRetriever, ParameterisedElasticsearchRetriever, MetadataRetriever
+from redbox.retriever import AllElasticsearchRetriever, MetadataRetriever
 from langchain_community.embeddings import BedrockEmbeddings
 from langchain.chat_models import init_chat_model
 from redbox.models.chain import StructuredResponseWithCitations
@@ -86,21 +86,6 @@ def get_all_chunks_retriever(env: Settings) -> ElasticsearchRetriever:
     return AllElasticsearchRetriever(
         es_client=env.elasticsearch_client(),
         index_name=env.elastic_chunk_alias,
-    )
-
-
-def get_parameterised_retriever(env: Settings, embeddings: Embeddings | None = None):
-    """Creates an Elasticsearch retriever runnable.
-
-    Runnable takes input of a dict keyed to question, file_uuids and user_uuid.
-
-    Runnable returns a list of Chunks.
-    """
-    return ParameterisedElasticsearchRetriever(
-        es_client=env.elasticsearch_client(),
-        index_name=env.elastic_chunk_alias,
-        embedding_model=embeddings or get_embeddings(env),
-        embedding_field_name=env.embedding_document_field_name,
     )
 
 
