@@ -196,7 +196,6 @@ def get_chat_with_documents_large_graph():
 
 def get_chat_with_documents_graph(
     all_chunks_retriever: VectorStoreRetriever,
-    parameterised_retriever: VectorStoreRetriever,
     debug: bool = False,
 ) -> CompiledGraph:
     """Creates a subgraph for chatting with documents."""
@@ -226,7 +225,7 @@ def get_chat_with_documents_graph(
     )
     builder.add_node(
         "p_answer_or_decide_route",
-        get_self_route_graph(parameterised_retriever, PromptSet.SelfRoute),
+        get_self_route_graph(all_chunks_retriever, PromptSet.SelfRoute),
     )
     builder.add_node(
         "p_retrieve_all_chunks",
@@ -318,7 +317,6 @@ def get_retrieve_metadata_graph(metadata_retriever: VectorStoreRetriever, debug:
 # Root graph
 def get_root_graph(
     all_chunks_retriever: VectorStoreRetriever,
-    parameterised_retriever: VectorStoreRetriever,
     metadata_retriever: VectorStoreRetriever,
     debug: bool = False,
 ) -> CompiledGraph:
@@ -329,7 +327,6 @@ def get_root_graph(
     chat_subgraph = get_chat_graph(debug=debug)
     cwd_subgraph = get_chat_with_documents_graph(
         all_chunks_retriever=all_chunks_retriever,
-        parameterised_retriever=parameterised_retriever,
         debug=debug,
     )
     metadata_subgraph = get_retrieve_metadata_graph(metadata_retriever=metadata_retriever, debug=debug)

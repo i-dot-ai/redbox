@@ -26,7 +26,6 @@ from redbox.test.data import (
     generate_test_cases,
     mock_all_chunks_retriever,
     mock_metadata_retriever,
-    mock_parameterised_retriever,
 )
 
 LANGGRAPH_DEBUG = True
@@ -303,7 +302,6 @@ async def test_streaming(test: RedboxChatTestCase, env: Settings, mocker: Mocker
     # Instantiate app
     app = Redbox(
         all_chunks_retriever=mock_all_chunks_retriever(test_case.docs),
-        parameterised_retriever=mock_parameterised_retriever(test_case.docs),
         metadata_retriever=mock_metadata_retriever(
             [d for d in test_case.docs if d.metadata["uri"] in test_case.query.s3_keys]
         ),
@@ -397,7 +395,6 @@ async def test_streaming(test: RedboxChatTestCase, env: Settings, mocker: Mocker
 def test_get_available_keywords(tokeniser: Encoding, env: Settings):
     app = Redbox(
         all_chunks_retriever=mock_all_chunks_retriever([]),
-        parameterised_retriever=mock_parameterised_retriever([]),
         metadata_retriever=mock_metadata_retriever([]),
         env=env,
         debug=LANGGRAPH_DEBUG,
