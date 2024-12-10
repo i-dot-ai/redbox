@@ -11,7 +11,7 @@ from langchain_elasticsearch import ElasticsearchStore
 from tiktoken.core import Encoding
 
 from redbox.models.settings import Settings
-from redbox.retriever import AllElasticsearchRetriever, MetadataRetriever, ParameterisedElasticsearchRetriever
+from redbox.retriever import AllElasticsearchRetriever, MetadataRetriever
 from redbox.test.data import RedboxChatTestCase
 from tests.retriever.data import ALL_CHUNKS_RETRIEVER_CASES, METADATA_RETRIEVER_CASES, PARAMETERISED_RETRIEVER_CASES
 
@@ -98,18 +98,6 @@ def all_chunks_retriever(es_client: Elasticsearch, es_index: str) -> AllElastics
     return AllElasticsearchRetriever(
         es_client=es_client,
         index_name=es_index,
-    )
-
-
-@pytest.fixture(scope="session")
-def parameterised_retriever(
-    env: Settings, es_client: Elasticsearch, es_index: str, embedding_model: FakeEmbeddings
-) -> ParameterisedElasticsearchRetriever:
-    return ParameterisedElasticsearchRetriever(
-        es_client=es_client,
-        index_name=es_index,
-        embedding_model=embedding_model,
-        embedding_field_name=env.embedding_document_field_name,
     )
 
 

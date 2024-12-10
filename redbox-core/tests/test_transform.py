@@ -1,4 +1,3 @@
-import copy
 from datetime import UTC, datetime
 from uuid import NAMESPACE_DNS, uuid5
 
@@ -12,8 +11,6 @@ from redbox.retriever.retrievers import filter_by_elbow
 from redbox.test.data import generate_docs
 from redbox.transform import (
     combine_documents,
-    merge_documents,
-    sort_documents,
     structure_documents_by_file_name,
     to_request_metadata,
 )
@@ -212,76 +209,3 @@ def test_structure_documents_by_file_name():
     result = structure_documents_by_file_name(docs=docs)
 
     assert result == expected
-
-
-def test_merge_documents():
-    """Tests that merge documents will merge the two passes of Elastic correctly.
-
-    Asserts:
-
-    * That the initial list's scores are prioritised
-    * That higher scores in the adjacent will push out lower scores in the initial
-    * The the result truncates to the length of the initial list
-    """
-    docs_1 = list(
-        generate_docs(s3_key="test_key_1", total_tokens=1000, number_of_docs=3, chunk_resolution="normal", score=1)
-    )
-
-    docs_2: list[Document] = []
-    for doc in copy.deepcopy(docs_1):
-        doc.metadata["score"] = 2
-        docs_2.append(doc)
-
-    merged_1 = merge_documents(initial=docs_1, adjacent=docs_2)
-
-    # Initial list score prioritised over adjacent
-    assert merged_1 == docs_1
-
-    docs_3 = list(
-        generate_docs(s3_key="test_key_2", total_tokens=1000, number_of_docs=3, chunk_resolution="normal", score=3)
-    ) + [docs_1[0]]
-
-    merged_2 = merge_documents(initial=docs_1, adjacent=docs_3)
-
-    # Higher scores in adjacent prioritised, length is the same as initial
-    assert merged_2 == docs_3[: len(docs_1)]
-
-
-def test_sort_documents():
-    original_order = [
-        (5, "foo.txt", 3),
-        (4.9, "foo.txt", 2),
-        (4.8, "bar.txt", 9),
-        (4.1, "foo.txt", 1),
-        (3.8, "foo.txt", 24),
-    ]
-    expected_order = [
-        (4.1, "foo.txt", 1),
-        (4.9, "foo.txt", 2),
-        (5, "foo.txt", 3),
-        (4.8, "bar.txt", 9),
-        (3.8, "foo.txt", 24),
-    ]
-
-    docs: list[Document] = []
-
-    for score, s3_key, index in original_order:
-        docs.append(
-            next(
-                generate_docs(
-                    s3_key=s3_key,
-                    total_tokens=100,
-                    number_of_docs=1,
-                    chunk_resolution="normal",
-                    index_start=index,
-                    score=score,
-                )
-            )
-        )
-
-    sorted_docs = sort_documents(docs)
-
-    for doc, (expected_score, expected_file_name, expected_index) in zip(sorted_docs, expected_order):
-        assert doc.metadata["score"] == expected_score
-        assert doc.metadata["uri"] == expected_file_name
-        assert doc.metadata["index"] == expected_index

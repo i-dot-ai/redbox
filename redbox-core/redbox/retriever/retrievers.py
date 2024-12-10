@@ -1,19 +1,16 @@
 from functools import partial
-from typing import Any, Callable, Sequence
+from typing import Any, Callable
 
 from elasticsearch import Elasticsearch
 from elasticsearch.helpers import scan
 from kneed import KneeLocator
 from langchain_core.callbacks import CallbackManagerForRetrieverRun
 from langchain_core.documents import Document
-from langchain_core.embeddings.embeddings import Embeddings
-from langchain_core.retrievers import BaseRetriever
 from langchain_elasticsearch.retrievers import ElasticsearchRetriever
 
 from redbox.models.chain import RedboxState
 from redbox.models.file import ChunkResolution
-from redbox.retriever.queries import add_document_filter_scores_to_query, build_document_query, get_all, get_metadata
-from redbox.transform import merge_documents, sort_documents
+from redbox.retriever.queries import get_all, get_metadata
 
 
 def hit_to_doc(hit: dict[str, Any]) -> Document:
@@ -75,57 +72,6 @@ def filter_by_elbow(
             return docs
 
     return _filter_by_elbow
-
-
-class ParameterisedElasticsearchRetriever(BaseRetriever):
-    """A modified ElasticsearchRetriever that allows configuration from RedboxState."""
-
-    es_client: Elasticsearch
-    index_name: str | Sequence[str]
-    embedding_model: Embeddings
-    embedding_field_name: str = "embedding"
-    chunk_resolution: ChunkResolution = ChunkResolution.normal
-
-    def _get_relevant_documents(
-        self, query: RedboxState, *, run_manager: CallbackManagerForRetrieverRun
-    ) -> list[Document]:
-        query_text = query.last_message.content
-        query_vector = self.embedding_model.embed_query(query_text)
-        selected_files = query.request.s3_keys
-        permitted_files = query.request.permitted_s3_keys
-        ai_settings = query.request.ai_settings
-
-        # Initial pass
-        initial_query = build_document_query(
-            query=query_text,
-            query_vector=query_vector,
-            selected_files=selected_files,
-            permitted_files=permitted_files,
-            embedding_field_name=self.embedding_field_name,
-            chunk_resolution=self.chunk_resolution,
-            ai_settings=ai_settings,
-        )
-        initial_documents = query_to_documents(
-            es_client=self.es_client, index_name=self.index_name, query=initial_query
-        )
-
-        # Handle nothing found (as when no files are permitted)
-        if not initial_documents:
-            return []
-
-        # Adjacent documents
-        with_adjacent_query = add_document_filter_scores_to_query(
-            elasticsearch_query=initial_query,
-            ai_settings=ai_settings,
-            centres=initial_documents,
-        )
-        adjacent_boosted = query_to_documents(
-            es_client=self.es_client, index_name=self.index_name, query=with_adjacent_query
-        )
-
-        # Merge, sort, return
-        merged_documents = merge_documents(initial=initial_documents, adjacent=adjacent_boosted)
-        return sort_documents(documents=merged_documents)
 
 
 class AllElasticsearchRetriever(ElasticsearchRetriever):
