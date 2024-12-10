@@ -4,7 +4,6 @@ from langgraph.graph.graph import CompiledGraph
 
 from redbox.graph.edges import (
     build_documents_bigger_than_context_conditional,
-    build_keyword_detection_conditional,
     build_total_tokens_request_handler_conditional,
     documents_selected_conditional,
     multiple_docs_in_group_conditional,
@@ -25,7 +24,6 @@ from redbox.graph.nodes.processes import (
 from redbox.graph.nodes.sends import build_document_chunk_send, build_document_group_send
 from redbox.models.chain import RedboxState
 from redbox.models.chat import ChatRoute, ErrorRoute
-from redbox.models.graph import ROUTABLE_KEYWORDS
 from redbox.transform import structure_documents_by_file_name
 
 
@@ -256,19 +254,11 @@ def get_root_graph(
     # Log
 
     # Decisions
-    builder.add_node("d_keyword_exists", empty_process)
     builder.add_node("d_docs_selected", empty_process)
 
     # Edges
     builder.add_edge(START, "p_retrieve_metadata")
-    builder.add_edge("p_retrieve_metadata", "d_keyword_exists")
-    builder.add_conditional_edges(
-        "d_keyword_exists",
-        build_keyword_detection_conditional(*ROUTABLE_KEYWORDS.keys()),
-        {
-            "DEFAULT": "d_docs_selected",
-        },
-    )
+    builder.add_edge("p_retrieve_metadata", "d_docs_selected")
     builder.add_conditional_edges(
         "d_docs_selected",
         documents_selected_conditional,

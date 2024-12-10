@@ -15,10 +15,8 @@ from redbox.graph.root import (
     get_chat_with_documents_large_graph,
 )
 from redbox.models.chain import RedboxState
-from redbox.models.chat import ChatRoute
 from redbox.models.graph import (
     FINAL_RESPONSE_TAG,
-    ROUTABLE_KEYWORDS,
     ROUTE_NAME_TAG,
     SOURCE_DOCUMENTS_TAG,
     RedboxEventType,
@@ -111,9 +109,6 @@ class Redbox:
             elif kind == "on_chain_end" and event["name"] == "LangGraph":
                 final_state = RedboxState(**event["data"]["output"])
         return final_state
-
-    def get_available_keywords(self) -> dict[ChatRoute, str]:
-        return ROUTABLE_KEYWORDS
 
     def draw(self, output_path=None, graph_to_draw: Literal["root", "chat_with_documents"] = "root"):
         from langchain_core.runnables.graph import MermaidDrawMethod
