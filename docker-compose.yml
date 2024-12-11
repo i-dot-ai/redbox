@@ -36,20 +36,6 @@ services:
       timeout: 30s
       retries: 24
       start_period: 60s
-  sveltekit-app:
-    image: sveltekit-app:latest
-    build:
-      context: .
-      dockerfile: ./sveltekit_app/Dockerfile
-    user: "node"
-    networks:
-      - redbox-app-network
-    ports:
-      - "3001:3001"
-    restart: unless-stopped
-    env_file:
-      - path: .env
-        required: false
   lit-ssr:
     image: lit-ssr:latest
     build:
