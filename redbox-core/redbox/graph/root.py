@@ -3,16 +3,13 @@ from langgraph.graph import END, START, StateGraph
 from langgraph.graph.graph import CompiledGraph
 
 from redbox.graph.edges import (
-    build_documents_bigger_than_context_conditional,
     build_total_tokens_request_handler_conditional,
     documents_selected_conditional,
-    multiple_docs_in_group_conditional,
 )
 from redbox.graph.nodes.processes import (
     PromptSet,
     build_chat_pattern,
     build_error_pattern,
-    build_merge_pattern,
     build_passthrough_pattern,
     build_retrieve_pattern,
     build_set_metadata_pattern,
@@ -21,7 +18,6 @@ from redbox.graph.nodes.processes import (
     clear_documents_process,
     empty_process,
 )
-from redbox.graph.nodes.sends import build_document_chunk_send, build_document_group_send
 from redbox.models.chain import RedboxState
 from redbox.models.chat import ChatRoute, ErrorRoute
 from redbox.transform import structure_documents_by_file_name
@@ -48,91 +44,6 @@ def get_chat_graph(
     return builder.compile(debug=debug)
 
 
-def get_chat_with_documents_large_graph():
-    """a subgraph for get_chat_with_documents_graph"""
-    builder = StateGraph(RedboxState)
-
-    # Sends
-    builder.add_node("s_chunk", empty_process)
-    builder.add_node("s_group_1", empty_process)
-    builder.add_node("s_group_2", empty_process)
-    builder.add_node("p_too_large_error", empty_process)
-
-    builder.add_node(
-        "p_summarise_each_document",
-        build_merge_pattern(prompt_set=PromptSet.ChatwithDocsMapReduce),
-    )
-    builder.add_node(
-        "p_summarise_document_by_document",
-        build_merge_pattern(prompt_set=PromptSet.ChatwithDocsMapReduce),
-    )
-    builder.add_node(
-        "p_summarise",
-        build_stuff_pattern(
-            prompt_set=PromptSet.ChatwithDocs,
-            final_response_chain=True,
-        ),
-    )
-    builder.add_node("p_clear_documents", clear_documents_process)
-
-    builder.add_node("d_groups_have_multiple_docs", empty_process)
-    builder.add_node("d_doc_summaries_bigger_than_context", empty_process)
-    builder.add_node("d_single_doc_summaries_bigger_than_context", empty_process)
-
-    # Edges
-    builder.add_edge(START, "s_chunk")
-    builder.add_conditional_edges(
-        "s_chunk",
-        build_document_chunk_send("p_summarise_each_document"),
-        path_map=["p_summarise_each_document"],
-    )
-    builder.add_edge("p_summarise_each_document", "d_groups_have_multiple_docs")
-
-    builder.add_conditional_edges(
-        "d_groups_have_multiple_docs",
-        multiple_docs_in_group_conditional,
-        {
-            True: "s_group_1",
-            False: "d_doc_summaries_bigger_than_context",
-        },
-    )
-
-    builder.add_conditional_edges(
-        "s_group_1",
-        build_document_group_send("d_single_doc_summaries_bigger_than_context"),
-        path_map=["d_single_doc_summaries_bigger_than_context"],
-    )
-    builder.add_conditional_edges(
-        "d_single_doc_summaries_bigger_than_context",
-        build_documents_bigger_than_context_conditional(PromptSet.ChatwithDocsMapReduce),
-        {
-            True: "p_too_large_error",
-            False: "s_group_2",
-        },
-    )
-    builder.add_conditional_edges(
-        "s_group_2",
-        build_document_group_send("p_summarise_document_by_document"),
-        path_map=["p_summarise_document_by_document"],
-    )
-    builder.add_edge("p_summarise_document_by_document", "d_doc_summaries_bigger_than_context")
-
-    builder.add_conditional_edges(
-        "d_doc_summaries_bigger_than_context",
-        build_documents_bigger_than_context_conditional(PromptSet.ChatwithDocs),
-        {
-            True: "p_too_large_error",
-            False: "p_summarise",
-        },
-    )
-    builder.add_edge("p_summarise", "p_clear_documents")
-
-    builder.add_edge("p_too_large_error", END)
-    builder.add_edge("p_clear_documents", END)
-
-    return builder.compile()
-
-
 def get_chat_with_documents_graph(
     all_chunks_retriever: VectorStoreRetriever,
     debug: bool = False,
@@ -143,10 +54,6 @@ def get_chat_with_documents_graph(
     # Processes
     builder.add_node("p_pass_question_to_text", build_passthrough_pattern())
     builder.add_node("p_set_chat_docs_route", build_set_route_pattern(route=ChatRoute.chat_with_docs))
-    builder.add_node(
-        "p_set_chat_docs_map_reduce_route",
-        build_set_route_pattern(route=ChatRoute.chat_with_docs_map_reduce),
-    )
     builder.add_node(
         "p_summarise",
         build_stuff_pattern(
@@ -171,8 +78,6 @@ def get_chat_with_documents_graph(
         ),
     )
 
-    builder.add_node("chat_with_documents_large", get_chat_with_documents_large_graph())
-
     # Decisions
     builder.add_node("d_request_handler_from_total_tokens", empty_process)
 
@@ -184,24 +89,15 @@ def get_chat_with_documents_graph(
         build_total_tokens_request_handler_conditional(PromptSet.ChatwithDocsMapReduce),
         {
             "max_exceeded": "p_too_large_error",
-            "context_exceeded": "p_set_chat_docs_map_reduce_route",
+            "context_exceeded": "p_too_large_error",
             "pass": "p_set_chat_docs_route",
         },
     )
     builder.add_edge("p_set_chat_docs_route", "p_retrieve_all_chunks")
-    builder.add_edge("p_set_chat_docs_map_reduce_route", "p_retrieve_all_chunks")
-    builder.add_conditional_edges(
-        "p_retrieve_all_chunks",
-        lambda s: s.route_name,
-        {
-            ChatRoute.chat_with_docs: "p_summarise",
-            ChatRoute.chat_with_docs_map_reduce: "chat_with_documents_large",
-        },
-    )
+    builder.add_edge("p_retrieve_all_chunks", "p_summarise")
     builder.add_edge("p_summarise", "p_clear_documents")
     builder.add_edge("p_clear_documents", END)
     builder.add_edge("p_too_large_error", END)
-    builder.add_edge("chat_with_documents_large", END)
 
     return builder.compile(debug=debug)
 
