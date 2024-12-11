@@ -8,7 +8,6 @@ from redbox.chains.components import (
     get_all_chunks_retriever,
     get_embeddings,
     get_metadata_retriever,
-    get_parameterised_retriever,
 )
 from redbox.graph.root import (
     get_chat_with_documents_graph,
@@ -16,10 +15,8 @@ from redbox.graph.root import (
     get_chat_with_documents_large_graph,
 )
 from redbox.models.chain import RedboxState
-from redbox.models.chat import ChatRoute
 from redbox.models.graph import (
     FINAL_RESPONSE_TAG,
-    ROUTABLE_KEYWORDS,
     ROUTE_NAME_TAG,
     SOURCE_DOCUMENTS_TAG,
     RedboxEventType,
@@ -39,7 +36,6 @@ class Redbox:
     def __init__(
         self,
         all_chunks_retriever: VectorStoreRetriever | None = None,
-        parameterised_retriever: VectorStoreRetriever | None = None,
         metadata_retriever: VectorStoreRetriever | None = None,
         embedding_model: Embeddings | None = None,
         env: Settings | None = None,
@@ -50,13 +46,11 @@ class Redbox:
         # Retrievers
 
         self.all_chunks_retriever = all_chunks_retriever or get_all_chunks_retriever(_env)
-        self.parameterised_retriever = parameterised_retriever or get_parameterised_retriever(_env)
         self.metadata_retriever = metadata_retriever or get_metadata_retriever(_env)
         self.embedding_model = embedding_model or get_embeddings(_env)
 
         self.graph = get_root_graph(
             all_chunks_retriever=self.all_chunks_retriever,
-            parameterised_retriever=self.parameterised_retriever,
             metadata_retriever=self.metadata_retriever,
             debug=debug,
         )
@@ -116,16 +110,13 @@ class Redbox:
                 final_state = RedboxState(**event["data"]["output"])
         return final_state
 
-    def get_available_keywords(self) -> dict[ChatRoute, str]:
-        return ROUTABLE_KEYWORDS
-
     def draw(self, output_path=None, graph_to_draw: Literal["root", "chat_with_documents"] = "root"):
         from langchain_core.runnables.graph import MermaidDrawMethod
 
         if graph_to_draw == "root":
             graph = self.graph.get_graph()
         elif graph_to_draw == "chat/documents":
-            graph = get_chat_with_documents_graph(self.all_chunks_retriever, self.parameterised_retriever).get_graph()
+            graph = get_chat_with_documents_graph(self.all_chunks_retriever).get_graph()
         elif graph_to_draw == "chat/documents/large":
             graph = get_chat_with_documents_large_graph().get_graph()
         else:

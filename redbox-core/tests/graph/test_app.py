@@ -5,18 +5,15 @@ import pytest
 from langchain_core.documents import Document
 from langchain_core.messages import AIMessage
 from pytest_mock import MockerFixture
-from tiktoken.core import Encoding
 
 from redbox import Redbox
 from redbox.models.chain import (
-    AISettings,
     RedboxQuery,
     RedboxState,
     RequestMetadata,
     metadata_reducer,
 )
 from redbox.models.chat import ChatRoute, ErrorRoute
-from redbox.models.file import ChunkResolution
 from redbox.models.graph import RedboxActivityEvent
 from redbox.models.settings import Settings
 from redbox.test.data import (
@@ -26,7 +23,6 @@ from redbox.test.data import (
     generate_test_cases,
     mock_all_chunks_retriever,
     mock_metadata_retriever,
-    mock_parameterised_retriever,
 )
 
 LANGGRAPH_DEBUG = True
@@ -96,48 +92,6 @@ TEST_CASES = [
         ),
         generate_test_cases(
             query=RedboxQuery(
-                question="What is AI?",
-                s3_keys=["s3_key_1", "s3_key_2"],
-                user_uuid=uuid4(),
-                chat_history=[],
-                permitted_s3_keys=["s3_key_1", "s3_key_2"],
-                ai_settings=AISettings(self_route_enabled=True),
-            ),
-            test_data=[
-                RedboxTestData(
-                    number_of_docs=2,
-                    tokens_in_all_docs=40_000,
-                    llm_responses=["Testing Response 1"],
-                    expected_route=ChatRoute.chat_with_docs,
-                ),
-                RedboxTestData(
-                    number_of_docs=2,
-                    tokens_in_all_docs=80_000,
-                    llm_responses=["Testing Response 1"],
-                    expected_route=ChatRoute.chat_with_docs,
-                ),
-                RedboxTestData(
-                    number_of_docs=2,
-                    tokens_in_all_docs=140_000,
-                    llm_responses=SELF_ROUTE_TO_CHAT + ["Map Step Response"] * 2 + ["Testing Response 1"],
-                    expected_route=ChatRoute.chat_with_docs_map_reduce,
-                    expected_activity_events=assert_number_of_events(2),
-                ),
-                RedboxTestData(
-                    number_of_docs=4,
-                    tokens_in_all_docs=140_000,
-                    llm_responses=SELF_ROUTE_TO_CHAT
-                    + ["Map Step Response"] * 4
-                    + ["Merge Per Document Response"] * 2
-                    + ["Testing Response 1"],
-                    expected_route=ChatRoute.chat_with_docs_map_reduce,
-                    expected_activity_events=assert_number_of_events(2),
-                ),
-            ],
-            test_id="Chat with multiple docs - with self route",
-        ),
-        generate_test_cases(
-            query=RedboxQuery(
                 question="What is AI?", s3_keys=["s3_key_1", "s3_key_2"], user_uuid=uuid4(), chat_history=[]
             ),
             test_data=[
@@ -194,49 +148,6 @@ TEST_CASES = [
                 s3_keys=["s3_key"],
                 user_uuid=uuid4(),
                 chat_history=[],
-                ai_settings=AISettings(self_route_enabled=True),
-            ),
-            test_data=[
-                RedboxTestData(
-                    number_of_docs=2,
-                    tokens_in_all_docs=200_000,
-                    llm_responses=SELF_ROUTE_TO_CHAT
-                    + ["Map Step Response"] * 2
-                    + ["Merge Per Document Response"]
-                    + ["Testing Response 1"],
-                    expected_route=ChatRoute.chat_with_docs_map_reduce,
-                    expected_activity_events=assert_number_of_events(2),
-                ),
-            ],
-            test_id="Chat with large doc - with self route",
-        ),
-        generate_test_cases(
-            query=RedboxQuery(
-                question="What is AI?",
-                s3_keys=["s3_key"],
-                user_uuid=uuid4(),
-                chat_history=[],
-                permitted_s3_keys=["s3_key"],
-                ai_settings=AISettings(self_route_enabled=True),
-            ),
-            test_data=[
-                RedboxTestData(
-                    number_of_docs=2,
-                    tokens_in_all_docs=200_000,
-                    chunk_resolution=ChunkResolution.normal,
-                    llm_responses=SELF_ROUTE_TO_SEARCH,  # + ["Condense Question", "Testing Response 1"],
-                    expected_route=ChatRoute.search,
-                    expected_activity_events=assert_number_of_events(1),
-                ),
-            ],
-            test_id="Self Route Search large doc",
-        ),
-        generate_test_cases(
-            query=RedboxQuery(
-                question="What is AI?",
-                s3_keys=["s3_key"],
-                user_uuid=uuid4(),
-                chat_history=[],
                 permitted_s3_keys=["s3_key"],
             ),
             test_data=[
@@ -248,49 +159,6 @@ TEST_CASES = [
                 ),
             ],
             test_id="Document too big for system",
-        ),
-        generate_test_cases(
-            query=RedboxQuery(
-                question="@search What is AI?",
-                s3_keys=["s3_key"],
-                user_uuid=uuid4(),
-                chat_history=[],
-                permitted_s3_keys=["s3_key"],
-            ),
-            test_data=[
-                RedboxTestData(
-                    number_of_docs=1,
-                    tokens_in_all_docs=10000,
-                    llm_responses=["Condense response", "The cake is a lie"],
-                    expected_route=ChatRoute.search,
-                ),
-                RedboxTestData(
-                    number_of_docs=5,
-                    tokens_in_all_docs=10000,
-                    llm_responses=["Condense response", "The cake is a lie"],
-                    expected_route=ChatRoute.search,
-                ),
-            ],
-            test_id="Search",
-        ),
-        generate_test_cases(
-            query=RedboxQuery(
-                question="@search What is AI?",
-                s3_keys=[],
-                user_uuid=uuid4(),
-                chat_history=[],
-                permitted_s3_keys=["s3_key"],
-            ),
-            test_data=[
-                RedboxTestData(
-                    number_of_docs=1,
-                    tokens_in_all_docs=10000,
-                    llm_responses=["Condense response", "The cake is a lie"],
-                    expected_route=ChatRoute.search,
-                    s3_keys=["s3_key"],
-                ),
-            ],
-            test_id="Search, nothing selected",
         ),
         generate_test_cases(
             query=RedboxQuery(
@@ -346,7 +214,6 @@ async def test_streaming(test: RedboxChatTestCase, env: Settings, mocker: Mocker
     # Instantiate app
     app = Redbox(
         all_chunks_retriever=mock_all_chunks_retriever(test_case.docs),
-        parameterised_retriever=mock_parameterised_retriever(test_case.docs),
         metadata_retriever=mock_metadata_retriever(
             [d for d in test_case.docs if d.metadata["uri"] in test_case.query.s3_keys]
         ),
@@ -435,16 +302,3 @@ async def test_streaming(test: RedboxChatTestCase, env: Settings, mocker: Mocker
     for document_list in document_events:
         for document in document_list:
             assert document in test_case.docs, f"Document not in test case docs: {document}"
-
-
-def test_get_available_keywords(tokeniser: Encoding, env: Settings):
-    app = Redbox(
-        all_chunks_retriever=mock_all_chunks_retriever([]),
-        parameterised_retriever=mock_parameterised_retriever([]),
-        metadata_retriever=mock_metadata_retriever([]),
-        env=env,
-        debug=LANGGRAPH_DEBUG,
-    )
-    keywords = {ChatRoute.search}
-
-    assert keywords == set(app.get_available_keywords().keys())
