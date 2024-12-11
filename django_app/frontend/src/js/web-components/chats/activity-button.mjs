@@ -1,17 +1,8 @@
 // @ts-check
 import { LitElement, html } from "lit";
+import { RedboxElement } from "../redbox-element.mjs";
 
-
-class BaseElement extends LitElement {
-  // clear the SSR content and prevents Shadow DOM by default
-  createRenderRoot() {
-    this.innerHTML = "";
-    return this;
-  }
-}
-
-
-export class ActivityButton extends BaseElement {
+export class ActivityButton extends RedboxElement {
   static properties = {
     expanded: { type: Boolean, reflect: true },
   };
@@ -22,11 +13,7 @@ export class ActivityButton extends BaseElement {
   }
 
   render() {
-    return html`
-      <button @click=${this.#buttonClick} type="button">
-        ${this.expanded ? `- Hide all activity` : `+ Show all activity`}
-      </button>
-    `;
+    return html` <button @click=${this.#buttonClick} type="button">${this.expanded ? `- Hide all activity` : `+ Show all activity`}</button> `;
   }
 
   #buttonClick = () => {
