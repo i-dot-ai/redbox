@@ -69,14 +69,14 @@ export class DocumentUpload extends RedboxElement {
 
   render() {
     return html`
-      <form @submit=${this.#sendFiles} action="/upload/" method="post" enctype="multipart/form-data">
+      <form class="rb-document-upload" @submit=${this.#sendFiles} action="/upload/" method="post" enctype="multipart/form-data">
         <input type="hidden" name="csrfmiddlewaretoken" value=${this["csrfToken"]} />
         <input type="hidden" name="chat_id" value=${this["chatId"]} />
         <label class="govuk-label" for="upload-docs">
           <h3 class="govuk-heading-s">Add a document</h3>
         </label>
         <div id="upload-docs-notification">
-          <p class="govuk-body-l">The AI will use all documents you upload. You can use up to, and including, Official Sensitive documents. Do not upload any documents with personal data.</p>
+          <p class="govuk-body-l">You can use up to, and including, Official Sensitive documents. Do not upload any documents with personal data.</p>
         </div>
         <p class="govuk-body rb-file-types" id="upload-docs-filetypes">Limit 200MB per file: EML, HTML, JSON, MD, MSG, RST, RTF, TXT, XML, CSV, DOC, DOCX, EPUB, ODT, PDF, PPT, PPTX, TSV, XLSX, HTM</p>
         <input class="govuk-file-upload" multiple id="upload-docs" name="uploadDocs" type="file" aria-describedby="upload-docs-notification upload-docs-filetypes" />
