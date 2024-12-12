@@ -143,6 +143,33 @@ class Settings(BaseSettings):
         "recovered from it. Create SEO-optimised metadata for this document."
         "Description must be less than 100 words. and no more than 5 keywords .",
     )
+    #Define index mapping for Opensearch - this is important so that KNN search works
+    index_mapping : Dict = {
+    "settings": {
+    "index.knn": True
+    },
+    "mappings": {
+        "properties": {
+            "metadata": {
+                "properties": {
+                    "chunk_resolution": {"type": "text", "fields": {"keyword": {"type": "keyword", "ignore_above": 256}}},
+                    "created_datetime": {"type": "date"},
+                    "creator_type": {"type": "text", "fields": {"keyword": {"type": "keyword", "ignore_above": 256}}},
+                    "description": {"type": "text", "fields": {"keyword": {"type": "keyword", "ignore_above": 256}}},
+                    "index": {"type": "long"},
+                    "keywords": {"type": "text", "fields": {"keyword": {"type": "keyword", "ignore_above": 256}}},
+                    "name": {"type": "text", "fields": {"keyword": {"type": "keyword", "ignore_above": 256}}},
+                    "page_number": {"type": "long"},
+                    "token_count": {"type": "long"},
+                    "uri": {"type": "text", "fields": {"keyword": {"type": "keyword", "ignore_above": 256}}},
+                    "uuid": {"type": "text", "fields": {"keyword": {"type": "keyword", "ignore_above": 256}}}
+                }
+            },
+            "text": {"type": "text", "fields": {"keyword": {"type": "keyword", "ignore_above": 256}}},
+            "vector_field": {"type": "knn_vector", "dimension": embedding_backend_vector_size, "method": {"name": "hnsw", "space_type": "cosinesimil", "engine": "lucene"}}     
+        }
+        }
+        }
 
     #Define index mapping for Opensearch - this is important so that KNN search works
     index_mapping : Dict = {
@@ -180,7 +207,7 @@ class Settings(BaseSettings):
     def elastic_alias(self):
         return self.elastic_root_index + "-chunk-current"
 
-    # @lru_cache(1)
+    #@lru_cache(1) #removing cache because pydantic object (index mapping) is not hashable
     def elasticsearch_client(self) -> Union[Elasticsearch, OpenSearch]:
         logger.info("Testing OpenSearch is definitely being used")
         
@@ -209,7 +236,7 @@ class Settings(BaseSettings):
             # client.options(ignore_status=[400]).indices.create(index=chunk_index)
             # client.indices.put_alias(index=chunk_index, name=self.elastic_alias)
             try:
-                client.indices.create(index=chunk_index, body=self.index_mapping, ignore=400)
+                client.indices.create(index=chunk_index, body=self.index_mapping, ignore=400)  # 400 is ignored to avoid index-already-exists errors
             except Exception as e:
                 logger.error(f"Failed to create index {chunk_index}: {e}")
 
