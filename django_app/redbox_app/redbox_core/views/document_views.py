@@ -74,7 +74,7 @@ class UploadView(View):
         return self.build_response(request)
 
     @method_decorator(login_required)
-    def post(self, request: HttpRequest) -> HttpResponse:
+    def post(self, request: HttpRequest, chat_id: uuid.UUID | None = None) -> HttpResponse:
         errors: MutableSequence[str] = []
 
         uploaded_files: MutableSequence[UploadedFile] = request.FILES.getlist("uploadDocs")
@@ -88,7 +88,7 @@ class UploadView(View):
         if not errors:
             for uploaded_file in uploaded_files:
                 # ingest errors are handled differently, as the other documents have started uploading by this point
-                request.session["ingest_errors"] = self.ingest_file(uploaded_file, request.user)
+                request.session["ingest_errors"] = self.ingest_file(uploaded_file, request.user, chat_id)
             return redirect(reverse("documents"))
 
         return self.build_response(request, errors)
@@ -125,13 +125,14 @@ class UploadView(View):
         return errors
 
     @staticmethod
-    def ingest_file(uploaded_file: UploadedFile, user: User) -> Sequence[str]:
+    def ingest_file(uploaded_file: UploadedFile, user: User, chat_id: uuid.UUID | None = None) -> Sequence[str]:
         try:
             logger.info("getting file from s3")
             file = File.objects.create(
                 status=File.Status.processing.value,
                 user=user,
                 original_file=uploaded_file,
+                chat_id=chat_id,
             )
         except (ValueError, FieldError, ValidationError) as e:
             logger.exception("Error creating File model object for %s.", uploaded_file, exc_info=e)
