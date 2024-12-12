@@ -40,6 +40,38 @@ def test_upload_view(alice, client, file_pdf_path: Path, s3_client):
         assert response.status_code == HTTPStatus.FOUND
         assert response.url == "/documents/"
 
+    file = File.objects.get(original_file=file_name.replace(" ", "_"))
+    assert file.chat is None
+
+
+@pytest.mark.django_db()
+def test_upload_view_with_chat(chat, client, file_pdf_path: Path, s3_client):
+    """
+    Given that the object store does not have a file with our test file in it
+    When we POST our test file to /upload/
+    We Expect to see this file in the object store
+    """
+    file_name = f"{chat.user.email}/{file_pdf_path.name}"
+
+    # we begin by removing any file in minio that has this key
+    s3_client.delete_object(Bucket=settings.BUCKET_NAME, Key=file_name.replace(" ", "_"))
+
+    assert not file_exists(s3_client, file_name)
+
+    client.force_login(chat.user)
+
+    with file_pdf_path.open("rb") as f:
+        url = reverse("upload", args=(chat.pk,))
+
+        response = client.post(url, {"uploadDocs": f})
+
+        assert file_exists(s3_client, file_name)
+        assert response.status_code == HTTPStatus.FOUND
+        assert response.url == "/documents/"
+
+    file = File.objects.get(original_file=file_name.replace(" ", "_"))
+    assert file.chat == chat
+
 
 @pytest.mark.django_db()
 def test_document_upload_status(client, alice, file_pdf_path: Path, s3_client):

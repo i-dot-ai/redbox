@@ -537,6 +537,60 @@ class User(BaseUser, UUIDPrimaryKeyBase):
             return ""
 
 
+class Chat(UUIDPrimaryKeyBase, TimeStampedModel, AbstractAISettings):
+    name = models.TextField(max_length=1024, null=False, blank=False)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    archived = models.BooleanField(default=False, null=True, blank=True)
+
+    # Exit feedback - this is separate to the ratings for individual ChatMessages
+    feedback_achieved = models.BooleanField(
+        null=True,
+        blank=True,
+        help_text="Did Redbox do what you needed it to in this chat?",
+    )
+    feedback_saved_time = models.BooleanField(null=True, blank=True, help_text="Did Redbox help save you time?")
+    feedback_improved_work = models.BooleanField(
+        null=True, blank=True, help_text="Did Redbox help to improve your work?"
+    )
+    feedback_notes = models.TextField(null=True, blank=True, help_text="Do you want to tell us anything further?")
+
+    def __str__(self) -> str:  # pragma: no cover
+        return self.name or ""
+
+    @override
+    def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
+        self.name = sanitise_string(self.name)
+
+        if self.chat_backend_id is None:
+            self.chat_backend = self.user.ai_settings.chat_backend
+
+        if self.temperature is None:
+            self.temperature = self.user.ai_settings.temperature
+
+        super().save(force_insert, force_update, using, update_fields)
+
+    @classmethod
+    def get_ordered_by_last_message_date(
+        cls, user: User, exclude_chat_ids: Collection[uuid.UUID] | None = None
+    ) -> Sequence["Chat"]:
+        """Returns all chat histories for a given user, ordered by the date of the latest message."""
+        exclude_chat_ids = exclude_chat_ids or []
+        return (
+            cls.objects.filter(user=user, archived=False)
+            .exclude(id__in=exclude_chat_ids)
+            .annotate(latest_message_date=Max("chatmessage__created_at"))
+            .order_by("-latest_message_date")
+        )
+
+    @property
+    def newest_message_date(self) -> date:
+        return self.chatmessage_set.aggregate(newest_date=Max("created_at"))["newest_date"].date()
+
+    @property
+    def date_group(self):
+        return get_date_group(self.newest_message_date)
+
+
 class InactiveFileError(ValueError):
     def __init__(self, file):
         super().__init__(f"{file.pk} is inactive, status is {file.status}")
@@ -573,6 +627,13 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
         blank=True,
         null=True,
         help_text="error, if any, encountered during ingest",
+    )
+    chat = models.ForeignKey(
+        Chat,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        help_text="chat that this document belongs to, which may be nothing for now",
     )
 
     def __str__(self) -> str:  # pragma: no cover
@@ -683,60 +744,6 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
                 )
             )
         )
-
-
-class Chat(UUIDPrimaryKeyBase, TimeStampedModel, AbstractAISettings):
-    name = models.TextField(max_length=1024, null=False, blank=False)
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    archived = models.BooleanField(default=False, null=True, blank=True)
-
-    # Exit feedback - this is separate to the ratings for individual ChatMessages
-    feedback_achieved = models.BooleanField(
-        null=True,
-        blank=True,
-        help_text="Did Redbox do what you needed it to in this chat?",
-    )
-    feedback_saved_time = models.BooleanField(null=True, blank=True, help_text="Did Redbox help save you time?")
-    feedback_improved_work = models.BooleanField(
-        null=True, blank=True, help_text="Did Redbox help to improve your work?"
-    )
-    feedback_notes = models.TextField(null=True, blank=True, help_text="Do you want to tell us anything further?")
-
-    def __str__(self) -> str:  # pragma: no cover
-        return self.name or ""
-
-    @override
-    def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
-        self.name = sanitise_string(self.name)
-
-        if self.chat_backend_id is None:
-            self.chat_backend = self.user.ai_settings.chat_backend
-
-        if self.temperature is None:
-            self.temperature = self.user.ai_settings.temperature
-
-        super().save(force_insert, force_update, using, update_fields)
-
-    @classmethod
-    def get_ordered_by_last_message_date(
-        cls, user: User, exclude_chat_ids: Collection[uuid.UUID] | None = None
-    ) -> Sequence["Chat"]:
-        """Returns all chat histories for a given user, ordered by the date of the latest message."""
-        exclude_chat_ids = exclude_chat_ids or []
-        return (
-            cls.objects.filter(user=user, archived=False)
-            .exclude(id__in=exclude_chat_ids)
-            .annotate(latest_message_date=Max("chatmessage__created_at"))
-            .order_by("-latest_message_date")
-        )
-
-    @property
-    def newest_message_date(self) -> date:
-        return self.chatmessage_set.aggregate(newest_date=Max("created_at"))["newest_date"].date()
-
-    @property
-    def date_group(self):
-        return get_date_group(self.newest_message_date)
 
 
 class Citation(UUIDPrimaryKeyBase, TimeStampedModel):
