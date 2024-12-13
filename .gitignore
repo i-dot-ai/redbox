@@ -1,9 +1,24 @@
+**/*.db
+.idea/
+redbox-core/models/
+
+# AI Test Data
+
+ai-tests/data/
+
 # data files
 elk/elasticsearch/data
 data/
 db/
 !*/user_preferences/classes_format.json
 !*/user_preferences/classes_subject.json
+/models/
+
+# npm package files
+
+node_modules/
+package-lock.json
+yarn.lock
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -23,7 +38,6 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
 lib64/
 parts/
 sdist/
@@ -91,6 +105,11 @@ target/
 profile_default/
 ipython_config.py
 
+# DeepEval
+temp_test_run_data.json
+.deepeval-cache.json
+.temp-deepeval-cache.json
+
 # pyenv
 #   For a library or package, you might want to ignore these files since the code is
 #   intended to run in multiple environments; otherwise, check them in:
@@ -130,6 +149,8 @@ celerybeat.pid
 
 # Environments
 .env
+.env.aws
+.env.backup
 .venv
 env/
 venv/
@@ -169,3 +190,35 @@ cython_debug/
 #.idea/
 
 .terraform
+
+# Django app
+*.pyc
+django_app/staticfiles/*
+# Django app frontend
+django_app/node_modules
+django_app/frontend/CACHE
+django_app/frontend/govuk-assets
+django_app/frontend/.parcel-cache
+django_app/frontend/test-results
+# Django app tests staticfiles
+django_app/tests/staticfiles
+
+
+# Other
+.DS_Store
+.python-version
+
+# Local .terraform directories
+**/.terraform/*
+**/.terraform.lock.hcl
+
+# .tfstate files
+*.tfstate
+*.tfstate.*
+
+# pre commit files
+.pre-commit-trivy-cache
+
+# lambda files
+infrastructure/aws/cleanup_lambda/*.zip
+infrastructure/aws/cleanup_lambda/layer/*
