@@ -2,7 +2,7 @@
 
 class ChatController extends HTMLElement {
   connectedCallback() {
-    const messageForm = this.closest("form");
+    const messageForm = document.querySelector("#message-form"); // TO DO: Tidy this up
     const messageContainer = this.querySelector(".js-message-container");
     const insertPosition = this.querySelector(".js-response-feedback");
     const feedbackButtons = /** @type {HTMLElement | null} */ (

@@ -842,3 +842,21 @@ main:has(.iai-chat-bubble[data-role="ai"]) .exit-feedback {
   border: 1px solid black;
   padding: 1rem;
 }
+
+.rb-uploaded-docs {
+  display: none;
+}
+.rb-uploaded-docs:has(li) {
+  display: block;
+}
+.rb-uploaded-docs__drag-drop-message {
+  background-color: rgba(255, 255, 255, 0.9);
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
