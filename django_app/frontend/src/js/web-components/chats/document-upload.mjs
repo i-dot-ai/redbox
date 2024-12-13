@@ -5,7 +5,7 @@ import { RedboxElement } from "../redbox-element.mjs";
 export class DocumentUpload extends RedboxElement {
   static properties = {
     csrfToken: { type: String, attribute: "data-csrf-token" },
-    chatId: { type: String, attribute: "data-chat-id" },
+    chatId: { type: String, attribute: "data-chatid" },
     dragDropInProgress: { type: Boolean, state: true },
   };
 
@@ -32,6 +32,8 @@ export class DocumentUpload extends RedboxElement {
       }
       /** @type {HTMLInputElement} */ (this.querySelector("input[type=file]")).files = dataTransfer.files;
       this.#sendFiles();
+
+      // TO DO: Send drag-drop event to Plausible
     });
 
     // this needs throttling, otherwise it will flicker
@@ -45,26 +47,17 @@ export class DocumentUpload extends RedboxElement {
   /**
    * @param {SubmitEvent} [evt]
    */
-  #sendFiles = async (evt) => {
+  #sendFiles = (evt) => {
+
     evt?.preventDefault();
-    const formData = new FormData(this.querySelector("form") || undefined);
-    /*
-    for (let [key, value] of formData.entries()) {
-      console.log(key, value);
+
+    const allUploadedDocContainers = document.querySelectorAll("uploaded-documents");
+    const lastUploadedDocContainer = allUploadedDocContainers[allUploadedDocContainers.length - 1];
+
+    for (const doc of /** @type {HTMLFormElement} */(this.querySelector("input[type=file]")).files) {
+      lastUploadedDocContainer.addDocument(doc, this.querySelector('[name="csrfmiddlewaretoken"]').value);
     }
-    */
-    const response = await fetch("/upload/", {
-      method: "POST",
-      headers: {
-        "X-CSRFToken": this["csrfToken"],
-      },
-      body: formData,
-    });
-    if (!response.ok) {
-      // TO DO: Handle error
-    }
-    // TO DO: add document icons to the chat
-    /** @type {HTMLInputElement} */ (this.querySelector("input[type=file]")).value = "";
+
   };
 
   render() {
@@ -82,7 +75,7 @@ export class DocumentUpload extends RedboxElement {
         <input class="govuk-file-upload" multiple id="upload-docs" name="uploadDocs" type="file" aria-describedby="upload-docs-notification upload-docs-filetypes" />
         <button class="govuk-!-display-inline-block" type="submit">Upload</button>
       </form>
-      ${this.dragDropInProgress ? html`<p>Drop files here to upload to chat</p>` : ""}
+      ${this.dragDropInProgress ? html`<p class="rb-uploaded-docs__drag-drop-message">Drop files here to upload to chat</p>` : ""}
     `;
   }
 }
