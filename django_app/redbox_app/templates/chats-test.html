@@ -57,7 +57,6 @@
           </div>
         </div>
 
-        {# TO DO: If we want this here, we need it to update a hidden input on the form
         <div class="iai-panel govuk-!-margin-top-5 govuk-!-padding-top-3">
           <label class="govuk-body-s govuk-!-font-weight-bold" for="llm-selector">Model</label>
           <select id="llm-selector" name="llm" class="govuk-select govuk-!-margin-top-1">
@@ -66,7 +65,6 @@
             {% endfor %}
           </select>
         </div>
-        #}
 
       </div>
     </div>
@@ -116,12 +114,17 @@
         <canned-prompts class="chat-options"></canned-prompts>
       {% endif %}
 
+      {% set uploaded_documents %}
+        <uploaded-documents data-chatid="{{ chat_id }}" data-docs="[]"></uploaded-documents>
+      {% endset %}
+      {{ uploaded_documents | render_lit | safe }}
+
       {% set document_upload %}
-        <document-upload data-csrf-token="{{ csrf_token }}" data-chat-id="{{ chat_id }}"></document-upload>
+        <document-upload data-csrf-token="{{ csrf_token }}" data-chatid="{{ chat_id }}"></document-upload>
       {% endset %}
       {{ document_upload | render_lit | safe }}
 
-      <form class="iai-chat-input" action="/post-message/" method="post">
+      <form id="message-form" class="iai-chat-input" action="/post-message/" method="post">
         <div class="iai-chat-input__container">
           <div class="iai-chat-input__input-container">
             <label class="iai-chat-input__label govuk-label" for="message">
