@@ -23,7 +23,7 @@
     data-domain="dev.redbox.uktrade.digital" src="https://plausible.io/js/script.pageview-props.tagged-events.outbound-links.file-downloads.local.js"></script>
   {% elif environment | lower == "prod" %}
     <script defer
-    data-domain="dev.redbox.uktrade.digital" src="https://plausible.io/js/script.pageview-props.tagged-events.outbound-links.file-downloads.js"></script>
+    data-domain="redbox.prod.uktrade.digital" src="https://plausible.io/js/script.pageview-props.tagged-events.outbound-links.file-downloads.js"></script>
   {% endif %}
 
   {% if environment | lower == "prod" and waffle_flag(request, 'uktrade') %}

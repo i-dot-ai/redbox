@@ -1,8 +1,13 @@
 services:
   unstructured:
     image: quay.io/unstructured-io/unstructured-api:latest
+    # image: unstructured:latest - TODO - separate this commented into a buildx ccommand somewhere
+    # build:
+    #   context: .
+    #   dockerfile: unstructured/Dockerfile
     ports:
       - 8000:8000
+      # - "8080:8080"
     networks:
       - redbox-app-network
   django-app:
@@ -94,6 +99,8 @@ services:
         condition: service_healthy
       django-app:
         condition: service_healthy
+      db:
+        condition: service_healthy
     networks:
       - redbox-app-network
     restart: unless-stopped
@@ -140,7 +147,6 @@ services:
       retries: 24
       start_period: 60s
     restart: unless-stopped
-
   opensearch-dashboards:
     image: opensearchproject/opensearch-dashboards:2.9.0
     environment:
@@ -171,7 +177,7 @@ services:
       - ./data/embeddings/config:/config
     restart: unless-stopped
     healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:8090/readyz" ]
+      test: [ "CMD", "curl", "-f", "http://localhost:8080/readyz" ]
       interval: 1m
       timeout: 20m
       retries: 5
@@ -201,11 +207,12 @@ services:
       - LANGFUSE_INIT_USER_EMAIL=${LANGFUSE_INIT_USER_EMAIL:-me@redbox.localhost}
       - LANGFUSE_INIT_USER_NAME=${LANGFUSE_INIT_USER_NAME:-me}
       - LANGFUSE_INIT_USER_PASSWORD=${LANGFUSE_INIT_USER_PASSWORD:-insecure-langfuse}
-      
+
 networks:
   redbox-app-network:
     driver: bridge
 
 volumes:
   opensearch-data:
+  redbox-app-data:
   local_postgres_data: {}

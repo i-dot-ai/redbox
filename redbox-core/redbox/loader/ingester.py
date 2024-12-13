@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING
 from langchain_core.runnables import RunnableParallel
 from langchain_elasticsearch.vectorstores import BM25Strategy, ElasticsearchStore
 from langchain_community.vectorstores import OpenSearchVectorSearch
+from langchain_core.embeddings import FakeEmbeddings
 
 from redbox.chains.components import get_embeddings
 from redbox.chains.ingest import ingest_from_loader
@@ -51,7 +52,7 @@ def get_elasticsearch_store_without_embeddings(es, es_index_name: str):
     return OpenSearchVectorSearch(
         index_name=es_index_name,
         opensearch_url=env.elastic.collection_endpoint,
-        embedding_function=get_embeddings(env),
+        embedding_function=FakeEmbeddings(size=env.embedding_backend_vector_size),
     )
 
 
@@ -61,7 +62,8 @@ def create_alias(alias: str):
     chunk_index_name = alias[:-8]  # removes -current
 
     # es.options(ignore_status=[400]).indices.create(index=chunk_index_name)
-    es.indices.create(index=chunk_index_name, ignore=400)
+    # es.indices.create(index=chunk_index_name, ignore=400)
+    es.indices.create(index=chunk_index_name, body=env.index_mapping, ignore=400)
     es.indices.put_alias(index=chunk_index_name, name=alias)
 
 
@@ -78,7 +80,8 @@ def _ingest_file(file_name: str, es_index_name: str = alias):
             create_alias(alias)
     else:
         # es.options(ignore_status=[400]).indices.create(index=es_index_name)
-        es.indices.create(index=es_index_name, ignore=400)
+        # es.indices.create(index=es_index_name, ignore=400)
+        es.indices.create(index=es_index_name, body=env.index_mapping, ignore=400)
 
     # Extract metadata
     metadata_loader = MetadataLoader(env=env, s3_client=env.s3_client(), file_name=file_name)

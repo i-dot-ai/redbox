@@ -76,7 +76,7 @@ def get_embeddings(env: Settings) -> Embeddings:
     if env.embedding_backend == "text-embedding-ada-002":
         return get_openai_embeddings(env)
     if env.embedding_backend == "fake":
-        return FakeEmbeddings(size=3072)
+        return FakeEmbeddings(size=1024)
     if env.embedding_backend == "amazon.titan-embed-text-v2:0":
         return get_aws_embeddings(env)
     raise Exception("No configured embedding model")

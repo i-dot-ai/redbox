@@ -2,7 +2,7 @@ import environ
 import logging
 import os
 from functools import cache, lru_cache
-from typing import Literal, Optional, Union
+from typing import Literal, Optional, Union, Dict
 
 import boto3
 from dotenv import load_dotenv
@@ -29,10 +29,12 @@ class OpenSearchSettings(BaseModel):
     collection_endpoint: str = env.str("COLLECTION_ENDPOINT")
     parsed_url: AnyUrl = urlparse(collection_endpoint)
 
+    logger.info(f'the parsed url is {parsed_url}')
+
     collection_endpoint__username: Optional[str] = parsed_url.username
     collection_endpoint__password: Optional[str] = parsed_url.password
     collection_endpoint__host: Optional[str] = parsed_url.hostname
-    collection_endpoint__port: Optional[str] = parsed_url.port
+    collection_endpoint__port: Optional[str] = "443"
 
 
 class ElasticLocalSettings(BaseModel):
@@ -75,6 +77,7 @@ class Settings(BaseSettings):
     metadata_extraction_llm: ChatLLMBackend = ChatLLMBackend(name="gpt-4o-mini", provider="openai")
 
     embedding_backend: str = "amazon.titan-embed-text-v2:0"
+    embedding_backend_vector_size: int = 1024
 
     llm_max_tokens: int = 1024
 
@@ -138,6 +141,34 @@ class Settings(BaseSettings):
         "Description must be less than 100 words. and no more than 5 keywords .",
     )
 
+    #Define index mapping for Opensearch - this is important so that KNN search works
+    index_mapping : Dict = {
+    "settings": {
+    "index.knn": True
+    },
+    "mappings": {
+        "properties": {
+            "metadata": {
+                "properties": {
+                    "chunk_resolution": {"type": "text", "fields": {"keyword": {"type": "keyword", "ignore_above": 256}}},
+                    "created_datetime": {"type": "date"},
+                    "creator_type": {"type": "text", "fields": {"keyword": {"type": "keyword", "ignore_above": 256}}},
+                    "description": {"type": "text", "fields": {"keyword": {"type": "keyword", "ignore_above": 256}}},
+                    "index": {"type": "long"},
+                    "keywords": {"type": "text", "fields": {"keyword": {"type": "keyword", "ignore_above": 256}}},
+                    "name": {"type": "text", "fields": {"keyword": {"type": "keyword", "ignore_above": 256}}},
+                    "page_number": {"type": "long"},
+                    "token_count": {"type": "long"},
+                    "uri": {"type": "text", "fields": {"keyword": {"type": "keyword", "ignore_above": 256}}},
+                    "uuid": {"type": "text", "fields": {"keyword": {"type": "keyword", "ignore_above": 256}}}
+                }
+            },
+            "text": {"type": "text", "fields": {"keyword": {"type": "keyword", "ignore_above": 256}}},
+            "vector_field": {"type": "knn_vector", "dimension": embedding_backend_vector_size, "method": {"name": "hnsw", "space_type": "cosinesimil", "engine": "lucene"}}     
+        }
+        }
+        }
+
     @property
     def elastic_chat_mesage_index(self):
         return self.elastic_root_index + "-chat-mesage-log"
@@ -146,7 +177,7 @@ class Settings(BaseSettings):
     def elastic_alias(self):
         return self.elastic_root_index + "-chunk-current"
 
-    @lru_cache(1)
+    # @lru_cache(1)
     def elasticsearch_client(self) -> Union[Elasticsearch, OpenSearch]:
         logger.info('Testing OpenSearch is definitely being used')
 
@@ -166,7 +197,8 @@ class Settings(BaseSettings):
             # client.options(ignore_status=[400]).indices.create(index=chunk_index)
             # client.indices.put_alias(index=chunk_index, name=self.elastic_alias)
             try:
-                client.indices.create(index=chunk_index, ignore=400)  # 400 is ignored to avoid index-already-exists errors
+                # client.indices.create(index=chunk_index, ignore=400)  # 400 is ignored to avoid index-already-exists errors
+                client.indices.create(index=chunk_index, body=self.index_mapping, ignore=400)
             except Exception as e:
                 logger.error(f"Failed to create index {chunk_index}: {e}")
 

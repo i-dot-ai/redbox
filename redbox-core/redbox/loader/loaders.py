@@ -41,7 +41,7 @@ class MetadataLoader:
         Chunking data using local unstructured
         """
         file_bytes = self._get_file_bytes(s3_client=self.s3_client, file_name=self.file_name)
-        url = f"http://{self.env.unstructured_host}:8000/general/v0/general"
+        url = f"http://{self.env.unstructured_host}:8080/general/v0/general"
         files = {
             "files": (self.file_name, file_bytes),
         }
@@ -141,7 +141,7 @@ class UnstructuredChunkLoader:
         When you're implementing lazy load methods, you should use a generator
         to yield documents one by one.
         """
-        url = f"http://{self.env.unstructured_host}:8000/general/v0/general"
+        url = f"http://{self.env.unstructured_host}:8080/general/v0/general"
         files = {
             "files": (file_name, file_bytes),
         }

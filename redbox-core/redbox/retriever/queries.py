@@ -23,7 +23,7 @@ def build_file_filter(file_names: list[str]) -> dict[str, Any]:
 
 def build_resolution_filter(chunk_resolution: ChunkResolution) -> dict[str, Any]:
     """Creates an Elasticsearch filter for chunk resolutions."""
-    return {"term": {"metadata.chunk_resolution.keyword": str(chunk_resolution)}}
+    return {"term": {"metadata.chunk_resolution.keyword": str(chunk_resolution.normal)}} #add normal to fix error
 
 
 def build_query_filter(
@@ -154,12 +154,10 @@ def build_document_query(
                     },
                     {
                         "knn": {
-                            "field": embedding_field_name,
-                            "query_vector": query_vector,
-                            "num_candidates": ai_settings.rag_num_candidates,
-                            "filter": query_filter,
-                            "boost": ai_settings.knn_boost,
-                            "similarity": ai_settings.similarity_threshold,
+                            "vector_field": {
+                            "vector": query_vector,
+                            "k": ai_settings.rag_num_candidates,
+                            "boost": ai_settings.knn_boost}
                         }
                     },
                 ],

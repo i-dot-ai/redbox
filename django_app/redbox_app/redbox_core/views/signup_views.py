@@ -104,7 +104,7 @@ class Signup6(AbstractSignup):
                 form.add_error(field, "You must give consent in order to sign up to Redbox")
 
         if form.is_valid():
-            user = User.objects.create_user(email=request.session["sign_up_data"]["email"])
+            user = User.objects.create_user(username=request.session["sign_up_data"]["email"])
             for field_name, field_value in form.cleaned_data.items():
                 setattr(user, field_name, field_value)
             user.save()

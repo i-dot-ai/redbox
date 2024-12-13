@@ -24,7 +24,6 @@ def sign_in_view(request: HttpRequest):
         form = SignInForm(request.POST)
         if form.is_valid():
             email = form.cleaned_data["email"].lower()
-
             try:
                 user = User.objects.get(email=email)
                 link = MagicLink.objects.create(

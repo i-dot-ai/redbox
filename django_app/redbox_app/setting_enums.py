@@ -25,7 +25,7 @@ class Environment(StrEnum):
     INTEGRATION = ("INTEGRATION", True, [*LOCAL_HOSTS, *ADDITIONAL_HOSTS])  # nosec: B104: Not in prod
     DEV = ("DEV", False, ["dev.redbox.uktrade.digital", *ADDITIONAL_HOSTS])
     PREPROD = ("PREPROD", False, ["redbox-preprod.ai.cabinetoffice.gov.uk", *ADDITIONAL_HOSTS])
-    PROD = ("PROD", False, ["redbox.ai.cabinetoffice.gov.uk", *ADDITIONAL_HOSTS])
+    PROD = ("PROD", False, ["redbox.prod.uktrade.digital", *ADDITIONAL_HOSTS])
 
 
 class Classification(StrEnum):
