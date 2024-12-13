@@ -32,6 +32,7 @@ services:
     volumes:
       - /app/django_app/frontend/node_modules
       - ./django_app:/app/django_app/
+      - .aws:/root/.aws
     ports:
       - "8080:8080"
     healthcheck:
@@ -49,7 +50,7 @@ services:
     networks:
       - redbox-app-network
     ports:
-      - "3000:3000"
+      - "3001:3001"
     restart: unless-stopped
     env_file:
       - path: .env
@@ -90,6 +91,8 @@ services:
         required: false
       - path: .env
         required: false
+    volumes:
+      - .aws:/root/.aws
     depends_on:
       unstructured:
         condition: service_started

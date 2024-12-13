@@ -1,11 +1,11 @@
 import logging
 
 from functools import partial
-from typing import (Any, Callable, Dict, List, Mapping, Optional, Sequence,
-                    Union, cast)
+from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Union, cast
 
 import opensearchpy
 from elasticsearch import Elasticsearch
+
 # from elasticsearch.helpers import scan
 from opensearchpy.helpers import scan
 from opensearchpy import OpenSearch
@@ -32,8 +32,8 @@ class OpenSearchRetriever(BaseRetriever):
     es_client: OpenSearch
     index_name: Union[str, Sequence[str]]
     body_func: Callable[[str], Dict]
-    content_field: Optional[Union[str, Mapping[str,str]]] = None
-    document_mapper : Optional[Callable[[Mapping], Document]] = None
+    content_field: Optional[Union[str, Mapping[str, str]]] = None
+    document_mapper: Optional[Callable[[Mapping], Document]] = None
 
     def __init__(self, **kwargs: Any):
         super().__init__(**kwargs)
@@ -60,18 +60,23 @@ class OpenSearchRetriever(BaseRetriever):
         self,
         index_name: Union[str, Sequence[str]],
         body_func: Callable[[str], Dict],
-        content_field: Optional[Union[str, Mapping[str,str]]] = None,
+        content_field: Optional[Union[str, Mapping[str, str]]] = None,
         document_mapper: Optional[Callable[[Mapping], Document]] = None,
-        opensearch_url : Optional[str] = None,
-        cloud_id : Optional[str] = None,
-        api_key : Optional[str] = None,
-        username : Optional[str] = None,
-        password : Optional[str] = None,
+        opensearch_url: Optional[str] = None,
+        cloud_id: Optional[str] = None,
+        api_key: Optional[str] = None,
+        username: Optional[str] = None,
+        password: Optional[str] = None,
         params: Optional[Dict[str, Any]] = None,
-        ) -> "OpenSearchRetriever":
-
+    ) -> "OpenSearchRetriever":
         es_client = self.es_client
-        return OpenSearchRetriever(es_client=es_client, index_name=index_name, body_func=body_func, content_field=content_field, document_mapper=document_mapper)
+        return OpenSearchRetriever(
+            es_client=es_client,
+            index_name=index_name,
+            body_func=body_func,
+            content_field=content_field,
+            document_mapper=document_mapper,
+        )
 
     def _get_relevant_documents(self, query: str, *, run_manager: CallbackManagerForRetrieverRun) -> List[Document]:
         if not self.es_client or not self.document_mapper:
@@ -95,6 +100,7 @@ class OpenSearchRetriever(BaseRetriever):
         content = hit["_source"].pop(field)
         return Document(page_content=content, metadata=hit)
 
+
 def hit_to_doc(hit: dict[str, Any]) -> Document:
     """
     Backwards compatibility for Chunks and Documents.
@@ -116,7 +122,9 @@ def hit_to_doc(hit: dict[str, Any]) -> Document:
     )
 
 
-def query_to_documents(es_client: Union[Elasticsearch, OpenSearch], index_name: str, query: dict[str, Any]) -> list[Document]:
+def query_to_documents(
+    es_client: Union[Elasticsearch, OpenSearch], index_name: str, query: dict[str, Any]
+) -> list[Document]:
     """Runs an Elasticsearch query and returns Documents."""
     logger.info("query to opensearch: from query_to_documents")
     logger.info(str(query))

@@ -38,6 +38,7 @@ python-jose = "^3.3.0"
 httpx = "^0.27.0"
 minio = "^7.2.7"
 yarl = "^1.9.4"
+ipykernel = "^6.29.5"
 
 [tool.poetry.group.docs.dependencies]
 mkdocs = "^1.5.3"

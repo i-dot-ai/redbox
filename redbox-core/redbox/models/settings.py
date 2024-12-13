@@ -1,18 +1,18 @@
-import environ
 import logging
 import os
 from functools import cache, lru_cache
+from urllib.parse import urlparse
 from typing import Literal, Optional, Union, Dict
 
 import boto3
+import environ
 from dotenv import load_dotenv
 from elasticsearch import Elasticsearch
+from langchain.globals import set_debug
 from openai import max_retries
 from opensearchpy import OpenSearch, RequestsHttpConnection
 from pydantic import AnyUrl, BaseModel
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from langchain.globals import set_debug
-from urllib.parse import urlparse
 
 logging.basicConfig(level=os.environ.get("LOG_LEVEL", "INFO"))
 logger = logging.getLogger()
@@ -20,6 +20,7 @@ logger = logging.getLogger()
 load_dotenv()
 
 env = environ.Env()
+
 
 class OpenSearchSettings(BaseModel):
     """settings required for a aws/opensearch"""
@@ -179,7 +180,7 @@ class Settings(BaseSettings):
 
     # @lru_cache(1)
     def elasticsearch_client(self) -> Union[Elasticsearch, OpenSearch]:
-        logger.info('Testing OpenSearch is definitely being used')
+        logger.info("Testing OpenSearch is definitely being used")
 
         client = OpenSearch(
             hosts=[{"host": self.elastic.collection_endpoint__host, "port": self.elastic.collection_endpoint__port}],
@@ -197,7 +198,6 @@ class Settings(BaseSettings):
             # client.options(ignore_status=[400]).indices.create(index=chunk_index)
             # client.indices.put_alias(index=chunk_index, name=self.elastic_alias)
             try:
-                # client.indices.create(index=chunk_index, ignore=400)  # 400 is ignored to avoid index-already-exists errors
                 client.indices.create(index=chunk_index, body=self.index_mapping, ignore=400)
             except Exception as e:
                 logger.error(f"Failed to create index {chunk_index}: {e}")
@@ -209,7 +209,9 @@ class Settings(BaseSettings):
 
         if not client.indices.exists(index=self.elastic_chat_mesage_index):
             try:
-                client.indices.create(index=self.elastic_chat_mesage_index, ignore=400)  # 400 is ignored to avoid index-already-exists errors
+                client.indices.create(
+                    index=self.elastic_chat_mesage_index, ignore=400
+                )  # 400 is ignored to avoid index-already-exists errors
             except Exception as e:
                 logger.error(f"Failed to create index {self.elastic_chat_mesage_index}: {e}")
             # client.indices.create(index=self.elastic_chat_mesage_index)

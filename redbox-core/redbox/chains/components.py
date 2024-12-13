@@ -10,13 +10,19 @@ from langchain_core.embeddings import Embeddings, FakeEmbeddings
 from langchain_core.tools import StructuredTool
 from langchain_core.runnables import Runnable
 from langchain_core.utils import convert_to_secret_str
+
 # from langchain_elasticsearch import ElasticsearchRetriever
 from langchain_openai.embeddings import AzureOpenAIEmbeddings, OpenAIEmbeddings
 
 
 from redbox.chains.parser import StreamingJsonOutputParser
 from redbox.models.settings import ChatLLMBackend, Settings
-from redbox.retriever import AllElasticsearchRetriever, ParameterisedElasticsearchRetriever, MetadataRetriever, OpenSearchRetriever
+from redbox.retriever import (
+    AllElasticsearchRetriever,
+    ParameterisedElasticsearchRetriever,
+    MetadataRetriever,
+    OpenSearchRetriever,
+)
 from langchain_community.embeddings import BedrockEmbeddings
 from langchain.chat_models import init_chat_model
 from redbox.models.chain import StructuredResponseWithCitations
@@ -76,7 +82,9 @@ def get_embeddings(env: Settings) -> Embeddings:
     if env.embedding_backend == "text-embedding-ada-002":
         return get_openai_embeddings(env)
     if env.embedding_backend == "fake":
-        return FakeEmbeddings(size=1024)
+        return FakeEmbeddings(
+            size=1024
+        )  # set embedding size to 1024 to match bedrock model amazon.titan-embed-text-v2:0 default embedding size
     if env.embedding_backend == "amazon.titan-embed-text-v2:0":
         return get_aws_embeddings(env)
     raise Exception("No configured embedding model")

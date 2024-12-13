@@ -15,6 +15,7 @@ from django.db import models
 from django.db.models import Max, Min, Prefetch, UniqueConstraint
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
+
 # from django_use_email_as_username.models import BaseUser, BaseUserManager
 from django.contrib.auth.models import AbstractBaseUser, Group, PermissionsMixin
 from yarl import URL
@@ -186,6 +187,7 @@ class AISettings(UUIDPrimaryKeyBase, TimeStampedModel, AbstractAISettings):
 
 class SSOUserManager(BaseSSOUserManager):
     use_in_migrations = True
+
     def _create_user(self, username, password, **extra_fields):
         """Create and save a User with the given email and password."""
         if not username:
@@ -195,7 +197,7 @@ class SSOUserManager(BaseSSOUserManager):
         User.set_password(password)
         User.save(using=self._db)
         return User
-    
+
     def create_user(self, username, password=None, **extra_fields):
         """Create and save a regular User with the given email and password."""
         extra_fields.setdefault("is_staff", False)
@@ -448,11 +450,9 @@ class User(AbstractBaseUser, PermissionsMixin, UUIDPrimaryKeyBase):
         blank=True,
         related_name="sso_user_set",
     )
-    groups = models.ManyToManyField(
-        Group, verbose_name="groups", blank=True, related_name="sso_user_set"
-    )
+    groups = models.ManyToManyField(Group, verbose_name="groups", blank=True, related_name="sso_user_set")
 
-    USERNAME_FIELD = 'username'
+    USERNAME_FIELD = "username"
 
     REQUIRED_FIELDS = []
 

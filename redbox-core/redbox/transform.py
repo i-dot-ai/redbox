@@ -1,4 +1,6 @@
 import itertools
+import json
+import re
 from typing import Iterable
 from uuid import NAMESPACE_DNS, UUID, uuid5
 
@@ -8,7 +10,7 @@ from langchain_core.documents import Document
 from langchain_core.messages import AIMessage
 from langchain_core.runnables import RunnableLambda
 
-from redbox.models.chain import DocumentState, LLMCallMetadata, RedboxState, RequestMetadata, DocumentMapping
+from redbox.models.chain import DocumentMapping, DocumentState, LLMCallMetadata, RedboxState, RequestMetadata
 from redbox.models.graph import RedboxEventType
 
 
@@ -202,6 +204,9 @@ def get_all_metadata(obj: dict):
         citations = getattr(parsed_response, "citations", [])
     else:
         text = text_and_tools["raw_response"].content
+
+        # if isinstance(text, list):
+        #     text = extract_and_parse_json(text[0].get('text'))
         citations = []
 
     out = {
