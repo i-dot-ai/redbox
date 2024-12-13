@@ -13,6 +13,7 @@ from openai import max_retries
 from opensearchpy import OpenSearch, RequestsHttpConnection
 from pydantic import AnyUrl, BaseModel
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from redbox_app.setting_enums import Environment
 
 logging.basicConfig(level=os.environ.get("LOG_LEVEL", "INFO"))
 logger = logging.getLogger()
@@ -21,6 +22,7 @@ load_dotenv()
 
 env = environ.Env()
 
+ENVIRONMENT = Environment[env.str("ENVIRONMENT").upper()]
 
 class OpenSearchSettings(BaseModel):
     """settings required for a aws/opensearch"""
@@ -181,17 +183,26 @@ class Settings(BaseSettings):
     # @lru_cache(1)
     def elasticsearch_client(self) -> Union[Elasticsearch, OpenSearch]:
         logger.info("Testing OpenSearch is definitely being used")
+        
+        if ENVIRONMENT.is_local:
+            client = OpenSearch(
+                hosts=[{"host": self.elastic.collection_endpoint__host, "port": self.elastic.collection_endpoint__port}],
+                http_auth=(self.elastic.collection_endpoint__username, self.elastic.collection_endpoint__password),
+                use_ssl=False,
+                connection_class=RequestsHttpConnection,
+            )
 
-        client = OpenSearch(
-            hosts=[{"host": self.elastic.collection_endpoint__host, "port": self.elastic.collection_endpoint__port}],
-            http_auth=(self.elastic.collection_endpoint__username, self.elastic.collection_endpoint__password),
-            use_ssl=True,
-            verify_certs=True,
-            connection_class=RequestsHttpConnection,
-            retry_on_timeout=True,
-            pool_maxsize=100,
-            timeout=120,
-        )
+        else:
+            client = OpenSearch(
+                hosts=[{"host": self.elastic.collection_endpoint__host, "port": self.elastic.collection_endpoint__port}],
+                http_auth=(self.elastic.collection_endpoint__username, self.elastic.collection_endpoint__password),
+                use_ssl=True,
+                verify_certs=True,
+                connection_class=RequestsHttpConnection,
+                retry_on_timeout=True,
+                pool_maxsize=100,
+                timeout=120,
+            )
 
         if not client.indices.exists_alias(name=self.elastic_alias):
             chunk_index = f"{self.elastic_root_index}-chunk"
