@@ -16,9 +16,8 @@ export class UploadedDocuments extends RedboxElement {
 
     const formData = new FormData();
     formData.append('uploadDocs', doc);
-    formData.append('chat_id', this.dataset.chatid);
 
-    const response = await fetch("/upload/", {
+    const response = await fetch(`/upload/${this.dataset.chatid}/`, {
       method: "POST",
       headers: {
         "X-CSRFToken": csrfToken,
