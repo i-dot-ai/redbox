@@ -34,6 +34,12 @@ class ChatsView(View):
             if current_chat.user != request.user:
                 return redirect(reverse("chats"))
             messages = ChatMessage.get_messages_ordered_by_citation_priority(chat_id)
+        else:
+            chat = Chat.objects.create(
+                name="New chat",
+                user=request.user,
+            )
+            return redirect(reverse("chats", kwargs={"chat_id": chat.id}))
 
         endpoint = URL.build(
             scheme=settings.WEBSOCKET_SCHEME,
