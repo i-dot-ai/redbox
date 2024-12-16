@@ -576,7 +576,7 @@ class Chat(UUIDPrimaryKeyBase, TimeStampedModel, AbstractAISettings):
         """Returns all chat histories for a given user, ordered by the date of the latest message."""
         exclude_chat_ids = exclude_chat_ids or []
         return (
-            cls.objects.filter(user=user, archived=False)
+            cls.objects.filter(user=user, archived=False, chatmessage__isnull=False)
             .exclude(id__in=exclude_chat_ids)
             .annotate(latest_message_date=Max("chatmessage__created_at"))
             .order_by("-latest_message_date")
