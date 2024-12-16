@@ -67,7 +67,7 @@ def test_chat_grouped_by_age(user_with_chats_with_messages_over_time: User, clie
     response = client.get(reverse("chats"))
 
     # Then
-    assert response.status_code == HTTPStatus.OK
+    assert response.status_code == HTTPStatus.FOUND
     soup = BeautifulSoup(response.content)
     date_groups_all = soup.find_all("h3", {"class": "rb-chat-history__date_group"})
 
