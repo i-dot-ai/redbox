@@ -36,9 +36,6 @@ class ChatsView(View):
     @method_decorator(login_required)
     def get(self, request: HttpRequest, chat_id: uuid.UUID) -> HttpResponse:
         all_chats = Chat.get_ordered_by_last_message_date(request.user)
-
-        messages: Sequence[ChatMessage] = []
-
         current_chat = get_object_or_404(Chat, id=chat_id)
         if current_chat.user != request.user:
             return redirect(reverse("chats"))
