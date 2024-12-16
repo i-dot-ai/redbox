@@ -28,10 +28,11 @@ def test_check_demographics_redirect_if_populated(client: Client, user_with_demo
     client.force_login(user_with_demographic_data)
 
     # When
-    response = client.get("/check-demographics/", follow=True)
+    response = client.get("/check-demographics/")
 
     # Then
-    assertRedirects(response, "/chats/")
+    assert response.status_code == HTTPStatus.FOUND
+    assert str(response.url).startswith("/chats/")
 
 
 @pytest.mark.django_db()

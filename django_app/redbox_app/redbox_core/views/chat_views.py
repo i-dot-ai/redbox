@@ -22,24 +22,27 @@ from redbox_app.redbox_core.models import Chat, ChatLLMBackend, ChatMessage, Fil
 logger = logging.getLogger(__name__)
 
 
+class ChatsViewNew(View):
+    @method_decorator(login_required)
+    def get(self, request: HttpRequest) -> HttpResponse:
+        chat = Chat.objects.create(
+            name="New chat",
+            user=request.user,
+        )
+        return redirect(reverse("chats", kwargs={"chat_id": chat.id}))
+
+
 class ChatsView(View):
     @method_decorator(login_required)
-    def get(self, request: HttpRequest, chat_id: uuid.UUID | None = None) -> HttpResponse:
-        chat = Chat.get_ordered_by_last_message_date(request.user)
+    def get(self, request: HttpRequest, chat_id: uuid.UUID) -> HttpResponse:
+        all_chats = Chat.get_ordered_by_last_message_date(request.user)
 
         messages: Sequence[ChatMessage] = []
-        current_chat = None
-        if chat_id:
-            current_chat = get_object_or_404(Chat, id=chat_id)
-            if current_chat.user != request.user:
-                return redirect(reverse("chats"))
-            messages = ChatMessage.get_messages_ordered_by_citation_priority(chat_id)
-        else:
-            chat = Chat.objects.create(
-                name="New chat",
-                user=request.user,
-            )
-            return redirect(reverse("chats", kwargs={"chat_id": chat.id}))
+
+        current_chat = get_object_or_404(Chat, id=chat_id)
+        if current_chat.user != request.user:
+            return redirect(reverse("chats"))
+        messages = ChatMessage.get_messages_ordered_by_citation_priority(chat_id)
 
         endpoint = URL.build(
             scheme=settings.WEBSOCKET_SCHEME,
@@ -51,7 +54,7 @@ class ChatsView(View):
         completed_files, processing_files = File.get_completed_and_processing_files(request.user)
 
         self.decorate_selected_files(completed_files, messages)
-        chat_grouped_by_date_group = groupby(chat, attrgetter("date_group"))
+        chat_grouped_by_date_group = groupby(all_chats, attrgetter("date_group"))
 
         chat_backend = current_chat.chat_backend if current_chat else ChatLLMBackend.objects.get(is_default=True)
 
