@@ -80,6 +80,12 @@
           {% endif %}
         </chat-title>
 
+        <ul>
+          {% for doc in current_chat.file_set.all() %}
+            <li>{{ doc.file_name }} : {{ doc.created_at }} : {{ doc.id }}</li>
+          {% endfor %}
+        <ul>
+
         <chat-controller class="iai-chat-container" data-stream-url="{{ streaming.endpoint }}" data-session-id="{{ chat_id or '' }}">
 
           <div class="rb-chat-message__container js-message-container">
