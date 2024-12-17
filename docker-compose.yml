@@ -6,8 +6,7 @@ services:
     #   context: .
     #   dockerfile: unstructured/Dockerfile
     ports:
-      - 8000:8000
-      # - "8080:8080"
+      - 8080:8080
     networks:
       - redbox-app-network
   django-app:
@@ -34,9 +33,9 @@ services:
       - ./django_app:/app/django_app/
       - .aws:/root/.aws
     ports:
-      - "8080:8080"
+      - "8090:8090"
     healthcheck:
-      test: curl --fail http://localhost:8080/health/ || exit 1
+      test: curl --fail http://localhost:8090/health/ || exit 1
       interval: 5s
       timeout: 30s
       retries: 24
@@ -167,9 +166,9 @@ services:
   embeddings:
     image: localai/localai:v2.18.1-aio-cpu #localai/localai:v2.18.1 should allow use of sentencetransformers backend
     expose:
-      - "8090"
+      - "8091"
     ports:
-      - "8090:8090"
+      - "8091:8091"
     environment:
       - MODELS=/aio/cpu/embeddings.yaml #Use defaults embedding model for aio image. Only aio images available in ARM architecture
       - MINIO_SECRET_KEY=minioadmin
@@ -181,7 +180,7 @@ services:
       - ./data/embeddings/config:/config
     restart: unless-stopped
     healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:8080/readyz" ]
+      test: [ "CMD", "curl", "-f", "http://localhost:8090/readyz" ]
       interval: 1m
       timeout: 20m
       retries: 5
