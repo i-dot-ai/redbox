@@ -109,6 +109,12 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 temperature=temperature,
             )
 
+        # Update session name if this is the first message
+        message_count = await session.chatmessage_set.acount()
+        if message_count == 0:
+            session.name = user_message_text[: settings.CHAT_TITLE_LENGTH]
+            await session.asave()
+
         # save user message
         permitted_files = File.objects.filter(user=user, status=File.Status.complete)
         selected_files = permitted_files.filter(id__in=selected_file_uuids)
