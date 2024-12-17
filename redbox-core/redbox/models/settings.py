@@ -38,6 +38,7 @@ class OpenSearchSettings(BaseModel):
     collection_endpoint__password: Optional[str] = parsed_url.password
     collection_endpoint__host: Optional[str] = parsed_url.hostname
     collection_endpoint__port: Optional[str] = "443"
+    collection_endpoint__port_local: Optional[str] = "9200" #locally, the port number is 9200
 
 
 class ElasticLocalSettings(BaseModel):
@@ -143,33 +144,6 @@ class Settings(BaseSettings):
         "recovered from it. Create SEO-optimised metadata for this document."
         "Description must be less than 100 words. and no more than 5 keywords .",
     )
-    #Define index mapping for Opensearch - this is important so that KNN search works
-    index_mapping : Dict = {
-    "settings": {
-    "index.knn": True
-    },
-    "mappings": {
-        "properties": {
-            "metadata": {
-                "properties": {
-                    "chunk_resolution": {"type": "text", "fields": {"keyword": {"type": "keyword", "ignore_above": 256}}},
-                    "created_datetime": {"type": "date"},
-                    "creator_type": {"type": "text", "fields": {"keyword": {"type": "keyword", "ignore_above": 256}}},
-                    "description": {"type": "text", "fields": {"keyword": {"type": "keyword", "ignore_above": 256}}},
-                    "index": {"type": "long"},
-                    "keywords": {"type": "text", "fields": {"keyword": {"type": "keyword", "ignore_above": 256}}},
-                    "name": {"type": "text", "fields": {"keyword": {"type": "keyword", "ignore_above": 256}}},
-                    "page_number": {"type": "long"},
-                    "token_count": {"type": "long"},
-                    "uri": {"type": "text", "fields": {"keyword": {"type": "keyword", "ignore_above": 256}}},
-                    "uuid": {"type": "text", "fields": {"keyword": {"type": "keyword", "ignore_above": 256}}}
-                }
-            },
-            "text": {"type": "text", "fields": {"keyword": {"type": "keyword", "ignore_above": 256}}},
-            "vector_field": {"type": "knn_vector", "dimension": embedding_backend_vector_size, "method": {"name": "hnsw", "space_type": "cosinesimil", "engine": "lucene"}}     
-        }
-        }
-        }
 
     #Define index mapping for Opensearch - this is important so that KNN search works
     index_mapping : Dict = {
@@ -213,7 +187,7 @@ class Settings(BaseSettings):
         
         if ENVIRONMENT.is_local:
             client = OpenSearch(
-                hosts=[{"host": self.elastic.collection_endpoint__host, "port": self.elastic.collection_endpoint__port}],
+                hosts=[{"host": self.elastic.collection_endpoint__host, "port": self.elastic.collection_endpoint__port_local}],
                 http_auth=(self.elastic.collection_endpoint__username, self.elastic.collection_endpoint__password),
                 use_ssl=False,
                 connection_class=RequestsHttpConnection,
