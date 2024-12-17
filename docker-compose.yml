@@ -132,11 +132,12 @@ services:
       start_period: 30s
 
   opensearch:
-    image: opensearchproject/opensearch:2.9.0
+    image: opensearchproject/opensearch:2.17.0
     environment:
       - discovery.type=single-node
       - OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m
       - plugins.security.disabled=true  # Disable security plugin for simplicity
+      - OPENSEARCH_INITIAL_ADMIN_PASSWORD=${OPENSEARCH_INITIAL_ADMIN_PASSWORD} # Sets the demo admin user password when using demo configuration (for OpenSearch 2.12 and later)
     volumes:
       - opensearch-data:/usr/share/opensearch/data
     ports:
@@ -151,7 +152,7 @@ services:
       start_period: 60s
     restart: unless-stopped
   opensearch-dashboards:
-    image: opensearchproject/opensearch-dashboards:2.9.0
+    image: opensearchproject/opensearch-dashboards:2.17.0
     environment:
       - OPENSEARCH_HOSTS=https://opensearch:9200
     ports:
