@@ -24,7 +24,11 @@ class FileStatus extends HTMLElement {
       }
     };
 
-    checkStatus();
+    if (this.textContent.toLowerCase() !== "complete") {
+      checkStatus();
+    }
+
   }
+
 }
 customElements.define("file-status", FileStatus);
