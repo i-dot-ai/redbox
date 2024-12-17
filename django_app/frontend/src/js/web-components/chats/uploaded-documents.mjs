@@ -27,6 +27,9 @@ export class UploadedDocuments extends RedboxElement {
     if (!response.ok) {
       // TO DO: Handle error
     }
+
+    const data = await response.text();
+    console.log(data);
   }
 
   render() {
@@ -36,7 +39,10 @@ export class UploadedDocuments extends RedboxElement {
         <ul>
           ${this.docs.map(
             (doc) => html`
-              <li>${doc.file_name}</li>
+              <li>
+                ${doc.file_name} : 
+                <file-status data-id=${doc.id}></file-status>
+              </li>
             `
           )}
         </ul>

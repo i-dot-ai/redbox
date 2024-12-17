@@ -88,10 +88,13 @@ class UploadView(View):
         if not errors:
             for uploaded_file in uploaded_files:
                 # ingest errors are handled differently, as the other documents have started uploading by this point
-                request.session["ingest_errors"] = self.ingest_file(uploaded_file, request.user, chat_id)
-            return redirect(reverse("documents"))
+                file, request.session["ingest_errors"] = self.ingest_file(uploaded_file, request.user, chat_id)
+                # This can be removed once we are uploading docs only on the chat page:
+                if not chat_id:
+                    return redirect(reverse("documents"))
 
         return self.build_response(request, errors)
+
 
     @staticmethod
     def build_response(request: HttpRequest, errors: Sequence[str] | None = None) -> HttpResponse:
@@ -125,7 +128,7 @@ class UploadView(View):
         return errors
 
     @staticmethod
-    def ingest_file(uploaded_file: UploadedFile, user: User, chat_id: uuid.UUID | None = None) -> Sequence[str]:
+    def ingest_file(uploaded_file: UploadedFile, user: User, chat_id: uuid.UUID | None = None) -> tuple[File, Sequence[str]]:
         try:
             logger.info("getting file from s3")
             file = File.objects.create(
@@ -136,10 +139,10 @@ class UploadView(View):
             )
         except (ValueError, FieldError, ValidationError) as e:
             logger.exception("Error creating File model object for %s.", uploaded_file, exc_info=e)
-            return e.args
+            return None, e.args
         else:
             async_task(ingest, file.id, task_name=file.unique_name, group="ingest")
-
+        return file, []
 
 @login_required
 def remove_doc_view(request, doc_id: uuid):

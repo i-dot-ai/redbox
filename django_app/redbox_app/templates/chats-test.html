@@ -82,7 +82,10 @@
 
         <ul>
           {% for doc in current_chat.file_set.all() %}
-            <li>{{ doc.file_name }} : {{ doc.created_at }} : {{ doc.id }}</li>
+            <li>
+              <p>{{ doc.file_name }} : {{ doc.created_at }} : {{ doc.id }}</p>
+              <file-status data-id="{{ doc.id }}" data-status="{{ doc.get_status_text() }}">{{ doc.get_status_text() }}</file-status>
+            </li>
           {% endfor %}
         <ul>
 
