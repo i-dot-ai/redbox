@@ -52,7 +52,7 @@ def get_elasticsearch_store_without_embeddings(es, es_index_name: str):
     return OpenSearchVectorSearch(
         index_name=es_index_name,
         opensearch_url=env.elastic.collection_endpoint,
-        embedding_function=FakeEmbeddings(size=env.embedding_backend_vector_size),
+        embedding_function=FakeEmbeddings(size=env.embedding_backend_vector_size)
     )
 
 
