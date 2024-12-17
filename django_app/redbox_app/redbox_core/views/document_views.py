@@ -95,7 +95,6 @@ class UploadView(View):
 
         return self.build_response(request, errors)
 
-
     @staticmethod
     def build_response(request: HttpRequest, errors: Sequence[str] | None = None) -> HttpResponse:
         return render(
@@ -128,7 +127,9 @@ class UploadView(View):
         return errors
 
     @staticmethod
-    def ingest_file(uploaded_file: UploadedFile, user: User, chat_id: uuid.UUID | None = None) -> tuple[File, Sequence[str]]:
+    def ingest_file(
+        uploaded_file: UploadedFile, user: User, chat_id: uuid.UUID | None = None
+    ) -> tuple[File, Sequence[str]]:
         try:
             logger.info("getting file from s3")
             file = File.objects.create(
@@ -143,6 +144,7 @@ class UploadView(View):
         else:
             async_task(ingest, file.id, task_name=file.unique_name, group="ingest")
         return file, []
+
 
 @login_required
 def remove_doc_view(request, doc_id: uuid):
