@@ -6,6 +6,7 @@ from django.urls import include, path
 from magic_link import urls as magic_link_urls
 
 from .redbox_core import views
+from .redbox_core.views import api_views
 
 admin.site = AdminSitePlus()
 admin.autodiscover()
@@ -80,6 +81,7 @@ other_urlpatterns = [
 
 api_url_patterns = [
     path("api/v0/", views.user_view_pre_alpha, name="user-view"),
+    path("api/v0/file/", api_views.file_upload, name="file-upload"),
 ]
 
 urlpatterns = (
