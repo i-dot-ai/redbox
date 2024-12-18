@@ -1,12 +1,12 @@
 services:
   unstructured:
     image: quay.io/unstructured-io/unstructured-api:latest
-    # image: unstructured:latest - TODO - separate this commented into a buildx ccommand somewhere
-    # build:
-    #   context: .
-    #   dockerfile: unstructured/Dockerfile
+    #image: unstructured:latest  #- TODO - separate this commented into a buildx ccommand somewhere
+    #build:
+      #context: .
+      #dockerfile: unstructured/Dockerfile
     ports:
-      - 8080:8080
+      - 8000:8000
     networks:
       - redbox-app-network
   django-app:
