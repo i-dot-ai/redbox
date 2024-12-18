@@ -154,7 +154,8 @@ def build_document_query(
                             "vector_field": {
                             "vector": query_vector,
                             "k": ai_settings.rag_num_candidates,
-                            "boost": ai_settings.knn_boost}
+                            "boost": ai_settings.knn_boost,
+                            "filter": query_filter}
                         }
                     },
                 ],
