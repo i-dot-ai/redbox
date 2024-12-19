@@ -223,23 +223,6 @@ def test_reingest_files_unstructured_fail(uploaded_file: File, requests_mock: Mo
         json=[],
     )
 
-    mocker.patch(
-        "redbox.loader.loaders.get_chat_llm",
-        return_value=GenericFakeChatModel(
-            messages=iter(
-                [
-                    json.dumps(
-                        {
-                            "name": "foo",
-                            "description": "more test",
-                            "keywords": ["hello", "world"],
-                        }
-                    )
-                ]
-            )
-        ),
-    )
-
     # When
     with mocker.patch("redbox.chains.ingest.VectorStore.add_documents", return_value=[]):
         call_command("reingest_files", sync=True)
