@@ -51,11 +51,11 @@ export class DocumentUpload extends RedboxElement {
 
     evt?.preventDefault();
 
-    const allUploadedDocContainers = document.querySelectorAll("uploaded-documents");
+    const allUploadedDocContainers = document.querySelectorAll("document-container");
     const lastUploadedDocContainer = allUploadedDocContainers[allUploadedDocContainers.length - 1];
 
     for (const doc of /** @type {HTMLFormElement} */(this.querySelector("input[type=file]")).files) {
-      lastUploadedDocContainer.addDocument(doc, this.querySelector('[name="csrfmiddlewaretoken"]').value);
+      lastUploadedDocContainer.addDocument(doc, this.csrfToken);
     }
 
   };

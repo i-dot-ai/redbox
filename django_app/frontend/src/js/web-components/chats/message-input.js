@@ -13,7 +13,7 @@ export class MessageInput extends HTMLElement {
 
     // Submit form on enter-key press (providing shift isn't being pressed)
     this.textarea.addEventListener("keypress", (evt) => {
-      if (evt.key === "Enter" && !evt.shiftKey && this.textarea) {
+      if (evt.key === "Enter" && !evt.shiftKey) {
         evt.preventDefault();
         if (this.textarea.value.trim()) {
           this.closest("form")?.requestSubmit();
@@ -40,7 +40,7 @@ export class MessageInput extends HTMLElement {
    * @returns string
    */
   getValue = () => {
-    return this.querySelector("textarea")?.value.trim() || "";
+    return this.textarea?.value?.trim() || "";
   };
 
   /**
