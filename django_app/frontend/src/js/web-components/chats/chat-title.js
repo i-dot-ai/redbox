@@ -68,7 +68,7 @@ export class ChatTitle extends HTMLElement {
       this.#update(true);
     });
 
-    if (!this.dataset.sessionId) {
+    if (!this.dataset.title) {
       document.addEventListener("chat-response-end", this.#onFirstResponse);
     }
 

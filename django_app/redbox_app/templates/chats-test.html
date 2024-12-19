@@ -1,4 +1,4 @@
-{% set pageTitle = "Chats" %}
+{% set pageTitle = "Chats - Test" %}
 {% extends "base.html" %}
 {% from "macros/chat-history-macros.html" import chat_history_heading, chat_history_item %}
 {% from "macros/chat-macros.html" import message_box, route_display %}
@@ -6,12 +6,6 @@
 
 
 {% block content %}
-
-{# To be added back in once profile overlay is required
-{% if not request.user.name %}
-  {{ profile_overlay(csrf_token, request.user, True) }}
-{% endif %}
-#}
 
 <div class="govuk-width-container">
 
@@ -21,7 +15,7 @@
     </div>
   </div>
 
-  <form id="message-form" class="govuk-grid-row js-message-input" action="/post-message/" method="post">
+  <div class="govuk-grid-row js-message-input">
 
     <div class="govuk-grid-column-one-third">
       <div class="rb-left-column-container govuk-!-margin-bottom-5">
@@ -31,63 +25,37 @@
           New chat
         </a>
 
-      <div class="iai-panel govuk-!-margin-top-5 govuk-!-padding-top-3">
-        <h2 class="govuk-body-s govuk-!-font-weight-bold govuk-!-margin-bottom-0 rb-chat-history__title">Recent chats</h2>
-        <div class="iai-panel__scrollable iai-panel__scrollable--chat-history govuk-!-padding-right-3">
+        <div class="iai-panel govuk-!-margin-top-5 govuk-!-padding-top-3">
+          <h2 class="govuk-body-s govuk-!-font-weight-bold govuk-!-margin-bottom-0 rb-chat-history__title">Recent chats</h2>
+          <div class="iai-panel__scrollable iai-panel__scrollable--chat-history govuk-!-padding-right-3">
 
-          <chat-history>
+            <chat-history>
 
-            <template id="template-chat_history_heading">
-              <div>
-                {% call chat_history_heading("-") %}
-                {% endcall %}
-              </div>
-            </template>
-            <template id="template-chat_history_item">
-              {{ chat_history_item({
-                "id": "id",
-                "name": ""
-              }, "", "id") }}
-            </template>
-
-            {% for date_group, chats in chat_grouped_by_date_group %}
-              {% call chat_history_heading(date_group) %}
-                {% for chat in chats %}
-                  {{ chat_history_item(chat, url('chats', chat.id), chat_id) }}
-                {% endfor %}
-              {% endcall %}
-            {% endfor %}
-
-          </chat-history>
-
-        </div>
-      </div>
-
-        <document-selector class="iai-panel govuk-!-margin-top-5 govuk-!-padding-top-3">
-          <fieldset class="govuk-fieldset">
-            <legend class="govuk-fieldset__legend govuk-fieldset__legend--s">
-              <h3 class="rb-doc-selector__heading govuk-fieldset__heading">Documents to use</h3>
-            </legend>
-            <div class="govuk-checkboxes govuk-checkboxes--small iai-panel__scrollable" data-module="govuk-checkboxes">
-              {% for file in completed_files %}
-                <div class="govuk-checkboxes__item">
-                  <input class="govuk-checkboxes__input" id="file-{{ file.id }}" name="file-{{ file.id }}" type="checkbox" value="{{ file.id }}" {% if file.selected %}checked{% endif %}>
-                  <label class="rb-doc-selector__label govuk-checkboxes__label" for="file-{{ file.id }}">{{ file.file_name }}</label>
+              <template id="template-chat_history_heading">
+                <div>
+                  {% call chat_history_heading("-") %}
+                  {% endcall %}
                 </div>
+              </template>
+              <template id="template-chat_history_item">
+                {{ chat_history_item({
+                  "id": "id",
+                  "name": ""
+                }, "", "id") }}
+              </template>
+
+              {% for date_group, chats in chat_grouped_by_date_group %}
+                {% call chat_history_heading(date_group) %}
+                  {% for chat in chats %}
+                    {{ chat_history_item(chat, url('chats', chat.id), chat_id) }}
+                  {% endfor %}
+                {% endcall %}
               {% endfor %}
-              {# files not yet ready - stored here to be moved to main list once ready #}
-              <div hidden>
-                {% for file in processing_files %}
-                  <div class="govuk-checkboxes__item">
-                    <input class="govuk-checkboxes__input" id="file-{{ file.id }}" name="file-{{ file.id }}" type="checkbox" value="{{ file.id }}" {% if file.selected %}checked{% endif %}>
-                    <label class="rb-doc-selector__label govuk-checkboxes__label" for="file-{{ file.id }}">{{ file.file_name }}</label>
-                    <file-status data-id="{{ file.id }}"></file-status>
-                  </div>
-                {% endfor %}
-              </div>
-            </div>
-          </fieldset>
-        </document-selector>
+
+            </chat-history>
+
+          </div>
+        </div>
 
         <div class="iai-panel govuk-!-margin-top-5 govuk-!-padding-top-3">
           <label class="govuk-body-s govuk-!-font-weight-bold" for="llm-selector">Model</label>
@@ -115,7 +83,6 @@
           {% endif %}
         </chat-title>
 
-
         <chat-controller class="iai-chat-container" data-stream-url="{{ streaming.endpoint }}" data-session-id="{{ chat_id or '' }}">
 
           <div class="rb-chat-message__container js-message-container">
@@ -126,6 +93,14 @@
 
             {# SSR messages #}
             {% for message in messages %}
+
+              {% if message.role == 'user' %}
+                {% set uploaded_documents %}
+                  <document-container data-chatid="{{ chat_id }}" data-docs="{{ current_chat.file_set.all() | filter_docs(messages, loop.index0) }}"></document-container>
+                {% endset %}
+                {{ uploaded_documents | render_lit | safe }}
+              {% endif %}
+
               {{ message_box(message=message) }}
 
               {# Collect feedback on SSR messages #}
@@ -134,6 +109,11 @@
               {% endif %}
 
             {% endfor %}
+
+            {% set uploaded_documents %}
+              <document-container data-chatid="{{ chat_id }}" data-docs="{{ current_chat.file_set.all() | filter_docs(messages, messages.count()) }}"></document-container>
+            {% endset %}
+            {{ uploaded_documents | render_lit | safe }}
 
             {# CSR messages are inserted here #}
 
@@ -150,7 +130,12 @@
         <canned-prompts class="chat-options"></canned-prompts>
       {% endif %}
 
-      <div class="iai-chat-input">
+      {% set document_upload %}
+        <document-upload data-csrf-token="{{ csrf_token }}" data-chatid="{{ chat_id }}"></document-upload>
+      {% endset %}
+      {{ document_upload | render_lit | safe }}
+
+      <form id="message-form" class="iai-chat-input" action="/post-message/" method="post">
         <div class="iai-chat-input__container">
           <div class="iai-chat-input__input-container">
             <label class="iai-chat-input__label govuk-label" for="message">
@@ -169,11 +154,11 @@
         </div>
         <p class="iai-chat-input__info-text">Redbox can make mistakes. You must check for accuracy before using the output.</p>
         <p class="iai-chat-input__info-text">You can use up to, and including, official sensitive documents.</p>
-      </div>
+      </form>
 
     </div>
 
-  </form>
+  </div>
 
   <exit-feedback class="exit-feedback" data-chatid="{{ current_chat.id }}" data-csrf="{{ csrf_token }}"></exit-feedback>
 
