@@ -2,7 +2,7 @@
 import { LitElement, html } from "lit";
 import { RedboxElement } from "../redbox-element.mjs";
 
-export class UploadedDocuments extends RedboxElement {
+export class DocumentContainer extends RedboxElement {
   static properties = {
     docs: { type: Array, attribute: "data-docs" },
   };
@@ -41,7 +41,7 @@ export class UploadedDocuments extends RedboxElement {
             (doc) => html`
               <li>
                 ${doc.file_name} : 
-                <file-status data-id=${doc.id}></file-status>
+                <file-status data-id=${doc.id}>${doc.file_status}</file-status>
               </li>
             `
           )}
@@ -50,4 +50,4 @@ export class UploadedDocuments extends RedboxElement {
     `;
   }
 }
-customElements.define("uploaded-documents", UploadedDocuments);
+customElements.define("document-container", DocumentContainer);
