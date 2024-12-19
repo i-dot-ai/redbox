@@ -45,7 +45,7 @@ class StreamingJsonOutputParser(BaseCumulativeTransformOutputParser[Any]):
 
         except Exception as e:
             print(f"Error processing JSON: {e}")
-            return None
+            return text
 
     def parse_partial_json(self, text: str):
         try:
