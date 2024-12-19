@@ -8,16 +8,21 @@ export class DocumentContainer extends RedboxElement {
   };
 
   async addDocument(doc, csrfToken) {
-    
+  
+    const tempId = crypto.randomUUID();
+
     this.docs.push({
-      file_name: doc.name
+      temp_id: tempId,
+      file_name: doc.name,
+      status: "Uploading"
     });
     this.requestUpdate();
 
     const formData = new FormData();
-    formData.append('uploadDocs', doc);
+    formData.append('file', doc);
+    formData.append('chat_id', this.dataset.chatid);
 
-    const response = await fetch(`/upload/${this.dataset.chatid}/`, {
+    const response = await fetch("/api/v0/file/", {
       method: "POST",
       headers: {
         "X-CSRFToken": csrfToken,
@@ -28,8 +33,10 @@ export class DocumentContainer extends RedboxElement {
       // TO DO: Handle error
     }
 
-    const data = await response.text();
-    console.log(data);
+    const data = await response.json();
+    this.docs.find(doc => doc.temp_id === tempId).id = data.file_id;
+    this.requestUpdate();
+
   }
 
   render() {
