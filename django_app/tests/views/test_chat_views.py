@@ -59,12 +59,12 @@ def test_view_session_with_documents(chat_message: ChatMessage, client: Client):
 
 
 @pytest.mark.django_db()
-def test_chat_grouped_by_age(user_with_chats_with_messages_over_time: User, client: Client):
+def test_chat_grouped_by_age(user_with_chats_with_messages_over_time: User, client: Client, chat):
     # Given
     client.force_login(user_with_chats_with_messages_over_time)
 
     # When
-    response = client.get(reverse("chats"))
+    response = client.get(reverse("chats", args=(chat.pk,)))
 
     # Then
     assert response.status_code == HTTPStatus.OK
