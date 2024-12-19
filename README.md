@@ -148,7 +148,7 @@ On initial app setup you will need to run `poetry run python manage.py collectst
 
 #### Testing
 
-To run the web-component tests, from the frontend folder run:
+To run the web-component tests, first ensure you have a user set up in Django that is the same as the `FROM_EMAIL` env. Then from the frontend folder run:
 
 ```
 npm run test

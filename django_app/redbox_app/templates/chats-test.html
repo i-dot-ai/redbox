@@ -72,8 +72,11 @@
     <div class="govuk-grid-column-two-thirds">
       <div class="rb-chats-section">
 
-        <chat-title class="chat-title" data-session-id="{{ chat_id or '' }}" data-title="{{ current_chat.name or '' }}", data-title-length="{{ chat_title_length }}">
-          {% if current_chat.name %}
+        {% if messages.count() %}
+          {% set chat_name = current_chat.name %}
+        {% endif %}
+        <chat-title class="chat-title" data-session-id="{{ chat_id }}" data-title="{{ chat_name or '' }}" data-title-length="{{ chat_title_length }}">
+          {% if messages.count() %}
             <h2 class="chat-title__heading govuk-heading-m">{{ current_chat.name }}</h2>
           {% else %}
             <h2 class="chat-title__heading govuk-visually-hidden" hidden>Current chat</h2>
