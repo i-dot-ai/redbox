@@ -107,7 +107,10 @@
 
             {% endfor %}
 
-            <document-container data-chatid="{{ chat_id }}" data-docs="{{ current_chat.file_set.all() | filter_docs(messages, messages.count()) }}"></document-container>
+            {% set uploaded_documents %}
+              <document-container data-chatid="{{ chat_id }}" data-docs="{{ current_chat.file_set.all() | filter_docs(messages, messages.count()) }}"></document-container>
+            {% endset %}
+            {{ uploaded_documents | render_lit | safe }}
 
             {# CSR messages are inserted here #}
 
