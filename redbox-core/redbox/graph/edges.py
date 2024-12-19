@@ -6,7 +6,6 @@ from langchain_core.runnables import Runnable
 
 from redbox.chains.components import get_tokeniser
 from redbox.graph.nodes.processes import PromptSet
-from redbox.models import ChatRoute
 from redbox.models.chain import RedboxState, get_prompts
 from redbox.transform import get_document_token_count
 
@@ -64,28 +63,6 @@ def documents_bigger_than_n_conditional(state: RedboxState) -> bool:
     """Do the documents meet a hard limit of document token size set in AI Settings."""
     token_counts = get_document_token_count(state)
     return sum(token_counts) > state.request.ai_settings.max_document_tokens
-
-
-def build_keyword_detection_conditional(*allowed_routes: ChatRoute) -> Runnable:
-    """Given a set of permitted routes, will detect them in keywords."""
-
-    def _keyword_detection_conditional(state: RedboxState) -> ChatRoute | str:
-        re_keyword_pattern = re.compile(r"@(\w+)")
-
-        route_match = re_keyword_pattern.search(state.request.question)
-        route_name = route_match.group()[1:] if route_match else None
-
-        try:
-            route = ChatRoute[route_name]
-            if route in allowed_routes:
-                return route
-        except KeyError:
-            if route_name is not None:
-                return "DEFAULT"
-
-        return "DEFAULT"
-
-    return _keyword_detection_conditional
 
 
 def documents_selected_conditional(state: RedboxState) -> bool:
