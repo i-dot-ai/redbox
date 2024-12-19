@@ -80,15 +80,6 @@
           {% endif %}
         </chat-title>
 
-        <ul>
-          {% for doc in current_chat.file_set.all() %}
-            <li>
-              <p>{{ doc.file_name }} : {{ doc.created_at }} : {{ doc.id }}</p>
-              <file-status data-id="{{ doc.id }}" data-status="{{ doc.get_status_text() }}">{{ doc.get_status_text() }}</file-status>
-            </li>
-          {% endfor %}
-        <ul>
-
         <chat-controller class="iai-chat-container" data-stream-url="{{ streaming.endpoint }}" data-session-id="{{ chat_id or '' }}">
 
           <div class="rb-chat-message__container js-message-container">
@@ -99,6 +90,14 @@
 
             {# SSR messages #}
             {% for message in messages %}
+
+              {% if message.role == 'user' %}
+                {% set uploaded_documents %}
+                  <document-container data-chatid="{{ chat_id }}" data-docs="{{ current_chat.file_set.all() | filter_docs(messages, loop.index0) }}"></document-container>
+                {% endset %}
+                {{ uploaded_documents | render_lit | safe }}
+              {% endif %}
+
               {{ message_box(message=message) }}
 
               {# Collect feedback on SSR messages #}
@@ -107,6 +106,8 @@
               {% endif %}
 
             {% endfor %}
+
+            <document-container data-chatid="{{ chat_id }}" data-docs="{{ current_chat.file_set.all() | filter_docs(messages, messages.count()) }}"></document-container>
 
             {# CSR messages are inserted here #}
 
@@ -122,11 +123,6 @@
       {% if not messages %}
         <canned-prompts class="chat-options"></canned-prompts>
       {% endif %}
-
-      {% set uploaded_documents %}
-        <uploaded-documents data-chatid="{{ chat_id }}" data-docs="[]"></uploaded-documents>
-      {% endset %}
-      {{ uploaded_documents | render_lit | safe }}
 
       {% set document_upload %}
         <document-upload data-csrf-token="{{ csrf_token }}" data-chatid="{{ chat_id }}"></document-upload>
