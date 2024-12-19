@@ -32,8 +32,7 @@ class UploadSerializer(Serializer):
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def file_upload(request):
-    """upload a new file
-    """
+    """upload a new file"""
 
     serializer = UploadSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)

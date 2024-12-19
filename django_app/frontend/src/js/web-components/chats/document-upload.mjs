@@ -58,6 +58,8 @@ export class DocumentUpload extends RedboxElement {
       lastUploadedDocContainer.addDocument(doc, this.csrfToken);
     }
 
+    this.querySelector("input[type=file]").value = "";
+
   };
 
   render() {
