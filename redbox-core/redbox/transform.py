@@ -204,9 +204,6 @@ def get_all_metadata(obj: dict):
         citations = getattr(parsed_response, "citations", [])
     else:
         text = text_and_tools["raw_response"].content
-
-        # if isinstance(text, list):
-        #     text = extract_and_parse_json(text[0].get('text'))
         citations = []
 
     out = {
