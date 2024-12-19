@@ -7,7 +7,6 @@ from langchain_elasticsearch.vectorstores import BM25Strategy, ElasticsearchStor
 from redbox.chains.components import get_embeddings
 from redbox.chains.ingest import ingest_from_loader
 from redbox.loader.loaders import UnstructuredChunkLoader
-from redbox.models.chain import GeneratedMetadata
 from redbox.models.settings import get_settings
 from redbox.models.file import ChunkResolution
 
@@ -65,12 +64,6 @@ def _ingest_file(file_name: str, es_index_name: str = alias):
     else:
         es.options(ignore_status=[400]).indices.create(index=es_index_name)
 
-    # Extract metadata
-    # metadata_loader = MetadataLoader(env=env, s3_client=env.s3_client(), file_name=file_name)
-    # metadata = metadata_loader.extract_metadata()
-
-    metadata = GeneratedMetadata(name=file_name)
-
     chunk_ingest_chain = ingest_from_loader(
         loader=UnstructuredChunkLoader(
             chunk_resolution=ChunkResolution.normal,
@@ -78,7 +71,6 @@ def _ingest_file(file_name: str, es_index_name: str = alias):
             min_chunk_size=env.worker_ingest_min_chunk_size,
             max_chunk_size=env.worker_ingest_max_chunk_size,
             overlap_chars=0,
-            metadata=metadata,
         ),
         s3_client=env.s3_client(),
         vectorstore=get_elasticsearch_store(es, es_index_name),
@@ -92,7 +84,6 @@ def _ingest_file(file_name: str, es_index_name: str = alias):
             min_chunk_size=env.worker_ingest_largest_chunk_size,
             max_chunk_size=env.worker_ingest_largest_chunk_size,
             overlap_chars=env.worker_ingest_largest_chunk_overlap,
-            metadata=metadata,
         ),
         s3_client=env.s3_client(),
         vectorstore=get_elasticsearch_store_without_embeddings(es, es_index_name),
