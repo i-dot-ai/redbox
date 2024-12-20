@@ -66,7 +66,7 @@ def test_upload_view_with_chat(chat, client, file_pdf_path: Path, s3_client):
         response = client.post(url, {"uploadDocs": f})
 
         assert file_exists(s3_client, file_name)
-        assert response.status_code == HTTPStatus.FOUND
+        assert response.status_code == HTTPStatus.OK
         assert response.url == "/documents/"
 
     file = File.objects.get(original_file=file_name.replace(" ", "_"))
