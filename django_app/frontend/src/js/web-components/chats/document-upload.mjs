@@ -33,7 +33,12 @@ export class DocumentUpload extends RedboxElement {
       /** @type {HTMLInputElement} */ (this.querySelector("input[type=file]")).files = dataTransfer.files;
       this.#sendFiles();
 
-      // TO DO: Send drag-drop event to Plausible
+      // send event to plausible analytics
+      let plausible = /** @type {any} */ (window).plausible;
+      if (typeof plausible !== "undefined") {
+        plausible("drag-drop");
+      }
+
     });
 
     // this needs throttling, otherwise it will flicker
