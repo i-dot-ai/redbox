@@ -5,7 +5,6 @@ from typing import Literal
 
 import boto3
 from elasticsearch import Elasticsearch
-from opensearchpy import OpenSearch, RequestsHttpConnection
 from pydantic import BaseModel
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from langchain.globals import set_debug
@@ -152,22 +151,8 @@ class Settings(BaseSettings):
                 basic_auth=(self.elastic.user, self.elastic.password),
             )
 
-        elif isinstance(self.elastic, OpenSearchSettings):
-            client = OpenSearch(
-                hosts=[{"host": self.elastic.collection_endpoint, "port": 443}],
-                use_ssl=True,
-                verify_certs=True,
-                connection_class=RequestsHttpConnection,
-                pool_maxsize=100,
-            )
-
         else:
             client = Elasticsearch(cloud_id=self.elastic.cloud_id, api_key=self.elastic.api_key)
-
-        if not client.indices.exists_alias(name=self.elastic_alias):
-            chunk_index = f"{self.elastic_root_index}-chunk"
-            client.options(ignore_status=[400]).indices.create(index=chunk_index)
-            client.indices.put_alias(index=chunk_index, name=self.elastic_alias)
 
         if not client.indices.exists(index=self.elastic_chat_mesage_index):
             client.indices.create(index=self.elastic_chat_mesage_index)

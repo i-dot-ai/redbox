@@ -1,5 +1,4 @@
 from redbox.models.chain import RedboxState
-from redbox.retriever import DjangoFileRetriever
 from redbox.test.data import RedboxChatTestCase
 
 TEST_CHAIN_PARAMETERS = (
@@ -30,7 +29,7 @@ TEST_CHAIN_PARAMETERS = (
 )
 
 
-def test_retriever(retriever: DjangoFileRetriever, stored_file_all_chunks: RedboxChatTestCase):
+def test_retriever(stored_file_all_chunks: RedboxChatTestCase):
     """
     Given a RedboxState, asserts:
 
@@ -47,6 +46,8 @@ def test_retriever(retriever: DjangoFileRetriever, stored_file_all_chunks: Redbo
     * If documents aren't selected and there's no permission to get them
         * The length of the result is zero
     """
+    stored_file_all_chunks, retriever = stored_file_all_chunks
+
     result = retriever.invoke(RedboxState(request=stored_file_all_chunks.query))
     correct = stored_file_all_chunks.get_docs_matching_query()
 
@@ -62,7 +63,7 @@ def test_retriever(retriever: DjangoFileRetriever, stored_file_all_chunks: Redbo
         len(result) == 0
 
 
-def test_metadata_retriever(retriever: DjangoFileRetriever, stored_file_metadata: RedboxChatTestCase):
+def test_metadata_retriever(stored_file_metadata: RedboxChatTestCase):
     """
     Given a RedboxState, asserts:
 
@@ -77,6 +78,8 @@ def test_metadata_retriever(retriever: DjangoFileRetriever, stored_file_metadata
     * If documents aren't selected and there's no permission to get them
         * The length of the result is zero
     """
+
+    stored_file_metadata, retriever = stored_file_metadata
 
     result = retriever.invoke(RedboxState(request=stored_file_metadata.query))
     correct = stored_file_metadata.get_docs_matching_query()
