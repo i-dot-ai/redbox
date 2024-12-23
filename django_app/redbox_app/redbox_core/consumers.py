@@ -70,7 +70,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
     route = None
     metadata: RequestMetadata = RequestMetadata()
     redbox = Redbox(
-        all_chunks_retriever=DjangoFileRetriever(file_manager=File.objects),
+        retriever=DjangoFileRetriever(file_manager=File.objects),
         debug=True,
     )
 

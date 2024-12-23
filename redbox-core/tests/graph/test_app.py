@@ -21,7 +21,7 @@ from redbox.test.data import (
     RedboxChatTestCase,
     RedboxTestData,
     generate_test_cases,
-    mock_all_chunks_retriever,
+    mock_retriever,
 )
 
 LANGGRAPH_DEBUG = True
@@ -212,7 +212,7 @@ async def test_streaming(test: RedboxChatTestCase, env: Settings, mocker: Mocker
 
     # Instantiate app
     app = Redbox(
-        retriever=mock_all_chunks_retriever(test_case.docs),
+        retriever=mock_retriever(test_case.docs),
         debug=LANGGRAPH_DEBUG,
     )
 

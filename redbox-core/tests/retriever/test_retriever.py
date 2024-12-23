@@ -30,7 +30,7 @@ TEST_CHAIN_PARAMETERS = (
 )
 
 
-def test_all_chunks_retriever(all_chunks_retriever: DjangoFileRetriever, stored_file_all_chunks: RedboxChatTestCase):
+def test_retriever(retriever: DjangoFileRetriever, stored_file_all_chunks: RedboxChatTestCase):
     """
     Given a RedboxState, asserts:
 
@@ -47,7 +47,7 @@ def test_all_chunks_retriever(all_chunks_retriever: DjangoFileRetriever, stored_
     * If documents aren't selected and there's no permission to get them
         * The length of the result is zero
     """
-    result = all_chunks_retriever.invoke(RedboxState(request=stored_file_all_chunks.query))
+    result = retriever.invoke(RedboxState(request=stored_file_all_chunks.query))
     correct = stored_file_all_chunks.get_docs_matching_query()
 
     selected = bool(stored_file_all_chunks.query.s3_keys)
@@ -62,7 +62,7 @@ def test_all_chunks_retriever(all_chunks_retriever: DjangoFileRetriever, stored_
         len(result) == 0
 
 
-def test_metadata_retriever(all_chunks_retriever: DjangoFileRetriever, stored_file_metadata: RedboxChatTestCase):
+def test_metadata_retriever(retriever: DjangoFileRetriever, stored_file_metadata: RedboxChatTestCase):
     """
     Given a RedboxState, asserts:
 
@@ -78,7 +78,7 @@ def test_metadata_retriever(all_chunks_retriever: DjangoFileRetriever, stored_fi
         * The length of the result is zero
     """
 
-    result = all_chunks_retriever.invoke(RedboxState(request=stored_file_metadata.query))
+    result = retriever.invoke(RedboxState(request=stored_file_metadata.query))
     correct = stored_file_metadata.get_docs_matching_query()
 
     selected = bool(stored_file_metadata.query.s3_keys)

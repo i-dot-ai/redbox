@@ -110,7 +110,7 @@ def file_manager():
 
 
 @pytest.fixture(scope="session")
-def all_chunks_retriever(file_manager) -> DjangoFileRetriever:
+def retriever(file_manager) -> DjangoFileRetriever:
     return DjangoFileRetriever(
         file_manager=file_manager,
     )

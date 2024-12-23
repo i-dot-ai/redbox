@@ -141,7 +141,7 @@ class FakeRetriever(BaseRetriever):
         return self.docs
 
 
-def mock_all_chunks_retriever(docs: list[Document]) -> FakeRetriever:
+def mock_retriever(docs: list[Document]) -> FakeRetriever:
     return FakeRetriever(docs=docs)
 
 
