@@ -8,6 +8,7 @@ from redbox.models.file import ChunkResolution
 log = logging.getLogger()
 
 
+#  internal
 def build_file_filter(file_names: list[str]) -> dict[str, Any]:
     """Creates an Elasticsearch filter for file names."""
     return {
@@ -19,7 +20,7 @@ def build_file_filter(file_names: list[str]) -> dict[str, Any]:
         }
     }
 
-
+#  internal
 def build_resolution_filter(chunk_resolution: ChunkResolution) -> dict[str, Any]:
     """Creates an Elasticsearch filter for chunk resolutions."""
     return {"term": {"metadata.chunk_resolution.keyword": str(chunk_resolution)}}
