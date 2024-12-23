@@ -18,8 +18,6 @@ log = logging.getLogger()
 env = get_settings()
 
 
-
-
 def ingest_file(file_name: str) -> tuple[str, UploadedFileMetadata]:
     s3_client = env.s3_client()
     loader = UnstructuredChunkLoader(
@@ -31,7 +29,7 @@ def ingest_file(file_name: str) -> tuple[str, UploadedFileMetadata]:
     )
 
     file_bytes = s3_client.get_object(Bucket=env.bucket_name, Key=file_name)["Body"].read()
-    documents =list(loader.lazy_load(file_name=file_name, file_bytes=BytesIO(file_bytes)))
+    documents = list(loader.lazy_load(file_name=file_name, file_bytes=BytesIO(file_bytes)))
 
     page_content = "\n".join(document.page_content for document in documents)
     token_count = sum(document.token_count for document in documents)
@@ -42,7 +40,7 @@ def ingest_file(file_name: str) -> tuple[str, UploadedFileMetadata]:
         token_count=token_count,
         chunk_resolution=ChunkCreatorType.user_uploaded_document,
         created_datetime=datetime.now(),
-       name=file_name,
+        name=file_name,
     )
 
     return page_content, metadata

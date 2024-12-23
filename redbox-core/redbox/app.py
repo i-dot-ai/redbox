@@ -1,14 +1,8 @@
 from logging import getLogger
 from typing import Literal
 
-from langchain_core.embeddings import Embeddings
 from langchain_core.vectorstores import VectorStoreRetriever
 
-from redbox.chains.components import (
-    get_all_chunks_retriever,
-    get_embeddings,
-    get_metadata_retriever,
-)
 from redbox.graph.root import (
     get_chat_with_documents_graph,
     get_root_graph,
@@ -21,7 +15,6 @@ from redbox.models.graph import (
     SOURCE_DOCUMENTS_TAG,
     RedboxEventType,
 )
-from redbox.models.settings import Settings, get_settings
 from redbox.transform import flatten_document_state
 
 
@@ -35,23 +28,15 @@ logger = getLogger(__name__)
 class Redbox:
     def __init__(
         self,
-        all_chunks_retriever: VectorStoreRetriever | None = None,
-        metadata_retriever: VectorStoreRetriever | None = None,
-        embedding_model: Embeddings | None = None,
-        env: Settings | None = None,
+        retriever: VectorStoreRetriever,
         debug: bool = False,
     ):
-        _env = env or get_settings()
-
         # Retrievers
 
-        self.all_chunks_retriever = all_chunks_retriever or get_all_chunks_retriever(_env)
-        self.metadata_retriever = metadata_retriever or get_metadata_retriever(_env)
-        self.embedding_model = embedding_model or get_embeddings(_env)
+        self.retriever = retriever
 
         self.graph = get_root_graph(
-            all_chunks_retriever=self.all_chunks_retriever,
-            metadata_retriever=self.metadata_retriever,
+            retriever=self.retriever,
             debug=debug,
         )
 

@@ -1,5 +1,5 @@
 from redbox.models.chain import RedboxState
-from redbox.retriever import AllElasticsearchRetriever, MetadataRetriever
+from redbox.retriever import DjangoFileRetriever
 from redbox.test.data import RedboxChatTestCase
 
 TEST_CHAIN_PARAMETERS = (
@@ -30,9 +30,7 @@ TEST_CHAIN_PARAMETERS = (
 )
 
 
-def test_all_chunks_retriever(
-    all_chunks_retriever: AllElasticsearchRetriever, stored_file_all_chunks: RedboxChatTestCase
-):
+def test_all_chunks_retriever(all_chunks_retriever: DjangoFileRetriever, stored_file_all_chunks: RedboxChatTestCase):
     """
     Given a RedboxState, asserts:
 
@@ -64,7 +62,7 @@ def test_all_chunks_retriever(
         len(result) == 0
 
 
-def test_metadata_retriever(metadata_retriever: MetadataRetriever, stored_file_metadata: RedboxChatTestCase):
+def test_metadata_retriever(all_chunks_retriever: DjangoFileRetriever, stored_file_metadata: RedboxChatTestCase):
     """
     Given a RedboxState, asserts:
 
@@ -80,7 +78,7 @@ def test_metadata_retriever(metadata_retriever: MetadataRetriever, stored_file_m
         * The length of the result is zero
     """
 
-    result = metadata_retriever.invoke(RedboxState(request=stored_file_metadata.query))
+    result = all_chunks_retriever.invoke(RedboxState(request=stored_file_metadata.query))
     correct = stored_file_metadata.get_docs_matching_query()
 
     selected = bool(stored_file_metadata.query.s3_keys)

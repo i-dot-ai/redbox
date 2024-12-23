@@ -11,7 +11,7 @@ from langchain_elasticsearch import ElasticsearchStore
 from tiktoken.core import Encoding
 
 from redbox.models.settings import Settings
-from redbox.retriever import AllElasticsearchRetriever, MetadataRetriever
+from redbox.retriever import DjangoFileRetriever
 from redbox.test.data import RedboxChatTestCase
 from tests.retriever.data import ALL_CHUNKS_RETRIEVER_CASES, METADATA_RETRIEVER_CASES, PARAMETERISED_RETRIEVER_CASES
 
@@ -94,16 +94,26 @@ def create_index(env: Settings, es_index: str) -> Generator[None, None, None]:
 
 
 @pytest.fixture(scope="session")
-def all_chunks_retriever(es_client: Elasticsearch, es_index: str) -> AllElasticsearchRetriever:
-    return AllElasticsearchRetriever(
-        es_client=es_client,
-        index_name=es_index,
-    )
+def file_manager():
+    class FakeFile:
+        def __init__(self, text, metadata):
+            self.text = text
+            self.metadata = metadata
+
+    class FileManager:
+        def filter(self, original_file__in):
+            for i in range(8):
+                yield FakeFile(text=f"Document {i} text", metadata=dict(uri="s3_key"))
+
+    _file_manager = FileManager()
+    yield _file_manager
 
 
 @pytest.fixture(scope="session")
-def metadata_retriever(es_client: Elasticsearch, es_index: str) -> MetadataRetriever:
-    return MetadataRetriever(es_client=es_client, index_name=es_index)
+def all_chunks_retriever(file_manager) -> DjangoFileRetriever:
+    return DjangoFileRetriever(
+        file_manager=file_manager,
+    )
 
 
 # -----#
