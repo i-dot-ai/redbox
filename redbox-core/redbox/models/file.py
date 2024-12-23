@@ -15,12 +15,6 @@ class ChunkResolution(StrEnum):
     largest = "largest"
 
 
-class ChunkCreatorType(StrEnum):
-    wikipedia = "Wikipedia"
-    user_uploaded_document = "UserUploadedDocument"
-    gov_uk = "GOV.UK"
-
-
 class ChunkMetadata(BaseModel):
     """
     Worker model for document metadata for new style chunks.
@@ -31,7 +25,6 @@ class ChunkMetadata(BaseModel):
     index: int = 0  # The order of this chunk in the original resource
     created_datetime: datetime.datetime = datetime.datetime.now(datetime.UTC)
     chunk_resolution: ChunkResolution = ChunkResolution.normal
-    creator_type: ChunkCreatorType
     uri: str = Field(validation_alias=AliasChoices("uri", "file_name"))  # URL or file name
     token_count: int
 
@@ -45,4 +38,3 @@ class UploadedFileMetadata(ChunkMetadata):
     name: str | None = None
     description: str | None = None
     keywords: list[str] | None = None
-    creator_type: ChunkCreatorType = ChunkCreatorType.user_uploaded_document

@@ -1,12 +1,9 @@
 import logging
-from collections.abc import Iterator
-from datetime import UTC, datetime
+from datetime import datetime
 from io import BytesIO
 from typing import TYPE_CHECKING
 import requests
 import tiktoken
-from langchain_core.documents import Document
-
 
 from redbox.models.file import ChunkResolution, UploadedFileMetadata
 from redbox.models.settings import Settings
@@ -31,19 +28,11 @@ class UnstructuredChunkLoader:
         self,
         chunk_resolution: ChunkResolution,
         env: Settings,
-        min_chunk_size: int,
-        max_chunk_size: int,
-        overlap_chars: int = 0,
-        overlap_all_chunks: bool = True,
     ):
         self.chunk_resolution = chunk_resolution
         self.env = env
-        self._min_chunk_size = min_chunk_size
-        self._max_chunk_size = max_chunk_size
-        self._overlap_chars = overlap_chars
-        self._overlap_all_chunks = overlap_all_chunks
 
-    def lazy_load(self, file_name: str, file_bytes: BytesIO) -> Iterator[Document]:
+    def lazy_load(self, file_name: str, file_bytes: BytesIO) -> tuple[str, UploadedFileMetadata]:
         """A lazy loader that reads a file line by line.
 
         When you're implementing lazy load methods, you should use a generator
@@ -59,10 +48,6 @@ class UnstructuredChunkLoader:
             data={
                 "strategy": "fast",
                 "chunking_strategy": "by_title",
-                "max_characters": self._max_chunk_size,
-                "combine_under_n_chars": self._min_chunk_size,
-                "overlap": self._overlap_chars,
-                "overlap_all": self._overlap_all_chunks,
             },
         )
 
@@ -75,16 +60,15 @@ class UnstructuredChunkLoader:
             raise ValueError("Unstructured failed to extract text for this file")
 
         # add metadata below
-        for i, raw_chunk in enumerate(elements):
-            yield Document(
-                page_content=raw_chunk["text"],
-                metadata=UploadedFileMetadata(
-                    index=i,
-                    uri=file_name,
-                    page_number=raw_chunk["metadata"].get("page_number"),
-                    created_datetime=datetime.now(UTC),
-                    token_count=len(encoding.encode(raw_chunk["text"])),
-                    chunk_resolution=self.chunk_resolution,
-                    name=file_name,
-                ).model_dump(),
-            )
+        page_content = "\n".join(raw_chunk["text"] for raw_chunk in elements)
+        token_count = len(encoding.encode(page_content))
+
+        metadata = UploadedFileMetadata(
+            index=1,
+            uri=file_name,
+            page_number=1,
+            token_count=token_count,
+            created_datetime=datetime.now(),
+            name=file_name,
+        )
+        return page_content, metadata
