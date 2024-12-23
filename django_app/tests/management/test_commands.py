@@ -196,7 +196,7 @@ def test_reingest_files(uploaded_file: File, requests_mock: Mocker, mocker: Mock
 
 
 @pytest.mark.django_db(transaction=True)
-def test_reingest_files_unstructured_fail(uploaded_file: File, requests_mock: Mocker, mocker):
+def test_reingest_files_unstructured_fail(uploaded_file: File, requests_mock: Mocker):
     # Given
     assert uploaded_file.status == File.Status.processing
 
@@ -206,8 +206,7 @@ def test_reingest_files_unstructured_fail(uploaded_file: File, requests_mock: Mo
     )
 
     # When
-    with mocker.patch("redbox.chains.ingest.VectorStore.add_documents", return_value=[]):
-        call_command("reingest_files", sync=True)
+    call_command("reingest_files", sync=True)
 
     # Then
     uploaded_file.refresh_from_db()
