@@ -1,4 +1,3 @@
-import json
 import os
 from datetime import UTC, datetime, timedelta
 from io import StringIO
@@ -14,7 +13,6 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.management import CommandError, call_command
 from django.utils import timezone
 from freezegun import freeze_time
-from langchain_core.language_models.fake_chat_models import GenericFakeChatModel
 from magic_link.models import MagicLink
 from pytest_mock import MockerFixture
 from requests_mock import Mocker
@@ -189,22 +187,6 @@ def test_reingest_files(uploaded_file: File, requests_mock: Mocker, mocker: Mock
 
     # When
     mocker.patch("redbox.chains.ingest.VectorStore.add_documents", return_value=[])
-    mocker.patch(
-        "redbox.loader.loaders.get_chat_llm",
-        return_value=GenericFakeChatModel(
-            messages=iter(
-                [
-                    json.dumps(
-                        {
-                            "name": "foo",
-                            "description": "more test",
-                            "keywords": ["hello", "world"],
-                        }
-                    )
-                ]
-            )
-        ),
-    )
 
     call_command("reingest_files", sync=True)
 
@@ -221,23 +203,6 @@ def test_reingest_files_unstructured_fail(uploaded_file: File, requests_mock: Mo
     requests_mock.post(
         f"http://{settings.UNSTRUCTURED_HOST}:8000/general/v0/general",
         json=[],
-    )
-
-    mocker.patch(
-        "redbox.loader.loaders.get_chat_llm",
-        return_value=GenericFakeChatModel(
-            messages=iter(
-                [
-                    json.dumps(
-                        {
-                            "name": "foo",
-                            "description": "more test",
-                            "keywords": ["hello", "world"],
-                        }
-                    )
-                ]
-            )
-        ),
     )
 
     # When
