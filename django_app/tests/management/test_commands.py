@@ -14,7 +14,6 @@ from django.core.management import CommandError, call_command
 from django.utils import timezone
 from freezegun import freeze_time
 from magic_link.models import MagicLink
-from pytest_mock import MockerFixture
 from requests_mock import Mocker
 
 from redbox_app.redbox_core.models import Chat, ChatMessage, File
@@ -176,7 +175,7 @@ def test_delete_expired_chats(chat: Chat, msg_1_date: datetime, msg_2_date: date
 
 
 @pytest.mark.django_db(transaction=True)
-def test_reingest_files(uploaded_file: File, requests_mock: Mocker, mocker: MockerFixture):
+def test_reingest_files(uploaded_file: File, requests_mock: Mocker):
     # Given
     assert uploaded_file.status == File.Status.processing
 
@@ -186,8 +185,6 @@ def test_reingest_files(uploaded_file: File, requests_mock: Mocker, mocker: Mock
     )
 
     # When
-    mocker.patch("redbox.chains.ingest.VectorStore.add_documents", return_value=[])
-
     call_command("reingest_files", sync=True)
 
     # Then
