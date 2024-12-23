@@ -26,8 +26,6 @@ logger = logging.getLogger(__name__)
 
 env = get_settings()
 
-es_client = env.elasticsearch_client()
-
 
 class UUIDPrimaryKeyBase(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -660,14 +658,6 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
         """Manually deletes the file from S3 storage."""
         self.original_file.delete(save=False)
 
-    def delete_from_elastic(self):
-        index = env.elastic_chunk_alias
-        if es_client.indices.exists(index=index):
-            es_client.delete_by_query(
-                index=index,
-                body={"query": {"term": {"metadata.file_name.keyword": self.unique_name}}},
-            )
-
     @property
     def file_type(self) -> str:
         name = self.file_name
@@ -886,11 +876,12 @@ class ChatMessage(UUIDPrimaryKeyBase, TimeStampedModel):
             "rating_text": str(self.rating_text),
             "rating_chips": list(map(str, self.rating_chips)) if self.rating_chips else None,
         }
-        es_client.create(
-            index=env.elastic_chat_mesage_index,
-            id=uuid.uuid4(),
-            document=elastic_log_msg,
-        )
+        if es_client := env.elasticsearch_client():
+            es_client.create(
+                index=env.elastic_chat_mesage_index,
+                id=uuid.uuid4(),
+                document=elastic_log_msg,
+            )
 
     def unique_citation_uris(self) -> list[tuple[str, str]]:
         """a unique set of names and hrefs for all citations"""

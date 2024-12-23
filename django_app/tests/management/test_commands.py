@@ -4,7 +4,6 @@ from io import StringIO
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-import elasticsearch
 import pytest
 from botocore.exceptions import UnknownClientMethodError
 from django.conf import settings
@@ -101,23 +100,6 @@ def test_delete_expired_files(uploaded_file: File, last_referenced: datetime, sh
     # Then
     is_deleted = File.objects.get(id=mock_file.id).status == File.Status.deleted
     assert is_deleted == should_delete
-
-
-@patch("redbox_app.redbox_core.models.File.delete_from_elastic")
-@pytest.mark.django_db()
-def test_delete_expired_files_with_elastic_error(deletion_mock: MagicMock, uploaded_file: File):
-    deletion_mock.side_effect = elasticsearch.BadRequestError(message="i am am error", meta=None, body=None)
-
-    # Given
-    mock_file = uploaded_file
-    mock_file.last_referenced = EXPIRED_FILE_DATE
-    mock_file.save()
-
-    # When
-    call_command("delete_expired_data")
-
-    # Then
-    assert File.objects.get(id=mock_file.id).status == File.Status.errored
 
 
 @patch("redbox_app.redbox_core.models.File.delete_from_s3")
