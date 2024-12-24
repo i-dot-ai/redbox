@@ -13,7 +13,8 @@ def ingest(file_id: UUID) -> None:
     logging.info("Ingesting file: %s", file)
 
     try:
-        file.text, file.metadata = ingest_file(file.unique_name)
+        text, metadata = ingest_file(file.unique_name)
+        file.text, file.metadata = text, metadata.model_dump()
         file.status = File.Status.complete
         file.save()
     except Exception as error:  # noqa: BLE001
