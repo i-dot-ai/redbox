@@ -1,3 +1,4 @@
+import contextlib
 import logging
 import os
 import textwrap
@@ -6,6 +7,7 @@ from collections.abc import Collection, Sequence
 from datetime import UTC, date, datetime, timedelta
 from typing import override
 
+import elastic_transport
 import jwt
 from django.conf import settings
 from django.contrib.auth.base_user import BaseUserManager as BaseSSOUserManager
@@ -877,11 +879,14 @@ class ChatMessage(UUIDPrimaryKeyBase, TimeStampedModel):
             "rating_chips": list(map(str, self.rating_chips)) if self.rating_chips else None,
         }
         if es_client := env.elasticsearch_client():
-            es_client.create(
-                index=env.elastic_chat_mesage_index,
-                id=uuid.uuid4(),
-                document=elastic_log_msg,
-            )
+            try:
+                es_client.create(
+                    index=env.elastic_chat_mesage_index,
+                    id=uuid.uuid4(),
+                    document=elastic_log_msg,
+                )
+            except elastic_transport.ConnectionError:
+                contextlib.suppress(elastic_transport.ConnectionError)
 
     def unique_citation_uris(self) -> list[tuple[str, str]]:
         """a unique set of names and hrefs for all citations"""

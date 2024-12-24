@@ -49,8 +49,6 @@ class Settings(BaseSettings):
 
     llm_max_tokens: int = 1024
 
-    embedding_openai_base_url: str | None = None
-
     partition_strategy: Literal["auto", "fast", "ocr_only", "hi_res"] = "fast"
     clustering_strategy: Literal["full"] | None = None
 
