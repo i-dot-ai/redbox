@@ -1,3 +1,4 @@
+import json
 import logging
 from uuid import UUID
 
@@ -14,7 +15,7 @@ def ingest(file_id: UUID) -> None:
 
     try:
         text, metadata = ingest_file(file.unique_name)
-        file.text, file.metadata = text, metadata.model_dump()
+        file.text, file.metadata = text, json.loads(metadata.model_dump_json())
         file.status = File.Status.complete
         file.save()
     except Exception as error:  # noqa: BLE001
