@@ -19,5 +19,5 @@ def ingest(file_id: UUID) -> None:
         file.save()
     except Exception as error:  # noqa: BLE001
         file.status = File.Status.errored
-        file.ingest_error = error
+        file.ingest_error = str(error)
         file.save()
