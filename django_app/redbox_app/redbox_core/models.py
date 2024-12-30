@@ -635,6 +635,8 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
         blank=True,
         help_text="chat that this document belongs to, which may be nothing for now",
     )
+    text = models.TextField(null=True, blank=True, help_text="text extracted from file")
+    metadata = models.JSONField(null=True, blank=True, help_text="metadata extracted from file")
 
     def __str__(self) -> str:  # pragma: no cover
         return self.file_name
