@@ -28,7 +28,7 @@ class DjangoFileRetriever(BaseRetriever):
         file_names = list(selected_files & permitted_files)
 
         files = self.file_manager.filter(
-            original_file__in=file_names, page_content__is_null=False, metadata__is_null=False
+            original_file__in=file_names, text__is_null=False, metadata__is_null=False
         )
 
         return [Document(page_content=file.text, metadata=file.metadata) for file in files]
