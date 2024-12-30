@@ -94,7 +94,7 @@ class FileManager:
     def __init__(self, docs):
         self.docs = docs
 
-    def filter(self, original_file__in):
+    def filter(self, original_file__in, text__is_null, metadata__is_null):
         for doc in self.docs:
             yield FakeFile(doc.page_content, doc.metadata)
 
