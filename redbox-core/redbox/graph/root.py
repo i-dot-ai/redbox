@@ -45,7 +45,7 @@ def get_chat_graph(
 
 
 def get_chat_with_documents_graph(
-    all_chunks_retriever: VectorStoreRetriever,
+    retriever: VectorStoreRetriever,
     debug: bool = False,
 ) -> CompiledGraph:
     """Creates a subgraph for chatting with documents."""
@@ -72,7 +72,7 @@ def get_chat_with_documents_graph(
     builder.add_node(
         "p_retrieve_all_chunks",
         build_retrieve_pattern(
-            retriever=all_chunks_retriever,
+            retriever=retriever,
             structure_func=structure_documents_by_file_name,
             final_source_chain=True,
         ),
@@ -102,14 +102,14 @@ def get_chat_with_documents_graph(
     return builder.compile(debug=debug)
 
 
-def get_retrieve_metadata_graph(metadata_retriever: VectorStoreRetriever, debug: bool = False):
+def get_retrieve_metadata_graph(retriever: VectorStoreRetriever, debug: bool = False):
     builder = StateGraph(RedboxState)
 
     # Processes
     builder.add_node(
         "p_retrieve_metadata",
         build_retrieve_pattern(
-            retriever=metadata_retriever,
+            retriever=retriever,
             structure_func=structure_documents_by_file_name,
         ),
     )
@@ -127,8 +127,7 @@ def get_retrieve_metadata_graph(metadata_retriever: VectorStoreRetriever, debug:
 
 # Root graph
 def get_root_graph(
-    all_chunks_retriever: VectorStoreRetriever,
-    metadata_retriever: VectorStoreRetriever,
+    retriever: VectorStoreRetriever,
     debug: bool = False,
 ) -> CompiledGraph:
     """Creates the core Redbox graph."""
@@ -137,10 +136,10 @@ def get_root_graph(
     # Subgraphs
     chat_subgraph = get_chat_graph(debug=debug)
     cwd_subgraph = get_chat_with_documents_graph(
-        all_chunks_retriever=all_chunks_retriever,
+        retriever=retriever,
         debug=debug,
     )
-    metadata_subgraph = get_retrieve_metadata_graph(metadata_retriever=metadata_retriever, debug=debug)
+    metadata_subgraph = get_retrieve_metadata_graph(retriever=retriever, debug=debug)
 
     # Processes
     builder.add_node("p_chat", chat_subgraph)

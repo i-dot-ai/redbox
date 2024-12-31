@@ -26,7 +26,7 @@ from redbox.test.data import (
     RedboxTestData,
     generate_docs,
     generate_test_cases,
-    mock_all_chunks_retriever,
+    mock_retriever,
     mock_parameterised_retriever,
 )
 from redbox.transform import structure_documents_by_file_name
@@ -210,7 +210,7 @@ RETRIEVER_TEST_CASES = generate_test_cases(
 
 @pytest.mark.parametrize(
     ("test_case", "mock_retriever"),
-    [(test_case, mock_all_chunks_retriever) for test_case in RETRIEVER_TEST_CASES]
+    [(test_case, mock_retriever) for test_case in RETRIEVER_TEST_CASES]
     + [(test_case, mock_parameterised_retriever) for test_case in RETRIEVER_TEST_CASES],
     ids=[f"All chunks, {t.test_id}" for t in RETRIEVER_TEST_CASES]
     + [f"Parameterised, {t.test_id}" for t in RETRIEVER_TEST_CASES],

@@ -4,7 +4,6 @@ from io import StringIO
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-import elasticsearch
 import pytest
 from botocore.exceptions import UnknownClientMethodError
 from django.conf import settings
@@ -14,7 +13,6 @@ from django.core.management import CommandError, call_command
 from django.utils import timezone
 from freezegun import freeze_time
 from magic_link.models import MagicLink
-from pytest_mock import MockerFixture
 from requests_mock import Mocker
 
 from redbox_app.redbox_core.models import Chat, ChatMessage, File
@@ -104,23 +102,6 @@ def test_delete_expired_files(uploaded_file: File, last_referenced: datetime, sh
     assert is_deleted == should_delete
 
 
-@patch("redbox_app.redbox_core.models.File.delete_from_elastic")
-@pytest.mark.django_db()
-def test_delete_expired_files_with_elastic_error(deletion_mock: MagicMock, uploaded_file: File):
-    deletion_mock.side_effect = elasticsearch.BadRequestError(message="i am am error", meta=None, body=None)
-
-    # Given
-    mock_file = uploaded_file
-    mock_file.last_referenced = EXPIRED_FILE_DATE
-    mock_file.save()
-
-    # When
-    call_command("delete_expired_data")
-
-    # Then
-    assert File.objects.get(id=mock_file.id).status == File.Status.errored
-
-
 @patch("redbox_app.redbox_core.models.File.delete_from_s3")
 @pytest.mark.django_db()
 def test_delete_expired_files_with_s3_error(deletion_mock: MagicMock, uploaded_file: File):
@@ -176,7 +157,7 @@ def test_delete_expired_chats(chat: Chat, msg_1_date: datetime, msg_2_date: date
 
 
 @pytest.mark.django_db(transaction=True)
-def test_reingest_files(uploaded_file: File, requests_mock: Mocker, mocker: MockerFixture):
+def test_reingest_files(uploaded_file: File, requests_mock: Mocker):
     # Given
     assert uploaded_file.status == File.Status.processing
 
@@ -186,8 +167,6 @@ def test_reingest_files(uploaded_file: File, requests_mock: Mocker, mocker: Mock
     )
 
     # When
-    mocker.patch("redbox.chains.ingest.VectorStore.add_documents", return_value=[])
-
     call_command("reingest_files", sync=True)
 
     # Then
@@ -196,7 +175,7 @@ def test_reingest_files(uploaded_file: File, requests_mock: Mocker, mocker: Mock
 
 
 @pytest.mark.django_db(transaction=True)
-def test_reingest_files_unstructured_fail(uploaded_file: File, requests_mock: Mocker, mocker):
+def test_reingest_files_unstructured_fail(uploaded_file: File, requests_mock: Mocker):
     # Given
     assert uploaded_file.status == File.Status.processing
 
@@ -206,13 +185,12 @@ def test_reingest_files_unstructured_fail(uploaded_file: File, requests_mock: Mo
     )
 
     # When
-    with mocker.patch("redbox.chains.ingest.VectorStore.add_documents", return_value=[]):
-        call_command("reingest_files", sync=True)
+    call_command("reingest_files", sync=True)
 
     # Then
     uploaded_file.refresh_from_db()
     assert uploaded_file.status == File.Status.errored
-    assert uploaded_file.ingest_error == "<class 'ValueError'>: Unstructured failed to extract text for this file"
+    assert uploaded_file.ingest_error == "Unstructured failed to extract text for this file"
 
 
 def test_delete_es_indices_no_new_index():

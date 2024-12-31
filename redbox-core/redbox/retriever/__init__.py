@@ -1,3 +1,3 @@
-from .retrievers import AllElasticsearchRetriever, MetadataRetriever
+from .retrievers import DjangoFileRetriever
 
-__all__ = ["AllElasticsearchRetriever", "MetadataRetriever"]
+__all__ = ["DjangoFileRetriever"]
