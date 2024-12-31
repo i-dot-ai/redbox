@@ -141,17 +141,12 @@ class FakeRetriever(BaseRetriever):
         return self.docs
 
 
-def mock_all_chunks_retriever(docs: list[Document]) -> FakeRetriever:
+def mock_retriever(docs: list[Document]) -> FakeRetriever:
     return FakeRetriever(docs=docs)
 
 
 def mock_parameterised_retriever(docs: list[Document]) -> FakeRetriever:
     return FakeRetriever(docs=docs)
-
-
-def mock_metadata_retriever(docs: list[Document]) -> FakeRetriever:
-    metadata_only_docs = [Document(page_content="", metadata={**doc.metadata, "embedding": None}) for doc in docs]
-    return FakeRetriever(docs=metadata_only_docs)
 
 
 class GenericFakeChatModelWithTools(GenericFakeChatModel):

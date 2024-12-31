@@ -144,27 +144,18 @@ class UploadView(View):
 @login_required
 def remove_doc_view(request, doc_id: uuid):
     file = get_object_or_404(File, id=doc_id)
-    errors: list[str] = []
 
     if request.method == "POST":
-        try:
-            file.delete_from_elastic()
-        except Exception as e:
-            logger.exception("Error deleting file object %s.", file, exc_info=e)
-            errors.append("There was an error deleting this file")
-            file.status = File.Status.errored
-            file.save()
-        else:
-            logger.info("Removing document: %s", request.POST["doc_id"])
-            file.delete_from_s3()
-            file.status = File.Status.deleted
-            file.save()
-            return redirect("documents")
+        logger.info("Removing document: %s", request.POST["doc_id"])
+        file.delete_from_s3()
+        file.status = File.Status.deleted
+        file.save()
+        return redirect("documents")
 
     return render(
         request,
         template_name="remove-doc.html",
-        context={"request": request, "doc_id": doc_id, "doc_name": file.file_name, "errors": errors},
+        context={"request": request, "doc_id": doc_id, "doc_name": file.file_name, "errors": []},
     )
 
 

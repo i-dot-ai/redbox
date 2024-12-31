@@ -28,7 +28,7 @@ from redbox.models.chain import (
 )
 from redbox.models.chain import Citation as AICitation
 from redbox.models.graph import RedboxActivityEvent
-from redbox.models.settings import get_settings
+from redbox.retriever import DjangoFileRetriever
 from redbox_app.redbox_core import error_messages
 from redbox_app.redbox_core.models import (
     ActivityEvent,
@@ -69,7 +69,10 @@ class ChatConsumer(AsyncWebsocketConsumer):
     activities: ClassVar[list[RedboxActivityEvent]] = []
     route = None
     metadata: RequestMetadata = RequestMetadata()
-    redbox = Redbox(env=get_settings(), debug=True)
+    redbox = Redbox(
+        retriever=DjangoFileRetriever(file_manager=File.objects),
+        debug=True,
+    )
 
     async def receive(self, text_data=None, bytes_data=None):
         """Receive & respond to message from browser websocket."""

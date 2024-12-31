@@ -11,7 +11,7 @@ from langchain_elasticsearch import ElasticsearchStore
 from tiktoken.core import Encoding
 
 from redbox.models.settings import Settings
-from redbox.retriever import AllElasticsearchRetriever, MetadataRetriever
+from redbox.retriever import DjangoFileRetriever
 from redbox.test.data import RedboxChatTestCase
 from tests.retriever.data import ALL_CHUNKS_RETRIEVER_CASES, METADATA_RETRIEVER_CASES, PARAMETERISED_RETRIEVER_CASES
 
@@ -84,26 +84,19 @@ def es_vector_store(
     )
 
 
-@pytest.fixture(autouse=True, scope="session")
-def create_index(env: Settings, es_index: str) -> Generator[None, None, None]:
-    es = env.elasticsearch_client()
-    if not es.indices.exists(index=es_index):
-        es.indices.create(index=es_index)
-    yield
-    es.indices.delete(index=es_index)
+class FakeFile:
+    def __init__(self, text, metadata):
+        self.text = text
+        self.metadata = metadata
 
 
-@pytest.fixture(scope="session")
-def all_chunks_retriever(es_client: Elasticsearch, es_index: str) -> AllElasticsearchRetriever:
-    return AllElasticsearchRetriever(
-        es_client=es_client,
-        index_name=es_index,
-    )
+class FileManager:
+    def __init__(self, docs):
+        self.docs = docs
 
-
-@pytest.fixture(scope="session")
-def metadata_retriever(es_client: Elasticsearch, es_index: str) -> MetadataRetriever:
-    return MetadataRetriever(es_client=es_client, index_name=es_index)
+    def filter(self, original_file__in, text__isnull, metadata__isnull):
+        for doc in self.docs:
+            yield FakeFile(doc.page_content, doc.metadata)
 
 
 # -----#
@@ -112,30 +105,21 @@ def metadata_retriever(es_client: Elasticsearch, es_index: str) -> MetadataRetri
 
 
 @pytest.fixture(params=ALL_CHUNKS_RETRIEVER_CASES)
-def stored_file_all_chunks(
-    request: FixtureRequest, es_vector_store: ElasticsearchStore
-) -> Generator[RedboxChatTestCase, None, None]:
+def stored_file_all_chunks(request: FixtureRequest) -> Generator[RedboxChatTestCase, None, None]:
     test_case: RedboxChatTestCase = request.param
-    doc_ids = es_vector_store.add_documents(test_case.docs)
-    yield test_case
-    es_vector_store.delete(doc_ids)
+    retriever = DjangoFileRetriever(file_manager=FileManager(test_case.docs))
+    yield test_case, retriever
 
 
 @pytest.fixture(params=PARAMETERISED_RETRIEVER_CASES)
-def stored_file_parameterised(
-    request: FixtureRequest, es_vector_store: ElasticsearchStore
-) -> Generator[RedboxChatTestCase, None, None]:
+def stored_file_parameterised(request: FixtureRequest) -> Generator[RedboxChatTestCase, None, None]:
     test_case: RedboxChatTestCase = request.param
-    doc_ids = es_vector_store.add_documents(test_case.docs)
-    yield test_case
-    es_vector_store.delete(doc_ids)
+    retriever = DjangoFileRetriever(file_manager=FileManager(test_case.docs))
+    yield test_case, retriever
 
 
 @pytest.fixture(params=METADATA_RETRIEVER_CASES)
-def stored_file_metadata(
-    request: FixtureRequest, es_vector_store: ElasticsearchStore
-) -> Generator[RedboxChatTestCase, None, None]:
+def stored_file_metadata(request: FixtureRequest) -> Generator[RedboxChatTestCase, None, None]:
     test_case: RedboxChatTestCase = request.param
-    doc_ids = es_vector_store.add_documents(test_case.docs)
-    yield test_case
-    es_vector_store.delete(doc_ids)
+    retriever = DjangoFileRetriever(file_manager=FileManager(test_case.docs))
+    yield test_case, retriever
