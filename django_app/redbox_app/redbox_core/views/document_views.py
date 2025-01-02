@@ -89,9 +89,10 @@ class UploadView(View):
             for uploaded_file in uploaded_files:
                 # ingest errors are handled differently, as the other documents have started uploading by this point
                 file, request.session["ingest_errors"] = self.ingest_file(uploaded_file, request.user, chat_id)
-                # This can be removed once we are uploading docs only on the chat page:
-                if not chat_id:
-                    return redirect(reverse("documents"))
+        
+        # This can be removed once we are uploading docs only on the chat page:
+        if not errors and not chat_id:
+            return redirect(reverse("documents"))
 
         return self.build_response(request, errors)
 
