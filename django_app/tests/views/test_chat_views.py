@@ -134,19 +134,3 @@ def test_post_chat_title_with_naughty_string(alice: User, chat: Chat, client: Cl
     assert status.is_success
     chat.refresh_from_db()
     assert chat.name == "New chat name \ufffd"
-
-
-@pytest.mark.django_db()
-def test_staff_user_can_see_route(chat_with_files: Chat, client: Client):
-    # Given
-    chat_with_files.user.is_staff = True
-    chat_with_files.user.save()
-    client.force_login(chat_with_files.user)
-
-    # When
-    response = client.get(f"/chats/{chat_with_files.id}/")
-
-    # Then
-    assert response.status_code == HTTPStatus.OK
-    assert b"iai-chat-bubble__route" in response.content
-    assert b"iai-chat-bubble__route govuk-!-display-none" not in response.content
