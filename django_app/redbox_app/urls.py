@@ -3,6 +3,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
+from django.views.generic.base import RedirectView
 from magic_link import urls as magic_link_urls
 
 from .redbox_core import views
@@ -13,13 +14,14 @@ admin.autodiscover()
 
 auth_urlpatterns = [
     path("magic_link/", include(magic_link_urls)),
-    path("sign-in/", views.sign_in_view, name="sign-in"),
+    path("log-in/", views.sign_in_view, name="log-in"),
+    path("sign-in/", RedirectView.as_view(url="/log-in/")),
     path(
-        "sign-in-link-sent/",
+        "log-in-link-sent/",
         views.sign_in_link_sent_view,
-        name="sign-in-link-sent",
+        name="log-in-link-sent",
     ),
-    path("signed-out/", views.signed_out_view, name="signed-out"),
+    path("logged-out/", views.signed_out_view, name="logged-out"),
     path("sign-up-page-1", views.Signup1.as_view(), name="sign-up-page-1"),
     path("sign-up-page-2", views.Signup2.as_view(), name="sign-up-page-2"),
     path("sign-up-page-3", views.Signup3.as_view(), name="sign-up-page-3"),

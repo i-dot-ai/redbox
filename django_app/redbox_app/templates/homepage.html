@@ -14,8 +14,8 @@
                     <div class="rb-banner__links">
                         {% if not request.user.is_authenticated %}
                             {{ govukButton(
-                                text="Sign in",
-                                href=url('sign-in'),
+                                text="Log in",
+                                href=url('log-in'),
                                 classes="govuk-button--secondary govuk-!-margin-bottom-0 rb-banner__button"
                             ) }}
                         {% endif %}
@@ -26,8 +26,8 @@
                     <div class="rb-banner__links">
                         {% if not request.user.is_authenticated %}
                             {{ govukButton(
-                                text="Sign in",
-                                href=url('sign-in'),
+                                text="Log in",
+                                href=url('log-in'),
                                 classes="govuk-button--secondary govuk-!-margin-bottom-0 rb-banner__button"
                             ) }}
                             {% if allow_sign_ups %}
