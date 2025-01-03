@@ -16,12 +16,12 @@ def test_sign_in_view_redirect_to_sign_in(alice: User, client: Client, mailoutbo
     # Given a user that does exist in the db Alice
 
     # When
-    url = reverse("sign-in")
+    url = reverse("log-in")
     response = client.post(url, data={"email": alice.email})
 
     # Then
     assert response.status_code == HTTPStatus.FOUND
-    assert response.url == "/sign-in-link-sent/"
+    assert response.url == "/log-in-link-sent/"
     link = next(line for line in mailoutbox[-1].body.splitlines() if line.startswith("http"))
     signed_in_response = client.get(link)
     assert signed_in_response.status_code == HTTPStatus.OK
@@ -32,7 +32,7 @@ def test_sign_in_view_redirect_sign_up(client: Client):
     # Given a user that does not exist in the database
 
     # When
-    url = reverse("sign-in")
+    url = reverse("log-in")
     response = client.post(url, data={"email": "not.a.real.user@gov.uk"})
 
     # Then
