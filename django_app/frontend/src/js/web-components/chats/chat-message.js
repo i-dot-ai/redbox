@@ -36,9 +36,6 @@ export class ChatMessage extends HTMLElement {
   connectedCallback() {
     this.uuid = crypto.randomUUID();
     this.innerHTML = `
-      <div class="rb-activity">
-        <activity-button class="rb-activity__btn"></activity-button>
-      </div>
       <div class="iai-chat-bubble govuk-body {{ classes }}" data-role="${
         this.dataset.role
       }" tabindex="-1">
@@ -117,26 +114,11 @@ export class ChatMessage extends HTMLElement {
     });
   };
 
-  /**
-   * Displays an activity above the message
-   * @param {string} message
-   * @param { "ai" | "user"} type
-   */
-  addActivity = (message, type) => {
-    let activityElement = document.createElement("p");
-    activityElement.classList.add(
-      "rb-activity__item",
-      `rb-activity__item--${type}`
-    );
-    activityElement.textContent = message;
-    this.querySelector(".rb-activity")?.appendChild(activityElement);
-  };
 
   /**
    * Streams an LLM response
    * @param {string} message
    * @param {string[]} selectedDocuments An array of IDs
-   * @param {string[]} activities
    * @param {string} llm
    * @param {string | undefined} sessionId
    * @param {string} endPoint
@@ -145,7 +127,6 @@ export class ChatMessage extends HTMLElement {
   stream = (
     message,
     selectedDocuments,
-    activities,
     llm,
     sessionId,
     endPoint,
@@ -193,7 +174,6 @@ export class ChatMessage extends HTMLElement {
           message: message,
           sessionId: sessionId,
           selectedFiles: selectedDocuments,
-          activities: activities,
           llm: llm,
         })
       );
@@ -256,8 +236,6 @@ export class ChatMessage extends HTMLElement {
           plausible("Chat-message-route", { props: { route: response.data } });
           this.plausibleRouteDataSent = true;
         }
-      } else if (response.type === "activity") {
-        this.addActivity(response.data, "ai");
       } else if (response.type === "end") {
         sourcesContainer.showCitations(response.data.message_id);
         this.feedbackButtons?.showFeedback(response.data.message_id);
