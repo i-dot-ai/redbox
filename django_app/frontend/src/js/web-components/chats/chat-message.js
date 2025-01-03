@@ -69,7 +69,7 @@ export class ChatMessage extends HTMLElement {
     `;
 
     // Add any existing markdown content - can't update directly to the above HTML string as user HTML may be removed
-    /** @type {import("../markdown-converter").MarkdownConverter} */(this.querySelector("markdown-converter")).update(this.dataset.text || "");
+    /** @type {import("./markdown-converter").MarkdownConverter} */(this.querySelector("markdown-converter")).update(this.dataset.text || "");
 
     // Add feedback buttons
     if (this.dataset.role === "ai") {
@@ -162,7 +162,7 @@ export class ChatMessage extends HTMLElement {
     });
 
     this.responseContainer =
-      /** @type {import("../markdown-converter").MarkdownConverter} */ (
+      /** @type {import("./markdown-converter").MarkdownConverter} */ (
         this.querySelector("markdown-converter")
       );
     let sourcesContainer = /** @type {import("./sources-list").SourcesList} */ (
