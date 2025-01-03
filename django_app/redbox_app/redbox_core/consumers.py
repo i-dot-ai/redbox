@@ -27,11 +27,10 @@ from redbox.models.chain import (
     metadata_reducer,
 )
 from redbox.models.chain import Citation as AICitation
-from redbox.models.graph import RedboxActivityEvent
 from redbox.retriever import DjangoFileRetriever
 from redbox_app.redbox_core import error_messages
+from redbox_app.redbox_core.models import AISettings as AISettingsModel
 from redbox_app.redbox_core.models import (
-    ActivityEvent,
     Chat,
     ChatLLMBackend,
     ChatMessage,
@@ -39,7 +38,6 @@ from redbox_app.redbox_core.models import (
     Citation,
     File,
 )
-from redbox_app.redbox_core.models import AISettings as AISettingsModel
 
 User = get_user_model()
 OptFileSeq = Sequence[File] | None
