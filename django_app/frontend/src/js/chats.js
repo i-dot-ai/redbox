@@ -8,7 +8,7 @@ import "./web-components/chats/document-selector.js";
 import "./web-components/chats/document-container.mjs";
 import "./web-components/chats/document-upload.mjs";
 import "./web-components/chats/feedback-buttons.js";
-import "./web-components/markdown-converter.js";
+import "./web-components/chats/markdown-converter.js";
 import "./web-components/chats/message-input.js";
 import "./web-components/chats/sources-list.js";
 import "./web-components/chats/canned-prompts";
