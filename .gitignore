@@ -1,6 +1,11 @@
 **/*.db
 .idea/
 redbox-core/models/
+# Credentials
+.aws/
+.aws/update_aws_env.sh
+.env.docker
+.env_old
 
 # AI Test Data
 
