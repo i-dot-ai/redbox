@@ -42,11 +42,6 @@ def get_token_use_model(use_type: str) -> str:
 
 
 @database_sync_to_async
-def get_activity_model() -> str:
-    return ActivityEvent.objects.latest("created_at").message
-
-
-@database_sync_to_async
 def get_token_use_count(use_type: str) -> int:
     return ChatMessageTokenUse.objects.filter(use_type=use_type).latest("created_at").token_count
 
@@ -96,7 +91,6 @@ async def test_chat_consumer_with_new_session(alice: User, uploaded_file: File, 
     assert await get_token_use_model(ChatMessageTokenUse.UseType.OUTPUT) == "gpt-4o"
     assert await get_token_use_count(ChatMessageTokenUse.UseType.INPUT) == 123
     assert await get_token_use_count(ChatMessageTokenUse.UseType.OUTPUT) == 1000
-    assert await get_activity_model() == "fish and chips"
 
 
 @pytest.mark.django_db(transaction=True)
@@ -642,13 +636,6 @@ def mocked_connect(uploaded_file: File) -> Connect:
                 llm_calls=[LLMCallMetadata(llm_model_name="gpt-4o", input_tokens=123, output_tokens=1000)],
                 selected_files_total_tokens=1000,
                 number_of_selected_files=1,
-            ),
-        },
-        {
-            "event": "on_custom_event",
-            "name": "activity",
-            "data": RedboxActivityEvent(
-                message="fish and chips",
             ),
         },
     ]
