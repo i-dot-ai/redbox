@@ -1,7 +1,6 @@
 services:
   unstructured:
     image: quay.io/unstructured-io/unstructured-api:latest
-    platform: ${DOCKER_PLATFORM:-windows/amd64}
     ports:
       - 8000:8000
     networks:

@@ -6,6 +6,7 @@ from django.urls import include, path
 from magic_link import urls as magic_link_urls
 
 from .redbox_core import views
+from .redbox_core.views import api_views
 
 admin.site = AdminSitePlus()
 admin.autodiscover()
@@ -50,7 +51,7 @@ file_urlpatterns = [
 
 chat_urlpatterns = [
     path("chats/<uuid:chat_id>/", views.ChatsView.as_view(), name="chats"),
-    path("chats/", views.ChatsView.as_view(), name="chats"),
+    path("chats/", views.ChatsViewNew.as_view(), name="chats"),
     path("chat/<uuid:chat_id>/title/", views.ChatsTitleView.as_view(), name="chat-titles"),
     path("citations/<uuid:message_id>/", views.CitationsView.as_view(), name="citations"),
     path("ratings/<uuid:message_id>/", views.RatingsView.as_view(), name="ratings"),
@@ -80,6 +81,7 @@ other_urlpatterns = [
 
 api_url_patterns = [
     path("api/v0/", views.user_view_pre_alpha, name="user-view"),
+    path("api/v0/file/", api_views.file_upload, name="file-upload"),
 ]
 
 urlpatterns = (

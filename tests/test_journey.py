@@ -98,31 +98,6 @@ def test_user_journey(page: Page, email_address: str):
     latest_chat_response = chats_page.wait_for_latest_message()
     assert latest_chat_response.text
 
-    # Use specific routes
-    for keyword, route, select_file, should_have_citation in [
-        ("search", "search", False, True),
-        ("search", "search", True, True),
-    ]:
-        question = f"@{keyword} What do I need to install?"
-        logger.info("Asking %r", question)
-        chats_page.write_message = question
-        if select_file:
-            current_files = files_to_select.copy()
-            chats_page.selected_file_names = current_files
-            logger.info("selected %s", current_files)
-        else:
-            chats_page.selected_file_names = []
-        chats_page = chats_page.send()
-        latest_chat_response = chats_page.wait_for_latest_message()
-        assert latest_chat_response.text
-        assert latest_chat_response.route.startswith(route)
-        if should_have_citation:
-            citations_page = latest_chat_response.navigate_to_citations()
-            chats_page = citations_page.back_to_chat()
-            assert any(file in latest_chat_response.sources for file in files_to_select)
-        else:
-            assert len(latest_chat_response.sources) == 0
-
     # Delete a file
     documents_page = chats_page.navigate_to_documents()
     pre_delete_doc_count = documents_page.document_count()

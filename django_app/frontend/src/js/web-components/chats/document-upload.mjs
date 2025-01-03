@@ -5,7 +5,7 @@ import { RedboxElement } from "../redbox-element.mjs";
 export class DocumentUpload extends RedboxElement {
   static properties = {
     csrfToken: { type: String, attribute: "data-csrf-token" },
-    chatId: { type: String, attribute: "data-chat-id" },
+    chatId: { type: String, attribute: "data-chatid" },
     dragDropInProgress: { type: Boolean, state: true },
   };
 
@@ -32,6 +32,13 @@ export class DocumentUpload extends RedboxElement {
       }
       /** @type {HTMLInputElement} */ (this.querySelector("input[type=file]")).files = dataTransfer.files;
       this.#sendFiles();
+
+      // send event to plausible analytics
+      let plausible = /** @type {any} */ (window).plausible;
+      if (typeof plausible !== "undefined") {
+        plausible("drag-drop");
+      }
+
     });
 
     // this needs throttling, otherwise it will flicker
@@ -45,44 +52,37 @@ export class DocumentUpload extends RedboxElement {
   /**
    * @param {SubmitEvent} [evt]
    */
-  #sendFiles = async (evt) => {
+  #sendFiles = (evt) => {
+
     evt?.preventDefault();
-    const formData = new FormData(this.querySelector("form") || undefined);
-    /*
-    for (let [key, value] of formData.entries()) {
-      console.log(key, value);
+
+    const allUploadedDocContainers = document.querySelectorAll("document-container");
+    const lastUploadedDocContainer = allUploadedDocContainers[allUploadedDocContainers.length - 1];
+
+    for (const doc of /** @type {HTMLFormElement} */(this.querySelector("input[type=file]")).files) {
+      lastUploadedDocContainer.addDocument(doc, this.csrfToken);
     }
-    */
-    const response = await fetch("/upload/", {
-      method: "POST",
-      headers: {
-        "X-CSRFToken": this["csrfToken"],
-      },
-      body: formData,
-    });
-    if (!response.ok) {
-      // TO DO: Handle error
-    }
-    // TO DO: add document icons to the chat
-    /** @type {HTMLInputElement} */ (this.querySelector("input[type=file]")).value = "";
+
+    this.querySelector("input[type=file]").value = "";
+
   };
 
   render() {
     return html`
-      <form @submit=${this.#sendFiles} action="/upload/" method="post" enctype="multipart/form-data">
+      <form class="rb-document-upload" @submit=${this.#sendFiles} action="/upload/" method="post" enctype="multipart/form-data">
         <input type="hidden" name="csrfmiddlewaretoken" value=${this["csrfToken"]} />
         <input type="hidden" name="chat_id" value=${this["chatId"]} />
         <label class="govuk-label" for="upload-docs">
           <h3 class="govuk-heading-s">Add a document</h3>
         </label>
         <div id="upload-docs-notification">
-          <p class="govuk-body-l">The AI will use all documents you upload. You can use up to, and including, Official Sensitive documents. Do not upload any documents with personal data.</p>
+          <p class="govuk-body-l">You can use up to, and including, Official Sensitive documents. Do not upload any documents with personal data.</p>
         </div>
         <p class="govuk-body rb-file-types" id="upload-docs-filetypes">Limit 200MB per file: EML, HTML, JSON, MD, MSG, RST, RTF, TXT, XML, CSV, DOC, DOCX, EPUB, ODT, PDF, PPT, PPTX, TSV, XLSX, HTM</p>
         <input class="govuk-file-upload" multiple id="upload-docs" name="uploadDocs" type="file" aria-describedby="upload-docs-notification upload-docs-filetypes" />
         <button class="govuk-!-display-inline-block" type="submit">Upload</button>
       </form>
-      ${this.dragDropInProgress ? html`<p>Drop files here to upload to chat</p>` : ""}
+      ${this.dragDropInProgress ? html`<p class="rb-uploaded-docs__drag-drop-message">Drop files here to upload to chat</p>` : ""}
     `;
   }
 }

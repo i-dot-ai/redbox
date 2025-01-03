@@ -1,4 +1,5 @@
 import datetime
+import json
 import logging
 
 import humanize
@@ -76,6 +77,23 @@ def render_lit(html):
         return html
 
 
+def filter_docs(docs, messages, message_index):
+    """
+    Filter the documents based on the timestamp of the messages
+    This ensures each document is displayed in the correct container / order
+    """
+    start_timestamp = datetime.datetime.now(pytz.timezone("Europe/London")) - datetime.timedelta(days=999)
+    if message_index > 0:
+        start_timestamp = messages[message_index - 1].created_at
+    end_timestamp = datetime.datetime.now(pytz.timezone("Europe/London"))
+    if message_index < messages.count():
+        end_timestamp = messages[message_index].created_at
+    filtered_docs = [doc for doc in docs if start_timestamp < doc.created_at < end_timestamp]
+    return json.dumps(
+        [{"id": str(doc.id), "file_name": doc.file_name, "file_status": doc.get_status_text()} for doc in filtered_docs]
+    )
+
+
 def to_user_timezone(value):
     # Assuming the user's timezone is stored in a variable called 'user_timezone'
     # Replace 'Europe/London' with the actual timezone string for the user
@@ -104,6 +122,7 @@ def environment(**options):
             "security": settings.MAX_SECURITY_CLASSIFICATION.value,
             "waffle_flag": waffle.flag_is_active,
             "render_lit": render_lit,
+            "filter_docs": filter_docs,
         }
     )
     env.globals.update(
