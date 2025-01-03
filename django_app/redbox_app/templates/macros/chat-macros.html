@@ -1,29 +1,3 @@
-{% macro route_display(route=None) %}
-<div class="iai-chat-bubble__route" {% if not route %}hidden{% endif %}>
-  <tool-tip class="iai-tooltip">
-    <div class="iai-tooltip__button" tabindex="0">
-      <span>Response generated using <strong>@<span class="iai-chat-bubble__route-text">{{ route }}</span></strong>
-        route</span>
-      <img src="{{ static('icons/question-mark.svg') }}" alt="" width="14" />
-    </div>
-    <div class="iai-tooltip__content">
-      <h3 class="iai-chat-bubble__route-heading">
-        <img src="{{ static('icons/question-mark.svg') }}" alt="" width="24" />
-        <span>Redbox uses different paths to generate the best response</span>
-      </h3>
-      <ul class="iai-chat-bubble__route-list">
-        <li class="iai-chat-bubble__route-list-item">I can <strong>@chat</strong> about general questions, not related
-          to your documents</li>
-        <li class="iai-chat-bubble__route-list-item">I can <strong>@chat/documents</strong> over selected documents and
-          do Q&amp;A on them, extract information, summarise and more!</li>
-      </ul>
-    </div>
-  </tool-tip>
-</div>
-{% endmacro %}
-
-
-
 {% macro message_box(message) %}
 
 <div
@@ -31,9 +5,6 @@
   data-role="{{ message.role }}" tabindex="-1">
   <div class="iai-chat-bubble__header">
     <div class="iai-chat-bubble__role">{% if message.role == "ai" %}Redbox{% else %}You{% endif %}</div>
-    {% if message.route %}
-    {{ route_display(message.route) }}
-    {% endif %}
   </div>
 
   <markdown-converter class="iai-chat-bubble__text" data-role="{{ message.role }}">{{ message.text }}</markdown-converter>

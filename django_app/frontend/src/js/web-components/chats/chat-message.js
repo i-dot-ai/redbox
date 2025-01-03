@@ -2,30 +2,6 @@
 
 import "../loading-message.js";
 
-/**
- * Send Plausible data on tool-tip hover
- * @param {Event} evt
- */
-const sendTooltipViewEvent = (evt) => {
-  let plausible = /** @type {any} */ (window).plausible;
-  if (typeof plausible !== "undefined") {
-    plausible("Route-tooltip-view");
-  }
-  // cancel event listener so events only get sent once
-  let targetElement = /** @type{HTMLElement | null | undefined} */ (evt.target);
-  if (targetElement?.nodeName !== "TOOL-TIP") {
-    targetElement = targetElement?.closest("tool-tip");
-  }
-  targetElement?.removeEventListener("mouseover", sendTooltipViewEvent);
-};
-// Do this for any SSR tool-tips on the page
-(() => {
-  const tooltips = document.querySelectorAll("tool-tip");
-  tooltips.forEach((tooltip) => {
-    tooltip.addEventListener("mouseover", sendTooltipViewEvent);
-  });
-})();
-
 export class ChatMessage extends HTMLElement {
   constructor() {
     super();
@@ -81,17 +57,6 @@ export class ChatMessage extends HTMLElement {
     this.programmaticScroll = true;
     this.scrollIntoView({ block: "end" });
 
-    // Insert route_display HTML
-    const routeTemplate = /** @type {HTMLTemplateElement} */ (
-      document.querySelector("#template-route-display")
-    );
-    const routeClone = document.importNode(routeTemplate.content, true);
-
-    this.querySelector(".iai-chat-bubble__header")?.appendChild(routeClone);
-    this.querySelector("tool-tip")?.addEventListener(
-      "mouseover",
-      sendTooltipViewEvent
-    );
   }
 
   #addFootnotes = (content) => {
@@ -222,20 +187,6 @@ export class ChatMessage extends HTMLElement {
           response.data.url,
           response.data.text_in_answer
         );
-      } else if (response.type === "route") {
-        let route = this.querySelector(".iai-chat-bubble__route");
-        let routeText = route?.querySelector(".iai-chat-bubble__route-text");
-        if (route && routeText) {
-          routeText.textContent = response.data;
-          route.removeAttribute("hidden");
-        }
-
-        // send route to Plausible
-        let plausible = /** @type {any} */ (window).plausible;
-        if (typeof plausible !== "undefined" && !this.plausibleRouteDataSent) {
-          plausible("Chat-message-route", { props: { route: response.data } });
-          this.plausibleRouteDataSent = true;
-        }
       } else if (response.type === "end") {
         sourcesContainer.showCitations(response.data.message_id);
         this.feedbackButtons?.showFeedback(response.data.message_id);
