@@ -1,7 +1,6 @@
 import logging
 from datetime import datetime
 from io import BytesIO
-from typing import TYPE_CHECKING
 import requests
 import tiktoken
 
@@ -12,11 +11,6 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger()
 
 encoding = tiktoken.get_encoding("cl100k_base")
-
-if TYPE_CHECKING:
-    from mypy_boto3_s3.client import S3Client
-else:
-    S3Client = object
 
 
 class UnstructuredChunkLoader:

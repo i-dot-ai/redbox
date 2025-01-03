@@ -11,7 +11,6 @@ from uuid import UUID, uuid4
 from langchain_core.documents import Document
 from langchain_core.messages import AnyMessage
 from langgraph.graph.message import add_messages
-from langgraph.managed.is_last_step import RemainingStepsManager
 from pydantic import BaseModel, Field
 
 from redbox.models import prompts
@@ -235,7 +234,6 @@ class RedboxState(BaseModel):
     route_name: str | None = None
     metadata: Annotated[RequestMetadata | None, metadata_reducer] = None
     citations: list[Citation] | None = None
-    steps_left: Annotated[int | None, RemainingStepsManager] = None
     messages: Annotated[list[AnyMessage], add_messages] = Field(default_factory=list)
 
     @property

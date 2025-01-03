@@ -11,7 +11,6 @@ from tiktoken.core import Encoding
 from redbox.chains.runnables import CannedChatLLM, build_chat_prompt_from_messages_runnable, build_llm_chain
 from redbox.graph.nodes.processes import (
     build_chat_pattern,
-    build_merge_pattern,
     build_passthrough_pattern,
     build_retrieve_pattern,
     build_set_route_pattern,
@@ -30,7 +29,7 @@ from redbox.test.data import (
     mock_retriever,
     mock_parameterised_retriever,
 )
-from redbox.transform import flatten_document_state, structure_documents_by_file_name
+from redbox.transform import structure_documents_by_file_name
 
 LANGGRAPH_DEBUG = True
 
@@ -228,56 +227,6 @@ def test_build_retrieve_pattern(test_case: RedboxChatTestCase, mock_retriever: B
     assert final_state.documents == structure_documents_by_file_name(test_case.docs)
 
 
-MERGE_TEST_CASES = generate_test_cases(
-    query=RedboxQuery(
-        question="What is AI?",
-        s3_keys=["s3_key_1", "s3_key_2"],
-        user_uuid=uuid4(),
-        chat_history=[],
-        permitted_s3_keys=["s3_key_1", "s3_key_2"],
-    ),
-    test_data=[
-        RedboxTestData(
-            number_of_docs=2,
-            tokens_in_all_docs=40_000,
-            llm_responses=["Testing Response 1"],
-            expected_route=ChatRoute.chat_with_docs,
-        ),
-        RedboxTestData(
-            number_of_docs=4,
-            tokens_in_all_docs=40_000,
-            llm_responses=["Testing Response 2"],
-            expected_route=ChatRoute.chat_with_docs,
-        ),
-    ],
-    test_id="Merge pattern",
-)
-
-
-@pytest.mark.parametrize(("test_case"), MERGE_TEST_CASES, ids=[t.test_id for t in MERGE_TEST_CASES])
-def test_build_merge_pattern(test_case: RedboxChatTestCase, mocker: MockerFixture):
-    """Tests a given state["request"] and state["documents"] correctly changes state["documents"]."""
-    llm = GenericFakeChatModel(messages=iter(test_case.test_data.llm_responses))
-    state = RedboxState(request=test_case.query, documents=structure_documents_by_file_name(test_case.docs))
-
-    merge = build_merge_pattern(prompt_set=PromptSet.ChatwithDocsMapReduce, final_response_chain=True)
-
-    mocker.patch("redbox.graph.nodes.processes.get_chat_llm", return_value=llm)
-    response = merge.invoke(state)
-    final_state = RedboxState(**response, request=test_case.query)
-
-    response_documents = [doc for doc in flatten_document_state(final_state.documents) if doc is not None]
-    noned_documents = sum(1 for doc in final_state.documents.groups.values() for v in doc.values() if v is None)
-
-    test_case_content = test_case.test_data.llm_responses[-1].content
-
-    assert len(response_documents) == 1
-    assert noned_documents == len(test_case.docs) - 1
-    assert (
-        response_documents[0].page_content == test_case_content
-    ), f"Expected document content: '{test_case_content}'. Received '{response_documents[0].page_content}'"
-
-
 STUFF_TEST_CASES = generate_test_cases(
     query=RedboxQuery(
         question="What is AI?",
@@ -381,7 +330,7 @@ def test_empty_process():
         ),
         documents=structure_documents_by_file_name([doc for doc in generate_docs(s3_key="s3_key")]),
         messages=[HumanMessage(content="Foo")],
-        route_name=ChatRoute.chat_with_docs_map_reduce,
+        route_name=ChatRoute.chat_with_docs,
     )
 
     builder = StateGraph(RedboxState)
@@ -403,7 +352,7 @@ CLEAR_DOC_TEST_CASES = [
         ),
         documents=structure_documents_by_file_name([doc for doc in generate_docs(s3_key="s3_key")]),
         messages=[HumanMessage(content="Foo")],
-        route_name=ChatRoute.chat_with_docs_map_reduce,
+        route_name=ChatRoute.chat_with_docs,
     ),
     RedboxState(
         request=RedboxQuery(
@@ -411,7 +360,7 @@ CLEAR_DOC_TEST_CASES = [
         ),
         documents={},
         messages=[HumanMessage(content="Foo")],
-        route_name=ChatRoute.chat_with_docs_map_reduce,
+        route_name=ChatRoute.chat_with_docs,
     ),
 ]
 

@@ -1,27 +1,21 @@
-import json
 import logging
 import re
-import textwrap
 from collections.abc import Callable
-from functools import reduce
-from typing import Any, Iterable
-from uuid import uuid4
+from typing import Any
 
 from langchain.schema import StrOutputParser
-from langchain_core.callbacks.manager import dispatch_custom_event
 from langchain_core.documents import Document
 from langchain_core.messages import AIMessage, HumanMessage
 from langchain_core.runnables import Runnable, RunnableLambda, RunnableParallel
 from langchain_core.tools import StructuredTool
 from langchain_core.vectorstores import VectorStoreRetriever
 
-from redbox.chains.activity import log_activity
-from redbox.chains.components import get_chat_llm, get_tokeniser
+from redbox.chains.components import get_chat_llm
 from redbox.chains.runnables import CannedChatLLM, build_llm_chain
 from redbox.models import ChatRoute
 from redbox.models.chain import DocumentState, PromptSet, RedboxState, RequestMetadata
-from redbox.models.graph import ROUTE_NAME_TAG, SOURCE_DOCUMENTS_TAG, RedboxActivityEvent, RedboxEventType
-from redbox.transform import combine_documents, flatten_document_state
+from redbox.models.graph import ROUTE_NAME_TAG, SOURCE_DOCUMENTS_TAG
+from redbox.transform import flatten_document_state
 
 log = logging.getLogger(__name__)
 re_keyword_pattern = re.compile(r"@(\w+)")
@@ -72,65 +66,6 @@ def build_chat_pattern(
     return _chat
 
 
-def build_merge_pattern(
-    prompt_set: PromptSet,
-    tools: list[StructuredTool] | None = None,
-    final_response_chain: bool = False,
-) -> Runnable[RedboxState, dict[str, Any]]:
-    """Returns a Runnable that uses state.request and state.documents to return one item in state.documents.
-
-    When combined with chunk send, will replace each Document with what's returned from the LLM.
-
-    When combined with group send, with combine all Documents and use the metadata of the first.
-
-    When used without a send, the first Document receieved defines the metadata.
-
-    If tools are supplied, can also set state["tool_calls"].
-    """
-    tokeniser = get_tokeniser()
-
-    @RunnableLambda
-    def _merge(state: RedboxState) -> dict[str, Any]:
-        llm = get_chat_llm(state.request.ai_settings.chat_backend, tools=tools)
-
-        if not state.documents.groups:
-            return {"documents": None}
-
-        flattened_documents = flatten_document_state(state.documents)
-        merged_document = reduce(lambda left, right: combine_documents(left, right), flattened_documents)
-
-        merge_state = RedboxState(
-            request=state.request,
-            documents=DocumentState(
-                groups={merged_document.metadata["uuid"]: {merged_document.metadata["uuid"]: merged_document}}
-            ),
-        )
-
-        merge_response = build_llm_chain(
-            prompt_set=prompt_set, llm=llm, final_response_chain=final_response_chain
-        ).invoke(merge_state)
-
-        merged_document.page_content = merge_response["messages"][-1].content
-        request_metadata = merge_response["metadata"]
-        merged_document.metadata["token_count"] = len(tokeniser.encode(merged_document.page_content))
-
-        group_uuid = next(iter(state.documents.groups or {}), uuid4())
-        document_uuid = merged_document.metadata.get("uuid", uuid4())
-
-        # Clear old documents, add new one
-        document_state = state.documents.groups.copy()
-
-        for group in document_state:
-            for document in document_state[group]:
-                document_state[group][document] = None
-
-        document_state[group_uuid][document_uuid] = merged_document
-
-        return {"documents": DocumentState(groups=document_state), "metadata": request_metadata}
-
-    return _merge
-
-
 def build_stuff_pattern(
     prompt_set: PromptSet,
     output_parser: Runnable = None,
@@ -172,28 +107,6 @@ def build_set_route_pattern(route: ChatRoute) -> Runnable[RedboxState, dict[str,
         return {"route_name": route}
 
     return RunnableLambda(_set_route).with_config(tags=[ROUTE_NAME_TAG])
-
-
-def build_set_self_route_from_llm_answer(
-    conditional: Callable[[str], bool],
-    true_condition_state_update: dict,
-    false_condition_state_update: dict,
-    final_route_response: bool = True,
-) -> Runnable[RedboxState, dict[str, Any]]:
-    """A Runnable which sets the route based on a conditional on state['text']"""
-
-    @RunnableLambda
-    def _set_self_route_from_llm_answer(state: RedboxState):
-        llm_response = state.last_message.content
-        if conditional(llm_response):
-            return true_condition_state_update
-        else:
-            return false_condition_state_update
-
-    runnable = _set_self_route_from_llm_answer
-    if final_route_response:
-        runnable = _set_self_route_from_llm_answer.with_config(tags=[ROUTE_NAME_TAG])
-    return runnable
 
 
 def build_passthrough_pattern() -> Runnable[RedboxState, dict[str, Any]]:
@@ -258,62 +171,5 @@ def clear_documents_process(state: RedboxState) -> dict[str, Any]:
         return {"documents": DocumentState(groups={group_id: None for group_id in documents.groups})}
 
 
-def report_sources_process(state: RedboxState) -> None:
-    """A Runnable which reports the documents in the state as sources."""
-    if citations_state := state.citations:
-        dispatch_custom_event(RedboxEventType.on_citations_report, citations_state)
-    elif document_state := state.documents:
-        dispatch_custom_event(RedboxEventType.on_source_report, flatten_document_state(document_state))
-
-
 def empty_process(state: RedboxState) -> None:
     return None
-
-
-def build_log_node(message: str) -> Runnable[RedboxState, dict[str, Any]]:
-    """A Runnable which logs the current state in a compact way"""
-
-    @RunnableLambda
-    def _log_node(state: RedboxState):
-        log.info(
-            json.dumps(
-                {
-                    "user_uuid": str(state.request.user_uuid),
-                    "document_metadata": {
-                        group_id: {doc_id: d.metadata for doc_id, d in group_documents.items()}
-                        for group_id, group_documents in state.documents.group
-                    },
-                    "messages": (textwrap.shorten(state.last_message.content, width=32, placeholder="...")),
-                    "route": state.route_name,
-                    "message": message,
-                }
-            )
-        )
-        return None
-
-    return _log_node
-
-
-def build_activity_log_node(
-    log_message: RedboxActivityEvent
-    | Callable[[RedboxState], Iterable[RedboxActivityEvent]]
-    | Callable[[RedboxState], Iterable[RedboxActivityEvent]],
-):
-    """
-    A Runnable which emits activity events based on the state. The message should either be a static message to log, or a function which returns an activity event or an iterator of them
-    """
-
-    @RunnableLambda
-    def _activity_log_node(state: RedboxState):
-        if isinstance(log_message, RedboxActivityEvent):
-            log_activity(log_message)
-        else:
-            response = log_message(state)
-            if isinstance(response, RedboxActivityEvent):
-                log_activity(response)
-            else:
-                for message in response:
-                    log_activity(message)
-        return None
-
-    return _activity_log_node
