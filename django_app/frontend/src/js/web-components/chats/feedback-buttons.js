@@ -40,7 +40,7 @@ export class FeedbackButtons extends HTMLElement {
     thumbsUpButton?.addEventListener("click", () => {
       if (!this.collectedData) return;
 
-      this.collectedData.rating = 1; // Thumbs up
+      this.collectedData.rating = 2; // Thumbs up
       this.#sendFeedback();
       this.#showPanel(1); // Show success/thank you panel
     });
@@ -48,7 +48,7 @@ export class FeedbackButtons extends HTMLElement {
     thumbsDownButton?.addEventListener("click", () => {
       if (!this.collectedData) return;
 
-      this.collectedData.rating = -1; // Thumbs down
+      this.collectedData.rating = 1; // Thumbs down
       this.#sendFeedback();
       this.#showPanel(1); // Show success/thank you panel
     });
