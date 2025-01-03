@@ -3,7 +3,7 @@ const { exec } = require("child_process");
 require("dotenv").config();
 
 const signIn = async (page) => {
-  await page.goto("/sign-in");
+  await page.goto("/log-in");
 
   // Perform login actions
   await page.fill("#email", process.env.FROM_EMAIL);

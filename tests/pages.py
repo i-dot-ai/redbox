@@ -118,14 +118,14 @@ class LandingPage(BasePage):
         return "Redbox"
 
     def navigate_to_sign_in(self) -> "SignInPage":
-        self.page.get_by_role("link", name="Sign in", exact=True).click()
+        self.page.get_by_role("link", name="Log in", exact=True).click()
         return SignInPage(self.page)
 
 
 class SignInPage(BasePage):
     @property
     def expected_page_title(self) -> str:
-        return "Sign in - Redbox"
+        return "Log in - Redbox"
 
     @property
     def email(self) -> str:
@@ -143,11 +143,11 @@ class SignInPage(BasePage):
 class SignInLinkSentPage(BasePage):
     @property
     def expected_page_title(self) -> str:
-        return "Sign in - link sent - Redbox"
+        return "Log in - link sent - Redbox"
 
 
 class SignInConfirmationPage(BasePage):
-    EXPECTED_TITLE = "Sign in - confirmation - Redbox"
+    EXPECTED_TITLE = "Log in - confirmation - Redbox"
 
     def __init__(self, page, magic_link: URL):
         page.goto(str(magic_link))

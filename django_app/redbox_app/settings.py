@@ -169,10 +169,10 @@ if LOGIN_METHOD == "sso":
 elif LOGIN_METHOD == "magic_link":
     SESSION_COOKIE_SAMESITE = "Strict"
     LOGIN_REDIRECT_URL = "homepage"
-    LOGIN_URL = "sign-in"
+    LOGIN_URL = "log-in"
 else:
     LOGIN_REDIRECT_URL = "homepage"
-    LOGIN_URL = "sign-in"
+    LOGIN_URL = "log-in"
 
 # CSP settings https://content-security-policy.com/
 # https://django-csp.readthedocs.io/

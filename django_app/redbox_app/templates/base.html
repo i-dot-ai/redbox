@@ -69,7 +69,7 @@
           "initials": request.user.get_initials(),
           "menu_items": [
               {"text": "My details", "href": url('demographics')},
-              {"text": "Sign out", "href": url('signed-out')}
+              {"text": "Log out", "href": url('logged-out')}
           ]
       },
       phase = "Beta"
@@ -78,7 +78,7 @@
     {{ iaiTopNav(
       product_name = "Redbox",
       menu_items = [
-        {"text": "Sign in", "href": url('sign-in')}
+        {"text": "Log in", "href": url('log-in')}
       ],
       phase = "Beta"
     ) }}

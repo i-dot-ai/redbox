@@ -77,7 +77,7 @@ To create an admin user, you can run the following command:
 docker compose run django-app venv/bin/django-admin createsuperuser
 ```
 
-You will be prompted to enter an email and a password. These can be anything you like as the development mode doesn't send emails or use passwords for authentication. Instead we use magic links. Once the superuser is created, you can log in to the Django admin interface by navigating to [`http://localhost:8090/sign-in`](http://localhost:8090/sign-in) and entering the email you just created.
+You will be prompted to enter an email and a password. These can be anything you like as the development mode doesn't send emails or use passwords for authentication. Instead we use magic links. Once the superuser is created, you can log in to the Django admin interface by navigating to [`http://localhost:8090/log-in`](http://localhost:8090/log-in) and entering the email you just created.
 
 ![Redbox Sign In](../../assets/redbox_signin.png)
 
