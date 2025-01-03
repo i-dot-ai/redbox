@@ -1,7 +1,7 @@
 {% set pageTitle = "Chats" %}
 {% extends "base.html" %}
 {% from "macros/chat-history-macros.html" import chat_history_heading, chat_history_item %}
-{% from "macros/chat-macros.html" import message_box, route_display %}
+{% from "macros/chat-macros.html" import message_box %}
 {% from "macros/profile-overlay.html" import profile_overlay %}
 
 
@@ -119,10 +119,6 @@
         <chat-controller class="iai-chat-container" data-stream-url="{{ streaming.endpoint }}" data-session-id="{{ chat_id or '' }}">
 
           <div class="rb-chat-message__container js-message-container">
-
-            <template id="template-route-display">
-              {{ route_display() }}
-            </template>
 
             {# SSR messages #}
             {% for message in messages %}

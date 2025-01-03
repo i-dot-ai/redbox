@@ -58,6 +58,7 @@ class ChatController extends HTMLElement {
       messageInput.reset();
 
       // if a route has been intentionally specified by a user, send an event to Plausible
+      // (though we no longer have routes, it might be worth keeping for a little while, to see if users are still trying to use them)
       (() => {
         let plausible = /** @type {any} */ (window).plausible;
         if (typeof plausible === "undefined") {
