@@ -8,6 +8,7 @@ export class RedboxElement extends LitElement {
   // clear the SSR content and prevents Shadow DOM by default
   createRenderRoot() {
     this.innerHTML = "";
+    this.jsInitialised = true;
     return this;
   }
 }
