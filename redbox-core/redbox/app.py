@@ -100,7 +100,7 @@ class Redbox:
         if graph_to_draw == "root":
             graph = self.graph.get_graph()
         elif graph_to_draw == "chat/documents":
-            graph = get_chat_with_documents_graph(self.all_chunks_retriever).get_graph()
+            graph = get_chat_with_documents_graph(self.retriever).get_graph()
         else:
             raise Exception("Invalid graph_to_draw")
 
