@@ -10,3 +10,4 @@ Custom events are used for communication between web components. Here is a list 
 | selected-docs-change | /chats                | {id: string, name: string}[]                            | When a user selects or deselects a document                                               |
 | stop-streaming       | /chats                | (none)                                                  | When a user presses the stop-streaming button, or an unexpected disconnection has occured |
 | chat-title-change    | /chats                | title: string<br/>session_id: string<br/>sender: string | When the chat title is changed by the user                                                |
+| upload-init          | /chats                | (none)                                                  | When a user clicks the upload button, so it can trigger the file input click event        |

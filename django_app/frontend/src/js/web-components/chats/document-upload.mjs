@@ -47,6 +47,12 @@ export class DocumentUpload extends RedboxElement {
         this.dragDropInProgress = false;
       }, 1);
     });
+
+    // detect when the user clicks the "attach document" button
+    document.addEventListener("upload-init", (evt) => {
+      this.querySelector("input[type=file]").click();
+    });
+
   }
 
   /**
@@ -69,17 +75,13 @@ export class DocumentUpload extends RedboxElement {
 
   render() {
     return html`
-      <form class="rb-document-upload" @submit=${this.#sendFiles} action="/upload/" method="post" enctype="multipart/form-data">
+      <form class="rb-document-upload ${this.jsInitialised ? `govuk-visually-hidden` : ''}" action="/upload/" method="post" enctype="multipart/form-data">
         <input type="hidden" name="csrfmiddlewaretoken" value=${this["csrfToken"]} />
         <input type="hidden" name="chat_id" value=${this["chatId"]} />
         <label class="govuk-label" for="upload-docs">
           <h3 class="govuk-heading-s">Add a document</h3>
         </label>
-        <div id="upload-docs-notification">
-          <p class="govuk-body-l">You can use up to, and including, Official Sensitive documents. Do not upload any documents with personal data.</p>
-        </div>
-        <p class="govuk-body rb-file-types" id="upload-docs-filetypes">Limit 200MB per file: EML, HTML, JSON, MD, MSG, RST, RTF, TXT, XML, CSV, DOC, DOCX, EPUB, ODT, PDF, PPT, PPTX, TSV, XLSX, HTM</p>
-        <input class="govuk-file-upload" multiple id="upload-docs" name="uploadDocs" type="file" aria-describedby="upload-docs-notification upload-docs-filetypes" />
+        <input class="govuk-file-upload" @change=${this.#sendFiles} multiple id="upload-docs" name="uploadDocs" type="file" />
         <button class="govuk-!-display-inline-block" type="submit">Upload</button>
       </form>
       ${this.dragDropInProgress ? html`<p class="rb-uploaded-docs__drag-drop-message">Drop files here to upload to chat</p>` : ""}
