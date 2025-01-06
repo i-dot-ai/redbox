@@ -1,6 +1,6 @@
-from redbox.app import Redbox
-
 from langchain_core.runnables import RunnablePassthrough
+
+from redbox.app import Redbox
 
 app = Redbox(retriever=RunnablePassthrough())
 
