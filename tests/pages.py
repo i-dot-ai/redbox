@@ -306,7 +306,6 @@ class ChatMessage:
     status: str | None
     role: str
     text: str
-    sources: Sequence[str]
     element: Locator = field(repr=False)
     chats_page: "ChatsPage" = field(repr=False)
 
@@ -319,8 +318,7 @@ class ChatMessage:
         status = element.get_attribute("data-status")
         role = element.locator(".iai-chat-bubble__role").inner_text()
         text = element.locator(".iai-chat-bubble__text").inner_text()
-        sources = element.locator("sources-list").get_by_role("listitem").all_inner_texts()
-        return cls(status=status, role=role, text=text, sources=sources, element=element, chats_page=page)
+        return cls(status=status, role=role, text=text, element=element, chats_page=page)
 
 
 class ChatsPage(SignedInBasePage):

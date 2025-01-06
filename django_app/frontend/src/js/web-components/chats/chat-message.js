@@ -29,7 +29,6 @@ export class ChatMessage extends HTMLElement {
               `
               : ""
           }
-          <sources-list data-id="${this.uuid}"></sources-list>
           <div class="govuk-notification-banner govuk-notification-banner--error govuk-!-margin-bottom-3 govuk-!-margin-top-3" role="alert" aria-labelledby="notification-title-${this.uuid}" data-module="govuk-notification-banner" hidden>
               <div class="govuk-notification-banner__header">
                   <h3 class="govuk-notification-banner__title" id="notification-title-${this.uuid}">Error</h3>
@@ -46,6 +45,9 @@ export class ChatMessage extends HTMLElement {
 
     // Add feedback buttons
     if (this.dataset.role === "ai") {
+      this.copyTextButton = document.createElement("copy-text");
+      this.copyTextButton.hidden = true;
+      this.parentElement?.appendChild(this.copyTextButton);
       this.feedbackButtons =
         /** @type {import("./feedback-buttons").FeedbackButtons} */ (
           document.createElement("feedback-buttons")
@@ -58,27 +60,6 @@ export class ChatMessage extends HTMLElement {
     this.scrollIntoView({ block: "end" });
 
   }
-
-  #addFootnotes = (content) => {
-    let footnotes = this.querySelectorAll("sources-list a[data-text]");
-    footnotes.forEach((footnote, footnoteIndex) => {
-      const matchingText = footnote.getAttribute("data-text");
-      if (!matchingText || !this.responseContainer) {
-        return;
-      }
-
-      this.responseContainer.innerHTML =
-        this.responseContainer.innerHTML.replace(
-          new RegExp(matchingText, "i"),
-          `${matchingText}<a class="rb-footnote-link" href="#${
-            footnote.id
-          }" aria-label="Footnote ${footnoteIndex + 1}">${
-            footnoteIndex + 1
-          }</a>`
-        );
-    });
-  };
-
 
   /**
    * Streams an LLM response
@@ -111,9 +92,6 @@ export class ChatMessage extends HTMLElement {
       /** @type {import("./markdown-converter").MarkdownConverter} */ (
         this.querySelector("markdown-converter")
       );
-    let sourcesContainer = /** @type {import("./sources-list").SourcesList} */ (
-      this.querySelector("sources-list")
-    );
     let responseLoading = /** @type HTMLElement */ (
       this.querySelector(".rb-loading-ellipsis")
     );
@@ -181,16 +159,9 @@ export class ChatMessage extends HTMLElement {
         this.responseContainer?.update(streamedContent);
       } else if (response.type === "session-id") {
         chatControllerRef.dataset.sessionId = response.data;
-      } else if (response.type === "source") {
-        sourcesContainer.add(
-          response.data.file_name,
-          response.data.url,
-          response.data.text_in_answer
-        );
       } else if (response.type === "end") {
-        sourcesContainer.showCitations(response.data.message_id);
+        this.copyTextButton.hidden = false;
         this.feedbackButtons?.showFeedback(response.data.message_id);
-        this.#addFootnotes(streamedContent);
 
         // Add action-buttons - work stopped on this
         /*
