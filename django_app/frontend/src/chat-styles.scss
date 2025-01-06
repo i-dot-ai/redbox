@@ -202,6 +202,28 @@ chat-history[data-initialised] .rb-chat-history__actions-button {
   }
 }
 
+
+/* Model selector */
+.rb-model-selector {
+  cursor: pointer;
+}
+.rb-model-selector__select {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+}
+.rb-model-selector__option--active, .rb-model-selector__option:hover {
+  background-color: #f5ebeb;
+}
+.rb-model-selector__option span {
+  display: block;
+  pointer-events: none;
+}
+.rb-model-selector__option span:first-child {
+  font-weight: 700;
+}
+
+
 .chat-title {
   display: block;
   margin-bottom: 2rem;
