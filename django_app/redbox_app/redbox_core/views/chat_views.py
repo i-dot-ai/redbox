@@ -84,6 +84,7 @@ class ChatsView(View):
                     "default": chat_llm_backend.is_default,
                     "selected": chat_llm_backend == chat_backend,
                     "id": chat_llm_backend.id,
+                    "description": chat_llm_backend.description,
                 }
                 for chat_llm_backend in ChatLLMBackend.objects.filter(enabled=True)
             ],

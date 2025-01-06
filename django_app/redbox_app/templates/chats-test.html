@@ -58,12 +58,10 @@
         </div>
 
         <div class="iai-panel govuk-!-margin-top-5 govuk-!-padding-top-3">
-          <label class="govuk-body-s govuk-!-font-weight-bold" for="llm-selector">Model</label>
-          <select id="llm-selector" name="llm" class="govuk-select govuk-!-margin-top-1">
-            {% for option in llm_options %}
-              <option value="{{ option.id }}" {% if option.selected %}selected{% endif %}>{{ option.name }}{% if option.default %} (default){% endif %}</option>
-            {% endfor %}
-          </select>
+          {% set model_selector %}
+            <model-selector data-options="{{ llm_options | to_json }}"></model-selector>
+          {% endset %}
+          {{ model_selector | render_lit | safe }}
         </div>
 
       </div>
