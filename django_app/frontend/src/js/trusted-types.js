@@ -15,7 +15,6 @@ if (typeof window.trustedTypes !== "undefined") {
             tagName === "feedback-buttons" ||
             tagName === "loading-message" ||
             tagName === "markdown-converter" ||
-            tagName === "sources-list" ||
             tagName === "tool-tip",
           attributeNameCheck: (attr) => true,
           allowCustomizedBuiltInElements: true,
