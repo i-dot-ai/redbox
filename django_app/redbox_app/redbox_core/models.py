@@ -918,11 +918,3 @@ class ChatMessageTokenUse(UUIDPrimaryKeyBase, TimeStampedModel):
 
     def __str__(self) -> str:
         return f"{self.model_name} {self.use_type}"
-
-
-class ActivityEvent(UUIDPrimaryKeyBase, TimeStampedModel):
-    chat_message = models.ForeignKey(ChatMessage, on_delete=models.CASCADE)
-    message = models.TextField()
-
-    def __str__(self) -> str:
-        return self.message
