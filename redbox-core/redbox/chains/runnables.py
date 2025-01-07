@@ -21,7 +21,6 @@ from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from tiktoken import Encoding
 
 from redbox.api.format import format_documents
-from redbox.chains.activity import log_activity
 from redbox.chains.components import get_tokeniser
 from redbox.models.chain import ChainChatMessage, PromptSet, RedboxState, get_prompts
 from redbox.models.errors import QuestionLengthError
@@ -127,11 +126,7 @@ def build_llm_chain(
         build_chat_prompt_from_messages_runnable(prompt_set, format_instructions=format_instructions)
         | text_and_tools
         | get_all_metadata
-        | RunnablePassthrough.assign(
-            _log=RunnableLambda(
-                lambda _: (log_activity(f"Generating response with {model_name}...") if final_response_chain else None)
-            )
-        )
+        | RunnablePassthrough.assign(_log=RunnableLambda(lambda _: None))
     )
 
 
