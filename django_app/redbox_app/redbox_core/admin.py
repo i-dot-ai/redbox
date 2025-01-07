@@ -187,13 +187,6 @@ class CitationInline(admin.StackedInline):
     extra = 0
 
 
-class ChatMessageActivityEventInline(admin.StackedInline):
-    model = models.ActivityEvent
-    ordering = ("modified_at",)
-
-    extra = 0
-
-
 class ChatMessageTokenUseInline(admin.StackedInline):
     model = models.ChatMessageTokenUse
     ordering = ("modified_at",)
@@ -210,7 +203,7 @@ class ChatMessageAdmin(ExportMixin, admin.ModelAdmin):
     list_display = ["short_text", "role", "get_user", "chat", "route", "created_at"]
     list_filter = ["role", "route", "chat__user"]
     date_hierarchy = "created_at"
-    inlines = [CitationInline, ChatMessageTokenUseInline, ChatMessageActivityEventInline]
+    inlines = [CitationInline, ChatMessageTokenUseInline]
     readonly_fields = ["selected_files", "source_files"]
     search_fields = ["chat__user__email"]
 
