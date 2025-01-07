@@ -109,37 +109,20 @@ TEST_CASES = [
                 RedboxTestData(
                     number_of_docs=2,
                     tokens_in_all_docs=140_000,
-                    llm_responses=["Map Step Response"] * 2 + ["Testing Response 1"],
-                    expected_route=ChatRoute.chat_with_docs_map_reduce,
+                    llm_responses=["These documents are too large to work with."] * 2
+                    + ["These documents are too large to work with."],
+                    expected_route=ErrorRoute.files_too_large,
                 ),
                 RedboxTestData(
                     number_of_docs=4,
                     tokens_in_all_docs=140_000,
                     llm_responses=["Map Step Response"] * 4
                     + ["Merge Per Document Response"] * 2
-                    + ["Testing Response 1"],
-                    expected_route=ChatRoute.chat_with_docs_map_reduce,
+                    + ["These documents are too large to work with."],
+                    expected_route=ErrorRoute.files_too_large,
                 ),
             ],
             test_id="Chat with multiple docs",
-        ),
-        generate_test_cases(
-            query=RedboxQuery(
-                question="What is AI?",
-                s3_keys=["s3_key"],
-                user_uuid=uuid4(),
-                chat_history=[],
-                permitted_s3_keys=["s3_key"],
-            ),
-            test_data=[
-                RedboxTestData(
-                    number_of_docs=2,
-                    tokens_in_all_docs=200_000,
-                    llm_responses=["Map Step Response"] * 2 + ["Merge Per Document Response"] + ["Testing Response 1"],
-                    expected_route=ChatRoute.chat_with_docs_map_reduce,
-                ),
-            ],
-            test_id="Chat with large doc",
         ),
         generate_test_cases(
             query=RedboxQuery(

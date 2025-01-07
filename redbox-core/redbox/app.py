@@ -6,7 +6,6 @@ from langchain_core.vectorstores import VectorStoreRetriever
 from redbox.graph.root import (
     get_chat_with_documents_graph,
     get_root_graph,
-    get_chat_with_documents_large_graph,
 )
 from redbox.models.chain import RedboxState
 from redbox.models.graph import (
@@ -101,9 +100,7 @@ class Redbox:
         if graph_to_draw == "root":
             graph = self.graph.get_graph()
         elif graph_to_draw == "chat/documents":
-            graph = get_chat_with_documents_graph(self.all_chunks_retriever).get_graph()
-        elif graph_to_draw == "chat/documents/large":
-            graph = get_chat_with_documents_large_graph().get_graph()
+            graph = get_chat_with_documents_graph(self.retriever).get_graph()
         else:
             raise Exception("Invalid graph_to_draw")
 
