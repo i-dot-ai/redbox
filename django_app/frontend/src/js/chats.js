@@ -14,9 +14,8 @@ import "./web-components/chats/message-input.js";
 import "./web-components/chats/model-selector.mjs";
 import "./web-components/chats/canned-prompts";
 import "./web-components/chats/send-message.js";
-import "./web-components/chats/profile-overlay.js";
 import "./web-components/documents/file-status.js";
-import "./web-components/chats/profile-overlay.js";
+import "./web-components/chats/upload-container.mjs";
 import "./web-components/chats/exit-feedback.js";
 
 document.addEventListener("chat-response-end", (evt) => {

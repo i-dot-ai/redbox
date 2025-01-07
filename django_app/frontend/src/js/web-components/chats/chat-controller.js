@@ -28,6 +28,9 @@ class ChatController extends HTMLElement {
       userMessage.setAttribute("data-role", "user");
       messageContainer?.insertBefore(userMessage, insertPosition);
 
+      let documentContainer = document.createElement("document-container");
+      messageContainer?.insertBefore(documentContainer, insertPosition);
+
       let aiMessage = /** @type {import("./chat-message").ChatMessage} */ (
         document.createElement("chat-message")
       );

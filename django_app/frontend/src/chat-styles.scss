@@ -826,9 +826,13 @@ main:has(.iai-chat-bubble[data-role="ai"]) .exit-feedback {
 
 .rb-uploaded-docs {
   display: none;
+  justify-content: flex-end;
 }
 .rb-uploaded-docs:has(li) {
-  display: block;
+  display: flex;
+}
+.rb-uploaded-docs__item {
+  list-style-type: none;
 }
 .rb-uploaded-docs__drag-drop-message {
   background-color: rgba(255, 255, 255, 0.9);

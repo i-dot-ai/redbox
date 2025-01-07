@@ -88,6 +88,9 @@
             {# SSR messages #}
             {% for message in messages %}
 
+              {{ message_box(message=message) }}
+
+              {# Display uploaded documents #}
               {% if message.role == 'user' %}
                 {% set uploaded_documents %}
                   <document-container data-chatid="{{ chat_id }}" data-docs="{{ current_chat.file_set.all() | filter_docs(messages, loop.index0) }}"></document-container>
@@ -95,19 +98,12 @@
                 {{ uploaded_documents | render_lit | safe }}
               {% endif %}
 
-              {{ message_box(message=message) }}
-
               {# Collect feedback on SSR messages #}
               {% if message.role == 'ai' %}
                 <feedback-buttons data-id="{{ message.id }}"></feedback-buttons>
               {% endif %}
 
             {% endfor %}
-
-            {% set uploaded_documents %}
-              <document-container data-chatid="{{ chat_id }}" data-docs="{{ current_chat.file_set.all() | filter_docs(messages, messages.count()) }}"></document-container>
-            {% endset %}
-            {{ uploaded_documents | render_lit | safe }}
 
             {# CSR messages are inserted here #}
 
@@ -125,9 +121,14 @@
       {% endif %}
 
       {% set document_upload %}
-        <document-upload data-csrf-token="{{ csrf_token }}" data-chatid="{{ chat_id }}"></document-upload>
+        <document-upload data-csrftoken="{{ csrf_token }}" data-chatid="{{ chat_id }}"></document-upload>
       {% endset %}
       {{ document_upload | render_lit | safe }}
+
+      {% set uploaded_documents %}
+        <upload-container data-chatid="{{ chat_id }}" data-csrftoken="{{ csrf_token }}" data-docs="{{ current_chat.file_set.all() | filter_docs(messages, messages.count()) }}"></upload-container>
+      {% endset %}
+      {{ uploaded_documents | render_lit | safe }}
 
       <form id="message-form" class="iai-chat-input" action="/post-message/" method="post">
         <div class="iai-chat-input__container">

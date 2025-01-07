@@ -4,7 +4,7 @@ import { RedboxElement } from "../redbox-element.mjs";
 
 export class DocumentUpload extends RedboxElement {
   static properties = {
-    csrfToken: { type: String, attribute: "data-csrf-token" },
+    csrfToken: { type: String, attribute: "data-csrftoken" },
     chatId: { type: String, attribute: "data-chatid" },
     dragDropInProgress: { type: Boolean, state: true },
   };
@@ -62,11 +62,10 @@ export class DocumentUpload extends RedboxElement {
 
     evt?.preventDefault();
 
-    const allUploadedDocContainers = document.querySelectorAll("document-container");
-    const lastUploadedDocContainer = allUploadedDocContainers[allUploadedDocContainers.length - 1];
+    const uploadContainer = document.querySelector("upload-container");
 
     for (const doc of /** @type {HTMLFormElement} */(this.querySelector("input[type=file]")).files) {
-      lastUploadedDocContainer.addDocument(doc, this.csrfToken);
+      uploadContainer.addDocument(doc);
     }
 
     this.querySelector("input[type=file]").value = "";
