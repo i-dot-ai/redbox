@@ -3,7 +3,6 @@ import logging
 import os
 from asyncio import CancelledError
 from collections.abc import Sequence
-from datetime import UTC, datetime
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -80,11 +79,6 @@ async def test_chat_consumer_with_new_session(alice: User, uploaded_file: File, 
     assert await get_chat_message_text(alice, ChatMessage.Role.user) == ["Hello Hal."]
     assert await get_chat_message_text(alice, ChatMessage.Role.ai) == ["Good afternoon, Mr. Amor."]
     assert await get_chat_message_route(alice, ChatMessage.Role.ai) == ["gratitude"]
-
-    expected_citations = {("Good afternoon Mr Amor", ()), ("Good afternoon Mr Amor", (34, 35))}
-    assert await get_chat_message_citation_set(alice, ChatMessage.Role.ai) == expected_citations
-    await refresh_from_db(uploaded_file)
-    assert uploaded_file.last_referenced.date() == datetime.now(tz=UTC).date()
 
     assert await get_token_use_model(ChatMessageTokenUse.UseType.INPUT) == "gpt-4o"
     assert await get_token_use_model(ChatMessageTokenUse.UseType.OUTPUT) == "gpt-4o"
@@ -186,46 +180,6 @@ async def test_chat_consumer_with_naughty_question(alice: User, uploaded_file: F
     assert await get_chat_message_text(alice, ChatMessage.Role.user) == ["Hello Hal. \ufffd"]
     assert await get_chat_message_text(alice, ChatMessage.Role.ai) == ["Good afternoon, Mr. Amor."]
     assert await get_chat_message_route(alice, ChatMessage.Role.ai) == ["gratitude"]
-    await refresh_from_db(uploaded_file)
-    assert uploaded_file.last_referenced.date() == datetime.now(tz=UTC).date()
-
-
-@pytest.mark.django_db(transaction=True)
-@pytest.mark.asyncio()
-async def test_chat_consumer_with_naughty_citation(
-    alice: User, uploaded_file: File, mocked_connect_with_naughty_citation: Connect
-):
-    # Given
-
-    # When
-    with patch("redbox_app.redbox_core.consumers.ChatConsumer.redbox.graph", new=mocked_connect_with_naughty_citation):
-        communicator = WebsocketCommunicator(ChatConsumer.as_asgi(), "/ws/chat/")
-        communicator.scope["user"] = alice
-        connected, _ = await communicator.connect()
-        assert connected
-
-        await communicator.send_json_to({"message": "Hello Hal."})
-        response1 = await communicator.receive_json_from(timeout=5)
-        response2 = await communicator.receive_json_from(timeout=5)
-        response3 = await communicator.receive_json_from(timeout=5)
-        response4 = await communicator.receive_json_from(timeout=5)
-
-        # Then
-        assert response1["type"] == "session-id"
-        assert response2["type"] == "text"
-        assert response2["data"] == "Good afternoon, Mr. Amor."
-        assert response3["type"] == "route"
-        assert response3["data"] == "gratitude"
-        assert response4["type"] == "source"
-        assert response4["data"]["file_name"] == uploaded_file.file_name
-        # Close
-        await communicator.disconnect()
-
-    assert await get_chat_message_text(alice, ChatMessage.Role.user) == ["Hello Hal."]
-    assert await get_chat_message_text(alice, ChatMessage.Role.ai) == ["Good afternoon, Mr. Amor."]
-    assert await get_chat_message_route(alice, ChatMessage.Role.ai) == ["gratitude"]
-    await refresh_from_db(uploaded_file)
-    assert uploaded_file.last_referenced.date() == datetime.now(tz=UTC).date()
 
 
 @pytest.mark.django_db(transaction=True)
@@ -263,11 +217,6 @@ async def test_chat_consumer_agentic(alice: User, uploaded_file: File, mocked_co
     assert await get_chat_message_text(alice, ChatMessage.Role.user) == ["Hello Hal."]
     assert await get_chat_message_text(alice, ChatMessage.Role.ai) == ["Good afternoon, Mr. Amor."]
 
-    expected_citations = {("Good afternoon Mr Amor", ()), ("Good afternoon Mr Amor", (34, 35))}
-    assert await get_chat_message_citation_set(alice, ChatMessage.Role.ai) == expected_citations
-    await refresh_from_db(uploaded_file)
-    assert uploaded_file.last_referenced.date() == datetime.now(tz=UTC).date()
-
     assert await get_token_use_model(ChatMessageTokenUse.UseType.INPUT) == "gpt-4o"
     assert await get_token_use_model(ChatMessageTokenUse.UseType.OUTPUT) == "gpt-4o"
     assert await get_token_use_count(ChatMessageTokenUse.UseType.INPUT) == 123
@@ -277,16 +226,6 @@ async def test_chat_consumer_agentic(alice: User, uploaded_file: File, mocked_co
 @database_sync_to_async
 def get_chat_message_text(user: User, role: ChatMessage.Role) -> Sequence[str]:
     return [m.text for m in ChatMessage.objects.filter(chat__user=user, role=role)]
-
-
-@database_sync_to_async
-def get_chat_message_citation_set(user: User, role: ChatMessage.Role) -> Sequence[tuple[str, tuple[int]]]:
-    return {
-        (citation.text, tuple(citation.page_numbers or []))
-        for message in ChatMessage.objects.filter(chat__user=user, role=role)
-        for source_file in message.source_files.all()
-        for citation in source_file.citation_set.all()
-    }
 
 
 @database_sync_to_async

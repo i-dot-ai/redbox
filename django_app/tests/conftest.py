@@ -20,7 +20,6 @@ from redbox_app.redbox_core.models import (
     ChatLLMBackend,
     ChatMessage,
     ChatMessageTokenUse,
-    Citation,
     File,
 )
 
@@ -171,8 +170,8 @@ def chat_message(chat: Chat, uploaded_file: File) -> ChatMessage:
 
 
 @pytest.fixture()
-def chat_message_with_citation(chat: Chat, uploaded_file: File) -> ChatMessage:
-    chat_message = ChatMessage.objects.create(
+def chat_message_with_citation(chat: Chat) -> ChatMessage:
+    return ChatMessage.objects.create(
         chat=chat,
         text="An answer.",
         role=ChatMessage.Role.ai,
@@ -181,8 +180,6 @@ def chat_message_with_citation(chat: Chat, uploaded_file: File) -> ChatMessage:
         rating_text="not bad",
         route="chat",
     )
-    Citation.objects.create(file=uploaded_file, chat_message=chat_message, text="Lorem ipsum.")
-    return chat_message
 
 
 @pytest.fixture()
@@ -223,26 +220,26 @@ def chat_with_files(chat: Chat, several_files: Sequence[File]) -> Chat:
         text="A question?",
         role=ChatMessage.Role.user,
     )
-    chat_message = ChatMessage.objects.create(
+    chat_message_1 = ChatMessage.objects.create(
         chat=chat,
         text="An answer.",
         role=ChatMessage.Role.ai,
         route="search",
     )
-    chat_message.source_files.set(several_files[0::2])
-    chat_message = ChatMessage.objects.create(
+    chat_message_1.source_files.set(several_files[0::2])
+    chat_message_2 = ChatMessage.objects.create(
         chat=chat,
         text="A second question?",
         role=ChatMessage.Role.user,
     )
-    chat_message.selected_files.set(several_files[0:2])
-    chat_message = ChatMessage.objects.create(
+    chat_message_2.selected_files.set(several_files[0:2])
+    chat_message_3 = ChatMessage.objects.create(
         chat=chat,
         text="A second answer.",
         role=ChatMessage.Role.ai,
         route="search",
     )
-    chat_message.source_files.set([several_files[2]])
+    chat_message_3.source_files.set([several_files[2]])
     return chat
 
 
