@@ -1,7 +1,6 @@
 import json
 import logging
 from asyncio import CancelledError
-from collections import defaultdict
 from collections.abc import Mapping, Sequence
 from typing import Any, ClassVar
 from uuid import UUID
@@ -11,7 +10,6 @@ from channels.generic.websocket import AsyncWebsocketConsumer
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.forms.models import model_to_dict
-from django.utils import timezone
 from langchain_core.documents import Document
 from openai import RateLimitError
 from websockets import ConnectionClosedError, WebSocketClientProtocol
@@ -23,10 +21,8 @@ from redbox.models.chain import (
     RedboxQuery,
     RedboxState,
     RequestMetadata,
-    Source,
     metadata_reducer,
 )
-from redbox.models.chain import Citation as AICitation
 from redbox.retriever import DjangoFileRetriever
 from redbox_app.redbox_core import error_messages
 from redbox_app.redbox_core.models import AISettings as AISettingsModel
@@ -35,7 +31,6 @@ from redbox_app.redbox_core.models import (
     ChatLLMBackend,
     ChatMessage,
     ChatMessageTokenUse,
-    Citation,
     File,
 )
 
@@ -63,7 +58,6 @@ def escape_curly_brackets(text: str):
 
 class ChatConsumer(AsyncWebsocketConsumer):
     full_reply: ClassVar = []
-    citations: ClassVar[list[tuple[File, AICitation]]] = []
     route = None
     metadata: RequestMetadata = RequestMetadata()
     redbox = Redbox(
@@ -74,7 +68,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
     async def receive(self, text_data=None, bytes_data=None):
         """Receive & respond to message from browser websocket."""
         self.full_reply = []
-        self.citations = []
         self.external_citations = []
         self.route = None
 
@@ -151,7 +144,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 response_tokens_callback=self.handle_text,
                 route_name_callback=self.handle_route,
                 documents_callback=self.handle_documents,
-                citations_callback=self.handle_citations,
                 metadata_tokens_callback=self.handle_metadata,
             )
 
@@ -215,28 +207,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
             route=self.route,
         )
         chat_message.save()
-        for file, ai_citation in self.citations:
-            for citation_source in ai_citation.sources:
-                if file:
-                    file.last_referenced = timezone.now()
-                    file.save()
-                    Citation.objects.create(
-                        chat_message=chat_message,
-                        text_in_answer=ai_citation.text_in_answer,
-                        file=file,
-                        text=citation_source.highlighted_text_in_source,
-                        page_numbers=citation_source.page_numbers,
-                        source=Citation.Origin.USER_UPLOADED_DOCUMENT,
-                    )
-                else:
-                    Citation.objects.create(
-                        chat_message=chat_message,
-                        text_in_answer=ai_citation.text_in_answer,
-                        url=citation_source.source,
-                        text=citation_source.highlighted_text_in_source,
-                        page_numbers=citation_source.page_numbers,
-                        source=Citation.Origin.try_parse(citation_source.source_type),
-                    )
 
         if self.metadata:
             for model, token_count in self.metadata.input_tokens.items():
@@ -283,54 +253,14 @@ class ChatConsumer(AsyncWebsocketConsumer):
         """
         Map documents used to create answer to AICitations for storing as citations
         """
-        sources_by_resource_ref: dict[str, Document] = defaultdict(list)
-        for document in response:
-            ref = document.metadata.get("uri")
-            sources_by_resource_ref[ref].append(document)
+        sources_by_resource_ref = [document.metadata.get("uri") for document in response]
 
-        for ref, sources in sources_by_resource_ref.items():
+        for ref in sources_by_resource_ref:
             try:
                 file = await File.objects.aget(original_file=ref)
                 payload = {"url": str(file.url), "file_name": file.file_name}
-                response_sources = [
-                    Source(
-                        source=str(file.url),
-                        source_type=Citation.Origin.USER_UPLOADED_DOCUMENT,
-                        document_name=file.file_name,
-                        highlighted_text_in_source=cited_chunk.page_content,
-                        page_numbers=parse_page_number(cited_chunk.metadata.get("page_number")),
-                    )
-                    for cited_chunk in sources
-                ]
             except File.DoesNotExist:
                 file = None
                 payload = {"url": ref, "file_name": None}
-                response_sources = [
-                    Source(
-                        source=cited_chunk.metadata["uri"],
-                        source_type=cited_chunk.metadata["creator_type"],
-                        document_name=cited_chunk.metadata["uri"].split("/")[-1],
-                        highlighted_text_in_source=cited_chunk.page_content,
-                        page_numbers=parse_page_number(cited_chunk.metadata.get("page_number")),
-                    )
-                    for cited_chunk in sources
-                ]
 
             await self.send_to_client("source", payload)
-            self.citations.append((file, AICitation(text_in_answer="", sources=response_sources)))
-
-    async def handle_citations(self, citations: list[AICitation]):
-        """
-        Map AICitations used to create answer to AICitations for storing as citations. The link to user files
-        must be populated
-        """
-        for c in citations:
-            for s in c.sources:
-                try:
-                    file = await File.objects.aget(original_file=s.source)
-                    payload = {"url": str(file.url), "file_name": file.file_name, "text_in_answer": c.text_in_answer}
-                except File.DoesNotExist:
-                    file = None
-                    payload = {"url": s.source, "file_name": s.source, "text_in_answer": c.text_in_answer}
-                await self.send_to_client("source", payload)
-                self.citations.append((file, AICitation(text_in_answer=c.text_in_answer, sources=[s])))

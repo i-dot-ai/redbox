@@ -85,17 +85,8 @@ class Source(BaseModel):
     page_numbers: list[int] = Field(description="Page Number in document the highlighted text is on", default=[1])
 
 
-class Citation(BaseModel):
-    text_in_answer: str = Field(
-        description="Part of text from `answer` that references sources and matches exactly with the `answer`, without rephrasing or altering the meaning. Partial matches are acceptable as long as they are exact excerpts from the `answer`",
-        default="",
-    )
-    sources: list[Source] = Field(default_factory=list)
-
-
 class StructuredResponseWithCitations(BaseModel):
     answer: str = Field(description="Markdown structured answer to the query", default="")
-    citations: list[Citation] = Field(default_factory=list)
 
 
 DocumentMapping = dict[UUID, Document | None]
@@ -233,7 +224,6 @@ class RedboxState(BaseModel):
     documents: Annotated[DocumentState, document_reducer] = DocumentState()
     route_name: str | None = None
     metadata: Annotated[RequestMetadata | None, metadata_reducer] = None
-    citations: list[Citation] | None = None
     messages: Annotated[list[AnyMessage], add_messages] = Field(default_factory=list)
 
     @property

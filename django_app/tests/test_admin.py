@@ -111,8 +111,6 @@ def test_message_serializer(chat_message_with_citation_and_tokens: ChatMessage):
     for k, v in expected.items():
         assert actual[k] == v, k
 
-    assert actual["source_files"][0]["file_name"].startswith("original_file")
-
     for k, v in expected_token_usage[0].items():
         assert actual["token_use"][0][k] == v, k
 
