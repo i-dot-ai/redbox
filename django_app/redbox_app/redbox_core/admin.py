@@ -1,6 +1,7 @@
 import csv
 import json
 import logging
+import textwrap
 
 from django.contrib import admin
 from django.contrib.auth import get_user_model
@@ -180,13 +181,6 @@ class FileAdmin(ExportMixin, admin.ModelAdmin):
     search_fields = ["user__email"]
 
 
-class CitationInline(admin.StackedInline):
-    model = models.Citation
-    ordering = ("modified_at",)
-
-    extra = 0
-
-
 class ChatMessageTokenUseInline(admin.StackedInline):
     model = models.ChatMessageTokenUse
     ordering = ("modified_at",)
@@ -203,10 +197,7 @@ class ChatMessageAdmin(ExportMixin, admin.ModelAdmin):
     list_display = ["short_text", "role", "get_user", "chat", "route", "created_at"]
     list_filter = ["role", "route", "chat__user"]
     date_hierarchy = "created_at"
-    inlines = [
-        CitationInline,
-        ChatMessageTokenUseInline,
-    ]
+    inlines = [ChatMessageTokenUseInline]
     readonly_fields = ["selected_files", "source_files"]
     search_fields = ["chat__user__email"]
 
@@ -216,10 +207,7 @@ class ChatMessageAdmin(ExportMixin, admin.ModelAdmin):
 
     @admin.display(description="text")
     def short_text(self, obj):
-        max_length = 128
-        if len(obj.text) < max_length:
-            return obj.text
-        return obj.text[: max_length - 3] + "..."
+        return textwrap.shorten(obj.text, 128, placeholder="...")
 
 
 class ChatMessageInline(admin.StackedInline):

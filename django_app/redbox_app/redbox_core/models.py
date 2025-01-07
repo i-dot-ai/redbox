@@ -18,7 +18,6 @@ from django.db.models import Max, Min, Prefetch, UniqueConstraint
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django_use_email_as_username.models import BaseUser, BaseUserManager
-from yarl import URL
 
 from redbox.models.settings import get_settings
 from redbox_app.redbox_core.utils import get_date_group
@@ -731,90 +730,7 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
             cls.objects.filter(citation__chat_message_id=chat_message_id)
             .annotate(min_created_at=Min("citation__created_at"))
             .order_by("min_created_at")
-            .prefetch_related(
-                Prefetch(
-                    "citation_set",
-                    queryset=Citation.objects.filter(chat_message_id=chat_message_id),
-                )
-            )
         )
-
-
-class Citation(UUIDPrimaryKeyBase, TimeStampedModel):
-    class Origin(models.TextChoices):
-        WIKIPEDIA = "Wikipedia", _("wikipedia")
-        USER_UPLOADED_DOCUMENT = "UserUploadedDocument", _("user uploaded document")
-        GOV_UK = "GOV.UK", _("gov.uk")
-
-        @classmethod
-        def try_parse(cls, value):
-            try:
-                return cls(value)
-            except ValueError:
-                logger.warning("failed to parse %s to Origin", value)
-                return None
-
-    file = models.ForeignKey(
-        File,
-        on_delete=models.CASCADE,
-        null=True,
-        blank=True,
-        help_text="file for internal citation",
-    )
-    url = models.URLField(null=True, blank=True, help_text="url for external")
-    chat_message = models.ForeignKey("ChatMessage", on_delete=models.CASCADE)
-    text = models.TextField(null=True, blank=True)
-    page_numbers = ArrayField(
-        models.PositiveIntegerField(),
-        null=True,
-        blank=True,
-        help_text="location of citation in document",
-    )
-    source = models.CharField(
-        max_length=32,
-        choices=Origin,
-        help_text="source of citation",
-        default=Origin.USER_UPLOADED_DOCUMENT,
-        null=True,
-        blank=True,
-    )
-    text_in_answer = models.TextField(
-        null=True,
-        blank=True,
-        help_text="the part of the answer the citation refers too - useful for adding in footnotes",
-    )
-
-    def __str__(self):
-        text = self.text or "..."
-        return textwrap.shorten(text, width=128, placeholder="...")
-
-    def save(self, *args, force_insert=False, force_update=False, using=None, update_fields=None):
-        if self.source == self.Origin.USER_UPLOADED_DOCUMENT:
-            if self.file is None:
-                msg = "file must be specified for a user-uploaded-document"
-                raise ValueError(msg)
-
-            if self.url is not None:
-                msg = "url should not be specified for a user-uploaded-document"
-                raise ValueError(msg)
-
-        if self.source != self.Origin.USER_UPLOADED_DOCUMENT:
-            if self.url is None:
-                msg = "url must be specified for an external citation"
-                raise ValueError(msg)
-
-            if self.file is not None:
-                msg = "file should not be specified for an external citation"
-                raise ValueError(msg)
-
-        self.text = sanitise_string(self.text)
-
-        super().save(*args, force_insert, force_update, using, update_fields)
-
-    @property
-    def uri(self) -> URL:
-        """returns the url of either the external citation or the user-uploaded document"""
-        return URL(self.url or self.file.url)
 
 
 class ChatMessage(UUIDPrimaryKeyBase, TimeStampedModel):
@@ -828,7 +744,7 @@ class ChatMessage(UUIDPrimaryKeyBase, TimeStampedModel):
     role = models.CharField(choices=Role.choices, null=False, blank=False)
     route = models.CharField(max_length=25, null=True, blank=True)
     selected_files = models.ManyToManyField(File, related_name="+", symmetrical=False, blank=True)
-    source_files = models.ManyToManyField(File, through=Citation)
+    source_files = models.ManyToManyField(File, related_name="+")
 
     rating = models.PositiveIntegerField(
         blank=True,
@@ -848,7 +764,7 @@ class ChatMessage(UUIDPrimaryKeyBase, TimeStampedModel):
         super().save(*args, force_insert, force_update, using, update_fields)
 
     @classmethod
-    def get_messages_ordered_by_citation_priority(cls, chat_id: uuid.UUID) -> Sequence["ChatMessage"]:
+    def get_messages(cls, chat_id: uuid.UUID) -> Sequence["ChatMessage"]:
         """Returns all chat messages for a given chat history, ordered by citation priority."""
         return (
             cls.objects.filter(chat_id=chat_id)
@@ -856,9 +772,7 @@ class ChatMessage(UUIDPrimaryKeyBase, TimeStampedModel):
             .prefetch_related(
                 Prefetch(
                     "source_files",
-                    queryset=File.objects.all()
-                    .annotate(min_created_at=Min("citation__created_at"))
-                    .order_by("min_created_at"),
+                    queryset=File.objects.all().order_by("created_at"),
                 )
             )
         )
@@ -887,18 +801,6 @@ class ChatMessage(UUIDPrimaryKeyBase, TimeStampedModel):
                 )
             except elastic_transport.ConnectionError:
                 contextlib.suppress(elastic_transport.ConnectionError)
-
-    def unique_citation_uris(self) -> list[tuple[str, str]]:
-        """a unique set of names and hrefs for all citations"""
-
-        def get_display(citation):
-            if not citation.file:
-                return str(citation.uri)
-            return citation.file.file_name
-
-        return sorted(
-            {(get_display(citation), citation.uri, citation.text_in_answer) for citation in self.citation_set.all()}
-        )
 
 
 class ChatMessageTokenUse(UUIDPrimaryKeyBase, TimeStampedModel):
