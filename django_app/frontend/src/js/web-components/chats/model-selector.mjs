@@ -31,7 +31,7 @@ export class ModelSelector extends RedboxElement {
           <span aria-hidden="true">${this.expanded ? "▲" : "▼"}</span>
         </div>
         ${this.expanded ? html`
-            <div id="models-list" role="listbox" aria-label="Model">
+            <div class="rb-model-selector__list" id="models-list" role="listbox" aria-label="Model">
               ${this.options.map(
                 (option, index) => html`
                   <div role="option" @click=${this.#clickOption} class="rb-model-selector__option ${index === this.activeOption ? 'rb-model-selector__option--active' : ''}" data-index=${index} id="model-option-${index}" aria-selected=${index === this.selectedOption ? "true" : "false"} data-value=${option.id}>
