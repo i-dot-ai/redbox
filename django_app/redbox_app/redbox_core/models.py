@@ -731,12 +731,6 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
             cls.objects.filter(citation__chat_message_id=chat_message_id)
             .annotate(min_created_at=Min("citation__created_at"))
             .order_by("min_created_at")
-            .prefetch_related(
-                Prefetch(
-                    "citation_set",
-                    queryset=Citation.objects.filter(chat_message_id=chat_message_id),
-                )
-            )
         )
 
 

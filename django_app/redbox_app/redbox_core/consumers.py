@@ -260,7 +260,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 file = await File.objects.aget(original_file=ref)
                 payload = {"url": str(file.url), "file_name": file.file_name}
             except File.DoesNotExist:
-                file = None
                 payload = {"url": ref, "file_name": None}
 
             await self.send_to_client("source", payload)
