@@ -94,6 +94,10 @@ def filter_docs(docs, messages, message_index):
     )
 
 
+def to_json(value):
+    return json.dumps(value)
+
+
 def to_user_timezone(value):
     # Assuming the user's timezone is stored in a variable called 'user_timezone'
     # Replace 'Europe/London' with the actual timezone string for the user
@@ -123,6 +127,7 @@ def environment(**options):
             "waffle_flag": waffle.flag_is_active,
             "render_lit": render_lit,
             "filter_docs": filter_docs,
+            "to_json": to_json,
         }
     )
     env.globals.update(
