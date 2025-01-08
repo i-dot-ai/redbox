@@ -10,7 +10,6 @@ from channels.generic.websocket import AsyncWebsocketConsumer
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.forms.models import model_to_dict
-from langchain_core.documents import Document
 from openai import RateLimitError
 from websockets import ConnectionClosedError, WebSocketClientProtocol
 
@@ -143,7 +142,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 state,
                 response_tokens_callback=self.handle_text,
                 route_name_callback=self.handle_route,
-                documents_callback=self.handle_documents,
                 metadata_tokens_callback=self.handle_metadata,
             )
 
@@ -248,18 +246,3 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
     async def handle_metadata(self, response: dict):
         self.metadata = metadata_reducer(self.metadata, RequestMetadata.model_validate(response))
-
-    async def handle_documents(self, response: list[Document]):
-        """
-        Map documents used to create answer to AICitations for storing as citations
-        """
-        sources_by_resource_ref = [document.metadata.get("uri") for document in response]
-
-        for ref in sources_by_resource_ref:
-            try:
-                file = await File.objects.aget(original_file=ref)
-                payload = {"url": str(file.url), "file_name": file.file_name}
-            except File.DoesNotExist:
-                payload = {"url": ref, "file_name": None}
-
-            await self.send_to_client("source", payload)

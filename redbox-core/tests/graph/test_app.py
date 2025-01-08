@@ -2,7 +2,6 @@ import copy
 from uuid import uuid4
 
 import pytest
-from langchain_core.documents import Document
 from langchain_core.messages import AIMessage
 from pytest_mock import MockerFixture
 
@@ -14,7 +13,6 @@ from redbox.models.chain import (
     metadata_reducer,
 )
 from redbox.models.chat import ChatRoute, ErrorRoute
-from redbox.models.graph import RedboxActivityEvent
 from redbox.models.settings import Settings
 from redbox.test.data import (
     GenericFakeChatModelWithTools,
@@ -202,8 +200,6 @@ async def test_streaming(test: RedboxChatTestCase, env: Settings, mocker: Mocker
     # Define callback functions
     token_events = []
     metadata_events = []
-    activity_events = []
-    document_events = []
     route_name = None
 
     async def streaming_response_handler(tokens: str):
@@ -216,20 +212,12 @@ async def test_streaming(test: RedboxChatTestCase, env: Settings, mocker: Mocker
         nonlocal route_name
         route_name = route
 
-    async def streaming_activity_handler(activity_event: RedboxActivityEvent):
-        activity_events.append(activity_event)
-
-    async def documents_response_handler(documents: list[Document]):
-        document_events.append(documents)
-
     # Run the app
     final_state = await app.run(
         input=RedboxState(request=test_case.query),
         response_tokens_callback=streaming_response_handler,
         metadata_tokens_callback=metadata_response_handler,
         route_name_callback=streaming_route_name_handler,
-        activity_event_callback=streaming_activity_handler,
-        documents_callback=documents_response_handler,
     )
 
     # Assertions
@@ -243,10 +231,6 @@ async def test_streaming(test: RedboxChatTestCase, env: Settings, mocker: Mocker
         assert len(metadata_events) == len(
             test_case.test_data.llm_responses
         ), f"Expected {len(test_case.test_data.llm_responses)} metadata events. Received {len(metadata_events)}"
-
-    assert test_case.test_data.expected_activity_events(
-        activity_events
-    ), f"Activity events not as expected. Received: {activity_events}"
 
     llm_response = "".join(token_events)
     number_of_selected_files = len(test_case.query.s3_keys)
@@ -277,6 +261,3 @@ async def test_streaming(test: RedboxChatTestCase, env: Settings, mocker: Mocker
     ), f"Expected Route: '{ test_case.test_data.expected_route}'. Received '{final_state.route_name}'"
     if metadata := final_state.metadata:
         assert metadata == metadata_response, f"Expected metadata: '{metadata_response}'. Received '{metadata}'"
-    for document_list in document_events:
-        for document in document_list:
-            assert document in test_case.docs, f"Document not in test case docs: {document}"
