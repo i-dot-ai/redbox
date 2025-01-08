@@ -1,0 +1,311 @@
+/* Response feedback - differing content for negative and positive responses */
+.feedback__container--negative .feedback__negative,
+.feedback__container--positive .feedback__positive {
+  display: block;
+}
+.feedback__container--negative .feedback__positive,
+.feedback__container--positive .feedback__negative {
+  display: none;
+}
+.feedback__container--2.feedback__container--negative img {
+  transform: scaleY(-1);
+}
+
+/* Response feedback - general styles */
+.feedback__container {
+  font-size: 0.75rem;
+  margin-bottom: 1.5rem;
+  margin-top: 0.75rem;
+  padding: 0 1rem;
+}
+.feedback__container--1:not([hidden]) {
+  align-items: flex-start;
+  color: #6b7280;
+  display: flex;
+  flex-wrap: wrap;
+  font-size: 0.625rem;
+}
+.feedback__star-help-text {
+  max-width: 3rem;
+  text-align: center;
+}
+.feedback__heading {
+  color: black;
+  font-size: 0.75rem;
+  font-weight: 400;
+  margin: 0;
+  margin-right: 1rem;
+}
+.feedback__star-container {
+  align-items: center;
+  display: flex;
+}
+.feedback__star-button {
+  background-color: transparent;
+  border: 0;
+  color: white;
+  cursor: pointer;
+  padding: 0 0.25rem;
+}
+.feedback__star-button--hover {
+  color: #bebebe;
+}
+
+.feedback__response-container {
+  align-items: center;
+  display: flex;
+  gap: 0.5rem;
+}
+.feedback__improve-response-btn,
+.feedback__rate-again-btn {
+  background-color: transparent;
+  border: 0;
+  cursor: pointer;
+  display: block;
+  margin-bottom: 1.25rem;
+  margin-top: 0.5rem;
+  padding: 0;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.feedback__chips-container {
+  border: 0;
+  margin: 0;
+  padding: 0;
+}
+.feedback__chips-legend {
+  padding: 0;
+}
+.feedback__chips-inner-container {
+  display: flex;
+  flex-wrap: wrap;
+  margin: 0.75rem 0;
+}
+.feedback__chip {
+  height: 0.75rem;
+  margin: 0;
+  opacity: 0;
+  width: 0.75rem;
+}
+.feedback__chip-label {
+  border: 1px solid #b1b4b6;
+  border-radius: 0.25rem;
+  color: #60697b;
+  cursor: pointer;
+  display: flex;
+  gap: 0.25rem;
+  left: -0.75rem;
+  margin-top: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  position: relative;
+}
+.feedback__chip:focus-visible + .feedback__chip-label {
+  outline: 2px solid;
+}
+.feedback__chip:checked + .feedback__chip-label {
+  background-color: #b1b4b6;
+  color: black;
+}
+.feedback__chip-label img {
+  display: none;
+  width: 0.75rem;
+}
+.feedback__chip:checked + .feedback__chip-label img {
+  display: block;
+}
+.feedback__text-input {
+  display: block;
+  margin-top: 0.5rem;
+  padding: 0.375rem;
+  max-width: 18rem;
+  resize: none;
+  width: 100%;
+}
+.feedback__submit-btn {
+  background-color: $redbox-red;
+  border: none;
+  border-radius: 0.25rem;
+  color: white;
+  cursor: pointer;
+  display: block;
+  font-weight: 500;
+  margin-top: 0.5rem;
+  padding: 0.5rem 1rem;
+}
+
+
+/* EXIT FEEDBACK */
+
+.exit-feedback {
+  background-color: #f3edc9;
+  display: none;
+  font-size: 0.75rem;
+  max-width: 18rem;
+  min-height: 6.5rem;
+  position: fixed;
+  right: 0;
+  top: calc(50% - 4rem);
+}
+main:has(.iai-chat-bubble[data-role="ai"]) .exit-feedback {
+  display: flex;
+}
+.exit-feedback__panel {
+  display: none;
+  padding: 1rem;
+}
+.exit-feedback:has(.exit-feedback__toggle-button[aria-expanded="true"])
+  .exit-feedback__panel {
+  display: block;
+}
+.exit-feedback__question-container {
+  align-items: center;
+  border: 0;
+  display: flex;
+  gap: 0.25rem;
+  margin: 0;
+  padding: 0.5rem 0;
+}
+.exit-feedback__question-container--small {
+  gap: 1rem;
+}
+.exit-feedback__button {
+  background-color: transparent;
+  border: 0;
+  cursor: pointer;
+}
+.exit-feedback__thumb-icon {
+  color: black;
+  cursor: pointer;
+  width: 1.5rem;
+}
+.exit-feedback__thumb-icon--down {
+  transform: rotate(180deg);
+}
+.exit-feedback__thumb-icon--up:hover,
+.exit-feedback input:checked + label .exit-feedback__thumb-icon--up {
+  color: var(--iai-colour-secondary-teal);
+}
+.exit-feedback__thumb-icon--down:hover,
+.exit-feedback input:checked + label .exit-feedback__thumb-icon--down {
+  color: var(--iai-product-colour);
+}
+.exit-feedback
+  input:checked
+  + label
+  .exit-feedback__thumb-icon--up
+  .exit-feedback__thumb-icon-fill {
+  fill: #84b8b3;
+}
+.exit-feedback
+  input:checked
+  + label
+  .exit-feedback__thumb-icon--down
+  .exit-feedback__thumb-icon-fill {
+  fill: #c08181;
+}
+.exit-feedback__radio-container {
+  height: 1.5rem;
+  position: relative;
+  width: 1.5rem;
+}
+.exit-feedback__radio-container input {
+  opacity: 0;
+}
+.exit-feedback__radio-container label {
+  left: 0;
+  position: absolute;
+  top: 0;
+}
+.exit-feedback__radio-container input:focus-visible + label {
+  border-radius: 0.25rem;
+  outline: 2px solid #005fcc;
+  outline-offset: 2px;
+}
+.exit-feedback__input-notes {
+  font-size: 0.875rem;
+}
+.exit-feedback__send-button {
+  margin-bottom: 0;
+  min-height: 2.25rem;
+}
+.exit-feedback__confirmation-container {
+  align-items: center;
+  display: flex;
+  gap: 0.75rem;
+}
+.exit-feedback__tick-animation {
+  flex-shrink: 0;
+  height: 3.75rem;
+  pointer-events: none;
+  position: relative;
+  width: 3.75rem;
+}
+.exit-feedback__tick-animation > div {
+  left: -3.125rem;
+  position: absolute;
+  top: -3.125rem;
+  width: 10rem;
+}
+.exit-feedback__confirmation-text {
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+}
+.exit-feedback__dismiss {
+  background-color: transparent;
+  border: 0;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 0;
+}
+.exit-feedback__dismiss:hover {
+  text-decoration: underline;
+}
+.exit-feedback__toggle-button {
+  background-color: #efdb5d;
+  border: 0;
+  cursor: pointer;
+  flex-shrink: 0;
+  position: relative;
+  width: 1.75rem;
+}
+.exit-feedback__toggle-button-icon {
+  left: -0.0625rem;
+  position: absolute;
+  top: 0;
+  transform: rotate(-90deg);
+  transition: transform 0.5s;
+  width: 2rem;
+}
+.exit-feedback__toggle-button-text {
+  display: block;
+  font-size: 0.75rem;
+  left: -0.8125rem;
+  position: absolute;
+  top: 3.625rem;
+  transform: rotate(-90deg);
+}
+@keyframes exit-feedback-wobble {
+  0% {
+    transform: rotate(-90deg);
+  }
+  33% {
+    transform: rotate(-120deg);
+  }
+  67% {
+    transform: rotate(-60deg);
+  }
+  100% {
+    transform: rotate(-90deg);
+  }
+}
+.exit-feedback__toggle-button:hover .exit-feedback__toggle-button-icon {
+  animation-name: exit-feedback-wobble;
+  animation-duration: 0.5s;
+}
+@media (prefers-reduced-motion) {
+  .exit-feedback__toggle-button:hover .exit-feedback__toggle-button-icon {
+    animation-duration: 0;
+  }
+}

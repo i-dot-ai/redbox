@@ -2,7 +2,7 @@ $govuk-assets-path: "govuk-assets/";
 $govuk-font-family: sans-serif;
 $redbox-red: #9c0000; /*old:#A50202*/
 
-@import "../node_modules/govuk-frontend/dist/govuk/all";
+@import "../../node_modules/govuk-frontend/dist/govuk/all";
 
 body {
   background-color: white;
@@ -97,7 +97,7 @@ upload-button {
   --iai-background-colour-1: #f6eef0;
   --iai-background-colour-2: #f8f8f8;
 }
-@import "../node_modules/i.ai-design-system/dist/styles.scss";
+@import "../../node_modules/i.ai-design-system/dist/styles.scss";
 
 /* Documents page - to come after i.AI Design System */
 .rb-doc-retention {
@@ -136,14 +136,9 @@ upload-button {
 
 
 /* Chats Page - to come after i.AI Design System */
-@import "./chat-styles.scss";
-
-@import "./profile-overlay-styles.scss";
+@import "./chats/chats.scss";
 
 /* To move to i.AI design system */
-.iai-chat-bubbles__sources-link:visited {
-  color: var(--iai-product-colour, var(--iai-colour-brand));
-}
 .iai-chat-bubble__text code {
   background-color: #f5ebeb;
   display: inline;

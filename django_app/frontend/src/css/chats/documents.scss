@@ -1,0 +1,27 @@
+
+.rb-document-upload {
+  border: 1px solid black;
+  padding: 1rem;
+}
+
+.rb-uploaded-docs {
+  display: none;
+  justify-content: flex-end;
+}
+.rb-uploaded-docs:has(li) {
+  display: flex;
+}
+.rb-uploaded-docs__item {
+  list-style-type: none;
+}
+.rb-uploaded-docs__drag-drop-message {
+  background-color: rgba(255, 255, 255, 0.9);
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}

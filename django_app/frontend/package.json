@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "Frontend dependencies for i.AI Redbox application",
   "source": [
-    "src/styles.scss",
+    "src/css/styles.scss",
     "src/js/autosubmit.js",
     "src/js/chats.js",
     "src/js/document-upload.js",

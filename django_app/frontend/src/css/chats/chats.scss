@@ -1,0 +1,224 @@
+main:has(.iai-chat-input),
+body:has(.iai-environment-warning) main:has(.iai-chat-input) {
+  min-height: 0;
+}
+
+@import "./chat-history.scss";
+
+.rb-doc-selector__heading {
+  font-size: 0.875rem;
+}
+.rb-doc-selector__label {
+  font-size: 0.75rem;
+  line-height: 1.4;
+}
+
+@media (min-width: 641px) {
+  .rb-chats-section {
+    flex-grow: 1;
+  }
+  .govuk-grid-row:has(.iai-chat-input) {
+    display: flex;
+    .govuk-grid-column-one-third,
+    .govuk-grid-column-two-thirds {
+      float: none;
+      min-height: calc(100vh - 17.25rem);
+    }
+    .govuk-grid-column-two-thirds {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .iai-panel {
+      height: auto;
+    }
+  }
+}
+@media (min-width: 1020px) {
+  .govuk-grid-row:has(.iai-chat-input) {
+    .govuk-grid-column-one-third,
+    .govuk-grid-column-two-thirds {
+      min-height: calc(100vh - 10.25rem);
+    }
+  }
+}
+@media (min-width: 1020px) and (min-height: 600px) {
+  body:has(.iai-chat-input) .iai-environment-warning {
+    position: fixed;
+    width: 100%;
+    z-index: 10;
+  }
+  body:has(.iai-chat-input) .iai-top-nav {
+    position: fixed;
+    width: 100%;
+    z-index: 10;
+  }
+  body:has(.iai-environment-warning) .iai-top-nav {
+    top: 26px;
+  }
+  main:has(.iai-chat-input) {
+    padding-top: 4.5rem;
+  }
+  body:has(.iai-environment-warning) main:has(.iai-chat-input) {
+    padding-top: 6.5rem;
+  }
+  .rb-left-column-container {
+    left: 0;
+    position: sticky;
+    top: 4.5rem;
+    width: calc(100% - 30px);
+  }
+  body:has(.iai-environment-warning) .rb-left-column-container {
+    top: 6.5rem;
+  }
+  .iai-panel__scrollable {
+    max-height: calc(50vh - 12rem);
+  }
+  main:has(#llm-selector) .iai-panel__scrollable {
+    max-height: calc(50vh - 15rem);
+  }
+}
+
+@import "./model-selector.scss";
+
+@import "./chat-title.scss";
+
+chat-message {
+  scroll-margin-bottom: 10rem;
+}
+
+.rb-loading-ellipsis {
+  font-style: italic;
+  margin-top: 1rem;
+}
+.rb-loading-ellipsis span {
+  animation-duration: 1.5s;
+  animation-iteration-count: infinite;
+  margin: 0 -2px;
+}
+.rb-loading-ellipsis span:nth-of-type(1) {
+  animation-name: rb-ellipsis-1;
+}
+.rb-loading-ellipsis span:nth-of-type(2) {
+  animation-name: rb-ellipsis-2;
+}
+.rb-loading-ellipsis span:nth-of-type(3) {
+  animation-name: rb-ellipsis-3;
+}
+@keyframes rb-ellipsis-1 {
+  0% {
+    opacity: 0;
+  }
+  24% {
+    opacity: 0;
+  }
+  25% {
+    opacity: 1;
+  }
+}
+@keyframes rb-ellipsis-2 {
+  0% {
+    opacity: 0;
+  }
+  49% {
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+@keyframes rb-ellipsis-3 {
+  0% {
+    opacity: 0;
+  }
+  74% {
+    opacity: 0;
+  }
+  75% {
+    opacity: 1;
+  }
+}
+
+.rb-chat-message__container {
+  margin-top: -1rem;
+}
+.govuk-main-wrapper:has(.iai-chat-input) {
+  padding-bottom: 0;
+}
+
+.rb-streaming-response-loading {
+  align-items: center;
+  display: flex;
+  padding: 0.5rem 0;
+  gap: 0.25rem;
+}
+.rb-response-loading {
+  align-items: center;
+  display: flex;
+  padding: 0.5rem 0;
+  visibility: hidden;
+}
+.rb-response-loading:focus-visible {
+  outline: 1px solid;
+}
+.rb-response-loading__spinner,
+.rb-streaming-response-loading__spinner {
+  width: 1.5rem;
+}
+
+.rb-copy-text-button {
+  align-items: center;
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  font-size: 0.75rem;
+  gap: 0.25rem;
+  margin-left: 0.5rem;
+  margin-top: -0.25rem;
+}
+.rb-copy-text-button:hover {
+  color: $redbox-red;
+}
+
+@import "./feedback.scss";
+
+@import "./canned-prompts.scss";
+
+
+.rb-send-button svg {
+  background-color: white;
+  border-radius: 100%;
+  box-shadow: 3px 3px 10px #edeef2;
+}
+.rb-send-button .rb-square-icon {
+  align-items: center;
+  background-color: white;
+  border-radius: 100%;
+  box-shadow: 3px 3px 10px #edeef2;
+  display: flex;
+  height: 1.75rem;
+  justify-content: center;
+  width: 1.75rem;
+}
+.rb-send-button .rb-square-icon::before {
+  background-color: #60697b;
+  border-radius: 2px;
+  content: "";
+  height: 0.625rem;
+  width: 0.625rem;
+}
+.rb-send-button:hover .rb-square-icon::before {
+  background-color: $redbox-red;
+}
+
+.iai-chat-input {
+  max-width: 94%;
+}
+@media (min-width: 1020px) {
+  .iai-chat-input {
+    max-width: 100%;
+  }
+}
+
+@import "./documents.scss";
