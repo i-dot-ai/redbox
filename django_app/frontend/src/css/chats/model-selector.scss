@@ -1,0 +1,32 @@
+
+.rb-model-selector {
+  cursor: pointer;
+  position: relative;
+}
+.rb-model-selector__select {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+}
+.rb-model-selector__list {
+  background-color: white;
+  border: 2px solid;
+  bottom: 2.5rem;
+  left: -0.5rem;
+  padding: 0.5rem;
+  position: absolute;
+  width: 150%;
+}
+.rb-model-selector__option {
+  padding: 0.5rem;
+}
+.rb-model-selector__option--active, .rb-model-selector__option:hover {
+  background-color: #f5ebeb;
+}
+.rb-model-selector__option span {
+  display: block;
+  pointer-events: none;
+}
+.rb-model-selector__option span:first-child {
+  font-weight: 700;
+}
