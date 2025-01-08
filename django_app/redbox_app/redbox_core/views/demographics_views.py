@@ -17,7 +17,6 @@ User = get_user_model()
 logger = logging.getLogger(__name__)
 
 
-# This can be removed once profile overlay added to /chats
 class CheckDemographicsView(View):
     @method_decorator(login_required)
     def get(self, request: HttpRequest) -> HttpResponse:

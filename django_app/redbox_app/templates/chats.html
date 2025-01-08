@@ -2,16 +2,9 @@
 {% extends "base.html" %}
 {% from "macros/chat-history-macros.html" import chat_history_heading, chat_history_item %}
 {% from "macros/chat-macros.html" import message_box %}
-{% from "macros/profile-overlay.html" import profile_overlay %}
 
 
 {% block content %}
-
-{# To be added back in once profile overlay is required
-{% if not request.user.name %}
-  {{ profile_overlay(csrf_token, request.user, True) }}
-{% endif %}
-#}
 
 <div class="govuk-width-container">
 
