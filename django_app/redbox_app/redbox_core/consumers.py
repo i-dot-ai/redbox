@@ -246,4 +246,3 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
     async def handle_metadata(self, response: dict):
         self.metadata = metadata_reducer(self.metadata, RequestMetadata.model_validate(response))
-

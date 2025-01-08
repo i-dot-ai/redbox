@@ -2,7 +2,6 @@ import copy
 from uuid import uuid4
 
 import pytest
-from langchain_core.documents import Document
 from langchain_core.messages import AIMessage
 from pytest_mock import MockerFixture
 
@@ -14,7 +13,6 @@ from redbox.models.chain import (
     metadata_reducer,
 )
 from redbox.models.chat import ChatRoute, ErrorRoute
-from redbox.models.graph import RedboxActivityEvent
 from redbox.models.settings import Settings
 from redbox.test.data import (
     GenericFakeChatModelWithTools,
@@ -214,7 +212,6 @@ async def test_streaming(test: RedboxChatTestCase, env: Settings, mocker: Mocker
         nonlocal route_name
         route_name = route
 
-
     # Run the app
     final_state = await app.run(
         input=RedboxState(request=test_case.query),
@@ -234,7 +231,6 @@ async def test_streaming(test: RedboxChatTestCase, env: Settings, mocker: Mocker
         assert len(metadata_events) == len(
             test_case.test_data.llm_responses
         ), f"Expected {len(test_case.test_data.llm_responses)} metadata events. Received {len(metadata_events)}"
-
 
     llm_response = "".join(token_events)
     number_of_selected_files = len(test_case.query.s3_keys)

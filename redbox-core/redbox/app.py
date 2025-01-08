@@ -11,10 +11,8 @@ from redbox.models.chain import RedboxState
 from redbox.models.graph import (
     FINAL_RESPONSE_TAG,
     ROUTE_NAME_TAG,
-    SOURCE_DOCUMENTS_TAG,
     RedboxEventType,
 )
-from redbox.transform import flatten_document_state
 
 
 async def _default_callback(*args, **kwargs):

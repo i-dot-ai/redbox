@@ -46,7 +46,7 @@ def get_token_use_count(use_type: str) -> int:
 
 @pytest.mark.django_db(transaction=True)
 @pytest.mark.asyncio()
-async def test_chat_consumer_with_new_session(alice: User, uploaded_file: File, mocked_connect: Connect):
+async def test_chat_consumer_with_new_session(alice: User, mocked_connect: Connect):
     # Given
 
     # When
@@ -146,7 +146,7 @@ async def test_chat_consumer_with_existing_session(alice: User, chat: Chat, mock
 
 @pytest.mark.django_db(transaction=True)
 @pytest.mark.asyncio()
-async def test_chat_consumer_with_naughty_question(alice: User, uploaded_file: File, mocked_connect: Connect):
+async def test_chat_consumer_with_naughty_question(alice: User, mocked_connect: Connect):
     # Given
 
     # When
@@ -182,7 +182,7 @@ async def test_chat_consumer_with_naughty_question(alice: User, uploaded_file: F
 
 @pytest.mark.django_db(transaction=True)
 @pytest.mark.asyncio()
-async def test_chat_consumer_agentic(alice: User, uploaded_file: File, mocked_connect_agentic_search: Connect):
+async def test_chat_consumer_agentic(alice: User, mocked_connect_agentic_search: Connect):
     # Given
 
     # When
