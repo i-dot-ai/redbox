@@ -6,7 +6,6 @@ from pydantic import BaseModel
 class RedboxEventType(StrEnum):
     on_metadata_generation = "on_metadata_generation"
     response_tokens = "response_tokens"
-    on_source_report = "on_source_report"  # Previous 'documents used' sources
 
 
 class RedboxActivityEvent(BaseModel):

@@ -50,9 +50,7 @@ class Redbox:
         input: RedboxState,
         response_tokens_callback=_default_callback,
         route_name_callback=_default_callback,
-        documents_callback=_default_callback,
         metadata_tokens_callback=_default_callback,
-        activity_event_callback=_default_callback,
     ) -> RedboxState:
         final_state = None
         request_dict = input.request.model_dump()
@@ -76,17 +74,8 @@ class Redbox:
                 await response_tokens_callback(event["data"])
             elif kind == "on_chain_end" and ROUTE_NAME_TAG in tags:
                 await route_name_callback(event["data"]["output"]["route_name"])
-            elif kind == "on_retriever_end" and SOURCE_DOCUMENTS_TAG in tags:
-                await documents_callback(event["data"]["output"])
-            elif kind == "on_tool_end" and SOURCE_DOCUMENTS_TAG in tags:
-                documents = flatten_document_state(event["data"]["output"].get("documents", {}))
-                await documents_callback(documents)
-            elif kind == "on_custom_event" and event["name"] == RedboxEventType.on_source_report.value:
-                await documents_callback(event["data"])
             elif kind == "on_custom_event" and event["name"] == RedboxEventType.on_metadata_generation.value:
                 await metadata_tokens_callback(event["data"])
-            elif kind == "on_custom_event" and event["name"] == RedboxEventType.activity.value:
-                await activity_event_callback(event["data"])
             elif kind == "on_chain_end" and event["name"] == "LangGraph":
                 final_state = RedboxState(**event["data"]["output"])
         return final_state
