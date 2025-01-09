@@ -1,5 +1,5 @@
 // @ts-check
-import { LitElement, html, nothing } from "lit";
+import { html, nothing } from "lit";
 import { RedboxElement } from "../redbox-element.mjs";
 
 export class ModelSelector extends RedboxElement {
