@@ -77,18 +77,6 @@ class AISettings(BaseModel):
     chat_backend: ChatLLMBackend = ChatLLMBackend()
 
 
-class Source(BaseModel):
-    source: str = Field(description="URL or reference to the source", default="")
-    source_type: str = Field(description="creator_type of tool", default="Unknown")
-    document_name: str = ""
-    highlighted_text_in_source: str = ""
-    page_numbers: list[int] = Field(description="Page Number in document the highlighted text is on", default=[1])
-
-
-class StructuredResponseWithCitations(BaseModel):
-    answer: str = Field(description="Markdown structured answer to the query", default="")
-
-
 DocumentMapping = dict[UUID, Document | None]
 DocumentGroup = dict[UUID, DocumentMapping | None]
 

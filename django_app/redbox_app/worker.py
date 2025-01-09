@@ -3,6 +3,7 @@ import logging
 from uuid import UUID
 
 from redbox.loader.ingester import ingest_file
+from redbox_app.redbox_core.models import sanitise_string
 
 
 def ingest(file_id: UUID) -> None:
@@ -15,6 +16,7 @@ def ingest(file_id: UUID) -> None:
 
     try:
         text, metadata = ingest_file(file.unique_name)
+        text = sanitise_string(text)
         file.text, file.metadata = text, json.loads(metadata.model_dump_json())
         file.status = File.Status.complete
         file.save()
