@@ -60,7 +60,7 @@
           {% set model_selector %}
             <model-selector data-options="{{ llm_options | to_json }}"></model-selector>
           {% endset %}
-          {{ model_selector | render_lit | safe }}
+          {{ model_selector | render_lit }}
         </div>
 
       </div>
@@ -94,7 +94,7 @@
                 {% set uploaded_documents %}
                   <document-container data-chatid="{{ chat_id }}" data-docs="{{ current_chat.file_set.all() | filter_docs(messages, loop.index0) }}"></document-container>
                 {% endset %}
-                {{ uploaded_documents | render_lit | safe }}
+                {{ uploaded_documents | render_lit }}
               {% endif %}
 
               {# Collect feedback on SSR messages #}
@@ -122,12 +122,12 @@
       {% set document_upload %}
         <document-upload data-csrftoken="{{ csrf_token }}" data-chatid="{{ chat_id }}"></document-upload>
       {% endset %}
-      {{ document_upload | render_lit | safe }}
+      {{ document_upload | render_lit }}
 
       {% set uploaded_documents %}
         <upload-container data-chatid="{{ chat_id }}" data-csrftoken="{{ csrf_token }}" data-docs="{{ current_chat.file_set.all() | filter_docs(messages, messages.count()) }}"></upload-container>
       {% endset %}
-      {{ uploaded_documents | render_lit | safe }}
+      {{ uploaded_documents | render_lit }}
 
       <form id="message-form" class="iai-chat-input" action="/post-message/" method="post">
         <div class="iai-chat-input__container">

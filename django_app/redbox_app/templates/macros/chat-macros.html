@@ -14,13 +14,5 @@
 {% if message.role == "ai" %}
   <copy-text></copy-text>
 {% endif %}
-{#
-{% if message.role == "ai" %}
-  {% set html %}
-    <action-buttons message-id="{{ message.id }}"></action-buttons>
-  {% endset %}
-  {{ html | render_lit | safe }}
-{% endif %}
-#}
 
 {% endmacro %}
