@@ -4,6 +4,7 @@ import logging
 
 import humanize
 import jinja2
+import markupsafe
 import pytz
 import requests
 import waffle
@@ -72,9 +73,9 @@ def render_lit(html):
         response = requests.get(lit_ssr_url, timeout=1, params={"data": html})
         logger.info("status_code=%s", response.status_code)
         response.raise_for_status()
-        return response.text  # noqa: TRY300
+        return markupsafe.Markup(response.text)
     except requests.RequestException:
-        return html
+        return markupsafe.Markup(html)
 
 
 def filter_docs(docs, messages, message_index):
