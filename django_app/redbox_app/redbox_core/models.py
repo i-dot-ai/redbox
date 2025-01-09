@@ -14,7 +14,7 @@ from django.contrib.auth.base_user import BaseUserManager as BaseSSOUserManager
 from django.contrib.postgres.fields import ArrayField
 from django.core import validators
 from django.db import models
-from django.db.models import Max, Min, Prefetch, UniqueConstraint
+from django.db.models import Max, Min, UniqueConstraint
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django_use_email_as_username.models import BaseUser, BaseUserManager
@@ -766,16 +766,7 @@ class ChatMessage(UUIDPrimaryKeyBase, TimeStampedModel):
     @classmethod
     def get_messages(cls, chat_id: uuid.UUID) -> Sequence["ChatMessage"]:
         """Returns all chat messages for a given chat history, ordered by citation priority."""
-        return (
-            cls.objects.filter(chat_id=chat_id)
-            .order_by("created_at")
-            .prefetch_related(
-                Prefetch(
-                    "source_files",
-                    queryset=File.objects.all().order_by("created_at"),
-                )
-            )
-        )
+        return cls.objects.filter(chat_id=chat_id).order_by("created_at")
 
     def log(self):
         token_sum = sum(token_use.token_count for token_use in self.chatmessagetokenuse_set.all())

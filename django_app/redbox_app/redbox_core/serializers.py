@@ -20,7 +20,6 @@ class ChatMessageTokenUseSerializer(serializers.ModelSerializer):
 
 class ChatMessageSerializer(serializers.ModelSerializer):
     selected_files = FileSerializer(many=True, read_only=True)
-    source_files = FileSerializer(many=True, read_only=True)
     token_use = ChatMessageTokenUseSerializer(source="chatmessagetokenuse_set", many=True, read_only=True)
 
     class Meta:
@@ -32,7 +31,6 @@ class ChatMessageSerializer(serializers.ModelSerializer):
             "role",
             "route",
             "selected_files",
-            "source_files",
             "rating",
             "rating_text",
             "rating_chips",
