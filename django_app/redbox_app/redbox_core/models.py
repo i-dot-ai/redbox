@@ -744,7 +744,6 @@ class ChatMessage(UUIDPrimaryKeyBase, TimeStampedModel):
     role = models.CharField(choices=Role.choices, null=False, blank=False)
     route = models.CharField(max_length=25, null=True, blank=True)
     selected_files = models.ManyToManyField(File, related_name="+", symmetrical=False, blank=True)
-    source_files = models.ManyToManyField(File, related_name="+")
 
     rating = models.PositiveIntegerField(
         blank=True,
@@ -769,12 +768,6 @@ class ChatMessage(UUIDPrimaryKeyBase, TimeStampedModel):
         return (
             cls.objects.filter(chat_id=chat_id)
             .order_by("created_at")
-            .prefetch_related(
-                Prefetch(
-                    "source_files",
-                    queryset=File.objects.all().order_by("created_at"),
-                )
-            )
         )
 
     def log(self):

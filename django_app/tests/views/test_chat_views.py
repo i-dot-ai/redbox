@@ -9,10 +9,7 @@ from django.contrib.auth import get_user_model
 from django.test import Client
 from django.urls import reverse
 
-from redbox_app.redbox_core.models import (
-    Chat,
-    ChatMessage,
-)
+from redbox_app.redbox_core.models import Chat
 
 User = get_user_model()
 
@@ -44,18 +41,6 @@ def test_user_cannot_see_other_users_chats(chat: Chat, bob: User, client: Client
     assert response.headers.get("Location") == "/chats/"
 
 
-@pytest.mark.django_db()
-def test_view_session_with_documents(chat_message: ChatMessage, client: Client):
-    # Given
-    client.force_login(chat_message.chat.user)
-    chat_id = chat_message.chat.id
-
-    # When
-    response = client.get(f"/chats/{chat_id}/")
-
-    # Then
-    assert response.status_code == HTTPStatus.OK
-    assert b"original_file.txt" in response.content
 
 
 @pytest.mark.django_db()
