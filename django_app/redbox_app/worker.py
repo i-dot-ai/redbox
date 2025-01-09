@@ -3,7 +3,6 @@ import logging
 from uuid import UUID
 
 from redbox.loader.ingester import ingest_file
-
 from redbox_app.redbox_core.models import sanitise_string
 
 

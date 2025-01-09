@@ -77,9 +77,6 @@ class AISettings(BaseModel):
     chat_backend: ChatLLMBackend = ChatLLMBackend()
 
 
-
-
-
 DocumentMapping = dict[UUID, Document | None]
 DocumentGroup = dict[UUID, DocumentMapping | None]
 
