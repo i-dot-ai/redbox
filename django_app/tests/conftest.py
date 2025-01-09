@@ -162,10 +162,7 @@ def chat_with_message(chat: Chat) -> Chat:
 
 @pytest.fixture()
 def chat_message(chat: Chat) -> ChatMessage:
-    chat_message = ChatMessage.objects.create(
-        chat=chat, text="A question?", role=ChatMessage.Role.user, route="A route"
-    )
-    return chat_message
+    return ChatMessage.objects.create(chat=chat, text="A question?", role=ChatMessage.Role.user, route="A route")
 
 
 @pytest.fixture()
@@ -218,7 +215,7 @@ def chat_with_files(chat: Chat, several_files: Sequence[File]) -> Chat:
         text="A question?",
         role=ChatMessage.Role.user,
     )
-    chat_message_1 = ChatMessage.objects.create(
+    ChatMessage.objects.create(
         chat=chat,
         text="An answer.",
         role=ChatMessage.Role.ai,
@@ -230,7 +227,7 @@ def chat_with_files(chat: Chat, several_files: Sequence[File]) -> Chat:
         role=ChatMessage.Role.user,
     )
     chat_message_2.selected_files.set(several_files[0:2])
-    chat_message_3 = ChatMessage.objects.create(
+    ChatMessage.objects.create(
         chat=chat,
         text="A second answer.",
         role=ChatMessage.Role.ai,

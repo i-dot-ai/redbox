@@ -41,8 +41,6 @@ def test_user_cannot_see_other_users_chats(chat: Chat, bob: User, client: Client
     assert response.headers.get("Location") == "/chats/"
 
 
-
-
 @pytest.mark.django_db()
 def test_chat_grouped_by_age(user_with_chats_with_messages_over_time: User, client: Client, chat):
     # Given

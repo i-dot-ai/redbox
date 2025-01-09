@@ -198,7 +198,9 @@ class ChatMessageAdmin(ExportMixin, admin.ModelAdmin):
     list_filter = ["role", "route", "chat__user"]
     date_hierarchy = "created_at"
     inlines = [ChatMessageTokenUseInline]
-    readonly_fields = ["selected_files",]
+    readonly_fields = [
+        "selected_files",
+    ]
     search_fields = ["chat__user__email"]
 
     @admin.display(ordering="chat__user", description="User")
