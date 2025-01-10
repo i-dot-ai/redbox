@@ -26,9 +26,6 @@ auth_urlpatterns = [
     path("sign-up-page-2", views.Signup2.as_view(), name="sign-up-page-2"),
     path("sign-up-page-3", views.Signup3.as_view(), name="sign-up-page-3"),
     path("sign-up-page-4", views.Signup4.as_view(), name="sign-up-page-4"),
-    path("sign-up-page-5", views.Signup5.as_view(), name="sign-up-page-5"),
-    path("sign-up-page-6", views.Signup6.as_view(), name="sign-up-page-6"),
-    path("sign-up-page-7", views.Signup7.as_view(), name="sign-up-page-7"),
 ]
 
 if settings.LOGIN_METHOD == "sso":
