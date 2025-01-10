@@ -40,6 +40,13 @@ class ChatHistoryItem extends HTMLElement {
       this.toggleButton?.setAttribute("aria-expanded", "false");
       this.#toggleChatTitleEdit(true);
     });
+    if (this.dataset.iscurrentchat === "true") {
+      this.querySelector('[data-action="print"]')?.addEventListener("click", () => {
+        window.print();
+      });
+    } else {
+      this.querySelector('[data-action="print"]').style.display = "none";
+    }
 
     let deleteButton = /** @type {HTMLButtonElement} */ (this.querySelector('[data-action="delete-confirm"]'));
     deleteButton.addEventListener("click", async () => {

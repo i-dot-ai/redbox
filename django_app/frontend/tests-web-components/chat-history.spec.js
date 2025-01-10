@@ -36,6 +36,16 @@ test(`Chat history functionality works as expected`, async ({ page }) => {
   await textInput.press("Enter");
   await expect(chatHistoryItem).toContainText("Renamed chat");
 
+  // The print button only displays for the active chat
+  await page.locator(".rb-chat-history__actions-button").first().click();
+  await page.waitForTimeout(500);
+  await expect(page.locator('button[data-action="print"]').first()).toBeVisible();
+  await page.locator(".rb-chat-history__actions-button").first().click();
+  await page.locator(".rb-chat-history__actions-button").nth(1).click();
+  await page.waitForTimeout(500);
+  await expect(page.locator('button[data-action="print"]').nth(1)).not.toBeVisible();
+  await page.locator(".rb-chat-history__actions-button").nth(1).click();
+
   // A chat can be deleted
   await page.locator(".rb-chat-history__actions-button").first().click();
   await page.locator('button[data-action="delete"]').first().click();
