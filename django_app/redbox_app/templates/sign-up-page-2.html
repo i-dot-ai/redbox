@@ -1,4 +1,4 @@
-{% set pageTitle = "Accessibility" %}
+{% set pageTitle = "Digital Confidence" %}
 {% extends "base.html" %}
 {% from "macros/govuk-button.html" import govukButton %}
 
@@ -8,8 +8,8 @@
 
     <div class="govuk-grid-row">
       <div class="govuk-grid-column-two-thirds">
-        <h1 class="govuk-heading-l govuk-!-margin-bottom-3">Accessibility</h1>
-        <p class="govuk-body-l">Step 2 of 6</p>
+        <h1 class="govuk-heading-l govuk-!-margin-bottom-3">Digital Confidence</h1>
+        <p class="govuk-body-l">Step 2 of 3</p>
       </div>
     </div>
 
@@ -34,60 +34,28 @@
       <div class="govuk-form-group">
         <fieldset class="govuk-fieldset">
           <legend class="govuk-fieldset__legend">
-            {{ form.accessibility_options.label }}
+            {{ form.ai_experience.label }}
           </legend>
           <div class="govuk-radios">
-            {% for value, label in form.accessibility_options.field.choices %}
+            {% for value, label in form.ai_experience.field.choices %}
               {% if value %}
                 <div class="govuk-radios__item">
                   <input class="govuk-radios__input" type="radio"
-                        id="accessibility_options_{{ loop.index0 }}"
-                        name="{{ form.accessibility_options.name }}"
+                        id="ai_experience_{{ loop.index0 }}"
+                        name="{{ form.ai_experience.name }}"
                         value="{{ value }}"
-                        {% if value|string == form.accessibility_options.value()|string %}checked{% endif %}
-                        aria-describedby="accessibility_options_{{ loop.index0 }}-hint">
+                        {% if value|string == form.ai_experience.value()|string %}checked{% endif %}
+                        aria-describedby="ai_experience_{{ loop.index0 }}-hint">
                   <label class="govuk-label govuk-radios__label"
-                        for="accessibility_options_{{ loop.index0 }}">
+                        for="ai_experience_{{ loop.index0 }}">
                     {{ value }}
                   </label>
+                  <div id="ai_experience_{{ loop.index0 }}-hint" class="govuk-hint govuk-radios__hint">{{ label }}</div>
                 </div>
               {% endif %}
             {% endfor %}
           </div>
         </fieldset>
-      </div>
-
-      <div class="govuk-form-group">
-        <fieldset class="govuk-fieldset">
-          <legend class="govuk-fieldset__legend">
-            {{ form.accessibility_categories.label }}
-          </legend>
-          <div class="govuk-checkboxes">
-            {% for value, label in form.accessibility_categories.field.choices %}
-              {% if value %}
-                <div class="govuk-radios__item">
-                  <input class="govuk-checkboxes__input" type="checkbox"
-                        id="accessibility_categories_{{ loop.index0 }}"
-                        name="{{ form.accessibility_categories.name }}"
-                        value="{{ value }}"
-                        {% if value|string == form.accessibility_categories.value()|string %}checked{% endif %}
-                        aria-describedby="accessibility_categories_{{ loop.index0 }}-hint">
-                  <label class="govuk-label govuk-checkboxes__label"
-                        for="accessibility_categories_{{ loop.index0 }}">
-                    {{ value }}
-                  </label>
-                </div>
-              {% endif %}
-            {% endfor %}
-          </div>
-        </fieldset>
-      </div>
-
-      <div class="govuk-form-group">
-        <label class="govuk-label" for="{{ form.accessibility_description.id_for_label }}">
-          {{ form.accessibility_description.label }}
-        </label>
-        {{ form.accessibility_description }}
       </div>
 
       <div class="govuk-button-group">

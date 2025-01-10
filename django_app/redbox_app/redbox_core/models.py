@@ -453,17 +453,17 @@ class User(BaseUser, UUIDPrimaryKeyBase):
     # Additional fields for sign-up form
     # Page 1
     role = models.TextField(null=True, blank=True)
-    # Page 2
+    # Archived (old Page 2)
     accessibility_options = models.CharField(null=True, blank=True, max_length=64, choices=AccessibilityOptions)
     accessibility_categories = models.CharField(null=True, blank=True, max_length=64, choices=AccessibilityCategories)
     accessibility_description = models.TextField(null=True, blank=True)
-    # Page 3
+    # Archived (old Page 3)
     digital_confidence = models.CharField(null=True, blank=True, max_length=128, choices=DigitalConfidence)
     usage_at_work = models.CharField(null=True, blank=True, max_length=64, choices=RegularityAI)
     usage_outside_work = models.CharField(null=True, blank=True, max_length=64, choices=RegularityAI)
     how_useful = models.CharField(null=True, blank=True, max_length=64, choices=Usefulness)
     redbox_tasks = models.TextField(null=True, blank=True)
-    # Page 4
+    # Archived (old Page 4)
     task_1_description = models.TextField(null=True, blank=True)
     task_1_regularity = models.TextField(null=True, blank=True)
     task_1_duration = models.TextField(null=True, blank=True)
@@ -476,7 +476,7 @@ class User(BaseUser, UUIDPrimaryKeyBase):
     task_3_regularity = models.TextField(null=True, blank=True)
     task_3_duration = models.TextField(null=True, blank=True)
     task_3_consider_using_ai = models.CharField(null=True, blank=True, max_length=64, choices=ConsiderUsingAI)
-    # Page 5
+    # Archived (old Page 5)
     role_regularity_summarise_large_docs = models.CharField(
         null=True, blank=True, max_length=32, choices=RegularityTasks
     )
@@ -497,7 +497,7 @@ class User(BaseUser, UUIDPrimaryKeyBase):
     role_duration_specific_template = models.CharField(null=True, blank=True, max_length=32, choices=DurationTasks)
     role_duration_shorten_docs = models.CharField(null=True, blank=True, max_length=32, choices=DurationTasks)
     role_duration_write_docs = models.CharField(null=True, blank=True, max_length=32, choices=DurationTasks)
-    # Page 6
+    # Page 3 (old Page 6)
     consent_research = models.BooleanField(null=True, blank=True, default=False)
     consent_interviews = models.BooleanField(null=True, blank=True, default=False)
     consent_feedback = models.BooleanField(null=True, blank=True, default=False)

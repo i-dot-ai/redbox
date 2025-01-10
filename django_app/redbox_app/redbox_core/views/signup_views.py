@@ -68,21 +68,6 @@ class Signup3(AbstractSignup):
     current_page = "sign-up-page-3"
     next_page = "sign-up-page-4"
 
-
-class Signup4(AbstractSignup):
-    current_page = "sign-up-page-4"
-    next_page = "sign-up-page-5"
-
-
-class Signup5(AbstractSignup):
-    current_page = "sign-up-page-5"
-    next_page = "sign-up-page-6"
-
-
-class Signup6(AbstractSignup):
-    current_page = "sign-up-page-6"
-    next_page = "sign-up-page-7"
-
     def post(self, request: HttpRequest) -> HttpResponse:
         if not settings.ALLOW_SIGN_UPS:
             return redirect("homepage")
@@ -108,13 +93,13 @@ class Signup6(AbstractSignup):
             for field_name, field_value in form.cleaned_data.items():
                 setattr(user, field_name, field_value)
             user.save()
-            return redirect("sign-up-page-7")
+            return redirect("sign-up-page-4")
         else:
-            return render(request, "sign-up-page-6.html", {"form": form})
+            return render(request, "sign-up-page-3.html", {"form": form})
 
 
-class Signup7(View):
+class Signup4(View):
     def get(self, request: HttpRequest) -> HttpResponse:
         if not settings.ALLOW_SIGN_UPS:
             return redirect("homepage")
-        return render(request, "sign-up-page-7.html")
+        return render(request, "sign-up-page-4.html")

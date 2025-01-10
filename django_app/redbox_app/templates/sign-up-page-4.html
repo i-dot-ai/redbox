@@ -1,4 +1,4 @@
-{% set pageTitle = "Common tasks" %}
+{% set pageTitle = "Welcome" %}
 {% extends "base.html" %}
 {% from "macros/govuk-button.html" import govukButton %}
 
@@ -8,181 +8,45 @@
 
     <div class="govuk-grid-row">
       <div class="govuk-grid-column-two-thirds">
-        <h1 class="govuk-heading-l govuk-!-margin-bottom-3">Common tasks across the <span class="govuk-!-display-inline-block">Cabinet Office</span></h1>
-        <p class="govuk-body-l">Step 4 of 6</p>
+        
+        <h1 class="govuk-heading-l govuk-!-margin-bottom-3">Welcome to Redbox!</h1>
+        <p class="govuk-body-l">Generative AI up to OFFICIAL-SENSITIVE</p>
+        <p class="govuk-body">We're excited to have you join the community of early Redbox users! <span aria-hidden="true">🎉</span></p>
+        <p class="govuk-body">Redbox is a Beta service that allows you to securely chat to an LLM with content up to OFFICIAL-SENSITIVE.</p>
+        
+        <h2 class="govuk-heading-m"><span aria-hidden="true">🌱</span> Being an early Redbox user</h2>
+        <p class="govuk-body">We need your help to make Redbox an effective tool for Civil Servants:</p>
+        <ul class="govuk-body govuk-list govuk-list--bullet">
+          <li><span aria-hidden="true">💼</span> <strong>Use Redbox as much as possible</strong> - this will help us improve your experience</li>
+          <li><span aria-hidden="true">⭐</span> <strong>Rate Redbox's responses</strong> - use the star rating at the bottom of each chat message</li>
+          <li><span aria-hidden="true">💬</span> <strong>Send us detailed comments and feedback</strong> - post a message in the <a class="govuk-link" href="https://chat.google.com/room/AAAAoEi1_cI?cls=7">Redbox User Community (Google Chat)</a></li>
+          <li><span aria-hidden="true">📋</span> <strong>Engage in surveys and research sessions</strong> - this helps us understand, in-depth, how Redbox is being used</li>
+        </ul>
+
+        <h2 class="govuk-heading-m"><span aria-hidden="true">🏗️</span> Redbox is in private beta</h2>
+        <p class="govuk-body">This means it is being actively developed and iterated. You might experience a bit of downtime or find that data, including documents, may be deleted unexpectedly.</p>
+
+        <h2 class="govuk-heading-m"><span aria-hidden="true">🚀</span> Ready to get started?</h2>
+        <p class="govuk-body">Here are a few ideas to start your Redbox journey:</p>
+        <ul class="govuk-body govuk-list govuk-list--bullet">
+          <li>Write a response to an email</li>
+          <li>Draft a report</li>
+          <li>Analyse a policy document</li>
+          <li>Produce a summary report</li>
+        </ul>
+
+        <h2 class="govuk-heading-m"><span aria-hidden="true">⚠️</span> Mandatory safety warning</h2>
+        <ul class="govuk-body govuk-list govuk-list--bullet">
+          <li>Please do not upload documents above OFFICIAL SENSITIVE. Redbox is not yet deployed at SECRET or TOP SECRET</li>
+          <li>Please do not upload anything containing personal data</li>
+        </ul>
+
+        <div class="govuk-button-group govuk-!-margin-top-6">
+          {{ govukButton(text="Log in to Redbox", href=url('log-in')) }}
+        </div>
+
       </div>
     </div>
-
-    {% if form.errors %}
-      <div class="govuk-error-summary" data-module="govuk-error-summary">
-        <div role="alert">
-          <div class="govuk-error-summary__body">
-            <ul class="govuk-list govuk-error-summary__list">
-              {% for field, error in form.errors.items() %}
-                <li>{{ field }} : {{ error }}</li>
-              {% endfor %}
-            </ul>
-          </div>
-        </div>
-      </div>
-    {% endif %}
-
-    <form method='post'>
-
-      <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
-      
-      <h2 class="govuk-heading-m">Task 1</h2>
-
-      <div class="govuk-form-group">
-        <label class="govuk-label" for="{{ form.task_1_description.id_for_label }}">
-          {{ form.task_1_description.label }}
-        </label>
-        {{ form.task_1_description }}
-      </div>
-
-      <div class="govuk-form-group">
-        <label class="govuk-label" for="{{ form.task_1_regularity.id_for_label }}">
-          {{ form.task_1_regularity.label }}
-        </label>
-        {{ form.task_1_regularity }}
-      </div>
-
-      <div class="govuk-form-group">
-        <label class="govuk-label" for="{{ form.task_1_duration.id_for_label }}">
-          {{ form.task_1_duration.label }}
-        </label>
-        {{ form.task_1_duration }}
-      </div>
-
-      <div class="govuk-form-group">
-        <fieldset class="govuk-fieldset">
-          <legend class="govuk-fieldset__legend">
-            {{ form.task_1_consider_using_ai.label }}
-          </legend>
-          <div class="govuk-radios">
-            {% for value, label in form.task_1_consider_using_ai.field.choices %}
-              {% if value %}
-                <div class="govuk-radios__item">
-                  <input class="govuk-radios__input" type="radio"
-                        id="task_1_consider_using_ai_{{ loop.index0 }}"
-                        name="{{ form.task_1_consider_using_ai.name }}"
-                        value="{{ value }}"
-                        {% if value|string == form.task_1_consider_using_ai.value()|string %}checked{% endif %}
-                        aria-describedby="task_1_consider_using_ai_{{ loop.index0 }}-hint">
-                  <label class="govuk-label govuk-radios__label"
-                        for="task_1_consider_using_ai_{{ loop.index0 }}">
-                    {{ value }}
-                  </label>
-                </div>
-              {% endif %}
-            {% endfor %}
-          </div>
-        </fieldset>
-      </div>
-
-      <h2 class="govuk-heading-m">Task 2</h2>
-
-      <div class="govuk-form-group">
-        <label class="govuk-label" for="{{ form.task_2_description.id_for_label }}">
-          {{ form.task_2_description.label }}
-        </label>
-        {{ form.task_2_description }}
-      </div>
-
-      <div class="govuk-form-group">
-        <label class="govuk-label" for="{{ form.task_2_regularity.id_for_label }}">
-          {{ form.task_2_regularity.label }}
-        </label>
-        {{ form.task_2_regularity }}
-      </div>
-
-      <div class="govuk-form-group">
-        <label class="govuk-label" for="{{ form.task_2_duration.id_for_label }}">
-          {{ form.task_2_duration.label }}
-        </label>
-        {{ form.task_2_duration }}
-      </div>
-
-      <div class="govuk-form-group">
-        <fieldset class="govuk-fieldset">
-          <legend class="govuk-fieldset__legend">
-            {{ form.task_2_consider_using_ai.label }}
-          </legend>
-          <div class="govuk-radios">
-            {% for value, label in form.task_2_consider_using_ai.field.choices %}
-              {% if value %}
-                <div class="govuk-radios__item">
-                  <input class="govuk-radios__input" type="radio"
-                        id="task_2_consider_using_ai_{{ loop.index0 }}"
-                        name="{{ form.task_2_consider_using_ai.name }}"
-                        value="{{ value }}"
-                        {% if value|string == form.task_2_consider_using_ai.value()|string %}checked{% endif %}
-                        aria-describedby="task_2_consider_using_ai_{{ loop.index0 }}-hint">
-                  <label class="govuk-label govuk-radios__label"
-                        for="task_2_consider_using_ai_{{ loop.index0 }}">
-                    {{ value }}
-                  </label>
-                </div>
-              {% endif %}
-            {% endfor %}
-          </div>
-        </fieldset>
-      </div>
-
-      <h2 class="govuk-heading-m">Task 3</h2>
-
-      <div class="govuk-form-group">
-        <label class="govuk-label" for="{{ form.task_3_description.id_for_label }}">
-          {{ form.task_3_description.label }}
-        </label>
-        {{ form.task_3_description }}
-      </div>
-
-      <div class="govuk-form-group">
-        <label class="govuk-label" for="{{ form.task_3_regularity.id_for_label }}">
-          {{ form.task_3_regularity.label }}
-        </label>
-        {{ form.task_3_regularity }}
-      </div>
-
-      <div class="govuk-form-group">
-        <label class="govuk-label" for="{{ form.task_3_duration.id_for_label }}">
-          {{ form.task_3_duration.label }}
-        </label>
-        {{ form.task_3_duration }}
-      </div>
-
-      <div class="govuk-form-group">
-        <fieldset class="govuk-fieldset">
-          <legend class="govuk-fieldset__legend">
-            {{ form.task_3_consider_using_ai.label }}
-          </legend>
-          <div class="govuk-radios">
-            {% for value, label in form.task_3_consider_using_ai.field.choices %}
-              {% if value %}
-                <div class="govuk-radios__item">
-                  <input class="govuk-radios__input" type="radio"
-                        id="task_3_consider_using_ai_{{ loop.index0 }}"
-                        name="{{ form.task_3_consider_using_ai.name }}"
-                        value="{{ value }}"
-                        {% if value|string == form.task_3_consider_using_ai.value()|string %}checked{% endif %}
-                        aria-describedby="task_3_consider_using_ai_{{ loop.index0 }}-hint">
-                  <label class="govuk-label govuk-radios__label"
-                        for="task_3_consider_using_ai_{{ loop.index0 }}">
-                    {{ value }}
-                  </label>
-                </div>
-              {% endif %}
-            {% endfor %}
-          </div>
-        </fieldset>
-      </div>
-
-      <div class="govuk-button-group">
-        {{ govukButton(text="Continue") }}
-      </div>
-
-    </form>
 
   </div>
 
