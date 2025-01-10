@@ -1,0 +1,21 @@
+@media print {
+
+  /* Hide header and footer */
+  .iai-environment-warning, .iai-top-nav, .iai-footer {
+    display: none;
+  }
+
+  /* Show main column full width */
+  #message-form .govuk-grid-column-one-third {
+    display: none;
+  }
+  .govuk-grid-column-two-thirds {
+    width: 100%;
+  }
+
+  /* Hide other interactive elements */
+  .chat-title__edit-btn, copy-text, feedback-buttons, .exit-feedback, .iai-chat-input {
+    display: none !important;
+  }
+
+}
