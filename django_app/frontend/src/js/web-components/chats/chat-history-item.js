@@ -40,13 +40,7 @@ class ChatHistoryItem extends HTMLElement {
       this.toggleButton?.setAttribute("aria-expanded", "false");
       this.#toggleChatTitleEdit(true);
     });
-    if (this.dataset.iscurrentchat === "true") {
-      this.querySelector('[data-action="print"]')?.addEventListener("click", () => {
-        window.print();
-      });
-    } else {
-      this.querySelector('[data-action="print"]').style.display = "none";
-    }
+    this.querySelector('[data-action="print"]')?.addEventListener("click", this.#printChat);
 
     let deleteButton = /** @type {HTMLButtonElement} */ (this.querySelector('[data-action="delete-confirm"]'));
     deleteButton.addEventListener("click", async () => {
@@ -184,6 +178,22 @@ class ChatHistoryItem extends HTMLElement {
       });
       document.dispatchEvent(chatTitleChangeEvent);
     }
+  };
+
+  #printChat = () => {
+    const url = this.querySelector(".rb-chat-history__link").href;
+    const printFrame = document.createElement("iframe");
+    printFrame.addEventListener("load", () => {
+      const closePrint = () => {
+        document.body.removeChild(printFrame);
+      };
+      printFrame.contentWindow.addEventListener("beforeunload", closePrint);
+      printFrame.contentWindow.addEventListener("afterprint", closePrint);
+      printFrame.contentWindow?.print();
+      printFrame.style.display = "none";
+    });
+    printFrame.src = url;
+    document.body.appendChild(printFrame);
   };
 
 }

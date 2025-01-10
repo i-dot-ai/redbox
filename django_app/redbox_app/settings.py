@@ -197,7 +197,7 @@ CSP_FONT_SRC = (
     "s3.amazonaws.com",
 )
 CSP_STYLE_SRC = ("'self'",)
-CSP_FRAME_ANCESTORS = ("'none'",)
+CSP_FRAME_ANCESTORS = ("'self'",)  # 'self' needed for printing chats
 
 
 CSP_CONNECT_SRC = [
