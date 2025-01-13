@@ -8,14 +8,10 @@ locals {
 
   django_app_environment_variables = {
     "ALLOW_SIGN_UPS": var.allow_sign_ups,
-    "EMBEDDING_DOCUMENT_FIELD_NAME" : var.embedding_document_field_name,
     "AZURE_OPENAI_MODEL" : var.azure_openai_model,
 
     "LIT_SSR_URL": local.ssr_url,
     "UNSTRUCTURED_HOST" : local.unstructured_host
-    "Q_TIMEOUT": var.django_queue_timeout,
-    "Q_RETRY": var.django_queue_retry,
-    "Q_MAX_ATTEMPTS": var.django_queue_max_attempts,
 
     "OBJECT_STORE" : "s3",
     "BUCKET_NAME" : aws_s3_bucket.user_data.bucket,
@@ -34,20 +30,13 @@ locals {
     "SENTRY_REPORT_TO_ENDPOINT" : var.sentry_report_to_endpoint,
     "UNSTRUCTURED_HOST" : local.unstructured_host,
 
-    "EMBEDDING_DOCUMENT_FIELD_NAME" : var.embedding_document_field_name,
-    "EMBEDDING_MAX_RETRIES" : var.embedding_max_retries,
-    "EMBEDDING_RETRY_MIN_SECONDS" : var.embedding_retry_min_seconds,
-    "EMBEDDING_RETRY_MAX_SECONDS" : var.embedding_retry_max_seconds,
     "ELASTIC_ROOT_INDEX" : "redbox-data-${terraform.workspace}",
     "ELASTIC_CHUNK_ALIAS" : "redbox-data-${terraform.workspace}-chunk-current",
     "BUCKET_NAME" : aws_s3_bucket.user_data.bucket,
     "OBJECT_STORE" : "s3",
     "ENVIRONMENT" : upper(terraform.workspace),
     "DEBUG" : terraform.workspace == "dev",
-    "worker_ingest_min_chunk_size" : var.worker_ingest_min_chunk_size,
-    "worker_ingest_max_chunk_size" : var.worker_ingest_max_chunk_size,
     "UNSTRUCTURED_HOST" : local.unstructured_host,
-    "EMBEDDING_BACKEND": var.embedding_backend
   }
 
   django_app_secrets = {
