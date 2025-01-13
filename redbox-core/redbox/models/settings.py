@@ -1,7 +1,6 @@
 import logging
 import os
 from functools import cache, lru_cache
-from typing import Literal
 
 import boto3
 from elasticsearch import Elasticsearch, ConnectionError
@@ -47,11 +46,6 @@ class ChatLLMBackend(BaseModel):
 class Settings(BaseSettings):
     """Settings for the redbox application."""
 
-    llm_max_tokens: int = 1024
-
-    partition_strategy: Literal["auto", "fast", "ocr_only", "hi_res"] = "fast"
-    clustering_strategy: Literal["full"] | None = None
-
     elastic: ElasticCloudSettings | ElasticLocalSettings | None = None
     elastic_root_index: str = "redbox-data"
 
@@ -69,9 +63,6 @@ class Settings(BaseSettings):
 
     aws_region: str = "eu-west-2"
     bucket_name: str = "redbox-storage-dev"
-
-    response_no_doc_available: str = "No available data for selected files. They may need to be removed and added again"
-    response_max_content_exceeded: str = "Max content exceeded. Try smaller or fewer documents"
 
     object_store: str = "minio"
 

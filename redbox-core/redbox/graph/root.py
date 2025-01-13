@@ -86,7 +86,7 @@ def get_chat_with_documents_graph(
     builder.add_edge("p_pass_question_to_text", "d_request_handler_from_total_tokens")
     builder.add_conditional_edges(
         "d_request_handler_from_total_tokens",
-        build_total_tokens_request_handler_conditional(PromptSet.ChatwithDocsMapReduce),
+        build_total_tokens_request_handler_conditional(PromptSet.ChatwithDocs),
         {
             "max_exceeded": "p_too_large_error",
             "context_exceeded": "p_too_large_error",

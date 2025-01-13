@@ -18,7 +18,7 @@ from websockets.legacy.client import Connect
 
 from redbox.models.chain import LLMCallMetadata, RedboxQuery, RequestMetadata
 from redbox.models.graph import FINAL_RESPONSE_TAG, ROUTE_NAME_TAG, SOURCE_DOCUMENTS_TAG
-from redbox.models.prompts import CHAT_MAP_QUESTION_PROMPT
+from redbox.models.prompts import CHAT_QUESTION_PROMPT
 from redbox_app.redbox_core import error_messages
 from redbox_app.redbox_core.consumers import ChatConsumer
 from redbox_app.redbox_core.models import (
@@ -420,7 +420,7 @@ async def test_chat_consumer_get_ai_settings(
 
         ai_settings = await ChatConsumer.get_ai_settings(chat_with_alice)
 
-        assert ai_settings.chat_map_question_prompt == CHAT_MAP_QUESTION_PROMPT
+        assert ai_settings.chat_question_prompt == CHAT_QUESTION_PROMPT
         assert ai_settings.chat_backend.name == chat_with_alice.chat_backend.name
         assert ai_settings.chat_backend.provider == chat_with_alice.chat_backend.provider
         assert not hasattr(ai_settings, "label")

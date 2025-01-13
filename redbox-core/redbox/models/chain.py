@@ -31,9 +31,6 @@ class AISettings(BaseModel):
 
     # Prompts and LangGraph settings
     max_document_tokens: int = 1_000_000
-    self_route_enabled: bool = False
-    map_max_concurrency: int = 128
-    stuff_chunk_context_ratio: float = 0.75
     recursion_limit: int = 50
 
     # Common Prompt Fragments
@@ -48,30 +45,6 @@ class AISettings(BaseModel):
     chat_question_prompt: str = prompts.CHAT_QUESTION_PROMPT
     chat_with_docs_system_prompt: str = prompts.CHAT_WITH_DOCS_SYSTEM_PROMPT
     chat_with_docs_question_prompt: str = prompts.CHAT_WITH_DOCS_QUESTION_PROMPT
-    chat_with_docs_reduce_system_prompt: str = prompts.CHAT_WITH_DOCS_REDUCE_SYSTEM_PROMPT
-    self_route_system_prompt: str = prompts.SELF_ROUTE_SYSTEM_PROMPT
-    retrieval_system_prompt: str = prompts.RETRIEVAL_SYSTEM_PROMPT
-    retrieval_question_prompt: str = prompts.RETRIEVAL_QUESTION_PROMPT
-    condense_system_prompt: str = prompts.CONDENSE_SYSTEM_PROMPT
-    condense_question_prompt: str = prompts.CONDENSE_QUESTION_PROMPT
-    chat_map_system_prompt: str = prompts.CHAT_MAP_SYSTEM_PROMPT
-    chat_map_question_prompt: str = prompts.CHAT_MAP_QUESTION_PROMPT
-    reduce_system_prompt: str = prompts.REDUCE_SYSTEM_PROMPT
-
-    # Elasticsearch RAG and boost values
-    rag_k: int = 30
-    rag_num_candidates: int = 10
-    rag_gauss_scale_size: int = 3
-    rag_gauss_scale_decay: float = 0.5
-    rag_gauss_scale_min: float = 1.1
-    rag_gauss_scale_max: float = 2.0
-    elbow_filter_enabled: bool = False
-    match_boost: float = 1.0
-    match_name_boost: float = 2.0
-    match_description_boost: float = 0.5
-    match_keywords_boost: float = 0.5
-    knn_boost: float = 2.0
-    similarity_threshold: float = 0.7
 
     # this is also the azure_openai_model
     chat_backend: ChatLLMBackend = ChatLLMBackend()
@@ -224,9 +197,6 @@ class RedboxState(BaseModel):
 class PromptSet(StrEnum):
     Chat = "chat"
     ChatwithDocs = "chat_with_docs"
-    ChatwithDocsMapReduce = "chat_with_docs_map_reduce"
-    SelfRoute = "self_route"
-    CondenseQuestion = "condense_question"
 
 
 def get_prompts(state: RedboxState, prompt_set: PromptSet) -> tuple[str, str]:
@@ -236,13 +206,4 @@ def get_prompts(state: RedboxState, prompt_set: PromptSet) -> tuple[str, str]:
     elif prompt_set == PromptSet.ChatwithDocs:
         system_prompt = state.request.ai_settings.chat_with_docs_system_prompt
         question_prompt = state.request.ai_settings.chat_with_docs_question_prompt
-    elif prompt_set == PromptSet.ChatwithDocsMapReduce:
-        system_prompt = state.request.ai_settings.chat_map_system_prompt
-        question_prompt = state.request.ai_settings.chat_map_question_prompt
-    elif prompt_set == PromptSet.SelfRoute:
-        system_prompt = state.request.ai_settings.self_route_system_prompt
-        question_prompt = state.request.ai_settings.retrieval_question_prompt
-    elif prompt_set == PromptSet.CondenseQuestion:
-        system_prompt = state.request.ai_settings.condense_system_prompt
-        question_prompt = state.request.ai_settings.condense_question_prompt
     return (system_prompt, question_prompt)
