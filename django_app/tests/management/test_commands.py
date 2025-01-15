@@ -1,14 +1,11 @@
-import os
 from datetime import UTC, datetime, timedelta
 from io import StringIO
-from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
 from botocore.exceptions import UnknownClientMethodError
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.management import CommandError, call_command
 from django.utils import timezone
 from freezegun import freeze_time
@@ -191,5 +188,3 @@ def test_reingest_files_unstructured_fail(uploaded_file: File, requests_mock: Mo
     uploaded_file.refresh_from_db()
     assert uploaded_file.status == File.Status.errored
     assert uploaded_file.ingest_error == "Unstructured failed to extract text for this file"
-
-
