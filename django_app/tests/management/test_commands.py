@@ -1,14 +1,11 @@
-import os
 from datetime import UTC, datetime, timedelta
 from io import StringIO
-from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
 from botocore.exceptions import UnknownClientMethodError
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.management import CommandError, call_command
 from django.utils import timezone
 from freezegun import freeze_time
@@ -191,47 +188,3 @@ def test_reingest_files_unstructured_fail(uploaded_file: File, requests_mock: Mo
     uploaded_file.refresh_from_db()
     assert uploaded_file.status == File.Status.errored
     assert uploaded_file.ingest_error == "Unstructured failed to extract text for this file"
-
-
-def test_delete_es_indices_no_new_index():
-    # Given
-
-    # When
-    with pytest.raises(CommandError) as exception:
-        call_command("delete_es_indices")
-
-    # Then
-    assert str(exception.value) == "No new index given for alias"
-
-
-@pytest.mark.django_db(transaction=True)
-def test_update_users(alice: User):
-    original_file_path = os.path.join(  # noqa: PTH118
-        os.path.dirname(os.path.abspath(__file__)),  # noqa: PTH100, PTH120
-        "..",
-        "data/csv/user_update.json",
-    )
-
-    original_file = SimpleUploadedFile(
-        "user_update.json",
-        Path.open(original_file_path, "rb").read(),
-    )
-    file = File.objects.create(
-        user=alice,
-        original_file=original_file,
-        last_referenced=datetime.now(tz=UTC) - timedelta(days=14),
-        status=File.Status.processing,
-    )
-    file.save()
-
-    assert not alice.usage_at_work
-    assert not User.objects.filter(email="bob@cabinetoffice.gov.uk").exists()
-
-    call_command("update_users", file.id)
-    alice.refresh_from_db()
-
-    assert alice.usage_at_work == "Everyday"
-    assert User.objects.filter(email="bob@cabinetoffice.gov.uk").exists()
-
-    bob = User.objects.get(email="bob@cabinetoffice.gov.uk")
-    assert bob.usage_at_work == "Monthly or a few times per month"
