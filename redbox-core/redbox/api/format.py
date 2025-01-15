@@ -1,7 +1,6 @@
 from langchain_core.documents.base import Document
 
 
-
 def format_documents(documents: list[Document]) -> str:
     formatted: list[str] = []
     for d in documents:
