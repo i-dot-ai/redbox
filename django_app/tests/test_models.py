@@ -4,6 +4,7 @@ import pytest
 from django.core.files.uploadedfile import SimpleUploadedFile
 
 from redbox_app.redbox_core.models import (
+    ChatMessage,
     File,
     InactiveFileError,
     User,
@@ -73,3 +74,11 @@ def test_file_model_unique_name_error_states(status: str, peter_rabbit: User, s3
 
     with pytest.raises(InactiveFileError, match="is inactive, status is"):
         assert new_file.unique_name
+
+
+@pytest.mark.django_db()
+def test_chat_message_model_token_count_on_save(chat):
+    chat_message = ChatMessage(chat=chat, role=ChatMessage.Role.ai, text="I am a message")
+    assert not chat_message.token_count
+    chat_message.save()
+    assert chat_message.token_count == 4
