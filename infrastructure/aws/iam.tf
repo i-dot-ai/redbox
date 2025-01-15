@@ -45,13 +45,6 @@ data "aws_iam_policy_document" "ecs_exec_role_policy" {
       "${aws_secretsmanager_secret.django-app-secret.arn}:*"
     ]
   }
-
-  statement {
-    sid       = "AllowOpenSearch"
-    effect    = "Allow"
-    actions   = ["es:ESHttp*"]
-    resources = ["*"]
-  }
 }
 
 resource "aws_iam_policy" "redbox_policy" {
