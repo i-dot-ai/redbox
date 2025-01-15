@@ -418,8 +418,11 @@ def test_0073_chatmessage_new_source_files(original_file, migrator):
     )
 
     Citation = old_state.apps.get_model("redbox_core", "Citation")
-    citation = Citation(chat_message=chat_message, file=file, source="USER UPLOADED DOCUMENT", text="hello!")
-    citation.save()
+    citation_1 = Citation(chat_message=chat_message, file=file, source="USER UPLOADED DOCUMENT", text="hello!")
+    citation_1.save()
+
+    citation_2 = Citation(chat_message=chat_message, file=file, source="USER UPLOADED DOCUMENT", text="good bye!")
+    citation_2.save()
 
     new_state = migrator.apply_tested_migration(
         ("redbox_core", "0073_chatmessage_new_source_files"),
