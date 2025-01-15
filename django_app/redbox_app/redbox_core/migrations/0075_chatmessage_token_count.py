@@ -2,6 +2,11 @@
 
 from django.db import migrations, models
 
+def back_populate_token_count(apps, schema_editor):
+    ChatMessage = apps.get_model("redbox_core", "ChatMessage")
+    for chat_message in ChatMessage.objects.all():
+        chat_message.save()
+
 
 class Migration(migrations.Migration):
 
@@ -15,4 +20,5 @@ class Migration(migrations.Migration):
             name='token_count',
             field=models.PositiveIntegerField(blank=True, help_text='number of tokens in the message', null=True),
         ),
+        migrations.RunPython(back_populate_token_count, migrations.RunPython.noop),
     ]
