@@ -19,6 +19,7 @@ from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django_use_email_as_username.models import BaseUser, BaseUserManager
 
+from redbox.chains.components import get_tokeniser
 from redbox.models.settings import get_settings
 from redbox_app.redbox_core.utils import get_date_group
 
@@ -26,6 +27,7 @@ logging.basicConfig(level=os.environ.get("LOG_LEVEL", "INFO"))
 logger = logging.getLogger(__name__)
 
 env = get_settings()
+tokeniser = get_tokeniser()
 
 
 class UUIDPrimaryKeyBase(models.Model):
@@ -753,6 +755,7 @@ class ChatMessage(UUIDPrimaryKeyBase, TimeStampedModel):
     )
     rating_text = models.TextField(blank=True, null=True)
     rating_chips = ArrayField(models.CharField(max_length=32), null=True, blank=True)
+    token_count = models.PositiveIntegerField(null=True, blank=True, help_text="number of tokens in the message")
 
     def __str__(self) -> str:  # pragma: no cover
         return textwrap.shorten(self.text, width=20, placeholder="...")
@@ -760,7 +763,7 @@ class ChatMessage(UUIDPrimaryKeyBase, TimeStampedModel):
     def save(self, *args, force_insert=False, force_update=False, using=None, update_fields=None):
         self.text = sanitise_string(self.text)
         self.rating_text = sanitise_string(self.rating_text)
-
+        self.token_count = len(tokeniser.encode(self.text))
         super().save(*args, force_insert, force_update, using, update_fields)
 
     @classmethod
