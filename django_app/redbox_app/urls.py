@@ -76,7 +76,6 @@ other_urlpatterns = [
 
 
 api_url_patterns = [
-    path("api/v0/", views.user_view_pre_alpha, name="user-view"),
     path("api/v0/file/", api_views.file_upload, name="file-upload"),
 ]
 

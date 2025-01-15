@@ -7,20 +7,9 @@ from rest_framework.response import Response
 from rest_framework.serializers import Serializer
 
 from redbox_app.redbox_core.models import File
-from redbox_app.redbox_core.serializers import UserSerializer
 from redbox_app.worker import ingest
 
 User = get_user_model()
-
-
-@api_view(["GET"])
-@permission_classes([IsAuthenticated])
-def user_view_pre_alpha(request):
-    """this is for testing and evaluation only
-    this *will* change so that not all data is returned!
-    """
-    serializer = UserSerializer(request.user)
-    return Response(serializer.data)
 
 
 class UploadSerializer(Serializer):

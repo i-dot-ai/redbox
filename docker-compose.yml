@@ -15,8 +15,6 @@ services:
         condition: service_healthy
       minio:
         condition: service_healthy
-      elasticsearch:
-        condition: service_healthy
     networks:
       - redbox-app-network
     env_file:
@@ -88,8 +86,6 @@ services:
     depends_on:
       unstructured:
         condition: service_started
-      elasticsearch:
-        condition: service_healthy
       minio:
         condition: service_healthy
       django-app:
