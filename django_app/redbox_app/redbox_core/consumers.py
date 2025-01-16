@@ -29,7 +29,6 @@ from redbox_app.redbox_core.models import (
     Chat,
     ChatLLMBackend,
     ChatMessage,
-    ChatMessageTokenUse,
     File,
 )
 
@@ -205,22 +204,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
             route=self.route,
         )
         chat_message.save()
-
-        if self.metadata:
-            for model, token_count in self.metadata.input_tokens.items():
-                ChatMessageTokenUse.objects.create(
-                    chat_message=chat_message,
-                    use_type=ChatMessageTokenUse.UseType.INPUT,
-                    model_name=model,
-                    token_count=token_count,
-                )
-            for model, token_count in self.metadata.output_tokens.items():
-                ChatMessageTokenUse.objects.create(
-                    chat_message=chat_message,
-                    use_type=ChatMessageTokenUse.UseType.OUTPUT,
-                    model_name=model,
-                    token_count=token_count,
-                )
 
         chat_message.log()
 

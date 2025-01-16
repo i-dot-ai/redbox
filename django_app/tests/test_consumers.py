@@ -24,7 +24,6 @@ from redbox_app.redbox_core.consumers import ChatConsumer
 from redbox_app.redbox_core.models import (
     Chat,
     ChatMessage,
-    ChatMessageTokenUse,
     File,
 )
 
@@ -32,16 +31,6 @@ User = get_user_model()
 
 logging.basicConfig(level=os.environ.get("LOG_LEVEL", "INFO"))
 logger = logging.getLogger(__name__)
-
-
-@database_sync_to_async
-def get_token_use_model(use_type: str) -> str:
-    return ChatMessageTokenUse.objects.filter(use_type=use_type).latest("created_at").model_name
-
-
-@database_sync_to_async
-def get_token_use_count(use_type: str) -> int:
-    return ChatMessageTokenUse.objects.filter(use_type=use_type).latest("created_at").token_count
 
 
 @pytest.mark.django_db(transaction=True)
@@ -78,11 +67,6 @@ async def test_chat_consumer_with_new_session(alice: User, mocked_connect: Conne
     assert await get_chat_message_text(alice, ChatMessage.Role.user) == ["Hello Hal."]
     assert await get_chat_message_text(alice, ChatMessage.Role.ai) == ["Good afternoon, Mr. Amor."]
     assert await get_chat_message_route(alice, ChatMessage.Role.ai) == ["gratitude"]
-
-    assert await get_token_use_model(ChatMessageTokenUse.UseType.INPUT) == "gpt-4o"
-    assert await get_token_use_model(ChatMessageTokenUse.UseType.OUTPUT) == "gpt-4o"
-    assert await get_token_use_count(ChatMessageTokenUse.UseType.INPUT) == 123
-    assert await get_token_use_count(ChatMessageTokenUse.UseType.OUTPUT) == 1000
 
 
 @pytest.mark.django_db(transaction=True)
@@ -213,11 +197,6 @@ async def test_chat_consumer_agentic(alice: User, mocked_connect_agentic_search:
 
     assert await get_chat_message_text(alice, ChatMessage.Role.user) == ["Hello Hal."]
     assert await get_chat_message_text(alice, ChatMessage.Role.ai) == ["Good afternoon, Mr. Amor."]
-
-    assert await get_token_use_model(ChatMessageTokenUse.UseType.INPUT) == "gpt-4o"
-    assert await get_token_use_model(ChatMessageTokenUse.UseType.OUTPUT) == "gpt-4o"
-    assert await get_token_use_count(ChatMessageTokenUse.UseType.INPUT) == 123
-    assert await get_token_use_count(ChatMessageTokenUse.UseType.OUTPUT) == 1000
 
 
 @database_sync_to_async

@@ -740,9 +740,10 @@ class ChatMessage(UUIDPrimaryKeyBase, TimeStampedModel):
     chat = models.ForeignKey(Chat, on_delete=models.CASCADE)
     text = models.TextField(max_length=32768, null=False, blank=False)
     role = models.CharField(choices=Role.choices, null=False, blank=False)
-    route = models.CharField(max_length=25, null=True, blank=True)
-    selected_files = models.ManyToManyField(File, related_name="+", symmetrical=False, blank=True)
-    source_files = models.ManyToManyField(File, related_name="+")
+
+    route = models.CharField(max_length=25, null=True, blank=True)  # delete me post Jan
+    selected_files = models.ManyToManyField(File, related_name="+", symmetrical=False, blank=True)  # delete me post Jan
+    source_files = models.ManyToManyField(File, related_name="+")  # delete me post Jan
 
     rating = models.PositiveIntegerField(
         blank=True,
@@ -768,7 +769,6 @@ class ChatMessage(UUIDPrimaryKeyBase, TimeStampedModel):
         return cls.objects.filter(chat_id=chat_id).order_by("created_at")
 
     def log(self):
-        token_sum = sum(token_use.token_count for token_use in self.chatmessagetokenuse_set.all())
         elastic_log_msg = {
             "@timestamp": self.created_at.isoformat(),
             "id": str(self.id),
@@ -777,7 +777,7 @@ class ChatMessage(UUIDPrimaryKeyBase, TimeStampedModel):
             "text": str(self.text),
             "route": str(self.route),
             "role": str(self.role),
-            "token_count": token_sum,
+            "token_count": self.token_count,
             "rating": int(self.rating) if self.rating else None,
             "rating_text": str(self.rating_text),
             "rating_chips": list(map(str, self.rating_chips)) if self.rating_chips else None,
@@ -791,22 +791,3 @@ class ChatMessage(UUIDPrimaryKeyBase, TimeStampedModel):
                 )
             except elastic_transport.ConnectionError:
                 contextlib.suppress(elastic_transport.ConnectionError)
-
-
-class ChatMessageTokenUse(UUIDPrimaryKeyBase, TimeStampedModel):
-    class UseType(models.TextChoices):
-        INPUT = "input", _("input")
-        OUTPUT = "output", _("output")
-
-    chat_message = models.ForeignKey(ChatMessage, on_delete=models.CASCADE)
-    use_type = models.CharField(
-        max_length=10,
-        choices=UseType,
-        help_text="input or output tokens",
-        default=UseType.INPUT,
-    )
-    model_name = models.CharField(max_length=50, null=True, blank=True)
-    token_count = models.PositiveIntegerField(null=True, blank=True)
-
-    def __str__(self) -> str:
-        return f"{self.model_name} {self.use_type}"

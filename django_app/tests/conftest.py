@@ -19,7 +19,6 @@ from redbox_app.redbox_core.models import (
     Chat,
     ChatLLMBackend,
     ChatMessage,
-    ChatMessageTokenUse,
     File,
 )
 
@@ -176,18 +175,6 @@ def chat_message_with_citation(chat: Chat) -> ChatMessage:
         rating_text="not bad",
         route="chat",
     )
-
-
-@pytest.fixture()
-def chat_message_with_citation_and_tokens(chat_message_with_citation: ChatMessage) -> ChatMessage:
-    chat_message = chat_message_with_citation
-    ChatMessageTokenUse.objects.create(
-        chat_message=chat_message, use_type=ChatMessageTokenUse.UseType.INPUT, model_name="gpt-4o", token_count=20
-    )
-    ChatMessageTokenUse.objects.create(
-        chat_message=chat_message, use_type=ChatMessageTokenUse.UseType.OUTPUT, model_name="gpt-4o", token_count=200
-    )
-    return chat_message
 
 
 @pytest.fixture()

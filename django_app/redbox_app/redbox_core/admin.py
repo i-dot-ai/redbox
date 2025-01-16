@@ -166,13 +166,6 @@ class FileAdmin(ExportMixin, admin.ModelAdmin):
     search_fields = ["user__email"]
 
 
-class ChatMessageTokenUseInline(admin.StackedInline):
-    model = models.ChatMessageTokenUse
-    ordering = ("modified_at",)
-
-    extra = 0
-
-
 class ChatMessageTokenUseAdmin(ExportMixin, admin.ModelAdmin):
     list_display = ["chat_message", "use_type", "model_name", "token_count"]
     list_filter = ["use_type", "model_name"]
@@ -182,7 +175,6 @@ class ChatMessageAdmin(ExportMixin, admin.ModelAdmin):
     list_display = ["short_text", "role", "get_user", "chat", "route", "created_at"]
     list_filter = ["role", "route", "chat__user"]
     date_hierarchy = "created_at"
-    inlines = [ChatMessageTokenUseInline]
     readonly_fields = [
         "selected_files",
     ]
@@ -245,6 +237,5 @@ admin.site.register(models.File, FileAdmin)
 admin.site.register(models.Chat, ChatAdmin)
 admin.site.register(models.ChatMessage, ChatMessageAdmin)
 admin.site.register(models.AISettings)
-admin.site.register(models.ChatMessageTokenUse, ChatMessageTokenUseAdmin)
 admin.site.register(models.ChatLLMBackend, ChatLLMBackendAdmin)
 admin.site.register_view("report/", view=reporting_dashboard, name="Site report")
