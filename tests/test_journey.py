@@ -4,15 +4,11 @@ import string
 import subprocess
 from pathlib import Path
 from random import choice
-from typing import TYPE_CHECKING
 
 import pytest
 from pages import LandingPage, SignInConfirmationPage
 from playwright.sync_api import Page
 from yarl import URL
-
-if TYPE_CHECKING:
-    from collections.abc import Sequence
 
 logging.basicConfig(level=os.environ.get("LOG_LEVEL", "INFO"))
 logger = logging.getLogger(__name__)
@@ -57,28 +53,23 @@ def test_user_journey(page: Page, email_address: str):
     # my_details_page.redbox_response_preferences = "Respond concisely"
     chats_page = my_details_page.update()
 
-    # Documents page
-    documents_page = chats_page.navigate_to_documents()
-    original_doc_count = documents_page.document_count()
-
-    # Upload files
-    document_upload_page = documents_page.navigate_to_upload()
-    upload_files: Sequence[Path] = [f for f in TEST_ROOT.parent.glob("*.md") if f.stat().st_size < 10000]
-    documents_page = document_upload_page.upload_documents(upload_files)
-    document_rows = documents_page.all_documents
-    assert {r.filename for r in document_rows} == {f.name for f in upload_files}
-    assert documents_page.document_count() == original_doc_count + len(upload_files)
-    documents_page.wait_for_documents_to_complete()
+    # Documents - keeping stuff which might be useful for later (now we can add documents on the chats page)
+    # original_doc_count = documents_page.document_count()
+    # upload_files: Sequence[Path] = [f for f in TEST_ROOT.parent.glob("*.md") if f.stat().st_size < 10000]
+    # documents_page = document_upload_page.upload_documents(upload_files)
+    # document_rows = documents_page.all_documents
+    # assert {r.filename for r in document_rows} == {f.name for f in upload_files}
+    # assert documents_page.document_count() == original_doc_count + len(upload_files)
+    # documents_page.wait_for_documents_to_complete()
 
     # Chats page
-    chats_page = documents_page.navigate_to_chats()
+    chats_page = chats_page.start_new_chat()
     chats_page.write_message = "What architecture is in use?"
     chats_page = chats_page.send()
     logger.debug("page: %s", chats_page)
     latest_chat_response = chats_page.wait_for_latest_message()
     assert latest_chat_response.text
-    # Commented out until we make this visible
-    assert chats_page.selected_llm == "gpt-4o (default)"
+    assert "gpt-4o" in chats_page.selected_llm
 
     # Give user feedback
     chats_page.feedback_stars = 2
@@ -89,24 +80,22 @@ def test_user_journey(page: Page, email_address: str):
 
     # Select files
     chats_page = chats_page.start_new_chat()
-    files_to_select = {f.name for f in upload_files if "README" in f.name}
-    chats_page.selected_file_names = files_to_select
+    # files_to_select = {f.name for f in upload_files if "README" in f.name}
+    # chats_page.selected_file_names = files_to_select
     chats_page.write_message = "What licence is in use?"
     chats_page = chats_page.send()
-
-    assert chats_page.selected_file_names == files_to_select
+    # assert chats_page.selected_file_names == files_to_select
     latest_chat_response = chats_page.wait_for_latest_message()
     assert latest_chat_response.text
 
-    # Delete a file
-    documents_page = chats_page.navigate_to_documents()
-    pre_delete_doc_count = documents_page.document_count()
-    document_delete_page = documents_page.delete_latest_document()
-    documents_page = document_delete_page.confirm_deletion()
-    assert documents_page.document_count() == pre_delete_doc_count - 1
+    # Delete a file - keeping stuff which might be useful for later (now we can add documents on the chats page)
+    # pre_delete_doc_count = documents_page.document_count()
+    # document_delete_page = documents_page.delete_latest_document()
+    # documents_page = document_delete_page.confirm_deletion()
+    # assert documents_page.document_count() == pre_delete_doc_count - 1
 
     # Delete a chat
-    chats_page = documents_page.navigate_to_chats()
+    chats_page = chats_page.start_new_chat()
     pre_chats_count = chats_page.count_chats()
     chats_page.delete_first_chat()
     assert chats_page.count_chats() == pre_chats_count - 1

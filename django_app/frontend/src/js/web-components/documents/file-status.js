@@ -30,12 +30,7 @@ class FileStatus extends HTMLElement {
     this.textContent = responseObj.status;
     this.dataset.status = responseObj.status.toLowerCase();
 
-    if (responseObj.status.toLowerCase() === "complete") {
-      const evt = new CustomEvent("doc-complete", {
-        detail: this,
-      });
-      document.body.dispatchEvent(evt);
-    } else {
+    if (responseObj.status.toLowerCase() !== "complete") {
       window.setTimeout(() => {
         this.#checkStatus();
       }, CHECK_INTERVAL_MS);

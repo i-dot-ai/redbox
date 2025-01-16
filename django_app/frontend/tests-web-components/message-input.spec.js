@@ -6,10 +6,10 @@ test(`Message input functionality`, async ({ page }) => {
 
   await page.goto("/chats");
 
-  const messageInput = page.locator(".iai-chat-input__input");
+  const messageInput = page.locator(".rb-chat-input textarea");
 
   const height1 = await page.evaluate(
-    () => document.querySelector(".iai-chat-input__input").scrollHeight
+    () => document.querySelector(".rb-chat-input textarea").scrollHeight
   );
 
   // Pressing shift + enter doesn't send the message
@@ -19,7 +19,7 @@ test(`Message input functionality`, async ({ page }) => {
 
   // The height of the textarea increases to fit content
   const height2 = await page.evaluate(
-    () => document.querySelector(".iai-chat-input__input").scrollHeight
+    () => document.querySelector(".rb-chat-input textarea").scrollHeight
   );
   expect(height2 > height1).toBeTruthy();
 
@@ -39,7 +39,7 @@ test(`Message input functionality`, async ({ page }) => {
 
   // And the height of the textarea returns to it's original height
   const height3 = await page.evaluate(
-    () => document.querySelector(".iai-chat-input__input").scrollHeight
+    () => document.querySelector(".rb-chat-input textarea").scrollHeight
   );
   expect(height3).toEqual(height1);
 });

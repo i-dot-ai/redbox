@@ -69,26 +69,6 @@ body {
   filter: brightness(0.9);
 }
 
-/* File upload */
-.rb-file-types {
-  font-size: 0.875rem;
-}
-upload-button {
-  display: block;
-}
-
-/* Citations page */
-.rb-citations__list {
-  padding-left: 1rem;
-}
-.rb-citations__item {
-  border-top: 1px solid #e5e7eb;
-  padding: 2rem 0 1.5rem 0;
-}
-.rb-citations__item:first-child {
-  border-top: none;
-}
-
 /* i.AI Design System */
 :root {
   --iai-product-colour: #9c0000;
@@ -99,51 +79,10 @@ upload-button {
 }
 @import "../../node_modules/i.ai-design-system/dist/styles.scss";
 
-/* Documents page - to come after i.AI Design System */
-.rb-doc-retention {
-  align-items: center;
-  display: flex;
-  gap: 0.5rem;
-}
-.iai-doc-list {
-  display: none;
-}
-.iai-doc-list:has(.iai-doc-list__item) {
-  display: block;
-}
-.rb-docs__show-if-docs {
-  display: none;
-}
-.rb-docs:has(.iai-doc-list__item) .rb-docs__show-if-docs {
-  display: block;
-}
-.rb-docs:has(.iai-doc-list__item) .rb-docs__show-if-no-docs {
-  display: none;
-}
-.rb-docs__upload-error {
-  align-items: center;
-  display: none;
-  font-size: 0.875rem;
-  gap: 0.75rem;
-  line-height: 1.4;
-}
-.rb-docs__upload-error svg {
-  color: var(--iai-product-colour);
-}
-.rb-docs:has(file-status[data-status*="error"]) .rb-docs__upload-error {
-  display: flex;
-}
-
 
 /* Chats Page - to come after i.AI Design System */
 @import "./chats/chats.scss";
 
-/* To move to i.AI design system */
-.iai-chat-bubble__text code {
-  background-color: #f5ebeb;
-  display: inline;
-  padding: 0.125rem;
-}
 
 /* Print styles */
 @import "./print.scss";

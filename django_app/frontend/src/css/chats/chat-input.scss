@@ -1,0 +1,47 @@
+.rb-chat-input {
+  background: linear-gradient(309deg, #f2f3f6 4.42%, #e5e6ec 92.55%);
+  border: 1px solid #e0e0e0;
+  border-top-left-radius: 1rem;
+  border-top-right-radius: 1rem;
+  bottom: 0;
+  left: 0;
+  margin-top: 1rem;
+  max-width: 94%;
+  padding: 0.5rem 1rem;
+  position: sticky;
+  right: 0;
+}
+.rb-chat-input__container {
+  align-items: center;
+  display: flex;
+  gap: 1rem;
+}
+
+.rb-chat-input__input-container {
+  flex-grow: 1;
+}
+.rb-chat-input__input-container label {
+  display: block;
+  margin-left: 1rem;
+}
+.rb-chat-input__input-container textarea {
+  border-radius: 1rem;
+  font-size: 0.875rem;
+  line-height: 1.5rem;
+  max-height: 132px;
+  min-height: 38px;
+  padding: 0.375rem 1rem;
+  resize: vertical;
+  width: 100%;
+}
+
+.rb-chat-input__button-container {
+  display: flex;
+  gap: 0.5rem;
+}
+
+@media (min-width: 1020px) {
+  .rb-chat-input {
+    max-width: 100%;
+  }
+}

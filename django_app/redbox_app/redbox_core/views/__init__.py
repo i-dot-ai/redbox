@@ -13,7 +13,6 @@ from redbox_app.redbox_core.views.demographics_views import (
     UpdateDemographicsView,
 )
 from redbox_app.redbox_core.views.document_views import (
-    DocumentView,
     UploadView,
     file_status_api_view,
     remove_doc_view,
@@ -29,7 +28,6 @@ __all__ = [
     "ChatsViewNew",
     "CheckDemographicsView",
     "DemographicsView",
-    "DocumentView",
     "RatingsView",
     "SecurityTxtRedirectView",
     "UploadView",
