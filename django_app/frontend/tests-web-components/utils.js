@@ -32,7 +32,7 @@ const signIn = async (page) => {
 };
 
 const sendMessage = async (page) => {
-  await page.locator(".iai-chat-input__input").fill("Testing");
+  await page.locator(".rb-chat-input textarea").fill("Testing");
   await page.getByRole("button", { name: "Send" }).click();
 };
 

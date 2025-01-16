@@ -64,7 +64,6 @@ export class ChatMessage extends HTMLElement {
   /**
    * Streams an LLM response
    * @param {string} message
-   * @param {string[]} selectedDocuments An array of IDs
    * @param {string} llm
    * @param {string | undefined} sessionId
    * @param {string} endPoint
@@ -72,7 +71,6 @@ export class ChatMessage extends HTMLElement {
    */
   stream = (
     message,
-    selectedDocuments,
     llm,
     sessionId,
     endPoint,
@@ -116,7 +114,6 @@ export class ChatMessage extends HTMLElement {
         JSON.stringify({
           message: message,
           sessionId: sessionId,
-          selectedFiles: selectedDocuments,
           llm: llm,
         })
       );
