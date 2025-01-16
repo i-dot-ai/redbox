@@ -29,4 +29,7 @@ class DjangoFileRetriever(BaseRetriever):
 
         files = self.file_manager.filter(original_file__in=file_names, text__isnull=False, metadata__isnull=False)
 
-        return [Document(page_content=file.text, metadata=file.metadata) for file in files]
+        return [
+            Document(page_content=file.text, metadata={"token_count": file.token_count, "uri": file.url})
+            for file in files
+        ]

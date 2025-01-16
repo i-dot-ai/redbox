@@ -87,7 +87,8 @@ def es_vector_store(
 class FakeFile:
     def __init__(self, text, metadata):
         self.text = text
-        self.metadata = metadata
+        self.token_count = metadata["token_count"]
+        self.url = metadata["uri"]
 
 
 class FileManager:

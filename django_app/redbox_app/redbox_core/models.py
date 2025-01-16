@@ -621,7 +621,6 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
         upload_to=build_s3_key,
     )
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    original_file_name = models.TextField(max_length=2048, blank=True, null=True)  # delete me
     last_referenced = models.DateTimeField(blank=True, null=True)
     ingest_error = models.TextField(
         max_length=2048,
@@ -637,7 +636,7 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
         help_text="chat that this document belongs to, which may be nothing for now",
     )
     text = models.TextField(null=True, blank=True, help_text="text extracted from file")
-    metadata = models.JSONField(null=True, blank=True, help_text="metadata extracted from file")
+    token_count = models.PositiveIntegerField(null=True, blank=True, help_text="number of tokens in the document")
 
     def __str__(self) -> str:  # pragma: no cover
         return self.file_name
@@ -672,9 +671,6 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
 
     @property
     def file_name(self) -> str:
-        if self.original_file_name:  # delete me?
-            return self.original_file_name
-
         # could have a stronger (regex?) way of stripping the users email address?
         if "/" in self.original_file.name:
             return self.original_file.name.split("/")[1]
