@@ -4,7 +4,7 @@ from django.db import migrations, models
 
 def back_populate_file_token_count(apps, schema_editor):
     File = apps.get_model("redbox_core", "File")
-    for file in File.objects.filter(metadata_isnull=False):
+    for file in File.objects.filter(metadata__isnull=False):
         file.token_count = file.metadata.get("token_count")
         file.save()
 
