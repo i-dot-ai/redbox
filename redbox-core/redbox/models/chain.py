@@ -50,65 +50,6 @@ class AISettings(BaseModel):
     chat_backend: ChatLLMBackend = ChatLLMBackend()
 
 
-DocumentMapping = dict[UUID, Document | None]
-DocumentGroup = dict[UUID, DocumentMapping | None]
-
-
-class DocumentState(BaseModel):
-    """A document state containing groups of documents."""
-
-    groups: DocumentGroup = Field(default_factory=DocumentGroup)
-
-
-def document_reducer(current: DocumentState | None, update: DocumentState | list[DocumentState]) -> DocumentState:
-    """Merges two document states based on the following rules.
-
-    * Groups are matched by the group key.
-    * Documents are matched by the group key and document key.
-
-    Then:
-
-    * If key(s) are matched, the group or Document is replaced
-    * If key(s) are matched and the key is None, the key is cleared
-    * If key(s) aren't matched, group or Document is added
-    """
-    # If update is actually a list of state updates, run them one by one
-    if isinstance(update, list):
-        reduced = reduce(lambda current, update: document_reducer(current, update), update, current)
-        return reduced
-
-    # If state is empty, return update
-    if current is None:
-        return update
-
-    reduced = {k: v.copy() for k, v in current.groups.items()}
-
-    # Update with update
-    for group_key, group in update.groups.items():
-        # If group is None, remove from output if a group key is matched
-        if group is None:
-            reduced.pop(group_key, None)
-            continue
-
-        # If group key isn't matched, add it
-        if group_key not in reduced:
-            reduced[group_key] = group.copy()
-
-        for document_key, document in group.items():
-            if document is None:
-                # If Document is None, remove from output if a group and document key is matched
-                reduced[group_key].pop(document_key, None)
-            else:
-                # Otherwise, update or add the value
-                reduced[group_key][document_key] = document
-
-        # Remove group_key from output if it becomes empty after updates
-        if not reduced[group_key]:
-            del reduced[group_key]
-
-    return DocumentState(groups=reduced)
-
-
 class RedboxQuery(BaseModel):
     question: str = Field(description="The last user chat message")
     s3_keys: list[str] = Field(description="List of files to process", default_factory=list)
@@ -182,7 +123,7 @@ def metadata_reducer(
 
 class RedboxState(BaseModel):
     request: RedboxQuery
-    documents: Annotated[DocumentState, document_reducer] = DocumentState()
+    documents: list[Document] = Field(default_factory=list)
     route_name: str | None = None
     metadata: Annotated[RequestMetadata | None, metadata_reducer] = None
     messages: Annotated[list[AnyMessage], add_messages] = Field(default_factory=list)

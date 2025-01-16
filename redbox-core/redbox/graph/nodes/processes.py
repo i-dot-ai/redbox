@@ -4,7 +4,6 @@ from collections.abc import Callable
 from typing import Any
 
 from langchain.schema import StrOutputParser
-from langchain_core.documents import Document
 from langchain_core.messages import AIMessage, HumanMessage
 from langchain_core.runnables import Runnable, RunnableLambda, RunnableParallel
 from langchain_core.tools import StructuredTool
@@ -13,9 +12,8 @@ from langchain_core.vectorstores import VectorStoreRetriever
 from redbox.chains.components import get_chat_llm
 from redbox.chains.runnables import CannedChatLLM, build_llm_chain
 from redbox.models import ChatRoute
-from redbox.models.chain import DocumentState, PromptSet, RedboxState, RequestMetadata
+from redbox.models.chain import PromptSet, RedboxState, RequestMetadata
 from redbox.models.graph import ROUTE_NAME_TAG, SOURCE_DOCUMENTS_TAG
-from redbox.transform import flatten_document_state
 
 log = logging.getLogger(__name__)
 re_keyword_pattern = re.compile(r"@(\w+)")
@@ -28,7 +26,7 @@ re_keyword_pattern = re.compile(r"@(\w+)")
 
 def build_retrieve_pattern(
     retriever: VectorStoreRetriever,
-    structure_func: Callable[[list[Document]], DocumentState],
+    structure_func: Callable,
     final_source_chain: bool = False,
 ) -> Runnable[RedboxState, dict[str, Any]]:
     """Returns a function that uses state["request"] and state["text"] to set state["documents"].
@@ -140,10 +138,9 @@ def build_set_metadata_pattern() -> Runnable[RedboxState, dict[str, Any]]:
 
     @RunnableLambda
     def _set_metadata_pattern(state: RedboxState):
-        flat_docs = flatten_document_state(state.documents)
         return {
             "metadata": RequestMetadata(
-                selected_files_total_tokens=sum(map(lambda d: d.metadata.get("token_count", 0), flat_docs)),
+                selected_files_total_tokens=sum(map(lambda d: d.metadata.get("token_count", 0), state.documents)),
                 number_of_selected_files=len(state.request.s3_keys),
             )
         }
@@ -167,8 +164,7 @@ def build_error_pattern(text: str, route_name: str | None) -> Runnable[RedboxSta
 
 
 def clear_documents_process(state: RedboxState) -> dict[str, Any]:
-    if documents := state.documents:
-        return {"documents": DocumentState(groups={group_id: None for group_id in documents.groups})}
+    return {"documents": []}
 
 
 def empty_process(state: RedboxState) -> None:
