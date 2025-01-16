@@ -8,7 +8,7 @@ from django.contrib.auth.decorators import login_required
 from django.core.exceptions import FieldError, ValidationError
 from django.core.files.uploadedfile import UploadedFile
 from django.http import HttpRequest, HttpResponse, JsonResponse
-from django.shortcuts import get_object_or_404, redirect, render
+from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.views import View
@@ -48,31 +48,7 @@ APPROVED_FILE_EXTENSIONS = [
 MAX_FILE_SIZE = 209715200  # 200 MB or 200 * 1024 * 1024
 
 
-class DocumentView(View):
-    @method_decorator(login_required)
-    def get(self, request: HttpRequest) -> HttpResponse:
-        completed_files, processing_files = File.get_completed_and_processing_files(request.user)
-
-        ingest_errors = request.session.get("ingest_errors", [])
-        request.session["ingest_errors"] = []
-
-        return render(
-            request,
-            template_name="documents.html",
-            context={
-                "request": request,
-                "completed_files": completed_files,
-                "processing_files": processing_files,
-                "ingest_errors": ingest_errors,
-            },
-        )
-
-
 class UploadView(View):
-    @method_decorator(login_required)
-    def get(self, request: HttpRequest) -> HttpResponse:
-        return self.build_response(request)
-
     @method_decorator(login_required)
     def post(self, request: HttpRequest, chat_id: uuid.UUID | None = None) -> HttpResponse:
         errors: MutableSequence[str] = []
@@ -95,18 +71,6 @@ class UploadView(View):
             return redirect(reverse("documents"))
 
         return self.build_response(request, errors)
-
-    @staticmethod
-    def build_response(request: HttpRequest, errors: Sequence[str] | None = None) -> HttpResponse:
-        return render(
-            request,
-            template_name="upload.html",
-            context={
-                "request": request,
-                "errors": {"upload_doc": errors or []},
-                "uploaded": not errors,
-            },
-        )
 
     @staticmethod
     def validate_uploaded_file(uploaded_file: UploadedFile) -> Sequence[str]:
@@ -156,13 +120,8 @@ def remove_doc_view(request, doc_id: uuid):
         file.delete_from_s3()
         file.status = File.Status.deleted
         file.save()
-        return redirect("documents")
 
-    return render(
-        request,
-        template_name="remove-doc.html",
-        context={"request": request, "doc_id": doc_id, "doc_name": file.file_name, "errors": []},
-    )
+    return JsonResponse({"status": file.get_status_text()})
 
 
 @require_http_methods(["GET"])

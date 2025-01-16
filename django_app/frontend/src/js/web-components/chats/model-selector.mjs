@@ -30,17 +30,15 @@ export class ModelSelector extends RedboxElement {
           ${this.options[this.selectedOption].name}
           <span aria-hidden="true">${this.expanded ? "▲" : "▼"}</span>
         </div>
-        ${this.expanded ? html`
-            <div class="rb-model-selector__list" id="models-list" role="listbox" aria-label="Model">
-              ${this.options.map(
-                (option, index) => html`
-                  <div role="option" @click=${this.#clickOption} class="rb-model-selector__option ${index === this.activeOption ? 'rb-model-selector__option--active' : ''}" data-index=${index} id="model-option-${index}" aria-selected=${index === this.selectedOption ? "true" : "false"} data-value=${option.id}>
-                    <span>${option.name}</span>
-                    <span>${option.description}</span>
-                  </div>
-              `)}
-            </div>
-        ` : nothing}
+        <div class="rb-model-selector__list" id="models-list" role="listbox" aria-label="Model" hidden=${this.expanded ? nothing : "true"}>
+          ${this.options.map(
+            (option, index) => html`
+              <div role="option" @click=${this.#clickOption} class="rb-model-selector__option ${index === this.activeOption ? 'rb-model-selector__option--active' : ''}" data-index=${index} id="model-option-${index}" aria-selected=${index === this.selectedOption ? "true" : "false"} data-value=${option.id}>
+                <span>${option.name}</span>
+                <span>${option.description}</span>
+              </div>
+          `)}
+        </div>
         <input type="hidden" id="llm-selector" name="llm" value=${this.options[this.selectedOption].id}/>
       `;
     }

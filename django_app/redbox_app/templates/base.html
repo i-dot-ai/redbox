@@ -38,7 +38,7 @@
   </script>
   {% endif %}
 
-  {# Temporarily removed due to this adding inline styles, which our CSP doesn't allow
+  {# Removed due to this adding inline styles, which our CSP doesn't allow
   {% if environment | lower == "preprod" %}
     <script type="module" src="{{ static('js/posthog.js') }}"></script>
   {% endif %}
@@ -62,7 +62,6 @@
     {{ iaiTopNav(
       product_name = "Redbox",
       menu_items = [
-        {"text": "Documents", "href": url('documents')},
         {"text": "Chats", "href": url('chats')}
       ],
       user_items = {

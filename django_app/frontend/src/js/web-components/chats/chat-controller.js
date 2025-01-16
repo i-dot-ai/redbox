@@ -8,7 +8,6 @@ class ChatController extends HTMLElement {
     const feedbackButtons = /** @type {HTMLElement | null} */ (
       this.querySelector("feedback-buttons")
     );
-    let selectedDocuments = [];
 
     messageForm?.addEventListener("submit", (evt) => {
       evt.preventDefault();
@@ -44,7 +43,6 @@ class ChatController extends HTMLElement {
 
       aiMessage.stream(
         userText,
-        selectedDocuments.map(doc => doc.id),
         llm,
         this.dataset.sessionId,
         this.dataset.streamUrl || "",
@@ -78,9 +76,6 @@ class ChatController extends HTMLElement {
       })();
     });
 
-    document.body.addEventListener("selected-docs-change", (evt) => {
-      selectedDocuments = /** @type{CustomEvent} */ (evt).detail;
-    });
   }
 }
 customElements.define("chat-controller", ChatController);

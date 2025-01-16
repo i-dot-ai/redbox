@@ -78,7 +78,7 @@ class ChatsView(View):
 
         return render(
             request,
-            template_name="chats-test.html" if request.GET.get("test") == "true" else "chats.html",
+            template_name="chats.html",
             context=context,
         )
 
