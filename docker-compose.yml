@@ -1,10 +1,4 @@
 services:
-  unstructured:
-    image: quay.io/unstructured-io/unstructured-api:latest
-    ports:
-      - 8000:8000
-    networks:
-      - redbox-app-network
   django-app:
     image: django-app:latest
     build:
@@ -84,8 +78,6 @@ services:
       - path: .env
         required: false
     depends_on:
-      unstructured:
-        condition: service_started
       minio:
         condition: service_healthy
       django-app:
@@ -118,100 +110,11 @@ services:
       timeout: 30s
       retries: 24
       start_period: 30s
-  elasticsearch:
-    image: elasticsearch:8.12.0
-    volumes:
-      - ./data/elastic/:/usr/share/elasticsearch/data:Z
-    ports:
-      - 9200:9200
-      - 9300:9300
-    environment:
-      # node.name: elasticsearch
-      - ES_JAVA_OPTS=-Xms512m -Xmx512m
-      # ELASTIC__PASSWORD: ${ELASTIC__PASSWORD:-}
-      - bootstrap.memory_lock=true
-      - discovery.type=single-node
-      - xpack.security.enabled=false
-      - xpack.security.enrollment.enabled=false
-      - cluster.routing.allocation.disk.threshold_enabled=false
-    networks:
-      - redbox-app-network
-    restart: unless-stopped
-    healthcheck:
-      test: curl --fail http://localhost:9200/_cluster/health || exit 1
-      interval: 5s
-      timeout: 30s
-      retries: 24
-      start_period: 60s
-  kibana:
-    image: kibana:8.12.0
-    ports:
-      - 5601:5601
-    environment:
-      # KIBANA_SYSTEM_PASSWORD: ${KIBANA_SYSTEM_PASSWORD:-}
-      # ELASTICSEARCH_PASSWORD: ${ELASTIC__PASSWORD:-}
-      # ELASTICSEARCH_HOSTS: "http://elasticsearch:9200"
-      # XPACK_SECURITY_ENABLED: "false"
-      XPACK_ENCRYPTEDSAVEDOBJECTS_ENCRYPTIONKEY: 19264f57-b71d-46e1-8f20-33be19131a6c
-    networks:
-      - redbox-app-network
-    depends_on:
-      elasticsearch:
-        condition: service_healthy
-    restart: unless-stopped
-  embeddings:
-    image: localai/localai:v2.18.1-aio-cpu #localai/localai:v2.18.1 should allow use of sentencetransformers backend
-    expose:
-      - "8080"
-    ports:
-      - "8080:8080"
-    environment:
-      - MODELS=/aio/cpu/embeddings.yaml #Use defaults embedding model for aio image. Only aio images available in ARM architecture
-      - MINIO_SECRET_KEY=minioadmin
-      - DEBUG=true
-    networks:
-      - redbox-app-network
-    volumes:
-      - ./data/embeddings/models:/models:cached
-      - ./data/embeddings/config:/config
-    restart: unless-stopped
-    healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:8080/readyz" ]
-      interval: 1m
-      timeout: 20m
-      retries: 5
-  langfuse:
-    image: langfuse/langfuse:2
-    depends_on:
-      db:
-        condition: service_healthy
-    ports:
-      - "3000:3000"
-    networks:
-      - redbox-app-network
-    environment:
-      - DATABASE_URL=postgresql://redbox-core:insecure@db:5432/langfuse
-      - NEXTAUTH_SECRET=mysecret
-      - SALT=mysalt
-      - ENCRYPTION_KEY=0000000000000000000000000000000000000000000000000000000000000000 # generate via `openssl rand -hex 32`
-      - NEXTAUTH_URL=http://localhost:3000
-      - TELEMETRY_ENABLED=${TELEMETRY_ENABLED:-false}
-      - LANGFUSE_ENABLE_EXPERIMENTAL_FEATURES=${LANGFUSE_ENABLE_EXPERIMENTAL_FEATURES:-false}
-      - LANGFUSE_INIT_ORG_ID=${LANGFUSE_INIT_ORG_ID:-Redbox}
-      - LANGFUSE_INIT_ORG_NAME=${LANGFUSE_INIT_ORG_NAME:-Redbox}
-      - LANGFUSE_INIT_PROJECT_ID=${LANGFUSE_INIT_PROJECT_ID:-Redbox}
-      - LANGFUSE_INIT_PROJECT_NAME=${LANGFUSE_INIT_PROJECT_NAME:-Redbox}
-      - LANGFUSE_INIT_PROJECT_PUBLIC_KEY=${LANGFUSE_INIT_PROJECT_PUBLIC_KEY:-pk-lf-6f517f1f-3fd0-4b00-9c2d-e9756132cc11} 
-      - LANGFUSE_INIT_PROJECT_SECRET_KEY=${LANGFUSE_INIT_PROJECT_SECRET_KEY:-sk-lf-878345f5-fa2c-46f0-8193-d6be00910ab0} #For local only
-      - LANGFUSE_INIT_USER_EMAIL=${LANGFUSE_INIT_USER_EMAIL:-me@redbox.localhost}
-      - LANGFUSE_INIT_USER_NAME=${LANGFUSE_INIT_USER_NAME:-me}
-      - LANGFUSE_INIT_USER_PASSWORD=${LANGFUSE_INIT_USER_PASSWORD:-insecure-langfuse}
 
 networks:
   redbox-app-network:
     driver: bridge
 
 volumes:
-  elasticsearch:
   redbox-app-data:
   local_postgres_data: {}

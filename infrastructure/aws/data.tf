@@ -1,7 +1,6 @@
 locals {
   record_prefix     = terraform.workspace == "prod" ? var.project_name : "${var.project_name}-${terraform.workspace}"
   django_host       = "${local.record_prefix}.${var.domain_name}"
-  unstructured_host = "${aws_service_discovery_service.unstructured_service_discovery_service.name}.${aws_service_discovery_private_dns_namespace.private_dns_namespace.name}"
   name              = "${var.team_name}-${terraform.workspace}-${var.project_name}"
   ssr_url = "${aws_service_discovery_service.lit_ssr_service_discovery_service.name}.${aws_service_discovery_private_dns_namespace.private_dns_namespace.name}"
 
@@ -11,7 +10,6 @@ locals {
     "AZURE_OPENAI_MODEL" : var.azure_openai_model,
 
     "LIT_SSR_URL": local.ssr_url,
-    "UNSTRUCTURED_HOST" : local.unstructured_host
 
     "OBJECT_STORE" : "s3",
     "BUCKET_NAME" : aws_s3_bucket.user_data.bucket,
@@ -28,7 +26,6 @@ locals {
     "MAX_SECURITY_CLASSIFICATION" : "OFFICIAL_SENSITIVE",
     "SENTRY_ENVIRONMENT" : var.sentry_environment,
     "SENTRY_REPORT_TO_ENDPOINT" : var.sentry_report_to_endpoint,
-    "UNSTRUCTURED_HOST" : local.unstructured_host,
 
     "ELASTIC_ROOT_INDEX" : "redbox-data-${terraform.workspace}",
     "ELASTIC_CHUNK_ALIAS" : "redbox-data-${terraform.workspace}-chunk-current",
@@ -36,7 +33,6 @@ locals {
     "OBJECT_STORE" : "s3",
     "ENVIRONMENT" : upper(terraform.workspace),
     "DEBUG" : terraform.workspace == "dev",
-    "UNSTRUCTURED_HOST" : local.unstructured_host,
   }
 
   django_app_secrets = {
