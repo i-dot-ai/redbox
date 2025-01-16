@@ -24,7 +24,7 @@ def ingest(file_id: UUID) -> None:
         file.metadata = {
             "token_count": len(tokeniser.encode(markdown.text_content)),
             "uri": file.url,
-            "uuid": file.id,
+            "uuid": str(file.id),
         }
         file.status = File.Status.complete
         file.save()
