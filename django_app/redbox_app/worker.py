@@ -21,7 +21,11 @@ def ingest(file_id: UUID) -> None:
     try:
         markdown = md.convert(file.url)
         file.text = sanitise_string(markdown.text_content)
-        file.metadata = {"token_count": len(tokeniser.encode(markdown.text_content)), "uri": file.url}
+        file.metadata = {
+            "token_count": len(tokeniser.encode(markdown.text_content)),
+            "uri": file.url,
+            "uuid": file.id,
+        }
         file.status = File.Status.complete
         file.save()
     except Exception as error:  # noqa: BLE001
