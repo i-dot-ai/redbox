@@ -5,7 +5,7 @@ from langchain_core.messages import AIMessage
 from langchain_core.runnables import RunnableLambda
 
 from redbox.models.chain import LLMCallMetadata, RequestMetadata
-from redbox.transform import     to_request_metadata
+from redbox.transform import to_request_metadata
 
 document_created = datetime.now(UTC)
 
