@@ -10,7 +10,6 @@ from django.core.management import CommandError, call_command
 from django.utils import timezone
 from freezegun import freeze_time
 from magic_link.models import MagicLink
-from requests_mock import Mocker
 
 from redbox_app.redbox_core.models import Chat, ChatMessage, File
 
@@ -154,14 +153,9 @@ def test_delete_expired_chats(chat: Chat, msg_1_date: datetime, msg_2_date: date
 
 
 @pytest.mark.django_db(transaction=True)
-def test_reingest_files(uploaded_file: File, requests_mock: Mocker):
+def test_reingest_files(uploaded_file: File):
     # Given
     assert uploaded_file.status == File.Status.processing
-
-    requests_mock.post(
-        f"http://{settings.UNSTRUCTURED_HOST}:8000/general/v0/general",
-        json=[{"text": "hello", "metadata": {"filename": "my-file.txt"}}],
-    )
 
     # When
     call_command("reingest_files", sync=True)
@@ -169,22 +163,3 @@ def test_reingest_files(uploaded_file: File, requests_mock: Mocker):
     # Then
     uploaded_file.refresh_from_db()
     assert uploaded_file.status == File.Status.complete
-
-
-@pytest.mark.django_db(transaction=True)
-def test_reingest_files_unstructured_fail(uploaded_file: File, requests_mock: Mocker):
-    # Given
-    assert uploaded_file.status == File.Status.processing
-
-    requests_mock.post(
-        f"http://{settings.UNSTRUCTURED_HOST}:8000/general/v0/general",
-        json=[],
-    )
-
-    # When
-    call_command("reingest_files", sync=True)
-
-    # Then
-    uploaded_file.refresh_from_db()
-    assert uploaded_file.status == File.Status.errored
-    assert uploaded_file.ingest_error == "Unstructured failed to extract text for this file"

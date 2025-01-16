@@ -388,8 +388,6 @@ Q_CLUSTER = {
     "workers": 1,
 }
 
-UNSTRUCTURED_HOST = env.str("UNSTRUCTURED_HOST")
-
 GOOGLE_ANALYTICS_TAG = env.str("GOOGLE_ANALYTICS_TAG", " ")
 GOOGLE_ANALYTICS_LINK = env.str("GOOGLE_ANALYTICS_LINK", " ")
 LIT_SSR_URL = env.str("LIT_SSR_URL", "localhost")

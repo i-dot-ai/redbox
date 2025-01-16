@@ -1,9 +1,13 @@
-import json
 import logging
 from uuid import UUID
 
-from redbox.loader.ingester import ingest_file
+from markitdown import MarkItDown
+
+from redbox.chains.components import get_tokeniser
 from redbox_app.redbox_core.models import sanitise_string
+
+md = MarkItDown()
+tokeniser = get_tokeniser()
 
 
 def ingest(file_id: UUID) -> None:
@@ -15,9 +19,13 @@ def ingest(file_id: UUID) -> None:
     logging.info("Ingesting file: %s", file)
 
     try:
-        text, metadata = ingest_file(file.unique_name)
-        text = sanitise_string(text)
-        file.text, file.metadata = text, json.loads(metadata.model_dump_json())
+        markdown = md.convert(file.url)
+        file.text = sanitise_string(markdown.text_content)
+        file.metadata = {
+            "token_count": len(tokeniser.encode(markdown.text_content)),
+            "uri": file.url,
+            "uuid": str(file.id),
+        }
         file.status = File.Status.complete
         file.save()
     except Exception as error:  # noqa: BLE001
