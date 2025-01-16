@@ -217,7 +217,7 @@ RETRIEVER_TEST_CASES = generate_test_cases(
 def test_build_retrieve_pattern(test_case: RedboxChatTestCase, mock_retriever: BaseRetriever):
     """Tests a given state["request"] correctly changes state["documents"]."""
     retriever = mock_retriever(test_case.docs)
-    retriever_function = build_retrieve_pattern(retriever=retriever, structure_func=list)
+    retriever_function = build_retrieve_pattern(retriever=retriever)
     state = RedboxState(request=test_case.query)
 
     response = retriever_function.invoke(state)

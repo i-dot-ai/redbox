@@ -1,6 +1,5 @@
 import logging
 import re
-from collections.abc import Callable
 from typing import Any
 
 from langchain.schema import StrOutputParser
@@ -26,14 +25,13 @@ re_keyword_pattern = re.compile(r"@(\w+)")
 
 def build_retrieve_pattern(
     retriever: VectorStoreRetriever,
-    structure_func: Callable,
     final_source_chain: bool = False,
 ) -> Runnable[RedboxState, dict[str, Any]]:
     """Returns a function that uses state["request"] and state["text"] to set state["documents"].
 
     Uses structure_func to order the retriever documents for the state.
     """
-    retriever_chain = RunnableParallel({"documents": retriever | structure_func})
+    retriever_chain = RunnableParallel({"documents": retriever})
 
     if final_source_chain:
         _retriever = retriever_chain.with_config(tags=[SOURCE_DOCUMENTS_TAG])
