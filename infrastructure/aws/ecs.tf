@@ -24,25 +24,6 @@ resource "aws_service_discovery_private_dns_namespace" "private_dns_namespace" {
 }
 
 
-resource "aws_service_discovery_service" "unstructured_service_discovery_service" {
-  name = "${local.name}-unstructured"
-
-  dns_config {
-    namespace_id = aws_service_discovery_private_dns_namespace.private_dns_namespace.id
-
-    dns_records {
-      ttl  = 10
-      type = "A"
-    }
-
-    routing_policy = "MULTIVALUE"
-  }
-
-  health_check_custom_config {
-    failure_threshold = 1
-  }
-}
-
 resource "aws_service_discovery_service" "lit_ssr_service_discovery_service" {
   name = "${local.name}-lit-ssr"
 
@@ -113,39 +94,6 @@ module "django-app" {
 }
 
 
-module "unstructured" {
-  # checkov:skip=CKV_TF_1: We're using semantic versions instead of commit hash
-  #source                       = "../../i-dot-ai-core-terraform-modules//modules/infrastructure/ecs" # For testing local changes
-  source                        = "git::https://github.com/i-dot-ai/i-dot-ai-core-terraform-modules.git//modules/infrastructure/ecs?ref=v1.0.0-ecs"
-  service_discovery_service_arn = aws_service_discovery_service.unstructured_service_discovery_service.arn
-  memory                        = 4096
-  cpu                           = 2048
-  create_listener               = false
-  create_networking             = false
-  name                          = "${local.name}-unstructured"
-  image_tag                     = "latest"
-  ecr_repository_uri            = "quay.io/unstructured-io/unstructured-api"
-  ecs_cluster_id                = module.cluster.ecs_cluster_id
-  ecs_cluster_name              = module.cluster.ecs_cluster_name
-  autoscaling_minimum_target    = 1
-  autoscaling_maximum_target    = 1
-  health_check = {
-    healthy_threshold   = 3
-    unhealthy_threshold = 3
-    accepted_response   = "200"
-    path                = "/healthcheck"
-    timeout             = 5
-  }
-  state_bucket                 = var.state_bucket
-  vpc_id                       = data.terraform_remote_state.vpc.outputs.vpc_id
-  private_subnets              = data.terraform_remote_state.vpc.outputs.private_subnets
-  container_port               = 8000
-  load_balancer_security_group = module.load_balancer.load_balancer_security_group_id
-  aws_lb_arn                   = module.load_balancer.alb_arn
-  ephemeral_storage            = 30
-  auto_scale_off_peak_times    = true
-  wait_for_ready_state         = true
-}
 
 
 module "worker" {
@@ -213,17 +161,6 @@ module "lit-ssr" {
   ephemeral_storage            = 21
   auto_scale_off_peak_times    = true
   wait_for_ready_state         = true
-}
-
-
-resource "aws_security_group_rule" "ecs_ingress_worker_to_unstructured" {
-  type                     = "ingress"
-  description              = "Allow all traffic from the worker to unstructured"
-  from_port                = 0
-  to_port                  = 0
-  protocol                 = "-1"
-  source_security_group_id = module.worker.ecs_sg_id
-  security_group_id        = module.unstructured.ecs_sg_id
 }
 
 
