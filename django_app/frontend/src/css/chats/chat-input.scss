@@ -40,6 +40,11 @@
   gap: 0.5rem;
 }
 
+.rb-chat-input__bottom-container {
+  display: flex;
+  gap: 1rem;
+}
+
 @media (min-width: 1020px) {
   .rb-chat-input {
     max-width: 100%;
