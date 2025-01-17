@@ -17,6 +17,7 @@ from redbox import Redbox
 from redbox.models.chain import (
     AISettings,
     ChainChatMessage,
+    PromptSet,
     RedboxQuery,
     RedboxState,
     RequestMetadata,
@@ -120,6 +121,17 @@ class ChatConsumer(AsyncWebsocketConsumer):
         message_history: Sequence[Mapping[str, str]] = [message async for message in session_messages]
 
         ai_settings = await self.get_ai_settings(session)
+
+        document_token_count = sum(file.metadata["token_count"] for file in selected_files)
+        message_history_token_count = sum(message.token_count for message in message_history)
+
+        if document_token_count + message_history_token_count > ai_settings.context_window_size:
+            await self.send_to_client("error", "selected are too big to work with")
+            return
+
+        self.route = PromptSet.ChatwithDocs if selected_files else PromptSet.Chat
+        self.send_to_client("route", self.route)
+
         state = RedboxState(
             request=RedboxQuery(
                 question=message_history[-1].text,
