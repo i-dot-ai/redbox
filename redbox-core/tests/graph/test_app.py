@@ -9,8 +9,6 @@ from redbox import Redbox
 from redbox.models.chain import (
     RedboxQuery,
     RedboxState,
-    RequestMetadata,
-    metadata_reducer,
 )
 from redbox.models.chat import ChatRoute, ErrorRoute
 from redbox.models.settings import Settings
@@ -19,7 +17,6 @@ from redbox.test.data import (
     RedboxChatTestCase,
     RedboxTestData,
     generate_test_cases,
-    mock_retriever,
 )
 
 LANGGRAPH_DEBUG = True
@@ -186,7 +183,6 @@ async def test_streaming(test: RedboxChatTestCase, env: Settings, mocker: Mocker
 
     # Instantiate app
     app = Redbox(
-        retriever=mock_retriever(test_case.docs),
         debug=LANGGRAPH_DEBUG,
     )
 
@@ -226,16 +222,6 @@ async def test_streaming(test: RedboxChatTestCase, env: Settings, mocker: Mocker
         ), f"Expected {len(test_case.test_data.llm_responses)} metadata events. Received {len(metadata_events)}"
 
     llm_response = "".join(token_events)
-    number_of_selected_files = len(test_case.query.s3_keys)
-    metadata_response = metadata_reducer(
-        RequestMetadata(
-            selected_files_total_tokens=0
-            if number_of_selected_files == 0
-            else (int(test_case.test_data.tokens_in_all_docs / number_of_selected_files) * number_of_selected_files),
-            number_of_selected_files=number_of_selected_files,
-        ),
-        metadata_events,
-    )
 
     expected_text = (
         test.test_data.expected_text if test.test_data.expected_text is not None else test.test_data.llm_responses[-1]
@@ -245,9 +231,4 @@ async def test_streaming(test: RedboxChatTestCase, env: Settings, mocker: Mocker
     assert (
         final_state.last_message.content == llm_response
     ), f"Text response from streaming: '{llm_response}' did not match final state text '{final_state.last_message.content}'"
-    assert (
-        final_state.last_message.content == expected_text
-    ), f"Expected text: '{expected_text}' did not match received text '{final_state.last_message.content}'"
-
-    if metadata := final_state.metadata:
-        assert metadata == metadata_response, f"Expected metadata: '{metadata_response}'. Received '{metadata}'"
+    assert final_state.last_message.content == expected_text

@@ -3,7 +3,6 @@ from uuid import uuid4
 import pytest
 from langchain_core.language_models.fake_chat_models import GenericFakeChatModel
 from langchain_core.messages import AIMessage, HumanMessage, ToolCall
-from langchain_core.retrievers import BaseRetriever
 from langgraph.graph import END, START, StateGraph
 from pytest_mock import MockerFixture
 from tiktoken.core import Encoding
@@ -12,10 +11,8 @@ from redbox.chains.runnables import CannedChatLLM, build_chat_prompt_from_messag
 from redbox.graph.nodes.processes import (
     build_chat_pattern,
     build_passthrough_pattern,
-    build_retrieve_pattern,
     build_set_text_pattern,
     build_stuff_pattern,
-    clear_documents_process,
     empty_process,
 )
 from redbox.models.chain import PromptSet, RedboxQuery, RedboxState
@@ -25,8 +22,6 @@ from redbox.test.data import (
     RedboxTestData,
     generate_docs,
     generate_test_cases,
-    mock_retriever,
-    mock_parameterised_retriever,
 )
 
 LANGGRAPH_DEBUG = True
@@ -140,56 +135,6 @@ def test_build_chat_pattern(test_case: RedboxChatTestCase, mocker: MockerFixture
     ), f"Expected LLM response: '{test_case_content}'. Received '{final_state['messages'][-1].content}'"
 
 
-RETRIEVER_TEST_CASES = generate_test_cases(
-    query=RedboxQuery(
-        question="What is AI?",
-        s3_keys=["s3_key_1", "s3_key_2"],
-        user_uuid=uuid4(),
-        chat_history=[],
-    ),
-    test_data=[
-        RedboxTestData(
-            number_of_docs=2,
-            tokens_in_all_docs=40_000,
-            llm_responses=["Testing Response 1"],
-            expected_route=ChatRoute.chat_with_docs,
-        ),
-        RedboxTestData(
-            number_of_docs=2,
-            tokens_in_all_docs=80_000,
-            llm_responses=["Testing Response 1"],
-            expected_route=ChatRoute.chat_with_docs,
-        ),
-        RedboxTestData(
-            number_of_docs=4,
-            tokens_in_all_docs=140_000,
-            llm_responses=["Map Step Response"] * 4 + ["Testing Response 1"],
-            expected_route=ChatRoute.chat_with_docs,
-        ),
-    ],
-    test_id="Retriever pattern",
-)
-
-
-@pytest.mark.parametrize(
-    ("test_case", "mock_retriever"),
-    [(test_case, mock_retriever) for test_case in RETRIEVER_TEST_CASES]
-    + [(test_case, mock_parameterised_retriever) for test_case in RETRIEVER_TEST_CASES],
-    ids=[f"All chunks, {t.test_id}" for t in RETRIEVER_TEST_CASES]
-    + [f"Parameterised, {t.test_id}" for t in RETRIEVER_TEST_CASES],
-)
-def test_build_retrieve_pattern(test_case: RedboxChatTestCase, mock_retriever: BaseRetriever):
-    """Tests a given state["request"] correctly changes state["documents"]."""
-    retriever = mock_retriever(test_case.docs)
-    retriever_function = build_retrieve_pattern(retriever=retriever)
-    state = RedboxState(request=test_case.query)
-
-    response = retriever_function.invoke(state)
-    final_state = RedboxState(**response, request=test_case.query)
-
-    assert final_state.documents == test_case.docs
-
-
 STUFF_TEST_CASES = generate_test_cases(
     query=RedboxQuery(
         question="What is AI?",
@@ -219,7 +164,7 @@ STUFF_TEST_CASES = generate_test_cases(
 def test_build_stuff_pattern(test_case: RedboxChatTestCase, mocker: MockerFixture):
     """Tests a given state["request"] and state["documents"] correctly changes state["text"]."""
     llm = GenericFakeChatModel(messages=iter(test_case.test_data.llm_responses))
-    state = RedboxState(request=test_case.query, documents=test_case.docs)
+    state = RedboxState(request=test_case.query)
 
     stuff = build_stuff_pattern(prompt_set=PromptSet.ChatwithDocs, final_response_chain=True)
 
@@ -313,46 +258,6 @@ def test_empty_process():
     final_state = RedboxState(**response)
 
     assert final_state == state
-
-
-CLEAR_DOC_TEST_CASES = [
-    RedboxState(
-        request=RedboxQuery(
-            question="What is AI?",
-            file_uuids=[],
-            user_uuid=uuid4(),
-            chat_history=[],
-        ),
-        documents=[doc for doc in generate_docs(s3_key="s3_key")],
-        messages=[HumanMessage(content="Foo")],
-        route_name=ChatRoute.chat_with_docs,
-    ),
-    RedboxState(
-        request=RedboxQuery(
-            question="What is AI?",
-            file_uuids=[],
-            user_uuid=uuid4(),
-            chat_history=[],
-        ),
-        messages=[HumanMessage(content="Foo")],
-        route_name=ChatRoute.chat_with_docs,
-    ),
-]
-
-
-@pytest.mark.parametrize(("test_case"), CLEAR_DOC_TEST_CASES)
-def test_clear_documents(test_case: list[RedboxState]):
-    """Tests that clear documents does what it says."""
-    builder = StateGraph(RedboxState)
-    builder.add_node("clear", clear_documents_process)
-    builder.add_edge(START, "clear")
-    builder.add_edge("clear", END)
-    graph = builder.compile()
-
-    response = graph.invoke(test_case)
-    final_state = RedboxState(**response)
-
-    assert final_state.documents == []
 
 
 def test_canned_llm():

@@ -4,15 +4,14 @@ from typing import Any
 
 from langchain.schema import StrOutputParser
 from langchain_core.messages import AIMessage, HumanMessage
-from langchain_core.runnables import Runnable, RunnableLambda, RunnableParallel
+from langchain_core.runnables import Runnable, RunnableLambda
 from langchain_core.tools import StructuredTool
-from langchain_core.vectorstores import VectorStoreRetriever
 
 from redbox.chains.components import get_chat_llm
 from redbox.chains.runnables import CannedChatLLM, build_llm_chain
 from redbox.models import ChatRoute
-from redbox.models.chain import PromptSet, RedboxState, RequestMetadata
-from redbox.models.graph import ROUTE_NAME_TAG, SOURCE_DOCUMENTS_TAG
+from redbox.models.chain import PromptSet, RedboxState
+from redbox.models.graph import ROUTE_NAME_TAG
 
 log = logging.getLogger(__name__)
 re_keyword_pattern = re.compile(r"@(\w+)")
@@ -21,24 +20,6 @@ re_keyword_pattern = re.compile(r"@(\w+)")
 # Patterns: functions that build processes
 
 ## Core patterns
-
-
-def build_retrieve_pattern(
-    retriever: VectorStoreRetriever,
-    final_source_chain: bool = False,
-) -> Runnable[RedboxState, dict[str, Any]]:
-    """Returns a function that uses state["request"] and state["text"] to set state["documents"].
-
-    Uses structure_func to order the retriever documents for the state.
-    """
-    retriever_chain = RunnableParallel({"documents": retriever})
-
-    if final_source_chain:
-        _retriever = retriever_chain.with_config(tags=[SOURCE_DOCUMENTS_TAG])
-    else:
-        _retriever = retriever_chain
-
-    return _retriever
 
 
 def build_chat_pattern(
@@ -131,21 +112,6 @@ def build_set_text_pattern(text: str, final_response_chain: bool = False) -> Run
     return _set_text
 
 
-def build_set_metadata_pattern() -> Runnable[RedboxState, dict[str, Any]]:
-    """A Runnable which calculates the static request metadata from the state"""
-
-    @RunnableLambda
-    def _set_metadata_pattern(state: RedboxState):
-        return {
-            "metadata": RequestMetadata(
-                selected_files_total_tokens=sum(map(lambda d: d.metadata.get("token_count", 0), state.documents)),
-                number_of_selected_files=len(state.request.s3_keys),
-            )
-        }
-
-    return _set_metadata_pattern
-
-
 def build_error_pattern(text: str, route_name: str | None) -> Runnable[RedboxState, dict[str, Any]]:
     """A Runnable which sets text and route to record an error"""
 
@@ -159,10 +125,6 @@ def build_error_pattern(text: str, route_name: str | None) -> Runnable[RedboxSta
 
 
 # Raw processes: functions that need no building
-
-
-def clear_documents_process(state: RedboxState) -> dict[str, Any]:
-    return {"documents": []}
 
 
 def empty_process(state: RedboxState) -> None:

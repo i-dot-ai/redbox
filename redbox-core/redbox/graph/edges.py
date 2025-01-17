@@ -33,7 +33,7 @@ def build_total_tokens_request_handler_conditional(prompt_set: PromptSet) -> Run
         token_budget_remaining_in_context = calculate_token_budget(state, system_prompt, question_prompt)
         max_tokens_allowed = state.request.ai_settings.max_document_tokens
 
-        total_tokens = state.metadata.selected_files_total_tokens
+        total_tokens = sum(x.metadata["token_count"] for x in state.request.documents)
 
         if total_tokens > max_tokens_allowed:
             return "max_exceeded"

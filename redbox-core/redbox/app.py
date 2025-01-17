@@ -1,7 +1,6 @@
 from logging import getLogger
 from typing import Literal
 
-from langchain_core.vectorstores import VectorStoreRetriever
 
 from redbox.graph.root import (
     get_chat_with_documents_graph,
@@ -25,15 +24,9 @@ logger = getLogger(__name__)
 class Redbox:
     def __init__(
         self,
-        retriever: VectorStoreRetriever,
         debug: bool = False,
     ):
-        # Retrievers
-
-        self.retriever = retriever
-
         self.graph = get_root_graph(
-            retriever=self.retriever,
             debug=debug,
         )
 

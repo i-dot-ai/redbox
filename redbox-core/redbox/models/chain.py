@@ -56,6 +56,7 @@ class RedboxQuery(BaseModel):
     user_uuid: UUID = Field(description="User the chain in executing for")
     chat_history: list[ChainChatMessage] = Field(description="All previous messages in chat (excluding question)")
     ai_settings: AISettings = Field(description="User request AI settings", default_factory=AISettings)
+    documents: list[Document] = Field(default_factory=list)
 
 
 class LLMCallMetadata(BaseModel):
@@ -122,7 +123,6 @@ def metadata_reducer(
 
 class RedboxState(BaseModel):
     request: RedboxQuery
-    documents: list[Document] = Field(default_factory=list)
     route_name: str | None = None
     metadata: Annotated[RequestMetadata | None, metadata_reducer] = None
     messages: Annotated[list[AnyMessage], add_messages] = Field(default_factory=list)

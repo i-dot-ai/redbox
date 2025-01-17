@@ -80,8 +80,9 @@ class RedboxChatTestCase:
             )
             for s3_key in all_s3_keys
         ]
+
         self.query = query
-        self.docs = [doc for generator in file_generators for doc in generator]
+        self.query.documents = [doc for generator in file_generators for doc in generator]
         self.test_data = test_data
         self.test_id = test_id
 
@@ -103,14 +104,6 @@ class FakeRetriever(BaseRetriever):
 
     async def _aget_relevant_documents(self, query: str) -> list[Document]:
         return self.docs
-
-
-def mock_retriever(docs: list[Document]) -> FakeRetriever:
-    return FakeRetriever(docs=docs)
-
-
-def mock_parameterised_retriever(docs: list[Document]) -> FakeRetriever:
-    return FakeRetriever(docs=docs)
 
 
 class GenericFakeChatModelWithTools(GenericFakeChatModel):
