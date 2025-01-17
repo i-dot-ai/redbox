@@ -26,7 +26,6 @@ from redbox.models.chain import ChainChatMessage, PromptSet, RedboxState, get_pr
 from redbox.models.errors import QuestionLengthError
 from redbox.models.graph import RedboxEventType
 from redbox.transform import (
-    flatten_document_state,
     get_all_metadata,
 )
 
@@ -78,7 +77,7 @@ def build_chat_prompt_from_messages_runnable(
             state.request.model_dump()
             | {
                 "messages": state.messages,
-                "formatted_documents": format_documents(flatten_document_state(state.documents)),
+                "formatted_documents": format_documents(state.documents),
             }
             | _additional_variables
         )

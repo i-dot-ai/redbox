@@ -20,7 +20,6 @@ from redbox.graph.nodes.processes import (
 )
 from redbox.models.chain import RedboxState
 from redbox.models.chat import ChatRoute, ErrorRoute
-from redbox.transform import structure_documents_by_file_name
 
 
 def get_chat_graph(
@@ -73,7 +72,6 @@ def get_chat_with_documents_graph(
         "p_retrieve_all_chunks",
         build_retrieve_pattern(
             retriever=retriever,
-            structure_func=structure_documents_by_file_name,
             final_source_chain=True,
         ),
     )
@@ -108,10 +106,7 @@ def get_retrieve_metadata_graph(retriever: VectorStoreRetriever, debug: bool = F
     # Processes
     builder.add_node(
         "p_retrieve_metadata",
-        build_retrieve_pattern(
-            retriever=retriever,
-            structure_func=structure_documents_by_file_name,
-        ),
+        build_retrieve_pattern(retriever=retriever),
     )
     builder.add_node("p_set_metadata", build_set_metadata_pattern())
     builder.add_node("p_clear_metadata_documents", clear_documents_process)
