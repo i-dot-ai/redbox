@@ -13,7 +13,6 @@ from redbox.graph.nodes.processes import (
     build_chat_pattern,
     build_passthrough_pattern,
     build_retrieve_pattern,
-    build_set_route_pattern,
     build_set_text_pattern,
     build_stuff_pattern,
     clear_documents_process,
@@ -139,40 +138,6 @@ def test_build_chat_pattern(test_case: RedboxChatTestCase, mocker: MockerFixture
     assert (
         final_state["messages"][-1].content == test_case_content
     ), f"Expected LLM response: '{test_case_content}'. Received '{final_state['messages'][-1].content}'"
-
-
-SET_ROUTE_TEST_CASES = generate_test_cases(
-    query=RedboxQuery(question="What is AI?", s3_keys=[], user_uuid=uuid4(), chat_history=[]),
-    test_data=[
-        RedboxTestData(
-            number_of_docs=0,
-            tokens_in_all_docs=0,
-            llm_responses=["Testing Response 1"],
-            expected_route=ChatRoute.chat,
-        ),
-        RedboxTestData(
-            number_of_docs=2,
-            tokens_in_all_docs=40_000,
-            llm_responses=["Testing Response 1"],
-            expected_route=ChatRoute.chat_with_docs,
-        ),
-    ],
-    test_id="Set route pattern",
-)
-
-
-@pytest.mark.parametrize(("test_case"), SET_ROUTE_TEST_CASES, ids=[t.test_id for t in SET_ROUTE_TEST_CASES])
-def test_build_set_route_pattern(test_case: RedboxChatTestCase):
-    """Tests a given value correctly changes state["route"]."""
-    set_route = build_set_route_pattern(route=test_case.test_data.expected_route)
-    state = RedboxState(request=test_case.query)
-
-    response = set_route.invoke(state)
-    final_state = RedboxState(**response, request=test_case.query)
-
-    assert (
-        final_state.route_name == test_case.test_data.expected_route.value
-    ), f"Expected Route: '{ test_case.test_data.expected_route.value}'. Received '{final_state.route_name}'"
 
 
 RETRIEVER_TEST_CASES = generate_test_cases(

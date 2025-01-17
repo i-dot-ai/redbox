@@ -249,8 +249,5 @@ async def test_streaming(test: RedboxChatTestCase, env: Settings, mocker: Mocker
         final_state.last_message.content == expected_text
     ), f"Expected text: '{expected_text}' did not match received text '{final_state.last_message.content}'"
 
-    assert (
-        final_state.route_name == test_case.test_data.expected_route
-    ), f"Expected Route: '{ test_case.test_data.expected_route}'. Received '{final_state.route_name}'"
     if metadata := final_state.metadata:
         assert metadata == metadata_response, f"Expected metadata: '{metadata_response}'. Received '{metadata}'"

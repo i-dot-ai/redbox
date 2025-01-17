@@ -24,7 +24,6 @@ class ChunkMetadata(BaseModel):
     uuid: UUID = Field(default_factory=uuid4)
     index: int = 0  # The order of this chunk in the original resource
     created_datetime: datetime.datetime = datetime.datetime.now(datetime.UTC)
-    chunk_resolution: ChunkResolution = ChunkResolution.normal
     uri: str = Field(validation_alias=AliasChoices("uri", "file_name"))  # URL or file name
     token_count: int
 

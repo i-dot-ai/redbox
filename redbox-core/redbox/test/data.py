@@ -1,9 +1,6 @@
-import datetime
 import logging
 from collections.abc import Callable
-from pathlib import Path
 from typing import Any, Generator, Sequence
-from uuid import uuid4
 
 from langchain_core.documents import Document
 from langchain_core.language_models.fake_chat_models import GenericFakeChatModel
@@ -13,21 +10,15 @@ from langchain_core.tools import BaseTool
 from pydantic.v1 import BaseModel, Field, validator
 
 from redbox.models.chain import RedboxQuery
-from redbox.models.chat import ChatRoute, ErrorRoute
-from redbox.models.file import ChunkResolution, UploadedFileMetadata
-from redbox.models.graph import RedboxActivityEvent
+from redbox.models.file import UploadedFileMetadata
 
 log = logging.getLogger()
 
 
 def generate_docs(
     s3_key: str = "test_data.pdf",
-    page_numbers: list[int] = [1, 2, 3, 4],
     total_tokens: int = 6000,
     number_of_docs: int = 10,
-    chunk_resolution: ChunkResolution = ChunkResolution.normal,
-    score: int = 1,
-    index_start: int = 0,
 ) -> Generator[Document, None, None]:
     """Generates a list of documents as if retrieved from a real retriever.
 
@@ -36,25 +27,13 @@ def generate_docs(
     """
     for i in range(number_of_docs):
         core_metadata = UploadedFileMetadata(
-            index=index_start + i,
             uri=s3_key,
-            page_number=page_numbers[int(i / number_of_docs) * len(page_numbers)],
-            created_datetime=datetime.datetime.now(datetime.UTC),
             token_count=int(total_tokens / number_of_docs),
-            chunk_resolution=chunk_resolution,
-            name=Path(s3_key).stem,
-            description="Lorem ipsum dolor sit amet",
-            keywords=["foo", "bar"],
         ).model_dump()
-
-        extra_metadata = {
-            "score": score,
-            "uuid": uuid4(),
-        }
 
         yield Document(
             page_content=f"Document {i} text",
-            metadata=core_metadata | extra_metadata,
+            metadata=core_metadata,
         )
 
 
@@ -64,14 +43,8 @@ class RedboxTestData(BaseModel):
 
     number_of_docs: int
     tokens_in_all_docs: int
-    chunk_resolution: ChunkResolution = ChunkResolution.largest
     llm_responses: list[str | AIMessage] = Field(default_factory=list)
     expected_text: str | None = None
-    expected_route: ChatRoute | ErrorRoute | None = None
-    expected_activity_events: Callable[[list[RedboxActivityEvent]], bool] = Field(
-        default=lambda _: True
-    )  # Function to check activity events are as expected
-    s3_keys: list[str] | None = None
 
     @validator("llm_responses", pre=True)
     @classmethod
@@ -92,8 +65,7 @@ class RedboxChatTestCase:
         query: RedboxQuery,
         test_data: RedboxTestData,
     ):
-        # Use separate file_uuids if specified else match the query
-        all_s3_keys = test_data.s3_keys if test_data.s3_keys else query.s3_keys
+        all_s3_keys = query.s3_keys
 
         if test_data.llm_responses is not None and len(test_data.llm_responses) < test_data.number_of_docs:
             log.warning(
@@ -105,7 +77,6 @@ class RedboxChatTestCase:
                 s3_key=s3_key,
                 total_tokens=int(test_data.tokens_in_all_docs / len(all_s3_keys)),
                 number_of_docs=int(test_data.number_of_docs / len(all_s3_keys)),
-                chunk_resolution=test_data.chunk_resolution,
             )
             for s3_key in all_s3_keys
         ]
