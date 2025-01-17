@@ -20,15 +20,17 @@ export class UploadContainer extends RedboxElement {
 
   render() {
     return html`
-      <div class="rb-uploaded-docs">
-        <h3>Uploaded documents</h3>
+      <div class="rb-upload-container">
+        <h3 class="govuk-visually-hidden">Uploading documents</h3>
         <ul>
           ${this.docs.map(
             (doc) => html`
               <li>
-                ${doc.file_name} : 
                 <file-status data-id=${doc.id}>${doc.file_status}</file-status>
-                <button @click=${this.#remove}>Remove</button>
+                <span class="rb-upload-container__filename-container">
+                  <span class="rb-upload-container__filename">${doc.file_name}</span>
+                  <button class="rb-upload-container__remove-button" @click=${this.#remove} aria-label="Remove" type="button">&times;</button>
+                </span>
               </li>
             `
           )}
@@ -70,7 +72,7 @@ export class UploadContainer extends RedboxElement {
   }
 
   #remove = (evt) => {
-    const item = evt.target.parentNode;
+    const item = evt.target.closest("li");
     const id = item.querySelector("file-status").dataset.id;
     
     // remove from UI
