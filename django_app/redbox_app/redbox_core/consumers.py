@@ -153,7 +153,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
             await self.redbox.run(
                 state,
                 response_tokens_callback=self.handle_text,
-                route_name_callback=self.handle_route,
                 metadata_tokens_callback=self.handle_metadata,
             )
 
@@ -251,10 +250,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
     async def handle_text(self, response: str) -> str:
         await self.send_to_client("text", response)
         self.full_reply.append(response)
-
-    async def handle_route(self, response: str) -> str:
-        await self.send_to_client("route", response)
-        self.route = response
 
     async def handle_metadata(self, response: dict):
         self.metadata = metadata_reducer(self.metadata, RequestMetadata.model_validate(response))
