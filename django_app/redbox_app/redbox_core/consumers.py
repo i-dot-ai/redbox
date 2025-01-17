@@ -110,9 +110,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         await self.llm_conversation(selected_files, session, user, user_message_text, permitted_files)
         await self.close()
 
-    async def llm_conversation(
-        self, selected_files: Sequence[File], session: Chat, user: User, title: str, permitted_files: Sequence[File]
-    ) -> None:
+    async def llm_conversation(self, selected_files: Sequence[File], session: Chat, user: User, title: str) -> None:
         """Initiate & close websocket conversation with the core-api message endpoint."""
         await self.send_to_client("session-id", session.id)
 
@@ -133,7 +131,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
                     for message in message_history[:-1]
                 ],
                 ai_settings=ai_settings,
-                permitted_s3_keys=[f.unique_name async for f in permitted_files],
             ),
         )
 

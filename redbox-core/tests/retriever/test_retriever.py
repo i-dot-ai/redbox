@@ -52,13 +52,11 @@ def test_retriever(stored_file_all_chunks: RedboxChatTestCase):
     correct = stored_file_all_chunks.get_docs_matching_query()
 
     selected = bool(stored_file_all_chunks.query.s3_keys)
-    permission = bool(stored_file_all_chunks.query.permitted_s3_keys)
 
-    if selected and permission:
+    if selected:
         assert len(result) == len(correct)
         assert {c.page_content for c in result} == {c.page_content for c in correct}
         assert {c.metadata["uri"] for c in result} == set(stored_file_all_chunks.query.s3_keys)
-        assert {c.metadata["uri"] for c in result} <= set(stored_file_all_chunks.query.permitted_s3_keys)
     else:
         len(result) == 0
 
@@ -85,11 +83,9 @@ def test_metadata_retriever(stored_file_metadata: RedboxChatTestCase):
     correct = stored_file_metadata.get_docs_matching_query()
 
     selected = bool(stored_file_metadata.query.s3_keys)
-    permission = bool(stored_file_metadata.query.permitted_s3_keys)
 
-    if selected and permission:
+    if selected:
         assert len(result) == len(correct)
         assert {c.metadata["uri"] for c in result} == set(stored_file_metadata.query.s3_keys)
-        assert {c.metadata["uri"] for c in result} <= set(stored_file_metadata.query.permitted_s3_keys)
     else:
         len(result) == 0

@@ -36,9 +36,7 @@ TEST_CASES = [
     test_case
     for generated_cases in [
         generate_test_cases(
-            query=RedboxQuery(
-                question="What is AI?", s3_keys=[], user_uuid=uuid4(), chat_history=[], permitted_s3_keys=[]
-            ),
+            query=RedboxQuery(question="What is AI?", s3_keys=[], user_uuid=uuid4(), chat_history=[]),
             test_data=[
                 RedboxTestData(
                     number_of_docs=0,
@@ -62,9 +60,7 @@ TEST_CASES = [
             test_id="Basic Chat",
         ),
         generate_test_cases(
-            query=RedboxQuery(
-                question="What is AI?", s3_keys=["s3_key"], user_uuid=uuid4(), chat_history=[], permitted_s3_keys=[]
-            ),
+            query=RedboxQuery(question="What is AI?", s3_keys=["s3_key"], user_uuid=uuid4(), chat_history=[]),
             test_data=[
                 RedboxTestData(
                     number_of_docs=1,
@@ -128,7 +124,6 @@ TEST_CASES = [
                 s3_keys=["s3_key"],
                 user_uuid=uuid4(),
                 chat_history=[],
-                permitted_s3_keys=["s3_key"],
             ),
             test_data=[
                 RedboxTestData(
@@ -146,7 +141,6 @@ TEST_CASES = [
                 s3_keys=[],
                 user_uuid=uuid4(),
                 chat_history=[],
-                permitted_s3_keys=[],
             ),
             test_data=[
                 RedboxTestData(
@@ -164,7 +158,6 @@ TEST_CASES = [
                 s3_keys=["s3_key"],
                 user_uuid=uuid4(),
                 chat_history=[],
-                permitted_s3_keys=["s3_key"],
             ),
             test_data=[
                 RedboxTestData(

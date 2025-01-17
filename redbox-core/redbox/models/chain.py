@@ -56,7 +56,6 @@ class RedboxQuery(BaseModel):
     user_uuid: UUID = Field(description="User the chain in executing for")
     chat_history: list[ChainChatMessage] = Field(description="All previous messages in chat (excluding question)")
     ai_settings: AISettings = Field(description="User request AI settings", default_factory=AISettings)
-    permitted_s3_keys: list[str] = Field(description="List of permitted files for response", default_factory=list)
 
 
 class LLMCallMetadata(BaseModel):

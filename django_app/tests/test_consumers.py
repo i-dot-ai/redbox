@@ -482,7 +482,6 @@ async def test_chat_consumer_redbox_state(
                 {"role": "ai", "text": "A second answer."},
             ],
             ai_settings=ai_settings,
-            permitted_s3_keys=permitted_file_keys,
         )
         redbox_state = mock_run.call_args.args[0]  # pulls out the args that redbox.run was called with
 

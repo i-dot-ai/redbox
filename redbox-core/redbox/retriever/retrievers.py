@@ -16,18 +16,9 @@ class DjangoFileRetriever(BaseRetriever):
     def _get_relevant_documents(
         self, query: RedboxState, *, run_manager: CallbackManagerForRetrieverRun
     ) -> list[Document]:
-        selected_files = set(query.request.s3_keys)
-        permitted_files = set(query.request.permitted_s3_keys)
-
-        if not selected_files <= permitted_files:
-            logger.warning(
-                "User has selected files they aren't permitted to access: \n"
-                f"{", ".join(selected_files - permitted_files)}"
-            )
-
-        file_names = list(selected_files & permitted_files)
-
-        files = self.file_manager.filter(original_file__in=file_names, text__isnull=False, metadata__isnull=False)
+        files = self.file_manager.filter(
+            original_file__in=query.request.s3_keys, text__isnull=False, metadata__isnull=False
+        )
 
         return [
             Document(page_content=file.text, metadata={"token_count": file.token_count, "uri": file.url})
