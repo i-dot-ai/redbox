@@ -3,7 +3,10 @@
 class CannedPrompts extends HTMLElement {
   connectedCallback() {
     this.innerHTML = `
-      <h3 class="chat-options__heading govuk-heading-m">What would you like to ask your Redbox?</h3>
+      <h3 class="chat-options__heading govuk-heading-m">
+        <img class="chat-options__icon" src="/static/icons/Icon_Redbox_200.svg" alt=""/>
+        What would you like to ask?
+      </h3>
       <div class="chat-options__options">
           <button class="chat-options__option chat-options__option_agenda plausible-event-name--canned+prompt+draft+meeting+agenda" type="button">
               <img src="/static/icons/icon_square_doc.svg" alt=""/>
