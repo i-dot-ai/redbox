@@ -25,3 +25,43 @@
   align-items: center;
   justify-content: center;
 }
+
+
+.rb-upload-container ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+}
+.rb-upload-container li {
+  background-color: white;
+  font-size: 0.75rem;
+  list-style-type: none;
+  width: 8rem;
+}
+.rb-upload-container file-status {
+  background-color: #ccc;
+  display: block;
+  padding: 0.25rem;
+}
+.rb-upload-container__filename-container {
+  display: flex;
+  justify-content: space-between;
+}
+.rb-upload-container__filename {
+  overflow: hidden;
+  padding: 0.25rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.rb-upload-container__remove-button {
+  background-color: transparent;
+  border: 0;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: bold;
+}
+.rb-upload-container__remove-button:hover {
+  color: var(--iai-product-colour);
+}
