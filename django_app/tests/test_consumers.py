@@ -76,11 +76,6 @@ async def test_chat_consumer_with_new_session(alice: User, mocked_connect: Conne
     assert await get_chat_message_text(alice, ChatMessage.Role.user) == ["Hello Hal."]
     assert await get_chat_message_text(alice, ChatMessage.Role.ai) == ["Good afternoon, Mr. Amor."]
 
-    assert await get_token_use_model(ChatMessageTokenUse.UseType.INPUT) == "gpt-4o"
-    assert await get_token_use_model(ChatMessageTokenUse.UseType.OUTPUT) == "gpt-4o"
-    assert await get_token_use_count(ChatMessageTokenUse.UseType.INPUT) == 123
-    assert await get_token_use_count(ChatMessageTokenUse.UseType.OUTPUT) == 1000
-
 
 @pytest.mark.django_db(transaction=True)
 @pytest.mark.asyncio()
@@ -200,11 +195,6 @@ async def test_chat_consumer_agentic(alice: User, mocked_connect_agentic_search:
 
     assert await get_chat_message_text(alice, ChatMessage.Role.user) == ["Hello Hal."]
     assert await get_chat_message_text(alice, ChatMessage.Role.ai) == ["Good afternoon, Mr. Amor."]
-
-    assert await get_token_use_model(ChatMessageTokenUse.UseType.INPUT) == "gpt-4o"
-    assert await get_token_use_model(ChatMessageTokenUse.UseType.OUTPUT) == "gpt-4o"
-    assert await get_token_use_count(ChatMessageTokenUse.UseType.INPUT) == 123
-    assert await get_token_use_count(ChatMessageTokenUse.UseType.OUTPUT) == 1000
 
 
 @database_sync_to_async

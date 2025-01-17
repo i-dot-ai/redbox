@@ -153,7 +153,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
             await self.redbox.run(
                 state,
                 response_tokens_callback=self.handle_text,
-                metadata_tokens_callback=self.handle_metadata,
             )
 
             message = await self.save_ai_message(
