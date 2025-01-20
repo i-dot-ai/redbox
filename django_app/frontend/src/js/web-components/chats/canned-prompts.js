@@ -4,7 +4,7 @@ class CannedPrompts extends HTMLElement {
   connectedCallback() {
     this.innerHTML = `
       <h3 class="chat-options__heading govuk-heading-m">
-        <img class="chat-options__icon" src="/static/icons/Icon_Redbox_200.svg" alt=""/>
+        <img class="chat-options__icon rb-icon--animated" src="/static/icons/Icon_Redbox_200.svg" alt=""/>
         What would you like to ask?
       </h3>
       <div class="chat-options__options">

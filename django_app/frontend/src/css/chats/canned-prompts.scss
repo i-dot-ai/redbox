@@ -62,26 +62,3 @@ main:has(.iai-chat-bubble) .chat-options {
     width: 33%;
   }
 }
-
-
-/* Animation */
-
-@keyframes rotateIcon {
-  0% {
-    transform: rotate(0deg);
-  }
-  20% {
-    transform: rotate(90deg);
-  }
-  100% {
-    transform: rotate(90deg);
-  }
-}
-.chat-options__icon {
-  animation: rotateIcon 5s infinite;
-}
-@media (prefers-reduced-motion) {
-  .chat-options__icon {
-    animation: none;
-  }
-}
