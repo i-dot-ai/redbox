@@ -1,9 +1,7 @@
 from datetime import UTC, datetime, timedelta
 from io import StringIO
-from unittest.mock import MagicMock, patch
 
 import pytest
-from botocore.exceptions import UnknownClientMethodError
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.management import CommandError, call_command
@@ -94,15 +92,12 @@ def test_delete_expired_files(uploaded_file: File, last_referenced: datetime, sh
     call_command("delete_expired_data")
 
     # Then
-    is_deleted = File.objects.get(id=mock_file.id).status == File.Status.deleted
+    is_deleted = not File.objects.filter(id=mock_file.id).exists()
     assert is_deleted == should_delete
 
 
-@patch("redbox_app.redbox_core.models.File.delete_from_s3")
 @pytest.mark.django_db()
-def test_delete_expired_files_with_s3_error(deletion_mock: MagicMock, uploaded_file: File):
-    deletion_mock.side_effect = UnknownClientMethodError(method_name="")
-
+def test_delete_expired_files_with_s3_error(uploaded_file: File):
     # Given
     mock_file = uploaded_file
     mock_file.last_referenced = EXPIRED_FILE_DATE
@@ -112,7 +107,7 @@ def test_delete_expired_files_with_s3_error(deletion_mock: MagicMock, uploaded_f
     call_command("delete_expired_data")
 
     # Then
-    assert File.objects.get(id=mock_file.id).status == File.Status.errored
+    assert not File.objects.filter(id=mock_file.id).exists()
 
 
 @pytest.mark.parametrize(

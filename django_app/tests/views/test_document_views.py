@@ -177,7 +177,7 @@ def test_remove_doc_view(client: Client, alice: User, file_pdf_path: Path, s3_cl
         client.post(f"/remove-doc/{new_file.id}", {"doc_id": new_file.id})
         assert not file_exists(s3_client, file_name)
         assert count_s3_objects(s3_client) == previous_count
-        assert File.objects.get(id=new_file.id).status == File.Status.deleted
+        assert not File.objects.filter(id=new_file.id).exists()
 
 
 @pytest.mark.django_db()
