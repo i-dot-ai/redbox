@@ -762,11 +762,15 @@ class ChatMessage(UUIDPrimaryKeyBase, TimeStampedModel):
 
     def log(self):
         token_sum = sum(token_use.token_count for token_use in self.chatmessagetokenuse_set.all())
+
         elastic_log_msg = {
             "@timestamp": self.created_at.isoformat(),
             "id": str(self.id),
             "chat_id": str(self.chat.id),
-            "user_id": str(self.chat.user.id),
+            "user_business_unit": self.chat.user.business_unit,
+            "user_grade": self.chat.user.grade,
+            "user_profession": self.chat.user.profession,
+            "user_ai_experience": self.chat.user.ai_experience,
             "text": str(self.text),
             "route": str(self.route),
             "role": str(self.role),
