@@ -21,7 +21,7 @@ class Command(BaseCommand):
     def handle(self, *_args, **kwargs):
         self.stdout.write(self.style.NOTICE("Reingesting active files from Django"))
 
-        for file in File.objects.exclude(status__in=File.INACTIVE_STATUSES):
+        for file in File.objects.exclude(status=File.Status.errored):
             logger.debug("Reingesting file object %s", file)
             async_task(
                 ingest,

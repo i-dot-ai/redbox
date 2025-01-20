@@ -609,11 +609,8 @@ def build_s3_key(instance, filename: str) -> str:
 class File(UUIDPrimaryKeyBase, TimeStampedModel):
     class Status(models.TextChoices):
         complete = "complete"
-        deleted = "deleted"
         errored = "errored"
         processing = "processing"
-
-    INACTIVE_STATUSES = [Status.deleted, Status.errored]
 
     status = models.CharField(choices=Status.choices, null=False, blank=False)
     original_file = models.FileField(
@@ -653,12 +650,8 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
     @override
     def delete(self, using=None, keep_parents=False):
         #  Needed to make sure no orphaned files remain in the storage
-        self.delete_from_s3()
-        super().delete()
-
-    def delete_from_s3(self):
-        """Manually deletes the file from S3 storage."""
         self.original_file.delete(save=False)
+        super().delete()
 
     @property
     def file_type(self) -> str:
@@ -681,7 +674,7 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
     @property
     def unique_name(self) -> str:
         """primary key for accessing file in s3"""
-        if self.status in File.INACTIVE_STATUSES:
+        if self.status == File.Status.errored:
             logger.exception("Attempt to access s3-key for inactive file %s with status %s", self.pk, self.status)
             raise InactiveFileError(self)
         return self.original_file.name
