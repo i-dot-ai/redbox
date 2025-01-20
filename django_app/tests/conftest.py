@@ -285,6 +285,7 @@ def several_files(alice: User, number_to_create: int = 4) -> Sequence[File]:
                 user=alice,
                 original_file=SimpleUploadedFile(filename, b"Lorem Ipsum."),
                 status=File.Status.complete,
+                metadata={"token_count": i * 100},
             )
         )
     return files
