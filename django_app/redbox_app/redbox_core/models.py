@@ -767,6 +767,7 @@ class ChatMessage(UUIDPrimaryKeyBase, TimeStampedModel):
             "@timestamp": self.created_at.isoformat(),
             "id": str(self.id),
             "chat_id": str(self.chat.id),
+            "department": self.chat.user.email.split("@")[-1],
             "user_business_unit": self.chat.user.business_unit,
             "user_grade": self.chat.user.grade,
             "user_profession": self.chat.user.profession,
