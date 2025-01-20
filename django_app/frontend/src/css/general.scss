@@ -37,20 +37,15 @@ body {
 }
 
 /* Home page */
-.govuk-main-wrapper:has(.rb-banner) {
-  padding-top: 0;
+
+.rb-banner h1 {
+  align-items: center;
+  display: flex;
+  gap: 1.5rem;
+  margin: 3rem 0;
 }
-.rb-banner {
-  background-color: $redbox-red;
-  color: white;
-  padding-bottom: 3rem;
-  padding-top: 2.75rem;
-}
-.rb-banner * {
-  color: white;
-}
-.rb-banner .govuk-link:any-link {
-  color: white;
+.rb-banner h1 img {
+  width: 4.5rem;
 }
 .rb-banner .govuk-link:focus {
   background-color: white;
@@ -62,12 +57,32 @@ body {
   gap: 0.75rem;
 }
 .rb-banner__button {
-  background-color: white !important;
+  padding-left: 1.5rem !important;
+  padding-right: 1.5rem !important;
+  width: auto;
 }
-.rb-banner__button:hover {
-  color: $redbox-red !important;
-  filter: brightness(0.9);
+
+
+@keyframes rotateIcon {
+  0% {
+    transform: rotate(0deg);
+  }
+  20% {
+    transform: rotate(90deg);
+  }
+  100% {
+    transform: rotate(90deg);
+  }
 }
+.rb-icon--animated {
+  animation: rotateIcon 5s infinite;
+}
+@media (prefers-reduced-motion) {
+  .rb-icon--animated {
+    animation: none;
+  }
+}
+
 
 /* i.AI Design System */
 :root {
