@@ -12,14 +12,10 @@ def back_populate_file_token_count(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('redbox_core', '0075_chatmessage_token_count'),
+        ('redbox_core', '0076_remove_file_original_file_name'),
     ]
 
     operations = [
-        migrations.RemoveField(
-            model_name='file',
-            name='original_file_name',
-        ),
         migrations.AddField(
             model_name='file',
             name='token_count',
