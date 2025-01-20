@@ -59,11 +59,16 @@
 
 
   {% if request.user.is_authenticated %}
+    {% if pageTitle == "Chats" %}
+      {% set menu_items = [] %}
+    {% else %}
+      {% set menu_items = [
+        {"text": "Chats", "href": url('chats')}
+      ] %}
+    {% endif %}
     {{ iaiTopNav(
       product_name = "Redbox",
-      menu_items = [
-        {"text": "Chats", "href": url('chats')}
-      ],
+      menu_items = menu_items,
       user_items = {
           "initials": request.user.get_initials(),
           "menu_items": [
