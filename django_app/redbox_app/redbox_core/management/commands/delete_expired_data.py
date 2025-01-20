@@ -48,7 +48,7 @@ class Command(BaseCommand):
             counter = 0
             failure_counter = 0
 
-            for file in File.objects.filter(last_referenced__lt=cutoff_date).exclude(status__in=File.INACTIVE_STATUSES):
+            for file in File.objects.filter(last_referenced__lt=cutoff_date).exclude(status=File.Status.errored):
                 logger.debug(
                     "Deleting file object %s, last_referenced %s",
                     file,

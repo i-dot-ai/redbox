@@ -612,8 +612,6 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
         errored = "errored"
         processing = "processing"
 
-    INACTIVE_STATUSES = [Status.errored]
-
     status = models.CharField(choices=Status.choices, null=False, blank=False)
     original_file = models.FileField(
         storage=settings.STORAGES["default"]["BACKEND"],
@@ -676,7 +674,7 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
     @property
     def unique_name(self) -> str:
         """primary key for accessing file in s3"""
-        if self.status in File.INACTIVE_STATUSES:
+        if self.status == File.Status.errored:
             logger.exception("Attempt to access s3-key for inactive file %s with status %s", self.pk, self.status)
             raise InactiveFileError(self)
         return self.original_file.name
