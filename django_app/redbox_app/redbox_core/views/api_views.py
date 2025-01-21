@@ -1,5 +1,4 @@
 from django.contrib.auth import get_user_model
-from django_q.tasks import async_task
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.fields import FileField, UUIDField
 from rest_framework.permissions import IsAuthenticated
@@ -7,7 +6,6 @@ from rest_framework.response import Response
 from rest_framework.serializers import Serializer
 
 from redbox_app.redbox_core.models import File
-from redbox_app.worker import ingest
 
 User = get_user_model()
 
@@ -33,6 +31,5 @@ def file_upload(request):
         chat_id=serializer.validated_data["chat_id"],
         status=File.Status.processing,
     )
-    async_task(ingest, file.id, task_name=file.unique_name, group="ingest")
-
+    file.ingest()
     return Response({"file_id": file.id}, status=200)

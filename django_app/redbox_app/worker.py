@@ -4,7 +4,7 @@ from uuid import UUID
 from markitdown import MarkItDown
 
 from redbox.chains.components import get_tokeniser
-from redbox_app.redbox_core.models import sanitise_string
+from redbox_app.redbox_core.utils import sanitise_string
 
 md = MarkItDown()
 tokeniser = get_tokeniser()
