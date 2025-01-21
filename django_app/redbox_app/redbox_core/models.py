@@ -17,11 +17,14 @@ from django.db import models
 from django.db.models import Max, Min, UniqueConstraint
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
+from django_q.models import OrmQ, Success
+from django_q.tasks import async_task
 from django_use_email_as_username.models import BaseUser, BaseUserManager
 
 from redbox.chains.components import get_tokeniser
 from redbox.models.settings import get_settings
-from redbox_app.redbox_core.utils import get_date_group
+from redbox_app.redbox_core.utils import get_date_group, sanitise_string
+from redbox_app.worker import ingest
 
 logging.basicConfig(level=os.environ.get("LOG_LEVEL", "INFO"))
 logger = logging.getLogger(__name__)
@@ -44,12 +47,6 @@ class TimeStampedModel(models.Model):
     class Meta:
         abstract = True
         ordering = ["created_at"]
-
-
-def sanitise_string(string: str | None) -> str | None:
-    """We are seeing NUL (0x00) characters in user entered fields, and also in document citations.
-    We can't save these characters, so we need to sanitise them."""
-    return string.replace("\x00", "\ufffd") if string else string
 
 
 class ChatLLMBackend(models.Model):
@@ -634,6 +631,7 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
     )
     text = models.TextField(null=True, blank=True, help_text="text extracted from file")
     metadata = models.JSONField(null=True, blank=True, help_text="metadata extracted from file")
+    task = models.ForeignKey(OrmQ, on_delete=models.CASCADE, null=True, blank=True, help_text="")
 
     def __str__(self) -> str:  # pragma: no cover
         return self.file_name
@@ -645,6 +643,7 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
                 self.last_referenced = self.created_at
             else:
                 self.last_referenced = timezone.now()
+
         super().save(*args, **kwargs)
 
     @override
@@ -706,6 +705,15 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
     def __lt__(self, other):
         return self.id < other.id
 
+    def ingest(self, sync: bool = False):
+        task = async_task(ingest, self.id, task_name=self.unique_name, group="ingest", sync=sync)
+        if sync:
+            result = Success.objects.get(pk=task)
+            self.status = self.Status.complete if result.success else self.Status.errored
+        else:
+            self.task = next(item for item in OrmQ.objects.all() if item.task["id"] == task)
+        self.save()
+
     @classmethod
     def get_completed_and_processing_files(cls, user: User) -> tuple[Sequence["File"], Sequence["File"]]:
         """Returns all files that are completed and processing for a given user."""
@@ -722,6 +730,11 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
             .annotate(min_created_at=Min("citation__created_at"))
             .order_by("min_created_at")
         )
+
+    def position_in_queue(self) -> int:
+        if not self.task:
+            return -1
+        return OrmQ.objects.filter(lock__lt=self.task.lock).count()
 
 
 class ChatMessage(UUIDPrimaryKeyBase, TimeStampedModel):

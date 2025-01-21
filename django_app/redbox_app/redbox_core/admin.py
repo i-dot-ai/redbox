@@ -4,10 +4,7 @@ import textwrap
 from django.contrib import admin
 from django.contrib.auth import get_user_model
 from django.shortcuts import render
-from django_q.tasks import async_task
 from import_export.admin import ExportMixin, ImportExportMixin
-
-from redbox_app.worker import ingest
 
 from . import models
 
@@ -156,7 +153,7 @@ class FileAdmin(ExportMixin, admin.ModelAdmin):
     def reupload(self, _request, queryset):
         for file in queryset:
             logger.info("Re-uploading file to core-api: %s", file)
-            async_task(ingest, file.id)
+            file.ingest()
             logger.info("Successfully reuploaded file %s.", file)
 
     list_display = ["file_name", "user", "status", "created_at", "last_referenced"]
