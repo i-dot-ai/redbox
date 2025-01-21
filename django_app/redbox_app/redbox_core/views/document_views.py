@@ -141,7 +141,7 @@ class UploadView(View):
             logger.exception("Error creating File model object for %s.", uploaded_file, exc_info=e)
             return None, e.args
 
-        file.save()
+        file.ingest()
 
         return file, []
 
