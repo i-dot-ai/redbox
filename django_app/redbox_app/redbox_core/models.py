@@ -17,7 +17,7 @@ from django.db import models
 from django.db.models import Max, Min, UniqueConstraint
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
-from django_q.models import OrmQ
+from django_q.models import OrmQ, Success
 from django_q.tasks import async_task
 from django_use_email_as_username.models import BaseUser, BaseUserManager
 
@@ -705,9 +705,13 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
     def __lt__(self, other):
         return self.id < other.id
 
-    def ingest(self):
-        task = async_task(ingest, self.id, task_name=self.unique_name, group="ingest")
-        self.task = next(item for item in OrmQ.objects.all() if item.task["id"] == task)
+    def ingest(self, sync: bool = False):
+        task = async_task(ingest, self.id, task_name=self.unique_name, group="ingest", sync=sync)
+        if sync:
+            result = Success.objects.get(pk=task)
+            self.status = self.Status.complete if result.success else self.Status.errored
+        else:
+            self.task = next(item for item in OrmQ.objects.all() if item.task["id"] == task)
         self.save()
 
     @classmethod

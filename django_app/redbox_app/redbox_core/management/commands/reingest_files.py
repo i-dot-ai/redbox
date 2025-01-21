@@ -16,9 +16,9 @@ class Command(BaseCommand):
         """sync only to be used for testing"""
         parser.add_argument("sync", nargs="?", type=bool, default=False)
 
-    def handle(self, *_args, **_kwargs):
+    def handle(self, *_args, **kwargs):
         self.stdout.write(self.style.NOTICE("Reingesting active files from Django"))
 
         for file in File.objects.exclude(status=File.Status.errored):
             logger.debug("Reingesting file object %s", file)
-            file.ingest()
+            file.ingest(kwargs["sync"])

@@ -1,5 +1,6 @@
 import logging
 import uuid
+from datetime import datetime
 from http import HTTPStatus
 from pathlib import Path
 
@@ -9,6 +10,7 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.test import Client
 from django.urls import reverse
+from pytz import UTC
 
 from redbox_app.redbox_core.models import File
 
@@ -205,6 +207,33 @@ def test_file_status_api_view_nonexistent_file(alice: User, client: Client):
 
     # Then
     assert response.status_code == HTTPStatus.NOT_FOUND
+
+
+@pytest.mark.django_db()
+def test_file_status_api_view_file(alice: User, original_file, uploaded_file: File, client: Client):
+    # Given
+    client.force_login(alice)
+
+    number_of_files_ahead_in_queue = 5
+
+    for _ in range(number_of_files_ahead_in_queue):
+        file = File.objects.create(
+            user=alice,
+            original_file=original_file,
+            last_referenced=datetime.now(tz=UTC),
+            status=File.Status.processing,
+        )
+        file.save()
+        file.ingest()
+
+    uploaded_file.ingest()
+
+    # When
+    response = client.get("/file-status/", {"id": uploaded_file.id})
+
+    # Then
+    assert response.status_code == HTTPStatus.OK
+    assert response.json() == {"position_in_queue": number_of_files_ahead_in_queue, "status": "Processing"}
 
 
 def count_s3_objects(s3_client) -> int:
