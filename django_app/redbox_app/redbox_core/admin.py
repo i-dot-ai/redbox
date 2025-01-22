@@ -149,40 +149,10 @@ class UserAdmin(ImportExportMixin, admin.ModelAdmin):
         import_id_fields = ["email"]
 
 
-class FileAdmin(ExportMixin, admin.ModelAdmin):
-    def reupload(self, _request, queryset):
-        for file in queryset:
-            logger.info("Re-uploading file to core-api: %s", file)
-            file.ingest()
-            logger.info("Successfully reuploaded file %s.", file)
-
-    list_display = ["file_name", "user", "status", "created_at", "last_referenced"]
-    list_filter = ["user", "status"]
-    date_hierarchy = "created_at"
-    actions = ["reupload"]
-    search_fields = ["user__email"]
-
-
-class ChatMessageTokenUseInline(admin.StackedInline):
-    model = models.ChatMessageTokenUse
-    ordering = ("modified_at",)
-
-    extra = 0
-
-
-class ChatMessageTokenUseAdmin(ExportMixin, admin.ModelAdmin):
-    list_display = ["chat_message", "use_type", "model_name", "token_count"]
-    list_filter = ["use_type", "model_name"]
-
-
 class ChatMessageAdmin(ExportMixin, admin.ModelAdmin):
     list_display = ["short_text", "role", "get_user", "chat", "route", "created_at"]
     list_filter = ["role", "route", "chat__user"]
     date_hierarchy = "created_at"
-    inlines = [ChatMessageTokenUseInline]
-    readonly_fields = [
-        "selected_files",
-    ]
     search_fields = ["chat__user__email"]
 
     @admin.display(ordering="chat__user", description="User")
@@ -192,6 +162,12 @@ class ChatMessageAdmin(ExportMixin, admin.ModelAdmin):
     @admin.display(description="text")
     def short_text(self, obj):
         return textwrap.shorten(obj.text, 128, placeholder="...")
+
+
+class FileInline(admin.StackedInline):
+    model = models.File
+    ordering = ("modified_at",)
+    extra = 1
 
 
 class ChatMessageInline(admin.StackedInline):
@@ -238,10 +214,7 @@ def reporting_dashboard(request):
 
 
 admin.site.register(User, UserAdmin)
-admin.site.register(models.File, FileAdmin)
 admin.site.register(models.Chat, ChatAdmin)
-admin.site.register(models.ChatMessage, ChatMessageAdmin)
 admin.site.register(models.AISettings)
-admin.site.register(models.ChatMessageTokenUse, ChatMessageTokenUseAdmin)
 admin.site.register(models.ChatLLMBackend, ChatLLMBackendAdmin)
 admin.site.register_view("report/", view=reporting_dashboard, name="Site report")
