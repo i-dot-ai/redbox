@@ -129,7 +129,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         state = RedboxState(
             request=RedboxQuery(
                 question=message_history[-1].text,
-                s3_keys=[Document(str(f.text), metadata={"uri": f.id}) for f in selected_files],
+                documents=[Document(str(f.text), metadata={"uri": f.id}) for f in selected_files],
                 user_uuid=user.id,
                 chat_history=[
                     ChainChatMessage(
