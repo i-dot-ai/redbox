@@ -97,11 +97,7 @@ def build_llm_chain(
 
     Permits both invoke and astream_events.
     """
-    return (
-        RunnableLambda(retriever_runnable(retriever))
-        | build_chat_prompt_from_messages_runnable(prompt_set) 
-        | llm
-    )
+    return RunnableLambda(retriever_runnable(retriever)) | build_chat_prompt_from_messages_runnable(prompt_set) | llm
 
 
 class CannedChatLLM(BaseChatModel):

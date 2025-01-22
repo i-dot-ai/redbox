@@ -187,7 +187,10 @@ async def test_chat_consumer_with_selected_files(
     selected_files: Sequence[File] = several_files[2:]
 
     # When
-    with patch("redbox_app.redbox_core.consumers.ChatConsumer.redbox._get_runnable", new=lambda *args: mocked_connect_with_several_files):
+    with patch(
+        "redbox_app.redbox_core.consumers.ChatConsumer.redbox._get_runnable",
+        new=lambda *args: mocked_connect_with_several_files,
+    ):
         communicator = WebsocketCommunicator(ChatConsumer.as_asgi(), "/ws/chat/")
         communicator.scope["user"] = alice
         connected, _ = await communicator.connect()
@@ -245,7 +248,9 @@ async def test_chat_consumer_with_connection_error(alice: User, mocked_breaking_
     # Given
 
     # When
-    with patch("redbox_app.redbox_core.consumers.ChatConsumer.redbox._get_runnable", new=lambda *args: mocked_breaking_connect):
+    with patch(
+        "redbox_app.redbox_core.consumers.ChatConsumer.redbox._get_runnable", new=lambda *args: mocked_breaking_connect
+    ):
         communicator = WebsocketCommunicator(ChatConsumer.as_asgi(), "/ws/chat/")
         communicator.scope["user"] = alice
         connected, _ = await communicator.connect()
@@ -268,7 +273,8 @@ async def test_chat_consumer_with_explicit_unhandled_error(
 
     # When
     with patch(
-        "redbox_app.redbox_core.consumers.ChatConsumer.redbox._get_runnable", new=lambda *args: mocked_connect_with_explicit_unhandled_error
+        "redbox_app.redbox_core.consumers.ChatConsumer.redbox._get_runnable",
+        new=lambda *args: mocked_connect_with_explicit_unhandled_error,
     ):
         communicator = WebsocketCommunicator(ChatConsumer.as_asgi(), "/ws/chat/")
         communicator.scope["user"] = alice
@@ -301,7 +307,8 @@ async def test_chat_consumer_with_rate_limited_error(alice: User, mocked_connect
 
     # When
     with patch(
-        "redbox_app.redbox_core.consumers.ChatConsumer.redbox._get_runnable", new=lambda *args: mocked_connect_with_rate_limited_error
+        "redbox_app.redbox_core.consumers.ChatConsumer.redbox._get_runnable",
+        new=lambda *args: mocked_connect_with_rate_limited_error,
     ):
         communicator = WebsocketCommunicator(ChatConsumer.as_asgi(), "/ws/chat/")
         communicator.scope["user"] = alice
@@ -332,7 +339,7 @@ async def test_chat_consumer_with_explicit_no_document_selected_error(
 
     # When
     with patch(
-        "redbox_app.redbox_core.consumers.ChatConsumer.redbox._get_runnable", 
+        "redbox_app.redbox_core.consumers.ChatConsumer.redbox._get_runnable",
         new=lambda *args: mocked_connect_with_explicit_no_document_selected_error,
     ):
         communicator = WebsocketCommunicator(ChatConsumer.as_asgi(), "/ws/chat/")
@@ -358,7 +365,7 @@ async def test_chat_consumer_get_ai_settings(
     chat_with_alice: Chat, mocked_connect_with_explicit_no_document_selected_error: Connect
 ):
     with patch(
-        "redbox_app.redbox_core.consumers.ChatConsumer.redbox._get_runnable", 
+        "redbox_app.redbox_core.consumers.ChatConsumer.redbox._get_runnable",
         new=lambda *args: mocked_connect_with_explicit_no_document_selected_error,
     ):
         communicator = WebsocketCommunicator(ChatConsumer.as_asgi(), "/ws/chat/")
@@ -591,7 +598,6 @@ def mocked_connect_with_explicit_no_document_selected_error() -> CannedGraphLLM:
     ]
 
     return CannedGraphLLM(responses=responses)
-
 
 
 @pytest.fixture()

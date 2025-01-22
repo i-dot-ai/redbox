@@ -36,4 +36,5 @@ def retriever_runnable(retriever: BaseRetriever):
     def _run(state: RedboxState):
         state.documents = retriever.invoke(state)
         return state
+
     return _run

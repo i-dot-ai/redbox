@@ -19,9 +19,9 @@ class Redbox:
 
     def _get_runnable(self, state: RedboxState):
         return build_llm_chain(
-            prompt_set=PromptSet.ChatwithDocs, 
+            prompt_set=PromptSet.ChatwithDocs,
             retriever=self.retriever,
-            llm=get_chat_llm(state.request.ai_settings.chat_backend)
+            llm=get_chat_llm(state.request.ai_settings.chat_backend),
         )
 
     def run_sync(self, input: RedboxState):
