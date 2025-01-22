@@ -2,7 +2,8 @@
 .rb-model-selector {
   cursor: pointer;
   display: inline-block;
-  margin-left: 1rem;
+  flex-shrink: 0;
+  margin-left: 0.5rem;
   position: relative;
 }
 .rb-model-selector__select {

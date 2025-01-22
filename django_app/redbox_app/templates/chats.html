@@ -90,11 +90,6 @@
                 {{ uploaded_documents | render_lit }}
               {% endif %}
 
-              {# Collect feedback on SSR messages #}
-              {% if message.role == 'ai' %}
-                <feedback-buttons data-id="{{ message.id }}"></feedback-buttons>
-              {% endif %}
-
             {% endfor %}
 
             {# CSR messages are inserted here #}
@@ -121,9 +116,7 @@
         <div class="rb-chat-input__container">
           <div class="rb-chat-input__input-container">
             <message-input>
-              <label class="govuk-label" for="message">
-                Message Redbox
-              </label>
+              <label class="govuk-visually-hidden" for="message">Message Redbox</label>
               <textarea placeholder="Ask anything..." id="message" name="message" rows="1" required></textarea>
             </message-input>
             <div class="rb-chat-input__bottom-container">
@@ -147,8 +140,6 @@
             </send-message>
           </div>
         </div>
-        <p class="govuk-body-xs govuk-!-margin-bottom-1 govuk-!-margin-top-2 govuk-!-margin-left-3">Redbox can make mistakes. You must check for accuracy before using the output.</p>
-        <p class="govuk-body-xs govuk-!-margin-bottom-0 govuk-!-margin-left-3">You can use up to, and including, official sensitive documents.</p>
       </form>
 
     </div>

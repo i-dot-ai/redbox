@@ -4,7 +4,13 @@
   class="iai-chat-bubble govuk-body {{ classes }}"
   data-role="{{ message.role }}" tabindex="-1">
   <div class="iai-chat-bubble__header">
-    <div class="iai-chat-bubble__role">{% if message.role == "ai" %}Redbox{% else %}You{% endif %}</div>
+    <div class="iai-chat-bubble__role">
+      {% if message.role == "ai" %}
+        <img src="/static/icons/Icon_Redbox_200.svg" alt=""/> Redbox
+      {% else %}
+        You
+      {% endif %}
+    </div>
   </div>
 
   <markdown-converter class="iai-chat-bubble__text" data-role="{{ message.role }}">{{ message.text }}</markdown-converter>
@@ -12,7 +18,10 @@
 </div>
 
 {% if message.role == "ai" %}
-  <copy-text></copy-text>
+  {% set footer %}
+    <chat-message-footer data-id="{{ message.id }}"></chat-message-footer>
+  {% endset %}
+  {{ footer | render_lit }}
 {% endif %}
 
 {% endmacro %}
