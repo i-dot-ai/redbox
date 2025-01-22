@@ -20,8 +20,6 @@ from redbox.models.chain import (
     PromptSet,
     RedboxQuery,
     RedboxState,
-    RequestMetadata,
-    metadata_reducer,
 )
 from redbox.retriever import DjangoFileRetriever
 from redbox_app.redbox_core import error_messages
@@ -30,7 +28,6 @@ from redbox_app.redbox_core.models import (
     Chat,
     ChatLLMBackend,
     ChatMessage,
-    ChatMessageTokenUse,
     File,
 )
 
@@ -59,7 +56,6 @@ def escape_curly_brackets(text: str):
 class ChatConsumer(AsyncWebsocketConsumer):
     full_reply: ClassVar = []
     route = None
-    metadata: RequestMetadata = RequestMetadata()
     redbox = Redbox(
         retriever=DjangoFileRetriever(file_manager=File.objects),
         debug=True,
@@ -220,22 +216,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
         )
         chat_message.save()
 
-        if self.metadata:
-            for model, token_count in self.metadata.input_tokens.items():
-                ChatMessageTokenUse.objects.create(
-                    chat_message=chat_message,
-                    use_type=ChatMessageTokenUse.UseType.INPUT,
-                    model_name=model,
-                    token_count=token_count,
-                )
-            for model, token_count in self.metadata.output_tokens.items():
-                ChatMessageTokenUse.objects.create(
-                    chat_message=chat_message,
-                    use_type=ChatMessageTokenUse.UseType.OUTPUT,
-                    model_name=model,
-                    token_count=token_count,
-                )
-
         chat_message.log()
 
         return chat_message
@@ -253,6 +233,3 @@ class ChatConsumer(AsyncWebsocketConsumer):
     async def handle_text(self, response: str) -> str:
         await self.send_to_client("text", response)
         self.full_reply.append(response)
-
-    async def handle_metadata(self, response: dict):
-        self.metadata = metadata_reducer(self.metadata, RequestMetadata.model_validate(response))

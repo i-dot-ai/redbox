@@ -30,3 +30,11 @@ class DjangoFileRetriever(BaseRetriever):
         files = self.file_manager.filter(original_file__in=file_names, text__isnull=False, metadata__isnull=False)
 
         return [Document(page_content=file.text, metadata=file.metadata) for file in files]
+
+
+def retriever_runnable(retriever: BaseRetriever):
+    def _run(state: RedboxState):
+        state.documents = retriever.invoke(state)
+        return state
+
+    return _run
