@@ -49,7 +49,7 @@ async def test_chat_consumer_with_new_session(alice: User, mocked_connect: Conne
     # Given
 
     # When
-    with patch("redbox_app.redbox_core.consumers.ChatConsumer.redbox._get_runnable", new=lambda *args: mocked_connect):
+    with patch("redbox_app.redbox_core.consumers.ChatConsumer.redbox._get_runnable", new=lambda _: mocked_connect):
         communicator = WebsocketCommunicator(ChatConsumer.as_asgi(), "/ws/chat/")
         communicator.scope["user"] = alice
         connected, _ = await communicator.connect()
@@ -82,7 +82,7 @@ async def test_chat_consumer_staff_user(staff_user: User, mocked_connect: Connec
     # Given
 
     # When
-    with patch("redbox_app.redbox_core.consumers.ChatConsumer.redbox._get_runnable", new=lambda *args: mocked_connect):
+    with patch("redbox_app.redbox_core.consumers.ChatConsumer.redbox._get_runnable", new=lambda _: mocked_connect):
         communicator = WebsocketCommunicator(ChatConsumer.as_asgi(), "/ws/chat/")
         communicator.scope["user"] = staff_user
         connected, _ = await communicator.connect()
@@ -112,7 +112,7 @@ async def test_chat_consumer_with_existing_session(alice: User, chat: Chat, mock
     # Given
 
     # When
-    with patch("redbox_app.redbox_core.consumers.ChatConsumer.redbox._get_runnable", new=lambda *args: mocked_connect):
+    with patch("redbox_app.redbox_core.consumers.ChatConsumer.redbox._get_runnable", new=lambda _: mocked_connect):
         communicator = WebsocketCommunicator(ChatConsumer.as_asgi(), "/ws/chat/")
         communicator.scope["user"] = alice
         connected, _ = await communicator.connect()
@@ -138,7 +138,7 @@ async def test_chat_consumer_with_naughty_question(alice: User, mocked_connect: 
     # Given
 
     # When
-    with patch("redbox_app.redbox_core.consumers.ChatConsumer.redbox._get_runnable", new=lambda *args: mocked_connect):
+    with patch("redbox_app.redbox_core.consumers.ChatConsumer.redbox._get_runnable", new=lambda _: mocked_connect):
         communicator = WebsocketCommunicator(ChatConsumer.as_asgi(), "/ws/chat/")
         communicator.scope["user"] = alice
         connected, _ = await communicator.connect()
@@ -189,7 +189,7 @@ async def test_chat_consumer_with_selected_files(
     # When
     with patch(
         "redbox_app.redbox_core.consumers.ChatConsumer.redbox._get_runnable",
-        new=lambda *args: mocked_connect_with_several_files,
+        new=lambda _: mocked_connect_with_several_files,
     ):
         communicator = WebsocketCommunicator(ChatConsumer.as_asgi(), "/ws/chat/")
         communicator.scope["user"] = alice
@@ -249,7 +249,7 @@ async def test_chat_consumer_with_connection_error(alice: User, mocked_breaking_
 
     # When
     with patch(
-        "redbox_app.redbox_core.consumers.ChatConsumer.redbox._get_runnable", new=lambda *args: mocked_breaking_connect
+        "redbox_app.redbox_core.consumers.ChatConsumer.redbox._get_runnable", new=lambda _: mocked_breaking_connect
     ):
         communicator = WebsocketCommunicator(ChatConsumer.as_asgi(), "/ws/chat/")
         communicator.scope["user"] = alice
@@ -274,7 +274,7 @@ async def test_chat_consumer_with_explicit_unhandled_error(
     # When
     with patch(
         "redbox_app.redbox_core.consumers.ChatConsumer.redbox._get_runnable",
-        new=lambda *args: mocked_connect_with_explicit_unhandled_error,
+        new=lambda _: mocked_connect_with_explicit_unhandled_error,
     ):
         communicator = WebsocketCommunicator(ChatConsumer.as_asgi(), "/ws/chat/")
         communicator.scope["user"] = alice
@@ -285,10 +285,6 @@ async def test_chat_consumer_with_explicit_unhandled_error(
         response1 = await communicator.receive_json_from(timeout=5)
         response2 = await communicator.receive_json_from(timeout=5)
         response3 = await communicator.receive_json_from(timeout=5)
-
-        print(response1)
-        print(response2)
-        print(response3)
 
         # Then
         assert response1["type"] == "session-id"
@@ -308,7 +304,7 @@ async def test_chat_consumer_with_rate_limited_error(alice: User, mocked_connect
     # When
     with patch(
         "redbox_app.redbox_core.consumers.ChatConsumer.redbox._get_runnable",
-        new=lambda *args: mocked_connect_with_rate_limited_error,
+        new=lambda _: mocked_connect_with_rate_limited_error,
     ):
         communicator = WebsocketCommunicator(ChatConsumer.as_asgi(), "/ws/chat/")
         communicator.scope["user"] = alice
@@ -340,7 +336,7 @@ async def test_chat_consumer_with_explicit_no_document_selected_error(
     # When
     with patch(
         "redbox_app.redbox_core.consumers.ChatConsumer.redbox._get_runnable",
-        new=lambda *args: mocked_connect_with_explicit_no_document_selected_error,
+        new=lambda _: mocked_connect_with_explicit_no_document_selected_error,
     ):
         communicator = WebsocketCommunicator(ChatConsumer.as_asgi(), "/ws/chat/")
         communicator.scope["user"] = alice
@@ -366,7 +362,7 @@ async def test_chat_consumer_get_ai_settings(
 ):
     with patch(
         "redbox_app.redbox_core.consumers.ChatConsumer.redbox._get_runnable",
-        new=lambda *args: mocked_connect_with_explicit_no_document_selected_error,
+        new=lambda _: mocked_connect_with_explicit_no_document_selected_error,
     ):
         communicator = WebsocketCommunicator(ChatConsumer.as_asgi(), "/ws/chat/")
         communicator.scope["user"] = chat_with_alice.user
