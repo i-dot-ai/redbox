@@ -25,7 +25,7 @@ export class UploadContainer extends RedboxElement {
         <ul>
           ${this.docs.map(
             (doc) => html`
-              <li>
+              <li class="rb-upload-container__doc">
                 <file-status data-id=${doc.id}>${doc.file_status}</file-status>
                 <span class="rb-upload-container__filename-container">
                   <span class="rb-upload-container__filename">${doc.file_name}</span>
@@ -34,6 +34,7 @@ export class UploadContainer extends RedboxElement {
               </li>
             `
           )}
+          <li class="rb-upload-container__info govuk-body-xs govuk-!-margin-bottom-0">You can use up to, and including, official sensitive documents.</li>
         </ul>
       </div>
     `;

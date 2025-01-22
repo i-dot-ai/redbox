@@ -17,7 +17,7 @@ export class ChatMessage extends HTMLElement {
       }" tabindex="-1">
           <div class="iai-chat-bubble__header">
               <div class="iai-chat-bubble__role">${
-                this.dataset.role === "ai" ? "Redbox" : "You"
+                this.dataset.role === "ai" ? `<img src="/static/icons/Icon_Redbox_200.svg" alt=""/> Redbox` : "You"
               }</div>
           </div>
           <markdown-converter class="iai-chat-bubble__text" data-role="${this.dataset.role}"></markdown-converter>
@@ -42,18 +42,6 @@ export class ChatMessage extends HTMLElement {
 
     // Add any existing markdown content - can't update directly to the above HTML string as user HTML may be removed
     /** @type {import("./markdown-converter").MarkdownConverter} */(this.querySelector("markdown-converter")).update(this.dataset.text || "");
-
-    // Add feedback buttons
-    if (this.dataset.role === "ai") {
-      this.copyTextButton = document.createElement("copy-text");
-      this.copyTextButton.hidden = true;
-      this.parentElement?.appendChild(this.copyTextButton);
-      this.feedbackButtons =
-        /** @type {import("./feedback-buttons").FeedbackButtons} */ (
-          document.createElement("feedback-buttons")
-        );
-      this.parentElement?.appendChild(this.feedbackButtons);
-    }
 
     // ensure new chat-messages aren't hidden behind the chat-input
     this.programmaticScroll = true;
@@ -157,15 +145,9 @@ export class ChatMessage extends HTMLElement {
       } else if (response.type === "session-id") {
         chatControllerRef.dataset.sessionId = response.data;
       } else if (response.type === "end") {
-        this.copyTextButton.hidden = false;
-        this.feedbackButtons?.showFeedback(response.data.message_id);
-
-        // Add action-buttons - work stopped on this
-        /*
-        let actionButtons = document.createElement("action-buttons");
-        actionButtons.dataset.id = this.uuid;
-        this.parentElement?.appendChild(actionButtons);
-        */
+        let chatMessageFooter = document.createElement("chat-message-footer");
+        chatMessageFooter.dataset.id = this.uuid;
+        this.parentElement?.appendChild(chatMessageFooter);
 
         const chatResponseEndEvent = new CustomEvent("chat-response-end", {
           detail: {
