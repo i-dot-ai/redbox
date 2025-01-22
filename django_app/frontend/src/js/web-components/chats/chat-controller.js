@@ -3,7 +3,7 @@
 class ChatController extends HTMLElement {
   connectedCallback() {
     const messageForm = document.querySelector("#message-form"); // TO DO: Tidy this up
-    const messageContainer = this.querySelector(".js-message-container");
+    this.messageContainer = this.querySelector(".js-message-container");
     const insertPosition = this.querySelector(".js-response-feedback");
     const feedbackButtons = /** @type {HTMLElement | null} */ (
       this.querySelector("feedback-buttons")
@@ -25,16 +25,16 @@ class ChatController extends HTMLElement {
       );
       userMessage.setAttribute("data-text", userText);
       userMessage.setAttribute("data-role", "user");
-      messageContainer?.insertBefore(userMessage, insertPosition);
+      this.messageContainer?.insertBefore(userMessage, insertPosition);
 
       let documentContainer = document.createElement("document-container");
-      messageContainer?.insertBefore(documentContainer, insertPosition);
+      this.messageContainer?.insertBefore(documentContainer, insertPosition);
 
       let aiMessage = /** @type {import("./chat-message").ChatMessage} */ (
         document.createElement("chat-message")
       );
       aiMessage.setAttribute("data-role", "ai");
-      messageContainer?.insertBefore(aiMessage, insertPosition);
+      this.messageContainer?.insertBefore(aiMessage, insertPosition);
 
       const llm =
         /** @type {HTMLInputElement | null}*/ (
@@ -76,6 +76,24 @@ class ChatController extends HTMLElement {
       })();
     });
 
+    document.addEventListener("file-error", (evt) => {
+      this.#showFileError(/** @type{CustomEvent} */ (evt).detail.name);
+    });
+
   }
+
+
+  /**
+   * @param {String} fileName 
+   */
+  #showFileError (fileName) {
+    let errorMessage = /** @type {import("./chat-message").ChatMessage} */ (
+      document.createElement("chat-message")
+    );
+    errorMessage.dataset.role = "ai";
+    errorMessage.dataset.text = `<p><strong>${fileName}</strong> can't be uploaded</p><p>You can:</p><ul><li>try uploading again</li><li>check the document opens outside Redbox on your computer</li><li>report to <a href="mailto:redbox-copilot@cabinetoffice.gov.uk">Redbox support</a></li></ul>`;
+    this.messageContainer?.append(errorMessage);
+  };
+
 }
 customElements.define("chat-controller", ChatController);

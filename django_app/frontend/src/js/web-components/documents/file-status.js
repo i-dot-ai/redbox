@@ -10,16 +10,23 @@ class FileStatus extends HTMLElement {
   }
 
   connectedCallback() {
+    if (!this.textContent) {
+      this.textContent = "Uploading";
+    }
     this.#checkStatus();
+  }
+
+  disconnectedCallback() {
+    this.dataset.id = "";
   }
 
   async #checkStatus () {
 
     // UPDATE THESE AS REQUIRED
     const FILE_STATUS_ENDPOINT = "/file-status";
-    const CHECK_INTERVAL_MS = 6000;
+    const CHECK_INTERVAL_MS = 2000;
 
-    if (this.textContent?.toLowerCase() === "complete" || !this.dataset.id) {
+    if (this.textContent?.toLowerCase() === "complete" || this.textContent?.toLowerCase() === "error" || !this.dataset.id) {
       return;
     }
 
@@ -30,11 +37,23 @@ class FileStatus extends HTMLElement {
     this.textContent = responseObj.status;
     this.dataset.status = responseObj.status.toLowerCase();
 
-    if (responseObj.status.toLowerCase() !== "complete") {
-      window.setTimeout(() => {
-        this.#checkStatus();
-      }, CHECK_INTERVAL_MS);
+    if (responseObj.status.toLowerCase() === "error") {
+      const fileErrorEvent = new CustomEvent("file-error", {
+        detail: {
+          name: this.dataset.name
+        },
+      });
+      document.dispatchEvent(fileErrorEvent);
+      return;
     }
+
+    if (responseObj.status.toLowerCase() === "complete") {
+      return;
+    }
+
+    window.setTimeout(() => {
+      this.#checkStatus();
+    }, CHECK_INTERVAL_MS);
 
   };
 
