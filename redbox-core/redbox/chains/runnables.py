@@ -1,33 +1,26 @@
 import logging
 import re
-from typing import Any, Callable, Iterable, Iterator
+from typing import Any, Iterator
 
 from langchain_core.callbacks.manager import (
     CallbackManagerForLLMRun,
-    dispatch_custom_event,
 )
 from langchain_core.language_models import BaseChatModel
 from langchain_core.messages import AIMessage, AIMessageChunk, BaseMessage
-from langchain_core.output_parsers import StrOutputParser
 from langchain_core.outputs import ChatGeneration, ChatGenerationChunk, ChatResult
 from langchain_core.runnables import (
     Runnable,
-    RunnableGenerator,
     RunnableLambda,
-    RunnablePassthrough,
     chain,
 )
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from tiktoken import Encoding
 
-from redbox.api.format import format_documents
 from redbox.chains.components import get_tokeniser
 from redbox.models.chain import ChainChatMessage, PromptSet, RedboxState, get_prompts
 from redbox.models.errors import QuestionLengthError
-from redbox.models.graph import RedboxEventType
-from redbox.transform import (
-    get_all_metadata,
-)
+from redbox.api.format import format_documents
+from redbox.retriever.retrievers import retriever_runnable
 
 log = logging.getLogger()
 re_string_pattern = re.compile(r"(\S+)")
@@ -97,78 +90,18 @@ def build_chat_prompt_from_messages_runnable(
 
 def build_llm_chain(
     prompt_set: PromptSet,
+    retriever: Runnable,
     llm: BaseChatModel,
-    output_parser: Runnable | Callable = None,
-    format_instructions: str | None = None,
-    final_response_chain: bool = False,
 ) -> Runnable:
     """Builds a chain that correctly forms a text and metadata state update.
 
     Permits both invoke and astream_events.
     """
-    model_name = getattr(llm, "model_name", "unknown-model")
-    _llm = llm.with_config(tags=["response_flag"]) if final_response_chain else llm
-    _output_parser = output_parser if output_parser else StrOutputParser()
-
-    _llm_text_and_tools = _llm | {
-        "raw_response": RunnablePassthrough(),
-        "parsed_response": _output_parser,
-    }
-
-    text_and_tools = {
-        "text_and_tools": _llm_text_and_tools,
-        "prompt": RunnableLambda(lambda prompt: prompt.to_string()),
-        "model": lambda _: model_name,
-    }
-
     return (
-        build_chat_prompt_from_messages_runnable(prompt_set, format_instructions=format_instructions)
-        | text_and_tools
-        | get_all_metadata
-        | RunnablePassthrough.assign(_log=RunnableLambda(lambda _: None))
+        RunnableLambda(retriever_runnable(retriever))
+        | build_chat_prompt_from_messages_runnable(prompt_set) 
+        | llm
     )
-
-
-def build_self_route_output_parser(
-    match_condition: Callable[[str], bool],
-    max_tokens_to_check: int,
-    final_response_chain: bool = False,
-) -> Runnable[Iterable[AIMessageChunk], Iterable[str]]:
-    """
-    This Runnable reads the streamed responses from an LLM until the match
-    condition is true for the response so far it has read a number of tokens.
-    If the match condition is true it breaks off and returns nothing to the
-    client, if not then it streams the response to the client as normal.
-
-    Used to handle responses from prompts like 'If this question can be
-    answered answer it, else return False'
-    """
-
-    def _self_route_output_parser(chunks: Iterable[AIMessageChunk]) -> Iterable[str]:
-        current_content = ""
-        token_count = 0
-        for chunk in chunks:
-            current_content += chunk.content
-            token_count += 1
-            if match_condition(current_content):
-                yield current_content
-                return
-            elif token_count > max_tokens_to_check:
-                break
-        if final_response_chain:
-            dispatch_custom_event(RedboxEventType.response_tokens, current_content)
-        yield current_content
-        for chunk in chunks:
-            if final_response_chain:
-                dispatch_custom_event(RedboxEventType.response_tokens, chunk.content)
-            yield chunk.content
-
-    return RunnableGenerator(_self_route_output_parser)
-
-
-@RunnableLambda
-def send_token_events(tokens: str):
-    dispatch_custom_event(RedboxEventType.response_tokens, data=tokens)
 
 
 class CannedChatLLM(BaseChatModel):
