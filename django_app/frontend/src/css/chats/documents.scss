@@ -18,16 +18,23 @@
   gap: 0.5rem;
   padding: 0.75rem;
 }
-.rb-uploaded-docs__drag-drop-message {
-  background-color: rgba(255, 255, 255, 0.9);
-  position: absolute;
+.rb-uploaded-docs__drag-drop {
+  align-items: center;
+  background-color: white;
+  border: 2.5rem solid rgba(69, 24, 24, 0.8);
+  border-left-width: 4rem;
+  border-right-width: 4rem;
+  bottom: 0;
+  color: $redbox-red;
+  display: flex;
+  flex-direction: column;
+  font-size: 1.375rem;
+  justify-content: center;
   left: 0;
+  position: fixed;
   right: 0;
   top: 0;
-  bottom: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  z-index: 50;
 }
 
 
