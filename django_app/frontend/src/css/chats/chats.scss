@@ -168,6 +168,12 @@ chat-message {
 .iai-chat-bubble__role img {
   width: 1.25rem;
 }
+.iai-chat-bubble__text a {
+  color: $redbox-red;
+}
+.iai-chat-bubble__text a:hover {
+  font-weight: bold;
+}
 
 .rb-chat-message-footer__text {
   color: #60697b;
