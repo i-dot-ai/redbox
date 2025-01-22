@@ -48,7 +48,7 @@ class Command(BaseCommand):
             counter = 0
             failure_counter = 0
 
-            for file in File.objects.filter(last_referenced__lt=cutoff_date).exclude(status__in=File.INACTIVE_STATUSES):
+            for file in File.objects.filter(last_referenced__lt=cutoff_date).exclude(status=File.Status.errored):
                 logger.debug(
                     "Deleting file object %s, last_referenced %s",
                     file,
@@ -56,7 +56,8 @@ class Command(BaseCommand):
                 )
 
                 try:
-                    file.delete_from_s3()
+                    file.delete()
+                    counter += 1
                 except BotoCoreError as e:
                     logger.exception("Error deleting file object %s from storage", file, exc_info=e)
                     file.status = File.Status.errored
@@ -67,12 +68,6 @@ class Command(BaseCommand):
                     file.status = File.Status.errored
                     file.save()
                     failure_counter += 1
-                else:
-                    file.status = File.Status.deleted
-                    file.save()
-                    logger.debug("File object %s deleted", file)
-
-                    counter += 1
 
             self.stdout.write(self.style.SUCCESS(f"Successfully deleted {counter} file objects"))
 

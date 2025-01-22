@@ -17,11 +17,14 @@ from django.db import models
 from django.db.models import Max, Min, UniqueConstraint
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
+from django_q.models import OrmQ, Success
+from django_q.tasks import async_task
 from django_use_email_as_username.models import BaseUser, BaseUserManager
 
 from redbox.chains.components import get_tokeniser
 from redbox.models.settings import get_settings
-from redbox_app.redbox_core.utils import get_date_group
+from redbox_app.redbox_core.utils import get_date_group, sanitise_string
+from redbox_app.worker import ingest
 
 logging.basicConfig(level=os.environ.get("LOG_LEVEL", "INFO"))
 logger = logging.getLogger(__name__)
@@ -44,12 +47,6 @@ class TimeStampedModel(models.Model):
     class Meta:
         abstract = True
         ordering = ["created_at"]
-
-
-def sanitise_string(string: str | None) -> str | None:
-    """We are seeing NUL (0x00) characters in user entered fields, and also in document citations.
-    We can't save these characters, so we need to sanitise them."""
-    return string.replace("\x00", "\ufffd") if string else string
 
 
 class ChatLLMBackend(models.Model):
@@ -609,11 +606,8 @@ def build_s3_key(instance, filename: str) -> str:
 class File(UUIDPrimaryKeyBase, TimeStampedModel):
     class Status(models.TextChoices):
         complete = "complete"
-        deleted = "deleted"
         errored = "errored"
         processing = "processing"
-
-    INACTIVE_STATUSES = [Status.deleted, Status.errored]
 
     status = models.CharField(choices=Status.choices, null=False, blank=False)
     original_file = models.FileField(
@@ -621,7 +615,6 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
         upload_to=build_s3_key,
     )
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    original_file_name = models.TextField(max_length=2048, blank=True, null=True)  # delete me
     last_referenced = models.DateTimeField(blank=True, null=True)
     ingest_error = models.TextField(
         max_length=2048,
@@ -638,6 +631,9 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
     )
     text = models.TextField(null=True, blank=True, help_text="text extracted from file")
     metadata = models.JSONField(null=True, blank=True, help_text="metadata extracted from file")
+    task = models.ForeignKey(
+        OrmQ, on_delete=models.SET_NULL, null=True, blank=True, help_text="pending text extraction task"
+    )
 
     def __str__(self) -> str:  # pragma: no cover
         return self.file_name
@@ -649,17 +645,14 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
                 self.last_referenced = self.created_at
             else:
                 self.last_referenced = timezone.now()
+
         super().save(*args, **kwargs)
 
     @override
     def delete(self, using=None, keep_parents=False):
         #  Needed to make sure no orphaned files remain in the storage
-        self.delete_from_s3()
-        super().delete()
-
-    def delete_from_s3(self):
-        """Manually deletes the file from S3 storage."""
         self.original_file.delete(save=False)
+        super().delete()
 
     @property
     def file_type(self) -> str:
@@ -672,9 +665,6 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
 
     @property
     def file_name(self) -> str:
-        if self.original_file_name:  # delete me?
-            return self.original_file_name
-
         # could have a stronger (regex?) way of stripping the users email address?
         if "/" in self.original_file.name:
             return self.original_file.name.split("/")[1]
@@ -685,7 +675,7 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
     @property
     def unique_name(self) -> str:
         """primary key for accessing file in s3"""
-        if self.status in File.INACTIVE_STATUSES:
+        if self.status == File.Status.errored:
             logger.exception("Attempt to access s3-key for inactive file %s with status %s", self.pk, self.status)
             raise InactiveFileError(self)
         return self.original_file.name
@@ -717,6 +707,15 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
     def __lt__(self, other):
         return self.id < other.id
 
+    def ingest(self, sync: bool = False):
+        task = async_task(ingest, self.id, task_name=self.unique_name, group="ingest", sync=sync)
+        if sync:
+            result = Success.objects.get(pk=task)
+            self.status = self.Status.complete if result.success else self.Status.errored
+        else:
+            self.task = next(item for item in OrmQ.objects.all() if item.task["id"] == task)
+        self.save()
+
     @classmethod
     def get_completed_and_processing_files(cls, user: User) -> tuple[Sequence["File"], Sequence["File"]]:
         """Returns all files that are completed and processing for a given user."""
@@ -733,6 +732,11 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
             .annotate(min_created_at=Min("citation__created_at"))
             .order_by("min_created_at")
         )
+
+    def position_in_queue(self) -> int:
+        if not self.task:
+            return -1
+        return OrmQ.objects.filter(lock__lt=self.task.lock).count()
 
 
 class ChatMessage(UUIDPrimaryKeyBase, TimeStampedModel):
@@ -773,11 +777,16 @@ class ChatMessage(UUIDPrimaryKeyBase, TimeStampedModel):
 
     def log(self):
         token_sum = sum(token_use.token_count for token_use in self.chatmessagetokenuse_set.all())
+
         elastic_log_msg = {
             "@timestamp": self.created_at.isoformat(),
             "id": str(self.id),
             "chat_id": str(self.chat.id),
-            "user_id": str(self.chat.user.id),
+            "department": self.chat.user.email.split("@")[-1],
+            "user_business_unit": self.chat.user.business_unit,
+            "user_grade": self.chat.user.grade,
+            "user_profession": self.chat.user.profession,
+            "user_ai_experience": self.chat.user.ai_experience,
             "text": str(self.text),
             "route": str(self.route),
             "role": str(self.role),

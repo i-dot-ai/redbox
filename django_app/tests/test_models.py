@@ -58,7 +58,6 @@ def test_file_model_unique_name(status: str, peter_rabbit: User, s3_client):  # 
 @pytest.mark.parametrize(
     ("status"),
     [
-        File.Status.deleted,
         File.Status.errored,
     ],
 )

@@ -17,6 +17,7 @@ from redbox import Redbox
 from redbox.models.chain import (
     AISettings,
     ChainChatMessage,
+    PromptSet,
     RedboxQuery,
     RedboxState,
     RequestMetadata,
@@ -102,6 +103,10 @@ class ChatConsumer(AsyncWebsocketConsumer):
             session.name = user_message_text[: settings.CHAT_TITLE_LENGTH]
             await session.asave()
 
+        if await File.objects.filter(id__in=selected_file_uuids, status=File.Status.processing).aexists():
+            await self.send_to_client("error", "you have files waiting to be processed")
+            return
+
         # save user message
         permitted_files = File.objects.filter(user=user, status=File.Status.complete)
         selected_files = permitted_files.filter(id__in=selected_file_uuids)
@@ -120,6 +125,17 @@ class ChatConsumer(AsyncWebsocketConsumer):
         message_history: Sequence[Mapping[str, str]] = [message async for message in session_messages]
 
         ai_settings = await self.get_ai_settings(session)
+
+        document_token_count = sum(file.metadata.get("token_count", 0) for file in selected_files)
+        message_history_token_count = sum(message.token_count for message in message_history)
+
+        if document_token_count + message_history_token_count > ai_settings.context_window_size:
+            await self.send_to_client("error", "selected are too big to work with")
+            return
+
+        self.route = PromptSet.ChatwithDocs if selected_files else PromptSet.Chat
+        self.send_to_client("route", self.route)
+
         state = RedboxState(
             request=RedboxQuery(
                 question=message_history[-1].text,
@@ -141,8 +157,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
             await self.redbox.run(
                 state,
                 response_tokens_callback=self.handle_text,
-                route_name_callback=self.handle_route,
-                metadata_tokens_callback=self.handle_metadata,
             )
 
             message = await self.save_ai_message(
@@ -239,10 +253,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
     async def handle_text(self, response: str) -> str:
         await self.send_to_client("text", response)
         self.full_reply.append(response)
-
-    async def handle_route(self, response: str) -> str:
-        await self.send_to_client("route", response)
-        self.route = response
 
     async def handle_metadata(self, response: dict):
         self.metadata = metadata_reducer(self.metadata, RequestMetadata.model_validate(response))

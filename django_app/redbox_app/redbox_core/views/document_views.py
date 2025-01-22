@@ -13,10 +13,8 @@ from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.views import View
 from django.views.decorators.http import require_http_methods
-from django_q.tasks import async_task
 
 from redbox_app.redbox_core.models import File
-from redbox_app.worker import ingest
 
 User = get_user_model()
 logger = logging.getLogger(__name__)
@@ -106,8 +104,9 @@ class UploadView(View):
         except (ValueError, FieldError, ValidationError) as e:
             logger.exception("Error creating File model object for %s.", uploaded_file, exc_info=e)
             return None, e.args
-        else:
-            async_task(ingest, file.id, task_name=file.unique_name, group="ingest")
+
+        file.ingest()
+
         return file, []
 
 
@@ -117,9 +116,7 @@ def remove_doc_view(request, doc_id: uuid):
 
     if request.method == "POST":
         logger.info("Removing document: %s", request.POST["doc_id"])
-        file.delete_from_s3()
-        file.status = File.Status.deleted
-        file.save()
+        file.delete()
 
     return JsonResponse({"status": file.get_status_text()})
 
@@ -136,4 +133,4 @@ def file_status_api_view(request: HttpRequest) -> JsonResponse:
     except File.DoesNotExist as ex:
         logger.exception("File object information not found in django - file does not exist %s.", file_id, exc_info=ex)
         return JsonResponse({"status": File.Status.errored.label})
-    return JsonResponse({"status": file.get_status_text()})
+    return JsonResponse({"status": file.get_status_text(), "position_in_queue": file.position_in_queue()})

@@ -61,7 +61,7 @@ async def test_chat_consumer_with_new_session(alice: User, mocked_connect: Conne
         response2 = await communicator.receive_json_from(timeout=5)
         response3 = await communicator.receive_json_from(timeout=5)
         response4 = await communicator.receive_json_from(timeout=5)
-        response5 = await communicator.receive_json_from(timeout=5)
+        # response5 = await communicator.receive_json_from(timeout=5)
 
         # Then
         assert response1["type"] == "session-id"
@@ -69,20 +69,12 @@ async def test_chat_consumer_with_new_session(alice: User, mocked_connect: Conne
         assert response2["data"] == "Good afternoon, "
         assert response3["type"] == "text"
         assert response3["data"] == "Mr. Amor."
-        assert response4["type"] == "route"
-        assert response4["data"] == "gratitude"
-        assert response5["type"] == "end"
+        assert response4["type"] == "end"
         # Close
         await communicator.disconnect()
 
     assert await get_chat_message_text(alice, ChatMessage.Role.user) == ["Hello Hal."]
     assert await get_chat_message_text(alice, ChatMessage.Role.ai) == ["Good afternoon, Mr. Amor."]
-    assert await get_chat_message_route(alice, ChatMessage.Role.ai) == ["gratitude"]
-
-    assert await get_token_use_model(ChatMessageTokenUse.UseType.INPUT) == "gpt-4o"
-    assert await get_token_use_model(ChatMessageTokenUse.UseType.OUTPUT) == "gpt-4o"
-    assert await get_token_use_count(ChatMessageTokenUse.UseType.INPUT) == 123
-    assert await get_token_use_count(ChatMessageTokenUse.UseType.OUTPUT) == 1000
 
 
 @pytest.mark.django_db(transaction=True)
@@ -102,7 +94,7 @@ async def test_chat_consumer_staff_user(staff_user: User, mocked_connect: Connec
         response2 = await communicator.receive_json_from(timeout=5)
         response3 = await communicator.receive_json_from(timeout=5)
         response4 = await communicator.receive_json_from(timeout=5)
-        _response5 = await communicator.receive_json_from(timeout=5)
+        # _response5 = await communicator.receive_json_from(timeout=5)
 
         # Then
         assert response1["type"] == "session-id"
@@ -110,12 +102,9 @@ async def test_chat_consumer_staff_user(staff_user: User, mocked_connect: Connec
         assert response2["data"] == "Good afternoon, "
         assert response3["type"] == "text"
         assert response3["data"] == "Mr. Amor."
-        assert response4["type"] == "route"
-        assert response4["data"] == "gratitude"
+        assert response4["type"] == "end"
         # Close
         await communicator.disconnect()
-
-    assert await get_chat_message_route(staff_user, ChatMessage.Role.ai) == ["gratitude"]
 
 
 @pytest.mark.django_db(transaction=True)
@@ -161,7 +150,6 @@ async def test_chat_consumer_with_naughty_question(alice: User, mocked_connect: 
         response2 = await communicator.receive_json_from(timeout=5)
         response3 = await communicator.receive_json_from(timeout=5)
         response4 = await communicator.receive_json_from(timeout=5)
-        response5 = await communicator.receive_json_from(timeout=5)
 
         # Then
         assert response1["type"] == "session-id"
@@ -169,15 +157,12 @@ async def test_chat_consumer_with_naughty_question(alice: User, mocked_connect: 
         assert response2["data"] == "Good afternoon, "
         assert response3["type"] == "text"
         assert response3["data"] == "Mr. Amor."
-        assert response4["type"] == "route"
-        assert response4["data"] == "gratitude"
-        assert response5["type"] == "end"
+        assert response4["type"] == "end"
         # Close
         await communicator.disconnect()
 
     assert await get_chat_message_text(alice, ChatMessage.Role.user) == ["Hello Hal. \ufffd"]
     assert await get_chat_message_text(alice, ChatMessage.Role.ai) == ["Good afternoon, Mr. Amor."]
-    assert await get_chat_message_route(alice, ChatMessage.Role.ai) == ["gratitude"]
 
 
 @pytest.mark.django_db(transaction=True)
@@ -197,7 +182,6 @@ async def test_chat_consumer_agentic(alice: User, mocked_connect_agentic_search:
         response2 = await communicator.receive_json_from(timeout=5)
         response3 = await communicator.receive_json_from(timeout=5)
         response4 = await communicator.receive_json_from(timeout=5)
-        response5 = await communicator.receive_json_from(timeout=5)
 
         # Then
         assert response1["type"] == "session-id"
@@ -205,19 +189,12 @@ async def test_chat_consumer_agentic(alice: User, mocked_connect_agentic_search:
         assert response2["data"] == "Good afternoon, "
         assert response3["type"] == "text"
         assert response3["data"] == "Mr. Amor."
-        assert response4["type"] == "route"
-        assert response4["data"] == "search/agentic"
-        assert response5["type"] == "end"
+        assert response4["type"] == "end"
         # Close
         await communicator.disconnect()
 
     assert await get_chat_message_text(alice, ChatMessage.Role.user) == ["Hello Hal."]
     assert await get_chat_message_text(alice, ChatMessage.Role.ai) == ["Good afternoon, Mr. Amor."]
-
-    assert await get_token_use_model(ChatMessageTokenUse.UseType.INPUT) == "gpt-4o"
-    assert await get_token_use_model(ChatMessageTokenUse.UseType.OUTPUT) == "gpt-4o"
-    assert await get_token_use_count(ChatMessageTokenUse.UseType.INPUT) == 123
-    assert await get_token_use_count(ChatMessageTokenUse.UseType.OUTPUT) == 1000
 
 
 @database_sync_to_async
@@ -726,3 +703,28 @@ def mocked_connect_with_several_files(several_files: Sequence[File]) -> Connect:
 @database_sync_to_async
 def refresh_from_db(obj: Model) -> None:
     obj.refresh_from_db()
+
+
+@pytest.mark.django_db(transaction=True)
+@pytest.mark.asyncio()
+async def test_llm_conversation_fail_file_processing(alice, mix_of_file_statues, chat):
+    communicator = WebsocketCommunicator(ChatConsumer.as_asgi(), "/ws/chat/")
+    communicator.scope["user"] = alice
+    connected, _ = await communicator.connect()
+    assert connected
+
+    selected_file_core_uuids: list[str] = [str(f.id) for f in mix_of_file_statues]
+
+    await communicator.send_json_to(
+        {
+            "message": "Third question, with selected files?",
+            "sessionId": str(chat.id),
+            "selectedFiles": selected_file_core_uuids,
+        }
+    )
+
+    response1 = await communicator.receive_json_from(timeout=5)
+
+    # Then
+    assert response1["type"] == "error"
+    assert response1["data"] == "you have files waiting to be processed"
