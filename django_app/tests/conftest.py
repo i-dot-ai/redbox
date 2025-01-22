@@ -298,3 +298,20 @@ def chat_message_with_rating(chat_message: ChatMessage) -> ChatMessage:
     chat_message.rating_chips = ["speed", "accuracy", "blasphemy"]
     chat_message.save()
     return chat_message
+
+
+@pytest.fixture()
+def mix_of_file_statues(alice: User, chat) -> Sequence[File]:
+    files = []
+    for status in File.Status.complete, File.Status.processing:
+        filename = f"original_file_{status}.txt"
+        files.append(
+            File.objects.create(
+                user=alice,
+                original_file=SimpleUploadedFile(filename, b"Lorem Ipsum."),
+                status=status,
+                metadata={"token_count": 100},
+                chat=chat,
+            )
+        )
+    return files

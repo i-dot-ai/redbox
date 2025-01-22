@@ -103,6 +103,10 @@ class ChatConsumer(AsyncWebsocketConsumer):
             session.name = user_message_text[: settings.CHAT_TITLE_LENGTH]
             await session.asave()
 
+        if await File.objects.filter(id__in=selected_file_uuids, status=File.Status.processing).aexists():
+            await self.send_to_client("error", "you have files waiting to be processed")
+            return
+
         # save user message
         permitted_files = File.objects.filter(user=user, status=File.Status.complete)
         selected_files = permitted_files.filter(id__in=selected_file_uuids)
