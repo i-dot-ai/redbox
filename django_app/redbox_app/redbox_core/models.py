@@ -631,7 +631,9 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
     )
     text = models.TextField(null=True, blank=True, help_text="text extracted from file")
     metadata = models.JSONField(null=True, blank=True, help_text="metadata extracted from file")
-    task = models.ForeignKey(OrmQ, on_delete=models.CASCADE, null=True, blank=True, help_text="")
+    task = models.ForeignKey(
+        OrmQ, on_delete=models.SET_NULL, null=True, blank=True, help_text="pending text extraction task"
+    )
 
     def __str__(self) -> str:  # pragma: no cover
         return self.file_name
