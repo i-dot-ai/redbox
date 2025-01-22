@@ -103,6 +103,10 @@ class ChatConsumer(AsyncWebsocketConsumer):
             session.name = user_message_text[: settings.CHAT_TITLE_LENGTH]
             await session.asave()
 
+        if await File.objects.filter(id__in=selected_file_uuids, status=File.Status.processing).aexists():
+            await self.send_to_client("error", "you have files waiting to be processed")
+            return
+
         # save user message
         permitted_files = File.objects.filter(user=user, status=File.Status.complete)
         selected_files = permitted_files.filter(id__in=selected_file_uuids)
@@ -122,7 +126,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
         ai_settings = await self.get_ai_settings(session)
 
-        document_token_count = sum(file.metadata["token_count"] for file in selected_files)
+        document_token_count = sum(file.metadata.get("token_count", 0) for file in selected_files)
         message_history_token_count = sum(message.token_count for message in message_history)
 
         if document_token_count + message_history_token_count > ai_settings.context_window_size:
