@@ -29,7 +29,6 @@ class AISettings(BaseModel):
 
     # Prompts and LangGraph settings
     max_document_tokens: int = 1_000_000
-    recursion_limit: int = 50
 
     # Common Prompt Fragments
 
@@ -50,23 +49,15 @@ class AISettings(BaseModel):
 
 class RedboxQuery(BaseModel):
     question: str = Field(description="The last user chat message")
-    s3_keys: list[str] = Field(description="List of files to process", default_factory=list)
+    documents: list[Document] = Field(description="List of files to process", default_factory=list)
     user_uuid: UUID = Field(description="User the chain in executing for")
     chat_history: list[ChainChatMessage] = Field(description="All previous messages in chat (excluding question)")
     ai_settings: AISettings = Field(description="User request AI settings", default_factory=AISettings)
-    permitted_s3_keys: list[str] = Field(description="List of permitted files for response", default_factory=list)
 
 
 class RedboxState(BaseModel):
     request: RedboxQuery
-    documents: list[Document] = Field(default_factory=list)
     messages: Annotated[list[AnyMessage], add_messages] = Field(default_factory=list)
-
-    @property
-    def last_message(self) -> AnyMessage:
-        if not self.messages:
-            raise ValueError("No messages in the state")
-        return self.messages[-1]
 
 
 class PromptSet(StrEnum):

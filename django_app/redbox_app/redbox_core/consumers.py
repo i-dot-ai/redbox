@@ -10,6 +10,7 @@ from channels.generic.websocket import AsyncWebsocketConsumer
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.forms.models import model_to_dict
+from langchain_core.documents import Document
 from openai import RateLimitError
 from websockets import ConnectionClosedError, WebSocketClientProtocol
 
@@ -21,7 +22,6 @@ from redbox.models.chain import (
     RedboxQuery,
     RedboxState,
 )
-from redbox.retriever import DjangoFileRetriever
 from redbox_app.redbox_core import error_messages
 from redbox_app.redbox_core.models import AISettings as AISettingsModel
 from redbox_app.redbox_core.models import (
@@ -56,10 +56,7 @@ def escape_curly_brackets(text: str):
 class ChatConsumer(AsyncWebsocketConsumer):
     full_reply: ClassVar = []
     route = None
-    redbox = Redbox(
-        retriever=DjangoFileRetriever(file_manager=File.objects),
-        debug=True,
-    )
+    redbox = Redbox(debug=True)
 
     async def receive(self, text_data=None, bytes_data=None):
         """Receive & respond to message from browser websocket."""
@@ -104,16 +101,13 @@ class ChatConsumer(AsyncWebsocketConsumer):
             return
 
         # save user message
-        permitted_files = File.objects.filter(user=user, status=File.Status.complete)
-        selected_files = permitted_files.filter(id__in=selected_file_uuids)
+        selected_files = File.objects.filter(user=user, status=File.Status.complete, id__in=selected_file_uuids)
         await self.save_user_message(session, user_message_text, selected_files=selected_files)
 
-        await self.llm_conversation(selected_files, session, user, user_message_text, permitted_files)
+        await self.llm_conversation(selected_files, session, user, user_message_text)
         await self.close()
 
-    async def llm_conversation(
-        self, selected_files: Sequence[File], session: Chat, user: User, title: str, permitted_files: Sequence[File]
-    ) -> None:
+    async def llm_conversation(self, selected_files: Sequence[File], session: Chat, user: User, title: str) -> None:
         """Initiate & close websocket conversation with the core-api message endpoint."""
         await self.send_to_client("session-id", session.id)
 
@@ -135,7 +129,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         state = RedboxState(
             request=RedboxQuery(
                 question=message_history[-1].text,
-                s3_keys=[f.unique_name for f in selected_files],
+                s3_keys=[Document(str(f.text), metadata={"uri": f.id}) for f in selected_files],
                 user_uuid=user.id,
                 chat_history=[
                     ChainChatMessage(
@@ -145,7 +139,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
                     for message in message_history[:-1]
                 ],
                 ai_settings=ai_settings,
-                permitted_s3_keys=[f.unique_name async for f in permitted_files],
             ),
         )
 
