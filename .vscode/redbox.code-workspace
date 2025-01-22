@@ -13,10 +13,6 @@
 			"path": "../redbox-core"
 		},
 		{
-			"name": "AI Tests",
-			"path": "../ai-tests"
-		},
-		{
 			"name": "Integration Tests",
 			"path": "../tests"
 		},

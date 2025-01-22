@@ -21,33 +21,6 @@ permissions:
   contents: read
 
 jobs:
-  test-redbox:
-
-    runs-on: ubuntu-latest
-
-    steps:
-    - uses: actions/checkout@v3
-
-    - name: Set up Python 3.12
-      uses: actions/setup-python@v3
-      with:
-        python-version: "3.12"
-
-    - name: Set up Poetry
-      uses: abatilo/actions-poetry@v2
-      with:
-        poetry-version: 1.7.0
-
-    - name: Build Containers
-      run: |
-        cp tests/.env.test .env
-        docker compose up -d --wait minio db
-
-    - name: Test redbox with pytest
-      run: |
-        make test-redbox
-
-
   test-django:
 
     runs-on: ubuntu-latest
