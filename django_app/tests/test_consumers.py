@@ -16,8 +16,7 @@ from pydantic import BaseModel
 from websockets import WebSocketClientProtocol
 from websockets.legacy.client import Connect
 
-from redbox.models.chain import LLMCallMetadata, RedboxQuery, RequestMetadata
-from redbox.models.graph import FINAL_RESPONSE_TAG, ROUTE_NAME_TAG, SOURCE_DOCUMENTS_TAG
+from redbox.models.chain import RedboxQuery
 from redbox.models.prompts import CHAT_QUESTION_PROMPT
 from redbox_app.redbox_core import error_messages
 from redbox_app.redbox_core.consumers import ChatConsumer
@@ -39,7 +38,7 @@ async def test_chat_consumer_with_new_session(alice: User, mocked_connect: Conne
     # Given
 
     # When
-    with patch("redbox_app.redbox_core.consumers.ChatConsumer.redbox.graph", new=mocked_connect):
+    with patch("redbox_app.redbox_core.consumers.ChatConsumer.redbox._get_runnable", new=lambda _: mocked_connect):
         communicator = WebsocketCommunicator(ChatConsumer.as_asgi(), "/ws/chat/")
         communicator.scope["user"] = alice
         connected, _ = await communicator.connect()
@@ -72,7 +71,7 @@ async def test_chat_consumer_staff_user(staff_user: User, mocked_connect: Connec
     # Given
 
     # When
-    with patch("redbox_app.redbox_core.consumers.ChatConsumer.redbox.graph", new=mocked_connect):
+    with patch("redbox_app.redbox_core.consumers.ChatConsumer.redbox._get_runnable", new=lambda _: mocked_connect):
         communicator = WebsocketCommunicator(ChatConsumer.as_asgi(), "/ws/chat/")
         communicator.scope["user"] = staff_user
         connected, _ = await communicator.connect()
@@ -102,7 +101,7 @@ async def test_chat_consumer_with_existing_session(alice: User, chat: Chat, mock
     # Given
 
     # When
-    with patch("redbox_app.redbox_core.consumers.ChatConsumer.redbox.graph", new=mocked_connect):
+    with patch("redbox_app.redbox_core.consumers.ChatConsumer.redbox._get_runnable", new=lambda _: mocked_connect):
         communicator = WebsocketCommunicator(ChatConsumer.as_asgi(), "/ws/chat/")
         communicator.scope["user"] = alice
         connected, _ = await communicator.connect()
@@ -128,7 +127,7 @@ async def test_chat_consumer_with_naughty_question(alice: User, mocked_connect: 
     # Given
 
     # When
-    with patch("redbox_app.redbox_core.consumers.ChatConsumer.redbox.graph", new=mocked_connect):
+    with patch("redbox_app.redbox_core.consumers.ChatConsumer.redbox._get_runnable", new=lambda _: mocked_connect):
         communicator = WebsocketCommunicator(ChatConsumer.as_asgi(), "/ws/chat/")
         communicator.scope["user"] = alice
         connected, _ = await communicator.connect()
@@ -151,38 +150,6 @@ async def test_chat_consumer_with_naughty_question(alice: User, mocked_connect: 
         await communicator.disconnect()
 
     assert await get_chat_message_text(alice, ChatMessage.Role.user) == ["Hello Hal. \ufffd"]
-    assert await get_chat_message_text(alice, ChatMessage.Role.ai) == ["Good afternoon, Mr. Amor."]
-
-
-@pytest.mark.django_db(transaction=True)
-@pytest.mark.asyncio()
-async def test_chat_consumer_agentic(alice: User, mocked_connect_agentic_search: Connect):
-    # Given
-
-    # When
-    with patch("redbox_app.redbox_core.consumers.ChatConsumer.redbox.graph", new=mocked_connect_agentic_search):
-        communicator = WebsocketCommunicator(ChatConsumer.as_asgi(), "/ws/chat/")
-        communicator.scope["user"] = alice
-        connected, _ = await communicator.connect()
-        assert connected
-
-        await communicator.send_json_to({"message": "Hello Hal."})
-        response1 = await communicator.receive_json_from(timeout=5)
-        response2 = await communicator.receive_json_from(timeout=5)
-        response3 = await communicator.receive_json_from(timeout=5)
-        response4 = await communicator.receive_json_from(timeout=5)
-
-        # Then
-        assert response1["type"] == "session-id"
-        assert response2["type"] == "text"
-        assert response2["data"] == "Good afternoon, "
-        assert response3["type"] == "text"
-        assert response3["data"] == "Mr. Amor."
-        assert response4["type"] == "end"
-        # Close
-        await communicator.disconnect()
-
-    assert await get_chat_message_text(alice, ChatMessage.Role.user) == ["Hello Hal."]
     assert await get_chat_message_text(alice, ChatMessage.Role.ai) == ["Good afternoon, Mr. Amor."]
 
 
@@ -209,7 +176,10 @@ async def test_chat_consumer_with_selected_files(
     selected_files: Sequence[File] = several_files[2:]
 
     # When
-    with patch("redbox_app.redbox_core.consumers.ChatConsumer.redbox.graph", new=mocked_connect_with_several_files):
+    with patch(
+        "redbox_app.redbox_core.consumers.ChatConsumer.redbox._get_runnable",
+        new=lambda _: mocked_connect_with_several_files,
+    ):
         communicator = WebsocketCommunicator(ChatConsumer.as_asgi(), "/ws/chat/")
         communicator.scope["user"] = alice
         connected, _ = await communicator.connect()
@@ -267,7 +237,9 @@ async def test_chat_consumer_with_connection_error(alice: User, mocked_breaking_
     # Given
 
     # When
-    with patch("redbox_app.redbox_core.consumers.ChatConsumer.redbox.graph", new=mocked_breaking_connect):
+    with patch(
+        "redbox_app.redbox_core.consumers.ChatConsumer.redbox._get_runnable", new=lambda _: mocked_breaking_connect
+    ):
         communicator = WebsocketCommunicator(ChatConsumer.as_asgi(), "/ws/chat/")
         communicator.scope["user"] = alice
         connected, _ = await communicator.connect()
@@ -290,7 +262,8 @@ async def test_chat_consumer_with_explicit_unhandled_error(
 
     # When
     with patch(
-        "redbox_app.redbox_core.consumers.ChatConsumer.redbox.graph", new=mocked_connect_with_explicit_unhandled_error
+        "redbox_app.redbox_core.consumers.ChatConsumer.redbox._get_runnable",
+        new=lambda _: mocked_connect_with_explicit_unhandled_error,
     ):
         communicator = WebsocketCommunicator(ChatConsumer.as_asgi(), "/ws/chat/")
         communicator.scope["user"] = alice
@@ -319,7 +292,8 @@ async def test_chat_consumer_with_rate_limited_error(alice: User, mocked_connect
 
     # When
     with patch(
-        "redbox_app.redbox_core.consumers.ChatConsumer.redbox.graph", new=mocked_connect_with_rate_limited_error
+        "redbox_app.redbox_core.consumers.ChatConsumer.redbox._get_runnable",
+        new=lambda _: mocked_connect_with_rate_limited_error,
     ):
         communicator = WebsocketCommunicator(ChatConsumer.as_asgi(), "/ws/chat/")
         communicator.scope["user"] = alice
@@ -350,8 +324,8 @@ async def test_chat_consumer_with_explicit_no_document_selected_error(
 
     # When
     with patch(
-        "redbox_app.redbox_core.consumers.ChatConsumer.redbox.graph",
-        new=mocked_connect_with_explicit_no_document_selected_error,
+        "redbox_app.redbox_core.consumers.ChatConsumer.redbox._get_runnable",
+        new=lambda _: mocked_connect_with_explicit_no_document_selected_error,
     ):
         communicator = WebsocketCommunicator(ChatConsumer.as_asgi(), "/ws/chat/")
         communicator.scope["user"] = alice
@@ -376,8 +350,8 @@ async def test_chat_consumer_get_ai_settings(
     chat_with_alice: Chat, mocked_connect_with_explicit_no_document_selected_error: Connect
 ):
     with patch(
-        "redbox_app.redbox_core.consumers.ChatConsumer.redbox.graph",
-        new=mocked_connect_with_explicit_no_document_selected_error,
+        "redbox_app.redbox_core.consumers.ChatConsumer.redbox._get_runnable",
+        new=lambda _: mocked_connect_with_explicit_no_document_selected_error,
     ):
         communicator = WebsocketCommunicator(ChatConsumer.as_asgi(), "/ws/chat/")
         communicator.scope["user"] = chat_with_alice.user
@@ -497,14 +471,12 @@ def mocked_connect(uploaded_file: File) -> Connect:
     responses = [
         {
             "event": "on_chat_model_stream",
-            "tags": [FINAL_RESPONSE_TAG],
             "data": {"chunk": Token(content="Good afternoon, ")},
         },
-        {"event": "on_chat_model_stream", "tags": [FINAL_RESPONSE_TAG], "data": {"chunk": Token(content="Mr. Amor.")}},
-        {"event": "on_chain_end", "tags": [ROUTE_NAME_TAG], "data": {"output": {"route_name": "gratitude"}}},
+        {"event": "on_chat_model_stream", "data": {"chunk": Token(content="Mr. Amor.")}},
+        {"event": "on_chain_end", "data": {"output": {"route_name": "gratitude"}}},
         {
             "event": "on_retriever_end",
-            "tags": [SOURCE_DOCUMENTS_TAG],
             "data": {
                 "output": [
                     Document(
@@ -516,7 +488,6 @@ def mocked_connect(uploaded_file: File) -> Connect:
         },
         {
             "event": "on_retriever_end",
-            "tags": [SOURCE_DOCUMENTS_TAG],
             "data": {
                 "output": [
                     Document(
@@ -530,15 +501,6 @@ def mocked_connect(uploaded_file: File) -> Connect:
                 ]
             },
         },
-        {
-            "event": "on_custom_event",
-            "name": "on_metadata_generation",
-            "data": RequestMetadata(
-                llm_calls=[LLMCallMetadata(llm_model_name="gpt-4o", input_tokens=123, output_tokens=1000)],
-                selected_files_total_tokens=1000,
-                number_of_selected_files=1,
-            ),
-        },
     ]
 
     return CannedGraphLLM(responses=responses)
@@ -549,13 +511,11 @@ def mocked_connect_with_naughty_citation(uploaded_file: File) -> CannedGraphLLM:
     responses = [
         {
             "event": "on_chat_model_stream",
-            "tags": [FINAL_RESPONSE_TAG],
             "data": {"chunk": Token(content="Good afternoon, Mr. Amor.")},
         },
-        {"event": "on_chain_end", "tags": [ROUTE_NAME_TAG], "data": {"output": {"route_name": "gratitude"}}},
+        {"event": "on_chain_end", "data": {"output": {"route_name": "gratitude"}}},
         {
             "event": "on_retriever_end",
-            "tags": [SOURCE_DOCUMENTS_TAG],
             "data": {
                 "output": [
                     Document(
@@ -586,12 +546,10 @@ def mocked_connect_with_explicit_unhandled_error() -> CannedGraphLLM:
     responses = [
         {
             "event": "on_chat_model_stream",
-            "tags": [FINAL_RESPONSE_TAG],
             "data": {"chunk": Token(content="Good afternoon, ")},
         },
         {
             "event": "on_chat_model_stream",
-            "tags": [FINAL_RESPONSE_TAG],
             "data": {"chunk": Token(content=error_messages.CORE_ERROR_MESSAGE)},
         },
     ]
@@ -604,12 +562,10 @@ def mocked_connect_with_rate_limited_error() -> CannedGraphLLM:
     responses = [
         {
             "event": "on_chat_model_stream",
-            "tags": [FINAL_RESPONSE_TAG],
             "data": {"chunk": Token(content="Good afternoon, ")},
         },
         {
             "event": "on_chat_model_stream",
-            "tags": [FINAL_RESPONSE_TAG],
             "data": {"chunk": Token(content=error_messages.RATE_LIMITED)},
         },
     ]
@@ -622,48 +578,7 @@ def mocked_connect_with_explicit_no_document_selected_error() -> CannedGraphLLM:
     responses = [
         {
             "event": "on_chat_model_stream",
-            "tags": [FINAL_RESPONSE_TAG],
             "data": {"chunk": Token(content=error_messages.SELECT_DOCUMENT)},
-        },
-    ]
-
-    return CannedGraphLLM(responses=responses)
-
-
-@pytest.fixture()
-def mocked_connect_agentic_search(uploaded_file: File) -> Connect:
-    responses = [
-        {
-            "event": "on_custom_event",
-            "name": "response_tokens",
-            "data": "Good afternoon, ",
-        },
-        {
-            "event": "on_custom_event",
-            "name": "response_tokens",
-            "data": "Mr. Amor.",
-        },
-        {"event": "on_chain_end", "tags": [ROUTE_NAME_TAG], "data": {"output": {"route_name": "search/agentic"}}},
-        {
-            "event": "on_custom_event",
-            "name": "on_source_report",
-            "data": [
-                Document(metadata={"uri": uploaded_file.unique_name}, page_content="Good afternoon Mr Amor"),
-                Document(metadata={"uri": uploaded_file.unique_name}, page_content="Good afternoon Mr Amor"),
-                Document(
-                    metadata={"uri": uploaded_file.unique_name, "page_number": [34, 35]},
-                    page_content="Good afternoon Mr Amor",
-                ),
-            ],
-        },
-        {
-            "event": "on_custom_event",
-            "name": "on_metadata_generation",
-            "data": RequestMetadata(
-                llm_calls=[LLMCallMetadata(llm_model_name="gpt-4o", input_tokens=123, output_tokens=1000)],
-                selected_files_total_tokens=1000,
-                number_of_selected_files=1,
-            ),
         },
     ]
 
