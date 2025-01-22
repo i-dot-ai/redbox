@@ -703,3 +703,28 @@ def mocked_connect_with_several_files(several_files: Sequence[File]) -> Connect:
 @database_sync_to_async
 def refresh_from_db(obj: Model) -> None:
     obj.refresh_from_db()
+
+
+@pytest.mark.django_db(transaction=True)
+@pytest.mark.asyncio()
+async def test_llm_conversation_fail_file_processing(alice, mix_of_file_statues, chat):
+    communicator = WebsocketCommunicator(ChatConsumer.as_asgi(), "/ws/chat/")
+    communicator.scope["user"] = alice
+    connected, _ = await communicator.connect()
+    assert connected
+
+    selected_file_core_uuids: list[str] = [str(f.id) for f in mix_of_file_statues]
+
+    await communicator.send_json_to(
+        {
+            "message": "Third question, with selected files?",
+            "sessionId": str(chat.id),
+            "selectedFiles": selected_file_core_uuids,
+        }
+    )
+
+    response1 = await communicator.receive_json_from(timeout=5)
+
+    # Then
+    assert response1["type"] == "error"
+    assert response1["data"] == "you have files waiting to be processed"
