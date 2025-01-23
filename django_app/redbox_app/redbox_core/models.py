@@ -758,6 +758,10 @@ class ChatMessage(UUIDPrimaryKeyBase, TimeStampedModel):
             "rating": int(self.rating) if self.rating else None,
             "rating_text": str(self.rating_text),
             "rating_chips": list(map(str, self.rating_chips)) if self.rating_chips else None,
+            "chat_feedback_achieved": self.chat.feedback_achieved,
+            "chat_feedback_saved_time": self.chat.feedback_saved_time,
+            "chat_feedback_improved_work": self.chat.feedback_improved_work,
+            "n_selected_files": len(self.selected_files),
         }
         if es_client := env.elasticsearch_client():
             try:
