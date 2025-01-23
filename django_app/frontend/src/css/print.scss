@@ -6,7 +6,7 @@
   }
 
   /* Show main column full width */
-  #message-form .govuk-grid-column-one-third {
+  .govuk-grid-column-one-third:has(#new-chat-button) {
     display: none;
   }
   .govuk-grid-column-two-thirds {

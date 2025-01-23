@@ -16,7 +16,7 @@ import "./web-components/chats/exit-feedback.js";
 
 import "./web-components/documents/document-container.mjs";
 import "./web-components/documents/document-upload.mjs";
-import "./web-components/documents/file-status.js";
+import "./web-components/documents/file-status.mjs";
 import "./web-components/documents/upload-container.mjs";
 
 document.addEventListener("chat-response-end", (evt) => {

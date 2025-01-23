@@ -12,19 +12,18 @@
   right: 0;
 }
 .rb-chat-input__container {
-  align-items: flex-start;
+  align-items: center;
   display: flex;
+  flex-wrap: wrap;
   gap: 1rem;
+  justify-content: space-between;
 }
 
+/* Top container - left */
 .rb-chat-input__input-container {
   flex-grow: 1;
 }
-.rb-chat-input__input-container label {
-  display: block;
-  margin-left: 1rem;
-}
-.rb-chat-input__input-container textarea {
+.rb-chat-input textarea {
   border: 0;
   font-size: 0.875rem;
   line-height: 1.5rem;
@@ -34,7 +33,13 @@
   resize: vertical;
   width: 100%;
 }
+.rb-chat-input__input-container-bottom {
+  align-items: center;
+  display: flex;
+  gap: 1rem;
+}
 
+/* Top container - right */
 .rb-chat-input__button-container {
   align-items: end;
   display: flex;
@@ -60,13 +65,18 @@
   color: var(--iai-product-colour);
 }
 
-.rb-chat-input__bottom-container {
-  display: flex;
-  gap: 1rem;
+/* Bottom container */
+.rb-chat-input__container--bottom:has(li) {
+  border-top: 1px solid #e0e0e0;
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
 }
 
 @media (min-width: 1020px) {
   .rb-chat-input {
     max-width: 100%;
+  }
+  .rb-chat-input__container--bottom {
+    margin-left: 0.5rem;
   }
 }
