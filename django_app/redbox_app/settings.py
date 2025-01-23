@@ -66,7 +66,6 @@ INSTALLED_APPS = [
     "import_export",
     "django_q",
     "rest_framework",
-    "django_plotly_dash.apps.DjangoPlotlyDashConfig",
     "adminplus",
     "waffle",
 ]
@@ -82,13 +81,11 @@ MIDDLEWARE = [
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
-    "redbox_app.redbox_core.middleware.plotly_no_csp_no_xframe_middleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "django_permissions_policy.PermissionsPolicyMiddleware",
     "csp.middleware.CSPMiddleware",
     "redbox_app.redbox_core.middleware.nocache_middleware",
     "redbox_app.redbox_core.middleware.security_header_middleware",
-    "django_plotly_dash.middleware.BaseMiddleware",
     "waffle.middleware.WaffleMiddleware",
 ]
 
