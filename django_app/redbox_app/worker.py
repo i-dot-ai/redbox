@@ -1,7 +1,7 @@
 import logging
 from uuid import UUID
 
-from markitdown import MarkItDown
+from markitdown import MarkItDown, UnsupportedFormatException
 
 from redbox.chains.components import get_tokeniser
 from redbox_app.redbox_core.utils import sanitise_string
@@ -23,8 +23,7 @@ def ingest(file_id: UUID) -> None:
         file.text = sanitise_string(markdown.text_content)
         file.token_count = len(tokeniser.encode(markdown.text_content))
         file.status = File.Status.complete
-        file.save()
-    except Exception as error:  # noqa: BLE001
+    except (Exception, UnsupportedFormatException) as error:
         file.status = File.Status.errored
         file.ingest_error = str(error)
-        file.save()
+    file.save()
