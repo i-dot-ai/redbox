@@ -29,6 +29,7 @@ class AISettings(BaseModel):
 
     # Prompts and LangGraph settings
     max_document_tokens: int = 1_000_000
+    recursion_limit: int = 50
 
     # Common Prompt Fragments
 

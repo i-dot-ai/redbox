@@ -56,12 +56,11 @@ def escape_curly_brackets(text: str):
 class ChatConsumer(AsyncWebsocketConsumer):
     full_reply: ClassVar = []
     route = None
-    redbox = Redbox(debug=True)
+    redbox = Redbox(debug=settings.DEBUG)
 
     async def receive(self, text_data=None, bytes_data=None):
         """Receive & respond to message from browser websocket."""
         self.full_reply = []
-        self.external_citations = []
         self.route = None
 
         data = json.loads(text_data or bytes_data)
@@ -129,7 +128,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         state = RedboxState(
             request=RedboxQuery(
                 question=message_history[-1].text,
-                documents=[Document(str(f.text), metadata={"uri": f.id}) for f in selected_files],
+                documents=[Document(str(f.text), metadata={"uri": f.original_file.name}) for f in selected_files],
                 user_uuid=user.id,
                 chat_history=[
                     ChainChatMessage(

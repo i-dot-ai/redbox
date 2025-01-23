@@ -388,7 +388,9 @@ async def test_chat_consumer_redbox_state(
         assert connected
 
         selected_file_uuids: Sequence[str] = [str(f.id) for f in selected_files]
-        documents: Sequence[str] = [Document(page_content=f.text) for f in selected_files]
+        documents: Sequence[str] = [
+            Document(page_content=str(f.text), metadata={"uri": f.original_file.name}) for f in selected_files
+        ]
 
         await communicator.send_json_to(
             {
