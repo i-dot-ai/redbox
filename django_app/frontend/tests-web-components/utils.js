@@ -28,7 +28,7 @@ const signIn = async (page) => {
   const magicLink = await getMagicLink();
 
   await page.goto(`${magicLink}`);
-  await expect(page.locator(".chat-options__heading")).toContainText("What would you like to ask your Redbox?");
+  await expect(page.locator(".chat-options__heading")).toContainText("What would you like to ask?");
 };
 
 const sendMessage = async (page) => {

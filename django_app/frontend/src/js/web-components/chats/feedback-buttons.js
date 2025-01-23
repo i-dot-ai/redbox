@@ -36,19 +36,19 @@ export class FeedbackButtons extends HTMLElement {
                 </button>
                 <button class="feedback__star-button" data-rating="2" type="button">
                     ${starIcon}
-                    <span class="govuk-visually-hidden">2 star out of 5</span>
+                    <span class="govuk-visually-hidden">2 stars out of 5</span>
                 </button>
                 <button class="feedback__star-button" data-rating="3" type="button">
                     ${starIcon}
-                    <span class="govuk-visually-hidden">3 star out of 5</span>
+                    <span class="govuk-visually-hidden">3 stars out of 5</span>
                 </button>
                 <button class="feedback__star-button" data-rating="4" type="button">
                     ${starIcon}
-                    <span class="govuk-visually-hidden">4 star out of 5</span>
+                    <span class="govuk-visually-hidden">4 stars out of 5</span>
                 </button>
                 <button class="feedback__star-button" data-rating="5" type="button">
                     ${starIcon}
-                    <span class="govuk-visually-hidden">5 star out of 5 (very helpful)</span>
+                    <span class="govuk-visually-hidden">5 stars out of 5 (very helpful)</span>
                 </button>
                 <span class="feedback__star-help-text" aria-hidden="true">Very helpful</span>
             </div>
