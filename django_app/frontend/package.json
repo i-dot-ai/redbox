@@ -33,10 +33,6 @@
     {
       "distDir": "./dist/js/libs",
       "staticPath": "./src/js/libs"
-    },
-    {
-      "distDir": "./dist/dash/component/plotly/package_data",
-      "staticPath": "./src/js/admin/plotly.min.js"
     }
   ],
   "scripts": {

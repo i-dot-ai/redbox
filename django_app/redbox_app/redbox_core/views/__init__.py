@@ -1,4 +1,3 @@
-from redbox_app.redbox_core.dash_apps import report_app
 from redbox_app.redbox_core.views.auth_views import sign_in_link_sent_view, sign_in_view, signed_out_view
 from redbox_app.redbox_core.views.chat_views import (
     ChatsTitleView,
@@ -46,7 +45,6 @@ __all__ = [
     "Signup2",
     "Signup3",
     "Signup4",
-    "report_app",
     "UpdateChatFeedback",
     "DeleteChat",
 ]
