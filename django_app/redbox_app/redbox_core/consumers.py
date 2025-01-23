@@ -129,6 +129,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
         if document_token_count + message_history_token_count > ai_settings.context_window_size:
             await self.send_to_client("error", "selected are too big to work with")
             return
+        else:
+            await self.send_to_client("error", f"document_token_count={document_token_count} message_history_token_count={message_history_token_count}")
 
         self.route = PromptSet.ChatwithDocs if selected_files else PromptSet.Chat
         self.send_to_client("route", self.route)
