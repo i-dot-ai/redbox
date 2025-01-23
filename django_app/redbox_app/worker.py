@@ -23,7 +23,7 @@ def ingest(file_id: UUID) -> None:
         file.text = sanitise_string(markdown.text_content)
         file.token_count = len(tokeniser.encode(markdown.text_content))
         file.status = File.Status.complete
-    except (Exception, UnsupportedFormatException) as error:  # noqa: BLE001
+    except (Exception, UnsupportedFormatException) as error:
         file.status = File.Status.errored
         file.ingest_error = str(error)
     file.save()
