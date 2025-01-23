@@ -3,7 +3,6 @@ import textwrap
 
 from django.contrib import admin
 from django.contrib.auth import get_user_model
-from django.shortcuts import render
 from import_export.admin import ExportMixin, ImportExportMixin
 
 from . import models
@@ -209,12 +208,7 @@ class ChatAdmin(ExportMixin, admin.ModelAdmin):
     search_fields = ["user__email"]
 
 
-def reporting_dashboard(request):
-    return render(request, "report.html", {}, using="django")
-
-
 admin.site.register(User, UserAdmin)
 admin.site.register(models.Chat, ChatAdmin)
 admin.site.register(models.AISettings)
 admin.site.register(models.ChatLLMBackend, ChatLLMBackendAdmin)
-admin.site.register_view("report/", view=reporting_dashboard, name="Site report")
