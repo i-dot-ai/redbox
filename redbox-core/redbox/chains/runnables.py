@@ -58,7 +58,7 @@ def build_chat_prompt_from_messages_runnable(
             state.request.model_dump()
             | {
                 "messages": state.messages,
-                "formatted_documents": format_documents(state.documents),
+                "formatted_documents": format_documents(state.request.documents),
             }
             | _additional_variables
         )
