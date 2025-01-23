@@ -388,11 +388,9 @@ async def test_chat_consumer_redbox_state(
         assert connected
 
         selected_file_uuids: Sequence[str] = [str(f.id) for f in selected_files]
-        selected_file_keys: Sequence[str] = [f.unique_name for f in selected_files]
-        permitted_file_keys: Sequence[str] = [
-            f.unique_name async for f in File.objects.filter(user=alice, status=File.Status.complete)
+        documents: Sequence[str] = [
+            Document(page_content=str(f.text), metadata={"uri": f.original_file.name}) for f in selected_files
         ]
-        assert selected_file_keys != permitted_file_keys
 
         await communicator.send_json_to(
             {
@@ -413,7 +411,7 @@ async def test_chat_consumer_redbox_state(
         # Then
         expected_request = RedboxQuery(
             question="Third question, with selected files?",
-            s3_keys=selected_file_keys,
+            documents=documents,
             user_uuid=alice.id,
             chat_history=[
                 {"role": "user", "text": "A question?"},
@@ -422,7 +420,6 @@ async def test_chat_consumer_redbox_state(
                 {"role": "ai", "text": "A second answer."},
             ],
             ai_settings=ai_settings,
-            permitted_s3_keys=permitted_file_keys,
         )
         redbox_state = mock_run.call_args.args[0]  # pulls out the args that redbox.run was called with
 

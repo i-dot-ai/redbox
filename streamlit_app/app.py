@@ -38,7 +38,7 @@ def run_streamlit():
             state = RedboxState(
                 request=RedboxQuery(
                     question=prompt,
-                    s3_keys=[],
+                    documents=[],
                     user_uuid=uuid4(),
                     chat_history=[],
                     ai_settings=st.session_state.ai_settings,

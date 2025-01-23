@@ -13,14 +13,12 @@ logger = getLogger(__name__)
 
 
 class Redbox:
-    def __init__(self, retriever, debug: bool = False):
-        self.retriever = retriever
+    def __init__(self, debug: bool = False):
         self.debug = debug
 
     def _get_runnable(self, state: RedboxState):
         return build_llm_chain(
             prompt_set=PromptSet.ChatwithDocs,
-            retriever=self.retriever,
             llm=get_chat_llm(state.request.ai_settings.chat_backend),
         )
 
