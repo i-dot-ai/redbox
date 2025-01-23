@@ -216,10 +216,6 @@ class FileAdmin(ExportMixin, admin.ModelAdmin):
     search_fields = ["user__email"]
 
 
-def reporting_dashboard(request):
-    return render(request, "report.html", {}, using="django")
-
-
 admin.site.register(User, UserAdmin)
 admin.site.register(models.Chat, ChatAdmin)
 admin.site.register(models.AISettings)
