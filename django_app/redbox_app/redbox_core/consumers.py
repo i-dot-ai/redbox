@@ -100,7 +100,10 @@ class ChatConsumer(AsyncWebsocketConsumer):
             return
 
         # save user message
-        selected_files = File.objects.filter(user=user, status=File.Status.complete, id__in=selected_file_uuids) | session.file_set.all()
+        selected_files = (
+            File.objects.filter(user=user, status=File.Status.complete, id__in=selected_file_uuids)
+            | session.file_set.all()
+        )
 
         await self.save_user_message(session, user_message_text, selected_files=selected_files)
 
