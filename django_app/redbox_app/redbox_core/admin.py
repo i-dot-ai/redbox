@@ -202,10 +202,18 @@ class ChatAdmin(ExportMixin, admin.ModelAdmin):
             },
         ),
     ]
-    inlines = [ChatMessageInline]
+    inlines = [ChatMessageInline, FileInline]
     list_display = ["name", "user", "created_at"]
     list_filter = ["user"]
     date_hierarchy = "created_at"
+    search_fields = ["user__email"]
+
+
+class FileAdmin(ExportMixin, admin.ModelAdmin):
+    list_display = ["file_name", "user", "status", "created_at", "last_referenced"]
+    list_filter = ["user", "status"]
+    date_hierarchy = "created_at"
+    actions = ["reupload"]
     search_fields = ["user__email"]
 
 
@@ -217,4 +225,5 @@ admin.site.register(User, UserAdmin)
 admin.site.register(models.Chat, ChatAdmin)
 admin.site.register(models.AISettings)
 admin.site.register(models.ChatLLMBackend, ChatLLMBackendAdmin)
+admin.site.register(models.File, FileAdmin)
 admin.site.register_view("report/", view=reporting_dashboard, name="Site report")
