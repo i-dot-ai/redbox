@@ -14,7 +14,7 @@ class CopyText extends HTMLElement {
 
     this.querySelector("button")?.addEventListener("click", () => {
       const textEl = /** @type {HTMLElement} */ (
-        this.previousElementSibling.querySelector(".iai-chat-bubble__text")
+        this.closest("chat-message-footer")?.previousElementSibling?.querySelector(".iai-chat-bubble__text")
       );
       this.#copyToClipboard(textEl?.innerHTML, textEl?.innerText);
     });

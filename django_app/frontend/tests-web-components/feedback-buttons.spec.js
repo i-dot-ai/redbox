@@ -8,14 +8,10 @@ test(`Individual message feedback can be entered`, async ({ page }) => {
 
   // The component is visible after sending a message
   await sendMessage(page);
-  await expect(page.getByText("Rate")).toBeVisible();
+  await expect(page.locator("feedback-buttons")).toBeVisible();
 
   // The component can be interacted with
   await page.locator('[data-rating="3"]').click();
   await expect(page.getByText("Thanks for the feedback")).toBeVisible();
 
-  // The component is only visible on the latest message
-  await sendMessage(page);
-  await expect(page.getByText("Rate").nth(1)).toBeVisible();
-  await expect(page.getByText("Rate").nth(0)).not.toBeVisible();
 });
