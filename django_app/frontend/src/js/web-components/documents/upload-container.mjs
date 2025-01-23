@@ -34,7 +34,6 @@ export class UploadContainer extends RedboxElement {
               </li>
             `
           )}
-          <li class="rb-upload-container__info govuk-body-xs govuk-!-margin-bottom-0">You can use up to, and including, official sensitive documents.</li>
         </ul>
       </div>
     `;

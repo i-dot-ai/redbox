@@ -113,21 +113,19 @@
       {{ document_upload | render_lit }}
 
       <form class="rb-chat-input" id="message-form" action="/post-message/" method="post">
-        <div class="rb-chat-input__container">
+
+        <div class="rb-chat-input__container rb-chat-input__container--top">
           <div class="rb-chat-input__input-container">
             <message-input>
-              <label class="govuk-visually-hidden" for="message">Message Redbox</label>
+              <label class="govuk-visually-hidden" for="message">Ask anything</label>
               <textarea placeholder="Ask anything..." id="message" name="message" rows="1" required></textarea>
             </message-input>
-            <div class="rb-chat-input__bottom-container">
+            <div class="rb-chat-input__input-container-bottom">
               {% set model_selector %}
                 <model-selector data-options="{{ llm_options | to_json }}"></model-selector>
               {% endset %}
               {{ model_selector | render_lit }}
-              {% set uploaded_documents %}
-                <upload-container data-chatid="{{ chat_id }}" data-csrftoken="{{ csrf_token }}" data-docs="{{ current_chat.file_set.all() | filter_docs(messages, messages.count()) }}"></upload-container>
-              {% endset %}
-              {{ uploaded_documents | render_lit }}
+              <p class="govuk-body-xs govuk-!-margin-bottom-0">You can use up to, and including, official sensitive documents</p>
             </div>
           </div>
           <div class="rb-chat-input__button-container">
@@ -140,6 +138,14 @@
             </send-message>
           </div>
         </div>
+
+        <div class="rb-chat-input__container rb-chat-input__container--bottom">
+          {% set uploaded_documents %}
+            <upload-container data-chatid="{{ chat_id }}" data-csrftoken="{{ csrf_token }}" data-docs="{{ current_chat.file_set.all() | filter_docs(messages, messages.count()) }}"></upload-container>
+          {% endset %}
+          {{ uploaded_documents | render_lit }}
+        </div>
+
       </form>
 
     </div>
