@@ -48,6 +48,7 @@
 }
 .rb-upload-container__doc {
   background-color: white;
+  border: 1px solid #b1b4b6;
   font-size: 0.75rem;
   list-style-type: none;
   width: 8rem;
@@ -56,13 +57,24 @@
   max-width: 12rem;
 }
 .rb-upload-container file-status {
-  background-color: #ccc;
-  display: block;
-  padding: 0.25rem;
+  align-items: center;
+  background-color: #f5ebeb;
+  display: flex;
+  gap: 0.25rem;
+  min-height: 1.5rem;
+  padding: 0.125rem 0.25rem;
+}
+.rb-upload-container file-status:has([data-status="complete"]) {
+  background-color: #e0f3f1;
+}
+.rb-upload-container file-status:has([data-status="error"]) {
+  background-color: #f9e8e0;
 }
 .rb-upload-container__filename-container {
+  align-items: center;
   display: flex;
   justify-content: space-between;
+  min-height: 1.5rem;
 }
 .rb-upload-container__filename {
   overflow: hidden;
@@ -76,6 +88,7 @@
   cursor: pointer;
   font-size: 1rem;
   font-weight: bold;
+  margin-bottom: 0.125rem;
 }
 .rb-upload-container__remove-button:hover {
   color: var(--iai-product-colour);
@@ -94,19 +107,10 @@
   background-color: white;
   font-size: 0.75rem;
   list-style-type: none;
-  width: 8rem;
+  width: 8.5rem;
 }
 .rb-upload-container__info {
   max-width: 12rem;
-}
-.rb-upload-container file-status {
-  background-color: #ccc;
-  display: block;
-  padding: 0.25rem;
-}
-.rb-upload-container__filename-container {
-  display: flex;
-  justify-content: space-between;
 }
 .rb-upload-container__filename {
   overflow: hidden;
