@@ -122,8 +122,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
         ai_settings = await self.get_ai_settings(session)
 
-        document_token_count = sum(file.metadata.get("token_count", 0) for file in selected_files)
-        message_history_token_count = sum(message.token_count for message in message_history)
+        document_token_count = sum(file.token_count for file in selected_files if file.token_count)
+        message_history_token_count = sum(message.token_count for message in message_history if message.token_count)
 
         if document_token_count + message_history_token_count > ai_settings.context_window_size:
             await self.send_to_client("error", "selected are too big to work with")

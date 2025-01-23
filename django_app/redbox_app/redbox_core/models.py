@@ -10,7 +10,6 @@ from typing import override
 import elastic_transport
 import jwt
 from django.conf import settings
-from django.contrib.auth.base_user import BaseUserManager as BaseSSOUserManager
 from django.contrib.postgres.fields import ArrayField
 from django.core import validators
 from django.db import models
@@ -179,40 +178,6 @@ class AISettings(UUIDPrimaryKeyBase, TimeStampedModel, AbstractAISettings):
 
     def __str__(self) -> str:
         return str(self.label)
-
-
-class SSOUserManager(BaseSSOUserManager):
-    use_in_migrations = True
-
-    def _create_user(self, username, password, **extra_fields):
-        """Create and save a User with the given email and password."""
-        if not username:
-            msg = "The given email must be set."
-            raise ValueError(msg)
-        user = self.model(email=username, **extra_fields)
-        user.set_password(password)
-        user.save(using=self._db)
-        return User
-
-    def create_user(self, username, password=None, **extra_fields):
-        """Create and save a regular User with the given email and password."""
-        extra_fields.setdefault("is_staff", False)
-        extra_fields.setdefault("is_superuser", False)
-        return self._create_user(username, password, **extra_fields)
-
-    def create_superuser(self, username, password=None, **extra_fields):
-        """Create and save a SuperUser with the given email and password."""
-        extra_fields.setdefault("is_staff", True)
-        extra_fields.setdefault("is_superuser", True)
-
-        if extra_fields.get("is_staff") is not True:
-            msg = "Superuser must have is_staff=True."
-            raise ValueError(msg)
-        if extra_fields.get("is_superuser") is not True:
-            msg = "Superuser must have is_superuser=True."
-            raise ValueError(msg)
-
-        return self._create_user(username, password, **extra_fields)
 
 
 class User(BaseUser, UUIDPrimaryKeyBase):
@@ -630,7 +595,7 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
         help_text="chat that this document belongs to, which may be nothing for now",
     )
     text = models.TextField(null=True, blank=True, help_text="text extracted from file")
-    metadata = models.JSONField(null=True, blank=True, help_text="metadata extracted from file")
+    token_count = models.PositiveIntegerField(null=True, blank=True, help_text="number of tokens in extracted text")
     task = models.ForeignKey(
         OrmQ, on_delete=models.SET_NULL, null=True, blank=True, help_text="pending text extraction task"
     )
@@ -776,8 +741,6 @@ class ChatMessage(UUIDPrimaryKeyBase, TimeStampedModel):
         return cls.objects.filter(chat_id=chat_id).order_by("created_at")
 
     def log(self):
-        token_sum = sum(token_use.token_count for token_use in self.chatmessagetokenuse_set.all())
-
         elastic_log_msg = {
             "@timestamp": self.created_at.isoformat(),
             "id": str(self.id),
@@ -790,7 +753,7 @@ class ChatMessage(UUIDPrimaryKeyBase, TimeStampedModel):
             "text": str(self.text),
             "route": str(self.route),
             "role": str(self.role),
-            "token_count": token_sum,
+            "token_count": self.token_count,
             "rating": int(self.rating) if self.rating else None,
             "rating_text": str(self.rating_text),
             "rating_chips": list(map(str, self.rating_chips)) if self.rating_chips else None,
@@ -804,22 +767,3 @@ class ChatMessage(UUIDPrimaryKeyBase, TimeStampedModel):
                 )
             except elastic_transport.ConnectionError:
                 contextlib.suppress(elastic_transport.ConnectionError)
-
-
-class ChatMessageTokenUse(UUIDPrimaryKeyBase, TimeStampedModel):
-    class UseType(models.TextChoices):
-        INPUT = "input", _("input")
-        OUTPUT = "output", _("output")
-
-    chat_message = models.ForeignKey(ChatMessage, on_delete=models.CASCADE)
-    use_type = models.CharField(
-        max_length=10,
-        choices=UseType,
-        help_text="input or output tokens",
-        default=UseType.INPUT,
-    )
-    model_name = models.CharField(max_length=50, null=True, blank=True)
-    token_count = models.PositiveIntegerField(null=True, blank=True)
-
-    def __str__(self) -> str:
-        return f"{self.model_name} {self.use_type}"

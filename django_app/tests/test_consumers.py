@@ -23,7 +23,6 @@ from redbox_app.redbox_core.consumers import ChatConsumer
 from redbox_app.redbox_core.models import (
     Chat,
     ChatMessage,
-    ChatMessageTokenUse,
     File,
 )
 
@@ -31,16 +30,6 @@ User = get_user_model()
 
 logging.basicConfig(level=os.environ.get("LOG_LEVEL", "INFO"))
 logger = logging.getLogger(__name__)
-
-
-@database_sync_to_async
-def get_token_use_model(use_type: str) -> str:
-    return ChatMessageTokenUse.objects.filter(use_type=use_type).latest("created_at").model_name
-
-
-@database_sync_to_async
-def get_token_use_count(use_type: str) -> int:
-    return ChatMessageTokenUse.objects.filter(use_type=use_type).latest("created_at").token_count
 
 
 @pytest.mark.django_db(transaction=True)
