@@ -10,15 +10,15 @@ class CannedPrompts extends HTMLElement {
       <div class="chat-options__options">
           <button class="chat-options__option chat-options__option_agenda plausible-event-name--canned+prompt+draft+meeting+agenda" type="button">
               <img src="/static/icons/icon_square_doc.svg" alt=""/>
-              Draft an agenda for a team meeting
+              Summarise this document
           </button>
           <button class="chat-options__option chat-options__option_objectives plausible-event-name--canned+prompt+set+work+objectives" type="button">
               <img src="/static/icons/archery.svg" alt=""/>
-              Help me set my work objectives
+              Draft an email about…
           </button>
           <button class="chat-options__option chat-options__option_ps_role plausible-event-name--canned+prompt+describe+role+permanent+secretary" type="button">
               <img src="/static/icons/person.svg" alt=""/>
-              Describe the role of a Permanent Secretary
+              Reformat this to assist with neurodivergent communication…
           </button>
       </div>
       <p class="chat-options__info-text">Or type any question below</p>
@@ -27,7 +27,7 @@ class CannedPrompts extends HTMLElement {
     let buttons = this.querySelectorAll("button");
     buttons.forEach((button) => {
       button.addEventListener("click", () => {
-        this.#prepopulateMessageBox(button.textContent?.trim() || "");
+        this.#prepopulateMessageBox((button.textContent?.trim() || "").replace("…", " "));
       });
     });
 
