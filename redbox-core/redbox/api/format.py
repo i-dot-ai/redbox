@@ -6,7 +6,6 @@ def format_documents(documents: list[Document]) -> str:
     for d in documents:
         doc_xml = (
             f"<Document>\n"
-            f"\t<SourceType>{d.metadata.get("creator_type", "Unknown")}</SourceType>\n"
             f"\t<Source>{d.metadata.get("uri", "")}</Source>\n"
             "\t<Content>\n"
             f"{d.page_content}\n"

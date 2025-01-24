@@ -17,7 +17,7 @@ class Redbox:
         self.debug = debug
 
     def _get_runnable(self, state: RedboxState):
-        llm = get_chat_llm(state.request.ai_settings.chat_backend)
+        llm = get_chat_llm(state.ai_settings.chat_backend)
         return build_chat_prompt_from_messages_runnable() | llm
 
     def run_sync(self, input: RedboxState):

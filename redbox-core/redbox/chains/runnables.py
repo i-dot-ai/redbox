@@ -22,7 +22,7 @@ def build_chat_prompt_from_messages_runnable() -> Runnable:
         Create a ChatPromptTemplate as part of a chain using 'chat_history'.
         Returns the PromptValue using values in the input_dict
         """
-        ai_settings = state.request.ai_settings
+        ai_settings = state.ai_settings
         _tokeniser = get_tokeniser()
 
         log.debug("Setting chat prompt")
@@ -39,16 +39,14 @@ def build_chat_prompt_from_messages_runnable() -> Runnable:
         chat_history_budget = ai_settings.context_window_size - ai_settings.llm_max_tokens - prompts_budget
 
         truncated_history: list[ChainChatMessage] = []
-        for msg in state.request.chat_history[::-1]:
+        for msg in state.chat_history[::-1]:
             chat_history_budget -= len(_tokeniser.encode(msg["text"]))
             if chat_history_budget <= 0:
                 break
             else:
                 truncated_history.insert(0, msg)
 
-        prompt_template_context = state.request.model_dump() | {
-            "formatted_documents": format_documents(state.request.documents)
-        }
+        prompt_template_context = state.model_dump() | {"formatted_documents": format_documents(state.documents)}
 
         return ChatPromptTemplate(
             messages=([("system", system_prompt_message)] + [(msg["role"], msg["text"]) for msg in truncated_history]),
