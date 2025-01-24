@@ -35,7 +35,7 @@ def build_chat_prompt_from_messages_runnable() -> Runnable:
             {ai_settings.caller_info_prompt}
             """
 
-        prompts_budget = len(_tokeniser.encode(ai_settings.system_prompt_message))
+        prompts_budget = len(_tokeniser.encode(system_prompt_message))
         chat_history_budget = ai_settings.context_window_size - ai_settings.llm_max_tokens - prompts_budget
 
         truncated_history: list[ChainChatMessage] = []
