@@ -59,6 +59,14 @@ main:has(.iai-chat-bubble) .chat-options {
     gap: 1.5rem;
   }
   .chat-options__option {
+    gap: 0.5rem;
+    padding: 0.875rem 0.5rem;
     width: 33%;
+  }
+}
+@media (min-width: 1280px) {
+  .chat-options__option {
+    gap: 1rem;
+    padding: 0.875rem 1rem;
   }
 }
