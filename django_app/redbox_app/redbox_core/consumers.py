@@ -18,7 +18,6 @@ from redbox import Redbox
 from redbox.models.chain import (
     AISettings,
     ChainChatMessage,
-    RedboxQuery,
     RedboxState,
 )
 from redbox_app.redbox_core import error_messages
@@ -117,17 +116,15 @@ class ChatConsumer(AsyncWebsocketConsumer):
         self.send_to_client("route", self.route)
 
         state = RedboxState(
-            request=RedboxQuery(
-                documents=[Document(str(f.text), metadata={"uri": f.original_file.name}) for f in selected_files],
-                chat_history=[
-                    ChainChatMessage(
-                        role=message.role,
-                        text=escape_curly_brackets(message.text),
-                    )
-                    for message in message_history
-                ],
-                ai_settings=ai_settings,
-            ),
+            documents=[Document(str(f.text), metadata={"uri": f.original_file.name}) for f in selected_files],
+            chat_history=[
+                ChainChatMessage(
+                    role=message.role,
+                    text=escape_curly_brackets(message.text),
+                )
+                for message in message_history
+            ],
+            ai_settings=ai_settings,
         )
 
         try:

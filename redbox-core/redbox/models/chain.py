@@ -22,10 +22,6 @@ class AISettings(BaseModel):
     context_window_size: int = 128_000
     llm_max_tokens: int = 1024
 
-    # Prompts and LangGraph settings
-    max_document_tokens: int = 1_000_000
-    recursion_limit: int = 50
-
     # Common Prompt Fragments
 
     system_info_prompt: str = prompts.SYSTEM_INFO
@@ -43,11 +39,7 @@ class AISettings(BaseModel):
     chat_backend: ChatLLMBackend = ChatLLMBackend()
 
 
-class RedboxQuery(BaseModel):
+class RedboxState(BaseModel):
     documents: list[Document] = Field(description="List of files to process", default_factory=list)
     chat_history: list[ChainChatMessage] = Field(description="All previous messages in chat (excluding question)")
     ai_settings: AISettings = Field(description="User request AI settings", default_factory=AISettings)
-
-
-class RedboxState(BaseModel):
-    request: RedboxQuery

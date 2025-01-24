@@ -16,7 +16,9 @@ from pydantic import BaseModel
 from websockets import WebSocketClientProtocol
 from websockets.legacy.client import Connect
 
-from redbox.models.chain import RedboxQuery
+from redbox.models.chain import (
+    RedboxState,
+)
 from redbox.models.prompts import CHAT_QUESTION_PROMPT
 from redbox_app.redbox_core import error_messages
 from redbox_app.redbox_core.consumers import ChatConsumer
@@ -409,7 +411,7 @@ async def test_chat_consumer_redbox_state(
         await communicator.disconnect()
 
         # Then
-        expected_request = RedboxQuery(
+        expected_request = RedboxState(
             documents=documents,
             chat_history=[
                 {"role": "user", "text": "A question?"},
@@ -422,9 +424,7 @@ async def test_chat_consumer_redbox_state(
         )
         redbox_state = mock_run.call_args.args[0]  # pulls out the args that redbox.run was called with
 
-        assert (
-            redbox_state.request == expected_request
-        ), f"Expected {expected_request}. Received: {redbox_state.request}"
+        assert redbox_state == expected_request, f"Expected {expected_request}. Received: {redbox_state}"
 
 
 @database_sync_to_async
@@ -454,7 +454,7 @@ class CannedGraphLLM(BaseChatModel):
 
     def _convert_input(self, prompt):
         if isinstance(prompt, dict):
-            prompt = prompt["request"].chat_hstory[-1]
+            prompt = prompt.chat_hstory[-1]
         return super()._convert_input(prompt)
 
     async def astream_events(self, *_args, **_kwargs):

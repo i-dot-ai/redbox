@@ -31,12 +31,11 @@ class Redbox:
         response_tokens_callback=_default_callback,
     ) -> RedboxState:
         final_state = None
-        request_dict = input.request.model_dump()
+        request_dict = input.model_dump()
         logger.info("Request: %s", {k: request_dict[k] for k in request_dict.keys() - {"ai_settings"}})
         async for event in self._get_runnable(input).astream_events(
             input,
             version="v2",
-            config={"recursion_limit": input.request.ai_settings.recursion_limit},
         ):
             kind = event["event"]
             if kind == "on_chat_model_stream":
