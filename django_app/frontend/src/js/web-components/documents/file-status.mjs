@@ -7,7 +7,8 @@ class FileStatus extends RedboxElement {
   static properties = {
     id: { type: String, attribute: "data-id" },
     status: { type: String, state: true },
-    positionInQueue: { type: Number, state: true }
+    positionInQueue: { type: Number, state: true },
+    name: { type: String, attribute: "data-name" }
   };
 
   connectedCallback() {
@@ -42,7 +43,10 @@ class FileStatus extends RedboxElement {
 
     return html`
       ${icon}
-      <span data-status=${statusAttr}>${statusText}</span>
+      <span data-status=${statusAttr} aria-live="assertive" aria-atomic="true">
+        ${statusText}
+        <span class="govuk-visually-hidden">${this.name}</span>
+      </span>
     `;
   }
 
@@ -73,7 +77,7 @@ class FileStatus extends RedboxElement {
     if (responseObj.status.toLowerCase() === "error") {
       const fileErrorEvent = new CustomEvent("file-error", {
         detail: {
-          name: this.dataset.name
+          name: this.name
         },
       });
       document.dispatchEvent(fileErrorEvent);
