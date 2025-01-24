@@ -25,19 +25,18 @@ def build_chat_prompt_from_messages_runnable() -> Runnable:
         """
         ai_settings = state.request.ai_settings
         _tokeniser = get_tokeniser()
-        task_system_prompt = state.request.ai_settings.chat_with_docs_system_prompt
-        task_question_prompt = state.request.ai_settings.chat_with_docs_question_prompt
 
         log.debug("Setting chat prompt")
         # Set the system prompt to be our composed structure
         # We preserve the format instructions
         system_prompt_message = f"""
             {ai_settings.system_info_prompt}
-            {task_system_prompt}
+            {ai_settings.chat_with_docs_system_prompt}
             {ai_settings.persona_info_prompt}
             {ai_settings.caller_info_prompt}
             """
-        prompts_budget = len(_tokeniser.encode(task_system_prompt)) + len(_tokeniser.encode(task_question_prompt))
+
+        prompts_budget = len(_tokeniser.encode(ai_settings.system_prompt_message))
         chat_history_budget = ai_settings.context_window_size - ai_settings.llm_max_tokens - prompts_budget
 
         truncated_history: list[ChainChatMessage] = []
@@ -53,11 +52,7 @@ def build_chat_prompt_from_messages_runnable() -> Runnable:
         }
 
         return ChatPromptTemplate(
-            messages=(
-                [("system", system_prompt_message)]
-                + [(msg["role"], msg["text"]) for msg in truncated_history]
-                + [task_question_prompt]
-            ),
+            messages=([("system", system_prompt_message)] + [(msg["role"], msg["text"]) for msg in truncated_history]),
         ).invoke(prompt_template_context)
 
     return _chat_prompt_from_messages
