@@ -47,6 +47,15 @@ export class ChatMessage extends HTMLElement {
     this.programmaticScroll = true;
     this.scrollIntoView({ block: "end" });
 
+    this.responseContainer =
+      /** @type {import("./markdown-converter").MarkdownConverter} */ (
+        this.querySelector("markdown-converter")
+      );
+
+    this.loadingMessage = /** @type HTMLElement */ (
+      this.querySelector("loading-message")
+    );
+
   }
 
   /**
@@ -74,13 +83,6 @@ export class ChatMessage extends HTMLElement {
       scrollOverride = true;
     });
 
-    this.responseContainer =
-      /** @type {import("./markdown-converter").MarkdownConverter} */ (
-        this.querySelector("markdown-converter")
-      );
-    let responseLoading = /** @type HTMLElement */ (
-      this.querySelector(".rb-loading-ellipsis")
-    );
     let responseComplete = this.querySelector(".rb-loading-complete");
     let webSocket = new WebSocket(endPoint);
     let streamedContent = "";
@@ -120,7 +122,7 @@ export class ChatMessage extends HTMLElement {
     };
 
     webSocket.onclose = (event) => {
-      responseLoading.style.display = "none";
+      this.loadingMessage?.remove();
       if (responseComplete) {
         responseComplete.textContent = "Response complete";
       }
@@ -188,5 +190,18 @@ export class ChatMessage extends HTMLElement {
       }
     };
   };
+
+  /** This is the same as adding content to the data-text attribute, except that this also reads the content out to screen-reader users */
+  showError(message) {
+    this.dataset.status = "stopped";
+    this.loadingMessage?.remove();
+    this.setAttribute("aria-live", "assertive");
+    window.setTimeout(() => {
+      if (this.responseContainer) {
+        this.responseContainer.innerHTML = message;
+      }
+    }, 100);
+  };
+
 }
 customElements.define("chat-message", ChatMessage);

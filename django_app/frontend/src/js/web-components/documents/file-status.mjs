@@ -2,12 +2,19 @@
 import { html } from "lit";
 import { RedboxElement } from "../redbox-element.mjs";
 
+
 class FileStatus extends RedboxElement {
+
+  constructor() {
+    super();
+    this.name = "";
+  }
 
   static properties = {
     id: { type: String, attribute: "data-id" },
     status: { type: String, state: true },
-    positionInQueue: { type: Number, state: true }
+    positionInQueue: { type: Number, state: true },
+    name: { type: String, attribute: "data-name" }
   };
 
   connectedCallback() {
@@ -37,12 +44,17 @@ class FileStatus extends RedboxElement {
     } else if (statusAttr === "processing") {
         icon = html`<img src="/static/icons/file-status/processing.svg" alt="" width="22" height="20"/>`;
     } else if (statusAttr === "error") {
-      icon = html`<img src="/static/icons/file-status/exclamation.svg" alt="" height="20"/>`;
+      icon = html`<img src="/static/icons/file-status/exclamation.svg" alt="" width="23" height="20"/>`;
+    } else if (statusAttr === "uploading") {
+      icon = html`<img src="/static/icons/file-status/uploading.svg" alt="" width="23" height="20"/>`;
     }
 
     return html`
       ${icon}
-      <span data-status=${statusAttr}>${statusText}</span>
+      <span data-status=${statusAttr} aria-live="assertive" aria-atomic="true">
+        ${statusText}
+        <span class="govuk-visually-hidden">${this.name}</span>
+      </span>
     `;
   }
 
@@ -73,7 +85,7 @@ class FileStatus extends RedboxElement {
     if (responseObj.status.toLowerCase() === "error") {
       const fileErrorEvent = new CustomEvent("file-error", {
         detail: {
-          name: this.dataset.name
+          name: this.name
         },
       });
       document.dispatchEvent(fileErrorEvent);

@@ -74,7 +74,7 @@ export class DocumentUpload extends RedboxElement {
 
   render() {
     return html`
-      <form class="rb-document-upload ${this.jsInitialised ? `govuk-visually-hidden` : ''}" action="/upload/" method="post" enctype="multipart/form-data">
+      <form class="rb-document-upload ${this.jsInitialised ? `rb-document-upload--js-active` : ''}" action="/upload/" method="post" enctype="multipart/form-data">
         <input type="hidden" name="csrfmiddlewaretoken" value=${this["csrfToken"]} />
         <input type="hidden" name="chat_id" value=${this["chatId"]} />
         <label class="govuk-label" for="upload-docs">
