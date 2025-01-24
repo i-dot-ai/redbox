@@ -37,18 +37,6 @@ logger = logging.getLogger(__name__)
 logger.info("WEBSOCKET_SCHEME is: %s", settings.WEBSOCKET_SCHEME)
 
 
-def parse_page_number(obj: int | list[int] | None) -> list[int]:
-    if isinstance(obj, int):
-        return [obj]
-    elif isinstance(obj, list) and len(obj) > 0 and all(isinstance(item, int) for item in obj):
-        return obj
-    elif obj is None:
-        return []
-
-    msg = "expected, int | list[int] | None got %s"
-    raise ValueError(msg, type(obj))
-
-
 def escape_curly_brackets(text: str):
     return text.replace("{", "{{").replace("}", "}}")
 
