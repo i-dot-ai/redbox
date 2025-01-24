@@ -6,7 +6,7 @@ from langchain_core.runnables import (
     Runnable,
     chain,
 )
-from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
+from langchain_core.prompts import ChatPromptTemplate
 from tiktoken import Encoding
 
 from redbox.chains.components import get_tokeniser
@@ -52,20 +52,16 @@ def build_chat_prompt_from_messages_runnable(
             else:
                 truncated_history.insert(0, msg)
 
-        prompt_template_context = (
-            state.request.model_dump()
-            | {
-                "formatted_documents": format_documents(state.request.documents)
-            }
-        )
+        prompt_template_context = state.request.model_dump() | {
+            "formatted_documents": format_documents(state.request.documents)
+        }
 
         return ChatPromptTemplate(
             messages=(
                 [("system", system_prompt_message)]
                 + [(msg["role"], msg["text"]) for msg in truncated_history]
-                + [task_question_prompt + "\n\n{format_instructions}"]
+                + [task_question_prompt]
             ),
-            partial_variables={"format_instructions": format_instructions},
         ).invoke(prompt_template_context)
 
     return _chat_prompt_from_messages
