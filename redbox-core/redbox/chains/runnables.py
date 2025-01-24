@@ -63,7 +63,6 @@ def build_chat_prompt_from_messages_runnable(
             messages=(
                 [("system", system_prompt_message)]
                 + [(msg["role"], msg["text"]) for msg in truncated_history]
-                + [MessagesPlaceholder("messages")]
                 + [task_question_prompt + "\n\n{format_instructions}"]
             ),
             partial_variables={"format_instructions": format_instructions},
