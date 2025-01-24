@@ -21,7 +21,6 @@ def build_chat_prompt_from_messages_runnable(
     prompt_set: PromptSet,
     tokeniser: Encoding = None,
     format_instructions: str = "",
-    additional_variables: dict | None = None,
 ) -> Runnable:
     @chain
     def _chat_prompt_from_messages(state: RedboxState) -> Runnable:
@@ -31,7 +30,6 @@ def build_chat_prompt_from_messages_runnable(
         """
         ai_settings = state.request.ai_settings
         _tokeniser = tokeniser or get_tokeniser()
-        _additional_variables = additional_variables or dict()
         task_system_prompt, task_question_prompt = get_prompts(state, prompt_set)
 
         log.debug("Setting chat prompt")
@@ -57,10 +55,8 @@ def build_chat_prompt_from_messages_runnable(
         prompt_template_context = (
             state.request.model_dump()
             | {
-                "messages": state.request.chat_history + [state.request.question],
-                "formatted_documents": format_documents(state.request.documents),
+                "formatted_documents": format_documents(state.request.documents)
             }
-            | _additional_variables
         )
 
         return ChatPromptTemplate(
