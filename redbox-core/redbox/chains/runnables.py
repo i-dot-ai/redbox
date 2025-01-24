@@ -39,7 +39,7 @@ def build_chat_prompt_from_messages_runnable() -> Runnable:
         chat_history_budget = ai_settings.context_window_size - ai_settings.llm_max_tokens - prompts_budget
 
         truncated_history: list[ChainChatMessage] = []
-        for msg in state.chat_history[::-1]:
+        for msg in state.messages:
             chat_history_budget -= len(_tokeniser.encode(msg["text"]))
             if chat_history_budget <= 0:
                 break
