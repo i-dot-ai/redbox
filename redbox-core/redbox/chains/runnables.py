@@ -7,21 +7,16 @@ from langchain_core.runnables import (
     chain,
 )
 from langchain_core.prompts import ChatPromptTemplate
-from tiktoken import Encoding
 
 from redbox.chains.components import get_tokeniser
-from redbox.models.chain import ChainChatMessage, PromptSet, RedboxState, get_prompts
+from redbox.models.chain import ChainChatMessage, RedboxState
 from redbox.api.format import format_documents
 
 log = logging.getLogger()
 re_string_pattern = re.compile(r"(\S+)")
 
 
-def build_chat_prompt_from_messages_runnable(
-    prompt_set: PromptSet,
-    tokeniser: Encoding = None,
-    format_instructions: str = "",
-) -> Runnable:
+def build_chat_prompt_from_messages_runnable() -> Runnable:
     @chain
     def _chat_prompt_from_messages(state: RedboxState) -> Runnable:
         """
@@ -29,8 +24,9 @@ def build_chat_prompt_from_messages_runnable(
         Returns the PromptValue using values in the input_dict
         """
         ai_settings = state.request.ai_settings
-        _tokeniser = tokeniser or get_tokeniser()
-        task_system_prompt, task_question_prompt = get_prompts(state, prompt_set)
+        _tokeniser = get_tokeniser()
+        task_system_prompt = state.request.ai_settings.chat_with_docs_system_prompt
+        task_question_prompt = state.request.ai_settings.chat_with_docs_question_prompt
 
         log.debug("Setting chat prompt")
         # Set the system prompt to be our composed structure
@@ -67,12 +63,9 @@ def build_chat_prompt_from_messages_runnable(
     return _chat_prompt_from_messages
 
 
-def build_llm_chain(
-    prompt_set: PromptSet,
-    llm: BaseChatModel,
-) -> Runnable:
+def build_llm_chain(llm: BaseChatModel) -> Runnable:
     """Builds a chain that correctly forms a text and metadata state update.
 
     Permits both invoke and astream_events.
     """
-    return build_chat_prompt_from_messages_runnable(prompt_set) | llm
+    return build_chat_prompt_from_messages_runnable() | llm

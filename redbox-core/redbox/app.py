@@ -2,7 +2,7 @@ from logging import getLogger
 
 from redbox.chains.components import get_chat_llm
 from redbox.chains.runnables import build_llm_chain
-from redbox.models.chain import PromptSet, RedboxState
+from redbox.models.chain import RedboxState
 
 
 async def _default_callback(*args, **kwargs):
@@ -17,10 +17,7 @@ class Redbox:
         self.debug = debug
 
     def _get_runnable(self, state: RedboxState):
-        return build_llm_chain(
-            prompt_set=PromptSet.ChatwithDocs,
-            llm=get_chat_llm(state.request.ai_settings.chat_backend),
-        )
+        return build_llm_chain(llm=get_chat_llm(state.request.ai_settings.chat_backend))
 
     def run_sync(self, input: RedboxState):
         """

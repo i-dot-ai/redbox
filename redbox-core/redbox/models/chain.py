@@ -1,4 +1,3 @@
-from enum import StrEnum
 from typing import (
     Literal,
     TypedDict,
@@ -55,18 +54,3 @@ class RedboxQuery(BaseModel):
 
 class RedboxState(BaseModel):
     request: RedboxQuery
-
-
-class PromptSet(StrEnum):
-    Chat = "chat"
-    ChatwithDocs = "chat_with_docs"
-
-
-def get_prompts(state: RedboxState, prompt_set: PromptSet) -> tuple[str, str]:
-    if prompt_set == PromptSet.Chat:
-        system_prompt = state.request.ai_settings.chat_system_prompt
-        question_prompt = state.request.ai_settings.chat_question_prompt
-    elif prompt_set == PromptSet.ChatwithDocs:
-        system_prompt = state.request.ai_settings.chat_with_docs_system_prompt
-        question_prompt = state.request.ai_settings.chat_with_docs_question_prompt
-    return (system_prompt, question_prompt)

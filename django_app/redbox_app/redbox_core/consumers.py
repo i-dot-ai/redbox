@@ -18,7 +18,6 @@ from redbox import Redbox
 from redbox.models.chain import (
     AISettings,
     ChainChatMessage,
-    PromptSet,
     RedboxQuery,
     RedboxState,
 )
@@ -114,7 +113,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             await self.send_to_client("error", "selected are too big to work with")
             return
 
-        self.route = PromptSet.ChatwithDocs if selected_files else PromptSet.Chat
+        self.route = "chat_with_docs" if selected_files else "chat"
         self.send_to_client("route", self.route)
 
         state = RedboxState(
