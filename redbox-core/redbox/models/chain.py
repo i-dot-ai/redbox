@@ -2,7 +2,6 @@ from typing import (
     Literal,
     TypedDict,
 )
-from uuid import UUID
 
 from langchain_core.documents import Document
 from pydantic import BaseModel, Field
@@ -45,9 +44,7 @@ class AISettings(BaseModel):
 
 
 class RedboxQuery(BaseModel):
-    question: str = Field(description="The last user chat message")
     documents: list[Document] = Field(description="List of files to process", default_factory=list)
-    user_uuid: UUID = Field(description="User the chain in executing for")
     chat_history: list[ChainChatMessage] = Field(description="All previous messages in chat (excluding question)")
     ai_settings: AISettings = Field(description="User request AI settings", default_factory=AISettings)
 

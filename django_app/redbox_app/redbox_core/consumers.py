@@ -94,10 +94,10 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
         await self.save_user_message(session, user_message_text, selected_files=selected_files)
 
-        await self.llm_conversation(selected_files, session, user, user_message_text)
+        await self.llm_conversation(selected_files, session, user_message_text)
         await self.close()
 
-    async def llm_conversation(self, selected_files: Sequence[File], session: Chat, user: User, title: str) -> None:
+    async def llm_conversation(self, selected_files: Sequence[File], session: Chat, title: str) -> None:
         """Initiate & close websocket conversation with the core-api message endpoint."""
         await self.send_to_client("session-id", session.id)
 
@@ -118,15 +118,13 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
         state = RedboxState(
             request=RedboxQuery(
-                question=message_history[-1].text,
                 documents=[Document(str(f.text), metadata={"uri": f.original_file.name}) for f in selected_files],
-                user_uuid=user.id,
                 chat_history=[
                     ChainChatMessage(
                         role=message.role,
                         text=escape_curly_brackets(message.text),
                     )
-                    for message in message_history[:-1]
+                    for message in message_history
                 ],
                 ai_settings=ai_settings,
             ),

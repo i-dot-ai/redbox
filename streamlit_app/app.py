@@ -3,7 +3,6 @@ import streamlit as st
 from redbox.app import Redbox
 from redbox.models.chain import RedboxQuery, RedboxState, AISettings
 from redbox.models.settings import get_settings
-from uuid import uuid4
 from dotenv import load_dotenv
 import asyncio
 
@@ -37,9 +36,7 @@ def run_streamlit():
             # Construct a Redbox object with required information
             state = RedboxState(
                 request=RedboxQuery(
-                    question=prompt,
-                    documents=[],
-                    user_uuid=uuid4(),
+                    documents=[prompt],
                     chat_history=[],
                     ai_settings=st.session_state.ai_settings,
                 ),

@@ -8,7 +8,6 @@ from datetime import UTC, date, datetime, timedelta
 from typing import override
 
 import elastic_transport
-import jwt
 from django.conf import settings
 from django.contrib.postgres.fields import ArrayField
 from django.core import validators
@@ -477,12 +476,6 @@ class User(BaseUser, UUIDPrimaryKeyBase):
     def save(self, *args, **kwargs):
         self.email = self.email.lower()
         super().save(*args, **kwargs)
-
-    def get_bearer_token(self) -> str:
-        """the bearer token expected by the core-api"""
-        user_uuid = str(self.id)
-        bearer_token = jwt.encode({"user_uuid": user_uuid}, key=settings.SECRET_KEY)
-        return f"Bearer {bearer_token}"
 
     def get_initials(self) -> str:
         try:

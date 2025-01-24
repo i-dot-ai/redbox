@@ -410,10 +410,9 @@ async def test_chat_consumer_redbox_state(
 
         # Then
         expected_request = RedboxQuery(
-            question="Third question, with selected files?",
             documents=documents,
-            user_uuid=alice.id,
             chat_history=[
+                {"role": "user", "text": "Third question, with selected files?"},
                 {"role": "user", "text": "A question?"},
                 {"role": "ai", "text": "An answer."},
                 {"role": "user", "text": "A second question?"},
@@ -455,7 +454,7 @@ class CannedGraphLLM(BaseChatModel):
 
     def _convert_input(self, prompt):
         if isinstance(prompt, dict):
-            prompt = prompt["request"].question
+            prompt = prompt["request"].chat_hstory[-1]
         return super()._convert_input(prompt)
 
     async def astream_events(self, *_args, **_kwargs):
