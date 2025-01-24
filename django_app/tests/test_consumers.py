@@ -454,7 +454,7 @@ class CannedGraphLLM(BaseChatModel):
 
     def _convert_input(self, prompt):
         if isinstance(prompt, dict):
-            prompt = prompt.chat_hstory[-1]
+            prompt = prompt.messages[-1]
         return super()._convert_input(prompt)
 
     async def astream_events(self, *_args, **_kwargs):
