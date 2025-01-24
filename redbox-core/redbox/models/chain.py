@@ -1,13 +1,11 @@
 from enum import StrEnum
 from typing import (
-    Annotated,
     Literal,
     TypedDict,
 )
 from uuid import UUID
 
 from langchain_core.documents import Document
-from langchain_core.messages import AnyMessage
 from pydantic import BaseModel, Field
 
 from redbox.models import prompts
