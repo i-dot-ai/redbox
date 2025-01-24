@@ -1,0 +1,33 @@
+RedboxQuery(
+    documents=[
+        Document(metadata={'uri': 'alice@cabinetoffice.gov.uk/original_file_2.txt'}, page_content='None'),
+        Document(metadata={'uri': 'alice@cabinetoffice.gov.uk/original_file_3.txt'}, page_content='None')
+    ],
+    chat_history=[
+        {'role': 'user', 'text': 'Third question, with selected files?'},
+        {'role': 'user', 'text': 'A question?'},
+        {'role': 'ai', 'text': 'An answer.'},
+        {'role': 'user', 'text': 'A second question?'},
+        {'role': 'ai', 'text': 'A second answer.'}
+    ],
+    ai_settings=AISettings(
+        context_window_size=128000, llm_max_tokens=1024, max_document_tokens=1000000, recursion_limit=50, system_info_prompt='You are Redbox, an AI assistant to civil servants in the United Kingdom.', persona_info_prompt='You follow instructions and respond to queries accurately and concisely, and are professional in all your interactions with users.', caller_info_prompt='', chat_system_prompt='You are tasked with providing information objectively and responding helpfully to users', chat_question_prompt='{question}\n=========\n Response: ', chat_with_docs_system_prompt='You are tasked with providing information objectively and responding helpfully to users using context from their provided documents', chat_with_docs_question_prompt='Question: {question}. \n\n Documents: \n\n {formatted_documents} \n\n Answer: ', chat_backend=ChatLLMBackend(name='gpt-4o', provider='azure_openai', description=None)
+    )
+)
+                                                                                                                                                                                                                                                                                                           ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+RedboxQuery(
+    documents=[
+        Document(metadata={'uri': 'alice@cabinetoffice.gov.uk/original_file_2.txt'}, page_content='None'),
+        Document(metadata={'uri': 'alice@cabinetoffice.gov.uk/original_file_3.txt'}, page_content='None')
+    ],
+    chat_history=[
+        {'role': 'user', 'text': 'A question?'},
+        {'role': 'ai', 'text': 'An answer.'},
+        {'role': 'user', 'text': 'A second question?'},
+        {'role': 'ai', 'text': 'A second answer.'},
+        {'role': 'user', 'text': 'Third question, with selected files?'}
+    ],
+    ai_settings=AISettings(
+        context_window_size=128000, llm_max_tokens=1024, max_document_tokens=1000000, recursion_limit=50, system_info_prompt='You are Redbox, an AI assistant to civil servants in the United Kingdom.', persona_info_prompt='You follow instructions and respond to queries accurately and concisely, and are professional in all your interactions with users.', caller_info_prompt='', chat_system_prompt='You are tasked with providing information objectively and responding helpfully to users', chat_question_prompt='{question}\n=========\n Response: ', chat_with_docs_system_prompt='You are tasked with providing information objectively and responding helpfully to users using context from their provided documents', chat_with_docs_question_prompt='Question: {question}. \n\n Documents: \n\n {formatted_documents} \n\n Answer: ', chat_backend=ChatLLMBackend(name='gpt-4o', provider='azure_openai', description=None)
+    )
+)

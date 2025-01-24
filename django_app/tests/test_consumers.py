@@ -412,11 +412,11 @@ async def test_chat_consumer_redbox_state(
         expected_request = RedboxQuery(
             documents=documents,
             chat_history=[
-                {"role": "user", "text": "Third question, with selected files?"},
                 {"role": "user", "text": "A question?"},
                 {"role": "ai", "text": "An answer."},
                 {"role": "user", "text": "A second question?"},
                 {"role": "ai", "text": "A second answer."},
+                {"role": "user", "text": "Third question, with selected files?"},
             ],
             ai_settings=ai_settings,
         )
