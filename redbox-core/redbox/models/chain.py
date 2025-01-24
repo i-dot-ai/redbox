@@ -8,7 +8,6 @@ from uuid import UUID
 
 from langchain_core.documents import Document
 from langchain_core.messages import AnyMessage
-from langgraph.graph.message import add_messages
 from pydantic import BaseModel, Field
 
 from redbox.models import prompts
@@ -58,7 +57,6 @@ class RedboxQuery(BaseModel):
 
 class RedboxState(BaseModel):
     request: RedboxQuery
-    messages: Annotated[list[AnyMessage], add_messages] = Field(default_factory=list)
 
 
 class PromptSet(StrEnum):
