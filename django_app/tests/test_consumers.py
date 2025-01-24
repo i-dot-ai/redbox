@@ -413,7 +413,7 @@ async def test_chat_consumer_redbox_state(
         # Then
         expected_request = RedboxState(
             documents=documents,
-            chat_history=[
+            messages=[
                 {"role": "user", "text": "A question?"},
                 {"role": "ai", "text": "An answer."},
                 {"role": "user", "text": "A second question?"},

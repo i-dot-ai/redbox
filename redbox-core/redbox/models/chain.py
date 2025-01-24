@@ -41,5 +41,5 @@ class AISettings(BaseModel):
 
 class RedboxState(BaseModel):
     documents: list[Document] = Field(description="List of files to process", default_factory=list)
-    chat_history: list[ChainChatMessage] = Field(description="All previous messages in chat (excluding question)")
+    messages: list[ChainChatMessage] = Field(description="All previous messages in chat (excluding question)")
     ai_settings: AISettings = Field(description="User request AI settings", default_factory=AISettings)

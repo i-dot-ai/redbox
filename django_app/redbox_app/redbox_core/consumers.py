@@ -117,7 +117,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
         state = RedboxState(
             documents=[Document(str(f.text), metadata={"uri": f.original_file.name}) for f in selected_files],
-            chat_history=[
+            messages=[
                 ChainChatMessage(
                     role=message.role,
                     text=escape_curly_brackets(message.text),

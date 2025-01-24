@@ -1,7 +1,6 @@
 import logging
 import re
 
-from langchain_core.language_models import BaseChatModel
 from langchain_core.runnables import (
     Runnable,
     chain,
@@ -56,11 +55,3 @@ def build_chat_prompt_from_messages_runnable() -> Runnable:
         ).invoke(prompt_template_context)
 
     return _chat_prompt_from_messages
-
-
-def build_llm_chain(llm: BaseChatModel) -> Runnable:
-    """Builds a chain that correctly forms a text and metadata state update.
-
-    Permits both invoke and astream_events.
-    """
-    return build_chat_prompt_from_messages_runnable() | llm
