@@ -91,8 +91,8 @@ class ChatController extends HTMLElement {
       document.createElement("chat-message")
     );
     errorMessage.dataset.role = "ai";
-    errorMessage.dataset.text = `<p><strong>${fileName}</strong> can't be uploaded</p><p>You can:</p><ul><li>try uploading again</li><li>check the document opens outside Redbox on your computer</li><li>report to <a href="mailto:redbox-copilot@cabinetoffice.gov.uk">Redbox support</a></li></ul>`;
     this.messageContainer?.append(errorMessage);
+    errorMessage.showError(`<p><strong>${fileName}</strong> can't be uploaded</p><p>You can:</p><ul><li>try uploading again</li><li>check the document opens outside Redbox on your computer</li><li>report to <a href="mailto:redbox-copilot@cabinetoffice.gov.uk">Redbox support</a></li></ul>`);
   };
 
 }
