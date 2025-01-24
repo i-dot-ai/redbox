@@ -57,7 +57,7 @@ def build_chat_prompt_from_messages_runnable(
         prompt_template_context = (
             state.request.model_dump()
             | {
-                "messages": state.messages,
+                "messages": state.request.chat_history + [state.request.question],
                 "formatted_documents": format_documents(state.request.documents),
             }
             | _additional_variables
