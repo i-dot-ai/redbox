@@ -29,7 +29,7 @@ export class UploadContainer extends RedboxElement {
               <li class="rb-upload-container__doc">
                 <file-status data-id=${doc.id} data-name=${doc.file_name}>${doc.file_status}</file-status>
                 <span class="rb-upload-container__filename-container">
-                  <span class="rb-upload-container__filename">${doc.file_name}</span>
+                  <span class="rb-upload-container__filename" aria-hidden="true">${doc.file_name}</span>
                   <button class="rb-upload-container__remove-button" @click=${this.#remove} aria-label="Remove ${doc.file_name}" type="button">&times;</button>
                 </span>
               </li>
