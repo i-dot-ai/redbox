@@ -1,8 +1,8 @@
 from logging import getLogger
 
 from langchain.chat_models import init_chat_model
+from langchain_core.prompts import PromptTemplate
 
-from redbox.chains.runnables import build_chat_prompt_from_messages_runnable
 from redbox.models.chain import RedboxState
 
 
@@ -11,6 +11,23 @@ async def _default_callback(*args, **kwargs):
 
 
 logger = getLogger(__name__)
+
+prompt_template = """You are Redbox, an AI assistant to civil servants in the United Kingdom.
+
+You follow instructions and respond to queries accurately and concisely, and are professional in all your
+interactions with users.
+
+You are tasked with providing information objectively and responding helpfully to users using context from their
+provided documents
+
+Messages:
+{messages}
+
+Documents:
+{documents}
+
+Answer:
+"""
 
 
 class Redbox:
@@ -24,7 +41,9 @@ class Redbox:
             configurable_fields=["base_url"],
         )
 
-        return build_chat_prompt_from_messages_runnable() | llm
+        prompt = PromptTemplate.from_template(prompt_template)
+
+        return prompt.invoke(messages=state.messages, documents=state.documents) | llm
 
     def run_sync(self, input: RedboxState):
         """

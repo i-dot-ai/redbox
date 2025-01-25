@@ -17,7 +17,6 @@ from websockets import ConnectionClosedError, WebSocketClientProtocol
 from redbox import Redbox
 from redbox.models.chain import (
     AISettings,
-    ChainChatMessage,
     RedboxState,
 )
 from redbox_app.redbox_core import error_messages
@@ -33,10 +32,6 @@ User = get_user_model()
 OptFileSeq = Sequence[File] | None
 logger = logging.getLogger(__name__)
 logger.info("WEBSOCKET_SCHEME is: %s", settings.WEBSOCKET_SCHEME)
-
-
-def escape_curly_brackets(text: str):
-    return text.replace("{", "{{").replace("}", "}}")
 
 
 class ChatConsumer(AsyncWebsocketConsumer):
@@ -117,13 +112,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
         state = RedboxState(
             documents=[Document(str(f.text), metadata={"uri": f.original_file.name}) for f in selected_files],
-            messages=[
-                ChainChatMessage(
-                    role=message.role,
-                    text=escape_curly_brackets(message.text),
-                )
-                for message in message_history
-            ],
+            messages=[message.to_langchain() for message in message_history],
             ai_settings=ai_settings,
         )
 

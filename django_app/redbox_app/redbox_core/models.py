@@ -18,6 +18,7 @@ from django.utils.translation import gettext_lazy as _
 from django_q.models import OrmQ, Success
 from django_q.tasks import async_task
 from django_use_email_as_username.models import BaseUser, BaseUserManager
+from langchain_core.messages import AIMessage, AnyMessage, HumanMessage
 
 from redbox.chains.components import get_tokeniser
 from redbox.models.settings import get_settings
@@ -29,6 +30,10 @@ logger = logging.getLogger(__name__)
 
 env = get_settings()
 tokeniser = get_tokeniser()
+
+
+def escape_curly_brackets(text: str) -> str:
+    return text.replace("{", "{{").replace("}", "}}")
 
 
 class UUIDPrimaryKeyBase(models.Model):
@@ -613,11 +618,6 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
         super().delete()
 
     @property
-    def file_type(self) -> str:
-        name = self.file_name
-        return name.split(".")[-1]
-
-    @property
     def url(self) -> str:
         return self.original_file.url
 
@@ -628,14 +628,6 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
             return self.original_file.name.split("/")[1]
 
         logger.error("expected filename=%s to start with the user's email address", self.original_file.name)
-        return self.original_file.name
-
-    @property
-    def unique_name(self) -> str:
-        """primary key for accessing file in s3"""
-        if self.status == File.Status.errored:
-            logger.exception("Attempt to access s3-key for inactive file %s with status %s", self.pk, self.status)
-            raise InactiveFileError(self)
         return self.original_file.name
 
     def get_status_text(self) -> str:
@@ -666,7 +658,7 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
         return self.id < other.id
 
     def ingest(self, sync: bool = False):
-        task = async_task(ingest, self.id, task_name=self.unique_name, group="ingest", sync=sync)
+        task = async_task(ingest, self.id, task_name=self.file_name, group="ingest", sync=sync)
         if sync:
             result = Success.objects.get(pk=task)
             self.status = self.Status.complete if result.success else self.Status.errored
@@ -732,6 +724,11 @@ class ChatMessage(UUIDPrimaryKeyBase, TimeStampedModel):
     def get_messages(cls, chat_id: uuid.UUID) -> Sequence["ChatMessage"]:
         """Returns all chat messages for a given chat history, ordered by citation priority."""
         return cls.objects.filter(chat_id=chat_id).order_by("created_at")
+
+    def to_langchain(self) -> AnyMessage:
+        if self.role == self.Role.ai:
+            return AIMessage(content=escape_curly_brackets(self.text))
+        return HumanMessage(content=escape_curly_brackets(self.text))
 
     def log(self):
         elastic_log_msg = {
