@@ -1,6 +1,3 @@
-import logging
-import re
-
 from langchain_core.runnables import (
     Runnable,
     chain,
@@ -10,9 +7,6 @@ from langchain_core.prompts import ChatPromptTemplate
 from redbox.chains.components import get_tokeniser
 from redbox.models.chain import ChainChatMessage, RedboxState
 from redbox.api.format import format_documents
-
-log = logging.getLogger()
-re_string_pattern = re.compile(r"(\S+)")
 
 
 def build_chat_prompt_from_messages_runnable() -> Runnable:
@@ -25,7 +19,6 @@ def build_chat_prompt_from_messages_runnable() -> Runnable:
         ai_settings = state.ai_settings
         _tokeniser = get_tokeniser()
 
-        log.debug("Setting chat prompt")
         # Set the system prompt to be our composed structure
         # We preserve the format instructions
         system_prompt_message = f"""
