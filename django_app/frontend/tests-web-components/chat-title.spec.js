@@ -4,8 +4,6 @@ const { sendMessage, signIn } = require("./utils.js");
 test(`Chat title functionality works as expected`, async ({ page }) => {
   await signIn(page);
 
-  await page.goto("/chats");
-
   // There is a hidden chat title for new chats
   const chatTitle = page.locator(".chat-title__heading");
   await expect(chatTitle).toContainText("Current chat");

@@ -4,8 +4,6 @@ const { signIn } = require("./utils.js");
 test(`Message input functionality`, async ({ page }) => {
   await signIn(page);
 
-  await page.goto("/chats");
-
   const messageInput = page.locator(".rb-chat-input textarea");
 
   const height1 = await page.evaluate(
