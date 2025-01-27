@@ -4,8 +4,6 @@ const { sendMessage, signIn } = require("./utils.js");
 test(`Streaming can be started and stopped`, async ({ page }) => {
   await signIn(page);
 
-  await page.goto("/chats");
-
   let sendButton = page.getByRole("button", { name: "Send" });
   let stopButton = page.getByRole("button", { name: "Stop" });
 

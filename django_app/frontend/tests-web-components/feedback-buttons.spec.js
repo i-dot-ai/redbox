@@ -4,8 +4,6 @@ const { sendMessage, signIn } = require("./utils.js");
 test(`Individual message feedback can be entered`, async ({ page }) => {
   await signIn(page);
 
-  await page.goto("/chats");
-
   // The component is visible after sending a message
   await sendMessage(page);
   await expect(page.locator("feedback-buttons")).toBeVisible();

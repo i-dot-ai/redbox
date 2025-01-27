@@ -1,11 +1,8 @@
 import { test, expect } from "@playwright/test";
 const { sendMessage, signIn } = require("./utils.js");
 
-test(`Individual message feedback can be entered`, async ({ page }) => {
+test(`A different model can be selected`, async ({ page }) => {
   await signIn(page);
-
-  const currentUrl = await page.url();
-  await page.goto(`${currentUrl}?test=true`);
   
   const select = await page.locator(".rb-model-selector__select");
 

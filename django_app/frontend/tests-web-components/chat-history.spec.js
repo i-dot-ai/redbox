@@ -4,8 +4,6 @@ const { signIn } = require("./utils.js");
 test(`Chat history functionality works as expected`, async ({ page }) => {
   await signIn(page);
 
-  await page.goto("/chats");
-
   const count1 = await page.evaluate(
     () => document.querySelectorAll(".rb-chat-history__link").length
   );
