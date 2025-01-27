@@ -94,10 +94,10 @@ body {
 }
 @import "../../node_modules/i.ai-design-system/dist/styles.scss";
 
+@import "./profile.scss";
 
 /* Chats Page - to come after i.AI Design System */
 @import "./chats/chats.scss";
-
 
 /* Print styles */
 @import "./print.scss";
