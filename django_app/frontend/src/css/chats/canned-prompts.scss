@@ -9,13 +9,20 @@ main:has(.iai-chat-bubble) .chat-options {
   display: none;
 }
 .chat-options__heading {
+  align-items: center;
   color: $redbox-red;
+  display: flex;
   font-size: 2.25rem;
+  gap: 1rem;
+}
+.chat-options__icon {
+  width: 3.5rem;
 }
 .chat-options__options {
   display: flex;
   flex-direction: column;
   gap: 1rem;
+  margin-top: 1.5rem;
 }
 .chat-options__option {
   align-items: center;
@@ -27,7 +34,6 @@ main:has(.iai-chat-bubble) .chat-options {
   display: flex;
   font-size: 0.875rem;
   gap: 1rem;
-  margin-top: 0.5rem;
   padding: 0.875rem 1rem;
   flex-grow: 1;
   text-align: left;
@@ -50,9 +56,17 @@ main:has(.iai-chat-bubble) .chat-options {
 @media (min-width: 1020px) {
   .chat-options__options {
     flex-direction: row;
-    gap: 2rem;
+    gap: 1.5rem;
   }
   .chat-options__option {
+    gap: 0.5rem;
+    padding: 0.875rem 0.5rem;
     width: 33%;
+  }
+}
+@media (min-width: 1280px) {
+  .chat-options__option {
+    gap: 1rem;
+    padding: 0.875rem 1rem;
   }
 }

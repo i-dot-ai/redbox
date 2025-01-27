@@ -3,19 +3,22 @@
 class CannedPrompts extends HTMLElement {
   connectedCallback() {
     this.innerHTML = `
-      <h3 class="chat-options__heading govuk-heading-m">What would you like to ask your Redbox?</h3>
+      <h3 class="chat-options__heading govuk-heading-m">
+        <img class="chat-options__icon rb-icon--animated" src="/static/icons/Icon_Redbox_200.svg" alt=""/>
+        What would you like to ask?
+      </h3>
       <div class="chat-options__options">
           <button class="chat-options__option chat-options__option_agenda plausible-event-name--canned+prompt+draft+meeting+agenda" type="button">
               <img src="/static/icons/icon_square_doc.svg" alt=""/>
-              Draft an agenda for a team meeting
+              Summarise this document
           </button>
           <button class="chat-options__option chat-options__option_objectives plausible-event-name--canned+prompt+set+work+objectives" type="button">
               <img src="/static/icons/archery.svg" alt=""/>
-              Help me set my work objectives
+              Draft an email about…
           </button>
           <button class="chat-options__option chat-options__option_ps_role plausible-event-name--canned+prompt+describe+role+permanent+secretary" type="button">
               <img src="/static/icons/person.svg" alt=""/>
-              Describe the role of a Permanent Secretary
+              Reformat this to assist with neurodivergent communication…
           </button>
       </div>
       <p class="chat-options__info-text">Or type any question below</p>
@@ -24,7 +27,7 @@ class CannedPrompts extends HTMLElement {
     let buttons = this.querySelectorAll("button");
     buttons.forEach((button) => {
       button.addEventListener("click", () => {
-        this.#prepopulateMessageBox(button.textContent?.trim() || "");
+        this.#prepopulateMessageBox((button.textContent?.trim() || "").replace("…", " "));
       });
     });
 
@@ -38,7 +41,7 @@ class CannedPrompts extends HTMLElement {
    */
   #prepopulateMessageBox = (prompt) => {
     /** @type HTMLInputElement | null */
-    let chatInput = document.querySelector(".iai-chat-input__input");
+    let chatInput = document.querySelector(".rb-chat-input textarea");
     if (chatInput) {
       chatInput.value = prompt;
       chatInput.focus();

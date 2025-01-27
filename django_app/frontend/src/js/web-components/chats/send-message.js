@@ -3,7 +3,7 @@
 class SendMessage extends HTMLElement {
   connectedCallback() {
     const stopButtonHtml = `
-      <button class="iai-chat-input__button iai-icon-button rb-send-button" type="button">
+      <button class="rb-chat-input__button iai-icon-button rb-send-button" type="button">
         <div class="rb-square-icon"></div>
         Stop
       </button>

@@ -90,10 +90,6 @@ class BasePage(ABC):
 
 
 class SignedInBasePage(BasePage, ABC):
-    def navigate_to_documents(self) -> "DocumentsPage":
-        self.page.get_by_role("link", name="Documents", exact=True).click()
-        return DocumentsPage(self.page)
-
     def navigate_to_chats(self) -> "ChatsPage":
         self.page.get_by_role("link", name="Chats", exact=True).click()
         return ChatsPage(self.page)
@@ -333,7 +329,7 @@ class ChatsPage(SignedInBasePage):
 
     @property
     def selected_llm(self) -> str:
-        return self.page.locator("#llm-selector").inner_text()
+        return self.page.locator(".rb-model-selector__select").inner_text()
 
     @property
     def write_message(self) -> str:

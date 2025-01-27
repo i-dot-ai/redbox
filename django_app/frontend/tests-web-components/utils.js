@@ -28,11 +28,11 @@ const signIn = async (page) => {
   const magicLink = await getMagicLink();
 
   await page.goto(`${magicLink}`);
-  await expect(page.locator(".chat-options__heading")).toContainText("What would you like to ask your Redbox?");
+  await expect(page.locator(".chat-options__heading")).toContainText("What would you like to ask?");
 };
 
 const sendMessage = async (page) => {
-  await page.locator(".iai-chat-input__input").fill("Testing");
+  await page.locator(".rb-chat-input textarea").fill("Testing");
   await page.getByRole("button", { name: "Send" }).click();
 };
 
