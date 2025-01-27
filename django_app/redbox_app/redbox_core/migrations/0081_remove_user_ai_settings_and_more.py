@@ -3,6 +3,24 @@
 from django.db import migrations, models
 
 
+context_window_sizes = {
+    "gpt-4o-mini": 128000,
+    "gpt-4o": 128000,
+    "gpt-35-turbo-16k": 16384,
+    "anthropic.claude-3-haiku-20240307-v1:0": 200000,
+    "anthropic.claude-3-sonnet-20240229-v1:0": 200000,
+    "gpt-4-turbo-2024-04-09": 150000,
+    "gpt-4o-2024-08-06": 128000
+}
+def back_populate_context_window_size(apps, schema_editor):
+    ChatLLMBackend = apps.get_model("redbox_core", "ChatLLMBackend")
+    for llm in ChatLLMBackend.objects.all():
+        llm.context_window_size = context_window_sizes.get(llm.name)
+        llm.save()
+
+    ChatLLMBackend.objects.filter(context_window_sizes__isnull=True).delete()
+
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -19,7 +37,13 @@ class Migration(migrations.Migration):
             name='context_window_size',
             field=models.PositiveIntegerField(blank=True, help_text='size of the LLM  context window', null=True),
         ),
+        migrations.RunPython(back_populate_context_window_size, migrations.RunPython.noop),
         migrations.DeleteModel(
             name='AISettings',
+        ),
+        migrations.AlterField(
+            model_name='chatllmbackend',
+            name='context_window_size',
+            field=models.PositiveIntegerField(help_text='size of the LLM context window'),
         ),
     ]

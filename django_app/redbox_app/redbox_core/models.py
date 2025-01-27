@@ -80,9 +80,7 @@ class ChatLLMBackend(models.Model):
     is_default = models.BooleanField(default=False, help_text="is this the default llm to use.")
     enabled = models.BooleanField(default=True, help_text="is this model enabled.")
     display = models.CharField(max_length=128, null=True, blank=True, help_text="name to display in UI.")
-    context_window_size = models.PositiveIntegerField(
-        null=True, blank=True, help_text="size of the LLM  context window"
-    )
+    context_window_size = models.PositiveIntegerField(help_text="size of the LLM context window")
 
     class Meta:
         constraints = [UniqueConstraint(fields=["name", "provider"], name="unique_name_provider")]
