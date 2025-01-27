@@ -12,13 +12,14 @@ context_window_sizes = {
     "gpt-4-turbo-2024-04-09": 150000,
     "gpt-4o-2024-08-06": 128000
 }
+
 def back_populate_context_window_size(apps, schema_editor):
     ChatLLMBackend = apps.get_model("redbox_core", "ChatLLMBackend")
     for llm in ChatLLMBackend.objects.all():
         llm.context_window_size = context_window_sizes.get(llm.name)
         llm.save()
 
-    ChatLLMBackend.objects.filter(context_window_sizes__isnull=True).delete()
+    ChatLLMBackend.objects.filter(context_window_size__isnull=True).delete()
 
 
 class Migration(migrations.Migration):

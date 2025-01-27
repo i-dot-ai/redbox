@@ -61,7 +61,12 @@ def _collect_static():
 
 @pytest.fixture(autouse=True)
 def llm_backend(db):  # noqa: ARG001
-    gpt_4o, _ = ChatLLMBackend.objects.get_or_create(name="gpt-4o", provider="azure_openai", is_default=True)
+    gpt_4o, _ = ChatLLMBackend.objects.get_or_create(
+        name="gpt-4o",
+        provider="azure_openai",
+        is_default=True,
+        context_window_size=128000,
+    )
     return gpt_4o
 
 

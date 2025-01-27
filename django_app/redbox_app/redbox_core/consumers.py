@@ -101,16 +101,14 @@ class ChatConsumer(AsyncWebsocketConsumer):
         document_token_count = sum(file.token_count for file in selected_files if file.token_count)
         message_history_token_count = sum(message.token_count for message in message_history if message.token_count)
 
-        chat_backend = session.chat_backend
-        if document_token_count + message_history_token_count > (chat_backend.context_window_size or 128_000):
+        if document_token_count + message_history_token_count > session.chat_backend.context_window_size:
             await self.send_to_client("error", "selected are too big to work with")
             return
 
         self.route = "chat_with_docs" if selected_files else "chat"
         self.send_to_client("route", self.route)
 
-        chat_backend_dict = model_to_dict(chat_backend)
-        chat_backend_dict["context_window_size"] = chat_backend_dict.get("context_window_size") or 128_000
+        chat_backend_dict = model_to_dict(session.chat_backend)
 
         state = RedboxState(
             documents=[Document(str(f.text), metadata={"uri": f.original_file.name}) for f in selected_files],

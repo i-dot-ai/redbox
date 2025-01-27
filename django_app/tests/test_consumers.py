@@ -385,7 +385,6 @@ async def test_chat_consumer_redbox_state(
         await communicator.disconnect()
 
         chat_backend_dict = model_to_dict(llm_backend)
-        chat_backend_dict["context_window_size"] = chat_backend_dict.get("context_window_size") or 128_000
 
         # Then
         expected_request = RedboxState(
