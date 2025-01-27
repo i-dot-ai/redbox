@@ -84,6 +84,13 @@ body {
 }
 
 
+/* sign-up pages */
+.rb-accessibility-heading {
+  align-items: center;
+  display: flex;
+  gap: 0.375rem;
+}
+
 /* i.AI Design System */
 :root {
   --iai-product-colour: #9c0000;
@@ -93,6 +100,11 @@ body {
   --iai-background-colour-2: #f8f8f8;
 }
 @import "../../node_modules/i.ai-design-system/dist/styles.scss";
+
+/* To add to i.AI Design System */
+.govuk-link:visited {
+  color: var(--iai-product-colour);
+}
 
 @import "./profile.scss";
 
