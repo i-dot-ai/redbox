@@ -41,7 +41,7 @@ class Redbox:
             configurable_fields=["base_url"],
         )
 
-        return PromptTemplate.from_template(prompt_template)  | llm
+        return PromptTemplate.from_template(prompt_template) | llm
 
     def run_sync(self, input: RedboxState):
         """
