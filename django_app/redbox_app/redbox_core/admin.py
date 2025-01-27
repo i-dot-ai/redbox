@@ -39,7 +39,6 @@ class UserAdmin(ImportExportMixin, admin.ModelAdmin):
                     "is_superuser",
                     "is_staff",
                     "last_login",
-                    "ai_settings",
                     "is_developer",
                 ]
             },
@@ -218,6 +217,5 @@ class FileAdmin(ExportMixin, admin.ModelAdmin):
 
 admin.site.register(User, UserAdmin)
 admin.site.register(models.Chat, ChatAdmin)
-admin.site.register(models.AISettings)
 admin.site.register(models.ChatLLMBackend, ChatLLMBackendAdmin)
 admin.site.register(models.File, FileAdmin)

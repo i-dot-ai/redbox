@@ -15,7 +15,6 @@ from django.utils import timezone
 from freezegun import freeze_time
 
 from redbox_app.redbox_core.models import (
-    AISettings,
     Chat,
     ChatLLMBackend,
     ChatMessage,
@@ -61,10 +60,9 @@ def _collect_static():
 
 
 @pytest.fixture(autouse=True)
-def default_ai_settings(db):  # noqa: ARG001
+def llm_backend(db):  # noqa: ARG001
     gpt_4o, _ = ChatLLMBackend.objects.get_or_create(name="gpt-4o", provider="azure_openai", is_default=True)
-    ai_settings, _ = AISettings.objects.get_or_create(label="default", chat_backend=gpt_4o)
-    return ai_settings
+    return gpt_4o
 
 
 @pytest.fixture()
