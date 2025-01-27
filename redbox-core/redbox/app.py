@@ -41,9 +41,7 @@ class Redbox:
             configurable_fields=["base_url"],
         )
 
-        prompt = PromptTemplate.from_template(prompt_template)
-
-        return prompt.invoke(messages=state.messages, documents=state.documents) | llm
+        return PromptTemplate.from_template(prompt_template)  | llm
 
     def run_sync(self, input: RedboxState):
         """
@@ -53,14 +51,14 @@ class Redbox:
 
     async def run(
         self,
-        input: RedboxState,
+        state: RedboxState,
         response_tokens_callback=_default_callback,
     ) -> RedboxState:
         final_state = None
-        request_dict = input.model_dump()
+        request_dict = state.model_dump()
         logger.info("Request: %s", {k: request_dict[k] for k in request_dict.keys() - {"ai_settings"}})
-        async for event in self._get_runnable(input).astream_events(
-            input,
+        async for event in self._get_runnable(state).astream_events(
+            request_dict,
             version="v2",
         ):
             kind = event["event"]
