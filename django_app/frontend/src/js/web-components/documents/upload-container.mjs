@@ -1,5 +1,5 @@
 // @ts-check
-import { html } from "lit";
+import { html, nothing } from "lit";
 import { RedboxElement } from "../redbox-element.mjs";
 
 export class UploadContainer extends RedboxElement {
@@ -27,7 +27,7 @@ export class UploadContainer extends RedboxElement {
           ${this.docs?.map(
             (doc) => html`
               <li class="rb-upload-container__doc">
-                <file-status data-id=${doc.id} data-name=${doc.file_name}>${doc.file_status}</file-status>
+                <file-status data-id=${doc.id} data-name=${doc.file_name} data-error=${doc.error ? "true" : nothing}>${doc.file_status}</file-status>
                 <span class="rb-upload-container__filename-container">
                   <span class="rb-upload-container__filename" aria-hidden="true">${doc.file_name}</span>
                   <button class="rb-upload-container__remove-button" @click=${this.#remove} aria-label="Remove ${doc.file_name}" type="button">&times;</button>
@@ -62,8 +62,13 @@ export class UploadContainer extends RedboxElement {
       },
       body: formData,
     });
+
     if (!response.ok) {
-      // TO DO: Handle error
+      if (this.docs) {
+        this.docs.find(doc => doc.temp_id === tempId).error = true;
+      }
+      this.requestUpdate();
+      return;
     }
 
     const data = await response.json();

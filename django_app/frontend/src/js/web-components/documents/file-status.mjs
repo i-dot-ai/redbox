@@ -58,11 +58,26 @@ class FileStatus extends RedboxElement {
     `;
   }
 
+  #sendErrorEvent() {
+    const fileErrorEvent = new CustomEvent("file-error", {
+      detail: {
+        name: this.name
+      },
+    });
+    document.dispatchEvent(fileErrorEvent);
+  }
+
   async #checkStatus () {
 
     // UPDATE THESE AS REQUIRED
     const FILE_STATUS_ENDPOINT = "/file-status";
-    const CHECK_INTERVAL_MS = 2000;
+    const CHECK_INTERVAL_MS = 1000;
+
+    if (this.dataset.error) {
+      this.status = "Error";
+      this.#sendErrorEvent();
+      return;
+    }
 
     if (!this.id) {
       window.setTimeout(() => {
@@ -83,12 +98,7 @@ class FileStatus extends RedboxElement {
     this.positionInQueue = responseObj.position_in_queue;
 
     if (responseObj.status.toLowerCase() === "error") {
-      const fileErrorEvent = new CustomEvent("file-error", {
-        detail: {
-          name: this.name
-        },
-      });
-      document.dispatchEvent(fileErrorEvent);
+      this.#sendErrorEvent();
       return;
     }
 
