@@ -16,11 +16,8 @@ context_window_sizes = {
 def back_populate_context_window_size(apps, schema_editor):
     ChatLLMBackend = apps.get_model("redbox_core", "ChatLLMBackend")
     for llm in ChatLLMBackend.objects.all():
-        llm.context_window_size = context_window_sizes.get(llm.name)
+        llm.context_window_size = context_window_sizes.get(llm.name, 0)
         llm.save()
-
-    ChatLLMBackend.objects.filter(context_window_size__isnull=True).delete()
-
 
 class Migration(migrations.Migration):
 
