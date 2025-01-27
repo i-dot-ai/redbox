@@ -6,17 +6,17 @@ test(`Clicking canned prompts updates the text input`, async ({ page }) => {
 
   await page.goto("/chats");
 
-  const textInput = page.locator(".iai-chat-input__input");
+  const textInput = page.locator(".rb-chat-input textarea");
   await expect(textInput).toHaveValue("");
 
   await page.locator(".chat-options__option").nth(0).click();
-  await expect(textInput).toHaveValue("Draft an agenda for a team meeting");
+  await expect(textInput).toHaveValue("Summarise this document");
 
   await page.locator(".chat-options__option").nth(1).click();
-  await expect(textInput).toHaveValue("Help me set my work objectives");
+  await expect(textInput).toHaveValue("Draft an email about ");
 
   await page.locator(".chat-options__option").nth(2).click();
   await expect(textInput).toHaveValue(
-    "Describe the role of a Permanent Secretary"
+    "Reformat this to assist with neurodivergent communication "
   );
 });

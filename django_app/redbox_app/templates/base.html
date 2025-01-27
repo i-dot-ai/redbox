@@ -38,7 +38,7 @@
   </script>
   {% endif %}
 
-  {# Temporarily removed due to this adding inline styles, which our CSP doesn't allow
+  {# Removed due to this adding inline styles, which our CSP doesn't allow
   {% if environment | lower == "preprod" %}
     <script type="module" src="{{ static('js/posthog.js') }}"></script>
   {% endif %}
@@ -59,12 +59,16 @@
 
 
   {% if request.user.is_authenticated %}
+    {% if pageTitle == "Chats" %}
+      {% set menu_items = [] %}
+    {% else %}
+      {% set menu_items = [
+        {"text": "Chats", "href": url('chats')}
+      ] %}
+    {% endif %}
     {{ iaiTopNav(
       product_name = "Redbox",
-      menu_items = [
-        {"text": "Documents", "href": url('documents')},
-        {"text": "Chats", "href": url('chats')}
-      ],
+      menu_items = menu_items,
       user_items = {
           "initials": request.user.get_initials(),
           "menu_items": [

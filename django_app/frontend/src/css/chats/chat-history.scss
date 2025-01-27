@@ -4,6 +4,10 @@
 }
 .iai-panel__scrollable--chat-history {
   margin-top: -0.75rem;
+  max-height: calc(100vh - 20rem);
+}
+body:has(.iai-environment-warning) .iai-panel__scrollable--chat-history {
+  max-height: calc(100vh - 18.5rem);
 }
 .rb-chat-history__date_group {
   font-size: 0.75rem;
