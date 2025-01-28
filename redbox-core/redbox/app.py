@@ -38,7 +38,7 @@ class Redbox:
     def _get_runnable(self, state: RedboxState):
         llm = init_chat_model(
             azure_endpoint=os.environ["AZURE_OPENAI_ENDPOINT"],
-            api_key=os.environ["LITELLM_MASTER_KEY"],
+            api_key="sk-1234",
             model=state.chat_backend.name,
             model_provider=state.chat_backend.provider,
         )
