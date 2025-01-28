@@ -662,7 +662,7 @@ class ChatMessage(UUIDPrimaryKeyBase, TimeStampedModel):
             "chat_feedback_achieved": self.chat.feedback_achieved,
             "chat_feedback_saved_time": self.chat.feedback_saved_time,
             "chat_feedback_improved_work": self.chat.feedback_improved_work,
-            "n_selected_files": len(self.selected_files),
+            "n_selected_files": self.selected_files.count(),
         }
         if es_client := env.elasticsearch_client():
             try:
