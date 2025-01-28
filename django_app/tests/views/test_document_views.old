@@ -121,18 +121,18 @@ def test_upload_view_duplicate_files(alice, bob, client, file_pdf_path: Path, s3
     alices_file = upload_file()
 
     assert count_s3_objects(s3_client) == previous_count + 1  # new file added
-    assert alices_file.unique_name.startswith(alice.email)
+    assert alices_file.original_file.name.startswith(alice.email)
 
     client.force_login(bob)
     bobs_file = upload_file()
 
     assert count_s3_objects(s3_client) == previous_count + 2  # new file added
-    assert bobs_file.unique_name.startswith(bob.email)
+    assert bobs_file.original_file.name.startswith(bob.email)
 
     bobs_new_file = upload_file()
 
     assert count_s3_objects(s3_client) == previous_count + 2  # no change, duplicate file
-    assert bobs_new_file.unique_name == bobs_file.unique_name
+    assert bobs_new_file.original_file.name == bobs_file.original_file.name
 
 
 @pytest.mark.django_db()

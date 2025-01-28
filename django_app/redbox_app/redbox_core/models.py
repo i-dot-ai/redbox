@@ -8,7 +8,6 @@ from datetime import UTC, date, datetime, timedelta
 from typing import override
 
 import elastic_transport
-import jwt
 from django.conf import settings
 from django.contrib.postgres.fields import ArrayField
 from django.core import validators
@@ -19,6 +18,7 @@ from django.utils.translation import gettext_lazy as _
 from django_q.models import OrmQ, Success
 from django_q.tasks import async_task
 from django_use_email_as_username.models import BaseUser, BaseUserManager
+from langchain_core.messages import AIMessage, AnyMessage, HumanMessage
 
 from redbox.chains.components import get_tokeniser
 from redbox.models.settings import get_settings
@@ -30,6 +30,10 @@ logger = logging.getLogger(__name__)
 
 env = get_settings()
 tokeniser = get_tokeniser()
+
+
+def escape_curly_brackets(text: str) -> str:
+    return text.replace("{", "{{").replace("}", "}}")
 
 
 class UUIDPrimaryKeyBase(models.Model):
@@ -76,6 +80,7 @@ class ChatLLMBackend(models.Model):
     is_default = models.BooleanField(default=False, help_text="is this the default llm to use.")
     enabled = models.BooleanField(default=True, help_text="is this model enabled.")
     display = models.CharField(max_length=128, null=True, blank=True, help_text="name to display in UI.")
+    context_window_size = models.PositiveIntegerField(help_text="size of the LLM context window")
 
     class Meta:
         constraints = [UniqueConstraint(fields=["name", "provider"], name="unique_name_provider")]
@@ -87,97 +92,6 @@ class ChatLLMBackend(models.Model):
         if self.is_default:
             ChatLLMBackend.objects.filter(is_default=True).update(is_default=False)
         super().save(*args, **kwargs)
-
-
-class AbstractAISettings(models.Model):
-    chat_backend = models.ForeignKey(ChatLLMBackend, on_delete=models.CASCADE, help_text="LLM to use in chat")
-    temperature = models.FloatField(default=0, help_text="temperature for LLM")
-
-    class Meta:
-        abstract = True
-
-    def save(self, *args, **kwargs):
-        if not self.chat_backend_id:
-            self.chat_backend = ChatLLMBackend.objects.get(is_default=True)
-        return super().save(*args, **kwargs)
-
-
-class AISettings(UUIDPrimaryKeyBase, TimeStampedModel, AbstractAISettings):
-    label = models.CharField(max_length=50, unique=True)
-
-    # LLM settings
-    context_window_size = models.PositiveIntegerField(null=True, blank=True)
-    llm_max_tokens = models.PositiveIntegerField(null=True, blank=True)
-
-    # Prompts and LangGraph settings
-    max_document_tokens = models.PositiveIntegerField(null=True, blank=True)
-    self_route_enabled = models.BooleanField(null=True, blank=True)
-    map_max_concurrency = models.PositiveIntegerField(null=True, blank=True)
-    stuff_chunk_context_ratio = models.FloatField(null=True, blank=True)
-    recursion_limit = models.PositiveIntegerField(null=True, blank=True)
-
-    chat_system_prompt = models.TextField(null=True, blank=True)
-    chat_question_prompt = models.TextField(null=True, blank=True)
-    chat_with_docs_system_prompt = models.TextField(null=True, blank=True)
-    chat_with_docs_question_prompt = models.TextField(null=True, blank=True)
-    chat_with_docs_reduce_system_prompt = models.TextField(null=True, blank=True)
-    retrieval_system_prompt = models.TextField(null=True, blank=True)
-    retrieval_question_prompt = models.TextField(null=True, blank=True)
-    agentic_retrieval_system_prompt = models.TextField(null=True, blank=True)
-    agentic_retrieval_question_prompt = models.TextField(null=True, blank=True)
-    agentic_give_up_system_prompt = models.TextField(null=True, blank=True)
-    agentic_give_up_question_prompt = models.TextField(null=True, blank=True)
-    condense_system_prompt = models.TextField(null=True, blank=True)
-    condense_question_prompt = models.TextField(null=True, blank=True)
-    chat_map_system_prompt = models.TextField(null=True, blank=True)
-    chat_map_question_prompt = models.TextField(null=True, blank=True)
-    reduce_system_prompt = models.TextField(null=True, blank=True)
-
-    # Elsticsearch RAG and boost values
-    rag_k = models.PositiveIntegerField(null=True, blank=True)
-    rag_num_candidates = models.PositiveIntegerField(null=True, blank=True)
-    rag_gauss_scale_size = models.PositiveIntegerField(null=True, blank=True)
-    rag_gauss_scale_decay = models.DecimalField(
-        max_digits=5,
-        decimal_places=2,
-        null=True,
-        blank=True,
-        validators=[validators.MinValueValidator(0.0)],
-    )
-    rag_gauss_scale_min = models.DecimalField(
-        max_digits=5,
-        decimal_places=2,
-        null=True,
-        blank=True,
-        validators=[validators.MinValueValidator(1.0)],
-    )
-    rag_gauss_scale_max = models.DecimalField(
-        max_digits=5,
-        decimal_places=2,
-        null=True,
-        blank=True,
-        validators=[validators.MinValueValidator(1.0)],
-    )
-    rag_desired_chunk_size = models.PositiveIntegerField(null=True, blank=True)
-    elbow_filter_enabled = models.BooleanField(null=True, blank=True)
-    match_boost = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
-    match_name_boost = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
-    match_description_boost = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
-    match_keywords_boost = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
-    knn_boost = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
-    similarity_threshold = models.DecimalField(
-        max_digits=5,
-        decimal_places=2,
-        null=True,
-        blank=True,
-        validators=[
-            validators.MinValueValidator(0.0),
-            validators.MaxValueValidator(1.0),
-        ],
-    )
-
-    def __str__(self) -> str:
-        return str(self.label)
 
 
 class User(BaseUser, UUIDPrimaryKeyBase):
@@ -411,7 +325,6 @@ class User(BaseUser, UUIDPrimaryKeyBase):
         blank=True,
         help_text="user entered info from profile overlay, to be used in custom prompt",
     )
-    ai_settings = models.ForeignKey(AISettings, on_delete=models.SET_DEFAULT, default="default", to_field="label")
     is_developer = models.BooleanField(null=True, blank=True, default=False, help_text="is this user a developer?")
 
     # Additional fields for sign-up form
@@ -478,12 +391,6 @@ class User(BaseUser, UUIDPrimaryKeyBase):
         self.email = self.email.lower()
         super().save(*args, **kwargs)
 
-    def get_bearer_token(self) -> str:
-        """the bearer token expected by the core-api"""
-        user_uuid = str(self.id)
-        bearer_token = jwt.encode({"user_uuid": user_uuid}, key=settings.SECRET_KEY)
-        return f"Bearer {bearer_token}"
-
     def get_initials(self) -> str:
         try:
             if self.name:
@@ -500,10 +407,12 @@ class User(BaseUser, UUIDPrimaryKeyBase):
             return ""
 
 
-class Chat(UUIDPrimaryKeyBase, TimeStampedModel, AbstractAISettings):
+class Chat(UUIDPrimaryKeyBase, TimeStampedModel):
     name = models.TextField(max_length=1024, null=False, blank=False)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     archived = models.BooleanField(default=False, null=True, blank=True)
+    chat_backend = models.ForeignKey(ChatLLMBackend, on_delete=models.CASCADE, help_text="LLM to use in chat")
+    temperature = models.FloatField(default=0, help_text="temperature for LLM")
 
     # Exit feedback - this is separate to the ratings for individual ChatMessages
     feedback_achieved = models.BooleanField(
@@ -525,10 +434,10 @@ class Chat(UUIDPrimaryKeyBase, TimeStampedModel, AbstractAISettings):
         self.name = sanitise_string(self.name)
 
         if self.chat_backend_id is None:
-            self.chat_backend = self.user.ai_settings.chat_backend
+            self.chat_backend = ChatLLMBackend.objects.get(is_default=True)
 
         if self.temperature is None:
-            self.temperature = self.user.ai_settings.temperature
+            self.temperature = 0
 
         super().save(force_insert, force_update, using, update_fields)
 
@@ -620,11 +529,6 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
         super().delete()
 
     @property
-    def file_type(self) -> str:
-        name = self.file_name
-        return name.split(".")[-1]
-
-    @property
     def url(self) -> str:
         return self.original_file.url
 
@@ -635,14 +539,6 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
             return self.original_file.name.split("/")[1]
 
         logger.error("expected filename=%s to start with the user's email address", self.original_file.name)
-        return self.original_file.name
-
-    @property
-    def unique_name(self) -> str:
-        """primary key for accessing file in s3"""
-        if self.status == File.Status.errored:
-            logger.exception("Attempt to access s3-key for inactive file %s with status %s", self.pk, self.status)
-            raise InactiveFileError(self)
         return self.original_file.name
 
     def get_status_text(self) -> str:
@@ -673,7 +569,7 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
         return self.id < other.id
 
     def ingest(self, sync: bool = False):
-        task = async_task(ingest, self.id, task_name=self.unique_name, group="ingest", sync=sync)
+        task = async_task(ingest, self.id, task_name=self.file_name, group="ingest", sync=sync)
         if sync:
             result = Success.objects.get(pk=task)
             self.status = self.Status.complete if result.success else self.Status.errored
@@ -739,6 +635,11 @@ class ChatMessage(UUIDPrimaryKeyBase, TimeStampedModel):
     def get_messages(cls, chat_id: uuid.UUID) -> Sequence["ChatMessage"]:
         """Returns all chat messages for a given chat history, ordered by citation priority."""
         return cls.objects.filter(chat_id=chat_id).order_by("created_at")
+
+    def to_langchain(self) -> AnyMessage:
+        if self.role == self.Role.ai:
+            return AIMessage(content=escape_curly_brackets(self.text))
+        return HumanMessage(content=escape_curly_brackets(self.text))
 
     def log(self):
         elastic_log_msg = {

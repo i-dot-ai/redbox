@@ -4,11 +4,12 @@ const { signIn } = require("./utils.js");
 test(`Chat history functionality works as expected`, async ({ page }) => {
   await signIn(page);
 
-  await page.goto("/chats");
-
   const count1 = await page.evaluate(
     () => document.querySelectorAll(".rb-chat-history__link").length
   );
+
+  // wait for chat-history to be ready
+  await expect(page.locator("chat-history")).toBeVisible();
 
   await page.evaluate(() => {
     document.querySelector("chat-history").addChat("session-id", "Test chat");

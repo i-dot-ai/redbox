@@ -74,7 +74,7 @@ export class DocumentUpload extends RedboxElement {
 
   render() {
     return html`
-      <form class="rb-document-upload ${this.jsInitialised ? `govuk-visually-hidden` : ''}" action="/upload/" method="post" enctype="multipart/form-data">
+      <form class="rb-document-upload ${this.jsInitialised ? `rb-document-upload--js-active` : ''}" action="/upload/" method="post" enctype="multipart/form-data">
         <input type="hidden" name="csrfmiddlewaretoken" value=${this["csrfToken"]} />
         <input type="hidden" name="chat_id" value=${this["chatId"]} />
         <label class="govuk-label" for="upload-docs">
@@ -83,7 +83,12 @@ export class DocumentUpload extends RedboxElement {
         <input class="govuk-file-upload" @change=${this.#sendFiles} multiple id="upload-docs" name="uploadDocs" type="file" />
         <button class="govuk-!-display-inline-block" type="submit">Upload</button>
       </form>
-      ${this.dragDropInProgress ? html`<p class="rb-uploaded-docs__drag-drop-message">Drop files here to upload to chat</p>` : ""}
+      ${this.dragDropInProgress ? html`
+        <div class="rb-uploaded-docs__drag-drop">
+          <img src="/static/icons/drag-drop-icon.svg" alt="" width="80" height="80" />
+          <p>Drop files here</p>
+        </div>
+      ` : ""}
     `;
   }
 }

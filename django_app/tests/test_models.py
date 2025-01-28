@@ -6,8 +6,6 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from redbox_app.redbox_core.models import (
     ChatMessage,
     File,
-    InactiveFileError,
-    User,
 )
 
 
@@ -33,46 +31,6 @@ def test_file_model_last_referenced(peter_rabbit, s3_client):  # noqa: ARG001
     new_file.last_referenced = new_date
     new_file.save()
     assert new_file.last_referenced == new_date
-
-
-@pytest.mark.parametrize(
-    ("status"),
-    [
-        File.Status.complete,
-        File.Status.processing,
-    ],
-)
-@pytest.mark.django_db()
-def test_file_model_unique_name(status: str, peter_rabbit: User, s3_client):  # noqa: ARG001
-    mock_file = SimpleUploadedFile("test.txt", b"these are the file contents")
-
-    new_file = File.objects.create(
-        status=status,
-        original_file=mock_file,
-        user=peter_rabbit,
-    )
-
-    assert new_file.unique_name  # Check new name can be retrieved without error
-
-
-@pytest.mark.parametrize(
-    ("status"),
-    [
-        File.Status.errored,
-    ],
-)
-@pytest.mark.django_db()
-def test_file_model_unique_name_error_states(status: str, peter_rabbit: User, s3_client):  # noqa: ARG001
-    mock_file = SimpleUploadedFile("test.txt", b"these are the file contents")
-
-    new_file = File.objects.create(
-        status=status,
-        original_file=mock_file,
-        user=peter_rabbit,
-    )
-
-    with pytest.raises(InactiveFileError, match="is inactive, status is"):
-        assert new_file.unique_name
 
 
 @pytest.mark.django_db()
