@@ -11,10 +11,15 @@ export class ModelSelector extends RedboxElement {
     activeOption: {type: Number, state: true}
   };
 
+  constructor() {
+    super();
+    this.options = [];
+  }
+
   connectedCallback() {
     super.connectedCallback();
+    this.selectedOption = 0;
     this.options.forEach((option, index) => {
-      this.selectedOption = 0;
       if (option.selected) {
         this.selectedOption = index;
       }
@@ -60,7 +65,8 @@ export class ModelSelector extends RedboxElement {
   }
 
   #clickOption(evt) {
-    this.selectedOption = parseInt(evt.target.dataset.index);
+    const option = evt.target.closest(".rb-model-selector__option");
+    this.selectedOption = parseInt(option.dataset.index);
     this.expanded = false;
   }
 
