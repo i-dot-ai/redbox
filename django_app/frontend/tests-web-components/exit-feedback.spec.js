@@ -4,8 +4,6 @@ const { sendMessage, signIn } = require("./utils.js");
 test(`Exit feedback can be entered`, async ({ page }) => {
   await signIn(page);
 
-  await page.goto("/chats");
-
   // Exit feedback isn't visible until a response has been received
   let feedbackButton = page.locator(".exit-feedback__toggle-button");
   await expect(feedbackButton).toBeHidden();

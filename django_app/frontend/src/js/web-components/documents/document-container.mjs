@@ -18,7 +18,10 @@ export class DocumentContainer extends RedboxElement {
         <ul>
           ${this.docs?.map(
             (doc) => html`
-              <li class="rb-uploaded-docs__item iai-chat-bubble">${doc.file_name}</li>
+              <li class="rb-uploaded-docs__item iai-chat-bubble">
+                <img src="/static/icons/doc.svg" alt="" loading="lazy"/>
+                ${doc.file_name}
+              </li>
             `
           )}
         </ul>

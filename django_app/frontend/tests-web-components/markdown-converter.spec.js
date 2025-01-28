@@ -4,8 +4,6 @@ const { sendMessage, signIn } = require("./utils.js");
 test(`Markdown can be converted to HTML`, async ({ page }) => {
   await signIn(page);
 
-  await page.goto("/chats");
-
   // Markdown can be added
   await page.evaluate(() => {
     let converter = document.createElement("markdown-converter");
