@@ -111,6 +111,17 @@ services:
       retries: 24
       start_period: 30s
 
+  litellm:
+    image: ghcr.io/berriai/litellm:main-latest
+    volumes:
+      - ./config.yml:/app/config.yaml
+    env_file: .env
+    networks:
+      - redbox-app-network
+    ports:
+      - "4000:4000"
+    command: --config /app/config.yaml --detailed_debug
+
 networks:
   redbox-app-network:
     driver: bridge

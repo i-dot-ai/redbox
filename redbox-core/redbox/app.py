@@ -1,3 +1,4 @@
+import os
 from logging import getLogger
 
 from langchain.chat_models import init_chat_model
@@ -36,6 +37,8 @@ class Redbox:
 
     def _get_runnable(self, state: RedboxState):
         llm = init_chat_model(
+            azure_endpoint="http://0.0.0.0:4000",
+            api_key=os.environ["LITELLM_MASTER_KEY"],
             model=state.chat_backend.name,
             model_provider=state.chat_backend.provider,
         )
