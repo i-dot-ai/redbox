@@ -38,6 +38,8 @@ const sendMessage = async (page) => {
 
 const uploadDocument = async (page) => {
   await page.setInputFiles('input[type="file"]', "./test-upload.html");
+  const fileStatus = page.locator("file-status");
+  await fileStatus.waitFor();
 };
 
 module.exports = {
