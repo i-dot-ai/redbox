@@ -1,8 +1,9 @@
 from logging import getLogger
 
-from redbox.chains.components import get_chat_llm
-from redbox.chains.runnables import build_llm_chain
-from redbox.models.chain import PromptSet, RedboxState
+from langchain.chat_models import init_chat_model
+from langchain_core.prompts import PromptTemplate
+
+from redbox.models.chain import RedboxState
 
 
 async def _default_callback(*args, **kwargs):
@@ -11,16 +12,36 @@ async def _default_callback(*args, **kwargs):
 
 logger = getLogger(__name__)
 
+prompt_template = """You are Redbox, an AI assistant to civil servants in the United Kingdom.
+
+You follow instructions and respond to queries accurately and concisely, and are professional in all your
+interactions with users.
+
+You are tasked with providing information objectively and responding helpfully to users using context from their
+provided documents
+
+Messages:
+{messages}
+
+Documents:
+{documents}
+
+Answer:
+"""
+
 
 class Redbox:
     def __init__(self, debug: bool = False):
         self.debug = debug
 
     def _get_runnable(self, state: RedboxState):
-        return build_llm_chain(
-            prompt_set=PromptSet.ChatwithDocs,
-            llm=get_chat_llm(state.request.ai_settings.chat_backend),
+        llm = init_chat_model(
+            model=state.ai_settings.chat_backend.name,
+            model_provider=state.ai_settings.chat_backend.provider,
+            configurable_fields=["base_url"],
         )
+
+        return PromptTemplate.from_template(prompt_template) | llm
 
     def run_sync(self, input: RedboxState):
         """
@@ -30,16 +51,15 @@ class Redbox:
 
     async def run(
         self,
-        input: RedboxState,
+        state: RedboxState,
         response_tokens_callback=_default_callback,
     ) -> RedboxState:
         final_state = None
-        request_dict = input.request.model_dump()
+        request_dict = state.model_dump()
         logger.info("Request: %s", {k: request_dict[k] for k in request_dict.keys() - {"ai_settings"}})
-        async for event in self._get_runnable(input).astream_events(
-            input,
+        async for event in self._get_runnable(state).astream_events(
+            request_dict,
             version="v2",
-            config={"recursion_limit": input.request.ai_settings.recursion_limit},
         ):
             kind = event["event"]
             if kind == "on_chat_model_stream":

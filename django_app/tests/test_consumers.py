@@ -12,12 +12,14 @@ from django.contrib.auth import get_user_model
 from django.db.models import Model
 from langchain_core.documents import Document
 from langchain_core.language_models import BaseChatModel
+from langchain_core.messages import AIMessage, HumanMessage
 from pydantic import BaseModel
 from websockets import WebSocketClientProtocol
 from websockets.legacy.client import Connect
 
-from redbox.models.chain import RedboxQuery
-from redbox.models.prompts import CHAT_QUESTION_PROMPT
+from redbox.models.chain import (
+    RedboxState,
+)
 from redbox_app.redbox_core import error_messages
 from redbox_app.redbox_core.consumers import ChatConsumer
 from redbox_app.redbox_core.models import (
@@ -185,7 +187,7 @@ async def test_chat_consumer_with_selected_files(
         connected, _ = await communicator.connect()
         assert connected
 
-        selected_file_core_uuids: Sequence[str] = [f.unique_name for f in selected_files]
+        selected_file_core_uuids: Sequence[str] = [f.file_name for f in selected_files]
         await communicator.send_json_to(
             {
                 "message": "Third question, with selected files?",
@@ -360,7 +362,6 @@ async def test_chat_consumer_get_ai_settings(
 
         ai_settings = await ChatConsumer.get_ai_settings(chat_with_alice)
 
-        assert ai_settings.chat_question_prompt == CHAT_QUESTION_PROMPT
         assert ai_settings.chat_backend.name == chat_with_alice.chat_backend.name
         assert ai_settings.chat_backend.provider == chat_with_alice.chat_backend.provider
         assert not hasattr(ai_settings, "label")
@@ -409,23 +410,20 @@ async def test_chat_consumer_redbox_state(
         await communicator.disconnect()
 
         # Then
-        expected_request = RedboxQuery(
-            question="Third question, with selected files?",
+        expected_request = RedboxState(
             documents=documents,
-            user_uuid=alice.id,
-            chat_history=[
-                {"role": "user", "text": "A question?"},
-                {"role": "ai", "text": "An answer."},
-                {"role": "user", "text": "A second question?"},
-                {"role": "ai", "text": "A second answer."},
+            messages=[
+                HumanMessage(content="A question?"),
+                AIMessage(content="An answer."),
+                HumanMessage(content="A second question?"),
+                AIMessage(content="A second answer."),
+                HumanMessage(content="Third question, with selected files?"),
             ],
             ai_settings=ai_settings,
         )
         redbox_state = mock_run.call_args.args[0]  # pulls out the args that redbox.run was called with
 
-        assert (
-            redbox_state.request == expected_request
-        ), f"Expected {expected_request}. Received: {redbox_state.request}"
+        assert redbox_state == expected_request, f"Expected {expected_request}. Received: {redbox_state}"
 
 
 @database_sync_to_async
@@ -453,11 +451,6 @@ class CannedGraphLLM(BaseChatModel):
     def _llm_type(self):
         return "canned"
 
-    def _convert_input(self, prompt):
-        if isinstance(prompt, dict):
-            prompt = prompt["request"].question
-        return super()._convert_input(prompt)
-
     async def astream_events(self, *_args, **_kwargs):
         for response in self.responses:
             yield response
@@ -477,7 +470,7 @@ def mocked_connect(uploaded_file: File) -> Connect:
             "data": {
                 "output": [
                     Document(
-                        metadata={"uri": uploaded_file.unique_name},
+                        metadata={"uri": uploaded_file.file_name},
                         page_content="Good afternoon Mr Amor",
                     )
                 ]
@@ -488,11 +481,11 @@ def mocked_connect(uploaded_file: File) -> Connect:
             "data": {
                 "output": [
                     Document(
-                        metadata={"uri": uploaded_file.unique_name},
+                        metadata={"uri": uploaded_file.file_name},
                         page_content="Good afternoon Mr Amor",
                     ),
                     Document(
-                        metadata={"uri": uploaded_file.unique_name, "page_number": [34, 35]},
+                        metadata={"uri": uploaded_file.file_name, "page_number": [34, 35]},
                         page_content="Good afternoon Mr Amor",
                     ),
                 ]
@@ -516,11 +509,11 @@ def mocked_connect_with_naughty_citation(uploaded_file: File) -> CannedGraphLLM:
             "data": {
                 "output": [
                     Document(
-                        metadata={"uri": uploaded_file.unique_name},
+                        metadata={"uri": uploaded_file.file_name},
                         page_content="Good afternoon Mr Amor",
                     ),
                     Document(
-                        metadata={"uri": uploaded_file.unique_name},
+                        metadata={"uri": uploaded_file.file_name},
                         page_content="I shouldn't send a \x00",
                     ),
                 ]
@@ -593,7 +586,7 @@ def mocked_connect_with_several_files(several_files: Sequence[File]) -> Connect:
         json.dumps(
             {
                 "resource_type": "documents",
-                "data": [{"s3_key": f.unique_name, "page_content": "a secret forth answer"} for f in several_files[2:]],
+                "data": [{"s3_key": f.file_name, "page_content": "a secret forth answer"} for f in several_files[2:]],
             }
         ),
         json.dumps({"resource_type": "end"}),

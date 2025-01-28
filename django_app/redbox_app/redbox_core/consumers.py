@@ -17,9 +17,6 @@ from websockets import ConnectionClosedError, WebSocketClientProtocol
 from redbox import Redbox
 from redbox.models.chain import (
     AISettings,
-    ChainChatMessage,
-    PromptSet,
-    RedboxQuery,
     RedboxState,
 )
 from redbox_app.redbox_core import error_messages
@@ -35,10 +32,6 @@ User = get_user_model()
 OptFileSeq = Sequence[File] | None
 logger = logging.getLogger(__name__)
 logger.info("WEBSOCKET_SCHEME is: %s", settings.WEBSOCKET_SCHEME)
-
-
-def escape_curly_brackets(text: str):
-    return text.replace("{", "{{").replace("}", "}}")
 
 
 class ChatConsumer(AsyncWebsocketConsumer):
@@ -95,10 +88,10 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
         await self.save_user_message(session, user_message_text, selected_files=selected_files)
 
-        await self.llm_conversation(selected_files, session, user, user_message_text)
+        await self.llm_conversation(selected_files, session, user_message_text)
         await self.close()
 
-    async def llm_conversation(self, selected_files: Sequence[File], session: Chat, user: User, title: str) -> None:
+    async def llm_conversation(self, selected_files: Sequence[File], session: Chat, title: str) -> None:
         """Initiate & close websocket conversation with the core-api message endpoint."""
         await self.send_to_client("session-id", session.id)
 
@@ -114,23 +107,13 @@ class ChatConsumer(AsyncWebsocketConsumer):
             await self.send_to_client("error", "The attached files are too large to work with")
             return
 
-        self.route = PromptSet.ChatwithDocs if selected_files else PromptSet.Chat
+        self.route = "chat_with_docs" if selected_files else "chat"
         self.send_to_client("route", self.route)
 
         state = RedboxState(
-            request=RedboxQuery(
-                question=message_history[-1].text,
-                documents=[Document(str(f.text), metadata={"uri": f.original_file.name}) for f in selected_files],
-                user_uuid=user.id,
-                chat_history=[
-                    ChainChatMessage(
-                        role=message.role,
-                        text=escape_curly_brackets(message.text),
-                    )
-                    for message in message_history[:-1]
-                ],
-                ai_settings=ai_settings,
-            ),
+            documents=[Document(str(f.text), metadata={"uri": f.original_file.name}) for f in selected_files],
+            messages=[message.to_langchain() for message in message_history],
+            ai_settings=ai_settings,
         )
 
         try:
