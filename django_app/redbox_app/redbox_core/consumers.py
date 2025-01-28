@@ -25,6 +25,7 @@ from redbox_app.redbox_core.models import (
     ChatMessage,
     File,
 )
+from redbox_app.redbox_core.utils import sanitise_string
 
 User = get_user_model()
 OptFileSeq = Sequence[File] | None
@@ -33,8 +34,8 @@ logger.info("WEBSOCKET_SCHEME is: %s", settings.WEBSOCKET_SCHEME)
 
 
 async def get_unique_chat_title(title: str, user: User, number: int = 0) -> str:
-    original_title = title[:settings.CHAT_TITLE_LENGTH]
-    new_title = title
+    original_title = sanitise_string(title[: settings.CHAT_TITLE_LENGTH])
+    new_title = original_title
     if number > 0:
         new_title = f"{original_title} ({number})"
     if await Chat.objects.filter(name=new_title, user=user).aexists():
@@ -136,7 +137,9 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 session,
                 "".join(self.full_reply),
             )
-            await self.send_to_client("end", {"message_id": message.id, "title": session.name, "session_id": session.id})
+            await self.send_to_client(
+                "end", {"message_id": message.id, "title": session.name, "session_id": session.id}
+            )
 
         except RateLimitError as e:
             logger.exception("Rate limit error", exc_info=e)
