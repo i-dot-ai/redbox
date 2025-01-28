@@ -10,7 +10,10 @@
             <div class="govuk-grid-column-full">
 
                 <h1 class="govuk-heading-l">
-                    <img class="rb-icon--animated" src="/static/icons/Icon_Redbox_200.svg" alt=""/>
+                    {% set animated_logo %}
+                        <animated-logo></animated-logo>
+                    {% endset %}
+                    {{ animated_logo | render_lit }}
                     Ask any question of Redbox
                 </h1>
                 <p class="govuk-heading-m govuk-!-margin-top-9">Your safe and secure Artificial Intelligence (AI) companion</p>
