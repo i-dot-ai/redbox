@@ -30,6 +30,7 @@ from redbox_app.redbox_core.models import (
     ChatMessage,
     File,
 )
+from redbox_app.redbox_core.ratelimit import UserRateLimiter
 
 User = get_user_model()
 OptFileSeq = Sequence[File] | None
@@ -60,6 +61,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         retriever=DjangoFileRetriever(file_manager=File.objects),
         debug=True,
     )
+    user_ratelimiter = UserRateLimiter()
 
     async def receive(self, text_data=None, bytes_data=None):
         """Receive & respond to message from browser websocket."""
@@ -150,15 +152,18 @@ class ChatConsumer(AsyncWebsocketConsumer):
         )
 
         try:
-            await self.redbox.run(
-                state,
-                response_tokens_callback=self.handle_text,
-            )
+            if self.user_ratelimiter.is_allowed(state):
+                await self.redbox.run(
+                    state,
+                    response_tokens_callback=self.handle_text,
+                )
 
-            message = await self.save_ai_message(
-                session,
-                "".join(self.full_reply),
-            )
+                message = await self.save_ai_message(
+                    session,
+                    "".join(self.full_reply),
+                )
+            else:
+                await self.send_to_client("text", "Your rate limit has been exceeded, please wait before submitting again!")
             await self.send_to_client("end", {"message_id": message.id, "title": title, "session_id": session.id})
 
         except RateLimitError as e:
