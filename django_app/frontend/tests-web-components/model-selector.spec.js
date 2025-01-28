@@ -13,5 +13,9 @@ test(`A different model can be selected`, async ({ page }) => {
   await select.click();
   await page.locator("#model-option-2").click();
   await expect(select).toContainText("Claude");
+
+  // The new value is also set as the active option (this is different to the selected option)
+  await select.click();
+  await expect(page.locator(".rb-model-selector__option--active")).toContainText("Claude");
  
 });
