@@ -9,6 +9,8 @@ services:
         condition: service_healthy
       minio:
         condition: service_healthy
+      litellm:
+        condition: service_started
     networks:
       - redbox-app-network
     env_file:
@@ -118,6 +120,9 @@ services:
     env_file: .env
     networks:
       - redbox-app-network
+    depends_on:
+      db:
+        condition: service_healthy
     ports:
       - "4000:4000"
     command: --config /app/config.yaml --detailed_debug
