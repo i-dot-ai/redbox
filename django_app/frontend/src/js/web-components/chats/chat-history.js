@@ -64,7 +64,7 @@ class ChatHistory extends HTMLElement {
     this.#createTodayHeading();
     let item = this.querySelector(`[data-chatid="${chatId}"]`)?.closest("li");
     if (!item) {
-      item = this.#createItem(chatId, title.substring(0, 30));
+      item = this.#createItem(chatId, title);
     }
     this.querySelector("ul")?.prepend(item);
   }
