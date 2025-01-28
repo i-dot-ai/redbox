@@ -32,6 +32,16 @@ logger = logging.getLogger(__name__)
 logger.info("WEBSOCKET_SCHEME is: %s", settings.WEBSOCKET_SCHEME)
 
 
+async def get_unique_chat_title(title: str, user: User, number: int = 0) -> str:
+    original_title = title[:settings.CHAT_TITLE_LENGTH]
+    new_title = title
+    if number > 0:
+        new_title = f"{original_title} ({number})"
+    if await Chat.objects.filter(name=new_title, user=user).aexists():
+        return await get_unique_chat_title(original_title, user, number + 1)
+    return new_title
+
+
 class ChatConsumer(AsyncWebsocketConsumer):
     full_reply: ClassVar = []
     route = None
@@ -64,7 +74,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         else:
             logger.info("creating session: chat_backend=%s temperature=%s", chat_backend, temperature)
             session = await Chat.objects.acreate(
-                name=user_message_text[: settings.CHAT_TITLE_LENGTH],
+                name=await get_unique_chat_title(user_message_text, user),
                 user=user,
                 chat_backend=chat_backend,
                 temperature=temperature,
@@ -73,7 +83,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         # Update session name if this is the first message
         message_count = await session.chatmessage_set.acount()
         if message_count == 0:
-            session.name = user_message_text[: settings.CHAT_TITLE_LENGTH]
+            session.name = await get_unique_chat_title(user_message_text, user)
             await session.asave()
 
         if await File.objects.filter(id__in=selected_file_uuids, status=File.Status.processing).aexists():
@@ -88,10 +98,10 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
         await self.save_user_message(session, user_message_text, selected_files=selected_files)
 
-        await self.llm_conversation(selected_files, session, user_message_text)
+        await self.llm_conversation(selected_files, session)
         await self.close()
 
-    async def llm_conversation(self, selected_files: Sequence[File], session: Chat, title: str) -> None:
+    async def llm_conversation(self, selected_files: Sequence[File], session: Chat) -> None:
         """Initiate & close websocket conversation with the core-api message endpoint."""
         await self.send_to_client("session-id", session.id)
 
@@ -126,7 +136,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 session,
                 "".join(self.full_reply),
             )
-            await self.send_to_client("end", {"message_id": message.id, "title": title, "session_id": session.id})
+            await self.send_to_client("end", {"message_id": message.id, "title": session.name, "session_id": session.id})
 
         except RateLimitError as e:
             logger.exception("Rate limit error", exc_info=e)
