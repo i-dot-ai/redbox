@@ -10,7 +10,7 @@ services:
       minio:
         condition: service_healthy
       litellm:
-        condition: service_started
+        condition: service_healthy
     networks:
       - redbox-app-network
     env_file:
