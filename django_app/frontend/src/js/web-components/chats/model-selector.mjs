@@ -8,7 +8,7 @@ export class ModelSelector extends RedboxElement {
     options: { type: Array, attribute: "data-options" },
     expanded: { type: Boolean, state: true },
     selectedOption: {type: Number, state: true},
-    activeOption: {type: Number, state: true}
+    activeOption: {type: Number, state: true} // this is the currently highlighted option when using keyboard, so can be different to selectedOption
   };
 
   constructor() {
@@ -67,6 +67,7 @@ export class ModelSelector extends RedboxElement {
   #clickOption(evt) {
     const option = evt.target.closest(".rb-model-selector__option");
     this.selectedOption = parseInt(option.dataset.index);
+    this.activeOption = this.selectedOption;
     this.expanded = false;
   }
 
