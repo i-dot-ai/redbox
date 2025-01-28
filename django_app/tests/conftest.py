@@ -211,18 +211,20 @@ def chat_with_files(chat: Chat, several_files: Sequence[File]) -> Chat:
         role=ChatMessage.Role.ai,
         route="search",
     )
-    chat_message_2 = ChatMessage.objects.create(
+    ChatMessage.objects.create(
         chat=chat,
         text="A second question?",
         role=ChatMessage.Role.user,
     )
-    chat_message_2.selected_files.set(several_files[0:2])
     ChatMessage.objects.create(
         chat=chat,
         text="A second answer.",
         role=ChatMessage.Role.ai,
         route="search",
     )
+    for file in several_files[2:]:
+        file.chat = chat
+        file.save()
     return chat
 
 
