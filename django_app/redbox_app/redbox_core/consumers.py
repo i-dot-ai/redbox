@@ -16,11 +16,9 @@ from websockets import ConnectionClosedError, WebSocketClientProtocol
 
 from redbox import Redbox
 from redbox.models.chain import (
-    AISettings,
     RedboxState,
 )
 from redbox_app.redbox_core import error_messages
-from redbox_app.redbox_core.models import AISettings as AISettingsModel
 from redbox_app.redbox_core.models import (
     Chat,
     ChatLLMBackend,
@@ -50,10 +48,12 @@ class ChatConsumer(AsyncWebsocketConsumer):
         selected_file_uuids: Sequence[UUID] = [UUID(u) for u in data.get("selectedFiles", [])]
         user: User = self.scope.get("user")
 
-        user_ai_settings = await AISettingsModel.objects.aget(label=user.ai_settings_id)
+        if chat_backend_id := data.get("llm"):
+            chat_backend = await ChatLLMBackend.objects.aget(id=chat_backend_id)
+        else:
+            chat_backend = await ChatLLMBackend.objects.aget(is_default=True)
 
-        chat_backend = await ChatLLMBackend.objects.aget(id=data.get("llm", user_ai_settings.chat_backend_id))
-        temperature = data.get("temperature", user_ai_settings.temperature)
+        temperature = data.get("temperature", 0)
 
         if session_id := data.get("sessionId"):
             session = await Chat.objects.aget(id=session_id)
@@ -98,22 +98,22 @@ class ChatConsumer(AsyncWebsocketConsumer):
         session_messages = ChatMessage.objects.filter(chat=session).order_by("created_at")
         message_history: Sequence[Mapping[str, str]] = [message async for message in session_messages]
 
-        ai_settings = await self.get_ai_settings(session)
-
         document_token_count = sum(file.token_count for file in selected_files if file.token_count)
         message_history_token_count = sum(message.token_count for message in message_history if message.token_count)
 
-        if document_token_count + message_history_token_count > ai_settings.context_window_size:
-            await self.send_to_client("error", "The attached files are too large to work with")
+        if document_token_count + message_history_token_count > session.chat_backend.context_window_size:
+            await self.send_to_client("error", "selected are too big to work with")
             return
 
         self.route = "chat_with_docs" if selected_files else "chat"
         self.send_to_client("route", self.route)
 
+        chat_backend_dict = model_to_dict(session.chat_backend)
+
         state = RedboxState(
             documents=[Document(str(f.text), metadata={"uri": f.original_file.name}) for f in selected_files],
             messages=[message.to_langchain() for message in message_history],
-            ai_settings=ai_settings,
+            chat_backend=chat_backend_dict,
         )
 
         try:
@@ -186,16 +186,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
         chat_message.log()
 
         return chat_message
-
-    @staticmethod
-    @database_sync_to_async
-    def get_ai_settings(chat: Chat) -> AISettings:
-        ai_settings = model_to_dict(chat.user.ai_settings, exclude=["label", "chat_backend"])
-        ai_settings["chat_backend"] = model_to_dict(chat.chat_backend)
-
-        # we remove null values so that AISettings can populate them with defaults
-        ai_settings = {k: v for k, v in ai_settings.items() if v not in (None, "")}
-        return AISettings.model_validate(ai_settings)
 
     async def handle_text(self, response: str) -> str:
         await self.send_to_client("text", response)

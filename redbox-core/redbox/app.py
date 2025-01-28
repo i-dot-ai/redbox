@@ -36,9 +36,8 @@ class Redbox:
 
     def _get_runnable(self, state: RedboxState):
         llm = init_chat_model(
-            model=state.ai_settings.chat_backend.name,
-            model_provider=state.ai_settings.chat_backend.provider,
-            configurable_fields=["base_url"],
+            model=state.chat_backend.name,
+            model_provider=state.chat_backend.provider,
         )
 
         return PromptTemplate.from_template(prompt_template) | llm

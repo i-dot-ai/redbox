@@ -10,6 +10,7 @@ from channels.db import database_sync_to_async
 from channels.testing import WebsocketCommunicator
 from django.contrib.auth import get_user_model
 from django.db.models import Model
+from django.forms import model_to_dict
 from langchain_core.documents import Document
 from langchain_core.language_models import BaseChatModel
 from langchain_core.messages import AIMessage, HumanMessage
@@ -173,6 +174,7 @@ async def test_chat_consumer_with_selected_files(
     several_files: Sequence[File],
     chat_with_files: Chat,
     mocked_connect_with_several_files: Connect,
+    llm_backend,
 ):
     # Given
     selected_files: Sequence[File] = several_files[2:]
@@ -221,7 +223,7 @@ async def test_chat_consumer_with_selected_files(
                 {"role": "user", "text": "Third question, with selected files?"},
             ],
             "selected_files": selected_file_core_uuids,
-            "ai_settings": await ChatConsumer.get_ai_settings(alice),
+            "chat_backend": llm_backend,
         }
     )
     mocked_websocket.send.assert_called_with(expected)
@@ -346,43 +348,16 @@ async def test_chat_consumer_with_explicit_no_document_selected_error(
         await communicator.disconnect()
 
 
-@pytest.mark.django_db()
-@pytest.mark.asyncio()
-async def test_chat_consumer_get_ai_settings(
-    chat_with_alice: Chat, mocked_connect_with_explicit_no_document_selected_error: Connect
-):
-    with patch(
-        "redbox_app.redbox_core.consumers.ChatConsumer.redbox._get_runnable",
-        new=lambda _: mocked_connect_with_explicit_no_document_selected_error,
-    ):
-        communicator = WebsocketCommunicator(ChatConsumer.as_asgi(), "/ws/chat/")
-        communicator.scope["user"] = chat_with_alice.user
-        connected, _ = await communicator.connect()
-        assert connected
-
-        ai_settings = await ChatConsumer.get_ai_settings(chat_with_alice)
-
-        assert ai_settings.chat_backend.name == chat_with_alice.chat_backend.name
-        assert ai_settings.chat_backend.provider == chat_with_alice.chat_backend.provider
-        assert not hasattr(ai_settings, "label")
-
-        # Close
-        await communicator.disconnect()
-
-
 @pytest.mark.django_db(transaction=True)
 @pytest.mark.asyncio()
 async def test_chat_consumer_redbox_state(
-    alice: User,
-    several_files: Sequence[File],
-    chat_with_files: Chat,
+    alice: User, several_files: Sequence[File], chat_with_files: Chat, llm_backend
 ):
     # Given
     selected_files: Sequence[File] = several_files[2:]
 
     # When
     with patch("redbox_app.redbox_core.consumers.ChatConsumer.redbox.run") as mock_run:
-        ai_settings = await ChatConsumer.get_ai_settings(chat_with_files)
         communicator = WebsocketCommunicator(ChatConsumer.as_asgi(), "/ws/chat/")
         communicator.scope["user"] = alice
         connected, _ = await communicator.connect()
@@ -409,6 +384,8 @@ async def test_chat_consumer_redbox_state(
         # Close
         await communicator.disconnect()
 
+        chat_backend_dict = model_to_dict(llm_backend)
+
         # Then
         expected_request = RedboxState(
             documents=documents,
@@ -419,7 +396,7 @@ async def test_chat_consumer_redbox_state(
                 AIMessage(content="A second answer."),
                 HumanMessage(content="Third question, with selected files?"),
             ],
-            ai_settings=ai_settings,
+            chat_backend=chat_backend_dict,
         )
         redbox_state = mock_run.call_args.args[0]  # pulls out the args that redbox.run was called with
 

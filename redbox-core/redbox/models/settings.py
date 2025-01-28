@@ -40,6 +40,7 @@ class ChatLLMBackend(BaseModel):
     name: str = "gpt-4o"
     provider: str = "azure_openai"
     description: str | None = None
+    context_window_size: int = 128_000
     model_config = {"frozen": True}
 
 
