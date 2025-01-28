@@ -103,4 +103,4 @@ class Signup4(View):
     def get(self, request: HttpRequest) -> HttpResponse:
         if not settings.ALLOW_SIGN_UPS:
             return redirect("homepage")
-        return render(request, "sign-up-page-4.html")
+        return render(request, "sign-up-page-4.html", {"contact_email": settings.CONTACT_EMAIL})

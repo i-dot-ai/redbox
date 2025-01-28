@@ -8,13 +8,18 @@ export class ModelSelector extends RedboxElement {
     options: { type: Array, attribute: "data-options" },
     expanded: { type: Boolean, state: true },
     selectedOption: {type: Number, state: true},
-    activeOption: {type: Number, state: true}
+    activeOption: {type: Number, state: true} // this is the currently highlighted option when using keyboard, so can be different to selectedOption
   };
+
+  constructor() {
+    super();
+    this.options = [];
+  }
 
   connectedCallback() {
     super.connectedCallback();
+    this.selectedOption = 0;
     this.options.forEach((option, index) => {
-      this.selectedOption = 0;
       if (option.selected) {
         this.selectedOption = index;
       }
@@ -30,17 +35,15 @@ export class ModelSelector extends RedboxElement {
           ${this.options[this.selectedOption].name}
           <span aria-hidden="true">${this.expanded ? "▲" : "▼"}</span>
         </div>
-        ${this.expanded ? html`
-            <div class="rb-model-selector__list" id="models-list" role="listbox" aria-label="Model">
-              ${this.options.map(
-                (option, index) => html`
-                  <div role="option" @click=${this.#clickOption} class="rb-model-selector__option ${index === this.activeOption ? 'rb-model-selector__option--active' : ''}" data-index=${index} id="model-option-${index}" aria-selected=${index === this.selectedOption ? "true" : "false"} data-value=${option.id}>
-                    <span>${option.name}</span>
-                    <span>${option.description}</span>
-                  </div>
-              `)}
-            </div>
-        ` : nothing}
+        <div class="rb-model-selector__list" id="models-list" role="listbox" aria-label="Model" hidden=${this.expanded ? nothing : "true"}>
+          ${this.options.map(
+            (option, index) => html`
+              <div role="option" @click=${this.#clickOption} class="rb-model-selector__option ${index === this.activeOption ? 'rb-model-selector__option--active' : ''}" data-index=${index} id="model-option-${index}" aria-selected=${index === this.selectedOption ? "true" : "false"} data-value=${option.id}>
+                <span>${option.name}</span>
+                <span>${option.description}</span>
+              </div>
+          `)}
+        </div>
         <input type="hidden" id="llm-selector" name="llm" value=${this.options[this.selectedOption].id}/>
       `;
     }
@@ -62,7 +65,9 @@ export class ModelSelector extends RedboxElement {
   }
 
   #clickOption(evt) {
-    this.selectedOption = parseInt(evt.target.dataset.index);
+    const option = evt.target.closest(".rb-model-selector__option");
+    this.selectedOption = parseInt(option.dataset.index);
+    this.activeOption = this.selectedOption;
     this.expanded = false;
   }
 

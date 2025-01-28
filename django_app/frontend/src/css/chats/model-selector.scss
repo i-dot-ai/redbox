@@ -1,21 +1,31 @@
 
 .rb-model-selector {
   cursor: pointer;
+  display: inline-block;
+  flex-shrink: 0;
+  margin-left: 0.5rem;
   position: relative;
 }
 .rb-model-selector__select {
   align-items: center;
   display: flex;
+  font-size: 0.75rem;
   justify-content: space-between;
+}
+.rb-model-selector__select span {
+  display: inline-block;
+  font-size: 0.5rem;
+  margin-left: 0.5rem;
 }
 .rb-model-selector__list {
   background-color: white;
-  border: 2px solid;
-  bottom: 2.5rem;
+  border: 1px solid;
+  bottom: 1rem;
+  font-size: 0.75rem;
   left: -0.5rem;
+  min-width: 14rem;
   padding: 0.5rem;
   position: absolute;
-  width: 150%;
 }
 .rb-model-selector__option {
   padding: 0.5rem;
@@ -25,7 +35,8 @@
 }
 .rb-model-selector__option span {
   display: block;
-  pointer-events: none;
+  word-wrap: none;
+  word-break: keep-all;
 }
 .rb-model-selector__option span:first-child {
   font-weight: 700;
