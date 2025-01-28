@@ -8,6 +8,9 @@ test(`Chat history functionality works as expected`, async ({ page }) => {
     () => document.querySelectorAll(".rb-chat-history__link").length
   );
 
+  // wait for chat-history to be ready
+  await expect(page.locator("chat-history")).toBeVisible();
+
   await page.evaluate(() => {
     document.querySelector("chat-history").addChat("session-id", "Test chat");
   });

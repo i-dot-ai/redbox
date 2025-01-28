@@ -106,7 +106,10 @@
       </div>
 
       {% if not messages %}
-        <canned-prompts class="chat-options"></canned-prompts>
+        {% set canned_prompts %}
+            <canned-prompts class="chat-options"></canned-prompts>
+        {% endset %}
+        {{ canned_prompts | render_lit }}
       {% endif %}
 
       {% set document_upload %}
