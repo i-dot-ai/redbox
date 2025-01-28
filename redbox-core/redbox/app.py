@@ -36,9 +36,9 @@ class Redbox:
         self.debug = debug
 
     def _get_runnable(self, state: RedboxState):
-        azure_endpoint = os.environ["AZURE_OPENAI_ENDPOINT"]
+        azure_endpoint = os.environ["LITELLM_URL"]
         api_key = os.environ["LITELLM_MASTER_KEY"]
-        logger.info("AZURE_OPENAI_ENDPOINT=%s, LITELLM_MASTER_KEY=%s", azure_endpoint, api_key)
+        logger.info("LITELLM_URL=%s, LITELLM_MASTER_KEY=%s", azure_endpoint, api_key)
 
         llm = init_chat_model(
             azure_endpoint=azure_endpoint,
