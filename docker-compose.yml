@@ -125,7 +125,7 @@ services:
         condition: service_healthy
     ports:
       - "4000:4000"
-    command: --config /app/config.yaml --detailed_debug
+    command: --config /app/config.yml --detailed_debug
 
 networks:
   redbox-app-network:
