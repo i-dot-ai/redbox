@@ -74,7 +74,8 @@ class Settings(BaseSettings):
 
     # Rate Limiting
     user_token_rate_limit_second: int = int(360_000 / 60)
-    number_cached_ratelimit_records: int = 250 # This should be the max number of concurrent users. If we have more users than cached records the rate limits won't apply properly
+    number_cached_ratelimit_records: int = 250  # This should be the max number of concurrent users. If we have more users than cached records the rate limits won't apply properly
+
     @property
     def elastic_chat_mesage_index(self):
         return self.elastic_root_index + "-chat-mesage-log"

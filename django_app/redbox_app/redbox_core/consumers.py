@@ -18,6 +18,7 @@ from redbox import Redbox
 from redbox.models.chain import (
     RedboxState,
 )
+from redbox.models.settings import get_settings
 from redbox_app.redbox_core import error_messages
 from redbox_app.redbox_core.models import (
     Chat,
@@ -25,7 +26,6 @@ from redbox_app.redbox_core.models import (
     ChatMessage,
     File,
 )
-from redbox.models.settings import get_settings
 from redbox_app.redbox_core.ratelimit import UserRateLimiter
 from redbox_app.redbox_core.utils import sanitise_string
 
@@ -49,7 +49,9 @@ class ChatConsumer(AsyncWebsocketConsumer):
     full_reply: ClassVar = []
     route = None
     redbox = Redbox(debug=settings.DEBUG)
-    user_ratelimiter: UserRateLimiter = UserRateLimiter(initial_user_credits=get_settings().user_token_rate_limit_second*60)
+    user_ratelimiter: UserRateLimiter = UserRateLimiter(
+        initial_user_credits=get_settings().user_token_rate_limit_second * 60
+    )
 
     async def receive(self, text_data=None, bytes_data=None):
         """Receive & respond to message from browser websocket."""
@@ -125,7 +127,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         chat_backend_dict = model_to_dict(session.chat_backend)
 
         state = RedboxState(
-            user_uuid = user.id,
+            user_uuid=user.id,
             documents=[Document(str(f.text), metadata={"uri": f.original_file.name}) for f in selected_files],
             messages=[message.to_langchain() for message in message_history],
             chat_backend=chat_backend_dict,
@@ -143,7 +145,9 @@ class ChatConsumer(AsyncWebsocketConsumer):
                     "".join(self.full_reply),
                 )
             else:
-                await self.send_to_client("text", "Your rate limit has been exceeded, please wait before submitting again!")
+                await self.send_to_client(
+                    "text", "Your rate limit has been exceeded, please wait before submitting again!"
+                )
             await self.send_to_client("end", {"message_id": message.id, "title": title, "session_id": session.id})
         except RateLimitError as e:
             logger.exception("Rate limit error", exc_info=e)
