@@ -10,7 +10,7 @@ FROM ghcr.io/berriai/litellm:main-latest
 WORKDIR /app
 
 # Copy the configuration file into the container at /app
-COPY config.yml .
+COPY litellm/config.yml .
 
 # Make sure your docker/entrypoint.sh is executable
 RUN chmod +x ./docker/entrypoint.sh
