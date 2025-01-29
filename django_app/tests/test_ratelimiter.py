@@ -35,7 +35,7 @@ def request_state(number_of_documents: int, total_document_tokens: int):
         (1000, {test_user_uuid: 800}, request_state(8, 400), False),
     ],
 )
-def test_ratelimiter(
+async def test_ratelimiter(
     token_ratelimit: int, users_consumed_tokens: dict[UUID, int], request_state: RedboxState, expect_allowed: bool
 ):
     ratelimiter = UserRateLimiter(token_ratelimit=token_ratelimit)
@@ -47,7 +47,7 @@ def test_ratelimiter(
         return _impl
 
     ratelimiter.get_tokens_for_user_in_last_minute = create_user_tokens_consumed_mock(users_consumed_tokens)
-    request_allowed = ratelimiter.is_allowed(request_state)
+    request_allowed = await ratelimiter.is_allowed(request_state)
     if request_allowed != expect_allowed:
         pytest.fail(
             reason=f"Request allow status did not match: Expected [{expect_allowed}]. Received [{request_allowed}]"

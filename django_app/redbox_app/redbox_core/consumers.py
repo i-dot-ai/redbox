@@ -5,19 +5,15 @@ from collections.abc import Mapping, Sequence
 from typing import Any, ClassVar
 from uuid import UUID
 
+from asgiref.sync import sync_to_async
 from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.forms.models import model_to_dict
-from langchain_core.documents import Document
 from openai import RateLimitError
-from websockets import ConnectionClosedError, WebSocketClientProtocol
+from websockets import ConnectionClosedError
 
 from redbox import Redbox
-from redbox.models.chain import (
-    RedboxState,
-)
 from redbox.models.settings import get_settings
 from redbox_app.redbox_core import error_messages
 from redbox_app.redbox_core.models import (
@@ -49,9 +45,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
     full_reply: ClassVar = []
     route = None
     redbox = Redbox(debug=settings.DEBUG)
-    user_ratelimiter: UserRateLimiter = UserRateLimiter(
-        initial_user_credits=get_settings().user_token_rate_limit_second * 60
-    )
+    user_ratelimiter: UserRateLimiter = UserRateLimiter(token_ratelimit=get_settings().user_token_ratelimit)
 
     async def receive(self, text_data=None, bytes_data=None):
         """Receive & respond to message from browser websocket."""
@@ -97,58 +91,39 @@ class ChatConsumer(AsyncWebsocketConsumer):
             return
 
         # save user message
-        selected_files = (
-            File.objects.filter(user=user, status=File.Status.complete, id__in=selected_file_uuids)
-            | session.file_set.all()
-        )
-
-        await self.save_user_message(session, user_message_text, selected_files=selected_files)
-
-        await self.llm_conversation(selected_files, session, user, user_message_text)
+        await self.save_message(session, user_message_text, ChatMessage.Role.user)
+        await self.llm_conversation(session)
         await self.close()
 
-    async def llm_conversation(self, selected_files: Sequence[File], session: Chat, user: User, title: str) -> None:
+    async def llm_conversation(self, session: Chat) -> None:
         """Initiate & close websocket conversation with the core-api message endpoint."""
         await self.send_to_client("session-id", session.id)
 
-        session_messages = ChatMessage.objects.filter(chat=session).order_by("created_at")
-        message_history: Sequence[Mapping[str, str]] = [message async for message in session_messages]
+        token_count = await sync_to_async(session.token_count)()
 
-        document_token_count = sum(file.token_count for file in selected_files if file.token_count)
-        message_history_token_count = sum(message.token_count for message in message_history if message.token_count)
-
-        if document_token_count + message_history_token_count > session.chat_backend.context_window_size:
+        if token_count > session.chat_backend.context_window_size:
             await self.send_to_client("error", "selected are too big to work with")
             return
 
-        self.route = "chat_with_docs" if selected_files else "chat"
+        self.route = "chat_with_docs"  # if selected_files else "chat"
         self.send_to_client("route", self.route)
 
-        chat_backend_dict = model_to_dict(session.chat_backend)
-
-        state = RedboxState(
-            user_uuid=user.id,
-            documents=[Document(str(f.text), metadata={"uri": f.original_file.name}) for f in selected_files],
-            messages=[message.to_langchain() for message in message_history],
-            chat_backend=chat_backend_dict,
-        )
+        state = await sync_to_async(session.to_langchain)()
 
         try:
-            if self.user_ratelimiter.is_allowed(state):
+            if await self.user_ratelimiter.is_allowed(state):
                 await self.redbox.run(
                     state,
                     response_tokens_callback=self.handle_text,
                 )
-
-                message = await self.save_ai_message(
-                    session,
-                    "".join(self.full_reply),
-                )
+                message = await self.save_message(session, "".join(self.full_reply), ChatMessage.Role.ai)
             else:
                 await self.send_to_client(
-                    "text", "Your rate limit has been exceeded, please wait before submitting again!"
+                    "text", "You have exceeded your rate limit for the last minute, please wait before trying again"
                 )
-            await self.send_to_client("end", {"message_id": message.id, "title": title, "session_id": session.id})
+            await self.send_to_client(
+                "end", {"message_id": message.id, "title": session.name, "session_id": session.id}
+            )
         except RateLimitError as e:
             logger.exception("Rate limit error", exc_info=e)
             await self.send_to_client("error", error_messages.RATE_LIMITED)
@@ -164,42 +139,12 @@ class ChatConsumer(AsyncWebsocketConsumer):
         logger.debug("sending %s to browser", message)
         await self.send(json.dumps(message, default=str))
 
-    @staticmethod
-    async def send_to_server(websocket: WebSocketClientProtocol, data: Mapping[str, Any]) -> None:
-        logger.debug("sending %s to core-api", data)
-        return await websocket.send(json.dumps(data, default=str))
-
     @database_sync_to_async
-    def save_user_message(
-        self,
-        session: Chat,
-        user_message_text: str,
-        selected_files: Sequence[File] | None = None,
-    ) -> ChatMessage:
+    def save_message(self, session: Chat, user_message_text: str, role: ChatMessage.Role) -> ChatMessage:
         chat_message = ChatMessage(
             chat=session,
             text=user_message_text,
-            role=ChatMessage.Role.user,
-            route=self.route,
-        )
-        chat_message.save()
-        if selected_files:
-            chat_message.selected_files.set(selected_files)
-
-        chat_message.log()
-
-        return chat_message
-
-    @database_sync_to_async
-    def save_ai_message(
-        self,
-        session: Chat,
-        user_message_text: str,
-    ) -> ChatMessage:
-        chat_message = ChatMessage(
-            chat=session,
-            text=user_message_text,
-            role=ChatMessage.Role.ai,
+            role=role,
             route=self.route,
         )
         chat_message.save()

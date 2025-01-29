@@ -12,14 +12,16 @@ from django.conf import settings
 from django.contrib.postgres.fields import ArrayField
 from django.core import validators
 from django.db import models
-from django.db.models import Max, Min, UniqueConstraint
+from django.db.models import Max, Min, Sum, UniqueConstraint
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django_q.models import OrmQ, Success
 from django_q.tasks import async_task
 from django_use_email_as_username.models import BaseUser, BaseUserManager
+from langchain_core.documents import Document
 from langchain_core.messages import AIMessage, AnyMessage, HumanMessage
 
+import redbox.models.chain
 from redbox.chains.components import get_tokeniser
 from redbox.models.settings import get_settings
 from redbox_app.redbox_core.utils import get_date_group, sanitise_string
@@ -462,6 +464,27 @@ class Chat(UUIDPrimaryKeyBase, TimeStampedModel):
     def date_group(self):
         return get_date_group(self.newest_message_date)
 
+    def to_langchain(self) -> redbox.models.chain.RedboxState:
+        chat_backend = redbox.models.chain.ChatLLMBackend(
+            name=self.chat_backend.name,
+            provider=self.chat_backend.provider,
+            description=self.chat_backend.description,
+            context_window_size=self.chat_backend.context_window_size,
+        )
+
+        return redbox.models.chain.RedboxState(
+            user_uuid=self.user.id,
+            documents=[Document(str(f.text), metadata={"uri": f.original_file.name}) for f in self.file_set.all()],
+            messages=[message.to_langchain() for message in self.chatmessage_set.all()],
+            chat_backend=chat_backend,
+        )
+
+    def token_count(self) -> int:
+        def f(obj):
+            return obj.aggregate(Sum("token_count"))["token_count__sum"] or 0
+
+        return f(self.file_set) + f(self.chatmessage_set)
+
 
 class InactiveFileError(ValueError):
     def __init__(self, file):
@@ -610,8 +633,6 @@ class ChatMessage(UUIDPrimaryKeyBase, TimeStampedModel):
     text = models.TextField(max_length=32768, null=False, blank=False)
     role = models.CharField(choices=Role.choices, null=False, blank=False)
     route = models.CharField(max_length=25, null=True, blank=True)
-    selected_files = models.ManyToManyField(File, related_name="+", symmetrical=False, blank=True)
-    source_files = models.ManyToManyField(File, related_name="+")
 
     rating = models.PositiveIntegerField(
         blank=True,
@@ -642,9 +663,9 @@ class ChatMessage(UUIDPrimaryKeyBase, TimeStampedModel):
         return HumanMessage(content=escape_curly_brackets(self.text))
 
     @classmethod
-    def get_since(cls, user: User, since: datetime) -> Sequence["Chat"]:
+    def get_since(cls, user: User, since: datetime) -> Sequence["ChatMessage"]:
         """Returns all chat messages for a given user, with the most recent message after 'since'"""
-        return cls.objects.filter(user=user).filter(created_at_gt=since)
+        return cls.objects.filter(chat__user=user, created_at__gt=since)
 
     def log(self):
         elastic_log_msg = {
