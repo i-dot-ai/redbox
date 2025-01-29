@@ -2,29 +2,29 @@ model_list:
   - model_name: gpt-4o-mini
     litellm_params:
       model: azure/gpt-4o-mini
-      api_base: os.environ/AZURE_OPENAI_ENDPOINT
-      api_key: os.environ/AZURE_OPENAI_API_KEY
+      api_base: "os.environ/AZURE_OPENAI_ENDPOINT"
+      api_key: "os.environ/AZURE_OPENAI_API_KEY"
       api_version: "2024-07-01-preview"
 
   - model_name: gpt-4o
     litellm_params:
       model: azure/gpt-4o
-      api_base: os.environ/AZURE_OPENAI_ENDPOINT
-      api_key: os.environ/AZURE_OPENAI_API_KEY
+      api_base: "os.environ/AZURE_OPENAI_ENDPOINT"
+      api_key: "os.environ/AZURE_OPENAI_API_KEY"
       api_version: "2024-07-01-preview"
 
   - model_name: gpt-35-turbo-16k
     litellm_params:
       model: azure/gpt-35-turbo-16k
-      api_base: os.environ/AZURE_OPENAI_ENDPOINT
-      api_key: os.environ/AZURE_OPENAI_API_KEY
+      api_base: "os.environ/AZURE_OPENAI_ENDPOINT"
+      api_key: "os.environ/AZURE_OPENAI_API_KEY"
       api_version: "2024-07-01-preview"
 
   - model_name: gpt-4o-2024-08-06
     litellm_params:
       model: azure/gpt-4o-2024-08-06
-      api_base: os.environ/AZURE_OPENAI_ENDPOINT
-      api_key: os.environ/AZURE_OPENAI_API_KEY
+      api_base: "os.environ/AZURE_OPENAI_ENDPOINT"
+      api_key: "os.environ/AZURE_OPENAI_API_KEY"
       api_version: "2024-07-01-preview"
 
 general_settings:
