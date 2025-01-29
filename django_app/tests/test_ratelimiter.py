@@ -40,10 +40,14 @@ def generate_user_activity(
         ("initial_user_credits", "user_activity_states", "ratelimit_should_be_triggered"),
         [
             [1000, generate_user_activity([UserActivity(2000, 2)]), True],
+            [1000, generate_user_activity([
+                UserActivity(100, 8),
+                UserActivity(2000, 2)]), 
+            True],
             [1000, generate_user_activity(
                 [
                     UserActivity(100, 8),
-                    UserActivity(200, 4)
+                    UserActivity(200, 4),
 
                 ]), 
             False]
