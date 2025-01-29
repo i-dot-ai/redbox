@@ -1,50 +1,25 @@
-from datetime import UTC, datetime
-from functools import lru_cache
+from datetime import UTC, datetime, timedelta
 from uuid import UUID
-
-from pydantic import BaseModel, Field
 
 from redbox.models.chain import RedboxState
 from redbox.models.settings import get_settings
+from redbox_app.redbox_core.models import ChatMessage, User
 
 _settings = get_settings()
 
 
-class UserRateLimitRecord(BaseModel):
-    credits: int = Field(default=_settings.user_token_rate_limit_second * 60)
-    last_updated: datetime = Field(default_factory=lambda: datetime.now(UTC))
-
-    def update_credits(self, max_credits=_settings.user_token_rate_limit_second * 60):
-        seconds_since_last = min(60, (datetime.now(UTC) - self.last_updated).seconds)
-        self.credits = int(min(self.credits + _settings.user_token_rate_limit_second * seconds_since_last, max_credits))
-
-
 class UserRateLimiter:
-    def __init__(self, initial_user_credits=_settings.user_token_rate_limit_second * 60) -> None:
-        self.initial_user_credits = initial_user_credits
+    def __init__(self, token_ratelimit=_settings.user_token_ratelimit) -> None:
+        self.token_ratelimit = token_ratelimit
 
     def is_allowed(self, state: RedboxState):
-        user_uuid = state.user_uuid
-        user_ratelimit_record = self.get_record(user_uuid)
-        request_credits = self.calculate_request_credits(state)
-        if request_credits < user_ratelimit_record.credits:
-            user_ratelimit_record.credits -= request_credits
-            return True
-        else:
-            return False
+        consumed_ratelimit = self.get_tokens_for_user_in_last_minute(state.user_uuid)
+        request_tokens = self.calculate_request_credits(state)
+        return request_tokens < self.token_ratelimit - consumed_ratelimit
 
-    def get_record(self, user_uuid: UUID) -> UserRateLimitRecord:
-        record = self._get_cached_record(user_uuid)
-        record.update_credits(max_credits=self.initial_user_credits)
-        return record
+    def get_tokens_for_user_in_last_minute(self, user_uuid: UUID):
+        recent_messages = ChatMessage.get_since(User.objects.get(user_uuid), datetime.now(UTC) - timedelta(minutes=1))
+        return sum([m.token_count for m in recent_messages])
 
     def calculate_request_credits(self, state: RedboxState):
         return int(sum([d.metadata.get("token_count", 0) for d in state.documents]))
-
-    @lru_cache(_settings.number_cached_ratelimit_records)  # noqa: B019 Ignore caching method warning as this instance is essentially a singleton and won't cause a leak
-    def _get_cached_record(self, user_uuid: UUID):  # noqa: ARG002 Ignore unused arg as it is necessary to cache a record per user
-        """
-        Returns a new rate limit record for this user. As the function is cached/lru_cached an existing record for this
-        user is returned if present
-        """
-        return UserRateLimitRecord(credits=self.initial_user_credits)

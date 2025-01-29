@@ -641,6 +641,11 @@ class ChatMessage(UUIDPrimaryKeyBase, TimeStampedModel):
             return AIMessage(content=escape_curly_brackets(self.text))
         return HumanMessage(content=escape_curly_brackets(self.text))
 
+    @classmethod
+    def get_since(cls, user: User, since: datetime) -> Sequence["Chat"]:
+        """Returns all chat messages for a given user, with the most recent message after 'since'"""
+        return cls.objects.filter(user=user).filter(created_at_gt=since)
+
     def log(self):
         elastic_log_msg = {
             "@timestamp": self.created_at.isoformat(),
