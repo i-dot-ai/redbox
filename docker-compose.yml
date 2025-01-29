@@ -114,6 +114,7 @@ services:
       start_period: 30s
 
   litellm:
+    image: litellm:latest
     build:
       context: .
       dockerfile: ./litellm/Dockerfile
