@@ -30,6 +30,3 @@ model_list:
 general_settings:
   master_key: sk-1234
   database_url: os.environ/POSTGRES_URL
-
-litellm_settings:
-    ssl_verify: false

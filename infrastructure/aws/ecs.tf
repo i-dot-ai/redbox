@@ -198,7 +198,6 @@ module "litellm" {
   ecs_cluster_name              = module.cluster.ecs_cluster_name
   autoscaling_minimum_target    = 1
   autoscaling_maximum_target    = 1
-  environment_variables         = local.django_app_environment_variables
   health_check = {
     healthy_threshold   = 3
     unhealthy_threshold = 3
@@ -213,6 +212,8 @@ module "litellm" {
   load_balancer_security_group = module.load_balancer.load_balancer_security_group_id
   aws_lb_arn                   = module.load_balancer.alb_arn
   ephemeral_storage            = 30
+  environment_variables        = local.django_app_environment_variables
+  secrets                      = local.reconstructed_django_secrets
   auto_scale_off_peak_times    = true
   wait_for_ready_state         = true
 }
