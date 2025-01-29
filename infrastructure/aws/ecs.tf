@@ -192,7 +192,7 @@ module "litellm" {
   create_listener               = false
   create_networking             = false
   name                          = "${local.name}-litellm"
-  image_tag                     = var.image_tag
+  image_tag                     = "ghcr.io/berriai/litellm:main-latest"
   ecr_repository_uri            = "${var.ecr_repository_uri}/${var.project_name}-litellm"
   ecs_cluster_id                = module.cluster.ecs_cluster_id
   ecs_cluster_name              = module.cluster.ecs_cluster_name
