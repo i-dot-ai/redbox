@@ -1587,25 +1587,6 @@ sentry = ["django-q-sentry (>=0.1)"]
 testing = ["blessed (>=1.19.1,<2.0.0)", "boto3 (>=1.24.92,<2.0.0)", "croniter (>=2.0.1,<3.0.0)", "django-redis (>=5.2.0,<6.0.0)", "hiredis (>=2.0.0,<3.0.0)", "iron-mq (>=0.9,<0.10)", "psutil (>=5.9.2,<6.0.0)", "pymongo (>=4.2.0,<5.0.0)", "redis (>=4.3.4,<5.0.0)", "setproctitle (>=1.3.2,<2.0.0)"]
 
 [[package]]
-name = "django-revproxy"
-version = "0.13.0"
-description = "Yet another Django reverse proxy application"
-optional = false
-python-versions = ">=3.7"
-groups = ["main"]
-files = [
-    {file = "django_revproxy-0.13.0-py3-none-any.whl", hash = "sha256:6130d52d5042624c918134369be0a825e9f7e87d15e12b739d6666e5ed1f32ef"},
-]
-
-[package.dependencies]
-Django = ">=3.0"
-urllib3 = ">=1.12"
-
-[package.extras]
-diazo = ["diazo (>=1.0.5)", "lxml (>=3.4)"]
-tests = ["coverage", "diazo", "flake8", "lxml (>=3.4)"]
-
-[[package]]
 name = "django-single-session"
 version = "0.2.0"
 description = "A Django app to enforce users to work only on one browser/device."
@@ -6049,4 +6030,4 @@ cffi = ["cffi (>=1.11)"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.12,<3.13"
-content-hash = "59e0037a43d087e49cc1ca40c8f109b0da4152c2cc692ac6181875cdcef5affe"
+content-hash = "6c6e794c528b69ace439bc85e5fd62e9897f7c36a75f03caa724509b13235799"
