@@ -198,6 +198,7 @@ module "litellm" {
   ecs_cluster_name              = module.cluster.ecs_cluster_name
   autoscaling_minimum_target    = 1
   autoscaling_maximum_target    = 1
+  environment_variables         = local.django_app_environment_variables
   health_check = {
     healthy_threshold   = 3
     unhealthy_threshold = 3

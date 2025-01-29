@@ -114,10 +114,7 @@ services:
       start_period: 30s
 
   litellm:
-    image: litellm:latest
-    build:
-      context: .
-      dockerfile: ./litellm/Dockerfile
+    image: ghcr.io/berriai/litellm:main-latest
     env_file: .env
     networks:
       - redbox-app-network

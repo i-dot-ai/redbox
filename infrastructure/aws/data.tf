@@ -12,6 +12,11 @@ locals {
 
     "LIT_SSR_URL": local.ssr_url,
 
+    "LITELLM_CONFIG_BUCKET_NAME": aws_s3_bucket.user_data.bucket,
+    "LITELLM_CONFIG_BUCKET_OBJECT_KEY": "litellm_proxy_config.yml",
+    "LITELLM_URL": local.litellm_url,
+    "LITELLM_MASTER_KEY": var.litellm_master_key,
+
     "OBJECT_STORE" : "s3",
     "BUCKET_NAME" : aws_s3_bucket.user_data.bucket,
     "POSTGRES_DB" : module.rds.db_instance_name,
@@ -44,8 +49,6 @@ locals {
     "AZURE_OPENAI_ENDPOINT" : var.azure_openai_endpoint,
     "OPENAI_API_VERSION": var.openai_api_version,
 
-    "LITELLM_URL": local.litellm_url,
-    "LITELLM_MASTER_KEY": var.litellm_master_key,
 
 
     "DJANGO_SECRET_KEY" : var.django_secret_key,
