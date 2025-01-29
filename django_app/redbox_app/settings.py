@@ -68,7 +68,6 @@ INSTALLED_APPS = [
     "rest_framework",
     "adminplus",
     "waffle",
-    "revproxy.apps.RevProxyConfig",
 ]
 
 if LOGIN_METHOD == "sso":

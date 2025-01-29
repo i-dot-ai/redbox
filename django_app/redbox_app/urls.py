@@ -1,12 +1,10 @@
-
 from adminplus.sites import AdminSitePlus
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
-from django.urls import include, path, re_path
+from django.urls import include, path
 from django.views.generic.base import RedirectView
 from magic_link import urls as magic_link_urls
-from revproxy.views import ProxyView
 
 from .redbox_core import views
 from .redbox_core.views import api_views
@@ -77,7 +75,6 @@ other_urlpatterns = [
 
 api_url_patterns = [
     path("api/v0/file/", api_views.file_upload, name="file-upload"),
-    re_path(r"litellm/(?P<path>.*)", ProxyView.as_view(upstream=settings.LITELLM_URL)),
 ]
 
 urlpatterns = (

@@ -116,6 +116,8 @@ services:
   litellm:
     image: ghcr.io/berriai/litellm:main-latest
     env_file: .env
+    volumes:
+      - ./litellm_proxy_config.yml:/app/config.yml
     networks:
       - redbox-app-network
     depends_on:
