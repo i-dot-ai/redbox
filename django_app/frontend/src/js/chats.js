@@ -10,7 +10,7 @@ import "./web-components/chats/feedback-buttons.js";
 import "./web-components/chats/markdown-converter.js";
 import "./web-components/chats/message-input.js";
 import "./web-components/chats/model-selector.mjs";
-import "./web-components/chats/canned-prompts";
+import "./web-components/chats/canned-prompts.mjs";
 import "./web-components/chats/send-message.js";
 import "./web-components/chats/exit-feedback.js";
 
