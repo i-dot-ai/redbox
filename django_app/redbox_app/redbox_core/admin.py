@@ -3,7 +3,6 @@ import textwrap
 
 from django.contrib import admin
 from django.contrib.auth import get_user_model
-from django.shortcuts import render
 from import_export.admin import ExportMixin, ImportExportMixin
 
 from . import models
@@ -40,7 +39,6 @@ class UserAdmin(ImportExportMixin, admin.ModelAdmin):
                     "is_superuser",
                     "is_staff",
                     "last_login",
-                    "ai_settings",
                     "is_developer",
                 ]
             },
@@ -202,19 +200,22 @@ class ChatAdmin(ExportMixin, admin.ModelAdmin):
             },
         ),
     ]
-    inlines = [ChatMessageInline]
+    inlines = [ChatMessageInline, FileInline]
     list_display = ["name", "user", "created_at"]
     list_filter = ["user"]
     date_hierarchy = "created_at"
     search_fields = ["user__email"]
 
 
-def reporting_dashboard(request):
-    return render(request, "report.html", {}, using="django")
+class FileAdmin(ExportMixin, admin.ModelAdmin):
+    list_display = ["file_name", "user", "status", "created_at", "last_referenced"]
+    list_filter = ["user", "status"]
+    date_hierarchy = "created_at"
+    actions = ["reupload"]
+    search_fields = ["user__email"]
 
 
 admin.site.register(User, UserAdmin)
 admin.site.register(models.Chat, ChatAdmin)
-admin.site.register(models.AISettings)
 admin.site.register(models.ChatLLMBackend, ChatLLMBackendAdmin)
-admin.site.register_view("report/", view=reporting_dashboard, name="Site report")
+admin.site.register(models.File, FileAdmin)

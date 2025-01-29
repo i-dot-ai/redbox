@@ -37,20 +37,15 @@ body {
 }
 
 /* Home page */
-.govuk-main-wrapper:has(.rb-banner) {
-  padding-top: 0;
+
+.rb-banner h1 {
+  align-items: center;
+  display: flex;
+  gap: 1.5rem;
+  margin: 3rem 0;
 }
-.rb-banner {
-  background-color: $redbox-red;
-  color: white;
-  padding-bottom: 3rem;
-  padding-top: 2.75rem;
-}
-.rb-banner * {
-  color: white;
-}
-.rb-banner .govuk-link:any-link {
-  color: white;
+.rb-banner h1 img {
+  width: 4.5rem;
 }
 .rb-banner .govuk-link:focus {
   background-color: white;
@@ -62,31 +57,38 @@ body {
   gap: 0.75rem;
 }
 .rb-banner__button {
-  background-color: white !important;
-}
-.rb-banner__button:hover {
-  color: $redbox-red !important;
-  filter: brightness(0.9);
+  padding-left: 1.5rem !important;
+  padding-right: 1.5rem !important;
+  width: auto;
 }
 
-/* File upload */
-.rb-file-types {
-  font-size: 0.875rem;
+
+@keyframes rotateIcon {
+  0% {
+    transform: rotate(0deg);
+  }
+  20% {
+    transform: rotate(90deg);
+  }
+  100% {
+    transform: rotate(90deg);
+  }
 }
-upload-button {
-  display: block;
+.rb-icon--animated {
+  animation: rotateIcon 5s infinite;
+}
+@media (prefers-reduced-motion) {
+  .rb-icon--animated {
+    animation: none;
+  }
 }
 
-/* Citations page */
-.rb-citations__list {
-  padding-left: 1rem;
-}
-.rb-citations__item {
-  border-top: 1px solid #e5e7eb;
-  padding: 2rem 0 1.5rem 0;
-}
-.rb-citations__item:first-child {
-  border-top: none;
+
+/* sign-up pages */
+.rb-accessibility-heading {
+  align-items: center;
+  display: flex;
+  gap: 0.375rem;
 }
 
 /* i.AI Design System */
@@ -99,51 +101,15 @@ upload-button {
 }
 @import "../../node_modules/i.ai-design-system/dist/styles.scss";
 
-/* Documents page - to come after i.AI Design System */
-.rb-doc-retention {
-  align-items: center;
-  display: flex;
-  gap: 0.5rem;
-}
-.iai-doc-list {
-  display: none;
-}
-.iai-doc-list:has(.iai-doc-list__item) {
-  display: block;
-}
-.rb-docs__show-if-docs {
-  display: none;
-}
-.rb-docs:has(.iai-doc-list__item) .rb-docs__show-if-docs {
-  display: block;
-}
-.rb-docs:has(.iai-doc-list__item) .rb-docs__show-if-no-docs {
-  display: none;
-}
-.rb-docs__upload-error {
-  align-items: center;
-  display: none;
-  font-size: 0.875rem;
-  gap: 0.75rem;
-  line-height: 1.4;
-}
-.rb-docs__upload-error svg {
+/* To add to i.AI Design System */
+.govuk-link:visited {
   color: var(--iai-product-colour);
 }
-.rb-docs:has(file-status[data-status*="error"]) .rb-docs__upload-error {
-  display: flex;
-}
 
+@import "./profile.scss";
 
 /* Chats Page - to come after i.AI Design System */
 @import "./chats/chats.scss";
-
-/* To move to i.AI design system */
-.iai-chat-bubble__text code {
-  background-color: #f5ebeb;
-  display: inline;
-  padding: 0.125rem;
-}
 
 /* Print styles */
 @import "./print.scss";

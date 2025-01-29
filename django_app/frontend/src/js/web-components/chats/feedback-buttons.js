@@ -8,16 +8,15 @@ export class FeedbackButtons extends HTMLElement {
       chips: /** @type {string[]}*/ ([]),
     };
 
-    // If the messageID already exists (e.g. for SSR messages), render the feedback HTML immediately
     if (this.dataset.id) {
-      this.showFeedback(this.dataset.id);
+      this.#showFeedback(this.dataset.id);
     }
   }
 
   /**
    * @param {string} messageId
    */
-  showFeedback(messageId) {
+  #showFeedback(messageId) {
     this.dataset.id = messageId;
 
     const starIcon = `
@@ -28,7 +27,7 @@ export class FeedbackButtons extends HTMLElement {
 
     this.innerHTML = `
         <div class="feedback__container feedback__container--1" tabindex="-1">
-            <h3 class="feedback__heading">Rate this response:</h3>
+            <h3 class="feedback__heading">Rate</h3>
             <div class="feedback__star-container">
                 <span class="feedback__star-help-text" aria-hidden="true">Not helpful</span>
                 <button class="feedback__star-button" data-rating="1" type="button">
@@ -37,19 +36,19 @@ export class FeedbackButtons extends HTMLElement {
                 </button>
                 <button class="feedback__star-button" data-rating="2" type="button">
                     ${starIcon}
-                    <span class="govuk-visually-hidden">2 star out of 5</span>
+                    <span class="govuk-visually-hidden">2 stars out of 5</span>
                 </button>
                 <button class="feedback__star-button" data-rating="3" type="button">
                     ${starIcon}
-                    <span class="govuk-visually-hidden">3 star out of 5</span>
+                    <span class="govuk-visually-hidden">3 stars out of 5</span>
                 </button>
                 <button class="feedback__star-button" data-rating="4" type="button">
                     ${starIcon}
-                    <span class="govuk-visually-hidden">4 star out of 5</span>
+                    <span class="govuk-visually-hidden">4 stars out of 5</span>
                 </button>
                 <button class="feedback__star-button" data-rating="5" type="button">
                     ${starIcon}
-                    <span class="govuk-visually-hidden">5 star out of 5 (very helpful)</span>
+                    <span class="govuk-visually-hidden">5 stars out of 5 (very helpful)</span>
                 </button>
                 <span class="feedback__star-help-text" aria-hidden="true">Very helpful</span>
             </div>

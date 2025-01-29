@@ -2,7 +2,7 @@
 from datetime import datetime, UTC
 from functools import cache, lru_cache
 from uuid import UUID
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, Field
 
 from redbox.models.chain import RedboxState
 from redbox.models.settings import get_settings
@@ -28,7 +28,7 @@ class UserRateLimiter():
         self.initial_user_credits = initial_user_credits
 
     def is_allowed(self, state: RedboxState):
-        user_uuid = state.request.user_uuid
+        user_uuid = state.user_uuid
         user_ratelimit_record = self.get_record(user_uuid)
         request_credits = self.calculate_request_credits(state)
         print(f"Request {request_credits}/{user_ratelimit_record.credits} credits")

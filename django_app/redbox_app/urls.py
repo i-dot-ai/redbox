@@ -42,7 +42,6 @@ info_urlpatterns = [
 ]
 
 file_urlpatterns = [
-    path("documents/", views.DocumentView.as_view(), name="documents"),
     path("upload/", views.UploadView.as_view(), name="upload"),
     path("upload/<uuid:chat_id>/", views.UploadView.as_view(), name="upload"),
     path("remove-doc/<uuid:doc_id>", views.remove_doc_view, name="remove-doc"),
@@ -58,7 +57,6 @@ chat_urlpatterns = [
 ]
 
 admin_urlpatterns = [
-    path("admin/report/", include("django_plotly_dash.urls")),
     path("admin/", admin.site.urls),
 ]
 

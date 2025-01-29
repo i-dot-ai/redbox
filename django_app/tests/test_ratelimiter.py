@@ -4,7 +4,7 @@ import pytest
 from uuid import uuid3, uuid4
 
 from redbox_app.redbox_core.ratelimit import UserRateLimiter
-from redbox.models.chain import RedboxState, RedboxQuery
+from redbox.models.chain import RedboxState
 from dataclasses import dataclass
 
 test_run_uuid = uuid4()
@@ -25,13 +25,7 @@ def generate_user_activity(
     all_user_requests = [
         [
         RedboxState(
-            request=RedboxQuery(
-                question="",
-                chat_history=[],
-                permitted_s3_keys=[],
-                s3_keys=[],
-                user_uuid=uuid3(test_run_uuid, str(i))
-            ),
+            user_uuid=uuid3(test_run_uuid, str(i)),
             documents=[
                 Document("", metadata={"token_count": int(s.total_document_tokens / s.number_documents)})
                 for n in range(s.number_documents)

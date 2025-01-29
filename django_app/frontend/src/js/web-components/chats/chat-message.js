@@ -17,7 +17,7 @@ export class ChatMessage extends HTMLElement {
       }" tabindex="-1">
           <div class="iai-chat-bubble__header">
               <div class="iai-chat-bubble__role">${
-                this.dataset.role === "ai" ? "Redbox" : "You"
+                this.dataset.role === "ai" ? `<img src="/static/icons/Icon_Redbox_200.svg" alt=""/> Redbox` : "You"
               }</div>
           </div>
           <markdown-converter class="iai-chat-bubble__text" data-role="${this.dataset.role}"></markdown-converter>
@@ -43,28 +43,24 @@ export class ChatMessage extends HTMLElement {
     // Add any existing markdown content - can't update directly to the above HTML string as user HTML may be removed
     /** @type {import("./markdown-converter").MarkdownConverter} */(this.querySelector("markdown-converter")).update(this.dataset.text || "");
 
-    // Add feedback buttons
-    if (this.dataset.role === "ai") {
-      this.copyTextButton = document.createElement("copy-text");
-      this.copyTextButton.hidden = true;
-      this.parentElement?.appendChild(this.copyTextButton);
-      this.feedbackButtons =
-        /** @type {import("./feedback-buttons").FeedbackButtons} */ (
-          document.createElement("feedback-buttons")
-        );
-      this.parentElement?.appendChild(this.feedbackButtons);
-    }
-
     // ensure new chat-messages aren't hidden behind the chat-input
     this.programmaticScroll = true;
     this.scrollIntoView({ block: "end" });
+
+    this.responseContainer =
+      /** @type {import("./markdown-converter").MarkdownConverter} */ (
+        this.querySelector("markdown-converter")
+      );
+
+    this.loadingMessage = /** @type HTMLElement */ (
+      this.querySelector("loading-message")
+    );
 
   }
 
   /**
    * Streams an LLM response
    * @param {string} message
-   * @param {string[]} selectedDocuments An array of IDs
    * @param {string} llm
    * @param {string | undefined} sessionId
    * @param {string} endPoint
@@ -72,7 +68,6 @@ export class ChatMessage extends HTMLElement {
    */
   stream = (
     message,
-    selectedDocuments,
     llm,
     sessionId,
     endPoint,
@@ -88,13 +83,6 @@ export class ChatMessage extends HTMLElement {
       scrollOverride = true;
     });
 
-    this.responseContainer =
-      /** @type {import("./markdown-converter").MarkdownConverter} */ (
-        this.querySelector("markdown-converter")
-      );
-    let responseLoading = /** @type HTMLElement */ (
-      this.querySelector(".rb-loading-ellipsis")
-    );
     let responseComplete = this.querySelector(".rb-loading-complete");
     let webSocket = new WebSocket(endPoint);
     let streamedContent = "";
@@ -116,7 +104,6 @@ export class ChatMessage extends HTMLElement {
         JSON.stringify({
           message: message,
           sessionId: sessionId,
-          selectedFiles: selectedDocuments,
           llm: llm,
         })
       );
@@ -135,7 +122,7 @@ export class ChatMessage extends HTMLElement {
     };
 
     webSocket.onclose = (event) => {
-      responseLoading.style.display = "none";
+      this.loadingMessage?.remove();
       if (responseComplete) {
         responseComplete.textContent = "Response complete";
       }
@@ -160,15 +147,9 @@ export class ChatMessage extends HTMLElement {
       } else if (response.type === "session-id") {
         chatControllerRef.dataset.sessionId = response.data;
       } else if (response.type === "end") {
-        this.copyTextButton.hidden = false;
-        this.feedbackButtons?.showFeedback(response.data.message_id);
-
-        // Add action-buttons - work stopped on this
-        /*
-        let actionButtons = document.createElement("action-buttons");
-        actionButtons.dataset.id = this.uuid;
-        this.parentElement?.appendChild(actionButtons);
-        */
+        let chatMessageFooter = document.createElement("chat-message-footer");
+        chatMessageFooter.dataset.id = this.uuid;
+        this.parentElement?.appendChild(chatMessageFooter);
 
         const chatResponseEndEvent = new CustomEvent("chat-response-end", {
           detail: {
@@ -209,5 +190,18 @@ export class ChatMessage extends HTMLElement {
       }
     };
   };
+
+  /** This is the same as adding content to the data-text attribute, except that this also reads the content out to screen-reader users */
+  showError(message) {
+    this.dataset.status = "stopped";
+    this.loadingMessage?.remove();
+    this.setAttribute("aria-live", "assertive");
+    window.setTimeout(() => {
+      if (this.responseContainer) {
+        this.responseContainer.innerHTML = message;
+      }
+    }, 100);
+  };
+
 }
 customElements.define("chat-message", ChatMessage);

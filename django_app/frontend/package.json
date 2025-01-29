@@ -6,8 +6,6 @@
     "src/styles.scss",
     "src/js/autosubmit.js",
     "src/js/chats.js",
-    "src/js/document-upload.js",
-    "src/js/documents.js",
     "src/js/main.js",
     "src/js/posthog.js"
   ],
@@ -35,10 +33,6 @@
     {
       "distDir": "./dist/js/libs",
       "staticPath": "./src/js/libs"
-    },
-    {
-      "distDir": "./dist/dash/component/plotly/package_data",
-      "staticPath": "./src/js/admin/plotly.min.js"
     }
   ],
   "scripts": {
@@ -49,7 +43,7 @@
   "author": "",
   "dependencies": {
     "govuk-frontend": "^5.2.0",
-    "i.ai-design-system": "^0.4.8",
+    "i.ai-design-system": "^0.5.0",
     "lit": "^3.2.1",
     "posthog-js": "^1.143.0"
   },

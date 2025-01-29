@@ -28,18 +28,16 @@ const signIn = async (page) => {
   const magicLink = await getMagicLink();
 
   await page.goto(`${magicLink}`);
-  await expect(page.locator(".chat-options__heading")).toContainText("What would you like to ask your Redbox?");
+  await expect(page.locator(".chat-options__heading")).toContainText("What would you like to ask?");
 };
 
 const sendMessage = async (page) => {
-  await page.locator(".iai-chat-input__input").fill("Testing");
+  await page.locator(".rb-chat-input textarea").fill("Testing");
   await page.getByRole("button", { name: "Send" }).click();
 };
 
 const uploadDocument = async (page) => {
-  await page.goto("/upload");
   await page.setInputFiles('input[type="file"]', "./test-upload.html");
-  await page.click('button[type="submit"]');
 };
 
 module.exports = {
