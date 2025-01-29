@@ -76,7 +76,7 @@ other_urlpatterns = [
 
 api_url_patterns = [
     path("api/v0/file/", api_views.file_upload, name="file-upload"),
-    re_path(r"litellm/(?P<path>.*)", ProxyView.as_view(upstream="https://{os.environ['LITELLM_URL']}:4000")),
+    re_path(r"litellm/(?P<path>.*)", ProxyView.as_view(upstream=f"https://{os.environ['LITELLM_URL']}:4000")),
 ]
 
 urlpatterns = (
