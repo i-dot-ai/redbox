@@ -36,7 +36,7 @@ class Redbox:
         self.debug = debug
 
     def _get_runnable(self, state: RedboxState):
-        azure_endpoint = os.environ["LITELLM_URL"]
+        azure_endpoint = f"http://{os.environ['LITELLM_URL']}:4000"
         api_key = os.environ["LITELLM_MASTER_KEY"]
         logger.info("LITELLM_URL=%s, LITELLM_MASTER_KEY=%s", azure_endpoint, api_key)
 
