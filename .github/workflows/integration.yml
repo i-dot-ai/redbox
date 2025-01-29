@@ -50,8 +50,7 @@ jobs:
         echo AZURE_OPENAI_ENDPOINT=${{ secrets.AZURE_OPENAI_ENDPOINT }} >> .env
         echo AZURE_OPENAI_API_KEY=${{ secrets.AZURE_OPENAI_API_KEY }} >> .env
         echo cat .env
-        docker compose up -d --wait minio db
-        docker compose up -d --wait litellm
+        docker compose up -d --wait minio db litellm
         docker compose up -d --wait django-app worker
         docker ps
 
