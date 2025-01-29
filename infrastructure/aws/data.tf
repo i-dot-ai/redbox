@@ -2,7 +2,8 @@ locals {
   record_prefix     = terraform.workspace == "prod" ? var.project_name : "${var.project_name}-${terraform.workspace}"
   django_host       = "${local.record_prefix}.${var.domain_name}"
   name              = "${var.team_name}-${terraform.workspace}-${var.project_name}"
-  ssr_url = "${aws_service_discovery_service.lit_ssr_service_discovery_service.name}.${aws_service_discovery_private_dns_namespace.private_dns_namespace.name}"
+  ssr_url           = "${aws_service_discovery_service.lit_ssr_service_discovery_service.name}.${aws_service_discovery_private_dns_namespace.private_dns_namespace.name}"
+  litellm_url       = "${aws_service_discovery_service.litellm_service_discovery_service.name}.${aws_service_discovery_private_dns_namespace.private_dns_namespace.name}"
 
 
   django_app_environment_variables = {
@@ -43,8 +44,9 @@ locals {
     "AZURE_OPENAI_ENDPOINT" : var.azure_openai_endpoint,
     "OPENAI_API_VERSION": var.openai_api_version,
 
-    "EMBEDDING_OPENAI_API_KEY" : var.embedding_openai_api_key,
-    "EMBEDDING_AZURE_OPENAI_ENDPOINT" : var.embedding_azure_openai_endpoint,
+    "LITELLM_URL": local.litellm_url,
+    "LITELLM_MASTER_KEY": var.litellm_master_key,
+
 
     "DJANGO_SECRET_KEY" : var.django_secret_key,
     "POSTGRES_PASSWORD" : module.rds.rds_instance_db_password,

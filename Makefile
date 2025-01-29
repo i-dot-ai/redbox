@@ -154,6 +154,12 @@ docker_build: ## Build the docker container
 	docker pull $$PREV_IMAGE; \
 	docker compose build lit-ssr;
 
+	echo "Building liellm..."; \
+	PREV_IMAGE="$(ECR_REPO_URL)-litellm:$(PREV_IMAGE_TAG)"; \
+	echo "Pulling previous image: $$PREV_IMAGE"; \
+	docker pull $$PREV_IMAGE; \
+	docker compose build litellm;
+
 
 
 
