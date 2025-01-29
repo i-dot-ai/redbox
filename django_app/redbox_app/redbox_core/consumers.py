@@ -25,6 +25,7 @@ from redbox_app.redbox_core.models import (
     ChatMessage,
     File,
 )
+from redbox.models.settings import get_settings
 from redbox_app.redbox_core.ratelimit import UserRateLimiter
 from redbox_app.redbox_core.utils import sanitise_string
 
@@ -48,7 +49,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
     full_reply: ClassVar = []
     route = None
     redbox = Redbox(debug=settings.DEBUG)
-    user_ratelimiter: UserRateLimiter = UserRateLimiter()
+    user_ratelimiter: UserRateLimiter = UserRateLimiter(initial_user_credits=get_settings().user_token_rate_limit_second*60)
 
     async def receive(self, text_data=None, bytes_data=None):
         """Receive & respond to message from browser websocket."""

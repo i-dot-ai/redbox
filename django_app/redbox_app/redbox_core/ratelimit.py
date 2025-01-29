@@ -23,7 +23,7 @@ class UserRateLimiter():
 
     def __init__(
             self,
-            initial_user_credits = 350_000
+            initial_user_credits = 360_000
     ) -> None:
         self.initial_user_credits = initial_user_credits
 
