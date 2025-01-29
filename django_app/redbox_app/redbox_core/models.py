@@ -625,11 +625,12 @@ class ChatMessage(UUIDPrimaryKeyBase, TimeStampedModel):
     def __str__(self) -> str:  # pragma: no cover
         return textwrap.shorten(self.text, width=20, placeholder="...")
 
-    def save(self, *args, force_insert=False, force_update=False, using=None, update_fields=None):
+    def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
         self.text = sanitise_string(self.text)
         self.rating_text = sanitise_string(self.rating_text)
         self.token_count = len(tokeniser.encode(self.text))
-        super().save(*args, force_insert, force_update, using, update_fields)
+        super().save(force_insert, force_update, using, update_fields)
+        self.log()
 
     @classmethod
     def get_messages(cls, chat_id: uuid.UUID) -> Sequence["ChatMessage"]:

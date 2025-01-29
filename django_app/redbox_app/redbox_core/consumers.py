@@ -164,9 +164,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
         chat_message.save()
         if selected_files:
             chat_message.selected_files.set(selected_files)
-
-        chat_message.log()
-
         return chat_message
 
     @database_sync_to_async
@@ -182,9 +179,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
             route=self.route,
         )
         chat_message.save()
-
-        chat_message.log()
-
         return chat_message
 
     async def handle_text(self, response: str) -> str:
