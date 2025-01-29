@@ -2,7 +2,8 @@ locals {
   record_prefix     = terraform.workspace == "prod" ? var.project_name : "${var.project_name}-${terraform.workspace}"
   django_host       = "${local.record_prefix}.${var.domain_name}"
   name              = "${var.team_name}-${terraform.workspace}-${var.project_name}"
-  ssr_url = "${aws_service_discovery_service.lit_ssr_service_discovery_service.name}.${aws_service_discovery_private_dns_namespace.private_dns_namespace.name}"
+  ssr_url           = "${aws_service_discovery_service.lit_ssr_service_discovery_service.name}.${aws_service_discovery_private_dns_namespace.private_dns_namespace.name}"
+  litellm_url       = "${aws_service_discovery_service.litellm_service_discovery_service.name}.${aws_service_discovery_private_dns_namespace.private_dns_namespace.name}"
 
 
   django_app_environment_variables = {
@@ -10,6 +11,11 @@ locals {
     "AZURE_OPENAI_MODEL" : var.azure_openai_model,
 
     "LIT_SSR_URL": local.ssr_url,
+
+    "LITELLM_CONFIG_BUCKET_NAME": aws_s3_bucket.user_data.bucket,
+    "LITELLM_CONFIG_BUCKET_OBJECT_KEY": "litellm_proxy_config.yml",
+    "LITELLM_URL": local.litellm_url,
+    "LITELLM_MASTER_KEY": var.litellm_master_key,
 
     "OBJECT_STORE" : "s3",
     "BUCKET_NAME" : aws_s3_bucket.user_data.bucket,
@@ -43,20 +49,18 @@ locals {
     "AZURE_OPENAI_ENDPOINT" : var.azure_openai_endpoint,
     "OPENAI_API_VERSION": var.openai_api_version,
 
-    "EMBEDDING_OPENAI_API_KEY" : var.embedding_openai_api_key,
-    "EMBEDDING_AZURE_OPENAI_ENDPOINT" : var.embedding_azure_openai_endpoint,
+
 
     "DJANGO_SECRET_KEY" : var.django_secret_key,
     "POSTGRES_PASSWORD" : module.rds.rds_instance_db_password,
     "POSTGRES_HOST" : module.rds.db_instance_address,
     "POSTGRES_USER" : module.rds.rds_instance_username,
+    "POSTGRES_URL": "postgresql://${module.rds.rds_instance_username}:${module.rds.rds_instance_db_password}@${module.rds.db_instance_address}:5432/litellm",
     "GOVUK_NOTIFY_API_KEY" : var.govuk_notify_api_key,
     "SENTRY_DSN" : var.sentry_dsn,
     "SLACK_NOTIFICATION_URL" : var.slack_url
     "ELASTIC__API_KEY" : var.elastic_api_key,
     "ELASTIC__CLOUD_ID" : var.cloud_id,
-    "EMBEDDING_OPENAI_API_KEY" : var.embedding_openai_api_key,
-    "EMBEDDING_AZURE_OPENAI_ENDPOINT" : var.embedding_azure_openai_endpoint,
   }
 
   reconstructed_django_secrets = [for k, _ in local.django_app_secrets : { name = k, valueFrom = "${aws_secretsmanager_secret.django-app-secret.arn}:${k}::" }]

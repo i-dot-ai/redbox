@@ -58,6 +58,7 @@ resource "aws_iam_role_policy_attachment" "redbox_role_policy" {
     {
       "worker" = module.worker.ecs_task_execution_exec_role_name,
       "django" = module.django-app.ecs_task_execution_exec_role_name,
+      "litellm" = module.litellm.ecs_task_execution_exec_role_name,
     }
   )
   role       = each.value
