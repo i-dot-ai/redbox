@@ -87,8 +87,7 @@ Title: {{d.metadata.get("uri", "unknown document")}}
 
 {% endfor %}
 {% endif %}
-
-Question: {{messages[-1]}}
+Question: {{messages[-1].content}}
 """
 
     model_config = SettingsConfigDict(env_file=".env", env_nested_delimiter="__", extra="allow", frozen=True)
