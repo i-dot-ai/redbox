@@ -25,12 +25,13 @@ class Redbox:
             model_provider=state.chat_backend.provider,
         )
         input_state = state.model_dump()
-        messages = [settings.system_prompt_template] + \
-                    state.messages[:-1] + \
-                    PromptTemplate.from_template(
-                        settings.question_prompt_template, 
-                        template_format="jinja2"
-                    ).invoke(input=input_state).to_messages()
+        messages = (
+            [settings.system_prompt_template]
+            + state.messages[:-1]
+            + PromptTemplate.from_template(settings.question_prompt_template, template_format="jinja2")
+            .invoke(input=input_state)
+            .to_messages()
+        )
         return ChatPromptTemplate.from_messages(messages=messages) | llm
 
     def run_sync(self, input: RedboxState):
