@@ -35,6 +35,7 @@ def request_state(number_of_documents: int, total_document_tokens: int):
         (1000, {test_user_uuid: 800}, request_state(8, 400), False),
     ],
 )
+@pytest.mark.asyncio()
 async def test_ratelimiter(
     token_ratelimit: int, users_consumed_tokens: dict[UUID, int], request_state: RedboxState, expect_allowed: bool
 ):
