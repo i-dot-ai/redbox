@@ -597,5 +597,8 @@ async def test_llm_conversation_fail_file_processing(alice, mix_of_file_statues,
     response1 = await communicator.receive_json_from(timeout=5)
 
     # Then
+    msg = (
+        "You have files waiting to be processed. Please wait for these to complete " "and then send the message again."
+    )
     assert response1["type"] == "error"
-    assert response1["data"] == "you have files waiting to be processed"
+    assert response1["data"] == msg

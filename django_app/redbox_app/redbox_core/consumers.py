@@ -3,7 +3,6 @@ import logging
 from asyncio import CancelledError
 from collections.abc import Mapping, Sequence
 from typing import Any, ClassVar
-from uuid import UUID
 
 from asgiref.sync import sync_to_async
 from channels.db import database_sync_to_async
@@ -52,7 +51,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
         data = json.loads(text_data or bytes_data)
         logger.debug("received %s from browser", data)
         user_message_text: str = data.get("message", "")
-        selected_file_uuids: Sequence[UUID] = [UUID(u) for u in data.get("selectedFiles", [])]
         user: User = self.scope.get("user")
 
         if chat_backend_id := data.get("llm"):
@@ -83,8 +81,12 @@ class ChatConsumer(AsyncWebsocketConsumer):
             session.name = await get_unique_chat_title(user_message_text, user)
             await session.asave()
 
-        if await File.objects.filter(id__in=selected_file_uuids, status=File.Status.processing).aexists():
-            await self.send_to_client("error", "you have files waiting to be processed")
+        if await session.file_set.filter(status=File.Status.processing).aexists():
+            msg = (
+                "You have files waiting to be processed. Please wait for these to complete "
+                "and then send the message again."
+            )
+            await self.send_to_client("error", msg)
             return
 
         # save user message
