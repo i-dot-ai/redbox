@@ -90,7 +90,7 @@ class UploadView(View):
         return errors
 
     @staticmethod
-    def ingest_file(uploaded_file: UploadedFile, chat_id: uuid.UUID | None = None) -> tuple[File, Sequence[str]]:
+    def ingest_file(uploaded_file: UploadedFile, chat_id: uuid.UUID) -> tuple[File, Sequence[str]]:
         try:
             logger.info("getting file from s3")
             file = File.objects.create(
