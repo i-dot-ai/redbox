@@ -181,9 +181,9 @@ def chat_message_with_citation(chat: Chat) -> ChatMessage:
 
 
 @pytest.fixture()
-def uploaded_file(alice: User, original_file: UploadedFile, s3_client) -> File:  # noqa: ARG001
+def uploaded_file(chat: Chat, original_file: UploadedFile, s3_client) -> File:  # noqa: ARG001
     file = File.objects.create(
-        user=alice,
+        chat=chat,
         original_file=original_file,
         last_referenced=datetime.now(tz=UTC) - timedelta(days=14),
         status=File.Status.processing,
@@ -268,13 +268,13 @@ def user_with_chats_with_messages_over_time(alice: User) -> User:
 
 
 @pytest.fixture()
-def several_files(alice: User, number_to_create: int = 4) -> Sequence[File]:
+def several_files(chat: Chat, number_to_create: int = 4) -> Sequence[File]:
     files = []
     for i in range(number_to_create):
         filename = f"original_file_{i}.txt"
         files.append(
             File.objects.create(
-                user=alice,
+                chat=chat,
                 original_file=SimpleUploadedFile(filename, b"Lorem Ipsum."),
                 status=File.Status.complete,
                 token_count=i * 100,
@@ -293,13 +293,12 @@ def chat_message_with_rating(chat_message: ChatMessage) -> ChatMessage:
 
 
 @pytest.fixture()
-def mix_of_file_statues(alice: User, chat) -> Sequence[File]:
+def mix_of_file_statues(chat: Chat) -> Sequence[File]:
     files = []
     for status in File.Status.complete, File.Status.processing:
         filename = f"original_file_{status}.txt"
         files.append(
             File.objects.create(
-                user=alice,
                 original_file=SimpleUploadedFile(filename, b"Lorem Ipsum."),
                 status=status,
                 token_count=100,
