@@ -672,7 +672,6 @@ class ChatMessage(UUIDPrimaryKeyBase, TimeStampedModel):
             "user_grade": self.chat.user.grade,
             "user_profession": self.chat.user.profession,
             "user_ai_experience": self.chat.user.ai_experience,
-            "text": str(self.text),
             "route": str(self.route),
             "role": str(self.role),
             "token_count": self.token_count,
