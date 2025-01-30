@@ -496,7 +496,7 @@ def build_s3_key(instance, filename: str) -> str:
     1. an existing file that they own, then it is overwritten
     2. an existing file that another user owns then a new file is created
     """
-    return f"{instance.user.email}/{filename}"
+    return f"{instance.chat.user.email}/{filename}"
 
 
 class File(UUIDPrimaryKeyBase, TimeStampedModel):
@@ -510,7 +510,7 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
         storage=settings.STORAGES["default"]["BACKEND"],
         upload_to=build_s3_key,
     )
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    # user = models.ForeignKey(User, on_delete=models.CASCADE)
     last_referenced = models.DateTimeField(blank=True, null=True)
     ingest_error = models.TextField(
         max_length=2048,
@@ -521,8 +521,8 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
     chat = models.ForeignKey(
         Chat,
         on_delete=models.CASCADE,
-        null=True,
-        blank=True,
+        # null=True,
+        # blank=True,
         help_text="chat that this document belongs to, which may be nothing for now",
     )
     text = models.TextField(null=True, blank=True, help_text="text extracted from file")
@@ -600,11 +600,11 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
         self.save()
 
     @classmethod
-    def get_completed_and_processing_files(cls, user: User) -> tuple[Sequence["File"], Sequence["File"]]:
+    def get_completed_and_processing_files(cls, chat_id: uuid.UUID) -> tuple[Sequence["File"], Sequence["File"]]:
         """Returns all files that are completed and processing for a given user."""
 
-        completed_files = cls.objects.filter(user=user, status=File.Status.complete).order_by("-created_at")
-        processing_files = cls.objects.filter(user=user, status=File.Status.processing).order_by("-created_at")
+        completed_files = cls.objects.filter(chat_id=chat_id, status=File.Status.complete).order_by("-created_at")
+        processing_files = cls.objects.filter(chat_id=chat_id, status=File.Status.processing).order_by("-created_at")
         return completed_files, processing_files
 
     @classmethod

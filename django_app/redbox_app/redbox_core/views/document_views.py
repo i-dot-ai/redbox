@@ -91,13 +91,12 @@ class UploadView(View):
 
     @staticmethod
     def ingest_file(
-        uploaded_file: UploadedFile, user: User, chat_id: uuid.UUID | None = None
+        uploaded_file: UploadedFile, chat_id: uuid.UUID | None = None
     ) -> tuple[File, Sequence[str]]:
         try:
             logger.info("getting file from s3")
             file = File.objects.create(
                 status=File.Status.processing.value,
-                user=user,
                 original_file=uploaded_file,
                 chat_id=chat_id,
             )

@@ -46,7 +46,7 @@ class ChatsView(View):
             path=r"/ws/chat/",
         )
 
-        completed_files, processing_files = File.get_completed_and_processing_files(request.user)
+        completed_files, processing_files = File.get_completed_and_processing_files(chat_id)
 
         chat_grouped_by_date_group = groupby(all_chats, attrgetter("date_group"))
 

@@ -354,7 +354,6 @@ async def test_chat_consumer_redbox_state(
     alice: User, several_files: Sequence[File], chat_with_files: Chat, llm_backend
 ):
     # Given
-    selected_files: Sequence[File] = several_files[2:]
 
     # When
     with patch("redbox_app.redbox_core.consumers.ChatConsumer.redbox.run") as mock_run:
@@ -363,9 +362,9 @@ async def test_chat_consumer_redbox_state(
         connected, _ = await communicator.connect()
         assert connected
 
-        selected_file_uuids: Sequence[str] = [str(f.id) for f in selected_files]
+        selected_file_uuids: Sequence[str] = [str(f.id) for f in several_files]
         documents: Sequence[str] = [
-            Document(page_content=str(f.text), metadata={"uri": f.original_file.name}) for f in selected_files
+            Document(page_content=str(f.text), metadata={"uri": f.original_file.name}) for f in several_files
         ]
 
         await communicator.send_json_to(
