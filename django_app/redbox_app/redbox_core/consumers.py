@@ -99,7 +99,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         token_count = await sync_to_async(session.token_count)()
 
         if token_count > session.chat_backend.context_window_size:
-            await self.send_to_client("error", "selected are too big to work with")
+            await self.send_to_client("error", "The attached files are too large to work with")
             return
 
         self.route = "chat_with_docs"  # if selected_files else "chat"
