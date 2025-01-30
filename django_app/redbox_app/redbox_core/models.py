@@ -510,7 +510,6 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
         storage=settings.STORAGES["default"]["BACKEND"],
         upload_to=build_s3_key,
     )
-    # user = models.ForeignKey(User, on_delete=models.CASCADE)
     last_referenced = models.DateTimeField(blank=True, null=True)
     ingest_error = models.TextField(
         max_length=2048,
@@ -520,9 +519,9 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
     )
     chat = models.ForeignKey(
         Chat,
+        null=True,
+        blank=True,
         on_delete=models.CASCADE,
-        # null=True,
-        # blank=True,
         help_text="chat that this document belongs to, which may be nothing for now",
     )
     text = models.TextField(null=True, blank=True, help_text="text extracted from file")

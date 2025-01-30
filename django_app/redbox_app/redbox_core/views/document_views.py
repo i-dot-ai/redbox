@@ -48,7 +48,7 @@ MAX_FILE_SIZE = 209715200  # 200 MB or 200 * 1024 * 1024
 
 class UploadView(View):
     @method_decorator(login_required)
-    def post(self, request: HttpRequest, chat_id: uuid.UUID | None = None) -> HttpResponse:
+    def post(self, request: HttpRequest, chat_id: uuid.UUID) -> HttpResponse:
         errors: MutableSequence[str] = []
 
         uploaded_files: MutableSequence[UploadedFile] = request.FILES.getlist("uploadDocs")
