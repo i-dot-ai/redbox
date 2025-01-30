@@ -208,7 +208,7 @@ class ChatAdmin(ExportMixin, admin.ModelAdmin):
 
 
 class FileAdmin(ExportMixin, admin.ModelAdmin):
-    list_display = ["file_name", "token_count", "status", "created_at", "last_referenced"]
+    list_display = ["file_name", "chat__user", "token_count", "status", "created_at"]
     list_filter = ["chat__user", "status"]
     date_hierarchy = "created_at"
     actions = ["reupload"]
