@@ -81,14 +81,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
             session.name = await get_unique_chat_title(user_message_text, user)
             await session.asave()
 
-        if await session.file_set.filter(status=File.Status.processing).aexists():
-            msg = (
-                "You have files waiting to be processed. Please wait for these to complete "
-                "and then send the message again."
-            )
-            await self.send_to_client("error", msg)
-            return
-
         # save user message
         await self.save_message(session, user_message_text, ChatMessage.Role.user)
         await self.llm_conversation(session)
