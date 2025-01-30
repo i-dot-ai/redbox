@@ -412,6 +412,7 @@ def test_0073_chatmessage_new_source_files(original_file, migrator):
 
     File = old_state.apps.get_model("redbox_core", "File")
     file = File.objects.create(
+        chat=chat,
         user=user,
         original_file=original_file,
         original_file_name=original_file.name,
