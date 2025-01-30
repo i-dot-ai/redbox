@@ -43,9 +43,6 @@ locals {
     "AZURE_OPENAI_ENDPOINT" : var.azure_openai_endpoint,
     "OPENAI_API_VERSION": var.openai_api_version,
 
-    "EMBEDDING_OPENAI_API_KEY" : var.embedding_openai_api_key,
-    "EMBEDDING_AZURE_OPENAI_ENDPOINT" : var.embedding_azure_openai_endpoint,
-
     "DJANGO_SECRET_KEY" : var.django_secret_key,
     "POSTGRES_PASSWORD" : module.rds.rds_instance_db_password,
     "POSTGRES_HOST" : module.rds.db_instance_address,
@@ -55,8 +52,6 @@ locals {
     "SLACK_NOTIFICATION_URL" : var.slack_url
     "ELASTIC__API_KEY" : var.elastic_api_key,
     "ELASTIC__CLOUD_ID" : var.cloud_id,
-    "EMBEDDING_OPENAI_API_KEY" : var.embedding_openai_api_key,
-    "EMBEDDING_AZURE_OPENAI_ENDPOINT" : var.embedding_azure_openai_endpoint,
   }
 
   reconstructed_django_secrets = [for k, _ in local.django_app_secrets : { name = k, valueFrom = "${aws_secretsmanager_secret.django-app-secret.arn}:${k}::" }]
