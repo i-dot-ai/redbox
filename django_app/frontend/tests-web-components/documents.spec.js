@@ -24,6 +24,12 @@ test(`A document can be sent`, async ({ page }) => {
   await uploadDocument(page);
   await expect(page.locator("file-status")).toHaveCount(1);
 
+  // sending the message before the document is uploaded should fail
+  await sendMessage(page);
+  await expect(page.locator("chat-message")).toContainText("You have files waiting to be processed. Please wait for these to complete and then send the message again.");
+  
+  // sending the message after the document is uploaded should succeed
+  await expect(page.locator("file-status")).toHaveText("Complete test-upload.html");
   await sendMessage(page);
   await expect(page.locator(".rb-uploaded-docs__item")).toContainText("test-upload.html");
   await expect(page.locator("file-status")).toHaveCount(0);
