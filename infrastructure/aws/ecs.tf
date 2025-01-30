@@ -17,6 +17,18 @@ resource "aws_route53_record" "type_a_record" {
   }
 }
 
+resource "aws_route53_record" "litellm" {
+  zone_id = var.hosted_zone_id
+  name    = local.litellm_host
+  type    = "A"
+
+  alias {
+    name                   = module.load_balancer.load_balancer_dns_name
+    zone_id                = module.load_balancer.load_balancer_zone_id
+    evaluate_target_health = true
+  }
+}
+
 resource "aws_service_discovery_private_dns_namespace" "private_dns_namespace" {
   name        = "${local.name}-internal"
   description = "redbox private dns namespace"
@@ -182,6 +194,11 @@ module "lit-ssr" {
   wait_for_ready_state         = true
 }
 
+data "aws_lb_listener" "lb_listener_443" {
+  load_balancer_arn = module.load_balancer.alb_arn
+  port              = 443
+}
+
 module "litellm" {
   # checkov:skip=CKV_TF_1: We're using semantic versions instead of commit hash
   #source                       = "../../i-dot-ai-core-terraform-modules//modules/infrastructure/ecs" # For testing local changes
@@ -190,7 +207,7 @@ module "litellm" {
   memory                        = 4096
   cpu                           = 2048
   create_listener               = false
-  create_networking             = false
+  create_networking             = true
   name                          = "${local.name}-litellm"
   image_tag                     = "main-latest"
   ecr_repository_uri            = "ghcr.io/berriai/litellm"
@@ -208,9 +225,11 @@ module "litellm" {
   state_bucket                 = var.state_bucket
   vpc_id                       = data.terraform_remote_state.vpc.outputs.vpc_id
   private_subnets              = data.terraform_remote_state.vpc.outputs.private_subnets
+  host                         = local.litellm_host
   container_port               = 4000
   load_balancer_security_group = module.load_balancer.load_balancer_security_group_id
   aws_lb_arn                   = module.load_balancer.alb_arn
+  https_listener_arn           = data.aws_lb_listener.lb_listener_443.arn
   ephemeral_storage            = 30
   environment_variables        = local.django_app_environment_variables
   secrets                      = local.reconstructed_django_secrets

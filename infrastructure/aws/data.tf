@@ -1,6 +1,7 @@
 locals {
   record_prefix     = terraform.workspace == "prod" ? var.project_name : "${var.project_name}-${terraform.workspace}"
   django_host       = "${local.record_prefix}.${var.domain_name}"
+  litellm_host      = "litellm-${local.record_prefix}.${var.domain_name}"
   name              = "${var.team_name}-${terraform.workspace}-${var.project_name}"
   ssr_url           = "${aws_service_discovery_service.lit_ssr_service_discovery_service.name}.${aws_service_discovery_private_dns_namespace.private_dns_namespace.name}"
   litellm_url       = "${aws_service_discovery_service.litellm_service_discovery_service.name}.${aws_service_discovery_private_dns_namespace.private_dns_namespace.name}"
