@@ -20,11 +20,14 @@ interactions with users.
 You are tasked with providing information objectively and responding helpfully to users using context from their
 provided documents
 
-Messages:
-{messages}
+Context: previous messages:
+{chat_history}
 
-Documents:
+Context: user documents:
 {documents}
+
+Question to answer:
+{question}
 
 Answer:
 """
@@ -55,6 +58,10 @@ class Redbox:
     ) -> RedboxState:
         final_state = None
         request_dict = state.model_dump()
+        question, chat_history = request_dict["messages"][-1], request_dict["messages"][:-1]
+        request_dict["question"] = question
+        request_dict["chat_history"] = chat_history
+
         logger.info("Request: %s", {k: request_dict[k] for k in request_dict.keys() - {"ai_settings"}})
         async for event in self._get_runnable(state).astream_events(
             request_dict,
