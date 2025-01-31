@@ -644,11 +644,12 @@ class ChatMessage(UUIDPrimaryKeyBase, TimeStampedModel):
     def __str__(self) -> str:  # pragma: no cover
         return textwrap.shorten(self.text, width=20, placeholder="...")
 
-    def save(self, *args, force_insert=False, force_update=False, using=None, update_fields=None):
+    def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
         self.text = sanitise_string(self.text)
         self.rating_text = sanitise_string(self.rating_text)
         self.token_count = len(tokeniser.encode(self.text))
-        super().save(*args, force_insert, force_update, using, update_fields)
+        super().save(force_insert, force_update, using, update_fields)
+        self.log()
 
     @classmethod
     def get_messages(cls, chat_id: uuid.UUID) -> Sequence["ChatMessage"]:
@@ -677,6 +678,10 @@ class ChatMessage(UUIDPrimaryKeyBase, TimeStampedModel):
             "rating": int(self.rating) if self.rating else None,
             "rating_text": str(self.rating_text),
             "rating_chips": list(map(str, self.rating_chips)) if self.rating_chips else None,
+            "chat_feedback_achieved": self.chat.feedback_achieved,
+            "chat_feedback_saved_time": self.chat.feedback_saved_time,
+            "chat_feedback_improved_work": self.chat.feedback_improved_work,
+            "n_selected_files": self.chat.file_set.count(),
         }
         if es_client := env.elasticsearch_client():
             try:

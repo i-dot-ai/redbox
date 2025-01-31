@@ -136,9 +136,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
             route=self.route,
         )
         chat_message.save()
-
-        chat_message.log()
-
         return chat_message
 
     async def handle_text(self, response: str) -> str:
