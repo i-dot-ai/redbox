@@ -14,12 +14,14 @@ class FileStatus extends RedboxElement {
     id: { type: String, attribute: "data-id" },
     status: { type: String, state: true },
     positionInQueue: { type: Number, state: true },
-    name: { type: String, attribute: "data-name" }
+    name: { type: String, attribute: "data-name" },
+    tokens: { type: Number, state: true }
   };
 
   connectedCallback() {
     super.connectedCallback();
     this.status = this.textContent || "Uploading";
+    this.tokens = 0;
     this.#checkStatus();
   }
 
@@ -51,7 +53,7 @@ class FileStatus extends RedboxElement {
 
     return html`
       ${icon}
-      <span data-status=${statusAttr} aria-live="assertive" aria-atomic="true">
+      <span data-status=${statusAttr} data-tokens=${this.tokens} data-name=${this.name} aria-live="assertive" aria-atomic="true">
         ${statusText}
         <span class="govuk-visually-hidden">${this.name}</span>
       </span>
@@ -96,6 +98,7 @@ class FileStatus extends RedboxElement {
     const responseObj = await response.json();
     this.status = responseObj.status;
     this.positionInQueue = responseObj.position_in_queue;
+    this.tokens = responseObj.tokens || 0;
 
     if (responseObj.status.toLowerCase() === "error") {
       this.#sendErrorEvent();

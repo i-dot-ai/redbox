@@ -92,7 +92,15 @@ def filter_docs(docs, messages, message_index):
     active_docs = [doc for doc in docs if doc.get_status_text() != "Deleted"]
     filtered_docs = [doc for doc in active_docs if start_timestamp < doc.created_at < end_timestamp]
     return json.dumps(
-        [{"id": str(doc.id), "file_name": doc.file_name, "file_status": doc.get_status_text()} for doc in filtered_docs]
+        [
+            {
+                "id": str(doc.id),
+                "file_name": doc.file_name,
+                "file_status": doc.get_status_text(),
+                "tokens": doc.token_count,
+            }
+            for doc in filtered_docs
+        ]
     )
 
 

@@ -16,11 +16,38 @@ class ChatController extends HTMLElement {
           document.querySelector("message-input")
         );
       const userText = messageInput?.getValue();
+      
+      // Prevent message sending an empty message
       if (!messageInput || !userText) {
         return;
       }
+
+      // Prevent message sending if there are files waiting to be processed
       if (document.querySelectorAll('file-status [data-status]:not([data-status="complete"])').length > 0) {
         this.#showError("<p>You have files waiting to be processed. Please wait for these to complete and then send the message again.</p>");
+        return;
+      }
+
+      // Prevent message sending if uploaded files are over the max token size
+      const maxTokens = parseInt(this.dataset.maxTokens || "0");
+      let tokenCount = 0;
+      let fileList = "";
+      /** @type {NodeListOf<HTMLElement>} */
+      let tokenElements = document.querySelectorAll('[data-tokens]');
+      tokenElements.forEach((element) => {
+        tokenCount += parseInt(element.dataset.tokens || "0");
+        fileList += `<li><span>${element.dataset.name}: </span><span>${element.dataset.tokens} tokens</span></li>`;
+      });
+      if (tokenCount > maxTokens) {
+        this.#showError(`
+          ${tokenElements.length > 1 ? 
+            `<p>The attached files are too large. Please remove some files and try again.</p>` :
+            `<p>The attached file is too large. Please remove this and try again with a smaller file.</p>`
+          }
+          <p>The maximum size for this chat is ${maxTokens} tokens.</p>
+          <p>Current file sizes:</p>
+          <ul class="rb-token-sizes">${fileList}</ul>
+        `);
         return;
       }
 
