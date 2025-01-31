@@ -72,7 +72,7 @@ class ChatsView(View):
                 }
                 for chat_llm_backend in ChatLLMBackend.objects.filter(enabled=True)
             ],
-            "max_tokens": settings.LLM_MAX_TOKENS,
+            "max_tokens": chat_backend.context_window_size,
         }
 
         return render(

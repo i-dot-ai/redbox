@@ -30,8 +30,6 @@ ENVIRONMENT = Environment[env.str("ENVIRONMENT").upper()]
 WEBSOCKET_SCHEME = "ws" if ENVIRONMENT.is_test else "wss"
 LOGIN_METHOD = env.str("LOGIN_METHOD", None)
 
-LLM_MAX_TOKENS = env.str("LLM_MAX_TOKENS", 1024)
-
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env.bool("DEBUG")
 
