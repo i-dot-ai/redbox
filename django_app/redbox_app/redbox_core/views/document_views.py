@@ -130,4 +130,6 @@ def file_status_api_view(request: HttpRequest) -> JsonResponse:
     except File.DoesNotExist as ex:
         logger.exception("File object information not found in django - file does not exist %s.", file_id, exc_info=ex)
         return JsonResponse({"status": File.Status.errored.label})
-    return JsonResponse({"status": file.get_status_text(), "position_in_queue": file.position_in_queue()})
+    return JsonResponse(
+        {"status": file.get_status_text(), "position_in_queue": file.position_in_queue(), "tokens": file.token_count}
+    )

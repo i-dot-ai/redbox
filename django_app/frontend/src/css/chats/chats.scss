@@ -234,6 +234,12 @@ chat-message {
   background-color: $redbox-red;
 }
 
+.rb-token-sizes li span:nth-child(1) {
+  display: inline-block;
+  font-weight: bold;
+  margin-right: 0.5rem;
+}
+
 @import "./chat-input.scss";
 
 @import "./documents.scss";

@@ -14,6 +14,12 @@ export class UploadContainer extends RedboxElement {
       /** @type {NodeListOf<import("./document-container.mjs").DocumentContainer>} */
       const documentContainers = document.querySelectorAll("document-container");
       const lastDocumentContainer = documentContainers[documentContainers.length - 1];
+        // add tokens to the docs array
+        /** @type {NodeListOf<HTMLElement> | undefined} */ (this.querySelectorAll("[data-tokens"))?.forEach((element, index) => {
+        if (this.docs) {
+          this.docs[index].tokens = parseInt(element.dataset.tokens || "0");
+        }
+      });
       lastDocumentContainer.addDocuments(this.docs);
       this.docs = [];
     });
