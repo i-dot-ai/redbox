@@ -1,9 +1,10 @@
 from logging import getLogger
 
 from langchain.chat_models import init_chat_model
-from langchain_core.prompts import PromptTemplate
+from langchain_core.prompts import ChatPromptTemplate, PromptTemplate
 
 from redbox.models.chain import RedboxState
+from redbox.models.settings import get_settings
 
 
 async def _default_callback(*args, **kwargs):
@@ -12,41 +13,32 @@ async def _default_callback(*args, **kwargs):
 
 logger = getLogger(__name__)
 
-prompt_template = """You are Redbox, an AI assistant to civil servants in the United Kingdom.
-
-You follow instructions and respond to queries accurately and concisely, and are professional in all your
-interactions with users.
-
-You are tasked with providing information objectively and responding helpfully to users using context from their
-provided documents
-
-Messages:
-{messages}
-
-Documents:
-{documents}
-
-Answer:
-"""
-
 
 class Redbox:
     def __init__(self, debug: bool = False):
         self.debug = debug
 
     def _get_runnable(self, state: RedboxState):
+        settings = get_settings()
         llm = init_chat_model(
             model=state.chat_backend.name,
             model_provider=state.chat_backend.provider,
         )
-
-        return PromptTemplate.from_template(prompt_template) | llm
+        input_state = state.model_dump()
+        messages = (
+            [settings.system_prompt_template]
+            + state.messages[:-1]
+            + PromptTemplate.from_template(settings.question_prompt_template, template_format="jinja2")
+            .invoke(input=input_state)
+            .to_messages()
+        )
+        return ChatPromptTemplate.from_messages(messages=messages) | llm
 
     def run_sync(self, input: RedboxState):
         """
         Run Redbox without streaming events. This simpler, synchronous execution enables use of the graph debug logging
         """
-        return self._get_runnable(input).invoke(input=input)
+        return self._get_runnable(input).invoke(input=input.model_dump())
 
     async def run(
         self,

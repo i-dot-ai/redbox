@@ -10,14 +10,10 @@ from redbox_app.redbox_core.models import (
 
 
 @pytest.mark.django_db()
-def test_file_model_last_referenced(peter_rabbit, s3_client):  # noqa: ARG001
+def test_file_model_last_referenced(chat, s3_client):  # noqa: ARG001
     mock_file = SimpleUploadedFile("test.txt", b"these are the file contents")
 
-    new_file = File.objects.create(
-        status=File.Status.processing,
-        original_file=mock_file,
-        user=peter_rabbit,
-    )
+    new_file = File.objects.create(status=File.Status.processing, original_file=mock_file, chat=chat)
 
     # Tests the initial value of the last_referenced
     expected_last_referenced = new_file.created_at

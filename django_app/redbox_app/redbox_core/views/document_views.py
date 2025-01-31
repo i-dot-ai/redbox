@@ -48,7 +48,7 @@ MAX_FILE_SIZE = 209715200  # 200 MB or 200 * 1024 * 1024
 
 class UploadView(View):
     @method_decorator(login_required)
-    def post(self, request: HttpRequest, chat_id: uuid.UUID | None = None) -> HttpResponse:
+    def post(self, request: HttpRequest, chat_id: uuid.UUID) -> HttpResponse:
         errors: MutableSequence[str] = []
 
         uploaded_files: MutableSequence[UploadedFile] = request.FILES.getlist("uploadDocs")
@@ -90,14 +90,11 @@ class UploadView(View):
         return errors
 
     @staticmethod
-    def ingest_file(
-        uploaded_file: UploadedFile, user: User, chat_id: uuid.UUID | None = None
-    ) -> tuple[File, Sequence[str]]:
+    def ingest_file(uploaded_file: UploadedFile, chat_id: uuid.UUID) -> tuple[File, Sequence[str]]:
         try:
             logger.info("getting file from s3")
             file = File.objects.create(
                 status=File.Status.processing.value,
-                user=user,
                 original_file=uploaded_file,
                 chat_id=chat_id,
             )

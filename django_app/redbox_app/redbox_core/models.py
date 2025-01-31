@@ -12,14 +12,16 @@ from django.conf import settings
 from django.contrib.postgres.fields import ArrayField
 from django.core import validators
 from django.db import models
-from django.db.models import Max, Min, UniqueConstraint
+from django.db.models import Max, Min, Sum, UniqueConstraint
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django_q.models import OrmQ, Success
 from django_q.tasks import async_task
 from django_use_email_as_username.models import BaseUser, BaseUserManager
+from langchain_core.documents import Document
 from langchain_core.messages import AIMessage, AnyMessage, HumanMessage
 
+import redbox.models.chain
 from redbox.chains.components import get_tokeniser
 from redbox.models.settings import get_settings
 from redbox_app.redbox_core.utils import get_date_group, sanitise_string
@@ -462,6 +464,26 @@ class Chat(UUIDPrimaryKeyBase, TimeStampedModel):
     def date_group(self):
         return get_date_group(self.newest_message_date)
 
+    def to_langchain(self) -> redbox.models.chain.RedboxState:
+        chat_backend = redbox.models.chain.ChatLLMBackend(
+            name=self.chat_backend.name,
+            provider=self.chat_backend.provider,
+            description=self.chat_backend.description,
+            context_window_size=self.chat_backend.context_window_size,
+        )
+
+        return redbox.models.chain.RedboxState(
+            documents=[Document(str(f.text), metadata={"uri": f.original_file.name}) for f in self.file_set.all()],
+            messages=[message.to_langchain() for message in self.chatmessage_set.all()],
+            chat_backend=chat_backend,
+        )
+
+    def token_count(self) -> int:
+        def f(obj):
+            return obj.aggregate(Sum("token_count"))["token_count__sum"] or 0
+
+        return f(self.file_set) + f(self.chatmessage_set)
+
 
 class InactiveFileError(ValueError):
     def __init__(self, file):
@@ -474,7 +496,7 @@ def build_s3_key(instance, filename: str) -> str:
     1. an existing file that they own, then it is overwritten
     2. an existing file that another user owns then a new file is created
     """
-    return f"{instance.user.email}/{filename}"
+    return f"{instance.chat.user.email}/{filename}"
 
 
 class File(UUIDPrimaryKeyBase, TimeStampedModel):
@@ -488,7 +510,6 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
         storage=settings.STORAGES["default"]["BACKEND"],
         upload_to=build_s3_key,
     )
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
     last_referenced = models.DateTimeField(blank=True, null=True)
     ingest_error = models.TextField(
         max_length=2048,
@@ -498,9 +519,9 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
     )
     chat = models.ForeignKey(
         Chat,
-        on_delete=models.CASCADE,
         null=True,
         blank=True,
+        on_delete=models.CASCADE,
         help_text="chat that this document belongs to, which may be nothing for now",
     )
     text = models.TextField(null=True, blank=True, help_text="text extracted from file")
@@ -578,11 +599,11 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
         self.save()
 
     @classmethod
-    def get_completed_and_processing_files(cls, user: User) -> tuple[Sequence["File"], Sequence["File"]]:
+    def get_completed_and_processing_files(cls, chat_id: uuid.UUID) -> tuple[Sequence["File"], Sequence["File"]]:
         """Returns all files that are completed and processing for a given user."""
 
-        completed_files = cls.objects.filter(user=user, status=File.Status.complete).order_by("-created_at")
-        processing_files = cls.objects.filter(user=user, status=File.Status.processing).order_by("-created_at")
+        completed_files = cls.objects.filter(chat_id=chat_id, status=File.Status.complete).order_by("-created_at")
+        processing_files = cls.objects.filter(chat_id=chat_id, status=File.Status.processing).order_by("-created_at")
         return completed_files, processing_files
 
     @classmethod
@@ -610,8 +631,6 @@ class ChatMessage(UUIDPrimaryKeyBase, TimeStampedModel):
     text = models.TextField(max_length=32768, null=False, blank=False)
     role = models.CharField(choices=Role.choices, null=False, blank=False)
     route = models.CharField(max_length=25, null=True, blank=True)
-    selected_files = models.ManyToManyField(File, related_name="+", symmetrical=False, blank=True)
-    source_files = models.ManyToManyField(File, related_name="+")
 
     rating = models.PositiveIntegerField(
         blank=True,
@@ -653,7 +672,6 @@ class ChatMessage(UUIDPrimaryKeyBase, TimeStampedModel):
             "user_grade": self.chat.user.grade,
             "user_profession": self.chat.user.profession,
             "user_ai_experience": self.chat.user.ai_experience,
-            "text": str(self.text),
             "route": str(self.route),
             "role": str(self.role),
             "token_count": self.token_count,

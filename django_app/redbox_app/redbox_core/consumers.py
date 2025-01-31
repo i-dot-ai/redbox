@@ -3,21 +3,16 @@ import logging
 from asyncio import CancelledError
 from collections.abc import Mapping, Sequence
 from typing import Any, ClassVar
-from uuid import UUID
 
+from asgiref.sync import sync_to_async
 from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.forms.models import model_to_dict
-from langchain_core.documents import Document
 from openai import RateLimitError
-from websockets import ConnectionClosedError, WebSocketClientProtocol
+from websockets import ConnectionClosedError
 
 from redbox import Redbox
-from redbox.models.chain import (
-    RedboxState,
-)
 from redbox_app.redbox_core import error_messages
 from redbox_app.redbox_core.models import (
     Chat,
@@ -25,11 +20,22 @@ from redbox_app.redbox_core.models import (
     ChatMessage,
     File,
 )
+from redbox_app.redbox_core.utils import sanitise_string
 
 User = get_user_model()
 OptFileSeq = Sequence[File] | None
 logger = logging.getLogger(__name__)
 logger.info("WEBSOCKET_SCHEME is: %s", settings.WEBSOCKET_SCHEME)
+
+
+async def get_unique_chat_title(title: str, user: User, number: int = 0) -> str:
+    original_title = sanitise_string(title[: settings.CHAT_TITLE_LENGTH])
+    new_title = original_title
+    if number > 0:
+        new_title = f"{original_title} ({number})"
+    if await Chat.objects.filter(name=new_title, user=user).aexists():
+        return await get_unique_chat_title(original_title, user, number + 1)
+    return new_title
 
 
 class ChatConsumer(AsyncWebsocketConsumer):
@@ -45,7 +51,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
         data = json.loads(text_data or bytes_data)
         logger.debug("received %s from browser", data)
         user_message_text: str = data.get("message", "")
-        selected_file_uuids: Sequence[UUID] = [UUID(u) for u in data.get("selectedFiles", [])]
         user: User = self.scope.get("user")
 
         if chat_backend_id := data.get("llm"):
@@ -64,7 +69,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         else:
             logger.info("creating session: chat_backend=%s temperature=%s", chat_backend, temperature)
             session = await Chat.objects.acreate(
-                name=user_message_text[: settings.CHAT_TITLE_LENGTH],
+                name=await get_unique_chat_title(user_message_text, user),
                 user=user,
                 chat_backend=chat_backend,
                 temperature=temperature,
@@ -73,48 +78,28 @@ class ChatConsumer(AsyncWebsocketConsumer):
         # Update session name if this is the first message
         message_count = await session.chatmessage_set.acount()
         if message_count == 0:
-            session.name = user_message_text[: settings.CHAT_TITLE_LENGTH]
+            session.name = await get_unique_chat_title(user_message_text, user)
             await session.asave()
 
-        if await File.objects.filter(id__in=selected_file_uuids, status=File.Status.processing).aexists():
-            await self.send_to_client("error", "you have files waiting to be processed")
-            return
-
         # save user message
-        selected_files = (
-            File.objects.filter(user=user, status=File.Status.complete, id__in=selected_file_uuids)
-            | session.file_set.all()
-        )
-
-        await self.save_user_message(session, user_message_text, selected_files=selected_files)
-
-        await self.llm_conversation(selected_files, session, user_message_text)
+        await self.save_message(session, user_message_text, ChatMessage.Role.user)
+        await self.llm_conversation(session)
         await self.close()
 
-    async def llm_conversation(self, selected_files: Sequence[File], session: Chat, title: str) -> None:
+    async def llm_conversation(self, session: Chat) -> None:
         """Initiate & close websocket conversation with the core-api message endpoint."""
         await self.send_to_client("session-id", session.id)
 
-        session_messages = ChatMessage.objects.filter(chat=session).order_by("created_at")
-        message_history: Sequence[Mapping[str, str]] = [message async for message in session_messages]
+        token_count = await sync_to_async(session.token_count)()
 
-        document_token_count = sum(file.token_count for file in selected_files if file.token_count)
-        message_history_token_count = sum(message.token_count for message in message_history if message.token_count)
-
-        if document_token_count + message_history_token_count > session.chat_backend.context_window_size:
-            await self.send_to_client("error", "selected are too big to work with")
+        if token_count > session.chat_backend.context_window_size:
+            await self.send_to_client("error", "The attached files are too large to work with")
             return
 
-        self.route = "chat_with_docs" if selected_files else "chat"
+        self.route = "chat_with_docs"  # if selected_files else "chat"
         self.send_to_client("route", self.route)
 
-        chat_backend_dict = model_to_dict(session.chat_backend)
-
-        state = RedboxState(
-            documents=[Document(str(f.text), metadata={"uri": f.original_file.name}) for f in selected_files],
-            messages=[message.to_langchain() for message in message_history],
-            chat_backend=chat_backend_dict,
-        )
+        state = await sync_to_async(session.to_langchain)()
 
         try:
             await self.redbox.run(
@@ -122,11 +107,10 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 response_tokens_callback=self.handle_text,
             )
 
-            message = await self.save_ai_message(
-                session,
-                "".join(self.full_reply),
+            message = await self.save_message(session, "".join(self.full_reply), ChatMessage.Role.ai)
+            await self.send_to_client(
+                "end", {"message_id": message.id, "title": session.name, "session_id": session.id}
             )
-            await self.send_to_client("end", {"message_id": message.id, "title": title, "session_id": session.id})
 
         except RateLimitError as e:
             logger.exception("Rate limit error", exc_info=e)
@@ -143,39 +127,12 @@ class ChatConsumer(AsyncWebsocketConsumer):
         logger.debug("sending %s to browser", message)
         await self.send(json.dumps(message, default=str))
 
-    @staticmethod
-    async def send_to_server(websocket: WebSocketClientProtocol, data: Mapping[str, Any]) -> None:
-        logger.debug("sending %s to core-api", data)
-        return await websocket.send(json.dumps(data, default=str))
-
     @database_sync_to_async
-    def save_user_message(
-        self,
-        session: Chat,
-        user_message_text: str,
-        selected_files: Sequence[File] | None = None,
-    ) -> ChatMessage:
+    def save_message(self, session: Chat, user_message_text: str, role: ChatMessage.Role) -> ChatMessage:
         chat_message = ChatMessage(
             chat=session,
             text=user_message_text,
-            role=ChatMessage.Role.user,
-            route=self.route,
-        )
-        chat_message.save()
-        if selected_files:
-            chat_message.selected_files.set(selected_files)
-        return chat_message
-
-    @database_sync_to_async
-    def save_ai_message(
-        self,
-        session: Chat,
-        user_message_text: str,
-    ) -> ChatMessage:
-        chat_message = ChatMessage(
-            chat=session,
-            text=user_message_text,
-            role=ChatMessage.Role.ai,
+            role=role,
             route=self.route,
         )
         chat_message.save()

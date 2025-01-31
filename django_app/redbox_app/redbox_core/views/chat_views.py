@@ -1,6 +1,5 @@
 import logging
 import uuid
-from collections.abc import Sequence
 from dataclasses import dataclass
 from http import HTTPStatus
 from itertools import groupby
@@ -47,9 +46,8 @@ class ChatsView(View):
             path=r"/ws/chat/",
         )
 
-        completed_files, processing_files = File.get_completed_and_processing_files(request.user)
+        completed_files, processing_files = File.get_completed_and_processing_files(chat_id)
 
-        self.decorate_selected_files(completed_files, messages)
         chat_grouped_by_date_group = groupby(all_chats, attrgetter("date_group"))
 
         chat_backend = current_chat.chat_backend if current_chat else ChatLLMBackend.objects.get(is_default=True)
@@ -81,17 +79,6 @@ class ChatsView(View):
             template_name="chats.html",
             context=context,
         )
-
-    @staticmethod
-    def decorate_selected_files(all_files: Sequence[File], messages: Sequence[ChatMessage]) -> None:
-        if messages:
-            last_user_message = [m for m in messages if m.role == ChatMessage.Role.user][-1]
-            selected_files: Sequence[File] = last_user_message.selected_files.all() or []
-        else:
-            selected_files = []
-
-        for file in all_files:
-            file.selected = file in selected_files
 
 
 class ChatsTitleView(View):

@@ -26,7 +26,6 @@ def file_upload(request):
     serializer = UploadSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
     file = File.objects.create(
-        user=request.user,
         original_file=serializer.validated_data["file"],
         chat_id=serializer.validated_data["chat_id"],
         status=File.Status.processing,

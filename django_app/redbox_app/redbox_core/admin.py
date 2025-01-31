@@ -165,7 +165,7 @@ class ChatMessageAdmin(ExportMixin, admin.ModelAdmin):
 class FileInline(admin.StackedInline):
     model = models.File
     ordering = ("modified_at",)
-    extra = 1
+    extra = 0
 
 
 class ChatMessageInline(admin.StackedInline):
@@ -173,7 +173,7 @@ class ChatMessageInline(admin.StackedInline):
     ordering = ("modified_at",)
     fields = ["text", "role", "route", "rating"]
     readonly_fields = ["text", "role", "route", "rating"]
-    extra = 1
+    extra = 0
     show_change_link = True  # allows users to click through to look at Citations
 
 
@@ -208,8 +208,8 @@ class ChatAdmin(ExportMixin, admin.ModelAdmin):
 
 
 class FileAdmin(ExportMixin, admin.ModelAdmin):
-    list_display = ["file_name", "user", "status", "created_at", "last_referenced"]
-    list_filter = ["user", "status"]
+    list_display = ["file_name", "chat__user", "token_count", "status", "created_at"]
+    list_filter = ["chat__user", "status"]
     date_hierarchy = "created_at"
     actions = ["reupload"]
     search_fields = ["user__email"]

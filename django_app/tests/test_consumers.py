@@ -354,7 +354,6 @@ async def test_chat_consumer_redbox_state(
     alice: User, several_files: Sequence[File], chat_with_files: Chat, llm_backend
 ):
     # Given
-    selected_files: Sequence[File] = several_files[2:]
 
     # When
     with patch("redbox_app.redbox_core.consumers.ChatConsumer.redbox.run") as mock_run:
@@ -363,9 +362,9 @@ async def test_chat_consumer_redbox_state(
         connected, _ = await communicator.connect()
         assert connected
 
-        selected_file_uuids: Sequence[str] = [str(f.id) for f in selected_files]
+        selected_file_uuids: Sequence[str] = [str(f.id) for f in several_files]
         documents: Sequence[str] = [
-            Document(page_content=str(f.text), metadata={"uri": f.original_file.name}) for f in selected_files
+            Document(page_content=str(f.text), metadata={"uri": f.original_file.name}) for f in several_files
         ]
 
         await communicator.send_json_to(
@@ -574,28 +573,3 @@ def mocked_connect_with_several_files(several_files: Sequence[File]) -> Connect:
 @database_sync_to_async
 def refresh_from_db(obj: Model) -> None:
     obj.refresh_from_db()
-
-
-@pytest.mark.django_db(transaction=True)
-@pytest.mark.asyncio()
-async def test_llm_conversation_fail_file_processing(alice, mix_of_file_statues, chat):
-    communicator = WebsocketCommunicator(ChatConsumer.as_asgi(), "/ws/chat/")
-    communicator.scope["user"] = alice
-    connected, _ = await communicator.connect()
-    assert connected
-
-    selected_file_core_uuids: list[str] = [str(f.id) for f in mix_of_file_statues]
-
-    await communicator.send_json_to(
-        {
-            "message": "Third question, with selected files?",
-            "sessionId": str(chat.id),
-            "selectedFiles": selected_file_core_uuids,
-        }
-    )
-
-    response1 = await communicator.receive_json_from(timeout=5)
-
-    # Then
-    assert response1["type"] == "error"
-    assert response1["data"] == "you have files waiting to be processed"
