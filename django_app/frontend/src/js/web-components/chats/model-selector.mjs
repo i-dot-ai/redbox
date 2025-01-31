@@ -117,7 +117,7 @@ export class ModelSelector extends RedboxElement {
   #blur() {
     window.setTimeout(() => {
       this.expanded = false;
-    }, 100);
+    }, 200);
   }
 
 }
