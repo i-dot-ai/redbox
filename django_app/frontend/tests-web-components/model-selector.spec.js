@@ -9,10 +9,16 @@ test(`A different model can be selected`, async ({ page }) => {
   // The component is rendered and displaying the currently selected model
   await expect(select).toContainText("gpt-4o");
 
+  // max-tokens is set correctly
+  expect(await page.locator("#max-tokens").inputValue()).toBe("128000");
+
   // A new value can be selected
   await select.click();
   await page.locator("#model-option-2").click();
   await expect(select).toContainText("Claude");
+
+  // max-tokens has updated
+  expect(await page.locator("#max-tokens").inputValue()).not.toBe("128000");
 
   // The new value is also set as the active option (this is different to the selected option)
   await select.click();
