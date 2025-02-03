@@ -212,7 +212,7 @@ class FileAdmin(ExportMixin, admin.ModelAdmin):
     list_filter = ["chat__user", "status"]
     date_hierarchy = "created_at"
     actions = ["reupload"]
-    search_fields = ["user__email"]
+    search_fields = ["chat__user__email", "file_name"]
 
 
 admin.site.register(User, UserAdmin)
