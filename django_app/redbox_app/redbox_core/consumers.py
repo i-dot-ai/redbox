@@ -52,12 +52,13 @@ class ChatConsumer(AsyncWebsocketConsumer):
         logger.debug("received %s from browser", data)
         user_message_text: str = data.get("message", "")
         user: User = self.scope.get("user")
-        if "sessionId" not in data:
+
+        try:
+            chat = await Chat.objects.aget(id=data["sessionId"])
+        except KeyError:
             self.close()
-            raise ValueError("no `sessionId` received")
-
-
-        chat = await Chat.objects.aget(id=data["sessionId"])
+            self.send_to_client("error", error_messages.CORE_ERROR_MESSAGE)
+            raise
 
         if chat_backend_id := data.get("llm"):
             chat.chat_backend = await ChatLLMBackend.objects.aget(id=chat_backend_id)
