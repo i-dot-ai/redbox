@@ -37,17 +37,17 @@ logger = logging.getLogger(__name__)
 
 @pytest.mark.django_db(transaction=True)
 @pytest.mark.asyncio()
-async def test_chat_consumer_with_new_session(alice: User, mocked_connect: Connect):
+async def test_chat_consumer_with_new_session(chat: Chat, mocked_connect: Connect):
     # Given
 
     # When
     with patch("redbox_app.redbox_core.consumers.ChatConsumer.redbox._get_runnable", new=lambda _: mocked_connect):
         communicator = WebsocketCommunicator(ChatConsumer.as_asgi(), "/ws/chat/")
-        communicator.scope["user"] = alice
+        communicator.scope["user"] = chat.user
         connected, _ = await communicator.connect()
         assert connected
 
-        await communicator.send_json_to({"message": "Hello Hal."})
+        await communicator.send_json_to({"sessionId": str(chat.id), "message": "Hello Hal."})
         response1 = await communicator.receive_json_from(timeout=5)
         response2 = await communicator.receive_json_from(timeout=5)
         response3 = await communicator.receive_json_from(timeout=5)
@@ -64,13 +64,13 @@ async def test_chat_consumer_with_new_session(alice: User, mocked_connect: Conne
         # Close
         await communicator.disconnect()
 
-    assert await get_chat_message_text(alice, ChatMessage.Role.user) == ["Hello Hal."]
-    assert await get_chat_message_text(alice, ChatMessage.Role.ai) == ["Good afternoon, Mr. Amor."]
+    assert await get_chat_message_text(chat.user, ChatMessage.Role.user) == ["Hello Hal."]
+    assert await get_chat_message_text(chat.user, ChatMessage.Role.ai) == ["Good afternoon, Mr. Amor."]
 
 
 @pytest.mark.django_db(transaction=True)
 @pytest.mark.asyncio()
-async def test_chat_consumer_staff_user(staff_user: User, mocked_connect: Connect):
+async def test_chat_consumer_staff_user(staff_user: User, chat: Chat, mocked_connect: Connect):
     # Given
 
     # When
@@ -80,7 +80,7 @@ async def test_chat_consumer_staff_user(staff_user: User, mocked_connect: Connec
         connected, _ = await communicator.connect()
         assert connected
 
-        await communicator.send_json_to({"message": "Hello Hal.", "output_text": "hello"})
+        await communicator.send_json_to({"sessionId": str(chat.id), "message": "Hello Hal.", "output_text": "hello"})
         response1 = await communicator.receive_json_from(timeout=5)
         response2 = await communicator.receive_json_from(timeout=5)
         response3 = await communicator.receive_json_from(timeout=5)
@@ -100,13 +100,13 @@ async def test_chat_consumer_staff_user(staff_user: User, mocked_connect: Connec
 
 @pytest.mark.django_db(transaction=True)
 @pytest.mark.asyncio()
-async def test_chat_consumer_with_existing_session(alice: User, chat: Chat, mocked_connect: Connect):
+async def test_chat_consumer_with_existing_session(chat: Chat, mocked_connect: Connect):
     # Given
 
     # When
     with patch("redbox_app.redbox_core.consumers.ChatConsumer.redbox._get_runnable", new=lambda _: mocked_connect):
         communicator = WebsocketCommunicator(ChatConsumer.as_asgi(), "/ws/chat/")
-        communicator.scope["user"] = alice
+        communicator.scope["user"] = chat.user
         connected, _ = await communicator.connect()
         assert connected
 
@@ -120,23 +120,23 @@ async def test_chat_consumer_with_existing_session(alice: User, chat: Chat, mock
         # Close
         await communicator.disconnect()
 
-    assert await get_chat_message_text(alice, ChatMessage.Role.user) == ["Hello Hal."]
-    assert await get_chat_message_text(alice, ChatMessage.Role.ai) == ["Good afternoon, Mr. Amor."]
+    assert await get_chat_message_text(chat.user, ChatMessage.Role.user) == ["Hello Hal."]
+    assert await get_chat_message_text(chat.user, ChatMessage.Role.ai) == ["Good afternoon, Mr. Amor."]
 
 
 @pytest.mark.django_db(transaction=True)
 @pytest.mark.asyncio()
-async def test_chat_consumer_with_naughty_question(alice: User, mocked_connect: Connect):
+async def test_chat_consumer_with_naughty_question(chat: Chat, mocked_connect: Connect):
     # Given
 
     # When
     with patch("redbox_app.redbox_core.consumers.ChatConsumer.redbox._get_runnable", new=lambda _: mocked_connect):
         communicator = WebsocketCommunicator(ChatConsumer.as_asgi(), "/ws/chat/")
-        communicator.scope["user"] = alice
+        communicator.scope["user"] = chat.user
         connected, _ = await communicator.connect()
         assert connected
 
-        await communicator.send_json_to({"message": "Hello Hal. \x00"})
+        await communicator.send_json_to({"sessionId": str(chat.id), "message": "Hello Hal. \x00"})
         response1 = await communicator.receive_json_from(timeout=5)
         response2 = await communicator.receive_json_from(timeout=5)
         response3 = await communicator.receive_json_from(timeout=5)
@@ -152,8 +152,8 @@ async def test_chat_consumer_with_naughty_question(alice: User, mocked_connect: 
         # Close
         await communicator.disconnect()
 
-    assert await get_chat_message_text(alice, ChatMessage.Role.user) == ["Hello Hal. \ufffd"]
-    assert await get_chat_message_text(alice, ChatMessage.Role.ai) == ["Good afternoon, Mr. Amor."]
+    assert await get_chat_message_text(chat.user, ChatMessage.Role.user) == ["Hello Hal. \ufffd"]
+    assert await get_chat_message_text(chat.user, ChatMessage.Role.ai) == ["Good afternoon, Mr. Amor."]
 
 
 @database_sync_to_async
@@ -170,7 +170,6 @@ def get_chat_message_route(user: User, role: ChatMessage.Role) -> Sequence[str]:
 @pytest.mark.django_db(transaction=True)
 @pytest.mark.asyncio()
 async def test_chat_consumer_with_selected_files(
-    alice: User,
     several_files: Sequence[File],
     chat_with_files: Chat,
     mocked_connect_with_several_files: Connect,
@@ -185,7 +184,7 @@ async def test_chat_consumer_with_selected_files(
         new=lambda _: mocked_connect_with_several_files,
     ):
         communicator = WebsocketCommunicator(ChatConsumer.as_asgi(), "/ws/chat/")
-        communicator.scope["user"] = alice
+        communicator.scope["user"] = chat_with_files.user
         connected, _ = await communicator.connect()
         assert connected
 
@@ -230,14 +229,14 @@ async def test_chat_consumer_with_selected_files(
 
     # TODO (@brunns): Assert selected files saved to model.
     # Requires fix for https://github.com/django/channels/issues/1091
-    all_messages = get_chat_messages(alice)
+    all_messages = get_chat_messages(chat_with_files.user)
     last_user_message = [m for m in all_messages if m.rule == ChatMessage.Role.user][-1]
     assert last_user_message.selected_files == selected_files
 
 
 @pytest.mark.django_db(transaction=True)
 @pytest.mark.asyncio()
-async def test_chat_consumer_with_connection_error(alice: User, mocked_breaking_connect: Connect):
+async def test_chat_consumer_with_connection_error(chat: Chat, mocked_breaking_connect: Connect):
     # Given
 
     # When
@@ -245,11 +244,11 @@ async def test_chat_consumer_with_connection_error(alice: User, mocked_breaking_
         "redbox_app.redbox_core.consumers.ChatConsumer.redbox._get_runnable", new=lambda _: mocked_breaking_connect
     ):
         communicator = WebsocketCommunicator(ChatConsumer.as_asgi(), "/ws/chat/")
-        communicator.scope["user"] = alice
+        communicator.scope["user"] = chat.user
         connected, _ = await communicator.connect()
         assert connected
 
-        await communicator.send_json_to({"message": "Hello Hal."})
+        await communicator.send_json_to({"sessionId": str(chat.id), "message": "Hello Hal."})
         await communicator.receive_json_from(timeout=5)
         response2 = await communicator.receive_json_from(timeout=5)
 
@@ -260,7 +259,7 @@ async def test_chat_consumer_with_connection_error(alice: User, mocked_breaking_
 @pytest.mark.django_db(transaction=True)
 @pytest.mark.asyncio()
 async def test_chat_consumer_with_explicit_unhandled_error(
-    alice: User, mocked_connect_with_explicit_unhandled_error: Connect
+    chat: Chat, mocked_connect_with_explicit_unhandled_error: Connect
 ):
     # Given
 
@@ -270,11 +269,11 @@ async def test_chat_consumer_with_explicit_unhandled_error(
         new=lambda _: mocked_connect_with_explicit_unhandled_error,
     ):
         communicator = WebsocketCommunicator(ChatConsumer.as_asgi(), "/ws/chat/")
-        communicator.scope["user"] = alice
+        communicator.scope["user"] = chat.user
         connected, _ = await communicator.connect()
         assert connected
 
-        await communicator.send_json_to({"message": "Hello Hal."})
+        await communicator.send_json_to({"sessionId": str(chat.id), "message": "Hello Hal."})
         response1 = await communicator.receive_json_from(timeout=5)
         response2 = await communicator.receive_json_from(timeout=5)
         response3 = await communicator.receive_json_from(timeout=5)
@@ -291,7 +290,7 @@ async def test_chat_consumer_with_explicit_unhandled_error(
 
 @pytest.mark.django_db(transaction=True)
 @pytest.mark.asyncio()
-async def test_chat_consumer_with_rate_limited_error(alice: User, mocked_connect_with_rate_limited_error: Connect):
+async def test_chat_consumer_with_rate_limited_error(chat: Chat, mocked_connect_with_rate_limited_error: Connect):
     # Given
 
     # When
@@ -300,11 +299,11 @@ async def test_chat_consumer_with_rate_limited_error(alice: User, mocked_connect
         new=lambda _: mocked_connect_with_rate_limited_error,
     ):
         communicator = WebsocketCommunicator(ChatConsumer.as_asgi(), "/ws/chat/")
-        communicator.scope["user"] = alice
+        communicator.scope["user"] = chat.user
         connected, _ = await communicator.connect()
         assert connected
 
-        await communicator.send_json_to({"message": "Hello Hal."})
+        await communicator.send_json_to({"sessionId": str(chat.id), "message": "Hello Hal."})
         response1 = await communicator.receive_json_from(timeout=5)
         response2 = await communicator.receive_json_from(timeout=5)
         response3 = await communicator.receive_json_from(timeout=5)
@@ -322,7 +321,7 @@ async def test_chat_consumer_with_rate_limited_error(alice: User, mocked_connect
 @pytest.mark.django_db(transaction=True)
 @pytest.mark.asyncio()
 async def test_chat_consumer_with_explicit_no_document_selected_error(
-    alice: User, mocked_connect_with_explicit_no_document_selected_error: Connect
+    chat: Chat, mocked_connect_with_explicit_no_document_selected_error: Connect
 ):
     # Given
 
@@ -332,11 +331,11 @@ async def test_chat_consumer_with_explicit_no_document_selected_error(
         new=lambda _: mocked_connect_with_explicit_no_document_selected_error,
     ):
         communicator = WebsocketCommunicator(ChatConsumer.as_asgi(), "/ws/chat/")
-        communicator.scope["user"] = alice
+        communicator.scope["user"] = chat.user
         connected, _ = await communicator.connect()
         assert connected
 
-        await communicator.send_json_to({"message": "Hello Hal."})
+        await communicator.send_json_to({"sessionId": str(chat.id), "message": "Hello Hal."})
         response1 = await communicator.receive_json_from(timeout=5)
         response2 = await communicator.receive_json_from(timeout=5)
 
@@ -351,14 +350,14 @@ async def test_chat_consumer_with_explicit_no_document_selected_error(
 @pytest.mark.django_db(transaction=True)
 @pytest.mark.asyncio()
 async def test_chat_consumer_redbox_state(
-    alice: User, several_files: Sequence[File], chat_with_files: Chat, llm_backend
+    chat: Chat, several_files: Sequence[File], chat_with_files: Chat, llm_backend
 ):
     # Given
 
     # When
     with patch("redbox_app.redbox_core.consumers.ChatConsumer.redbox.run") as mock_run:
         communicator = WebsocketCommunicator(ChatConsumer.as_asgi(), "/ws/chat/")
-        communicator.scope["user"] = alice
+        communicator.scope["user"] = chat.user
         connected, _ = await communicator.connect()
         assert connected
 

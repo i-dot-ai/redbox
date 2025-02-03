@@ -478,6 +478,9 @@ class Chat(UUIDPrimaryKeyBase, TimeStampedModel):
             chat_backend=chat_backend,
         )
 
+    def context_window_size(self) -> int:
+        return self.chat_backend.context_window_size
+
     def token_count(self) -> int:
         def f(obj):
             return obj.aggregate(Sum("token_count"))["token_count__sum"] or 0
