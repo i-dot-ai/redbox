@@ -43,7 +43,7 @@ class ChatsView(View):
             scheme=settings.WEBSOCKET_SCHEME,
             host="localhost" if settings.ENVIRONMENT.is_test else settings.ENVIRONMENT.hosts[0],
             port=int(request.META["SERVER_PORT"]) if settings.ENVIRONMENT.is_test else None,
-            path=r"/ws/chat/",
+            path=f"/ws/chat/{chat_id}",
         )
 
         completed_files, processing_files = File.get_completed_and_processing_files(chat_id)
