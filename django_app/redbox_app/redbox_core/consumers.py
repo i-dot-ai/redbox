@@ -54,10 +54,10 @@ class ChatConsumer(AsyncWebsocketConsumer):
         try:
             user: User = self.scope["user"]
             chat_id = self.scope["url_route"]["kwargs"]["chat_id"]
-        except KeyError:
+        except KeyError as e:
             self.close()
             self.send_to_client("error", error_messages.CORE_ERROR_MESSAGE)
-            raise
+            raise Exception("unexpected error", self.scope, e)
 
         chat = await Chat.objects.aget(id=chat_id)
 
