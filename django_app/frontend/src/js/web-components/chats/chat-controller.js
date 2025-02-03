@@ -29,7 +29,7 @@ class ChatController extends HTMLElement {
       }
 
       // Prevent message sending if uploaded files are over the max token size
-      const maxTokens = parseInt(this.dataset.maxTokens || "0");
+      const maxTokens = parseInt(/** @type {HTMLInputElement} */(document.querySelector("#max-tokens")).value || "0");
       let tokenCount = 0;
       let fileList = "";
       /** @type {NodeListOf<HTMLElement>} */

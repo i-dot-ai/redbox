@@ -69,10 +69,10 @@ class ChatsView(View):
                     "selected": chat_llm_backend == chat_backend,
                     "id": chat_llm_backend.id,
                     "description": chat_llm_backend.description,
+                    "max_tokens": chat_llm_backend.context_window_size,
                 }
                 for chat_llm_backend in ChatLLMBackend.objects.filter(enabled=True)
             ],
-            "max_tokens": chat_backend.context_window_size,
         }
 
         return render(

@@ -45,6 +45,7 @@ export class ModelSelector extends RedboxElement {
           `)}
         </div>
         <input type="hidden" id="llm-selector" name="llm" value=${this.options[this.selectedOption].id}/>
+        <input type="hidden" id="max-tokens" value=${this.options[this.selectedOption].max_tokens}/>
       `;
     }
     return html`
