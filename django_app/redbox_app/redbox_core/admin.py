@@ -181,7 +181,7 @@ class ChatAdmin(ExportMixin, admin.ModelAdmin):
         (
             None,
             {
-                "fields": ["name", "user", "created_at"],
+                "fields": ["name", "user"],
             },
         ),
         (
