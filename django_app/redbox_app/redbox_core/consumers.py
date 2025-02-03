@@ -43,22 +43,23 @@ class ChatConsumer(AsyncWebsocketConsumer):
     route = None
     redbox = Redbox(debug=settings.DEBUG)
 
-    async def receive(self, text_data=None, bytes_data=None):
+    async def receive(self, text_data=None, _bytes_data=None):
         """Receive & respond to message from browser websocket."""
         self.full_reply = []
         self.route = None
 
-        data = json.loads(text_data or bytes_data)
+        data = json.loads(text_data)
         logger.debug("received %s from browser", data)
         user_message_text: str = data.get("message", "")
-        user: User = self.scope.get("user")
-
         try:
-            chat = await Chat.objects.aget(id=data["sessionId"])
+            user: User = self.scope["user"]
+            chat_id = self.scope["url_route"]["kwargs"]["chat_id"]
         except KeyError:
             self.close()
             self.send_to_client("error", error_messages.CORE_ERROR_MESSAGE)
             raise
+
+        chat = await Chat.objects.aget(id=chat_id)
 
         if chat_backend_id := data.get("llm"):
             chat.chat_backend = await ChatLLMBackend.objects.aget(id=chat_backend_id)

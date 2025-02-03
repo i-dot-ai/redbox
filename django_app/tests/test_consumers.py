@@ -44,10 +44,11 @@ async def test_chat_consumer_with_new_session(chat: Chat, mocked_connect: Connec
     with patch("redbox_app.redbox_core.consumers.ChatConsumer.redbox._get_runnable", new=lambda _: mocked_connect):
         communicator = WebsocketCommunicator(ChatConsumer.as_asgi(), "/ws/chat/")
         communicator.scope["user"] = chat.user
+        communicator.scope["url_route"] = {"kwargs": {"chat_id": chat.id}}
         connected, _ = await communicator.connect()
         assert connected
 
-        await communicator.send_json_to({"sessionId": str(chat.id), "message": "Hello Hal."})
+        await communicator.send_json_to({"message": "Hello Hal."})
         response1 = await communicator.receive_json_from(timeout=5)
         response2 = await communicator.receive_json_from(timeout=5)
         response3 = await communicator.receive_json_from(timeout=5)
@@ -77,10 +78,11 @@ async def test_chat_consumer_staff_user(staff_user: User, chat: Chat, mocked_con
     with patch("redbox_app.redbox_core.consumers.ChatConsumer.redbox._get_runnable", new=lambda _: mocked_connect):
         communicator = WebsocketCommunicator(ChatConsumer.as_asgi(), "/ws/chat/")
         communicator.scope["user"] = staff_user
+        communicator.scope["url_route"] = {"kwargs": {"chat_id": chat.id}}
         connected, _ = await communicator.connect()
         assert connected
 
-        await communicator.send_json_to({"sessionId": str(chat.id), "message": "Hello Hal.", "output_text": "hello"})
+        await communicator.send_json_to({"message": "Hello Hal.", "output_text": "hello"})
         response1 = await communicator.receive_json_from(timeout=5)
         response2 = await communicator.receive_json_from(timeout=5)
         response3 = await communicator.receive_json_from(timeout=5)
@@ -107,10 +109,11 @@ async def test_chat_consumer_with_existing_session(chat: Chat, mocked_connect: C
     with patch("redbox_app.redbox_core.consumers.ChatConsumer.redbox._get_runnable", new=lambda _: mocked_connect):
         communicator = WebsocketCommunicator(ChatConsumer.as_asgi(), "/ws/chat/")
         communicator.scope["user"] = chat.user
+        communicator.scope["url_route"] = {"kwargs": {"chat_id": chat.id}}
         connected, _ = await communicator.connect()
         assert connected
 
-        await communicator.send_json_to({"message": "Hello Hal.", "sessionId": str(chat.id)})
+        await communicator.send_json_to({"message": "Hello Hal."})
         response1 = await communicator.receive_json_from(timeout=5)
 
         # Then
@@ -133,10 +136,11 @@ async def test_chat_consumer_with_naughty_question(chat: Chat, mocked_connect: C
     with patch("redbox_app.redbox_core.consumers.ChatConsumer.redbox._get_runnable", new=lambda _: mocked_connect):
         communicator = WebsocketCommunicator(ChatConsumer.as_asgi(), "/ws/chat/")
         communicator.scope["user"] = chat.user
+        communicator.scope["url_route"] = {"kwargs": {"chat_id": chat.id}}
         connected, _ = await communicator.connect()
         assert connected
 
-        await communicator.send_json_to({"sessionId": str(chat.id), "message": "Hello Hal. \x00"})
+        await communicator.send_json_to({"message": "Hello Hal. \x00"})
         response1 = await communicator.receive_json_from(timeout=5)
         response2 = await communicator.receive_json_from(timeout=5)
         response3 = await communicator.receive_json_from(timeout=5)
@@ -188,12 +192,9 @@ async def test_chat_consumer_with_selected_files(
         connected, _ = await communicator.connect()
         assert connected
 
-        selected_file_core_uuids: Sequence[str] = [f.file_name for f in selected_files]
         await communicator.send_json_to(
             {
                 "message": "Third question, with selected files?",
-                "sessionId": str(chat_with_files.id),
-                "selectedFiles": selected_file_core_uuids,
             }
         )
         response1 = await communicator.receive_json_from(timeout=5)
@@ -221,7 +222,7 @@ async def test_chat_consumer_with_selected_files(
                 {"role": "ai", "text": "A second answer."},
                 {"role": "user", "text": "Third question, with selected files?"},
             ],
-            "selected_files": selected_file_core_uuids,
+            "selected_files": [x.id for x in selected_files],
             "chat_backend": llm_backend,
         }
     )
@@ -245,10 +246,11 @@ async def test_chat_consumer_with_connection_error(chat: Chat, mocked_breaking_c
     ):
         communicator = WebsocketCommunicator(ChatConsumer.as_asgi(), "/ws/chat/")
         communicator.scope["user"] = chat.user
+        communicator.scope["url_route"] = {"kwargs": {"chat_id": chat.id}}
         connected, _ = await communicator.connect()
         assert connected
 
-        await communicator.send_json_to({"sessionId": str(chat.id), "message": "Hello Hal."})
+        await communicator.send_json_to({"message": "Hello Hal."})
         await communicator.receive_json_from(timeout=5)
         response2 = await communicator.receive_json_from(timeout=5)
 
@@ -270,10 +272,11 @@ async def test_chat_consumer_with_explicit_unhandled_error(
     ):
         communicator = WebsocketCommunicator(ChatConsumer.as_asgi(), "/ws/chat/")
         communicator.scope["user"] = chat.user
+        communicator.scope["url_route"] = {"kwargs": {"chat_id": chat.id}}
         connected, _ = await communicator.connect()
         assert connected
 
-        await communicator.send_json_to({"sessionId": str(chat.id), "message": "Hello Hal."})
+        await communicator.send_json_to({"message": "Hello Hal."})
         response1 = await communicator.receive_json_from(timeout=5)
         response2 = await communicator.receive_json_from(timeout=5)
         response3 = await communicator.receive_json_from(timeout=5)
@@ -300,10 +303,11 @@ async def test_chat_consumer_with_rate_limited_error(chat: Chat, mocked_connect_
     ):
         communicator = WebsocketCommunicator(ChatConsumer.as_asgi(), "/ws/chat/")
         communicator.scope["user"] = chat.user
+        communicator.scope["url_route"] = {"kwargs": {"chat_id": chat.id}}
         connected, _ = await communicator.connect()
         assert connected
 
-        await communicator.send_json_to({"sessionId": str(chat.id), "message": "Hello Hal."})
+        await communicator.send_json_to({"message": "Hello Hal."})
         response1 = await communicator.receive_json_from(timeout=5)
         response2 = await communicator.receive_json_from(timeout=5)
         response3 = await communicator.receive_json_from(timeout=5)
@@ -332,10 +336,11 @@ async def test_chat_consumer_with_explicit_no_document_selected_error(
     ):
         communicator = WebsocketCommunicator(ChatConsumer.as_asgi(), "/ws/chat/")
         communicator.scope["user"] = chat.user
+        communicator.scope["url_route"] = {"kwargs": {"chat_id": chat.id}}
         connected, _ = await communicator.connect()
         assert connected
 
-        await communicator.send_json_to({"sessionId": str(chat.id), "message": "Hello Hal."})
+        await communicator.send_json_to({"message": "Hello Hal."})
         response1 = await communicator.receive_json_from(timeout=5)
         response2 = await communicator.receive_json_from(timeout=5)
 
@@ -358,21 +363,11 @@ async def test_chat_consumer_redbox_state(
     with patch("redbox_app.redbox_core.consumers.ChatConsumer.redbox.run") as mock_run:
         communicator = WebsocketCommunicator(ChatConsumer.as_asgi(), "/ws/chat/")
         communicator.scope["user"] = chat.user
+        communicator.scope["url_route"] = {"kwargs": {"chat_id": chat.id}}
         connected, _ = await communicator.connect()
         assert connected
 
-        selected_file_uuids: Sequence[str] = [str(f.id) for f in several_files]
-        documents: Sequence[str] = [
-            Document(page_content=str(f.text), metadata={"uri": f.original_file.name}) for f in several_files
-        ]
-
-        await communicator.send_json_to(
-            {
-                "message": "Third question, with selected files?",
-                "sessionId": str(chat_with_files.id),
-                "selectedFiles": selected_file_uuids,
-            }
-        )
+        await communicator.send_json_to({"message": "Third question, with selected files?"})
         response1 = await communicator.receive_json_from(timeout=5)
 
         # Then
@@ -386,7 +381,9 @@ async def test_chat_consumer_redbox_state(
 
         # Then
         expected_request = RedboxState(
-            documents=documents,
+            documents=[
+                Document(page_content=str(f.text), metadata={"uri": f.original_file.name}) for f in several_files
+            ],
             messages=[
                 HumanMessage(content="A question?"),
                 AIMessage(content="An answer."),
