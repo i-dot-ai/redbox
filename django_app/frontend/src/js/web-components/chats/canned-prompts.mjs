@@ -19,15 +19,15 @@ class CannedPrompts extends RedboxElement {
         What would you like to ask?
       </h3>
       <div class="chat-options__options">
-          <button @click=${this.#prepopulateMessageBox} class="chat-options__option chat-options__option_agenda plausible-event-name--canned+prompt+draft+meeting+agenda" type="button">
+          <button @click=${this.#prepopulateMessageBox} class="chat-options__option chat-options__option_agenda" type="button">
               <img src="/static/icons/icon_square_doc.svg" alt=""/>
               Summarise this document
           </button>
-          <button @click=${this.#prepopulateMessageBox} class="chat-options__option chat-options__option_objectives plausible-event-name--canned+prompt+set+work+objectives" type="button">
+          <button @click=${this.#prepopulateMessageBox} class="chat-options__option chat-options__option_objectives" type="button">
               <img src="/static/icons/archery.svg" alt=""/>
               Draft an email about…
           </button>
-          <button @click=${this.#prepopulateMessageBox} class="chat-options__option chat-options__option_ps_role plausible-event-name--canned+prompt+describe+role+permanent+secretary" type="button">
+          <button @click=${this.#prepopulateMessageBox} class="chat-options__option chat-options__option_ps_role" type="button">
               <img src="/static/icons/person.svg" alt=""/>
               Reformat this to assist with neurodivergent communication…
           </button>
@@ -44,6 +44,12 @@ class CannedPrompts extends RedboxElement {
       chatInput.value = prompt;
       chatInput.focus();
       chatInput.selectionStart = chatInput.value.length;
+    }
+
+    // Send data to Plausible
+    let plausible = /** @type {any} */ (window).plausible;
+    if (typeof plausible !== "undefined") {
+      plausible("Canned prompt", { props: { text: prompt } });
     }
   };
 
