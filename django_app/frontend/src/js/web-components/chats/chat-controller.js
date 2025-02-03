@@ -75,7 +75,6 @@ class ChatController extends HTMLElement {
       aiMessage.stream(
         userText,
         llm,
-        this.dataset.sessionId,
         this.dataset.streamUrl || "",
         this
       );

@@ -69,7 +69,6 @@ export class ChatMessage extends HTMLElement {
   stream = (
     message,
     llm,
-    sessionId,
     endPoint,
     chatControllerRef
   ) => {
@@ -103,7 +102,6 @@ export class ChatMessage extends HTMLElement {
       webSocket.send(
         JSON.stringify({
           message: message,
-          sessionId: sessionId,
           llm: llm,
         })
       );
