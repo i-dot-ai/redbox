@@ -52,38 +52,29 @@ class ChatConsumer(AsyncWebsocketConsumer):
         logger.debug("received %s from browser", data)
         user_message_text: str = data.get("message", "")
         user: User = self.scope.get("user")
+        if "sessionId" not in data:
+            self.close()
+            raise ValueError("no `sessionId` received")
+
+
+        chat = await Chat.objects.aget(id=data["sessionId"])
 
         if chat_backend_id := data.get("llm"):
-            chat_backend = await ChatLLMBackend.objects.aget(id=chat_backend_id)
-        else:
-            chat_backend = await ChatLLMBackend.objects.aget(is_default=True)
+            chat.chat_backend = await ChatLLMBackend.objects.aget(id=chat_backend_id)
+            await chat.asave()
 
-        temperature = data.get("temperature", 0)
-
-        if session_id := data.get("sessionId"):
-            session = await Chat.objects.aget(id=session_id)
-            session.chat_backend = chat_backend
-            session.temperature = temperature
-            logger.info("updating session: chat_backend=%s temperature=%s", chat_backend, temperature)
-            await session.asave()
-        else:
-            logger.info("creating session: chat_backend=%s temperature=%s", chat_backend, temperature)
-            session = await Chat.objects.acreate(
-                name=await get_unique_chat_title(user_message_text, user),
-                user=user,
-                chat_backend=chat_backend,
-                temperature=temperature,
-            )
+        if temperature := data.get("temperature", 0):
+            chat.temperature = temperature
+            await chat.asave()
 
         # Update session name if this is the first message
-        message_count = await session.chatmessage_set.acount()
-        if message_count == 0:
-            session.name = await get_unique_chat_title(user_message_text, user)
-            await session.asave()
+        if await chat.chatmessage_set.acount() == 0:
+            chat.name = await get_unique_chat_title(user_message_text, user)
+            await chat.asave()
 
         # save user message
-        await self.save_message(session, user_message_text, ChatMessage.Role.user)
-        await self.llm_conversation(session)
+        await self.save_message(chat, user_message_text, ChatMessage.Role.user)
+        await self.llm_conversation(chat)
         await self.close()
 
     async def llm_conversation(self, session: Chat) -> None:
