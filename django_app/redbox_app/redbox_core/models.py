@@ -474,7 +474,7 @@ class Chat(UUIDPrimaryKeyBase, TimeStampedModel):
 
         return redbox.models.chain.RedboxState(
             documents=[Document(str(f.text), metadata={"uri": f.original_file.name}) for f in self.file_set.all()],
-            messages=[message.to_langchain() for message in self.chatmessage_set.order_by("-created_at")],
+            messages=[message.to_langchain() for message in self.chatmessage_set.order_by("created_at")],
             chat_backend=chat_backend,
         )
 

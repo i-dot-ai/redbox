@@ -170,9 +170,9 @@ class FileInline(admin.StackedInline):
 
 class ChatMessageInline(admin.StackedInline):
     model = models.ChatMessage
-    ordering = "-created_at"
-    fields = ["created_at", "text", "role", "route", "rating"]
-    readonly_fields = ["created_at", "text", "role", "route", "rating"]
+    ordering = "created_at"
+    fields = ["text", "role", "route", "rating"]
+    readonly_fields = ["text", "role", "route", "rating"]
     extra = 0
 
 
@@ -181,7 +181,7 @@ class ChatAdmin(ExportMixin, admin.ModelAdmin):
         (
             None,
             {
-                "fields": ["name", "user"],
+                "fields": ["name", "user", "created_at"],
             },
         ),
         (
