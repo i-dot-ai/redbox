@@ -387,6 +387,7 @@ async def test_chat_consumer_redbox_state(
 
         # Then
         expected_request = RedboxState(
+            user_uuid=alice.id,
             documents=documents,
             messages=[
                 HumanMessage(content="A question?"),

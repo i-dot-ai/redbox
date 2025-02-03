@@ -473,6 +473,7 @@ class Chat(UUIDPrimaryKeyBase, TimeStampedModel):
         )
 
         return redbox.models.chain.RedboxState(
+            user_uuid=self.user.id,
             documents=[Document(str(f.text), metadata={"uri": f.original_file.name}) for f in self.file_set.all()],
             messages=[message.to_langchain() for message in self.chatmessage_set.order_by("created_at")],
             chat_backend=chat_backend,
@@ -660,6 +661,11 @@ class ChatMessage(UUIDPrimaryKeyBase, TimeStampedModel):
         if self.role == self.Role.ai:
             return AIMessage(content=escape_curly_brackets(self.text))
         return HumanMessage(content=escape_curly_brackets(self.text))
+
+    @classmethod
+    def get_since(cls, user: User, since: datetime) -> Sequence["ChatMessage"]:
+        """Returns all chat messages for a given user, with the most recent message after 'since'"""
+        return cls.objects.filter(chat__user=user, created_at__gt=since)
 
     def log(self):
         elastic_log_msg = {

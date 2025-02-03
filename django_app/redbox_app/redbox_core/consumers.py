@@ -13,6 +13,7 @@ from openai import RateLimitError
 from websockets import ConnectionClosedError
 
 from redbox import Redbox
+from redbox.models.settings import get_settings
 from redbox_app.redbox_core import error_messages
 from redbox_app.redbox_core.models import (
     Chat,
@@ -20,6 +21,7 @@ from redbox_app.redbox_core.models import (
     ChatMessage,
     File,
 )
+from redbox_app.redbox_core.ratelimit import UserRateLimiter
 from redbox_app.redbox_core.utils import sanitise_string
 
 User = get_user_model()
@@ -42,6 +44,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
     full_reply: ClassVar = []
     route = None
     redbox = Redbox(debug=settings.DEBUG)
+    user_ratelimiter: UserRateLimiter = UserRateLimiter(token_ratelimit=get_settings().user_token_ratelimit)
 
     async def receive(self, text_data=None, bytes_data=None):
         """Receive & respond to message from browser websocket."""
@@ -102,16 +105,19 @@ class ChatConsumer(AsyncWebsocketConsumer):
         state = await sync_to_async(session.to_langchain)()
 
         try:
-            await self.redbox.run(
-                state,
-                response_tokens_callback=self.handle_text,
-            )
-
-            message = await self.save_message(session, "".join(self.full_reply), ChatMessage.Role.ai)
+            if await self.user_ratelimiter.is_allowed(state):
+                await self.redbox.run(
+                    state,
+                    response_tokens_callback=self.handle_text,
+                )
+                message = await self.save_message(session, "".join(self.full_reply), ChatMessage.Role.ai)
+            else:
+                await self.send_to_client(
+                    "text", "You have exceeded your rate limit for the last minute, please wait before trying again"
+                )
             await self.send_to_client(
                 "end", {"message_id": message.id, "title": session.name, "session_id": session.id}
             )
-
         except RateLimitError as e:
             logger.exception("Rate limit error", exc_info=e)
             await self.send_to_client("error", error_messages.RATE_LIMITED)

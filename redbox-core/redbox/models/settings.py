@@ -92,6 +92,9 @@ Question: {{messages[-1].content}}
 
     model_config = SettingsConfigDict(env_file=".env", env_nested_delimiter="__", extra="allow", frozen=True)
 
+    # Rate Limiting
+    user_token_ratelimit: int = 360_000
+
     @property
     def elastic_chat_mesage_index(self):
         return self.elastic_root_index + "-chat-mesage-log"
