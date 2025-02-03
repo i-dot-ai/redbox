@@ -43,47 +43,40 @@ class ChatConsumer(AsyncWebsocketConsumer):
     route = None
     redbox = Redbox(debug=settings.DEBUG)
 
-    async def receive(self, text_data=None, bytes_data=None):
+    async def receive(self, text_data=None, _bytes_data=None):
         """Receive & respond to message from browser websocket."""
         self.full_reply = []
         self.route = None
 
-        data = json.loads(text_data or bytes_data)
+        data = json.loads(text_data)
         logger.debug("received %s from browser", data)
         user_message_text: str = data.get("message", "")
-        user: User = self.scope.get("user")
+        try:
+            user: User = self.scope["user"]
+            chat_id = self.scope["url_route"]["kwargs"]["chat_id"]
+        except KeyError:
+            self.close()
+            self.send_to_client("error", error_messages.CORE_ERROR_MESSAGE)
+            raise
+
+        chat = await Chat.objects.aget(id=chat_id)
 
         if chat_backend_id := data.get("llm"):
-            chat_backend = await ChatLLMBackend.objects.aget(id=chat_backend_id)
-        else:
-            chat_backend = await ChatLLMBackend.objects.aget(is_default=True)
+            chat.chat_backend = await ChatLLMBackend.objects.aget(id=chat_backend_id)
+            await chat.asave()
 
-        temperature = data.get("temperature", 0)
-
-        if session_id := data.get("sessionId"):
-            session = await Chat.objects.aget(id=session_id)
-            session.chat_backend = chat_backend
-            session.temperature = temperature
-            logger.info("updating session: chat_backend=%s temperature=%s", chat_backend, temperature)
-            await session.asave()
-        else:
-            logger.info("creating session: chat_backend=%s temperature=%s", chat_backend, temperature)
-            session = await Chat.objects.acreate(
-                name=await get_unique_chat_title(user_message_text, user),
-                user=user,
-                chat_backend=chat_backend,
-                temperature=temperature,
-            )
+        if temperature := data.get("temperature", 0):
+            chat.temperature = temperature
+            await chat.asave()
 
         # Update session name if this is the first message
-        message_count = await session.chatmessage_set.acount()
-        if message_count == 0:
-            session.name = await get_unique_chat_title(user_message_text, user)
-            await session.asave()
+        if await chat.chatmessage_set.acount() == 0:
+            chat.name = await get_unique_chat_title(user_message_text, user)
+            await chat.asave()
 
         # save user message
-        await self.save_message(session, user_message_text, ChatMessage.Role.user)
-        await self.llm_conversation(session)
+        await self.save_message(chat, user_message_text, ChatMessage.Role.user)
+        await self.llm_conversation(chat)
         await self.close()
 
     async def llm_conversation(self, session: Chat) -> None:
@@ -92,7 +85,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
         token_count = await sync_to_async(session.token_count)()
 
-        if token_count > session.chat_backend.context_window_size:
+        if token_count > await sync_to_async(session.context_window_size)():
             await self.send_to_client("error", "The attached files are too large to work with")
             return
 
