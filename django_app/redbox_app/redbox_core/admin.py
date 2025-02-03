@@ -170,11 +170,10 @@ class FileInline(admin.StackedInline):
 
 class ChatMessageInline(admin.StackedInline):
     model = models.ChatMessage
-    ordering = ("modified_at",)
-    fields = ["text", "role", "route", "rating"]
-    readonly_fields = ["text", "role", "route", "rating"]
+    ordering = "-created_at"
+    fields = ["created_at", "text", "role", "route", "rating"]
+    readonly_fields = ["created_at", "text", "role", "route", "rating"]
     extra = 0
-    show_change_link = True  # allows users to click through to look at Citations
 
 
 class ChatAdmin(ExportMixin, admin.ModelAdmin):
