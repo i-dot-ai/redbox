@@ -14,7 +14,11 @@ def ingest(file_id: UUID) -> None:
     # These models need to be loaded at runtime otherwise they can be loaded before they exist
     from redbox_app.redbox_core.models import File
 
-    file = File.objects.get(id=file_id)
+    try:
+        file = File.objects.get(id=file_id)
+    except File.DoesNotExist:
+        logging.info("file_id=%s no longer exists, has the user deleted it?", file_id)
+        return
 
     logging.info("Ingesting file: %s", file)
 
