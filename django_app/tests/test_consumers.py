@@ -49,14 +49,12 @@ async def test_chat_consumer_with_new_session(chat: Chat, mocked_connect: Connec
         assert connected
 
         await communicator.send_json_to({"message": "Hello Hal."})
-        response1 = await communicator.receive_json_from(timeout=5)
         response2 = await communicator.receive_json_from(timeout=5)
         response3 = await communicator.receive_json_from(timeout=5)
         response4 = await communicator.receive_json_from(timeout=5)
         # response5 = await communicator.receive_json_from(timeout=5)
 
         # Then
-        assert response1["type"] == "session-id"
         assert response2["type"] == "text"
         assert response2["data"] == "Good afternoon, "
         assert response3["type"] == "text"
@@ -83,14 +81,12 @@ async def test_chat_consumer_staff_user(staff_user: User, chat: Chat, mocked_con
         assert connected
 
         await communicator.send_json_to({"message": "Hello Hal.", "output_text": "hello"})
-        response1 = await communicator.receive_json_from(timeout=5)
         response2 = await communicator.receive_json_from(timeout=5)
         response3 = await communicator.receive_json_from(timeout=5)
         response4 = await communicator.receive_json_from(timeout=5)
         # _response5 = await communicator.receive_json_from(timeout=5)
 
         # Then
-        assert response1["type"] == "session-id"
         assert response2["type"] == "text"
         assert response2["data"] == "Good afternoon, "
         assert response3["type"] == "text"
@@ -114,11 +110,6 @@ async def test_chat_consumer_with_existing_session(chat: Chat, mocked_connect: C
         assert connected
 
         await communicator.send_json_to({"message": "Hello Hal."})
-        response1 = await communicator.receive_json_from(timeout=5)
-
-        # Then
-        assert response1["type"] == "session-id"
-        assert response1["data"] == str(chat.id)
 
         # Close
         await communicator.disconnect()
@@ -141,13 +132,11 @@ async def test_chat_consumer_with_naughty_question(chat: Chat, mocked_connect: C
         assert connected
 
         await communicator.send_json_to({"message": "Hello Hal. \x00"})
-        response1 = await communicator.receive_json_from(timeout=5)
         response2 = await communicator.receive_json_from(timeout=5)
         response3 = await communicator.receive_json_from(timeout=5)
         response4 = await communicator.receive_json_from(timeout=5)
 
         # Then
-        assert response1["type"] == "session-id"
         assert response2["type"] == "text"
         assert response2["data"] == "Good afternoon, "
         assert response3["type"] == "text"
@@ -197,11 +186,6 @@ async def test_chat_consumer_with_selected_files(
                 "message": "Third question, with selected files?",
             }
         )
-        response1 = await communicator.receive_json_from(timeout=5)
-
-        # Then
-        assert response1["type"] == "session-id"
-        assert response1["data"] == str(chat_with_files.id)
 
         # Close
         await communicator.disconnect()
@@ -251,7 +235,6 @@ async def test_chat_consumer_with_connection_error(chat: Chat, mocked_breaking_c
         assert connected
 
         await communicator.send_json_to({"message": "Hello Hal."})
-        await communicator.receive_json_from(timeout=5)
         response2 = await communicator.receive_json_from(timeout=5)
 
         # Then
@@ -277,12 +260,10 @@ async def test_chat_consumer_with_explicit_unhandled_error(
         assert connected
 
         await communicator.send_json_to({"message": "Hello Hal."})
-        response1 = await communicator.receive_json_from(timeout=5)
         response2 = await communicator.receive_json_from(timeout=5)
         response3 = await communicator.receive_json_from(timeout=5)
 
         # Then
-        assert response1["type"] == "session-id"
         assert response2["type"] == "text"
         assert response2["data"] == "Good afternoon, "
         assert response3["type"] == "text"
@@ -308,12 +289,10 @@ async def test_chat_consumer_with_rate_limited_error(chat: Chat, mocked_connect_
         assert connected
 
         await communicator.send_json_to({"message": "Hello Hal."})
-        response1 = await communicator.receive_json_from(timeout=5)
         response2 = await communicator.receive_json_from(timeout=5)
         response3 = await communicator.receive_json_from(timeout=5)
 
         # Then
-        assert response1["type"] == "session-id"
         assert response2["type"] == "text"
         assert response2["data"] == "Good afternoon, "
         assert response3["type"] == "text"
@@ -341,11 +320,9 @@ async def test_chat_consumer_with_explicit_no_document_selected_error(
         assert connected
 
         await communicator.send_json_to({"message": "Hello Hal."})
-        response1 = await communicator.receive_json_from(timeout=5)
         response2 = await communicator.receive_json_from(timeout=5)
 
         # Then
-        assert response1["type"] == "session-id"
         assert response2["type"] == "text"
         assert response2["data"] == error_messages.SELECT_DOCUMENT
         # Close
@@ -368,11 +345,6 @@ async def test_chat_consumer_redbox_state(
         assert connected
 
         await communicator.send_json_to({"message": "Third question, with selected files?"})
-        response1 = await communicator.receive_json_from(timeout=5)
-
-        # Then
-        assert response1["type"] == "session-id"
-        assert response1["data"] == str(chat_with_files.id)
 
         # Close
         await communicator.disconnect()

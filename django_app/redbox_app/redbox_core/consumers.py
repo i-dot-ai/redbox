@@ -81,12 +81,19 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
     async def llm_conversation(self, session: Chat) -> None:
         """Initiate & close websocket conversation with the core-api message endpoint."""
-        await self.send_to_client("session-id", session.id)
 
         token_count = await sync_to_async(session.token_count)()
 
-        if token_count > await sync_to_async(session.context_window_size)():
+        active_context_window_sizes = await sync_to_async(ChatLLMBackend.active_context_window_sizes)()
+
+        if token_count > max(active_context_window_sizes.values()):
             await self.send_to_client("error", "The attached files are too large to work with")
+            return
+
+        if token_count > await sync_to_async(session.context_window_size)():
+            details = "\n".join(f"* `{k}`: {v} tokens" for k, v in active_context_window_sizes if v >= token_count)
+            msg = "The attached files are too large to work with, try one of the following models\n" + details
+            await self.send_to_client("error", msg)
             return
 
         self.route = "chat_with_docs"  # if selected_files else "chat"
