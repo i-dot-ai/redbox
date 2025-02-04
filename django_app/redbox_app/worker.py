@@ -7,7 +7,6 @@ from langchain_openai import AzureOpenAIEmbeddings, OpenAIEmbeddings
 from markitdown import MarkItDown, UnsupportedFormatException
 
 from redbox.chains.components import get_tokeniser
-from redbox_app.redbox_core.models import TextChunk
 from redbox_app.redbox_core.utils import sanitise_string
 
 md = MarkItDown()
@@ -15,18 +14,16 @@ tokeniser = get_tokeniser()
 
 
 def get_embedding_model():
-    if "FAKE_API_KEY" in os.environ:
-        return FakeEmbeddings(size=3072)
     if "AZURE_OPENAI_API_KEY" in os.environ:
         return AzureOpenAIEmbeddings(model=EMBEDDING_MODEL)
     if "OPENAI_API_KEY" in os.environ:
         return OpenAIEmbeddings(model=EMBEDDING_MODEL)
-    raise NotImplementedError("only Azure and OpenAI embeddings are supported")
+    return FakeEmbeddings(size=3072)
 
 
 def ingest(file_id: UUID) -> None:
     # These models need to be loaded at runtime otherwise they can be loaded before they exist
-    from redbox_app.redbox_core.models import File
+    from redbox_app.redbox_core.models import File, TextChunk
 
     file = File.objects.get(id=file_id)
 

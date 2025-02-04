@@ -466,6 +466,10 @@ class Chat(UUIDPrimaryKeyBase, TimeStampedModel):
     def date_group(self):
         return get_date_group(self.newest_message_date)
 
+    @property
+    def question(self) -> str:
+        return self.chatmessage_set.order_by("created_at").last()
+
     def to_langchain(self) -> redbox.models.chain.RedboxState:
         chat_backend = redbox.models.chain.ChatLLMBackend(
             name=self.chat_backend.name,
@@ -474,8 +478,10 @@ class Chat(UUIDPrimaryKeyBase, TimeStampedModel):
             context_window_size=self.chat_backend.context_window_size,
         )
 
+        embedded_question = get_embedding_model().embed_query(self.question)
+
         return redbox.models.chain.RedboxState(
-            documents=self.query_documents(),
+            documents=self.query_documents(embedded_question, self.context_window_size()),
             messages=[message.to_langchain() for message in self.chatmessage_set.order_by("created_at")],
             chat_backend=chat_backend,
         )
@@ -489,10 +495,7 @@ class Chat(UUIDPrimaryKeyBase, TimeStampedModel):
 
         return f(self.file_set) + f(self.chatmessage_set)
 
-    def query_documents(self) -> list[Document]:
-        question = self.chatmessage_set.order_by("created_at").last()
-        embedded_query = get_embedding_model().embed_query(question)
-
+    def query_documents(self, embedded_query: list[float], context_window_size: int) -> list[Document]:
         # limit chunks to those belonging to this chat
         relevant_text_chunks = TextChunk.objects.filter(file__chat=self)
 
@@ -504,7 +507,7 @@ class Chat(UUIDPrimaryKeyBase, TimeStampedModel):
 
         # cut off least relevant chunks
         truncated_text_chunks = ordered_text_chunks.annotate(cumsum=cumulative_token_count).filter(
-            cumsum__le=self.chat_backend.context_window_size
+            cumsum__lt=context_window_size
         )
 
         # define how we want to stitch TextChunks together
@@ -512,13 +515,23 @@ class Chat(UUIDPrimaryKeyBase, TimeStampedModel):
 
         # put back into coherent order
         reordered_text_chunks = (
-            truncated_text_chunks.order_by("file", "index")
+            truncated_text_chunks.order_by("file__original_file", "index")
             .annotate(page_content=page_content)
-            .values("file", "page_content")
+            .values("file__original_file", "page_content", "index", "cumsum")
         )
 
+        def strip_email(txt: str):
+            return txt.split("/")[-1]
+
         return [
-            Document(page_content=text_chunk.page_content, metadata={"uri": text_chunk.file.file_name})
+            Document(
+                page_content=text_chunk["page_content"],
+                metadata={
+                    "uri": strip_email(text_chunk["file__original_file"]),
+                    "index": text_chunk["index"],
+                    "distance": text_chunk["cumsum"],
+                },
+            )
             for text_chunk in reordered_text_chunks
         ]
 

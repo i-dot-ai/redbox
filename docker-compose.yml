@@ -42,7 +42,7 @@ services:
       - path: .env
         required: false
   db:
-    image: postgres:13
+    image: ankane/pgvector
     env_file:
       - path: tests/.env.integration
         required: false
