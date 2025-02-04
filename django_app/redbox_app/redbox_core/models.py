@@ -9,10 +9,11 @@ from typing import override
 
 import elastic_transport
 from django.conf import settings
+from django.contrib.postgres.aggregates import StringAgg
 from django.contrib.postgres.fields import ArrayField
 from django.core import validators
 from django.db import models
-from django.db.models import Max, Min, Sum, UniqueConstraint
+from django.db.models import F, Max, Min, Sum, UniqueConstraint, Window
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django_q.models import OrmQ, Success
@@ -20,12 +21,13 @@ from django_q.tasks import async_task
 from django_use_email_as_username.models import BaseUser, BaseUserManager
 from langchain_core.documents import Document
 from langchain_core.messages import AIMessage, AnyMessage, HumanMessage
+from pgvector.django import CosineDistance, VectorField
 
 import redbox.models.chain
 from redbox.chains.components import get_tokeniser
 from redbox.models.settings import get_settings
 from redbox_app.redbox_core.utils import get_date_group, sanitise_string
-from redbox_app.worker import ingest
+from redbox_app.worker import get_embedding_model, ingest
 
 logging.basicConfig(level=os.environ.get("LOG_LEVEL", "INFO"))
 logger = logging.getLogger(__name__)
@@ -473,7 +475,7 @@ class Chat(UUIDPrimaryKeyBase, TimeStampedModel):
         )
 
         return redbox.models.chain.RedboxState(
-            documents=[Document(str(f.text), metadata={"uri": f.original_file.name}) for f in self.file_set.all()],
+            documents=self.query_documents(),
             messages=[message.to_langchain() for message in self.chatmessage_set.order_by("created_at")],
             chat_backend=chat_backend,
         )
@@ -486,6 +488,39 @@ class Chat(UUIDPrimaryKeyBase, TimeStampedModel):
             return obj.aggregate(Sum("token_count"))["token_count__sum"] or 0
 
         return f(self.file_set) + f(self.chatmessage_set)
+
+    def query_documents(self) -> list[Document]:
+        question = self.chatmessage_set.order_by("created_at").last()
+        embedded_query = get_embedding_model().embed_query(question)
+
+        # limit chunks to those belonging to this chat
+        relevant_text_chunks = TextChunk.objects.filter(file__chat=self)
+
+        # compute similarity to query
+        ordered_text_chunks = relevant_text_chunks.annotate(distance=CosineDistance("embedding", embedded_query))
+
+        # define how we want to sum tokens with increasing distance
+        cumulative_token_count = Window(Sum("token_count"), order_by=F("distance").asc())
+
+        # cut off least relevant chunks
+        truncated_text_chunks = ordered_text_chunks.annotate(cumsum=cumulative_token_count).filter(
+            cumsum__le=self.chat_backend.context_window_size
+        )
+
+        # define how we want to stitch TextChunks together
+        page_content = StringAgg("text", delimiter="\n", ordering=F("index"))
+
+        # put back into coherent order
+        reordered_text_chunks = (
+            truncated_text_chunks.order_by("file", "index")
+            .annotate(page_content=page_content)
+            .values("file", "concatenated_text")
+        )
+
+        return [
+            Document(page_content=text_chunk.page_content, metadata={"uri": text_chunk.file.file_name})
+            for text_chunk in reordered_text_chunks
+        ]
 
 
 class InactiveFileError(ValueError):
@@ -622,6 +657,14 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
         if not self.task:
             return -1
         return OrmQ.objects.filter(lock__lt=self.task.lock).count()
+
+
+class TextChunk(UUIDPrimaryKeyBase, TimeStampedModel):
+    file = models.ForeignKey(File, on_delete=models.CASCADE)
+    embedding = VectorField(dimensions=3072)
+    text = models.TextField()
+    index = models.PositiveIntegerField()
+    token_count = models.PositiveIntegerField()
 
 
 class ChatMessage(UUIDPrimaryKeyBase, TimeStampedModel):
