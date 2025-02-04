@@ -330,15 +330,15 @@ async def test_chat_consumer_with_explicit_no_document_selected_error(
 @pytest.mark.django_db(transaction=True)
 @pytest.mark.asyncio()
 async def test_chat_consumer_redbox_state(
-    chat: Chat, several_files: Sequence[File], chat_with_files: Chat, llm_backend
+    several_files: Sequence[File], chat_with_files: Chat, llm_backend
 ):
     # Given
 
     # When
     with patch("redbox_app.redbox_core.consumers.ChatConsumer.redbox.run") as mock_run:
         communicator = WebsocketCommunicator(ChatConsumer.as_asgi(), "/ws/chat/")
-        communicator.scope["user"] = chat.user
-        communicator.scope["url_route"] = {"kwargs": {"chat_id": chat.id}}
+        communicator.scope["user"] = chat_with_files.user
+        communicator.scope["url_route"] = {"kwargs": {"chat_id": chat_with_files.id}}
         connected, _ = await communicator.connect()
         assert connected
 
@@ -539,3 +539,49 @@ def mocked_connect_with_several_files(several_files: Sequence[File]) -> Connect:
 @database_sync_to_async
 def refresh_from_db(obj: Model) -> None:
     obj.refresh_from_db()
+
+
+@pytest.mark.django_db(transaction=True)
+@pytest.mark.asyncio()
+async def test_chat_consumer_with_context_window_error(large_file: File):
+    # Given large_file
+
+    # When
+    communicator = WebsocketCommunicator(ChatConsumer.as_asgi(), "/ws/chat/")
+    communicator.scope["user"] = large_file.chat.user
+    communicator.scope["url_route"] = {"kwargs": {"chat_id": large_file.chat.id}}
+    connected, _ = await communicator.connect()
+    assert connected
+
+    await communicator.send_json_to({"message": "Hello Hal."})
+    response_1 = await communicator.receive_json_from(timeout=5)
+
+    # Then
+    assert response_1["type"] == "error"
+    assert response_1["data"] == error_messages.FILES_TOO_LARGE
+    # Close
+    await communicator.disconnect()
+
+
+@pytest.mark.django_db(transaction=True)
+@pytest.mark.asyncio()
+async def test_chat_consumer_with_context_window_error_with_suggestion(large_file: File, big_llm_backend):
+    # Given large_file
+
+    # When
+    communicator = WebsocketCommunicator(ChatConsumer.as_asgi(), "/ws/chat/")
+    communicator.scope["user"] = large_file.chat.user
+    communicator.scope["url_route"] = {"kwargs": {"chat_id": large_file.chat.id}}
+    connected, _ = await communicator.connect()
+    assert connected
+
+    await communicator.send_json_to({"message": "Hello Hal."})
+    response_1 = await communicator.receive_json_from(timeout=5)
+
+    # Then
+    assert response_1["type"] == "error"
+    assert response_1["data"].startswith(error_messages.FILES_TOO_LARGE)
+    assert response_1["data"].endswith(f"`{big_llm_backend}`: {big_llm_backend.context_window_size} tokens")
+
+    # Close
+    await communicator.disconnect()
