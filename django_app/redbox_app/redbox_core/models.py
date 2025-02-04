@@ -5,11 +5,11 @@ import textwrap
 import uuid
 from collections.abc import Collection, Sequence
 from datetime import UTC, date, datetime, timedelta
+from itertools import groupby
 from typing import override
 
 import elastic_transport
 from django.conf import settings
-from django.contrib.postgres.aggregates import StringAgg
 from django.contrib.postgres.fields import ArrayField
 from django.core import validators
 from django.db import models
@@ -499,40 +499,28 @@ class Chat(UUIDPrimaryKeyBase, TimeStampedModel):
         # limit chunks to those belonging to this chat
         relevant_text_chunks = TextChunk.objects.filter(file__chat=self)
 
-        # compute similarity to query
+        # Compute similarity to query
         ordered_text_chunks = relevant_text_chunks.annotate(distance=CosineDistance("embedding", embedded_query))
 
-        # define how we want to sum tokens with increasing distance
-        cumulative_token_count = Window(Sum("token_count"), order_by=F("distance").asc())
+        # Define how we want to sum tokens with increasing distance
+        cumulative_token_count = Window(Sum("token_count"), order_by=[F("distance").asc()])
 
-        # cut off least relevant chunks
-        truncated_text_chunks = ordered_text_chunks.annotate(cumsum=cumulative_token_count).filter(
-            cumsum__lt=context_window_size
+        # Cut off least relevant chunks
+        truncated_text_chunks = (
+            ordered_text_chunks.annotate(cumsum=cumulative_token_count)
+            .filter(cumsum__lt=context_window_size)
+            .values("file__original_file", "text", "distance", "index")
         )
 
-        # define how we want to stitch TextChunks together
-        page_content = StringAgg("text", delimiter="\n", ordering=F("index"))
-
-        # put back into coherent order
-        reordered_text_chunks = (
-            truncated_text_chunks.order_by("file__original_file", "index")
-            .annotate(page_content=page_content)
-            .values("file__original_file", "page_content", "index", "distance")
-        )
-
-        def strip_email(txt: str):
-            return txt.split("/")[-1]
+        def k(x):
+            return x["file__original_file"]
 
         return [
             Document(
-                page_content=text_chunk["page_content"],
-                metadata={
-                    "uri": strip_email(text_chunk["file__original_file"]),
-                    "index": text_chunk["index"],
-                    "distance": round(text_chunk["distance"], 4),
-                },
+                page_content="\n".join(chunk["text"] for chunk in sorted(group, key=lambda x: x["index"])),
+                metadata={"uri": file__original_file.split("/")[-1]},
             )
-            for text_chunk in reordered_text_chunks
+            for file__original_file, group in groupby(sorted(truncated_text_chunks, key=k), key=k)
         ]
 
 

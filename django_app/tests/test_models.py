@@ -67,13 +67,7 @@ def test_query_documents(chat, several_files):
     # the first 4 files correctly re-ordered
     documents = chat.query_documents([int(i == 4) for i in range(3072)], 100)
     assert documents == [
-         Document(metadata={'uri': 'original_file_0.txt', 'index': 0, 'distance': 0.9997}, page_content='0-0-a'),
-         Document(metadata={'uri': 'original_file_0.txt', 'index': 1, 'distance': 0.9916}, page_content='0-1-b'),
-         Document(metadata={'uri': 'original_file_0.txt', 'index': 2, 'distance': 0.8983}, page_content='0-2-c'),
-         Document(metadata={'uri': 'original_file_1.txt', 'index': 0, 'distance': 0.5444}, page_content='1-0-a'),
-         Document(metadata={'uri': 'original_file_1.txt', 'index': 1, 'distance': 0.2489}, page_content='1-1-b'),
-         Document(metadata={'uri': 'original_file_1.txt', 'index': 2, 'distance': 0.5444}, page_content='1-2-c'),
-         Document(metadata={'uri': 'original_file_2.txt', 'index': 0, 'distance': 0.8984}, page_content='2-0-a'),
-         Document(metadata={'uri': 'original_file_2.txt', 'index': 1, 'distance': 0.9917}, page_content='2-1-b'),
-         Document(metadata={'uri': 'original_file_2.txt', 'index': 2, 'distance': 0.9997}, page_content='2-2-c'),
+        Document(metadata={"uri": "original_file_0.txt"}, page_content="0-0-a\n0-1-b\n0-2-c"),
+        Document(metadata={"uri": "original_file_1.txt"}, page_content="1-0-a\n1-1-b\n1-2-c"),
+        Document(metadata={"uri": "original_file_2.txt"}, page_content="2-0-a\n2-1-b\n2-2-c"),
     ]
