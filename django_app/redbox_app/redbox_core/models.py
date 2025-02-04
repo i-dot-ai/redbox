@@ -514,7 +514,7 @@ class Chat(UUIDPrimaryKeyBase, TimeStampedModel):
         reordered_text_chunks = (
             truncated_text_chunks.order_by("file", "index")
             .annotate(page_content=page_content)
-            .values("file", "concatenated_text")
+            .values("file", "page_content")
         )
 
         return [
