@@ -381,9 +381,7 @@ async def test_chat_consumer_redbox_state(
 
         # Then
         expected_request = RedboxState(
-            documents=[
-                Document(page_content=str(f.text), metadata={"uri": f.original_file.name}) for f in several_files
-            ],
+            documents=[Document(page_content="Lorem\nIpsum", metadata={"uri": f.file_name}) for f in several_files],
             messages=[
                 HumanMessage(content="A question?"),
                 AIMessage(content="An answer."),

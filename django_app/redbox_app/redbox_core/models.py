@@ -512,7 +512,7 @@ class Chat(UUIDPrimaryKeyBase, TimeStampedModel):
             .values("file__original_file", "text", "distance", "index")
         )
 
-        def k(x):
+        def file_name(x):
             return x["file__original_file"]
 
         return [
@@ -520,7 +520,7 @@ class Chat(UUIDPrimaryKeyBase, TimeStampedModel):
                 page_content="\n".join(chunk["text"] for chunk in sorted(group, key=lambda x: x["index"])),
                 metadata={"uri": file__original_file.split("/")[-1]},
             )
-            for file__original_file, group in groupby(sorted(truncated_text_chunks, key=k), key=k)
+            for file__original_file, group in groupby(sorted(truncated_text_chunks, key=file_name), key=file_name)
         ]
 
 

@@ -14,12 +14,7 @@ from django.core.management import call_command
 from django.utils import timezone
 from freezegun import freeze_time
 
-from redbox_app.redbox_core.models import (
-    Chat,
-    ChatLLMBackend,
-    ChatMessage,
-    File,
-)
+from redbox_app.redbox_core.models import Chat, ChatLLMBackend, ChatMessage, File, TextChunk
 
 User = get_user_model()
 
@@ -272,14 +267,17 @@ def several_files(chat: Chat, number_to_create: int = 4) -> Sequence[File]:
     files = []
     for i in range(number_to_create):
         filename = f"original_file_{i}.txt"
-        files.append(
-            File.objects.create(
-                chat=chat,
-                original_file=SimpleUploadedFile(filename, b"Lorem Ipsum."),
-                status=File.Status.complete,
-                token_count=i * 100,
-            )
+        file = File.objects.create(
+            chat=chat,
+            original_file=SimpleUploadedFile(filename, b"Lorem Ipsum."),
+            status=File.Status.complete,
+            token_count=i * 100,
         )
+        for index, text in enumerate(["Lorem", "Ipsum"]):
+            TextChunk.objects.create(
+                file=file, text=text, token_count=10, embedding=[0 for _ in range(3072)], index=index
+            )
+        files.append(file)
     return files
 
 
