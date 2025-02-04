@@ -510,17 +510,18 @@ class Chat(UUIDPrimaryKeyBase, TimeStampedModel):
             ordered_text_chunks.annotate(cumsum=cumulative_token_count)
             .filter(cumsum__lt=context_window_size)
             .values("file__original_file", "text", "distance", "index")
+            .order_by("file__original_file", "index")
         )
 
-        def file_name(x):
-            return x["file__original_file"]
+        def file_name(text_chunk: dict) -> str:
+            return text_chunk["file__original_file"]
 
         return [
             Document(
-                page_content="\n".join(chunk["text"] for chunk in sorted(group, key=lambda x: x["index"])),
-                metadata={"uri": file__original_file.split("/")[-1]},
+                page_content="\n".join(chunk["text"] for chunk in group),
+                metadata={"uri": file_name.split("/")[-1]},
             )
-            for file__original_file, group in groupby(sorted(truncated_text_chunks, key=file_name), key=file_name)
+            for file_name, group in groupby(truncated_text_chunks, key=file_name)
         ]
 
 
