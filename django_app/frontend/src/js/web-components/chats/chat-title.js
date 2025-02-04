@@ -144,7 +144,12 @@ export class ChatTitle extends HTMLElement {
       /** @type {HTMLInputElement | null} */ (
         document.querySelector('[name="csrfmiddlewaretoken"]')
       )?.value || "";
-    fetch(`/chat/${this.dataset.sessionId}/title/`, {
+
+    if (!this.dataset.titleUrl || !this.dataset.sessionId) {
+      return;
+    }
+    
+    fetch(this.dataset.titleUrl.replace("00000000-0000-0000-0000-000000000000", this.dataset.sessionId), {
       method: "POST",
       headers: { "Content-Type": "application/json", "X-CSRFToken": csrfToken },
       body: JSON.stringify({ name: newTitle }),

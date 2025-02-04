@@ -21,4 +21,9 @@ test(`Chat title functionality works as expected`, async ({ page }) => {
   await textInput.fill("Updated chat title");
   await textInput.press("Enter");
   await expect(chatTitle).toContainText("Updated chat title");
+
+  // The title is saved
+  await page.reload();
+  await expect(chatTitle).toContainText("Updated chat title");
+
 });
