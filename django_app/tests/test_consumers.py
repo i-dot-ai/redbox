@@ -49,17 +49,16 @@ async def test_chat_consumer_with_new_session(chat: Chat, mocked_connect: Connec
         assert connected
 
         await communicator.send_json_to({"message": "Hello Hal."})
-        response2 = await communicator.receive_json_from(timeout=5)
-        response3 = await communicator.receive_json_from(timeout=5)
-        response4 = await communicator.receive_json_from(timeout=5)
-        # response5 = await communicator.receive_json_from(timeout=5)
+        response_1 = await communicator.receive_json_from(timeout=5)
+        response_2 = await communicator.receive_json_from(timeout=5)
+        response_3 = await communicator.receive_json_from(timeout=5)
 
         # Then
-        assert response2["type"] == "text"
-        assert response2["data"] == "Good afternoon, "
-        assert response3["type"] == "text"
-        assert response3["data"] == "Mr. Amor."
-        assert response4["type"] == "end"
+        assert response_1["type"] == "text"
+        assert response_1["data"] == "Good afternoon, "
+        assert response_2["type"] == "text"
+        assert response_2["data"] == "Mr. Amor."
+        assert response_3["type"] == "end"
         # Close
         await communicator.disconnect()
 
@@ -81,17 +80,16 @@ async def test_chat_consumer_staff_user(staff_user: User, chat: Chat, mocked_con
         assert connected
 
         await communicator.send_json_to({"message": "Hello Hal.", "output_text": "hello"})
-        response2 = await communicator.receive_json_from(timeout=5)
-        response3 = await communicator.receive_json_from(timeout=5)
-        response4 = await communicator.receive_json_from(timeout=5)
-        # _response5 = await communicator.receive_json_from(timeout=5)
+        response_1 = await communicator.receive_json_from(timeout=5)
+        response_2 = await communicator.receive_json_from(timeout=5)
+        response_3 = await communicator.receive_json_from(timeout=5)
 
         # Then
-        assert response2["type"] == "text"
-        assert response2["data"] == "Good afternoon, "
-        assert response3["type"] == "text"
-        assert response3["data"] == "Mr. Amor."
-        assert response4["type"] == "end"
+        assert response_1["type"] == "text"
+        assert response_1["data"] == "Good afternoon, "
+        assert response_2["type"] == "text"
+        assert response_2["data"] == "Mr. Amor."
+        assert response_3["type"] == "end"
         # Close
         await communicator.disconnect()
 
@@ -132,16 +130,16 @@ async def test_chat_consumer_with_naughty_question(chat: Chat, mocked_connect: C
         assert connected
 
         await communicator.send_json_to({"message": "Hello Hal. \x00"})
-        response2 = await communicator.receive_json_from(timeout=5)
-        response3 = await communicator.receive_json_from(timeout=5)
-        response4 = await communicator.receive_json_from(timeout=5)
+        response_1 = await communicator.receive_json_from(timeout=5)
+        response_2 = await communicator.receive_json_from(timeout=5)
+        response_3 = await communicator.receive_json_from(timeout=5)
 
         # Then
-        assert response2["type"] == "text"
-        assert response2["data"] == "Good afternoon, "
-        assert response3["type"] == "text"
-        assert response3["data"] == "Mr. Amor."
-        assert response4["type"] == "end"
+        assert response_1["type"] == "text"
+        assert response_1["data"] == "Good afternoon, "
+        assert response_2["type"] == "text"
+        assert response_2["data"] == "Mr. Amor."
+        assert response_3["type"] == "end"
         # Close
         await communicator.disconnect()
 
@@ -235,10 +233,10 @@ async def test_chat_consumer_with_connection_error(chat: Chat, mocked_breaking_c
         assert connected
 
         await communicator.send_json_to({"message": "Hello Hal."})
-        response2 = await communicator.receive_json_from(timeout=5)
+        response_1 = await communicator.receive_json_from(timeout=5)
 
         # Then
-        assert response2["type"] == "error"
+        assert response_1["type"] == "error"
 
 
 @pytest.mark.django_db(transaction=True)
@@ -260,14 +258,14 @@ async def test_chat_consumer_with_explicit_unhandled_error(
         assert connected
 
         await communicator.send_json_to({"message": "Hello Hal."})
-        response2 = await communicator.receive_json_from(timeout=5)
-        response3 = await communicator.receive_json_from(timeout=5)
+        response_1 = await communicator.receive_json_from(timeout=5)
+        response_2 = await communicator.receive_json_from(timeout=5)
 
         # Then
-        assert response2["type"] == "text"
-        assert response2["data"] == "Good afternoon, "
-        assert response3["type"] == "text"
-        assert response3["data"] == error_messages.CORE_ERROR_MESSAGE
+        assert response_1["type"] == "text"
+        assert response_1["data"] == "Good afternoon, "
+        assert response_2["type"] == "text"
+        assert response_2["data"] == error_messages.CORE_ERROR_MESSAGE
         # Close
         await communicator.disconnect()
 
@@ -289,14 +287,14 @@ async def test_chat_consumer_with_rate_limited_error(chat: Chat, mocked_connect_
         assert connected
 
         await communicator.send_json_to({"message": "Hello Hal."})
-        response2 = await communicator.receive_json_from(timeout=5)
-        response3 = await communicator.receive_json_from(timeout=5)
+        response_1 = await communicator.receive_json_from(timeout=5)
+        response_2 = await communicator.receive_json_from(timeout=5)
 
         # Then
-        assert response2["type"] == "text"
-        assert response2["data"] == "Good afternoon, "
-        assert response3["type"] == "text"
-        assert response3["data"] == error_messages.RATE_LIMITED
+        assert response_1["type"] == "text"
+        assert response_1["data"] == "Good afternoon, "
+        assert response_2["type"] == "text"
+        assert response_2["data"] == error_messages.RATE_LIMITED
         # Close
         await communicator.disconnect()
 
@@ -320,11 +318,11 @@ async def test_chat_consumer_with_explicit_no_document_selected_error(
         assert connected
 
         await communicator.send_json_to({"message": "Hello Hal."})
-        response2 = await communicator.receive_json_from(timeout=5)
+        response_1 = await communicator.receive_json_from(timeout=5)
 
         # Then
-        assert response2["type"] == "text"
-        assert response2["data"] == error_messages.SELECT_DOCUMENT
+        assert response_1["type"] == "text"
+        assert response_1["data"] == error_messages.SELECT_DOCUMENT
         # Close
         await communicator.disconnect()
 
