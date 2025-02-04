@@ -619,7 +619,7 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
         )
 
     def position_in_queue(self) -> int:
-        if not self.task:
+        if not self.task_id:
             return -1
         return OrmQ.objects.filter(lock__lt=self.task.lock).count()
 
