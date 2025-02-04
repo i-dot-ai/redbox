@@ -71,6 +71,17 @@ def llm_backend(db):  # noqa: ARG001
 
 
 @pytest.fixture()
+def big_llm_backend():
+    big_llm, _ = ChatLLMBackend.objects.get_or_create(
+        name="big-llm",
+        provider="azure_openai",
+        is_default=False,
+        context_window_size=1_000_000,
+    )
+    return big_llm
+
+
+@pytest.fixture()
 def create_user():
     def _create_user(
         email,
@@ -187,6 +198,20 @@ def uploaded_file(chat: Chat, original_file: UploadedFile, s3_client) -> File:  
         original_file=original_file,
         last_referenced=datetime.now(tz=UTC) - timedelta(days=14),
         status=File.Status.processing,
+    )
+    file.save()
+    yield file
+    file.delete()
+
+
+@pytest.fixture()
+def large_file(chat: Chat, original_file: UploadedFile, s3_client) -> File:  # noqa: ARG001
+    file = File.objects.create(
+        chat=chat,
+        original_file=original_file,
+        last_referenced=datetime.now(tz=UTC) - timedelta(days=14),
+        status=File.Status.processing,
+        token_count=150_000,
     )
     file.save()
     yield file

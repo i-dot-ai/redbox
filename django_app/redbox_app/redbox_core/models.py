@@ -95,6 +95,10 @@ class ChatLLMBackend(models.Model):
             ChatLLMBackend.objects.filter(is_default=True).update(is_default=False)
         super().save(*args, **kwargs)
 
+    @classmethod
+    def active_context_window_sizes(cls) -> dict[str, int]:
+        return {str(o): o.context_window_size for o in cls.objects.filter(enabled=True)}
+
 
 class User(BaseUser, UUIDPrimaryKeyBase):
     class UserGrade(models.TextChoices):
