@@ -329,9 +329,7 @@ async def test_chat_consumer_with_explicit_no_document_selected_error(
 
 @pytest.mark.django_db(transaction=True)
 @pytest.mark.asyncio()
-async def test_chat_consumer_redbox_state(
-    several_files: Sequence[File], chat_with_files: Chat, llm_backend
-):
+async def test_chat_consumer_redbox_state(several_files: Sequence[File], chat_with_files: Chat, llm_backend):
     # Given
 
     # When
