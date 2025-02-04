@@ -517,7 +517,7 @@ class Chat(UUIDPrimaryKeyBase, TimeStampedModel):
         reordered_text_chunks = (
             truncated_text_chunks.order_by("file__original_file", "index")
             .annotate(page_content=page_content)
-            .values("file__original_file", "page_content", "index", "cumsum")
+            .values("file__original_file", "page_content", "index", "distance")
         )
 
         def strip_email(txt: str):
@@ -529,7 +529,7 @@ class Chat(UUIDPrimaryKeyBase, TimeStampedModel):
                 metadata={
                     "uri": strip_email(text_chunk["file__original_file"]),
                     "index": text_chunk["index"],
-                    "distance": text_chunk["cumsum"],
+                    "distance": round(text_chunk["distance"], 4),
                 },
             )
             for text_chunk in reordered_text_chunks
