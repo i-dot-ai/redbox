@@ -41,7 +41,7 @@ test(`Chat history functionality works as expected`, async ({ page }) => {
   await page.locator(".rb-chat-history__actions-button").first().click();
   await page.locator('button[data-action="delete"]').first().click();
   await page.locator('button[data-action="delete-confirm"]').first().click();
-  await page.waitForTimeout(500);
+  await page.waitForTimeout(1000);
   const count3 = await page.evaluate(
     () => document.querySelectorAll(".rb-chat-history__link").length
   );

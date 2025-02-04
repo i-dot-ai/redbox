@@ -7,6 +7,7 @@ export class DocumentUpload extends RedboxElement {
     csrfToken: { type: String, attribute: "data-csrftoken" },
     chatId: { type: String, attribute: "data-chatid" },
     dragDropInProgress: { type: Boolean, state: true },
+    uploadUrl: { type: String, attribute: "data-upload-url" },
   };
 
   connectedCallback() {
@@ -74,7 +75,7 @@ export class DocumentUpload extends RedboxElement {
 
   render() {
     return html`
-      <form class="rb-document-upload ${this.jsInitialised ? `rb-document-upload--js-active` : ''}" action="/upload/" method="post" enctype="multipart/form-data">
+      <form class="rb-document-upload ${this.jsInitialised ? `rb-document-upload--js-active` : ''}" action=${this.uploadUrl} method="post" enctype="multipart/form-data">
         <input type="hidden" name="csrfmiddlewaretoken" value=${this["csrfToken"]} />
         <input type="hidden" name="chat_id" value=${this["chatId"]} />
         <label class="govuk-label" for="upload-docs">

@@ -41,18 +41,16 @@ info_urlpatterns = [
     path("support/", views.support_view, name="support"),
 ]
 
-file_urlpatterns = [
-    path("upload/<uuid:chat_id>/", views.UploadView.as_view(), name="upload"),
-    path("remove-doc/<uuid:doc_id>", views.remove_doc_view, name="remove-doc"),
-]
 
 chat_urlpatterns = [
-    path("chats/<uuid:chat_id>/", views.ChatsView.as_view(), name="chats"),
     path("chats/", views.ChatsViewNew.as_view(), name="chats"),
-    path("chat/<uuid:chat_id>/title/", views.ChatsTitleView.as_view(), name="chat-titles"),
-    path("ratings/<uuid:message_id>/", views.RatingsView.as_view(), name="ratings"),
+    path("chats/<uuid:chat_id>/", views.ChatsView.as_view(), name="chats"),
+    path("chats/<uuid:chat_id>/title/", views.ChatsTitleView.as_view(), name="chat-titles"),
     path("chats/<uuid:chat_id>/update-chat-feedback", views.UpdateChatFeedback.as_view(), name="chat-feedback"),
     path("chats/<uuid:chat_id>/delete-chat", views.DeleteChat.as_view(), name="chat-delete"),
+    path("chats/<uuid:chat_id>/upload", views.UploadView.as_view(), name="upload"),
+    path("chats/<uuid:chat_id>/remove-doc/<uuid:doc_id>", views.remove_doc_view, name="remove-doc"),
+    path("ratings/<uuid:message_id>/", views.RatingsView.as_view(), name="ratings"),
 ]
 
 admin_urlpatterns = [
@@ -77,13 +75,7 @@ api_url_patterns = [
 ]
 
 urlpatterns = (
-    info_urlpatterns
-    + other_urlpatterns
-    + auth_urlpatterns
-    + chat_urlpatterns
-    + file_urlpatterns
-    + admin_urlpatterns
-    + api_url_patterns
+    info_urlpatterns + other_urlpatterns + auth_urlpatterns + chat_urlpatterns + admin_urlpatterns + api_url_patterns
 )
 
 if settings.DEBUG:

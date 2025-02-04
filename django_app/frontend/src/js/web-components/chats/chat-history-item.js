@@ -163,7 +163,12 @@ class ChatHistoryItem extends HTMLElement {
       /** @type {HTMLInputElement | null} */ (
       document.querySelector('[name="csrfmiddlewaretoken"]')
     )?.value || "";
-    fetch(`/chat/${this.dataset.chatid}/title/`, {
+
+    if (!this.dataset.titleUrl || !this.dataset.chatid) {
+      return;
+    }
+
+    fetch(this.dataset.titleUrl.replace("00000000-0000-0000-0000-000000000000", this.dataset.chatid), {
       method: "POST",
       headers: {"Content-Type": "application/json", "X-CSRFToken": csrfToken},
       body: JSON.stringify({name: newTitle}),

@@ -89,13 +89,17 @@ export class UploadContainer extends RedboxElement {
     const item = evt.target.closest("li");
     const id = item.querySelector("file-status").dataset.id;
     
+    if (!this.dataset.removeDocUrl) {
+      return;
+    }
+
     // remove from UI
     item.remove();
 
     // remove from server
     const formData = new FormData();
     formData.append('doc_id', id);
-    fetch(`/remove-doc/${id}`, {
+    fetch(this.dataset.removeDocUrl.replace("00000000-0000-0000-0000-000000000000", id), {
       method: "POST",
       headers: {
         "X-CSRFToken": this.dataset.csrftoken || "",
