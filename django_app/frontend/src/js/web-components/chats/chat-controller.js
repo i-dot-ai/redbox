@@ -39,14 +39,23 @@ class ChatController extends HTMLElement {
         fileList += `<li><span>${element.dataset.name}: </span><span>${element.dataset.tokens} tokens</span></li>`;
       });
       if (tokenCount > maxTokens) {
+        const models = JSON.parse(this.dataset.models || "[]");
         this.#showError(`
-          ${tokenElements.length > 1 ? 
-            `<p>The attached files are too large. Please remove some files and try again.</p>` :
-            `<p>The attached file is too large. Please remove this and try again with a smaller file.</p>`
-          }
-          <p>The maximum size for this chat is ${maxTokens} tokens.</p>
+          <p>The attached file(s) are too large. The maximum size for this chat is ${maxTokens} tokens.</p>
+          <p>You can try:</p>
+          <ul>
+            <li>Removing any files attached since the last message</li>
+            <li>Reducing the size of the files attached</li>
+            <li>Selecting a different model</li>
+          </ul>
           <p>Current file sizes:</p>
           <ul class="rb-token-sizes">${fileList}</ul>
+          <details>
+            <summary>Model token limits</summary>
+            <ul class="rb-token-sizes">
+              ${models.map((model) => `<li><span>${model.name}: </span><span>${model.max_tokens} tokens</li>`).join("")}
+            </ul>
+          </details>
         `);
         return;
       }

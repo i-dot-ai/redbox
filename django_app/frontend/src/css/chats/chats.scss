@@ -239,6 +239,17 @@ chat-message {
   font-weight: bold;
   margin-right: 0.5rem;
 }
+.iai-chat-bubble__text details {
+  border: 1px solid var(--iai-colour-secondary-teal);
+  border-radius: 0.5rem;
+  color: var(--iai-colour-secondary-teal);
+  cursor: pointer;
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+}
+.iai-chat-bubble__text details ul {
+  padding-left: 1rem;
+}
 
 @import "./chat-input.scss";
 
