@@ -13,7 +13,7 @@ from django.db.models import Model
 from django.forms import model_to_dict
 from langchain_core.documents import Document
 from langchain_core.language_models import BaseChatModel
-from langchain_core.messages import AIMessage, HumanMessage
+from langchain_core.messages import AIMessage, AIMessageChunk, HumanMessage
 from pydantic import BaseModel
 from websockets import WebSocketClientProtocol
 from websockets.legacy.client import Connect
@@ -409,7 +409,7 @@ def mocked_connect() -> Connect:
         {"event": "on_chat_model_stream", "data": {"chunk": Token(content="Mr. Amor.")}},
         {
             "event": "on_chain_end",
-            "data": {"output": RedboxState(messages=[AIMessage(content="Good afternoon, Mr. Amor.")])},
+            "data": {"output": AIMessageChunk(content="Good afternoon, Mr. Amor.")},
         },
     ]
 
@@ -425,7 +425,7 @@ def mocked_connect_with_naughty_citation() -> CannedGraphLLM:
         },
         {
             "event": "on_chain_end",
-            "data": {"output": RedboxState(messages=[AIMessage(content="Good afternoon, Mr. Amor.")])},
+            "data": {"output": AIMessageChunk(content="Good afternoon, Mr. Amor.")},
         },
     ]
 
