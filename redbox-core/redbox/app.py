@@ -34,11 +34,12 @@ class Redbox:
         )
         return ChatPromptTemplate.from_messages(messages=messages) | llm
 
-    def run_sync(self, input: RedboxState):
+    def run_sync(self, state: RedboxState):
         """
         Run Redbox without streaming events. This simpler, synchronous execution enables use of the graph debug logging
         """
-        return self._get_runnable(input).invoke(input=input.model_dump())
+        request_dict = state.model_dump()
+        return self._get_runnable(state).invoke(input=request_dict)
 
     async def run(
         self,

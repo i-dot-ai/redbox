@@ -50,6 +50,7 @@ chat_urlpatterns = [
     path("chats/<uuid:chat_id>/delete-chat", views.DeleteChat.as_view(), name="chat-delete"),
     path("chats/<uuid:chat_id>/upload", views.UploadView.as_view(), name="upload"),
     path("chats/<uuid:chat_id>/remove-doc/<uuid:doc_id>", views.remove_doc_view, name="remove-doc"),
+    path("chats/<uuid:chat_id>/message", views.ChatMessageView.as_view(), name="chat-message"),
     path("ratings/<uuid:message_id>/", views.RatingsView.as_view(), name="ratings"),
 ]
 
