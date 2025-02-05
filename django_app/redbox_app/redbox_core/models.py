@@ -1,7 +1,9 @@
 import contextlib
 import logging
+import math
 import os
 import textwrap
+import time
 import uuid
 from collections.abc import Collection, Sequence
 from datetime import UTC, date, datetime, timedelta
@@ -20,6 +22,7 @@ from django_q.tasks import async_task
 from django_use_email_as_username.models import BaseUser, BaseUserManager
 from langchain_core.documents import Document
 from langchain_core.messages import AIMessage, AnyMessage, HumanMessage
+from pytz import utc
 
 import redbox.models.chain
 from redbox.chains.components import get_tokeniser
@@ -84,6 +87,7 @@ class ChatLLMBackend(models.Model):
     enabled = models.BooleanField(default=True, help_text="is this model enabled.")
     display = models.CharField(max_length=128, null=True, blank=True, help_text="name to display in UI.")
     context_window_size = models.PositiveIntegerField(help_text="size of the LLM context window")
+    rate_limit = models.PositiveIntegerField(null=True, blank=True, help_text="tokens per minute allowed by this model")
 
     class Meta:
         constraints = [UniqueConstraint(fields=["name", "provider"], name="unique_name_provider")]
@@ -729,15 +733,17 @@ def get_chat_session(user: User, chat_id: uuid.UUID, data: dict) -> Chat:
         chat.name = get_unique_chat_title(data.get("message", ""), user)
         chat.save()
 
-    token_count = chat.token_count()
+    token_count_this_message = chat.token_count()
 
     active_context_window_sizes = ChatLLMBackend.active_context_window_sizes()
 
-    if token_count > max(active_context_window_sizes.values()):
+    if token_count_this_message > max(active_context_window_sizes.values()):
         raise ValueError(error_messages.FILES_TOO_LARGE)
 
-    if token_count > chat.context_window_size():
-        details = "\n".join(f"* `{k}`: {v} tokens" for k, v in active_context_window_sizes.items() if v >= token_count)
+    if token_count_this_message > chat.context_window_size():
+        details = "\n".join(
+            f"* `{k}`: {v} tokens" for k, v in active_context_window_sizes.items() if v >= token_count_this_message
+        )
         msg = f"{error_messages.FILES_TOO_LARGE}.\nTry one of the following models:\n{details}"
         raise ValueError(msg)
 
@@ -746,5 +752,13 @@ def get_chat_session(user: User, chat_id: uuid.UUID, data: dict) -> Chat:
         text=data.get("message", ""),
         role=ChatMessage.Role.user,
     )
+
+    tokens_used_in_last_min = ChatMessage.objects.filter(
+        chat__chat_backend=chat.chat_backend, created_at__gt=datetime.now(tz=utc) - timedelta(minutes=1)
+    ).aggregate(Sum("token_count"))["token_count__sum"] = 0
+
+    tokens_left = chat.chat_backend.rate_limit - tokens_used_in_last_min - token_count_this_message
+    delay = math.exp(-math.pow(tokens_left, 2) * settings.MAGIC_CONSTANT_YET_TO_BEDETERMINED)
+    time.sleep(delay * settings.MAX_DELAY_SECONDS)
 
     return chat
