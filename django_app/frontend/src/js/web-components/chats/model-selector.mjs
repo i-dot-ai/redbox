@@ -5,7 +5,7 @@ import { RedboxElement } from "../redbox-element.mjs";
 export class ModelSelector extends RedboxElement {
 
   static properties = {
-    options: { type: Array, attribute: "data-options" },
+    options: { type: Array, attribute: "data-models" },
     expanded: { type: Boolean, state: true },
     selectedOption: {type: Number, state: true},
     activeOption: {type: Number, state: true} // this is the currently highlighted option when using keyboard, so can be different to selectedOption
