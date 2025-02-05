@@ -1,4 +1,3 @@
-import contextlib
 import logging
 import os
 import textwrap
@@ -7,7 +6,6 @@ from collections.abc import Collection, Sequence
 from datetime import UTC, date, datetime, timedelta
 from typing import override
 
-import elastic_transport
 from django.conf import settings
 from django.contrib.postgres.fields import ArrayField
 from django.core import validators
@@ -692,14 +690,11 @@ class ChatMessage(UUIDPrimaryKeyBase, TimeStampedModel):
             "n_selected_files": n_selected_files,
         }
         if es_client := env.elasticsearch_client():
-            try:
-                es_client.create(
-                    index=env.elastic_chat_mesage_index,
-                    id=uuid.uuid4(),
-                    document=elastic_log_msg,
-                )
-            except elastic_transport.ConnectionError:
-                contextlib.suppress(elastic_transport.ConnectionError)
+            es_client.create(
+                index=env.elastic_chat_mesage_index,
+                id=uuid.uuid4(),
+                document=elastic_log_msg,
+            )
 
 
 def get_unique_chat_title(title: str, user: User, number: int = 0) -> str:
