@@ -75,7 +75,7 @@
           {% endif %}
         </chat-title>
 
-        <chat-controller class="iai-chat-container" data-stream-url="{{ streaming.endpoint }}">
+        <chat-controller class="iai-chat-container" data-stream-url="{{ streaming.endpoint }}" data-models="{{ llm_options | to_json }}">
 
           <div class="rb-chat-message__container js-message-container">
 
@@ -127,7 +127,7 @@
             </message-input>
             <div class="rb-chat-input__input-container-bottom">
               {% set model_selector %}
-                <model-selector data-options="{{ llm_options | to_json }}"></model-selector>
+                <model-selector data-models="{{ llm_options | to_json }}"></model-selector>
               {% endset %}
               {{ model_selector | render_lit }}
               <p class="govuk-body-xs govuk-!-margin-bottom-0">You can use up to, and including, official sensitive documents</p>
