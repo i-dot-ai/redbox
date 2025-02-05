@@ -88,3 +88,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
         message = {"type": message_type, "data": data}
         logger.debug("sending %s to browser", message)
         await self.send(json.dumps(message, default=str))
+
+    async def handle_text(self, response: str) -> str:
+        await self.send_to_client("text", response)

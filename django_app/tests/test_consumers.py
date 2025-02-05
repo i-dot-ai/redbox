@@ -324,11 +324,19 @@ async def test_chat_consumer_with_explicit_no_document_selected_error(
 
 @pytest.mark.django_db(transaction=True)
 @pytest.mark.asyncio()
-async def test_chat_consumer_redbox_state(several_files: Sequence[File], chat_with_files: Chat, llm_backend):
+async def test_chat_consumer_redbox_state(
+    several_files: Sequence[File], chat_with_files: Chat, mocked_connect_with_several_files: Connect, llm_backend
+):
     # Given
 
     # When
-    with patch("redbox_app.redbox_core.consumers.ChatConsumer.redbox.run") as mock_run:
+    with (
+        patch(
+            "redbox_app.redbox_core.consumers.ChatConsumer.redbox._get_runnable",
+            new=lambda _: mocked_connect_with_several_files,
+        ),
+        patch("redbox_app.redbox_core.consumers.ChatConsumer.redbox.run") as mock_run,
+    ):
         communicator = WebsocketCommunicator(ChatConsumer.as_asgi(), "/ws/chat/")
         communicator.scope["user"] = chat_with_files.user
         communicator.scope["url_route"] = {"kwargs": {"chat_id": chat_with_files.id}}
