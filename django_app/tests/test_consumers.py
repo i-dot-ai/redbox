@@ -152,11 +152,6 @@ def get_chat_message_text(user: User, role: ChatMessage.Role) -> Sequence[str]:
     return [m.text for m in ChatMessage.objects.filter(chat__user=user, role=role)]
 
 
-@database_sync_to_async
-def get_chat_message_route(user: User, role: ChatMessage.Role) -> Sequence[str]:
-    return [m.route for m in ChatMessage.objects.filter(chat__user=user, role=role)]
-
-
 @pytest.mark.xfail()
 @pytest.mark.django_db(transaction=True)
 @pytest.mark.asyncio()

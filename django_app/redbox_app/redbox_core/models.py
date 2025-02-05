@@ -637,7 +637,6 @@ class ChatMessage(UUIDPrimaryKeyBase, TimeStampedModel):
     chat = models.ForeignKey(Chat, on_delete=models.CASCADE)
     text = models.TextField(max_length=32768, null=False, blank=False)
     role = models.CharField(choices=Role.choices, null=False, blank=False)
-    route = models.CharField(max_length=25, null=True, blank=True)
 
     rating = models.PositiveIntegerField(
         blank=True,
@@ -669,6 +668,7 @@ class ChatMessage(UUIDPrimaryKeyBase, TimeStampedModel):
         return HumanMessage(content=escape_curly_brackets(self.text))
 
     def log(self):
+        n_selected_files = self.chat.file_set.count()
         elastic_log_msg = {
             "@timestamp": self.created_at.isoformat(),
             "id": str(self.id),
@@ -679,8 +679,8 @@ class ChatMessage(UUIDPrimaryKeyBase, TimeStampedModel):
             "user_grade": self.chat.user.grade,
             "user_profession": self.chat.user.profession,
             "user_ai_experience": self.chat.user.ai_experience,
-            "route": str(self.route),
-            "role": str(self.role),
+            "route": "chat_with_docs" if n_selected_files else "chat",
+            "role": self.role,
             "token_count": self.token_count,
             "rating": int(self.rating) if self.rating else None,
             "rating_text": str(self.rating_text),
@@ -688,7 +688,7 @@ class ChatMessage(UUIDPrimaryKeyBase, TimeStampedModel):
             "chat_feedback_achieved": self.chat.feedback_achieved,
             "chat_feedback_saved_time": self.chat.feedback_saved_time,
             "chat_feedback_improved_work": self.chat.feedback_improved_work,
-            "n_selected_files": self.chat.file_set.count(),
+            "n_selected_files": n_selected_files,
         }
         if es_client := env.elasticsearch_client():
             try:

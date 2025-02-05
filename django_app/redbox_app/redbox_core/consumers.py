@@ -2,7 +2,7 @@ import json
 import logging
 from asyncio import CancelledError
 from collections.abc import Mapping, Sequence
-from typing import Any, ClassVar
+from typing import Any
 
 from asgiref.sync import sync_to_async
 from channels.db import database_sync_to_async
@@ -39,14 +39,10 @@ async def get_unique_chat_title(title: str, user: User, number: int = 0) -> str:
 
 
 class ChatConsumer(AsyncWebsocketConsumer):
-    full_reply: ClassVar = []
-    route = None
     redbox = Redbox(debug=settings.DEBUG)
 
     async def receive(self, text_data=None, _bytes_data=None):
         """Receive & respond to message from browser websocket."""
-        self.full_reply = []
-        self.route = None
 
         data = json.loads(text_data)
         logger.debug("received %s from browser", data)
@@ -74,6 +70,24 @@ class ChatConsumer(AsyncWebsocketConsumer):
             chat.name = await get_unique_chat_title(user_message_text, user)
             await chat.asave()
 
+        token_count = await sync_to_async(chat.token_count)()
+
+        active_context_window_sizes = await sync_to_async(ChatLLMBackend.active_context_window_sizes)()
+
+        if token_count > max(active_context_window_sizes.values()):
+            await self.send_to_client("error", error_messages.FILES_TOO_LARGE)
+            await self.close()
+            return
+
+        if token_count > await sync_to_async(chat.context_window_size)():
+            details = "\n".join(
+                f"* `{k}`: {v} tokens" for k, v in active_context_window_sizes.items() if v >= token_count
+            )
+            msg = f"{error_messages.FILES_TOO_LARGE}.\nTry one of the following models:\n{details}"
+            await self.send_to_client("error", msg)
+            await self.close()
+            return
+
         # save user message
         await self.save_message(chat, user_message_text, ChatMessage.Role.user)
         await self.llm_conversation(chat)
@@ -82,34 +96,15 @@ class ChatConsumer(AsyncWebsocketConsumer):
     async def llm_conversation(self, session: Chat) -> None:
         """Initiate & close websocket conversation with the core-api message endpoint."""
 
-        token_count = await sync_to_async(session.token_count)()
-
-        active_context_window_sizes = await sync_to_async(ChatLLMBackend.active_context_window_sizes)()
-
-        if token_count > max(active_context_window_sizes.values()):
-            await self.send_to_client("error", error_messages.FILES_TOO_LARGE)
-            return
-
-        if token_count > await sync_to_async(session.context_window_size)():
-            details = "\n".join(
-                f"* `{k}`: {v} tokens" for k, v in active_context_window_sizes.items() if v >= token_count
-            )
-            msg = f"{error_messages.FILES_TOO_LARGE}.\nTry one of the following models:\n{details}"
-            await self.send_to_client("error", msg)
-            return
-
-        self.route = "chat_with_docs"  # if selected_files else "chat"
-        self.send_to_client("route", self.route)
-
         state = await sync_to_async(session.to_langchain)()
 
         try:
-            await self.redbox.run(
+            state = await self.redbox.run(
                 state,
                 response_tokens_callback=self.handle_text,
             )
 
-            message = await self.save_message(session, "".join(self.full_reply), ChatMessage.Role.ai)
+            message = await self.save_message(session, state.messages[-1], ChatMessage.Role.ai)
             await self.send_to_client(
                 "end", {"message_id": message.id, "title": session.name, "session_id": session.id}
             )
@@ -135,11 +130,9 @@ class ChatConsumer(AsyncWebsocketConsumer):
             chat=session,
             text=user_message_text,
             role=role,
-            route=self.route,
         )
         chat_message.save()
         return chat_message
 
     async def handle_text(self, response: str) -> str:
         await self.send_to_client("text", response)
-        self.full_reply.append(response)
