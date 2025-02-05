@@ -5,6 +5,7 @@ import textwrap
 import uuid
 from collections.abc import Collection, Sequence
 from datetime import UTC, date, datetime, timedelta
+from itertools import groupby
 from typing import override
 
 import elastic_transport
@@ -12,7 +13,7 @@ from django.conf import settings
 from django.contrib.postgres.fields import ArrayField
 from django.core import validators
 from django.db import models
-from django.db.models import Max, Min, Sum, UniqueConstraint
+from django.db.models import F, Max, Min, Sum, UniqueConstraint, Window
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django_q.models import OrmQ, Success
@@ -20,13 +21,14 @@ from django_q.tasks import async_task
 from django_use_email_as_username.models import BaseUser, BaseUserManager
 from langchain_core.documents import Document
 from langchain_core.messages import AIMessage, AnyMessage, HumanMessage
+from pgvector.django import CosineDistance, VectorField
 
 import redbox.models.chain
 from redbox.chains.components import get_tokeniser
 from redbox.models.settings import get_settings
 from redbox_app.redbox_core import error_messages
 from redbox_app.redbox_core.utils import get_date_group, sanitise_string
-from redbox_app.worker import ingest
+from redbox_app.worker import get_embedding_model, ingest
 
 logging.basicConfig(level=os.environ.get("LOG_LEVEL", "INFO"))
 logger = logging.getLogger(__name__)
@@ -469,6 +471,10 @@ class Chat(UUIDPrimaryKeyBase, TimeStampedModel):
     def date_group(self):
         return get_date_group(self.newest_message_date)
 
+    @property
+    def question(self) -> str:
+        return self.chatmessage_set.order_by("created_at").last()
+
     def to_langchain(self) -> redbox.models.chain.RedboxState:
         chat_backend = redbox.models.chain.ChatLLMBackend(
             name=self.chat_backend.name,
@@ -477,8 +483,10 @@ class Chat(UUIDPrimaryKeyBase, TimeStampedModel):
             context_window_size=self.chat_backend.context_window_size,
         )
 
+        embedded_question = get_embedding_model().embed_query(self.question)
+
         return redbox.models.chain.RedboxState(
-            documents=[Document(str(f.text), metadata={"uri": f.original_file.name}) for f in self.file_set.all()],
+            documents=self.query_documents(embedded_question, self.context_window_size()),
             messages=[message.to_langchain() for message in self.chatmessage_set.order_by("created_at")],
             chat_backend=chat_backend,
         )
@@ -491,6 +499,35 @@ class Chat(UUIDPrimaryKeyBase, TimeStampedModel):
             return obj.aggregate(Sum("token_count"))["token_count__sum"] or 0
 
         return f(self.file_set) + f(self.chatmessage_set)
+
+    def query_documents(self, embedded_query: list[float], context_window_size: int) -> list[Document]:
+        # limit chunks to those belonging to this chat
+        relevant_text_chunks = TextChunk.objects.filter(file__chat=self)
+
+        # Compute similarity to query
+        ordered_text_chunks = relevant_text_chunks.annotate(distance=CosineDistance("embedding", embedded_query))
+
+        # Define how we want to sum tokens with increasing distance
+        cumulative_token_count = Window(Sum("token_count"), order_by=[F("distance").asc()])
+
+        # Cut off least relevant chunks
+        truncated_text_chunks = (
+            ordered_text_chunks.annotate(cumsum=cumulative_token_count)
+            .filter(cumsum__lt=context_window_size)
+            .values("file__original_file", "text", "distance", "index")
+            .order_by("file__original_file", "index")
+        )
+
+        def file_name(text_chunk: dict) -> str:
+            return text_chunk["file__original_file"]
+
+        return [
+            Document(
+                page_content="\n".join(chunk["text"] for chunk in group),
+                metadata={"uri": file_name.split("/")[-1]},
+            )
+            for file_name, group in groupby(truncated_text_chunks, key=file_name)
+        ]
 
 
 class InactiveFileError(ValueError):
@@ -627,6 +664,14 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
         if not self.task_id:
             return -1
         return OrmQ.objects.filter(lock__lt=self.task.lock).count()
+
+
+class TextChunk(UUIDPrimaryKeyBase, TimeStampedModel):
+    file = models.ForeignKey(File, on_delete=models.CASCADE)
+    embedding = VectorField(dimensions=3072)
+    text = models.TextField()
+    index = models.PositiveIntegerField()
+    token_count = models.PositiveIntegerField()
 
 
 class ChatMessage(UUIDPrimaryKeyBase, TimeStampedModel):
