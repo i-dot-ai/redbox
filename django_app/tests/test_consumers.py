@@ -392,39 +392,16 @@ class CannedGraphLLM(BaseChatModel):
 
 
 @pytest.fixture()
-def mocked_connect(uploaded_file: File) -> Connect:
+def mocked_connect() -> Connect:
     responses = [
         {
             "event": "on_chat_model_stream",
             "data": {"chunk": Token(content="Good afternoon, ")},
         },
         {"event": "on_chat_model_stream", "data": {"chunk": Token(content="Mr. Amor.")}},
-        {"event": "on_chain_end", "data": {"output": {"route_name": "gratitude"}}},
         {
-            "event": "on_retriever_end",
-            "data": {
-                "output": [
-                    Document(
-                        metadata={"uri": uploaded_file.file_name},
-                        page_content="Good afternoon Mr Amor",
-                    )
-                ]
-            },
-        },
-        {
-            "event": "on_retriever_end",
-            "data": {
-                "output": [
-                    Document(
-                        metadata={"uri": uploaded_file.file_name},
-                        page_content="Good afternoon Mr Amor",
-                    ),
-                    Document(
-                        metadata={"uri": uploaded_file.file_name, "page_number": [34, 35]},
-                        page_content="Good afternoon Mr Amor",
-                    ),
-                ]
-            },
+            "event": "on_chain_end",
+            "data": {"output": RedboxState(messages=[AIMessage(content="Good afternoon, Mr. Amor.")])},
         },
     ]
 
@@ -432,27 +409,15 @@ def mocked_connect(uploaded_file: File) -> Connect:
 
 
 @pytest.fixture()
-def mocked_connect_with_naughty_citation(uploaded_file: File) -> CannedGraphLLM:
+def mocked_connect_with_naughty_citation() -> CannedGraphLLM:
     responses = [
         {
             "event": "on_chat_model_stream",
             "data": {"chunk": Token(content="Good afternoon, Mr. Amor.")},
         },
-        {"event": "on_chain_end", "data": {"output": {"route_name": "gratitude"}}},
         {
-            "event": "on_retriever_end",
-            "data": {
-                "output": [
-                    Document(
-                        metadata={"uri": uploaded_file.file_name},
-                        page_content="Good afternoon Mr Amor",
-                    ),
-                    Document(
-                        metadata={"uri": uploaded_file.file_name},
-                        page_content="I shouldn't send a \x00",
-                    ),
-                ]
-            },
+            "event": "on_chain_end",
+            "data": {"output": RedboxState(messages=[AIMessage(content="Good afternoon, Mr. Amor.")])},
         },
     ]
 

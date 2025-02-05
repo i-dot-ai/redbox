@@ -16,26 +16,15 @@ from redbox import Redbox
 from redbox_app.redbox_core import error_messages
 from redbox_app.redbox_core.models import (
     Chat,
-    ChatLLMBackend,
     ChatMessage,
     File,
+    get_chat_session,
 )
-from redbox_app.redbox_core.utils import sanitise_string
 
 User = get_user_model()
 OptFileSeq = Sequence[File] | None
 logger = logging.getLogger(__name__)
 logger.info("WEBSOCKET_SCHEME is: %s", settings.WEBSOCKET_SCHEME)
-
-
-async def get_unique_chat_title(title: str, user: User, number: int = 0) -> str:
-    original_title = sanitise_string(title[: settings.CHAT_TITLE_LENGTH])
-    new_title = original_title
-    if number > 0:
-        new_title = f"{original_title} ({number})"
-    if await Chat.objects.filter(name=new_title, user=user).aexists():
-        return await get_unique_chat_title(original_title, user, number + 1)
-    return new_title
 
 
 class ChatConsumer(AsyncWebsocketConsumer):
@@ -46,7 +35,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
         data = json.loads(text_data)
         logger.debug("received %s from browser", data)
-        user_message_text: str = data.get("message", "")
+
         try:
             user: User = self.scope["user"]
             chat_id = self.scope["url_route"]["kwargs"]["chat_id"]
@@ -55,41 +44,13 @@ class ChatConsumer(AsyncWebsocketConsumer):
             await self.send_to_client("error", error_messages.CORE_ERROR_MESSAGE)
             raise
 
-        chat = await Chat.objects.aget(id=chat_id)
-
-        if chat_backend_id := data.get("llm"):
-            chat.chat_backend = await ChatLLMBackend.objects.aget(id=chat_backend_id)
-            await chat.asave()
-
-        if temperature := data.get("temperature", 0):
-            chat.temperature = temperature
-            await chat.asave()
-
-        # Update session name if this is the first message
-        if await chat.chatmessage_set.acount() == 0:
-            chat.name = await get_unique_chat_title(user_message_text, user)
-            await chat.asave()
-
-        token_count = await sync_to_async(chat.token_count)()
-
-        active_context_window_sizes = await sync_to_async(ChatLLMBackend.active_context_window_sizes)()
-
-        if token_count > max(active_context_window_sizes.values()):
-            await self.send_to_client("error", error_messages.FILES_TOO_LARGE)
+        try:
+            chat = await sync_to_async(get_chat_session)(chat_id=chat_id, user=user, data=data)
+        except ValueError as e:
+            await self.send_to_client("error", e.args[0])
             await self.close()
             return
 
-        if token_count > await sync_to_async(chat.context_window_size)():
-            details = "\n".join(
-                f"* `{k}`: {v} tokens" for k, v in active_context_window_sizes.items() if v >= token_count
-            )
-            msg = f"{error_messages.FILES_TOO_LARGE}.\nTry one of the following models:\n{details}"
-            await self.send_to_client("error", msg)
-            await self.close()
-            return
-
-        # save user message
-        await self.save_message(chat, user_message_text, ChatMessage.Role.user)
         await self.llm_conversation(chat)
         await self.close()
 
@@ -104,7 +65,12 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 response_tokens_callback=self.handle_text,
             )
 
-            message = await self.save_message(session, state.messages[-1], ChatMessage.Role.ai)
+            message = await ChatMessage.objects.acreate(
+                chat=session,
+                text=state.messages[-1].content,
+                role=ChatMessage.Role.ai,
+            )
+
             await self.send_to_client(
                 "end", {"message_id": message.id, "title": session.name, "session_id": session.id}
             )

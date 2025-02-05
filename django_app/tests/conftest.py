@@ -175,7 +175,7 @@ def chat_with_message(chat: Chat) -> Chat:
 
 @pytest.fixture()
 def chat_message(chat: Chat) -> ChatMessage:
-    return ChatMessage.objects.create(chat=chat, text="A question?", role=ChatMessage.Role.user, route="A route")
+    return ChatMessage.objects.create(chat=chat, text="A question?", role=ChatMessage.Role.user)
 
 
 @pytest.fixture()
@@ -187,7 +187,6 @@ def chat_message_with_citation(chat: Chat) -> ChatMessage:
         rating=3,
         rating_chips=["apple", "pear"],
         rating_text="not bad",
-        route="chat",
     )
 
 
@@ -234,7 +233,6 @@ def chat_with_files(chat: Chat, several_files: Sequence[File]) -> Chat:
         chat=chat,
         text="An answer.",
         role=ChatMessage.Role.ai,
-        route="search",
     )
     ChatMessage.objects.create(
         chat=chat,
@@ -245,7 +243,6 @@ def chat_with_files(chat: Chat, several_files: Sequence[File]) -> Chat:
         chat=chat,
         text="A second answer.",
         role=ChatMessage.Role.ai,
-        route="search",
     )
     for file in several_files[2:]:
         file.chat = chat
