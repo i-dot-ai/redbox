@@ -24,6 +24,7 @@ from langchain_core.messages import AIMessage, AnyMessage, HumanMessage
 import redbox.models.chain
 from redbox.chains.components import get_tokeniser
 from redbox.models.settings import get_settings
+from redbox_app.redbox_core import error_messages
 from redbox_app.redbox_core.utils import get_date_group, sanitise_string
 from redbox_app.worker import ingest
 
@@ -637,7 +638,6 @@ class ChatMessage(UUIDPrimaryKeyBase, TimeStampedModel):
     chat = models.ForeignKey(Chat, on_delete=models.CASCADE)
     text = models.TextField(max_length=32768, null=False, blank=False)
     role = models.CharField(choices=Role.choices, null=False, blank=False)
-    route = models.CharField(max_length=25, null=True, blank=True)
 
     rating = models.PositiveIntegerField(
         blank=True,
@@ -669,6 +669,7 @@ class ChatMessage(UUIDPrimaryKeyBase, TimeStampedModel):
         return HumanMessage(content=escape_curly_brackets(self.text))
 
     def log(self):
+        n_selected_files = self.chat.file_set.count()
         elastic_log_msg = {
             "@timestamp": self.created_at.isoformat(),
             "id": str(self.id),
@@ -679,8 +680,8 @@ class ChatMessage(UUIDPrimaryKeyBase, TimeStampedModel):
             "user_grade": self.chat.user.grade,
             "user_profession": self.chat.user.profession,
             "user_ai_experience": self.chat.user.ai_experience,
-            "route": str(self.route),
-            "role": str(self.role),
+            "route": "chat_with_docs" if n_selected_files else "chat",
+            "role": self.role,
             "token_count": self.token_count,
             "rating": int(self.rating) if self.rating else None,
             "rating_text": str(self.rating_text),
@@ -688,7 +689,7 @@ class ChatMessage(UUIDPrimaryKeyBase, TimeStampedModel):
             "chat_feedback_achieved": self.chat.feedback_achieved,
             "chat_feedback_saved_time": self.chat.feedback_saved_time,
             "chat_feedback_improved_work": self.chat.feedback_improved_work,
-            "n_selected_files": self.chat.file_set.count(),
+            "n_selected_files": n_selected_files,
         }
         if es_client := env.elasticsearch_client():
             try:
@@ -699,3 +700,51 @@ class ChatMessage(UUIDPrimaryKeyBase, TimeStampedModel):
                 )
             except elastic_transport.ConnectionError:
                 contextlib.suppress(elastic_transport.ConnectionError)
+
+
+def get_unique_chat_title(title: str, user: User, number: int = 0) -> str:
+    original_title = sanitise_string(title[: settings.CHAT_TITLE_LENGTH])
+    new_title = original_title
+    if number > 0:
+        new_title = f"{original_title} ({number})"
+    if Chat.objects.filter(name=new_title, user=user).exists():
+        return get_unique_chat_title(original_title, user, number + 1)
+    return new_title
+
+
+def get_chat_session(user: User, chat_id: uuid.UUID, data: dict) -> Chat:
+    """create or update a Chat"""
+    chat = Chat.objects.get(id=chat_id)
+
+    if chat_backend_id := data.get("llm"):
+        chat.chat_backend = ChatLLMBackend.objects.get(id=chat_backend_id)
+        chat.save()
+
+    if temperature := data.get("temperature", 0):
+        chat.temperature = temperature
+        chat.save()
+
+    # Update session name if this is the first message
+    if chat.chatmessage_set.count() == 0:
+        chat.name = get_unique_chat_title(data.get("message", ""), user)
+        chat.save()
+
+    token_count = chat.token_count()
+
+    active_context_window_sizes = ChatLLMBackend.active_context_window_sizes()
+
+    if token_count > max(active_context_window_sizes.values()):
+        raise ValueError(error_messages.FILES_TOO_LARGE)
+
+    if token_count > chat.context_window_size():
+        details = "\n".join(f"* `{k}`: {v} tokens" for k, v in active_context_window_sizes.items() if v >= token_count)
+        msg = f"{error_messages.FILES_TOO_LARGE}.\nTry one of the following models:\n{details}"
+        raise ValueError(msg)
+
+    ChatMessage.objects.create(
+        chat=chat,
+        text=data.get("message", ""),
+        role=ChatMessage.Role.user,
+    )
+
+    return chat

@@ -148,8 +148,8 @@ class UserAdmin(ImportExportMixin, admin.ModelAdmin):
 
 
 class ChatMessageAdmin(ExportMixin, admin.ModelAdmin):
-    list_display = ["short_text", "role", "get_user", "chat", "route", "created_at"]
-    list_filter = ["role", "route", "chat__user"]
+    list_display = ["short_text", "role", "get_user", "chat", "created_at"]
+    list_filter = ["role", "chat__user"]
     date_hierarchy = "created_at"
     search_fields = ["chat__user__email"]
 
@@ -171,8 +171,8 @@ class FileInline(admin.StackedInline):
 class ChatMessageInline(admin.StackedInline):
     model = models.ChatMessage
     ordering = ("created_at",)
-    fields = ["created_at", "text", "role", "route", "rating"]
-    readonly_fields = ["created_at", "text", "role", "route", "rating"]
+    fields = ["created_at", "text", "role", "rating"]
+    readonly_fields = ["created_at", "text", "role", "rating"]
     extra = 0
 
 

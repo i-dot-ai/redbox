@@ -13,7 +13,7 @@ from django.db.models import Model
 from django.forms import model_to_dict
 from langchain_core.documents import Document
 from langchain_core.language_models import BaseChatModel
-from langchain_core.messages import AIMessage, HumanMessage
+from langchain_core.messages import AIMessage, AIMessageChunk, HumanMessage
 from pydantic import BaseModel
 from websockets import WebSocketClientProtocol
 from websockets.legacy.client import Connect
@@ -150,11 +150,6 @@ async def test_chat_consumer_with_naughty_question(chat: Chat, mocked_connect: C
 @database_sync_to_async
 def get_chat_message_text(user: User, role: ChatMessage.Role) -> Sequence[str]:
     return [m.text for m in ChatMessage.objects.filter(chat__user=user, role=role)]
-
-
-@database_sync_to_async
-def get_chat_message_route(user: User, role: ChatMessage.Role) -> Sequence[str]:
-    return [m.route for m in ChatMessage.objects.filter(chat__user=user, role=role)]
 
 
 @pytest.mark.xfail()
@@ -329,11 +324,19 @@ async def test_chat_consumer_with_explicit_no_document_selected_error(
 
 @pytest.mark.django_db(transaction=True)
 @pytest.mark.asyncio()
-async def test_chat_consumer_redbox_state(several_files: Sequence[File], chat_with_files: Chat, llm_backend):
+async def test_chat_consumer_redbox_state(
+    several_files: Sequence[File], chat_with_files: Chat, mocked_connect_with_several_files: Connect, llm_backend
+):
     # Given
 
     # When
-    with patch("redbox_app.redbox_core.consumers.ChatConsumer.redbox.run") as mock_run:
+    with (
+        patch(
+            "redbox_app.redbox_core.consumers.ChatConsumer.redbox._get_runnable",
+            new=lambda _: mocked_connect_with_several_files,
+        ),
+        patch("redbox_app.redbox_core.consumers.ChatConsumer.redbox.run") as mock_run,
+    ):
         communicator = WebsocketCommunicator(ChatConsumer.as_asgi(), "/ws/chat/")
         communicator.scope["user"] = chat_with_files.user
         communicator.scope["url_route"] = {"kwargs": {"chat_id": chat_with_files.id}}
@@ -397,39 +400,16 @@ class CannedGraphLLM(BaseChatModel):
 
 
 @pytest.fixture()
-def mocked_connect(uploaded_file: File) -> Connect:
+def mocked_connect() -> Connect:
     responses = [
         {
             "event": "on_chat_model_stream",
             "data": {"chunk": Token(content="Good afternoon, ")},
         },
         {"event": "on_chat_model_stream", "data": {"chunk": Token(content="Mr. Amor.")}},
-        {"event": "on_chain_end", "data": {"output": {"route_name": "gratitude"}}},
         {
-            "event": "on_retriever_end",
-            "data": {
-                "output": [
-                    Document(
-                        metadata={"uri": uploaded_file.file_name},
-                        page_content="Good afternoon Mr Amor",
-                    )
-                ]
-            },
-        },
-        {
-            "event": "on_retriever_end",
-            "data": {
-                "output": [
-                    Document(
-                        metadata={"uri": uploaded_file.file_name},
-                        page_content="Good afternoon Mr Amor",
-                    ),
-                    Document(
-                        metadata={"uri": uploaded_file.file_name, "page_number": [34, 35]},
-                        page_content="Good afternoon Mr Amor",
-                    ),
-                ]
-            },
+            "event": "on_chain_end",
+            "data": {"output": AIMessageChunk(content="Good afternoon, Mr. Amor.")},
         },
     ]
 
@@ -437,27 +417,15 @@ def mocked_connect(uploaded_file: File) -> Connect:
 
 
 @pytest.fixture()
-def mocked_connect_with_naughty_citation(uploaded_file: File) -> CannedGraphLLM:
+def mocked_connect_with_naughty_citation() -> CannedGraphLLM:
     responses = [
         {
             "event": "on_chat_model_stream",
             "data": {"chunk": Token(content="Good afternoon, Mr. Amor.")},
         },
-        {"event": "on_chain_end", "data": {"output": {"route_name": "gratitude"}}},
         {
-            "event": "on_retriever_end",
-            "data": {
-                "output": [
-                    Document(
-                        metadata={"uri": uploaded_file.file_name},
-                        page_content="Good afternoon Mr Amor",
-                    ),
-                    Document(
-                        metadata={"uri": uploaded_file.file_name},
-                        page_content="I shouldn't send a \x00",
-                    ),
-                ]
-            },
+            "event": "on_chain_end",
+            "data": {"output": AIMessageChunk(content="Good afternoon, Mr. Amor.")},
         },
     ]
 
