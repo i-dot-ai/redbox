@@ -1,6 +1,5 @@
 import contextlib
 import logging
-import math
 import os
 import textwrap
 import time
@@ -754,11 +753,24 @@ def get_chat_session(user: User, chat_id: uuid.UUID, data: dict) -> Chat:
     )
 
     tokens_used_in_last_min = ChatMessage.objects.filter(
-        chat__chat_backend=chat.chat_backend, created_at__gt=datetime.now(tz=utc) - timedelta(minutes=1)
+        chat__chat_backend=chat.chat_backend,
+        created_at__gt=datetime.now(tz=utc) - timedelta(minutes=1),
+    ).aggregate(Sum("token_count"))["token_count__sum"] = 0
+
+    tokens_used_in_last_min_by_this_user = ChatMessage.objects.filter(
+        chat__chat_backend=chat.chat_backend,
+        created_at__gt=datetime.now(tz=utc) - timedelta(minutes=1),
+        chat__user=chat.user,
     ).aggregate(Sum("token_count"))["token_count__sum"] = 0
 
     tokens_left = chat.chat_backend.rate_limit - tokens_used_in_last_min - token_count_this_message
-    delay = math.exp(-math.pow(tokens_left, 2) * settings.MAGIC_CONSTANT_YET_TO_BEDETERMINED)
-    time.sleep(delay * settings.MAX_DELAY_SECONDS)
+
+    def magic_smoothing_function(x):
+        # gaussian?
+        pass
+
+    delay = magic_smoothing_function(tokens_used_in_last_min_by_this_user / tokens_left)
+
+    time.sleep(delay)
 
     return chat
