@@ -5,7 +5,6 @@ from collections.abc import Mapping, Sequence
 from typing import Any
 
 from asgiref.sync import sync_to_async
-from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -89,16 +88,3 @@ class ChatConsumer(AsyncWebsocketConsumer):
         message = {"type": message_type, "data": data}
         logger.debug("sending %s to browser", message)
         await self.send(json.dumps(message, default=str))
-
-    @database_sync_to_async
-    def save_message(self, session: Chat, user_message_text: str, role: ChatMessage.Role) -> ChatMessage:
-        chat_message = ChatMessage(
-            chat=session,
-            text=user_message_text,
-            role=role,
-        )
-        chat_message.save()
-        return chat_message
-
-    async def handle_text(self, response: str) -> str:
-        await self.send_to_client("text", response)
