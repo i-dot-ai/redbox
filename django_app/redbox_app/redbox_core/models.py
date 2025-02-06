@@ -86,7 +86,7 @@ class ChatLLMBackend(models.Model):
     enabled = models.BooleanField(default=True, help_text="is this model enabled.")
     display = models.CharField(max_length=128, null=True, blank=True, help_text="name to display in UI.")
     context_window_size = models.PositiveIntegerField(help_text="size of the LLM context window")
-    rate_limit = models.PositiveIntegerField(null=True, blank=True, help_text="tokens per minute allowed by this model")
+    rate_limit = models.PositiveIntegerField(default=1000000, help_text="tokens per minute allowed by this model")
 
     class Meta:
         constraints = [UniqueConstraint(fields=["name", "provider"], name="unique_name_provider")]
