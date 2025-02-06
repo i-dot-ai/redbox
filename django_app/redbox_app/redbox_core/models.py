@@ -729,7 +729,7 @@ def get_chat_session(user: User, chat_id: uuid.UUID, data: dict) -> tuple[Chat, 
         chat.save()
 
     # Update session name if this is the first message
-    if chat.chatmessage_set.exists():
+    if not chat.chatmessage_set.exists():
         chat.name = get_unique_chat_title(data.get("message", ""), user)
         chat.save()
 
