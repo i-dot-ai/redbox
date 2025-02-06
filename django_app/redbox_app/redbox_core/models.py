@@ -759,6 +759,6 @@ def get_chat_session(user: User, chat_id: uuid.UUID, data: dict) -> Chat:
 
     delay = token_count_this_message / (chat.chat_backend.rate_limit - tokens_used_in_last_min)
 
-    time.sleep(delay)
+    time.sleep(delay * 60)
 
     return chat
