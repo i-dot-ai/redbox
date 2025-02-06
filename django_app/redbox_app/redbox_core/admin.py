@@ -171,8 +171,8 @@ class FileInline(admin.StackedInline):
 class ChatMessageInline(admin.StackedInline):
     model = models.ChatMessage
     ordering = ("created_at",)
-    fields = ["created_at", "text", "role", "rating"]
-    readonly_fields = ["created_at", "text", "role", "rating"]
+    fields = ["created_at", "text", "role", "rating", "delay"]
+    readonly_fields = ["created_at", "text", "role", "rating", "delay"]
     extra = 0
 
 

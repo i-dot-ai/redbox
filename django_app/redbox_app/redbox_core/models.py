@@ -762,6 +762,7 @@ def get_chat_session(user: User, chat_id: uuid.UUID, data: dict) -> tuple[Chat, 
     )
 
     delay = token_count_this_message / (chat.chat_backend.rate_limit - tokens_used_in_last_min)
+
     delay = max(delay, 0)  # should never happen but just in case!
 
     return chat, delay * 60
