@@ -2,7 +2,6 @@ import contextlib
 import logging
 import os
 import textwrap
-import time
 import uuid
 from collections.abc import Collection, Sequence
 from datetime import UTC, date, datetime, timedelta
@@ -650,6 +649,7 @@ class ChatMessage(UUIDPrimaryKeyBase, TimeStampedModel):
     rating_text = models.TextField(blank=True, null=True)
     rating_chips = ArrayField(models.CharField(max_length=32), null=True, blank=True)
     token_count = models.PositiveIntegerField(null=True, blank=True, help_text="number of tokens in the message")
+    delay = models.FloatField(default=0, help_text="by how much was this message delayed in seconds")
 
     def __str__(self) -> str:  # pragma: no cover
         return textwrap.shorten(self.text, width=20, placeholder="...")
@@ -693,6 +693,7 @@ class ChatMessage(UUIDPrimaryKeyBase, TimeStampedModel):
             "chat_feedback_saved_time": self.chat.feedback_saved_time,
             "chat_feedback_improved_work": self.chat.feedback_improved_work,
             "n_selected_files": n_selected_files,
+            "delay_seconds": self.delay,
         }
         if es_client := env.elasticsearch_client():
             try:
@@ -715,8 +716,8 @@ def get_unique_chat_title(title: str, user: User, number: int = 0) -> str:
     return new_title
 
 
-def get_chat_session(user: User, chat_id: uuid.UUID, data: dict) -> Chat:
-    """create or update a Chat"""
+def get_chat_session(user: User, chat_id: uuid.UUID, data: dict) -> tuple[Chat, float]:
+    """create or update a Chat, and return a delay (seconds) to handle large traffic"""
     chat = Chat.objects.get(id=chat_id)
 
     if chat_backend_id := data.get("llm"):
@@ -728,7 +729,7 @@ def get_chat_session(user: User, chat_id: uuid.UUID, data: dict) -> Chat:
         chat.save()
 
     # Update session name if this is the first message
-    if chat.chatmessage_set.count() == 0:
+    if chat.chatmessage_set.exists():
         chat.name = get_unique_chat_title(data.get("message", ""), user)
         chat.save()
 
@@ -752,13 +753,15 @@ def get_chat_session(user: User, chat_id: uuid.UUID, data: dict) -> Chat:
         role=ChatMessage.Role.user,
     )
 
-    tokens_used_in_last_min = ChatMessage.objects.filter(
-        chat__chat_backend=chat.chat_backend,
-        created_at__gt=datetime.now(tz=utc) - timedelta(minutes=1),
-    ).aggregate(Sum("token_count"))["token_count__sum"] = 0
+    tokens_used_in_last_min = (
+        ChatMessage.objects.filter(
+            chat__chat_backend=chat.chat_backend,
+            created_at__gt=datetime.now(tz=utc) - timedelta(minutes=1),
+        ).aggregate(Sum("token_count"))["token_count__sum"]
+        or 0
+    )
 
     delay = token_count_this_message / (chat.chat_backend.rate_limit - tokens_used_in_last_min)
+    delay = max(delay, 0)  # should never happen but just in case!
 
-    time.sleep(delay * 60)
-
-    return chat
+    return chat, delay * 60

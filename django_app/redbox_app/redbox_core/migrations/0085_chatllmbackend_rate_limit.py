@@ -17,6 +17,10 @@ def back_populate_rate_limit(apps, schema_editor):
         llm.rate_limit = rate_limits.get(llm.name, 1000000)
         llm.save()
 
+def back_populate_chat_message_delays(apps, schema_editor):
+    ChatMessage = apps.get_model("redbox_core", "ChatMessage")
+    ChatMessage.objects.all().update(delay=0)
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -29,10 +33,22 @@ class Migration(migrations.Migration):
             name='rate_limit',
             field=models.PositiveIntegerField(blank=True, help_text='tokens per minute allowed by this model', null=True),
         ),
+        migrations.AddField(
+            model_name='chatmessage',
+            name='delay',
+            field=models.FloatField(blank=True, default=0, help_text='by how much was this message delayed in seconds',
+                                    null=True),
+        ),
+        migrations.RunPython(back_populate_rate_limit, migrations.RunPython.noop),
+        migrations.RunPython(back_populate_chat_message_delays, migrations.RunPython.noop),
         migrations.AlterField(
             model_name='chatllmbackend',
             name='rate_limit',
             field=models.PositiveIntegerField(default=1000000, help_text='tokens per minute allowed by this model'),
         ),
-
+        migrations.AlterField(
+            model_name='chatmessage',
+            name='delay',
+            field=models.FloatField(default=0, help_text='by how much was this message delayed in seconds'),
+        ),
     ]
