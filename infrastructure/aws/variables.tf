@@ -227,7 +227,7 @@ variable "message_throttle_seconds_max" {
 
 variable "message_throttle_seconds_min" {
   type        = number
-  default     = 10
+  default     = 1
   description = "lower bound by which a message can be throttled"
 }
 
