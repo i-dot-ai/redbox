@@ -33,6 +33,10 @@ locals {
     "OBJECT_STORE" : "s3",
     "ENVIRONMENT" : upper(terraform.workspace),
     "DEBUG" : terraform.workspace == "dev",
+
+    "MESSAGE_THROTTLE_SECONDS_MAX": var.message_throttle_seconds_max,
+    "MESSAGE_THROTTLE_SECONDS_MIN": var.message_throttle_seconds_min,
+    "MESSAGE_THROTTLE_RATE": var.message_throttle_rate,
   }
 
   django_app_secrets = {
