@@ -20,6 +20,7 @@ from django_q.tasks import async_task
 from django_use_email_as_username.models import BaseUser, BaseUserManager
 from langchain_core.documents import Document
 from langchain_core.messages import AIMessage, AnyMessage, HumanMessage
+from pytz import utc
 
 import redbox.models.chain
 from redbox.chains.components import get_tokeniser
@@ -84,6 +85,7 @@ class ChatLLMBackend(models.Model):
     enabled = models.BooleanField(default=True, help_text="is this model enabled.")
     display = models.CharField(max_length=128, null=True, blank=True, help_text="name to display in UI.")
     context_window_size = models.PositiveIntegerField(help_text="size of the LLM context window")
+    rate_limit = models.PositiveIntegerField(default=1000000, help_text="tokens per minute allowed by this model")
 
     class Meta:
         constraints = [UniqueConstraint(fields=["name", "provider"], name="unique_name_provider")]
@@ -647,6 +649,7 @@ class ChatMessage(UUIDPrimaryKeyBase, TimeStampedModel):
     rating_text = models.TextField(blank=True, null=True)
     rating_chips = ArrayField(models.CharField(max_length=32), null=True, blank=True)
     token_count = models.PositiveIntegerField(null=True, blank=True, help_text="number of tokens in the message")
+    delay = models.FloatField(default=0, help_text="by how much was this message delayed in seconds")
 
     def __str__(self) -> str:  # pragma: no cover
         return textwrap.shorten(self.text, width=20, placeholder="...")
@@ -690,6 +693,7 @@ class ChatMessage(UUIDPrimaryKeyBase, TimeStampedModel):
             "chat_feedback_saved_time": self.chat.feedback_saved_time,
             "chat_feedback_improved_work": self.chat.feedback_improved_work,
             "n_selected_files": n_selected_files,
+            "delay_seconds": self.delay,
         }
         if es_client := env.elasticsearch_client():
             try:
@@ -712,8 +716,8 @@ def get_unique_chat_title(title: str, user: User, number: int = 0) -> str:
     return new_title
 
 
-def get_chat_session(user: User, chat_id: uuid.UUID, data: dict) -> Chat:
-    """create or update a Chat"""
+def get_chat_session(user: User, chat_id: uuid.UUID, data: dict) -> tuple[Chat, float]:
+    """create or update a Chat, and return a delay (seconds) to handle large traffic"""
     chat = Chat.objects.get(id=chat_id)
 
     if chat_backend_id := data.get("llm"):
@@ -725,19 +729,21 @@ def get_chat_session(user: User, chat_id: uuid.UUID, data: dict) -> Chat:
         chat.save()
 
     # Update session name if this is the first message
-    if chat.chatmessage_set.count() == 0:
+    if not chat.chatmessage_set.exists():
         chat.name = get_unique_chat_title(data.get("message", ""), user)
         chat.save()
 
-    token_count = chat.token_count()
+    token_count_this_message = chat.token_count()
 
     active_context_window_sizes = ChatLLMBackend.active_context_window_sizes()
 
-    if token_count > max(active_context_window_sizes.values()):
+    if token_count_this_message > max(active_context_window_sizes.values()):
         raise ValueError(error_messages.FILES_TOO_LARGE)
 
-    if token_count > chat.context_window_size():
-        details = "\n".join(f"* `{k}`: {v} tokens" for k, v in active_context_window_sizes.items() if v >= token_count)
+    if token_count_this_message > chat.context_window_size():
+        details = "\n".join(
+            f"* `{k}`: {v} tokens" for k, v in active_context_window_sizes.items() if v >= token_count_this_message
+        )
         msg = f"{error_messages.FILES_TOO_LARGE}.\nTry one of the following models:\n{details}"
         raise ValueError(msg)
 
@@ -747,4 +753,16 @@ def get_chat_session(user: User, chat_id: uuid.UUID, data: dict) -> Chat:
         role=ChatMessage.Role.user,
     )
 
-    return chat
+    tokens_used_in_last_min = (
+        ChatMessage.objects.filter(
+            chat__chat_backend=chat.chat_backend,
+            created_at__gt=datetime.now(tz=utc) - timedelta(minutes=1),
+        ).aggregate(Sum("token_count"))["token_count__sum"]
+        or 0
+    )
+
+    delay = token_count_this_message / (chat.chat_backend.rate_limit - tokens_used_in_last_min)
+
+    delay = max(delay, 0)  # should never happen but just in case!
+
+    return chat, delay * 60

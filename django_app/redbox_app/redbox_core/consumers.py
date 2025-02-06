@@ -1,3 +1,4 @@
+import asyncio
 import json
 import logging
 from collections.abc import Mapping
@@ -39,11 +40,17 @@ class ChatConsumer(AsyncWebsocketConsumer):
             raise
 
         try:
-            chat = await sync_to_async(get_chat_session)(chat_id=chat_id, user=user, data=data)
+            chat, delay = await sync_to_async(get_chat_session)(chat_id=chat_id, user=user, data=data)
         except ValueError as e:
             await self.send_to_client("error", e.args[0])
             await self.close()
             return
+
+        if delay > settings.MIN_MESSAGE_THROTTLE_SECONDS:
+            self.send_to_client("info", "due to high demand your message is being queued")
+            if delay > settings.MAX_MESSAGE_THROTTLE_SECONDS:
+                logger.error("delay=%s > %s, this will be capped", delay, settings.MAX_MESSAGE_THROTTLE_SECONDS)
+            await asyncio.sleep(max(delay, settings.MAX_MESSAGE_THROTTLE_SECONDS))
 
         state = await sync_to_async(chat.to_langchain)()
 
@@ -57,6 +64,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 chat=chat,
                 text=state.content,
                 role=ChatMessage.Role.ai,
+                delay=delay,
             )
 
             await self.send_to_client("end", {"message_id": message.id, "title": chat.name, "session_id": chat.id})
