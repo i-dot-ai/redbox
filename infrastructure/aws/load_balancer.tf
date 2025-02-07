@@ -1,7 +1,7 @@
 module "load_balancer" {
   # checkov:skip=CKV_TF_1: We're using semantic versions instead of commit hash
   #source         = "../../i-dot-ai-core-terraform-modules//modules/infrastructure/load_balancer" # For testing local changes
-  source          = "git::https://github.com/i-dot-ai/i-dot-ai-core-terraform-modules.git//modules/infrastructure/load_balancer?ref=v1.0.0-load_balancer"
+  source          = "git@github.com:i-dot-ai/i-dot-ai-core-terraform-modules.git//modules/infrastructure/load_balancer?ref=v1.0.0-load_balancer"
   name            = local.name
   account_id      = var.account_id
   vpc_id          = data.terraform_remote_state.vpc.outputs.vpc_id
@@ -16,7 +16,7 @@ module "load_balancer" {
 module "waf" {
   # checkov:skip=CKV_TF_1: We're using semantic versions instead of commit hash
   #source         = "../../i-dot-ai-core-terraform-modules//modules/infrastructure/waf" # For testing local changes
-  source         = "git::https://github.com/i-dot-ai/i-dot-ai-core-terraform-modules.git//modules/infrastructure/waf?ref=v1.0.0-waf"
+  source         = "git@github.com:i-dot-ai/i-dot-ai-core-terraform-modules.git//modules/infrastructure/waf?ref=v1.0.0-waf"
   name           = local.name
   ip_set         = concat(var.internal_ips, var.developer_ips, var.external_ips)
   scope          = var.scope

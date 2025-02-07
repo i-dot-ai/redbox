@@ -2,6 +2,9 @@ from datetime import UTC, datetime, timedelta
 
 import pytest
 from django.core.files.uploadedfile import SimpleUploadedFile
+from freezegun import freeze_time
+from lxml.html.diff import token
+from pytz import utc
 
 from redbox_app.redbox_core.models import (
     ChatMessage,
@@ -35,3 +38,27 @@ def test_chat_message_model_token_count_on_save(chat):
     assert not chat_message.token_count
     chat_message.save()
     assert chat_message.token_count == 4
+
+
+@pytest.mark.django_db()
+@pytest.mark.parametrize("role, expected_count", [(ChatMessage.Role.ai, 0), (ChatMessage.Role.user, 100)])
+def test_associated_file_token_count(chat, original_file, role, expected_count):
+
+    now = datetime.now(tz=utc)
+
+    # Given a chat message...
+    with freeze_time(now):
+        chat_message = ChatMessage.objects.create(chat=chat, role=role, text="I am a message")
+
+    # and a file created before it...
+    with freeze_time(now - timedelta(seconds=1)):
+        File.objects.create(original_file=original_file, chat=chat, token_count=100)
+
+
+    # and a file created after it...
+    with freeze_time(now + timedelta(seconds=1)):
+        File.objects.create(original_file=original_file, chat=chat, token_count=200)
+
+    # when i call associated_file_token_count
+    # I expect to see the token count for the file created before it in the count
+    assert chat_message.associated_file_token_count == expected_count

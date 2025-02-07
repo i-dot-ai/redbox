@@ -1,7 +1,7 @@
 module "cluster" {
   # checkov:skip=CKV_TF_1: We're using semantic versions instead of commit hash
   # source = "../../../i-ai-core-infrastructure//modules/ecs_cluster"
-  source = "git::https://github.com/i-dot-ai/i-dot-ai-core-terraform-modules.git//modules/infrastructure/ecs-cluster?ref=v1.0.0-ecs-cluster"
+  source = "git@github.com:i-dot-ai/i-dot-ai-core-terraform-modules.git//modules/infrastructure/ecs-cluster?ref=v1.0.0-ecs-cluster"
   name   = local.name
 }
 
@@ -60,13 +60,13 @@ resource "aws_secretsmanager_secret_version" "django-app-json-secret" {
 module "django-app" {
   # checkov:skip=CKV_TF_1: We're using semantic versions instead of commit hash
   #source                    = "../../i-dot-ai-core-terraform-modules//modules/infrastructure/ecs" # For testing local changes
-  source                     = "git::https://github.com/i-dot-ai/i-dot-ai-core-terraform-modules.git//modules/infrastructure/ecs?ref=v1.0.0-ecs"
+  source                     = "git@github.com:i-dot-ai/i-dot-ai-core-terraform-modules.git//modules/infrastructure/ecs?ref=v1.0.0-ecs"
   memory                     = 4096
   cpu                        = 2048
   create_listener            = true
   create_networking          = true
   name                       = "${local.name}-django-app"
-  image_tag                  = var.image_tag
+  image_tag                  = "5ec4d891cac87760c61ca6c45f93b8e9e9411e56"
   ecr_repository_uri         = "${var.ecr_repository_uri}/${var.project_name}-django-app"
   ecs_cluster_id             = module.cluster.ecs_cluster_id
   ecs_cluster_name           = module.cluster.ecs_cluster_name
@@ -99,14 +99,14 @@ module "django-app" {
 module "worker" {
   # checkov:skip=CKV_TF_1: We're using semantic versions instead of commit hash
   #source                      = "../../i-dot-ai-core-terraform-modules//modules/infrastructure/ecs" # For testing local changes
-  source                       = "git::https://github.com/i-dot-ai/i-dot-ai-core-terraform-modules.git//modules/infrastructure/ecs?ref=v1.0.0-ecs"
+  source                       = "git@github.com:i-dot-ai/i-dot-ai-core-terraform-modules.git//modules/infrastructure/ecs?ref=v1.0.0-ecs"
   command                      = ["venv/bin/django-admin", "qcluster"]
   memory                       = 6144
   cpu                          = 2048
   create_listener              = false
   create_networking            = false
   name                         = "${local.name}-worker"
-  image_tag                    = var.image_tag
+  image_tag                    = "5ec4d891cac87760c61ca6c45f93b8e9e9411e56"
   ecr_repository_uri           = "${var.ecr_repository_uri}/${var.project_name}-django-app"
   ecs_cluster_id               = module.cluster.ecs_cluster_id
   ecs_cluster_name             = module.cluster.ecs_cluster_name
@@ -131,14 +131,14 @@ module "worker" {
 module "lit-ssr" {
   # checkov:skip=CKV_TF_1: We're using semantic versions instead of commit hash
   #source                      = "../../i-dot-ai-core-terraform-modules//modules/infrastructure/ecs" # For testing local changes
-  source                       = "git::https://github.com/i-dot-ai/i-dot-ai-core-terraform-modules.git//modules/infrastructure/ecs?ref=v1.0.0-ecs"
+  source                       = "git@github.com:i-dot-ai/i-dot-ai-core-terraform-modules.git//modules/infrastructure/ecs?ref=v1.0.0-ecs"
   service_discovery_service_arn = aws_service_discovery_service.lit_ssr_service_discovery_service.arn
   memory                       = 6144
   cpu                          = 2048
   create_listener              = false
   create_networking            = false
   name                         = "${local.name}-lit-ssr"
-  image_tag                    = var.image_tag
+  image_tag                    = "5ec4d891cac87760c61ca6c45f93b8e9e9411e56"
   ecr_repository_uri           = "${var.ecr_repository_uri}/${var.project_name}-lit-ssr"
   ecs_cluster_id               = module.cluster.ecs_cluster_id
   ecs_cluster_name             = module.cluster.ecs_cluster_name
