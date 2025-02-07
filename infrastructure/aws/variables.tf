@@ -236,3 +236,9 @@ variable "message_throttle_rate" {
   default     = 0.1
   description = "message throttling rate"
 }
+
+variable "allowed_email_domains" {
+  type        = string
+  default     = ".gov.uk"
+  description = "comma separated list of email domains"
+}

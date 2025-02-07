@@ -37,6 +37,8 @@ locals {
     "MESSAGE_THROTTLE_SECONDS_MAX": var.message_throttle_seconds_max,
     "MESSAGE_THROTTLE_SECONDS_MIN": var.message_throttle_seconds_min,
     "MESSAGE_THROTTLE_RATE": var.message_throttle_rate,
+
+    "ALLOWED_EMAIL_DOMAINS": var.allowed_email_domains,
   }
 
   django_app_secrets = {
