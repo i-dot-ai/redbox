@@ -657,9 +657,24 @@ class ChatMessage(UUIDPrimaryKeyBase, TimeStampedModel):
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
         self.text = sanitise_string(self.text)
         self.rating_text = sanitise_string(self.rating_text)
-        self.token_count = len(tokeniser.encode(self.text))
+        self.token_count = self.associated_file_token_count + len(tokeniser.encode(self.text))
         super().save(force_insert, force_update, using, update_fields)
         self.log()
+
+    @property
+    def associated_file_token_count(self):
+        """count token of all files created before this chat
+        that would have been used in the creation of this message
+        """
+        if self.role == self.Role.ai:
+            return 0
+
+        return (
+            self.chat.file_set.filter(
+                created_at__lt=datetime.now(tz=utc),
+            ).aggregate(Sum("token_count"))["token_count__sum"]
+            or 0
+        )
 
     @classmethod
     def get_messages(cls, chat_id: uuid.UUID) -> Sequence["ChatMessage"]:
