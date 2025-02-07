@@ -3,7 +3,6 @@ from datetime import UTC, datetime, timedelta
 import pytest
 from django.core.files.uploadedfile import SimpleUploadedFile
 from freezegun import freeze_time
-from lxml.html.diff import token
 from pytz import utc
 
 from redbox_app.redbox_core.models import (
@@ -41,9 +40,8 @@ def test_chat_message_model_token_count_on_save(chat):
 
 
 @pytest.mark.django_db()
-@pytest.mark.parametrize("role, expected_count", [(ChatMessage.Role.ai, 0), (ChatMessage.Role.user, 100)])
+@pytest.mark.parametrize(("role", "expected_count"), [(ChatMessage.Role.ai, 0), (ChatMessage.Role.user, 100)])
 def test_associated_file_token_count(chat, original_file, role, expected_count):
-
     now = datetime.now(tz=utc)
 
     # Given a chat message...
@@ -53,7 +51,6 @@ def test_associated_file_token_count(chat, original_file, role, expected_count):
     # and a file created before it...
     with freeze_time(now - timedelta(seconds=1)):
         File.objects.create(original_file=original_file, chat=chat, token_count=100)
-
 
     # and a file created after it...
     with freeze_time(now + timedelta(seconds=1)):
