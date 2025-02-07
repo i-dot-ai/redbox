@@ -66,7 +66,7 @@ module "django-app" {
   create_listener            = true
   create_networking          = true
   name                       = "${local.name}-django-app"
-  image_tag                  = "5ec4d891cac87760c61ca6c45f93b8e9e9411e56"
+  image_tag                  = var.image_tag
   ecr_repository_uri         = "${var.ecr_repository_uri}/${var.project_name}-django-app"
   ecs_cluster_id             = module.cluster.ecs_cluster_id
   ecs_cluster_name           = module.cluster.ecs_cluster_name
@@ -106,7 +106,7 @@ module "worker" {
   create_listener              = false
   create_networking            = false
   name                         = "${local.name}-worker"
-  image_tag                    = "5ec4d891cac87760c61ca6c45f93b8e9e9411e56"
+  image_tag                    = var.image_tag
   ecr_repository_uri           = "${var.ecr_repository_uri}/${var.project_name}-django-app"
   ecs_cluster_id               = module.cluster.ecs_cluster_id
   ecs_cluster_name             = module.cluster.ecs_cluster_name
@@ -138,7 +138,7 @@ module "lit-ssr" {
   create_listener              = false
   create_networking            = false
   name                         = "${local.name}-lit-ssr"
-  image_tag                    = "5ec4d891cac87760c61ca6c45f93b8e9e9411e56"
+  image_tag                    = var.image_tag
   ecr_repository_uri           = "${var.ecr_repository_uri}/${var.project_name}-lit-ssr"
   ecs_cluster_id               = module.cluster.ecs_cluster_id
   ecs_cluster_name             = module.cluster.ecs_cluster_name
