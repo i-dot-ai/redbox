@@ -1,6 +1,6 @@
 // @ts-check
 
-import "../loading-message.js";
+import "../loading-message.mjs";
 
 export class ChatMessage extends HTMLElement {
   constructor() {
@@ -62,7 +62,6 @@ export class ChatMessage extends HTMLElement {
    * Streams an LLM response
    * @param {string} message
    * @param {string} llm
-   * @param {string | undefined} sessionId
    * @param {string} endPoint
    * @param {HTMLElement} chatControllerRef
    */
@@ -165,6 +164,10 @@ export class ChatMessage extends HTMLElement {
         );
         if (errorContentContainer) {
           errorContentContainer.innerHTML = response.data;
+        }
+      } else if (response.type === "info") {
+        if (this.loadingMessage) {
+          this.loadingMessage.dataset.message = response.data;
         }
       }
 

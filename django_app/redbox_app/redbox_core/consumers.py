@@ -47,10 +47,12 @@ class ChatConsumer(AsyncWebsocketConsumer):
             return
 
         if delay > settings.MESSAGE_THROTTLE_SECONDS_MIN:
-            self.send_to_client("info", "due to high demand your message is being queued")
+            await self.send_to_client("info", "Due to high demand your message is being queued")
             if delay > settings.MESSAGE_THROTTLE_SECONDS_MAX:
                 logger.error("delay=%s > %s, this will be capped", delay, settings.MESSAGE_THROTTLE_SECONDS_MAX)
             await asyncio.sleep(max(delay, settings.MESSAGE_THROTTLE_SECONDS_MAX))
+
+        await self.send_to_client("info", "Loading")
 
         state = await sync_to_async(chat.to_langchain)()
 
