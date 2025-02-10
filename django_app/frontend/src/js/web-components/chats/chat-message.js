@@ -34,9 +34,9 @@ export class ChatMessage extends HTMLElement {
               `
               : ""
           }
-          <div class="govuk-notification-banner govuk-notification-banner--error govuk-!-margin-bottom-3 govuk-!-margin-top-3" role="alert" aria-labelledby="notification-title-${this.uuid}" data-module="govuk-notification-banner" hidden>
+          <div class="govuk-notification-banner govuk-notification-banner--error govuk-!-margin-bottom-3 govuk-!-margin-top-3" role="alert" aria-labelledby="notification-title-${uuid}" data-module="govuk-notification-banner" hidden>
               <div class="govuk-notification-banner__header">
-                  <h3 class="govuk-notification-banner__title" id="notification-title-${this.uuid}">Error</h3>
+                  <h3 class="govuk-notification-banner__title" id="notification-title-${uuid}">Error</h3>
               </div>
               <div class="govuk-notification-banner__content">
                   <p class="govuk-notification-banner__heading"></p>
