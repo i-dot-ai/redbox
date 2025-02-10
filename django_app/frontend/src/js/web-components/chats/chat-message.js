@@ -10,7 +10,12 @@ export class ChatMessage extends HTMLElement {
   }
 
   connectedCallback() {
-    this.uuid = crypto.randomUUID();
+    
+    /**
+     * A random UUID for UI elements - this is not the Django message ID
+     */
+    const uuid = crypto.randomUUID();
+    
     this.innerHTML = `
       <div class="iai-chat-bubble govuk-body {{ classes }}" data-role="${
         this.dataset.role
@@ -145,7 +150,7 @@ export class ChatMessage extends HTMLElement {
         chatControllerRef.dataset.sessionId = response.data;
       } else if (response.type === "end") {
         let chatMessageFooter = document.createElement("chat-message-footer");
-        chatMessageFooter.dataset.id = this.uuid;
+        chatMessageFooter.dataset.id = response.data.message_id;
         this.parentElement?.appendChild(chatMessageFooter);
 
         const chatResponseEndEvent = new CustomEvent("chat-response-end", {
