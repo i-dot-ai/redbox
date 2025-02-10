@@ -4,7 +4,6 @@ from uuid import UUID
 
 from django.contrib.auth import get_user_model
 from django.shortcuts import get_object_or_404
-from redbox_core.utils import sanitize_json
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.fields import CharField, FileField, IntegerField, ListField, UUIDField
 from rest_framework.permissions import IsAuthenticated
@@ -12,6 +11,7 @@ from rest_framework.response import Response
 from rest_framework.serializers import Serializer
 
 from redbox_app.redbox_core.models import ChatMessage, File
+from redbox_app.redbox_core.utils import sanitize_json
 
 User = get_user_model()
 logger = logging.getLogger(__name__)
